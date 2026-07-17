@@ -5,10 +5,10 @@ from __future__ import annotations
 import sys
 import typing
 
-from tests.models import m
-from tests.protocols import p
-from tests.typings import t
-from tests.utilities import u
+from tests import m
+from tests import p
+from tests import t
+from tests import u
 
 if typing.TYPE_CHECKING:
     from pathlib import Path

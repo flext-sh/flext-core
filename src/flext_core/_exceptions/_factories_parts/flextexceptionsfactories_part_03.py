@@ -17,7 +17,7 @@ from .flextexceptionsfactories_part_02 import (
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from flext_core.result import FlextResult
+    from flext_core import FlextResult
 
 
 class FlextExceptionsFactories(FlextExceptionsFactoriesPart02):

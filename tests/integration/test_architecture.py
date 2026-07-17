@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 from flext_tests import m, p, tm, tv
 
-from tests.constants import c
+from tests import c
 
 
 class TestsFlextCoreArchitecture:

@@ -17,8 +17,8 @@ from flext_tests import h, r, tm
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests.protocols import p
-    from tests.typings import t
+    from tests import p
+    from tests import t
 
 
 class _CreateCommand:

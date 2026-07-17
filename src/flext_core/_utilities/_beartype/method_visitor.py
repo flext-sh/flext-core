@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import inspect
 import types as _types_mod
+from typing import TYPE_CHECKING
 
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._typings.base import FlextTypingBase as t
+if TYPE_CHECKING:
+    from flext_core._protocols.enforcement import FlextProtocolsEnforcement as pe
+    from flext_core._typings.base import FlextTypingBase as t
 
 _NO_VIOLATION: t.StrMapping | None = None
 _BARE_VIOLATION: t.StrMapping = {}
@@ -43,7 +45,7 @@ class FlextUtilitiesBeartypeMethodVisitor:
 
     @staticmethod
     def v_method_shape(
-        params: me.MethodShapeParams, *args: type | str | _types_mod.FunctionType
+        params: pe.MethodShapeParams, *args: type | str | _types_mod.FunctionType
     ) -> t.StrMapping | None:
         """METHOD_SHAPE — accessor-prefix, staticmethod-required, and param-cap governance.
 

@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._typings.base import FlextTypingBase as t
+from typing import TYPE_CHECKING
+
 from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_01 import (
     NO_VIOLATION,
 )
 from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers as ubh
+
+if TYPE_CHECKING:
+    from flext_core._protocols.enforcement import FlextProtocolsEnforcement as pe
+    from flext_core._typings.base import FlextTypingBase as t
 
 
 def redundant_inner_violation(
@@ -29,7 +33,7 @@ def redundant_inner_violation(
 
 
 def self_ref_violation(
-    target: type, violation: t.StrMapping | None, params: me.MroShapeParams
+    target: type, violation: t.StrMapping | None, params: pe.MroShapeParams
 ) -> t.StrMapping | None:
     """Compute the utilities.py self-root import violation."""
     if violation is not None or not params.require_explicit_class_when_self_ref:

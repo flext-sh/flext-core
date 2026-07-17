@@ -20,9 +20,9 @@ import warnings
 from typing import TYPE_CHECKING
 
 from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
-from tests.constants import c
+from tests import c
 from tests.unit._enforcement_support import make_class
-from tests.utilities import u
+from tests import u
 
 if TYPE_CHECKING:
     from pathlib import Path

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import cast
+from typing import cast, TYPE_CHECKING
 
 from pydantic import ValidationError
 
@@ -11,10 +11,11 @@ from flext_core._constants.errors import FlextConstantsErrors as c
 
 from .construction import FlextResultConstructionMixin
 
-from collections.abc import Callable, MutableSequence, Sequence
 
-from flext_core._protocols.result import FlextProtocolsResult as p
-from flext_core._typings.base import FlextTypingBase as t
+if TYPE_CHECKING:
+    from flext_core._protocols.result import FlextProtocolsResult as p
+    from collections.abc import Callable, MutableSequence, Sequence
+    from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextResultCompositionMixin[T](FlextResultConstructionMixin[T], ABC):

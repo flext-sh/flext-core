@@ -3,15 +3,16 @@
 from __future__ import annotations
 
 from types import MappingProxyType
-from typing import Final
+from typing import Final, TYPE_CHECKING
 
 from flext_core._constants._enforcement_data.loader import SMELL_RULES_TEXT
 
 from .flextconstantsenforcement_part_09 import NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT
 
-from collections.abc import Mapping
 
-from flext_core._typings.base import FlextTypingBase as t
+if TYPE_CHECKING:
+    from flext_core._typings.base import FlextTypingBase as t
+    from collections.abc import Mapping
 
 
 _BASE_ENFORCEMENT_RULES_TEXT: dict[str, t.StrPair] = {

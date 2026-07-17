@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from examples.models import m
-from examples.protocols import p
+from examples import m
+from examples import p
 from flext_core import FlextContainer
 
 from .ex_08_container_scoped import Ex08ContainerScoped

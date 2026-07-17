@@ -15,10 +15,10 @@ from flext_tests import r
 
 from flext_core import FlextSettings
 from tests.base import s
-from tests.models import m
-from tests.protocols import p
-from tests.typings import p, t
-from tests.utilities import u
+from tests import m
+from tests import p
+from tests import p, t
+from tests import u
 
 
 class TestsFlextCoreServiceBootstrap:

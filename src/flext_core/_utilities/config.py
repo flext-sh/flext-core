@@ -14,18 +14,19 @@ from __future__ import annotations
 
 import re
 import tomllib
-from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, TYPE_CHECKING
 
 from flext_core._constants.config import FlextConstantsConfig as c
 from flext_core._typings.base import FlextTypingBase as t
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore as g
 from flext_core._utilities.reliability import FlextUtilitiesReliability as rel
-from flext_core.result import r
+from flext_core import r
 
-from collections.abc import Mapping
 
-from flext_core import FlextProtocols as p
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+    from flext_core import FlextProtocols as p
+    from pathlib import Path
 
 
 class FlextUtilitiesConfig:

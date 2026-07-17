@@ -17,11 +17,11 @@ from __future__ import annotations
 
 from typing import Annotated, override
 
-from examples.constants import c
-from examples.models import m
-from examples.protocols import p
-from examples.typings import p, t
-from examples.utilities import u
+from examples import c
+from examples import m
+from examples import p
+from examples import p, t
+from examples import u
 from flext_core import d, r, s
 
 

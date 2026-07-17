@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from tests.constants import c
-from tests.models import m
-from tests.utilities import u
+from tests import c
+from tests import m
+from tests import u
 
 
 class TestsFlextEnforcementCatalog:

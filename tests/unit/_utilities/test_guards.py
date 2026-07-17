@@ -11,7 +11,7 @@ from __future__ import annotations
 import pytest
 
 from flext_core import m, p, t
-from tests.utilities import u
+from tests import u
 
 
 class _SampleModel(m.BaseModel):

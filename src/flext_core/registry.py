@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import inspect
 import sys
-from typing import Annotated, ClassVar, Self, override
+from typing import Annotated, ClassVar, Self, override, TYPE_CHECKING
 
 from pydantic import PrivateAttr
 
@@ -19,7 +19,9 @@ from pydantic import PrivateAttr
 # FlextRegistry class split across a numbered MRO chain) into this single facade module.
 from flext_core import c, e, h, m, p, r, s, t, u
 
-from collections.abc import Callable, MutableMapping
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, MutableMapping
 
 
 class FlextRegistry(s[bool]):

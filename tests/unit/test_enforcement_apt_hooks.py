@@ -21,11 +21,11 @@ from typing import TYPE_CHECKING, ClassVar
 
 import pytest
 
-from tests.constants import c
-from tests.utilities import u
+from tests import c
+from tests import u
 
 if TYPE_CHECKING:
-    from tests.typings import p, t
+    from tests import p, t
 
 
 # Note: the top-level class name is intentionally ``TestsFlextEnforcementAptHooks``

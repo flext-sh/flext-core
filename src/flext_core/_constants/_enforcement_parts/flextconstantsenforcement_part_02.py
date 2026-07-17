@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from types import MappingProxyType
-from typing import Final
+from typing import Final, TYPE_CHECKING
 
 from .flextconstantsenforcement_part_01 import FlextConstantsEnforcementEnums
 
-from collections.abc import Mapping
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 
 class FlextConstantsEnforcementRuntime:

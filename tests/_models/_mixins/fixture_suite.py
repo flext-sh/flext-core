@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Annotated, ClassVar
 from flext_core import m
 
 if TYPE_CHECKING:
-    from tests.typings import p, t
+    from tests import p, t
 
 
 class TestsFlextModelsFixtureSuiteMixin:

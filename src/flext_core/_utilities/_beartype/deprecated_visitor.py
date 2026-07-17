@@ -4,14 +4,16 @@ from __future__ import annotations
 
 import inspect
 from pathlib import Path
-from typing import TypeAlias
+from typing import TYPE_CHECKING, TypeAlias
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._constants.regex import FlextConstantsRegex as cre
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._typings.base import FlextTypingBase as t
 
 from .helpers import FlextUtilitiesBeartypeHelpers as _ubh
+
+if TYPE_CHECKING:
+    from flext_core._protocols.enforcement import FlextProtocolsEnforcement as pe
+    from flext_core._typings.base import FlextTypingBase as t
 
 _NO_VIOLATION: t.StrMapping | None = None
 _typing_TypeAlias = TypeAlias  # sentinel for ``X: TypeAlias = Y`` annotation match.
@@ -21,7 +23,7 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
     """DEPRECATED_SYNTAX + WRAPPER visitors via bytecode introspection."""
 
     @staticmethod
-    def v_wrapper(_params: me.WrapperParams, target: type) -> t.StrMapping | None:
+    def v_wrapper(_params: pe.WrapperParams, target: type) -> t.StrMapping | None:
         """Detect pass-through wrappers via bytecode (ENFORCE-043)."""
         module = _ubh.runtime_module_for(target)
         if module is None:
@@ -37,7 +39,7 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
 
     @staticmethod
     def v_deprecated_syntax(
-        params: me.DeprecatedSyntaxParams, target: type
+        params: pe.DeprecatedSyntaxParams, target: type
     ) -> t.StrMapping | None:
         """DEPRECATED_SYNTAX — runtime introspection routed by ``params.ast_shape``."""
         shape = params.ast_shape

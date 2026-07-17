@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import datetime
-from typing import ClassVar
+from typing import ClassVar, TYPE_CHECKING
 
 from flext_core import (
     FlextConstants as c,
@@ -26,8 +26,10 @@ from flext_core._utilities._logging_context_parts.logging_context_part_01 import
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
 
-import contextvars
-from collections.abc import MutableMapping
+
+if TYPE_CHECKING:
+    from collections.abc import MutableMapping
+    import contextvars
 
 
 class FlextUtilitiesContextState:

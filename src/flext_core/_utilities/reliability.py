@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from typing import Annotated
+from typing import Annotated, TYPE_CHECKING
 
 from pydantic import Field
 
@@ -20,7 +20,9 @@ from flext_core import c, p, r, t
 from flext_core._models.base import FlextModelsBase
 from flext_core._utilities.args import FlextUtilitiesArgs
 
-from collections.abc import Callable
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 type _HandledExceptions = tuple[type[Exception], ...]

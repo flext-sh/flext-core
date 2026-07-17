@@ -14,7 +14,7 @@ from flext_core._exceptions.template import FlextExceptionsTemplate
 from flext_core._models.exception_params import FlextModelsExceptionParams as m
 
 if TYPE_CHECKING:
-    from flext_core.result import FlextResult
+    from flext_core import FlextResult
 
 
 class FlextExceptionsFactories:

@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from typing import ClassVar, override
 
-from flext_core.constants import FlextConstants as c
+from flext_core import FlextConstants as c
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._utilities.enforcement import FlextUtilitiesEnforcement as ue
 

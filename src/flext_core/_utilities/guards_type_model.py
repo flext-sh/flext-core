@@ -2,17 +2,16 @@
 
 from __future__ import annotations
 
-from typing import TypeIs
+from typing import TYPE_CHECKING, TypeIs
 
 from pydantic import BaseModel as PydanticBaseModel
 
-from flext_core import FlextTypes as t
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
-from collections.abc import Callable
-
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._protocols.base import FlextProtocolsBase as pb
-from flext_core._protocols.result import FlextProtocolsResult as pr
+    from flext_core import FlextTypes as t
+    from flext_core._protocols.base import FlextProtocolsBase as pb
+    from flext_core._protocols.result import FlextProtocolsResult as pr
 
 
 class FlextUtilitiesGuardsTypeModel:
@@ -27,7 +26,7 @@ class FlextUtilitiesGuardsTypeModel:
         return callable(model_dump)
 
     @staticmethod
-    def model_type(value: t.TypeHintSpecifier) -> TypeIs[t.ModelClass[mp.BaseModel]]:
+    def model_type(value: t.TypeHintSpecifier) -> TypeIs[type[pb.BaseModel]]:
         """Narrow a runtime value to a canonical Pydantic model class."""
         return isinstance(value, type) and issubclass(value, PydanticBaseModel)
 
@@ -41,7 +40,7 @@ class FlextUtilitiesGuardsTypeModel:
     @staticmethod
     def pydantic_model(
         value: t.GuardInput | pb.BaseModel | t.JsonValue | PydanticBaseModel | None,
-    ) -> TypeIs[mp.BaseModel]:
+    ) -> TypeIs[pb.BaseModel]:
         """Narrow value to the canonical Pydantic model carrier.
 
         Accepts both ``FlextModelsPydantic.BaseModel`` and

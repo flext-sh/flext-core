@@ -7,14 +7,14 @@ from typing import TYPE_CHECKING, override
 import pytest
 from flext_tests import h, r
 
-from tests.constants import c
-from tests.models import m
-from tests.typings import p, t
+from tests import c
+from tests import m
+from tests import p, t
 from tests.unit._handlers_support import TestsFlextFlextHandlers
-from tests.utilities import u
+from tests import u
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 HANDLER_TYPES = TestsFlextFlextHandlers.HANDLER_TYPES
 HandlerTypeScenario = TestsFlextFlextHandlers.HandlerTypeScenario

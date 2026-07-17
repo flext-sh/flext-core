@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._typings.base import FlextTypingBase as t
 
 from .helpers import FlextUtilitiesBeartypeHelpers as _ubh
+
+if TYPE_CHECKING:
+    from flext_core._protocols.enforcement import FlextProtocolsEnforcement as pe
+    from flext_core._typings.base import FlextTypingBase as t
 
 _NO_VIOLATION: t.StrMapping | None = None
 
@@ -18,7 +21,7 @@ class FlextUtilitiesBeartypeAliasVisitor:
 
     @staticmethod
     def v_foreign_canonical_alias_import(
-        params: me.ForeignCanonicalAliasImportParams, target: type
+        params: pe.ForeignCanonicalAliasImportParams, target: type
     ) -> t.StrMapping | None:
         """FOREIGN_CANONICAL_ALIAS_IMPORT — alias owned locally must not be imported from upstream.
 
@@ -51,7 +54,7 @@ class FlextUtilitiesBeartypeAliasVisitor:
 
     @staticmethod
     def v_alias_rebind(
-        params: me.AliasRebindParams, target: type
+        params: pe.AliasRebindParams, target: type
     ) -> t.StrMapping | None:
         """ALIAS_REBIND — canonical alias rebind / sibling-import discipline."""
         module = _ubh.runtime_module_for(target)
@@ -103,7 +106,7 @@ class FlextUtilitiesBeartypeAliasVisitor:
 
     @staticmethod
     def v_compatibility_alias(
-        params: me.CompatibilityAliasParams, target: type
+        params: pe.CompatibilityAliasParams, target: type
     ) -> t.StrMapping | None:
         """COMPATIBILITY_ALIAS — long facade class name must use canonical alias."""
         if not params.alias_renames:

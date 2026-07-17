@@ -12,12 +12,12 @@ from typing import TYPE_CHECKING
 import pytest
 from flext_tests import r, tm
 
-from tests.constants import c
+from tests import c
 from tests.unit._result_exception_support import TestsFlextResultExceptionCarrying
 
 if TYPE_CHECKING:
-    from tests.protocols import p
-    from tests.typings import p, t
+    from tests import p
+    from tests import p, t
 
 
 class TestsFlextCoreResultExceptionTraverseValidation(

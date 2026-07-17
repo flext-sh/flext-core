@@ -13,15 +13,17 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Hashable, MutableSequence
-from typing import Annotated, override
+from typing import Annotated, override, TYPE_CHECKING
 
 from pydantic import Field
 
 from flext_core._models.base import FlextModelsBase as m
-from flext_core._models.domain_event import FlextModelsDomainEvent
-from flext_core._typings.base import FlextTypingBase as t
 from flext_core._utilities.domain import FlextUtilitiesDomain as u
 from flext_core._utilities.generators import FlextUtilitiesGenerators
+
+if TYPE_CHECKING:
+    from flext_core._typings.base import FlextTypingBase as t
+    from flext_core._models.domain_event import FlextModelsDomainEvent
 
 
 class FlextModelsEntity:

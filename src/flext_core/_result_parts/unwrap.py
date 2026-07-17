@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import overload, override
+from typing import overload, override, TYPE_CHECKING
 
 from flext_core._constants.errors import FlextConstantsErrors as c
 
 from .behavior import FlextResultBehaviorMixin
 
-from collections.abc import Callable
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class FlextResultUnwrapMixin[T](FlextResultBehaviorMixin[T], ABC):

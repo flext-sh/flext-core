@@ -14,7 +14,7 @@ import textwrap
 from pathlib import Path
 
 from flext_core._utilities.beartype_conf import FlextUtilitiesBeartypeConf
-from tests.typings import p, t
+from tests import p, t
 from tests.unit._beartype_engine_support import TestsFlextBeartypeEngine
 
 _CLAW_INIT = (

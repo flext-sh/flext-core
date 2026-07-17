@@ -16,7 +16,10 @@ from flext_core._decorators._combined import FlextDecoratorsCombined
 from flext_core._exceptions.types import FlextExceptionsTypes as et
 from flext_core._models.container import FlextModelsContainer as mc
 
-from collections.abc import Callable
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class FlextDecoratorsRuntime(FlextDecoratorsCombined):

@@ -110,7 +110,7 @@ class FlextProtocolsHandler:
     # ------------------------------------------------------------------
 
     @runtime_checkable
-    class Handler[MessageT, ResultT](p.Base, Protocol):
+    class Handler[MessageT, ResultT](p.BaseModel, Protocol):  # mro-wkii.17.26 (kimi): ModelBase -> BaseModel
         """Typed message handler contract.
 
         Mirrors the public instance API of ``FlextHandlers[MessageT, ResultT]``
@@ -217,7 +217,7 @@ class FlextProtocolsHandler:
     # ------------------------------------------------------------------
 
     @runtime_checkable
-    class Dispatcher(p.Base, Protocol):
+    class Dispatcher(p.BaseModel, Protocol):  # mro-wkii.17.26 (kimi): ModelBase -> BaseModel
         """Protocol for dispatching and publishing messages in CQRS systems.
 
         Mirrors the public surface of ``FlextDispatcher``.
@@ -265,7 +265,7 @@ class FlextProtocolsHandler:
     # ------------------------------------------------------------------
 
     @runtime_checkable
-    class Middleware(p.Base, Protocol):
+    class Middleware(p.BaseModel, Protocol):  # mro-wkii.17.26 (kimi): ModelBase -> BaseModel
         """Protocol for middleware layers in handler execution chains."""
 
         def process[TResult](

@@ -10,13 +10,13 @@ from typing import TYPE_CHECKING
 import pytest
 from flext_tests import tm
 
-from tests.protocols import p
-from tests.utilities import u
+from tests import p
+from tests import u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests.typings import p, t
+    from tests import p, t
 
 LOG_LEVELS: tuple[tuple[str, bool], ...] = (
     ("debug", False),

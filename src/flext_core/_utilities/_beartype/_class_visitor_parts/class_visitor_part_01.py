@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 from enum import EnumType
+from typing import TYPE_CHECKING
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._typings.base import FlextTypingBase as t
 from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers as ubh
+
+if TYPE_CHECKING:
+    from flext_core._protocols.enforcement import FlextProtocolsEnforcement as pe
+    from flext_core._typings.base import FlextTypingBase as t
 
 NO_VIOLATION: t.StrMapping | None = None
 BARE_VIOLATION: t.StrMapping = {}
@@ -19,7 +22,7 @@ class FlextUtilitiesBeartypeClassVisitor:
 
     @staticmethod
     def v_class_placement(
-        params: me.ClassPlacementParams, *args: type | str
+        params: pe.ClassPlacementParams, *args: type | str
     ) -> t.StrMapping | None:
         """CLASS_PLACEMENT — class-name / inner-class layer placement."""
         violation = NO_VIOLATION
@@ -95,7 +98,7 @@ class FlextUtilitiesBeartypeClassVisitor:
 
     @staticmethod
     def v_protocol_tree(
-        params: me.ProtocolTreeParams, value: type
+        params: pe.ProtocolTreeParams, value: type
     ) -> t.StrMapping | None:
         """PROTOCOL_TREE — inner-class kind + runtime_checkable governance."""
         if params.require_inner_kind_protocol_or_namespace:

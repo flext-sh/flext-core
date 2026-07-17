@@ -16,9 +16,9 @@ import pytest
 
 from flext_core._constants.enforcement import FlextMroViolation, FlextSmellViolation
 from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
-from tests.constants import c
-from tests.models import m
-from tests.utilities import u
+from tests import c
+from tests import m
+from tests import u
 
 
 def _hard_violation(

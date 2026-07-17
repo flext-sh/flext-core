@@ -10,13 +10,13 @@ from typing import TYPE_CHECKING
 from flext_tests import r, tm
 
 from flext_core import FlextContainer
-from tests.typings import p, t
-from tests.utilities import u
+from tests import p, t
+from tests import u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests.protocols import p
+    from tests import p
 
 
 def capture_stdout[T](emit: Callable[[], T], *, contains: str) -> T:

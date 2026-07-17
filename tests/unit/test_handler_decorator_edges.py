@@ -21,7 +21,7 @@ from flext_tests import h, r
 from tests.base import s
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextHandlerDecoratorEdges:

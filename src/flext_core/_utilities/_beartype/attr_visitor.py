@@ -5,14 +5,17 @@ from __future__ import annotations
 import inspect
 from pathlib import Path
 from types import MappingProxyType
-from typing import get_origin
+from typing import TYPE_CHECKING, get_origin
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core._typings.pydantic import FlextTypesPydantic as tp
 
 from .helpers import FlextUtilitiesBeartypeHelpers as _ubh
+
+if TYPE_CHECKING:
+    from flext_core._protocols.enforcement import FlextProtocolsEnforcement as pe
+    from flext_core._typings.base import FlextTypingBase as t
+    from flext_core._typings.pydantic import FlextTypesPydantic as tp
+
 
 _NO_VIOLATION: t.StrMapping | None = None
 _BARE_VIOLATION: t.StrMapping = {}
@@ -37,7 +40,7 @@ class FlextUtilitiesBeartypeAttrVisitor:
 
     @staticmethod
     def v_attr_shape(
-        params: me.AttrShapeParams, name: str, value: tp.JsonValue
+        params: pe.AttrShapeParams, name: str, value: tp.JsonValue
     ) -> t.StrMapping | None:
         """ATTR_SHAPE — class-attribute governance (constants / aliases / TypeAdapters)."""
         if params.forbid_mutable_value:
@@ -93,7 +96,7 @@ class FlextUtilitiesBeartypeAttrVisitor:
 
     @staticmethod
     def _is_implicit_constant(
-        params: me.ClassVarConstantParams, target: type, name: str, value: object
+        params: pe.ClassVarConstantParams, target: type, name: str, value: object
     ) -> bool:
         """Return True when an UPPER_CASE attribute looks like a constant but lacks ClassVar."""
         if not params.detect_implicit_constants:
@@ -104,7 +107,7 @@ class FlextUtilitiesBeartypeAttrVisitor:
 
     @staticmethod
     def v_classvar_constant(
-        params: me.ClassVarConstantParams, target: type
+        params: pe.ClassVarConstantParams, target: type
     ) -> t.StrMapping | None:
         """CLASSVAR_CONSTANT — flag constants declared outside _constants."""
         module_name = getattr(target, "__module__", "") or ""

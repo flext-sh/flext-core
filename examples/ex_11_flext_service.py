@@ -5,11 +5,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, override
 
-from examples.models import m
-from examples.protocols import p
+from examples import m
+from examples import p
 from examples.shared import ExamplesFlextShared
-from examples.typings import p, t
-from examples.utilities import u
+from examples import p, t
+from examples import u
 from flext_core import r, s
 
 from flext_core import p as p

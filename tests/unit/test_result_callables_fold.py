@@ -14,8 +14,8 @@ import pytest
 from flext_tests import r, tm
 
 if TYPE_CHECKING:
-    from tests.protocols import p
-    from tests.typings import p, t
+    from tests import p
+    from tests import p, t
 
 
 class TestsFlextCoreResultCallablesFold:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from tests.models import m
+from tests import m
 
 
 class TestsFlextResultExceptionCarrying:

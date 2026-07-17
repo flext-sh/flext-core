@@ -11,16 +11,16 @@ from __future__ import annotations
 
 
 import structlog
+from typing import TYPE_CHECKING
 
 from .logging_config_part_02 import (
     FlextUtilitiesLoggingConfig as FlextUtilitiesLoggingConfigPart02,
 )
 
-from structlog.types import Processor
+if TYPE_CHECKING:
+    from structlog.types import Processor
 
-
-from flext_core import FlextTypes as t
-from flext_core._models.pydantic import FlextModelsPydantic as mp
+    from flext_core import FlextProtocols as p, FlextTypes as t
 
 
 class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart02):
@@ -28,7 +28,7 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart02):
     def configure_structlog(
         cls,
         *,
-        settings: mp.BaseModel | None = None,
+        settings: p.BaseModel | None = None,
         log_level: int | None = None,
         console_renderer: bool = True,
         additional_processors: t.SequenceOf[Processor] | None = None,

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests.models import m
+from tests import m
 
 
 class TestsFlextCoreEntity:

@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import ClassVar, Self
 
 from flext_core import m, p, u
-from tests.typings import p, t
+from tests import p, t
 
 
 class TestsFlextModelsCorePublicMixin:

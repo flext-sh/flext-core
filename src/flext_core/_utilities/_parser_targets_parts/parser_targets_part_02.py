@@ -11,7 +11,10 @@ from .parser_targets_part_01 import (
     FlextUtilitiesParserTargets as FlextUtilitiesParserTargetsPart01,
 )
 
-from flext_core._utilities.parser_coerce import FlextUtilitiesParserCoerce
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from flext_core._utilities.parser_coerce import FlextUtilitiesParserCoerce
 
 
 class FlextUtilitiesParserTargets(FlextUtilitiesParserTargetsPart01):

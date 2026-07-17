@@ -5,13 +5,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar
 
 from tests._utilities.service_factories import TestsFlextUtilitiesServiceFactoriesMixin
-from tests.constants import c
-from tests.models import m
+from tests import c
+from tests import m
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from tests.typings import p, t
+    from tests import p, t
 
 
 class TestsFlextUtilitiesCaseServiceFactoriesMixin(

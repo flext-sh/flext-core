@@ -19,10 +19,10 @@ from typing import TYPE_CHECKING, cast
 import pytest
 
 from flext_core._constants.enforcement import FlextMroViolation, FlextSmellViolation
-from tests.utilities import u
+from tests import u
 
 if TYPE_CHECKING:
-    from tests.typings import p, t
+    from tests import p, t
 
 
 class TestsFlextCoreEnforcementWarningVisibility:

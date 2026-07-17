@@ -5,12 +5,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Annotated, ClassVar
 
 from flext_core import m
-from tests.constants import c
+from tests import c
 
 if TYPE_CHECKING:
     from collections.abc import MutableSequence
 
-    from tests.typings import t
+    from tests import t
 
 
 class TestsFlextModelsCoreStateMixin:

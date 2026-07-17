@@ -21,13 +21,13 @@ import pytest
 from flext_tests import x
 
 from flext_core import FlextContext
-from tests.constants import c
-from tests.protocols import p
+from tests import c
+from tests import p
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from tests.typings import p, t
+    from tests import p, t
 
 
 class TestsFlextMixins:

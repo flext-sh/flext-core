@@ -3,15 +3,18 @@
 from __future__ import annotations
 
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._typings.base import FlextTypingBase as t
+
+if TYPE_CHECKING:
+    from flext_core._protocols.base import FlextProtocolsBase as p
+    from flext_core._typings.base import FlextTypingBase as t
 
 
 def _extended_bindings() -> t.MappingKV[
-    str, tuple[c.EnforcementPredicateKind, mp.BaseModel]
+    str, tuple[c.EnforcementPredicateKind, p.BaseModel]
 ]:
     """Map extended tags to (predicate_kind, params) dispatch entries."""
     pk = c.EnforcementPredicateKind
@@ -81,7 +84,7 @@ def _extended_bindings() -> t.MappingKV[
 
 
 EXTENDED_PREDICATE_BINDINGS: t.MappingKV[
-    str, tuple[c.EnforcementPredicateKind, mp.BaseModel]
+    str, tuple[c.EnforcementPredicateKind, p.BaseModel]
 ] = _extended_bindings()
 
 

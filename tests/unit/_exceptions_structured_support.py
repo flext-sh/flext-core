@@ -7,10 +7,10 @@ from typing import TYPE_CHECKING
 
 from flext_tests import e
 
-from tests.constants import c
+from tests import c
 
 if TYPE_CHECKING:
-    from tests.typings import p, t
+    from tests import p, t
 
 type ErrorFactory = Callable[[], e.BaseError]
 

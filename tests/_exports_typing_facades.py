@@ -19,23 +19,23 @@ from tests.base import (
     TestsFlextServiceBase,
     s,
 )
-from tests.constants import (
+from tests import (
     TestsFlextConstants,
     c,
 )
-from tests.models import (
+from tests import (
     TestsFlextModels,
     m,
 )
-from tests.protocols import (
+from tests import (
     TestsFlextProtocols,
     p,
 )
-from tests.typings import (
+from tests import (
     TestsFlextTypes,
     t,
 )
-from tests.utilities import (
+from tests import (
     TestsFlextUtilities,
     u,
 )

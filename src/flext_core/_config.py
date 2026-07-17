@@ -25,9 +25,8 @@ from __future__ import annotations
 import inspect
 from pathlib import Path
 from threading import RLock
-from typing import ClassVar, Self, cast, override
+from typing import ClassVar, Self, cast, override, TYPE_CHECKING
 
-from pydantic import JsonValue
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
@@ -37,6 +36,9 @@ from pydantic_settings import (
 from yaml import MappingNode, SafeLoader
 from yaml.constructor import ConstructorError
 from yaml.resolver import BaseResolver
+
+if TYPE_CHECKING:
+    from pydantic import JsonValue
 
 
 class _UniqueKeySafeLoader(SafeLoader):

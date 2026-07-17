@@ -8,12 +8,12 @@ from flext_tests import m as tm, r, u
 
 from tests._models.mixins import TestsFlextModelsMixins
 from tests.base import s
-from tests.constants import c
-from tests.models import m
-from tests.typings import t
+from tests import c
+from tests import m
+from tests import t
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextUtilitiesRailwayServicesMixin:

@@ -10,13 +10,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, TYPE_CHECKING
 
-from flext_core import FlextTypes as t
 from flext_core._models.base import FlextModelsBase as m
 from flext_core._models.containers import FlextModelsContainers as mc
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._utilities.collection import FlextUtilitiesCollection as u
+
+if TYPE_CHECKING:
+    from flext_core import FlextTypes as t
 
 
 class FlextModelsDomainEvent:

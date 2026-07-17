@@ -16,13 +16,15 @@ from __future__ import annotations
 import time
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from typing import Annotated, ClassVar, Self
+from typing import Annotated, ClassVar, Self, TYPE_CHECKING
 
 from flext_core import c, m, p, r, t, u
 
 # NOTE (multi-agent): mro-i6nq.12 — Generator is annotation-only; importing it
 # under TYPE_CHECKING keeps the public runtime facade graph lazy.
-from collections.abc import Generator
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 
 class FlextContext(m.ManagedModel):

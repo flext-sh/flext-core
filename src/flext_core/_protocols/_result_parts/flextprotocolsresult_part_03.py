@@ -113,7 +113,7 @@ class FlextProtocolsResult(FlextProtocolsResultPart02):
 
     @runtime_checkable
     class ResultConvertible[T](Protocol):
-        """Conversion helpers from raw result payloads to validated types."""
+        """Conversion helpers from raw payloads to validated types."""
 
         def to_model[U: mp.BaseModel](
             self, model: type[U]

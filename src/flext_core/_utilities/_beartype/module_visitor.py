@@ -5,12 +5,15 @@ from __future__ import annotations
 import ast
 import inspect
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._typings.base import FlextTypingBase as t
 
 from .helpers import FlextUtilitiesBeartypeHelpers
+
+if TYPE_CHECKING:
+    from flext_core._protocols.enforcement import FlextProtocolsEnforcement as pe
+    from flext_core._typings.base import FlextTypingBase as t
 
 _NO_VIOLATION: t.StrMapping | None = None
 _MODULE_EXEMPT_FILES: frozenset[str] = frozenset({
@@ -49,7 +52,7 @@ class FlextUtilitiesBeartypeModuleVisitor:
     """LOC_CAP + MODULE_ALIAS + DUPLICATE_SYMBOL visitors."""
 
     @staticmethod
-    def v_loc_cap(params: me.LocCapParams, target: type) -> t.StrMapping | None:
+    def v_loc_cap(params: pe.LocCapParams, target: type) -> t.StrMapping | None:
         """LOC_CAP — module logical-LOC ceiling + top-level class census (§3.1)."""
         module = FlextUtilitiesBeartypeHelpers.runtime_module_for(target)
         if module is None:
@@ -106,7 +109,7 @@ class FlextUtilitiesBeartypeModuleVisitor:
 
     @staticmethod
     def v_module_alias(
-        params: me.AliasRebindParams, target: type
+        params: pe.AliasRebindParams, target: type
     ) -> t.StrMapping | None:
         """MODULE_ALIAS — module-level CapWords compat alias / nested-class hoist."""
         if params.expected_form != "no_module_compat_alias":
@@ -135,12 +138,12 @@ class FlextUtilitiesBeartypeModuleVisitor:
 
     @staticmethod
     def v_duplicate_symbol(
-        _params: me.DuplicateSymbolParams, _target: type
+        _params: pe.DuplicateSymbolParams, _target: type
     ) -> t.StrMapping | None:
         """DUPLICATE_SYMBOL — workspace cross-project SSOT (Phase 3 hook).
 
         Implementation lives in the workspace walker, not the per-class
         runtime hook — needs the cross-project symbol index that only the
-        walker can build. Returns None at runtime.
+        walker can build. Returns None at runtipe.
         """
         return _NO_VIOLATION

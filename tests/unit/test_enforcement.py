@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from tests.unit._enforcement_support import make_class, messages
-from tests.utilities import u
+from tests import u
 
 if TYPE_CHECKING:
     from flext_core import m

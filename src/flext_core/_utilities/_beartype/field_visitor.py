@@ -3,16 +3,18 @@
 from __future__ import annotations
 
 import inspect
-from typing import Annotated, get_args, get_origin
+from typing import TYPE_CHECKING, Annotated, get_args, get_origin
 
 from pydantic.fields import FieldInfo
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._models.enforcement import FlextModelsEnforcement as me
 from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._typings.base import FlextTypingBase as t
 
 from .helpers import FlextUtilitiesBeartypeHelpers as _ubh
+
+if TYPE_CHECKING:
+    from flext_core._protocols.enforcement import FlextProtocolsEnforcement as pe
+    from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextUtilitiesBeartypeFieldVisitor:
@@ -43,7 +45,7 @@ class FlextUtilitiesBeartypeFieldVisitor:
 
     @staticmethod
     def _field_violation(
-        params: me.FieldShapeParams, info: FieldInfo
+        params: pe.FieldShapeParams, info: FieldInfo
     ) -> t.StrMapping | None:
         violation: t.StrMapping | None = None
         if params.forbid_any and _ubh.contains_any_recursive(
@@ -94,7 +96,7 @@ class FlextUtilitiesBeartypeFieldVisitor:
     @classmethod
     def v_field_shape(
         cls: type[FlextUtilitiesBeartypeFieldVisitor],
-        params: me.FieldShapeParams,
+        params: pe.FieldShapeParams,
         *args: type | str | FieldInfo,
     ) -> t.StrMapping | None:
         """FIELD_SHAPE — Pydantic field annotation governance via flags."""
@@ -116,7 +118,7 @@ class FlextUtilitiesBeartypeFieldVisitor:
 
     @staticmethod
     def v_model_config(
-        params: me.ModelConfigParams, target: type
+        params: pe.ModelConfigParams, target: type
     ) -> t.StrMapping | None:
         """MODEL_CONFIG — Pydantic model_config governance via flags."""
         violation: t.StrMapping | None = None

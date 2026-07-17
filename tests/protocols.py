@@ -22,7 +22,7 @@ if TYPE_CHECKING:
         TestsFlextModelsMixins,
         TestsFlextModelsMixins as _Mixins,
     )
-    from tests.typings import p, t
+    from tests import p, t
 
     AttrObject = _Mixins.AttrObject
     BadMapping = _Mixins.BadMapping

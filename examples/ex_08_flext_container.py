@@ -5,9 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
-from examples.constants import c
-from examples.protocols import p
-from examples.utilities import u
+from examples import c
+from examples import p
+from examples import u
 from flext_core import FlextContainer, r
 
 from .ex_08_container_lifecycle import Ex08ContainerLifecycle

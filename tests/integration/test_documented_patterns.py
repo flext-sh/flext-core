@@ -16,7 +16,7 @@ from flext_tests import d, e, r
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextCoreDocumentedPatterns:

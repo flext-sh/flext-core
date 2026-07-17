@@ -14,8 +14,11 @@ import operator
 from flext_core import FlextConstants as c, FlextTypes as t
 from flext_core._models.container import FlextModelsContainer
 
-from collections.abc import MutableSequence
-from types import ModuleType
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from types import ModuleType
+    from collections.abc import MutableSequence
 
 
 class FlextUtilitiesDiscovery:

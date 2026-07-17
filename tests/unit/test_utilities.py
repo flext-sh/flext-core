@@ -10,7 +10,7 @@ import uuid
 
 import pytest
 
-from tests.utilities import u
+from tests import u
 
 type MatchValue = str | int | bool | list[int] | dict[str, int]
 type ConvValue = str | float | int | bool | None

@@ -7,7 +7,7 @@ from contextlib import redirect_stdout
 from pathlib import Path
 from typing import override
 
-from examples.protocols import p
+from examples import p
 from examples.shared import ExamplesFlextShared
 from flext_core import u
 

@@ -13,7 +13,7 @@ from collections.abc import Iterator, Sequence
 import pytest
 from flext_tests import e
 
-from tests.models import m
+from tests import m
 
 
 class TestsFlextCoreExceptionsPublicMetrics:

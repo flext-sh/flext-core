@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from flext_tests import tm
 
 from flext_core import FlextSettings
-from tests.utilities import u
+from tests import u
 
 from .settings_integration_factories import TestsFlextFlextSettingsFactories
 

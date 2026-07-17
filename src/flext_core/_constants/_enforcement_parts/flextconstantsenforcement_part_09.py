@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 
-from flext_core._typings.base import FlextTypingBase as t
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from flext_core._typings.base import FlextTypingBase as t
 
 
 NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT: dict[str, t.StrPair] = {

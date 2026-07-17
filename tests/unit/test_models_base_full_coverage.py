@@ -13,8 +13,8 @@ from typing import Annotated
 
 import pytest
 
-from tests.constants import c
-from tests.models import m
+from tests import c
+from tests import m
 
 
 class TestsFlextCoreModelsBaseFullCoverage:

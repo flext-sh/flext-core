@@ -5,9 +5,10 @@ from __future__ import annotations
 import functools
 import importlib
 import sys
-from typing import Any, TypeAliasType, get_args, get_origin
+from typing import TYPE_CHECKING, Any, TypeAliasType, get_args, get_origin
 
-from flext_core._typings.base import FlextTypingBase as t
+if TYPE_CHECKING:
+    from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextUtilitiesBeartypeHelpers:

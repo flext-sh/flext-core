@@ -6,11 +6,11 @@ from enum import StrEnum
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
 
-from examples.constants import c
+from examples import c
 
 from collections.abc import Mapping
 
-from examples.typings import p, t
+from examples import p, t
 
 
 

@@ -8,7 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
-from examples.models import m
+from examples import m
 from flext_core import r, u
 
 from collections.abc import MutableSequence

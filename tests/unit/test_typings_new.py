@@ -12,8 +12,8 @@ from enum import StrEnum
 import pytest
 from flext_tests import tm
 
-from tests.constants import c
-from tests.typings import p, t
+from tests import c
+from tests import p, t
 
 
 class _Color(StrEnum):

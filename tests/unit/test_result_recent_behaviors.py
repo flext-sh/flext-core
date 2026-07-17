@@ -13,10 +13,10 @@ from typing import TYPE_CHECKING
 
 from flext_tests import r
 
-from tests.models import m
+from tests import m
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextCoreResultRecentBehaviors:

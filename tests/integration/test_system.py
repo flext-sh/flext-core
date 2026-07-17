@@ -20,11 +20,11 @@ import pytest
 from flext_tests import e, r, tm
 
 from flext_core import FlextContainer
-from tests.constants import c
-from tests.utilities import u
+from tests import c
+from tests import u
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 _UUID_TEXT_LENGTH = 36
 

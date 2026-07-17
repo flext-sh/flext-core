@@ -20,9 +20,9 @@ import pytest
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._models.enforcement import FlextModelsEnforcement as me
 from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as be
-from tests.typings import p, t
+from tests import p, t
 
-_FORBIDDEN_IMPORT = "from tests.constants import c"
+_FORBIDDEN_IMPORT = "from tests import c"
 
 
 class TestsFlextCoreBeartypeEngineImportHooks:
@@ -78,7 +78,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
             under_tests=True,
             body=textwrap.dedent(
                 """
-                from tests.constants import c
+                from tests import c
 
 
                 class Probe:
@@ -126,7 +126,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
             under_tests=False,
             body=textwrap.dedent(
                 """
-                from tests.constants import c
+                from tests import c
 
 
                 class Probe:
@@ -175,7 +175,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
             under_tests=True,
             body=textwrap.dedent(
                 """
-                from tests.constants import c
+                from tests import c
 
 
                 class Probe:

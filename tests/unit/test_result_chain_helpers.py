@@ -14,7 +14,7 @@ import pytest
 from flext_tests import r
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextCoreResultChainHelpers:

@@ -6,10 +6,15 @@ from abc import ABC, abstractmethod
 
 from flext_core._protocols.result import FlextProtocolsResult as p
 
-from returns.result import Result
 
-from flext_core import FlextTypes as t
-from flext_core._models.containers import FlextModelsContainers as mc
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from flext_core._models.containers import FlextModelsContainers as mc
+    from flext_core import FlextTypes as t
+    from returns.result import (
+        Result,
+    )  # mro-itcd.1: returns 0.28.0 moved exports to returns.result.
 
 
 class FlextResultBehaviorMixin[T](p.Result[T], ABC):

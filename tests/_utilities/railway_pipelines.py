@@ -7,11 +7,11 @@ from typing import TYPE_CHECKING
 from flext_tests import e, m as tm, r
 
 from tests._utilities.railway_services import TestsFlextUtilitiesRailwayServicesMixin
-from tests.constants import c
-from tests.models import m
+from tests import c
+from tests import m
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayServicesMixin):

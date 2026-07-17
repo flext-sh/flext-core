@@ -11,9 +11,9 @@ from __future__ import annotations
 import pytest
 from flext_tests import tm
 
-from tests.constants import c
-from tests.models import m
-from tests.typings import p, t
+from tests import c
+from tests import m
+from tests import p, t
 
 
 class TestsFlextCoreTypingsValidationNumbers:

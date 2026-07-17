@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from examples.constants import c
-from examples.models import m
+from examples import c
+from examples import m
 from flext_core import r
 
 from .ex_12_registry_flow import Ex12RegistryFlow
 from .ex_12_registry_support import ProtocolHandler, as_registry_handler
 
-from examples.protocols import p
+from examples import p
 
 
 

@@ -14,7 +14,7 @@ from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._utilities.collection import FlextUtilitiesCollection
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 from flext_core._utilities.mapper_extract import FlextUtilitiesMapperExtract
-from flext_core.result import r
+from flext_core import r
 from flext_core.runtime import FlextRuntime
 
 

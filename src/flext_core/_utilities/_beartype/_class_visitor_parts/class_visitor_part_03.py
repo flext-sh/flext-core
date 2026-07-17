@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._typings.base import FlextTypingBase as t
 
 from .class_visitor_part_01 import NO_VIOLATION
+
+if TYPE_CHECKING:
+    from flext_core._protocols.enforcement import FlextProtocolsEnforcement as pe
+    from flext_core._typings.base import FlextTypingBase as t
+
 from .class_visitor_part_02 import (
     FlextUtilitiesBeartypeClassVisitor as FlextUtilitiesBeartypeClassVisitorPart02,
 )
@@ -15,7 +20,7 @@ from .class_visitor_part_02 import (
 class FlextUtilitiesBeartypeClassVisitor(FlextUtilitiesBeartypeClassVisitorPart02):
     @staticmethod
     def v_loose_symbol(
-        params: me.LooseSymbolParams, *args: type | str
+        params: pe.LooseSymbolParams, *args: type | str
     ) -> t.StrMapping | None:
         """LOOSE_SYMBOL — top-level class/function naming + settings inheritance."""
         match args:

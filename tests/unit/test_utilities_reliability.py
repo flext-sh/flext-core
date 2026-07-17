@@ -16,12 +16,12 @@ from typing import TYPE_CHECKING, Final
 import pytest
 from flext_tests import r
 
-from tests.utilities import u
+from tests import u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests.protocols import p
+    from tests import p
 
 
 def _counting_operation(

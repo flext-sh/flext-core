@@ -7,11 +7,11 @@ from typing import TYPE_CHECKING
 from tests._utilities.case_service_factories import (
     TestsFlextUtilitiesCaseServiceFactoriesMixin,
 )
-from tests.constants import c
-from tests.models import m
+from tests import c
+from tests import m
 
 if TYPE_CHECKING:
-    from tests.typings import p, t
+    from tests import p, t
 
 
 class TestsFlextUtilitiesCaseGeneratorsMixin(

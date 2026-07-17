@@ -3,16 +3,17 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import Self, cast, overload, override
+from typing import Self, cast, overload, override, TYPE_CHECKING
 
 from flext_core._constants.errors import FlextConstantsErrors as c
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 
 from .construction import FlextResultConstructionMixin
 
-from collections.abc import Callable
 
-from flext_core._protocols.result import FlextProtocolsResult as p
+if TYPE_CHECKING:
+    from flext_core._protocols.result import FlextProtocolsResult as p
+    from collections.abc import Callable
 
 
 class FlextResultTransformsMixin[T](FlextResultConstructionMixin[T], ABC):

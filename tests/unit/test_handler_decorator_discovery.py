@@ -16,7 +16,7 @@ import pytest
 from flext_tests import h, r
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextCoreHandlerDecoratorDiscovery:

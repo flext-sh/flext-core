@@ -6,11 +6,11 @@ from typing import TYPE_CHECKING, override
 
 from flext_tests import s as tests_s
 
-from tests.constants import c
-from tests.typings import p, t
+from tests import c
+from tests import p, t
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextServiceBase[TDomainResult: t.JsonPayload | t.SequenceOf[t.JsonPayload]](

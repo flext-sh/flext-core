@@ -13,7 +13,7 @@ from typing import Annotated
 import pytest
 from pydantic import ValidationError
 
-from tests.models import m
+from tests import m
 
 
 class Sample(m.BaseModel):

@@ -13,10 +13,10 @@ from typing import TYPE_CHECKING
 import pytest
 from flext_tests import tm
 
-from tests.constants import c
-from tests.models import m
+from tests import c
+from tests import m
 from tests.unit._project_metadata_support import write_pyproject
-from tests.utilities import u
+from tests import u
 
 if TYPE_CHECKING:
     from pathlib import Path

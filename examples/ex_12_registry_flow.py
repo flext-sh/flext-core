@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from examples.constants import c
-from examples.models import m
+from examples import c
+from examples import m
 from examples.shared import ExamplesFlextShared
-from examples.utilities import u
+from examples import u
 from flext_core import h, r
 
 from .ex_12_registry_support import (
@@ -16,8 +16,8 @@ from .ex_12_registry_support import (
     discovered_handler,
 )
 
-from examples.protocols import p
-from examples.typings import p, t
+from examples import p
+from examples import p, t
 
 
 

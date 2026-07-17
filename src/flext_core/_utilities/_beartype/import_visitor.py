@@ -3,14 +3,17 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._typings.base import FlextTypingBase as t
 
 from ._alias_visitor import FlextUtilitiesBeartypeAliasVisitor
 from ._library_visitor import FlextUtilitiesBeartypeLibraryVisitor
 from .helpers import FlextUtilitiesBeartypeHelpers as _ubh
+
+if TYPE_CHECKING:
+    from flext_core._protocols.enforcement import FlextProtocolsEnforcement as pe
+    from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextUtilitiesBeartypeImportVisitor:
@@ -18,14 +21,14 @@ class FlextUtilitiesBeartypeImportVisitor:
 
     @staticmethod
     def v_import_blacklist(
-        params: me.ImportBlacklistParams, target: type
+        params: pe.ImportBlacklistParams, target: type
     ) -> t.StrMapping | None:
         """IMPORT_BLACKLIST — concrete-class / pydantic consumer-import discipline."""
         return _ImportBlacklistVisitor.v_import_blacklist(params, target)
 
     @staticmethod
     def v_foreign_canonical_alias_import(
-        params: me.ForeignCanonicalAliasImportParams, target: type
+        params: pe.ForeignCanonicalAliasImportParams, target: type
     ) -> t.StrMapping | None:
         """FOREIGN_CANONICAL_ALIAS_IMPORT."""
         return FlextUtilitiesBeartypeAliasVisitor.v_foreign_canonical_alias_import(
@@ -34,21 +37,21 @@ class FlextUtilitiesBeartypeImportVisitor:
 
     @staticmethod
     def v_alias_rebind(
-        params: me.AliasRebindParams, target: type
+        params: pe.AliasRebindParams, target: type
     ) -> t.StrMapping | None:
         """ALIAS_REBIND."""
         return FlextUtilitiesBeartypeAliasVisitor.v_alias_rebind(params, target)
 
     @staticmethod
     def v_compatibility_alias(
-        params: me.CompatibilityAliasParams, target: type
+        params: pe.CompatibilityAliasParams, target: type
     ) -> t.StrMapping | None:
         """COMPATIBILITY_ALIAS."""
         return FlextUtilitiesBeartypeAliasVisitor.v_compatibility_alias(params, target)
 
     @staticmethod
     def v_library_import(
-        params: me.LibraryImportParams, target: type
+        params: pe.LibraryImportParams, target: type
     ) -> t.StrMapping | None:
         """LIBRARY_IMPORT."""
         return FlextUtilitiesBeartypeLibraryVisitor.v_library_import(params, target)
@@ -59,7 +62,7 @@ class _ImportBlacklistVisitor:
 
     @staticmethod
     def v_import_blacklist(
-        params: me.ImportBlacklistParams, target: type
+        params: pe.ImportBlacklistParams, target: type
     ) -> t.StrMapping | None:
         """IMPORT_BLACKLIST — concrete-class / pydantic consumer-import discipline."""
         no_violation: t.StrMapping | None = None

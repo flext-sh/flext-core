@@ -14,7 +14,7 @@ import inspect
 import sys
 import threading
 from collections.abc import Sequence
-from typing import ClassVar, Self, TypeGuard, overload, override
+from typing import ClassVar, Self, TypeGuard, overload, override, TYPE_CHECKING
 
 from dependency_injector import containers as di_containers
 
@@ -24,7 +24,9 @@ from flext_core import FlextContext
 from flext_core import FlextUtilitiesLogging
 
 from collections.abc import Callable
-from types import FrameType, ModuleType
+
+if TYPE_CHECKING:
+    from types import FrameType, ModuleType
 
 
 class FlextContainer(p.Container):

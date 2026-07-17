@@ -6,12 +6,12 @@ from typing import TYPE_CHECKING, ClassVar
 
 from flext_tests import r, tm, u
 
-from tests.constants import c
+from tests import c
 
 if TYPE_CHECKING:
     from collections.abc import MutableSequence, Sequence
 
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextUtilitiesContractsMixin:

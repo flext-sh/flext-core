@@ -10,14 +10,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from types import MappingProxyType
-from typing import ClassVar, override
+from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._protocols.base import FlextProtocolsBase as p
-from flext_core._typings.base import FlextTypingBase as t
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from flext_core._protocols.base import FlextProtocolsBase as p
+    from flext_core._typings.base import FlextTypingBase as t
 
 from ._beartype._helpers_parts.helpers_part_03 import FlextUtilitiesBeartypeHelpers
 from ._beartype.attr_visitor import FlextUtilitiesBeartypeAttrVisitor
@@ -117,7 +119,7 @@ class FlextUtilitiesBeartypeEngine(
     def apply(
         cls,
         kind: c.EnforcementPredicateKind,
-        params: mp.BaseModel,
+        params: p.BaseModel,
         *args: p.AttributeProbe,
     ) -> t.StrMapping | None:
         """Dispatch a rule predicate to its visitor by ``predicate_kind``."""

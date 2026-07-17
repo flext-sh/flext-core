@@ -11,11 +11,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import TypeGuard, TypeIs
+from typing import TYPE_CHECKING, TypeGuard, TypeIs
 
 from flext_core import FlextTypes as t
 
-from pydantic import BaseModel as PydanticBaseModel
+if TYPE_CHECKING:
+    from pydantic import BaseModel as PydanticBaseModel
 
 
 class FlextUtilitiesGuardsTypeCore:

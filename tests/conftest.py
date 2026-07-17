@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests.utilities import u
+from tests import u
 
 # NOTE (multi-agent): Shared fixtures come only from flext-tests' pytest11 plugin.
 

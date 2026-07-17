@@ -11,18 +11,20 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, MutableSequence
-from typing import get_args, get_origin
+from typing import get_args, get_origin, TYPE_CHECKING
 
 from pydantic import BaseModel
 
 from flext_core import FlextConstants as c
-from flext_core._protocols.base import FlextProtocolsBase as pb
-from flext_core._protocols.result import FlextProtocolsResult as p
 from flext_core._typings.base import FlextTypingBase as tb
-from flext_core._typings.services import FlextTypesServices as ts
-from flext_core.result import FlextResult as r
+from flext_core import FlextResult as r
 
 from .checker_part_02 import FlextUtilitiesChecker as FlextUtilitiesCheckerPart02
+
+if TYPE_CHECKING:
+    from flext_core._typings.services import FlextTypesServices as ts
+    from flext_core._protocols.result import FlextProtocolsResult as p
+    from flext_core._protocols.base import FlextProtocolsBase as pb
 
 
 class FlextUtilitiesChecker(FlextUtilitiesCheckerPart02):

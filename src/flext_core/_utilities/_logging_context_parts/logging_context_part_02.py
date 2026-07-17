@@ -19,7 +19,10 @@ from .logging_context_part_01 import (
     FlextUtilitiesLoggingContext as FlextUtilitiesLoggingContextPart01,
 )
 
-import types
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import types
 
 
 class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingContextPart01):

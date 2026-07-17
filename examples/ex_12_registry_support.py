@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from examples.models import m
-from examples.typings import p, t
-from examples.utilities import u
+from examples import m
+from examples import p, t
+from examples import u
 from flext_core import h, r
 
-from examples.protocols import p
+from examples import p
 
 
 

@@ -2,19 +2,22 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator
 from enum import EnumType
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._models.enforcement import FlextModelsEnforcement as me
 from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._protocols.base import FlextProtocolsBase as p
-from flext_core._typings.base import FlextTypingBase as t
 from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as ub
 from flext_core._utilities.enforcement_collect import FlextUtilitiesEnforcementCollect
 
 from .enforcement_part_01 import PREDICATE_BINDINGS
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    from flext_core._protocols.base import FlextProtocolsBase as p
+    from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
@@ -151,7 +154,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         return FlextUtilitiesEnforcement._check(target, layer=layer)
 
     @staticmethod
-    def check_model_construction(target: type[mp.BaseModel]) -> me.Report:
+    def check_model_construction(target: type[p.BaseModel]) -> me.Report:
         """Run only Pydantic construction rules for ``__pydantic_init_subclass__``."""
         return FlextUtilitiesEnforcement._check(
             target, categories=FlextUtilitiesEnforcement._MODEL_CONSTRUCTION_CATEGORIES

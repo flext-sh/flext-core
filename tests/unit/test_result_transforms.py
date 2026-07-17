@@ -13,12 +13,12 @@ from typing import TYPE_CHECKING
 import pytest
 from flext_tests import r, tm
 
-from tests.utilities import u
+from tests import u
 
 if TYPE_CHECKING:
     from collections.abc import MutableSequence
 
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextResultTransforms:

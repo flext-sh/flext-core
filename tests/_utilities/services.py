@@ -8,10 +8,10 @@ from flext_tests import r, u
 
 from tests._utilities.railway_services import TestsFlextUtilitiesRailwayServicesMixin
 from tests.base import s
-from tests.constants import c
+from tests import c
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextUtilitiesServicesMixin:

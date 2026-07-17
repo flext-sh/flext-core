@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._typings.base import FlextTypingBase as t
+from typing import TYPE_CHECKING
 
 from .helpers import FlextUtilitiesBeartypeHelpers as _ubh
+
+if TYPE_CHECKING:
+    from flext_core._protocols.enforcement import FlextProtocolsEnforcement as pe
+    from flext_core._typings.base import FlextTypingBase as t
 
 _NO_VIOLATION: t.StrMapping | None = None
 
@@ -15,7 +18,7 @@ class FlextUtilitiesBeartypeLibraryVisitor:
 
     @staticmethod
     def v_library_import(
-        params: me.LibraryImportParams, target: type
+        params: pe.LibraryImportParams, target: type
     ) -> t.StrMapping | None:
         """LIBRARY_IMPORT — §2.7 library abstraction owner enforcement (Phase 3 hook)."""
         if not params.library_owners:

@@ -19,10 +19,10 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tests.constants import c
+from tests import c
 
 if TYPE_CHECKING:
-    from tests.typings import p, t
+    from tests import p, t
 
 _CHECK_COUNT_RE = re.compile(r"\((\d+) checks\)")
 

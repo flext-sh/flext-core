@@ -2,17 +2,19 @@
 
 from __future__ import annotations
 
-from typing import overload
+from typing import overload, TYPE_CHECKING
 
 # mro-wkii.17.26 (codex): internal static init imports owned facades directly.
-from flext_core.constants import FlextConstants as c
+from flext_core import FlextConstants as c
 from flext_core.exceptions import FlextExceptions as e
-from flext_core.protocols import FlextProtocols as p
-from flext_core.result import FlextResult as r
+from flext_core import FlextResult as r
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import FlextTypes as t
+from flext_core import FlextTypes as t
 from flext_core._utilities.context_state import FlextUtilitiesContextState
 from flext_core._utilities.model import FlextUtilitiesModel
+
+if TYPE_CHECKING:
+    from flext_core import FlextProtocols as p
 
 
 class FlextUtilitiesContextCrudSetMixin(FlextUtilitiesContextState):

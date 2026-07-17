@@ -14,9 +14,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from typing import ClassVar
+from typing import ClassVar, TYPE_CHECKING
 
-from flext_core._models.enforcement import FlextModelsEnforcement as _me
+
+if TYPE_CHECKING:
+    from flext_core._models.enforcement import FlextModelsEnforcement as _me
 
 
 class FlextUtilitiesRuntimeViolationRegistry:

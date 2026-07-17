@@ -9,11 +9,11 @@ from flext_tests import tm
 
 from flext_core import FlextSettings
 from flext_core.container import FlextContainer
-from tests.models import m
+from tests import m
 
 if TYPE_CHECKING:
-    from tests.protocols import p
-    from tests.typings import p, t
+    from tests import p
+    from tests import p, t
 
 
 class TestsFlextCoreContainerConfig:

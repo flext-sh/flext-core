@@ -3,24 +3,27 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import cast
+from typing import cast, TYPE_CHECKING
 
 from pydantic import ValidationError
-from returns.result import Failure, Success
+from returns.result import (
+    Failure,
+    Success,
+)  # mro-itcd.1: returns 0.28.0 moved exports to returns.result.
 
 from flext_core._constants.errors import FlextConstantsErrors as c
 from flext_core._constants.infrastructure import FlextConstantsInfrastructure
 from flext_core._constants.mixins import FlextConstantsMixins
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 
-from collections.abc import Callable
-
-from flext_core import FlextTypes as t
-from flext_core._models.containers import FlextModelsContainers as mc
-from flext_core._protocols.result import FlextProtocolsResult as p
-
 
 from .behavior import FlextResultBehaviorMixin
+
+if TYPE_CHECKING:
+    from flext_core._models.containers import FlextModelsContainers as mc
+    from flext_core._protocols.result import FlextProtocolsResult as p
+    from collections.abc import Callable
+    from flext_core import FlextTypes as t
 
 
 class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):

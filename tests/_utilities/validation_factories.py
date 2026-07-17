@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, ClassVar, override
 
 from tests._utilities.services import TestsFlextUtilitiesServicesMixin
 from tests._utilities.user_factories import TestsFlextUtilitiesUserFactoriesMixin
-from tests.constants import c
+from tests import c
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

@@ -14,11 +14,11 @@ from flext_tests import r, tm
 
 from flext_core import FlextContainer
 from flext_core.__version__ import __version__
-from tests.protocols import p
-from tests.utilities import u
+from tests import p
+from tests import u
 
 if TYPE_CHECKING:
-    from tests.typings import p, t
+    from tests import p, t
 
 pytestmark = [pytest.mark.integration]
 

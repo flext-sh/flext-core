@@ -19,8 +19,8 @@ from flext_tests import FlextTestsCase, FlextTestsSettings, r
 from pydantic import BaseModel
 
 from tests.base import s
-from tests.models import m
-from tests.protocols import p
+from tests import m
+from tests import p
 
 
 class TestsFlextService(FlextTestsCase):

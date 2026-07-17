@@ -16,8 +16,8 @@ from __future__ import annotations
 
 import pytest
 
-from tests.typings import p, t
-from tests.utilities import u
+from tests import p, t
+from tests import u
 
 
 class TestsFlextCoreUtilitiesCoverage:

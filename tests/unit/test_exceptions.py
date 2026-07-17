@@ -13,10 +13,10 @@ from typing import TYPE_CHECKING
 import pytest
 from flext_tests import e
 
-from tests.constants import c
+from tests import c
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextCoreExceptions:

@@ -13,8 +13,8 @@ import pytest
 from flext_tests import h, r, tm
 from hypothesis import given, strategies as st
 
-from tests.constants import c
-from tests.typings import p, t
+from tests import c
+from tests import p, t
 from tests.unit._handlers_support import TestsFlextFlextHandlers
 
 _TOKENS: st.SearchStrategy[str] = st.text(

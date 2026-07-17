@@ -7,9 +7,9 @@ from pathlib import Path
 import pytest
 
 from flext_core import u as core_u
-from tests.constants import c
-from tests.models import m
-from tests.utilities import u as test_u
+from tests import c
+from tests import m
+from tests import u as test_u
 
 
 class TestsFlextUtilitiesText(test_u.Tests.Contract):

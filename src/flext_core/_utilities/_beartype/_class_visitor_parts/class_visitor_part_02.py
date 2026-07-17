@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._typings.base import FlextTypingBase as t
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from flext_core._protocols.enforcement import FlextProtocolsEnforcement as pe
+    from flext_core._typings.base import FlextTypingBase as t
 
 from ._parts.class_visitor_part_02_01 import alias_first_violation
 from ._parts.class_visitor_part_02_02 import (
@@ -18,7 +21,7 @@ from .class_visitor_part_01 import (
 
 class FlextUtilitiesBeartypeClassVisitor(FlextUtilitiesBeartypeClassVisitorPart01):
     @staticmethod
-    def v_mro_shape(params: me.MroShapeParams, target: type) -> t.StrMapping | None:
+    def v_mro_shape(params: pe.MroShapeParams, target: type) -> t.StrMapping | None:
         """MRO_SHAPE — facade base ordering and inner-namespace redundancy."""
         if not target.__bases__:
             return NO_VIOLATION

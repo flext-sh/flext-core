@@ -16,14 +16,14 @@ from typing import TYPE_CHECKING
 import pytest
 from flext_tests import tm
 
-from tests.utilities import u
+from tests import u
 
 from .service_lifecycle_cases import (
     TestsFlextFlextServiceLifecycleCases as _ServiceLifecycleCases,
 )
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 _FETCH_CALL_COUNT = 2
 

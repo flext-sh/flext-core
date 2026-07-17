@@ -25,7 +25,7 @@ from pathlib import Path
 import pytest
 
 from flext_core import e
-from tests.typings import p, t
+from tests import p, t
 
 _CLEAN_MODULE = "tests.fixtures.clean_module"
 _BAD_MODULE = "tests_flext_enforcement_integration_fixtures_bad"
@@ -37,9 +37,9 @@ from collections.abc import MutableSequence
 from typing import Annotated, ClassVar
 
 from flext_core import m as core_m
-from flext_core.models import FlextModelsNamespace
-from tests.models import m
-from tests.utilities import u
+from flext_core import FlextModelsNamespace
+from tests import m
+from tests import u
 
 
 class TestsFlextBadAnyField(core_m.ArbitraryTypesModel):

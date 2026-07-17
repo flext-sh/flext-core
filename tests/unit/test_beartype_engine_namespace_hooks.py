@@ -16,8 +16,8 @@ from pathlib import Path
 import pytest
 from flext_tests import tm
 
-from tests.protocols import p
-from tests.typings import t
+from tests import p
+from tests import t
 from tests.unit._beartype_engine_support import TestsFlextBeartypeEngine
 
 

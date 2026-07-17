@@ -4,17 +4,19 @@ from __future__ import annotations
 
 import re
 import tomllib
-from typing import ClassVar
+from typing import ClassVar, TYPE_CHECKING
 
 from flext_core._constants.file import FlextConstantsFile as cf
 from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cpm
 from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
 from flext_core._protocols.project_metadata import FlextProtocolsProjectMetadata as ppm
-from flext_core._protocols.result import FlextProtocolsResult as pr
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core.result import FlextResult as r
+from flext_core import FlextResult as r
 
-from pathlib import Path
+
+if TYPE_CHECKING:
+    from flext_core._typings.base import FlextTypingBase as t
+    from flext_core._protocols.result import FlextProtocolsResult as pr
+    from pathlib import Path
 
 
 # NOTE (multi-agent, mro-wkii.17.23 / agent: uv_overlay_owner): this utility

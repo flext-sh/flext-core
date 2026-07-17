@@ -4,15 +4,61 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
+from flext_core._protocols.base import FlextProtocolsBase
+
 if TYPE_CHECKING:
     # mro-wkii.17.26 (codex): reverse p/t edges are annotation-only while the
     # public protocol facade is still being composed.
+    import contextvars
     from contextlib import AbstractContextManager
     from flext_core import p, t
 
 
 class FlextProtocolsContextOperations:
     """Instance, service, and correlation context contracts."""
+
+    # mro-wkii.17.26.25 (kimi): expose context state/data protocols consumed by
+    # _utilities/context_*.py so Pyrefly can resolve p.ContextRuntimeState and
+    # p.ContextData through the canonical protocols facade.
+    @runtime_checkable
+    class ContextRuntimeState(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
+        """Structural contract for the mutable context runtime state model."""
+
+        @property
+        def metadata(self) -> p.Metadata: ...
+
+        @property
+        def hooks(self) -> t.ContextHookMap: ...
+
+        @property
+        def statistics(self) -> p.HasModelDump: ...
+
+        @property
+        def active(self) -> bool: ...
+
+        @property
+        def suspended(self) -> bool: ...
+
+        @property
+        def scope_vars(
+            self,
+        ) -> t.MappingKV[str, contextvars.ContextVar[p.ConfigMap | None]]: ...
+
+        def with_operation_update(self, operation: str) -> Self: ...
+
+        def resolve_scope_var(
+            self, scope: str
+        ) -> tuple[Self, contextvars.ContextVar[p.ConfigMap | None]]: ...
+
+    @runtime_checkable
+    class ContextData(FlextProtocolsBase.BaseModel, Protocol):
+        """Structural contract for context initialization data."""
+
+        @property
+        def data(self) -> t.MappingKV[str, t.Scalar]: ...
+
+        @property
+        def metadata(self) -> p.Metadata | t.MappingKV[str, t.Scalar] | None: ...
 
     @runtime_checkable
     class ContextContainerState(Protocol):

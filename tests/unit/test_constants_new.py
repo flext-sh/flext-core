@@ -17,7 +17,7 @@ import enum
 import pytest
 from flext_tests import tm
 
-from tests.constants import c
+from tests import c
 
 
 class TestsFlextConstantsNew:

@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
-from types import TracebackType
-from typing import Annotated, ClassVar, Self, TypeIs, overload, override
+from typing import Annotated, ClassVar, Self, TypeIs, overload, override, TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, computed_field
-from returns.result import Failure, Result, Success
+from returns.result import (
+    Failure,
+    Result,
+    Success,
+)  # mro-itcd.1: returns 0.28.0 moved exports to returns.result.
 
 from ._constants.errors import FlextConstantsErrors as c
 from ._models.containers import FlextModelsContainers as mc
@@ -15,9 +18,12 @@ from ._result_parts.transforms import FlextResultTransformsMixin
 from ._result_parts.unwrap import FlextResultUnwrapMixin
 from ._runtime._metadata import FlextRuntimeMetadata as FlextRuntime
 
-from ._protocols.logging import FlextProtocolsLogging as pl
-from ._typings.base import FlextTypingBase as tb
-from ._typings.services import FlextTypesServices as ts
+
+if TYPE_CHECKING:
+    from ._typings.base import FlextTypingBase as tb
+    from ._typings.services import FlextTypesServices as ts
+    from ._protocols.logging import FlextProtocolsLogging as pl
+    from types import TracebackType
 
 
 class FlextResult[T](

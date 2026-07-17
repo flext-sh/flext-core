@@ -12,7 +12,7 @@ from tests.unit._result_exception_support import TestsFlextResultExceptionCarryi
 if TYPE_CHECKING:
     from collections.abc import Sized
 
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextCoreResultExceptionSafeCallable(TestsFlextResultExceptionCarrying):

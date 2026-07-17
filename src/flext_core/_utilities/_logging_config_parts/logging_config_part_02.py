@@ -13,21 +13,24 @@ import logging
 import sys
 import typing
 from contextlib import suppress
+from typing import TYPE_CHECKING
 
 import structlog
 from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
 from structlog.stdlib import add_log_level
 
-from flext_core import FlextConstants as c, FlextProtocols as p, FlextTypes as t
-from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core import FlextConstants as c
 
 from .logging_config_part_01 import (
     FlextUtilitiesLoggingConfig as FlextUtilitiesLoggingConfigPart01,
 )
 
-import types
+if TYPE_CHECKING:
+    import types
 
-from structlog.types import Processor
+    from structlog.types import Processor
+
+    from flext_core import FlextProtocols as p, FlextTypes as t
 
 
 class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
@@ -75,7 +78,7 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
 
     @staticmethod
     def _resolve_structlog_params(
-        settings: mp.BaseModel | None,
+        settings: p.BaseModel | None,
         *,
         log_level: int | None,
         console_renderer: bool,

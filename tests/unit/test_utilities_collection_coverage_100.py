@@ -9,12 +9,12 @@ import pytest
 from flext_tests import tm
 
 from flext_core import u
-from tests.models import m
+from tests import m
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests.typings import p, t
+    from tests import p, t
 
 
 class TestsFlextCoreUtilitiesCollection:

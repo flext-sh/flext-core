@@ -26,7 +26,7 @@ from flext_core import c, m
 from flext_core._constants.enforcement import FlextMroViolation, FlextSmellViolation
 from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
 from tests.unit._enforcement_support import make_class
-from tests.utilities import u
+from tests import u
 
 type WarningRecords = list[warnings.WarningMessage]
 type ClassFactory = Callable[[], type]

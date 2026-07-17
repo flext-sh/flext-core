@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests.constants import c
+from tests import c
 
 
 class TestsFlextCoreConstantsProjectMetadata:

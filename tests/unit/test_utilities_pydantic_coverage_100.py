@@ -5,8 +5,8 @@ from __future__ import annotations
 import pytest
 
 from flext_core import u
-from tests.models import m
-from tests.typings import p, t
+from tests import m
+from tests import p, t
 
 
 class TestsFlextUtilitiesPydantic:
