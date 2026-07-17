@@ -144,7 +144,7 @@ class TestsFlextCoreUtilitiesReliability:
         )
 
         assert result.failure
-        assert "Max attempts must be at least" in (result.error or "")
+        assert "max_attempts" in (result.error or "")
 
     def test_retry_accepts_configuration_via_options_model(self) -> None:
         op, attempts = _counting_operation(

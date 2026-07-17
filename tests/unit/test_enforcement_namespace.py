@@ -194,7 +194,7 @@ class_stem_override = "XmlAPI"
         module_path = package / "__init__.py"
         module_path.write_text("class XmlAPIModels:\n    pass\n", encoding="utf-8")
         spec = importlib.util.spec_from_file_location(
-            "xmlapi_override_sample",
+            "xmlapi",
             module_path,
         )
         assert spec is not None and spec.loader is not None
@@ -207,7 +207,7 @@ class_stem_override = "XmlAPI"
 
             assert not any(_PREFIX_FRAGMENT in v.message for v in report.violations)
         finally:
-            sys.modules.pop("xmlapi_override_sample", None)
+            sys.modules.pop("xmlapi", None)
 
     def test_run_layer_emits_warnings_for_mutable_constant_under_warn_mode(
         self,

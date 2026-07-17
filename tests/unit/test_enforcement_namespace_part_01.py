@@ -205,7 +205,7 @@ class_stem_override = "XmlAPI"
         module_path = package / "__init__.py"
         module_path.write_text("class XmlAPIModels:\n    pass\n", encoding="utf-8")
         spec = importlib.util.spec_from_file_location(
-            "xmlapi_override_sample",
+            "xmlapi",
             module_path,
         )
         assert spec is not None and spec.loader is not None

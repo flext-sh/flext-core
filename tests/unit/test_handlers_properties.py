@@ -7,8 +7,10 @@ and the handler it returns (``handler_name``, ``mode``, ``handle``,
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
-from flext_tests import e, h, r, tm
+from flext_tests import h, r, tm
 from hypothesis import given, strategies as st
 
 from tests.constants import c
@@ -16,8 +18,7 @@ from tests.typings import p, t
 from tests.unit._handlers_support import TestsFlextFlextHandlers
 
 _TOKENS: st.SearchStrategy[str] = st.text(
-    alphabet=st.characters(min_codepoint=33, max_codepoint=126),
-    min_size=1,
+    alphabet=st.characters(min_codepoint=33, max_codepoint=126), min_size=1
 )
 
 
@@ -32,20 +33,14 @@ class TestsFlextCoreHandlersProperties(TestsFlextFlextHandlers):
         tm.that(handler.handler_name, eq=handler_name)
 
     @given(_TOKENS)
-    def test_handle_wraps_plain_return_value_as_success(
-        self,
-        message: str,
-    ) -> None:
+    def test_handle_wraps_plain_return_value_as_success(self, message: str) -> None:
         """``handle`` wraps a callable's plain return in a success result."""
         handler = h.create_from_callable(str, handler_name="echo")
 
         tm.ok(handler.handle(message), eq=message)
 
     @given(_TOKENS)
-    def test_execute_runs_pipeline_and_returns_success(
-        self,
-        message: str,
-    ) -> None:
+    def test_execute_runs_pipeline_and_returns_success(self, message: str) -> None:
         """``execute`` drives the full pipeline to a success outcome."""
         handler = h.create_from_callable(str, handler_name="echo")
 
@@ -94,50 +89,20 @@ class TestsFlextCoreHandlersProperties(TestsFlextFlextHandlers):
         ],
     )
     def test_handler_type_is_reflected_in_mode(
-        self,
-        handler_type: c.HandlerType,
+        self, handler_type: c.HandlerType
     ) -> None:
         """The requested handler type becomes the handler's public mode."""
         handler = h.create_from_callable(
-            str,
-            handler_name="typed",
-            handler_type=handler_type,
+            str, handler_name="typed", handler_type=handler_type
         )
 
         tm.that(handler.mode, eq=handler_type)
 
-    @pytest.mark.parametrize(
-        "handler_type",
-        [
-            c.HandlerType.COMMAND,
-            c.HandlerType.QUERY,
-            c.HandlerType.EVENT,
-            c.HandlerType.SAGA,
-        ],
-    )
-    def test_valid_mode_string_resolves_to_that_mode(
-        self,
-        handler_type: c.HandlerType,
-    ) -> None:
-        """A valid mode string resolves to the matching handler mode."""
-        handler = h.create_from_callable(
-            str,
-            handler_name="moded",
-            mode=handler_type.value,
-        )
-
-        tm.that(handler.mode, eq=handler_type)
-
-    @pytest.mark.parametrize(
-        "invalid_mode",
-        ["invalid_mode", "COMMAND ", "unknown", ""],
-    )
-    def test_invalid_mode_raises_validation_error(
-        self,
-        invalid_mode: str,
-    ) -> None:
-        """An unrecognised mode string raises a typed validation error."""
-        with pytest.raises(e.ValidationError) as exc_info:
-            h.create_from_callable(str, handler_name="bad", mode=invalid_mode)
-
-        assert invalid_mode in str(exc_info.value)
+    def test_invalid_handler_type_is_rejected(self) -> None:
+        """A handler type outside the HandlerType enum is rejected."""
+        with pytest.raises(c.ValidationError):
+            h.create_from_callable(
+                str,
+                handler_name="bad",
+                handler_type=cast("c.HandlerType", "unknown-mode"),
+            )

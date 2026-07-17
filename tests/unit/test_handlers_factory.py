@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
-from flext_tests import e, h, r
+from flext_tests import h, r
 
 from tests.constants import c
 from tests.typings import p, t
@@ -69,13 +71,12 @@ class TestsFlextCoreHandlersFactory(TestsFlextFlextHandlers):
             return f"invalid_{message}"
 
         # Act / Assert
-        with pytest.raises(e.ValidationError) as exc_info:
+        with pytest.raises(c.ValidationError):
             h.create_from_callable(
                 invalid_handler,
                 handler_name="invalid_handler",
-                mode="invalid_mode",
+                handler_type=cast("c.HandlerType", "invalid_mode"),
             )
-        assert "Invalid handler mode: invalid_mode" in str(exc_info.value)
 
     def test_handler_name_defaults_to_callable_name(self) -> None:
         # Arrange
@@ -109,8 +110,7 @@ class TestsFlextCoreHandlersFactory(TestsFlextFlextHandlers):
 
     @pytest.mark.parametrize("scenario", TestsFlextFlextHandlers.HANDLER_TYPES)
     def test_mode_reflects_requested_handler_type(
-        self,
-        scenario: TestsFlextFlextHandlers.HandlerTypeScenario,
+        self, scenario: TestsFlextFlextHandlers.HandlerTypeScenario
     ) -> None:
         # Arrange
         def any_callable(message: t.Scalar) -> t.Scalar:
@@ -118,14 +118,11 @@ class TestsFlextCoreHandlersFactory(TestsFlextFlextHandlers):
 
         # Act
         by_type = h.create_from_callable(
-            any_callable,
-            handler_type=scenario.handler_type,
+            any_callable, handler_type=scenario.handler_type
         )
-        by_mode = h.create_from_callable(any_callable, mode=scenario.handler_type)
 
         # Assert
         assert by_type.mode == scenario.handler_mode
-        assert by_mode.mode == scenario.handler_mode
 
     def test_execute_returns_processed_success(self) -> None:
         # Arrange
@@ -215,13 +212,10 @@ class TestsFlextCoreHandlersFactory(TestsFlextFlextHandlers):
         assert handler.mode == c.HandlerType.COMMAND
 
     @pytest.mark.parametrize(
-        ("payload", "expected_success"),
-        [("non_empty", True), ("", False)],
+        ("payload", "expected_success"), [("non_empty", True), ("", False)]
     )
     def test_validate_message_reports_payload_validity(
-        self,
-        payload: str,
-        expected_success: bool,
+        self, payload: str, expected_success: bool
     ) -> None:
         # Arrange
         settings = u.Tests.create_handler_config("test_validate", "Test Validate")

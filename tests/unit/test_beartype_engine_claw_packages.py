@@ -21,10 +21,10 @@ _CLAW_INIT = (
     textwrap.dedent(
         """
     from beartype.claw import beartype_this_package
-    from flext_core import FlextUtilitiesBeartypeConf
+    from flext_core._utilities.beartype_conf import FlextUtilitiesBeartypeConf
 
     beartype_this_package(conf=FlextUtilitiesBeartypeConf.build_beartype_conf())
-    """,
+    """
     ).strip()
     + "\n"
 )
@@ -35,20 +35,14 @@ class TestsFlextCoreBeartypeEngineClawPackages(TestsFlextBeartypeEngine):
 
     _REPO_ROOT: Path = Path(__file__).resolve().parents[2]
 
-    def _write_claw_package(
-        self,
-        root: Path,
-        name: str,
-        modules: t.StrMapping,
-    ) -> None:
+    def _write_claw_package(self, root: Path, name: str, modules: t.StrMapping) -> None:
         """Create a claw-bootstrapped package with the given submodule sources."""
         package_dir = root / name
         package_dir.mkdir()
         (package_dir / "__init__.py").write_text(_CLAW_INIT, encoding="utf-8")
         for module_name, source in modules.items():
             (package_dir / f"{module_name}.py").write_text(
-                textwrap.dedent(source).strip() + "\n",
-                encoding="utf-8",
+                textwrap.dedent(source).strip() + "\n", encoding="utf-8"
             )
 
     def _import_modules_script(self, root: Path, dotted_modules: t.StrSequence) -> str:
@@ -72,10 +66,7 @@ class TestsFlextCoreBeartypeEngineClawPackages(TestsFlextBeartypeEngine):
         assert conf_a == conf_b
         assert hash(conf_a) == hash(conf_b)
 
-    def test_claw_supports_pydantic_and_runtime_protocols(
-        self,
-        tmp_path: Path,
-    ) -> None:
+    def test_claw_supports_pydantic_and_runtime_protocols(self, tmp_path: Path) -> None:
         """Claw-instrumented Pydantic models and runtime Protocols import cleanly."""
         # Arrange
         self._write_claw_package(
@@ -114,8 +105,7 @@ class TestsFlextCoreBeartypeEngineClawPackages(TestsFlextBeartypeEngine):
         # Act
         result = self._run_python(
             self._import_modules_script(
-                tmp_path,
-                ["pkgprobe.models", "pkgprobe.protocols"],
+                tmp_path, ["pkgprobe.models", "pkgprobe.protocols"]
             ),
             cwd=self._REPO_ROOT,
         )
@@ -125,8 +115,7 @@ class TestsFlextCoreBeartypeEngineClawPackages(TestsFlextBeartypeEngine):
         assert "claw_import_ok" in result.stdout
 
     def test_claw_supports_recursive_aliases_in_synthetic_package(
-        self,
-        tmp_path: Path,
+        self, tmp_path: Path
     ) -> None:
         """Claw tolerates PEP 695 recursive aliases and preserves the runtime value."""
         # Arrange
@@ -140,7 +129,7 @@ class TestsFlextCoreBeartypeEngineClawPackages(TestsFlextBeartypeEngine):
                     )
 
                     VALUE: JsonLike = {"ok": [1, "x", None]}
-                """,
+                """
             },
         )
 
@@ -153,7 +142,7 @@ class TestsFlextCoreBeartypeEngineClawPackages(TestsFlextBeartypeEngine):
                 sys.path.insert(0, {str(tmp_path)!r})
                 import aliasprobe.aliases as aliases
                 print("aliasprobe_value", aliases.VALUE["ok"][1])
-                """,
+                """
             ),
             cwd=self._REPO_ROOT,
         )
@@ -169,7 +158,9 @@ class TestsFlextCoreBeartypeEngineClawPackages(TestsFlextBeartypeEngine):
             textwrap.dedent(
                 """
                 from beartype.claw import beartype_package
-                from flext_core import FlextUtilitiesBeartypeConf
+                from flext_core._utilities.beartype_conf import (
+                    FlextUtilitiesBeartypeConf,
+                )
 
                 beartype_package(
                     "flext_core",
@@ -177,7 +168,7 @@ class TestsFlextCoreBeartypeEngineClawPackages(TestsFlextBeartypeEngine):
                 )
                 import flext_core
                 print("flext_core_facade", hasattr(flext_core, "u"))
-                """,
+                """
             ),
             cwd=self._REPO_ROOT,
         )

@@ -83,7 +83,7 @@ class TestsFlextCoreEnforcementWarningVisibility:
     ) -> None:
         # Arrange: reconstruct the shipped pytest filterwarnings config so the
         # test fails if a future edit silences enforcement warnings again.
-        payload = u.load_pyproject_toml(self._PROJECT_ROOT)
+        payload = u.config_load(self._PROJECT_ROOT / "pyproject.toml").unwrap()
         tool = cast("t.JsonMapping", payload.get("tool", {}))
         pytest_tool = cast("t.JsonMapping", tool.get("pytest", {}))
         ini_options = cast("t.JsonMapping", pytest_tool.get("ini_options", {}))
@@ -99,7 +99,7 @@ class TestsFlextCoreEnforcementWarningVisibility:
                 """
                 import warnings
 
-                from flext_core import FlextMroViolation
+                from flext_core._constants.enforcement import FlextMroViolation
 
 
                 def test_probe() -> None:

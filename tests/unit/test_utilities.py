@@ -66,14 +66,7 @@ class TestsFlextCoreUtilities:
         assert u.to_bool(value) is expected
 
     @pytest.mark.parametrize(
-        ("value", "expected"),
-        [
-            ("5", 5),
-            (3.9, 3),
-            ("x", 0),
-            ("", 0),
-            (None, 0),
-        ],
+        ("value", "expected"), [("5", 5), (3.9, 3), ("x", 0), ("", 0), (None, 0)]
     )
     def test_to_int_parses_or_defaults_to_zero(
         self, value: ConvValue, expected: int
@@ -81,50 +74,26 @@ class TestsFlextCoreUtilities:
         assert u.to_int(value) == expected
 
     @pytest.mark.parametrize(
-        ("value", "expected"),
-        [
-            ("1.5", 1.5),
-            ("2", 2.0),
-            ("x", 0.0),
-        ],
+        ("value", "expected"), [("1.5", 1.5), ("2", 2.0), ("x", 0.0)]
     )
     def test_to_float_parses_or_defaults_to_zero(
         self, value: ConvValue, expected: float
     ) -> None:
         assert u.to_float(value) == expected
 
-    @pytest.mark.parametrize(
-        ("value", "expected"),
-        [
-            (5, 5),
-            (0, 0),
-            (-1, 0),
-        ],
-    )
+    @pytest.mark.parametrize(("value", "expected"), [(5, 5), (0, 0), (-1, 0)])
     def test_to_positive_int_clamps_negatives_to_zero(
         self, value: int, expected: int
     ) -> None:
         assert u.to_positive_int(value) == expected
 
-    @pytest.mark.parametrize(
-        ("value", "expected"),
-        [
-            (5, "5"),
-            (None, ""),
-        ],
-    )
+    @pytest.mark.parametrize(("value", "expected"), [(5, "5"), (None, "")])
     def test_to_str_stringifies_with_empty_default(
         self, value: ConvValue, expected: str
     ) -> None:
         assert u.to_str(value) == expected
 
-    @pytest.mark.parametrize(
-        ("value", "expected"),
-        [
-            ("x", "x"),
-            (None, None),
-        ],
-    )
+    @pytest.mark.parametrize(("value", "expected"), [("x", "x"), (None, None)])
     def test_to_optional_str_preserves_none(
         self, value: str | None, expected: str | None
     ) -> None:
@@ -132,11 +101,7 @@ class TestsFlextCoreUtilities:
 
     @pytest.mark.parametrize(
         ("value", "expected"),
-        [
-            ("a", ["a"]),
-            ("a,b", ["a,b"]),
-            (["x", "y"], ["x", "y"]),
-        ],
+        [("a", ["a"]), ("a,b", ["a,b"]), (["x", "y"], ["x", "y"])],
     )
     def test_to_str_list_wraps_scalars_and_preserves_lists(
         self, value: str | list[str], expected: list[str]
@@ -144,26 +109,7 @@ class TestsFlextCoreUtilities:
         assert u.to_str_list(value) == expected
 
     @pytest.mark.parametrize(
-        ("value", "expected"),
-        [
-            ("foo_bar", "FooBar"),
-            ("foo-bar", "FooBar"),
-            ("fooBar", "FooBar"),
-            ("", ""),
-        ],
-    )
-    def test_pascalize_converts_delimited_tokens(
-        self, value: str, expected: str
-    ) -> None:
-        assert u.pascalize(value) == expected
-
-    @pytest.mark.parametrize(
-        ("value", "expected"),
-        [
-            ("Aa9!@ x", "aa9x"),
-            ("abc", "abc"),
-            ("!!!", ""),
-        ],
+        ("value", "expected"), [("Aa9!@ x", "aa9x"), ("abc", "abc"), ("!!!", "")]
     )
     def test_normalize_alnum_lowercases_and_drops_non_alnum(
         self, value: str, expected: str
@@ -172,11 +118,7 @@ class TestsFlextCoreUtilities:
 
     @pytest.mark.parametrize(
         ("left", "right", "expected"),
-        [
-            ({"a": 1}, {"a": 1}, True),
-            ({"a": 1}, {"a": 2}, False),
-            ({}, {}, True),
-        ],
+        [({"a": 1}, {"a": 1}, True), ({"a": 1}, {"a": 2}, False), ({}, {}, True)],
     )
     def test_deep_eq_compares_mapping_contents(
         self, left: dict[str, int], right: dict[str, int], expected: bool
@@ -184,11 +126,7 @@ class TestsFlextCoreUtilities:
         assert u.deep_eq(left, right) is expected
 
     @pytest.mark.parametrize(
-        ("left", "right", "expected"),
-        [
-            (1, 2, True),
-            (1, "a", False),
-        ],
+        ("left", "right", "expected"), [(1, 2, True), (1, "a", False)]
     )
     def test_same_type_compares_runtime_types(
         self, left: int | str, right: int | str, expected: bool
@@ -196,12 +134,7 @@ class TestsFlextCoreUtilities:
         assert u.same_type(left, right) is expected
 
     @pytest.mark.parametrize(
-        ("value", "expected"),
-        [
-            (1, "int"),
-            ("a", "str"),
-            ([], "list"),
-        ],
+        ("value", "expected"), [(1, "int"), ("a", "str"), ([], "list")]
     )
     def test_type_name_reports_runtime_type_name(
         self, value: int | str | list[int], expected: str

@@ -537,9 +537,6 @@ if TYPE_CHECKING:
     from tests.unit.test_utilities_project_metadata import (
         TestsFlextCoreUtilitiesProjectMetadata as TestsFlextCoreUtilitiesProjectMetadata,
     )
-    from tests.unit.test_utilities_project_metadata_config import (
-        TestsFlextCoreUtilitiesProjectMetadataConfig as TestsFlextCoreUtilitiesProjectMetadataConfig,
-    )
     from tests.unit.test_utilities_project_metadata_read import (
         TestsFlextUtilitiesProjectMetadataRead as TestsFlextUtilitiesProjectMetadataRead,
     )
@@ -929,9 +926,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ),
             ".unit.test_utilities_project_metadata": (
                 "TestsFlextCoreUtilitiesProjectMetadata",
-            ),
-            ".unit.test_utilities_project_metadata_config": (
-                "TestsFlextCoreUtilitiesProjectMetadataConfig",
             ),
             ".unit.test_utilities_project_metadata_read": (
                 "TestsFlextUtilitiesProjectMetadataRead",

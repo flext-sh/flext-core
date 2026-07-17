@@ -181,9 +181,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
             ".test_utilities_project_metadata": (
                 "TestsFlextCoreUtilitiesProjectMetadata",
             ),
-            ".test_utilities_project_metadata_config": (
-                "TestsFlextCoreUtilitiesProjectMetadataConfig",
-            ),
             ".test_utilities_project_metadata_read": (
                 "TestsFlextUtilitiesProjectMetadataRead",
             ),
