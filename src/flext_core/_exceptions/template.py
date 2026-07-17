@@ -6,9 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextConstants as c, FlextRuntime, FlextTypes as t
+
+from flext_core import (
+    FlextConstants as c,
+    FlextProtocols as p,
+    FlextRuntime,
+    FlextTypes as t,
+)
 from flext_core._models.containers import FlextModelsContainers as mc
-from flext_core._models.pydantic import FlextModelsPydantic as mp
 
 
 class FlextExceptionsTemplate:
@@ -18,7 +23,7 @@ class FlextExceptionsTemplate:
 
     @staticmethod
     def template_values(
-        params: mp.BaseModel | None, values: FlextExceptionsTemplate.TemplateValues
+        params: p.BaseModel | None, values: FlextExceptionsTemplate.TemplateValues
     ) -> mc.ConfigMap:
         """Build template substitution values using params data and field metadata."""
         payload: t.JsonDict = (
@@ -32,7 +37,7 @@ class FlextExceptionsTemplate:
         if params is not None:
             payload |= {
                 f"{field_name}_description": field_help
-                for field_name, field_info in params.__class__.model_fields.items()
+                for field_name, field_info in params.__class__.__pydantic_fields__.items()
                 if isinstance(
                     (field_help := field_info.description or field_info.title), str
                 )
@@ -49,7 +54,7 @@ class FlextExceptionsTemplate:
     def render_template(
         template: str,
         *,
-        params: mp.BaseModel | None = None,
+        params: p.BaseModel | None = None,
         **values: t.JsonPayload | None,
     ) -> str:
         """Render a message template from params + explicit values.
@@ -67,7 +72,7 @@ class FlextExceptionsTemplate:
 
     @staticmethod
     def result_error_data(
-        params: mp.BaseModel | None, **values: t.JsonPayload | None
+        params: p.BaseModel | None, **values: t.JsonPayload | None
     ) -> mc.ConfigMap | None:
         """Build canonical error_data payload from params and explicit values."""
         payload = FlextExceptionsTemplate.template_values(params, values)

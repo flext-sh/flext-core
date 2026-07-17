@@ -23,10 +23,9 @@ if TYPE_CHECKING:
     # p is used only in annotations (p.Metadata); importing it at runtime here
     # re-enters flext_core.__init__ before its lazy exports install -> import
     # cycle. `from __future__ import annotations` keeps the annotations valid.
+    from flext_core._typings.services import FlextTypesServices as ts
+    from flext_core._typings.base import FlextTypingBase as tb
     from flext_core import p
-
-from flext_core._typings.base import FlextTypingBase as tb
-from flext_core._typings.services import FlextTypesServices as ts
 
 
 class FlextExceptionsHelpers:

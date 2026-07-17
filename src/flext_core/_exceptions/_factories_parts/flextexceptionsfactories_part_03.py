@@ -14,10 +14,19 @@ from .flextexceptionsfactories_part_02 import (
     FlextExceptionsFactories as FlextExceptionsFactoriesPart02,
 )
 
-from flext_core.result import FlextResult
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from flext_core.result import FlextResult
 
 
 class FlextExceptionsFactories(FlextExceptionsFactoriesPart02):
+    @staticmethod
+    def _resolve_connection_error_params(
+        params: p.ConnectionErrorParams | None, host: str
+    ) -> p.ConnectionErrorParams:
+        return params or m.ConnectionErrorParams(host=host)
+
     @staticmethod
     def fail_connection[TResult](
         host: str,
@@ -38,7 +47,7 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart02):
 
         """
         options, error = FlextExceptionsFactories._resolve_options(options)
-        params = params or m.ConnectionErrorParams(host=host)
+        params = FlextExceptionsFactories._resolve_connection_error_params(params, host)
         msg = FlextExceptionsFactories._failure_message(
             f"connect to {host}", params=params, error=error
         )

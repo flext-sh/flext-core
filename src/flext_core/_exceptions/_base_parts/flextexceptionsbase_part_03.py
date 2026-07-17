@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from flext_core._constants.errors import FlextConstantsErrors as ce
 from flext_core._constants.infrastructure import FlextConstantsInfrastructure as ci
@@ -16,17 +16,18 @@ from flext_core._typings.base import FlextTypingBase as tb
 
 from .flextexceptionsbase_part_02 import FlextBaseErrorStateMixin
 
-from collections.abc import MutableMapping
+if TYPE_CHECKING:
+    from collections.abc import MutableMapping
 
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._protocols.result import FlextProtocolsResult as pr
-from flext_core._typings.services import FlextTypesServices as ts
+    from flext_core._protocols.base import FlextProtocolsBase as p
+    from flext_core._protocols.result import FlextProtocolsResult as pr
+    from flext_core._typings.services import FlextTypesServices as ts
 
 
 class FlextBaseError(FlextBaseErrorStateMixin, Exception):
     """Base exception with correlation metadata and error codes."""
 
-    _params_cls: ClassVar[ts.ModelClass[mp.BaseModel] | None] = None
+    _params_cls: ClassVar[type[p.BaseModel] | None] = None
     _excluded_context_keys: ClassVar[set[str] | frozenset[str] | None] = None
 
     def __init__(
@@ -44,7 +45,7 @@ class FlextBaseError(FlextBaseErrorStateMixin, Exception):
         merged_kwargs: tb.MappingKV[str, ts.JsonPayload | None]
         | pr.HasModelDump
         | None = None,
-        params: mp.BaseModel | None = None,
+        params: p.BaseModel | None = None,
         **extra_kwargs: tb.JsonValue,
     ) -> None:
         """Initialize base error with message and optional metadata."""
@@ -72,7 +73,7 @@ class FlextBaseError(FlextBaseErrorStateMixin, Exception):
                 key: FlextRuntime.normalize_to_metadata(value)
                 for key, value in extra_kwargs.items()
             })
-            declared_param_keys = frozenset(declared_params_cls.model_fields)
+            declared_param_keys = frozenset(declared_params_cls.__pydantic_fields__)
             remaining_extra: tb.MutableJsonMapping = {}
             if combined_extra:
                 remaining_extra.update({

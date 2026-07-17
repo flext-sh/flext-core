@@ -15,10 +15,33 @@ from .flextexceptionsfactories_part_01 import (
     FlextExceptionsFactories as FlextExceptionsFactoriesPart01,
 )
 
-from flext_core.result import FlextResult
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from flext_core.result import FlextResult
 
 
 class FlextExceptionsFactories(FlextExceptionsFactoriesPart01):
+    @staticmethod
+    def _resolve_service_lookup_params(
+        details: p.ServiceLookupParams | str, actual: str | None
+    ) -> p.ServiceLookupParams:
+        return (
+            m.ServiceLookupParams(expected_type=details, actual_type=actual)
+            if isinstance(details, str)
+            else details
+        )
+
+    @staticmethod
+    def _resolve_validation_error_params(
+        details: p.ValidationErrorParams | str | None,
+    ) -> p.ValidationErrorParams:
+        return (
+            m.ValidationErrorParams(field=details)
+            if isinstance(details, str)
+            else (details or m.ValidationErrorParams())
+        )
+
     @staticmethod
     def fail_type_mismatch[TResult](
         details: p.ServiceLookupParams | str,
@@ -41,10 +64,8 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart01):
             )
 
         """
-        params = (
-            details
-            if isinstance(details, m.ServiceLookupParams)
-            else m.ServiceLookupParams(expected_type=details, actual_type=actual)
+        params = FlextExceptionsFactories._resolve_service_lookup_params(
+            details, actual
         )
         expected_type = (
             params.expected_type
@@ -79,11 +100,7 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart01):
             )
 
         """
-        params = (
-            details
-            if isinstance(details, m.ValidationErrorParams)
-            else m.ValidationErrorParams(field=details)
-        )
+        params = FlextExceptionsFactories._resolve_validation_error_params(details)
         field_name = params.field if params.field is not None else "input"
         base_msg = (
             FlextExceptionsTemplate.render_template(

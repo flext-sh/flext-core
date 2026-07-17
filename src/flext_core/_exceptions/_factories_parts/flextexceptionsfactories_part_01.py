@@ -7,14 +7,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from importlib import import_module
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING
 
 from flext_core import FlextConstants as c, FlextProtocols as p
 from flext_core._exceptions.template import FlextExceptionsTemplate
 from flext_core._models.exception_params import FlextModelsExceptionParams as m
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-
-TExceptionParams = TypeVar("TExceptionParams", bound=mp.BaseModel)
 
 if TYPE_CHECKING:
     from flext_core.result import FlextResult
@@ -41,7 +38,7 @@ class FlextExceptionsFactories:
     def _failure_message(
         operation: str,
         *,
-        params: mp.BaseModel | None = None,
+        params: p.BaseModel | None = None,
         error: Exception | str | None = None,
     ) -> str:
         """Render the canonical failure message with or without an error cause."""
@@ -69,21 +66,9 @@ class FlextExceptionsFactories:
         return resolved_options, resolved_options.error
 
     @staticmethod
-    def _normalize_params(
-        params: TExceptionParams | None,
-        params_type: type[TExceptionParams],
-        update: dict[str, object | None],
-    ) -> TExceptionParams:
-        if params is None:
-            return params_type.model_validate(update)
-        return params.model_copy(
-            update={key: value for key, value in update.items() if value is not None}
-        )
-
-    @staticmethod
     def _fail_result[TResult](
         message: str,
-        params: mp.BaseModel | None,
+        params: p.BaseModel | None,
         *,
         options: p.ExceptionFactoryOptions | None = None,
         default_error_code: str,
