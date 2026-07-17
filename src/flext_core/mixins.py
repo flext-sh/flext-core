@@ -53,8 +53,8 @@ class FlextMixins(m.ArbitraryTypesModel):
 
     _runtime: p.ServiceRuntime | None = mp.PrivateAttr(default=None)
 
-    _operation_stats: MutableMapping[str, m.ConfigMap] = mp.PrivateAttr(
-        default_factory=dict[str, m.ConfigMap]
+    _operation_stats: t.MutableMappingKV[str, p.ConfigMap] = mp.PrivateAttr(
+        default_factory=dict[str, p.ConfigMap]
     )
 
     _logger_cache: ClassVar[MutableMapping[str, p.Logger]] = {}

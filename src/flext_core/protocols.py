@@ -10,6 +10,7 @@ from ._protocols.base import FlextProtocolsBase
 from ._protocols.config import FlextProtocolsConfig
 from ._protocols.container import FlextProtocolsContainer
 from ._protocols.context import FlextProtocolsContext
+from ._protocols.enforcement import FlextProtocolsEnforcement
 from ._protocols.handler import FlextProtocolsHandler
 from ._protocols.lazy import FlextProtocolsLazy
 from ._protocols.logging import FlextProtocolsLogging
@@ -28,6 +29,7 @@ class FlextProtocols(
     FlextProtocolsLazy,
     FlextProtocolsConfig,
     FlextProtocolsContext,
+    FlextProtocolsEnforcement,
     FlextProtocolsResult,
     FlextProtocolsSettings,
     FlextProtocolsContainer,

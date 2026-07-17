@@ -10,7 +10,7 @@ from tests._models.mixins import TestsFlextModelsMixins
 from tests.base import s
 from tests.constants import c
 from tests.models import m
-from tests.typings import p, t
+from tests.typings import t
 
 if TYPE_CHECKING:
     from tests.protocols import p
@@ -23,8 +23,7 @@ class TestsFlextUtilitiesRailwayServicesMixin:
         """Service to get user."""
 
         user_id: Annotated[
-            str,
-            u.Field(description="Identifier of the user to fetch."),
+            str, u.Field(description="Identifier of the user to fetch.")
         ] = ""
 
         @override
@@ -37,36 +36,27 @@ class TestsFlextUtilitiesRailwayServicesMixin:
                     unique_id=self.user_id,
                     name=f"{c.Tests.DEFAULT_USER_NAME_PREFIX}{self.user_id}",
                     email=f"user{self.user_id}{c.Tests.DEFAULT_EMAIL_DOMAIN}",
-                ),
+                )
             )
 
     class SendEmailService(s[p.BaseModel]):
         """Service to send email."""
 
-        to: Annotated[
-            str,
-            u.Field(description="Destination email address."),
-        ] = ""
-        subject: Annotated[
-            str,
-            u.Field(description="Email subject line."),
-        ] = ""
+        to: Annotated[str, u.Field(description="Destination email address.")] = ""
+        subject: Annotated[str, u.Field(description="Email subject line.")] = ""
 
         @override
         def execute(self) -> p.Result[p.Tests.EmailResponse]:
             if "@" not in self.to:
                 return r[p.Tests.EmailResponse].fail(c.Tests.INVALID_EMAIL)
             return r[p.Tests.EmailResponse].ok(
-                m.Tests.EmailResponse(status="sent", message_id=f"msg-{self.to}"),
+                m.Tests.EmailResponse(status="sent", message_id=f"msg-{self.to}")
             )
 
     class ValidationService(s[t.JsonMapping]):
         """Service to validate values."""
 
-        value: Annotated[
-            int,
-            u.Field(description="Integer value to validate."),
-        ] = 0
+        value: Annotated[int, u.Field(description="Integer value to validate.")] = 0
 
         @override
         def execute(self) -> p.Result[t.JsonMapping]:
@@ -74,55 +64,41 @@ class TestsFlextUtilitiesRailwayServicesMixin:
                 return r[t.JsonMapping].fail(c.Tests.VALUE_TOO_LOW)
             if self.value > c.Tests.MAX_VALUE:
                 return r[t.JsonMapping].fail(c.Tests.VALUE_TOO_HIGH)
-            return r[t.JsonMapping].ok(
-                {"valid": True, "value": self.value},
-            )
+            return r[t.JsonMapping].ok({"valid": True, "value": self.value})
 
     class MultiOperationService(s[t.JsonMapping]):
         """Service for multiple operations."""
 
         operation: Annotated[
-            str,
-            u.Field(description="Operation name (double / square / ...)."),
+            str, u.Field(description="Operation name (double / square / ...).")
         ] = ""
         value: Annotated[
-            int,
-            u.Field(description="Numeric operand for the operation."),
+            int, u.Field(description="Numeric operand for the operation.")
         ] = 0
 
         @override
         def execute(self) -> p.Result[t.JsonMapping]:
             match self.operation:
                 case c.Tests.RAILWAY_OPERATION_DOUBLE:
-                    return r[t.JsonMapping].ok(
-                        {
-                            c.Tests.OPERATION_NAME_KEY: c.Tests.RAILWAY_OPERATION_DOUBLE,
-                            c.Tests.OPERATION_RESULT_KEY: self.value
-                            * c.Tests.OPERATION_FACTORS[
-                                c.Tests.RAILWAY_OPERATION_DOUBLE
-                            ],
-                        },
-                    )
+                    return r[t.JsonMapping].ok({
+                        c.Tests.OPERATION_NAME_KEY: c.Tests.RAILWAY_OPERATION_DOUBLE,
+                        c.Tests.OPERATION_RESULT_KEY: self.value
+                        * c.Tests.OPERATION_FACTORS[c.Tests.RAILWAY_OPERATION_DOUBLE],
+                    })
                 case c.Tests.RAILWAY_OPERATION_SQUARE:
-                    return r[t.JsonMapping].ok(
-                        {
-                            c.Tests.OPERATION_NAME_KEY: c.Tests.RAILWAY_OPERATION_SQUARE,
-                            c.Tests.OPERATION_RESULT_KEY: self.value**2,
-                        },
-                    )
+                    return r[t.JsonMapping].ok({
+                        c.Tests.OPERATION_NAME_KEY: c.Tests.RAILWAY_OPERATION_SQUARE,
+                        c.Tests.OPERATION_RESULT_KEY: self.value**2,
+                    })
                 case c.Tests.RAILWAY_OPERATION_NEGATE:
-                    return r[t.JsonMapping].ok(
-                        {
-                            c.Tests.OPERATION_NAME_KEY: c.Tests.RAILWAY_OPERATION_NEGATE,
-                            c.Tests.OPERATION_RESULT_KEY: self.value
-                            * c.Tests.OPERATION_FACTORS[
-                                c.Tests.RAILWAY_OPERATION_NEGATE
-                            ],
-                        },
-                    )
+                    return r[t.JsonMapping].ok({
+                        c.Tests.OPERATION_NAME_KEY: c.Tests.RAILWAY_OPERATION_NEGATE,
+                        c.Tests.OPERATION_RESULT_KEY: self.value
+                        * c.Tests.OPERATION_FACTORS[c.Tests.RAILWAY_OPERATION_NEGATE],
+                    })
                 case _:
                     return r[t.JsonMapping].fail(
-                        f"{c.Tests.UNKNOWN_OPERATION_PREFIX} {self.operation}",
+                        f"{c.Tests.UNKNOWN_OPERATION_PREFIX} {self.operation}"
                     )
 
     @staticmethod
@@ -130,7 +106,8 @@ class TestsFlextUtilitiesRailwayServicesMixin:
         target: TestsFlextModelsMixins._TargetModel = (
             TestsFlextModelsMixins._TargetModel.model_validate(data)
         )
-        return target.value < 100
+        upper_bound = 100
+        return target.value < upper_bound
 
     @staticmethod
     def make[T](service_type: type[T], **kwargs: t.Scalar) -> T:

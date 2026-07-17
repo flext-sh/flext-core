@@ -1,6 +1,6 @@
 """Surgical beartype patches for ``typing_extensions`` PEP 695 aliases.
 
-beartype 0.23 (git pin ``ee481e0c``) mishandles pydantic/``typing_extensions``
+beartype 0.22.9 mishandles pydantic/``typing_extensions``
 PEP 695 type aliases in two independent ways. Both are patched once and
 idempotently:
 

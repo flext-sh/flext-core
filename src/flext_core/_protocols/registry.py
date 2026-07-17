@@ -17,8 +17,11 @@ from flext_core._constants.mixins import FlextConstantsMixins as c
 from flext_core._constants.status import FlextConstantsStatus as cs
 from flext_core import t
 
+from .container import FlextProtocolsContainer
+from .context import FlextProtocolsContext
 from .handler import FlextProtocolsHandler
 from .result import FlextProtocolsResult
+from .settings import FlextProtocolsSettings
 
 
 class FlextProtocolsRegistry:
@@ -192,6 +195,15 @@ class FlextProtocolsRegistry:
     @runtime_checkable
     class ServiceRuntime(Protocol):
         """Runtime capabilities consumed by registry composition."""
+
+        @property
+        def settings(self) -> FlextProtocolsSettings.Settings: ...
+
+        @property
+        def context(self) -> FlextProtocolsContext.Context: ...
+
+        @property
+        def container(self) -> FlextProtocolsContainer.Container: ...
 
         @property
         def dispatcher(self) -> FlextProtocolsHandler.Dispatcher | None:

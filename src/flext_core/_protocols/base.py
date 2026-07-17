@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
+from typing import TYPE_CHECKING, Literal, Protocol, Self, runtime_checkable
 
 from collections.abc import Iterable, MutableSequence
 from types import TracebackType
@@ -48,22 +48,45 @@ class FlextProtocolsBase:
         in typings.py, preventing circular dependencies.
         """
 
-        # NOTE (multi-agent, mro-wkii.17 / agent: codex): declare only the
-        # instance capability consumed by interfaces; Pydantic class APIs stay
-        # on ``ModelType``.
+        @classmethod
+        def model_validate(
+            cls,
+            obj: FlextProtocolsBase.AttributeProbe,
+            *,
+            strict: bool | None = None,
+            extra: Literal["allow", "forbid", "ignore"] | None = None,
+            from_attributes: bool | None = None,
+            context: t.JsonMapping | None = None,
+            by_alias: bool | None = None,
+            by_name: bool | None = None,
+        ) -> Self:
+            """Validate one external value into the concrete model type."""
+            ...
 
         def model_dump(
             self,
             *,
             mode: str = "python",
             by_alias: bool | None = None,
+            exclude_unset: bool = False,
             exclude_defaults: bool = False,
             exclude_none: bool = False,
         ) -> t.JsonDict:
             """Dump the validated model at an external serialization boundary."""
             ...
 
-        def model_copy(self, *, deep: bool = False) -> Self:
+        def model_copy(
+            self,
+            *,
+            update: t.MappingKV[
+                str,
+                t.JsonPayload
+                | FlextProtocolsBase.BaseModel
+                | t.SequenceOf[FlextProtocolsBase.BaseModel],
+            ]
+            | None = None,
+            deep: bool = False,
+        ) -> Self:
             """Copy a Pydantic-compatible model instance."""
             ...
 
@@ -143,6 +166,16 @@ class FlextProtocolsBase:
             ...
 
     @runtime_checkable
+    class DomainEvent(BaseModel, Protocol):
+        """Domain event identity and routing fields buffered by entities."""
+
+        @property
+        def event_type(self) -> str: ...
+
+        @property
+        def aggregate_id(self) -> str: ...
+
+    @runtime_checkable
     class HasDomainEvents(Protocol):
         """Protocol for DDD aggregate roots that buffer uncommitted domain events.
 
@@ -151,7 +184,7 @@ class FlextProtocolsBase:
         """
 
         unique_id: str
-        domain_events: MutableSequence[p.DomainEvent]
+        domain_events: MutableSequence[FlextProtocolsBase.DomainEvent]
 
 
 __all__: list[str] = ["FlextProtocolsBase"]

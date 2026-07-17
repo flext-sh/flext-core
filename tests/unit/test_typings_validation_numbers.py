@@ -45,9 +45,7 @@ class TestsFlextCoreTypingsValidationNumbers:
         ],
     )
     def test_accepts_valid_value_returns_input_unchanged(
-        self,
-        alias: type[str | int],
-        value: str | int,
+        self, alias: type[str | int], value: str | int
     ) -> None:
         """A value inside the constraint validates to itself unchanged."""
         adapter: p.TypeAdapter[str | int] = m.TypeAdapter(alias)
@@ -76,9 +74,7 @@ class TestsFlextCoreTypingsValidationNumbers:
         ],
     )
     def test_rejects_out_of_bound_value_raises_validation_error(
-        self,
-        alias: type[str | int],
-        value: str | int,
+        self, alias: type[str | int], value: str | int
     ) -> None:
         """A value outside the constraint raises the public ValidationError."""
         adapter: p.TypeAdapter[str | int] = m.TypeAdapter(alias)
@@ -87,12 +83,10 @@ class TestsFlextCoreTypingsValidationNumbers:
             adapter.validate_python(value)
 
     @pytest.mark.parametrize(
-        "alias",
-        [t.PositiveInt, t.NonNegativeInt, t.PortNumber, t.HttpStatusCode],
+        "alias", [t.PositiveInt, t.NonNegativeInt, t.PortNumber, t.HttpStatusCode]
     )
     def test_validation_is_idempotent_for_accepted_values(
-        self,
-        alias: type[int],
+        self, alias: type[int]
     ) -> None:
         """Re-validating an already-valid value yields the same result."""
         adapter: p.TypeAdapter[int] = m.TypeAdapter(alias)
@@ -108,11 +102,7 @@ class TestsFlextCoreTypingsStrippedStr:
 
     @pytest.mark.parametrize(
         ("value", "expected"),
-        [
-            ("hello", "hello"),
-            ("  hello  ", "hello"),
-            ("\tspaced\n", "spaced"),
-        ],
+        [("hello", "hello"), ("  hello  ", "hello"), ("\tspaced\n", "spaced")],
     )
     def test_strips_surrounding_whitespace(self, value: str, expected: str) -> None:
         """A non-blank value is returned with surrounding whitespace removed."""

@@ -23,7 +23,7 @@ from flext_core import FlextSettings
 from flext_core import FlextContext
 from flext_core import FlextUtilitiesLogging
 
-from collections.abc import Callable, MutableMapping
+from collections.abc import Callable
 from types import FrameType, ModuleType
 
 
@@ -59,11 +59,11 @@ class FlextContainer(p.Container):
 
     _di_container: di_containers.DynamicContainer
 
-    _services: MutableMapping[str, m.ServiceRegistration]
+    _services: t.MutableMappingKV[str, p.ServiceRegistration]
 
-    _factories: MutableMapping[str, m.FactoryRegistration]
+    _factories: t.MutableMappingKV[str, p.FactoryRegistration]
 
-    _resources: MutableMapping[str, m.ResourceRegistration]
+    _resources: t.MutableMappingKV[str, p.ResourceRegistration]
 
     _internal_registrations: set[str]
 
@@ -84,6 +84,12 @@ class FlextContainer(p.Container):
     def context(self) -> p.Context:
         """Execution context bound to this container."""
         return self._context
+
+    @property
+    @override
+    def settings(self) -> p.Settings:
+        """Validated settings bound to this container."""
+        return self._config
 
     @property
     @override
@@ -607,7 +613,7 @@ class FlextContainer(p.Container):
         merged.update({k: u.normalize_to_container(v) for k, v in settings.items()})
         self._user_overrides = merged
         self._global_config = self._global_config.model_copy(
-            update=dict(merged), deep=True
+            update=dict(merged.root), deep=True
         )
         self.sync_config_to_di()
         return self

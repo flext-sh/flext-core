@@ -15,6 +15,15 @@ class FlextProtocolsContextOperations:
     """Instance, service, and correlation context contracts."""
 
     @runtime_checkable
+    class ContextContainerState(Protocol):
+        """Immutable binding state between a context and its container."""
+
+        @property
+        def container(self) -> p.Container | None: ...
+
+        def with_container(self, container: p.Container | None) -> Self: ...
+
+    @runtime_checkable
     class ContextRead(Protocol):
         """Read-only context operations."""
 

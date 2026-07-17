@@ -63,7 +63,7 @@ class FlextRegistry(s[bool]):
         )
         self._state = m.RegistryState(dispatcher=resolved_dispatcher)
 
-    def __init_subclass__(cls, **kwargs: t.Scalar | m.ConfigMap | t.ScalarList) -> None:
+    def __init_subclass__(cls, **kwargs: t.Scalar | p.ConfigMap | t.ScalarList) -> None:
         """Auto-create per-subclass class-level storage.
 
         Each subclass gets its OWN storage (not shared with parent or siblings).
@@ -152,7 +152,7 @@ class FlextRegistry(s[bool]):
             t.JsonValue
             | t.RegisterableService
             | t.RegistrablePlugin
-            | m.BaseModel
+            | p.BaseModel
             | None
         ),
     ) -> t.JsonPayload | None:
@@ -180,7 +180,7 @@ class FlextRegistry(s[bool]):
 
             def normalized_callable(
                 *args: p.AttributeProbe, **kwargs: p.AttributeProbe
-            ) -> t.JsonPayload | m.BaseModel | None:
+            ) -> t.JsonPayload | p.BaseModel | None:
                 result = value(*args, **kwargs)
                 return FlextRegistry._narrow_value(result)
 

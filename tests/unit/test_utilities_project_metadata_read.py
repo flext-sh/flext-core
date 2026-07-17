@@ -1,6 +1,6 @@
 """Project metadata read utility tests.
 
-``u.read_project_metadata(root)`` returns ``r[m.ProjectMetadata]`` — a
+``u.read_project_metadata(root)`` returns ``r[p.ProjectMetadata]`` — a
 Result-wrapped, frozen model whose PEP 621 payload lives under the nested
 ``project`` field. Tests assert the observable success value and the
 Result failure contract for missing/incomplete pyproject inputs.

@@ -6,7 +6,7 @@ from collections import UserDict, UserList
 from typing import TYPE_CHECKING, Annotated, ClassVar, override
 
 from flext_core import m
-from tests.typings import p, t
+from tests.typings import t
 
 if TYPE_CHECKING:
     from collections.abc import ItemsView, Iterator
@@ -32,22 +32,22 @@ class TestsFlextModelsGuardsMapperMixin:
         """
 
         model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
-            arbitrary_types_allowed=True,
+            arbitrary_types_allowed=True
         )
 
-        def debug(self, *args: t.Scalar, **kwargs: t.Scalar) -> None:
+        def debug(self, *_args: t.Scalar, **_kwargs: t.Scalar) -> None:
             return None
 
-        def info(self, *args: t.Scalar, **kwargs: t.Scalar) -> None:
+        def info(self, *_args: t.Scalar, **_kwargs: t.Scalar) -> None:
             return None
 
-        def warning(self, *args: t.Scalar, **kwargs: t.Scalar) -> None:
+        def warning(self, *_args: t.Scalar, **_kwargs: t.Scalar) -> None:
             return None
 
-        def error(self, *args: t.Scalar, **kwargs: t.Scalar) -> None:
+        def error(self, *_args: t.Scalar, **_kwargs: t.Scalar) -> None:
             return None
 
-        def exception(self, *args: t.Scalar, **kwargs: t.Scalar) -> None:
+        def exception(self, *_args: t.Scalar, **_kwargs: t.Scalar) -> None:
             return None
 
     # --- from test_models_context_full_coverage.py ---
@@ -63,10 +63,7 @@ class TestsFlextModelsGuardsMapperMixin:
         """Model with port/nested for mapper take/extract tests."""
 
         port: int = 0
-        nested: Annotated[
-            t.JsonMapping,
-            m.Field(default_factory=dict),
-        ]
+        nested: Annotated[t.JsonMapping, m.Field(default_factory=dict)]
 
     class MaybeModel(m.BaseModel):
         """Model with optional field for take tests."""
@@ -104,8 +101,7 @@ class TestsFlextModelsGuardsMapperMixin:
         user_id: Annotated[str, m.Field(description="Identifier of the created user.")]
         user_name: Annotated[str, m.Field(description="Name assigned to the new user.")]
         timestamp: Annotated[
-            float,
-            m.Field(description="POSIX timestamp when the event fired."),
+            float, m.Field(description="POSIX timestamp when the event fired.")
         ]
 
     class UserUpdatedEvent(m.DomainEvent):
@@ -115,8 +111,7 @@ class TestsFlextModelsGuardsMapperMixin:
         old_name: Annotated[str, m.Field(description="Previous user name.")]
         new_name: Annotated[str, m.Field(description="Updated user name.")]
         timestamp: Annotated[
-            float,
-            m.Field(description="POSIX timestamp when the event fired."),
+            float, m.Field(description="POSIX timestamp when the event fired.")
         ]
 
 

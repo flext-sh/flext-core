@@ -24,12 +24,13 @@ classifiers = [
   "Typing :: Typed",
 ]
 dependencies = [
-  "beartype>=0.22.9",
+  "beartype>=0.22.9,<0.23",
   "cachetools>=6.2,<7.0",
   "dependency-injector>=4.49.0",
   "docker>=7.1.0",
   "limits>=5.8.0",
   "orjson>=3.11.8",
+  "packaging>=26.2",
   "pybreaker>=1.4.1",
   "pydantic-core>=2.46.3",
   "pydantic-extra-types[semver]>=2.11.1",
@@ -55,9 +56,6 @@ version = "0.20.0.dev0"
 [[project.authors]]
 email = "team@flext.sh"
 name = "FLEXT Team"
-
-[project.entry-points.pytest11]
-flext_core_enforcement = "flext_core._fixtures.enforcement"
 
 [[project.maintainers]]
 email = "team@flext.sh"
@@ -251,24 +249,6 @@ warn_return_any = true
 warn_unreachable = true
 warn_unused_ignores = true
 
-[tool.poetry.dependencies]
-python = ">=3.13,<3.14"
-
-[tool.poetry.dependencies.flext-cli]
-develop = true
-optional = true
-path = "../flext-cli"
-
-[tool.poetry.dependencies.flext-infra]
-develop = true
-optional = true
-path = "../flext-infra"
-
-[tool.poetry.dependencies.flext-tests]
-develop = true
-optional = true
-path = "../flext-tests"
-
 # [MANAGED] pydantic-mypy
 [tool.pydantic-mypy]
 init_forbid_extra = true
@@ -294,7 +274,6 @@ project-excludes = [
   "**/typings/**",
   "**/vendor/**",
   "**/venv/**",
-  ".flext-deps/**",
   ".venv/**",
   "typings/**",
   "vendor/**",
@@ -745,11 +724,6 @@ split-on-trailing-comma = false
 all = true
 in_place = true
 sort_first = [ "build-system", "dependency-groups", "project", "tool" ]
-
-[tool.uv.sources.beartype]
-# mro-45r9: PyPI remains at 0.22.9; Git consumers validate the 0.23 runtime.
-git = "https://github.com/beartype/beartype.git"
-rev = "ee481e0c6da5c0cf8a6b27a53a10354e9df4ac71"
 
 [tool.vulture]
 exclude = [ "*/_protocols/*" ]

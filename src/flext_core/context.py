@@ -38,9 +38,9 @@ class FlextContext(m.ManagedModel):
     )
 
     data: Annotated[
-        m.ConfigMap,
+        p.ConfigMap,
         m.Field(description="Scoped key-value payload for this context instance."),
-    ] = m.Field(default_factory=lambda: p.ConfigMap(root={}))
+    ] = m.Field(default_factory=lambda: m.ConfigMap(root={}))
 
     metadata: Annotated[
         m.Metadata, m.Field(description="Correlation and service metadata snapshot.")

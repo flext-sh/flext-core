@@ -20,10 +20,10 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
     @staticmethod
     def execute_v1_pipeline(
         case: p.Tests.RailwayTestCase,
-    ) -> p.Result[str | tm.Tests.User | m.Tests.EmailResponse]:
+    ) -> p.Result[str | tm.Tests.User | p.Tests.EmailResponse]:
         """Execute the documented V1 railway pipeline."""
         if not case.user_ids:
-            return r[str | tm.Tests.User | m.Tests.EmailResponse].fail(
+            return r[str | tm.Tests.User | p.Tests.EmailResponse].fail(
                 c.Tests.NO_USER_IDS_PROVIDED,
             )
         user_result: p.Result[tm.Tests.User] = (
@@ -32,7 +32,7 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
                 user_id=case.user_ids[0],
             ).execute()
         )
-        result: p.Result[str | tm.Tests.User | m.Tests.EmailResponse] = user_result.map(
+        result: p.Result[str | tm.Tests.User | p.Tests.EmailResponse] = user_result.map(
             lambda user: user,
         )
         for operation in case.operations:

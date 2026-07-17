@@ -14,7 +14,7 @@ class ExamplesFlextTypes(FlextTypes):
         type ExampleRenderable = (
             t.JsonPayload
             | t.ScalarOrModel
-            | m.ConfigMap
+            | p.ConfigMap
             | p.ResultLike[t.JsonPayload]
             | p.ResultLike[t.JsonValue]
         )

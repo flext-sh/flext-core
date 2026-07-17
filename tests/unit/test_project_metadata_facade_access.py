@@ -56,7 +56,7 @@ class TestsFlextFacadeFlatSsotAccess:
         assert u.derive_class_stem("") == ""
 
     @staticmethod
-    def _metadata(**overrides: object) -> m.ProjectMetadata:
+    def _metadata(**overrides: object) -> p.ProjectMetadata:
         payload: dict[str, object] = {
             "root": Path("/tmp/flext-ldif"),
             "package_name": "flext_ldif",

@@ -14,7 +14,7 @@ from __future__ import annotations
 from typing import override
 
 import pytest
-from flext_tests import r
+from flext_tests import r, tm
 
 from flext_core import FlextContainer, FlextService
 from tests.models import m
@@ -23,6 +23,9 @@ from tests.typings import p, t
 from tests.utilities import u
 
 from .migration_validation_cases import capture_stdout
+
+_EXPECTED_DOUBLED_VALUE = 42
+_OBSERVED_VALUE = 5
 
 
 class TestsFlextCoreMigrationValidation:
@@ -46,20 +49,20 @@ class TestsFlextCoreMigrationValidation:
         """A successful result reports success and returns the wrapped value."""
         result: p.Result[str] = r[str].ok(value)
 
-        assert result.success is True
-        assert result.failure is False
-        assert result.error is None
-        assert result.value == expected
-        assert result.unwrap() == expected
+        tm.that(result.success, eq=True)
+        tm.that(result.failure, eq=False)
+        tm.that(result.error, none=True)
+        tm.that(result.value, eq=expected)
+        tm.that(result.unwrap(), eq=expected)
 
     def test_fail_result_carries_error_message(self) -> None:
         """A failed result reports failure and preserves the error message."""
         result: p.Result[str] = r[str].fail("Invalid email format")
 
-        assert result.failure is True
-        assert result.success is False
-        assert result.error is not None
-        assert "Invalid email format" in result.error
+        tm.that(result.failure, eq=True)
+        tm.that(result.success, eq=False)
+        tm.that(result.error, none=False)
+        tm.that(tm.not_none(result.error), has="Invalid email format")
 
     def test_unwrap_raises_on_failure(self) -> None:
         """Unwrapping a failure raises instead of inventing a value."""
@@ -82,17 +85,17 @@ class TestsFlextCoreMigrationValidation:
         expected: int,
     ) -> None:
         """unwrap_or yields the value on success and the default on failure."""
-        assert result.unwrap_or(default) == expected
+        tm.that(result.unwrap_or(default), eq=expected)
 
     def test_map_transforms_success_and_skips_failure(self) -> None:
         """Map applies to a success value but leaves a failure untouched."""
         mapped_ok = r[str].ok("test_value").map(str.upper)
-        assert mapped_ok.success is True
-        assert mapped_ok.value == "TEST_VALUE"
+        tm.that(mapped_ok.success, eq=True)
+        tm.that(mapped_ok.value, eq="TEST_VALUE")
 
         mapped_fail = r[str].fail("orig").map(str.upper)
-        assert mapped_fail.failure is True
-        assert mapped_fail.error == "orig"
+        tm.that(mapped_fail.failure, eq=True)
+        tm.that(mapped_fail.error, eq="orig")
 
     def test_flat_map_chains_fallible_operations(self) -> None:
         """flat_map sequences dependent fallible steps and short-circuits."""
@@ -103,58 +106,60 @@ class TestsFlextCoreMigrationValidation:
             return r[int].ok(int(raw))
 
         chained_ok = r[str].ok("21").flat_map(parse).map(lambda n: n * 2)
-        assert chained_ok.success is True
-        assert chained_ok.value == 42
+        tm.that(chained_ok.success, eq=True)
+        tm.that(chained_ok.value, eq=_EXPECTED_DOUBLED_VALUE)
 
         chained_fail = r[str].ok("abc").flat_map(parse)
-        assert chained_fail.failure is True
-        assert chained_fail.error is not None
-        assert "not a number" in chained_fail.error
+        tm.that(chained_fail.failure, eq=True)
+        tm.that(chained_fail.error, none=False)
+        tm.that(tm.not_none(chained_fail.error), has="not a number")
 
     def test_map_error_transforms_only_the_failure_channel(self) -> None:
         """map_error rewrites a failure's error and leaves success alone."""
         rewritten = r[str].fail("bad").map_error(str.upper)
-        assert rewritten.failure is True
-        assert rewritten.error == "BAD"
+        tm.that(rewritten.failure, eq=True)
+        tm.that(rewritten.error, eq="BAD")
 
         untouched = r[str].ok("keep").map_error(str.upper)
-        assert untouched.success is True
-        assert untouched.value == "keep"
+        tm.that(untouched.success, eq=True)
+        tm.that(untouched.value, eq="keep")
 
     def test_recover_replaces_failure_with_fallback_value(self) -> None:
         """Recover converts a failure into a success using the error."""
         recovered = r[str].fail("e").recover(lambda _err: "fallback")
-        assert recovered.success is True
-        assert recovered.value == "fallback"
+        tm.that(recovered.success, eq=True)
+        tm.that(recovered.value, eq="fallback")
 
         preserved = r[str].ok("orig").recover(lambda _err: "fallback")
-        assert preserved.value == "orig"
+        tm.that(preserved.value, eq="orig")
 
     def test_filter_demotes_success_that_fails_predicate(self) -> None:
         """Filter keeps a passing value and rejects a failing one."""
-        assert r[int].ok(4).filter(lambda n: n > 0).success is True
-        assert r[int].ok(-1).filter(lambda n: n > 0).failure is True
+        tm.that(r[int].ok(4).filter(lambda n: n > 0).success, eq=True)
+        tm.that(r[int].ok(-1).filter(lambda n: n > 0).failure, eq=True)
 
     def test_tap_and_tap_error_observe_without_changing_outcome(self) -> None:
         """tap/tap_error run side effects on the matching channel only."""
         seen: list[int] = []
         errors: list[str] = []
 
-        ok_after = r[int].ok(5).tap(seen.append).tap_error(errors.append)
-        assert seen == [5]
-        assert errors == []
-        assert ok_after.value == 5
+        ok_after = (
+            r[int].ok(_OBSERVED_VALUE).tap(seen.append).tap_error(errors.append)
+        )
+        tm.that(seen, eq=[_OBSERVED_VALUE])
+        tm.that(errors, empty=True)
+        tm.that(ok_after.value, eq=_OBSERVED_VALUE)
 
         fail_after = r[int].fail("z").tap(seen.append).tap_error(errors.append)
-        assert seen == [5]
-        assert errors == ["z"]
-        assert fail_after.failure is True
+        tm.that(seen, eq=[_OBSERVED_VALUE])
+        tm.that(errors, eq=["z"])
+        tm.that(fail_after.failure, eq=True)
 
     # ------------------------------------------------------------ container
 
     def test_container_is_process_singleton(self) -> None:
         """FlextContainer() returns the same shared instance every call."""
-        assert FlextContainer() is FlextContainer()
+        tm.that(FlextContainer() is FlextContainer(), eq=True)
 
     def test_container_binds_and_resolves_registered_service(self) -> None:
         """A bound service resolves to the same object via its public API."""
@@ -169,8 +174,8 @@ class TestsFlextCoreMigrationValidation:
             type_cls=RegisteredService,
         )
 
-        assert resolution.success is True
-        assert resolution.value.name == "test"
+        tm.that(resolution.success, eq=True)
+        tm.that(resolution.value.name, eq="test")
 
     def test_container_resolve_missing_key_fails(self) -> None:
         """Resolving an unregistered key yields a failure, not an exception."""
@@ -179,9 +184,9 @@ class TestsFlextCoreMigrationValidation:
             type_cls=int,
         )
 
-        assert resolution.failure is True
-        assert resolution.error is not None
-        assert "migration_absent_key" in resolution.error
+        tm.that(resolution.failure, eq=True)
+        tm.that(resolution.error, none=False)
+        tm.that(tm.not_none(resolution.error), has="migration_absent_key")
 
     # -------------------------------------------------------------- service
 
@@ -194,8 +199,8 @@ class TestsFlextCoreMigrationValidation:
                 return r[None].ok(None)
 
         outcome = NoopService().execute()
-        assert outcome.success is True
-        assert outcome.error is None
+        tm.that(outcome.success, eq=True)
+        tm.that(outcome.error, none=True)
 
     def test_service_method_returns_failure_on_invalid_input(self) -> None:
         """Domain validation surfaces as an r failure, not a raised error."""
@@ -213,14 +218,14 @@ class TestsFlextCoreMigrationValidation:
         service = UserService()
 
         failure = service.create_user("", "alice@example.com")
-        assert failure.failure is True
-        assert failure.error is not None
-        assert "required" in failure.error
+        tm.that(failure.failure, eq=True)
+        tm.that(failure.error, none=False)
+        tm.that(tm.not_none(failure.error), has="required")
 
         success = service.create_user("alice", "alice@example.com")
-        assert success.success is True
-        assert success.value["username"] == "alice"
-        assert success.value["email"] == "alice@example.com"
+        tm.that(success.success, eq=True)
+        tm.that(success.value["username"], eq="alice")
+        tm.that(success.value["email"], eq="alice@example.com")
 
     # --------------------------------------------------------------- logger
 
@@ -237,5 +242,5 @@ class TestsFlextCoreMigrationValidation:
 
     def test_factory_helpers_produce_protocol_conformant_objects(self) -> None:
         """Public builders return objects satisfying their published protocols."""
-        assert isinstance(u.build_dispatcher(), p.Dispatcher)
-        assert isinstance(u.build_registry(), p.Registry)
+        tm.that(u.build_dispatcher(), is_=p.Dispatcher)
+        tm.that(u.build_registry(), is_=p.Registry)

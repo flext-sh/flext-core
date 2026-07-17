@@ -14,6 +14,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+from flext_tests import tm
 
 from tests.utilities import u
 
@@ -24,7 +25,11 @@ from .service_lifecycle_cases import (
 if TYPE_CHECKING:
     from tests.protocols import p
 
+_FETCH_CALL_COUNT = 2
 
+
+@pytest.mark.integration
+@pytest.mark.usefixtures("clean_container")
 class TestsFlextCoreService(_ServiceLifecycleCases):
     """Behavioral contract of the user/notification/lifecycle services.
 
@@ -32,29 +37,21 @@ class TestsFlextCoreService(_ServiceLifecycleCases):
     (``UserQueryService``, ``NotificationService``, ``UserServiceEntity`` ...).
     """
 
-    pytestmark = [pytest.mark.integration]
-
     # ------------------------------------------------------------------ #
     # UserQueryService.execute — availability contract
     # ------------------------------------------------------------------ #
-    def test_user_service_execute_reports_available(
-        self,
-        clean_container: p.Container,
-    ) -> None:
+    def test_user_service_execute_reports_available(self) -> None:
         """execute() succeeds with True when the service is available."""
         service = self.UserQueryService()
         result = service.execute()
-        assert u.Tests.assert_success(result, expected_value=True) is True
+        tm.that(u.Tests.assert_success(result, expected_value=True), eq=True)
 
-    def test_user_service_execute_reports_unavailable_in_failure_mode(
-        self,
-        clean_container: p.Container,
-    ) -> None:
+    def test_user_service_execute_reports_unavailable_in_failure_mode(self) -> None:
         """execute() fails with the unavailable error under failure mode."""
         service = self.UserQueryService()
         service.configure_failure_mode(should_fail=True)
         result = service.execute()
-        assert result.failure
+        tm.that(result.failure, eq=True)
         _ = u.Tests.assert_failure(result, "User service unavailable")
 
     # ------------------------------------------------------------------ #
@@ -66,21 +63,17 @@ class TestsFlextCoreService(_ServiceLifecycleCases):
     )
     def test_fetch_user_derives_default_entity(
         self,
-        clean_container: p.Container,
         user_id: str,
     ) -> None:
         """fetch_user() derives a default entity from the requested id."""
         service = self.UserQueryService()
         entity = u.Tests.assert_success(service.fetch_user(user_id))
-        assert entity.unique_id == user_id
-        assert entity.name == f"User {user_id}"
-        assert entity.email == f"user{user_id}@example.com"
-        assert entity.active is True
+        tm.that(entity.unique_id, eq=user_id)
+        tm.that(entity.name, eq=f"User {user_id}")
+        tm.that(entity.email, eq=f"user{user_id}@example.com")
+        tm.that(entity.active, eq=True)
 
-    def test_fetch_user_returns_applied_custom_entity(
-        self,
-        clean_container: p.Container,
-    ) -> None:
+    def test_fetch_user_returns_applied_custom_entity(self) -> None:
         """fetch_user() returns previously applied custom user data verbatim."""
         service = self.UserQueryService()
         user_id = "custom_user"
@@ -92,34 +85,25 @@ class TestsFlextCoreService(_ServiceLifecycleCases):
         )
         service.apply_user_data(user_id, custom)
         entity = u.Tests.assert_success(service.fetch_user(user_id))
-        assert entity.model_dump() == custom.model_dump()
+        tm.that(entity.model_dump(), eq=custom.model_dump())
 
-    def test_fetch_user_fails_in_failure_mode(
-        self,
-        clean_container: p.Container,
-    ) -> None:
+    def test_fetch_user_fails_in_failure_mode(self) -> None:
         """fetch_user() surfaces a failure result under failure mode."""
         service = self.UserQueryService()
         service.configure_failure_mode(should_fail=True)
         result = service.fetch_user("anyone")
-        assert result.failure
+        tm.that(result.failure, eq=True)
         _ = u.Tests.assert_failure(result, "User service unavailable")
 
-    def test_fetch_user_counts_each_call(
-        self,
-        clean_container: p.Container,
-    ) -> None:
+    def test_fetch_user_counts_each_call(self) -> None:
         """call_count reflects the number of fetch_user invocations."""
         service = self.UserQueryService()
-        assert service.call_count == 0
+        tm.that(service.call_count, eq=0)
         _ = service.fetch_user("a")
         _ = service.fetch_user("b")
-        assert service.call_count == 2
+        tm.that(service.call_count, eq=_FETCH_CALL_COUNT)
 
-    def test_fetch_user_result_supports_combinators(
-        self,
-        clean_container: p.Container,
-    ) -> None:
+    def test_fetch_user_result_supports_combinators(self) -> None:
         """The r[T] returned by fetch_user chains via map/flat_map."""
         service = self.UserQueryService()
         email = (
@@ -128,43 +112,34 @@ class TestsFlextCoreService(_ServiceLifecycleCases):
             .map(lambda entity: entity.email)
             .unwrap_or("missing")
         )
-        assert email == "userchained@example.com"
+        tm.that(email, eq="userchained@example.com")
 
     # ------------------------------------------------------------------ #
     # NotificationService — send/execute contract
     # ------------------------------------------------------------------ #
-    def test_notification_execute_reports_sent(
-        self,
-        clean_container: p.Container,
-    ) -> None:
+    def test_notification_execute_reports_sent(self) -> None:
         """execute() succeeds with the 'sent' status."""
         service = self.NotificationService()
         result = service.execute()
-        assert u.Tests.assert_success(result, expected_value="sent") == "sent"
+        tm.that(u.Tests.assert_success(result, expected_value="sent"), eq="sent")
 
-    def test_notification_send_records_recipient(
-        self,
-        clean_container: p.Container,
-    ) -> None:
+    def test_notification_send_records_recipient(self) -> None:
         """send() succeeds and records the recipient in the public log."""
         service = self.NotificationService()
         email = "test@example.com"
         result = service.send(email)
-        assert u.Tests.assert_success(result, expected_value="sent") == "sent"
-        assert email in service.sent_notifications
-        assert service.call_count == 1
+        tm.that(u.Tests.assert_success(result, expected_value="sent"), eq="sent")
+        tm.that(service.sent_notifications, has=email)
+        tm.that(service.call_count, eq=1)
 
-    def test_notification_send_fails_in_failure_mode(
-        self,
-        clean_container: p.Container,
-    ) -> None:
+    def test_notification_send_fails_in_failure_mode(self) -> None:
         """send() fails and does not record the recipient under failure mode."""
         service = self.NotificationService()
         service.configure_failure_mode(should_fail=True)
         result = service.send("test@example.com")
-        assert result.failure
+        tm.that(result.failure, eq=True)
         _ = u.Tests.assert_failure(result, "Notification service unavailable")
-        assert "test@example.com" not in service.sent_notifications
+        tm.that(service.sent_notifications, lacks="test@example.com")
 
     # ------------------------------------------------------------------ #
     # Dependency injection — resolve round-trip contract
@@ -204,14 +179,13 @@ class TestsFlextCoreService(_ServiceLifecycleCases):
             resolved_notification.send(entity.email),
             expected_value="sent",
         )
-        assert entity.email in resolved_notification.sent_notifications
+        tm.that(resolved_notification.sent_notifications, has=entity.email)
 
     # ------------------------------------------------------------------ #
     # External-service integration — boundary contract
     # ------------------------------------------------------------------ #
     def test_external_service_processes_user_email(
         self,
-        clean_container: p.Container,
         mock_external_service: u.Tests.FunctionalExternalService,
     ) -> None:
         """A fetched user email flows through the external service boundary."""
@@ -220,6 +194,6 @@ class TestsFlextCoreService(_ServiceLifecycleCases):
         processed = u.Tests.assert_success(
             mock_external_service.process(entity.email),
         )
-        assert processed == f"processed_{entity.email}"
-        assert processed in mock_external_service.processed_items
-        assert mock_external_service.get_call_count() == 1
+        tm.that(processed, eq=f"processed_{entity.email}")
+        tm.that(mock_external_service.processed_items, has=processed)
+        tm.that(mock_external_service.get_call_count(), eq=1)

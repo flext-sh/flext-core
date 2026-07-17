@@ -6,7 +6,8 @@ import sys
 import typing
 
 from tests.models import m
-from tests.typings import p, t
+from tests.protocols import p
+from tests.typings import t
 from tests.utilities import u
 
 if typing.TYPE_CHECKING:
@@ -25,10 +26,7 @@ class TestsFlextBeartypeEngine:
     @staticmethod
     def _run_python(script: str, cwd: Path) -> p.Cli.CommandOutput:
         """Run a Python snippet in a subprocess and capture text output."""
-        result = u.Cli.run_raw(
-            [sys.executable, "-c", script],
-            cwd=cwd,
-        )
+        result = u.Cli.run_raw([sys.executable, "-c", script], cwd=cwd)
         if result.success:
             return result.value
         return m.Cli.CommandOutput(

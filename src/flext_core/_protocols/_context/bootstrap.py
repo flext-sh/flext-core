@@ -18,7 +18,7 @@ class FlextProtocolsContextBootstrap:
         """Runtime bootstrap options for service initialization."""
 
         settings: p.Settings | None
-        settings_type: type | None
+        settings_type: t.SettingsClass | None
         settings_overrides: t.ScalarMapping | None
         context: p.Context | None
         dispatcher: p.Dispatcher | None

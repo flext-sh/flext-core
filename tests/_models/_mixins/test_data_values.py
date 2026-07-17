@@ -15,35 +15,20 @@ class TestsFlextModelsTestDataValuesMixin:
 
         model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
-        error_code: Annotated[
-            str,
-            m.Field(
-                description="Default test error code",
-            ),
-        ] = "TEST_ERROR_001"
+        error_code: Annotated[str, m.Field(description="Default test error code")] = (
+            "TEST_ERROR_001"
+        )
         validation_error: Annotated[
-            str,
-            m.Field(
-                description="Default validation error message",
-            ),
+            str, m.Field(description="Default validation error message")
         ] = "test_error"
         operation_error: Annotated[
-            str,
-            m.Field(
-                description="Default operation error message",
-            ),
+            str, m.Field(description="Default operation error message")
         ] = "Op failed"
         settings_error: Annotated[
-            str,
-            m.Field(
-                description="Default configuration error message",
-            ),
+            str, m.Field(description="Default configuration error message")
         ] = "Settings failed"
         timeout_error: Annotated[
-            str,
-            m.Field(
-                description="Default timeout error message",
-            ),
+            str, m.Field(description="Default timeout error message")
         ] = "Operation timeout"
 
     class Data(m.BaseModel):
@@ -63,30 +48,18 @@ class TestsFlextModelsTestDataValuesMixin:
         email: Annotated[str, m.Field(description="Default test email")] = (
             "test@example.com"
         )
-        password: Annotated[str, m.Field(description="Default test password")] = (
-            "test_pass"
-        )
         string_value: Annotated[
-            str,
-            m.Field(
-                description="Default test string value",
-            ),
+            str, m.Field(description="Default test string value")
         ] = "test_value"
         input_data: Annotated[str, m.Field(description="Default test input data")] = (
             "test_input"
         )
         request_data: Annotated[
-            str,
-            m.Field(
-                description="Default test request data",
-            ),
+            str, m.Field(description="Default test request data")
         ] = "test_request"
-        result_data: Annotated[
-            str,
-            m.Field(
-                description="Default test result data",
-            ),
-        ] = "test_result"
+        result_data: Annotated[str, m.Field(description="Default test result data")] = (
+            "test_result"
+        )
         message: Annotated[str, m.Field(description="Default test message")] = (
             "test_message"
         )
@@ -97,22 +70,13 @@ class TestsFlextModelsTestDataValuesMixin:
         model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         slug_input: Annotated[
-            str,
-            m.Field(
-                description="Input value for slug conversion tests",
-            ),
+            str, m.Field(description="Input value for slug conversion tests")
         ] = "Test_String"
         slug_expected: Annotated[
-            str,
-            m.Field(
-                description="Expected slug conversion output",
-            ),
+            str, m.Field(description="Expected slug conversion output")
         ] = "test_string"
         uuid_format: Annotated[
-            str,
-            m.Field(
-                description="Sample UUID format for tests",
-            ),
+            str, m.Field(description="Sample UUID format for tests")
         ] = "550e8400-e29b-41d4-a716-446655440000"
 
     class NumericValues(m.BaseModel):

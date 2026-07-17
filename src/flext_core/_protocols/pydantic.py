@@ -10,12 +10,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import Protocol
+
 from pydantic import (
     EncoderProtocol,
     ModelWrapValidatorHandler,
     ValidationInfo,
     ValidatorFunctionWrapHandler,
 )
+
+from .base import FlextProtocolsBase
 
 
 class FlextProtocolsPydantic:
@@ -24,6 +28,19 @@ class FlextProtocolsPydantic:
     **NEVER import pydantic directly outside flext-core/src/.**
     Use p.* instead.
     """
+
+    class TypeAdapter[ValidatedT](Protocol):
+        """Structural validation capability implemented by Pydantic adapters."""
+
+        def validate_python(
+            self, value: FlextProtocolsBase.AttributeProbe, /
+        ) -> ValidatedT:
+            """Validate a Python value into the adapter's declared output type."""
+            ...
+
+        def validate_json(self, data: str | bytes | bytearray, /) -> ValidatedT:
+            """Validate serialized JSON into the adapter's declared output type."""
+            ...
 
     # Protocols
     EncoderProtocol = EncoderProtocol

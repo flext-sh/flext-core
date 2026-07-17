@@ -97,7 +97,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
 
     @staticmethod
     def transform(
-        source: t.JsonMapping | m.ConfigMap,
+        source: t.JsonMapping | p.ConfigMap,
         *,
         normalize: bool = False,
         strip_none: bool = False,

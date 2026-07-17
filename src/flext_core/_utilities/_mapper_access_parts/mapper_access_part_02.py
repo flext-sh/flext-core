@@ -77,7 +77,7 @@ class FlextUtilitiesMapperAccess(FlextUtilitiesMapperAccessPart01):
         match data:
             case dict() | Mapping() if key in data:
                 return FlextUtilitiesMapperAccess._normalize_accessible_value(data[key])
-            case m.ConfigMap() | m.Dict() if key in data.root:
+            case m.ConfigMap() | p.Dict() if key in data.root:
                 return FlextUtilitiesMapperAccess._normalize_accessible_value(
                     data.root[key]
                 )

@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from tests.protocols import p
+    from tests.typings import t
 
 
 class _CreateCommand:
@@ -195,20 +196,20 @@ class TestsFlextHandlerDiscoveryModule:
     )
     def test_discovered_callable_coerces_result_to_scalar_or_none(
         self,
-        returned: object,
-        expected: object,
+        returned: t.JsonValue,
+        expected: t.Scalar | None,
     ) -> None:
         # Arrange
         module = types.ModuleType("coercion_module")
 
         @h.handler(command=_CreateCommand)
-        def produce(cmd: _CreateCommand) -> object:
+        def produce(cmd: _CreateCommand) -> t.JsonValue:
             _ = cmd
             return returned
 
         setattr(module, "produce", produce)
         _, discovered, _ = h.Discovery.scan_module(module)[0]
-        invoke: Callable[[dict[str, str]], object] = discovered
+        invoke: Callable[..., t.Scalar | None] = discovered
 
         # Act
         result = invoke({})
