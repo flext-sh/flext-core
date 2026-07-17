@@ -40,5 +40,20 @@ class FlextProtocolsConfig:
             """Deep-merge ``override`` onto ``base``, returning a new mapping."""
             ...
 
+    # mro-qc84 (fix-forward): protocol-of-model for a loaded config document
+    # (m.ConfigDocument). Consumed at runtime by the flext-cli config loader
+    # result contracts (r[p.ConfigDocument]).
+    @runtime_checkable
+    class ConfigDocument(Protocol):
+        """A loaded, parsed config document with optional schema/source refs."""
+
+        @property
+        def data(self) -> t.JsonMapping: ...
+
+        @property
+        def source_path(self) -> str | None: ...
+
+        @property
+        def schema_ref(self) -> str | None: ...
 
 __all__: list[str] = ["FlextProtocolsConfig"]
