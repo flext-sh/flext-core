@@ -26,8 +26,8 @@ class TestsFlextResultOperations:
         assert result.success is True
         assert result.failure is False
         assert bool(result) is True
-        assert result.value == value
-        assert result.unwrap() == value
+        tm.that(result.value, eq=value)
+        tm.that(result.unwrap(), eq=value)
         assert result.error is None
 
     @pytest.mark.parametrize("message", ["boom", "error message", "not found"])
@@ -38,7 +38,7 @@ class TestsFlextResultOperations:
         assert result.failure is True
         assert result.success is False
         assert bool(result) is False
-        assert result.error == message
+        tm.that(result.error, eq=message)
 
     @pytest.mark.parametrize("message", ["boom", "denied"])
     def test_value_and_unwrap_raise_on_failure(self, message: str) -> None:
@@ -67,8 +67,8 @@ class TestsFlextResultOperations:
         expected: str,
     ) -> None:
         """unwrap_or and the | operator both yield value on success, default on failure."""
-        assert result.unwrap_or(default) == expected
-        assert (result | default) == expected
+        tm.that(result.unwrap_or(default), eq=expected)
+        tm.that((result | default), eq=expected)
 
     # --- map -------------------------------------------------------------
 
@@ -79,7 +79,7 @@ class TestsFlextResultOperations:
         mapped = result.map(lambda x: x * 2)
 
         assert mapped.success is True
-        assert mapped.unwrap() == 10
+        tm.that(mapped.unwrap(), eq=10)
 
     def test_map_is_a_no_op_on_failure_and_preserves_error(self) -> None:
         """Map does not run the function on a failure; the error passes through."""
@@ -88,7 +88,7 @@ class TestsFlextResultOperations:
         mapped = result.map(lambda x: x * 2)
 
         assert mapped.failure is True
-        assert mapped.error == "boom"
+        tm.that(mapped.error, eq="boom")
 
     # --- flat_map --------------------------------------------------------
 
@@ -98,7 +98,7 @@ class TestsFlextResultOperations:
 
         chained = result.flat_map(lambda x: r[str].ok(f"value_{x}"))
 
-        assert chained.unwrap() == "value_5"
+        tm.that(chained.unwrap(), eq="value_5")
 
     def test_flat_map_short_circuits_on_failure(self) -> None:
         """flat_map skips the continuation when the source is a failure."""
@@ -107,7 +107,7 @@ class TestsFlextResultOperations:
         chained = result.flat_map(lambda x: r[str].ok(f"value_{x}"))
 
         assert chained.failure is True
-        assert chained.error == "boom"
+        tm.that(chained.error, eq="boom")
 
     def test_flat_map_propagates_a_failing_continuation(self) -> None:
         """flat_map surfaces the error produced by the continuation."""
@@ -116,7 +116,7 @@ class TestsFlextResultOperations:
         chained = result.flat_map(lambda _: r[str].fail("downstream"))
 
         assert chained.failure is True
-        assert chained.error == "downstream"
+        tm.that(chained.error, eq="downstream")
 
     # --- map_error -------------------------------------------------------
 
@@ -127,7 +127,7 @@ class TestsFlextResultOperations:
         remapped = result.map_error(lambda e: f"alt_{e}")
 
         assert remapped.failure is True
-        assert remapped.error == "alt_original"
+        tm.that(remapped.error, eq="alt_original")
 
     def test_map_error_leaves_a_success_untouched(self) -> None:
         """map_error is a no-op on a success value."""
@@ -135,7 +135,7 @@ class TestsFlextResultOperations:
 
         remapped = result.map_error(lambda e: f"alt_{e}")
 
-        assert remapped.unwrap() == "value"
+        tm.that(remapped.unwrap(), eq="value")
 
     # --- lash (recover-with-result) -------------------------------------
 
@@ -145,7 +145,7 @@ class TestsFlextResultOperations:
 
         recovered = result.lash(lambda e: r[str].ok(f"recovered_{e}"))
 
-        assert recovered.unwrap() == "recovered_error"
+        tm.that(recovered.unwrap(), eq="recovered_error")
 
     def test_lash_passes_a_success_through_unchanged(self) -> None:
         """Lash does not invoke the handler on a success."""
@@ -153,7 +153,7 @@ class TestsFlextResultOperations:
 
         recovered = result.lash(lambda e: r[str].ok(f"recovered_{e}"))
 
-        assert recovered.unwrap() == "value"
+        tm.that(recovered.unwrap(), eq="value")
 
     # --- filter ----------------------------------------------------------
 
@@ -175,7 +175,7 @@ class TestsFlextResultOperations:
 
         assert filtered.success is expected_success
         if expected_success:
-            assert filtered.unwrap() == value
+            tm.that(filtered.unwrap(), eq=value)
 
     # --- boolean protocol ------------------------------------------------
 
@@ -203,7 +203,7 @@ class TestsFlextResultOperations:
         )
 
         assert composed.success is True
-        assert composed.unwrap() == "result_10"
+        tm.that(composed.unwrap(), eq="result_10")
 
     def test_railway_composition_short_circuits_at_first_failure(self) -> None:
         """A failure mid-chain halts every downstream step and keeps its error."""
@@ -213,4 +213,4 @@ class TestsFlextResultOperations:
             result = result.map(step)
 
         assert result.failure is True
-        assert result.error == "early"
+        tm.that(result.error, eq="early")

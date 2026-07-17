@@ -107,7 +107,7 @@ class TestsFlextCoreEnumUtilities:
             tm.ok(result)
             tm.that(result.value, eq=scenario.expected_status)
         else:
-            assert result.failure
+            tm.fail(result)
             assert scenario.expected_error is not None
             assert result.error is not None
             assert scenario.expected_error in result.error

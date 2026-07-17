@@ -60,11 +60,11 @@ class TestsFlextCoreUtilitiesTypeGuards:
         assert u.chk(payload["command_name"], command_spec)
         assert u.chk(payload["attempt_count"], gte=1, lte=3, not_in=[0])
         assert u.chk(payload["command_name"], gt="alpha", none=False, empty=False)
-        assert metadata["workspace_root"] == "/tmp/flext"
-        assert metadata["retry_window"] == ""
+        tm.that(metadata["workspace_root"], eq="/tmp/flext")
+        tm.that(metadata["retry_window"], eq="")
         assert isinstance(payload["started_at"], str)
-        assert datetime.fromisoformat(payload["started_at"]) == envelope.started_at
-        assert set(normalized_modes) == {"delta", "full"}
+        tm.that(datetime.fromisoformat(payload["started_at"]), eq=envelope.started_at)
+        tm.that(set(normalized_modes), eq={"delta", "full"})
 
     def test_public_guard_returns_normalized_values_defaults_and_failures(self) -> None:
         payload: dict[str, t.JsonValue] = {
@@ -98,8 +98,8 @@ class TestsFlextCoreUtilitiesTypeGuards:
         )
         failed_guard = failed_guard_result
 
-        assert cast("dict[str, t.JsonValue]", guarded_payload) == payload
-        assert cast("list[str]", fallback_tags) == ["cli"]
-        assert cast("int", guarded_attempt) == 2
+        tm.that(cast("dict[str, t.JsonValue]", guarded_payload), eq=payload)
+        tm.that(cast("list[str]", fallback_tags), eq=["cli"])
+        tm.that(cast("int", guarded_attempt), eq=2)
         tm.fail(failed_guard)
-        assert failed_guard.error == "Guard validation raised an exception"
+        tm.that(failed_guard.error, eq="Guard validation raised an exception")

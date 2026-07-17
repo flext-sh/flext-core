@@ -144,7 +144,7 @@ class TestsFlextCoreContainerProperties:
 
         container.clear()
 
-        assert list(container.names()) == []
+        tm.that(list(container.names()), eq=[])
         assert container.has("a") is False
 
     # -- invariants --------------------------------------------------------
