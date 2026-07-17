@@ -12,7 +12,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Annotated, ClassVar, Self, TYPE_CHECKING
 
 from flext_core._models._base_parts.flextmodelsbase_part_02 import (
@@ -26,6 +25,9 @@ from flext_core._typings.base import FlextTypingBase as t
 from flext_core._utilities.generators import FlextUtilitiesGenerators as ug
 from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
 from flext_core.constants import FlextConstants as c
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 
 class FlextModelsBase(FlextModelsBasePart02):

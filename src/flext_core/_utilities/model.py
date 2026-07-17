@@ -122,7 +122,7 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def service_settings_type(
-        service_or_cls: p.ModelBase | p.SettingsType | t.SettingsClass,
+        service_or_cls: p.BaseModel | p.SettingsType | t.SettingsClass,
     ) -> t.SettingsClass:
         """Resolve the concrete settings type used by a service-like object."""
         settings_base = FlextUtilitiesModel._settings_base()

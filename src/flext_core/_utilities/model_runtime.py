@@ -134,7 +134,10 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
     def build_service_runtime(
         cls,
         source: (
-            m.RuntimeBootstrapOptions | t.MappingKV[str, t.JsonPayload] | p.BaseModel | None  # mro-wkii.17.26 (kimi): ModelBase -> BaseModel
+            m.RuntimeBootstrapOptions
+            | t.MappingKV[str, t.JsonPayload]
+            | p.BaseModel
+            | None
         ) = None,
         **overrides: t.JsonPayload,
     ) -> p.ServiceRuntime:

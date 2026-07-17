@@ -11,7 +11,10 @@ from __future__ import annotations
 from flext_core import FlextConstants as c, FlextTypes as t
 from flext_core import FlextResult as r
 from flext_core._protocols.base import FlextProtocolsBase as pb
-from flext_core._protocols.result import FlextProtocolsResult as p
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from flext_core._protocols.result import FlextProtocolsResult as p
 
 
 class FlextUtilitiesArgs:

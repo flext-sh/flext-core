@@ -21,7 +21,7 @@ class FlextProtocolsSettings:
     """Protocols for configurable components and settings."""
 
     @runtime_checkable
-    class Configurable(p.BaseModel, Protocol):  # mro-wkii.17.26 (kimi): ModelBase -> BaseModel
+    class Configurable(p.BaseModel, Protocol):
         """Protocol for component configuration."""
 
         def apply(self, settings: t.UserOverridesMapping | None = None) -> Self:
@@ -29,7 +29,7 @@ class FlextProtocolsSettings:
             ...
 
     @runtime_checkable
-    class Settings(pr.HasModelDump, p.BaseModel, Protocol):  # mro-wkii.17.26 (kimi): ModelBase -> BaseModel
+    class Settings(pr.HasModelDump, p.BaseModel, Protocol):
         """Minimal Pydantic-2 settings contract and universal log level.
 
         Declares the operation surface (``fetch_global``, ``clone``,
