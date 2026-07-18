@@ -575,6 +575,7 @@ ignore = [
   "C901",
   "COM812",
   "CPY001",
+  "D102",
   "D203",
   "D213",
   "D401",
@@ -602,6 +603,7 @@ ignore = [
   "PLR0915",
   "PLR0917",
   "PLR1702",
+  "PLR2004",
   "PLR6301",
   "PLW0108",
   "PLW2901",
@@ -612,6 +614,7 @@ ignore = [
   "RUF002",
   "RUF003",
   "RUF005",
+  "S101",
   "S608",
   # ADR-011: runtime-forward annotations — names in runtime-evaluated annotations
   # must be runtime imports; TC001-003 would wrongly move them to TYPE_CHECKING.
