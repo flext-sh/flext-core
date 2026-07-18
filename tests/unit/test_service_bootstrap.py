@@ -17,7 +17,7 @@ from flext_core import FlextSettings
 from tests.base import s
 from tests import m
 from tests import p
-from tests import p, t
+from tests import t
 from tests import u
 
 
@@ -42,8 +42,7 @@ class TestsFlextCoreServiceBootstrap:
 
         def _runtime_bootstrap_options(self) -> p.RuntimeBootstrapOptions:
             return m.RuntimeBootstrapOptions(
-                subproject="source-options",
-                wire_packages=("source-options",),
+                subproject="source-options", wire_packages=("source-options",)
             )
 
     class ConcreteTestService(s[bool]):
@@ -106,13 +105,12 @@ class TestsFlextCoreServiceBootstrap:
         ],
     )
     def test_resolve_mapping_sanitizes_wire_packages_by_element_type(
-        self,
-        wire_packages: list[str | int],
-        expected: tuple[str, ...] | None,
+        self, wire_packages: list[str | int], expected: tuple[str, ...] | None
     ) -> None:
-        resolved = u.resolve_runtime_options(
-            {"subproject": "demo", "wire_packages": wire_packages},
-        )
+        resolved = u.resolve_runtime_options({
+            "subproject": "demo",
+            "wire_packages": wire_packages,
+        })
 
         assert resolved.subproject == "demo"
         assert resolved.wire_packages == expected
@@ -150,9 +148,7 @@ class TestsFlextCoreServiceBootstrap:
         )
 
         resolved = u.resolve_runtime_options(
-            source,
-            subproject="override",
-            wire_packages=("override",),
+            source, subproject="override", wire_packages=("override",)
         )
 
         assert resolved.subproject == "override"

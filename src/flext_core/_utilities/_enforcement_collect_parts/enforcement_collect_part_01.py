@@ -16,6 +16,7 @@ from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata
 from collections.abc import Callable
 from flext_core._protocols.base import FlextProtocolsBase as pb
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
+
 if TYPE_CHECKING:
     from collections.abc import Iterator
 

@@ -26,8 +26,7 @@ class TestsFlextCoreExceptionsBase:
         ],
     )
     def test_typed_exceptions_are_base_error_subclasses(
-        self,
-        subclass: type[e.BaseError],
+        self, subclass: type[e.BaseError]
     ) -> None:
         assert issubclass(subclass, e.BaseError)
         assert issubclass(subclass, Exception)
@@ -63,8 +62,7 @@ class TestsFlextCoreExceptionsBase:
 
     def test_fail_operation_returns_structured_failure(self) -> None:
         result: p.Result[bool] = e.fail_operation(
-            "register service",
-            ValueError("boom"),
+            "register service", ValueError("boom")
         )
         assert result.failure
         assert result.error is not None
@@ -77,8 +75,7 @@ class TestsFlextCoreExceptionsBase:
 
     def test_failure_result_short_circuits_map_and_recovers(self) -> None:
         result: p.Result[bool] = e.fail_operation(
-            "register service",
-            ValueError("boom"),
+            "register service", ValueError("boom")
         )
         mapped = result.map(lambda _value: False)
         assert mapped.failure
@@ -86,10 +83,7 @@ class TestsFlextCoreExceptionsBase:
         assert result.unwrap_or(True) is True
 
     def test_fail_not_found_returns_structured_failure(self) -> None:
-        result: p.Result[bool] = e.fail_not_found(
-            "service",
-            "command_bus",
-        )
+        result: p.Result[bool] = e.fail_not_found("service", "command_bus")
         assert result.failure
         assert result.error is not None
         assert "Service 'command_bus' not found" in result.error
@@ -99,10 +93,7 @@ class TestsFlextCoreExceptionsBase:
         assert result.error_data["resource_id"] == "command_bus"
 
     def test_fail_type_mismatch_returns_structured_failure(self) -> None:
-        result: p.Result[bool] = e.fail_type_mismatch(
-            "Dispatcher",
-            "str",
-        )
+        result: p.Result[bool] = e.fail_type_mismatch("Dispatcher", "str")
         assert result.failure
         assert result.error is not None
         assert "Dispatcher" in result.error
@@ -117,7 +108,7 @@ class TestsFlextCoreExceptionsBase:
                 service_name="connection",
                 expected_type="ldap3.Connection",
                 actual_type="str",
-            ),
+            )
         )
 
         assert result.failure
@@ -130,20 +121,13 @@ class TestsFlextCoreExceptionsBase:
 
     @pytest.mark.parametrize(
         ("field", "value", "cause"),
-        [
-            ("name", "", "empty"),
-            ("email", "bad", "invalid"),
-        ],
+        [("name", "", "empty"), ("email", "bad", "invalid")],
     )
     def test_fail_validation_returns_structured_failure(
-        self,
-        field: str,
-        value: str,
-        cause: str,
+        self, field: str, value: str, cause: str
     ) -> None:
         result: p.Result[bool] = e.fail_validation(
-            m.ValidationErrorParams(field=field, value=value),
-            error=cause,
+            m.ValidationErrorParams(field=field, value=value), error=cause
         )
         assert result.failure
         assert result.error is not None
@@ -156,9 +140,7 @@ class TestsFlextCoreExceptionsBase:
 
     def test_declarative_error_supports_public_auto_correlation(self) -> None:
         error = e.ValidationError(
-            "Validation failed",
-            field="email",
-            auto_correlation=True,
+            "Validation failed", field="email", auto_correlation=True
         )
         assert error.correlation_id is not None
         assert error.correlation_id.startswith("exc_")

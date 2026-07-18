@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from pathlib import Path  # noqa: TC003 — Pydantic field resolution needs runtime Path
+from pathlib import Path
 from typing import Annotated, ClassVar
 
 from pydantic import AliasChoices, Field

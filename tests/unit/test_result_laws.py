@@ -48,16 +48,10 @@ class TestsFlextCoreResultLaws:
 
     @pytest.mark.parametrize(
         ("result", "default", "expected"),
-        [
-            (r[int].ok(7), 99, 7),
-            (r[int].fail("nope"), 99, 99),
-        ],
+        [(r[int].ok(7), 99, 7), (r[int].fail("nope"), 99, 99)],
     )
     def test_unwrap_or_returns_value_or_default(
-        self,
-        result: p.Result[int],
-        default: int,
-        expected: int,
+        self, result: p.Result[int], default: int, expected: int
     ) -> None:
         assert result.unwrap_or(default) == expected
 
@@ -122,20 +116,12 @@ class TestsFlextCoreResultLaws:
 
     @pytest.mark.parametrize(
         ("result", "expected"),
-        [
-            (r[int].ok(4), "ok:4"),
-            (r[int].fail("boom"), "err:boom"),
-        ],
+        [(r[int].ok(4), "ok:4"), (r[int].fail("boom"), "err:boom")],
     )
     def test_fold_dispatches_to_the_matching_branch(
-        self,
-        result: p.Result[int],
-        expected: str,
+        self, result: p.Result[int], expected: str
     ) -> None:
-        folded = result.fold(
-            lambda e: f"err:{e}",
-            lambda v: f"ok:{v}",
-        )
+        folded = result.fold(lambda e: f"err:{e}", lambda v: f"ok:{v}")
         assert folded == expected
 
     def test_map_error_rewrites_failure_message_only(self) -> None:

@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 
 # mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
 from flext_core._typings.services import FlextTypesServices as ts
+
 if TYPE_CHECKING:
     from flext_core._typings.base import FlextTypingBase as tb
     from flext_core._protocols.container import FlextProtocolsContainer as pc

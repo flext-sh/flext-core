@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (  # noqa: TC003 — Pydantic field resolution needs runtime Mapping/Sequence
+from collections.abc import (
     Mapping,
     Sequence,
 )

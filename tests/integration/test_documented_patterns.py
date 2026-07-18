@@ -31,10 +31,7 @@ class TestsFlextCoreDocumentedPatterns:
         ],
     )
     def test_map_transforms_success_value(
-        self,
-        seed: int,
-        transform: Callable[[int], int],
-        expected: int,
+        self, seed: int, transform: Callable[[int], int], expected: int
     ) -> None:
         # Arrange / Act
         result = r[int].ok(seed).map(transform)
@@ -81,16 +78,10 @@ class TestsFlextCoreDocumentedPatterns:
         assert result.error == "stopped"
 
     @pytest.mark.parametrize(
-        ("result", "expected"),
-        [
-            (r[str].ok("flext"), 5),
-            (r[str].fail("missing"), 0),
-        ],
+        ("result", "expected"), [(r[str].ok("flext"), 5), (r[str].fail("missing"), 0)]
     )
     def test_map_or_returns_default_on_failure(
-        self,
-        result: p.Result[str],
-        expected: int,
+        self, result: p.Result[str], expected: int
     ) -> None:
         # Act / Assert
         assert result.map_or(0, len) == expected
@@ -162,10 +153,7 @@ class TestsFlextCoreDocumentedPatterns:
         ],
     )
     def test_validation_normalizes_or_fails(
-        self,
-        raw_email: str | None,
-        expect_success: bool,
-        expected_value: str | None,
+        self, raw_email: str | None, expect_success: bool, expected_value: str | None
     ) -> None:
         def require_email(candidate: str | None) -> p.Result[str]:
             if candidate is None:
@@ -225,11 +213,7 @@ class TestsFlextCoreDocumentedPatterns:
         assert result.value == 4
 
     def test_combined_decorator_wraps_return_in_success_result(self) -> None:
-        @d.combined(
-            operation_name="sum_values",
-            railway_enabled=True,
-            track_perf=False,
-        )
+        @d.combined(operation_name="sum_values", railway_enabled=True, track_perf=False)
         def sum_values(values: list[int]) -> int:
             return sum(values)
 

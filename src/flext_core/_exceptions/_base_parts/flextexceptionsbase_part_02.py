@@ -19,6 +19,7 @@ from .flextexceptionsbase_part_01 import FlextBaseErrorMetadataMixin
 # mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
 from flext_core._typings.base import FlextTypingBase as tb
 from collections.abc import Mapping
+
 if TYPE_CHECKING:
     from flext_core import p
     from flext_core._typings.services import FlextTypesServices as ts

@@ -28,6 +28,7 @@ from .logging_config_part_01 import (
 # mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
 from structlog.types import Processor
 from flext_core import FlextTypes as t
+
 if TYPE_CHECKING:
     import types
 

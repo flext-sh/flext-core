@@ -8,7 +8,7 @@ from flext_tests import h, r
 
 from tests import c
 from tests import p
-from tests import p, t
+from tests import t
 
 
 class TestsFlextUtilitiesDispatchMixin:
@@ -32,18 +32,14 @@ class TestsFlextUtilitiesDispatchMixin:
 
         @override
         def publish(
-            self,
-            event: p.Routable | t.SequenceOf[p.Routable],
+            self, event: p.Routable | t.SequenceOf[p.Routable]
         ) -> p.Result[bool]:
             _ = event
             return r[bool].ok(True)
 
         @override
         def register_handler(
-            self,
-            handler: t.DispatchableHandler,
-            *,
-            is_event: bool = False,
+            self, handler: t.DispatchableHandler, *, is_event: bool = False
         ) -> p.Result[bool]:
             _ = handler
             _ = is_event
@@ -59,18 +55,14 @@ class TestsFlextUtilitiesDispatchMixin:
 
         @override
         def publish(
-            self,
-            event: p.Routable | t.SequenceOf[p.Routable],
+            self, event: p.Routable | t.SequenceOf[p.Routable]
         ) -> p.Result[bool]:
             _ = event
             return r[bool].ok(True)
 
         @override
         def register_handler(
-            self,
-            handler: t.DispatchableHandler,
-            *,
-            is_event: bool = False,
+            self, handler: t.DispatchableHandler, *, is_event: bool = False
         ) -> p.Result[bool]:
             _ = handler
             _ = is_event
@@ -86,18 +78,14 @@ class TestsFlextUtilitiesDispatchMixin:
 
         @override
         def publish(
-            self,
-            event: p.Routable | t.SequenceOf[p.Routable],
+            self, event: p.Routable | t.SequenceOf[p.Routable]
         ) -> p.Result[bool]:
             _ = event
             return r[bool].ok(True)
 
         @override
         def register_handler(
-            self,
-            handler: t.DispatchableHandler,
-            *,
-            is_event: bool = False,
+            self, handler: t.DispatchableHandler, *, is_event: bool = False
         ) -> p.Result[bool]:
             _ = handler
             _ = is_event

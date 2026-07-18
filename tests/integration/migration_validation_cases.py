@@ -16,8 +16,6 @@ from tests import u
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests import p
-
 
 def capture_stdout[T](emit: Callable[[], T], *, contains: str) -> T:
     """Capture stdout until the expected observable message is emitted."""
@@ -45,24 +43,17 @@ class TestsFlextFlextMigrationApplicationCase:
                 self.logger = u.fetch_logger(__name__)
                 self.container = FlextContainer()
 
-            def process_data(
-                self,
-                data: t.StrMapping,
-            ) -> p.Result[t.JsonMapping]:
+            def process_data(self, data: t.StrMapping) -> p.Result[t.JsonMapping]:
                 """Typical data processing method."""
                 if not data:
                     return r[t.JsonMapping].fail("Data required")
                 self.logger.info("Processing data", size=len(data))
-                processed: t.JsonMapping = {
-                    "original": str(data),
-                    "processed": True,
-                }
+                processed: t.JsonMapping = {"original": str(data), "processed": True}
                 return r[t.JsonMapping].ok(processed)
 
         app = ApplicationExample()
         result = capture_stdout(
-            lambda: app.process_data({"key": "value"}),
-            contains="Processing data",
+            lambda: app.process_data({"key": "value"}), contains="Processing data"
         )
         tm.that(result.success, eq=True)
         tm.that(result.value["processed"], eq=True)

@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Final
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from flext_core import p, t
+    from flext_core import t
 
 
 class TestsFlextConstantsServices:

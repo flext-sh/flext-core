@@ -43,25 +43,19 @@ class TestsFlextCoreExceptionsTypedMetrics:
             ),
             (
                 lambda: e.AuthenticationError(
-                    "Test message",
-                    auth_method="password",
-                    user_id="u-1",
+                    "Test message", auth_method="password", user_id="u-1"
                 ),
                 e.AuthenticationError,
             ),
             (
                 lambda: e.AuthorizationError(
-                    "Test message",
-                    user_id="u-1",
-                    permission="read",
+                    "Test message", user_id="u-1", permission="read"
                 ),
                 e.AuthorizationError,
             ),
             (
                 lambda: e.NotFoundError(
-                    "Test message",
-                    resource_type="User",
-                    resource_id="123",
+                    "Test message", resource_type="User", resource_id="123"
                 ),
                 e.NotFoundError,
             ),
@@ -76,9 +70,7 @@ class TestsFlextCoreExceptionsTypedMetrics:
         ],
     )
     def test_typed_exception_is_expected_type_and_raisable(
-        self,
-        factory: Callable[[], e.BaseError],
-        expected_type: type[e.BaseError],
+        self, factory: Callable[[], e.BaseError], expected_type: type[e.BaseError]
     ) -> None:
         # Arrange / Act
         error = factory()
@@ -95,26 +87,11 @@ class TestsFlextCoreExceptionsTypedMetrics:
     @pytest.mark.parametrize(
         ("factory", "expected_domain"),
         [
-            (
-                lambda: e.ValidationError("m", field="email"),
-                "VALIDATION",
-            ),
-            (
-                lambda: e.ConfigurationError("m", config_key="timeout"),
-                "INTERNAL",
-            ),
-            (
-                lambda: e.ConnectionError("m", host=c.LOCALHOST, port=8080),
-                "NETWORK",
-            ),
-            (
-                lambda: e.TimeoutError("m", timeout_seconds=30.0),
-                "TIMEOUT",
-            ),
-            (
-                lambda: e.AuthenticationError("m", auth_method="password"),
-                "AUTH",
-            ),
+            (lambda: e.ValidationError("m", field="email"), "VALIDATION"),
+            (lambda: e.ConfigurationError("m", config_key="timeout"), "INTERNAL"),
+            (lambda: e.ConnectionError("m", host=c.LOCALHOST, port=8080), "NETWORK"),
+            (lambda: e.TimeoutError("m", timeout_seconds=30.0), "TIMEOUT"),
+            (lambda: e.AuthenticationError("m", auth_method="password"), "AUTH"),
             (
                 lambda: e.NotFoundError("m", resource_type="User", resource_id="1"),
                 "NOT_FOUND",
@@ -122,9 +99,7 @@ class TestsFlextCoreExceptionsTypedMetrics:
         ],
     )
     def test_error_code_maps_to_routing_domain(
-        self,
-        factory: Callable[[], e.BaseError],
-        expected_domain: str,
+        self, factory: Callable[[], e.BaseError], expected_domain: str
     ) -> None:
         # Arrange / Act
         error = factory()
@@ -178,10 +153,7 @@ class TestsFlextCoreExceptionsTypedMetrics:
         ],
     )
     def test_typed_exception_exposes_structured_fields(
-        self,
-        factory: Callable[[], e.BaseError],
-        attribute: str,
-        expected_value: object,
+        self, factory: Callable[[], e.BaseError], attribute: str, expected_value: object
     ) -> None:
         # Arrange / Act
         error = factory()
@@ -192,9 +164,7 @@ class TestsFlextCoreExceptionsTypedMetrics:
     def test_base_error_exposes_correlation_and_metadata(self) -> None:
         # Arrange / Act
         err = e.BaseError(
-            "boom",
-            correlation_id="corr-001",
-            metadata={"scope": "service"},
+            "boom", correlation_id="corr-001", metadata={"scope": "service"}
         )
 
         # Assert: correlation id + metadata attributes reachable publicly

@@ -13,7 +13,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from flext_tests import m, p, tm, tv
+from flext_tests import m, tm, tv
 
 from tests import c
 

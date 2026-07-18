@@ -14,6 +14,7 @@ from flext_core._constants.errors import FlextConstantsErrors as ce
 
 # mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
 from flext_core._typings.base import FlextTypingBase as tb
+
 if TYPE_CHECKING:
     from flext_core._typings.services import FlextTypesServices as ts
 

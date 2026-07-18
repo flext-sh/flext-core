@@ -138,8 +138,7 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         assert outcome.unwrap() == "processed_e7"
 
     @pytest.mark.parametrize(
-        ("priority", "expected_name"),
-        [(10, "handle_low"), (90, "handle_high")],
+        ("priority", "expected_name"), [(10, "handle_low"), (90, "handle_high")]
     )
     def test_scan_class_reports_command_and_priority(
         self, priority: int, expected_name: str

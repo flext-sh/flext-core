@@ -36,20 +36,14 @@ class TestsFlextModelsFixtureSuiteMixin:
         model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=False)
 
         name: Annotated[str, m.Field(description="Fixture entity name.")]
-        value: Annotated[
-            t.JsonValue,
-            m.Field(description="Fixture entity payload."),
-        ]
+        value: Annotated[t.JsonValue, m.Field(description="Fixture entity payload.")]
 
     class UtilityValueModel(m.Value):
         """Shared value model for generic test fixtures."""
 
         model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
-        value: Annotated[
-            t.JsonValue,
-            m.Field(description="Fixture value payload."),
-        ]
+        value: Annotated[t.JsonValue, m.Field(description="Fixture value payload.")]
 
     class MockScenarioData(m.BaseModel):
         """Mock scenario test data."""
@@ -84,10 +78,7 @@ class TestsFlextModelsFixtureSuiteMixin:
         email: str
         environment: str
         version: str
-        nested_data: t.MappingKV[
-            str,
-            TestsFlextModelsFixtureSuiteMixin.NestedDataDict,
-        ]
+        nested_data: t.MappingKV[str, TestsFlextModelsFixtureSuiteMixin.NestedDataDict]
 
     class FixtureCaseDict(m.BaseModel):
         """Individual test case configuration."""
@@ -131,10 +122,7 @@ class TestsFlextModelsFixtureSuiteMixin:
         suite_name: str
         scenario_count: int
         tags: t.StrSequence
-        setup_data: t.MappingKV[
-            str,
-            TestsFlextModelsFixtureSuiteMixin.SetupDataDict,
-        ]
+        setup_data: t.MappingKV[str, TestsFlextModelsFixtureSuiteMixin.SetupDataDict]
 
     class UserDataFixtureDict(m.BaseModel):
         """User fixture data."""
@@ -159,13 +147,9 @@ class TestsFlextModelsFixtureSuiteMixin:
 
         model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
-        user: t.MappingKV[
-            str,
-            TestsFlextModelsFixtureSuiteMixin.UserDataFixtureDict,
-        ]
+        user: t.MappingKV[str, TestsFlextModelsFixtureSuiteMixin.UserDataFixtureDict]
         request: t.MappingKV[
-            str,
-            TestsFlextModelsFixtureSuiteMixin.RequestDataFixtureDict,
+            str, TestsFlextModelsFixtureSuiteMixin.RequestDataFixtureDict
         ]
 
 

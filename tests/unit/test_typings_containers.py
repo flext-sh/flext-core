@@ -15,7 +15,7 @@ import pytest
 from flext_tests import m as ftm, tm
 
 from tests import m
-from tests import p, t
+from tests import t
 
 
 class TestsFlextCoreTypingsContainers:
@@ -40,13 +40,10 @@ class TestsFlextCoreTypingsContainers:
             _ = d["missing"]
 
     @pytest.mark.parametrize(
-        ("present", "expected"),
-        [("key", True), ("missing", False)],
+        ("present", "expected"), [("key", True), ("missing", False)]
     )
     def test_dict_contains_reports_membership(
-        self,
-        present: str,
-        expected: bool,
+        self, present: str, expected: bool
     ) -> None:
         """The 'in' operator reflects actual key membership."""
         d = m.Dict(root={"key": "value"})
@@ -163,20 +160,17 @@ class TestsFlextCoreTypingsContainers:
     # ---- t.SCALAR_TYPES: runtime scalar contract ---------------------------
 
     @pytest.mark.parametrize(
-        "scalar",
-        ["text", 42, math.pi, True, datetime(2025, 1, 1, tzinfo=UTC)],
+        "scalar", ["text", 42, math.pi, True, datetime(2025, 1, 1, tzinfo=UTC)]
     )
     def test_scalar_types_accepts_every_scalar(
-        self,
-        scalar: str | float | bool | datetime,
+        self, scalar: str | float | bool | datetime
     ) -> None:
         """SCALAR_TYPES is an isinstance-usable tuple covering all scalar kinds."""
         tm.that(isinstance(scalar, t.SCALAR_TYPES), eq=True)
 
     @pytest.mark.parametrize("nonscalar", [["list"], {"dict": 1}, ("tuple",)])
     def test_scalar_types_rejects_containers(
-        self,
-        nonscalar: list[str] | dict[str, int] | tuple[str],
+        self, nonscalar: list[str] | dict[str, int] | tuple[str]
     ) -> None:
         """Container values are not members of the scalar runtime contract."""
         tm.that(isinstance(nonscalar, t.SCALAR_TYPES), eq=False)
@@ -193,7 +187,7 @@ class TestsFlextCoreTypingsContainers:
     def test_triple_alias_enforces_three_element_arity(self) -> None:
         """t.Triple validates a 3-tuple and rejects shorter tuples."""
         adapter: ftm.TypeAdapter[t.Triple[int, str, bool]] = ftm.TypeAdapter(
-            t.Triple[int, str, bool],
+            t.Triple[int, str, bool]
         )
         tm.that(adapter.validate_python((1, "x", True)), eq=(1, "x", True))
         with pytest.raises(ftm.ValidationError):
@@ -209,7 +203,7 @@ class TestsFlextCoreTypingsContainers:
     def test_variadic_tuple_alias_accepts_any_length(self) -> None:
         """t.VariadicTuple validates homogeneous tuples of arbitrary length."""
         adapter: ftm.TypeAdapter[t.VariadicTuple[int]] = ftm.TypeAdapter(
-            t.VariadicTuple[int],
+            t.VariadicTuple[int]
         )
         tm.that(adapter.validate_python(()), eq=())
         tm.that(adapter.validate_python((1, 2, 3)), eq=(1, 2, 3))

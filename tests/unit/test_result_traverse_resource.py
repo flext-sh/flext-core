@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from collections.abc import MutableSequence
 
     from tests import p
-    from tests import p, t
+    from tests import t
 
 
 class TestsFlextResultTraverseResource:
@@ -194,17 +194,12 @@ class TestsFlextResultTraverseResource:
 
         class ModelDumpCarrier:
             def model_dump(
-                self,
-                *,
-                mode: str = "python",
+                self, *, mode: str = "python"
             ) -> t.MappingKV[str, t.JsonPayload | None]:
                 _ = mode
                 return {"alpha": 1, "beta": "two"}
 
-        result: p.Result[str] = r[str].fail(
-            "error",
-            error_data=ModelDumpCarrier(),
-        )
+        result: p.Result[str] = r[str].fail("error", error_data=ModelDumpCarrier())
 
         tm.that(result.error_data, eq={"alpha": 1, "beta": "two"})
 

@@ -19,7 +19,7 @@ from flext_tests import r, tm
 from flext_core import FlextContainer, FlextService
 from tests import m
 from tests import p
-from tests import p, t
+from tests import t
 from tests import u
 
 from .migration_validation_cases import capture_stdout
@@ -34,18 +34,9 @@ class TestsFlextCoreMigrationValidation:
     # ------------------------------------------------------------------ r[T]
 
     @pytest.mark.parametrize(
-        ("value", "expected"),
-        [
-            ("user_123", "user_123"),
-            ("", ""),
-            ("A B C", "A B C"),
-        ],
+        ("value", "expected"), [("user_123", "user_123"), ("", ""), ("A B C", "A B C")]
     )
-    def test_ok_result_exposes_wrapped_value(
-        self,
-        value: str,
-        expected: str,
-    ) -> None:
+    def test_ok_result_exposes_wrapped_value(self, value: str, expected: str) -> None:
         """A successful result reports success and returns the wrapped value."""
         result: p.Result[str] = r[str].ok(value)
 
@@ -73,16 +64,10 @@ class TestsFlextCoreMigrationValidation:
 
     @pytest.mark.parametrize(
         ("result", "default", "expected"),
-        [
-            (r[int].ok(42), 0, 42),
-            (r[int].fail("missing"), 7, 7),
-        ],
+        [(r[int].ok(42), 0, 42), (r[int].fail("missing"), 7, 7)],
     )
     def test_unwrap_or_returns_default_only_on_failure(
-        self,
-        result: p.Result[int],
-        default: int,
-        expected: int,
+        self, result: p.Result[int], default: int, expected: int
     ) -> None:
         """unwrap_or yields the value on success and the default on failure."""
         tm.that(result.unwrap_or(default), eq=expected)
@@ -143,9 +128,7 @@ class TestsFlextCoreMigrationValidation:
         seen: list[int] = []
         errors: list[str] = []
 
-        ok_after = (
-            r[int].ok(_OBSERVED_VALUE).tap(seen.append).tap_error(errors.append)
-        )
+        ok_after = r[int].ok(_OBSERVED_VALUE).tap(seen.append).tap_error(errors.append)
         tm.that(seen, eq=[_OBSERVED_VALUE])
         tm.that(errors, empty=True)
         tm.that(ok_after.value, eq=_OBSERVED_VALUE)
@@ -170,8 +153,7 @@ class TestsFlextCoreMigrationValidation:
 
         container.bind("migration_probe_service", RegisteredService())
         resolution = container.resolve(
-            "migration_probe_service",
-            type_cls=RegisteredService,
+            "migration_probe_service", type_cls=RegisteredService
         )
 
         tm.that(resolution.success, eq=True)
@@ -179,10 +161,7 @@ class TestsFlextCoreMigrationValidation:
 
     def test_container_resolve_missing_key_fails(self) -> None:
         """Resolving an unregistered key yields a failure, not an exception."""
-        resolution = FlextContainer().resolve(
-            "migration_absent_key",
-            type_cls=int,
-        )
+        resolution = FlextContainer().resolve("migration_absent_key", type_cls=int)
 
         tm.that(resolution.failure, eq=True)
         tm.that(resolution.error, none=False)

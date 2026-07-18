@@ -13,7 +13,7 @@ from tests import p, t
 
 
 class TestsFlextUtilitiesCaseGeneratorsMixin(
-    TestsFlextUtilitiesCaseServiceFactoriesMixin,
+    TestsFlextUtilitiesCaseServiceFactoriesMixin
 ):
     """Service case generator helpers."""
 
@@ -52,7 +52,7 @@ class TestsFlextUtilitiesCaseGeneratorsMixin(
                     input_value="test",
                     extra_param=2,
                     description="Custom min length",
-                ),
+                )
             ]
 
         @staticmethod
@@ -106,7 +106,7 @@ class TestsFlextUtilitiesCaseGeneratorsMixin(
         ):
             """Create appropriate service based on case type."""
             return TestsFlextUtilitiesCaseGeneratorsMixin.ServiceFactoryRegistry.create_service(
-                case,
+                case
             )
 
     class GenericModelFactory:
@@ -114,9 +114,7 @@ class TestsFlextUtilitiesCaseGeneratorsMixin(
 
         @staticmethod
         def operation_progress(
-            success: int = 0,
-            failure: int = 0,
-            skipped: int = 0,
+            success: int = 0, failure: int = 0, skipped: int = 0
         ) -> p.Tests.Operation:
             """Create OperationProgress."""
             return m.Tests.Operation(
@@ -130,11 +128,7 @@ class TestsFlextUtilitiesCaseGeneratorsMixin(
         def conversion_progress() -> p.Tests.Conversion:
             """Create ConversionProgress."""
             return m.Tests.Conversion(
-                converted=[],
-                errors=[],
-                warnings=[],
-                skipped=[],
-                metadata={},
+                converted=[], errors=[], warnings=[], skipped=[], metadata={}
             )
 
     @staticmethod

@@ -16,6 +16,7 @@ from flext_core._decorators._logging_payloads import FlextDecoratorsLoggingPaylo
 
 
 from typing import TYPE_CHECKING
+
 # mro-cqxy (ADR-011): runtime import — used in a runtime-evaluated annotation
 from flext_core._typings.base import FlextTypingBase as tb
 

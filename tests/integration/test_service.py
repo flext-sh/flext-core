@@ -55,14 +55,8 @@ class TestsFlextCoreService(_ServiceLifecycleCases):
     # ------------------------------------------------------------------ #
     # UserQueryService.fetch_user — value derivation contract
     # ------------------------------------------------------------------ #
-    @pytest.mark.parametrize(
-        "user_id",
-        ["test_user_123", "abc", "user-42"],
-    )
-    def test_fetch_user_derives_default_entity(
-        self,
-        user_id: str,
-    ) -> None:
+    @pytest.mark.parametrize("user_id", ["test_user_123", "abc", "user-42"])
+    def test_fetch_user_derives_default_entity(self, user_id: str) -> None:
         """fetch_user() derives a default entity from the requested id."""
         service = self.UserQueryService()
         entity = u.Tests.assert_success(service.fetch_user(user_id))
@@ -143,8 +137,7 @@ class TestsFlextCoreService(_ServiceLifecycleCases):
     # Dependency injection — resolve round-trip contract
     # ------------------------------------------------------------------ #
     def test_container_resolves_bound_services_functionally(
-        self,
-        clean_container: p.Container,
+        self, clean_container: p.Container
     ) -> None:
         """Bound services resolve back and remain fully functional."""
         user_service = self.UserQueryService()
@@ -163,19 +156,17 @@ class TestsFlextCoreService(_ServiceLifecycleCases):
         _ = clean_container.bind("notification_service", notification_service)
 
         resolved_user = u.Tests.assert_success(
-            clean_container.resolve("user_service", type_cls=self.UserQueryService),
+            clean_container.resolve("user_service", type_cls=self.UserQueryService)
         )
         resolved_notification = u.Tests.assert_success(
             clean_container.resolve(
-                "notification_service",
-                type_cls=self.NotificationService,
-            ),
+                "notification_service", type_cls=self.NotificationService
+            )
         )
 
         entity = u.Tests.assert_success(resolved_user.fetch_user(user_id))
         _ = u.Tests.assert_success(
-            resolved_notification.send(entity.email),
-            expected_value="sent",
+            resolved_notification.send(entity.email), expected_value="sent"
         )
         tm.that(resolved_notification.sent_notifications, has=entity.email)
 
@@ -183,15 +174,12 @@ class TestsFlextCoreService(_ServiceLifecycleCases):
     # External-service integration — boundary contract
     # ------------------------------------------------------------------ #
     def test_external_service_processes_user_email(
-        self,
-        mock_external_service: u.Tests.FunctionalExternalService,
+        self, mock_external_service: u.Tests.FunctionalExternalService
     ) -> None:
         """A fetched user email flows through the external service boundary."""
         service = self.UserQueryService()
         entity = u.Tests.assert_success(service.fetch_user("test_user"))
-        processed = u.Tests.assert_success(
-            mock_external_service.process(entity.email),
-        )
+        processed = u.Tests.assert_success(mock_external_service.process(entity.email))
         tm.that(processed, eq=f"processed_{entity.email}")
         tm.that(mock_external_service.processed_items, has=processed)
         tm.that(mock_external_service.get_call_count(), eq=1)

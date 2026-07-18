@@ -20,8 +20,8 @@ from .flextexceptionsbase_part_02 import FlextBaseErrorStateMixin
 from collections.abc import MutableMapping
 from flext_core._protocols.base import FlextProtocolsBase as p
 from flext_core._typings.services import FlextTypesServices as ts
-if TYPE_CHECKING:
 
+if TYPE_CHECKING:
     from flext_core._protocols.result import FlextProtocolsResult as pr
 
 

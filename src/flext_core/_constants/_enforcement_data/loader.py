@@ -58,9 +58,7 @@ _SMELL_DATA: Final[_SmellData] = _load_smell_data()
 
 ENFORCEMENT_SMELL_TAGS: Final[tuple[str, ...]] = _SMELL_DATA.tags
 SMELL_THRESHOLDS: Final[Mapping[str, int]] = _SMELL_DATA.thresholds.model_dump()
-SMELL_FIX_STRATEGIES: Final[Mapping[str, _SmellFixStrategy]] = (
-    _SMELL_DATA.fix_strategy
-)
+SMELL_FIX_STRATEGIES: Final[Mapping[str, _SmellFixStrategy]] = _SMELL_DATA.fix_strategy
 SMELL_RULES_TEXT: Final[Mapping[str, tuple[str, str]]] = _SMELL_DATA.rules_text
 SMELL_BEARTYPE_ROWS: Final[
     tuple[tuple[str, str, str, str, tuple[str, ...], str], ...]

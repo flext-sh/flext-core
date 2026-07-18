@@ -27,10 +27,7 @@ class TestsFlextCoreModelsCqrs:
         assert page.page == c.DEFAULT_RETRY_DELAY_SECONDS
         assert page.size == c.DEFAULT_PAGE_SIZE
 
-    @pytest.mark.parametrize(
-        ("page", "size"),
-        [(1, 10), (3, 11), (2, 50), (10, 100)],
-    )
+    @pytest.mark.parametrize(("page", "size"), [(1, 10), (3, 11), (2, 50), (10, 100)])
     def test_pagination_limit_equals_size(self, page: int, size: int) -> None:
         assert m.Pagination(page=page, size=size).limit == size
 
@@ -39,10 +36,7 @@ class TestsFlextCoreModelsCqrs:
         [(1, 10, 0), (2, 10, 10), (3, 11, 22), (5, 20, 80)],
     )
     def test_pagination_offset_is_derived_from_page_and_size(
-        self,
-        page: int,
-        size: int,
-        expected_offset: int,
+        self, page: int, size: int, expected_offset: int
     ) -> None:
         assert m.Pagination(page=page, size=size).offset == expected_offset
 
@@ -58,11 +52,7 @@ class TestsFlextCoreModelsCqrs:
             m.Pagination(size=size)
 
     @pytest.mark.parametrize(("page", "size"), [(0, 10), (1, 0), (-1, 10)])
-    def test_pagination_rejects_non_positive_bounds(
-        self,
-        page: int,
-        size: int,
-    ) -> None:
+    def test_pagination_rejects_non_positive_bounds(self, page: int, size: int) -> None:
         with pytest.raises(ValidationError):
             m.Pagination(page=page, size=size)
 
@@ -77,9 +67,7 @@ class TestsFlextCoreModelsCqrs:
         assert query.pagination.size == c.DEFAULT_PAGE_SIZE
         assert query.message_type == "query"
 
-    def test_query_coerces_pagination_mapping_including_stringified_ints(
-        self,
-    ) -> None:
+    def test_query_coerces_pagination_mapping_including_stringified_ints(self) -> None:
         query = m.Query.model_validate({
             "pagination": {"page": "4", "size": "20"},
             "filters": {},
@@ -147,9 +135,7 @@ class TestsFlextCoreModelsCqrs:
     # ------------------------------------------------------------------ #
     def test_handler_stores_identity_and_defaults_mode_to_command(self) -> None:
         handler = m.Handler(
-            handler_type=c.HandlerType.QUERY,
-            handler_id="h-1",
-            handler_name="handler",
+            handler_type=c.HandlerType.QUERY, handler_id="h-1", handler_name="handler"
         )
 
         assert handler.handler_id == "h-1"
@@ -162,23 +148,16 @@ class TestsFlextCoreModelsCqrs:
         [c.HandlerType.COMMAND, c.HandlerType.QUERY, c.HandlerType.EVENT],
     )
     def test_handler_accepts_each_handler_type(
-        self,
-        handler_type: c.HandlerType,
+        self, handler_type: c.HandlerType
     ) -> None:
-        handler = m.Handler(
-            handler_type=handler_type,
-            handler_id="h",
-            handler_name="n",
-        )
+        handler = m.Handler(handler_type=handler_type, handler_id="h", handler_name="n")
 
         assert handler.handler_type == handler_type
 
     def test_handler_rejects_empty_identity(self) -> None:
         with pytest.raises(ValidationError):
             m.Handler(
-                handler_type=c.HandlerType.COMMAND,
-                handler_id="",
-                handler_name="",
+                handler_type=c.HandlerType.COMMAND, handler_id="", handler_name=""
             )
 
     # ------------------------------------------------------------------ #
@@ -200,9 +179,7 @@ class TestsFlextCoreModelsCqrs:
         ],
     )
     def test_flext_message_union_discriminates_on_message_type(
-        self,
-        payload: dict[str, str | dict[str, str]],
-        expected_cls: str,
+        self, payload: dict[str, str | dict[str, str]], expected_cls: str
     ) -> None:
         adapter = m.TypeAdapter(m.FlextMessage.__value__)
 

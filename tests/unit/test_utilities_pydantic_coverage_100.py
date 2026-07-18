@@ -6,7 +6,7 @@ import pytest
 
 from flext_core import u
 from tests import m
-from tests import p, t
+from tests import t
 
 
 class TestsFlextUtilitiesPydantic:
@@ -19,9 +19,7 @@ class TestsFlextUtilitiesPydantic:
         ],
     )
     def test_field_validator_normalizes_aliased_name(
-        self,
-        raw_name: str,
-        expected_name: str,
+        self, raw_name: str, expected_name: str
     ) -> None:
         payload = m.Tests.PublicPayload.model_validate({
             "rawName": raw_name,
@@ -30,9 +28,7 @@ class TestsFlextUtilitiesPydantic:
 
         assert payload.raw_name == expected_name
 
-    def test_serialization_applies_alias_serializer_and_computed_field(
-        self,
-    ) -> None:
+    def test_serialization_applies_alias_serializer_and_computed_field(self) -> None:
         payload = m.Tests.PublicPayload.model_validate({
             "rawName": "  ada lovelace ",
             "visits": "3",
@@ -77,15 +73,13 @@ class TestsFlextUtilitiesPydantic:
         with pytest.raises(m.ValidationError):
             double_positive(-1)
 
-    def test_public_facade_resolves_runtime_bootstrap_options_from_json(
-        self,
-    ) -> None:
+    def test_public_facade_resolves_runtime_bootstrap_options_from_json(self) -> None:
         runtime_options = m.RuntimeBootstrapOptions.model_validate_json(
             u.to_json({
                 "subproject": "source-runtime",
                 "wire_packages": ["flext.core.runtime", "tests.runtime"],
                 "settings_overrides": {"dry_run": True},
-            }),
+            })
         )
 
         @u.validate_call()
@@ -101,9 +95,7 @@ class TestsFlextUtilitiesPydantic:
             )
 
         resolved = build_runtime_options(
-            runtime_options,
-            " cli_runtime ",
-            ("flext.cli.runtime", "flext.cli.jobs"),
+            runtime_options, " cli_runtime ", ("flext.cli.runtime", "flext.cli.jobs")
         )
 
         assert runtime_options.subproject == "source-runtime"

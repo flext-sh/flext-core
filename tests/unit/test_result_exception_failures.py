@@ -28,9 +28,7 @@ class TestsFlextCoreResultExceptionFailures:
         ],
     )
     def test_fail_without_exception_exposes_error_and_no_exception(
-        self,
-        error_msg: str | None,
-        expected_error: str,
+        self, error_msg: str | None, expected_error: str
     ) -> None:
         result: p.Result[int] = r[int].fail(error_msg)
 
@@ -49,9 +47,7 @@ class TestsFlextCoreResultExceptionFailures:
         tm.that(result.exception is exc, eq=True)
         tm.that(result.exception, is_=ZeroDivisionError)
 
-    def test_fail_with_none_error_and_exception_normalizes_error_to_empty(
-        self,
-    ) -> None:
+    def test_fail_with_none_error_and_exception_normalizes_error_to_empty(self) -> None:
         exc = RuntimeError("something went wrong")
 
         result: p.Result[int] = r[int].fail(None, exception=exc)
@@ -64,9 +60,7 @@ class TestsFlextCoreResultExceptionFailures:
         exc = ValueError("expected integer")
 
         result: p.Result[str] = r[str].fail(
-            "Invalid input",
-            error_code="INVALID_INPUT",
-            exception=exc,
+            "Invalid input", error_code="INVALID_INPUT", exception=exc
         )
 
         tm.that(result.failure, eq=True)
@@ -79,9 +73,7 @@ class TestsFlextCoreResultExceptionFailures:
         exc = ValueError("invalid email")
 
         result: p.Result[t.StrMapping] = r[t.StrMapping].fail(
-            "Validation failed",
-            error_data=error_data,
-            exception=exc,
+            "Validation failed", error_data=error_data, exception=exc
         )
 
         tm.that(result.failure, eq=True)
@@ -100,16 +92,12 @@ class TestsFlextCoreResultExceptionFailures:
             def __init__(self) -> None:
                 super().__init__("invalid email")
                 self.metadata = m.Metadata(
-                    attributes={
-                        "field": "email",
-                        "details": {"retryable": False},
-                    },
+                    attributes={"field": "email", "details": {"retryable": False}}
                 )
                 self.correlation_id = "corr-123"
 
         result: p.Result[str] = r[str].fail(
-            "Validation failed",
-            exception=MetadataError(),
+            "Validation failed", exception=MetadataError()
         )
 
         tm.that(result.failure, eq=True)
@@ -117,10 +105,7 @@ class TestsFlextCoreResultExceptionFailures:
         if result.error_data is not None:
             tm.that(result.error_data.get("field"), eq="email")
             tm.that(result.error_data.get("details"), eq={"retryable": False})
-            tm.that(
-                result.error_data.get(c.ContextKey.CORRELATION_ID),
-                eq="corr-123",
-            )
+            tm.that(result.error_data.get(c.ContextKey.CORRELATION_ID), eq="corr-123")
 
     def test_map_on_failure_short_circuits_and_keeps_exception(self) -> None:
         exc = ValueError("boom")
@@ -177,8 +162,7 @@ class TestsFlextCoreResultExceptionFailures:
 
         fallback = UserModel(name="anon", age=0)
         failure: p.Result[UserModel] = r[UserModel].fail(
-            "lookup failed",
-            exception=KeyError("missing"),
+            "lookup failed", exception=KeyError("missing")
         )
 
         recovered: p.Result[UserModel] = failure.recover(lambda _error: fallback)

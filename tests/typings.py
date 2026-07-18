@@ -13,11 +13,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    MutableSequence,
-)
+from collections.abc import MutableSequence
 
-from flext_tests import p, t
+from flext_tests import t
 
 
 class TestsFlextTypes(t):
@@ -43,13 +41,11 @@ class TestsFlextTypes(t):
             """flext-core test types namespace."""
 
             type ServiceConfigMapping = t.MappingKV[
-                str,
-                t.Tests.TestobjectSerializable | MutableSequence[str],
+                str, t.Tests.TestobjectSerializable | MutableSequence[str]
             ]
             "Service configuration mapping specific to flext-core services."
             type HandlerConfigMapping = t.MappingKV[
-                str,
-                t.Tests.TestobjectSerializable | MutableSequence[str],
+                str, t.Tests.TestobjectSerializable | MutableSequence[str]
             ]
             "Handler configuration mapping specific to flext-core handlers."
 

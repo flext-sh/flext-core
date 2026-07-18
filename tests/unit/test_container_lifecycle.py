@@ -18,8 +18,7 @@ from tests import p
 
 class TestsFlextContainerLifecycle:
     def test_clear_removes_every_registration(
-        self,
-        clean_container: p.Container,
+        self, clean_container: p.Container
     ) -> None:
         """After clear the container exposes no user registrations."""
         container = clean_container
@@ -34,11 +33,7 @@ class TestsFlextContainerLifecycle:
 
         container.clear()
 
-        tm.that(
-            container.names(),
-            empty=True,
-            msg="names() must be empty after clear",
-        )
+        tm.that(container.names(), empty=True, msg="names() must be empty after clear")
         for name in ("service1", "service2", "factory1"):
             tm.that(
                 container.has(name),
@@ -46,13 +41,11 @@ class TestsFlextContainerLifecycle:
                 msg=f"has({name}) must be False after clear",
             )
             _ = tm.fail(
-                container.resolve(name),
-                msg=f"resolve({name}) must fail after clear",
+                container.resolve(name), msg=f"resolve({name}) must fail after clear"
             )
 
     def test_clear_on_empty_container_is_noop(
-        self,
-        clean_container: p.Container,
+        self, clean_container: p.Container
     ) -> None:
         """Clearing an already-empty container leaves it empty (no error)."""
         container = clean_container
@@ -79,8 +72,7 @@ class TestsFlextContainerLifecycle:
         tm.that(second, empty=True, msg="Container must remain empty")
 
     def test_bind_returns_container_for_fluent_chaining(
-        self,
-        clean_container: p.Container,
+        self, clean_container: p.Container
     ) -> None:
         """Bind returns the same container so registrations can be chained."""
         container = clean_container
@@ -95,8 +87,7 @@ class TestsFlextContainerLifecycle:
         )
 
     def test_registered_services_resolve_to_their_bound_values(
-        self,
-        clean_container: p.Container,
+        self, clean_container: p.Container
     ) -> None:
         """Resolve returns the exact value/instance that was registered."""
         container = clean_container
@@ -113,15 +104,10 @@ class TestsFlextContainerLifecycle:
             eq="logger-instance",
             msg="Factory product must resolve to the produced value",
         )
-        tm.that(
-            len(container.names()),
-            eq=2,
-            msg="Both registrations must be counted",
-        )
+        tm.that(len(container.names()), eq=2, msg="Both registrations must be counted")
 
     def test_factory_that_raises_surfaces_a_failure_result(
-        self,
-        clean_container: p.Container,
+        self, clean_container: p.Container
     ) -> None:
         """A raising factory yields a failing r[T] carrying the error text."""
         container = clean_container
@@ -138,10 +124,7 @@ class TestsFlextContainerLifecycle:
             msg="Factory exception must surface as a failure result",
         )
 
-    def test_resolve_unknown_service_fails(
-        self,
-        clean_container: p.Container,
-    ) -> None:
+    def test_resolve_unknown_service_fails(self, clean_container: p.Container) -> None:
         """Resolving a name that was never registered fails."""
         container = clean_container
 
@@ -151,8 +134,7 @@ class TestsFlextContainerLifecycle:
         )
 
     def test_drop_removes_a_registered_service(
-        self,
-        clean_container: p.Container,
+        self, clean_container: p.Container
     ) -> None:
         """Drop succeeds for a known name and the service disappears."""
         container = clean_container
@@ -169,10 +151,7 @@ class TestsFlextContainerLifecycle:
             msg="Dropped service must no longer be present",
         )
 
-    def test_drop_unknown_service_fails(
-        self,
-        clean_container: p.Container,
-    ) -> None:
+    def test_drop_unknown_service_fails(self, clean_container: p.Container) -> None:
         """Drop reports a failure when the name was never registered."""
         container = clean_container
 
@@ -182,8 +161,7 @@ class TestsFlextContainerLifecycle:
         )
 
     def test_scope_creates_isolated_child_without_polluting_parent(
-        self,
-        clean_container: p.Container,
+        self, clean_container: p.Container
     ) -> None:
         """A scoped container sees its own service and derives its settings.
 
@@ -192,7 +170,7 @@ class TestsFlextContainerLifecycle:
         scoped = clean_container.scope(
             subproject="unit",
             registration=m.ServiceRegistrationSpec.model_validate({
-                "services": {"scoped_service": "scoped-value"},
+                "services": {"scoped_service": "scoped-value"}
             }),
         )
 
@@ -216,9 +194,7 @@ class TestsFlextContainerLifecycle:
         scoped_settings = scoped.settings.model_dump()
         base_settings = clean_container.settings.model_dump()
         tm.ok(
-            ctx_result,
-            eq="unit",
-            msg="Scoped context must carry the subproject value",
+            ctx_result, eq="unit", msg="Scoped context must carry the subproject value"
         )
         tm.that(
             scoped_settings["log_level"],

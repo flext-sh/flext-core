@@ -24,15 +24,14 @@ from flext_core.lazy import (
 )
 
 if TYPE_CHECKING:
-    from flext_core import p, t
+    from flext_core import t
 
 
 class TestsFlextCoreLazyExportsMerge:
     """Behavior contract for merge/cache/normalize/build-map helpers."""
 
     def test_merge_normalizes_child_relative_targets_to_absolute_paths(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         child_package_name = "test_lazy_pkg_merge.child"
         alpha_module_name = f"{child_package_name}.alpha"
@@ -53,8 +52,7 @@ class TestsFlextCoreLazyExportsMerge:
         assert merged["Alpha"] == (alpha_module_name, "Alpha")
 
     def test_merge_normalizes_relative_child_package_paths_against_parent(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         parent_package_name = "test_lazy_pkg_parent"
         child_package_name = f"{parent_package_name}.child"
@@ -71,17 +69,12 @@ class TestsFlextCoreLazyExportsMerge:
         monkeypatch.setitem(sys.modules, child_package_name, child_package)
         monkeypatch.setitem(sys.modules, alpha_module_name, alpha_module)
 
-        merged = merge_lazy_imports(
-            (".child",),
-            {},
-            module_name=parent_package_name,
-        )
+        merged = merge_lazy_imports((".child",), {}, module_name=parent_package_name)
 
         assert merged["Alpha"] == (alpha_module_name, "Alpha")
 
     def test_merge_keeps_local_map_when_child_has_no_lazy_imports(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Non-lazy child packages contribute no lazy entries."""
         parent_package_name = "test_lazy_pkg_without_child_map"
@@ -143,8 +136,7 @@ class TestsFlextCoreLazyExportsMerge:
         assert normalize_lazy_imports(module_path, raw) == expected
 
     def test_installed_getattr_resolves_submodule_and_caches_it(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """The published ``__getattr__`` returns the live submodule object."""
         package_name = "test_lazy_pkg_state"
@@ -157,10 +149,7 @@ class TestsFlextCoreLazyExportsMerge:
 
         module_globals: t.ModuleGlobals = {}
         install_lazy_exports(
-            package_name,
-            module_globals,
-            {"module": module_name},
-            publish_all=False,
+            package_name, module_globals, {"module": module_name}, publish_all=False
         )
 
         getattr_fn = module_globals["__getattr__"]
@@ -169,8 +158,7 @@ class TestsFlextCoreLazyExportsMerge:
         assert lazy.cache_stats["module_cache"] >= 1
 
     def test_reset_clears_all_cache_stats_to_zero(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """After a resolution + reset, every diagnostic counter returns to zero."""
         package_name = "test_lazy_pkg_reset"
@@ -182,10 +170,7 @@ class TestsFlextCoreLazyExportsMerge:
 
         module_globals: t.ModuleGlobals = {}
         install_lazy_exports(
-            package_name,
-            module_globals,
-            {"module": module_name},
-            publish_all=False,
+            package_name, module_globals, {"module": module_name}, publish_all=False
         )
         getattr_fn = module_globals["__getattr__"]
         assert callable(getattr_fn)
@@ -220,11 +205,7 @@ class TestsFlextCoreLazyExportsMerge:
     def test_build_map_merges_module_groups_and_alias_groups(self) -> None:
         """Module groups map names to the module; alias groups map to (module, attr)."""
         mapping = lazy.build_map(
-            {"pkg.mod": ("alpha",)},
-            alias_groups={"pkg.alias": (("beta", "Thing"),)},
+            {"pkg.mod": ("alpha",)}, alias_groups={"pkg.alias": (("beta", "Thing"),)}
         )
 
-        assert mapping == {
-            "alpha": "pkg.mod",
-            "beta": ("pkg.alias", "Thing"),
-        }
+        assert mapping == {"alpha": "pkg.mod", "beta": ("pkg.alias", "Thing")}

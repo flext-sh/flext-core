@@ -11,9 +11,7 @@ from tests._utilities.parser_reliability import (
     TestsFlextUtilitiesParserReliabilityMixin,
 )
 from tests._utilities.railway import TestsFlextUtilitiesRailwayMixin
-from tests._utilities.service_factories import (
-    TestsFlextUtilitiesServiceFactoriesMixin,
-)
+from tests._utilities.service_factories import TestsFlextUtilitiesServiceFactoriesMixin
 from tests._utilities.services import TestsFlextUtilitiesServicesMixin
 from tests._utilities.validation_scenarios import (
     TestsFlextUtilitiesValidationScenariosMixin,

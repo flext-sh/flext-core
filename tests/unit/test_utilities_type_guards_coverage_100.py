@@ -58,7 +58,9 @@ class TestsFlextCoreUtilitiesTypeGuards:
         tm.that(u.string_non_empty(payload["correlation_id"]), eq=True)
         tm.that(u.chk(payload["command_name"], command_spec), eq=True)
         tm.that(u.chk(payload["attempt_count"], gte=1, lte=3, not_in=[0]), eq=True)
-        tm.that(u.chk(payload["command_name"], gt="alpha", none=False, empty=False), eq=True)
+        tm.that(
+            u.chk(payload["command_name"], gt="alpha", none=False, empty=False), eq=True
+        )
         tm.that(metadata["workspace_root"], eq="/tmp/flext")
         tm.that(metadata["retry_window"], eq=None)
         tm.that(payload["started_at"], is_=str)
@@ -73,10 +75,7 @@ class TestsFlextCoreUtilitiesTypeGuards:
 
         guarded_payload = u.guard(payload, dict, return_value=True)
         fallback_tags = u.guard(
-            "invalid-tags",
-            validator=u.list_like,
-            default=["cli"],
-            return_value=True,
+            "invalid-tags", validator=u.list_like, default=["cli"], return_value=True
         )
         guarded_attempt = u.guard(2, validator=(int, float), return_value=True)
 
@@ -86,15 +85,15 @@ class TestsFlextCoreUtilitiesTypeGuards:
             raise ValueError(error_message)
 
         failed_guard_result = u.guard(
-            "sync-users",
-            validator=raising_validator,
-            return_value=True,
+            "sync-users", validator=raising_validator, return_value=True
         )
 
-        tm.that(isinstance(
-            failed_guard_result,
-            (bool, dict, list, str, int, float, type(None)),
-        ), eq=False)
+        tm.that(
+            isinstance(
+                failed_guard_result, (bool, dict, list, str, int, float, type(None))
+            ),
+            eq=False,
+        )
         failed_guard = failed_guard_result
 
         tm.that(cast("dict[str, t.JsonValue]", guarded_payload), eq=payload)

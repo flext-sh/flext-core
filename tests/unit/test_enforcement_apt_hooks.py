@@ -98,9 +98,7 @@ class TestsFlextEnforcementAptHooks:
         ],
     )
     def test_beartype_rule_binds_expected_predicate_kind(
-        self,
-        rule_id: str,
-        predicate_kind: c.EnforcementPredicateKind,
+        self, rule_id: str, predicate_kind: c.EnforcementPredicateKind
     ) -> None:
         rule = u.build_canonical_catalog().by_id(rule_id)
         assert rule is not None

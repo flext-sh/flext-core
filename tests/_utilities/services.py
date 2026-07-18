@@ -20,12 +20,10 @@ class TestsFlextUtilitiesServicesMixin:
         """Service with validation."""
 
         value_input: Annotated[
-            str,
-            u.Field(description="String input validated by business rules."),
+            str, u.Field(description="String input validated by business rules.")
         ]
         min_length: Annotated[
-            int,
-            u.Field(description="Minimum accepted input length."),
+            int, u.Field(description="Minimum accepted input length.")
         ] = c.Tests.MIN_LENGTH_DEFAULT
 
         @override
@@ -33,7 +31,7 @@ class TestsFlextUtilitiesServicesMixin:
             """Validate and return value."""
             if len(self.value_input) < self.min_length:
                 return r[str].fail(
-                    f"Value must be at least {self.min_length} characters",
+                    f"Value must be at least {self.min_length} characters"
                 )
             return r[str].ok(self.value_input.upper())
 
@@ -41,8 +39,7 @@ class TestsFlextUtilitiesServicesMixin:
         """Service that always fails."""
 
         error_message: Annotated[
-            str,
-            u.Field(description="Failure message emitted by execute()."),
+            str, u.Field(description="Failure message emitted by execute().")
         ] = c.Tests.DEFAULT_ERROR_MESSAGE
 
         @override

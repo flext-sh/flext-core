@@ -50,14 +50,10 @@ class TestsFlextExamplesExecution:
         )
 
     @pytest.mark.parametrize(
-        ("example_name", "module_name", "script_name"),
-        c.Tests.PUBLIC_EXAMPLES,
+        ("example_name", "module_name", "script_name"), c.Tests.PUBLIC_EXAMPLES
     )
     def test_public_example_scripts_match_golden_files(
-        self,
-        example_name: str,
-        module_name: str,
-        script_name: str,
+        self, example_name: str, module_name: str, script_name: str
     ) -> None:
         """A public example runs to completion and matches its golden file.
 

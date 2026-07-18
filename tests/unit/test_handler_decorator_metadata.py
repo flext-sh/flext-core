@@ -20,7 +20,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable, MutableSequence
 
     from tests.base import s
-    from tests import m
     from tests import p
 
 
@@ -47,13 +46,10 @@ class TestsFlextHandlerDecoratorMetadata:
         tm.that(hasattr(Service.handle_user, c.HANDLER_ATTR), eq=False)
 
     @pytest.mark.parametrize(
-        ("priority", "timeout"),
-        [(0, None), (1, 0.5), (42, 5.0), (7, 30.0)],
+        ("priority", "timeout"), [(0, None), (1, 0.5), (42, 5.0), (7, 30.0)]
     )
     def test_priority_and_timeout_are_recorded_verbatim(
-        self,
-        priority: int,
-        timeout: float | None,
+        self, priority: int, timeout: float | None
     ) -> None:
         class CreateCommand:
             pass

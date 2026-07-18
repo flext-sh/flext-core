@@ -22,6 +22,7 @@ from flext_core._utilities.guards_type_protocol import FlextUtilitiesGuardsTypeP
 
 # mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
 from collections.abc import Callable, Mapping, Sized
+
 if TYPE_CHECKING:
     from flext_core._protocols.result import FlextProtocolsResult as p
 

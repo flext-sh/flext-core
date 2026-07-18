@@ -12,11 +12,7 @@ from tests import m
 from tests import p, t
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        Sequence,
-    )
-
-    from tests import p
+    from collections.abc import Sequence
 
 
 class TestsFlextFlextHandlers:
@@ -28,9 +24,7 @@ class TestsFlextFlextHandlers:
 
         @override
         def dispatch_message(
-            self,
-            message: t.JsonPayload,
-            operation: str = c.DEFAULT_HANDLER_MODE,
+            self, message: t.JsonPayload, operation: str = c.DEFAULT_HANDLER_MODE
         ) -> p.Result[t.JsonPayload]:
             handler_mode = getattr(
                 self._config_model.handler_mode,
@@ -44,32 +38,26 @@ class TestsFlextFlextHandlers:
             }
             if operation != handler_mode and operation in valid_operations:
                 error_msg = c.ERR_HANDLER_INCOMPATIBLE_PIPELINE_MODE.format(
-                    handler_mode=handler_mode,
-                    operation=operation,
+                    handler_mode=handler_mode, operation=operation
                 )
                 return r[t.JsonPayload].fail_op(
-                    "validate handler pipeline mode",
-                    error_msg,
+                    "validate handler pipeline mode", error_msg
                 )
             message_type = message.__class__
             if not self.can_handle(message_type):
                 error_msg = c.ERR_HANDLER_CANNOT_HANDLE_MESSAGE_TYPE.format(
-                    type_name=message_type.__name__,
+                    type_name=message_type.__name__
                 )
                 return r[t.JsonPayload].fail_op(
-                    "validate handler message type",
-                    error_msg,
+                    "validate handler message type", error_msg
                 )
             validation = self.validate_message(message)
             if validation.failure:
                 error_detail = validation.error or c.ERR_VALIDATION_FAILED
                 error_msg = c.ERR_HANDLER_MESSAGE_VALIDATION_FAILED.format(
-                    error=error_detail,
+                    error=error_detail
                 )
-                return r[t.JsonPayload].fail_op(
-                    "validate handler message",
-                    error_msg,
-                )
+                return r[t.JsonPayload].fail_op("validate handler message", error_msg)
             try:
                 return self.handle(message)
             except c.EXC_BROAD_RUNTIME as exc:
@@ -98,8 +86,7 @@ class TestsFlextFlextHandlers:
         def validate_message(self, data: t.JsonPayload) -> p.Result[bool]:
             if data is None:
                 return r[bool].fail_op(
-                    "validate handler message",
-                    c.ERR_MESSAGE_CANNOT_BE_NONE,
+                    "validate handler message", c.ERR_MESSAGE_CANNOT_BE_NONE
                 )
             return r[bool].ok(True)
 

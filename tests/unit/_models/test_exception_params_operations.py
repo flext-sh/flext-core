@@ -22,34 +22,24 @@ from tests.unit._models._exception_params_support import (
 class TestsFlextCoreExceptionParamsOperations:
     @pytest.mark.parametrize("model_cls", _ALL_PARAMS_MODELS, ids=_ALL_PARAMS_IDS)
     def test_no_arg_construction_yields_all_none_fields(
-        self,
-        model_cls: type[p.ParamsModel],
+        self, model_cls: type[p.ParamsModel]
     ) -> None:
         instance = model_cls()
         for value in instance.model_dump().values():
             tm.that(value, none=True)
 
     @pytest.mark.parametrize("model_cls", _ALL_PARAMS_MODELS, ids=_ALL_PARAMS_IDS)
-    def test_unknown_field_is_rejected(
-        self,
-        model_cls: type[p.ParamsModel],
-    ) -> None:
+    def test_unknown_field_is_rejected(self, model_cls: type[p.ParamsModel]) -> None:
         with pytest.raises(c.ValidationError):
             model_cls.model_validate({"bogus_field": "nope"})
 
     @pytest.mark.parametrize(
         ("expected", "actual"),
-        [
-            ("str", "int"),
-            ("list", "dict"),
-            ("BaseModel", "NoneType"),
-        ],
+        [("str", "int"), ("list", "dict"), ("BaseModel", "NoneType")],
         ids=["str-int", "list-dict", "model-none"],
     )
     def test_type_error_params_exposes_expected_and_actual(
-        self,
-        expected: str,
-        actual: str,
+        self, expected: str, actual: str
     ) -> None:
         params = m.TypeErrorParams(expected_type=expected, actual_type=actual)
         tm.that(params.expected_type, eq=expected)
@@ -63,8 +53,7 @@ class TestsFlextCoreExceptionParamsOperations:
 
     def test_attribute_access_error_params_preserve_mapping_context(self) -> None:
         params = m.AttributeAccessErrorParams(
-            attribute_name="token",
-            attribute_context={"owner": "session"},
+            attribute_name="token", attribute_context={"owner": "session"}
         )
         tm.that(params.attribute_name, eq="token")
         tm.that(params.attribute_context, eq={"owner": "session"})
@@ -79,10 +68,7 @@ class TestsFlextCoreExceptionParamsOperations:
         ids=["host-port", "host-only", "neither"],
     )
     def test_connection_target_formats_host_and_port(
-        self,
-        host: str | None,
-        port: int | None,
-        expected_target: str,
+        self, host: str | None, port: int | None, expected_target: str
     ) -> None:
         params = m.ConnectionErrorParams(host=host, port=port)
         tm.that(params.connection_target, eq=expected_target)
@@ -97,9 +83,7 @@ class TestsFlextCoreExceptionParamsOperations:
         ids=["field-int", "port-str", "expected-type-int"],
     )
     def test_strict_typing_rejects_wrong_type(
-        self,
-        model_cls: type[p.ParamsModel],
-        payload: dict[str, object],
+        self, model_cls: type[p.ParamsModel], payload: dict[str, object]
     ) -> None:
         with pytest.raises(c.ValidationError):
             model_cls.model_validate(payload)
@@ -115,17 +99,12 @@ class TestsFlextCoreExceptionParamsOperations:
         [
             m.ConnectionErrorParams(host="db.internal", port=5432, timeout=5),
             m.AuthorizationErrorParams(
-                user_id="u-1",
-                resource="docs:secret",
-                permission="read",
+                user_id="u-1", resource="docs:secret", permission="read"
             ),
             m.RateLimitErrorParams(limit=1000, window_seconds=3600, retry_after=2.5),
         ],
         ids=["connection", "authorization", "rate-limit"],
     )
-    def test_model_dump_roundtrip_preserves_values(
-        self,
-        params: p.ParamsModel,
-    ) -> None:
+    def test_model_dump_roundtrip_preserves_values(self, params: p.ParamsModel) -> None:
         rebuilt = type(params).model_validate(params.model_dump())
         tm.that(rebuilt.model_dump(), eq=params.model_dump())

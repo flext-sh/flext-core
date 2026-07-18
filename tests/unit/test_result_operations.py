@@ -61,10 +61,7 @@ class TestsFlextResultOperations:
         ids=["success-keeps-value", "failure-yields-default"],
     )
     def test_unwrap_or_returns_value_on_success_default_on_failure(
-        self,
-        result: p.Result[str],
-        default: str,
-        expected: str,
+        self, result: p.Result[str], default: str, expected: str
     ) -> None:
         """unwrap_or and the | operator both yield value on success, default on failure."""
         tm.that(result.unwrap_or(default), eq=expected)
@@ -163,10 +160,7 @@ class TestsFlextResultOperations:
         ids=["predicate-passes", "predicate-fails"],
     )
     def test_filter_keeps_value_when_predicate_holds(
-        self,
-        value: int,
-        *,
-        expected_success: bool,
+        self, value: int, *, expected_success: bool
     ) -> None:
         """Filter keeps a success only when the predicate is satisfied."""
         result: p.Result[int] = r[int].ok(value)
@@ -185,10 +179,7 @@ class TestsFlextResultOperations:
         ids=["success-truthy", "failure-falsy"],
     )
     def test_bool_reflects_success_state(
-        self,
-        result: p.Result[str],
-        *,
-        expected: bool,
+        self, result: p.Result[str], *, expected: bool
     ) -> None:
         """bool(result) is True for success and False for failure."""
         assert bool(result) is expected

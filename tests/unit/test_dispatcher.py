@@ -14,7 +14,7 @@ from flext_tests import r
 
 from tests import m
 from tests import p
-from tests import p, t
+from tests import t
 from tests import u
 
 

@@ -11,7 +11,7 @@ from __future__ import annotations
 import pytest
 
 from tests import m
-from tests import p, t
+from tests import t
 
 
 class TestsFlextCoreModels:
@@ -37,10 +37,7 @@ class TestsFlextCoreModels:
         assert left == right
         assert hash(left) == hash(right)
 
-    @pytest.mark.parametrize(
-        ("x", "y"),
-        [(2, "a"), (1, "b"), (9, "z")],
-    )
+    @pytest.mark.parametrize(("x", "y"), [(2, "a"), (1, "b"), (9, "z")])
     def test_value_objects_with_different_fields_are_unequal(
         self, x: int, y: str
     ) -> None:
@@ -140,10 +137,7 @@ class TestsFlextCoreModels:
 
     # ----- Pagination value object -------------------------------------------
 
-    @pytest.mark.parametrize(
-        ("page", "size"),
-        [(1, 10), (3, 25), (5, 100)],
-    )
+    @pytest.mark.parametrize(("page", "size"), [(1, 10), (3, 25), (5, 100)])
     def test_pagination_exposes_page_and_size(self, page: int, size: int) -> None:
         pagination = m.Pagination(page=page, size=size)
 

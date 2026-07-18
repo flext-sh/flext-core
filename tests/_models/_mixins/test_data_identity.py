@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Annotated, ClassVar, Self
 
 from flext_core import m
-from tests import p, t
+from tests import t
 
 
 class TestsFlextModelsTestDataIdentityMixin:

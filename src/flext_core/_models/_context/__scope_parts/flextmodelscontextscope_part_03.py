@@ -8,7 +8,9 @@ from __future__ import annotations
 
 from typing import Annotated, Self
 
-from flext_core import FlextProtocols as p  # runtime: p.Container types a Pydantic field (ADR-011)
+from flext_core import (
+    FlextProtocols as p,
+)  # runtime: p.Container types a Pydantic field (ADR-011)
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 

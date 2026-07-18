@@ -22,7 +22,7 @@ from collections.abc import Callable
 
 import pytest
 
-from flext_core import c, m
+from flext_core import c
 from flext_core._constants.enforcement import FlextMroViolation, FlextSmellViolation
 from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
 from tests.unit._enforcement_support import make_class

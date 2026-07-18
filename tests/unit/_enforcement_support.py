@@ -10,17 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from flext_core import m
-
-
-def messages(
-    report: p.Report,
-    *,
-    fragment: str,
-) -> list[str]:
+def messages(report: p.Report, *, fragment: str) -> list[str]:
     return [v.message for v in report.violations if fragment in v.message]
 
 

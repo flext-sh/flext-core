@@ -37,9 +37,7 @@ class TestsFlextCoreIntegration:
 
     @pytest.mark.core
     def test_result_and_container_compose_on_public_surface(
-        self,
-        clean_container: p.Container,
-        sample_data: t.JsonMapping,
+        self, clean_container: p.Container, sample_data: t.JsonMapping
     ) -> None:
         """Bound value round-trips through container.resolve as a success r[T]."""
         # Arrange
@@ -103,7 +101,7 @@ class TestsFlextCoreIntegration:
 
         # Act
         mapped = failure.map(lambda value: value + 1).flat_map(
-            lambda value: r[int].ok(value),
+            lambda value: r[int].ok(value)
         )
 
         # Assert
@@ -143,8 +141,7 @@ class TestsFlextCoreIntegration:
         tm.that(resolved.value, eq=expected)
 
     def test_container_resolve_unknown_name_fails_with_error(
-        self,
-        clean_container: p.Container,
+        self, clean_container: p.Container
     ) -> None:
         """Resolving an unregistered name yields a failure carrying the name."""
         # Act
@@ -156,8 +153,7 @@ class TestsFlextCoreIntegration:
         tm.that(tm.not_none(resolved.error), has="does_not_exist")
 
     def test_container_bind_is_idempotent_for_existing_name(
-        self,
-        clean_container: p.Container,
+        self, clean_container: p.Container
     ) -> None:
         """Re-binding an existing name preserves the first value (no overwrite)."""
         # Arrange

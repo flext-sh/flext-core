@@ -8,26 +8,18 @@ from __future__ import annotations
 
 from typing import Final
 
-from flext_core import c, p, t
+from flext_core import c, t
 
 
 class TestsFlextConstantsOther:
     PUBLIC_EXAMPLES: Final[tuple[tuple[str, str, str], ...]] = (
-        (
-            "ex_01_flext_result",
-            "examples.ex_01_flext_result",
-            "ex_01_flext_result.py",
-        ),
+        ("ex_01_flext_result", "examples.ex_01_flext_result", "ex_01_flext_result.py"),
         (
             "ex_02_flext_settings",
             "examples.ex_02_flext_settings",
             "ex_02_flext_settings.py",
         ),
-        (
-            "ex_03_flext_logger",
-            "examples.ex_03_flext_logger",
-            "ex_03_flext_logger.py",
-        ),
+        ("ex_03_flext_logger", "examples.ex_03_flext_logger", "ex_03_flext_logger.py"),
         (
             "ex_04_flext_dispatcher",
             "examples.ex_04_flext_dispatcher",
@@ -45,12 +37,7 @@ class TestsFlextConstantsOther:
         ),
     )
 
-    VALIDATOR_METHODS: Final[t.StrSequence] = (
-        "imports",
-        "types",
-        "bypass",
-        "layer",
-    )
+    VALIDATOR_METHODS: Final[t.StrSequence] = ("imports", "types", "bypass", "layer")
 
     LAZY_BENCHMARK_REAL_SYMBOLS: Final[t.StrSequence] = (
         "FlextConstants",

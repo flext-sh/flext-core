@@ -11,7 +11,7 @@ from tests import p, t
 
 
 class TestsFlextServiceBase[TDomainResult: t.JsonPayload | t.SequenceOf[t.JsonPayload]](
-    tests_s[TDomainResult],
+    tests_s[TDomainResult]
 ):
     """Project-local test service base with flext-core result typing."""
 

@@ -14,33 +14,16 @@ class TestsFlextUtilitiesRailwayCasesMixin:
     @staticmethod
     def success_cases() -> t.SequenceOf[tuple[str, str]]:
         return [
-            (
-                c.Tests.USER_IDS_SUCCESS[0],
-                "Valid user ID",
-            ),
-            (
-                c.Tests.USER_IDS_SUCCESS[1],
-                "Another valid user ID",
-            ),
-            (
-                c.Tests.USER_IDS_SUCCESS[2],
-                "Third valid user ID",
-            ),
+            (c.Tests.USER_IDS_SUCCESS[0], "Valid user ID"),
+            (c.Tests.USER_IDS_SUCCESS[1], "Another valid user ID"),
+            (c.Tests.USER_IDS_SUCCESS[2], "Third valid user ID"),
         ]
 
     @staticmethod
     def failure_cases() -> t.SequenceOf[tuple[str, str, str]]:
         return [
-            (
-                "invalid",
-                "not found",
-                "Invalid user ID",
-            ),
-            (
-                "",
-                "not found",
-                "Empty user ID",
-            ),
+            ("invalid", "not found", "Invalid user ID"),
+            ("", "not found", "Empty user ID"),
         ]
 
     @staticmethod
@@ -48,12 +31,7 @@ class TestsFlextUtilitiesRailwayCasesMixin:
         tuple[t.StrSequence, t.StrSequence, int, str]
     ]:
         return [
-            (
-                [c.Tests.USER_IDS_SUCCESS[0]],
-                (),
-                1,
-                "Simple user retrieval",
-            ),
+            ([c.Tests.USER_IDS_SUCCESS[0]], (), 1, "Simple user retrieval"),
             (
                 [c.Tests.USER_IDS_SUCCESS[1]],
                 [c.Tests.RAILWAY_OPERATION_GET_EMAIL],

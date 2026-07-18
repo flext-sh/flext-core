@@ -31,9 +31,8 @@ class TestsFlextModelsServiceCaseCoreMixin:
         ) -> p.Result[TestsFlextModelsServiceCaseCoreMixin.ServiceUserData]:
             return r[TestsFlextModelsServiceCaseCoreMixin.ServiceUserData].ok(
                 TestsFlextModelsServiceCaseCoreMixin.ServiceUserData(
-                    user_id=1,
-                    name="test_user",
-                ),
+                    user_id=1, name="test_user"
+                )
             )
 
     class ServiceTestCase(m.BaseModel):
@@ -42,38 +41,26 @@ class TestsFlextModelsServiceCaseCoreMixin:
         model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         service_type: Annotated[
-            str | None,
-            m.Field(
-                description="Service type for factory-driven tests",
-            ),
+            str | None, m.Field(description="Service type for factory-driven tests")
         ] = None
         input_value: Annotated[
-            str | None,
-            m.Field(description="Primary service input"),
+            str | None, m.Field(description="Primary service input")
         ] = None
         user_id: Annotated[
-            str | None,
-            m.Field(description="User identifier for documented tests"),
+            str | None, m.Field(description="User identifier for documented tests")
         ] = None
         expected_success: Annotated[
-            bool,
-            m.Field(
-                description="Whether service call is expected to succeed",
-            ),
+            bool, m.Field(description="Whether service call is expected to succeed")
         ] = True
         expected_error: Annotated[
             str | None,
-            m.Field(
-                description="Expected error substring for failure cases",
-            ),
+            m.Field(description="Expected error substring for failure cases"),
         ] = None
         description: Annotated[
-            str,
-            m.Field(description="Human-readable test case description"),
+            str, m.Field(description="Human-readable test case description")
         ] = ""
         extra_param: Annotated[
-            int,
-            m.Field(description="Auxiliary numeric parameter"),
+            int, m.Field(description="Auxiliary numeric parameter")
         ] = 3
 
     class RailwayTestCase(m.BaseModel):
@@ -82,28 +69,19 @@ class TestsFlextModelsServiceCaseCoreMixin:
         model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         user_ids: Annotated[
-            t.StrSequence,
-            m.Field(description="User identifiers used in pipeline"),
+            t.StrSequence, m.Field(description="User identifiers used in pipeline")
         ]
         operations: Annotated[
-            t.StrSequence,
-            m.Field(description="Pipeline operations to execute"),
+            t.StrSequence, m.Field(description="Pipeline operations to execute")
         ] = m.Field(default_factory=tuple)
         expected_pipeline_length: Annotated[
-            int,
-            m.Field(description="Expected number of pipeline stages"),
+            int, m.Field(description="Expected number of pipeline stages")
         ] = 1
         should_fail_at: Annotated[
-            int | None,
-            m.Field(
-                description="Optional pipeline step expected to fail",
-            ),
+            int | None, m.Field(description="Optional pipeline step expected to fail")
         ] = None
         description: Annotated[
-            str,
-            m.Field(
-                description="Human-readable railway test case description",
-            ),
+            str, m.Field(description="Human-readable railway test case description")
         ] = ""
 
 

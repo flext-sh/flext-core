@@ -27,13 +27,9 @@ from tests import t
 class TestsFlextCoreEnforcementWarningVisibility:
     _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-    @pytest.mark.parametrize(
-        "category",
-        [FlextMroViolation, FlextSmellViolation],
-    )
+    @pytest.mark.parametrize("category", [FlextMroViolation, FlextSmellViolation])
     def test_enforcement_categories_are_userwarnings(
-        self,
-        category: type[FlextMroViolation],
+        self, category: type[FlextMroViolation]
     ) -> None:
         # Arrange / Act / Assert: default warning filters surface UserWarning,
         # so a caller sees enforcement violations without extra configuration.
@@ -44,21 +40,15 @@ class TestsFlextCoreEnforcementWarningVisibility:
         # the more specific smell category.
         assert issubclass(FlextSmellViolation, FlextMroViolation)
 
-    @pytest.mark.parametrize(
-        "category",
-        [FlextMroViolation, FlextSmellViolation],
-    )
+    @pytest.mark.parametrize("category", [FlextMroViolation, FlextSmellViolation])
     def test_emitted_violation_is_observable_with_message(
-        self,
-        category: type[FlextMroViolation],
+        self, category: type[FlextMroViolation]
     ) -> None:
         # Act: emit the violation the way the enforcement engine does.
         # Assert: pytest.warns observes the exact category and its message.
         with pytest.warns(category, match="ENFORCE-probe") as record:
             warnings.warn(
-                "ENFORCE-probe: runtime violation visibility",
-                category,
-                stacklevel=2,
+                "ENFORCE-probe: runtime violation visibility", category, stacklevel=2
             )
 
         assert len(record) == 1
@@ -69,16 +59,13 @@ class TestsFlextCoreEnforcementWarningVisibility:
         # since callers filter on FlextMroViolation broadly.
         with pytest.warns(FlextMroViolation) as record:
             warnings.warn(
-                "ENFORCE-probe: smell via parent",
-                FlextSmellViolation,
-                stacklevel=2,
+                "ENFORCE-probe: smell via parent", FlextSmellViolation, stacklevel=2
             )
 
         assert record[0].category is FlextSmellViolation
 
     def test_real_filterwarnings_keep_mro_violations_visible(
-        self,
-        tmp_path: Path,
+        self, tmp_path: Path
     ) -> None:
         # Arrange: reconstruct the shipped pytest filterwarnings config so the
         # test fails if a future edit silences enforcement warnings again.
@@ -90,8 +77,7 @@ class TestsFlextCoreEnforcementWarningVisibility:
 
         filter_lines = "\n".join(f"    {item}" for item in filters)
         (tmp_path / "pytest.ini").write_text(
-            f"[pytest]\nfilterwarnings =\n{filter_lines}\n",
-            encoding="utf-8",
+            f"[pytest]\nfilterwarnings =\n{filter_lines}\n", encoding="utf-8"
         )
         (tmp_path / "test_probe.py").write_text(
             textwrap.dedent(
@@ -107,7 +93,7 @@ class TestsFlextCoreEnforcementWarningVisibility:
                         FlextMroViolation,
                         stacklevel=2,
                     )
-                """,
+                """
             ).strip()
             + "\n",
             encoding="utf-8",

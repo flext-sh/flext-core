@@ -124,18 +124,10 @@ class TestsFlextResultTransforms:
 
     @pytest.mark.parametrize(
         ("value", "predicate_ceiling", "expect_success"),
-        [
-            (10, 5, True),
-            (10, 20, False),
-            (6, 5, True),
-            (5, 5, False),
-        ],
+        [(10, 5, True), (10, 20, False), (6, 5, True), (5, 5, False)],
     )
     def test_filter_keeps_or_drops_success_by_predicate(
-        self,
-        value: int,
-        predicate_ceiling: int,
-        expect_success: bool,
+        self, value: int, predicate_ceiling: int, expect_success: bool
     ) -> None:
         """Filter keeps a success when the predicate holds, else fails it."""
         result = r[int].ok(value)
@@ -187,16 +179,10 @@ class TestsFlextResultTransforms:
 
     @pytest.mark.parametrize(
         ("result", "fallback", "expected"),
-        [
-            (r[int].ok(7), 42, 7),
-            (r[int].fail("missing"), 42, 42),
-        ],
+        [(r[int].ok(7), 42, 7), (r[int].fail("missing"), 42, 42)],
     )
     def test_unwrap_or_returns_value_or_fallback(
-        self,
-        result: p.Result[int],
-        fallback: int,
-        expected: int,
+        self, result: p.Result[int], fallback: int, expected: int
     ) -> None:
         """unwrap_or yields the success value, or the fallback on failure."""
         tm.that(result.unwrap_or(fallback), eq=expected)
@@ -242,8 +228,7 @@ class TestsFlextResultTransforms:
     def test_traverse_fails_fast_on_first_failure(self) -> None:
         """Traverse stops at the first item that maps to a failure."""
         result = r.traverse(
-            [1, 2, 3],
-            lambda x: r[int].fail("error") if x == 2 else r[int].ok(x),
+            [1, 2, 3], lambda x: r[int].fail("error") if x == 2 else r[int].ok(x)
         )
 
         _ = u.Tests.assert_failure(result)

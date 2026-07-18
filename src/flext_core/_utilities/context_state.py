@@ -29,6 +29,7 @@ from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeMode
 
 # mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
 from collections.abc import MutableMapping
+
 if TYPE_CHECKING:
     import contextvars
 

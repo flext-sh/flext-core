@@ -16,6 +16,7 @@ from flext_core._typings.base import FlextTypingBase as tb
 
 # mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
 from flext_core._protocols.logging import FlextProtocolsLogging as pl
+
 if TYPE_CHECKING:
     from flext_core._typings.services import FlextTypesServices as ts
 

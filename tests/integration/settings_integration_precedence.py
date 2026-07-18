@@ -59,10 +59,7 @@ class TestsFlextFlextSettingsPrecedenceCase(TestsFlextFlextSettingsFactories):
 
             FlextSettings.reset_for_testing()
             explicit = FlextSettings(
-                log_level="ERROR",
-                debug=True,
-                trace=False,
-                timezone="America/Sao_Paulo",
+                log_level="ERROR", debug=True, trace=False, timezone="America/Sao_Paulo"
             )
             tm.that(explicit.log_level, eq="ERROR")
             tm.that(explicit.debug, eq=True)

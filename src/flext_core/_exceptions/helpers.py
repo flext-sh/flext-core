@@ -22,6 +22,7 @@ from flext_core._runtime._metadata_validation import (
 # mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
 from flext_core._typings.base import FlextTypingBase as tb
 from flext_core import p
+
 if TYPE_CHECKING:
     # p is used only in annotations (p.Metadata); importing it at runtime here
     # re-enters flext_core.__init__ before its lazy exports install -> import

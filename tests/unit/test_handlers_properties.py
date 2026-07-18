@@ -14,7 +14,7 @@ from flext_tests import h, r, tm
 from hypothesis import given, strategies as st
 
 from tests import c
-from tests import p, t
+from tests import t
 from tests.unit._handlers_support import TestsFlextFlextHandlers
 
 _TOKENS: st.SearchStrategy[str] = st.text(

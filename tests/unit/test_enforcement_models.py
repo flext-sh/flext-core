@@ -13,7 +13,7 @@ from pydantic.warnings import PydanticDeprecatedSince20
 from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
 from tests import c
 from tests import m
-from tests import p, t
+from tests import t
 from tests.unit._enforcement_support import messages
 from tests import u
 
@@ -55,8 +55,7 @@ class TestsFlextEnforcementModels:
     def test_mutable_sequence_list_factory_passes(self) -> None:
         class _M(m.ArbitraryTypesModel):
             items: Annotated[
-                MutableSequence[str],
-                m.Field(default_factory=list, description="d"),
+                MutableSequence[str], m.Field(default_factory=list, description="d")
             ]
 
         assert not messages(u.check(_M), fragment="read-only field contract")
@@ -67,8 +66,7 @@ class TestsFlextEnforcementModels:
                 name: Annotated[str, m.Field(description="Value name")] = "x"
 
             items: typing.MutableMapping[str, _M.Value] = m.Field(
-                default_factory=dict,
-                description="Mutable mapping contract.",
+                default_factory=dict, description="Mutable mapping contract."
             )
 
         assert not messages(u.check(_M), fragment="read-only field contract")
@@ -88,8 +86,7 @@ class TestsFlextEnforcementModels:
     def test_sequence_list_factory_detected(self) -> None:
         class _M(m.ArbitraryTypesModel):
             items: Annotated[
-                t.StrSequence,
-                m.Field(default_factory=list, description="d"),
+                t.StrSequence, m.Field(default_factory=list, description="d")
             ]
 
         assert messages(u.check(_M), fragment="read-only field contract")
@@ -135,22 +132,14 @@ class TestsFlextEnforcementModels:
 
     def test_canonical_flext_core_class_satisfies_prefix_contract(self) -> None:
         """A correctly named ``flext_core`` class raises no class-prefix violation."""
-        assert not messages(
-            u.check(FlextUtilitiesEnforcement),
-            fragment="class_prefix",
-        )
+        assert not messages(u.check(FlextUtilitiesEnforcement), fragment="class_prefix")
 
     @pytest.mark.parametrize(
         ("module", "expect_prefix_violation"),
-        [
-            ("flext_core.synthetic_module", True),
-            ("fence", False),
-        ],
+        [("flext_core.synthetic_module", True), ("fence", False)],
     )
     def test_class_prefix_enforced_only_for_knowable_projects(
-        self,
-        module: str,
-        expect_prefix_violation: bool,
+        self, module: str, expect_prefix_violation: bool
     ) -> None:
         """``flext_core`` demands the ``Flext`` prefix; doc-fence modules stay silent.
 

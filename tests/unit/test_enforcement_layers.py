@@ -188,11 +188,7 @@ class TestsFlextCoreEnforcementLayers:
         ],
     )
     def test_non_compliant_class_is_flagged(
-        self,
-        build: str,
-        layer: str,
-        expected_layer: str,
-        rule_tag: str,
+        self, build: str, layer: str, expected_layer: str, rule_tag: str
     ) -> None:
         # Arrange
         target: type = getattr(self, build)()
@@ -217,10 +213,7 @@ class TestsFlextCoreEnforcementLayers:
         ],
     )
     def test_compliant_class_is_not_flagged(
-        self,
-        build: str,
-        layer: str,
-        rule_tag: str,
+        self, build: str, layer: str, rule_tag: str
     ) -> None:
         # Arrange
         target: type = getattr(self, build)()

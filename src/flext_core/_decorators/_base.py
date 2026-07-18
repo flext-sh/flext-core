@@ -15,6 +15,7 @@ from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._protocols.logging import FlextProtocolsLogging as pl
 from flext_core._typings.base import FlextTypingBase as tb
 from flext_core._typings.services import FlextTypesServices as ts
+
 # mro-cqxy (ADR-011): runtime import — used in a runtime-evaluated annotation
 from flext_core._protocols.context import FlextProtocolsContext as pcx
 from flext_core._protocols.container import FlextProtocolsContainer as pc

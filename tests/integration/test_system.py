@@ -47,8 +47,7 @@ class TestsFlextCoreSystem:
     def test_fail_result_exposes_failure_contract(self) -> None:
         """A failed result is failure, exposes the error, and carries the error code."""
         result: p.Result[str] = r[str].fail(
-            "processing_failed",
-            error_code=c.ErrorCode.VALIDATION_ERROR,
+            "processing_failed", error_code=c.ErrorCode.VALIDATION_ERROR
         )
 
         tm.that(result.success, eq=False)
@@ -63,10 +62,7 @@ class TestsFlextCoreSystem:
 
     @pytest.mark.parametrize(
         ("start", "expected"),
-        [
-            ("dados_iniciais", "processado-DADOS-INICIAIS"),
-            ("abc", "processado-ABC"),
-        ],
+        [("dados_iniciais", "processado-DADOS-INICIAIS"), ("abc", "processado-ABC")],
     )
     def test_map_chain_transforms_success_value(
         self, start: str, expected: str
@@ -117,9 +113,7 @@ class TestsFlextCoreSystem:
         recovered = (
             r[str]
             .fail("erro_original")
-            .lash(
-                lambda _error: r[str].ok("valor_recuperado"),
-            )
+            .lash(lambda _error: r[str].ok("valor_recuperado"))
         )
 
         tm.that(recovered.success, eq=True)
@@ -235,12 +229,7 @@ class TestsFlextCoreSystem:
         tm.that(timestamp, is_=str, empty=False)
 
     @pytest.mark.parametrize(
-        ("value", "expected"),
-        [
-            ("payload", True),
-            ("", False),
-            ("   ", False),
-        ],
+        ("value", "expected"), [("payload", True), ("", False), ("   ", False)]
     )
     def test_string_non_empty_reports_meaningful_content(
         self, value: str, *, expected: bool
@@ -277,8 +266,7 @@ class TestsFlextCoreSystem:
     def _process_user_data(data: dict[str, str]) -> p.Result[dict[str, str]]:
         if not data:
             return r[dict[str, str]].fail(
-                "Dados não fornecidos",
-                error_code=c.ErrorCode.VALIDATION_ERROR,
+                "Dados não fornecidos", error_code=c.ErrorCode.VALIDATION_ERROR
             )
         processed: dict[str, str] = {}
         for key, value in data.items():
@@ -292,9 +280,7 @@ class TestsFlextCoreSystem:
 
     def test_workflow_transforms_every_field_on_success(self) -> None:
         """A valid record yields a success whose fields are all transformed."""
-        result = self._process_user_data(
-            {"nome": "João", "email": "joao@exemplo.com"},
-        )
+        result = self._process_user_data({"nome": "João", "email": "joao@exemplo.com"})
 
         tm.that(result.success, eq=True)
         tm.that(result.value["nome"], eq="processado_João")
@@ -302,9 +288,7 @@ class TestsFlextCoreSystem:
 
     def test_workflow_fails_with_field_error_on_empty_value(self) -> None:
         """An empty field aborts the workflow with a descriptive validation error."""
-        result = self._process_user_data(
-            {"nome": "", "email": "joao@exemplo.com"},
-        )
+        result = self._process_user_data({"nome": "", "email": "joao@exemplo.com"})
 
         tm.that(result.success, eq=False)
         tm.that(result.error, none=False)

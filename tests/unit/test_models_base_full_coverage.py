@@ -107,8 +107,7 @@ class TestsFlextCoreModelsBaseFullCoverage:
 
     def test_identifiable_blank_unique_id_rejected(self) -> None:
         with pytest.raises(
-            c.ValidationError,
-            match="String should have at least 1 character",
+            c.ValidationError, match="String should have at least 1 character"
         ):
             self._Identifiable(unique_id="   ")
 

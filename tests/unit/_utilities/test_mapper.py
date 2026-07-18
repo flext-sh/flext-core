@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import p, t
+from flext_core import t
 from tests import u
 
 
@@ -94,11 +94,7 @@ class TestsFlextCoreMapper:
         ],
     )
     def test_deep_eq_reports_structural_equality(
-        self,
-        left: t.JsonDict,
-        right: t.JsonDict,
-        *,
-        expected: bool,
+        self, left: t.JsonDict, right: t.JsonDict, *, expected: bool
     ) -> None:
         assert u.deep_eq(left, right) is expected
 

@@ -5,8 +5,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import ClassVar, Self
 
-from flext_core import m, p, u
-from tests import p, t
+from flext_core import m, u
+from tests import t
 
 
 class TestsFlextModelsCorePublicMixin:

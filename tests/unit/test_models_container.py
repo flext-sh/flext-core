@@ -12,7 +12,7 @@ from __future__ import annotations
 import pytest
 
 from tests import m
-from tests import p, t
+from tests import t
 
 
 class TestsFlextCoreModelsContainer:
@@ -52,29 +52,19 @@ class TestsFlextCoreModelsContainer:
 
     @pytest.mark.parametrize(
         ("key", "default", "expected"),
-        [
-            ("a", None, 1),
-            ("absent", None, None),
-            ("absent", 99, 99),
-        ],
+        [("a", None, 1), ("absent", None, None), ("absent", 99, 99)],
     )
     def test_config_map_get_returns_value_or_default(
-        self,
-        key: str,
-        default: int | None,
-        expected: int | None,
+        self, key: str, default: int | None, expected: int | None
     ) -> None:
         cfg = m.ConfigMap(root={"a": 1})
         assert cfg.get(key, default) == expected
 
     @pytest.mark.parametrize(
-        ("key", "present"),
-        [("a", True), ("b", True), ("missing", False)],
+        ("key", "present"), [("a", True), ("b", True), ("missing", False)]
     )
     def test_config_map_contains_reflects_membership(
-        self,
-        key: str,
-        present: bool,
+        self, key: str, present: bool
     ) -> None:
         cfg = m.ConfigMap(root={"a": 1, "b": 2})
         assert (key in cfg) is present
@@ -82,14 +72,9 @@ class TestsFlextCoreModelsContainer:
     def test_config_map_len_counts_entries(self) -> None:
         assert len(m.ConfigMap(root={"a": 1, "b": 2, "c": 3})) == 3
 
-    @pytest.mark.parametrize(
-        ("root", "truthy"),
-        [({}, False), ({"a": 1}, True)],
-    )
+    @pytest.mark.parametrize(("root", "truthy"), [({}, False), ({"a": 1}, True)])
     def test_config_map_bool_reflects_emptiness(
-        self,
-        root: dict[str, t.JsonPayload],
-        truthy: bool,
+        self, root: dict[str, t.JsonPayload], truthy: bool
     ) -> None:
         assert bool(m.ConfigMap(root=root)) is truthy
 
@@ -176,14 +161,9 @@ class TestsFlextCoreModelsContainer:
     def test_object_list_len_counts_elements(self) -> None:
         assert len(m.ObjectList(root=["a", 1])) == 2
 
-    @pytest.mark.parametrize(
-        ("root", "truthy"),
-        [([], False), (["a"], True)],
-    )
+    @pytest.mark.parametrize(("root", "truthy"), [([], False), (["a"], True)])
     def test_object_list_bool_reflects_emptiness(
-        self,
-        root: list[t.JsonPayload],
-        truthy: bool,
+        self, root: list[t.JsonPayload], truthy: bool
     ) -> None:
         assert bool(m.ObjectList(root=root)) is truthy
 

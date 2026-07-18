@@ -20,7 +20,7 @@ import pytest
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._models.enforcement import FlextModelsEnforcement as me
 from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as be
-from tests import p, t
+from tests import t
 
 # ENFORCE-055: root wrapper alias imports (`from tests import c`) are CORRECT; a
 # SUBMODULE alias import is the violation. The forbidden form is the submodule one.
@@ -32,11 +32,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
 
     @staticmethod
     def _probe_class(
-        tmp_path: Path,
-        *,
-        package: str,
-        under_tests: bool,
-        body: str,
+        tmp_path: Path, *, package: str, under_tests: bool, body: str
     ) -> type:
         """Materialize ``<package>[/tests]/sample.py`` and import its ``Probe`` class.
 
@@ -70,8 +66,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
         )
 
     def test_detects_forbidden_facade_alias_import_in_wrapper_module(
-        self,
-        tmp_path: Path,
+        self, tmp_path: Path
     ) -> None:
         """A forbidden facade alias import in a tests module yields a violation."""
         probe = self._probe_class(
@@ -85,7 +80,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
 
                 class Probe:
                     value = c
-                """,
+                """
             ).strip()
             + "\n",
         )
@@ -98,8 +93,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
         assert violation["line"] == "1"
 
     def test_ignores_string_literal_that_merely_mentions_a_forbidden_import(
-        self,
-        tmp_path: Path,
+        self, tmp_path: Path
     ) -> None:
         """A string literal spelling the import is not an import; no violation."""
         probe = self._probe_class(
@@ -110,7 +104,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
                 f"""
                 class Probe:
                     value = "{_FORBIDDEN_IMPORT}"
-                """,
+                """
             ).strip()
             + "\n",
         )
@@ -118,8 +112,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
         assert self._apply(probe) is None
 
     def test_ignores_forbidden_import_outside_wrapper_module(
-        self,
-        tmp_path: Path,
+        self, tmp_path: Path
     ) -> None:
         """The predicate only scans test/example/script wrapper modules."""
         probe = self._probe_class(
@@ -133,7 +126,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
 
                 class Probe:
                     value = c
-                """,
+                """
             ).strip()
             + "\n",
         )
@@ -141,8 +134,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
         assert self._apply(probe) is None
 
     def test_unrelated_shape_reports_no_violation_for_clean_class(
-        self,
-        tmp_path: Path,
+        self, tmp_path: Path
     ) -> None:
         """An unrelated ast_shape on a clean wrapper class returns no violation."""
         probe = self._probe_class(
@@ -153,7 +145,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
                 """
                 class Probe:
                     value = 1
-                """,
+                """
             ).strip()
             + "\n",
         )
@@ -167,8 +159,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
         assert result is None
 
     def test_detection_is_idempotent_across_repeated_applications(
-        self,
-        tmp_path: Path,
+        self, tmp_path: Path
     ) -> None:
         """Re-applying the predicate yields an equal result (stable contract)."""
         probe = self._probe_class(
@@ -182,7 +173,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
 
                 class Probe:
                     value = c
-                """,
+                """
             ).strip()
             + "\n",
         )
@@ -195,9 +186,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
 
     @pytest.mark.parametrize("attempts", [2, 3])
     def test_string_literal_case_stays_clean_under_repeat(
-        self,
-        tmp_path: Path,
-        attempts: int,
+        self, tmp_path: Path, attempts: int
     ) -> None:
         """The no-false-positive guarantee holds across repeated applications."""
         probe = self._probe_class(
@@ -208,7 +197,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
                 f"""
                 class Probe:
                     value = "{_FORBIDDEN_IMPORT}"
-                """,
+                """
             ).strip()
             + "\n",
         )

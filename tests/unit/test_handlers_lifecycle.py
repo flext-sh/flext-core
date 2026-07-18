@@ -41,8 +41,7 @@ class TestsFlextHandlersLifecycle(TestsFlextFlextHandlers):
 
     @pytest.mark.parametrize("scenario", HANDLER_TYPES, ids=lambda s: s.name)
     def test_mode_reflects_configured_handler_mode(
-        self,
-        scenario: HandlerTypeScenario,
+        self, scenario: HandlerTypeScenario
     ) -> None:
         settings = u.Tests.create_handler_config(
             f"h_{scenario.name}",
@@ -60,7 +59,7 @@ class TestsFlextHandlersLifecycle(TestsFlextFlextHandlers):
 
     def test_handle_reports_failure_with_producer_error(self) -> None:
         handler = self.FailingTestHandler(
-            settings=u.Tests.create_handler_config("h_fail", "Fail Handler"),
+            settings=u.Tests.create_handler_config("h_fail", "Fail Handler")
         )
         result = handler.handle("payload")
         u.Tests.assert_failure(result, expected_error="Handler failed for: payload")
@@ -68,10 +67,7 @@ class TestsFlextHandlersLifecycle(TestsFlextFlextHandlers):
     def test_handle_rejects_wrong_message_type(self) -> None:
         handler = self._concrete("h_type", "Type Handler")
         result = handler.handle(123)
-        u.Tests.assert_failure(
-            result,
-            expected_error=c.Tests.UNEXPECTED_MESSAGE_TYPE,
-        )
+        u.Tests.assert_failure(result, expected_error=c.Tests.UNEXPECTED_MESSAGE_TYPE)
 
     def test_execute_delivers_handle_result_on_valid_message(self) -> None:
         handler = self._concrete("h_exec", "Exec Handler")
@@ -118,9 +114,7 @@ class TestsFlextHandlersLifecycle(TestsFlextFlextHandlers):
         ids=[label for label, _ in VALIDATION_TYPES],
     )
     def test_validation_accepts_every_non_null_payload_shape(
-        self,
-        label: str,
-        message: t.JsonPayload,
+        self, label: str, message: t.JsonPayload
     ) -> None:
         handler = self._concrete(f"h_val_{label}", f"Validate {label} Handler")
         assert handler.validate_message(message).unwrap() is True
@@ -137,9 +131,7 @@ class TestsFlextHandlersLifecycle(TestsFlextFlextHandlers):
 
     def test_command_timeout_config_does_not_break_execution(self) -> None:
         settings = u.Tests.create_handler_config(
-            "h_timeout",
-            "Timeout Handler",
-            command_timeout=60,
+            "h_timeout", "Timeout Handler", command_timeout=60
         )
         handler = self.ConcreteTestHandler(settings=settings)
         result = handler.execute("payload")
@@ -147,9 +139,7 @@ class TestsFlextHandlersLifecycle(TestsFlextFlextHandlers):
 
     def test_retry_config_does_not_break_execution(self) -> None:
         settings = u.Tests.create_handler_config(
-            "h_retry",
-            "Retry Handler",
-            max_command_retries=3,
+            "h_retry", "Retry Handler", max_command_retries=3
         )
         handler = self.ConcreteTestHandler(settings=settings)
         result = handler.execute("payload")
@@ -167,18 +157,15 @@ class TestsFlextHandlersLifecycle(TestsFlextFlextHandlers):
                 return r[t.JsonPayload].ok(f"processed_{message}")
 
         handler = IntHandler(
-            settings=u.Tests.create_handler_config("h_int", "Int Handler"),
+            settings=u.Tests.create_handler_config("h_int", "Int Handler")
         )
         u.Tests.assert_success(handler.handle(42), expected_value="processed_42")
         u.Tests.assert_failure(
-            handler.handle("nan"),
-            expected_error=c.Tests.UNEXPECTED_MESSAGE_TYPE,
+            handler.handle("nan"), expected_error=c.Tests.UNEXPECTED_MESSAGE_TYPE
         )
 
     def _concrete(
-        self,
-        handler_id: str,
-        handler_name: str,
+        self, handler_id: str, handler_name: str
     ) -> TestsFlextFlextHandlers.ConcreteTestHandler:
         settings = u.Tests.create_handler_config(handler_id, handler_name)
         return self.ConcreteTestHandler(settings=settings)

@@ -30,9 +30,7 @@ class TestsFlextCoreResultRecentBehaviors:
     def test_map_error_transforms_message_and_preserves_error_code(self) -> None:
         """``map_error`` rewrites the failure message but keeps the error code."""
         failure: p.Result[int] = r[int].fail(
-            "bad",
-            error_code="E1",
-            error_data=m.ConfigMap(root={"k": "v"}),
+            "bad", error_code="E1", error_data=m.ConfigMap(root={"k": "v"})
         )
 
         transformed = failure.map_error(lambda msg: f"{msg}_mapped")
@@ -78,10 +76,7 @@ class TestsFlextCoreResultRecentBehaviors:
         result = (
             r[int]
             .ok(1)
-            .flow_through(
-                lambda v: r[int].ok(v + 1),
-                lambda v: r[int].ok(v * 10),
-            )
+            .flow_through(lambda v: r[int].ok(v + 1), lambda v: r[int].ok(v * 10))
         )
 
         assert result.success is True

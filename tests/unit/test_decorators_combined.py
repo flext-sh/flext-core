@@ -151,17 +151,10 @@ class TestsFlextCoreDecoratorsCombined(TestsFlextDecoratorsLegacy):
         assert attempts == 2
 
     @pytest.mark.parametrize(
-        ("timeout_seconds", "should_raise"),
-        [
-            (5.0, False),
-            (0.001, True),
-        ],
+        ("timeout_seconds", "should_raise"), [(5.0, False), (0.001, True)]
     )
     def test_timeout_enforces_duration_budget(
-        self,
-        timeout_seconds: float,
-        *,
-        should_raise: bool,
+        self, timeout_seconds: float, *, should_raise: bool
     ) -> None:
         # Arrange
         @d.timeout(timeout_seconds=timeout_seconds)
@@ -180,9 +173,7 @@ class TestsFlextCoreDecoratorsCombined(TestsFlextDecoratorsLegacy):
     @given(a=st.integers(), b=st.integers(min_value=1, max_value=1000))
     @settings(max_examples=50)
     def test_railway_division_always_returns_success_result(
-        self,
-        a: int,
-        b: int,
+        self, a: int, b: int
     ) -> None:
         # Arrange
         @d.railway(error_code="DIV")

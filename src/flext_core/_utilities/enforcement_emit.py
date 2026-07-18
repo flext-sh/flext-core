@@ -16,6 +16,7 @@ from flext_core._models.enforcement import FlextModelsEnforcement as me
 # mro-qtjb (flext-core): t at runtime — module-level _BEARTYPE_TAG_TO_RULE
 # annotation is evaluated at runtime by beartype claw instrumentation.
 from flext_core._typings.base import FlextTypingBase as t
+
 _BEARTYPE_TAG_TO_RULE: MappingProxyType[str, t.StrPair] = MappingProxyType({
     tag: (rule_id, anchor)
     for rule_id, _sev, tag, anchor, *_ in (*c.BEARTYPE_ROWS, *c.SMELL_CODE_SMELL_ROWS)
@@ -74,9 +75,7 @@ class FlextUtilitiesEnforcementEmit:
         ):
             layer = "Model"
 
-        file_path, line_number = (
-            FlextUtilitiesEnforcementEmit._resolve_source(target)
-        )
+        file_path, line_number = FlextUtilitiesEnforcementEmit._resolve_source(target)
         return me.Violation(
             qualname=qualname,
             layer=layer,
@@ -108,11 +107,7 @@ class FlextUtilitiesEnforcementEmit:
             else:
                 fix_note = f"See AGENTS.md § {v.layer} governance."
 
-            source = (
-                f"\nLocation: {v.file_path}:{v.line_number}"
-                if v.file_path
-                else ""
-            )
+            source = f"\nLocation: {v.file_path}:{v.line_number}" if v.file_path else ""
             msg = (
                 f"\n{v.qualname} violates FLEXT {v.layer} {v.severity}:"
                 f"{source}\n  - {v.message}\n\nFix: {fix_note}"

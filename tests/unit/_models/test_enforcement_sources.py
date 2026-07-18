@@ -20,10 +20,14 @@ from tests import p, t
 # One representative valid instance per surviving source variant, keyed by the
 # discriminator literal it must expose on the public ``kind`` field.
 _SOURCE_CASES: dict[str, m.BaseModel] = {
-    "flext_infra_detector": m.EnforcementInfraDetectorSource(violation_field="loose_symbol",),
+    "flext_infra_detector": m.EnforcementInfraDetectorSource(
+        violation_field="loose_symbol"
+    ),
     "flext_tests_validator": m.EnforcementTestsValidatorSource(method="check_x"),
     "runtime_warning": m.EnforcementRuntimeWarningSource(category="FlextMroWarning"),
-    "beartype": m.EnforcementBeartypeSource(predicate_kind=c.EnforcementPredicateKind.MODULE_ALIAS,),
+    "beartype": m.EnforcementBeartypeSource(
+        predicate_kind=c.EnforcementPredicateKind.MODULE_ALIAS
+    ),
     "ruff": m.EnforcementRuffSource(rule_code="ANN401"),
     "skill_pointer": m.EnforcementSkillPointerSource(skill="pydantic-canonical"),
     "code_smell": m.EnforcementCodeSmellSource(smell_tag="complex-method"),
@@ -48,9 +52,7 @@ class TestsFlextCoreEnforcementSources:
         ],
     )
     def test_source_kind_member_exposes_expected_value(
-        self,
-        member: p.EnforcementSourceKind,
-        value: str,
+        self, member: p.EnforcementSourceKind, value: str
     ) -> None:
         assert member.value == value
 
@@ -70,14 +72,9 @@ class TestsFlextCoreEnforcementSources:
 
     # --- discriminator literals across every source model ---
 
-    @pytest.mark.parametrize(
-        ("expected_kind", "source"),
-        list(_SOURCE_CASES.items()),
-    )
+    @pytest.mark.parametrize(("expected_kind", "source"), list(_SOURCE_CASES.items()))
     def test_source_model_exposes_matching_discriminator_literal(
-        self,
-        expected_kind: str,
-        source: p.BaseModel,
+        self, expected_kind: str, source: p.BaseModel
     ) -> None:
         assert source.model_dump()["kind"] == expected_kind
 
@@ -104,7 +101,7 @@ class TestsFlextCoreEnforcementSources:
 
     def test_beartype_source_carries_predicate_kind_enum(self) -> None:
         source = m.EnforcementBeartypeSource(
-            predicate_kind=c.EnforcementPredicateKind.WRAPPER,
+            predicate_kind=c.EnforcementPredicateKind.WRAPPER
         )
         assert source.kind == "beartype"
         assert source.predicate_kind is c.EnforcementPredicateKind.WRAPPER
@@ -113,9 +110,7 @@ class TestsFlextCoreEnforcementSources:
 
     def test_beartype_source_rejects_unknown_predicate_kind(self) -> None:
         with pytest.raises(c.ValidationError):
-            m.EnforcementBeartypeSource.model_validate(
-                {"predicate_kind": "not_a_kind"},
-            )
+            m.EnforcementBeartypeSource.model_validate({"predicate_kind": "not_a_kind"})
 
     @pytest.mark.parametrize(
         ("factory", "payload"),
@@ -130,18 +125,17 @@ class TestsFlextCoreEnforcementSources:
         ],
     )
     def test_source_model_rejects_missing_required_field(
-        self,
-        factory: type[p.BaseModel],
-        payload: t.JsonMapping,
+        self, factory: type[p.BaseModel], payload: t.JsonMapping
     ) -> None:
         with pytest.raises(c.ValidationError):
             factory.model_validate(payload)
 
     def test_fix_action_rejects_kind_outside_literal_set(self) -> None:
         with pytest.raises(c.ValidationError):
-            m.EnforcementFixAction.model_validate(
-                {"kind": "not_a_fixer", "target": "x"},
-            )
+            m.EnforcementFixAction.model_validate({
+                "kind": "not_a_fixer",
+                "target": "x",
+            })
 
     def test_fix_action_defaults_safe_true_and_empty_params(self) -> None:
         action = m.EnforcementFixAction(kind="gate", target="loose-symbol-gate")
@@ -152,14 +146,9 @@ class TestsFlextCoreEnforcementSources:
 
     # --- model_dump round-trip (public serialization contract) ---
 
-    @pytest.mark.parametrize(
-        ("expected_kind", "source"),
-        list(_SOURCE_CASES.items()),
-    )
+    @pytest.mark.parametrize(("expected_kind", "source"), list(_SOURCE_CASES.items()))
     def test_source_model_dump_round_trips(
-        self,
-        expected_kind: str,
-        source: p.BaseModel,
+        self, expected_kind: str, source: p.BaseModel
     ) -> None:
         dumped = source.model_dump()
         assert dumped["kind"] == expected_kind
@@ -176,11 +165,7 @@ class TestsFlextCoreEnforcementSources:
                 {"kind": "beartype", "predicate_kind": "module_alias"},
                 m.EnforcementBeartypeSource,
             ),
-            (
-                "ruff",
-                {"kind": "ruff", "rule_code": "ANN401"},
-                m.EnforcementRuffSource,
-            ),
+            ("ruff", {"kind": "ruff", "rule_code": "ANN401"}, m.EnforcementRuffSource),
             (
                 "flext_infra_detector",
                 {"kind": "flext_infra_detector", "violation_field": "loose_symbol"},
@@ -189,29 +174,22 @@ class TestsFlextCoreEnforcementSources:
         ],
     )
     def test_rule_spec_dispatches_source_by_discriminator(
-        self,
-        kind: str,
-        source_payload: t.JsonMapping,
-        expected_type: type[p.BaseModel],
+        self, kind: str, source_payload: t.JsonMapping, expected_type: type[p.BaseModel]
     ) -> None:
-        spec = m.EnforcementRuleSpec.model_validate(
-            {
-                "id": "ENFORCE-001",
-                "description": "d",
-                "severity": "HIGH",
-                "source": source_payload,
-            },
-        )
+        spec = m.EnforcementRuleSpec.model_validate({
+            "id": "ENFORCE-001",
+            "description": "d",
+            "severity": "HIGH",
+            "source": source_payload,
+        })
         assert isinstance(spec.source, expected_type)
         assert spec.source.kind == kind
 
     def test_rule_spec_rejects_unknown_source_discriminator(self) -> None:
         with pytest.raises(c.ValidationError):
-            m.EnforcementRuleSpec.model_validate(
-                {
-                    "id": "ENFORCE-001",
-                    "description": "d",
-                    "severity": "HIGH",
-                    "source": {"kind": "minimal_ast"},
-                },
-            )
+            m.EnforcementRuleSpec.model_validate({
+                "id": "ENFORCE-001",
+                "description": "d",
+                "severity": "HIGH",
+                "source": {"kind": "minimal_ast"},
+            })

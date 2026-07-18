@@ -187,17 +187,10 @@ class TestsFlextHandlerDiscoveryModule:
 
     @pytest.mark.parametrize(
         ("returned", "expected"),
-        [
-            (42, 42),
-            ("payload", "payload"),
-            (None, None),
-            ([1, 2], "[1, 2]"),
-        ],
+        [(42, 42), ("payload", "payload"), (None, None), ([1, 2], "[1, 2]")],
     )
     def test_discovered_callable_coerces_result_to_scalar_or_none(
-        self,
-        returned: t.JsonValue,
-        expected: t.Scalar | None,
+        self, returned: t.JsonValue, expected: t.Scalar | None
     ) -> None:
         # Arrange
         module = types.ModuleType("coercion_module")

@@ -22,7 +22,7 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
         """Execute the documented V1 railway pipeline."""
         if not case.user_ids:
             return r[str | tm.Tests.User | p.Tests.EmailResponse].fail(
-                c.Tests.NO_USER_IDS_PROVIDED,
+                c.Tests.NO_USER_IDS_PROVIDED
             )
         user_result: p.Result[tm.Tests.User] = (
             TestsFlextUtilitiesRailwayPipelinesMixin.make(
@@ -31,14 +31,14 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
             ).execute()
         )
         result: p.Result[str | tm.Tests.User | p.Tests.EmailResponse] = user_result.map(
-            lambda user: user,
+            lambda user: user
         )
         for operation in case.operations:
             if operation == "get_email":
                 result = result.map(
                     lambda user: (
                         user.email if isinstance(user, tm.Tests.User) else str(user)
-                    ),
+                    )
                 )
             elif operation == "send_email":
                 email_result: p.Result[p.Tests.EmailResponse] = result.flat_map(
@@ -46,7 +46,7 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
                         TestsFlextUtilitiesRailwayPipelinesMixin.SendEmailService,
                         to=str(email),
                         subject="Test",
-                    ).execute(),
+                    ).execute()
                 )
                 result = email_result.map(lambda response: response)
             elif operation == "get_status":
@@ -55,14 +55,12 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
                         response.status
                         if isinstance(response, m.Tests.EmailResponse)
                         else str(response)
-                    ),
+                    )
                 )
         return result
 
     @staticmethod
-    def execute_v2_pipeline(
-        case: p.Tests.RailwayTestCase,
-    ) -> tm.Tests.User | str:
+    def execute_v2_pipeline(case: p.Tests.RailwayTestCase) -> tm.Tests.User | str:
         """Execute the documented V2 railway pipeline."""
         if not case.user_ids:
             msg = c.Tests.NO_USER_IDS_PROVIDED

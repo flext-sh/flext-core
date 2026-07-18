@@ -6,13 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (  # noqa: TC003 — Pydantic field resolution needs runtime Mapping
+from collections.abc import (
     Mapping,
 )
 from types import MappingProxyType
 from typing import Annotated, Self, TYPE_CHECKING
 
-from pydantic import NonNegativeInt  # noqa: TC002 — Pydantic field resolution needs runtime NonNegativeInt
+from pydantic import NonNegativeInt
 
 from flext_core._models.base import FlextModelsBase as m
 from flext_core._models.pydantic import FlextModelsPydantic as mp
