@@ -7,7 +7,7 @@ import inspect
 import types as _types_mod
 from collections.abc import Callable, MutableMapping, MutableSequence, MutableSet
 from types import UnionType
-from typing import TYPE_CHECKING, TypeAliasType, Union, get_args, get_origin
+from typing import TypeAliasType, Union, get_args, get_origin
 
 # Import directly from base modules to avoid a circular load through the public
 # flext_core facade while this module is still being initialized.
@@ -17,9 +17,8 @@ from .helpers_part_02 import (
     FlextUtilitiesBeartypeHelpers as FlextUtilitiesBeartypeHelpersPart02,
 )
 
-if TYPE_CHECKING:
-    from flext_core._protocols.base import FlextProtocolsBase as p
-    from flext_core._typings.base import FlextTypingBase as t
+from flext_core._protocols.base import FlextProtocolsBase as p
+from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart02):

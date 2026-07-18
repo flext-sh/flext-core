@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from enum import EnumType
-from typing import TYPE_CHECKING
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers as ubh
@@ -12,8 +11,7 @@ from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelper
 # is evaluated at runtime by beartype claw instrumentation.
 from flext_core._typings.base import FlextTypingBase as t
 
-if TYPE_CHECKING:
-    from flext_core._protocols.enforcement import FlextProtocolsEnforcement as pe
+from flext_core._protocols.enforcement import FlextProtocolsEnforcement as pe
 
 NO_VIOLATION: t.StrMapping | None = None
 BARE_VIOLATION: t.StrMapping = {}

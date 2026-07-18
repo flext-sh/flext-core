@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 
 from .helpers import FlextUtilitiesBeartypeHelpers as _ubh
 
@@ -10,8 +9,7 @@ from .helpers import FlextUtilitiesBeartypeHelpers as _ubh
 # is evaluated at runtime by beartype claw instrumentation.
 from flext_core._typings.base import FlextTypingBase as t
 
-if TYPE_CHECKING:
-    from flext_core._protocols.enforcement import FlextProtocolsEnforcement as pe
+from flext_core._protocols.enforcement import FlextProtocolsEnforcement as pe
 
 _NO_VIOLATION: t.StrMapping | None = None
 
