@@ -14,8 +14,9 @@ from __future__ import annotations
 
 import uuid
 from collections.abc import Hashable
+from datetime import datetime
 from types import MappingProxyType
-from typing import Annotated, ClassVar, override, TYPE_CHECKING
+from typing import Annotated, ClassVar, override
 
 from pydantic import ConfigDict
 
@@ -28,10 +29,7 @@ from flext_core._runtime._metadata_validation import (
 )
 from flext_core._utilities.generators import FlextUtilitiesGenerators as ug
 from flext_core.constants import FlextConstants as c
-
-if TYPE_CHECKING:
-    from datetime import datetime
-    from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextModelsBase(FlextModelsBasePart01):

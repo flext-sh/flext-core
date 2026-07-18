@@ -10,16 +10,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Annotated, TYPE_CHECKING
+from types import ModuleType
+from typing import Annotated
 
+from flext_core import FlextProtocols as p, FlextTypes as t
 from flext_core._models.base import FlextModelsBase as m
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
 from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
-
-if TYPE_CHECKING:
-    from flext_core import FlextProtocols as p, FlextTypes as t
-    from types import ModuleType
 
 
 class FlextModelsService:

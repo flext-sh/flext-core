@@ -12,6 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+from collections.abc import MutableSequence
 from typing import Annotated, ClassVar, TYPE_CHECKING
 
 from flext_core import c, p, t
@@ -21,7 +22,9 @@ from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
 
 if TYPE_CHECKING:
-    from collections.abc import MutableSequence
+    from flext_core._models.handler import FlextModelsHandler as _FlextModelsHandler
+
+    ExecutionContext = _FlextModelsHandler.ExecutionContext
 
 
 class FlextModelsHandler:
@@ -122,11 +125,11 @@ class FlextModelsHandler:
         """Aggregate runtime state for the active handler pipeline."""
 
         execution_context: Annotated[
-            FlextModelsHandler.ExecutionContext,
+            ExecutionContext,
             mp.Field(description="Execution context for the active handler"),
         ]
         context_stack: Annotated[
-            MutableSequence[FlextModelsHandler.ExecutionContext],
+            MutableSequence[ExecutionContext],
             mp.Field(description="Stack of nested execution contexts."),
         ] = mp.Field(default_factory=list)
 

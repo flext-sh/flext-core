@@ -47,7 +47,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         kind, params = binding
         return [
             FlextUtilitiesEnforcement._violation(
-                tag, location, qualname, detail, category=category
+                tag, location, qualname, detail, category=category, target=_target
             )
             for location, args in items
             if (detail := ub.apply(kind, params, *args)) is not None

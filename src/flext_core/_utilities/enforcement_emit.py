@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 import warnings
 from types import MappingProxyType
 
@@ -26,12 +27,29 @@ class FlextUtilitiesEnforcementEmit:
     """Violation factory + warning/strict emission + exemption rules."""
 
     @staticmethod
+    def _resolve_source(target: type | None) -> tuple[str, int]:
+        """Resolve a class to its real ``(file_path, line_number)`` source.
+
+        Returns ``("", 0)`` for built-in or dynamically generated classes
+        whose source cannot be read, so emission degrades gracefully.
+        """
+        if target is None:
+            return "", 0
+        try:
+            source_file = inspect.getsourcefile(target)
+            _, line_number = inspect.getsourcelines(target)
+        except (OSError, TypeError):
+            return "", 0
+        return (source_file or "", line_number)
+
+    @staticmethod
     def _violation(
         tag: str,
         location: str,
         qualname: str,
         detail: t.StrMapping | None = None,
         category: c.EnforcementCategory | None = None,
+        target: type | None = None,
     ) -> me.Violation:
         # Look up problem/fix from legacy text mapping (derived from rows)
         problem, fix = c.ENFORCEMENT_RULES_TEXT[tag]
@@ -57,6 +75,9 @@ class FlextUtilitiesEnforcementEmit:
         ):
             layer = "Model"
 
+        file_path, line_number = (
+            FlextUtilitiesEnforcementEmit._resolve_source(target)
+        )
         return me.Violation(
             qualname=qualname,
             layer=layer,
@@ -64,6 +85,8 @@ class FlextUtilitiesEnforcementEmit:
             rule_id=rule_id,
             agents_md_anchor=anchor,
             message=message,
+            file_path=file_path,
+            line_number=line_number,
         )
 
     @staticmethod
@@ -86,9 +109,14 @@ class FlextUtilitiesEnforcementEmit:
             else:
                 fix_note = f"See AGENTS.md § {v.layer} governance."
 
+            source = (
+                f"\nLocation: {v.file_path}:{v.line_number}"
+                if v.file_path
+                else ""
+            )
             msg = (
-                f"\n{v.qualname} violates FLEXT {v.layer} {v.severity}:\n  - "
-                f"{v.message}\n\nFix: {fix_note}"
+                f"\n{v.qualname} violates FLEXT {v.layer} {v.severity}:"
+                f"{source}\n  - {v.message}\n\nFix: {fix_note}"
             )
             category = (
                 FlextSmellViolation

@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, TYPE_CHECKING
+from typing import Annotated
 
 from pydantic import Discriminator, Field, model_validator
 
@@ -14,9 +14,8 @@ from flext_core import FlextConstants as c
 
 from ._base import EnforcementModelBase, FlextModelsEnforcementBase
 from ._sources import FlextModelsEnforcementSources
+from flext_core._typings.base import FlextTypingBase as t
 
-if TYPE_CHECKING:
-    from flext_core._typings.base import FlextTypingBase as t
 
 type EnforcementRuleSource = (
     FlextModelsEnforcementSources.EnforcementInfraDetectorSource

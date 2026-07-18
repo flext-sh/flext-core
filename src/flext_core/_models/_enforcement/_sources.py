@@ -6,16 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Literal, TYPE_CHECKING
+from typing import Literal
 
 from pydantic import Field
 
 
 from ._base import EnforcementModelBase, FlextModelsEnforcementBase
-
-if TYPE_CHECKING:
-    from flext_core._constants.enforcement import FlextConstantsEnforcement as ce
-    from flext_core._typings.base import FlextTypingBase as t
+from flext_core._constants.enforcement import FlextConstantsEnforcement as ce
+from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextModelsEnforcementSources(FlextModelsEnforcementBase):

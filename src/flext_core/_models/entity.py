@@ -20,10 +20,10 @@ from pydantic import Field
 from flext_core._models.base import FlextModelsBase as m
 from flext_core._utilities.domain import FlextUtilitiesDomain as u
 from flext_core._utilities.generators import FlextUtilitiesGenerators
+from flext_core._models.domain_event import FlextModelsDomainEvent
 
 if TYPE_CHECKING:
     from flext_core._typings.base import FlextTypingBase as t
-    from flext_core._models.domain_event import FlextModelsDomainEvent
 
 
 class FlextModelsEntity:

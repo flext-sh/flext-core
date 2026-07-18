@@ -10,8 +10,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, TYPE_CHECKING
+from typing import Annotated
 
+from flext_core import FlextTypes as t
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 
 from .flextmodelsexceptionparams_part_01 import (
@@ -20,9 +21,6 @@ from .flextmodelsexceptionparams_part_01 import (
 from .flextmodelsexceptionparams_part_02 import (
     FlextModelsExceptionParams as FlextModelsExceptionParamsPart02,
 )
-
-if TYPE_CHECKING:
-    from flext_core import FlextTypes as t
 
 
 class FlextModelsExceptionParams(FlextModelsExceptionParamsPart02):
