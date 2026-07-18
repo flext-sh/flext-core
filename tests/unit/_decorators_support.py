@@ -8,7 +8,7 @@ from contextlib import redirect_stdout
 from enum import StrEnum, unique
 from typing import TYPE_CHECKING, Annotated, ClassVar
 
-from tests import m
+from tests import m, t
 from tests import u
 
 if TYPE_CHECKING:

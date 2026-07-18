@@ -16,7 +16,7 @@ import pytest
 
 from flext_core._constants.enforcement import FlextMroViolation, FlextSmellViolation
 from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
-from tests import c
+from tests import c, p
 from tests import m
 from tests import u
 

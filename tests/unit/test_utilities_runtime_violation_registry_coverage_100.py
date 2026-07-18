@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tests import m
+from tests import m, p
 
 if TYPE_CHECKING:
     # pyrefly cannot resolve the lazy root export; bind the concrete class for

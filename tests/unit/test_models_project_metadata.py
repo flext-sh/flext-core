@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from tests import c
+from tests import c, p
 from tests import m
 from tests import u
 

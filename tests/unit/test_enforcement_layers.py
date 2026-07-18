@@ -18,7 +18,7 @@ from typing import Final, Protocol, runtime_checkable
 import pytest
 
 from flext_core import m
-from tests import u
+from tests import p, u
 
 
 class TestsFlextCoreEnforcementLayers:

@@ -12,7 +12,7 @@ from __future__ import annotations
 import pytest
 
 from tests.unit._enforcement_support import make_class, messages
-from tests import u
+from tests import p, u
 
 
 class TestsFlextCoreEnforcement:

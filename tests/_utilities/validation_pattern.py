@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from tests import m
+from tests import m, p
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

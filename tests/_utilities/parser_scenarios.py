@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 from flext_tests import u
 
-from tests import c
+from tests import c, p
 from tests import m
 
 if TYPE_CHECKING:

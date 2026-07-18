@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
+from tests import p
 
 
 def messages(report: p.Report, *, fragment: str) -> list[str]:
