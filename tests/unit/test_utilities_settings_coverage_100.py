@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import tm
@@ -13,8 +12,7 @@ from flext_core import FlextContainer, u
 from tests import c
 from tests import m
 
-if TYPE_CHECKING:
-    from tests import p, t
+from tests import t
 
 
 class TestsFlextCoreUtilitiesSettings:
@@ -59,7 +57,7 @@ class TestsFlextCoreUtilitiesSettings:
             log_level=requested,
         )
 
-        assert resolved == expected
+        tm.that(resolved, eq=expected)
 
     def test_env_override_and_process_environment_are_observable(
         self,
@@ -85,10 +83,10 @@ class TestsFlextCoreUtilitiesSettings:
         finally:
             os.environ.pop(probe_env_var, None)
 
-        assert snapshot.env_file == str(env_file.resolve())
-        assert snapshot.process_environment[c.ENV_FILE_ENV_VAR] == str(env_file)
-        assert snapshot.process_environment[probe_env_var] == "integration"
-        assert snapshot.log_level == c.LogLevel.DEBUG
+        tm.that(snapshot.env_file, eq=str(env_file.resolve()))
+        tm.that(snapshot.process_environment[c.ENV_FILE_ENV_VAR], eq=str(env_file))
+        tm.that(snapshot.process_environment[probe_env_var], eq="integration")
+        tm.that(snapshot.log_level, eq=c.LogLevel.DEBUG)
 
     def test_env_file_resolves_cwd_default_then_override_then_fallback(
         self,
@@ -104,11 +102,11 @@ class TestsFlextCoreUtilitiesSettings:
         missing_override = str(tmp_path / "missing.env")
         os.environ[c.ENV_FILE_ENV_VAR] = missing_override
 
-        assert cwd_resolved == str(default_env_file.resolve())
-        assert u.resolve_env_file() == missing_override
+        tm.that(cwd_resolved, eq=str(default_env_file.resolve()))
+        tm.that(u.resolve_env_file(), eq=missing_override)
 
         os.environ.pop(c.ENV_FILE_ENV_VAR, None)
-        assert u.resolve_env_file() == c.ENV_FILE_DEFAULT
+        tm.that(u.resolve_env_file(), eq=c.ENV_FILE_DEFAULT)
 
     def test_register_factory_reports_success_and_resolvable_service(self) -> None:
         container = FlextContainer()
@@ -134,12 +132,12 @@ class TestsFlextCoreUtilitiesSettings:
         resolved_summary = container.resolve("settings_summary")
 
         tm.ok(success_result)
-        assert success_result.value is True
+        tm.that(success_result.value, eq=True)
         tm.ok(resolved_summary)
-        assert resolved_summary.value == {
+        tm.that(resolved_summary.value, eq={
             "env_file": c.ENV_FILE_DEFAULT,
             "log_level": c.LogLevel.INFO,
-        }
+        })
 
     def test_register_factory_surfaces_factory_failure_as_result(self) -> None:
         container = FlextContainer()
@@ -156,5 +154,5 @@ class TestsFlextCoreUtilitiesSettings:
         )
 
         tm.fail(failure_result)
-        assert failure_result.error is not None
-        assert error_message in failure_result.error
+        tm.that(failure_result.error, none=False)
+        tm.that(failure_result.error, has=error_message)

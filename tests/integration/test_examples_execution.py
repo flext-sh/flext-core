@@ -15,14 +15,12 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import pytest
 
 from tests import c
 
-if TYPE_CHECKING:
-    from tests import p, t
+from tests import t
 
 _CHECK_COUNT_RE = re.compile(r"\((\d+) checks\)")
 

@@ -17,9 +17,14 @@ from .flextlazy_part_01 import (
 
 from typing import TYPE_CHECKING
 
+# mro-qtjb (flext-core): p imported at runtime — the lazy __getattr__ wrapper
+# runs at import time and beartype resolves its p.Namespace parameter hint in
+# this module namespace, so p must be runtime-importable (forward-safe: this
+# is u-layer infra importing the p facade).
+from flext_core._protocols.lazy import FlextProtocolsLazy as p
+
 if TYPE_CHECKING:
     from collections.abc import Sequence
-    from flext_core._protocols.lazy import FlextProtocolsLazy as p
 
 
 class FlextLazyAttribute:

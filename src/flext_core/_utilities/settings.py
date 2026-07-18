@@ -62,4 +62,4 @@ class FlextUtilitiesSettings:
         return r[bool].ok(True)
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesSettings"]
+__all__: list[str] = ["FlextUtilitiesSettings"]

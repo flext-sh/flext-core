@@ -116,4 +116,4 @@ class FlextUtilitiesConfig:
         return value
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesConfig"]
+__all__: list[str] = ["FlextUtilitiesConfig"]

@@ -116,4 +116,4 @@ class FlextUtilitiesContextCrud(
         self._update_statistics(c.ContextOperation.REMOVE.value)
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesContextCrud"]
+__all__: list[str] = ["FlextUtilitiesContextCrud"]

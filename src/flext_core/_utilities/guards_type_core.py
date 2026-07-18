@@ -173,4 +173,4 @@ class FlextUtilitiesGuardsTypeCore:
         return False
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesGuardsTypeCore"]
+__all__: list[str] = ["FlextUtilitiesGuardsTypeCore"]

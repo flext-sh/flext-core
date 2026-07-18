@@ -184,5 +184,5 @@ class TestsFlextCoreResult:
 
     def test_results_satisfy_success_checkable_protocol(self) -> None:
         """Result instances honor the structural p.SuccessCheckable contract."""
-        assert isinstance(r[int].ok(1), p.SuccessCheckable)
-        assert isinstance(r[int].fail("e"), p.SuccessCheckable)
+        tm.that(r[int].ok(1), is_=p.SuccessCheckable)
+        tm.that(r[int].fail("e"), is_=p.SuccessCheckable)

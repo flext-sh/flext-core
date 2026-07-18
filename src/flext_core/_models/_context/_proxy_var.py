@@ -67,4 +67,4 @@ class FlextModelsContextProxyVar:
             )
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextModelsContextProxyVar"]
+__all__: list[str] = ["FlextModelsContextProxyVar"]

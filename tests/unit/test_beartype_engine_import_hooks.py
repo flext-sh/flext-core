@@ -22,7 +22,9 @@ from flext_core._models.enforcement import FlextModelsEnforcement as me
 from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as be
 from tests import p, t
 
-_FORBIDDEN_IMPORT = "from tests import c"
+# ENFORCE-055: root wrapper alias imports (`from tests import c`) are CORRECT; a
+# SUBMODULE alias import is the violation. The forbidden form is the submodule one.
+_FORBIDDEN_IMPORT = "from tests.constants import c"
 
 
 class TestsFlextCoreBeartypeEngineImportHooks:
@@ -78,7 +80,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
             under_tests=True,
             body=textwrap.dedent(
                 """
-                from tests import c
+                from tests.constants import c
 
 
                 class Probe:
@@ -126,7 +128,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
             under_tests=False,
             body=textwrap.dedent(
                 """
-                from tests import c
+                from tests.constants import c
 
 
                 class Probe:
@@ -175,7 +177,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
             under_tests=True,
             body=textwrap.dedent(
                 """
-                from tests import c
+                from tests.constants import c
 
 
                 class Probe:

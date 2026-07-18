@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from enum import EnumType
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._models.enforcement import FlextModelsEnforcement as me
@@ -13,11 +13,12 @@ from flext_core._utilities.enforcement_collect import FlextUtilitiesEnforcementC
 
 from .enforcement_part_01 import PREDICATE_BINDINGS
 
-if TYPE_CHECKING:
-    from collections.abc import Iterator
-
-    from flext_core._protocols.base import FlextProtocolsBase as p
-    from flext_core._typings.base import FlextTypingBase as t
+# mro-qtjb (flext-core): Iterator/p/t at runtime — the PEP 526 annotated
+# assignment (items: Iterator[...] = iter(())) is evaluated at runtime by
+# beartype claw instrumentation, so these names must resolve at runtime.
+from collections.abc import Iterator
+from flext_core._protocols.base import FlextProtocolsBase as p
+from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):

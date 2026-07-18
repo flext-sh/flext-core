@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 
 from flext_tests import e, m as tm, r
 
@@ -10,8 +9,7 @@ from tests._utilities.railway_services import TestsFlextUtilitiesRailwayServices
 from tests import c
 from tests import m
 
-if TYPE_CHECKING:
-    from tests import p
+from tests import p
 
 
 class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayServicesMixin):

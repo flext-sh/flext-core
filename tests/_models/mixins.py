@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 
 from tests._models._mixins.container import TestsFlextModelsContainerMixin
 from tests._models._mixins.core import TestsFlextModelsCoreMixin
@@ -10,8 +9,7 @@ from tests._models._mixins.guards_mapper import TestsFlextModelsGuardsMapperMixi
 from tests._models._mixins.service_cases import TestsFlextModelsServiceCasesMixin
 from tests._models._mixins.test_data import TestsFlextModelsTestDataMixin
 
-if TYPE_CHECKING:
-    from tests import p, t
+from tests import t
 
 
 class TestsFlextModelsMixins(

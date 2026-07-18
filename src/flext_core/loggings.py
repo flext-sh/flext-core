@@ -448,4 +448,4 @@ class FlextUtilitiesLogging(ulc):
         return logger
 
 
-__all__: t.StrSequence = ("FlextUtilitiesLogging",)
+__all__: tuple[str, ...] = ("FlextUtilitiesLogging",)

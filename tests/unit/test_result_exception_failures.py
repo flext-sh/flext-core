@@ -8,7 +8,7 @@ attributes, no internal patching, no mock spying on the unit under test.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 
 import pytest
 from flext_tests import r, tm
@@ -16,9 +16,6 @@ from flext_tests import r, tm
 from tests import c
 from tests import m
 from tests import p, t
-
-if TYPE_CHECKING:
-    from tests import p
 
 
 class TestsFlextCoreResultExceptionFailures:

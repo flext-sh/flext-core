@@ -20,9 +20,10 @@ from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeMode
 from flext_core._utilities.guards_type_protocol import FlextUtilitiesGuardsTypeProtocol
 
 
+# mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
+from collections.abc import Callable, Mapping, Sized
 if TYPE_CHECKING:
     from flext_core._protocols.result import FlextProtocolsResult as p
-    from collections.abc import Callable, Mapping, Sized
 
 
 # NOTE (multi-agent): mro-i6nq.12 — consolidated _guards_parts/part_01..02 (one

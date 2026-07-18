@@ -11,7 +11,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import tm
@@ -22,8 +21,7 @@ from .service_lifecycle_cases import (
     TestsFlextFlextServiceLifecycleCases as _ServiceLifecycleCases,
 )
 
-if TYPE_CHECKING:
-    from tests import p
+from tests import p
 
 _FETCH_CALL_COUNT = 2
 

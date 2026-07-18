@@ -7,17 +7,15 @@ from_validation. No private attributes or internal collaborators are touched.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import r, tm
 
 from tests import c
+from tests import t
 from tests.unit._result_exception_support import TestsFlextResultExceptionCarrying
 
-if TYPE_CHECKING:
-    from tests import p
-    from tests import p, t
+from tests import p
 
 
 class TestsFlextCoreResultExceptionTraverseValidation(

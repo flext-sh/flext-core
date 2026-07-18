@@ -15,11 +15,15 @@ from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 
+# mro-qtjb (flext-core): t at runtime — module-level _NO_VIOLATION annotation
+# is evaluated at runtime by beartype claw instrumentation.
+from flext_core._typings.base import FlextTypingBase as t
+
+# mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
+from collections.abc import Callable
 if TYPE_CHECKING:
-    from collections.abc import Callable
 
     from flext_core._protocols.base import FlextProtocolsBase as p
-    from flext_core._typings.base import FlextTypingBase as t
 
 from ._beartype._helpers_parts.helpers_part_03 import FlextUtilitiesBeartypeHelpers
 from ._beartype.attr_visitor import FlextUtilitiesBeartypeAttrVisitor

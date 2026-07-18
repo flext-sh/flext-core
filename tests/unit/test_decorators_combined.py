@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import d, e, r
@@ -12,8 +11,7 @@ from hypothesis import given, settings, strategies as st
 from tests.unit._decorators_support import TestsFlextDecoratorsLegacy
 from tests import u
 
-if TYPE_CHECKING:
-    from tests import p
+from tests import p
 
 
 class TestsFlextCoreDecoratorsCombined(TestsFlextDecoratorsLegacy):

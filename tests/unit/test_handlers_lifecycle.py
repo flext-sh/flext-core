@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, override
+from typing import override
 
 import pytest
 from flext_tests import h, r
@@ -13,8 +13,6 @@ from tests import p, t
 from tests.unit._handlers_support import TestsFlextFlextHandlers
 from tests import u
 
-if TYPE_CHECKING:
-    from tests import p
 
 HANDLER_TYPES = TestsFlextFlextHandlers.HANDLER_TYPES
 HandlerTypeScenario = TestsFlextFlextHandlers.HandlerTypeScenario

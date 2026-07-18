@@ -13,15 +13,14 @@ method; that is an implementation detail of how discovery is wired.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, override
+from typing import override
 
 import pytest
 from flext_tests import h, r
 
 from tests.base import s
 
-if TYPE_CHECKING:
-    from tests import p
+from tests import p
 
 
 class TestsFlextHandlerDecoratorEdges:

@@ -8,15 +8,13 @@ violation types — never private attributes or internal collaborators.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import e
 
 from tests import c
 
-if TYPE_CHECKING:
-    from tests import p
+from tests import p
 
 
 class TestsFlextCoreExceptions:

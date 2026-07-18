@@ -112,4 +112,4 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
         return resolved_value
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesParser"]
+__all__: list[str] = ["FlextUtilitiesParser"]

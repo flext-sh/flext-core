@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated, override
+from typing import Annotated, override
 
 from flext_tests import m as tm, r, u
 
@@ -12,8 +12,7 @@ from tests import c
 from tests import m
 from tests import t
 
-if TYPE_CHECKING:
-    from tests import p
+from tests import p
 
 
 class TestsFlextUtilitiesRailwayServicesMixin:

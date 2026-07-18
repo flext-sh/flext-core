@@ -12,9 +12,10 @@ from flext_core._models.pydantic import FlextModelsPydantic as mp
 
 from .helpers import FlextUtilitiesBeartypeHelpers as _ubh
 
+# mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
+from flext_core._typings.base import FlextTypingBase as t
 if TYPE_CHECKING:
     from flext_core._protocols.enforcement import FlextProtocolsEnforcement as pe
-    from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextUtilitiesBeartypeFieldVisitor:

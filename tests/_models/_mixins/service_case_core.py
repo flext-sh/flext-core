@@ -2,16 +2,15 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated, ClassVar, override
+from typing import Annotated, ClassVar, override
 
 from flext_tests import r
 
 from flext_core import m
 from tests.base import s
 
-if TYPE_CHECKING:
-    from tests import p
-    from tests import p, t
+from tests import p
+from tests import t
 
 
 class TestsFlextModelsServiceCaseCoreMixin:

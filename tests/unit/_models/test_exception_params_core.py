@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import tm
@@ -11,8 +10,7 @@ from flext_tests import tm
 from tests import c
 from tests import m
 
-if TYPE_CHECKING:
-    from tests import p, t
+from tests import t
 
 
 class TestsFlextModelsExceptionParamsCore:

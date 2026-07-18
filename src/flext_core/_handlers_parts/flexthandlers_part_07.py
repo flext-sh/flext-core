@@ -9,9 +9,10 @@ from .flexthandlers_part_06 import FlextHandlers as FlextHandlersPart06
 
 from typing import TYPE_CHECKING
 
+# mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
+from collections.abc import Callable, MutableSequence
 if TYPE_CHECKING:
     from types import ModuleType
-    from collections.abc import Callable, MutableSequence
 
 
 class FlextHandlers[MessageT_contra, ResultT](

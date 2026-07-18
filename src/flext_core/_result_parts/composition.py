@@ -12,9 +12,11 @@ from flext_core._constants.errors import FlextConstantsErrors as c
 from .construction import FlextResultConstructionMixin
 
 
+# mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
+from flext_core._protocols.result import FlextProtocolsResult as p
+from collections.abc import MutableSequence
 if TYPE_CHECKING:
-    from flext_core._protocols.result import FlextProtocolsResult as p
-    from collections.abc import Callable, MutableSequence, Sequence
+    from collections.abc import Callable, Sequence
     from flext_core._typings.base import FlextTypingBase as t
 
 

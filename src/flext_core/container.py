@@ -621,4 +621,4 @@ class FlextContainer(p.Container):
         return self
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextContainer"]
+__all__: list[str] = ["FlextContainer"]

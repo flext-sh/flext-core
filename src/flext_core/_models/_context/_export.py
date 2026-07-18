@@ -58,4 +58,4 @@ class FlextModelsContextExport:
         ]
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextModelsContextExport"]
+__all__: list[str] = ["FlextModelsContextExport"]

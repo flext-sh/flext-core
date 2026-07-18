@@ -55,4 +55,4 @@ class FlextUtilitiesGuardsTypeModel:
         )
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesGuardsTypeModel"]
+__all__: list[str] = ["FlextUtilitiesGuardsTypeModel"]

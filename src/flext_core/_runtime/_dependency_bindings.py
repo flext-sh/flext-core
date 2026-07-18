@@ -18,12 +18,14 @@ from ._dependency_options import FlextRuntimeDependencyOptions
 
 from typing import TYPE_CHECKING
 
+# mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
+from types import ModuleType
+from collections.abc import MutableSequence
 if TYPE_CHECKING:
     from flext_core._typings.services import FlextTypesServices as ts
     from flext_core._typings.base import FlextTypingBase as tb
     from flext_core._protocols.container import FlextProtocolsContainer as pc
-    from types import ModuleType
-    from collections.abc import Callable, MutableSequence
+    from collections.abc import Callable
 
 
 class FlextRuntimeDependencyBindings(FlextRuntimeDependencyOptions):

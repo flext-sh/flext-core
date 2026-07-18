@@ -12,12 +12,14 @@ from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine a
 from flext_core._utilities.enforcement_emit import FlextUtilitiesEnforcementEmit
 from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata as upm
 
+# mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
+from collections.abc import Callable
+from flext_core._protocols.base import FlextProtocolsBase as pb
+from flext_core._typings.pydantic import FlextTypesPydantic as tp
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterator
+    from collections.abc import Iterator
 
-    from flext_core._protocols.base import FlextProtocolsBase as pb
     from flext_core._typings.base import FlextTypingBase as t
-    from flext_core._typings.pydantic import FlextTypesPydantic as tp
 
 
 class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):

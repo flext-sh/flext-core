@@ -179,4 +179,4 @@ class FlextUtilitiesDomain:
         return entry
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesDomain"]
+__all__: list[str] = ["FlextUtilitiesDomain"]

@@ -309,4 +309,4 @@ class FlextContext(m.ManagedModel):
         _ = u.REQUEST_TIMESTAMP.set(None)
 
 
-__all__: t.StrSequence = ("FlextContext",)
+__all__: tuple[str, ...] = ("FlextContext",)

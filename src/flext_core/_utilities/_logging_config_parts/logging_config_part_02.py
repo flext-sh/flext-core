@@ -25,12 +25,13 @@ from .logging_config_part_01 import (
     FlextUtilitiesLoggingConfig as FlextUtilitiesLoggingConfigPart01,
 )
 
+# mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
+from structlog.types import Processor
+from flext_core import FlextTypes as t
 if TYPE_CHECKING:
     import types
 
-    from structlog.types import Processor
-
-    from flext_core import FlextProtocols as p, FlextTypes as t
+    from flext_core import FlextProtocols as p
 
 
 class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):

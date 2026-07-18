@@ -37,7 +37,7 @@ from collections.abc import MutableSequence
 from typing import Annotated, ClassVar
 
 from flext_core import m as core_m
-from flext_core import FlextModelsNamespace
+from flext_core._models.namespace import FlextModelsNamespace
 from tests import m
 from tests import u
 

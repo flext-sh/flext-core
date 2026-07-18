@@ -20,17 +20,13 @@ from tests import p, t
 # One representative valid instance per surviving source variant, keyed by the
 # discriminator literal it must expose on the public ``kind`` field.
 _SOURCE_CASES: dict[str, m.BaseModel] = {
-    "flext_infra_detector": p.EnforcementInfraDetectorSource(
-        violation_field="loose_symbol",
-    ),
-    "flext_tests_validator": p.EnforcementTestsValidatorSource(method="check_x"),
-    "runtime_warning": p.EnforcementRuntimeWarningSource(category="FlextMroWarning"),
-    "beartype": p.EnforcementBeartypeSource(
-        predicate_kind=c.EnforcementPredicateKind.MODULE_ALIAS,
-    ),
-    "ruff": p.EnforcementRuffSource(rule_code="ANN401"),
-    "skill_pointer": p.EnforcementSkillPointerSource(skill="pydantic-canonical"),
-    "code_smell": p.EnforcementCodeSmellSource(smell_tag="complex-method"),
+    "flext_infra_detector": m.EnforcementInfraDetectorSource(violation_field="loose_symbol",),
+    "flext_tests_validator": m.EnforcementTestsValidatorSource(method="check_x"),
+    "runtime_warning": m.EnforcementRuntimeWarningSource(category="FlextMroWarning"),
+    "beartype": m.EnforcementBeartypeSource(predicate_kind=c.EnforcementPredicateKind.MODULE_ALIAS,),
+    "ruff": m.EnforcementRuffSource(rule_code="ANN401"),
+    "skill_pointer": m.EnforcementSkillPointerSource(skill="pydantic-canonical"),
+    "code_smell": m.EnforcementCodeSmellSource(smell_tag="complex-method"),
 }
 
 

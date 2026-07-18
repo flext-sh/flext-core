@@ -613,6 +613,11 @@ ignore = [
   "RUF003",
   "RUF005",
   "S608",
+  # ADR-011: runtime-forward annotations — names in runtime-evaluated annotations
+  # must be runtime imports; TC001-003 would wrongly move them to TYPE_CHECKING.
+  "TC001",
+  "TC002",
+  "TC003",
   "TRY003",
   "TRY300",
   "TRY301",

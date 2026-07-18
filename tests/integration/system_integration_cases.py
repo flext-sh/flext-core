@@ -2,16 +2,12 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 
 from flext_tests import r, tm
 
 from tests import c
 from tests import p, t
 from tests import u
-
-if TYPE_CHECKING:
-    from tests import p
 
 
 class TestsFlextFlextSystemWorkflowCases:

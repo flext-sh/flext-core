@@ -183,4 +183,4 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         _params_cls: ClassVar[type[p.BaseModel] | None] = m.AttributeAccessErrorParams
 
 
-__all__: t.SequenceOf[str] = ["FlextExceptionsTypes"]
+__all__: list[str] = ["FlextExceptionsTypes"]

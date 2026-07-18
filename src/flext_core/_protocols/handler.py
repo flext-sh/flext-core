@@ -265,7 +265,7 @@ class FlextProtocolsHandler:
     # ------------------------------------------------------------------
 
     @runtime_checkable
-    class Middleware(p.BaseModel, Protocol):
+    class Middleware(Protocol):
         """Protocol for middleware layers in handler execution chains."""
 
         def process[TResult](

@@ -150,9 +150,9 @@ class TestsFlextConstantsNew:
     @pytest.mark.parametrize(
         "version",
         [
-            "0.20",
+            "0.20.0",
             "0.12.0rc0",
-            "0.20.dev0",
+            "0.20.0.dev0",
             "1.2.3a1",
             "1.2.3b2",
             "1.2.3.dev4",

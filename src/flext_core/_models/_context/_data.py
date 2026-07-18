@@ -115,4 +115,4 @@ class FlextModelsContextData:
             return val if isinstance(val, t.PRIMITIVES_TYPES) else str(val)
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextModelsContextData"]
+__all__: list[str] = ["FlextModelsContextData"]

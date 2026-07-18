@@ -166,4 +166,4 @@ class FlextUtilitiesReliability:
         )
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesReliability"]
+__all__: list[str] = ["FlextUtilitiesReliability"]

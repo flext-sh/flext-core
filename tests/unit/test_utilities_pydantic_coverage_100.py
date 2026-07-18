@@ -90,10 +90,10 @@ class TestsFlextUtilitiesPydantic:
 
         @u.validate_call()
         def build_runtime_options(
-            options: p.RuntimeBootstrapOptions,
+            options: m.RuntimeBootstrapOptions,
             override_subproject: str,
             override_packages: t.StrSequence,
-        ) -> p.RuntimeBootstrapOptions:
+        ) -> m.RuntimeBootstrapOptions:
             return u.resolve_runtime_options(
                 options,
                 subproject=override_subproject.strip().replace("_", "-"),

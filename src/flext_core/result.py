@@ -19,10 +19,11 @@ from ._result_parts.unwrap import FlextResultUnwrapMixin
 from ._runtime._metadata import FlextRuntimeMetadata as FlextRuntime
 
 
+# mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
+from flext_core._typings.base import FlextTypingBase as tb
+from flext_core._protocols.logging import FlextProtocolsLogging as pl
 if TYPE_CHECKING:
-    from ._typings.base import FlextTypingBase as tb
     from ._typings.services import FlextTypesServices as ts
-    from ._protocols.logging import FlextProtocolsLogging as pl
     from types import TracebackType
 
 

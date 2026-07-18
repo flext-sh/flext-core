@@ -25,7 +25,7 @@ from typing import ClassVar, Self, Unpack
 
 from pydantic import ConfigDict
 
-from flext_core import p, t, x
+from flext_core import p, x
 
 
 class FlextService[TDomainResult: p.BaseModel = p.BaseModel](x):
@@ -92,4 +92,4 @@ class FlextService[TDomainResult: p.BaseModel = p.BaseModel](x):
 
 
 s = FlextService
-__all__: t.MutableSequenceOf[str] = ["FlextService", "s"]
+__all__: list[str] = ["FlextService", "s"]

@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_core import FlextConstants as c, FlextTypes as t
+from flext_core import FlextConstants as c
 
 
 class FlextUtilitiesText:
@@ -63,4 +63,4 @@ class FlextUtilitiesText:
         Path(path).write_text(content, encoding=encoding)
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesText"]
+__all__: list[str] = ["FlextUtilitiesText"]

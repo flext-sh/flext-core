@@ -16,12 +16,13 @@ from flext_core._typings.base import FlextTypingBase as tb
 
 from .flextexceptionsbase_part_02 import FlextBaseErrorStateMixin
 
+# mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
+from collections.abc import MutableMapping
+from flext_core._protocols.base import FlextProtocolsBase as p
+from flext_core._typings.services import FlextTypesServices as ts
 if TYPE_CHECKING:
-    from collections.abc import MutableMapping
 
-    from flext_core._protocols.base import FlextProtocolsBase as p
     from flext_core._protocols.result import FlextProtocolsResult as pr
-    from flext_core._typings.services import FlextTypesServices as ts
 
 
 class FlextBaseError(FlextBaseErrorStateMixin, Exception):

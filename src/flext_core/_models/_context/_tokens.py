@@ -74,4 +74,4 @@ class FlextModelsContextTokens:
         ]
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextModelsContextTokens"]
+__all__: list[str] = ["FlextModelsContextTokens"]

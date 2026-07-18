@@ -4,15 +4,14 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 from flext_tests import tm
 
 from flext_core import u
 from tests import m
 
-if TYPE_CHECKING:
-    from tests import p, t
+from tests import t
 
 
 class TestsFlextCoreUtilitiesTypeGuards:
@@ -39,8 +38,8 @@ class TestsFlextCoreUtilitiesTypeGuards:
         }
 
         payload = metadata["payload"]
-        assert isinstance(payload, dict)
-        assert isinstance(normalized_modes, list)
+        tm.that(payload, is_=dict)
+        tm.that(normalized_modes, is_=list)
 
         command_spec = m.GuardCheckSpec.model_validate({
             "starts": "sync",
@@ -50,21 +49,21 @@ class TestsFlextCoreUtilitiesTypeGuards:
             "empty": False,
         })
 
-        assert u.dict_non_empty(metadata)
-        assert u.matches_type(payload, "dict_non_empty")
-        assert not u.matches_type(envelope, "dict_non_empty")
-        assert u.matches_type(payload["tags"], "list_non_empty")
-        assert u.matches_type(payload["attempt_count"], (int, float))
-        assert u.matches_type(payload["command_name"], str)
-        assert u.string_non_empty(payload["correlation_id"])
-        assert u.chk(payload["command_name"], command_spec)
-        assert u.chk(payload["attempt_count"], gte=1, lte=3, not_in=[0])
-        assert u.chk(payload["command_name"], gt="alpha", none=False, empty=False)
-        assert metadata["workspace_root"] == "/tmp/flext"
-        assert metadata["retry_window"] == ""
-        assert isinstance(payload["started_at"], str)
-        assert datetime.fromisoformat(payload["started_at"]) == envelope.started_at
-        assert set(normalized_modes) == {"delta", "full"}
+        tm.that(u.dict_non_empty(metadata), eq=True)
+        tm.that(u.matches_type(payload, "dict_non_empty"), eq=True)
+        tm.that(u.matches_type(envelope, "dict_non_empty"), eq=False)
+        tm.that(u.matches_type(payload["tags"], "list_non_empty"), eq=True)
+        tm.that(u.matches_type(payload["attempt_count"], (int, float)), eq=True)
+        tm.that(u.matches_type(payload["command_name"], str), eq=True)
+        tm.that(u.string_non_empty(payload["correlation_id"]), eq=True)
+        tm.that(u.chk(payload["command_name"], command_spec), eq=True)
+        tm.that(u.chk(payload["attempt_count"], gte=1, lte=3, not_in=[0]), eq=True)
+        tm.that(u.chk(payload["command_name"], gt="alpha", none=False, empty=False), eq=True)
+        tm.that(metadata["workspace_root"], eq="/tmp/flext")
+        tm.that(metadata["retry_window"], eq=None)
+        tm.that(payload["started_at"], is_=str)
+        tm.that(datetime.fromisoformat(payload["started_at"]), eq=envelope.started_at)
+        tm.that(set(normalized_modes), eq={"delta", "full"})
 
     def test_public_guard_returns_normalized_values_defaults_and_failures(self) -> None:
         payload: dict[str, t.JsonValue] = {
@@ -92,14 +91,14 @@ class TestsFlextCoreUtilitiesTypeGuards:
             return_value=True,
         )
 
-        assert not isinstance(
+        tm.that(isinstance(
             failed_guard_result,
             (bool, dict, list, str, int, float, type(None)),
-        )
+        ), eq=False)
         failed_guard = failed_guard_result
 
-        assert cast("dict[str, t.JsonValue]", guarded_payload) == payload
-        assert cast("list[str]", fallback_tags) == ["cli"]
-        assert cast("int", guarded_attempt) == 2
+        tm.that(cast("dict[str, t.JsonValue]", guarded_payload), eq=payload)
+        tm.that(cast("list[str]", fallback_tags), eq=["cli"])
+        tm.that(cast("int", guarded_attempt), eq=2)
         tm.fail(failed_guard)
-        assert failed_guard.error == "Guard validation raised an exception"
+        tm.that(failed_guard.error, eq="Guard validation raised an exception")

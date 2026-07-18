@@ -10,13 +10,11 @@ returned ``(name, ...)`` tuples, the public ``DecoratorConfig`` fields, and the
 from __future__ import annotations
 
 import types
-from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import h, r
 
-if TYPE_CHECKING:
-    from tests import p
+from tests import p
 
 
 class TestsFlextCoreHandlerDecoratorDiscovery:

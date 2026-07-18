@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, override
+from typing import override
 
 from flext_tests import s as tests_s
 
 from tests import c
 from tests import p, t
-
-if TYPE_CHECKING:
-    from tests import p
 
 
 class TestsFlextServiceBase[TDomainResult: t.JsonPayload | t.SequenceOf[t.JsonPayload]](

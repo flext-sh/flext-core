@@ -81,4 +81,4 @@ class FlextModelsRegistry:
             return not self.errors
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextModelsRegistry"]
+__all__: list[str] = ["FlextModelsRegistry"]

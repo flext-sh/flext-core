@@ -3,13 +3,10 @@
 from __future__ import annotations
 
 import importlib.resources
-from typing import Final, TYPE_CHECKING
+from collections.abc import Mapping
+from typing import Final
 
 from pydantic import BaseModel, Field
-
-
-if TYPE_CHECKING:
-    from flext_core._typings.base import FlextTypingBase as t
 
 
 class _SmellThresholds(BaseModel):
@@ -60,11 +57,11 @@ def _load_smell_data() -> _SmellData:
 _SMELL_DATA: Final[_SmellData] = _load_smell_data()
 
 ENFORCEMENT_SMELL_TAGS: Final[tuple[str, ...]] = _SMELL_DATA.tags
-SMELL_THRESHOLDS: Final[t.MappingKV[str, int]] = _SMELL_DATA.thresholds.model_dump()
-SMELL_FIX_STRATEGIES: Final[t.MappingKV[str, _SmellFixStrategy]] = (
+SMELL_THRESHOLDS: Final[Mapping[str, int]] = _SMELL_DATA.thresholds.model_dump()
+SMELL_FIX_STRATEGIES: Final[Mapping[str, _SmellFixStrategy]] = (
     _SMELL_DATA.fix_strategy
 )
-SMELL_RULES_TEXT: Final[t.MappingKV[str, tuple[str, str]]] = _SMELL_DATA.rules_text
+SMELL_RULES_TEXT: Final[Mapping[str, tuple[str, str]]] = _SMELL_DATA.rules_text
 SMELL_BEARTYPE_ROWS: Final[
     tuple[tuple[str, str, str, str, tuple[str, ...], str], ...]
 ] = tuple(

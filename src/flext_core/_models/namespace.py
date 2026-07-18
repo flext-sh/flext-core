@@ -18,7 +18,6 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from flext_core._typings.pydantic import FlextTypesPydantic as tp
-    from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextModelsNamespace:
@@ -46,4 +45,4 @@ class FlextModelsNamespace:
         ue.run_layer(cls, layer)
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextModelsNamespace"]
+__all__: list[str] = ["FlextModelsNamespace"]

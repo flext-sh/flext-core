@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import time
 import warnings
-from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import d, e, r, tm
@@ -12,8 +11,7 @@ from flext_tests import d, e, r, tm
 from flext_core import FlextContainer
 from tests import m
 
-if TYPE_CHECKING:
-    from tests import p
+from tests import p
 
 
 class TestsFlextCoreDecorators:
@@ -188,5 +186,5 @@ class TestsFlextCoreDecorators:
 
         built = build()
         payload = built.unwrap() if isinstance(built, r) else built
-        assert isinstance(payload, _Payload)
+        tm.that(payload, is_=_Payload)
         tm.that(payload.v, eq=7)

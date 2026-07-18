@@ -3,13 +3,7 @@
 from __future__ import annotations
 
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from flext_core._typings.base import FlextTypingBase as t
-
-
-NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT: dict[str, t.StrPair] = {
+NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT: dict[str, tuple[str, str]] = {
     "no_core_tests_namespace": (
         'deprecated namespace "{symbol}" in {file}:{line}',
         "Use flat test namespace access (c/p/t/m/u.Tests.*) with no Core intermediary.",

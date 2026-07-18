@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib
 import sys
+from types import ModuleType
 from collections.abc import Callable, Mapping, Sequence
 
 from pydantic import (
@@ -15,11 +16,6 @@ from pydantic import (
     ValidationError,
     computed_field,
 )
-
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from types import ModuleType
 
 
 type StrPair = tuple[str, str]

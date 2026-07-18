@@ -10,7 +10,6 @@ model state) rather than internal structures.
 from __future__ import annotations
 
 import inspect
-from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import tm
@@ -18,8 +17,7 @@ from flext_tests import tm
 from flext_core.container import FlextContainer
 from tests import u
 
-if TYPE_CHECKING:
-    from tests import p
+from tests import p
 
 
 class TestsFlextCoreContainer:

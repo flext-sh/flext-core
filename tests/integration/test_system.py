@@ -14,7 +14,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import e, r, tm
@@ -23,8 +22,7 @@ from flext_core import FlextContainer
 from tests import c
 from tests import u
 
-if TYPE_CHECKING:
-    from tests import p
+from tests import p
 
 _UUID_TEXT_LENGTH = 36
 

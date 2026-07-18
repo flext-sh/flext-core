@@ -14,15 +14,14 @@ import sys
 import textwrap
 import warnings
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 import pytest
 
 from flext_core._constants.enforcement import FlextMroViolation, FlextSmellViolation
 from tests import u
 
-if TYPE_CHECKING:
-    from tests import p, t
+from tests import t
 
 
 class TestsFlextCoreEnforcementWarningVisibility:

@@ -105,4 +105,4 @@ class FlextUtilitiesContext:
         return FlextModelsContext.StructlogProxyContextVar(key, default=default)
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesContext"]
+__all__: list[str] = ["FlextUtilitiesContext"]

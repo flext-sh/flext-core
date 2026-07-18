@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import e
@@ -11,8 +10,7 @@ from flext_tests import e
 from tests import c
 from tests import m
 
-if TYPE_CHECKING:
-    from tests import p
+from tests import p
 
 
 class TestsFlextCoreExceptionsBase:

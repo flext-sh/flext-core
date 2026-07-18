@@ -26,13 +26,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import os
+import sys
 import threading
 from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Annotated, ClassVar, Self
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, computed_field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _ENV_FILE_ENV_VAR = "FLEXT_ENV_FILE"
@@ -60,6 +61,107 @@ def _resolve_env_file(namespace: str | None = None) -> str:
     if default_path.exists():
         return str(default_path.resolve())
     return _ENV_FILE_DEFAULT
+
+
+def _platform_cache_root() -> Path:
+    """Return the OS-native user cache root for scratch/work directories.
+
+    Linux/BSD honour ``XDG_CACHE_HOME`` (default ``~/.cache``); macOS uses
+    ``~/Library/Caches``; Windows uses ``%LOCALAPPDATA%`` (default
+    ``~/AppData/Local``). Module-level + stdlib-only so it can seed a field
+    default without importing the facades (layer-0 purity).
+    """
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Caches"
+    if sys.platform == "win32":
+        local_app_data = os.environ.get("LOCALAPPDATA")
+        return (
+            Path(local_app_data)
+            if local_app_data
+            else Path.home() / "AppData" / "Local"
+        )
+    xdg_cache_home = os.environ.get("XDG_CACHE_HOME")
+    return Path(xdg_cache_home) if xdg_cache_home else Path.home() / ".cache"
+
+
+def _platform_data_root() -> Path:
+    """Return the OS-native user data root for durable per-namespace data.
+
+    Linux/BSD honour ``XDG_DATA_HOME`` (default ``~/.local/share``); macOS uses
+    ``~/Library/Application Support``; Windows uses ``%LOCALAPPDATA%`` (default
+    ``~/AppData/Local``). Module-level + stdlib-only for layer-0 purity.
+    """
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support"
+    if sys.platform == "win32":
+        local_app_data = os.environ.get("LOCALAPPDATA")
+        return (
+            Path(local_app_data)
+            if local_app_data
+            else Path.home() / "AppData" / "Local"
+        )
+    xdg_data_home = os.environ.get("XDG_DATA_HOME")
+    return Path(xdg_data_home) if xdg_data_home else Path.home() / ".local" / "share"
+
+
+def _platform_config_root() -> Path:
+    """Return the OS-native user config root for per-namespace configuration.
+
+    Linux/BSD honour ``XDG_CONFIG_HOME`` (default ``~/.config``); macOS uses
+    ``~/Library/Application Support``; Windows uses ``%APPDATA%`` (default
+    ``~/AppData/Roaming``). Module-level + stdlib-only for layer-0 purity.
+    """
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support"
+    if sys.platform == "win32":
+        app_data = os.environ.get("APPDATA")
+        return Path(app_data) if app_data else Path.home() / "AppData" / "Roaming"
+    xdg_config_home = os.environ.get("XDG_CONFIG_HOME")
+    return Path(xdg_config_home) if xdg_config_home else Path.home() / ".config"
+
+
+def _platform_state_root() -> Path:
+    """Return the OS-native user state root for per-namespace state.
+
+    Linux/BSD honour ``XDG_STATE_HOME`` (default ``~/.local/state``); macOS uses
+    ``~/Library/Application Support``; Windows uses ``%LOCALAPPDATA%`` (default
+    ``~/AppData/Local``). Module-level + stdlib-only for layer-0 purity.
+    """
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support"
+    if sys.platform == "win32":
+        local_app_data = os.environ.get("LOCALAPPDATA")
+        return (
+            Path(local_app_data)
+            if local_app_data
+            else Path.home() / "AppData" / "Local"
+        )
+    xdg_state_home = os.environ.get("XDG_STATE_HOME")
+    return Path(xdg_state_home) if xdg_state_home else Path.home() / ".local" / "state"
+
+
+def _app_env_prefix(namespace: str) -> str:
+    """Return the environment prefix owned by one application namespace."""
+    normalized = "".join(char if char.isalnum() else "_" for char in namespace)
+    return f"{normalized.upper()}_"
+
+
+def _validate_app_namespace(namespace: str) -> str:
+    """Return one safe application namespace segment or fail validation."""
+    candidate = namespace.strip()
+    if not candidate or candidate in {".", ".."} or Path(candidate).name != candidate:
+        msg = "application namespace must be one non-empty path segment"
+        raise ValueError(msg)
+    return candidate
+
+
+def _namespace_dir_name(env_prefix: str) -> str:
+    """Derive the owning project's namespace segment from its ``env_prefix``.
+
+    ``FLEXT_`` -> ``flext``; ``AI_HUB_`` -> ``ai-hub``; empty -> ``flext``. This
+    is the default when no application identity was registered.
+    """
+    return env_prefix.rstrip("_").lower().replace("_", "-") or "flext"
 
 
 class FlextSettings(BaseSettings):
@@ -98,6 +200,7 @@ class FlextSettings(BaseSettings):
     _lock: ClassVar[threading.RLock] = threading.RLock()
     _singleton_enabled: ClassVar[bool] = True
     _instance: ClassVar[FlextSettings | None] = None
+    _app_namespace: ClassVar[str | None] = None
 
     def __init_subclass__(cls, **kwargs: object) -> None:
         """Give every concrete subclass its own isolated singleton slot."""
@@ -227,6 +330,106 @@ class FlextSettings(BaseSettings):
         """Drop the singleton slot for test isolation."""
         with cls._lock:
             cls._instance = None
+
+    @classmethod
+    def set_app_namespace(cls, namespace: str) -> None:
+        """Set the outer application identity once for the current process."""
+        candidate = _validate_app_namespace(namespace)
+        with FlextSettings._lock:
+            if FlextSettings._app_namespace is None:
+                FlextSettings._app_namespace = candidate
+
+    @classmethod
+    def reset_app_namespace(cls) -> None:
+        """Clear the process application identity for isolated tests."""
+        with FlextSettings._lock:
+            FlextSettings._app_namespace = None
+
+    @classmethod
+    def _owner_namespace(cls) -> str:
+        """Return the owning project's own namespace, derived from ``env_prefix``.
+
+        This is the default identity when no application registered one, so a
+        standalone project (e.g. ``ai-hub``) transparently owns its own
+        directories without being forced to call ``set_app_namespace``.
+        """
+        env_prefix = cls.model_config.get("env_prefix") or "FLEXT_"
+        return _namespace_dir_name(env_prefix)
+
+    @classmethod
+    def _current_app_namespace(cls) -> str:
+        """Return the effective namespace.
+
+        Precedence: an explicitly registered application identity
+        (``set_app_namespace``) wins so every library shares it; then the
+        ``FLEXT_APP_NAMESPACE`` environment override; otherwise the owning
+        project's own namespace prevails as the default (registration is never
+        mandatory).
+        """
+        registered = FlextSettings._app_namespace or os.environ.get(
+            "FLEXT_APP_NAMESPACE"
+        )
+        return _validate_app_namespace(registered or cls._owner_namespace())
+
+    @classmethod
+    def _absolute_app_dir(cls, name: str, root: Path) -> Path:
+        namespace = cls._current_app_namespace()
+        override = os.environ.get(f"{_app_env_prefix(namespace)}{name.upper()}_DIR")
+        path = Path(override) if override else root / namespace
+        if not path.is_absolute():
+            msg = f"{name}_dir must be absolute"
+            raise ValueError(msg)
+        return path
+
+    @computed_field
+    @property
+    def cache_dir(self) -> Path:
+        """Consuming application's cache directory."""
+        return self._absolute_app_dir("cache", _platform_cache_root())
+
+    @computed_field
+    @property
+    def work_dir(self) -> Path:
+        """Consuming application's scratch/work directory."""
+        return self._absolute_app_dir("work", _platform_cache_root())
+
+    @computed_field
+    @property
+    def data_dir(self) -> Path:
+        """Consuming application's durable data directory."""
+        return self._absolute_app_dir("data", _platform_data_root())
+
+    @computed_field
+    @property
+    def state_dir(self) -> Path:
+        """Consuming application's persistent state directory."""
+        return self._absolute_app_dir("state", _platform_state_root())
+
+    @computed_field
+    @property
+    def config_dir(self) -> Path:
+        """Consuming application's user configuration directory."""
+        return self._absolute_app_dir("config", _platform_config_root())
+
+    @computed_field
+    @property
+    def runtime_dir(self) -> Path:
+        """Consuming application's ephemeral runtime directory."""
+        namespace = self._current_app_namespace()
+        override = os.environ.get(f"{_app_env_prefix(namespace)}RUNTIME_DIR")
+        if override:
+            path = Path(override)
+        else:
+            xdg_runtime_dir = os.environ.get("XDG_RUNTIME_DIR")
+            path = (
+                Path(xdg_runtime_dir) / namespace
+                if xdg_runtime_dir
+                else self.work_dir / "run"
+            )
+        if not path.is_absolute():
+            msg = "runtime_dir must be absolute"
+            raise ValueError(msg)
+        return path
 
     @model_validator(mode="after")
     def _validate_settings(self) -> Self:

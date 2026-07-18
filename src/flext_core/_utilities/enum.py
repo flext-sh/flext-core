@@ -34,4 +34,4 @@ class FlextUtilitiesEnum:
         return result
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesEnum"]
+__all__: list[str] = ["FlextUtilitiesEnum"]

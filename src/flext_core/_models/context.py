@@ -15,10 +15,6 @@ from flext_core._models._context._metadata import FlextModelsContextMetadata
 from flext_core._models._context._proxy_var import FlextModelsContextProxyVar
 from flext_core._models._context._scope import FlextModelsContextScope
 from flext_core._models._context._tokens import FlextModelsContextTokens
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from flext_core import FlextTypes as t
 
 
 class FlextModelsContext(
@@ -42,4 +38,4 @@ class FlextModelsContext(
 FlextModelsContext.ContextContainerState.model_rebuild()
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextModelsContext"]
+__all__: list[str] = ["FlextModelsContext"]

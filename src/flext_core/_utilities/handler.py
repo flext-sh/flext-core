@@ -102,4 +102,4 @@ class FlextUtilitiesHandler:
         return r.ok((next_state, popped_context))
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesHandler"]
+__all__: list[str] = ["FlextUtilitiesHandler"]

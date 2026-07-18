@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import r, tm
@@ -17,8 +16,7 @@ from flext_core.__version__ import __version__
 from tests import p
 from tests import u
 
-if TYPE_CHECKING:
-    from tests import p, t
+from tests import t
 
 pytestmark = [pytest.mark.integration]
 

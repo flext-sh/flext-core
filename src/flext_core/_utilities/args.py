@@ -66,4 +66,4 @@ class FlextUtilitiesArgs:
         )
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesArgs"]
+__all__: list[str] = ["FlextUtilitiesArgs"]

@@ -13,8 +13,9 @@ from flext_core._protocols.project_metadata import FlextProtocolsProjectMetadata
 from flext_core import r
 
 
+# mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
+from flext_core._typings.base import FlextTypingBase as t
 if TYPE_CHECKING:
-    from flext_core._typings import FlextTypingBase as t
     from flext_core._protocols import FlextProtocolsResult as pr
     from pathlib import Path
 

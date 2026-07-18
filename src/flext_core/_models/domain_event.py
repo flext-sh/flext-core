@@ -58,4 +58,4 @@ class FlextModelsDomainEvent:
     DomainEvent = Entry
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextModelsDomainEvent"]
+__all__: list[str] = ["FlextModelsDomainEvent"]

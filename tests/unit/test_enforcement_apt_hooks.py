@@ -17,15 +17,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 import pytest
 
 from tests import c
 from tests import u
 
-if TYPE_CHECKING:
-    from tests import p, t
+from tests import t
 
 
 # Note: the top-level class name is intentionally ``TestsFlextEnforcementAptHooks``

@@ -186,4 +186,4 @@ class FlextModelsService:
             return normalized if len(normalized) == len(value) else None
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextModelsService"]
+__all__: list[str] = ["FlextModelsService"]

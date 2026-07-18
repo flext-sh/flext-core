@@ -21,8 +21,9 @@ from flext_core import FlextResult as r
 
 from .checker_part_02 import FlextUtilitiesChecker as FlextUtilitiesCheckerPart02
 
+# mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
+from flext_core._typings.services import FlextTypesServices as ts
 if TYPE_CHECKING:
-    from flext_core._typings.services import FlextTypesServices as ts
     from flext_core._protocols.result import FlextProtocolsResult as p
     from flext_core._protocols.base import FlextProtocolsBase as pb
 

@@ -3,13 +3,9 @@
 from __future__ import annotations
 
 from importlib import import_module
-from typing import ClassVar, TYPE_CHECKING
+from typing import ClassVar
 
 from beartype.claw import beartype_this_package
-
-
-if TYPE_CHECKING:
-    from ._typings.base import FlextTypingBase as t
 
 
 class FlextCoreBeartypeBootstrap:
@@ -54,4 +50,4 @@ class FlextCoreBeartypeBootstrap:
             cls._activating = False
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextCoreBeartypeBootstrap"]
+__all__: list[str] = ["FlextCoreBeartypeBootstrap"]
