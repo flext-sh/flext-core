@@ -32,10 +32,4 @@ class FlextModelsContext(
     """
 
 
-# NOTE (multi-agent, mro-wkii.17.26.25): ContextContainerState references
-# p.Container in a field annotation; rebuild after the protocol graph is
-# importable so Pydantic can resolve the forward reference.
-FlextModelsContext.ContextContainerState.model_rebuild()
-
-
 __all__: list[str] = ["FlextModelsContext"]
