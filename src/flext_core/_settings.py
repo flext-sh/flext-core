@@ -33,7 +33,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Annotated, ClassVar, Self
 
-from pydantic import BaseModel, Field, ValidationInfo, field_validator, model_validator
+from pydantic import BaseModel, Field, computed_field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _ENV_FILE_ENV_VAR = "FLEXT_ENV_FILE"
@@ -140,12 +140,19 @@ def _platform_state_root() -> Path:
     return Path(xdg_state_home) if xdg_state_home else Path.home() / ".local" / "state"
 
 
-def _namespace_dir_name(env_prefix: str) -> str:
-    """Derive a filesystem directory name from a settings ``env_prefix``.
+def _app_env_prefix(namespace: str) -> str:
+    """Return the environment prefix owned by one application namespace."""
+    normalized = "".join(char if char.isalnum() else "_" for char in namespace)
+    return f"{normalized.upper()}_"
 
-    ``FLEXT_`` -> ``flext``; ``AI_HUB_`` -> ``ai-hub``; empty -> ``flext``.
-    """
-    return env_prefix.rstrip("_").lower().replace("_", "-") or "flext"
+
+def _validate_app_namespace(namespace: str) -> str:
+    """Return one safe application namespace segment or fail validation."""
+    candidate = namespace.strip()
+    if not candidate or candidate in {".", ".."} or Path(candidate).name != candidate:
+        msg = "application namespace must be one non-empty path segment"
+        raise ValueError(msg)
+    return candidate
 
 
 class FlextSettings(BaseSettings):
@@ -180,53 +187,11 @@ class FlextSettings(BaseSettings):
     async_logging: Annotated[
         bool, Field(description="Enable asynchronous buffered logging")
     ] = True
-    work_dir: Annotated[
-        Path,
-        Field(
-            default=None,
-            validate_default=True,
-            description=(
-                "Per-namespace scratch/work root; defaults to the OS cache home "
-                "joined with the settings namespace (e.g. ~/.cache/flext)."
-            ),
-        ),
-    ]
-    data_dir: Annotated[
-        Path,
-        Field(
-            default=None,
-            validate_default=True,
-            description="Per-namespace persistent application data directory.",
-        ),
-    ]
-    state_dir: Annotated[
-        Path,
-        Field(
-            default=None,
-            validate_default=True,
-            description="Per-namespace persistent runtime state directory.",
-        ),
-    ]
-    config_dir: Annotated[
-        Path,
-        Field(
-            default=None,
-            validate_default=True,
-            description="Per-namespace user configuration directory.",
-        ),
-    ]
-    runtime_dir: Annotated[
-        Path,
-        Field(
-            default=None,
-            validate_default=True,
-            description="Per-namespace ephemeral runtime directory.",
-        ),
-    ]
 
     _lock: ClassVar[threading.RLock] = threading.RLock()
     _singleton_enabled: ClassVar[bool] = True
     _instance: ClassVar[FlextSettings | None] = None
+    _app_namespace: ClassVar[str | None] = None
 
     def __init_subclass__(cls, **kwargs: object) -> None:
         """Give every concrete subclass its own isolated singleton slot."""
@@ -357,47 +322,87 @@ class FlextSettings(BaseSettings):
         with cls._lock:
             cls._instance = None
 
-    @field_validator(
-        "work_dir", "data_dir", "state_dir", "config_dir", "runtime_dir", mode="before"
-    )
     @classmethod
-    def _seed_namespace_dir(
-        cls, value: Path | str | None, info: ValidationInfo
-    ) -> Path | str:
-        """Seed an unset directory from its platform root and project namespace."""
-        if value:
-            return value
-        env_prefix = cls.model_config.get("env_prefix") or "FLEXT_"
-        namespace = _namespace_dir_name(env_prefix)
-        roots = {
-            "work_dir": _platform_cache_root(),
-            "data_dir": _platform_data_root(),
-            "state_dir": _platform_state_root(),
-            "config_dir": _platform_config_root(),
-        }
-        if info.field_name == "runtime_dir":
-            xdg_runtime_dir = os.environ.get("XDG_RUNTIME_DIR")
-            if xdg_runtime_dir:
-                return Path(xdg_runtime_dir) / namespace
-            work_dir = info.data.get("work_dir")
-            if not isinstance(work_dir, Path):
-                msg = "work_dir must be resolved before runtime_dir"
-                raise TypeError(msg)
-            return work_dir / "run"
-        root = roots.get(info.field_name or "")
-        if root is None:
-            msg = f"unexpected settings directory field: {info.field_name!r}"
-            raise ValueError(msg)
-        return root / namespace
+    def set_app_namespace(cls, namespace: str) -> None:
+        """Set the outer application identity once for the current process."""
+        candidate = _validate_app_namespace(namespace)
+        with FlextSettings._lock:
+            if FlextSettings._app_namespace is None:
+                FlextSettings._app_namespace = candidate
 
-    @field_validator("work_dir", "data_dir", "state_dir", "config_dir", "runtime_dir")
     @classmethod
-    def _require_absolute_runtime_dir(cls, value: Path) -> Path:
-        """Reject relative directory overrides at the settings boundary."""
-        if not value.is_absolute():
-            msg = "runtime directory paths must be absolute"
+    def reset_app_namespace(cls) -> None:
+        """Clear the process application identity for isolated tests."""
+        with FlextSettings._lock:
+            FlextSettings._app_namespace = None
+
+    @staticmethod
+    def _current_app_namespace() -> str:
+        """Return the process application identity with environment fallback."""
+        return _validate_app_namespace(
+            FlextSettings._app_namespace
+            or os.environ.get("FLEXT_APP_NAMESPACE", "flext")
+        )
+
+    @staticmethod
+    def _absolute_app_dir(name: str, root: Path) -> Path:
+        namespace = FlextSettings._current_app_namespace()
+        override = os.environ.get(f"{_app_env_prefix(namespace)}{name.upper()}_DIR")
+        path = Path(override) if override else root / namespace
+        if not path.is_absolute():
+            msg = f"{name}_dir must be absolute"
             raise ValueError(msg)
-        return value
+        return path
+
+    @computed_field
+    @property
+    def cache_dir(self) -> Path:
+        """Consuming application's cache directory."""
+        return self._absolute_app_dir("cache", _platform_cache_root())
+
+    @computed_field
+    @property
+    def work_dir(self) -> Path:
+        """Consuming application's scratch/work directory."""
+        return self._absolute_app_dir("work", _platform_cache_root())
+
+    @computed_field
+    @property
+    def data_dir(self) -> Path:
+        """Consuming application's durable data directory."""
+        return self._absolute_app_dir("data", _platform_data_root())
+
+    @computed_field
+    @property
+    def state_dir(self) -> Path:
+        """Consuming application's persistent state directory."""
+        return self._absolute_app_dir("state", _platform_state_root())
+
+    @computed_field
+    @property
+    def config_dir(self) -> Path:
+        """Consuming application's user configuration directory."""
+        return self._absolute_app_dir("config", _platform_config_root())
+
+    @computed_field
+    @property
+    def runtime_dir(self) -> Path:
+        """Consuming application's ephemeral runtime directory."""
+        namespace = self._current_app_namespace()
+        override = os.environ.get(f"{_app_env_prefix(namespace)}RUNTIME_DIR")
+        if override:
+            path = Path(override)
+        else:
+            xdg_runtime_dir = os.environ.get("XDG_RUNTIME_DIR")
+            path = (
+                Path(xdg_runtime_dir) / namespace
+                if xdg_runtime_dir
+                else self.work_dir / "run"
+            )
+        if not path.is_absolute():
+            msg = "runtime_dir must be absolute"
+            raise ValueError(msg)
+        return path
 
     @model_validator(mode="after")
     def _validate_settings(self) -> Self:
