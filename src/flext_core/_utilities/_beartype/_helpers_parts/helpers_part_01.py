@@ -7,6 +7,13 @@ import importlib
 import sys
 from typing import Any, TypeAliasType, get_args, get_origin
 
+import typing_extensions
+
+# pydantic ships JsonValue as a typing_extensions.TypeAliasType, which is a
+# distinct class from typing.TypeAliasType; unwrap must recognize both variants
+# so a nested alias (e.g. flext JsonValue -> pydantic JsonValue) fully resolves.
+_TYPE_ALIAS_TYPES: tuple[type, ...] = (TypeAliasType, typing_extensions.TypeAliasType)
+
 from flext_core._typings.base import FlextTypingBase as t
 
 
@@ -75,7 +82,7 @@ class FlextUtilitiesBeartypeHelpers:
     ) -> t.TypeHintSpecifier | None:
         current = hint
         seen: set[int] = set()
-        while isinstance(current, TypeAliasType):
+        while isinstance(current, _TYPE_ALIAS_TYPES):
             current_id = id(current)
             if current_id in seen:
                 return current

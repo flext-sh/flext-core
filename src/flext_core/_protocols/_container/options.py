@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from flext_core import p, t
 
 
+@runtime_checkable
 class _MappingRoot(Protocol):
     """Shared structural API for validated mutable mapping roots."""
 
