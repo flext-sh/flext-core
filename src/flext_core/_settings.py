@@ -26,13 +26,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import os
+import sys
 import threading
 from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Annotated, ClassVar, Self
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _ENV_FILE_ENV_VAR = "FLEXT_ENV_FILE"
@@ -60,6 +61,91 @@ def _resolve_env_file(namespace: str | None = None) -> str:
     if default_path.exists():
         return str(default_path.resolve())
     return _ENV_FILE_DEFAULT
+
+
+def _platform_cache_root() -> Path:
+    """Return the OS-native user cache root for scratch/work directories.
+
+    Linux/BSD honour ``XDG_CACHE_HOME`` (default ``~/.cache``); macOS uses
+    ``~/Library/Caches``; Windows uses ``%LOCALAPPDATA%`` (default
+    ``~/AppData/Local``). Module-level + stdlib-only so it can seed a field
+    default without importing the facades (layer-0 purity).
+    """
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Caches"
+    if sys.platform == "win32":
+        local_app_data = os.environ.get("LOCALAPPDATA")
+        return (
+            Path(local_app_data)
+            if local_app_data
+            else Path.home() / "AppData" / "Local"
+        )
+    xdg_cache_home = os.environ.get("XDG_CACHE_HOME")
+    return Path(xdg_cache_home) if xdg_cache_home else Path.home() / ".cache"
+
+
+def _platform_data_root() -> Path:
+    """Return the OS-native user data root for durable per-namespace data.
+
+    Linux/BSD honour ``XDG_DATA_HOME`` (default ``~/.local/share``); macOS uses
+    ``~/Library/Application Support``; Windows uses ``%LOCALAPPDATA%`` (default
+    ``~/AppData/Local``). Module-level + stdlib-only for layer-0 purity.
+    """
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support"
+    if sys.platform == "win32":
+        local_app_data = os.environ.get("LOCALAPPDATA")
+        return (
+            Path(local_app_data)
+            if local_app_data
+            else Path.home() / "AppData" / "Local"
+        )
+    xdg_data_home = os.environ.get("XDG_DATA_HOME")
+    return Path(xdg_data_home) if xdg_data_home else Path.home() / ".local" / "share"
+
+
+def _platform_config_root() -> Path:
+    """Return the OS-native user config root for per-namespace configuration.
+
+    Linux/BSD honour ``XDG_CONFIG_HOME`` (default ``~/.config``); macOS uses
+    ``~/Library/Application Support``; Windows uses ``%APPDATA%`` (default
+    ``~/AppData/Roaming``). Module-level + stdlib-only for layer-0 purity.
+    """
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support"
+    if sys.platform == "win32":
+        app_data = os.environ.get("APPDATA")
+        return Path(app_data) if app_data else Path.home() / "AppData" / "Roaming"
+    xdg_config_home = os.environ.get("XDG_CONFIG_HOME")
+    return Path(xdg_config_home) if xdg_config_home else Path.home() / ".config"
+
+
+def _platform_state_root() -> Path:
+    """Return the OS-native user state root for per-namespace state.
+
+    Linux/BSD honour ``XDG_STATE_HOME`` (default ``~/.local/state``); macOS uses
+    ``~/Library/Application Support``; Windows uses ``%LOCALAPPDATA%`` (default
+    ``~/AppData/Local``). Module-level + stdlib-only for layer-0 purity.
+    """
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support"
+    if sys.platform == "win32":
+        local_app_data = os.environ.get("LOCALAPPDATA")
+        return (
+            Path(local_app_data)
+            if local_app_data
+            else Path.home() / "AppData" / "Local"
+        )
+    xdg_state_home = os.environ.get("XDG_STATE_HOME")
+    return Path(xdg_state_home) if xdg_state_home else Path.home() / ".local" / "state"
+
+
+def _namespace_dir_name(env_prefix: str) -> str:
+    """Derive a filesystem directory name from a settings ``env_prefix``.
+
+    ``FLEXT_`` -> ``flext``; ``AI_HUB_`` -> ``ai-hub``; empty -> ``flext``.
+    """
+    return env_prefix.rstrip("_").lower().replace("_", "-") or "flext"
 
 
 class FlextSettings(BaseSettings):
@@ -94,6 +180,49 @@ class FlextSettings(BaseSettings):
     async_logging: Annotated[
         bool, Field(description="Enable asynchronous buffered logging")
     ] = True
+    work_dir: Annotated[
+        Path,
+        Field(
+            default=None,
+            validate_default=True,
+            description=(
+                "Per-namespace scratch/work root; defaults to the OS cache home "
+                "joined with the settings namespace (e.g. ~/.cache/flext)."
+            ),
+        ),
+    ]
+    data_dir: Annotated[
+        Path,
+        Field(
+            default=None,
+            validate_default=True,
+            description="Per-namespace persistent application data directory.",
+        ),
+    ]
+    state_dir: Annotated[
+        Path,
+        Field(
+            default=None,
+            validate_default=True,
+            description="Per-namespace persistent runtime state directory.",
+        ),
+    ]
+    config_dir: Annotated[
+        Path,
+        Field(
+            default=None,
+            validate_default=True,
+            description="Per-namespace user configuration directory.",
+        ),
+    ]
+    runtime_dir: Annotated[
+        Path,
+        Field(
+            default=None,
+            validate_default=True,
+            description="Per-namespace ephemeral runtime directory.",
+        ),
+    ]
 
     _lock: ClassVar[threading.RLock] = threading.RLock()
     _singleton_enabled: ClassVar[bool] = True
@@ -227,6 +356,48 @@ class FlextSettings(BaseSettings):
         """Drop the singleton slot for test isolation."""
         with cls._lock:
             cls._instance = None
+
+    @field_validator(
+        "work_dir", "data_dir", "state_dir", "config_dir", "runtime_dir", mode="before"
+    )
+    @classmethod
+    def _seed_namespace_dir(
+        cls, value: Path | str | None, info: ValidationInfo
+    ) -> Path | str:
+        """Seed an unset directory from its platform root and project namespace."""
+        if value:
+            return value
+        env_prefix = cls.model_config.get("env_prefix") or "FLEXT_"
+        namespace = _namespace_dir_name(env_prefix)
+        roots = {
+            "work_dir": _platform_cache_root(),
+            "data_dir": _platform_data_root(),
+            "state_dir": _platform_state_root(),
+            "config_dir": _platform_config_root(),
+        }
+        if info.field_name == "runtime_dir":
+            xdg_runtime_dir = os.environ.get("XDG_RUNTIME_DIR")
+            if xdg_runtime_dir:
+                return Path(xdg_runtime_dir) / namespace
+            work_dir = info.data.get("work_dir")
+            if not isinstance(work_dir, Path):
+                msg = "work_dir must be resolved before runtime_dir"
+                raise TypeError(msg)
+            return work_dir / "run"
+        root = roots.get(info.field_name or "")
+        if root is None:
+            msg = f"unexpected settings directory field: {info.field_name!r}"
+            raise ValueError(msg)
+        return root / namespace
+
+    @field_validator("work_dir", "data_dir", "state_dir", "config_dir", "runtime_dir")
+    @classmethod
+    def _require_absolute_runtime_dir(cls, value: Path) -> Path:
+        """Reject relative directory overrides at the settings boundary."""
+        if not value.is_absolute():
+            msg = "runtime directory paths must be absolute"
+            raise ValueError(msg)
+        return value
 
     @model_validator(mode="after")
     def _validate_settings(self) -> Self:
