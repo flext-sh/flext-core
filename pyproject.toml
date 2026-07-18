@@ -739,7 +739,3 @@ preserve_quotes = true
 section_whitelines = 1
 whitelines = 1
 
-[tool.uv.sources]
-flext-cli = { workspace = true }
-flext-infra = { workspace = true }
-flext-tests = { workspace = true }
