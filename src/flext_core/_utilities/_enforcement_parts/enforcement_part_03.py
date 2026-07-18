@@ -2,17 +2,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._typings.base import FlextTypingBase as t
 from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as ub
 
 from .enforcement_part_02 import (
     FlextUtilitiesEnforcement as FlextUtilitiesEnforcementPart02,
 )
-
-if TYPE_CHECKING:
-    from flext_core._protocols.base import FlextProtocolsBase as p
 
 
 class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart02):
@@ -36,7 +32,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart02):
         return any(seg.startswith(("Tests", "Test")) for seg in segments)
 
     @staticmethod
-    def run(model_type: type[p.BaseModel]) -> None:
+    def run(model_type: type[t.BaseModelType]) -> None:
         """Pydantic ``__pydantic_init_subclass__`` hook.
 
         Function-local classes (Python's ``<locals>`` qualname marker)

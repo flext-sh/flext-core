@@ -155,7 +155,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         return FlextUtilitiesEnforcement._check(target, layer=layer)
 
     @staticmethod
-    def check_model_construction(target: type[p.BaseModel]) -> me.Report:
+    def check_model_construction(target: type[t.BaseModelType]) -> me.Report:
         """Run only Pydantic construction rules for ``__pydantic_init_subclass__``."""
         return FlextUtilitiesEnforcement._check(
             target, categories=FlextUtilitiesEnforcement._MODEL_CONSTRUCTION_CATEGORIES
