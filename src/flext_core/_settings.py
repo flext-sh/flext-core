@@ -296,7 +296,7 @@ class FlextSettings(BaseSettings):
         if not overrides:
             with self.__class__.singleton_disabled():
                 return self.model_copy(deep=True)
-        merged = self.__class__._merge_overrides(self, **overrides)  # noqa: SLF001  Why: internal helper on same class
+        merged = self.__class__._merge_overrides(self, **overrides)  # ruff:ignore[private-member-access]  Why: internal helper on same class
         with self.__class__.singleton_disabled():
             copied = self.model_copy(update=merged, deep=True)
             return type(copied).model_validate(copied, from_attributes=True)
