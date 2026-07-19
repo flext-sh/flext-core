@@ -10,7 +10,7 @@ from typing import Annotated
 import pytest
 from pydantic.warnings import PydanticDeprecatedSince20
 
-from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
+from flext_core import FlextResult
 from tests import c
 from tests import m
 from tests import t
@@ -132,7 +132,7 @@ class TestsFlextEnforcementModels:
 
     def test_canonical_flext_core_class_satisfies_prefix_contract(self) -> None:
         """A correctly named ``flext_core`` class raises no class-prefix violation."""
-        assert not messages(u.check(FlextUtilitiesEnforcement), fragment="class_prefix")
+        assert not messages(u.check(FlextResult), fragment="class_prefix")
 
     @pytest.mark.parametrize(
         ("module", "expect_prefix_violation"),

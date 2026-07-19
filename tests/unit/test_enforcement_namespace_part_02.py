@@ -23,10 +23,8 @@ from collections.abc import Callable
 import pytest
 
 from flext_core import c
-from flext_core._constants.enforcement import FlextMroViolation, FlextSmellViolation
-from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
 from tests.unit._enforcement_support import make_class
-from tests import p, u
+from tests import e, p, u
 
 type WarningRecords = list[warnings.WarningMessage]
 type ClassFactory = Callable[[], type]
@@ -53,7 +51,7 @@ def _run_layer_records(target: type, layer: str) -> WarningRecords:
     """Drive ``run_layer`` and return the warnings it emits (public behavior)."""
     with warnings.catch_warnings(record=True) as recorded:
         warnings.simplefilter("always")
-        FlextUtilitiesEnforcement.run_layer(target, layer)
+        u.run_layer(target, layer)
     return list(recorded)
 
 
@@ -86,7 +84,7 @@ class TestsFlextCoreEnforcementNamespacePart02:
         recorded = _run_layer_records(bad, "constants")
 
         assert recorded, "expected run_layer to emit at least one warning"
-        assert all(issubclass(rec.category, FlextMroViolation) for rec in recorded), (
+        assert all(issubclass(rec.category, e.MroViolation) for rec in recorded), (
             "every emitted warning must be from the FLEXT violation family"
         )
         texts = [str(rec.message) for rec in recorded]
@@ -226,7 +224,7 @@ class TestsFlextCoreEnforcementNamespacePart02:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             with pytest.raises(TypeError, match="ENFORCE-079"):
-                FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.STRICT)
+                u.emit(report, mode=c.EnforcementMode.STRICT)
 
     def test_emit_stays_silent_in_off_mode(self) -> None:
         """OFF mode neither warns nor raises for a non-empty report."""
@@ -235,7 +233,7 @@ class TestsFlextCoreEnforcementNamespacePart02:
 
         with warnings.catch_warnings(record=True) as recorded:
             warnings.simplefilter("always")
-            FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.OFF)
+            u.emit(report, mode=c.EnforcementMode.OFF)
 
         assert recorded == []
 
@@ -244,8 +242,8 @@ class TestsFlextCoreEnforcementNamespacePart02:
         report = _bad_constant_report()
         assert not report.empty
 
-        with pytest.warns(FlextSmellViolation, match="ENFORCE-079"):
-            FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.WARN)
+        with pytest.warns(e.SmellViolation, match="ENFORCE-079"):
+            u.emit(report, mode=c.EnforcementMode.WARN)
 
     def test_emit_is_a_noop_for_empty_report(self) -> None:
         """An empty report never warns or raises regardless of mode."""
@@ -254,6 +252,6 @@ class TestsFlextCoreEnforcementNamespacePart02:
 
         with warnings.catch_warnings(record=True) as recorded:
             warnings.simplefilter("always")
-            FlextUtilitiesEnforcement.emit(empty_report, mode=c.EnforcementMode.STRICT)
+            u.emit(empty_report, mode=c.EnforcementMode.STRICT)
 
         assert recorded == []

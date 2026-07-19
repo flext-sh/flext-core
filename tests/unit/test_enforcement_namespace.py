@@ -4,7 +4,7 @@ Every assertion here is over the OBSERVABLE public contract:
 
 - ``u.check(target)`` -> ``m.Report`` with public ``violations`` (each carrying
   ``message`` / ``rule_id``), and
-- ``FlextUtilitiesEnforcement.run_layer(target, layer)`` -> emitted warnings.
+- ``u.run_layer(target, layer)`` -> emitted warnings.
 
 No private attribute/method is inspected; the class-prefix policy (e.g. the
 ``flext_core`` -> ``Flext`` mapping) is asserted through the violations a caller
@@ -19,7 +19,6 @@ import sys
 import warnings
 from typing import TYPE_CHECKING
 
-from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
 from tests import c
 from tests.unit._enforcement_support import make_class
 from tests import u
@@ -213,7 +212,7 @@ class_stem_override = "XmlAPI"
 
         with warnings.catch_warnings(record=True) as recorded:
             warnings.simplefilter("always")
-            FlextUtilitiesEnforcement.run_layer(bad, "constants")
+            u.run_layer(bad, "constants")
 
         texts = [str(r.message) for r in recorded]
         assert len(recorded) == 2
@@ -226,7 +225,7 @@ class_stem_override = "XmlAPI"
 
         with warnings.catch_warnings(record=True) as recorded:
             warnings.simplefilter("always")
-            FlextUtilitiesEnforcement.run_layer(target, "constants")
+            u.run_layer(target, "constants")
 
         assert recorded == []
 
@@ -242,7 +241,7 @@ class_stem_override = "XmlAPI"
 
         with warnings.catch_warnings(record=True) as recorded:
             warnings.simplefilter("always")
-            FlextUtilitiesEnforcement.run_layer(target, "constants")
+            u.run_layer(target, "constants")
 
         assert recorded == []
 
@@ -256,7 +255,7 @@ class_stem_override = "XmlAPI"
 
         with warnings.catch_warnings(record=True) as recorded:
             warnings.simplefilter("always")
-            FlextUtilitiesEnforcement.run_layer(FlextLocalConstants, "constants")
+            u.run_layer(FlextLocalConstants, "constants")
 
         assert recorded == []
 

@@ -14,10 +14,9 @@ from typing import Annotated
 
 import pytest
 
-from flext_core._constants.enforcement import FlextMroViolation, FlextSmellViolation
-from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
 from tests import c, p
 from tests import m
+from tests import e
 from tests import u
 
 
@@ -151,7 +150,7 @@ class TestsFlextCoreEnforcementReports:
         class _WithAny(m.ArbitraryTypesModel):
             data: Annotated[typing.Any, m.Field(description="d")] = None
 
-        report = FlextUtilitiesEnforcement.check_model_construction(_WithAny)
+        report = u.check_model_construction(_WithAny)
 
         assert report.violations
         assert any("no_any" in violation.message for violation in report.violations)
@@ -166,8 +165,8 @@ class TestsFlextCoreEnforcementReports:
             ]
         )
 
-        with pytest.warns(FlextMroViolation) as caught:
-            FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.WARN)
+        with pytest.warns(e.MroViolation) as caught:
+            u.emit(report, mode=c.EnforcementMode.WARN)
 
         assert len(caught) == 2
         assert str(caught[0].message) == (
@@ -193,11 +192,11 @@ class TestsFlextCoreEnforcementReports:
         with warnings.catch_warnings(record=True) as recorded:
             warnings.simplefilter("always")
             with pytest.raises(TypeError) as excinfo:
-                FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.STRICT)
+                u.emit(report, mode=c.EnforcementMode.STRICT)
 
         assert str(excinfo.value) == expected
         assert len(recorded) == 1
-        assert recorded[0].category is FlextMroViolation
+        assert recorded[0].category is e.MroViolation
         assert str(recorded[0].message) == expected
 
     def test_emit_off_mode_is_silent(self) -> None:
@@ -205,7 +204,7 @@ class TestsFlextCoreEnforcementReports:
 
         with warnings.catch_warnings(record=True) as recorded:
             warnings.simplefilter("always")
-            FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.OFF)
+            u.emit(report, mode=c.EnforcementMode.OFF)
 
         assert recorded == []
 
@@ -218,7 +217,7 @@ class TestsFlextCoreEnforcementReports:
     ) -> None:
         with warnings.catch_warnings(record=True) as recorded:
             warnings.simplefilter("always")
-            FlextUtilitiesEnforcement.emit(m.Report(), mode=mode)
+            u.emit(m.Report(), mode=mode)
 
         assert recorded == []
 
@@ -242,8 +241,8 @@ class TestsFlextCoreEnforcementReports:
             violations=[_hard_violation(message="boom", rule_id=rule_id, anchor=anchor)]
         )
 
-        with pytest.warns(FlextMroViolation) as caught:
-            FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.WARN)
+        with pytest.warns(e.MroViolation) as caught:
+            u.emit(report, mode=c.EnforcementMode.WARN)
 
         assert str(caught[0].message).endswith(expected_fix)
 
@@ -254,10 +253,10 @@ class TestsFlextCoreEnforcementReports:
             ]
         )
 
-        with pytest.warns(FlextSmellViolation) as caught:
-            FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.WARN)
+        with pytest.warns(e.SmellViolation) as caught:
+            u.emit(report, mode=c.EnforcementMode.WARN)
 
-        assert caught[0].category is FlextSmellViolation
+        assert caught[0].category is e.SmellViolation
 
     def test_emit_of_checked_report_carries_layer_tag_and_fix(self) -> None:
         class _WithAny(m.ArbitraryTypesModel):
@@ -266,8 +265,8 @@ class TestsFlextCoreEnforcementReports:
         report = u.check(_WithAny)
         assert report.violations
 
-        with pytest.warns(FlextMroViolation) as caught:
-            FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.WARN)
+        with pytest.warns(e.MroViolation) as caught:
+            u.emit(report, mode=c.EnforcementMode.WARN)
 
         texts = [str(entry.message) for entry in caught]
         assert any(

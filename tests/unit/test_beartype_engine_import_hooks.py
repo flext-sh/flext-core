@@ -17,10 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as be
-from tests import t
+from tests import c, m, t, u
 
 # ENFORCE-055: root wrapper alias imports (`from tests import c`) are CORRECT; a
 # SUBMODULE alias import is the violation. The forbidden form is the submodule one.
@@ -59,9 +56,9 @@ class TestsFlextCoreBeartypeEngineImportHooks:
 
     def _apply(self, target: type) -> t.StrMapping | None:
         """Invoke the public engine dispatch for the wrapper-alias-import shape."""
-        return be.apply(
+        return u.apply(
             c.EnforcementPredicateKind.DEPRECATED_SYNTAX,
-            me.DeprecatedSyntaxParams(ast_shape="no_wrapper_root_alias_import"),
+            m.DeprecatedSyntaxParams(ast_shape="no_wrapper_root_alias_import"),
             target,
         )
 
@@ -150,9 +147,9 @@ class TestsFlextCoreBeartypeEngineImportHooks:
             + "\n",
         )
 
-        result = be.apply(
+        result = u.apply(
             c.EnforcementPredicateKind.DEPRECATED_SYNTAX,
-            me.DeprecatedSyntaxParams(ast_shape="model_rebuild_call"),
+            m.DeprecatedSyntaxParams(ast_shape="model_rebuild_call"),
             probe,
         )
 
