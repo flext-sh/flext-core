@@ -155,6 +155,15 @@ def _validate_app_namespace(namespace: str) -> str:
     return candidate
 
 
+def _namespace_dir_name(env_prefix: str) -> str:
+    """Derive the owning project's namespace segment from its ``env_prefix``.
+
+    ``FLEXT_`` -> ``flext``; ``AI_HUB_`` -> ``ai-hub``; empty -> ``flext``. This
+    is the default when no application identity was registered.
+    """
+    return env_prefix.rstrip("_").lower().replace("_", "-") or "flext"
+
+
 class FlextSettings(BaseSettings):
     """Single settings base: singleton + helper API + registry + universal fields.
 
@@ -336,17 +345,35 @@ class FlextSettings(BaseSettings):
         with FlextSettings._lock:
             FlextSettings._app_namespace = None
 
-    @staticmethod
-    def _current_app_namespace() -> str:
-        """Return the process application identity with environment fallback."""
-        return _validate_app_namespace(
-            FlextSettings._app_namespace
-            or os.environ.get("FLEXT_APP_NAMESPACE", "flext")
-        )
+    @classmethod
+    def _owner_namespace(cls) -> str:
+        """Return the owning project's own namespace, derived from ``env_prefix``.
 
-    @staticmethod
-    def _absolute_app_dir(name: str, root: Path) -> Path:
-        namespace = FlextSettings._current_app_namespace()
+        This is the default identity when no application registered one, so a
+        standalone project (e.g. ``ai-hub``) transparently owns its own
+        directories without being forced to call ``set_app_namespace``.
+        """
+        env_prefix = cls.model_config.get("env_prefix") or "FLEXT_"
+        return _namespace_dir_name(env_prefix)
+
+    @classmethod
+    def _current_app_namespace(cls) -> str:
+        """Return the effective namespace.
+
+        Precedence: an explicitly registered application identity
+        (``set_app_namespace``) wins so every library shares it; then the
+        ``FLEXT_APP_NAMESPACE`` environment override; otherwise the owning
+        project's own namespace prevails as the default (registration is never
+        mandatory).
+        """
+        registered = FlextSettings._app_namespace or os.environ.get(
+            "FLEXT_APP_NAMESPACE"
+        )
+        return _validate_app_namespace(registered or cls._owner_namespace())
+
+    @classmethod
+    def _absolute_app_dir(cls, name: str, root: Path) -> Path:
+        namespace = cls._current_app_namespace()
         override = os.environ.get(f"{_app_env_prefix(namespace)}{name.upper()}_DIR")
         path = Path(override) if override else root / namespace
         if not path.is_absolute():

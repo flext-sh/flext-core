@@ -183,6 +183,30 @@ class TestsFlextCoreSettingsWorkDir:
         FlextSettings.set_app_namespace("flext-cli")
         assert FlextSettings.fetch_global().work_dir.name == "flext-tap-oracle"
 
+    def test_unregistered_owner_namespace_prevails_by_default(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Without registration, the owning project's own namespace is the default.
+
+        Registration is never mandatory: a standalone project (e.g. ``ai-hub``)
+        transparently owns ``<root>/ai-hub`` directories, not the ``flext``
+        fallback, purely from its ``env_prefix``.
+        """
+        if sys.platform not in {"linux", "linux2"}:
+            pytest.skip("XDG directories are Linux-specific")
+        monkeypatch.setenv("XDG_CACHE_HOME", "/xdg/cache")
+        monkeypatch.setenv("XDG_DATA_HOME", "/xdg/data")
+        monkeypatch.delenv("FLEXT_APP_NAMESPACE", raising=False)
+
+        class _AiHubSettings(FlextSettings):
+            model_config = FlextSettings.model_config | {"env_prefix": "AI_HUB_"}
+
+        _AiHubSettings.reset_for_testing()
+        s = _AiHubSettings.fetch_global()
+        assert s.cache_dir == Path("/xdg/cache/ai-hub")
+        assert s.data_dir == Path("/xdg/data/ai-hub")
+        _AiHubSettings.reset_for_testing()
+
     def test_computed_directories_serialize_with_current_application(self) -> None:
         """Pydantic serialization exposes directories for the current application."""
         settings = FlextSettings.fetch_global()
