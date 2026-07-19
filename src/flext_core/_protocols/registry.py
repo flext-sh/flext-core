@@ -11,6 +11,8 @@ from __future__ import annotations
 
 from typing import Protocol, Self, runtime_checkable, TYPE_CHECKING
 
+from flext_core._protocols.base import FlextProtocolsBase
+
 from flext_core._constants.mixins import FlextConstantsMixins as c
 
 
@@ -28,6 +30,16 @@ if TYPE_CHECKING:
 
 class FlextProtocolsRegistry:
     """Protocols for handler registration and plugin management."""
+
+    @runtime_checkable
+    class RegistryState(FlextProtocolsBase.BaseModel, Protocol):
+        """Validated registry runtime state."""
+
+        @property
+        def dispatcher(self) -> FlextProtocolsHandler.Dispatcher | None: ...
+
+        @property
+        def registered_keys(self) -> frozenset[str]: ...
 
     # mro-wkii.17.26 (codex): registry owns structural result/runtime contracts;
     # importing the concrete model facade here creates the p -> m -> p cycle.
@@ -62,7 +74,7 @@ class FlextProtocolsRegistry:
         @property
         def registered(
             self,
-        ) -> t.SequenceOf[FlextProtocolsRegistry.RegistrationDetails]:
+        ) -> t.MutableSequenceOf[FlextProtocolsRegistry.RegistrationDetails]:
             """Successful registration details."""
             ...
 
@@ -72,7 +84,7 @@ class FlextProtocolsRegistry:
             ...
 
         @property
-        def errors(self) -> t.StrSequence:
+        def errors(self) -> t.MutableSequenceOf[str]:
             """Registration error messages."""
             ...
 
@@ -195,7 +207,7 @@ class FlextProtocolsRegistry:
             ...
 
     @runtime_checkable
-    class ServiceRuntime(Protocol):
+    class ServiceRuntime(FlextProtocolsBase.BaseModel, Protocol):
         """Runtime capabilities consumed by registry composition."""
 
         @property
@@ -210,21 +222,6 @@ class FlextProtocolsRegistry:
         @property
         def dispatcher(self) -> FlextProtocolsHandler.Dispatcher | None:
             """Dispatcher bound to the runtime."""
-            ...
-
-        def model_copy(
-            self,
-            *,
-            update: t.MappingKV[
-                str,
-                FlextProtocolsHandler.Dispatcher
-                | FlextProtocolsRegistry.Registry
-                | None,
-            ]
-            | None = None,
-            deep: bool = False,
-        ) -> FlextProtocolsRegistry.ServiceRuntime:
-            """Copy runtime state with registry-owned updates."""
             ...
 
 

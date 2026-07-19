@@ -48,7 +48,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
                 k: FlextRuntime.normalize_to_metadata(v)
                 for k, v in self._metadata_map().items()
             }
-        export_model: p.ContextExport = m.ContextExport.model_validate({
+        export_model = m.ContextExport.model_validate({
             "data": dict(all_data),
             "metadata": (
                 m.Metadata.model_validate({"attributes": metadata_attributes})

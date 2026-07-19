@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import sys
-from typing import TYPE_CHECKING
-
 from examples import m
 from examples import p
 from flext_core import FlextSettings
@@ -12,7 +10,6 @@ from flext_core import FlextSettings
 from .ex_08_container_registration import Ex08ContainerRegistration
 
 from types import ModuleType
-
 
 
 class _WireProbe:

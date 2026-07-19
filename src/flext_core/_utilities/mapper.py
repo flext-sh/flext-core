@@ -107,11 +107,15 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
         exclude_keys: set[str] | None = None,
     ) -> p.Result[t.JsonMapping]:
         """Apply normalize/strip_none/strip_empty/map_keys/filter_keys/exclude_keys to a dict."""
-        coerced: t.JsonMapping = (
-            {k: FlextRuntime.normalize_to_metadata(v) for k, v in source.root.items()}
-            if isinstance(source, m.ConfigMap)
-            else source
-        )
+        coerced: t.JsonMapping
+        if isinstance(source, m.ConfigMap):
+            coerced = {
+                k: FlextRuntime.normalize_to_metadata(v) for k, v in source.root.items()
+            }
+        else:
+            coerced = {
+                k: FlextRuntime.normalize_to_metadata(v) for k, v in source.items()
+            }
 
         def _pipeline() -> t.JsonDict:
             step: t.JsonDict = dict(coerced)

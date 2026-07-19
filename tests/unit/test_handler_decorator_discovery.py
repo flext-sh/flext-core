@@ -14,7 +14,7 @@ import types
 import pytest
 from flext_tests import h, r
 
-from tests import p
+from tests import m, p
 
 
 class TestsFlextCoreHandlerDecoratorDiscovery:
@@ -25,9 +25,8 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         return types.ModuleType(name)
 
     def test_discovered_module_handler_invokes_with_success_outcome(self) -> None:
-        class CreateCommand:
-            def __init__(self, name: str) -> None:
-                self.name = name
+        class CreateCommand(m.Value):
+            name: str
 
         module = self._module("success_module")
 
@@ -38,7 +37,7 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         module.__dict__["handle_create"] = handle_create
 
         ((name, _, config),) = h.Discovery.scan_module(module)
-        outcome = handle_create(CreateCommand("alice"))
+        outcome = handle_create(CreateCommand(name="alice"))
 
         assert name == "handle_create"
         assert config.command is CreateCommand
@@ -46,9 +45,8 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         assert outcome.unwrap() == "created_alice"
 
     def test_discovered_module_handler_preserves_failure_outcome(self) -> None:
-        class DeleteCommand:
-            def __init__(self, user_id: str) -> None:
-                self.user_id = user_id
+        class DeleteCommand(m.Value):
+            user_id: str
 
         module = self._module("failure_module")
 
@@ -59,7 +57,7 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         module.__dict__["handle_delete"] = handle_delete
 
         ((name, _, _),) = h.Discovery.scan_module(module)
-        outcome = handle_delete(DeleteCommand("u42"))
+        outcome = handle_delete(DeleteCommand(user_id="u42"))
 
         assert name == "handle_delete"
         assert outcome.failure is True
@@ -121,9 +119,8 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         assert config.priority == priority
 
     def test_discovered_class_handler_invokes_via_instance(self) -> None:
-        class EventPublished:
-            def __init__(self, event_id: str) -> None:
-                self.event_id = event_id
+        class EventPublished(m.Value):
+            event_id: str
 
         class OrderService:
             @h.handler(command=EventPublished, priority=25)
@@ -131,7 +128,7 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
                 return r[str].ok(f"processed_{event.event_id}")
 
         ((name, _),) = h.Discovery.scan_class(OrderService)
-        outcome = getattr(OrderService(), name)(EventPublished("e7"))
+        outcome = getattr(OrderService(), name)(EventPublished(event_id="e7"))
 
         assert name == "handle_event"
         assert outcome.success is True

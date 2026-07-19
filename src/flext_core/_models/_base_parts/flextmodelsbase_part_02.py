@@ -15,7 +15,6 @@ from __future__ import annotations
 import uuid
 from collections.abc import Hashable
 from datetime import datetime
-from types import MappingProxyType
 from typing import Annotated, ClassVar, override
 
 from pydantic import ConfigDict
@@ -105,7 +104,7 @@ class FlextModelsBase(FlextModelsBasePart01):
                 title="Attributes",
                 examples=[{"source": "api", "priority": "high"}],
             ),
-        ] = mp.Field(default_factory=lambda: MappingProxyType({}))
+        ] = mp.Field(default_factory=dict)
         metadata_value: Annotated[
             t.Scalar | None,
             mp.Field(default=None, description="Scalar metadata value."),

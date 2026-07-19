@@ -3,17 +3,13 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, override
+from typing import Annotated, override
 
 from examples import m
-from examples import p
-from examples.shared import ExamplesFlextShared
 from examples import p, t
+from examples.shared import ExamplesFlextShared
 from examples import u
 from flext_core import r, s
-
-from flext_core import p as p
-
 
 
 class _EchoService(s[str]):

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import m, p, u
+from flext_core import m, u
 
 
 class ExamplesFlextModelsEx12:

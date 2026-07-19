@@ -16,6 +16,8 @@ from tests import t
 
 
 class TestsFlextCoreUtilitiesSettings:
+    """Verify settings utility behavior."""
+
     _original_env_file: str | None
     _original_cwd: Path
 

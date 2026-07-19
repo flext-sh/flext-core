@@ -19,6 +19,8 @@ from tests import u
 
 
 class TestsFlextEnforcementModels:
+    """Verify public enforcement models."""
+
     def test_any_field_detected(self) -> None:
         class _M(m.ArbitraryTypesModel):
             data: Annotated[typing.Any, m.Field(description="d")] = None

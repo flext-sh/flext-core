@@ -1,14 +1,13 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Shared Parts package."""
+"""Shared Parts package.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from flext_core.lazy import build_lazy_import_map, install_lazy_exports
+from .shared_part_01 import ExamplesFlextSharedBase as ExamplesFlextSharedBase
+from .shared_part_02 import ExamplesFlextShared as ExamplesFlextShared
 
-_LAZY_IMPORTS = build_lazy_import_map({
-    ".shared_part_01": ("ExamplesFlextSharedBase",),
-    ".shared_part_02": ("ExamplesFlextShared",),
-})
-
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, publish_all=False)
+__all__: tuple[str, ...] = ("ExamplesFlextShared", "ExamplesFlextSharedBase")

@@ -6,13 +6,12 @@ import hashlib
 import string
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 from examples import m
 from flext_core import r, u
 
 from collections.abc import MutableSequence
-
 
 
 class ExamplesFlextSharedBase(m.BaseModel):
@@ -46,7 +45,7 @@ class ExamplesFlextSharedBase(m.BaseModel):
         """Return a deterministic pseudo-random boolean."""
         return self._next_unit_float() >= self._BOOL_THRESHOLD
 
-    def rand_dict(self, n: int = 3) -> p.ConfigMap:
+    def rand_dict(self, n: int = 3) -> m.ConfigMap:
         """Return a ConfigMap with ``n`` random string keys to int values."""
         return m.ConfigMap(
             root={self.rand_str(4): self.rand_int(0, 100) for _ in range(n)}

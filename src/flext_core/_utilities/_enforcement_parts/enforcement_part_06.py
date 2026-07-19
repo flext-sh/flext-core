@@ -9,12 +9,12 @@ from flext_core._models.enforcement import FlextModelsEnforcement as me
 # mro-wkii (flext-core): t/p imported at runtime, not TYPE_CHECKING-only —
 # the module-level EXTENDED_PREDICATE_BINDINGS annotation is evaluated at
 # runtime by beartype claw instrumentation, so t/p must resolve at runtime.
-from flext_core._protocols.base import FlextProtocolsBase as p
 from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.pydantic import FlextTypesPydantic as tp
 
 
 def _extended_bindings() -> t.MappingKV[
-    str, tuple[c.EnforcementPredicateKind, p.BaseModel]
+    str, tuple[c.EnforcementPredicateKind, tp.BaseModelType]
 ]:
     """Map extended tags to (predicate_kind, params) dispatch entries."""
     pk = c.EnforcementPredicateKind
@@ -84,7 +84,7 @@ def _extended_bindings() -> t.MappingKV[
 
 
 EXTENDED_PREDICATE_BINDINGS: t.MappingKV[
-    str, tuple[c.EnforcementPredicateKind, p.BaseModel]
+    str, tuple[c.EnforcementPredicateKind, tp.BaseModelType]
 ] = _extended_bindings()
 
 

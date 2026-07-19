@@ -82,7 +82,8 @@ class TestsFlextCoreEnforcementNamespacePart01:
             spec = importlib.util.spec_from_file_location(
                 "demo_pkg.base", package / "base.py"
             )
-            assert spec is not None and spec.loader is not None
+            assert spec is not None
+            assert spec.loader is not None
             module = importlib.util.module_from_spec(spec)
             sys.modules[spec.name] = module
             spec.loader.exec_module(module)
@@ -199,7 +200,8 @@ class_stem_override = "XmlAPI"
         module_path = package / "__init__.py"
         module_path.write_text("class XmlAPIModels:\n    pass\n", encoding="utf-8")
         spec = importlib.util.spec_from_file_location("xmlapi", module_path)
-        assert spec is not None and spec.loader is not None
+        assert spec is not None
+        assert spec.loader is not None
         module = importlib.util.module_from_spec(spec)
         sys.modules[spec.name] = module
         spec.loader.exec_module(module)

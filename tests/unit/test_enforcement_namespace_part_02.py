@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Callable
+from typing import ClassVar
 
 import pytest
 
@@ -42,7 +43,7 @@ def _local_constants_class() -> type:
     """Return a genuinely function-local class (has ``<locals>`` qualname)."""
 
     class FlextLocalConstants:
-        ITEMS: list[str] = ["a"]  # violating shape, but function-local
+        ITEMS: ClassVar[list[str]] = ["a"]  # violating shape, but function-local
 
     return FlextLocalConstants
 
@@ -64,6 +65,8 @@ def _bad_constant_report() -> p.Report:
 
 
 class TestsFlextCoreEnforcementNamespacePart02:
+    """Verify namespace enforcement edge contracts."""
+
     __test__ = True
 
     # ------------------------------------------------------------------ #

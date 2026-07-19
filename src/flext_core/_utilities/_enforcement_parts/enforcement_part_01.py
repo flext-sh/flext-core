@@ -11,11 +11,13 @@ from .enforcement_part_06 import EXTENDED_PREDICATE_BINDINGS
 # mro-wkii (flext-core): t/p imported at runtime, not TYPE_CHECKING-only —
 # the module-level PREDICATE_BINDINGS annotation is evaluated at runtime by
 # beartype claw instrumentation, so t/p must resolve at runtime.
-from flext_core._protocols.base import FlextProtocolsBase as p
 from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.pydantic import FlextTypesPydantic as tp
 
 
-def _bindings() -> t.MappingKV[str, tuple[c.EnforcementPredicateKind, p.BaseModel]]:
+def _bindings() -> t.MappingKV[
+    str, tuple[c.EnforcementPredicateKind, tp.BaseModelType]
+]:
     """Build the tag → (predicate_kind, params) dispatch mapping (1 row = 1 rule)."""
     pk = c.EnforcementPredicateKind
     fp = me.FieldShapeParams
@@ -143,13 +145,12 @@ def _bindings() -> t.MappingKV[str, tuple[c.EnforcementPredicateKind, p.BaseMode
             pk.MRO_SHAPE,
             msh(require_explicit_class_when_self_ref=True),
         ),
-        **EXTENDED_PREDICATE_BINDINGS,
     })
 
 
-PREDICATE_BINDINGS: t.MappingKV[str, tuple[c.EnforcementPredicateKind, p.BaseModel]] = (
-    _bindings()
-)
+PREDICATE_BINDINGS: t.MappingKV[
+    str, tuple[c.EnforcementPredicateKind, t.BaseModelType]
+] = {**_bindings(), **EXTENDED_PREDICATE_BINDINGS}
 
 
 __all__: list[str] = ["PREDICATE_BINDINGS"]

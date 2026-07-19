@@ -14,6 +14,8 @@ from tests import p
 
 
 class TestsFlextCoreExceptionsBase:
+    """Verify base exception contracts."""
+
     @pytest.mark.parametrize(
         "subclass",
         [

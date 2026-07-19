@@ -11,6 +11,8 @@ from tests import m
 
 
 class TestsFlextCoreUtilitiesGenerators:
+    """Verify generator utility behavior."""
+
     def test_public_generators_build_dispatch_audit_metadata(self) -> None:
         request = m.Tests.DispatchRequest(
             command_name="sync-users", tenant="tenant-a", environment="prod"

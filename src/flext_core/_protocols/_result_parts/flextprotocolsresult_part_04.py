@@ -32,8 +32,14 @@ class FlextProtocolsResult(FlextProtocolsResultPart03):
         """
 
         def model_dump(
-            self, *, mode: str = "python"
-        ) -> t.MappingKV[str, t.JsonPayload | None]:
+            self,
+            *,
+            mode: str = "python",
+            by_alias: bool | None = None,
+            exclude_unset: bool = False,
+            exclude_defaults: bool = False,
+            exclude_none: bool = False,
+        ) -> t.JsonDict:
             """Dump model data to a mapping that runtime helpers can normalize."""
             ...
 
@@ -62,7 +68,7 @@ class FlextProtocolsResult(FlextProtocolsResultPart03):
             ...
 
         @property
-        def metadata(self) -> FlextProtocolsResult.Metadata:
+        def metadata(self) -> t.JsonMapping:
             """Structured metadata attached to the error."""
             ...
 

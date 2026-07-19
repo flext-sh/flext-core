@@ -121,13 +121,24 @@ class FlextProtocolsContextOperations:
             """Merge another context or mapping into this one."""
             ...
 
-    @runtime_checkable
-    class ContextExport(Protocol):
-        """Context export/serialization operations."""
-
-        def export(self, *, as_dict: bool = ...) -> dict[str, t.JsonPayload] | Self:
-            """Export context state as a dict or the context instance itself."""
+        def export(
+            self, *, as_dict: bool = ...
+        ) -> t.MappingKV[str, t.JsonPayload] | Self:
+            """Export the current context as a snapshot or mapping."""
             ...
+
+    @runtime_checkable
+    class ContextExport(FlextProtocolsBase.BaseModel, Protocol):
+        """Validated context snapshot returned by export operations."""
+
+        @property
+        def data(self) -> t.MappingKV[str, t.JsonPayload]: ...
+
+        @property
+        def metadata(self) -> p.Metadata | p.Dict | None: ...
+
+        @property
+        def statistics(self) -> t.JsonMapping: ...
 
     @runtime_checkable
     class ContextMetadataAccess(Protocol):
@@ -143,12 +154,7 @@ class FlextProtocolsContextOperations:
 
     @runtime_checkable
     class Context(
-        ContextRead,
-        ContextWrite,
-        ContextLifecycle,
-        ContextExport,
-        ContextMetadataAccess,
-        Protocol,
+        ContextRead, ContextWrite, ContextLifecycle, ContextMetadataAccess, Protocol
     ):
         """Full context protocol composed from capability sub-protocols."""
 

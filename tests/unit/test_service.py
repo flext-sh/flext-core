@@ -21,6 +21,7 @@ from pydantic import BaseModel
 from tests.base import s
 from tests import m
 from tests import p
+import operator
 
 
 class TestsFlextService(FlextTestsCase):
@@ -39,6 +40,13 @@ class TestsFlextService(FlextTestsCase):
         @override
         def execute(self) -> p.Result[bool]:
             return r[bool].fail("execute-boom")
+
+    class _UnspecializedService(s):
+        """Public unspecialized service using the established default result type."""
+
+        @override
+        def execute(self) -> p.Result[p.BaseModel]:
+            return r[p.BaseModel].ok(m.Metadata())
 
     # --- execute(): the r[T] contract ------------------------------------
 
@@ -66,6 +74,12 @@ class TestsFlextService(FlextTestsCase):
         assert not result.success
         assert result.error == "execute-boom"
 
+    def test_unspecialized_service_preserves_default_result_contract(self) -> None:
+        result = self._UnspecializedService().execute()
+
+        assert result.success
+        assert isinstance(result.value, m.Metadata)
+
     def test_execute_success_result_supports_combinators(self) -> None:
         result = self._PureService().execute()
 
@@ -75,7 +89,7 @@ class TestsFlextService(FlextTestsCase):
     def test_execute_failure_result_short_circuits_combinators(self) -> None:
         result = self._FailingService().execute()
 
-        assert result.map(lambda ok: not ok).failure
+        assert result.map(operator.not_).failure
         assert result.unwrap_or(default=False) is False
 
     def test_service_instance_is_a_flext_service(self) -> None:

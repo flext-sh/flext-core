@@ -23,6 +23,8 @@ if TYPE_CHECKING:
 
 
 class TestsFlextUtilitiesProjectMetadataRead:
+    """Verify project metadata reading."""
+
     @pytest.mark.parametrize(
         ("project_name", "expected_stem"),
         [

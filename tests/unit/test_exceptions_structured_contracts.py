@@ -15,6 +15,7 @@ from tests import c
 from tests import p
 from tests.unit._exceptions_failure_support import FAILURES, FailureFactory
 from tests.unit._exceptions_structured_support import STRUCTURED_ERRORS, ErrorFactory
+import operator
 
 
 class TestsFlextCoreExceptionsStructuredContracts:
@@ -37,6 +38,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
 
         # Assert: structured protocol surface
         assert isinstance(error, p.StructuredError)
+        assert name
         assert error.error_domain == expected_domain
         assert error.error_code == expected_code
         assert error.error_message == error.message
@@ -65,11 +67,14 @@ class TestsFlextCoreExceptionsStructuredContracts:
             raise factory()
 
         error = caught.value
+        assert name
         assert error.error_domain == expected_domain
         assert error.error_code == expected_code
         assert error.matches_error_domain(expected_domain)
         assert error.message in str(error)
         assert error.error_message == error.message
+        for key, value in expected_payload.items():
+            assert error.metadata.attributes[key] == value
 
     def test_base_error_defaults_to_unknown_domain_protocol_surface(self) -> None:
         # Arrange / Act
@@ -134,6 +139,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
 
         # Assert: r[T] failure contract
         assert result.failure
+        assert name
         assert not result.success
         assert result.error is not None
         assert expected_fragment in result.error
@@ -158,9 +164,15 @@ class TestsFlextCoreExceptionsStructuredContracts:
         result = factory()
 
         # Act / Assert: map short-circuits, preserving the failure and its code.
-        mapped = result.map(lambda value: not value)
+        mapped = result.map(operator.not_)
         assert mapped.failure
+        assert name
+        assert result.error is not None
+        assert expected_fragment in result.error
         assert mapped.error_code == expected_code
+        assert result.error_data is not None
+        for key, value in expected_data.items():
+            assert result.error_data[key] == value
 
         # unwrap_or yields the caller's default on failure.
         assert result.unwrap_or(True) is True

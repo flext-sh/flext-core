@@ -65,7 +65,7 @@ class TestsFlextCoreEnforcement:
         self, class_name: str, member: str
     ) -> None:
         """``get_``/``set_``/``is_`` methods violate the accessor contract."""
-        cls = make_class(class_name, {member: lambda self: None})
+        cls = make_class(class_name, {member: lambda _self: None})
 
         report = u.check(cls)
         assert messages(report, fragment=f'accessor method "{member}"')
@@ -73,7 +73,7 @@ class TestsFlextCoreEnforcement:
     @pytest.mark.parametrize("member", ["fetch_remote", "build_widget"])
     def test_non_accessor_prefix_method_allowed(self, member: str) -> None:
         """Verb-prefixed methods that are not accessors raise no accessor finding."""
-        cls = make_class("FlextCoreAccessedOk", {member: lambda self: None})
+        cls = make_class("FlextCoreAccessedOk", {member: lambda _self: None})
 
         report = u.check(cls)
         assert not messages(report, fragment="accessor method")

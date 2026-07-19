@@ -21,6 +21,8 @@ class _Color(StrEnum):
 
 
 class TestsFlextCoreTypingsNew:
+    """Verify public typing utilities."""
+
     def test_json_value_adapter_accepts_nested_json(self) -> None:
         """json_value_adapter validates arbitrarily nested JSON payloads."""
         payload: t.JsonValue = {"k": [1, 2, "x", True, None]}

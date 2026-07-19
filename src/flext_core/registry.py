@@ -171,8 +171,10 @@ class FlextRegistry(s[bool]):
             value, (p.Logger, p.Settings, p.Context, p.Dispatcher)
         ) or callable(value):
             narrowed = str(value)
+        elif isinstance(value, t.PRIMITIVES_TYPES):
+            narrowed = t.json_value_adapter().validate_python(value)
         else:
-            normalized = u.normalize_to_metadata(value)
+            normalized = u.normalize_to_metadata(str(value))
             narrowed = t.json_value_adapter().validate_python(normalized)
         return narrowed
 
@@ -185,7 +187,7 @@ class FlextRegistry(s[bool]):
 
             def normalized_callable(
                 *args: p.AttributeProbe, **kwargs: p.AttributeProbe
-            ) -> t.JsonPayload | p.BaseModel | None:
+            ) -> t.JsonPayload | None:
                 result = value(*args, **kwargs)
                 return FlextRegistry._narrow_value(result)
 

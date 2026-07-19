@@ -48,21 +48,6 @@ class FlextProtocolsBase:
         in typings.py, preventing circular dependencies.
         """
 
-        @classmethod
-        def model_validate(
-            cls,
-            obj: FlextProtocolsBase.AttributeProbe,
-            *,
-            strict: bool | None = None,
-            extra: Literal["allow", "forbid", "ignore"] | None = None,
-            from_attributes: bool | None = None,
-            context: t.JsonMapping | None = None,
-            by_alias: bool | None = None,
-            by_name: bool | None = None,
-        ) -> Self:
-            """Validate one external value into the concrete model type."""
-            ...
-
         def model_dump(
             self,
             *,
@@ -96,13 +81,7 @@ class FlextProtocolsBase:
         def model_copy(
             self,
             *,
-            update: t.MappingKV[
-                str,
-                t.JsonPayload
-                | FlextProtocolsBase.BaseModel
-                | t.SequenceOf[FlextProtocolsBase.BaseModel],
-            ]
-            | None = None,
+            update: t.MappingKV[str, FlextProtocolsBase.AttributeProbe] | None = None,
             deep: bool = False,
         ) -> Self:
             """Copy a Pydantic-compatible model instance."""
@@ -119,6 +98,14 @@ class FlextProtocolsBase:
     class ContractModel(BaseModel, Protocol):
         """Structural protocol for immutable strict Pydantic contract models."""
 
+    # mro-dxrp.1.4 (agent: Sisyphus-Junior): expose the immutable value-object
+    # capability required by runtime Pydantic annotations without model imports.
+    @runtime_checkable
+    class Value(ContractModel, Protocol):
+        """Structural contract for immutable value-semantic models."""
+
+        def __hash__(self) -> int: ...
+
     @runtime_checkable
     class Routable(Protocol):
         """Base protocol for messages that carry explicit route information."""
@@ -129,6 +116,16 @@ class FlextProtocolsBase:
 
         command_type: str
         """Command type identifier."""
+
+    # mro-dxrp.1.4 (agent: Sisyphus-Junior): own the complete public command
+    # contract used by runtime Pydantic annotations without importing models.
+    @runtime_checkable
+    class Command(ArbitraryTypesModel, CommandRoutable, Protocol):
+        """Structural contract for validated CQRS command messages."""
+
+        message_type: Literal["command"]
+        command_id: str
+        issuer_id: str | None
 
     @runtime_checkable
     class EventRoutable(Routable, Protocol):

@@ -24,6 +24,8 @@ if TYPE_CHECKING:
 
 
 class TestsFlextHandlerDecoratorMetadata:
+    """Verify handler decorator metadata."""
+
     def test_decorated_method_exposes_handler_config(self) -> None:
         class CreateCommand:
             pass

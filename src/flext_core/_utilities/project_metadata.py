@@ -10,14 +10,13 @@ from flext_core._constants.file import FlextConstantsFile as cf
 from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cpm
 from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
 from flext_core._protocols.project_metadata import FlextProtocolsProjectMetadata as ppm
-from flext_core import r
+from flext_core import p, r
 
 
 # mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
 from flext_core._typings.base import FlextTypingBase as t
 
 if TYPE_CHECKING:
-    from flext_core._protocols import FlextProtocolsResult as pr
     from pathlib import Path
 
 
@@ -42,7 +41,7 @@ class FlextUtilitiesProjectMetadata(mpm):
         )
 
     @staticmethod
-    def _read_project_document(root: Path) -> pr.Result[mpm.PyprojectDocument]:
+    def _read_project_document(root: Path) -> p.Result[mpm.PyprojectDocument]:
         """Parse and validate one canonical pyproject document exactly once."""
         pyproject = root / cf.PYPROJECT_FILENAME
         try:
@@ -57,11 +56,11 @@ class FlextUtilitiesProjectMetadata(mpm):
     @classmethod
     def _retain_project_metadata(
         cls, root: Path, document: mpm.PyprojectDocument
-    ) -> pr.Result[ppm.ProjectMetadata]:
+    ) -> p.Result[mpm.ProjectMetadata]:
         """Retain exact validated declarations as canonical project metadata."""
         project = document.project
         if project is None:
-            return r[ppm.ProjectMetadata].fail(
+            return r[mpm.ProjectMetadata].fail(
                 f"cannot load project metadata from {root / cf.PYPROJECT_FILENAME}: "
                 "PEP 621 [project] table is required"
             )
@@ -75,7 +74,7 @@ class FlextUtilitiesProjectMetadata(mpm):
             project=project,
             flext=flext,
         )
-        return r[ppm.ProjectMetadata].ok(metadata)
+        return r[mpm.ProjectMetadata].ok(metadata)
 
     @staticmethod
     def derive_class_stem(project_name: str) -> str:
@@ -117,7 +116,7 @@ class FlextUtilitiesProjectMetadata(mpm):
     @classmethod
     def project_uses_distribution_at(
         cls, root: Path, distribution_name: str
-    ) -> pr.Result[bool]:
+    ) -> p.Result[bool]:
         """Return whether a canonical project declares one distribution.
 
         A valid TOML document without a PEP 621 ``[project]`` table is not a
@@ -135,11 +134,11 @@ class FlextUtilitiesProjectMetadata(mpm):
         )
 
     @classmethod
-    def read_project_metadata(cls, root: Path) -> pr.Result[ppm.ProjectMetadata]:
+    def read_project_metadata(cls, root: Path) -> p.Result[mpm.ProjectMetadata]:
         """Validate one project document and retain its exact nested models."""
         document_result = cls._read_project_document(root)
         if document_result.failure:
-            return r[ppm.ProjectMetadata].from_failure(document_result)
+            return r[mpm.ProjectMetadata].from_failure(document_result)
         return cls._retain_project_metadata(root, document_result.value)
 
 

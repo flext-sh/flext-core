@@ -35,7 +35,15 @@ class _MappingRoot(Protocol):
 
     def update(self, other: t.MappingKV[str, t.JsonPayload]) -> None: ...
 
-    def model_dump(self, *, mode: str = "python") -> t.JsonDict: ...
+    def model_dump(
+        self,
+        *,
+        mode: str = "python",
+        by_alias: bool | None = None,
+        exclude_unset: bool = False,
+        exclude_defaults: bool = False,
+        exclude_none: bool = False,
+    ) -> t.JsonDict: ...
 
     def model_copy(
         self,
@@ -127,7 +135,12 @@ class FlextProtocolsContainerOptions:
             self,
         ) -> (
             FlextProtocolsContainerOptions.ConfigMap
-            | t.MappingKV[str, t.JsonPayload]
+            | t.MappingKV[
+                str,
+                FlextProtocolsContainerOptions.ConfigMap
+                | t.SequenceOf[t.Scalar]
+                | t.Scalar,
+            ]
             | None
         ): ...
 

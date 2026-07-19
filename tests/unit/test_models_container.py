@@ -34,7 +34,7 @@ class TestsFlextCoreModelsContainer:
 
     def test_config_map_rejects_non_mapping_root(self) -> None:
         # Pydantic ValidationError subclasses ValueError.
-        with pytest.raises(ValueError):
+        with pytest.raises(m.ValidationError, match="valid dictionary"):
             m.ConfigMap.model_validate(["not", "a", "mapping"])
 
     # ------------------------------------------------------------------ #
@@ -172,5 +172,5 @@ class TestsFlextCoreModelsContainer:
         assert m.ObjectList(root=payload).model_dump() == payload
 
     def test_object_list_rejects_non_sequence_root(self) -> None:
-        with pytest.raises(ValueError):
+        with pytest.raises(m.ValidationError, match="valid list"):
             m.ObjectList.model_validate({"root": 12345})

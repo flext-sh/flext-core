@@ -9,6 +9,7 @@ constructed model state, model_dump output, and validation error paths.
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+import json
 from typing import Annotated
 
 import pytest
@@ -18,6 +19,8 @@ from tests import m
 
 
 class TestsFlextCoreModelsBaseFullCoverage:
+    """Verify public base-model behavior."""
+
     class _FrozenValue(m.FrozenValueModel):
         name: Annotated[str, m.Field(description="Frozen value name")]
         count: Annotated[int, m.Field(description="Frozen value count")]
@@ -54,7 +57,7 @@ class TestsFlextCoreModelsBaseFullCoverage:
 
     def test_metadata_attributes_broken_dump_object_rejected(self) -> None:
         with pytest.raises(TypeError):
-            m.Metadata.model_validate({"attributes": m.Tests._BrokenDumpModel()})
+            m.Metadata.model_validate({"attributes": m.Tests.BrokenDumpModel()})
 
     # --- Metadata defaults and immutability ------------------------------
 
@@ -65,6 +68,14 @@ class TestsFlextCoreModelsBaseFullCoverage:
         assert model.tags == ()
         assert model.created_by is None
         assert model.attributes == {}
+
+    def test_metadata_default_dump_is_warning_free_and_json_compatible(self) -> None:
+        model = m.Metadata()
+
+        dumped = model.model_dump(mode="json")
+
+        assert dumped["attributes"] == {}
+        assert json.loads(model.model_dump_json())["attributes"] == {}
 
     def test_metadata_is_frozen(self) -> None:
         model = m.Metadata()

@@ -39,6 +39,8 @@ def _hard_violation(
 
 
 class TestsFlextCoreEnforcementReports:
+    """Verify enforcement report behavior."""
+
     # --- Report container contract -------------------------------------
 
     def test_empty_report_is_falsy_and_reports_zero_length(self) -> None:
@@ -90,7 +92,7 @@ class TestsFlextCoreEnforcementReports:
         violation = _hard_violation()
 
         # Pydantic's frozen ValidationError subclasses ValueError.
-        with pytest.raises(ValueError):
+        with pytest.raises(c.ValidationError, match="frozen"):
             violation.qualname = "other"
 
     def test_violation_model_dump_exposes_public_fields(self) -> None:

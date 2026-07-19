@@ -53,7 +53,7 @@ class FlextUtilitiesContextCrud(
             if scope_name == c.ContextScope.GLOBAL:
                 _ = FlextUtilitiesLoggingContext.clear_global_context()
         self.state = self.state.model_copy(
-            update={"metadata": p.Metadata()}
+            update={"metadata": m.Metadata()}
         ).with_operation_update(c.ContextOperation.CLEAR.value)
 
     def get(

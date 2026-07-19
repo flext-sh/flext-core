@@ -723,6 +723,7 @@ split-on-trailing-comma = false
 "**/tools/**/*.py" = [ "FBT001", "FBT002", "N802", "S404", "S603", "S607", "T201" ]
 "**/typings.py" = [ "RUF036" ]
 "**/workspace/*.py" = [ "S404", "S603", "S607" ]
+"**/tests/**/*.py" = [ "FBT001", "PLC1901", "S108" ]
 
 # [MANAGED] tomlsort
 [tool.tomlsort]

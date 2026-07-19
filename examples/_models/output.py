@@ -4,14 +4,13 @@ from __future__ import annotations
 
 from enum import StrEnum
 from types import MappingProxyType
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 from examples import c
 
 from collections.abc import Mapping
 
-from examples import p, t
-
+from examples import t
 
 
 class ExamplesFlextModelsOutput:

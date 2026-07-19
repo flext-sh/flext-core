@@ -20,7 +20,7 @@ from flext_tests import h, r
 
 from tests.base import s
 
-from tests import p
+from tests import m, p
 
 
 class TestsFlextHandlerDecoratorEdges:
@@ -193,9 +193,8 @@ class TestsFlextHandlerDecoratorEdges:
 
     def test_decorated_method_stays_callable_and_returns_success(self) -> None:
         # Arrange: decoration must not alter the method's runtime behavior.
-        class CreateCommand:
-            def __init__(self, name: str) -> None:
-                self.name = name
+        class CreateCommand(m.Value):
+            name: str
 
         class Service:
             @h.handler(command=CreateCommand, priority=3)
@@ -203,7 +202,7 @@ class TestsFlextHandlerDecoratorEdges:
                 return r[str].ok(f"created_{cmd.name}")
 
         # Act
-        result = Service().handle(CreateCommand("alpha"))
+        result = Service().handle(CreateCommand(name="alpha"))
 
         # Assert
         assert result.success
@@ -211,9 +210,8 @@ class TestsFlextHandlerDecoratorEdges:
 
     def test_service_integration_discovers_handler_via_scan_class(self) -> None:
         # Arrange: a real FlextService subclass with a decorated handler.
-        class CreateCommand:
-            def __init__(self, name: str) -> None:
-                self.name = name
+        class CreateCommand(m.Value):
+            name: str
 
         class Service(s[str]):
             @h.handler(command=CreateCommand, priority=10)

@@ -22,6 +22,8 @@ if TYPE_CHECKING:
 
 
 class TestsFlextCoreExceptionsTypedMetrics:
+    """Verify typed exception metrics."""
+
     @pytest.mark.parametrize(
         ("factory", "expected_type"),
         [

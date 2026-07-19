@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from flext_core import FlextConstants as c, FlextTypes as t
 from flext_core import FlextResult as r
-from flext_core._protocols.base import FlextProtocolsBase as pb
+from flext_core._models.pydantic import FlextModelsPydantic as mp
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -21,7 +21,7 @@ class FlextUtilitiesArgs:
     """Utilities for model-based option parsing."""
 
     @staticmethod
-    def parse_model[M: pb.BaseModel](
+    def parse_model[M: mp.BaseModel](
         kwargs: t.MappingKV[str, t.JsonPayload],
         model_cls: t.ModelClass[M],
         *,
@@ -47,7 +47,7 @@ class FlextUtilitiesArgs:
             return r[M].fail_op("parse options model", exc)
 
     @staticmethod
-    def resolve_options[M: pb.BaseModel](
+    def resolve_options[M: mp.BaseModel](
         options: M | None,
         kwargs: t.MappingKV[str, t.JsonPayload],
         model_cls: t.ModelClass[M],

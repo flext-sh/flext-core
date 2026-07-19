@@ -10,6 +10,8 @@ from tests import t
 
 
 class TestsFlextUtilitiesPydantic:
+    """Verify Pydantic utility behavior."""
+
     @pytest.mark.parametrize(
         ("raw_name", "expected_name"),
         [

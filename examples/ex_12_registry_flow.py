@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from examples import c
 from examples import m
 from examples.shared import ExamplesFlextShared
@@ -16,9 +14,7 @@ from .ex_12_registry_support import (
     discovered_handler,
 )
 
-from examples import p
 from examples import p, t
-
 
 
 class Ex12RegistryFlow(ExamplesFlextShared):

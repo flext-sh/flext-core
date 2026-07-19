@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 
 from flext_core import m, p, r, t, u
 
 from collections.abc import Callable
-
 
 
 class ExamplesFlextModelsEx10:
@@ -40,7 +39,8 @@ class ExamplesFlextModelsEx10:
 
     class ProtocolHandler(m.BaseModel):
         message_type: Annotated[
-            type[p.Command], u.Field(description="Message type for protocol handler")
+            t.ModelClass[t.BaseModelType],
+            u.Field(description="Message type for protocol handler"),
         ] = m.Command
 
         def handle(self, message: ExamplesFlextModelsEx10.Message) -> p.Result[str]:

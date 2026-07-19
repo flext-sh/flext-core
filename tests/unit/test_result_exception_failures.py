@@ -19,6 +19,8 @@ from tests import p, t
 
 
 class TestsFlextCoreResultExceptionFailures:
+    """Verify exception-carrying result failures."""
+
     @pytest.mark.parametrize(
         ("error_msg", "expected_error"),
         [

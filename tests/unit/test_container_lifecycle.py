@@ -17,6 +17,8 @@ from tests import p
 
 
 class TestsFlextContainerLifecycle:
+    """Verify container lifecycle behavior."""
+
     def test_clear_removes_every_registration(
         self, clean_container: p.Container
     ) -> None:

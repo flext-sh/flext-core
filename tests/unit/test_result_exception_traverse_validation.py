@@ -21,6 +21,8 @@ from tests import p
 class TestsFlextCoreResultExceptionTraverseValidation(
     TestsFlextResultExceptionCarrying
 ):
+    """Verify result traversal validation failures."""
+
     @pytest.mark.parametrize(
         "raised", [ValueError("item error"), TypeError("bad type"), KeyError("missing")]
     )

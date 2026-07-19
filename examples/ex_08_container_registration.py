@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from examples import p
 from examples import p, t
 from examples import u
 from examples.shared import ExamplesFlextShared

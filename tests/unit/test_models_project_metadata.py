@@ -20,6 +20,8 @@ from tests import u
 
 
 class TestsFlextModelsProjectMetadata:
+    """Verify project metadata models."""
+
     # ------------------------------------------------------------------
     # derive_class_stem — pure name-derivation contract (behavior on u.*)
     # ------------------------------------------------------------------

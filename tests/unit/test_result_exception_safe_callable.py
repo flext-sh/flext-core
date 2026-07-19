@@ -16,6 +16,8 @@ if TYPE_CHECKING:
 
 
 class TestsFlextCoreResultExceptionSafeCallable(TestsFlextResultExceptionCarrying):
+    """Verify safe callable exception handling."""
+
     def test_safe_carries_exception(self) -> None:
         @r.safe
         def divide(a: int, b: int) -> float:
@@ -87,7 +89,8 @@ class TestsFlextCoreResultExceptionSafeCallable(TestsFlextResultExceptionCarryin
         @r.safe
         def parse_int(value: str) -> int:
             if not value.isdigit():
-                raise ValueError(f"'{value}' is not a valid integer")
+                msg = f"'{value}' is not a valid integer"
+                raise ValueError(msg)
             return int(value)
 
         result: p.Result[int] = parse_int("abc")

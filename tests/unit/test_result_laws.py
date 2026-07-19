@@ -16,6 +16,8 @@ from tests.unit._result_scenarios import ResultOperationType
 
 
 class TestsFlextCoreResultLaws:
+    """Verify algebraic result laws."""
+
     ResultOperationType = ResultOperationType
 
     # ------------------------------------------------------------------ #

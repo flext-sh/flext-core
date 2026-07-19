@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import Self, override, TYPE_CHECKING
 
 from flext_core import p
+from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._constants.errors import FlextConstantsErrors as ce
 
 
@@ -59,7 +60,7 @@ class FlextModelsBuilder:
                 return self._set(**{field_name: (*current_values, value)})
 
             @staticmethod
-            def _model[ModelT: p.ContractModel](
+            def _model[ModelT: mp.BaseModel](
                 model_type: type[ModelT],
                 /,
                 **data: ts.JsonPayload | tb.SequenceOf[ts.JsonPayload],
@@ -68,7 +69,7 @@ class FlextModelsBuilder:
                 model: ModelT = model_type.model_validate(data)
                 return model
 
-            def _append_model[ModelT: p.ContractModel](
+            def _append_model[ModelT: mp.BaseModel](
                 self,
                 field_name: str,
                 model_type: type[ModelT],
@@ -77,10 +78,10 @@ class FlextModelsBuilder:
             ) -> Self:
                 """Build and append one ContractModel item to a sequence field."""
                 model_item = self._model(model_type, **data)
-                current_values: tb.VariadicTuple[p.ContractModel] = tuple(
+                current_values: tb.VariadicTuple[mp.BaseModel] = tuple(
                     getattr(self.state, field_name)
                 )
-                updated: tb.SequenceOf[p.ContractModel] = (*current_values, model_item)
+                updated: tb.SequenceOf[mp.BaseModel] = (*current_values, model_item)
                 return self._set(**{field_name: updated})
 
             def _build_product(self, state: StateT) -> ProductT:

@@ -25,6 +25,8 @@ from tests import t
 
 
 class TestsFlextCoreEnforcementWarningVisibility:
+    """Verify enforcement warning visibility."""
+
     _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
     @pytest.mark.parametrize("category", [e.MroViolation, e.SmellViolation])

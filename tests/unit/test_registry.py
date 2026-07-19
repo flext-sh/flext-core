@@ -81,6 +81,33 @@ class TestsFlextCoreRegistry:
         assert first.success
         assert duplicate.success
 
+    def test_registered_nullable_callable_preserves_none(
+        self, registry: p.Registry
+    ) -> None:
+        def nullable_service() -> None:
+            return None
+
+        registration = registry.register("nullable-service", nullable_service)
+        resolved = registry.container.resolve("nullable-service")
+
+        assert registration.success
+        assert resolved.success
+        service = resolved.value
+        assert callable(service)
+        assert service() is None
+
+    @pytest.mark.parametrize("scalar", [42, True, 3.5])
+    def test_registered_json_scalar_preserves_native_identity(
+        self, registry: p.Registry, scalar: bool | float
+    ) -> None:
+        registration = registry.register(f"scalar-{type(scalar).__name__}", scalar)
+        resolved = registry.container.resolve(f"scalar-{type(scalar).__name__}")
+
+        assert registration.success
+        assert resolved.success
+        assert resolved.value == scalar
+        assert type(resolved.value) is type(scalar)
+
     def test_instance_plugin_roundtrips_then_unregisters(
         self, registry: p.Registry
     ) -> None:

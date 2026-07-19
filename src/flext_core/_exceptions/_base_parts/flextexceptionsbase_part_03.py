@@ -20,6 +20,7 @@ from .flextexceptionsbase_part_02 import FlextBaseErrorStateMixin
 from collections.abc import MutableMapping
 from flext_core._protocols.base import FlextProtocolsBase as p
 from flext_core._typings.services import FlextTypesServices as ts
+from flext_core._models.pydantic import FlextModelsPydantic as mp
 
 if TYPE_CHECKING:
     from flext_core._protocols.result import FlextProtocolsResult as pr
@@ -28,7 +29,7 @@ if TYPE_CHECKING:
 class FlextBaseError(FlextBaseErrorStateMixin, Exception):
     """Base exception with correlation metadata and error codes."""
 
-    _params_cls: ClassVar[type[p.BaseModel] | None] = None
+    _params_cls: ClassVar[type[mp.BaseModel] | None] = None
     _excluded_context_keys: ClassVar[set[str] | frozenset[str] | None] = None
 
     def __init__(

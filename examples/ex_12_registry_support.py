@@ -2,28 +2,23 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from examples import m
 from examples import p, t
 from examples import u
 from flext_core import h, r
 
-from examples import p
-
-
 
 class ProtocolHandler:
     """Protocol-like handler used by the registry example."""
 
-    message_type: type[p.Command]
+    message_type: t.ModelClass[t.BaseModelType]
 
-    def __init__(self, label: str, message_type: type[p.Command]) -> None:
+    def __init__(self, label: str, message_type: t.ModelClass[t.BaseModelType]) -> None:
         """Store the handler label and message type."""
         self._label = label
         self.message_type = message_type
 
-    def can_handle(self, message_type: type[p.Command]) -> bool:
+    def can_handle(self, message_type: t.ModelClass[t.BaseModelType]) -> bool:
         """Return whether this handler supports the message type."""
         return message_type is self.message_type
 
@@ -46,7 +41,7 @@ def as_registry_handler(handler: ProtocolHandler) -> t.DispatchableHandler:
 
     class _RegistryHandlerCallable:
         handler_id: str
-        message_type: type[p.Command]
+        message_type: t.ModelClass[t.BaseModelType]
 
         def __init__(self, source: ProtocolHandler) -> None:
             self._source = source

@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, Self, override, runtime_checkable
 
 from .base import FlextProtocolsBase as p
 from .result import FlextProtocolsResult as pr
@@ -51,6 +51,7 @@ class FlextProtocolsSettings:
             """Return the global singleton settings instance, optionally with overrides."""
             ...
 
+        @override
         def model_copy(
             self,
             *,

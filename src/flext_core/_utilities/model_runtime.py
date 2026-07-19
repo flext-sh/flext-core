@@ -77,10 +77,15 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
             else None
         )
         settings_cls = (
-            type(settings_instance)
-            if settings_instance is not None
-            else cls.service_settings_type(runtime_options.settings_type)
+            type(settings_instance) if settings_instance is not None else None
         )
+        if settings_cls is None:
+            settings_type = runtime_options.settings_type
+            settings_cls = (
+                cls.service_settings_type(settings_type)
+                if settings_type is not None
+                else cls._settings_base()
+            )
         settings_overrides = runtime_options.settings_overrides
         if settings_instance is not None:
             return (

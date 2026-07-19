@@ -25,7 +25,7 @@ class TestsFlextCoreEnforcementAccessors:
     @pytest.mark.parametrize("prefix", ["get_user", "set_config", "is_ready"])
     def test_forbidden_accessor_prefix_is_flagged(self, prefix: str) -> None:
         # Arrange
-        cls = make_class("FlextCoreAccessed", {prefix: lambda self: None})
+        cls = make_class("FlextCoreAccessed", {prefix: lambda _self: None})
 
         # Act
         report = u.check(cls)
@@ -40,7 +40,7 @@ class TestsFlextCoreEnforcementAccessors:
     @pytest.mark.parametrize("prefix", ["fetch_remote", "resolve_ref", "compute_total"])
     def test_domain_verb_method_is_allowed(self, prefix: str) -> None:
         # Arrange
-        cls = make_class("FlextCoreVerb", {prefix: lambda self: None})
+        cls = make_class("FlextCoreVerb", {prefix: lambda _self: None})
 
         # Act
         messages = [
@@ -54,7 +54,7 @@ class TestsFlextCoreEnforcementAccessors:
 
     def test_accessor_violation_locates_the_owning_class(self) -> None:
         # Arrange
-        cls = make_class("FlextCoreAccessedGet", {"get_user": lambda self: None})
+        cls = make_class("FlextCoreAccessedGet", {"get_user": lambda _self: None})
 
         # Act
         accessor = next(
@@ -134,7 +134,7 @@ class TestsFlextCoreEnforcementAccessors:
 
     def test_clean_class_yields_an_empty_report(self) -> None:
         # Arrange
-        cls = make_class("FlextCoreService", {"fetch_value": lambda self: None})
+        cls = make_class("FlextCoreService", {"fetch_value": lambda _self: None})
 
         # Act
         report = u.check(cls)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import FlextSettings, m, p, r, u
+from flext_core import FlextSettings, m, p, r, t, u
 
 
 class ExamplesFlextModelsEx11:
@@ -23,7 +23,8 @@ class ExamplesFlextModelsEx11:
 
     class ServiceHandlerLike(m.BaseModel):
         message_type: Annotated[
-            type[p.Value], u.Field(description="Message type handled by this handler")
+            t.ModelClass[t.BaseModelType],
+            u.Field(description="Message type handled by this handler"),
         ] = m.Value
 
         def handle(self, message: ExamplesFlextModelsEx11.Payload) -> p.Result[str]:

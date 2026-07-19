@@ -8,6 +8,8 @@ attributes, collaborators, or internal data structures are inspected.
 
 from __future__ import annotations
 
+from operator import itemgetter
+
 import pytest
 
 from flext_core import t
@@ -74,10 +76,7 @@ class TestsFlextCoreMapper:
         assert u.agg([], "x") == 0
 
     def test_agg_accepts_callable_field_selector(self) -> None:
-        def selector(item: dict[str, int]) -> int:
-            return item["x"]
-
-        assert u.agg([{"x": 1}, {"x": 2}], selector) == 3
+        assert u.agg([{"x": 1}, {"x": 2}], itemgetter("x")) == 3
 
     def test_agg_ignores_non_numeric_and_absent_field_values(self) -> None:
         assert u.agg([{"x": 1}, {"x": "skip"}, {"y": 9}], "x") == 1

@@ -13,7 +13,6 @@ from collections.abc import MutableSequence
 from flext_core import p, t
 from flext_core._models.base import FlextModelsBase as m
 from flext_core._models.entity import FlextModelsEntity
-from flext_core._models.handler import FlextModelsHandler
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
 
@@ -48,11 +47,11 @@ class FlextModelsRegistry:
         """Aggregated outcome for batch handler registration tracking."""
 
         registered: Annotated[
-            MutableSequence[FlextModelsHandler.RegistrationDetails],
+            MutableSequence[p.RegistrationDetails],
             mp.Field(
                 description="Successfully registered handlers with registration details."
             ),
-        ] = mp.Field(default_factory=list[FlextModelsHandler.RegistrationDetails])
+        ] = mp.Field(default_factory=list[p.RegistrationDetails])
         skipped: Annotated[
             t.StrSequence,
             mp.Field(

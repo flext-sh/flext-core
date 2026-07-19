@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextSettings, c, m, p, u
+from flext_core import FlextSettings, c, m, u
 
 from .ex_02_flext_settings_helpers import Ex02FlextSettingsFieldChecks
 

@@ -61,6 +61,30 @@ _ALIASES: tuple[tuple[object, str], ...] = (
 class TestsFlextCorePublicApiContract:
     """Assert the observable behavior promised by the flext_core public surface."""
 
+    def test_command_class_token_roundtrips_through_pydantic(self) -> None:
+        """The public model-class token accepts the concrete command class."""
+
+        class CommandHolder(m.BaseModel):
+            command_type: t.ModelClass[t.BaseModelType]
+
+        holder = CommandHolder(command_type=m.Command)
+        restored = CommandHolder.model_validate(holder.model_dump())
+
+        assert holder.command_type is m.Command
+        assert restored.command_type is m.Command
+
+    def test_value_class_token_roundtrips_through_pydantic(self) -> None:
+        """The public model-class token accepts the concrete value class."""
+
+        class ValueHolder(m.BaseModel):
+            value_type: t.ModelClass[t.BaseModelType]
+
+        holder = ValueHolder(value_type=m.Value)
+        restored = ValueHolder.model_validate(holder.model_dump())
+
+        assert holder.value_type is m.Value
+        assert restored.value_type is m.Value
+
     @pytest.mark.parametrize("name", _FACADES)
     def test_named_facade_is_importable(self, name: str) -> None:
         """Every advertised facade is reachable from the package root."""

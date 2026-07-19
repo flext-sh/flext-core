@@ -12,13 +12,12 @@ from __future__ import annotations
 
 import os
 import re
-import subprocess
 import sys
 from pathlib import Path
 
 import pytest
 
-from tests import c
+from tests import c, p, u
 
 from tests import t
 
@@ -34,20 +33,13 @@ class TestsFlextExamplesExecution:
         return Path(__file__).resolve().parents[c.Tests.REPO_ROOT_PARENT_DEPTH]
 
     @staticmethod
-    def _run_example(
-        module_name: str, repo_root: Path
-    ) -> subprocess.CompletedProcess[str]:
+    def _run_example(module_name: str, repo_root: Path) -> p.Cli.CommandOutput:
         """Execute an example via ``python -m`` in a clean environment."""
         env: t.MutableStrMapping = dict(os.environ)
         env.pop("PYTHONPATH", None)
-        return subprocess.run(
-            [sys.executable, "-m", module_name],
-            cwd=repo_root,
-            capture_output=True,
-            text=True,
-            check=False,
-            env=env,
-        )
+        return u.Cli.run_raw(
+            [sys.executable, "-m", module_name], cwd=repo_root, env=env
+        ).unwrap()
 
     @pytest.mark.parametrize(
         ("example_name", "module_name", "script_name"), c.Tests.PUBLIC_EXAMPLES
@@ -75,7 +67,7 @@ class TestsFlextExamplesExecution:
         result = self._run_example(module_name, repo_root)
 
         diagnostic = result.stderr or result.stdout
-        assert result.returncode == 0, diagnostic
+        assert result.exit_code == 0, diagnostic
         assert f"PASS: {example_name}" in result.stdout
         assert "FAIL" not in result.stdout, result.stdout
         assert "Traceback" not in result.stderr, result.stderr

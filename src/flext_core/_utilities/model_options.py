@@ -26,7 +26,7 @@ class FlextUtilitiesModelOptions(FlextUtilitiesModel):
             | None
         ) = None,
         **overrides: t.JsonPayload,
-    ) -> p.RuntimeBootstrapOptions:
+    ) -> m.RuntimeBootstrapOptions:
         """Resolve runtime options from models, mappings, or service instances."""
         resolved = m.RuntimeBootstrapOptions()
         match source:
@@ -39,7 +39,7 @@ class FlextUtilitiesModelOptions(FlextUtilitiesModel):
             case _:
                 options_resolver = getattr(source, "_runtime_bootstrap_options", None)
                 raw_options = options_resolver() if callable(options_resolver) else None
-                if raw_options is not None:
+                if isinstance(raw_options, (m.RuntimeBootstrapOptions, Mapping)):
                     resolved = cls.resolve_runtime_options(raw_options)
                 source_updates: dict[str, t.JsonPayload] = {
                     field_name: value

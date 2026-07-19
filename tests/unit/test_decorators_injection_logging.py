@@ -19,6 +19,8 @@ from tests.unit._decorators_support import capture_stdout
 
 
 class TestsFlextCoreDecoratorsInjectionLogging:
+    """Verify injection decorator logging behavior."""
+
     @pytest.fixture
     def container(self) -> FlextContainer:
         return FlextContainer.shared()

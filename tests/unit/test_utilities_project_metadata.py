@@ -14,6 +14,8 @@ from tests import u
 
 
 class TestsFlextCoreUtilitiesProjectMetadata:
+    """Verify project metadata utilities."""
+
     def test_lazy_alias_suffixes_returns_tuple_for_installed_distribution(self) -> None:
         tm.that(u.lazy_alias_suffixes("flext-core"), is_=tuple)
 

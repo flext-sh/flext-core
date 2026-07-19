@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol
 
+from flext_core._protocols.base import FlextProtocolsBase
+
 if TYPE_CHECKING:
     # mro-wkii.17.26 (codex): reverse p/t edges are annotation-only while the
     # public protocol facade is still being composed.
@@ -14,7 +16,7 @@ if TYPE_CHECKING:
 class FlextProtocolsContextBootstrap:
     """Runtime bootstrap option contracts."""
 
-    class RuntimeBootstrapOptions(Protocol):
+    class RuntimeBootstrapOptions(FlextProtocolsBase.BaseModel, Protocol):
         """Runtime bootstrap options for service initialization."""
 
         settings: p.Settings | None

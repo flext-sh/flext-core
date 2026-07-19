@@ -19,6 +19,8 @@ from tests import t
 
 
 class TestsFlextCoreTypingsContainers:
+    """Verify public container typing aliases."""
+
     # ---- m.Dict: mapping read contract -------------------------------------
 
     def test_dict_empty_has_zero_length(self) -> None:

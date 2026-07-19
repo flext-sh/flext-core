@@ -8,6 +8,7 @@ no patching of the unit under test.
 
 from __future__ import annotations
 
+from operator import floordiv
 from typing import TYPE_CHECKING
 
 import pytest
@@ -26,22 +27,14 @@ class TestsFlextResultTransforms:
 
     def test_safe_wraps_successful_call_as_success(self) -> None:
         """Safe returns a success carrying the wrapped function's return value."""
-
-        def divide(a: int, b: int) -> int:
-            return a // b
-
-        result: p.Result[int] = r.safe(divide)(10, 2)
+        result: p.Result[int] = r.safe(floordiv)(10, 2)
 
         _ = u.Tests.assert_success(result)
         tm.that(result.value, eq=5)
 
     def test_safe_captures_raised_exception_as_failure(self) -> None:
         """Safe converts a raised exception into a failure preserving its message."""
-
-        def divide(a: int, b: int) -> int:
-            return a // b
-
-        result: p.Result[int] = r.safe(divide)(10, 0)
+        result: p.Result[int] = r.safe(floordiv)(10, 0)
 
         tm.fail(result)
         tm.that(result.error, eq="integer division or modulo by zero")

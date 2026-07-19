@@ -18,6 +18,8 @@ if TYPE_CHECKING:
 
 
 class TestsFlextResultTraverseResource:
+    """Verify result traversal and resource behavior."""
+
     def test_accumulate_errors_all_success(self) -> None:
         """Test accumulate_errors with all successes."""
         results = [r[int].ok(1), r[int].ok(2), r[int].ok(3)]
@@ -207,13 +209,13 @@ class TestsFlextResultTraverseResource:
         """Test unwrap raises RuntimeError on failure."""
         result: p.Result[str] = r[str].fail("error")
         with pytest.raises(RuntimeError, match="Cannot access value of failed result"):
-            result.value
+            _ = result.value
 
     def test_flat_map_inner_failure(self) -> None:
         """Test flat_map inner function returns Failure."""
         result = r[int].ok(5)
 
-        def failing_func(value: int) -> p.Result[str]:
+        def failing_func(_value: int) -> p.Result[str]:
             return r[str].fail("flat_map failed")
 
         bound = result.flat_map(failing_func)

@@ -25,7 +25,7 @@ from .flextprotocolslogging_part_01 import (
 
 class FlextProtocolsLogging(FlextProtocolsLoggingPart01):
     @runtime_checkable
-    class Metadata(Protocol):
+    class Metadata(FlextProtocolsBase.BaseModel, Protocol):
         """Metadata protocol."""
 
         @property
@@ -46,25 +46,6 @@ class FlextProtocolsLogging(FlextProtocolsLoggingPart01):
         @property
         def version(self) -> str:
             """Version string."""
-            ...
-
-        @classmethod
-        def model_validate(
-            cls,
-            obj: t.MappingKV[
-                str,
-                t.Scalar
-                | t.MappingKV[str, t.Scalar | t.SequenceOf[t.Scalar]]
-                | t.SequenceOf[t.Scalar]
-                | None,
-            ]
-            | Self,
-            *,
-            strict: bool | None = None,
-            from_attributes: bool | None = None,
-            context: t.MappingKV[str, t.Scalar] | None = None,
-        ) -> Self:
-            """Validate and create metadata from input data."""
             ...
 
     @runtime_checkable

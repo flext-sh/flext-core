@@ -11,7 +11,7 @@ from __future__ import annotations
 import pytest
 from flext_tests import h, r, tm
 
-from tests import p
+from tests import m, p
 
 
 class TestsFlextCoreHandlerDiscoveryClass:
@@ -95,9 +95,8 @@ class TestsFlextCoreHandlerDiscoveryClass:
 
     def test_scan_class_binds_config_command_and_priority(self) -> None:
         # Arrange
-        class EventPublished:
-            def __init__(self, event_id: str) -> None:
-                self.event_id = event_id
+        class EventPublished(m.Value):
+            event_id: str
 
         class OrderService:
             @h.handler(command=EventPublished, priority=25)
