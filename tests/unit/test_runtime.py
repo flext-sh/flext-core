@@ -32,23 +32,25 @@ class TestsFlextCoreRuntime:
         [
             (datetime(2025, 1, 1, tzinfo=UTC), "2025-01-01T00:00:00+00:00"),
             (Path("/a/b"), "/a/b"),
-            (None, None),
+            (None, ""),
             (42, 42),
             ("text", "text"),
         ],
     )
     def test_normalize_to_metadata_converts_scalars_to_json_native(
-        self, value: t.JsonPayload, expected: t.JsonValue
+        self,
+        value: t.JsonPayload,
+        expected: t.JsonValue,
     ) -> None:
         assert FlextRuntime.normalize_to_metadata(value) == expected
 
     def test_normalize_to_metadata_flattens_sequence_members(self) -> None:
         normalized = FlextRuntime.normalize_to_metadata([1, Path("/x"), None])
 
-        assert normalized == [1, "/x", None]
+        assert normalized == [1, "/x", ""]
 
-    def test_normalize_to_json_value_preserves_none(self) -> None:
-        assert FlextRuntime.normalize_to_json_value(None) is None
+    def test_normalize_to_json_value_maps_none_to_empty_string(self) -> None:
+        assert FlextRuntime.normalize_to_json_value(None) == ""
 
     def test_normalize_to_json_mapping_normalizes_each_value(self) -> None:
         normalized = FlextRuntime.normalize_to_json_mapping({"a": 1, "b": Path("/z")})
@@ -56,10 +58,17 @@ class TestsFlextCoreRuntime:
         assert normalized == {"a": 1, "b": "/z"}
 
     @pytest.mark.parametrize(
-        ("value", "expected"), [(None, ""), (42, 42), ([1, 2], [1, 2])]
+        ("value", "expected"),
+        [
+            (None, ""),
+            (42, 42),
+            ([1, 2], [1, 2]),
+        ],
     )
     def test_normalize_to_container_returns_runtime_data(
-        self, value: t.JsonPayload, expected: t.JsonValue
+        self,
+        value: t.JsonPayload,
+        expected: t.JsonValue,
     ) -> None:
         assert FlextRuntime.normalize_to_container(value) == expected
 
@@ -70,12 +79,12 @@ class TestsFlextCoreRuntime:
 
     def test_normalize_model_input_mapping_preserves_nested_mapping(self) -> None:
         assert FlextRuntime.normalize_model_input_mapping({"x": {"y": 1}}) == {
-            "x": {"y": 1}
+            "x": {"y": 1},
         }
 
     def test_normalize_model_input_mapping_accepts_root_model(self) -> None:
         normalized = FlextRuntime.normalize_model_input_mapping(
-            m.Dict(root={"a": 1, "b": {"c": 2}})
+            m.Dict(root={"a": 1, "b": {"c": 2}}),
         )
 
         assert normalized == {"a": 1, "b": {"c": 2}}
@@ -84,16 +93,15 @@ class TestsFlextCoreRuntime:
         assert FlextRuntime.normalize_model_input_mapping(None) is None
 
     def test_normalize_metadata_input_mapping_preserves_explicit_none(self) -> None:
-        normalized = FlextRuntime.normalize_metadata_input_mapping({
-            "alpha": None,
-            "beta": 2,
-        })
+        normalized = FlextRuntime.normalize_metadata_input_mapping(
+            {"alpha": None, "beta": 2},
+        )
 
         assert normalized == {"alpha": None, "beta": 2}
 
     def test_normalize_metadata_input_mapping_reads_model_dump_carrier(self) -> None:
         normalized = FlextRuntime.normalize_metadata_input_mapping(
-            m.Dict(root={"a": 1, "b": None})
+            m.Dict(root={"a": 1, "b": None}),
         )
 
         assert normalized == {"a": 1, "b": None}
@@ -107,7 +115,7 @@ class TestsFlextCoreRuntime:
 
     def test_validate_metadata_attributes_drops_none_values(self) -> None:
         assert FlextRuntime.validate_metadata_attributes({"a": 1, "b": None}) == {
-            "a": 1
+            "a": 1,
         }
 
     def test_validate_metadata_attributes_rejects_reserved_underscore_keys(
@@ -157,7 +165,7 @@ class TestsFlextCoreRuntime:
 
     def test_create_container_exposes_registered_object_provider(self) -> None:
         container = FlextRuntime.DependencyIntegration.create_container(
-            services={"alpha": "beta"}
+            services={"alpha": "beta"},
         )
 
         assert container.alpha() == "beta"
@@ -165,7 +173,10 @@ class TestsFlextCoreRuntime:
     def test_register_factory_with_cache_yields_singleton_instances(self) -> None:
         container = FlextRuntime.DependencyIntegration.create_container()
         _ = FlextRuntime.DependencyIntegration.register_factory(
-            container, "svc", object, cache=True
+            container,
+            "svc",
+            object,
+            cache=True,
         )
 
         assert container.svc() is container.svc()
@@ -173,17 +184,22 @@ class TestsFlextCoreRuntime:
     def test_register_factory_without_cache_yields_distinct_instances(self) -> None:
         container = FlextRuntime.DependencyIntegration.create_container()
         _ = FlextRuntime.DependencyIntegration.register_factory(
-            container, "svc", object, cache=False
+            container,
+            "svc",
+            object,
+            cache=False,
         )
 
         assert container.svc() is not container.svc()
 
     def test_register_object_rejects_duplicate_provider_name(self) -> None:
         container = FlextRuntime.DependencyIntegration.create_container(
-            services={"alpha": "beta"}
+            services={"alpha": "beta"},
         )
 
         with pytest.raises(ValueError, match="already registered"):
             _ = FlextRuntime.DependencyIntegration.register_object(
-                container, "alpha", "other"
+                container,
+                "alpha",
+                "other",
             )

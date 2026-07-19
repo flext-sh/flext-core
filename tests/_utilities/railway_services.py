@@ -18,7 +18,7 @@ from tests import p
 class TestsFlextUtilitiesRailwayServicesMixin:
     """Railway service helpers."""
 
-    class GetUserService(s[p.BaseModel]):
+    class GetUserService(s[t.JsonMapping]):
         """Service to get user."""
 
         user_id: Annotated[
@@ -38,7 +38,7 @@ class TestsFlextUtilitiesRailwayServicesMixin:
                 )
             )
 
-    class SendEmailService(s[p.BaseModel]):
+    class SendEmailService(s[t.JsonMapping]):
         """Service to send email."""
 
         to: Annotated[str, u.Field(description="Destination email address.")] = ""

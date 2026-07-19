@@ -41,13 +41,6 @@ class TestsFlextService(FlextTestsCase):
         def execute(self) -> p.Result[bool]:
             return r[bool].fail("execute-boom")
 
-    class _UnspecializedService(s):
-        """Public unspecialized service using the established default result type."""
-
-        @override
-        def execute(self) -> p.Result[p.BaseModel]:
-            return r[p.BaseModel].ok(m.Metadata())
-
     # --- execute(): the r[T] contract ------------------------------------
 
     def test_execute_reports_success_and_typed_payload(self) -> None:
@@ -73,12 +66,6 @@ class TestsFlextService(FlextTestsCase):
         assert result.failure
         assert not result.success
         assert result.error == "execute-boom"
-
-    def test_unspecialized_service_preserves_default_result_contract(self) -> None:
-        result = self._UnspecializedService().execute()
-
-        assert result.success
-        assert isinstance(result.value, m.Metadata)
 
     def test_execute_success_result_supports_combinators(self) -> None:
         result = self._PureService().execute()

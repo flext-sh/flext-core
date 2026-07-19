@@ -28,6 +28,7 @@ from flext_core._runtime._metadata_validation import (
 )
 from flext_core._utilities.generators import FlextUtilitiesGenerators as ug
 from flext_core.constants import FlextConstants as c
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
 from flext_core._typings.base import FlextTypingBase as t
 
 
@@ -109,6 +110,11 @@ class FlextModelsBase(FlextModelsBasePart01):
             t.Scalar | None,
             mp.Field(default=None, description="Scalar metadata value."),
         ] = None
+
+        @up.field_serializer("attributes", when_used="json")
+        def serialize_attributes(self, value: t.JsonMapping) -> dict[str, t.JsonValue]:
+            """Serialize the read-only attributes mapping to a plain JSON dict."""
+            return dict(value)
 
     class ContractModel(StrictModel):
         """Immutable base model with strict validation."""

@@ -171,9 +171,11 @@ class TestsFlextContainerLifecycle:
         """
         scoped = clean_container.scope(
             subproject="unit",
-            registration=m.ServiceRegistrationSpec.model_validate({
-                "services": {"scoped_service": "scoped-value"}
-            }),
+            registration=u.normalize_service_registration_spec(
+                m.ServiceRegistrationSpec(
+                    services={"scoped_service": "scoped-value"},
+                )
+            ),
         )
 
         tm.that(

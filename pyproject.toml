@@ -143,7 +143,6 @@ dev = [
     "types-setuptools>=80.9",
     "types-tabulate>=0.10",
     "types-toml>=0.10.8.20240310",
-    "uv>=0.11.15",
     "vulture>=2.13",
 ]
 
@@ -567,65 +566,60 @@ skip-magic-trailing-comma = true
 # FLEXT ruff[I001]: Ruff sorts TYPE_CHECKING imports lexically and reverses the mandatory semantic c-t-p-m-u dependency order in FLEXT facades.
 # FLEXT ruff[PLC0415]: Public facade models are imported lazily only at validation and construction sites to preserve the c-t-p-m-u graph and prevent runtime cycles.
 ignore = [
-  "ANN202",
-  "B009",
-  "B010",
-  "B017",
-  "BLE001",
-  "C901",
-  "COM812",
-  "CPY001",
-  "D102",
-  "D203",
-  "D213",
-  "D401",
-  "D417",
-  "DOC201",
-  "DOC202",
-  "DOC402",
-  "DOC501",
-  "DOC502",
-  "E501",
-  "ERA001",
-  "FBT003",
-  "G004",
-  "I001",
-  "N805",
-  "N813",
-  "N816",
-  "PIE790",
-  "PLC0415",
-  "PLR0904",
-  "PLR0911",
-  "PLR0912",
-  "PLR0913",
-  "PLR0914",
-  "PLR0915",
-  "PLR0917",
-  "PLR1702",
-  "PLR2004",
-  "PLR6301",
-  "PLW0108",
-  "PLW2901",
-  "PLW3201",
-  "PYI042",
-  "Q000",
-  "RUF001",
-  "RUF002",
-  "RUF003",
-  "RUF005",
-  "S101",
-  "S608",
-  # ADR-011: runtime-forward annotations — names in runtime-evaluated annotations
-  # must be runtime imports; TC001-003 would wrongly move them to TYPE_CHECKING.
-  "TC001",
-  "TC002",
-  "TC003",
-  "TRY003",
-  "TRY300",
-  "TRY301",
-  "UP040",
-  "W293",
+  "missing-return-type-private-function",
+  "get-attr-with-constant",
+  "set-attr-with-constant",
+  "assert-raises-exception",
+  "blind-except",
+  "complex-structure",
+  "missing-trailing-comma",
+  "missing-copyright-notice",
+  "incorrect-blank-line-before-class",
+  "multi-line-summary-second-line",
+  "non-imperative-mood",
+  "undocumented-param",
+  "docstring-missing-returns",
+  "docstring-extraneous-returns",
+  "docstring-missing-yields",
+  "docstring-missing-exception",
+  "docstring-extraneous-exception",
+  "line-too-long",
+  "commented-out-code",
+  "boolean-positional-value-in-call",
+  "logging-f-string",
+  "unsorted-imports",
+  "invalid-first-argument-name-for-method",
+  "camelcase-imported-as-lowercase",
+  "mixed-case-variable-in-global-scope",
+  "unnecessary-placeholder",
+  "import-outside-top-level",
+  "too-many-public-methods",
+  "too-many-return-statements",
+  "too-many-branches",
+  "too-many-arguments",
+  "too-many-locals",
+  "too-many-statements",
+  "too-many-positional-arguments",
+  "too-many-nested-blocks",
+  "no-self-use",
+  "unnecessary-lambda",
+  "redefined-loop-name",
+  "bad-dunder-method-name",
+  "snake-case-type-alias",
+  "bad-quotes-inline-string",
+  "ambiguous-unicode-character-string",
+  "ambiguous-unicode-character-docstring",
+  "ambiguous-unicode-character-comment",
+  "collection-literal-concatenation",
+  "hardcoded-sql-expression",
+  "typing-only-first-party-import",
+  "typing-only-third-party-import",
+  "typing-only-standard-library-import",
+  "raise-vanilla-args",
+  "try-consider-else",
+  "raise-within-try",
+  "non-pep695-type-alias",
+  "blank-line-with-whitespace",
 ]
 select = [ "ALL" ]
 
@@ -651,79 +645,78 @@ split-on-trailing-comma = false
 "**/.vulture_whitelist.py" = [ "ALL" ]
 "**/*_pb2*.py" = [ "ALL" ]
 "**/*dispatcher*" = [  ]
-"**/*docs*" = [ "INP001", "S404", "S603", "T201" ]
-"**/*exceptions*" = [ "A001", "S105", "SLF001" ]
+"**/*docs*" = [ "implicit-namespace-package", "suspicious-subprocess-import", "subprocess-without-shell-equals-true", "print" ]
+"**/*exceptions*" = [ "builtin-variable-shadowing", "hardcoded-password-string", "private-member-access" ]
 "**/*handlers*" = [  ]
-"**/*instrumentation*" = [ "C901", "FBT001", "SLF001" ]
-"**/*loggings*" = [ "PLR0904", "PLW0603" ]
-"**/*middleware*" = [ "ANN401", "FBT001", "FBT002", "PLC2801", "S107" ]
-"**/*models*" = [ "ANN401", "FBT001", "PLC2701", "PLR0206", "PLW0603" ]
-"**/*oracle*" = [ "DTZ007" ]
-"**/*result*" = [ "PLC2701", "SLF001" ]
+"**/*instrumentation*" = [ "complex-structure", "boolean-type-hint-positional-argument", "private-member-access" ]
+"**/*loggings*" = [ "too-many-public-methods", "global-statement" ]
+"**/*middleware*" = [ "any-type", "boolean-type-hint-positional-argument", "boolean-default-value-positional-argument", "unnecessary-dunder-call", "hardcoded-password-default" ]
+"**/*models*" = [ "any-type", "boolean-type-hint-positional-argument", "import-private-name", "property-with-parameters", "global-statement" ]
+"**/*oracle*" = [ "call-datetime-strptime-without-zone" ]
+"**/*result*" = [ "import-private-name", "private-member-access" ]
 "**/*runtime*" = [  ]
 "**/*scripts*" = [
-  "EXE001",
-  "FIX002",
-  "INP001",
-  "PLR0911",
-  "PLR0912",
-  "PLR0915",
-  "PLR2004",
-  "PLW2901",
-  "S105",
-  "S107",
-  "S404",
-  "S603",
-  "T201",
-  "TID252",
+  "shebang-not-executable",
+  "line-contains-todo",
+  "implicit-namespace-package",
+  "too-many-return-statements",
+  "too-many-branches",
+  "too-many-statements",
+  "magic-value-comparison",
+  "redefined-loop-name",
+  "hardcoded-password-string",
+  "hardcoded-password-default",
+  "suspicious-subprocess-import",
+  "subprocess-without-shell-equals-true",
+  "print",
+  "relative-imports",
 ]
-"**/*service*" = [ "N815", "PLC2801", "S404", "S603", "SLF001" ]
-"**/*subprocess_utils*" = [ "S404", "S603" ]
-"**/*typings*" = [ "ANN401" ]
-"**/*utilities*" = [ "C901", "E402", "PLC2801", "PLW1510", "S404", "S603" ]
+"**/*service*" = [ "mixed-case-variable-in-class-scope", "unnecessary-dunder-call", "suspicious-subprocess-import", "subprocess-without-shell-equals-true", "private-member-access" ]
+"**/*subprocess_utils*" = [ "suspicious-subprocess-import", "subprocess-without-shell-equals-true" ]
+"**/*typings*" = [ "any-type" ]
+"**/*utilities*" = [ "complex-structure", "module-import-not-at-top-of-file", "unnecessary-dunder-call", "subprocess-run-without-check", "suspicious-subprocess-import", "subprocess-without-shell-equals-true" ]
 "**/__init__.py" = [
-  "A004",
-  "ANN401",
-  "D107",
-  "F401",
-  "F403",
-  "F405",
-  "F822",
-  "INP001",
-  "N999",
-  "PLC2701",
-  "RUF067",
-  "TC004",
+  "builtin-import-shadowing",
+  "any-type",
+  "undocumented-public-init",
+  "unused-import",
+  "undefined-local-with-import-star",
+  "undefined-local-with-import-star-usage",
+  "undefined-export",
+  "implicit-namespace-package",
+  "invalid-module-name",
+  "import-private-name",
+  "non-empty-init-module",
+  "runtime-import-in-type-checking-block",
 ]
-"**/_config.py" = [ "N802" ]
-"**/_constants/*.py" = [ "S105" ]
-"**/_protocols/*.py" = [ "N802" ]
-"**/_settings.py" = [ "N802" ]
-"**/_utilities/parser.py" = [ "ARG004", "FBT001" ]
-"**/alert_manager*.py" = [ "S310" ]
-"**/constants.py" = [ "S105" ]
-"**/container.py" = [ "ANN401", "SLF001" ]
+"**/_config.py" = [ "invalid-function-name" ]
+"**/_constants/*.py" = [ "hardcoded-password-string" ]
+"**/_protocols/*.py" = [ "invalid-function-name" ]
+"**/_settings.py" = [ "invalid-function-name" ]
+"**/_utilities/parser.py" = [ "unused-static-method-argument", "boolean-type-hint-positional-argument" ]
+"**/alert_manager*.py" = [ "suspicious-url-open-usage" ]
+"**/constants.py" = [ "hardcoded-password-string" ]
+"**/container.py" = [ "any-type", "private-member-access" ]
 "**/context.py" = [  ]
-"**/external_command*.py" = [ "S404", "S603" ]
-"**/file_tools.py" = [ "D102" ]
-"**/flext_cli/_protocols/framework.py" = [ "A002" ]
-"**/flext_cli/_utilities/formatters.py" = [ "TID251" ]
-"**/flext_cli/_utilities/framework.py" = [ "A002", "TID251" ]
-"**/managers.py" = [ "S105" ]
-"**/models.py" = [ "PLC2801", "S102", "S105" ]
-"**/orchestrator*.py" = [ "S404", "S603" ]
-"**/output.py" = [ "FBT001" ]
-"**/plugins/*.py" = [ "FBT001", "FBT002", "S404", "S603", "S607", "TID252" ]
-"**/protocol_impls/*.py" = [ "SLF001" ]
-"**/providers/*.py" = [ "S106", "S107" ]
-"**/services/prompts.py" = [ "D102", "D107" ]
-"**/settings.py" = [ "ANN401", "FBT001", "SLF001" ]
-"**/singer/*.py" = [ "S404", "S603" ]
-"**/tools/*.py" = [ "FBT001", "FBT002", "N802", "S404", "S603", "S607", "T201" ]
-"**/tools/**/*.py" = [ "FBT001", "FBT002", "N802", "S404", "S603", "S607", "T201" ]
-"**/typings.py" = [ "RUF036" ]
-"**/workspace/*.py" = [ "S404", "S603", "S607" ]
-"**/tests/**/*.py" = [ "FBT001", "PLC1901", "S108" ]
+"**/external_command*.py" = [ "suspicious-subprocess-import", "subprocess-without-shell-equals-true" ]
+"**/file_tools.py" = [ "undocumented-public-method" ]
+"**/flext_cli/_protocols/framework.py" = [ "builtin-argument-shadowing" ]
+"**/flext_cli/_utilities/formatters.py" = [ "banned-api" ]
+"**/flext_cli/_utilities/framework.py" = [ "builtin-argument-shadowing", "banned-api" ]
+"**/managers.py" = [ "hardcoded-password-string" ]
+"**/models.py" = [ "unnecessary-dunder-call", "exec-builtin", "hardcoded-password-string" ]
+"**/orchestrator*.py" = [ "suspicious-subprocess-import", "subprocess-without-shell-equals-true" ]
+"**/output.py" = [ "boolean-type-hint-positional-argument" ]
+"**/plugins/*.py" = [ "boolean-type-hint-positional-argument", "boolean-default-value-positional-argument", "suspicious-subprocess-import", "subprocess-without-shell-equals-true", "start-process-with-partial-path", "relative-imports" ]
+"**/protocol_impls/*.py" = [ "private-member-access" ]
+"**/providers/*.py" = [ "hardcoded-password-func-arg", "hardcoded-password-default" ]
+"**/services/prompts.py" = [ "undocumented-public-method", "undocumented-public-init" ]
+"**/settings.py" = [ "any-type", "boolean-type-hint-positional-argument", "private-member-access" ]
+"**/singer/*.py" = [ "suspicious-subprocess-import", "subprocess-without-shell-equals-true" ]
+"**/tools/*.py" = [ "boolean-type-hint-positional-argument", "boolean-default-value-positional-argument", "invalid-function-name", "suspicious-subprocess-import", "subprocess-without-shell-equals-true", "start-process-with-partial-path", "print" ]
+"**/tools/**/*.py" = [ "boolean-type-hint-positional-argument", "boolean-default-value-positional-argument", "invalid-function-name", "suspicious-subprocess-import", "subprocess-without-shell-equals-true", "start-process-with-partial-path", "print" ]
+"**/typings.py" = [ "none-not-at-end-of-union" ]
+"**/workspace/*.py" = [ "suspicious-subprocess-import", "subprocess-without-shell-equals-true", "start-process-with-partial-path" ]
 
 # [MANAGED] tomlsort
 [tool.tomlsort]

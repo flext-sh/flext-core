@@ -33,6 +33,7 @@ class TestsFlextHandlerDiscoveryModule:
     """Public-contract tests for module handler discovery."""
 
     def test_scan_module_discovers_every_decorated_public_function(self) -> None:
+        """All decorated public functions are discovered."""
         # Arrange
         module = types.ModuleType("decorated_module")
 
@@ -59,6 +60,7 @@ class TestsFlextHandlerDiscoveryModule:
         tm.that(names, has="handle_delete")
 
     def test_scan_module_omits_underscore_prefixed_functions(self) -> None:
+        """Private module functions are excluded from discovery."""
         # Arrange
         module = types.ModuleType("private_check_module")
 
@@ -84,6 +86,7 @@ class TestsFlextHandlerDiscoveryModule:
         tm.that(names, has="public_handler")
 
     def test_scan_module_ignores_non_callable_and_undecorated_members(self) -> None:
+        """Undecorated functions and non-callable values are ignored."""
         # Arrange
         module = types.ModuleType("mixed_members_module")
 
@@ -111,6 +114,7 @@ class TestsFlextHandlerDiscoveryModule:
         tm.that("constant" not in names, eq=True)
 
     def test_scan_module_orders_by_priority_descending(self) -> None:
+        """Discovered functions are ordered from highest to lowest priority."""
         # Arrange
         module = types.ModuleType("priority_order_module")
 
@@ -134,6 +138,7 @@ class TestsFlextHandlerDiscoveryModule:
         tm.that(ordered, eq=["high", "low"])
 
     def test_scan_module_breaks_priority_ties_by_name(self) -> None:
+        """Equal-priority functions use their names as a stable tie breaker."""
         # Arrange
         module = types.ModuleType("tie_break_module")
 
@@ -157,6 +162,7 @@ class TestsFlextHandlerDiscoveryModule:
         tm.that(ordered, eq=["alpha", "bravo"])
 
     def test_scan_module_surfaces_decorator_metadata(self) -> None:
+        """Discovery preserves the handler's public decorator metadata."""
         # Arrange
         module = types.ModuleType("metadata_module")
 
@@ -175,6 +181,7 @@ class TestsFlextHandlerDiscoveryModule:
         tm.that(config.priority, eq=7)
 
     def test_scan_module_returns_empty_for_module_without_handlers(self) -> None:
+        """A module without decorated handlers yields an empty sequence."""
         # Arrange
         module = types.ModuleType("bare_module")
         setattr(module, "value", 42)
@@ -192,6 +199,7 @@ class TestsFlextHandlerDiscoveryModule:
     def test_discovered_callable_coerces_result_to_scalar_or_none(
         self, returned: t.JsonValue, expected: t.Scalar | None
     ) -> None:
+        """The discovered callable exposes the documented scalar coercion."""
         # Arrange
         module = types.ModuleType("coercion_module")
 

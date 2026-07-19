@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import sys
-from examples import m
-from examples import p
+from examples import m, p, u
 from flext_core import FlextSettings
 
 from .ex_08_container_registration import Ex08ContainerRegistration
@@ -45,15 +44,17 @@ class Ex08ContainerScoped(Ex08ContainerRegistration):
         scoped_resource_value = self.rand_str(8)
         scoped_full = container.scope(
             subproject=subproject_beta,
-            registration=m.ServiceRegistrationSpec.model_validate({
-                "settings": explicit_settings,
-                "context": explicit_context,
-                "services": {scoped_service_name: scoped_service_value},
-                "factories": {scoped_factory_name: lambda: scoped_factory_value},
-                "resources": {
-                    scoped_resource_name: lambda: {"res": scoped_resource_value}
-                },
-            }),
+            registration=u.normalize_service_registration_spec(
+                m.ServiceRegistrationSpec(
+                    settings=explicit_settings,
+                    context=explicit_context,
+                    services={scoped_service_name: scoped_service_value},
+                    factories={scoped_factory_name: lambda: scoped_factory_value},
+                    resources={
+                        scoped_resource_name: lambda: {"res": scoped_resource_value}
+                    },
+                )
+            ),
         )
         self.audit_check("scoped.default.new_instance", scoped_default is not container)
         self.audit_check(
