@@ -14,7 +14,7 @@ from collections.abc import Mapping
 
 import pytest
 
-from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as be
+from flext_core import u
 from tests import t
 from tests.unit._beartype_engine_support import (
     AnyAlias,
@@ -48,7 +48,7 @@ class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
         self, hint: t.TypeHintSpecifier | None, *, expected: bool
     ) -> None:
         """contains_any is True iff typing.Any appears at any nesting depth."""
-        assert be.contains_any(hint) is expected
+        assert u.contains_any(hint) is expected
 
     @pytest.mark.parametrize(
         ("hint", "expected"),
@@ -66,7 +66,7 @@ class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
         self, hint: t.TypeHintSpecifier | None, expected: tuple[bool, str]
     ) -> None:
         """Bare mutable collection origins are flagged with their name."""
-        assert be.has_forbidden_collection_origin(hint, self.FORBIDDEN) == expected
+        assert u.has_forbidden_collection_origin(hint, self.FORBIDDEN) == expected
 
     @pytest.mark.parametrize(
         ("hint", "expected"),
@@ -83,7 +83,7 @@ class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
         self, hint: t.TypeHintSpecifier | None, *, expected: int
     ) -> None:
         """count_union_members counts non-None members; 0 for non-unions."""
-        assert be.count_union_members(hint) == expected
+        assert u.count_union_members(hint) == expected
 
     @pytest.mark.parametrize(
         ("hint", "expected"),
@@ -100,7 +100,7 @@ class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
         self, hint: t.TypeHintSpecifier | None, *, expected: bool
     ) -> None:
         """Union matches iff both str and None are members."""
-        assert be.matches_str_none_union(hint) is expected
+        assert u.matches_str_none_union(hint) is expected
 
     @pytest.mark.parametrize(
         ("alias_value", "expected"),
@@ -115,4 +115,4 @@ class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
         self, alias_value: t.TypeHintSpecifier | None, *, expected: bool
     ) -> None:
         """alias_contains_any detects Any inside a resolved type-alias value."""
-        assert be.alias_contains_any(alias_value) is expected
+        assert u.alias_contains_any(alias_value) is expected

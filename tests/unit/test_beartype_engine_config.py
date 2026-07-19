@@ -10,7 +10,6 @@ from __future__ import annotations
 import pytest
 from beartype import BeartypeConf, BeartypeStrategy
 
-from flext_core._utilities.beartype_conf import FlextUtilitiesBeartypeConf
 from tests import c
 from tests import t
 from tests.unit._beartype_engine_support import AnyAlias, CleanAlias, NestedAnyAlias
@@ -24,7 +23,7 @@ class TestsFlextCoreBeartypeEngineConfig:
 
     def test_build_conf_returns_beartype_conf_instance(self) -> None:
         """The factory yields a real ``BeartypeConf`` callers can pass to beartype."""
-        conf = FlextUtilitiesBeartypeConf.build_beartype_conf()
+        conf = u.build_beartype_conf()
         assert isinstance(conf, BeartypeConf)
 
     def test_default_mode_is_off(self) -> None:
@@ -33,7 +32,7 @@ class TestsFlextCoreBeartypeEngineConfig:
 
     def test_disabled_mode_yields_no_op_strategy(self) -> None:
         """With mode OFF the conf uses the O0 (no-check) strategy."""
-        conf = FlextUtilitiesBeartypeConf.build_beartype_conf()
+        conf = u.build_beartype_conf()
         assert conf.strategy is BeartypeStrategy.O0
 
     @pytest.mark.parametrize(

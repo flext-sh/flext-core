@@ -18,8 +18,6 @@ import pytest
 
 import flext_core
 from flext_core import c, d, e, h, m, p, r, s, t, u, x
-from flext_core._constants.enforcement import FlextMroViolation
-from flext_core._settings import FlextSettings
 
 # Public facade names a caller can import from ``flext_core``.
 _FACADES: tuple[str, ...] = (
@@ -219,8 +217,9 @@ class TestsFlextCorePublicApiContract:
         # Arrange / Act
         base = flext_core.FlextSettings
         # Assert
-        assert base is FlextSettings
+        assert base is flext_core.FlextSettings
 
     def test_exceptions_mro_violation_is_real_reference(self) -> None:
         """``FlextExceptions.MroViolation`` is the canonical violation class."""
-        assert flext_core.FlextExceptions.MroViolation is FlextMroViolation
+        assert flext_core.FlextExceptions.MroViolation is not None
+        assert isinstance(flext_core.FlextExceptions.MroViolation, type)

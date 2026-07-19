@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine
 from tests import m
 from tests.unit._enforcement_support import make_class
 from tests import u
@@ -156,7 +155,7 @@ class TestsFlextCoreEnforcementAccessors:
                 pass
 
         # Act / Assert
-        assert FlextUtilitiesBeartypeEngine.has_nested_namespace(_DirectHolder)
+        assert u.has_nested_namespace(_DirectHolder)
 
     def test_inherited_nested_class_is_a_namespace(self) -> None:
         # Arrange
@@ -168,7 +167,7 @@ class TestsFlextCoreEnforcementAccessors:
             pass
 
         # Act / Assert — inheritance still exposes the nested namespace.
-        assert FlextUtilitiesBeartypeEngine.has_nested_namespace(_Empty)
+        assert u.has_nested_namespace(_Empty)
 
     def test_plain_class_is_not_a_namespace(self) -> None:
         # Arrange
@@ -176,4 +175,4 @@ class TestsFlextCoreEnforcementAccessors:
             x: int = 1
 
         # Act / Assert
-        assert not FlextUtilitiesBeartypeEngine.has_nested_namespace(_Bare)
+        assert not u.has_nested_namespace(_Bare)

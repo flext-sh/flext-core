@@ -1,6 +1,6 @@
 """Behavioral tests for the FLEXT beartype claw configuration factory.
 
-Exercises the public contract of ``FlextUtilitiesBeartypeConf.build_beartype_conf()``:
+Exercises the public contract of ``u.build_beartype_conf()``:
 the conf it produces must let ``beartype.claw``-instrumented packages import cleanly
 (Pydantic models, runtime-checkable Protocols, PEP 695 recursive aliases, and
 ``flext_core`` itself) instead of crashing on known beartype/pydantic edge cases.
@@ -13,17 +13,17 @@ from __future__ import annotations
 import textwrap
 from pathlib import Path
 
-from flext_core._utilities.beartype_conf import FlextUtilitiesBeartypeConf
 from tests import t
 from tests.unit._beartype_engine_support import TestsFlextBeartypeEngine
+from flext_core import u
 
 _CLAW_INIT = (
     textwrap.dedent(
         """
     from beartype.claw import beartype_this_package
-    from flext_core._utilities.beartype_conf import FlextUtilitiesBeartypeConf
+    from flext_core import u
 
-    beartype_this_package(conf=FlextUtilitiesBeartypeConf.build_beartype_conf())
+    beartype_this_package(conf=u.build_beartype_conf())
     """
     ).strip()
     + "\n"
@@ -59,8 +59,8 @@ class TestsFlextCoreBeartypeEngineClawPackages(TestsFlextBeartypeEngine):
     def test_build_beartype_conf_is_idempotent(self) -> None:
         """Repeated factory calls yield equal, hash-stable conf values (public API)."""
         # Arrange / Act
-        conf_a = FlextUtilitiesBeartypeConf.build_beartype_conf()
-        conf_b = FlextUtilitiesBeartypeConf.build_beartype_conf()
+        conf_a = u.build_beartype_conf()
+        conf_b = u.build_beartype_conf()
 
         # Assert: deterministic public value, safe to reuse across call sites.
         assert conf_a == conf_b
@@ -158,13 +158,11 @@ class TestsFlextCoreBeartypeEngineClawPackages(TestsFlextBeartypeEngine):
             textwrap.dedent(
                 """
                 from beartype.claw import beartype_package
-                from flext_core._utilities.beartype_conf import (
-                    FlextUtilitiesBeartypeConf,
-                )
+                from flext_core import u
 
                 beartype_package(
                     "flext_core",
-                    conf=FlextUtilitiesBeartypeConf.build_beartype_conf(),
+                    conf=u.build_beartype_conf(),
                 )
                 import flext_core
                 print("flext_core_facade", hasattr(flext_core, "u"))
