@@ -543,9 +543,6 @@ if TYPE_CHECKING:
     from tests.unit.test_utilities_reliability import (
         TestsFlextCoreUtilitiesReliability as TestsFlextCoreUtilitiesReliability,
     )
-    from tests.unit.test_utilities_runtime_violation_registry_coverage_100 import (
-        TestsFlextCoreUtilitiesRuntimeViolationRegistry as TestsFlextCoreUtilitiesRuntimeViolationRegistry,
-    )
     from tests.unit.test_utilities_settings_coverage_100 import (
         TestsFlextCoreUtilitiesSettings as TestsFlextCoreUtilitiesSettings,
     )
@@ -870,9 +867,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
         ),
         ".unit.test_utilities_pydantic_coverage_100": ("TestsFlextUtilitiesPydantic",),
         ".unit.test_utilities_reliability": ("TestsFlextCoreUtilitiesReliability",),
-        ".unit.test_utilities_runtime_violation_registry_coverage_100": (
-            "TestsFlextCoreUtilitiesRuntimeViolationRegistry",
-        ),
         ".unit.test_utilities_settings_coverage_100": (
             "TestsFlextCoreUtilitiesSettings",
         ),

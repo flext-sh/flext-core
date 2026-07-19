@@ -42,7 +42,6 @@ TESTS_FLEXT_CORE_PUBLIC_EXPORTS: tuple[str, ...] = (
     "TestsFlextProtocols",
     "TestsFlextRegistry",
     "TestsFlextRuntime",
-    "TestsFlextRuntimeViolationRegistry",
     "TestsFlextService",
     "TestsFlextServiceBase",
     "TestsFlextServiceBootstrap",

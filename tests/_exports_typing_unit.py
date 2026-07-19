@@ -43,9 +43,6 @@ from tests.unit.test_utilities_generators_full_coverage import (
 )
 from tests.unit.test_utilities_pydantic_coverage_100 import TestsFlextUtilitiesPydantic
 from tests.unit.test_utilities_reliability import TestsFlextCoreUtilitiesReliability
-from tests.unit.test_utilities_runtime_violation_registry_coverage_100 import (
-    TestsFlextCoreUtilitiesRuntimeViolationRegistry,
-)
 from tests.unit.test_utilities_settings_coverage_100 import (
     TestsFlextCoreUtilitiesSettings,
 )
@@ -75,7 +72,6 @@ __all__: list[str] = [
     "TestsFlextCoreUtilitiesDomain",
     "TestsFlextCoreUtilitiesGenerators",
     "TestsFlextCoreUtilitiesReliability",
-    "TestsFlextCoreUtilitiesRuntimeViolationRegistry",
     "TestsFlextCoreUtilitiesSettings",
     "TestsFlextCoreUtilitiesTypeGuards",
     "TestsFlextCoreVersion",

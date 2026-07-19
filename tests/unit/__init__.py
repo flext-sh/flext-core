@@ -155,9 +155,6 @@ _LAZY_IMPORTS = merge_lazy_imports(
         ),
         ".test_utilities_pydantic_coverage_100": ("TestsFlextUtilitiesPydantic",),
         ".test_utilities_reliability": ("TestsFlextCoreUtilitiesReliability",),
-        ".test_utilities_runtime_violation_registry_coverage_100": (
-            "TestsFlextCoreUtilitiesRuntimeViolationRegistry",
-        ),
         ".test_utilities_settings_coverage_100": ("TestsFlextCoreUtilitiesSettings",),
         ".test_utilities_text_full_coverage": ("TestsFlextUtilitiesText",),
         ".test_utilities_type_guards_coverage_100": (
