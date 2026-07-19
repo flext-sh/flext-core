@@ -236,9 +236,9 @@ class FlextContainer(p.Container):
     ) -> None:
         """Initialize service registrations and configuration."""
         spec = registration or m.ServiceRegistrationSpec()
-        self._services = dict(spec.services or {})
-        self._factories = dict(spec.factories or {})
-        self._resources = dict(spec.resources or {})
+        self._services = dict(u.normalize_service_registrations(spec.services) or {})
+        self._factories = dict(u.normalize_factory_registrations(spec.factories) or {})
+        self._resources = dict(u.normalize_resource_registrations(spec.resources) or {})
         self._internal_registrations = {
             name
             for name in self._services
@@ -441,20 +441,28 @@ class FlextContainer(p.Container):
         cloned_resources = {
             name: reg.model_copy(deep=False) for name, reg in self._resources.items()
         }
-        cloned_services.update(scope_registration.services or {})
-        cloned_factories.update(scope_registration.factories or {})
-        cloned_resources.update(scope_registration.resources or {})
+        cloned_services.update(
+            u.normalize_service_registrations(scope_registration.services) or {}
+        )
+        cloned_factories.update(
+            u.normalize_factory_registrations(scope_registration.factories) or {}
+        )
+        cloned_resources.update(
+            u.normalize_resource_registrations(scope_registration.resources) or {}
+        )
         scoped = u.create_instance(self.__class__)
         scoped.initialize_di_components()
         scoped.initialize_registrations(
-            registration=m.ServiceRegistrationSpec(
-                settings=base_config,
-                context=scoped_context,
-                services=cloned_services,
-                factories=cloned_factories,
-                resources=cloned_resources,
-                user_overrides=self._user_overrides.model_copy(),
-                container_config=self._global_config.model_copy(deep=True),
+            registration=u.normalize_service_registration_spec(
+                m.ServiceRegistrationSpec(
+                    settings=base_config,
+                    context=scoped_context,
+                    services=cloned_services,
+                    factories=cloned_factories,
+                    resources=cloned_resources,
+                    user_overrides=self._user_overrides.model_copy(),
+                    container_config=self._global_config.model_copy(deep=True),
+                )
             )
         )
         scoped.sync_config_to_di()
