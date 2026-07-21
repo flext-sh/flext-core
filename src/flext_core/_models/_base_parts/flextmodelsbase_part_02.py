@@ -26,10 +26,10 @@ from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._runtime._metadata_validation import (
     FlextRuntimeMetadataValidation as ur,
 )
-from flext_core._utilities.generators import FlextUtilitiesGenerators as ug
-from flext_core.constants import FlextConstants as c
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
 from flext_core._typings.base import FlextTypingBase as t
+from flext_core._utilities.generators import FlextUtilitiesGenerators as ug
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
+from flext_core.constants import FlextConstants as c
 
 
 class FlextModelsBase(FlextModelsBasePart01):

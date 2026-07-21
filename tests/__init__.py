@@ -24,7 +24,6 @@ if TYPE_CHECKING:
         tv as tv,
         x as x,
     )
-
     from tests._constants.domain import (
         TestsFlextConstantsDomain as TestsFlextConstantsDomain,
     )

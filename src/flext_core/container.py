@@ -13,17 +13,23 @@ from __future__ import annotations
 import inspect
 import sys
 import threading
-from collections.abc import Sequence
-from typing import ClassVar, Self, TypeGuard, overload, override, TYPE_CHECKING
+from collections.abc import Callable, Sequence
+from typing import TYPE_CHECKING, ClassVar, Self, TypeGuard, overload, override
 
 from dependency_injector import containers as di_containers
 
-from flext_core import c, e, m, p, r, t, u
-from flext_core import FlextSettings
-from flext_core import FlextContext
-from flext_core import FlextUtilitiesLogging
-
-from collections.abc import Callable
+from flext_core import (
+    FlextContext,
+    FlextSettings,
+    FlextUtilitiesLogging,
+    c,
+    e,
+    m,
+    p,
+    r,
+    t,
+    u,
+)
 
 if TYPE_CHECKING:
     from types import FrameType, ModuleType

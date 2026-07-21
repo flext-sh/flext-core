@@ -6,12 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Self, override, TYPE_CHECKING
+from typing import TYPE_CHECKING, Self, override
 
 from flext_core import p
-from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._constants.errors import FlextConstantsErrors as ce
-
+from flext_core._models.pydantic import FlextModelsPydantic as mp
 
 # mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
 from flext_core._typings.base import FlextTypingBase as tb

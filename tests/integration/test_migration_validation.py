@@ -14,13 +14,10 @@ from __future__ import annotations
 from typing import override
 
 import pytest
-from flext_tests import r, tm
 
 from flext_core import FlextContainer, FlextService
-from tests import m
-from tests import p
-from tests import t
-from tests import u
+from flext_tests import r, tm
+from tests import m, p, t, u
 
 from .migration_validation_cases import capture_stdout
 

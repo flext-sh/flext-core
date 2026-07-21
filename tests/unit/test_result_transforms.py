@@ -12,8 +12,8 @@ from operator import floordiv
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import r, tm
 
+from flext_tests import r, tm
 from tests import u
 
 if TYPE_CHECKING:

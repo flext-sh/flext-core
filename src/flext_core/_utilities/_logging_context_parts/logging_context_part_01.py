@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import ClassVar, TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import (
     FlextConstants as c,
@@ -23,7 +23,6 @@ from flext_core import (
 from flext_core._utilities.collection import FlextUtilitiesCollection
 from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
 from flext_core._utilities.logging_config import FlextUtilitiesLoggingConfig
-
 
 if TYPE_CHECKING:
     import types

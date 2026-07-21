@@ -12,10 +12,9 @@ import math
 from datetime import UTC, datetime
 
 import pytest
-from flext_tests import m as ftm, tm
 
-from tests import m
-from tests import t
+from flext_tests import m as ftm, tm
+from tests import m, t
 
 
 class TestsFlextCoreTypingsContainers:

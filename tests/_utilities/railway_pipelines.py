@@ -2,14 +2,9 @@
 
 from __future__ import annotations
 
-
 from flext_tests import e, m as tm, r
-
+from tests import c, m, p
 from tests._utilities.railway_services import TestsFlextUtilitiesRailwayServicesMixin
-from tests import c
-from tests import m
-
-from tests import p
 
 
 class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayServicesMixin):

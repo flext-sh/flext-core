@@ -6,15 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Literal, overload, TYPE_CHECKING
+# mro-cqxy (ADR-011): runtime import — used in a runtime-evaluated annotation
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Literal, overload
 
 from flext_core._decorators._railway import FlextDecoratorsRailway
 from flext_core._models.handler import FlextModelsHandler as mh
-
-# mro-cqxy (ADR-011): runtime import — used in a runtime-evaluated annotation
-from collections.abc import Callable
 from flext_core._protocols.result import FlextProtocolsResult as pr
-
 
 if TYPE_CHECKING:
     from flext_core._typings.base import FlextTypingBase as tb

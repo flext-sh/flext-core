@@ -6,9 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated
-
 from collections.abc import MutableSequence
+from typing import Annotated
 
 from flext_core import p, t
 from flext_core._models.base import FlextModelsBase as m

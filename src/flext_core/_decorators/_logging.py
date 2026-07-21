@@ -8,21 +8,20 @@ from __future__ import annotations
 
 import time
 from functools import wraps
+from typing import TYPE_CHECKING
 
 from flext_core import FlextUtilities as u
 from flext_core._constants.base import FlextConstantsBase as cb
 from flext_core._constants.infrastructure import FlextConstantsInfrastructure as ci
 from flext_core._decorators._logging_payloads import FlextDecoratorsLoggingPayloads
 
-
-from typing import TYPE_CHECKING
-
 # mro-cqxy (ADR-011): runtime import — used in a runtime-evaluated annotation
 from flext_core._typings.base import FlextTypingBase as tb
 
 if TYPE_CHECKING:
-    from flext_core._protocols.logging import FlextProtocolsLogging as pl
     from collections.abc import Callable
+
+    from flext_core._protocols.logging import FlextProtocolsLogging as pl
 
 
 class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):

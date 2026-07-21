@@ -8,14 +8,13 @@ constructed model state, model_dump output, and validation error paths.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
 import json
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 import pytest
 
-from tests import c
-from tests import m
+from tests import c, m
 
 
 class TestsFlextCoreModelsBaseFullCoverage:

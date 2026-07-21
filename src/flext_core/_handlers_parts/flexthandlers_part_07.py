@@ -2,15 +2,13 @@
 
 from __future__ import annotations
 
+# mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
+from collections.abc import Callable, MutableSequence
+from typing import TYPE_CHECKING
 
 from flext_core import c, p, t
 
 from .flexthandlers_part_06 import FlextHandlers as FlextHandlersPart06
-
-from typing import TYPE_CHECKING
-
-# mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
-from collections.abc import Callable, MutableSequence
 
 if TYPE_CHECKING:
     from types import ModuleType

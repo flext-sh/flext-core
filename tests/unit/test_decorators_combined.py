@@ -5,13 +5,11 @@ from __future__ import annotations
 import time
 
 import pytest
-from flext_tests import d, e, r
 from hypothesis import given, settings, strategies as st
 
+from flext_tests import d, e, r
+from tests import p, u
 from tests.unit._decorators_support import TestsFlextDecoratorsLegacy
-from tests import u
-
-from tests import p
 
 
 class TestsFlextCoreDecoratorsCombined(TestsFlextDecoratorsLegacy):

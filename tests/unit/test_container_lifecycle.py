@@ -7,13 +7,8 @@ of fallible operations. No private attribute or internal-collaborator is touched
 
 from __future__ import annotations
 
-
 from flext_tests import tm
-
-from tests import m
-from tests import u
-
-from tests import p
+from tests import m, p, u
 
 
 class TestsFlextContainerLifecycle:

@@ -13,9 +13,9 @@ from __future__ import annotations
 import textwrap
 from pathlib import Path
 
+from flext_core import u
 from tests import t
 from tests.unit._beartype_engine_support import TestsFlextBeartypeEngine
-from flext_core import u
 
 _CLAW_INIT = (
     textwrap.dedent(

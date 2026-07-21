@@ -12,8 +12,8 @@ from __future__ import annotations
 import types
 
 import pytest
-from flext_tests import h, r
 
+from flext_tests import h, r
 from tests import m, p
 
 

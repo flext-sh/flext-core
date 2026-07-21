@@ -13,9 +13,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests import c
-from tests import m
-from tests import p, t
+from tests import c, m, p, t
 
 # One representative valid instance per surviving source variant, keyed by the
 # discriminator literal it must expose on the public ``kind`` field.

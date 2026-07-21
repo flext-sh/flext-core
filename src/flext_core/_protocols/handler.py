@@ -14,15 +14,15 @@ from typing import TYPE_CHECKING, Protocol, override, runtime_checkable
 
 from .base import FlextProtocolsBase as p
 
-
 if TYPE_CHECKING:
     # NOTE (multi-agent, mro-wkii.17.26): FlextTypesServices imports this
     # protocol while t is still being composed; t is annotation-only here.
-    from .result import FlextProtocolsResult as pr
-    from .container import FlextProtocolsContainer as pc
     from collections.abc import Callable
-    from flext_core import FlextConstants as c
-    from flext_core import FlextTypes as t
+
+    from flext_core import FlextConstants as c, FlextTypes as t
+
+    from .container import FlextProtocolsContainer as pc
+    from .result import FlextProtocolsResult as pr
 
 
 class FlextProtocolsHandler:

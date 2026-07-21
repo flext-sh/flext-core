@@ -14,10 +14,7 @@ from typing import Annotated
 
 import pytest
 
-from tests import c, p
-from tests import m
-from tests import e
-from tests import u
+from tests import c, e, m, p, u
 
 
 def _hard_violation(

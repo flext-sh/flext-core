@@ -6,13 +6,10 @@ import os
 from pathlib import Path
 
 import pytest
-from flext_tests import tm
 
 from flext_core import FlextContainer, u
-from tests import c
-from tests import m
-
-from tests import t
+from flext_tests import tm
+from tests import c, m, t
 
 
 class TestsFlextCoreUtilitiesSettings:

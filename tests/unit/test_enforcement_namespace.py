@@ -19,9 +19,8 @@ import sys
 import warnings
 from typing import TYPE_CHECKING, ClassVar
 
-from tests import c
+from tests import c, u
 from tests.unit._enforcement_support import make_class
-from tests import u
 
 if TYPE_CHECKING:
     from pathlib import Path

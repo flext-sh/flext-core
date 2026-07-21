@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     # mro-wkii.17.26 (codex): reverse p/t edges are annotation-only while the
     # public protocol facade is still being composed.
     from types import ModuleType
+
     from flext_core import p, t
 
 

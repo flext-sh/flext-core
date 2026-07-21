@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from examples import t
 from examples._models.errors import ExamplesFlextModelsErrors
 from examples._models.ex00 import ExamplesFlextModelsEx00
 from examples._models.ex01 import ExamplesFlextModelsEx01
@@ -18,8 +19,6 @@ from examples._models.ex14 import ExamplesFlextModelsEx14
 from examples._models.output import ExamplesFlextModelsOutput
 from examples._models.shared import ExamplesFlextSharedHandle, ExamplesFlextSharedPerson
 from flext_core import m
-
-from examples import t
 
 
 class ExamplesFlextModels(m):

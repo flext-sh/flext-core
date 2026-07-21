@@ -25,7 +25,7 @@ from __future__ import annotations
 import inspect
 from pathlib import Path
 from threading import RLock
-from typing import ClassVar, Self, cast, override, TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar, Self, cast, override
 
 from pydantic_settings import (
     BaseSettings,

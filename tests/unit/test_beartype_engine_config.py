@@ -10,10 +10,8 @@ from __future__ import annotations
 import pytest
 from beartype import BeartypeConf, BeartypeStrategy
 
-from tests import c
-from tests import t
+from tests import c, t, u
 from tests.unit._beartype_engine_support import AnyAlias, CleanAlias, NestedAnyAlias
-from tests import u
 
 _FORBIDDEN: frozenset[str] = frozenset({"dict", "list", "set"})
 

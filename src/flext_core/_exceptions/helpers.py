@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 
 from pydantic import ValidationError as PydanticValidationError
 
+from flext_core import p
 from flext_core._constants.errors import FlextConstantsErrors as ce
 from flext_core._constants.mixins import FlextConstantsMixins as cm
 from flext_core._models.base import FlextModelsBase as m
@@ -21,7 +22,6 @@ from flext_core._runtime._metadata_validation import (
 
 # mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
 from flext_core._typings.base import FlextTypingBase as tb
-from flext_core import p
 
 if TYPE_CHECKING:
     # p is used only in annotations (p.Metadata); importing it at runtime here

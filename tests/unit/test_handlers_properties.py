@@ -10,11 +10,10 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
-from flext_tests import h, r, tm
 from hypothesis import given, strategies as st
 
-from tests import c
-from tests import t
+from flext_tests import h, r, tm
+from tests import c, t
 from tests.unit._handlers_support import TestsFlextFlextHandlers
 
 _TOKENS: st.SearchStrategy[str] = st.text(

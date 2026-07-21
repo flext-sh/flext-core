@@ -4,14 +4,13 @@ from __future__ import annotations
 
 import hashlib
 import string
+from collections.abc import MutableSequence
 from datetime import datetime
 from pathlib import Path
 from typing import ClassVar
 
 from examples import m
 from flext_core import r, u
-
-from collections.abc import MutableSequence
 
 
 class ExamplesFlextSharedBase(m.BaseModel):

@@ -7,14 +7,13 @@ import inspect
 from pathlib import Path
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-
-from .helpers import FlextUtilitiesBeartypeHelpers
+from flext_core._protocols.enforcement import FlextProtocolsEnforcement as pe
 
 # mro-qtjb (flext-core): t at runtime — module-level _NO_VIOLATION annotation
 # is evaluated at runtime by beartype claw instrumentation.
 from flext_core._typings.base import FlextTypingBase as t
 
-from flext_core._protocols.enforcement import FlextProtocolsEnforcement as pe
+from .helpers import FlextUtilitiesBeartypeHelpers
 
 _NO_VIOLATION: t.StrMapping | None = None
 _MODULE_EXEMPT_FILES: frozenset[str] = frozenset({

@@ -11,11 +11,8 @@ import pytest
 from pydantic.warnings import PydanticDeprecatedSince20
 
 from flext_core import FlextResult
-from tests import c
-from tests import m
-from tests import t
+from tests import c, m, t, u
 from tests.unit._enforcement_support import messages
-from tests import u
 
 
 class TestsFlextEnforcementModels:

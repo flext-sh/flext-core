@@ -8,8 +8,7 @@ from contextlib import redirect_stdout
 from enum import StrEnum, unique
 from typing import TYPE_CHECKING, Annotated, ClassVar
 
-from tests import m, t
-from tests import u
+from tests import m, t, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence

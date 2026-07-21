@@ -6,9 +6,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
 from flext_core import u
+from flext_tests import tm
 from tests import m
 
 if TYPE_CHECKING:

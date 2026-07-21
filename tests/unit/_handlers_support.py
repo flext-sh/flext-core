@@ -6,10 +6,7 @@ import math
 from typing import TYPE_CHECKING, Annotated, ClassVar, override
 
 from flext_tests import h, r
-
-from tests import c
-from tests import m
-from tests import p, t
+from tests import c, m, p, t
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

@@ -11,17 +11,16 @@ from __future__ import annotations
 
 import inspect
 import sys
-from typing import Annotated, ClassVar, Self, override, TYPE_CHECKING
+
+# mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
+from collections.abc import MutableMapping
+from typing import TYPE_CHECKING, Annotated, ClassVar, Self, override
 
 from pydantic import PrivateAttr
 
 # NOTE (multi-agent): mro-i6nq.12 — consolidated _registry_parts/part_01..04 (one
 # FlextRegistry class split across a numbered MRO chain) into this single facade module.
 from flext_core import c, e, h, m, p, r, s, t, u
-
-
-# mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
-from collections.abc import MutableMapping
 
 if TYPE_CHECKING:
     from collections.abc import Callable

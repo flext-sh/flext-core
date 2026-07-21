@@ -9,12 +9,12 @@ from pydantic.fields import FieldInfo
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._models.pydantic import FlextModelsPydantic as mp
-
-from .helpers import FlextUtilitiesBeartypeHelpers as _ubh
+from flext_core._protocols.enforcement import FlextProtocolsEnforcement as pe
 
 # mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
 from flext_core._typings.base import FlextTypingBase as t
-from flext_core._protocols.enforcement import FlextProtocolsEnforcement as pe
+
+from .helpers import FlextUtilitiesBeartypeHelpers as _ubh
 
 
 class FlextUtilitiesBeartypeFieldVisitor:

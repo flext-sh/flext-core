@@ -10,10 +10,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import ClassVar
 
-from flext_core import c, m
-from flext_core import r
-
-from flext_core import p, t
+from flext_core import c, m, p, r, t
 
 
 class FlextUtilitiesParserCoerce:

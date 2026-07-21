@@ -10,10 +10,9 @@ from __future__ import annotations
 from enum import StrEnum
 
 import pytest
-from flext_tests import tm
 
-from tests import c
-from tests import t
+from flext_tests import tm
+from tests import c, t
 
 
 class _Color(StrEnum):

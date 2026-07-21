@@ -5,9 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_tests import u
-
-from tests import c, p
-from tests import m
+from tests import c, m, p
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

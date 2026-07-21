@@ -7,12 +7,11 @@ import tomllib
 from functools import cache
 from typing import TYPE_CHECKING, ClassVar
 
+from flext_core import p, r
 from flext_core._constants.file import FlextConstantsFile as cf
 from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cpm
 from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
 from flext_core._protocols.project_metadata import FlextProtocolsProjectMetadata as ppm
-from flext_core import p, r
-
 
 # mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
 from flext_core._typings.base import FlextTypingBase as t

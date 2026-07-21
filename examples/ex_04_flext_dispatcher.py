@@ -5,10 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
-from examples import m
-from examples import p
+from examples import m, p, u
 from examples.shared import ExamplesFlextShared
-from examples import u
 from flext_core import r
 
 

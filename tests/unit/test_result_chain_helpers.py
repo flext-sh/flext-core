@@ -8,10 +8,9 @@ no internal collaborators, no implementation details are inspected.
 
 from __future__ import annotations
 
-
 import pytest
-from flext_tests import r
 
+from flext_tests import r
 from tests import p
 
 

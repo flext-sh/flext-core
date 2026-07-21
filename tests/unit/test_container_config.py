@@ -2,16 +2,12 @@
 
 from __future__ import annotations
 
-
 import pytest
-from flext_tests import tm
 
 from flext_core import FlextSettings
 from flext_core.container import FlextContainer
-from tests import m
-from tests import t
-
-from tests import p
+from flext_tests import tm
+from tests import m, p, t
 
 
 class TestsFlextCoreContainerConfig:

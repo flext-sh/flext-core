@@ -17,9 +17,9 @@ from typing import Annotated
 
 from flext_core import FlextConstants as c, FlextTypes as t
 from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.containers import FlextModelsContainers
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._runtime._container import FlextRuntimeContainer as FlextRuntime
-from flext_core._models.containers import FlextModelsContainers
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
 from flext_core._utilities.generators import FlextUtilitiesGenerators as ug
 from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up

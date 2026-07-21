@@ -18,11 +18,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import x
 
 from flext_core import FlextContext
-from tests import c
-from tests import p
+from flext_tests import x
+from tests import c, p
 
 if TYPE_CHECKING:
     from collections.abc import Mapping

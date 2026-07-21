@@ -3,21 +3,21 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import cast, TYPE_CHECKING
+from collections.abc import MutableSequence
+from typing import TYPE_CHECKING, cast
 
 from pydantic import ValidationError
 
 from flext_core._constants.errors import FlextConstantsErrors as c
 
-from .construction import FlextResultConstructionMixin
-
-
 # mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
 from flext_core._protocols.result import FlextProtocolsResult as p
-from collections.abc import MutableSequence
+
+from .construction import FlextResultConstructionMixin
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
+
     from flext_core._typings.base import FlextTypingBase as t
 
 

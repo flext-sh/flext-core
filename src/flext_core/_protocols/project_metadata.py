@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Protocol, runtime_checkable, TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_core._protocols.base import FlextProtocolsBase as pb
-
 
 if TYPE_CHECKING:
     from pathlib import Path

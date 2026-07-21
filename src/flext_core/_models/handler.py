@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import MutableSequence
-from typing import Annotated, ClassVar, TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated, ClassVar
 
 from flext_core import c, p, t
 from flext_core._models.base import FlextModelsBase as m

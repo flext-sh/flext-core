@@ -5,9 +5,7 @@ from __future__ import annotations
 from typing import override
 
 from flext_tests import s as tests_s
-
-from tests import c
-from tests import p, t
+from tests import c, p, t
 
 
 class TestsFlextServiceBase[TDomainResult: t.JsonPayload | t.SequenceOf[t.JsonPayload]](

@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import sys
+from types import ModuleType
+
 from examples import m, p, u
 from flext_core import FlextSettings
 
 from .ex_08_container_registration import Ex08ContainerRegistration
-
-from types import ModuleType
 
 
 class _WireProbe:

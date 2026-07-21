@@ -5,15 +5,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Annotated, ClassVar, override
 
 from flext_tests import r
-
-from tests.base import s
 from tests import m
+from tests.base import s
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping, MutableSequence
 
-    from tests import p
-    from tests import t
+    from tests import p, t
 
 
 class TestsFlextUserServiceEntity(m.BaseModel):

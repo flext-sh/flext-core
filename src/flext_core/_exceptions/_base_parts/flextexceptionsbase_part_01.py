@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping
+from typing import TYPE_CHECKING
+
 from flext_core._constants.errors import FlextConstantsErrors as ce
 from flext_core._constants.mixins import FlextConstantsMixins as cm
 from flext_core._exceptions.helpers import FlextExceptionsHelpers
@@ -11,12 +13,10 @@ from flext_core._protocols.result import FlextProtocolsResult as pr
 from flext_core._runtime._metadata_validation import (
     FlextRuntimeMetadataValidation as FlextRuntime,
 )
-
-from typing import TYPE_CHECKING
+from flext_core._typings.base import FlextTypingBase as tb
 
 # mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
 from flext_core._typings.services import FlextTypesServices as ts
-from flext_core._typings.base import FlextTypingBase as tb
 
 if TYPE_CHECKING:
     from flext_core import p

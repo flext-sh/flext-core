@@ -7,11 +7,9 @@ import time
 from contextlib import redirect_stdout
 from typing import TYPE_CHECKING
 
-from flext_tests import r, tm
-
 from flext_core import FlextContainer
-from tests import p, t
-from tests import u
+from flext_tests import r, tm
+from tests import p, t, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable

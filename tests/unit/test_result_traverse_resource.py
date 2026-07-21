@@ -5,16 +5,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import r, tm
 
-from tests import m
-from tests import u
+from flext_tests import r, tm
+from tests import m, u
 
 if TYPE_CHECKING:
     from collections.abc import MutableSequence
 
-    from tests import p
-    from tests import t
+    from tests import p, t
 
 
 class TestsFlextResultTraverseResource:

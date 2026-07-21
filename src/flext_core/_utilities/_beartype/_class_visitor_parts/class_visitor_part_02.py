@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-
 from flext_core._protocols.enforcement import FlextProtocolsEnforcement as pe
 from flext_core._typings.base import FlextTypingBase as t
+
 from ._parts.class_visitor_part_02_01 import alias_first_violation
 from ._parts.class_visitor_part_02_02 import (
     redundant_inner_violation,

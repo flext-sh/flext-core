@@ -3,17 +3,15 @@
 from __future__ import annotations
 
 import threading
-from contextlib import contextmanager
-from typing import Annotated, ClassVar, TYPE_CHECKING
 
+# mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
+from collections.abc import MutableMapping
+from contextlib import contextmanager
+from typing import TYPE_CHECKING, Annotated, ClassVar
 
 from flext_core import FlextContainer, FlextContext, c, m, p, t, u
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
-
-
-# mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
-from collections.abc import MutableMapping
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Mapping

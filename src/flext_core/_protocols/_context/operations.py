@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     # public protocol facade is still being composed.
     import contextvars
     from contextlib import AbstractContextManager
+
     from flext_core import p, t
 
 

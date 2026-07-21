@@ -18,10 +18,7 @@ from typing import cast
 
 import pytest
 
-from tests import e
-from tests import u
-
-from tests import t
+from tests import e, t, u
 
 
 class TestsFlextCoreEnforcementWarningVisibility:

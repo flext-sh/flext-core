@@ -8,9 +8,9 @@ touched and no collaborator is mocked.
 from __future__ import annotations
 
 import pytest
-from flext_tests import r
 from hypothesis import given, settings, strategies as st
 
+from flext_tests import r
 from tests import p
 from tests.unit._result_scenarios import ResultOperationType
 

@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import overload, override, TYPE_CHECKING
+from typing import TYPE_CHECKING, overload, override
 
 from flext_core._constants.errors import FlextConstantsErrors as c
 
 from .behavior import FlextResultBehaviorMixin
-
 
 if TYPE_CHECKING:
     from collections.abc import Callable

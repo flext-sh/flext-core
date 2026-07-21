@@ -16,11 +16,10 @@ from __future__ import annotations
 from typing import override
 
 import pytest
+
 from flext_tests import h, r
-
-from tests.base import s
-
 from tests import m, p
+from tests.base import s
 
 
 class TestsFlextHandlerDecoratorEdges:

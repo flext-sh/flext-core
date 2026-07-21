@@ -12,9 +12,11 @@ if TYPE_CHECKING:
     # mro-wkii.17.26 (codex): p is composing this module; importing the root
     # m/p/t facades here re-enters protocols and models before t is available.
     from collections.abc import Iterable, MutableSequence
-    from flext_core import p, t
-    from pydantic.fields import FieldInfo
     from types import TracebackType
+
+    from pydantic.fields import FieldInfo
+
+    from flext_core import p, t
 
 
 class FlextProtocolsBase:

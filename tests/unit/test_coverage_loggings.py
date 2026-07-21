@@ -8,15 +8,14 @@ from contextlib import redirect_stdout
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
+from flext_tests import tm
 from tests import u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests import p
-    from tests import t
+    from tests import p, t
 
 
 class TestsFlextCoverageLoggings:

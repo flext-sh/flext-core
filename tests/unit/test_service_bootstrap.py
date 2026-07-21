@@ -11,14 +11,11 @@ from __future__ import annotations
 from typing import Annotated, override
 
 import pytest
-from flext_tests import r, tm
 
 from flext_core import FlextSettings
+from flext_tests import r, tm
+from tests import m, p, t, u
 from tests.base import s
-from tests import m
-from tests import p
-from tests import t
-from tests import u
 
 
 class TestsFlextCoreServiceBootstrap:

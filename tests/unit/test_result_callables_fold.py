@@ -8,12 +8,10 @@ collaborators.
 
 from __future__ import annotations
 
-
 import pytest
-from flext_tests import r, tm
 
-from tests import p
-from tests import t
+from flext_tests import r, tm
+from tests import p, t
 
 
 class TestsFlextCoreResultCallablesFold:

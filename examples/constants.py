@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from flext_core import c as _c
-
 from examples import t
-
+from flext_core import c as _c
 
 c = _c
 

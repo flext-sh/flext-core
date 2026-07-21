@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import importlib
 import sys
-from types import ModuleType
 from collections.abc import Callable, Mapping, Sequence
+from types import ModuleType
 
 from pydantic import (
     BaseModel,
@@ -16,7 +16,6 @@ from pydantic import (
     ValidationError,
     computed_field,
 )
-
 
 type StrPair = tuple[str, str]
 type LazyImportEntry = str | StrPair

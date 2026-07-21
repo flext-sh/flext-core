@@ -11,15 +11,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar, TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from flext_core._constants.infrastructure import FlextConstantsInfrastructure as _c
 from flext_core._models.context import FlextModelsContext
 
-
 if TYPE_CHECKING:
-    from flext_core import FlextTypes as t
     from datetime import datetime
+
+    from flext_core import FlextTypes as t
 
 
 class FlextUtilitiesContext:

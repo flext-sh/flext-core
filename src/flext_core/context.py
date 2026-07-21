@@ -16,7 +16,7 @@ from __future__ import annotations
 import time
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from typing import Annotated, ClassVar, Self, TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated, ClassVar, Self
 
 from flext_core import c, m, p, r, t, u
 

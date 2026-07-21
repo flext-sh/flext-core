@@ -11,8 +11,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from tests import c
-from tests import m
+from tests import c, m
 
 
 class TestsFlextCoreModelsCqrs:

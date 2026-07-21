@@ -8,11 +8,10 @@ collector internals, per-rule private helpers, or emit machinery.
 
 from __future__ import annotations
 
-
 import pytest
 
-from tests.unit._enforcement_support import make_class, messages
 from tests import p, u
+from tests.unit._enforcement_support import make_class, messages
 
 
 class TestsFlextCoreEnforcement:

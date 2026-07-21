@@ -13,13 +13,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-
 if TYPE_CHECKING:
     # NOTE (multi-agent, mro-wkii.17.26): the public t facade is still being
     # composed when this protocol module loads; it is needed only by annotations.
     from pathlib import Path
-    from .result import FlextProtocolsResult as pr
+
     from flext_core import FlextTypes as t
+
+    from .result import FlextProtocolsResult as pr
 
 
 class FlextProtocolsConfig:

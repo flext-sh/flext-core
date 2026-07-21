@@ -8,14 +8,14 @@ internal collaborators.
 
 from __future__ import annotations
 
-import pytest
-from flext_tests import e
+import operator
 
-from tests import c
-from tests import p
+import pytest
+
+from flext_tests import e
+from tests import c, p
 from tests.unit._exceptions_failure_support import FAILURES, FailureFactory
 from tests.unit._exceptions_structured_support import STRUCTURED_ERRORS, ErrorFactory
-import operator
 
 
 class TestsFlextCoreExceptionsStructuredContracts:

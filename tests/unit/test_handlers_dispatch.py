@@ -5,12 +5,10 @@ from __future__ import annotations
 from typing import override
 
 import pytest
-from flext_tests import h, r
 
-from tests import c
-from tests import p, t
+from flext_tests import h, r
+from tests import c, p, t, u
 from tests.unit._handlers_support import TestsFlextFlextHandlers
-from tests import u
 
 
 class TestsFlextHandlersDispatch(TestsFlextFlextHandlers):

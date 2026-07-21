@@ -9,9 +9,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 
 import structlog
-from typing import TYPE_CHECKING
 
 from .logging_config_part_02 import (
     FlextUtilitiesLoggingConfig as FlextUtilitiesLoggingConfigPart02,

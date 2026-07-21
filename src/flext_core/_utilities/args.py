@@ -8,10 +8,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextConstants as c, FlextTypes as t
-from flext_core import FlextResult as r
-from flext_core._models.pydantic import FlextModelsPydantic as mp
 from typing import TYPE_CHECKING
+
+from flext_core import FlextConstants as c, FlextResult as r, FlextTypes as t
+from flext_core._models.pydantic import FlextModelsPydantic as mp
 
 if TYPE_CHECKING:
     from flext_core._protocols.result import FlextProtocolsResult as p

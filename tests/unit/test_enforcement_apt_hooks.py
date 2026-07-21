@@ -21,10 +21,7 @@ from typing import ClassVar
 
 import pytest
 
-from tests import c
-from tests import u
-
-from tests import t
+from tests import c, t, u
 
 
 # Note: the top-level class name is intentionally ``TestsFlextEnforcementAptHooks``

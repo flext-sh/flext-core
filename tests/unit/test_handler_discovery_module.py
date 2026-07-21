@@ -12,13 +12,13 @@ import types
 from typing import TYPE_CHECKING
 
 import pytest
+
 from flext_tests import h, r, tm
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests import p
-    from tests import t
+    from tests import p, t
 
 
 class _CreateCommand:

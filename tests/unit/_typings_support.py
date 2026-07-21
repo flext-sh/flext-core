@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-
 from tests import t
 
 TYPE_ALIAS_NAMES: t.VariadicTuple[str] = (

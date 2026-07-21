@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Annotated, ClassVar
 
-from tests import m
-from tests import u
+from tests import m, u
 
 if TYPE_CHECKING:
     from pathlib import Path

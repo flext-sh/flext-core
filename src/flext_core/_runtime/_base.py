@@ -7,15 +7,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import ClassVar, TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from flext_core._constants.errors import FlextConstantsErrors as ce
 from flext_core._constants.logging import FlextConstantsLogging as cl
-from flext_core._typings.base import FlextTypingBase as tb
-
 
 # mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
 from flext_core._protocols.logging import FlextProtocolsLogging as pl
+from flext_core._typings.base import FlextTypingBase as tb
 
 if TYPE_CHECKING:
     from flext_core._typings.services import FlextTypesServices as ts

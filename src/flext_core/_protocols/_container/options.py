@@ -7,8 +7,9 @@ from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 if TYPE_CHECKING:
     # NOTE (multi-agent, mro-wkii.17.26.2): annotations must not reopen t while
     # FlextTypesServices is composing the handler/container protocol graph.
-    from types import ModuleType
     from collections.abc import Iterable
+    from types import ModuleType
+
     from flext_core import p, t
 
 

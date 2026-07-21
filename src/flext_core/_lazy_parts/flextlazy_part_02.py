@@ -4,17 +4,6 @@ from __future__ import annotations
 
 import sys
 from types import ModuleType
-
-# NOTE (multi-agent, mro-0ftd.3.3.1): consume the finite structural contract;
-# the former self-recursive module-global alias has no runtime owner.
-
-from .flextlazy_part_01 import (
-    FlextLazy as FlextLazyPart01,
-    LazyImportDict,
-    LazyImportMap,
-    MutableLazyImportMap,
-)
-
 from typing import TYPE_CHECKING
 
 # mro-qtjb (flext-core): p imported at runtime — the lazy __getattr__ wrapper
@@ -22,6 +11,15 @@ from typing import TYPE_CHECKING
 # this module namespace, so p must be runtime-importable (forward-safe: this
 # is u-layer infra importing the p facade).
 from flext_core._protocols.lazy import FlextProtocolsLazy as p
+
+# NOTE (multi-agent, mro-0ftd.3.3.1): consume the finite structural contract;
+# the former self-recursive module-global alias has no runtime owner.
+from .flextlazy_part_01 import (
+    FlextLazy as FlextLazyPart01,
+    LazyImportDict,
+    LazyImportMap,
+    MutableLazyImportMap,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

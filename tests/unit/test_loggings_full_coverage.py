@@ -8,10 +8,9 @@ from contextlib import redirect_stdout
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
-from tests import p
-from tests import u
+from flext_tests import tm
+from tests import p, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable

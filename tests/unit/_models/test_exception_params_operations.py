@@ -9,10 +9,9 @@ attribute access, no patching, no collaborator spying.
 from __future__ import annotations
 
 import pytest
-from flext_tests import tm
 
-from tests import c, p
-from tests import m
+from flext_tests import tm
+from tests import c, m, p
 from tests.unit._models._exception_params_support import (
     _ALL_PARAMS_IDS,
     _ALL_PARAMS_MODELS,

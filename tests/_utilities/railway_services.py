@@ -5,14 +5,9 @@ from __future__ import annotations
 from typing import Annotated, override
 
 from flext_tests import m as tm, r, u
-
+from tests import c, m, p, t
 from tests._models.mixins import TestsFlextModelsMixins
 from tests.base import s
-from tests import c
-from tests import m
-from tests import t
-
-from tests import p
 
 
 class TestsFlextUtilitiesRailwayServicesMixin:

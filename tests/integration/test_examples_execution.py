@@ -17,9 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from tests import c, p, u
-
-from tests import t
+from tests import c, p, t, u
 
 _CHECK_COUNT_RE = re.compile(r"\((\d+) checks\)")
 

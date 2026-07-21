@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import cast, TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from pydantic import ValidationError
 from returns.result import (
@@ -16,14 +16,14 @@ from flext_core._constants.infrastructure import FlextConstantsInfrastructure
 from flext_core._constants.mixins import FlextConstantsMixins
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 
-
 from .behavior import FlextResultBehaviorMixin
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from flext_core import FlextTypes as t
     from flext_core._models.containers import FlextModelsContainers as mc
     from flext_core._protocols.result import FlextProtocolsResult as p
-    from collections.abc import Callable
-    from flext_core import FlextTypes as t
 
 
 class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):

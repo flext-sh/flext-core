@@ -9,12 +9,11 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from itertools import starmap
 
-from flext_core import m, p, t
+from flext_core import m, p, r, t
 from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._utilities.collection import FlextUtilitiesCollection
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 from flext_core._utilities.mapper_extract import FlextUtilitiesMapperExtract
-from flext_core import r
 from flext_core.runtime import FlextRuntime
 
 

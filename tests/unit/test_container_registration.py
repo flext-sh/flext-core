@@ -2,16 +2,11 @@
 
 from __future__ import annotations
 
-
 import pytest
-from flext_tests import tm
 
 from flext_core.container import FlextContainer
-from tests import m
-from tests import p
-from tests import u
-
-from tests import t
+from flext_tests import tm
+from tests import m, p, t, u
 
 
 class TestsFlextCoreContainerRegistration:

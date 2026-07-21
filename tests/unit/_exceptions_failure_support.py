@@ -5,12 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 
 from flext_tests import e
-
-from tests import c
-from tests import m
-from tests import p
-
-from tests import t
+from tests import c, m, p, t
 
 type FailureFactory = Callable[[], p.Result[bool]]
 

@@ -2,15 +2,9 @@
 
 from __future__ import annotations
 
-
 import pytest
 
-from tests import c
-from tests import t
-from tests import m
-from tests import u
-
-from tests import p
+from tests import c, m, p, t, u
 
 
 class TestsFlextCoreRegistry:

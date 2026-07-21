@@ -7,10 +7,10 @@ from collections.abc import MutableSequence, Sequence
 from flext_core import (
     FlextConstants as c,
     FlextProtocols as p,
+    FlextResult as r,
     FlextTypes as t,
     FlextUtilities as u,
 )
-from flext_core import FlextResult as r
 
 from ._utilities.dispatcher_execute import execute_dispatcher_handler
 

@@ -7,10 +7,9 @@ Exercises only the public contract of ``h.Discovery``:
 
 from __future__ import annotations
 
-
 import pytest
-from flext_tests import h, r, tm
 
+from flext_tests import h, r, tm
 from tests import m, p
 
 

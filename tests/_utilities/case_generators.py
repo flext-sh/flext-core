@@ -2,14 +2,10 @@
 
 from __future__ import annotations
 
-
+from tests import c, m, p, t
 from tests._utilities.case_service_factories import (
     TestsFlextUtilitiesCaseServiceFactoriesMixin,
 )
-from tests import c
-from tests import m
-
-from tests import p, t
 
 
 class TestsFlextUtilitiesCaseGeneratorsMixin(

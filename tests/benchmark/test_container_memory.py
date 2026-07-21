@@ -18,9 +18,9 @@ import sys
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
 from flext_core import FlextContainer
+from flext_tests import tm
 
 if TYPE_CHECKING:
     from collections.abc import Callable

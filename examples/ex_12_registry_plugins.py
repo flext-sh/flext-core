@@ -2,14 +2,11 @@
 
 from __future__ import annotations
 
-from examples import c
-from examples import m
+from examples import c, m, p
 from flext_core import r
 
 from .ex_12_registry_flow import Ex12RegistryFlow
 from .ex_12_registry_support import ProtocolHandler, as_registry_handler
-
-from examples import p
 
 
 class Ex12RegistryPlugins(Ex12RegistryFlow):

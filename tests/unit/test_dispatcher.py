@@ -10,12 +10,9 @@ internal registries or logging side effects.
 from __future__ import annotations
 
 import pytest
-from flext_tests import r
 
-from tests import m
-from tests import p
-from tests import t
-from tests import u
+from flext_tests import r
+from tests import m, p, t, u
 
 
 class RouteMessage(m.BaseModel):

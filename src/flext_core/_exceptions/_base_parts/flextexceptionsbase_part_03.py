@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+# mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
+from collections.abc import MutableMapping
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_core._constants.errors import FlextConstantsErrors as ce
@@ -9,18 +11,15 @@ from flext_core._constants.infrastructure import FlextConstantsInfrastructure as
 from flext_core._constants.mixins import FlextConstantsMixins as cm
 from flext_core._constants.validation import FlextConstantsValidation as cv
 from flext_core._exceptions.helpers import FlextExceptionsHelpers
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._protocols.base import FlextProtocolsBase as p
 from flext_core._runtime._metadata_validation import (
     FlextRuntimeMetadataValidation as FlextRuntime,
 )
 from flext_core._typings.base import FlextTypingBase as tb
+from flext_core._typings.services import FlextTypesServices as ts
 
 from .flextexceptionsbase_part_02 import FlextBaseErrorStateMixin
-
-# mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
-from collections.abc import MutableMapping
-from flext_core._protocols.base import FlextProtocolsBase as p
-from flext_core._typings.services import FlextTypesServices as ts
-from flext_core._models.pydantic import FlextModelsPydantic as mp
 
 if TYPE_CHECKING:
     from flext_core._protocols.result import FlextProtocolsResult as pr

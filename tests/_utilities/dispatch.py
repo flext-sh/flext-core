@@ -5,10 +5,7 @@ from __future__ import annotations
 from typing import override
 
 from flext_tests import h, r
-
-from tests import c
-from tests import p
-from tests import t
+from tests import c, p, t
 
 
 class TestsFlextUtilitiesDispatchMixin:

@@ -9,12 +9,8 @@ inspected.
 
 from __future__ import annotations
 
-
 from flext_tests import r
-
-from tests import m
-
-from tests import p
+from tests import m, p
 
 
 class TestsFlextCoreResultRecentBehaviors:

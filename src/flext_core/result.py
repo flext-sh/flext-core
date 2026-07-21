@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated, ClassVar, Self, TypeIs, overload, override, TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated, ClassVar, Self, TypeIs, overload, override
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, computed_field
 from returns.result import (
@@ -11,6 +11,11 @@ from returns.result import (
     Success,
 )  # mro-itcd.1: returns 0.28.0 moved exports to returns.result.
 
+from flext_core._protocols.logging import FlextProtocolsLogging as pl
+
+# mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
+from flext_core._typings.base import FlextTypingBase as tb
+
 from ._constants.errors import FlextConstantsErrors as c
 from ._models.containers import FlextModelsContainers as mc
 from ._result_parts.composition import FlextResultCompositionMixin
@@ -18,14 +23,10 @@ from ._result_parts.transforms import FlextResultTransformsMixin
 from ._result_parts.unwrap import FlextResultUnwrapMixin
 from ._runtime._metadata import FlextRuntimeMetadata as FlextRuntime
 
-
-# mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
-from flext_core._typings.base import FlextTypingBase as tb
-from flext_core._protocols.logging import FlextProtocolsLogging as pl
-
 if TYPE_CHECKING:
-    from ._typings.services import FlextTypesServices as ts
     from types import TracebackType
+
+    from ._typings.services import FlextTypesServices as ts
 
 
 class FlextResult[T](

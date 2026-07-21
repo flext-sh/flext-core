@@ -20,9 +20,7 @@ from pathlib import Path
 
 import pytest
 
-from tests import c, p
-from tests import m
-from tests import u
+from tests import c, m, p, u
 
 
 class TestsFlextFacadeFlatSsotAccess:

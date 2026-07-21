@@ -6,8 +6,7 @@ from collections import UserDict, UserList
 from typing import TYPE_CHECKING, Annotated, Never, override
 
 from flext_core import m
-from tests import c
-from tests import t
+from tests import c, t
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator

@@ -16,13 +16,10 @@ from __future__ import annotations
 import uuid
 
 import pytest
-from flext_tests import e, r, tm
 
 from flext_core import FlextContainer
-from tests import c
-from tests import u
-
-from tests import p
+from flext_tests import e, r, tm
+from tests import c, p, u
 
 _UUID_TEXT_LENGTH = 36
 

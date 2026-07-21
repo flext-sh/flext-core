@@ -14,11 +14,8 @@ from typing import Annotated, ClassVar
 
 import pytest
 
-from tests import c
-from tests import m
-from tests import t
+from tests import c, m, t, u
 from tests.unit._handlers_support import TestsFlextFlextHandlers
-from tests import u
 
 HANDLER_TYPES = TestsFlextFlextHandlers.HANDLER_TYPES
 VALIDATION_TYPES = TestsFlextFlextHandlers.VALIDATION_TYPES

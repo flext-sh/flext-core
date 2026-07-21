@@ -24,8 +24,8 @@ from typing import ClassVar
 import pytest
 
 from flext_core import c
-from tests.unit._enforcement_support import make_class
 from tests import e, p, u
+from tests.unit._enforcement_support import make_class
 
 type WarningRecords = list[warnings.WarningMessage]
 type ClassFactory = Callable[[], type]

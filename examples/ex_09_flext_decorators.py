@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from functools import wraps
+
 from examples import p
 from flext_core import r
-
-from collections.abc import Callable
 
 
 def _log_result[T](fn: Callable[..., T]) -> Callable[..., T]:

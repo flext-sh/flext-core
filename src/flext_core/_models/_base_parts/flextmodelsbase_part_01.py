@@ -16,9 +16,8 @@ from typing import ClassVar, override
 
 from flext_core import FlextConstants as c
 from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._utilities.enforcement import FlextUtilitiesEnforcement as ue
-
 from flext_core._typings.base import FlextTypingBase as t
+from flext_core._utilities.enforcement import FlextUtilitiesEnforcement as ue
 
 
 class FlextModelsBase:

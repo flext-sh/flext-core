@@ -9,8 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+# mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
+from collections.abc import MutableMapping
 from datetime import datetime
-from typing import ClassVar, TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import (
     FlextConstants as c,
@@ -25,10 +27,6 @@ from flext_core._utilities._logging_context_parts.logging_context_part_01 import
 )
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
-
-
-# mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
-from collections.abc import MutableMapping
 
 if TYPE_CHECKING:
     import contextvars

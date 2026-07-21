@@ -3,16 +3,17 @@
 from __future__ import annotations
 
 from types import MappingProxyType
+
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._models.enforcement import FlextModelsEnforcement as me
-
-from .enforcement_part_06 import EXTENDED_PREDICATE_BINDINGS
 
 # mro-wkii (flext-core): t/p imported at runtime, not TYPE_CHECKING-only —
 # the module-level PREDICATE_BINDINGS annotation is evaluated at runtime by
 # beartype claw instrumentation, so t/p must resolve at runtime.
 from flext_core._typings.base import FlextTypingBase as t
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
+
+from .enforcement_part_06 import EXTENDED_PREDICATE_BINDINGS
 
 
 def _bindings() -> t.MappingKV[

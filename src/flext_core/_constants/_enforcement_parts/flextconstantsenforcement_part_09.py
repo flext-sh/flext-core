@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-
 NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT: dict[str, tuple[str, str]] = {
     "no_core_tests_namespace": (
         'deprecated namespace "{symbol}" in {file}:{line}',

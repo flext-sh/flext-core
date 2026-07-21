@@ -5,12 +5,9 @@ from __future__ import annotations
 from typing import Annotated, ClassVar, override
 
 from flext_tests import r, u
-
+from tests import c, p
 from tests._utilities.railway_services import TestsFlextUtilitiesRailwayServicesMixin
 from tests.base import s
-from tests import c
-
-from tests import p
 
 
 class TestsFlextUtilitiesServicesMixin:

@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 from types import MappingProxyType
-from typing import Final, TYPE_CHECKING
-
+from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
     from collections.abc import Mapping

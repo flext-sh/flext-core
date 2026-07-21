@@ -8,11 +8,11 @@ No private attribute, internal collaborator or implementation detail is inspecte
 
 from __future__ import annotations
 
-import pytest
-from flext_tests import tm
-
 from collections.abc import Callable
 
+import pytest
+
+from flext_tests import tm
 from tests import d, e, p, r
 
 _COMBINED_SUM = 6

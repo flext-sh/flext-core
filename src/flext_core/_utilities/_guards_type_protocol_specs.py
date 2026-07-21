@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from types import MappingProxyType
-from typing import TypeIs, TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeIs
 
 from flext_core import c, t
 from flext_core._protocols.container import FlextProtocolsContainer as pc
@@ -12,10 +12,10 @@ from flext_core._protocols.result import FlextProtocolsResult as pr
 from flext_core._protocols.service import FlextProtocolsService as psrv
 from flext_core._protocols.settings import FlextProtocolsSettings as ps
 
-
 if TYPE_CHECKING:
-    from flext_core._utilities._guards_type_protocol_types import ProtocolGuardInput
     from collections.abc import Callable
+
+    from flext_core._utilities._guards_type_protocol_types import ProtocolGuardInput
 
 
 class FlextUtilitiesGuardsTypeProtocolSpecsMixin:

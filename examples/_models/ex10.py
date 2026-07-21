@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Annotated
 
 from flext_core import m, p, r, t, u
-
-from collections.abc import Callable
 
 
 class ExamplesFlextModelsEx10:

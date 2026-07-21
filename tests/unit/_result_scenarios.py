@@ -5,8 +5,7 @@ from __future__ import annotations
 from enum import StrEnum, unique
 from typing import TYPE_CHECKING, Annotated, ClassVar
 
-from tests import m
-from tests import t
+from tests import m, t
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

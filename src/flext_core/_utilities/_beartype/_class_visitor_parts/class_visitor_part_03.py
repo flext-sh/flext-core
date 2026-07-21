@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-
-from .class_visitor_part_01 import NO_VIOLATION
+from flext_core._protocols.enforcement import FlextProtocolsEnforcement as pe
 
 # mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
 from flext_core._typings.base import FlextTypingBase as t
-from flext_core._protocols.enforcement import FlextProtocolsEnforcement as pe
+
+from .class_visitor_part_01 import NO_VIOLATION
 from .class_visitor_part_02 import (
     FlextUtilitiesBeartypeClassVisitor as FlextUtilitiesBeartypeClassVisitorPart02,
 )

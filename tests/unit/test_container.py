@@ -12,12 +12,10 @@ from __future__ import annotations
 import inspect
 
 import pytest
-from flext_tests import tm
 
 from flext_core.container import FlextContainer
-from tests import u
-
-from tests import p
+from flext_tests import tm
+from tests import p, u
 
 
 class TestsFlextCoreContainer:

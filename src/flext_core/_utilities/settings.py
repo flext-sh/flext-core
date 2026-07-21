@@ -14,6 +14,9 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+from flext_core import r
 
 # AGENT-COORDINATION (2026-07-11, ai-hub-mkzg): p/t MUST stay a RUNTIME import.
 # beartype.claw evaluates annotations at runtime; moving FlextProtocols/FlextTypes
@@ -21,8 +24,6 @@ from pathlib import Path
 # Do NOT "optimize" this into a TYPE_CHECKING block. Same precedent: model_options.py,
 # model_runtime.py. Contact owner of bead ai-hub-mkzg before touching this line.
 from flext_core._constants.environment import FlextConstantsEnvironment
-from flext_core import r
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from flext_core import FlextProtocols as p, FlextTypes as t

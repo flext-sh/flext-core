@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from examples import m
-from examples import p, t
-from examples import u
+from examples import m, p, t, u
 from flext_core import h, r
 
 

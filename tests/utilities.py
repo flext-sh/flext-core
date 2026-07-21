@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from flext_tests import u as tests_u
-
 from tests._utilities.case_factories import TestsFlextUtilitiesCaseFactoriesMixin
 from tests._utilities.contracts import TestsFlextUtilitiesContractsMixin
 from tests._utilities.dispatch import TestsFlextUtilitiesDispatchMixin

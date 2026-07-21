@@ -7,12 +7,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+from typing import TYPE_CHECKING
 
 from flext_core._constants.base import FlextConstantsBase as cb
 from flext_core._constants.infrastructure import FlextConstantsInfrastructure as ci
 from flext_core._decorators._base import FlextDecoratorsBase
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from flext_core._typings.base import FlextTypingBase as tb

@@ -11,11 +11,9 @@ from __future__ import annotations
 from typing import Annotated
 
 import pytest
-from flext_tests import r, tm
 
-from tests import c
-from tests import m
-from tests import p, t
+from flext_tests import r, tm
+from tests import c, m, p, t
 
 
 class TestsFlextCoreResultExceptionFailures:

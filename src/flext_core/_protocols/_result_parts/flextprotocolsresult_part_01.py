@@ -13,11 +13,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, overload, runtime_checkable
 
-
 if TYPE_CHECKING:
     # mro-wkii.17.26 (codex): result Protocol annotations are postponed and
     # importing the public t facade here re-enters its own composition chain.
     from collections.abc import Callable
+
     from flext_core import FlextTypes as t
 
 

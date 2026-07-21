@@ -17,10 +17,7 @@ from __future__ import annotations
 
 from typing import Annotated, override
 
-from examples import c
-from examples import m
-from examples import p, t
-from examples import u
+from examples import c, m, p, t, u
 from flext_core import d, r, s
 
 

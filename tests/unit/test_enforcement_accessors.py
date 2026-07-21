@@ -11,9 +11,8 @@ from __future__ import annotations
 
 import pytest
 
-from tests import m
+from tests import m, u
 from tests.unit._enforcement_support import make_class
-from tests import u
 
 _INHERITANCE_FRAGMENT = "must inherit FlextSettings"
 _ACCESSOR_FRAGMENT = "accessor method"

@@ -8,13 +8,10 @@ violation types — never private attributes or internal collaborators.
 
 from __future__ import annotations
 
-
 import pytest
+
 from flext_tests import e
-
-from tests import c
-
-from tests import p
+from tests import c, p
 
 
 class TestsFlextCoreExceptions:

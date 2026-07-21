@@ -8,21 +8,22 @@ from __future__ import annotations
 
 import warnings
 from functools import wraps
-from typing import ClassVar, TypeIs, TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar, TypeIs
 
 from flext_core import FlextContainer, FlextContext, FlextUtilitiesLogging
 from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._protocols.container import FlextProtocolsContainer as pc
+
+# mro-cqxy (ADR-011): runtime import — used in a runtime-evaluated annotation
+from flext_core._protocols.context import FlextProtocolsContext as pcx
 from flext_core._protocols.logging import FlextProtocolsLogging as pl
 from flext_core._typings.base import FlextTypingBase as tb
 from flext_core._typings.services import FlextTypesServices as ts
 
-# mro-cqxy (ADR-011): runtime import — used in a runtime-evaluated annotation
-from flext_core._protocols.context import FlextProtocolsContext as pcx
-from flext_core._protocols.container import FlextProtocolsContainer as pc
-
 if TYPE_CHECKING:
-    from flext_core._protocols.base import FlextProtocolsBase as pb
     from collections.abc import Callable
+
+    from flext_core._protocols.base import FlextProtocolsBase as pb
 
 
 class FlextDecoratorsBase:

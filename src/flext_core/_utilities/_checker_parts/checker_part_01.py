@@ -10,14 +10,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TypeIs, TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeIs
 
 from flext_core._typings.services import FlextTypesServices as ts
 
-
 if TYPE_CHECKING:
-    from flext_core._typings.base import FlextTypingBase as tb
     from collections.abc import Callable
+
+    from flext_core._typings.base import FlextTypingBase as tb
 
 
 class FlextUtilitiesChecker:

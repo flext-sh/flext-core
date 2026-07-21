@@ -8,9 +8,7 @@ ingress model (nested PEP 621 ``project`` + ``[tool.flext]`` contract).
 from __future__ import annotations
 
 from flext_tests import tm
-
-from tests import m
-from tests import u
+from tests import m, u
 
 
 class TestsFlextCoreUtilitiesProjectMetadata:

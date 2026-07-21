@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from examples import c
-from examples import m
+from examples import c, m, p, t, u
 from examples.shared import ExamplesFlextShared
-from examples import u
 from flext_core import h, r
 
 from .ex_12_registry_support import (
@@ -13,8 +11,6 @@ from .ex_12_registry_support import (
     as_registry_handler,
     discovered_handler,
 )
-
-from examples import p, t
 
 
 class Ex12RegistryFlow(ExamplesFlextShared):

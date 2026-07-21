@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from types import MappingProxyType
-from typing import Annotated, Self, TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated, Self
 
 from pydantic import NonNegativeInt
 

@@ -11,13 +11,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Protocol, Self, overload, runtime_checkable, TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol, Self, overload, runtime_checkable
 
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._protocols._result_parts.flextprotocolsresult_part_02 import (
     FlextProtocolsResult as FlextProtocolsResultPart02,
 )
-
 
 if TYPE_CHECKING:
     from collections.abc import Callable

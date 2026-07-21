@@ -8,6 +8,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from .errors import ExamplesFlextModelsErrors as ExamplesFlextModelsErrors
+from .ex00 import ExamplesFlextModelsEx00 as ExamplesFlextModelsEx00
 from .ex01 import ExamplesFlextModelsEx01 as ExamplesFlextModelsEx01
 from .ex02 import ExamplesFlextModelsEx02 as ExamplesFlextModelsEx02
 from .ex03 import ExamplesFlextModelsEx03 as ExamplesFlextModelsEx03
@@ -24,7 +25,6 @@ from .shared import (
     ExamplesFlextSharedHandle as ExamplesFlextSharedHandle,
     ExamplesFlextSharedPerson as ExamplesFlextSharedPerson,
 )
-from .ex00 import ExamplesFlextModelsEx00 as ExamplesFlextModelsEx00
 
 __all__: tuple[str, ...] = (
     "ExamplesFlextModelsErrors",

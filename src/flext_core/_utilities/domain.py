@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from typing import TYPE_CHECKING
 
 from flext_core import c, t
 from flext_core._models.base import FlextModelsBase as m
@@ -18,8 +19,6 @@ from flext_core._models.containers import FlextModelsContainers as mc
 from flext_core._models.domain_event import FlextModelsDomainEvent as mde
 
 from .guards import FlextUtilitiesGuards as u
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from flext_core._protocols.base import FlextProtocolsBase as pb

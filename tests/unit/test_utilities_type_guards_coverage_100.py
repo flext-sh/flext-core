@@ -6,12 +6,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import cast
 
-from flext_tests import tm
-
 from flext_core import u
-from tests import m
-
-from tests import t
+from flext_tests import tm
+from tests import m, t
 
 
 class TestsFlextCoreUtilitiesTypeGuards:

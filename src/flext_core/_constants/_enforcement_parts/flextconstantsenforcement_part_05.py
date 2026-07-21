@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 from types import MappingProxyType
-from typing import Final, TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from flext_core._constants._enforcement_data.loader import SMELL_RULES_TEXT
 
 from .flextconstantsenforcement_part_09 import NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT
-
 
 if TYPE_CHECKING:
     from collections.abc import Mapping

@@ -20,10 +20,10 @@ from pydantic import (
     ValidatorFunctionWrapHandler,
 )
 
-
 if TYPE_CHECKING:
-    from .base import FlextProtocolsBase
     from flext_core import t
+
+    from .base import FlextProtocolsBase
 
 
 type _IncEx = (

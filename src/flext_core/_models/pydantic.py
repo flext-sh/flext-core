@@ -17,7 +17,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from re import Pattern
-from typing import TypeAlias, dataclass_transform, TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeAlias, dataclass_transform
 
 from pydantic import (
     AfterValidator,

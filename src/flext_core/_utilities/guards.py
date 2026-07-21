@@ -11,17 +11,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
-from typing import ClassVar, TYPE_CHECKING
+
+# mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
+from collections.abc import Callable, Mapping, Sized
+from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import r, t
 from flext_core._models.collections import FlextModelsCollections
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
 from flext_core._utilities.guards_type_protocol import FlextUtilitiesGuardsTypeProtocol
-
-
-# mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
-from collections.abc import Callable, Mapping, Sized
 
 if TYPE_CHECKING:
     from flext_core._protocols.result import FlextProtocolsResult as p

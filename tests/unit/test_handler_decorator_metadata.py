@@ -12,15 +12,15 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import h, r, tm
 
+from flext_tests import h, r, tm
 from tests import c
 
 if TYPE_CHECKING:
     from collections.abc import Callable, MutableSequence
 
-    from tests.base import s
     from tests import p
+    from tests.base import s
 
 
 class TestsFlextHandlerDecoratorMetadata:

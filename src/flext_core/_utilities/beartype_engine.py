@@ -10,18 +10,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+# mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
+from collections.abc import Callable
 from types import MappingProxyType
 from typing import ClassVar, override
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._protocols.base import FlextProtocolsBase as p
 
 # mro-qtjb (flext-core): t at runtime — module-level _NO_VIOLATION annotation
 # is evaluated at runtime by beartype claw instrumentation.
 from flext_core._typings.base import FlextTypingBase as t
 
-# mro-cqxy (ADR-011): runtime import for runtime-evaluated annotation
-from collections.abc import Callable
-from flext_core._protocols.base import FlextProtocolsBase as p
 from ._beartype._helpers_parts.helpers_part_03 import FlextUtilitiesBeartypeHelpers
 from ._beartype.attr_visitor import FlextUtilitiesBeartypeAttrVisitor
 from ._beartype.class_visitor import FlextUtilitiesBeartypeClassVisitor
