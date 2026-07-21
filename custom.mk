@@ -1,49 +1,20 @@
-FLEXT_MODERNIZE_FLAGS ?= --skip-check
-FLEXT_INFRA_PYTHON = PYTHONPATH=$(CURDIR)/src $(POETRY) run python
-# -----------------------------------------------------------------------------
-# Project-specific convenience targets (on top of standardized FLEXT verbs)
-# -----------------------------------------------------------------------------
-.PHONY: diagnose doctor deps-update deps-show validate-typings precommit quick-check ci ci-fast activate tooling-sync setup-project
-diagnose: ## Show local runtime and Poetry diagnostics
+# Private project handlers for flext-core.
+# Strict extension: only `_custom_<verb>_<what>` handlers and `(pre|post)-<verb>[-<what>]`
+# hooks. Public targets, toolchain vars, .DEFAULT_GOAL, includes, and help are
+# invalid (base.mk owns those). Each handler maps to `make <verb> WHAT=<what>`.
+# NOTE: legacy activate/setup-project/tooling-sync/precommit/quick-check/ci/
+# ci-fast/doctor reimplemented standard verbs (boot/check/test) and were removed;
+# base.mk owns them. Toolchain vars and .DEFAULT_GOAL removed.
+.PHONY: _custom_run_diagnose _custom_run_deps-update _custom_run_deps-show _custom_run_validate-typings
+_custom_run_diagnose: ## make run WHAT=diagnose — local runtime and Poetry diagnostics
 	$(Q)echo "Project: $(PROJECT_NAME)"
 	$(Q)echo "Python: $$($(POETRY) run python --version)"
 	$(Q)echo "Poetry: $$($(POETRY) --version)"
 	$(Q)$(POETRY) env info
-activate: ## Pre-activate environment for flext-infra automations
-	$(Q)$(POETRY) install --all-extras --all-groups
-	$(Q)if git rev-parse --git-dir >/dev/null 2>&1; then \
-		$(POETRY) run pre-commit install; \
-	else \
-		echo "INFO: skipping pre-commit install (no git repository)"; \
-	fi
-tooling-sync: ## Regenerate pyproject/base.mk through flext-infra generators
-	$(Q)$(FLEXT_INFRA_PYTHON) -m flext_infra deps modernize $(FLEXT_MODERNIZE_FLAGS)
-	$(Q)$(FLEXT_INFRA_PYTHON) -m flext_infra basemk generate --project-name $(PROJECT_NAME) --output base.mk
-setup-project: ## Recommended setup: activate env + generate files + internal sync
-	$(Q)$(MAKE) activate
-	$(Q)$(MAKE) tooling-sync
-	$(Q)$(FLEXT_INFRA_PYTHON) -m flext_infra deps internal-sync --workspace "$(CURDIR)"
-	$(Q)$(POETRY) lock
-	$(Q)$(POETRY) install --all-extras --all-groups
-precommit: ## Run all pre-commit hooks
-	$(Q)$(POETRY) run pre-commit run --all-files
-quick-check: ## Fast gates for local development loop
-	$(Q)$(MAKE) check CHECK_GATES=lint,format,pyrefly,mypy,pyright
-ci-fast: ## CI-style check without docs generation
-	$(Q)$(MAKE) check
-ci: ## Full CI-style check including docs
-	$(Q)$(MAKE) check
-	$(Q)$(MAKE) docs DOCS_PHASE=all
-# Extended health check for contributors
-doctor: ## Project health check
-	$(Q)$(MAKE) diagnose
-	$(Q)$(MAKE) validate
-	$(Q)$(MAKE) test
-deps-update: ## Refresh lockfile and dependency graph
+_custom_run_deps-update: ## make run WHAT=deps-update — refresh lockfile
 	$(Q)$(POETRY) update
 	$(Q)$(POETRY) lock
-deps-show: ## Show dependency tree
+_custom_run_deps-show: ## make run WHAT=deps-show — show dependency tree
 	$(Q)$(POETRY) show --tree
-validate-typings: ## Validate TypeAlias syntax rules in typings.py
+_custom_run_validate-typings: ## make run WHAT=validate-typings — validate TypeAlias rules
 	$(Q)bash scripts/validate_typings.sh
-.DEFAULT_GOAL := help
