@@ -318,7 +318,6 @@ local_partial_types = true
 mypy_path = [".", "src"]
 namespace_packages = true
 no_implicit_reexport = true
-overrides = []
 plugins = ["pydantic.mypy", "returns.contrib.mypy.returns_plugin"]
 python_version = "3.13"
 strict_equality = true
@@ -326,6 +325,14 @@ warn_redundant_casts = true
 warn_return_any = true
 warn_unreachable = true
 warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+disable_error_code = ["arg-type"]
+module = ["*.cli"]
+
+[[tool.mypy.overrides]]
+disable_error_code = ["unreachable"]
+module = ["dcdoc._utilities._charts._matplotlib_renderer._renders_spec"]
 
 # [MANAGED] pydantic-mypy
 [tool.pydantic-mypy]
@@ -642,7 +649,7 @@ exclude = [
 ]
 fix = false
 line-length = 88
-namespace-packages = ["tests"]
+namespace-packages = ["examples", "scripts", "tests"]
 preview = true
 respect-gitignore = true
 show-fixes = true
@@ -739,62 +746,6 @@ split-on-trailing-comma = false
 [tool.ruff.lint.per-file-ignores]
 "**/.vulture_whitelist.py" = ["ALL"]
 "**/*_pb2*.py" = ["ALL"]
-"**/*dispatcher*" = []
-"**/*docs*" = [
-  "implicit-namespace-package",
-  "print",
-  "subprocess-without-shell-equals-true",
-  "suspicious-subprocess-import",
-]
-"**/*exceptions*" = [
-  "builtin-variable-shadowing",
-  "hardcoded-password-string",
-  "private-member-access",
-]
-"**/*handlers*" = []
-"**/*instrumentation*" = [
-  "boolean-type-hint-positional-argument",
-  "complex-structure",
-  "private-member-access",
-]
-"**/*loggings*" = ["global-statement", "too-many-public-methods"]
-"**/*middleware*" = [
-  "any-type",
-  "boolean-default-value-positional-argument",
-  "boolean-type-hint-positional-argument",
-  "hardcoded-password-default",
-  "unnecessary-dunder-call",
-]
-"**/*models*" = [
-  "any-type",
-  "boolean-type-hint-positional-argument",
-  "global-statement",
-  "import-private-name",
-  "property-with-parameters",
-]
-"**/*oracle*" = ["call-datetime-strptime-without-zone"]
-"**/*result*" = ["import-private-name", "private-member-access"]
-"**/*runtime*" = []
-"**/*service*" = [
-  "mixed-case-variable-in-class-scope",
-  "private-member-access",
-  "subprocess-without-shell-equals-true",
-  "suspicious-subprocess-import",
-  "unnecessary-dunder-call",
-]
-"**/*subprocess_utils*" = [
-  "subprocess-without-shell-equals-true",
-  "suspicious-subprocess-import",
-]
-"**/*typings*" = ["any-type"]
-"**/*utilities*" = [
-  "complex-structure",
-  "module-import-not-at-top-of-file",
-  "subprocess-run-without-check",
-  "subprocess-without-shell-equals-true",
-  "suspicious-subprocess-import",
-  "unnecessary-dunder-call",
-]
 "**/__init__.py" = [
   "any-type",
   "builtin-import-shadowing",
@@ -809,89 +760,10 @@ split-on-trailing-comma = false
   "undocumented-public-init",
   "unused-import",
 ]
-"**/_config.py" = ["invalid-function-name"]
-"**/_constants/*.py" = ["hardcoded-password-string"]
-"**/_protocols/*.py" = ["invalid-function-name"]
-"**/_settings.py" = ["invalid-function-name"]
-"**/_utilities/parser.py" = [
-  "boolean-type-hint-positional-argument",
-  "unused-static-method-argument",
-]
-"**/alert_manager*.py" = ["suspicious-url-open-usage"]
-"**/constants.py" = ["hardcoded-password-string"]
-"**/container.py" = ["any-type", "private-member-access"]
-"**/context.py" = []
-"**/external_command*.py" = [
-  "subprocess-without-shell-equals-true",
-  "suspicious-subprocess-import",
-]
-"**/file_tools.py" = ["undocumented-public-method"]
-"**/flext_cli/_protocols/framework.py" = ["builtin-argument-shadowing"]
-"**/flext_cli/_utilities/formatters.py" = ["banned-api"]
-"**/flext_cli/_utilities/framework.py" = [
-  "banned-api",
-  "builtin-argument-shadowing",
-]
-"**/managers.py" = ["hardcoded-password-string"]
-"**/models.py" = [
-  "exec-builtin",
-  "hardcoded-password-string",
-  "unnecessary-dunder-call",
-]
-"**/orchestrator*.py" = [
-  "subprocess-without-shell-equals-true",
-  "suspicious-subprocess-import",
-]
-"**/output.py" = ["boolean-type-hint-positional-argument"]
-"**/plugins/*.py" = [
-  "boolean-default-value-positional-argument",
-  "boolean-type-hint-positional-argument",
-  "relative-imports",
-  "start-process-with-partial-path",
-  "subprocess-without-shell-equals-true",
-  "suspicious-subprocess-import",
-]
-"**/protocol_impls/*.py" = ["private-member-access"]
-"**/providers/*.py" = [
-  "hardcoded-password-default",
-  "hardcoded-password-func-arg",
-]
-"**/services/prompts.py" = [
-  "undocumented-public-init",
+"**/tests/**" = [
+  "assert",
+  "undocumented-public-function",
   "undocumented-public-method",
-]
-"**/settings.py" = [
-  "any-type",
-  "boolean-type-hint-positional-argument",
-  "private-member-access",
-]
-"**/singer/*.py" = [
-  "subprocess-without-shell-equals-true",
-  "suspicious-subprocess-import",
-]
-"**/tools/*.py" = [
-  "boolean-default-value-positional-argument",
-  "boolean-type-hint-positional-argument",
-  "invalid-function-name",
-  "print",
-  "start-process-with-partial-path",
-  "subprocess-without-shell-equals-true",
-  "suspicious-subprocess-import",
-]
-"**/tools/**/*.py" = [
-  "boolean-default-value-positional-argument",
-  "boolean-type-hint-positional-argument",
-  "invalid-function-name",
-  "print",
-  "start-process-with-partial-path",
-  "subprocess-without-shell-equals-true",
-  "suspicious-subprocess-import",
-]
-"**/typings.py" = ["none-not-at-end-of-union"]
-"**/workspace/*.py" = [
-  "start-process-with-partial-path",
-  "subprocess-without-shell-equals-true",
-  "suspicious-subprocess-import",
 ]
 
 # [MANAGED] tomlsort
