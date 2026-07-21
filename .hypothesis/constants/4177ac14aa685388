@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/.claude/worktrees/mro-wkii-17-26-refactor/flext-core/src/flext_core/_protocols/enforcement.py
+# hypothesis_version: 6.156.6
+
+['alias_rebind', 'attr_shape', 'beartype', 'class_placement', 'classvar_constant', 'code_smell', 'compatibility_alias', 'deprecated_syntax', 'duplicate_symbol', 'field_shape', 'flext_infra_detector', 'gate', 'import_blacklist', 'library_import', 'loc_cap', 'loose_symbol', 'manual', 'method_shape', 'model_config', 'mro_shape', 'protocol_tree', 'rope', 'ruff', 'runtime_warning', 'skill_pointer', 'transformer', 'wrapper']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-api/src/flext_api/settings.py
+# hypothesis_version: 6.151.12
+
+['FLEXT_API_', 'FlextApiSettings', 'api', 'ignore']

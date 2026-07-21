@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_loggings_parts/flextlogger_part_04.py
+# hypothesis_version: 6.152.4
+
+[0.0, 'Domain event emitted', 'Service resolved', 'exception_message', 'exception_type', 'failed', 'success']

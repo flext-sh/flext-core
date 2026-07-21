@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/pyproject.py
+# hypothesis_version: 6.152.4
+
+['build', 'docs', 'flext', 'hatch', 'members', 'name', 'package_name', 'packages', 'project', 'targets', 'uv', 'wheel', 'workspace']

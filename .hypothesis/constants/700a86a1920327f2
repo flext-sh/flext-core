@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_lazy_parts/flextlazy_part_02.py
+# hypothesis_version: 6.152.4
+
+['.', 'FlextLazy', 'FlextLazyAttribute', '__all__', '__dir__', '__getattr__', '__spec__', '_initializing', '_lazy', '_lazy_imports', '_module_globals', '_module_name', '_name']

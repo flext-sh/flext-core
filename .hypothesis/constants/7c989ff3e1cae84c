@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/_rope_method_order.py
+# hypothesis_version: 6.156.6
+
+['*', '_', '__', 'class', 'class_attributes', 'classmethod', 'private', 'protected', 'public', 'static', 'staticmethod']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/servers/_base/mixins.py
+# hypothesis_version: 6.151.12
+
+[100, 'Constants', 'PRIORITY', '_parent_quirk']

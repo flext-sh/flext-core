@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/settings.py
+# hypothesis_version: 6.151.10
+
+['API key', 'Application name', 'Application version', 'Cache TTL', 'Database URL', 'Database pool size', 'Default timeout', 'Dispatcher timeout', 'Enable caching', 'Enable debug mode', 'Enable trace mode', 'Executor workers', 'FlextSettings', 'Log level', 'Max batch size', 'Max retry attempts', 'Max workers', 'Rate limit window', 'Retry delay', '__name__', '__pydantic_private__', '_di_provider', 'after', 'before', 'core', 'env_prefix', 'log_level', 'model_config', 'root', 'settings']

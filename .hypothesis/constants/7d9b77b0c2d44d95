@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/gates/mypy.py
+# hypothesis_version: 6.151.10
+
+['--config-file', '--output', '-m', '?', 'FlextInfraMypyGate', 'MYPYPATH', 'Mypy', '[tool.mypy]', 'code', 'column', 'error', 'file', 'generated', 'line', 'message', 'note', 'severity', 'warning']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_models/filesystem.py
+# hypothesis_version: 6.156.6
+
+['Assert path is file.', 'Auto-detect format.', 'CSV column headers.', 'CSV delimiter.', 'CSV has headers.', 'CSV headers.', 'Comparison mode.', 'Compute SHA256 hash.', 'File encoding.', 'File size in bytes.', 'Format override.', 'Human-readable size.', 'Path to file.', 'Target directory.', 'before', 'file1', 'file2', 'name', 'path', 'unknown']

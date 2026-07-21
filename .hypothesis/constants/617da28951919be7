@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/transformers/dict_to_mapping.py
+# hypothesis_version: 6.151.9
+
+['Mapping', '__future__', 'abc', 'clear', 'collections', 'collections.abc', 'copy', 'dict', 'overload', 'pop', 'popitem', 'setdefault', 'update']

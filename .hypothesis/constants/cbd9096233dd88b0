@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/_github_pr_single.py
+# hypothesis_version: 6.152.4
+
+['--action', '--auto', '--base', '--checks-strict', '--delete-branch', '--draft', '--merge-method', '--release-on-merge', '--repo-root', '-C', '-m', '0', '1', 'PR_BODY', 'PR_HEAD', 'PR_NUMBER', 'PR_TITLE', 'body', 'head', 'number', 'title']

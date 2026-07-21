@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/github_pr.py
+# hypothesis_version: 6.156.6
+
+['--cached', '--name-only', '--porcelain', '-A', '-m', '-u', 'add', 'changes check failed', 'checkout', 'commit', 'diff', 'git add failed', 'git commit failed', 'push', 'status']

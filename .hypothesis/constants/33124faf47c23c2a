@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/runtime.py
+# hypothesis_version: 6.151.10
+
+['.', 'FlextRuntime', 'config', 'factories', 'factory_cache', 'p.Metadata', 'resources', 'services', 'span_id', 'timestamp', 'trace_id', 'type[BaseModel]', 'wire_classes', 'wire_modules', 'wire_packages']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/guards_type_protocol.py
+# hypothesis_version: 6.152.1
+
+['__dict__', '__origin__', 'bind', 'command_bus', 'container', 'dict_non_empty', 'dispatch', 'handler', 'info', 'list_non_empty', 'logger', 'middleware', 'publish', 'register_handler', 'result', 'service', 'string_non_empty']

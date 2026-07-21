@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_models/codegen_conform.py
+# hypothesis_version: 6.152.4
+
+[2025, '..', 'APPLY', 'Author display name', 'Author email', 'Blocking explanation', 'Canonical owner', 'Catalog key', 'Copyright year', 'Exact Python version', 'Exact uv version', 'Exclusion rationale', 'GitHub organization', 'Import package name', 'Manifest version', 'Project description', 'Project version', 'Provider branch', 'Provider key', 'Public Make verb', 'Required Git branch', 'SPDX license id', 'WHAT', 'Workspace name', 'Y', 'after', 'branch', 'manifest', 'path', 'url']

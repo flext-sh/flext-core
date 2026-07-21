@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/rope_helpers.py
+# hypothesis_version: 6.156.6
+
+['(', ')', '@', '[', ']', 'class', 'class ', 'def ', 'function', 'p.Infra.RopePostHook', 'pass', '{', '}']

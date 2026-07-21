@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_protocols/__init__.py
+# hypothesis_version: 6.151.10
+
+['base', 'domain']

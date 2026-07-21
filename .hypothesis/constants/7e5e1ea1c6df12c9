@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/codegen/_utilities_codegen_constant_transformer.py
+# hypothesis_version: 6.151.10
+
+[' import ', '*.py', '.', 'Constants', '_', '__future__', 'added c import', 'c', 'constants.py', 'd', 'e', 'from ', 'h', 'm', 'p', 'r', 'removed empty class', 's', 't', 'u', 'x']

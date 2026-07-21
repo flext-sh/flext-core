@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/constants.py
+# hypothesis_version: 6.151.9
+
+['FlextConstants', 'PROJECT_KIND_LIBRARY', 'PROJECT_KIND_SERVICE', 'application', 'c', 'library', 'service']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/context.py
+# hypothesis_version: 6.151.12
+
+['FlextContext', 'correlation', 'custom_fields', 'export payload', 'key', 'metadata', 'scope payload', 'service', 'statistics', 'value']

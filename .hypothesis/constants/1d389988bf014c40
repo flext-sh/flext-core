@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_utilities/_matchers/_result.py
+# hypothesis_version: 6.156.6
+
+['.', 'empty', 'ends', 'eq', 'gt', 'gte', 'has', 'is_', 'lacks', 'lt', 'lte', 'match', 'ne', 'none', 'starts']

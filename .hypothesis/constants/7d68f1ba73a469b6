@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_utilities/workspace_cleanup_paths.py
+# hypothesis_version: 6.156.6
+
+['--git-common-dir', '--git-dir', '--show-toplevel', '.', '..', '.beads', '.env', '.git', '.gnupg', '.hg', '.ssh', '.svn', '.venv', 'config', 'credentials', 'git dir discovery', 'git root discovery', 'rev-parse', 'secrets', 'settings', 'venv']

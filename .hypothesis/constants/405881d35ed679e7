@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/typings.py
+# hypothesis_version: 6.151.9
+
+['FlextLdifTypes', 'T', 'TAttribute', 'TEntry', 'TSchema', 't']

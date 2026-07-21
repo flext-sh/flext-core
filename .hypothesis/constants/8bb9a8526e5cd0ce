@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/servers/_rfc/schema.py
+# hypothesis_version: 6.151.9
+
+[')', 'MAY', 'MUST', 'STRUCTURAL', 'X-ORIGIN', '_parent_quirk', '_schema_service', 'attr_definition', 'attr_model', 'attribute', 'attribute_case', 'desc', 'equality', 'kind', 'length', 'may', 'metadata_extensions', 'must', 'name', 'no_user_modification', 'objectClass', 'objectClass SUP', 'objectclass', 'oc_definition', 'oc_model', 'oid', 'operation', 'ordering', 'parent_quirk', 'parse', 'rfc', 'single_value', 'substr', 'sup', 'syntax', 'syntax_validation', 'usage']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/services/_cli_parts/flextclicli_part_02.py
+# hypothesis_version: 6.152.4
+
+['Cli', 'FlextCliCli', 'debug', 'log_level', 'quiet', 'return', 'trace', 'verbose']

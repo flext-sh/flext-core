@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_fixtures/enforcement.py
+# hypothesis_version: 6.152.4
+
+[' | ', ',', '-', '--flext-enforce', '--no-flext-enforce', 'EnforcementCollector', 'EnforcementItem', 'FlextTestsValidator', '_', 'category', 'default', 'description', 'detail', 'error', 'exists', 'failure', 'file', 'file_path', 'filterwarnings', 'flext-', 'flext-enforce', 'flext-enforcement', 'flext_infra_detector', 'fspath', 'line', 'line_number', 'match_missing', 'method', 'path', 'project', 'project_name', 'projects', 'pyproject.toml', 'pytest_addoption', 'pytest_configure', 'pytest_sessionstart', 'rule_id', 'rule_ids', 'runtime_warning', 'store', 'store_true', 'suggestion', 'validate_config', 'value', 'violation_field', 'violations', 'workerinput', 'workspace']

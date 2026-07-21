@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/_models/base.py
+# hypothesis_version: 6.151.9
+
+['AclElement', 'FlextLdifModelsBase', 'FlextLdifModelsBases', 'FrozenLdifModel', 'SchemaElement', 'extensions', 'forbid', 'ignore', 'metadata', 'quirk_type', 'rfc']

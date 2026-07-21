@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_constants/pptx.py
+# hypothesis_version: 6.156.6
+
+['[Content_Types].xml', 'docProps/core.xml', 'ppt/presentation.xml', 'pptx_archive_invalid', 'pptx_plan_invalid', 'pptx_render_failed']

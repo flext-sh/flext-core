@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/logging_context.py
+# hypothesis_version: 6.152.1
+
+['.', '.git', '.venv', '<module>', '__class__', 'bind global context', 'clear global context', 'co_qualname', 'deep', 'flext_core', 'model_dump', 'poetry.lock', 'pyproject.toml', 'replace', 'self']

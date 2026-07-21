@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/config.py
+# hypothesis_version: 6.152.4
+
+['.json', '.schema.json', '.toml', '.yaml', 'config', 'schemas', 'settings.yaml', 'templates', 'utf-8']

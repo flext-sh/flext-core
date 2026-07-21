@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/docs/builder.py
+# hypothesis_version: 6.151.9
+
+['# Docs Build Report', '--strict', '-d', '-f', 'FlextInfraDocBuilder', 'SKIP', 'build', 'build failed', 'build succeeded', 'build-report.md', 'build-summary.json', 'mkdocs', 'mkdocs build failed', 'mkdocs.yml', 'mkdocs.yml not found']

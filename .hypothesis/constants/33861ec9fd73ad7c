@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/parser.py
+# hypothesis_version: 6.151.12
+
+['FLOAT_COERCE_ERROR', 'FlextUtilitiesParser', 'INT_COERCE_ERROR', 'T', 'T | None', '__name__', 'lower', 'type', 'value']

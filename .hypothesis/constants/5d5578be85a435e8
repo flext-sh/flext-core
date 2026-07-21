@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_models/deps_tool_config_linters.py
+# hypothesis_version: 6.156.6
+
+['Maximum line length.', 'Mypy plugins list.', 'banned-api', 'boolean-settings', 'check-filenames', 'combine-as-imports', 'disable-error-codes', 'disabled-error-codes', 'force-single-line', 'ignore-words-list', 'indent-style', 'line-ending', 'line-length', 'per-file-ignores', 'quote-style', 'respect-gitignore', 'show-fixes', 'string-settings', 'target-version', 'warn-untyped-fields']

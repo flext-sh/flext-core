@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_constants/codegen_detection.py
+# hypothesis_version: 6.156.6
+
+['""', "''", '()', '-1', '0', '1', '2', '3', '4', '5', 'False', 'None', 'True', '[]', 'c', 'class\\s+(\\w+)', 'd', 'e', 'h', 'm', 'p', 'r', 's', 't', 'u', 'x', '{}']

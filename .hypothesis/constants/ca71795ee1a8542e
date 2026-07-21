@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/validate/inventory.py
+# hypothesis_version: 6.151.9
+
+['*', '.sh', 'candidates', 'generated_at', 'repo_root', 'root_makefile', 'scripts', 'total_scripts', 'unwired_scripts', 'write failed']

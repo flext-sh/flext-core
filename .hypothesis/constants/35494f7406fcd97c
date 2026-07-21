@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/_enforcement_parts/enforcement_part_03.py
+# hypothesis_version: 6.152.4
+
+['.', 'Test', 'Tests', '__module__', '__qualname__', 'tests.', 'tests.fixtures', 'tests_']

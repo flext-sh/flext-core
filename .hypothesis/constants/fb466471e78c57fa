@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/codegen/_models.py
+# hypothesis_version: 6.151.10
+
+['Absolute file path', 'Check identifier', 'Constant identifier', 'Detected violations', 'Fixed violations', 'Item identifier', 'Line number', 'MRO failure count', 'Modified file paths', 'Module file path', 'Nested class path', 'Project name', 'Total violations', 'Whether check passed']

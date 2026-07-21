@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_utilities/_make_parts/make_registry_part_03.py
+# hypothesis_version: 6.152.4
+
+['__pycache__', 'command load failed', 'header load failed', 'verb', 'verb missing', 'what', 'what missing']

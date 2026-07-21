@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/rules/import_modernizer.py
+# hypothesis_version: 6.151.9
+
+['forbidden_imports', 'hoist_to_module_top', 'lazy-import', 'module', 'symbol_mapping']

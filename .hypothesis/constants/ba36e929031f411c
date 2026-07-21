@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/validate/namespace_rules.py
+# hypothesis_version: 6.151.11
+
+['BaseModel', 'Constants', 'Final', 'Protocol', 'TypeAlias', 'Types', '_', 'lineno']

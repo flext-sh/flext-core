@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/_utilities/parser.py
+# hypothesis_version: 6.151.9
+
+['#', ':', 'DESC', 'ORDERING', 'SUBSTR', '\\(\\s*([0-9.]+)', '_base64_attrs', '_base64_dn', '_original_dn_line', '_original_lines', 'dn', 'extensions', 'original_format', 'rfc', 'syntax_oid_valid', 'true']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_fixtures/_enforcement_parts/build.py
+# hypothesis_version: 6.156.6
+
+['build_items', 'flext-enforcement', 'flext_infra_detector']

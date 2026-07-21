@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_models/census.py
+# hypothesis_version: 6.151.11
+
+[0.0, 'Detected violations', 'Fixes applied count', 'Line number', 'Object identifier', 'Object kind', 'Original file path', 'Per-project reports', 'Severity level', 'Total unused objects', 'warning']

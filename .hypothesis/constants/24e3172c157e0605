@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/_detectors/namespace_source_detector.py
+# hypothesis_version: 6.151.9
+
+['*', '.', '._', '__init__.py', 'error', 'namespace-source-map']

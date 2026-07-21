@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_utilities/_docx/_reader.py
+# hypothesis_version: 6.156.6
+
+['author', 'category', 'center', 'comments', 'distribute', 'double', 'doubleAccounting', 'justify', 'keywords', 'left', 'right', 'single', 'singleAccounting', 'subject', 'title']

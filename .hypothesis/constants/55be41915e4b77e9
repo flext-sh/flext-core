@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_models/refactor_namespace_enforcer.py
+# hypothesis_version: 6.152.4
+
+['Alias involved', 'Alias name', 'Base class name', 'Class name', 'Error type', 'Facade class name', 'Facade family', 'Facade family name', 'Facade file path', 'Files in cycle', 'Files scanned', 'Fix suggestion', 'Import cycle chain', 'Missing base class', 'Object kind', 'Parse stage', 'Project root path', 'Protocol class name', 'Runtime alias letter', 'Symbol count', 'Symbol name', 'Target name', 'Test function name', 'Total cyclic imports', 'Total files scanned', 'Total loose objects', 'Total parse failures', 'Violation kind', 'Workspace root path', 'manual', 'total_', 'total_files_scanned']

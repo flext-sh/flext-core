@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/codegen/transforms.py
+# hypothesis_version: 6.151.9
+
+['\n]', '*', '.', 'Final', 'FlextTests', 'ParamSpec', 'TypeAlias', 'TypeVar', 'TypeVarTuple', '__', '__all__', '__all__ = [\n', '__all__ = []', 'flext']

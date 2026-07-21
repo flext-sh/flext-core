@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/engine.py
+# hypothesis_version: 6.151.10
+
+['+', ',', '--analysis-output', '--analyze-violations', '--config', '--dry-run', '--file', '--files', '--impact-map-output', '--list-rules', '--pattern', '--project', '--rules', '--show-diff', '--workspace', '-c', '-d', '-f', '-l', '-n', '-p', '-r', '-w', 'alias', 'bypass', 'class', 'config.yml', 'container-invariance', 'deprecated', 'description', 'dict-to-mapping', 'ensure-future', 'future-annotations', 'import', 'json', 'legacy', 'method', 'migrate-to-class-mro', 'migrate_to_class_mro', 'modernize', 'mro', 'propagate', 'redundant-cast', 'rename', 'reorder', 'rollback failed', 'running', 'severity', 'signature', 'store_true', 'symbol-rename', 'transformed', 'wrapper']

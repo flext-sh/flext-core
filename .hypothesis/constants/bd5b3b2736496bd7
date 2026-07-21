@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/examples/ex_02_flext_settings_helpers.py
+# hypothesis_version: 6.156.6
+
+['America/Sao_Paulo', 'ERROR', 'field.async_logging', 'field.debug', 'field.log_level', 'field.timezone', 'field.trace']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/examples/_shared_parts/__init__.py
+# hypothesis_version: 6.152.4
+
+['.shared_part_01', '.shared_part_02', 'ExamplesFlextShared']

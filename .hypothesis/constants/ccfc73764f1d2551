@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_constants/workspace.py
+# hypothesis_version: 6.151.12
+
+['!scripts/', '!scripts/**', '.reports/', '.venv/', '/scripts/', '__pycache__/', 'attached', 'base.mk', 'member', 'scripts/', 'standalone', 'workspace']

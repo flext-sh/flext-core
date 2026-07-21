@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/enforcement.py
+# hypothesis_version: 6.152.1
+
+['$X = $Y', '3-5-integrity', 'ENFORCE-022', 'ENFORCE-040', 'ENFORCE-066', 'PGH003', '[', 'flext-quality-gates', 'flext-strict-typing', 'proto_inner_kind']

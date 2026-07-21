@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/_utilities/dn.py
+# hypothesis_version: 6.151.9
+
+[128, ' \t\r\n,+"\\<>;=', '#', '+', ',', '=', 'DN cannot be None', 'DN string is empty', 'Entry DN is empty', 'FlextLdifUtilitiesDN', 'Normalization failed', 'Skipped', 'Validation failed', '[\\t\\r\\n\\x0b\\x0c]', '\\', '\\1', '\\s+,', '\\s+=', 'attributes', 'basedn_transform', 'cn=config', 'distinguishedname', 'dn', 'had_escape_sequences', 'had_extra_spaces', 'had_leading_spaces', 'had_tab_chars', 'had_trailing_spaces', 'had_utf8_chars', 'lower', 'manager', 'member', 'memberof', 'metadata', 'modified', 'original', 'owner', 'seealso', 'skip', 'uniquemember', 'upper', 'validation_errors', 'validation_status', 'validation_warnings', 'was_base64_encoded']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/validate/cli.py
+# hypothesis_version: 6.151.10
+
+['Scan failed', 'Validate a skill', 'basemk-validate', 'error_traces', 'failed_cases', 'inventory', 'pytest-diag', 'scan', 'skill-validate', 'skip_cases', 'slow_entries', 'stub-validate', 'unknown error', 'violation_count', 'warning_lines']

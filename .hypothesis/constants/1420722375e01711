@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/cli.py
+# hypothesis_version: 6.151.9
+
+[',', ', ', '-', '--apply', '--check', '--diff', '--dry-run', '--format', '--project', '--projects', '--workspace', '=', 'Apply changes', 'Plan/Scan only', 'Run in check mode', '_unknown_args', 'apply', 'before', 'check', 'class_to_analyze', 'command', 'diff', 'discovery failed', 'dry-run', 'include_apply', 'include_check', 'include_diff', 'include_format', 'include_project', 'json', 'operation failed', 'output_format', 'project', 'projects', 'store_true', 'subcommand', 'text', 'workspace']

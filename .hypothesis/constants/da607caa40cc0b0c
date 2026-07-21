@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/codegen_lazy.py
+# hypothesis_version: 6.151.11
+
+['"', "'", '*', '-', '.', '._', 'CommandContext', 'Service', 'ServiceBase', 'Types', '["\\\']([^"\\\']+)["\\\']', '^[\'"]|[\'"]$', '_', '__', '__main__.py', '__version__.py', 'api', 'base', 'joinpath', 'main', 's', 'service', 'typings']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/__main__.py
+# hypothesis_version: 6.151.9
+
+['--family', '--json-output', '--target', 'Census failed', '__main__', 'all', 'c', 'census', 'centralize-pydantic', 'constants', 'family', 'flext_infra refactor', 'imports', 'json_output', 'm', 'migrate-mro', 'mode', 'models', 'mro_failures', 'mro_files_scanned', 'namespace-enforce', 'normalize_remaining', 'p', 'protocols', 'store_true', 't', 'target', 'typings', 'u', 'ultrawork-models', 'utilities', 'workspace']

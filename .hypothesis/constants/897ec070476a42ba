@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/beartype_conf.py
+# hypothesis_version: 6.151.10
+
+['off', 'warn']

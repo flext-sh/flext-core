@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/domains.py
+# hypothesis_version: 6.151.9
+
+[30.0, 99.99, 151, 200, 300, '/api/test', '2025-01-01T00:00:00Z', '@example.com', 'Content-Type', 'FlextTestsDomains', 'GET', 'INFO', 'TEST_ERROR', 'Test', 'Test User', 'Test error message', 'USD', 'User', 'active', 'amount', 'api', 'api_request', 'application/json', 'body', 'cache_ttl', 'code', 'config', 'created_at', 'currency', 'data', 'debug', 'email', 'enable_caching', 'enabled', 'environment', 'error', 'first_name', 'headers', 'id', 'invalid-email', 'last_name', 'log_level', 'max_retries', 'memory', 'message', 'method', 'name', 'namespace', 'order', 'order_id', 'pending', 'request_id', 'service_type', 'status', 'storage_backend', 'success', 'td', 'test', 'test+tag@example.com', 'test@', 'test@.com', 'test@example..com', 'test@example.com', 'testuser', 'timeout', 'timestamp', 'type', 'updated_at', 'url', 'user', 'user_id', 'username']

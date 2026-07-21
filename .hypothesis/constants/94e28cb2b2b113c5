@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/transformers/_utilities_normalizer.py
+# hypothesis_version: 6.151.10
+
+[128, ' as ', '*.py', ',', '.', '^import\\s+([\\w., ]+)', '_', '__init__', '__init__.py', 'alias_tiers', 'enabled', 'import_normalization', 'r', 'result', 'rules', 'service', 'services', 'src', 'universal_aliases', 'wrong_source']

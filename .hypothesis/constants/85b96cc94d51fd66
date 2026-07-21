@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/enforcement.py
+# hypothesis_version: 6.152.4
+
+[200, 'CRITICAL', 'HIGH', 'LOW', 'MEDIUM', '^ENFORCE-\\d{3}$', 'after', 'alias_rebind', 'ast_grep', 'attr_shape', 'beartype', 'class_placement', 'deprecated_syntax', 'duplicate_symbol', 'field_shape', 'flext_infra_detector', 'forbid', 'import_blacklist', 'kind', 'library_import', 'loc_cap', 'loose_symbol', 'method_shape', 'minimal_ast', 'model_config', 'mro_shape', 'protocol_tree', 'ruff', 'runtime_warning', 'skill_pointer', 'wrapper']

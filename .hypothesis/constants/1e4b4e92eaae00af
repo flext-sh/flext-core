@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-auth/src/flext_auth/protocols.py
+# hypothesis_version: 6.151.12
+
+['FlextAuthProtocols', 'POST', 'p']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/codegen/_utilities_codegen_constant_visitor.py
+# hypothesis_version: 6.151.9
+
+[100, 2000, 5000, '"', "'", '*.py', '-', '-?\\d+', '.', '.mypy_cache', '<dynamic>', 'Constants', 'Final', 'Flext', 'Flext\\w*Constants\\.', 'Infra', '_', '__pycache__', '__self__', 'by_type', 'c', 'canonical', 'canonical_name', 'canonical_usages', 'constants.py', 'duplicates', 'file', 'files_modified', 'flext-core', 'flext_core', 'line', 'name', 'old_name', 'replaced', 'replaced_details', 'src', 'status', 'success', 'total', 'total_objects', 'total_occurrences', 'total_unused', 'total_used', 'type', 'unknown', 'unused', 'usage_map', 'usages', 'used', 'value']

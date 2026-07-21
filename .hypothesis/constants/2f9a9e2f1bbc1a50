@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/generators.py
+# hypothesis_version: 6.151.10
+
+['-', '_', 'batch', 'cmd', 'corr', 'correlation', 'ent', 'entity', 'evt', 'id', 'qry', 'saga', 'transaction', 'txn', 'ulid', 'uuid']

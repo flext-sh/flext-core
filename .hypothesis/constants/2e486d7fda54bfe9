@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/examples/ex_08_container_lifecycle.py
+# hypothesis_version: 6.152.4
+
+[1000, '_di_bridge', '_di_container', 'clear_all.count', 'command_bus', 'internal_and_cleanup', 'logger', 'settings']

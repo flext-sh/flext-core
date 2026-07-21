@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_exceptions/types.py
+# hypothesis_version: 6.152.4
+
+['FlextExceptionsTypes', 'bool', 'bytes', 'dict', 'float', 'int', 'list', 'set', 'str', 'tuple']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_registry_parts/flextregistry_part_03.py
+# hypothesis_version: 6.152.4
+
+['FlextRegistry', '__name__', 'handler_id', 'mode']

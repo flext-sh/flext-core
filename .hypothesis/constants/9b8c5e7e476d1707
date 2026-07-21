@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_exceptions/base.py
+# hypothesis_version: 6.151.12
+
+['FlextExceptionsBase', '_default_error_code', 'error_code', 'error_type', 'message', 'timestamp', 'value']

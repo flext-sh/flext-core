@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_models/cli_inputs_codegen.py
+# hypothesis_version: 6.151.10
+
+['.', 'Apply changes', 'Enable check mode', 'Single project name', 'Strict mode', 'Workspace root', 'text']

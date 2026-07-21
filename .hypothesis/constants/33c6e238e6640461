@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/paths.py
+# hypothesis_version: 6.151.10
+
+['.', 'FLEXT_WORKSPACE_ROOT']

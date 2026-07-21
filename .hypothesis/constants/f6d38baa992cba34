@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_models/make.py
+# hypothesis_version: 6.156.6
+
+['Canonical make verb.', 'Detailed help text.', 'Dispatcher argv.', 'Short help summary.', 'Source script path.', 'Stable probe name.']

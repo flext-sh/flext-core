@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/container.py
+# hypothesis_version: 6.152.1
+
+['Config', 'Container Config', 'Context', 'Factories', 'FlextModelsContainer', 'Resources', 'Services', 'User Overrides', 'before', 'mc', 'service']

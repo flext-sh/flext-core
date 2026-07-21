@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/deps/_extra_paths_resolution.py
+# hypothesis_version: 6.151.10
+
+[' @ ', '../', './', '/', '://', 'file:', 'file://', 'git+', 'git@', 'http://', 'https://', 'sources', 'ssh://', 'uv', 'workspace']

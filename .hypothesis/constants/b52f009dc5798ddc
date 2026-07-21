@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_models/base.py
+# hypothesis_version: 6.151.11
+
+['.4g', 'Ask for confirmation', 'Command name', 'Count occurrences', 'Default value', 'Enable debug mode', 'FlextCliModelsBase', 'Float format string', 'Help text for option', 'Hide user input', 'INFO', 'Requested type', 'Show default in help', 'Suffix after prompt', 'Value type', 'Write to stderr', 'bool', 'debug', 'decimal', 'dict', 'forbid', 'keys', 'left', 'log_format', 'log_level', 'no_color', 'output_format', 'quiet', 'simple', 'str', 'success', 'trace', 'verbose']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/services/cli_params.py
+# hypothesis_version: 6.151.10
+
+[', ', 'FlextCliCommonParams', 'debug', 'log_format', 'log_level', 'no_color', 'output_format', 'quiet', 'trace', 'verbose']

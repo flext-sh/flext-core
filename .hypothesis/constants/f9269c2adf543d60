@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/namespace_common.py
+# hypothesis_version: 6.152.4
+
+[' as ', ' import ', '#', '(', '(.)([A-Z][a-z]+)', '([a-z0-9])([A-Z])', ')', ',', '=', '\\1_\\2', 'from ']

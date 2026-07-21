@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/enforcement_emit.py
+# hypothesis_version: 6.152.4
+
+['.', 'HARD rules', 'Model', 'Test', 'Tests', '[', '__module__', '__qualname__', 'tests.', 'tests_']

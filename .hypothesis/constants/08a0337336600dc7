@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/_enforcement_parts/flextconstantsenforcement_part_08.py
+# hypothesis_version: 6.152.4
+
+['ENFORCE-008', 'ENFORCE-016', 'ENFORCE-026', 'ENFORCE-027', 'ENFORCE-028', 'ENFORCE-029', 'ENFORCE-030', 'ENFORCE-031', 'ENFORCE-032', 'ENFORCE-033', 'ENFORCE-066', 'ENFORCE-067', 'ENFORCE-068', 'ENFORCE-069', 'ENFORCE-070', 'ENFORCE-074', 'ENFORCE-079', 'ENFORCE-080', 'bare_except', 'classvar_relocation', 'dict', 'future_import', 'gate', 'hardcoded_version', 'kind', 'manual', 'one_class_per_module', 'open_encoding', 'params', 'print_to_logger', 'remove_breakpoint', 'rope', 'safe', 'smell_boolean_logic', 'smell_tag', 'smells', 'target', 'targets', 'transformer', 'typing_dict_attr', 'typing_dict_import', 'typing_unifier']

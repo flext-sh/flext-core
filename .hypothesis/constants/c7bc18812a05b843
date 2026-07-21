@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_docker_parts/docker_part_02.py
+# hypothesis_version: 6.152.4
+
+['.flext', 'FlextTestsDocker', 'dirty_containers']

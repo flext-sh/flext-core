@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/examples/settings.py
+# hypothesis_version: 6.152.1
+
+['Feature enable flag', 'before', 'database_url', 'example-service']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/examples/_models/ex03.py
+# hypothesis_version: 6.151.12
+
+['before', 'currency', 'currency mismatch', 'items', 'order has no items']

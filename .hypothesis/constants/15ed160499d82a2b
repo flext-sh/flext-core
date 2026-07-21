@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_models/docker.py
+# hypothesis_version: 6.152.1
+
+['Container name.', 'DEBUG', 'Display name.', 'Lifecycle status.', 'Logging level name.', 'Source image tag.', 'active', 'api', 'test']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/transformers/class_reconstructor.py
+# hypothesis_version: 6.151.9
+
+['*', '_', '__', 'cached_property', 'class_attributes', 'classmethod', 'computed_field', 'private', 'property', 'protected', 'public', 'staticmethod']

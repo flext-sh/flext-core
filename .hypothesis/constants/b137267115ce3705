@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/_detectors/internal_import_detector.py
+# hypothesis_version: 6.151.9
+
+['*', ', ', '._', '_', '__init__.py', 'error', 'utf-8']

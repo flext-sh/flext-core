@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/detectors/namespace_source_detector.py
+# hypothesis_version: 6.151.9
+
+['__init__.py', 'current_import', 'file', 'line', 'suggested_import', 'violation_type', 'wrong_source']

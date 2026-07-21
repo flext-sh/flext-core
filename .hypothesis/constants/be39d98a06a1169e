@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_runtime/_dependency_types.py
+# hypothesis_version: 6.156.6
+
+['factories', 'resources', 'services', 'settings', 'wire_classes', 'wire_modules', 'wire_packages']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/cli.py
+# hypothesis_version: 6.151.10
+
+[',', 'Census failed', 'MRO migration failed', 'No changes detected.', 'aliases_migrated', 'all', 'census', 'centralize-pydantic', 'error', 'files_changed', 'files_failed', 'files_planned', 'info', 'migrate-mro', 'migrated', 'missing export', 'mro_failures', 'mro_files_scanned', 'namespace-enforce', 'runtime alias import', 'ultrawork-models', 'unsafe']

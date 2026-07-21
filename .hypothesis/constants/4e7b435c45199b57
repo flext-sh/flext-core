@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/container.py
+# hypothesis_version: 6.151.9
+
+['FlextContainer', '__main__', '__name__', '_config', '_container_config', '_context', '_di_container', '_factories', '_namespace_registry', '_resources', '_services', '_user_overrides', 'app_name', 'command_bus', 'config', 'container_config', 'context', 'factories', 'factory', 'flext_core', 'fn', 'logger', 'override', 'provide', 'provided', 'resources', 'service', 'services', 'subproject', 'user_overrides']

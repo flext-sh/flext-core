@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/examples/ex_12_registry_flow.py
+# hypothesis_version: 6.156.6
+
+[100, 200, 'dispatch.a.success', 'dispatch.a.value', 'dispatch.b.success', 'dispatch.b.value', 'ensure_result.raw', 'execute.success', 'generate_id.len', 'generate_prefixed_id', 'mixin.fail.error', 'mixin.ok.unwrap_or', 'summary.fail.failure', 'summary.fail.success', 'summary.ok.failure', 'summary.ok.success', 'summary_and_mixins', 'to_dict.basemodel', 'to_dict.mapping', 'to_dict.none']

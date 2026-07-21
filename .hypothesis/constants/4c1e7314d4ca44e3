@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/codegen/constants_quality_gate.py
+# hypothesis_version: 6.151.10
+
+['Before/After:', 'Checks:', 'Duplicate Groups:', 'FAIL', 'Improvement:', 'PASS', 'after', 'artifacts', 'baseline', 'before', 'checks', 'detail', 'generated_at', 'improvement', 'load_error', 'passed', 'projects', 'provided', 'source', 'verdict', 'workspace']

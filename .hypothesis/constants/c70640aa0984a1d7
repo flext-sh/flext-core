@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldap/src/flext_ldap/adapters/__init__.py
+# hypothesis_version: 6.152.4
+
+['.entry', '.ldap3']

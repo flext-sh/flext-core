@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/services/writer.py
+# hypothesis_version: 6.151.9
+
+['File write failed', 'FlextLdifWriter', 'LDIF writing failed', 'String write failed', '_server', 'base64_encode_binary', 'entries', 'format_options', 'include_comments', 'include_dn_comments', 'output_path', 'rfc', 'sort_attributes', 'sort_entries', 'target_server_type', 'utf-8']

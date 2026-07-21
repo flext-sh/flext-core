@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_models/release.py
+# hypothesis_version: 6.151.10
+
+['Build log file path', 'Create branches flag', 'Dev suffix flag', 'Dry run flag', 'Git tag', 'Git tag for release', 'Next bump', 'Next dev flag', 'Project name', 'Project names', 'Push flag', 'Release bump type', 'Release phase', 'Release tag', 'Release version', 'Workspace root', 'minor']

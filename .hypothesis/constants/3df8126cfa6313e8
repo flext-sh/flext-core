@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldap/src/flext_ldap/constants.py
+# hypothesis_version: 6.151.9
+
+[1.0, 127, 389, 3600, '(objectClass=*)', '*', '0.10.0', 'BASE', 'Connection failed', 'FLEXT_LDAP', 'ONELEVEL', 'Operation failed', 'SUBTREE', 'Search failed', 'add', 'added', 'already exists', 'batch_upsert', 'bind', 'changetype', 'cn', 'completed', 'connect', 'createTimestamp', 'creatorsName', 'delete', 'dseType', 'entry already exists', 'entryCSN', 'entryUUID', 'entryalreadyexists', 'failed', 'hasSubordinates', 'ldap3_to_ldif_entry', 'ldap_already_exists', 'ldif_entry_to_ldap3', 'mail', 'modified', 'modifiersName', 'modify', 'modifyTimestamp', 'numSubordinates', 'objectClass', 'pending', 'rfc', 'running', 'search', 'skipped', 'sn', 'subschemaSubentry', 'sync', 'unbind', 'unknown', 'unknown error']

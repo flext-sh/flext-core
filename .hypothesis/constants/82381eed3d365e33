@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/project_metadata.py
+# hypothesis_version: 6.152.1
+
+[',', '-', '<', '>= ', 'Homepage', 'UNLICENSED', '_', 'authors', 'description', 'empty project name', 'flext', 'license', 'name', 'project', 'pyproject.toml', 'rb', 'requires-python', 'text', 'tool', 'urls', 'version']

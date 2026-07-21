@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/docs_audit.py
+# hypothesis_version: 6.152.4
+
+['#', '# Docs Audit Report', '*.md', ',', '-', '--stdin-filename', '.md', '/', '<', '>', '?', 'README.md', '```', 'audit', 'body', 'broken_link', 'data:', 'docs/api', 'docs/api-reference', 'generated_ownership', 'high', 'http', 'http://', 'https://', 'lower', 'mailto:', 'medium', 'python_codeblock', 'scope_boundary', 'stale_symbol', 'stale_symbols', 'tel:', '|---|---|---|---|']

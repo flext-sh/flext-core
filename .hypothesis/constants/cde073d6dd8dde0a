@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/codegen/codegen_generation.py
+# hypothesis_version: 6.152.4
+
+[', ', '-', '.', '0', '1', '2', 'FlextTypes', '_', 'cli', 'flext_infra', 'flext_tests', 'if _t.TYPE_CHECKING:', 'infra', 'main', 'templates', 'tests']

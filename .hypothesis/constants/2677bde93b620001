@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_root_typing_parts/_exports_lazy_part_05.py
+# hypothesis_version: 6.152.4
+
+['.facades', '.models', '.utilities_part_03', 'FlextUtilitiesModel', 'FlextUtilitiesParser', 'FlextUtilitiesText', 'c', 'd', 'e', 'h', 'lazy', 'm', 'mc', 'p', 'r', 's', 't', 'u', 'ube', 'x']

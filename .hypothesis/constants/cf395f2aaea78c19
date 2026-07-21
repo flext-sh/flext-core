@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/_detectors/module_loader.py
+# hypothesis_version: 6.151.9
+
+['SyntaxError', '_V', '_ViolationWithLine', 'error', 'line']

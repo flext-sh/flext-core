@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_docker_parts/docker_part_03.py
+# hypothesis_version: 6.152.4
+
+['Compose down', 'Compose down failed', 'Compose up', 'Compose up failed', 'FlextTestsDocker']

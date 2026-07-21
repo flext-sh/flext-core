@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/_enforcement_catalog_rows_parts/flextconstantsenforcementcatalogrows_part_04.py
+# hypothesis_version: 6.152.4
+
+['2-6-settings-law', '3-1-supreme-law', '3-5-integrity', '4-import-law', 'ENFORCE-039', 'ENFORCE-041', 'ENFORCE-042', 'ENFORCE-043', 'ENFORCE-044', 'ENFORCE-045', 'ENFORCE-046', 'ENFORCE-047', 'ENFORCE-048', 'ENFORCE-049', 'ENFORCE-050', 'ENFORCE-051', 'ENFORCE-052', 'ENFORCE-053', 'ENFORCE-054', 'ENFORCE-055', 'ENFORCE-064', 'ENFORCE-066', 'ENFORCE-067', 'ENFORCE-068', 'ENFORCE-069', 'ENFORCE-070', 'ENFORCE-079', 'HIGH', 'MEDIUM', 'cast_outside_core', 'flext-import-rules', 'flext-patterns', 'flext-strict-typing', 'library_abstraction', 'model_rebuild_call', 'one_class_per_module', 'pass_through_wrapper', 'private_attr_probe', 'pydantic-v2-patterns', 'rules-scripts', 'settings_inheritance']

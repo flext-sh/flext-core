@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/file.py
+# hypothesis_version: 6.152.1
+
+['data', 'logs', 'plugins', 'settings', 'temp']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_typings/xlsx.py
+# hypothesis_version: 6.156.6
+
+['FlextCliTypesXlsx', 'between', 'custom', 'date', 'decimal', 'defined_name', 'duplicate_member', 'equal', 'greaterThan', 'greaterThanOrEqual', 'lessThan', 'lessThanOrEqual', 'list', 'member', 'member_count', 'member_prefix', 'member_size', 'notBetween', 'notEqual', 'required_member', 'style_protection', 'textLength', 'time', 'total_size', 'whole', 'worksheet_count', 'worksheet_tag']

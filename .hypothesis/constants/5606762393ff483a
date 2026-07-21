@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/runtime.py
+# hypothesis_version: 6.151.10
+
+['-', '.', 'BoolDict', 'BoolList', 'Dict', 'FlextRuntime', 'FloatDict', 'FloatList', 'IntDict', 'IntList', 'List', 'NestedDict', 'Sequence', 'StringDict', 'StringList', '__dict__', '__getitem__', '__iter__', '__len__', '__mro__', '__name__', '__value__', 'bytearray', 'bytes', 'config', 'count', 'dict', 'factories', 'factory_cache', 'index', 'items', 'list', 'memoryview', 'model_dump', 'p.Metadata', 'range', 'resources', 'services', 'span_id', 'str', 'timestamp', 'trace_id', 'tuple', 'type[BaseModel]', 'unique_id', 'wire_classes', 'wire_modules', 'wire_packages']

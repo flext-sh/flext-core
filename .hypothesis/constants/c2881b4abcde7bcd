@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/safety.py
+# hypothesis_version: 6.151.9
+
+['--collect-only', '-m', '-q', 'unspecified', 'updated_at']

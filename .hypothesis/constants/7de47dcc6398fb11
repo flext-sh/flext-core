@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/lazy.py
+# hypothesis_version: 6.151.11
+
+['.', '_LAZY_IMPORTS', '__all__', '__dir__', '__getattr__', 'install_lazy_exports', 'lazy_getattr', 'merge_lazy_imports']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/_beartype/method_visitor.py
+# hypothesis_version: 6.156.6
+
+['_', '__', '__code__', 'cls', 'count', 'get_', 'is_', 'max', 'model_', 'name', 'self', 'set_', 'suggestion', 'use a domain verb']

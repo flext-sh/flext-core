@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/_models.py
+# hypothesis_version: 6.151.10
+
+['Absolute src/ path', 'Alias moves to apply', 'Alias name', 'Checkpoint status', 'Class moves to apply', 'Class name', 'Class suffix', 'Confidence level', 'Confidence score', 'Encoding error count', 'End line number', 'Facade family letter', 'Family alias letter', 'File name patterns', 'Git stash reference', 'I/O error count', 'Line number', 'Method name', 'Raw source text', 'Source code text', 'Source file path', 'Start line number', 'Syntax error count', 'Target file path', 'Violated rule id', 'Violating class name', 'Workspace root path', 'running']

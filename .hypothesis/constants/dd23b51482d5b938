@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/enforcement.py
+# hypothesis_version: 6.151.11
+
+['-', '.', 'ADAPTER_', 'ClassVar', 'Config', 'Constants', 'Examples', 'Final', 'Flext', 'FrozenStrictModel', 'FrozenValueModel', 'HARD', 'ImmutableValueModel', 'Protocol', 'Protocols', 'Root', 'Scripts', 'StrEnum', 'Tests', 'TypeAdapter', 'Types', 'Utilities', '_', '__annotations__', '__module__', '__value__', '_is_protocol', '_is_runtime_protocol', 'best practices', 'constants', 'description=', 'dict', 'examples', 'extra', 'flext', 'flext-', 'flext-core', 'flext_', 'flext_tests', 'forbid', 'frozen', 'list', 'model_config', 'off', 'protocols', 'pyproject.toml', 'scripts', 'set', 'strict', 'tests', 'types', 'unknown', 'utilities']

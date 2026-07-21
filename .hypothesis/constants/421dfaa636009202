@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_utilities/_xlxx/xlsx_archive_checks.py
+# hypothesis_version: 6.156.6
+
+['definedName', 'defined_name', 'hidden', 'locked', 'protection', 'style_protection', 'worksheet_tag', '}']

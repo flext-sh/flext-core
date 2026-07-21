@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_validator/types.py
+# hypothesis_version: 6.151.12
+
+['#\\s*type:\\s*ignore', 'FlextValidatorTypes', 'TYPE-001', 'TYPE-002', 'TYPE-003', 'cast', 'lineno', 'typing', 'utf-8']

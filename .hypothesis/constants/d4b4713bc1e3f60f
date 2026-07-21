@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_root_exports_parts/__init__.py
+# hypothesis_version: 6.156.6
+
+['.all_names', '.exclude_names', '.lazy_core', '.lazy_facades', '.lazy_utilities', '.metadata_names', '.typing_only_names', 'ROOT_ALL', 'ROOT_EXCLUDE_NAMES', 'ROOT_LAZY_CORE', 'ROOT_LAZY_FACADES', 'ROOT_LAZY_UTILITIES', 'ROOT_METADATA_NAMES']

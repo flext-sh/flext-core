@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/mixins.py
+# hypothesis_version: 6.151.10
+
+[0.0, 'FlextMixins', '_runtime', 'already registered', 'avg_duration_ms', 'duration_ms', 'error_count', 'operation_count', 'success_rate', 'total_duration_ms', 'x']

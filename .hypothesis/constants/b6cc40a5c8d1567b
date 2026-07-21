@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/_beartype/_alias_visitor.py
+# hypothesis_version: 6.152.4
+
+['.', '_models', 'alias', 'class', 'file', 'flext_', 'local', 'module', 'name', 'origin', 'package']

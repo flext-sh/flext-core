@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/_utilities_pydantic_analysis.py
+# hypothesis_version: 6.151.10
+
+['    pass', '/_typings.py', '/typings.py', '/typings/', 'AnnAssign', 'ArbitraryTypesModel', 'Assign', 'Attribute', 'BaseModel', 'ClassDef', 'FlextModels.', 'FrozenModel', 'FrozenStrictModel', 'Mapping[', 'MutableMapping[', 'Name', 'RootModel', 'TypeAlias', 'TypedDict', 'attr', 'base_model', 'bases', 'body', 'case', 'config', 'dict', 'end_lineno', 'entry', 'fixture', 'get_string_module', 'id', 'lineno', 'metadata', 'name', 'payload', 'schema', 'target', 'targets', 'typed_dict', 'value']

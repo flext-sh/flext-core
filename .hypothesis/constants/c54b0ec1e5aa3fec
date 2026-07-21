@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/_utilities/writer.py
+# hypothesis_version: 6.151.9
+
+[' $ ', ')', '-', 'COLLECTIVE', 'File write failed', 'MAY', 'MUST', 'NO-USER-MODIFICATION', 'OBSOLETE', 'SINGLE-VALUE', '_acl_attributes', '_metadata', 'ascii', 'attribute_order', 'bytes_written', 'changetype: modify', 'changetype_value', 'dn:: ', 'encoding', 'extensions', 'filtered', 'fold_long_lines', 'hidden', 'include_changetype', 'marked_for_removal', 'modify', 'operational', 'path', 'replace', 'server_type', 'show', 'utf-8', 'width', 'x_origin']

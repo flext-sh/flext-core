@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_constants/__init__.py
+# hypothesis_version: 6.151.11
+
+['.docker', '.files', '.matcher', '.validator']

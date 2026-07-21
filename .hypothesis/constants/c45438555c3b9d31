@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/status.py
+# hypothesis_version: 6.152.4
+
+['active', 'apply context update', 'archived', 'bind', 'cancelled', 'clear', 'compensating', 'completed', 'degraded', 'error', 'failed', 'failure', 'get', 'get context value', 'healthy', 'idle', 'inactive', 'partial', 'pending', 'processing', 'remove', 'resolve context key', 'running', 'sent', 'set', 'set context value', 'stopped', 'success', 'unbind', 'unhealthy', 'unknown', 'validate context key']

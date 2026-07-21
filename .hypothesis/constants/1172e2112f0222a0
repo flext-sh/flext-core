@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/transformers/project_alias_migrator.py
+# hypothesis_version: 6.156.6
+
+[' as ', '.', 'TYPE_CHECKING', '__future__']

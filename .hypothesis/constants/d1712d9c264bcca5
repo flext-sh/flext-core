@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/transformers/typing_annotation_replacer.py
+# hypothesis_version: 6.151.9
+
+['ContainerValue', 'Mapping', 'Sequence', 'TypeAdapter', 'TypeGuard', 'TypeIs', '__eq__', '__ge__', '__gt__', '__hash__', '__le__', '__lt__', '__ne__', '_is_', 'bool', 'builtins', 'dict', 'flext', 'flext_core', 'is_', 'list', 'model_post_init', 't', 't.NormalizedValue']

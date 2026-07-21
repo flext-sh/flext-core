@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_models/_filesystem_parts/filesystem_part_01.py
+# hypothesis_version: 6.152.4
+
+['CSV delimiter.', 'CSV headers.', 'File encoding.', 'File size in bytes.', 'Human-readable size.', 'Target directory.', 'before', 'name', 'unknown']

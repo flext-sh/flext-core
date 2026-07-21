@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_models/refactor.py
+# hypothesis_version: 6.151.12
+
+['Absolute src/ path', 'Checkpoint status', 'Class name', 'Class suffix', 'Confidence level', 'Confidence score', 'Facade family letter', 'Family alias letter', 'File name patterns', 'Line number', 'Method name', 'Raw source text', 'Source file path', 'Target file path', 'Violated rule id', 'Violating class name', 'Workspace root path', 'all', 'preview-limit', 'running']

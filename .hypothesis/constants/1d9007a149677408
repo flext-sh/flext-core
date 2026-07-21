@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_utilities/make_rendering.py
+# hypothesis_version: 6.152.4
+
+[' [mutates]', ' obrigatorio', '*', ', ', '<ausente>', 'Detalhe de uma acao:', 'Execucao canonica:', 'Exemplo:', 'Exemplos:', 'Opcoes por WHAT:', 'Parametros atuais:', 'Parametros:', 'Regras:', 'WHAT disponiveis:', 'command unknown', 'obrigatorio', 'opcional', 'verb unknown']

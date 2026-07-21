@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/_beartype/field_visitor.py
+# hypothesis_version: 6.156.6
+
+['Config', '_', '__annotations__', 'arms', 'description=', 'extra', 'forbid', 'frozen', 'kind', 'model_config', 'replacement']

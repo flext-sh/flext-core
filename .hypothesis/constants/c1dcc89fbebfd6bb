@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/examples/_models/ex05.py
+# hypothesis_version: 6.152.4
+
+['Handler payload map', 'User account status', 'User age in years', 'User display name', 'active', 'before', 'inactive', 'pending', 'status']

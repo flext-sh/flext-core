@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/check/workspace_check.py
+# hypothesis_version: 6.151.9
+
+[0.0, '*', ',', ', ', '--check-only', '--fail-fast', '--fix', '--gates', '--project', '--pyright-args', '--reports-dir', '--ruff-args', '--verbose', 'Errors by project:', 'FLEXT_WORKSPACE_ROOT', 'Run quality gates', 'append', 'build_parser', 'check failed', 'check-report.md', 'check-report.sarif', 'fix-pyrefly-config', 'flext-infra check', 'include_apply', 'include_diff', 'invalid gates', 'main', 'projects', 'run_cli', 'store_true']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/parser.py
+# hypothesis_version: 6.151.9
+
+['0', '1', 'Continue pipeline', 'FLOAT_COERCE_ERROR', 'FlextUtilitiesParser', 'INT_COERCE_ERROR', 'PIPELINE_CONTINUE', 'Pattern applied', 'TARGET_NOT_ENUM', 'TARGET_NOT_MODEL', 'TARGET_NOT_PRIMITIVE', 'Text cannot be None', 'Unknown', 'Validation failed', 'Value is None', '\\', '\\s+', '__class__', '__dict__', '__name__', 'apply_regex_pipeline', 'false', 'get_object_key', 'id', 'lower', 'name', 'no', 'normalize_whitespace', 'off', 'on', 'parse_delimited', 'true', 'type', 'typing.Any', 'upper', 'value', 'yes']

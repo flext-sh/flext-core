@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/formatting.py
+# hypothesis_version: 6.151.10
+
+['--fix', '--ignore', '--quiet', 'Flext', 'TCH001,TCH002,TCH003', '_', '__all__']

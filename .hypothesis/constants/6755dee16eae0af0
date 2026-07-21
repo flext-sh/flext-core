@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/services/auth.py
+# hypothesis_version: 6.151.10
+
+['.flext', 'Failed to save token', 'FlextCliAuth', 'Invalid credentials', 'auth_token.json']

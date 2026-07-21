@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_protocols/workspace_cleanup.py
+# hypothesis_version: 6.156.6
+
+['directory', 'file', 'symlink']

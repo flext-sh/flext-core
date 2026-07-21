@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/servers/_base/__init__.py
+# hypothesis_version: 6.152.4
+
+['.acl', '.constants', '.entry', '.mixins', '.schema']

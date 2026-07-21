@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/api.py
+# hypothesis_version: 6.151.12
+
+['FlextLdif', 'execute ldif facade', 'ldif']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/files.py
+# hypothesis_version: 6.151.12
+
+[128, '*', ',', '.', 'FlextTestsFiles', 'Unknown error', '\\s+', 'auto', 'bin', 'collect', 'compute_hash', 'content', 'create', 'csv', 'deep', 'delete', 'delim', 'detect_fmt', 'directory', 'enc', 'exclude_keys', 'extract_result', 'fail', 'file1', 'file2', 'files', 'fmt', 'has_headers', 'hash', 'headers', 'ignore_case', 'ignore_ws', 'indent', 'json', 'keys', 'lines', 'md', 'mode', 'model', 'model_cls', 'name', 'on_error', 'operation', 'parallel', 'parse_content', 'path', 'pattern', 'python', 'r failure', 'read', 'readonly', 'replace', 'size', 'text', 'tf', 'txt', 'unknown', 'utf-8', 'validate_model', 'value', 'yaml']

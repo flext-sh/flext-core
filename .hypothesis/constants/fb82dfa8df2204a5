@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/_utilities_cli.py
+# hypothesis_version: 6.151.9
+
+['+', ',', '-', '--analysis-output', '--analyze-violations', '--config', '--dry-run', '--file', '--files', '--impact-map-output', '--list-rules', '--pattern', '--project', '--rules', '--show-diff', '--workspace', '-c', '-d', '-f', '-l', '-n', '-p', '-r', '-w', 'Available Rules', 'Hottest files:', 'No changes', 'No rules loaded.', 'Summary', 'Top pattern counts:', 'Violation Analysis', 'changed', 'description', 'failed', 'failure', 'json', 'kind', 'new', 'old', 'rename', 'signature_add', 'signature_remove', 'store_true', '✓', '✗']

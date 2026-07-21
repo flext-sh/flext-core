@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/policy.py
+# hypothesis_version: 6.152.4
+
+['.*', '/', '\\', '_decorators', '_dispatcher', '_runtime', '_utilities', 'class-policy-v2.yml', 'forbidden_target', 'helper_name', 'models', 'operation_forbidden', 'other_private', 'policy_matrix', 'rules']

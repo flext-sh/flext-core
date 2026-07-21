@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_root_exports.py
+# hypothesis_version: 6.152.4
+
+['ROOT_ALL', 'ROOT_EXCLUDE_NAMES', 'ROOT_LAZY_MODULES', 'ROOT_METADATA_NAMES', 'ROOT_PACKAGE_MODULES']

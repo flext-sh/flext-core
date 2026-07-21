@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_utilities/rules.py
+# hypothesis_version: 6.152.1
+
+['*.yml', ', ', 'action', 'check', 'enabled', 'engine-registry.yml', 'fix_action', 'id', 'lower', 'rules']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/examples/_models/__init__.py
+# hypothesis_version: 6.152.4
+
+['.errors', '.ex00', '.ex01', '.ex02', '.ex03', '.ex04', '.ex05', '.ex07', '.ex08', '.ex10', '.ex11', '.ex12', '.ex14', '.output', '.shared']

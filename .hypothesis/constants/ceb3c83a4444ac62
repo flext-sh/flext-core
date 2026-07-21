@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_utilities/matchers.py
+# hypothesis_version: 6.152.4
+
+['*', '.', 'Dict', 'ObjectList', 'all', 'container', 'contains', 'context', 'empty', 'ends', 'eq', 'excludes', 'first', 'gt', 'gte', 'has', 'is_', 'lacks', 'last', 'lt', 'lte', 'match', 'ne', 'none', 'root', 'settings', 'starts', 'str', 'tm', 'value']

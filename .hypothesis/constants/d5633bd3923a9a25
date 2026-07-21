@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_enforcement/__init__.py
+# hypothesis_version: 6.152.4
+
+['.collection_base', '.collection_sources', '.collection_tests', '.engine', '.metadata', '.selection']

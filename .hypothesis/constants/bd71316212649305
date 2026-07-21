@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_constants/rope.py
+# hypothesis_version: 6.152.4
+
+['*.pyc', '.cache/', '.git', '.mypy_cache', '.pyrefly_cache', '.pytest_cache', '.tox/', '.venv', 'AssignedName', 'DefinedName', 'ImportedName', 'ParameterName', '__pycache__', 'build/', 'cached_property', 'computed_field', 'dist/', 'node_modules', 'property', 'rope.base.pynames', 'rope.base.pynamesdef', 'venv']

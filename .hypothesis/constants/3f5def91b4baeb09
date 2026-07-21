@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/examples/ex_12_registry_plugins.py
+# hypothesis_version: 6.156.6
+
+['bindings_and_plugins', 'enabled', 'fetch_plugin.missing', 'fetch_plugin.ok', 'owner', 'register.service.bad', 'register_plugin.dup', 'register_plugin.ok', 'team', 'unregister_plugin.ok', 'version']

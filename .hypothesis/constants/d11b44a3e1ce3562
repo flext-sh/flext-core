@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_models/refactor_census.py
+# hypothesis_version: 6.151.10
+
+['Access mode', 'Files scanned', 'Flext', 'Method kind', 'Method name', 'Method summaries', 'Per-class summaries', 'Per-method usages', 'Project name', 'Source file path', 'Source filename', 'Total usage records', 'Total usages', 'Usage count', 'Utilities class name', 'u.Class.method count', 'u.method count']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/enforcement.py
+# hypothesis_version: 6.152.1
+
+['CRITICAL', 'HIGH', 'LOW', 'MEDIUM', '^ENFORCE-\\d{3}$', 'after', 'ast_grep', 'ast_grep_fix', 'beartype', 'flext_infra_detector', 'forbid', 'kind', 'rope_fix', 'ruff', 'runtime_warning', 'skill_pointer']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/codegen_lazy_merging.py
+# hypothesis_version: 6.151.10
+
+['"', "'", '.', '["\\\']([^"\\\']+)["\\\']', '^[\'"]|[\'"]$', '_', '__', '__version__.py', 'install_lazy_exports', 'joinpath', 'lazy_getattr', 'main', 'merge_lazy_imports', 'pyproject.toml']

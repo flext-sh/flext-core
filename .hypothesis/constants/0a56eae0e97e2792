@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/_enforcement_data/__init__.py
+# hypothesis_version: 6.152.4
+
+['SMELL_BEARTYPE_ROWS', 'SMELL_RULES_TEXT', 'SMELL_THRESHOLDS', 'beartype_rows', 'code_smell_rows', 'populate_by_name', 'smells.json', 'utf-8']

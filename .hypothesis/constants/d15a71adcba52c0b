@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/logging_context.py
+# hypothesis_version: 6.152.1
+
+['.', '__class__', 'co_qualname', 'model_dump']

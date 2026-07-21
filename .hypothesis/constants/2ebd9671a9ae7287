@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_constants/files.py
+# hypothesis_version: 6.152.4
+
+[1024, ',', '.bin', '.csv', '.dat', '.json', '.log', '.md', '.rst', '.tsv', '.txt', '.yaml', '.yml', 'B', 'GB', 'KB', 'MB', 'PB', 'TB', 'auto', 'bin', 'csv', 'file', 'json', 'text', 'unknown', 'yaml']

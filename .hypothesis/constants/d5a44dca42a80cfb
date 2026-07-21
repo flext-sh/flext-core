@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_constants/validator.py
+# hypothesis_version: 6.156.6
+
+['#\\s*noqa', '#\\s*type:\\s*ignore', '**/*.py', '**/*.pyc', '**/.git/**', '**/.venv/**', '**/__pycache__/**', '**/build/**', '**/dist/**', '**/htmlcov/**', '**/venv/**', '--markdown-docs', 'AGENTS.md', 'Any', 'AsyncMock', 'CRITICAL', 'Dict', 'FrozenSet', 'Generic', 'HIGH', 'LOW', 'List', 'MEDIUM', 'MagicMock', 'Mock', 'Optional', 'ParamSpec', 'PropertyMock', 'Set', 'Tuple', 'TypeAlias', 'TypeAliasType', 'TypeGuard', 'TypeVar', 'Unapproved  usage', 'Union', '_[^/]+/__init__\\.py$', '__init__\\.py$', 'bare except', 'bypass', 'container\\.py$', 'flext-core', 'flext-tests', 'from typing import', 'imports', 'layer', 'markdown', 'service\\.py$', 'settings', 'tests', 'types']

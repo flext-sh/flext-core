@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/collection.py
+# hypothesis_version: 6.151.9
+
+['Enum', 'Unknown error', '__name__', 'append', 'deep', 'fail', 'filter_both', 'filter_empty', 'filter_none', 'override', 'replace', 'skip']

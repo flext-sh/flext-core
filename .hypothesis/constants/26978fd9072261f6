@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/mixins.py
+# hypothesis_version: 6.152.1
+
+['attributes', 'class', 'context', 'execute', 'handle', 'handler_mode', 'instance', 'metadata', 'process', 'process_command', 'status', 'unique_id', 'unknown', 'validate']

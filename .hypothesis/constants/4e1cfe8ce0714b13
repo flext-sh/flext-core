@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-auth/src/flext_auth/services/__init__.py
+# hypothesis_version: 6.151.12
+
+['.identity_service', '.middleware', '.provider_service', '.session_service', '.token_service', 'FlextAuthMiddleware']

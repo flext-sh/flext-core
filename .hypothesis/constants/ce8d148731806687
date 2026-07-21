@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/_errors_parts/flextconstantserrors_part_01.py
+# hypothesis_version: 6.152.4
+
+['AUTH', 'Handler failed', 'INTERNAL', 'NETWORK', 'NOT_FOUND', 'TIMEOUT', 'UNKNOWN', 'VALIDATION', 'Validation failed', 'Value cannot be None', 'found_none:{key}']

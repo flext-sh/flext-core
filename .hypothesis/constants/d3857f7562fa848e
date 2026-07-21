@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/codegen/lazy_init.py
+# hypothesis_version: 6.151.10
+
+['.', '.venv', 'Types', '_', '__version__.py', 'lazy_getattr', 'node_modules', 'typings', 'vendor']

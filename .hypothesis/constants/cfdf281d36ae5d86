@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/_utilities_mro_scan.py
+# hypothesis_version: 6.151.11
+
+['.', ':', '@', 'Models', 'NewType', 'ParamSpec', 'Protocol', 'Protocols', 'TypeAlias', 'TypeVar', 'Types', 'Utilities', 'bases', 'c', 'class ', 'constant', 'constants', 'm', 'models', 'p', 'protocol', 'protocols', 't', 'typealias', 'typevar', 'typings', 'u', 'utilities']

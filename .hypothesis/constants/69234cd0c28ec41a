@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/reporting.py
+# hypothesis_version: 6.151.11
+
+[' Total | Status |', '# FLEXT Check Report', '## Summary', '-------|--------|', '------|', '=', 'CI', 'DEBUG', 'ERROR', 'FORCE_COLOR', 'GITHUB_ACTIONS', 'GITLAB_CI', 'INFO', 'LANG', 'LC_ALL', 'NO_COLOR', 'TERM', 'WARN', '[FAIL]', '[OK]', '```', 'dumb', 'failed', 'isatty', 'json', 'utf', '| Project |', '|---------|', '═']

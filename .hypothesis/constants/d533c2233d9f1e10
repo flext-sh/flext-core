@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_constants/docs.py
+# hypothesis_version: 6.151.11
+
+['.reports/docs', 'docs_config.json']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/codegen_lazy_aliases.py
+# hypothesis_version: 6.151.10
+
+['*', '.', 'Types', 'examples', 'flext_core', 'pyproject.toml', 'scripts', 'src', 'tests', 'typings']

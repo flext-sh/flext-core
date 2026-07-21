@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_models/github.py
+# hypothesis_version: 6.151.10
+
+['.github', 'Captured stderr', 'Captured stdout', 'Execution mode', 'Execution status', 'Failed executions', 'Failure detail', 'HTTPS clone URL', 'Lint status', 'Log file path', 'Process exit code', 'Project root path', 'SSH clone URL', 'Skip reason', 'Workflow operations', 'apply', 'ci.yml', 'dry-run', 'ok', 'skipped', 'workflow lint failed', 'workflow lint passed', 'workflows']

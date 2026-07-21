@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_constants/enums.py
+# hypothesis_version: 6.151.11
+
+['CRITICAL', 'DEBUG', 'ERROR', 'INFO', 'WARNING', 'cancelled', 'compact', 'completed', 'csv', 'debug', 'detailed', 'error', 'failed', 'full', 'info', 'json', 'operational', 'pending', 'plain', 'running', 'success', 'table', 'warning', 'yaml']

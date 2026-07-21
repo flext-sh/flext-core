@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/mapper_extract.py
+# hypothesis_version: 6.152.4
+
+['.', '[', ']', 'default', 'extract', 'extract path', 'extract path default', 'found_none:', 'model_dump', 'path_context', 'required']

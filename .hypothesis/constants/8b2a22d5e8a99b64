@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/services/_cli_parts/__unit__.py
+# hypothesis_version: 6.156.6
+
+['.flextclicli_part_05', 'FlextCliCli']

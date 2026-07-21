@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/rules/class_reconstructor.py
+# hypothesis_version: 6.151.9
+
+['.*', 'class-policy-v2.yml', 'classRule', 'definitions', 'forbidden_target', 'helper_name', 'method_order', 'operation_forbidden', 'order', 'other_private', 'policyEntry', 'policy_matrix', 'required', 'target_name']

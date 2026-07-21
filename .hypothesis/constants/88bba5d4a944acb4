@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_models/refactor_violations.py
+# hypothesis_version: 6.156.6
+
+['Assigned category', 'Category totals', 'Class name', 'Confidence histogram', 'Confidence level', 'Facade family alias', 'File path', 'Files scanned', 'Function name', 'Module family key', 'Module family name', 'Per-pattern counts', 'Source file', 'Source symbol name', 'Target class name', 'Top hotspot files', 'Total violations', 'Violation details']

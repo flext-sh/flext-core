@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/environment.py
+# hypothesis_version: 6.152.4
+
+['.env', 'FLEXT_', 'FLEXT_ENV_FILE', 'UTC', '__', 'development', 'flext', 'local', 'production', 'staging', 'testing']

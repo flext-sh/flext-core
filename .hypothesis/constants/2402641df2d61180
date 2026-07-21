@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/deps_path_sync.py
+# hypothesis_version: 6.152.4
+
+[' @ ', ', ', ';', '[DRY-RUN] ', 'changed', 'editable', 'failed to write TOML', 'members', 'mode', 'path', 'sources', 'uv', 'workspace', 'would change', 'write pyproject.toml']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/_context/_metadata.py
+# hypothesis_version: 6.152.4
+
+['Associated user ID', 'Type of domain', 'after', 'get', 'set']

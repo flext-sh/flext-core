@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/services/statistics.py
+# hypothesis_version: 6.151.9
+
+[0.0, '1.0.0', 'FlextLdifStatistics', 'StatisticsService', 'analyze_rejections', 'count_entries', 'generate_statistics', 'operational', 'rejected', 'server_type']

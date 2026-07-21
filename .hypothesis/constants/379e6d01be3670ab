@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/domain.py
+# hypothesis_version: 6.151.12
+
+[10000, 10485760, 'BRL', 'CRITICAL', 'DEBUG', 'ERROR', 'EUR', 'GBP', 'INFO', 'USD', 'WARNING', 'active', 'archived', 'bind', 'cancelled', 'clear', 'compact', 'confirmed', 'critical', 'debug', 'delivered', 'error', 'get', 'inactive', 'info', 'pending', 'remove', 'set', 'shipped', 'unbind', 'warning']

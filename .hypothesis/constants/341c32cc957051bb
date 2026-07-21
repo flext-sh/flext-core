@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/_logging_config_parts/logging_config_part_01.py
+# hypothesis_version: 6.152.4
+
+[0.1, 2.0, '<async-log-writer>', '_writer_logger', 'buffer', 'encoding', 'errors', 'flush', 'line_buffering', 'mode', 'name', 'newlines', 'w']

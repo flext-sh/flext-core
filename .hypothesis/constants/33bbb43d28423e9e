@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/examples/_models/ex07.py
+# hypothesis_version: 6.152.4
+
+['Plugin name', 'User display name', 'User email address', 'User name from event']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/invest/.venv/bin/pytest
+# hypothesis_version: 6.156.1
+
+['.exe', '__main__']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/transformers/__init__.py
+# hypothesis_version: 6.151.12
+
+['.base', '.census_visitors', '.class_nesting', '.class_reconstructor', '.deprecated_remover', '.import_modernizer', '.lazy_import_fixer', '.mro_remover', '.symbol_propagator', '.tier0_import_fixer', '.typing_unifier']

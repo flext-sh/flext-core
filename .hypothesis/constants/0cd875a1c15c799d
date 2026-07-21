@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_settings/infrastructure.py
+# hypothesis_version: 6.152.4
+
+['API key', 'Default timeout', 'Max batch size', 'Max retry attempts', 'Max workers', 'Rate limit window', 'Retry delay']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/services/file_tools.py
+# hypothesis_version: 6.151.11
+
+['.csv', '.json', '.log', '.txt', '.yaml', '.yml', 'Auto load failed', 'FlextCliFileTools', 'Text write failed', 'YAML load failed', 'csv', 'json', 'text', 'w', 'yaml']

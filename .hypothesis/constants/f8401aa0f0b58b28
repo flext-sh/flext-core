@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/_enforcement_catalog_rows_parts/flextconstantsenforcementcatalogrows_part_02.py
+# hypothesis_version: 6.152.4
+
+['2-5-services-pattern', '2-architecture-law', '3-1-supreme-law', '3-code-law', 'ENFORCE-034', 'ENFORCE-035', 'ENFORCE-036', 'ENFORCE-037', 'ENFORCE-038', 'ENFORCE-057', 'ENFORCE-058', 'ENFORCE-059', 'ENFORCE-060', 'ENFORCE-061', 'ENFORCE-062', 'ENFORCE-063', 'ENFORCE-065', 'HIGH', 'MEDIUM', 'facade-purity', 'flext-patterns', 'flext-strict-typing', 'no-accessor-methods', 'pydantic-v2-patterns', 'settings-baseline']

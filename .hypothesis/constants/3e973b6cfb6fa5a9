@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/registry.py
+# hypothesis_version: 6.151.12
+
+[',', '::', '; ', 'FlextRegistry', '__main__', '__name__', 'command_bus', 'dispatcher', 'handler_id', 'mode', 'timestamp', 'with_service']

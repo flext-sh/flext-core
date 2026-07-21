@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/rope_runtime_types.py
+# hypothesis_version: 6.156.6
+
+['AbstractClass', 'AssignedName', 'File', 'FromImport', 'ModuleNotFoundError', 'ModuleSyntaxError', 'NormalImport', 'PyClass', 'PyFunction', 'PyModule', 'RefactoringError', 'RopeError', '_PatchingASTWalker', 'rope.base.exceptions', 'rope.base.pynamesdef', 'rope.base.pyobjects', 'rope.base.resources']

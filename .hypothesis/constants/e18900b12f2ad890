@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/rope_pep695_patch.py
+# hypothesis_version: 6.152.4
+
+['(', ')', '*', '**', ',', ':', '=', '@', '[', ']', '_', '_ClassDef', '_MatchOr', '_MatchSequence', '_MatchSingleton', '_MatchStar', '_ParamSpec', '_PatchingASTWalker', '_TypeAlias', '_TypeVar', '_TypeVarTuple', 'async', 'bound', 'class', 'col_offset', 'def', 'lineno', 'type', 'type_params', '|']

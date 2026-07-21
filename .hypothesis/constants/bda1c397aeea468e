@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/examples/ex_01_flext_result_helpers.py
+# hypothesis_version: 6.155.7
+
+['bad-number', 'bind.failure', 'bind.success', 'cleaned', 'e1', 'e2', 'filter.failure_stays', 'filter.success_fail', 'filter.success_pass', 'flat failed', 'flat_map.failure', 'flat_map.success', 'fold.failure', 'fold.success', 'map exploded', 'map.failure', 'map.success', 'map_or.failure_func', 'map_or.success_func', 'none', 'oops', 'recover.failure', 'recover.success', 'resource op failed', 'tap.failure', 'tap.log', 'tap.success', 'tap_error.failure', 'tap_error.log', 'tap_error.success', 'traverse.collect', 'traverse.fail_fast', 'traverse.success']

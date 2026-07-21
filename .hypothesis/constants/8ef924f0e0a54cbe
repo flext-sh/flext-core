@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/base.py
+# hypothesis_version: 6.152.1
+
+[2.0, 100, 253, 599, 1000, 10000, 65535, 1000000, '127.0.0.1', 'FLEXT', 'localhost']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/mro_scan_catalog.py
+# hypothesis_version: 6.152.4
+
+['.', 'c', 'constants', 'm', 'models', 'p', 'protocols', 't', 'typings', 'u', 'utilities']

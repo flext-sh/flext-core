@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/__version__.py
+# hypothesis_version: 6.151.11
+
+['.', '0.0.0', 'Author', 'Author-Email', 'Documentation', 'FlextInfraVersion', 'Home-Page', 'Homepage', 'License', 'Name', 'Repository', 'Summary', 'Version', '__author__', '__author_email__', '__description__', '__license__', '__title__', '__url__', '__version__', '__version_info__', 'authors', 'description', 'email', 'flext-infra', 'license', 'name', 'project', 'pyproject.toml', 'rb', 'urls', 'version']

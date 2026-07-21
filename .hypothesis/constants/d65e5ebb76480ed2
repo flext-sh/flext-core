@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/transformers/tier0_import_fixer.py
+# hypothesis_version: 6.151.10
+
+['.py', 'EnumT', 'FlextRuntime', 'FlextUtilitiesCache', 'FlextUtilitiesGuards', 'FlextUtilitiesMapper', 'FlextUtilitiesModel', 'T', 'TYPE_CHECKING', 'T_Model', 'U', '__init__.py', 'flext_core.runtime', 'src', 'typing']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/output.py
+# hypothesis_version: 6.151.9
+
+['--', '=', 'OutputBackend', '[FAIL]', '[OK]', '[SKIP]', '[WARN]', 'blue', 'bold', 'green', 'output', 'red', 'reset', 'stream', 'sym_fail', 'sym_ok', 'sym_skip', 'sym_warn', 'use_color', 'use_unicode', 'yellow', '──', '═']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/_enforcement_parts/enforcement_part_06.py
+# hypothesis_version: 6.156.6
+
+[200, 'AnnAssign[TypeAlias]', 'BaseModel', 'Protocol', 'RootModel', 'StrEnum', 'TypeAlias', '_models/', 'flext-cli', 'flext-core', 'flext-infra', 'frozenset_const', 'library_abstraction', 'loc_cap', 'one_class_per_module', 'params']

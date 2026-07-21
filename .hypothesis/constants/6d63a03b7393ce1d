@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/codegen/cli.py
+# hypothesis_version: 6.151.10
+
+['FlextInfraCliCodegen', 'auto-fix', 'auto-fix failed', 'census', 'census failed', 'consolidate', 'consolidate failed', 'deduplicate', 'deduplicate failed', 'lazy-init', 'lazy-init complete', 'lazy-init failed', 'pipeline', 'pipeline failed', 'py-typed', 'py-typed failed', 'scaffold', 'scaffold failed']

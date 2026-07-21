@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_models/codegen.py
+# hypothesis_version: 6.156.6
+
+['Applied replacements', 'Canonical reference', 'Canonical type', 'Canonical value', 'Check identifier', 'Config version', 'Constant identifier', 'Detected violations', 'Fixed violations', 'Governance rules', 'Item identifier', 'Line number', 'MRO failure count', 'Modified file paths', 'Module file path', 'Rule ID', 'Rule description', 'Total files reverted', 'Total violations', 'Whether check passed', 'after', 'applied', 'forbid', 'frozenset', 'int', 'never', 'regex', 'reverted', 'semantic_names', 'str', 'tuple']

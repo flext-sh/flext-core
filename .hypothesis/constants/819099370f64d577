@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/_detectors/class_placement_detector.py
+# hypothesis_version: 6.151.9
+
+['ArbitraryTypesModel', 'BaseModel', 'FrozenModel', 'FrozenStrictModel', 'FrozenValueModel', 'TimestampedModel', '_', '_models', '_models.py', 'models.py']

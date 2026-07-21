@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/_beartype/class_visitor.py
+# hypothesis_version: 6.152.1
+
+['.', 'Flext', 'FlextSettings', 'Protocol', 'Settings', 'StrEnum', '__', '__code__', '__name__', '__qualname__', '_is_runtime_protocol', 'actual', 'base', 'bases', 'class', 'expected', 'first', 'first_base', 'name', 'u', 'utilities.py']

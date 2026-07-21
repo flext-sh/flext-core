@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/deps/extra_paths.py
+# hypothesis_version: 6.151.10
+
+['__main__', 'extraPaths', 'mypy_path', 'sync failed', 'tool']

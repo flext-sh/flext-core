@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/_beartype/attr_visitor.py
+# hypothesis_version: 6.152.1
+
+['ADAPTER_', 'TypeAdapter', '__value__', 'kind', 'name', 'upper_name']

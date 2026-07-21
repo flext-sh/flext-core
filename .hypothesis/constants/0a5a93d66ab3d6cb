@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_utilities/_yaml/_convert.py
+# hypothesis_version: 6.156.6
+
+['false', 'n', 'no', 'null', 'off', 'on', 't.Cli.YamlScalar', 'true', 'y', 'yes', '~']

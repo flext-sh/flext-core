@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/fixers/__unit__.py
+# hypothesis_version: 6.156.6
+
+['.base', '.gate_fixer', '.manual_fixer', '.orchestrator', '.result', '.rope_fixer', '.transformer_fixer']

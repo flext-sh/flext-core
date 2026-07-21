@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_models/_matchers_parts/matchers_part_01.py
+# hypothesis_version: 6.152.4
+
+['Empty check.', 'Error code equals.', 'Expected value.', 'Greater than.', 'Length spec.', 'Less than or equal.', 'Less than.', 'None check.', 'Runtime type check.', 'contains', 'excludes', 'has', 'is', 'is_', 'lacks']

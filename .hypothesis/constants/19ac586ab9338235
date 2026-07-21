@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/services/prompts.py
+# hypothesis_version: 6.151.10
+
+['CI', 'FlextCliPrompts', 'Input stream ended', 'No choices provided', 'PYTEST_CURRENT_TEST', 'Password:', 'Prompting again', '_', '_print_message', 'confirm', 'critical', 'error', 'execute', 'info', 'n', 'no', 'prompt', 'prompt_choice', 'prompt_password', 'pytest', 'true', 'warning', 'y', 'yes']

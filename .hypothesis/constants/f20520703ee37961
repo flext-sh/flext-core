@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/services/_cli_parts/flextclicli_part_03.py
+# hypothesis_version: 6.152.4
+
+['FlextCliCli', 'exclude', 'model_fields', 'return']

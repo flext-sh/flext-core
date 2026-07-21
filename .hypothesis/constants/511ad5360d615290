@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/base.py
+# hypothesis_version: 6.151.12
+
+[0.0, 2.0, 60.0, 100, 253, 300, 599, 600, 1000, 3600, 10000, 65535, 1000000, '127.0.0.1', 'FLEXT', 'Type mismatch', 'localhost', 'sqlite:///:memory:']

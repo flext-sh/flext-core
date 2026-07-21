@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/examples/_models/ex04.py
+# hypothesis_version: 6.152.1
+
+['events', 'ex04_auto_command', 'ex04_create_user', 'ex04_delete_user', 'ex04_failing_delete', 'ex04_get_user', 'ex04_ping', 'ex04_unknown_query', 'no_subscribers', 'user_created', 'users']

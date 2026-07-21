@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_validator/bypass.py
+# hypothesis_version: 6.156.6
+
+['BYPASS-001', 'BYPASS-002', 'BYPASS-003', 'BYPASS-UNREADABLE', 'FlextValidatorBypass', 'could not read file']

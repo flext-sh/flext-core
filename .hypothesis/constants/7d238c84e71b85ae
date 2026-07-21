@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/codegen/_cli_codegen_handlers.py
+# hypothesis_version: 6.151.10
+
+['FAIL', 'No duplicates found', 'auto_fix', 'canonical', 'canonical_name', 'canonical_usages', 'census_after', 'census_before', 'duplicates', 'files_modified', 'json', 'name', 'replaced', 'scaffold', 'status', 'success', 'total_created', 'total_fixable', 'total_fixed', 'total_skipped', 'total_violations', 'usages', 'value', 'verdict']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/_beartype/deprecated_visitor.py
+# hypothesis_version: 6.152.4
+
+['.', '<runtime>', '?', 'AnnAssign[TypeAlias]', 'Core', 'Tests', 'cast_outside_core', 'examples', 'file', 'line', 'model_rebuild_call', 'name', 'private_attr_probe', 'probe', 'scripts', 'statement', 'symbol', 'tests', 'utf-8']

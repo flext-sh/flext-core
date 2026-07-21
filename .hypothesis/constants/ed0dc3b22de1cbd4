@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/silent_failure_ast.py
+# hypothesis_version: 6.156.6
+
+['.', 'BaseException', 'Exception', 'Result', '_', '_result', 'contextlib.suppress', 'fail', 'failure', 'manual', 'operation failed', 'r', 'silent-failure-guard', 'success', 'unwrap_or']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/cqrs.py
+# hypothesis_version: 6.152.1
+
+['active', 'api_key', 'archived', 'avg', 'batch', 'bearer', 'bzip2', 'cancelled', 'command', 'compact', 'compensating', 'complete', 'completed', 'count', 'counter', 'create', 'degraded', 'delete', 'dict', 'disk', 'distributed', 'error', 'errors', 'event', 'execute', 'failed', 'failure', 'full', 'gauge', 'generic_command', 'get', 'gzip', 'healthy', 'histogram', 'idle', 'inactive', 'json', 'jwt', 'list', 'lz4', 'max', 'memory', 'merge_deep', 'min', 'minimal', 'msgpack', 'none', 'operation', 'parallel', 'partial', 'pending', 'performance', 'permanent', 'prepare', 'processing', 'query', 'replace', 'running', 'saga', 'sent', 'sequential', 'serialization', 'stopped', 'stream', 'success', 'sum', 'summary', 'temporary', 'throughput', 'toml', 'unhealthy', 'unknown', 'update', 'validate', 'validation', 'warn', 'yaml']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/rope_analysis.py
+# hypothesis_version: 6.156.1
+
+[' import ', '"', '#', "'", '(', '([{', ')', ')]}', '*', '**', ',', '.', '/home/marlonsc/flext', ':', '=', 'AnnAssign', 'Assign', 'AsyncFunctionDef', 'Call', 'ClassDef', 'Constant', 'Constants', 'Dict', 'Expr', 'FunctionDef', 'Import', 'ImportFrom', 'List', 'MappingProxyType', 'Name', 'Set', 'Str', 'Tuple', '[', '[{(', '\\', ']', '_', '__', '_fields', '_name', 'args', 'as', 'asname', 'attr', 'bases', 'body', 'col_offset', 'decorators', 'elts', 'end_col_offset', 'end_lineno', 'from ', 'func', 'get_name', 'get_type', 'id', 'imports', 'install_lazy_exports', 'keys', 'lazy_imports', 'level', 'lineno', 'main', 'merge_lazy_imports', 'module', 'module_name', 'name', 'names', 'public_exports', 'real_path', 'root', 's', 'target', 'targets', 'value', 'values', '{', '}']

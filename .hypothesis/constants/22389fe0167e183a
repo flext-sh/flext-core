@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/workspace/migrator.py
+# hypothesis_version: 6.151.9
+
+['Makefile not found', 'flext-core', 'no changes needed', 'python/workspace']

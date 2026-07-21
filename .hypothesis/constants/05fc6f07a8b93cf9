@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/dispatcher.py
+# hypothesis_version: 6.151.9
+
+['Handler failed', 'Registered handler', 'message_type']

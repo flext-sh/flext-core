@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_typings/__init__.py
+# hypothesis_version: 6.151.12
+
+['.annotateds', '.base', '.containers', '.core', '.project_metadata', '.pydantic', '.services', '.typeadapters', 'ContainerOrModel', 'FlextTypesAnnotateds', 'FlextTypesCore', 'FlextTypesPydantic', 'FlextTypesServices', 'FlextTypingBase']

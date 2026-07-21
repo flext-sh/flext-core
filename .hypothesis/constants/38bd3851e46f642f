@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/base.py
+# hypothesis_version: 6.152.4
+
+['1.0.0', '1.2.3', 'Attributes', 'Created At', 'Created By', 'FlextModelsBase', 'Metadata Version', 'Modified By', 'Tags', 'Unique identifier', 'Updated At', 'after', 'api', 'billing', 'created_at', 'critical', 'forbid', 'high', 'ignore', 'json', 'max_attempts', 'priority', 'source', 'system', 'updated_at', 'user-123', 'user-456']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_utilities/matching.py
+# hypothesis_version: 6.151.11
+
+['cannot open', 'does not exist', 'errno 2', 'no such file', 'not found']

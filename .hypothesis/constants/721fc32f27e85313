@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_utilities/files.py
+# hypothesis_version: 6.151.11
+
+['.yaml', '.yml', 'rb', 'w']

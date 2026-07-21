@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/reporting.py
+# hypothesis_version: 6.151.10
+
+[' Total | Status |', '# FLEXT Check Report', '## Summary', '-------|--------|', '------|', '```', '| Project |', '|---------|']

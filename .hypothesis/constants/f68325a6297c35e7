@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/services/pipeline.py
+# hypothesis_version: 6.151.9
+
+['_config', '_pipeline', 'none', 'normalize_attrs', 'normalize_dn', 'preserve', 'server_transform']

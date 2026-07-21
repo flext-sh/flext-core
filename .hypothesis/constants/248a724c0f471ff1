@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/codegen/census.py
+# hypothesis_version: 6.151.9
+
+['*.py', 'NS-003', 'NS-004', 'NS-005', 'Use run() directly', 'constants.py', 'json', 'line', 'message', 'module', 'rule']

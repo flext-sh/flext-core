@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/docs/_auditor_helpers.py
+# hypothesis_version: 6.151.10
+
+[',', 'all', 'audit-report.md', 'audit-summary.json', 'forbidden-terms', 'issue_type', 'issues', 'links', 'max_issues_by_scope', 'max_issues_default', 'parse_audit_gate', 'report_dir', 'resolve_checks', 'severity', 'write_audit_reports']

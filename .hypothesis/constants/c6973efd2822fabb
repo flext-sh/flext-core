@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/_utilities_pydantic_analysis.py
+# hypothesis_version: 6.151.10
+
+['ArbitraryTypesModel', 'BaseModel', 'ContractModel', 'FrozenModel', 'Mapping[', 'MutableMapping[', 'RootModel', 'TypedDict', '_typings', 'assignment', 'case', 'class', 'config', 'dict', 'entry', 'fixture', 'get_string_module', 'line', 'metadata', 'model', 'payload', 'schema', 'typings.py']

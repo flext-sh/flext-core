@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/examples/_shared_parts/shared_part_02.py
+# hypothesis_version: 6.156.6
+
+['.actual', '.expected', 'ExamplesFlextShared', 'int | str', 'utf-8']

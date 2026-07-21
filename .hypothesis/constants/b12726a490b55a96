@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/servers/openldap1.py
+# hypothesis_version: 6.151.12
+
+[389, 636, 1000, ' $ ', ' )', ' SINGLE-VALUE', '"', '*', ',', 'STRUCTURAL', '^\\s*access\\s+to\\s+', '^\\s*attributetype\\s+', '^\\s*objectclass\\s+', '^to\\s+(.+?)\\s+by\\s+', 'access', 'all', 'anonymous', 'attributes', 'attributetype', 'attrs=', 'auth', 'authenticated', 'cn=settings', 'dc=', 'dn=', 'domain', 'groupofnames', 'metadata', 'none', 'objectclass', 'olc', 'openldap1', 'organizationalunit', 'original_format', 'ou=', 'person', 'raw_acl', 'rfc', 'rootdn', 'rootpw', 'self', 'suffix', 'target_dn', 'top', 'userdn']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/migrate_to_class_mro.py
+# hypothesis_version: 6.151.10
+
+['Errors:', 'Warnings:', 'all', 'lower', 'planned', 'rewrote']

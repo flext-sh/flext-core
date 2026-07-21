@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/typings.py
+# hypothesis_version: 6.151.11
+
+['FlextInfraTypes', 't']

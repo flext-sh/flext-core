@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/_enforcement_catalog_rows_parts/_parts/flextconstantsenforcementcatalogrows_part_01_b.py
+# hypothesis_version: 6.152.4
+
+['3-1-supreme-law', '4-import-law', 'ENFORCE-026', 'ENFORCE-027', 'ENFORCE-028', 'ENFORCE-029', 'ENFORCE-030', 'ENFORCE-031', 'ENFORCE-032', 'ENFORCE-033', 'ENFORCE-081', 'ENFORCE-082', 'ENFORCE-083', 'ENFORCE-084', 'HIGH', 'MEDIUM', 'flext-import-rules', 'flext-patterns', 'flext-strict-typing', 'noqa_violations', 'print_violations']

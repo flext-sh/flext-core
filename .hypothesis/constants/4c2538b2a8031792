@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/_utilities_namespace.py
+# hypothesis_version: 6.151.10
+
+[' @ ', '"""', '#!', "'''", '*', ', ', '.', './', '._', 'Protocol', 'TypeAlias', '\\n{3,}', '^#.*coding[:=]', '__init__', '__init__.py', 'dependencies', 'file:', 'flext-', 'flext-core', 'path', 'poetry', 'project', 'protocols.py', 'py.typed', 'src', 'tool', 'typings.py', 'utilities.py']

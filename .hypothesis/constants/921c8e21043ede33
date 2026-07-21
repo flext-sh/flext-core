@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/parse_smells.py
+# hypothesis_version: 6.152.4
+
+[':', '__main__', 'artifactLocation', 'combined', 'count', 'count = (\\d+)', 'file', 'locations', 'message', 'physicalLocation', 'qlty:file-complexity', 'r', 'results', 'rule', 'ruleId', 'runs', 'src/flext_core/', 'symbol', 'text', 'unknown', 'uri', 'utf-8']

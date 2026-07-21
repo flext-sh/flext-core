@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/services/detector.py
+# hypothesis_version: 6.151.12
+
+[0.0, '389ds', 'AD', 'APACHE', 'Constants', 'DETECTION_ATTRIBUTES', 'DETECTION_PATTERN', 'DETECTION_WEIGHT', 'DS389', 'FlextLdifDetector', 'GENERIC', 'IBM_TIVOLI', 'NOVELL', 'OID', 'OPENLDAP', 'ORCLACI', 'ORCLENTRYLEVELACI', 'OUD', 'Oracle OID ACLs', 'active_directory', 'apache_directory', 'confidence', 'detect server type', 'detect_server_type', 'detected_server_type', 'ds389', 'generic', 'ibm_tivoli', 'initialized', 'is_confident', 'novell_edirectory', 'oid', 'openldap', 'openldap1', 'openldap2', 'oud', 'patterns_found', 'relaxed', 'rfc', 'samaccountname', 'scores', 'service', 'utf-8']

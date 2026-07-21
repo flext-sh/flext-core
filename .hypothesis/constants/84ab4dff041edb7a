@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/dispatcher.py
+# hypothesis_version: 6.151.9
+
+[0.0, 0.1, 1.0, 2.0, 'Temporary failure', 'current_count', 'executor_active', 'executor_workers', 'failure_count', 'failure_rate', 'failures', 'limit', 'message_type', 'open_count', 'retry_after', 'state', 'states', 'timeout', 'total_operations', 'transient', 'try again', 'window_seconds']

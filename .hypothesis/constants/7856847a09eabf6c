@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_decorators/_logging.py
+# hypothesis_version: 6.152.4
+
+[0.0, '%s_completed', '%s_started', 'correlation_id', 'duration_ms', 'error', 'error_type', 'func_module', 'function', 'operation', 'success']

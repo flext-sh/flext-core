@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_fixtures/enforcement.py
+# hypothesis_version: 6.156.6
+
+['_register', 'runtime_warning']

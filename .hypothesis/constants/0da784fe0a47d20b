@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_validator/models.py
+# hypothesis_version: 6.151.10
+
+['**/.venv/**', '**/__pycache__/**', 'Approved Exceptions', 'Exclude Patterns', 'FlextValidatorModels', 'Include Patterns', 'RULE_001', 'src/**/*.py', 'tests/**/*.py', 'vm']

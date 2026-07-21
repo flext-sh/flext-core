@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/_enforcement_catalog_rows_parts/flextconstantsenforcementcatalogrows_part_05.py
+# hypothesis_version: 6.152.4
+
+['ENFORCE-090', 'HIGH', 'flext-strict-typing', 'stub_file_violations']

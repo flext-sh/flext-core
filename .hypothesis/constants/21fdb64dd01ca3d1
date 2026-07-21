@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_typings/pipeline.py
+# hypothesis_version: 6.151.11
+
+['failed', 'ok', 'skipped']

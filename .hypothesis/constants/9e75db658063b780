@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/domains.py
+# hypothesis_version: 6.152.4
+
+['.ldif', 'FlextTestsDomains', 'td']

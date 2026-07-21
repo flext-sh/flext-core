@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/rope.py
+# hypothesis_version: 6.151.9
+
+['"""', '#', "'''", '.', '.py', '/', 'RopeFile', '_', '__rope_temp__.py', 'classmethod', 'from ', 'get_changed_contents', 'import ', 'import\\s+([\\w.]+)', 'method', 'src/', 'staticmethod']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/services/acl.py
+# hypothesis_version: 6.151.9
+
+['ACL parsing failed', 'ACL writing failed', 'FlextLdifAcl', '_server', 'add', 'compare', 'delete', 'openldap', 'openldap1', 'openldap2', 'read', 'search', 'write']

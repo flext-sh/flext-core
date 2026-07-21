@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_utilities/_yaml_roundtrip_parts/flextcliutilitiesyamlroundtrip_part_02.py
+# hypothesis_version: 6.152.4
+
+['#', 'yaml_set_anchor']

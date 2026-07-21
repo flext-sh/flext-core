@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_models/check.py
+# hypothesis_version: 6.156.6
+
+[0.0, 1024, '$schema', '%SRCROOT%', ',', '2.1.0', 'Artifact URI', 'Column number', 'Detected issues', 'Display/project name', 'Duration in seconds', 'Gate error messages', 'Gate name', 'Gate result model', 'Issue severity level', 'Line number', 'Raw tool output', 'Result locations', 'Result message', 'Rule descriptors', 'Rule identifier', 'Rule or error code', 'Run results', 'SARIF runs', 'SARIF schema URI', 'SARIF version', 'Source file path', 'Start line (1-based)', 'Tool name', 'URI base identifier', 'artifactLocation', 'before', 'check-after', 'check-only', 'driver', 'forbid', 'id', 'informationUri', 'level', 'locations', 'message', 'name', 'physicalLocation', 'plain', 'projects', 'pyright-args', 'region', 'reports-dir', 'results', 'ruff-args', 'ruleId', 'rules', 'safe-only', 'shortDescription', 'startColumn', 'startLine', 'text', 'tool', 'uri', 'uriBaseId']

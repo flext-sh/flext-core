@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/namespace.py
+# hypothesis_version: 6.151.12
+
+['FlextModelsNamespace', 'constants', 'models', 'off', 'protocols', 'types', 'utilities']

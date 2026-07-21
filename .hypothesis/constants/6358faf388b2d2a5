@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/_beartype/_class_visitor_parts/class_visitor_part_01.py
+# hypothesis_version: 6.152.4
+
+['.', 'Protocol', 'StrEnum', '[', '__qualname__', '_is_runtime_protocol', 'actual', 'expected', 'qn']

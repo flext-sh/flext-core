@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/_utilities_namespace_analysis.py
+# hypothesis_version: 6.151.11
+
+[' as ', ' import ', '#', '(', ')', ',', ':', '=', 'from ']

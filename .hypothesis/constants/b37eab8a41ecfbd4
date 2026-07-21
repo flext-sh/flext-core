@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/transformers/__unit__.py
+# hypothesis_version: 6.156.6
+
+['.base', '.cast_remover', '.census_visitors', '.class_nesting', '.class_reconstructor', '.cli_modernizer', '.compatibility_alias', '.deprecated_remover', '.future_import', '.hardcoded_version', '.import_modernizer', '.lazy_import_fixer', '.logging_modernizer', '.mro_remover', '.open_encoding', '.pattern', '.pattern_modernizer', '.pydantic_modernizer', '.smells', '.smells.base', '.symbol_propagator', '.tier0_import_fixer', '.typing_dict_attr', '.typing_dict_import', '.typing_unifier', 'FlextInfraSmellFixer', 'register_smell_fixer', 'smell_fixer_for', 'smells']

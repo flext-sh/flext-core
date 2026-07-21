@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/examples/ex_05_flext_mixins.py
+# hypothesis_version: 6.151.12
+
+['-1', '2', 'E_EX', 'Q', '__main__', 'accumulate_errors.ok', 'bad', 'container.type', 'context.type', 'demo_failure', 'demo_success', 'duration_ms', 'e1', 'e2', 'ensure_result.raw', 'fail.error', 'fail.error_code', 'failure', 'has_duration', 'hits', 'k', 'logger.type', 'metrics.available', 'metrics.value', 'ok.unwrap_or', 'operation_count', 'protocol.handler.bad', 'settings.type', 'to_dict.dict', 'to_dict.none', 'traverse.collect', 'traverse.fail_fast', 'traverse.ok', 'v', 'x', 'y', '{}']

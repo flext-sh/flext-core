@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/rope_runtime_refactors.py
+# hypothesis_version: 6.156.6
+
+['Rename', 'Worder', 'create_finder', 'create_move', 'get_changes', 'get_primary_at', 'get_primary_range', 'rope.base.worder', 'rope.refactor.move', 'rope.refactor.rename']

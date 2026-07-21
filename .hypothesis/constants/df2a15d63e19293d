@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/shared.py
+# hypothesis_version: 6.151.12
+
+['389directory', '389ds', 'FlextLdifShared', 'active_directory', 'activedirectory', 'apache_directory', 'apachedirectory', 'apacheds', 'edirectory', 'ibm_tivoli', 'ibmtivoli', 'novell_edirectory', 'novelledirectory', 'openldap', 'openldap1', 'openldap2', 'oracle_oid', 'oracle_oud', 'oracleoid', 'oracleoud', 'tivoli']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/docs.py
+# hypothesis_version: 6.152.4
+
+['# ', '###', '*.md', '-', '- No sections found', '-+', '.', '[^a-z0-9\\s-]', '\\s+', 'lower', 'root', 'scope error']

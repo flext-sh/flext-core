@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_fixtures/_enforcement_parts/config.py
+# hypothesis_version: 6.156.6
+
+[',', '--flext-enforce', '--no-flext-enforce', 'SessionConfig', 'active_rules', 'category', 'default', 'error', 'filterwarnings', 'flext-enforce', 'pytest_addoption', 'pytest_configure', 'resolve_config', 'runtime_warning', 'split_csv', 'store', 'store_true']

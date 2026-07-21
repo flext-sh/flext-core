@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/_enforcement_collect_parts/enforcement_collect_part_02.py
+# hypothesis_version: 6.152.4
+
+['.', '[', '_', '__module__', 'class_prefix', 'cross_protocol', 'cross_strenum', 'nested_mro', 'no_accessor_methods']

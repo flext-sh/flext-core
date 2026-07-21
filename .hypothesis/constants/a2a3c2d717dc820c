@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/services/categorization.py
+# hypothesis_version: 6.151.9
+
+[100, ', ', 'BASE_DN_FILTER', 'Category entries', 'No category match', 'Sample rejected DNs', 'Validated entries', '_base_dn', '_rejection_tracker', '_server_registry', '_server_type', 'attr:', 'attributes', 'attributetypes', 'base_dn_filter', 'dn', 'invalid_dn', 'invalid_dn_rfc4514', 'ldapsyntaxes', 'matchingrules', 'objectclasses', 'rfc']

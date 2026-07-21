@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/servers/_base/acl.py
+# hypothesis_version: 6.151.12
+
+['Parse failed', 'Write failed', '_parent_quirk', 'aci', 'acl', 'acl "{0}"', 'aclEntry', 'aclRights', 'acl\\\\s+"[^"]*"', 'data', 'olcAccess', 'operation', 'original_format', 'parse', 'rfc', 'write']

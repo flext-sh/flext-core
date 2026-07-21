@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_utilities/files.py
+# hypothesis_version: 6.151.11
+
+[1024, '.tmp', 'ensure_dir failed', 'rb', 'w']

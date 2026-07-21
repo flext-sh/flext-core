@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/_beartype/attr_visitor.py
+# hypothesis_version: 6.156.6
+
+['.', '._constants', '._constants.', '<class>', 'ADAPTER_', 'ClassVar', 'ClassVar[', 'TypeAdapter', '_', '__module__', '__qualname__', '__value__', '_name', 'class_name', 'full_module', 'implicit', 'kind', 'module', 'name', 'project', 'suggested_name', 'suggested_target', 'upper_name']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/conftest.py
+# hypothesis_version: 6.152.4
+
+['__file__', '__init__.py', 'examples', 'tests']

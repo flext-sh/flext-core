@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/_models/settings.py
+# hypothesis_version: 6.151.12
+
+[100, 300, 100000, '*', ',', '3.0', 'ACI attribute prefix', 'ACI line prefix', 'ACI version', 'ACI version string', 'ACL name', 'Component name', 'Current value', 'Discriminator', 'Entry model to write', 'Entry writing logic', 'Include LDIF header', 'Item name for errors', 'Line break positions', 'Optional DN writing', 'Original ACL model', 'Request identifier', 'Session identifier', 'Sort ACL attributes', 'Sort strategy', 'Source schema quirk', 'Source server type', 'Target schema quirk', 'Target scope values', 'Target server type', 'Trace identifier', 'Traversal order', 'User identifier', 'aci:', 'aci: ', 'add', 'all', 'any', 'attribute', 'comment', 'depth-first', 'entries', 'hide', 'hierarchy', 'lower', 'objectClass', 'objectclass', 'unnamed-acl']

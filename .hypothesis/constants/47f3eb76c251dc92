@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/settings.py
+# hypothesis_version: 6.151.9
+
+[1.0, 30.0, 60.0, 256, 1000, '123', 'Actual type class', 'Actual type name', 'Data Items', 'Error type name', 'Execution Context', 'Expected type class', 'Expected type name', 'FlextModelsConfig', 'Function module', 'Function name', 'Function to execute', 'Handler Name', 'Input Data', 'Metadata for error', 'MiddlewareConfig', 'Operation name', 'Operation start time', 'Processing Context', 'Processing Data', 'RateLimiterState', '_exception', 'after', 'before', 'context', 'corr-123', 'corr-abc', 'correlation_id', 'custom_validators', 'description', 'forbid', 'item-a', 'item-b', 'max_attempts', 'max_retries', 'ord-1001', 'order_id', 'pending', 'process_order', 'record_id', 'status', 'sync_inventory', 'title']

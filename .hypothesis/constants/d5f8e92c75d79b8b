@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/_utilities_pydantic.py
+# hypothesis_version: 6.151.10
+
+['.git', '.mypy_cache', '.py', '.pytest_cache', '.ruff_cache', '.venv', '/_models.py', '/models.py', '/models/', '__init__.py', '__pycache__', '_models.py', 'created_model_files', 'examples', 'moved_aliases', 'moved_classes', 'normalized_files', 'parse_io_errors', 'parse_syntax_errors', 'scanned_files', 'scripts', 'settings.py', 'src', 'tests', 'touched_files', 'typed_dict', 'typed_dict_factory']

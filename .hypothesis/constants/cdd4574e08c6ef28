@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-web/src/flext_web/typings.py
+# hypothesis_version: 6.151.12
+
+[0.0, 200, 8080, 'App name', 'App status', 'Debug', 'Environment', 'FlextWebTypes', 'URL is required', 'Version', 'Web.Entity', 'Web.Message', 'Web.Request', 'Web.Response', 'localhost', 't']

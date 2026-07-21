@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_settings.py
+# hypothesis_version: 6.156.6
+
+['-', '.', '..', '.cache', '.config', '.env', '.local', 'APPDATA', 'AppData', 'Application Support', 'Caches', 'Enable debug mode', 'Enable trace mode', 'FLEXT_', 'FLEXT_APP_NAMESPACE', 'FLEXT_ENV_FILE', 'FlextSettings', 'INFO', 'LOCALAPPDATA', 'Library', 'Local', 'Log level', 'Roaming', 'UTC', 'XDG_CACHE_HOME', 'XDG_CONFIG_HOME', 'XDG_DATA_HOME', 'XDG_RUNTIME_DIR', 'XDG_STATE_HOME', '_', '__', '_instance', 'after', 'cache', 'config', 'darwin', 'data', 'env_prefix', 'flext', 'ignore', 'python', 'run', 'settings', 'share', 'state', 'utf-8', 'win32', 'work']

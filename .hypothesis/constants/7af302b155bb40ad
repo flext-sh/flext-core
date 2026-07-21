@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_models/xlsx_cells.py
+# hypothesis_version: 6.156.6
+
+['Cell boolean.', 'Cell calendar date.', 'Cell decimal value.', 'Cell integer.', 'Cell text.', 'Destination address.', 'Excel formula.', 'Named visual style.', 'One-based row index.', 'Value kind.', '^=', 'blank', 'boolean', 'date', 'datetime', 'decimal', 'formula', 'integer', 'kind', 'text']

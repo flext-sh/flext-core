@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_utilities/output.py
+# hypothesis_version: 6.151.12
+
+[0.0, '.reports', '=', '[FAIL]', '[OK]', 'elapsed', 'error_count', 'errors', 'failed', 'log_path', 'max_show', 'project', 'skipped', 'success', 'summary', 'total', 'unknown', 'unknown error', 'verb', 'workspace']

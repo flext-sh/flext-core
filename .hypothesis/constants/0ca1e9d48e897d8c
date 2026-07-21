@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/services/_prompts_parts/flextcliprompts_support.py
+# hypothesis_version: 6.152.4
+
+['Prompting again', '_print_message', 'confirm', 'critical']

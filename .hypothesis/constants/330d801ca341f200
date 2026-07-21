@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/transformers/typing_annotation_replacer.py
+# hypothesis_version: 6.151.10
+
+['t.ContainerValue', 't.NormalizedValue']

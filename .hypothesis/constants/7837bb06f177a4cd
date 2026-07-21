@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/parsing.py
+# hypothesis_version: 6.152.1
+
+[' as ', '"""', '#', "'''", '(', ')', '*', ',', '-', '.', '/', ':', '=', '[', '\\', '__', 'from __future__', 'main', 'module', 'symbol_mapping', 'value']

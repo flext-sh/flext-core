@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/_utilities/fluent.py
+# hypothesis_version: 6.151.9
+
+['1/0', '=', 'DnOps', 'Entry has no DN', 'EntryOps', 'TRUE/FALSE', '_dn', '_entry', '_error', 'all', 'any', 'attributes', 'extensions', 'lower', 'metadata', 'true/false', 'upper', 'value', 'yes/no']

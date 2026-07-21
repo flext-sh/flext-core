@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/_detectors/compatibility_alias_detector.py
+# hypothesis_version: 6.151.9
+
+['.py', '__all__', '__version__', '__version_info__', 'utf-8']

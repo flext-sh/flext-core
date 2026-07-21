@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/census.py
+# hypothesis_version: 6.151.10
+
+[500, 'Metadata gathering', 'aggregate', 'census', 'libcst', 'metadata', 'report', 'scan-files']

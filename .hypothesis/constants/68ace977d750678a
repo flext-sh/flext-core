@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/mro_migration_scanner.py
+# hypothesis_version: 6.151.9
+
+['Models', 'NewType', 'ParamSpec', 'Protocol', 'Protocols', 'TypeAlias', 'TypeVar', 'TypeVarTuple', 'Types', 'Utilities', '^_?[A-Z][A-Z0-9_]*$', 'c', 'constant', 'constants', 'm', 'models', 'p', 'protocol', 'protocols', 't', 'typealias', 'typevar', 'typings', 'u', 'utilities']

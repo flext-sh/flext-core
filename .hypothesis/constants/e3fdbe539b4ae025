@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/rules/symbol_propagation.py
+# hypothesis_version: 6.151.9
+
+['"', "'", 'False', 'None', 'True', 'false', 'module_renames', 'none', 'signature_migrations', 'target_modules', 'true']

@@ -1,0 +1,26 @@
+[project]
+name = "flext-core"
+languages = ["python"]
+
+[index]
+ignore = [
+    "node_modules",
+    "dist",
+    "build",
+    ".git",
+]
+include_tests = true
+vendor_patterns = [
+    "venv",
+    ".venv",
+    "site-packages",
+    "__pycache__",
+]
+
+[embeddings]
+provider = "local"
+model = "nomic-embed-code"
+
+[output]
+max_refs = 20
+max_impact_depth = 3

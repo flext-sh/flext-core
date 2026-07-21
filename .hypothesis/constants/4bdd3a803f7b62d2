@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/examples/_models/ex03.py
+# hypothesis_version: 6.151.12
+
+['Customer identifier', 'Email address', 'Numeric amount', 'Order status', 'Product identifier', 'Product name', 'Quantity ordered', 'User age in years', 'User display name', 'before', 'currency', 'currency mismatch', 'items', 'order has no items']

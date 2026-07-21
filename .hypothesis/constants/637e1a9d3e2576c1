@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/settings.py
+# hypothesis_version: 6.152.1
+
+[100, 'CRITICAL', 'DEBUG', 'ERROR', 'HS256', 'INFO', 'WARNING', '[\\x00-\\x1F\\x7F]', '_cache', '_cached_at', '_cached_value', '_ttl', 'allow', 'base64', 'development', 'float', 'forbid', 'hex', 'ignore', 'iso8601', 'join', 'local', 'normalize', 'production', 'staging', 'testing', 'to_str', 'to_str_list', 'utf8']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_utilities/pipeline.py
+# hypothesis_version: 6.151.11
+
+[0.0, 1000, 'pipeline_complete', 'skip_if', 'stage_exception', 'stage_failed', 'stage_retry', 'stage_skipped']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_models/xlsx_archive.py
+# hypothesis_version: 6.156.6
+
+[2048, 67108864, 268435456, 'Inspection policy.', 'Policy violations.', 'Violation evidence.', 'Violation kind.']

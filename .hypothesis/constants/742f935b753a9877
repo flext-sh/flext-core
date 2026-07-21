@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_models/deps_tool_config.py
+# hypothesis_version: 6.151.10
+
+['App overrides', 'Core overrides', 'Domain overrides', 'Mypy config', 'Platform overrides', 'Pyrefly config', 'Pyright config', 'Pytest config', 'Ruff config', 'Tomlsort config', 'Tools', 'Yamlfix config', 'fail-under', 'pydantic-mypy', 'show-missing', 'skip-covered', 'standard-addopts', 'standard-markers']

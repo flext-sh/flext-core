@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/configuration.py
+# hypothesis_version: 6.151.9
+
+['FLEXT_LOG_LEVEL', '__dict__', 'factory', 'get', 'model_dump', 'mysql://', 'postgresql://', 'sqlite://']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/pyproject_conform.py
+# hypothesis_version: 6.152.4
+
+[' @ ', '.', '../flext', '.flext-deps', '/flext-', ';', 'branch', 'codegen', 'flext', 'flext-', 'flext-infra', 'flext-tests', 'git', 'mypy_path', 'pythonPath', 'required-version', 'root', 'sources', 'src', 'uv', 'venv', 'venvPath', 'workspace']

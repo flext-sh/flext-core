@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/rules/class_nesting.py
+# hypothesis_version: 6.151.9
+
+['class-policy-v2.yml', 'confidence_threshold', 'expected_base_chain', 'family_name', 'helper_name', 'imports_resolve', 'mro_valid', 'policy_matrix', 'postcheck_failed', 'precheck_failed', 'quality_gates', 'target_name', 'type', '|']

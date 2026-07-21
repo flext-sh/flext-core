@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-auth/src/flext_auth/providers/__init__.py
+# hypothesis_version: 6.151.12
+
+['.apikey', '.basic', '.certificate', '.jwt', '.jwt_password_hasher', '.jwt_token_generator', '.jwt_token_validator', '.kerberos', '.ldap', '.mixin', '.oauth2', '.oidc', '.rfc', '.saml', 'FlextAuthJwtProvider', 'FlextAuthRfcProvider']

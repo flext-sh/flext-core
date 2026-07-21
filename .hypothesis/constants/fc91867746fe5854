@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/examples/ex_04_flext_dispatcher.py
+# hypothesis_version: 6.156.1
+
+['FlextDispatcher', '__main__', 'alice', 'auto:fallback', 'auto_discovery', 'bob', 'constructor.protocol', 'delete_failed', 'dispatch', 'dispatcher-example', 'error_cases', 'event_publishing', 'missing', 'no-route', 'none', 'subscriber.events', 'unexpected_message', 'x']

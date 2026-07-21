@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/servers/_rfc/constants.py
+# hypothesis_version: 6.151.12
+
+[100, 127, 389, 636, 1000, '# ', '$', '.*', ': ', 'aci', 'acl', 'add', 'allows_multiple_sup', 'ascii', 'changetype: ', 'cn=schema', 'compare', 'country', 'createTimestamp', 'creatorsName', 'delete', 'dn:', 'dn: ', 'filter', 'generic', 'groupOfNames', 'groupOfUniqueNames', 'groups', 'hierarchy', 'ignore', 'inetOrgPerson', 'latin-1', 'ldap:///', 'ldap:///anyone', 'ldap:///self', 'locality', 'modifiersName', 'modifyTimestamp', 'organization', 'organizationalPerson', 'organizationalUnit', 'original_format', 'person', 'posixGroup', 'read', 'replace', 'residentialPerson', 'rfc', 'rfc_generic', 'search', 'strict', 'subschemaSubentry', 'users', 'utf-16-le', 'utf-8', 'version 3.0', 'version: ', 'write']

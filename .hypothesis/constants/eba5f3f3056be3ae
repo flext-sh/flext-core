@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/workspace/maintenance/__init__.py
+# hypothesis_version: 6.151.10
+
+['cli', 'logger', 'python_version']

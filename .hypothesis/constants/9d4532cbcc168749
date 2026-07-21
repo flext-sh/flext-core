@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/examples/ex_12_flext_registry.py
+# hypothesis_version: 6.151.12
+
+[100, 200, '__main__', '__name__', 'bindings_and_plugins', 'decorated', 'dispatch.a.success', 'dispatch.a.value', 'dispatch.b.success', 'dispatch.b.value', 'dispatcher.protocol', 'enabled', 'ensure_result.raw', 'execute.success', 'fetch_plugin.missing', 'fetch_plugin.ok', 'generate_id.len', 'generate_prefixed_id', 'handler_id', 'message_type', 'mixin.fail.error', 'mixin.ok.unwrap_or', 'owner', 'register.service.bad', 'register_plugin.dup', 'register_plugin.ok', 'summary.fail.failure', 'summary.fail.success', 'summary.ok.failure', 'summary.ok.success', 'summary_and_mixins', 'team', 'to_dict.basemodel', 'to_dict.mapping', 'to_dict.none', 'unregister_plugin.ok', 'version']

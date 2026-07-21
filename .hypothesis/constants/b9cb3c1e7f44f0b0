@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/rule_definition_validator.py
+# hypothesis_version: 6.151.9
+
+['signature_migrations']

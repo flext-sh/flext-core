@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/_utilities/filters.py
+# hypothesis_version: 6.151.9
+
+['AndFilter', 'ByAttrValueFilter', 'ByAttrsFilter', 'ByDnFilter', 'ByDnUnderBaseFilter', 'ByObjectClassFilter', 'CustomFilter', 'ExcludeAttrsFilter', 'Filter', 'NotFilter', 'OrFilter', '_attr', '_attrs', '_base_dn', '_case_insensitive', '_classes', '_inner', '_is_schema', '_left', '_mode', '_pattern', '_predicate', '_right', 'all', 'any', 'attributes', 'm.Ldif.Entry', 'objectclass', 'value']

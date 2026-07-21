@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/output.py
+# hypothesis_version: 6.151.11
+
+['=', 'DEBUG', 'ERROR', 'INFO', 'WARN', '[FAIL]', '[OK]', 'failed', '═']

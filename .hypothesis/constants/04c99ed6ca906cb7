@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/patterns.py
+# hypothesis_version: 6.151.9
+
+['^#{1,6}\\s+(.+?)\\s*$', '`[^`]*`', 'flext_']

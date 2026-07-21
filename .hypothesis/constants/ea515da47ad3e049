@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/_detectors/namespace_facade_scanner.py
+# hypothesis_version: 6.151.9
+
+['-', '.', 'Flext', '_', 'flext-', 'flext-core']

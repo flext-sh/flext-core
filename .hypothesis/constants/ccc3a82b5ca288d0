@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/rope_analysis.py
+# hypothesis_version: 6.151.10
+
+[':\\s*(.+?)\\s*=', '=\\s*(.+)$', 'Final', '_', 'assignment', 'class', 'classmethod', 'foo.py', 'function', 'instance', 'method', 'static', 'staticmethod']

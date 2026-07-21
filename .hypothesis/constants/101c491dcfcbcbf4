@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_models/xlsx_styles.py
+# hypothesis_version: 6.156.6
+
+[180, 'Border style.', 'Excel number format.', 'Fill specification.', 'Font specification.', 'General', 'Named style key.', 'Optional top border.', 'Shrink cell text.', 'Text indent.', 'Text reading order.', 'Text rotation.', 'Vertical alignment.', 'Wrap cell text.', 'bottom', 'center', 'centerContinuous', 'dashDot', 'dashDotDot', 'dashed', 'distributed', 'dotted', 'double', 'fill', 'general', 'hair', 'justify', 'left', 'medium', 'mediumDashDot', 'mediumDashDotDot', 'mediumDashed', 'right', 'slantDashDot', 'thick', 'thin', 'top']

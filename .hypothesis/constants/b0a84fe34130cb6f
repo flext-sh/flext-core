@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/_utilities/oid.py
+# hypothesis_version: 6.151.9
+
+[100, 200, '(', '.', '\\(\\s*([\\d.]+)', '^[0-2](\\.[0-9]+)*$', 'ad', 'ds389', 'novell', 'oid', 'openldap', 'tivoli']

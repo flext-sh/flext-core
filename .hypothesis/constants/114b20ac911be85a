@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/codegen/py_typed.py
+# hypothesis_version: 6.151.10
+
+['*', '.', '.venv', '/*', 'apply', 'check', 'node_modules', 'py.typed', 'vendor']

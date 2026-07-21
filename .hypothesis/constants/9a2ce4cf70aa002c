@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_constants/detectors.py
+# hypothesis_version: 6.156.6
+
+['__init__.py', 'beartype', 'contextlib.suppress']

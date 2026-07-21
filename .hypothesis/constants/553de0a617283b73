@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_utilities/framework.py
+# hypothesis_version: 6.156.6
+
+['_app', '_command', '_name']

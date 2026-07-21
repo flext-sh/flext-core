@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/_models/domain_schema.py
+# hypothesis_version: 6.151.12
+
+['Attribute OID', 'Attribute name', 'OID cannot be empty', 'Object class OID', 'Object class name', 'STRUCTURAL', '^\\d+(\\.\\d+)*$', 'oid', 'quirk_type', 'string']

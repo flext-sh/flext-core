@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-api/src/flext_api/models.py
+# hypothesis_version: 6.151.12
+
+[0.0, 1.0, 2.0, 500, 1000, 'CONNECT', 'Canonical event type', 'DELETE', 'Dictionary value', 'Failed cache reads', 'FlextApiModels', 'Form data', 'GET', 'HEAD', 'HTTP headers', 'HTTP method', 'HTTP method for SSE', 'HTTP request headers', 'Integer value', 'JSON body', 'JSON request body', 'Number of cache hits', 'OPTIONS', 'PATCH', 'POST', 'PUT', 'Query parameters', 'Raw content body', 'Request URL', 'Request body', 'Request timeout', 'String value', 'TRACE', 'X-Webhook-Signature', 'delivered', 'flext', 'flext_api', 'forbid', 'http://', 'https://', 'm', 'memory', 'method', 'sha256', 'text', 'url']

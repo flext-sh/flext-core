@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/collections.py
+# hypothesis_version: 6.151.9
+
+['Regex flags', 'Regex pattern', 'Replacement string', 'forbid']

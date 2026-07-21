@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_constants/errors.py
+# hypothesis_version: 6.152.1
+
+['Input stream ended', 'Invalid command name', 'No choices provided', 'Token file is empty', 'ensure_dir failed', 'ensure_dir: {error}']

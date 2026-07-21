@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_utilities/workspace_cleanup.py
+# hypothesis_version: 6.156.6
+
+[b'\x00', '\x00', '*', ', ', '--', '--literal-pathspecs', '--no-index', '--porcelain=v1', '--show-toplevel', '--stdin', '-z', '.', '..', 'check-ignore', 'directory', 'file', 'git ignore check', 'git root discovery', 'git status check', 'ls-files', 'rev-parse', 'status', 'symlink', 'utf-8']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_validator/settings.py
+# hypothesis_version: 6.152.4
+
+['(global)', 'CONFIG-001', 'CONFIG-003', 'CONFIG-004', 'CONFIG-005', 'ignore_errors', 'ignore_errors = true', 'module', 'mypy', 'overrides', 'pyproject.toml', 'pyright', 'reportPrivateUsage', 'tool', 'unknown', 'warn_return_any']

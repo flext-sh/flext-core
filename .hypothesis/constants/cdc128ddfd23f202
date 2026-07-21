@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/_enforcement/_sources.py
+# hypothesis_version: 6.152.4
+
+['ast_grep', 'beartype', 'flext_infra_detector', 'ruff', 'runtime_warning', 'skill_pointer']

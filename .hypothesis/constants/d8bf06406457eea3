@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/configuration.py
+# hypothesis_version: 6.151.9
+
+['FLEXT_LOG_LEVEL', 'Registration failed', 'UnknownClass', 'UnknownModel', '__', '__contains__', '__dict__', '__name__', 'case_sensitive', 'env_file', 'env_nested_delimiter', 'env_prefix', 'extra', 'factory', 'get', 'get_global', 'model_config', 'model_dump', 'model_fields', 'mysql://', 'postgresql://', 'sqlite://', 'validate_default']

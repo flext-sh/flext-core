@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/detectors/manual_protocol_detector.py
+# hypothesis_version: 6.151.9
+
+['Protocol', 'name', 'suggestion']

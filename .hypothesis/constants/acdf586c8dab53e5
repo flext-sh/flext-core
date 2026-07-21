@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_models/base.py
+# hypothesis_version: 6.151.11
+
+['Execution mode used', 'Failed items', 'Skipped items', 'Successful items', 'Total project errors']

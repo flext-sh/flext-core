@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/_rope_core_pymodule.py
+# hypothesis_version: 6.156.6
+
+['\\b[A-Za-z_]\\w*\\b']

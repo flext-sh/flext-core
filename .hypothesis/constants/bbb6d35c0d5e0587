@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/iteration.py
+# hypothesis_version: 6.152.4
+
+[' -> ', ' @ ', '!=', '*', '*.go', '-', '--porcelain', '.', '..', '/', ';', '<', '<=', '==', '>', '>=', '[', '_', 'docs', 'enabled', 'examples', 'flext', 'git', 'head', 'include_dynamic_dirs', 'members', 'name', 'namespace', 'package', 'python', 'registry', 'scan_dirs', 'scripts', 'source', 'sources', 'src', 'tests', 'url', 'uv', 'workspace', '~=']

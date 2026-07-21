@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_utilities/yaml.py
+# hypothesis_version: 6.156.6
+
+['w', 'yaml_load_list']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/model.py
+# hypothesis_version: 6.151.12
+
+['FlextUtilitiesModel', 'T_Model', 'config', 'config_overrides', 'config_type', 'container_overrides', 'context', 'factories', 'failed_items', 'fetch_global', 'flext_core.container', 'flext_core.context', 'flext_core.settings', 'initial_context', 'resources', 'root', 'runtime_config', 'services', 'skip_reasons', 'subproject', 'warning_items', 'wire_classes', 'wire_modules', 'wire_packages']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/container.py
+# hypothesis_version: 6.151.12
+
+['FlextContainer', '__main__', '__name__', '_di_container', 'app_name', 'bootstrap context', 'bootstrap settings', 'container context', 'container settings', 'dispatcher', 'registerable service', 'scoped base context', 'service', 'subproject']

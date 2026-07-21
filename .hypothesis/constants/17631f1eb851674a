@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_utilities/badobjects.py
+# hypothesis_version: 6.151.11
+
+['Bad model_dump', '__']

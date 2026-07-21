@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/.claude/worktrees/mro-wkii-17-26-refactor/flext-core/src/flext_core/_utilities/_checker_parts/checker_part_03.py
+# hypothesis_version: 6.156.6
+
+['PydanticUndefined', '__name__', '__orig_bases__', 'args', 'command_type', 'event_type', 'origin', 'query_type']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_models/matchers.py
+# hypothesis_version: 6.156.6
+
+['Actual value found.', 'All.', 'Any.', 'Attr equals.', 'Attr rules.', 'Attrs.', 'Cleanup functions.', 'Contains.', 'Context values.', 'Deep spec.', 'Empty check.', 'Equals.', 'Error code equals.', 'Expected value.', 'First item.', 'Greater than.', 'Greater/equal.', 'Items.', 'Key-values.', 'Keys.', 'Lacks.', 'Last item.', 'Length <.', 'Length <=.', 'Length >.', 'Length >=.', 'Length spec.', 'Length.', 'Less than or equal.', 'Less than.', 'Less/equal.', 'Message.', 'Methods.', 'No keys.', 'None check.', 'Not equals.', 'Not type.', 'Paths.', 'Predicate.', 'Prefix.', 'Regex.', 'Result error.', 'Result ok.', 'Runtime type check.', 'Sort key.', 'Suffix.', 'Type.', 'Unique.', 'Values.', 'after', 'all', 'all_', 'any', 'any_', 'before', 'contains', 'cwd', 'excludes', 'has', 'is', 'is_', 'lacks', 'len', 'length', 'not', 'not_']

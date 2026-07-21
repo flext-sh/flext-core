@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/context.py
+# hypothesis_version: 6.151.9
+
+['FlextContext', 'Service not found', 'Validation failed', 'Value cannot be None', 'correlation', 'custom_fields', 'flext_global_context', 'flext_user_context', 'key', 'operations', 'statistics', 'value']

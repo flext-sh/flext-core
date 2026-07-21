@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_models/workspace.py
+# hypothesis_version: 6.151.12
+
+['Applied changes', 'Migration errors', 'Primary package name', 'Project root path', 'Sync source path', 'Sync target path', 'Total changed files', 'platform']

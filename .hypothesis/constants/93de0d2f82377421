@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/validate/stub_chain.py
+# hypothesis_version: 6.151.9
+
+['-', '--config', '--config-file', '--no-error-summary', '.', '/', '_', '__init__.pyi', 'generated']

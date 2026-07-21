@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/_base_parts/flextmodelsbase_part_03.py
+# hypothesis_version: 6.156.6
+
+['FlextModelsBase', 'after', 'created_at', 'json', 'max_attempts', 'updated_at']

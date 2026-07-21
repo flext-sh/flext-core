@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_constants/cli.py
+# hypothesis_version: 6.152.4
+
+['--apply', '--apply-typings', '--audit', '--check', '--check-only', '--checks', '--constraint-policy', '--docstring-min', '--dry-run', '--fail-fast', '--format', '--gates', '--json-output', '--module', '--namespace', '--no-fail', '--no-pip-check', '--output', '--output-dir', '--project', '--projects', '--pyright-args', '--quiet', '--report', '--reports-dir', '--ruff-args', '--skip-check', '--skip-comments', '--typings', '--verbose', '--what', '--workspace', 'basemk', 'check', 'codegen', 'deps', 'docs', 'github', 'maintenance', 'refactor', 'release', 'validate', 'workspace']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_utilities/make_contract.py
+# hypothesis_version: 6.152.4
+
+[', ', '.py', '.sh', 'choices invalid', 'mutates_when invalid', 'verb unknown', '|']

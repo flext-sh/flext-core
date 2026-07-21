@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/workspace/__init__.py
+# hypothesis_version: 6.151.12
+
+['.cli', '.detector', '.migrator', '.orchestrator', '.project_makefile', '.rope', '.sync', '.workspace_makefile']

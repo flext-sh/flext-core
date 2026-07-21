@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_constants/check.py
+# hypothesis_version: 6.152.4
+
+['**/*_pb2*.py', '**/*_pb2_grpc*.py', 'Bandit', 'Go Vet', 'MarkdownLint', 'Mypy', 'Pyrefly', 'Pyright', 'Ruff Formatter', 'Ruff Linter', 'error', 'errors', 'format', 'generalDiagnostics', 'go', 'lint', 'markdown', 'mypy', 'note', 'pyrefly', 'pyright', 'results', 'security', 'silent-failure', 'warning']

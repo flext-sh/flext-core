@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/project_metadata.py
+# hypothesis_version: 6.151.12
+
+['Constants', 'Decorators', 'Docs', 'DocsFlext', 'Examples', 'ExamplesFlext', 'Exceptions', 'Flext', 'FlextRoot', 'Handlers', 'Mixins', 'Models', 'Protocols', 'Result', 'Scripts', 'ScriptsFlext', 'Service', 'Tests', 'TestsFlext', 'Types', 'Utilities', 'c', 'd', 'docs', 'e', 'examples', 'flext', 'flext-core', 'flext_core', 'h', 'm', 'p', 'r', 's', 'scripts', 'src', 't', 'tests', 'tool.flext.aliases', 'tool.flext.docs', 'tool.flext.namespace', 'tool.flext.project', 'u', 'x']

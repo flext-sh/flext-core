@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/rules/tier0_import_fix.py
+# hypothesis_version: 6.151.9
+
+['alias_to_submodule', 'constants.py', 'core_aliases', 'core_package', 'flext_core', 'protocols.py', 'tier0_modules', 'typings.py']

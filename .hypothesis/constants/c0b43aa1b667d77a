@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-api/src/flext_api/utilities.py
+# hypothesis_version: 6.151.12
+
+[30.0, 200, 253, 400, 1000, 65535, '1', '20', 'CONNECT', 'DELETE', 'FlextApiUtilities', 'GET', 'HEAD', 'Hostname too long', 'OPTIONS', 'PATCH', 'POST', 'PUT', 'Page must be >= 1', 'Success', 'TRACE', 'URL cannot be empty', 'body', 'code', 'data', 'default_page_size', 'error', 'has_next', 'has_prev', 'headers', 'http', 'http://', 'https', 'https://', 'json', 'max_page_size', 'message', 'method', 'next_page', 'page', 'page_size', 'pagination', 'params', 'prev_page', 'query_params', 'status', 'status_code', 'success', 'timeout', 'timestamp', 'total', 'total_pages', 'u', 'url']

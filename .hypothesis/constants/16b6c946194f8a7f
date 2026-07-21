@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_loggings_parts/flextlogger_part_02.py
+# hypothesis_version: 6.152.4
+
+['FlextLogger', 'exc_info', 'exception', 'exception logging', 'exception_message', 'exception_type', 'stack_trace']

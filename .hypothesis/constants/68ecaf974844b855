@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/deps/fix_pyrefly_config.py
+# hypothesis_version: 6.151.10
+
+['*', '--dry-run', '--verbose', 'Use run() directly', '__main__', 'items', 'main', 'matches', 'projects', 'pyrefly_config_fix', 'removed ignore', 'store_true']

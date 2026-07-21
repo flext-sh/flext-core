@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/services/commands.py
+# hypothesis_version: 6.152.4
+
+['--help', '--version', '-h', '-v', 'FlextCliCommands', 'No args', 'app_name', 'commands', 'commands_count', 'initialized', 'message', 'name', 'status']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_utilities/validation.py
+# hypothesis_version: 6.152.4
+
+['.', '; ', '<input>', '__name__', 'body', 'collect', 'fail', 'field', 'format', 'invalid value', 'loc', 'model_fields', 'msg', 'validation failed']

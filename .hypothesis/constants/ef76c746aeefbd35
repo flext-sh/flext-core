@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/settings.py
+# hypothesis_version: 6.152.4
+
+['FlextSettings', '__pydantic_private__', '_instance', 'after', 'core', 'mysql://', 'postgresql://', 'root', 'settings', 'sqlite://']

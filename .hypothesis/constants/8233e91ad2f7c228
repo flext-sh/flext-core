@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/_utilities/writer.py
+# hypothesis_version: 6.151.12
+
+['COLLECTIVE', 'NO-USER-MODIFICATION', 'SINGLE-VALUE', 'replace', 'utf-8']

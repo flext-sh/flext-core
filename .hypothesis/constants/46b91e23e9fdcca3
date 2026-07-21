@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/examples/ex_08_container_scoped.py
+# hypothesis_version: 6.152.4
+
+[1000, 'context', 'factories', 'res', 'resources', 'services', 'settings', 'wiring_and_scoped']

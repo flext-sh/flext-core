@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/generators.py
+# hypothesis_version: 6.152.1
+
+['-', 'Custom ID prefix', '_', 'batch', 'cmd', 'corr', 'correlation', 'ent', 'entity', 'evt', 'forbid', 'id', 'qry', 'saga', 'transaction', 'txn', 'ulid', 'uuid']

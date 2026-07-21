@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/examples/ex_11_flext_service.py
+# hypothesis_version: 6.156.6
+
+['__main__', 'container.type', 'context.type', 'echo:ok', 'examples', 'execute.unwrap', 'fail.error', 'fail.error.message', 'ok', 'ok.unwrap', 'payload', 'result_and_failures', 'runtime.type', 'service', 'service_core_api', 'service_info.payload', 'service_info.type', 'settings.type', 'valid.default', 'valid.override']

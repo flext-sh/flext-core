@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/detectors/mro_completeness_detector.py
+# hypothesis_version: 6.151.9
+
+['*.py', 'ParseError', '_', 'facade_class', 'family', 'missing_base']

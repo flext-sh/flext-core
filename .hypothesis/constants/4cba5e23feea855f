@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/examples/_models/ex02.py
+# hypothesis_version: 6.152.4
+
+['INVALID', 'invalid query', 'missing key', 'missing value', 'rows']

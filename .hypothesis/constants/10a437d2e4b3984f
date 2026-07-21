@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/workspace/orchestrator.py
+# hypothesis_version: 6.151.11
+
+[0.0, ',', ', ', '-C', '1', '=', 'CHECK_GATES=', 'Make verb to execute', 'NO_COLOR', 'apply_changes', 'fail_fast', 'make_arg', 'projects', 'verb', 'workspace_root']

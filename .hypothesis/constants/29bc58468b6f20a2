@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/mro_scan_source.py
+# hypothesis_version: 6.152.4
+
+['NewType', 'ParamSpec', 'Protocol', 'TypeAlias', 'TypeVar', 'TypeVarTuple', '^_?[A-Z][A-Z0-9_]*$', 'constant', 'p', 'protocol', 't', 'typealias', 'typevar']

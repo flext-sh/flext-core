@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/servers/_base/schema.py
+# hypothesis_version: 6.151.12
+
+[100, 'Parse failed', 'SUP', '_parent_quirk', 'ad', 'apache', 'attribute', 'data', 'detect_schema_type', 'ds389', 'extract_extensions', 'generic', 'ibm_tivoli', 'novell', 'objectclass', 'oid', 'openldap', 'openldap1', 'openldap2', 'operation', 'original_format', 'oud', 'parse', 'relaxed', 'rfc', 'syntax_oid_valid', 'write']

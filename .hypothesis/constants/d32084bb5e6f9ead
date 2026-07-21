@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/infrastructure.py
+# hypothesis_version: 6.152.4
+
+[100, 500, 5000, 'FlextHandlers', 'application', 'command', 'command_bus', 'correlation_id', 'duration_seconds', 'end_time', 'exponential', 'global', 'h', 'linear', 'logger', 'operation', 'operation_id', 'operation_metadata', 'operation_name', 'operation_start_time', 'query', 'request', 'request_id', 'request_timestamp', 'service_module', 'service_name', 'service_version', 'session', 'sqlite:///:memory:', 'start_time', 'transaction', 'user', 'user_id']

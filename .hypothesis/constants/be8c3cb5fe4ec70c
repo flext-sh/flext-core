@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/_models_typing_census.py
+# hypothesis_version: 6.151.9
+
+['Column offset', 'Files scanned', 'Line number', 'Source file path', 'Total models scanned']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/codegen_lazy_aliases.py
+# hypothesis_version: 6.151.10
+
+['*', '.', '._', 'FlextDecorators', 'FlextExceptions', 'FlextHandlers', 'FlextMixins', 'FlextResult', 'FlextService', 'Service', 'ServiceBase', 'Types', 'api', 'base', 'd', 'e', 'flext_core.handlers', 'flext_core.mixins', 'flext_core.result', 'flext_core.service', 'h', 'r', 's', 'service', 'typings', 'x']

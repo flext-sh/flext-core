@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/scanner.py
+# hypothesis_version: 6.151.10
+
+[0.02, 0.99, '--json', '--lang', '--pattern', '_', '__', 'ast-grep failed', 'class $NAME', 'classes_scanned', 'confidence_counts', 'discovery failed', 'files_scanned', 'high', 'medium', 'required_targets', 'rule', 'sg']

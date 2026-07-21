@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_utilities/xlsx_style_builders.py
+# hypothesis_version: 6.156.6
+
+['indexed', 'pattern', 'rgb', 'theme']

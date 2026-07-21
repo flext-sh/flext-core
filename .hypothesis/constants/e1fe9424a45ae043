@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_models/gates.py
+# hypothesis_version: 6.151.10
+
+['forbid', 'workspace']

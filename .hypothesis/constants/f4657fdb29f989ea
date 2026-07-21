@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/collection.py
+# hypothesis_version: 6.151.12
+
+['Unknown error', 'append', 'deep', 'fail', 'filter_both', 'filter_empty', 'filter_none', 'override', 'replace', 'skip']

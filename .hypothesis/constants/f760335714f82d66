@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/toml_parse.py
+# hypothesis_version: 6.151.10
+
+['-', '@', '_', '__pycache__', 'dependency-groups', 'flext-', 'python']

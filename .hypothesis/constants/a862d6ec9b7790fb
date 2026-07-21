@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_models/config.py
+# hypothesis_version: 6.152.4
+
+[2025, 'Author display name', 'Author email', 'Blocking explanation', 'Canonical owner', 'Catalog key', 'Copyright year', 'Distribution name', 'Exact Python version', 'Exact uv version', 'Exclusion rationale', 'GitHub organization', 'Import package name', 'Manifest version', 'Project description', 'Project homepage', 'Project version', 'Provider branch', 'Provider key', 'Public Make verb', 'Required Git branch', 'SPDX license id', 'Workspace name', 'forbid']

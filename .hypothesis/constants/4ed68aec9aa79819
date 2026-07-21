@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_utilities/toml.py
+# hypothesis_version: 6.152.1
+
+['--config', '.', '.taplo.toml', 'format', 'pyproject.toml', 'taplo', 'tool']

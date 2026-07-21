@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/_enforcement_parts/flextconstantsenforcement_part_08.py
+# hypothesis_version: 6.152.4
+
+['--fix', 'Dict', 'ENFORCE-008', 'ENFORCE-018', 'ENFORCE-023', 'ENFORCE-025', 'ENFORCE-030', 'ENFORCE-031', 'ENFORCE-032', 'ENFORCE-056', 'ENFORCE-063', 'ENFORCE-064', 'ENFORCE-066', 'args', 'canonicalize_imports', 'dict', 'gate', 'layer', 'lint', 'manual', 'mapping', 'rope', 'smell_identical_code', 'smell_similar_code', 'targets', 'transformer', 'typing.Dict', 'typing_unifier']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/examples/_models/ex01.py
+# hypothesis_version: 6.156.6
+
+['Operation type', 'Person age in years', 'Person name', 'User display name', 'User email address', 'demonstration']

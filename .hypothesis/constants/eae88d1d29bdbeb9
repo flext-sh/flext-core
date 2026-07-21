@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/docs_audit.py
+# hypothesis_version: 6.152.4
+
+['#', '# Docs Audit Report', ',', '.md', '/', '<', '>', '?', '```', 'audit', 'broken_link', 'data:', 'high', 'http', 'http://', 'https://', 'lower', 'mailto:', 'medium', 'stale_symbol', 'stale_symbols', 'tel:', '|---|---|---|---|']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/servers/relaxed.py
+# hypothesis_version: 6.151.12
+
+[200, '#', '$', '*', ':', ': ', 'DN cannot be empty', 'No DN found in entry', "\\bDESC\\s+'([^']+)'\\b", 'aci', 'acl: ', 'all', 'attribute_metadata', 'attributes', 'desc', 'dn', 'dn: ', 'extensions', 'kind', 'lenient', 'may', 'metadata', 'must', 'name', 'objectClass', 'objectclass', 'oid', 'original_format', 'permissions', 'quirk_type', 'raw_acl', 'raw_line', 'relaxed', 'relaxed_acl', 'relaxed_mode', 'replace', 'rfc', 'rfc_generic', 'schema_source_server', 'server_type', 'subject', 'subject_type', 'subject_value', 'sup', 'target', 'target_dn', 'utf-8', 'value', 'version:']

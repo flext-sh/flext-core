@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/_beartype/module_visitor.py
+# hypothesis_version: 6.152.4
+
+['#', '.', '_', '__init__.py', '__main__.py', '__qualname__', 'alias', 'cap', 'conftest.py', 'count', 'file', 'flext_', 'loc', 'target']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/beartype_typingext_patch.py
+# hypothesis_version: 6.152.4
+
+['HintPep695TypeAlias', '__module__', 'beartype']

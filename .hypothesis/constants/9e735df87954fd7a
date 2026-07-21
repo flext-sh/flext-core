@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_models/worktree.py
+# hypothesis_version: 6.156.6
+
+['Canonical tool name', 'Detected error count', 'forbid']

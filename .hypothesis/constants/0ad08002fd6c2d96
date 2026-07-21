@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/transformers/nested_class_propagation.py
+# hypothesis_version: 6.151.9
+
+['.', 'propagate_imports']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/codegen/_codegen_coercion.py
+# hypothesis_version: 6.151.9
+
+['duplicate_groups', 'duplicates', 'failed', 'layer_violations', 'ns001_violations', 'passed', 'projects', 'total', 'total_violations', 'totals']

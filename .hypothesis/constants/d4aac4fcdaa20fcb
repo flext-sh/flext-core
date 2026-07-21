@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/docs_scope.py
+# hypothesis_version: 6.152.4
+
+[', ', 'README.md', 'cmd', 'dependencies', 'discovery failed', 'docs/index.md', 'domain', 'enabled', 'exclude_docs', 'exclude_roots', 'infra', 'integration', 'mkdocs.yml', 'name', 'project', 'project_class', 'python/flext', 'scope', 'test']

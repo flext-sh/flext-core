@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_constants/_validator_parts/validator_part_03.py
+# hypothesis_version: 6.152.4
+
+['**/*.py', '**/*.pyc', '**/.git/**', '**/.venv/**', '**/__pycache__/**', '**/build/**', '**/dist/**', '**/htmlcov/**', '**/venv/**', 'AGENTS.md', 'AsyncMock', 'Dict', 'FrozenSet', 'Generic', 'List', 'MagicMock', 'Mock', 'Optional', 'ParamSpec', 'PropertyMock', 'Set', 'Tuple', 'TypeAlias', 'TypeAliasType', 'TypeGuard', 'TypeVar', 'Union', '_[^/]+/__init__\\.py$', '__init__\\.py$', 'bypass', 'constants', 'container', 'container\\.py$', 'context', 'decorators', 'dispatcher', 'exceptions', 'flext-core', 'flext-tests', 'handlers', 'imports', 'layer', 'loggings', 'markdown', 'mixins', 'models', 'protocols', 'registry', 'result', 'runtime', 'service', 'service\\.py$', 'settings', 'tests', 'types', 'typings', 'utilities']

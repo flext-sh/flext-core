@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/_utilities/parsers.py
+# hypothesis_version: 6.151.9
+
+[':', 'STRUCTURAL', 'desc', 'dn:', 'equality', 'kind', 'may', 'must', 'name', 'no_user_modification', 'oid', 'ordering', 'single_value', 'substr', 'sup', 'syntax', 'usage', 'version:']

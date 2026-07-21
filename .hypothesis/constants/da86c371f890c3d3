@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_utilities/xlsx_validations.py
+# hypothesis_version: 6.156.6
+
+['"', '""', ',', 'between', 'custom', 'date', 'decimal', 'equal', 'greaterThan', 'greaterThanOrEqual', 'greater_or_equal', 'greater_than', 'lessThan', 'lessThanOrEqual', 'less_or_equal', 'less_than', 'list', 'notBetween', 'notEqual', 'not_between', 'not_equal', 'textLength', 'text_length', 'time', 'values', 'whole']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_models/cli_inputs.py
+# hypothesis_version: 6.151.9
+
+['.', 'Add dev suffix', 'Apply changes', 'Auto-merge', 'Base branch', 'Branch name filter', 'Create as draft', 'Draft PR', 'Enable check mode', 'Enable checkpoints', 'Exclude glob', 'Fail if checks fail', 'Head branch', 'Include glob', 'Include root project', 'JUnit XML path', 'Make verb to execute', 'Merge method', 'Output directory', 'Output report file', 'PR action', 'PR body', 'PR number', 'PR title', 'Project to validate', 'Push to remote', 'Pytest log path', 'Regex pattern', 'Release on merge', 'Release phase', 'Remove unknown files', 'Run in check mode', 'Single project name', 'Skill folder name', 'Strict mode', 'Verbose output', 'Version string', 'Workspace root', 'all', 'main', 'minor', 'squash', 'status', 'text', 'u']

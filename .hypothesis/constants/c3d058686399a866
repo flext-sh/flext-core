@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/circuit.py
+# hypothesis_version: 6.152.1
+
+['exponential', 'linear']

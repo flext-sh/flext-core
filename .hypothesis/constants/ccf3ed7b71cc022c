@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-auth/src/flext_auth/transports/__init__.py
+# hypothesis_version: 6.151.12
+
+['.http']

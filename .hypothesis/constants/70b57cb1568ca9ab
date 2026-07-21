@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_models/filesystem.py
+# hypothesis_version: 6.151.11
+
+['Auto-detect format.', 'CSV column headers.', 'CSV has headers.', 'CSV headers.', 'Comparison mode.', 'Compute SHA256 hash.', 'File encoding.', 'Format override.', 'before', 'file1', 'file2', 'name', 'path', 'unknown', 'utf-8']

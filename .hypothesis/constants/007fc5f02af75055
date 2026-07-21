@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/transformers/lazy_import_fixer.py
+# hypothesis_version: 6.151.10
+
+['from ', 'hoist lazy imports', 'import ']

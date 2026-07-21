@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/_docs_audit_detectors.py
+# hypothesis_version: 6.152.4
+
+['*.md', ',', '-', '--extend-ignore', '--no-fix', '--stdin-filename', 'README.md', 'body', 'docs/api', 'docs/api-reference', 'generated_ownership', 'high', 'medium', 'python_codeblock', 'scope_boundary']

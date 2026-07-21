@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/violation_analyzer.py
+# hypothesis_version: 6.151.10
+
+['(', ')', ',', ', ', '.', '@\\w+', '\\', '\\b([A-Za-z_]\\w*)\\b', '\\s+as\\s+', '^def\\s+(\\w+)\\s*\\(', 'builtins', 'collections', 'dataclasses', 'decorators', 'dispatcher', 'kind', 'models', 'pathlib', 'typing', 'utility']

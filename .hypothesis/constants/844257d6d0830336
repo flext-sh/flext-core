@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/github/cli.py
+# hypothesis_version: 6.151.10
+
+['0', '1', 'PR operation failed', 'Workflow lint failed', 'Workflow sync failed', 'action', 'auto', 'base', 'body', 'checks_strict', 'delete_branch', 'draft', 'head', 'merge_method', 'number', 'ok', 'pr-workspace', 'release_on_merge', 'title', 'workflow sync failed', 'workflows']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/guards.py
+# hypothesis_version: 6.152.4
+
+['FlextConstantsGuards', '__len__', 'bool', 'bytes', 'callable', 'dict', 'float', 'int', 'list', 'list_or_tuple', 'mapping', 'none', 'sequence', 'sequence_not_str', 'sized', 'str', 'string_non_empty', 'tuple']

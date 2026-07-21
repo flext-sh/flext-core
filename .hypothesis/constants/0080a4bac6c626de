@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/codegen_governance.py
+# hypothesis_version: 6.151.10
+
+['config', 'frozenset', 'int', 'regex', 'rules', 'str', 'tuple']

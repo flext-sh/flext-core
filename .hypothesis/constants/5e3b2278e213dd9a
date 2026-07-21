@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_fixtures/_enforcement_parts/items.py
+# hypothesis_version: 6.156.6
+
+[' | ', 'EnforcementCollector', 'EnforcementItem', 'description', 'detail', 'file', 'file_path', 'line', 'line_number', 'rule_id', 'suggestion']

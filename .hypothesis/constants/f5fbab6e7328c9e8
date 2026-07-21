@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/_context/_scope.py
+# hypothesis_version: 6.152.4
+
+['Name of the scope', 'Scope data', 'Scope metadata', 'container', 'flext_global_context', 'flext_user_context', 'operations', 'scope_vars', 'statistics']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/deps/_models_tool_config.py
+# hypothesis_version: 6.151.10
+
+['Maximum line length.', 'Mypy plugins list.', 'boolean-settings', 'combine-as-imports', 'default-excludes', 'disable-error-codes', 'disabled-error-codes', 'disabled-errors', 'dynamic-exclude-dirs', 'env-dirs', 'extended-settings', 'fail-under', 'force-single-line', 'indent-style', 'line-ending', 'line-length', 'path-rules', 'per-file-ignores', 'project-root', 'project-venv-path', 'pydantic-mypy', 'python-version', 'quote-style', 'respect-gitignore', 'root-typings-paths', 'root-venv-path', 'show-fixes', 'show-missing', 'skip-covered', 'source-dir', 'standard-addopts', 'standard-markers', 'strict-errors', 'strict-settings', 'target-version', 'test-like-dirs', 'use-ignore-files', 'venv-name']

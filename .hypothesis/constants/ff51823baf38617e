@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/serialization.py
+# hypothesis_version: 6.152.1
+
+['backslashreplace', 'bzip2', 'gzip', 'ignore', 'json', 'lz4', 'msgpack', 'none', 'replace', 'strict', 'toml', 'utf-8', 'xmlcharrefreplace', 'yaml']

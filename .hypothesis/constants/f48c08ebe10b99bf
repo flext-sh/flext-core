@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/rule_helpers.py
+# hypothesis_version: 6.151.10
+
+[' as ', '(', ')', '*', ',', '/', ':', '=', 'Removed deprecated', '\\', 'module', 'symbol_mapping']

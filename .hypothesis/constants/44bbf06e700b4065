@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_utilities/settings.py
+# hypothesis_version: 6.156.6
+
+['os.environ']

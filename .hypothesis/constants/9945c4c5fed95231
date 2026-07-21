@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/gruponos-meltano-native/src/gruponos_meltano_native/monitoring/__init__.py
+# hypothesis_version: 6.152.4
+
+['.alert_manager']

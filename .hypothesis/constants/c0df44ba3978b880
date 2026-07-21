@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_utilities/_files/_info.py
+# hypothesis_version: 6.156.6
+
+[128, 'auto', 'column_count', 'compute_hash', 'csv', 'detect_fmt', 'item_count', 'json', 'key_count', 'model_name', 'model_valid', 'parse_content', 'path', 'replace', 'row_count', 'unknown', 'validate_model', 'yaml']

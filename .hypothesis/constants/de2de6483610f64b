@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_models/docx_styles.py
+# hypothesis_version: 6.156.6
+
+['All caps.', 'Bold font state.', 'Color kind.', 'Color tint.', 'First line indent.', 'Font family.', 'Font size.', 'Italic font state.', 'Keep together.', 'Left indent.', 'Optional font color.', 'Paragraph alignment.', 'RGB or ARGB value.', 'Right indent.', 'Small caps.', 'Space after.', 'Space before.', 'Strike font state.', 'Subscript.', 'Superscript.', 'Theme color value.', 'Underline style.', 'Widow control.', 'auto', 'black', 'blue', 'center', 'cyan', 'darkBlue', 'darkCyan', 'darkGray', 'darkGreen', 'darkMagenta', 'darkRed', 'darkYellow', 'distribute', 'double', 'doubleAccounting', 'green', 'justify', 'kind', 'left', 'lightGray', 'magenta', 'red', 'rgb', 'right', 'single', 'singleAccounting', 'theme', 'yellow']

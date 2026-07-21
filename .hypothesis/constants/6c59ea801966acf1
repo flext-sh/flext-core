@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/workspace/detector.py
+# hypothesis_version: 6.151.9
+
+['--get', '/', 'WorkspaceMode', 'config', 'remote.origin.url', 'standalone']

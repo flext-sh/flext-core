@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/docs/validator.py
+# hypothesis_version: 6.151.10
+
+['.claude/skills', 'SKILL.md', 'TODOS.md', 'adr', 'adr-skill', 'all', 'apply', 'details', 'docs_validation', 'missing_adr_skills', 'required_skills', 'result', 'rules-docs', 'scripts-maintenance', 'todo_written', 'validate', 'validate failed', 'validate-report.md', 'validation passed']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/mro_resolver.py
+# hypothesis_version: 6.151.10
+
+['Flext', 'NormalizedValue', '^_?[A-Z][A-Z0-9_]*$', '_']

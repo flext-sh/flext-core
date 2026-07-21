@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_constants/release.py
+# hypothesis_version: 6.151.12
+
+['all', 'build', 'major', 'minor', 'patch', 'publish', 'validate', 'version']

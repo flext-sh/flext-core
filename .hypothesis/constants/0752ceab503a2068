@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/examples/_models/ex10.py
+# hypothesis_version: 6.151.12
+
+['Handler name', 'Message text content', 'bad', 'good', 'ok', 'service', 'stub']

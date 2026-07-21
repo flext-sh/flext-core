@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/detectors/cyclic_import_detector.py
+# hypothesis_version: 6.151.10
+
+['.']

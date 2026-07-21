@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/_utilities/acl.py
+# hypothesis_version: 6.151.9
+
+[128, ' || ', '"', '(allow (', '(targetattr="*")', '*', ',', ', ', '...', '3.0', ':', 'Invalid ACI format', 'aci', 'aci:', 'acl', 'aclEntry', 'aclRights', 'action_type', 'ad', 'add', 'all', 'anonymous', 'authenticated', 'browse', 'compare', 'delete', 'dn', 'dn_spaces', 'format', 'group', 'groupdn', 'ldap:///', 'ldap:///anyone', 'ldap:///self', 'line_breaks', 'nTSecurityDescriptor', 'oid', 'olcAccess', 'operator', 'orclaci', 'orclaci:', 'orclentrylevelaci', 'orclentrylevelaci:', 'original_format', 'oud', 'public', 'read', 'rfc', 'role', 'roledn', 'sddl', 'search', 'self', 'selfwrite', 'targetscope', 'type', 'user', 'userdn', 'value', 'version', 'write', '{', '||', '}']

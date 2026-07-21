@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/_utilities/transformers.py
+# hypothesis_version: 6.151.9
+
+[',', '=', 'CustomTransformer', 'DN validation failed', 'Entry has no DN', 'Normalize', 'TRUE/FALSE', 'Transform', '_attributes', '_case', '_case_fold_names', '_case_insensitive', '_exclude', '_format', '_func', '_include', '_new_base', '_old_base', '_remove_empty', '_spaces', '_trim_values', '_validate', 'accountlocked', 'attributes', 'dn', 'lower', 'normalize', 'passwordexpired', 'passwordneverexpires', 'pwdaccountlocked', 'pwdlocked', 'trim', 'upper', 'userpassword', 'value']

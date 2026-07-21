@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/validate/skill_validator.py
+# hypothesis_version: 6.151.9
+
+['**/*', '**/*.py', '--globs', '--json=stream', '--mode', '--rule', '--workspace', 'ast-grep', 'count', 'counts', 'custom', 'include', 'pass_mode', 'rules must be a list', 'rules.yml', 'scan_targets', 'script', 'strategy', 'type', 'violation_count', '{skill}']

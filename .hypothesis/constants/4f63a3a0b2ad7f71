@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_utilities/_file_test_helper_parts/flextcliutilitiesfiletesthelpersmixin_part_01.py
+# hypothesis_version: 6.156.6
+
+['.yaml', '.yml', 'json_dumps failed']

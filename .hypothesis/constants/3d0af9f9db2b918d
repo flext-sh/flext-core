@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_utilities/_files/_comparison.py
+# hypothesis_version: 6.156.6
+
+['deep', 'exclude_keys', 'file1', 'file2', 'hash', 'ignore_case', 'ignore_ws', 'json', 'keys', 'lines', 'mode', 'pattern', 'size', 'yaml']

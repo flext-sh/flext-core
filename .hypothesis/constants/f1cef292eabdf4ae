@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/deps/_models.py
+# hypothesis_version: 6.151.10
+
+['DEP001 issues', 'DEP002 issues', 'DEP003 issues', 'DEP004 issues', 'FlextInfraDepsModels', 'Per-project reports']

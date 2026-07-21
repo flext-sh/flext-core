@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/platform.py
+# hypothesis_version: 6.152.1
+
+[0.25, 1.0, 2.0, 5.0, 60.0, 120.0, 300.0, 10000.0, 100, 300, 1000, 3600, 8000, 10000, 1073741824, '.json', '.md', '.py', '.toml', '.txt', '.xml', '.yaml', 'X-Request-ID', 'application/json', 'closed', 'data', 'exponential', 'half_open', 'linear', 'localhost', 'logs', 'open', 'plugins', 'settings', 'temp']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_constants/docx.py
+# hypothesis_version: 6.156.6
+
+['[Content_Types].xml', 'docProps/core.xml', 'docx_archive_invalid', 'docx_plan_invalid', 'docx_render_failed', 'docx_style_missing', 'word/document.xml', 'word/styles.xml']

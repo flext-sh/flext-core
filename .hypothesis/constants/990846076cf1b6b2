@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-tests/src/flext_tests/__version__.py
+# hypothesis_version: 6.152.1
+
+['FlextTestsVersion', '__author__', '__author_email__', '__description__', '__license__', '__title__', '__url__', '__version__', '__version_info__', 'flext-tests']

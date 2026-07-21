@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/servers/_base/entry.py
+# hypothesis_version: 6.151.9
+
+[127, '"', '# Entry Metadata:', "'", 'DN cannot be empty', 'Entry DN is None', 'No entries parsed', '_parent_quirk', 'aci', 'acl\\\\s+"[^"]*"', 'ascii', 'attributes', 'base64_encode_binary', 'entry_model', 'extensions', 'include_comments', 'include_dn_comments', 'ldif_content', 'metadata', 'objectClass', 'objectclass', 'replace', 'rfc', 'sort_attributes', 'sort_entries', 'unknown', 'utf-8', 'version: 1', 'write_format_options', 'write_options']

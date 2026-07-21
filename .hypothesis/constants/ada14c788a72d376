@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/basemk/cli.py
+# hypothesis_version: 6.151.10
+
+['base.mk generated', 'generate']

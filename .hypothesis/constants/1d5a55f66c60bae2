@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/rules/pattern_corrections.py
+# hypothesis_version: 6.151.10
+
+['Dict[', 'Mapping[', 'dict[']

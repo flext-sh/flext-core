@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/services/output.py
+# hypothesis_version: 6.151.10
+
+['D', 'FlextCliOutput', '__name__', 'dict', 'dim', 'ensure', 'skip', 'to_json', 'transform']

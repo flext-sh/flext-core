@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_utilities/_files_parts/flextcliutilitiesfiles_part_04.py
+# hypothesis_version: 6.152.4
+
+[',', '.json', '.yaml', '.yml']

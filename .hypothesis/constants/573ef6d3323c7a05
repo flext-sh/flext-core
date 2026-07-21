@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_constants/census.py
+# hypothesis_version: 6.151.12
+
+[':\\s*TypeAlias\\s*=', '\\bLiteral\\s*\\[', '\\bcast\\s*\\(', '^([A-Z_]+)\\s*=\\s*\\{', '^type\\s+(\\w+)\\s*=']

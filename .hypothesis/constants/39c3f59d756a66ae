@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/protected_edit_apply.py
+# hypothesis_version: 6.152.4
+
+[300, '--tb=short', '-m', '-q', '-x', 'Test', 'no tests collected', 'no tests ran', 'py_compile', 'py_compile failed', 'pytest', 'test_', 'tests']

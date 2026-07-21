@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_result/_state.py
+# hypothesis_version: 6.152.4
+
+['correlation_id', 'error', 'error_code', 'error_data', 'metadata', 'success']

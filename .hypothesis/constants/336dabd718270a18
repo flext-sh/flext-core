@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/transformers/typing_unifier.py
+# hypothesis_version: 6.151.9
+
+['.', 'None', 'NoneType', 'TypeAlias', 'flext_core', 't', 'typing', 'typing.TypeAlias']

@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/codegen/lazy_init.py
+# hypothesis_version: 6.151.9
+
+['*.py', '-', '--fix', '--quiet', '.', '.py', '.venv', 'Constants', 'Flext', 'ParamSpec', 'TypeVar', 'TypeVarTuple', 'Types', '_', '__', '__init__', '__main__.py', '__version__', '__version__.py', 'constants.py', 'install_lazy_exports', 'lazy_getattr', 'main', 'merge_lazy_imports', 'node_modules', 'typings', 'typings.py', 'vendor']

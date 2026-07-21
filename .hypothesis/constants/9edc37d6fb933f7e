@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_utilities/_json/_core.py
+# hypothesis_version: 6.156.6
+
+['json_dumps', 'json_loads', 'json_parse', 'json_read', 'json_read failed', 'json_write', 'json_write failed']

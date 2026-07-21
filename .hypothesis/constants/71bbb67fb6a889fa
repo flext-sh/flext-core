@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_utilities/_yaml_roundtrip_parts/flextcliutilitiesyamlroundtrip_part_01.py
+# hypothesis_version: 6.152.4
+
+[4096, 'YAML dump error', 'false', 'n', 'no', 'null', 'off', 'on', 'r', 't.Cli.YamlScalar', 'true', 'y', 'yes', '~']

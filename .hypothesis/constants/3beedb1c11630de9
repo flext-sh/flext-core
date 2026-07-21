@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/_enforcement_catalog_rows_parts/_parts/flextconstantsenforcementcatalogrows_part_01_a.py
+# hypothesis_version: 6.156.6
+
+['2-architecture-law', '4-import-law', 'CRITICAL', 'ENFORCE-001', 'ENFORCE-002', 'ENFORCE-003', 'ENFORCE-004', 'ENFORCE-005', 'ENFORCE-006', 'ENFORCE-007', 'ENFORCE-008', 'ENFORCE-009', 'ENFORCE-010', 'ENFORCE-011', 'ENFORCE-012', 'ENFORCE-013', 'ENFORCE-014', 'ENFORCE-080', 'HIGH', 'LOW', 'MEDIUM', 'cyclic_imports', 'facade_statuses', 'flext-import-rules', 'flext-type-system', 'future_violations', 'import_violations', 'loose_objects', 'parse_failures', 'rules-examples']

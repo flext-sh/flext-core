@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-cli/src/flext_cli/__version__.py
+# hypothesis_version: 6.151.9
+
+['(\\d)(a|b|rc)(\\d+)$', '+', '-', '-dev\\1', '.', 'Author', 'Author-Email', 'Home-Page', 'License', 'Name', 'Summary', 'Version', '\\.dev(\\d+)$', '\\1-\\2\\3', '__author__', '__author_email__', '__description__', '__license__', '__title__', '__url__', '__version__', '__version_info__', 'flext_cli']

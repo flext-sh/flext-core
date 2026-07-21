@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/docs_api.py
+# hypothesis_version: 6.152.4
+
+['*', '.', '._', '.__version__', 'Documentation', 'Homepage', 'Repository', '_', '__', '__all__', 'aliases', 'description', 'exclude_docs', 'exports', 'facades', 'keywords', 'medium', 'missing_docstring', 'module_exclude', 'module_exports', 'module_include', 'modules', 'name', 'package_name', 'public_symbols', 'repo_url', 'site_title', 'site_url', 'src', 'target_map', 'urls', 'version']

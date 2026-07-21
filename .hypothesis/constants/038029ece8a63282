@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/result.py
+# hypothesis_version: 6.152.4
+
+['; ', 'FlextResult', 'Unknown error', 'correlation_id', 'error', 'error_code', 'error_data', 'errors', 'forbid', 'metadata', 'r', 'success']

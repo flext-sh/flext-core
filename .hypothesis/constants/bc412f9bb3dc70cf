@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/servers/_oud/acl.py
+# hypothesis_version: 6.151.12
+
+[' || ', '(', ')', '*', ',', ':', ';)', '=', 'GROUPDN', 'LDAPURL', 'USERDN', 'Unknown error', '_parent_quirk', 'access to', 'aci', 'aci:', 'acl', 'aclEntry', 'aclRights', 'acl_target_target', 'add', 'attributes', 'base_dn', 'bind_rules', 'compare', 'conversion_comments', 'delete', 'dn_attr', 'ds-cfg-', 'ds-privilege-name', 'group', 'group=', 'group_attr', 'group_dn', 'groupdn', 'guid_attr', 'metadata', 'olcAccess', 'oud', 'proxy', 'read', 'role', 'roledn', 'search', 'self', 'self_write', 'self_write_to_write', 'selfwrite', 'target_dn', 'target_permissions', 'user', 'userdn', 'write']

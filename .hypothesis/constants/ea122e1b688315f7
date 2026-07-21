@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/codegen/_codegen_generation.py
+# hypothesis_version: 6.151.9
+
+['        return value', '    )', ')', ', ', '.', '._typings', ']', '__all__ = [', '__version__', '__version__.py', '__version_info__', 'if TYPE_CHECKING:', 'import importlib', 'import sys', 'tests', '}']

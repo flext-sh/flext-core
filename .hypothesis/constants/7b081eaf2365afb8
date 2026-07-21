@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-core/src/flext_core/_root_exports_parts/__init__.py
+# hypothesis_version: 6.152.4
+
+['ROOT_LAZY_CORE', 'ROOT_LAZY_FACADES', 'ROOT_LAZY_UTILITIES']

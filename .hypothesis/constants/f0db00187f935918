@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/deps/cli.py
+# hypothesis_version: 6.151.10
+
+['-', '--format', '--help', '--limits', '--mode', '--output', '--project', '--projects', '--workspace', '-h', '-o', '=', 'detect', 'extra-paths', 'flext-infra deps', 'internal-sync', 'modernize', 'path-sync']
