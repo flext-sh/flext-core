@@ -10,22 +10,17 @@ PROJECT_NAME := flext-core
 PYTHON_VERSION ?= >=3.13,<3.14
 SRC_DIR ?= src
 TESTS_DIR ?= tests
-# Detect workspace root by walking up until we find the parent repo's .gitmodules.
-# In a workspace, base.mk lives in flext-infra/ and is the single source of truth.
+# Detect a FLEXT workspace root by its manifest and canonical base.mk owner.
 FLEXT_WORKSPACE_ROOT := $(shell \
 	current="$(CURDIR)"; \
 	while [ "$$current" != "/" ]; do \
-		if [ -f "$$current/.gitmodules" ]; then echo "$$current"; break; fi; \
+		if [ -f "$$current/.gitmodules" ] && [ -f "$$current/flext-infra/base.mk" ]; then echo "$$current"; break; fi; \
 		current="$$(dirname "$$current")"; \
 	done)
 
 ifneq ($(FLEXT_WORKSPACE_ROOT),)
 FLEXT_INFRA_BASE_MK := $(FLEXT_WORKSPACE_ROOT)/flext-infra/base.mk
-ifneq ("$(wildcard $(FLEXT_INFRA_BASE_MK))", "")
 include $(FLEXT_INFRA_BASE_MK)
-else
-$(error flext-infra/base.mk not found at $(FLEXT_INFRA_BASE_MK); run from a valid workspace)
-endif
 else
 # =============================================================================
 # STANDALONE BOOTSTRAP — auto-generates base.mk via flext-infra
