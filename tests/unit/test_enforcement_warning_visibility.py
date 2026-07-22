@@ -28,6 +28,12 @@ if TYPE_CHECKING:
 class TestsFlextCoreEnforcementWarningVisibility:
     _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
+    # test_real_filterwarnings_keep_mro_violations_visible spawns a nested
+    # pytest via u.Cli.run_raw that cold-imports flext_core: real work ~8s,
+    # exceeding the global --timeout=10 under full-suite CPU contention.
+    # Class-level ceiling override, not a suppression of a hang (profiled ~8s).
+    pytestmark = pytest.mark.timeout(60)
+
     @pytest.mark.parametrize("category", [FlextMroViolation, FlextSmellViolation])
     def test_enforcement_categories_are_userwarnings(
         self, category: type[FlextMroViolation]
