@@ -11,9 +11,9 @@ from __future__ import annotations
 from collections.abc import Iterator
 
 import pytest
-from flext_tests import tm
 
 from flext_core import FlextContext
+from flext_tests import tm
 
 
 class TestsFlextCoreContext:

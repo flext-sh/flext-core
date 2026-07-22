@@ -15,9 +15,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
-from flext_tests import tm
 
 import flext_core as core
+from flext_tests import tm
 from tests.typings import t
 from tests.unit._typings_support import FLAT_ALIAS_NAMES, PUBLIC_ALIAS_NAMES
 
@@ -100,11 +100,7 @@ class TestsFlextCoreTypingsAliases:
         ],
     )
     def test_type_check_tuples_classify_values(
-        self,
-        value: object,
-        is_primitive: bool,
-        is_numeric: bool,
-        is_scalar: bool,
+        self, value: object, is_primitive: bool, is_numeric: bool, is_scalar: bool
     ) -> None:
         """The type-check tuples classify values correctly via isinstance."""
         tm.that(isinstance(value, t.PRIMITIVES_TYPES), eq=is_primitive)

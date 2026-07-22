@@ -10,10 +10,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import r, tm
 
 from flext_core import FlextContainer
 from flext_core.__version__ import __version__
+from flext_tests import r, tm
 from tests.protocols import p
 from tests.utilities import u
 

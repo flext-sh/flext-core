@@ -83,7 +83,9 @@ Use `fetch_global(overrides=...)` to derive worker/request-level configuration f
 ```python
 from flext_core import FlextSettings
 
-worker_settings = FlextSettings.fetch_global(overrides={"debug": True, "log_level": "DEBUG"})
+worker_settings = FlextSettings.fetch_global(
+    overrides={"debug": True, "log_level": "DEBUG"}
+)
 
 assert worker_settings.debug is True
 assert worker_settings.log_level == "DEBUG"

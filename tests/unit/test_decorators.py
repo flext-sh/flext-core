@@ -13,9 +13,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_tests import d, e, r
 
 from flext_core.container import FlextContainer
+from flext_tests import d, e, r
 
 
 class TestsFlextCoreDecorators:
@@ -44,9 +44,7 @@ class TestsFlextCoreDecorators:
         ],
     )
     def test_railway_converts_exception_to_failure_result(
-        self,
-        raised: Exception,
-        message: str,
+        self, raised: Exception, message: str
     ) -> None:
         """Railway captures caught exceptions as a failure ``r`` with the code."""
 

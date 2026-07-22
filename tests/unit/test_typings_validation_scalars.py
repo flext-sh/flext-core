@@ -14,8 +14,8 @@ from __future__ import annotations
 import math
 
 import pytest
-from flext_tests import tm
 
+from flext_tests import tm
 from tests.constants import c
 from tests.models import m
 from tests.typings import t
@@ -141,8 +141,7 @@ class TestsFlextCoreTypingsValidationScalars:
         ids=["hostname", "uri", "timestamp"],
     )
     @pytest.mark.parametrize(
-        "value",
-        [c.LOCALHOST, "https://example.com", "2025-01-01T00:00:00Z"],
+        "value", [c.LOCALHOST, "https://example.com", "2025-01-01T00:00:00Z"]
     )
     def test_non_empty_string_aliases_accept_non_empty(
         self, alias: type[str], value: str

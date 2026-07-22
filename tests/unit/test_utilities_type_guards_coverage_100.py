@@ -6,9 +6,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
-from flext_tests import tm
-
 from flext_core import u
+from flext_tests import tm
 from tests.models import m
 
 if TYPE_CHECKING:
@@ -74,10 +73,7 @@ class TestsFlextCoreUtilitiesTypeGuards:
 
         guarded_payload = u.guard(payload, dict, return_value=True)
         fallback_tags = u.guard(
-            "invalid-tags",
-            validator=u.list_like,
-            default=["cli"],
-            return_value=True,
+            "invalid-tags", validator=u.list_like, default=["cli"], return_value=True
         )
         guarded_attempt = u.guard(2, validator=(int, float), return_value=True)
 
@@ -87,14 +83,11 @@ class TestsFlextCoreUtilitiesTypeGuards:
             raise ValueError(error_message)
 
         failed_guard_result = u.guard(
-            "sync-users",
-            validator=raising_validator,
-            return_value=True,
+            "sync-users", validator=raising_validator, return_value=True
         )
 
         assert not isinstance(
-            failed_guard_result,
-            (bool, dict, list, str, int, float, type(None)),
+            failed_guard_result, (bool, dict, list, str, int, float, type(None))
         )
         failed_guard = failed_guard_result
 

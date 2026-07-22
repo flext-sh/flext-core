@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Annotated, override
 
 from flext_tests import m as tm, r, u
-
 from tests._models.mixins import TestsFlextModelsMixins
 from tests.base import s
 from tests.constants import c

@@ -15,8 +15,8 @@ from __future__ import annotations
 import enum
 
 import pytest
-from flext_tests import tm
 
+from flext_tests import tm
 from tests.constants import c
 
 

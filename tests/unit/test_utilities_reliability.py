@@ -14,8 +14,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Final
 
 import pytest
-from flext_tests import r
 
+from flext_tests import r
 from tests.utilities import u
 
 if TYPE_CHECKING:
@@ -25,8 +25,7 @@ if TYPE_CHECKING:
 
 
 def _counting_operation(
-    fail_before: int,
-    success_value: int,
+    fail_before: int, success_value: int
 ) -> tuple[Callable[[], p.Result[int]], list[int]]:
     """Build an operation that fails ``fail_before`` times then succeeds.
 
@@ -69,9 +68,7 @@ class TestsFlextCoreUtilitiesReliability:
 
     # -- retry ------------------------------------------------------------
 
-    def test_retry_returns_first_attempt_result_when_operation_succeeds(
-        self,
-    ) -> None:
+    def test_retry_returns_first_attempt_result_when_operation_succeeds(self) -> None:
         op, attempts = _counting_operation(
             fail_before=1, success_value=self.SUCCESS_VALUE
         )
@@ -134,8 +131,7 @@ class TestsFlextCoreUtilitiesReliability:
 
     @pytest.mark.parametrize("invalid_attempts", [0, -1])
     def test_retry_rejects_non_positive_max_attempts(
-        self,
-        invalid_attempts: int,
+        self, invalid_attempts: int
     ) -> None:
         result: p.Result[int] = u.retry(
             lambda: r[int].fail("unused"),

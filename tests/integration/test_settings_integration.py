@@ -7,10 +7,10 @@ precedence, clone, trace-requires-debug) using the universal scalar fields.
 from __future__ import annotations
 
 import pytest
-from flext_tests import tm
 from pydantic import ValidationError
 
 from flext_core import FlextContainer, FlextSettings
+from flext_tests import tm
 
 
 class TestsFlextSettingsIntegration:

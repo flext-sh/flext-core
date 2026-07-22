@@ -22,9 +22,7 @@ class TestsFlextUtilitiesText(test_u.Tests.Contract):
         ],
     )
     def test_public_text_helpers_reject_blank_bootstrap_inputs(
-        self,
-        value: str | None,
-        message: str,
+        self, value: str | None, message: str
     ) -> None:
         """Bootstrap inputs must fail fast when text is absent or blank."""
         with pytest.raises(ValueError, match=message):
@@ -44,10 +42,7 @@ class TestsFlextUtilitiesText(test_u.Tests.Contract):
         ],
     )
     def test_public_text_helpers_derive_stable_identifiers(
-        self,
-        raw: str,
-        expected_id: str,
-        expected_key: str,
+        self, raw: str, expected_id: str, expected_key: str
     ) -> None:
         """format_app_id and normalize_alnum expose a deterministic contract."""
         cleaned = core_u.safe_string(raw)
@@ -82,8 +77,7 @@ class TestsFlextUtilitiesText(test_u.Tests.Contract):
         assert core_u.normalize_alnum(normalized_key) == normalized_key
 
     def test_public_text_helpers_prepare_and_persist_app_manifest(
-        self,
-        tmp_path: Path,
+        self, tmp_path: Path
     ) -> None:
         """App bootstrap uses the public helpers to normalize and persist text."""
         raw_name = "  Fleet Sync_App v2  "

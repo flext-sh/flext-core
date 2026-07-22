@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from examples.protocols import p
+from examples.shared import ExamplesFlextShared
 from examples.typings import t
 from examples.utilities import u
-from examples.shared import ExamplesFlextShared
 
 
 class Ex08ContainerRegistration(ExamplesFlextShared):

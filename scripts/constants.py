@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from flext_cli import c
-
 from scripts import t
 
 

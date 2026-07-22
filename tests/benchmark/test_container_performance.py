@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from flext_tests import tm
-
 from flext_core import FlextContainer
+from flext_tests import tm
 
 
 class TestsFlextContainerPerformance:

@@ -561,11 +561,7 @@ def close_connection(_conn: dict[str, int]) -> None:
     """Close the resource used by the example."""
 
 
-resource_result = r.with_resource(
-    create_connection,
-    use_connection,
-    close_connection,
-)
+resource_result = r.with_resource(create_connection, use_connection, close_connection)
 expected_identifier = 10
 if not resource_result.success:
     message = "Expected resource success"
@@ -678,11 +674,7 @@ from __future__ import annotations
 from flext_core import d
 
 
-@d.combined(
-    operation_name="sum_values",
-    railway_enabled=True,
-    track_perf=False,
-)
+@d.combined(operation_name="sum_values", railway_enabled=True, track_perf=False)
 def sum_values(values: list[int]) -> int:
     """Return the arithmetic sum of the provided values."""
     return sum(values)

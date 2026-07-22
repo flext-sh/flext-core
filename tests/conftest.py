@@ -12,9 +12,7 @@ from tests.utilities import u
 
 # NOTE (multi-agent): Shared fixtures come only from flext-tests' pytest11 plugin.
 
-collect_ignore_glob = [
-    "**/__init__.py",
-]
+collect_ignore_glob = ["**/__init__.py"]
 
 
 @pytest.fixture

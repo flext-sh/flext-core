@@ -18,13 +18,11 @@ class TestsFlextModelsContainerMixin:
         """Test scenario for service registration and retrieval."""
 
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-            frozen=True,
-            arbitrary_types_allowed=True,
+            frozen=True, arbitrary_types_allowed=True
         )
         name: Annotated[str, m.Field(description="Service scenario name")]
         service: Annotated[
-            t.Primitives,
-            m.Field(description="Service value to register"),
+            t.Primitives, m.Field(description="Service value to register")
         ]
         description: Annotated[str, m.Field(description="Scenario description")] = ""
 
@@ -32,21 +30,15 @@ class TestsFlextModelsContainerMixin:
         """Test scenario for typed service retrieval."""
 
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-            frozen=True,
-            arbitrary_types_allowed=True,
+            frozen=True, arbitrary_types_allowed=True
         )
         name: Annotated[str, m.Field(description="Typed retrieval scenario name")]
-        service: Annotated[
-            str | int,
-            m.Field(description="Registered service value"),
-        ]
+        service: Annotated[str | int, m.Field(description="Registered service value")]
         expected_type: Annotated[
-            type[str | int],
-            m.Field(description="Expected service type"),
+            type[str | int], m.Field(description="Expected service type")
         ]
         should_pass: Annotated[
-            bool,
-            m.Field(description="Whether typed retrieval should succeed"),
+            bool, m.Field(description="Whether typed retrieval should succeed")
         ]
         description: Annotated[str, m.Field(description="Scenario description")] = ""
 

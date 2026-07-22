@@ -9,12 +9,13 @@ internal collaborators.
 from __future__ import annotations
 
 import pytest
-from flext_tests import e
 
+from flext_tests import e
 from tests.constants import c
 from tests.protocols import p
 from tests.unit._exceptions_failure_support import FAILURES, FailureFactory
 from tests.unit._exceptions_structured_support import STRUCTURED_ERRORS, ErrorFactory
+import operator
 
 
 class TestsFlextCoreExceptionsStructuredContracts:
@@ -158,7 +159,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
         result = factory()
 
         # Act / Assert: map short-circuits, preserving the failure and its code.
-        mapped = result.map(lambda value: not value)
+        mapped = result.map(operator.not_)
         assert mapped.failure
         assert mapped.error_code == expected_code
 

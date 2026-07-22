@@ -10,8 +10,8 @@ internal registries or logging side effects.
 from __future__ import annotations
 
 import pytest
-from flext_tests import r
 
+from flext_tests import r
 from tests.models import m
 from tests.protocols import p
 from tests.typings import t

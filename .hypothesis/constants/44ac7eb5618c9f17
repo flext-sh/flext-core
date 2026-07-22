@@ -1,0 +1,4 @@
+# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_constants/workspace.py
+# hypothesis_version: 6.157.0
+
+['.ai-hub', '.envrc', '.mise.toml', '.vscode', 'algar-*', 'attached', 'go', 'gruponos-*', 'member', 'mypy', 'pyrefly', 'pyright', 'ruff', 'settings.json', 'standalone', 'vscode', 'workspace']

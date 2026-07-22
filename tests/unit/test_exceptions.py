@@ -11,8 +11,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import e
 
+from flext_tests import e
 from tests.constants import c
 
 if TYPE_CHECKING:
@@ -41,8 +41,7 @@ class TestsFlextCoreExceptions:
         ],
     )
     def test_facade_exposes_typed_errors_as_base_error_subclasses(
-        self,
-        subclass: type[e.BaseError],
+        self, subclass: type[e.BaseError]
     ) -> None:
         # Act / Assert — every typed error is reachable on the facade and is a
         # catchable member of the BaseError hierarchy.
@@ -61,9 +60,7 @@ class TestsFlextCoreExceptions:
         ],
     )
     def test_error_domain_routes_typed_errors(
-        self,
-        error: e.BaseError,
-        expected_domain: str,
+        self, error: e.BaseError, expected_domain: str
     ) -> None:
         # Assert — the public routing domain is derived from the error code.
         assert error.error_domain == expected_domain
@@ -81,11 +78,7 @@ class TestsFlextCoreExceptions:
         # Act / Assert
         message = "not found"
         with pytest.raises(e.BaseError) as excinfo:
-            raise e.NotFoundError(
-                message,
-                resource_type="user",
-                resource_id="u-1",
-            )
+            raise e.NotFoundError(message, resource_type="user", resource_id="u-1")
         raised = excinfo.value
         assert isinstance(raised, e.NotFoundError)
         assert raised.resource_type == "user"
@@ -99,23 +92,14 @@ class TestsFlextCoreExceptions:
         assert error.correlation_id.startswith("exc_")
 
     @pytest.mark.parametrize(
-        ("declared", "expected"),
-        [
-            ("int", int),
-            (str, str),
-            ("dict", dict),
-        ],
+        ("declared", "expected"), [("int", int), (str, str), ("dict", dict)]
     )
     def test_type_error_resolves_type_names_to_types(
-        self,
-        declared: type | str,
-        expected: type,
+        self, declared: type | str, expected: type
     ) -> None:
         # Act — TypeError accepts either a type or its name and resolves both.
         error = e.TypeError(
-            "type mismatch",
-            expected_type=declared,
-            actual_type=declared,
+            "type mismatch", expected_type=declared, actual_type=declared
         )
         # Assert
         assert error.expected_type is expected
@@ -210,8 +194,7 @@ class TestsFlextCoreExceptions:
 
     @pytest.mark.parametrize("violation", [e.MroViolation, e.SmellViolation])
     def test_enforcement_violations_are_raisable_exception_types(
-        self,
-        violation: type[Exception],
+        self, violation: type[Exception]
     ) -> None:
         # Assert — enforcement violations are exposed on the facade and raise.
         assert issubclass(violation, Exception)

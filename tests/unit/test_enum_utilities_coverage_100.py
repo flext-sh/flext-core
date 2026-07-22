@@ -18,8 +18,8 @@ from enum import StrEnum, unique
 from typing import TYPE_CHECKING, Annotated, ClassVar
 
 import pytest
-from flext_tests import tm
 
+from flext_tests import tm
 from tests.models import m
 from tests.utilities import u
 
@@ -53,16 +53,13 @@ class TestsFlextCoreEnumUtilities:
         name: Annotated[str, m.Field(description="Parse scenario name")]
         value: Annotated[str | StrEnum, m.Field(description="Input value to parse")]
         expected_success: Annotated[
-            bool,
-            m.Field(description="Whether parse should succeed"),
+            bool, m.Field(description="Whether parse should succeed")
         ]
         expected_status: Annotated[
-            StrEnum | None,
-            m.Field(description="Expected parsed enum member"),
+            StrEnum | None, m.Field(description="Expected parsed enum member")
         ] = None
         expected_error: Annotated[
-            str | None,
-            m.Field(description="Expected error message fragment"),
+            str | None, m.Field(description="Expected error message fragment")
         ] = None
 
     PARSE: ClassVar[Sequence[ParseScenario]] = [

@@ -18,9 +18,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import x
 
 from flext_core import FlextContext
+from flext_tests import x
 from tests.constants import c
 from tests.protocols import p
 

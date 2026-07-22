@@ -39,21 +39,17 @@ class TestsFlextModelsCoreErrorsMixin:
         """Object with model_dump that raises."""
 
         model_dump: Callable[[], t.MappingKV[str, t.Tests.TestobjectSerializable]] = (
-            staticmethod(
-                lambda: (_ for _ in ()).throw(RuntimeError("Bad model_dump")),
-            )
+            staticmethod(lambda: (_ for _ in ()).throw(RuntimeError("Bad model_dump")))
         )
 
     class AttrObject(m.BaseModel):
         """Simple model with name/value attributes for mapper tests."""
 
         name: Annotated[
-            str,
-            m.Field(description="Attribute recursive container name"),
+            str, m.Field(description="Attribute recursive container name")
         ] = "name"
         value: Annotated[
-            int,
-            m.Field(description="Attribute recursive container value"),
+            int, m.Field(description="Attribute recursive container value")
         ] = 1
 
     class BadMapping(UserDict[str, t.JsonValue]):

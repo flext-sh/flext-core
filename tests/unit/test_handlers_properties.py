@@ -10,9 +10,9 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
-from flext_tests import h, r, tm
 from hypothesis import given, strategies as st
 
+from flext_tests import h, r, tm
 from tests.constants import c
 from tests.typings import t
 from tests.unit._handlers_support import TestsFlextFlextHandlers

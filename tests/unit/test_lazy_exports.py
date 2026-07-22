@@ -26,8 +26,7 @@ class TestsFlextCoreLazyExports:
 
     @pytest.fixture
     def registered_alpha_module(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> tuple[str, type]:
         """Register a real child module exposing ``Alpha`` and return its name."""
         lazy.reset()
@@ -54,10 +53,7 @@ class TestsFlextCoreLazyExports:
         ],
     )
     def test_thin_facade_modules_export_facade_and_short_alias(
-        self,
-        module_name: str,
-        facade_name: str,
-        alias_name: str,
+        self, module_name: str, facade_name: str, alias_name: str
     ) -> None:
         # Arrange / Act
         module = importlib.import_module(module_name)
@@ -106,9 +102,7 @@ class TestsFlextCoreLazyExports:
 
         # Act
         install_lazy_exports(
-            "test_pkg",
-            module_globals,
-            {"Alpha": ("test_pkg.alpha", "Alpha")},
+            "test_pkg", module_globals, {"Alpha": ("test_pkg.alpha", "Alpha")}
         )
 
         # Assert
@@ -139,16 +133,13 @@ class TestsFlextCoreLazyExports:
         assert dir_fn() == ["Alpha"]
 
     def test_installed_getattr_resolves_absolute_target(
-        self,
-        registered_alpha_module: tuple[str, type],
+        self, registered_alpha_module: tuple[str, type]
     ) -> None:
         # Arrange
         module_name, alpha_cls = registered_alpha_module
         module_globals: t.ModuleGlobals = {}
         install_lazy_exports(
-            "test_lazy_pkg",
-            module_globals,
-            {"Alpha": (module_name, "Alpha")},
+            "test_lazy_pkg", module_globals, {"Alpha": (module_name, "Alpha")}
         )
 
         # Act
@@ -161,16 +152,13 @@ class TestsFlextCoreLazyExports:
         assert module_globals["Alpha"] is alpha_cls
 
     def test_installed_getattr_resolves_relative_target(
-        self,
-        registered_alpha_module: tuple[str, type],
+        self, registered_alpha_module: tuple[str, type]
     ) -> None:
         # Arrange — relative path resolved against the installing package
         _, alpha_cls = registered_alpha_module
         module_globals: t.ModuleGlobals = {}
         install_lazy_exports(
-            "test_lazy_pkg",
-            module_globals,
-            {"Alpha": (".alpha", "Alpha")},
+            "test_lazy_pkg", module_globals, {"Alpha": (".alpha", "Alpha")}
         )
 
         # Act
@@ -181,8 +169,7 @@ class TestsFlextCoreLazyExports:
         assert getattr_fn("Alpha") is alpha_cls
 
     def test_installed_getattr_resolves_bare_string_module_entry(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         # Arrange — a bare-string entry names a module whose same-named attr is used;
         # resolution must succeed without any '<pkg>.alias' child module existing.
@@ -212,9 +199,7 @@ class TestsFlextCoreLazyExports:
         # Arrange
         module_globals: t.ModuleGlobals = {}
         install_lazy_exports(
-            "test_pkg",
-            module_globals,
-            {"Alpha": ("test_pkg.alpha", "Alpha")},
+            "test_pkg", module_globals, {"Alpha": ("test_pkg.alpha", "Alpha")}
         )
         getattr_fn = module_globals["__getattr__"]
         assert callable(getattr_fn)
@@ -224,8 +209,7 @@ class TestsFlextCoreLazyExports:
             getattr_fn("Missing")
 
     def test_install_is_idempotent_and_keeps_getattr_working(
-        self,
-        registered_alpha_module: tuple[str, type],
+        self, registered_alpha_module: tuple[str, type]
     ) -> None:
         # Arrange
         module_name, alpha_cls = registered_alpha_module
@@ -243,8 +227,7 @@ class TestsFlextCoreLazyExports:
         assert module_globals["__all__"] == ("Alpha",)
 
     def test_get_resolves_symbol_and_caches_into_module_globals(
-        self,
-        registered_alpha_module: tuple[str, type],
+        self, registered_alpha_module: tuple[str, type]
     ) -> None:
         # Arrange
         module_name, alpha_cls = registered_alpha_module
@@ -252,10 +235,7 @@ class TestsFlextCoreLazyExports:
 
         # Act
         resolved = lazy.get(
-            "Alpha",
-            {"Alpha": (module_name, "Alpha")},
-            module_globals,
-            "test_lazy_pkg",
+            "Alpha", {"Alpha": (module_name, "Alpha")}, module_globals, "test_lazy_pkg"
         )
 
         # Assert
@@ -263,8 +243,7 @@ class TestsFlextCoreLazyExports:
         assert module_globals["Alpha"] is alpha_cls
 
     def test_get_does_not_cache_symbol_from_initializing_module(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
+        self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         # Arrange
         lazy.reset()
@@ -302,8 +281,7 @@ class TestsFlextCoreLazyExports:
         assert module_globals["u"] is FinalAlias
 
     def test_attribute_resolves_class_namespace_symbol_and_caches_global(
-        self,
-        registered_alpha_module: tuple[str, type],
+        self, registered_alpha_module: tuple[str, type]
     ) -> None:
         # Arrange
         module_name, alpha_cls = registered_alpha_module
@@ -344,8 +322,7 @@ class TestsFlextCoreLazyExports:
     def test_normalize_map_resolves_relative_paths_against_module(self) -> None:
         # Act
         normalized = lazy.normalize_map(
-            "pkg.sub",
-            {"Rel": (".child", "Rel"), "Abs": "other.mod"},
+            "pkg.sub", {"Rel": (".child", "Rel"), "Abs": "other.mod"}
         )
 
         # Assert
@@ -380,16 +357,13 @@ class TestsFlextCoreLazyExports:
         assert merged["Shared"] == ("local.mod", "SharedLocal")
 
     def test_reset_clears_caches_observed_via_cache_stats(
-        self,
-        registered_alpha_module: tuple[str, type],
+        self, registered_alpha_module: tuple[str, type]
     ) -> None:
         # Arrange — perform an install to populate caches
         module_name, _ = registered_alpha_module
         module_globals: t.ModuleGlobals = {}
         install_lazy_exports(
-            "test_lazy_pkg",
-            module_globals,
-            {"Alpha": (module_name, "Alpha")},
+            "test_lazy_pkg", module_globals, {"Alpha": (module_name, "Alpha")}
         )
         getattr_fn = module_globals["__getattr__"]
         assert callable(getattr_fn)

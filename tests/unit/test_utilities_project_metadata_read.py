@@ -11,8 +11,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
+from flext_tests import tm
 from tests.constants import c
 from tests.models import m
 from tests.unit._project_metadata_support import write_pyproject

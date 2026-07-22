@@ -6,9 +6,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
 from flext_core import u
+from flext_tests import tm
 from tests.models import m
 
 if TYPE_CHECKING:
@@ -27,11 +27,7 @@ class TestsFlextCoreUtilitiesCollection:
             "attempt_count": 2,
             "ignored": None,
         })
-        mapping_payload: t.JsonMapping = {
-            "tenant": "acme",
-            "retry": 1,
-            "skip": None,
-        }
+        mapping_payload: t.JsonMapping = {"tenant": "acme", "retry": 1, "skip": None}
 
         normalized_config = u.normalize_domain_event_data(config_payload)
         normalized_mapping_payload = u.normalize_domain_event_data(mapping_payload)
@@ -92,8 +88,7 @@ class TestsFlextCoreUtilitiesCollection:
 
     def test_find_returns_failure_when_mapping_has_no_matching_value(self) -> None:
         result = u.find(
-            {"tenant": "acme", "mode": "full"},
-            lambda value: value == "delta",
+            {"tenant": "acme", "mode": "full"}, lambda value: value == "delta"
         )
 
         tm.fail(result)
@@ -125,10 +120,7 @@ class TestsFlextCoreUtilitiesCollection:
 
     @pytest.mark.parametrize(
         ("items", "predicate", "expected"),
-        [
-            ([1, 2, 3, 4], None, 4),
-            ([1, 2, 3, 4], lambda x: x % 2 == 0, 2),
-        ],
+        [([1, 2, 3, 4], None, 4), ([1, 2, 3, 4], lambda x: x % 2 == 0, 2)],
     )
     def test_count_returns_total_or_matching(
         self,

@@ -14,9 +14,9 @@ from __future__ import annotations
 from typing import override
 
 import pytest
-from flext_tests import r, tm
 
 from flext_core import FlextContainer, FlextService
+from flext_tests import r, tm
 from tests.models import m
 from tests.protocols import p
 from tests.typings import t

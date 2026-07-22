@@ -7,9 +7,9 @@ import warnings
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import d, e, r, tm
 
 from flext_core import FlextContainer
+from flext_tests import d, e, r, tm
 from tests.models import m
 
 if TYPE_CHECKING:
@@ -32,8 +32,7 @@ class TestsFlextCoreDecorators:
         tm.that(any(w.category is DeprecationWarning for w in caught), eq=True)
 
     def test_inject_resolves_dependency_from_shared_container(
-        self,
-        clean_container: p.Container,
+        self, clean_container: p.Container
     ) -> None:
         _ = clean_container
         di = FlextContainer.shared()
@@ -46,8 +45,7 @@ class TestsFlextCoreDecorators:
         tm.that(fn(), eq="dep-value")
 
     def test_inject_falls_back_when_binding_missing(
-        self,
-        clean_container: p.Container,
+        self, clean_container: p.Container
     ) -> None:
         _ = clean_container
 
@@ -136,8 +134,7 @@ class TestsFlextCoreDecorators:
         tm.that(calls["n"], eq=2)
 
     def test_combined_applies_injection_on_standard_path(
-        self,
-        clean_container: p.Container,
+        self, clean_container: p.Container
     ) -> None:
         _ = clean_container
         di = FlextContainer.shared()
@@ -150,15 +147,11 @@ class TestsFlextCoreDecorators:
         tm.that(fn(), eq=43)
 
     def test_combined_wraps_with_railway_when_enabled(
-        self,
-        clean_container: p.Container,
+        self, clean_container: p.Container
     ) -> None:
         _ = clean_container
 
-        @d.combined(
-            operation_name="rw",
-            railway_enabled=True,
-        )
+        @d.combined(operation_name="rw", railway_enabled=True)
         def fails() -> int:
             msg = "boom"
             raise RuntimeError(msg)
@@ -174,8 +167,7 @@ class TestsFlextCoreDecorators:
         tm.that(fn(), eq="ok")
 
     def test_factory_registers_callable_and_produces_value(
-        self,
-        clean_container: p.Container,
+        self, clean_container: p.Container
     ) -> None:
         _ = clean_container
 

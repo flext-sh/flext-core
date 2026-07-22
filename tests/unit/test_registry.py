@@ -32,8 +32,7 @@ class TestsFlextCoreRegistry:
         assert outcome.value is True
 
     def test_register_handler_returns_registration_details(
-        self,
-        registry: p.Registry,
+        self, registry: p.Registry
     ) -> None:
         registration = registry.register_handler(u.Tests.Handler())
 
@@ -52,13 +51,9 @@ class TestsFlextCoreRegistry:
         assert c.Tests.DISPATCHER_FAIL in (registration.error or "")
 
     def test_register_handlers_batch_reports_every_success(
-        self,
-        registry: p.Registry,
+        self, registry: p.Registry
     ) -> None:
-        batch = registry.register_handlers([
-            u.Tests.Handler(),
-            u.Tests.Handler(),
-        ])
+        batch = registry.register_handlers([u.Tests.Handler(), u.Tests.Handler()])
 
         assert batch.success
         summary = batch.value
@@ -68,8 +63,7 @@ class TestsFlextCoreRegistry:
         assert list(summary.errors) == []
 
     def test_register_bindings_batch_reports_every_success(
-        self,
-        registry: p.Registry,
+        self, registry: p.Registry
     ) -> None:
         batch = registry.register_bindings({
             str: u.Tests.Handler(),
@@ -90,8 +84,7 @@ class TestsFlextCoreRegistry:
         assert duplicate.success
 
     def test_instance_plugin_roundtrips_then_unregisters(
-        self,
-        registry: p.Registry,
+        self, registry: p.Registry
     ) -> None:
         assert registry.register_plugin("validators", "local", "plugin").success
 
@@ -106,35 +99,23 @@ class TestsFlextCoreRegistry:
         reader = u.build_registry(dispatcher=u.Tests.OkDispatcher())
 
         registration = writer.register_plugin(
-            "validators",
-            "shared",
-            "plugin",
-            scope=c.RegistrationScope.CLASS,
+            "validators", "shared", "plugin", scope=c.RegistrationScope.CLASS
         )
         assert registration.success
 
         fetched = reader.fetch_plugin(
-            "validators",
-            "shared",
-            scope=c.RegistrationScope.CLASS,
+            "validators", "shared", scope=c.RegistrationScope.CLASS
         )
         assert fetched.value == "plugin"
 
         assert reader.unregister_plugin(
-            "validators",
-            "shared",
-            scope=c.RegistrationScope.CLASS,
+            "validators", "shared", scope=c.RegistrationScope.CLASS
         ).success
         assert writer.fetch_plugin(
-            "validators",
-            "shared",
-            scope=c.RegistrationScope.CLASS,
+            "validators", "shared", scope=c.RegistrationScope.CLASS
         ).failure
 
-    def test_register_plugin_rejects_empty_name(
-        self,
-        registry: p.Registry,
-    ) -> None:
+    def test_register_plugin_rejects_empty_name(self, registry: p.Registry) -> None:
         result = registry.register_plugin("validators", "", "plugin")
 
         assert result.failure
@@ -147,16 +128,10 @@ class TestsFlextCoreRegistry:
         assert registry.unregister_plugin("validators", "absent").failure
 
     @pytest.mark.parametrize(
-        ("errors", "expected_success"),
-        [
-            ((), True),
-            (("boom",), False),
-        ],
+        ("errors", "expected_success"), [((), True), (("boom",), False)]
     )
     def test_summary_success_reflects_error_state(
-        self,
-        errors: tuple[str, ...],
-        expected_success: bool,
+        self, errors: tuple[str, ...], expected_success: bool
     ) -> None:
         detail = m.RegistrationDetails(
             registration_id="handler-a",

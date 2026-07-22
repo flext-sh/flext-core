@@ -7,10 +7,10 @@ import time
 from types import ModuleType
 
 import pytest
-from flext_tests import tm
 
 import flext_core
 from flext_core.lazy import install_lazy_exports, lazy
+from flext_tests import tm
 from tests.constants import c
 
 type LazyImportEntry = str | tuple[str, str]

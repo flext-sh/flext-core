@@ -70,8 +70,7 @@ from flext_core import FlextContainer, p, r, t
 
 
 def bind_services(
-    container: FlextContainer,
-    services: t.SequenceOf[tuple[str, t.RegisterableService]],
+    container: FlextContainer, services: t.SequenceOf[tuple[str, t.RegisterableService]]
 ) -> p.Result[bool]:
     for name, service in services:
         _ = container.bind(name, service)
@@ -82,13 +81,7 @@ def bind_services(
 
 
 container = FlextContainer()
-result = bind_services(
-    container,
-    (
-        ("service_a", "ok"),
-        ("service_b", "ok"),
-    ),
-)
+result = bind_services(container, (("service_a", "ok"), ("service_b", "ok")))
 
 assert result.success
 ```

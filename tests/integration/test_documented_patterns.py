@@ -8,12 +8,12 @@ No private attribute, internal collaborator or implementation detail is inspecte
 
 from __future__ import annotations
 
-import pytest
-from flext_tests import tm
-
 from collections.abc import Callable
 
-from tests.protocols import p, d, e, r
+import pytest
+
+from flext_tests import d, e, r, tm
+from tests.protocols import p
 
 _COMBINED_SUM = 6
 _FLAT_MAP_VALUE = 20

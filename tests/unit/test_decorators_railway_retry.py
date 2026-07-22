@@ -11,6 +11,7 @@ from __future__ import annotations
 import time
 
 import pytest
+
 from flext_tests import d, e, r
 
 
@@ -52,15 +53,10 @@ class TestsFlextCoreDecoratorsRailwayRetry:
 
     @pytest.mark.parametrize(
         ("error_code", "expected_code"),
-        [
-            (None, "OPERATION_ERROR"),
-            ("CUSTOM_ERROR", "CUSTOM_ERROR"),
-        ],
+        [(None, "OPERATION_ERROR"), ("CUSTOM_ERROR", "CUSTOM_ERROR")],
     )
     def test_railway_failure_carries_expected_error_code(
-        self,
-        error_code: str | None,
-        expected_code: str,
+        self, error_code: str | None, expected_code: str
     ) -> None:
         # Arrange
         @d.railway(error_code=error_code)

@@ -94,11 +94,7 @@ class TestsFlextCoreMapper:
         ],
     )
     def test_deep_eq_reports_structural_equality(
-        self,
-        left: t.JsonDict,
-        right: t.JsonDict,
-        *,
-        expected: bool,
+        self, left: t.JsonDict, right: t.JsonDict, *, expected: bool
     ) -> None:
         assert u.deep_eq(left, right) is expected
 

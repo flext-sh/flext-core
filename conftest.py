@@ -35,9 +35,7 @@ def _install_local_package(package_name: str, package_dir: Path) -> None:
             sys.modules.pop(module_name, None)
 
     package_spec = importlib.util.spec_from_file_location(
-        package_name,
-        init_file,
-        submodule_search_locations=[str(package_dir)],
+        package_name, init_file, submodule_search_locations=[str(package_dir)]
     )
     if package_spec is None or package_spec.loader is None:
         msg = f"Unable to load local package from {init_file}"

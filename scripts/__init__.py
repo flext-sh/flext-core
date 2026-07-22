@@ -14,38 +14,14 @@ if _t.TYPE_CHECKING:
     from scripts.protocols import ScriptsFlextProtocols, p
     from scripts.typings import ScriptsFlextTypes, t
     from scripts.utilities import ScriptsFlextUtilities, u
-_LAZY_IMPORTS = build_lazy_import_map(
-    {
-        ".constants": (
-            "ScriptsFlextConstants",
-            "c",
-        ),
-        ".models": (
-            "ScriptsFlextModels",
-            "m",
-        ),
-        ".protocols": (
-            "ScriptsFlextProtocols",
-            "p",
-        ),
-        ".typings": (
-            "ScriptsFlextTypes",
-            "t",
-        ),
-        ".utilities": (
-            "ScriptsFlextUtilities",
-            "u",
-        ),
-        "flext_core": (
-            "d",
-            "e",
-            "h",
-            "r",
-            "s",
-            "x",
-        ),
-    },
-)
+_LAZY_IMPORTS = build_lazy_import_map({
+    ".constants": ("ScriptsFlextConstants", "c"),
+    ".models": ("ScriptsFlextModels", "m"),
+    ".protocols": ("ScriptsFlextProtocols", "p"),
+    ".typings": ("ScriptsFlextTypes", "t"),
+    ".utilities": ("ScriptsFlextUtilities", "u"),
+    "flext_core": ("d", "e", "h", "r", "s", "x"),
+})
 
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS)

@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+
 from flext_tests import h, r, tm
 
 if TYPE_CHECKING:
@@ -149,9 +150,7 @@ class TestsFlextCoreHandlerDiscoveryClass:
 
     @pytest.mark.parametrize("expected_present", [True, False])
     def test_has_handlers_reflects_presence_of_decorated_methods(
-        self,
-        *,
-        expected_present: bool,
+        self, *, expected_present: bool
     ) -> None:
         # Arrange
         class Command:
