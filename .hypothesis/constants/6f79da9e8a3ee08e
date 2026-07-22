@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-api/src/flext_api/typings.py
-# hypothesis_version: 6.151.12
-
-['FlextApiTypes', 'delivered', 'failed', 'sha256', 'sha512', 't']

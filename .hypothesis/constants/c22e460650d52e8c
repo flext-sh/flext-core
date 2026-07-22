@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/logging.py
-# hypothesis_version: 6.152.1
-
-[10485760, 'CRITICAL', 'DEBUG', 'ERROR', 'INFO', 'Registered {subject}', 'WARNING', 'event subscriber', 'handler']

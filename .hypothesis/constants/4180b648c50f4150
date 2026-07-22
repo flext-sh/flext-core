@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/examples/ex_08_flext_container.py
-# hypothesis_version: 6.152.1
-
-[1000, '__main__', '_di_bridge', '_di_container', 'app_name', 'clear_all.count', 'command_bus', 'count', 'fetch_global.type', 'fluent_and_settings', 'get.factory.success', 'get.missing.failure', 'get.resource.success', 'get.service.success', 'internal_and_cleanup', 'logger', 'max_factories', 'max_services', 'res', 'result.ok.roundtrip', 'settings', 'wiring_and_scoped']

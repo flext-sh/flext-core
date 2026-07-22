@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/_enforcement_parts/enforcement_part_04.py
-# hypothesis_version: 6.152.4
-
-['3-5-integrity', 'ENFORCE-022', 'ENFORCE-040', 'PGH003', 'bool', 'flext-quality-gates', 'flext-strict-typing', 'kind', 'params', 'safe', 'str', 't.JsonMapping', 'target']

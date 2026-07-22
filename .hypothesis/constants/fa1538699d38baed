@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/generic.py
-# hypothesis_version: 6.151.10
-
-['Conversion metadata', 'Converted items', 'Current item', 'End time', 'Error messages', 'Estimated total', 'Failures', 'FlextGenericModels', 'Last update', 'Operation metadata', 'Operation name', 'Retries', 'Skipped', 'Skipped items', 'Source format', 'Start time', 'Successes', 'Target format', 'Total input count', 'Warning messages', 'Warnings', 'failed_items', 'warning_items']

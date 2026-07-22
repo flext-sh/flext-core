@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/service.py
-# hypothesis_version: 6.151.10
-
-['Config', 'Container', 'Context', 'FlextService', 'Runtime', '_exception', 'before', 'config_overrides', 'config_type', 'container_overrides', 'context', 'factories', 'forbid', 'resources', 's', 'services', 'subproject', 'type[FlextSettings]', 'wire_classes', 'wire_modules', 'wire_packages']

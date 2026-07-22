@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-auth/src/flext_auth/typings.py
-# hypothesis_version: 6.151.12
-
-['FlextAuthTypes', 'Identity username', 'Unit', '^[a-z][a-z0-9_:-]*$', 'access', 'bearer', 'id', 'refresh', 't']

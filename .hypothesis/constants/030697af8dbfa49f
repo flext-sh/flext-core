@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_models/xlsx_rules.py
-# hypothesis_version: 6.156.6
-
-['Allow deleting rows.', 'Allow filtering.', 'Allow pivot tables.', 'Allow sorting.', 'Cell comparison.', 'Conditional formats.', 'Data validations.', 'Format kind.', 'Formatted range.', 'Locked state.', 'Named style.', 'Resolved secret.', 'Searched text.', 'Secret kind.', 'Stop later rules.', 'cell', 'contains_text', 'formula', 'kind', 'legacy_hash', 'plain']

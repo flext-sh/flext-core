@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/patterns.py
-# hypothesis_version: 6.151.10
-
-['^#{1,6}\\s+(.+?)\\s*$', '^[A-Z][A-Z0-9_]+$', '^class\\s+(\\w+)', '^import\\s+([\\w.]+)', '`[^`]*`', 'flext_']

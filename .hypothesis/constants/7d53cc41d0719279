@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/base.py
-# hypothesis_version: 6.151.10
-
-['1.0.0', '1.2.3', 'Attributes', 'Created At', 'Created By', 'FlextModelFoundation', 'Metadata Version', 'Modified By', 'Tag must be string', 'Tags', 'Tags must be a list', 'Unique identifier', 'Updated At', '_', 'after', 'allow', 'api', 'attributes', 'before', 'billing', 'command', 'created_at', 'critical', 'event', 'failure', 'forbid', 'high', 'ignore', 'invalid', 'json', 'max_attempts', 'message_type', 'outcome_type', 'partial', 'priority', 'query', 'result_type', 'source', 'success', 'system', 'updated_at', 'user-123', 'user-456', 'valid', 'warning']

@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/codegen/cli.py
-# hypothesis_version: 6.151.10
-
-['FAIL', 'No duplicates found', 'auto-fix', 'auto-fix failed', 'auto_fix', 'canonical', 'canonical_name', 'canonical_usages', 'census', 'census failed', 'census_after', 'census_before', 'deduplicate', 'deduplicate failed', 'duplicates', 'files_modified', 'json', 'lazy-init', 'lazy-init complete', 'lazy-init failed', 'name', 'pipeline', 'pipeline failed', 'py-typed', 'py-typed failed', 'replaced', 'scaffold', 'scaffold failed', 'status', 'success', 'total_created', 'total_fixable', 'total_fixed', 'total_skipped', 'total_violations', 'usages', 'value', 'verdict']

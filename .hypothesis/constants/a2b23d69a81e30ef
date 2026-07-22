@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/validator.py
-# hypothesis_version: 6.151.10
-
-['*.py', '.py', 'FlextTestsValidator', 'all', 'bypass', 'config', 'imports', 'layer', 'tests', 'tv', 'types']

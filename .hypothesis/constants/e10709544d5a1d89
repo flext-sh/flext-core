@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/rope_inventory.py
-# hypothesis_version: 6.152.4
-
-['.', '<name>', 'Constants', 'Services', 'assignment', 'attribute', 'c', 'child_scope', 'class', 'class_chain', 'cls', 'constant', 'convention', 'function', 'get_scope', 'lineno', 'local', 'method', 'module_name', 'name', 'name_index', 'offset', 'parameter', 'path', 'project_name', 'pyname', 'real_path', 'resource', 'rope_project', 'rope_workspace', 'scope_chain', 'self', 'services', 'source']

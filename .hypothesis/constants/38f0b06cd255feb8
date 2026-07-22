@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_validator/_types_parts/types_part_02.py
-# hypothesis_version: 6.152.4
-
-['FlextValidatorTypes', 'TYPE-001', 'TYPE-002', 'TYPE-003', 'TYPE-007', 'TYPE-UNREADABLE', 'arg', 'could not read file', 'name']

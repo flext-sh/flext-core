@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/validate/pytest_diag.py
-# hypothesis_version: 6.151.9
-
-[0.0, '0', '^=+', 'classname', 'error_traces', 'failed_cases', 'failure', 'replace', 'skip_cases', 'skipped', 'slow_entries', 'testcase', 'time', 'warning_lines']

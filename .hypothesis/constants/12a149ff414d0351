@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/services/pipeline.py
-# hypothesis_version: 6.152.4
-
-[0.0, 'FlextCliPipeline', 'depends_on', 'duration_ms', 'error', 'handler', 'output', 'retry', 'settings', 'shared', 'skip_if', 'stage_id', 'status', 'workspace_root']

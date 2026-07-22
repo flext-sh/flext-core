@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_models/_matchers_parts/matchers_part_03.py
-# hypothesis_version: 6.152.4
-
-['Actual value found.', 'Cleanup functions.', 'Context values.', 'before', 'cwd']

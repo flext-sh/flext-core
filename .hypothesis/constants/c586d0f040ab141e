@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/_utilities/parser.py
-# hypothesis_version: 6.151.12
-
-['#', '-', '1', ':', '<', 'DESC', 'No DN found in entry', 'ORDERING', 'SUBSTR', '\\(\\s*([0-9.]+)', 'add', 'attribute_metadata', 'attributes', 'changetype', 'control', 'delete', 'deleteoldrdn', 'dn', 'dn_original', 'entry_comments', 'entry_original_ldif', 'extensions', 'false', 'file://', 'increment', 'newrdn', 'newsuperior', 'original_format', 'raw_values', 'replace', 'rfc', 'syntax_oid_valid', 'true', 'value_origins', 'version:', 'yes']

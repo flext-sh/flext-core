@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/rope_imports.py
-# hypothesis_version: 6.152.4
-
-[')', '--fix', '--select', 'I,F401', 'changes', 'check', 'flext-infra', 'format', 'import_dependents', 'name_index', 'new_contents', 'path', 'real_path', 'resource', 'ruff', 'ruff format failed']

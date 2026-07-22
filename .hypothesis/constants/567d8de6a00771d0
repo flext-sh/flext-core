@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_constants/__unit__.py
-# hypothesis_version: 6.156.6
-
-['.base', '.config', '.enums', '.errors', '.exceptions', '.files', '.output', '.pipeline', '.settings', '.xlsx', 'CliDefinitionError', 'CliValidationError']

@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/examples/_models/ex12.py
-# hypothesis_version: 6.156.6
-
-['Command A payload', 'Command B payload', 'ex12_command_a', 'ex12_command_b', 'ex12_event_a', 'ex12_event_b']

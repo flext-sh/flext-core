@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/_enforcement_parts/flextconstantsenforcement_part_04.py
-# hypothesis_version: 6.152.4
-
-['/usr/lib/', '/usr/local/lib/', 'Constants', 'Types', 'Utilities', 'alias_any', 'attr', 'cast', 'cast_outside_core', 'class_prefix', 'const_lowercase', 'const_mutable', 'cross_protocol', 'cross_strenum', 'dist-packages', 'extra_missing', 'extra_wrong', 'field', 'flext-core', 'flext_core', 'getattr', 'hasattr', 'library_abstraction', 'loc_cap', 'missing_description', 'model_class', 'model_rebuild', 'model_rebuild_call', 'namespace', 'nested_mro', 'no_accessor_methods', 'no_any', 'no_bare_collection', 'no_inline_union', 'no_mutable_default', 'no_str_none_empty', 'no_v1_config', 'one_class_per_module', 'pass_through_wrapper', 'private_attr_probe', 'proto_inner_kind', 'proto_not_runtime', 'protocol_tree', 'setattr', 'settings_inheritance', 'site-packages', 'typeadapter_name', 'utility_not_static', 'value_not_frozen']

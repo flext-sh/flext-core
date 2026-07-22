@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/services/__init__.py
-# hypothesis_version: 6.151.12
-
-['.basemk', '.check', '.cli_base', '.consolidator', '.deps', '.github', '.phase_engine', '.pipeline', '.refactor', '.release', '.rope', '.validate', '.workspace']

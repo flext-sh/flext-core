@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/_utilities/entry.py
-# hypothesis_version: 6.151.12
-
-[',', '0', '0/1', '1', ';', ';binary', '=', 'FALSE', 'TRUE', 'TRUE/FALSE', 'add', 'any', 'attribute', 'attributetypes', 'change_operations', 'cn=schema', 'cn=subschema', 'cn=subschemasubentry', 'context', 'converted', 'converted_length', 'delete', 'differences', 'dn', 'entry', 'moddn', 'modify', 'modrdn', 'objectClass', 'objectclass', 'objectclasses', 'oid', 'original', 'original_length', 'replace', 'rfc', 'subentry', 'subschema', 'utf-8', 'value']

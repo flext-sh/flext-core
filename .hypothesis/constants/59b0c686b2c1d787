@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/containers.py
-# hypothesis_version: 6.151.9
-
-[400, 404, 504, 'Batch Errors', 'Batch Results', 'Consistency Rule Map', 'Error Codes', 'Error Count', 'Error Map', 'Event Validator Map', 'Field Validator Map', 'Success Count', 'Total Items', 'Validator Callable', 'bad_input', 'email', 'identity_validator', 'invalid data', 'invalid payload', 'invalid_payload', 'ok', 'order_total', 'timeout', 'user.created', 'user_missing', 'validate_email', 'validate_order_total']

@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_fixtures/__init__.py
-# hypothesis_version: 6.151.11
-
-['T', 'reset_settings', 'settings', 'settings_factory']

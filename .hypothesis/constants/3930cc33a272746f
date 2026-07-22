@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_utilities/__init__.py
-# hypothesis_version: 6.151.12
-
-['.base', '.configuration', '.conversion', '.files', '.json', '.matching', '.model_commands', '.options', '.pipeline', '.runtime', '.tables', '.toml', '.validation', '.yaml']

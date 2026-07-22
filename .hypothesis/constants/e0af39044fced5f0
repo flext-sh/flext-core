@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_validator/_settings_parts/settings_part_02.py
-# hypothesis_version: 6.152.4
-
-['CONFIG-005', 'CONFIG-INVALID-TOML', 'CONFIG-UNREADABLE', 'could not read file', 'pyproject.toml', 'pyright', 'reportPrivateUsage', 'tool']

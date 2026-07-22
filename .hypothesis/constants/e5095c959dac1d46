@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_utilities/make_parsing.py
-# hypothesis_version: 6.156.6
-
-[220, '#', 'aliases', 'choices', 'choices invalid', 'command body read', 'command header read', 'default', 'help', 'name', 'param help missing', 'param invalid', 'param name missing', 'required', 'utf-8', 'values']

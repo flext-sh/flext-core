@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/deps/_models.py
-# hypothesis_version: 6.151.9
-
-['DEP001 issues', 'DEP002 issues', 'DEP003 issues', 'DEP004 issues', 'FlextInfraDepsModels', 'Maximum line length.', 'Missing dependencies', 'Mypy plugins list.', 'Project name', 'Unused dependencies', 'boolean-settings', 'combine-as-imports', 'disabled-error-codes', 'disabled-errors', 'extended-settings', 'fail-under', 'forbid', 'force-single-line', 'indent-style', 'line-ending', 'line-length', 'per-file-ignores', 'pydantic-mypy', 'quote-style', 'respect-gitignore', 'show-fixes', 'show-missing', 'skip-covered', 'standard-addopts', 'standard-markers', 'strict-errors', 'strict-settings', 'target-version']

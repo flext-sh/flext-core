@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_models/mixins.py
-# hypothesis_version: 6.151.12
-
-[',', '.', 'Absolute file path', 'Add dev suffix', 'Apply changes', 'Auto-merge', 'Base branch', 'Branch name filter', 'Confidence level', 'Draft PR', 'Enable check mode', 'Enable checkpoints', 'Error detail', 'File path', 'Git stash reference', 'Head branch', 'Include root project', 'Line number', 'Merge method', 'Nested class path', 'Output report file', 'PR action', 'PR body', 'PR number', 'PR title', 'Project name', 'Project names', 'Push to remote', 'Release on merge', 'Release phase', 'Rewrite scope', 'Verbose output', 'Version string', 'Violation detail', 'Workspace root', 'Workspace root path', 'all', 'file', 'low', 'main', 'r,s', 'squash', 'status', 'typer_param_decls', 'workspace', 'workspace_path']

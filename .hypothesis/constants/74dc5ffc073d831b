@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/_detectors/import_alias_detector.py
-# hypothesis_version: 6.151.9
-
-[' as ', '#', '(', ')', '*', ',', ', ', '.', '._', '__init__.py', 'c', 'd', 'e', 'flext_core', 'flext_infra', 'h', 'm', 'p', 'r', 's', 't', 'u', 'x']

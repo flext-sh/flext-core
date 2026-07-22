@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/mro_migrator.py
-# hypothesis_version: 6.151.9
-
-['.', 'Core', 'Types', '_', '_Core']

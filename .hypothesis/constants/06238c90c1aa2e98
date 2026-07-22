@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/project_metadata.py
-# hypothesis_version: 6.156.6
-
-['Author display name', 'Author email address', 'Class stem', 'Documentation', 'Documentation policy', 'Homepage', 'Import package', 'Owned tool tables', 'Project URLs', 'Project authors', 'Project homepage URL', 'Project root', 'Python constraint', 'Repository', 'Trove classifiers', 'documentation', 'forbid', 'homepage', 'ignore', 'library', 'repository', 'requires-python']

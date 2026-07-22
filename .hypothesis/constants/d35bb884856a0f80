@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_settings.py
-# hypothesis_version: 6.152.4
-
-['CLI application name', 'CLI log level', 'FLEXT_CLI_', 'FlextCliSettings', 'Quiet output', 'Verbose output', 'compact', 'flext-cli', 'ignore', 'info', 'pytest', 'settings', 'table']

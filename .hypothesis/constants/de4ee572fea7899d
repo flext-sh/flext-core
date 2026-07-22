@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/deps/_models_tool_config.py
-# hypothesis_version: 6.151.10
-
-['fail-under', 'pydantic-mypy', 'show-missing', 'skip-covered', 'standard-addopts', 'standard-markers']

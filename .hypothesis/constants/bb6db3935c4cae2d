@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-web/src/flext_web/utilities.py
-# hypothesis_version: 6.151.12
-
-['-', 'FlextWebUtilities', '[-\\s]+', '[^\\w\\s-]+', 'u']

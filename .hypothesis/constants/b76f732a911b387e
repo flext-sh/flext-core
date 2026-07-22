@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/parser_coerce.py
-# hypothesis_version: 6.156.6
-
-['FLOAT_COERCE_ERROR', 'INT_COERCE_ERROR', 'lower']

@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/handler.py
-# hypothesis_version: 6.151.12
-
-[0.0, '2025-01-01T00:00:00Z', 'FlextModelsHandler', 'GetUserQuery', 'Name of the handler', 'OrderCreatedEvent', 'ProcessOrderCommand', 'RegistrationDetails', 'command', 'description', 'event', 'failed', 'query', 'reg-abc123', 'running', 'stopped', 'title']

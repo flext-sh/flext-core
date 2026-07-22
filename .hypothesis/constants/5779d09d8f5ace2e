@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/transformers/project_discovery.py
-# hypothesis_version: 6.151.9
-
-['*/src/', '-', '_', '__all__', '__init__.py', 'constants.py', 'decorators.py', 'exceptions.py', 'handlers.py', 'mixins.py', 'models.py', 'protocols.py', 'result.py', 'service.py', 'services.py', 'typings.py', 'utf-8', 'utilities.py']

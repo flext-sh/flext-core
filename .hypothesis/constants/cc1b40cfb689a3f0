@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/basemk/generator.py
-# hypothesis_version: 6.151.10
-
-['--dry-run', '-C', 'Template engine', 'flext-basemk-', 'help', 'include base.mk\n', 'project_name', 'templates', 'write failed']

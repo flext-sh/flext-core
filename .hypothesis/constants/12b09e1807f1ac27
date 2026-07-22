@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/workspace/cli.py
-# hypothesis_version: 6.151.9
-
-[',', ', ', 'detect', 'detection failed', 'migrate', 'migration failed', 'orchestrate', 'orchestration failed', 'sync', 'sync failed']

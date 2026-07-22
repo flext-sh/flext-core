@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_utilities/_files_parts/flextcliutilitiesfiles_part_01.py
-# hypothesis_version: 6.156.6
-
-['.csv', '.json', '.log', '.txt', '.yaml', '.yml', 'r', 'w']

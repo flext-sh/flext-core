@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_constants/codegen_project.py
-# hypothesis_version: 6.155.7
-
-['.env.example', '.envrc', '.gitignore', '.mise.toml', '.python-version', 'LICENSE', 'Makefile', 'README.md', 'REGISTRATION.md', 'base/.envrc.j2', 'base/.mise.toml.j2', 'base/LICENSE.j2', 'base/Makefile.j2', 'base/README.md.j2', 'base/custom.mk.j2', 'base/env.example.j2', 'base/gitignore.j2', 'base/src/api.py.j2', 'base/src/base.py.j2', 'base/src/cli.py.j2', 'base/src/py.typed.j2', 'custom.mk', 'external', 'flext-repo-map.toml', 'internal', 'project', 'projects/{dist}.md', 'pyproject.toml', 'render', 'tests/__init__.py', 'tests/base.py', 'tests/conftest.py', 'tests/constants.py', 'tests/models.py', 'tests/protocols.py', 'tests/py.typed', 'tests/settings.py', 'tests/typings.py', 'tests/unit/py.typed', 'tests/utilities.py']

@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_constants/codegen_project.py
-# hypothesis_version: 6.156.6
-
-['_custom_', 'active', 'all', 'apply', 'build', 'check', 'clean', 'codegen', 'content-only', 'custom.mk', 'dependencies', 'deps', 'docs', 'excluded', 'external', 'format', 'help', 'internal', 'members', 'pyproject', 'release', 'run', 'self', 'setup', 'standalone', 'status', 'test', 'uv.lock', 'workspace-member', 'workspace-root', 'workspace.yaml']

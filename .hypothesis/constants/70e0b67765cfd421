@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/transformers/import_normalizer.py
-# hypothesis_version: 6.151.9
-
-[128, '*.py', '.', '._', '.git', '.py', 'ImportViolation', '_', '_LAZY_IMPORTS', '__init__', '__init__.py', 'alias_tiers', 'deep', 'enabled', 'facade_filenames', 'import_normalization', 'r', 'result', 'rules', 'service', 'services', 'src', 'universal_aliases', 'wrong_source']

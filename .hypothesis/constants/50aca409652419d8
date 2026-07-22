@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/codegen_constant_transformation.py
-# hypothesis_version: 6.151.10
-
-[' import ', ' import c', ',c', '.', '=', 'Constants', '^class\\s+(\\w+)', '_', 'added c import', 'class\\s+(\\w+)', 'from ', 'import ', 'import\\s*\\(\\s*\\)']

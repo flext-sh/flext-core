@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/codegen/__init__.py
-# hypothesis_version: 6.151.12
-
-['.census', '.cli', '.codegen_generation', '.fixer', '.lazy_init', '.lazy_init_planner', '.py_typed', '.scaffolder', 'FlextInfraCliCodegen']

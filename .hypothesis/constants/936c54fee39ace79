@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/servers/_oud/__init__.py
-# hypothesis_version: 6.151.12
-
-['.acl', '.constants', '.entry', '.schema', '.utilities', 'c']

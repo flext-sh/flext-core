@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/loggings.py
-# hypothesis_version: 6.151.10
-
-[0.0, 0.1, 2.0, '.', '.git', '<async-log-writer>', '<module>', 'Domain event emitted', 'FlextLogger', 'INFO', 'Service resolved', '_', '__class__', '__name__', '_level_', '_writer_logger', 'async_logging', 'buffer', 'co_qualname', 'configure', 'console_renderer', 'critical', 'debug', 'deep', 'encoding', 'errors', 'exc_info', 'exception', 'exception_message', 'exception_type', 'failed', 'flext', 'flext_core.loggings', 'flush', 'force_new', 'info', 'iso', 'level', 'line_buffering', 'log_level', 'logger_factory', 'mode', 'name', 'newlines', 'poetry.lock', 'pyproject.toml', 'self', 'source', 'stack_trace', 'success', 'trace', 'w', 'warning']

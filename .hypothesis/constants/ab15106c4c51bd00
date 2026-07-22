@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_utilities/__init__.py
-# hypothesis_version: 6.152.4
-
-['.badobjects', '.constants', '.container', '.context', '.domain', '.exception', '.files', '.fixtures_dsl', '.generic', '.handler', '.matchers', '.parser', '.payload', '.result', '.settings', '.testcase', '.testcontext', '.validation', '.validator', 'tm']

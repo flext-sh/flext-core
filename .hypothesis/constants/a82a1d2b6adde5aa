@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/mixins.py
-# hypothesis_version: 6.151.12
-
-[0.0, 'Configuration loaded', 'FlextMixins', 'Service initialized', '_runtime', 'already registered', 'avg_duration_ms', 'config_overrides', 'config_type', 'duration_ms', 'error_count', 'initial_context', 'operation_count', 'service_module', 'success_rate', 'total_duration_ms', 'x']

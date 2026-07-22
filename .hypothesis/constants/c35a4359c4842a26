@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/.claude/worktrees/mro-wkii-17-26-refactor/flext-core/src/flext_core/_utilities/_enforcement_collect_parts/enforcement_collect_part_01.py
-# hypothesis_version: 6.156.6
-
-['-', '.', '_', '__annotations__', '__module__', 'examples', 'fence', 'missing_description', 'pyproject.toml', 'scripts', 'src', 'tests']

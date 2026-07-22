@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/cli.py
-# hypothesis_version: 6.151.9
-
-['--help', '-h', 'Groups', 'Missing argument', 'Missing option', 'No such command', 'No such option', 'basemk', 'codegen', 'deps', 'flext-infra', 'github', 'maintenance', 'refactor', 'validate']

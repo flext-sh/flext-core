@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/parse_sarif.py
-# hypothesis_version: 6.152.4
-
-['(\\d+)', '.py', '/', ':', '\\"([^\\"]+)\\"', '_', '__', '__main__', '_exceptions/', '_utilities/', 'artifactLocation', 'count', 'examples/', 'file', 'install', 'lazy.install', 'locations', 'mapper_access', 'message', 'physicalLocation', 'protocol', 'qlty:function-length', 'region', 'register_plugin', 'results', 'rule', 'ruleId', 'runs', 'startLine', 'symbol', 'tests/', 'text', 'unknown', 'uri', 'utf-8']

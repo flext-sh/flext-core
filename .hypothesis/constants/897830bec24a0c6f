@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/encoding.py
-# hypothesis_version: 6.152.1
-
-[b'\xef\xbb\xbf', 'ascii', 'latin-1', 'utf-16', 'utf-8']

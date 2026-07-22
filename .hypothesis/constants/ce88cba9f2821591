@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/_utilities/pipeline.py
-# hypothesis_version: 6.151.9
-
-[',', '=', 'Pipeline', 'PipelineStep', 'Processing failed', 'ValidationPipeline', 'ValidationResult', '_collect_all', '_errors', '_fail_fast', '_func', '_is_valid', '_max_errors', '_name', '_steps', '_strict', '_warnings', 'attributes', 'custom', 'invalid', 'objectclass', 'valid', 'value']

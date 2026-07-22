@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/cqrs.py
-# hypothesis_version: 6.151.12
-
-[100, 'Command Id', 'Event Id', 'Event payload data', 'FlextModelsCqrs', 'Handler', 'Handler mode', 'Handler type', 'Pagination', 'Query', 'Query Filters', 'Query Id', 'acme', 'active', 'before', 'cmd', 'cmd_01HZX7Q0P5N6M2', 'command', 'description', 'event', 'evt', 'evt_01HZX7Q0P5N6M2', 'flext_core', 'page', 'pagination', 'query', 'query_01HZX7Q0P5N6M2', 'size', 'status', 'tenant', 'title']

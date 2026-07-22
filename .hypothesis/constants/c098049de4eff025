@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_typings/base.py
-# hypothesis_version: 6.151.12
-
-['auto', 'remove', 'skip', 'standalone', 'workspace', 'write']

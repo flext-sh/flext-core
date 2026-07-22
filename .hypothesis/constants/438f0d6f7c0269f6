@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/codegen/_codegen_generation_paths.py
-# hypothesis_version: 6.152.4
-
-[', ', '-', '.', '_', '__', '_fixtures', 'flext_core', 'flext_core.', 'flext_core._typings']

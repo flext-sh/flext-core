@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_config.py
-# hypothesis_version: 6.156.6
-
-['*.yaml', '*.yml', 'FLEXT_CONFIG_', 'FlextConfig', 'allow', 'config']

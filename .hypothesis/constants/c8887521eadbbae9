@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_constants/data_cases.py
-# hypothesis_version: 6.152.4
-
-['  valid_name  ', '123start', 'A_B_C', 'FLEXT_APP', 'FlextApp', 'MyApp2025', '_private', 'a', 'app', 'dot not allowed', 'empty string', 'flext-app', 'flext_app_v2', 'flextapp', 'hyphen not allowed', 'identifier_123', 'invalid name', 'invalid-name', 'invalid.name', 'invalid@symbol', 'myapp2025', 'null value', 'numeric prefix', 'snake_case_name', 'space not allowed', 'special character', 'valid_name', 'whitespace only']

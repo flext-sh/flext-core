@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/model_options.py
-# hypothesis_version: 6.152.4
-
-['context', 'dispatcher', 'initial_context', 'registry', 'runtime_dispatcher', 'runtime_registry', 'runtime_settings', 'settings']

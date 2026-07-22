@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/git.py
-# hypothesis_version: 6.151.11
-
-['--abbrev-ref', '--cached', '--name-only', '--porcelain', '--rebase', '-A', '-B', '-a', '-l', '-m', '-u', 'HEAD', 'add', 'checkout', 'commit', 'diff', 'fetch', 'pull', 'push', 'rev-parse', 'status', 'tag']

@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_constants/github.py
-# hypothesis_version: 6.151.12
-
-['ci.yml', 'fail', 'ok', 'skipped']

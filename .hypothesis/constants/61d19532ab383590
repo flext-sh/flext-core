@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/cqrs.py
-# hypothesis_version: 6.152.1
-
-['active', 'api_key', 'append', 'avg', 'batch', 'bearer', 'command', 'compact', 'complete', 'count', 'counter', 'create', 'deep', 'delete', 'dict', 'disk', 'distributed', 'error', 'errors', 'event', 'execute', 'filter_both', 'filter_empty', 'filter_none', 'full', 'gauge', 'generic_command', 'get', 'histogram', 'inactive', 'json', 'jwt', 'list', 'max', 'memory', 'merge_deep', 'min', 'minimal', 'none', 'operation', 'override', 'parallel', 'performance', 'permanent', 'prepare', 'query', 'replace', 'saga', 'sequential', 'serialization', 'stream', 'sum', 'summary', 'temporary', 'throughput', 'update', 'validate', 'validation', 'warn']

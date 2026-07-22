@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/rope_source.py
-# hypothesis_version: 6.151.10
-
-[', ', '\\1', '\\1:', '__all__', '__version__', 'class ', 'def ', 'rope transform', 'sync source']

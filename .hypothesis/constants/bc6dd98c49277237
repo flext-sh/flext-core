@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/rope_helpers.py
-# hypothesis_version: 6.152.4
-
-['(', '()[]{}', '([{', ')', '*', '@', '[', ']', '_', '__', 'class', 'class ', 'class_attributes', 'classmethod', 'def ', 'function', 'pass', 'private', 'protected', 'public', 'static', 'staticmethod', '{', '}']

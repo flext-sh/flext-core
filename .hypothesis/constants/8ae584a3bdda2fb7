@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/pagination.py
-# hypothesis_version: 6.151.9
-
-['Page must be >= 1', 'default_page_size', 'has_next', 'has_prev', 'max_page_size', 'message', 'page', 'page_size', 'pagination', 'total', 'total_pages']

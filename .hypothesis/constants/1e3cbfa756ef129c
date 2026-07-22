@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_exceptions/types.py
-# hypothesis_version: 6.151.12
-
-['FlextExceptionsTypes', '__qualname__', 'actual_type', 'attribute_context', 'attribute_name', 'auth_method', 'bool', 'bytes', 'config_key', 'config_source', 'conflict_reason', 'dict', 'expected_type', 'failure_count', 'field', 'float', 'host', 'int', 'limit', 'list', 'operation', 'permission', 'port', 'reason', 'reset_timeout', 'resource', 'resource_id', 'resource_type', 'retry_after', 'set', 'str', 'timeout', 'timeout_seconds', 'tuple', 'value', 'window_seconds']

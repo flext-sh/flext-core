@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_constants/rope.py
-# hypothesis_version: 6.151.9
-
-['*.pyc', '.git', '.mypy_cache', '.venv', '__pycache__', 'dist/', 'flext-', 'src']

@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/rules/pattern_corrections.py
-# hypothesis_version: 6.151.9
-
-['Mapping', '__future__', 'abc', 'cast', 'clear', 'collections', 'collections.abc', 'copy', 'dict', 'overload', 'pop', 'popitem', 'setdefault', 't.NormalizedValue', 'type', 'update']

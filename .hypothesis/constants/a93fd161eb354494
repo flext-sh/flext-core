@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/settings.py
-# hypothesis_version: 6.152.1
-
-['FlextModelsSettings', 'after', 'forbid', 'max_attempts', 'max_retries']

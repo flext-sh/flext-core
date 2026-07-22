@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_constants/base.py
-# hypothesis_version: 6.151.11
-
-[' CLI', '.flext', ': ', 'D', 'FlextCliCmd', 'blue', 'bold green', 'bold red', 'bold yellow', 'cache', 'dim', 'flext_cli', 'i', 'logs', 'password', 'service', 'status', 'token', 'username', 'utf-8', '○', '⚠', '⚠️', '✅', '✓', '✗', '❌']

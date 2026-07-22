@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/release/orchestrator.py
-# hypothesis_version: 6.151.9
-
-['--abbrev=0', '--oneline', '--tags', '-C', 'HEAD', 'RELEASE_NOTES.md', 'build-report.json', 'bump failed', 'describe', 'dry-run', 'invalid version', 'json', 'log', 'ok', 'origin', 'publish', 'push', 'release_run_started', 'tag check failed']

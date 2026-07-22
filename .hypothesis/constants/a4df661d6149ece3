@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/_utilities/events.py
-# hypothesis_version: 6.151.9
-
-['aggregate_id', 'component', 'component_count', 'conversion_operation', 'correlation_id', 'debug', 'dn_operation', 'entries_failed', 'entries_migrated', 'entries_processed', 'error', 'has_output', 'info', 'input_dn', 'items_converted', 'items_failed', 'items_processed', 'ldif.conversion', 'ldif.dn', 'ldif.migration', 'ldif.schema', 'migration_operation', 'output_dn', 'request_id', 'session_id', 'source_format', 'source_server', 'success_rate_pct', 'target_format', 'target_server', 'trace_id', 'user_id', 'warning']

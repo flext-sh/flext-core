@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_validator/layer.py
-# hypothesis_version: 6.156.6
-
-['.', 'FlextValidatorLayer', 'LAYER-001', 'LAYER-UNREADABLE', 'could not read file', 'module', 'modules']

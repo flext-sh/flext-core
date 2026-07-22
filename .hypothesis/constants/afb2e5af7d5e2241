@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_constants/enums.py
-# hypothesis_version: 6.151.12
-
-['CRITICAL', 'DEBUG', 'ERROR', 'INFO', 'WARNING', 'blue', 'bold', 'bold blue', 'bold cyan', 'bold green', 'bold magenta', 'bold red', 'bold white', 'bold yellow', 'bool', 'cancelled', 'compact', 'completed', 'csv', 'cyan', 'debug', 'detailed', 'dict', 'dim', 'error', 'failed', 'full', 'green', 'info', 'json', 'ok', 'operational', 'pending', 'plain', 'red', 'running', 'skipped', 'str', 'success', 'table', 'warning', 'white', 'yaml', 'yellow']

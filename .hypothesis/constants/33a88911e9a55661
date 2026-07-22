@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_models/deps_tool_config_type_checkers.py
-# hypothesis_version: 6.151.11
-
-['default-excludes', 'disabled-errors', 'dynamic-exclude-dirs', 'env-dirs', 'extended-settings', 'path-rules', 'project-root', 'project-venv-path', 'python-version', 'root-typings-paths', 'root-venv-path', 'source-dir', 'strict-errors', 'strict-settings', 'test-like-dirs', 'use-ignore-files', 'venv-name']

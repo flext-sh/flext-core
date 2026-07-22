@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_constants/settings.py
-# hypothesis_version: 6.152.4
-
-['2.0.0', 'FLEXT CLI', 'L', 'c', 'case_sensitive', 'choices', 'cli_log_level', 'config_file', 'd', 'debug', 'default', 'field_name_override', 'flext', 'flext-cli', 'help', 'log-format', 'log_level', 'log_verbosity', 'no_color', 'o', 'output_format', 'priority', 'q', 'quiet', 'short', 't', 'trace', 'v', 'verbose']

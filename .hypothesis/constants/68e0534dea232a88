@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/_beartype/_helpers_parts/helpers_part_01.py
-# hypothesis_version: 6.156.6
-
-['.', 'ABC', 'Constants', 'Models', 'Protocols', 'Types', 'Utilities', '_', '_LAZY_IMPORTS', '__abstractmethods__', '__name__', '_is_protocol', 'flext_core.lazy', 'typings']

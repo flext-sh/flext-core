@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_exceptions/__init__.py
-# hypothesis_version: 6.152.4
-
-['.base', '.helpers', '.metrics', '.template', '.types', 'FlextExceptionsBase', 'FlextExceptionsTypes']

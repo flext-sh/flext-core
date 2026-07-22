@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/workspace/sync.py
-# hypothesis_version: 6.151.9
-
-[1024, '--canonical-root', '.sync.lock', '__main__', 'a', 'base.mk sync failed', 'canonical_root', 'main', 'rb', 'sync failed', 'w']

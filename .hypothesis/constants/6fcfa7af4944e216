@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/_utilities/oid.py
-# hypothesis_version: 6.151.12
-
-['\\(\\s*([\\d.]+)', '^[0-2](\\.[0-9]+)*$']

@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/base.py
-# hypothesis_version: 6.152.4
-
-[',', 'Apply changes', 'Check mode', 'Dry-run mode', 'Output directory', 'Projects to process', 'Report output path', 'Workspace root', 'apply', 'apply_changes', 'before', 'check', 'check_only', 'cli', 'dry_run', 'fail_fast', 'module', 'namespace', 'output_dir', 'output_format', 'project_filter', 'projects', 'report_path', 's', 'text', 'typer_param_decls', 'workspace', 'workspace_root']

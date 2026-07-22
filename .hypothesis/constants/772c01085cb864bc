@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/model_options.py
-# hypothesis_version: 6.152.4
-
-['container_overrides', 'context', 'dispatcher', 'factories', 'initial_context', 'registry', 'resources', 'runtime_dispatcher', 'runtime_registry', 'runtime_settings', 'services', 'settings', 'settings_overrides', 'settings_type', 'subproject', 'wire_classes', 'wire_modules', 'wire_packages']

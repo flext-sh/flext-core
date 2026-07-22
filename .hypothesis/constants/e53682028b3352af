@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/docs_render.py
-# hypothesis_version: 6.151.11
-
-['            - src', '          options:', '          paths:', '        python:', '      glob:', '      handlers:', '    options:', '  - Home: index.md', '  - autorefs', '  - exclude:', '  - mkdocstrings:', '  - search', '  - section-index', '  name: material', ' |', ' | ', '## Generated Pages', '## Next Pages', '## Source of Truth', '## Start Here', '## Surface Summary', ', ', '.', '/', '3. Module docstrings', 'FLEXT Workspace', '\\|', '_none_', '_not declared_', 'aliases', 'description', 'docs_dir: docs', 'exclude_docs', 'exclude_docs: |', 'facades', 'keywords', 'module_exports', 'modules', 'nav:', 'plugins:', 'project_class', 'public_symbols', 'repo_url', 'site_title', 'site_url', 'theme:', 'validation:', '|', '| ', '|---|---|---|---|']

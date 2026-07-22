@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_constants/xlsx.py
-# hypothesis_version: 6.156.6
-
-[120.0, 255, '#', '--convert-to', '--headless', '--outdir', '.xml', '0', '1', 'General', 'auto', 'cellStyleXfs', 'cellXfs', 'false', 'flext-xlsx-recalc-', 'off', 'on', 'soffice', 'source.xlsx', 'true', 'xl/', 'xl/styles.xml', 'xl/workbook.xml', 'xl/worksheets/sheet', 'xlsx', 'xlsx_archive_invalid', 'xlsx_duplicate_sheet', 'xlsx_duplicate_table', 'xlsx_parity_failed', 'xlsx_plan_invalid', 'xlsx_range_invalid', 'xlsx_recalc_failed', 'xlsx_render_failed', 'xlsx_sheet_missing']

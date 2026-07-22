@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_utilities/_files/_batch.py
-# hypothesis_version: 6.152.4
-
-['Unknown error', 'collect', 'create', 'delete', 'directory', 'errors', 'fail', 'failed', 'files', 'model', 'on_error', 'operation', 'parallel', 'read', 'results', 'succeeded', 'total']

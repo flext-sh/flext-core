@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/formatting.py
-# hypothesis_version: 6.151.9
-
-['--fix', '--quiet', 'Flext', '_', 'flext_core']

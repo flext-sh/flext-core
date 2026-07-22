@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/examples/ex_02_flext_settings.py
-# hypothesis_version: 6.152.4
-
-[41.0, 55.0, '__main__', 'app_name', 'context_system', 'debug', 'decorated', 'decorated_ns', 'does_not_exist', 'materialized', 'namespace_system', 'registered', 'registered_ns', 'service_name', 'singleton_and_global', 'test-service', 'timeout_seconds', 'trace', 'utf-8', 'worker-a', 'worker-service', 'x']

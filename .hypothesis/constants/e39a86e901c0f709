@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/containers.py
-# hypothesis_version: 6.151.9
-
-[400, 404, 504, 'Batch Errors', 'Batch Results', 'Consistency Rule Map', 'Error Codes', 'Error Count', 'Error Map', 'Event Validator Map', 'Factory Map', 'Field Validator Map', 'Resource Map', 'Service Registry Map', 'Success Count', 'Total Items', 'UserService', 'Validator Callable', 'bad_input', 'build_session', 'connection', 'create_db_client', 'db_client', 'email', 'forbid', 'identity_validator', 'invalid data', 'invalid payload', 'invalid_payload', 'ok', 'open_connection', 'order_total', 'session_factory', 'timeout', 'user.created', 'user_missing', 'user_service', 'validate_email', 'validate_order_total']

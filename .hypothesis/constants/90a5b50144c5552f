@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/transformers/_utilities_normalizer.py
-# hypothesis_version: 6.151.10
-
-[128, ' as ', ',', '.', '^import\\s+([\\w., ]+)', 'alias_tiers', 'import_normalization', 'rules']

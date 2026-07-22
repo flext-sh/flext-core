@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_constants/namespace.py
-# hypothesis_version: 6.152.4
-
-['__init__.py', '__main__.py', '__version__.py', '_settings.py', '_typings.py', 'cli', 'conftest.py', 'ldif', 'main', 'py.typed', 'settings.py', 'typings.py']

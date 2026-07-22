@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/result.py
-# hypothesis_version: 6.152.1
-
-['; ', 'FlextResult', 'FlextResult[T | U]', 'T', 'Unknown error', 'Validation failed', 'correlation_id', 'error', 'error_code', 'error_data', 'errors', 'forbid', 'message', 'metadata', 'r', 'success', 't.ModelInput']

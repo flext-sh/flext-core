@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/rope_analysis.py
-# hypothesis_version: 6.152.4
-
-['*', '.', '/home/marlonsc/flext', 'AnnAssign', 'Assign', 'AsyncFunctionDef', 'ClassDef', 'Constant', 'Constants', 'Expr', 'FunctionDef', 'Import', 'ImportFrom', '_', '__', '_fields', 'asname', 'attr', 'bases', 'body', 'col_offset', 'decorators', 'end_col_offset', 'end_lineno', 'func', 'id', 'imports', 'level', 'lineno', 'main', 'module', 'module_name', 'name', 'names', 'real_path', 'root', 'target', 'targets', 'value']

@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/release/cli.py
-# hypothesis_version: 6.151.10
-
-[',', '0.0.0', 'Release failed', 'all', 'bump failed', 'bump> ', 'invalid bump type', 'invalid version', 'lower', 'major', 'minor', 'patch', 'publish', 'run', 'v']

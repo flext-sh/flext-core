@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/release.py
-# hypothesis_version: 6.156.6
-
-['# Changelog\n\n', '## Projects impacted', '## Scope', '## Status', '## Verification', '- Quality: Alpha', '- make build', '- root', 'CHANGELOG.md', 'changelog update', 'latest.md', 'releases']

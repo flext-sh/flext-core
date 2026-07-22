@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/gates/go.py
-# hypothesis_version: 6.151.9
-
-['*.go', '-l', '.', './...', 'FlextInfraGoGate', 'Go', 'col', 'file', 'go vet failed', 'line', 'msg', 'vet']

@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/settings.py
-# hypothesis_version: 6.152.1
-
-[100, 'HS256', '[\\x00-\\x1F\\x7F]', '_cache', '_cached_at', '_cached_value', '_ttl', 'allow', 'base64', 'forbid', 'ignore', 'iso8601']

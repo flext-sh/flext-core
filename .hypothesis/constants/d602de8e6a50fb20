@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/enforcement.py
-# hypothesis_version: 6.152.1
-
-['CRITICAL', 'HIGH', 'HIT', 'HIT / MISS / SKIP.', 'LOW', 'MEDIUM', 'MISS', 'SKIP', '^ENFORCE-\\d{3}$', 'after', 'ast_grep', 'ast_grep_fix', 'beartype', 'change_signature', 'custom', 'extract', 'flext_infra_detector', 'forbid', 'inline', 'kind', 'minimal_ast', 'move', 'rename', 'ruff', 'runtime_warning', 'skill_pointer']

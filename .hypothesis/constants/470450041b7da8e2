@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-ldap/src/flext_ldap/__version__.py
-# hypothesis_version: 6.152.4
-
-['FlextLdapVersion', '__author__', '__author_email__', '__description__', '__license__', '__title__', '__url__', '__version__', '__version_info__', 'flext-ldap']

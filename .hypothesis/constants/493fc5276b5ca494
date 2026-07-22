@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_typings/base.py
-# hypothesis_version: 6.152.4
-
-['audit', 'build', 'fix', 'generate', 'validate']

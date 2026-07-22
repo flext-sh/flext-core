@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_models/deps_toml.py
-# hypothesis_version: 6.156.6
-
-['Custom handler', 'Expected values', 'Key to remove', 'Merge strategy', 'Operation kind', 'Phase name', 'Primary table path', 'TOML key name', 'custom_handler', 'kind', 'nested_tables', 'operations', 'root_path', 'table_path']

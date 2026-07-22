@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_models/engine_ops.py
-# hypothesis_version: 6.152.4
-
-['Expected values', 'Key to remove', 'Merge strategy', 'Operation kind', 'TOML key name']

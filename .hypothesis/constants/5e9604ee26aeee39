@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_models/xlsx_snapshot.py
-# hypothesis_version: 6.156.6
-
-['A1 cell coordinate.', 'Applied named style.', 'Defined name.', 'Explicit row height.', 'First column index.', 'Formula cell count.', 'Hidden column state.', 'Hidden row state.', 'Last column index.', 'Merged-range count.', 'One-based row index.', 'Row outline level.', 'Table name.', 'Worksheet name.', '^=', 'hidden', 'veryHidden', 'visible']

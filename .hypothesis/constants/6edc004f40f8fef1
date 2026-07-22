@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_models/rope.py
-# hypothesis_version: 6.156.6
-
-['Base class names', 'Bound local name', 'Class name', 'Comment marker', 'Constant name', 'Definition name', 'Exact source region', 'Exclusive offset', 'FlextInfraModelsRope', 'From-import marker', 'Imported member', 'Imported module path', 'Inclusive offset', 'Symbol name', 'Type annotation text', 'Value representation']

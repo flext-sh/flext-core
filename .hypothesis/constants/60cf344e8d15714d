@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/domain.py
-# hypothesis_version: 6.156.6
-
-['FlextUtilitiesDomain', '__iter__', 'model_dump']

@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/__init__.py
-# hypothesis_version: 6.152.4
-
-['.accessor_migration', '.census', '.engine', '.engine_file', '.engine_legacy', '.engine_text', '.loader', '.mro_import_rewriter', '.mro_resolver', '.namespace_enforcer', '.orchestrator', '.project_classifier', '.safety', '.scanner', '.violation_analyzer']

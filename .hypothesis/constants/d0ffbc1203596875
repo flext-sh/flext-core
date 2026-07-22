@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/model.py
-# hypothesis_version: 6.152.1
-
-['FlextUtilitiesModel', 'fetch_global', 'flext_core', 'json_input', 'model_copy', 'settings_type']

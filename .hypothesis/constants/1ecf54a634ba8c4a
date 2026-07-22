@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/handler.py
-# hypothesis_version: 6.152.4
-
-['execution_context', 'handler_name', 'saga', 'started_at']

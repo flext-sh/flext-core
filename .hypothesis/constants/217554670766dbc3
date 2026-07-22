@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_models/docs.py
-# hypothesis_version: 6.156.6
-
-['Applied TOC updates', 'Applied link fixes', 'Apply mode flag', 'Apply writes to disk', 'Audit issue severity', 'Audit issue type', 'Changed files count', 'Defining module name', 'Executed checks', 'Exports', 'File path', 'FlextInfraModelsDocs', 'Generated API page', 'Generated file path', 'Import package name', 'Issue category', 'Issue description', 'Issue severity', 'Item detail message', 'Project class', 'Project count', 'Project description', 'Project name', 'Public export name', 'Relative file path', 'Resolved site URL', 'Resolved site title', 'Result reason', 'Result status', 'Scope name', 'Strict mode', 'Strict-mode flag', 'Whether phase passed', 'all', 'forbid', 'root']

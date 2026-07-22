@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_validator/imports.py
-# hypothesis_version: 6.156.6
-
-['.', 'IMPORT-001', 'IMPORT-002', 'IMPORT-003', 'IMPORT-004', 'IMPORT-006', 'IMPORT-UNREADABLE', '_', 'could not read file', 'module']

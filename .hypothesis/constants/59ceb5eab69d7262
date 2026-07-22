@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_models/xlsx_tables.py
-# hypothesis_version: 6.156.6
-
-['Defined name.', 'Name kind.', 'Table name.', 'Table style.', 'formula', 'kind', 'range']

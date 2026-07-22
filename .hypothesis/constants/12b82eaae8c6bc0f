@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/_exception_params_parts/flextmodelsexceptionparams_part_02.py
-# hypothesis_version: 6.156.1
-
-[1.5, 30.0, 100, 'Conflict Reason', 'Limit', 'Operation', 'Permission', 'Resource', 'Retry After', 'Timeout Seconds', 'User ID', 'Window Seconds', 'dispatch', 'invoice:12345', 'user-123', 'version_mismatch', 'write']

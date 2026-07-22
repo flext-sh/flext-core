@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_utilities/_options_parts/flextcliutilitiesoptions_part_02.py
-# hypothesis_version: 6.156.6
-
-['-', '=', 'default', 'default_factory']

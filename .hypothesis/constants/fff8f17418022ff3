@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/transformers/smells/__init__.py
-# hypothesis_version: 6.152.4
-
-['.base', '.boolean_logic', 'FlextInfraSmellFixer', 'register_smell_fixer', 'smell_fixer_for']

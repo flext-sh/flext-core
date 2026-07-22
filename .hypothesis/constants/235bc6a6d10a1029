@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/registry.py
-# hypothesis_version: 6.152.1
-
-['::', '; ', 'FlextRegistry', '__main__', '__name__', 'dispatcher', 'execute registry', 'handler_id', 'mode', 'name', 'registered_keys', 'registry']

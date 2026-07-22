@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/gates/ruff_lint.py
-# hypothesis_version: 6.151.9
-
-['--fix', '--output-format', '--quiet', '-m', '.', '?', 'Ruff Lint', '[]', 'code', 'column', 'filename', 'location', 'message', 'row']

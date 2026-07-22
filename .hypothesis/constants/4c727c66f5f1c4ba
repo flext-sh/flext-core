@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/domain_event.py
-# hypothesis_version: 6.156.6
-
-['Event data container', 'event']

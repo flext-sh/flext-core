@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/servers/apache.py
-# hypothesis_version: 6.151.12
-
-['*', ':', '\\([^()]+\\)', '\\(version', 'aci', 'aci:', 'ads-', 'ads-aci', 'ads-aci:', 'ads-base', 'ads-directoryservice', 'ads-interceptor', 'ads-partition', 'ads-server', 'anonymous', 'apache', 'apache-', 'apache_directory', 'apacheds', 'metadata', 'ou=partitions', 'ou=services', 'ou=settings', 'ou=system', 'raw_acl', 'rfc']

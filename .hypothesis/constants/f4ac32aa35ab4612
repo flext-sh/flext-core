@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_constants/make.py
-# hypothesis_version: 6.152.4
-
-['-q', '.py', '.pytest_cache', '.sh', '.venv', '///', '/// flext-command', '0', '1', 'APPLY', 'CHECK_GATES', 'DEPS_REPORT', 'DOCS_PHASE', 'DRY_RUN', 'FLEXT_COMMAND_PATH', 'FLEXT_COMMAND_VERB', 'FLEXT_COMMAND_WHAT', 'HELP', 'MESSAGE', 'N', 'OPTIONS', 'PYTEST_ARGS', 'PYTHONPATH', 'TAG', 'TRUE', 'VALIDATE_SCOPE', 'WHAT', 'Y', 'YES', '__pycache__', 'all', 'github', 'lib', 'lint', 'maintenance', 'project', 'surface-validation', 'validate']

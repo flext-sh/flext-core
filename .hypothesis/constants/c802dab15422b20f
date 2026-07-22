@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/_utilities/functional.py
-# hypothesis_version: 6.151.9
-
-['FlextFunctional', 'bool', 'collect', 'dict', 'f', 'float', 'int', 'list', 'set', 'skip', 'stop', 'str', 'tuple']

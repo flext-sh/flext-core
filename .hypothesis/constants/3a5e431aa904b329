@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/settings.py
-# hypothesis_version: 6.151.9
-
-[30.0, 120, 200, ', ', '.flext', '.json', '.yaml', '.yml', 'CLI config directory', 'CLI log level', 'CLI profile name', 'CLI timeout seconds', 'FlextCliSettings', 'Max output width', 'Max retries', 'Path to config file', 'Quiet output', 'Verbose output', 'config', 'default', 'development', 'json', 'loaded', 'logger', 'normal', 'profile', 'quiet', 'simple', 'utf-8', 'verbose']

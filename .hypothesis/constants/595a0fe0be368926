@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/github.py
-# hypothesis_version: 6.152.4
-
-['*.yaml', '*.yml', '.github', 'action', 'actionlint', 'already synced', 'ci.yml', 'create', 'missing ci.yml', 'noop', 'path', 'project', 'prune', 'reason', 'run: make boot', 'run: make setup', 'update', 'workflows']

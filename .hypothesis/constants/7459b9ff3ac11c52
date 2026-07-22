@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/_models/events.py
-# hypothesis_version: 6.151.9
-
-[0.0, 'file', 'forbid', 'ldap3', 'ldif.parse', 'parse_file', 'parse_ldap3', 'parse_string', 'string', 'write_file']

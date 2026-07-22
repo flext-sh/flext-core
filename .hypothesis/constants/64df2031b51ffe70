@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_typings/annotateds.py
-# hypothesis_version: 6.151.10
-
-[0.0, 1.0, 100.0, 300.0, 100, 255, 599, 10000, 65535, 'FlextTypesAnnotateds', 'message_type', 'outcome_type', 'result_type']

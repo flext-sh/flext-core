@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/_models/domain_entry.py
-# hypothesis_version: 6.151.12
-
-[0.0, 1.0, '<None>', 'RFC 2849 changetype', 'Warning messages', 'acls', 'after', 'allow', 'attribute_count', 'attribute_metadata', 'attributes', 'attributes_schema', 'before', 'change_operations', 'changetype', 'context', 'controls', 'created_at', 'deleteoldrdn', 'dn', 'entry_metadata', 'errors', 'filter_results', 'filters_applied', 'forbid', 'metadata', 'newrdn', 'newsuperior', 'objectclasses', 'quirk_type', 'quirks_applied', 'raw_record_lines', 'record_kind', 'rejection_category', 'rejection_reason', 'rfc_violations', 'server_type', 'source_entry', 'statistics', 'total_violations', 'updated_at', 'validation_metadata', 'validation_rules', 'validator', 'warnings', 'was_filtered', 'was_parsed', 'was_rejected']

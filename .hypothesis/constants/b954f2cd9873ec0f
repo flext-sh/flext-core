@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/codegen/_codegen_metrics.py
-# hypothesis_version: 6.151.10
-
-['duplicate_groups', 'duplicates_delta', 'duplicates_increased', 'import_parse_errors', 'layer_violations', 'mro_failures', 'parse_error_count', 'projects_failed', 'projects_passed', 'projects_total', 'total_violations', 'violations_by_rule', 'violations_delta', 'violations_increased', 'violations_reduced']

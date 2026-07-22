@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/docs_generate.py
-# hypothesis_version: 6.152.4
-
-['#', '*.md', '-', '.', '/', 'README.md', '_', 'api_page', 'apply', 'code-docstring-ssot', 'description', 'docs/index.md', 'dry-run', 'exclude_docs', 'files', 'generate', 'generate-report.md', 'generated', 'http://', 'https://', 'mailto:', 'mkdocs.yml', 'modules', 'name', 'package_name', 'path', 'project_class', 'written']

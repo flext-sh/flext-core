@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/detectors/import_alias_detector.py
-# hypothesis_version: 6.151.9
-
-['current_import', 'deep', 'file', 'line', 'suggested_import', 'violation_type']

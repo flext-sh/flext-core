@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/collections.py
-# hypothesis_version: 6.152.4
-
-['Contains', 'Empty Constraint', 'Ends With', 'Equals', 'Greater Than', 'In Values', 'Is Type', 'Less Than', 'Less Than Or Equal', 'None Constraint', 'Not Equals', 'Not In Values', 'Not Type', 'Regex Match', 'Starts With']

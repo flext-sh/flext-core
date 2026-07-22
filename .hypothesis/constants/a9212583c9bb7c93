@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/examples/ex_07_flext_exceptions.py
-# hypothesis_version: 6.152.4
-
-['E_AUTO', 'E_BASE', 'E_CALL', 'E_DYNAMIC', '__call__.error_code', '__call__.type', '__main__', 'auto corr', 'base boom', 'base.auto_log', 'base.class', 'base.correlation_id', 'base.error_code', 'base.error_message', 'base.has_timestamp', 'base.message', 'base.meta.channel', 'base.meta.operation', 'base.meta.scope', 'base_error', 'caller', 'channel', 'corr-base-1', 'corr-dyn-1', 'create', 'create.error_code', 'create.type', 'demo', 'dynamic', 'e', 'example', 'exc_', 'factories_helpers', 'factory attribute', 'factory validation', 'from __call__', 'import.constant', 'import.r_ok', 'imports', 'metrics', 'metrics.unique_types', 'ok', 'operation', 'scope', 'style.raise_msg', 'test', 'title', 'username']

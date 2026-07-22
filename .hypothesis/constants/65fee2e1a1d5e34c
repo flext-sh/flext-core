@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/check/_models.py
-# hypothesis_version: 6.151.10
-
-[0.0, '$schema', '%SRCROOT%', '2.1.0', 'Artifact URI', 'Column number', 'Detected issues', 'Duration in seconds', 'Gate error messages', 'Gate name', 'Gate result model', 'Issue severity level', 'Line number', 'Project name', 'Raw tool output', 'Result locations', 'Result message', 'Rule descriptors', 'Rule identifier', 'Rule or error code', 'Run results', 'SARIF runs', 'SARIF schema URI', 'SARIF version', 'Source file path', 'Start line (1-based)', 'Tool name', 'URI base identifier', 'artifactLocation', 'driver', 'id', 'informationUri', 'level', 'locations', 'message', 'name', 'physicalLocation', 'plain', 'region', 'results', 'ruleId', 'rules', 'shortDescription', 'startColumn', 'startLine', 'text', 'tool', 'uri', 'uriBaseId']

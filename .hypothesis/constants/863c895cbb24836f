@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_utilities/_toml_parts/flextcliutilitiestoml_part_06.py
-# hypothesis_version: 6.152.4
-
-['--config', '.taplo.toml', 'TOML file', 'TOML write', 'format', 'pyproject.toml', 'read TOML', 'taplo']

@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_fixtures/_enforcement_parts/discovery.py
-# hypothesis_version: 6.152.4
-
-['flext-', 'fspath', 'load_infra_report', 'path', 'pyproject.toml']

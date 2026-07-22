@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-web/src/flext_web/protocols.py
-# hypothesis_version: 6.151.12
-
-[0.05, 2.0, 1000, '/protocol/health', 'DEBUG', 'FlextWebProtocols', 'GET', 'Host cannot be empty', 'SECRET_KEY', 'TESTING', 'action', 'app_id', 'app_ids', 'autoescape', 'avg_response_time_ms', 'cache_enabled', 'count', 'created_at', 'errors', 'flask_health', 'framework', 'headers', 'host', 'http', 'id', 'interface', 'message', 'name', 'p', 'port', 'requests', 'routes_initialized', 'service', 'service_running', 'status', 'success', 'template_dir', 'warning']

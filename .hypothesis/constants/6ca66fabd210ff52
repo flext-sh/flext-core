@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/rules/class_nesting.py
-# hypothesis_version: 6.151.11
-
-['-m', 'class-policy-v2.yml', 'confidence_threshold', 'expected_base_chain', 'helper_name', 'imports_resolve', 'lower', 'mro_valid', 'postcheck_failed', 'precheck_failed', 'py_compile', 'quality_gates', 'transform_failed', '|']

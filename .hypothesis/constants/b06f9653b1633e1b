@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_constants/docs.py
-# hypothesis_version: 6.152.4
-
-['.reports/docs', 'D100', 'D101', 'D102', 'D103', 'PLR2004', 'S101', '^#{1,6}\\s+(.+?)\\s*$', '`[^`]*`', 'docs_config.json']

@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/status.py
-# hypothesis_version: 6.152.1
-
-['active', 'archived', 'cancelled', 'compensating', 'completed', 'degraded', 'error', 'failed', 'failure', 'healthy', 'idle', 'inactive', 'partial', 'pending', 'processing', 'running', 'sent', 'stopped', 'success', 'unhealthy', 'unknown']

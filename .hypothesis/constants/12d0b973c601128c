@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/deps/extra_paths.py
-# hypothesis_version: 6.151.10
-
-[' @ ', '../', './', '/', '://', '__main__', 'extraPaths', 'file:', 'file://', 'git+', 'git@', 'http://', 'https://', 'mypy_path', 'sources', 'ssh://', 'sync failed', 'tests', 'unwrap', 'uv', 'workspace']

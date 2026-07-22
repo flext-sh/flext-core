@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_utilities/model_commands.py
-# hypothesis_version: 6.152.1
-
-['__annotations__', '__signature__', 'annotation', 'exclude', 'get_default', 'is_required', 'model_fields', 'return']

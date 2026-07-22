@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_fixtures/markdown_validation.py
-# hypothesis_version: 6.152.4
-
-['.md', 'markdown', 'pytest_addoption', 'pytest_collect_file', 'pytest_markdown_docs', 'store_true']

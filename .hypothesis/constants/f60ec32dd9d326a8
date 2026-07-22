@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/servers/novell.py
-# hypothesis_version: 6.151.12
-
-['#', ':', 'A', 'B', 'C', 'D', 'E', 'Empty ACL content', 'GUID', 'R', 'S', 'W', '[', ']', 'aci', 'acl', 'add', 'ascii', 'attributes', 'compare', 'createTimestamp', 'delete', 'dirxml-', 'entry', 'guid', 'inheritedacl', 'login', 'logindisabled', 'loginexpirationtime', 'logingraceremaining', 'logintime', 'metadata', 'modifyTimestamp', 'ndsloginproperties', 'ndsperson', 'ndsserver', 'ndstree', 'novell', 'novell_edirectory', 'nspm', 'nspmldapaccessgroup', 'nspmldapuser', 'nspmpasswordpolicy', 'nspmpasswordpolicydn', 'ou=apps', 'ou=services', 'ou=system', 'raw_acl', 'read', 'rfc', 'search', 'supervisor', 'target_dn', 'trustee', 'write']

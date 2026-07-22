@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/codegen/fixer.py
-# hypothesis_version: 6.151.10
-
-['*.py', 'Final constant', 'NS-001', 'NS-002', 'NS-003', 'NS-004', 'NS-005', 'NS-ENGINE', 'NS-MRO', 'TypeAlias', 'TypeVar', 'Use run() directly', '_', 'all', 'ban-lazy-imports', 'constants', 'constants.py', 'typings.py']

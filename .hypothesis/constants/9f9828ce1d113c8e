@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_utilities/_output_parts/flextcliutilitiesoutput_part_02.py
-# hypothesis_version: 6.152.4
-
-[0.0, 'elapsed', 'error_count', 'errors', 'failed', 'log_path', 'max_show', 'project', 'skipped', 'success', 'total', 'verb']

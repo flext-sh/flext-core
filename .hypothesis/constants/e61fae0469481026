@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_constants/__init__.py
-# hypothesis_version: 6.152.4
-
-['.adapters', '.base', '.basemk', '.census', '.check', '.cli', '.cli_routes', '.codegen', '.codegen_detection', '.codegen_lazy', '.deps', '.detectors', '.docs', '.github', '.make', '.namespace', '.refactor', '.release', '.rope', '.source_code', '.validate', '.workspace', 'CODEGEN_ROUTES', 'VALIDATE_ROUTES', 'WORKSPACE_ROUTES']

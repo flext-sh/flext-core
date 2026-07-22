@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/loggings.py
-# hypothesis_version: 6.151.10
-
-[0.0, '.', '.git', '<module>', 'FlextLogger', 'INFO', '__class__', 'co_qualname', 'critical', 'debug', 'deep', 'exc_info', 'exception', 'exception_message', 'exception_type', 'failed', 'flext', 'flext_core.loggings', 'force_new', 'info', 'level', 'log_level', 'name', 'poetry.lock', 'pyproject.toml', 'self', 'source', 'stack_trace', 'success', 'trace', 'u', 'warning']

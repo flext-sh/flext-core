@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/output.py
-# hypothesis_version: 6.151.9
-
-['=', 'DEBUG', 'ERROR', 'INFO', 'OutputBackend', 'WARN', '[FAIL]', '[OK]', 'output', '═']

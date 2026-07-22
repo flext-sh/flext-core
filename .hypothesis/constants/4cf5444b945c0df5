@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/_models/domain_dn.py
-# hypothesis_version: 6.151.12
-
-['after', 'canonical_case', 'cleaned_dn', 'dn cannot be None', 'forbid', 'metadata', 'normalized_dn', 'original_dn', 'transformations', 'valid', 'value', 'variant_count', 'variants']

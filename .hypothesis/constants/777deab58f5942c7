@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/servers/ds389.py
-# hypothesis_version: 6.151.12
-
-['(version', '(version 3.0)', '*', ',', '389 DS ACL', '389ds', ':', '\\([^()]+\\)', 'aci', 'aci:', 'acl\\s+\\"([^\\"]+)\\"', 'add', 'all', 'allow', 'allow\\s*\\(([^)]+)\\)', 'anyone', 'attributes', 'cn=changelog', 'cn=monitor', 'cn=settings', 'cn=subschemasubentry', 'compare', 'createTimestamp', 'creatorsName', 'delete', 'dn:', 'dncomp', 'ds389', 'entryid', 'group', 'ldap:///anyone', 'metadata', 'modifiersName', 'modifyTimestamp', 'nsUniqueId', 'nscontainer', 'nscpEntryDN', 'nscpentrydn', 'nsds', 'nsds5ReplConflict', 'nsds5replconflict', 'nsds5replica', 'nsorganizationalunit', 'nsperson', 'nsslapd-', 'nsuniqueId', 'nsuniqueid', 'original_format', 'parentid', 'passwordHistory', 'proxy', 'raw_acl', 'read', 'rfc', 'search', 'self', 'target = "', 'target_dn', 'targetattr', 'user', 'userdn', 'write', 'x_ds_use', 'x_origin']

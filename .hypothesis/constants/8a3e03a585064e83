@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/collection.py
-# hypothesis_version: 6.151.9
-
-['1', 'Enum', 'No first item found', 'No last item found', 'Unknown error', '__name__', 'append', 'collect', 'deep', 'fail', 'filter_both', 'filter_empty', 'filter_none', 'override', 'replace', 'skip', 'true', 'yes']

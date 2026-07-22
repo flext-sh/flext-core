@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/builders.py
-# hypothesis_version: 6.151.9
-
-['.', 'FlextTestsBuilders', 'Validation failed', '_id', '_is_result_marker', '_result_code', '_result_fail', '_result_ok', 'active', 'add', 'api', 'batch', 'build', 'config', 'configs', 'count', 'data', 'debug', 'deep', 'default', 'development', 'email', 'entity', 'environment', 'error', 'exclude_keys', 'id', 'invalid_emails', 'is_success', 'key', 'merge_from', 'name', 'production', 'result_error', 'result_is_success', 'result_value', 'results', 'scenarios', 'service', 'service_type', 'services', 'status', 'strategy', 'success', 'tb', 'timeout', 'to_result', 'type', 'ulid', 'user', 'users', 'valid_emails', 'valid_hostnames', 'validation_fields', 'value']

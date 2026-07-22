@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/parser.py
-# hypothesis_version: 6.151.10
-
-['0', '1', 'FLOAT_COERCE_ERROR', 'FlextUtilitiesParser', 'INT_COERCE_ERROR', 'TARGET_NOT_ENUM', 'TARGET_NOT_MODEL', 'TARGET_NOT_PRIMITIVE', 'Unknown', 'Value is None', '__name__', 'case_insensitive', 'default', 'default_factory', 'false', 'field_name', 'lower', 'no', 'off', 'on', 'strict', 'title', 'true', 'type', 'typing.Any', 'upper', 'value', 'yes']

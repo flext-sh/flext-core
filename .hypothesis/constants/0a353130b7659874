@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_typings/containers.py
-# hypothesis_version: 6.151.12
-
-['Dictionary Payload', 'Object List', 'dry_run', 'item-1', 'req-123', 'request_id', 'retry_count']

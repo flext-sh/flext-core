@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/basemk/_models.py
-# hypothesis_version: 6.151.9
-
-['Default test command', 'Dependency manager', 'Project identifier', 'Tests directory path']

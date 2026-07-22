@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/_models/domain_acl.py
-# hypothesis_version: 6.151.12
-
-['389ds', 'ACL name', 'ACL permission flags', 'Add permission', 'Compare permission', 'Delete permission', 'Read permission', 'Search permission', 'Target DN pattern', 'Target attributes', 'Write permission', 'active_directory', 'add', 'after', 'all', 'auth', 'browse', 'compare', 'delete', 'name_sanitized', 'no_add', 'no_browse', 'no_delete', 'no_self_write', 'no_write', 'oid', 'openldap', 'openldap1', 'openldap2', 'original_format', 'original_name_raw', 'oud', 'proxy', 'read', 'relaxed', 'rfc', 'search', 'self_write', 'source_server', 'write']

@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/settings.py
-# hypothesis_version: 6.152.1
-
-['base64', 'forbid', 'ignore', 'iso8601']

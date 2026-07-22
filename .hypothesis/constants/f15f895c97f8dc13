@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/github_pr.py
-# hypothesis_version: 6.151.10
-
-['--action', '--auto', '--base', '--checks-strict', '--delete-branch', '--draft', '--merge-method', '--release-on-merge', '--repo-root', '-C', '-m', '0', '1', 'PR_BODY', 'PR_HEAD', 'PR_NUMBER', 'PR_TITLE', 'body', 'changes check failed', 'git add failed', 'git commit failed', 'head', 'number', 'title']

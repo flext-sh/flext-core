@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_constants/files.py
-# hypothesis_version: 6.151.11
-
-[292, 420, 493, 1024, 8192, ',', '.bin', '.csv', '.dat', '.json', '.log', '.md', '.rst', '.tsv', '.txt', '.yaml', '.yml', 'B', 'GB', 'Info error: {error}', 'KB', 'MB', 'PB', 'Read error: {error}', 'TB', 'auto', 'bin', 'binary', 'collect', 'content', 'create', 'csv', 'delete', 'file', 'hash', 'json', 'lines', 'read', 'size', 'skip', 'stop', 'text', 'unknown', 'yaml']

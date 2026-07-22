@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/examples/_models/errors.py
-# hypothesis_version: 6.152.4
-
-['Expected text input', 'adapter boom', 'auth fail', 'bad attr', 'bad cfg', 'boom', 'callable failed', 'conflict', 'down', 'explode', 'failed op', 'forced boom', 'invalid', 'late', 'missing', 'nope', 'open', 'rule-crash', 'slow down', 'wrong type']

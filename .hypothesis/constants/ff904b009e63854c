@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_utilities/_make_parts/make_registry_part_02.py
-# hypothesis_version: 6.152.4
-
-['aliases', 'description', 'domain', 'example', 'mutates', 'mutates_when', 'params', 'rules', 'summary', 'target', 'target_env']

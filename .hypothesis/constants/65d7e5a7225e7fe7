@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_settings/core.py
-# hypothesis_version: 6.152.4
-
-['Application name', 'Application version', 'Cache TTL', 'Enable caching', 'Enable debug mode', 'Enable trace mode', 'FlextSettingsCore', 'Log level']

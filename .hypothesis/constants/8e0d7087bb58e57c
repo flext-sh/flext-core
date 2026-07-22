@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/mixins.py
-# hypothesis_version: 6.151.9
-
-[100, 1000, '0', '1', 'FAIL', 'Invalid log level', 'NO_TARGET', 'PASS', 'SKIP', 'UNKNOWN', 'active', 'aggregate_id', 'anonymous', 'api_key', 'attributes', 'auto_correlation', 'auto_log', 'bearer', 'class', 'collection', 'command', 'config', 'context', 'created_at', 'data', 'default', 'degraded', 'description', 'disabled', 'enabled', 'event_name', 'execute', 'false', 'guest', 'handle', 'handler_mode', 'healthy', 'idle', 'inactive', 'jwt', 'metadata', 'module', 'name', 'no', 'nonexistent', 'occurred_at', 'off', 'on', 'override', 'process', 'process_command', 'query', 'registered', 'sent', 'state', 'status', 'system', 'test_password', 'true', 'type', 'unhealthy', 'unique_id', 'unknown', 'updated_at', 'validate', 'validated', 'yes']

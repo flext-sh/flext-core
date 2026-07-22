@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/collection_merge.py
-# hypothesis_version: 6.152.1
-
-['Unknown error', 'append', 'deep', 'filter_both', 'filter_empty', 'filter_none', 'override', 'replace']

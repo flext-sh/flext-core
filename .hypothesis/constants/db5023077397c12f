@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/cli_subcommand.py
-# hypothesis_version: 6.151.11
-
-[', ', '--apply', '--check', '--diff', '--dry-run', '--format', '--projects', '=', '_unknown_args', 'command', 'include_apply', 'include_check', 'include_diff', 'include_format', 'include_project', 'subcommand']

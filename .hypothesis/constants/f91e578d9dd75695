@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_utilities/_files/_creation.py
-# hypothesis_version: 6.156.6
-
-['content', 'delim', 'directory', 'enc', 'extract_result', 'fmt', 'headers', 'indent', 'json', 'name', 'r failure', 'readonly', 'value']

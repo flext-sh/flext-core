@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/codegen_lazy_scanning.py
-# hypothesis_version: 6.151.10
-
-['"', "'", '*.py', '-', '.', 'ParamSpec', 'TypeVar', 'TypeVarTuple', '["\\\']([^"\\\']+)["\\\']', '^[\'"]|[\'"]$', '_', '__', '__main__.py', '__version__', '__version__.py', 'install_lazy_exports', 'lazy_getattr', 'main', 'merge_lazy_imports']

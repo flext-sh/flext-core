@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_models/base.py
-# hypothesis_version: 6.151.12
-
-['Entity display name.', 'Occurrence counter.', 'Payload data string.']

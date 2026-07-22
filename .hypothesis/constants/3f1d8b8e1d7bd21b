@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/_detectors/future_annotations_detector.py
-# hypothesis_version: 6.151.9
-
-['__future__', 'annotations', 'error', 'py.typed']

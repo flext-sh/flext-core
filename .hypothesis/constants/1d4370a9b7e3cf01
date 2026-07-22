@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/result_helpers.py
-# hypothesis_version: 6.151.12
-
-['Callable failed', 'T', '_exception']

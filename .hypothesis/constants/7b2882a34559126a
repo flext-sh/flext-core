@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/docs_fix.py
-# hypothesis_version: 6.152.4
-
-['#', '# Docs Fix Report', '.md', 'apply', 'changed_files', 'changes', 'fix', 'fix-report.md', 'fix-summary.json', 'http://', 'https://', 'links', 'mailto:', 'tel:', 'toc', '|---|---:|---:|']

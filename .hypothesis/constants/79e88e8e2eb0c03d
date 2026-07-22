@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_constants/output.py
-# hypothesis_version: 6.152.4
-
-[' [Y/n]: ', ' [y/N]: ', ' [{default}]', ': ', 'D', 'Emacs org-mode table', 'HTML table', 'Jira markup table', 'LaTeX booktabs table', 'LaTeX longtable', 'LaTeX table', 'Markdown pipe table', 'MediaWiki markup', 'MoinMoin markup', 'Presto SQL output', 'Pretty ASCII table', 'Raw LaTeX table', 'Settings displayed', 'Simple ASCII borders', 'Tab-separated values', 'Textile markup', 'Unsafe HTML table', 'YouTrack markup', 'i', 'n', 'no', 'y', 'yes', '⚠️', '✅', '❌']

@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/discovery.py
-# hypothesis_version: 6.151.9
-
-['*.py', '*/src/', '-', '.', '.git', '.gitmodules', 'Makefile', '_', '_LAZY_IMPORTS', '__all__', '__init__.py', 'cmd', 'constants.py', 'external', 'flext-core', 'flext_core', 'models.py', 'protocols.py', 'pyproject.toml', 'src', 'submodule', 'tests', 'typings.py', 'utf-8', 'utilities.py']

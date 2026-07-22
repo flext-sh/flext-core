@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_constants/errors.py
-# hypothesis_version: 6.156.6
-
-['Auto load failed', 'Command failed', 'Input stream ended', 'Invalid command name', 'No choices provided', 'ensure_dir failed', 'ensure_dir: {error}', 'unknown error']

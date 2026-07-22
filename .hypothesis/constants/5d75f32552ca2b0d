@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/docs_render.py
-# hypothesis_version: 6.152.4
-
-['          paths:', '      glob:', '      members: false', '    options:', '  - exclude:', ' |', ' | ', '## Collection Rules', '## Generated Pages', '## Module Map', '## Next Pages', '## Operation Flow', '## Purpose', '## Quality Gates', '## Source of Truth', '## Start Here', '## Surface Summary', ', ', '.', '..', '../../', '.agents/skills/', '/', '3. Module docstrings', 'AGENTS.md', 'FLEXT Workspace', 'README.md', '\\|', '_none_', '_not declared_', 'aliases', 'api_page', 'blob', 'description', 'exclude_docs', 'exclude_docs: |', 'facades', 'http://', 'https://', 'keywords', 'module_exports', 'modules', 'project_class', 'public_symbols', 'repo_url', 'site_title', 'site_url', 'src', 'tree', 'unknown', 'version', '|', '| ', '|---|---|---|---|']

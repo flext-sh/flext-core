@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/output.py
-# hypothesis_version: 6.151.9
-
-[0.0, 110, '  Missing facades: ', ', ', '-', '=', 'Cyclic imports', 'DEBUG', 'ERROR', 'INFO', 'Import violations', 'Internal imports', 'Loose objects', 'Manual protocols', 'Parse failures', 'WARN', '[FAIL]', '[OK]', 'failed', 'output', '═', '⚠️']

@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/census.py
-# hypothesis_version: 6.156.6
-
-['(', ')', ',', ',\n', '.', ':', '; ', '@', 'body', 'class', 'class ', 'function', 'lineno', 'prefix']

@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_utilities/factory.py
-# hypothesis_version: 6.151.11
-
-['Validation failed', 'default', 'default_123', 'email', 'result', 'service_type', 'success', 'test@example.com', 'test_123', 'ulid', 'user_id']

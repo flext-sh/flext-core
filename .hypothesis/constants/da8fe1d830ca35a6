@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/_detectors/dependency_analyzer_base.py
-# hypothesis_version: 6.151.9
-
-['--json', '--lang', '--pattern', '.', '__init__', 'ast-grep failed', 'capture failed', 'import $MODULE', 'sg', 'src']

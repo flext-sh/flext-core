@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/context.py
-# hypothesis_version: 6.151.9
-
-['Associated user ID', 'FlextModelsContext', 'Name of the scope', 'Scope data', 'Scope metadata', 'Type of domain', '__iter__', 'after', 'before', 'correlation_id', 'data', 'get', 'request_id', 'service_name', 'session_id', 'set', 'user_id']

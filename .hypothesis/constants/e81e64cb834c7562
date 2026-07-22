@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_models/__unit__.py
-# hypothesis_version: 6.156.6
-
-['.base', '.batch', '.docker', '.domains', '.filesystem', '.make', '.matchers', '.validator']

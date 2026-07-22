@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_utilities/workspace_cleanup_paths.py
-# hypothesis_version: 6.156.6
-
-['--show-toplevel', '.', '..', 'git root discovery', 'rev-parse']

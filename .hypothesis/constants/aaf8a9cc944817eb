@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/_utilities/entry.py
-# hypothesis_version: 6.151.9
-
-['0', '0/1', '1', 'FALSE', 'TRUE', 'TRUE/FALSE', 'accountlocked', 'all', 'any', 'attribute', 'attributes', 'attributetypes', 'cn=schema', 'cn=subschema', 'cn=subschemasubentry', 'dn', 'exclude_schema', 'is_schema', 'lower', 'objectClass', 'objectclasses', 'passwordexpired', 'passwordneverexpires', 'pwdaccountlocked', 'pwdlocked', 'replace', 'subentry', 'subschema', 'upper', 'userpassword', 'utf-8', 'value']

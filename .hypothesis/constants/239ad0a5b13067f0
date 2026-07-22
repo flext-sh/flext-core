@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/enforcement.py
-# hypothesis_version: 6.151.12
-
-['-', '.', 'Test', 'Tests', '[', '_', '__annotations__', '__init__.py', '__module__', '__qualname__', 'class_prefix', 'cross_protocol', 'cross_strenum', 'examples', 'fence', 'missing_description', 'nested_mro', 'no_accessor_methods', 'proto_inner_kind', 'pyproject.toml', 'scripts', 'settings_inheritance', 'src', 'tests', 'tests.', 'tests_']

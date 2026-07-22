@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_models/xlsx_style_primitives.py
-# hypothesis_version: 6.156.6
-
-['Bold font state.', 'Color kind.', 'Color tint.', 'Extended font state.', 'Font charset.', 'Font family class.', 'Font family.', 'Font size.', 'Indexed color value.', 'Italic font state.', 'Optional font color.', 'Outline font state.', 'RGB or ARGB value.', 'Shadow font state.', 'Strike font state.', 'Theme color value.', 'Theme font scheme.', 'Underline style.', 'auto', 'baseline', 'double', 'doubleAccounting', 'indexed', 'kind', 'major', 'minor', 'rgb', 'single', 'singleAccounting', 'subscript', 'superscript', 'theme']

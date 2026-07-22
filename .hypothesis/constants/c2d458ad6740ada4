@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/git.py
-# hypothesis_version: 6.151.9
-
-['--abbrev-ref', '--cached', '--name-only', '--porcelain', '--rebase', '-A', '-B', '-a', '-l', '-m', '-u', '-v:refname', 'HEAD', 'actionlint', 'add', 'checkout', 'commit', 'diff', 'fail', 'fetch', 'lint failed', 'not installed', 'ok', 'pull', 'push', 'rev-parse', 'skipped', 'status', 'tag']

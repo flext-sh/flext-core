@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/codegen/_cli_codegen_consolidate.py
-# hypothesis_version: 6.151.10
-
-['-', '_', '_constants', 'applied', 'assignment', 'c', 'changes', 'file', 'files', 'json', 'reverted', 'status', 'total_applied', 'total_failed', 'total_found']

@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_domains_parts/domains_part_03.py
-# hypothesis_version: 6.152.4
-
-['@example.com', 'COMMAND', 'Command failed', 'EVENT', 'FlextTestsDomains', 'Handled: event', 'Handled: query', 'Handled: test', 'QUERY', 'Query failed', 'TEST_ERROR', 'description', 'error_message', 'expected_result', 'fail_command', 'fail_query', 'handler_id', 'handler_type', 'invalid-email', 'should_fail', 'success_command', 'success_event', 'success_query', 'test+tag@example.com', 'test@', 'test@example.com']

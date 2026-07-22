@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/rope_source.py
-# hypothesis_version: 6.156.6
-
-[' as ', '"""', '#', "'''", '(', ')', '*', ',', '-', '.', '/', ':', '=', '[', '\\', '\\1', 'class ', 'def ', 'module', 'symbol_mapping']

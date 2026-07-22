@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/collections.py
-# hypothesis_version: 6.151.9
-
-['Batch Size', 'Contains', 'Empty Constraint', 'Ends With', 'Equals', 'Error Mode', 'Flatten', 'Greater Than', 'In Values', 'Is Type', 'Less Than', 'Less Than Or Equal', 'None Constraint', 'Not Equals', 'Not In Values', 'Not Type', 'Parallel', 'Pre Validate', 'Progress Callback', 'Progress Interval', 'Regex Match', 'Regex flags', 'Regex pattern', 'Replacement string', 'Starts With', 'forbid']

@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/guards_type_protocol.py
-# hypothesis_version: 6.151.9
-
-['__dict__', '__len__', '__origin__', 'bind', 'bool', 'bytes', 'callable', 'can_handle', 'command_bus', 'container', 'dict', 'dict_non_empty', 'float', 'handle', 'handler', 'info', 'int', 'list', 'list_non_empty', 'list_or_tuple', 'logger', 'mapping', 'middleware', 'model_dump', 'none', 'result', 'sequence', 'sequence_not_str', 'service', 'sized', 'str', 'string_non_empty', 'tuple']

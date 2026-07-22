@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/handlers.py
-# hypothesis_version: 6.152.1
-
-['FlextHandlers', '[', '_', '__abstractmethods__', '__name__', 'execution_time_ms', 'h', 'middleware', 'pop handler context', 'run handler pipeline', 'success', 'unknown_handler', 'value']

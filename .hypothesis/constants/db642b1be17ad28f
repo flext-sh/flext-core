@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/docs_validate.py
-# hypothesis_version: 6.152.4
-
-['README.md', 'TODOS.md', 'adr', 'docs/README.md', 'docs/index.md', 'docs_validation', 'exports', 'json', 'mkdocs.yml', 'modules', 'required_skills', 'validate-report.md']

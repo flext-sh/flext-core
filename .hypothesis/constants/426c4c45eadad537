@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_constants/source_code.py
-# hypothesis_version: 6.151.12
-
-['.claude.disabled', '.flext-deps', '.git', '.mypy_cache', '.pytest_cache', '.reports', '.ruff_cache', '.sisyphus', '.venv', '<!-- TOC END -->', '<!-- TOC START -->', 'ArbitraryTypesModel', 'BaseModel', 'ContractModel', 'FrozenModel', 'FrozenValueModel', 'TimestampedModel', '[project]', '^(\\w+)\\s*(?::.*)?=', '^ERROR:', '^E\\s+\\w', '^FAIL:', '^FAILED\\s', '^INFO:', '^\\s*\\S+\\.py:\\d+', '^\\s*from\\s+import\\s', '^\\s+\\[B\\d+\\]', '^_?[A-Z][A-Z0-9_]*$', '^class\\s+(\\w+)', '^error:', '^import\\s+(.+)', '^make\\[', '^──\\s', '__pycache__', '_models.py', 'build', 'dist', 'dist-packages', 'examples', 'flext-sh/flext', 'major', 'minor', 'models.py', 'node_modules', 'patch', 'reports', 'scripts', 'site', 'site-packages', 'src', 'tests', 'utf-8', 'vendor', 'venv']

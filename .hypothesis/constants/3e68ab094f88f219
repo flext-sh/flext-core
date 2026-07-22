@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/rope_source.py
-# hypothesis_version: 6.151.12
-
-[':', '\\1', '_', '_result', 'async def ', 'class ', 'def ', 'exception_name', 'failure_name', 'indent', 'legacy_inner', 'operation failed', 'result', 'result_inner', 'sentinel', 'silent-failure-guard', 'success_name']

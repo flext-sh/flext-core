@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_constants/codegen_render_names.py
-# hypothesis_version: 6.156.6
-
-['lazy_init_root.py.j2', 'mkdocs_root.yml.j2', 'version_file.py.j2']

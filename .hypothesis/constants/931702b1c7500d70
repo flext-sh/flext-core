@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_constants/rope.py
-# hypothesis_version: 6.156.6
-
-['*.pyc', '.cache/', '.git', '.mypy_cache', '.pyrefly_cache', '.pytest_cache', '.tox/', '.venv', 'Class', 'Function', 'Module', 'Unknown', '__pycache__', 'ann_assign', 'assign', 'build/', 'cached_property', 'call', 'class_def', 'computed_field', 'dist/', 'from_import', 'func_def', 'if_guard', 'import', 'node_modules', 'other', 'property', 'type_alias', 'venv']

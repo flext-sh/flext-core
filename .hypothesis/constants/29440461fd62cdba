@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_models/settings.py
-# hypothesis_version: 6.156.6
-
-['FLEXT_STANDALONE', 'FLEXT_USE_HTTPS', 'FLEXT_WORKSPACE_ROOT', 'GITHUB_ACTIONS', 'GITHUB_HEAD_REF', 'GITHUB_REF_NAME', 'forbid']

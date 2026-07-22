@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_models/__unit__.py
-# hypothesis_version: 6.156.6
-
-['._base_parts', '._test_tmp', '.config', '.pipeline', '.rules', '.template', '.xlsx', '.xlsx_archive', '.xlsx_cells', '.xlsx_layout', '.xlsx_recalc', '.xlsx_rules', '.xlsx_snapshot', '.xlsx_style_catalog', '.xlsx_style_fills', '.xlsx_styles', '.xlsx_tables', '.xlsx_validation', '.xlsx_workbook', 'FlextCliConfigModels', 'FlextCliModelsBase', 'FlextCliModelsRules', 'FlextCliModelsXlsx', 'X', '_base_parts']

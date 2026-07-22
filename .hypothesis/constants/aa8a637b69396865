@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_utilities/matchers.py
-# hypothesis_version: 6.151.9
-
-['contains', 'empty', 'ends', 'eq', 'excludes', 'gt', 'gte', 'has', 'is_', 'lacks', 'length', 'lt', 'lte', 'match', 'ne', 'none', 'starts', 'where']

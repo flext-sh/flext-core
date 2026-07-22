@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/codegen_constant_analysis.py
-# hypothesis_version: 6.151.10
-
-[100, 2000, 5000, '.', '.mypy_cache', 'Invalid class path', 'by_type', 'canonical', 'canonical_name', 'canonical_usages', 'duplicates', 'error', 'file', 'files_modified', 'line', 'message', 'name', 'old_name', 'replaced', 'replaced_details', 'status', 'success', 'total', 'total_objects', 'total_occurrences', 'total_unused', 'total_used', 'type', 'unused', 'usage_map', 'usages', 'used', 'value']

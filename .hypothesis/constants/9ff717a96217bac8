@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/codegen/_codegen_generation_helpers.py
-# hypothesis_version: 6.151.10
-
-[', ', '.', '.fixtures.', 'BaseModel', 'FlextTypes', '_build_lazy_entries', '_format_import', '_group_imports', '_has_flext_types', '_is_local_module']

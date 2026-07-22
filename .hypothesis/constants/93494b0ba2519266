@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/fixers/result.py
-# hypothesis_version: 6.156.6
-
-['Dry-run previews', 'Enforcement rule ID', 'Failed fix attempts', 'Failure message', 'Fixed violations', 'Modified file paths', 'Project name', 'Skipped violations']

@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/docs/generator.py
-# hypothesis_version: 6.151.9
-
-['  - Home: README.md', '  name: mkdocs', '# ', '*.md', 'apply', 'docs/CHANGELOG.md', 'docs/guides', 'dry-run', 'files', 'generate', 'generate failed', 'generate-report.md', 'generated', 'http://', 'https://', 'mailto:', 'mkdocs.yml', 'nav:', 'plugins: []', 'source', 'tel:', 'theme:', 'written']

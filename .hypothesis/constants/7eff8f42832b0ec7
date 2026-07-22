@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/logging.py
-# hypothesis_version: 6.156.6
-
-[10485760, '.git', '.venv', '<module>', 'CRITICAL', 'DEBUG', 'ERROR', 'INFO', 'Registered {subject}', 'WARNING', 'bind global context', 'clear global context', 'clear scope', 'event subscriber', 'flext_core', 'handler', 'poetry.lock', 'pyproject.toml', 'self']

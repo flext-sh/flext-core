@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/gates/bandit.py
-# hypothesis_version: 6.151.10
-
-['-f', '-ll', '-m', '-q', '-r', '?', 'Bandit', 'FlextInfraBanditGate', 'MEDIUM', 'filename', 'issue_severity', 'issue_text', 'line_number', 'results', 'test_id', '{}']

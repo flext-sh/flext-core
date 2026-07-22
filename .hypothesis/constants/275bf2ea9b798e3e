@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_protocols/__unit__.py
-# hypothesis_version: 6.156.6
-
-['._base_parts', '.config', '.domain', '.framework', '.pipeline', '.xlsx', '.xlsx_archive', '.xlsx_rules', '.xlsx_snapshot', '.xlsx_workbook', '_base_parts']

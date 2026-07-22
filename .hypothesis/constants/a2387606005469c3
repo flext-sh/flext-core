@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/github.py
-# hypothesis_version: 6.151.9
-
-['*.yaml', '*.yml', '--action', '--auto', '--base', '--checks-strict', '--delete-branch', '--draft', '--merge-method', '--release-on-merge', '--repo-root', '-C', '-m', '.github', '0', '1', 'PR_BODY', 'PR_HEAD', 'PR_NUMBER', 'PR_TITLE', 'actionlint', 'already synced', 'apply', 'auto', 'base', 'body', 'changes check failed', 'checks_strict', 'ci.yml', 'create', 'delete_branch', 'draft', 'dry-run', 'fail', 'git add failed', 'git commit failed', 'head', 'merge_method', 'missing ci.yml', 'mode', 'noop', 'number', 'ok', 'operations', 'prune', 'reason', 'release_on_merge', 'skipped', 'title', 'update', 'workflows']

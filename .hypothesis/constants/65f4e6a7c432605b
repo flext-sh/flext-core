@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/examples/_models/ex02.py
-# hypothesis_version: 6.151.12
-
-['Feature enable flag', 'INVALID', 'example-service', 'invalid query', 'missing key', 'missing value', 'rows']

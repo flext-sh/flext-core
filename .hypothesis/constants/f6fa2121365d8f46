@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_utilities/make_rendering.py
-# hypothesis_version: 6.156.6
-
-[' [mutates]', ' required', '*', ', ', '; ', '<missing>', 'Current parameters:', 'Execucao canonica:', 'Exemplo:', 'Exemplos:', 'Opcoes por WHAT:', 'Parameters:', 'Regras:', 'WHAT available:', 'command unknown', 'condicional', 'nao', 'opcional', 'required', 'sim', 'verb unknown']

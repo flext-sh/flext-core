@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_models/xlsx_layout.py
-# hypothesis_version: 6.156.6
-
-['Auto-filter range.', 'Cell comments.', 'Cell hyperlinks.', 'Comment author.', 'Comment cell.', 'Comment height.', 'Comment text.', 'Comment width.', 'Destination address.', 'Dimension axis.', 'Explicit size.', 'First index.', 'Grouped axis.', 'Hidden state.', 'Hyperlink cell.', 'Hyperlink kind.', 'Last index.', 'Merged cell range.', 'Merged ranges.', 'Outline level.', 'column', 'external', 'hidden', 'kind', 'navigation', 'row', 'veryHidden', 'visible']

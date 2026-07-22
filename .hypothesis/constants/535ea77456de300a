@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/context_crud.py
-# hypothesis_version: 6.152.1
-
-['attributes', 'get context value', 'key', 'metadata', 'resolve context key', 'set context value', 'validate context key', 'value']

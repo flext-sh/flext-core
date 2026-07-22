@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/docs/cli.py
-# hypothesis_version: 6.151.9
-
-['Audit failed', 'Build MkDocs sites', 'Build failed', 'Fix failed', 'Generate failed', 'Validate failed', 'all', 'audit', 'audit failed', 'build', 'build failed', 'docs', 'fix', 'fix failed', 'generate', 'generate failed', 'validate', 'validate failed']

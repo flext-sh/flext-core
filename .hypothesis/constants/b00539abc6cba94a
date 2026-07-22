@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/model_runtime.py
-# hypothesis_version: 6.152.1
-
-['context', 'fetch_global', 'flext_core.registry', 'registry']

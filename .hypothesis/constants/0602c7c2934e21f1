@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/platform.py
-# hypothesis_version: 6.151.12
-
-[0.25, 1.0, 2.0, 5.0, 60.0, 120.0, 300.0, 10000.0, 100, 300, 1000, 3600, 8000, 10000, 1073741824, '.env', '.json', '.md', '.py', '.toml', '.txt', '.xml', '.yaml', 'FLEXT_', 'FLEXT_ENV_FILE', 'X-Request-ID', '^(cn|ou|dc)=.*', '^[^:]+:[^:]+$', '^[a-zA-Z0-9]+$', '__', 'application/json', 'closed', 'config', 'data', 'exponential', 'flext', 'half_open', 'linear', 'localhost', 'logs', 'open', 'plugins', 'temp']

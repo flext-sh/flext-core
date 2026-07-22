@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/dependencies.py
-# hypothesis_version: 6.156.6
-
-[' @ ', '!=', ',', '-', '/', ';', '<', '<=', '==', '>', '>=', '[', '_', 'flext', 'git', 'head', 'name', 'package', 'python', 'registry', 'source', 'url', '~=']

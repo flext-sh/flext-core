@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-auth/src/flext_auth/utilities.py
-# hypothesis_version: 6.151.12
-
-['.', '@', 'AUTH_ERROR', 'FlextAuthUtilities', 'Invalid email format', 'error', 'error_code', 'expires_at', 'message', 'success', 'timestamp', 'token', 'u', 'user_id', 'verify_signature']

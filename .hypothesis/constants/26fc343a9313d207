@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/service.py
-# hypothesis_version: 6.156.1
-
-['FlextService', '_instance', 'forbid', 'initial_context', 'runtime_settings', 's', 'settings_overrides', 'settings_type']

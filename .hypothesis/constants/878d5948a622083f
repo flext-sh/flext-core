@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_models/xlsx_validation.py
-# hypothesis_version: 6.156.6
-
-['Allow blank cells.', 'Comparison operand.', 'Error behavior.', 'Error message.', 'Error title.', 'Input message.', 'Input title.', 'Rule kind.', 'Show input guidance.', 'Show list selector.', 'Source kind.', 'Typed comparison.', 'between', 'custom', 'date', 'decimal', 'equal', 'formula', 'greater_or_equal', 'greater_than', 'information', 'kind', 'less_or_equal', 'less_than', 'list', 'mode', 'not_between', 'not_equal', 'stop', 'text_length', 'time', 'values', 'warning', 'whole']

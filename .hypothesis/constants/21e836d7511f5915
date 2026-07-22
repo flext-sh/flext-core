@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/worktree_transaction.py
-# hypothesis_version: 6.156.6
-
-['(?im)^.*\\bwarning:', '-c', '-m', '1', '; ', '\\b(\\d+)\\s+errors?\\b', 'command stderr', 'command stdout', 'flext_infra', 'import stderr', 'import stdout', 'lint delta:', 'lint_', 'post_', 'replace', 'ruff']

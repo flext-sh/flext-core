@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/services/formatters.py
-# hypothesis_version: 6.151.9
-
-['FlextCliFormatters', 'rich_panel_fallback', 'rich_print_fallback', 'rich_rule_fallback', 'rich_table_fallback']

@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/examples/ex_07_flext_exceptions_helpers.py
-# hypothesis_version: 6.152.4
-
-[0.0, 1.5, 2.0, 3.5, 30.0, 100, 5432, '127.0.0.1', '13', '404', 'ConnectionError.host', 'ConnectionError.port', 'RateLimitError.limit', 'User', 'UserModel', 'bad', 'billing', 'db.host', 'duplicate', 'email', 'env', 'invoice:7', 'publish', 'quota', 'read', 'secret', 'subclasses', 'sync', 'token', 'u-1', 'u-2']

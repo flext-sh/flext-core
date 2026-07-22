@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/github/_models.py
-# hypothesis_version: 6.151.9
-
-['Auto-merge', 'Base branch', 'Branch name filter', 'Captured stderr', 'Captured stdout', 'Draft PR', 'Enable checkpoints', 'Execution status', 'Failed executions', 'Failure detail', 'HTTPS clone URL', 'Head branch', 'Include root project', 'Lint status', 'Log file path', 'Merge method', 'PR action', 'PR body', 'PR number', 'PR title', 'Process exit code', 'Project name.', 'Release on merge', 'SSH clone URL', 'Skip reason', 'forbid', 'main', 'squash', 'status']

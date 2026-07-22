@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_models/_base_parts/flextclimodelsbase_part_06.py
-# hypothesis_version: 6.152.4
-
-['Enable debug mode', 'FlextCliModelsBase', 'Option help text', 'debug', 'ignore', 'log_format', 'log_level', 'no_color', 'output_format', 'quiet', 'trace', 'verbose']

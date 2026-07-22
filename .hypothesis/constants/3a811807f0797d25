@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/_utilities/schema.py
-# hypothesis_version: 6.151.12
-
-[' $ ', ' abstract', ' auxiliary', ' equality ', ' may (', ' must (', ' ordering ', ' single-value', ' structural', ' substr ', ' syntax ', ' usage ', '$', "'", ')', '-', ':', ';binary', 'MAY', 'MUST', 'OBSOLETE', '\\(.*\\)', '_', 'attr_data', 'attribute', 'attributetypes:', 'desc', 'equality', 'field_order', 'kind', 'length', 'may', 'metadata_extensions', 'multiple', 'must', 'name', 'name_format', 'name_values', 'no_user_modification', 'objectClass', 'objectclass', 'objectclasses:', 'obsolete_presence', 'oc_data', 'oclass', 'oid', 'ordering', 'single', 'single_value', 'substr', 'sup', 'syntax', 'syntax_validation', 'trailing_spaces', 'usage', 'value', 'x_origin', 'x_origin_presence', 'x_origin_value']

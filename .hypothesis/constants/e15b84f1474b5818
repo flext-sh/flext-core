@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/services/cli.py
-# hypothesis_version: 6.151.10
-
-['-', 'FlextCliCli', '_', 'cli_log_level', 'debug', 'default', 'default_factory', 'error', 'is_failure', 'json_schema_extra', 'message', 'model_fields', 'quiet', 'return', 'success', 'trace', 'typer_param_decls', 'utf-8', 'value', 'verbose']

@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/_beartype/_library_visitor.py
-# hypothesis_version: 6.152.4
-
-['-', '.', '_', '__module__', 'lib', 'owner', 'package']

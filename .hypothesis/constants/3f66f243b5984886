@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/exception_params.py
-# hypothesis_version: 6.151.12
-
-[1.5, 5.5, 30.0, 100, 5432, '.env', '42', 'Actual Type', 'Attribute Context', 'Attribute Name', 'Auth Method', 'Category', 'Conflict Reason', 'Expected Type', 'Failure Count', 'Field', 'FlextDispatcher', 'Host', 'Limit', 'Operation', 'Permission', 'Plugin Name', 'Port', 'Reason', 'Reset Timeout', 'Resource', 'Resource ID', 'Resource Type', 'Retry After', 'Scope', 'Service Name', 'Settings Key', 'Settings Source', 'Timeout', 'Timeout Seconds', 'User ID', 'Window Seconds', 'class', 'command_bus', 'database_url', 'db.internal', 'dispatch', 'email', 'forbid', 'instance', 'int', 'invoice:12345', 'ord-1001', 'order', 'owner', 'payments-api', 'publish_events', 'session', 'str', 'strict_typing', 'token', 'user', 'user-123', 'validators', 'version_mismatch', 'write']

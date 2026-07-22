@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/rope_pep695_patch.py
-# hypothesis_version: 6.152.4
-
-['(', ')', '*', '**', ',', ':', '=', '@', '[', ']', '_ClassDef', '_ParamSpec', '_PatchingASTWalker', '_TypeAlias', '_TypeVar', '_TypeVarTuple', 'async', 'bound', 'class', 'def', 'type', 'type_params']

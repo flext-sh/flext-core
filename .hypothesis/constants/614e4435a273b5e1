@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/domain.py
-# hypothesis_version: 6.151.10
-
-['FlextUtilitiesDomain', '__iter__', 'failed_items', 'model_dump', 'skip_reasons', 'warning_items']

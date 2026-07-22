@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/codegen/_codegen_governance.py
-# hypothesis_version: 6.151.9
-
-['CanonicalValueRule', 'NsRule', 'config', 'int', 'rules', 'str', 'utf-8']

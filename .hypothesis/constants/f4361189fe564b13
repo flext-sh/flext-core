@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/_engine_rules.py
-# hypothesis_version: 6.151.10
-
-['alias_to_submodule', 'core_aliases', 'core_package', 'method_order', 'module_renames', 'order', 'signature_migrations', 'target_modules', 'tier0_modules']

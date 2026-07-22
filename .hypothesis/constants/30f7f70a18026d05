@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/decorators.py
-# hypothesis_version: 6.151.12
-
-[0.0, '%s_completed', '%s_started', ', ', 'FlextDecorators', 'OPERATION_ERROR', 'OPERATION_TIMEOUT', 'P', 'R', 'T', 'd', 'duration_ms', 'error', 'error_type', 'exponential_backoff', 'extra', 'function', 'log_error', 'log_error_code', 'logger', 'max_retries', 'operation', 'retry_attempt', 'retry_on_exceptions', 'success']

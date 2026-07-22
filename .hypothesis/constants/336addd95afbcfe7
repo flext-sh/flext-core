@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/transformers/violation_census_visitor.py
-# hypothesis_version: 6.151.10
-
-[',', '_', 'compatibility_alias', 'container_invariance', 'detail', 'file', 'flext_core.*', 'kind', 'line', 'literal_usage', 'manual_typing_alias', 'redundant_cast', 'strenum_usage']

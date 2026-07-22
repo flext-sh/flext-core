@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_decorators/_railway.py
-# hypothesis_version: 6.156.6
-
-['OPERATION_ERROR', 'exponential_backoff', 'max_retries', 'retry_attempt', 'retry_on_exceptions']

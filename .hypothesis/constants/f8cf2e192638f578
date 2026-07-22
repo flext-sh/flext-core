@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/cli.py
-# hypothesis_version: 6.151.11
-
-['Apply changes flag', 'Check mode flag', 'Class to analyze', 'Output format', 'apply', 'check', 'class_to_analyze', 'diff', 'output_format', 'projects', 'text', 'typer_param_decls', 'workspace']

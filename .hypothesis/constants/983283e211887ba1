@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/rope_analysis.py
-# hypothesis_version: 6.151.10
-
-[',', '.', '[', '_', 'classmethod', 'method', 'staticmethod']

@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/docs_build.py
-# hypothesis_version: 6.152.4
-
-['# Docs Build Report', '--strict', '-d', '-f', 'Abort', 'BuildError', 'ConfigurationError', 'MkDocsException', 'PluginError', 'SKIP', 'build', 'build succeeded', 'build-report.md', 'build-summary.json', 'dev server stopped', 'load_config', 'mkdocs', 'mkdocs build failed', 'mkdocs serve failed', 'mkdocs.config', 'mkdocs.exceptions', 'mkdocs.yml', 'mkdocs.yml not found', 'serve', 'strict']

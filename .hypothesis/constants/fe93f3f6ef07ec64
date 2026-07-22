@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/_cqrs_parts/flextmodelscqrs_part_02.py
-# hypothesis_version: 6.152.4
-
-['Event Id', 'Event payload data', 'FlextModelsCqrs', 'Handler', 'Handler mode', 'Handler type', 'description', 'event', 'evt', 'evt_01HZX7Q0P5N6M2', 'title']

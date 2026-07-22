@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/docs_audit.py
-# hypothesis_version: 6.151.11
-
-['#', '# Docs Audit Report', '*.md', ',', '.md', '/', '<', '>', '?', 'README.md', '```', 'audit', 'broken_link', 'data:', 'docs/api', 'docs/api-reference', 'generated_ownership', 'high', 'http', 'http://', 'https://', 'lower', 'mailto:', 'medium', 'scope_boundary', 'stale_symbol', 'stale_symbols', 'tel:', '|---|---|---|---|']

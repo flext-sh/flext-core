@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/_detectors/mro_completeness_detector.py
-# hypothesis_version: 6.151.9
-
-['*.py', '_', '_constants', '_models', '_protocols', '_typings', '_utilities', 'c', 'error', 'm', 'p', 't', 'u']

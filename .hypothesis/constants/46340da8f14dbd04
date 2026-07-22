@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/examples/ex_01_flext_result.py
-# hypothesis_version: 6.156.6
-
-[123, '42', 'Ada', 'E_CALL', 'E_DEMO', 'E_NONE', 'E_PROP', '__main__', 'age', 'bad', 'bad input', 'boom', 'created', 'default', 'factories_and_guards', 'factory', 'fail.error', 'fail.error_code', 'fail.error_data', 'fallback', 'flat_map.success', 'io-err', 'lash.failure', 'map.failure', 'map.success', 'map_error.failure', 'missing', 'name', 'ok', 'ok.value', 'plain', 'prop.failure.error', 'prop.success.value', 'safe.failure.error', 'stage', 'to_model.success', 'unwrap.failure.type', 'unwrap.success', 'unwrap_or.failure', 'unwrap_or.success', 'value', 'value.success', 'x']

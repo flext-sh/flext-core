@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/_beartype/helpers.py
-# hypothesis_version: 6.152.4
-
-[',', '.', '/', '/__init__.py', '/examples/', '/scripts/', '/tests/', 'ABC', 'Annotated[', 'Any', 'CACHE', 'CALL', 'CALL_FUNCTION', 'COPY_FREE_VARS', 'LOAD_ATTR', 'LOAD_CONST', 'LOAD_DEREF', 'LOAD_FAST', 'LOAD_GLOBAL', 'LOAD_NAME', 'PUSH_NULL', 'RESUME', 'RETURN_VALUE', '[', '\\', ']', '_', '__', '__abstractmethods__', '__code__', '__file__', '__name__', '_is_protocol', 'typing.Annotated[']

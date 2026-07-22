@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/validate/_constants.py
-# hypothesis_version: 6.151.10
-
-[120, 300, 600, 900, '*.py', '*.pyi', '.claude/skills', '.git', '.gitignore', '.gitmodules', '.md', '.py', '.pyi', '.toml', '.venv/bin', '.yml', 'Enum', 'HEAD', 'IntEnum', 'Makefile', 'ParamSpec', 'StrEnum', 'TypeVar', 'TypeVarTuple', '_', '__all__', '__file__', '__future__', '__init__', '__init__.py', '__main__.py', '__name__', '__pycache__', '__version__', 'base.mk', 'build', 'c', 'conftest.py', 'constants.py', 'd', 'dict', 'dist', 'docs', 'e', 'examples', 'flext', 'flext-', 'flext-core', 'flext_', 'flext_core', 'frozenset', 'go.mod', 'h', 'list', 'm', 'main', 'models.py', 'origin', 'p', 'protocols.py', 'pyproject.toml', 'r', 's', 'scripts', 'site', 'src', 't', 'tc', 'test_', 'tests', 'tuple', 'typings', 'typings.py', 'u', 'utilities.py', 'x']

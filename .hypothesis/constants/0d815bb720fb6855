@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/_utilities_cli.py
-# hypothesis_version: 6.151.10
-
-['-', 'Available Rules', 'Hottest files:', 'No changes', 'No rules loaded.', 'Summary', 'Top pattern counts:', 'Violation Analysis', 'changed', 'description', 'failed', 'failure', 'kind', 'new', 'old', 'rename', 'signature_add', 'signature_remove', '✓', '✗']

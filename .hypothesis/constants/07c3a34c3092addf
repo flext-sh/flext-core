@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/_git_worktree.py
-# hypothesis_version: 6.156.6
-
-[b'\n', '\x00', '-', '--', '--binary', '--cached', '--check', '--detach', '--exclude-standard', '--force', '--name-only', '--others', '--recursive', '--show-toplevel', '-A', '-m', '-p', '-z', '.', '.git', 'HEAD', 'add', 'apply', 'commit-tree', 'diff', 'git apply failed', 'ls-files', 'prune', 'remove', 'rev-parse', 'status', 'submodule', 'update-ref', 'worktree', 'write-tree']

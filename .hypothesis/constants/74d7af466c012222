@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_models/_base_parts/flextclimodelsbase_part_01.py
-# hypothesis_version: 6.156.6
-
-[0.0, 'CLI version', 'Command exit code', 'Duration in seconds', 'FlextCliModelsBase', 'Service identifier', 'forbid', 'plain']

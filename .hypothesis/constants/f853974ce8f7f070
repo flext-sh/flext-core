@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/checker.py
-# hypothesis_version: 6.152.1
-
-['FlextHandlers', 'PydanticUndefined', '__name__', '__orig_bases__', '__origin__', 'args', 'command_type', 'event_type', 'h', 'origin', 'query_type', 'self']

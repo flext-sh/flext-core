@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/namespace_moves.py
-# hypothesis_version: 6.156.1
-
-[', ', '--fix', '.', '; ', 'Import', 'ImportFrom', 'Name', 'asname', 'body', 'check', 'class ', 'end_lineno', 'flext-infra', 'id', 'lineno', 'name', 'names', 'ruff', 'typealias', 'typevar', 'value']

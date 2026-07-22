@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/docs/fixer.py
-# hypothesis_version: 6.151.10
-
-['#', '# Docs Fix Report', '.md', 'FlextInfraDocFixer', 'apply', 'changed_files', 'changes', 'fix', 'fix failed', 'fix-report.md', 'fix-summary.json', 'http://', 'https://', 'links', 'mailto:', 'tel:', 'toc', '|---|---:|---:|']

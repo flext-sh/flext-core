@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/_enforcement/_params.py
-# hypothesis_version: 6.152.4
-
-[200, 'alias_rebind', 'attr_shape', 'class_placement', 'classvar_constant', 'compatibility_alias', 'deprecated_syntax', 'duplicate_symbol', 'field_shape', 'import_blacklist', 'library_import', 'loc_cap', 'loose_symbol', 'method_shape', 'model_config', 'mro_shape', 'protocol_tree', 'wrapper']

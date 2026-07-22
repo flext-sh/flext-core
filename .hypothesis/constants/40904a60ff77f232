@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_utilities/validation.py
-# hypothesis_version: 6.151.12
-
-['; ', 'collect', 'fail', 'field', 'format', 'session_status']

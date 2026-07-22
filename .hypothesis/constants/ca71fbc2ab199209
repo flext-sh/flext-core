@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/codegen_constant_detection.py
-# hypothesis_version: 6.151.10
-
-['"', "'", '*.py', '-', '-?\\d+', '.', ':', 'Constants', 'Flext\\w*Constants\\.', '\\bc\\.([A-Za-z_]\\w*)', '_', 'ann', 'c', 'class ', 'class\\s+(\\w+)', 'name', 'src', 'unknown', 'value']

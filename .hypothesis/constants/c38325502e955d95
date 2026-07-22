@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_constants/workspace.py
-# hypothesis_version: 6.152.4
-
-['!scripts/', '!scripts/**', '.ai-hub', '.direnv/', '.envrc', '.mise.toml', '.reports/', '.venv/', '.vscode', '/scripts/', '__pycache__/', 'algar-*', 'attached', 'base.mk', 'gruponos-*', 'member', 'mypy', 'pyrefly', 'pyright', 'scripts/', 'settings.json', 'standalone', 'strict', 'workspace']

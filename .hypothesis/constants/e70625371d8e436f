@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/configuration.py
-# hypothesis_version: 6.151.10
-
-['__dict__', 'factory', 'get', 'model_dump', 'mysql://', 'postgresql://', 'sqlite://']

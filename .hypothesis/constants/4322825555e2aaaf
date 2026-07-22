@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/examples/ex_08_container_registration.py
-# hypothesis_version: 6.152.4
-
-[1000, 'count', 'get.factory.success', 'get.missing.failure', 'get.resource.success', 'get.service.success']

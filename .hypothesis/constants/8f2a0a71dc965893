@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_fixtures/_enforcement_parts/registry.py
-# hypothesis_version: 6.156.6
-
-['builder_for', 'builders', 'clear', 'get', 'register', 'warning_categories']

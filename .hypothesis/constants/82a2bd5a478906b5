@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/transformers/violation_census_visitor.py
-# hypothesis_version: 6.151.9
-
-['Container', 'Literal', 'Mapping', 'StrEnum', 'TypeAlias', '_', 'c', 'cast', 'compatibility_alias', 'container_invariance', 'd', 'detail', 'dict', 'e', 'file', 'flext_core', 'flext_core.', 'h', 'kind', 'line', 'literal_usage', 'm', 'manual_typing_alias', 'p', 'r', 'redundant_cast', 's', 'str', 'strenum_usage', 't', 't.NormalizedValue', 'typing', 'u', 'x']

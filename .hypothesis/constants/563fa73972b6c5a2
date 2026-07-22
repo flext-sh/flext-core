@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/codegen_execution.py
-# hypothesis_version: 6.151.11
-
-[127, ' -> ', ' | ', '-', '--config', '--output-format', '--porcelain', '--quiet', '--summary=none', '-C', '-m', 'A', 'C', 'CONDITIONAL_PASS', 'FAIL', 'M', 'PASS', 'R', 'U', 'WARN PYTHONPATH', '_', 'critical', 'detail', 'duplicate_groups', 'duplicates', 'duplicates_delta', 'duplicates_increased', 'execution error', 'exit_code', 'failed', 'import_parse_errors', 'invalid_import_from', 'latest.json', 'latest.txt', 'layer_violations', 'mro_failures', 'ns001_violations', 'ok', 'parse_error_count', 'parse_errors', 'passed', 'projects', 'projects_failed', 'projects_passed', 'projects_total', 'report_json', 'report_text', 'status', 'total', 'total_violations', 'totals', 'violations_by_rule', 'violations_delta', 'violations_increased', 'violations_reduced']

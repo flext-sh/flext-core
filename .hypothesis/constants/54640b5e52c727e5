@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_utilities/make_registry.py
-# hypothesis_version: 6.156.6
-
-['__pycache__', 'aliases', 'command load failed', 'description', 'domain', 'example', 'header load failed', 'mutates', 'mutates_when', 'params', 'rules', 'summary', 'target', 'target_env', 'verb', 'verb missing', 'what', 'what missing']

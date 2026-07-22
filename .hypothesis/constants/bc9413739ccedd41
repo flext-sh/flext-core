@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/examples/__init__.py
-# hypothesis_version: 6.156.1
-
-['Ex01r', 'Ex02FlextSettings', 'Ex03FlextLogger', 'Ex04DispatchDsl', 'Ex05FlextMixins', 'Ex06FlextContext', 'Ex07FlextExceptions', 'Ex08ContainerScoped', 'Ex08FlextContainer', 'Ex09FlextDecorators', 'Ex10FlextHandlers', 'Ex12RegistryDsl', 'Ex12RegistryFlow', 'Ex12RegistryPlugins', 'ExampleService', 'ExamplesFlextModels', 'ExamplesFlextShared', 'ExamplesFlextTypes', 'ExamplesSettings', 'ProtocolHandler', '_models', '_shared_parts', 'c', 'd', 'e', 'h', 'm', 'p', 'r', 's', 't', 'u', 'x']

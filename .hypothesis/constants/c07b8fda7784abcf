@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_models/cli_inputs_ops.py
-# hypothesis_version: 6.151.11
-
-['Exclude glob', 'Include glob', 'JUnit XML path', 'Make verb to execute', 'Pytest log path', 'Regex pattern', 'Remove unknown files', 'Skill folder name', 'all', 'minor', 'u']

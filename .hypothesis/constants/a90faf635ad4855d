@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_utilities/handler.py
-# hypothesis_version: 6.152.4
-
-['command_timeout', 'handler_id', 'handler_mode', 'handler_name', 'handler_type', 'max_command_retries', 'metadata']

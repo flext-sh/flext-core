@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/transformers/_header.py
-# hypothesis_version: 6.156.6
-
-['#', '#!', '(', ')', '__future__', 'alias_locally_bound', 'alias_used', 'annotations', 'as', 'ensure_alias_import', 'from', 'has_alias_import', 'import']

@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/workspace/orchestrator.py
-# hypothesis_version: 6.151.10
-
-[0.0, ',', ', ', '-C', '1', '=', 'CHECK_GATES=', 'NO_COLOR', 'go.mod']

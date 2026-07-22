@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/codegen/_codegen_constant_visitor.py
-# hypothesis_version: 6.151.9
-
-['"', "'", '*.py', '-?\\d+', '.', 'Constants', 'Final', 'Flext', 'Flext\\w*Constants\\.', '_', '__init__.py', 'c', 'constants.py', 'flext_core', 'src', 'utf-8']

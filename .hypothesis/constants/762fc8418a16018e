@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/codegen.py
-# hypothesis_version: 6.156.6
-
-['.', '.py', ':', 'Flext', 'FlextTests', 'ann', 'class ', 'name', 'templates', 'value']

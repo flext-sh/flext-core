@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/infrastructure.py
-# hypothesis_version: 6.152.1
-
-[100, 500, 1000, 5000, 10000, 'X-Correlation-Id', 'X-Service-Name', 'X-User-Id', '__sentinel_missing__', 'application', 'command', 'command_bus', 'correlation_id', 'default_resource', 'default_service', 'dict', 'duration_seconds', 'end_time', 'error_details', 'exception', 'factory', 'flext-', 'flext-dispatcher', 'flext_core', 'global', 'json', 'logger', 'operation', 'operation_id', 'operation_metadata', 'operation_name', 'operation_start_time', 'params', 'query', 'request', 'request_id', 'request_timestamp', 'resource', 'schema', 'service', 'service_module', 'service_name', 'service_version', 'session', 'session_id', 'stack_trace', 'start_time', 'tenant_id', 'traceback', 'transaction', 'user', 'user_id']

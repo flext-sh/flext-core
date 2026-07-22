@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_root_exports_parts/metadata_names.py
-# hypothesis_version: 6.152.4
-
-['ROOT_METADATA_NAMES', '__author__', '__author_email__', '__description__', '__license__', '__title__', '__url__', '__version__', '__version_info__']

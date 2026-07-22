@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_typings/__unit__.py
-# hypothesis_version: 6.156.6
-
-['.base', '.domain', '.pipeline', '.xlsx', 'FlextCliTypesBase', 'FlextCliTypesDomain', 'FlextCliTypesXlsx']

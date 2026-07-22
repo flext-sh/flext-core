@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/api.py
-# hypothesis_version: 6.152.4
-
-[0.0, 'FlextCli', 'available', 'cli', 'components', 'depends_on', 'duration_ms', 'error', 'formatters', 'handler', 'output', 'prompts', 'retry', 'rules', 'settings', 'shared', 'skip_if', 'stage_id', 'status', 'timestamp', 'version', 'workspace_root']

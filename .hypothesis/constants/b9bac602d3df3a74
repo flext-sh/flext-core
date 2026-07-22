@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/examples/ex_03_flext_logger.py
-# hypothesis_version: 6.152.4
-
-['__main__', 'acme', 'actor', 'adapter.critical.ok', 'adapter.debug.ok', 'adapter.error.ok', 'adapter.exception.ok', 'adapter.info.ok', 'adapter.name', 'adapter.trace.ok', 'adapter.warning.ok', 'app', 'application', 'bind.protocol', 'boom', 'bound', 'container', 'critical', 'critical.ok', 'debug', 'debug.ok', 'demo', 'error', 'error.ok', 'example', 'examples.ex_03', 'examples.ex_03.level', 'exception', 'exception.ok', 'factory_methods', 'global', 'global.info.ok', 'global_context', 'info', 'info.ok', 'instance_methods', 'level', 'level.info.ok', 'level_context', 'log', 'log.ok', 'missing', 'new.protocol', 'op', 'operation', 'performance_tracker', 'r1', 'req-1', 'request', 'result_adapter', 'scoped', 'scoped_context', 'shared', 'tenant', 'tester', 'trace', 'trace.ok', 'unbind.protocol', 'unbind_safe.protocol', 'warning', 'warning.ok', 'with_result.protocol']

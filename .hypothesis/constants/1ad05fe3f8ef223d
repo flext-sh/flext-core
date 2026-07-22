@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/docker.py
-# hypothesis_version: 6.152.4
-
-[0.0, 0.5, '.flext', 'Compose down', 'Compose down failed', 'Compose up', 'Compose up failed', 'FlextTestsDocker', 'HostPort', 'Stack start', 'compose_file', 'container_name', 'dirty_containers', 'docker', 'master', 'running', 'tk']

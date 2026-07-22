@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_constants/codegen_project.py
-# hypothesis_version: 6.152.4
-
-['.env.example', '.gitignore', '.python-version', 'LICENSE', 'Makefile', 'README.md', 'REGISTRATION.md', '_shared/LICENSE.j2', '_shared/README.md.j2', '_shared/gitignore.j2', 'conftest.py', 'custom.mk', 'external', 'external/Makefile.j2', 'internal', 'internal/Makefile.j2', 'mkdocs.yml', 'project', 'projects/{dist}.md', 'pyproject.toml', 'render', 'tests/__init__.py', 'tests/base.py', 'tests/conftest.py', 'tests/constants.py', 'tests/py.typed']

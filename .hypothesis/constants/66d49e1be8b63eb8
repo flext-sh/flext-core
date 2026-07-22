@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/mixins.py
-# hypothesis_version: 6.151.9
-
-[0.0, ', ', 'CommandBus', 'Configurable', 'Configuration loaded', 'FlextMixins', 'Handler', 'Repository', 'Service', 'Service initialized', 'Validation failed', '_metrics', '_runtime', '_stack', 'already registered', 'avg_duration_ms', 'can_handle', 'config_overrides', 'config_type', 'configure', 'debug', 'delete', 'dispatch', 'duration_ms', 'error_count', 'error_details', 'exception', 'execute', 'find_all', 'get_by_id', 'get_global', 'get_service_info', 'handler_name', 'initial_context', 'is_valid', 'items', 'model_dump', 'operation_count', 'params', 'process', 'publish', 'register_handler', 'saga', 'save', 'schema', 'service_module', 'stack_trace', 'success_rate', 'total_duration_ms', 'traceback', 'validate', 'x']

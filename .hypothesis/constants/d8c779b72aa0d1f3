@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/_utilities/object_class.py
-# hypothesis_version: 6.151.9
-
-['desc', 'javanamingReference', 'javanamingref', 'kind', 'may', 'must', 'name', 'oid', 'sup', 'tombstone', 'top']

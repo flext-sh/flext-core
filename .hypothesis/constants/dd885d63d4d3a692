@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_models/xlsx_style_fills.py
-# hypothesis_version: 6.156.6
-
-['Fill kind.', 'Fill pattern.', 'Gradient mode.', 'Gradient stop color.', 'Path bottom extent.', 'Path left extent.', 'Path right extent.', 'Path top extent.', 'darkDown', 'darkGray', 'darkGrid', 'darkHorizontal', 'darkTrellis', 'darkUp', 'darkVertical', 'gradient', 'gray0625', 'gray125', 'kind', 'lightDown', 'lightGray', 'lightGrid', 'lightHorizontal', 'lightTrellis', 'lightUp', 'lightVertical', 'linear', 'mediumGray', 'path', 'pattern', 'solid']

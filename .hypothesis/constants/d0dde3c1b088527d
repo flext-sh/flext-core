@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_models/mro_scan.py
-# hypothesis_version: 6.152.4
-
-['Absolute file path', 'Class suffix', 'Facade alias letter', 'Family alias letter', 'File name patterns', 'Import module path', 'Source line number', 'Symbol name', 'Target class name', 'c', 'constant']

@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_utilities/_matchers/_that_parts/that_part_02.py
-# hypothesis_version: 6.152.4
-
-['empty', 'ends', 'eq', 'gt', 'gte', 'lt', 'lte', 'ne', 'none', 'starts']

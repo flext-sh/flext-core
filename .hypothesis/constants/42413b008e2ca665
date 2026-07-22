@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/gates/pyrefly.py
-# hypothesis_version: 6.151.9
-
-['(\\d+)\\s+errors?', '--config', '--output-format', '--summary=none', '-m', '-o', '.', '?', 'Pyrefly', 'column', 'description', 'errors', 'line', 'name', 'path', 'severity']

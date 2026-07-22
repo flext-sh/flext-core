@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/_beartype/_class_visitor_parts/class_visitor_part_02.py
-# hypothesis_version: 6.152.4
-
-['.', 'FlextService', '[', '__', '__code__', '__file__', '__flext_pattern_b__', '__module__', '__name__', '__qualname__', 'base', 'bases', 'class', 'expected', 'first', 'first_base', 'flext_core.', 'flext_core.examples', 'flext_core.scripts', 'flext_core.tests', 'u', 'utilities.py']

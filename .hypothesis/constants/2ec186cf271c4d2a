@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/transformers/signature_propagator.py
-# hypothesis_version: 6.151.9
-
-['"', "'", 'False', 'None', 'True', 'false', 'none', 'true']

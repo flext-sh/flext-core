@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/servers/_oud/entry.py
-# hypothesis_version: 6.151.12
-
-['# ', '=', 'MODIFIED', 'SKIP_TO_04', 'TRANSFORMED', 'Unknown error', '_acl_quirk', '_parent_quirk', 'aci', 'aci:', 'acl', 'attribute_metadata', 'attributes', 'authmethod', 'base64_encode_binary', 'base_dn', 'bind_dayofweek', 'bind_dns', 'bind_ip', 'bind_timeofday', 'cleaned_dn', 'converted_attributes', 'corrected_attributes', 'dayofweek', 'dn', 'dn_registry', 'dn_was_base64', 'dns', 'extensions', 'extop', 'format', 'hidden_attrs', 'include_comments', 'ip', 'metadata', 'objectclass', 'orclaci', 'orclaci:', 'orclentrylevelaci', 'original_attr_lines', 'original_dn_line', 'original_entry', 'original_entry_dn', 'original_format', 'oud', 'quirk_type', 'rejection_reason', 'sort_attributes', 'sort_entries', 'ssf', 'syntax_corrections', 'targattrfilters', 'targetcontrol', 'targetscope', 'timeofday', 'utf-8', 'write_options']

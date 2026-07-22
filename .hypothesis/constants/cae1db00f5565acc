@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/cst.py
-# hypothesis_version: 6.151.9
-
-['*.py', '^_?[A-Z][A-Z0-9_]+$', '_', 'assignment', 'class', 'flext-', 'function', 'src', 'type_alias', 'utf-8']

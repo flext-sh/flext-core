@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/dispatcher.py
-# hypothesis_version: 6.156.6
-
-['dispatch message', 'message_type', 'register handler']

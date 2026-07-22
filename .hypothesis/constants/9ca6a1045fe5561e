@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/examples/logging_config_once_pattern.py
-# hypothesis_version: 6.152.4
-
-[100, 1000, 5432, '/data/input', '/data/output', 'Alice', '__main__', 'batch_size', 'database', 'database_query', 'failed', 'host', 'id', 'input_dir', 'max_workers', 'migrated', 'migration_process', 'mydb', 'name', 'output_dir', 'pool_size', 'port', 'select', 'sync', 'users']

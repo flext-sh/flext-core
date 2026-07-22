@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_constants/base.py
-# hypothesis_version: 6.152.4
-
-['.flext', 'FlextCliCmd', 'No args', 'action', 'app_name', 'cache', 'cannot open', 'check', 'command', 'commands', 'commands_count', 'does not exist', 'enabled', 'engine-registry.yml', 'errno 2', 'fix_action', 'id', 'initialized', 'logs', 'message', 'missing argument', 'missing option', 'name', 'no such command', 'no such file', 'no such option', 'not found', 'password', 'rules', 'service', 'status', 'token', 'username', 'utf-8', '✓', '✗']

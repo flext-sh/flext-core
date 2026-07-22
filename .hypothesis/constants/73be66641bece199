@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/codegen/fixer.py
-# hypothesis_version: 6.151.10
-
-[', ', 'LAZY-INIT', 'MRO', 'MRO-REWRITE', 'NAMESPACE', 'REFACTOR', 'Use run() directly', 'all', 'line', 'message', 'module', 'refactor applied', 'refactor failed', 'rule', 'symbols']

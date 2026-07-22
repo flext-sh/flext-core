@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/api.py
-# hypothesis_version: 6.151.9
-
-[100, ',', 'FlextLdif', 'acl', 'any', 'attr_order', 'attributes', 'cn', 'cn=health-check', 'config_overrides', 'detector', 'dn', 'entries', 'fold_lines', 'health-check', 'inetorgperson', 'objectClass', 'organizationalperson', 'output_filename', 'parser', 'person', 'processing', 'rfc', 'server', 'statistics', 'utf-8', 'validator', 'write_options', 'writer']

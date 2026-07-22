@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_utilities/_matchers/_that.py
-# hypothesis_version: 6.152.4
-
-['*', '.', 'Dict', 'ObjectList', 'all', 'choices', 'contains', 'empty', 'ends', 'eq', 'excludes', 'first', 'gt', 'gte', 'has', 'is_', 'lacks', 'last', 'lt', 'lte', 'msg', 'ne', 'none', 'root', 'starts', 'value', 'where']

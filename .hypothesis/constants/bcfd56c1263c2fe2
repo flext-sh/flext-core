@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/_utilities_namespace.py
-# hypothesis_version: 6.151.9
-
-['"""', '#!', "'''", '):', '*', '.', '._', 'Protocol', 'TypeAlias', '\\n{3,}', '^#.*coding[:=]', '__init__', '__init__.py', 'lineno', 'protocols.py', 'py.typed', 'scan', 'src', 'typings.py', 'utf-8', 'utilities.py']

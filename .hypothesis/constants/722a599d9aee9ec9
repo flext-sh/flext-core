@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/rules/legacy_removal.py
-# hypothesis_version: 6.151.9
-
-['*', '**', 'alias', 'allow_aliases', 'bypass', 'deprecated', 'inline_and_remove', 'keep_try_only', 'remove', 'wrapper']

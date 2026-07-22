@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/_exception_params_parts/flextmodelsexceptionparams_part_03.py
-# hypothesis_version: 6.156.6
-
-['Attribute Context', 'Attribute Name', 'Category', 'Plugin Name', 'Scope', 'Service Name', 'class', 'command_bus', 'instance', 'owner', 'session', 'strict_typing', 'token', 'validators']

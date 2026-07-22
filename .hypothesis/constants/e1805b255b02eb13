@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/namespace_facades.py
-# hypothesis_version: 6.152.4
-
-['    pass', '*', ', ', 'Utilities', '^__all__\\s*:', '^class\\s+\\w+']

@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/protected_edit.py
-# hypothesis_version: 6.152.4
-
-[300, ',', '--tb=short', '-q', '-x', 'PYTHONPATH', 'lint', 'no tests collected', 'no tests ran', 'pytest', 'ruff', 'test_', 'tests', '{file}']

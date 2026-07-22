@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-ldif/src/flext_ldif/_models/results.py
-# hypothesis_version: 6.151.12
-
-[0.0, 100.0, 100, 'Count of ACL entries', 'Extracted ACL models', 'Parsed LDIF entries', 'Schema service name', 'Syntax service name', 'acl_attribute_name', 'acl_entries', 'acls_extracted', 'acls_failed', 'data_entries', 'detected_server_type', 'encoding', 'entries_written', 'events', 'failed_entries', 'file_size_bytes', 'group_entries', 'hierarchy_entries', 'output_file', 'parse_errors', 'processed_entries', 'processing_duration', 'rejected_entries', 'rejection_reasons', 'schema_attributes', 'schema_entries', 'schema_objectclasses', 'total_entries', 'user_entries']

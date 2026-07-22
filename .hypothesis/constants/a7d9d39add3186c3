@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_models/engine.py
-# hypothesis_version: 6.151.12
-
-['Custom handler', 'Expected values', 'Key to remove', 'Merge strategy', 'Operation kind', 'Phase name', 'Primary table path', 'TOML key name', 'custom_handler', 'kind', 'list', 'nested_tables', 'operations', 'python', 'remove', 'root_path', 'set', 'table_path']

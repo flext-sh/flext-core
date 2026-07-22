@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_models/docx_document.py
-# hypothesis_version: 6.156.6
-
-['Cell paragraphs.', 'Document paragraphs.', 'Document sections.', 'Document tables.', 'Exact source plan.', 'Left margin in EMU.', 'Named table style.', 'Page height in EMU.', 'Page orientation.', 'Page width in EMU.', 'Paragraph runs.', 'Right margin in EMU.', 'Row cells.', 'Run text.', 'Table rows.', 'Top margin in EMU.', 'portrait']

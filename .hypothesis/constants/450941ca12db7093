@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/namespace_config.py
-# hypothesis_version: 6.152.4
-
-['.', 'docs', 'enabled', 'examples', 'include_dynamic_dirs', 'namespace', 'scan_dirs', 'scripts', 'src', 'tests']

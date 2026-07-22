@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_utilities/matchers.py
-# hypothesis_version: 6.151.9
-
-['.', 'config', 'container', 'contains', 'context', 'eq', 'error', 'excludes', 'has', 'is_success', 'items', 'keys', 'lacks', 'ne', 'replace', 'str', 't.GuardInput', 'tm', 'utf-8', 'value']

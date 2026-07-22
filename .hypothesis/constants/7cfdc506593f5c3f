@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/typings.py
-# hypothesis_version: 6.151.9
-
-['FlextTestsTypes', 'auto', 'bin', 'collect', 'compare', 'create', 'csv', 'delete', 'info', 'json', 'md', 'read', 'skip', 'stop', 't', 'text', 'txt', 'yaml']

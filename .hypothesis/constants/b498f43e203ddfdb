@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/runtime.py
-# hypothesis_version: 6.151.9
-
-[0.1, 2.0, '-', '<async-log-writer>', 'BoolDict', 'BoolList', 'Dict', 'Domain event emitted', 'FlextRuntime', 'FloatDict', 'FloatList', 'IntDict', 'IntList', 'List', 'NestedDict', 'Sequence', 'Service resolved', 'StringDict', 'StringList', '_', '__dict__', '__getitem__', '__iter__', '__len__', '__mro__', '__name__', '_level_', '_writer_logger', 'async_logging', 'buffer', 'bytearray', 'bytes', 'config', 'configure', 'console_renderer', 'count', 'critical', 'debug', 'dict', 'encoding', 'errors', 'factories', 'factory_cache', 'index', 'info', 'iso', 'items', 'line_buffering', 'list', 'log_level', 'logger_factory', 'memoryview', 'mode', 'model_dump', 'name', 'newlines', 'range', 'resources', 'services', 'span_id', 'str', 'timestamp', 'trace_id', 'tuple', 'unique_id', 'w', 'warning', 'wire_classes', 'wire_modules', 'wire_packages']

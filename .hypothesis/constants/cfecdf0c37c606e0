@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/detectors/mro_completeness_detector.py
-# hypothesis_version: 6.151.10
-
-['*.py', 'ResourceNotFound', '_', 'mro-completeness']

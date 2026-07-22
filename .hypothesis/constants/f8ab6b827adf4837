@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-cli/src/flext_cli/_utilities/_xlxx/xlsx_archive.py
-# hypothesis_version: 6.156.6
-
-['archive', 'duplicate ZIP member', 'duplicate_member', 'member', 'member_count', 'member_prefix', 'member_size', 'required_member', 'total_size', 'worksheet_count']

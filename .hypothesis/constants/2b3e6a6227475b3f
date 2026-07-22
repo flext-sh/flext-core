@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-web/src/flext_web/services/__init__.py
-# hypothesis_version: 6.151.12
-
-['.app', '.auth', '.entities', '.handlers', '.health', '.web', 'FlextWebApp', 'FlextWebAuth', 'FlextWebEntities', 'FlextWebHandlers', 'FlextWebHealth', 'FlextWebServices']

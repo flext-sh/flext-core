@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/docs/auditor.py
-# hypothesis_version: 6.151.9
-
-['#', '# Docs Audit Report', ',', '--output-dir', '--strict', '.md', '/', '<', '>', '?', 'FlextInfraDocAuditor', 'Strict mode', '__main__', '```', 'all', 'audit', 'audit failed', 'audit-report.md', 'audit-summary.json', 'audit_gate', 'broken_link', 'data:', 'docs/', 'docs_validation', 'flext-', 'forbidden-terms', 'forbidden_term', 'high', 'http', 'http://', 'https://', 'issue_type', 'issues', 'links', 'lower', 'mailto:', 'main', 'max_issues_by_scope', 'max_issues_default', 'medium', 'none', 'report_dir', 'severity', 'store_true', 'strict', 'tel:', '|---|---|---|---|']

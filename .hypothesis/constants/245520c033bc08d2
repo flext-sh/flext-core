@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/deps/phases/__init__.py
-# hypothesis_version: 6.152.4
-
-['.consolidate_groups', '.ensure_coverage', '.ensure_formatting', '.ensure_mypy', '.ensure_namespace', '.ensure_pyrefly', '.ensure_pyright', '.ensure_pytest', '.ensure_ruff', '.inject_comments']

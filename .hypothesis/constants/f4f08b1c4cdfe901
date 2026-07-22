@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_constants/errors.py
-# hypothesis_version: 6.152.4
-
-['AUTH', 'Handler failed', 'INTERNAL', 'Invalid log level', 'NETWORK', 'NOT_FOUND', 'Not a sequence', 'TIMEOUT', 'Type hint is None', 'UNKNOWN', 'VALIDATION', 'Validation failed', 'Value cannot be None', 'found_none:{key}', 'index']

@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/_beartype/import_visitor.py
-# hypothesis_version: 6.152.4
-
-['-', '.', '_', '__module__', '_models', 'alias', 'class', 'file', 'flext_', 'import', 'lib', 'owner', 'package', 'pydantic']

@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_models/validate.py
-# hypothesis_version: 6.152.4
-
-['Error trace count', 'Exclude globs', 'Failed test labels', 'FlextInfraModelsCore', 'Include globs', 'Rules payload', 'Rules to evaluate', 'Skill directory path', 'Skill folder name', 'Skipped test labels', 'Slow test entries', 'Validation status', 'Violation counts', 'Violations', 'Warning line count', 'Workspace root path']

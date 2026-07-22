@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/gates/pyright.py
-# hypothesis_version: 6.151.10
-
-['--outputjson', '-m', '?', 'Pyright', 'character', 'file', 'generalDiagnostics', 'line', 'message', 'range', 'rule', 'severity', 'start', '{}']

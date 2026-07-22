@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/rope_analysis_introspection.py
-# hypothesis_version: 6.152.4
-
-['AnnAssign', 'Assign', 'AsyncFunctionDef', 'ClassDef', 'FunctionDef', 'TypeAlias', 'assignment', 'body', 'class', 'classmethod', 'foo.py', 'function', 'id', 'instance', 'lineno', 'name', 'static', 'staticmethod', 'target', 'targets']

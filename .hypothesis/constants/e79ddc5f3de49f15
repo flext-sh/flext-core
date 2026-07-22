@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_constants/census.py
-# hypothesis_version: 6.151.10
-
-['ArbitraryTypesModel', 'BaseModel', 'ClassVar', 'Constants', 'Final', 'FrozenStrictModel', 'Models', 'Protocol', 'Protocols', 'TypeAlias', 'TypedDict', 'Types', 'Utilities', '^_?[A-Z][A-Z0-9_]+$', '_constants', '_constants.py', '_models', '_models.py', '_protocols', '_protocols.py', '_typings', '_typings.py', '_utilities', '_utilities.py', 'add_mro_base', 'constant', 'constants.py', 'deduplicate', 'duplicate', 'flat_alias', 'misplaced', 'missing_mro_base', 'model', 'models.py', 'move_to_tier', 'protocol', 'protocols.py', 'remove_flat_alias', 'remove_unused', 'type', 'typings.py', 'unused', 'utilities.py', 'utility', 'wrong_tier']

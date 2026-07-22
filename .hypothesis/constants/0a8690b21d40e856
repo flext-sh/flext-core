@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_settings.py
-# hypothesis_version: 6.156.1
-
-['-', '.cache', '.env', 'AppData', 'Caches', 'Enable debug mode', 'Enable trace mode', 'FLEXT_', 'FLEXT_ENV_FILE', 'FlextSettings', 'INFO', 'LOCALAPPDATA', 'Library', 'Local', 'Log level', 'UTC', 'XDG_CACHE_HOME', '_', '__', '_instance', 'after', 'before', 'darwin', 'env_prefix', 'flext', 'ignore', 'python', 'settings', 'utf-8', 'win32', 'work_dir']

@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/release/orchestrator_phases.py
-# hypothesis_version: 6.151.10
-
-['-C', 'RELEASE_NOTES.md', 'build-report.json', 'invalid version', 'json']

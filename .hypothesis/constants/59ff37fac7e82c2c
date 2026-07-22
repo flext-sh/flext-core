@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/.claude/worktrees/mro-wkii-17-26-refactor/flext-core/src/flext_core/_protocols/base.py
-# hypothesis_version: 6.156.6
-
-['FlextProtocolsBase', 'allow', 'error', 'forbid', 'ignore', 'none', 'python', 'warn']

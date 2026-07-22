@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-auth/src/flext_auth/settings.py
-# hypothesis_version: 6.151.12
-
-['FLEXT_AUTH_', 'FlextAuthSettings', 'Password hash rounds', 'Signing secret', 'Token audience', 'Token issuer', 'auth', 'auth_secret', 'before', 'ignore', 'secret_key']

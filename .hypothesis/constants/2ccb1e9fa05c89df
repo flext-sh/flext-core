@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_docker_parts/docker_part_04.py
-# hypothesis_version: 6.152.4
-
-[0.0, 0.5, 'FlextTestsDocker', 'Stack start', 'running']

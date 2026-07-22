@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/gates/ruff_format.py
-# hypothesis_version: 6.151.9
-
-['--check', '--quiet', '-m', '.', 'Ruff Format', 'Would be reformatted']

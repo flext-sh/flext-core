@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_validator/markdown.py
-# hypothesis_version: 6.156.6
-
-['#', '*.md', '->', '.claude', ':', 'MD-001', 'MD-002', 'MD-003', 'MD-004', 'MD-UNREADABLE', 'class ', 'could not read file', 'def ', 'docs', 'exec', 'invalid Python', 'object', 'skills']

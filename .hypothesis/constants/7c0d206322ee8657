@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_validator/bypass.py
-# hypothesis_version: 6.151.12
-
-['#\\s*noqa', 'BYPASS-001', 'BYPASS-002', 'BYPASS-003', 'FlextValidatorBypass', 'utf-8']

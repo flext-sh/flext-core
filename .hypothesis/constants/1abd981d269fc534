@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/.claude/worktrees/mro-wkii-17-26-refactor/flext-core/src/flext_core/_settings.py
-# hypothesis_version: 6.156.6
-
-['-', '.cache', '.config', '.env', '.local', 'APPDATA', 'AppData', 'Application Support', 'Caches', 'Enable debug mode', 'Enable trace mode', 'FLEXT_', 'FLEXT_ENV_FILE', 'FlextSettings', 'INFO', 'LOCALAPPDATA', 'Library', 'Local', 'Log level', 'Roaming', 'UTC', 'XDG_CACHE_HOME', 'XDG_CONFIG_HOME', 'XDG_DATA_HOME', 'XDG_RUNTIME_DIR', 'XDG_STATE_HOME', '_', '__', '_instance', 'after', 'before', 'config_dir', 'darwin', 'data_dir', 'env_prefix', 'flext', 'ignore', 'python', 'run', 'runtime_dir', 'settings', 'share', 'state', 'state_dir', 'utf-8', 'win32', 'work_dir']

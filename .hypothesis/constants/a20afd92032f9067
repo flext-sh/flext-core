@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/examples/ex_04_flext_dispatcher.py
-# hypothesis_version: 6.151.12
-
-['__main__', 'alice', 'auto_discovery', 'bruno', 'carla', 'constructor.protocol', 'delete user', 'dispatch_message', 'error_cases', 'event_publishing', 'fallback', 'none', 'ok', 'subscriber.events', 'user_created', 'x']

@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_utilities/payload.py
-# hypothesis_version: 6.152.4
-
-['.', '<predicate>', 'Predicate failed', 'Value mismatch', 'ignore', 'python']

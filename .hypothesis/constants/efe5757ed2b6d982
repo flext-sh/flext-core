@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/docker.py
-# hypothesis_version: 6.156.1
-
-['FlextTestsDocker', 'tk']

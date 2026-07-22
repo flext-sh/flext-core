@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/examples/shared.py
-# hypothesis_version: 6.152.1
-
-[-1000.0, 0.5, 1000.0, -1000, 100, 1000, '.actual', '.expected', 'None', 'Result', 'big', 'dict', 'list', 'utf-8']

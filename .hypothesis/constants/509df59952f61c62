@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/algar-oud-mig/src/algar_oud_mig/services/__init__.py
-# hypothesis_version: 6.152.4
-
-['.acl', '.clean', '.migration', '.migration_category', '.migration_format', '.migration_io', '.migration_write', '.sync']

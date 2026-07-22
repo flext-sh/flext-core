@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/transformers/census_visitors.py
-# hypothesis_version: 6.151.9
-
-['CensusUsageCollector', 'flext_', 'flext_core']

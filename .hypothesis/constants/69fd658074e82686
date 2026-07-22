@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_utilities/pydantic.py
-# hypothesis_version: 6.151.12
-
-['BaseModel', 'ConfigDict', 'Field', 'RootModel', 'TypeAdapter', 'ValidationError', 'computed_field', 'field_serializer', 'field_validator', 'model_validator']

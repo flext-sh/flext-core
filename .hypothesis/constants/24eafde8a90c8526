@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/rules/__init__.py
-# hypothesis_version: 6.151.9
-
-['class_nesting', 'class_reconstructor', 'import_modernizer', 'legacy_removal', 'mro_class_migration', 'pattern_corrections']

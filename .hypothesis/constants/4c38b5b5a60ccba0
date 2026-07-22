@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/pydantic_centralizer_analysis.py
-# hypothesis_version: 6.151.9
-
-['    pass', '/_typings.py', '/typings.py', '/typings/', 'ArbitraryTypesModel', 'BaseModel', 'FlextModels.', 'FrozenModel', 'FrozenStrictModel', 'Mapping[', 'MutableMapping[', 'RootModel', 'TypeAlias', 'TypedDict', 'base_model', 'case', 'config', 'dict', 'dict[', 'entry', 'fixture', 'metadata', 'payload', 'schema', 'total', 'typed_dict', 'typed_dict_factory', 'utf-8']

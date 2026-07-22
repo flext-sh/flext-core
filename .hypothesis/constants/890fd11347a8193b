@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/_context/_tokens.py
-# hypothesis_version: 6.156.6
-
-['correlation_id', 'request_id', 'service_name', 'session_id', 'user_id']

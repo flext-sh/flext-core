@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/terminal.py
-# hypothesis_version: 6.151.11
-
-['CI', 'FORCE_COLOR', 'GITHUB_ACTIONS', 'GITLAB_CI', 'LANG', 'LC_ALL', 'NO_COLOR', 'TERM', 'dumb', 'isatty', 'utf']

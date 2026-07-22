@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/refactor/_detectors/cyclic_import_detector.py
-# hypothesis_version: 6.151.9
-
-['.', 'TYPE_CHECKING', '__init__', '__init__.py', '__pycache__']

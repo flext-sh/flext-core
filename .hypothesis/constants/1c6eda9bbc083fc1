@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/containers.py
-# hypothesis_version: 6.151.10
-
-['Batch Errors', 'Batch Results', 'Error Count', 'Field Validator Map', 'Success Count', 'Total Items', 'Validator Callable', 'email', 'identity_validator', 'invalid payload', 'ok', 'validate_email']

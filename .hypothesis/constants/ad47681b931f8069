@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/mro_scan_catalog.py
-# hypothesis_version: 6.152.4
-
-['*.py', '*/pyproject.toml', '.', 'Constants', 'Makefile', 'Models', 'Protocols', 'Types', 'Utilities', '__pycache__', '_constants.py', '_protocols.py', '_typings.py', '_utilities.py', 'all', 'c', 'constants', 'constants.py', 'examples', 'm', 'models', 'models.py', 'p', 'protocols', 'protocols.py', 'pyproject.toml', 'scripts', 'src', 't', 'tests', 'typings', 'typings.py', 'u', 'utilities', 'utilities.py']

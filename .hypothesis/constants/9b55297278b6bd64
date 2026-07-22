@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/log_parser.py
-# hypothesis_version: 6.151.9
-
-['^ERROR:', '^E\\s+\\w', '^FAIL:', '^FAILED\\s', '^INFO:', '^\\s*\\S+\\.py:\\d+', '^\\s+\\[B\\d+\\]', '^error:', '^make\\[', '^──\\s', 'replace']

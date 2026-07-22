@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_models/deps.py
-# hypothesis_version: 6.151.12
-
-['Current typings', 'DEP001 issues', 'DEP002 issues', 'DEP003 issues', 'DEP004 issues', 'Dependency limits', 'Deptry report', 'FlextInfraModelsDeps', 'Hinted packages', 'Missing dependencies', 'Missing modules', 'Path to limits file', 'Per-project reports', 'Pip check report', 'Python version', 'Raw issue count', 'Required packages', 'Run in check mode', 'Typings report', 'Typings to add', 'Typings to remove', 'Unused dependencies', 'Workspace name', 'apply-typings', 'auto', 'format', 'no-fail', 'no-pip-check', 'skip-check', 'skip-comments', 'text', 'typer_param_decls']

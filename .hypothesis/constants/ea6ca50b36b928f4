@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-core/src/flext_core/_models/service.py
-# hypothesis_version: 6.151.9
-
-[1.0, 2.0, 100, 500, 'Action', 'Aggregation', 'Batch Operations', 'Denied permissions', 'Exponential Base', 'FlextModelsService', 'Granted permissions', 'Group By', 'Method to execute', 'Operation Name', 'Operation name', 'Requested action', 'Resource Limit', 'Resource Type', 'Resource identifier', 'Service name', 'Span Id', 'Trace Id', 'User identifier', 'after', 'avg', 'create', 'create_user', 'delete', 'errors', 'get', 'handler_mode', 'invoice', 'job', 'max', 'operation_name', 'performance', 'persist', 'service_name', 'sum', 'sync_records', 'throughput', 'update', 'user', 'validate']

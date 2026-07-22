@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-tests/src/flext_tests/_constants/__unit__.py
-# hypothesis_version: 6.156.6
-
-['.data_cases', '.docker', '.files', '.make', '.matcher', '.validator']

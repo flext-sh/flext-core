@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_utilities/cli_shared.py
-# hypothesis_version: 6.151.10
-
-['--apply', '--check', '--diff', '--dry-run', '--format', '--projects', '--workspace', 'Apply changes', 'Plan/Scan only', 'Run in check mode', 'append', 'before', 'include_apply', 'include_check', 'include_diff', 'include_format', 'include_project', 'json', 'output_format', 'store_true', 'text']

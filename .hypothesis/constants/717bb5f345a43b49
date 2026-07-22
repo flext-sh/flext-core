@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/check/workspace_check_cli.py
-# hypothesis_version: 6.151.10
-
-['*', '--check-only', '--fail-fast', '--fix', '--gates', '--project', '--pyright-args', '--reports-dir', '--ruff-args', '--verbose', 'FLEXT_WORKSPACE_ROOT', 'Run quality gates', 'append', 'check failed', 'fix-pyrefly-config', 'flext-infra check', 'include_apply', 'include_diff', 'projects', 'store_true']

@@ -1,4 +1,0 @@
-# file: /home/marlonsc/flext/flext-infra/src/flext_infra/_models/refactor_ast_grep.py
-# hypothesis_version: 6.152.4
-
-[0.0, 'Absolute file path', 'Dry-run indicator', 'Errors', 'Facade alias letter', 'Import module path', 'Imported symbol name', 'Keywords to add', 'Method category', 'Migration ID', 'Optional alias', 'Source line number', 'Symbol name', 'Target class name', 'Visibility filter', 'Warnings', 'Workspace root path', 'c', 'constant', 'post-apply-rescan', 'signature-migration']
