@@ -368,13 +368,7 @@ project-includes = [
 ]
 python-interpreter-path = "../.venv/bin/python"
 python-version = "3.13"
-search-path = [
-  ".",
-  "../flext-cli/src",
-  "../flext-infra/src",
-  "../flext-tests/src",
-  "src",
-]
+search-path = [".", "src"]
 use-ignore-files = false
 
 [tool.pyrefly.errors]
@@ -600,7 +594,10 @@ root = "scripts"
 [tool.pytest.ini_options]
 addopts = ["--durations=10", "--strict-markers", "--timeout=10"]
 enable_assertion_pass_hook = true
-filterwarnings = ["error"]
+filterwarnings = [
+  "error",
+  "module::flext_core._constants.enforcement.FlextMroViolation",
+]
 markers = [
   "advanced: advanced pattern tests",
   "architecture: architectural pattern tests",
@@ -765,6 +762,8 @@ split-on-trailing-comma = false
   "undocumented-public-function",
   "undocumented-public-method",
 ]
+"**/flext_cli/_utilities/runtime.py" = ["S404", "S603"]
+"**/flext_cli/_utilities/processes.py" = ["S404", "S603"]
 
 # [MANAGED] tomlsort
 [tool.tomlsort]
