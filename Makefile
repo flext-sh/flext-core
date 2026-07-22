@@ -7,7 +7,7 @@
 # =============================================================================
 
 PROJECT_NAME := flext-core
-PYTHON_VERSION ?= >=3.13,<3.14
+PYTHON_VERSION ?= 3.13
 SRC_DIR ?= src
 TESTS_DIR ?= tests
 # Detect a FLEXT workspace root by its manifest and canonical base.mk owner.
