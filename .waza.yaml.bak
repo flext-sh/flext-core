@@ -11,7 +11,6 @@ tokens:
       "references/**/*.md": 1000
       "*.md": 2000
     overrides:
-      "AGENTS.md": 3000
       "README.md": 3000
       "CLAUDE.md": 3000
       "GEMINI.md": 3000
@@ -20,6 +19,7 @@ tokens:
       "docs/prompts/**/*.md": 10000
       "docs/architecture/**/*.md": 10000
       ".agents/skills/frontend-slides/STYLE_PRESETS.md": 3000
+      # AGENTS.md intentionally uses the default *.md limit (2000 tokens).
 
 paths:
   skills:

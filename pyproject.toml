@@ -765,8 +765,6 @@ split-on-trailing-comma = false
   "undocumented-public-function",
   "undocumented-public-method",
 ]
-"**/flext_cli/_utilities/runtime.py" = ["S404", "S603"]
-"**/flext_cli/_utilities/processes.py" = ["S404", "S603"]
 
 # [MANAGED] tomlsort
 [tool.tomlsort]
