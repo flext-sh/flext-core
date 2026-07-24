@@ -41,9 +41,7 @@ class ProtocolHandler:
         return self.handle(message)
 
 
-def as_registry_handler(
-    handler: ProtocolHandler,
-) -> t.DispatchableHandler:
+def as_registry_handler(handler: ProtocolHandler) -> t.DispatchableHandler:
     """Adapt protocol handlers to the registry callable contract."""
 
     class _RegistryHandlerCallable:
@@ -63,4 +61,5 @@ def as_registry_handler(
 
 @h.handler(m.Examples.CommandA, priority=3)
 def discovered_handler(message: m.Command) -> m.Command:
+    """Return the discovered command unchanged for registry dispatch."""
     return message

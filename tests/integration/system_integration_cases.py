@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_tests import r
-
+from flext_tests import r, tm
 from tests.constants import c
 from tests.typings import t
 from tests.utilities import u
@@ -15,16 +14,15 @@ if TYPE_CHECKING:
 
 
 class TestsFlextFlextSystemWorkflowCases:
+    """Exercise composed system workflow behavior."""
+
     def _test_complex_integration(self) -> None:
         """Test complex integration scenarios."""
 
-        def processar_dados_usuario(
-            dados: t.StrMapping,
-        ) -> p.Result[t.StrMapping]:
+        def processar_dados_usuario(dados: t.StrMapping) -> p.Result[t.StrMapping]:
             if not dados:
                 return r[t.StrMapping].fail(
-                    "Dados não fornecidos",
-                    error_code=c.ErrorCode.VALIDATION_ERROR,
+                    "Dados não fornecidos", error_code=c.ErrorCode.VALIDATION_ERROR
                 )
             dados_processados: t.MutableStrMapping = {}
             for key, value in dados.items():
@@ -40,28 +38,28 @@ class TestsFlextFlextSystemWorkflowCases:
 
         dados_teste = {"nome": "João", "email": "joao@exemplo.com"}
         resultado_processamento = processar_dados_usuario(dados_teste)
-        assert resultado_processamento.success is True
+        tm.that(resultado_processamento.success, eq=True)
         dados_finais = resultado_processamento.value
-        assert "nome" in dados_finais
-        assert "email" in dados_finais
-        assert "processado_em" in dados_finais
-        assert "processado_por" in dados_finais
-        assert dados_finais["nome"] == "processado_João"
-        assert dados_finais["email"] == "processado_joao@exemplo.com"
+        tm.that(dados_finais, has="nome")
+        tm.that(dados_finais, has="email")
+        tm.that(dados_finais, has="processado_em")
+        tm.that(dados_finais, has="processado_por")
+        tm.that(dados_finais["nome"], eq="processado_João")
+        tm.that(dados_finais["email"], eq="processado_joao@exemplo.com")
         dados_invalidos = {"nome": "", "email": "joao@exemplo.com"}
         resultado_erro = processar_dados_usuario(dados_invalidos)
-        assert resultado_erro.success is False
-        assert resultado_erro.error is not None
-        assert "não pode estar vazio" in resultado_erro.error
+        tm.that(resultado_erro.success, eq=False)
+        tm.that(resultado_erro.error, none=False)
+        tm.that(tm.not_none(resultado_erro.error), has="não pode estar vazio")
 
     def _test_error_recovery(self) -> None:
         """Test error recovery scenarios."""
         resultado_com_erro: p.Result[str] = r[str].fail("erro_original")
         resultado_recuperado = resultado_com_erro.lash(
-            lambda _error: r[str].ok("valor_recuperado"),
+            lambda _error: r[str].ok("valor_recuperado")
         )
-        assert resultado_recuperado.success is True
-        assert resultado_recuperado.value == "valor_recuperado"
+        tm.that(resultado_recuperado.success, eq=True)
+        tm.that(resultado_recuperado.value, eq="valor_recuperado")
 
         def operacao_1(data: str) -> p.Result[str]:
             return r[str].ok(f"etapa1_{data}")
@@ -81,8 +79,8 @@ class TestsFlextFlextSystemWorkflowCases:
             .flat_map(operacao_2)
             .flat_map(operacao_3)
         )
-        assert pipeline_sucesso.success is True
-        assert pipeline_sucesso.value == "final_etapa2_etapa1_dados_iniciais"
+        tm.that(pipeline_sucesso.success, eq=True)
+        tm.that(pipeline_sucesso.value, eq="final_etapa2_etapa1_dados_iniciais")
         pipeline_falha = (
             r[str]
             .ok("dados_com_erro")
@@ -90,5 +88,5 @@ class TestsFlextFlextSystemWorkflowCases:
             .flat_map(operacao_2)
             .flat_map(operacao_3)
         )
-        assert pipeline_falha.success is False
-        assert pipeline_falha.error == "erro_na_etapa2"
+        tm.that(pipeline_falha.success, eq=False)
+        tm.that(pipeline_falha.error, eq="erro_na_etapa2")

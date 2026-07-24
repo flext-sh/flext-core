@@ -12,8 +12,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import h, r, tm
 
+from flext_tests import h, r, tm
 from tests.constants import c
 
 if TYPE_CHECKING:
@@ -47,13 +47,10 @@ class TestsFlextHandlerDecoratorMetadata:
         tm.that(hasattr(Service.handle_user, c.HANDLER_ATTR), eq=False)
 
     @pytest.mark.parametrize(
-        ("priority", "timeout"),
-        [(0, None), (1, 0.5), (42, 5.0), (7, 30.0)],
+        ("priority", "timeout"), [(0, None), (1, 0.5), (42, 5.0), (7, 30.0)]
     )
     def test_priority_and_timeout_are_recorded_verbatim(
-        self,
-        priority: int,
-        timeout: float | None,
+        self, priority: int, timeout: float | None
     ) -> None:
         class CreateCommand:
             pass

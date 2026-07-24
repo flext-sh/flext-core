@@ -18,8 +18,7 @@ class FlextUtilitiesBeartypeAliasVisitor:
 
     @staticmethod
     def v_foreign_canonical_alias_import(
-        params: me.ForeignCanonicalAliasImportParams,
-        target: type,
+        params: me.ForeignCanonicalAliasImportParams, target: type
     ) -> t.StrMapping | None:
         """FOREIGN_CANONICAL_ALIAS_IMPORT — alias owned locally must not be imported from upstream.
 
@@ -47,17 +46,12 @@ class FlextUtilitiesBeartypeAliasVisitor:
             if origin_package == package:
                 continue
             if origin_package.startswith("flext_"):
-                return {
-                    "alias": name,
-                    "origin": origin_package,
-                    "local": package,
-                }
+                return {"alias": name, "origin": origin_package, "local": package}
         return _NO_VIOLATION
 
     @staticmethod
     def v_alias_rebind(
-        params: me.AliasRebindParams,
-        target: type,
+        params: me.AliasRebindParams, target: type
     ) -> t.StrMapping | None:
         """ALIAS_REBIND — canonical alias rebind / sibling-import discipline."""
         module = _ubh.runtime_module_for(target)
@@ -93,8 +87,7 @@ class FlextUtilitiesBeartypeAliasVisitor:
                         is not None
                         and (
                             (_ubh.object_module_name_for(alias_value) or "").split(
-                                ".",
-                                1,
+                                ".", 1
                             )[0]
                         )
                         == package
@@ -110,8 +103,7 @@ class FlextUtilitiesBeartypeAliasVisitor:
 
     @staticmethod
     def v_compatibility_alias(
-        params: me.CompatibilityAliasParams,
-        target: type,
+        params: me.CompatibilityAliasParams, target: type
     ) -> t.StrMapping | None:
         """COMPATIBILITY_ALIAS — long facade class name must use canonical alias."""
         if not params.alias_renames:

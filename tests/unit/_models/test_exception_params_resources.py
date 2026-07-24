@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import pytest
-from flext_tests import tm
 
+from flext_tests import tm
 from tests.constants import c
 from tests.models import m
 
@@ -18,9 +18,7 @@ class TestsFlextModelsExceptionParamsResources:
 
     def test_authorization_error_params_with_values(self) -> None:
         params = m.AuthorizationErrorParams(
-            user_id="user-123",
-            resource="invoice:12345",
-            permission="write",
+            user_id="user-123", resource="invoice:12345", permission="write"
         )
         tm.that(params.user_id, eq="user-123")
         tm.that(params.resource, eq="invoice:12345")
@@ -28,9 +26,7 @@ class TestsFlextModelsExceptionParamsResources:
 
     def test_authorization_error_params_serialization(self) -> None:
         params = m.AuthorizationErrorParams(
-            user_id="admin",
-            resource="settings",
-            permission="delete",
+            user_id="admin", resource="settings", permission="delete"
         )
         data = params.model_dump()
         tm.that(data["user_id"], eq="admin")
@@ -69,13 +65,10 @@ class TestsFlextModelsExceptionParamsResources:
         ids=["user", "order", "invoice", "all-none"],
     )
     def test_not_found_error_params_resource_variants(
-        self,
-        resource_type: str | None,
-        resource_id: str | None,
+        self, resource_type: str | None, resource_id: str | None
     ) -> None:
         params = m.NotFoundErrorParams(
-            resource_type=resource_type,
-            resource_id=resource_id,
+            resource_type=resource_type, resource_id=resource_id
         )
         tm.that(params.resource_type, eq=resource_type)
         tm.that(params.resource_id, eq=resource_id)
@@ -124,13 +117,10 @@ class TestsFlextModelsExceptionParamsResources:
         tm.that(params.retry_after, eq=1.5)
 
     @pytest.mark.parametrize(
-        "retry_after",
-        [1, 1.5, 0, None],
-        ids=["int", "float", "zero", "none"],
+        "retry_after", [1, 1.5, 0, None], ids=["int", "float", "zero", "none"]
     )
     def test_rate_limit_error_params_retry_after_types(
-        self,
-        retry_after: float | None,
+        self, retry_after: float | None
     ) -> None:
         params = m.RateLimitErrorParams(retry_after=retry_after)
         tm.that(params.retry_after, eq=retry_after)
@@ -156,9 +146,7 @@ class TestsFlextModelsExceptionParamsResources:
 
     def test_circuit_breaker_error_params_with_values(self) -> None:
         params = m.CircuitBreakerErrorParams(
-            service_name="payments-api",
-            failure_count=5,
-            reset_timeout=30.0,
+            service_name="payments-api", failure_count=5, reset_timeout=30.0
         )
         tm.that(params.service_name, eq="payments-api")
         tm.that(params.failure_count, eq=5)
@@ -166,9 +154,7 @@ class TestsFlextModelsExceptionParamsResources:
 
     def test_circuit_breaker_error_params_serialization(self) -> None:
         params = m.CircuitBreakerErrorParams(
-            service_name="auth-svc",
-            failure_count=3,
-            reset_timeout=15,
+            service_name="auth-svc", failure_count=3, reset_timeout=15
         )
         data = params.model_dump()
         tm.that(data["service_name"], eq="auth-svc")

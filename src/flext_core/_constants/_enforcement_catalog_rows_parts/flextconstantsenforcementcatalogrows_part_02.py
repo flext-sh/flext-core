@@ -14,10 +14,10 @@ class FlextConstantsEnforcementCatalogSkillRows:
         (
             "ENFORCE-034",
             "HIGH",
-            "flext-patterns",
+            "pydantic-v2-governance",
             "no-accessor-methods",
             "3-code-law",
-            ("flext-patterns",),
+            ("pydantic-v2-governance",),
             "Accessor method (get_*, set_*) forbidden — expose as field or @u.computed_field (AGENTS.md §3.1).",
         ),
         (
@@ -71,7 +71,7 @@ class FlextConstantsEnforcementCatalogSkillRows:
             "flext-mro-namespace-rules",
             "service-mixin-inheritance",
             "2-5-services-pattern",
-            ("flext-mro-namespace-rules", "flext-patterns"),
+            ("flext-mro-namespace-rules", "flext-architecture-layers"),
             "Classes in services/*.py must end MRO at the project's Flext<X>ServiceBase (which itself ends at FlextService/s[T]). Plain classes lacking the canonical service base violate AGENTS.md §2.5 (Services Pattern services/* shape).",
         ),
         (
@@ -89,7 +89,7 @@ class FlextConstantsEnforcementCatalogSkillRows:
             "pydantic-v2-governance",
             "data-boundaries-are-models",
             "3-1-supreme-law",
-            ("pydantic-v2-governance", "flext-patterns"),
+            ("pydantic-v2-governance", "flext-strict-typing"),
             "Public method parameters and return types in services/*.py and api.py must be Pydantic 2 models, p.* Protocols, r[T] of those, or PEP 604 unions thereof. Bare `dict`, `list[primitive]`, `tuple[primitive...]`, `set`, `TypedDict`, `Mapping[str, Any]`, `Sequence[primitive]` are loose data crossings and violate AGENTS.md §3.1.",
         ),
         (

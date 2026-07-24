@@ -12,8 +12,8 @@ from __future__ import annotations
 
 from typing import Annotated
 
+from flext_core import FlextTypes as t
 from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core.typings import FlextTypes as t
 
 from .flextmodelsexceptionparams_part_01 import (
     FlextModelsExceptionParams as FlextModelsExceptionParamsPart01,
@@ -53,13 +53,13 @@ class FlextModelsExceptionParams(FlextModelsExceptionParamsPart01):
         auth_method: Annotated[
             str | None,
             mp.Field(
-                description="Authentication method used when the failure occurred.",
+                description="Authentication method used when the failure occurred."
             ),
         ] = None
         user_id: Annotated[
             str | None,
             mp.Field(
-                description="User identifier associated with the authentication attempt.",
+                description="User identifier associated with the authentication attempt."
             ),
         ] = None
 

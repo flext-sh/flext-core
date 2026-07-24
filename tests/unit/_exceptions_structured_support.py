@@ -6,7 +6,6 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from flext_tests import e
-
 from tests.constants import c
 
 if TYPE_CHECKING:
@@ -27,9 +26,7 @@ STRUCTURED_ERRORS: t.SequenceOf[
     (
         "configuration",
         lambda: e.ConfigurationError(
-            "Missing key",
-            config_key="API_KEY",
-            config_source="environment",
+            "Missing key", config_key="API_KEY", config_source="environment"
         ),
         c.ErrorDomain.INTERNAL.value,
         c.ErrorCode.CONFIGURATION_ERROR,
@@ -37,11 +34,8 @@ STRUCTURED_ERRORS: t.SequenceOf[
     ),
     (
         "connection",
-        lambda: e.ConnectionError(
-            "Connect failed",
-            host="db.internal",
-            port=5432,
-            timeout=5,
+        lambda: e.FlextConnectionError(
+            "Connect failed", host="db.internal", port=5432, timeout=5
         ),
         c.ErrorDomain.NETWORK.value,
         c.ErrorCode.CONNECTION_ERROR,
@@ -49,10 +43,8 @@ STRUCTURED_ERRORS: t.SequenceOf[
     ),
     (
         "timeout",
-        lambda: e.TimeoutError(
-            "Timed out",
-            timeout_seconds=30,
-            operation="dispatch",
+        lambda: e.FlextTimeoutError(
+            "Timed out", timeout_seconds=30, operation="dispatch"
         ),
         c.ErrorDomain.TIMEOUT.value,
         c.ErrorCode.TIMEOUT_ERROR,
@@ -61,9 +53,7 @@ STRUCTURED_ERRORS: t.SequenceOf[
     (
         "authentication",
         lambda: e.AuthenticationError(
-            "Auth failed",
-            auth_method="token",
-            user_id="u-1",
+            "Auth failed", auth_method="token", user_id="u-1"
         ),
         c.ErrorDomain.AUTH.value,
         c.ErrorCode.AUTHENTICATION_ERROR,
@@ -72,10 +62,7 @@ STRUCTURED_ERRORS: t.SequenceOf[
     (
         "authorization",
         lambda: e.AuthorizationError(
-            "Denied",
-            user_id="u-1",
-            resource="admin.panel",
-            permission="write",
+            "Denied", user_id="u-1", resource="admin.panel", permission="write"
         ),
         c.ErrorDomain.AUTH.value,
         c.ErrorCode.AUTHORIZATION_ERROR,
@@ -84,9 +71,7 @@ STRUCTURED_ERRORS: t.SequenceOf[
     (
         "not_found",
         lambda: e.NotFoundError(
-            "User missing",
-            resource_type="User",
-            resource_id="123",
+            "User missing", resource_type="User", resource_id="123"
         ),
         c.ErrorDomain.NOT_FOUND.value,
         c.ErrorCode.NOT_FOUND_ERROR,
@@ -102,19 +87,12 @@ STRUCTURED_ERRORS: t.SequenceOf[
         ),
         c.ErrorDomain.VALIDATION.value,
         c.ErrorCode.ALREADY_EXISTS,
-        {
-            "resource_type": "User",
-            "resource_id": "123",
-            "conflict_reason": "duplicate",
-        },
+        {"resource_type": "User", "resource_id": "123", "conflict_reason": "duplicate"},
     ),
     (
         "circuit_breaker",
         lambda: e.CircuitBreakerError(
-            "Circuit open",
-            service_name="payments",
-            failure_count=5,
-            reset_timeout=60,
+            "Circuit open", service_name="payments", failure_count=5, reset_timeout=60
         ),
         c.ErrorDomain.NETWORK.value,
         c.ErrorCode.EXTERNAL_SERVICE_ERROR,
@@ -122,11 +100,7 @@ STRUCTURED_ERRORS: t.SequenceOf[
     ),
     (
         "type_error",
-        lambda: e.TypeError(
-            "Wrong type",
-            expected_type="str",
-            actual_type=int,
-        ),
+        lambda: e.FlextTypeError("Wrong type", expected_type="str", actual_type=int),
         c.ErrorDomain.VALIDATION.value,
         c.ErrorCode.TYPE_ERROR,
         {"expected_type": "str", "actual_type": "int"},

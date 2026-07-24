@@ -24,7 +24,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import FlextMroViolation
+from flext_core import e
 from tests.typings import t
 
 _CLEAN_MODULE = "tests.fixtures.clean_module"
@@ -36,7 +36,8 @@ import typing
 from collections.abc import MutableSequence
 from typing import Annotated, ClassVar
 
-from flext_core import FlextModelsNamespace, m as core_m
+from flext_core import m as core_m
+from flext_core.models import FlextModelsNamespace
 from tests.models import m
 from tests.utilities import u
 
@@ -98,9 +99,7 @@ class TestsFlextBadClassVarConstant(FlextModelsNamespace):
 
 
 def _capture_import_warnings(
-    dotted: str,
-    *,
-    search_path: Path | None = None,
+    dotted: str, *, search_path: Path | None = None
 ) -> t.StrSequence:
     """Freshly import ``dotted`` and return every emitted violation message.
 
@@ -115,12 +114,12 @@ def _capture_import_warnings(
         sys.modules.pop(dotted, None)
         importlib.invalidate_caches()
         with warnings.catch_warnings(record=True) as caught:
-            warnings.simplefilter("always", FlextMroViolation)
+            warnings.simplefilter("always", e.MroViolation)
             importlib.import_module(dotted)
         return tuple(
             str(entry.message)
             for entry in caught
-            if issubclass(entry.category, FlextMroViolation)
+            if issubclass(entry.category, e.MroViolation)
             and "violates FLEXT" in str(entry.message)
         )
     finally:
@@ -142,26 +141,24 @@ class TestsFlextEnforcementIntegration:
         )
 
     @pytest.fixture(scope="class")
+    @classmethod
     def violation_messages(
-        self,
-        tmp_path_factory: pytest.TempPathFactory,
+        cls, tmp_path_factory: pytest.TempPathFactory
     ) -> t.StrSequence:
         module_root = tmp_path_factory.mktemp("enforcement_bad_fixture")
         (module_root / f"{_BAD_MODULE}.py").write_text(
-            _BAD_MODULE_SOURCE,
-            encoding="utf-8",
+            _BAD_MODULE_SOURCE, encoding="utf-8"
         )
         messages = _capture_import_warnings(_BAD_MODULE, search_path=module_root)
         assert messages, "Importing the violating module emitted no warnings"
         return messages
 
     def test_every_emitted_warning_is_the_public_category(
-        self,
-        violation_messages: t.StrSequence,
+        self, violation_messages: t.StrSequence
     ) -> None:
         # The public FlextMroViolation export is a genuine Warning subclass and
         # is the exact category a caller can filter on.
-        assert issubclass(FlextMroViolation, Warning)
+        assert issubclass(e.MroViolation, Warning)
         assert all("violates FLEXT" in message for message in violation_messages)
 
     @pytest.mark.parametrize(
@@ -183,10 +180,7 @@ class TestsFlextEnforcementIntegration:
         ],
     )
     def test_rule_violation_is_reported_in_warning_text(
-        self,
-        violation_messages: t.StrSequence,
-        fragment: str,
-        rule: str,
+        self, violation_messages: t.StrSequence, fragment: str, rule: str
     ) -> None:
         # Assert: the observable warning output names the specific violation.
         assert any(fragment in message for message in violation_messages), (
@@ -209,9 +203,7 @@ class TestsFlextEnforcementIntegration:
         ],
     )
     def test_each_violating_class_is_named_in_a_warning(
-        self,
-        violation_messages: t.StrSequence,
-        class_name: str,
+        self, violation_messages: t.StrSequence, class_name: str
     ) -> None:
         # Assert: every rule-breaking top-level class triggers the hook.
         assert any(class_name in message for message in violation_messages), (

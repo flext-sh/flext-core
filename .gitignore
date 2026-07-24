@@ -1,77 +1,62 @@
-# ============================================================================
-# AGGRESSIVE WHITELIST - Block everything by default, explicitly allow needed files
-# ============================================================================
+# Python and build artifacts
+__pycache__/
+__pyrefly_virtual__/
+.agents/
+.beads/
+.benchmarks/
+.cache/
+.claude/
+.direnv/
+.code-review-graph/
+.codegraph/
+.dolt/
+.dolt_dropped_databases/
+.doltcfg/
+.hypothesis/
+.mypy_cache/
+.omo/
+.pylance_cache/
+.pytest_cache/
+.reports/
+.ropeproject/
+.ruff_cache/
+.scope/
+.serena/
+.sisyphus/
+.state/
+.superpowers/
+.trash/
+.turbo/
+.venv/
+.venv.*/
+*.egg-info/
+build/
+dist/
+node_modules/
+site/
+target/
+.pyrefly_cache/
+.tox/
+.flext-deps/
+.flext-sync.lock
+.sync.lock
+.planning/
+skill-create-output/
+.debug-journal.md
+.mcp.json
+CLAUDE.local.md
+*.py[cod]
+*$py.class
+.eggs/
+.coverage
+htmlcov/
 
+# FLEXT
+*.tpl.rej
 
-# Block everything at root level
-/*
-/*/
-!*.jmx
-
-# ============================================================================
-# ALLOWED: Core Directories
-# ============================================================================
-!src/
-!tests/
-!docs/
-!examples/
-!ansible/
-!docker/
-!dbt/
-!.github/
-!.vscode/
-
-# ============================================================================
-# ALLOWED: Root-Level Configuration Files
-# ============================================================================
-!pyproject.toml
-!poetry.lock
-!Makefile
-!README.md
-!AGENTS.md
-!LICENSE
-!.python-version
-!.tool-versions
-!.gitignore
-!.gitattributes
-!.pre-commit-settings.yaml
-!sonar-project.properties
-
-# Environment templates (NOT .env - keep secrets out!)
-!.env.example
-!.env.test
-!.env.template
-!.env.*.example
-
-# Docker files
-!Dockerfile
-!Dockerfile.*
-!docker-compose.yml
-!docker-compose.*.yml
-!.dockerignore
-
-# ============================================================================
-# ALLOWED: Contents Inside Whitelisted Directories
-# ============================================================================
-!src/**
-!tests/**
-!docs/**
-!examples/**
-!ansible/**
-!docker/**
-!dbt/**
-!.github/**
-!.vscode/**
-
-
-# ============================================================================
-# SECURITY: Explicit Blocks (NEVER commit these)
-# ============================================================================
+# Environment and secrets
 .env
-.internal.invalid
-.env.production
-.env.development
-**/.env
+.env.*
 *.key
 *.pem
 *.p12
@@ -80,253 +65,11 @@ credentials.json
 secrets.yaml
 secrets.yml
 
-
-# ============================================================================
-# PROJECT-SPECIFIC RULES: flext-core
-# ============================================================================
-
-*.py[cod]
-*.pyd
-*.so
-.installed.cfg
-MANIFEST
-.tox/
-.nox/
-.coverage.*
-coverage.xml
-coverage.json
-*.cover
-.pyre/
-.pytype/
-ENV/
-.vscode/
-*.swo
-*~
-Thumbs.db
-Desktop.ini
-docs/_build/
-site/
-logs/
-*.tmp
-*.key
-*.pem
-*.crt
-archive/
-backup/
-*.bak
-*.bkp
-*.bkp?
-*.actual
-*.archive
-*.backup
-*.orig
-/*_temp.*
-/temp_*
-/fix_*
-*_REPORT*.md
-*_ANALYSIS*.md
-*_SUMMARY*.md
-AGENTS.md
-.github/copilot-instructions.md
-.cursor/
-.claude/
-.cursor/
-.cursorrules
-.cursorignore
-.aider*
-.serena/
-.claude/
-.copilot/
-.github/copilot-instructions.md
-*_REPORT*.md
-*_ANALYSIS*.md
-*_SUMMARY*.md
-*_FINDINGS*.md
-CLAUDE*.md
-CURSOR.md
-CONFIG_MIGRATION*.md
-DEVELOPMENT_STANDARDS*.md
-DUPLICATION_REPORT*.md
-LINT_CORRECTIONS*.md
-*.ai.md
-*.ai.txt
-*.ai.json
-*.ai.log
-*.py[cod]
-*$py.class
-*.so
-*.pyd
-ENV/
-.Python
-coverage.xml
-coverage.json
-*.cover
-junit.xml
-.nox/
-.pyre/
-.pytype/
-.bandit/
-.installed.cfg
-MANIFEST
-*.manifest
-*.spec
-state.json
-*.state
-*.state.json
-catalog.json
-target_settings.json
-dbt.log
-dbt_packages/
-target/
-profiles.yml.bak
-profiles/profiles.yml.backup
-**/.user.yml
-docs/_build/
-site/
-/temp_*.py
-/*_temp.py
-*_temp.md
-/fix_*.py
-/*_fix.py
-/debug_*.py
-/investigate_*.py
-/validate_*.py
-/*_validation.py
-*_analysis.txt
-*_output.txt
-*_report.txt
-/temp_test_*
-analysis_temp/
-report_*/
-reports_*/
-*_COMPLETE.md
-*_PLAN.md
-*_GUIDE.md
-*_CHECKLIST.md
-*_PROMPT.md
-*_ASSESSMENT.md
-*_CONTROL.md
-*_AUDIT*.md
-*_RESULTS.md
-*_STATUS.md
-*_HANDOVER.md
-*_REFACTORING*.md
-*_REORGANIZATION*.md
-*_STANDARDIZATION*.md
-*_OPTIMIZATION*.md
-*_METHODOLOGY*.md
-*_BASELINE*.md
-*_MODERNIZATION*.md
-RELATORIO_*.md
-COMPREHENSIVE_*.md
-COMPLETE_*.md
-TODO.md
-lint-report.md
-mypy_*.md
-*-report.md
-*-cleanup*.md
-*-summary.md
-*_report.md
-*_analysis.md
-*_summary.md
-*_REPORT*.md
-*_ANALYSIS*.md
-*_SUMMARY*.md
-*_FINDINGS*.md
-CONFIG_MIGRATION*.md
-DEVELOPMENT_STANDARDS*.md
-DUPLICATION_REPORT*.md
-LINT_CORRECTIONS*.md
-*.ai.md
-*.ai.txt
-*.md_20250*
-CRUFT_DETECTION_REPORT.md
-*.backup
-*.bak
-*.orig
-*~
-.*.swp
-*.syntax_backup
-*.broken
-*.tmp.bak
-*_backup
-*_backup_*
-temp_backup
-.archive/
-archive/
-archives/
-backups/
-*backup*/
-Desktop.ini
-*.swo
-
-# ============================================================================
-# COMMON PATTERNS: Artifacts inside allowed directories
-# ============================================================================
-**/__pycache__/
-**/*.pyc
-**/*.pyo
-**/*.pyd
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.hypothesis/
-.coverage
-htmlcov/
-dist/
-build/
-*.egg-info/
-
-# ============================================================================
-# SAFETY: Keep .gitkeep files
-# ============================================================================
-!**/.gitkeep
-# Backup files
-*.bak
-*.backup
-*.orig
-*.old
-*_backup*
-*_old*
-*_temp*
-*backup*
-
-# Validation and test scripts outside proper directories
-/validate*.sh
-/validate*.py
-/test*.sh
-/test*.py
-
-# Temporary and working files
-*.tmp
-*.temp
-temp/
-staging/
-.cache/
-
-# IDE and editor files
-.vscode/
+# Editors and OS
 .idea/
 *.swp
 *.swo
 *~
-
-# Claude AI files
-.claude/
-
-# Auto-added by maintenance
-*.egg-info
-.github/*.rej
-
-
-
-
-# --- workspace-sync: required ignores (auto-managed) -base.mk
-!base.mk
-
-# --- workspace-sync: required ignores (auto-managed) ---
-.direnv/
-.reports/
-.venv/
-__pycache__/
-base.mk
+.DS_Store
+Thumbs.db
+Desktop.ini

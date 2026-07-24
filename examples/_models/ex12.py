@@ -12,12 +12,10 @@ class ExamplesFlextModelsEx12:
 
     class CommandA(m.Command):
         command_type: Annotated[
-            str,
-            u.Field(description="Command type identifier for command A"),
+            str, u.Field(description="Command type identifier for command A")
         ] = "ex12_command_a"
         query_type: Annotated[
-            str,
-            u.Field(description="Query type placeholder for command A"),
+            str, u.Field(description="Query type placeholder for command A")
         ] = ""
         event_type: Annotated[str, u.Field(description="Event type for command A")] = (
             "ex12_event_a"
@@ -26,12 +24,10 @@ class ExamplesFlextModelsEx12:
 
     class CommandB(m.Command):
         command_type: Annotated[
-            str,
-            u.Field(description="Command type identifier for command B"),
+            str, u.Field(description="Command type identifier for command B")
         ] = "ex12_command_b"
         query_type: Annotated[
-            str,
-            u.Field(description="Query type placeholder for command B"),
+            str, u.Field(description="Query type placeholder for command B")
         ] = ""
         event_type: Annotated[str, u.Field(description="Event type for command B")] = (
             "ex12_event_b"

@@ -34,14 +34,10 @@ _svc_scenarios: t.SequenceOf[TestsFlextModelsMixins.ServiceScenario] = [
         description="Simple string service",
     ),
     TestsFlextModelsMixins.ServiceScenario(
-        name="service_instance",
-        service=42,
-        description="Integer service instance",
+        name="service_instance", service=42, description="Integer service instance"
     ),
     TestsFlextModelsMixins.ServiceScenario(
-        name="string_service",
-        service="test_value",
-        description="String service",
+        name="string_service", service="test_value", description="String service"
     ),
 ]
 TestsFlextModelsMixins.ContainerScenarios.SERVICE_SCENARIOS = _svc_scenarios

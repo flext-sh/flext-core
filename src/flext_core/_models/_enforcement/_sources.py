@@ -13,10 +13,7 @@ from pydantic import Field
 from flext_core._constants.enforcement import FlextConstantsEnforcement as ce
 from flext_core._typings.base import FlextTypingBase as t
 
-from ._base import (
-    EnforcementModelBase,
-    FlextModelsEnforcementBase,
-)
+from ._base import EnforcementModelBase, FlextModelsEnforcementBase
 
 
 class FlextModelsEnforcementSources(FlextModelsEnforcementBase):

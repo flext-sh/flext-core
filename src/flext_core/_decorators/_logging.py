@@ -7,14 +7,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from contextlib import suppress
 from functools import wraps
 from typing import TYPE_CHECKING
 
+from flext_core import FlextUtilities as u
 from flext_core._constants.base import FlextConstantsBase as cb
 from flext_core._constants.infrastructure import FlextConstantsInfrastructure as ci
 from flext_core._decorators._logging_payloads import FlextDecoratorsLoggingPayloads
-from flext_core.utilities import FlextUtilities as u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -48,26 +47,17 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
                 if args and cls._is_logger_carrier(args[0]):
                     logger_carrier = args[0]
                 logger = cls._resolve_logger(
-                    logger_carrier,
-                    func_module=func.__module__,
+                    logger_carrier, func_module=func.__module__
                 )
                 correlation_id = cls._resolve_correlation_id(
-                    ensure_correlation=ensure_correlation,
+                    ensure_correlation=ensure_correlation
                 )
                 cls._context_type.apply_operation_name(op_name)
                 binding_result = u.bind_context(
-                    ci.ContextScope.OPERATION,
-                    operation=op_name,
+                    ci.ContextScope.OPERATION, operation=op_name
                 )
                 if binding_result.failure:
-                    logger.warning(
-                        "operation_context_binding_failed",
-                        function=func.__name__,
-                        operation=op_name,
-                        error=binding_result.error or "",
-                        error_code=binding_result.error_code or "",
-                        correlation_id=correlation_id or "",
-                    )
+                    binding_result.unwrap()
                 start_time = time.perf_counter() if track_perf else 0.0
                 try:
                     return cls._execute_logged_call(
@@ -81,16 +71,7 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
                         start_time=start_time,
                     )
                 finally:
-                    with suppress(Exception):
-                        clear_result = u.clear_scope(ci.ContextScope.OPERATION)
-                        if clear_result.failure:
-                            logger.warning(
-                                "operation_context_clear_failed",
-                                function=func.__name__,
-                                operation=op_name,
-                                error=clear_result.error or "",
-                                error_code=clear_result.error_code or "",
-                            )
+                    u.clear_scope(ci.ContextScope.OPERATION).unwrap()
 
             return wrapper
 
@@ -154,11 +135,7 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
             if track_perf:
                 exc_kw["duration_ms"] = tracked_duration * cb.DEFAULT_SIZE
                 exc_kw[ci.MetadataKey.DURATION_SECONDS] = tracked_duration
-            logger.exception(
-                op_name,
-                exception=exc,
-                **exc_kw,
-            )
+            logger.exception(op_name, exception=exc, **exc_kw)
             raise
 
     @classmethod

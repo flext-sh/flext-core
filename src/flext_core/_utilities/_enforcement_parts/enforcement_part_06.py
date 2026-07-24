@@ -11,10 +11,9 @@ from flext_core._typings.base import FlextTypingBase as t
 
 
 def _extended_bindings() -> t.MappingKV[
-    str,
-    tuple[c.EnforcementPredicateKind, mp.BaseModel],
+    str, tuple[c.EnforcementPredicateKind, mp.BaseModel]
 ]:
-    """Extended tag → (predicate_kind, params) dispatch mapping."""
+    """Map extended tags to (predicate_kind, params) dispatch entries."""
     pk = c.EnforcementPredicateKind
     dsp = me.DeprecatedSyntaxParams
     cpp = me.ClassPlacementParams
@@ -75,15 +74,14 @@ def _extended_bindings() -> t.MappingKV[
         "foreign_canonical_alias_import": (
             pk.FOREIGN_CANONICAL_ALIAS_IMPORT,
             me.ForeignCanonicalAliasImportParams(
-                project_alias_owners=c.ENFORCEMENT_PROJECT_ALIAS_OWNERS,
+                project_alias_owners=c.ENFORCEMENT_PROJECT_ALIAS_OWNERS
             ),
         ),
     })
 
 
 EXTENDED_PREDICATE_BINDINGS: t.MappingKV[
-    str,
-    tuple[c.EnforcementPredicateKind, mp.BaseModel],
+    str, tuple[c.EnforcementPredicateKind, mp.BaseModel]
 ] = _extended_bindings()
 
 

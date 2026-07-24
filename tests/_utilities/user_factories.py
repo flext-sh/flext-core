@@ -6,7 +6,6 @@ from itertools import count
 from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_tests import m as tm
-
 from tests._utilities.railway_services import TestsFlextUtilitiesRailwayServicesMixin
 
 if TYPE_CHECKING:
@@ -73,7 +72,7 @@ class TestsFlextUtilitiesUserFactoriesMixin(TestsFlextUtilitiesRailwayServicesMi
             cls._counter = count(1)
             cls._name_index = 0
 
-    class _GetUserFactoryBase[T]:
+    class GetUserFactoryBase[T]:
         """Shared counter-rotating state for GetUser-style factories.
 
         Subclasses provide their own typed ``build``;
@@ -105,20 +104,18 @@ class TestsFlextUtilitiesUserFactoriesMixin(TestsFlextUtilitiesRailwayServicesMi
             cls._counter = count(1)
 
     class GetUserServiceFactory(
-        _GetUserFactoryBase[TestsFlextUtilitiesRailwayServicesMixin.GetUserService],
+        GetUserFactoryBase[TestsFlextUtilitiesRailwayServicesMixin.GetUserService]
     ):
         """Factory for `GetUserService`."""
 
         @classmethod
         @override
         def build(
-            cls,
-            *,
-            user_id: str | None = None,
+            cls, *, user_id: str | None = None
         ) -> TestsFlextUtilitiesUserFactoriesMixin.GetUserService:
             """Build a `GetUserService` instance."""
             return TestsFlextUtilitiesUserFactoriesMixin.GetUserService(
-                user_id=cls._resolve_user_id(user_id),
+                user_id=cls._resolve_user_id(user_id)
             )
 
 

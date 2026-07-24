@@ -5,7 +5,8 @@ from __future__ import annotations
 from functools import wraps
 from typing import TYPE_CHECKING
 
-from examples import p, r
+from examples.protocols import p
+from flext_core import r
 
 if TYPE_CHECKING:
     from collections.abc import Callable

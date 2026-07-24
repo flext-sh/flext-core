@@ -15,11 +15,10 @@ from pathlib import Path
 
 import pytest
 
-from tests.models import m
+from flext_tests import tm
+from tests.protocols import p
 from tests.typings import t
-from tests.unit._beartype_engine_support import (
-    TestsFlextBeartypeEngine,
-)
+from tests.unit._beartype_engine_support import TestsFlextBeartypeEngine
 
 
 class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
@@ -33,7 +32,7 @@ class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
         files: t.MappingKV[str, str],
         import_target: str,
         ast_shape: str,
-    ) -> m.Cli.CommandOutput:
+    ) -> p.Cli.CommandOutput:
         """Materialize ``files``, import ``Probe`` from ``import_target``, run ``apply``.
 
         Returns the captured subprocess output; ``stdout`` holds ``repr`` of the
@@ -50,22 +49,20 @@ class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
 
             sys.path.insert(0, {str(tmp_path)!r})
             from {import_target} import Probe
-            from flext_core._utilities.beartype_engine import (
+            from flext_core.utilities import (
                 FlextUtilitiesBeartypeEngine as be,
             )
-            from flext_core._constants.enforcement import (
-                FlextConstantsEnforcement as c,
-            )
-            from flext_core._models.enforcement import (
+            from flext_core import c
+            from flext_core.models import (
                 FlextModelsEnforcement as me,
             )
 
-            print(repr(be.apply(
+            u.Cli.print(repr(be.apply(
                 c.EnforcementPredicateKind.DEPRECATED_SYNTAX,
                 me.DeprecatedSyntaxParams(ast_shape={ast_shape!r}),
                 Probe,
             )))
-            """,
+            """
         )
         return self._run_python(script, cwd=self._REPO_ROOT)
 
@@ -86,7 +83,7 @@ class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
 
                         class Probe:
                             value = c.Core.Tests.ERR_OK_FAILED
-                        """,
+                        """
                     ).strip()
                     + "\n",
                 },
@@ -102,7 +99,7 @@ class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
                         """
                         class Probe:
                             value = "c.Core.Tests.ERR_OK_FAILED"
-                        """,
+                        """
                     ).strip()
                     + "\n",
                 },
@@ -120,18 +117,14 @@ class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
     ) -> None:
         """``no_core_tests_namespace`` returns None for exempt / non-alias code."""
         result = self._apply_deprecated_syntax(
-            tmp_path,
-            files,
-            import_target,
-            ast_shape="no_core_tests_namespace",
+            tmp_path, files, import_target, ast_shape="no_core_tests_namespace"
         )
 
-        assert result.exit_code == 0, result.stderr
-        assert result.stdout.strip() == "None", (case_id, result.stdout)
+        tm.that(result.exit_code, eq=0, msg=result.stderr)
+        tm.that(result.stdout.strip(), eq="None", msg=f"{case_id}: {result.stdout}")
 
     def test_private_attr_probe_detects_getattr_on_private_attribute(
-        self,
-        tmp_path: Path,
+        self, tmp_path: Path
     ) -> None:
         """``private_attr_probe`` returns a violation payload for a private probe."""
         result = self._apply_deprecated_syntax(
@@ -146,7 +139,7 @@ class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
 
                     class Probe:
                         pass
-                    """,
+                    """
                 ).strip()
                 + "\n",
             },
@@ -154,16 +147,15 @@ class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
             ast_shape="private_attr_probe",
         )
 
-        assert result.exit_code == 0, result.stderr
+        tm.that(result.exit_code, eq=0, msg=result.stderr)
         payload = result.stdout.strip()
-        assert payload != "None", payload
-        assert "'probe': 'getattr'" in payload, payload
-        assert "'name': '_secret'" in payload, payload
-        assert "'file': 'mod.py'" in payload, payload
+        tm.that(payload, ne="None", msg=payload)
+        tm.that(payload, has="'probe': 'getattr'", msg=payload)
+        tm.that(payload, has="'name': '_secret'", msg=payload)
+        tm.that(payload, has="'file': 'mod.py'", msg=payload)
 
     def test_private_attr_probe_reports_no_violation_for_clean_module(
-        self,
-        tmp_path: Path,
+        self, tmp_path: Path
     ) -> None:
         """A module with no private-attribute probe yields None (no false positive)."""
         result = self._apply_deprecated_syntax(
@@ -178,7 +170,7 @@ class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
 
                     class Probe:
                         pass
-                    """,
+                    """
                 ).strip()
                 + "\n",
             },
@@ -186,12 +178,11 @@ class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
             ast_shape="private_attr_probe",
         )
 
-        assert result.exit_code == 0, result.stderr
-        assert result.stdout.strip() == "None", result.stdout
+        tm.that(result.exit_code, eq=0, msg=result.stderr)
+        tm.that(result.stdout.strip(), eq="None", msg=result.stdout)
 
     def test_apply_returns_none_for_unrecognized_ast_shape(
-        self,
-        tmp_path: Path,
+        self, tmp_path: Path
     ) -> None:
         """An unknown ``ast_shape`` is a no-op: apply returns None, never raises."""
         result = self._apply_deprecated_syntax(
@@ -206,7 +197,7 @@ class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
 
                     class Probe:
                         pass
-                    """,
+                    """
                 ).strip()
                 + "\n",
             },
@@ -214,5 +205,5 @@ class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
             ast_shape="totally_unrecognized_shape",
         )
 
-        assert result.exit_code == 0, result.stderr
-        assert result.stdout.strip() == "None", result.stdout
+        tm.that(result.exit_code, eq=0, msg=result.stderr)
+        tm.that(result.stdout.strip(), eq="None", msg=result.stdout)

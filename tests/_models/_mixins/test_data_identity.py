@@ -20,21 +20,16 @@ class TestsFlextModelsTestDataIdentityMixin:
         dispatcher_enable_logging: bool = False
 
         @classmethod
-        def fetch_global(
-            cls,
-            *,
-            overrides: t.ScalarMapping | None = None,
-        ) -> Self:
+        def fetch_global(cls, *, overrides: t.ScalarMapping | None = None) -> Self:
             """Return a new instance for testing."""
             _ = overrides
             return cls()
 
         def model_copy(
-            self,
-            *,
-            update: t.JsonMapping | None = None,
-            deep: bool = False,
+            self, *, update: t.JsonMapping | None = None, deep: bool = False
         ) -> Self:
+            """Return the same test settings object without copying state."""
+            _ = update, deep
             return self
 
         def model_dump(self) -> t.ScalarMapping:
@@ -45,41 +40,23 @@ class TestsFlextModelsTestDataIdentityMixin:
 
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
-        user_id: Annotated[
-            str,
-            m.Field(
-                description="Default test user identifier",
-            ),
-        ] = "test_user_123"
+        user_id: Annotated[str, m.Field(description="Default test user identifier")] = (
+            "test_user_123"
+        )
         session_id: Annotated[
-            str,
-            m.Field(
-                description="Default test session identifier",
-            ),
+            str, m.Field(description="Default test session identifier")
         ] = "test_session_123"
         service_name: Annotated[
-            str,
-            m.Field(
-                description="Default test service name",
-            ),
+            str, m.Field(description="Default test service name")
         ] = "test_service"
         operation_id: Annotated[
-            str,
-            m.Field(
-                description="Default test operation identifier",
-            ),
+            str, m.Field(description="Default test operation identifier")
         ] = "test_operation"
         request_id: Annotated[
-            str,
-            m.Field(
-                description="Default test request identifier",
-            ),
+            str, m.Field(description="Default test request identifier")
         ] = "test-request-456"
         correlation_id: Annotated[
-            str,
-            m.Field(
-                description="Default test correlation identifier",
-            ),
+            str, m.Field(description="Default test correlation identifier")
         ] = "test-corr-123"
 
     class Names(m.BaseModel):
@@ -87,53 +64,32 @@ class TestsFlextModelsTestDataIdentityMixin:
 
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
-        module_name: Annotated[
-            str,
-            m.Field(
-                description="Default test module name",
-            ),
-        ] = "test_module"
+        module_name: Annotated[str, m.Field(description="Default test module name")] = (
+            "test_module"
+        )
         handler_name: Annotated[
-            str,
-            m.Field(
-                description="Default test handler name",
-            ),
+            str, m.Field(description="Default test handler name")
         ] = "test_handler"
         chain_name: Annotated[str, m.Field(description="Default test chain name")] = (
             "test_chain"
         )
         command_type: Annotated[
-            str,
-            m.Field(
-                description="Default test command type",
-            ),
+            str, m.Field(description="Default test command type")
         ] = "test_command"
         query_type: Annotated[str, m.Field(description="Default test query type")] = (
             "test_query"
         )
-        logger_name: Annotated[
-            str,
-            m.Field(
-                description="Default test logger name",
-            ),
-        ] = "test_logger"
+        logger_name: Annotated[str, m.Field(description="Default test logger name")] = (
+            "test_logger"
+        )
         app_name: Annotated[
-            str,
-            m.Field(
-                description="Default test application name",
-            ),
+            str, m.Field(description="Default test application name")
         ] = "test-app"
         validation_app: Annotated[
-            str,
-            m.Field(
-                description="Default validation test application name",
-            ),
+            str, m.Field(description="Default validation test application name")
         ] = "validation-test"
         source_service: Annotated[
-            str,
-            m.Field(
-                description="Default source service name",
-            ),
+            str, m.Field(description="Default source service name")
         ] = "test_service"
 
 

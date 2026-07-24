@@ -124,8 +124,7 @@ class Ex02FlextSettings(Ex02FlextSettingsFieldChecks):
             )
             created = auto.create_settings()
             self.audit_check(
-                "AutoSettings.create_settings.type",
-                type(created).__name__,
+                "AutoSettings.create_settings.type", type(created).__name__
             )
             self.audit_check(
                 "AutoSettings.create_settings.service_name",

@@ -6,9 +6,9 @@ import time
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import d, e, r
 from hypothesis import given, settings, strategies as st
 
+from flext_tests import d, e, r
 from tests.unit._decorators_support import TestsFlextDecoratorsLegacy
 from tests.utilities import u
 
@@ -111,7 +111,7 @@ class TestsFlextCoreDecoratorsCombined(TestsFlextDecoratorsLegacy):
             raise RuntimeError(error_msg)
 
         # Act / Assert: exhaustion surfaces as a typed FlextExceptions member.
-        with pytest.raises(e.TimeoutError) as exc_info:
+        with pytest.raises(e.FlextTimeoutError) as exc_info:
             always_failing()
         assert exc_info.value.operation == "always_failing"
 
@@ -153,17 +153,10 @@ class TestsFlextCoreDecoratorsCombined(TestsFlextDecoratorsLegacy):
         assert attempts == 2
 
     @pytest.mark.parametrize(
-        ("timeout_seconds", "should_raise"),
-        [
-            (5.0, False),
-            (0.001, True),
-        ],
+        ("timeout_seconds", "should_raise"), [(5.0, False), (0.001, True)]
     )
     def test_timeout_enforces_duration_budget(
-        self,
-        timeout_seconds: float,
-        *,
-        should_raise: bool,
+        self, timeout_seconds: float, *, should_raise: bool
     ) -> None:
         # Arrange
         @d.timeout(timeout_seconds=timeout_seconds)
@@ -173,7 +166,7 @@ class TestsFlextCoreDecoratorsCombined(TestsFlextDecoratorsLegacy):
 
         # Act / Assert
         if should_raise:
-            with pytest.raises(e.TimeoutError) as exc_info:
+            with pytest.raises(e.FlextTimeoutError) as exc_info:
                 measured()
             assert exc_info.value.operation == "measured"
         else:
@@ -182,9 +175,7 @@ class TestsFlextCoreDecoratorsCombined(TestsFlextDecoratorsLegacy):
     @given(a=st.integers(), b=st.integers(min_value=1, max_value=1000))
     @settings(max_examples=50)
     def test_railway_division_always_returns_success_result(
-        self,
-        a: int,
-        b: int,
+        self, a: int, b: int
     ) -> None:
         # Arrange
         @d.railway(error_code="DIV")

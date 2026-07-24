@@ -18,10 +18,7 @@ from .class_visitor_part_01 import (
 
 class FlextUtilitiesBeartypeClassVisitor(FlextUtilitiesBeartypeClassVisitorPart01):
     @staticmethod
-    def v_mro_shape(
-        params: me.MroShapeParams,
-        target: type,
-    ) -> t.StrMapping | None:
+    def v_mro_shape(params: me.MroShapeParams, target: type) -> t.StrMapping | None:
         """MRO_SHAPE — facade base ordering and inner-namespace redundancy."""
         if not target.__bases__:
             return NO_VIOLATION

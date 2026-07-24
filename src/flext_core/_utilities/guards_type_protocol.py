@@ -47,8 +47,7 @@ class FlextUtilitiesGuardsTypeProtocol(
             protocol_specs = FlextUtilitiesGuardsTypeProtocol._get_protocol_specs()
             if type_name in protocol_specs:
                 matched = FlextUtilitiesGuardsTypeProtocol._check_protocol(
-                    value,
-                    type_name,
+                    value, type_name
                 )
             elif type_name in c.STRING_METHOD_MAP:
                 matched = not (
@@ -56,21 +55,17 @@ class FlextUtilitiesGuardsTypeProtocol(
                     in {"string_non_empty", "dict_non_empty", "list_non_empty"}
                     and isinstance(value, (mp.BaseModel, mp.RootModel))
                 ) and FlextUtilitiesGuardsTypeProtocol._run_string_type_check(
-                    type_name,
-                    value,
+                    type_name, value
                 )
         elif isinstance(type_spec, tuple):
             matched = isinstance(value, type_spec)
         elif isinstance(type_spec, type):
             protocol_name = (
-                FlextUtilitiesGuardsTypeProtocol._get_protocol_type_map().get(
-                    type_spec,
-                )
+                FlextUtilitiesGuardsTypeProtocol._get_protocol_type_map().get(type_spec)
             )
             if protocol_name is not None:
                 matched = FlextUtilitiesGuardsTypeProtocol._check_protocol(
-                    value,
-                    protocol_name,
+                    value, protocol_name
                 )
             else:
                 runtime_type = getattr(type_spec, "__origin__", None) or type_spec

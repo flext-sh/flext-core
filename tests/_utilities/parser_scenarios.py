@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_tests import u
-
 from tests.constants import c
 from tests.models import m
 
@@ -82,9 +81,7 @@ class TestsFlextUtilitiesParserScenariosMixin:
                 name="enum-case-insensitive",
                 input_value="INACTIVE",
                 target=c.Tests.STATUS_ENUM,
-                options=u.ParseOptions(
-                    case_insensitive=True,
-                ),
+                options=u.ParseOptions(case_insensitive=True),
                 should_succeed=True,
                 expected_value=c.Tests.STATUS_INACTIVE,
                 description="Public parse resolves StrEnum values case-insensitively",

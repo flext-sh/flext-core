@@ -43,9 +43,7 @@ class FlextProtocolsService:
 
         @dispatcher.setter
         def dispatcher(
-            self,
-            value: FlextProtocolsHandler.Dispatcher | None,
-            /,
+            self, value: FlextProtocolsHandler.Dispatcher | None, /
         ) -> None: ...
 
         @property
@@ -53,40 +51,26 @@ class FlextProtocolsService:
 
         @registry.setter
         def registry(
-            self,
-            value: FlextProtocolsRegistry.Registry | None,
-            /,
+            self, value: FlextProtocolsRegistry.Registry | None, /
         ) -> None: ...
 
         @property
         def context(self) -> FlextProtocolsContext.Context: ...
 
         @context.setter
-        def context(
-            self,
-            value: FlextProtocolsContext.Context,
-            /,
-        ) -> None: ...
+        def context(self, value: FlextProtocolsContext.Context, /) -> None: ...
 
         @property
         def settings(self) -> FlextProtocolsSettings.Settings: ...
 
         @settings.setter
-        def settings(
-            self,
-            value: FlextProtocolsSettings.Settings,
-            /,
-        ) -> None: ...
+        def settings(self, value: FlextProtocolsSettings.Settings, /) -> None: ...
 
         @property
         def container(self) -> FlextProtocolsContainer.Container: ...
 
         @container.setter
-        def container(
-            self,
-            value: FlextProtocolsContainer.Container,
-            /,
-        ) -> None: ...
+        def container(self, value: FlextProtocolsContainer.Container, /) -> None: ...
 
     # ------------------------------------------------------------------
     # MixinsInfrastructure — mirrors FlextMixins public instance surface
@@ -122,8 +106,7 @@ class FlextProtocolsService:
             ...
 
         def track(
-            self,
-            operation_name: str,
+            self, operation_name: str
         ) -> AbstractContextManager[Mapping[str, ts.JsonPayload]]:
             """Track operation performance with timing and context cleanup."""
             ...
@@ -182,9 +165,7 @@ class FlextProtocolsService:
             ...
 
         def fail_op(
-            self,
-            operation: str,
-            exc: Exception | str | None = ...,
+            self, operation: str, exc: Exception | str | None = ...
         ) -> FlextProtocolsResult.Result[T]:
             """Return a failure result for an operation that failed."""
             ...
@@ -194,9 +175,7 @@ class FlextProtocolsService:
         """Structural protocol for dispatch-capable service objects in the DI container."""
 
         def dispatch(
-            self,
-            message: FlextProtocolsBase.Model,
-            /,
+            self, message: FlextProtocolsBase.Model, /
         ) -> FlextProtocolsBase.Model:
             """Dispatch a message and return the result."""
             ...

@@ -22,7 +22,6 @@ from flext_core._models.base import FlextModelsBase as m
 from flext_core._models.containers import FlextModelsContainers
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
 
 
 class FlextModelsContainer(FlextModelsContainerPart02):
@@ -34,8 +33,7 @@ class FlextModelsContainer(FlextModelsContainerPart02):
         """
 
         model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            strict=True,
-            arbitrary_types_allowed=True,
+            strict=True, arbitrary_types_allowed=True
         )
 
         settings: Annotated[
@@ -56,35 +54,49 @@ class FlextModelsContainer(FlextModelsContainerPart02):
                 description="Execution context attached to the container.",
             ),
         ] = None
-        services: t.MappingKV[str, FlextModelsContainer.ServiceRegistration] | None = (
+        services: Annotated[
+            t.MappingKV[
+                str, FlextModelsContainer.ServiceRegistration | t.RegisterableService
+            ]
+            | None,
+            tp.SkipValidation,
             mp.Field(
                 None,
                 title="Services",
                 description="Pre-registered service instances for bootstrap.",
                 validate_default=True,
-            )
-        )
-        factories: t.MappingKV[str, FlextModelsContainer.FactoryRegistration] | None = (
+            ),
+        ] = None
+        factories: Annotated[
+            t.MappingKV[
+                str, FlextModelsContainer.FactoryRegistration | t.FactoryCallable
+            ]
+            | None,
+            tp.SkipValidation,
             mp.Field(
                 None,
                 title="Factories",
                 description="Pre-registered factory callables for bootstrap.",
                 validate_default=True,
-            )
-        )
-        resources: (
-            t.MappingKV[str, FlextModelsContainer.ResourceRegistration] | None
-        ) = mp.Field(
-            None,
-            title="Resources",
-            description="Pre-registered resource factories for bootstrap.",
-            validate_default=True,
-        )
+            ),
+        ] = None
+        resources: Annotated[
+            t.MappingKV[
+                str, FlextModelsContainer.ResourceRegistration | t.ResourceCallable
+            ]
+            | None,
+            tp.SkipValidation,
+            mp.Field(
+                None,
+                title="Resources",
+                description="Pre-registered resource factories for bootstrap.",
+                validate_default=True,
+            ),
+        ] = None
         user_overrides: (
             FlextModelsContainers.ConfigMap
             | t.MappingKV[
-                str,
-                FlextModelsContainers.ConfigMap | t.ScalarList | t.Scalar,
+                str, FlextModelsContainers.ConfigMap | t.ScalarList | t.Scalar
             ]
             | None
         ) = mp.Field(
@@ -99,87 +111,6 @@ class FlextModelsContainer(FlextModelsContainerPart02):
             description="Container configuration model controlling DI behavior.",
             validate_default=True,
         )
-
-        @up.field_validator("services", mode="before")
-        @classmethod
-        def validate_services(
-            cls,
-            value: (
-                t.MappingKV[
-                    str,
-                    FlextModelsContainer.ServiceRegistration | t.RegisterableService,
-                ]
-                | None
-            ),
-        ) -> t.MappingKV[str, FlextModelsContainer.ServiceRegistration] | None:
-            if value is None:
-                return None
-            return {
-                name: (
-                    registration
-                    if isinstance(
-                        registration,
-                        FlextModelsContainer.ServiceRegistration,
-                    )
-                    else FlextModelsContainer.ServiceRegistration(
-                        name=name,
-                        service=registration,
-                        service_type=registration.__class__.__name__,
-                    )
-                )
-                for name, registration in value.items()
-            }
-
-        @staticmethod
-        def _norm_callable_reg[Reg: m.ArbitraryTypesModel](
-            value: t.MappingKV[str, Reg | t.FactoryCallable] | None,
-            reg_cls: type[Reg],
-        ) -> t.MappingKV[str, Reg] | None:
-            """Normalize a name→(Registration|callable) dict to name→Registration."""
-            if value is None:
-                return None
-            return {
-                name: (
-                    registration
-                    if isinstance(registration, reg_cls)
-                    else reg_cls.model_validate({"name": name, "factory": registration})
-                )
-                for name, registration in value.items()
-            }
-
-        @up.field_validator("factories", mode="before")
-        @classmethod
-        def validate_factories(
-            cls,
-            value: (
-                t.MappingKV[
-                    str,
-                    FlextModelsContainer.FactoryRegistration | t.FactoryCallable,
-                ]
-                | None
-            ),
-        ) -> t.MappingKV[str, FlextModelsContainer.FactoryRegistration] | None:
-            return cls._norm_callable_reg(
-                value,
-                FlextModelsContainer.FactoryRegistration,
-            )
-
-        @up.field_validator("resources", mode="before")
-        @classmethod
-        def validate_resources(
-            cls,
-            value: (
-                t.MappingKV[
-                    str,
-                    FlextModelsContainer.ResourceRegistration | t.ResourceCallable,
-                ]
-                | None
-            ),
-        ) -> t.MappingKV[str, FlextModelsContainer.ResourceRegistration] | None:
-            return cls._norm_callable_reg(
-                value,
-                FlextModelsContainer.ResourceRegistration,
-            )
 
 
 __all__: list[str] = ["FlextModelsContainer"]

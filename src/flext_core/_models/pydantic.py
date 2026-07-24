@@ -17,7 +17,8 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from re import Pattern
-from typing import TYPE_CHECKING, TypeAlias, dataclass_transform
+from types import EllipsisType
+from typing import TypeAlias, dataclass_transform
 
 from pydantic import (
     AfterValidator,
@@ -46,20 +47,13 @@ from pydantic import (
     field_validator,
 )
 from pydantic.fields import FieldInfo
-from pydantic_core import (
-    PydanticUndefined,
-    PydanticUndefinedType,
-    SchemaValidator,
-)
+from pydantic_core import PydanticUndefined, PydanticUndefinedType, SchemaValidator
 from pydantic_settings import (
     BaseSettings as PydanticBaseSettings,
     EnvSettingsSource,
     PydanticBaseSettingsSource,
     SettingsConfigDict as _PydanticSettingsConfigDict,
 )
-
-if TYPE_CHECKING:
-    from types import EllipsisType
 
 type _FieldValue = JsonValue | Path
 type _FieldSchemaExtra = Mapping[str, _FieldValue | Sequence[_FieldValue]]
@@ -99,22 +93,19 @@ class FlextModelsPydantic:
     """
 
     @dataclass_transform(
-        kw_only_default=True,
-        field_specifiers=(_field, Field, PrivateAttr),
+        kw_only_default=True, field_specifiers=(_field, Field, PrivateAttr)
     )
     class BaseModel(PydanticBaseModel):
         """Canonical BaseModel exported through the FLEXT models facade."""
 
     @dataclass_transform(
-        kw_only_default=True,
-        field_specifiers=(_field, Field, PrivateAttr),
+        kw_only_default=True, field_specifiers=(_field, Field, PrivateAttr)
     )
     class BaseSettings(PydanticBaseSettings):
         """Canonical BaseSettings exported through the FLEXT models facade."""
 
     @dataclass_transform(
-        kw_only_default=True,
-        field_specifiers=(_field, Field, PrivateAttr),
+        kw_only_default=True, field_specifiers=(_field, Field, PrivateAttr)
     )
     class RootModel[RootValueT](PydanticRootModel[RootValueT]):
         """Canonical RootModel exported through the FLEXT models facade."""
@@ -124,7 +115,10 @@ class FlextModelsPydantic:
     SettingsConfigDict: TypeAlias = _PydanticSettingsConfigDict
 
     Field = staticmethod(_field)
-    PrivateAttr = PrivateAttr
+    # NOTE (multi-agent): mro-ecfu — staticmethod wrap matches Field above and
+    # u.PrivateAttr (_utilities/pydantic.py): pyright cannot model an unwrapped
+    # function class attribute called through the facade (mixins.py:59 error).
+    PrivateAttr = staticmethod(PrivateAttr)
     SkipValidation = SkipValidation
     computed_field = computed_field
     field_validator = field_validator

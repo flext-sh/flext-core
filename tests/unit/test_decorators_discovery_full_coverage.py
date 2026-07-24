@@ -11,8 +11,8 @@ from __future__ import annotations
 import types
 
 import pytest
-from flext_tests import d, r
 
+from flext_tests import d, r
 from tests.protocols import p
 from tests.utilities import u
 
@@ -75,18 +75,10 @@ class TestsFlextDecoratorsDiscovery:
 
     @pytest.mark.parametrize(
         ("singleton", "lazy"),
-        [
-            (False, True),
-            (True, False),
-            (True, True),
-            (False, False),
-        ],
+        [(False, True), (True, False), (True, True), (False, False)],
     )
     def test_scan_module_preserves_config_metadata(
-        self,
-        *,
-        singleton: bool,
-        lazy: bool,
+        self, *, singleton: bool, lazy: bool
     ) -> None:
         mod = self._module("metadata_mod")
 

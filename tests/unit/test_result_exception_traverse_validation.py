@@ -10,8 +10,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import r, tm
 
+from flext_tests import r, tm
 from tests.constants import c
 from tests.unit._result_exception_support import TestsFlextResultExceptionCarrying
 
@@ -21,15 +21,13 @@ if TYPE_CHECKING:
 
 
 class TestsFlextCoreResultExceptionTraverseValidation(
-    TestsFlextResultExceptionCarrying,
+    TestsFlextResultExceptionCarrying
 ):
     @pytest.mark.parametrize(
-        "raised",
-        [ValueError("item error"), TypeError("bad type"), KeyError("missing")],
+        "raised", [ValueError("item error"), TypeError("bad type"), KeyError("missing")]
     )
     def test_traverse_fail_fast_carries_originating_failure_exception(
-        self,
-        raised: Exception,
+        self, raised: Exception
     ) -> None:
         # Arrange
         def process(value: int) -> p.Result[int]:
@@ -125,8 +123,7 @@ class TestsFlextCoreResultExceptionTraverseValidation(
 
         # Act
         result = r[TestsFlextResultExceptionCarrying.UserModel].from_validation(
-            invalid,
-            TestsFlextResultExceptionCarrying.UserModel,
+            invalid, TestsFlextResultExceptionCarrying.UserModel
         )
 
         # Assert
@@ -140,8 +137,7 @@ class TestsFlextCoreResultExceptionTraverseValidation(
 
         # Act
         result = r[TestsFlextResultExceptionCarrying.UserModel].from_validation(
-            valid,
-            TestsFlextResultExceptionCarrying.UserModel,
+            valid, TestsFlextResultExceptionCarrying.UserModel
         )
 
         # Assert
@@ -191,13 +187,10 @@ class TestsFlextCoreResultExceptionTraverseValidation(
         tm.that(result.unwrap_or(-1), eq=-1)
 
     @pytest.mark.parametrize(
-        ("value", "expected"),
-        [(True, True), (False, False), (42, 42)],
+        ("value", "expected"), [(True, True), (False, False), (42, 42)]
     )
     def test_ok_reports_success_and_wraps_value(
-        self,
-        value: bool | int,
-        expected: bool | int,
+        self, *, value: bool | int, expected: bool | int
     ) -> None:
         # Arrange / Act
         result = r[bool | int].ok(value)

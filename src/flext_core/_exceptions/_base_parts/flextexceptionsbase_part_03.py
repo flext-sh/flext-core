@@ -14,9 +14,7 @@ from flext_core._runtime._metadata_validation import (
 )
 from flext_core._typings.base import FlextTypingBase as tb
 
-from .flextexceptionsbase_part_02 import (
-    FlextBaseErrorStateMixin,
-)
+from .flextexceptionsbase_part_02 import FlextBaseErrorStateMixin
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
@@ -29,8 +27,8 @@ if TYPE_CHECKING:
 class FlextBaseError(FlextBaseErrorStateMixin, Exception):
     """Base exception with correlation metadata and error codes."""
 
-    _params_cls: ClassVar[ts.ModelClass[mp.BaseModel] | None] = None
-    _excluded_context_keys: ClassVar[set[str] | frozenset[str] | None] = None
+    params_cls: ClassVar[ts.ModelClass[mp.BaseModel] | None] = None
+    excluded_context_keys: ClassVar[set[str] | frozenset[str] | None] = None
 
     def __init__(
         self,
@@ -51,8 +49,8 @@ class FlextBaseError(FlextBaseErrorStateMixin, Exception):
         **extra_kwargs: tb.JsonValue,
     ) -> None:
         """Initialize base error with message and optional metadata."""
-        declared_params_cls = self.__class__._params_cls
-        if declared_params_cls is not None:
+        declaredparams_cls = self.__class__.params_cls
+        if declaredparams_cls is not None:
             resolved_error_code = (
                 str(getattr(type(self), "_default_error_code", error_code))
                 if error_code == cv.ErrorCode.UNKNOWN_ERROR
@@ -61,7 +59,7 @@ class FlextBaseError(FlextBaseErrorStateMixin, Exception):
             combined_extra: MutableMapping[str, ts.JsonPayload | None] = {}
             try:
                 merged_kwargs_map = FlextRuntime.normalize_metadata_input_mapping(
-                    merged_kwargs,
+                    merged_kwargs
                 )
             except ce.EXC_PYDANTIC_TYPE_VALUE:
                 merged_kwargs_map = None
@@ -75,7 +73,7 @@ class FlextBaseError(FlextBaseErrorStateMixin, Exception):
                 key: FlextRuntime.normalize_to_metadata(value)
                 for key, value in extra_kwargs.items()
             })
-            declared_param_keys = frozenset(declared_params_cls.model_fields)
+            declared_param_keys = frozenset(declaredparams_cls.model_fields)
             remaining_extra: tb.MutableJsonMapping = {}
             if combined_extra:
                 remaining_extra.update({
@@ -92,17 +90,12 @@ class FlextBaseError(FlextBaseErrorStateMixin, Exception):
                 if preserved_metadata_raw is not None
                 else None
             )
-            correlation_id_raw = remaining_extra.pop(
-                ci.ContextKey.CORRELATION_ID,
-                None,
-            )
+            correlation_id_raw = remaining_extra.pop(ci.ContextKey.CORRELATION_ID, None)
             correlation_id_str = FlextExceptionsHelpers.safe_optional_str(
-                correlation_id_raw,
+                correlation_id_raw
             )
             param_values = FlextExceptionsHelpers.build_param_map(
-                context,
-                remaining_extra,
-                keys=declared_param_keys,
+                context, remaining_extra, keys=declared_param_keys
             )
             for key, value in resolved_named.items():
                 if value is None:
@@ -116,14 +109,12 @@ class FlextBaseError(FlextBaseErrorStateMixin, Exception):
             resolved = (
                 params
                 if params is not None
-                else declared_params_cls.model_validate(param_values)
+                else declaredparams_cls.model_validate(param_values)
             )
             ctx = FlextExceptionsHelpers.build_context_map(
-                context,
-                remaining_extra,
-                excluded_keys=type(self)._excluded_context_keys,
+                context, remaining_extra, excluded_keys=type(self).excluded_context_keys
             )
-            resolved_fields = declared_params_cls.__pydantic_fields__
+            resolved_fields = declaredparams_cls.__pydantic_fields__
             for key in declared_param_keys:
                 attr_val = getattr(resolved, key, None)
                 if attr_val is not None:

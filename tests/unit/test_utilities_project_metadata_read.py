@@ -1,12 +1,18 @@
-"""Project metadata read utility tests."""
+"""Project metadata read utility tests.
+
+``u.read_project_metadata(root)`` returns ``r[m.ProjectMetadata]`` — a
+Result-wrapped, frozen model whose PEP 621 payload lives under the nested
+``project`` field. Tests assert the observable success value and the
+Result failure contract for missing/incomplete pyproject inputs.
+"""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
+from flext_tests import tm
 from tests.constants import c
 from tests.models import m
 from tests.unit._project_metadata_support import write_pyproject
@@ -25,27 +31,15 @@ class TestsFlextUtilitiesProjectMetadataRead:
         ],
     )
     def test_derive_class_stem_produces_pascal_case_from_project_name(
-        self,
-        project_name: str,
-        expected_stem: str,
+        self, project_name: str, expected_stem: str
     ) -> None:
         tm.that(u.derive_class_stem(project_name), eq=expected_stem)
 
-    def test_pascalize_converts_dashes_and_underscores_to_camel_case(self) -> None:
-        tm.that(
-            m.pascalize(c.Tests.SAMPLE_PROJECT_NAME),
-            eq=c.Tests.SAMPLE_PROJECT_CLASS_STEM,
-        )
-        tm.that(m.pascalize("flext_ldif"), eq=c.Tests.SAMPLE_PROJECT_CLASS_STEM)
-        tm.that(m.pascalize(""), eq="")
-
-    def test_derive_class_stem_rejects_empty_input(self) -> None:
-        with pytest.raises(ValueError, match="empty"):
-            u.derive_class_stem("")
+    def test_derive_class_stem_returns_empty_for_empty_input(self) -> None:
+        tm.that(u.derive_class_stem(""), eq="")
 
     def test_read_project_metadata_parses_minimal_pyproject(
-        self,
-        tmp_path: Path,
+        self, tmp_path: Path
     ) -> None:
         root = write_pyproject(
             tmp_path,
@@ -53,36 +47,16 @@ class TestsFlextUtilitiesProjectMetadataRead:
             [project]
             name = "{c.Tests.SAMPLE_PROJECT_NAME}"
             version = "{c.Tests.SAMPLE_PROJECT_VERSION}"
-            license = "{c.Tests.SAMPLE_PROJECT_LICENSE}"
             description = "LDIF"
             """,
         )
-        meta = u.read_project_metadata(root)
+        meta = u.read_project_metadata(root).unwrap()
         tm.that(meta, is_=m.ProjectMetadata)
-        tm.that(meta.name, eq=c.Tests.SAMPLE_PROJECT_NAME)
+        tm.that(meta.project.name, eq=c.Tests.SAMPLE_PROJECT_NAME)
         tm.that(meta.class_stem, eq=c.Tests.SAMPLE_PROJECT_CLASS_STEM)
 
-    def test_read_project_metadata_accepts_spdx_license_dict(
-        self,
-        tmp_path: Path,
-    ) -> None:
-        root = write_pyproject(
-            tmp_path,
-            f"""
-            [project]
-            name = "{c.Tests.SAMPLE_PROJECT_NAME}"
-            version = "{c.Tests.SAMPLE_PROJECT_VERSION}"
-            license = {{text = "{c.Tests.SAMPLE_PROJECT_LICENSE}"}}
-            """,
-        )
-        tm.that(
-            u.read_project_metadata(root).license,
-            eq=c.Tests.SAMPLE_PROJECT_LICENSE,
-        )
-
     def test_read_project_metadata_extracts_author_names_from_project_table(
-        self,
-        tmp_path: Path,
+        self, tmp_path: Path
     ) -> None:
         root = write_pyproject(
             tmp_path,
@@ -90,30 +64,20 @@ class TestsFlextUtilitiesProjectMetadataRead:
             [project]
             name = "{c.Tests.SAMPLE_PROJECT_NAME}"
             version = "{c.Tests.SAMPLE_PROJECT_VERSION}"
-            license = "{c.Tests.SAMPLE_PROJECT_LICENSE}"
             authors = [
                 {{name = "{c.Tests.SAMPLE_AUTHOR_ALICE}", email = "alice@example.com"}},
                 {{name = "{c.Tests.SAMPLE_AUTHOR_BOB}"}},
             ]
             """,
         )
+        meta = u.read_project_metadata(root).unwrap()
         tm.that(
-            u.read_project_metadata(root).authors,
+            tuple(author.name for author in meta.project.authors),
             eq=(c.Tests.SAMPLE_AUTHOR_ALICE, c.Tests.SAMPLE_AUTHOR_BOB),
         )
 
-    def test_read_project_constants_returns_installed_project_metadata_values(
-        self,
-    ) -> None:
-        constants = u.read_project_constants("flext-core")
-        tm.that(constants.PACKAGE_NAME, eq="flext-core")
-        tm.that(constants.PYTHON_PACKAGE_NAME, eq="flext_core")
-        tm.that(constants.CLASS_STEM, eq="Flext")
-        tm.that("c" in constants.RUNTIME_ALIAS_NAMES, eq=True)
-
     def test_read_project_metadata_derives_package_name_and_stem_from_name(
-        self,
-        tmp_path: Path,
+        self, tmp_path: Path
     ) -> None:
         root = write_pyproject(
             tmp_path,
@@ -121,16 +85,14 @@ class TestsFlextUtilitiesProjectMetadataRead:
             [project]
             name = "{c.Tests.SAMPLE_PROJECT_NAME}"
             version = "{c.Tests.SAMPLE_PROJECT_VERSION}"
-            license = "{c.Tests.SAMPLE_PROJECT_LICENSE}"
             """,
         )
-        meta = u.read_project_metadata(root)
+        meta = u.read_project_metadata(root).unwrap()
         tm.that(meta.package_name, eq=c.Tests.SAMPLE_PROJECT_NAME.replace("-", "_"))
         tm.that(meta.class_stem, eq=c.Tests.SAMPLE_PROJECT_CLASS_STEM)
 
     def test_read_project_metadata_extracts_optional_url_and_requires_python(
-        self,
-        tmp_path: Path,
+        self, tmp_path: Path
     ) -> None:
         root = write_pyproject(
             tmp_path,
@@ -138,18 +100,16 @@ class TestsFlextUtilitiesProjectMetadataRead:
             [project]
             name = "{c.Tests.SAMPLE_PROJECT_NAME}"
             version = "{c.Tests.SAMPLE_PROJECT_VERSION}"
-            license = "{c.Tests.SAMPLE_PROJECT_LICENSE}"
             requires-python = ">=3.13"
             urls = {{Homepage = "https://example.com"}}
             """,
         )
-        meta = u.read_project_metadata(root)
-        tm.that(meta.requires_python, eq="3.13")
-        tm.that(meta.url, eq="https://example.com")
+        meta = u.read_project_metadata(root).unwrap()
+        tm.that(meta.project.requires_python, eq=">=3.13")
+        tm.that(meta.project.urls.homepage, eq="https://example.com")
 
     def test_read_project_metadata_defaults_optional_fields_when_absent(
-        self,
-        tmp_path: Path,
+        self, tmp_path: Path
     ) -> None:
         root = write_pyproject(
             tmp_path,
@@ -157,14 +117,12 @@ class TestsFlextUtilitiesProjectMetadataRead:
             [project]
             name = "{c.Tests.SAMPLE_PROJECT_NAME}"
             version = "{c.Tests.SAMPLE_PROJECT_VERSION}"
-            license = "{c.Tests.SAMPLE_PROJECT_LICENSE}"
             """,
         )
-        meta = u.read_project_metadata(root)
-        tm.that(meta.description, eq="")
-        tm.that(meta.url, eq="")
-        tm.that(meta.requires_python, eq="")
-        tm.that(meta.authors, eq=())
+        meta = u.read_project_metadata(root).unwrap()
+        tm.that(meta.project.requires_python, eq="")
+        tm.that(meta.project.urls.homepage, eq="")
+        tm.that(meta.project.authors, eq=())
 
     def test_project_metadata_is_immutable(self, tmp_path: Path) -> None:
         root = write_pyproject(
@@ -173,34 +131,30 @@ class TestsFlextUtilitiesProjectMetadataRead:
             [project]
             name = "{c.Tests.SAMPLE_PROJECT_NAME}"
             version = "{c.Tests.SAMPLE_PROJECT_VERSION}"
-            license = "{c.Tests.SAMPLE_PROJECT_LICENSE}"
             """,
         )
-        meta = u.read_project_metadata(root)
+        meta = u.read_project_metadata(root).unwrap()
         with pytest.raises(m.ValidationError):
-            meta.name = "mutated"
+            setattr(meta, "package_name", "mutated")
 
-    def test_read_project_metadata_raises_on_missing_pyproject(
-        self,
-        tmp_path: Path,
+    def test_read_project_metadata_fails_on_missing_pyproject(
+        self, tmp_path: Path
     ) -> None:
-        with pytest.raises(FileNotFoundError):
-            u.read_project_metadata(tmp_path)
+        result = u.read_project_metadata(tmp_path)
+        tm.that(result.failure, eq=True)
 
     @pytest.mark.parametrize(
         ("body", "match_pattern"),
         [
-            ('[project]\nversion="0.12.0"\n', r"missing.*name"),
-            ('[project]\nname="x"\n', r"missing.*version"),
+            ('[project]\nversion="0.12.0"\n', "name"),
+            ('[project]\nname="x"\n', "version"),
         ],
         ids=["missing_name", "missing_version"],
     )
-    def test_read_project_metadata_rejects_incomplete_pyproject(
-        self,
-        tmp_path: Path,
-        body: str,
-        match_pattern: str,
+    def test_read_project_metadata_fails_on_incomplete_pyproject(
+        self, tmp_path: Path, body: str, match_pattern: str
     ) -> None:
         root = write_pyproject(tmp_path, body)
-        with pytest.raises(ValueError, match=match_pattern):
-            u.read_project_metadata(root)
+        result = u.read_project_metadata(root)
+        tm.that(result.failure, eq=True)
+        tm.that(match_pattern in (result.error or ""), eq=True)

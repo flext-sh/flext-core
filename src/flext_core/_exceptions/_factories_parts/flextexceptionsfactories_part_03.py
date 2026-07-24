@@ -42,9 +42,7 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart02):
         options, error = FlextExceptionsFactories._resolve_options(options)
         params = params or m.ConnectionErrorParams(host=host)
         msg = FlextExceptionsFactories._failure_message(
-            f"connect to {host}",
-            params=params,
-            error=error,
+            f"connect to {host}", params=params, error=error
         )
         return FlextExceptionsFactories._fail_result(
             msg,
@@ -70,13 +68,11 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart02):
 
         """
         params = m.TimeoutErrorParams(
-            timeout_seconds=timeout_seconds,
-            operation=operation,
+            timeout_seconds=timeout_seconds, operation=operation
         )
         op_label = operation or "operation"
         msg = FlextExceptionsFactories._failure_message(
-            f"{op_label} (timeout={timeout_seconds}s)",
-            params=params,
+            f"{op_label} (timeout={timeout_seconds}s)", params=params
         )
         return FlextExceptionsFactories._fail_result(
             msg,
@@ -101,14 +97,9 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart02):
 
         """
         options, error = FlextExceptionsFactories._resolve_options(options)
-        params = m.AuthenticationErrorParams(
-            auth_method=auth_method,
-            user_id=user_id,
-        )
+        params = m.AuthenticationErrorParams(auth_method=auth_method, user_id=user_id)
         msg = FlextExceptionsFactories._failure_message(
-            f"authenticate user {user_id or 'unknown'}",
-            params=params,
-            error=error,
+            f"authenticate user {user_id or 'unknown'}", params=params, error=error
         )
         return FlextExceptionsFactories._fail_result(
             msg,
@@ -136,14 +127,10 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart02):
         """
         options, error = FlextExceptionsFactories._resolve_options(options)
         params = m.AuthorizationErrorParams(
-            user_id=user_id,
-            resource=resource,
-            permission=permission,
+            user_id=user_id, resource=resource, permission=permission
         )
         msg = FlextExceptionsFactories._failure_message(
-            f"authorize {user_id!r} on {resource!r}",
-            params=params,
-            error=error,
+            f"authorize {user_id!r} on {resource!r}", params=params, error=error
         )
         return FlextExceptionsFactories._fail_result(
             msg,

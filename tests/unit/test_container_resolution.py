@@ -5,9 +5,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
-from tests.models import TestsFlextModels
+from flext_tests import tm
+from tests.models import m
 from tests.utilities import u
 
 if TYPE_CHECKING:
@@ -16,15 +16,13 @@ if TYPE_CHECKING:
 
 
 class TestsFlextContainerResolution:
+    """Exercise public service resolution and discovery behavior."""
+
     @pytest.mark.parametrize(
-        "scenario",
-        TestsFlextModels.Tests.ContainerScenarios.SERVICE_SCENARIOS,
-        ids=lambda s: s.name,
+        "scenario", m.Tests.ContainerScenarios.SERVICE_SCENARIOS, ids=lambda s: s.name
     )
     def test_get_service(
-        self,
-        scenario: TestsFlextModels.Tests.ServiceScenario,
-        clean_container: p.Container,
+        self, scenario: m.Tests.ServiceScenario, clean_container: p.Container
     ) -> None:
         """Test service retrieval using fixtures."""
         clean_container.bind(scenario.name, scenario.service)
@@ -42,50 +40,41 @@ class TestsFlextContainerResolution:
         factory = u.Tests.create_factory(factory_result)
         clean_container.factory("factory_service", factory)
         result: p.Result[t.RegisterableService] = clean_container.resolve(
-            "factory_service",
+            "factory_service"
         )
         u.Tests.assert_success(result, expected_value=factory_result)
 
     def test_get_factory_called_each_time(self, clean_container: p.Container) -> None:
         """Test that factory is called each time get() is invoked using fixtures."""
-        factory, get_count = u.Tests.create_counting_factory(
-            "service_value",
-        )
+        factory, get_count = u.Tests.create_counting_factory("service_value")
         clean_container.factory("factory_service", factory)
         result1: p.Result[t.RegisterableService] = clean_container.resolve(
-            "factory_service",
+            "factory_service"
         )
         _ = u.Tests.assert_success(result1)
         tm.that(get_count(), eq=1, msg="Factory must be called once after first get()")
         result2: p.Result[t.RegisterableService] = clean_container.resolve(
-            "factory_service",
+            "factory_service"
         )
         _ = u.Tests.assert_success(result2)
         tm.that(
-            get_count(),
-            eq=2,
-            msg="Factory must be called twice after second get()",
+            get_count(), eq=2, msg="Factory must be called twice after second get()"
         )
 
     @pytest.mark.parametrize(
         "scenario",
-        TestsFlextModels.Tests.ContainerScenarios.TYPED_RETRIEVAL_SCENARIOS,
+        m.Tests.ContainerScenarios.TYPED_RETRIEVAL_SCENARIOS,
         ids=lambda s: s.name,
     )
     def test_get_typed_correct(
-        self,
-        scenario: TestsFlextModels.Tests.TypedRetrievalScenario,
-        clean_container: p.Container,
+        self, scenario: m.Tests.TypedRetrievalScenario, clean_container: p.Container
     ) -> None:
         """Test typed retrieval with correct types using fixtures."""
         container = clean_container
         _ = container.bind(scenario.name, scenario.service)
         if scenario.should_pass:
             resolved_service: str | int = u.Tests.assert_success(
-                container.resolve(
-                    scenario.name,
-                    type_cls=scenario.expected_type,
-                ),
+                container.resolve(scenario.name, type_cls=scenario.expected_type)
             )
             tm.that(
                 str(resolved_service),
@@ -99,10 +88,7 @@ class TestsFlextContainerResolution:
             )
         else:
             _ = u.Tests.assert_failure(
-                container.resolve(
-                    scenario.name,
-                    type_cls=scenario.expected_type,
-                ),
+                container.resolve(scenario.name, type_cls=scenario.expected_type)
             )
 
     def test_get_typed_wrong_type(self, clean_container: p.Container) -> None:
@@ -122,10 +108,7 @@ class TestsFlextContainerResolution:
         ids=["exists", "not_exists"],
     )
     def test_has_service(
-        self,
-        has_service: bool,
-        expected: bool,
-        clean_container: p.Container,
+        self, *, has_service: bool, expected: bool, clean_container: p.Container
     ) -> None:
         """Test has_service returns correct value using fixtures."""
         container = clean_container
@@ -155,14 +138,10 @@ class TestsFlextContainerResolution:
         services = container.names()
         tm.that(services, is_=list, msg="list_services must return a list")
         tm.that(
-            len(services),
-            eq=0,
-            msg="Empty container must return empty services list",
+            len(services), eq=0, msg="Empty container must return empty services list"
         )
         tm.that(
-            services,
-            empty=True,
-            msg="Empty container must have empty services list",
+            services, empty=True, msg="Empty container must have empty services list"
         )
 
     def test_list_services_mixed(self, clean_container: p.Container) -> None:

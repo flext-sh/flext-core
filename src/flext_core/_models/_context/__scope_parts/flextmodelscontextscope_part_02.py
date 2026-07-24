@@ -10,11 +10,10 @@ import contextvars
 from types import MappingProxyType
 from typing import Annotated, Self
 
+from flext_core import FlextConstants as c, FlextTypes as t
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.containers import FlextModelsContainers
 from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core.constants import FlextConstants as c
-from flext_core.typings import FlextTypes as t
 
 from .flextmodelscontextscope_part_01 import (
     FlextModelsContextScope as FlextModelsContextScopePart01,
@@ -45,14 +44,11 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
                 default_factory=FlextModelsContextScopePart01.ContextStatistics,
                 description="Operation counters for this context instance",
             ),
-        ] = mp.Field(
-            default_factory=FlextModelsContextScopePart01.ContextStatistics,
-        )
+        ] = mp.Field(default_factory=FlextModelsContextScopePart01.ContextStatistics)
         active: Annotated[
             bool,
             mp.Field(
-                default=True,
-                description="Whether the context accepts operations",
+                default=True, description="Whether the context accepts operations"
             ),
         ] = True
         suspended: Annotated[
@@ -64,8 +60,7 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
         ] = False
         scope_vars: Annotated[
             t.MappingKV[
-                str,
-                contextvars.ContextVar[FlextModelsContainers.ConfigMap | None],
+                str, contextvars.ContextVar[FlextModelsContainers.ConfigMap | None]
             ],
             mp.Field(
                 default_factory=lambda: MappingProxyType({}),
@@ -75,28 +70,18 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
 
         @classmethod
         def create_default(
-            cls,
-            metadata: FlextModelsBase.Metadata | None = None,
+            cls, metadata: FlextModelsBase.Metadata | None = None
         ) -> Self:
             """Create default runtime state with canonical built-in scopes."""
             global_scope_var: contextvars.ContextVar[
                 FlextModelsContainers.ConfigMap | None
-            ] = contextvars.ContextVar(
-                "flext_global_context",
-                default=None,
-            )
+            ] = contextvars.ContextVar("flext_global_context", default=None)
             user_scope_var: contextvars.ContextVar[
                 FlextModelsContainers.ConfigMap | None
-            ] = contextvars.ContextVar(
-                "flext_user_context",
-                default=None,
-            )
+            ] = contextvars.ContextVar("flext_user_context", default=None)
             session_scope_var: contextvars.ContextVar[
                 FlextModelsContainers.ConfigMap | None
-            ] = contextvars.ContextVar(
-                "flext_session_context",
-                default=None,
-            )
+            ] = contextvars.ContextVar("flext_session_context", default=None)
             metadata_model = (
                 metadata.model_copy()
                 if metadata is not None
@@ -112,11 +97,9 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
             )
 
         def resolve_scope_var(
-            self,
-            scope: str,
+            self, scope: str
         ) -> tuple[
-            Self,
-            contextvars.ContextVar[FlextModelsContainers.ConfigMap | None],
+            Self, contextvars.ContextVar[FlextModelsContainers.ConfigMap | None]
         ]:
             """Resolve an existing scope var or create one immutably."""
             existing = self.scope_vars.get(scope)
@@ -124,17 +107,13 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
                 return self, existing
             scope_var: contextvars.ContextVar[
                 FlextModelsContainers.ConfigMap | None
-            ] = contextvars.ContextVar(
-                f"flext_{scope}_context",
-                default=None,
-            )
+            ] = contextvars.ContextVar(f"flext_{scope}_context", default=None)
             updated_scope_vars: dict[
-                str,
-                contextvars.ContextVar[FlextModelsContainers.ConfigMap | None],
+                str, contextvars.ContextVar[FlextModelsContainers.ConfigMap | None]
             ] = dict(self.scope_vars)
             updated_scope_vars[scope] = scope_var
             updated_state: Self = self.model_copy(
-                update={"scope_vars": updated_scope_vars},
+                update={"scope_vars": updated_scope_vars}
             )
             return updated_state, scope_var
 
@@ -155,20 +134,18 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
             current_operation_value = operations.get(operation)
             if isinstance(current_operation_value, int):
                 statistics_updates["operations"] = (
-                    t.json_mapping_adapter().validate_python(
-                        {
-                            **operations,
-                            operation: current_operation_value + 1,
-                        },
-                    )
+                    t.json_mapping_adapter().validate_python({
+                        **operations,
+                        operation: current_operation_value + 1,
+                    })
                 )
             if not statistics_updates:
                 return self
             updated_statistics = current_statistics.model_copy(
-                update=statistics_updates,
+                update=statistics_updates
             )
             updated_state: Self = self.model_copy(
-                update={"statistics": updated_statistics},
+                update={"statistics": updated_statistics}
             )
             return updated_state
 

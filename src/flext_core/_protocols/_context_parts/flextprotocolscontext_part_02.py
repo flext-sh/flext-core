@@ -11,11 +11,7 @@ from typing import TYPE_CHECKING, Protocol
 if TYPE_CHECKING:
     from contextlib import AbstractContextManager
 
-    from flext_core import (
-        m,
-        p,
-        t,
-    )
+    from flext_core import m, p, t
 from .flextprotocolscontext_part_01 import (
     FlextProtocolsContext as FlextProtocolsContextPart01,
 )
@@ -70,10 +66,7 @@ class FlextProtocolsContext(FlextProtocolsContextPart01):
         """Protocol for flat context classes exposing the canonical class API."""
 
         @classmethod
-        def create(
-            cls,
-            **initial_data: t.JsonPayload,
-        ) -> p.Context:
+        def create(cls, **initial_data: t.JsonPayload) -> p.Context:
             """Create a new context instance."""
             ...
 
@@ -83,24 +76,18 @@ class FlextProtocolsContext(FlextProtocolsContextPart01):
             ...
 
         @classmethod
-        def configure_container(
-            cls,
-            container: p.Container,
-        ) -> None:
+        def configure_container(cls, container: p.Container) -> None:
             """Configure the container used by the context service namespace."""
             ...
 
         @staticmethod
-        def fetch_service(
-            service_name: str,
-        ) -> p.Result[t.RegisterableService]:
+        def fetch_service(service_name: str) -> p.Result[t.RegisterableService]:
             """Resolve a named service from the configured container."""
             ...
 
         @staticmethod
         def register_service(
-            service_name: str,
-            service: t.RegisterableService,
+            service_name: str, service: t.RegisterableService
         ) -> p.Result[bool]:
             """Register a named service through the configured container."""
             ...
@@ -112,8 +99,7 @@ class FlextProtocolsContext(FlextProtocolsContextPart01):
 
         @staticmethod
         def new_correlation(
-            correlation_id: str | None = None,
-            parent_id: str | None = None,
+            correlation_id: str | None = None, parent_id: str | None = None
         ) -> AbstractContextManager[str]:
             """Create a scoped correlation-id context manager."""
             ...
@@ -130,8 +116,7 @@ class FlextProtocolsContext(FlextProtocolsContextPart01):
 
         @staticmethod
         def service_context(
-            service_name: str,
-            version: str | None = None,
+            service_name: str, version: str | None = None
         ) -> AbstractContextManager[None]:
             """Create a service-scoped context manager."""
             ...

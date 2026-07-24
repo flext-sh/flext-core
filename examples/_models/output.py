@@ -6,14 +6,12 @@ from enum import StrEnum
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
 
-from examples import c
+from examples.constants import c
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        Mapping,
-    )
+    from collections.abc import Mapping
 
-    from examples import t
+    from examples.typings import t
 
 
 class ExamplesFlextModelsOutput:
@@ -25,25 +23,23 @@ class ExamplesFlextModelsOutput:
         class OutputKind(StrEnum):
             """Supported output result kinds."""
 
-            PASS = "PASS"
+            SUCCESS = "PASS"
             FAIL = "FAIL"
             GENERATED = "GENERATED"
 
         class OutputTemplate(StrEnum):
             """Canonical output templates for example verification."""
 
-            PASS = "{kind}: {stem} ({checks} checks)\\n"
+            SUCCESS = "{kind}: {stem} ({checks} checks)\\n"
             FAIL = "{kind}: {stem} — diff {expected_name} {actual_name}\\n"
             GENERATED = "{kind}: {expected_name} ({checks} checks)\\n"
 
         LABEL_VALUE_SEPARATOR: ClassVar[str] = ": "
         RESULT_LINE_PATTERN: ClassVar[t.RegexPattern] = c.PATTERN_EXAMPLE_RESULT_LINE_RE
         TEMPLATE_BY_KIND: ClassVar[Mapping[OutputKind, OutputTemplate]] = (
-            MappingProxyType(
-                {
-                    OutputKind.PASS: OutputTemplate.PASS,
-                    OutputKind.FAIL: OutputTemplate.FAIL,
-                    OutputKind.GENERATED: OutputTemplate.GENERATED,
-                },
-            )
+            MappingProxyType({
+                OutputKind.SUCCESS: OutputTemplate.SUCCESS,
+                OutputKind.FAIL: OutputTemplate.FAIL,
+                OutputKind.GENERATED: OutputTemplate.GENERATED,
+            })
         )

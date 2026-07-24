@@ -19,16 +19,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Annotated
 
+from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._typings.services import FlextTypesServices
 
-from .pydantic import FlextModelsPydantic as mp
-
 if TYPE_CHECKING:
-    from collections.abc import (
-        ItemsView,
-        KeysView,
-        ValuesView,
-    )
+    from collections.abc import ItemsView, KeysView, ValuesView
 
     from flext_core._typings.base import FlextTypingBase as t
 
@@ -49,8 +44,7 @@ class FlextModelsContainers:
         ]
 
         def __call__(
-            self,
-            value: FlextTypesServices.ScalarOrModel,
+            self, value: FlextTypesServices.ScalarOrModel
         ) -> FlextTypesServices.ScalarOrModel:
             return self.root(value)
 
@@ -66,11 +60,7 @@ class FlextModelsContainers:
         def __getitem__(self, key: str) -> FlextTypesServices.JsonPayload:
             return self.root[key]
 
-        def __setitem__(
-            self,
-            key: str,
-            value: FlextTypesServices.JsonPayload,
-        ) -> None:
+        def __setitem__(self, key: str, value: FlextTypesServices.JsonPayload) -> None:
             self.root[key] = value
 
         def __delitem__(self, key: str) -> None:
@@ -95,15 +85,12 @@ class FlextModelsContainers:
             return self.root.items()
 
         def get(
-            self,
-            key: str,
-            default: FlextTypesServices.JsonPayload | None = None,
+            self, key: str, default: FlextTypesServices.JsonPayload | None = None
         ) -> FlextTypesServices.JsonPayload | None:
             return self.root.get(key, default)
 
         def update(
-            self,
-            other: t.MappingKV[str, FlextTypesServices.JsonPayload],
+            self, other: t.MappingKV[str, FlextTypesServices.JsonPayload]
         ) -> None:
             self.root.update(other)
 
@@ -111,9 +98,7 @@ class FlextModelsContainers:
             self.root.clear()
 
         def pop(
-            self,
-            key: str,
-            *args: FlextTypesServices.JsonPayload,
+            self, key: str, *args: FlextTypesServices.JsonPayload
         ) -> FlextTypesServices.JsonPayload:
             return self.root.pop(key, *args)
 
@@ -121,9 +106,7 @@ class FlextModelsContainers:
             return self.root.popitem()
 
         def setdefault(
-            self,
-            key: str,
-            default: FlextTypesServices.JsonPayload,
+            self, key: str, default: FlextTypesServices.JsonPayload
         ) -> FlextTypesServices.JsonPayload:
             return self.root.setdefault(key, default)
 

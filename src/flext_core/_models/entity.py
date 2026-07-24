@@ -17,12 +17,11 @@ from typing import Annotated, override
 
 from pydantic import Field
 
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.domain_event import FlextModelsDomainEvent
 from flext_core._typings.base import FlextTypingBase as t
 from flext_core._utilities.domain import FlextUtilitiesDomain as u
 from flext_core._utilities.generators import FlextUtilitiesGenerators
-
-from .base import FlextModelsBase as m
-from .domain_event import FlextModelsDomainEvent
 
 
 class FlextModelsEntity:
@@ -35,12 +34,7 @@ class FlextModelsEntity:
     the forward-reference cycle that Pydantic cannot resolve.
     """
 
-    class Entity(
-        m.TimestampedModel,
-        m.IdentifiableMixin,
-        m.VersionableMixin,
-        Hashable,
-    ):
+    class Entity(m.TimestampedModel, m.IdentifiableMixin, m.VersionableMixin, Hashable):
         """Entity implementation - base class for domain entities with identity.
 
         Combines TimestampedModel, IdentifiableMixin, and VersionableMixin to provide:

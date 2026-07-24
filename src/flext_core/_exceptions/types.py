@@ -27,7 +27,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         field: str | None = None
         value: t.Scalar | None = None
         _default_error_code: ClassVar[str] = c.ErrorCode.VALIDATION_ERROR
-        _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
+        params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
             m.ValidationErrorParams
         )
 
@@ -37,28 +37,28 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         config_key: str | None = None
         config_source: str | None = None
         _default_error_code: ClassVar[str] = c.ErrorCode.CONFIGURATION_ERROR
-        _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
+        params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
             m.ConfigurationErrorParams
         )
 
-    class ConnectionError(FlextExceptionsBase.BaseError):
+    class FlextConnectionError(FlextExceptionsBase.BaseError):
         """Exception raised for network and connection failures."""
 
         host: str | None = None
         port: int | None = None
         timeout: t.Numeric | None = None
         _default_error_code: ClassVar[str] = c.ErrorCode.CONNECTION_ERROR
-        _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
+        params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
             m.ConnectionErrorParams
         )
 
-    class TimeoutError(FlextExceptionsBase.BaseError):
+    class FlextTimeoutError(FlextExceptionsBase.BaseError):
         """Exception raised for operation timeout errors."""
 
         timeout_seconds: t.Numeric | None = None
         operation: str | None = None
         _default_error_code: ClassVar[str] = c.ErrorCode.TIMEOUT_ERROR
-        _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = m.TimeoutErrorParams
+        params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = m.TimeoutErrorParams
 
     class AuthenticationError(FlextExceptionsBase.BaseError):
         """Exception raised for authentication failures."""
@@ -66,7 +66,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         auth_method: str | None = None
         user_id: str | None = None
         _default_error_code: ClassVar[str] = c.ErrorCode.AUTHENTICATION_ERROR
-        _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
+        params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
             m.AuthenticationErrorParams
         )
 
@@ -77,7 +77,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         resource: str | None = None
         permission: str | None = None
         _default_error_code: ClassVar[str] = c.ErrorCode.AUTHORIZATION_ERROR
-        _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
+        params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
             m.AuthorizationErrorParams
         )
 
@@ -87,8 +87,8 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         resource_type: str | None = None
         resource_id: str | None = None
         _default_error_code: ClassVar[str] = c.ErrorCode.NOT_FOUND_ERROR
-        _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = m.NotFoundErrorParams
-        _excluded_context_keys: ClassVar[set[str] | frozenset[str] | None] = frozenset({
+        params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = m.NotFoundErrorParams
+        excluded_context_keys: ClassVar[set[str] | frozenset[str] | None] = frozenset({
             c.ContextKey.CORRELATION_ID,
             c.FIELD_METADATA,
         })
@@ -100,7 +100,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         resource_id: str | None = None
         conflict_reason: str | None = None
         _default_error_code: ClassVar[str] = c.ErrorCode.ALREADY_EXISTS
-        _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = m.ConflictErrorParams
+        params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = m.ConflictErrorParams
 
     class RateLimitError(FlextExceptionsBase.BaseError):
         """Exception raised when rate limits are exceeded."""
@@ -109,9 +109,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         window_seconds: int | None = None
         retry_after: t.Numeric | None = None
         _default_error_code: ClassVar[str] = c.ErrorCode.OPERATION_ERROR
-        _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
-            m.RateLimitErrorParams
-        )
+        params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = m.RateLimitErrorParams
 
     class CircuitBreakerError(FlextExceptionsBase.BaseError):
         """Exception raised when circuit breaker is open."""
@@ -120,17 +118,17 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         failure_count: int | None = None
         reset_timeout: t.Numeric | None = None
         _default_error_code: ClassVar[str] = c.ErrorCode.EXTERNAL_SERVICE_ERROR
-        _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
+        params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
             m.CircuitBreakerErrorParams
         )
 
-    class TypeError(FlextExceptionsBase.BaseError):
+    class FlextTypeError(FlextExceptionsBase.BaseError):
         """Exception raised for type mismatch errors."""
 
         expected_type: type | None = None
         actual_type: type | None = None
 
-        _TYPE_MAP: ClassVar[dict[str, type]] = {
+        TYPE_MAP: ClassVar[dict[str, type]] = {
             "str": str,
             "int": int,
             "float": float,
@@ -153,7 +151,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
             correlation_id: str | None = None,
         ) -> None:
             """Initialize type error with type information."""
-            cls = FlextExceptionsTypes.TypeError
+            cls = FlextExceptionsTypes.FlextTypeError
             super().__init__(
                 message,
                 error_code=error_code,
@@ -176,7 +174,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
             if isinstance(v, type):
                 return v
             return (
-                FlextExceptionsTypes.TypeError._TYPE_MAP.get(v)
+                FlextExceptionsTypes.FlextTypeError.TYPE_MAP.get(v)
                 if isinstance(v, str)
                 else None
             )
@@ -187,9 +185,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         operation: str | None
         reason: str | None
         _default_error_code: ClassVar[str] = c.ErrorCode.OPERATION_ERROR
-        _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
-            m.OperationErrorParams
-        )
+        params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = m.OperationErrorParams
 
     class AttributeAccessError(FlextExceptionsBase.BaseError):
         """Exception raised for attribute access errors."""
@@ -197,7 +193,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         attribute_name: str | None
         attribute_context: t.JsonValue | None
         _default_error_code: ClassVar[str] = c.ErrorCode.ATTRIBUTE_ERROR
-        _params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
+        params_cls: ClassVar[t.ModelClass[mp.BaseModel] | None] = (
             m.AttributeAccessErrorParams
         )
 

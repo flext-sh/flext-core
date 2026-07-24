@@ -14,9 +14,7 @@ import logging
 from contextlib import suppress
 from typing import TYPE_CHECKING
 
-from flext_core import (
-    FlextConstants as c,
-)
+from flext_core import FlextConstants as c
 
 from .logging_context_part_01 import (
     FlextUtilitiesLoggingContext as FlextUtilitiesLoggingContextPart01,
@@ -37,8 +35,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingContextPart01):
             return FlextUtilitiesLoggingContext._format_caller_source_path(caller_frame)
         except c.EXC_ATTR_RUNTIME_TYPE as exc:
             FlextUtilitiesLoggingContext._report_internal_logging_failure(
-                c.LoggingOperation.GET_CALLER_SOURCE,
-                exc,
+                c.LoggingOperation.GET_CALLER_SOURCE, exc
             )
             return None
 
@@ -65,7 +62,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingContextPart01):
     def _report_internal_logging_failure(operation: str, exc: Exception) -> None:
         with suppress(*c.CONTEXT_EXCEPTIONS):
             FlextUtilitiesLoggingContext.structlog().fetch_logger(
-                c.LOGGER_NAME_FLEXT_CORE,
+                c.LOGGER_NAME_FLEXT_CORE
             ).warning(
                 c.LOG_INTERNAL_OPERATION_FAILED,
                 operation=operation,
@@ -80,8 +77,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingContextPart01):
             return logging.getLogger().getEffectiveLevel() <= logging.DEBUG
         except c.EXC_ATTR_RUNTIME_TYPE as exc:
             FlextUtilitiesLoggingContext._report_internal_logging_failure(
-                c.LoggingOperation.SHOULD_INCLUDE_STACK,
-                exc,
+                c.LoggingOperation.SHOULD_INCLUDE_STACK, exc
             )
             return True
 

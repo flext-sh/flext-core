@@ -61,10 +61,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart02):
         if FlextUtilitiesEnforcement._is_exempt(target):
             return
         report = FlextUtilitiesEnforcement.check(target, layer=layer)
-        FlextUtilitiesEnforcement.emit(
-            report,
-            mode=c.ENFORCEMENT_NAMESPACE_MODE,
-        )
+        FlextUtilitiesEnforcement.emit(report, mode=c.ENFORCEMENT_NAMESPACE_MODE)
 
 
 __all__: list[str] = ["FlextUtilitiesEnforcement"]

@@ -19,10 +19,7 @@ class FlextUtilitiesConversion:
 
     @staticmethod
     def join(
-        values: t.StrSequence,
-        *,
-        separator: str = " ",
-        case: str | None = None,
+        values: t.StrSequence, *, separator: str = " ", case: str | None = None
     ) -> str:
         """Join string values with separator and optional case conversion."""
         if not values:
@@ -52,9 +49,7 @@ class FlextUtilitiesConversion:
         if isinstance(value, str):
             return value
         try:
-            float_value = t.float_adapter().validate_python(
-                value,
-            )
+            float_value = t.float_adapter().validate_python(value)
             if float_value.is_integer():
                 return str(int(float_value))
             return f"{float_value:.2f}"
@@ -63,9 +58,7 @@ class FlextUtilitiesConversion:
 
     @staticmethod
     def to_str_list(
-        value: t.StrictValue | None,
-        *,
-        default: t.StrSequence | None = None,
+        value: t.StrictValue | None, *, default: t.StrSequence | None = None
     ) -> t.StrSequence:
         """Convert value to list of strings."""
         if value is None:

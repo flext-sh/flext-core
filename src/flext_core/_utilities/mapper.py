@@ -10,17 +10,16 @@ from collections.abc import Callable, Mapping, Sequence
 from itertools import starmap
 from typing import TYPE_CHECKING
 
+from flext_core import m, t
 from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._utilities.collection import FlextUtilitiesCollection
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 from flext_core._utilities.mapper_extract import FlextUtilitiesMapperExtract
-from flext_core.models import m
 from flext_core.result import r
 from flext_core.runtime import FlextRuntime
-from flext_core.typings import t
 
 if TYPE_CHECKING:
-    from flext_core.protocols import p
+    from flext_core import p
 
 
 class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
@@ -54,8 +53,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
 
     @staticmethod
     def _deep_eq_values(
-        val_a: t.JsonPayload | t.JsonValue,
-        val_b: t.JsonPayload | t.JsonValue,
+        val_a: t.JsonPayload | t.JsonValue, val_b: t.JsonPayload | t.JsonValue
     ) -> bool:
         """Recursive deep equality for any two nested items."""
         if val_a is val_b:
@@ -71,9 +69,8 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
         if isinstance(val_a, list) and isinstance(val_b, list):
             return len(val_a) == len(val_b) and all(
                 starmap(
-                    FlextUtilitiesMapper._deep_eq_values,
-                    zip(val_a, val_b, strict=True),
-                ),
+                    FlextUtilitiesMapper._deep_eq_values, zip(val_a, val_b, strict=True)
+                )
             )
         return val_a == val_b
 
@@ -93,14 +90,10 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
         )
 
     @staticmethod
-    def prop(
-        key: str,
-    ) -> Callable[[t.ConfigModelInput], t.JsonPayload | t.JsonValue]:
+    def prop(key: str) -> Callable[[t.ConfigModelInput], t.JsonPayload | t.JsonValue]:
         """Return an accessor function that extracts the named property from an object."""
 
-        def accessor(
-            obj: t.ConfigModelInput,
-        ) -> t.JsonPayload | t.JsonValue:
+        def accessor(obj: t.ConfigModelInput) -> t.JsonPayload | t.JsonValue:
             result = FlextUtilitiesMapper._get_raw(obj, key)
             return result if result is not None else ""
 
@@ -138,14 +131,13 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
                 step = {k: v for k, v in step.items() if k not in exclude_keys}
             if strip_none:
                 step = dict(
-                    FlextUtilitiesCollection.filter(step, lambda v: v is not None),
+                    FlextUtilitiesCollection.filter(step, lambda v: v is not None)
                 )
             if strip_empty:
                 step = dict(
                     FlextUtilitiesCollection.filter(
-                        step,
-                        lambda v: not FlextUtilitiesGuardsTypeCore.empty_value(v),
-                    ),
+                        step, lambda v: not FlextUtilitiesGuardsTypeCore.empty_value(v)
+                    )
                 )
             return step
 
@@ -158,10 +150,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
                 if isinstance(transform_result.exception, Exception)
                 else transform_result.error
             )
-            return r[t.JsonMapping].fail_op(
-                "transform",
-                failure_reason,
-            )
+            return r[t.JsonMapping].fail_op("transform", failure_reason)
         return transform_result
 
 

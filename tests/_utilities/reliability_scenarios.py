@@ -19,10 +19,10 @@ class TestsFlextUtilitiesReliabilityScenariosMixin:
         """Centralized reliability scenarios - single source of truth."""
 
         _RETRY_BASE_SETTINGS: ClassVar[m.ConfigMap] = m.ConfigMap(
-            root={"max_retries": 3, "backoff_type": "constant", "backoff_ms": 10},
+            root={"max_retries": 3, "backoff_type": "constant", "backoff_ms": 10}
         )
         _RETRY_EXHAUSTED_SETTINGS: ClassVar[m.ConfigMap] = m.ConfigMap(
-            root={"max_retries": 2, "backoff_type": "constant", "backoff_ms": 10},
+            root={"max_retries": 2, "backoff_type": "constant", "backoff_ms": 10}
         )
 
         RETRY_SCENARIOS: ClassVar[Sequence[m.Tests.ReliabilityScenario]] = [

@@ -5,14 +5,7 @@ from __future__ import annotations
 import dis
 import inspect
 import types as _types_mod
-from typing import (
-    TYPE_CHECKING,
-    Annotated,
-    ClassVar,
-    ForwardRef,
-    get_args,
-    get_origin,
-)
+from typing import TYPE_CHECKING, Annotated, ClassVar, ForwardRef, get_args, get_origin
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 
@@ -21,9 +14,7 @@ from .helpers_part_01 import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        Iterator,
-    )
+    from collections.abc import Iterator
 
     from flext_core._typings.base import FlextTypingBase as t
 
@@ -145,8 +136,7 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart01):
 
     @staticmethod
     def is_pass_through_bytecode(
-        fn: _types_mod.FunctionType,
-        param_names: t.StrSequence,
+        fn: _types_mod.FunctionType, param_names: t.StrSequence
     ) -> bool:
         instructions = [
             ins
@@ -177,8 +167,7 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart01):
 
     @staticmethod
     def has_call_to_global(
-        fn: _types_mod.FunctionType,
-        target_name: str,
+        fn: _types_mod.FunctionType, target_name: str
     ) -> dis.Instruction | None:
         for ins in dis.get_instructions(fn):
             if ins.opname == "LOAD_GLOBAL" and ins.argval == target_name:

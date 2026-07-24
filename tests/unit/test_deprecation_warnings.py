@@ -9,6 +9,7 @@ no internal collaborator is spied on.
 from __future__ import annotations
 
 import pytest
+
 from flext_tests import r
 
 
@@ -50,10 +51,7 @@ class TestsFlextCoreDeprecationWarnings:
 
     @pytest.mark.parametrize(
         ("result", "default", "expected"),
-        [
-            (r[int].ok(7), 99, 7),
-            (r[int].fail("nope"), 99, 99),
-        ],
+        [(r[int].ok(7), 99, 7), (r[int].fail("nope"), 99, 99)],
     )
     def test_unwrap_or_returns_value_or_default(
         self, result: r[int], default: int, expected: int

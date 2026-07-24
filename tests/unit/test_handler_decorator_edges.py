@@ -16,8 +16,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, override
 
 import pytest
-from flext_tests import h, r
+from dataclasses import dataclass
 
+from flext_tests import h, r
 from tests.base import s
 
 if TYPE_CHECKING:
@@ -63,9 +64,10 @@ class TestsFlextHandlerDecoratorEdges:
         _, config = h.Discovery.scan_class(Service)[0]
 
         # Assert: defaults surfaced through the public config
+        dumped = config.model_dump()
         assert config.priority == 0
-        assert config.timeout == 30
-        assert config.middleware == []
+        assert dumped["timeout"] == 30
+        assert dumped["middleware"] == ()
 
     def test_none_timeout_is_preserved(self) -> None:
         # Arrange
@@ -82,7 +84,7 @@ class TestsFlextHandlerDecoratorEdges:
         _, config = h.Discovery.scan_class(Service)[0]
 
         # Assert
-        assert config.timeout is None
+        assert config.model_dump()["timeout"] is None
 
     @pytest.mark.parametrize("timeout", [0.5, 5.0, 120.0])
     def test_explicit_timeout_is_preserved(self, timeout: float) -> None:
@@ -100,7 +102,7 @@ class TestsFlextHandlerDecoratorEdges:
         _, config = h.Discovery.scan_class(Service)[0]
 
         # Assert
-        assert config.timeout == timeout
+        assert config.model_dump()["timeout"] == timeout
 
     def test_stacked_decorators_innermost_wins(self) -> None:
         # Arrange: the innermost decorator runs first and takes precedence.
@@ -193,9 +195,9 @@ class TestsFlextHandlerDecoratorEdges:
 
     def test_decorated_method_stays_callable_and_returns_success(self) -> None:
         # Arrange: decoration must not alter the method's runtime behavior.
+        @dataclass
         class CreateCommand:
-            def __init__(self, name: str) -> None:
-                self.name = name
+            name: str
 
         class Service:
             @h.handler(command=CreateCommand, priority=3)
@@ -211,9 +213,9 @@ class TestsFlextHandlerDecoratorEdges:
 
     def test_service_integration_discovers_handler_via_scan_class(self) -> None:
         # Arrange: a real FlextService subclass with a decorated handler.
+        @dataclass
         class CreateCommand:
-            def __init__(self, name: str) -> None:
-                self.name = name
+            name: str
 
         class Service(s[str]):
             @h.handler(command=CreateCommand, priority=10)

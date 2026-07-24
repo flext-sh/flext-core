@@ -27,9 +27,7 @@ class FlextProtocolsContainer(FlextProtocolsContainerPart02):
             ...
 
         def initialize_registrations(
-            self,
-            *,
-            registration: m.ServiceRegistrationSpec | None = None,
+            self, *, registration: m.ServiceRegistrationSpec | None = None
         ) -> None:
             """Initialize explicit registrations and runtime-bound state."""
             ...
@@ -49,7 +47,7 @@ class FlextProtocolsContainer(FlextProtocolsContainerPart02):
 
     @runtime_checkable
     class ContainerType[
-        TContainer: FlextProtocolsContainerPart02.Container = FlextProtocolsContainerPart02.Container,
+        TContainer: FlextProtocolsContainerPart02.Container = FlextProtocolsContainerPart02.Container
     ](Protocol):
         """Protocol for concrete container classes exposing canonical factories."""
 

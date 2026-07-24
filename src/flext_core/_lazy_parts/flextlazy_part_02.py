@@ -16,9 +16,7 @@ from .flextlazy_part_01 import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        Sequence,
-    )
+    from collections.abc import Sequence
 
 type ModuleGlobalValue = FlextTypesLazy.ModuleGlobalValue
 type ModuleGlobals = FlextTypesLazy.ModuleGlobals
@@ -27,13 +25,7 @@ type ModuleGlobals = FlextTypesLazy.ModuleGlobals
 class FlextLazyAttribute:
     """Descriptor that resolves a class attribute through ``FlextLazy``."""
 
-    __slots__ = (
-        "_lazy",
-        "_lazy_imports",
-        "_module_globals",
-        "_module_name",
-        "_name",
-    )
+    __slots__ = ("_lazy", "_lazy_imports", "_module_globals", "_module_name", "_name")
 
     def __init__(
         self,
@@ -50,17 +42,12 @@ class FlextLazyAttribute:
         self._module_name = module_name
 
     def __get__(
-        self,
-        instance: ModuleGlobalValue | None,
-        owner: type | None = None,
+        self, instance: ModuleGlobalValue | None, owner: type | None = None
     ) -> ModuleGlobalValue:
         """Resolve and cache the target symbol through the owning lazy container."""
         _ = instance, owner
         return self._lazy.get(
-            self._name,
-            self._lazy_imports,
-            self._module_globals,
-            self._module_name,
+            self._name, self._lazy_imports, self._module_globals, self._module_name
         )
 
 
@@ -78,13 +65,7 @@ class FlextLazy(FlextLazyPart01):
         module_name: str,
     ) -> FlextLazyAttribute:
         """Return a descriptor for class-namespace lazy attributes."""
-        return FlextLazyAttribute(
-            self,
-            name,
-            lazy_imports,
-            module_globals,
-            module_name,
-        )
+        return FlextLazyAttribute(self, name, lazy_imports, module_globals, module_name)
 
     def get(
         self,
@@ -126,11 +107,7 @@ class FlextLazy(FlextLazyPart01):
             module_globals[name] = value
         return value
 
-    def cleanup(
-        self,
-        module_name: str,
-        lazy_imports: LazyImportMap,
-    ) -> None:
+    def cleanup(self, module_name: str, lazy_imports: LazyImportMap) -> None:
         """Remove eager child module attrs."""
         current = sys.modules.get(module_name)
         if current is None:
@@ -202,10 +179,7 @@ class FlextLazy(FlextLazyPart01):
             names = tuple(dict.fromkeys((*normalized, *all_exports)))
 
         module_globals["__getattr__"] = lambda name: self.get(
-            name,
-            normalized,
-            module_globals,
-            module_name,
+            name, normalized, module_globals, module_name
         )
         module_globals["__dir__"] = lambda: list(names)
         if publish_all:

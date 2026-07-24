@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, cast
 
 import pytest
 
-from flext_core import FlextMroViolation, FlextSmellViolation
+from flext_core.exceptions import FlextMroViolation, FlextSmellViolation
 from tests.utilities import u
 
 if TYPE_CHECKING:
@@ -28,13 +28,15 @@ if TYPE_CHECKING:
 class TestsFlextCoreEnforcementWarningVisibility:
     _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-    @pytest.mark.parametrize(
-        "category",
-        [FlextMroViolation, FlextSmellViolation],
-    )
+    # test_real_filterwarnings_keep_mro_violations_visible spawns a nested
+    # pytest via u.Cli.run_raw that cold-imports flext_core: real work ~8s,
+    # exceeding the global --timeout=10 under full-suite CPU contention.
+    # Class-level ceiling override, not a suppression of a hang (profiled ~8s).
+    pytestmark = pytest.mark.timeout(60)
+
+    @pytest.mark.parametrize("category", [FlextMroViolation, FlextSmellViolation])
     def test_enforcement_categories_are_userwarnings(
-        self,
-        category: type[FlextMroViolation],
+        self, category: type[FlextMroViolation]
     ) -> None:
         # Arrange / Act / Assert: default warning filters surface UserWarning,
         # so a caller sees enforcement violations without extra configuration.
@@ -45,21 +47,15 @@ class TestsFlextCoreEnforcementWarningVisibility:
         # the more specific smell category.
         assert issubclass(FlextSmellViolation, FlextMroViolation)
 
-    @pytest.mark.parametrize(
-        "category",
-        [FlextMroViolation, FlextSmellViolation],
-    )
+    @pytest.mark.parametrize("category", [FlextMroViolation, FlextSmellViolation])
     def test_emitted_violation_is_observable_with_message(
-        self,
-        category: type[FlextMroViolation],
+        self, category: type[FlextMroViolation]
     ) -> None:
         # Act: emit the violation the way the enforcement engine does.
         # Assert: pytest.warns observes the exact category and its message.
         with pytest.warns(category, match="ENFORCE-probe") as record:
             warnings.warn(
-                "ENFORCE-probe: runtime violation visibility",
-                category,
-                stacklevel=2,
+                "ENFORCE-probe: runtime violation visibility", category, stacklevel=2
             )
 
         assert len(record) == 1
@@ -70,20 +66,17 @@ class TestsFlextCoreEnforcementWarningVisibility:
         # since callers filter on FlextMroViolation broadly.
         with pytest.warns(FlextMroViolation) as record:
             warnings.warn(
-                "ENFORCE-probe: smell via parent",
-                FlextSmellViolation,
-                stacklevel=2,
+                "ENFORCE-probe: smell via parent", FlextSmellViolation, stacklevel=2
             )
 
         assert record[0].category is FlextSmellViolation
 
     def test_real_filterwarnings_keep_mro_violations_visible(
-        self,
-        tmp_path: Path,
+        self, tmp_path: Path
     ) -> None:
         # Arrange: reconstruct the shipped pytest filterwarnings config so the
         # test fails if a future edit silences enforcement warnings again.
-        payload = u.load_pyproject_toml(self._PROJECT_ROOT)
+        payload = u.config_load(self._PROJECT_ROOT / "pyproject.toml").unwrap()
         tool = cast("t.JsonMapping", payload.get("tool", {}))
         pytest_tool = cast("t.JsonMapping", tool.get("pytest", {}))
         ini_options = cast("t.JsonMapping", pytest_tool.get("ini_options", {}))
@@ -91,15 +84,14 @@ class TestsFlextCoreEnforcementWarningVisibility:
 
         filter_lines = "\n".join(f"    {item}" for item in filters)
         (tmp_path / "pytest.ini").write_text(
-            f"[pytest]\nfilterwarnings =\n{filter_lines}\n",
-            encoding="utf-8",
+            f"[pytest]\nfilterwarnings =\n{filter_lines}\n", encoding="utf-8"
         )
         (tmp_path / "test_probe.py").write_text(
             textwrap.dedent(
                 """
                 import warnings
 
-                from flext_core import FlextMroViolation
+                from flext_core.exceptions import FlextMroViolation
 
 
                 def test_probe() -> None:
@@ -108,7 +100,7 @@ class TestsFlextCoreEnforcementWarningVisibility:
                         FlextMroViolation,
                         stacklevel=2,
                     )
-                """,
+                """
             ).strip()
             + "\n",
             encoding="utf-8",

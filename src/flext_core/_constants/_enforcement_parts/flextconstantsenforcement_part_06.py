@@ -14,9 +14,7 @@ if TYPE_CHECKING:
 class FlextConstantsEnforcementTargets:
     """Target sets and external library ownership constants."""
 
-    ENFORCEMENT_RECURSIVE_TAGS: Final[frozenset[str]] = frozenset({
-        "const_mutable",
-    })
+    ENFORCEMENT_RECURSIVE_TAGS: Final[frozenset[str]] = frozenset({"const_mutable"})
     """Tags that must recurse into inner namespace classes during scanning."""
 
     ENFORCEMENT_NAMESPACE_TARGET_TAGS: Final[frozenset[str]] = frozenset({

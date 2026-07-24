@@ -26,21 +26,11 @@ def _adapt_dispatcher_output(
     result: p.Result[t.JsonPayload]
     if raw_output is None:
         result = dispatch_result.fail_op(
-            "validate handler return payload",
-            c.ERR_HANDLER_RETURNED_NONE,
+            "validate handler return payload", c.ERR_HANDLER_RETURNED_NONE
         )
     elif isinstance(raw_output, p.ResultLike):
         if raw_output.failure:
-            error_data_value = raw_output.error_data
-            result = dispatch_result.fail(
-                raw_output.error or c.ERR_HANDLER_FAILED,
-                error_code=raw_output.error_code,
-                error_data=(
-                    error_data_value
-                    if FlextUtilitiesGuardsTypeModel.pydantic_model(error_data_value)
-                    else None
-                ),
-            )
+            result = dispatch_result.from_failure(raw_output)
         else:
             output_value = raw_output.value
             if FlextUtilitiesGuardsTypeCore.container(output_value):
@@ -55,7 +45,7 @@ def _adapt_dispatcher_output(
                     c.ERR_HANDLER_RETURNED_NON_CONTAINER_SUCCESS_RESULT,
                 )
     elif FlextUtilitiesGuardsTypeCore.container(
-        raw_output,
+        raw_output
     ) or FlextUtilitiesGuardsTypeModel.pydantic_model(raw_output):
         result = dispatch_result.ok(raw_output)
     else:
@@ -75,12 +65,11 @@ def _normalize_dispatcher_output(
     if raw_candidate is None:
         return None
     if FlextUtilitiesGuardsTypeCore.container(
-        raw_candidate,
+        raw_candidate
     ) or FlextUtilitiesGuardsTypeModel.pydantic_model(raw_candidate):
         return raw_candidate
     return dispatch_result.fail_op(
-        "validate handler return payload",
-        c.ERR_HANDLER_RETURNED_NON_CONTAINER_VALUE,
+        "validate handler return payload", c.ERR_HANDLER_RETURNED_NON_CONTAINER_VALUE
     )
 
 

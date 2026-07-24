@@ -73,19 +73,14 @@ class FlextUtilitiesConfig:
             op_name="config_load",
         )
         if parsed.failure:
-            return r[t.JsonMapping].fail(
-                parsed.error or f"{c.ERR_CONFIG_PARSE_FAILED}: {path}"
-            )
+            return r[t.JsonMapping].from_failure(parsed)
         payload = parsed.value
         if not g.mapping(payload):
             return r[t.JsonMapping].fail(f"{c.ERR_CONFIG_NOT_MAPPING}: {path}")
         return r[t.JsonMapping].ok(payload)
 
     @staticmethod
-    def config_merge(
-        base: t.JsonMapping,
-        override: t.JsonMapping,
-    ) -> t.JsonDict:
+    def config_merge(base: t.JsonMapping, override: t.JsonMapping) -> t.JsonDict:
         """Deep-merge ``override`` onto ``base``, returning a new mapping."""
         merged: dict[str, t.JsonValue] = dict(base)
         for key, value in override.items():
@@ -100,10 +95,7 @@ class FlextUtilitiesConfig:
         return merged
 
     @staticmethod
-    def config_env_override(
-        value: t.JsonValue,
-        env: Mapping[str, str],
-    ) -> t.JsonValue:
+    def config_env_override(value: t.JsonValue, env: Mapping[str, str]) -> t.JsonValue:
         """Expand ``${VAR}`` / ``${VAR:-default}`` placeholders in string leaves.
 
         Recurses through mappings and sequences; non-string leaves pass through

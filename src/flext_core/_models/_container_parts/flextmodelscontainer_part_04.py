@@ -14,12 +14,12 @@ from __future__ import annotations
 
 from typing import Annotated
 
+from flext_core import FlextTypes as t
 from flext_core._models._container_parts.flextmodelscontainer_part_03 import (
     FlextModelsContainer as FlextModelsContainerPart03,
 )
 from flext_core._models.base import FlextModelsBase as m
 from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core.typings import FlextTypes as t
 
 
 class FlextModelsContainer(FlextModelsContainerPart03):
@@ -36,9 +36,7 @@ class FlextModelsContainer(FlextModelsContainerPart03):
 
         Examples:
             >>> settings = mc.FactoryDecoratorConfig(
-            ...     name="database_service",
-            ...     singleton=True,
-            ...     lazy=False,
+            ...     name="database_service", singleton=True, lazy=False
             ... )
             >>> settings.name
             'database_service'
@@ -50,22 +48,17 @@ class FlextModelsContainer(FlextModelsContainerPart03):
         name: Annotated[
             t.NonEmptyStr,
             mp.Field(
-                ...,
-                description="Name to register this factory under in the container",
+                ..., description="Name to register this factory under in the container"
             ),
         ]
         singleton: Annotated[
             bool,
-            mp.Field(
-                False,
-                description="Whether factory creates singleton instances",
-            ),
+            mp.Field(False, description="Whether factory creates singleton instances"),
         ] = False
         lazy: Annotated[
             bool,
             mp.Field(
-                True,
-                description="Whether to defer factory invocation until first use",
+                True, description="Whether to defer factory invocation until first use"
             ),
         ] = True
 

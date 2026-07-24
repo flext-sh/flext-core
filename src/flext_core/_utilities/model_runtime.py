@@ -15,9 +15,84 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
     """Runtime DSL: dispatcher, registry, and service-runtime construction."""
 
     @staticmethod
+    def normalize_service_registrations(
+        registrations: t.MappingKV[str, m.ServiceRegistration | t.RegisterableService]
+        | None,
+    ) -> t.MappingKV[str, m.ServiceRegistration] | None:
+        """Normalize service values into service registration records."""
+        return (
+            None
+            if registrations is None
+            else {
+                name: (
+                    value
+                    if isinstance(value, m.ServiceRegistration)
+                    else m.ServiceRegistration(
+                        name=name, service=value, service_type=value.__class__.__name__
+                    )
+                )
+                for name, value in registrations.items()
+            }
+        )
+
+    @staticmethod
+    def normalize_factory_registrations(
+        registrations: t.MappingKV[str, m.FactoryRegistration | t.FactoryCallable]
+        | None,
+    ) -> t.MappingKV[str, m.FactoryRegistration] | None:
+        """Normalize factory callables into factory registration records."""
+        return (
+            None
+            if registrations is None
+            else {
+                name: (
+                    value
+                    if isinstance(value, m.FactoryRegistration)
+                    else m.FactoryRegistration(name=name, factory=value)
+                )
+                for name, value in registrations.items()
+            }
+        )
+
+    @staticmethod
+    def normalize_resource_registrations(
+        registrations: t.MappingKV[str, m.ResourceRegistration | t.ResourceCallable]
+        | None,
+    ) -> t.MappingKV[str, m.ResourceRegistration] | None:
+        """Normalize resource callables into resource registration records."""
+        return (
+            None
+            if registrations is None
+            else {
+                name: (
+                    value
+                    if isinstance(value, m.ResourceRegistration)
+                    else m.ResourceRegistration(name=name, factory=value)
+                )
+                for name, value in registrations.items()
+            }
+        )
+
+    @classmethod
+    def normalize_service_registration_spec(
+        cls, registration: m.ServiceRegistrationSpec
+    ) -> m.ServiceRegistrationSpec:
+        """Normalize declarative bootstrap values into registration records."""
+        return registration.model_copy(
+            update={
+                "services": cls.normalize_service_registrations(registration.services),
+                "factories": cls.normalize_factory_registrations(
+                    registration.factories
+                ),
+                "resources": cls.normalize_resource_registrations(
+                    registration.resources
+                ),
+            }
+        )
+
+    @staticmethod
     def _resolve_runtime_dispatcher(
-        runtime_options: m.RuntimeBootstrapOptions,
-        runtime_container: p.Container,
+        runtime_options: m.RuntimeBootstrapOptions, runtime_container: p.Container
     ) -> p.Dispatcher | None:
         """Resolve the dispatcher from explicit options or the built container."""
         explicit_dispatcher = runtime_options.dispatcher
@@ -59,9 +134,7 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
 
     @classmethod
     def _resolve_runtime_registry(
-        cls,
-        runtime_options: m.RuntimeBootstrapOptions,
-        runtime: m.ServiceRuntime,
+        cls, runtime_options: m.RuntimeBootstrapOptions, runtime: m.ServiceRuntime
     ) -> p.Registry:
         """Resolve the registry from explicit options or the shared runtime DSL."""
         explicit_registry = runtime_options.registry
@@ -71,8 +144,7 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
 
     @classmethod
     def _resolve_runtime_settings(
-        cls,
-        runtime_options: m.RuntimeBootstrapOptions,
+        cls, runtime_options: m.RuntimeBootstrapOptions
     ) -> p.Settings:
         """Resolve the runtime settings instance + apply overrides."""
         settings_instance = (
@@ -115,24 +187,24 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
         shared_container: p.Container = container_type.shared()
         runtime_container: p.Container = shared_container.scope(
             subproject=runtime_options.subproject,
-            registration=m.ServiceRegistrationSpec.model_validate({
-                "settings": runtime_settings,
-                "context": runtime_context,
-                "services": bootstrap_services,
-                "factories": runtime_options.factories,
-                "resources": runtime_options.resources,
-            }),
+            registration=cls.normalize_service_registration_spec(
+                m.ServiceRegistrationSpec(
+                    settings=runtime_settings,
+                    context=runtime_context,
+                    services=bootstrap_services,
+                    factories=runtime_options.factories,
+                    resources=runtime_options.resources,
+                )
+            ),
         )
         normalized_container_overrides = cls._normalize_runtime_override_mapping(
-            runtime_options.container_overrides,
+            runtime_options.container_overrides
         )
         if normalized_container_overrides:
             runtime_container.apply(normalized_container_overrides)
         if wire_modules or wire_packages or wire_classes:
             runtime_container.wire(
-                modules=wire_modules,
-                packages=wire_packages,
-                classes=wire_classes,
+                modules=wire_modules, packages=wire_packages, classes=wire_classes
             )
         return runtime_container
 
@@ -155,9 +227,7 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
             else context_type.create()
         )
         runtime_container = cls._build_runtime_container(
-            runtime_options,
-            runtime_settings,
-            runtime_context,
+            runtime_options, runtime_settings, runtime_context
         )
         runtime_container_context = getattr(runtime_container, "context", None)
         resolved_context = (
@@ -166,8 +236,7 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
             else runtime_context
         )
         runtime_dispatcher = cls._resolve_runtime_dispatcher(
-            runtime_options,
-            runtime_container,
+            runtime_options, runtime_container
         )
         service_runtime = m.ServiceRuntime(
             settings=runtime_settings,
@@ -176,11 +245,10 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
             dispatcher=runtime_dispatcher,
         )
         runtime_registry = cls._resolve_runtime_registry(
-            runtime_options,
-            service_runtime,
+            runtime_options, service_runtime
         )
         resolved_runtime: m.ServiceRuntime = service_runtime.model_copy(
-            update={"registry": runtime_registry},
+            update={"registry": runtime_registry}
         )
         return resolved_runtime
 

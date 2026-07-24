@@ -40,15 +40,12 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
     ) -> TypeGuard[ts.RegisterableService]:
         """Narrow runtime service values accepted by the dependency container."""
         return callable(value) or isinstance(
-            value,
-            (pl.Logger, ps.Settings, pcx.Context, ph.Dispatcher),
+            value, (pl.Logger, ps.Settings, pcx.Context, ph.Dispatcher)
         )
 
     @staticmethod
     def _normalize_payload_item(
-        item: pb.AttributeProbe,
-        *,
-        container_kind: Literal["mapping", "sequence"],
+        item: pb.AttributeProbe, *, container_kind: Literal["mapping", "sequence"]
     ) -> ts.JsonPayload:
         """Normalize one container item to its canonical payload form."""
         normalized_item: ts.JsonPayload
@@ -86,27 +83,22 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
             return mc.ConfigMap(
                 root={
                     key_s: FlextRuntimeContainer._normalize_payload_item(
-                        item,
-                        container_kind="mapping",
+                        item, container_kind="mapping"
                     )
                     for key_s, item in value.items()
-                },
+                }
             )
         if isinstance(value, Sequence) and not isinstance(value, tb.STR_BINARY_TYPES):
             return mc.ObjectList(
                 root=[
                     FlextRuntimeContainer._normalize_payload_item(
-                        item,
-                        container_kind="sequence",
+                        item, container_kind="sequence"
                     )
                     for item in value
-                ],
+                ]
             )
         if (
-            isinstance(
-                value,
-                (str, int, float, bool, bytes, datetime, Path, BaseModel),
-            )
+            isinstance(value, (str, int, float, bool, bytes, datetime, Path, BaseModel))
             or value is None
         ):
             return value
@@ -114,15 +106,12 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
             return value
         raise ValueError(
             ce.ERR_RUNTIME_SERVICE_MUST_BE_REGISTERABLE.format(
-                type_name=type(value).__name__,
-            ),
+                type_name=type(value).__name__
+            )
         )
 
     @staticmethod
-    def validate_callable_input[TCallable](
-        value: TCallable,
-        subject: str,
-    ) -> TCallable:
+    def validate_callable_input[TCallable](value: TCallable, subject: str) -> TCallable:
         """Validate that a single runtime input is callable."""
         if not callable(value):
             msg = f"{subject} must be callable, got {value.__class__.__name__}"
@@ -144,16 +133,13 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
             normalized_data = ""
         elif isinstance(val, (mc.ConfigMap, mc.Dict)):
             normalized_data = FlextRuntimeContainer._normalize_dict_entries(
-                list(val.root.items()),
+                list(val.root.items())
             )
         elif isinstance(val, mc.ObjectList):
             normalized_data = list(
-                tta.json_list_adapter().validate_python(
-                    [
-                        FlextRuntimeContainer.normalize_to_json_value(v)
-                        for v in val.root
-                    ],
-                ),
+                tta.json_list_adapter().validate_python([
+                    FlextRuntimeContainer.normalize_to_json_value(v) for v in val.root
+                ])
             )
         elif isinstance(val, BaseModel):
             normalized_data = val
@@ -163,16 +149,14 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
             normalized_data = FlextRuntimeContainer.normalize_to_json_value(val)
         elif isinstance(val, Mapping):
             normalized_data = FlextRuntimeContainer._normalize_dict_entries(
-                list(val.items()),
+                list(val.items())
             )
         elif isinstance(val, Sequence) and not isinstance(val, tb.STR_BYTES_TYPES):
             normalized_data = list(
-                tta.json_list_adapter().validate_python(
-                    [
-                        FlextRuntimeContainer.normalize_to_json_value(item_raw)
-                        for item_raw in val
-                    ],
-                ),
+                tta.json_list_adapter().validate_python([
+                    FlextRuntimeContainer.normalize_to_json_value(item_raw)
+                    for item_raw in val
+                ])
             )
         else:
             normalized_data = str(val)

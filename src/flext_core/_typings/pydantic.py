@@ -117,7 +117,11 @@ class FlextTypesPydantic:
     # emitted from aliases that flow through this class namespace.
     type JsonValue = pydantic.JsonValue
     type BaseModelType = pydantic.BaseModel
-    BaseModel = pydantic.BaseModel
+    # NOTE (multi-agent): PEP 695 alias (not a bare class-scope assignment).
+    # A bare ``BaseModel = pydantic.BaseModel`` makes mypy treat the facade
+    # attribute as an instance variable, which breaks isinstance narrowing
+    # for every union containing ``t.BaseModel`` (mypy [unreachable]).
+    type BaseModel = pydantic.BaseModel
     type TypeAdapterType[T] = pydantic.TypeAdapter[T]
     TypeAdapter = pydantic.TypeAdapter
     ConfigDict = pydantic.ConfigDict

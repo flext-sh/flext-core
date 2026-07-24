@@ -14,8 +14,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
-    from flext_core.models import FlextModels as m
-    from flext_core.typings import FlextTypes as t
+    from flext_core import FlextModels as m, FlextTypes as t
 from flext_core._protocols._result_parts.flextprotocolsresult_part_03 import (
     FlextProtocolsResult as FlextProtocolsResultPart03,
 )
@@ -30,9 +29,7 @@ class FlextProtocolsResult(FlextProtocolsResultPart03):
         """
 
         def model_dump(
-            self,
-            *,
-            mode: str = "python",
+            self, *, mode: str = "python"
         ) -> t.MappingKV[str, t.JsonPayload | None]:
             """Dump model data to a mapping that runtime helpers can normalize."""
             ...

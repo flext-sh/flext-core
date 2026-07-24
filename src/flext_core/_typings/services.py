@@ -6,11 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Callable,
-    MutableMapping,
-    Set as AbstractSet,
-)
+from collections.abc import Callable, MutableMapping, Set as AbstractSet
 from datetime import date, time, tzinfo
 from enum import Enum
 from pathlib import Path
@@ -75,13 +71,7 @@ class FlextTypesServices:
         | ph.Dispatcher
     )
     type UserOverridesMapping = t.MappingKV[str, JsonPayload]
-    type RegisterableService = (
-        ServiceValue
-        | Callable[
-            ...,
-            ServiceValue,
-        ]
-    )
+    type RegisterableService = ServiceValue | Callable[..., ServiceValue]
     type FactoryCallable = Callable[[], RegisterableService]
     type ResourceCallable = Callable[[], RegisterableService]
     type ModelInput = tp.JsonValue | prt.HasModelDump | t.MappingKV[str, JsonPayload]
@@ -94,8 +84,7 @@ class FlextTypesServices:
     type ContextHookMap = t.MappingKV[str, t.SequenceOf[ContextHookCallable]]
 
     type HandlerCallable = Callable[
-        ...,
-        tp.BaseModelType | prt.ResultLike[ScalarOrModel],
+        ..., tp.BaseModelType | prt.ResultLike[ScalarOrModel]
     ]
     type DispatchableHandler = (
         tp.BaseModelType
@@ -104,17 +93,14 @@ class FlextTypesServices:
         | ph.Execute
         | ph.AutoDiscoverableHandler
         | Callable[
-            ...,
-            tp.BaseModelType | JsonPayload | prt.ResultLike[JsonPayload] | None,
+            ..., tp.BaseModelType | JsonPayload | prt.ResultLike[JsonPayload] | None
         ]
     )
     type ResolvedHandlerCallable = Callable[
-        ...,
-        tp.BaseModelType | JsonPayload | prt.ResultLike[JsonPayload] | None,
+        ..., tp.BaseModelType | JsonPayload | prt.ResultLike[JsonPayload] | None
     ]
     type RoutedHandlerCallable = Callable[
-        [p.Routable],
-        JsonPayload | prt.ResultLike[JsonPayload] | None,
+        [p.Routable], JsonPayload | prt.ResultLike[JsonPayload] | None
     ]
     type RegistrablePlugin = ScalarOrModel | Callable[..., ScalarOrModel]
     type LoggerFactory = Callable[..., pl.OutputLogger] | None
@@ -127,11 +113,8 @@ class FlextTypesServices:
 
     type ConfigurationMapping = t.MappingKV[str, t.Scalar]
     type MutableConfigurationMapping = MutableMapping[str, t.Scalar]
-    type ScopedContainerRegistry = MutableMapping[
-        str,
-        t.MutableJsonMapping,
-    ]
-    type SettingsClass = type[ps.Settings]
+    type ScopedContainerRegistry = MutableMapping[str, t.MutableJsonMapping]
+    type SettingsClass = type[ps.SettingsType]
     type LazyScalar = t.Scalar | bytes | date | time
     type LazyCollection = t.MappingKV[str, LazyScalar] | t.SequenceOf[LazyScalar]
     type ModuleExportValue = tp.JsonValue | bytes | date | time
@@ -147,10 +130,7 @@ class FlextTypesServices:
 
     type ValidatorCallable = Callable[[ScalarOrModel], ScalarOrModel]
 
-    type MapperCallable = Callable[
-        [tp.JsonValue],
-        tp.JsonValue,
-    ]
+    type MapperCallable = Callable[[tp.JsonValue], tp.JsonValue]
     MapperInput = MapperCallable | tp.JsonValue
     StrictValue = (
         t.Scalar

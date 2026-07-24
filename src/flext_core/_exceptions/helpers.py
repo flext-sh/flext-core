@@ -6,9 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Mapping,
-)
+from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from pydantic import ValidationError as PydanticValidationError
@@ -42,7 +40,7 @@ class FlextExceptionsHelpers:
                 continue
             try:
                 source_mapping = FlextRuntime.normalize_metadata_input_mapping(
-                    source_value,
+                    source_value
                 )
             except ce.EXC_PYDANTIC_TYPE_VALUE:
                 continue
@@ -78,7 +76,7 @@ class FlextExceptionsHelpers:
                             if item is not None
                         }
                         metadata = m.Metadata.model_validate({
-                            cm.FIELD_ATTRIBUTES: attrs,
+                            cm.FIELD_ATTRIBUTES: attrs
                         })
         return metadata
 
@@ -102,8 +100,7 @@ class FlextExceptionsHelpers:
         return {
             key: value
             for key, value in FlextExceptionsHelpers._normalized_source_entries(
-                context,
-                extra_kwargs,
+                context, extra_kwargs
             )
             if key not in excluded
         }
@@ -118,8 +115,7 @@ class FlextExceptionsHelpers:
         return {
             key: value
             for key, value in FlextExceptionsHelpers._normalized_source_entries(
-                context,
-                extra_kwargs,
+                context, extra_kwargs
             )
             if key in keys
         }

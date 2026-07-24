@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import FlextUtilitiesBeartypeEngine as be
+from flext_core.utilities import FlextUtilitiesBeartypeEngine as be
 from tests.protocols import p
 from tests.unit._beartype_engine_support import TestsFlextBeartypeEngine
 
@@ -54,12 +54,7 @@ class TestsFlextCoreBeartypeEngine(TestsFlextBeartypeEngine):
 
     @pytest.mark.parametrize(
         ("name", "expected"),
-        [
-            ("run", True),
-            ("do_thing", True),
-            ("_private", False),
-            ("__dunder__", False),
-        ],
+        [("run", True), ("do_thing", True), ("_private", False), ("__dunder__", False)],
     )
     def test_attr_accept_public_rejects_underscore_names(
         self, name: str, *, expected: bool

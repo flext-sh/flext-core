@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from examples import p, r
+from examples.protocols import p
+from flext_core import r
 
 
 def run() -> p.Result[str]:

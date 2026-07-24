@@ -56,10 +56,7 @@ class FlextUtilitiesContextState:
             empty_context: t.JsonMapping = {}
             return empty_context
 
-    def _scope_var(
-        self,
-        scope: str,
-    ) -> contextvars.ContextVar[m.ConfigMap | None]:
+    def _scope_var(self, scope: str) -> contextvars.ContextVar[m.ConfigMap | None]:
         """Get or create contextvar for scope."""
         state, scope_var = self.state.resolve_scope_var(scope)
         self.state = state
@@ -72,8 +69,8 @@ class FlextUtilitiesContextState:
         value = ctx_var.get()
         return dict(
             FlextUtilitiesContextState._narrow_contextvar_to_configuration_dict(
-                value,
-            ).items(),
+                value
+            ).items()
         )
 
     def _scope_payloads(self) -> t.MappingKV[str, t.JsonMapping]:
@@ -88,22 +85,14 @@ class FlextUtilitiesContextState:
                 scopes[scope_name] = dict(scope_dict)
         return scopes
 
-    def _update_contextvar(
-        self,
-        scope: str,
-        data: m.ConfigMap | t.JsonMapping,
-    ) -> None:
+    def _update_contextvar(self, scope: str, data: m.ConfigMap | t.JsonMapping) -> None:
         """Set multiple values in contextvar scope."""
         ctx_var = self._scope_var(scope)
         incoming = self._narrow_contextvar_to_configuration_dict(data)
         current = m.ConfigMap(
-            root=dict(
-                self._narrow_contextvar_to_configuration_dict(ctx_var.get()),
-            ),
+            root=dict(self._narrow_contextvar_to_configuration_dict(ctx_var.get()))
         )
-        updated = current.model_copy(
-            update={"root": {**current.root, **incoming}},
-        )
+        updated = current.model_copy(update={"root": {**current.root, **incoming}})
         _ = ctx_var.set(updated)
         if scope == c.ContextScope.GLOBAL:
             normalized_context: t.MappingKV[str, t.JsonPayload] = {
@@ -111,18 +100,14 @@ class FlextUtilitiesContextState:
                 for key, value in incoming.items()
                 if value is not None
             }
-            _ = FlextUtilitiesLoggingContext.bind_global_context(
-                **normalized_context,
-            )
+            _ = FlextUtilitiesLoggingContext.bind_global_context(**normalized_context)
 
     def _update_statistics(self, operation: str) -> None:
         """Update statistics counter for an operation (DRY helper)."""
         self.state = self.state.with_operation_update(operation)
 
     def _execute_hooks(
-        self,
-        event: str,
-        event_data: t.JsonPayload | t.MappingKV[str, t.JsonPayload],
+        self, event: str, event_data: t.JsonPayload | t.MappingKV[str, t.JsonPayload]
     ) -> None:
         """Execute hooks for an event (DRY helper)."""
         if event not in self.state.hooks:
@@ -150,8 +135,7 @@ class FlextUtilitiesContextState:
                 custom_fields_dict[ck] = FlextRuntime.normalize_to_container(cv)
         except c.EXC_BASIC_TYPE as exc:
             self.logger.debug(
-                "Custom metadata field normalization failed",
-                exc_info=exc,
+                "Custom metadata field normalization failed", exc_info=exc
             )
             custom_fields_dict = {}
         result: dict[str, t.JsonPayload] = {}
@@ -185,9 +169,9 @@ class FlextUtilitiesContextState:
         self.state = self.state.model_copy(
             update={
                 "metadata": meta.model_copy(
-                    update={"attributes": {**meta.attributes, key: value}},
-                ),
-            },
+                    update={"attributes": {**meta.attributes, key: value}}
+                )
+            }
         )
 
 

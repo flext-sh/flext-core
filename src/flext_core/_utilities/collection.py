@@ -27,8 +27,7 @@ from .collection_merge import FlextUtilitiesCollectionMerge
 
 
 class FlextUtilitiesCollection(
-    FlextUtilitiesCollectionIter,
-    FlextUtilitiesCollectionMerge,
+    FlextUtilitiesCollectionIter, FlextUtilitiesCollectionMerge
 ):
     """Facade composing iter + merge utilities; small helpers live here."""
 
@@ -50,8 +49,7 @@ class FlextUtilitiesCollection(
 
     @staticmethod
     def count[TItem](
-        items: t.SequenceOf[TItem],
-        predicate: Callable[[TItem], bool] | None = None,
+        items: t.SequenceOf[TItem], predicate: Callable[[TItem], bool] | None = None
     ) -> int:
         """Count items, optionally matching predicate."""
         if predicate is None:
@@ -91,13 +89,13 @@ class FlextUtilitiesCollection(
             if predicate is not None and (not predicate(item_typed)):
                 continue
             process_result = r[TMapped].create_from_callable(
-                lambda current_item=item_typed: processor(current_item),
+                lambda current_item=item_typed: processor(current_item)
             )
             if process_result.failure:
                 if on_error == "skip":
                     continue
                 return r[Sequence[TMapped]].fail(
-                    c.ERR_COLLECTION_PROCESSING_FAILED_FOR_ITEM.format(item=item),
+                    c.ERR_COLLECTION_PROCESSING_FAILED_FOR_ITEM.format(item=item)
                 )
             processed_item: TMapped = process_result.unwrap()
             results.append(processed_item)

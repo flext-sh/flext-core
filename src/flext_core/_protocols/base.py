@@ -9,11 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        Callable,
-        Iterable,
-        MutableSequence,
-    )
+    from collections.abc import Iterable, MutableSequence
     from types import TracebackType
 
     from flext_core import m, p, t
@@ -43,19 +39,6 @@ class FlextProtocolsBase:
         __module__: str
 
     @runtime_checkable
-    class FieldInfoLike(Base, Protocol):
-        """Structural contract for Pydantic v2 field metadata.
-
-        Captures the attributes consumed across the monorepo without
-        importing ``pydantic.fields.FieldInfo`` directly in protocol
-        definitions, avoiding circular dependencies.
-        """
-
-        default: t.JsonValue | FlextProtocolsBase.AttributeProbe
-        description: str | None = None
-        title: str | None = None
-
-    @runtime_checkable
     class Model(Base, Protocol):
         """Structural typing protocol for Pydantic v2 models.
 
@@ -63,75 +46,23 @@ class FlextProtocolsBase:
         in typings.py, preventing circular dependencies.
         """
 
-        model_fields: t.MappingKV[str, FlextProtocolsBase.FieldInfoLike]
+        # NOTE (multi-agent, mro-wkii.17 / agent: codex): declare only the
+        # instance capability consumed by interfaces; Pydantic class APIs stay
+        # on ``ModelType``.
 
         def model_dump(
             self,
             *,
             mode: str = "python",
-            include: t.IncEx | None = None,
-            exclude: t.IncEx | None = None,
-            context: t.MetadataInput | None = None,
             by_alias: bool | None = None,
-            exclude_unset: bool = False,
             exclude_defaults: bool = False,
             exclude_none: bool = False,
-            exclude_computed_fields: bool = False,
-            round_trip: bool = False,
-            warnings: bool | str = True,
-            fallback: (
-                Callable[
-                    [t.JsonPayload],
-                    t.JsonPayload,
-                ]
-                | None
-            ) = None,
-            serialize_as_any: bool = False,
-        ) -> t.JsonMapping:
-            """Dump model to dictionary."""
+        ) -> t.JsonDict:
+            """Dump the validated model at an external serialization boundary."""
             ...
 
-        @classmethod
-        def model_validate(
-            cls: type[Self],
-            obj: t.ConfigModelInput,
-            *,
-            strict: bool | None = None,
-            extra: str | None = None,
-            from_attributes: bool | None = None,
-            context: t.MetadataInput | None = None,
-            by_alias: bool | None = None,
-            by_name: bool | None = None,
-        ) -> Self:
-            """Validate arbitrary input into a concrete model instance."""
-            ...
-
-        def model_copy(
-            self,
-            *,
-            update: t.SettingsOverridesMapping | None = None,
-            deep: bool = False,
-        ) -> Self:
-            """Copy a validated model, optionally updating fields."""
-            ...
-
-    @runtime_checkable
-    class ModelType[TModel: Model](Protocol):
-        """Protocol for Pydantic-compatible model classes."""
-
-        @classmethod
-        def model_validate(
-            cls: type[TModel],
-            obj: t.ConfigModelInput,
-            *,
-            strict: bool | None = None,
-            extra: str | None = None,
-            from_attributes: bool | None = None,
-            context: t.MetadataInput | None = None,
-            by_alias: bool | None = None,
-            by_name: bool | None = None,
-        ) -> TModel:
-            """Validate arbitrary input into a concrete model instance."""
+        def model_copy(self, *, deep: bool = False) -> Self:
+            """Copy a Pydantic-compatible model instance."""
             ...
 
     @runtime_checkable
@@ -163,9 +94,7 @@ class FlextProtocolsBase:
     class Executable(Base, Protocol):
         """Protocol for objects that can be executed and report service info."""
 
-        def execute(
-            self,
-        ) -> p.Result[t.JsonPayload]: ...
+        def execute(self) -> p.Result[t.JsonPayload]: ...
 
         def service_info(self) -> t.JsonMapping: ...
 
@@ -174,9 +103,7 @@ class FlextProtocolsBase:
         """Protocol for mapping-like configuration payloads."""
 
         def get(
-            self,
-            key: str,
-            default: t.JsonPayload | None = None,
+            self, key: str, default: t.JsonPayload | None = None
         ) -> t.JsonPayload | None:
             """Fetch a configuration value by key."""
             ...

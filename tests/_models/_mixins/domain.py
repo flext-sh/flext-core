@@ -29,10 +29,7 @@ class TestsFlextModelsDomainMixin:
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
 
         name: Annotated[str, m.Field(description="Entity display name.")]
-        value: Annotated[
-            t.JsonValue,
-            m.Field(description="Entity payload value."),
-        ]
+        value: Annotated[t.JsonValue, m.Field(description="Entity payload value.")]
 
     class DomainTestValue(m.Value):
         """Test value object for domain tests."""
@@ -70,13 +67,10 @@ class TestsFlextModelsDomainMixin:
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
 
         data: str = ""
-        items: t.StrSequence = []
+        items: Annotated[t.StrSequence, m.Field(default_factory=list)]
 
         def __init__(
-            self,
-            data: str = "",
-            items: t.StrSequence | None = None,
-            **kwargs: t.Scalar,
+            self, data: str = "", items: t.StrSequence | None = None, **kwargs: t.Scalar
         ) -> None:
             """Initialize complex value with non-hashable items."""
             super().__init__(data=data, items=items or [], **kwargs)
@@ -123,8 +117,7 @@ class TestsFlextModelsDomainMixin:
         """Test case for parse_delimited method."""
 
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-            frozen=True,
-            arbitrary_types_allowed=True,
+            frozen=True, arbitrary_types_allowed=True
         )
 
         text: str
@@ -177,8 +170,7 @@ class TestsFlextModelsDomainMixin:
         """Test case for get_object_key method."""
 
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-            frozen=True,
-            arbitrary_types_allowed=True,
+            frozen=True, arbitrary_types_allowed=True
         )
 
         obj: t.JsonValue

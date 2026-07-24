@@ -5,8 +5,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import r, tm
 
+from flext_tests import r, tm
 from tests.models import m
 from tests.utilities import u
 
@@ -194,17 +194,12 @@ class TestsFlextResultTraverseResource:
 
         class ModelDumpCarrier:
             def model_dump(
-                self,
-                *,
-                mode: str = "python",
+                self, *, mode: str = "python"
             ) -> t.MappingKV[str, t.JsonPayload | None]:
                 _ = mode
                 return {"alpha": 1, "beta": "two"}
 
-        result: p.Result[str] = r[str].fail(
-            "error",
-            error_data=ModelDumpCarrier(),
-        )
+        result: p.Result[str] = r[str].fail("error", error_data=ModelDumpCarrier())
 
         tm.that(result.error_data, eq={"alpha": 1, "beta": "two"})
 
@@ -212,13 +207,13 @@ class TestsFlextResultTraverseResource:
         """Test unwrap raises RuntimeError on failure."""
         result: p.Result[str] = r[str].fail("error")
         with pytest.raises(RuntimeError, match="Cannot access value of failed result"):
-            result.value
+            _ = result.value
 
     def test_flat_map_inner_failure(self) -> None:
         """Test flat_map inner function returns Failure."""
         result = r[int].ok(5)
 
-        def failing_func(value: int) -> p.Result[str]:
+        def failing_func(_value: int) -> p.Result[str]:
             return r[str].fail("flat_map failed")
 
         bound = result.flat_map(failing_func)

@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
 from flext_core._typings.base import FlextTypingBase as t
 from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_01 import (
     BINARY_ARITY,
     NO_VIOLATION,
 )
 from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers as ubh
+from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata as upm
 
 
 def _peer_first_allowed(
@@ -54,8 +54,7 @@ def _requires_alias_first(
 
 
 def alias_first_violation(
-    target: type,
-    params: me.MroShapeParams,
+    target: type, params: me.MroShapeParams
 ) -> t.StrMapping | None:
     """Compute the alias/peer-first violation for ``v_mro_shape``."""
     _, separator, _ = target.__qualname__.partition(".")
@@ -63,13 +62,11 @@ def alias_first_violation(
     project_prefix, _ = target.__name__, ""
     if target.__module__:
         package_name = target.__module__.split(".", 1)[0]
-        project_prefix = mpm.derive_class_stem(package_name)
+        project_prefix = upm.derive_class_stem(package_name)
     tier_facade_prefixes = (project_prefix, f"Tests{project_prefix}")
     is_facade = is_module_level and target.__name__.startswith(tier_facade_prefixes)
     module_name = getattr(target, "__module__", "") or ""
-    is_core_root = module_name.startswith(
-        "flext_core.",
-    ) and not module_name.startswith((
+    is_core_root = module_name.startswith("flext_core.") and not module_name.startswith((
         "flext_core.tests",
         "flext_core.examples",
         "flext_core.scripts",

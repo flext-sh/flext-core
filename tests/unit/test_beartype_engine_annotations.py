@@ -14,7 +14,7 @@ from collections.abc import Mapping
 
 import pytest
 
-from flext_core import FlextUtilitiesBeartypeEngine as be
+from flext_core.utilities import FlextUtilitiesBeartypeEngine as be
 from tests.typings import t
 from tests.unit._beartype_engine_support import (
     AnyAlias,

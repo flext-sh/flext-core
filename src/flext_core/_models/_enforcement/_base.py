@@ -16,10 +16,7 @@ from flext_core._typings.base import FlextTypingBase as t
 class EnforcementModelBase(mp.BaseModel):
     """Frozen, extra-forbid base for internal enforcement models."""
 
-    model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-        frozen=True,
-        extra="forbid",
-    )
+    model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(frozen=True, extra="forbid")
 
 
 class FlextModelsEnforcementBase:
@@ -61,7 +58,7 @@ class FlextModelsEnforcementBase:
             return bool(self.violations)
 
         def __getitem__(self, index: int) -> str:
-            """The nth message for ``report[i]`` access."""
+            """Return the nth message for ``report[i]`` access."""
             return self.messages[index]
 
         def __contains__(self, fragment: t.Scalar | None) -> bool:

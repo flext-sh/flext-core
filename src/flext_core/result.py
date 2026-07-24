@@ -2,7 +2,17 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated, ClassVar, Self, TypeIs, overload, override
+from types import TracebackType
+from typing import (
+    TYPE_CHECKING,
+    Annotated,
+    ClassVar,
+    Self,
+    TypeIs,
+    cast,
+    overload,
+    override,
+)
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, computed_field
 from returns.result import Failure, Result, Success
@@ -15,8 +25,6 @@ from ._result_parts.unwrap import FlextResultUnwrapMixin
 from ._runtime._metadata import FlextRuntimeMetadata as FlextRuntime
 
 if TYPE_CHECKING:
-    from types import TracebackType
-
     from ._protocols.logging import FlextProtocolsLogging as pl
     from ._typings.base import FlextTypingBase as tb
     from ._typings.services import FlextTypesServices as ts
@@ -151,6 +159,7 @@ class FlextResult[T](
         value: T | None = None,
         error: str | None = None,
         success: bool = True,
+        exception: BaseException | None = None,
     ) -> None:
         """Initialize a FlextResult with optional value, error, and metadata."""
         super().__init__(
@@ -161,6 +170,11 @@ class FlextResult[T](
         )
         if success:
             self._payload = value
+            self._result = Success(cast("T", value))
+        else:
+            self._result = Failure(error if error is not None else "")
+            if exception is not None:
+                self._exception = exception
 
     @property
     def _returns_result(self) -> Result[T, str]:
