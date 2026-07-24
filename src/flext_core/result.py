@@ -3,7 +3,16 @@
 from __future__ import annotations
 
 from types import TracebackType
-from typing import TYPE_CHECKING, Annotated, ClassVar, Self, TypeIs, overload, override
+from typing import (
+    TYPE_CHECKING,
+    Annotated,
+    ClassVar,
+    Self,
+    TypeIs,
+    cast,
+    overload,
+    override,
+)
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, computed_field
 from returns.result import Failure, Result, Success
@@ -161,7 +170,7 @@ class FlextResult[T](
         )
         if success:
             self._payload = value
-            self._result = Success(value)
+            self._result = Success(cast("T", value))
         else:
             self._result = Failure(error if error is not None else "")
             if exception is not None:
@@ -173,7 +182,7 @@ class FlextResult[T](
             if self.success:
                 self._result = Success(self.value)
             else:
-                self._result = Failure(self.require_error(self))
+                self._result = Failure(self.error or "")
         return self._result
 
     @staticmethod

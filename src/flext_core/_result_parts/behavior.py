@@ -28,6 +28,7 @@ class FlextResultBehaviorMixin[T](p.Result[T], ABC):
         value: T | None = None,
         error: str | None = None,
         success: bool = True,
+        exception: BaseException | None = None,
     ) -> None: ...
 
     @staticmethod
