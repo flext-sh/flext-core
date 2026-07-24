@@ -23,7 +23,7 @@ INFRA_DETECTOR_ROWS_PATTERNS: Final[
         "3-1-supreme-law",
         ("using-flext-core",),
         False,
-        "`print()` call in source code — use structured logging.",
+        "`u.Cli.print()` call in source code — use structured logging.",
     ),
     (
         "ENFORCE-028",

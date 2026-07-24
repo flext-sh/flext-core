@@ -59,7 +59,7 @@ class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
                 FlextModelsEnforcement as me,
             )
 
-            print(repr(be.apply(
+            u.Cli.print(repr(be.apply(
                 c.EnforcementPredicateKind.DEPRECATED_SYNTAX,
                 me.DeprecatedSyntaxParams(ast_shape={ast_shape!r}),
                 Probe,

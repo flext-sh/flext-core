@@ -89,8 +89,8 @@ class TestsFlextCoreBeartypeEngineRuntime(TestsFlextBeartypeEngine):
                             {arg_literal}
                         )
                     except (AttributeError, ValueError) as exc:
-                        print("runtime_exc", type(exc).__name__)
-                    print("warning_count", len(caught))
+                        u.Cli.print("runtime_exc", type(exc).__name__)
+                    u.Cli.print("warning_count", len(caught))
                 """
             ),
             cwd=_FLEXT_CORE_ROOT,
@@ -130,7 +130,7 @@ class TestsFlextCoreBeartypeEngineRuntime(TestsFlextBeartypeEngine):
                 )
                 import flext_core
 
-                print("unexpected_success", hasattr(flext_core, "u"))
+                u.Cli.print("unexpected_success", hasattr(flext_core, "u"))
                 """
             ),
             cwd=_FLEXT_CORE_ROOT,

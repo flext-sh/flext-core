@@ -52,7 +52,7 @@ class TestsFlextCoreBeartypeEngineClawPackages(TestsFlextBeartypeEngine):
             "",
             f"sys.path.insert(0, {str(root)!r})",
             *(f"import {mod}" for mod in dotted_modules),
-            'print("claw_import_ok")',
+            'u.Cli.print("claw_import_ok")',
         ]
         return "\n".join(lines) + "\n"
 
@@ -141,7 +141,7 @@ class TestsFlextCoreBeartypeEngineClawPackages(TestsFlextBeartypeEngine):
 
                 sys.path.insert(0, {str(tmp_path)!r})
                 import aliasprobe.aliases as aliases
-                print("aliasprobe_value", aliases.VALUE["ok"][1])
+                u.Cli.print("aliasprobe_value", aliases.VALUE["ok"][1])
                 """
             ),
             cwd=self._REPO_ROOT,
@@ -167,7 +167,7 @@ class TestsFlextCoreBeartypeEngineClawPackages(TestsFlextBeartypeEngine):
                     conf=FlextUtilitiesBeartypeConf.build_beartype_conf(),
                 )
                 import flext_core
-                print("flext_core_facade", hasattr(flext_core, "u"))
+                u.Cli.print("flext_core_facade", hasattr(flext_core, "u"))
                 """
             ),
             cwd=self._REPO_ROOT,

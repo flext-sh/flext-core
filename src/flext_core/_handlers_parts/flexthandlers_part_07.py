@@ -72,7 +72,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             Example:
                 >>> handlers = FlextHandlers.Discovery.scan_class(MyService)
                 >>> for method_name, settings in handlers:
-                ...     print(f"{method_name}: {settings.command.__name__}")
+                ...     u.Cli.print(f"{method_name}: {settings.command.__name__}")
 
             """
             handlers: t.SequenceOf[tuple[str, p.DecoratorConfig]] = [
@@ -102,7 +102,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             Example:
                 >>> handlers = FlextHandlers.Discovery.scan_module(my_module)
                 >>> for func_name, func, settings in handlers:
-                ...     print(f"{func_name}: {settings.command.__name__}")
+                ...     u.Cli.print(f"{func_name}: {settings.command.__name__}")
 
             """
             handlers: MutableSequence[

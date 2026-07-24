@@ -89,7 +89,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             >>> handler = UserHandler()
             >>> result = handler.validate_message(invalid_data)
             >>> if result.failure:
-            ...     print(f"Validation error: {result.error}")
+            ...     u.Cli.print(f"Validation error: {result.error}")
 
         Note: self is required for subclass override compatibility, even though
         this base implementation doesn't use instance state.
