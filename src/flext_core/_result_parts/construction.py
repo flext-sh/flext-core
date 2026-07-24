@@ -6,7 +6,6 @@ from abc import ABC
 from typing import TYPE_CHECKING, cast
 
 from pydantic import ValidationError
-from returns.result import Failure, Success
 
 from flext_core._constants.errors import FlextConstantsErrors as c
 from flext_core._constants.infrastructure import FlextConstantsInfrastructure
@@ -133,15 +132,13 @@ class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
             if error_data is not None
             else cls._extract_exception_error_data(exception)
         )
-        result = cls(
+        return cls(
             error_code=resolved_error_code,
             error_data=resolved_error_data,
             error=error_msg,
             success=False,
+            exception=exception,
         )
-        result._result = Failure(error_msg)
-        result._exception = exception
-        return result
 
     @classmethod
     def fail_op[V](
@@ -174,9 +171,7 @@ class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
         """Create successful result wrapping value."""
         # Type bridge: class factories intentionally rebind the generic payload.
         result_class = cast("type[FlextResultConstructionMixin[V]]", cls)
-        result = result_class(value=value, success=True)
-        result._result = Success(value)
-        return result
+        return result_class(value=value, success=True)
 
     @classmethod
     def from_result[V](cls, source: p.Result[V]) -> FlextResultConstructionMixin[V]:

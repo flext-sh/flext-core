@@ -54,7 +54,7 @@ class TestsFlextCoreModelsBaseFullCoverage:
 
     def test_metadata_attributes_broken_dump_object_rejected(self) -> None:
         with pytest.raises(TypeError):
-            m.Metadata.model_validate({"attributes": m.Tests._BrokenDumpModel()})
+            m.Metadata.model_validate({"attributes": m.Tests.BrokenDumpModel()})
 
     # --- Metadata defaults and immutability ------------------------------
 

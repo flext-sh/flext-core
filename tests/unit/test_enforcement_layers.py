@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import typing
 from abc import ABC, abstractmethod
-from typing import Final, Protocol, runtime_checkable
+from typing import ClassVar, Final, Protocol, runtime_checkable
 
 import pytest
 
@@ -43,14 +43,14 @@ class TestsFlextCoreEnforcementLayers:
     @staticmethod
     def _constants_mutable_list() -> type:
         class _CConstants:
-            ITEMS: list[str] = ["a", "b"]
+            ITEMS: ClassVar[list[str]] = ["a", "b"]
 
         return _CConstants
 
     @staticmethod
     def _constants_mutable_dict() -> type:
         class _CConstants:
-            DATA: dict[str, int] = {"x": 1}
+            DATA: ClassVar[dict[str, int]] = {"x": 1}
 
         return _CConstants
 
@@ -65,7 +65,7 @@ class TestsFlextCoreEnforcementLayers:
     def _constants_inner_mutable() -> type:
         class _CConstants:
             class Inner:
-                BAD: list[str] = ["x"]
+                BAD: ClassVar[list[str]] = ["x"]
 
         return _CConstants
 

@@ -22,7 +22,7 @@ class TestsFlextCoreExceptionsBase:
             e.ValidationError,
             e.NotFoundError,
             e.AuthenticationError,
-            e.TimeoutError,
+            e.FlextTimeoutError,
             e.ConflictError,
             e.ConfigurationError,
         ],

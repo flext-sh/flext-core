@@ -59,9 +59,9 @@ class TestsFlextModelsProjectMetadata:
     # ProjectMetadata — derived names, immutability, validation
     # ------------------------------------------------------------------
     @staticmethod
-    def _metadata(**overrides: object) -> m.ProjectMetadata:
+    def _metadata(tmp_path: Path, **overrides: object) -> m.ProjectMetadata:
         payload: dict[str, object] = {
-            "root": Path("/tmp/flext-ldif"),
+            "root": tmp_path,
             "package_name": "flext_ldif",
             "class_stem": c.Tests.SAMPLE_PROJECT_CLASS_STEM,
             "project": {
@@ -73,30 +73,32 @@ class TestsFlextModelsProjectMetadata:
         payload.update(overrides)
         return m.ProjectMetadata.model_validate(payload)
 
-    def test_project_metadata_exposes_package_name_and_class_stem(self) -> None:
-        metadata = self._metadata()
+    def test_project_metadata_exposes_package_name_and_class_stem(
+        self, tmp_path: Path
+    ) -> None:
+        metadata = self._metadata(tmp_path)
 
         assert metadata.package_name == "flext_ldif"
         assert metadata.class_stem == c.Tests.SAMPLE_PROJECT_CLASS_STEM
 
-    def test_project_metadata_exposes_nested_project(self) -> None:
-        metadata = self._metadata()
+    def test_project_metadata_exposes_nested_project(self, tmp_path: Path) -> None:
+        metadata = self._metadata(tmp_path)
 
         assert metadata.project.name == c.Tests.SAMPLE_PROJECT_NAME
         assert metadata.project.version == c.Tests.SAMPLE_PROJECT_VERSION
         assert metadata.project.authors == ()
         assert metadata.project.requires_python == ""
 
-    def test_project_metadata_is_frozen_against_mutation(self) -> None:
-        metadata = self._metadata()
+    def test_project_metadata_is_frozen_against_mutation(self, tmp_path: Path) -> None:
+        metadata = self._metadata(tmp_path)
 
         with pytest.raises(c.ValidationError):
             metadata.package_name = "other"
 
-    def test_project_metadata_rejects_unknown_fields(self) -> None:
+    def test_project_metadata_rejects_unknown_fields(self, tmp_path: Path) -> None:
         with pytest.raises(c.ValidationError):
             m.ProjectMetadata.model_validate({
-                "root": Path("/tmp/flext-ldif"),
+                "root": tmp_path,
                 "package_name": "flext_ldif",
                 "class_stem": c.Tests.SAMPLE_PROJECT_CLASS_STEM,
                 "project": {
@@ -107,13 +109,14 @@ class TestsFlextModelsProjectMetadata:
                 "unexpected": "boom",
             })
 
-    def test_project_metadata_model_dump_roundtrips(self) -> None:
+    def test_project_metadata_model_dump_roundtrips(self, tmp_path: Path) -> None:
         metadata = self._metadata(
+            tmp_path,
             project={
                 "name": c.Tests.SAMPLE_PROJECT_NAME,
                 "version": c.Tests.SAMPLE_PROJECT_VERSION,
                 "authors": [{"name": c.Tests.SAMPLE_AUTHOR_ALICE}],
-            }
+            },
         )
 
         rebuilt = m.ProjectMetadata.model_validate(metadata.model_dump())

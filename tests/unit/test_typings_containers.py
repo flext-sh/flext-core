@@ -43,7 +43,7 @@ class TestsFlextCoreTypingsContainers:
         ("present", "expected"), [("key", True), ("missing", False)]
     )
     def test_dict_contains_reports_membership(
-        self, present: str, expected: bool
+        self, present: str, *, expected: bool
     ) -> None:
         """The 'in' operator reflects actual key membership."""
         d = m.Dict(root={"key": "value"})
@@ -163,7 +163,7 @@ class TestsFlextCoreTypingsContainers:
         "scalar", ["text", 42, math.pi, True, datetime(2025, 1, 1, tzinfo=UTC)]
     )
     def test_scalar_types_accepts_every_scalar(
-        self, scalar: str | float | bool | datetime
+        self, *, scalar: str | float | bool | datetime
     ) -> None:
         """SCALAR_TYPES is an isinstance-usable tuple covering all scalar kinds."""
         tm.that(isinstance(scalar, t.SCALAR_TYPES), eq=True)

@@ -32,7 +32,7 @@ class TestsFlextCoreUtilities:
         ],
     )
     def test_matches_type_reports_runtime_type_membership(
-        self, value: MatchValue, type_name: str, expected: bool
+        self, value: MatchValue, type_name: str, *, expected: bool
     ) -> None:
         assert u.matches_type(value, type_name) is expected
 
@@ -62,7 +62,9 @@ class TestsFlextCoreUtilities:
             (None, False),
         ],
     )
-    def test_to_bool_follows_truthiness(self, value: ConvValue, expected: bool) -> None:
+    def test_to_bool_follows_truthiness(
+        self, value: ConvValue, *, expected: bool
+    ) -> None:
         assert u.to_bool(value) is expected
 
     @pytest.mark.parametrize(
@@ -121,7 +123,7 @@ class TestsFlextCoreUtilities:
         [({"a": 1}, {"a": 1}, True), ({"a": 1}, {"a": 2}, False), ({}, {}, True)],
     )
     def test_deep_eq_compares_mapping_contents(
-        self, left: dict[str, int], right: dict[str, int], expected: bool
+        self, left: dict[str, int], right: dict[str, int], *, expected: bool
     ) -> None:
         assert u.deep_eq(left, right) is expected
 
@@ -129,7 +131,7 @@ class TestsFlextCoreUtilities:
         ("left", "right", "expected"), [(1, 2, True), (1, "a", False)]
     )
     def test_same_type_compares_runtime_types(
-        self, left: int | str, right: int | str, expected: bool
+        self, left: int | str, right: int | str, *, expected: bool
     ) -> None:
         assert u.same_type(left, right) is expected
 

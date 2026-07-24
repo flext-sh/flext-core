@@ -18,8 +18,8 @@ import pytest
 
 import flext_core
 from flext_core import c, d, e, h, m, p, r, s, t, u, x
-from flext_core._constants.enforcement import FlextMroViolation
-from flext_core._settings import FlextSettings
+from flext_core.exceptions import FlextMroViolation
+from flext_core import FlextSettings
 
 # Public facade names a caller can import from ``flext_core``.
 _FACADES: tuple[str, ...] = (

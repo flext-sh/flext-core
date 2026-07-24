@@ -34,7 +34,7 @@ STRUCTURED_ERRORS: t.SequenceOf[
     ),
     (
         "connection",
-        lambda: e.ConnectionError(
+        lambda: e.FlextConnectionError(
             "Connect failed", host="db.internal", port=5432, timeout=5
         ),
         c.ErrorDomain.NETWORK.value,
@@ -43,7 +43,9 @@ STRUCTURED_ERRORS: t.SequenceOf[
     ),
     (
         "timeout",
-        lambda: e.TimeoutError("Timed out", timeout_seconds=30, operation="dispatch"),
+        lambda: e.FlextTimeoutError(
+            "Timed out", timeout_seconds=30, operation="dispatch"
+        ),
         c.ErrorDomain.TIMEOUT.value,
         c.ErrorCode.TIMEOUT_ERROR,
         {"timeout_seconds": 30, "operation": "dispatch"},
@@ -98,7 +100,7 @@ STRUCTURED_ERRORS: t.SequenceOf[
     ),
     (
         "type_error",
-        lambda: e.TypeError("Wrong type", expected_type="str", actual_type=int),
+        lambda: e.FlextTypeError("Wrong type", expected_type="str", actual_type=int),
         c.ErrorDomain.VALIDATION.value,
         c.ErrorCode.TYPE_ERROR,
         {"expected_type": "str", "actual_type": "int"},

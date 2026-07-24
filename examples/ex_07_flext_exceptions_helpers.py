@@ -32,18 +32,18 @@ class Ex07FlextExceptionSubclasses(ExamplesFlextShared):
                 "ConfigurationError.config_source", exc.config_source or ""
             )
         try:
-            raise e.ConnectionError(
+            raise e.FlextConnectionError(
                 m.Examples.ErrorMessages.DOWN, host="127.0.0.1", port=5432, timeout=3.5
             )
-        except e.ConnectionError as exc:
+        except e.FlextConnectionError as exc:
             self.audit_check("ConnectionError.host", exc.host or "")
             self.audit_check("ConnectionError.port", exc.port or 0)
             self.audit_check("ConnectionError.timeout", exc.timeout or 0.0)
         try:
-            raise e.TimeoutError(
+            raise e.FlextTimeoutError(
                 m.Examples.ErrorMessages.LATE, timeout_seconds=2.0, operation="sync"
             )
-        except e.TimeoutError as exc:
+        except e.FlextTimeoutError as exc:
             self.audit_check("TimeoutError.timeout_seconds", exc.timeout_seconds or 0.0)
             self.audit_check("TimeoutError.operation", exc.operation or "")
         try:
@@ -111,10 +111,10 @@ class Ex07FlextExceptionSubclasses(ExamplesFlextShared):
                 "CircuitBreakerError.reset_timeout", exc.reset_timeout or 0.0
             )
         try:
-            raise e.TypeError(
+            raise e.FlextTypeError(
                 m.Examples.ErrorMessages.WRONG_TYPE, expected_type=str, actual_type=int
             )
-        except e.TypeError as exc:
+        except e.FlextTypeError as exc:
             self.audit_check(
                 "TypeError.expected_type",
                 exc.expected_type.__name__ if exc.expected_type else "",

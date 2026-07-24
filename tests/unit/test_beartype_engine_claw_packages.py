@@ -13,7 +13,7 @@ from __future__ import annotations
 import textwrap
 from pathlib import Path
 
-from flext_core._utilities.beartype_conf import FlextUtilitiesBeartypeConf
+from flext_core.utilities import FlextUtilitiesBeartypeConf
 from tests.typings import t
 from tests.unit._beartype_engine_support import TestsFlextBeartypeEngine
 
@@ -21,7 +21,7 @@ _CLAW_INIT = (
     textwrap.dedent(
         """
     from beartype.claw import beartype_this_package
-    from flext_core._utilities.beartype_conf import FlextUtilitiesBeartypeConf
+    from flext_core.utilities import FlextUtilitiesBeartypeConf
 
     beartype_this_package(conf=FlextUtilitiesBeartypeConf.build_beartype_conf())
     """
@@ -158,7 +158,7 @@ class TestsFlextCoreBeartypeEngineClawPackages(TestsFlextBeartypeEngine):
             textwrap.dedent(
                 """
                 from beartype.claw import beartype_package
-                from flext_core._utilities.beartype_conf import (
+                from flext_core.utilities import (
                     FlextUtilitiesBeartypeConf,
                 )
 

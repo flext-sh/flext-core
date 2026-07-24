@@ -110,7 +110,7 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
             if auto_correlation and (not correlation_id)
             else correlation_id
         )
-        self.metadata = type(self)._normalize_metadata(metadata, final_kwargs.root)
+        self.metadata = type(self).normalize_metadata(metadata, final_kwargs.root)
         self.timestamp = time.time()
         self.auto_log = auto_log
 

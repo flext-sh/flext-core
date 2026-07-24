@@ -143,7 +143,7 @@ class TestsFlextLoggings:
 
     @pytest.mark.parametrize(("level", "expect_output"), LOG_LEVELS)
     def test_every_log_level_returns_success_result_with_value_true(
-        self, logger: p.Logger, level: str, expect_output: bool
+        self, logger: p.Logger, level: str, *, expect_output: bool
     ) -> None:
         result = self._assert_log_output(
             lambda: getattr(logger, level)("test %s message", level),
@@ -155,7 +155,7 @@ class TestsFlextLoggings:
 
     @pytest.mark.parametrize(("level", "expect_output"), LOG_LEVELS)
     def test_every_log_level_accepts_structured_kwargs_and_returns_success(
-        self, logger: p.Logger, level: str, expect_output: bool
+        self, logger: p.Logger, level: str, *, expect_output: bool
     ) -> None:
         result = self._assert_log_output(
             lambda: getattr(logger, level)(

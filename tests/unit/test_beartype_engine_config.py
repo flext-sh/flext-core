@@ -10,7 +10,7 @@ from __future__ import annotations
 import pytest
 from beartype import BeartypeConf, BeartypeStrategy
 
-from flext_core._utilities.beartype_conf import FlextUtilitiesBeartypeConf
+from flext_core.utilities import FlextUtilitiesBeartypeConf
 from tests.constants import c
 from tests.typings import t
 from tests.unit._beartype_engine_support import AnyAlias, CleanAlias, NestedAnyAlias
@@ -47,7 +47,7 @@ class TestsFlextCoreBeartypeEngineConfig:
         ],
     )
     def test_contains_any_detects_unrestricted_hints(
-        self, hint: t.TypeHintSpecifier | None, expected: bool
+        self, hint: t.TypeHintSpecifier | None, *, expected: bool
     ) -> None:
         """``contains_any`` is True exactly when a hint admits any value."""
         assert u.contains_any(hint) is expected
@@ -57,7 +57,7 @@ class TestsFlextCoreBeartypeEngineConfig:
         [(AnyAlias, True), (NestedAnyAlias, True), (CleanAlias, False)],
     )
     def test_alias_contains_any_unwraps_type_alias(
-        self, alias: t.TypeHintSpecifier | None, expected: bool
+        self, alias: t.TypeHintSpecifier | None, *, expected: bool
     ) -> None:
         """``alias_contains_any`` follows a PEP 695 alias to its underlying value."""
         assert u.alias_contains_any(alias) is expected
@@ -99,7 +99,7 @@ class TestsFlextCoreBeartypeEngineConfig:
         ],
     )
     def test_matches_str_none_union_is_exact(
-        self, hint: t.TypeHintSpecifier | None, expected: bool
+        self, hint: t.TypeHintSpecifier | None, *, expected: bool
     ) -> None:
         """Only the ``str | None`` shape matches; other unions do not."""
         assert u.matches_str_none_union(hint) is expected

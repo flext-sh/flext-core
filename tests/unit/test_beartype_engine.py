@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as be
+from flext_core.utilities import FlextUtilitiesBeartypeEngine as be
 from tests.protocols import p
 from tests.unit._beartype_engine_support import TestsFlextBeartypeEngine
 

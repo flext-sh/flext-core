@@ -51,7 +51,7 @@ class TestsFlextCoreUtilitiesDomain:
         ],
     )
     def test_normalize_returns_expected_string(
-        self, value: str | float | bool, case: str | None, expected: str
+        self, *, value: str | float | bool, case: str | None, expected: str
     ) -> None:
         assert u.normalize(value, case=case) == expected
 
@@ -104,7 +104,7 @@ class TestsFlextCoreUtilitiesDomain:
         ],
     )
     def test_to_int_converts_value(
-        self, value: float | str | bool | None, expected: int
+        self, *, value: float | str | bool | None, expected: int
     ) -> None:
         assert u.to_int(value) == expected
 
@@ -117,7 +117,7 @@ class TestsFlextCoreUtilitiesDomain:
         [(5, 5.0), (5.5, 5.5), ("2.5", 2.5), ("bad", 0.0), (None, 0.0), (True, 0.0)],
     )
     def test_to_float_converts_value(
-        self, value: float | str | bool | None, expected: float
+        self, *, value: float | str | bool | None, expected: float
     ) -> None:
         assert u.to_float(value) == expected
 
@@ -138,7 +138,7 @@ class TestsFlextCoreUtilitiesDomain:
         ],
     )
     def test_to_bool_converts_value(
-        self, value: bool | int | str | None, expected: bool
+        self, *, value: bool | int | str | None, expected: bool
     ) -> None:
         assert u.to_bool(value) is expected
 
@@ -162,7 +162,7 @@ class TestsFlextCoreUtilitiesDomain:
         ],
     )
     def test_to_positive_int_rejects_non_positive(
-        self, value: float | str | bool | None, expected: int
+        self, *, value: float | str | bool | None, expected: int
     ) -> None:
         assert u.to_positive_int(value) == expected
 

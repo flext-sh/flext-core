@@ -27,8 +27,8 @@ if TYPE_CHECKING:
 class FlextBaseError(FlextBaseErrorStateMixin, Exception):
     """Base exception with correlation metadata and error codes."""
 
-    _params_cls: ClassVar[ts.ModelClass[mp.BaseModel] | None] = None
-    _excluded_context_keys: ClassVar[set[str] | frozenset[str] | None] = None
+    params_cls: ClassVar[ts.ModelClass[mp.BaseModel] | None] = None
+    excluded_context_keys: ClassVar[set[str] | frozenset[str] | None] = None
 
     def __init__(
         self,
@@ -49,8 +49,8 @@ class FlextBaseError(FlextBaseErrorStateMixin, Exception):
         **extra_kwargs: tb.JsonValue,
     ) -> None:
         """Initialize base error with message and optional metadata."""
-        declared_params_cls = self.__class__._params_cls
-        if declared_params_cls is not None:
+        declaredparams_cls = self.__class__.params_cls
+        if declaredparams_cls is not None:
             resolved_error_code = (
                 str(getattr(type(self), "_default_error_code", error_code))
                 if error_code == cv.ErrorCode.UNKNOWN_ERROR
@@ -73,7 +73,7 @@ class FlextBaseError(FlextBaseErrorStateMixin, Exception):
                 key: FlextRuntime.normalize_to_metadata(value)
                 for key, value in extra_kwargs.items()
             })
-            declared_param_keys = frozenset(declared_params_cls.model_fields)
+            declared_param_keys = frozenset(declaredparams_cls.model_fields)
             remaining_extra: tb.MutableJsonMapping = {}
             if combined_extra:
                 remaining_extra.update({
@@ -109,14 +109,12 @@ class FlextBaseError(FlextBaseErrorStateMixin, Exception):
             resolved = (
                 params
                 if params is not None
-                else declared_params_cls.model_validate(param_values)
+                else declaredparams_cls.model_validate(param_values)
             )
             ctx = FlextExceptionsHelpers.build_context_map(
-                context,
-                remaining_extra,
-                excluded_keys=type(self)._excluded_context_keys,
+                context, remaining_extra, excluded_keys=type(self).excluded_context_keys
             )
-            resolved_fields = declared_params_cls.__pydantic_fields__
+            resolved_fields = declaredparams_cls.__pydantic_fields__
             for key in declared_param_keys:
                 attr_val = getattr(resolved, key, None)
                 if attr_val is not None:

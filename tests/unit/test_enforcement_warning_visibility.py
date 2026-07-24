@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, cast
 
 import pytest
 
-from flext_core._constants.enforcement import FlextMroViolation, FlextSmellViolation
+from flext_core.exceptions import FlextMroViolation, FlextSmellViolation
 from tests.utilities import u
 
 if TYPE_CHECKING:
@@ -91,7 +91,7 @@ class TestsFlextCoreEnforcementWarningVisibility:
                 """
                 import warnings
 
-                from flext_core._constants.enforcement import FlextMroViolation
+                from flext_core.exceptions import FlextMroViolation
 
 
                 def test_probe() -> None:

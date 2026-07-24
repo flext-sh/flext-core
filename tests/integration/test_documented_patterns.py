@@ -200,7 +200,7 @@ class TestsFlextCoreDocumentedPatterns:
             try:
                 raise RuntimeError(socket_message)
             except RuntimeError as exc:
-                raise e.TimeoutError(
+                raise e.FlextTimeoutError(
                     timeout_message,
                     operation="fetch profile",
                     timeout_seconds=2.0,
@@ -209,7 +209,7 @@ class TestsFlextCoreDocumentedPatterns:
                 ) from exc
 
         # Act / Assert
-        with pytest.raises(e.TimeoutError) as raised:
+        with pytest.raises(e.FlextTimeoutError) as raised:
             fetch_remote_profile()
 
         error = raised.value

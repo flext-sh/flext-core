@@ -64,7 +64,7 @@ class FlextDecoratorsRuntime(FlextDecoratorsCombined):
                             f"Operation {func.__name__} exceeded timeout of "
                             f"{max_duration}s (took {duration:.2f}s)"
                         )
-                        raise et.TimeoutError(
+                        raise et.FlextTimeoutError(
                             msg,
                             error_code=error_code or "OPERATION_TIMEOUT",
                             timeout_seconds=max_duration,
@@ -73,7 +73,7 @@ class FlextDecoratorsRuntime(FlextDecoratorsCombined):
                             original_error="",
                         )
                     return result
-                except et.TimeoutError:
+                except et.FlextTimeoutError:
                     raise
                 except cls._CAUGHT_EXCEPTIONS as exc:
                     duration = time.perf_counter() - start_time
@@ -83,7 +83,7 @@ class FlextDecoratorsRuntime(FlextDecoratorsCombined):
                             f"{max_duration}s (took {duration:.2f}s) and raised "
                             f"{exc.__class__.__name__}"
                         )
-                        raise et.TimeoutError(
+                        raise et.FlextTimeoutError(
                             msg,
                             error_code=error_code or cv.ErrorCode.TIMEOUT_ERROR.value,
                             timeout_seconds=max_duration,

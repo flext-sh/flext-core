@@ -215,7 +215,7 @@ class TestsFlextCoreHandlersFactory(TestsFlextFlextHandlers):
         ("payload", "expected_success"), [("non_empty", True), ("", False)]
     )
     def test_validate_message_reports_payload_validity(
-        self, payload: str, expected_success: bool
+        self, payload: str, *, expected_success: bool
     ) -> None:
         # Arrange
         settings = u.Tests.create_handler_config("test_validate", "Test Validate")

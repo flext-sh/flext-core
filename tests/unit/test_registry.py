@@ -131,7 +131,7 @@ class TestsFlextCoreRegistry:
         ("errors", "expected_success"), [((), True), (("boom",), False)]
     )
     def test_summary_success_reflects_error_state(
-        self, errors: tuple[str, ...], expected_success: bool
+        self, errors: tuple[str, ...], *, expected_success: bool
     ) -> None:
         detail = m.RegistrationDetails(
             registration_id="handler-a",

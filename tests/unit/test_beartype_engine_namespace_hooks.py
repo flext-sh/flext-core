@@ -49,13 +49,11 @@ class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
 
             sys.path.insert(0, {str(tmp_path)!r})
             from {import_target} import Probe
-            from flext_core._utilities.beartype_engine import (
+            from flext_core.utilities import (
                 FlextUtilitiesBeartypeEngine as be,
             )
-            from flext_core._constants.enforcement import (
-                FlextConstantsEnforcement as c,
-            )
-            from flext_core._models.enforcement import (
+            from flext_core import c
+            from flext_core.models import (
                 FlextModelsEnforcement as me,
             )
 

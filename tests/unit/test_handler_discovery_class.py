@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+from dataclasses import dataclass
 
 from flext_tests import h, r, tm
 
@@ -98,9 +99,9 @@ class TestsFlextCoreHandlerDiscoveryClass:
 
     def test_scan_class_binds_config_command_and_priority(self) -> None:
         # Arrange
+        @dataclass
         class EventPublished:
-            def __init__(self, event_id: str) -> None:
-                self.event_id = event_id
+            event_id: str
 
         class OrderService:
             @h.handler(command=EventPublished, priority=25)

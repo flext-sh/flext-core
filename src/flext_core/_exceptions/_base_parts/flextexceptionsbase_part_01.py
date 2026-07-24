@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 class FlextBaseErrorMetadataMixin:
     @staticmethod
-    def _normalize_metadata(
+    def normalize_metadata(
         metadata: pr.HasModelDump | tb.JsonValue | None,
         merged_kwargs: tb.MappingKV[str, ts.JsonPayload],
     ) -> m.Metadata:

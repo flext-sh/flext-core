@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import operator
 import pytest
 
 from flext_tests import r, tm
@@ -26,22 +27,14 @@ class TestsFlextResultTransforms:
 
     def test_safe_wraps_successful_call_as_success(self) -> None:
         """Safe returns a success carrying the wrapped function's return value."""
-
-        def divide(a: int, b: int) -> int:
-            return a // b
-
-        result: p.Result[int] = r.safe(divide)(10, 2)
+        result: p.Result[int] = r.safe(operator.floordiv)(10, 2)
 
         _ = u.Tests.assert_success(result)
         tm.that(result.value, eq=5)
 
     def test_safe_captures_raised_exception_as_failure(self) -> None:
         """Safe converts a raised exception into a failure preserving its message."""
-
-        def divide(a: int, b: int) -> int:
-            return a // b
-
-        result: p.Result[int] = r.safe(divide)(10, 0)
+        result: p.Result[int] = r.safe(operator.floordiv)(10, 0)
 
         tm.fail(result)
         tm.that(result.error, eq="integer division or modulo by zero")
@@ -127,7 +120,7 @@ class TestsFlextResultTransforms:
         [(10, 5, True), (10, 20, False), (6, 5, True), (5, 5, False)],
     )
     def test_filter_keeps_or_drops_success_by_predicate(
-        self, value: int, predicate_ceiling: int, expect_success: bool
+        self, value: int, predicate_ceiling: int, *, expect_success: bool
     ) -> None:
         """Filter keeps a success when the predicate holds, else fails it."""
         result = r[int].ok(value)

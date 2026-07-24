@@ -34,12 +34,14 @@ class TestsFlextCoreExceptionsTypedMetrics:
                 e.ConfigurationError,
             ),
             (
-                lambda: e.ConnectionError("Test message", host=c.LOCALHOST, port=8080),
-                e.ConnectionError,
+                lambda: e.FlextConnectionError(
+                    "Test message", host=c.LOCALHOST, port=8080
+                ),
+                e.FlextConnectionError,
             ),
             (
-                lambda: e.TimeoutError("Test message", timeout_seconds=30.0),
-                e.TimeoutError,
+                lambda: e.FlextTimeoutError("Test message", timeout_seconds=30.0),
+                e.FlextTimeoutError,
             ),
             (
                 lambda: e.AuthenticationError(
@@ -89,8 +91,11 @@ class TestsFlextCoreExceptionsTypedMetrics:
         [
             (lambda: e.ValidationError("m", field="email"), "VALIDATION"),
             (lambda: e.ConfigurationError("m", config_key="timeout"), "INTERNAL"),
-            (lambda: e.ConnectionError("m", host=c.LOCALHOST, port=8080), "NETWORK"),
-            (lambda: e.TimeoutError("m", timeout_seconds=30.0), "TIMEOUT"),
+            (
+                lambda: e.FlextConnectionError("m", host=c.LOCALHOST, port=8080),
+                "NETWORK",
+            ),
+            (lambda: e.FlextTimeoutError("m", timeout_seconds=30.0), "TIMEOUT"),
             (lambda: e.AuthenticationError("m", auth_method="password"), "AUTH"),
             (
                 lambda: e.NotFoundError("m", resource_type="User", resource_id="1"),
@@ -128,10 +133,14 @@ class TestsFlextCoreExceptionsTypedMetrics:
                 "config_key",
                 "timeout",
             ),
-            (lambda: e.ConnectionError("m", host=c.LOCALHOST), "host", c.LOCALHOST),
-            (lambda: e.ConnectionError("m", port=8080), "port", 8080),
             (
-                lambda: e.TimeoutError("m", timeout_seconds=30.0),
+                lambda: e.FlextConnectionError("m", host=c.LOCALHOST),
+                "host",
+                c.LOCALHOST,
+            ),
+            (lambda: e.FlextConnectionError("m", port=8080), "port", 8080),
+            (
+                lambda: e.FlextTimeoutError("m", timeout_seconds=30.0),
                 "timeout_seconds",
                 30.0,
             ),
@@ -193,7 +202,7 @@ class TestsFlextCoreExceptionsTypedMetrics:
 
     def test_type_error_normalizes_expected_and_actual_type(self) -> None:
         # Arrange / Act: mixed str + type inputs
-        error = e.TypeError(
+        error = e.FlextTypeError(
             "Type mismatch",
             expected_type="str",
             actual_type=int,
@@ -215,7 +224,7 @@ class TestsFlextCoreExceptionsTypedMetrics:
         # Act
         e.record_exception(e.ValidationError)
         e.record_exception(e.ValidationError)
-        e.record_exception(e.TimeoutError)
+        e.record_exception(e.FlextTimeoutError)
         metrics = e.resolve_metrics_snapshot()
 
         # Assert: public snapshot contract
@@ -224,7 +233,7 @@ class TestsFlextCoreExceptionsTypedMetrics:
         assert metrics.unique_exception_types == 2
         assert metrics.has_exceptions is True
         assert metrics.exception_counts[e.ValidationError.__qualname__] == 2
-        assert metrics.exception_counts[e.TimeoutError.__qualname__] == 1
+        assert metrics.exception_counts[e.FlextTimeoutError.__qualname__] == 1
 
         # Assert: flat config export mirrors the snapshot
         config_map = metrics.to_config_map()

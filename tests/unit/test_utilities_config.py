@@ -66,12 +66,13 @@ class TestsFlextCoreUtilitiesConfig:
 
         assert merged == {"a": 2}
 
-    def test_config_env_override_expands_string_leaves(self) -> None:
+    def test_config_env_override_expands_string_leaves(self, tmp_path: Path) -> None:
+        home = str(tmp_path)
         expanded = u.config_env_override(
-            {"home": "${HOME}", "n": {"p": "${HOME}/x"}, "keep": 5}, {"HOME": "/tmp"}
+            {"home": "${HOME}", "n": {"p": "${HOME}/x"}, "keep": 5}, {"HOME": home}
         )
 
-        assert expanded == {"home": "/tmp", "n": {"p": "/tmp/x"}, "keep": 5}
+        assert expanded == {"home": home, "n": {"p": f"{home}/x"}, "keep": 5}
 
     def test_config_env_override_unknown_var_expands_to_empty(self) -> None:
         expanded = u.config_env_override("${MISSING}", {})

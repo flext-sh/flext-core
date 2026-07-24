@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 class TestsFlextCoreResultCallablesFold:
     @pytest.mark.parametrize("value", [True, False, 0, 1, "", "value"])
-    def test_ok_carries_value_as_success(self, value: bool | int | str) -> None:
+    def test_ok_carries_value_as_success(self, *, value: bool | int | str) -> None:
         """ok() yields a success whose value is the wrapped payload."""
         result = r[bool | int | str].ok(value)
         tm.that(result.success, eq=True)

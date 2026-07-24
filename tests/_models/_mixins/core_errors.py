@@ -94,7 +94,7 @@ class TestsFlextModelsCoreErrorsMixin:
     class _SvcModel(m.BaseModel):
         value: str
 
-    class _BrokenDumpModel:
+    class BrokenDumpModel:
         """Test fake whose ``model_dump`` returns wrong type.
 
         Triggers ``TypeError`` in mapping-shaped validators (e.g.,
@@ -151,7 +151,7 @@ class TestsFlextModelsCoreErrorsMixin:
             msg = c.Tests.PLAIN_BOOM
             raise RuntimeError(msg)
 
-    class _TargetModel(m.BaseModel):
+    class TargetModel(m.BaseModel):
         value: int
 
 

@@ -190,7 +190,7 @@ class TestsFlextCoreResultExceptionTraverseValidation(
         ("value", "expected"), [(True, True), (False, False), (42, 42)]
     )
     def test_ok_reports_success_and_wraps_value(
-        self, value: bool | int, expected: bool | int
+        self, *, value: bool | int, expected: bool | int
     ) -> None:
         # Arrange / Act
         result = r[bool | int].ok(value)

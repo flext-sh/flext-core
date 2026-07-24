@@ -19,12 +19,13 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Callable
+from typing import ClassVar
 
 import pytest
 
 from flext_core import c, m
-from flext_core._constants.enforcement import FlextMroViolation, FlextSmellViolation
-from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
+from flext_core.exceptions import FlextMroViolation, FlextSmellViolation
+from flext_core.utilities import FlextUtilitiesEnforcement
 from tests.unit._enforcement_support import make_class
 from tests.utilities import u
 
@@ -44,7 +45,7 @@ def _local_constants_class() -> type:
     """Return a genuinely function-local class (has ``<locals>`` qualname)."""
 
     class FlextLocalConstants:
-        ITEMS: list[str] = ["a"]  # violating shape, but function-local
+        ITEMS: ClassVar[list[str]] = ["a"]  # violating shape, but function-local
 
     return FlextLocalConstants
 

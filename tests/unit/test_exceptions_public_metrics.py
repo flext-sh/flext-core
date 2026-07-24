@@ -62,14 +62,14 @@ class TestsFlextCoreExceptionsPublicMetrics:
         [
             ((e.ValidationError,), 1, 1),
             ((e.ValidationError, e.ValidationError), 2, 1),
-            ((e.ValidationError, e.TimeoutError), 2, 2),
+            ((e.ValidationError, e.FlextTimeoutError), 2, 2),
             (
                 (
                     e.ValidationError,
                     e.ValidationError,
-                    e.TimeoutError,
-                    e.TimeoutError,
-                    e.TimeoutError,
+                    e.FlextTimeoutError,
+                    e.FlextTimeoutError,
+                    e.FlextTimeoutError,
                 ),
                 5,
                 2,
@@ -96,9 +96,9 @@ class TestsFlextCoreExceptionsPublicMetrics:
         for exception_type in (
             e.ValidationError,
             e.ValidationError,
-            e.TimeoutError,
-            e.TimeoutError,
-            e.TimeoutError,
+            e.FlextTimeoutError,
+            e.FlextTimeoutError,
+            e.FlextTimeoutError,
         ):
             e.record_exception(exception_type)
 
@@ -107,13 +107,13 @@ class TestsFlextCoreExceptionsPublicMetrics:
 
         # Assert
         assert snapshot.exception_counts[e.ValidationError.__qualname__] == 2
-        assert snapshot.exception_counts[e.TimeoutError.__qualname__] == 3
+        assert snapshot.exception_counts[e.FlextTimeoutError.__qualname__] == 3
 
     def test_summary_reports_name_and_count_for_each_type(self) -> None:
         # Arrange
         e.record_exception(e.ValidationError)
         e.record_exception(e.ValidationError)
-        e.record_exception(e.TimeoutError)
+        e.record_exception(e.FlextTimeoutError)
 
         # Act
         summary = e.resolve_metrics_snapshot().exception_counts_summary
@@ -125,7 +125,7 @@ class TestsFlextCoreExceptionsPublicMetrics:
     def test_clear_metrics_resets_all_public_totals(self) -> None:
         # Arrange
         e.record_exception(e.ValidationError)
-        e.record_exception(e.TimeoutError)
+        e.record_exception(e.FlextTimeoutError)
 
         # Act
         e.clear_metrics()
@@ -166,7 +166,7 @@ class TestsFlextCoreExceptionsPublicMetrics:
         # Arrange
         e.record_exception(e.ValidationError)
         e.record_exception(e.ValidationError)
-        e.record_exception(e.TimeoutError)
+        e.record_exception(e.FlextTimeoutError)
 
         # Act
         config = e.resolve_metrics()
@@ -175,4 +175,4 @@ class TestsFlextCoreExceptionsPublicMetrics:
         assert config["total_exceptions"] == 3
         assert config["unique_exception_types"] == 2
         assert config[f"exception_counts.{e.ValidationError.__qualname__}"] == 2
-        assert config[f"exception_counts.{e.TimeoutError.__qualname__}"] == 1
+        assert config[f"exception_counts.{e.FlextTimeoutError.__qualname__}"] == 1

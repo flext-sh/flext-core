@@ -10,7 +10,7 @@ from typing import Annotated
 import pytest
 from pydantic.warnings import PydanticDeprecatedSince20
 
-from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
+from flext_core.utilities import FlextUtilitiesEnforcement
 from tests.constants import c
 from tests.models import m
 from tests.typings import t
@@ -139,7 +139,7 @@ class TestsFlextEnforcementModels:
         [("flext_core.synthetic_module", True), ("fence", False)],
     )
     def test_class_prefix_enforced_only_for_knowable_projects(
-        self, module: str, expect_prefix_violation: bool
+        self, module: str, *, expect_prefix_violation: bool
     ) -> None:
         """``flext_core`` demands the ``Flext`` prefix; doc-fence modules stay silent.
 

@@ -34,7 +34,7 @@ class TestsFlextCoreModelsContainer:
 
     def test_config_map_rejects_non_mapping_root(self) -> None:
         # Pydantic ValidationError subclasses ValueError.
-        with pytest.raises(ValueError):
+        with pytest.raises(m.ValidationError):
             m.ConfigMap.model_validate(["not", "a", "mapping"])
 
     # ------------------------------------------------------------------ #
@@ -64,7 +64,7 @@ class TestsFlextCoreModelsContainer:
         ("key", "present"), [("a", True), ("b", True), ("missing", False)]
     )
     def test_config_map_contains_reflects_membership(
-        self, key: str, present: bool
+        self, key: str, *, present: bool
     ) -> None:
         cfg = m.ConfigMap(root={"a": 1, "b": 2})
         assert (key in cfg) is present
@@ -74,7 +74,7 @@ class TestsFlextCoreModelsContainer:
 
     @pytest.mark.parametrize(("root", "truthy"), [({}, False), ({"a": 1}, True)])
     def test_config_map_bool_reflects_emptiness(
-        self, root: dict[str, t.JsonPayload], truthy: bool
+        self, root: dict[str, t.JsonPayload], *, truthy: bool
     ) -> None:
         assert bool(m.ConfigMap(root=root)) is truthy
 
@@ -163,7 +163,7 @@ class TestsFlextCoreModelsContainer:
 
     @pytest.mark.parametrize(("root", "truthy"), [([], False), (["a"], True)])
     def test_object_list_bool_reflects_emptiness(
-        self, root: list[t.JsonPayload], truthy: bool
+        self, root: list[t.JsonPayload], *, truthy: bool
     ) -> None:
         assert bool(m.ObjectList(root=root)) is truthy
 
@@ -172,5 +172,5 @@ class TestsFlextCoreModelsContainer:
         assert m.ObjectList(root=payload).model_dump() == payload
 
     def test_object_list_rejects_non_sequence_root(self) -> None:
-        with pytest.raises(ValueError):
+        with pytest.raises(m.ValidationError):
             m.ObjectList.model_validate({"root": 12345})

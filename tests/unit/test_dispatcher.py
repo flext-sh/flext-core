@@ -128,7 +128,7 @@ class TestsFlextCoreDispatcher:
         self, dispatcher: p.Dispatcher
     ) -> None:
         # Arrange: callable exposing no message_type / event_type / can_handle.
-        def orphan_handler(message: p.Routable) -> p.Result[t.JsonPayload]:
+        def orphan_handler(_message: p.Routable) -> p.Result[t.JsonPayload]:
             return r[t.JsonPayload].ok({})
 
         # Act

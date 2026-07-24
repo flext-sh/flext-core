@@ -2,7 +2,7 @@
 
 Every assertion targets the observable public contract of ``d.railway``,
 ``d.retry``, and ``d.timeout``: the returned ``r[T]`` outcome, the raw return
-value, or the ``e.TimeoutError`` raised to the caller. No private attribute,
+value, or the ``e.FlextTimeoutError`` raised to the caller. No private attribute,
 internal collaborator, or logging side effect is inspected.
 """
 
@@ -142,7 +142,9 @@ class TestsFlextCoreDecoratorsRailwayRetry:
             raise ValueError(error_msg)
 
         # Act / Assert
-        with pytest.raises(e.TimeoutError, match="failed after 2 attempts") as info:
+        with pytest.raises(
+            e.FlextTimeoutError, match="failed after 2 attempts"
+        ) as info:
             always_fails()
         assert info.value.operation == "always_fails"
 
@@ -168,7 +170,7 @@ class TestsFlextCoreDecoratorsRailwayRetry:
             return "should_not_reach"
 
         # Act / Assert
-        with pytest.raises(e.TimeoutError) as info:
+        with pytest.raises(e.FlextTimeoutError) as info:
             slow_operation()
         assert info.value.operation == "slow_operation"
 
@@ -180,6 +182,6 @@ class TestsFlextCoreDecoratorsRailwayRetry:
             return "should_not_reach"
 
         # Act / Assert
-        with pytest.raises(e.TimeoutError) as info:
+        with pytest.raises(e.FlextTimeoutError) as info:
             slow_operation()
         assert info.value.error_code == "OPERATION_TIMEOUT"

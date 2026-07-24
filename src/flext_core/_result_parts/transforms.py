@@ -83,7 +83,7 @@ class FlextResultTransformsMixin[T](FlextResultConstructionMixin[T], ABC):
         """Apply recovery function on failure; returns self if success."""
         if self.failure:
             try:
-                return self.__class__._from_result(func(self.require_error(self)))
+                return self.__class__.from_result(func(self.require_error(self)))
             except c.EXC_BROAD_RUNTIME as exc:
                 return self.__class__.fail(str(exc), exception=exc)
         return self

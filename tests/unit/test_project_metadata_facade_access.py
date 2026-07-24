@@ -56,9 +56,9 @@ class TestsFlextFacadeFlatSsotAccess:
         assert u.derive_class_stem("") == ""
 
     @staticmethod
-    def _metadata(**overrides: object) -> m.ProjectMetadata:
+    def _metadata(tmp_path: Path, **overrides: object) -> m.ProjectMetadata:
         payload: dict[str, object] = {
-            "root": Path("/tmp/flext-ldif"),
+            "root": tmp_path,
             "package_name": "flext_ldif",
             "class_stem": "FlextLdif",
             "project": {"name": "flext-ldif", "version": "1.2.3"},
@@ -67,24 +67,26 @@ class TestsFlextFacadeFlatSsotAccess:
         payload.update(overrides)
         return m.ProjectMetadata.model_validate(payload)
 
-    def test_project_metadata_exposes_declared_field_values(self) -> None:
-        metadata = self._metadata()
+    def test_project_metadata_exposes_declared_field_values(
+        self, tmp_path: Path
+    ) -> None:
+        metadata = self._metadata(tmp_path)
 
         assert metadata.package_name == "flext_ldif"
         assert metadata.class_stem == "FlextLdif"
         assert metadata.project.name == "flext-ldif"
         assert metadata.project.version == "1.2.3"
 
-    def test_project_metadata_is_immutable(self) -> None:
-        metadata = self._metadata()
+    def test_project_metadata_is_immutable(self, tmp_path: Path) -> None:
+        metadata = self._metadata(tmp_path)
 
         with pytest.raises(m.ValidationError):
             metadata.package_name = "other"
 
-    def test_project_metadata_rejects_unknown_field(self) -> None:
+    def test_project_metadata_rejects_unknown_field(self, tmp_path: Path) -> None:
         with pytest.raises(m.ValidationError):
             m.ProjectMetadata.model_validate({
-                "root": Path("/tmp"),
+                "root": tmp_path,
                 "package_name": "flext_ldif",
                 "class_stem": "FlextLdif",
                 "project": {"name": "flext-ldif", "version": "1.0.0"},
@@ -92,8 +94,10 @@ class TestsFlextFacadeFlatSsotAccess:
                 "unexpected": "value",
             })
 
-    def test_project_metadata_model_dump_exposes_public_fields(self) -> None:
-        dumped = self._metadata().model_dump()
+    def test_project_metadata_model_dump_exposes_public_fields(
+        self, tmp_path: Path
+    ) -> None:
+        dumped = self._metadata(tmp_path).model_dump()
 
         assert dumped["package_name"] == "flext_ldif"
         assert dumped["class_stem"] == "FlextLdif"

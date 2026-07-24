@@ -70,7 +70,7 @@ class TestsFlextCoreUtilitiesCoverage:
         ],
     )
     def test_to_bool_returns_truthiness_or_default(
-        self, value: t.JsonPayload | None, default: bool, expected: bool
+        self, value: t.JsonPayload | None, *, default: bool, expected: bool
     ) -> None:
         """to_bool reflects truthiness and uses default only for None."""
         assert u.to_bool(value, default=default) is expected

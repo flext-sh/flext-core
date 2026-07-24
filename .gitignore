@@ -1,29 +1,75 @@
-# Python
+# Python and build artifacts
 __pycache__/
-*.py[cod]
-*$py.class
+__pyrefly_virtual__/
+.agents/
+.beads/
+.benchmarks/
+.cache/
+.claude/
+.direnv/
+.code-review-graph/
+.codegraph/
+.dolt/
+.dolt_dropped_databases/
+.doltcfg/
+.hypothesis/
+.mypy_cache/
+.omo/
+.pylance_cache/
+.pytest_cache/
+.reports/
+.ropeproject/
+.ruff_cache/
+.scope/
+.serena/
+.sisyphus/
+.state/
+.superpowers/
+.trash/
+.turbo/
+.venv/
+.venv.*/
 *.egg-info/
-.eggs/
 build/
 dist/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
+node_modules/
+site/
+target/
+.pyrefly_cache/
+.tox/
+.flext-deps/
+.flext-sync.lock
+.sync.lock
+.planning/
+skill-create-output/
+.debug-journal.md
+.mcp.json
+CLAUDE.local.md
+*.py[cod]
+*$py.class
+.eggs/
 .coverage
 htmlcov/
-.hypothesis/
 
 # FLEXT
-.venv/
-.reports/
 *.tpl.rej
 
 # Environment and secrets
 .env
 .env.*
+*.key
+*.pem
+*.p12
+*.pfx
+credentials.json
+secrets.yaml
+secrets.yml
 
-# Editors
-.vscode/
+# Editors and OS
 .idea/
 *.swp
+*.swo
+*~
 .DS_Store
+Thumbs.db
+Desktop.ini

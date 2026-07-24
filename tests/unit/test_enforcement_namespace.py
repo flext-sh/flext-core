@@ -17,9 +17,9 @@ import importlib
 import importlib.util
 import sys
 import warnings
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
-from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
+from flext_core.utilities import FlextUtilitiesEnforcement
 from tests.constants import c
 from tests.unit._enforcement_support import make_class
 from tests.utilities import u
@@ -252,7 +252,7 @@ class_stem_override = "XmlAPI"
         """Function-local classes (``<locals>`` qualname) are never enforced."""
 
         class FlextLocalConstants:
-            ITEMS: list[str] = ["a"]  # violating shape, but function-local
+            ITEMS: ClassVar[list[str]] = ["a"]  # violating shape, but function-local
 
         assert "<locals>" in FlextLocalConstants.__qualname__
 
@@ -330,6 +330,7 @@ class_stem_override = "XmlAPI"
         name: str,
         body: dict[str, object],
         module_override: str | None,
+        *,
         expect_enforce_079: bool,
     ) -> None:
         """ENFORCE-079 fires only for UPPER_CASE constants outside ``_constants``."""

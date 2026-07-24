@@ -27,15 +27,15 @@ class TestsFlextCoreExceptions:
         [
             e.ValidationError,
             e.ConfigurationError,
-            e.ConnectionError,
-            e.TimeoutError,
+            e.FlextConnectionError,
+            e.FlextTimeoutError,
             e.AuthenticationError,
             e.AuthorizationError,
             e.NotFoundError,
             e.ConflictError,
             e.RateLimitError,
             e.CircuitBreakerError,
-            e.TypeError,
+            e.FlextTypeError,
             e.OperationError,
             e.AttributeAccessError,
         ],
@@ -55,8 +55,8 @@ class TestsFlextCoreExceptions:
             (e.AuthenticationError("nope"), c.ErrorDomain.AUTH),
             (e.AuthorizationError("nope"), c.ErrorDomain.AUTH),
             (e.NotFoundError("missing"), c.ErrorDomain.NOT_FOUND),
-            (e.ConnectionError("down"), c.ErrorDomain.NETWORK),
-            (e.TimeoutError("slow"), c.ErrorDomain.TIMEOUT),
+            (e.FlextConnectionError("down"), c.ErrorDomain.NETWORK),
+            (e.FlextTimeoutError("slow"), c.ErrorDomain.TIMEOUT),
         ],
     )
     def test_error_domain_routes_typed_errors(
@@ -98,7 +98,7 @@ class TestsFlextCoreExceptions:
         self, declared: type | str, expected: type
     ) -> None:
         # Act — TypeError accepts either a type or its name and resolves both.
-        error = e.TypeError(
+        error = e.FlextTypeError(
             "type mismatch", expected_type=declared, actual_type=declared
         )
         # Assert

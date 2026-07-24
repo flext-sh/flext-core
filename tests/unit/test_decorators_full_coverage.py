@@ -61,7 +61,7 @@ class TestsFlextCoreDecorators:
             time.sleep(0.05)
             return "never"
 
-        with pytest.raises(e.TimeoutError):
+        with pytest.raises(e.FlextTimeoutError):
             slow()
 
     def test_timeout_reraises_original_exception_when_within_limit(self) -> None:
@@ -84,9 +84,9 @@ class TestsFlextCoreDecorators:
         @d.timeout(timeout_seconds=1.0)
         def raises_timeout() -> None:
             msg = "already-timeout"
-            raise e.TimeoutError(msg)
+            raise e.FlextTimeoutError(msg)
 
-        with pytest.raises(e.TimeoutError, match="already-timeout"):
+        with pytest.raises(e.FlextTimeoutError, match="already-timeout"):
             raises_timeout()
 
     def test_railway_wraps_exception_as_failed_result(self) -> None:

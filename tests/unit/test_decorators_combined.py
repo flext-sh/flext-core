@@ -111,7 +111,7 @@ class TestsFlextCoreDecoratorsCombined(TestsFlextDecoratorsLegacy):
             raise RuntimeError(error_msg)
 
         # Act / Assert: exhaustion surfaces as a typed FlextExceptions member.
-        with pytest.raises(e.TimeoutError) as exc_info:
+        with pytest.raises(e.FlextTimeoutError) as exc_info:
             always_failing()
         assert exc_info.value.operation == "always_failing"
 
@@ -166,7 +166,7 @@ class TestsFlextCoreDecoratorsCombined(TestsFlextDecoratorsLegacy):
 
         # Act / Assert
         if should_raise:
-            with pytest.raises(e.TimeoutError) as exc_info:
+            with pytest.raises(e.FlextTimeoutError) as exc_info:
                 measured()
             assert exc_info.value.operation == "measured"
         else:

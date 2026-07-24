@@ -576,9 +576,7 @@ class FlextConstantsErrorsRuntimeSettings:
     )
 
     # --- Exceptions / Error handling ---
-    ERR_EXCEPTIONS_PARAMS_CLS_MISSING: Final[str] = (
-        "{class_name} is missing _params_cls"
-    )
+    ERR_EXCEPTIONS_PARAMS_CLS_MISSING: Final[str] = "{class_name} is missing params_cls"
     ERR_EXCEPTIONS_UNKNOWN_ERROR_TYPE: Final[str] = "Unknown error type: {message}"
 
     # --- Handlers ---

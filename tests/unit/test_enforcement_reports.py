@@ -14,8 +14,8 @@ from typing import Annotated
 
 import pytest
 
-from flext_core._constants.enforcement import FlextMroViolation, FlextSmellViolation
-from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
+from flext_core.exceptions import FlextMroViolation, FlextSmellViolation
+from flext_core.utilities import FlextUtilitiesEnforcement
 from tests.constants import c
 from tests.models import m
 from tests.utilities import u
@@ -91,7 +91,7 @@ class TestsFlextCoreEnforcementReports:
         violation = _hard_violation()
 
         # Pydantic's frozen ValidationError subclasses ValueError.
-        with pytest.raises(ValueError):
+        with pytest.raises(m.ValidationError):
             violation.qualname = "other"
 
     def test_violation_model_dump_exposes_public_fields(self) -> None:

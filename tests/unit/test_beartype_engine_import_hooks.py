@@ -17,9 +17,9 @@ from pathlib import Path
 
 import pytest
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as be
+from flext_core import c
+from flext_core.models import FlextModelsEnforcement as me
+from flext_core.utilities import FlextUtilitiesBeartypeEngine as be
 from tests.typings import t
 
 _FORBIDDEN_IMPORT = "from tests.constants import c"

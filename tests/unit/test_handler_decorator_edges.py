@@ -16,6 +16,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, override
 
 import pytest
+from dataclasses import dataclass
 
 from flext_tests import h, r
 from tests.base import s
@@ -194,9 +195,9 @@ class TestsFlextHandlerDecoratorEdges:
 
     def test_decorated_method_stays_callable_and_returns_success(self) -> None:
         # Arrange: decoration must not alter the method's runtime behavior.
+        @dataclass
         class CreateCommand:
-            def __init__(self, name: str) -> None:
-                self.name = name
+            name: str
 
         class Service:
             @h.handler(command=CreateCommand, priority=3)
@@ -212,9 +213,9 @@ class TestsFlextHandlerDecoratorEdges:
 
     def test_service_integration_discovers_handler_via_scan_class(self) -> None:
         # Arrange: a real FlextService subclass with a decorated handler.
+        @dataclass
         class CreateCommand:
-            def __init__(self, name: str) -> None:
-                self.name = name
+            name: str
 
         class Service(s[str]):
             @h.handler(command=CreateCommand, priority=10)

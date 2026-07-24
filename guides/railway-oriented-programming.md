@@ -33,7 +33,7 @@ exceptions and for `fail_*` helpers that already return `p.Result[T]`.
 - Failure path: `r[T].fail(message, error_code=..., error_data=...)`
 - Structured result failures: `e.fail_operation(...)`,
   `e.fail_not_found(...)`, `e.fail_validation(...)`
-- Typed raised exceptions: `e.ValidationError(...)`, `e.TimeoutError(...)`,
+- Typed raised exceptions: `e.ValidationError(...)`, `e.FlextTimeoutError(...)`,
   `e.NotFoundError(...)`
 
 Canonical implementations and live examples:
@@ -468,7 +468,7 @@ def fetch_remote_profile() -> str:
     try:
         raise RuntimeError(socket_message)
     except RuntimeError as exc:
-        raise e.TimeoutError(
+        raise e.FlextTimeoutError(
             timeout_message,
             operation="fetch profile",
             timeout_seconds=2.0,
@@ -477,10 +477,10 @@ def fetch_remote_profile() -> str:
         ) from exc
 
 
-captured: e.TimeoutError | None = None
+captured: e.FlextTimeoutError | None = None
 try:
     fetch_remote_profile()
-except e.TimeoutError as exc:
+except e.FlextTimeoutError as exc:
     captured = exc
 
 if captured is None:
@@ -611,7 +611,7 @@ if fail_result.error_code != expected_error_code:
 
 ### @d.retry + @d.railway
 
-When retries exhaust, `@d.retry` raises `e.TimeoutError`; with outer
+When retries exhaust, `@d.retry` raises `e.FlextTimeoutError`; with outer
 `@d.railway`, the exception is converted back into `p.Result[T]`.
 
 ```python
