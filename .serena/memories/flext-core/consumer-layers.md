@@ -18,6 +18,7 @@
 ## No Direct Imports Rule
 
 Abstracted libs (pydantic, dependency_injector, structlog, returns):
+
 - ✓ Access via `c.*`, `m.*`, `p.*`, `t.*`, `u.*`, `r[T]`
 - ✗ NEVER `from pydantic import`, `from dependency_injector import`, etc.
 

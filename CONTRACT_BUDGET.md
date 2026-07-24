@@ -29,6 +29,7 @@
 ## Budget: t.* (FlextTypingBase + FlextTypesServices + FlextTypingContainers + FlextTypesPydantic + FlextTypesAnnotateds)
 
 ### FlextTypingBase — KEEP (flat, composable)
+
 - `Numeric`, `Primitives`, `Scalar`, `Container`
 - `FlatScalarMapping`, `FlatScalarSequence`
 - `StrMapping` / `MutableStrMapping`, `StrSequence`
@@ -42,9 +43,11 @@
 - Tuples `PRIMITIVES_TYPES`/`NUMERIC_TYPES`/`SCALAR_TYPES`/`CONTAINER_TYPES`/`CONTAINER_AND_COLLECTION_TYPES` — MOVE to `_constants/` (runtime, not typing).
 
 ### FlextTypingBase — REMOVE / MIGRATE
+
 - None yet (already lean).
 
 ### FlextTypesServices — KEEP (signature composition only)
+
 - `RegistryDict`, `ModelCarrier`, `ContainerCarrier`, `ScalarOrModel`, `ModelClass`
 - `LogArgument`, `LogValue`, `LogResult`
 - `MetadataValue`, `MetadataData`, `MetadataData`
@@ -59,6 +62,7 @@
 - `ContextHookCallable` / `ContextHookMap`
 
 ### FlextTypesServices — REMOVE
+
 - All `# DEPRECATED` comment blocks (dead code — delete, don't leave).
 - `ProtocolModelCarrier = p.Model` — thin pass-through duplicate of `p.Model`; inline at call sites.
 - `DomainModelCarrier = ModelCarrier | ProtocolModelCarrier` — collapse to `ModelCarrier` (pydantic `BaseModel` is the SSOT).
@@ -69,9 +73,10 @@
 - `TypeOriginSpecifier = TypeHintSpecifier` — remove.
 - `ScopedContainerRegistry`, `ScopedScalarRegistry` — move to `m.*` (container model).
 
-## Budget: p.* (FlextProtocols*)
+## Budget: p.*(FlextProtocols*)
 
 Keep only behavioral:
+
 - `Result`, `ResultLike`, `SuccessCheckable`, `StructuredError`, `ErrorDomainProtocol`
 - `Model` (structural), `Routable`, `Dispatcher`, `Handle`, `Execute`, `AutoDiscoverableHandler`
 - `Context`, `Container` (protocol, not the concrete class), `ProviderLike`
@@ -83,7 +88,7 @@ Keep only behavioral:
 
 Nothing else. All dict/list recursive hints in protocol signatures must switch to `t.FlatContainerMapping` / `t.StrMapping` / `m.*` / concrete payload models.
 
-## Budget: m.* (FlextModels*)
+## Budget: m.*(FlextModels*)
 
 SSOT for structured/validated payloads. Primary rewiring targets (replace recursive dicts):
 
@@ -96,6 +101,7 @@ SSOT for structured/validated payloads. Primary rewiring targets (replace recurs
 7. **Normalization** — the `_normalization`/`_lifecycle` utilities emit into concrete models.
 
 Models flagged for validator-consolidation (move custom logic into `field_validator` / `model_validator` / computed_field):
+
 - `handler.py` (511 LOC)
 - `exception_params.py` (460 LOC)
 - `dispatcher.py` (441 LOC)
@@ -108,6 +114,7 @@ Each of these gets a pass in Stage B.
 ## Budget: u.* (FlextUtilities)
 
 Keep only pure helpers:
+
 - `collection` merge/diff ops (shrink — use `m.*` validators where possible)
 - `mapper` normalization (strip `RecursiveContainer*` — use `FlatContainerMapping`)
 - `checker` — audit, remove redundant narrowing
@@ -115,6 +122,7 @@ Keep only pure helpers:
 - `generators`, `parser`, `text`, `enum`, `conversion`, `discovery`, `args`
 
 Remove / collapse:
+
 - `guards_ensure.py` redundant with pydantic validators — audit & shrink
 - `context_*.py` move data-holder logic into `FlextModelsContext*`, leave `u.*` only as composition/reflect helpers
 - `reliability.py` audit vs. actual callers
@@ -123,6 +131,7 @@ Remove / collapse:
 ## Budget: c.* (FlextConstants)
 
 Keep domain constants and error codes. Accept runtime tuples relocated from `_typings/base.py`:
+
 - `c.Typing.PRIMITIVES_TYPES`
 - `c.Typing.NUMERIC_TYPES`
 - `c.Typing.SCALAR_TYPES`

@@ -1,6 +1,7 @@
 # flext-core: Quick Reference Map
 
 **File Structure**:
+
 ```
 src/flext_core/
 ├── result.py           # r[T] Railway carrier
