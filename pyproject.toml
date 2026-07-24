@@ -368,7 +368,13 @@ project-includes = [
 ]
 python-interpreter-path = "../.venv/bin/python"
 python-version = "3.13"
-search-path = [".", "src"]
+search-path = [
+  ".",
+  "../flext-cli/src",
+  "../flext-infra/src",
+  "../flext-tests/src",
+  "src",
+]
 use-ignore-files = false
 
 [tool.pyrefly.errors]
@@ -592,7 +598,12 @@ root = "scripts"
 
 # [MANAGED] pytest
 [tool.pytest.ini_options]
-addopts = ["--durations=10", "--strict-markers", "--timeout=10"]
+addopts = [
+  "--durations=10",
+  "--markdown-docs",
+  "--strict-markers",
+  "--timeout=10",
+]
 enable_assertion_pass_hook = true
 filterwarnings = [
   "error",
@@ -618,7 +629,7 @@ markers = [
 minversion = "8.0"
 python_classes = ["Test*"]
 python_files = ["*_test.py", "*_tests.py", "test_*.py"]
-testpaths = ["tests"]
+testpaths = [".", "docs", "examples", "scripts", "src", "tests"]
 
 [tool.radon]
 cc_min = "B"
