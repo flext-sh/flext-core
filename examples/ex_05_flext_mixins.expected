@@ -1,0 +1,34 @@
+[result_and_conversion]
+ok.unwrap_or: "root={'k': 'v'}"
+fail.error: 'failure'
+fail.error_code: 'E_EX'
+to_dict.dict: "{'x': 1, 'y': '2'}"
+to_dict.none: '{}'
+ensure_result.raw: '99'
+ensure_result.existing: '7'
+traverse.ok: '[2, 4]'
+traverse.fail_fast: 'odd:3'
+traverse.collect: 'odd:1; odd:3'
+accumulate_errors.ok: '[1, 2]'
+accumulate_errors.fail: 'e1; e2'
+
+[runtime_properties_and_tracking]
+container.type: 'FlextContainer'
+logger.type: 'FlextUtilities'
+context.type: 'FlextContext'
+settings.type: 'FlextSettings'
+const.scope_operation: <ContextScope.OPERATION: 'operation'>
+track.success.metrics: dict
+track.failure.message: 'boom'
+
+[cqrs_validation_protocols]
+metrics.record_metric: True
+metrics.available: True
+metrics.value: "root={'hits': 3}"
+context_stack.push_context: True
+context_stack.current_context.before_pop: True
+context_stack.pop_context.success: True
+context_stack.pop_context.value: "{'handler_name': 'Q', 'handler_mode': 'query'}"
+context_stack.current_context.after_pop: True
+protocol.handler.good: True
+protocol.handler.bad: False

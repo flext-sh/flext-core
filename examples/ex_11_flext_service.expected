@@ -1,0 +1,24 @@
+[service_core_api]
+execute.unwrap: 'echo:ok'
+execute.unwrap.matches: True
+runtime.type: 'ServiceRuntime'
+context.type: 'FlextContext'
+settings.type: 'FlextSettings'
+container.type: 'FlextContainer'
+validate_business_rules.default.success: True
+valid.default: True
+validate_business_rules.override.success: False
+validate_business_rules.override.error: 'Failed to validate business_rule: E_RULE'
+valid.override: False
+
+[runtime_creation_and_serialization]
+create_runtime.default.context: 'FlextContext'
+create_runtime.full.container: 'FlextContainer'
+create_runtime.full.settings: 'FlextSettings'
+service_info.type: 'dict'
+service_info.payload: 'ok'
+
+[result_and_failures]
+ok.unwrap: 'echo:ok'
+fail.error: True
+fail.error.message: 'Failed to validate business_rule: E_RULE'
