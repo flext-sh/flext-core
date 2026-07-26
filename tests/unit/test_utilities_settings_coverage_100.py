@@ -139,5 +139,5 @@ class TestsFlextCoreUtilitiesSettings:
         )
 
         tm.fail(failure_result)
-        tm.that(failure_result.error, none=False)
+        assert failure_result.error is not None
         assert error_message in failure_result.error
