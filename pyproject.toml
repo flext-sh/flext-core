@@ -776,15 +776,6 @@ all = true
 in_place = true
 sort_first = [ "build-system", "dependency-groups", "project", "tool" ]
 
-[tool.uv.sources.flext-cli]
-workspace = true
-
-[tool.uv.sources.flext-infra]
-workspace = true
-
-[tool.uv.sources.flext-tests]
-workspace = true
-
 # [MANAGED] yamlfix
 [tool.yamlfix]
 explicit_start = false
