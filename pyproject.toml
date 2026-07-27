@@ -706,7 +706,7 @@ sort_first = ["build-system", "dependency-groups", "project", "tool"]
 
 [tool.uv]
 link-mode = "copy"
-required-version = "==0.11.29"
+required-version = "==0.11.32"
 
 [tool.vulture]
 exclude = ["*/_protocols/*"]
