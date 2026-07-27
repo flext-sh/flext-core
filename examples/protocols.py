@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flext_core.protocols import FlextProtocols
+from flext_core import FlextProtocols
 
 p: type[FlextProtocols] = FlextProtocols
 

@@ -31,10 +31,7 @@ def _is_synthetic_parametrized_type(value: object) -> bool:
     return isinstance(value, type) and "[" in getattr(value, "__qualname__", "")
 
 
-def _is_module_alias_candidate(
-    name: str,
-    value: object,
-) -> bool:
+def _is_module_alias_candidate(name: str, value: object) -> bool:
     """Return True when a module-level symbol looks like a compat alias."""
     if not isinstance(value, type):
         return False
@@ -52,10 +49,7 @@ class FlextUtilitiesBeartypeModuleVisitor:
     """LOC_CAP + MODULE_ALIAS + DUPLICATE_SYMBOL visitors."""
 
     @staticmethod
-    def v_loc_cap(
-        params: me.LocCapParams,
-        target: type,
-    ) -> t.StrMapping | None:
+    def v_loc_cap(params: me.LocCapParams, target: type) -> t.StrMapping | None:
         """LOC_CAP — module logical-LOC ceiling + top-level class census (§3.1)."""
         module = FlextUtilitiesBeartypeHelpers.runtime_module_for(target)
         if module is None:
@@ -112,8 +106,7 @@ class FlextUtilitiesBeartypeModuleVisitor:
 
     @staticmethod
     def v_module_alias(
-        params: me.AliasRebindParams,
-        target: type,
+        params: me.AliasRebindParams, target: type
     ) -> t.StrMapping | None:
         """MODULE_ALIAS — module-level CapWords compat alias / nested-class hoist."""
         if params.expected_form != "no_module_compat_alias":
@@ -135,18 +128,14 @@ class FlextUtilitiesBeartypeModuleVisitor:
             (
                 {"alias": name, "target": value.__name__, "file": filename}
                 for name, value in vars(module).items()
-                if _is_module_alias_candidate(
-                    name,
-                    value,
-                )
+                if _is_module_alias_candidate(name, value)
             ),
             _NO_VIOLATION,
         )
 
     @staticmethod
     def v_duplicate_symbol(
-        _params: me.DuplicateSymbolParams,
-        _target: type,
+        _params: me.DuplicateSymbolParams, _target: type
     ) -> t.StrMapping | None:
         """DUPLICATE_SYMBOL — workspace cross-project SSOT (Phase 3 hook).
 

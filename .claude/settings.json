@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git clean -f:*)",
+      "Bash(sed -i:*)",
+      "Bash(rm -rf:*)",
+      "Bash(rm -fr:*)"
+    ]
+  },
+  "extraKnownMarketplaces": {
+    "flext": {
+      "source": {
+        "source": "directory",
+        "path": ".."
+      }
+    }
+  },
+  "enabledPlugins": {
+    "flext@flext": true
+  }
+}

@@ -12,10 +12,7 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
-from flext_core import (
-    FlextConstants as c,
-    FlextTypes as t,
-)
+from flext_core import FlextConstants as c, FlextTypes as t
 from flext_core._models.base import FlextModelsBase as m
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
@@ -73,14 +70,12 @@ class FlextModelsExceptionParams:
 
         resource_type: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            mp.Field(
-                description="Domain resource type associated with the failure.",
-            ),
+            mp.Field(description="Domain resource type associated with the failure."),
         ] = None
         resource_id: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
             mp.Field(
-                description="Identifier of the resource associated with the failure.",
+                description="Identifier of the resource associated with the failure."
             ),
         ] = None
 
@@ -89,15 +84,11 @@ class FlextModelsExceptionParams:
 
         expected_type: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            mp.Field(
-                description="Expected runtime type name for the failing value.",
-            ),
+            mp.Field(description="Expected runtime type name for the failing value."),
         ] = None
         actual_type: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            mp.Field(
-                description="Actual runtime type name received at runtime.",
-            ),
+            mp.Field(description="Actual runtime type name received at runtime."),
         ] = None
 
     class ValidationErrorParams(ParamsModel):
@@ -125,15 +116,11 @@ class FlextModelsExceptionParams:
 
         config_key: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            mp.Field(
-                description="Settings key associated with the error.",
-            ),
+            mp.Field(description="Settings key associated with the error."),
         ] = None
         config_source: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            mp.Field(
-                description="Settings source where the invalid value originated.",
-            ),
+            mp.Field(description="Settings source where the invalid value originated."),
         ] = None
 
     class ConnectionErrorParams(ParamsModel):
@@ -156,8 +143,7 @@ class FlextModelsExceptionParams:
         timeout: Annotated[
             t.Numeric | None,
             mp.Field(
-                default=None,
-                description="Connection timeout threshold in seconds.",
+                default=None, description="Connection timeout threshold in seconds."
             ),
         ] = None
 

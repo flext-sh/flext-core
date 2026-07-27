@@ -16,7 +16,7 @@ class FlextConstantsEnforcementCatalogBeartypeRows:
             "HIGH",
             "cast_outside_core",
             "3-2-types-and-contracts",
-            ("flext-strict-typing", "flext-patterns"),
+            ("flext-strict-typing",),
             "cast() call outside flext-core result internals violates AGENTS.md §3.2 (Strict Types).",
         ),
         (
@@ -24,7 +24,7 @@ class FlextConstantsEnforcementCatalogBeartypeRows:
             "HIGH",
             "model_rebuild_call",
             "3-4-tools-and-modules",
-            ("flext-patterns",),
+            ("pydantic-v2-governance",),
             "model_rebuild() call indicates unresolved forward refs and violates AGENTS.md §3.4 (Tools/Modules/Env).",
         ),
         (
@@ -32,7 +32,7 @@ class FlextConstantsEnforcementCatalogBeartypeRows:
             "HIGH",
             "settings_inheritance",
             "2-6-settings-law",
-            ("flext-patterns", "lib-pydantic-settings"),
+            ("lib-pydantic-settings",),
             "Settings class missing FlextSettings base or wrong env_prefix violates AGENTS.md §2.6 (Settings Law). Reuses the existing check_settings_inheritance hook — no new detection code per SSOT/DRY.",
         ),
         (
@@ -48,7 +48,7 @@ class FlextConstantsEnforcementCatalogBeartypeRows:
             "HIGH",
             "private_attr_probe",
             "3-6-test-standardization",
-            ("flext-strict-typing", "flext-patterns"),
+            ("flext-strict-typing", "testing-patterns"),
             "hasattr/getattr/setattr probing of private attributes (single-underscore names) violates AGENTS.md §3.6.",
         ),
         (

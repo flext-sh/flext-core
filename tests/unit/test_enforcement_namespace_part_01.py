@@ -51,8 +51,7 @@ class TestsFlextCoreEnforcementNamespacePart01:
         assert _MISSING_PREFIX not in report
 
     def test_pydantic_generic_parametrized_subclass_produces_no_violation(
-        self,
-        tmp_path: Path,
+        self, tmp_path: Path
     ) -> None:
         """Pydantic leaks ``Base[int]`` into the base module during subclassing.
 
@@ -81,10 +80,10 @@ class TestsFlextCoreEnforcementNamespacePart01:
         sys.path.insert(0, src_path)
         try:
             spec = importlib.util.spec_from_file_location(
-                "demo_pkg.base",
-                package / "base.py",
+                "demo_pkg.base", package / "base.py"
             )
-            assert spec is not None and spec.loader is not None
+            assert spec is not None
+            assert spec.loader is not None
             module = importlib.util.module_from_spec(spec)
             sys.modules[spec.name] = module
             spec.loader.exec_module(module)
@@ -169,10 +168,7 @@ class TestsFlextCoreEnforcementNamespacePart01:
         ],
     )
     def test_tests_module_requires_tests_prefix_composition(
-        self,
-        class_name: str,
-        *,
-        flagged: bool,
+        self, class_name: str, *, flagged: bool
     ) -> None:
         """Classes in ``tests.*`` must carry the composed ``TestsFlext`` prefix."""
         target = type(class_name, (), {})
@@ -183,8 +179,7 @@ class TestsFlextCoreEnforcementNamespacePart01:
         assert (_MISSING_PREFIX in report) is flagged
 
     def test_project_class_stem_override_controls_class_prefix(
-        self,
-        tmp_path: Path,
+        self, tmp_path: Path
     ) -> None:
         """``class_stem_override`` in pyproject drives the required class prefix."""
         root = tmp_path / "sample"
@@ -204,11 +199,9 @@ class_stem_override = "XmlAPI"
         )
         module_path = package / "__init__.py"
         module_path.write_text("class XmlAPIModels:\n    pass\n", encoding="utf-8")
-        spec = importlib.util.spec_from_file_location(
-            "xmlapi_override_sample",
-            module_path,
-        )
-        assert spec is not None and spec.loader is not None
+        spec = importlib.util.spec_from_file_location("xmlapi", module_path)
+        assert spec is not None
+        assert spec.loader is not None
         module = importlib.util.module_from_spec(spec)
         sys.modules[spec.name] = module
         spec.loader.exec_module(module)

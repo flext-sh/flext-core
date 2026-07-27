@@ -42,7 +42,7 @@ class TestsFlextEnforcementCatalog:
 
     def test_by_kind_returns_only_matching_source_kind(self) -> None:
         infra = u.build_canonical_catalog().by_kind(
-            m.EnforcementSourceKind.FLEXT_INFRA_DETECTOR,
+            m.EnforcementSourceKind.FLEXT_INFRA_DETECTOR
         )
         assert all(
             rule.source.kind == m.EnforcementSourceKind.FLEXT_INFRA_DETECTOR.value
@@ -54,12 +54,10 @@ class TestsFlextEnforcementCatalog:
         expected = {member.value for member in m.EnforcementSourceKind}
         assert expected <= present
 
-    def test_infra_detector_rules_match_declared_infra_rows(
-        self,
-    ) -> None:
+    def test_infra_detector_rules_match_declared_infra_rows(self) -> None:
         declared_fields = {row[2] for row in c.INFRA_DETECTOR_ROWS}
         infra = u.build_canonical_catalog().by_kind(
-            m.EnforcementSourceKind.FLEXT_INFRA_DETECTOR,
+            m.EnforcementSourceKind.FLEXT_INFRA_DETECTOR
         )
         actual_fields: set[str] = set()
         for rule in infra:
@@ -73,7 +71,7 @@ class TestsFlextEnforcementCatalog:
         """Each auto-fixable infra detector field maps to one catalog rule."""
         fields: list[str] = []
         for rule in u.build_canonical_catalog().by_kind(
-            m.EnforcementSourceKind.FLEXT_INFRA_DETECTOR,
+            m.EnforcementSourceKind.FLEXT_INFRA_DETECTOR
         ):
             assert isinstance(rule.source, m.EnforcementInfraDetectorSource)
             if rule.fix_action is not None:
@@ -85,7 +83,7 @@ class TestsFlextEnforcementCatalog:
         self,
     ) -> None:
         validators = u.build_canonical_catalog().by_kind(
-            m.EnforcementSourceKind.FLEXT_TESTS_VALIDATOR,
+            m.EnforcementSourceKind.FLEXT_TESTS_VALIDATOR
         )
         assert len(validators) == 7
         methods: set[str] = set()
@@ -104,7 +102,7 @@ class TestsFlextEnforcementCatalog:
 
     def test_runtime_warning_category_references_flext_mro_violation(self) -> None:
         runtime = u.build_canonical_catalog().by_kind(
-            m.EnforcementSourceKind.RUNTIME_WARNING,
+            m.EnforcementSourceKind.RUNTIME_WARNING
         )
         categories: set[str] = set()
         for rule in runtime:

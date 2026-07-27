@@ -20,9 +20,7 @@ from flext_core._protocols._result_parts.flextprotocolsresult_part_01 import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        Callable,
-    )
+    from collections.abc import Callable
     from types import TracebackType
 
     from flext_core._typings.base import FlextTypingBase as t
@@ -97,39 +95,32 @@ class FlextProtocolsResult(FlextProtocolsResultPart01):
 
         @abstractmethod
         def flat_map[U](
-            self,
-            func: Callable[[T_co], FlextProtocolsResult.Result[U]],
+            self, func: Callable[[T_co], FlextProtocolsResult.Result[U]]
         ) -> FlextProtocolsResult.Result[U]: ...
 
         @abstractmethod
         def fold[U](
-            self,
-            on_failure: Callable[[str], U],
-            on_success: Callable[[T_co], U],
+            self, on_failure: Callable[[str], U], on_success: Callable[[T_co], U]
         ) -> U: ...
 
         @abstractmethod
         def lash(
-            self,
-            func: Callable[[str], FlextProtocolsResult.Result[T_co]],
+            self, func: Callable[[str], FlextProtocolsResult.Result[T_co]]
         ) -> FlextProtocolsResult.Result[T_co]: ...
 
         @abstractmethod
         def map[U](
-            self,
-            func: Callable[[T_co], U],
+            self, func: Callable[[T_co], U]
         ) -> FlextProtocolsResult.Result[U]: ...
 
         @abstractmethod
         def flow_through(
-            self,
-            *funcs: Callable[[T_co], FlextProtocolsResult.Result[T_co]],
+            self, *funcs: Callable[[T_co], FlextProtocolsResult.Result[T_co]]
         ) -> FlextProtocolsResult.Result[T_co]: ...
 
         @abstractmethod
         def map_error(
-            self,
-            func: Callable[[str], str],
+            self, func: Callable[[str], str]
         ) -> FlextProtocolsResult.Result[T_co]: ...
 
         @overload
@@ -141,15 +132,12 @@ class FlextProtocolsResult(FlextProtocolsResultPart01):
 
         @abstractmethod
         def map_or[U](
-            self,
-            default: U,
-            func: Callable[[T_co], U] | None = None,
+            self, default: U, func: Callable[[T_co], U] | None = None
         ) -> U | T_co: ...
 
         @abstractmethod
         def tap(
-            self,
-            func: Callable[[T_co], None],
+            self, func: Callable[[T_co], None]
         ) -> FlextProtocolsResult.Result[T_co]: ...
 
         @abstractmethod
@@ -157,20 +145,17 @@ class FlextProtocolsResult(FlextProtocolsResultPart01):
 
         @abstractmethod
         def filter(
-            self,
-            predicate: Callable[[T_co], bool],
+            self, predicate: Callable[[T_co], bool]
         ) -> FlextProtocolsResult.Result[T_co]: ...
 
         @abstractmethod
         def recover[U](
-            self,
-            func: Callable[[str], U],
+            self, func: Callable[[str], U]
         ) -> FlextProtocolsResult.Result[T_co | U]: ...
 
         @abstractmethod
         def to_model[U: mp.BaseModel](
-            self,
-            model: type[U],
+            self, model: type[U]
         ) -> FlextProtocolsResult.Result[U]: ...
 
         @abstractmethod

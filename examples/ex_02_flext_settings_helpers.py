@@ -28,6 +28,5 @@ class Ex02FlextSettingsFieldChecks(ExamplesFlextShared):
         self.audit_check("field.async_logging", settings.async_logging)
         validated = FlextSettings.model_validate(settings.model_dump())
         self.audit_check(
-            "validate_configuration.indirect_via_model_validate",
-            validated.log_level,
+            "validate_configuration.indirect_via_model_validate", validated.log_level
         )

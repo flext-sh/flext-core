@@ -40,15 +40,11 @@ class FlextResultUnwrapMixin[T](FlextResultBehaviorMixin[T], ABC):
     def unwrap_or_else(self, func: Callable[[], T]) -> T: ...
     @overload
     def unwrap_or_else[DefaultT](
-        self,
-        func: Callable[[], DefaultT],
+        self, func: Callable[[], DefaultT]
     ) -> T | DefaultT: ...
 
     @override
-    def unwrap_or_else[DefaultT](
-        self,
-        func: Callable[[], DefaultT],
-    ) -> T | DefaultT:
+    def unwrap_or_else[DefaultT](self, func: Callable[[], DefaultT]) -> T | DefaultT:
         """Return the success value or call func if failed."""
         if self.success and self.value is not None:
             return self.value

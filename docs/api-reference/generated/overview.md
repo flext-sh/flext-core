@@ -3,15 +3,17 @@
 # flext-core API Overview
 
 - Package: `flext_core`
-- Version: `0.12.0-dev`
+- Version: `0.12.0`
 - Description: Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture
+- Doc summary: Flext Core package.
+- Classifiers: `Development Status :: 3 - Alpha`, `Framework :: Pydantic :: 2`, `Framework :: Pydantic`, `Intended Audience :: Developers`, `Operating System :: OS Independent`, `Programming Language :: Python :: 3 :: Only` (+3 more)
 - Project class: `platform`
 - Keywords: `clean-architecture`, `ddd`, `enterprise`, `flext`, `modern`, `solid`
-- Main facades: _none_
+- Main facades: `FlextConfig`, `FlextConstants`, `FlextContainer`, `FlextContext`, `FlextDecorators`, `FlextDispatcher`, `FlextExceptions`, `FlextHandlers` (+12 more)
 - Alias exports: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
-- Public symbol exports: `FlextContext`, `FlextTypes`, `FlextLazy`, `FlextSettings`, `FlextHandlers`, `FlextDispatcher`, `FlextService`, `FlextExceptions`, `FlextResult`, `FlextMixins` (+9 more)
+- Public symbol exports: `FlextConfig`, `FlextConstants`, `FlextContainer`, `FlextContext`, `FlextDecorators`, `FlextDispatcher`, `FlextExceptions`, `FlextHandlers`, `FlextLazy`, `FlextMixins` (+12 more)
 - Exported module shortcuts: _none_
-- Generated module pages: `19`
+- Generated module pages: `18`
 
 ## Next Pages
 

@@ -15,10 +15,7 @@ if TYPE_CHECKING:
     from flext_core._typings.base import FlextTypingBase as t
 
 _BASE_ENFORCEMENT_RULES_TEXT: dict[str, t.StrPair] = {
-    "no_any": (
-        "Any is FORBIDDEN (detected recursively)",
-        "Use a t.* type contract.",
-    ),
+    "no_any": ("Any is FORBIDDEN (detected recursively)", "Use a t.* type contract."),
     "no_bare_collection": (
         "bare {kind}[...] annotation FORBIDDEN",
         "Use {replacement}.",
@@ -129,9 +126,10 @@ _BASE_ENFORCEMENT_RULES_TEXT: dict[str, t.StrPair] = {
 class FlextConstantsEnforcementRuleText:
     """Legacy problem/fix text indexed by enforcement tag."""
 
-    ENFORCEMENT_RULES_TEXT: Final[Mapping[str, t.StrPair]] = MappingProxyType(
-        {**_BASE_ENFORCEMENT_RULES_TEXT, **SMELL_RULES_TEXT},
-    )
+    ENFORCEMENT_RULES_TEXT: Final[Mapping[str, t.StrPair]] = MappingProxyType({
+        **_BASE_ENFORCEMENT_RULES_TEXT,
+        **SMELL_RULES_TEXT,
+    })
     """Legacy: problem/fix text indexed by tag. Use m.EnforcementCatalog for new code."""
 
 

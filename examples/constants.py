@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from flext_core import c as _c
 
 if TYPE_CHECKING:
-    from examples import t
+    from examples.typings import t
 
 c = _c
 

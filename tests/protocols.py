@@ -48,7 +48,9 @@ class TestsFlextProtocols(p):
         class ExtractFieldCallable(Protocol):
             """Protocol for _extract_field_value callable."""
 
-            def __call__(self, item: AttrObject, field_name: str) -> t.JsonValue: ...
+            def __call__(self, item: AttrObject, field_name: str) -> t.JsonValue:
+                """Extract one named field value from an attribute object."""
+                ...
 
         @runtime_checkable
         class TakeCallable(Protocol):
@@ -62,7 +64,9 @@ class TestsFlextProtocols(p):
                 key_or_index: int | str,
                 *,
                 default: str | None = None,
-            ) -> t.JsonMapping | t.JsonList | t.JsonValue: ...
+            ) -> t.JsonMapping | t.JsonList | t.JsonValue:
+                """Take one key or index from supported mapper input."""
+                ...
 
         @runtime_checkable
         class BuildApplyConvertCallable(Protocol):
@@ -74,23 +78,21 @@ class TestsFlextProtocols(p):
                 operations: t.MappingKV[str, t.MapperInput],
                 default_val: t.JsonValue,
                 on_error: str,
-            ) -> t.JsonValue: ...
+            ) -> t.JsonValue:
+                """Apply conversion operations to the current mapper value."""
+                ...
 
         @runtime_checkable
         class ExtractTransformOptionsCallable(Protocol):
             """Protocol for _extract_transform_options callable."""
 
             def __call__(
-                self,
-                transform_opts: t.MappingKV[str, t.MapperInput],
+                self, transform_opts: t.MappingKV[str, t.MapperInput]
             ) -> tuple[
-                bool,
-                bool,
-                bool,
-                t.StrMapping | None,
-                set[str] | None,
-                set[str] | None,
-            ]: ...
+                bool, bool, bool, t.StrMapping | None, set[str] | None, set[str] | None
+            ]:
+                """Extract normalized transform options from mapper input."""
+                ...
 
         @runtime_checkable
         class BuildApplyOpCallable(Protocol):
@@ -104,17 +106,19 @@ class TestsFlextProtocols(p):
                 operations: t.MappingKV[str, t.MapperInput],
                 default_val: t.JsonValue,
                 on_error: str,
-            ) -> t.JsonMapping | t.JsonList | t.JsonValue: ...
+            ) -> t.JsonMapping | t.JsonList | t.JsonValue:
+                """Apply sort, unique, slice, or group mapper operations."""
+                ...
 
         @runtime_checkable
         class TransformCallable(Protocol):
             """Protocol for transform callable."""
 
             def __call__(
-                self,
-                source: BadMapping,
-                **kwargs: t.StrMapping,
-            ) -> p.Result[t.JsonMapping]: ...
+                self, source: BadMapping, **kwargs: t.StrMapping
+            ) -> p.Result[t.JsonMapping]:
+                """Transform one mapping source into a result mapping."""
+                ...
 
         @runtime_checkable
         class MapDictKeysCallable(Protocol):
@@ -126,7 +130,9 @@ class TestsFlextProtocols(p):
                 key_map: t.StrMapping,
                 *,
                 keep_unmapped: bool = True,
-            ) -> p.Result[t.JsonMapping]: ...
+            ) -> p.Result[t.JsonMapping]:
+                """Map source dictionary keys under the requested policy."""
+                ...
 
 
 p = TestsFlextProtocols

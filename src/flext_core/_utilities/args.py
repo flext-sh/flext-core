@@ -59,9 +59,7 @@ class FlextUtilitiesArgs:
         if options is not None:
             return r[M].ok(options)
         return FlextUtilitiesArgs.parse_model(
-            kwargs,
-            model_cls,
-            allow_empty=allow_empty,
+            kwargs, model_cls, allow_empty=allow_empty
         )
 
 

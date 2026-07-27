@@ -10,8 +10,8 @@ from __future__ import annotations
 from enum import StrEnum
 
 import pytest
-from flext_tests import tm
 
+from flext_tests import tm
 from tests.constants import c
 from tests.typings import t
 
@@ -40,13 +40,7 @@ class TestsFlextCoreTypingsNew:
         with pytest.raises(c.ValidationError):
             t.primitives_adapter().validate_python([1])
 
-    @pytest.mark.parametrize(
-        ("valid", "invalid"),
-        [
-            (7, "7"),
-            (0, 1.5),
-        ],
-    )
+    @pytest.mark.parametrize(("valid", "invalid"), [(7, "7"), (0, 1.5)])
     def test_int_adapter_is_strict(self, valid: int, invalid: object) -> None:
         """int_adapter accepts real ints and rejects coercible non-ints."""
         tm.that(t.int_adapter().validate_python(valid), eq=valid)
@@ -78,13 +72,7 @@ class TestsFlextCoreTypingsNew:
         data: t.JsonList = [1, "a", None]
         tm.that(t.json_list_adapter().validate_python(data), eq=data)
 
-    @pytest.mark.parametrize(
-        ("valid", "invalid"),
-        [
-            (1, 0),
-            (8080, 70000),
-        ],
-    )
+    @pytest.mark.parametrize(("valid", "invalid"), [(1, 0), (8080, 70000)])
     def test_port_number_adapter_enforces_range(self, valid: int, invalid: int) -> None:
         """port_number_adapter accepts in-range ports and rejects out-of-range."""
         tm.that(t.port_number_adapter().validate_python(valid), eq=valid)

@@ -14,12 +14,7 @@ import pytest
 from pydantic import ValidationError
 
 import flext_core as fc
-from flext_core import (
-    FlextConfig,
-    FlextSettings,
-    config,
-    settings,
-)
+from flext_core import FlextConfig, FlextSettings, config, settings
 
 
 class TestsFlextCoreConfigSettingsCanonical:

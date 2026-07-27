@@ -21,8 +21,8 @@ class TestsFlextModelsCoreStateMixin:
 
         name: str
         value: int
-        tags: MutableSequence[str] = []
-        meta: t.MutableStrMapping = {}
+        tags: Annotated[MutableSequence[str], m.Field(default_factory=list)]
+        meta: Annotated[t.MutableStrMapping, m.Field(default_factory=dict)]
 
     class NestedModel(m.BaseModel):
         """Nested Pydantic model for cache testing."""
@@ -34,8 +34,7 @@ class TestsFlextModelsCoreStateMixin:
         """Test configuration model (mutable for set_parameter tests)."""
 
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-            validate_assignment=True,
-            extra="forbid",
+            validate_assignment=True, extra="forbid"
         )
 
         name: str = "default_settings"
@@ -51,8 +50,7 @@ class TestsFlextModelsCoreStateMixin:
         """Test singleton class with Pydantic validation."""
 
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-            validate_assignment=True,
-            extra="forbid",
+            validate_assignment=True, extra="forbid"
         )
 
         _instance: ClassVar[
@@ -63,9 +61,7 @@ class TestsFlextModelsCoreStateMixin:
         timeout: int = 30
 
         @classmethod
-        def fetch_global(
-            cls,
-        ) -> TestsFlextModelsCoreStateMixin.SingletonClassForTest:
+        def fetch_global(cls) -> TestsFlextModelsCoreStateMixin.SingletonClassForTest:
             """Get global singleton instance."""
             if cls._instance is None:
                 cls._instance = cls()
@@ -79,9 +75,7 @@ class TestsFlextModelsCoreStateMixin:
     class BadSettingsForTest(m.BaseModel):
         """Settings that fails to instantiate."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-            validate_assignment=True,
-        )
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(validate_assignment=True)
 
         def __init__(self, **kwargs: t.Scalar) -> None:
             """Raise error on init."""

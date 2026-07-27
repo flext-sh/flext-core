@@ -17,9 +17,9 @@ import importlib
 import importlib.util
 import sys
 import warnings
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
-from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
+from flext_core.utilities import FlextUtilitiesEnforcement
 from tests.constants import c
 from tests.unit._enforcement_support import make_class
 from tests.utilities import u
@@ -67,10 +67,7 @@ class TestsFlextCoreEnforcementNamespace:
                 id="nested-inner-class-qualname",
             ),
             pytest.param(
-                "FlextModels",
-                "FlextModels",
-                "anything",
-                id="facade-root-name",
+                "FlextModels", "FlextModels", "anything", id="facade-root-name"
             ),
             pytest.param(
                 "FlextWidget",
@@ -81,10 +78,7 @@ class TestsFlextCoreEnforcementNamespace:
         ],
     )
     def test_exempt_or_compliant_targets_report_no_prefix_violation(
-        self,
-        name: str,
-        qualname: str,
-        module: str,
+        self, name: str, qualname: str, module: str
     ) -> None:
         """Exempt shapes and correctly-prefixed classes yield no prefix violation."""
         target = _synthetic(name, qualname=qualname, module=module)
@@ -122,8 +116,7 @@ class TestsFlextCoreEnforcementNamespace:
         assert not any(_PREFIX_FRAGMENT in v.message for v in report.violations)
 
     def test_pydantic_generic_specialization_does_not_count_as_namespace_violation(
-        self,
-        tmp_path: Path,
+        self, tmp_path: Path
     ) -> None:
         """Pydantic's synthetic ``Base[int]`` leak must not add prefix violations."""
         package = tmp_path / "src" / "demo_pkg"
@@ -148,10 +141,10 @@ class TestsFlextCoreEnforcementNamespace:
         sys.path.insert(0, src_path)
         try:
             spec = importlib.util.spec_from_file_location(
-                "demo_pkg.base",
-                package / "base.py",
+                "demo_pkg.base", package / "base.py"
             )
-            assert spec is not None and spec.loader is not None
+            assert spec is not None
+            assert spec.loader is not None
             module = importlib.util.module_from_spec(spec)
             sys.modules[spec.name] = module
             spec.loader.exec_module(module)
@@ -172,8 +165,7 @@ class TestsFlextCoreEnforcementNamespace:
             sys.modules.pop("demo_pkg.consumer", None)
 
     def test_project_class_stem_override_controls_required_prefix(
-        self,
-        tmp_path: Path,
+        self, tmp_path: Path
     ) -> None:
         """``[tool.flext.project] class_stem_override`` sets the accepted prefix."""
         root = tmp_path / "sample"
@@ -193,11 +185,9 @@ class_stem_override = "XmlAPI"
         )
         module_path = package / "__init__.py"
         module_path.write_text("class XmlAPIModels:\n    pass\n", encoding="utf-8")
-        spec = importlib.util.spec_from_file_location(
-            "xmlapi_override_sample",
-            module_path,
-        )
-        assert spec is not None and spec.loader is not None
+        spec = importlib.util.spec_from_file_location("xmlapi", module_path)
+        assert spec is not None
+        assert spec.loader is not None
         module = importlib.util.module_from_spec(spec)
         sys.modules[spec.name] = module
         try:
@@ -207,7 +197,7 @@ class_stem_override = "XmlAPI"
 
             assert not any(_PREFIX_FRAGMENT in v.message for v in report.violations)
         finally:
-            sys.modules.pop("xmlapi_override_sample", None)
+            sys.modules.pop("xmlapi", None)
 
     def test_run_layer_emits_warnings_for_mutable_constant_under_warn_mode(
         self,
@@ -262,7 +252,7 @@ class_stem_override = "XmlAPI"
         """Function-local classes (``<locals>`` qualname) are never enforced."""
 
         class FlextLocalConstants:
-            ITEMS: list[str] = ["a"]  # violating shape, but function-local
+            ITEMS: ClassVar[list[str]] = ["a"]  # violating shape, but function-local
 
         assert "<locals>" in FlextLocalConstants.__qualname__
 
@@ -340,6 +330,7 @@ class_stem_override = "XmlAPI"
         name: str,
         body: dict[str, object],
         module_override: str | None,
+        *,
         expect_enforce_079: bool,
     ) -> None:
         """ENFORCE-079 fires only for UPPER_CASE constants outside ``_constants``."""

@@ -16,9 +16,7 @@ from flext_core import FlextConstants as c, FlextTypes as t
 from flext_core._models.container import FlextModelsContainer
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        MutableSequence,
-    )
+    from collections.abc import MutableSequence
     from types import ModuleType
 
 
@@ -27,8 +25,7 @@ class FlextUtilitiesDiscovery:
 
     @staticmethod
     def _factory_config_for(
-        module: ModuleType,
-        name: str,
+        module: ModuleType, name: str
     ) -> FlextModelsContainer.FactoryDecoratorConfig | None:
         func = vars(module).get(name)
         if func is None or not callable(func):
@@ -62,9 +59,7 @@ class FlextUtilitiesDiscovery:
         wire_packages: t.StrSequence | None,
         wire_classes: t.SequenceOf[type] | None,
     ) -> tuple[
-        t.SequenceOf[ModuleType] | None,
-        t.StrSequence | None,
-        t.SequenceOf[type] | None,
+        t.SequenceOf[ModuleType] | None, t.StrSequence | None, t.SequenceOf[type] | None
     ]:
         """Separate mixed wire_modules into actual modules vs package name strings."""
         resolved_modules: t.SequenceOf[ModuleType] | None = None

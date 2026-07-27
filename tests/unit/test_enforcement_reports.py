@@ -14,11 +14,8 @@ from typing import Annotated
 
 import pytest
 
-from flext_core import (
-    FlextMroViolation,
-    FlextSmellViolation,
-    FlextUtilitiesEnforcement,
-)
+from flext_core.exceptions import FlextMroViolation, FlextSmellViolation
+from flext_core.utilities import FlextUtilitiesEnforcement
 from tests.constants import c
 from tests.models import m
 from tests.utilities import u
@@ -82,10 +79,7 @@ class TestsFlextCoreEnforcementReports:
 
     def test_violation_optional_fields_default_to_empty(self) -> None:
         violation = m.Violation(
-            qualname="X",
-            layer="Model",
-            severity="HARD rules",
-            message="m",
+            qualname="X", layer="Model", severity="HARD rules", message="m"
         )
 
         assert violation.rule_id == ""
@@ -97,7 +91,7 @@ class TestsFlextCoreEnforcementReports:
         violation = _hard_violation()
 
         # Pydantic's frozen ValidationError subclasses ValueError.
-        with pytest.raises(ValueError):
+        with pytest.raises(m.ValidationError):
             violation.qualname = "other"
 
     def test_violation_model_dump_exposes_public_fields(self) -> None:
@@ -169,7 +163,7 @@ class TestsFlextCoreEnforcementReports:
             violations=[
                 _hard_violation(qualname="X.Y", rule_id="ENFORCE-001", anchor="3.1"),
                 _hard_violation(qualname="X.Z", rule_id="ENFORCE-001", anchor="3.1"),
-            ],
+            ]
         )
 
         with pytest.warns(FlextMroViolation) as caught:
@@ -181,7 +175,7 @@ class TestsFlextCoreEnforcementReports:
             "\n\nFix: See AGENTS.md §3.1 and search for ENFORCE-001."
         )
         assert str(caught[1].message).startswith(
-            "\nX.Z violates FLEXT Model HARD rules",
+            "\nX.Z violates FLEXT Model HARD rules"
         )
 
     def test_emit_strict_mode_warns_then_raises_on_first_violation(self) -> None:
@@ -189,7 +183,7 @@ class TestsFlextCoreEnforcementReports:
             violations=[
                 _hard_violation(qualname="X.Y", rule_id="ENFORCE-001", anchor="3.1"),
                 _hard_violation(qualname="X.Z", rule_id="ENFORCE-001", anchor="3.1"),
-            ],
+            ]
         )
         expected = (
             "\nX.Y violates FLEXT Model HARD rules:\n  - boom [ENFORCE-001]"
@@ -217,15 +211,10 @@ class TestsFlextCoreEnforcementReports:
 
     @pytest.mark.parametrize(
         "mode",
-        [
-            c.EnforcementMode.OFF,
-            c.EnforcementMode.WARN,
-            c.EnforcementMode.STRICT,
-        ],
+        [c.EnforcementMode.OFF, c.EnforcementMode.WARN, c.EnforcementMode.STRICT],
     )
     def test_emit_empty_report_is_silent_in_every_mode(
-        self,
-        mode: c.EnforcementMode,
+        self, mode: c.EnforcementMode
     ) -> None:
         with warnings.catch_warnings(record=True) as recorded:
             warnings.simplefilter("always")
@@ -247,15 +236,10 @@ class TestsFlextCoreEnforcementReports:
         ],
     )
     def test_emit_fix_guidance_falls_back_by_rule_id_and_anchor(
-        self,
-        rule_id: str,
-        anchor: str,
-        expected_fix: str,
+        self, rule_id: str, anchor: str, expected_fix: str
     ) -> None:
         report = m.Report(
-            violations=[
-                _hard_violation(message="boom", rule_id=rule_id, anchor=anchor),
-            ],
+            violations=[_hard_violation(message="boom", rule_id=rule_id, anchor=anchor)]
         )
 
         with pytest.warns(FlextMroViolation) as caught:
@@ -266,8 +250,8 @@ class TestsFlextCoreEnforcementReports:
     def test_emit_uses_smell_category_for_code_smell_rules(self) -> None:
         report = m.Report(
             violations=[
-                _hard_violation(message="smell [ENFORCE-071]", rule_id="ENFORCE-071"),
-            ],
+                _hard_violation(message="smell [ENFORCE-071]", rule_id="ENFORCE-071")
+            ]
         )
 
         with pytest.warns(FlextSmellViolation) as caught:

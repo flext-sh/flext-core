@@ -13,11 +13,12 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
+import tempfile
 
 import pytest
-from flext_tests import tm
 
 import flext_core as core
+from flext_tests import tm
 from tests.typings import t
 from tests.unit._typings_support import FLAT_ALIAS_NAMES, PUBLIC_ALIAS_NAMES
 
@@ -95,16 +96,12 @@ class TestsFlextCoreTypingsAliases:
             (1.5, True, True, True),
             (True, True, True, True),
             (datetime(2026, 1, 1, tzinfo=UTC), False, False, True),
-            (Path("/tmp"), False, False, False),
+            (Path(tempfile.gettempdir()), False, False, False),
             ([1, 2], False, False, False),
         ],
     )
     def test_type_check_tuples_classify_values(
-        self,
-        value: object,
-        is_primitive: bool,
-        is_numeric: bool,
-        is_scalar: bool,
+        self, value: object, *, is_primitive: bool, is_numeric: bool, is_scalar: bool
     ) -> None:
         """The type-check tuples classify values correctly via isinstance."""
         tm.that(isinstance(value, t.PRIMITIVES_TYPES), eq=is_primitive)
@@ -119,7 +116,7 @@ class TestsFlextCoreTypingsAliases:
             2.0,
             True,
             datetime(2026, 1, 1, tzinfo=UTC),
-            Path("/tmp"),
+            Path(tempfile.gettempdir()),
             [1],
             {"a": 1},
             (1,),

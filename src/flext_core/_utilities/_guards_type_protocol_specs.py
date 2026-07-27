@@ -63,21 +63,15 @@ class FlextUtilitiesGuardsTypeProtocolSpecsMixin:
         return cls._protocol_type_map_cache
 
     @staticmethod
-    def context(
-        value: ProtocolGuardInput,
-    ) -> TypeIs[pcx.Context]:
+    def context(value: ProtocolGuardInput) -> TypeIs[pcx.Context]:
         return isinstance(value, pcx.Context)
 
     @staticmethod
-    def factory(
-        value: ProtocolGuardInput,
-    ) -> bool:
+    def factory(value: ProtocolGuardInput) -> bool:
         return callable(value)
 
     @staticmethod
-    def result_like(
-        value: ProtocolGuardInput,
-    ) -> bool:
+    def result_like(value: ProtocolGuardInput) -> bool:
         return isinstance(value, pr.Result)
 
     @classmethod

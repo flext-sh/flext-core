@@ -23,8 +23,7 @@ class FlextModelsContextExport:
     """Namespace for context export models."""
 
     class ContextExport(
-        FlextModelsContextData.SerializableDataValidatorMixin,
-        FlextModelsEntity.Value,
+        FlextModelsContextData.SerializableDataValidatorMixin, FlextModelsEntity.Value
     ):
         """Typed snapshot returned by export_snapshot."""
 
@@ -37,9 +36,7 @@ class FlextModelsContextExport:
         ]
         metadata: Annotated[
             m.Metadata | FlextModelsContainers.Dict | None,
-            BeforeValidator(
-                FlextModelsContextData.normalize_metadata_before,
-            ),
+            BeforeValidator(FlextModelsContextData.normalize_metadata_before),
             Field(
                 default=None,
                 description="Context metadata (creation info, source, etc.)",
@@ -52,7 +49,7 @@ class FlextModelsContextExport:
                     FlextModelsContextData.normalize_to_mapping(v)
                     if v is not None
                     else {}
-                ),
+                )
             ),
             Field(
                 default_factory=lambda: MappingProxyType({}),

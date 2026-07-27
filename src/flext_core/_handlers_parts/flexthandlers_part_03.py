@@ -13,25 +13,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core import (
-    c,
-    m,
-    p,
-    t,
-)
+from flext_core import c
 
-from .flexthandlers_part_02 import (
-    FlextHandlers as FlextHandlersPart02,
-)
+from .flexthandlers_part_02 import FlextHandlers as FlextHandlersPart02
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        Callable,
-    )
+    from collections.abc import Callable
+
+    from flext_core import p, t
 
 
 class FlextHandlers[MessageT_contra, ResultT](
-    FlextHandlersPart02[MessageT_contra, ResultT],
+    FlextHandlersPart02[MessageT_contra, ResultT]
 ):
     @staticmethod
     def handler[**PHandler, TResult](
@@ -41,7 +34,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         timeout: float | None = c.DEFAULT_TIMEOUT_SECONDS,
         middleware: t.SequenceOf[type[p.Middleware]] | None = None,
     ) -> Callable[[Callable[PHandler, TResult]], Callable[PHandler, TResult]]:
-        """Decorator to mark methods as handlers for commands.
+        """Mark methods as handlers for commands.
 
         Stores handler configuration as metadata on the decorated method,
         enabling auto-discovery by FlextService and handler registries.
@@ -62,9 +55,7 @@ class FlextHandlers[MessageT_contra, ResultT](
 
         """
 
-        def decorator(
-            func: Callable[PHandler, TResult],
-        ) -> Callable[PHandler, TResult]:
+        def decorator(func: Callable[PHandler, TResult]) -> Callable[PHandler, TResult]:
             """Apply handler configuration metadata to function.
 
             Only sets the attribute if not already set - innermost decorator wins.
@@ -72,16 +63,14 @@ class FlextHandlers[MessageT_contra, ResultT](
             one to run takes precedence.
             """
             if not hasattr(func, c.HANDLER_ATTR):
+                from flext_core import m
+
                 settings = m.DecoratorConfig(
                     command=command,
                     priority=priority,
                     timeout=timeout,
-                    middleware=[],
+                    middleware=middleware or (),
                 )
-                if middleware is not None:
-                    settings = settings.model_copy(
-                        update={"middleware": list(middleware)},
-                    )
                 setattr(func, c.HANDLER_ATTR, settings)
             return func
 

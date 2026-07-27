@@ -56,75 +56,42 @@ class FlextProtocolsLogging:
             ...
 
         def critical(
-            self,
-            msg: str,
-            *args: t.LogValue,
-            **kw: t.LogValue,
+            self, msg: str, *args: t.LogValue, **kw: t.LogValue
         ) -> t.LogResult:
             """Log critical message."""
             ...
 
-        def debug(
-            self,
-            msg: str,
-            *args: t.LogValue,
-            **kw: t.LogValue,
-        ) -> t.LogResult:
+        def debug(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
             """Log debug message."""
             ...
 
-        def error(
-            self,
-            msg: str,
-            *args: t.LogValue,
-            **kw: t.LogValue,
-        ) -> t.LogResult:
+        def error(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
             """Log error message."""
             ...
 
         def exception(
-            self,
-            msg: str,
-            *args: t.LogValue,
-            **kw: t.LogValue,
+            self, msg: str, *args: t.LogValue, **kw: t.LogValue
         ) -> t.LogResult:
             """Log exception with traceback."""
             ...
 
-        def info(
-            self,
-            msg: str,
-            *args: t.LogValue,
-            **kw: t.LogValue,
-        ) -> t.LogResult:
+        def info(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
             """Log info message."""
             ...
 
         def log(
-            self,
-            level: str,
-            message: str,
-            *args: t.LogValue,
-            **kw: t.LogValue,
+            self, level: str, message: str, *args: t.LogValue, **kw: t.LogValue
         ) -> t.LogResult:
             """Log a message at an arbitrary level."""
             ...
 
         def trace(
-            self,
-            message: str,
-            *args: t.LogValue,
-            **kwargs: t.JsonPayload,
+            self, message: str, *args: t.LogValue, **kwargs: t.JsonPayload
         ) -> t.LogResult:
             """Log a trace/debug-level diagnostic message."""
             ...
 
-        def warning(
-            self,
-            msg: str,
-            *args: t.LogValue,
-            **kw: t.LogValue,
-        ) -> t.LogResult:
+        def warning(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
             """Log warning message."""
             ...
 

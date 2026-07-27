@@ -29,24 +29,16 @@ class FlextUtilitiesModel:
         """Options controlling Pydantic model_dump() serialization behavior."""
 
         by_alias: bool | None = mp.Field(
-            None,
-            description="Serialize using field aliases",
-            validate_default=True,
+            None, description="Serialize using field aliases", validate_default=True
         )
         exclude_none: bool | None = mp.Field(
-            None,
-            description="Exclude None-valued fields",
-            validate_default=True,
+            None, description="Exclude None-valued fields", validate_default=True
         )
         exclude_unset: bool | None = mp.Field(
-            None,
-            description="Exclude fields not explicitly set",
-            validate_default=True,
+            None, description="Exclude fields not explicitly set", validate_default=True
         )
         exclude_defaults: bool | None = mp.Field(
-            None,
-            description="Exclude fields matching defaults",
-            validate_default=True,
+            None, description="Exclude fields matching defaults", validate_default=True
         )
         include: set[str] | None = mp.Field(
             None,
@@ -79,13 +71,11 @@ class FlextUtilitiesModel:
 
         """
         opts = ua.resolve_options(
-            options,
-            kwargs,
-            FlextUtilitiesModel.ModelDumpOptions,
+            options, kwargs, FlextUtilitiesModel.ModelDumpOptions
         ).unwrap_or(FlextUtilitiesModel.ModelDumpOptions())
         opts_dict = opts.model_dump(exclude_none=True)
         dumped: t.JsonMapping = t.json_mapping_adapter().validate_python(
-            model.model_dump(mode="json", **opts_dict),
+            model.model_dump(mode="json", **opts_dict)
         )
         return dumped
 
@@ -119,19 +109,15 @@ class FlextUtilitiesModel:
 
     @classmethod
     def _normalize_runtime_override_mapping(
-        cls,
-        value: t.MappingKV[str, t.JsonPayload | t.Scalar] | None,
+        cls, value: t.MappingKV[str, t.JsonPayload | t.Scalar] | None
     ) -> t.JsonMapping | None:
         """Normalize runtime override mappings to canonical JsonMapping."""
         if value is None:
             return None
         runtime_type = cls._runtime_type()
-        validated: t.JsonMapping = t.json_mapping_adapter().validate_python(
-            {
-                key: runtime_type.normalize_to_metadata(item)
-                for key, item in value.items()
-            },
-        )
+        validated: t.JsonMapping = t.json_mapping_adapter().validate_python({
+            key: runtime_type.normalize_to_metadata(item) for key, item in value.items()
+        })
         return validated
 
     @staticmethod

@@ -19,30 +19,14 @@ from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._protocols.base import FlextProtocolsBase as p
 from flext_core._typings.base import FlextTypingBase as t
 
-from ._beartype._helpers_parts.helpers_part_03 import (
-    FlextUtilitiesBeartypeHelpers,
-)
-from ._beartype.attr_visitor import (
-    FlextUtilitiesBeartypeAttrVisitor,
-)
-from ._beartype.class_visitor import (
-    FlextUtilitiesBeartypeClassVisitor,
-)
-from ._beartype.deprecated_visitor import (
-    FlextUtilitiesBeartypeDeprecatedVisitor,
-)
-from ._beartype.field_visitor import (
-    FlextUtilitiesBeartypeFieldVisitor,
-)
-from ._beartype.import_visitor import (
-    FlextUtilitiesBeartypeImportVisitor,
-)
-from ._beartype.method_visitor import (
-    FlextUtilitiesBeartypeMethodVisitor,
-)
-from ._beartype.module_visitor import (
-    FlextUtilitiesBeartypeModuleVisitor,
-)
+from ._beartype._helpers_parts.helpers_part_03 import FlextUtilitiesBeartypeHelpers
+from ._beartype.attr_visitor import FlextUtilitiesBeartypeAttrVisitor
+from ._beartype.class_visitor import FlextUtilitiesBeartypeClassVisitor
+from ._beartype.deprecated_visitor import FlextUtilitiesBeartypeDeprecatedVisitor
+from ._beartype.field_visitor import FlextUtilitiesBeartypeFieldVisitor
+from ._beartype.import_visitor import FlextUtilitiesBeartypeImportVisitor
+from ._beartype.method_visitor import FlextUtilitiesBeartypeMethodVisitor
+from ._beartype.module_visitor import FlextUtilitiesBeartypeModuleVisitor
 from .beartype_typingext_patch import (
     FlextUtilitiesBeartypeTypingExtPatch as _FlextUtilitiesBeartypeTypingExtPatch,
 )
@@ -93,20 +77,15 @@ class FlextUtilitiesBeartypeEngine(
 
     @staticmethod
     def contains_any(hint: t.TypeHintSpecifier | None) -> bool:
-        return FlextUtilitiesBeartypeHelpers.contains_any_recursive(
-            hint,
-            seen=set(),
-        )
+        return FlextUtilitiesBeartypeHelpers.contains_any_recursive(hint, seen=set())
 
     @override
     @staticmethod
     def has_forbidden_collection_origin(
-        hint: t.TypeHintSpecifier | None,
-        forbidden: frozenset[str],
+        hint: t.TypeHintSpecifier | None, forbidden: frozenset[str]
     ) -> tuple[bool, str]:
         return FlextUtilitiesBeartypeHelpers.has_forbidden_collection_origin(
-            hint,
-            forbidden,
+            hint, forbidden
         )
 
     @override

@@ -32,8 +32,7 @@ if TYPE_CHECKING:
 
 
 class FlextUtilitiesContextCrud(
-    FlextUtilitiesContextCrudSetMixin,
-    FlextUtilitiesContextState,
+    FlextUtilitiesContextCrudSetMixin, FlextUtilitiesContextState
 ):
     """CRUD operations on context scopes for FlextContext."""
 
@@ -53,19 +52,16 @@ class FlextUtilitiesContextCrud(
             if scope_name == c.ContextScope.GLOBAL:
                 _ = FlextUtilitiesLoggingContext.clear_global_context()
         self.state = self.state.model_copy(
-            update={"metadata": m.Metadata()},
+            update={"metadata": m.Metadata()}
         ).with_operation_update(c.ContextOperation.CLEAR.value)
 
     def get(
-        self,
-        key: str,
-        scope: str = c.ContextScope.GLOBAL,
+        self, key: str, scope: str = c.ContextScope.GLOBAL
     ) -> p.Result[t.JsonPayload]:
         """Get a value from the context (fail-fast, no default fallback)."""
         if not self.state.active:
             return r[t.JsonPayload].fail_op(
-                c.ContextCrudOperation.GET_VALUE,
-                c.ERR_CONTEXT_NOT_ACTIVE,
+                c.ContextCrudOperation.GET_VALUE, c.ERR_CONTEXT_NOT_ACTIVE
             )
         scope_data = self._contextvar_data(scope)
         if key not in scope_data:
@@ -115,10 +111,7 @@ class FlextUtilitiesContextCrud(
         try:
             _ = ctx_var.set(m.ConfigMap.model_validate(filtered))
         except c.EXC_BASIC_TYPE as exc:
-            self.logger.debug(
-                c.LOG_CONTEXT_REMOVAL_FAILED,
-                exc_info=exc,
-            )
+            self.logger.debug(c.LOG_CONTEXT_REMOVAL_FAILED, exc_info=exc)
         self._update_statistics(c.ContextOperation.REMOVE.value)
 
 

@@ -24,7 +24,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserTargetsPart01):
         options: FlextUtilitiesParserCoerce.ParseOptions[T] | None = None,
         **kwargs: t.JsonPayload,
     ) -> T | None:
-        """Helper function for type primitive parsing fallback."""
+        """Fall back to primitive type parsing."""
         opts, fp = FlextUtilitiesParserTargets._resolve_opts(options, kwargs)
         if value is None:
             parsed_default: T = FlextUtilitiesParserTargets._parse_with_default(
@@ -36,8 +36,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserTargetsPart01):
         if target is str:
             coerced_value = value if isinstance(value, str) else str(value)
             validated_str: T = FlextUtilitiesModel.validate_value(
-                target,
-                coerced_value,
+                target, coerced_value
             ).unwrap()
             return validated_str
         cls = FlextUtilitiesParserTargets
@@ -60,8 +59,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserTargetsPart01):
             )
         if target in {int, float, str, bool}:
             validated_primitive: T | None = FlextUtilitiesModel.validate_value(
-                target,
-                value,
+                target, value
             ).map_or(None)
             return validated_primitive
         return None

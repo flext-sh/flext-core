@@ -10,8 +10,8 @@ internal registries or logging side effects.
 from __future__ import annotations
 
 import pytest
-from flext_tests import r
 
+from flext_tests import r
 from tests.models import m
 from tests.protocols import p
 from tests.typings import t
@@ -128,7 +128,7 @@ class TestsFlextCoreDispatcher:
         self, dispatcher: p.Dispatcher
     ) -> None:
         # Arrange: callable exposing no message_type / event_type / can_handle.
-        def orphan_handler(message: p.Routable) -> p.Result[t.JsonPayload]:
+        def orphan_handler(_message: p.Routable) -> p.Result[t.JsonPayload]:
             return r[t.JsonPayload].ok({})
 
         # Act

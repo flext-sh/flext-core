@@ -11,10 +11,7 @@ from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 if TYPE_CHECKING:
     from contextlib import AbstractContextManager
 
-    from flext_core import (
-        p,
-        t,
-    )
+    from flext_core import p, t
 
 
 class FlextProtocolsContext:
@@ -24,10 +21,7 @@ class FlextProtocolsContext:
     class ContextRead(Protocol):
         """Read-only context operations."""
 
-        def get(
-            self,
-            key: str,
-        ) -> p.Result[t.JsonPayload]:
+        def get(self, key: str) -> p.Result[t.JsonPayload]:
             """Get a context value by key."""
             ...
 
@@ -51,11 +45,7 @@ class FlextProtocolsContext:
     class ContextWrite(Protocol):
         """Write context operations."""
 
-        def set(
-            self,
-            key: str,
-            value: t.JsonPayload,
-        ) -> p.Result[bool]:
+        def set(self, key: str, value: t.JsonPayload) -> p.Result[bool]:
             """Set a context value in the context scope."""
             ...
 
@@ -75,10 +65,7 @@ class FlextProtocolsContext:
             """Clone context for isolated execution."""
             ...
 
-        def merge(
-            self,
-            other: Self | t.MappingKV[str, t.JsonPayload],
-        ) -> Self:
+        def merge(self, other: Self | t.MappingKV[str, t.JsonPayload]) -> Self:
             """Merge another context or mapping into this one."""
             ...
 
@@ -86,11 +73,7 @@ class FlextProtocolsContext:
     class ContextExport(Protocol):
         """Context export/serialization operations."""
 
-        def export(
-            self,
-            *,
-            as_dict: bool = ...,
-        ) -> dict[str, t.JsonPayload] | Self:
+        def export(self, *, as_dict: bool = ...) -> dict[str, t.JsonPayload] | Self:
             """Export context state as a dict or the context instance itself."""
             ...
 
@@ -98,10 +81,7 @@ class FlextProtocolsContext:
     class ContextMetadataAccess(Protocol):
         """Context metadata read/write operations."""
 
-        def resolve_metadata(
-            self,
-            key: str,
-        ) -> p.Result[t.JsonPayload]:
+        def resolve_metadata(self, key: str) -> p.Result[t.JsonPayload]:
             """Get a metadata value by key."""
             ...
 
@@ -133,24 +113,20 @@ class FlextProtocolsContext:
         """Protocol for the service-scoped context namespace."""
 
         @staticmethod
-        def fetch_service(
-            service_name: str,
-        ) -> p.Result[t.RegisterableService]:
+        def fetch_service(service_name: str) -> p.Result[t.RegisterableService]:
             """Resolve a service from the configured container."""
             ...
 
         @staticmethod
         def register_service(
-            service_name: str,
-            service: t.RegisterableService,
+            service_name: str, service: t.RegisterableService
         ) -> p.Result[bool]:
             """Register a service through the configured container."""
             ...
 
         @staticmethod
         def service_context(
-            service_name: str,
-            version: str | None = None,
+            service_name: str, version: str | None = None
         ) -> AbstractContextManager[None]:
             """Create a service context scope manager."""
             ...

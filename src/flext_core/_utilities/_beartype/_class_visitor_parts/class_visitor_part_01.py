@@ -19,8 +19,7 @@ class FlextUtilitiesBeartypeClassVisitor:
 
     @staticmethod
     def v_class_placement(
-        params: me.ClassPlacementParams,
-        *args: type | str,
+        params: me.ClassPlacementParams, *args: type | str
     ) -> t.StrMapping | None:
         """CLASS_PLACEMENT — class-name / inner-class layer placement."""
         violation = NO_VIOLATION
@@ -48,13 +47,11 @@ class FlextUtilitiesBeartypeClassVisitor:
                 and "[" not in target.__name__
             ):
                 deep = FlextUtilitiesBeartypeClassVisitor._deep_nested(
-                    target,
-                    params.max_nested_class_depth,
+                    target, params.max_nested_class_depth
                 )
                 violation = {"qn": deep} if deep else NO_VIOLATION
             case (target, expected) if isinstance(target, type) and isinstance(
-                expected,
-                str,
+                expected, str
             ):
                 if params.check_nested:
                     parts = target.__qualname__.split(".")
@@ -85,24 +82,20 @@ class FlextUtilitiesBeartypeClassVisitor:
                 isinstance(value, type)
                 and not isinstance(value, EnumType)
                 and getattr(value, "__qualname__", "").startswith(
-                    f"{node.__qualname__}.",
+                    f"{node.__qualname__}."
                 )
             ):
                 continue
             if budget == 0:
                 return value.__qualname__
-            found = FlextUtilitiesBeartypeClassVisitor._deep_nested(
-                value,
-                budget - 1,
-            )
+            found = FlextUtilitiesBeartypeClassVisitor._deep_nested(value, budget - 1)
             if found:
                 return found
         return None
 
     @staticmethod
     def v_protocol_tree(
-        params: me.ProtocolTreeParams,
-        value: type,
+        params: me.ProtocolTreeParams, value: type
     ) -> t.StrMapping | None:
         """PROTOCOL_TREE — inner-class kind + runtime_checkable governance."""
         if params.require_inner_kind_protocol_or_namespace:

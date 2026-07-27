@@ -39,9 +39,7 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
 
     @staticmethod
     def level_based_context_filter(
-        logger: p.Logger | None,
-        method_name: str,
-        event_dict: t.ScalarMapping,
+        logger: p.Logger | None, method_name: str, event_dict: t.ScalarMapping
     ) -> t.ScalarMapping:
         """Filter context variables based on log level."""
         level_hierarchy = {
@@ -104,15 +102,11 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
             if cfg_processors:
                 additional_processors = cfg_processors
             wrapper_class_factory = getattr(
-                settings,
-                "wrapper_class_factory",
-                wrapper_class_factory,
+                settings, "wrapper_class_factory", wrapper_class_factory
             )
             logger_factory = getattr(settings, "logger_factory", logger_factory)
             cache_logger_on_first_use = getattr(
-                settings,
-                "cache_logger_on_first_use",
-                cache_logger_on_first_use,
+                settings, "cache_logger_on_first_use", cache_logger_on_first_use
             )
             async_logging = getattr(settings, "async_logging", True)
         level = log_level if log_level is not None else logging.INFO
@@ -151,10 +145,7 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
 
     @classmethod
     def _resolve_logger_factory(
-        cls,
-        *,
-        logger_factory: t.LoggerFactory,
-        async_logging: bool,
+        cls, *, logger_factory: t.LoggerFactory, async_logging: bool
     ) -> t.LoggerFactory | None:
         """Resolve the logger factory, enabling async output when requested."""
         if logger_factory is not None:
@@ -172,8 +163,7 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
 
     @classmethod
     def _build_async_logger_factory(
-        cls,
-        factory_builder: typing.Callable[..., t.LoggerFactory],
+        cls, factory_builder: typing.Callable[..., t.LoggerFactory]
     ) -> t.LoggerFactory:
         """Build a structlog logger factory bound to the shared async writer."""
         if cls._async_writer is None:

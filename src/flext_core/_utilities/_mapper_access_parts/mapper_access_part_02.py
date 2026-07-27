@@ -35,42 +35,25 @@ class FlextUtilitiesMapperAccess(FlextUtilitiesMapperAccessPart01):
         | t.SequenceOf[t.JsonValue | t.JsonPayload]
         | FlextModelsContainers.ObjectList,
         array_match: str,
-    ) -> p.Result[t.JsonPayload]:
+    ) -> p.Result[t.JsonPayload | None]:
         """Handle array indexing with negative index support."""
         if isinstance(current, FlextModelsContainers.ObjectList):
             sequence: t.SequenceOf[t.JsonValue | t.JsonPayload] = current.root
         elif isinstance(current, Sequence) and not isinstance(
-            current,
-            t.STR_BYTES_TYPES,
+            current, t.STR_BYTES_TYPES
         ):
             sequence = current
         else:
-            return r[t.JsonPayload].fail_op(
-                "extract array index",
-                c.ERR_MAPPER_NOT_A_SEQUENCE,
+            return r[t.JsonPayload | None].fail_op(
+                "extract array index", c.ERR_MAPPER_NOT_A_SEQUENCE
             )
         index_result = FlextUtilitiesMapperAccess._normalize_array_index(
-            array_match,
-            len(sequence),
+            array_match, len(sequence)
         )
-        if index_result.failure:
-            return r[t.JsonPayload].fail_op(
-                "extract array index",
-                index_result.error or c.ERR_MAPPER_NOT_A_SEQUENCE,
-            )
-        item = sequence[index_result.value]
-        if item is None:
-            return r[t.JsonPayload].fail_op(
-                "extract array index value",
-                c.ERR_MAPPER_FOUND_NONE_INDEX,
-            )
-        return r[t.JsonPayload].ok(item)
+        return index_result.map(lambda index: sequence[index])
 
     @staticmethod
-    def _normalize_array_index(
-        array_match: str,
-        sequence_size: int,
-    ) -> p.Result[int]:
+    def _normalize_array_index(array_match: str, sequence_size: int) -> p.Result[int]:
         try:
             idx = int(array_match)
         except ValueError:
@@ -83,28 +66,24 @@ class FlextUtilitiesMapperAccess(FlextUtilitiesMapperAccessPart01):
             return r[int].ok(resolved_idx)
         return r[int].fail_op(
             "extract array index",
-            e.render_template(
-                c.ERR_TEMPLATE_INDEX_OUT_OF_RANGE,
-                index=idx,
-            ),
+            e.render_template(c.ERR_TEMPLATE_INDEX_OUT_OF_RANGE, index=idx),
         )
 
     @staticmethod
     def _get_raw(
-        data: p.AccessibleData | t.ConfigModelInput,
-        key: str,
+        data: p.AccessibleData | t.ConfigModelInput, key: str
     ) -> t.JsonPayload | t.JsonValue:
-        """Internal helper for raw get without DSL conversion."""
+        """Get raw values without DSL conversion."""
         match data:
             case dict() | Mapping() if key in data:
                 return FlextUtilitiesMapperAccess._normalize_accessible_value(data[key])
             case m.ConfigMap() | m.Dict() if key in data.root:
                 return FlextUtilitiesMapperAccess._normalize_accessible_value(
-                    data.root[key],
+                    data.root[key]
                 )
             case _ if hasattr(data, key):
                 return FlextUtilitiesMapperAccess._normalize_accessible_value(
-                    getattr(data, key),
+                    getattr(data, key)
                 )
             case _:
                 return ""

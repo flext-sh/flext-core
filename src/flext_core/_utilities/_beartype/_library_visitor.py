@@ -15,8 +15,7 @@ class FlextUtilitiesBeartypeLibraryVisitor:
 
     @staticmethod
     def v_library_import(
-        params: me.LibraryImportParams,
-        target: type,
+        params: me.LibraryImportParams, target: type
     ) -> t.StrMapping | None:
         """LIBRARY_IMPORT — §2.7 library abstraction owner enforcement (Phase 3 hook)."""
         if not params.library_owners:

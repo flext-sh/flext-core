@@ -18,26 +18,19 @@ class TestsFlextModelsServiceCaseReliabilityMixin:
         name: Annotated[str, m.Field(description="Unique reliability scenario name")]
         strategy: Annotated[str, m.Field(description="Reliability strategy under test")]
         settings: Annotated[
-            m.ConfigMap,
-            m.Field(description="Reliability configuration payload"),
+            m.ConfigMap, m.Field(description="Reliability configuration payload")
         ]
         simulate_failures: Annotated[
-            int,
-            m.Field(description="Number of failures to simulate"),
+            int, m.Field(description="Number of failures to simulate")
         ]
         expected_state: Annotated[
-            str,
-            m.Field(description="Expected strategy terminal state"),
+            str, m.Field(description="Expected strategy terminal state")
         ]
         should_succeed: Annotated[
-            bool,
-            m.Field(
-                description="Whether scenario expects successful outcome",
-            ),
+            bool, m.Field(description="Whether scenario expects successful outcome")
         ] = True
         description: Annotated[
-            str | None,
-            m.Field(description="Human-readable scenario description"),
+            str | None, m.Field(description="Human-readable scenario description")
         ] = None
 
 

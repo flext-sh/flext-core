@@ -22,36 +22,30 @@ class FlextProtocolsSettings:
     class Configurable(p.Base, Protocol):
         """Protocol for component configuration."""
 
-        def apply(
-            self,
-            settings: t.UserOverridesMapping | None = None,
-        ) -> Self:
+        def apply(self, settings: t.UserOverridesMapping | None = None) -> Self:
             """Apply configuration overrides."""
             ...
 
     @runtime_checkable
-    class Settings(
-        pr.HasModelDump,
-        p.Base,
-        Protocol,
-    ):
-        """Minimal Pydantic-2 settings contract — operations only.
+    class Settings(pr.HasModelDump, p.Base, Protocol):
+        """Minimal Pydantic-2 settings contract and universal log level.
 
-        Declares only the operation surface (``fetch_global``, ``clone``,
-        ``update_global``, ``model_copy``, ``model_dump``) so root and project
-        subclasses can both satisfy it without sharing concrete fields.
+        Declares the operation surface (``fetch_global``, ``clone``,
+        ``update_global``, ``model_copy``, ``model_dump``) and ``log_level``,
+        which ``FlextSettings`` guarantees for every project subclass.
         Concrete root fields (``app_name``, ``version``, ``timeout_seconds``,
         ``dispatcher_*``, …) are declared on ``FlextSettings`` itself, not on
         the protocol — project subclasses must NOT inherit them
         (workspace rule 3 isolation).
         """
 
+        @property
+        def log_level(self) -> str:
+            """Universal runtime log level."""
+            ...
+
         @classmethod
-        def fetch_global(
-            cls,
-            *,
-            overrides: t.ScalarMapping | None = None,
-        ) -> Self:
+        def fetch_global(cls, *, overrides: t.ScalarMapping | None = None) -> Self:
             """Return the global singleton settings instance, optionally with overrides."""
             ...
 
@@ -112,9 +106,7 @@ class FlextProtocolsSettings:
 
         @classmethod
         def fetch_global(
-            cls,
-            *,
-            overrides: t.ScalarMapping | None = None,
+            cls, *, overrides: t.ScalarMapping | None = None
         ) -> FlextProtocolsSettings.Settings:
             """Return the global singleton settings instance."""
             ...

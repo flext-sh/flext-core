@@ -28,9 +28,7 @@ from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
 class FlextModelsContainer:
     """Container models namespace for DI and service registry."""
 
-    class ServiceRegistration(
-        m.ArbitraryTypesModel,
-    ):
+    class ServiceRegistration(m.ArbitraryTypesModel):
         """Model for service registry entries.
 
         Implements metadata for registered service instances in the DI container.
@@ -38,58 +36,44 @@ class FlextModelsContainer:
         """
 
         name: Annotated[
-            t.NonEmptyStr,
-            mp.Field(
-                ...,
-                description="Service identifier/name",
-            ),
+            t.NonEmptyStr, mp.Field(..., description="Service identifier/name")
         ]
         service: Annotated[
             t.RegisterableService,
             tp.SkipValidation,
             mp.Field(
-                ...,
-                description="Service instance (protocols, models, callables)",
+                ..., description="Service instance (protocols, models, callables)"
             ),
         ]
         registration_time: Annotated[
             datetime,
             mp.Field(
-                description="Timestamp when service was registered (configured timezone)",
+                description="Timestamp when service was registered (configured timezone)"
             ),
         ] = mp.Field(default_factory=ug.now)
         metadata: Annotated[
             m.Metadata | FlextModelsContainers.ConfigMap | None,
             mp.BeforeValidator(
                 lambda value: FlextRuntime.validate_metadata_model_input(
-                    value,
-                    m.Metadata,
-                ),
+                    value, m.Metadata
+                )
             ),
             mp.Field(
-                None,
-                description="Additional service metadata (JSON-serializable)",
+                None, description="Additional service metadata (JSON-serializable)"
             ),
         ] = None
         service_type: Annotated[
             str | None,
-            mp.Field(
-                None,
-                description="Service type name (e.g., 'DatabaseService')",
-            ),
+            mp.Field(None, description="Service type name (e.g., 'DatabaseService')"),
         ] = None
         tags: Annotated[
-            t.StrSequence,
-            mp.Field(
-                description="Service tags for categorization",
-            ),
+            t.StrSequence, mp.Field(description="Service tags for categorization")
         ] = mp.Field(default_factory=tuple)
 
         @up.field_validator("service", mode="before")
         @classmethod
         def validate_service(
-            cls,
-            value: t.RegisterableService,
+            cls, value: t.RegisterableService
         ) -> (
             t.RegisterableService
             | FlextModelsContainers.ConfigMap
@@ -97,9 +81,7 @@ class FlextModelsContainer:
         ):
             return FlextRuntime.normalize_registerable_service(value)
 
-    class FactoryRegistration(
-        m.ArbitraryTypesModel,
-    ):
+    class FactoryRegistration(m.ArbitraryTypesModel):
         """Model for factory registry entries.
 
         Implements metadata for registered factory functions in the DI container.
@@ -107,52 +89,41 @@ class FlextModelsContainer:
         """
 
         name: Annotated[
-            t.NonEmptyStr,
-            mp.Field(
-                ...,
-                description="Factory identifier/name",
-            ),
+            t.NonEmptyStr, mp.Field(..., description="Factory identifier/name")
         ]
         factory: Annotated[
             t.FactoryCallable,
             tp.SkipValidation,
             mp.Field(
-                ...,
-                description="Factory function that creates service instances",
+                ..., description="Factory function that creates service instances"
             ),
         ]
         registration_time: Annotated[
             datetime,
             mp.Field(
-                description="Timestamp when factory was registered (configured timezone)",
+                description="Timestamp when factory was registered (configured timezone)"
             ),
         ] = mp.Field(default_factory=ug.now)
         is_singleton: Annotated[
             bool,
-            mp.Field(
-                False,
-                description="Whether factory creates singleton instances",
-            ),
+            mp.Field(False, description="Whether factory creates singleton instances"),
         ] = False
         cached_instance: Annotated[
             t.RegisterableService | None,
             tp.SkipValidation,
             mp.Field(
-                None,
-                description="Cached singleton instance (if is_singleton=True)",
+                None, description="Cached singleton instance (if is_singleton=True)"
             ),
         ] = None
         metadata: Annotated[
             m.Metadata | FlextModelsContainers.ConfigMap | None,
             mp.BeforeValidator(
                 lambda value: FlextRuntime.validate_metadata_model_input(
-                    value,
-                    m.Metadata,
-                ),
+                    value, m.Metadata
+                )
             ),
             mp.Field(
-                None,
-                description="Additional factory metadata (JSON-serializable)",
+                None, description="Additional factory metadata (JSON-serializable)"
             ),
         ] = None
         invocation_count: Annotated[

@@ -106,8 +106,7 @@ class FlextProtocolsLogging(FlextProtocolsLoggingPart01):
             ...
 
         def __and__(
-            self,
-            other: FlextProtocolsLogging.ValidatorSpec,
+            self, other: FlextProtocolsLogging.ValidatorSpec
         ) -> FlextProtocolsLogging.ValidatorSpec:
             """Compose with AND - both validators must pass."""
             ...
@@ -117,8 +116,7 @@ class FlextProtocolsLogging(FlextProtocolsLoggingPart01):
             ...
 
         def __or__(
-            self,
-            other: FlextProtocolsLogging.ValidatorSpec,
+            self, other: FlextProtocolsLogging.ValidatorSpec
         ) -> FlextProtocolsLogging.ValidatorSpec:
             """Compose with OR - at least one validator must pass."""
             ...
@@ -137,11 +135,7 @@ class FlextProtocolsLogging(FlextProtocolsLoggingPart01):
             """Distinguished name."""
             ...
 
-        def add_attribute(
-            self,
-            name: str,
-            values: t.StrSequence,
-        ) -> Self:
+        def add_attribute(self, name: str, values: t.StrSequence) -> Self:
             """Add attribute values, returning self for chaining."""
             ...
 
@@ -149,11 +143,7 @@ class FlextProtocolsLogging(FlextProtocolsLoggingPart01):
             """Remove attribute, returning self for chaining."""
             ...
 
-        def update_attribute(
-            self,
-            name: str,
-            values: t.StrSequence,
-        ) -> Self:
+        def update_attribute(self, name: str, values: t.StrSequence) -> Self:
             """Update attribute values, returning self for chaining."""
             ...
 

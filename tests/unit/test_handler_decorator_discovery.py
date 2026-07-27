@@ -13,6 +13,8 @@ import types
 from typing import TYPE_CHECKING
 
 import pytest
+from dataclasses import dataclass
+
 from flext_tests import h, r
 
 if TYPE_CHECKING:
@@ -27,9 +29,9 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         return types.ModuleType(name)
 
     def test_discovered_module_handler_invokes_with_success_outcome(self) -> None:
+        @dataclass
         class CreateCommand:
-            def __init__(self, name: str) -> None:
-                self.name = name
+            name: str
 
         module = self._module("success_module")
 
@@ -48,9 +50,9 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         assert outcome.unwrap() == "created_alice"
 
     def test_discovered_module_handler_preserves_failure_outcome(self) -> None:
+        @dataclass
         class DeleteCommand:
-            def __init__(self, user_id: str) -> None:
-                self.user_id = user_id
+            user_id: str
 
         module = self._module("failure_module")
 
@@ -123,9 +125,9 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         assert config.priority == priority
 
     def test_discovered_class_handler_invokes_via_instance(self) -> None:
+        @dataclass
         class EventPublished:
-            def __init__(self, event_id: str) -> None:
-                self.event_id = event_id
+            event_id: str
 
         class OrderService:
             @h.handler(command=EventPublished, priority=25)
@@ -140,8 +142,7 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         assert outcome.unwrap() == "processed_e7"
 
     @pytest.mark.parametrize(
-        ("priority", "expected_name"),
-        [(10, "handle_low"), (90, "handle_high")],
+        ("priority", "expected_name"), [(10, "handle_low"), (90, "handle_high")]
     )
     def test_scan_class_reports_command_and_priority(
         self, priority: int, expected_name: str

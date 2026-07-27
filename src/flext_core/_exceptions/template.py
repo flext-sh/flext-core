@@ -18,8 +18,7 @@ class FlextExceptionsTemplate:
 
     @staticmethod
     def template_values(
-        params: mp.BaseModel | None,
-        values: FlextExceptionsTemplate.TemplateValues,
+        params: mp.BaseModel | None, values: FlextExceptionsTemplate.TemplateValues
     ) -> mc.ConfigMap:
         """Build template substitution values using params data and field metadata."""
         payload: t.JsonDict = (
@@ -35,8 +34,7 @@ class FlextExceptionsTemplate:
                 f"{field_name}_description": field_help
                 for field_name, field_info in params.__class__.model_fields.items()
                 if isinstance(
-                    (field_help := field_info.description or field_info.title),
-                    str,
+                    (field_help := field_info.description or field_info.title), str
                 )
                 and field_help
             }
@@ -64,16 +62,12 @@ class FlextExceptionsTemplate:
         except KeyError as exc:
             missing_key = str(exc).strip("'")
             raise ValueError(
-                c.ERR_TEMPLATE_MISSING_VALUE.format(
-                    key=missing_key,
-                    template=template,
-                ),
+                c.ERR_TEMPLATE_MISSING_VALUE.format(key=missing_key, template=template)
             ) from exc
 
     @staticmethod
     def result_error_data(
-        params: mp.BaseModel | None,
-        **values: t.JsonPayload | None,
+        params: mp.BaseModel | None, **values: t.JsonPayload | None
     ) -> mc.ConfigMap | None:
         """Build canonical error_data payload from params and explicit values."""
         payload = FlextExceptionsTemplate.template_values(params, values)

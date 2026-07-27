@@ -12,9 +12,7 @@ from flext_core._protocols.base import FlextProtocolsBase
 from flext_core._protocols.settings import FlextProtocolsSettings
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        Callable,
-    )
+    from collections.abc import Callable
     from types import ModuleType
 
     from flext_core import FlextModels as m, FlextTypes as t
@@ -30,9 +28,7 @@ from flext_core._protocols._container_parts.flextprotocolscontainer_part_01 impo
 class FlextProtocolsContainer(FlextProtocolsContainerPart01):
     @runtime_checkable
     class Container(
-        FlextProtocolsSettings.Configurable,
-        FlextProtocolsBase.Base,
-        Protocol,
+        FlextProtocolsSettings.Configurable, FlextProtocolsBase.Base, Protocol
     ):
         """Dependency injection container protocol.
 
@@ -64,31 +60,22 @@ class FlextProtocolsContainer(FlextProtocolsContainerPart01):
             ...
 
         @override
-        def apply(
-            self,
-            settings: t.UserOverridesMapping | None = None,
-        ) -> Self:
+        def apply(self, settings: t.UserOverridesMapping | None = None) -> Self:
             """Apply user configuration overrides to the container."""
             ...
 
         @overload
         def resolve[T: t.RegisterableService](
-            self,
-            name: str,
-            *,
-            type_cls: type[T],
+            self, name: str, *, type_cls: type[T]
         ) -> FlextProtocolsResult.Result[T]: ...
 
         @overload
         def resolve(
-            self,
-            name: str,
-            *,
-            type_cls: None = None,
+            self, name: str, *, type_cls: None = None
         ) -> FlextProtocolsResult.Result[t.RegisterableService]: ...
 
         def snapshot(self) -> m.ConfigMap:
-            """The merged settings exposed by this container."""
+            """Return the merged settings exposed by this container."""
             ...
 
         def has(self, name: str) -> bool:
@@ -99,27 +86,15 @@ class FlextProtocolsContainer(FlextProtocolsContainerPart01):
             """List all registered services."""
             ...
 
-        def bind(
-            self,
-            name: str,
-            impl: t.RegisterableService,
-        ) -> Self:
+        def bind(self, name: str, impl: t.RegisterableService) -> Self:
             """Bind a concrete service instance or value."""
             ...
 
-        def factory(
-            self,
-            name: str,
-            impl: t.FactoryCallable,
-        ) -> Self:
+        def factory(self, name: str, impl: t.FactoryCallable) -> Self:
             """Bind a factory callable."""
             ...
 
-        def resource(
-            self,
-            name: str,
-            impl: t.ResourceCallable,
-        ) -> Self:
+        def resource(self, name: str, impl: t.ResourceCallable) -> Self:
             """Bind a lifecycle-managed resource factory."""
             ...
 

@@ -13,12 +13,11 @@ from collections.abc import Sequence
 from types import ModuleType
 from typing import Annotated
 
+from flext_core import FlextProtocols as p, FlextTypes as t
 from flext_core._models.base import FlextModelsBase as m
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
 from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
-from flext_core.protocols import FlextProtocols as p
-from flext_core.typings import FlextTypes as t
 
 
 class FlextModelsService:
@@ -40,21 +39,21 @@ class FlextModelsService:
             p.Settings,
             tp.SkipValidation,
             mp.Field(
-                description="Service configuration settings for runtime behavior.",
+                description="Service configuration settings for runtime behavior."
             ),
         ]
         context: Annotated[
             p.Context,
             tp.SkipValidation,
             mp.Field(
-                description="Execution context carrying correlation and tracing metadata.",
+                description="Execution context carrying correlation and tracing metadata."
             ),
         ]
         container: Annotated[
             p.Container,
             tp.SkipValidation,
             mp.Field(
-                description="Dependency injection container for service resolution.",
+                description="Dependency injection container for service resolution."
             ),
         ]
         dispatcher: Annotated[
@@ -177,12 +176,10 @@ class FlextModelsService:
         @up.field_validator("wire_packages", mode="before")
         @classmethod
         def validate_wire_packages(
-            cls,
-            value: t.JsonPayload | None,
+            cls, value: t.JsonPayload | None
         ) -> t.JsonPayload | None:
             if not isinstance(value, Sequence) or isinstance(
-                value,
-                (str, bytes, bytearray),
+                value, (str, bytes, bytearray)
             ):
                 return value
             normalized = tuple(item for item in value if isinstance(item, str))

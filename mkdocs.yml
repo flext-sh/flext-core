@@ -1,0 +1,95 @@
+# AUTO-GENERATED — DO NOT EDIT MANUALLY
+site_name: flext-core Documentation
+site_description: Generated documentation for flext-core
+site_url: https://github.com/flext-sh/flext-core/blob/main/README.md
+repo_name: flext-sh/flext
+repo_url: https://github.com/flext-sh/flext-core
+edit_uri: edit/main/flext-core/
+docs_dir: docs
+site_dir: .reports/docs/site
+
+exclude_docs: |
+  /README.md
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - toc.integrate
+    - content.code.copy
+    - content.tabs.link
+    - search.highlight
+    - search.share
+    - search.suggest
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+
+plugins:
+  - search
+  - autorefs
+  - section-index
+  - mkdocstrings:
+      handlers:
+        python:
+          paths:
+            - src
+          docstring_style: auto
+          docstring_options:
+            warnings: false
+            warn_unknown_params: false
+            warn_missing_types: false
+          options:
+            show_root_heading: true
+            show_root_full_path: false
+            show_source: false
+            show_signature_annotations: true
+            separate_signature: true
+            merge_init_into_class: true
+            docstring_section_style: spacy
+  - git-revision-date-localized:
+      enable_creation_date: true
+      type: date
+      exclude:
+        - api-reference/generated/**
+  - mermaid2
+  - redirects
+  - minify:
+      minify_html: true
+
+markdown_extensions:
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+nav:
+  - Home: index.md
+  - Guides: guides/README.md
+  - API Reference: api-reference/README.md
+
+not_in_nav: |
+  api-reference/generated/**
+validation:
+  omitted_files: ignore
+  absolute_links: warn
+  unrecognized_links: warn

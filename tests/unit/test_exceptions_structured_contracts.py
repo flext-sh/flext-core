@@ -9,24 +9,25 @@ internal collaborators.
 from __future__ import annotations
 
 import pytest
-from flext_tests import e
 
+from flext_tests import e
 from tests.constants import c
 from tests.protocols import p
 from tests.unit._exceptions_failure_support import FAILURES, FailureFactory
 from tests.unit._exceptions_structured_support import STRUCTURED_ERRORS, ErrorFactory
+import operator
 
 
 class TestsFlextCoreExceptionsStructuredContracts:
     """Public-contract behavior of structured errors and failure results."""
 
     @pytest.mark.parametrize(
-        ("name", "factory", "expected_domain", "expected_code", "expected_payload"),
+        ("_name", "factory", "expected_domain", "expected_code", "expected_payload"),
         STRUCTURED_ERRORS,
     )
     def test_structured_errors_expose_public_contract(
         self,
-        name: str,
+        _name: str,
         factory: ErrorFactory,
         expected_domain: str,
         expected_code: str,
@@ -48,16 +49,16 @@ class TestsFlextCoreExceptionsStructuredContracts:
             assert error.metadata.attributes[key] == value
 
     @pytest.mark.parametrize(
-        ("name", "factory", "expected_domain", "expected_code", "expected_payload"),
+        ("_name", "factory", "expected_domain", "expected_code", "_expected_payload"),
         STRUCTURED_ERRORS,
     )
     def test_structured_errors_are_raisable_and_preserve_contract(
         self,
-        name: str,
+        _name: str,
         factory: ErrorFactory,
         expected_domain: str,
         expected_code: str,
-        expected_payload: dict[str, str | int | None],
+        _expected_payload: dict[str, str | int | None],
     ) -> None:
         # Act / Assert: the error is a real exception that callers can catch,
         # and its structured contract survives raise/except unchanged.
@@ -117,12 +118,12 @@ class TestsFlextCoreExceptionsStructuredContracts:
         assert error.metadata.attributes["attempt"] == 2
 
     @pytest.mark.parametrize(
-        ("name", "factory", "expected_fragment", "expected_code", "expected_data"),
+        ("_name", "factory", "expected_fragment", "expected_code", "expected_data"),
         FAILURES,
     )
     def test_failure_factories_return_public_result_contract(
         self,
-        name: str,
+        _name: str,
         factory: FailureFactory,
         expected_fragment: str,
         expected_code: str,
@@ -143,22 +144,22 @@ class TestsFlextCoreExceptionsStructuredContracts:
             assert result_data[key] == value
 
     @pytest.mark.parametrize(
-        ("name", "factory", "expected_fragment", "expected_code", "expected_data"),
+        ("_name", "factory", "_expected_fragment", "expected_code", "_expected_data"),
         FAILURES,
     )
     def test_failure_results_honor_combinator_contract(
         self,
-        name: str,
+        _name: str,
         factory: FailureFactory,
-        expected_fragment: str,
+        _expected_fragment: str,
         expected_code: str,
-        expected_data: dict[str, str | int | None],
+        _expected_data: dict[str, str | int | None],
     ) -> None:
         # Arrange
         result = factory()
 
         # Act / Assert: map short-circuits, preserving the failure and its code.
-        mapped = result.map(lambda value: not value)
+        mapped = result.map(operator.not_)
         assert mapped.failure
         assert mapped.error_code == expected_code
 
