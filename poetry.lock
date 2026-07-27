@@ -349,7 +349,7 @@ version = "6.2.6"
 description = "Extensible memoizing collections and decorators"
 optional = false
 python-versions = ">=3.9"
-groups = ["main", "codegen", "dev"]
+groups = ["main"]
 files = [
     {file = "cachetools-6.2.6-py3-none-any.whl", hash = "sha256:8c9717235b3c651603fff0076db52d6acbfd1b338b8ed50256092f7ce9c85bda"},
     {file = "cachetools-6.2.6.tar.gz", hash = "sha256:16c33e1f276b9a9c0b49ab5782d901e3ad3de0dd6da9bf9bcd29ac5672f2f9e6"},
@@ -1298,13 +1298,10 @@ files = []
 develop = false
 
 [package.dependencies]
-cachetools = ">=6.2,<7.0"
 click = ">=8.3.3"
-defusedxml = ">=0.7.1"
-flext-core = {git = "https://github.com/flext-sh/flext-core.git", rev = "0.12.0-dev"}
+flext-core = "*"
 jinja2 = ">=3.1.6"
 jsonschema = ">=4.26.0"
-openpyxl = ">=3.1.5"
 pluggy = ">=1.6.0"
 prompt-toolkit = ">=3.0.52"
 pydantic = ">=2.13.3"
@@ -1312,13 +1309,12 @@ pydantic-core = ">=2.46.3"
 pydantic-settings = ">=2.14.0"
 pyyaml = ">=6.0.3"
 rich = ">=14,<15"
-"ruamel.yaml" = ">=0.18.16"
 tabulate = ">=0.10.0"
 tomlkit = ">=0.14.0"
 typer = ">=0.25.1"
 
 [package.extras]
-dev = ["autoflake (>=2.3.1)", "bandit (>=1.8)", "black (>=25.1)", "blacken-docs (>=1.19)", "codespell (>=2.3)", "deptry (>=0.23)", "django-stubs (>=5.2.2)", "factory-boy (>=3.3.1)", "faker (>=37.4)", "hypothesis (>=6.125)", "isort (>=6.0.1)", "matplotlib-stubs (>=0.3)", "mkdocs (>=1.6)", "mkdocs-awesome-pages-plugin (>=2.9)", "mkdocs-encryptcontent-plugin (>=2)", "mkdocs-exclude (>=1.0.2)", "mkdocs-get-deps (>=0.2)", "mkdocs-git-revision-date-localized-plugin (>=1.2)", "mkdocs-literate-nav (>=0.6)", "mkdocs-macros-plugin (>=1)", "mkdocs-material (>=9.5)", "mkdocs-material-extensions (>=1.3.1)", "mkdocs-mermaid2-plugin (>=1.1)", "mkdocs-minify-plugin (>=0.7)", "mkdocs-print-site-plugin (>=0.8)", "mkdocs-redirects (>=1.2)", "mkdocs-section-index (>=0.3.12)", "mkdocs-versioning (>=0.2)", "mkdocstrings (>=0.24)", "mkdocstrings-python (>=1.7)", "pip-audit (>=2.7.3)", "pre-commit (>=4.6.0)", "psutil (>=7.2.2)", "pylint (>=3.3)", "pyrefly (>=1.1.1,<1.2.0)", "pytest (>=8.4)", "pytest-benchmark (>=5.1)", "pytest-clarity (>=1.0.1)", "pytest-codeblocks (>=0.17.0)", "pytest-cov (>=6.2)", "pytest-deadfixtures (>=2.2.1)", "pytest-env (>=1.1.5)", "pytest-markdown-docs (>=0.9.2)", "pytest-mock (>=3.14)", "pytest-randomly (>=3.16)", "pytest-sugar (>=1)", "pytest-timeout (>=2.4)", "pytest-xdist (>=3.8)", "pyupgrade (>=3.19)", "radon (>=6.0.1)", "ruff (>=0.12.3)", "types-cachetools (>=6.2)", "types-cffi (>=2.0)", "types-click (>=7.1)", "types-defusedxml (>=0.7)", "types-docker (>=7.1)", "types-flask (>=1.1.6)", "types-jsonschema (>=4.26)", "types-ldap3 (>=2.9.13.20250622)", "types-openpyxl (>=3.1.5.20260518)", "types-paramiko (>=4.0)", "types-protobuf (>=6.30.2.20250703)", "types-psutil (>=7)", "types-psycopg2 (>=2.9.21.20250718)", "types-pyasn1 (>=0.6)", "types-pyopenssl (>=24.1)", "types-python-dateutil (>=2.9)", "types-pyyaml (>=6.0.12.20260518)", "types-redis (>=4.6)", "types-requests (>=2.32.4)", "types-setuptools (>=80.9)", "types-tabulate (>=0.10)", "types-toml (>=0.10.8.20240310)", "vulture (>=2.13)", "yamlfix (>=1.19.1,<2)"]
+dev = ["autoflake (>=2.3.1)", "bandit (>=1.8)", "black (>=25.1)", "blacken-docs (>=1.19)", "codespell (>=2.3)", "deptry (>=0.23)", "django-stubs (>=5.2.2)", "factory-boy (>=3.3.1)", "faker (>=37.4)", "hypothesis (>=6.125)", "isort (>=6.0.1)", "matplotlib-stubs (>=0.3)", "mkdocs (>=1.6)", "mkdocs-awesome-pages-plugin (>=2.9)", "mkdocs-encryptcontent-plugin (>=2)", "mkdocs-exclude (>=1.0.2)", "mkdocs-get-deps (>=0.2)", "mkdocs-git-revision-date-localized-plugin (>=1.2)", "mkdocs-literate-nav (>=0.6)", "mkdocs-macros-plugin (>=1)", "mkdocs-material (>=9.5)", "mkdocs-material-extensions (>=1.3.1)", "mkdocs-mermaid2-plugin (>=1.1)", "mkdocs-minify-plugin (>=0.7)", "mkdocs-print-site-plugin (>=0.8)", "mkdocs-redirects (>=1.2)", "mkdocs-section-index (>=0.3.12)", "mkdocs-versioning (>=0.2)", "mkdocstrings (>=0.24)", "mkdocstrings-python (>=1.7)", "pip-audit (>=2.7.3)", "pre-commit (>=4.6.0)", "psutil (>=7.2.2)", "pylint (>=3.3)", "pyrefly (>=1.1.1,<1.2.0)", "pytest (>=8.4)", "pytest-benchmark (>=5.1)", "pytest-clarity (>=1.0.1)", "pytest-codeblocks (>=0.17.0)", "pytest-cov (>=6.2)", "pytest-deadfixtures (>=2.2.1)", "pytest-env (>=1.1.5)", "pytest-markdown-docs (>=0.9.2)", "pytest-mock (>=3.14)", "pytest-randomly (>=3.16)", "pytest-sugar (>=1)", "pytest-timeout (>=2.4)", "pytest-xdist (>=3.8)", "pyupgrade (>=3.19)", "radon (>=6.0.1)", "ruff (>=0.12.3)", "types-cachetools (>=6.2)", "types-cffi (>=2.0)", "types-click (>=7.1)", "types-defusedxml (>=0.7)", "types-docker (>=7.1)", "types-flask (>=1.1.6)", "types-jsonschema (>=4.26)", "types-ldap3 (>=2.9.13.20250622)", "types-paramiko (>=4.0)", "types-protobuf (>=6.30.2.20250703)", "types-psutil (>=7)", "types-psycopg2 (>=2.9.21.20250718)", "types-pyasn1 (>=0.6)", "types-pyopenssl (>=24.1)", "types-python-dateutil (>=2.9)", "types-pyyaml (>=6.0.12.20260518)", "types-redis (>=4.6)", "types-requests (>=2.32.4)", "types-setuptools (>=80.9)", "types-tabulate (>=0.10)", "types-toml (>=0.10.8.20240310)", "vulture (>=2.13)"]
 
 [package.source]
 type = "git"
@@ -1337,9 +1333,8 @@ files = []
 develop = false
 
 [package.dependencies]
-defusedxml = ">=0.7.1"
-flext-cli = {git = "https://github.com/flext-sh/flext-cli.git", rev = "0.12.0-dev"}
-flext-core = {git = "https://github.com/flext-sh/flext-core.git", rev = "0.12.0-dev"}
+flext-cli = "*"
+flext-core = "*"
 gitpython = ">=3.1.49"
 libcst = ">=1.8.6"
 mkdocs = ">=1.6.1"
@@ -1351,7 +1346,7 @@ mkdocstrings-python = ">=2.0.3"
 rope = ">=1.14.0"
 
 [package.extras]
-dev = ["autoflake (>=2.3.1)", "bandit (>=1.8)", "black (>=25.1)", "blacken-docs (>=1.19)", "codespell (>=2.3)", "deptry (>=0.23)", "django-stubs (>=5.2.2)", "factory-boy (>=3.3.1)", "faker (>=37.4)", "hypothesis (>=6.125)", "isort (>=6.0.1)", "matplotlib-stubs (>=0.3)", "mkdocs (>=1.6)", "mkdocs-awesome-pages-plugin (>=2.9)", "mkdocs-encryptcontent-plugin (>=2)", "mkdocs-exclude (>=1.0.2)", "mkdocs-get-deps (>=0.2)", "mkdocs-git-revision-date-localized-plugin (>=1.2)", "mkdocs-literate-nav (>=0.6)", "mkdocs-macros-plugin (>=1)", "mkdocs-material (>=9.5)", "mkdocs-material-extensions (>=1.3.1)", "mkdocs-mermaid2-plugin (>=1.1)", "mkdocs-minify-plugin (>=0.7)", "mkdocs-print-site-plugin (>=0.8)", "mkdocs-redirects (>=1.2)", "mkdocs-section-index (>=0.3.12)", "mkdocs-versioning (>=0.2)", "mkdocstrings (>=0.24)", "mkdocstrings-python (>=1.7)", "pip-audit (>=2.7.3)", "pre-commit (>=4.6.0)", "pylint (>=3.3)", "pyrefly (>=1.1.1,<1.2.0)", "pytest (>=8.4)", "pytest-benchmark (>=5.1)", "pytest-clarity (>=1.0.1)", "pytest-codeblocks (>=0.17.0)", "pytest-cov (>=6.2)", "pytest-deadfixtures (>=2.2.1)", "pytest-env (>=1.1.5)", "pytest-markdown-docs (>=0.9.2)", "pytest-mock (>=3.14)", "pytest-randomly (>=3.16)", "pytest-sugar (>=1)", "pytest-timeout (>=2.4)", "pytest-xdist (>=3.8)", "pyupgrade (>=3.19)", "radon (>=6.0.1)", "ruff (>=0.12.3)", "types-cachetools (>=6.2)", "types-cffi (>=2.0)", "types-click (>=7.1)", "types-defusedxml (>=0.7)", "types-docker (>=7.1)", "types-flask (>=1.1.6)", "types-jsonschema (>=4.26)", "types-ldap3 (>=2.9.13.20250622)", "types-paramiko (>=4.0)", "types-protobuf (>=6.30.2.20250703)", "types-psutil (>=7)", "types-psycopg2 (>=2.9.21.20250718)", "types-pyasn1 (>=0.6)", "types-pyopenssl (>=24.1)", "types-python-dateutil (>=2.9)", "types-pyyaml (>=6.0.12.20260518)", "types-redis (>=4.6)", "types-requests (>=2.32.4)", "types-setuptools (>=80.9)", "types-tabulate (>=0.10)", "types-toml (>=0.10.8.20240310)", "vulture (>=2.13)", "yamlfix (>=1.19.1,<2)"]
+dev = ["autoflake (>=2.3.1)", "bandit (>=1.8)", "black (>=25.1)", "blacken-docs (>=1.19)", "codespell (>=2.3)", "deptry (>=0.23)", "django-stubs (>=5.2.2)", "factory-boy (>=3.3.1)", "faker (>=37.4)", "hypothesis (>=6.125)", "isort (>=6.0.1)", "matplotlib-stubs (>=0.3)", "mkdocs (>=1.6)", "mkdocs-awesome-pages-plugin (>=2.9)", "mkdocs-encryptcontent-plugin (>=2)", "mkdocs-exclude (>=1)", "mkdocs-get-deps (>=0.2)", "mkdocs-git-revision-date-localized-plugin (>=1.2)", "mkdocs-literate-nav (>=0.6)", "mkdocs-macros-plugin (>=1)", "mkdocs-material (>=9.5)", "mkdocs-material-extensions (>=1.3.1)", "mkdocs-mermaid2-plugin (>=1.1)", "mkdocs-minify-plugin (>=0.7)", "mkdocs-print-site-plugin (>=0.8)", "mkdocs-redirects (>=1.2)", "mkdocs-section-index (>=0.3)", "mkdocs-versioning (>=0.2)", "mkdocstrings (>=0.24)", "mkdocstrings-python (>=1.7)", "pip-audit (>=2.7.3)", "pre-commit (>=4.0.1)", "pylint (>=3.3)", "pyrefly (>=1.0.0,<1.1.0)", "pytest (>=8.4)", "pytest-benchmark (>=5.1)", "pytest-clarity (>=1.0.1)", "pytest-codeblocks (>=0.17.0)", "pytest-cov (>=6.2)", "pytest-deadfixtures (>=2.2.1)", "pytest-env (>=1.1.5)", "pytest-mock (>=3.14)", "pytest-randomly (>=3.16)", "pytest-sugar (>=1)", "pytest-timeout (>=2.4)", "pytest-xdist (>=3.8)", "pyupgrade (>=3.19)", "radon (>=6.0.1)", "ruff (>=0.12.3)", "types-cachetools (>=6.2)", "types-cffi (>=2.0)", "types-click (>=7.1)", "types-defusedxml (>=0.7)", "types-docker (>=7.1)", "types-flask (>=1.1.6)", "types-ldap3 (>=2.9.13.20250622)", "types-paramiko (>=4.0)", "types-protobuf (>=6.30.2.20250703)", "types-psutil (>=7)", "types-psycopg2 (>=2.9.21.20250718)", "types-pyasn1 (>=0.6)", "types-pyopenssl (>=24.1)", "types-python-dateutil (>=2.9)", "types-pyyaml (>=6.0.12)", "types-redis (>=4.6)", "types-requests (>=2.32.4)", "types-setuptools (>=80.9)", "types-tabulate (>=0.10)", "types-toml (>=0.10.8.20240310)", "vulture (>=2.13)"]
 
 [package.source]
 type = "git"
@@ -1392,7 +1387,7 @@ pytest-xdist = ">=3.8.0"
 python-on-whales = ">=0.7"
 
 [package.extras]
-dev = ["autoflake (>=2.3.1)", "bandit (>=1.8)", "black (>=25.1)", "blacken-docs (>=1.19)", "codespell (>=2.3)", "deptry (>=0.23)", "detect-secrets (>=1.5.0)", "django-stubs (>=5.2.2)", "factory-boy (>=3.3.1)", "faker (>=37.4)", "hypothesis (>=6.125)", "isort (>=6.0.1)", "matplotlib-stubs (>=0.3)", "mkdocs (>=1.6)", "mkdocs-awesome-pages-plugin (>=2.9)", "mkdocs-encryptcontent-plugin (>=2)", "mkdocs-exclude (>=1.0.2)", "mkdocs-get-deps (>=0.2)", "mkdocs-git-revision-date-localized-plugin (>=1.2)", "mkdocs-literate-nav (>=0.6)", "mkdocs-macros-plugin (>=1)", "mkdocs-material (>=9.5)", "mkdocs-material-extensions (>=1.3.1)", "mkdocs-mermaid2-plugin (>=1.1)", "mkdocs-minify-plugin (>=0.7)", "mkdocs-print-site-plugin (>=0.8)", "mkdocs-redirects (>=1.2)", "mkdocs-section-index (>=0.3.12)", "mkdocs-versioning (>=0.2)", "mkdocstrings (>=0.24)", "mkdocstrings-python (>=1.7)", "mypy (>=1.20.2)", "pip-audit (>=2.7.3)", "pre-commit (>=4.6.0)", "pylint (>=3.3)", "pyrefly (>=1.1.1,<1.2.0)", "pytest (>=8.4)", "pytest-benchmark (>=5.1)", "pytest-clarity (>=1.0.1)", "pytest-codeblocks (>=0.17.0)", "pytest-cov (>=6.2)", "pytest-deadfixtures (>=2.2.1)", "pytest-env (>=1.1.5)", "pytest-markdown-docs (>=0.9.2)", "pytest-mock (>=3.14)", "pytest-randomly (>=3.16)", "pytest-sugar (>=1)", "pytest-timeout (>=2.4)", "pytest-xdist (>=3.8)", "pyupgrade (>=3.19)", "radon (>=6.0.1)", "ruff (>=0.12.3)", "types-cachetools (>=6.2)", "types-cffi (>=2.0)", "types-click (>=7.1)", "types-defusedxml (>=0.7)", "types-docker (>=7.1)", "types-flask (>=1.1.6)", "types-jsonschema (>=4.26)", "types-ldap3 (>=2.9.13.20250622)", "types-paramiko (>=4.0)", "types-protobuf (>=6.30.2.20250703)", "types-psutil (>=7)", "types-psycopg2 (>=2.9.21.20250718)", "types-pyasn1 (>=0.6)", "types-pyopenssl (>=24.1)", "types-python-dateutil (>=2.9)", "types-pyyaml (>=6.0.12.20260518)", "types-redis (>=4.6)", "types-requests (>=2.32.4)", "types-setuptools (>=80.9)", "types-tabulate (>=0.10)", "types-toml (>=0.10.8.20240310)", "vulture (>=2.13)", "yamlfix (>=1.19.1,<2)"]
+dev = ["autoflake (>=2.3.1)", "bandit (>=1.8)", "black (>=25.1)", "blacken-docs (>=1.19)", "codespell (>=2.3)", "deptry (>=0.23)", "detect-secrets (>=1.5.0)", "django-stubs (>=5.2.2)", "factory-boy (>=3.3.1)", "faker (>=37.4)", "hypothesis (>=6.125)", "isort (>=6.0.1)", "matplotlib-stubs (>=0.3)", "mkdocs (>=1.6)", "mkdocs-awesome-pages-plugin (>=2.9)", "mkdocs-encryptcontent-plugin (>=2)", "mkdocs-exclude (>=1)", "mkdocs-get-deps (>=0.2)", "mkdocs-git-revision-date-localized-plugin (>=1.2)", "mkdocs-literate-nav (>=0.6)", "mkdocs-macros-plugin (>=1)", "mkdocs-material (>=9.5)", "mkdocs-material-extensions (>=1.3.1)", "mkdocs-mermaid2-plugin (>=1.1)", "mkdocs-minify-plugin (>=0.7)", "mkdocs-print-site-plugin (>=0.8)", "mkdocs-redirects (>=1.2)", "mkdocs-section-index (>=0.3)", "mkdocs-versioning (>=0.2)", "mkdocstrings (>=0.24)", "mkdocstrings-python (>=1.7)", "mypy (>=1.20.2)", "pip-audit (>=2.7.3)", "pre-commit (>=4.0.1)", "pylint (>=3.3)", "pyrefly (>=1.0.0,<1.1.0)", "pytest (>=8.4)", "pytest-benchmark (>=5.1)", "pytest-clarity (>=1.0.1)", "pytest-codeblocks (>=0.17.0)", "pytest-cov (>=6.2)", "pytest-deadfixtures (>=2.2.1)", "pytest-env (>=1.1.5)", "pytest-mock (>=3.14)", "pytest-randomly (>=3.16)", "pytest-sugar (>=1)", "pytest-timeout (>=2.4)", "pytest-xdist (>=3.8)", "pyupgrade (>=3.19)", "radon (>=6.0.1)", "ruff (>=0.12.3)", "types-cachetools (>=6.2)", "types-cffi (>=2.0)", "types-click (>=7.1)", "types-defusedxml (>=0.7)", "types-docker (>=7.1)", "types-flask (>=1.1.6)", "types-ldap3 (>=2.9.13.20250622)", "types-paramiko (>=4.0)", "types-protobuf (>=6.30.2.20250703)", "types-psutil (>=7)", "types-psycopg2 (>=2.9.21.20250718)", "types-pyasn1 (>=0.6)", "types-pyopenssl (>=24.1)", "types-python-dateutil (>=2.9)", "types-pyyaml (>=6.0.12)", "types-redis (>=4.6)", "types-requests (>=2.32.4)", "types-setuptools (>=80.9)", "types-tabulate (>=0.10)", "types-toml (>=0.10.8.20240310)", "vulture (>=2.13)"]
 
 [package.source]
 type = "git"
@@ -1782,9 +1777,10 @@ files = [
 name = "jsonschema"
 version = "4.26.0"
 description = "An implementation of JSON Schema validation for Python"
-optional = false
+optional = true
 python-versions = ">=3.10"
-groups = ["codegen", "dev"]
+groups = ["main"]
+markers = "extra == \"dev\""
 files = [
     {file = "jsonschema-4.26.0-py3-none-any.whl", hash = "sha256:d489f15263b8d200f8387e64b4c3a75f06629559fb73deb8fdfb525f2dab50ce"},
     {file = "jsonschema-4.26.0.tar.gz", hash = "sha256:0c26707e2efad8aa1bfc5b7ce170f3fccc2e4918ff85989ba9ffa9facb2be326"},
@@ -1804,9 +1800,10 @@ format-nongpl = ["fqdn", "idna", "isoduration", "jsonpointer (>1.13)", "rfc3339-
 name = "jsonschema-specifications"
 version = "2025.9.1"
 description = "The JSON Schema meta-schemas and vocabularies, exposed as a Registry"
-optional = false
+optional = true
 python-versions = ">=3.9"
-groups = ["codegen", "dev"]
+groups = ["main"]
+markers = "extra == \"dev\""
 files = [
     {file = "jsonschema_specifications-2025.9.1-py3-none-any.whl", hash = "sha256:98802fee3a11ee76ecaca44429fda8a41bff98b00a0f2838151b113f210cc6fe"},
     {file = "jsonschema_specifications-2025.9.1.tar.gz", hash = "sha256:b540987f239e745613c7a9176f3edb72b832a4ac465cf02712288397832b5e8d"},
@@ -4643,9 +4640,10 @@ toml = ["tomli (>=2.0.1)"]
 name = "referencing"
 version = "0.37.0"
 description = "JSON Referencing + Python"
-optional = false
+optional = true
 python-versions = ">=3.10"
-groups = ["codegen", "dev"]
+groups = ["main"]
+markers = "extra == \"dev\""
 files = [
     {file = "referencing-0.37.0-py3-none-any.whl", hash = "sha256:381329a9f99628c9069361716891d34ad94af76e461dcb0335825aecc7692231"},
     {file = "referencing-0.37.0.tar.gz", hash = "sha256:44aefc3142c5b842538163acb373e24cce6632bd54bdb01b21ad5863489f50d8"},
@@ -4713,14 +4711,15 @@ compatible-mypy = ["mypy (>=1.19,<2.2)"]
 
 [[package]]
 name = "rich"
-version = "14.3.4"
+version = "15.0.0"
 description = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
-optional = false
+optional = true
 python-versions = ">=3.8.0"
-groups = ["codegen", "dev"]
+groups = ["main"]
+markers = "extra == \"dev\""
 files = [
-    {file = "rich-14.3.4-py3-none-any.whl", hash = "sha256:07e7adb4690f68864777b1450859253bed81a99a31ac321ac1817b2313558952"},
-    {file = "rich-14.3.4.tar.gz", hash = "sha256:817e02727f2b25b40ef56f5aa2217f400c8489f79ca8f46ea2b70dd5e14558a9"},
+    {file = "rich-15.0.0-py3-none-any.whl", hash = "sha256:33bd4ef74232fb73fe9279a257718407f169c09b78a87ad3d296f548e27de0bb"},
+    {file = "rich-15.0.0.tar.gz", hash = "sha256:edd07a4824c6b40189fb7ac9bc4c52536e9780fbbfbddf6f1e2502c31b068c36"},
 ]
 
 [package.dependencies]
@@ -4754,9 +4753,10 @@ release = ["pip-tools (>=6.12.1)", "toml (>=0.10.2)", "twine (>=4.0.2)"]
 name = "rpds-py"
 version = "2026.6.3"
 description = "Python bindings to Rust's persistent data structures (rpds)"
-optional = false
+optional = true
 python-versions = ">=3.11"
-groups = ["codegen", "dev"]
+groups = ["main"]
+markers = "extra == \"dev\""
 files = [
     {file = "rpds_py-2026.6.3-cp311-cp311-macosx_10_12_x86_64.whl", hash = "sha256:7b689145a1485c335569bd056464f3243a29af7ed3871c7be31ad624ba239bc7"},
     {file = "rpds_py-2026.6.3-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:db08f45aecde626498fb3df07bcf6d2ec040af42e859a4f5040d79c200342911"},
@@ -4875,24 +4875,6 @@ files = [
     {file = "rpds_py-2026.6.3-pp311-pypy311_pp73-musllinux_1_2_x86_64.whl", hash = "sha256:8e65860d238379ed982fd9ba690579b5e95af2f4840f99c772816dbe573cb826"},
     {file = "rpds_py-2026.6.3.tar.gz", hash = "sha256:1cebd1337c242e4ec2293e541f712b2da849b29f48f0c293684b71c0632625d4"},
 ]
-
-[[package]]
-name = "ruamel-yaml"
-version = "0.19.1"
-description = "ruamel.yaml is a YAML parser/emitter that supports roundtrip preservation of comments, seq/map flow style, and map key order"
-optional = false
-python-versions = ">=3.9"
-groups = ["codegen", "dev"]
-files = [
-    {file = "ruamel_yaml-0.19.1-py3-none-any.whl", hash = "sha256:27592957fedf6e0b62f281e96effd28043345e0e66001f97683aa9a40c667c93"},
-    {file = "ruamel_yaml-0.19.1.tar.gz", hash = "sha256:53eb66cd27849eff968ebf8f0bf61f46cdac2da1d1f3576dd4ccee9b25c31993"},
-]
-
-[package.extras]
-docs = ["mercurial (>5.7)", "ryd"]
-jinja2 = ["ruamel.yaml.jinja2 (>=0.2)"]
-libyaml = ["ruamel.yaml.clibz (>=0.3.7) ; platform_python_implementation == \"CPython\""]
-oldlibyaml = ["ruamel.yaml.clib ; platform_python_implementation == \"CPython\""]
 
 [[package]]
 name = "ruff"
@@ -5855,4 +5837,4 @@ ruyaml = ">=0.91.0"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13,<3.14"
-content-hash = "bf4505662832f4f474a0d758300e0e5e878adf3354fd0c07d800464f35dfab50"
+content-hash = "b75389373be3614a167510a2b71799bd930eb8e6321333c44d1383c269ed2249"

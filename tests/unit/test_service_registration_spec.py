@@ -28,17 +28,23 @@ class TestsServiceRegistrationSpecOwner:
 
         tm.that(registration.services is not None, eq=True)
         services = registration.services or {}
-        tm.that(services["service"].name, eq="service")
-        tm.that(services["service"].service, eq="value")
-        tm.that(services["service"].service_type, eq="str")
+        service_record = services["service"]
+        assert isinstance(service_record, m.ServiceRegistration)
+        tm.that(service_record.name, eq="service")
+        tm.that(service_record.service, eq="value")
+        tm.that(service_record.service_type, eq="str")
         tm.that(registration.factories is not None, eq=True)
         factories = registration.factories or {}
-        tm.that(factories["factory"].name, eq="factory")
-        tm.that(factories["factory"].factory is _factory, eq=True)
+        factory_record = factories["factory"]
+        assert isinstance(factory_record, m.FactoryRegistration)
+        tm.that(factory_record.name, eq="factory")
+        tm.that(factory_record.factory is _factory, eq=True)
         tm.that(registration.resources is not None, eq=True)
         resources = registration.resources or {}
-        tm.that(resources["resource"].name, eq="resource")
-        tm.that(resources["resource"].factory is _factory, eq=True)
+        resource_record = resources["resource"]
+        assert isinstance(resource_record, m.ResourceRegistration)
+        tm.that(resource_record.name, eq="resource")
+        tm.that(resource_record.factory is _factory, eq=True)
 
     def test_utility_preserves_non_mapping_services_error(self) -> None:
         """Malformed service collections retain the characterized error contract."""

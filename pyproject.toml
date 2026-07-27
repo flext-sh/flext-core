@@ -697,6 +697,7 @@ split-on-trailing-comma = false
   "undocumented-public-function",
   "undocumented-public-method",
 ]
+"scripts/cmd/**/*.py" = ["invalid-module-name"]
 
 # [MANAGED] tomlsort
 [tool.tomlsort]
