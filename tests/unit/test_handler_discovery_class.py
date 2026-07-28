@@ -7,10 +7,10 @@ Exercises only the public contract of ``h.Discovery``:
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import pytest
-from dataclasses import dataclass
 
 from flext_tests import h, r, tm
 

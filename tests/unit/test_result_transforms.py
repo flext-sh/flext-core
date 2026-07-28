@@ -8,9 +8,9 @@ no patching of the unit under test.
 
 from __future__ import annotations
 
+import operator
 from typing import TYPE_CHECKING
 
-import operator
 import pytest
 
 from flext_tests import r, tm
