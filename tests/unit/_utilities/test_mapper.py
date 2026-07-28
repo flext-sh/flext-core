@@ -9,6 +9,7 @@ attributes, collaborators, or internal data structures are inspected.
 from __future__ import annotations
 
 import operator
+
 import pytest
 
 from flext_core.typings import t

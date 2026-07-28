@@ -10,10 +10,10 @@ returned ``(name, ...)`` tuples, the public ``DecoratorConfig`` fields, and the
 from __future__ import annotations
 
 import types
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import pytest
-from dataclasses import dataclass
 
 from flext_tests import h, r
 

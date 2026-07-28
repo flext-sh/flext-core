@@ -13,10 +13,10 @@ method; that is an implementation detail of how discovery is wired.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, override
 
 import pytest
-from dataclasses import dataclass
 
 from flext_tests import h, r
 from tests.base import s
