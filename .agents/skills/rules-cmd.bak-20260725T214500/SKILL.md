@@ -1,1 +1,0 @@
-../../../../.agents/skills/rules-cmd/SKILL.md
