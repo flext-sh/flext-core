@@ -41,6 +41,7 @@ from pydantic import (
     SkipValidation,
     TypeAdapter as PydanticTypeAdapter,
     ValidationError,
+    ValidationInfo,
     WrapSerializer,
     WrapValidator,
     computed_field,
@@ -136,6 +137,7 @@ class FlextModelsPydantic:
     # Validation and serialization context helpers
     FieldInfo = FieldInfo
     FieldSerializationInfo = FieldSerializationInfo
+    ValidationInfo = ValidationInfo
 
     type TypeAdapterType[T] = PydanticTypeAdapter[T]
     TypeAdapter = PydanticTypeAdapter
