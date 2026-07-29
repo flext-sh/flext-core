@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from flext_core import FlextTypes as t
     from flext_core._models.containers import FlextModelsContainers as mc
     from flext_core._protocols.result import FlextProtocolsResult as p
+    from flext_core.result import FlextResult
 
 from .behavior import FlextResultBehaviorMixin
 
@@ -35,8 +36,8 @@ class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
 
     @classmethod
     def from_failure[V](
-        cls: type[FlextResultConstructionMixin[T]], source: p.ResultLike[V]
-    ) -> FlextResultConstructionMixin[T]:
+        cls: type[FlextResult[V]], source: p.ResultLike[V]
+    ) -> FlextResult[V]:
         """Rebind one failure payload type while preserving its full error state."""
         if source.success:
             raise ValueError(c.ERR_RESULT_FAILURE_REQUIRED)
@@ -80,7 +81,7 @@ class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
         return payload
 
     @classmethod
-    def _from_result[V](cls, source: p.Result[V]) -> FlextResultConstructionMixin[V]:
+    def _from_result[V](cls, source: p.Result[V]) -> FlextResult[V]:
         if source.success:
             # Cannot use source.value: it raises ValueError when _payload is None.
             # r[None].ok(None) is a valid success with a None payload — access the
@@ -88,7 +89,7 @@ class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
             raw: V | None = getattr(source, "_payload", None)
             return cls.ok(cast("V", raw))
         # Type bridge: normalized failures carry the source result payload type.
-        result_class = cast("type[FlextResultConstructionMixin[V]]", cls)
+        result_class = cast("type[FlextResult[V]]", cls)
         return result_class.fail(
             cls.require_error(source),
             error_code=source.error_code,
@@ -98,32 +99,32 @@ class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
 
     @classmethod
     def create_from_callable[V](
-        cls, func: Callable[[], V | None], error_code: str | None = None
-    ) -> FlextResultConstructionMixin[V]:
+        cls: type[FlextResult[V]], func: Callable[[], V | None], error_code: str | None = None
+    ) -> FlextResult[V]:
         """Execute callable; catch exceptions and None returns."""
         try:
             value = func()
             if value is None:
                 # Type bridge: callable failures carry the callable payload type.
-                result_class = cast("type[FlextResultConstructionMixin[V]]", cls)
+                result_class = cast("type[FlextResult[V]]", cls)
                 return result_class.fail(
                     "Callable returned None", error_code=error_code
                 )
             return cls.ok(value)
         except c.EXC_BROAD_RUNTIME as exc:
             # Type bridge: callable exceptions carry the callable payload type.
-            result_class = cast("type[FlextResultConstructionMixin[V]]", cls)
+            result_class = cast("type[FlextResult[V]]", cls)
             return result_class.fail(str(exc), error_code=error_code, exception=exc)
 
     @classmethod
     def fail[V](
-        cls: type[FlextResultConstructionMixin[V]],
+        cls: type[FlextResult[V]],
         error: str | None,
         *,
         error_code: str | None = None,
         error_data: t.JsonMapping | t.ConfigModelInput | None = None,
         exception: BaseException | None = None,
-    ) -> FlextResultConstructionMixin[V]:
+    ) -> FlextResult[V]:
         """Create failed result with error message, optional code and metadata."""
         error_msg = error if error is not None else ""
         resolved_error_code = error_code or cls._extract_exception_error_code(exception)
@@ -142,10 +143,10 @@ class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
 
     @classmethod
     def fail_op[V](
-        cls: type[FlextResultConstructionMixin[V]],
+        cls: type[FlextResult[V]],
         operation: str,
         exc: Exception | str | None = None,
-    ) -> FlextResultConstructionMixin[V]:
+    ) -> FlextResult[V]:
         """Create a failure result for a named operation with optional exception."""
         if isinstance(exc, Exception):
             return cls.fail(f"{operation} failed: {exc}", exception=exc)
@@ -157,24 +158,24 @@ class FlextResultConstructionMixin[T](FlextResultBehaviorMixin[T], ABC):
     @classmethod
     def from_validation[ModelT: mp.BaseModel](
         cls, data: t.ModelInput, model: t.ModelClass[ModelT]
-    ) -> FlextResultConstructionMixin[ModelT]:
+    ) -> FlextResult[ModelT]:
         """Create result from Pydantic validation."""
         try:
             return cls.ok(model.model_validate(data))
         except c.EXC_ATTR_RUNTIME_VALIDATION as exc:
             # Type bridge: validation failures carry the model payload type.
-            result_class = cast("type[FlextResultConstructionMixin[ModelT]]", cls)
+            result_class = cast("type[FlextResult[ModelT]]", cls)
             return result_class.fail(str(exc), exception=exc)
 
     @classmethod
-    def ok[V](cls, value: V) -> FlextResultConstructionMixin[V]:
+    def ok[V](cls: type[FlextResult[V]], value: V) -> FlextResult[V]:
         """Create successful result wrapping value."""
         # Type bridge: class factories intentionally rebind the generic payload.
-        result_class = cast("type[FlextResultConstructionMixin[V]]", cls)
+        result_class = cast("type[FlextResult[V]]", cls)
         return result_class(value=value, success=True)
 
     @classmethod
-    def from_result[V](cls, source: p.Result[V]) -> FlextResultConstructionMixin[V]:
+    def from_result[V](cls, source: p.Result[V]) -> FlextResult[V]:
         """Normalize structural result to FlextResult."""
         return cls._from_result(source)
 
