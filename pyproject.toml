@@ -290,7 +290,6 @@ project-includes = [
   "src/**/*.py*",
   "tests/**/*.py*",
 ]
-python-interpreter-path = "../.venv/bin/python"
 python-version = "3.13"
 search-path = [
     ".",
@@ -707,7 +706,6 @@ sort_first = ["build-system", "dependency-groups", "project", "tool"]
 
 [tool.uv]
 link-mode = "copy"
-required-version = "==0.11.32"
 
 [tool.vulture]
 exclude = ["*/_protocols/*"]
