@@ -13,8 +13,7 @@
   "shellcheck.useWorkspaceRootAsCwd": true,
   "python-envs.workspaceSearchPaths": [
     "./.venv",
-    "./*/.venv",
-    "./apps/*/.venv"
+    "./*/.venv"
   ],
   "files.exclude": {
     "**/__pycache__": true,
