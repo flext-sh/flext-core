@@ -5,8 +5,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import r, tm
 
+from flext_tests import r, tm
 from tests.unit._result_exception_support import TestsFlextResultExceptionCarrying
 
 if TYPE_CHECKING:
@@ -54,9 +54,7 @@ class TestsFlextCoreResultExceptionSafeCallable(TestsFlextResultExceptionCarryin
         def divide(a: int, b: int) -> float:
             return a / b
 
-        chained: p.Result[float] = divide(10, 2).flat_map(
-            lambda value: r.ok(value + 1),
-        )
+        chained: p.Result[float] = divide(10, 2).flat_map(lambda value: r.ok(value + 1))
         tm.that(chained.success, eq=True)
         tm.that(chained.value, eq=6.0)
 
@@ -89,7 +87,8 @@ class TestsFlextCoreResultExceptionSafeCallable(TestsFlextResultExceptionCarryin
         @r.safe
         def parse_int(value: str) -> int:
             if not value.isdigit():
-                raise ValueError(f"'{value}' is not a valid integer")
+                msg = f"'{value}' is not a valid integer"
+                raise ValueError(msg)
             return int(value)
 
         result: p.Result[int] = parse_int("abc")
@@ -108,13 +107,10 @@ class TestsFlextCoreResultExceptionSafeCallable(TestsFlextResultExceptionCarryin
         tm.that(result.exception, is_=TypeError)
 
     @pytest.mark.parametrize(
-        "exception_type",
-        [OSError, IndexError],
-        ids=("os-error", "lookup-index-error"),
+        "exception_type", [OSError, IndexError], ids=("os-error", "lookup-index-error")
     )
     def test_safe_captures_boundary_exceptions(
-        self,
-        exception_type: type[Exception],
+        self, exception_type: type[Exception]
     ) -> None:
         @r.safe
         def raise_boundary_error() -> int:
@@ -134,8 +130,7 @@ class TestsFlextCoreResultExceptionSafeCallable(TestsFlextResultExceptionCarryin
         result: p.Result[int] = r[int].create_from_callable(risky_operation)
         tm.that(result.failure, eq=True)
         tm.that(
-            result.error is not None and "operation failed" in result.error,
-            eq=True,
+            result.error is not None and "operation failed" in result.error, eq=True
         )
         tm.that(result.exception, none=False)
         tm.that(result.exception, is_=RuntimeError)
@@ -163,8 +158,7 @@ class TestsFlextCoreResultExceptionSafeCallable(TestsFlextResultExceptionCarryin
             raise ValueError(msg)
 
         result: p.Result[int] = r[int].create_from_callable(
-            failing_operation,
-            error_code="INVALID_VALUE",
+            failing_operation, error_code="INVALID_VALUE"
         )
         tm.that(result.failure, eq=True)
         tm.that(result.error_code, eq="INVALID_VALUE")

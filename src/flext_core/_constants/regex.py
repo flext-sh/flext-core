@@ -22,8 +22,13 @@ class FlextConstantsRegex:
 
     PATTERN_ENFORCE_RULE_ID: Final[str] = r"^ENFORCE-\d{3}$"
     "Pattern for canonical enforcement rule identifiers."
-    PATTERN_SEMVER: Final[str] = r"^\d+\.\d+\.\d+(?:[-.][\w\.]+)?(?:\+[\w\.]+)?$"
-    "Pattern for semantic-version strings with optional pre-release and build metadata."
+    PATTERN_SEMVER: Final[str] = (
+        r"^\d+\.\d+\.\d+"
+        r"(?:(?:a|b|rc)\d+|\.(?:a|b|rc|post|dev)\d+|"
+        r"-[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)?"
+        r"(?:\+[0-9A-Za-z]+(?:[._-][0-9A-Za-z]+)*)?$"
+    )
+    "Pattern for SemVer and normalized PEP 440 version strings."
     PATTERN_IDENTIFIER_WITH_UNDERSCORE: Final[str] = "^[a-zA-Z_][a-zA-Z0-9_]*$"
     "Pattern for identifiers that can start with underscore (context keys)."
     PATTERN_ISO8601_TIMESTAMP: Final[str] = (
@@ -31,17 +36,23 @@ class FlextConstantsRegex:
     )
     "Pattern for ISO 8601 timestamps (optional, allows empty string)."
     PATTERN_HOSTNAME_OR_IP: Final[str] = (
-        "^[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$|^localhost$|^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$"
+        r"^[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"
+        r"|^localhost$"
+        r"|^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$"
     )
     "Pattern for hostnames (domain names) or IPv4 addresses."
     PATTERN_LDAP_DN: Final[str] = (
-        "^[a-zA-Z][\\w\\-]*\\s*=\\s*[^,]+(?:\\s*,\\s*[a-zA-Z][\\w\\-]*\\s*=\\s*[^,]+)*$"
+        r"^[A-Za-z][\w-]*[ \t]*+=[ \t]*+[^\s,][^,\r\n]*"
+        r"(?:,[ \t]*+[A-Za-z][\w-]*[ \t]*+=[ \t]*+[^\s,][^,\r\n]*)*$"
     )
     "Pattern for LDAP Distinguished Names (DN)."
     PATTERN_IDENTIFIER_LOWERCASE: Final[str] = (
         "^[a-z0-9](?:[a-z0-9\\-_.]{0,62}[a-z0-9])?$"
     )
-    "Pattern for lowercase identifiers with optional hyphens, underscores, and dots (max 64 chars)."
+    (
+        "Pattern for lowercase identifiers with optional hyphens, underscores, "
+        "and dots (max 64 chars)."
+    )
     PATTERN_CAMEL_TO_SNAKE: Final[str] = r"([a-z0-9])([A-Z])"
     "Boundary used to insert underscores when converting camelCase → snake_case."
     PATTERN_FORBIDDEN_FACADE_IMPORT: Final[str] = (
@@ -53,27 +64,26 @@ class FlextConstantsRegex:
 
     # === Pre-compiled regex authorities (consumers MUST use these) ===
     PATTERN_ENFORCE_RULE_ID_RE: ClassVar[t.RegexPattern] = re.compile(
-        PATTERN_ENFORCE_RULE_ID,
+        PATTERN_ENFORCE_RULE_ID
     )
     PATTERN_SEMVER_RE: ClassVar[t.RegexPattern] = re.compile(PATTERN_SEMVER)
     PATTERN_IDENTIFIER_WITH_UNDERSCORE_RE: ClassVar[t.RegexPattern] = re.compile(
-        PATTERN_IDENTIFIER_WITH_UNDERSCORE,
+        PATTERN_IDENTIFIER_WITH_UNDERSCORE
     )
     PATTERN_ISO8601_TIMESTAMP_RE: ClassVar[t.RegexPattern] = re.compile(
-        PATTERN_ISO8601_TIMESTAMP,
+        PATTERN_ISO8601_TIMESTAMP
     )
     PATTERN_HOSTNAME_OR_IP_RE: ClassVar[t.RegexPattern] = re.compile(
-        PATTERN_HOSTNAME_OR_IP,
+        PATTERN_HOSTNAME_OR_IP
     )
     PATTERN_LDAP_DN_RE: ClassVar[t.RegexPattern] = re.compile(PATTERN_LDAP_DN)
     PATTERN_IDENTIFIER_LOWERCASE_RE: ClassVar[t.RegexPattern] = re.compile(
-        PATTERN_IDENTIFIER_LOWERCASE,
+        PATTERN_IDENTIFIER_LOWERCASE
     )
     CAMEL_TO_SNAKE_RE: ClassVar[t.RegexPattern] = re.compile(PATTERN_CAMEL_TO_SNAKE)
     FORBIDDEN_FACADE_IMPORT_RE: ClassVar[t.RegexPattern] = re.compile(
-        PATTERN_FORBIDDEN_FACADE_IMPORT,
-        flags=re.MULTILINE,
+        PATTERN_FORBIDDEN_FACADE_IMPORT, flags=re.MULTILINE
     )
     PATTERN_EXAMPLE_RESULT_LINE_RE: ClassVar[t.RegexPattern] = re.compile(
-        PATTERN_EXAMPLE_RESULT_LINE,
+        PATTERN_EXAMPLE_RESULT_LINE
     )

@@ -18,20 +18,15 @@ class ExamplesFlextModelsEx11:
 
     class ServiceHandlerConfig(FlextSettings):
         enabled: Annotated[
-            bool,
-            u.Field(description="Whether the service is enabled"),
+            bool, u.Field(description="Whether the service is enabled")
         ] = True
 
     class ServiceHandlerLike(m.BaseModel):
         message_type: Annotated[
-            type[m.Value],
-            u.Field(description="Message type handled by this handler"),
+            type[m.Value], u.Field(description="Message type handled by this handler")
         ] = m.Value
 
-        def handle(
-            self,
-            message: ExamplesFlextModelsEx11.Payload,
-        ) -> p.Result[str]:
+        def handle(self, message: ExamplesFlextModelsEx11.Payload) -> p.Result[str]:
             return r[str].ok(message.text)
 
     class ProcessorProtocolGood(m.Value):

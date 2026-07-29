@@ -12,9 +12,7 @@ from flext_core._models.enforcement import FlextModelsEnforcement as me
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._typings.base import FlextTypingBase as t
 
-from .helpers import (
-    FlextUtilitiesBeartypeHelpers as _ubh,
-)
+from .helpers import FlextUtilitiesBeartypeHelpers as _ubh
 
 
 class FlextUtilitiesBeartypeFieldVisitor:
@@ -22,14 +20,12 @@ class FlextUtilitiesBeartypeFieldVisitor:
 
     @staticmethod
     def _field_description_violation(
-        model_type: type,
-        name: str,
-        info: FieldInfo,
+        model_type: type, name: str, info: FieldInfo
     ) -> t.StrMapping | None:
         raw_annotations = vars(model_type).get("__annotations__", {})
         raw_annotation = raw_annotations.get(name)
         resolved_annotation = inspect.get_annotations(model_type, eval_str=False).get(
-            name,
+            name
         )
         has_annotated_description = False
         if get_origin(resolved_annotation) is Annotated:
@@ -47,19 +43,16 @@ class FlextUtilitiesBeartypeFieldVisitor:
 
     @staticmethod
     def _field_violation(
-        params: me.FieldShapeParams,
-        info: FieldInfo,
+        params: me.FieldShapeParams, info: FieldInfo
     ) -> t.StrMapping | None:
         violation: t.StrMapping | None = None
         if params.forbid_any and _ubh.contains_any_recursive(
-            info.annotation,
-            seen=set(),
+            info.annotation, seen=set()
         ):
             violation = {}
         elif params.forbid_bare_collection:
             bad, origin = _ubh.has_forbidden_collection_origin(
-                info.annotation,
-                c.ENFORCEMENT_FORBIDDEN_COLLECTION_ORIGINS,
+                info.annotation, c.ENFORCEMENT_FORBIDDEN_COLLECTION_ORIGINS
             )
             if bad:
                 replacement = next(
@@ -79,8 +72,7 @@ class FlextUtilitiesBeartypeFieldVisitor:
             params.forbid_raw_default_factory
             and info.default_factory is not None
             and not _ubh.allows_mutable_default_factory(
-                info.annotation,
-                info.default_factory,
+                info.annotation, info.default_factory
             )
         ):
             factory_kind = _ubh.mutable_default_factory_kind(info.default_factory)
@@ -124,19 +116,17 @@ class FlextUtilitiesBeartypeFieldVisitor:
 
     @staticmethod
     def v_model_config(
-        params: me.ModelConfigParams,
-        target: type,
+        params: me.ModelConfigParams, target: type
     ) -> t.StrMapping | None:
         """MODEL_CONFIG — Pydantic model_config governance via flags."""
         violation: t.StrMapping | None = None
         has_v1_config = params.forbid_v1_config and isinstance(
-            target.__dict__.get("Config"),
-            type,
+            target.__dict__.get("Config"), type
         )
         if has_v1_config:
             violation = {}
         elif issubclass(target, mp.BaseModel) and not _ubh.has_relaxed_extra_base(
-            target,
+            target
         ):
             extra = target.model_config.get("extra")
             local = target.__dict__.get("model_config", {})

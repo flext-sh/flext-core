@@ -8,8 +8,8 @@ from contextlib import redirect_stdout
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
+from flext_tests import tm
 from tests.utilities import u
 
 if TYPE_CHECKING:
@@ -68,9 +68,7 @@ class TestsFlextCoverageLoggings:
         ],
     )
     def test_clear_scope_returns_success_for_bound_scopes(
-        self,
-        scope: str,
-        context: dict[str, str],
+        self, scope: str, context: dict[str, str]
     ) -> None:
         bind_result = u.bind_context(scope=scope, **context)
         _ = self.assert_log_result_success(bind_result)
@@ -89,14 +87,11 @@ class TestsFlextCoverageLoggings:
 
         tm.that(logger, none=False)
         result = self.assert_captured_log_success(
-            lambda: logger.info("service ready"),
-            contains="service ready",
+            lambda: logger.info("service ready"), contains="service ready"
         )
         tm.that(result.value, eq=True)
 
-    def test_logging_preserves_message_template_with_format_arguments(
-        self,
-    ) -> None:
+    def test_logging_preserves_message_template_with_format_arguments(self) -> None:
         logger = self.make_result_logger("tests.loggings.format")
 
         result = self.assert_captured_log_success(
@@ -105,9 +100,7 @@ class TestsFlextCoverageLoggings:
         )
         tm.that(result.value, eq=True)
 
-    def test_exception_logging_accepts_explicit_exception_and_context(
-        self,
-    ) -> None:
+    def test_exception_logging_accepts_explicit_exception_and_context(self) -> None:
         logger = self.make_result_logger("tests.loggings.exception")
         error_message = "disk failure"
 
@@ -116,9 +109,7 @@ class TestsFlextCoverageLoggings:
         except OSError as exc:
             result = self.assert_captured_log_success(
                 lambda exc=exc: logger.exception(
-                    "io operation failed",
-                    exception=exc,
-                    operation="file_read",
+                    "io operation failed", exception=exc, operation="file_read"
                 ),
                 contains="io operation failed",
                 expected_tokens=("file_read",),

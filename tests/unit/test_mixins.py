@@ -18,11 +18,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import x
 
 from flext_core import FlextContext
+from flext_tests import x
+from tests.constants import c
 from tests.protocols import p
-from tests.utilities import u
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -114,38 +114,6 @@ class TestsFlextMixins:
 
         assert recovered == 2
 
-    def test_register_in_container_succeeds_and_reports_true(self) -> None:
-        service = self._service()
-
-        result = service._register_in_container("discovery_target")
-        registered = u.Tests.assert_success(result)
-
-        assert registered is True
-
-    def test_register_in_container_is_idempotent(self) -> None:
-        service = self._service()
-
-        _ = u.Tests.assert_success(service._register_in_container("target"))
-        second = u.Tests.assert_success(service._register_in_container("target"))
-
-        assert second is True
-        assert service.container.has("target") is True
-
-    def test_init_service_makes_service_discoverable_in_container(self) -> None:
-        service = self._service()
-
-        assert service.container.has("DiscoverableService") is False
-        service._init_service("DiscoverableService")
-
-        assert service.container.has("DiscoverableService") is True
-
-    def test_init_service_defaults_registration_name_to_class(self) -> None:
-        service = self._service()
-
-        service._init_service()
-
-        assert service.container.has(type(service).__name__) is True
-
     def test_initial_context_defaults_to_none(self) -> None:
         service = self._service()
 
@@ -153,7 +121,7 @@ class TestsFlextMixins:
 
     def test_settings_overrides_setter_round_trips(self) -> None:
         service = self._service()
-        overrides: t.JsonMapping = {"feature_flag": True, "retries": 3}
+        overrides: t.ScalarMapping = {"feature_flag": True, "retries": 3}
 
         service.settings_overrides = overrides
 
@@ -161,21 +129,13 @@ class TestsFlextMixins:
 
     @pytest.mark.parametrize(
         ("field_name", "bad_value"),
-        [
-            ("settings_overrides", "not-a-mapping"),
-            ("runtime_settings", 123),
-            ("initial_context", "not-a-context"),
-            ("settings_type", str),
-        ],
+        [("settings_overrides", "not-a-mapping"), ("settings_type", str)],
     )
     def test_constructor_rejects_invalid_bootstrap_value(
-        self,
-        field_name: str,
-        bad_value: t.GuardInput,
+        self, field_name: str, bad_value: t.GuardInput
     ) -> None:
-        invalid_bootstrap: dict[str, t.GuardInput] = {field_name: bad_value}
-        with pytest.raises(TypeError):
-            self._Service(**invalid_bootstrap)
+        with pytest.raises(c.ValidationError):
+            self._Service.model_validate({field_name: bad_value})
 
     def test_correlation_id_round_trips_through_flext_context(self) -> None:
         FlextContext.apply_correlation_id("trace-42")

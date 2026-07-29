@@ -13,6 +13,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+
 from flext_tests import r, tm
 
 if TYPE_CHECKING:
@@ -57,7 +58,7 @@ class TestsFlextCoreResultExceptionMapping:
         result: p.Result[int] = r[int].fail("error", exception=exc)
 
         mapped: p.Result[int] = result.map(lambda value: value + 1).map(
-            lambda value: value * 2,
+            lambda value: value * 2
         )
 
         tm.that(mapped.failure, eq=True)
@@ -68,7 +69,7 @@ class TestsFlextCoreResultExceptionMapping:
         result: p.Result[int] = r[int].fail("error", exception=exc)
 
         flat_mapped: p.Result[str] = result.flat_map(
-            lambda value: r[str].ok(str(value)),
+            lambda value: r[str].ok(str(value))
         )
 
         tm.that(flat_mapped.failure, eq=True)
@@ -78,7 +79,7 @@ class TestsFlextCoreResultExceptionMapping:
         result: p.Result[int] = r[int].ok(5)
 
         flat_mapped: p.Result[str] = result.flat_map(
-            lambda value: r[str].ok(str(value)),
+            lambda value: r[str].ok(str(value))
         )
 
         tm.that(flat_mapped.success, eq=True)
@@ -90,10 +91,8 @@ class TestsFlextCoreResultExceptionMapping:
         result: p.Result[int] = r[int].fail("error", exception=exc)
 
         flat_mapped: p.Result[str] = result.flat_map(
-            lambda value: r[int].ok(value + 1),
-        ).flat_map(
-            lambda value: r[str].ok(str(value)),
-        )
+            lambda value: r[int].ok(value + 1)
+        ).flat_map(lambda value: r[str].ok(str(value)))
 
         tm.that(flat_mapped.failure, eq=True)
         tm.that(flat_mapped.exception is exc, eq=True)
@@ -102,9 +101,7 @@ class TestsFlextCoreResultExceptionMapping:
         exc = ValueError("original")
         result: p.Result[int] = r[int].fail("error", exception=exc)
 
-        altered: p.Result[int] = result.map_error(
-            lambda error: f"transformed: {error}",
-        )
+        altered: p.Result[int] = result.map_error(lambda error: f"transformed: {error}")
 
         tm.that(altered.failure, eq=True)
         tm.that(altered.exception is exc, eq=True)
@@ -135,9 +132,8 @@ class TestsFlextCoreResultExceptionMapping:
 
         recovered: p.Result[int] = result.lash(
             lambda error: r[int].fail(
-                f"recovery failed: {error}",
-                exception=recovery_exc,
-            ),
+                f"recovery failed: {error}", exception=recovery_exc
+            )
         )
 
         tm.that(recovered.failure, eq=True)
@@ -148,39 +144,29 @@ class TestsFlextCoreResultExceptionMapping:
         [
             pytest.param(lambda exc: r[int].ok(5).map(_raiser(exc)), id="map"),
             pytest.param(
-                lambda exc: r[int].ok(5).flat_map(_raiser(exc)),
-                id="flat_map",
+                lambda exc: r[int].ok(5).flat_map(_raiser(exc)), id="flat_map"
             ),
             pytest.param(
-                lambda exc: r[int].ok(5).flow_through(_raiser(exc)),
-                id="flow_through",
+                lambda exc: r[int].ok(5).flow_through(_raiser(exc)), id="flow_through"
             ),
             pytest.param(
-                lambda exc: r[int].fail("error").map_error(_raiser(exc)),
-                id="map_error",
+                lambda exc: r[int].fail("error").map_error(_raiser(exc)), id="map_error"
             ),
             pytest.param(
-                lambda exc: r[int].fail("error").recover(_raiser(exc)),
-                id="recover",
+                lambda exc: r[int].fail("error").recover(_raiser(exc)), id="recover"
             ),
             pytest.param(
-                lambda exc: r[int].fail("error").lash(_raiser(exc)),
-                id="lash",
+                lambda exc: r[int].fail("error").lash(_raiser(exc)), id="lash"
             ),
-            pytest.param(
-                lambda exc: r[int].ok(5).filter(_raiser(exc)),
-                id="filter",
-            ),
+            pytest.param(lambda exc: r[int].ok(5).filter(_raiser(exc)), id="filter"),
             pytest.param(lambda exc: r[int].ok(5).tap(_raiser(exc)), id="tap"),
             pytest.param(
-                lambda exc: r[int].fail("error").tap_error(_raiser(exc)),
-                id="tap_error",
+                lambda exc: r[int].fail("error").tap_error(_raiser(exc)), id="tap_error"
             ),
         ],
     )
     def test_callback_exception_becomes_carried_failure(
-        self,
-        invoke: Callable[[Exception], p.Result[int]],
+        self, invoke: Callable[[Exception], p.Result[int]]
     ) -> None:
         exc = RuntimeError("callback failed")
 

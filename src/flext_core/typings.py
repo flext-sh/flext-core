@@ -38,11 +38,6 @@ class FlextTypes(
     """
 
 
-t_core = FlextTypes
 t = FlextTypes
 
-__all__: list[str] = [
-    "FlextTypes",
-    "t",
-    "t_core",
-]
+__all__: list[str] = ["FlextTypes", "t"]

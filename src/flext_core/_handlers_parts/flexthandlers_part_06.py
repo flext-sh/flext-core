@@ -13,36 +13,25 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
 
-from flext_core import (
-    c,
-    e,
-    m,
-    p,
-    r,
-    t,
-    u,
-)
+from flext_core import c, r, t
 
-from .flexthandlers_part_05 import (
-    FlextHandlers as FlextHandlersPart05,
-)
+from .flexthandlers_part_05 import FlextHandlers as FlextHandlersPart05
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        Callable,
-    )
+    from collections.abc import Callable
+
+    from flext_core import p
 
 
 class FlextHandlers[MessageT_contra, ResultT](
-    FlextHandlersPart05[MessageT_contra, ResultT],
+    FlextHandlersPart05[MessageT_contra, ResultT]
 ):
     @staticmethod
     def create_from_callable(
         handler_callable: Callable[[t.Scalar], t.Scalar],
         handler_name: str | None = None,
         handler_type: c.HandlerType | None = None,
-        mode: c.HandlerType | str | None = None,
-        handler_config: m.Handler | None = None,
+        handler_config: p.HandlerConfig | None = None,
     ) -> p.Handler[t.Scalar, t.Scalar]:
         """Create a handler instance from a callable function.
 
@@ -53,14 +42,10 @@ class FlextHandlers[MessageT_contra, ResultT](
             handler_callable: Callable that takes a message and returns result
             handler_name: Optional handler name (defaults to function name)
             handler_type: Optional handler type (command, query, event)
-            mode: Optional handler mode (compatibility alias for handler_type)
-            handler_config: Optional m configuration
+            handler_config: Optional validated handler configuration
 
         Returns:
             p.Handler[t.Scalar, t.Scalar]: Handler instance wrapping the callable
-
-        Raises:
-            e.ValidationError: If invalid mode is provided
 
         Example:
             >>> def my_handler(msg: str) -> p.Result[str]:
@@ -78,7 +63,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             def __init__(
                 self,
                 handler_fn: Callable[[t.Scalar], t.Scalar],
-                settings: m.Handler | None = None,
+                settings: p.HandlerConfig | None = None,
             ) -> None:
                 super().__init__(settings=settings)
                 self._handler_fn = handler_fn
@@ -97,21 +82,13 @@ class FlextHandlers[MessageT_contra, ResultT](
 
         if handler_config is not None:
             return CallableHandler(handler_fn=handler_callable, settings=handler_config)
-        resolved_type: c.HandlerType = c.HandlerType.COMMAND
-        if mode is not None:
-            if isinstance(mode, c.HandlerType):
-                resolved_type = mode
-            elif mode not in u.enum_values(c.HandlerType):
-                error_msg = c.ERR_HANDLER_INVALID_MODE.format(mode=mode)
-                raise e.ValidationError(error_msg)
-            else:
-                resolved_type = c.HandlerType(mode)
-        elif handler_type is not None:
-            resolved_type = handler_type
+        resolved_type = handler_type or c.HandlerType.COMMAND
         resolved_name: str = handler_name or str(
             getattr(handler_callable, "__name__", "unknown_handler")
-            or "unknown_handler",
+            or "unknown_handler"
         )
+        from flext_core import m
+
         settings = m.Handler(
             handler_id=f"callable_{id(handler_callable)}",
             handler_name=resolved_name,

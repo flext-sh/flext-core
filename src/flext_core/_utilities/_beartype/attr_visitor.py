@@ -12,21 +12,12 @@ from flext_core._models.enforcement import FlextModelsEnforcement as me
 from flext_core._typings.base import FlextTypingBase as t
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
 
-from .helpers import (
-    FlextUtilitiesBeartypeHelpers as _ubh,
-)
+from .helpers import FlextUtilitiesBeartypeHelpers as _ubh
 
 _NO_VIOLATION: t.StrMapping | None = None
 _BARE_VIOLATION: t.StrMapping = {}
 
-_CONSTANT_LITERAL_TYPES: tuple[type, ...] = (
-    int,
-    float,
-    str,
-    bool,
-    bytes,
-    type(None),
-)
+_CONSTANT_LITERAL_TYPES: tuple[type, ...] = (int, float, str, bool, bytes, type(None))
 """Scalar literal types accepted as canonical constant values."""
 
 _CONSTANT_CONTAINER_TYPES: tuple[type, ...] = (
@@ -46,9 +37,7 @@ class FlextUtilitiesBeartypeAttrVisitor:
 
     @staticmethod
     def v_attr_shape(
-        params: me.AttrShapeParams,
-        name: str,
-        value: tp.JsonValue,
+        params: me.AttrShapeParams, name: str, value: tp.JsonValue
     ) -> t.StrMapping | None:
         """ATTR_SHAPE — class-attribute governance (constants / aliases / TypeAdapters)."""
         if params.forbid_mutable_value:
@@ -58,7 +47,7 @@ class FlextUtilitiesBeartypeAttrVisitor:
         if params.require_uppercase_name and name != name.upper():
             return _BARE_VIOLATION
         if params.forbid_any_in_alias and _ubh.alias_contains_any(
-            getattr(value, "__value__", None),
+            getattr(value, "__value__", None)
         ):
             return _BARE_VIOLATION
         if (
@@ -88,9 +77,7 @@ class FlextUtilitiesBeartypeAttrVisitor:
         if ann is not None:
             origin = get_origin(ann)
             origin_name = getattr(origin, "__qualname__", "") or getattr(
-                origin,
-                "_name",
-                "",
+                origin, "_name", ""
             )
             return origin_name == "ClassVar" or str(ann).endswith("ClassVar")
         # Fallback for string annotations whose defining module is unavailable
@@ -106,10 +93,7 @@ class FlextUtilitiesBeartypeAttrVisitor:
 
     @staticmethod
     def _is_implicit_constant(
-        params: me.ClassVarConstantParams,
-        target: type,
-        name: str,
-        value: object,
+        params: me.ClassVarConstantParams, target: type, name: str, value: object
     ) -> bool:
         """Return True when an UPPER_CASE attribute looks like a constant but lacks ClassVar."""
         if not params.detect_implicit_constants:
@@ -120,8 +104,7 @@ class FlextUtilitiesBeartypeAttrVisitor:
 
     @staticmethod
     def v_classvar_constant(
-        params: me.ClassVarConstantParams,
-        target: type,
+        params: me.ClassVarConstantParams, target: type
     ) -> t.StrMapping | None:
         """CLASSVAR_CONSTANT — flag constants declared outside _constants."""
         module_name = getattr(target, "__module__", "") or ""
@@ -133,16 +116,12 @@ class FlextUtilitiesBeartypeAttrVisitor:
             if name in c.ENFORCEMENT_CLASSVAR_EXEMPT_NAMES:
                 continue
             has_classvar = FlextUtilitiesBeartypeAttrVisitor._has_classvar_annotation(
-                target,
-                name,
+                target, name
             )
             is_implicit = (
                 not has_classvar
                 and FlextUtilitiesBeartypeAttrVisitor._is_implicit_constant(
-                    params,
-                    target,
-                    name,
-                    value,
+                    params, target, name, value
                 )
             )
             if not (has_classvar or is_implicit):

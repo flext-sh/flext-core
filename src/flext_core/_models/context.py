@@ -9,14 +9,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core.typings import FlextTypes as t
-
-from ._context._data import FlextModelsContextData
-from ._context._export import FlextModelsContextExport
-from ._context._metadata import FlextModelsContextMetadata
-from ._context._proxy_var import FlextModelsContextProxyVar
-from ._context._scope import FlextModelsContextScope
-from ._context._tokens import FlextModelsContextTokens
+from flext_core import FlextTypes as t
+from flext_core._models._context._data import FlextModelsContextData
+from flext_core._models._context._export import FlextModelsContextExport
+from flext_core._models._context._metadata import FlextModelsContextMetadata
+from flext_core._models._context._proxy_var import FlextModelsContextProxyVar
+from flext_core._models._context._scope import FlextModelsContextScope
+from flext_core._models._context._tokens import FlextModelsContextTokens
 
 
 class FlextModelsContext(

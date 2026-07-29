@@ -13,12 +13,7 @@ class TestsFlextConstantsResult:
     """Flat result and railway constants for flext-core tests."""
 
     type RailwayOperation = Literal[
-        "get_email",
-        "send_email",
-        "get_status",
-        "double",
-        "square",
-        "negate",
+        "get_email", "send_email", "get_status", "double", "square", "negate"
     ]
     RAILWAY_OPERATION_GET_EMAIL: Final[RailwayOperation] = "get_email"
     RAILWAY_OPERATION_SEND_EMAIL: Final[RailwayOperation] = "send_email"

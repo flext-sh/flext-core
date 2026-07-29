@@ -33,9 +33,7 @@ class TestsFlextCoreHandlersValidationContext(TestsFlextFlextHandlers):
         ids=[scenario.name for scenario in HANDLER_TYPES],
     )
     def test_validate_message_accepts_message_for_every_handler_type(
-        self,
-        handler_type: c.HandlerType,
-        handler_mode: c.HandlerType,
+        self, handler_type: c.HandlerType, handler_mode: c.HandlerType
     ) -> None:
         # Arrange
         settings = u.Tests.create_handler_config(
@@ -58,14 +56,11 @@ class TestsFlextCoreHandlersValidationContext(TestsFlextFlextHandlers):
         ids=[item[0] for item in VALIDATION_TYPES],
     )
     def test_validate_message_accepts_supported_payload_types(
-        self,
-        type_name: str,
-        message: t.JsonValue,
+        self, type_name: str, message: t.JsonValue
     ) -> None:
         # Arrange
         settings = u.Tests.create_handler_config(
-            f"payload_{type_name}",
-            f"Payload {type_name.title()}",
+            f"payload_{type_name}", f"Payload {type_name.title()}"
         )
         handler = self.ValidationTestHandler(settings=settings)
 
@@ -87,14 +82,9 @@ class TestsFlextCoreHandlersValidationContext(TestsFlextFlextHandlers):
         error = u.Tests.assert_failure(result, c.ERR_MESSAGE_CANNOT_BE_NONE)
         assert c.ERR_MESSAGE_CANNOT_BE_NONE in error
 
-    @pytest.mark.parametrize(
-        "falsy_message",
-        ["", None],
-        ids=["empty_string", "none"],
-    )
+    @pytest.mark.parametrize("falsy_message", ["", None], ids=["empty_string", "none"])
     def test_validation_handler_rejects_falsy_message(
-        self,
-        falsy_message: t.JsonValue,
+        self, falsy_message: t.JsonValue
     ) -> None:
         # Arrange
         settings = u.Tests.create_handler_config("reject_falsy", "Reject Falsy")
@@ -167,8 +157,8 @@ class TestsFlextCoreHandlersValidationContext(TestsFlextFlextHandlers):
         settings = u.Tests.create_handler_config("push_context", "Push Context")
         handler = self.ConcreteTestHandler(settings=settings)
         context: t.JsonMapping = t.json_mapping_adapter().validate_python({
-            "user_id": "123",
-            "operation": "test",
+            "handler_name": "push_context",
+            "handler_mode": "command",
         })
 
         # Act
@@ -181,7 +171,12 @@ class TestsFlextCoreHandlersValidationContext(TestsFlextFlextHandlers):
         # Arrange
         settings = u.Tests.create_handler_config("pop_context", "Pop Context")
         handler = self.ConcreteTestHandler(settings=settings)
-        _ = u.Tests.assert_success(handler.push_context({"stage": "unit"}))
+        _ = u.Tests.assert_success(
+            handler.push_context({
+                "handler_name": "pop_context",
+                "handler_mode": "command",
+            })
+        )
 
         # Act
         result = handler.pop_context()
@@ -218,8 +213,7 @@ class TestsFlextCoreHandlersValidationContext(TestsFlextFlextHandlers):
         ids=[scenario.name for scenario in HANDLER_TYPES],
     )
     def test_handler_properties_reflect_configuration(
-        self,
-        handler_type: c.HandlerType,
+        self, handler_type: c.HandlerType
     ) -> None:
         # Arrange
         settings = u.Tests.create_handler_config(

@@ -67,10 +67,7 @@ class TestsFlextModelsFixturePayloadsMixin:
 
         event_type: str
         timestamp: str
-        payload: t.MappingKV[
-            str,
-            TestsFlextModelsFixturePayloadsMixin.AsyncPayloadDict,
-        ]
+        payload: t.MappingKV[str, TestsFlextModelsFixturePayloadsMixin.AsyncPayloadDict]
 
     class UserPayloadDict(m.BaseModel):
         """User command payload."""
@@ -94,10 +91,7 @@ class TestsFlextModelsFixturePayloadsMixin:
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         target_user_id: str
-        updates: t.MappingKV[
-            str,
-            TestsFlextModelsFixturePayloadsMixin.UpdateFieldDict,
-        ]
+        updates: t.MappingKV[str, TestsFlextModelsFixturePayloadsMixin.UpdateFieldDict]
 
     class UserDataDict(m.BaseModel):
         """User data response."""

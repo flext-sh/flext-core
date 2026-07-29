@@ -38,14 +38,10 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart03):
         """
         options, error = FlextExceptionsFactories._resolve_options(options)
         params = m.ConflictErrorParams(
-            resource_type=resource_type,
-            resource_id=resource_id,
-            conflict_reason=reason,
+            resource_type=resource_type, resource_id=resource_id, conflict_reason=reason
         )
         msg = FlextExceptionsFactories._failure_message(
-            f"create {resource_type} {resource_id!r}",
-            params=params,
-            error=error,
+            f"create {resource_type} {resource_id!r}", params=params, error=error
         )
         return FlextExceptionsFactories._fail_result(
             msg,

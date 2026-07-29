@@ -81,10 +81,7 @@ class TestsFlextCoreBase:
 
         assert left == right
 
-    @pytest.mark.parametrize(
-        ("amount", "label"),
-        [(6, "usd"), (5, "eur")],
-    )
+    @pytest.mark.parametrize(("amount", "label"), [(6, "usd"), (5, "eur")])
     def test_value_objects_differ_when_any_field_differs(
         self, amount: int, label: str
     ) -> None:
@@ -114,10 +111,7 @@ class TestsFlextCoreBase:
         with pytest.raises(ValidationError):
             setattr(value, "amount", 3)
 
-    @pytest.mark.parametrize(
-        "amount",
-        ["1", 1.5],
-    )
+    @pytest.mark.parametrize("amount", ["1", 1.5])
     def test_value_object_strictly_validates_field_types(
         self, amount: str | float
     ) -> None:

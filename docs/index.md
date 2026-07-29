@@ -2,7 +2,7 @@
 
 # flext-core Documentation
 
-- Version: `0.12.0-dev`
+- Version: `0.12.0`
 - Project class: `platform`
 - Package: `flext_core`
 - Description: Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture
@@ -36,5 +36,6 @@ Canonical `make` verbs (`check`, `test`, `val`, `docs`) — see `AGENTS.md` §5 
 ## Governance Pointer
 
 - Engineering law: [`/flext/AGENTS.md`](https://github.com/flext-sh/flext/blob/main/AGENTS.md)
+- Governance + ADRs: [`/flext/docs/GOVERNANCE.md`](https://github.com/flext-sh/flext/blob/main/docs/GOVERNANCE.md)
 - Skills index: [`/flext/.agents/skills/`](https://github.com/flext-sh/flext/tree/main/.agents/skills/)
 - Onboarding: [`/flext/docs/guides/onboarding.md`](https://github.com/flext-sh/flext/blob/main/docs/guides/onboarding.md)

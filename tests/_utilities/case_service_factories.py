@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 class TestsFlextUtilitiesCaseServiceFactoriesMixin(
-    TestsFlextUtilitiesServiceFactoriesMixin,
+    TestsFlextUtilitiesServiceFactoriesMixin
 ):
     """Service case construction helpers."""
 
@@ -28,13 +28,7 @@ class TestsFlextUtilitiesCaseServiceFactoriesMixin(
             c.Tests.SERVICE_TEST_TYPE_FAIL,
         ]
         _type_index: ClassVar[int] = 0
-        _words: ClassVar[Sequence[str]] = [
-            "test",
-            "sample",
-            "example",
-            "demo",
-            "data",
-        ]
+        _words: ClassVar[Sequence[str]] = ["test", "sample", "example", "demo", "data"]
         _word_index: ClassVar[int] = 0
 
         @classmethod
@@ -95,8 +89,7 @@ class TestsFlextUtilitiesCaseServiceFactoriesMixin(
 
         @classmethod
         def create_service(
-            cls,
-            case: m.Tests.ServiceTestCase,
+            cls, case: m.Tests.ServiceTestCase
         ) -> (
             TestsFlextUtilitiesCaseServiceFactoriesMixin.GetUserService
             | TestsFlextUtilitiesCaseServiceFactoriesMixin.ValidatingService
@@ -111,16 +104,15 @@ class TestsFlextUtilitiesCaseServiceFactoriesMixin(
             match case.service_type:
                 case c.Tests.SERVICE_TEST_TYPE_GET_USER:
                     service = TestsFlextUtilitiesCaseServiceFactoriesMixin.GetUserServiceFactory.build(
-                        user_id=case.input_value,
+                        user_id=case.input_value
                     )
                 case c.Tests.SERVICE_TEST_TYPE_VALIDATE:
                     service = TestsFlextUtilitiesCaseServiceFactoriesMixin.ValidatingServiceFactory.build(
-                        value_input=case.input_value,
-                        min_length=case.extra_param,
+                        value_input=case.input_value, min_length=case.extra_param
                     )
                 case c.Tests.SERVICE_TEST_TYPE_FAIL:
                     service = TestsFlextUtilitiesCaseServiceFactoriesMixin.FailingServiceFactory.build(
-                        error_message=case.input_value or c.Tests.DEFAULT_ERROR_MESSAGE,
+                        error_message=case.input_value or c.Tests.DEFAULT_ERROR_MESSAGE
                     )
                 case _:
                     msg = f"Unsupported service type: {case.service_type}"

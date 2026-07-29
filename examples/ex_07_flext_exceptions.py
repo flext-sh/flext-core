@@ -47,28 +47,21 @@ class Ex07FlextExceptions(Ex07FlextExceptionSubclasses):
         self.audit_check("base.correlation_id", base.correlation_id or "")
         self.audit_check("base.auto_log", base.auto_log)
         self.audit_check(
-            "base.meta.scope",
-            str(base.metadata.attributes.get("scope") or ""),
+            "base.meta.scope", str(base.metadata.attributes.get("scope") or "")
         )
         self.audit_check(
-            "base.meta.channel",
-            str(base.metadata.attributes.get("channel") or ""),
+            "base.meta.channel", str(base.metadata.attributes.get("channel") or "")
         )
         self.audit_check(
-            "base.meta.operation",
-            str(base.metadata.attributes.get("operation") or ""),
+            "base.meta.operation", str(base.metadata.attributes.get("operation") or "")
         )
         self.audit_check("base.error_message", base.error_message)
         self.audit_check("base.has_timestamp", base.timestamp > 0)
         auto_corr = e.BaseError(
-            "auto corr",
-            error_code="E_AUTO",
-            auto_correlation=True,
-            auto_log=False,
+            "auto corr", error_code="E_AUTO", auto_correlation=True, auto_log=False
         )
         self.audit_check(
-            "base.auto_corr.prefix",
-            (auto_corr.correlation_id or "").startswith("exc_"),
+            "base.auto_corr.prefix", (auto_corr.correlation_id or "").startswith("exc_")
         )
 
     def _exercise_factories_and_helpers(self) -> None:
@@ -80,7 +73,7 @@ class Ex07FlextExceptions(Ex07FlextExceptionSubclasses):
         self.audit_check(
             "create_error.AttributeError",
             type(
-                e.AttributeAccessError("factory attribute", attribute_name="test"),
+                e.AttributeAccessError("factory attribute", attribute_name="test")
             ).__name__,
         )
         created_dynamic = e.ValidationError(
@@ -98,10 +91,7 @@ class Ex07FlextExceptions(Ex07FlextExceptionSubclasses):
         )
         self.audit_check("create.correlation_id", created_dynamic.correlation_id or "")
         instance_created = e.ValidationError(
-            "from __call__",
-            error_code="E_CALL",
-            field="title",
-            value="",
+            "from __call__", error_code="E_CALL", field="title", value=""
         )
         self.audit_check("__call__.type", type(instance_created).__name__)
         self.audit_check("__call__.error_code", instance_created.error_code)
@@ -116,14 +106,12 @@ class Ex07FlextExceptions(Ex07FlextExceptionSubclasses):
         self.audit_check("metrics.total_exceptions", metrics.total_exceptions)
         self.audit_check("metrics.has_exception_counts", bool(metrics.exception_counts))
         self.audit_check(
-            "metrics.summary_nonempty",
-            bool(metrics.exception_counts_summary),
+            "metrics.summary_nonempty", bool(metrics.exception_counts_summary)
         )
         self.audit_check("metrics.unique_types", metrics.unique_exception_types)
         e.clear_metrics()
         self.audit_check(
-            "metrics.cleared_total",
-            e.resolve_metrics_snapshot().total_exceptions,
+            "metrics.cleared_total", e.resolve_metrics_snapshot().total_exceptions
         )
 
 

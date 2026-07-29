@@ -12,10 +12,9 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
+from flext_core import FlextTypes as t
+from flext_core._models.base import FlextModelsBase as m
 from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core.typings import FlextTypes as t
-
-from .base import FlextModelsBase as m
 
 
 class FlextModelsConfig:
@@ -25,8 +24,7 @@ class FlextModelsConfig:
         """A loaded, parsed config document with optional schema/source refs."""
 
         model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            frozen=True,
-            arbitrary_types_allowed=True,
+            frozen=True, arbitrary_types_allowed=True
         )
 
         data: Annotated[

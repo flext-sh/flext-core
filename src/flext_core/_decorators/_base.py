@@ -10,11 +10,11 @@ import warnings
 from functools import wraps
 from typing import TYPE_CHECKING, ClassVar, TypeIs
 
+from flext_core import FlextContainer
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._protocols.logging import FlextProtocolsLogging as pl
 from flext_core._typings.base import FlextTypingBase as tb
 from flext_core._typings.services import FlextTypesServices as ts
-from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
 from flext_core.loggings import FlextUtilitiesLogging
 
@@ -42,14 +42,12 @@ class FlextDecoratorsBase:
 
     @classmethod
     def _is_logger_carrier(
-        cls,
-        value: pb.AttributeProbe | None,
+        cls, value: pb.AttributeProbe | None
     ) -> TypeIs[_LoggerCarrier]:
         """Return whether value carries or can route logging context."""
         _ = cls
         return isinstance(
-            value,
-            (pl.Logger, pl.HasLogger, mp.BaseModel, *tb.CONTAINER_TYPES),
+            value, (pl.Logger, pl.HasLogger, mp.BaseModel, *tb.CONTAINER_TYPES)
         )
 
     @classmethod
@@ -98,8 +96,7 @@ class FlextDecoratorsBase:
 
     @classmethod
     def inject[**PCallback, TResult](
-        cls,
-        **dependencies: str,
+        cls, **dependencies: str
     ) -> Callable[[Callable[PCallback, TResult]], Callable[PCallback, TResult]]:
         """Inject dependencies from the configured FLEXT container."""
 

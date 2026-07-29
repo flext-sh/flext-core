@@ -5,15 +5,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Annotated, ClassVar, override
 
 from flext_tests import r
-
 from tests.base import s
 from tests.models import m
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        MutableMapping,
-        MutableSequence,
-    )
+    from collections.abc import MutableMapping, MutableSequence
 
     from tests.protocols import p
     from tests.typings import t
@@ -32,14 +28,14 @@ class TestsFlextUserQueryService(s[bool]):
     """Real user query service using ``s``."""
 
     _users: MutableMapping[str, TestsFlextUserServiceEntity] = m.PrivateAttr(
-        default_factory=dict[str, TestsFlextUserServiceEntity],
+        default_factory=dict[str, TestsFlextUserServiceEntity]
     )
     _should_fail: bool = m.PrivateAttr(default_factory=lambda: False)
     _call_count: int = m.PrivateAttr(default_factory=lambda: 0)
 
     @override
     def execute(self) -> p.Result[bool]:
-        """The service availability."""
+        """Return the service availability."""
         if self._should_fail:
             return r[bool].fail("User service unavailable")
         return r[bool].ok(True)
@@ -63,7 +59,7 @@ class TestsFlextUserQueryService(s[bool]):
         """Apply user data for testing."""
         self._users[user_id] = user
 
-    def configure_failure_mode(self, should_fail: bool) -> None:
+    def configure_failure_mode(self, *, should_fail: bool) -> None:
         """Configure failure mode for testing."""
         self._should_fail = should_fail
 
@@ -76,9 +72,7 @@ class TestsFlextUserQueryService(s[bool]):
 class TestsFlextNotificationService(s[str]):
     """Real notification service using ``s``."""
 
-    _sent_notifications: MutableSequence[str] = m.PrivateAttr(
-        default_factory=list[str],
-    )
+    _sent_notifications: MutableSequence[str] = m.PrivateAttr(default_factory=list[str])
     _call_count: int = m.PrivateAttr(default_factory=lambda: 0)
     _should_fail: bool = m.PrivateAttr(default_factory=lambda: False)
 
@@ -97,7 +91,7 @@ class TestsFlextNotificationService(s[str]):
         self._sent_notifications.append(email)
         return r[str].ok("sent")
 
-    def configure_failure_mode(self, should_fail: bool) -> None:
+    def configure_failure_mode(self, *, should_fail: bool) -> None:
         """Configure failure mode for testing."""
         self._should_fail = should_fail
 
@@ -127,7 +121,7 @@ class TestsFlextLifecycleService(s[str]):
 
     _initialized: bool = m.PrivateAttr(default_factory=lambda: False)
     _service_config: TestsFlextServiceConfig | None = m.PrivateAttr(
-        default_factory=lambda: None,
+        default_factory=lambda: None
     )
     _shutdown_called: bool = m.PrivateAttr(default_factory=lambda: False)
     _should_fail_init: bool = m.PrivateAttr(default_factory=lambda: False)
@@ -160,11 +154,9 @@ class TestsFlextLifecycleService(s[str]):
         return r[str].ok("shutdown")
 
     def configure_failure_mode(
-        self,
-        *,
-        fail_init: bool = False,
-        fail_shutdown: bool = False,
+        self, *, fail_init: bool = False, fail_shutdown: bool = False
     ) -> None:
+        """Configure initialization and shutdown failure behavior."""
         self._should_fail_init = fail_init
         self._should_fail_shutdown = fail_shutdown
 
@@ -203,9 +195,6 @@ class TestsFlextFlextServiceFixtures:
 
     @staticmethod
     def _build_service_config(
-        *,
-        name: str,
-        version: str,
-        temp_dir: str,
+        *, name: str, version: str, temp_dir: str
     ) -> TestsFlextServiceConfig:
         return TestsFlextServiceConfig(name=name, version=version, temp_dir=temp_dir)

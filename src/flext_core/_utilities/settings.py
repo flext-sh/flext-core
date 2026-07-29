@@ -22,8 +22,6 @@ from pathlib import Path
 # model_runtime.py. Contact owner of bead ai-hub-mkzg before touching this line.
 from flext_core import FlextProtocols as p, FlextTypes as t
 from flext_core._constants.environment import FlextConstantsEnvironment
-from flext_core._constants.errors import FlextConstantsErrors
-from flext_core._exceptions.factories import FlextExceptionsFactories as e
 from flext_core.result import r
 
 
@@ -51,20 +49,13 @@ class FlextUtilitiesSettings:
 
     @staticmethod
     def register_factory(
-        container: p.Container,
-        name: str,
-        factory: t.FactoryCallable,
+        container: p.Container, name: str, factory: t.FactoryCallable
     ) -> p.Result[bool]:
         """Register factory in DI container, verifying resolution succeeds."""
         _ = container.factory(name, factory)
         resolved = container.resolve(name)
         if resolved.failure:
-            failure: p.Result[bool] = e.fail_operation(
-                "resolve registered config factory",
-                resolved.error
-                or FlextConstantsErrors.ERR_CONFIG_FACTORY_REGISTRATION_FAILED,
-            )
-            return failure
+            return r[bool].from_failure(resolved)
         return r[bool].ok(True)
 
 

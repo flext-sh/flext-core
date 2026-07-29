@@ -48,7 +48,7 @@ INFRA_DETECTOR_ROWS_CORE: Final[
         "MEDIUM",
         "manual_protocol_violations",
         "",
-        ("flext-patterns",),
+        ("flext-mro-namespace-rules",),
         False,
         "Manual Protocol class declared outside protocols.py / _protocols/ tree.",
     ),

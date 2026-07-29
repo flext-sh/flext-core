@@ -20,6 +20,7 @@ from ._utilities.beartype_engine import FlextUtilitiesBeartypeEngine
 from ._utilities.checker import FlextUtilitiesChecker
 from ._utilities.collection import FlextUtilitiesCollection
 from ._utilities.config import FlextUtilitiesConfig
+from ._utilities.console import FlextUtilitiesConsole
 from ._utilities.context import FlextUtilitiesContext
 from ._utilities.conversion import FlextUtilitiesConversion
 from ._utilities.discovery import FlextUtilitiesDiscovery
@@ -34,6 +35,9 @@ from ._utilities.parser import FlextUtilitiesParser
 from ._utilities.project_metadata import FlextUtilitiesProjectMetadata
 from ._utilities.pydantic import FlextUtilitiesPydantic
 from ._utilities.reliability import FlextUtilitiesReliability
+from ._utilities.runtime_violation_registry import (
+    FlextUtilitiesRuntimeViolationRegistry,
+)
 from ._utilities.settings import FlextUtilitiesSettings
 from ._utilities.text import FlextUtilitiesText
 
@@ -46,6 +50,7 @@ class FlextUtilities(
     FlextUtilitiesBeartypeEngine,
     FlextUtilitiesChecker,
     FlextUtilitiesCollection,
+    FlextUtilitiesConsole,
     FlextUtilitiesConfig,
     FlextUtilitiesSettings,
     FlextUtilitiesContext,
@@ -62,6 +67,7 @@ class FlextUtilities(
     FlextUtilitiesProjectMetadata,
     FlextUtilitiesPydantic,
     FlextUtilitiesReliability,
+    FlextUtilitiesRuntimeViolationRegistry,
     FlextUtilitiesText,
     FlextModelsNamespace,
 ):
@@ -74,6 +80,6 @@ class FlextUtilities(
     """
 
 
-__all__: list[str] = ["FlextUtilities", "u"]
-
 u = FlextUtilities
+
+__all__: list[str] = ["FlextUtilities", "FlextUtilitiesRuntimeViolationRegistry", "u"]

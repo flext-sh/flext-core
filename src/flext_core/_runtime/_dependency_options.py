@@ -28,19 +28,18 @@ class FlextRuntimeDependencyOptions(FlextRuntimeDependencyTypes):
         | None,
     ) -> pc.ContainerCreationOptions:
         """Parse raw container options into a validated model."""
-        options_model = cls._require_container_creation_options_model()
         match container_options:
             case None:
-                return options_model.model_validate({})
+                return cls.ContainerCreationOptions.model_validate({})
             case Mapping():
-                return options_model.model_validate(container_options)
+                return cls.ContainerCreationOptions.model_validate(container_options)
             case _:
-                return options_model.model_validate(
+                return cls.ContainerCreationOptions.model_validate(
                     {
                         field: getattr(container_options, field)
                         for field in cls._OPTION_FIELDS
                     }
-                    | {"factory_cache": container_options.factory_cache},
+                    | {"factory_cache": container_options.factory_cache}
                 )
 
     @classmethod
@@ -50,8 +49,7 @@ class FlextRuntimeDependencyOptions(FlextRuntimeDependencyTypes):
         overrides: tb.MappingKV[str, ts.JsonPayload],
     ) -> pc.ContainerCreationOptions:
         """Merge runtime kwargs over base options."""
-        options_model = cls._require_container_creation_options_model()
-        override_opts = options_model.model_validate(overrides)
+        override_opts = cls.ContainerCreationOptions.model_validate(overrides)
         merged: MutableMapping[str, ts.JsonPayload] = {
             field: (
                 getattr(override_opts, field)
@@ -61,8 +59,7 @@ class FlextRuntimeDependencyOptions(FlextRuntimeDependencyTypes):
             for field in cls._OPTION_FIELDS
         }
         merged["factory_cache"] = override_opts.factory_cache
-        merged_options: tb.MappingKV[str, ts.JsonPayload] = dict(merged)
-        return options_model.model_validate(merged_options)
+        return cls.ContainerCreationOptions.model_validate(merged)
 
 
 __all__: list[str] = ["FlextRuntimeDependencyOptions"]

@@ -41,11 +41,11 @@ class FlextCoreBeartypeBootstrap:
             # import path never loads beartype_engine, so this is the only site
             # that guarantees the patches are live for pydantic.JsonValue et al.
             import_module(
-                "flext_core._utilities.beartype_typingext_patch",
+                "flext_core._utilities.beartype_typingext_patch"
             ).FlextUtilitiesBeartypeTypingExtPatch.apply()
             conf_module = import_module("flext_core._utilities.beartype_conf")
             beartype_this_package(
-                conf=conf_module.FlextUtilitiesBeartypeConf.build_beartype_conf(),
+                conf=conf_module.FlextUtilitiesBeartypeConf.build_beartype_conf()
             )
             cls._activated = True
         finally:

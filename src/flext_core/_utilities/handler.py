@@ -12,12 +12,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+from collections.abc import Mapping
 from datetime import datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from flext_core import c, p, r, t
-from flext_core._models.handler import FlextModelsHandler
+from flext_core import c, r
 from flext_core.runtime import FlextRuntime
+
+if TYPE_CHECKING:
+    from flext_core import p, t
 
 
 class FlextUtilitiesHandler:
@@ -25,36 +29,28 @@ class FlextUtilitiesHandler:
 
     @staticmethod
     def create_runtime_state(
-        handler_name: str,
-        handler_mode: c.HandlerType,
-    ) -> FlextModelsHandler.HandlerRuntimeState:
+        handler_name: str, handler_mode: c.HandlerType
+    ) -> p.HandlerRuntimeState:
         """Build runtime state with a fresh execution context."""
-        return FlextModelsHandler.HandlerRuntimeState(
-            execution_context=FlextModelsHandler.ExecutionContext(
-                handler_name=handler_name,
-                handler_mode=handler_mode,
-            ),
+        from flext_core import m
+
+        return m.HandlerRuntimeState(
+            execution_context=m.ExecutionContext(
+                handler_name=handler_name, handler_mode=handler_mode
+            )
         )
 
     @staticmethod
-    def start_execution(
-        state: FlextModelsHandler.HandlerRuntimeState,
-    ) -> FlextModelsHandler.HandlerRuntimeState:
+    def start_execution(state: p.HandlerRuntimeState) -> p.HandlerRuntimeState:
         """Stamp the current monotonic time on the active execution context."""
-        updated_state: FlextModelsHandler.HandlerRuntimeState = state.model_copy(
-            update={
-                "execution_context": state.execution_context.model_copy(
-                    update={"started_at": time.time()},
-                ),
-            },
+        execution_context = state.execution_context.model_copy(
+            update={"started_at": time.time()}
         )
-        return updated_state
+        return state.model_copy(update={"execution_context": execution_context})
 
     @staticmethod
     def record_metric(
-        ctx: FlextModelsHandler.ExecutionContext,
-        name: str,
-        value: t.JsonPayload,
+        ctx: p.ExecutionContext, name: str, value: t.JsonPayload
     ) -> p.Result[bool]:
         """Record a metric value onto an execution context's payload."""
         normalized = FlextRuntime.normalize_to_container(value)
@@ -63,51 +59,49 @@ class FlextUtilitiesHandler:
             if isinstance(normalized, (str, int, float, bool, datetime, Path))
             else str(normalized)
         )
-        return r[bool].ok(True)
+        return r.ok(True)
 
     @staticmethod
     def push_context(
-        state: FlextModelsHandler.HandlerRuntimeState,
-        ctx: t.JsonMapping | FlextModelsHandler.ExecutionContext,
-    ) -> p.Result[bool]:
-        """Coerce a flat mapping into an ExecutionContext and push it."""
-        if isinstance(ctx, FlextModelsHandler.ExecutionContext):
-            state.context_stack.append(ctx.model_copy())
-            return r[bool].ok(True)
-        handler_name = str(ctx.get("handler_name", c.IDENTIFIER_UNKNOWN))
-        handler_mode_str = str(ctx.get(c.FIELD_HANDLER_MODE, c.HandlerType.OPERATION))
-        handler_mode = (
-            c.HandlerType.COMMAND
-            if handler_mode_str == c.HandlerType.COMMAND
-            else c.HandlerType.QUERY
-            if handler_mode_str == c.HandlerType.QUERY
-            else c.HandlerType.EVENT
-            if handler_mode_str == c.HandlerType.EVENT
-            else c.HandlerType.SAGA
-            if handler_mode_str == "saga"
-            else c.HandlerType.OPERATION
+        state: p.HandlerRuntimeState, ctx: t.JsonMapping | p.ExecutionContext
+    ) -> p.Result[p.HandlerRuntimeState]:
+        """Validate a context and return state with an extended stack."""
+        if not isinstance(ctx, Mapping):
+            execution_context = ctx.model_copy()
+        else:
+            from flext_core import m
+
+            validated = r.from_validation(ctx, m.ExecutionContext)
+            if validated.failure:
+                return r.fail_op("push handler context", validated.error)
+            execution_context: p.ExecutionContext = validated.unwrap()
+        return r.ok(
+            state.model_copy(
+                update={"context_stack": (*state.context_stack, execution_context)}
+            )
         )
-        state.context_stack.append(
-            FlextModelsHandler.ExecutionContext(
-                handler_name=handler_name,
-                handler_mode=handler_mode,
-            ),
-        )
-        return r[bool].ok(True)
 
     @staticmethod
     def pop_context(
-        state: FlextModelsHandler.HandlerRuntimeState,
-    ) -> p.Result[t.ScalarMapping]:
-        """Pop the top context and return its identity as a scalar mapping."""
+        state: p.HandlerRuntimeState,
+    ) -> p.Result[t.Pair[p.HandlerRuntimeState, p.RootDict[t.JsonPayload]]]:
+        """Return state without the top context plus its validated identity."""
+        from flext_core import m
+
         if not state.context_stack:
-            empty_context: t.ScalarMapping = {}
-            return r[t.ScalarMapping].ok(empty_context)
-        popped = state.context_stack.pop()
-        return r[t.ScalarMapping].ok({
-            "handler_name": popped.handler_name,
-            c.FIELD_HANDLER_MODE: popped.handler_mode,
-        })
+            empty_context: p.RootDict[t.JsonPayload] = m.ConfigMap(root={})
+            return r.ok((state, empty_context))
+        popped = state.context_stack[-1]
+        next_state = state.model_copy(
+            update={"context_stack": state.context_stack[:-1]}
+        )
+        popped_context: p.RootDict[t.JsonPayload] = m.ConfigMap(
+            root={
+                "handler_name": popped.handler_name,
+                c.FIELD_HANDLER_MODE: popped.handler_mode,
+            }
+        )
+        return r.ok((next_state, popped_context))
 
 
 __all__: t.MutableSequenceOf[str] = ["FlextUtilitiesHandler"]

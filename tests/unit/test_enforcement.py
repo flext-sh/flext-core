@@ -38,10 +38,7 @@ class TestsFlextCoreEnforcement:
         assert u.check(compliant).violations == []
 
     @pytest.mark.parametrize("builtin", [int, str, dict])
-    def test_builtin_class_flagged_missing_project_prefix(
-        self,
-        builtin: type,
-    ) -> None:
+    def test_builtin_class_flagged_missing_project_prefix(self, builtin: type) -> None:
         """Types without a project prefix raise a Namespace class-prefix finding."""
         report = u.check(builtin)
 
@@ -69,12 +66,10 @@ class TestsFlextCoreEnforcement:
         ],
     )
     def test_accessor_prefix_method_is_flagged(
-        self,
-        class_name: str,
-        member: str,
+        self, class_name: str, member: str
     ) -> None:
         """``get_``/``set_``/``is_`` methods violate the accessor contract."""
-        cls = make_class(class_name, {member: lambda self: None})
+        cls = make_class(class_name, {member: lambda _self: None})
 
         report = u.check(cls)
         assert messages(report, fragment=f'accessor method "{member}"')
@@ -82,22 +77,17 @@ class TestsFlextCoreEnforcement:
     @pytest.mark.parametrize("member", ["fetch_remote", "build_widget"])
     def test_non_accessor_prefix_method_allowed(self, member: str) -> None:
         """Verb-prefixed methods that are not accessors raise no accessor finding."""
-        cls = make_class("FlextCoreAccessedOk", {member: lambda self: None})
+        cls = make_class("FlextCoreAccessedOk", {member: lambda _self: None})
 
         report = u.check(cls)
         assert not messages(report, fragment="accessor method")
 
     @pytest.mark.parametrize(
         ("class_name", "expect_finding"),
-        [
-            ("FlextWorkerSettings", True),
-            ("FlextCoreService", False),
-        ],
+        [("FlextWorkerSettings", True), ("FlextCoreService", False)],
     )
     def test_settings_named_class_requires_inheritance(
-        self,
-        class_name: str,
-        expect_finding: bool,
+        self, class_name: str, *, expect_finding: bool
     ) -> None:
         """Only ``*Settings`` classes must inherit ``FlextSettings``."""
         cls = make_class(class_name, {})

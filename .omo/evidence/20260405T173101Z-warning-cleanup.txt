@@ -1,0 +1,19 @@
+2026-04-05T17:31:01Z
+
+Scope:
+- flext-core/tests/models.py
+- flext-core/tests/helpers/factories_impl.py
+- flext-core/tests/unit/test_enforcement.py
+- flext-tests/src/flext_tests/_validator/models.py
+- flext-infra/src/flext_infra/detectors/_base_detector.py
+
+Commands:
+- cd /home/marlonsc/flext/flext-core && make check FILES="tests/models.py tests/helpers/factories_impl.py tests/unit/test_enforcement.py" CHECK_GATES=lint,mypy,pyright,pyrefly
+- cd /home/marlonsc/flext/flext-tests && make check FILES="src/flext_tests/_validator/models.py" CHECK_GATES=lint,mypy,pyright,pyrefly
+- cd /home/marlonsc/flext/flext-infra && make check FILES="src/flext_infra/detectors/_base_detector.py" CHECK_GATES=lint,mypy,pyright,pyrefly
+- cd /home/marlonsc/flext/flext-core && make test
+
+Results:
+- All targeted checks passed in the three affected projects.
+- flext-core full test suite passed: 3529 passed in 119.20s.
+- flext-core warnings report is empty: .reports/tests/20260405T172842Z-1529255/warnings.txt

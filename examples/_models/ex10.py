@@ -7,9 +7,7 @@ from typing import TYPE_CHECKING, Annotated
 from flext_core import m, p, r, t, u
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        Callable,
-    )
+    from collections.abc import Callable
 
 
 class ExamplesFlextModelsEx10:
@@ -29,8 +27,7 @@ class ExamplesFlextModelsEx10:
 
     class ProcessorGood(m.Value):
         marker: Annotated[
-            str,
-            u.Field(description="Marker indicating successful processing"),
+            str, u.Field(description="Marker indicating successful processing")
         ] = "good"
 
         def process(self) -> bool:
@@ -38,27 +35,19 @@ class ExamplesFlextModelsEx10:
 
     class ProcessorBad(m.Value):
         marker: Annotated[
-            str,
-            u.Field(description="Marker indicating failed processing"),
+            str, u.Field(description="Marker indicating failed processing")
         ] = "bad"
 
     class ProtocolHandler(m.BaseModel):
         message_type: Annotated[
-            type[m.Command],
-            u.Field(description="Message type for protocol handler"),
+            type[m.Command], u.Field(description="Message type for protocol handler")
         ] = m.Command
 
-        def handle(
-            self,
-            message: ExamplesFlextModelsEx10.Message,
-        ) -> p.Result[str]:
+        def handle(self, message: ExamplesFlextModelsEx10.Message) -> p.Result[str]:
             return r[str].ok(message.text)
 
     class CommandBusStub(m.BaseModel):
-        def dispatch(
-            self,
-            message: ExamplesFlextModelsEx10.Message,
-        ) -> p.Result[str]:
+        def dispatch(self, message: ExamplesFlextModelsEx10.Message) -> p.Result[str]:
             return r[str].ok(message.text)
 
     class ServiceStub(m.BaseModel):

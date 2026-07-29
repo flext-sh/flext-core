@@ -9,8 +9,7 @@ from tests._models._mixins.test_data_values import TestsFlextModelsTestDataValue
 
 
 class TestsFlextModelsTestDataMixin(
-    TestsFlextModelsTestDataValuesMixin,
-    TestsFlextModelsTestDataIdentityMixin,
+    TestsFlextModelsTestDataValuesMixin, TestsFlextModelsTestDataIdentityMixin
 ):
     """Static test data model helpers."""
 

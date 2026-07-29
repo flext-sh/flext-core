@@ -25,14 +25,10 @@ from flext_core import FlextSettings, m, t
 class _AliasFieldSettings(FlextSettings):
     """Minimal subclass: one field declared only via validation_alias (no populate_by_name)."""
 
-    model_config = m.SettingsConfigDict(
-        extra="forbid",
-        populate_by_name=False,
-    )
+    model_config = m.SettingsConfigDict(extra="forbid", populate_by_name=False)
 
     pandoc_bin: Annotated[
-        str,
-        m.Field(validation_alias=t.AliasChoices("PANDOC", "FLEXT_PANDOC")),
+        str, m.Field(validation_alias=t.AliasChoices("PANDOC", "FLEXT_PANDOC"))
     ] = "pandoc"
 
 
@@ -53,12 +49,10 @@ class TestsFlextCoreSettingsValidationAlias:
         assert settings.pandoc_bin == "pandoc"
 
     @pytest.mark.parametrize(
-        "override_value",
-        ["custom_pandoc", "/usr/bin/pandoc", "pandoc-3.1", "pandoc"],
+        "override_value", ["custom_pandoc", "/usr/bin/pandoc", "pandoc-3.1", "pandoc"]
     )
     def test_update_global_applies_and_propagates_override(
-        self,
-        override_value: str,
+        self, override_value: str
     ) -> None:
         # Act — must not raise "Extra inputs are not permitted".
         returned = _AliasFieldSettings.update_global(pandoc_bin=override_value)

@@ -19,9 +19,7 @@ from flext_core._protocols._result_parts.flextprotocolsresult_part_02 import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        Callable,
-    )
+    from collections.abc import Callable
 
 
 class FlextProtocolsResult(FlextProtocolsResultPart02):
@@ -36,31 +34,24 @@ class FlextProtocolsResult(FlextProtocolsResultPart02):
         """
 
         def flat_map[U](
-            self,
-            func: Callable[[T], FlextProtocolsResult.Result[U]],
+            self, func: Callable[[T], FlextProtocolsResult.Result[U]]
         ) -> FlextProtocolsResult.Result[U]:
             """Chain operations that return structural FLEXT results."""
             ...
 
         def fold[U](
-            self,
-            on_failure: Callable[[str], U],
-            on_success: Callable[[T], U],
+            self, on_failure: Callable[[str], U], on_success: Callable[[T], U]
         ) -> U:
             """Reduce result into a single value."""
             ...
 
         def lash(
-            self,
-            func: Callable[[str], FlextProtocolsResult.Result[T]],
+            self, func: Callable[[str], FlextProtocolsResult.Result[T]]
         ) -> FlextProtocolsResult.Result[T]:
             """Recover from failure using another structural result."""
             ...
 
-        def map[U](
-            self,
-            func: Callable[[T], U],
-        ) -> FlextProtocolsResult.Result[U]:
+        def map[U](self, func: Callable[[T], U]) -> FlextProtocolsResult.Result[U]:
             """Transform the success value."""
             ...
 
@@ -74,15 +65,13 @@ class FlextProtocolsResult(FlextProtocolsResultPart02):
         """
 
         def flow_through(
-            self,
-            *funcs: Callable[[T], FlextProtocolsResult.Result[T]],
+            self, *funcs: Callable[[T], FlextProtocolsResult.Result[T]]
         ) -> FlextProtocolsResult.Result[T]:
             """Apply multiple Result-returning steps in sequence."""
             ...
 
         def map_error(
-            self,
-            func: Callable[[str], str],
+            self, func: Callable[[str], str]
         ) -> FlextProtocolsResult.Result[T]:
             """Transform the failure message."""
             ...
@@ -93,18 +82,11 @@ class FlextProtocolsResult(FlextProtocolsResultPart02):
         def map_or[U](self, default: U, func: None = None) -> T | U: ...
         @overload
         def map_or[U](self, default: U, func: Callable[[T], U]) -> U: ...
-        def map_or[U](
-            self,
-            default: U,
-            func: Callable[[T], U] | None = None,
-        ) -> U | T:
+        def map_or[U](self, default: U, func: Callable[[T], U] | None = None) -> U | T:
             """Map success value or return default."""
             ...
 
-        def tap(
-            self,
-            func: Callable[[T], None],
-        ) -> FlextProtocolsResult.Result[T]:
+        def tap(self, func: Callable[[T], None]) -> FlextProtocolsResult.Result[T]:
             """Apply a side effect to the success value."""
             ...
 
@@ -117,15 +99,13 @@ class FlextProtocolsResult(FlextProtocolsResultPart02):
         """Fallback and predicate-based result operations."""
 
         def filter(
-            self,
-            predicate: Callable[[T], bool],
+            self, predicate: Callable[[T], bool]
         ) -> FlextProtocolsResult.Result[T]:
             """Keep the value only when the predicate passes."""
             ...
 
         def recover[U](
-            self,
-            func: Callable[[str], U],
+            self, func: Callable[[str], U]
         ) -> FlextProtocolsResult.Result[T | U]:
             """Recover a failure into a success value."""
             ...
@@ -135,8 +115,7 @@ class FlextProtocolsResult(FlextProtocolsResultPart02):
         """Conversion helpers from raw result payloads to validated types."""
 
         def to_model[U: mp.BaseModel](
-            self,
-            model: type[U],
+            self, model: type[U]
         ) -> FlextProtocolsResult.Result[U]:
             """Convert the success payload into a validated model."""
             ...

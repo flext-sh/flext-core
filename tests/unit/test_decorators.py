@@ -13,9 +13,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_tests import d, e, r
 
 from flext_core.container import FlextContainer
+from flext_tests import d, e, r
 
 
 class TestsFlextCoreDecorators:
@@ -44,9 +44,7 @@ class TestsFlextCoreDecorators:
         ],
     )
     def test_railway_converts_exception_to_failure_result(
-        self,
-        raised: Exception,
-        message: str,
+        self, raised: Exception, message: str
     ) -> None:
         """Railway captures caught exceptions as a failure ``r`` with the code."""
 
@@ -105,14 +103,14 @@ class TestsFlextCoreDecorators:
         assert attempts == 3
 
     def test_retry_raises_timeout_error_when_exhausted(self) -> None:
-        """Retry raises ``e.TimeoutError`` carrying the operation name."""
+        """Retry raises ``e.FlextTimeoutError`` carrying the operation name."""
 
         @d.retry(max_attempts=2, delay_seconds=0.001)
         def always_fails() -> str:
             msg = "permanent"
             raise ValueError(msg)
 
-        with pytest.raises(e.TimeoutError) as excinfo:
+        with pytest.raises(e.FlextTimeoutError) as excinfo:
             always_fails()
 
         assert excinfo.value.operation == "always_fails"
@@ -128,13 +126,13 @@ class TestsFlextCoreDecorators:
         assert quick() == "done"
 
     def test_timeout_raises_timeout_error_when_exceeded(self) -> None:
-        """Timeout raises ``e.TimeoutError`` naming the slow operation."""
+        """Timeout raises ``e.FlextTimeoutError`` naming the slow operation."""
 
         @d.timeout(timeout_seconds=0.0)
         def slow() -> int:
             return sum(range(100000))
 
-        with pytest.raises(e.TimeoutError) as excinfo:
+        with pytest.raises(e.FlextTimeoutError) as excinfo:
             slow()
 
         assert excinfo.value.operation == "slow"

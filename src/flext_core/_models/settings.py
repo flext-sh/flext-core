@@ -11,18 +11,12 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar, Self
 
-from pydantic import (
-    AliasChoices,
-    ConfigDict,
-    model_validator,
-)
+from pydantic import AliasChoices, ConfigDict, model_validator
 
+from flext_core import FlextConstants as c, FlextTypes as t
+from flext_core._models.base import FlextModelsBase as m
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._protocols.settings import FlextProtocolsSettings as p
-from flext_core.constants import FlextConstants as c
-from flext_core.typings import FlextTypes as t
-
-from .base import FlextModelsBase as m
 
 
 class FlextModelsSettings:
@@ -36,13 +30,11 @@ class FlextModelsSettings:
         """Automatic settings wrapper for canonical FLEXT settings classes."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True,
-            arbitrary_types_allowed=True,
+            frozen=True, arbitrary_types_allowed=True
         )
 
         settings_class: Annotated[
-            type[p.SettingsType],
-            mp.Field(description="Settings class to instantiate"),
+            type[p.SettingsType], mp.Field(description="Settings class to instantiate")
         ]
         env_prefix: Annotated[
             str,
@@ -72,10 +64,7 @@ class FlextModelsSettings:
             validate_return=True,
         )
 
-    class RetryConfiguration(
-        m.ArbitraryTypesModel,
-        m.RetryConfigurationMixin,
-    ):
+    class RetryConfiguration(m.ArbitraryTypesModel, m.RetryConfigurationMixin):
         """Retry configuration with advanced validation."""
 
         max_retries: Annotated[
@@ -105,9 +94,7 @@ class FlextModelsSettings:
         ] = c.DEFAULT_BACKOFF_MULTIPLIER
         retry_on_exceptions: Annotated[
             t.SequenceOf[type[BaseException]],
-            mp.Field(
-                description="Exception types to retry on",
-            ),
+            mp.Field(description="Exception types to retry on"),
         ] = mp.Field(default_factory=tuple)
         retry_on_status_codes: Annotated[
             t.SequenceOf[int],

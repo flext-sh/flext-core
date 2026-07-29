@@ -142,26 +142,19 @@ class FlextModelsBase(FlextModelsBasePart01):
         """Shared preset for mutable mixins with assignment validation."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            validate_assignment=True,
-            arbitrary_types_allowed=True,
+            validate_assignment=True, arbitrary_types_allowed=True
         )
 
     class NormalizedMutableConfiguredMixin(MutableConfiguredMixin):
         """Shared preset for mutable mixins with whitespace normalization."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            str_strip_whitespace=True,
-        )
+        model_config: ClassVar[ConfigDict] = ConfigDict(str_strip_whitespace=True)
 
     class IdentifiableMixin(NormalizedMutableConfiguredMixin):
         """Mixin for unique identifiers."""
 
         unique_id: Annotated[
-            t.NonEmptyStr,
-            mp.Field(
-                description="Unique identifier",
-                frozen=False,
-            ),
+            t.NonEmptyStr, mp.Field(description="Unique identifier", frozen=False)
         ] = mp.Field(default_factory=lambda: str(uuid.uuid4()))
 
 

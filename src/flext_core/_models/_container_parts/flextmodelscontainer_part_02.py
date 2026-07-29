@@ -28,9 +28,7 @@ from flext_core._utilities.generators import FlextUtilitiesGenerators as ug
 
 
 class FlextModelsContainer(FlextModelsContainerPart01):
-    class ResourceRegistration(
-        m.ArbitraryTypesModel,
-    ):
+    class ResourceRegistration(m.ArbitraryTypesModel):
         """Model for lifecycle-managed resource registrations.
 
         Captures resource factories that dependency-injector should wrap via
@@ -38,37 +36,30 @@ class FlextModelsContainer(FlextModelsContainerPart01):
         """
 
         name: Annotated[
-            t.NonEmptyStr,
-            mp.Field(
-                ...,
-                description="Resource identifier/name",
-            ),
+            t.NonEmptyStr, mp.Field(..., description="Resource identifier/name")
         ]
         factory: Annotated[
             t.ResourceCallable,
             tp.SkipValidation,
             mp.Field(
-                ...,
-                description="Factory returning the lifecycle-managed resource",
+                ..., description="Factory returning the lifecycle-managed resource"
             ),
         ]
         registration_time: Annotated[
             datetime,
             mp.Field(
-                description="Timestamp when resource was registered (configured timezone)",
+                description="Timestamp when resource was registered (configured timezone)"
             ),
         ] = mp.Field(default_factory=ug.now)
         metadata: Annotated[
             m.Metadata | FlextModelsContainers.ConfigMap | None,
             mp.BeforeValidator(
                 lambda value: FlextRuntime.validate_metadata_model_input(
-                    value,
-                    m.Metadata,
-                ),
+                    value, m.Metadata
+                )
             ),
             mp.Field(
-                None,
-                description="Additional resource metadata (JSON-serializable)",
+                None, description="Additional resource metadata (JSON-serializable)"
             ),
         ] = None
 
@@ -80,18 +71,11 @@ class FlextModelsContainer(FlextModelsContainerPart01):
         """
 
         enable_singleton: Annotated[
-            bool,
-            mp.Field(
-                True,
-                description="Enable singleton pattern for factories",
-            ),
+            bool, mp.Field(True, description="Enable singleton pattern for factories")
         ] = True
         enable_factory_caching: Annotated[
             bool,
-            mp.Field(
-                True,
-                description="Enable caching of factory-created instances",
-            ),
+            mp.Field(True, description="Enable caching of factory-created instances"),
         ] = True
         max_services: Annotated[
             t.PositiveInt,
@@ -119,16 +103,11 @@ class FlextModelsContainer(FlextModelsContainerPart01):
         enable_lifecycle_hooks: Annotated[
             bool,
             mp.Field(
-                True,
-                description="Enable lifecycle hooks (on_register, on_get, etc.)",
+                True, description="Enable lifecycle hooks (on_register, on_get, etc.)"
             ),
         ] = True
         lazy_loading: Annotated[
-            bool,
-            mp.Field(
-                True,
-                description="Enable lazy loading of services",
-            ),
+            bool, mp.Field(True, description="Enable lazy loading of services")
         ] = True
 
 

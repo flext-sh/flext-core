@@ -16,11 +16,7 @@ if TYPE_CHECKING:
     from flext_core import m
 
 
-def messages(
-    report: m.Report,
-    *,
-    fragment: str,
-) -> list[str]:
+def messages(report: m.Report, *, fragment: str) -> list[str]:
     return [v.message for v in report.violations if fragment in v.message]
 
 

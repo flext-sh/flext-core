@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import (
-    MutableSequence,
-    Sequence,
-)
+from collections.abc import MutableSequence, Sequence
 
 from flext_core import p, r
 
@@ -38,9 +35,7 @@ class Ex01ResultAdvancedSections(ExamplesFlextShared):
         )
         acc_ok = r.accumulate_errors(r[int].ok(1), r[int].ok(2))
         acc_fail = r.accumulate_errors(
-            r[int].ok(1),
-            r[int].fail("e1"),
-            r[int].fail("e2"),
+            r[int].ok(1), r[int].fail("e1"), r[int].fail("e2")
         )
         self.audit_check("accumulate_errors.success", acc_ok.unwrap_or([]))
         self.audit_check("accumulate_errors.failure", acc_fail.error)
@@ -64,8 +59,7 @@ class Ex01ResultAdvancedSections(ExamplesFlextShared):
             cleanup=clean_handle,
         )
         no_cleanup_resource = r[int].with_resource(
-            make_handle,
-            lambda handle: r[int].ok(handle.value + 1),
+            make_handle, lambda handle: r[int].ok(handle.value + 1)
         )
         self.audit_check("with_resource.success", success_resource.unwrap_or(-1))
         self.audit_check("with_resource.failure", failure_resource.error)
@@ -79,59 +73,44 @@ class Ex01ResultAdvancedSections(ExamplesFlextShared):
         error_effects: MutableSequence[str] = []
         ok_value = r[int].ok(7)
         fail_value = r[int].fail("oops")
-        self.audit_check(
-            "tap.success",
-            ok_value.tap(side_effects.append).success,
-        )
-        self.audit_check(
-            "tap.failure",
-            fail_value.tap(side_effects.append).failure,
-        )
+        self.audit_check("tap.success", ok_value.tap(side_effects.append).success)
+        self.audit_check("tap.failure", fail_value.tap(side_effects.append).failure)
         self.audit_check("tap.log", side_effects)
         self.audit_check(
-            "tap_error.failure",
-            fail_value.tap_error(error_effects.append).failure,
+            "tap_error.failure", fail_value.tap_error(error_effects.append).failure
         )
         self.audit_check(
-            "tap_error.success",
-            ok_value.tap_error(error_effects.append).success,
+            "tap_error.success", ok_value.tap_error(error_effects.append).success
         )
         self.audit_check("tap_error.log", error_effects)
         self.audit_check("map_or.success_default", ok_value.map_or(0))
         self.audit_check("map_or.failure_default", fail_value.map_or(0))
         self.audit_check(
-            "map_or.success_func",
-            ok_value.map_or("none", lambda n: f"n={n}"),
+            "map_or.success_func", ok_value.map_or("none", lambda n: f"n={n}")
         )
         self.audit_check(
-            "map_or.failure_func",
-            fail_value.map_or("none", lambda n: f"n={n}"),
+            "map_or.failure_func", fail_value.map_or("none", lambda n: f"n={n}")
         )
         self.audit_check(
             "fold.success",
             ok_value.fold(
-                on_failure=lambda e: f"fail:{e}",
-                on_success=lambda n: f"ok:{n}",
+                on_failure=lambda e: f"fail:{e}", on_success=lambda n: f"ok:{n}"
             ),
         )
         self.audit_check(
             "fold.failure",
             fail_value.fold(
-                on_failure=lambda e: f"fail:{e}",
-                on_success=lambda n: f"ok:{n}",
+                on_failure=lambda e: f"fail:{e}", on_success=lambda n: f"ok:{n}"
             ),
         )
         self.audit_check(
-            "filter.success_pass",
-            ok_value.filter(lambda n: n > 0).success,
+            "filter.success_pass", ok_value.filter(lambda n: n > 0).success
         )
         self.audit_check(
-            "filter.success_fail",
-            ok_value.filter(lambda n: n < 0).failure,
+            "filter.success_fail", ok_value.filter(lambda n: n < 0).failure
         )
         self.audit_check(
-            "filter.failure_stays",
-            fail_value.filter(lambda n: n > 0).failure,
+            "filter.failure_stays", fail_value.filter(lambda n: n > 0).failure
         )
 
     def transform_chain_and_recover(self) -> None:
@@ -144,7 +123,7 @@ class Ex01ResultAdvancedSections(ExamplesFlextShared):
         self.audit_check(
             "map.exception_to_failure",
             base_ok.map(
-                lambda _: (_ for _ in ()).throw(ValueError("map exploded")),
+                lambda _: (_ for _ in ()).throw(ValueError("map exploded"))
             ).error,
         )
         self.audit_check(
@@ -160,8 +139,7 @@ class Ex01ResultAdvancedSections(ExamplesFlextShared):
             base_ok.flat_map(lambda n: r[int].ok(n - 2)).unwrap_or(-1),
         )
         self.audit_check(
-            "flat_map_chain.failure",
-            base_fail.flat_map(r[int].ok).failure,
+            "flat_map_chain.failure", base_fail.flat_map(r[int].ok).failure
         )
         bind_ok = self.bind_probe(base_ok, 3)
         bind_fail = self.bind_probe(base_fail, 3)
@@ -172,8 +150,7 @@ class Ex01ResultAdvancedSections(ExamplesFlextShared):
             base_ok.map_error(lambda e: f"alt:{e}").unwrap_or(-1),
         )
         self.audit_check(
-            "map_error.failure_changed",
-            base_fail.map_error(lambda e: f"alt:{e}").error,
+            "map_error.failure_changed", base_fail.map_error(lambda e: f"alt:{e}").error
         )
         self.audit_check(
             "map_error.failure_changed",
@@ -191,8 +168,5 @@ class Ex01ResultAdvancedSections(ExamplesFlextShared):
             "lash.success_unchanged",
             base_ok.lash(lambda _: r[int].ok(99)).unwrap_or(-1),
         )
-        self.audit_check(
-            "recover.failure",
-            base_fail.recover(len).unwrap_or(-1),
-        )
+        self.audit_check("recover.failure", base_fail.recover(len).unwrap_or(-1))
         self.audit_check("recover.success", base_ok.recover(lambda _: 0).unwrap_or(-1))

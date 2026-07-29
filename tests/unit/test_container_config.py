@@ -5,11 +5,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
-from flext_core._settings import FlextSettings
+from flext_core import FlextSettings
 from flext_core.container import FlextContainer
-from tests.models import TestsFlextModels, m
+from flext_tests import tm
+from tests.models import m
 
 if TYPE_CHECKING:
     from tests.protocols import p
@@ -17,15 +17,13 @@ if TYPE_CHECKING:
 
 
 class TestsFlextCoreContainerConfig:
+    """Exercise the public container configuration contract."""
+
     @pytest.mark.parametrize(
-        "settings",
-        TestsFlextModels.Tests.ContainerScenarios.CONFIG_SCENARIOS,
-        ids=str,
+        "settings", m.Tests.ContainerScenarios.CONFIG_SCENARIOS, ids=str
     )
     def test_configure_container(
-        self,
-        settings: t.ScalarMapping,
-        clean_container: p.Container,
+        self, settings: t.ScalarMapping, clean_container: p.Container
     ) -> None:
         """Test container configuration."""
         container = clean_container
@@ -52,8 +50,10 @@ class TestsFlextCoreContainerConfig:
                     msg=f"Unknown settings key {key} must not leak into public settings",
                 )
         if not settings:
-            assert settings_result.root == original_settings.root, (
-                "Empty configure() input must preserve existing settings"
+            tm.that(
+                settings_result.root,
+                eq=original_settings.root,
+                msg="Empty configure() input must preserve existing settings",
             )
 
     def test_with_config_fluent(self, clean_container: p.Container) -> None:
@@ -149,7 +149,6 @@ class TestsFlextCoreContainerConfig:
             is_=FlextSettings,
             msg="Container settings property must expose FlextSettings",
         )
-        assert isinstance(settings, FlextSettings)
         tm.that(
             settings.log_level,
             eq=FlextSettings.fetch_global().log_level,
