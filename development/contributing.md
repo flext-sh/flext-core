@@ -66,7 +66,7 @@ cd flext-core
 make setup
 
 # Verify installation
-python -c "from flext_core import r; u.Cli.print('✅ FLEXT-Core ready')"
+make status
 ```
 
 ## How to Contribute

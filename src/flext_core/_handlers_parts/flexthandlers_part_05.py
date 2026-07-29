@@ -120,10 +120,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         Example:
             >>> handler = UserHandler()
             >>> result = handler.execute(UserCommand(user_id="123", action="create"))
-            >>> if result.success:
-            ...     u.Cli.print(f"Success: {result.value}")
-            ... else:
-            ...     u.Cli.print(f"Failed: {result.error}")
+            >>> assert result.success or result.error is not None
 
         """
         validation = self.validate_message(message)
