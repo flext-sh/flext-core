@@ -1,95 +1,3 @@
-# BLOCK EVERYTHING BY DEFAULT
-/*
-/*/
-!/LICENSE
-
-# WHITELIST: Workspace Directories
-!docker/
-!docs/
-!examples/
-!.github/
-!src/
-!tests/
-!typings/
-!libs/
-!.vscode/
-!.code-review-graph/
-!.claude/
-!.claude-plugin/
-!/config/
-!.claude/CLAUDE.md
-!.claude/settings.json
-!.claude/settings.local.json
-!.agents/
-!.agents/**
-.agents/skills/*/report.json
-
-# Dispatcher-based command surface (Make SSOT)
-!scripts/
-!scripts/cmd/
-!scripts/cmd/**
-scripts/*.py
-scripts/*.sh
-scripts/*.md
-!scripts/dispatch.py
-!scripts/__init__.py
-
-# Python configuration
-!pyproject.toml
-!.taplo.toml
-!pyrefly.toml
-!poetry.lock
-!uv.lock
-!ruff-shared.toml
-
-# mise toolchain pinning
-!.mise.toml
-!.default-python-packages
-!.python-version
-
-# Docker configuration
-!.dockerignore
-
-# Build and automation
-!Makefile
-!Makefile.flext-docker
-!*.mk
-
-# Documentation
-!README.md
-!AGENTS.md
-!AGENTS.md
-!codex.md
-!.markdownlint.json
-!.markdownlintignore
-!.shellcheckrc
-
-# Git configuration
-!.gitignore
-!.gitattributes
-
-# direnv environment (no secrets — venv activation only)
-!.envrc
-!.envrc.local
-
-# Environment templates (NOT .env - keep secrets out!)
-!.env.test
-!.env.example
-!.env.template
-
-# WHITELIST: Contents Inside Allowed Directories
-!docker/**
-!docs/**
-!examples/**
-!.github/**
-!src/**
-!tests/**
-!typings/**
-!libs/**
-!.vscode/**
-!.claude/**
-!.claude-plugin/**
-
 # BLOCK: AI/Agent Local Data (NEVER track these)
 .claude/*
 !.agents/skills/
@@ -284,7 +192,14 @@ secrets.yml
 !base.mk
 
 # FINAL BEADS TRACKING POLICY
+!.beads/
+.beads/*
+.beads/.*
+!.beads/config.yaml
+.beads/proxieddb/
+.dolt/
 *.db
+.beads-credential-key
 .worktrees/
 legado/
 
@@ -337,3 +252,20 @@ skill-create-output/
 .debug-journal.md
 .mcp.json
 CLAUDE.local.md
+
+# Tracked managed artifacts
+!ci/
+!ci/docker/
+!ci/docker/alpine.Dockerfile
+!ci/docker/arch.Dockerfile
+!ci/docker/debian.Dockerfile
+!ci/docker/fedora.Dockerfile
+!ci/docker/ubuntu.Dockerfile
+!.github/workflows/
+!.github/workflows/ci-matrix.yml
+!.github/workflows/ci.yml
+!.vscode/settings.json
+!LICENSE
+!config/
+!config/workspace.yaml
+!custom.mk
