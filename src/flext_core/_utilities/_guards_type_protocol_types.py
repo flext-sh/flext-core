@@ -21,7 +21,7 @@ type ProtocolGuardInput = (
     | ph.Handle
     | ph.Middleware
     | pl.Logger
-    | pr.ResultLike[t.JsonPayload]
+    | pr.Result[t.JsonPayload]
     | ps.Settings
     | psrv.Service[t.JsonPayload]
     | None

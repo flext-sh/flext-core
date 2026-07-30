@@ -1,1 +1,0 @@
-../../.agents/INSTRUCTION_SURFACE.md

@@ -2,23 +2,20 @@
 
 from __future__ import annotations
 
-from abc import ABC
-from typing import TYPE_CHECKING, overload, override
+from typing import TYPE_CHECKING, overload
 
 from flext_core._constants.errors import FlextConstantsErrors as c
 
-from .behavior import FlextResultBehaviorMixin
+from .composition import FlextResultComposition
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-class FlextResultUnwrapMixin[T](FlextResultBehaviorMixin[T], ABC):
+class FlextResultUnwrap[T](FlextResultComposition[T]):
     """Value extraction helpers for results."""
 
-    @override
     def unwrap(self) -> T:
-        """Unwrap the success value or raise RuntimeError."""
         if self.failure:
             msg = c.ERR_RESULT_CANNOT_UNWRAP.format(error=self.error)
             raise RuntimeError(msg)
@@ -29,11 +26,9 @@ class FlextResultUnwrapMixin[T](FlextResultBehaviorMixin[T], ABC):
     @overload
     def unwrap_or[DefaultT](self, default: DefaultT) -> T | DefaultT: ...
 
-    @override
     def unwrap_or[DefaultT](self, default: DefaultT) -> T | DefaultT:
-        """Return success value or default; safe extraction."""
-        if self.success and self.value is not None:
-            return self.value
+        if self.success and self._payload is not None:
+            return self._payload
         return default
 
     @overload
@@ -43,12 +38,10 @@ class FlextResultUnwrapMixin[T](FlextResultBehaviorMixin[T], ABC):
         self, func: Callable[[], DefaultT]
     ) -> T | DefaultT: ...
 
-    @override
     def unwrap_or_else[DefaultT](self, func: Callable[[], DefaultT]) -> T | DefaultT:
-        """Return the success value or call func if failed."""
-        if self.success and self.value is not None:
-            return self.value
+        if self.success and self._payload is not None:
+            return self._payload
         return func()
 
 
-__all__: list[str] = ["FlextResultUnwrapMixin"]
+__all__: list[str] = ["FlextResultUnwrap"]

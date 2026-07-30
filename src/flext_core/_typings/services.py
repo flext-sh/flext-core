@@ -83,24 +83,20 @@ class FlextTypesServices:
     type ContextHookCallable = Callable[[t.Scalar], JsonPayload]
     type ContextHookMap = t.MappingKV[str, t.SequenceOf[ContextHookCallable]]
 
-    type HandlerCallable = Callable[
-        ..., tp.BaseModelType | prt.ResultLike[ScalarOrModel]
-    ]
+    type HandlerCallable = Callable[..., tp.BaseModelType | prt.Result[ScalarOrModel]]
     type DispatchableHandler = (
         tp.BaseModelType
         | ph.DispatchMessage
         | ph.Handle
         | ph.Execute
         | ph.AutoDiscoverableHandler
-        | Callable[
-            ..., tp.BaseModelType | JsonPayload | prt.ResultLike[JsonPayload] | None
-        ]
+        | Callable[..., tp.BaseModelType | JsonPayload | prt.Result[JsonPayload] | None]
     )
     type ResolvedHandlerCallable = Callable[
-        ..., tp.BaseModelType | JsonPayload | prt.ResultLike[JsonPayload] | None
+        ..., tp.BaseModelType | JsonPayload | prt.Result[JsonPayload] | None
     ]
     type RoutedHandlerCallable = Callable[
-        [p.Routable], JsonPayload | prt.ResultLike[JsonPayload] | None
+        [p.Routable], JsonPayload | prt.Result[JsonPayload] | None
     ]
     type RegistrablePlugin = ScalarOrModel | Callable[..., ScalarOrModel]
     type LoggerFactory = Callable[..., pl.OutputLogger] | None
@@ -168,7 +164,7 @@ class FlextTypesServices:
         | prt.HasModelDump
         | pr.Registry
         | p.Model
-        | prt.ResultLike[JsonPayload]
+        | prt.Result[JsonPayload]
         | ps.Settings
         | RegisterableService
         | t.SequenceOf[JsonPayload]

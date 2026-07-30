@@ -21,7 +21,7 @@ from flext_core._constants.config import FlextConstantsConfig as c
 from flext_core._typings.base import FlextTypingBase as t
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore as g
 from flext_core._utilities.reliability import FlextUtilitiesReliability as rel
-from flext_core.result import r
+from flext_core import r
 
 if TYPE_CHECKING:
     from collections.abc import Mapping

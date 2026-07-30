@@ -17,6 +17,12 @@ from flext_core._utilities.enforcement_emit import FlextUtilitiesEnforcementEmit
 from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata as upm
 
 
+_ERR_ENFORCEMENT_NAMESPACE_METADATA = "Cannot read project metadata for enforcement namespace resolution"
+_ERR_ENFORCEMENT_CLASS_STEM_METADATA = (
+    "Cannot read project metadata for enforcement class stem override"
+)
+
+
 class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
     """Project resolution + rule-input iterators."""
 
@@ -63,11 +69,13 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         top = (getattr(target, "__module__", "") or "").split(".", 1)[0]
         if (project_root / "src" / top).is_dir() or (project_root / top).is_dir():
             return top
-        metadata_result = upm.read_project_metadata(project_root)
-        if metadata_result.failure:
+        try:
+            document = upm.read_project_document_cached(project_root)
+        except (OSError, ValueError) as exc:
+            raise RuntimeError(_ERR_ENFORCEMENT_NAMESPACE_METADATA) from exc
+        if document.project is None:
             return None
-        package_name: str = metadata_result.value.package_name
-        return package_name
+        return upm.build_project_metadata(project_root, document).package_name
 
     @staticmethod
     def _project(target: type) -> t.StrPair | None:
@@ -85,12 +93,12 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
             class_stem_override = None
             project_root = FlextUtilitiesEnforcementCollect._owning_project_root(target)
             if project_root is not None:
-                metadata_result = upm.read_project_metadata(project_root)
-                if metadata_result.failure:
-                    return None
-                class_stem_override = (
-                    metadata_result.value.flext.project.class_stem_override
-                )
+                try:
+                    document = upm.read_project_document_cached(project_root)
+                except (OSError, ValueError) as exc:
+                    raise RuntimeError(_ERR_ENFORCEMENT_CLASS_STEM_METADATA) from exc
+                metadata = upm.build_project_metadata(project_root, document)
+                class_stem_override = metadata.flext.project.class_stem_override
         canonical_project_name = src.replace("_", "-")
         head, _, tail = canonical_project_name.partition("-")
         namespace = upm.derive_class_stem(tail or head)

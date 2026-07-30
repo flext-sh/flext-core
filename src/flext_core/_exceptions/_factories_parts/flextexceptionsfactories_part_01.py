@@ -17,7 +17,7 @@ from flext_core._models.pydantic import FlextModelsPydantic as mp
 TExceptionParams = TypeVar("TExceptionParams", bound=mp.BaseModel)
 
 if TYPE_CHECKING:
-    from flext_core.result import FlextResult
+    from flext_core import r as FlextResult
 
 
 class FlextExceptionsFactories:
