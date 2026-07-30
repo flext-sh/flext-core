@@ -13,8 +13,7 @@ from .behavior import FlextResultBehavior
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core import p
-    from flext_core import t
+    from flext_core import p, t
 
 
 class FlextResultConstruction[T](FlextResultBehavior[T]):

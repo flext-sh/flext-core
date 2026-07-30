@@ -7,16 +7,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Generic, TYPE_CHECKING, TypeVar, cast
+from typing import TypeVar, cast
 
 from pydantic import BaseModel, PrivateAttr
 from returns.result import Result
+
 from flext_core._protocols.result import FlextProtocolsResult as prt
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
-
-if TYPE_CHECKING:
-    from flext_core import t
-
 
 type JsonMapping = Mapping[str, tp.JsonValue]
 type JsonDict = dict[str, tp.JsonValue]
@@ -26,7 +23,7 @@ type ConfigModelInput = prt.HasModelDump | JsonMapping
 T = TypeVar("T")
 
 
-class FlextResultBase(BaseModel, Generic[T]):
+class FlextResultBase[T](BaseModel):
     """Internal result data container — T cannot be None (returns convention)."""
 
     model_config = {"arbitrary_types_allowed": True, "populate_by_name": True}

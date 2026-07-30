@@ -13,8 +13,7 @@ from .transforms import FlextResultTransforms
 if TYPE_CHECKING:
     from collections.abc import Callable, MutableSequence, Sequence
 
-    from flext_core import p
-    from flext_core import t
+    from flext_core import p, t
 
 
 class FlextResultComposition[T](FlextResultTransforms[T]):

@@ -16,8 +16,9 @@ from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine a
 from flext_core._utilities.enforcement_emit import FlextUtilitiesEnforcementEmit
 from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata as upm
 
-
-_ERR_ENFORCEMENT_NAMESPACE_METADATA = "Cannot read project metadata for enforcement namespace resolution"
+_ERR_ENFORCEMENT_NAMESPACE_METADATA = (
+    "Cannot read project metadata for enforcement namespace resolution"
+)
 _ERR_ENFORCEMENT_CLASS_STEM_METADATA = (
     "Cannot read project metadata for enforcement class stem override"
 )

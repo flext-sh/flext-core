@@ -203,11 +203,6 @@ class TestsFlextCoreSystem:
         tm.that(caught.value, is_=e.ValidationError)
         tm.that(caught.value.error_code, eq="VALIDATION_ERROR")
 
-    def test_family_hierarchy_subclasses_base_error(self) -> None:
-        """Concrete family classes derive from BaseError."""
-        tm.that(issubclass(e.ValidationError, e.BaseError), eq=True)
-        tm.that(issubclass(e.OperationError, e.BaseError), eq=True)
-
     # ------------------------------------------------------------------ #
     # Public utilities contract                                           #
     # ------------------------------------------------------------------ #

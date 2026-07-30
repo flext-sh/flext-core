@@ -9,8 +9,8 @@ from flext_core import (
     FlextProtocols as p,
     FlextTypes as t,
     FlextUtilities as u,
+    r,
 )
-from flext_core import r
 
 from ._utilities.dispatcher_execute import execute_dispatcher_handler
 
