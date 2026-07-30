@@ -26,9 +26,7 @@ class TestsFlextCoverageLoggings:
         return u.create_module_logger(name)
 
     @staticmethod
-    def assert_log_result_success(
-        result: p.ResultLike[bool] | None,
-    ) -> p.ResultLike[bool]:
+    def assert_log_result_success(result: p.Result[bool] | None) -> p.Result[bool]:
         if result is None:
             msg = "Expected result to not be None"
             raise AssertionError(msg)
@@ -38,11 +36,11 @@ class TestsFlextCoverageLoggings:
 
     def assert_captured_log_success(
         self,
-        emit: Callable[[], p.ResultLike[bool] | None],
+        emit: Callable[[], p.Result[bool] | None],
         *,
         contains: str,
         expected_tokens: t.StrSequence = (),
-    ) -> p.ResultLike[bool]:
+    ) -> p.Result[bool]:
         stream = io.StringIO()
         with redirect_stdout(stream):
             result = emit()
