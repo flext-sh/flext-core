@@ -135,9 +135,7 @@ class TestsFlextProtocols(p):
                 """Map source dictionary keys under the requested policy."""
                 ...
 
-    @runtime_checkable
-    class SuccessCheckable(FlextProtocolsResult.SuccessCheckable):
-        """Result-like object exposing success/failure state."""
+    SuccessCheckable = FlextProtocolsResult.SuccessCheckable
 
 
 p = TestsFlextProtocols

@@ -171,11 +171,10 @@ class TestsFlextCoreMigrationValidation:
 
     def test_service_execute_returns_success(self) -> None:
         """A concrete FlextService.execute honors the r[None] contract."""
-
-    class NoopService(FlextService[bool]):
-        @override
-        def execute(self, **_kwargs: t.Scalar) -> p.Result[bool]:
-            return r[bool].ok(True)
+        class NoopService(FlextService[bool]):
+            @override
+            def execute(self, **_kwargs: t.Scalar) -> p.Result[bool]:
+                return r[bool].ok(True)
 
         outcome = NoopService().execute()
         tm.that(outcome.success, eq=True)
