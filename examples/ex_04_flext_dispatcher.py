@@ -35,7 +35,7 @@ class _GetUserHandler:
 class _DeleteUserHandler:
     message_type = m.Examples.DeleteUser
 
-    def execute(self, message: p.Routable    ) -> r[str]:
+    def execute(self, message: p.Routable) -> r[str]:
         if not isinstance(message, m.Examples.DeleteUser):
             return r[str].fail("unexpected_message")
         return r[str].ok(f"deleted:{message.username}")
@@ -80,7 +80,7 @@ class _AuditSubscriber:
 class _PingHandler:
     message_type = m.Examples.Ping
 
-    def __call__(self, message: p.Routable    ) -> r[str]:
+    def __call__(self, message: p.Routable) -> r[str]:
         if not isinstance(message, m.Examples.Ping):
             return r[str].fail("unexpected_message")
         return r[str].ok(f"pong:{message.value}")
@@ -89,13 +89,13 @@ class _PingHandler:
 class _FailingDeleteHandler:
     message_type = m.Examples.FailingDelete
 
-    def __call__(self, message: p.Routable    ) -> r[str]:
+    def __call__(self, message: p.Routable) -> r[str]:
         if not isinstance(message, m.Examples.FailingDelete):
             return r[str].fail("unexpected_message")
         return r[str].fail("delete_failed")
 
 
-def _no_route_handler(message: p.Routable    ) -> r[str]:
+def _no_route_handler(message: p.Routable) -> r[str]:
     _ = message
     return r[str].ok("no-route")
 
@@ -114,7 +114,7 @@ class Ex04DispatchDsl:
         return dispatcher
 
     @classmethod
-    def run(cls    ) -> r[str]:
+    def run(cls) -> r[str]:
         """Dispatch a real ping command through the public dispatcher."""
         dispatcher = cls.build_dispatcher()
         result = dispatcher.dispatch(m.Examples.Ping(value="dispatcher-example"))
