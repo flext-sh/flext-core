@@ -99,7 +99,7 @@ class TestsFlextCoreIntegration:
     def test_result_fail_short_circuits_map_and_flat_map(self) -> None:
         """A failed r propagates its error through map/flat_map untouched."""
         # Arrange
-        failure = r[int].fail("boom")
+        failure: r[int] = r[int].fail("boom")
 
         # Act
         mapped = failure.map(lambda value: value + 1).flat_map(

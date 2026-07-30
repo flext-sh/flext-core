@@ -34,7 +34,7 @@ class TestsFlextCoreResultChainHelpers:
 
     def test_fail_carries_error_and_reports_failure(self) -> None:
         """A failure result reports failure state and carries its error message."""
-        result = r[int].fail("boom")
+        result: r[int] = r[int].fail("boom")
 
         assert result.success is False
         assert result.failure is True
@@ -43,14 +43,14 @@ class TestsFlextCoreResultChainHelpers:
 
     def test_value_access_on_failure_raises(self) -> None:
         """Reading ``.value`` on a failure is a contract violation that raises."""
-        result = r[int].fail("boom")
+        result: r[int] = r[int].fail("boom")
 
         with pytest.raises(RuntimeError, match="boom"):
             _ = result.value
 
     def test_unwrap_on_failure_raises(self) -> None:
         """``unwrap`` on a failure raises rather than inventing a value."""
-        result = r[int].fail("boom")
+        result: r[int] = r[int].fail("boom")
 
         with pytest.raises(RuntimeError, match="Cannot unwrap failed result"):
             result.unwrap()
@@ -177,14 +177,14 @@ class TestsFlextCoreResultChainHelpers:
 
     def test_map_error_rewrites_failure_message(self) -> None:
         """``map_error`` transforms the error text of a failure."""
-        result = r[int].fail("boom").map_error(lambda err: f"{err}!")
+        result: r[int] = r[int].fail("boom").map_error(lambda err: f"{err}!")
 
         assert result.failure is True
         assert result.error == "boom!"
 
     def test_map_error_leaves_success_unchanged(self) -> None:
         """``map_error`` does not touch a success value."""
-        result = r[int].ok(5).map_error(lambda err: f"{err}!")
+        result: r[int] = r[int].ok(5).map_error(lambda err: f"{err}!")
 
         assert result.value == 5
 

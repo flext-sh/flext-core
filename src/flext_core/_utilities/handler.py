@@ -67,7 +67,7 @@ class FlextUtilitiesHandler:
     ) -> p.Result[p.HandlerRuntimeState]:
         """Validate a context and return state with an extended stack."""
         if not isinstance(ctx, Mapping):
-            execution_context = ctx.model_copy()
+            pushed_context = ctx.model_copy()
         else:
             from flext_core import m
 
@@ -75,9 +75,10 @@ class FlextUtilitiesHandler:
             if validated.failure:
                 return r.fail_op("push handler context", validated.error)
             execution_context: p.ExecutionContext = validated.unwrap()
+            pushed_context = execution_context
         return r.ok(
             state.model_copy(
-                update={"context_stack": (*state.context_stack, execution_context)}
+                update={"context_stack": (*state.context_stack, pushed_context)}
             )
         )
 

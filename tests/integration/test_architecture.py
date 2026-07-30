@@ -34,14 +34,14 @@ class TestsFlextCoreArchitecture:
     def test_each_validator_verb_succeeds_and_self_identifies(self) -> None:
         """Each validator returns a scan named for its invoked public verb."""
         for verb in c.Tests.VALIDATOR_METHODS:
-            scan = tm.ok(getattr(tv, verb)(self._core_package()))
+            scan: m.Tests.ScanResult = tm.ok(getattr(tv, verb)(self._core_package()))
             tm.that(scan.validator_name, eq=verb)
             tm.that(scan.files_scanned, is_=int, gte=1)
 
     @pytest.mark.parametrize("verb", c.Tests.VALIDATOR_METHODS)
     def test_passed_flag_is_true_exactly_when_no_violations(self, verb: str) -> None:
         """A validator passes exactly when its scan emits no violations."""
-        scan = tm.ok(getattr(tv, verb)(self._core_package()))
+        scan: m.Tests.ScanResult = tm.ok(getattr(tv, verb)(self._core_package()))
         tm.that(scan.passed, eq=not scan.violations)
 
     @pytest.mark.parametrize("verb", c.Tests.VALIDATOR_METHODS)
@@ -49,7 +49,7 @@ class TestsFlextCoreArchitecture:
         self, verb: str
     ) -> None:
         """Every violation exposes severity, location, identity, and description."""
-        scan = tm.ok(getattr(tv, verb)(self._core_package()))
+        scan: m.Tests.ScanResult = tm.ok(getattr(tv, verb)(self._core_package()))
         valid_severities = frozenset(c.Tests.ValidatorSeverity)
         for violation in scan.violations:
             tm.that(violation.severity in valid_severities, eq=True)
@@ -61,10 +61,10 @@ class TestsFlextCoreArchitecture:
     def test_all_aggregates_union_of_individual_validators(self) -> None:
         """The all verb aggregates individual findings and maximum scan count."""
         package = self._core_package()
-        individual = [
+        individual: list[m.Tests.ScanResult] = [
             tm.ok(getattr(tv, verb)(package)) for verb in c.Tests.VALIDATOR_METHODS
         ]
-        aggregate = tm.ok(tv.all(package))
+        aggregate: m.Tests.ScanResult = tm.ok(tv.all(package))
 
         tm.that(aggregate.validator_name, eq="all")
         tm.that(
@@ -79,7 +79,7 @@ class TestsFlextCoreArchitecture:
     def test_all_with_pyproject_option_still_returns_passed_invariant(self) -> None:
         """Pyproject-aware aggregation preserves the passed invariant."""
         package = self._core_package()
-        scan = tm.ok(
+        scan: m.Tests.ScanResult = tm.ok(
             tv.all(
                 package,
                 options=tv.AllValidationOptions(pyproject_path=self._pyproject()),
@@ -90,7 +90,7 @@ class TestsFlextCoreArchitecture:
 
     def test_validate_config_scans_pyproject_and_reports_result(self) -> None:
         """Config validation reports scan count and the passed invariant."""
-        scan = tm.ok(tv.validate_config(self._pyproject()))
+        scan: m.Tests.ScanResult = tm.ok(tv.validate_config(self._pyproject()))
         tm.that(scan.passed, eq=not scan.violations)
         tm.that(scan.files_scanned, is_=int, gte=0)
 
@@ -98,7 +98,7 @@ class TestsFlextCoreArchitecture:
         """A non-Python path produces an empty successful import scan."""
         # A non-".py" file has no source to inspect: the contract is an empty,
         # passing scan rather than an error.
-        scan = tm.ok(tv.imports(self._pyproject()))
+        scan: m.Tests.ScanResult = tm.ok(tv.imports(self._pyproject()))
         tm.that(scan.files_scanned, eq=0)
         tm.that(scan.violations, empty=True)
         tm.that(scan.passed, eq=True)
@@ -107,8 +107,8 @@ class TestsFlextCoreArchitecture:
     def test_validation_is_idempotent(self, verb: str) -> None:
         """Repeated validation returns identical public scan outcomes."""
         package = self._core_package()
-        first = tm.ok(getattr(tv, verb)(package))
-        second = tm.ok(getattr(tv, verb)(package))
+        first: m.Tests.ScanResult = tm.ok(getattr(tv, verb)(package))
+        second: m.Tests.ScanResult = tm.ok(getattr(tv, verb)(package))
         tm.that(second.passed, eq=first.passed)
         tm.that(len(second.violations), eq=len(first.violations))
         tm.that(second.files_scanned, eq=first.files_scanned)

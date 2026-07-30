@@ -83,7 +83,7 @@ class TestsFlextCoreSystem:
 
     def test_map_is_skipped_on_failure(self) -> None:
         """Map does not run its function once the result is a failure."""
-        result = r[str].fail("boom").map(lambda x: x.upper())
+        result: r[str] = r[str].fail("boom").map(lambda x: x.upper())
 
         tm.that(result.failure, eq=True)
         tm.that(result.error, eq="boom")

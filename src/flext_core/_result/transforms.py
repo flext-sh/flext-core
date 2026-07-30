@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, cast, overload
 
 from pydantic import BaseModel
 
@@ -12,17 +11,20 @@ from flext_core import c
 from .construction import FlextResultConstruction
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from flext_core import FlextResult as rt
     from flext_core import p
 
 
 class FlextResultTransforms[T](FlextResultConstruction[T]):
     """Instance transformation methods for result values and errors."""
 
-    def _as_result(self) -> p.Result[T]:
+    def _as_result(self) -> rt[T]:
         """Structural cast of self to p.Result for internal calls."""
-        return cast("p.Result[T]", self)
+        return cast("rt[T]", self)
 
-    def filter(self, predicate: Callable[[T], bool]) -> p.Result[T]:
+    def filter(self, predicate: Callable[[T], bool]) -> rt[T]:
         if self.success:
             try:
                 if predicate(self._payload):
@@ -32,7 +34,7 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
                 return self.__class__.fail(str(exc), exception=exc)
         return self._as_result()
 
-    def flat_map[U](self, func: Callable[[T], p.Result[U]]) -> p.Result[U]:
+    def flat_map[U](self, func: Callable[[T], p.Result[U]]) -> rt[U]:
         if self.failure:
             return self.__class__.fail(
                 self.require_error(self._as_result()),
@@ -45,8 +47,8 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
         except c.EXC_BROAD_RUNTIME as exc:
             return self.__class__.fail(str(exc), exception=exc)
 
-    def flow_through[U](self, *funcs: Callable[..., p.Result[U]]) -> p.Result[T | U]:
-        current: p.Result[T | U] = self._as_result()
+    def flow_through(self, *funcs: Callable[[T], p.Result[T]]) -> rt[T]:
+        current: rt[T] = self._as_result()
         for func in funcs:
             if current.success:
                 try:
@@ -64,17 +66,20 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
             return on_success(self._payload)
         return on_failure(self.require_error(self._as_result()))
 
-    def lash[U](self, func: Callable[[str], p.Result[U]]) -> p.Result[T | U]:
+    def lash[U](self, func: Callable[[str], p.Result[U]]) -> rt[T | U]:
         if self.failure:
             try:
-                return self.__class__.from_result(
-                    func(self.require_error(self._as_result()))
+                return cast(
+                    "rt[T | U]",
+                    self.__class__.from_result(
+                        func(self.require_error(self._as_result()))
+                    ),
                 )
             except c.EXC_BROAD_RUNTIME as exc:
                 return self.__class__.fail(str(exc), exception=exc)
-        return self._as_result()
+        return cast("rt[T | U]", self._as_result())
 
-    def map[U](self, func: Callable[[T], U]) -> p.Result[U]:
+    def map[U](self, func: Callable[[T], U]) -> rt[U]:
         if self.success:
             try:
                 return self.__class__.ok(func(self._payload))
@@ -87,7 +92,7 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
             exception=self._exception,
         )
 
-    def map_error(self, func: Callable[[str], str]) -> p.Result[T]:
+    def map_error(self, func: Callable[[str], str]) -> rt[T]:
         if self.failure:
             try:
                 return self.__class__.fail(
@@ -100,22 +105,29 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
                 return self.__class__.fail(str(exc), exception=exc)
         return self._as_result()
 
-    def map_or[U](self, default: U, func: Callable[..., U] | None = None) -> U | T:
+    @overload
+    def map_or(self, default: None, func: None = None) -> T | None: ...
+    @overload
+    def map_or[U](self, default: U, func: None = None) -> T | U: ...
+    @overload
+    def map_or[U](self, default: U, func: Callable[[T], U]) -> U: ...
+
+    def map_or[U](self, default: U, func: Callable[[T], U] | None = None) -> U | T:
         if self.success:
             if func is not None:
                 return func(self._payload)
             return self._payload
         return default
 
-    def recover[U](self, func: Callable[[str], U]) -> p.Result[T | U]:
+    def recover[U](self, func: Callable[[str], U]) -> rt[T | U]:
         if self.success:
-            return self._as_result()
+            return cast("rt[T | U]", self)
         try:
             return self.__class__.ok(func(self.require_error(self._as_result())))
         except c.EXC_BROAD_RUNTIME as exc:
             return self.__class__.fail(str(exc), exception=exc)
 
-    def tap(self, func: Callable[[T], None]) -> p.Result[T]:
+    def tap(self, func: Callable[[T], None]) -> rt[T]:
         if self.success:
             try:
                 func(self._payload)
@@ -123,7 +135,7 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
                 return self.__class__.fail(str(exc), exception=exc)
         return self._as_result()
 
-    def tap_error(self, func: Callable[[str], None]) -> p.Result[T]:
+    def tap_error(self, func: Callable[[str], None]) -> rt[T]:
         if self.failure:
             try:
                 func(self.require_error(self._as_result()))
@@ -131,7 +143,7 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
                 return self.__class__.fail(str(exc), exception=exc)
         return self._as_result()
 
-    def to_model[U: BaseModel](self, model: type[U]) -> p.Result[U]:
+    def to_model[U: BaseModel](self, model: type[U]) -> rt[U]:
         if self.failure:
             return self.__class__.fail(
                 self.require_error(self._as_result()),

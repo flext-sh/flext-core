@@ -81,7 +81,7 @@ class FlextUtilitiesMapperAccess:
         key_part: str,
     ) -> p.Result[t.JsonPayload]:
         """Get a raw value from a mapping, model, or protocol object."""
-        not_found_result = r[t.JsonPayload].fail_op(
+        not_found_result: p.Result[t.JsonPayload] = r[t.JsonPayload].fail_op(
             "extract key", e.render_template(c.ERR_TEMPLATE_KEY_NOT_FOUND, key=key_part)
         )
         result: p.Result[t.JsonPayload]

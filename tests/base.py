@@ -4,14 +4,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
 
-from flext_tests import s
+from flext_tests.base import FlextTestsServiceBase as _FlextTestsServiceBase
 from tests.constants import c
 
 if TYPE_CHECKING:
     from tests.protocols import p
 
 
-class TestsFlextServiceBase[TDomainResult: p.Base = p.Base](s[TDomainResult]):
+class TestsFlextServiceBase[TDomainResult: p.Base = p.Base](
+    _FlextTestsServiceBase[TDomainResult]
+):
     """Project-local test service base with flext-core result typing."""
 
     @override

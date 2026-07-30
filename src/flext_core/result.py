@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+from flext_core._protocols.result import FlextProtocolsResult as prt
+
 from ._result.base import JsonDict
 from ._result.behavior import FlextResultBehavior
 from ._result.composition import FlextResultComposition
@@ -10,7 +14,7 @@ from ._result.transforms import FlextResultTransforms
 from ._result.unwrap import FlextResultUnwrap
 
 
-class FlextResult[T](
+class _FlextResult[T](
     FlextResultUnwrap[T],
     FlextResultComposition[T],
     FlextResultTransforms[T],
@@ -40,6 +44,18 @@ class FlextResult[T](
         )
 
 
+if TYPE_CHECKING:
+
+    class FlextResult[T](_FlextResult[T], prt.Result[T]):
+        """Type-safe result with monadic railway-oriented operations."""
+
+else:
+
+    class FlextResult[T](_FlextResult[T]):
+        """Type-safe result with monadic railway-oriented operations."""
+
+
 r = FlextResult
+
 
 __all__: list[str] = ["FlextResult", "r"]
