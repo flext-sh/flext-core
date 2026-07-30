@@ -6,16 +6,27 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from collections.abc import Mapping
+from typing import Generic, TYPE_CHECKING, TypeVar, cast
 
 from pydantic import BaseModel, PrivateAttr
 from returns.result import Result
+from flext_core._protocols.result import FlextProtocolsResult as prt
+from flext_core._typings.pydantic import FlextTypesPydantic as tp
 
 if TYPE_CHECKING:
     from flext_core import t
 
 
-class FlextResultBase[T](BaseModel):
+type JsonMapping = Mapping[str, tp.JsonValue]
+type JsonDict = dict[str, tp.JsonValue]
+type ConfigModelInput = prt.HasModelDump | JsonMapping
+
+
+T = TypeVar("T")
+
+
+class FlextResultBase(BaseModel, Generic[T]):
     """Internal result data container — T cannot be None (returns convention)."""
 
     model_config = {"arbitrary_types_allowed": True, "populate_by_name": True}
@@ -23,7 +34,7 @@ class FlextResultBase[T](BaseModel):
     success: bool = True
     error: str | None = None
     error_code: str | None = None
-    error_data: t.JsonDict | None = None
+    error_data: JsonDict | None = None
 
     _payload: T = PrivateAttr()
     _exception: BaseException | None = PrivateAttr(default=None)
@@ -31,8 +42,8 @@ class FlextResultBase[T](BaseModel):
 
     @staticmethod
     def _validate_error_data(
-        error_data: t.JsonMapping | t.ConfigModelInput | None,
-    ) -> t.JsonDict | None:
+        error_data: JsonMapping | ConfigModelInput | None,
+    ) -> JsonDict | None:
         from flext_core._runtime._metadata import FlextRuntimeMetadata as FlextRuntime
 
         normalized = FlextRuntime.normalize_model_input_mapping(error_data)
@@ -43,7 +54,7 @@ class FlextResultBase[T](BaseModel):
     def __init__(
         self,
         error_code: str | None = None,
-        error_data: t.JsonMapping | t.ConfigModelInput | None = None,
+        error_data: JsonMapping | ConfigModelInput | None = None,
         *,
         value: T | None = None,
         error: str | None = None,

@@ -61,6 +61,32 @@ class FlextUtilitiesProjectMetadata(mpm):
         )
 
     @staticmethod
+    def read_project_metadata(root: Path) -> t.Result[ppm.ProjectMetadata]:
+        """Read project metadata from ``pyproject.toml`` and return a protocol result.
+
+        The method remains as a compatibility surface for existing consumers while
+        delegating the canonical behavior to:
+
+        - ``read_project_document_cached``
+        - ``build_project_metadata``
+        """
+        from flext_core import r
+
+        try:
+            project_root = root.resolve()
+            document = FlextUtilitiesProjectMetadata.read_project_document_cached(
+                project_root
+            )
+            return r.ok(
+                FlextUtilitiesProjectMetadata.build_project_metadata(
+                    project_root, document
+                )
+            )
+        except Exception as exc:
+            msg = f"cannot read project metadata from {root}: {exc}"
+            return r.fail(msg, exception=exc)
+
+    @staticmethod
     def derive_class_stem(project_name: str) -> str:
         normalized = project_name.lower()
         override = next(
