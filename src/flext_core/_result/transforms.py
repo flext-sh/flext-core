@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import TYPE_CHECKING, cast, overload
 
 from pydantic import BaseModel
@@ -11,8 +12,6 @@ from flext_core import c
 from .construction import FlextResultConstruction
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
     from flext_core import p
 
 
@@ -46,8 +45,8 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
         except c.EXC_BROAD_RUNTIME as exc:
             return self.__class__.fail(str(exc), exception=exc)
 
-    def flow_through(self, *funcs: Callable[[T], p.Result[T]]) -> p.Result[T]:
-        current: p.Result[T] = self._as_result()
+    def flow_through[U](self, *funcs: Callable[..., p.Result[U]]) -> p.Result[T | U]:
+        current: p.Result[T | U] = self._as_result()
         for func in funcs:
             if current.success:
                 try:
@@ -65,7 +64,7 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
             return on_success(self._payload)
         return on_failure(self.require_error(self._as_result()))
 
-    def lash(self, func: Callable[[str], p.Result[T]]) -> p.Result[T]:
+    def lash[U](self, func: Callable[[str], p.Result[U]]) -> p.Result[T | U]:
         if self.failure:
             try:
                 return self.__class__.from_result(
@@ -107,7 +106,6 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
     def map_or[U](self, default: U, func: None = None) -> T | U: ...
     @overload
     def map_or[U](self, default: U, func: Callable[[T], U]) -> U: ...
-
     def map_or[U](self, default: U, func: Callable[[T], U] | None = None) -> U | T:
         if self.success:
             if func is not None:
@@ -117,7 +115,7 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
 
     def recover[U](self, func: Callable[[str], U]) -> p.Result[T | U]:
         if self.success:
-            return cast("p.Result[T | U]", self)
+            return self._as_result()
         try:
             return self.__class__.ok(func(self.require_error(self._as_result())))
         except c.EXC_BROAD_RUNTIME as exc:

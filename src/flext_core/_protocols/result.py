@@ -6,9 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, Self, overload, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, Self, TypeVar, runtime_checkable
 
 from flext_core._models.pydantic import FlextModelsPydantic as mp
+
+T_co = TypeVar("T_co", covariant=True)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -38,7 +40,7 @@ class FlextProtocolsResult:
         def success(self) -> bool: ...
 
     @runtime_checkable
-    class Result[T_co](Protocol):
+    class Result(Protocol[T_co]):
         """Structural railway result contract; covariant payload."""
 
         @property
@@ -65,52 +67,42 @@ class FlextProtocolsResult:
             _exc_tb: TracebackType | None,
         ) -> None: ...
 
-        @overload
-        def __or__(self, default: T_co) -> T_co: ...
-        @overload
         def __or__[D](self, default: D) -> T_co | D: ...
-        def __or__[D](self, default: T_co | D) -> T_co | D: ...
 
         def unwrap(self) -> T_co: ...
         def unwrap_or[D](self, default: D) -> T_co | D: ...
         def unwrap_or_else[D](self, func: Callable[[], D]) -> T_co | D: ...
 
         def flat_map[U](
-            self, func: Callable[[T_co], FlextProtocolsResult.Result[U]]
+            self, func: Callable[..., FlextProtocolsResult.Result[U]]
         ) -> FlextProtocolsResult.Result[U]: ...
 
         def fold[U](
-            self, on_failure: Callable[[str], U], on_success: Callable[[T_co], U]
+            self, on_failure: Callable[[str], U], on_success: Callable[..., U]
         ) -> U: ...
 
-        def lash(
-            self, func: Callable[[str], FlextProtocolsResult.Result[T_co]]
-        ) -> FlextProtocolsResult.Result[T_co]: ...
+        def lash[U](
+            self, func: Callable[[str], FlextProtocolsResult.Result[U]]
+        ) -> FlextProtocolsResult.Result[T_co | U]: ...
 
         def map[U](
-            self, func: Callable[[T_co], U]
+            self, func: Callable[..., U]
         ) -> FlextProtocolsResult.Result[U]: ...
 
-        def flow_through(
-            self, *funcs: Callable[[T_co], FlextProtocolsResult.Result[T_co]]
-        ) -> FlextProtocolsResult.Result[T_co]: ...
+        def flow_through[U](
+            self, *funcs: Callable[..., FlextProtocolsResult.Result[U]]
+        ) -> FlextProtocolsResult.Result[T_co | U]: ...
 
         def map_error(
             self, func: Callable[[str], str]
         ) -> FlextProtocolsResult.Result[T_co]: ...
 
-        @overload
-        def map_or(self, default: None, func: None = None) -> T_co | None: ...
-        @overload
-        def map_or[U](self, default: U, func: None = None) -> T_co | U: ...
-        @overload
-        def map_or[U](self, default: U, func: Callable[[T_co], U]) -> U: ...
         def map_or[U](
-            self, default: U, func: Callable[[T_co], U] | None = None
-        ) -> U | T_co: ...
+            self, default: U, func: Callable[..., U] | None = None
+        ) -> T_co | U: ...
 
         def tap(
-            self, func: Callable[[T_co], None]
+            self, func: Callable[..., None]
         ) -> FlextProtocolsResult.Result[T_co]: ...
 
         def tap_error(
@@ -118,7 +110,7 @@ class FlextProtocolsResult:
         ) -> FlextProtocolsResult.Result[T_co]: ...
 
         def filter(
-            self, predicate: Callable[[T_co], bool]
+            self, predicate: Callable[..., bool]
         ) -> FlextProtocolsResult.Result[T_co]: ...
 
         def recover[U](

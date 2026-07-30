@@ -13,7 +13,7 @@ from .behavior import FlextResultBehavior
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core import FlextResult, p, t
+    from flext_core import p, t
 
 
 class FlextResultConstruction[T](FlextResultBehavior[T]):
@@ -145,8 +145,10 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
             return cls.fail(str(exc), exception=exc)
 
     @classmethod
-    def ok[V](cls: type[Self], value: V) -> FlextResult[V]:
-        return cast("FlextResult[V]", cls(value=value, success=True))
+    def ok[V](cls, value: V) -> p.Result[V]:
+        from flext_core import FlextResult
+
+        return FlextResult(value=value, success=True)
 
     @staticmethod
     def successful_result[V](obj: p.Result[V] | V) -> bool:

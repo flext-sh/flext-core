@@ -120,7 +120,7 @@ class TestsFlextCoreResultRecentBehaviors:
 
     def test_map_returning_none_reports_success(self) -> None:
         """``map`` producing ``None`` is rejected and returns failure."""
-        result: p.Result[str] = r[str].ok("x").map(lambda _: None)
+        result: p.Result[None] = r[str].ok("x").map(lambda _: None)
 
         assert result.failure is True
         assert result.error is not None

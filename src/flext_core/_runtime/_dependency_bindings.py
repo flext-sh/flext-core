@@ -177,11 +177,7 @@ class FlextRuntimeDependencyBindings(FlextRuntimeDependencyOptions):
                 if module is not None:
                     modules_to_wire.append(module)
         _ = packages
-        wiring.wire(
-            container,  # pyrefly: ignore[bad-argument-type] -- pyrefly resolves dependency_injector.containers.Container to a distinct type; runtime and stubs agree
-            modules=modules_to_wire or None,
-            packages=None,
-        )
+        wiring.wire(container, modules=modules_to_wire or None, packages=None)
 
 
 __all__: list[str] = ["FlextRuntimeDependencyBindings"]
