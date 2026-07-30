@@ -1,8 +1,8 @@
 """Canonical project metadata boundary and derivation utilities.
 
-Pure data ingress and naming utilities — does NOT import FlextResult (r).
-Methods that returned pr.Result have been moved to the caller layer to
-break the circular import chain: models → enforcement → beartype → here.
+Pure data ingress and naming utilities. Result object creation is explicit and
+typed through ``p.Result`` contracts, using internal concrete helpers only for
+construction.
 """
 
 from __future__ import annotations
@@ -17,6 +17,7 @@ from flext_core._constants.project_metadata import FlextConstantsProjectMetadata
 from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
 from flext_core._protocols.project_metadata import FlextProtocolsProjectMetadata as ppm
 from flext_core._protocols.result import FlextProtocolsResult as p
+from flext_core.result import FlextResult as _Result
 from flext_core._typings.base import FlextTypingBase as t
 
 if TYPE_CHECKING:
@@ -87,21 +88,19 @@ class FlextUtilitiesProjectMetadata(mpm):
         - ``read_project_document_cached``
         - ``build_project_metadata``
         """
-        from flext_core import FlextResult
-
         try:
             project_root = root.resolve()
             document = FlextUtilitiesProjectMetadata.read_project_document_cached(
                 project_root
             )
-            return FlextResult.ok(
+            return _Result[ppm.ProjectMetadata].ok(
                 FlextUtilitiesProjectMetadata.build_project_metadata(
                     project_root, document
                 )
             )
-        except Exception as exc:
+        except (OSError, ValueError, tomllib.TOMLDecodeError) as exc:
             msg = f"cannot read project metadata from {root}: {exc}"
-            return FlextResult.fail(msg, exception=exc)
+            return _Result[ppm.ProjectMetadata].fail(msg, exception=exc)
 
     @staticmethod
     def derive_class_stem(project_name: str) -> str:
