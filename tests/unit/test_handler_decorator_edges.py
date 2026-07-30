@@ -67,7 +67,7 @@ class TestsFlextHandlerDecoratorEdges:
         dumped = config.model_dump()
         assert config.priority == 0
         assert dumped["timeout"] == 30
-        assert dumped["middleware"] == ()
+        assert dumped["middleware"] == []
 
     def test_none_timeout_is_preserved(self) -> None:
         # Arrange

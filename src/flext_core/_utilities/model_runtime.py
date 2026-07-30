@@ -78,7 +78,7 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
         cls, registration: m.ServiceRegistrationSpec
     ) -> m.ServiceRegistrationSpec:
         """Normalize declarative bootstrap values into registration records."""
-        return registration.model_copy(
+        normalized: m.ServiceRegistrationSpec = registration.model_copy(
             update={
                 "services": cls.normalize_service_registrations(registration.services),
                 "factories": cls.normalize_factory_registrations(
@@ -89,6 +89,7 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
                 ),
             }
         )
+        return normalized
 
     @staticmethod
     def _resolve_runtime_dispatcher(

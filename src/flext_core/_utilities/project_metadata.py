@@ -56,20 +56,24 @@ class FlextUtilitiesProjectMetadata(mpm):
             class_stem = flext.project.class_stem_override or cls.derive_class_stem(
                 package_name
             )
+            resolved_project = mpm.Project(name=package_name, version="0.0.0")
             return mpm.ProjectMetadata(
                 root=root,
                 package_name=package_name,
                 class_stem=class_stem,
-                project=project,
+                project=resolved_project,
                 flext=flext,
             )
+        resolved_project = project
         return mpm.ProjectMetadata(
             root=root,
-            package_name=flext.docs.package_name or project.name.replace("-", "_"),
+            package_name=flext.docs.package_name
+            or resolved_project.name.replace("-", "_"),
             class_stem=(
-                flext.project.class_stem_override or cls.derive_class_stem(project.name)
+                flext.project.class_stem_override
+                or cls.derive_class_stem(resolved_project.name)
             ),
-            project=project,
+            project=resolved_project,
             flext=flext,
         )
 
@@ -83,21 +87,21 @@ class FlextUtilitiesProjectMetadata(mpm):
         - ``read_project_document_cached``
         - ``build_project_metadata``
         """
-        from flext_core import r
+        from flext_core import FlextResult
 
         try:
             project_root = root.resolve()
             document = FlextUtilitiesProjectMetadata.read_project_document_cached(
                 project_root
             )
-            return r.ok(
+            return FlextResult.ok(
                 FlextUtilitiesProjectMetadata.build_project_metadata(
                     project_root, document
                 )
             )
         except Exception as exc:
             msg = f"cannot read project metadata from {root}: {exc}"
-            return r.fail(msg, exception=exc)
+            return FlextResult.fail(msg, exception=exc)
 
     @staticmethod
     def derive_class_stem(project_name: str) -> str:

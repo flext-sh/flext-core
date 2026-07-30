@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self, cast
+from typing import TYPE_CHECKING, Self
 
 from pydantic import BaseModel, ValidationError
 
@@ -29,7 +29,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
         return error
 
     @classmethod
-    def from_failure[V](cls: type[Self], source: p.FailureLike) -> p.Result[V]:
+    def from_failure[V](cls: type[Self], source: p.FailureLike) -> FlextResult[V]:
         if source.success:
             msg = c.ERR_RESULT_FAILURE_REQUIRED
             raise ValueError(msg)
@@ -71,7 +71,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
         return payload
 
     @classmethod
-    def _from_result[V](cls: type[Self], source: p.Result[V]) -> p.Result[V]:
+    def _from_result[V](cls: type[Self], source: p.Result[V]) -> FlextResult[V]:
         if source.success:
             try:
                 return cls.ok(source.value)
@@ -87,7 +87,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
     @classmethod
     def create_from_callable[V](
         cls: type[Self], func: Callable[[], V | None], error_code: str | None = None
-    ) -> p.Result[V]:
+    ) -> FlextResult[V]:
         try:
             value = func()
             if value is None:
@@ -104,7 +104,9 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
         error_code: str | None = None,
         error_data: t.JsonMapping | t.ConfigModelInput | None = None,
         exception: BaseException | None = None,
-    ) -> p.Result[V]:
+    ) -> FlextResult[V]:
+        from flext_core import FlextResult
+
         error_msg = error if error is not None else ""
         resolved_error_code = error_code or cls._extract_exception_error_code(exception)
         resolved_error_data = (
@@ -112,21 +114,18 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
             if error_data is not None
             else cls._extract_exception_error_data(exception)
         )
-        return cast(
-            "p.Result[V]",
-            cls(
-                error_code=resolved_error_code,
-                error_data=cls.validate_error_data(resolved_error_data),
-                error=error_msg,
-                success=False,
-                exception=exception,
-            ),
+        return FlextResult(
+            error_code=resolved_error_code,
+            error_data=cls.validate_error_data(resolved_error_data),
+            error=error_msg,
+            success=False,
+            exception=exception,
         )
 
     @classmethod
     def fail_op[V](
         cls: type[Self], operation: str, exc: Exception | str | None = None
-    ) -> p.Result[V]:
+    ) -> FlextResult[V]:
         if isinstance(exc, Exception):
             return cls.fail(f"{operation} failed: {exc}", exception=exc)
         error_msg = (
@@ -137,7 +136,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
     @classmethod
     def from_validation[ModelT: BaseModel](
         cls: type[Self], data: t.ModelInput, model: t.ModelClass[ModelT]
-    ) -> p.Result[ModelT]:
+    ) -> FlextResult[ModelT]:
         try:
             validated: ModelT = model.model_validate(data)
             return cls.ok(validated)
@@ -151,21 +150,21 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
         return FlextResult(value=value, success=True)
 
     @staticmethod
-    def successful_result[V](obj: p.Result[V] | V) -> bool:
+    def successful_result(obj: object) -> bool:
         """Check whether an object is a successful FlextResult."""
         from flext_core import FlextResult
 
         return isinstance(obj, FlextResult) and obj.success
 
     @staticmethod
-    def failed_result[V](obj: p.Result[V] | V) -> bool:
+    def failed_result(obj: object) -> bool:
         """Check whether an object is a failed FlextResult."""
         from flext_core import FlextResult
 
         return isinstance(obj, FlextResult) and obj.failure
 
     @classmethod
-    def from_result[V](cls: type[Self], source: p.Result[V]) -> p.Result[V]:
+    def from_result[V](cls: type[Self], source: p.Result[V]) -> FlextResult[V]:
         return cls._from_result(source)
 
 
