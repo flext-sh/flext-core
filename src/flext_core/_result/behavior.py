@@ -18,8 +18,8 @@ class FlextResultBehavior[T](FlextResultBase[T]):
     def value(self) -> T:
         if not self.success:
             error_msg = self.error or ""
-            msg = f"Cannot access value on failed result: {error_msg}"
-            raise ValueError(msg)
+            msg = f"Cannot access value of failed result: {error_msg}"
+            raise RuntimeError(msg)
         return self._payload
 
     @property
@@ -51,7 +51,9 @@ class FlextResultBehavior[T](FlextResultBase[T]):
 
     @override
     def __repr__(self) -> str:
-        return f"{type(self).__name__}(success={self.success})"
+        if self.success:
+            return f"r[T].ok({self._payload!r})"
+        return f"r[T].fail({self.error!r})"
 
 
 __all__: list[str] = ["FlextResultBehavior"]

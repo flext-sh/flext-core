@@ -16,6 +16,7 @@ from flext_core._constants.file import FlextConstantsFile as cf
 from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cpm
 from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
 from flext_core._protocols.project_metadata import FlextProtocolsProjectMetadata as ppm
+from flext_core._protocols.result import FlextProtocolsResult as p
 from flext_core._typings.base import FlextTypingBase as t
 
 if TYPE_CHECKING:
@@ -50,6 +51,16 @@ class FlextUtilitiesProjectMetadata(mpm):
     ) -> ppm.ProjectMetadata:
         project = document.project
         flext = document.tool.flext
+        if project is None:
+            package_name = flext.docs.package_name or "unknown"
+            class_stem = flext.project.class_stem_override or cls.derive_class_stem(package_name)
+            return mpm.ProjectMetadata(
+                root=root,
+                package_name=package_name,
+                class_stem=class_stem,
+                project=project,
+                flext=flext,
+            )
         return mpm.ProjectMetadata(
             root=root,
             package_name=flext.docs.package_name or project.name.replace("-", "_"),
@@ -61,7 +72,7 @@ class FlextUtilitiesProjectMetadata(mpm):
         )
 
     @staticmethod
-    def read_project_metadata(root: Path) -> t.Result[ppm.ProjectMetadata]:
+    def read_project_metadata(root: Path) -> p.Result[ppm.ProjectMetadata]:
         """Read project metadata from ``pyproject.toml`` and return a protocol result.
 
         The method remains as a compatibility surface for existing consumers while

@@ -16,7 +16,7 @@ from .flextexceptionsfactories_part_03 import (
 )
 
 if TYPE_CHECKING:
-    from flext_core import r as FlextResult
+    from flext_core import r
 
 
 class FlextExceptionsFactories(FlextExceptionsFactoriesPart03):
@@ -27,7 +27,7 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart03):
         reason: str | None = None,
         *,
         options: m.ExceptionFactoryOptions | None = None,
-        result_type: type[FlextResult[TResult]] | None = None,
+        result_type: type[r[TResult]] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical conflict message.
 

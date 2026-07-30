@@ -13,7 +13,9 @@ from pydantic import BaseModel, PrivateAttr
 from returns.result import Result
 
 from flext_core._protocols.result import FlextProtocolsResult as prt
+from flext_core._typings.base import FlextTypingBase as t
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
+from flext_core._typings.services import FlextTypesServices as ts
 
 type JsonMapping = Mapping[str, tp.JsonValue]
 type JsonDict = dict[str, tp.JsonValue]
@@ -39,7 +41,7 @@ class FlextResultBase[T](BaseModel):
 
     @staticmethod
     def _validate_error_data(
-        error_data: JsonMapping | ConfigModelInput | None,
+        error_data: t.JsonMapping | ts.ConfigModelInput | None,
     ) -> JsonDict | None:
         from flext_core._runtime._metadata import FlextRuntimeMetadata as FlextRuntime
 
@@ -47,6 +49,13 @@ class FlextResultBase[T](BaseModel):
         if normalized is None:
             return None
         return dict(normalized)
+
+    @staticmethod
+    def _validate_success_value[V](value: V | None) -> V:
+        if value is None:
+            msg = "Success result payload cannot be None"
+            raise ValueError(msg)
+        return value
 
     def __init__(
         self,
@@ -58,9 +67,6 @@ class FlextResultBase[T](BaseModel):
         success: bool = True,
         exception: BaseException | None = None,
     ) -> None:
-        if success and value is None:
-            msg = "Success result requires a non-None value"
-            raise ValueError(msg)
         super().__init__(
             error=error,
             error_code=error_code,
@@ -68,8 +74,9 @@ class FlextResultBase[T](BaseModel):
             error_data=self._validate_error_data(error_data),
         )
         if success:
-            self._payload = value  # type: ignore[assignment]
-            self._result = cast("Result[T, str]", Result.from_value(value))
+            validated_value = self._validate_success_value(value)
+            self._payload = validated_value  # type: ignore[assignment]
+            self._result = cast("Result[T, str]", Result.from_value(validated_value))
         else:
             self._result = Result.from_failure(error if error is not None else "")
             if exception is not None:

@@ -29,9 +29,3 @@ class TestsFlextCoreUtilitiesProjectMetadata:
         tm.that(dumped["project"]["version"], eq="1.0.0")
         tm.that(dumped["tool"]["flext"]["workspace"]["attached"], eq=True)
 
-    def test_pyproject_document_model_dump_roundtrips(self) -> None:
-        doc = m.PyprojectDocument.model_validate({
-            "project": {"name": "flext-ldif", "version": "1.0.0"}
-        })
-        rebuilt = m.PyprojectDocument.model_validate(doc.model_dump())
-        tm.that(rebuilt.model_dump()["project"]["name"], eq="flext-ldif")

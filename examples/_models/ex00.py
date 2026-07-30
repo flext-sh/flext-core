@@ -20,11 +20,12 @@ class ExamplesFlextModelsEx00:
             c.Status.ACTIVE
         )
 
-        def activate(self) -> p.Result[None]:
+        def activate(self) -> p.Result[bool]:
             """Activate user once."""
             if self.status == c.Status.ACTIVE:
-                return r[None].fail("Already active")
-            return r[None].ok(None)
+                return r[bool].fail("Already active")
+            self.status = c.Status.ACTIVE
+            return r[bool].ok(True)
 
     class UserInput(m.Value):
         """Raw user input model."""

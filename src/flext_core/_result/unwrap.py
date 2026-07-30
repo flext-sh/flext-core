@@ -27,7 +27,7 @@ class FlextResultUnwrap[T](FlextResultComposition[T]):
     def unwrap_or[DefaultT](self, default: DefaultT) -> T | DefaultT: ...
 
     def unwrap_or[DefaultT](self, default: DefaultT) -> T | DefaultT:
-        if self.success and self._payload is not None:
+        if self.success:
             return self._payload
         return default
 
@@ -39,7 +39,7 @@ class FlextResultUnwrap[T](FlextResultComposition[T]):
     ) -> T | DefaultT: ...
 
     def unwrap_or_else[DefaultT](self, func: Callable[[], DefaultT]) -> T | DefaultT:
-        if self.success and self._payload is not None:
+        if self.success:
             return self._payload
         return func()
 

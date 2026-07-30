@@ -111,17 +111,19 @@ class TestsFlextCoreResultRecentBehaviors:
         assert result.success is True
         assert result.value == 42
 
-    def test_flat_map_into_none_success_reports_success(self) -> None:
-        """Chaining ``flat_map`` into ``r[None].ok(None)`` yields a success."""
-        result: p.Result[None] = r[str].ok("x").flat_map(lambda _: r[None].ok(None))
+    def test_flat_map_into_success_value_reports_success(self) -> None:
+        """Flat map can continue with non-`None` success payload."""
+        result: p.Result[int] = r[str].ok("x").flat_map(lambda _: r[int].ok(1))
 
         assert result.success is True
+        assert result.value == 1
 
     def test_map_returning_none_reports_success(self) -> None:
-        """``map`` producing ``None`` yields a success with a ``None`` payload."""
-        result: p.Result[None] = r[str].ok("x").map(lambda _: None)
+        """``map`` producing ``None`` is rejected and returns failure."""
+        result: p.Result[str] = r[str].ok("x").map(lambda _: None)
 
-        assert result.success is True
+        assert result.failure is True
+        assert result.error is not None
 
     def test_with_resource_returns_value_and_runs_cleanup(self) -> None:
         """``with_resource`` returns the op value and always runs cleanup."""

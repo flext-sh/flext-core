@@ -17,7 +17,7 @@ from flext_core._models.pydantic import FlextModelsPydantic as mp
 TExceptionParams = TypeVar("TExceptionParams", bound=mp.BaseModel)
 
 if TYPE_CHECKING:
-    from flext_core import r as FlextResult
+    from flext_core import r
 
 
 class FlextExceptionsFactories:
@@ -28,13 +28,13 @@ class FlextExceptionsFactories:
 
     @staticmethod
     def _result_type[TValue](
-        result_type: type[FlextResult[TValue]] | None = None,
-    ) -> type[FlextResult[TValue]]:
+        result_type: type[r[TValue]] | None = None,
+    ) -> type[r[TValue]]:
         """Resolve FlextResult lazily to avoid runtime import cycles."""
         if result_type is not None:
             return result_type
         result_module = import_module("flext_core")
-        result_cls: type[FlextResult[TValue]] = result_module.FlextResult
+        result_cls: type[r[TValue]] = result_module.FlextResult
         return result_cls
 
     @staticmethod
@@ -87,7 +87,7 @@ class FlextExceptionsFactories:
         *,
         options: m.ExceptionFactoryOptions | None = None,
         default_error_code: str,
-        result_type: type[FlextResult[TResult]] | None = None,
+        result_type: type[r[TResult]] | None = None,
     ) -> p.Result[TResult]:
         options, error = FlextExceptionsFactories._resolve_options(options)
         return FlextExceptionsFactories._result_type(result_type).fail(
@@ -105,7 +105,7 @@ class FlextExceptionsFactories:
         exc: Exception | str | None = None,
         *,
         error_code: str | None = None,
-        result_type: type[FlextResult[TResult]] | None = None,
+        result_type: type[r[TResult]] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical operation-error message.
 
@@ -134,7 +134,7 @@ class FlextExceptionsFactories:
         resource_id: str,
         *,
         error_code: str | None = None,
-        result_type: type[FlextResult[TResult]] | None = None,
+        result_type: type[r[TResult]] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical not-found message.
 

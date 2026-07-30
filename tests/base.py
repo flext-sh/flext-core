@@ -12,9 +12,7 @@ if TYPE_CHECKING:
     from tests.protocols import p
 
 
-class TestsFlextServiceBase[TDomainResult: t.JsonPayload | t.SequenceOf[t.JsonPayload]](
-    s
-):
+class TestsFlextServiceBase[TDomainResult: p.Base = p.Base](s[TDomainResult]):
     """Project-local test service base with flext-core result typing."""
 
     @override

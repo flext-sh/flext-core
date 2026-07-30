@@ -10,6 +10,7 @@ import inspect
 from typing import TYPE_CHECKING
 
 from dependency_injector import containers, providers, wiring
+from dependency_injector.containers import Container
 
 from flext_core._constants.errors import FlextConstantsErrors as ce
 from flext_core._constants.file import FlextConstantsFile as cf
@@ -162,7 +163,7 @@ class FlextRuntimeDependencyBindings(FlextRuntimeDependencyOptions):
 
     @staticmethod
     def wire(
-        container: containers.Container,
+        container: Container,
         *,
         modules: tb.SequenceOf[ModuleType] | None = None,
         packages: tb.StrSequence | None = None,
@@ -176,9 +177,10 @@ class FlextRuntimeDependencyBindings(FlextRuntimeDependencyOptions):
                 if module is not None:
                     modules_to_wire.append(module)
         _ = packages
-        wire_runtime = wiring.wire
-        wire_runtime(
-            modules=modules_to_wire or None, packages=None, container=container
+        wiring.wire(
+            container,  # pyrefly: ignore[bad-argument-type] -- pyrefly resolves dependency_injector.containers.Container to a distinct type; runtime and stubs agree
+            modules=modules_to_wire or None,
+            packages=None,
         )
 
 

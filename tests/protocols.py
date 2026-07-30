@@ -16,6 +16,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_tests import p
+from flext_core._protocols.result import FlextProtocolsResult
 
 if TYPE_CHECKING:
     from tests._models.mixins import (
@@ -133,6 +134,10 @@ class TestsFlextProtocols(p):
             ) -> p.Result[t.JsonMapping]:
                 """Map source dictionary keys under the requested policy."""
                 ...
+
+    @runtime_checkable
+    class SuccessCheckable(FlextProtocolsResult.SuccessCheckable):
+        """Result-like object exposing success/failure state."""
 
 
 p = TestsFlextProtocols

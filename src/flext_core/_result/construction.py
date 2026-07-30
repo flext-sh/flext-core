@@ -20,7 +20,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
     """Factory methods for the concrete result facade."""
 
     @staticmethod
-    def require_error[V](source: p.Result[V]) -> str:
+    def require_error(source: p.FailureLike) -> str:
         """Extract error message from any failed Result."""
         error = source.error
         if not error:
@@ -29,7 +29,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
         return error
 
     @classmethod
-    def from_failure[V](cls: type[Self], source: p.Result[V]) -> p.Result[V]:
+    def from_failure[V](cls: type[Self], source: p.FailureLike) -> p.Result[V]:
         if source.success:
             msg = c.ERR_RESULT_FAILURE_REQUIRED
             raise ValueError(msg)
@@ -73,7 +73,10 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
     @classmethod
     def _from_result[V](cls: type[Self], source: p.Result[V]) -> p.Result[V]:
         if source.success:
-            return cls.ok(source.value)
+            try:
+                return cls.ok(source.value)
+            except ValueError as exc:
+                return cls.fail(str(exc))
         return cls.fail(
             cls.require_error(source),
             error_code=source.error_code,
@@ -113,7 +116,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
             "p.Result[V]",
             cls(
                 error_code=resolved_error_code,
-                error_data=resolved_error_data,
+                error_data=cls._validate_error_data(resolved_error_data),
                 error=error_msg,
                 success=False,
                 exception=exception,
@@ -144,6 +147,20 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
     @classmethod
     def ok[V](cls: type[Self], value: V) -> p.Result[V]:
         return cast("p.Result[V]", cls(value=value, success=True))
+
+    @staticmethod
+    def successful_result[V](obj: p.Result[V] | V) -> bool:
+        """Check whether an object is a successful FlextResult."""
+        from flext_core import FlextResult
+
+        return isinstance(obj, FlextResult) and obj.success
+
+    @staticmethod
+    def failed_result[V](obj: p.Result[V] | V) -> bool:
+        """Check whether an object is a failed FlextResult."""
+        from flext_core import FlextResult
+
+        return isinstance(obj, FlextResult) and obj.failure
 
     @classmethod
     def from_result[V](cls: type[Self], source: p.Result[V]) -> p.Result[V]:

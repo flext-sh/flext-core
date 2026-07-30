@@ -172,10 +172,10 @@ class TestsFlextCoreMigrationValidation:
     def test_service_execute_returns_success(self) -> None:
         """A concrete FlextService.execute honors the r[None] contract."""
 
-        class NoopService(FlextService[None]):
-            @override
-            def execute(self, **_kwargs: t.Scalar) -> p.Result[None]:
-                return r[None].ok(None)
+    class NoopService(FlextService[bool]):
+        @override
+        def execute(self, **_kwargs: t.Scalar) -> p.Result[bool]:
+            return r[bool].ok(True)
 
         outcome = NoopService().execute()
         tm.that(outcome.success, eq=True)
@@ -184,10 +184,10 @@ class TestsFlextCoreMigrationValidation:
     def test_service_method_returns_failure_on_invalid_input(self) -> None:
         """Domain validation surfaces as an r failure, not a raised error."""
 
-        class UserService(FlextService[None]):
+        class UserService(FlextService[bool]):
             @override
-            def execute(self, **_kwargs: t.Scalar) -> p.Result[None]:
-                return r[None].ok(None)
+            def execute(self, **_kwargs: t.Scalar) -> p.Result[bool]:
+                return r[bool].ok(True)
 
             def create_user(self, username: str, email: str) -> p.Result[t.StrMapping]:
                 if not username or not email:

@@ -16,7 +16,7 @@ from .flextexceptionsfactories_part_02 import (
 )
 
 if TYPE_CHECKING:
-    from flext_core import r as FlextResult
+    from flext_core import r
 
 
 class FlextExceptionsFactories(FlextExceptionsFactoriesPart02):
@@ -26,7 +26,7 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart02):
         *,
         params: m.ConnectionErrorParams | None = None,
         options: m.ExceptionFactoryOptions | None = None,
-        result_type: type[FlextResult[TResult]] | None = None,
+        result_type: type[r[TResult]] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical connection-error message.
 
@@ -58,7 +58,7 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart02):
         operation: str | None = None,
         *,
         error_code: str | None = None,
-        result_type: type[FlextResult[TResult]] | None = None,
+        result_type: type[r[TResult]] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical timeout message.
 
@@ -87,7 +87,7 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart02):
         user_id: str | None = None,
         *,
         options: m.ExceptionFactoryOptions | None = None,
-        result_type: type[FlextResult[TResult]] | None = None,
+        result_type: type[r[TResult]] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical authentication-error message.
 
@@ -116,7 +116,7 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart02):
         permission: str | None = None,
         *,
         options: m.ExceptionFactoryOptions | None = None,
-        result_type: type[FlextResult[TResult]] | None = None,
+        result_type: type[r[TResult]] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical authorization-error message.
 
