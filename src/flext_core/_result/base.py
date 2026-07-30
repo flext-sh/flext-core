@@ -75,7 +75,7 @@ class FlextResultBase[T](BaseModel):
         )
         if success:
             validated_value = self._validate_success_value(value)
-            self._payload = validated_value  # type: ignore[assignment]
+            self._payload = validated_value
             self._result = cast("Result[T, str]", Result.from_value(validated_value))
         else:
             self._result = Result.from_failure(error if error is not None else "")
