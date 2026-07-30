@@ -33,7 +33,9 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
     @staticmethod
     def _owning_project_root(target: type) -> Path | None:
         """Return the pyproject root that physically owns the target source."""
-        source_file = FlextUtilitiesEnforcementCollect._resolve_target_source_file(target)
+        source_file = FlextUtilitiesEnforcementCollect._resolve_target_source_file(
+            target
+        )
         if source_file is None:
             return None
         source = source_file.resolve()
