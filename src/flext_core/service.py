@@ -28,7 +28,7 @@ from pydantic import ConfigDict
 from flext_core import p, t, x
 
 
-class FlextService[TDomainResult: p.Base = p.Base](x):
+class FlextService[TDomainResult = p.Base](x):
     """Base class for domain services in FLEXT applications."""
 
     model_config: ClassVar[ConfigDict] = ConfigDict(

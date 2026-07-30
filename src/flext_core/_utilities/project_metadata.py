@@ -53,7 +53,9 @@ class FlextUtilitiesProjectMetadata(mpm):
         flext = document.tool.flext
         if project is None:
             package_name = flext.docs.package_name or "unknown"
-            class_stem = flext.project.class_stem_override or cls.derive_class_stem(package_name)
+            class_stem = flext.project.class_stem_override or cls.derive_class_stem(
+                package_name
+            )
             return mpm.ProjectMetadata(
                 root=root,
                 package_name=package_name,

@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, override
 
 from flext_tests import s
 from tests.constants import c
-from tests.typings import t
 
 if TYPE_CHECKING:
     from tests.protocols import p

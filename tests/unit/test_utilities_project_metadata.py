@@ -28,4 +28,3 @@ class TestsFlextCoreUtilitiesProjectMetadata:
         tm.that(dumped["project"]["name"], eq="flext-ldif")
         tm.that(dumped["project"]["version"], eq="1.0.0")
         tm.that(dumped["tool"]["flext"]["workspace"]["attached"], eq=True)
-
