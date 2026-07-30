@@ -167,6 +167,14 @@ class FlextModelsHandler:
         middleware: Annotated[
             t.SequenceOf[type[p.Middleware]],
             mp.Field(description="Middleware types to apply to this handler"),
+            mp.PlainSerializer(
+                lambda value: [
+                    f"{middleware_type.__module__}.{middleware_type.__qualname__}"
+                    for middleware_type in value
+                ],
+                return_type=list[str],
+                when_used="always",
+            ),
         ] = mp.Field(default_factory=tuple)
 
     class CombinedRailwayOptions(m.ImmutableValueModel):
