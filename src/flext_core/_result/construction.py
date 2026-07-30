@@ -13,7 +13,7 @@ from .behavior import FlextResultBehavior
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core import p, t
+    from flext_core import FlextResult, p, t
 
 
 class FlextResultConstruction[T](FlextResultBehavior[T]):
@@ -60,7 +60,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
         if raw_attributes is None:
             return None
         try:
-            payload = cls._validate_error_data(raw_attributes)
+            payload = cls.validate_error_data(raw_attributes)
         except ValidationError:
             return None
         if payload is None:
@@ -116,7 +116,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
             "p.Result[V]",
             cls(
                 error_code=resolved_error_code,
-                error_data=cls._validate_error_data(resolved_error_data),
+                error_data=cls.validate_error_data(resolved_error_data),
                 error=error_msg,
                 success=False,
                 exception=exception,
@@ -145,7 +145,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
             return cls.fail(str(exc), exception=exc)
 
     @classmethod
-    def ok[V](cls, value: V) -> p.Result[V]:
+    def ok[V](cls: type[Self], value: V) -> FlextResult[V]:
         from flext_core import FlextResult
 
         return FlextResult(value=value, success=True)

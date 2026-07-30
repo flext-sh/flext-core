@@ -40,7 +40,7 @@ class FlextResultBase[T](BaseModel):
     _result: Result[T, str] = PrivateAttr()
 
     @staticmethod
-    def _validate_error_data(
+    def validate_error_data(
         error_data: t.JsonMapping | ts.ConfigModelInput | None,
     ) -> JsonDict | None:
         from flext_core._runtime._metadata import FlextRuntimeMetadata as FlextRuntime
@@ -71,7 +71,7 @@ class FlextResultBase[T](BaseModel):
             error=error,
             error_code=error_code,
             success=success,
-            error_data=self._validate_error_data(error_data),
+            error_data=self.validate_error_data(error_data),
         )
         if success:
             validated_value = self._validate_success_value(value)
