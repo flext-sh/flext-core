@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 
 from flext_core import u
@@ -28,20 +30,21 @@ class TestsServiceRegistrationSpecOwner:
 
         tm.that(registration.services is not None, eq=True)
         services = registration.services or {}
-        service_record = services["service"]
+
+        service_record = cast("m.ServiceRegistration", services["service"])
         assert isinstance(service_record, m.ServiceRegistration)
         tm.that(service_record.name, eq="service")
         tm.that(service_record.service, eq="value")
         tm.that(service_record.service_type, eq="str")
         tm.that(registration.factories is not None, eq=True)
         factories = registration.factories or {}
-        factory_record = factories["factory"]
+        factory_record = cast("m.FactoryRegistration", factories["factory"])
         assert isinstance(factory_record, m.FactoryRegistration)
         tm.that(factory_record.name, eq="factory")
         tm.that(factory_record.factory is _factory, eq=True)
         tm.that(registration.resources is not None, eq=True)
         resources = registration.resources or {}
-        resource_record = resources["resource"]
+        resource_record = cast("m.ResourceRegistration", resources["resource"])
         assert isinstance(resource_record, m.ResourceRegistration)
         tm.that(resource_record.name, eq="resource")
         tm.that(resource_record.factory is _factory, eq=True)
