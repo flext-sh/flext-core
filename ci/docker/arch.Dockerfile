@@ -11,7 +11,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # === SECTION: base packages (managed) ===
 # Source: template (distro-specific package list)
 RUN pacman -Syu --noconfirm --needed \
-      bash ca-certificates curl git make base-devel \
+      bash ca-certificates curl git make base-devel icu \
     && pacman -Scc --noconfirm
 # End SECTION: base packages
 
@@ -25,7 +25,11 @@ RUN curl -fsSL https://mise.run | sh
 RUN curl -fsSL https://astral.sh/uv/install.sh | sh
 # tokei (and any future cargo-backed mise tool) needs a Rust toolchain.
 RUN curl -fsSL https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
-ENV PATH="/root/.local/bin:/root/.cargo/bin:/root/.local/share/mise/shims:${PATH}"
+# go is required for mise-managed beads (go:github.com/steveyegge/beads/cmd/bd).
+RUN curl -fsSL https://go.dev/dl/go1.23.4.linux-amd64.tar.gz | tar -C /usr/local -xzf - \
+    && ln -sf /usr/local/go/bin/go /usr/local/bin/go
+ENV PATH="/usr/local/go/bin:/root/.local/bin:/root/.cargo/bin:/root/.local/share/mise/shims:${PATH}"
+# End SECTION: managed tool bootstrap
 
 WORKDIR /workspace
 COPY . .
