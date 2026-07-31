@@ -11,7 +11,13 @@ RUN dnf install -y \
 # mise installs the supported Python 3.13 family.
 # uv is supplied by the managed environment without a project patch pin.
 RUN curl -fsSL https://mise.run | sh
-ENV PATH="/root/.local/bin:/root/.local/share/mise/shims:${PATH}"
+# uv is intentionally supplied by the caller environment; install it explicitly
+# in clean-machine images so the project bootstrap can resolve dependencies.
+RUN curl -fsSL https://astral.sh/uv/install.sh | sh
+# tokei (and any future cargo-backed mise tool) needs a Rust toolchain.
+RUN curl -fsSL https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+ENV PATH="/root/.local/bin:/root/.cargo/bin:/root/.local/share/mise/shims:${PATH}"
+
 WORKDIR /workspace
 COPY . .
 
