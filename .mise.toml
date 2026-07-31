@@ -20,5 +20,4 @@ taplo = "0.10.0"
 ast-grep = "0.45.0"
 gitleaks = "8.30.1"
 tokei = "14.0.0"
-"go:github.com/steveyegge/beads/cmd/bd" = "423afdcb2813e36b2bc4c96b07e0fc3516a34495"
-# End SECTION: tools
+"github:gastownhall/beads" = "1.1.2"
