@@ -176,3 +176,20 @@ class TestsFlextCoreResult:
         """Result instances honor the structural p.SuccessCheckable contract."""
         assert isinstance(r[int].ok(1), p.SuccessCheckable)
         assert isinstance(r[int].fail("e"), p.SuccessCheckable)
+
+    def test_ok_accepts_none_payload_as_successful_result(self) -> None:
+        """Success with no payload is a legitimate state, not an error."""
+        result: p.Result[None] = r[None].ok(None)
+
+        tm.that(result.success, eq=True)
+        tm.that(result.failure, eq=False)
+        tm.that(result.error, eq=None)
+        tm.that(result.value, eq=None)
+
+    def test_none_payload_result_unwraps_and_transforms(self) -> None:
+        """A None payload flows through unwrap and transform surfaces."""
+        result: p.Result[None] = r[None].ok(None)
+
+        tm.that(result.unwrap(), eq=None)
+        tm.that(result.unwrap_or(7), eq=None)
+        tm.ok(result.map(lambda _: 3), eq=3)

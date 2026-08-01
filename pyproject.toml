@@ -132,7 +132,6 @@ dependencies = [
   "python-dotenv>=1.2.2",
   "python-on-whales>=0.81.0",
   "pyyaml>=6.0.3",
-  "returns>=0.27.0",
   "rope>=1.14.0",
   "structlog>=25.5.0",
   "tomlkit>=0.14.0",

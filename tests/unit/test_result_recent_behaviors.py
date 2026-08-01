@@ -119,11 +119,12 @@ class TestsFlextCoreResultRecentBehaviors:
         assert result.value == 1
 
     def test_map_returning_none_reports_success(self) -> None:
-        """``map`` producing ``None`` is rejected and returns failure."""
+        """``map`` producing ``None`` yields a successful empty payload."""
         result: p.Result[None] = r[str].ok("x").map(lambda _: None)
 
-        assert result.failure is True
-        assert result.error is not None
+        assert result.success is True
+        assert result.error is None
+        assert result.value is None
 
     def test_with_resource_returns_value_and_runs_cleanup(self) -> None:
         """``with_resource`` returns the op value and always runs cleanup."""

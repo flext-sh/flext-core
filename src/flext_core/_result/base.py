@@ -10,7 +10,6 @@ from collections.abc import Mapping
 from typing import TypeVar, cast
 
 from pydantic import BaseModel, PrivateAttr
-from returns.result import Result
 
 from flext_core._protocols.result import FlextProtocolsResult as prt
 from flext_core._typings.base import FlextTypingBase as t
@@ -26,7 +25,7 @@ T = TypeVar("T")
 
 
 class FlextResultBase[T](BaseModel):
-    """Internal result data container — T cannot be None (returns convention)."""
+    """Internal result data container."""
 
     model_config = {"arbitrary_types_allowed": True, "populate_by_name": True}
 
@@ -37,7 +36,6 @@ class FlextResultBase[T](BaseModel):
 
     _payload: T = PrivateAttr()
     _exception: BaseException | None = PrivateAttr(default=None)
-    _result: Result[T, str] = PrivateAttr()
 
     @staticmethod
     def validate_error_data(
@@ -49,13 +47,6 @@ class FlextResultBase[T](BaseModel):
         if normalized is None:
             return None
         return dict(normalized)
-
-    @staticmethod
-    def _validate_success_value[V](value: V | None) -> V:
-        if value is None:
-            msg = "Success result payload cannot be None"
-            raise ValueError(msg)
-        return value
 
     def __init__(
         self,
@@ -74,13 +65,9 @@ class FlextResultBase[T](BaseModel):
             error_data=self.validate_error_data(error_data),
         )
         if success:
-            validated_value = self._validate_success_value(value)
-            self._payload = validated_value
-            self._result = cast("Result[T, str]", Result.from_value(validated_value))
-        else:
-            self._result = Result.from_failure(error if error is not None else "")
-            if exception is not None:
-                self._exception = exception
+            self._payload = cast("T", value)
+        elif exception is not None:
+            self._exception = exception
 
 
 __all__: list[str] = ["FlextResultBase"]
