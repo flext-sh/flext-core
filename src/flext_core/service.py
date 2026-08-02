@@ -35,6 +35,8 @@ class FlextService[TDomainResult = p.Base](x):
         strict=True,
         arbitrary_types_allowed=True,
         extra="forbid",
+        validate_by_name=True,
+        validate_by_alias=True,
         use_enum_values=True,
         validate_assignment=True,
     )
