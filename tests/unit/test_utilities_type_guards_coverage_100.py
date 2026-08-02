@@ -14,7 +14,11 @@ from tests import m, t
 class TestsFlextCoreUtilitiesTypeGuards:
     """Behavior contract for public guard helpers on runtime metadata."""
 
-    def test_public_type_guards_validate_normalized_dispatch_metadata(self) -> None:
+    def test_public_type_guards_validate_normalized_dispatch_metadata(
+        self, tmp_path: Path
+    ) -> None:
+        workspace_root = tmp_path / "flext"
+        workspace_root.mkdir()
         envelope = m.Tests.DispatchEnvelope(
             command_name="sync-users",
             correlation_id="corr_12345678",
@@ -23,7 +27,7 @@ class TestsFlextCoreUtilitiesTypeGuards:
             started_at=datetime(2026, 5, 5, 12, 0, tzinfo=UTC),
         )
         normalized_payload = u.normalize_to_metadata(envelope)
-        normalized_workspace_root = u.normalize_to_metadata(Path("/tmp/flext"))
+        normalized_workspace_root = u.normalize_to_metadata(workspace_root)
         normalized_retry_window = u.normalize_to_metadata(None)
         normalized_modes = u.normalize_to_metadata({"delta", "full"})
 

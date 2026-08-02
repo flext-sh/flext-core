@@ -47,7 +47,7 @@ class FlextConstantsEnforcementFixActions:
                     {
                         "regex": r"\bprint\s*\(\s*(?P<args>[^)]*)\s*\)",
                         "replacement": r"u.fetch_logger(__name__).info(\g<args>)",
-                        "change_message": "Rewrote print() to u.fetch_logger(__name__).info()",
+                        "change_message": "Rewrote u.Cli.print() to u.fetch_logger(__name__).info()",
                     }
                 ],
                 "required_alias": "u",

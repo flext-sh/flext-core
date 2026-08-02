@@ -150,7 +150,7 @@ class TestsFlextModelsCoreErrorsMixin:
             msg = c.Tests.PLAIN_BOOM
             raise RuntimeError(msg)
 
-    class _TargetModel(m.BaseModel):
+    class TargetModel(m.BaseModel):
         value: int
 
 

@@ -120,7 +120,7 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
                     timeout_message = (
                         f"Operation {func.__name__} failed after {attempts} attempts"
                     )
-                    raise et.TimeoutError(
+                    raise et.FlextTimeoutError(
                         timeout_message,
                         error_code=effective_error_code,
                         operation=func.__name__,

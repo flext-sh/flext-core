@@ -11,6 +11,7 @@ Exercises the observable contract callers depend on:
 
 from __future__ import annotations
 
+import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -95,7 +96,7 @@ class TestsFlextCoreTypingsAliases:
             (1.5, True, True, True),
             (True, True, True, True),
             (datetime(2026, 1, 1, tzinfo=UTC), False, False, True),
-            (Path("/tmp"), False, False, False),
+            (Path(tempfile.gettempdir()), False, False, False),
             ([1, 2], False, False, False),
         ],
     )
@@ -115,7 +116,7 @@ class TestsFlextCoreTypingsAliases:
             2.0,
             True,
             datetime(2026, 1, 1, tzinfo=UTC),
-            Path("/tmp"),
+            Path(tempfile.gettempdir()),
             [1],
             {"a": 1},
             (1,),

@@ -328,6 +328,7 @@ class_stem_override = "XmlAPI"
         name: str,
         body: dict[str, object],
         module_override: str | None,
+        *,
         expect_enforce_079: bool,
     ) -> None:
         """ENFORCE-079 fires only for UPPER_CASE constants outside ``_constants``."""

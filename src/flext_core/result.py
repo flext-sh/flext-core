@@ -158,6 +158,7 @@ class FlextResult[T](
         value: T | None = None,
         error: str | None = None,
         success: bool = True,
+        exception: BaseException | None = None,
     ) -> None:
         """Initialize a FlextResult with optional value, error, and metadata."""
         super().__init__(
@@ -168,6 +169,11 @@ class FlextResult[T](
         )
         if success:
             self._payload = value
+            self._result = Success(cast("T", value))
+        else:
+            self._result = Failure(error if error is not None else "")
+            if exception is not None:
+                self._exception = exception
 
     @property
     def _returns_result(self) -> Result[T, str]:
@@ -175,7 +181,7 @@ class FlextResult[T](
             if self.success:
                 self._result = Success(self.value)
             else:
-                self._result = Failure(self.require_error(self))
+                self._result = Failure(self.error or "")
         return self._result
 
     @staticmethod

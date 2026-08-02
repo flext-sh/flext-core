@@ -128,11 +128,15 @@ class TestsFlextCoreSettingsWorkDir:
         assert FlextSettings.fetch_global().work_dir == Path("/xdg/cache/flext")
         FlextSettings.reset_for_testing()
 
-    def test_env_override_wins(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_env_override_wins(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
         """FLEXT_WORK_DIR overrides the derived default."""
         FlextSettings.reset_for_testing()
-        monkeypatch.setenv("FLEXT_WORK_DIR", "/tmp/flext-custom-wd")
-        assert FlextSettings.fetch_global().work_dir == Path("/tmp/flext-custom-wd")
+        custom_dir = tmp_path / "flext-custom-wd"
+        custom_dir.mkdir()
+        monkeypatch.setenv("FLEXT_WORK_DIR", str(custom_dir))
+        assert FlextSettings.fetch_global().work_dir == custom_dir
         FlextSettings.reset_for_testing()
 
     def test_libraries_share_consuming_application_namespace(

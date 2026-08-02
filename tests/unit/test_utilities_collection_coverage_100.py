@@ -20,10 +20,14 @@ if TYPE_CHECKING:
 class TestsFlextCoreUtilitiesCollection:
     """Behavior contract for u.map / u.find / u.filter / u.count / u.process / u.merge_mappings."""
 
-    def test_normalize_domain_event_data_flattens_public_payloads(self) -> None:
+    def test_normalize_domain_event_data_flattens_public_payloads(
+        self, tmp_path: Path
+    ) -> None:
+        workspace_root = tmp_path / "flext"
+        workspace_root.mkdir()
         config_payload = m.ConfigMap.model_validate({
             "event": "sync-users",
-            "workspace_root": Path("/tmp/flext"),
+            "workspace_root": workspace_root,
             "attempt_count": 2,
             "ignored": None,
         })
@@ -38,7 +42,7 @@ class TestsFlextCoreUtilitiesCollection:
             normalized_config,
             eq={
                 "event": "sync-users",
-                "workspace_root": "/tmp/flext",
+                "workspace_root": str(workspace_root),
                 "attempt_count": 2,
             },
         )
@@ -74,6 +78,7 @@ class TestsFlextCoreUtilitiesCollection:
     )
     def test_find_returns_matching_element_or_failure(
         self,
+        *,
         items: t.JsonList | tuple[t.JsonValue, ...] | t.JsonMapping,
         predicate: Callable[[t.JsonValue], bool],
         expected: t.JsonValue,

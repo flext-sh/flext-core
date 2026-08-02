@@ -35,6 +35,9 @@ from ._utilities.parser import FlextUtilitiesParser
 from ._utilities.project_metadata import FlextUtilitiesProjectMetadata
 from ._utilities.pydantic import FlextUtilitiesPydantic
 from ._utilities.reliability import FlextUtilitiesReliability
+from ._utilities.runtime_violation_registry import (
+    FlextUtilitiesRuntimeViolationRegistry,
+)
 from ._utilities.settings import FlextUtilitiesSettings
 from ._utilities.text import FlextUtilitiesText
 
@@ -64,6 +67,7 @@ class FlextUtilities(
     FlextUtilitiesProjectMetadata,
     FlextUtilitiesPydantic,
     FlextUtilitiesReliability,
+    FlextUtilitiesRuntimeViolationRegistry,
     FlextUtilitiesText,
     FlextModelsNamespace,
 ):
@@ -78,4 +82,4 @@ class FlextUtilities(
 
 u = FlextUtilities
 
-__all__: list[str] = ["FlextUtilities", "u"]
+__all__: list[str] = ["FlextUtilities", "FlextUtilitiesRuntimeViolationRegistry", "u"]

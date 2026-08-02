@@ -36,7 +36,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         _default_error_code: ClassVar[str] = c.ErrorCode.CONFIGURATION_ERROR
         _params_cls = m.ConfigurationErrorParams
 
-    class ConnectionError(FlextExceptionsBase.BaseError):
+    class FlextConnectionError(FlextExceptionsBase.BaseError):
         """Exception raised for network and connection failures."""
 
         host: str | None = None
@@ -45,7 +45,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         _default_error_code: ClassVar[str] = c.ErrorCode.CONNECTION_ERROR
         _params_cls = m.ConnectionErrorParams
 
-    class TimeoutError(FlextExceptionsBase.BaseError):
+    class FlextTimeoutError(FlextExceptionsBase.BaseError):
         """Exception raised for operation timeout errors."""
 
         timeout_seconds: t.Numeric | None = None
@@ -109,13 +109,13 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         _default_error_code: ClassVar[str] = c.ErrorCode.EXTERNAL_SERVICE_ERROR
         _params_cls = m.CircuitBreakerErrorParams
 
-    class TypeError(FlextExceptionsBase.BaseError):
+    class FlextTypeError(FlextExceptionsBase.BaseError):
         """Exception raised for type mismatch errors."""
 
         expected_type: type | None = None
         actual_type: type | None = None
 
-        _TYPE_MAP: ClassVar[dict[str, type]] = {
+        TYPE_MAP: ClassVar[dict[str, type]] = {
             "str": str,
             "int": int,
             "float": float,
@@ -138,7 +138,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
             correlation_id: str | None = None,
         ) -> None:
             """Initialize type error with type information."""
-            cls = FlextExceptionsTypes.TypeError
+            cls = FlextExceptionsTypes.FlextTypeError
             super().__init__(
                 message,
                 error_code=error_code,
@@ -161,7 +161,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
             if isinstance(v, type):
                 return v
             return (
-                FlextExceptionsTypes.TypeError._TYPE_MAP.get(v)
+                FlextExceptionsTypes.FlextTypeError.TYPE_MAP.get(v)
                 if isinstance(v, str)
                 else None
             )
