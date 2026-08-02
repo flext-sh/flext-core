@@ -38,7 +38,7 @@ class FlextModelsErrors:
             mp.Field(description="Number of unique exception types recorded."),
         ] = 0
 
-        @up.computed_field()
+        @up.computed_field
         @property
         def has_exceptions(self) -> bool:
             """Whether the metrics snapshot contains recorded exceptions."""
@@ -63,19 +63,19 @@ class FlextModelsErrors:
             mp.Field(description="Recorded counts keyed by exception type name."),
         ] = mp.Field(default_factory=lambda: MappingProxyType({}))
 
-        @up.computed_field()
+        @up.computed_field
         @property
         def total_exceptions(self) -> int:
             """Total recorded exception occurrences."""
             return sum(self.exception_counts.values(), 0)
 
-        @up.computed_field()
+        @up.computed_field
         @property
         def unique_exception_types(self) -> int:
             """Number of unique exception types recorded."""
             return len(self.exception_counts)
 
-        @up.computed_field()
+        @up.computed_field
         @property
         def exception_counts_summary(self) -> str:
             """Human-readable summary for logs and diagnostics."""

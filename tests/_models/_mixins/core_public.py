@@ -110,7 +110,7 @@ class TestsFlextModelsCorePublicMixin:
             self._events.append("validated")
             return self
 
-        @u.computed_field()
+        @u.computed_field
         @property
         def label(self) -> str:
             return f"{self.raw_name}:{self.visits}"
