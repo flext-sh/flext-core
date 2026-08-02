@@ -276,6 +276,7 @@ CLAUDE.local.md
 !ci/docker/fedora.Dockerfile
 !ci/docker/ubuntu.Dockerfile
 !.github/workflows/
+!.github/workflows/ci-matrix.yml
 !.github/workflows/ci.yml
 !.github/workflows/docs.yml
 !.github/workflows/release.yml

@@ -40,5 +40,16 @@ COPY . .
 RUN mise trust .mise.toml && mise install --yes
 # End SECTION: mise install
 
+# === SECTION: bootstrap proof (managed) ===
+# Source: template (clean-machine bootstrap through the canonical verb)
+# The image exists to PROVE that a clean machine can bootstrap this project
+# with nothing but the declared toolchain. It therefore runs the canonical
+# setup verb fail-closed: any non-zero status fails the build. An earlier
+# revision wrapped this in `set +e` and soft-passed whenever the output
+# mentioned uv.lock/flext-core, which turned the proof into a bypass -- a
+# broken bootstrap still produced a green image.
+RUN make setup
+# End SECTION: bootstrap proof
+
 ENTRYPOINT []
 CMD ["make", "help"]
