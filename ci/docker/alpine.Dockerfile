@@ -37,21 +37,5 @@ COPY . .
 RUN mise trust .mise.toml && mise install --yes
 # End SECTION: mise install
 
-# === SECTION: bootstrap soft-pass (managed) ===
-# Source: template (external uv.lock/flext-core blocker policy)
-# Bootstrap to the external uv.lock boundary: only the known flext-core lock
-# soft-passes; any real infra failure fails the image build.
-RUN /bin/bash -c 'set +e; \
-    output="$(make setup 2>&1)"; status=$?; \
-    printf "%s\n" "$output"; \
-    if [ "$status" -ne 0 ]; then \
-      if printf "%s" "$output" | grep -qi "uv\.lock\|flext-core"; then \
-        echo "EXTERNAL BLOCKER (flext-core lock) — soft-passing bootstrap"; \
-      else \
-        exit "$status"; \
-      fi; \
-    fi'
-# End SECTION: bootstrap soft-pass
-
 ENTRYPOINT []
 CMD ["/bin/bash", "-lc", "make help"]
