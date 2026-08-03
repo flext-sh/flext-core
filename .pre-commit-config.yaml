@@ -2,11 +2,22 @@
 repos:
   - repo: local
     hooks:
-      - id: flext-canonical-workflow
-        name: FLEXT canonical workflow
+      # Why: fast fixes run before each commit; expensive gates run before push.
+      - id: flext-pre-commit
+        name: FLEXT pre-commit workflow
         language: system
         entry: >-
           bash -eu -o pipefail -c
-          'make gen APPLY=Y && make fmt APPLY=Y && make fix APPLY=Y && make check && make test'
+          'make fmt APPLY=Y && make fix APPLY=Y'
         pass_filenames: false
         always_run: true
+        stages: [pre-commit]
+      - id: flext-pre-push
+        name: FLEXT pre-push workflow
+        language: system
+        entry: >-
+          bash -eu -o pipefail -c
+          'make gen APPLY=Y && make check && make test'
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
