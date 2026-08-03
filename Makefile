@@ -524,13 +524,11 @@ _builtin_help_usage:
 # Computed: workspace-root uses WORKSPACE_MEMBERS from config; standalone discovers
 #           submodules with flext-managed=true from .gitmodules at runtime.
 # Rule: setup PROVISIONS an absent governed gitlink and VERIFIES a present one.
-#       An absent checkout holds no work, so setup clones it and places it on the
-#       declared branch at the recorded gitlink. A present checkout is never
-#       written to: setup is invoked automatically by every verb, so a checkout,
-#       pull, reset or submodule update there would run unattended against
-#       uncommitted work. Divergence is reported with the exact command to run.
-#       Fetch is conditional: when cached origin refs already satisfy the local
-#       merge-base checks, setup skips network I/O so idempotent runs stay cheap.
+#       An absent checkout holds no work, so setup initializes it at the recorded
+#       gitlink. A present checkout is never destroyed: git checkout and git reset
+#       are forbidden. Detached HEAD is attached via branch + symbolic-ref so dirty
+#       work is carried. branch = . follows the superproject named branch (worktree
+#       propagation). Fetch is conditional when cached origin refs already validate.
 # Free: no
 # End SECTION: submodule setup
 _builtin_setup_submodules:
@@ -556,6 +554,19 @@ _builtin_setup_submodules:
 	fi; \
 	managed=$$(printf '%s' "$$managed" | tr ' ' '\n' | sort -u | tr '\n' ' '); \
 	if [ -z "$$managed" ]; then exit 0; fi; \
+	attach_branch_at_head() { \
+		child_root="$$1"; \
+		branch="$$2"; \
+		git -C "$$child_root" branch --quiet -f "$$branch" HEAD || { \
+			printf 'ERROR: %s: could not create branch %s at HEAD\n' "$$child_root" "$$branch" >&2; \
+			exit 1; \
+		}; \
+		git -C "$$child_root" symbolic-ref HEAD "refs/heads/$$branch" || { \
+			printf 'ERROR: %s: could not attach HEAD to %s without moving the tree\n' "$$child_root" "$$branch" >&2; \
+			exit 1; \
+		}; \
+		git -C "$$child_root" branch --quiet --set-upstream-to "origin/$$branch" "$$branch" >/dev/null 2>&1 || :; \
+	}; \
 	validate_submodule() { \
 		superproject="$$1"; \
 		child_path="$$2"; \
@@ -602,17 +613,13 @@ _builtin_setup_submodules:
 				printf 'ERROR: %s: could not initialize the governed gitlink\n' "$$child_path" >&2; \
 				exit 1; \
 			}; \
-			git -C "$$child_root" checkout --quiet -B "$$branch" "$$gitlink" || { \
-				printf 'ERROR: %s: could not place the new checkout on %s at %s\n' "$$child_path" "$$branch" "$$gitlink" >&2; \
-				exit 1; \
-			}; \
-			git -C "$$child_root" branch --quiet --set-upstream-to "origin/$$branch" "$$branch" >/dev/null 2>&1 || :; \
+			attach_branch_at_head "$$child_root" "$$branch"; \
 		fi; \
 		remote_ref="refs/remotes/origin/$$branch"; \
 		current=$$(git -C "$$child_root" branch --show-current); \
 		head=$$(git -C "$$child_root" rev-parse HEAD); \
 		if [ -n "$$current" ] && [ "$$current" != "$$branch" ]; then \
-			printf 'ERROR: %s: conflicting branch %s; expected %s\n' "$$child_path" "$$current" "$$branch" >&2; \
+			printf 'ERROR: %s: conflicting branch %s; expected %s (setup never runs checkout/reset; switch it yourself while keeping dirty)\n' "$$child_path" "$$current" "$$branch" >&2; \
 			exit 1; \
 		fi; \
 		need_fetch=1; \
@@ -638,22 +645,18 @@ _builtin_setup_submodules:
 		current=$$(git -C "$$child_root" branch --show-current); \
 		head=$$(git -C "$$child_root" rev-parse HEAD); \
 		if [ -n "$$current" ] && [ "$$current" != "$$branch" ]; then \
-			printf 'ERROR: %s: conflicting branch %s; expected %s\n' "$$child_path" "$$current" "$$branch" >&2; \
+			printf 'ERROR: %s: conflicting branch %s; expected %s (setup never runs checkout/reset; switch it yourself while keeping dirty)\n' "$$child_path" "$$current" "$$branch" >&2; \
 			exit 1; \
 		fi; \
 		if [ -z "$$current" ]; then \
-			if ! git -C "$$child_root" merge-base --is-ancestor "$$head" "refs/remotes/origin/$$branch"; then \
+			if ! git -C "$$child_root" merge-base --is-ancestor "$$head" "$$remote_ref"; then \
 				printf 'ERROR: %s: detached HEAD %s is not contained in origin/%s; reconcile it yourself (setup never discards commits)\n' "$$child_path" "$$head" "$$branch" >&2; \
 				exit 1; \
 			fi; \
-			git -C "$$child_root" checkout --quiet -B "$$branch" "$$head" || { \
-				printf 'ERROR: %s: could not attach detached HEAD %s to %s\n' "$$child_path" "$$head" "$$branch" >&2; \
-				exit 1; \
-			}; \
-			git -C "$$child_root" branch --quiet --set-upstream-to "origin/$$branch" "$$branch" >/dev/null 2>&1 || :; \
+			attach_branch_at_head "$$child_root" "$$branch"; \
 			current="$$branch"; \
 		fi; \
-		if ! git -C "$$child_root" merge-base --is-ancestor "$$gitlink" "refs/remotes/origin/$$branch"; then \
+		if ! git -C "$$child_root" merge-base --is-ancestor "$$gitlink" "$$remote_ref"; then \
 			printf 'ERROR: %s: origin/%s diverges from recorded gitlink %s\\n' "$$child_path" "$$branch" "$$gitlink" >&2; \
 			exit 1; \
 		fi; \
