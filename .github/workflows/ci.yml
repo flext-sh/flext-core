@@ -75,4 +75,30 @@ jobs:
       - name: test (blocking)
         run: make test
 
+      - name: Dump reports on failure
+        if: ${{ failure() }}
+        run: |
+          set -eu
+          for f in .reports/workspace/test/*.log; do
+            [ -f "$f" ] || continue
+            echo "::group::workspace $(basename "$f")"
+            tail -n 200 "$f"
+            echo "::endgroup::"
+          done
+          for f in apps/*/.reports/tests/*/pytest.log .reports/tests/*/pytest.log; do
+            [ -f "$f" ] || continue
+            echo "::group::$f"
+            tail -n 200 "$f"
+            echo "::endgroup::"
+          done
+      - name: Upload reports on failure
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: flext-ci-reports-${{ github.run_id }}
+          path: |
+            .reports/**
+            apps/*/.reports/**
+          if-no-files-found: ignore
+          retention-days: 7
     # End SECTION: ci job
