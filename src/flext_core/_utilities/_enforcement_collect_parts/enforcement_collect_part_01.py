@@ -16,6 +16,16 @@ from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine a
 from flext_core._utilities.enforcement_emit import FlextUtilitiesEnforcementEmit
 from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata as upm
 
+_ERR_ENFORCEMENT_NAMESPACE_METADATA = (
+    "Cannot read project metadata for enforcement namespace resolution"
+)
+_ERR_ENFORCEMENT_CLASS_STEM_METADATA = (
+    "Cannot read project metadata for enforcement class stem override"
+)
+_ERR_ENFORCEMENT_NAMESPACE_SOURCE = (
+    "Cannot inspect target source module for namespace resolution"
+)
+
 
 class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
     """Project resolution + rule-input iterators."""
@@ -23,13 +33,12 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
     @staticmethod
     def _owning_project_root(target: type) -> Path | None:
         """Return the pyproject root that physically owns the target source."""
-        try:
-            src_file = inspect.getsourcefile(target)
-        except (OSError, TypeError):
+        source_file = FlextUtilitiesEnforcementCollect._resolve_target_source_file(
+            target
+        )
+        if source_file is None:
             return None
-        if src_file is None:
-            return None
-        source = Path(src_file).resolve()
+        source = source_file.resolve()
         top = (getattr(target, "__module__", "") or "").split(".", 1)[0]
         if not top:
             return None
@@ -49,6 +58,17 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         return None
 
     @staticmethod
+    def _resolve_target_source_file(target: type) -> Path | None:
+        """Resolve target source file path with explicit error semantics."""
+        try:
+            src_file = inspect.getsourcefile(target)
+        except (OSError, TypeError) as exc:
+            raise RuntimeError(_ERR_ENFORCEMENT_NAMESPACE_SOURCE) from exc
+        if src_file is None:
+            return None
+        return Path(src_file)
+
+    @staticmethod
     def _discover_src_package(target: type) -> str | None:
         """Return the package owned by the target's physical project root.
 
@@ -57,17 +77,22 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         and ``OSError`` when the source file cannot be read; both produce
         ``None`` here so the dispatcher cleanly skips the target.
         """
-        project_root = FlextUtilitiesEnforcementCollect._owning_project_root(target)
+        try:
+            project_root = FlextUtilitiesEnforcementCollect._owning_project_root(target)
+        except RuntimeError:
+            return None
         if project_root is None:
             return None
         top = (getattr(target, "__module__", "") or "").split(".", 1)[0]
         if (project_root / "src" / top).is_dir() or (project_root / top).is_dir():
             return top
-        metadata_result = upm.read_project_metadata(project_root)
-        if metadata_result.failure:
+        try:
+            document = upm.read_project_document_cached(project_root)
+        except (OSError, ValueError) as exc:
+            raise RuntimeError(_ERR_ENFORCEMENT_NAMESPACE_METADATA) from exc
+        if document.project is None:
             return None
-        package_name: str = metadata_result.value.package_name
-        return package_name
+        return upm.build_project_metadata(project_root, document).package_name
 
     @staticmethod
     def _project(target: type) -> t.StrPair | None:
@@ -85,12 +110,12 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
             class_stem_override = None
             project_root = FlextUtilitiesEnforcementCollect._owning_project_root(target)
             if project_root is not None:
-                metadata_result = upm.read_project_metadata(project_root)
-                if metadata_result.failure:
-                    return None
-                class_stem_override = (
-                    metadata_result.value.flext.project.class_stem_override
-                )
+                try:
+                    document = upm.read_project_document_cached(project_root)
+                except (OSError, ValueError) as exc:
+                    raise RuntimeError(_ERR_ENFORCEMENT_CLASS_STEM_METADATA) from exc
+                metadata = upm.build_project_metadata(project_root, document)
+                class_stem_override = metadata.flext.project.class_stem_override
         canonical_project_name = src.replace("_", "-")
         head, _, tail = canonical_project_name.partition("-")
         namespace = upm.derive_class_stem(tail or head)

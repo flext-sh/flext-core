@@ -32,7 +32,7 @@ class TestsFlextLoggings:
     """Behavior contract for FlextUtilitiesLogging public API: create, bind, log, track, strict returns."""
 
     @classmethod
-    def _assert_log_output[TResult: p.ResultLike[bool] | None](
+    def _assert_log_output[TResult: p.Result[bool] | None](
         cls,
         emit: Callable[[], TResult],
         *,
@@ -131,7 +131,7 @@ class TestsFlextLoggings:
     def test_performance_tracker_context_manager_completes_without_error(
         self, logger: p.Logger
     ) -> None:
-        def emit() -> p.ResultLike[bool] | None:
+        def emit() -> p.Result[bool] | None:
             with u.PerformanceTracker(logger, "operation_under_test"):
                 nonlocal result
                 result = 1 + 1

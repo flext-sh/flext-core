@@ -189,7 +189,7 @@ class FlextSettings(BaseSettings):
 
     debug: Annotated[bool, Field(description="Enable debug mode")] = False
     trace: Annotated[bool, Field(description="Enable trace mode")] = False
-    log_level: Annotated[str, Field(default="INFO", description="Log level")]
+    log_level: str = Field(default="INFO", description="Log level")
     timezone: Annotated[
         str, Field(description="IANA timezone for datetime operations")
     ] = "UTC"

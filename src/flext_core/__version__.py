@@ -47,11 +47,12 @@ class _FlextVersionMetadata:
         if homepage := package_metadata.get("Home-Page", ""):
             return homepage
         for project_url in package_metadata.get_all("Project-URL") or ():
-            label, separator, url = project_url.partition(",")
+            project_url_text = str(project_url)
+            label, separator, url = project_url_text.partition(",")
             if label.strip().casefold() != "homepage":
                 continue
             if not separator or not url.strip():
-                msg = f"invalid Homepage project URL metadata: {project_url!r}"
+                msg = f"invalid Homepage project URL metadata: {project_url_text!r}"
                 raise ValueError(msg)
             return url.strip()
         return ""

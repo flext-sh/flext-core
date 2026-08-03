@@ -49,7 +49,10 @@ class FlextUtilitiesPydantic:
     PrivateAttr = staticmethod(PrivateAttr)
     SkipValidation = SkipValidation
 
-    computed_field = computed_field
+    # Same unwrapped-class-attribute problem as Field/PrivateAttr above:
+    # pyright binds the bare decorator through the facade and infers the
+    # facade type for every decorated property (reportIndexIssue downstream).
+    computed_field = staticmethod(computed_field)
     field_validator = field_validator
     field_serializer = field_serializer
     model_validator = model_validator

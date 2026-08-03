@@ -134,6 +134,8 @@ class TestsFlextProtocols(p):
                 """Map source dictionary keys under the requested policy."""
                 ...
 
+    SuccessCheckable = p.SuccessCheckable
+
 
 p = TestsFlextProtocols
 __all__: list[str] = ["TestsFlextProtocols", "p"]

@@ -28,7 +28,7 @@ def _adapt_dispatcher_output(
         result = dispatch_result.fail_op(
             "validate handler return payload", c.ERR_HANDLER_RETURNED_NONE
         )
-    elif isinstance(raw_output, p.ResultLike):
+    elif isinstance(raw_output, p.Result):
         if raw_output.failure:
             result = dispatch_result.from_failure(raw_output)
         else:
@@ -57,7 +57,7 @@ def _adapt_dispatcher_output(
 
 
 def _normalize_dispatcher_output(
-    raw_candidate: t.JsonPayload | p.ResultLike[t.JsonPayload] | None,
+    raw_candidate: t.JsonPayload | p.Result[t.JsonPayload] | None,
     dispatch_result: type[r[t.JsonPayload]],
 ) -> t.JsonPayload | p.Result[t.JsonPayload] | None:
     if isinstance(raw_candidate, r):

@@ -1,95 +1,3 @@
-# BLOCK EVERYTHING BY DEFAULT
-/*
-/*/
-!/LICENSE
-
-# WHITELIST: Workspace Directories
-!docker/
-!docs/
-!examples/
-!.github/
-!src/
-!tests/
-!typings/
-!libs/
-!.vscode/
-!.code-review-graph/
-!.claude/
-!.claude-plugin/
-!/config/
-!.claude/CLAUDE.md
-!.claude/settings.json
-!.claude/settings.local.json
-!.agents/
-!.agents/**
-.agents/skills/*/report.json
-
-# Dispatcher-based command surface (Make SSOT)
-!scripts/
-!scripts/cmd/
-!scripts/cmd/**
-scripts/*.py
-scripts/*.sh
-scripts/*.md
-!scripts/dispatch.py
-!scripts/__init__.py
-
-# Python configuration
-!pyproject.toml
-!.taplo.toml
-!pyrefly.toml
-!poetry.lock
-!uv.lock
-!ruff-shared.toml
-
-# mise toolchain pinning
-!.mise.toml
-!.default-python-packages
-!.python-version
-
-# Docker configuration
-!.dockerignore
-
-# Build and automation
-!Makefile
-!Makefile.flext-docker
-!*.mk
-
-# Documentation
-!README.md
-!AGENTS.md
-!AGENTS.md
-!codex.md
-!.markdownlint.json
-!.markdownlintignore
-!.shellcheckrc
-
-# Git configuration
-!.gitignore
-!.gitattributes
-
-# direnv environment (no secrets — venv activation only)
-!.envrc
-!.envrc.local
-
-# Environment templates (NOT .env - keep secrets out!)
-!.env.test
-!.env.example
-!.env.template
-
-# WHITELIST: Contents Inside Allowed Directories
-!docker/**
-!docs/**
-!examples/**
-!.github/**
-!src/**
-!tests/**
-!typings/**
-!libs/**
-!.vscode/**
-!.claude/**
-!.claude-plugin/**
-
 # BLOCK: AI/Agent Local Data (NEVER track these)
 .claude/*
 !.agents/skills/
@@ -280,21 +188,30 @@ secrets.yml
 .devcontainer/.env
 .github/*.rej
 
-# --- workspace-migrate: required ignores (auto-managed) ---
+# --- codegen conform: tracked owner inputs ---
 !base.mk
 
 # FINAL BEADS TRACKING POLICY
+!.beads/
+.beads/*
+.beads/.*
+!.beads/config.yaml
+.beads/proxieddb/
+.dolt/
 *.db
+.beads-credential-key
 .worktrees/
 legado/
 
 # codegen module-standardizer reject artifacts (ADR-005 §9)
 *.tpl.rej
 
-# --- workspace-sync: required ignores (auto-managed) ---
+# --- codegen conform: generated runtime ignores ---
 .direnv/
 .reports/
 .venv/
+.bin/
+.tools/
 __pycache__/
 base.mk
 !.pre-commit-config.yaml
@@ -302,6 +219,7 @@ base.mk
 # Derived build and tool artifacts
 __pyrefly_virtual__/
 .benchmarks/
+.bkp/
 .cache/
 .codegraph/
 .dolt_dropped_databases/
@@ -329,7 +247,6 @@ site/
 target/
 .pyrefly_cache/
 .tox/
-.flext-deps/
 .flext-sync.lock
 .sync.lock
 .planning/
@@ -337,3 +254,36 @@ skill-create-output/
 .debug-journal.md
 .mcp.json
 CLAUDE.local.md
+
+# Tracked managed artifacts
+!.github/ci-template/
+!.github/ci-template/ci.yml
+!.github/copilot-instructions.md
+!.github/dependabot.yml
+!.github/prompts/
+!.github/prompts/flext-aggressive-scale-refactor.prompt.md
+!.github/prompts/flext-strict-jsonvalue-session-continuation.prompt.md
+!.github/scripts/
+!.github/scripts/check-beads-policy.sh
+!.github/scripts/check-cqrs-compliance.sh
+!.github/scripts/flext-law-loop.sh
+!.github/scripts/install-git-hooks.sh
+!tests/fixtures/
+!tests/fixtures/ci/
+!tests/fixtures/ci/docker/
+!tests/fixtures/ci/docker/alpine.Dockerfile
+!tests/fixtures/ci/docker/arch.Dockerfile
+!tests/fixtures/ci/docker/debian.Dockerfile
+!tests/fixtures/ci/docker/fedora.Dockerfile
+!tests/fixtures/ci/docker/ubuntu.Dockerfile
+!.github/workflows/
+!.github/workflows/ci-matrix.yml
+!.github/workflows/ci.yml
+!.github/workflows/docs.yml
+!.github/workflows/release.yml
+!sgconfig.yml
+!.vscode/settings.json
+!LICENSE
+!config/
+!config/workspace.yaml
+!custom.mk

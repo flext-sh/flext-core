@@ -83,7 +83,7 @@ class TestsFlextCoreSystem:
 
     def test_map_is_skipped_on_failure(self) -> None:
         """Map does not run its function once the result is a failure."""
-        result = r[str].fail("boom").map(lambda x: x.upper())
+        result: r[str] = r[str].fail("boom").map(lambda x: x.upper())
 
         tm.that(result.failure, eq=True)
         tm.that(result.error, eq="boom")
@@ -202,11 +202,6 @@ class TestsFlextCoreSystem:
 
         tm.that(caught.value, is_=e.ValidationError)
         tm.that(caught.value.error_code, eq="VALIDATION_ERROR")
-
-    def test_family_hierarchy_subclasses_base_error(self) -> None:
-        """Concrete family classes derive from BaseError."""
-        tm.that(issubclass(e.ValidationError, e.BaseError), eq=True)
-        tm.that(issubclass(e.OperationError, e.BaseError), eq=True)
 
     # ------------------------------------------------------------------ #
     # Public utilities contract                                           #

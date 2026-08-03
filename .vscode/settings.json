@@ -13,8 +13,7 @@
   "shellcheck.useWorkspaceRootAsCwd": true,
   "python-envs.workspaceSearchPaths": [
     "./.venv",
-    "./*/.venv",
-    "./apps/*/.venv"
+    "./*/.venv"
   ],
   "files.exclude": {
     "**/__pycache__": true,
@@ -51,7 +50,11 @@
     "**/dist": true,
     "**/node_modules": true,
     "**/site": true,
-    "**/target": true
+    "**/target": true,
+    "**/.archive": true,
+    "**/.bin": true,
+    "**/.tools": true,
+    "**/.bkp": true
   },
   "files.watcherExclude": {
     "**/__pycache__/**": true,
@@ -89,7 +92,11 @@
     "**/build/**": true,
     "**/dist/**": true,
     "**/node_modules/**": true,
-    "**/target/**": true
+    "**/target/**": true,
+    "**/.archive/**": true,
+    "**/.bin/**": true,
+    "**/.tools/**": true,
+    "**/.bkp/**": true
   },
   "search.exclude": {
     "**/__pycache__": true,
@@ -126,7 +133,11 @@
     "**/dist": true,
     "**/node_modules": true,
     "**/site": true,
-    "**/target": true
+    "**/target": true,
+    "**/.archive": true,
+    "**/.bin": true,
+    "**/.tools": true,
+    "**/.bkp": true
   },
   "python.analysis.diagnosticSeverityOverrides": {
     "reportUntypedBaseClass": "none"

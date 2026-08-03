@@ -121,7 +121,10 @@ class FlextModelsPydantic:
     # function class attribute called through the facade (mixins.py:59 error).
     PrivateAttr = staticmethod(PrivateAttr)
     SkipValidation = SkipValidation
-    computed_field = computed_field
+    # Same unwrapped-class-attribute problem as PrivateAttr above: pyright
+    # binds the bare decorator through the facade and infers the facade type
+    # for every decorated property (reportIndexIssue on real consumers).
+    computed_field = staticmethod(computed_field)
     field_validator = field_validator
 
     # Annotation validators

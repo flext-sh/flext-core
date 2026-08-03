@@ -10,8 +10,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_core import c, m
-from flext_core.result import r
+from flext_core import c, m, r
 
 if TYPE_CHECKING:
     from flext_core import p, t

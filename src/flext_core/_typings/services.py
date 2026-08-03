@@ -62,6 +62,7 @@ class FlextTypesServices:
     type MutableMetadataMapping = MutableMapping[str, JsonPayload]
     type RuntimeData = tp.JsonValue | tp.BaseModelType
     type BootstrapInput = tp.BaseModelType | t.JsonMapping
+    type ServiceClass = type[object]
     type ServiceValue = (
         JsonPayload
         | tp.BaseModelType
@@ -71,7 +72,11 @@ class FlextTypesServices:
         | ph.Dispatcher
     )
     type UserOverridesMapping = t.MappingKV[str, JsonPayload]
-    type RegisterableService = ServiceValue | Callable[..., ServiceValue]
+    # Keep registerable-service shape to a single top-level union in this layer.
+    # This avoids ``no_inline_union`` violations while preserving the contract
+    # that services may be values, factories, or class references.
+    type RegisterableServiceValue = ServiceValue | Callable[..., ServiceValue]
+    type RegisterableService = RegisterableServiceValue | ServiceClass
     type FactoryCallable = Callable[[], RegisterableService]
     type ResourceCallable = Callable[[], RegisterableService]
     type ModelInput = tp.JsonValue | prt.HasModelDump | t.MappingKV[str, JsonPayload]
@@ -83,9 +88,7 @@ class FlextTypesServices:
     type ContextHookCallable = Callable[[t.Scalar], JsonPayload]
     type ContextHookMap = t.MappingKV[str, t.SequenceOf[ContextHookCallable]]
 
-    type HandlerCallable = Callable[
-        ..., tp.BaseModelType | prt.ResultLike[ScalarOrModel]
-    ]
+    type HandlerCallable = Callable[..., tp.BaseModelType | prt.Result[ScalarOrModel]]
     type DispatchableHandler = (
         tp.BaseModelType
         | ph.DispatchMessage
@@ -93,14 +96,15 @@ class FlextTypesServices:
         | ph.Execute
         | ph.AutoDiscoverableHandler
         | Callable[
-            ..., tp.BaseModelType | JsonPayload | prt.ResultLike[JsonPayload] | None
+            [p.Routable],
+            tp.BaseModelType | JsonPayload | prt.Result[JsonPayload] | None,
         ]
     )
     type ResolvedHandlerCallable = Callable[
-        ..., tp.BaseModelType | JsonPayload | prt.ResultLike[JsonPayload] | None
+        ..., tp.BaseModelType | JsonPayload | prt.Result[JsonPayload] | None
     ]
     type RoutedHandlerCallable = Callable[
-        [p.Routable], JsonPayload | prt.ResultLike[JsonPayload] | None
+        [p.Routable], JsonPayload | prt.Result[JsonPayload] | None
     ]
     type RegistrablePlugin = ScalarOrModel | Callable[..., ScalarOrModel]
     type LoggerFactory = Callable[..., pl.OutputLogger] | None
@@ -168,7 +172,7 @@ class FlextTypesServices:
         | prt.HasModelDump
         | pr.Registry
         | p.Model
-        | prt.ResultLike[JsonPayload]
+        | prt.Result[JsonPayload]
         | ps.Settings
         | RegisterableService
         | t.SequenceOf[JsonPayload]

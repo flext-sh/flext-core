@@ -42,8 +42,8 @@ class TestsFlextCoreResultCallablesFold:
         def double(x: int) -> p.Result[int]:
             return r[int].ok(x * 2)
 
-        final = r[int].ok(5).flow_through(add_one, double)
-        value = tm.ok(final)
+        final: r[int] = r[int].ok(5).flow_through(add_one, double)
+        value: int = tm.ok(final)
         tm.that(value, eq=12)
 
     def test_flow_through_short_circuits_on_first_failure(self) -> None:
@@ -73,8 +73,8 @@ class TestsFlextCoreResultCallablesFold:
         def produce() -> str:
             return "success"
 
-        result = r.create_from_callable(produce)
-        value = tm.ok(result)
+        result: r[str] = r.create_from_callable(produce)
+        value: str = tm.ok(result)
         tm.that(value, eq="success")
 
     def test_create_from_callable_none_return_is_failure(self) -> None:

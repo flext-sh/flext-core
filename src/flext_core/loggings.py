@@ -18,6 +18,7 @@ from flext_core import (
     FlextExceptions as e,
     FlextProtocols as p,
     FlextTypes as t,
+    r,
 )
 from flext_core._constants.errors import FlextConstantsErrors as ce
 from flext_core._constants.logging import FlextConstantsLogging as cl
@@ -25,7 +26,6 @@ from flext_core._exceptions.factories import FlextExceptionsFactories as ef
 from flext_core._models.containers import FlextModelsContainers as mc
 from flext_core._utilities.generators import FlextUtilitiesGenerators as ug
 from flext_core._utilities.logging_context import FlextUtilitiesLoggingContext as ulc
-from flext_core.result import FlextResult as r
 
 if TYPE_CHECKING:
     import types

@@ -15,8 +15,8 @@ class ExamplesFlextTypes(FlextTypes):
             t.JsonPayload
             | t.ScalarOrModel
             | m.ConfigMap
-            | p.ResultLike[t.JsonPayload]
-            | p.ResultLike[t.JsonValue]
+            | p.Result[t.JsonPayload]
+            | p.Result[t.JsonValue]
         )
 
 

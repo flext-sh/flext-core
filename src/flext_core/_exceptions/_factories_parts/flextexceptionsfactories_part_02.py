@@ -17,7 +17,7 @@ from .flextexceptionsfactories_part_01 import (
 )
 
 if TYPE_CHECKING:
-    from flext_core.result import FlextResult
+    from flext_core import r
 
 
 class FlextExceptionsFactories(FlextExceptionsFactoriesPart01):
@@ -27,7 +27,7 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart01):
         actual: str | None = None,
         *,
         error_code: str | None = None,
-        result_type: type[FlextResult[TResult]] | None = None,
+        result_type: type[r[TResult]] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical type-mismatch message.
 
@@ -69,7 +69,7 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart01):
         *,
         error_code: str | None = None,
         error: Exception | str | None = None,
-        result_type: type[FlextResult[TResult]] | None = None,
+        result_type: type[r[TResult]] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical validation-failed message.
 
@@ -117,7 +117,7 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart01):
         config_source: str | None = None,
         *,
         options: m.ExceptionFactoryOptions | None = None,
-        result_type: type[FlextResult[TResult]] | None = None,
+        result_type: type[r[TResult]] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical configuration-error message.
 

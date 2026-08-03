@@ -101,7 +101,7 @@ class TestsFlextCoreResult:
 
     def test_map_error_rewrites_error_message(self) -> None:
         """map_error transforms the error text on failure only."""
-        rewritten = r[int].fail("raw").map_error(lambda e: f"wrapped:{e}")
+        rewritten: r[int] = r[int].fail("raw").map_error(lambda e: f"wrapped:{e}")
 
         tm.fail(rewritten, has="wrapped:raw")
 
@@ -148,7 +148,7 @@ class TestsFlextCoreResult:
     def test_tap_error_runs_only_on_failure(self) -> None:
         """tap_error observes the error and returns the result intact."""
         seen: list[str] = []
-        result = r[int].fail("bad").tap_error(seen.append)
+        result: r[int] = r[int].fail("bad").tap_error(seen.append)
 
         tm.fail(result, has="bad")
         tm.that(seen, eq=["bad"])
@@ -164,8 +164,8 @@ class TestsFlextCoreResult:
 
     def test_type_guards_classify_results(self) -> None:
         """successful_result / failed_result guard by observable outcome."""
-        ok_result = r[int].ok(1)
-        fail_result = r[int].fail("e")
+        ok_result: r[int] = r[int].ok(1)
+        fail_result: r[int] = r[int].fail("e")
 
         tm.that(r.successful_result(ok_result), eq=True)
         tm.that(r.failed_result(ok_result), eq=False)
@@ -176,3 +176,20 @@ class TestsFlextCoreResult:
         """Result instances honor the structural p.SuccessCheckable contract."""
         assert isinstance(r[int].ok(1), p.SuccessCheckable)
         assert isinstance(r[int].fail("e"), p.SuccessCheckable)
+
+    def test_ok_accepts_none_payload_as_successful_result(self) -> None:
+        """Success with no payload is a legitimate state, not an error."""
+        result: p.Result[None] = r[None].ok(None)
+
+        tm.that(result.success, eq=True)
+        tm.that(result.failure, eq=False)
+        tm.that(result.error, eq=None)
+        tm.that(result.value, eq=None)
+
+    def test_none_payload_result_unwraps_and_transforms(self) -> None:
+        """A None payload flows through unwrap and transform surfaces."""
+        result: p.Result[None] = r[None].ok(None)
+
+        tm.that(result.unwrap(), eq=None)
+        tm.that(result.unwrap_or(7), eq=None)
+        tm.ok(result.map(lambda _: 3), eq=3)

@@ -92,9 +92,11 @@ class TestsFlextCoreVersion:
         package_metadata = PathDistribution(distribution_path).metadata
 
         with pytest.raises(ValueError, match="three-part semantic version"):
-
-            class InvalidVersionContract(FlextVersion):
-                _metadata: PackageMetadata = package_metadata
+            type(
+                "InvalidVersionContract",
+                (FlextVersion,),
+                {"_metadata": package_metadata},
+            )
 
     def test_metadata_attributes_are_populated_strings(self) -> None:
         """Package metadata fields are populated and use the canonical title."""
