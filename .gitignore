@@ -76,6 +76,14 @@ fix-report.json
 **/coverage.xml
 **/*.cover
 
+# Docs verb report artifacts inside docs trees
+**/docs/generate-report.md
+**/docs/generate-summary.json
+**/docs/fix-report.md
+**/docs/fix-summary.json
+**/docs/audit-report.md
+**/docs/audit-summary.json
+
 # Virtual environments inside allowed directories (should never be committed)
 **/.venv/
 **/venv/
