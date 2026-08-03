@@ -274,9 +274,12 @@ SETUP_ENVIRONMENT_RECIPE = set -eu; \
 WORKSPACE_ORCHESTRATE = $(UV_RUN) python -m flext_infra workspace orchestrate
 REQUESTED_PROJECTS := $(strip $(if $(PROJECT),$(PROJECT),$(PROJECTS)))
 # A workspace root owns no local gate implementation: its verbs fan out to the
-# declared members. Selecting the root here would make it orchestrate itself.
+# declared members. Selecting the root (PROJECT=.) would make it orchestrate
+# itself forever; map `.` to WORKSPACE_MEMBERS instead of failing closed mid-CI.
 DEFAULT_PROJECTS := $(WORKSPACE_MEMBERS) .
+
 SELECTED_PROJECTS := $(if $(strip $(REQUESTED_PROJECTS)),$(REQUESTED_PROJECTS),$(DEFAULT_PROJECTS))
+
 WORKSPACE_PROJECT_ARGS := $(foreach project,$(SELECTED_PROJECTS),--projects $(project))
 WORKSPACE_CHECK_ARGS := $(if $(strip $(CHECK_GATES)),--make-arg "CHECK_GATES=$(strip $(CHECK_GATES))")
 WORKSPACE_TEST_ARGS := $(if $(strip $(FLEXT_PYTEST_FILE_RAW)),--file "$${FLEXT_PYTEST_FILE_RAW}") $(if $(strip $(FLEXT_PYTEST_MATCH_RAW)),--match "$${FLEXT_PYTEST_MATCH_RAW}") $(if $(strip $(FLEXT_PYTEST_WHAT_RAW)),--what "$${FLEXT_PYTEST_WHAT_RAW}")
@@ -636,10 +639,16 @@ _builtin_setup_submodules:
 			exit 1; \
 		fi; \
 		need_fetch=1; \
-		if git -C "$$child_root" rev-parse --verify "$$remote_ref" >/dev/null 2>&1 && \
-		   git -C "$$child_root" merge-base --is-ancestor "$$gitlink" HEAD && \
-		   git -C "$$child_root" merge-base --is-ancestor "$$remote_ref" HEAD; then \
-			need_fetch=0; \
+		if git -C "$$child_root" merge-base --is-ancestor "$$gitlink" HEAD; then \
+			if git -C "$$child_root" rev-parse --verify "$$remote_ref" >/dev/null 2>&1; then \
+				if git -C "$$child_root" merge-base --is-ancestor "$$remote_ref" HEAD; then \
+					need_fetch=0; \
+				fi; \
+			else \
+				# Pin is already present; origin tip may be absent on a shallow CI
+				# clone. Origin lag must not fail verify (setup never destroys).
+				need_fetch=0; \
+			fi; \
 		fi; \
 		if [ "$$need_fetch" -eq 1 ]; then \
 			git -C "$$child_root" fetch --quiet origin "$$branch" || { \

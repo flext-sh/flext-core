@@ -28,6 +28,11 @@ permissions:
   contents: read
 # End SECTION: permissions
 
+# Why: one active run per workflow and branch prevents obsolete CI from consuming runners.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # === SECTION: ci job (managed) ===
   # Source: template + config:github_actions.*
@@ -45,8 +50,9 @@ jobs:
           submodules: false
           fetch-depth: 0
 
+
       - name: Install mise toolchain
-        uses: jdx/mise-action@dba19683ed58901619b14f395a24841710cb4925  # v4.1.0
+        uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14  # v4.2.3
 
       - name: Install uv
         uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9  # v9.0.0
@@ -56,13 +62,13 @@ jobs:
         run: make setup
 
       - name: gen (blocking)
-        run: make gen APPLY=Y
+        run: make gen WHAT=apply APPLY=Y
 
       - name: fmt (blocking)
-        run: make fmt APPLY=Y
+        run: make fmt WHAT=apply APPLY=Y
 
       - name: fix (blocking)
-        run: make fix APPLY=Y
+        run: make fix WHAT=apply APPLY=Y
 
       - name: check (blocking)
         run: make check
