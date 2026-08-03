@@ -322,16 +322,24 @@ define _dispatch
 	case "$$what" in \
 		*[!a-z0-9_-]*|'') printf 'ERROR: invalid WHAT selector %s\n' "$$what" >&2; exit 2 ;; \
 	esac; \
-	case " $(_ALLOWED_WHATS_$(1)) " in \
-		*" $$what "*) ;; \
-		*) printf 'ERROR: unsupported %s WHAT=%s (allowed:%s)\n' "$(1)" "$$what" "$(_ALLOWED_WHATS_$(1))" >&2; exit 2 ;; \
-	esac; \
+	custom="_custom_$(1)_$$what"; \
+	$(SELF_MAKE) -q "$$custom" >/dev/null 2>&1; custom_rc=$$?; \
+	if [ "$$custom_rc" -eq 2 ]; then \
+		case " $(_ALLOWED_WHATS_$(1)) " in \
+			*" $$what "*) ;; \
+			*) printf 'ERROR: unsupported %s WHAT=%s (allowed:%s)\n' "$(1)" "$$what" "$(_ALLOWED_WHATS_$(1))" >&2; exit 2 ;; \
+		esac; \
+	fi; \
 	builtin="_builtin_$(1)_$$what"; \
 	for hook in "pre-$(1)" "pre-$(1)-$$what"; do \
 		$(SELF_MAKE) -q "$$hook" >/dev/null 2>&1; rc=$$?; \
 		if [ "$$rc" -ne 2 ]; then $(SELF_MAKE) "$$hook" || exit $$?; fi; \
 	done; \
-	$(SELF_MAKE) "$$builtin" || exit $$?; \
+	if [ "$$custom_rc" -ne 2 ]; then \
+		$(SELF_MAKE) "$$custom" || exit $$?; \
+	else \
+		$(SELF_MAKE) "$$builtin" || exit $$?; \
+	fi; \
 	for hook in "post-$(1)-$$what" "post-$(1)"; do \
 		$(SELF_MAKE) -q "$$hook" >/dev/null 2>&1; rc=$$?; \
 		if [ "$$rc" -ne 2 ]; then $(SELF_MAKE) "$$hook" || exit $$?; fi; \
@@ -505,8 +513,9 @@ _builtin_help_usage:
 	@printf '\n%s\n' 'Custom hooks (custom.mk):';
 	@printf '  %s\n' 'Define pre-<verb>, post-<verb>, pre-<verb>-<what>, post-<verb>-<what>';
 	@printf '  %s\n' 'in custom.mk to wrap one declared handler.';
+	@printf '  %s\n' 'Add _custom_<verb>_<what> to define a new WHAT.';
 	@if [ -f custom.mk ]; then \
-		hooks=$$(grep -oE '^(pre|post)-[a-z][a-z0-9-]*' custom.mk 2>/dev/null | sort -u); \
+		hooks=$$(grep -oE '^(pre|post)-[a-z][a-z0-9-]*|^_custom_[a-z][a-z0-9_-]*' custom.mk 2>/dev/null | sort -u); \
 		if [ -n "$$hooks" ]; then \
 			printf '  %s\n' 'Defined in this project:'; \
 			for hook in $$hooks; do printf '    %s\n' "$$hook"; done; \
@@ -527,8 +536,10 @@ _builtin_help_usage:
 #       An absent checkout holds no work, so setup initializes it at the recorded
 #       gitlink. A present checkout is never destroyed: git checkout and git reset
 #       are forbidden. Detached HEAD is attached via branch + symbolic-ref so dirty
-#       work is carried. branch = . follows the superproject named branch (worktree
-#       propagation). Fetch is conditional when cached origin refs already validate.
+#       work is carried. Pin validity is HEAD contains gitlink — origin may lag the
+#       pin without failing verify. Declared branch is the named integration line;
+#       legacy branch=. still resolves to the superproject named branch if present.
+#       Fetch skips when local already contains pin and origin tip.
 # Free: no
 # End SECTION: submodule setup
 _builtin_setup_submodules:
@@ -623,18 +634,10 @@ _builtin_setup_submodules:
 			exit 1; \
 		fi; \
 		need_fetch=1; \
-		if git -C "$$child_root" rev-parse --verify "$$remote_ref" >/dev/null 2>&1; then \
-			cached_ok=1; \
-			if [ -z "$$current" ]; then \
-				if ! git -C "$$child_root" merge-base --is-ancestor "$$head" "$$remote_ref"; then \
-					cached_ok=0; \
-				fi; \
-			fi; \
-			if [ "$$cached_ok" -eq 1 ] && \
-			   git -C "$$child_root" merge-base --is-ancestor "$$gitlink" "$$remote_ref" && \
-			   git -C "$$child_root" merge-base --is-ancestor "$$gitlink" HEAD; then \
-				need_fetch=0; \
-			fi; \
+		if git -C "$$child_root" rev-parse --verify "$$remote_ref" >/dev/null 2>&1 && \
+		   git -C "$$child_root" merge-base --is-ancestor "$$gitlink" HEAD && \
+		   git -C "$$child_root" merge-base --is-ancestor "$$remote_ref" HEAD; then \
+			need_fetch=0; \
 		fi; \
 		if [ "$$need_fetch" -eq 1 ]; then \
 			git -C "$$child_root" fetch --quiet origin "$$branch" || { \
@@ -649,19 +652,19 @@ _builtin_setup_submodules:
 			exit 1; \
 		fi; \
 		if [ -z "$$current" ]; then \
-			if ! git -C "$$child_root" merge-base --is-ancestor "$$head" "$$remote_ref"; then \
-				printf 'ERROR: %s: detached HEAD %s is not contained in origin/%s; reconcile it yourself (setup never discards commits)\n' "$$child_path" "$$head" "$$branch" >&2; \
+			if git -C "$$child_root" merge-base --is-ancestor "$$gitlink" HEAD; then \
+				attach_branch_at_head "$$child_root" "$$branch"; \
+			elif git -C "$$child_root" rev-parse --verify "$$remote_ref" >/dev/null 2>&1 && \
+			     git -C "$$child_root" merge-base --is-ancestor "$$head" "$$remote_ref"; then \
+				attach_branch_at_head "$$child_root" "$$branch"; \
+			else \
+				printf 'ERROR: %s: detached HEAD %s is not on the recorded gitlink and not contained in origin/%s; reconcile it yourself (setup never discards commits)\n' "$$child_path" "$$head" "$$branch" >&2; \
 				exit 1; \
 			fi; \
-			attach_branch_at_head "$$child_root" "$$branch"; \
 			current="$$branch"; \
 		fi; \
-		if ! git -C "$$child_root" merge-base --is-ancestor "$$gitlink" "$$remote_ref"; then \
-			printf 'ERROR: %s: origin/%s diverges from recorded gitlink %s\\n' "$$child_path" "$$branch" "$$gitlink" >&2; \
-			exit 1; \
-		fi; \
 		if ! git -C "$$child_root" merge-base --is-ancestor "$$gitlink" HEAD; then \
-			printf 'ERROR: %s: branch %s diverges from recorded gitlink %s\n' "$$child_path" "$$branch" "$$gitlink" >&2; \
+			printf 'ERROR: %s: branch %s diverges from recorded gitlink %s (setup never runs checkout/reset; advance or switch it yourself while keeping dirty)\n' "$$child_path" "$$branch" "$$gitlink" >&2; \
 			exit 1; \
 		fi; \
 		if [ -f "$$child_root/.gitmodules" ]; then \
