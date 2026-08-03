@@ -110,21 +110,22 @@ endif
 PUBLIC_VERBS := help setup deps build check test fmt fix run status docs clean release gen worktree
 BUILTIN_VERBS := help setup deps build check test fmt fix run status docs clean release gen worktree
 SCRIPT_VERBS :=
-_ALLOWED_WHATS_help := usage
-_ALLOWED_WHATS_setup := environment
-_ALLOWED_WHATS_deps := check lock upgrade
-_ALLOWED_WHATS_build := artifacts
-_ALLOWED_WHATS_check := all
-_ALLOWED_WHATS_test := all
-_ALLOWED_WHATS_fmt := check all
-_ALLOWED_WHATS_fix := check all
-_ALLOWED_WHATS_run := default
-_ALLOWED_WHATS_status := diagnostics
-_ALLOWED_WHATS_docs := all generate fix audit build validate
-_ALLOWED_WHATS_clean := generated
-_ALLOWED_WHATS_release := status
-_ALLOWED_WHATS_gen := check all
-_ALLOWED_WHATS_worktree := list add update remove
+
+_ALLOWED_WHATS_help := usage $(shell sed -n 's/^_custom_help_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
+_ALLOWED_WHATS_setup := environment $(shell sed -n 's/^_custom_setup_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
+_ALLOWED_WHATS_deps := check lock upgrade $(shell sed -n 's/^_custom_deps_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
+_ALLOWED_WHATS_build := artifacts $(shell sed -n 's/^_custom_build_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
+_ALLOWED_WHATS_check := all $(shell sed -n 's/^_custom_check_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
+_ALLOWED_WHATS_test := all $(shell sed -n 's/^_custom_test_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
+_ALLOWED_WHATS_fmt := check all $(shell sed -n 's/^_custom_fmt_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
+_ALLOWED_WHATS_fix := check all $(shell sed -n 's/^_custom_fix_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
+_ALLOWED_WHATS_run := default $(shell sed -n 's/^_custom_run_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
+_ALLOWED_WHATS_status := diagnostics $(shell sed -n 's/^_custom_status_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
+_ALLOWED_WHATS_docs := all generate fix audit build validate $(shell sed -n 's/^_custom_docs_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
+_ALLOWED_WHATS_clean := generated $(shell sed -n 's/^_custom_clean_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
+_ALLOWED_WHATS_release := status $(shell sed -n 's/^_custom_release_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
+_ALLOWED_WHATS_gen := check all $(shell sed -n 's/^_custom_gen_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
+_ALLOWED_WHATS_worktree := list add update remove $(shell sed -n 's/^_custom_worktree_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 
 CHECK_GATES_ALLOWED := lint format pyrefly mypy pyright security markdown smells
 CHECK_GATES_DEFAULT := lint pyrefly mypy pyright security markdown smells
@@ -178,6 +179,7 @@ _DEFAULT_worktree := list
 _APPLY_WHAT_deps := upgrade
 _APPLY_WHAT_fmt := all
 _APPLY_WHAT_fix := all
+_APPLY_WHAT_run := default
 _APPLY_WHAT_clean := generated
 _APPLY_WHAT_gen := all
 _APPLY_WHAT_worktree := update
@@ -449,7 +451,7 @@ _builtin_help_usage:
 	@printf '%s\n' 'flext-core [workspace-member]' '';
 
 
-	@printf '  %-10s WHAT=%s\n' 'help' 'usage';
+	@printf '  %-10s WHAT=%s\n' 'help' "$$(printf '%s' '$(_ALLOWED_WHATS_help)' | awk '{$$1=$$1; gsub(/ /, "|"); print}')";
 
 
 
@@ -457,55 +459,55 @@ _builtin_help_usage:
 
 
 
-	@printf '  %-10s WHAT=%s APPLY=Y\n' 'deps' 'check|lock|upgrade';
+	@printf '  %-10s WHAT=%s APPLY=Y\n' 'deps' "$$(printf '%s' '$(_ALLOWED_WHATS_deps)' | awk '{$$1=$$1; gsub(/ /, "|"); print}')";
 
 
 
-	@printf '  %-10s WHAT=%s\n' 'build' 'artifacts';
+	@printf '  %-10s WHAT=%s\n' 'build' "$$(printf '%s' '$(_ALLOWED_WHATS_build)' | awk '{$$1=$$1; gsub(/ /, "|"); print}')";
 
 
 
-	@printf '  %-10s WHAT=%s\n' 'check' 'all';
+	@printf '  %-10s WHAT=%s\n' 'check' "$$(printf '%s' '$(_ALLOWED_WHATS_check)' | awk '{$$1=$$1; gsub(/ /, "|"); print}')";
 
 
 
-	@printf '  %-10s WHAT=%s\n' 'test' 'all';
+	@printf '  %-10s WHAT=%s\n' 'test' "$$(printf '%s' '$(_ALLOWED_WHATS_test)' | awk '{$$1=$$1; gsub(/ /, "|"); print}')";
 
 
 
-	@printf '  %-10s WHAT=%s APPLY=Y\n' 'fmt' 'check|all';
+	@printf '  %-10s WHAT=%s APPLY=Y\n' 'fmt' "$$(printf '%s' '$(_ALLOWED_WHATS_fmt)' | awk '{$$1=$$1; gsub(/ /, "|"); print}')";
 
 
 
-	@printf '  %-10s WHAT=%s APPLY=Y\n' 'fix' 'check|all';
+	@printf '  %-10s WHAT=%s APPLY=Y\n' 'fix' "$$(printf '%s' '$(_ALLOWED_WHATS_fix)' | awk '{$$1=$$1; gsub(/ /, "|"); print}')";
 
 
 
-	@printf '  %-10s WHAT=%s\n' 'run' 'default';
+	@printf '  %-10s WHAT=%s APPLY=Y\n' 'run' "$$(printf '%s' '$(_ALLOWED_WHATS_run)' | awk '{$$1=$$1; gsub(/ /, "|"); print}')";
 
 
 
-	@printf '  %-10s WHAT=%s\n' 'status' 'diagnostics';
+	@printf '  %-10s WHAT=%s\n' 'status' "$$(printf '%s' '$(_ALLOWED_WHATS_status)' | awk '{$$1=$$1; gsub(/ /, "|"); print}')";
 
 
 
-	@printf '  %-10s WHAT=%s\n' 'docs' 'all|generate|fix|audit|build|validate';
+	@printf '  %-10s WHAT=%s\n' 'docs' "$$(printf '%s' '$(_ALLOWED_WHATS_docs)' | awk '{$$1=$$1; gsub(/ /, "|"); print}')";
 
 
 
-	@printf '  %-10s WHAT=%s APPLY=Y\n' 'clean' 'generated';
+	@printf '  %-10s WHAT=%s APPLY=Y\n' 'clean' "$$(printf '%s' '$(_ALLOWED_WHATS_clean)' | awk '{$$1=$$1; gsub(/ /, "|"); print}')";
 
 
 
-	@printf '  %-10s WHAT=%s\n' 'release' 'status';
+	@printf '  %-10s WHAT=%s\n' 'release' "$$(printf '%s' '$(_ALLOWED_WHATS_release)' | awk '{$$1=$$1; gsub(/ /, "|"); print}')";
 
 
 
-	@printf '  %-10s WHAT=%s APPLY=Y\n' 'gen' 'check|all';
+	@printf '  %-10s WHAT=%s APPLY=Y\n' 'gen' "$$(printf '%s' '$(_ALLOWED_WHATS_gen)' | awk '{$$1=$$1; gsub(/ /, "|"); print}')";
 
 
 
-	@printf '  %-10s WHAT=%s APPLY=Y\n' 'worktree' 'list|add|update|remove';
+	@printf '  %-10s WHAT=%s APPLY=Y\n' 'worktree' "$$(printf '%s' '$(_ALLOWED_WHATS_worktree)' | awk '{$$1=$$1; gsub(/ /, "|"); print}')";
 
 
 	@printf '  %-10s %s\n' 'WORKSPACE' 'target repository (default: current project)';
