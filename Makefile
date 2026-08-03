@@ -529,6 +529,8 @@ _builtin_help_usage:
 #       written to: setup is invoked automatically by every verb, so a checkout,
 #       pull, reset or submodule update there would run unattended against
 #       uncommitted work. Divergence is reported with the exact command to run.
+#       Fetch is conditional: when cached origin refs already satisfy the local
+#       merge-base checks, setup skips network I/O so idempotent runs stay cheap.
 # Free: no
 # End SECTION: submodule setup
 _builtin_setup_submodules:
@@ -606,10 +608,33 @@ _builtin_setup_submodules:
 			}; \
 			git -C "$$child_root" branch --quiet --set-upstream-to "origin/$$branch" "$$branch" >/dev/null 2>&1 || :; \
 		fi; \
-		git -C "$$child_root" fetch --quiet origin "$$branch" || { \
-			printf 'ERROR: %s: fetch origin %s failed\n' "$$child_path" "$$branch" >&2; \
+		remote_ref="refs/remotes/origin/$$branch"; \
+		current=$$(git -C "$$child_root" branch --show-current); \
+		head=$$(git -C "$$child_root" rev-parse HEAD); \
+		if [ -n "$$current" ] && [ "$$current" != "$$branch" ]; then \
+			printf 'ERROR: %s: conflicting branch %s; expected %s\n' "$$child_path" "$$current" "$$branch" >&2; \
 			exit 1; \
-		}; \
+		fi; \
+		need_fetch=1; \
+		if git -C "$$child_root" rev-parse --verify "$$remote_ref" >/dev/null 2>&1; then \
+			cached_ok=1; \
+			if [ -z "$$current" ]; then \
+				if ! git -C "$$child_root" merge-base --is-ancestor "$$head" "$$remote_ref"; then \
+					cached_ok=0; \
+				fi; \
+			fi; \
+			if [ "$$cached_ok" -eq 1 ] && \
+			   git -C "$$child_root" merge-base --is-ancestor "$$gitlink" "$$remote_ref" && \
+			   git -C "$$child_root" merge-base --is-ancestor "$$gitlink" HEAD; then \
+				need_fetch=0; \
+			fi; \
+		fi; \
+		if [ "$$need_fetch" -eq 1 ]; then \
+			git -C "$$child_root" fetch --quiet origin "$$branch" || { \
+				printf 'ERROR: %s: fetch origin %s failed\n' "$$child_path" "$$branch" >&2; \
+				exit 1; \
+			}; \
+		fi; \
 		current=$$(git -C "$$child_root" branch --show-current); \
 		head=$$(git -C "$$child_root" rev-parse HEAD); \
 		if [ -n "$$current" ] && [ "$$current" != "$$branch" ]; then \
