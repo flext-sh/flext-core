@@ -99,7 +99,11 @@ show_missing = true
 skip_covered = false
 
 [tool.coverage.run]
-omit = ["*/dependency_injector/providers.pyx"]
+omit = [
+  "*/_protocols/*",
+  "*/dependency_injector/providers.pyx",
+  "*/protocols.py",
+]
 source = ["src"]
 
 # [MANAGED] deptry
