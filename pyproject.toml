@@ -182,7 +182,6 @@ disable_error_code = ["unreachable"]
 module = ["dcdoc._utilities._charts._matplotlib_renderer._renders_spec"]
 
 # [MANAGED] pydantic-mypy
-
 [tool.pydantic-mypy]
 init_forbid_extra = true
 init_typed = true
@@ -446,7 +445,6 @@ reportUnusedImport = "none"
 root = "scripts"
 
 # [MANAGED] pytest
-
 [tool.pytest.ini_options]
 addopts = [
   "--benchmark-disable",
