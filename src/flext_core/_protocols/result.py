@@ -25,6 +25,21 @@ class FlextProtocolsResult:
     """Single structural result contract used across FLEXT."""
 
     @runtime_checkable
+    class FailureLike(Protocol):
+        @property
+        def error(self) -> str | None: ...
+        @property
+        def error_code(self) -> str | None: ...
+        @property
+        def error_data(self) -> t.JsonMapping | None: ...
+        @property
+        def exception(self) -> BaseException | None: ...
+        @property
+        def failure(self) -> bool: ...
+        @property
+        def success(self) -> bool: ...
+
+    @runtime_checkable
     class Result(Protocol[ResultT_co]):
         """Structural railway result contract; covariant payload."""
 
@@ -112,6 +127,27 @@ class FlextProtocolsResult:
 
         def __bool__(self) -> bool: ...
 
+    @runtime_checkable
+    class SuccessCheckable(Protocol):
+        @property
+        def success(self) -> bool: ...
+        @property
+        def failure(self) -> bool: ...
+
+    @runtime_checkable
+    class StructuredError(Protocol):
+        @property
+        def error_domain(self) -> str | None: ...
+        @property
+        def error_code(self) -> str | None: ...
+        @property
+        def error_message(self) -> str | None: ...
+        @property
+        def message(self) -> str: ...
+        @property
+        def metadata(self) -> m.Metadata: ...
+
+        def matches_error_domain(self, domain: str) -> bool: ...
 
     @runtime_checkable
     class HasModelDump(Protocol):
