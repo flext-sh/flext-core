@@ -1,1 +1,0 @@
-../../../.agents/commands/flext-law.md
