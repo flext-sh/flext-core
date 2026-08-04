@@ -26,12 +26,13 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
 
     @staticmethod
     def require_error(source: p.FailureLike) -> str:
-        """Extract error message from any failed Result."""
+        """Extract error text from any failed Result.
+
+        Empty failures (``fail(None)`` / ``fail("")``) are valid railway values;
+        return ``""`` so combinators re-wrap instead of raising.
+        """
         error = source.error
-        if not error:
-            msg = c.ERR_RESULT_FAILURE_MESSAGE_REQUIRED
-            raise ValueError(msg)
-        return error
+        return error or ""
 
     @classmethod
     def from_failure(cls: type[Self], source: p.FailureLike) -> p.Result[T]:
@@ -55,6 +56,18 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
         return error_code if isinstance(error_code, str) and error_code else None
 
     @classmethod
+    def _redacted_error_data_keys(
+        cls, exception: BaseException | None
+    ) -> frozenset[str]:
+        """Union of fleet-sensitive keys and the exception's excluded context keys."""
+        excluded: set[str] = set(c.SENSITIVE_ERROR_DATA_KEYS)
+        if exception is not None:
+            class_excluded = getattr(type(exception), "excluded_context_keys", None)
+            if class_excluded:
+                excluded.update(class_excluded)
+        return frozenset(excluded)
+
+    @classmethod
     def _extract_exception_error_data(
         cls, exception: BaseException | None
     ) -> t.JsonDict | None:
@@ -70,10 +83,15 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
             return None
         if payload is None:
             return None
+        # Why: redact secrets before metadata becomes public Result.error_data
+        redacted_keys = cls._redacted_error_data_keys(exception)
+        payload = {
+            key: value for key, value in payload.items() if key not in redacted_keys
+        }
         correlation_id = getattr(exception, "correlation_id", None)
         if isinstance(correlation_id, str) and correlation_id:
             payload[c.ContextKey.CORRELATION_ID] = correlation_id
-        return payload
+        return payload or None
 
     @classmethod
     def copy_from_result(cls: type[Self], source: p.Result[T]) -> p.Result[T]:

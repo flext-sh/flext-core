@@ -47,6 +47,23 @@ class FlextConstantsInfrastructure:
         REQUEST_TIMESTAMP = "request_timestamp"
         SERVICE_MODULE = "service_module"
 
+    SENSITIVE_ERROR_DATA_KEYS: Final[frozenset[str]] = frozenset({
+        "password",
+        "passwd",
+        "secret",
+        "token",
+        "api_key",
+        "apikey",
+        "access_token",
+        "refresh_token",
+        "authorization",
+        "dsn",
+        "connection_string",
+        "private_key",
+        "credential",
+        "credentials",
+    })
+
     @unique
     class MetadataKey(StrEnum):
         """Metadata dictionary key names for operation timing."""
