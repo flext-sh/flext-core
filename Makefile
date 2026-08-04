@@ -91,6 +91,17 @@ MAKEFILE_ROOT := $(patsubst %/,%,$(dir $(SELF_MAKEFILE)))
 PROJECT_ROOT := $(MAKEFILE_ROOT)
 override export FLEXT_PYTEST_TARGET_RAW := tests
 WORKSPACE ?= $(PROJECT_ROOT)
+# make work targets a member checkout when PROJECT names a workspace member and
+# WORKSPACE was not overridden on the command line. PROJECT alone used to keep
+# WORKSPACE at the workspace root, so finish looked up lanes in the wrong git
+# primary and failed with "worktree branch is not registered".
+ifeq ($(filter command line override,$(origin WORKSPACE)),)
+ifneq ($(strip $(PROJECT)),)
+ifneq ($(filter $(PROJECT),$(WORKSPACE_MEMBERS)),)
+override WORKSPACE := $(PROJECT_ROOT)/$(PROJECT)
+endif
+endif
+endif
 # === SECTION: WORKSPACE_ROOT isolation (managed) ===
 # Source: computed (rule: derive from current checkout unless caller overrides)
 # Rule: WORKSPACE_ROOT is always derived from the current checkout unless the
@@ -146,7 +157,13 @@ UV ?= uv
 UV_REQUESTED := $(UV)
 CALLER_PATH := $(PATH)
 CALLER_VIRTUAL_ENV := $(patsubst %/,%,$(VIRTUAL_ENV))
-FLEXT_INFRA_BOOTSTRAP_REQUIREMENT := flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev
+# Prefer the recorded flext-infra gitlink OID (immutable) when the workspace
+# root can resolve it; otherwise fall back to the provider integration branch.
+FLEXT_INFRA_BOOTSTRAP_REF := $(shell git -C "$(WORKSPACE_ROOT)" rev-parse "HEAD:flext-infra" 2>/dev/null)
+ifeq ($(strip $(FLEXT_INFRA_BOOTSTRAP_REF)),)
+FLEXT_INFRA_BOOTSTRAP_REF := 0.12.0-dev
+endif
+FLEXT_INFRA_BOOTSTRAP_REQUIREMENT := flext-infra @ git+https://github.com/flext-sh/flext-infra.git@$(FLEXT_INFRA_BOOTSTRAP_REF)
 FLEXT_INFRA_SOURCE_ROOT_REL := 
 UV_BOOTSTRAP_FLAGS := --isolated --all-groups --all-extras
 # End SECTION: infra bootstrap
@@ -522,6 +539,7 @@ _builtin_help_usage:
 
 
 	@printf '  %-10s %s\n' 'WORKSPACE' 'target repository (default: current project)';
+	@printf '  %-10s %s\n' 'PROJECT' 'member checkout for work when WORKSPACE unset';
 	@printf '  %-10s %s\n' 'BEAD' 'lane-root bead id for work start/land/finish';
 	@printf '  %-10s %s\n' 'KIND/NAME' 'GitFlow kind and slug for work start';
 	@printf '  %-10s %s\n' 'BASE' 'optional integration base override for work start';
@@ -763,7 +781,7 @@ _builtin_deps_upgrade: _builtin_require_environment
 	fi
 	$(call _run_for_selected_projects,$(if $(strip $(DEPENDENCY)),--upgrade-package "$(strip $(DEPENDENCY))",--upgrade))
 	@set -eu; \
-	selected="$(strip $(PROJECTS))"; \
+	selected="$(strip $(SELECTED_PROJECTS))"; \
 	if [ -z "$$selected" ]; then selected="."; fi; \
 	set --; \
 	for project in $$selected; do set -- "$$@" --projects "$$project"; done; \
@@ -820,6 +838,9 @@ _builtin_fix_apply: _builtin_fix_all
 _builtin_run_default: _builtin_require_environment
 	@$(UV_RUN) $(PROJECT_NAME) $(ARGS)
 
+# workspace-member Make files attach to the governing workspace root; report
+# the member path so status diagnostics stay meaningful after profile routing.
+ATTACHED_MEMBER := $(if $(filter workspace-member,$(MAKE_PROFILE)),$(PROJECT_ROOT),)
 _builtin_status_diagnostics: _builtin_require_environment
 	@printf 'profile=%s\nattached=%s\nproject=%s\nruntime=%s\n' \
 		'$(MAKE_PROFILE)' '$(ATTACHED_MEMBER)' '$(PROJECT_ROOT)' '$(RUNTIME_ROOT)'

@@ -96,9 +96,15 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
           name: flext-ci-reports-${{ github.run_id }}
+          # Structured reports only — omit raw pytest/tool logs that may carry
+          # connection strings or env-derived secrets from integration fixtures.
           path: |
-            .reports/**
-            apps/*/.reports/**
+            .reports/**/junit.xml
+            .reports/**/coverage.xml
+            .reports/**/coverage.json
+            apps/*/.reports/**/junit.xml
+            apps/*/.reports/**/coverage.xml
+            apps/*/.reports/**/coverage.json
           if-no-files-found: ignore
           retention-days: 7
     # End SECTION: ci job
