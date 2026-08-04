@@ -101,7 +101,7 @@ class TestsFlextCoreResult:
 
     def test_map_error_rewrites_error_message(self) -> None:
         """map_error transforms the error text on failure only."""
-        rewritten: r[int] = r[int].fail("raw").map_error(lambda e: f"wrapped:{e}")
+        rewritten: p.Result[int] = r[int].fail("raw").map_error(lambda e: f"wrapped:{e}")
 
         tm.fail(rewritten, has="wrapped:raw")
 
@@ -119,9 +119,10 @@ class TestsFlextCoreResult:
 
     def test_recover_maps_failure_to_success_value(self) -> None:
         """Recovering a failure produces a success from its error."""
-        recovered = r[int].fail("err").recover(lambda _: -1)
+        fallback: int = -1
+        recovered = r[int].fail("err").recover(lambda _: fallback)
 
-        tm.ok(recovered, eq=-1)
+        tm.ok(recovered, eq=fallback)
 
     @pytest.mark.parametrize(("value", "keeps"), [(9, True), (2, False)])
     def test_filter_keeps_or_rejects_by_predicate(
@@ -148,7 +149,7 @@ class TestsFlextCoreResult:
     def test_tap_error_runs_only_on_failure(self) -> None:
         """tap_error observes the error and returns the result intact."""
         seen: list[str] = []
-        result: r[int] = r[int].fail("bad").tap_error(seen.append)
+        result: p.Result[int] = r[int].fail("bad").tap_error(seen.append)
 
         tm.fail(result, has="bad")
         tm.that(seen, eq=["bad"])
@@ -164,8 +165,8 @@ class TestsFlextCoreResult:
 
     def test_type_guards_classify_results(self) -> None:
         """successful_result / failed_result guard by observable outcome."""
-        ok_result: r[int] = r[int].ok(1)
-        fail_result: r[int] = r[int].fail("e")
+        ok_result: p.Result[int] = r[int].ok(1)
+        fail_result: p.Result[int] = r[int].fail("e")
 
         tm.that(r.successful_result(ok_result), eq=True)
         tm.that(r.failed_result(ok_result), eq=False)

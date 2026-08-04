@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING, Self, cast
 
 from pydantic import ValidationError
 
@@ -14,7 +14,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable, MutableSequence, Sequence
 
     from flext_core import p, t
-    from flext_core import FlextResult as rt
 
 
 class FlextResultComposition[T](FlextResultTransforms[T]):
@@ -23,7 +22,7 @@ class FlextResultComposition[T](FlextResultTransforms[T]):
     @classmethod
     def accumulate_errors[ValueT](
         cls: type[Self], *results: p.Result[ValueT]
-    ) -> rt[Sequence[ValueT]]:
+    ) -> p.Result[Sequence[ValueT]]:
         successes: MutableSequence[ValueT] = []
         errors: MutableSequence[str] = []
         for result in results:
@@ -32,7 +31,7 @@ class FlextResultComposition[T](FlextResultTransforms[T]):
             else:
                 errors.append(cls.require_error(result))
         if errors:
-            return cls.fail("; ".join(errors))
+            return cast("p.Result[Sequence[ValueT]]", cls.fail("; ".join(errors)))
         return cls.ok(successes)
 
     @classmethod
@@ -42,24 +41,32 @@ class FlextResultComposition[T](FlextResultTransforms[T]):
         func: Callable[[V], p.Result[U]],
         *,
         fail_fast: bool = True,
-    ) -> rt[Sequence[U]]:
+    ) -> p.Result[Sequence[U]]:
         if fail_fast:
             results: MutableSequence[U] = []
             for item in items:
                 try:
                     result = func(item)
                 except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
-                    return cls.fail(str(exc), exception=exc)
+                    return cast(
+                        "p.Result[Sequence[U]]",
+                        cls.fail(str(exc), exception=exc),
+                    )
                 if result.failure:
-                    return cls.from_failure(result)
+                    return cast(
+                        "p.Result[Sequence[U]]",
+                        cls.from_failure(result),
+                    )
                 results.append(result.value)
             return cls.ok(results)
-        all_results: MutableSequence[rt[U]] = []
+        all_results: MutableSequence[p.Result[U]] = []
         for item in items:
             try:
                 all_results.append(cls.from_result(func(item)))
             except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
-                all_results.append(cls.fail(str(exc), exception=exc))
+                all_results.append(
+                    cast("p.Result[U]", cls.fail(str(exc), exception=exc))
+                )
         return cls.accumulate_errors(*all_results)
 
     @classmethod
@@ -68,21 +75,21 @@ class FlextResultComposition[T](FlextResultTransforms[T]):
         factory: Callable[[], R],
         op: Callable[[R], p.Result[U]],
         cleanup: Callable[[R], None] | None = None,
-    ) -> rt[U]:
+    ) -> p.Result[U]:
         try:
             resource = factory()
         except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
-            return cls.fail(str(exc), exception=exc)
-        result: rt[U]
+            return cast("p.Result[U]", cls.fail(str(exc), exception=exc))
+        result: p.Result[U]
         try:
             result = cls.from_result(op(resource))
         except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
-            result = cls.fail(str(exc), exception=exc)
+            result = cast("p.Result[U]", cls.fail(str(exc), exception=exc))
         if cleanup:
             try:
                 cleanup(resource)
             except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
-                return cls.fail(str(exc), exception=exc)
+                return cast("p.Result[U]", cls.fail(str(exc), exception=exc))
         return result
 
     @staticmethod
@@ -97,12 +104,12 @@ class FlextResultComposition[T](FlextResultTransforms[T]):
     @classmethod
     def safe[U, **PFunc](
         cls: type[Self], func: Callable[PFunc, U]
-    ) -> Callable[PFunc, rt[U]]:
-        def wrapper(*args: PFunc.args, **kwargs: PFunc.kwargs) -> rt[U]:
+    ) -> Callable[PFunc, p.Result[U]]:
+        def wrapper(*args: PFunc.args, **kwargs: PFunc.kwargs) -> p.Result[U]:
             try:
                 return cls.ok(func(*args, **kwargs))
             except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
-                return cls.fail(str(exc), exception=exc)
+                return cast("p.Result[U]", cls.fail(str(exc), exception=exc))
 
         return wrapper
 

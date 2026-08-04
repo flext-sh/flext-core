@@ -31,7 +31,7 @@ class TestsFlextCoreResultLaws:
         assert result.unwrap() == 42
 
     def test_fail_reports_failure_and_exposes_error_message(self) -> None:
-        result: r[int] = r[int].fail("boom")
+        result: p.Result[int] = r[int].fail("boom")
         assert result.failure is True
         assert result.success is False
         assert bool(result) is False
@@ -42,7 +42,7 @@ class TestsFlextCoreResultLaws:
     # ------------------------------------------------------------------ #
 
     def test_unwrap_on_failure_raises_with_error_in_message(self) -> None:
-        result: r[int] = r[int].fail("boom")
+        result: p.Result[int] = r[int].fail("boom")
         with pytest.raises(RuntimeError, match="boom"):
             result.unwrap()
 
@@ -143,7 +143,7 @@ class TestsFlextCoreResultLaws:
 
     def test_tap_does_not_run_effect_on_failure(self) -> None:
         seen: list[int] = []
-        result: r[int] = r[int].fail("boom").tap(seen.append)
+        result: p.Result[int] = r[int].fail("boom").tap(seen.append)
         assert seen == []
         assert result.failure is True
 

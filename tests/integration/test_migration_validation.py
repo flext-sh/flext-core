@@ -101,11 +101,11 @@ class TestsFlextCoreMigrationValidation:
 
     def test_map_error_transforms_only_the_failure_channel(self) -> None:
         """map_error rewrites a failure's error and leaves success alone."""
-        rewritten: r[str] = r[str].fail("bad").map_error(str.upper)
+        rewritten: p.Result[str] = r[str].fail("bad").map_error(str.upper)
         tm.that(rewritten.failure, eq=True)
         tm.that(rewritten.error, eq="BAD")
 
-        untouched: r[str] = r[str].ok("keep").map_error(str.upper)
+        untouched: p.Result[str] = r[str].ok("keep").map_error(str.upper)
         tm.that(untouched.success, eq=True)
         tm.that(untouched.value, eq="keep")
 
@@ -133,7 +133,9 @@ class TestsFlextCoreMigrationValidation:
         tm.that(errors, empty=True)
         tm.that(ok_after.value, eq=_OBSERVED_VALUE)
 
-        fail_after: r[int] = r[int].fail("z").tap(seen.append).tap_error(errors.append)
+        fail_after: p.Result[int] = (
+            r[int].fail("z").tap(seen.append).tap_error(errors.append)
+        )
         tm.that(seen, eq=[_OBSERVED_VALUE])
         tm.that(errors, eq=["z"])
         tm.that(fail_after.failure, eq=True)

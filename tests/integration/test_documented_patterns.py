@@ -47,7 +47,7 @@ class TestsFlextCoreDocumentedPatterns:
     def test_map_leaves_failure_untransformed(self) -> None:
         """Map preserves a failure and its original error message."""
         # Arrange
-        failure: r[int] = r[int].fail("boom")
+        failure: p.Result[int] = r[int].fail("boom")
 
         # Act
         result = failure.map(lambda value: value + 1)
@@ -97,7 +97,7 @@ class TestsFlextCoreDocumentedPatterns:
     def test_recover_replaces_failure_with_value(self) -> None:
         """Recover converts a failure into the value returned by its handler."""
         # Act
-        result: r[int] = r[int].fail("boom").recover(lambda _error: _RECOVERED_VALUE)
+        result: p.Result[int] = r[int].fail("boom").recover(lambda _error: _RECOVERED_VALUE)
 
         # Assert
         tm.that(result.success, eq=True)
@@ -106,7 +106,7 @@ class TestsFlextCoreDocumentedPatterns:
     def test_map_error_rewrites_error_message(self) -> None:
         """Map error transforms only the public failure message."""
         # Act
-        result: r[int] = r[int].fail("boom").map_error(lambda message: message.upper())
+        result: p.Result[int] = r[int].fail("boom").map_error(lambda message: message.upper())
 
         # Assert
         tm.that(result.failure, eq=True)
@@ -115,7 +115,7 @@ class TestsFlextCoreDocumentedPatterns:
     def test_value_access_on_failure_raises(self) -> None:
         """Reading the value channel of a failed result raises RuntimeError."""
         # Arrange
-        failure: r[int] = r[int].fail("no value here")
+        failure: p.Result[int] = r[int].fail("no value here")
 
         # Act / Assert
         with pytest.raises(RuntimeError):
