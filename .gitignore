@@ -238,6 +238,9 @@ __pyrefly_virtual__/
 .omo/
 .pylance_cache/
 .pytest_cache/
+.testmondata
+.testmondata-wal
+.testmondata-shm
 .ropeproject/
 .ruff_cache/
 .scope/

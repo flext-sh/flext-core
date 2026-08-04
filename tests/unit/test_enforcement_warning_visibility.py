@@ -116,6 +116,12 @@ class TestsFlextCoreEnforcementWarningVisibility:
                 "-q",
                 "-p",
                 "no:cacheprovider",
+                # Isolate from site plugins: under the parent xdist worker,
+                # pytest-benchmark treats loaded xdist as active and warns;
+                # filterwarnings=error turns that into INTERNALERROR.
+                "-p",
+                "no:xdist",
+                "--benchmark-disable",
             ],
             cwd=tmp_path,
         )
