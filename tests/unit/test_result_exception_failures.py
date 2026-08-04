@@ -173,3 +173,10 @@ class TestsFlextCoreResultExceptionFailures:
         tm.that(recovered.success, eq=True)
         tm.that(recovered.unwrap().name, eq="anon")
         tm.that(recovered.unwrap().age, eq=0)
+
+    def test_empty_fail_map_stays_failed_without_raising(self) -> None:
+        failure: p.Result[int] = r[int].fail(None, exception=ValueError("boom"))
+        mapped: p.Result[int] = failure.map(lambda value: value + 1)
+        tm.that(mapped.failure, eq=True)
+        tm.that(mapped.error, eq="")
+        tm.that(mapped.exception is failure.exception, eq=True)

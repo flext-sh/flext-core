@@ -113,9 +113,6 @@ class FlextConstantsErrorsMessages:
     ERR_RESULT_FILTER_PREDICATE_FAILED: Final[str] = (
         "Value did not pass filter predicate"
     )
-    ERR_RESULT_FAILURE_MESSAGE_REQUIRED: Final[str] = (
-        "Failed result must carry a non-empty error message"
-    )
     ERR_RESULT_FAILURE_REQUIRED: Final[str] = (
         "Cannot propagate a successful result as a failure"
     )
