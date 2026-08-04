@@ -160,13 +160,7 @@ extra_checks = true
 follow_imports = "normal"
 ignore_missing_imports = true
 local_partial_types = true
-mypy_path = [
-  "src",
-  ".",
-  "../flext-cli/src",
-  "../flext-infra/src",
-  "../flext-tests/src",
-]
+mypy_path = ["src", "."]
 namespace_packages = true
 no_implicit_reexport = true
 plugins = ["pydantic.mypy"]
@@ -218,13 +212,7 @@ project-includes = [
   "tests/**/*.py*",
 ]
 python-version = "3.13"
-search-path = [
-  "src",
-  ".",
-  "../flext-cli/src",
-  "../flext-infra/src",
-  "../flext-tests/src",
-]
+search-path = ["src", "."]
 use-ignore-files = false
 
 [tool.pyrefly.errors]
@@ -532,8 +520,10 @@ skip-magic-trailing-comma = true
 # FLEXT ruff[import-outside-top-level]: Public facade models are imported lazily only at validation and construction sites to preserve the c-t-p-m-u graph and prevent runtime cycles.
 # FLEXT ruff[unsorted-imports]: Ruff sorts TYPE_CHECKING imports lexically and reverses the mandatory semantic c-t-p-m-u dependency order in FLEXT facades.
 ignore = [
-
-
+  "ambiguous-unicode-character-comment",
+  "ambiguous-unicode-character-docstring",
+  "ambiguous-unicode-character-string",
+  "assert-raises-exception",
   "bad-dunder-method-name",
   "bad-quotes-inline-string",
   "blank-line-with-whitespace",
