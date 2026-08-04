@@ -73,23 +73,26 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
     ) -> t.JsonDict | None:
         if exception is None:
             return None
+        payload: t.JsonDict | None = None
         metadata = getattr(exception, "metadata", None)
         raw_attributes = getattr(metadata, c.FIELD_ATTRIBUTES, None)
-        if raw_attributes is None:
-            return None
-        try:
-            payload = cls.validate_error_data(raw_attributes)
-        except ValidationError:
-            return None
-        if payload is None:
-            return None
-        # Why: redact secrets before metadata becomes public Result.error_data
-        redacted_keys = cls._redacted_error_data_keys(exception)
-        payload = {
-            key: value for key, value in payload.items() if key not in redacted_keys
-        }
+        if raw_attributes is not None:
+            try:
+                payload = cls.validate_error_data(raw_attributes)
+            except ValidationError:
+                payload = None
+        if payload is not None:
+            # Why: redact secrets before metadata becomes public Result.error_data
+            redacted_keys = cls._redacted_error_data_keys(exception)
+            payload = {
+                key: value
+                for key, value in payload.items()
+                if key not in redacted_keys
+            }
         correlation_id = getattr(exception, "correlation_id", None)
         if isinstance(correlation_id, str) and correlation_id:
+            if payload is None:
+                payload = {}
             payload[c.ContextKey.CORRELATION_ID] = correlation_id
         return payload or None
 
