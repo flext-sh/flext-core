@@ -213,3 +213,7 @@ class TestsFlextCoreResultLaws:
     def test_results_satisfy_success_checkable_protocol_at_runtime(self) -> None:
         assert isinstance(r[str].ok("value"), p.SuccessCheckable)
         assert isinstance(r[str].fail("boom"), p.SuccessCheckable)
+
+    def test_results_satisfy_result_protocol_at_runtime(self) -> None:
+        assert isinstance(r[str].ok("value"), p.Result)
+        assert isinstance(r[str].fail("boom"), p.Result)
