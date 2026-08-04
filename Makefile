@@ -107,8 +107,8 @@ endif
 # === SECTION: verb dispatch (managed) ===
 # Source: config:make.verbs[*].whats, config:make.check_gates_allowed,
 #        config:make.check_gates_default, config:make.serialization.verbs
-PUBLIC_VERBS := help setup deps build check test fmt fix run status docs clean release gen worktree
-BUILTIN_VERBS := help setup deps build check test fmt fix run status docs clean release gen worktree
+PUBLIC_VERBS := help setup deps build check test fmt fix run status docs clean release gen work
+BUILTIN_VERBS := help setup deps build check test fmt fix run status docs clean release gen work
 SCRIPT_VERBS :=
 
 _ALLOWED_WHATS_help := usage $(shell sed -n 's/^_custom_help_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
@@ -125,13 +125,13 @@ _ALLOWED_WHATS_docs := all generate fix audit build validate $(shell sed -n 's/^
 _ALLOWED_WHATS_clean := generated $(shell sed -n 's/^_custom_clean_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_release := status $(shell sed -n 's/^_custom_release_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_gen := check all apply $(shell sed -n 's/^_custom_gen_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
-_ALLOWED_WHATS_worktree := list add update remove $(shell sed -n 's/^_custom_worktree_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
+_ALLOWED_WHATS_work := start status land finish $(shell sed -n 's/^_custom_work_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 
 CHECK_GATES_ALLOWED := lint format pyrefly mypy pyright security markdown smells
 CHECK_GATES_DEFAULT := lint pyrefly mypy pyright security markdown smells
 DOCS_ACTIONS := generate fix audit build validate
-SERIALIZED_VERBS := check test gen fmt fix deps clean worktree docs
-SERIALIZED_TARGETS := _serialized_check _serialized_test _serialized_gen _serialized_fmt _serialized_fix _serialized_deps _serialized_clean _serialized_worktree _serialized_docs
+SERIALIZED_VERBS := check test gen fmt fix deps clean work docs
+SERIALIZED_TARGETS := _serialized_check _serialized_test _serialized_gen _serialized_fmt _serialized_fix _serialized_deps _serialized_clean _serialized_work _serialized_docs
 # End SECTION: verb dispatch
 
 # === SECTION: lint/type paths (managed) ===
@@ -174,7 +174,7 @@ _DEFAULT_docs := all
 _DEFAULT_clean := generated
 _DEFAULT_release := status
 _DEFAULT_gen := check
-_DEFAULT_worktree := list
+_DEFAULT_work := status
 
 _APPLY_WHAT_deps := upgrade
 _APPLY_WHAT_fmt := apply
@@ -183,7 +183,7 @@ _APPLY_WHAT_run := default
 _APPLY_WHAT_docs := generate
 _APPLY_WHAT_clean := generated
 _APPLY_WHAT_gen := apply
-_APPLY_WHAT_worktree := update
+_APPLY_WHAT_work := land
 
 
 # === SECTION: profile routing (managed) ===
@@ -374,7 +374,7 @@ define _run_for_selected_projects
 	done
 endef
 
-.PHONY: $(PUBLIC_VERBS) $(SERIALIZED_TARGETS) _builtin_help_usage _builtin_setup_environment _builtin_deps_check _builtin_deps_lock _builtin_deps_upgrade _builtin_build_artifacts _builtin_check_all _builtin_test_all _builtin_fmt_check _builtin_fmt_all _builtin_fmt_apply _builtin_fix_check _builtin_fix_all _builtin_fix_apply _builtin_run_default _builtin_status_diagnostics _builtin_docs_all _builtin_docs_generate _builtin_docs_fix _builtin_docs_audit _builtin_docs_build _builtin_docs_validate _builtin_clean_generated _builtin_release_status _builtin_gen_check _builtin_gen_all _builtin_gen_apply _builtin_worktree_list _builtin_worktree_add _builtin_worktree_update _builtin_worktree_remove
+.PHONY: $(PUBLIC_VERBS) $(SERIALIZED_TARGETS) _builtin_help_usage _builtin_setup_environment _builtin_deps_check _builtin_deps_lock _builtin_deps_upgrade _builtin_build_artifacts _builtin_check_all _builtin_test_all _builtin_fmt_check _builtin_fmt_all _builtin_fmt_apply _builtin_fix_check _builtin_fix_all _builtin_fix_apply _builtin_run_default _builtin_status_diagnostics _builtin_docs_all _builtin_docs_generate _builtin_docs_fix _builtin_docs_audit _builtin_docs_build _builtin_docs_validate _builtin_clean_generated _builtin_release_status _builtin_gen_check _builtin_gen_all _builtin_gen_apply _builtin_work_start _builtin_work_status _builtin_work_land _builtin_work_finish
 
 $(filter-out setup $(SERIALIZED_VERBS),$(PUBLIC_VERBS)):
 	$(call _dispatch,$@)
@@ -429,11 +429,11 @@ _serialized_clean:
 	$(call _dispatch,clean)
 
 
-worktree: _builtin_require_environment
-	@$(PROJECT_FLEXT_INFRA) workspace serialize-make --workspace "$(PROJECT_ROOT)" --makefile "$(SELF_MAKEFILE)" --verb "worktree" --selector-value "$(WHAT)" --apply-token "$(APPLY)"
+work: _builtin_require_environment
+	@$(PROJECT_FLEXT_INFRA) workspace serialize-make --workspace "$(PROJECT_ROOT)" --makefile "$(SELF_MAKEFILE)" --verb "work" --selector-value "$(WHAT)" --apply-token "$(APPLY)"
 
-_serialized_worktree:
-	$(call _dispatch,worktree)
+_serialized_work:
+	$(call _dispatch,work)
 
 
 docs: _builtin_require_environment
@@ -518,11 +518,13 @@ _builtin_help_usage:
 
 
 
-	@printf '  %-10s WHAT=%s APPLY=Y\n' 'worktree' "$$(printf '%s' '$(_ALLOWED_WHATS_worktree)' | awk '{$$1=$$1; gsub(/ /, "|"); print}')";
+	@printf '  %-10s WHAT=%s APPLY=Y\n' 'work' "$$(printf '%s' '$(_ALLOWED_WHATS_work)' | awk '{$$1=$$1; gsub(/ /, "|"); print}')";
 
 
 	@printf '  %-10s %s\n' 'WORKSPACE' 'target repository (default: current project)';
-	@printf '  %-10s %s\n' 'BASE' 'required for worktree add/update';
+	@printf '  %-10s %s\n' 'BEAD' 'lane-root bead id for work start/land/finish';
+	@printf '  %-10s %s\n' 'KIND/NAME' 'GitFlow kind and slug for work start';
+	@printf '  %-10s %s\n' 'BASE' 'optional integration base override for work start';
 	@printf '\n%s\n' 'Custom hooks (custom.mk):';
 	@printf '  %s\n' 'Define pre-<verb>, post-<verb>, pre-<verb>-<what>, post-<verb>-<what>';
 	@printf '  %s\n' 'in custom.mk to wrap one declared handler.';
@@ -892,17 +894,17 @@ _builtin_gen_all: _builtin_require_environment
 
 _builtin_gen_apply: _builtin_gen_all
 
-_builtin_worktree_list:
-	@$(PROJECT_FLEXT_INFRA) workspace worktree --workspace "$(WORKSPACE)" --operation list
+_builtin_work_status:
+	@$(PROJECT_FLEXT_INFRA) workspace work --workspace "$(WORKSPACE)" --operation status --bead "$(BEAD)" --branch "$(BRANCH)"
 
-_builtin_worktree_add:
+_builtin_work_start:
 	$(call _require_apply)
-	@$(PROJECT_FLEXT_INFRA) workspace worktree --workspace "$(WORKSPACE)" --operation add --branch "$(BRANCH)" --base "$(BASE)" --apply
+	@$(PROJECT_FLEXT_INFRA) workspace work --workspace "$(WORKSPACE)" --operation start --bead "$(BEAD)" --kind "$(KIND)" --name "$(NAME)" --base "$(BASE)" --apply
 
-_builtin_worktree_update:
+_builtin_work_land:
 	$(call _require_apply)
-	@$(PROJECT_FLEXT_INFRA) workspace worktree --workspace "$(WORKSPACE)" --operation update --branch "$(BRANCH)" --base "$(BASE)" --apply
+	@$(PROJECT_FLEXT_INFRA) workspace work --workspace "$(WORKSPACE)" --operation land --bead "$(BEAD)" --apply
 
-_builtin_worktree_remove:
+_builtin_work_finish:
 	$(call _require_apply)
-	@$(PROJECT_FLEXT_INFRA) workspace worktree --workspace "$(WORKSPACE)" --operation remove --branch "$(BRANCH)" --apply
+	@$(PROJECT_FLEXT_INFRA) workspace work --workspace "$(WORKSPACE)" --operation finish --bead "$(BEAD)" --apply

@@ -45,9 +45,51 @@ class _FlextResult[T](
 
 
 if TYPE_CHECKING:
+    from typing import override
+
+    from flext_core import p, t
 
     class FlextResult[T](_FlextResult[T], prt.Result[T]):
         """Type-safe result with monadic railway-oriented operations."""
+
+        @classmethod
+        @override
+        def ok[V](cls, value: V) -> FlextResult[V]:
+            """Create a successful result carrying ``value``."""
+            ...
+
+        @classmethod
+        @override
+        def fail(
+            cls,
+            error: str | None,
+            *,
+            error_code: str | None = None,
+            error_data: t.JsonMapping | t.ConfigModelInput | None = None,
+            exception: BaseException | None = None,
+        ) -> FlextResult[T]:
+            """Create a failed result with the given error payload."""
+            ...
+
+        @classmethod
+        @override
+        def fail_op(
+            cls, operation: str, exc: Exception | str | None = None
+        ) -> FlextResult[T]:
+            """Create a failed result for a named operation."""
+            ...
+
+        @classmethod
+        @override
+        def from_failure(cls, source: p.FailureLike) -> FlextResult[T]:
+            """Rebuild this concrete facade from any failed result-like."""
+            ...
+
+        @classmethod
+        @override
+        def from_result[V](cls, source: p.Result[V]) -> FlextResult[V]:
+            """Copy an abstract result into this concrete facade."""
+            ...
 
 else:
 

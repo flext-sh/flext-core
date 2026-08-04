@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_core import FlextContainer
+from flext_core import p, FlextContainer
 from flext_tests import e, r, tm
 from tests.constants import c
 from tests.utilities import u
@@ -83,7 +83,7 @@ class TestsFlextCoreSystem:
 
     def test_map_is_skipped_on_failure(self) -> None:
         """Map does not run its function once the result is a failure."""
-        result: r[str] = r[str].fail("boom").map(lambda x: x.upper())
+        result: p.Result[str] = r[str].fail("boom").map(lambda x: x.upper())
 
         tm.that(result.failure, eq=True)
         tm.that(result.error, eq="boom")
