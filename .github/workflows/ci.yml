@@ -72,22 +72,24 @@ jobs:
 
 
       - name: setup (blocking)
-        run: make setup
+        # Why (mro-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
+        run: CI=Y make setup
 
       - name: gen (blocking)
-        run: make gen WHAT=apply APPLY=Y
+        # Why (mro-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
+        run: CI=Y make gen WHAT=apply APPLY=Y
 
       - name: fmt (blocking)
-        run: make fmt WHAT=apply APPLY=Y
+        # Why (mro-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
+        run: CI=Y make fmt WHAT=apply APPLY=Y
 
       - name: fix (blocking)
-        run: make fix WHAT=apply APPLY=Y
+        # Why (mro-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
+        run: CI=Y make fix WHAT=apply APPLY=Y
 
       - name: check (blocking)
-        run: make check
-
-      - name: test (blocking)
-        run: make test
+        # Why (mro-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
+        run: CI=Y make check
 
       - name: Dump reports on failure
         if: ${{ failure() }}

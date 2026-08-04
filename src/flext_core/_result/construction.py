@@ -85,9 +85,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
             # Why: redact secrets before metadata becomes public Result.error_data
             redacted_keys = cls._redacted_error_data_keys(exception)
             payload = {
-                key: value
-                for key, value in payload.items()
-                if key not in redacted_keys
+                key: value for key, value in payload.items() if key not in redacted_keys
             }
         correlation_id = getattr(exception, "correlation_id", None)
         if isinstance(correlation_id, str) and correlation_id:
@@ -129,9 +127,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
 
     @classmethod
     def _filter_sensitive_error_data(
-        cls,
-        payload: t.JsonDict | None,
-        exception: BaseException | None = None,
+        cls, payload: t.JsonDict | None, exception: BaseException | None = None
     ) -> t.JsonDict | None:
         """Drop sensitive keys from any error_data mapping before storage."""
         if payload is None:

@@ -101,8 +101,7 @@ class TestsFlextCoreResultExceptionFailures:
         tm.that(result.error_data, none=False)
         if result.error_data is not None:
             tm.that(
-                result.error_data.get(c.ContextKey.CORRELATION_ID),
-                eq="corr-only-456",
+                result.error_data.get(c.ContextKey.CORRELATION_ID), eq="corr-only-456"
             )
 
     def test_fail_enriches_error_data_from_exception_metadata(self) -> None:

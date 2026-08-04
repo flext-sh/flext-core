@@ -85,6 +85,7 @@ fix-report.json
 **/docs/audit-summary.json
 
 # Virtual environments inside allowed directories (should never be committed)
+**/.venv
 **/.venv/
 **/venv/
 **/env/
@@ -218,6 +219,7 @@ legado/
 # --- codegen conform: generated runtime ignores ---
 .direnv/
 .reports/
+.venv
 .venv/
 .bin/
 .tools/

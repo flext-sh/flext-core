@@ -128,8 +128,7 @@ class FlextConstantsErrorsMessages:
         "or a concrete payload type"
     )
     ERR_RESULT_TYPE_PARAM_OBJECT_FORBIDDEN: Final[str] = (
-        "FlextResult cannot be parameterized with object; use a concrete "
-        "payload type"
+        "FlextResult cannot be parameterized with object; use a concrete payload type"
     )
     ERR_RESULT_SUCCESS_PAYLOAD_CANNOT_BE_OBJECT: Final[str] = (
         "Success result payload cannot be a bare object instance"
