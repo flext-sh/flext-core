@@ -172,7 +172,7 @@ class TestsFlextCoreMigrationValidation:
     # -------------------------------------------------------------- service
 
     def test_service_execute_returns_success(self) -> None:
-        """A concrete FlextService.execute honors the r[None] contract."""
+        """A concrete FlextService.execute honors the r[bool] void contract."""
 
         class NoopService(FlextService[bool]):
             @override
