@@ -128,6 +128,21 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
             )
 
     @classmethod
+    def _filter_sensitive_error_data(
+        cls,
+        payload: t.JsonDict | None,
+        exception: BaseException | None = None,
+    ) -> t.JsonDict | None:
+        """Drop sensitive keys from any error_data mapping before storage."""
+        if payload is None:
+            return None
+        redacted_keys = cls._redacted_error_data_keys(exception)
+        filtered = {
+            key: value for key, value in payload.items() if key not in redacted_keys
+        }
+        return filtered or None
+
+    @classmethod
     def fail(
         cls: type[Self],
         error: str | None,
@@ -138,11 +153,13 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
     ) -> p.Result[T]:
         error_msg = error if error is not None else ""
         resolved_error_code = error_code or cls._extract_exception_error_code(exception)
-        resolved_error_data = (
-            error_data
-            if error_data is not None
-            else cls._extract_exception_error_data(exception)
-        )
+        # Why: redact caller-supplied AND auto-extracted error_data (security mro-8taj)
+        if error_data is not None:
+            resolved_error_data = cls._filter_sensitive_error_data(
+                cls.validate_error_data(error_data), exception
+            )
+        else:
+            resolved_error_data = cls._extract_exception_error_data(exception)
         return cast(
             "p.Result[T]",
             cls(
