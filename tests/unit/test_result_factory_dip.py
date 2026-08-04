@@ -208,3 +208,29 @@ class TestsFlextCoreResultFactoryDip:
         assert bad.exception is not None
         assert isinstance(bad, FlextResult)
         assert r.failed_result(bad)
+
+    def test_fail_explicit_error_data_redacts_sensitive_keys(self) -> None:
+        result: p.Result[int] = r[int].fail(
+            "denied",
+            error_data={"password": "s3cret", "host": "db.example", "token": "t0k"},
+        )
+        tm.fail(result, has="denied")
+        assert result.error_data is not None
+        tm.that(result.error_data.get("host"), eq="db.example")
+        assert "password" not in result.error_data
+        assert "token" not in result.error_data
+
+    def test_fail_explicit_error_data_wins_but_still_redacts_with_exception(
+        self,
+    ) -> None:
+        exc = e.OperationError("x", context={"password": "from-exc", "host": "h"})
+        result: p.Result[int] = r[int].fail(
+            "denied",
+            error_data={"password": "explicit", "host": "kept", "api_key": "k"},
+            exception=exc,
+        )
+        tm.fail(result, has="denied")
+        assert result.error_data is not None
+        tm.that(result.error_data.get("host"), eq="kept")
+        assert "password" not in result.error_data
+        assert "api_key" not in result.error_data
