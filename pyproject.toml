@@ -534,7 +534,6 @@ skip-magic-trailing-comma = true
 ignore = [
 
 
-  "assert-raises-exception",
   "bad-dunder-method-name",
   "bad-quotes-inline-string",
   "blank-line-with-whitespace",
