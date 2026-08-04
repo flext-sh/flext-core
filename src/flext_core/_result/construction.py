@@ -151,6 +151,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
         error_data: t.JsonMapping | t.ConfigModelInput | None = None,
         exception: BaseException | None = None,
     ) -> p.Result[T]:
+        cls.reject_banned_result_parameterization()
         error_msg = error if error is not None else ""
         resolved_error_code = error_code or cls._extract_exception_error_code(exception)
         # Why: redact caller-supplied AND auto-extracted error_data (security mro-8taj)
@@ -194,6 +195,8 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
 
     @classmethod
     def ok[V](cls: type[Self], value: V) -> p.Result[V]:
+        cls.reject_banned_result_parameterization()
+        cls.reject_banned_success_payload(value)
         return cast("p.Result[V]", cls(value=value, success=True))
 
     @staticmethod

@@ -180,19 +180,16 @@ class TestsFlextCoreResult:
         assert isinstance(r[int].ok(1), p.SuccessCheckable)
         assert isinstance(r[int].fail("e"), p.SuccessCheckable)
 
-    def test_ok_accepts_none_payload_as_successful_result(self) -> None:
-        """Success with no payload is a legitimate state, not an error."""
-        result: p.Result[None] = r[None].ok(None)
+    def test_ok_rejects_none_payload_explicitly(self) -> None:
+        """Success with ``None`` is forbidden and raises immediately."""
+        with pytest.raises(ValueError, match="cannot be None"):
+            r.ok(None)
 
-        tm.that(result.success, eq=True)
-        tm.that(result.failure, eq=False)
-        tm.that(result.error, eq=None)
-        tm.that(result.value, eq=None)
-
-    def test_none_payload_result_unwraps_and_transforms(self) -> None:
-        """A None payload flows through unwrap and transform surfaces."""
-        result: p.Result[None] = r[None].ok(None)
-
-        tm.that(result.unwrap(), eq=None)
-        tm.that(result.unwrap_or(7), eq=None)
-        tm.ok(result.map(lambda _: 3), eq=3)
+    def test_parameterized_none_and_object_are_forbidden(self) -> None:
+        """``r[None]`` and ``r[object]`` specializations are rejected."""
+        with pytest.raises(ValueError, match="parameterized with None"):
+            r[None].ok(True)
+        with pytest.raises(ValueError, match="parameterized with object"):
+            r[object].ok({"k": "v"})
+        with pytest.raises(ValueError, match="parameterized with None"):
+            r[None].fail("nope")
