@@ -37,7 +37,8 @@ real docstrings.
 
 ## Collection Rules
 
-Read [`/flext/AGENTS.md`](https://github.com/flext-sh/flext/blob/0.12.0-dev/AGENTS.md)
+Read
+[`/flext/AGENTS.md`](https://github.com/flext-sh/flext/blob/0.12.0-dev/AGENTS.md)
 §9 — Agent Execution Pre-requisites — for the canonical pre-change checklist
 (parent MRO chain, Scope bootstrap, skill loading, zero-debt baseline,
 slot registry verification).
