@@ -80,8 +80,7 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
                 )
             except c.EXC_BROAD_RUNTIME as exc:
                 return cast(
-                    "p.Result[T | U]",
-                    self.__class__.fail(str(exc), exception=exc),
+                    "p.Result[T | U]", self.__class__.fail(str(exc), exception=exc)
                 )
         return cast("p.Result[T | U]", self._as_result())
 
@@ -134,10 +133,7 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
         try:
             return self.__class__.ok(func(self.require_error(self._as_result())))
         except c.EXC_BROAD_RUNTIME as exc:
-            return cast(
-                "p.Result[T | U]",
-                self.__class__.fail(str(exc), exception=exc),
-            )
+            return cast("p.Result[T | U]", self.__class__.fail(str(exc), exception=exc))
 
     def tap(self, func: Callable[[T], None]) -> p.Result[T]:
         if self.success:

@@ -121,8 +121,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
             return cls.ok(value)
         except c.EXC_BROAD_RUNTIME as exc:
             return cast(
-                "p.Result[V]",
-                cls.fail(str(exc), error_code=error_code, exception=exc),
+                "p.Result[V]", cls.fail(str(exc), error_code=error_code, exception=exc)
             )
 
     @classmethod

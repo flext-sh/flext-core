@@ -49,14 +49,10 @@ class FlextResultComposition[T](FlextResultTransforms[T]):
                     result = func(item)
                 except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
                     return cast(
-                        "p.Result[Sequence[U]]",
-                        cls.fail(str(exc), exception=exc),
+                        "p.Result[Sequence[U]]", cls.fail(str(exc), exception=exc)
                     )
                 if result.failure:
-                    return cast(
-                        "p.Result[Sequence[U]]",
-                        cls.from_failure(result),
-                    )
+                    return cast("p.Result[Sequence[U]]", cls.from_failure(result))
                 results.append(result.value)
             return cls.ok(results)
         all_results: MutableSequence[p.Result[U]] = []

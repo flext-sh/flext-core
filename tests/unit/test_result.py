@@ -101,7 +101,9 @@ class TestsFlextCoreResult:
 
     def test_map_error_rewrites_error_message(self) -> None:
         """map_error transforms the error text on failure only."""
-        rewritten: p.Result[int] = r[int].fail("raw").map_error(lambda e: f"wrapped:{e}")
+        rewritten: p.Result[int] = (
+            r[int].fail("raw").map_error(lambda e: f"wrapped:{e}")
+        )
 
         tm.fail(rewritten, has="wrapped:raw")
 

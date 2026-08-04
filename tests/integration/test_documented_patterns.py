@@ -97,7 +97,9 @@ class TestsFlextCoreDocumentedPatterns:
     def test_recover_replaces_failure_with_value(self) -> None:
         """Recover converts a failure into the value returned by its handler."""
         # Act
-        result: p.Result[int] = r[int].fail("boom").recover(lambda _error: _RECOVERED_VALUE)
+        result: p.Result[int] = (
+            r[int].fail("boom").recover(lambda _error: _RECOVERED_VALUE)
+        )
 
         # Assert
         tm.that(result.success, eq=True)
@@ -106,7 +108,9 @@ class TestsFlextCoreDocumentedPatterns:
     def test_map_error_rewrites_error_message(self) -> None:
         """Map error transforms only the public failure message."""
         # Act
-        result: p.Result[int] = r[int].fail("boom").map_error(lambda message: message.upper())
+        result: p.Result[int] = (
+            r[int].fail("boom").map_error(lambda message: message.upper())
+        )
 
         # Assert
         tm.that(result.failure, eq=True)
