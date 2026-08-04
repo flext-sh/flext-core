@@ -79,18 +79,17 @@ jobs:
         if: ${{ failure() }}
         run: |
           set -eu
-          for f in .reports/workspace/test/*.log; do
-            [ -f "$f" ] || continue
-            echo "::group::workspace $(basename "$f")"
-            tail -n 200 "$f"
-            echo "::endgroup::"
-          done
-          for f in apps/*/.reports/tests/*/pytest.log .reports/tests/*/pytest.log; do
-            [ -f "$f" ] || continue
+          # Structured reports only — same allowlist as Upload reports (no raw
+          # pytest/tool logs: those may carry connection strings / env secrets).
+          while IFS= read -r -d '' f; do
             echo "::group::$f"
             tail -n 200 "$f"
             echo "::endgroup::"
-          done
+          done < <(
+            find .reports apps \
+              \( -path '*/junit.xml' -o -path '*/coverage.xml' -o -path '*/coverage.json' \) \
+              -type f -print0 2>/dev/null || true
+          )
       - name: Upload reports on failure
         if: ${{ failure() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
