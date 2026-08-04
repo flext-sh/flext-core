@@ -532,9 +532,8 @@ skip-magic-trailing-comma = true
 # FLEXT ruff[import-outside-top-level]: Public facade models are imported lazily only at validation and construction sites to preserve the c-t-p-m-u graph and prevent runtime cycles.
 # FLEXT ruff[unsorted-imports]: Ruff sorts TYPE_CHECKING imports lexically and reverses the mandatory semantic c-t-p-m-u dependency order in FLEXT facades.
 ignore = [
-  "ambiguous-unicode-character-comment",
-  "ambiguous-unicode-character-docstring",
-  "ambiguous-unicode-character-string",
+
+
   "assert-raises-exception",
   "bad-dunder-method-name",
   "bad-quotes-inline-string",
