@@ -21,10 +21,13 @@ from pydantic import (
 
 from flext_core import c, t
 from flext_core._models.base import FlextModelsBase as m
-from flext_core._runtime._metadata_validation import (
-    FlextRuntimeMetadataValidation as ur,
-)
-from flext_core._utilities.generators import FlextUtilitiesGenerators as ug
+
+
+def _u() -> type:
+    """Deferred facade access: cqrs is loaded by the m facade itself."""
+    from flext_core import u
+
+    return u
 
 
 # NOTE (multi-agent): mro-i6nq.12 — consolidated _cqrs_parts/part_01..02 (one
@@ -98,7 +101,7 @@ class FlextModelsCqrs:
                 title="Command Id",
                 examples=["cmd_01HZX7Q0P5N6M2"],
             ),
-        ] = Field(default_factory=lambda: ug.generate_prefixed_id("cmd"))
+        ] = Field(default_factory=lambda: _u().generate_prefixed_id("cmd"))
         issuer_id: Annotated[
             t.NonEmptyStr | None,
             Field(description="Identity of the principal that issued this command."),
@@ -143,7 +146,7 @@ class FlextModelsCqrs:
                 title="Query Id",
                 examples=["query_01HZX7Q0P5N6M2"],
             ),
-        ] = Field(default_factory=lambda: ug.generate_prefixed_id("query"))
+        ] = Field(default_factory=lambda: _u().generate_prefixed_id("query"))
         query_type: Annotated[
             str | None,
             Field(description="Query type identifier for dispatcher routing."),
@@ -160,7 +163,7 @@ class FlextModelsCqrs:
             pagination_cls: type[BaseModel] = getattr(
                 cls, "Pagination", _CqrsPagination
             )
-            normalized_input = ur.normalize_model_input_mapping(v)
+            normalized_input = _u().normalize_model_input_mapping(v)
             if normalized_input is None:
                 return pagination_cls()
             try:
@@ -232,7 +235,7 @@ class FlextModelsCqrs:
                 title="Event Id",
                 examples=["evt_01HZX7Q0P5N6M2"],
             ),
-        ] = Field(default_factory=lambda: ug.generate_prefixed_id("evt"))
+        ] = Field(default_factory=lambda: _u().generate_prefixed_id("evt"))
         data: Annotated[
             t.MappingKV[str, t.Scalar], Field(description="Event payload data")
         ] = Field(default_factory=lambda: MappingProxyType({}))
