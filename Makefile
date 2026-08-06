@@ -754,7 +754,11 @@ _builtin_setup_submodules:
 
 _builtin_require_environment:
 	@if [ ! -x "$(RUNTIME_PYTHON)" ]; then \
-		printf 'ERROR: missing environment interpreter %s; make setup creates it\n' "$(RUNTIME_PYTHON)" >&2; \
+		printf '==> environment interpreter missing; provisioning via setup\n' >&2; \
+		$(SELF_MAKE) setup || exit $$?; \
+	fi
+	@if [ ! -x "$(RUNTIME_PYTHON)" ]; then \
+		printf 'ERROR: setup did not produce the environment interpreter %s\n' "$(RUNTIME_PYTHON)" >&2; \
 		exit 2; \
 	fi
 
