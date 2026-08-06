@@ -24,5 +24,5 @@ tokei = "14.0.0"
 # runtime must be a declared tool; without it mise looks for go on PATH and
 # every runner without an ambient toolchain fails to install beads.
 go = "1.26.5"
-"go:github.com/steveyegge/beads/cmd/bd" = "423afdcb2813e36b2bc4c96b07e0fc3516a34495"
+"go:github.com/steveyegge/beads/cmd/bd" = "af45955aa2878999541470182a9980dc891823f1"
 # End SECTION: tools

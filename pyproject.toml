@@ -461,6 +461,7 @@ markers = [
   "edge_cases: edge case tests",
   "integration: integration tests",
   "performance: performance and benchmark tests",
+  "remote: tests requiring remote/external network services",
   "resilience: resilience tests",
   "slow: slow-running tests",
   "smoke: public-interface smoke tests",
@@ -630,6 +631,7 @@ in_place = true
 sort_first = ["build-system", "dependency-groups", "project", "tool"]
 
 [tool.uv]
+exclude-newer = "7 days"
 link-mode = "copy"
 
 [[tool.uv.exclude-dependencies]]
@@ -706,13 +708,13 @@ dev = [
   "mkdocs-versioning>=0.2",
   "mkdocstrings>=0.24",
   "mkdocstrings-python>=1.7",
-  "mypy>=1.20.2",
+  "mypy>=2.3.0",
   "pip-audit>=2.7.3",
   "pre-commit>=4.6.0",
   "pylint>=3.3",
   "pyrefly>=1.1.1",
   "pyright>=1.1.411",
-  "pytest>=8.4",
+  "pytest>=9.0.3",
   "pytest-benchmark>=5.1",
   "pytest-clarity>=1.0.1",
   "pytest-codeblocks>=0.17.0",
@@ -729,8 +731,8 @@ dev = [
   "pyupgrade>=3.19",
   "radon>=6.0.1",
   "rope>=1.14.0",
-  "ruff>=0.12.3",
-  "rumdl>=0.2.46",
+  "ruff>=0.15.12",
+  "rumdl>=0.2.45",
   "types-cachetools>=6.2",
   "types-cffi>=2.0",
   "types-click>=7.1",

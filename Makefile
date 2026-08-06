@@ -118,8 +118,8 @@ endif
 # === SECTION: verb dispatch (managed) ===
 # Source: config:make.verbs[*].whats, config:make.check_gates_allowed,
 #        config:make.check_gates_default, config:make.serialization.verbs
-PUBLIC_VERBS := help setup deps build check test fmt fix run status docs clean release gen work
-BUILTIN_VERBS := help setup deps build check test fmt fix run status docs clean release gen work
+PUBLIC_VERBS := help setup deps build check test fmt fix run status docs clean release gen work mod
+BUILTIN_VERBS := help setup deps build check test fmt fix run status docs clean release gen work mod
 SCRIPT_VERBS :=
 
 _ALLOWED_WHATS_help := usage $(shell sed -n 's/^_custom_help_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
@@ -133,16 +133,17 @@ _ALLOWED_WHATS_fix := check all apply $(shell sed -n 's/^_custom_fix_\([a-z0-9_-
 _ALLOWED_WHATS_run := default $(shell sed -n 's/^_custom_run_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_status := diagnostics $(shell sed -n 's/^_custom_status_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_docs := all generate fix audit build validate $(shell sed -n 's/^_custom_docs_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
-_ALLOWED_WHATS_clean := generated $(shell sed -n 's/^_custom_clean_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
+_ALLOWED_WHATS_clean := status generated $(shell sed -n 's/^_custom_clean_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_release := status $(shell sed -n 's/^_custom_release_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_gen := check all apply $(shell sed -n 's/^_custom_gen_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_work := start status land finish $(shell sed -n 's/^_custom_work_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
+_ALLOWED_WHATS_mod := check all apply $(shell sed -n 's/^_custom_mod_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 
 CHECK_GATES_ALLOWED := lint format pyrefly mypy pyright security markdown smells
 CHECK_GATES_DEFAULT := lint pyrefly mypy pyright security markdown smells
 DOCS_ACTIONS := generate fix audit build validate
-SERIALIZED_VERBS := check test gen fmt fix deps clean work docs
-SERIALIZED_TARGETS := _serialized_check _serialized_test _serialized_gen _serialized_fmt _serialized_fix _serialized_deps _serialized_clean _serialized_work _serialized_docs
+SERIALIZED_VERBS := check test gen fmt fix deps clean work docs mod
+SERIALIZED_TARGETS := _serialized_check _serialized_test _serialized_gen _serialized_fmt _serialized_fix _serialized_deps _serialized_clean _serialized_work _serialized_docs _serialized_mod
 # End SECTION: verb dispatch
 
 # === SECTION: lint/type paths (managed) ===
@@ -187,11 +188,12 @@ _DEFAULT_fmt := check
 _DEFAULT_fix := check
 _DEFAULT_run := default
 _DEFAULT_status := diagnostics
-_DEFAULT_docs := all
-_DEFAULT_clean := generated
+_DEFAULT_docs := validate
+_DEFAULT_clean := status
 _DEFAULT_release := status
 _DEFAULT_gen := check
 _DEFAULT_work := status
+_DEFAULT_mod := check
 
 _APPLY_WHAT_deps := upgrade
 _APPLY_WHAT_test := all
@@ -202,6 +204,7 @@ _APPLY_WHAT_docs := generate
 _APPLY_WHAT_clean := generated
 _APPLY_WHAT_gen := apply
 _APPLY_WHAT_work := land
+_APPLY_WHAT_mod := apply
 
 
 # === SECTION: profile routing (managed) ===
@@ -416,7 +419,7 @@ define _run_for_selected_projects
 	done
 endef
 
-.PHONY: $(PUBLIC_VERBS) $(SERIALIZED_TARGETS) _builtin_help_usage _builtin_setup_environment _builtin_deps_check _builtin_deps_lock _builtin_deps_upgrade _builtin_build_artifacts _builtin_check_all _builtin_test_all _builtin_test_cache-status _builtin_test_cache-clear _builtin_test_cache-checkpoint _builtin_fmt_check _builtin_fmt_all _builtin_fmt_apply _builtin_fix_check _builtin_fix_all _builtin_fix_apply _builtin_run_default _builtin_status_diagnostics _builtin_docs_all _builtin_docs_generate _builtin_docs_fix _builtin_docs_audit _builtin_docs_build _builtin_docs_validate _builtin_clean_generated _builtin_release_status _builtin_gen_check _builtin_gen_all _builtin_gen_apply _builtin_work_start _builtin_work_status _builtin_work_land _builtin_work_finish
+.PHONY: $(PUBLIC_VERBS) $(SERIALIZED_TARGETS) _builtin_help_usage _builtin_setup_environment _builtin_deps_check _builtin_deps_lock _builtin_deps_upgrade _builtin_build_artifacts _builtin_check_all _builtin_test_all _builtin_test_cache-status _builtin_test_cache-clear _builtin_test_cache-checkpoint _builtin_fmt_check _builtin_fmt_all _builtin_fmt_apply _builtin_fix_check _builtin_fix_all _builtin_fix_apply _builtin_run_default _builtin_status_diagnostics _builtin_docs_all _builtin_docs_generate _builtin_docs_fix _builtin_docs_audit _builtin_docs_build _builtin_docs_validate _builtin_clean_status _builtin_clean_generated _builtin_release_status _builtin_gen_check _builtin_gen_all _builtin_gen_apply _builtin_work_start _builtin_work_status _builtin_work_land _builtin_work_finish _builtin_mod_check _builtin_mod_all _builtin_mod_apply
 
 $(filter-out setup $(SERIALIZED_VERBS),$(PUBLIC_VERBS)):
 	$(call _dispatch,$@)
@@ -485,6 +488,28 @@ _serialized_docs:
 	$(call _dispatch,docs)
 
 
+mod: _builtin_require_environment
+	@$(PROJECT_FLEXT_INFRA) workspace serialize-make --workspace "$(PROJECT_ROOT)" --makefile "$(SELF_MAKEFILE)" --verb "mod" --selector-value "$(WHAT)" --apply-token "$(APPLY)"
+
+_serialized_mod:
+	$(call _dispatch,mod)
+
+
+
+# `all` = clean setup gen fmt fmt fix check test. CI=Y skips pytest inside
+# make test (flext_infra._pytest_entry guards mro-v4p5), so all always calls
+# test — the pytest gate is self-guarding.
+all: _builtin_require_environment
+	@$(SELF_MAKE) clean APPLY=Y
+	@$(SELF_MAKE) setup
+	@$(SELF_MAKE) gen APPLY=Y
+	@$(SELF_MAKE) fmt APPLY=Y
+	@$(SELF_MAKE) fmt APPLY=Y
+	@$(SELF_MAKE) fix APPLY=Y
+	@$(SELF_MAKE) check
+	@$(SELF_MAKE) test
+
+.PHONY: all
 
 # `setup` keeps its own recipe (it must not require the environment it is about
 # to build), but it still runs the pre-/post-setup lifecycle hooks so a project
@@ -497,7 +522,7 @@ setup:
 	@$(SELF_MAKE) _builtin_setup_environment
 	@# Provision Beads local role so `bd` writes do not warn (GH#2950).
 	@if git -C "$(PROJECT_ROOT)" rev-parse --is-inside-work-tree >/dev/null 2>&1; then \
-		role=$$(git -C "$(PROJECT_ROOT)" config --local --get beads.role 2>/dev/null || true); \
+		role=$$(git -C "$(PROJECT_ROOT)" config --local --get beads.role 2>/dev/null || echo ""); \
 		if [ -z "$$role" ]; then \
 			git -C "$(PROJECT_ROOT)" config --local beads.role maintainer; \
 		fi; \
@@ -570,6 +595,10 @@ _builtin_help_usage:
 
 	@printf '  %-10s WHAT=%s\n' 'work' "$$(printf '%s' '$(_ALLOWED_WHATS_work)' | awk '{$$1=$$1; gsub(/ /, "|"); print}')";
 	@printf '  %-10s %s\n' '' 'status is read-only; other WHATs require APPLY=Y';
+
+
+
+	@printf '  %-10s WHAT=%s APPLY=Y\n' 'mod' "$$(printf '%s' '$(_ALLOWED_WHATS_mod)' | awk '{$$1=$$1; gsub(/ /, "|"); print}')";
 
 
 	@printf '  %-10s %s\n' 'WORKSPACE' 'target repository (default: current project)';
@@ -893,8 +922,10 @@ _builtin_fmt_all: _builtin_require_environment
 
 _builtin_fmt_apply: _builtin_fmt_all
 
-_builtin_fix_check:
-	@printf 'ERROR: make fix requires APPLY=Y\n' >&2; exit 2
+# Read-only fixed-point after `make fix APPLY=Y` (serialize-make strips APPLY and
+# re-runs default_what=check). Dual of `ruff check --fix` — never mutate here.
+_builtin_fix_check: _builtin_require_environment
+	@$(UV_RUN) ruff check $(RUFF_PATHS)
 
 _builtin_fix_all: _builtin_require_environment
 	$(call _require_apply)
