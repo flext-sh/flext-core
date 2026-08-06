@@ -167,7 +167,9 @@ class FlextDispatcher:
             )
             return self._adapt_dispatcher_output(raw_output, dispatch_result)
         except c.EXC_BROAD_RUNTIME as exc:
-            self.logger.exception(c.LOG_HANDLER_EXECUTION_FAILED, route=route_name)
+            self.logger.exception(
+                c.LOG_HANDLER_EXECUTION_FAILED, exception=exc, route=route_name
+            )
             return dispatch_result.fail_op("execute resolved handler", exc)
 
     @staticmethod
