@@ -12,8 +12,6 @@ from flext_core import (
     r,
 )
 
-from ._utilities.dispatcher_execute import execute_dispatcher_handler
-
 
 class FlextDispatcher:
     """Application-level dispatcher that satisfies the command bus protocol."""
@@ -160,10 +158,63 @@ class FlextDispatcher:
         message: p.Routable,
         route_name: str,
     ) -> p.Result[t.JsonPayload]:
-        """Execute a handler against a message via the extracted helper."""
-        return execute_dispatcher_handler(
-            resolved_handler=resolved_handler,
-            message=message,
-            route_name=route_name,
-            logger=self.logger,
+        """Execute ``resolved_handler(message)`` and adapt to ``r[JsonPayload]``."""
+        dispatch_result = r[t.JsonPayload]
+        try:
+            raw_candidate = resolved_handler(message)
+            raw_output = self._normalize_dispatcher_output(
+                raw_candidate, dispatch_result
+            )
+            return self._adapt_dispatcher_output(raw_output, dispatch_result)
+        except c.EXC_BROAD_RUNTIME as exc:
+            self.logger.exception(c.LOG_HANDLER_EXECUTION_FAILED, route=route_name)
+            return dispatch_result.fail_op("execute resolved handler", exc)
+
+    @staticmethod
+    def _normalize_dispatcher_output(
+        raw_candidate: t.JsonPayload | p.Result[t.JsonPayload] | None,
+        dispatch_result: type[r[t.JsonPayload]],
+    ) -> t.JsonPayload | p.Result[t.JsonPayload] | None:
+        """Normalize raw handler output to Result or payload candidate."""
+        if isinstance(raw_candidate, r):
+            return raw_candidate
+        if raw_candidate is None:
+            return None
+        if u.container(raw_candidate) or u.pydantic_model(raw_candidate):
+            return raw_candidate
+        return dispatch_result.fail_op(
+            "validate handler return payload",
+            c.ERR_HANDLER_RETURNED_NON_CONTAINER_VALUE,
         )
+
+    @staticmethod
+    def _adapt_dispatcher_output(
+        raw_output: t.JsonPayload | p.Result[t.JsonPayload] | None,
+        dispatch_result: type[r[t.JsonPayload]],
+    ) -> p.Result[t.JsonPayload]:
+        """Adapt normalized output to the canonical ``r[t.JsonPayload]`` contract."""
+        result: p.Result[t.JsonPayload]
+        if raw_output is None:
+            result = dispatch_result.fail_op(
+                "validate handler return payload", c.ERR_HANDLER_RETURNED_NONE
+            )
+        elif isinstance(raw_output, p.Result):
+            if raw_output.failure:
+                result = dispatch_result.from_failure(raw_output)
+            else:
+                output_value = raw_output.value
+                if u.container(output_value) or u.pydantic_model(output_value):
+                    result = dispatch_result.ok(output_value)
+                else:
+                    result = dispatch_result.fail_op(
+                        "validate handler success payload",
+                        c.ERR_HANDLER_RETURNED_NON_CONTAINER_SUCCESS_RESULT,
+                    )
+        elif u.container(raw_output) or u.pydantic_model(raw_output):
+            result = dispatch_result.ok(raw_output)
+        else:
+            result = dispatch_result.fail_op(
+                "validate handler return payload",
+                c.ERR_HANDLER_RETURNED_NON_CONTAINER_VALUE,
+            )
+        return result
