@@ -14,12 +14,6 @@ def _extended_bindings() -> t.MappingKV[
     str, tuple[c.EnforcementPredicateKind, mp.BaseModel]
 ]:
     """Map extended tags to (predicate_kind, params) dispatch entries."""
-    # Why (operator 2026-08-07): the LOC ceiling is POLICY and lives in
-    # config/enforcement.yaml, not as a literal here. Imported inside the
-    # function so config is read lazily at call time, never at import time
-    # (_config.py contract: "c/t/p/m/u use it with zero import-time coupling").
-    from flext_core import config
-
     pk = c.EnforcementPredicateKind
     dsp = me.DeprecatedSyntaxParams
     cpp = me.ClassPlacementParams
@@ -27,12 +21,13 @@ def _extended_bindings() -> t.MappingKV[
     iblp = me.ImportBlacklistParams
     return MappingProxyType({
         # --- Phase 3 data-only additions ---
-        "loc_cap": (
-            pk.LOC_CAP,
-            me.LocCapParams(
-                max_logical_loc=config.ENFORCEMENT_MODULE_LOGICAL_LOC_MAX
-            ),
-        ),
+        # Why (operator 2026-08-07): the "loc_cap" tag is GONE from this runtime
+        # catalog. It measured module LOC by reading source text
+        # (inspect.getsourcelines), so it was a static check wearing a runtime
+        # costume, and the census re-ran it once per class of the same module —
+        # reporting one file up to 8 times. flext-infra's tokei gate is the one
+        # owner of the module-LOC ceiling. "one_class_per_module" below stays:
+        # it is a different rule that happens to share this predicate.
         "library_abstraction": (
             pk.LIBRARY_IMPORT,
             me.LibraryImportParams(library_owners=c.ENFORCEMENT_LIBRARY_OWNERS),
@@ -66,14 +61,11 @@ def _extended_bindings() -> t.MappingKV[
             pk.MODULE_ALIAS,
             arp(expected_form="no_module_compat_alias"),
         ),
-        # Why: this tag enforces the top-level-class census only; the LOC ceiling
-        # still comes from config so both knobs share one owner.
+        # Why: top-level-class census only. The LOC ceiling is no longer part of
+        # this predicate — flext-infra's tokei gate owns it.
         "one_class_per_module": (
             pk.LOC_CAP,
-            me.LocCapParams(
-                max_logical_loc=config.ENFORCEMENT_MODULE_LOGICAL_LOC_MAX,
-                max_top_level_classes=1,
-            ),
+            me.LocCapParams(max_top_level_classes=1),
         ),
         "no_private_module_bypass": (
             pk.IMPORT_BLACKLIST,

@@ -111,13 +111,6 @@ class FlextConfig(BaseSettings):
     _lock: ClassVar[RLock] = RLock()
     _instance: ClassVar[FlextConfig | None] = None
 
-    # Why (operator 2026-08-07): declared so static analysis sees the field.
-    # `extra="allow"` lets config/*.yaml supply the value at runtime, but an
-    # undeclared attribute is invisible to pyrefly/pyright and every consumer
-    # would need a cast. The YAML stays the SSOT: this default is the fallback
-    # used only when no config/*.yaml declares the key.
-    ENFORCEMENT_MODULE_LOGICAL_LOC_MAX: int = 1000
-
     def __init_subclass__(cls, **kwargs: object) -> None:
         """Give every concrete subclass its own isolated singleton slot."""
         _ = kwargs

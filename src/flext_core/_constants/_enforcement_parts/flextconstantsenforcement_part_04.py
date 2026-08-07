@@ -79,7 +79,6 @@ class FlextConstantsEnforcementRules:
             "extra_wrong": EnforcementCategory.MODEL_CLASS,
             "facade_base_is_alias_or_peer": EnforcementCategory.NAMESPACE,
             "library_abstraction": EnforcementCategory.NAMESPACE,
-            "loc_cap": EnforcementCategory.NAMESPACE,
             "missing_description": EnforcementCategory.FIELD,
             "model_rebuild_call": EnforcementCategory.NAMESPACE,
             "forbid_deep_namespace": EnforcementCategory.NAMESPACE,
