@@ -212,6 +212,8 @@ secrets.yml
 .beads-credential-key
 .worktrees/
 legado/
+.beads.gate.lock
+*.gate.lock
 
 # codegen module-standardizer reject artifacts (ADR-005 §9)
 *.tpl.rej
