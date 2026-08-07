@@ -9,6 +9,11 @@ internal registries or logging side effects.
 
 from __future__ import annotations
 
+import io
+import time
+from contextlib import redirect_stdout
+from typing import override
+
 import pytest
 
 from flext_tests import r
@@ -40,6 +45,19 @@ class RecordingHandler:
     def handle(self, message: p.Routable) -> p.Result[t.JsonPayload]:
         self.received.append(message)
         return r[t.JsonPayload].ok({"route": self.message_type})
+
+
+class FailingHandler(RecordingHandler):
+    """Handler whose execution always raises, exercising the failure path."""
+
+    def __init__(self, route: str, failure_detail: str) -> None:
+        super().__init__(route)
+        self.failure_detail = failure_detail
+
+    @override
+    def handle(self, message: p.Routable) -> p.Result[t.JsonPayload]:
+        self.received.append(message)
+        raise RuntimeError(self.failure_detail)
 
 
 class TestsFlextCoreDispatcher:
@@ -197,6 +215,30 @@ class TestsFlextCoreDispatcher:
         # Assert: registration on one instance never leaks into another.
         assert registered_result.success
         assert other_result.failure
+
+    def test_dispatch_logs_handler_exception_type_and_message(self) -> None:
+        # Arrange: a handler whose execution raises a runtime failure.
+        failure_detail = "upstream inventory unavailable"
+
+        # Act: capture what an operator would actually see on the log stream.
+        stream = io.StringIO()
+        with redirect_stdout(stream):
+            dispatcher = u.build_dispatcher()
+            _ = dispatcher.register_handler(FailingHandler("explodes", failure_detail))
+            result = dispatcher.dispatch(RouteMessage(command_type="explodes"))
+            deadline = time.monotonic() + 0.25
+            while time.monotonic() < deadline:
+                if "RuntimeError" in stream.getvalue():
+                    break
+                time.sleep(0.01)
+        emitted = stream.getvalue()
+
+        # Assert: the failure is reported AND its cause is diagnosable in the log.
+        assert result.failure
+        assert result.error is not None
+        assert failure_detail in result.error
+        assert "RuntimeError" in emitted
+        assert failure_detail in emitted
 
 
 __all__: list[str] = ["TestsFlextCoreDispatcher"]
