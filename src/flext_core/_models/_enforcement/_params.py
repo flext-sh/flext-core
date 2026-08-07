@@ -76,10 +76,18 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         max_nested_class_depth: int = 0
 
     class LocCapParams(EnforcementModelBase):
-        """Parameters for LOC_CAP predicate."""
+        """Parameters for LOC_CAP predicate.
+
+        ``max_logical_loc`` has NO literal default: the ceiling is policy owned by
+        ``config/enforcement.yaml`` and injected by the predicate binding
+        (operator 2026-08-07). A literal here would be a second owner that
+        silently diverges from config.
+        """
 
         kind: Literal["loc_cap"] = "loc_cap"
-        max_logical_loc: int = 200
+        max_logical_loc: int = Field(
+            description="Per-module logical-LOC ceiling; supplied from config."
+        )
         max_top_level_classes: int = 0
 
     class WrapperParams(EnforcementModelBase):

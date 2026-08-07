@@ -14,6 +14,12 @@ def _extended_bindings() -> t.MappingKV[
     str, tuple[c.EnforcementPredicateKind, mp.BaseModel]
 ]:
     """Map extended tags to (predicate_kind, params) dispatch entries."""
+    # Why (operator 2026-08-07): the LOC ceiling is POLICY and lives in
+    # config/enforcement.yaml, not as a literal here. Imported inside the
+    # function so config is read lazily at call time, never at import time
+    # (_config.py contract: "c/t/p/m/u use it with zero import-time coupling").
+    from flext_core import config
+
     pk = c.EnforcementPredicateKind
     dsp = me.DeprecatedSyntaxParams
     cpp = me.ClassPlacementParams
@@ -21,7 +27,12 @@ def _extended_bindings() -> t.MappingKV[
     iblp = me.ImportBlacklistParams
     return MappingProxyType({
         # --- Phase 3 data-only additions ---
-        "loc_cap": (pk.LOC_CAP, me.LocCapParams(max_logical_loc=200)),
+        "loc_cap": (
+            pk.LOC_CAP,
+            me.LocCapParams(
+                max_logical_loc=config.ENFORCEMENT_MODULE_LOGICAL_LOC_MAX
+            ),
+        ),
         "library_abstraction": (
             pk.LIBRARY_IMPORT,
             me.LibraryImportParams(library_owners=c.ENFORCEMENT_LIBRARY_OWNERS),
@@ -55,7 +66,15 @@ def _extended_bindings() -> t.MappingKV[
             pk.MODULE_ALIAS,
             arp(expected_form="no_module_compat_alias"),
         ),
-        "one_class_per_module": (pk.LOC_CAP, me.LocCapParams(max_top_level_classes=1)),
+        # Why: this tag enforces the top-level-class census only; the LOC ceiling
+        # still comes from config so both knobs share one owner.
+        "one_class_per_module": (
+            pk.LOC_CAP,
+            me.LocCapParams(
+                max_logical_loc=config.ENFORCEMENT_MODULE_LOGICAL_LOC_MAX,
+                max_top_level_classes=1,
+            ),
+        ),
         "no_private_module_bypass": (
             pk.IMPORT_BLACKLIST,
             iblp(private_package_only=True),

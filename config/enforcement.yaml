@@ -1,0 +1,12 @@
+# Runtime enforcement policy — declarative execution parametrization.
+#
+# Why (operator 2026-08-07): the per-module logical-LOC ceiling is POLICY, not a
+# constant. It moved from a literal buried in the predicate bindings
+# (_utilities/_enforcement_parts/enforcement_part_06.py) into this config surface
+# so it has exactly one owner and changes without touching code.
+#
+# Raised fleet-wide 200 -> 1000: the former ceiling made cohesive modules
+# unmanageable and forced artificial splits.
+#
+# Consumers MUST read `config.ENFORCEMENT_MODULE_LOGICAL_LOC_MAX`, never a literal.
+ENFORCEMENT_MODULE_LOGICAL_LOC_MAX: 1000
