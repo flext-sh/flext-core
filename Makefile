@@ -875,12 +875,13 @@ _builtin_check_all: _builtin_require_environment
 			if [ "$$gate" = "lint" ]; then skip=1; fi; \
 			if [ "$$gate" = "format" ]; then skip=1; fi; \
 			if [ "$$gate" = "pyrefly" ]; then skip=1; fi; \
+			if [ "$$gate" = "markdown" ]; then skip=1; fi; \
 			if [ "$$skip" -eq 0 ]; then \
 				if [ -n "$$filtered" ]; then filtered="$$filtered,$$gate"; else filtered="$$gate"; fi; \
 			fi; \
 		done; \
 		gates="$$filtered"; \
-		printf 'INFO: CI=Y omits check gates: lint format pyrefly\n'; \
+		printf 'INFO: CI=Y omits check gates: lint format pyrefly markdown\n'; \
 	fi; \
 	for gate in $$(printf '%s' "$$gates" | tr ',' ' '); do \
 		case " $(CHECK_GATES_ALLOWED) " in *" $$gate "*) ;; \
