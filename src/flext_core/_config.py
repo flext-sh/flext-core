@@ -90,6 +90,62 @@ class _StrictYamlConfigSettingsSource(YamlConfigSettingsSource):
             raise TypeError(msg)
         return loaded
 
+    @override
+    def _read_files(self, files: object, deep_merge: bool = False) -> dict[str, object]:
+        """Read multiple YAML files with list-aware deep merge.
+
+        The upstream ``deep_update`` only recurses into dicts; when two files
+        declare the same list key (e.g. ``command_rules``), the second file
+        *replaces* the first list entirely. This override concatenates lists
+        instead, enabling domain-split config files to each contribute rules
+        to the same list.
+        """
+        from collections.abc import Sequence as _Sequence
+        from pathlib import Path as _Path
+
+        if files is None:
+            return {}
+        if isinstance(files, str) or not isinstance(files, _Sequence):
+            files = [files]
+        merged: dict[str, object] = {}
+        for file in files:
+            file_path = _Path(file) if isinstance(file, str) else file
+            if isinstance(file_path, _Path):
+                file_path = file_path.expanduser()
+            if not file_path.is_file():
+                continue
+            updating = self._read_file(file_path)
+            if deep_merge:
+                merged = self._deep_merge_lists(merged, updating)
+            else:
+                merged.update(updating)
+        return merged
+
+    @staticmethod
+    def _deep_merge_lists(
+        base: dict[str, object], updating: dict[str, object]
+    ) -> dict[str, object]:
+        """Deep-merge two config dicts, concatenating list values."""
+        result = dict(base)
+        for key, value in updating.items():
+            if (
+                key in result
+                and isinstance(result[key], dict)
+                and isinstance(value, dict)
+            ):
+                result[key] = _StrictYamlConfigSettingsSource._deep_merge_lists(
+                    result[key], value
+                )
+            elif (
+                key in result
+                and isinstance(result[key], list)
+                and isinstance(value, list)
+            ):
+                result[key] = [*result[key], *value]
+            else:
+                result[key] = value
+        return result
+
 
 class FlextConfig(BaseSettings):
     """Frozen per-class config singleton auto-loaded from ``config/*.yaml``.
