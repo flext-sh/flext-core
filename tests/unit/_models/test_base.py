@@ -8,11 +8,12 @@ and immutability. No private attributes or internals are touched.
 
 from __future__ import annotations
 
-from typing import Annotated, Any
+from typing import Annotated
 
 import pytest
 from pydantic import ValidationError
 
+from flext_tests import tm
 from tests.models import m
 
 
@@ -108,9 +109,7 @@ class TestsFlextCoreBase:
     def test_value_object_is_immutable(self) -> None:
         value = SampleValue(amount=2, label="chf")
 
-        mutable_value: Any = value
-        with pytest.raises(ValidationError):
-            mutable_value.amount = 3
+        tm.rejects_assignment(value, "amount", 3, expected=ValidationError)
 
     @pytest.mark.parametrize("amount", ["1", 1.5])
     def test_value_object_strictly_validates_field_types(

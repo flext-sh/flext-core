@@ -10,12 +10,11 @@ shim, no ``def settings(self) -> XSettings: return XSettings.fetch_global()`` ov
 
 from __future__ import annotations
 
-from typing import Any
 
-import pytest
 from pydantic import ValidationError
 
 import flext_core as fc
+from flext_tests import tm
 from flext_core import FlextConfig, FlextSettings, config, settings
 
 
@@ -26,9 +25,7 @@ class TestsFlextCoreConfigSettingsCanonical:
         """S1: ``config`` is a ready-to-use frozen FlextConfig instance; mutation raises."""
         assert isinstance(config, FlextConfig)
         assert config is FlextConfig.fetch_global()
-        mutable_config: Any = config
-        with pytest.raises(ValidationError):
-            mutable_config.anything = "mutated"
+        tm.rejects_assignment(config, "anything", "mutated", expected=ValidationError)
 
     def test_settings_is_preinstantiated_usable_singleton(self) -> None:
         """S2: ``settings`` is a ready-to-use FlextSettings instance used directly."""

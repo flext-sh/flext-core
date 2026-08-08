@@ -599,6 +599,7 @@ split-on-trailing-comma = false
 ]
 "scripts/cmd/**/*.py" = ["invalid-module-name", "shebang-not-executable"]
 "**/examples/**/*.py" = ["invalid-module-name", "shebang-not-executable"]
+"src/flext_infra/_utilities/_rope/**/*.py" = ["private-member-access"]
 
 # [MANAGED] tomlsort
 [tool.tomlsort]

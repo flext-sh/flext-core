@@ -8,12 +8,12 @@ serialization, and mapping access — never private internals.
 
 from __future__ import annotations
 
-from typing import Any
 
 import pytest
 
 from tests.models import m
 from tests.typings import t
+from flext_tests import tm
 
 
 class TestsFlextCoreModels:
@@ -52,9 +52,7 @@ class TestsFlextCoreModels:
     def test_value_object_is_immutable(self) -> None:
         value = self._SampleValue(x=1, y="a")
 
-        mutable_value: Any = value
-        with pytest.raises(m.ValidationError):
-            mutable_value.x = 5
+        tm.rejects_assignment(value, "x", 5, expected=m.ValidationError)
 
     def test_value_object_model_dump_exposes_public_fields(self) -> None:
         value = self._SampleValue(x=7, y="ok")

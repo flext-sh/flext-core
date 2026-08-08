@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
 
 import pytest
 
@@ -137,9 +136,7 @@ class TestsFlextModelsExceptionParamsResources:
     ) -> None:
         """validate_assignment=True: reassigning an invalid type raises."""
         params = m.RateLimitErrorParams(limit=10)
-        mutable_params: Any = params
-        with pytest.raises(c.ValidationError):
-            mutable_params.limit = "not-an-int"
+        tm.rejects_assignment(params, "limit", "not-an-int", expected=c.ValidationError)
 
     def test_circuit_breaker_error_params_defaults(self) -> None:
         params = m.CircuitBreakerErrorParams()
