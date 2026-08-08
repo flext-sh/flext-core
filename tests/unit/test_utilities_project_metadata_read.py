@@ -8,7 +8,7 @@ Result failure contract for missing/incomplete pyproject inputs.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 import pytest
 
@@ -134,8 +134,9 @@ class TestsFlextUtilitiesProjectMetadataRead:
             """,
         )
         meta = u.read_project_metadata(root).unwrap()
+        mutable_meta: Any = meta
         with pytest.raises(m.ValidationError):
-            setattr(meta, "package_name", "mutated")
+            mutable_meta.package_name = "mutated"
 
     def test_read_project_metadata_fails_on_missing_pyproject(
         self, tmp_path: Path

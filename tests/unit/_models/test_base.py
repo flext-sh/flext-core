@@ -8,7 +8,7 @@ and immutability. No private attributes or internals are touched.
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Any
 
 import pytest
 from pydantic import ValidationError
@@ -108,8 +108,9 @@ class TestsFlextCoreBase:
     def test_value_object_is_immutable(self) -> None:
         value = SampleValue(amount=2, label="chf")
 
+        mutable_value: Any = value
         with pytest.raises(ValidationError):
-            setattr(value, "amount", 3)
+            mutable_value.amount = 3
 
     @pytest.mark.parametrize("amount", ["1", 1.5])
     def test_value_object_strictly_validates_field_types(

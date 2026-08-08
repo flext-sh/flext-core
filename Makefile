@@ -516,10 +516,12 @@ all: _builtin_require_environment
 	@$(SELF_MAKE) setup
 	@$(SELF_MAKE) gen APPLY=Y
 	@$(SELF_MAKE) fmt APPLY=Y
-	@$(SELF_MAKE) fmt APPLY=Y
 	@$(SELF_MAKE) fix APPLY=Y
-	@$(SELF_MAKE) check
-	@$(SELF_MAKE) test
+	@# check/test are read-only verbs. Clear APPLY and the CI token so an
+	@# inherited APPLY=Y/CI=Y from the caller environment cannot reach them:
+	@# check rejects APPLY, and pytest is forbidden under the CI token.
+	@$(SELF_MAKE) check APPLY=
+	@env -u CI $(SELF_MAKE) test APPLY=
 
 .PHONY: all
 

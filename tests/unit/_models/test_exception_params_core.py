@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 import pytest
 
@@ -28,14 +28,16 @@ class TestsFlextModelsExceptionParamsCore:
     def test_validate_assignment_rejects_bad_value(self) -> None:
         """validate_assignment=True: reassigning an invalid type raises."""
         params = m.ConnectionErrorParams(port=1)
+        mutable_params: Any = params
         with pytest.raises(c.ValidationError):
-            setattr(params, "port", "bad")
+            mutable_params.port = "bad"
 
     def test_validate_assignment_rejects_extra_field(self) -> None:
         """extra=forbid + validate_assignment: unknown attribute assignment raises."""
         params = m.ConnectionErrorParams()
+        mutable_params: Any = params
         with pytest.raises(c.ValidationError):
-            setattr(params, "unknown_field", "value")
+            mutable_params.unknown_field = "value"
 
     def test_validation_error_params_defaults(self) -> None:
         params = m.ValidationErrorParams()

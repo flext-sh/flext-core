@@ -9,7 +9,7 @@ caller depends on - never private attributes or implementation internals.
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Any
 
 import pytest
 
@@ -35,8 +35,9 @@ class TestsFlextCoreCqrs:
         command = m.Command()
 
         # Act / Assert
+        mutable_command: Any = command
         with pytest.raises(c.ValidationError):
-            setattr(command, "message_type", "query")
+            mutable_command.message_type = "query"
 
     def test_command_generates_prefixed_identifier_by_default(self) -> None:
         # Act
@@ -108,8 +109,9 @@ class TestsFlextCoreCqrs:
         query = m.Query()
 
         # Act / Assert
+        mutable_query: Any = query
         with pytest.raises(c.ValidationError):
-            setattr(query, "message_type", "command")
+            mutable_query.message_type = "command"
 
     def test_query_generates_prefixed_identifier_by_default(self) -> None:
         # Act / Assert

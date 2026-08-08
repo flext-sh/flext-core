@@ -9,7 +9,7 @@ constructed model state, model_dump output, and validation error paths.
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
-from typing import Annotated
+from typing import Annotated, Any
 
 import pytest
 
@@ -69,8 +69,9 @@ class TestsFlextCoreModelsBaseFullCoverage:
 
     def test_metadata_is_frozen(self) -> None:
         model = m.Metadata()
+        mutable_model: Any = model
         with pytest.raises(c.ValidationError):
-            setattr(model, "version", "2.0.0")
+            mutable_model.version = "2.0.0"
 
     def test_metadata_rejects_extra_fields(self) -> None:
         with pytest.raises(c.ValidationError):
