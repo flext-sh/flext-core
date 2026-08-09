@@ -127,7 +127,7 @@ _ALLOWED_WHATS_setup := environment $(shell sed -n 's/^_custom_setup_\([a-z0-9_-
 _ALLOWED_WHATS_deps := check lock upgrade $(shell sed -n 's/^_custom_deps_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_build := artifacts $(shell sed -n 's/^_custom_build_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_check := all $(shell sed -n 's/^_custom_check_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
-_ALLOWED_WHATS_test := all cache-status cache-clear cache-checkpoint $(shell sed -n 's/^_custom_test_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
+_ALLOWED_WHATS_test := all full cache-status cache-clear cache-checkpoint $(shell sed -n 's/^_custom_test_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_fmt := check all apply $(shell sed -n 's/^_custom_fmt_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_fix := check all apply $(shell sed -n 's/^_custom_fix_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_run := default $(shell sed -n 's/^_custom_run_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
@@ -293,6 +293,17 @@ endif
 # Each checkout therefore owns the environment its own name resolves to. The
 # link is replaced (removing a link destroys no environment); a real local
 # environment is never cleared, because a concurrent process may be using it.
+# FLEXT=<worktree> rebinds this project's flext packages onto that checkout for
+# the session. Pinned dependencies stay the default: the flag is opt-in, the
+# consumer's pyproject is never modified, and setup without FLEXT= restores the
+# pinned resolution. Which distributions are rebound comes from the worktree's
+# own manifest, so this never carries a hardcoded package list.
+FLEXT_BINDING_RECIPE = if [ -n "$(strip $(FLEXT))" ]; then \
+		$(FLEXT_INFRA_RUNTIME_PYTHON) -m flext_infra workspace flext-binding \
+			--workspace "$(PROJECT_ROOT)" --flext-root "$(strip $(FLEXT))" \
+			--python "$(RUNTIME_PYTHON)"; \
+	fi
+
 SETUP_ENVIRONMENT_RECIPE = set -eu; \
 	if [ -L "$(RUNTIME_VENV)" ]; then \
 		rm -f "$(RUNTIME_VENV)"; \
@@ -420,7 +431,7 @@ define _run_for_selected_projects
 	done
 endef
 
-.PHONY: $(PUBLIC_VERBS) $(SERIALIZED_TARGETS) _builtin_help_usage _builtin_setup_environment _builtin_deps_check _builtin_deps_lock _builtin_deps_upgrade _builtin_build_artifacts _builtin_check_all _builtin_test_all _builtin_test_cache-status _builtin_test_cache-clear _builtin_test_cache-checkpoint _builtin_fmt_check _builtin_fmt_all _builtin_fmt_apply _builtin_fix_check _builtin_fix_all _builtin_fix_apply _builtin_run_default _builtin_status_diagnostics _builtin_docs_all _builtin_docs_generate _builtin_docs_fix _builtin_docs_audit _builtin_docs_build _builtin_docs_validate _builtin_clean_status _builtin_clean_generated _builtin_release_status _builtin_gen_check _builtin_gen_all _builtin_gen_apply _builtin_work_start _builtin_work_status _builtin_work_land _builtin_work_finish _builtin_mod_check _builtin_mod_all _builtin_mod_apply
+.PHONY: $(PUBLIC_VERBS) $(SERIALIZED_TARGETS) _builtin_help_usage _builtin_setup_environment _builtin_deps_check _builtin_deps_lock _builtin_deps_upgrade _builtin_build_artifacts _builtin_check_all _builtin_test_all _builtin_test_full _builtin_test_cache-status _builtin_test_cache-clear _builtin_test_cache-checkpoint _builtin_fmt_check _builtin_fmt_all _builtin_fmt_apply _builtin_fix_check _builtin_fix_all _builtin_fix_apply _builtin_run_default _builtin_status_diagnostics _builtin_docs_all _builtin_docs_generate _builtin_docs_fix _builtin_docs_audit _builtin_docs_build _builtin_docs_validate _builtin_clean_status _builtin_clean_generated _builtin_release_status _builtin_gen_check _builtin_gen_all _builtin_gen_apply _builtin_work_start _builtin_work_status _builtin_work_land _builtin_work_finish _builtin_mod_check _builtin_mod_all _builtin_mod_apply
 
 $(filter-out setup $(SERIALIZED_VERBS),$(PUBLIC_VERBS)):
 	$(call _dispatch,$@)
@@ -817,13 +828,16 @@ _builtin_setup_environment: _builtin_setup_submodules
 		$(MAKE) -C "$(RUNTIME_ROOT)" _builtin_setup_environment; \
 		$(BORROW_RUNTIME_VENV_RECIPE); \
 	fi
+	@$(FLEXT_BINDING_RECIPE)
 else ifeq ($(MAKE_PROFILE),workspace-root)
 _builtin_setup_environment: _builtin_setup_submodules
 	@$(SETUP_ENVIRONMENT_RECIPE)
 	@$(UV) pip check --python "$(RUNTIME_VENV)"
+	@$(FLEXT_BINDING_RECIPE)
 else
 _builtin_setup_environment: _builtin_setup_submodules
 	@$(SETUP_ENVIRONMENT_RECIPE)
+	@$(FLEXT_BINDING_RECIPE)
 endif
 # End SECTION: setup environment
 
@@ -898,6 +912,10 @@ _builtin_test_all: _builtin_require_environment
 
 	@$(PYTEST_BOUNDED) $(UV_RUN) python -m flext_infra._pytest_entry
 
+
+_builtin_test_full: _builtin_require_environment
+
+	@$(PYTEST_BOUNDED) $(UV_RUN) python -m flext_infra._pytest_entry
 
 _builtin_test_cache-status: _builtin_require_environment
 
@@ -981,13 +999,15 @@ _builtin_docs_validate:
 
 
 
+# Disposable artifacts (caches, reports, traces) are owned by the flext-infra
+# clean service and declared in config.make.clean, so the recipe stays a thin
+# dispatch like every other verb instead of shell that drifts per project.
+_builtin_clean_status:
+	@$(PROJECT_FLEXT_INFRA) maintenance clean --workspace "$(PROJECT_ROOT)"
+
 _builtin_clean_generated:
 	$(call _require_apply)
-	@find "$(PROJECT_ROOT)" -type d \
-		\( -name __pycache__ -o -name .mypy_cache -o -name .pytest_cache -o -name .ruff_cache \) \
-		-prune -exec rm -rf {} +
-	@rm -rf "$(PROJECT_ROOT)/build" "$(PROJECT_ROOT)/dist" "$(PROJECT_ROOT)/htmlcov"
-	@rm -f "$(PROJECT_ROOT)/.coverage"
+	@$(PROJECT_FLEXT_INFRA) maintenance clean --workspace "$(PROJECT_ROOT)" --apply-changes
 
 _builtin_release_status: _builtin_require_environment
 	@$(UV) lock --project "$(PROJECT_ROOT)" --check
