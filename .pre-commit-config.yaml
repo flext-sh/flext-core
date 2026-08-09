@@ -17,17 +17,21 @@ repos:
       # make exports as ` -- WHAT=land` and a child make re-reads with
       # command-line precedence — so unsetting the variable alone leaves the
       # override in place (MAKEOVERRIDES is never exported and clearing it here
-      # would change nothing). Each step then states its selector: the declared
-      # `what` when it has one, otherwise the verb's own declared default — a
-      # hook validates everything, never a caller-narrowed subset. Mutating steps
-      # pass APPLY only, so the verb resolves its own apply_what
-      # (gen/fmt/fix -> apply) instead of being forced to a read-only selector.
+      # would change nothing). APPLY leaks the same way and
+      # is cleared with them: `make work ... APPLY=Y` exports it, the hook's
+      # read-only steps inherit it, and a read-only verb rejects the token
+      # outright ("verb check is read-only and does not accept APPLY"), so a
+      # landing lane could not push. Each step then states its selector: the
+      # declared `what` when it has one, otherwise the verb's own declared
+      # default — a hook validates everything, never a caller-narrowed subset.
+      # Mutating steps pass APPLY explicitly, so the verb resolves its own
+      # apply_what (gen/fmt/fix -> apply) instead of a read-only selector.
       - id: flext-pre-commit
         name: FLEXT pre-commit workflow
         language: system
         entry: >-
           bash -eu -o pipefail -c
-          'unset WHAT MAKEFLAGS; make fmt APPLY=Y && make fix APPLY=Y'
+          'unset WHAT MAKEFLAGS APPLY; make fmt APPLY=Y && make fix APPLY=Y'
         pass_filenames: false
         always_run: true
         stages: [pre-commit]
@@ -36,7 +40,7 @@ repos:
         language: system
         entry: >-
           bash -eu -o pipefail -c
-          'unset WHAT MAKEFLAGS; unset $(git rev-parse --local-env-vars); make gen APPLY=Y && make check WHAT=all && make test WHAT=cache-clear APPLY=Y && make test WHAT=all'
+          'unset WHAT MAKEFLAGS APPLY; unset $(git rev-parse --local-env-vars); make gen APPLY=Y && make check WHAT=all && make test WHAT=cache-clear APPLY=Y && make test WHAT=all'
         pass_filenames: false
         always_run: true
         stages: [pre-push]

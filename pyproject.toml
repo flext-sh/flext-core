@@ -1,6 +1,7 @@
 # @flext-managed: continuous
 # @flext-regenerate: make deps WHAT=upgrade APPLY=Y
 # @flext-ssot: flext-infra/src/flext_infra/_constants/deps.py
+# @flext-ssot-dependencies: flext-infra/config/codegen.yaml (project_defaults.dev, dependency_profiles)
 # @flext-maintenance: do not edit managed sections; edit the SSOT
 # [MANAGED] FLEXT pyproject standardization
 # Sections with [MANAGED] are enforced by flext_infra.deps.modernizer.
@@ -599,7 +600,6 @@ split-on-trailing-comma = false
 ]
 "scripts/cmd/**/*.py" = ["invalid-module-name", "shebang-not-executable"]
 "**/examples/**/*.py" = ["invalid-module-name", "shebang-not-executable"]
-"src/flext_infra/_utilities/_rope/**/*.py" = ["private-member-access"]
 
 # [MANAGED] tomlsort
 [tool.tomlsort]
@@ -687,7 +687,7 @@ dev = [
   "mkdocstrings-python>=1.7",
   "mypy>=2.3.0",
   "pip-audit>=2.7.3",
-  "pre-commit>=4.6.0",
+  "pre-commit>=4.6.1",
   "pylint>=3.3",
   "pyrefly>=1.1.1",
   "pyright>=1.1.411",
