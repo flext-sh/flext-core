@@ -23,7 +23,7 @@ repos:
         language: system
         entry: >-
           bash -eu -o pipefail -c
-          'unset $(git rev-parse --local-env-vars); make gen APPLY=Y && CHECK_GATES=lint,pyrefly,mypy,pyright,security,smells make check && make test WHAT=cache-clear APPLY=Y && make test WHAT=all'
+          'unset $(git rev-parse --local-env-vars); make gen APPLY=Y && CHECK_GATES=lint,pyrefly,mypy,pyright,security,smells make check && make test WHAT=cache-clear APPLY=Y && make test WHAT=full'
         pass_filenames: false
         always_run: true
         stages: [pre-push]
