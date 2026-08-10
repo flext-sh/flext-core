@@ -7,6 +7,9 @@
 # BLOCK: AI/Agent Local Data (NEVER track these)
 .claude/*
 
+# BLOCK: member-local lockfile (the workspace root owns uv.lock)
+uv.lock
+
 # BLOCK: Agent surface outside the workspace root
 .agents/
 

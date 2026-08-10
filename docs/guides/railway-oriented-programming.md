@@ -38,11 +38,11 @@ exceptions and for `fail_*` helpers that already return `p.Result[T]`.
 
 Canonical implementations and live examples:
 
-- [`flext_core.result`](../../src/flext_core/result.py)
-- [`flext_core.exceptions`](../../src/flext_core/exceptions.py)
-- [`flext_core.decorators`](../../src/flext_core/decorators.py)
-- [`examples/ex_01_flext_result.py`](../../examples/ex_01_flext_result.py)
-- [`tests/unit/test_exceptions.py`](../../tests/unit/test_exceptions.py)
+- [`flext_core.result`](https://github.com/flext-sh/flext-core/blob/0.12.0-dev/src/flext_core/result.py)
+- [`flext_core.exceptions`](https://github.com/flext-sh/flext-core/blob/0.12.0-dev/src/flext_core/exceptions.py)
+- [`flext_core.decorators`](https://github.com/flext-sh/flext-core/blob/0.12.0-dev/src/flext_core/decorators.py)
+- [`examples/ex_01_flext_result.py`](https://github.com/flext-sh/flext-core/blob/0.12.0-dev/examples/ex_01_flext_result.py)
+- [`tests/unit/test_exceptions.py`](https://github.com/flext-sh/flext-core/blob/0.12.0-dev/tests/unit/test_exceptions.py)
 
 The goal is predictable composition without exception-driven control flow in
 the core path, while still allowing typed exception propagation at the outer
