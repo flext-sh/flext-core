@@ -28,14 +28,14 @@ class TestsFlextModelsExceptionParamsCore:
     def test_validate_assignment_rejects_bad_value(self) -> None:
         """validate_assignment=True: reassigning an invalid type raises."""
         params = m.ConnectionErrorParams(port=1)
-        with pytest.raises(c.ValidationError):
-            setattr(params, "port", "bad")
+        tm.rejects_assignment(params, "port", "bad", expected=c.ValidationError)
 
     def test_validate_assignment_rejects_extra_field(self) -> None:
         """extra=forbid + validate_assignment: unknown attribute assignment raises."""
         params = m.ConnectionErrorParams()
-        with pytest.raises(c.ValidationError):
-            setattr(params, "unknown_field", "value")
+        tm.rejects_assignment(
+            params, "unknown_field", "value", expected=c.ValidationError
+        )
 
     def test_validation_error_params_defaults(self) -> None:
         params = m.ValidationErrorParams()

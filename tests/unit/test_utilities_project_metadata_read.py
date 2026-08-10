@@ -134,8 +134,9 @@ class TestsFlextUtilitiesProjectMetadataRead:
             """,
         )
         meta = u.read_project_metadata(root).unwrap()
-        with pytest.raises(m.ValidationError):
-            setattr(meta, "package_name", "mutated")
+        tm.rejects_assignment(
+            meta, "package_name", "mutated", expected=m.ValidationError
+        )
 
     def test_read_project_metadata_fails_on_missing_pyproject(
         self, tmp_path: Path

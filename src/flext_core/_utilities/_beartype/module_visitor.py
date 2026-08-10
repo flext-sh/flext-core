@@ -50,57 +50,47 @@ class FlextUtilitiesBeartypeModuleVisitor:
 
     @staticmethod
     def v_loc_cap(params: me.LocCapParams, target: type) -> t.StrMapping | None:
-        """LOC_CAP — module logical-LOC ceiling + top-level class census (§3.1)."""
+        """LOC_CAP — top-level class census (NS-000).
+
+        The module-LOC ceiling used to live here too, but it counted source-text
+        lines, which is a static measure flext-infra's tokei gate already owns —
+        and the census re-ran it once per class, reporting one module up to eight
+        times. Only the class census remains (operator 2026-08-07).
+        """
         module = FlextUtilitiesBeartypeHelpers.runtime_module_for(target)
         if module is None:
             return _NO_VIOLATION
         src_file = inspect.getsourcefile(module) or ""
         filename = Path(src_file).name
-        if params.max_top_level_classes:
-            package = module.__name__.split(".")[0]
-            if not package.startswith("flext_") or filename.startswith("_"):
-                return _NO_VIOLATION
-            try:
-                source_lines, _start = inspect.getsourcelines(module)
-            except (OSError, TypeError):
-                return _NO_VIOLATION
-            source = "".join(source_lines)
-            try:
-                tree = ast.parse(source, filename=src_file)
-            except SyntaxError:
-                return _NO_VIOLATION
-            top_level_class_count = sum(
-                1
-                for node in tree.body
-                if isinstance(node, ast.ClassDef)
-                and not any(
-                    base.id == "Warning"
-                    for base in node.bases
-                    if isinstance(base, ast.Name)
-                )
-            )
-            if top_level_class_count > params.max_top_level_classes:
-                return {
-                    "file": filename,
-                    "count": str(top_level_class_count),
-                    "cap": str(params.max_top_level_classes),
-                }
+        if not params.max_top_level_classes:
+            return _NO_VIOLATION
+        package = module.__name__.split(".")[0]
+        if not package.startswith("flext_") or filename.startswith("_"):
             return _NO_VIOLATION
         try:
             source_lines, _start = inspect.getsourcelines(module)
         except (OSError, TypeError):
             return _NO_VIOLATION
         source = "".join(source_lines)
-        loc = sum(
+        try:
+            tree = ast.parse(source, filename=src_file)
+        except SyntaxError:
+            return _NO_VIOLATION
+        top_level_class_count = sum(
             1
-            for line in source.splitlines()
-            if line.strip() and not line.lstrip().startswith("#")
+            for node in tree.body
+            if isinstance(node, ast.ClassDef)
+            and not any(
+                base.id == "Warning"
+                for base in node.bases
+                if isinstance(base, ast.Name)
+            )
         )
-        if loc > params.max_logical_loc:
+        if top_level_class_count > params.max_top_level_classes:
             return {
                 "file": filename,
-                "loc": str(loc),
-                "cap": str(params.max_logical_loc),
+                "count": str(top_level_class_count),
+                "cap": str(params.max_top_level_classes),
             }
         return _NO_VIOLATION
 

@@ -35,8 +35,8 @@ class FlextHandlers[MessageT_contra, ResultT](
         Args:
             message: The message (command, query, or event) to handle
 
-        Returns:
-            r[ResultT]: Success with result or failure with error details
+        Raises:
+            NotImplementedError: Always; concrete subclasses must override.
 
         Note:
             This method should focus on business logic only. Validation should

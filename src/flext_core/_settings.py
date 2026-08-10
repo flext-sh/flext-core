@@ -104,7 +104,7 @@ def _platform_data_root() -> Path:
     return Path(xdg_data_home) if xdg_data_home else Path.home() / ".local" / "share"
 
 
-def _platform_config_root() -> Path:
+def platform_config_root() -> Path:
     """Return the OS-native user config root for per-namespace configuration.
 
     Linux/BSD honour ``XDG_CONFIG_HOME`` (default ``~/.config``); macOS uses
@@ -140,7 +140,7 @@ def _platform_state_root() -> Path:
     return Path(xdg_state_home) if xdg_state_home else Path.home() / ".local" / "state"
 
 
-def _app_env_prefix(namespace: str) -> str:
+def app_env_prefix(namespace: str) -> str:
     """Return the environment prefix owned by one application namespace."""
     normalized = "".join(char if char.isalnum() else "_" for char in namespace)
     return f"{normalized.upper()}_"
@@ -374,7 +374,7 @@ class FlextSettings(BaseSettings):
     @classmethod
     def _absolute_app_dir(cls, name: str, root: Path) -> Path:
         namespace = cls._current_app_namespace()
-        override = os.environ.get(f"{_app_env_prefix(namespace)}{name.upper()}_DIR")
+        override = os.environ.get(f"{app_env_prefix(namespace)}{name.upper()}_DIR")
         path = Path(override) if override else root / namespace
         if not path.is_absolute():
             msg = f"{name}_dir must be absolute"
@@ -409,14 +409,14 @@ class FlextSettings(BaseSettings):
     @property
     def config_dir(self) -> Path:
         """Consuming application's user configuration directory."""
-        return self._absolute_app_dir("config", _platform_config_root())
+        return self._absolute_app_dir("config", platform_config_root())
 
     @computed_field
     @property
     def runtime_dir(self) -> Path:
         """Consuming application's ephemeral runtime directory."""
         namespace = self._current_app_namespace()
-        override = os.environ.get(f"{_app_env_prefix(namespace)}RUNTIME_DIR")
+        override = os.environ.get(f"{app_env_prefix(namespace)}RUNTIME_DIR")
         if override:
             path = Path(override)
         else:
