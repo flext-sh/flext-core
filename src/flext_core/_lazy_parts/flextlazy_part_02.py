@@ -71,8 +71,17 @@ class FlextLazy(FlextLazyPart01):
         lazy_imports: LazyImportMap,
         module_globals: ModuleGlobals,
         module_name: str,
+        *,
+        resolved_type: type[T] | None = None,
     ) -> FlextLazyAttribute[T]:
-        """Return a descriptor for class-namespace lazy attributes."""
+        """Return a descriptor for class-namespace lazy attributes.
+
+        ``resolved_type`` binds the descriptor's symbol type explicitly. Omit it
+        where the assignment already carries the annotation
+        (``Alpha: Beta = lazy_attribute(...)``); pass it where there is no
+        annotation to bind, so the symbol type never degrades to unknown.
+        """
+        _ = resolved_type
         return FlextLazyAttribute[T](
             self, name, lazy_imports, module_globals, module_name
         )

@@ -364,7 +364,42 @@ reportUnusedImport = "error"
 reportUnusedVariable = "error"
 typeCheckingMode = "strict"
 venv = ".venv"
-venvPath = "."
+venvPath = ".."
+
+[[tool.pyright.executionEnvironments]]
+extraPaths = ["src"]
+reportAssignmentType = "none"
+reportAttributeAccessIssue = "none"
+reportGeneralTypeIssues = "none"
+reportInvalidTypeForm = "none"
+reportPrivateImportUsage = "none"
+reportPrivateUsage = "error"
+reportReturnType = "none"
+reportUnknownArgumentType = "none"
+reportUnknownLambdaType = "none"
+reportUnknownMemberType = "none"
+reportUnknownParameterType = "none"
+reportUnknownVariableType = "none"
+reportUnusedImport = "none"
+root = "src"
+
+[[tool.pyright.executionEnvironments]]
+extraPaths = [".", "src"]
+reportArgumentType = "none"
+reportAssignmentType = "none"
+reportAttributeAccessIssue = "none"
+reportGeneralTypeIssues = "none"
+reportInvalidTypeForm = "none"
+reportPrivateImportUsage = "none"
+reportPrivateUsage = "none"
+reportReturnType = "none"
+reportUnknownArgumentType = "none"
+reportUnknownLambdaType = "none"
+reportUnknownMemberType = "none"
+reportUnknownParameterType = "none"
+reportUnknownVariableType = "none"
+reportUnusedImport = "none"
+root = "tests"
 
 [[tool.pyright.executionEnvironments]]
 extraPaths = [".", "src"]
@@ -401,41 +436,6 @@ reportUnknownParameterType = "none"
 reportUnknownVariableType = "none"
 reportUnusedImport = "none"
 root = "scripts"
-
-[[tool.pyright.executionEnvironments]]
-extraPaths = ["src"]
-reportAssignmentType = "none"
-reportAttributeAccessIssue = "none"
-reportGeneralTypeIssues = "none"
-reportInvalidTypeForm = "none"
-reportPrivateImportUsage = "none"
-reportPrivateUsage = "error"
-reportReturnType = "none"
-reportUnknownArgumentType = "none"
-reportUnknownLambdaType = "none"
-reportUnknownMemberType = "none"
-reportUnknownParameterType = "none"
-reportUnknownVariableType = "none"
-reportUnusedImport = "none"
-root = "src"
-
-[[tool.pyright.executionEnvironments]]
-extraPaths = [".", "src"]
-reportArgumentType = "none"
-reportAssignmentType = "none"
-reportAttributeAccessIssue = "none"
-reportGeneralTypeIssues = "none"
-reportInvalidTypeForm = "none"
-reportPrivateImportUsage = "none"
-reportPrivateUsage = "none"
-reportReturnType = "none"
-reportUnknownArgumentType = "none"
-reportUnknownLambdaType = "none"
-reportUnknownMemberType = "none"
-reportUnknownParameterType = "none"
-reportUnknownVariableType = "none"
-reportUnusedImport = "none"
-root = "tests"
 
 # [MANAGED] pytest
 [tool.pytest.ini_options]
@@ -645,7 +645,7 @@ whitelines = 1
 
 [dependency-groups]
 codegen = [
-  "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0rc2",
+  "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
 ]
 dev = [
   "actionlint-py>=1.7.12.24",
@@ -659,9 +659,9 @@ dev = [
   "django-stubs>=5.2.2",
   "factory-boy>=3.3.1",
   "faker>=37.4",
-  "flext-cli @ git+https://github.com/flext-sh/flext-cli.git@0.12.0rc2",
-  "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0rc2",
-  "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0rc2",
+  "flext-cli @ git+https://github.com/flext-sh/flext-cli.git@0.12.0-dev",
+  "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
+  "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev",
   "hypothesis>=6.125",
   "interrogate>=1.7.0",
   "isort>=6.0.1",

@@ -293,6 +293,7 @@ class TestsFlextCoreLazyExports:
                 {"Alpha": (module_name, "Alpha")},
                 module_globals,
                 "test_lazy_pkg",
+                resolved_type=type,
             )
 
         # Act / Assert
