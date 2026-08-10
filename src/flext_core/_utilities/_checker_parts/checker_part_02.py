@@ -82,12 +82,15 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart01):
         """Instance check for non-type objects; returns True on TypeError."""
         try:
             if isinstance(origin_type, type):
-                return isinstance(message_type, origin_type) or cls._is_subclass_of(
+                matched = isinstance(message_type, origin_type) or cls._is_subclass_of(
                     message_type, origin_type
                 )
-            return True
+            else:
+                matched = True
         except TypeError:
             return True
+        else:
+            return matched
 
     @classmethod
     def _handle_type_or_origin_check(
@@ -99,13 +102,28 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart01):
     ) -> bool:
         """Type checking for types or objects with __origin__."""
         try:
-            if hasattr(message_type, "__origin__"):
-                return message_origin is origin_type
-            if isinstance(origin_type, type):
-                return cls._is_subclass_of(message_type, origin_type)
-            return message_type is expected_type
+            matched = cls._match_type_or_origin(
+                expected_type, message_type, origin_type, message_origin
+            )
         except TypeError:
             return message_type is expected_type
+        else:
+            return matched
+
+    @classmethod
+    def _match_type_or_origin(
+        cls,
+        expected_type: tb.TypeHintSpecifier,
+        message_type: tb.TypeHintSpecifier,
+        origin_type: tb.TypeHintSpecifier,
+        message_origin: tb.TypeHintSpecifier,
+    ) -> bool:
+        """Resolve the origin/type match without guarding against TypeError."""
+        if hasattr(message_type, "__origin__"):
+            return message_origin is origin_type
+        if isinstance(origin_type, type):
+            return cls._is_subclass_of(message_type, origin_type)
+        return message_type is expected_type
 
     @classmethod
     def _evaluate_type_compatibility(

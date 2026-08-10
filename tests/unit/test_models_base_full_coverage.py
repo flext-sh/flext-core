@@ -15,6 +15,7 @@ import pytest
 
 from tests.constants import c
 from tests.models import m
+from flext_tests import tm
 
 
 class TestsFlextCoreModelsBaseFullCoverage:
@@ -69,8 +70,7 @@ class TestsFlextCoreModelsBaseFullCoverage:
 
     def test_metadata_is_frozen(self) -> None:
         model = m.Metadata()
-        with pytest.raises(c.ValidationError):
-            setattr(model, "version", "2.0.0")
+        tm.rejects_assignment(model, "version", "2.0.0", expected=c.ValidationError)
 
     def test_metadata_rejects_extra_fields(self) -> None:
         with pytest.raises(c.ValidationError):

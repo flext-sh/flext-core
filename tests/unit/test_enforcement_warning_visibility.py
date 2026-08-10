@@ -29,10 +29,13 @@ class TestsFlextCoreEnforcementWarningVisibility:
     _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
     # test_real_filterwarnings_keep_mro_violations_visible spawns a nested
-    # pytest via u.Cli.run_raw that cold-imports flext_core: real work ~8s,
-    # exceeding the global --timeout=10 under full-suite CPU contention.
-    # Class-level ceiling override, not a suppression of a hang (profiled ~8s).
-    pytestmark = pytest.mark.timeout(60)
+    # pytest via u.Cli.run_raw that cold-imports flext_core, so it is legitimately
+    # slow (~49s standalone, >60s under full-suite CPU contention). The former
+    # class-level timeout(60) override was calibrated against an old global
+    # --timeout=10; the SSOT (flext-infra codegen) now projects --timeout=90,
+    # which supersedes it. Keeping the local override would cap the ceiling
+    # *below* the SSOT value and re-introduce the timeout it was meant to avoid,
+    # so the case inherits the generated global budget instead.
 
     @pytest.mark.parametrize("category", [FlextMroViolation, FlextSmellViolation])
     def test_enforcement_categories_are_userwarnings(

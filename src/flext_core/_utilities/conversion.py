@@ -50,11 +50,12 @@ class FlextUtilitiesConversion:
             return value
         try:
             float_value = t.float_adapter().validate_python(value)
+        except c.ValidationError:
+            return str(value)
+        else:
             if float_value.is_integer():
                 return str(int(float_value))
             return f"{float_value:.2f}"
-        except c.ValidationError:
-            return str(value)
 
     @staticmethod
     def to_str_list(
