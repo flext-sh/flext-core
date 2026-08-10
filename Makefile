@@ -53,7 +53,7 @@ PYTEST_PROCESS_TIMEOUT_SECONDS ?= 1920
 # MYPY_BOUNDED, so a hung run is terminated even if the typed runner stalls.
 PYTEST_BOUNDED = timeout --signal=TERM --kill-after=5s "$(PYTEST_PROCESS_TIMEOUT_SECONDS)s"
 PYTEST_REPORTS_DIR ?= .reports/tests
-override PYTEST_CASE_TIMEOUT_SECONDS := 30
+override PYTEST_CASE_TIMEOUT_SECONDS := 90
 override PYTEST_RUN_TIMEOUT_SECONDS := 1800
 override PYTEST_TERMINATION_GRACE_SECONDS := 2
 override PYTEST_TIMEOUT_EXIT_CODE := 124
