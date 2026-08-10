@@ -48,8 +48,8 @@ class TestsFlextHandlerDiscoveryModule:
             _ = cmd
             return r[str].ok("deleted")
 
-        setattr(module, "handle_create", handle_create)
-        setattr(module, "handle_delete", handle_delete)
+        module.__dict__["handle_create"] = handle_create
+        module.__dict__["handle_delete"] = handle_delete
 
         # Act
         handlers = h.Discovery.scan_module(module)
@@ -75,8 +75,8 @@ class TestsFlextHandlerDiscoveryModule:
             _ = cmd
             return r[str].ok("public")
 
-        setattr(module, "_private_handler", _private_handler)
-        setattr(module, "public_handler", public_handler)
+        module.__dict__["_private_handler"] = _private_handler
+        module.__dict__["public_handler"] = public_handler
 
         # Act
         handlers = h.Discovery.scan_module(module)
@@ -100,9 +100,9 @@ class TestsFlextHandlerDiscoveryModule:
             _ = cmd
             return "plain"
 
-        setattr(module, "decorated", decorated)
-        setattr(module, "plain", plain)
-        setattr(module, "constant", 123)
+        module.__dict__["decorated"] = decorated
+        module.__dict__["plain"] = plain
+        module.__dict__["constant"] = 123
 
         # Act
         handlers = h.Discovery.scan_module(module)
@@ -129,8 +129,8 @@ class TestsFlextHandlerDiscoveryModule:
             _ = cmd
             return r[str].ok("high")
 
-        setattr(module, "low", low)
-        setattr(module, "high", high)
+        module.__dict__["low"] = low
+        module.__dict__["high"] = high
 
         # Act
         ordered = [name for name, _, _ in h.Discovery.scan_module(module)]
@@ -153,8 +153,8 @@ class TestsFlextHandlerDiscoveryModule:
             _ = cmd
             return r[str].ok("a")
 
-        setattr(module, "bravo", bravo)
-        setattr(module, "alpha", alpha)
+        module.__dict__["bravo"] = bravo
+        module.__dict__["alpha"] = alpha
 
         # Act
         ordered = [name for name, _, _ in h.Discovery.scan_module(module)]
@@ -172,7 +172,7 @@ class TestsFlextHandlerDiscoveryModule:
             _ = cmd
             return r[str].ok("done")
 
-        setattr(module, "handle", handle)
+        module.__dict__["handle"] = handle
 
         # Act
         _, _, config = h.Discovery.scan_module(module)[0]
@@ -185,7 +185,7 @@ class TestsFlextHandlerDiscoveryModule:
         """A module without decorated handlers yields an empty sequence."""
         # Arrange
         module = types.ModuleType("bare_module")
-        setattr(module, "value", 42)
+        module.__dict__["value"] = 42
 
         # Act
         handlers = h.Discovery.scan_module(module)
@@ -209,7 +209,7 @@ class TestsFlextHandlerDiscoveryModule:
             _ = cmd
             return returned
 
-        setattr(module, "produce", produce)
+        module.__dict__["produce"] = produce
         _, discovered, _ = h.Discovery.scan_module(module)[0]
         invoke: Callable[..., t.Scalar | None] = discovered
 

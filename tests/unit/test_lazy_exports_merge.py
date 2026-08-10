@@ -37,13 +37,13 @@ class TestsFlextCoreLazyExportsMerge:
         alpha_module_name = f"{child_package_name}.alpha"
 
         child_package = ModuleType(child_package_name)
-        setattr(child_package, "_LAZY_IMPORTS", {"Alpha": (".alpha", "Alpha")})
+        child_package.__dict__["_LAZY_IMPORTS"] = {"Alpha": (".alpha", "Alpha")}
         alpha_module = ModuleType(alpha_module_name)
 
         class Alpha:
             pass
 
-        setattr(alpha_module, "Alpha", Alpha)
+        alpha_module.__dict__["Alpha"] = Alpha
         monkeypatch.setitem(sys.modules, child_package_name, child_package)
         monkeypatch.setitem(sys.modules, alpha_module_name, alpha_module)
 
@@ -59,13 +59,13 @@ class TestsFlextCoreLazyExportsMerge:
         alpha_module_name = f"{child_package_name}.alpha"
 
         child_package = ModuleType(child_package_name)
-        setattr(child_package, "_LAZY_IMPORTS", {"Alpha": (".alpha", "Alpha")})
+        child_package.__dict__["_LAZY_IMPORTS"] = {"Alpha": (".alpha", "Alpha")}
         alpha_module = ModuleType(alpha_module_name)
 
         class Alpha:
             pass
 
-        setattr(alpha_module, "Alpha", Alpha)
+        alpha_module.__dict__["Alpha"] = Alpha
         monkeypatch.setitem(sys.modules, child_package_name, child_package)
         monkeypatch.setitem(sys.modules, alpha_module_name, alpha_module)
 

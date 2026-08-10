@@ -49,7 +49,7 @@ Canonical `make` verbs (`check`, `test`, `fmt WHAT=apply APPLY=Y`, `val`,
 `docs`) — see
 [`/flext/AGENTS.md`](https://github.com/flext-sh/flext/blob/0.12.0-dev/AGENTS.md)
 `Build & Test` and `Required Python quality gates`; selector routing is owned
-universally by [`make-check`](~/.agents/skills/make-check/SKILL.md).
+universally by the agents_home `make-check` skill.
 
 ## Governance Pointer
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 import io
 import time
 from contextlib import redirect_stdout
-from typing import TYPE_CHECKING
+from typing import NoReturn, TYPE_CHECKING
 
 import pytest
 
@@ -179,8 +179,12 @@ class TestsFlextLoggings:
 
     def test_exception_log_captures_inside_except_block(self, logger: p.Logger) -> None:
         message = "captured"
-        try:
+
+        def _fail() -> NoReturn:
             raise ValueError(message)
+
+        try:
+            _fail()
         except ValueError:
             result = self._assert_log_output(
                 lambda: logger.exception(message), contains=message

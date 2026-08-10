@@ -63,10 +63,7 @@ def _extended_bindings() -> t.MappingKV[
         ),
         # Why: top-level-class census only. The LOC ceiling is no longer part of
         # this predicate — flext-infra's tokei gate owns it.
-        "one_class_per_module": (
-            pk.LOC_CAP,
-            me.LocCapParams(max_top_level_classes=1),
-        ),
+        "one_class_per_module": (pk.LOC_CAP, me.LocCapParams(max_top_level_classes=1)),
         "no_private_module_bypass": (
             pk.IMPORT_BLACKLIST,
             iblp(private_package_only=True),
