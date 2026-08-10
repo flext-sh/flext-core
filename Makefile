@@ -163,7 +163,7 @@ ifeq ($(strip $(FLEXT_INFRA_BOOTSTRAP_REF)),)
 FLEXT_INFRA_BOOTSTRAP_REF := 0.12.0-dev
 endif
 FLEXT_INFRA_BOOTSTRAP_REQUIREMENT := flext-infra @ git+https://github.com/flext-sh/flext-infra.git@$(FLEXT_INFRA_BOOTSTRAP_REF)
-FLEXT_INFRA_SOURCE_ROOT_REL := 
+FLEXT_INFRA_SOURCE_ROOT_REL :=
 UV_BOOTSTRAP_FLAGS := --isolated --all-groups --all-extras
 # End SECTION: infra bootstrap
 
