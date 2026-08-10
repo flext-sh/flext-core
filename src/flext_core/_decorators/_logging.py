@@ -110,17 +110,6 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
                 ),
             )
             result = call()
-            logger.debug(
-                "%s_completed",
-                op_name,
-                **cls._success_log_payload(
-                    func_name=func_name,
-                    correlation_id=correlation_id,
-                    track_perf=track_perf,
-                    start_time=start_time,
-                ),
-            )
-            return result
         except cls._CAUGHT_EXCEPTIONS as exc:
             tracked_duration = time.perf_counter() - start_time if track_perf else 0.0
             exc_kw: tb.MutableJsonMapping = {
@@ -137,6 +126,18 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
                 exc_kw[ci.MetadataKey.DURATION_SECONDS] = tracked_duration
             logger.exception(op_name, exception=exc, **exc_kw)
             raise
+        else:
+            logger.debug(
+                "%s_completed",
+                op_name,
+                **cls._success_log_payload(
+                    func_name=func_name,
+                    correlation_id=correlation_id,
+                    track_perf=track_perf,
+                    start_time=start_time,
+                ),
+            )
+            return result
 
     @classmethod
     def with_correlation[**PCallback, TResult](

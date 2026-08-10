@@ -31,7 +31,7 @@ _OBSERVED_VALUE = 5
 class TestsFlextCoreMigrationValidation:
     """Contract tests for the guaranteed-stable flext-core public surface."""
 
-    # ------------------------------------------------------------------ r[T]
+    # Section: Result contract
 
     @pytest.mark.parametrize(
         ("value", "expected"), [("user_123", "user_123"), ("", ""), ("A B C", "A B C")]

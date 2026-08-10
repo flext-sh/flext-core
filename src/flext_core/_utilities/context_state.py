@@ -44,10 +44,6 @@ class FlextUtilitiesContextState:
         """Return contextvar payload as a flat container mapping with safe default."""
         try:
             normalized = FlextRuntime.normalize_model_input_mapping(ctx_value)
-            if normalized is None:
-                empty_normalized_context: t.JsonMapping = {}
-                return empty_normalized_context
-            return normalized
         except c.EXC_ATTR_KEY_TYPE_VALUE as exc:
             FlextUtilitiesContextState.logger.debug(
                 "Failed to normalize contextvar payload to configuration dict",
@@ -55,6 +51,11 @@ class FlextUtilitiesContextState:
             )
             empty_context: t.JsonMapping = {}
             return empty_context
+        else:
+            if normalized is None:
+                empty_normalized_context: t.JsonMapping = {}
+                return empty_normalized_context
+            return normalized
 
     def _scope_var(self, scope: str) -> contextvars.ContextVar[m.ConfigMap | None]:
         """Get or create contextvar for scope."""

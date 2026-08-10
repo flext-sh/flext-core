@@ -128,7 +128,7 @@ class TestsFlextCoreResultFactoryDip:
         for empty in (None, ""):
             source: p.Result[int] = r[int].fail(empty)
             mapped: p.Result[int] = source.map(lambda value: value + 1)
-            flat: p.Result[int] = source.flat_map(lambda value: r[int].ok(value))
+            flat: p.Result[int] = source.flat_map(r[int].ok)
             copied: p.Result[int] = r.from_result(source)
             tm.fail(mapped, has="")
             tm.that(mapped.error, eq="")

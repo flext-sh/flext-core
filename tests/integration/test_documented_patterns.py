@@ -8,6 +8,8 @@ No private attribute, internal collaborator or implementation detail is inspecte
 
 from __future__ import annotations
 
+from typing import NoReturn
+
 from collections.abc import Callable
 
 import pytest
@@ -30,7 +32,7 @@ class TestsFlextCoreDocumentedPatterns:
         [
             (1, lambda value: value + 1, 2),
             (10, lambda value: value * 3, 30),
-            (-5, lambda value: abs(value), 5),
+            (-5, abs, 5),
         ],
     )
     def test_map_transforms_success_value(
@@ -201,8 +203,12 @@ class TestsFlextCoreDocumentedPatterns:
         def fetch_remote_profile() -> str:
             socket_message = "socket stalled"
             timeout_message = "Remote profile lookup timed out"
-            try:
+
+            def _stall() -> NoReturn:
                 raise RuntimeError(socket_message)
+
+            try:
+                _stall()
             except RuntimeError as exc:
                 raise e.FlextTimeoutError(
                     timeout_message,
