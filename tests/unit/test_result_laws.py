@@ -195,7 +195,7 @@ class TestsFlextCoreResultLaws:
     @settings(max_examples=50)
     def test_monad_right_unit_law(self, x: int) -> None:
         """ok(x).flat_map(ok) == ok(x)."""
-        chained = r[int].ok(x).flat_map(lambda v: r[int].ok(v))
+        chained = r[int].ok(x).flat_map(r[int].ok)
         assert chained.success is True
         assert chained.value == x
 
