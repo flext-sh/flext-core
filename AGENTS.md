@@ -41,6 +41,8 @@ src/flext_core/
 - `_config.py` / `_settings.py` are layer-0 pure (stdlib + pydantic only); they own `config` / `settings` singletons.
 - `lazy.py` (`FlextLazy`) builds the PEP-562 export map used by every generated `__init__`.
 - Never hand-edit `__init__.py` or `# AUTO-GENERATED` facet roots; do not collapse `_parts` without updating facade imports (breaks lazy map / cycles).
+- Config/settings canonical pattern: ADR-012.
+- Codemod governance (ast-grep + make mod): ADR-014.
 
 ## Commands
 

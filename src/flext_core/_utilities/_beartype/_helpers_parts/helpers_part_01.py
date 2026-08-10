@@ -35,7 +35,7 @@ class FlextUtilitiesBeartypeHelpers:
             return ()
         lazy_module = importlib.import_module("flext_core.lazy")
         lazy_imports = lazy_module.normalize_lazy_imports(
-            package.__name__, getattr(package, "_LAZY_IMPORTS")
+            package.__name__, package.__dict__["_LAZY_IMPORTS"]
         )
         return tuple(
             (

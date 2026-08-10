@@ -20,10 +20,7 @@ from flext_core import (
     FlextTypes as t,
     r,
 )
-from flext_core._constants.errors import FlextConstantsErrors as ce
-from flext_core._constants.logging import FlextConstantsLogging as cl
-from flext_core._exceptions.factories import FlextExceptionsFactories as ef
-from flext_core._models.containers import FlextModelsContainers as mc
+from flext_core.models import FlextModels as m
 from flext_core._utilities.generators import FlextUtilitiesGenerators as ug
 from flext_core._utilities.logging_context import FlextUtilitiesLoggingContext as ulc
 
@@ -223,12 +220,12 @@ class FlextUtilitiesLogging(ulc):
 
     def warning(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
         """Log warning message."""
-        return self._log_standard_level(cl.LogLevel.WARNING, msg, *args, **kw)
+        return self._log_standard_level(c.LogLevel.WARNING, msg, *args, **kw)
 
     @staticmethod
-    def _resolve_level_name(level: cl.LogLevel | str) -> str:
+    def _resolve_level_name(level: c.LogLevel | str) -> str:
         match level:
-            case cl.LogLevel() as enum_level:
+            case c.LogLevel() as enum_level:
                 level_raw: str = enum_level.value
             case _:
                 level_raw = level
@@ -249,7 +246,7 @@ class FlextUtilitiesLogging(ulc):
 
     def _log(
         self,
-        level: cl.LogLevel | str,
+        level: c.LogLevel | str,
         event: str,
         *args: t.LogValue,
         **context: t.LogValue,
@@ -260,35 +257,35 @@ class FlextUtilitiesLogging(ulc):
             scalar_context = FlextUtilitiesLogging._resolve_log_context(args, context)
             getattr(self.logger, level_str)(event, **scalar_context)
             return r[bool].ok(True)
-        except ce.EXC_BROAD_RUNTIME as exc:
-            return ef.fail_operation("logging", exc)
+        except c.EXC_BROAD_RUNTIME as exc:
+            return e.fail_operation("logging", exc)
 
     def _log_standard_level(
-        self, level: cl.LogLevel, msg: str, *args: t.LogValue, **kw: t.LogValue
+        self, level: c.LogLevel, msg: str, *args: t.LogValue, **kw: t.LogValue
     ) -> t.LogResult:
         return self._log(level, msg, *args, **kw)
 
     def critical(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
         """Log critical message."""
-        return self._log_standard_level(cl.LogLevel.CRITICAL, msg, *args, **kw)
+        return self._log_standard_level(c.LogLevel.CRITICAL, msg, *args, **kw)
 
     def debug(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
         """Log debug message."""
-        return self._log_standard_level(cl.LogLevel.DEBUG, msg, *args, **kw)
+        return self._log_standard_level(c.LogLevel.DEBUG, msg, *args, **kw)
 
     def error(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
         """Log error message."""
-        return self._log_standard_level(cl.LogLevel.ERROR, msg, *args, **kw)
+        return self._log_standard_level(c.LogLevel.ERROR, msg, *args, **kw)
 
     def info(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
         """Log info message."""
-        return self._log_standard_level(cl.LogLevel.INFO, msg, *args, **kw)
+        return self._log_standard_level(c.LogLevel.INFO, msg, *args, **kw)
 
     def log(
         self, level: str, message: str, *args: t.LogValue, **context: t.LogValue
     ) -> t.LogResult:
         """Log message with specified level."""
-        level_enum: cl.LogLevel = cl.LogLevel(level.upper())
+        level_enum: c.LogLevel = c.LogLevel(level.upper())
         converted_args: tuple[t.JsonValue, ...] = tuple(
             FlextUtilitiesLogging._to_container_value(arg) for arg in args
         )
@@ -301,15 +298,15 @@ class FlextUtilitiesLogging(ulc):
         try:
             try:
                 formatted_message = message % args if args else message
-            except ce.EXC_TYPE_VALIDATION:
+            except c.EXC_TYPE_VALIDATION:
                 formatted_message = f"{message} | args={args!r}"
             self.logger.debug(
                 formatted_message, **FlextUtilitiesLogging._to_scalar_context(kwargs)
             )
             return r[bool].ok(True)
-        except ce.EXC_BROAD_RUNTIME as exc:
+        except c.EXC_BROAD_RUNTIME as exc:
             FlextUtilitiesLogging._report_internal_logging_failure("trace", exc)
-            return ef.fail_operation("trace logging", exc)
+            return e.fail_operation("trace logging", exc)
 
     class PerformanceTracker:
         """Context manager for performance tracking with automatic logging."""
@@ -336,7 +333,7 @@ class FlextUtilitiesLogging(ulc):
             elapsed = time.time() - self._start_time
             success = exc_type is None
             status = "success" if success else "failed"
-            context: mc.ConfigMap = mc.ConfigMap(
+            context: m.ConfigMap = m.ConfigMap(
                 root={
                     c.MetadataKey.DURATION_SECONDS: elapsed,
                     c.HandlerType.OPERATION: self._operation_name,
@@ -386,7 +383,7 @@ class FlextUtilitiesLogging(ulc):
         def track_domain_event(
             event_name: str,
             aggregate_id: str | None = None,
-            event_data: mc.ConfigMap | None = None,
+            event_data: m.ConfigMap | None = None,
         ) -> None:
             """Track domain event with context correlation."""
             sl = FlextUtilitiesLogging.structlog()

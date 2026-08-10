@@ -12,8 +12,6 @@ from typing import TYPE_CHECKING, Annotated, ClassVar
 # fields mirroring m.RuntimeBootstrapOptions; dead track/_init_service/
 # _register_in_container removed (zero callers).
 from flext_core import FlextContainer, FlextContext, c, m, p, t, u
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._typings.pydantic import FlextTypesPydantic as tp
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Mapping, MutableMapping
@@ -22,7 +20,7 @@ if TYPE_CHECKING:
 class FlextMixins(m.ArbitraryTypesModel):
     """Composable behaviors for dispatcher-driven services and handlers."""
 
-    settings_type: t.SettingsClass | None = mp.Field(
+    settings_type: t.SettingsClass | None = m.Field(
         default=None,
         validate_default=True,
         exclude=True,
@@ -31,15 +29,15 @@ class FlextMixins(m.ArbitraryTypesModel):
 
     runtime_settings: Annotated[
         p.Settings | None,
-        tp.SkipValidation,
-        mp.Field(
+        t.SkipValidation,
+        m.Field(
             default=None,
             exclude=True,
             description="Pre-built settings instance used directly for the runtime.",
         ),
     ] = None
 
-    settings_overrides: t.ScalarMapping | None = mp.Field(
+    settings_overrides: t.ScalarMapping | None = m.Field(
         default=None,
         validate_default=True,
         exclude=True,
@@ -48,17 +46,17 @@ class FlextMixins(m.ArbitraryTypesModel):
 
     initial_context: Annotated[
         p.Context | None,
-        tp.SkipValidation,
-        mp.Field(
+        t.SkipValidation,
+        m.Field(
             default=None,
             exclude=True,
             description="Initial context for the service scope.",
         ),
     ] = None
 
-    _runtime: m.ServiceRuntime | None = mp.PrivateAttr(default_factory=lambda: None)
+    _runtime: m.ServiceRuntime | None = m.PrivateAttr(default_factory=lambda: None)
 
-    _operation_stats: MutableMapping[str, m.ConfigMap] = mp.PrivateAttr(
+    _operation_stats: MutableMapping[str, m.ConfigMap] = m.PrivateAttr(
         default_factory=dict[str, m.ConfigMap]
     )
 

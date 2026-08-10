@@ -114,9 +114,12 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart01):
         module: _types_mod.ModuleType,
     ) -> Iterator[_types_mod.FunctionType]:
         module_name = module.__name__
-        for value in vars(module).values():
-            if isinstance(value, (classmethod, staticmethod)):
-                value = value.__func__
+        for member in vars(module).values():
+            value = (
+                member.__func__
+                if isinstance(member, (classmethod, staticmethod))
+                else member
+            )
             code = getattr(value, "__code__", None)
             if (
                 isinstance(value, _types_mod.FunctionType)

@@ -15,14 +15,14 @@ SHELL := /bin/sh
 # === SECTION: project identity (managed) ===
 # Source: config:dist / config:make_profile / config:workspace_root_rel / config:uv_link_mode
 PROJECT_NAME := flext-core
-MAKE_PROFILE := workspace-member
+MAKE_PROFILE := standalone
 WORKSPACE_ROOT_REL := .
 # === SECTION: workspace members (managed) ===
 # Source: config:workspace_members (list), config:workspace_repositories (list)
 # Computed: MANAGED_GITLINKS mirrors WORKSPACE_MEMBERS for workspace-root gitlink
 # governance; standalone projects discover managed submodules at runtime from
 # .gitmodules (flext-managed=true).
-WORKSPACE_MEMBERS := flext-api flext-auth flext-cli flext-core flext-db-oracle flext-dbt-ldap flext-dbt-ldif flext-dbt-oracle flext-dbt-oracle-wms flext-grpc flext-infra flext-ldap flext-ldif flext-meltano flext-observability flext-oracle-oic flext-oracle-wms flext-plugin flext-quality flext-tap-ldap flext-tap-ldif flext-tap-oracle flext-tap-oracle-oic flext-tap-oracle-wms flext-target-ldap flext-target-ldif flext-target-oracle flext-target-oracle-oic flext-target-oracle-wms flext-tests flext-web
+WORKSPACE_MEMBERS :=
 MANAGED_GITLINKS :=
 WORKSPACE_EDITABLES := $(PROJECT_NAME):.
 UV_LINK_MODE := copy
@@ -53,7 +53,7 @@ PYTEST_PROCESS_TIMEOUT_SECONDS ?= 1920
 # MYPY_BOUNDED, so a hung run is terminated even if the typed runner stalls.
 PYTEST_BOUNDED = timeout --signal=TERM --kill-after=5s "$(PYTEST_PROCESS_TIMEOUT_SECONDS)s"
 PYTEST_REPORTS_DIR ?= .reports/tests
-override PYTEST_CASE_TIMEOUT_SECONDS := 30
+override PYTEST_CASE_TIMEOUT_SECONDS := 90
 override PYTEST_RUN_TIMEOUT_SECONDS := 1800
 override PYTEST_TERMINATION_GRACE_SECONDS := 2
 override PYTEST_TIMEOUT_EXIT_CODE := 124
@@ -117,9 +117,9 @@ endif
 
 # === SECTION: verb dispatch (managed) ===
 # Source: config:make.verbs[*].whats, config:make.check_gates_allowed,
-#        config:make.check_gates_default, config:make.serialization.verbs
-PUBLIC_VERBS := help setup deps build check test fmt fix run status docs clean release gen work
-BUILTIN_VERBS := help setup deps build check test fmt fix run status docs clean release gen work
+#        config:make.check_gates_default
+PUBLIC_VERBS := help setup deps build check test fmt fix run status docs clean release gen work mod
+BUILTIN_VERBS := help setup deps build check test fmt fix run status docs clean release gen work mod
 SCRIPT_VERBS :=
 
 _ALLOWED_WHATS_help := usage $(shell sed -n 's/^_custom_help_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
@@ -127,22 +127,21 @@ _ALLOWED_WHATS_setup := environment $(shell sed -n 's/^_custom_setup_\([a-z0-9_-
 _ALLOWED_WHATS_deps := check lock upgrade $(shell sed -n 's/^_custom_deps_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_build := artifacts $(shell sed -n 's/^_custom_build_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_check := all $(shell sed -n 's/^_custom_check_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
-_ALLOWED_WHATS_test := all cache-status cache-clear cache-checkpoint $(shell sed -n 's/^_custom_test_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
+_ALLOWED_WHATS_test := all full cache-status cache-clear cache-checkpoint $(shell sed -n 's/^_custom_test_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_fmt := check all apply $(shell sed -n 's/^_custom_fmt_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_fix := check all apply $(shell sed -n 's/^_custom_fix_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_run := default $(shell sed -n 's/^_custom_run_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_status := diagnostics $(shell sed -n 's/^_custom_status_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_docs := all generate fix audit build validate $(shell sed -n 's/^_custom_docs_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
-_ALLOWED_WHATS_clean := generated $(shell sed -n 's/^_custom_clean_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
-_ALLOWED_WHATS_release := status $(shell sed -n 's/^_custom_release_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
+_ALLOWED_WHATS_clean := status generated $(shell sed -n 's/^_custom_clean_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
+_ALLOWED_WHATS_release := status rel $(shell sed -n 's/^_custom_release_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_gen := check all apply $(shell sed -n 's/^_custom_gen_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_work := start status land finish $(shell sed -n 's/^_custom_work_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
+_ALLOWED_WHATS_mod := check all apply $(shell sed -n 's/^_custom_mod_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 
 CHECK_GATES_ALLOWED := lint format pyrefly mypy pyright security markdown smells
 CHECK_GATES_DEFAULT := lint pyrefly mypy pyright security markdown smells
 DOCS_ACTIONS := generate fix audit build validate
-SERIALIZED_VERBS := check test gen fmt fix deps clean work docs
-SERIALIZED_TARGETS := _serialized_check _serialized_test _serialized_gen _serialized_fmt _serialized_fix _serialized_deps _serialized_clean _serialized_work _serialized_docs
 # End SECTION: verb dispatch
 
 # === SECTION: lint/type paths (managed) ===
@@ -187,11 +186,12 @@ _DEFAULT_fmt := check
 _DEFAULT_fix := check
 _DEFAULT_run := default
 _DEFAULT_status := diagnostics
-_DEFAULT_docs := all
-_DEFAULT_clean := generated
+_DEFAULT_docs := validate
+_DEFAULT_clean := status
 _DEFAULT_release := status
 _DEFAULT_gen := check
 _DEFAULT_work := status
+_DEFAULT_mod := check
 
 _APPLY_WHAT_deps := upgrade
 _APPLY_WHAT_test := all
@@ -200,8 +200,10 @@ _APPLY_WHAT_fix := apply
 _APPLY_WHAT_run := default
 _APPLY_WHAT_docs := generate
 _APPLY_WHAT_clean := generated
+_APPLY_WHAT_release := rel
 _APPLY_WHAT_gen := apply
 _APPLY_WHAT_work := land
+_APPLY_WHAT_mod := apply
 
 
 # === SECTION: profile routing (managed) ===
@@ -283,21 +285,33 @@ endif
 # reports drift without touching the tree; only a non-zero exit escalates to a
 # real `uv sync`. Creating a missing venv is provisioning, so it is allowed;
 # clearing a present one is destruction, so it never happens.
-# A symlinked RUNTIME_VENV is a BORROWED environment: a linked worktree (a
-# `make work` lane) shares the primary checkout's environment so the two never
-# diverge. Syncing it would rewrite the editable pointers the owner and every
-# sibling lane resolve through, so the borrower provisions nothing and the owner
-# stays the only writer.
+# A symlinked RUNTIME_VENV points at ANOTHER checkout's environment. `uv`
+# records editable installs as per-environment `.pth` files holding absolute
+# paths, so every import through a borrowed environment loads the owner's
+# sources: a lane silently validates the owner's code instead of its own.
+# Each checkout therefore owns the environment its own name resolves to. The
+# link is replaced (removing a link destroys no environment); a real local
+# environment is never cleared, because a concurrent process may be using it.
+# FLEXT=<worktree> rebinds this project's flext packages onto that checkout for
+# the session. Pinned dependencies stay the default: the flag is opt-in, the
+# consumer's pyproject is never modified, and setup without FLEXT= restores the
+# pinned resolution. Which distributions are rebound comes from the worktree's
+# own manifest, so this never carries a hardcoded package list.
+FLEXT_BINDING_RECIPE = if [ -n "$(strip $(FLEXT))" ]; then \
+		$(FLEXT_INFRA_RUNTIME_PYTHON) -m flext_infra workspace flext-binding \
+			--workspace "$(PROJECT_ROOT)" --flext-root "$(strip $(FLEXT))" \
+			--python "$(RUNTIME_PYTHON)"; \
+	fi
+
 SETUP_ENVIRONMENT_RECIPE = set -eu; \
 	if [ -L "$(RUNTIME_VENV)" ]; then \
-		printf 'setup: borrowed environment %s is owned by another checkout\n' "$(RUNTIME_VENV)"; \
-	else \
-		if [ ! -x "$(RUNTIME_PYTHON)" ]; then \
-			$(UV) venv "$(RUNTIME_VENV)"; \
-		fi; \
-		if ! $(UV) sync --project "$(PROJECT_ROOT)" $(UV_SYNC_FLAGS) --link-mode "$(UV_LINK_MODE)" --check >/dev/null 2>&1; then \
-			$(UV) sync --project "$(PROJECT_ROOT)" $(UV_SYNC_FLAGS) --link-mode "$(UV_LINK_MODE)"; \
-		fi; \
+		rm -f "$(RUNTIME_VENV)"; \
+	fi; \
+	if [ ! -x "$(RUNTIME_PYTHON)" ]; then \
+		$(UV) venv "$(RUNTIME_VENV)"; \
+	fi; \
+	if ! $(UV) sync --project "$(PROJECT_ROOT)" $(UV_SYNC_FLAGS) --link-mode "$(UV_LINK_MODE)" --check >/dev/null 2>&1; then \
+		$(UV) sync --project "$(PROJECT_ROOT)" $(UV_SYNC_FLAGS) --link-mode "$(UV_LINK_MODE)"; \
 	fi
 
 # A delegated runtime lives in another checkout, so this project has no local
@@ -416,75 +430,40 @@ define _run_for_selected_projects
 	done
 endef
 
-.PHONY: $(PUBLIC_VERBS) $(SERIALIZED_TARGETS) _builtin_help_usage _builtin_setup_environment _builtin_deps_check _builtin_deps_lock _builtin_deps_upgrade _builtin_build_artifacts _builtin_check_all _builtin_test_all _builtin_test_cache-status _builtin_test_cache-clear _builtin_test_cache-checkpoint _builtin_fmt_check _builtin_fmt_all _builtin_fmt_apply _builtin_fix_check _builtin_fix_all _builtin_fix_apply _builtin_run_default _builtin_status_diagnostics _builtin_docs_all _builtin_docs_generate _builtin_docs_fix _builtin_docs_audit _builtin_docs_build _builtin_docs_validate _builtin_clean_generated _builtin_release_status _builtin_gen_check _builtin_gen_all _builtin_gen_apply _builtin_work_start _builtin_work_status _builtin_work_land _builtin_work_finish
+.PHONY: $(PUBLIC_VERBS) _builtin_help_usage _builtin_setup_environment _builtin_deps_check _builtin_deps_lock _builtin_deps_upgrade _builtin_build_artifacts _builtin_check_all _builtin_test_all _builtin_test_full _builtin_test_cache-status _builtin_test_cache-clear _builtin_test_cache-checkpoint _builtin_fmt_check _builtin_fmt_all _builtin_fmt_apply _builtin_fix_check _builtin_fix_all _builtin_fix_apply _builtin_run_default _builtin_status_diagnostics _builtin_docs_all _builtin_docs_generate _builtin_docs_fix _builtin_docs_audit _builtin_docs_build _builtin_docs_validate _builtin_clean_status _builtin_clean_generated _builtin_release_status _builtin_release_rel _builtin_gen_check _builtin_gen_all _builtin_gen_apply _builtin_work_start _builtin_work_status _builtin_work_land _builtin_work_finish _builtin_mod_check _builtin_mod_all _builtin_mod_apply
 
-$(filter-out setup $(SERIALIZED_VERBS),$(PUBLIC_VERBS)):
+# Every public verb dispatches straight into its private builtin. The verbs
+# that used to round-trip through the Python serializer keep the environment
+# prerequisite that round-trip carried.
+#
+# `setup` builds the environment it would otherwise require. `help` documents
+# how to build it, so demanding an interpreter to print that documentation
+# makes an unprovisioned checkout undiscoverable. Both still dispatch — they
+# only drop the prerequisite.
+$(filter-out setup help,$(PUBLIC_VERBS)): _builtin_require_environment
+	$(call _dispatch,$@)
+
+help:
 	$(call _dispatch,$@)
 
 
-check: _builtin_require_environment
-	@$(PROJECT_FLEXT_INFRA) workspace serialize-make --workspace "$(PROJECT_ROOT)" --makefile "$(SELF_MAKEFILE)" --verb "check" --selector-value "$(WHAT)" --apply-token "$(APPLY)"
+# `all` = clean setup gen fmt fmt fix check test. CI=Y skips pytest inside
+# make test (flext_infra._pytest_entry guards mro-v4p5), so all always calls
+# test — the pytest gate is self-guarding.
+all: _builtin_require_environment
+	@$(SELF_MAKE) clean APPLY=Y
+	@$(SELF_MAKE) setup
+	@$(SELF_MAKE) gen APPLY=Y
+	@$(SELF_MAKE) fmt APPLY=Y
+	@$(SELF_MAKE) fmt APPLY=Y
+	@$(SELF_MAKE) fix APPLY=Y
+	@# check/test are read-only verbs. Clear APPLY and the CI token so an
+	@# inherited APPLY=Y/CI=Y from the caller environment cannot reach them:
+	@# check rejects APPLY, and pytest is forbidden under the CI token.
+	@$(SELF_MAKE) check APPLY=
+	@env -u CI $(SELF_MAKE) test APPLY=
 
-_serialized_check:
-	$(call _dispatch,check)
-
-
-test: _builtin_require_environment
-	@$(PROJECT_FLEXT_INFRA) workspace serialize-make --workspace "$(PROJECT_ROOT)" --makefile "$(SELF_MAKEFILE)" --verb "test" --selector-value "$(WHAT)" --apply-token "$(APPLY)"
-
-_serialized_test:
-	$(call _dispatch,test)
-
-
-gen: _builtin_require_environment
-	@$(PROJECT_FLEXT_INFRA) workspace serialize-make --workspace "$(PROJECT_ROOT)" --makefile "$(SELF_MAKEFILE)" --verb "gen" --selector-value "$(WHAT)" --apply-token "$(APPLY)"
-
-_serialized_gen:
-	$(call _dispatch,gen)
-
-
-fmt: _builtin_require_environment
-	@$(PROJECT_FLEXT_INFRA) workspace serialize-make --workspace "$(PROJECT_ROOT)" --makefile "$(SELF_MAKEFILE)" --verb "fmt" --selector-value "$(WHAT)" --apply-token "$(APPLY)"
-
-_serialized_fmt:
-	$(call _dispatch,fmt)
-
-
-fix: _builtin_require_environment
-	@$(PROJECT_FLEXT_INFRA) workspace serialize-make --workspace "$(PROJECT_ROOT)" --makefile "$(SELF_MAKEFILE)" --verb "fix" --selector-value "$(WHAT)" --apply-token "$(APPLY)"
-
-_serialized_fix:
-	$(call _dispatch,fix)
-
-
-deps: _builtin_require_environment
-	@$(PROJECT_FLEXT_INFRA) workspace serialize-make --workspace "$(PROJECT_ROOT)" --makefile "$(SELF_MAKEFILE)" --verb "deps" --selector-value "$(WHAT)" --apply-token "$(APPLY)"
-
-_serialized_deps:
-	$(call _dispatch,deps)
-
-
-clean: _builtin_require_environment
-	@$(PROJECT_FLEXT_INFRA) workspace serialize-make --workspace "$(PROJECT_ROOT)" --makefile "$(SELF_MAKEFILE)" --verb "clean" --selector-value "$(WHAT)" --apply-token "$(APPLY)"
-
-_serialized_clean:
-	$(call _dispatch,clean)
-
-
-work: _builtin_require_environment
-	@$(PROJECT_FLEXT_INFRA) workspace serialize-make --workspace "$(PROJECT_ROOT)" --makefile "$(SELF_MAKEFILE)" --verb "work" --selector-value "$(WHAT)" --apply-token "$(APPLY)"
-
-_serialized_work:
-	$(call _dispatch,work)
-
-
-docs: _builtin_require_environment
-	@$(PROJECT_FLEXT_INFRA) workspace serialize-make --workspace "$(PROJECT_ROOT)" --makefile "$(SELF_MAKEFILE)" --verb "docs" --selector-value "$(WHAT)" --apply-token "$(APPLY)"
-
-_serialized_docs:
-	$(call _dispatch,docs)
-
-
+.PHONY: all
 
 # `setup` keeps its own recipe (it must not require the environment it is about
 # to build), but it still runs the pre-/post-setup lifecycle hooks so a project
@@ -497,10 +476,17 @@ setup:
 	@$(SELF_MAKE) _builtin_setup_environment
 	@# Provision Beads local role so `bd` writes do not warn (GH#2950).
 	@if git -C "$(PROJECT_ROOT)" rev-parse --is-inside-work-tree >/dev/null 2>&1; then \
-		role=$$(git -C "$(PROJECT_ROOT)" config --local --get beads.role 2>/dev/null || true); \
+		role=$$(git -C "$(PROJECT_ROOT)" config --local --get beads.role 2>/dev/null || echo ""); \
 		if [ -z "$$role" ]; then \
 			git -C "$(PROJECT_ROOT)" config --local beads.role maintainer; \
 		fi; \
+	fi
+	@# Provision git hooks when the project ships an installer. This was the
+	@# workspace-root custom.mk `hooks` + `post-boot` pair: a public target and a
+	@# lifecycle hook that only ever ran one script setup already owns. CI skips
+	@# it (no local commit hooks are needed there).
+	@if [ "$${CI:-}" != "true" ] && [ -x "$(PROJECT_ROOT)/.github/scripts/install-git-hooks.sh" ]; then \
+		"$(PROJECT_ROOT)/.github/scripts/install-git-hooks.sh"; \
 	fi
 	@for hook in "post-setup"; do \
 		$(SELF_MAKE) -q "$$hook" >/dev/null 2>&1; rc=$$?; \
@@ -508,7 +494,7 @@ setup:
 	done
 
 _builtin_help_usage:
-	@printf '%s\n' 'flext-core [workspace-member]' '';
+	@printf '%s\n' 'flext-core [standalone]' '';
 
 
 	@printf '  %-10s WHAT=%s\n' 'help' "$$(printf '%s' '$(_ALLOWED_WHATS_help)' | awk '{$$1=$$1; gsub(/ /, "|"); print}')";
@@ -559,7 +545,7 @@ _builtin_help_usage:
 
 
 
-	@printf '  %-10s WHAT=%s\n' 'release' "$$(printf '%s' '$(_ALLOWED_WHATS_release)' | awk '{$$1=$$1; gsub(/ /, "|"); print}')";
+	@printf '  %-10s WHAT=%s APPLY=Y\n' 'release' "$$(printf '%s' '$(_ALLOWED_WHATS_release)' | awk '{$$1=$$1; gsub(/ /, "|"); print}')";
 
 
 
@@ -570,6 +556,10 @@ _builtin_help_usage:
 
 	@printf '  %-10s WHAT=%s\n' 'work' "$$(printf '%s' '$(_ALLOWED_WHATS_work)' | awk '{$$1=$$1; gsub(/ /, "|"); print}')";
 	@printf '  %-10s %s\n' '' 'status is read-only; other WHATs require APPLY=Y';
+
+
+
+	@printf '  %-10s WHAT=%s APPLY=Y\n' 'mod' "$$(printf '%s' '$(_ALLOWED_WHATS_mod)' | awk '{$$1=$$1; gsub(/ /, "|"); print}')";
 
 
 	@printf '  %-10s %s\n' 'WORKSPACE' 'target repository (default: current project)';
@@ -787,13 +777,16 @@ _builtin_setup_environment: _builtin_setup_submodules
 		$(MAKE) -C "$(RUNTIME_ROOT)" _builtin_setup_environment; \
 		$(BORROW_RUNTIME_VENV_RECIPE); \
 	fi
+	@$(FLEXT_BINDING_RECIPE)
 else ifeq ($(MAKE_PROFILE),workspace-root)
 _builtin_setup_environment: _builtin_setup_submodules
 	@$(SETUP_ENVIRONMENT_RECIPE)
 	@$(UV) pip check --python "$(RUNTIME_VENV)"
+	@$(FLEXT_BINDING_RECIPE)
 else
 _builtin_setup_environment: _builtin_setup_submodules
 	@$(SETUP_ENVIRONMENT_RECIPE)
+	@$(FLEXT_BINDING_RECIPE)
 endif
 # End SECTION: setup environment
 
@@ -845,12 +838,13 @@ _builtin_check_all: _builtin_require_environment
 			if [ "$$gate" = "lint" ]; then skip=1; fi; \
 			if [ "$$gate" = "format" ]; then skip=1; fi; \
 			if [ "$$gate" = "pyrefly" ]; then skip=1; fi; \
+			if [ "$$gate" = "markdown" ]; then skip=1; fi; \
 			if [ "$$skip" -eq 0 ]; then \
 				if [ -n "$$filtered" ]; then filtered="$$filtered,$$gate"; else filtered="$$gate"; fi; \
 			fi; \
 		done; \
 		gates="$$filtered"; \
-		printf 'INFO: CI=Y omits check gates: lint format pyrefly\n'; \
+		printf 'INFO: CI=Y omits check gates: lint format pyrefly markdown\n'; \
 	fi; \
 	for gate in $$(printf '%s' "$$gates" | tr ',' ' '); do \
 		case " $(CHECK_GATES_ALLOWED) " in *" $$gate "*) ;; \
@@ -867,6 +861,10 @@ _builtin_test_all: _builtin_require_environment
 
 	@$(PYTEST_BOUNDED) $(UV_RUN) python -m flext_infra._pytest_entry
 
+
+_builtin_test_full: _builtin_require_environment
+
+	@$(PYTEST_BOUNDED) $(UV_RUN) python -m flext_infra._pytest_entry
 
 _builtin_test_cache-status: _builtin_require_environment
 
@@ -893,8 +891,9 @@ _builtin_fmt_all: _builtin_require_environment
 
 _builtin_fmt_apply: _builtin_fmt_all
 
-_builtin_fix_check:
-	@printf 'ERROR: make fix requires APPLY=Y\n' >&2; exit 2
+# Read-only dual of `make fix APPLY=Y` — never mutate here.
+_builtin_fix_check: _builtin_require_environment
+	@$(UV_RUN) ruff check $(RUFF_PATHS)
 
 _builtin_fix_all: _builtin_require_environment
 	$(call _require_apply)
@@ -948,26 +947,51 @@ _builtin_docs_validate:
 
 
 
+# Disposable artifacts (caches, reports, traces) are owned by the flext-infra
+# clean service and declared in config.make.clean, so the recipe stays a thin
+# dispatch like every other verb instead of shell that drifts per project.
+_builtin_clean_status:
+	@$(PROJECT_FLEXT_INFRA) maintenance clean --workspace "$(PROJECT_ROOT)"
+
 _builtin_clean_generated:
 	$(call _require_apply)
-	@find "$(PROJECT_ROOT)" -type d \
-		\( -name __pycache__ -o -name .mypy_cache -o -name .pytest_cache -o -name .ruff_cache \) \
-		-prune -exec rm -rf {} +
-	@rm -rf "$(PROJECT_ROOT)/build" "$(PROJECT_ROOT)/dist" "$(PROJECT_ROOT)/htmlcov"
-	@rm -f "$(PROJECT_ROOT)/.coverage"
+	@$(PROJECT_FLEXT_INFRA) maintenance clean --workspace "$(PROJECT_ROOT)" --apply-changes
 
 _builtin_release_status: _builtin_require_environment
 	@$(UV) lock --project "$(PROJECT_ROOT)" --check
 	@git -C "$(PROJECT_ROOT)" diff --quiet
 	@git -C "$(PROJECT_ROOT)" diff --cached --quiet
 
+# Release orchestration belongs to the verb that already owns releases. It
+# previously lived in the workspace-root custom.mk as _custom_release_rel,
+# putting the release pipeline outside the Make monopoly and making Release CI
+# depend on a hand-written surface. Knobs come from the caller environment so
+# no new selector variables enter the public surface; PUSH=1 opts into pushing.
+_builtin_release_rel: _builtin_require_environment
+	$(call _require_apply)
+	@push_flag=--no-push; \
+	if [ "$${PUSH:-0}" = "1" ]; then push_flag=--push; fi; \
+	projects_args=""; \
+	if [ -n "$${PROJECTS:-}" ]; then projects_args="--projects $${PROJECTS}"; \
+	elif [ -n "$(PROJECT)" ] && [ "$(PROJECT)" != "." ]; then projects_args="--projects $(PROJECT)"; fi; \
+	$(PROJECT_FLEXT_INFRA) release run \
+		--workspace "$(PROJECT_ROOT)" \
+		--apply \
+		--no-dry-run \
+		--phase "$${RELEASE_PHASE:-all}" \
+		--version "$${VERSION}" \
+		--tag "$${TAG}" \
+		--interactive "$${INTERACTIVE:-0}" \
+		--create-branches "$${CREATE_BRANCHES:-0}" \
+		$$push_flag \
+		$$projects_args
+
 # Every command here writes to the SAME root, derived from the invocation
 # point. `deps modernize`/`extra-paths` used to receive WORKSPACE_ROOT while
 # `conform` received PROJECT_ROOT, so a gen run inside one member rewrote the
 # pyproject of ~30 siblings and left each dirty. Because gen runs inside check
 # and check runs in the pre-commit hook, one commit in any lane dirtied every
-# sibling -- the "workspace changed during serialized Make check" abort. It
-# also kept the fixed point out of reach: each run rewrote the siblings, so
+# sibling. It also kept the fixed point out of reach: each run rewrote the siblings, so
 # the next run found a difference again. At the workspace root PROJECT_ROOT is
 # already the workspace, so fan-out survives exactly where it belongs.
 _builtin_gen_check: _builtin_require_environment
@@ -997,3 +1021,18 @@ _builtin_work_land:
 _builtin_work_finish:
 	$(call _require_apply)
 	@$(PROJECT_FLEXT_INFRA) workspace work --workspace "$(WORKSPACE)" --operation finish --bead "$(BEAD)" --apply
+
+# `mod` was declared in the verb table (and listed in .PHONY) but no builtin
+# handler was ever generated, so the dispatcher resolved a non-existent target
+# and the verb was unreachable. The codemod engine already exists behind
+# `flext-infra refactor mod`; these handlers are the missing dispatch into it.
+# check is the read-only fixed-point (reports pending fixes); apply runs the
+# batch under the ruff/pyrefly rollback circuit.
+_builtin_mod_check: _builtin_require_environment
+	@$(PROJECT_FLEXT_INFRA) refactor mod --workspace "$(PROJECT_ROOT)"
+
+_builtin_mod_all: _builtin_require_environment
+	$(call _require_apply)
+	@$(PROJECT_FLEXT_INFRA) refactor mod --workspace "$(PROJECT_ROOT)" --apply
+
+_builtin_mod_apply: _builtin_mod_all

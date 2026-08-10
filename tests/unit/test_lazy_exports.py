@@ -36,7 +36,7 @@ class TestsFlextCoreLazyExports:
         class Alpha:
             pass
 
-        setattr(child, "Alpha", Alpha)
+        child.__dict__["Alpha"] = Alpha
         monkeypatch.setitem(sys.modules, "test_lazy_pkg", ModuleType("test_lazy_pkg"))
         monkeypatch.setitem(sys.modules, module_name, child)
         return module_name, Alpha
@@ -176,7 +176,7 @@ class TestsFlextCoreLazyExports:
         lazy.reset()
         target_name = "test_lazy_alias_target"
         target = ModuleType(target_name)
-        setattr(target, "alias", "resolved")
+        target.__dict__["alias"] = "resolved"
         monkeypatch.setitem(sys.modules, target_name, target)
 
         module_globals: t.ModuleGlobals = {}
@@ -250,7 +250,7 @@ class TestsFlextCoreLazyExports:
         module_name = "test_lazy_pkg.partial"
         partial = ModuleType(module_name)
         spec = ModuleSpec(module_name, loader=None)
-        setattr(spec, "_initializing", True)
+        spec.__dict__["_initializing"] = True
         partial.__spec__ = spec
 
         class PartialAlias:
@@ -259,7 +259,7 @@ class TestsFlextCoreLazyExports:
         class FinalAlias:
             pass
 
-        setattr(partial, "u", PartialAlias)
+        partial.__dict__["u"] = PartialAlias
         monkeypatch.setitem(sys.modules, module_name, partial)
         module_globals: t.ModuleGlobals = {}
         lazy_map = {"u": (module_name, "u")}
@@ -272,8 +272,8 @@ class TestsFlextCoreLazyExports:
         assert "u" not in module_globals
 
         # Act
-        setattr(spec, "_initializing", False)
-        setattr(partial, "u", FinalAlias)
+        spec.__dict__["_initializing"] = False
+        partial.__dict__["u"] = FinalAlias
         final_resolved = lazy.get("u", lazy_map, module_globals, "test_lazy_pkg")
 
         # Assert
@@ -334,14 +334,10 @@ class TestsFlextCoreLazyExports:
         lazy.reset()
         child_name = "test_merge_child"
         child = ModuleType(child_name)
-        setattr(
-            child,
-            "_LAZY_IMPORTS",
-            {
-                "ChildOnly": (f"{child_name}.a", "ChildOnly"),
-                "Shared": (f"{child_name}.a", "SharedChild"),
-            },
-        )
+        child.__dict__["_LAZY_IMPORTS"] = {
+            "ChildOnly": (f"{child_name}.a", "ChildOnly"),
+            "Shared": (f"{child_name}.a", "SharedChild"),
+        }
         sys.modules[child_name] = child
         try:
             local = {"Shared": ("local.mod", "SharedLocal")}
