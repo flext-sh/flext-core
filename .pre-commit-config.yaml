@@ -2,45 +2,121 @@
 repos:
   - repo: local
     hooks:
-      # Why: fast fixes run before each commit; expensive gates run before push.
-      # Pre-push is local operator validation and runs every BLOCKING gate: CI=Y
-      # is never injected here, because it skips the lint/format/pyrefly gates
-      # that must block a push (9b604d43). make test never inherits that token
-      # either (mro-v4p5 forbids pytest under CI=Y).
+      # Why: each make verb is its own pre-commit/pre-push hook so the operator
+      # sees per-step status (Passed/Failed) natively via the pre-commit runner.
+      # CI=Y is never injected here, because it skips the
+      # lint/format/pyrefly gates that must block a push (9b604d43).
+      # make test never inherits that token either (mro-v4p5 forbids pytest
+      # under CI=Y).
       # A step declaring gates_skip (mro-ucxgl) narrows CHECK_GATES for the hook
       # context only: local `make check` and the `docs` verb keep the full set.
-      # WHAT never leaks in from the caller: git hooks inherit the invoking
-      # environment, so `make work WHAT=land` reached these steps two ways and
-      # any step without its own WHAT (e.g. `make gen`) rejected it as an
-      # unsupported selector, making every lane unpushable. BOTH carriers are
-      # cleared: the exported shell variable, and MAKEFLAGS, which the parent
-      # make exports as ` -- WHAT=land` and a child make re-reads with
-      # command-line precedence — so unsetting the variable alone leaves the
-      # override in place (MAKEOVERRIDES is never exported and clearing it here
-      # would change nothing). APPLY leaks the same way and
-      # is cleared with them: `make work ... APPLY=Y` exports it, the hook's
-      # read-only steps inherit it, and a read-only verb rejects the token
-      # outright ("verb check is read-only and does not accept APPLY"), so a
-      # landing lane could not push. Each step then states its selector: the
-      # declared `what` when it has one, otherwise the verb's own declared
-      # default — a hook validates everything, never a caller-narrowed subset.
-      # Mutating steps pass APPLY explicitly, so the verb resolves its own
-      # apply_what (gen/fmt/fix -> apply) instead of a read-only selector.
-      - id: flext-pre-commit
-        name: FLEXT pre-commit workflow
+
+      - id: flext-pre-commit-setup
+        name: make setup
         language: system
         entry: >-
-          bash -eu -o pipefail -c
-          'unset WHAT MAKEFLAGS APPLY; make fmt APPLY=Y && make fix APPLY=Y'
+          make setup
         pass_filenames: false
         always_run: true
         stages: [pre-commit]
-      - id: flext-pre-push
-        name: FLEXT pre-push workflow
+
+      - id: flext-pre-commit-gen
+        name: make gen APPLY=Y
         language: system
         entry: >-
-          bash -eu -o pipefail -c
-          'unset WHAT MAKEFLAGS APPLY; unset $(git rev-parse --local-env-vars); make gen APPLY=Y && make check WHAT=all && make test WHAT=cache-clear APPLY=Y && make test WHAT=all'
+          make gen APPLY=Y
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: flext-pre-commit-fmt
+        name: make fmt APPLY=Y
+        language: system
+        entry: >-
+          make fmt APPLY=Y
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: flext-pre-commit-fix
+        name: make fix APPLY=Y
+        language: system
+        entry: >-
+          make fix APPLY=Y
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: flext-pre-commit-check
+        name: make check
+        language: system
+        entry: >-
+          CI=Y CHECK_GATES=lint,pyrefly,mypy,pyright,security,smells make check
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+
+      - id: flext-pre-push-setup
+        name: make setup
+        language: system
+        entry: >-
+          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); make setup'
         pass_filenames: false
         always_run: true
         stages: [pre-push]
+
+      - id: flext-pre-push-gen
+        name: make gen APPLY=Y
+        language: system
+        entry: >-
+          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); make gen APPLY=Y'
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
+      - id: flext-pre-push-fmt
+        name: make fmt APPLY=Y
+        language: system
+        entry: >-
+          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); make fmt APPLY=Y'
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
+      - id: flext-pre-push-fix
+        name: make fix APPLY=Y
+        language: system
+        entry: >-
+          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); make fix APPLY=Y'
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
+      - id: flext-pre-push-check
+        name: make check
+        language: system
+        entry: >-
+          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); CHECK_GATES=lint,pyrefly,mypy,pyright,security,smells make check'
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
+      - id: flext-pre-push-test-cache-clear
+        name: make test WHAT=cache-clear APPLY=Y
+        language: system
+        entry: >-
+          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); make test WHAT=cache-clear APPLY=Y'
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
+      - id: flext-pre-push-test-full
+        name: make test WHAT=full
+        language: system
+        entry: >-
+          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); make test WHAT=full'
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
