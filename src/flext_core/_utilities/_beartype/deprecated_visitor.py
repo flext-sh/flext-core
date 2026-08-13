@@ -14,7 +14,7 @@ from flext_core._typings.base import FlextTypingBase as t
 from .helpers import FlextUtilitiesBeartypeHelpers as _ubh
 
 _NO_VIOLATION: t.StrMapping | None = None
-_typing_TypeAlias = TypeAlias  # sentinel for ``X: TypeAlias = Y`` annotation match.
+_TYPING_TYPE_ALIAS = TypeAlias  # sentinel for ``X: TypeAlias = Y`` annotation match.
 
 
 class FlextUtilitiesBeartypeDeprecatedVisitor:
@@ -51,7 +51,7 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
             case "AnnAssign[TypeAlias]":
                 try:
                     has_type_alias = any(
-                        annotation is _typing_TypeAlias
+                        annotation is _TYPING_TYPE_ALIAS
                         for annotation in inspect.get_annotations(
                             module, eval_str=False
                         ).values()

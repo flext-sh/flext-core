@@ -76,10 +76,14 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         max_nested_class_depth: int = 0
 
     class LocCapParams(EnforcementModelBase):
-        """Parameters for LOC_CAP predicate."""
+        """Parameters for the LOC_CAP predicate (top-level-class census).
+
+        The module-LOC ceiling moved out of this predicate entirely (operator
+        2026-08-07): it read source text, so flext-infra's tokei gate owns it.
+        Only the class census remains here, hence the single knob.
+        """
 
         kind: Literal["loc_cap"] = "loc_cap"
-        max_logical_loc: int = 200
         max_top_level_classes: int = 0
 
     class WrapperParams(EnforcementModelBase):

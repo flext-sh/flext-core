@@ -71,7 +71,7 @@ class FlextUtilitiesBeartypeAttrVisitor:
         annotations_map: dict[str, object]
         try:
             annotations_map = inspect.get_annotations(target, eval_str=True)
-        except Exception:
+        except (NameError, AttributeError, TypeError):
             annotations_map = {}
         ann = annotations_map.get(name)
         if ann is not None:
@@ -84,7 +84,7 @@ class FlextUtilitiesBeartypeAttrVisitor:
         # (e.g. synthetic test classes) — keep detection strict but do not fail.
         try:
             raw_annotations = inspect.get_annotations(target, eval_str=False)
-        except Exception:
+        except (NameError, AttributeError, TypeError):
             return False
         raw = raw_annotations.get(name)
         return isinstance(raw, str) and (

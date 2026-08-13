@@ -141,7 +141,7 @@ class TestsFlextCoreResultExceptionFailures:
         exc = ValueError("boom")
         failure: p.Result[int] = r[int].fail("bad", exception=exc)
 
-        chained: p.Result[int] = failure.flat_map(lambda value: r[int].ok(value))
+        chained: p.Result[int] = failure.flat_map(r[int].ok)
 
         tm.that(chained.failure, eq=True)
         tm.that(chained.exception is exc, eq=True)

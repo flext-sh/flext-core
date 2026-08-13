@@ -56,10 +56,6 @@ NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT: dict[str, t.StrPair] = {
         "utilities.py with self-referencing method must use explicit class base (R10)",
         "Use class FlextXxxUtilities(FlextParentUtilities, FlextPeerUtilities): for parent (not alias).",
     ),
-    "loc_cap": (
-        "module {file} has {loc} logical LOC > cap {cap} (AGENTS.md §3.1)",
-        "Decompose into focused submodules under the same package.",
-    ),
     "library_abstraction": (
         "import of {lib} outside its owner {owner} (AGENTS.md §2.7)",
         "Route through the owner facade (u.Observability.* / u.Cli.* / u.Infra.*).",

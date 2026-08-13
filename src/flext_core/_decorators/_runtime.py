@@ -58,21 +58,6 @@ class FlextDecoratorsRuntime(FlextDecoratorsCombined):
                 start_time = time.perf_counter()
                 try:
                     result = func(*args, **kwargs)
-                    duration = time.perf_counter() - start_time
-                    if duration > max_duration:
-                        msg = (
-                            f"Operation {func.__name__} exceeded timeout of "
-                            f"{max_duration}s (took {duration:.2f}s)"
-                        )
-                        raise et.FlextTimeoutError(
-                            msg,
-                            error_code=error_code or "OPERATION_TIMEOUT",
-                            timeout_seconds=max_duration,
-                            operation=func.__name__,
-                            duration_seconds=duration,
-                            original_error="",
-                        )
-                    return result
                 except et.FlextTimeoutError:
                     raise
                 except cls._CAUGHT_EXCEPTIONS as exc:
@@ -92,6 +77,22 @@ class FlextDecoratorsRuntime(FlextDecoratorsCombined):
                             original_error=str(exc),
                         ) from exc
                     raise
+                else:
+                    duration = time.perf_counter() - start_time
+                    if duration > max_duration:
+                        msg = (
+                            f"Operation {func.__name__} exceeded timeout of "
+                            f"{max_duration}s (took {duration:.2f}s)"
+                        )
+                        raise et.FlextTimeoutError(
+                            msg,
+                            error_code=error_code or "OPERATION_TIMEOUT",
+                            timeout_seconds=max_duration,
+                            operation=func.__name__,
+                            duration_seconds=duration,
+                            original_error="",
+                        )
+                    return result
 
             return wrapper
 

@@ -7,17 +7,17 @@
 # ledger_id) falling back to the canonical project name when undeclared.
 # Source: dolt server block = flext-infra config/codegen.yaml
 # toolchain.beads.server (machine-wide shared Dolt server facts).
-# Owned ledger config: the workspace root owns this tracker; conform
-# initializes and verifies it against the pinned binary.
-issue-prefix: "flext-core"
+# Routing-only client config: this attached standalone owns no tracker state;
+# bd commands route to the shared ledger below. Local data is never written.
+issue-prefix: "mro"
 
 # Dolt shared-server connection (machine-wide shared server on :3308).
-# The `flext-core` database lives there; a repository-local server is never used.
+# The `mro` database lives there; a repository-local server is never used.
 dolt:
   mode: server
   shared-server: true
   host: 127.0.0.1
   port: 3308
   user: root
-  database: flext-core
+  database: mro
   auto-commit: "on"
