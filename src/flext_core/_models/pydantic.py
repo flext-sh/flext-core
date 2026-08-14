@@ -18,7 +18,7 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from re import Pattern
 from types import EllipsisType
-from typing import TypeAlias, dataclass_transform
+from typing import dataclass_transform
 
 from pydantic import (
     AfterValidator,
@@ -112,8 +112,8 @@ class FlextModelsPydantic:
         """Canonical RootModel exported through the FLEXT models facade."""
 
     # Pydantic field utilities
-    ConfigDict: TypeAlias = _PydanticConfigDict
-    SettingsConfigDict: TypeAlias = _PydanticSettingsConfigDict
+    ConfigDict = _PydanticConfigDict
+    SettingsConfigDict = _PydanticSettingsConfigDict
 
     Field = staticmethod(_field)
     # NOTE (multi-agent): mro-ecfu — staticmethod wrap matches Field above and

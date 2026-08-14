@@ -64,8 +64,6 @@ class FlextHandlers[MessageT_contra, ResultT](
         _ = self.push_context(self._runtime_state.execution_context)
         try:
             result = self.handle(message)
-            self._record_execution_metrics(success=result.success)
-            return result
         except c.EXC_BROAD_RUNTIME as exc:
             self.logger.warning(c.LOG_HANDLER_PIPELINE_FAILURE, exc_info=exc)
             self._record_execution_metrics(success=False, error=str(exc))
@@ -73,6 +71,9 @@ class FlextHandlers[MessageT_contra, ResultT](
                 "run handler pipeline",
                 c.ERR_HANDLER_CRITICAL_FAILURE.format(error=str(exc)),
             )
+        else:
+            self._record_execution_metrics(success=result.success)
+            return result
         finally:
             _ = self.pop_context()
 

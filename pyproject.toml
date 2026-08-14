@@ -1,6 +1,7 @@
 # @flext-managed: continuous
 # @flext-regenerate: make deps WHAT=upgrade APPLY=Y
 # @flext-ssot: flext-infra/src/flext_infra/_constants/deps.py
+# @flext-ssot-dependencies: flext-infra/config/codegen.yaml (project_defaults.dev, dependency_profiles)
 # @flext-maintenance: do not edit managed sections; edit the SSOT
 # [MANAGED] FLEXT pyproject standardization
 # Sections with [MANAGED] are enforced by flext_infra.deps.modernizer.
@@ -53,7 +54,7 @@ license = "MIT"
 name = "flext-core"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
-version = "0.12.0"
+version = "0.12.0rc1"
 
 [[project.authors]]
 email = "team@flext.sh"
@@ -362,8 +363,6 @@ reportUnusedFunction = "error"
 reportUnusedImport = "error"
 reportUnusedVariable = "error"
 typeCheckingMode = "strict"
-venv = ".venv"
-venvPath = ".."
 
 [[tool.pyright.executionEnvironments]]
 extraPaths = ["src"]
@@ -443,7 +442,11 @@ addopts = [
   "--durations=10",
   "--markdown-docs",
   "--strict-markers",
+<<<<<<< HEAD
   "--timeout=90",
+=======
+  "--timeout=10",
+>>>>>>> refs/remotes/origin/0.12.0-dev
 ]
 enable_assertion_pass_hook = true
 filterwarnings = [
@@ -524,41 +527,21 @@ ignore = [
   "ambiguous-unicode-character-comment",
   "ambiguous-unicode-character-docstring",
   "ambiguous-unicode-character-string",
-  "assert-raises-exception",
-  "bad-dunder-method-name",
-  "bad-quotes-inline-string",
-  "blank-line-with-whitespace",
-  "blind-except",
   "boolean-positional-value-in-call",
   "camelcase-imported-as-lowercase",
-  "collection-literal-concatenation",
-  "commented-out-code",
   "complex-structure",
-  "docstring-extraneous-exception",
-  "docstring-extraneous-returns",
   "docstring-missing-exception",
   "docstring-missing-returns",
   "docstring-missing-yields",
-  "get-attr-with-constant",
-  "hardcoded-sql-expression",
   "import-outside-top-level",
   "incorrect-blank-line-before-class",
-  "invalid-first-argument-name-for-method",
   "line-too-long",
   "logging-f-string",
   "missing-copyright-notice",
-  "missing-return-type-private-function",
   "missing-trailing-comma",
-  "mixed-case-variable-in-global-scope",
   "multi-line-summary-second-line",
   "no-self-use",
   "non-imperative-mood",
-  "non-pep695-type-alias",
-  "raise-vanilla-args",
-  "raise-within-try",
-  "redefined-loop-name",
-  "set-attr-with-constant",
-  "snake-case-type-alias",
   "too-many-arguments",
   "too-many-branches",
   "too-many-locals",
@@ -567,13 +550,9 @@ ignore = [
   "too-many-public-methods",
   "too-many-return-statements",
   "too-many-statements",
-  "try-consider-else",
   "typing-only-first-party-import",
   "typing-only-standard-library-import",
   "typing-only-third-party-import",
-  "undocumented-param",
-  "unnecessary-lambda",
-  "unnecessary-placeholder",
   "unsorted-imports",
 ]
 select = ["ALL"]
@@ -710,7 +689,7 @@ dev = [
   "mkdocstrings-python>=1.7",
   "mypy>=2.3.0",
   "pip-audit>=2.7.3",
-  "pre-commit>=4.6.0",
+  "pre-commit>=4.6.1",
   "pylint>=3.3",
   "pyrefly>=1.1.1",
   "pyright>=1.1.411",

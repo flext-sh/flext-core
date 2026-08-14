@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sys
 from types import ModuleType
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from flext_core._typings.lazy import FlextTypesLazy
 
@@ -22,8 +22,12 @@ type ModuleGlobalValue = FlextTypesLazy.ModuleGlobalValue
 type ModuleGlobals = FlextTypesLazy.ModuleGlobals
 
 
-class FlextLazyAttribute:
-    """Descriptor that resolves a class attribute through ``FlextLazy``."""
+class FlextLazyAttribute[T]:
+    """Descriptor that resolves a class attribute through ``FlextLazy``.
+
+    Generic in the resolved symbol so a class-namespace lazy attribute keeps its
+    declared static type instead of widening to the untyped module-global union.
+    """
 
     __slots__ = ("_lazy", "_lazy_imports", "_module_globals", "_module_name", "_name")
 
@@ -43,12 +47,16 @@ class FlextLazyAttribute:
 
     def __get__(
         self, instance: ModuleGlobalValue | None, owner: type | None = None
-    ) -> ModuleGlobalValue:
+    ) -> T:
         """Resolve and cache the target symbol through the owning lazy container."""
         _ = instance, owner
-        return self._lazy.get(
-            self._name, self._lazy_imports, self._module_globals, self._module_name
+        resolved: T = cast(
+            "T",
+            self._lazy.get(
+                self._name, self._lazy_imports, self._module_globals, self._module_name
+            ),
         )
+        return resolved
 
 
 class FlextLazy(FlextLazyPart01):
@@ -57,15 +65,26 @@ class FlextLazy(FlextLazyPart01):
         """Return whether Python is still executing a module body."""
         return bool(getattr(getattr(module, "__spec__", None), "_initializing", False))
 
-    def attribute(
+    def attribute[T](
         self,
         name: str,
         lazy_imports: LazyImportMap,
         module_globals: ModuleGlobals,
         module_name: str,
-    ) -> FlextLazyAttribute:
-        """Return a descriptor for class-namespace lazy attributes."""
-        return FlextLazyAttribute(self, name, lazy_imports, module_globals, module_name)
+        *,
+        resolved_type: type[T] | None = None,
+    ) -> FlextLazyAttribute[T]:
+        """Return a descriptor for class-namespace lazy attributes.
+
+        ``resolved_type`` binds the descriptor's symbol type explicitly. Omit it
+        where the assignment already carries the annotation
+        (``Alpha: Beta = lazy_attribute(...)``); pass it where there is no
+        annotation to bind, so the symbol type never degrades to unknown.
+        """
+        _ = resolved_type
+        return FlextLazyAttribute[T](
+            self, name, lazy_imports, module_globals, module_name
+        )
 
     def get(
         self,

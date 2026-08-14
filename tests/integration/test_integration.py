@@ -102,9 +102,7 @@ class TestsFlextCoreIntegration:
         failure: p.Result[int] = r[int].fail("boom")
 
         # Act
-        mapped = failure.map(lambda value: value + 1).flat_map(
-            lambda value: r[int].ok(value)
-        )
+        mapped = failure.map(lambda value: value + 1).flat_map(r[int].ok)
 
         # Assert
         tm.that(mapped.success, eq=False)
