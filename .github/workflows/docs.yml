@@ -54,7 +54,7 @@ jobs:
       # upload as artifact so the real error is always reachable.
       - name: Docs audit (blocking)
         run: |
-          make docs WHAT=audit || {
+          .venv/bin/python -m flext_infra docs audit --workspace . --output-dir .reports/docs || {
             while IFS= read -r -d '' f; do
               echo "::group::$f"
               tail -n 80 "$f"
@@ -69,11 +69,11 @@ jobs:
           }
 
       - name: Docs generate (materialize contract artifacts)
-        run: make docs WHAT=generate APPLY=Y
+        run: .venv/bin/python -m flext_infra docs generate --workspace . --output-dir .reports/docs --apply
 
       - name: Docs validate (blocking)
         run: |
-          make docs WHAT=validate || {
+          .venv/bin/python -m flext_infra docs validate --workspace . --output-dir .reports/docs || {
             while IFS= read -r -d '' f; do
               echo "::group::$f"
               tail -n 80 "$f"
@@ -134,10 +134,10 @@ jobs:
         run: make setup
 
       - name: Generate docs
-        run: make docs WHAT=generate APPLY=Y
+        run: .venv/bin/python -m flext_infra docs generate --workspace . --output-dir .reports/docs --apply
 
       - name: Build site
-        run: make docs WHAT=build
+        run: .venv/bin/python -m flext_infra docs build --workspace . --output-dir .reports/docs
 
       # Pages configure/upload exist only to feed deploy on main. Running them on
       # every integration push fails closed when Pages is unset and is wasted
@@ -159,7 +159,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment:
-      name: github-pages
+      name: ${{ 'github-pages' }}
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy to GitHub Pages

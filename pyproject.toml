@@ -442,7 +442,7 @@ addopts = [
   "--durations=10",
   "--markdown-docs",
   "--strict-markers",
-  "--timeout=90",
+  "--timeout=10",
 ]
 enable_assertion_pass_hook = true
 filterwarnings = [
