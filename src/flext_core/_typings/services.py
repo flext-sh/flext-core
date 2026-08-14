@@ -11,7 +11,7 @@ from datetime import date, time
 from enum import Enum
 from pathlib import Path
 from types import GenericAlias, ModuleType, UnionType
-from typing import TYPE_CHECKING, Protocol, TypeAliasType, runtime_checkable
+from typing import TYPE_CHECKING, Literal, Protocol, TypeAliasType, runtime_checkable
 
 from pydantic import BaseModel
 
@@ -317,3 +317,6 @@ class FlextTypesServices:
         | Mapping[str, m.FactoryRegistration]
         | Mapping[str, m.ResourceRegistration]
     )
+    type HandlerModeLiteral = Literal["command", "query", "event", "operation", "saga"]
+    type DispatchOperationLiteral = Literal["command", "query", "event"]
+    type HandlerModeInput = HandlerModeLiteral | str

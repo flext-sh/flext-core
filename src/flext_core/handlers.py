@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import Callable, MutableMapping, MutableSequence, Sequence
 from types import ModuleType
 from typing import ClassVar, Unpack, override
 
@@ -32,13 +32,11 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
     _expected_message_type: ClassVar[type | None] = None
     _expected_result_type: ClassVar[type | None] = None
-    _HANDLER_TYPE_LITERALS: ClassVar[Mapping[c.HandlerType, c.HandlerType]] = {
-        c.HandlerType.COMMAND: c.HandlerType.COMMAND,
-        c.HandlerType.QUERY: c.HandlerType.QUERY,
-        c.HandlerType.EVENT: c.HandlerType.EVENT,
-        c.HandlerType.OPERATION: c.HandlerType.OPERATION,
-        c.HandlerType.SAGA: c.HandlerType.SAGA,
-    }
+    _DISPATCH_OPERATIONS: ClassVar[frozenset[c.HandlerType]] = frozenset({
+        c.HandlerType.COMMAND,
+        c.HandlerType.QUERY,
+        c.HandlerType.EVENT,
+    })
 
     def __init__(self, *, config: m.Handler | None = None) -> None:
         """Initialize handler with configuration and context.
@@ -52,24 +50,16 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         """
         super().__init__(config_type=None, config_overrides=None, initial_context=None)
         if config is not None:
-            self._config_model = config
+            self._config_model: m.Handler | p.HandlerConfigModel = config
         else:
             self._config_model = m.Handler(
                 handler_id=f"handler_{id(self)}",
                 handler_name=self.__class__.__name__,
             )
-        handler_type = self._config_model.handler_mode
-        valid_handler_types = {
-            c.HandlerType.COMMAND,
-            c.HandlerType.QUERY,
-            c.HandlerType.EVENT,
-            c.HandlerType.OPERATION,
-            c.HandlerType.SAGA,
-        }
-        if handler_type not in valid_handler_types:
-            error_msg = f"Invalid handler mode: {handler_type}"
-            raise e.ValidationError(error_msg)
-        handler_mode_literal = self._handler_type_to_literal(handler_type)
+        handler_mode_literal = self._parse_handler_mode(
+            self._config_model.handler_mode,
+            strict=True,
+        )
         self._execution_context = m.ExecutionContext.create_for_handler(
             handler_name=self._config_model.handler_name,
             handler_mode=handler_mode_literal,
@@ -135,7 +125,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         handler_callable: Callable[[t.Scalar], t.Scalar],
         handler_name: str | None = None,
         handler_type: c.HandlerType | None = None,
-        mode: c.HandlerType | str | None = None,
+        mode: t.HandlerModeInput | c.HandlerType | None = None,
         handler_config: m.Handler | None = None,
     ) -> FlextHandlers[t.Scalar, t.Scalar]:
         """Create a handler instance from a callable function.
@@ -201,17 +191,13 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
         if handler_config is not None:
             return CallableHandler(handler_fn=handler_callable, config=handler_config)
-        resolved_type: c.HandlerType = c.HandlerType.COMMAND
-        if mode is not None:
-            if isinstance(mode, c.HandlerType):
-                resolved_type = mode
-            elif mode not in u.enum_values(c.HandlerType):
-                error_msg = f"Invalid handler mode: {mode}"
-                raise e.ValidationError(error_msg)
-            else:
-                resolved_type = c.HandlerType(str(mode))
-        elif handler_type is not None:
-            resolved_type = handler_type
+        resolved_type = cls._parse_handler_mode(mode, default=c.HandlerType.COMMAND)
+        if mode is None and handler_type is not None:
+            resolved_type = cls._parse_handler_mode(
+                handler_type,
+                default=c.HandlerType.COMMAND,
+                strict=True,
+            )
         resolved_name: str = handler_name or str(
             getattr(handler_callable, "__name__", "unknown_handler")
             or "unknown_handler",
@@ -225,14 +211,20 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         return CallableHandler(handler_fn=handler_callable, config=config)
 
     @staticmethod
-    def _handler_type_to_literal(
-        handler_type: c.HandlerType,
+    def _parse_handler_mode(
+        value: t.HandlerModeInput | c.HandlerType | None,
+        *,
+        default: c.HandlerType = c.HandlerType.OPERATION,
+        strict: bool = False,
     ) -> c.HandlerType:
-        """Convert handler type to canonical HandlerType."""
-        if handler_type in FlextHandlers._HANDLER_TYPE_LITERALS:
-            return FlextHandlers._HANDLER_TYPE_LITERALS[handler_type]
-        msg = f"Unsupported handler type: {handler_type}"
-        raise ValueError(msg)
+        """Parse/normalize handler mode using shared enum utilities."""
+        if strict:
+            parsed = u.parse_enum(c.HandlerType, value or default)
+            if parsed.is_failure:
+                error_msg = f"Invalid handler mode: {value}"
+                raise e.ValidationError(error_msg)
+            return parsed.value or default
+        return u.parse_or_default(c.HandlerType, value, default)
 
     @staticmethod
     def handler(
@@ -317,7 +309,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
     def dispatch_message(
         self,
         message: MessageT_contra,
-        operation: str = c.DEFAULT_HANDLER_MODE,
+        operation: t.DispatchOperationLiteral = c.DEFAULT_HANDLER_MODE,
     ) -> r[ResultT]:
         """Dispatch message through the handler execution pipeline.
 
@@ -425,21 +417,10 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             c.FIELD_HANDLER_MODE,
             c.HandlerType.OPERATION,
         )
-        handler_mode_str = (
-            str(handler_mode_raw)
-            if handler_mode_raw is not None
-            else c.HandlerType.OPERATION
-        )
-        handler_mode_literal: c.HandlerType = (
-            c.HandlerType.COMMAND
-            if handler_mode_str == c.HandlerType.COMMAND
-            else c.HandlerType.QUERY
-            if handler_mode_str == c.HandlerType.QUERY
-            else c.HandlerType.EVENT
-            if handler_mode_str == c.HandlerType.EVENT
-            else c.HandlerType.SAGA
-            if handler_mode_str == "saga"
-            else c.HandlerType.OPERATION
+        handler_mode_str = str(handler_mode_raw) if handler_mode_raw is not None else None
+        handler_mode_literal = self._parse_handler_mode(
+            handler_mode_str,
+            default=c.HandlerType.OPERATION,
         )
         execution_ctx = m.ExecutionContext.create_for_handler(
             handler_name=handler_name,
@@ -501,7 +482,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
     def _run_pipeline(
         self,
         message: MessageT_contra,
-        operation: str = c.DEFAULT_HANDLER_MODE,
+        operation: t.DispatchOperationLiteral = c.DEFAULT_HANDLER_MODE,
     ) -> r[ResultT]:
         """Run the handler execution pipeline (internal).
 
@@ -522,12 +503,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             "value",
             self._config_model.handler_mode,
         )
-        valid_operations = {
-            c.DEFAULT_HANDLER_MODE,
-            c.HANDLER_MODE_QUERY,
-            c.HandlerType.EVENT.value,
-        }
-        if operation != handler_mode and operation in valid_operations:
+        if operation != handler_mode and c.HandlerType(operation) in self._DISPATCH_OPERATIONS:
             error_msg = f"Handler with mode '{handler_mode}' cannot execute {operation} pipelines"
             return r[ResultT].fail(error_msg)
         message_type = message.__class__

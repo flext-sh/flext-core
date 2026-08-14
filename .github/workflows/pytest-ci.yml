@@ -1,0 +1,38 @@
+name: Pytest CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pytest:
+    name: pytest
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Run pytest pipeline
+        run: make ci-pytest
+
+      - name: Upload pytest and coverage artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-artifacts
+          path: artifacts/
+          if-no-files-found: warn

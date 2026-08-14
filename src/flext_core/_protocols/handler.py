@@ -16,6 +16,23 @@ class FlextProtocolsHandler:
     """Protocols for CQRS handlers and message routing."""
 
     @runtime_checkable
+    class HandlerConfigModel(Protocol):
+        """Structural contract for handler configuration models."""
+
+        handler_name: str
+        handler_mode: t.HandlerModeInput
+
+    @runtime_checkable
+    class ExecutionContextModel(Protocol):
+        """Structural contract used by handler runtime/context stacks."""
+
+        handler_name: str
+        handler_mode: t.HandlerModeInput
+        execution_time_ms: float | Callable[[], float]
+
+        def start_execution(self) -> None: ...
+
+    @runtime_checkable
     class Handler[MessageT: FlextProtocolsBase.Model, ResultT](
         FlextProtocolsBase.Base,
         Protocol,

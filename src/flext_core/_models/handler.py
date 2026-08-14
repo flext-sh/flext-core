@@ -320,20 +320,13 @@ class FlextModelsHandler:
             handler_name: str = str(
                 ctx_mapping.get("handler_name", c.IDENTIFIER_UNKNOWN),
             )
-            handler_mode_str: str = str(
+            handler_mode_str: t.HandlerModeInput | None = str(
                 ctx_mapping.get(c.FIELD_HANDLER_MODE, c.HandlerType.OPERATION),
             )
-            handler_mode_literal: c.HandlerType = (
-                c.HandlerType.COMMAND
-                if handler_mode_str == c.HandlerType.COMMAND
-                else c.HandlerType.QUERY
-                if handler_mode_str == c.HandlerType.QUERY
-                else c.HandlerType.EVENT
-                if handler_mode_str == c.HandlerType.EVENT
-                else c.HandlerType.SAGA
-                if handler_mode_str == "saga"
-                else c.HandlerType.OPERATION
-            )
+            try:
+                handler_mode_literal = c.HandlerType(handler_mode_str)
+            except ValueError:
+                handler_mode_literal = c.HandlerType.OPERATION
             execution_ctx = FlextModelsHandler.ExecutionContext.create_for_handler(
                 handler_name=handler_name,
                 handler_mode=handler_mode_literal,

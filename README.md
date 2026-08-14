@@ -135,6 +135,32 @@ FLEXT-Core is designed around Clean Architecture and SOLID principles.
 
 Contributions are welcome! Please read our [Contributing Guide](docs/development/contributing.md) to get started.
 
+### Workspace setup with FLEXT org libraries (same branch)
+
+When developing across the FLEXT ecosystem, `make setup` now auto-syncs the main org libraries from GitHub (`flext-cli`, `flext-infra`, `flext-tests`) and tries to checkout the **same branch** as the current `flext-core` branch (fallback: `main`), then installs them as editable dependencies in `.venv`.
+
+```bash
+make setup
+```
+
+Useful overrides:
+
+```bash
+# Disable org sync
+make setup FLEXT_AUTO_ORG_LIBS=0
+
+# Use another org and custom repos
+FLEXT_GH_ORG=my-org FLEXT_ORG_REPOS="repo-a repo-b" make setup
+```
+
+CI/CD now has a dedicated pytest pipeline (`.github/workflows/pytest-ci.yml`) that executes:
+
+```bash
+make ci-pytest
+```
+
+This command installs project dependencies, syncs FLEXT org repos automatically, runs pytest with coverage, and exports reports to `artifacts/`.
+
 1. Fork the repository
 1. Create your feature branch (`git checkout -b feature/amazing-feature`)
 1. Commit your changes (`git commit -m 'Add amazing feature'`)
