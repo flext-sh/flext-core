@@ -282,7 +282,7 @@ for key, value in os.environ.items():
 
 # Load and print configuration
 config = FlextSettings()
-print(f"Config: {config.dict()}")
+print(f"Config: {config.model_dump()}")
 ```
 
 ### 5. LDIF Processing Issues
@@ -365,7 +365,7 @@ config = FlextLdifSettings(
     handle_schema_extensions=True,
 )
 
-print(f"Config: {config.dict()}")
+print(f"Config: {config.model_dump()}")
 ```
 
 **Enable server quirks:**

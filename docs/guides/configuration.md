@@ -290,7 +290,7 @@ base_config = FlextSettings(log_level="INFO", environment="production")
 
 # Extended configuration
 extended_config = FlextSettings(
-    **base_config.dict(),
+    **base_config.model_dump(),
     debug=True,  # Override for development
     custom_setting="value",
 )
@@ -445,7 +445,7 @@ from flext_core import u
 config = FlextSettings(debug=True)
 
 # Print configuration
-print(config.dict())
+print(config.model_dump())
 
 # Validate configuration
 if config.is_valid():
