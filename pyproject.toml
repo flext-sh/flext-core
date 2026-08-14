@@ -442,7 +442,11 @@ addopts = [
   "--durations=10",
   "--markdown-docs",
   "--strict-markers",
+<<<<<<< HEAD
+  "--timeout=90",
+=======
   "--timeout=10",
+>>>>>>> refs/remotes/origin/0.12.0-dev
 ]
 enable_assertion_pass_hook = true
 filterwarnings = [
