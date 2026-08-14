@@ -91,14 +91,15 @@ MAKEFILE_ROOT := $(patsubst %/,%,$(dir $(SELF_MAKEFILE)))
 PROJECT_ROOT := $(MAKEFILE_ROOT)
 override export FLEXT_PYTEST_TARGET_RAW := tests
 WORKSPACE ?= $(PROJECT_ROOT)
-# make work targets a member checkout when PROJECT names a workspace member and
-# WORKSPACE was not overridden on the command line. PROJECT alone used to keep
-# WORKSPACE at the workspace root, so finish looked up lanes in the wrong git
-# primary and failed with "worktree branch is not registered".
+# A workspace lane is always registered at the workspace root. Other verbs may
+# select a member through PROJECT, but `make work` keeps WORKSPACE at the root
+# so one Git worktree owns the complete project matrix.
+ifneq ($(filter work,$(MAKECMDGOALS)),work)
 ifeq ($(filter command line override,$(origin WORKSPACE)),)
 ifneq ($(strip $(PROJECT)),)
 ifneq ($(filter $(PROJECT),$(WORKSPACE_MEMBERS)),)
 override WORKSPACE := $(PROJECT_ROOT)/$(PROJECT)
+endif
 endif
 endif
 endif
@@ -579,6 +580,9 @@ _builtin_help_usage:
 #       work is carried. Pin validity is HEAD contains gitlink — origin may lag the
 #       pin without failing verify. Declared branch is the named integration line;
 #       legacy branch=. still resolves to the superproject named branch if present.
+#       A checkout is also accepted on the superproject current branch (workspace
+#       lane): that lane branch then becomes the verified branch, and its fetch is
+#       skipped when origin carries no counterpart. Any third branch still fails.
 #       Fetch skips when local already contains pin and origin tip.
 # Free: no
 # End SECTION: submodule setup
@@ -643,12 +647,18 @@ _builtin_setup_submodules:
 			printf 'ERROR: governed gitlink has no declared branch: %s\n' "$$child_path" >&2; \
 			exit 2; \
 		fi; \
+		super_branch=$$(git -C "$$superproject" branch --show-current); \
 		if [ "$$branch" = "." ]; then \
-			branch=$$(git -C "$$superproject" branch --show-current); \
+			branch="$$super_branch"; \
 			if [ -z "$$branch" ]; then \
 				printf 'ERROR: %s: branch = . requires a named superproject branch\n' "$$child_path" >&2; \
 				exit 1; \
 			fi; \
+		fi; \
+		declared_branch="$$branch"; \
+		accepted_branches="$$declared_branch"; \
+		if [ -n "$$super_branch" ] && [ "$$super_branch" != "$$declared_branch" ]; then \
+			accepted_branches="$$declared_branch or $$super_branch"; \
 		fi; \
 		git check-ref-format --branch "$$branch" >/dev/null || { \
 			printf 'ERROR: %s: invalid declared branch %s\n' "$$child_path" "$$branch" >&2; \
@@ -666,11 +676,15 @@ _builtin_setup_submodules:
 			}; \
 			attach_branch_at_head "$$child_root" "$$branch"; \
 		fi; \
-		remote_ref="refs/remotes/origin/$$branch"; \
 		current=$$(git -C "$$child_root" branch --show-current); \
+		if [ -n "$$current" ] && [ "$$current" != "$$declared_branch" ] && \
+		   [ -n "$$super_branch" ] && [ "$$current" = "$$super_branch" ]; then \
+			branch="$$super_branch"; \
+		fi; \
+		remote_ref="refs/remotes/origin/$$branch"; \
 		head=$$(git -C "$$child_root" rev-parse HEAD); \
 		if [ -n "$$current" ] && [ "$$current" != "$$branch" ]; then \
-			printf 'ERROR: %s: conflicting branch %s; expected %s (setup never runs checkout/reset; switch it yourself while keeping dirty)\n' "$$child_path" "$$current" "$$branch" >&2; \
+			printf 'ERROR: %s: conflicting branch %s; expected %s (setup never runs checkout/reset; switch it yourself while keeping dirty)\n' "$$child_path" "$$current" "$$accepted_branches" >&2; \
 			exit 1; \
 		fi; \
 		need_fetch=1; \
@@ -686,15 +700,22 @@ _builtin_setup_submodules:
 			fi; \
 		fi; \
 		if [ "$$need_fetch" -eq 1 ]; then \
-			git -C "$$child_root" fetch --quiet origin "$$branch" || { \
-				printf 'ERROR: %s: fetch origin %s failed\n' "$$child_path" "$$branch" >&2; \
-				exit 1; \
-			}; \
+			fetch_allowed=1; \
+			if [ "$$branch" != "$$declared_branch" ] && \
+			   ! git -C "$$child_root" ls-remote --exit-code --heads origin "$$branch" >/dev/null 2>&1; then \
+				fetch_allowed=0; \
+			fi; \
+			if [ "$$fetch_allowed" -eq 1 ]; then \
+				git -C "$$child_root" fetch --quiet origin "$$branch" || { \
+					printf 'ERROR: %s: fetch origin %s failed\n' "$$child_path" "$$branch" >&2; \
+					exit 1; \
+				}; \
+			fi; \
 		fi; \
 		current=$$(git -C "$$child_root" branch --show-current); \
 		head=$$(git -C "$$child_root" rev-parse HEAD); \
 		if [ -n "$$current" ] && [ "$$current" != "$$branch" ]; then \
-			printf 'ERROR: %s: conflicting branch %s; expected %s (setup never runs checkout/reset; switch it yourself while keeping dirty)\n' "$$child_path" "$$current" "$$branch" >&2; \
+			printf 'ERROR: %s: conflicting branch %s; expected %s (setup never runs checkout/reset; switch it yourself while keeping dirty)\n' "$$child_path" "$$current" "$$accepted_branches" >&2; \
 			exit 1; \
 		fi; \
 		if [ -z "$$current" ]; then \
