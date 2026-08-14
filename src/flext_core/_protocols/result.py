@@ -74,21 +74,23 @@ class FlextProtocolsResult:
         def unwrap_or_else[D](self, func: Callable[[], D]) -> ResultT | D: ...
 
         def flat_map[U](
-            self, func: Callable[..., FlextProtocolsResult.Result[U]]
+            self, func: Callable[[ResultT], FlextProtocolsResult.Result[U]]
         ) -> FlextProtocolsResult.Result[U]: ...
 
         def fold[U](
-            self, on_failure: Callable[[str], U], on_success: Callable[..., U]
+            self, on_failure: Callable[[str], U], on_success: Callable[[ResultT], U]
         ) -> U: ...
 
         def lash[U](
             self, func: Callable[[str], FlextProtocolsResult.Result[U]]
         ) -> FlextProtocolsResult.Result[ResultT | U]: ...
 
-        def map[U](self, func: Callable[..., U]) -> FlextProtocolsResult.Result[U]: ...
+        def map[U](
+            self, func: Callable[[ResultT], U]
+        ) -> FlextProtocolsResult.Result[U]: ...
 
         def flow_through(
-            self, *funcs: Callable[..., FlextProtocolsResult.Result[ResultT]]
+            self, *funcs: Callable[[ResultT], FlextProtocolsResult.Result[ResultT]]
         ) -> FlextProtocolsResult.Result[ResultT]: ...
 
         def map_error(
@@ -100,13 +102,13 @@ class FlextProtocolsResult:
         @overload
         def map_or[U](self, default: U, func: None = None) -> ResultT | U: ...
         @overload
-        def map_or[U](self, default: U, func: Callable[..., U]) -> U: ...
+        def map_or[U](self, default: U, func: Callable[[ResultT], U]) -> U: ...
         def map_or[U](
-            self, default: U, func: Callable[..., U] | None = None
+            self, default: U, func: Callable[[ResultT], U] | None = None
         ) -> U | ResultT: ...
 
         def tap(
-            self, func: Callable[..., None]
+            self, func: Callable[[ResultT], None]
         ) -> FlextProtocolsResult.Result[ResultT]: ...
 
         def tap_error(
@@ -114,7 +116,7 @@ class FlextProtocolsResult:
         ) -> FlextProtocolsResult.Result[ResultT]: ...
 
         def filter(
-            self, predicate: Callable[..., bool]
+            self, predicate: Callable[[ResultT], bool]
         ) -> FlextProtocolsResult.Result[ResultT]: ...
 
         def recover[U](
