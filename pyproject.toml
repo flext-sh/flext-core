@@ -449,6 +449,7 @@ filterwarnings = [
   "error",
   "module::flext_core._constants.enforcement.FlextMroViolation",
 ]
+flext_slow_timeout_seconds = 60
 markers = [
   "advanced: advanced pattern tests",
   "architecture: architectural pattern tests",
