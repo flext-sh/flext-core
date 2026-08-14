@@ -120,19 +120,23 @@ Definir **ações objetivas, priorizadas e mensuráveis** para reduzir custo de 
 ## Plano de execução em PRs pequenos (recomendado)
 
 ### PR 1 (rápido)
+
 - `dispatcher.py`: resolver executor no `register_handler` e armazenar callable.
 - `_models/cqrs.py`: cache do adapter de paginação.
 - `_models/settings.py`: cache do adapter de batch.
 
 ### PR 2 (segurança + consistência)
+
 - Remoção de `default=[]` em todos os modelos Pydantic alvo.
 - Ajustes de testes de igualdade/default quando necessário.
 
 ### PR 3 (estrutura)
+
 - Cache de conformidade de protocolos em `protocols.py`.
 - Flag de ambiente para nível de validação da metaclass.
 
 ### PR 4 (controle de regressão)
+
 - Benchmark scripts + budget de performance no CI.
 - Documento de guideline oficial.
 
