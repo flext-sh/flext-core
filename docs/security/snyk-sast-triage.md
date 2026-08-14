@@ -33,7 +33,7 @@ Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `r
        45          )
 ```
 
-**Decisão**: 
+**Decisão**:
 
 ### 2 · ⚪ LOW · Use of Hardcoded Credentials
 **Local**: `tests/_models/_mixins/test_data_identity.py:43` · **CWE**: -
@@ -50,7 +50,7 @@ Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `r
        47              str, m.Field(description="Default test session identifier")
 ```
 
-**Decisão**: 
+**Decisão**:
 
 ### 3 · ⚪ LOW · Use of Hardcoded Credentials
 **Local**: `tests/_models/_mixins/test_data_values.py:45` · **CWE**: -
@@ -67,7 +67,7 @@ Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `r
        49              "test@example.com"
 ```
 
-**Decisão**: 
+**Decisão**:
 
 ### 4 · ⚪ LOW · Use of Hardcoded Credentials
 **Local**: `tests/integration/test_service.py:73` · **CWE**: -
@@ -84,7 +84,7 @@ Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `r
        77              email="custom@example.com",
 ```
 
-**Decisão**: 
+**Decisão**:
 
 ### 5 · ⚪ LOW · Use of Hardcoded Credentials
 **Local**: `tests/integration/test_service.py:147` · **CWE**: -
@@ -101,7 +101,7 @@ Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `r
       151                  unique_id=user_id,
 ```
 
-**Decisão**: 
+**Decisão**:
 
 ### 6 · ⚪ LOW · Use of Hardcoded Passwords
 **Local**: `tests/unit/test_result_factory_dip.py:169` · **CWE**: -
@@ -118,7 +118,7 @@ Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `r
       173          assert result.error_data is not None
 ```
 
-**Decisão**: 
+**Decisão**:
 
 ### 7 · ⚪ LOW · Use of Hardcoded Passwords
 **Local**: `tests/unit/test_result_factory_dip.py:215` · **CWE**: -
@@ -135,7 +135,7 @@ Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `r
       219          tm.that(result.error_data.get("host"), eq="db.example")
 ```
 
-**Decisão**: 
+**Decisão**:
 
 ### 8 · ⚪ LOW · Use of Hardcoded Passwords
 **Local**: `tests/unit/test_result_factory_dip.py:226` · **CWE**: -
@@ -152,7 +152,7 @@ Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `r
       230              exception=exc,
 ```
 
-**Decisão**: 
+**Decisão**:
 
 ### 9 · ⚪ LOW · Use of Hardcoded Passwords
 **Local**: `tests/unit/test_result_factory_dip.py:229` · **CWE**: -
@@ -169,5 +169,4 @@ Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `r
       233          assert result.error_data is not None
 ```
 
-**Decisão**: 
-
+**Decisão**:

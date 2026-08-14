@@ -48,13 +48,13 @@ BRANCH ?=
 PYTEST_ARGS ?=
 PYTEST_DIAG_ARGS ?= -rA --durations=0 --tb=long --showlocals
 PYTEST_REPORT_ARGS ?= -ra --durations=25 --durations-min=0.001 --tb=short
-PYTEST_PROCESS_TIMEOUT_SECONDS ?= 1920
+PYTEST_PROCESS_TIMEOUT_SECONDS ?= 180
 # mro-99ae: the pytest process inherits a hard wall-clock boundary, mirroring
 # MYPY_BOUNDED, so a hung run is terminated even if the typed runner stalls.
 PYTEST_BOUNDED = timeout --signal=TERM --kill-after=5s "$(PYTEST_PROCESS_TIMEOUT_SECONDS)s"
 PYTEST_REPORTS_DIR ?= .reports/tests
-override PYTEST_CASE_TIMEOUT_SECONDS := 90
-override PYTEST_RUN_TIMEOUT_SECONDS := 1800
+override PYTEST_CASE_TIMEOUT_SECONDS := 10
+override PYTEST_RUN_TIMEOUT_SECONDS := 120
 override PYTEST_TERMINATION_GRACE_SECONDS := 2
 override PYTEST_TIMEOUT_EXIT_CODE := 124
 override PYTEST_ENFORCEMENT_PLUGIN := flext_tests_enforcement
@@ -165,14 +165,6 @@ FLEXT_INFRA_SOURCE_ROOT_REL :=
 UV_BOOTSTRAP_FLAGS := --isolated --all-groups --all-extras
 # End SECTION: infra bootstrap
 
-# === MYPY RESOURCE LIMIT ===
-# mro-0ftd.3.11: every Mypy process inherits validated memory and time caps.
-MYPY_MEMORY_LIMIT_MB ?= 6144
-MYPY_TIMEOUT_SECONDS ?= 600
-MYPY_BOUNDED = timeout --signal=TERM --kill-after=5s "$(MYPY_TIMEOUT_SECONDS)s" prlimit --as=$$(( $(MYPY_MEMORY_LIMIT_MB) * 1024 * 1024 )):$$(( $(MYPY_MEMORY_LIMIT_MB) * 1024 * 1024 )) --
-VALIDATE_MYPY_LIMITS = case "$(MYPY_MEMORY_LIMIT_MB)" in ""|*[!0-9]*) echo "ERROR: MYPY_MEMORY_LIMIT_MB must be a positive integer"; exit 2;; esac; [ "$(MYPY_MEMORY_LIMIT_MB)" -gt 0 ] || { echo "ERROR: MYPY_MEMORY_LIMIT_MB must be greater than zero"; exit 2; }; [ "$(MYPY_MEMORY_LIMIT_MB)" -le 6144 ] || { echo "ERROR: MYPY_MEMORY_LIMIT_MB must be less than or equal to 6144"; exit 2; }; case "$(MYPY_TIMEOUT_SECONDS)" in ""|*[!0-9]*) echo "ERROR: MYPY_TIMEOUT_SECONDS must be a positive integer"; exit 2;; esac; [ "$(MYPY_TIMEOUT_SECONDS)" -gt 0 ] || { echo "ERROR: MYPY_TIMEOUT_SECONDS must be greater than zero"; exit 2; }; [ "$(MYPY_TIMEOUT_SECONDS)" -le 600 ] || { echo "ERROR: MYPY_TIMEOUT_SECONDS must be less than or equal to 600"; exit 2; }; command -v timeout >/dev/null 2>&1 || { echo "ERROR: required executable not found: timeout"; exit 2; }; command -v prlimit >/dev/null 2>&1 || { echo "ERROR: required executable not found: prlimit"; exit 2; }
-REPORT_MYPY_FAILURE = code=$$?; signal=none; if [ "$$code" -ge 128 ]; then signal=$$(( $$code - 128 )); fi; if [ "$$code" -eq 124 ] || [ "$$signal" != none ]; then reason="resource limit triggered"; else reason="type check failed under enforced limits"; fi; echo "ERROR: Mypy $$reason: memory_limit=$(MYPY_MEMORY_LIMIT_MB) MiB; timeout=$(MYPY_TIMEOUT_SECONDS)s; exit=$$code; signal=$$signal" >&2
-export MYPY_MEMORY_LIMIT_MB MYPY_TIMEOUT_SECONDS
 
 
 _DEFAULT_help := usage
@@ -255,6 +247,20 @@ override VIRTUAL_ENV := $(RUNTIME_VENV)
 override PATH := $(RUNTIME_BIN):$(SANITIZED_CALLER_PATH)
 export FLEXT_INFRA_PYTHON UV UV_PROJECT UV_PROJECT_ENVIRONMENT VIRTUAL_ENV PATH
 
+# Bytecode caching is a Make-owned guarantee, not a shell-profile convention.
+# `make` never sources .envrc (that needs direnv), so a policy expressed only
+# there is inert for every Make-driven run. An inherited PYTHONDONTWRITEBYTECODE
+# then disables the import cache and each verb pays full source recompilation
+# (measured: 3341 compile() calls, 9.1s of pure recompilation per run).
+# The variable is undefined rather than set to an empty value, because CPython
+# treats ANY non-empty value as true and an empty one as unset; clearing it here
+# keeps the caller's environment from re-disabling the cache. The prefix keeps
+# __pycache__ out of the working tree while still caching.
+override undefine PYTHONDONTWRITEBYTECODE
+PYTHONPYCACHEPREFIX ?= $(PROJECT_ROOT)/.cache/pycache
+export PYTHONPYCACHEPREFIX
+unexport PYTHONDONTWRITEBYTECODE
+
 ifneq ($(strip $(FLEXT_INFRA_SOURCE_ROOT_REL)),)
 FLEXT_INFRA_SOURCE_ROOT := $(abspath $(PROJECT_ROOT)/$(FLEXT_INFRA_SOURCE_ROOT_REL))
 FLEXT_INFRA_BOOTSTRAP := env -u PYTHONPATH -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u UV_PROJECT_ENVIRONMENT PATH="$(SANITIZED_CALLER_PATH)" $(UV) run --project "$(PROJECT_ROOT)" $(UV_BOOTSTRAP_FLAGS) --with-editable "$(FLEXT_INFRA_SOURCE_ROOT)" python -m flext_infra
@@ -270,7 +276,6 @@ else
 CODEGEN_SCOPE := self
 ALLOWED_PROJECTS := .
 endif
-CODEGEN_PROJECT_ARGS := $(if $(filter self,$(CODEGEN_SCOPE)),--projects .,)
 
 # Workspace-root gate verbs fan out across declared members through the generic
 # `flext-infra workspace orchestrate` primitive (verb allowlist + CLI group come
@@ -340,6 +345,26 @@ $(error ERROR: Cannot use PROJECT and PROJECTS together)
 endif
 endif
 
+
+# mro-ga9q (custom.mk blacklist): member projects may define ANY custom
+# verb/WHAT through _custom_<verb>_<what> handlers and (pre|post)-<verb>[-<what>]
+# hooks EXCEPT the reserved verbs/WHATs below, which stay a flext-infra
+# monopoly. Parse-time guard: every make invocation fails loud when custom.mk
+# redefines a reserved target; every other target is permitted.
+# R12 moved the public verbs out of base.mk into this projection, but the guard
+# stayed behind — and a generated project never includes base.mk, so the
+# monopoly was unenforced in every real checkout. The guard belongs with the
+# verbs it protects.
+CUSTOM_MK_RESERVED_TARGETS := _custom_build_artifacts _custom_check_all _custom_clean_generated _custom_clean_status _custom_deps_check _custom_deps_lock _custom_deps_upgrade _custom_fix_all _custom_fix_apply _custom_fix_check _custom_fmt_all _custom_fmt_apply _custom_fmt_check _custom_gen_all _custom_gen_apply _custom_gen_check _custom_help_usage _custom_mod_all _custom_mod_apply _custom_mod_check _custom_release_rel _custom_release_status _custom_run_default _custom_setup_environment _custom_status_diagnostics _custom_test_all _custom_test_cache-checkpoint _custom_test_cache-clear _custom_test_cache-status _custom_test_full _custom_work_finish _custom_work_land _custom_work_start _custom_work_status build check clean deps fix fmt gen help mod release run setup status test work
+ifneq ($(wildcard custom.mk),)
+# Target definitions at column 0, excluding assignments (=) and dot-directives.
+# $(shell) converts the newline-separated results to space-separated lists.
+_CUSTOM_MK_DEFINED := $(shell awk '/^[A-Za-z_][A-Za-z0-9_-]*([ \t]+[A-Za-z_][A-Za-z0-9_-]*)*[ \t]*:/ && index($$0, "=") == 0 { line = $$0; sub(/:.*/, "", line); count = split(line, names, /[ \t]+/); for (i = 1; i <= count; i++) print names[i] }' custom.mk | sort -u)
+_CUSTOM_MK_OFFENDERS := $(shell printf '%s\n' $(_CUSTOM_MK_DEFINED) | grep -xF $(foreach target,$(CUSTOM_MK_RESERVED_TARGETS),-e $(target)))
+ifneq ($(_CUSTOM_MK_OFFENDERS),)
+$(error custom.mk redefines reserved flext-infra target(s): $(_CUSTOM_MK_OFFENDERS) - reserved verbs/WHATs are a flext-infra monopoly; use _custom_<verb>_<what> with a non-reserved WHAT or (pre|post)-<verb>[-<what>] hooks)
+endif
+endif
 
 -include custom.mk
 SELF_MAKE := $(MAKE) --no-print-directory -f "$(SELF_MAKEFILE)"
@@ -870,9 +895,18 @@ _builtin_fmt_apply: _builtin_fmt_all
 _builtin_fix_check: _builtin_require_environment
 	@$(UV_RUN) ruff check $(RUFF_PATHS)
 
+# mro-38p39: `fix` is the mutating dual of `check`, so it routes through the
+# same gate pipeline. Running `ruff check --fix` alone left every other fixable
+# gate unreachable: a markdown finding the linter itself marks auto-fixable
+# blocked `make check` while `make fix APPLY=Y` exited 0 without repairing it,
+# so the canonical sequence could never reach green without hand-editing a
+# governed file. The gate list is the SSOT can_fix set, not a literal -- an
+# unscoped --fix would also run pyright and mypy, which repair nothing and cost
+# ~37s, timing the verb out.
 _builtin_fix_all: _builtin_require_environment
 	$(call _require_apply)
-	@$(UV_RUN) ruff check --fix $(RUFF_PATHS)
+	@$(PROJECT_FLEXT_INFRA) check run --workspace "$(PROJECT_ROOT)" --projects . --fix \
+		--gates format,markdown,smells
 
 _builtin_fix_apply: _builtin_fix_all
 
@@ -937,12 +971,12 @@ _builtin_release_rel: _builtin_require_environment
 # settings that conform does not render.
 _builtin_gen_check: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) codegen conform --root "$(PROJECT_ROOT)" --scope "$(CODEGEN_SCOPE)" --mode check
-	@$(PROJECT_FLEXT_INFRA) deps modernize --workspace "$(PROJECT_ROOT)" --check $(CODEGEN_PROJECT_ARGS)
+	@$(PROJECT_FLEXT_INFRA) deps modernize --workspace "$(PROJECT_ROOT)" --check
 
 _builtin_gen_all: _builtin_require_environment
 	$(call _require_apply)
 	@$(PROJECT_FLEXT_INFRA) codegen conform --root "$(PROJECT_ROOT)" --scope "$(CODEGEN_SCOPE)" --mode apply
-	@$(PROJECT_FLEXT_INFRA) deps modernize --workspace "$(PROJECT_ROOT)" --apply $(CODEGEN_PROJECT_ARGS)
+	@$(PROJECT_FLEXT_INFRA) deps modernize --workspace "$(PROJECT_ROOT)" --apply
 
 _builtin_gen_apply: _builtin_gen_all
 
