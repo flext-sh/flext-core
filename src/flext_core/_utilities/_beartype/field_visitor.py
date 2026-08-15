@@ -57,12 +57,8 @@ class FlextUtilitiesBeartypeFieldVisitor:
             return sum(
                 1
                 for member in members
-                if not (
-                    isinstance(member, ast.Name) and member.id == "None"
-                )
-                and not (
-                    isinstance(member, ast.Constant) and member.value is None
-                )
+                if not (isinstance(member, ast.Name) and member.id == "None")
+                and not (isinstance(member, ast.Constant) and member.value is None)
             )
         if get_origin(declared) is Annotated:
             args = get_args(declared)
@@ -170,13 +166,11 @@ class FlextUtilitiesBeartypeFieldVisitor:
                     return None
                 if params.require_description:
                     return cls._field_description_violation(model_type, name, info)
-                declared_annotation = vars(model_type).get("__annotations__", {}).get(
-                    name
+                declared_annotation = (
+                    vars(model_type).get("__annotations__", {}).get(name)
                 )
                 return cls._field_violation(
-                    params,
-                    info,
-                    declared_annotation=declared_annotation,
+                    params, info, declared_annotation=declared_annotation
                 )
             case (info,):
                 if not isinstance(info, FieldInfo):
