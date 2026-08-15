@@ -28,14 +28,9 @@ if TYPE_CHECKING:
 class TestsFlextCoreEnforcementWarningVisibility:
     _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-    # test_real_filterwarnings_keep_mro_violations_visible spawns a nested
-    # pytest via u.Cli.run_raw that cold-imports flext_core, so it is legitimately
-    # slow (~49s standalone, >60s under full-suite CPU contention). The former
-    # class-level timeout(60) override was calibrated against an old global
-    # --timeout=10; the SSOT (flext-infra codegen) now projects --timeout=90,
-    # which supersedes it. Keeping the local override would cap the ceiling
-    # *below* the SSOT value and re-introduce the timeout it was meant to avoid,
-    # so the case inherits the generated global budget instead.
+    # The real-filter probe starts a nested pytest. It disables third-party
+    # plugin autoload and exercises only pytest core so the integration boundary
+    # remains deterministic and fits the config-owned regular-item budget.
 
     @pytest.mark.parametrize("category", [FlextMroViolation, FlextSmellViolation])
     def test_enforcement_categories_are_userwarnings(
@@ -119,14 +114,9 @@ class TestsFlextCoreEnforcementWarningVisibility:
                 "-q",
                 "-p",
                 "no:cacheprovider",
-                # Isolate from site plugins: under the parent xdist worker,
-                # pytest-benchmark treats loaded xdist as active and warns;
-                # filterwarnings=error turns that into INTERNALERROR.
-                "-p",
-                "no:xdist",
-                "--benchmark-disable",
             ],
             cwd=tmp_path,
+            env={"PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1"},
         )
 
         # Assert: the warning survives to the caller's output.

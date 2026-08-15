@@ -53,6 +53,9 @@ class TestsFlextTypes(t):
 
             type InputPayloadMap = t.MappingKV[str, t.Tests.TestobjectSerializable]
 
+            type CentralizedUnion = str | int | float | None
+            "Centralized multi-arm alias used by enforcement regression fixtures."
+
 
 t = TestsFlextTypes
 

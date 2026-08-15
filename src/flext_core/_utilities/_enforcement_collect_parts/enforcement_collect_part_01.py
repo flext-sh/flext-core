@@ -156,7 +156,9 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
             if name not in own_ann:
                 continue
             args: tuple[pb.AttributeProbe, ...] = (
-                (model_type, name, info) if tag == "missing_description" else (info,)
+                (model_type, name, info)
+                if tag in {"missing_description", "no_inline_union"}
+                else (info,)
             )
             yield f'Field "{name}"', args
 
