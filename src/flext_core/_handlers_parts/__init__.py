@@ -5,23 +5,23 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from types import MappingProxyType
+
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from .flexthandlers_part_07 import FlextHandlers
-
-_LAZY_MODULES: dict[str, tuple[str, ...]] = {
-    ".flexthandlers_part_07": ("FlextHandlers",)
-}
-
-
-_LAZY_ALIAS_GROUPS: dict[str, tuple[tuple[str, str], ...]] = {}
-
-
-_LAZY_IMPORTS = build_lazy_import_map(
-    _LAZY_MODULES, alias_groups=_LAZY_ALIAS_GROUPS, sort_keys=False
-)
-
 __all__: tuple[str, ...] = ("FlextHandlers",)
 
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)
+install_lazy_exports(
+    __name__,
+    globals(),
+    MappingProxyType(
+        build_lazy_import_map(
+            MappingProxyType({".flexthandlers_part_07": ("FlextHandlers",)}),
+            alias_groups=MappingProxyType({}),
+            sort_keys=False,
+        )
+    ),
+    public_exports=__all__,
+)

@@ -5,6 +5,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from types import MappingProxyType
+
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
@@ -44,54 +46,6 @@ if TYPE_CHECKING:
     from .registry import FlextModelsRegistry
     from .service import FlextModelsService
     from .settings import FlextModelsSettings
-
-_LAZY_MODULES: dict[str, tuple[str, ...]] = {
-    "._base_parts": ("_base_parts",),
-    "._container_parts": ("_container_parts",),
-    "._context": ("_context",),
-    "._context._data": ("FlextModelsContextData",),
-    "._context._export": ("FlextModelsContextExport",),
-    "._context._metadata": ("FlextModelsContextMetadata",),
-    "._context._proxy_var": ("FlextModelsContextProxyVar",),
-    "._context._scope": ("FlextModelsContextScope",),
-    "._context._tokens": ("FlextModelsContextTokens",),
-    "._enforcement": ("_enforcement",),
-    "._enforcement._base": ("EnforcementModelBase", "FlextModelsEnforcementBase"),
-    "._enforcement._catalog": ("FlextModelsEnforcementCatalog",),
-    "._enforcement._params": ("FlextModelsEnforcementParams",),
-    "._enforcement._sources": ("FlextModelsEnforcementSources",),
-    "._exception_params_parts": ("_exception_params_parts",),
-    ".base": ("FlextModelsBase",),
-    ".builder": ("FlextModelsBuilder",),
-    ".collections": ("FlextModelsCollections",),
-    ".config": ("FlextModelsConfig",),
-    ".container": ("FlextModelsContainer",),
-    ".containers": ("FlextModelsContainers", "mc"),
-    ".context": ("FlextModelsContext",),
-    ".cqrs": ("FlextModelsCqrs",),
-    ".dispatcher": ("FlextModelsDispatcher",),
-    ".domain_event": ("FlextModelsDomainEvent",),
-    ".enforcement": ("FlextModelsEnforcement",),
-    ".entity": ("FlextModelsEntity",),
-    ".errors": ("FlextModelsErrors",),
-    ".exception_params": ("FlextModelsExceptionParams",),
-    ".handler": ("FlextModelsHandler",),
-    ".namespace": ("FlextModelsNamespace",),
-    ".project_metadata": ("FlextModelsProjectMetadata",),
-    ".pydantic": ("FlextModelsPydantic",),
-    ".registry": ("FlextModelsRegistry",),
-    ".service": ("FlextModelsService",),
-    ".settings": ("FlextModelsSettings",),
-}
-
-
-_LAZY_ALIAS_GROUPS: dict[str, tuple[tuple[str, str], ...]] = {}
-
-
-_LAZY_IMPORTS = build_lazy_import_map(
-    _LAZY_MODULES, alias_groups=_LAZY_ALIAS_GROUPS, sort_keys=False
-)
-
 __all__: tuple[str, ...] = (
     "EnforcementModelBase",
     "FlextModelsBase",
@@ -133,4 +87,55 @@ __all__: tuple[str, ...] = (
     "mc",
 )
 
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)
+install_lazy_exports(
+    __name__,
+    globals(),
+    MappingProxyType(
+        build_lazy_import_map(
+            MappingProxyType({
+                "._base_parts": ("_base_parts",),
+                "._container_parts": ("_container_parts",),
+                "._context": ("_context",),
+                "._context._data": ("FlextModelsContextData",),
+                "._context._export": ("FlextModelsContextExport",),
+                "._context._metadata": ("FlextModelsContextMetadata",),
+                "._context._proxy_var": ("FlextModelsContextProxyVar",),
+                "._context._scope": ("FlextModelsContextScope",),
+                "._context._tokens": ("FlextModelsContextTokens",),
+                "._enforcement": ("_enforcement",),
+                "._enforcement._base": (
+                    "EnforcementModelBase",
+                    "FlextModelsEnforcementBase",
+                ),
+                "._enforcement._catalog": ("FlextModelsEnforcementCatalog",),
+                "._enforcement._params": ("FlextModelsEnforcementParams",),
+                "._enforcement._sources": ("FlextModelsEnforcementSources",),
+                "._exception_params_parts": ("_exception_params_parts",),
+                ".base": ("FlextModelsBase",),
+                ".builder": ("FlextModelsBuilder",),
+                ".collections": ("FlextModelsCollections",),
+                ".config": ("FlextModelsConfig",),
+                ".container": ("FlextModelsContainer",),
+                ".containers": ("FlextModelsContainers", "mc"),
+                ".context": ("FlextModelsContext",),
+                ".cqrs": ("FlextModelsCqrs",),
+                ".dispatcher": ("FlextModelsDispatcher",),
+                ".domain_event": ("FlextModelsDomainEvent",),
+                ".enforcement": ("FlextModelsEnforcement",),
+                ".entity": ("FlextModelsEntity",),
+                ".errors": ("FlextModelsErrors",),
+                ".exception_params": ("FlextModelsExceptionParams",),
+                ".handler": ("FlextModelsHandler",),
+                ".namespace": ("FlextModelsNamespace",),
+                ".project_metadata": ("FlextModelsProjectMetadata",),
+                ".pydantic": ("FlextModelsPydantic",),
+                ".registry": ("FlextModelsRegistry",),
+                ".service": ("FlextModelsService",),
+                ".settings": ("FlextModelsSettings",),
+            }),
+            alias_groups=MappingProxyType({}),
+            sort_keys=False,
+        )
+    ),
+    public_exports=__all__,
+)

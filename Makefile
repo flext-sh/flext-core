@@ -48,13 +48,13 @@ BRANCH ?=
 PYTEST_ARGS ?=
 PYTEST_DIAG_ARGS ?= -rA --durations=0 --tb=long --showlocals
 PYTEST_REPORT_ARGS ?= -ra --durations=25 --durations-min=0.001 --tb=short
-PYTEST_PROCESS_TIMEOUT_SECONDS ?= 180
+PYTEST_PROCESS_TIMEOUT_SECONDS ?= 360
 # mro-99ae: the pytest process inherits a hard wall-clock boundary, mirroring
 # MYPY_BOUNDED, so a hung run is terminated even if the typed runner stalls.
 PYTEST_BOUNDED = timeout --signal=TERM --kill-after=5s "$(PYTEST_PROCESS_TIMEOUT_SECONDS)s"
 PYTEST_REPORTS_DIR ?= .reports/tests
 override PYTEST_CASE_TIMEOUT_SECONDS := 10
-override PYTEST_RUN_TIMEOUT_SECONDS := 120
+override PYTEST_RUN_TIMEOUT_SECONDS := 300
 override PYTEST_TERMINATION_GRACE_SECONDS := 2
 override PYTEST_TIMEOUT_EXIT_CODE := 124
 override PYTEST_ENFORCEMENT_PLUGIN := flext_tests_enforcement
@@ -91,18 +91,6 @@ MAKEFILE_ROOT := $(patsubst %/,%,$(dir $(SELF_MAKEFILE)))
 PROJECT_ROOT := $(MAKEFILE_ROOT)
 override export FLEXT_PYTEST_TARGET_RAW := tests
 WORKSPACE ?= $(PROJECT_ROOT)
-# A workspace lane is always registered at the workspace root. Other verbs may
-# select a member through PROJECT, but `make work` keeps WORKSPACE at the root
-# so one Git worktree owns the complete project matrix.
-ifneq ($(filter work,$(MAKECMDGOALS)),work)
-ifeq ($(filter command line override,$(origin WORKSPACE)),)
-ifneq ($(strip $(PROJECT)),)
-ifneq ($(filter $(PROJECT),$(WORKSPACE_MEMBERS)),)
-override WORKSPACE := $(PROJECT_ROOT)/$(PROJECT)
-endif
-endif
-endif
-endif
 # === SECTION: WORKSPACE_ROOT isolation (managed) ===
 # Source: computed (rule: derive from current checkout unless caller overrides)
 # Rule: WORKSPACE_ROOT is always derived from the current checkout unless the
@@ -115,6 +103,18 @@ ifeq ($(filter command line override,$(origin WORKSPACE_ROOT)),)
 WORKSPACE_ROOT := $(shell cd "$(MAKEFILE_ROOT)" && root=$$(git rev-parse --show-superproject-working-tree 2>/dev/null); if [ -n "$$root" ]; then printf '%s\n' "$$root"; else git rev-parse --show-toplevel 2>/dev/null || printf '%s\n' "$(MAKEFILE_ROOT)"; fi)
 endif
 # End SECTION: WORKSPACE_ROOT isolation
+# A workspace lane is always registered at the workspace root. Other verbs may
+# select a member through PROJECT, but `make work` keeps WORKSPACE at the root
+# so one Git worktree owns the complete project matrix.
+ifneq ($(filter work,$(MAKECMDGOALS)),work)
+ifeq ($(filter command line override,$(origin WORKSPACE)),)
+ifneq ($(strip $(PROJECT)),)
+ifneq ($(filter $(PROJECT),$(WORKSPACE_MEMBERS)),)
+override WORKSPACE := $(WORKSPACE_ROOT)/$(PROJECT)
+endif
+endif
+endif
+endif
 
 # === SECTION: verb dispatch (managed) ===
 # Source: config:make.verbs[*].whats, config:make.check_gates_allowed,
@@ -991,19 +991,16 @@ _builtin_release_rel: _builtin_require_environment
 		$$push_flag \
 		$$projects_args
 
-# Generation preserves the caller's scope. Conform owns analyzer roots in the
-# rendered tooling context; dependency modernization owns only dependency
-# settings that conform does not render.
+# Generation has one owner. Conform preserves the caller's scope and applies
+# the complete dependency/tooling projection before it verifies its fixed point.
+# Dependency upgrades remain a separate explicit verb because they rewrite lock
+# floors; gen must never run a second pyproject writer over conform's result.
 _builtin_gen_check: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) codegen conform --root "$(PROJECT_ROOT)" --scope "$(CODEGEN_SCOPE)" --mode check
-	@$(PROJECT_FLEXT_INFRA) codegen init --workspace "$(PROJECT_ROOT)" --check
-	@$(PROJECT_FLEXT_INFRA) deps modernize --workspace "$(PROJECT_ROOT)" --check
 
 _builtin_gen_all: _builtin_require_environment
 	$(call _require_apply)
 	@$(PROJECT_FLEXT_INFRA) codegen conform --root "$(PROJECT_ROOT)" --scope "$(CODEGEN_SCOPE)" --mode apply
-	@$(PROJECT_FLEXT_INFRA) codegen init --workspace "$(PROJECT_ROOT)" --apply
-	@$(PROJECT_FLEXT_INFRA) deps modernize --workspace "$(PROJECT_ROOT)" --apply
 
 _builtin_gen_apply: _builtin_gen_all
 

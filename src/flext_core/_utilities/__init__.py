@@ -5,6 +5,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from types import MappingProxyType
+
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
@@ -79,87 +81,6 @@ if TYPE_CHECKING:
     from .runtime_violation_registry import FlextUtilitiesRuntimeViolationRegistry
     from .settings import FlextUtilitiesSettings
     from .text import FlextUtilitiesText
-
-_LAZY_MODULES: dict[str, tuple[str, ...]] = {
-    "._beartype": ("_beartype",),
-    "._beartype._alias_visitor": ("FlextUtilitiesBeartypeAliasVisitor",),
-    "._beartype._library_visitor": ("FlextUtilitiesBeartypeLibraryVisitor",),
-    "._beartype.attr_visitor": ("FlextUtilitiesBeartypeAttrVisitor",),
-    "._beartype.class_visitor": ("FlextUtilitiesBeartypeClassVisitor",),
-    "._beartype.deprecated_visitor": ("FlextUtilitiesBeartypeDeprecatedVisitor",),
-    "._beartype.field_visitor": ("FlextUtilitiesBeartypeFieldVisitor",),
-    "._beartype.helpers": ("FlextUtilitiesBeartypeHelpers",),
-    "._beartype.import_visitor": ("FlextUtilitiesBeartypeImportVisitor",),
-    "._beartype.method_visitor": ("FlextUtilitiesBeartypeMethodVisitor",),
-    "._beartype.module_visitor": ("FlextUtilitiesBeartypeModuleVisitor",),
-    "._checker_parts": ("_checker_parts",),
-    "._context_crud_set": ("FlextUtilitiesContextCrudSetMixin",),
-    "._enforcement_collect_parts": ("_enforcement_collect_parts",),
-    "._enforcement_parts": ("_enforcement_parts",),
-    "._enforcement_parts.enforcement_part_06": ("EXTENDED_PREDICATE_BINDINGS",),
-    "._guards_type_protocol_specs": ("FlextUtilitiesGuardsTypeProtocolSpecsMixin",),
-    "._guards_type_protocol_string": ("FlextUtilitiesGuardsTypeProtocolStringMixin",),
-    "._guards_type_protocol_types": ("ProtocolGuardInput",),
-    "._logging_config_parts": ("_logging_config_parts",),
-    "._logging_context_parts": ("_logging_context_parts",),
-    "._mapper_access_parts": ("_mapper_access_parts",),
-    "._mapper_extract_parts": ("_mapper_extract_parts",),
-    "._parser_targets_parts": ("_parser_targets_parts",),
-    ".args": ("FlextUtilitiesArgs",),
-    ".beartype_conf": ("FlextUtilitiesBeartypeConf",),
-    ".beartype_engine": ("FlextUtilitiesBeartypeEngine", "ube"),
-    ".beartype_typingext_patch": ("FlextUtilitiesBeartypeTypingExtPatch",),
-    ".checker": ("FlextUtilitiesChecker",),
-    ".collection": ("FlextUtilitiesCollection",),
-    ".collection_iter": ("FlextUtilitiesCollectionIter",),
-    ".collection_merge": ("FlextUtilitiesCollectionMerge",),
-    ".config": ("FlextUtilitiesConfig",),
-    ".console": ("FlextUtilitiesConsole",),
-    ".context": ("FlextUtilitiesContext",),
-    ".context_crud": ("FlextUtilitiesContextCrud",),
-    ".context_lifecycle": ("FlextUtilitiesContextLifecycle",),
-    ".context_state": ("FlextUtilitiesContextState",),
-    ".conversion": ("FlextUtilitiesConversion",),
-    ".discovery": ("FlextUtilitiesDiscovery",),
-    ".dispatcher_execute": ("execute_dispatcher_handler",),
-    ".domain": ("FlextUtilitiesDomain",),
-    ".enforcement": ("FlextUtilitiesEnforcement", "PREDICATE_BINDINGS"),
-    ".enforcement_collect": ("FlextUtilitiesEnforcementCollect",),
-    ".enforcement_emit": ("FlextUtilitiesEnforcementEmit",),
-    ".enum": ("FlextUtilitiesEnum",),
-    ".generators": ("FlextUtilitiesGenerators",),
-    ".guards": ("FlextUtilitiesGuards",),
-    ".guards_type_core": ("FlextUtilitiesGuardsTypeCore",),
-    ".guards_type_model": ("FlextUtilitiesGuardsTypeModel",),
-    ".guards_type_protocol": ("FlextUtilitiesGuardsTypeProtocol",),
-    ".handler": ("FlextUtilitiesHandler",),
-    ".logging_config": ("FlextUtilitiesLoggingConfig",),
-    ".logging_context": ("FlextUtilitiesLoggingContext",),
-    ".mapper": ("FlextUtilitiesMapper",),
-    ".mapper_access": ("FlextUtilitiesMapperAccess",),
-    ".mapper_extract": ("FlextUtilitiesMapperExtract",),
-    ".model": ("FlextUtilitiesModel",),
-    ".model_options": ("FlextUtilitiesModelOptions",),
-    ".model_runtime": ("FlextUtilitiesModelRuntime",),
-    ".parser": ("FlextUtilitiesParser",),
-    ".parser_coerce": ("FlextUtilitiesParserCoerce",),
-    ".parser_targets": ("FlextUtilitiesParserTargets",),
-    ".project_metadata": ("FlextUtilitiesProjectMetadata",),
-    ".pydantic": ("FlextUtilitiesPydantic",),
-    ".reliability": ("FlextUtilitiesReliability",),
-    ".runtime_violation_registry": ("FlextUtilitiesRuntimeViolationRegistry",),
-    ".settings": ("FlextUtilitiesSettings",),
-    ".text": ("FlextUtilitiesText",),
-}
-
-
-_LAZY_ALIAS_GROUPS: dict[str, tuple[tuple[str, str], ...]] = {}
-
-
-_LAZY_IMPORTS = build_lazy_import_map(
-    _LAZY_MODULES, alias_groups=_LAZY_ALIAS_GROUPS, sort_keys=False
-)
-
 __all__: tuple[str, ...] = (
     "EXTENDED_PREDICATE_BINDINGS",
     "PREDICATE_BINDINGS",
@@ -234,4 +155,97 @@ __all__: tuple[str, ...] = (
     "ube",
 )
 
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)
+install_lazy_exports(
+    __name__,
+    globals(),
+    MappingProxyType(
+        build_lazy_import_map(
+            MappingProxyType({
+                "._beartype": ("_beartype",),
+                "._beartype._alias_visitor": ("FlextUtilitiesBeartypeAliasVisitor",),
+                "._beartype._library_visitor": (
+                    "FlextUtilitiesBeartypeLibraryVisitor",
+                ),
+                "._beartype.attr_visitor": ("FlextUtilitiesBeartypeAttrVisitor",),
+                "._beartype.class_visitor": ("FlextUtilitiesBeartypeClassVisitor",),
+                "._beartype.deprecated_visitor": (
+                    "FlextUtilitiesBeartypeDeprecatedVisitor",
+                ),
+                "._beartype.field_visitor": ("FlextUtilitiesBeartypeFieldVisitor",),
+                "._beartype.helpers": ("FlextUtilitiesBeartypeHelpers",),
+                "._beartype.import_visitor": ("FlextUtilitiesBeartypeImportVisitor",),
+                "._beartype.method_visitor": ("FlextUtilitiesBeartypeMethodVisitor",),
+                "._beartype.module_visitor": ("FlextUtilitiesBeartypeModuleVisitor",),
+                "._checker_parts": ("_checker_parts",),
+                "._context_crud_set": ("FlextUtilitiesContextCrudSetMixin",),
+                "._enforcement_collect_parts": ("_enforcement_collect_parts",),
+                "._enforcement_parts": ("_enforcement_parts",),
+                "._enforcement_parts.enforcement_part_06": (
+                    "EXTENDED_PREDICATE_BINDINGS",
+                ),
+                "._guards_type_protocol_specs": (
+                    "FlextUtilitiesGuardsTypeProtocolSpecsMixin",
+                ),
+                "._guards_type_protocol_string": (
+                    "FlextUtilitiesGuardsTypeProtocolStringMixin",
+                ),
+                "._guards_type_protocol_types": ("ProtocolGuardInput",),
+                "._logging_config_parts": ("_logging_config_parts",),
+                "._logging_context_parts": ("_logging_context_parts",),
+                "._mapper_access_parts": ("_mapper_access_parts",),
+                "._mapper_extract_parts": ("_mapper_extract_parts",),
+                "._parser_targets_parts": ("_parser_targets_parts",),
+                ".args": ("FlextUtilitiesArgs",),
+                ".beartype_conf": ("FlextUtilitiesBeartypeConf",),
+                ".beartype_engine": ("FlextUtilitiesBeartypeEngine", "ube"),
+                ".beartype_typingext_patch": ("FlextUtilitiesBeartypeTypingExtPatch",),
+                ".checker": ("FlextUtilitiesChecker",),
+                ".collection": ("FlextUtilitiesCollection",),
+                ".collection_iter": ("FlextUtilitiesCollectionIter",),
+                ".collection_merge": ("FlextUtilitiesCollectionMerge",),
+                ".config": ("FlextUtilitiesConfig",),
+                ".console": ("FlextUtilitiesConsole",),
+                ".context": ("FlextUtilitiesContext",),
+                ".context_crud": ("FlextUtilitiesContextCrud",),
+                ".context_lifecycle": ("FlextUtilitiesContextLifecycle",),
+                ".context_state": ("FlextUtilitiesContextState",),
+                ".conversion": ("FlextUtilitiesConversion",),
+                ".discovery": ("FlextUtilitiesDiscovery",),
+                ".dispatcher_execute": ("execute_dispatcher_handler",),
+                ".domain": ("FlextUtilitiesDomain",),
+                ".enforcement": ("FlextUtilitiesEnforcement", "PREDICATE_BINDINGS"),
+                ".enforcement_collect": ("FlextUtilitiesEnforcementCollect",),
+                ".enforcement_emit": ("FlextUtilitiesEnforcementEmit",),
+                ".enum": ("FlextUtilitiesEnum",),
+                ".generators": ("FlextUtilitiesGenerators",),
+                ".guards": ("FlextUtilitiesGuards",),
+                ".guards_type_core": ("FlextUtilitiesGuardsTypeCore",),
+                ".guards_type_model": ("FlextUtilitiesGuardsTypeModel",),
+                ".guards_type_protocol": ("FlextUtilitiesGuardsTypeProtocol",),
+                ".handler": ("FlextUtilitiesHandler",),
+                ".logging_config": ("FlextUtilitiesLoggingConfig",),
+                ".logging_context": ("FlextUtilitiesLoggingContext",),
+                ".mapper": ("FlextUtilitiesMapper",),
+                ".mapper_access": ("FlextUtilitiesMapperAccess",),
+                ".mapper_extract": ("FlextUtilitiesMapperExtract",),
+                ".model": ("FlextUtilitiesModel",),
+                ".model_options": ("FlextUtilitiesModelOptions",),
+                ".model_runtime": ("FlextUtilitiesModelRuntime",),
+                ".parser": ("FlextUtilitiesParser",),
+                ".parser_coerce": ("FlextUtilitiesParserCoerce",),
+                ".parser_targets": ("FlextUtilitiesParserTargets",),
+                ".project_metadata": ("FlextUtilitiesProjectMetadata",),
+                ".pydantic": ("FlextUtilitiesPydantic",),
+                ".reliability": ("FlextUtilitiesReliability",),
+                ".runtime_violation_registry": (
+                    "FlextUtilitiesRuntimeViolationRegistry",
+                ),
+                ".settings": ("FlextUtilitiesSettings",),
+                ".text": ("FlextUtilitiesText",),
+            }),
+            alias_groups=MappingProxyType({}),
+            sort_keys=False,
+        )
+    ),
+    public_exports=__all__,
+)

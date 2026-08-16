@@ -5,6 +5,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from types import MappingProxyType
+
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 from .__version__ import __author__ as __author__
@@ -37,38 +39,6 @@ if TYPE_CHECKING:
     from .service import FlextService, s
     from .typings import FlextTypes, FlextTypes as t
     from .utilities import FlextUtilities, FlextUtilities as u
-
-_LAZY_MODULES: dict[str, tuple[str, ...]] = {
-    "._config": ("FlextConfig", "config"),
-    "._settings": ("FlextSettings", "settings"),
-    ".constants": ("FlextConstants", "c"),
-    ".container": ("FlextContainer",),
-    ".context": ("FlextContext",),
-    ".decorators": ("FlextDecorators", "d"),
-    ".dispatcher": ("FlextDispatcher",),
-    ".exceptions": ("FlextExceptions", "e"),
-    ".handlers": ("FlextHandlers", "h"),
-    ".lazy": ("FlextLazy",),
-    ".loggings": ("FlextUtilitiesLogging",),
-    ".mixins": ("FlextMixins", "x"),
-    ".models": ("FlextModels", "m"),
-    ".protocols": ("FlextProtocols", "p"),
-    ".registry": ("FlextRegistry",),
-    ".result": ("FlextResult", "r"),
-    ".runtime": ("FlextRuntime",),
-    ".service": ("FlextService", "s"),
-    ".typings": ("FlextTypes", "t"),
-    ".utilities": ("FlextUtilities", "u"),
-}
-
-
-_LAZY_ALIAS_GROUPS: dict[str, tuple[tuple[str, str], ...]] = {}
-
-
-_LAZY_IMPORTS = build_lazy_import_map(
-    _LAZY_MODULES, alias_groups=_LAZY_ALIAS_GROUPS, sort_keys=False
-)
-
 __all__: tuple[str, ...] = (
     "FlextConfig",
     "FlextConstants",
@@ -113,4 +83,36 @@ __all__: tuple[str, ...] = (
     "x",
 )
 
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)
+install_lazy_exports(
+    __name__,
+    globals(),
+    MappingProxyType(
+        build_lazy_import_map(
+            MappingProxyType({
+                "._config": ("FlextConfig", "config"),
+                "._settings": ("FlextSettings", "settings"),
+                ".constants": ("FlextConstants", "c"),
+                ".container": ("FlextContainer",),
+                ".context": ("FlextContext",),
+                ".decorators": ("FlextDecorators", "d"),
+                ".dispatcher": ("FlextDispatcher",),
+                ".exceptions": ("FlextExceptions", "e"),
+                ".handlers": ("FlextHandlers", "h"),
+                ".lazy": ("FlextLazy",),
+                ".loggings": ("FlextUtilitiesLogging",),
+                ".mixins": ("FlextMixins", "x"),
+                ".models": ("FlextModels", "m"),
+                ".protocols": ("FlextProtocols", "p"),
+                ".registry": ("FlextRegistry",),
+                ".result": ("FlextResult", "r"),
+                ".runtime": ("FlextRuntime",),
+                ".service": ("FlextService", "s"),
+                ".typings": ("FlextTypes", "t"),
+                ".utilities": ("FlextUtilities", "u"),
+            }),
+            alias_groups=MappingProxyType({}),
+            sort_keys=False,
+        )
+    ),
+    public_exports=__all__,
+)
