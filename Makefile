@@ -66,6 +66,16 @@ override PYTEST_PARALLEL_DISTRIBUTION := worksteal
 override PYTEST_PROFILE_SORT := cumulative
 override PYTEST_PROFILE_LIMIT := 50
 override PROCESS_TIMEOUT_COMMAND := timeout
+# CI ternary wall-clock budget per verb/what/project: CI=Y owns the fast
+# gates (60s each); CI=N owns the slow whole-program analyses
+# (300s each); an unset token runs unbounded.
+ifeq ($(strip $(CI)),Y)
+VERB_BOUNDED := timeout --signal=TERM --kill-after=5s 60s
+else ifeq ($(strip $(CI)),N)
+VERB_BOUNDED := timeout --signal=TERM --kill-after=5s 300s
+else
+VERB_BOUNDED :=
+endif
 override export FLEXT_PYTEST_ARGS_RAW := $(value PYTEST_ARGS)
 override export FLEXT_PYTEST_FILE_RAW := $(value FILE)
 override export FLEXT_PYTEST_FILES_RAW := $(value FILES)
@@ -139,7 +149,7 @@ _ALLOWED_WHATS_gen := check all apply $(shell sed -n 's/^_custom_gen_\([a-z0-9_-
 _ALLOWED_WHATS_work := start status land finish $(shell sed -n 's/^_custom_work_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_mod := check all apply $(shell sed -n 's/^_custom_mod_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 
-CHECK_GATES_ALLOWED := lint format pyrefly mypy pyright security markdown smells
+CHECK_GATES_ALLOWED := lint pyrefly mypy pyright security markdown smells
 CHECK_GATES_DEFAULT := lint pyrefly mypy pyright security markdown smells
 # End SECTION: verb dispatch
 
@@ -400,9 +410,9 @@ define _dispatch
 		if [ "$$rc" -ne 2 ]; then $(SELF_MAKE) "$$hook" || exit $$?; fi; \
 	done; \
 	if [ "$$custom_rc" -ne 2 ]; then \
-		$(SELF_MAKE) "$$custom" || exit $$?; \
+		$(VERB_BOUNDED) $(SELF_MAKE) "$$custom" || exit $$?; \
 	else \
-		$(SELF_MAKE) "$$builtin" || exit $$?; \
+		$(VERB_BOUNDED) $(SELF_MAKE) "$$builtin" || exit $$?; \
 	fi; \
 	for hook in "post-$(1)-$$what" "post-$(1)"; do \
 		$(SELF_MAKE) -q "$$hook" >/dev/null 2>&1; rc=$$?; \
@@ -857,15 +867,19 @@ _builtin_build_artifacts:
 # by `make fix APPLY=Y` and formatting by `make fmt APPLY=Y`, both run BEFORE
 # check. APPLY here made the same tools run twice with conflicting intents,
 # so it is rejected instead of silently honoured; FIX=1 became the `fix` verb.
-# CI=Y runs make.ci.check_gates (RULING 2: rules not skip-list).
+# CI=Y runs make.ci.check_gates and CI=N runs its strict
+# complement, make.ci.local_check_gates (RULING 2: rules not skip-list).
 _builtin_check_all: _builtin_require_environment
 	@set -eu; \
 	gates="$(strip $(CHECK_GATES))"; \
 	if [ -z "$$gates" ]; then gates="$$(printf '%s' '$(CHECK_GATES_DEFAULT)' | tr ' ' ',')"; fi; \
 	gates="$$(printf '%s' "$$gates" | tr -d '[:space:]')"; \
 	if [ "$(strip $(CI))" = "Y" ]; then \
-		gates="mypy,pyright,security,markdown,smells"; \
-		printf 'INFO: CI=Y runs check gates: mypy pyright security markdown smells\n'; \
+		gates="lint,pyright,security,markdown,smells"; \
+		printf 'INFO: CI=Y runs check gates: lint pyright security markdown smells\n'; \
+	elif [ "$(strip $(CI))" = "N" ]; then \
+		gates="pyrefly,mypy"; \
+		printf 'INFO: CI=N runs check gates: pyrefly mypy\n'; \
 	fi; \
 	for gate in $$(printf '%s' "$$gates" | tr ',' ' '); do \
 		case " $(CHECK_GATES_ALLOWED) " in *" $$gate "*) ;; \
@@ -931,7 +945,7 @@ _builtin_fix_check: _builtin_require_environment
 _builtin_fix_all: _builtin_require_environment
 	$(call _require_apply)
 	@$(PROJECT_FLEXT_INFRA) check run --workspace "$(PROJECT_ROOT)" --projects . --fix \
-		--gates format,markdown,smells
+		--gates markdown,smells
 
 _builtin_fix_apply: _builtin_fix_all
 
