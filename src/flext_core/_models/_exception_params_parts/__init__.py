@@ -1,6 +1,27 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Exception Params Parts package."""
+"""Flext Core. Models. Exception Params Parts package."""
 
 from __future__ import annotations
 
-__all__: tuple[str, ...] = ()
+from typing import TYPE_CHECKING
+
+from flext_core.lazy import build_lazy_import_map, install_lazy_exports
+
+if TYPE_CHECKING:
+    from .flextmodelsexceptionparams_part_03 import FlextModelsExceptionParams
+
+_LAZY_MODULES: dict[str, tuple[str, ...]] = {
+    ".flextmodelsexceptionparams_part_03": ("FlextModelsExceptionParams",)
+}
+
+
+_LAZY_ALIAS_GROUPS: dict[str, tuple[tuple[str, str], ...]] = {}
+
+
+_LAZY_IMPORTS = build_lazy_import_map(
+    _LAZY_MODULES, alias_groups=_LAZY_ALIAS_GROUPS, sort_keys=False
+)
+
+__all__: tuple[str, ...] = ("FlextModelsExceptionParams",)
+
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)
