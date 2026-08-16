@@ -178,5 +178,6 @@ class TestsFlextCoreDecorators:
         def build() -> _Payload:
             return _Payload(v=7)
 
-        built = build()
-        tm.that(built.v, eq=7)
+        payload = build()
+        assert isinstance(payload, _Payload)
+        tm.that(payload.v, eq=7)

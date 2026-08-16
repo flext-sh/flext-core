@@ -176,7 +176,16 @@ class FlextLazy(FlextLazyPart01):
         publish_all: bool = True,
         public_exports: Sequence[str] | None = None,
     ) -> None:
-        """Install __getattr__/__dir__/__all__."""
+        """Install __getattr__/__dir__/__all__ and publish _LAZY_IMPORTS.
+
+        The normalized map is published into the module globals as
+        ``_LAZY_IMPORTS`` because it is the runtime metadata contract:
+        ``_child_map`` (parent merge) and the beartype helpers
+        (``lazy_alias_suffixes``/``runtime_alias_names``) read it from
+        ``vars(module)``. Publishing here makes every install shape —
+        module-level literal or inline call — satisfy that contract from
+        the single owner.
+        """
         pre_signature: tuple[int, int, int, int, bool] = (
             id(module_globals),
             id(lazy_imports),
@@ -197,6 +206,7 @@ class FlextLazy(FlextLazyPart01):
         else:
             names = tuple(dict.fromkeys((*normalized, *all_exports)))
 
+        module_globals["_LAZY_IMPORTS"] = normalized
         module_globals["__getattr__"] = lambda name: self.get(
             name, normalized, module_globals, module_name
         )

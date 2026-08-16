@@ -44,6 +44,10 @@ class TestsFlextCleanModels:
                         description="Attribute map.",
                     ),
                 ]
+                aliased_value: Annotated[
+                    t.Core.Tests.CentralizedUnion,
+                    u.Field(description="Value declared through a t.* alias."),
+                ] = None
 
             class GoodFrozenValue(m.FrozenValueModel):
                 """Frozen value object."""
