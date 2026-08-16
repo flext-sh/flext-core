@@ -572,8 +572,6 @@ known-first-party = ["flext_cli", "flext_core", "flext_infra", "flext_tests"]
 split-on-trailing-comma = false
 
 [tool.ruff.lint.per-file-ignores]
-"**/.vulture_whitelist.py" = ["ALL"]
-"**/*_pb2*.py" = ["ALL"]
 "**/__init__.py" = [
   "any-type",
   "builtin-import-shadowing",

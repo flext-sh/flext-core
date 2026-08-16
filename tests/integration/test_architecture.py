@@ -177,7 +177,7 @@ class TestsFlextCoreArchitecture:
             file_path=Path("x.py"),
             line_number=1,
             rule_id="R",
-            severity=raw_severity,
+            severity=c.Tests.ValidatorSeverity(raw_severity.lower()),
             description="d",
         )
         tm.that(violation.severity, eq=expected)

@@ -19,7 +19,7 @@ class TestsFlextCoreHandlersFactory(TestsFlextFlextHandlers):
     def test_callable_result_is_wrapped_in_success(self) -> None:
         # Arrange
         def simple_handler(message: t.Scalar) -> t.Scalar:
-            return f"handled_{message}"
+            return f"handled_{message.decode() if isinstance(message, bytes) else message}"
 
         # Act
         handler = h.create_from_callable(
@@ -35,7 +35,9 @@ class TestsFlextCoreHandlersFactory(TestsFlextFlextHandlers):
     def test_callable_returning_result_is_passed_through(self) -> None:
         # Arrange
         def result_handler(message: t.Scalar) -> t.Scalar:
-            return r[t.Scalar].ok(f"result_{message}").value
+            return r[t.Scalar].ok(
+                f"result_{message.decode() if isinstance(message, bytes) else message}"
+            ).value
 
         # Act
         handler = h.create_from_callable(
@@ -68,7 +70,7 @@ class TestsFlextCoreHandlersFactory(TestsFlextFlextHandlers):
     def test_invalid_mode_raises_validation_error(self) -> None:
         # Arrange
         def invalid_handler(message: t.Scalar) -> t.Scalar:
-            return f"invalid_{message}"
+            return f"invalid_{message.decode() if isinstance(message, bytes) else message}"
 
         # Act / Assert
         with pytest.raises(c.ValidationError):
@@ -81,7 +83,7 @@ class TestsFlextCoreHandlersFactory(TestsFlextFlextHandlers):
     def test_handler_name_defaults_to_callable_name(self) -> None:
         # Arrange
         def named_callable(message: t.Scalar) -> t.Scalar:
-            return f"named_{message}"
+            return f"named_{message.decode() if isinstance(message, bytes) else message}"
 
         # Act
         handler = h.create_from_callable(named_callable)
@@ -92,7 +94,7 @@ class TestsFlextCoreHandlersFactory(TestsFlextFlextHandlers):
     def test_handler_config_overrides_name_and_type(self) -> None:
         # Arrange
         def any_callable(message: t.Scalar) -> t.Scalar:
-            return f"any_{message}"
+            return f"any_{message.decode() if isinstance(message, bytes) else message}"
 
         config = u.Tests.create_handler_config(
             "cfg_id",
@@ -114,7 +116,7 @@ class TestsFlextCoreHandlersFactory(TestsFlextFlextHandlers):
     ) -> None:
         # Arrange
         def any_callable(message: t.Scalar) -> t.Scalar:
-            return f"any_{message}"
+            return f"any_{message.decode() if isinstance(message, bytes) else message}"
 
         # Act
         by_type = h.create_from_callable(
