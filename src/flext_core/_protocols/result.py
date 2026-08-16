@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Protocol, Self, TypeVar, overload, runtime_che
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 
 ResultT = TypeVar("ResultT")
-ResultViewT = TypeVar("ResultViewT", covariant=True)
+ResultViewT_co = TypeVar("ResultViewT_co", covariant=True)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -26,7 +26,7 @@ class FlextProtocolsResult:
     """Single structural result contract used across FLEXT."""
 
     @runtime_checkable
-    class ResultView(Protocol[ResultViewT]):
+    class ResultView(Protocol[ResultViewT_co]):
         """Covariant read-only result state observed by assertions and reporting."""
 
         @property
@@ -42,7 +42,7 @@ class FlextProtocolsResult:
         @property
         def failure(self) -> bool: ...
         @property
-        def value(self) -> ResultViewT: ...
+        def value(self) -> ResultViewT_co: ...
 
     @runtime_checkable
     class FailureLike(Protocol):
