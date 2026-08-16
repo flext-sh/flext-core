@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 class TestsFlextUtilitiesRailwayServicesMixin:
     """Railway service helpers."""
 
-    class GetUserService(s[m.BaseModel]):
+    class GetUserService(s[tm.Tests.User]):
         """Service to get user."""
 
         user_id: Annotated[
@@ -38,7 +38,7 @@ class TestsFlextUtilitiesRailwayServicesMixin:
                 )
             )
 
-    class SendEmailService(s[m.BaseModel]):
+    class SendEmailService(s[m.Tests.EmailResponse]):
         """Service to send email."""
 
         to: Annotated[str, u.Field(description="Destination email address.")] = ""

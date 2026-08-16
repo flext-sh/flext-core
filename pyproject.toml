@@ -166,6 +166,7 @@ namespace_packages = true
 no_implicit_reexport = true
 plugins = ["pydantic.mypy"]
 python_version = "3.13"
+show_traceback = true
 strict_equality = true
 warn_redundant_casts = true
 warn_return_any = true
@@ -442,13 +443,14 @@ addopts = [
   "--durations=10",
   "--markdown-docs",
   "--strict-markers",
-  "--timeout=90",
+  "--timeout=10",
 ]
 enable_assertion_pass_hook = true
 filterwarnings = [
   "error",
   "module::flext_core._constants.enforcement.FlextMroViolation",
 ]
+flext_slow_timeout_seconds = "60"
 markers = [
   "advanced: advanced pattern tests",
   "architecture: architectural pattern tests",
@@ -572,8 +574,6 @@ known-first-party = ["flext_cli", "flext_core", "flext_infra", "flext_tests"]
 split-on-trailing-comma = false
 
 [tool.ruff.lint.per-file-ignores]
-"**/.vulture_whitelist.py" = ["ALL"]
-"**/*_pb2*.py" = ["ALL"]
 "**/__init__.py" = [
   "any-type",
   "builtin-import-shadowing",
@@ -626,6 +626,9 @@ dependencies = ["flext-core"]
 
 [tool.uv.exclude-dependencies.package]
 name = "flext-cli"
+
+[tool.uv.exclude-newer-package]
+mypy = "2026-08-15T03:04:00Z"
 
 [tool.vulture]
 exclude = ["*/_protocols/*"]
@@ -683,7 +686,7 @@ dev = [
   "mkdocs-versioning>=0.2",
   "mkdocstrings>=0.24",
   "mkdocstrings-python>=1.7",
-  "mypy>=2.3.0",
+  "mypy>=2.3.1",
   "pip-audit>=2.7.3",
   "pre-commit>=4.6.1",
   "pylint>=3.3",

@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import ast
 import inspect
-from typing import Annotated, get_args, get_origin
+from types import UnionType
+from typing import Annotated, TypeAliasType, Union, get_args, get_origin
 
 from pydantic.fields import FieldInfo
 
@@ -17,6 +19,55 @@ from .helpers import FlextUtilitiesBeartypeHelpers as _ubh
 
 class FlextUtilitiesBeartypeFieldVisitor:
     """FIELD_SHAPE + MODEL_CONFIG visitors via Pydantic introspection."""
+
+    @staticmethod
+    def _ast_union_members(node: ast.expr) -> tuple[ast.expr, ...]:
+        """Return only the top-level members written in a union expression."""
+        if isinstance(node, ast.BinOp) and isinstance(node.op, ast.BitOr):
+            return (
+                *FlextUtilitiesBeartypeFieldVisitor._ast_union_members(node.left),
+                *FlextUtilitiesBeartypeFieldVisitor._ast_union_members(node.right),
+            )
+        if isinstance(node, ast.Subscript) and (
+            (isinstance(node.value, ast.Name) and node.value.id == "Union")
+            or (isinstance(node.value, ast.Attribute) and node.value.attr == "Union")
+        ):
+            return (
+                tuple(node.slice.elts)
+                if isinstance(node.slice, ast.Tuple)
+                else (node.slice,)
+            )
+        return (node,)
+
+    @classmethod
+    def _declared_union_members(cls, annotation: object | None) -> int:
+        """Count union arms from declaration syntax without expanding aliases."""
+        declared = annotation
+        if isinstance(declared, str):
+            unwrapped = _ubh.unwrap_annotated(declared)
+            if not isinstance(unwrapped, str):
+                return 0
+            try:
+                expression = ast.parse(unwrapped, mode="eval").body
+            except SyntaxError:
+                return 0
+            members = cls._ast_union_members(expression)
+            if len(members) == 1:
+                return 0
+            return sum(
+                1
+                for member in members
+                if not (isinstance(member, ast.Name) and member.id == "None")
+                and not (isinstance(member, ast.Constant) and member.value is None)
+            )
+        if get_origin(declared) is Annotated:
+            args = get_args(declared)
+            declared = args[0] if args else declared
+        if isinstance(declared, TypeAliasType):
+            return 0
+        if get_origin(declared) not in {UnionType, Union}:
+            return 0
+        return sum(1 for member in get_args(declared) if member is not type(None))
 
     @staticmethod
     def _field_description_violation(
@@ -43,7 +94,10 @@ class FlextUtilitiesBeartypeFieldVisitor:
 
     @staticmethod
     def _field_violation(
-        params: me.FieldShapeParams, info: FieldInfo
+        params: me.FieldShapeParams,
+        info: FieldInfo,
+        *,
+        declared_annotation: object | None = None,
     ) -> t.StrMapping | None:
         violation: t.StrMapping | None = None
         if params.forbid_any and _ubh.contains_any_recursive(
@@ -86,7 +140,11 @@ class FlextUtilitiesBeartypeFieldVisitor:
         ):
             violation = {}
         elif params.forbid_inline_union:
-            inline_union_arms = _ubh.count_union_members(info.annotation)
+            inline_union_arms = (
+                FlextUtilitiesBeartypeFieldVisitor._declared_union_members(
+                    declared_annotation
+                )
+            )
             if inline_union_arms > params.max_union_arms:
                 violation = {"arms": str(inline_union_arms)}
         return violation
@@ -99,14 +157,21 @@ class FlextUtilitiesBeartypeFieldVisitor:
     ) -> t.StrMapping | None:
         """FIELD_SHAPE — Pydantic field annotation governance via flags."""
         match args:
-            case (model_type, name, info) if params.require_description:
+            case (model_type, name, info):
                 if not (
                     isinstance(model_type, type)
                     and isinstance(name, str)
                     and isinstance(info, FieldInfo)
                 ):
                     return None
-                return cls._field_description_violation(model_type, name, info)
+                if params.require_description:
+                    return cls._field_description_violation(model_type, name, info)
+                declared_annotation = (
+                    vars(model_type).get("__annotations__", {}).get(name)
+                )
+                return cls._field_violation(
+                    params, info, declared_annotation=declared_annotation
+                )
             case (info,):
                 if not isinstance(info, FieldInfo):
                     return None
