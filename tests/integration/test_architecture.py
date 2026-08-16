@@ -172,12 +172,12 @@ class TestsFlextCoreArchitecture:
     def test_violation_coerces_severity_string_to_enum(
         self, raw_severity: str, expected: c.Tests.ValidatorSeverity
     ) -> None:
-        """Violation validation normalizes severity strings to public enums."""
+        """Violation accepts any letter case for a declared severity name."""
         violation = m.Tests.Violation(
             file_path=Path("x.py"),
             line_number=1,
             rule_id="R",
-            severity=c.Tests.ValidatorSeverity(raw_severity.lower()),
+            severity=c.Tests.ValidatorSeverity(raw_severity.upper()),
             description="d",
         )
         tm.that(violation.severity, eq=expected)
