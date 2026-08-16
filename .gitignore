@@ -4,6 +4,10 @@
 !.beads/config.yaml
 !.beads/metadata.json
 
+# Markdown lint configuration
+!.markdownlint.json
+!.markdownlintignore
+
 # BLOCK: AI/Agent Local Data (NEVER track these)
 .claude/*
 
