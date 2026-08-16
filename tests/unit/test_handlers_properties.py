@@ -60,6 +60,7 @@ class TestsFlextCoreHandlersProperties(TestsFlextFlextHandlers):
         """A callable already returning ``r[T]`` is not double-wrapped."""
 
         def result_handler(message: t.Scalar) -> t.Scalar:
+            assert isinstance(message, str)
             return r[t.Scalar].ok(f"pre_{message}").value
 
         handler = h.create_from_callable(result_handler, handler_name="pre")
