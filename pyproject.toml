@@ -449,7 +449,6 @@ filterwarnings = [
   "error",
   "module::flext_core._constants.enforcement.FlextMroViolation",
 ]
-flext_slow_timeout_seconds = 60
 markers = [
   "advanced: advanced pattern tests",
   "architecture: architectural pattern tests",
@@ -575,7 +574,20 @@ split-on-trailing-comma = false
 [tool.ruff.lint.per-file-ignores]
 "**/.vulture_whitelist.py" = ["ALL"]
 "**/*_pb2*.py" = ["ALL"]
-"**/__init__.py" = ["ALL"]
+"**/__init__.py" = [
+  "any-type",
+  "builtin-import-shadowing",
+  "implicit-namespace-package",
+  "import-private-name",
+  "invalid-module-name",
+  "non-empty-init-module",
+  "runtime-import-in-type-checking-block",
+  "undefined-export",
+  "undefined-local-with-import-star",
+  "undefined-local-with-import-star-usage",
+  "undocumented-public-init",
+  "unused-import",
+]
 "**/tests/**" = [
   "assert",
   "compare-to-empty-string",
