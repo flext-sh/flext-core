@@ -846,7 +846,7 @@ _builtin_deps_upgrade: _builtin_require_environment
 	set --; \
 	for project in $$selected; do set -- "$$@" --projects "$$project"; done; \
 	$(PROJECT_FLEXT_INFRA) deps modernize --workspace "$(PROJECT_ROOT)" \
-		--apply --rewrite-constraints --skip-check "$$@"
+		--apply $(if $(strip $(DEPENDENCY)),,--rewrite-constraints) --skip-check "$$@"
 	$(call _run_for_selected_projects,)
 
 
