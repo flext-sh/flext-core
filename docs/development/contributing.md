@@ -145,15 +145,15 @@ python -c "from flext_core import r; u.Cli.print('✅ FLEXT-Core ready')"
 make val
 
 # Individual checks
-make lint           # Ruff linting (ZERO tolerance)
-make type-check     # MyPy strict + PyRight
-make test          # Full test suite with coverage
-make security      # Bandit + pip-audit
+make check CHECK_GATES=lint       # Ruff linting (ZERO tolerance)
+make check CHECK_GATES=mypy,pyright  # Type checking (strict)
+make test WHAT=all                # Full test suite with coverage
+make check CHECK_GATES=security   # Bandit security scan
 
 # Quick validation during development
-make check         # lint + type-check only
-make format        # Auto-format code
-make fix           # Auto-fix linting issues
+make check WHAT=all               # All read-only gates
+make fmt WHAT=apply APPLY=Y       # Auto-format code
+make fix WHAT=apply APPLY=Y       # Auto-fix findings (markdown, smells)
 ```
 
 ### Testing

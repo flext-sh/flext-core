@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Protocol, Self, TypeVar, overload, runtime_che
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 
 ResultT = TypeVar("ResultT")
+ResultViewT_co = TypeVar("ResultViewT_co", covariant=True)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -23,6 +24,25 @@ if TYPE_CHECKING:
 
 class FlextProtocolsResult:
     """Single structural result contract used across FLEXT."""
+
+    @runtime_checkable
+    class ResultView(Protocol[ResultViewT_co]):
+        """Covariant read-only result state observed by assertions and reporting."""
+
+        @property
+        def error(self) -> str | None: ...
+        @property
+        def error_code(self) -> str | None: ...
+        @property
+        def error_data(self) -> t.JsonMapping | None: ...
+        @property
+        def success(self) -> bool: ...
+        @property
+        def exception(self) -> BaseException | None: ...
+        @property
+        def failure(self) -> bool: ...
+        @property
+        def value(self) -> ResultViewT_co: ...
 
     @runtime_checkable
     class FailureLike(Protocol):
@@ -74,21 +94,23 @@ class FlextProtocolsResult:
         def unwrap_or_else[D](self, func: Callable[[], D]) -> ResultT | D: ...
 
         def flat_map[U](
-            self, func: Callable[..., FlextProtocolsResult.Result[U]]
+            self, func: Callable[[ResultT], FlextProtocolsResult.Result[U]]
         ) -> FlextProtocolsResult.Result[U]: ...
 
         def fold[U](
-            self, on_failure: Callable[[str], U], on_success: Callable[..., U]
+            self, on_failure: Callable[[str], U], on_success: Callable[[ResultT], U]
         ) -> U: ...
 
         def lash[U](
             self, func: Callable[[str], FlextProtocolsResult.Result[U]]
         ) -> FlextProtocolsResult.Result[ResultT | U]: ...
 
-        def map[U](self, func: Callable[..., U]) -> FlextProtocolsResult.Result[U]: ...
+        def map[U](
+            self, func: Callable[[ResultT], U]
+        ) -> FlextProtocolsResult.Result[U]: ...
 
         def flow_through(
-            self, *funcs: Callable[..., FlextProtocolsResult.Result[ResultT]]
+            self, *funcs: Callable[[ResultT], FlextProtocolsResult.Result[ResultT]]
         ) -> FlextProtocolsResult.Result[ResultT]: ...
 
         def map_error(
@@ -100,13 +122,13 @@ class FlextProtocolsResult:
         @overload
         def map_or[U](self, default: U, func: None = None) -> ResultT | U: ...
         @overload
-        def map_or[U](self, default: U, func: Callable[..., U]) -> U: ...
+        def map_or[U](self, default: U, func: Callable[[ResultT], U]) -> U: ...
         def map_or[U](
-            self, default: U, func: Callable[..., U] | None = None
+            self, default: U, func: Callable[[ResultT], U] | None = None
         ) -> U | ResultT: ...
 
         def tap(
-            self, func: Callable[..., None]
+            self, func: Callable[[ResultT], None]
         ) -> FlextProtocolsResult.Result[ResultT]: ...
 
         def tap_error(
@@ -114,7 +136,7 @@ class FlextProtocolsResult:
         ) -> FlextProtocolsResult.Result[ResultT]: ...
 
         def filter(
-            self, predicate: Callable[..., bool]
+            self, predicate: Callable[[ResultT], bool]
         ) -> FlextProtocolsResult.Result[ResultT]: ...
 
         def recover[U](

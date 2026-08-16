@@ -23,6 +23,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
+import os
 from collections.abc import Callable
 from pathlib import Path
 from threading import RLock
@@ -39,6 +40,8 @@ from pydantic_settings.sources import PathType
 from yaml import MappingNode, SafeLoader
 from yaml.constructor import ConstructorError
 from yaml.resolver import BaseResolver
+
+from flext_core._settings import app_env_prefix, platform_config_root
 
 
 class _UniqueKeySafeLoader(SafeLoader):
@@ -202,8 +205,20 @@ class FlextConfig(BaseSettings):
         cls._instance = None
 
     @classmethod
+    def _package_namespace(cls) -> str:
+        """Return the namespace segment owned by the declaring package.
+
+        Derived from the concrete subclass's own import package, so every
+        FLEXT distribution owns ``<import-package-with-dashes>`` without
+        naming itself anywhere (``flext_core`` -> ``flext-core``,
+        ``ai_hub`` -> ``ai-hub``).
+        """
+        package = cls.__module__.split(".", 1)[0]
+        return package.replace("_", "-")
+
+    @classmethod
     def _config_dir(cls) -> Path:
-        """Resolve ``config/`` deterministically, independent of the caller's CWD.
+        """Resolve the packaged ``config/`` root, independent of the caller's CWD.
 
         ``CONFIG_DIR`` may be an absolute path (explicit override, used verbatim)
         or a relative name (default ``"config"``). When relative it is resolved
@@ -215,9 +230,14 @@ class FlextConfig(BaseSettings):
            ``config/`` sits beside ``src/`` (``<root>/src/<pkg>/_config.py`` →
            ``parents[2]`` is the project root).
 
-        Library code must never depend on the process CWD, so the legacy
-        CWD-relative lookup is gone.
+        An operator may relocate the root entirely with
+        ``<PACKAGE>_CONFIG_DIR``. Library code must never depend on the process
+        CWD, so the legacy CWD-relative lookup is gone.
         """
+        namespace = cls._package_namespace()
+        override = os.environ.get(f"{app_env_prefix(namespace)}CONFIG_DIR")
+        if override:
+            return Path(override)
         config_dir = Path(cls.CONFIG_DIR)
         if config_dir.is_absolute():
             return config_dir
@@ -228,14 +248,34 @@ class FlextConfig(BaseSettings):
         return module_path.parents[2] / config_dir
 
     @classmethod
+    def _user_config_dir(cls) -> Path:
+        """Return the operator's optional preference directory for this package.
+
+        Lives under the platform config root scoped by the package namespace
+        (``$XDG_CONFIG_HOME/<namespace>`` on Linux). Packaged defaults stay
+        immutable; anything declared here overlays them.
+        """
+        return platform_config_root() / cls._package_namespace()
+
+    @classmethod
+    def _yaml_files_in(cls, directory: Path) -> list[Path]:
+        """Return every YAML file in one directory, sorted for deterministic merge."""
+        return sorted(directory.glob("*.yaml")) + sorted(directory.glob("*.yml"))
+
+    @classmethod
     def _config_files(cls) -> list[Path]:
-        """Auto-discover every ``config/*.yaml`` (sorted for deterministic merge)."""
+        """Packaged ``config/*.yaml`` first, then the operator's overlay files.
+
+        Later files win on key collision, so operator preferences override the
+        packaged defaults while every undeclared key keeps shipping its default.
+        """
         config_dir = cls._config_dir()
+        user_files = cls._yaml_files_in(cls._user_config_dir())
         if not config_dir.is_dir():
             if cls.CONFIG_FILENAMES:
                 msg = f"declared config directory does not exist: {config_dir}"
                 raise FileNotFoundError(msg)
-            return []
+            return user_files
         if cls.CONFIG_FILENAMES:
             invalid = tuple(
                 filename
@@ -251,8 +291,8 @@ class FlextConfig(BaseSettings):
             if missing:
                 msg = "declared config files do not exist: " + ", ".join(missing)
                 raise FileNotFoundError(msg)
-            return files
-        return sorted(config_dir.glob("*.yaml")) + sorted(config_dir.glob("*.yml"))
+            return files + user_files
+        return cls._yaml_files_in(config_dir) + user_files
 
     @classmethod
     def _transform_loaded_yaml(cls, data: dict[str, Any]) -> dict[str, Any]:

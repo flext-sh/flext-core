@@ -116,4 +116,4 @@ class TestsFlextCoreBase:
         self, amount: str | float
     ) -> None:
         with pytest.raises(ValidationError):
-            SampleValue(amount=amount, label="strict")
+            SampleValue.model_validate({"amount": amount, "label": "strict"})
