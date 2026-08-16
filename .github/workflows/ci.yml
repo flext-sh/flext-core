@@ -126,3 +126,39 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
     # End SECTION: ci job
+
+  # === SECTION: merge-guard job (managed) ===
+  merge-guard:
+    name: merge-guard
+    # Always run on PRs so a WIP/DRAFT source cannot slip past the skipped CI job.
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Block WIP/DRAFT merges into protected integration branches
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          HEAD_REF: ${{ github.head_ref }}
+          IS_DRAFT: ${{ github.event.pull_request.draft }}
+        run: |
+          set -eu
+          case "$BASE_REF" in
+            dev|develop|0.12.0-dev)
+              ;;
+            *)
+              echo "Merge guard passed for $HEAD_REF -> $BASE_REF"
+              exit 0
+              ;;
+          esac
+          if [ "$IS_DRAFT" = "true" ]; then
+            echo "DRAFT PR cannot merge into ${BASE_REF}"
+            exit 1
+          fi
+          for pattern in '^wip/' 'WIP'; do
+            if [[ "$HEAD_REF" =~ $pattern ]]; then
+              echo "WIP branch ${HEAD_REF} cannot merge into ${BASE_REF}"
+              exit 1
+            fi
+          done
+          echo "Merge guard passed for $HEAD_REF -> $BASE_REF"
+  # End SECTION: merge-guard job
+

@@ -28,7 +28,7 @@ repos:
         name: make setup
         language: system
         entry: >-
-          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); unset WHAT MAKEFLAGS APPLY; CI=Y make setup'
+          bash -eu -o pipefail -c 'scope() { if [ -f "$(git rev-parse --show-toplevel)/.gitmodules" ]; then echo "workspace type (.gitmodules): hook gates are self-scope only; member hooks and push CI own member gates"; return 1; fi; return 0; }; scope || exit 0; unset $(git rev-parse --local-env-vars); unset WHAT MAKEFLAGS APPLY; CI=Y make setup'
         pass_filenames: false
         always_run: true
         stages: [pre-commit]
@@ -37,7 +37,7 @@ repos:
         name: make gen APPLY=Y
         language: system
         entry: >-
-          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); unset WHAT MAKEFLAGS APPLY; CI=Y make gen APPLY=Y'
+          bash -eu -o pipefail -c 'scope() { if [ -f "$(git rev-parse --show-toplevel)/.gitmodules" ]; then echo "workspace type (.gitmodules): hook gates are self-scope only; member hooks and push CI own member gates"; return 1; fi; return 0; }; scope || exit 0; unset $(git rev-parse --local-env-vars); unset WHAT MAKEFLAGS APPLY; CI=Y make gen APPLY=Y'
         pass_filenames: false
         always_run: true
         stages: [pre-commit]
@@ -46,7 +46,7 @@ repos:
         name: make fmt APPLY=Y
         language: system
         entry: >-
-          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); unset WHAT MAKEFLAGS APPLY; CI=Y make fmt APPLY=Y'
+          bash -eu -o pipefail -c 'scope() { if [ -f "$(git rev-parse --show-toplevel)/.gitmodules" ]; then echo "workspace type (.gitmodules): hook gates are self-scope only; member hooks and push CI own member gates"; return 1; fi; return 0; }; scope || exit 0; unset $(git rev-parse --local-env-vars); unset WHAT MAKEFLAGS APPLY; CI=Y make fmt APPLY=Y'
         pass_filenames: false
         always_run: true
         stages: [pre-commit]
@@ -55,7 +55,7 @@ repos:
         name: make fix APPLY=Y
         language: system
         entry: >-
-          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); unset WHAT MAKEFLAGS APPLY; CI=Y make fix APPLY=Y'
+          bash -eu -o pipefail -c 'scope() { if [ -f "$(git rev-parse --show-toplevel)/.gitmodules" ]; then echo "workspace type (.gitmodules): hook gates are self-scope only; member hooks and push CI own member gates"; return 1; fi; return 0; }; scope || exit 0; unset $(git rev-parse --local-env-vars); unset WHAT MAKEFLAGS APPLY; CI=Y make fix APPLY=Y'
         pass_filenames: false
         always_run: true
         stages: [pre-commit]
@@ -64,7 +64,7 @@ repos:
         name: make check
         language: system
         entry: >-
-          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); unset WHAT MAKEFLAGS APPLY; CI=Y make check'
+          bash -eu -o pipefail -c 'scope() { if [ -f "$(git rev-parse --show-toplevel)/.gitmodules" ]; then echo "workspace type (.gitmodules): hook gates are self-scope only; member hooks and push CI own member gates"; return 1; fi; return 0; }; scope || exit 0; unset $(git rev-parse --local-env-vars); unset WHAT MAKEFLAGS APPLY; CI=Y make check'
         pass_filenames: false
         always_run: true
         stages: [pre-commit]
@@ -74,7 +74,7 @@ repos:
         name: make setup
         language: system
         entry: >-
-          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); unset WHAT MAKEFLAGS APPLY; CI=N make setup'
+          bash -eu -o pipefail -c 'scope() { if [ -f "$(git rev-parse --show-toplevel)/.gitmodules" ]; then echo "workspace type (.gitmodules): hook gates are self-scope only; member hooks and push CI own member gates"; return 1; fi; return 0; }; scope || exit 0; guard() { local branch=$(git branch --show-current); if [[ "$branch" =~ ^wip/ ]]; then echo "WIP branch $branch: skipping pre-push gate"; return 1; fi; if [[ "$branch" =~ WIP ]]; then echo "WIP branch $branch: skipping pre-push gate"; return 1; fi; if command -v gh >/dev/null 2>&1; then local draft=$(gh pr view --json isDraft --jq ".isDraft" 2>/dev/null); if [ -z "$draft" ]; then echo "PR state unresolvable: skipping pre-push gate (fail-open)"; return 1; fi; if [ "$draft" = "true" ]; then echo "DRAFT PR: skipping pre-push gate"; return 1; fi; else echo "gh unavailable: skipping pre-push gate (fail-open)"; return 1; fi; return 0; }; guard || exit 0; unset $(git rev-parse --local-env-vars); unset WHAT MAKEFLAGS APPLY; CI=N make setup'
         pass_filenames: false
         always_run: true
         stages: [pre-push]
@@ -83,7 +83,7 @@ repos:
         name: make gen APPLY=Y
         language: system
         entry: >-
-          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); unset WHAT MAKEFLAGS APPLY; CI=N make gen APPLY=Y'
+          bash -eu -o pipefail -c 'scope() { if [ -f "$(git rev-parse --show-toplevel)/.gitmodules" ]; then echo "workspace type (.gitmodules): hook gates are self-scope only; member hooks and push CI own member gates"; return 1; fi; return 0; }; scope || exit 0; guard() { local branch=$(git branch --show-current); if [[ "$branch" =~ ^wip/ ]]; then echo "WIP branch $branch: skipping pre-push gate"; return 1; fi; if [[ "$branch" =~ WIP ]]; then echo "WIP branch $branch: skipping pre-push gate"; return 1; fi; if command -v gh >/dev/null 2>&1; then local draft=$(gh pr view --json isDraft --jq ".isDraft" 2>/dev/null); if [ -z "$draft" ]; then echo "PR state unresolvable: skipping pre-push gate (fail-open)"; return 1; fi; if [ "$draft" = "true" ]; then echo "DRAFT PR: skipping pre-push gate"; return 1; fi; else echo "gh unavailable: skipping pre-push gate (fail-open)"; return 1; fi; return 0; }; guard || exit 0; unset $(git rev-parse --local-env-vars); unset WHAT MAKEFLAGS APPLY; CI=N make gen APPLY=Y'
         pass_filenames: false
         always_run: true
         stages: [pre-push]
@@ -92,7 +92,7 @@ repos:
         name: make fmt APPLY=Y
         language: system
         entry: >-
-          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); unset WHAT MAKEFLAGS APPLY; CI=N make fmt APPLY=Y'
+          bash -eu -o pipefail -c 'scope() { if [ -f "$(git rev-parse --show-toplevel)/.gitmodules" ]; then echo "workspace type (.gitmodules): hook gates are self-scope only; member hooks and push CI own member gates"; return 1; fi; return 0; }; scope || exit 0; guard() { local branch=$(git branch --show-current); if [[ "$branch" =~ ^wip/ ]]; then echo "WIP branch $branch: skipping pre-push gate"; return 1; fi; if [[ "$branch" =~ WIP ]]; then echo "WIP branch $branch: skipping pre-push gate"; return 1; fi; if command -v gh >/dev/null 2>&1; then local draft=$(gh pr view --json isDraft --jq ".isDraft" 2>/dev/null); if [ -z "$draft" ]; then echo "PR state unresolvable: skipping pre-push gate (fail-open)"; return 1; fi; if [ "$draft" = "true" ]; then echo "DRAFT PR: skipping pre-push gate"; return 1; fi; else echo "gh unavailable: skipping pre-push gate (fail-open)"; return 1; fi; return 0; }; guard || exit 0; unset $(git rev-parse --local-env-vars); unset WHAT MAKEFLAGS APPLY; CI=N make fmt APPLY=Y'
         pass_filenames: false
         always_run: true
         stages: [pre-push]
@@ -101,7 +101,7 @@ repos:
         name: make fix APPLY=Y
         language: system
         entry: >-
-          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); unset WHAT MAKEFLAGS APPLY; CI=N make fix APPLY=Y'
+          bash -eu -o pipefail -c 'scope() { if [ -f "$(git rev-parse --show-toplevel)/.gitmodules" ]; then echo "workspace type (.gitmodules): hook gates are self-scope only; member hooks and push CI own member gates"; return 1; fi; return 0; }; scope || exit 0; guard() { local branch=$(git branch --show-current); if [[ "$branch" =~ ^wip/ ]]; then echo "WIP branch $branch: skipping pre-push gate"; return 1; fi; if [[ "$branch" =~ WIP ]]; then echo "WIP branch $branch: skipping pre-push gate"; return 1; fi; if command -v gh >/dev/null 2>&1; then local draft=$(gh pr view --json isDraft --jq ".isDraft" 2>/dev/null); if [ -z "$draft" ]; then echo "PR state unresolvable: skipping pre-push gate (fail-open)"; return 1; fi; if [ "$draft" = "true" ]; then echo "DRAFT PR: skipping pre-push gate"; return 1; fi; else echo "gh unavailable: skipping pre-push gate (fail-open)"; return 1; fi; return 0; }; guard || exit 0; unset $(git rev-parse --local-env-vars); unset WHAT MAKEFLAGS APPLY; CI=N make fix APPLY=Y'
         pass_filenames: false
         always_run: true
         stages: [pre-push]
@@ -110,7 +110,7 @@ repos:
         name: make check
         language: system
         entry: >-
-          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); unset WHAT MAKEFLAGS APPLY; CI=N make check'
+          bash -eu -o pipefail -c 'scope() { if [ -f "$(git rev-parse --show-toplevel)/.gitmodules" ]; then echo "workspace type (.gitmodules): hook gates are self-scope only; member hooks and push CI own member gates"; return 1; fi; return 0; }; scope || exit 0; guard() { local branch=$(git branch --show-current); if [[ "$branch" =~ ^wip/ ]]; then echo "WIP branch $branch: skipping pre-push gate"; return 1; fi; if [[ "$branch" =~ WIP ]]; then echo "WIP branch $branch: skipping pre-push gate"; return 1; fi; if command -v gh >/dev/null 2>&1; then local draft=$(gh pr view --json isDraft --jq ".isDraft" 2>/dev/null); if [ -z "$draft" ]; then echo "PR state unresolvable: skipping pre-push gate (fail-open)"; return 1; fi; if [ "$draft" = "true" ]; then echo "DRAFT PR: skipping pre-push gate"; return 1; fi; else echo "gh unavailable: skipping pre-push gate (fail-open)"; return 1; fi; return 0; }; guard || exit 0; unset $(git rev-parse --local-env-vars); unset WHAT MAKEFLAGS APPLY; CI=N make check'
         pass_filenames: false
         always_run: true
         stages: [pre-push]
@@ -119,7 +119,7 @@ repos:
         name: make test WHAT=cache-clear APPLY=Y
         language: system
         entry: >-
-          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); unset WHAT MAKEFLAGS APPLY; CI=N make test WHAT=cache-clear APPLY=Y'
+          bash -eu -o pipefail -c 'scope() { if [ -f "$(git rev-parse --show-toplevel)/.gitmodules" ]; then echo "workspace type (.gitmodules): hook gates are self-scope only; member hooks and push CI own member gates"; return 1; fi; return 0; }; scope || exit 0; guard() { local branch=$(git branch --show-current); if [[ "$branch" =~ ^wip/ ]]; then echo "WIP branch $branch: skipping pre-push gate"; return 1; fi; if [[ "$branch" =~ WIP ]]; then echo "WIP branch $branch: skipping pre-push gate"; return 1; fi; if command -v gh >/dev/null 2>&1; then local draft=$(gh pr view --json isDraft --jq ".isDraft" 2>/dev/null); if [ -z "$draft" ]; then echo "PR state unresolvable: skipping pre-push gate (fail-open)"; return 1; fi; if [ "$draft" = "true" ]; then echo "DRAFT PR: skipping pre-push gate"; return 1; fi; else echo "gh unavailable: skipping pre-push gate (fail-open)"; return 1; fi; return 0; }; guard || exit 0; unset $(git rev-parse --local-env-vars); unset WHAT MAKEFLAGS APPLY; CI=N make test WHAT=cache-clear APPLY=Y'
         pass_filenames: false
         always_run: true
         stages: [pre-push]
@@ -128,7 +128,7 @@ repos:
         name: make test WHAT=full
         language: system
         entry: >-
-          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); unset WHAT MAKEFLAGS APPLY; CI=N make test WHAT=full'
+          bash -eu -o pipefail -c 'scope() { if [ -f "$(git rev-parse --show-toplevel)/.gitmodules" ]; then echo "workspace type (.gitmodules): hook gates are self-scope only; member hooks and push CI own member gates"; return 1; fi; return 0; }; scope || exit 0; guard() { local branch=$(git branch --show-current); if [[ "$branch" =~ ^wip/ ]]; then echo "WIP branch $branch: skipping pre-push gate"; return 1; fi; if [[ "$branch" =~ WIP ]]; then echo "WIP branch $branch: skipping pre-push gate"; return 1; fi; if command -v gh >/dev/null 2>&1; then local draft=$(gh pr view --json isDraft --jq ".isDraft" 2>/dev/null); if [ -z "$draft" ]; then echo "PR state unresolvable: skipping pre-push gate (fail-open)"; return 1; fi; if [ "$draft" = "true" ]; then echo "DRAFT PR: skipping pre-push gate"; return 1; fi; else echo "gh unavailable: skipping pre-push gate (fail-open)"; return 1; fi; return 0; }; guard || exit 0; unset $(git rev-parse --local-env-vars); unset WHAT MAKEFLAGS APPLY; CI=N make test WHAT=full'
         pass_filenames: false
         always_run: true
         stages: [pre-push]
