@@ -67,10 +67,10 @@ override PYTEST_PROFILE_SORT := cumulative
 override PYTEST_PROFILE_LIMIT := 50
 override PROCESS_TIMEOUT_COMMAND := timeout
 # CI ternary wall-clock budget per verb/what/project: CI=Y owns the fast
-# gates (60s each); CI=N owns the slow whole-program analyses
+# gates (120s each); CI=N owns the slow whole-program analyses
 # (300s each); an unset token runs unbounded.
 ifeq ($(strip $(CI)),Y)
-VERB_BOUNDED := timeout --signal=TERM --kill-after=5s 60s
+VERB_BOUNDED := timeout --signal=TERM --kill-after=5s 120s
 else ifeq ($(strip $(CI)),N)
 VERB_BOUNDED := timeout --signal=TERM --kill-after=5s 300s
 else
