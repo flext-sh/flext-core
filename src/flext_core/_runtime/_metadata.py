@@ -40,7 +40,8 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
         """Normalize arbitrary runtime input to one validated ``JsonValue``."""
         validated_value: tb.JsonValue
         if value is None:
-            validated_value = tta.json_value_adapter().validate_python("")
+            validated_value = tta.json_value_adapter().validate_python(None)
+
         elif ugm.has_model_dump(value):
             validated_value = tta.json_value_adapter().validate_python(
                 value.model_dump(mode="json")
