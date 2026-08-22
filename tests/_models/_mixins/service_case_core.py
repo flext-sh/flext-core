@@ -22,7 +22,7 @@ class TestsFlextModelsServiceCaseCoreMixin:
         user_id: Annotated[int, m.Field(description="User identifier")]
         name: Annotated[str, m.Field(description="User name")]
 
-    class ServiceUserService(s[bool]):
+    class ServiceUserService(s[ServiceUserData]):
         """Simple successful service for test scenarios."""
 
         @override

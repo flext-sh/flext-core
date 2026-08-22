@@ -57,7 +57,8 @@
     "**/.bkp": true,
     "**/.testmondata": true,
     "**/.testmondata-wal": true,
-    "**/.testmondata-shm": true
+    "**/.testmondata-shm": true,
+    "**/.worktrees": true
   },
   "files.watcherExclude": {
     "**/__pycache__/**": true,
@@ -102,7 +103,8 @@
     "**/.bkp/**": true,
     "**/.testmondata/**": true,
     "**/.testmondata-wal/**": true,
-    "**/.testmondata-shm/**": true
+    "**/.testmondata-shm/**": true,
+    "**/.worktrees/**": true
   },
   "search.exclude": {
     "**/__pycache__": true,
@@ -146,7 +148,8 @@
     "**/.bkp": true,
     "**/.testmondata": true,
     "**/.testmondata-wal": true,
-    "**/.testmondata-shm": true
+    "**/.testmondata-shm": true,
+    "**/.worktrees": true
   },
   "python.analysis.diagnosticSeverityOverrides": {
     "reportUntypedBaseClass": "none"

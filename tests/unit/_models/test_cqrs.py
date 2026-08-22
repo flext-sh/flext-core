@@ -13,6 +13,7 @@ from typing import Annotated
 
 import pytest
 
+from flext_tests import tm
 from flext_core import c, t
 from tests.models import m
 
@@ -35,8 +36,9 @@ class TestsFlextCoreCqrs:
         command = m.Command()
 
         # Act / Assert
-        with pytest.raises(c.ValidationError):
-            setattr(command, "message_type", "query")
+        tm.rejects_assignment(
+            command, "message_type", "query", expected=c.ValidationError
+        )
 
     def test_command_generates_prefixed_identifier_by_default(self) -> None:
         # Act
@@ -108,8 +110,9 @@ class TestsFlextCoreCqrs:
         query = m.Query()
 
         # Act / Assert
-        with pytest.raises(c.ValidationError):
-            setattr(query, "message_type", "command")
+        tm.rejects_assignment(
+            query, "message_type", "command", expected=c.ValidationError
+        )
 
     def test_query_generates_prefixed_identifier_by_default(self) -> None:
         # Act / Assert
