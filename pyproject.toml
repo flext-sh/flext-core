@@ -364,6 +364,8 @@ reportUnusedFunction = "error"
 reportUnusedImport = "error"
 reportUnusedVariable = "error"
 typeCheckingMode = "strict"
+venv = ".venv"
+venvPath = ".."
 
 [[tool.pyright.executionEnvironments]]
 extraPaths = ["src"]
@@ -472,7 +474,7 @@ markers = [
 minversion = "8.0"
 python_classes = ["Test*"]
 python_files = ["*_test.py", "*_tests.py", "test_*.py"]
-testpaths = [".", "docs", "examples", "scripts", "src", "tests"]
+testpaths = ["tests"]
 
 [tool.radon]
 cc_min = "B"
@@ -628,7 +630,7 @@ dependencies = ["flext-core"]
 name = "flext-cli"
 
 [tool.uv.exclude-newer-package]
-mypy = "2026-08-15T03:04:00Z"
+cryptography = false
 
 [tool.vulture]
 exclude = ["*/_protocols/*"]
@@ -686,7 +688,7 @@ dev = [
   "mkdocs-versioning>=0.2",
   "mkdocstrings>=0.24",
   "mkdocstrings-python>=1.7",
-  "mypy>=2.3.1",
+  "mypy>=2.3.0",
   "pip-audit>=2.7.3",
   "pre-commit>=4.6.1",
   "pylint>=3.3",

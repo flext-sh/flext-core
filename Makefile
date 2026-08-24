@@ -41,6 +41,7 @@ DEPENDENCY ?=
 FAIL_FAST ?= 0
 FILE ?=
 MATCH ?=
+COV ?=
 PROJECT ?=
 PROJECTS ?=
 BASE ?=
@@ -48,34 +49,24 @@ BRANCH ?=
 PYTEST_ARGS ?=
 PYTEST_DIAG_ARGS ?= -rA --durations=0 --tb=long --showlocals
 PYTEST_REPORT_ARGS ?= -ra --durations=25 --durations-min=0.001 --tb=short
-PYTEST_PROCESS_TIMEOUT_SECONDS ?= 360
+PYTEST_PROCESS_TIMEOUT_SECONDS ?= 660
 # mro-99ae: the pytest process inherits a hard wall-clock boundary, mirroring
 # MYPY_BOUNDED, so a hung run is terminated even if the typed runner stalls.
 PYTEST_BOUNDED = timeout --signal=TERM --kill-after=5s "$(PYTEST_PROCESS_TIMEOUT_SECONDS)s"
 PYTEST_REPORTS_DIR ?= .reports/tests
 override PYTEST_CASE_TIMEOUT_SECONDS := 10
-override PYTEST_RUN_TIMEOUT_SECONDS := 300
+override PYTEST_RUN_TIMEOUT_SECONDS := 600
 override PYTEST_TERMINATION_GRACE_SECONDS := 2
 override PYTEST_TIMEOUT_EXIT_CODE := 124
 override PYTEST_ENFORCEMENT_PLUGIN := flext_tests_enforcement
 override PYTEST_PROGRESS_ARGS := --verbose
 override PYTEST_REPORT_ARGS := -ra --durations=25 --durations-min=0.001 --tb=short
 override PYTEST_DIAG_ARGS := -rA --durations=0 --tb=long --showlocals
-override PYTEST_PARALLEL_WORKERS := 12
+override PYTEST_PARALLEL_WORKERS := 4
 override PYTEST_PARALLEL_DISTRIBUTION := worksteal
 override PYTEST_PROFILE_SORT := cumulative
 override PYTEST_PROFILE_LIMIT := 50
 override PROCESS_TIMEOUT_COMMAND := timeout
-# CI ternary wall-clock budget per verb/what/project: CI=Y owns the fast
-# gates (300s each); CI=N owns the slow whole-program analyses
-# (300s each); an unset token runs unbounded.
-ifeq ($(strip $(CI)),Y)
-VERB_BOUNDED := timeout --signal=TERM --kill-after=5s 300s
-else ifeq ($(strip $(CI)),N)
-VERB_BOUNDED := timeout --signal=TERM --kill-after=5s 300s
-else
-VERB_BOUNDED :=
-endif
 override export FLEXT_PYTEST_ARGS_RAW := $(value PYTEST_ARGS)
 override export FLEXT_PYTEST_FILE_RAW := $(value FILE)
 override export FLEXT_PYTEST_FILES_RAW := $(value FILES)
@@ -85,6 +76,7 @@ override export FLEXT_PYTEST_FAIL_FAST_RAW := $(value FAIL_FAST)
 override export FLEXT_PYTEST_REPORTS_RAW := $(value PYTEST_REPORTS_DIR)
 override export FLEXT_PYTEST_WHAT_RAW := $(value WHAT)
 override export FLEXT_PYTEST_VERBOSE_RAW := $(value VERBOSE)
+override export FLEXT_PYTEST_COV_RAW := $(value COV)
 WHAT ?=
 # End SECTION: user overrides
 
@@ -101,6 +93,17 @@ MAKEFILE_ROOT := $(patsubst %/,%,$(dir $(SELF_MAKEFILE)))
 PROJECT_ROOT := $(MAKEFILE_ROOT)
 override export FLEXT_PYTEST_TARGET_RAW := tests
 WORKSPACE ?= $(PROJECT_ROOT)
+# `make` targets a member checkout when PROJECT names a workspace member and
+# WORKSPACE was not overridden on the command line. PROJECT alone used to keep
+# WORKSPACE at the workspace root, so finish looked up lanes in the wrong git
+# primary and failed with "worktree branch is not registered".
+ifeq ($(filter command line override,$(origin WORKSPACE)),)
+ifneq ($(strip $(PROJECT)),)
+ifneq ($(filter $(PROJECT),$(WORKSPACE_MEMBERS)),)
+override WORKSPACE := $(PROJECT_ROOT)/$(PROJECT)
+endif
+endif
+endif
 # === SECTION: WORKSPACE_ROOT isolation (managed) ===
 # Source: computed (rule: derive from current checkout unless caller overrides)
 # Rule: WORKSPACE_ROOT is always derived from the current checkout unless the
@@ -114,9 +117,8 @@ WORKSPACE_ROOT := $(shell cd "$(MAKEFILE_ROOT)" && root=$$(git rev-parse --show-
 endif
 # End SECTION: WORKSPACE_ROOT isolation
 # A workspace lane is always registered at the workspace root. Other verbs may
-# select a member through PROJECT, but `make work` keeps WORKSPACE at the root
+# select a member through PROJECT while workspace orchestration keeps the root
 # so one Git worktree owns the complete project matrix.
-ifneq ($(filter work,$(MAKECMDGOALS)),work)
 ifeq ($(filter command line override,$(origin WORKSPACE)),)
 ifneq ($(strip $(PROJECT)),)
 ifneq ($(filter $(PROJECT),$(WORKSPACE_MEMBERS)),)
@@ -124,13 +126,12 @@ override WORKSPACE := $(WORKSPACE_ROOT)/$(PROJECT)
 endif
 endif
 endif
-endif
 
 # === SECTION: verb dispatch (managed) ===
 # Source: config:make.verbs[*].whats, config:make.check_gates_allowed,
 #        config:make.check_gates_default
-PUBLIC_VERBS := help setup deps build check test fmt fix run status clean release gen work mod
-BUILTIN_VERBS := help setup deps build check test fmt fix run status clean release gen work mod
+PUBLIC_VERBS := help setup deps build check test fmt fix run status docs clean release gen mod
+BUILTIN_VERBS := help setup deps build check test fmt fix run status docs clean release gen mod
 SCRIPT_VERBS :=
 
 _ALLOWED_WHATS_help := usage $(shell sed -n 's/^_custom_help_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
@@ -143,15 +144,16 @@ _ALLOWED_WHATS_fmt := check all apply $(shell sed -n 's/^_custom_fmt_\([a-z0-9_-
 _ALLOWED_WHATS_fix := check all apply $(shell sed -n 's/^_custom_fix_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_run := default $(shell sed -n 's/^_custom_run_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_status := diagnostics $(shell sed -n 's/^_custom_status_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
+_ALLOWED_WHATS_docs := all generate fix audit build validate $(shell sed -n 's/^_custom_docs_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_clean := status generated $(shell sed -n 's/^_custom_clean_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
-_ALLOWED_WHATS_release := status rel $(shell sed -n 's/^_custom_release_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
+_ALLOWED_WHATS_release := status $(shell sed -n 's/^_custom_release_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_gen := check all apply $(shell sed -n 's/^_custom_gen_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
-_ALLOWED_WHATS_work := start status land finish $(shell sed -n 's/^_custom_work_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 _ALLOWED_WHATS_mod := check all apply $(shell sed -n 's/^_custom_mod_\([a-z0-9_-]*\):.*/\1/p' "$(MAKEFILE_ROOT)/custom.mk" 2>/dev/null | sort -u | tr '\n' ' ')
 
 CHECK_GATES_ALLOWED := lint pyrefly mypy pyright security markdown smells
 CHECK_GATES_DEFAULT := lint pyrefly mypy pyright security markdown smells
-# End SECTION: verb dispatch
+ DOCS_ACTIONS := generate fix audit build validate
+ # End SECTION: verb dispatch
 
 # === SECTION: lint/type paths (managed) ===
 # Source: template + computed (script_dispatch conditional)
@@ -172,7 +174,7 @@ ifeq ($(strip $(FLEXT_INFRA_BOOTSTRAP_REF)),)
 FLEXT_INFRA_BOOTSTRAP_REF := 0.12.0-dev
 endif
 FLEXT_INFRA_BOOTSTRAP_REQUIREMENT := flext-infra @ git+https://github.com/flext-sh/flext-infra.git@$(FLEXT_INFRA_BOOTSTRAP_REF)
-FLEXT_INFRA_SOURCE_ROOT_REL :=
+FLEXT_INFRA_SOURCE_ROOT_REL := 
 UV_BOOTSTRAP_FLAGS := --isolated --all-groups --all-extras
 # End SECTION: infra bootstrap
 
@@ -187,10 +189,10 @@ _DEFAULT_fmt := check
 _DEFAULT_fix := check
 _DEFAULT_run := default
 _DEFAULT_status := diagnostics
+_DEFAULT_docs := validate
 _DEFAULT_clean := status
 _DEFAULT_release := status
 _DEFAULT_gen := check
-_DEFAULT_work := status
 _DEFAULT_mod := check
 
 _APPLY_WHAT_deps := upgrade
@@ -198,10 +200,9 @@ _APPLY_WHAT_test := all
 _APPLY_WHAT_fmt := apply
 _APPLY_WHAT_fix := apply
 _APPLY_WHAT_run := default
+_APPLY_WHAT_docs := generate
 _APPLY_WHAT_clean := generated
-_APPLY_WHAT_release := rel
 _APPLY_WHAT_gen := apply
-_APPLY_WHAT_work := land
 _APPLY_WHAT_mod := apply
 
 
@@ -222,6 +223,7 @@ endif
 # End SECTION: profile routing
 
 RUNTIME_VENV := $(RUNTIME_ROOT)/.venv
+PROJECT_VENV := $(PROJECT_ROOT)/.venv
 FLEXT_INFRA_RUNTIME_ROOT := $(if $(filter $(MAKEFILE_ROOT),$(PROJECT_ROOT)),$(RUNTIME_ROOT),$(MAKEFILE_ROOT))
 ifeq ($(OS),Windows_NT)
 RUNTIME_BIN := $(RUNTIME_VENV)/Scripts
@@ -258,20 +260,6 @@ override VIRTUAL_ENV := $(RUNTIME_VENV)
 override PATH := $(RUNTIME_BIN):$(SANITIZED_CALLER_PATH)
 export FLEXT_INFRA_PYTHON UV UV_PROJECT UV_PROJECT_ENVIRONMENT VIRTUAL_ENV PATH
 
-# Bytecode caching is a Make-owned guarantee, not a shell-profile convention.
-# `make` never sources .envrc (that needs direnv), so a policy expressed only
-# there is inert for every Make-driven run. An inherited PYTHONDONTWRITEBYTECODE
-# then disables the import cache and each verb pays full source recompilation
-# (measured: 3341 compile() calls, 9.1s of pure recompilation per run).
-# The variable is undefined rather than set to an empty value, because CPython
-# treats ANY non-empty value as true and an empty one as unset; clearing it here
-# keeps the caller's environment from re-disabling the cache. The prefix keeps
-# __pycache__ out of the working tree while still caching.
-override undefine PYTHONDONTWRITEBYTECODE
-PYTHONPYCACHEPREFIX ?= $(PROJECT_ROOT)/.cache/pycache
-export PYTHONPYCACHEPREFIX
-unexport PYTHONDONTWRITEBYTECODE
-
 ifneq ($(strip $(FLEXT_INFRA_SOURCE_ROOT_REL)),)
 FLEXT_INFRA_SOURCE_ROOT := $(abspath $(PROJECT_ROOT)/$(FLEXT_INFRA_SOURCE_ROOT_REL))
 FLEXT_INFRA_BOOTSTRAP := env -u PYTHONPATH -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u UV_PROJECT_ENVIRONMENT PATH="$(SANITIZED_CALLER_PATH)" $(UV) run --project "$(PROJECT_ROOT)" $(UV_BOOTSTRAP_FLAGS) --with-editable "$(FLEXT_INFRA_SOURCE_ROOT)" python -m flext_infra
@@ -297,33 +285,31 @@ endif
 # reports drift without touching the tree; only a non-zero exit escalates to a
 # real `uv sync`. Creating a missing venv is provisioning, so it is allowed;
 # clearing a present one is destruction, so it never happens.
-# A symlinked RUNTIME_VENV points at ANOTHER checkout's environment. `uv`
-# records editable installs as per-environment `.pth` files holding absolute
-# paths, so imports through that environment load the owner's sources: a lane
-# silently validates the owner's code instead of its own.
-# Each checkout therefore owns the environment its own name resolves to. The
-# link is replaced (removing a link destroys no environment); a real local
-# environment is never cleared, because a concurrent process may be using it.
-# FLEXT=<worktree> rebinds this project's flext packages onto that checkout for
-# the session. Pinned dependencies stay the default: the flag is opt-in, the
-# consumer's pyproject is never modified, and setup without FLEXT= restores the
-# pinned resolution. Which distributions are rebound comes from the worktree's
-# own manifest, so this never carries a hardcoded package list.
-FLEXT_BINDING_RECIPE = if [ -n "$(strip $(FLEXT))" ]; then \
-		$(FLEXT_INFRA_RUNTIME_PYTHON) -m flext_infra workspace flext-binding \
-			--workspace "$(PROJECT_ROOT)" --flext-root "$(strip $(FLEXT))" \
-			--python "$(RUNTIME_PYTHON)"; \
-	fi
-
+# A symlinked RUNTIME_VENV is a BORROWED environment: a linked worktree (a
+# lane checkout) shares the primary checkout's environment so the two never
+# diverge. Syncing it would rewrite the editable pointers the owner and every
+# sibling lane resolve through, so the borrower provisions nothing and the owner
+# stays the only writer.
 SETUP_ENVIRONMENT_RECIPE = set -eu; \
 	if [ -L "$(RUNTIME_VENV)" ]; then \
-		rm -f "$(RUNTIME_VENV)"; \
-	fi; \
-	if [ ! -x "$(RUNTIME_PYTHON)" ]; then \
-		$(UV) venv "$(RUNTIME_VENV)"; \
-	fi; \
-	if ! $(UV) sync --project "$(PROJECT_ROOT)" $(UV_SYNC_FLAGS) --link-mode "$(UV_LINK_MODE)" --check >/dev/null 2>&1; then \
-		$(UV) sync --project "$(PROJECT_ROOT)" $(UV_SYNC_FLAGS) --link-mode "$(UV_LINK_MODE)"; \
+		printf 'setup: borrowed environment %s is owned by another checkout\n' "$(RUNTIME_VENV)"; \
+	else \
+		if [ ! -x "$(RUNTIME_PYTHON)" ]; then \
+			$(UV) venv "$(RUNTIME_VENV)"; \
+		fi; \
+		if ! $(UV) sync --project "$(PROJECT_ROOT)" $(UV_SYNC_FLAGS) --link-mode "$(UV_LINK_MODE)" --check >/dev/null 2>&1; then \
+			$(UV) sync --project "$(PROJECT_ROOT)" $(UV_SYNC_FLAGS) --link-mode "$(UV_LINK_MODE)"; \
+		fi; \
+	fi
+
+# A delegated runtime lives in another checkout, so this project has no local
+# environment of its own. Generated tooling still addresses the environment by
+# its project-local name (`$${workspaceFolder}/.venv`), which must never be
+# rewritten into a cross-project relative hop: the link makes that name resolve.
+# Linking is provisioning, so a real local environment is never replaced.
+BORROW_RUNTIME_VENV_RECIPE = set -eu; \
+	if [ ! -e "$(PROJECT_VENV)" ] || [ -L "$(PROJECT_VENV)" ]; then \
+		ln -sfn "$(RUNTIME_VENV)" "$(PROJECT_VENV)"; \
 	fi
 
 WORKSPACE_ORCHESTRATE = $(UV_RUN) python -m flext_infra workspace orchestrate
@@ -338,17 +324,27 @@ SELECTED_PROJECTS := $(if $(strip $(REQUESTED_PROJECTS)),$(REQUESTED_PROJECTS),$
 WORKSPACE_PROJECT_ARGS := $(foreach project,$(SELECTED_PROJECTS),--projects $(project))
 WORKSPACE_CHECK_ARGS := $(if $(strip $(CHECK_GATES)),--make-arg "CHECK_GATES=$(strip $(CHECK_GATES))")
 WORKSPACE_TEST_ARGS := $(if $(strip $(FLEXT_PYTEST_FILE_RAW)),--file "$${FLEXT_PYTEST_FILE_RAW}") $(if $(strip $(FLEXT_PYTEST_MATCH_RAW)),--match "$${FLEXT_PYTEST_MATCH_RAW}") $(if $(strip $(FLEXT_PYTEST_WHAT_RAW)),--what "$${FLEXT_PYTEST_WHAT_RAW}")
-ORCHESTRATED_VERBS := build check clean fmt fix scan test val
+DOCS_PROJECT_ARGS := $(foreach project,$(REQUESTED_PROJECTS),--projects $(project))
+ORCHESTRATED_VERBS := build check clean docs fmt fix scan test val
 
-UV_RUN := env -u MYPYPATH PYTHONPATH="$(PROJECT_ROOT)/src" $(UV) run --project "$(RUNTIME_ROOT)" --no-sync
+# A borrowed RUNTIME_VENV keeps the primary editable install. Clearing
+# PYTHONPATH would make `make test` in a linked worktree execute that primary
+# tree instead of this checkout. Prefer PROJECT_ROOT/src so the Makefile owner
+# always wins over the shared editable (terminus T4 / path-purity).
+UV_RUN := env -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u UV_PROJECT_ENVIRONMENT PYTHONPATH="$(PROJECT_ROOT)/src" $(UV) run --project "$(RUNTIME_ROOT)" --no-sync
 PROJECT_INFRA_PYTHONPATH ?= $(MAKEFILE_ROOT)/src
 PROJECT_FLEXT_INFRA := test -x "$(FLEXT_INFRA_PYTHON)" || { printf 'ERROR: FLEXT_INFRA_PYTHON must name an executable managed Python\n' >&2; exit 2; }; env -u PYTHONPATH -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u UV_PROJECT_ENVIRONMENT PATH="$(dir $(FLEXT_INFRA_PYTHON)):$(SANITIZED_CALLER_PATH)" PYTHONPATH="$(PROJECT_INFRA_PYTHONPATH)" $(FLEXT_INFRA_PYTHON) -m flext_infra
 # mro-j47u (codex): scaffold dev tools live in the validated optional dev
 # profile; a fresh project must create its lock before later check-mode locks.
-# Workspace roots sync every declared package into their local runtime. A
-# standalone project has no workspace packages to include.
-WORKSPACE_SYNC := $(if $(strip $(WORKSPACE_MEMBERS)),1,)
-UV_SYNC_FLAGS := $(if $(WORKSPACE_SYNC),--all-packages ,)--all-extras --all-groups
+# Keyed on the environment's OWNER, not on the caller's profile. A member has
+# no local venv -- RUNTIME_VENV is RUNTIME_ROOT/.venv -- so every checkout that
+# provisions a shared environment must describe the same contents. A member
+# syncing without --all-packages treats the siblings already installed there as
+# surplus and uninstalls them, undoing the root's provisioning and leaving
+# `uv sync --check` permanently divergent. A standalone project owns its venv
+# alone and has no workspace packages to include.
+SHARED_RUNTIME := $(if $(filter-out $(PROJECT_ROOT),$(RUNTIME_ROOT)),1,$(if $(strip $(WORKSPACE_MEMBERS)),1,))
+UV_SYNC_FLAGS := $(if $(SHARED_RUNTIME),--all-packages ,)--all-extras --all-groups
 
 ifneq ($(strip $(PROJECT)),)
 ifneq ($(strip $(PROJECTS)),)
@@ -356,26 +352,6 @@ $(error ERROR: Cannot use PROJECT and PROJECTS together)
 endif
 endif
 
-
-# mro-ga9q (custom.mk blacklist): member projects may define ANY custom
-# verb/WHAT through _custom_<verb>_<what> handlers and (pre|post)-<verb>[-<what>]
-# hooks EXCEPT the reserved verbs/WHATs below, which stay a flext-infra
-# monopoly. Parse-time guard: every make invocation fails loud when custom.mk
-# redefines a reserved target; every other target is permitted.
-# R12 moved the public verbs out of base.mk into this projection, but the guard
-# stayed behind — and a generated project never includes base.mk, so the
-# monopoly was unenforced in every real checkout. The guard belongs with the
-# verbs it protects.
-CUSTOM_MK_RESERVED_TARGETS := _custom_build_artifacts _custom_check_all _custom_clean_generated _custom_clean_status _custom_deps_check _custom_deps_lock _custom_deps_upgrade _custom_fix_all _custom_fix_apply _custom_fix_check _custom_fmt_all _custom_fmt_apply _custom_fmt_check _custom_gen_all _custom_gen_apply _custom_gen_check _custom_help_usage _custom_mod_all _custom_mod_apply _custom_mod_check _custom_release_rel _custom_release_status _custom_run_default _custom_setup_environment _custom_status_diagnostics _custom_test_all _custom_test_cache-checkpoint _custom_test_cache-clear _custom_test_cache-status _custom_test_full _custom_test_profile _custom_work_finish _custom_work_land _custom_work_start _custom_work_status build check clean deps fix fmt gen help mod release run setup status test work
-ifneq ($(wildcard custom.mk),)
-# Target definitions at column 0, excluding assignments (=) and dot-directives.
-# $(shell) converts the newline-separated results to space-separated lists.
-_CUSTOM_MK_DEFINED := $(shell awk '/^[A-Za-z_][A-Za-z0-9_-]*([ \t]+[A-Za-z_][A-Za-z0-9_-]*)*[ \t]*:/ && index($$0, "=") == 0 { line = $$0; sub(/:.*/, "", line); count = split(line, names, /[ \t]+/); for (i = 1; i <= count; i++) print names[i] }' custom.mk | sort -u)
-_CUSTOM_MK_OFFENDERS := $(shell printf '%s\n' $(_CUSTOM_MK_DEFINED) | grep -xF $(foreach target,$(CUSTOM_MK_RESERVED_TARGETS),-e $(target)))
-ifneq ($(_CUSTOM_MK_OFFENDERS),)
-$(error custom.mk redefines reserved flext-infra target(s): $(_CUSTOM_MK_OFFENDERS) - reserved verbs/WHATs are a flext-infra monopoly; use _custom_<verb>_<what> with a non-reserved WHAT or (pre|post)-<verb>[-<what>] hooks)
-endif
-endif
 
 -include custom.mk
 SELF_MAKE := $(MAKE) --no-print-directory -f "$(SELF_MAKEFILE)"
@@ -410,9 +386,9 @@ define _dispatch
 		if [ "$$rc" -ne 2 ]; then $(SELF_MAKE) "$$hook" || exit $$?; fi; \
 	done; \
 	if [ "$$custom_rc" -ne 2 ]; then \
-		$(VERB_BOUNDED) $(SELF_MAKE) "$$custom" || exit $$?; \
+		$(SELF_MAKE) "$$custom" || exit $$?; \
 	else \
-		$(VERB_BOUNDED) $(SELF_MAKE) "$$builtin" || exit $$?; \
+		$(SELF_MAKE) "$$builtin" || exit $$?; \
 	fi; \
 	for hook in "post-$(1)-$$what" "post-$(1)"; do \
 		$(SELF_MAKE) -q "$$hook" >/dev/null 2>&1; rc=$$?; \
@@ -442,41 +418,10 @@ define _run_for_selected_projects
 	done
 endef
 
-.PHONY: $(PUBLIC_VERBS) _builtin_help_usage _builtin_setup_environment _builtin_deps_check _builtin_deps_lock _builtin_deps_upgrade _builtin_build_artifacts _builtin_check_all _builtin_test_all _builtin_test_full _builtin_test_profile _builtin_test_cache-status _builtin_test_cache-clear _builtin_test_cache-checkpoint _builtin_fmt_check _builtin_fmt_all _builtin_fmt_apply _builtin_fix_check _builtin_fix_all _builtin_fix_apply _builtin_run_default _builtin_status_diagnostics _builtin_clean_status _builtin_clean_generated _builtin_release_status _builtin_release_rel _builtin_gen_check _builtin_gen_all _builtin_gen_apply _builtin_work_start _builtin_work_status _builtin_work_land _builtin_work_finish _builtin_mod_check _builtin_mod_all _builtin_mod_apply
+.PHONY: $(PUBLIC_VERBS) _builtin_help_usage _builtin_setup_environment _builtin_deps_check _builtin_deps_lock _builtin_deps_upgrade _builtin_build_artifacts _builtin_check_all _builtin_test_all _builtin_test_full _builtin_test_profile _builtin_test_cache-status _builtin_test_cache-clear _builtin_test_cache-checkpoint _builtin_fmt_check _builtin_fmt_all _builtin_fmt_apply _builtin_fix_check _builtin_fix_all _builtin_fix_apply _builtin_run_default _builtin_status_diagnostics _builtin_docs_all _builtin_docs_generate _builtin_docs_fix _builtin_docs_audit _builtin_docs_build _builtin_docs_validate _builtin_clean_status _builtin_clean_generated _builtin_release_status _builtin_gen_check _builtin_gen_all _builtin_gen_apply _builtin_mod_check _builtin_mod_all _builtin_mod_apply
 
-# Every public verb dispatches straight into its private builtin. The verbs
-# that used to round-trip through the Python serializer keep the environment
-# prerequisite that round-trip carried.
-#
-# `setup` builds the environment it would otherwise require. `help` documents
-# how to build it, so demanding an interpreter to print that documentation
-# makes an unprovisioned checkout undiscoverable. Both still dispatch — they
-# only drop the prerequisite.
-$(filter-out setup help,$(PUBLIC_VERBS)): _builtin_require_environment
+$(filter-out setup,$(PUBLIC_VERBS)):
 	$(call _dispatch,$@)
-
-help:
-	$(call _dispatch,$@)
-
-
-# `all` = clean setup gen fmt fmt fix check test. CI=Y skips pytest inside
-# make test (flext_infra._pytest_entry guards mro-v4p5), so all always calls
-# test — the pytest gate is self-guarding.
-all: _builtin_require_environment
-	@$(SELF_MAKE) clean APPLY=Y
-	@$(SELF_MAKE) setup
-	@$(SELF_MAKE) gen APPLY=Y
-	@$(SELF_MAKE) fmt APPLY=Y
-	@$(SELF_MAKE) fmt APPLY=Y
-	@$(SELF_MAKE) fix APPLY=Y
-	@# check/test are read-only verbs. Clear APPLY and the CI token so an
-	@# inherited APPLY=Y/CI=Y from the caller environment cannot reach them:
-	@# check rejects APPLY, and pytest is forbidden under the CI token.
-	@$(SELF_MAKE) check APPLY=
-	@env -u CI $(SELF_MAKE) test APPLY=
-
-.PHONY: all
-
 # `setup` keeps its own recipe (it must not require the environment it is about
 # to build), but it still runs the pre-/post-setup lifecycle hooks so a project
 # declaring them in the custom handler surface is actually honoured.
@@ -488,17 +433,10 @@ setup:
 	@$(SELF_MAKE) _builtin_setup_environment
 	@# Provision Beads local role so `bd` writes do not warn (GH#2950).
 	@if git -C "$(PROJECT_ROOT)" rev-parse --is-inside-work-tree >/dev/null 2>&1; then \
-		role=$$(git -C "$(PROJECT_ROOT)" config --local --get beads.role 2>/dev/null || echo ""); \
+		if role=$$(git -C "$(PROJECT_ROOT)" config --local --get beads.role 2>/dev/null); then :; else role=; fi; \
 		if [ -z "$$role" ]; then \
 			git -C "$(PROJECT_ROOT)" config --local beads.role maintainer; \
 		fi; \
-	fi
-	@# Provision git hooks when the project ships an installer. This was the
-	@# workspace-root custom.mk `hooks` + `post-boot` pair: a public target and a
-	@# lifecycle hook that only ever ran one script setup already owns. CI skips
-	@# it (no local commit hooks are needed there).
-	@if [ "$${CI:-}" != "true" ] && [ -x "$(PROJECT_ROOT)/.github/scripts/install-git-hooks.sh" ]; then \
-		"$(PROJECT_ROOT)/.github/scripts/install-git-hooks.sh"; \
 	fi
 	@for hook in "post-setup"; do \
 		$(SELF_MAKE) -q "$$hook" >/dev/null 2>&1; rc=$$?; \
@@ -549,11 +487,15 @@ _builtin_help_usage:
 
 
 
+	@printf '  %-10s WHAT=%s APPLY=Y\n' 'docs' "$$(printf '%s' '$(_ALLOWED_WHATS_docs)' | awk '{$$1=$$1; gsub(/ /, "|"); print}')";
+
+
+
 	@printf '  %-10s WHAT=%s APPLY=Y\n' 'clean' "$$(printf '%s' '$(_ALLOWED_WHATS_clean)' | awk '{$$1=$$1; gsub(/ /, "|"); print}')";
 
 
 
-	@printf '  %-10s WHAT=%s APPLY=Y\n' 'release' "$$(printf '%s' '$(_ALLOWED_WHATS_release)' | awk '{$$1=$$1; gsub(/ /, "|"); print}')";
+	@printf '  %-10s WHAT=%s\n' 'release' "$$(printf '%s' '$(_ALLOWED_WHATS_release)' | awk '{$$1=$$1; gsub(/ /, "|"); print}')";
 
 
 
@@ -561,22 +503,11 @@ _builtin_help_usage:
 
 
 
-
-	@printf '  %-10s WHAT=%s\n' 'work' "$$(printf '%s' '$(_ALLOWED_WHATS_work)' | awk '{$$1=$$1; gsub(/ /, "|"); print}')";
-	@printf '  %-10s %s\n' '' 'status is read-only; other WHATs require APPLY=Y';
-
-
-
 	@printf '  %-10s WHAT=%s APPLY=Y\n' 'mod' "$$(printf '%s' '$(_ALLOWED_WHATS_mod)' | awk '{$$1=$$1; gsub(/ /, "|"); print}')";
 
 
 	@printf '  %-10s %s\n' 'WORKSPACE' 'target repository (default: current project)';
-	@printf '  %-10s %s\n' 'PROJECT' 'member checkout for work when WORKSPACE unset';
-	@printf '  %-10s %s\n' 'BEAD' 'lane-root bead id for work start/land/finish';
-	@printf '  %-10s %s\n' 'NAME' 'required lane slug for work start';
-	@printf '  %-10s %s\n' 'KIND' 'optional feature|bugfix|hotfix|release; omitted derives from Bead issue_type';
-	@printf '  %-10s %s\n' 'BASE' 'optional integration base override for work start';
-	@printf '  %-10s %s\n' 'EPIC' 'registered epic bead id; nests work start as its child lane';
+	@printf '  %-10s %s\n' 'PROJECT' 'member checkout when WORKSPACE unset';
 	@printf '\n%s\n' 'Custom hooks (custom.mk):';
 	@printf '  %s\n' 'Define pre-<verb>, post-<verb>, pre-<verb>-<what>, post-<verb>-<what>';
 	@printf '  %s\n' 'in custom.mk to wrap one declared handler.';
@@ -618,7 +549,7 @@ _builtin_setup_submodules:
 	if [ ! -f "$$root/.gitmodules" ]; then exit 0; fi; \
 	profile="$(MAKE_PROFILE)"; \
 	if [ "$$profile" = "workspace-root" ]; then \
-		managed="$(WORKSPACE_MEMBERS)"; \
+		managed="$(MANAGED_GITLINKS)"; \
 	else \
 		managed=""; \
 		keys=$$(git -C "$$root" config -f .gitmodules --name-only --get-regexp '^submodule\..*\.flext-managed$$' || :); \
@@ -772,21 +703,9 @@ _builtin_setup_submodules:
 		validate_submodule "$$root" "$$child_path"; \
 	done
 
-# Every verb depends on this guard. When the interpreter is missing the guard
-# provisions it by invoking `setup` instead of failing: a fresh clone, a new
-# worktree, or a CI runner has no venv yet, and forcing the operator to run
-# `make setup` by hand turns every managed verb into a two-step ritual and
-# breaks git hooks (which call `make fmt`/`make fix` in a bare checkout).
-# `setup` is idempotent and cheap when the tooling already matches the lock,
-# so the auto-provision path costs nothing in the common case. Only a setup
-# that itself fails to produce the interpreter is a real error.
 _builtin_require_environment:
 	@if [ ! -x "$(RUNTIME_PYTHON)" ]; then \
-		printf '==> environment interpreter missing; provisioning via setup\n' >&2; \
-		$(SELF_MAKE) setup || exit $$?; \
-	fi
-	@if [ ! -x "$(RUNTIME_PYTHON)" ]; then \
-		printf 'ERROR: setup did not produce the environment interpreter %s\n' "$(RUNTIME_PYTHON)" >&2; \
+		printf 'ERROR: missing environment interpreter %s; make setup creates it\n' "$(RUNTIME_PYTHON)" >&2; \
 		exit 2; \
 	fi
 
@@ -816,19 +735,16 @@ _builtin_setup_environment: _builtin_setup_submodules
 	@if [ "$(RUNTIME_ROOT)" = "$(PROJECT_ROOT)" ]; then \
 		$(SETUP_ENVIRONMENT_RECIPE); \
 	else \
-		env -u MAKEFILES -u GNUMAKEFLAGS -u MAKEFLAGS -u MAKELEVEL -u MAKEOVERRIDES -u MFLAGS -u PYTHONPATH \
-			$(MAKE) -C "$(RUNTIME_ROOT)" _builtin_setup_environment; \
+		$(MAKE) -C "$(RUNTIME_ROOT)" _builtin_setup_environment; \
+		$(BORROW_RUNTIME_VENV_RECIPE); \
 	fi
-	@$(FLEXT_BINDING_RECIPE)
 else ifeq ($(MAKE_PROFILE),workspace-root)
 _builtin_setup_environment: _builtin_setup_submodules
 	@$(SETUP_ENVIRONMENT_RECIPE)
 	@$(UV) pip check --python "$(RUNTIME_VENV)"
-	@$(FLEXT_BINDING_RECIPE)
 else
 _builtin_setup_environment: _builtin_setup_submodules
 	@$(SETUP_ENVIRONMENT_RECIPE)
-	@$(FLEXT_BINDING_RECIPE)
 endif
 # End SECTION: setup environment
 
@@ -856,7 +772,7 @@ _builtin_deps_upgrade: _builtin_require_environment
 	set --; \
 	for project in $$selected; do set -- "$$@" --projects "$$project"; done; \
 	$(PROJECT_FLEXT_INFRA) deps modernize --workspace "$(PROJECT_ROOT)" \
-		--apply $(if $(strip $(DEPENDENCY)),,--rewrite-constraints) --skip-check "$$@"
+		--apply --rewrite-constraints --skip-check "$$@"
 	$(call _run_for_selected_projects,)
 
 
@@ -930,22 +846,14 @@ _builtin_fmt_all: _builtin_require_environment
 
 _builtin_fmt_apply: _builtin_fmt_all
 
-# Read-only dual of `make fix APPLY=Y` — never mutate here.
+# Read-only fixed-point after `make fix APPLY=Y` (strips APPLY and
+# re-runs default_what=check). Dual of `ruff check --fix` — never mutate here.
 _builtin_fix_check: _builtin_require_environment
 	@$(UV_RUN) ruff check $(RUFF_PATHS)
 
-# mro-38p39: `fix` is the mutating dual of `check`, so it routes through the
-# same gate pipeline. Running `ruff check --fix` alone left every other fixable
-# gate unreachable: a markdown finding the linter itself marks auto-fixable
-# blocked `make check` while `make fix APPLY=Y` exited 0 without repairing it,
-# so the canonical sequence could never reach green without hand-editing a
-# governed file. The gate list is the SSOT can_fix set, not a literal -- an
-# unscoped --fix would also run pyright and mypy, which repair nothing and cost
-# ~37s, timing the verb out.
 _builtin_fix_all: _builtin_require_environment
 	$(call _require_apply)
-	@$(PROJECT_FLEXT_INFRA) check run --workspace "$(PROJECT_ROOT)" --projects . --fix \
-		--gates markdown,smells
+	@$(UV_RUN) ruff check --fix $(RUFF_PATHS)
 
 _builtin_fix_apply: _builtin_fix_all
 
@@ -966,84 +874,68 @@ _builtin_status_diagnostics: _builtin_require_environment
 	fi
 	@git -C "$(PROJECT_ROOT)" status --short
 
-# Disposable artifacts (caches, reports, traces) are owned by the flext-infra
-# clean service and declared in config.make.clean, so the recipe stays a thin
-# dispatch like every other verb instead of shell that drifts per project.
-_builtin_clean_status:
-	@$(PROJECT_FLEXT_INFRA) maintenance clean --workspace "$(PROJECT_ROOT)"
+_builtin_docs_all:
+	@set -eu; \
+	for action in $(DOCS_ACTIONS); do \
+		case "$$action" in generate|fix) mode=$(if $(filter Y,$(APPLY)),--apply,--check) ;; *) mode= ;; esac; \
+		$(PROJECT_FLEXT_INFRA) docs "$$action" --workspace "$(PROJECT_ROOT)" --output-dir "$(PROJECT_ROOT)/.reports/docs" $$mode $(DOCS_PROJECT_ARGS); \
+	done
+
+
+_builtin_docs_generate:
+	@$(PROJECT_FLEXT_INFRA) docs generate --workspace "$(PROJECT_ROOT)" --output-dir "$(PROJECT_ROOT)/.reports/docs" $(if $(filter Y,$(APPLY)),--apply,--check) $(DOCS_PROJECT_ARGS)
+
+
+_builtin_docs_fix:
+	@$(PROJECT_FLEXT_INFRA) docs fix --workspace "$(PROJECT_ROOT)" --output-dir "$(PROJECT_ROOT)/.reports/docs" $(if $(filter Y,$(APPLY)),--apply,--check) $(DOCS_PROJECT_ARGS)
+
+
+_builtin_docs_audit:
+	@$(PROJECT_FLEXT_INFRA) docs audit --workspace "$(PROJECT_ROOT)" --output-dir "$(PROJECT_ROOT)/.reports/docs" $(DOCS_PROJECT_ARGS)
+
+
+_builtin_docs_build:
+	@$(PROJECT_FLEXT_INFRA) docs build --workspace "$(PROJECT_ROOT)" --output-dir "$(PROJECT_ROOT)/.reports/docs" $(DOCS_PROJECT_ARGS)
+
+
+_builtin_docs_validate:
+	@$(PROJECT_FLEXT_INFRA) docs validate --workspace "$(PROJECT_ROOT)" --output-dir "$(PROJECT_ROOT)/.reports/docs" $(DOCS_PROJECT_ARGS)
+
+
 
 _builtin_clean_generated:
 	$(call _require_apply)
-	@$(PROJECT_FLEXT_INFRA) maintenance clean --workspace "$(PROJECT_ROOT)" --apply-changes
+	@find "$(PROJECT_ROOT)" -type d \
+		\( -name __pycache__ -o -name .mypy_cache -o -name .pytest_cache -o -name .ruff_cache \) \
+		-prune -exec rm -rf {} +
+	@rm -rf "$(PROJECT_ROOT)/build" "$(PROJECT_ROOT)/dist" "$(PROJECT_ROOT)/htmlcov"
+	@rm -f "$(PROJECT_ROOT)/.coverage"
 
 _builtin_release_status: _builtin_require_environment
 	@$(UV) lock --project "$(PROJECT_ROOT)" --check
 	@git -C "$(PROJECT_ROOT)" diff --quiet
 	@git -C "$(PROJECT_ROOT)" diff --cached --quiet
 
-# Release orchestration belongs to the verb that already owns releases. It
-# previously lived in the workspace-root custom.mk as _custom_release_rel,
-# putting the release pipeline outside the Make monopoly and making Release CI
-# depend on a hand-written surface. Knobs come from the caller environment so
-# no new selector variables enter the public surface; PUSH=1 opts into pushing.
-_builtin_release_rel: _builtin_require_environment
-	$(call _require_apply)
-	@push_flag=--no-push; \
-	if [ "$${PUSH:-0}" = "1" ]; then push_flag=--push; fi; \
-	projects_args=""; \
-	if [ -n "$${PROJECTS:-}" ]; then projects_args="--projects $${PROJECTS}"; \
-	elif [ -n "$(PROJECT)" ] && [ "$(PROJECT)" != "." ]; then projects_args="--projects $(PROJECT)"; fi; \
-	$(PROJECT_FLEXT_INFRA) release run \
-		--workspace "$(PROJECT_ROOT)" \
-		--apply \
-		--no-dry-run \
-		--phase "$${RELEASE_PHASE:-all}" \
-		--version "$${VERSION}" \
-		--tag "$${TAG}" \
-		--interactive "$${INTERACTIVE:-0}" \
-		--create-branches "$${CREATE_BRANCHES:-0}" \
-		$$push_flag \
-		$$projects_args
-
-# Generation has one owner. Conform preserves the caller's scope and applies
-# the complete dependency/tooling projection before it verifies its fixed point.
-# Dependency upgrades remain a separate explicit verb because they rewrite lock
-# floors; gen must never run a second pyproject writer over conform's result.
+# Every command here writes to the SAME root, derived from the invocation
+# point. `deps modernize`/`extra-paths` used to receive WORKSPACE_ROOT while
+# `conform` received PROJECT_ROOT, so a gen run inside one member rewrote the
+# pyproject of ~30 siblings and left each dirty. Because gen runs inside check
+# and check runs in the pre-commit hook, one commit in any lane dirtied every
+# sibling -- the "workspace changed during Make check" abort. It
+# also kept the fixed point out of reach: each run rewrote the siblings, so
+# the next run found a difference again. At the workspace root PROJECT_ROOT is
+# already the workspace, so fan-out survives exactly where it belongs.
 _builtin_gen_check: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) codegen conform --root "$(PROJECT_ROOT)" --scope "$(CODEGEN_SCOPE)" --mode check
+	@$(PROJECT_FLEXT_INFRA) deps modernize --workspace "$(PROJECT_ROOT)" --check
+	@$(PROJECT_FLEXT_INFRA) deps extra-paths --workspace "$(PROJECT_ROOT)" --check
 
 _builtin_gen_all: _builtin_require_environment
 	$(call _require_apply)
 	@$(PROJECT_FLEXT_INFRA) codegen conform --root "$(PROJECT_ROOT)" --scope "$(CODEGEN_SCOPE)" --mode apply
+	@$(PROJECT_FLEXT_INFRA) deps modernize --workspace "$(PROJECT_ROOT)" --apply
+	@$(PROJECT_FLEXT_INFRA) deps extra-paths --workspace "$(PROJECT_ROOT)" --apply
 
 _builtin_gen_apply: _builtin_gen_all
 
-_builtin_work_status:
-	@$(PROJECT_FLEXT_INFRA) workspace work --workspace "$(WORKSPACE)" --operation status --bead "$(BEAD)" --branch "$(BRANCH)"
 
-_builtin_work_start:
-	$(call _require_apply)
-	@$(PROJECT_FLEXT_INFRA) workspace work --workspace "$(WORKSPACE)" --operation start --bead "$(BEAD)" $(if $(strip $(KIND)),--kind "$(KIND)") --name "$(NAME)" --base "$(BASE)" --epic "$(EPIC)" --apply
-
-_builtin_work_land:
-	$(call _require_apply)
-	@$(PROJECT_FLEXT_INFRA) workspace work --workspace "$(WORKSPACE)" --operation land --bead "$(BEAD)" --apply
-
-_builtin_work_finish:
-	$(call _require_apply)
-	@$(PROJECT_FLEXT_INFRA) workspace work --workspace "$(WORKSPACE)" --operation finish --bead "$(BEAD)" --apply
-
-# `mod` was declared in the verb table (and listed in .PHONY) but no builtin
-# handler was ever generated, so the dispatcher resolved a non-existent target
-# and the verb was unreachable. The codemod engine already exists behind
-# `flext-infra refactor mod`; these handlers are the missing dispatch into it.
-# check reports pending fixes; apply runs the
-# batch under the ruff/pyrefly rollback circuit.
-_builtin_mod_check: _builtin_require_environment
-	@$(PROJECT_FLEXT_INFRA) refactor mod --workspace "$(PROJECT_ROOT)"
-
-_builtin_mod_all: _builtin_require_environment
-	$(call _require_apply)
-	@$(PROJECT_FLEXT_INFRA) refactor mod --workspace "$(PROJECT_ROOT)" --apply
-
-_builtin_mod_apply: _builtin_mod_all

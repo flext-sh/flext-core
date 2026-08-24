@@ -1,9 +1,3 @@
-# TRACK: Beads team config; keep Dolt data, runtime state, and JSONL exports local.
-!.beads/
-.beads/*
-!.beads/config.yaml
-!.beads/metadata.json
-
 # BLOCK: AI/Agent Local Data (NEVER track these)
 .claude/*
 
@@ -221,11 +215,6 @@ secrets.yml
 .beads-credential-key
 .worktrees/
 legado/
-.beads.gate.lock
-*.gate.lock*
-
-# Beads ledger identity (all Beads-participating profiles; see mro-9wv8, mro-cdzxf)
-!.beads/metadata.json
 
 # codegen module-standardizer reject artifacts (ADR-005 §9)
 *.tpl.rej

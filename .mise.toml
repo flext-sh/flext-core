@@ -9,7 +9,7 @@
 # === SECTION: tools (managed) ===
 # Source: config:python_version, config:codegen.scaffold.project.dev native toolchain floors
 #         (kubectl_version, helm_version, kind_version, taplo_version, ast_grep_version,
-#          gitleaks_version, tokei_version, beads.selector, beads.version)
+#          gitleaks_version, tokei_version, qlty_version, beads.selector, beads.version)
 [tools]
 python = "3.13"
 # Native toolchain (single source: Infra.codegen.toolchain in codegen.yaml).
@@ -20,6 +20,9 @@ taplo = "0.10.0"
 ast-grep = "0.45.0"
 gitleaks = "8.30.1"
 tokei = "14.0.0"
+# qlty ships no mise registry alias; the github backend selector is the only
+# resolvable form (bare 'qlty' fails mise install: 'not found in registry').
+"github:qltysh/qlty" = "0.642.0"
 # Go runtime for the Go projects in this workspace.
 go = "1.26.5"
 "github:marlon-costa-dc/beads" = "1.1.2-dc1"
