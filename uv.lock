@@ -705,7 +705,7 @@ dependencies = [
 
 [[package]]
 name = "flext-core"
-version = "0.12.0"
+version = "0.12.0rc1"
 source = { editable = "." }
 dependencies = [
     { name = "beartype" },
@@ -887,7 +887,7 @@ dev = [
     { name = "mkdocstrings-python", specifier = ">=1.7" },
     { name = "mypy", specifier = ">=2.3.0" },
     { name = "pip-audit", specifier = ">=2.7.3" },
-    { name = "pre-commit", specifier = ">=4.6.0" },
+    { name = "pre-commit", specifier = ">=4.6.1" },
     { name = "pylint", specifier = ">=3.3" },
     { name = "pyrefly", specifier = ">=1.1.1" },
     { name = "pyright", specifier = ">=1.1.411" },
