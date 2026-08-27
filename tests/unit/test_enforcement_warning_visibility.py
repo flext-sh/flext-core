@@ -28,11 +28,9 @@ if TYPE_CHECKING:
 class TestsFlextCoreEnforcementWarningVisibility:
     _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-    # test_real_filterwarnings_keep_mro_violations_visible spawns a nested
-    # pytest via u.Cli.run_raw that cold-imports flext_core: real work ~8s,
-    # exceeding the global --timeout=10 under full-suite CPU contention.
-    # Class-level ceiling override, not a suppression of a hang (profiled ~8s).
-    pytestmark = pytest.mark.timeout(60)
+    # The real-filter probe starts a nested pytest. It disables third-party
+    # plugin autoload and exercises only pytest core so the integration boundary
+    # remains deterministic and fits the config-owned regular-item budget.
 
     @pytest.mark.parametrize("category", [FlextMroViolation, FlextSmellViolation])
     def test_enforcement_categories_are_userwarnings(
@@ -118,6 +116,7 @@ class TestsFlextCoreEnforcementWarningVisibility:
                 "no:cacheprovider",
             ],
             cwd=tmp_path,
+            env={"PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1"},
         )
 
         # Assert: the warning survives to the caller's output.

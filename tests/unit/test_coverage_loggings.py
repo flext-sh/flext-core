@@ -5,7 +5,7 @@ from __future__ import annotations
 import io
 import time
 from contextlib import redirect_stdout
-from typing import TYPE_CHECKING
+from typing import NoReturn, TYPE_CHECKING
 
 import pytest
 
@@ -102,8 +102,11 @@ class TestsFlextCoverageLoggings:
         logger = self.make_result_logger("tests.loggings.exception")
         error_message = "disk failure"
 
-        try:
+        def _fail() -> NoReturn:
             raise OSError(error_message)
+
+        try:
+            _fail()
         except OSError as exc:
             result = self.assert_captured_log_success(
                 lambda exc=exc: logger.exception(

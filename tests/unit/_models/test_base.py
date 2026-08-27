@@ -13,6 +13,7 @@ from typing import Annotated
 import pytest
 from pydantic import ValidationError
 
+from flext_tests import tm
 from tests.models import m
 
 
@@ -108,12 +109,11 @@ class TestsFlextCoreBase:
     def test_value_object_is_immutable(self) -> None:
         value = SampleValue(amount=2, label="chf")
 
-        with pytest.raises(ValidationError):
-            setattr(value, "amount", 3)
+        tm.rejects_assignment(value, "amount", 3, expected=ValidationError)
 
     @pytest.mark.parametrize("amount", ["1", 1.5])
     def test_value_object_strictly_validates_field_types(
         self, amount: str | float
     ) -> None:
         with pytest.raises(ValidationError):
-            SampleValue(amount=amount, label="strict")
+            SampleValue.model_validate({"amount": amount, "label": "strict"})

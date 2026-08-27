@@ -14,9 +14,7 @@ from __future__ import annotations
 
 from typing import cast
 
-from flext_core import c, p, r, t
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
-from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
+from flext_core import c, p, r, t, u
 
 
 def _adapt_dispatcher_output(
@@ -33,10 +31,10 @@ def _adapt_dispatcher_output(
             result = dispatch_result.from_failure(raw_output)
         else:
             output_value = raw_output.value
-            if FlextUtilitiesGuardsTypeCore.container(output_value):
+            if u.container(output_value):
                 payload: t.JsonPayload = output_value
                 result = dispatch_result.ok(payload)
-            elif FlextUtilitiesGuardsTypeModel.pydantic_model(output_value):
+            elif u.pydantic_model(output_value):
                 model_payload: t.JsonPayload = output_value
                 result = dispatch_result.ok(model_payload)
             else:
@@ -44,9 +42,7 @@ def _adapt_dispatcher_output(
                     "validate handler success payload",
                     c.ERR_HANDLER_RETURNED_NON_CONTAINER_SUCCESS_RESULT,
                 )
-    elif FlextUtilitiesGuardsTypeCore.container(
-        raw_output
-    ) or FlextUtilitiesGuardsTypeModel.pydantic_model(raw_output):
+    elif u.container(raw_output) or u.pydantic_model(raw_output):
         result = dispatch_result.ok(raw_output)
     else:
         result = dispatch_result.fail_op(
@@ -64,9 +60,7 @@ def _normalize_dispatcher_output(
         return cast("p.Result[t.JsonPayload]", raw_candidate)
     if raw_candidate is None:
         return None
-    if FlextUtilitiesGuardsTypeCore.container(
-        raw_candidate
-    ) or FlextUtilitiesGuardsTypeModel.pydantic_model(raw_candidate):
+    if u.container(raw_candidate) or u.pydantic_model(raw_candidate):
         return raw_candidate
     return dispatch_result.fail_op(
         "validate handler return payload", c.ERR_HANDLER_RETURNED_NON_CONTAINER_VALUE

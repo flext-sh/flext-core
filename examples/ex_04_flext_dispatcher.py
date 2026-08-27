@@ -26,7 +26,7 @@ class _GetUserHandler:
 
     def dispatch_message(
         self, message: p.Routable, operation: str = "dispatch"
-        ) -> r[str]:
+    ) -> r[str]:
         if not isinstance(message, m.Examples.GetUser):
             return r[str].fail(f"{operation}:unexpected_message")
         return r[str].ok(f"active:{message.username}")

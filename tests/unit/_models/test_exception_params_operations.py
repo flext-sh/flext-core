@@ -8,6 +8,7 @@ attribute access, no patching, no collaborator spying.
 
 from __future__ import annotations
 
+
 import pytest
 
 from flext_tests import tm
@@ -91,8 +92,7 @@ class TestsFlextCoreExceptionParamsOperations:
     def test_assignment_revalidates_field_type(self) -> None:
         params = m.ValidationErrorParams(field="email")
         wrong_value: object = 123
-        with pytest.raises(c.ValidationError):
-            setattr(params, "field", wrong_value)
+        tm.rejects_assignment(params, "field", wrong_value, expected=c.ValidationError)
 
     @pytest.mark.parametrize(
         "params",

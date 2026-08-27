@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_tests import r
+from tests import p, r
 
 
 class TestsFlextCoreDeprecationWarnings:
@@ -18,7 +18,7 @@ class TestsFlextCoreDeprecationWarnings:
 
     def test_ok_reports_success_state(self) -> None:
         # Arrange / Act
-        result: r[str] = r[str].ok("value")
+        result: p.Result[str] = r[str].ok("value")
 
         # Assert
         assert result.success is True
@@ -26,25 +26,25 @@ class TestsFlextCoreDeprecationWarnings:
 
     def test_fail_reports_failure_state(self) -> None:
         # Arrange / Act
-        result: r[str] = r[str].fail("deprecated")
+        result: p.Result[str] = r[str].fail("deprecated")
 
         # Assert
         assert result.failure is True
         assert result.success is False
 
     def test_ok_exposes_wrapped_value(self) -> None:
-        result: r[int] = r[int].ok(42)
+        result: p.Result[int] = r[int].ok(42)
 
         assert result.value == 42
         assert result.unwrap() == 42
 
     def test_fail_exposes_error_message(self) -> None:
-        result: r[int] = r[int].fail("boom")
+        result: p.Result[int] = r[int].fail("boom")
 
         assert result.error == "boom"
 
     def test_unwrap_on_failure_raises(self) -> None:
-        result: r[int] = r[int].fail("boom")
+        result: p.Result[int] = r[int].fail("boom")
 
         with pytest.raises(RuntimeError):
             result.unwrap()
@@ -59,50 +59,50 @@ class TestsFlextCoreDeprecationWarnings:
         assert result.unwrap_or(default) == expected
 
     def test_map_transforms_success_value(self) -> None:
-        result: r[int] = r[int].ok(5).map(lambda x: x * 2)
+        result: p.Result[int] = r[int].ok(5).map(lambda x: x * 2)
 
         assert result.success is True
         assert result.unwrap() == 10
 
     def test_map_is_skipped_on_failure(self) -> None:
-        result: r[int] = r[int].fail("boom").map(lambda x: x * 2)
+        result: p.Result[int] = r[int].fail("boom").map(lambda x: x * 2)
 
         assert result.failure is True
         assert result.error == "boom"
 
     def test_flat_map_chains_fallible_success(self) -> None:
-        result: r[int] = r[int].ok(5).flat_map(lambda x: r[int].ok(x + 1))
+        result: p.Result[int] = r[int].ok(5).flat_map(lambda x: r[int].ok(x + 1))
 
         assert result.unwrap() == 6
 
     def test_flat_map_short_circuits_on_failure(self) -> None:
-        result: r[int] = r[int].fail("boom").flat_map(lambda x: r[int].ok(x + 1))
+        result: p.Result[int] = r[int].fail("boom").flat_map(lambda x: r[int].ok(x + 1))
 
         assert result.failure is True
         assert result.error == "boom"
 
     def test_map_error_transforms_failure_only(self) -> None:
-        failed: r[int] = r[int].fail("boom").map_error(lambda e: e.upper())
-        succeeded: r[int] = r[int].ok(1).map_error(lambda e: e.upper())
+        failed: p.Result[int] = r[int].fail("boom").map_error(lambda e: e.upper())
+        succeeded: p.Result[int] = r[int].ok(1).map_error(lambda e: e.upper())
 
         assert failed.error == "BOOM"
         assert succeeded.unwrap() == 1
 
     def test_recover_supplies_value_on_failure(self) -> None:
-        result: r[int] = r[int].fail("boom").recover(lambda _e: 42)
+        result: p.Result[int] = r[int].fail("boom").recover(lambda _e: 42)
 
         assert result.success is True
         assert result.unwrap() == 42
 
     def test_recover_leaves_success_untouched(self) -> None:
-        result: r[int] = r[int].ok(5).recover(lambda _e: 0)
+        result: p.Result[int] = r[int].ok(5).recover(lambda _e: 0)
 
         assert result.unwrap() == 5
 
     def test_tap_observes_success_without_changing_value(self) -> None:
         seen: list[int] = []
 
-        result: r[int] = r[int].ok(5).tap(seen.append)
+        result: p.Result[int] = r[int].ok(5).tap(seen.append)
 
         assert seen == [5]
         assert result.unwrap() == 5

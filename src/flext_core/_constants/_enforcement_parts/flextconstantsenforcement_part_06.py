@@ -28,7 +28,6 @@ class FlextConstantsEnforcementTargets:
         "facade_base_is_alias_or_peer",
         "forbid_deep_namespace",
         "library_abstraction",
-        "loc_cap",
         "model_rebuild_call",
         "nested_layer_misplacement",
         "no_concrete_namespace_import",

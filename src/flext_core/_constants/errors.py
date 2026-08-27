@@ -113,9 +113,6 @@ class FlextConstantsErrorsMessages:
     ERR_RESULT_FILTER_PREDICATE_FAILED: Final[str] = (
         "Value did not pass filter predicate"
     )
-    ERR_RESULT_FAILURE_MESSAGE_REQUIRED: Final[str] = (
-        "Failed result must carry a non-empty error message"
-    )
     ERR_RESULT_FAILURE_REQUIRED: Final[str] = (
         "Cannot propagate a successful result as a failure"
     )
@@ -123,6 +120,19 @@ class FlextConstantsErrorsMessages:
         "Cannot access value of failed result: {error}"
     )
     ERR_RESULT_CANNOT_UNWRAP: Final[str] = "Cannot unwrap failed result: {error}"
+    ERR_RESULT_SUCCESS_PAYLOAD_CANNOT_BE_NONE: Final[str] = (
+        "Success result payload cannot be None"
+    )
+    ERR_RESULT_TYPE_PARAM_NONE_FORBIDDEN: Final[str] = (
+        "FlextResult cannot be parameterized with None; use r[bool].ok(True) "
+        "or a concrete payload type"
+    )
+    ERR_RESULT_TYPE_PARAM_OBJECT_FORBIDDEN: Final[str] = (
+        "FlextResult cannot be parameterized with object; use a concrete payload type"
+    )
+    ERR_RESULT_SUCCESS_PAYLOAD_CANNOT_BE_OBJECT: Final[str] = (
+        "Success result payload cannot be a bare object instance"
+    )
     ERR_MESSAGE_CANNOT_BE_NONE: Final[str] = "Message cannot be None"
     ERR_CONTEXT_KEY_NON_EMPTY_STRING_REQUIRED: Final[str] = (
         "Key must be a non-empty string"

@@ -1,0 +1,8 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "server",
+  "dolt_database": "flext",
+  "dolt_server_port": 3307,
+  "dolt_server_host": "127.0.0.1"
+}

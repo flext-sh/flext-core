@@ -107,7 +107,7 @@ class FlextModelsHandler:
             ),
         ] = mp.Field(default_factory=lambda: mc.Dict(root={}))
 
-        @up.computed_field()
+        @up.computed_field
         @property
         def execution_time_ms(self) -> float:
             """Elapsed execution time in milliseconds (0 until started)."""
@@ -128,13 +128,13 @@ class FlextModelsHandler:
             mp.Field(description="Stack of nested execution contexts."),
         ] = mp.Field(default_factory=list)
 
-        @mp.computed_field()
+        @mp.computed_field
         @property
         def handler_name(self) -> str:
             """Active handler name taken from the execution context."""
             return self.execution_context.handler_name
 
-        @mp.computed_field()
+        @mp.computed_field
         @property
         def handler_mode(self) -> c.HandlerType:
             """Active handler mode taken from the execution context."""
