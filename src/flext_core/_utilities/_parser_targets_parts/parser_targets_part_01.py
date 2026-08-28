@@ -49,25 +49,19 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
         if isinstance(value, target):
             return value
         target_name = target.__name__ if hasattr(target, "__name__") else "type"
-        parsed_direct: T = (
-            FlextUtilitiesModel
-            .validate_value(target, value)
-            .fold(
-                lambda error: FlextUtilitiesParserTargets._parse_with_default(
-                    default,
-                    default_factory,
-                    c.ERR_PARSER_CANNOT_PARSE_TO_TARGET.format(
-                        field_prefix=fp,
-                        source_type=value.__class__.__name__,
-                        target_name=target_name,
-                        error=error,
-                    ),
-                ),
-                lambda validated: validated,
-            )
-            .unwrap()
-        )
-        return parsed_direct
+        validation = FlextUtilitiesModel.validate_value(target, value)
+        if validation.success:
+            return validation.value
+        return FlextUtilitiesParserTargets._parse_with_default(
+            default,
+            default_factory,
+            c.ERR_PARSER_CANNOT_PARSE_TO_TARGET.format(
+                field_prefix=fp,
+                source_type=value.__class__.__name__,
+                target_name=target_name,
+                error=validation.error,
+            ),
+        ).unwrap()
 
     @staticmethod
     @r.safe

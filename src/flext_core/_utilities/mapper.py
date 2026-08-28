@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING
 
 from flext_core import m, r, t
 from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._utilities.collection import FlextUtilitiesCollection
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 from flext_core._utilities.mapper_extract import FlextUtilitiesMapperExtract
 from flext_core.runtime import FlextRuntime
@@ -129,15 +128,13 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
             if exclude_keys:
                 step = {k: v for k, v in step.items() if k not in exclude_keys}
             if strip_none:
-                step = dict(
-                    FlextUtilitiesCollection.filter(step, lambda v: v is not None)
-                )
+                step = {k: v for k, v in step.items() if v is not None}
             if strip_empty:
-                step = dict(
-                    FlextUtilitiesCollection.filter(
-                        step, lambda v: not FlextUtilitiesGuardsTypeCore.empty_value(v)
-                    )
-                )
+                step = {
+                    k: v
+                    for k, v in step.items()
+                    if not FlextUtilitiesGuardsTypeCore.empty_value(v)
+                }
             return step
 
         transform_result: p.Result[t.JsonMapping] = r[

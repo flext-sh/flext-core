@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import re
 import tomllib
+from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
@@ -51,7 +52,7 @@ class FlextUtilitiesConfig:
         current = value
         for _ in range(c.CONFIG_EXPAND_MAX_PASSES):
             expanded = FlextUtilitiesConfig._EXPAND_PATTERN.sub(
-                lambda match: FlextUtilitiesConfig._expand_one(match, env), current
+                partial(FlextUtilitiesConfig._expand_one, env=env), current
             )
             if expanded == current:
                 return expanded

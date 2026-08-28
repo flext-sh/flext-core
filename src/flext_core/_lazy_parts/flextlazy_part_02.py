@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+from functools import partial
 from types import ModuleType
 from typing import TYPE_CHECKING, cast
 
@@ -207,8 +208,11 @@ class FlextLazy(FlextLazyPart01):
             names = tuple(dict.fromkeys((*normalized, *all_exports)))
 
         module_globals["_LAZY_IMPORTS"] = normalized
-        module_globals["__getattr__"] = lambda name: self.get(
-            name, normalized, module_globals, module_name
+        module_globals["__getattr__"] = partial(
+            self.get,
+            lazy_imports=normalized,
+            module_globals=module_globals,
+            module_name=module_name,
         )
         module_globals["__dir__"] = lambda: list(names)
         if publish_all:

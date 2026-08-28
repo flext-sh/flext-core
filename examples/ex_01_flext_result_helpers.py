@@ -86,10 +86,10 @@ class Ex01ResultAdvancedSections(ExamplesFlextShared):
         self.audit_check("map_or.success_default", ok_value.map_or(0))
         self.audit_check("map_or.failure_default", fail_value.map_or(0))
         self.audit_check(
-            "map_or.success_func", ok_value.map_or("none", lambda n: f"n={n}")
+            "map_or.success_func", ok_value.map_or("none", "n={}".format)
         )
         self.audit_check(
-            "map_or.failure_func", fail_value.map_or("none", lambda n: f"n={n}")
+            "map_or.failure_func", fail_value.map_or("none", "n={}".format)
         )
         self.audit_check(
             "fold.success",
