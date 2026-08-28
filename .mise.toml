@@ -31,8 +31,8 @@ tokei = "14.0"
 "github:qltysh/qlty" = "0.642"
 # Go runtime for the Go projects in this workspace.
 go = "1.26"
-[tools."github:marlon-costa-dc/beads"]
-version = "latest"
+[tools."github:gastownhall/beads"]
+version = "1.2.2"
 prerelease = true
 minimum_release_age = "0s"
 
