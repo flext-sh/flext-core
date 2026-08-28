@@ -14,7 +14,6 @@ from pydantic import (
     AfterValidator,
     PlainSerializer,
     PlainValidator,
-    PrivateAttr,
     SkipValidation,
     WrapSerializer,
     WrapValidator,
@@ -39,14 +38,14 @@ class FlextUtilitiesPydantic:
     Use u.* / up.* instead.
     """
 
-    # Wrap field specifiers in ``staticmethod`` so pyright treats ``u.Field`` /
-    # ``u.PrivateAttr`` as static callables rather than instance-bound descriptors.
+    # Wrap field specifiers in ``staticmethod`` so type checkers treat them as
+    # static callables rather than instance-bound descriptors.
     # Why: a bare ``Field = mp.Field`` binds ``_field``'s generic first parameter
     # (``default: DefaultT``) to ``self`` = ``FlextUtilities`` when accessed via the
     # facade, so ``u.Field(default_factory=...)`` was mis-inferred as returning
     # ``FlextUtilities`` (bogus reportAssignmentType). ``mp.Field`` already does this.
     Field = staticmethod(mp.Field)
-    PrivateAttr = staticmethod(PrivateAttr)
+    PrivateAttr = staticmethod(mp.PrivateAttr)
     SkipValidation = SkipValidation
 
     # Same unwrapped-class-attribute problem as Field/PrivateAttr above:
