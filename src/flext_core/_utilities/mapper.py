@@ -116,6 +116,12 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
             else source
         )
 
+        def _is_not_none(value: t.JsonValue) -> bool:
+            return value is not None
+
+        def _is_not_empty(value: t.JsonValue) -> bool:
+            return not FlextUtilitiesGuardsTypeCore.empty_value(value)
+
         def _pipeline() -> t.JsonDict:
             step: t.JsonDict = dict(coerced)
             if normalize:
@@ -129,15 +135,9 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
             if exclude_keys:
                 step = {k: v for k, v in step.items() if k not in exclude_keys}
             if strip_none:
-                step = dict(
-                    FlextUtilitiesCollection.filter(step, lambda v: v is not None)
-                )
+                step = dict(FlextUtilitiesCollection.filter(step, _is_not_none))
             if strip_empty:
-                step = dict(
-                    FlextUtilitiesCollection.filter(
-                        step, lambda v: not FlextUtilitiesGuardsTypeCore.empty_value(v)
-                    )
-                )
+                step = dict(FlextUtilitiesCollection.filter(step, _is_not_empty))
             return step
 
         transform_result: p.Result[t.JsonMapping] = r[

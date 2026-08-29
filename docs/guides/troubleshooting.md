@@ -24,7 +24,9 @@ settings = FlextSettings.fetch_global()
 snapshot = settings.model_dump()
 
 assert isinstance(snapshot, dict)
-assert "log_level" in snapshot```
+assert "log_level" in snapshot
+```
+
 ## 2. Validate Container Resolution
 
 ```python
@@ -35,7 +37,9 @@ _ = container.bind("service_name", "demo")
 
 resolved = container.resolve("service_name")
 assert resolved.success
-assert resolved.value == "demo"```
+assert resolved.value == "demo"
+```
+
 ## 3. Validate Result Flow
 
 ```python
@@ -54,7 +58,9 @@ ok_result = parse_positive(1)
 fail_result = parse_positive(0)
 
 assert ok_result.success
-assert fail_result.failure```
+assert fail_result.failure
+```
+
 ## 4. Re-run Canonical Examples
 
 When behavior drifts, execute the official examples used by maintainers.
@@ -69,7 +75,9 @@ from examples.ex_08_flext_container import Ex08FlextContainer
 stream = io.StringIO()
 with redirect_stdout(stream):
     Ex02FlextSettings("docs/guides/troubleshooting.md").exercise()
-Ex08FlextContainer("docs/guides/troubleshooting.md").exercise()```
+Ex08FlextContainer("docs/guides/troubleshooting.md").exercise()
+```
+
 ## 5. Debug Logger Context
 
 ```python
@@ -88,7 +96,9 @@ with redirect_stdout(stream):
     while time.monotonic() < deadline and "diagnostic_event" not in stream.getvalue():
         time.sleep(0.01)
     assert "diagnostic_event" in stream.getvalue()
-_ = FlextUtilitiesLogging.clear_global_context()```
+_ = FlextUtilitiesLogging.clear_global_context()
+```
+
 ## Checklist
 
 - Check `FlextSettings.fetch_global()` returns expected values.

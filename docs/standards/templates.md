@@ -20,7 +20,9 @@ def run_case(value: str) -> p.Result[str]:
 
 
 assert run_case("ok").success
-assert run_case("").failure```
+assert run_case("").failure
+```
+
 ## Template: Runtime Example
 
 ```python
@@ -30,4 +32,5 @@ container = FlextContainer()
 _ = container.bind("template", "active")
 
 result = container.resolve("template")
-assert result.success```
+assert result.success
+```

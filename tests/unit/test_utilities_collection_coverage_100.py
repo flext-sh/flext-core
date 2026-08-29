@@ -17,6 +17,50 @@ if TYPE_CHECKING:
     from tests.typings import t
 
 
+def _double(value: int) -> int:
+    return value * 2
+
+
+def _increment(value: int) -> int:
+    return value + 1
+
+
+def _times_ten(value: int) -> int:
+    return value * 10
+
+
+def _equals_two(value: int) -> bool:
+    return value == 2
+
+
+def _equals_four(value: int) -> bool:
+    return value == 4
+
+
+def _is_even(value: int) -> bool:
+    return value % 2 == 0
+
+
+def _is_odd(value: int) -> bool:
+    return value % 2 != 0
+
+
+def _greater_than_one(value: int) -> bool:
+    return value > 1
+
+
+def _greater_than_two(value: int) -> bool:
+    return value > 2
+
+
+def _greater_than_ten(value: int) -> bool:
+    return value > 10
+
+
+def _upper(value: str) -> str:
+    return value.upper()
+
+
 class TestsFlextCoreUtilitiesCollection:
     """Behavior contract for u.map / u.find / u.filter / u.count / u.process / u.merge_mappings."""
 
@@ -53,9 +97,9 @@ class TestsFlextCoreUtilitiesCollection:
     @pytest.mark.parametrize(
         ("items", "mapper", "expected"),
         [
-            ([1, 2, 3], lambda x: x * 2, [2, 4, 6]),
-            ((1, 2), lambda x: x + 1, (2, 3)),
-            ({"a": 1, "b": 2}, lambda x: x * 10, {"a": 10, "b": 20}),
+            ([1, 2, 3], _double, [2, 4, 6]),
+            ((1, 2), _increment, (2, 3)),
+            ({"a": 1, "b": 2}, _times_ten, {"a": 10, "b": 20}),
         ],
     )
     def test_map_applies_function_to_each_element(
@@ -71,9 +115,9 @@ class TestsFlextCoreUtilitiesCollection:
     @pytest.mark.parametrize(
         ("items", "predicate", "expected", "expect_found"),
         [
-            ([1, 2, 3], lambda x: x == 2, 2, True),
-            ({"a": 1, "b": 4}, lambda x: x == 4, 4, True),
-            ([1, 3, 5], lambda x: x == 2, None, False),
+            ([1, 2, 3], _equals_two, 2, True),
+            ({"a": 1, "b": 4}, _equals_four, 4, True),
+            ([1, 3, 5], _equals_two, None, False),
         ],
     )
     def test_find_returns_matching_element_or_failure(
@@ -104,12 +148,12 @@ class TestsFlextCoreUtilitiesCollection:
     @pytest.mark.parametrize(
         ("items", "predicate", "mapper", "expected"),
         [
-            ([1, 2, 3, 4], lambda x: x % 2 == 0, None, [2, 4]),
-            ([1, 2, 3, 4], lambda x: x > 2, lambda x: x * 2, [6, 8]),
-            ({"a": 1, "b": 2, "c": 3}, lambda v: v % 2 != 0, None, {"a": 1, "c": 3}),
-            ({"a": 1, "b": 4}, lambda v: v > 2, lambda v: v * 2, {"b": 8}),
-            ([1, 3, 5], lambda x: x > 10, None, []),
-            ([2, 4, 6], lambda x: x % 2 == 0, None, [2, 4, 6]),
+            ([1, 2, 3, 4], _is_even, None, [2, 4]),
+            ([1, 2, 3, 4], _greater_than_two, _double, [6, 8]),
+            ({"a": 1, "b": 2, "c": 3}, _is_odd, None, {"a": 1, "c": 3}),
+            ({"a": 1, "b": 4}, _greater_than_two, _double, {"b": 8}),
+            ([1, 3, 5], _greater_than_ten, None, []),
+            ([2, 4, 6], _is_even, None, [2, 4, 6]),
         ],
     )
     def test_filter_keeps_matching_and_optionally_maps(
@@ -125,7 +169,7 @@ class TestsFlextCoreUtilitiesCollection:
 
     @pytest.mark.parametrize(
         ("items", "predicate", "expected"),
-        [([1, 2, 3, 4], None, 4), ([1, 2, 3, 4], lambda x: x % 2 == 0, 2)],
+        [([1, 2, 3, 4], None, 4), ([1, 2, 3, 4], _is_even, 2)],
     )
     def test_count_returns_total_or_matching(
         self,
@@ -140,10 +184,10 @@ class TestsFlextCoreUtilitiesCollection:
     @pytest.mark.parametrize(
         ("items", "processor", "predicate", "expected"),
         [
-            ([1, 2, 3], lambda x: x * 2, None, [2, 4, 6]),
-            ([1, 2, 3], lambda x: x * 2, lambda x: x > 1, [4, 6]),
-            (["a", "b", "c"], lambda x: x.upper(), None, ["A", "B", "C"]),
-            ([], lambda x: x * 2, None, []),
+            ([1, 2, 3], _double, None, [2, 4, 6]),
+            ([1, 2, 3], _double, _greater_than_one, [4, 6]),
+            (["a", "b", "c"], _upper, None, ["A", "B", "C"]),
+            ([], _double, None, []),
         ],
     )
     def test_process_applies_processor_with_optional_predicate(

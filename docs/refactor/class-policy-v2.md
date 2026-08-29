@@ -12,7 +12,9 @@
 ## Declaracao de Regras v2
 
 - Arquivos: `class-policy-v2.yml` e `class-policy-v2.schema.json`
-- Campos principais: `project_kind`, `facade_family`, `module_family`, `source_symbol`, `target_facade_class`, `target_namespace_path`, `expected_base_chain`, `forbidden_targets`, `confidence`, `pre_checks`, `post_checks`, `rewrite_scope`
+- Campos principais: `project_kind`, `facade_family`, `module_family`, `source_symbol`, `target_facade_class`,
+  `target_namespace_path`, `expected_base_chain`, `forbidden_targets`, `confidence`, `pre_checks`, `post_checks`,
+  `rewrite_scope`
 - `confidence`: escala `0.0` a `1.0`
 - `pre_checks` e `post_checks`: lista de objetos com `type` e `params`
 

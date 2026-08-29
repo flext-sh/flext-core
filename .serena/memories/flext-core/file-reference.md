@@ -2,7 +2,7 @@
 
 **File Structure**:
 
-```
+```text
 src/flext_core/
 ├── result.py           # r[T] Railway carrier
 ├── container.py        # FlextContainer DI singleton

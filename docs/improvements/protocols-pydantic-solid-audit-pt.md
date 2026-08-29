@@ -2,12 +2,14 @@
 
 ## Contexto
 
-Este documento identifica _bad patterns_ observados no uso de `Protocol` e na integração com Pydantic no projeto, seguido de práticas recomendadas (“Pydantic way” + princípios SOLID).
+Este documento identifica _bad patterns_ observados no uso de `Protocol` e na integração com Pydantic no projeto,
+seguido de práticas recomendadas (“Pydantic way” + princípios SOLID).
 
 ## Bad patterns identificados
 
 1. **Dependência de APIs internas/privadas para metaclass de Protocol + Pydantic**
-   - `typing._ProtocolMeta` e `pydantic._internal._model_construction.ModelMetaclass` são imports internos e frágeis a mudanças de versão.
+   - `typing._ProtocolMeta` e `pydantic._internal._model_construction.ModelMetaclass` são imports internos e frágeis a
+     mudanças de versão.
    - Risco: quebra silenciosa em upgrades de Python/Pydantic.
 
 2. **Detecção e validação manual de Protocol por introspecção frágil**
@@ -27,7 +29,8 @@ Este documento identifica _bad patterns_ observados no uso de `Protocol` e na in
 
 ### 1) Protocols mínimos por caso de uso (ISP/DIP)
 
-- Criar contratos menores para recursos opcionais de configuração (ex.: `RetryConfig`, `RateLimitConfig`, `CircuitBreakerConfig`), em vez de depender de `getattr`.
+- Criar contratos menores para recursos opcionais de configuração (ex.: `RetryConfig`, `RateLimitConfig`,
+  `CircuitBreakerConfig`), em vez de depender de `getattr`.
 - Cada componente depende apenas do protocolo necessário.
 
 ### 2) Preferir tipos públicos e estáveis
@@ -37,8 +40,10 @@ Este documento identifica _bad patterns_ observados no uso de `Protocol` e na in
 
 ### 3) Pydantic way: validação explícita nas bordas
 
-- Trocar campos `object + SkipValidation` por modelos discriminados (`Union` com `discriminator`) quando houver conjunto conhecido de tipos.
-- Quando realmente dinâmico, validar no momento do registro (`model_validator`) e persistir metadados tipados (ex.: tipo, capacidades, versão).
+- Trocar campos `object + SkipValidation` por modelos discriminados (`Union` com `discriminator`) quando houver conjunto
+  conhecido de tipos.
+- Quando realmente dinâmico, validar no momento do registro (`model_validator`) e persistir metadados tipados (ex.:
+  tipo, capacidades, versão).
 
 ### 4) Evitar “protocol detection” heurístico
 

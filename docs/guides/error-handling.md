@@ -30,7 +30,9 @@ def parse_port(raw: str) -> p.Result[int]:
 
 
 assert parse_port("8080").success
-assert parse_port("bad").failure```
+assert parse_port("bad").failure
+```
+
 ## Recovery Pattern
 
 ```python
@@ -39,7 +41,9 @@ from flext_core import r
 default_port = 80
 result = r[int].fail("missing_value").recover(lambda _err: default_port)
 assert result.success
-assert result.value == default_port```
+assert result.value == default_port
+```
+
 ## Error Mapping Pattern
 
 ```python
@@ -47,4 +51,5 @@ from flext_core import r
 
 mapped = r[str].fail("not_found").map_error(lambda msg: f"domain_error:{msg}")
 assert mapped.failure
-assert mapped.error == "domain_error:not_found"```
+assert mapped.error == "domain_error:not_found"
+```
