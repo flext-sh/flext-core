@@ -78,17 +78,8 @@ jobs:
         # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
         run: CI=Y make setup
 
-      - name: gen (blocking)
-        # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
-        run: CI=Y make gen WHAT=apply APPLY=Y
-
-      - name: fmt (blocking)
-        # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
-        run: CI=Y make fmt WHAT=apply APPLY=Y
-
-      - name: fix (blocking)
-        # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
-        run: CI=Y make fix WHAT=apply APPLY=Y
+      - name: gen check (blocking)
+        run: CI=Y make gen WHAT=check
 
       - name: check (blocking)
         # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
@@ -112,21 +103,19 @@ jobs:
           set -eu
           # Structured reports only — same allowlist as Upload reports (no raw
           # pytest/tool logs: those may carry connection strings / env secrets).
-          report_roots=()
-          for candidate in .reports apps; do
-            if [ -e "$candidate" ]; then report_roots+=("$candidate"); fi
+          for report_root in .reports apps; do
+            if [ -d "$report_root" ]; then
+              find "$report_root" \
+                \( -path '*/junit.xml' -o -path '*/coverage.xml' -o -path '*/coverage.json' \) \
+                -type f -exec sh -eu -c '
+                  for report_file do
+                    printf "::group::%s\n" "$report_file"
+                    tail -n 200 "$report_file"
+                    printf "::endgroup::\n"
+                  done
+                ' sh {} +
+            fi
           done
-          if [ "${#report_roots[@]}" -gt 0 ]; then
-            report_list="$(mktemp "${RUNNER_TEMP:?}/flext-ci-reports.XXXXXX")"
-            find "${report_roots[@]}" \
-              \( -path '*/junit.xml' -o -path '*/coverage.xml' -o -path '*/coverage.json' \) \
-              -type f -print0 >"$report_list"
-            while IFS= read -r -d '' f; do
-              echo "::group::$f"
-              tail -n 200 "$f"
-              echo "::endgroup::"
-            done <"$report_list"
-          fi
       - name: Upload reports on failure
         if: ${{ failure() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2

@@ -161,7 +161,7 @@ extra_checks = true
 follow_imports = "normal"
 ignore_missing_imports = true
 local_partial_types = true
-mypy_path = ["src", "."]
+mypy_path = ["src", ".", "scripts"]
 namespace_packages = true
 no_implicit_reexport = true
 plugins = ["pydantic.mypy"]
@@ -209,7 +209,7 @@ project-includes = [
   "tests/**/*.py*",
 ]
 python-version = "3.13"
-search-path = ["src", "."]
+search-path = ["src", ".", "scripts"]
 use-ignore-files = false
 
 [tool.pyrefly.errors]
@@ -624,9 +624,6 @@ django-stubs = "2026-08-13T00:00:00Z"
 mkdocstrings-python = "2026-08-18T00:00:00Z"
 mypy = "2026-08-15T03:04:00Z"
 types-setuptools = "2026-08-13T00:00:00Z"
-
-[tool.uv.workspace]
-members = []
 
 [tool.vulture]
 exclude = ["*/_protocols/*"]
