@@ -13,6 +13,10 @@ exclude-newer-span = "P7D"
 
 [options.exclude-newer-package]
 mypy = "2026-08-15T03:04:00Z"
+cryptography = false
+django-stubs = "2026-08-13T00:00:00Z"
+mkdocstrings-python = "2026-08-18T00:00:00Z"
+types-setuptools = "2026-08-13T00:00:00Z"
 
 [manifest]
 excludes = [
@@ -260,11 +264,11 @@ filecache = [
 
 [[package]]
 name = "cachetools"
-version = "7.1.7"
+version = "6.2.6"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/70/d2/47e8bc06fe2a06d3f5bdf20f1126ab66c4e99dc48d940e7ba873f7ac7131/cachetools-7.1.7.tar.gz", hash = "sha256:a3e2a00b14d8f8a6b70c1dae7b4685e7ad3bc965c5b42124a2d6ce895da6cf50", size = 40680, upload-time = "2026-08-01T21:20:40.434Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/39/91/d9ae9a66b01102a18cd16db0cf4cd54187ffe10f0865cc80071a4104fbb3/cachetools-6.2.6.tar.gz", hash = "sha256:16c33e1f276b9a9c0b49ab5782d901e3ad3de0dd6da9bf9bcd29ac5672f2f9e6", size = 32363, upload-time = "2026-01-27T20:32:59.956Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e4/d8/767faeda872075724b95dd675466a645f1b92aadcdcf2d1429dcfd76c176/cachetools-7.1.7-py3-none-any.whl", hash = "sha256:ef98ef375ad188819ef2f9b3645e3987f4b8c5b7550e436ad998c2de78296df0", size = 16830, upload-time = "2026-08-01T21:20:38.977Z" },
+    { url = "https://files.pythonhosted.org/packages/90/45/f458fa2c388e79dd9d8b9b0c99f1d31b568f27388f2fdba7bb66bbc0c6ed/cachetools-6.2.6-py3-none-any.whl", hash = "sha256:8c9717235b3c651603fff0076db52d6acbfd1b338b8ed50256092f7ce9c85bda", size = 11668, upload-time = "2026-01-27T20:32:58.527Z" },
 ]
 
 [[package]]
@@ -729,7 +733,7 @@ dependencies = [
 
 [[package]]
 name = "flext-core"
-version = "0.12.0rc1"
+version = "0.12.0rc0"
 source = { editable = "." }
 dependencies = [
     { name = "beartype" },
@@ -778,6 +782,7 @@ dev = [
     { name = "libcst" },
     { name = "matplotlib-stubs" },
     { name = "mkdocs" },
+    { name = "mkdocs-autorefs" },
     { name = "mkdocs-awesome-pages-plugin" },
     { name = "mkdocs-encryptcontent-plugin" },
     { name = "mkdocs-exclude" },
@@ -849,7 +854,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "beartype", specifier = ">=0.22.9,<0.23" },
-    { name = "cachetools", specifier = ">=6.2,<8.0" },
+    { name = "cachetools", specifier = ">=6.2,<7.0" },
     { name = "dependency-injector", specifier = ">=4.49.0" },
     { name = "docker", specifier = ">=7.1.0" },
     { name = "limits", specifier = ">=5.8.0" },
@@ -891,29 +896,30 @@ dev = [
     { name = "isort", specifier = ">=6.0.1" },
     { name = "libcst", specifier = ">=1.8.6" },
     { name = "matplotlib-stubs", specifier = ">=0.3" },
-    { name = "mkdocs", specifier = ">=1.6" },
+    { name = "mkdocs", specifier = ">=1.6.1" },
+    { name = "mkdocs-autorefs", specifier = ">=1.4.4" },
     { name = "mkdocs-awesome-pages-plugin", specifier = ">=2.9" },
     { name = "mkdocs-encryptcontent-plugin", specifier = ">=2" },
     { name = "mkdocs-exclude", specifier = ">=1.0.2" },
     { name = "mkdocs-get-deps", specifier = ">=0.2" },
-    { name = "mkdocs-git-revision-date-localized-plugin", specifier = ">=1.2" },
+    { name = "mkdocs-git-revision-date-localized-plugin", specifier = ">=1.5.3" },
     { name = "mkdocs-literate-nav", specifier = ">=0.6" },
     { name = "mkdocs-macros-plugin", specifier = ">=1" },
-    { name = "mkdocs-material", specifier = ">=9.5" },
+    { name = "mkdocs-material", specifier = ">=9.7.7" },
     { name = "mkdocs-material-extensions", specifier = ">=1.3.1" },
-    { name = "mkdocs-mermaid2-plugin", specifier = ">=1.1" },
-    { name = "mkdocs-minify-plugin", specifier = ">=0.7" },
+    { name = "mkdocs-mermaid2-plugin", specifier = ">=1.2.3" },
+    { name = "mkdocs-minify-plugin", specifier = ">=0.8.0" },
     { name = "mkdocs-print-site-plugin", specifier = ">=0.8" },
-    { name = "mkdocs-redirects", specifier = ">=1.2" },
+    { name = "mkdocs-redirects", specifier = ">=1.2.3" },
     { name = "mkdocs-section-index", specifier = ">=0.3.12" },
     { name = "mkdocs-versioning", specifier = ">=0.2" },
-    { name = "mkdocstrings", specifier = ">=0.24" },
-    { name = "mkdocstrings-python", specifier = ">=1.7" },
-    { name = "mypy", specifier = ">=2.3.1" },
+    { name = "mkdocstrings", specifier = ">=1.0.6" },
+    { name = "mkdocstrings-python", specifier = ">=2.0.5" },
+    { name = "mypy", specifier = ">=2.3.0" },
     { name = "pip-audit", specifier = ">=2.7.3" },
     { name = "pre-commit", specifier = ">=4.6.1" },
     { name = "pylint", specifier = ">=3.3" },
-    { name = "pyrefly", specifier = ">=1.1.1" },
+    { name = "pyrefly", specifier = ">=1.2.0" },
     { name = "pyright", specifier = ">=1.1.411" },
     { name = "pytest", specifier = ">=9.0.3" },
     { name = "pytest-benchmark", specifier = ">=5.1" },
