@@ -92,7 +92,9 @@ def _private_attr[PrivateT](
 
 @overload
 def _private_attr[PrivateT](
-    *, default_factory: Callable[[], PrivateT], init: Literal[False] = False
+    *,
+    default_factory: Callable[[], PrivateT],
+    init: Literal[False] = False,
 ) -> PrivateT: ...
 
 
@@ -112,7 +114,11 @@ def _private_attr[PrivateT](
 ) -> PrivateT:
     """Typed FLEXT facade for ``pydantic.PrivateAttr``."""
     private_attr_factory: Callable[..., PrivateT] = PydanticPrivateAttr
-    return private_attr_factory(default, default_factory=default_factory, init=init)
+    return private_attr_factory(
+        default,
+        default_factory=default_factory,
+        init=init,
+    )
 
 
 class FlextModelsPydantic:

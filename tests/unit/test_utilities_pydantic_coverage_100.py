@@ -131,8 +131,21 @@ class TestsFlextUtilitiesPydantic:
         ]
         assert resolved.settings_overrides == {"dry_run": True}
 
-    def test_private_attr_factories_preserve_pydantic_instance_semantics(self) -> None:
+    def test_private_attr_factories_preserve_pydantic_instance_semantics(
+        self,
+    ) -> None:
         first = _PrivateAttrContract(label="first")
         second = _PrivateAttrContract(label="second")
+
+        first._model_values.append("model")
+        first._utility_values.append("utility")
+
+        assert first._model_values == ["model"]
+        assert second._model_values == []
+        assert first._utility_values == ["utility"]
+        assert second._utility_values == []
+        assert first._label_copy == "first"
+        assert second._label_copy == "second"
+        assert first._reader is input
+        assert second._reader is input
         assert first.model_dump() == {"label": "first"}
-        assert second.model_dump() == {"label": "second"}
