@@ -30,7 +30,9 @@ ok = validate_username("alice")
 ko = validate_username("")
 
 assert ok.success
-assert ko.failure```
+assert ko.failure
+```
+
 ## Test Container Registration
 
 ```python
@@ -41,13 +43,17 @@ _ = container.bind("service", "ready")
 
 resolved = container.resolve("service")
 assert resolved.success
-assert resolved.value == "ready"```
+assert resolved.value == "ready"
+```
+
 ## Reuse Official Example Tests
 
 ```python
 from examples.ex_11_flext_service import ExampleService
 
-ExampleService.run()```
+ExampleService.run()
+```
+
 ## Recommended Strategy
 
 - Prefer public behavior assertions (`success`, `failure`, `value`, `error`).

@@ -8,7 +8,7 @@ repos:
       # with the invoking environment, so a caller that already exported
       # CI=Y would otherwise reach the pre-push steps and
       # revoke exactly the gates a push must not skip (9b604d43: lint, format,
-      # pyrefly; mro-v4p5: pytest). Declaring the token closes that carrier.
+      # pyrefly; flext-v4p5: pytest). Declaring the token closes that carrier.
       # pre-commit is the fast mutation pass and runs the CI gate set
       # (CI=Y). pre-push is the local blocking gate and runs
       # the full set with CI=N, the local arm of the same
@@ -21,7 +21,7 @@ repos:
       # reads the member's temporary index and reports governed gitlinks missing.
       # WHAT/MAKEFLAGS/APPLY are cleared in the same prefix so caller selectors
       # and write intent cannot leak into an independently declared hook step.
-      # A step declaring gates_skip (mro-ucxgl) narrows CHECK_GATES for the hook
+      # A step declaring gates_skip (flext-ucxgl) narrows CHECK_GATES for the hook
       # context only: local `make check` and the `docs` verb keep the full set.
       # Stage gates (operator law 2026-08-24): each stage renders only when its
       # config gate (make.pre_commit / make.pre_push) is enabled. Disabled by

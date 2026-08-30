@@ -25,7 +25,9 @@ class AuditModel(m.BaseModel):
 
 model = AuditModel(value=1)
 data = model.model_dump()
-assert data["value"] == 1```
+assert data["value"] == 1
+```
+
 ## Check: ConfigDict usage
 
 ```python
@@ -39,7 +41,9 @@ class AuditSettings(m.BaseModel):
     debug: bool = False
 
 
-assert AuditSettings(debug=True).debug is True```
+assert AuditSettings(debug=True).debug is True
+```
+
 ## Check: examples-backed settings flow
 
 ```python
@@ -50,4 +54,5 @@ from examples.ex_02_flext_settings import Ex02FlextSettings
 
 stream = io.StringIO()
 with redirect_stdout(stream):
-    Ex02FlextSettings("docs/improvements/pydantic-v2-audit.md").exercise()```
+    Ex02FlextSettings("docs/improvements/pydantic-v2-audit.md").exercise()
+```

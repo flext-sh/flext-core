@@ -80,7 +80,11 @@ class FlextHandlers[MessageT_contra, ResultT](
                 for name in dir(target_class)
                 if hasattr(method := getattr(target_class, name, None), c.HANDLER_ATTR)
             ]
-            return sorted(handlers, key=lambda x: x[1].priority, reverse=True)
+
+            def _priority(entry: tuple[str, p.DecoratorConfig]) -> int:
+                return entry[1].priority
+
+            return sorted(handlers, key=_priority, reverse=True)
 
         @staticmethod
         def scan_module(
@@ -135,7 +139,13 @@ class FlextHandlers[MessageT_contra, ResultT](
 
                 setattr(narrowed_func, c.HANDLER_ATTR, settings)
                 handlers.append((name, narrowed_func, settings))
-            return sorted(handlers, key=lambda x: (-x[2].priority, x[0]))
+
+            def _priority_then_name(
+                entry: tuple[str, Callable[..., t.Scalar | None], p.DecoratorConfig],
+            ) -> tuple[int, str]:
+                return (-entry[2].priority, entry[0])
+
+            return sorted(handlers, key=_priority_then_name)
 
 
 __all__: list[str] = ["FlextHandlers"]

@@ -25,6 +25,7 @@ from __future__ import annotations
 import inspect
 import os
 from collections.abc import Callable
+from importlib.resources.abc import Traversable
 from pathlib import Path
 from threading import RLock
 from typing import Any, ClassVar, Self, cast, override
@@ -113,7 +114,7 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
         return data
 
     @override
-    def _read_file(self, file_path: Path) -> dict[str, JsonValue]:
+    def _read_file(self, file_path: Path | Traversable) -> dict[str, JsonValue]:
         """Parse one YAML config file exactly once with strict mapping keys."""
         with file_path.open(encoding=self.yaml_file_encoding) as yaml_file:
             loader = _UniqueKeySafeLoader(yaml_file)

@@ -25,7 +25,9 @@ def normalize(value: str) -> p.Result[str]:
 
 
 assert normalize(" x ").success
-assert normalize("").failure```
+assert normalize("").failure
+```
+
 ## examples-backed sanity
 
 ```python
@@ -36,4 +38,5 @@ from examples.ex_03_flext_logger import Ex03FlextLogger
 
 stream = io.StringIO()
 with redirect_stdout(stream):
-    Ex03FlextLogger().run()```
+    Ex03FlextLogger().run()
+```

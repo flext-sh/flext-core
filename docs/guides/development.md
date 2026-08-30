@@ -28,7 +28,9 @@ def normalize_email(email: str) -> p.Result[str]:
 
 result = r[str].ok(" USER@EXAMPLE.COM ").flat_map(normalize_email)
 assert result.success
-assert result.value == "user@example.com"```
+assert result.value == "user@example.com"
+```
+
 ## 2. Configure Runtime Settings
 
 ```python
@@ -36,7 +38,9 @@ from flext_core import FlextSettings
 
 settings = FlextSettings.fetch_global(overrides={"debug": True, "log_level": "DEBUG"})
 assert settings.debug is True
-assert settings.log_level == "DEBUG"```
+assert settings.log_level == "DEBUG"
+```
+
 ## 3. Wire Services Through Container
 
 ```python
@@ -46,7 +50,9 @@ container = FlextContainer()
 _ = container.factory("logger", lambda: u.fetch_logger(__name__))
 logger_result = container.resolve("logger")
 
-assert logger_result.success```
+assert logger_result.success
+```
+
 ## 4. Validate Against Examples
 
 ```python
@@ -62,4 +68,5 @@ with redirect_stdout(stream):
 
 stream = io.StringIO()
 with redirect_stdout(stream):
-    Ex12RegistryDsl("docs/guides/development.md").exercise()```
+    Ex12RegistryDsl("docs/guides/development.md").exercise()
+```

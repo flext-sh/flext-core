@@ -42,14 +42,18 @@ with redirect_stdout(stream):
         time.sleep(0.01)
     assert "application_started" in stream.getvalue()
 
-_ = FlextUtilitiesLogging.unbind_global_context("service", "environment")```
+_ = FlextUtilitiesLogging.unbind_global_context("service", "environment")
+```
+
 Use `unbind_global_context` when you want to remove selected keys, or `clear_global_context` when you want a full reset.
 
 ```python
 from flext_core import FlextUtilitiesLogging
 
 _ = FlextUtilitiesLogging.bind_global_context(trace_id="trace-001")
-_ = FlextUtilitiesLogging.clear_global_context()```
+_ = FlextUtilitiesLogging.clear_global_context()
+```
+
 ## Scoped Context
 
 Use `bind_context` to attach context to a logical scope (for example, a request id).
@@ -75,7 +79,9 @@ with redirect_stdout(stream):
         time.sleep(0.01)
     assert "request_started" in stream.getvalue()
 
-_ = FlextUtilitiesLogging.clear_scope(scope)```
+_ = FlextUtilitiesLogging.clear_scope(scope)
+```
+
 `clear_scope` removes context associated with that scope.
 
 ## Context Binding
@@ -103,7 +109,9 @@ with redirect_stdout(stream):
         time.sleep(0.01)
     assert "info_message" in stream.getvalue()
 
-_ = FlextUtilitiesLogging.clear_global_context()```
+_ = FlextUtilitiesLogging.clear_global_context()
+```
+
 ## Request Handler Pattern
 
 The typical flow is: bind request context, log, then clear scope in `finally`.
@@ -139,7 +147,9 @@ def handle_request(request_id: str, user_id: str) -> None:
         _ = FlextUtilitiesLogging.clear_scope(scope)
 
 
-handle_request("req-99", "u-10")```
+handle_request("req-99", "u-10")
+```
+
 ## Best Practices
 
 - Use global context for stable metadata (service, environment, version).

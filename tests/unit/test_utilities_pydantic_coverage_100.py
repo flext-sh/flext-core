@@ -83,7 +83,7 @@ class TestsFlextUtilitiesPydantic:
         assert payload_jsonable == payload_dict
 
     def test_validate_call_rejects_invalid_argument_values(self) -> None:
-        @u.validate_call()
+        @u.validate_call
         def double_positive(value: t.PositiveInt) -> int:
             doubled: int = value * 2
             return doubled
@@ -101,7 +101,7 @@ class TestsFlextUtilitiesPydantic:
             })
         )
 
-        @u.validate_call()
+        @u.validate_call
         def build_runtime_options(
             options: m.RuntimeBootstrapOptions,
             override_subproject: str,

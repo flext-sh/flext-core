@@ -106,8 +106,11 @@ class TestsFlextCoreBeartypeEngine(TestsFlextBeartypeEngine):
         def _fn(_self: p.AttributeProbe) -> int:
             return 0
 
+        def _cls_fn(_cls: type) -> int:
+            return 0
+
         static_value: p.AttributeProbe = staticmethod(_fn)
-        class_value: p.AttributeProbe = classmethod(lambda _cls: 0)
+        class_value: p.AttributeProbe = classmethod(_cls_fn)
         property_value: p.AttributeProbe = property(_fn)
 
         assert be.attr_accept_constants("as_static", static_value) is False

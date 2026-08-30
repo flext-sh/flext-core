@@ -21,7 +21,9 @@ def ping(value: str) -> p.Result[str]:
 
 
 assert ping("ok").success
-assert ping("").failure```
+assert ping("").failure
+```
+
 ## Step 2: Container basics
 
 ```python
@@ -31,7 +33,9 @@ container = FlextContainer()
 _ = container.bind("app", "flext")
 app = container.resolve("app")
 assert app.success
-assert app.value == "flext"```
+assert app.value == "flext"
+```
+
 ## Step 3: Dispatcher example
 
 ```python
@@ -39,4 +43,5 @@ from examples.ex_04_flext_dispatcher import Ex04DispatchDsl
 
 result = Ex04DispatchDsl.run()
 assert result.success
-assert result.value == "pong:dispatcher-example"```
+assert result.value == "pong:dispatcher-example"
+```
