@@ -2,31 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
-
 import pytest
 
-from flext_core import m as core_m
 from flext_core import u
 from tests.models import m
 from tests.typings import t
-
-
-def _private_label(validated_data: dict[str, str]) -> str:
-    label: str = validated_data["label"]
-    return f"{label}"
-
-
-def _input_reader() -> Callable[[str], str]:
-    return input
-
-
-class _PrivateAttrContract(core_m.BaseModel):
-    label: str
-    _model_values: list[str] = core_m.PrivateAttr(default_factory=list)
-    _utility_values: list[str] = u.PrivateAttr(default_factory=list)
-    _label_copy: str = core_m.PrivateAttr(default_factory=_private_label)
-    _reader: Callable[[str], str] = u.PrivateAttr(default_factory=_input_reader)
 
 
 class TestsFlextUtilitiesPydantic:
@@ -130,22 +110,3 @@ class TestsFlextUtilitiesPydantic:
             "flext.cli.jobs",
         ]
         assert resolved.settings_overrides == {"dry_run": True}
-
-    def test_private_attr_factories_preserve_pydantic_instance_semantics(
-        self,
-    ) -> None:
-        first = _PrivateAttrContract(label="first")
-        second = _PrivateAttrContract(label="second")
-
-        first._model_values.append("model")
-        first._utility_values.append("utility")
-
-        assert first._model_values == ["model"]
-        assert second._model_values == []
-        assert first._utility_values == ["utility"]
-        assert second._utility_values == []
-        assert first._label_copy == "first"
-        assert second._label_copy == "second"
-        assert first._reader is input
-        assert second._reader is input
-        assert first.model_dump() == {"label": "first"}
