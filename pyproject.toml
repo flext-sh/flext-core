@@ -37,7 +37,7 @@ dependencies = [
   "python-on-whales>=0.81.0",
   "pyyaml>=6.0.3",
   "rope>=1.14.0",
-  "structlog>=26.1.0",
+  "structlog>=25.5.0",
   "tomlkit>=0.15.1",
   "wrapt>=2.3.0",
 ]
@@ -597,6 +597,7 @@ in_place = true
 sort_first = ["build-system", "dependency-groups", "project", "tool"]
 
 [tool.uv]
+environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 exclude-newer = "7 days"
 link-mode = "copy"
 
@@ -620,10 +621,6 @@ name = "flext-cli"
 
 [tool.uv.exclude-newer-package]
 cryptography = false
-django-stubs = "2026-08-13T00:00:00Z"
-mkdocstrings-python = "2026-08-18T00:00:00Z"
-mypy = "2026-08-15T03:04:00Z"
-types-setuptools = "2026-08-13T00:00:00Z"
 
 [tool.vulture]
 exclude = ["*/_protocols/*"]
@@ -686,7 +683,7 @@ dev = [
   "pip-audit>=2.10.1",
   "pre-commit>=4.6.1",
   "pylint>=4.0.7",
-  "pyrefly>=1.2.0",
+  "pyrefly>=1.1.1",
   "pyright>=1.1.411",
   "pytest>=9.0.3",
   "pytest-benchmark>=5.2.3",
