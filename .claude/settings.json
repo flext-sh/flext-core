@@ -1,4 +1,54 @@
 {
+  "enabledPlugins": {
+    "flext@flext": true
+  },
+  "extraKnownMarketplaces": {
+    "flext": {
+      "source": {
+        "path": "..",
+        "source": "directory"
+      }
+    }
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "python3 /home/marlonsc/flext/flext-core/.claude/aihub-hooks/claude-sessionstart.py",
+            "statusMessage": "Applying synchronized governance",
+            "timeout": 10,
+            "type": "command"
+          }
+        ],
+        "matcher": "startup|resume|clear|compact"
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "command": "python3 /home/marlonsc/flext/flext-core/.claude/aihub-hooks/claude-subagentstart.py",
+            "statusMessage": "Applying synchronized governance",
+            "timeout": 10,
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "command": "python3 /home/marlonsc/flext/flext-core/.claude/aihub-hooks/claude-userpromptsubmit.py",
+            "statusMessage": "Applying synchronized governance",
+            "timeout": 10,
+            "type": "command"
+          }
+        ]
+      }
+    ]
+  },
   "permissions": {
     "deny": [
       "Bash(git push --force:*)",
@@ -9,16 +59,5 @@
       "Bash(rm -rf:*)",
       "Bash(rm -fr:*)"
     ]
-  },
-  "extraKnownMarketplaces": {
-    "flext": {
-      "source": {
-        "source": "directory",
-        "path": ".."
-      }
-    }
-  },
-  "enabledPlugins": {
-    "flext@flext": true
   }
 }
