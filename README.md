@@ -36,7 +36,7 @@ Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture
 Read
 [`/flext/AGENTS.md`](https://github.com/flext-sh/flext/blob/0.12.0-dev/AGENTS.md)
 §9 — Agent Execution Pre-requisites — for the canonical pre-change checklist
-(parent MRO chain, Scope bootstrap, skill loading, zero-debt baseline,
+(parent FLEXT chain, Scope bootstrap, skill loading, zero-debt baseline,
 slot registry verification).
 
 ## Operation Flow
@@ -50,9 +50,9 @@ slot registry verification).
 
 ## Integration Points
 
-- Parent MRO chain: read this project's `pyproject.toml` `dependencies` array
-  filtered by `flext-*`. The MRO cascade is encoded in the inheritance lists of
-  the facade classes listed under Module Map above.
+- Parent FLEXT chain: read this project's `pyproject.toml` `dependencies` array
+  filtered by `flext-*`. The FLEXT cascade is encoded in the inheritance lists
+  of the facade classes listed under Module Map above.
 - Public extensions exposed by this project: `FlextConfig`, `FlextConstants`,
   `FlextContainer`, `FlextContext`, `FlextDecorators`, `FlextDispatcher` (+14
   more).
@@ -64,7 +64,7 @@ Canonical `make` verbs (`check`, `test`, `fmt WHAT=apply APPLY=Y`, `val`,
 `docs`) — see
 [`/flext/AGENTS.md`](https://github.com/flext-sh/flext/blob/0.12.0-dev/AGENTS.md)
 `Build & Test` and `Required Python quality gates`; selector routing is owned
-universally by the agents_home `make-check` skill.
+universally by `config.AiHub.paths.agents_home`/`skills/make-check/SKILL.md`.
 
 ## Governance Pointer
 

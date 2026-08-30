@@ -40,7 +40,7 @@ real docstrings.
 Read
 [`/flext/AGENTS.md`](https://github.com/flext-sh/flext/blob/0.12.0-dev/AGENTS.md)
 §9 — Agent Execution Pre-requisites — for the canonical pre-change checklist
-(parent MRO chain, Scope bootstrap, skill loading, zero-debt baseline,
+(parent FLEXT chain, Scope bootstrap, skill loading, zero-debt baseline,
 slot registry verification).
 
 ## Quality Gates
@@ -49,7 +49,7 @@ Canonical `make` verbs (`check`, `test`, `fmt WHAT=apply APPLY=Y`, `val`,
 `docs`) — see
 [`/flext/AGENTS.md`](https://github.com/flext-sh/flext/blob/0.12.0-dev/AGENTS.md)
 `Build & Test` and `Required Python quality gates`; selector routing is owned
-universally by the agents_home `make-check` skill.
+universally by `config.AiHub.paths.agents_home`/`skills/make-check/SKILL.md`.
 
 ## Governance Pointer
 
