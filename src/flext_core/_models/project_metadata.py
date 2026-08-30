@@ -10,11 +10,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Annotated, ClassVar
+from pathlib import Path, PurePosixPath, PureWindowsPath
+from typing import Annotated, ClassVar, Self
 
-from pydantic import AliasChoices, Field
+from pydantic import AliasChoices, Field, field_validator, model_validator
 
+from flext_core._constants.regex import FlextConstantsRegex as cr
 from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._typings.base import FlextTypingBase as t
 
@@ -85,6 +86,60 @@ class _ProjectMetadataFields:
             str | None, Field(default=None, description="Explicit class stem override")
         ] = None
 
+    class ProjectToolFlextReadmeSection(_ProjectMetadataContract):
+        """One ordered project README section declaration."""
+
+        id: Annotated[
+            str,
+            Field(
+                pattern=cr.PATTERN_IDENTIFIER_LOWERCASE,
+                description="Stable project README section identifier",
+            ),
+        ]
+        title: Annotated[
+            str,
+            Field(min_length=1, description="Project README section heading"),
+        ]
+        content: Annotated[
+            str | None,
+            Field(default=None, min_length=1, description="Inline Markdown content"),
+        ] = None
+        include: Annotated[
+            PurePosixPath | None,
+            Field(
+                default=None,
+                description="Portable repository-relative Markdown include path",
+            ),
+        ] = None
+
+        @field_validator("include", mode="before")
+        @classmethod
+        def _validate_include_path(cls, value: object) -> object:
+            if value is None or not isinstance(value, (str, PurePosixPath)):
+                return value
+            rendered = str(value)
+            path = PurePosixPath(rendered)
+            windows_path = PureWindowsPath(rendered)
+            if (
+                not rendered
+                or "\\\\" in rendered
+                or path.is_absolute()
+                or bool(windows_path.drive)
+                or any(part in {"", ".", ".."} for part in rendered.split("/"))
+            ):
+                msg = (
+                    "README include path must be a portable repository-relative path"
+                )
+                raise ValueError(msg)
+            return path
+
+        @model_validator(mode="after")
+        def _validate_content_source(self) -> Self:
+            if (self.content is None) == (self.include is None):
+                msg = "README section must declare exactly one of content or include"
+                raise ValueError(msg)
+            return self
+
     class ProjectToolFlextDocs(_ProjectMetadataContract):
         """``[tool.flext.docs]`` contract."""
 
@@ -103,6 +158,18 @@ class _ProjectMetadataFields:
             t.StrTuple,
             Field(default=(), description="Documentation exclusion patterns"),
         ] = ()
+        readme_sections: Annotated[
+            tuple[_ProjectMetadataFields.ProjectToolFlextReadmeSection, ...],
+            Field(default=(), description="Ordered project README sections"),
+        ] = ()
+
+        @model_validator(mode="after")
+        def _validate_readme_section_ids(self) -> Self:
+            section_ids = tuple(section.id for section in self.readme_sections)
+            if len(section_ids) != len(set(section_ids)):
+                msg = "project README section identifiers must be unique"
+                raise ValueError(msg)
+            return self
 
     class ProjectToolFlextWorkspace(_ProjectMetadataContract):
         """``[tool.flext.workspace]`` contract."""
