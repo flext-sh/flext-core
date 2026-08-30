@@ -86,6 +86,7 @@ def _field[DefaultT](
 def _private_attr[PrivateT](
     default: PrivateT | PydanticUndefinedType = PydanticUndefined,
     *,
+    default_factory: Callable[..., PrivateT] | None = None,
     init: Literal[False] = False,
 ) -> PrivateT: ...
 
