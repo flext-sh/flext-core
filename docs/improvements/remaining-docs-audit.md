@@ -15,7 +15,8 @@ ______________________________________________________________________
 
 ## Key Findings
 
-- Several secondary guides still mention `FlextDispatcher` in verification snippets and import blocks even though the application layer now exposes `FlextDispatcher` only.
+- Several secondary guides still mention `FlextDispatcher` in verification snippets and import blocks even though the
+  application layer now exposes `FlextDispatcher` only.
 - `FlextProcessors` appears in a few checklists but the module is not present in `src/flext_core`.
 - Import blocks are otherwise lean and map to current symbols.
 

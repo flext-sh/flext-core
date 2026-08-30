@@ -27,7 +27,9 @@ def ensure_non_empty(value: str) -> p.Result[str]:
 
 
 assert ensure_non_empty("ok").success
-assert ensure_non_empty("").failure```
+assert ensure_non_empty("").failure
+```
+
 ## Example: Runtime wiring
 
 ```python
@@ -38,4 +40,5 @@ settings = FlextSettings.fetch_global()
 _ = container.bind("settings", settings)
 
 resolved = container.resolve("settings")
-assert resolved.success```
+assert resolved.success
+```

@@ -30,7 +30,7 @@ class FlextModelsContextExport:
         data: Annotated[
             t.MappingKV[str, t.JsonPayload],
             Field(
-                default_factory=lambda: MappingProxyType({}),
+                default_factory=lambda: MappingProxyType[str, t.JsonPayload]({}),
                 description="All context data from all scopes",
             ),
         ]
@@ -52,7 +52,7 @@ class FlextModelsContextExport:
                 )
             ),
             Field(
-                default_factory=lambda: MappingProxyType({}),
+                default_factory=lambda: MappingProxyType[str, t.JsonValue]({}),
                 description="Usage statistics (operation counts, timing info)",
             ),
         ]

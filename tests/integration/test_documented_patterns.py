@@ -24,16 +24,20 @@ _INCREMENTED_VALUE = 4
 _RECOVERED_VALUE = 99
 
 
+def _increment(value: int) -> int:
+    return value + 1
+
+
+def _triple(value: int) -> int:
+    return value * 3
+
+
 class TestsFlextCoreDocumentedPatterns:
     """Public-contract behavior of the documented result/exception/decorator DSL."""
 
     @pytest.mark.parametrize(
         ("seed", "transform", "expected"),
-        [
-            (1, lambda value: value + 1, 2),
-            (10, lambda value: value * 3, 30),
-            (-5, abs, 5),
-        ],
+        [(1, _increment, 2), (10, _triple, 30), (-5, abs, 5)],
     )
     def test_map_transforms_success_value(
         self, seed: int, transform: Callable[[int], int], expected: int

@@ -28,7 +28,9 @@ def divide(a: float, b: float) -> p.Result[float]:
 
 
 assert divide(10, 2).success
-assert divide(10, 0).failure```
+assert divide(10, 0).failure
+```
+
 ## Settings Basics
 
 ```python
@@ -37,7 +39,9 @@ from flext_core import FlextSettings
 settings = FlextSettings.fetch_global()
 snapshot = settings.model_dump()
 
-assert "log_level" in snapshot```
+assert "log_level" in snapshot
+```
+
 ## Container Basics
 
 ```python
@@ -48,7 +52,9 @@ _ = container.bind("project", "flext-core")
 
 resolved = container.resolve("project")
 assert resolved.success
-assert resolved.value == "flext-core"```
+assert resolved.value == "flext-core"
+```
+
 ## Dispatcher Walkthrough (Examples)
 
 ```python
@@ -56,7 +62,9 @@ from examples.ex_04_flext_dispatcher import Ex04DispatchDsl
 
 result = Ex04DispatchDsl.run()
 assert result.success
-assert result.value == "pong:dispatcher-example"```
+assert result.value == "pong:dispatcher-example"
+```
+
 ## Next Steps
 
 - Run additional examples in `examples/ex_*.py`.

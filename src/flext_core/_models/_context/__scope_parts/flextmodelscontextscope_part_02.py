@@ -37,7 +37,11 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
                 default_factory=lambda: MappingProxyType({}),
                 description="Lifecycle hooks keyed by event name",
             ),
-        ] = mp.Field(default_factory=lambda: MappingProxyType({}))
+        ] = mp.Field(
+            default_factory=lambda: MappingProxyType[
+                str, t.SequenceOf[t.ContextHookCallable]
+            ]({})
+        )
         statistics: Annotated[
             FlextModelsContextScopePart01.ContextStatistics,
             mp.Field(
@@ -66,7 +70,11 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
                 default_factory=lambda: MappingProxyType({}),
                 description="ContextVar registry keyed by scope name",
             ),
-        ] = mp.Field(default_factory=lambda: MappingProxyType({}))
+        ] = mp.Field(
+            default_factory=lambda: MappingProxyType[
+                str, contextvars.ContextVar[FlextModelsContainers.ConfigMap | None]
+            ]({})
+        )
 
         @classmethod
         def create_default(

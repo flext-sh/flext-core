@@ -7,7 +7,7 @@
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
 - Package: `flext_core`
-- Version: `0.12.0`
+- Version: `0.12.0rc0`
 - Description: Enterprise Foundation Framework - Modern Python 3.13 + Clean
   Architecture
 - Doc summary: Flext Core package.
@@ -25,7 +25,7 @@
   `FlextContext`, `FlextDecorators`, `FlextDispatcher`, `FlextExceptions`,
   `FlextHandlers`, `FlextLazy`, `FlextMixins` (+12 more)
 - Exported module shortcuts: _none_
-- Generated module pages: `18`
+- Generated module pages: `0`
 
 ## Next Pages
 

@@ -28,7 +28,9 @@ def validate_sku(sku: str) -> p.Result[str]:
 
 
 assert validate_sku("ABC").success
-assert validate_sku("A").failure```
+assert validate_sku("A").failure
+```
+
 ## Entity Command Flow
 
 ```python
@@ -52,7 +54,9 @@ def create_product(command: dict[str, str]) -> p.Result[dict[str, str]]:
 
 
 created = create_product({"sku": "SKU-123"})
-assert created.success```
+assert created.success
+```
+
 ## Use Maintainer DDD-Like Examples
 
 ```python
@@ -65,7 +69,9 @@ from examples.ex_12_flext_registry import Ex12RegistryDsl
 ExampleService.run()
 stream = io.StringIO()
 with redirect_stdout(stream):
-    Ex12RegistryDsl("docs/guides/domain-driven-design.md").exercise()```
+    Ex12RegistryDsl("docs/guides/domain-driven-design.md").exercise()
+```
+
 ## DDD Checklist
 
 - Keep domain validation deterministic.

@@ -110,5 +110,5 @@ python3 scripts/core/skill_validate.py --all
 
 For future automation work, do not introduce manual-only procedures. Ship scripts + skill + docs together in the same change.
 
-```
+```text
 ```

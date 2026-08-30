@@ -130,7 +130,7 @@ class FlextModelsCqrs:
                 title="Query Filters",
                 examples=[{"status": "active", "tenant": "acme"}],
             ),
-        ] = Field(default_factory=lambda: MappingProxyType({}))
+        ] = Field(default_factory=lambda: MappingProxyType[str, t.Scalar]({}))
         pagination: Annotated[
             _CqrsPagination,
             Field(
@@ -238,11 +238,11 @@ class FlextModelsCqrs:
         ] = Field(default_factory=lambda: _u().generate_prefixed_id("evt"))
         data: Annotated[
             t.MappingKV[str, t.Scalar], Field(description="Event payload data")
-        ] = Field(default_factory=lambda: MappingProxyType({}))
+        ] = Field(default_factory=lambda: MappingProxyType[str, t.Scalar]({}))
         metadata: Annotated[
             t.MappingKV[str, t.Scalar],
             Field(description="Event metadata (timestamps, correlation IDs, etc.)"),
-        ] = Field(default_factory=lambda: MappingProxyType({}))
+        ] = Field(default_factory=lambda: MappingProxyType[str, t.Scalar]({}))
 
     type FlextMessage = t.MessageUnion[Command, Query, Event]
 

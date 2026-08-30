@@ -105,7 +105,7 @@ class FlextModelsBase(FlextModelsBasePart01):
                 title="Attributes",
                 examples=[{"source": "api", "priority": "high"}],
             ),
-        ] = mp.Field(default_factory=lambda: MappingProxyType({}))
+        ] = mp.Field(default_factory=lambda: MappingProxyType[str, t.JsonValue]({}))
         metadata_value: Annotated[
             t.Scalar | None,
             mp.Field(default=None, description="Scalar metadata value."),

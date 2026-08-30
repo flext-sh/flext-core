@@ -18,7 +18,9 @@
 from flext_core import FlextSettings
 
 settings = FlextSettings.fetch_global()
-assert isinstance(settings.model_dump(), dict)```
+assert isinstance(settings.model_dump(), dict)
+```
+
 ## Examples-backed Reference
 
 ```python
@@ -29,4 +31,5 @@ from examples.ex_02_flext_settings import Ex02FlextSettings
 
 stream = io.StringIO()
 with redirect_stdout(stream):
-    Ex02FlextSettings("docs/standards/documentation.md").exercise()```
+    Ex02FlextSettings("docs/standards/documentation.md").exercise()
+```

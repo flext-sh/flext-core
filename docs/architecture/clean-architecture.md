@@ -25,7 +25,7 @@ describes the dependency rules and per-layer responsibilities.
 
 ## Layer Hierarchy
 
-```
+```text
 ┌─────────────────────────────────────┐
 │  L3: Application                    │  dispatcher.py, handlers.py, decorators.py
 │  (orchestration & middleware)       │  _dispatcher/reliability.py, _dispatcher/timeout.py
@@ -132,5 +132,5 @@ make type-check
 make test-fast
 ```
 
-```
+```text
 ```

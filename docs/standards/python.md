@@ -29,7 +29,9 @@ def parse_int(raw: str) -> p.Result[int]:
 
 
 assert parse_int("42").success
-assert parse_int("x").failure```
+assert parse_int("x").failure
+```
+
 ## Settings Contract Example
 
 ```python
@@ -38,7 +40,9 @@ from flext_core import FlextSettings
 settings = FlextSettings.fetch_global()
 snapshot = settings.model_dump()
 
-assert isinstance(snapshot, dict)```
+assert isinstance(snapshot, dict)
+```
+
 ## Container Contract Example
 
 ```python
@@ -49,4 +53,5 @@ _ = container.bind("name", "flext")
 
 resolved = container.resolve("name")
 assert resolved.success
-assert resolved.value == "flext"```
+assert resolved.value == "flext"
+```

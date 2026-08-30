@@ -28,7 +28,9 @@ class UserModel(m.BaseModel):
 
 
 user = UserModel(name="Alice", email="alice@example.com")
-assert user.name == "Alice"```
+assert user.name == "Alice"
+```
+
 ## ConfigDict + model_dump
 
 ```python
@@ -44,7 +46,9 @@ class SettingsModel(m.BaseModel):
 
 settings = SettingsModel(debug=True)
 data = settings.model_dump()
-assert data["debug"] is True```
+assert data["debug"] is True
+```
+
 ## field_validator
 
 ```python
@@ -68,7 +72,9 @@ class PortModel(m.BaseModel):
 
 
 valid = PortModel(port=8080)
-assert valid.port == 8080```
+assert valid.port == 8080
+```
+
 ## examples-backed sanity check
 
 ```python
@@ -79,4 +85,5 @@ from examples.ex_02_flext_settings import Ex02FlextSettings
 
 stream = io.StringIO()
 with redirect_stdout(stream):
-    Ex02FlextSettings("docs/guides/pydantic-v2-patterns.md").exercise()```
+    Ex02FlextSettings("docs/guides/pydantic-v2-patterns.md").exercise()
+```

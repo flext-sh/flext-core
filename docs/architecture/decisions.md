@@ -27,4 +27,5 @@ def to_int(raw: str) -> p.Result[int]:
 
 
 assert to_int("7").success
-assert to_int("bad").failure```
+assert to_int("bad").failure
+```

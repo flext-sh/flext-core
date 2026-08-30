@@ -40,7 +40,7 @@ class TestsFlextCleanModels:
                 metadata: Annotated[
                     t.StrMapping,
                     u.Field(
-                        default_factory=lambda: MappingProxyType({}),
+                        default_factory=lambda: MappingProxyType[str, str]({}),
                         description="Attribute map.",
                     ),
                 ]

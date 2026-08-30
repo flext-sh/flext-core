@@ -52,7 +52,9 @@ def validate_payload(payload: dict[str, str]) -> p.Result[dict[str, str]]:
 
 
 assert validate_payload({"email": "a@b.com"}).success
-assert validate_payload({}).failure```
+assert validate_payload({}).failure
+```
+
 ### Prefer Current Settings API
 
 ```python
@@ -61,7 +63,9 @@ from flext_core import FlextSettings
 settings = FlextSettings.fetch_global()
 data = settings.model_dump()
 
-assert isinstance(data, dict)```
+assert isinstance(data, dict)
+```
+
 ### Prefer Explicit Container Registration
 
 ```python
@@ -72,7 +76,9 @@ _ = container.bind("service", "ready")
 
 service = container.resolve("service")
 assert service.success
-assert service.value == "ready"```
+assert service.value == "ready"
+```
+
 ### Reuse Maintainer Examples
 
 ```python
@@ -87,4 +93,5 @@ with redirect_stdout(stream):
     Ex03FlextLogger().run()
 result = Ex04DispatchDsl.run()
 assert result.success
-assert result.value == "pong:dispatcher-example"```
+assert result.value == "pong:dispatcher-example"
+```
