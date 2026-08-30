@@ -17,10 +17,10 @@ from flext_core import (
     FlextConstants as c,
     FlextProtocols as p,
     FlextResult as r,
+    FlextRuntime,
     FlextTypes as t,
 )
 from flext_core._models.containers import FlextModelsContainers as mc
-from flext_core._runtime._metadata import FlextRuntimeMetadata
 
 from .collection_iter import FlextUtilitiesCollectionIter
 from .collection_merge import FlextUtilitiesCollectionMerge
@@ -44,7 +44,7 @@ class FlextUtilitiesCollection(
         for key, item in raw_source.items():
             if item is None:
                 continue
-            normalized[key] = FlextRuntimeMetadata.normalize_to_metadata(item)
+            normalized[key] = FlextRuntime.normalize_to_metadata(item)
         return normalized
 
     @staticmethod

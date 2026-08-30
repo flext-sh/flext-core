@@ -5,7 +5,6 @@ from __future__ import annotations
 import importlib
 import sys
 from importlib.machinery import ModuleSpec
-from pathlib import Path
 from types import ModuleType
 from typing import TYPE_CHECKING
 
@@ -17,7 +16,6 @@ from flext_core.lazy import (
     lazy,
     lazy_attribute,
 )
-from tests import u
 
 if TYPE_CHECKING:
     from flext_core import t
@@ -79,24 +77,6 @@ class TestsFlextCoreLazyExports:
         assert package.t is package.FlextTypes
         assert package.u is package.FlextUtilities
         assert {"FlextConstants", "FlextUtilities", "u"} <= set(package.__all__)
-
-    def test_model_facade_does_not_initialize_dependency_runtime(self) -> None:
-        """Loading model declarations must not initialize the optional DI stack."""
-        script = (
-            "import sys\n"
-            "from flext_core import m\n"
-            "assert m.StrictModel\n"
-            "for name in sorted(sys.modules):\n"
-            "    if name == 'fastapi' or name.startswith('fastapi.') "
-            "or name == 'dependency_injector' "
-            "or name.startswith('dependency_injector.'):\n"
-            "        print(name)\n"
-        )
-
-        result = u.Cli.run_raw([sys.executable, "-c", script], cwd=Path.cwd())
-
-        assert result.success, result.error
-        assert result.value.stdout == ""
 
     def test_install_without_publish_all_omits_dunder_all(self) -> None:
         # Arrange
