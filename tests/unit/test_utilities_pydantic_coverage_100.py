@@ -13,7 +13,8 @@ from tests.typings import t
 
 
 def _private_label(validated_data: dict[str, str]) -> str:
-    return validated_data["label"]
+    label: str = validated_data["label"]
+    return f"{label}"
 
 
 def _input_reader() -> Callable[[str], str]:
