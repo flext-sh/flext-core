@@ -3,6 +3,7 @@
 .beads/*
 !.beads/config.yaml
 !.beads/metadata.json
+!.beads/identity.toml
 
 # BLOCK: AI/Agent Local Data (NEVER track these)
 .claude/*
@@ -221,6 +222,7 @@ legado/
 
 # Beads ledger identity (workspace and standalone; see mro-9wv8)
 !.beads/metadata.json
+!.beads/identity.toml
 
 # codegen module-standardizer reject artifacts (ADR-005 §9)
 *.tpl.rej
@@ -231,6 +233,9 @@ legado/
 .venv
 .venv/
 .bin/
+/bin/*
+!/bin/mise
+!/bin/mise.cmd
 .tools/
 __pycache__/
 base.mk

@@ -37,7 +37,7 @@ dependencies = [
   "python-on-whales>=0.81.0",
   "pyyaml>=6.0.3",
   "rope>=1.14.0",
-  "structlog>=25.5.0",
+  "structlog>=26.1.0",
   "tomlkit>=0.15.1",
   "wrapt>=2.3.0",
 ]
@@ -357,41 +357,6 @@ reportUnusedVariable = "error"
 typeCheckingMode = "strict"
 
 [[tool.pyright.executionEnvironments]]
-extraPaths = ["src"]
-reportAssignmentType = "none"
-reportAttributeAccessIssue = "none"
-reportGeneralTypeIssues = "none"
-reportInvalidTypeForm = "none"
-reportPrivateImportUsage = "none"
-reportPrivateUsage = "error"
-reportReturnType = "none"
-reportUnknownArgumentType = "none"
-reportUnknownLambdaType = "none"
-reportUnknownMemberType = "none"
-reportUnknownParameterType = "none"
-reportUnknownVariableType = "none"
-reportUnusedImport = "none"
-root = "src"
-
-[[tool.pyright.executionEnvironments]]
-extraPaths = [".", "src"]
-reportArgumentType = "none"
-reportAssignmentType = "none"
-reportAttributeAccessIssue = "none"
-reportGeneralTypeIssues = "none"
-reportInvalidTypeForm = "none"
-reportPrivateImportUsage = "none"
-reportPrivateUsage = "none"
-reportReturnType = "none"
-reportUnknownArgumentType = "none"
-reportUnknownLambdaType = "none"
-reportUnknownMemberType = "none"
-reportUnknownParameterType = "none"
-reportUnknownVariableType = "none"
-reportUnusedImport = "none"
-root = "tests"
-
-[[tool.pyright.executionEnvironments]]
 extraPaths = [".", "src"]
 reportArgumentType = "none"
 reportAssignmentType = "none"
@@ -426,6 +391,41 @@ reportUnknownParameterType = "none"
 reportUnknownVariableType = "none"
 reportUnusedImport = "none"
 root = "scripts"
+
+[[tool.pyright.executionEnvironments]]
+extraPaths = ["src"]
+reportAssignmentType = "none"
+reportAttributeAccessIssue = "none"
+reportGeneralTypeIssues = "none"
+reportInvalidTypeForm = "none"
+reportPrivateImportUsage = "none"
+reportPrivateUsage = "error"
+reportReturnType = "none"
+reportUnknownArgumentType = "none"
+reportUnknownLambdaType = "none"
+reportUnknownMemberType = "none"
+reportUnknownParameterType = "none"
+reportUnknownVariableType = "none"
+reportUnusedImport = "none"
+root = "src"
+
+[[tool.pyright.executionEnvironments]]
+extraPaths = [".", "src"]
+reportArgumentType = "none"
+reportAssignmentType = "none"
+reportAttributeAccessIssue = "none"
+reportGeneralTypeIssues = "none"
+reportInvalidTypeForm = "none"
+reportPrivateImportUsage = "none"
+reportPrivateUsage = "none"
+reportReturnType = "none"
+reportUnknownArgumentType = "none"
+reportUnknownLambdaType = "none"
+reportUnknownMemberType = "none"
+reportUnknownParameterType = "none"
+reportUnknownVariableType = "none"
+reportUnusedImport = "none"
+root = "tests"
 
 # [MANAGED] pytest
 [tool.pytest.ini_options]
@@ -643,7 +643,7 @@ codegen = [
 dev = [
   "actionlint-py>=1.7.12.24",
   "autoflake>=2.4.0",
-  "bandit>=1.8",
+  "bandit>=1.9.4",
   "black>=26.5.1",
   "blacken-docs>=1.20.0",
   "codespell>=2.4.3",
@@ -679,13 +679,13 @@ dev = [
   "mkdocs-versioning>=0.4.0",
   "mkdocstrings>=1.0.6",
   "mkdocstrings-python>=2.0.7",
-  "mypy>=2.3.0",
+  "mypy>=2.3.1",
   "pip-audit>=2.10.1",
-  "pre-commit>=4.6.1",
+  "pre-commit>=4.6.2",
   "pylint>=4.0.7",
-  "pyrefly>=1.1.1",
+  "pyrefly>=1.2.0",
   "pyright>=1.1.411",
-  "pytest>=9.0.3",
+  "pytest>=9.1.1",
   "pytest-benchmark>=5.2.3",
   "pytest-clarity>=1.0.1",
   "pytest-codeblocks>=0.18.0",
@@ -702,8 +702,8 @@ dev = [
   "pyupgrade>=3.21.2",
   "radon>=6.0.1",
   "rope>=1.14.0",
-  "ruff>=0.15.12",
-  "rumdl>=0.2.45",
+  "ruff>=0.16.4",
+  "rumdl>=0.2.60",
   "types-cachetools>=7.0.0.20260713",
   "types-cffi>=2.0.0.20260518",
   "types-click>=7.1.8",
