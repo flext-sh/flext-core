@@ -37,7 +37,7 @@ dependencies = [
   "python-on-whales>=0.81.0",
   "pyyaml>=6.0.3",
   "rope>=1.14.0",
-  "structlog>=26.1.0",
+  "structlog>=25.5.0,<26",
   "tomlkit>=0.15.1",
   "wrapt>=2.3.0",
 ]
