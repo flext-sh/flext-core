@@ -19,7 +19,6 @@ name: ci-matrix
 # End SECTION: triggers
 
 
-
 # === SECTION: permissions (managed) ===
 # Source: template (minimal read-only permissions)
 permissions:
@@ -126,4 +125,4 @@ jobs:
       - name: Canonical check
         shell: bash
         run: CI=Y make check
-  # End SECTION: windows
+# End SECTION: windows
