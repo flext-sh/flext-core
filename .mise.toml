@@ -17,7 +17,7 @@ locked = true
 # Source: config:python_version, config:codegen.scaffold.project.dev native toolchain floors
 #         (kubectl_version, helm_version, kind_version, taplo_version, ast_grep_version,
 #          gitleaks_version, tokei_version, kubeconform_version, qlty_version,
-#          beads.selector, beads.version)
+#          beads (selector/version/prerelease), gascity (selector/version/prerelease))
 [tools]
 python = "3.13"
 uv = "0.12"
@@ -35,8 +35,12 @@ kubeconform = "0.8"
 "github:qltysh/qlty" = "0.642"
 # Go runtime for the Go projects in this workspace.
 go = "1.26"
-[tools."github:gastownhall/beads"]
-version = "1.2.2"
-prerelease = false
+[tools."github:marlon-costa-dc/beads"]
+version = "1.2.2-fd1"
+prerelease = true
+
+[tools."github:marlon-costa-dc/gascity"]
+version = "1.4.1-fc2"
+prerelease = true
 
 # End SECTION: tools

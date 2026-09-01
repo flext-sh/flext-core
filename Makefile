@@ -12,6 +12,18 @@
 SHELL := /bin/sh
 .DEFAULT_GOAL := help
 
+ifeq ($(filter command line override,$(origin GEN_INIT_ONLY)),)
+ifeq ($(filter gen,$(MAKECMDGOALS)),gen)
+ifeq ($(strip $(WHAT)),init)
+GEN_INIT_ONLY := Y
+# _dispatch re-invokes this Makefile through SELF_MAKE, and a derived (non
+# command-line) variable is not inherited by that sub-make, so the bypass would
+# silently switch off exactly where the recipes run.
+export GEN_INIT_ONLY
+endif
+endif
+endif
+
 # === SECTION: project identity (managed) ===
 # Source: config:dist / config:make_profile / config:workspace_root_rel / config:uv_link_mode
 PROJECT_NAME := flext-core
@@ -101,17 +113,6 @@ MISE_LOCK_PLATFORMS := linux-x64,linux-arm64,linux-x64-musl,linux-arm64-musl,mac
 MISE_LOCK_PROJECTS := .
 override export FLEXT_PYTEST_TARGET_RAW := tests
 WORKSPACE ?= $(PROJECT_ROOT)
-# make work targets a member checkout when PROJECT names a workspace member and
-# WORKSPACE was not overridden on the command line. PROJECT alone used to keep
-# WORKSPACE at the workspace root, so finish looked up lanes in the wrong git
-# primary and failed with "worktree branch is not registered".
-ifeq ($(filter command line override,$(origin WORKSPACE)),)
-ifneq ($(strip $(PROJECT)),)
-ifneq ($(filter $(PROJECT),$(WORKSPACE_MEMBERS)),)
-override WORKSPACE := $(PROJECT_ROOT)/$(PROJECT)
-endif
-endif
-endif
 # === SECTION: WORKSPACE_ROOT isolation (managed) ===
 # Source: computed (rule: derive from current checkout unless caller overrides)
 # Rule: WORKSPACE_ROOT is always derived from the current checkout unless the
@@ -120,8 +121,14 @@ endif
 # must never redirect verbs to another working tree. The git queries therefore
 # run inside MAKEFILE_ROOT: run from a foreign CWD they would report THAT
 # checkout's topology and redirect the verb to the wrong tree.
+# `gen WHAT=init` (GEN_INIT_ONLY) must probe NO external tool — the checkout may
+# have no git metadata yet.
+ifeq ($(GEN_INIT_ONLY),Y)
+WORKSPACE_ROOT := $(PROJECT_ROOT)
+else
 ifeq ($(filter command line override,$(origin WORKSPACE_ROOT)),)
 WORKSPACE_ROOT := $(shell cd "$(MAKEFILE_ROOT)" && root=$$(git rev-parse --show-superproject-working-tree 2>/dev/null); if [ -n "$$root" ]; then printf '%s\n' "$$root"; else git rev-parse --show-toplevel 2>/dev/null || printf '%s\n' "$(MAKEFILE_ROOT)"; fi)
+endif
 endif
 # End SECTION: WORKSPACE_ROOT isolation
 # A workspace lane is always registered at the workspace root. Other verbs may
@@ -130,7 +137,7 @@ endif
 ifneq ($(filter work,$(MAKECMDGOALS)),work)
 ifeq ($(filter command line override,$(origin WORKSPACE)),)
 ifneq ($(strip $(PROJECT)),)
-ifneq ($(filter $(PROJECT),$(WORKSPACE_MEMBERS)),)
+ifneq ($(filter $(PROJECT),$(WORKSPACE_SUBPROJECTS)),)
 override WORKSPACE := $(WORKSPACE_ROOT)/$(PROJECT)
 endif
 endif
@@ -159,7 +166,7 @@ _ALLOWED_WHATS_help := usage
 _ALLOWED_WHATS_setup := environment
 _ALLOWED_WHATS_deps := check lock upgrade
 _ALLOWED_WHATS_build := artifacts
-_ALLOWED_WHATS_check := all lint pyrefly mypy pyright security markdown smells
+_ALLOWED_WHATS_check := all lint pyrefly mypy pyright security markdown smells direnv
 _ALLOWED_WHATS_test := all cache-status cache-clear cache-checkpoint
 _ALLOWED_WHATS_fmt := check all apply
 _ALLOWED_WHATS_fix := check all apply
@@ -176,7 +183,7 @@ _ALLOWED_WHATS_help := usage $(patsubst _custom_help_%,%,$(filter _custom_help_%
 _ALLOWED_WHATS_setup := environment $(patsubst _custom_setup_%,%,$(filter _custom_setup_%,$(CUSTOM_DECLARED_TARGETS)))
 _ALLOWED_WHATS_deps := check lock upgrade $(patsubst _custom_deps_%,%,$(filter _custom_deps_%,$(CUSTOM_DECLARED_TARGETS)))
 _ALLOWED_WHATS_build := artifacts $(patsubst _custom_build_%,%,$(filter _custom_build_%,$(CUSTOM_DECLARED_TARGETS)))
-_ALLOWED_WHATS_check := all lint pyrefly mypy pyright security markdown smells $(patsubst _custom_check_%,%,$(filter _custom_check_%,$(CUSTOM_DECLARED_TARGETS)))
+_ALLOWED_WHATS_check := all lint pyrefly mypy pyright security markdown smells direnv $(patsubst _custom_check_%,%,$(filter _custom_check_%,$(CUSTOM_DECLARED_TARGETS)))
 _ALLOWED_WHATS_test := all cache-status cache-clear cache-checkpoint $(patsubst _custom_test_%,%,$(filter _custom_test_%,$(CUSTOM_DECLARED_TARGETS)))
 _ALLOWED_WHATS_fmt := check all apply $(patsubst _custom_fmt_%,%,$(filter _custom_fmt_%,$(CUSTOM_DECLARED_TARGETS)))
 _ALLOWED_WHATS_fix := check all apply $(patsubst _custom_fix_%,%,$(filter _custom_fix_%,$(CUSTOM_DECLARED_TARGETS)))
@@ -189,8 +196,8 @@ _ALLOWED_WHATS_release := status $(patsubst _custom_release_%,%,$(filter _custom
 _ALLOWED_WHATS_gen := check all apply init $(patsubst _custom_gen_%,%,$(filter _custom_gen_%,$(CUSTOM_DECLARED_TARGETS)))
 _ALLOWED_WHATS_mod := check all apply $(patsubst _custom_mod_%,%,$(filter _custom_mod_%,$(CUSTOM_DECLARED_TARGETS)))
 endif
-CHECK_GATES_ALLOWED := lint pyrefly mypy pyright security markdown smells
-CHECK_GATES_DEFAULT := lint pyrefly mypy pyright security markdown smells
+CHECK_GATES_ALLOWED := lint pyrefly mypy pyright security markdown smells direnv
+CHECK_GATES_DEFAULT := lint pyrefly mypy pyright security markdown smells direnv
  DOCS_ACTIONS := generate fix audit build validate
  # End SECTION: verb dispatch
 
@@ -345,7 +352,7 @@ _bootstrap_setup_tools:
 
 ifeq ($(MAKE_PROFILE),workspace)
 CODEGEN_SCOPE := all
-ALLOWED_PROJECTS := . $(WORKSPACE_MEMBERS)
+ALLOWED_PROJECTS := . $(WORKSPACE_SUBPROJECTS)
 else
 CODEGEN_SCOPE := self
 ALLOWED_PROJECTS := .
@@ -423,8 +430,11 @@ endif
 endif
 
 
+
+ifneq ($(GEN_INIT_ONLY),Y)
 -include custom.mk
-SELF_MAKE := $(MAKE) --no-print-directory -f "$(SELF_MAKEFILE)"
+endif
+SELF_MAKE := $(MAKE) --no-print-directory -f "$(SELF_MAKEFILE)" $(if $(filter Y,$(GEN_INIT_ONLY)),GEN_INIT_ONLY=Y)
 
 define _dispatch
 	@set -eu; \
@@ -498,13 +508,35 @@ endef
 
 # `setup` builds the environment it would otherwise require. `help` documents
 # how to build it, so demanding an interpreter to print that documentation
-# makes an unprovisioned checkout undiscoverable. Both still dispatch — they
-# only drop the prerequisite.
+# makes an unprovisioned checkout undiscoverable. `gen WHAT=init` scaffolds a
+# repository that has no environment yet — it is the verb that MAKES the tree
+# provisionable, so requiring a provisioned tree first is circular. All three
+# still dispatch; they only drop the prerequisite.
+# `gen WHAT=init` bootstraps a repository that may not even have an
+# environment, so it is excluded from the require-environment fan-out
+# outright, and its own target runs the init selector directly instead of
+# going through _dispatch (which re-enters make and re-parses everything the
+# init bypass exists to skip).
+ifeq ($(filter gen,$(PUBLIC_VERBS)),gen)
+$(filter-out setup gen,$(PUBLIC_VERBS)): _builtin_require_environment
+	$(call _dispatch,$@)
+
+# The hermetic bootstrap route for WHAT=init: run the init selector directly,
+# never through _dispatch (which re-enters make and re-parses every surface
+# the init bypass exists to skip). Any other WHAT dispatches normally.
+gen:
+ifeq ($(strip $(WHAT)),init)
+	@$(SELF_MAKE) _builtin_gen_init APPLY=$(APPLY)
+else
+	$(call _dispatch,$@)
+endif
+else
 $(filter-out setup help,$(PUBLIC_VERBS)): _builtin_require_environment
 	$(call _dispatch,$@)
 
 help:
 	$(call _dispatch,$@)
+endif
 
 # `setup` keeps its own recipe (it must not require the environment it is about
 # to build), but it still runs the pre-/post-setup lifecycle hooks so a project
@@ -755,10 +787,15 @@ _builtin_setup_submodules:
 	done
 
 _builtin_require_environment:
+# Documenting the interface (`make help`) must not require the interpreter it
+# tells the operator how to provision. Only `make help` with no other goal
+# skips the check; any combined goal still demands the environment.
+ifneq ($(MAKECMDGOALS),help)
 	@if [ ! -x "$(RUNTIME_PYTHON)" ]; then \
 		printf 'ERROR: missing environment interpreter %s; make setup creates it\n' "$(RUNTIME_PYTHON)" >&2; \
 		exit 2; \
 	fi
+endif
 
 # === SECTION: setup environment (managed) ===
 # Source: computed (MAKE_PROFILE routing) + operator contract (mro-e9j0.6 C7)
@@ -802,7 +839,7 @@ _builtin_deps_upgrade: _builtin_require_environment
 	set --; \
 	for project in $$selected; do set -- "$$@" --projects "$$project"; done; \
 	$(PROJECT_FLEXT_INFRA) deps modernize --workspace "$(PROJECT_ROOT)" \
-		--apply --rewrite-constraints --skip-check "$$@"
+		--apply $(if $(strip $(DEPENDENCY)),,--rewrite-constraints) --skip-check "$$@"
 	$(call _run_for_selected_projects,)
 
 
@@ -829,12 +866,13 @@ _builtin_check_all: _builtin_require_environment
 			if [ "$$gate" = "security" ]; then keep=1; fi; \
 			if [ "$$gate" = "markdown" ]; then keep=1; fi; \
 			if [ "$$gate" = "smells" ]; then keep=1; fi; \
+			if [ "$$gate" = "direnv" ]; then keep=1; fi; \
 			if [ "$$keep" -eq 1 ]; then \
 				if [ -n "$$filtered" ]; then filtered="$$filtered,$$gate"; else filtered="$$gate"; fi; \
 			fi; \
 		done; \
 		gates="$$filtered"; \
-		printf 'INFO: CI=Y runs check gates: lint pyright security markdown smells\n'; \
+		printf 'INFO: CI=Y runs check gates: lint pyright security markdown smells direnv\n'; \
 	fi; \
 	for gate in $$(printf '%s' "$$gates" | tr ',' ' '); do \
 		case " $(CHECK_GATES_ALLOWED) " in *" $$gate "*) ;; \
@@ -1103,6 +1141,11 @@ _builtin_gen_all:
 	$(call _mise_artifacts_check)
 
 _builtin_gen_apply: _builtin_gen_all
+
+# The read-only default selector: reports lane/primary state without mutating,
+# so `make work` with no WHAT is safe and needs no APPLY.
+_builtin_work_status:
+	@$(PROJECT_FLEXT_INFRA) workspace work --workspace "$(WORKSPACE)" --operation status --bead "$(BEAD)"
 
 _builtin_work_start:
 	$(call _require_apply)

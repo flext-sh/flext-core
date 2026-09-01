@@ -1,0 +1,347 @@
+{
+  "context": "project",
+  "destination": ".agents/skills",
+  "managed": {
+    "anti-hardcode": {
+      "activation": [
+        "project-generic"
+      ],
+      "adapter_version": 1,
+      "destination": "anti-hardcode",
+      "origin": "agents:skills",
+      "physical_digest": "e3ee83ffbf8471dbe91bf53926d6b12d4fb28105f929eb641aa06a5442f0b3c3",
+      "slug": "anti-hardcode",
+      "source_digest": "23a5dcb22b8f558f5abd0a8c1a50c74c535cde1420877305b448e673171440e8",
+      "source_type": "skill"
+    },
+    "architecture-documentation": {
+      "activation": [
+        "project-generic"
+      ],
+      "adapter_version": 1,
+      "destination": "architecture-documentation",
+      "origin": "agents:skills",
+      "physical_digest": "7e39bcee706b9cdefc84aa6c1f6692c3c6a04067da1164b24f7ca83997f3d8ea",
+      "slug": "architecture-documentation",
+      "source_digest": "7883a405a52ae226c975da3ff6731d32193cb25078cc32c2781bd1ad0aec12e8",
+      "source_type": "skill"
+    },
+    "backend-patterns": {
+      "activation": [
+        "project-generic"
+      ],
+      "adapter_version": 1,
+      "destination": "backend-patterns",
+      "origin": "agents:skills",
+      "physical_digest": "ade9094e4f711b3398e1f6888c2effa7fa56d93a7bd99da852e51777d72deeef",
+      "slug": "backend-patterns",
+      "source_digest": "9da0ea57cb66193ee3166ccea5518cdef9f58e628ecc7a8e9c4a68955778adf4",
+      "source_type": "skill"
+    },
+    "code-review-expert": {
+      "activation": [
+        "project-generic"
+      ],
+      "adapter_version": 1,
+      "destination": "code-review-expert",
+      "origin": "agents:skills",
+      "physical_digest": "494e11b27dac8fd90899a989873c08bff7691379f6b16f075a9c18777059d709",
+      "slug": "code-review-expert",
+      "source_digest": "571de64843e1bbe12effa63f647ee556f7132374152d9f6dda2ad1248c8562f9",
+      "source_type": "skill"
+    },
+    "config-schema-migration": {
+      "activation": [
+        "project-generic"
+      ],
+      "adapter_version": 1,
+      "destination": "config-schema-migration",
+      "origin": "agents:skills",
+      "physical_digest": "ed5b2cf62c2dd94c47c35c9c3a7d3fbe8de8973b7042906f85151e98d7546af7",
+      "slug": "config-schema-migration",
+      "source_digest": "08f27a3586eb93875c862aba1e4c0c2876280ca41d02bd54a6b5e064bc47be91",
+      "source_type": "skill"
+    },
+    "data-modeling-analysis": {
+      "activation": [
+        "project-generic"
+      ],
+      "adapter_version": 1,
+      "destination": "data-modeling-analysis",
+      "origin": "agents:skills",
+      "physical_digest": "060a3f329471c32d445a2e1f7c423ca3eed6427015d40d220bb2ae53aced2006",
+      "slug": "data-modeling-analysis",
+      "source_digest": "2ae48816a5ddb8b83e4186eebaa12e1fca0f044759a33fe234f08f6448b8368a",
+      "source_type": "skill"
+    },
+    "doc-drift": {
+      "activation": [
+        "project-generic"
+      ],
+      "adapter_version": 1,
+      "destination": "doc-drift",
+      "origin": "agents:skills",
+      "physical_digest": "daef590b6aaa86f2bd7a05cb8847dbf35fb4dd04d016e35fec6c4762b38f2ee5",
+      "slug": "doc-drift",
+      "source_digest": "1e005fd3df44c58b37d5f0c4fb370d1841abc22c8549ca92582bb10c6ec029cf",
+      "source_type": "skill"
+    },
+    "documentation-criteria": {
+      "activation": [
+        "project-generic"
+      ],
+      "adapter_version": 1,
+      "destination": "documentation-criteria",
+      "origin": "agents:skills",
+      "physical_digest": "f8c905f23a3cd79a5229985cf0b9b0db657ecb355dc5b2f7fdd7571567f6ba51",
+      "slug": "documentation-criteria",
+      "source_digest": "44a8525d91abea7d81b69ac79369c09ca6ba04cc931e494cc306031c4f23a167",
+      "source_type": "skill"
+    },
+    "dry": {
+      "activation": [
+        "project-generic"
+      ],
+      "adapter_version": 1,
+      "destination": "dry",
+      "origin": "agents:skills",
+      "physical_digest": "00e8fb49d12672c08095fff5d08ed091e9e35025da295e2afe55dce0807ad3ad",
+      "slug": "dry",
+      "source_digest": "b45550ea34ff370d3d8a01f7a4e7048e9722c2ec866372d58df8fba5c76a9acd",
+      "source_type": "skill"
+    },
+    "eval-harness": {
+      "activation": [
+        "project-generic"
+      ],
+      "adapter_version": 1,
+      "destination": "eval-harness",
+      "origin": "agents:skills",
+      "physical_digest": "8e0683d047365db0b30788c7718e9674795a92336af9d67509552927383cf4d8",
+      "slug": "eval-harness",
+      "source_digest": "4dacfffe15e36c247a8b4b79a5963dc3f1ea9711b313b7b2f10cf682b2031964",
+      "source_type": "skill"
+    },
+    "extermination-mode": {
+      "activation": [
+        "project-generic"
+      ],
+      "adapter_version": 1,
+      "destination": "extermination-mode",
+      "origin": "agents:skills",
+      "physical_digest": "c14a7c0dfba4d4dd4be2350c584fc3e413699e85dc7e69b8001d36326c7ee609",
+      "slug": "extermination-mode",
+      "source_digest": "6e26fa69f3f402ec6d4a7698ff328295e208556ad49d0eb242109bde91488411",
+      "source_type": "skill"
+    },
+    "fail-fast": {
+      "activation": [
+        "project-generic"
+      ],
+      "adapter_version": 1,
+      "destination": "fail-fast",
+      "origin": "agents:skills",
+      "physical_digest": "129004a0af9ba723b296c1a17d2e5521e74aea5f485d03d2628012e720577bcc",
+      "slug": "fail-fast",
+      "source_digest": "33b3361e9148dca6b7a1390f708cd63ef0a2a072e7825f7c7cecce597955dc3b",
+      "source_type": "skill"
+    },
+    "flext-development": {
+      "activation": [
+        "selected-tag:flext"
+      ],
+      "adapter_version": 1,
+      "destination": "flext-development",
+      "origin": "agents:skills",
+      "physical_digest": "dd8da66e2c6f006fa2cbf20f0266ae30aba53b234a36496dda7f3ce17d494c77",
+      "slug": "flext-development",
+      "source_digest": "f122834e2c7173a0e929d28e248150daa84f93b6cf344a7c143a080343dee6b7",
+      "source_type": "skill"
+    },
+    "implementation-plan-review": {
+      "activation": [
+        "project-generic"
+      ],
+      "adapter_version": 1,
+      "destination": "implementation-plan-review",
+      "origin": "agents:skills",
+      "physical_digest": "b6c95bc52f8ca1a407b6cb9fad4fc788a6dab50e998fbf80c107e15c0a570410",
+      "slug": "implementation-plan-review",
+      "source_digest": "6619c9cced7b254f6132e54176b1a705ada7e061f1ed5bee2747c76db47fc181",
+      "source_type": "skill"
+    },
+    "product-capability": {
+      "activation": [
+        "project-generic"
+      ],
+      "adapter_version": 1,
+      "destination": "product-capability",
+      "origin": "agents:skills",
+      "physical_digest": "b8b7e11f392eea7b99f903e110159de02331b36d7f353d9c4da4408d41453cec",
+      "slug": "product-capability",
+      "source_digest": "c2d1cdcfb17200509ce91b2584b0051d19de0ac8af57c1a67d554d7a45567b56",
+      "source_type": "skill"
+    },
+    "python-development": {
+      "activation": [
+        "marker:pyproject.toml",
+        "marker:uv.lock"
+      ],
+      "adapter_version": 1,
+      "destination": "python-development",
+      "origin": "agents:skills",
+      "physical_digest": "6261c625ac6bd71925b83b90a9ee00a10ceaf3c36cac86300a0358a4da041a0f",
+      "slug": "python-development",
+      "source_digest": "3008748035f1907778a9bb2b118e6aef1a3e6a284128ad577cafd91e512261cd",
+      "source_type": "skill"
+    },
+    "python-parallelization": {
+      "activation": [
+        "marker:pyproject.toml",
+        "marker:uv.lock"
+      ],
+      "adapter_version": 1,
+      "destination": "python-parallelization",
+      "origin": "agents:skills",
+      "physical_digest": "344c05242dee5401faca977a773b30b27fbe9405c7935b4d224c6d827928886d",
+      "slug": "python-parallelization",
+      "source_digest": "806841f04f741cb2eece45b12ca1ef255526508f520aaa538750d5e215483c44",
+      "source_type": "skill"
+    },
+    "rest-api-design": {
+      "activation": [
+        "project-generic"
+      ],
+      "adapter_version": 1,
+      "destination": "rest-api-design",
+      "origin": "agents:skills",
+      "physical_digest": "654f9d75871cebe4356629fe5e30b20101019cc0c35f00e3692da4710947eb5f",
+      "slug": "rest-api-design",
+      "source_digest": "f738bc66a3f4c57f82659930e868724c94f991972ae6f64a7a47646f8c00750a",
+      "source_type": "skill"
+    },
+    "search-first": {
+      "activation": [
+        "project-generic"
+      ],
+      "adapter_version": 1,
+      "destination": "search-first",
+      "origin": "agents:skills",
+      "physical_digest": "d2a5ee7eca1500fc9114bbd7fcaf90767fe508ac345baf14583a9507de242882",
+      "slug": "search-first",
+      "source_digest": "a7501d8bebf10cc11a942a8a949bf818eac6c3282f7e42f639bb4f34dfeb063c",
+      "source_type": "skill"
+    },
+    "security-review": {
+      "activation": [
+        "project-generic"
+      ],
+      "adapter_version": 1,
+      "destination": "security-review",
+      "origin": "agents:skills",
+      "physical_digest": "5e6c6f3f9ac5a7e6813bb0e94de64f87c994f0a5e13a4f47642f75f9de206cdb",
+      "slug": "security-review",
+      "source_digest": "81c7a2188d845b6e7fe52dce126d45b01b6526023d4612497915606b4717f977",
+      "source_type": "skill"
+    },
+    "simplify": {
+      "activation": [
+        "project-generic"
+      ],
+      "adapter_version": 1,
+      "destination": "simplify",
+      "origin": "agents:skills",
+      "physical_digest": "f0f4588a45566ac16ed2a66799bd96bc69582977270927768c488ed2a8dec1ce",
+      "slug": "simplify",
+      "source_digest": "e91e85903000bd3d8cb71101c657b6105f84af3a6b60bc74344ecb84425eed6c",
+      "source_type": "skill"
+    },
+    "solid": {
+      "activation": [
+        "project-generic"
+      ],
+      "adapter_version": 1,
+      "destination": "solid",
+      "origin": "agents:skills",
+      "physical_digest": "3ca47a46603808e5458c96c11a0c793794251a05447485fc463b7f511a136e66",
+      "slug": "solid",
+      "source_digest": "0fa657eda8f1e56b4fd43910a93fb6fba51b951ff29ab33e79bbe562941d8eff",
+      "source_type": "skill"
+    },
+    "ssot": {
+      "activation": [
+        "project-generic"
+      ],
+      "adapter_version": 1,
+      "destination": "ssot",
+      "origin": "agents:skills",
+      "physical_digest": "5146ea2876206f1c5e2e9847c345786e171177083a12f57f8c19f0a039448395",
+      "slug": "ssot",
+      "source_digest": "1ad89fbb07ba17eafe1c0771bfc273bcff5bbfe98fa39afe35ebdaebf69497b8",
+      "source_type": "skill"
+    },
+    "tdd-workflow": {
+      "activation": [
+        "project-generic"
+      ],
+      "adapter_version": 1,
+      "destination": "tdd-workflow",
+      "origin": "agents:skills",
+      "physical_digest": "11bcc701f1a8d93cb717912fac01438813cd1b284849da49226af71d20b3fff8",
+      "slug": "tdd-workflow",
+      "source_digest": "0852845e4ae5782621f2be83a4d26b8a84fb2f296935e4c449a32e6665a61ac8",
+      "source_type": "skill"
+    },
+    "technical-writing-style": {
+      "activation": [
+        "project-generic"
+      ],
+      "adapter_version": 1,
+      "destination": "technical-writing-style",
+      "origin": "agents:skills",
+      "physical_digest": "34d5102439695456b9f05c6acf30d3481d9d50c7accbac8a5f8bde7d060849f1",
+      "slug": "technical-writing-style",
+      "source_digest": "cd4fd9608338cbe829ce0ef702c6c0b988d08c8bd74213f7be3625fb9c458c5c",
+      "source_type": "skill"
+    },
+    "workspace-toolchain": {
+      "activation": [
+        "project-generic"
+      ],
+      "adapter_version": 1,
+      "destination": "workspace-toolchain",
+      "origin": "agents:skills",
+      "physical_digest": "736ed47106c409813af2a95f75d7f375d007114211e6ade5b815f65a6d181462",
+      "slug": "workspace-toolchain",
+      "source_digest": "de0031bb26152e56892e66e8fe9b9312136375c72e4cc0ad6fd4d7b0ff99e376",
+      "source_type": "skill"
+    },
+    "yagni": {
+      "activation": [
+        "project-generic"
+      ],
+      "adapter_version": 1,
+      "destination": "yagni",
+      "origin": "agents:skills",
+      "physical_digest": "1fa65c09b85b29141bf9e147141b3d78d0150e01b4f51da1d47c01b382da9ae2",
+      "slug": "yagni",
+      "source_digest": "85cdfd5fbfe64c032e0cca72a5d9c64d7713f3585ac2cda4b2d9567be9e0b9a9",
+      "source_type": "skill"
+    }
+  },
+  "owner": "agents-governance",
+  "project": ".",
+  "providers": [
+    "antigravity",
+    "codex"
+  ],
+  "selection": {
+    "agents": [],
+    "opt_ins": [],
+    "selected_tags": [
+      "flext"
+    ]
+  },
+  "surface": "skills",
+  "version": 5
+}

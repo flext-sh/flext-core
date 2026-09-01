@@ -1,0 +1,54 @@
+---
+description: ''
+globs: []
+alwaysApply: true
+---
+
+# Storage and scratch law
+
+This file owns universal storage placement. Project and skill documents point
+here and add only narrower local constraints.
+
+`config/storage.toml` is the sole writable owner of registered repositories. The
+typed storage owner derives its own manifest path from the physical checkout and
+derives the shell scratch root as the current platform home plus `tmp`. These
+canonical calculations are SSOT defaults, not fallback or required external
+inputs. Every resulting path is physical, canonical, and validated before the
+first effect.
+
+- `/tmp` is limited to small, bounded operating-system ephemera. Never place a
+  repository, worktree, virtual environment, persistent database, build cache,
+  checkpoint, backup, or report there.
+- `agentsctl doctor` and `agentsctl check` derive `config/storage.toml` from the
+  checkout, load the entire manifest, calculate shell scratch once, and reject
+  the first schema, expansion, symlink, Git-root, `/tmp`, overlap, registration,
+  or repository-residue defect.
+- The manifest contains no runner, retention, report, warning, GC, cache, retry,
+  or fallback configuration. Development subprocesses remain Make/tool owned and
+  propagate nonzero exits, timeouts, and signals through their native process API.
+- `agentsctl clean` validates the complete repository-owned generated-artifact
+  set before deletion. It never deletes unknown, dirty, symlinked, special-file,
+  database, provider-home, or external-repository content.
+- Missing, empty, conflicting, unexpanded, relative, or invalid genuinely
+  required external values and configured paths raise immediately. No
+  environment variable, setting, parameter, or argument repeats a derivable
+  canonical default; no failure selects home, XDG, shell, or `/tmp` as an alternate.
+- Preflight selects exactly one supported physical copy primitive for the
+  destination filesystem. Its failure raises; no alternate copy primitive is
+  attempted. Copies remain independent physical trees; symbolic links and
+  cross-repository references are prohibited.
+
+A repository-local `.venv` is a regenerable local runtime artifact, never a
+source, projection, backup, quarantine payload, or dependency shared between
+repositories. Links created internally by its environment manager are permitted
+only inside that exact `.venv` tree. The tree is never copied, archived,
+projected, or reused from another checkout; each physical repository reconstructs
+its own environment through the declared bootstrap owner.
+
+Canonical runtime surface:
+
+```text
+agentsctl doctor
+agentsctl check
+agentsctl clean
+```

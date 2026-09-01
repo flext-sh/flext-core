@@ -1,0 +1,4 @@
+interface:
+  display_name: "Extermination Mode"
+  short_description: "Atomic removal of superseded contracts"
+  default_prompt: "Use $extermination-mode to remove an approved obsolete contract and rewire its useful tests."
