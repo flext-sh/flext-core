@@ -1,0 +1,7 @@
+interface:
+  display_name: "Fail Fast"
+  short_description: "Eliminate silent failures and automatic failover"
+  brand_color: "#DC2626"
+  default_prompt: "Use $fail-fast to trace swallowed errors and remove false-success paths at their owner."
+policy:
+  allow_implicit_invocation: true

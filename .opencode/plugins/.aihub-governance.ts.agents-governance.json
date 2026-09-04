@@ -1,0 +1,51 @@
+{
+  "config": "aihub-governance.ts",
+  "context": "project",
+  "entries": {},
+  "events": {
+    "context_refresh": {
+      "clients": [
+        "local"
+      ],
+      "coverage": "exact",
+      "native": [
+        "experimental.session.compacting",
+        "experimental.chat.system.transform"
+      ],
+      "status": "SUPPORTED"
+    },
+    "prompt_submit": {
+      "clients": [
+        "local"
+      ],
+      "coverage": "equivalent",
+      "native": [
+        "experimental.chat.system.transform"
+      ],
+      "status": "SUPPORTED"
+    },
+    "session_start": {
+      "clients": [
+        "local"
+      ],
+      "coverage": "equivalent",
+      "native": [
+        "experimental.chat.system.transform"
+      ],
+      "status": "SUPPORTED"
+    },
+    "subagent_start": {
+      "reason": "UNSUPPORTED: OpenCode exposes no documented subagent lifecycle boundary",
+      "status": "UNSUPPORTED"
+    }
+  },
+  "managed": {
+    ".opencode/plugins/aihub-governance.ts": {
+      "digest": "0bdad6c10bdd6e8d5623224fd47adc0003e0d239ce3a51a546a18386ad7bc4eb",
+      "mode": "0644"
+    }
+  },
+  "owner": "agents-governance",
+  "provider": "opencode",
+  "version": 3
+}

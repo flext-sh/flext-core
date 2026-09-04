@@ -1,0 +1,7 @@
+interface:
+  display_name: "Simplify"
+  short_description: "Simplify every code unit during implementation"
+  brand_color: "#0F766E"
+  default_prompt: "Use $simplify inline while implementing complete, readable code without changing required behavior."
+policy:
+  allow_implicit_invocation: true

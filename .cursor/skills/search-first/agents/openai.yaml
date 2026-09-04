@@ -1,0 +1,7 @@
+interface:
+  display_name: "Search First"
+  short_description: "Research project owners before implementation"
+  brand_color: "#155E75"
+  default_prompt: "Use $search-first once, pass evidence through $yagni and relevant $solid boundaries, simplify inline, route only proven structural waste to $dry, recheck, and validate runtime."
+policy:
+  allow_implicit_invocation: true

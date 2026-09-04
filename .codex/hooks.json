@@ -1,0 +1,38 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "python3 /home/marlonsc/flext/flext-core/.codex/aihub-hooks/codex-sessionstart.py",
+            "statusMessage": "Applying synchronized governance",
+            "type": "command"
+          }
+        ],
+        "matcher": "startup|resume|clear|compact"
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "command": "python3 /home/marlonsc/flext/flext-core/.codex/aihub-hooks/codex-subagentstart.py",
+            "statusMessage": "Applying synchronized governance",
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "command": "python3 /home/marlonsc/flext/flext-core/.codex/aihub-hooks/codex-userpromptsubmit.py",
+            "statusMessage": "Applying synchronized governance",
+            "type": "command"
+          }
+        ]
+      }
+    ]
+  }
+}

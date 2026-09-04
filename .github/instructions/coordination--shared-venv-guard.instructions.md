@@ -1,0 +1,28 @@
+---
+applyTo: '**'
+---
+
+# Python environments are physical and checkout-local
+
+Use the repository's declared setup owner and interpreter. Each authorized
+checkout reconstructs its own physical environment.
+
+- Never borrow another checkout's environment through a symlink, path
+  dependency, `PYTHONPATH`, editable-install path, or cross-repository
+  reference.
+- A declared workspace may install its own members as editable path
+  dependencies; that is its setup owner, not borrowing. Every member then runs
+  the working tree of every sibling, so a sibling left on a feature branch
+  silently changes the toolchain of all of them and fails in a different
+  repository than the one that moved. Prove the checked-out branch of each
+  editable sibling before diagnosing a toolchain failure, and return a
+  generator checkout to its integration branch in the same turn that inspected
+  it.
+- Never replace or clear a real environment while another process may own it.
+- While orchestration is suspended, use only the environment already owned by
+  the existing authorized checkout; create no clone, worktree, or alternate
+  workspace.
+- Missing or stale environment state is red. Repair it through the repository's
+  canonical setup surface only when that mutation is authorized.
+
+See also: `strict-execution.md` (rule file) — aggregate parent policy.
