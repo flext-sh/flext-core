@@ -46,8 +46,8 @@ if TYPE_CHECKING:
     from .ex_08_container_registration import Ex08ContainerRegistration
     from .ex_08_container_scoped import Ex08ContainerScoped
     from .ex_08_flext_container import Ex08FlextContainer
-    from .ex_09_flext_decorators import Ex09FlextDecorators, msg, result
-    from .ex_10_flext_handlers import Ex10FlextHandlers
+    from .ex_09_flext_decorators import Ex09FlextDecorators
+    from .ex_10_flext_handlers import Ex10FlextHandlers, msg, result
     from .ex_11_flext_service import ExampleService
     from .ex_12_flext_registry import Ex12RegistryDsl
     from .ex_12_registry_flow import Ex12RegistryFlow
@@ -174,8 +174,8 @@ _LAZY_IMPORTS = MappingProxyType(
             ".ex_08_container_registration": ("Ex08ContainerRegistration",),
             ".ex_08_container_scoped": ("Ex08ContainerScoped",),
             ".ex_08_flext_container": ("Ex08FlextContainer",),
-            ".ex_09_flext_decorators": ("Ex09FlextDecorators", "msg", "result"),
-            ".ex_10_flext_handlers": ("Ex10FlextHandlers",),
+            ".ex_09_flext_decorators": ("Ex09FlextDecorators",),
+            ".ex_10_flext_handlers": ("Ex10FlextHandlers", "msg", "result"),
             ".ex_11_flext_service": ("ExampleService",),
             ".ex_12_flext_registry": ("Ex12RegistryDsl",),
             ".ex_12_registry_flow": ("Ex12RegistryFlow",),
