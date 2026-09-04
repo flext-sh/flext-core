@@ -27,23 +27,20 @@ __all__: tuple[str, ...] = (
     "__scope_parts",
 )
 
-install_lazy_exports(
-    __name__,
-    globals(),
-    MappingProxyType(
-        build_lazy_import_map(
-            MappingProxyType({
-                ".__scope_parts": ("__scope_parts",),
-                "._data": ("FlextModelsContextData",),
-                "._export": ("FlextModelsContextExport",),
-                "._metadata": ("FlextModelsContextMetadata",),
-                "._proxy_var": ("FlextModelsContextProxyVar",),
-                "._scope": ("FlextModelsContextScope",),
-                "._tokens": ("FlextModelsContextTokens",),
-            }),
-            alias_groups=MappingProxyType({}),
-            sort_keys=False,
-        )
-    ),
-    public_exports=__all__,
+_LAZY_IMPORTS = MappingProxyType(
+    build_lazy_import_map(
+        MappingProxyType({
+            ".__scope_parts": ("__scope_parts",),
+            "._data": ("FlextModelsContextData",),
+            "._export": ("FlextModelsContextExport",),
+            "._metadata": ("FlextModelsContextMetadata",),
+            "._proxy_var": ("FlextModelsContextProxyVar",),
+            "._scope": ("FlextModelsContextScope",),
+            "._tokens": ("FlextModelsContextTokens",),
+        }),
+        alias_groups=MappingProxyType({}),
+        sort_keys=False,
+    )
 )
+
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

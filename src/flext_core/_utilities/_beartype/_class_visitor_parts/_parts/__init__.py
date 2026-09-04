@@ -10,22 +10,26 @@ from types import MappingProxyType
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from . import class_visitor_part_02_01 as class_visitor_part_02_01
-    from . import class_visitor_part_02_02 as class_visitor_part_02_02
-__all__: tuple[str, ...] = ("class_visitor_part_02_01", "class_visitor_part_02_02")
-
-install_lazy_exports(
-    __name__,
-    globals(),
-    MappingProxyType(
-        build_lazy_import_map(
-            MappingProxyType({
-                ".class_visitor_part_02_01": ("class_visitor_part_02_01",),
-                ".class_visitor_part_02_02": ("class_visitor_part_02_02",),
-            }),
-            alias_groups=MappingProxyType({}),
-            sort_keys=False,
-        )
-    ),
-    public_exports=__all__,
+    from .class_visitor_part_02_01 import alias_first_violation
+    from .class_visitor_part_02_02 import redundant_inner_violation, self_ref_violation
+__all__: tuple[str, ...] = (
+    "alias_first_violation",
+    "redundant_inner_violation",
+    "self_ref_violation",
 )
+
+_LAZY_IMPORTS = MappingProxyType(
+    build_lazy_import_map(
+        MappingProxyType({
+            ".class_visitor_part_02_01": ("alias_first_violation",),
+            ".class_visitor_part_02_02": (
+                "redundant_inner_violation",
+                "self_ref_violation",
+            ),
+        }),
+        alias_groups=MappingProxyType({}),
+        sort_keys=False,
+    )
+)
+
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

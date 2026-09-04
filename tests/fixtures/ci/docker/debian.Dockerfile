@@ -13,12 +13,9 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # Source: template (distro-specific seed contract)
 # The seed is the whole host contract: curl fetches mise, git is what uv shells
 # out to for the flext-infra git+https requirement, make invokes the verbs.
-# libicu-dev is pulled in because tokei (cargo-backed) needs a Rust toolchain,
-# which in turn needs it — mise provisions Rust, so the native
-# ICU headers must be present at the system layer.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-       bash ca-certificates curl git make libicu-dev \
+       bash ca-certificates curl git make \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --create-home --shell /bin/bash runner
 # End SECTION: base packages

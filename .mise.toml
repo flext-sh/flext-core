@@ -16,8 +16,8 @@ locked = true
 # === SECTION: tools (managed) ===
 # Source: config:python_version, config:codegen.scaffold.project.dev native toolchain floors
 #         (kubectl_version, helm_version, kind_version, taplo_version, ast_grep_version,
-#          gitleaks_version, tokei_version, kubeconform_version, qlty_version,
-#          beads.selector, beads.version)
+#          gitleaks_version, scc_version, kubeconform_version, qlty_version,
+#          beads (selector/version/prerelease), gascity (selector/version/prerelease))
 [tools]
 python = "3.13"
 uv = "0.12"
@@ -25,18 +25,28 @@ uv = "0.12"
 kubectl = "1.32"
 helm = "3.19"
 kind = "0.31"
+direnv = "2.37"
 taplo = "0.10"
 ast-grep = "0.45"
 gitleaks = "8.30"
-tokei = "14.0"
+# scc (the loc-cap gate's code counter) ships no bare mise registry alias, so
+# pin the aqua backend explicitly (matching the qlty selector below). Its
+# aqua-registry entry carries an evergreen catch-all rule with real
+# per-platform release assets, so it never falls back to a source build,
+# which keeps the offline setup/gen/check/test path source-build-free.
+"aqua:boyter/scc" = "4.0"
 kubeconform = "0.8"
 # qlty ships no mise registry alias; the github backend selector is the only
 # resolvable form (bare 'qlty' fails mise install: 'not found in registry').
 "github:qltysh/qlty" = "0.642"
 # Go runtime for the Go projects in this workspace.
 go = "1.26"
-[tools."github:gastownhall/beads"]
-version = "1.2.2"
-prerelease = false
+[tools."github:marlon-costa-dc/beads"]
+version = "latest"
+prerelease = true
+
+[tools."github:marlon-costa-dc/gascity"]
+version = "latest"
+prerelease = true
 
 # End SECTION: tools
