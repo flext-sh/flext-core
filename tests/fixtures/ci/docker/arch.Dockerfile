@@ -13,11 +13,8 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # Source: template (distro-specific seed contract)
 # The seed is the whole host contract: curl fetches mise, git is what uv shells
 # out to for the flext-infra git+https requirement, make invokes the verbs.
-# icu is pulled in because tokei (cargo-backed) needs a Rust toolchain, which
-# in turn needs it — mise provisions Rust, so the native ICU
-# library must be present at the system layer.
 RUN pacman -Syu --noconfirm --needed \
-      bash ca-certificates curl git make icu \
+      bash ca-certificates curl git make \
     && pacman -Scc --noconfirm \
     && useradd --create-home --shell /bin/bash runner
 # End SECTION: base packages

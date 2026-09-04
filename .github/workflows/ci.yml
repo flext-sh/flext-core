@@ -43,9 +43,6 @@ jobs:
     timeout-minutes: 60
     env:
       CI: Y
-      # The credential helper installed below reads the token from the
-      # environment of every later step, so it is a job-level value.
-      GH_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
@@ -53,16 +50,34 @@ jobs:
           submodules: false
           fetch-depth: 0
 
-      # Codegen refreshes the declared provider baseline before comparison.
-      # actions/checkout deliberately does not persist credentials, so install
-      # the runner's scoped token through the GitHub CLI's Git credential owner.
-      - name: Configure GitHub authentication
-        run: gh auth setup-git
-
       - name: Install mise toolchain
-        uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14  # v4.2.3
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c  # v4.3.0
+
+
+      # Why: the official uv cache must never be reused across differently
+      # resolved projects — cache identity is owned ONLY by uv.lock. The uv
+      # version comes from the same toolchain SSOT that renders .mise.toml,
+      # keeping one version source for local (mise) and CI (setup-uv).
+      - name: Set up uv with lock-owned cache
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
         with:
-          version: 2026.8.14
+          version: 0.12
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+          cache-suffix: locked
+
+      # The direnv check gate runs a real `direnv exec` activation smoke. The
+      # preinstalled runner image has no direnv binary, so provision it here —
+      # the gate is intentional and its binary must exist wherever CI=Y make
+      # check runs. The smoke runs unattended, where no one can answer
+      # `direnv allow`, so allow the checkout's .envrc up front: `direnv allow
+      # <path>` computes and stores the same path-hash record an interactive
+      # allow writes. .envrc is tracked, so it exists right after checkout.
+      # This trusts only this repo's own generated file, on this runner only.
+      - name: Install direnv (check-gate dependency)
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq direnv
+          direnv allow "${{ github.workspace }}/.envrc"
       - name: Restore testmon cache
         id: testmon-restore
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4.3.0
@@ -78,15 +93,27 @@ jobs:
         # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
         run: CI=Y make setup
 
+      # `make setup` renders .envrc; direnv must re-allow it here because the
+      # unattended smoke cannot answer `direnv allow`. Any content change
+      # re-blocks, so the allow MUST run after every render — including this one.
+      - name: direnv allow (rendered .envrc)
+        run: direnv allow "${{ github.workspace }}/.envrc"
+
       - name: gen check (blocking)
         run: CI=Y make gen WHAT=check
+
+      # Setup installs the committed lock as-is (`uv sync --frozen`); a stale
+      # lock is a reviewed change through `make deps`, so CI proves it here
+      # instead of letting a runner rewrite it.
+      - name: deps check (blocking)
+        run: CI=Y make deps
 
       - name: check (blocking)
         # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
         run: CI=Y make check
 
       # Why (aihub-v01jg): CI=Y runs ONE HALF of the gate set
-      # (lint pyright security markdown smells); the complement
+      # (lint pyright security markdown smells direnv); the complement
       # (pyrefly mypy) is owned by
       # CI=N and, without this step, ran on developer
       # machines only. That split let real defects reach main twice: five
@@ -96,6 +123,10 @@ jobs:
       # hole rather than trusting everyone to run the other half by hand.
       - name: check complement (blocking)
         run: CI=N make check
+
+      - name: test (blocking)
+        # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
+        run: CI=Y make test
 
       - name: Dump reports on failure
         if: ${{ failure() }}
@@ -134,39 +165,68 @@ jobs:
           retention-days: 7
   # End SECTION: ci job
 
+  # === SECTION: release-plan job (managed) ===
+  # The release protocol's read-only decision on every pull request: the title
+  # must be a Conventional Commits title (it becomes the merge commit subject
+  # the next release is derived from), and no pyproject version may change
+  # outside the protocol's own release commit.
+  release-plan:
+    name: release-plan
+    permissions:
+      contents: read
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == false }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CI: Y
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          fetch-depth: 0
+          submodules: false
+      - name: Install mise toolchain
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c  # v4.3.0
+
+      - name: Boot
+        run: make setup
+      - name: Release plan and guard
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: make release WHAT=plan PR_TITLE="$PR_TITLE"
+  # End SECTION: release-plan job
+
   # === SECTION: merge-guard job (managed) ===
   merge-guard:
     name: merge-guard
-    # Reads only the event payload: no checkout, no API call, no token use.
-    permissions: {}
-    # Always run on PRs so a WIP/DRAFT source cannot slip past the skipped CI job.
-    if: ${{ github.event_name == 'pull_request' }}
+    permissions:
+      contents: read
+    # Draft is the typed WIP state: no repository Action is selected until the
+    # operator promotes the same PR to Review with a non-WIP head.
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
     steps:
-      - name: Block WIP/DRAFT merges into protected integration branches
+      - name: Checkout promoted head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          fetch-depth: 1
+      - name: Block WIP heads from protected integration branches
         env:
           BASE_REF: ${{ github.base_ref }}
-          HEAD_REF: ${{ github.head_ref }}
-          IS_DRAFT: ${{ github.event.pull_request.draft }}
         run: |
           set -eu
           case "$BASE_REF" in
             dev|develop|0.12.0-dev)
               ;;
             *)
-              echo "Merge guard passed for $HEAD_REF -> $BASE_REF"
+              echo "Merge guard passed for $(git rev-parse HEAD) -> $BASE_REF"
               exit 0
               ;;
           esac
-          if [ "$IS_DRAFT" = "true" ]; then
-            echo "DRAFT PR cannot merge into ${BASE_REF}"
+          subject=$(git log -1 --format=%s)
+          if [[ "$subject" == \[WIP\]* ]]; then
+            echo "WIP head cannot merge into ${BASE_REF}: ${subject}"
             exit 1
           fi
-          for pattern in '^wip/' 'WIP'; do
-            if [[ "$HEAD_REF" =~ $pattern ]]; then
-              echo "WIP branch ${HEAD_REF} cannot merge into ${BASE_REF}"
-              exit 1
-            fi
-          done
-          echo "Merge guard passed for $HEAD_REF -> $BASE_REF"
+          echo "Merge guard passed for $(git rev-parse HEAD) -> $BASE_REF"
   # End SECTION: merge-guard job

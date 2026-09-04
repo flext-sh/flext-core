@@ -19,7 +19,6 @@ name: ci-matrix
 # End SECTION: triggers
 
 
-
 # === SECTION: permissions (managed) ===
 # Source: template (minimal read-only permissions)
 permissions:
@@ -83,9 +82,8 @@ jobs:
           # token into .git/config would expose it to every later command.
           persist-credentials: false
       - name: Install mise toolchain
-        uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14  # v4.2.3
-        with:
-          version: 2026.8.14
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c  # v4.3.0
+
       - name: Bootstrap
         run: CI=Y make setup
       - name: Verb surface
@@ -111,9 +109,8 @@ jobs:
           # token into .git/config would expose it to every later command.
           persist-credentials: false
       - name: Install mise toolchain
-        uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14  # v4.2.3
-        with:
-          version: 2026.8.14
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c  # v4.3.0
+
       - name: Bootstrap
         shell: bash
         run: CI=Y make setup
@@ -126,4 +123,4 @@ jobs:
       - name: Canonical check
         shell: bash
         run: CI=Y make check
-  # End SECTION: windows
+# End SECTION: windows
