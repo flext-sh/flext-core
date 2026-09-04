@@ -1,0 +1,96 @@
+{
+  "config": "settings.json",
+  "context": "project",
+  "entries": {
+    "SessionStart": {
+      "hooks": [
+        {
+          "command": "python3 /home/marlonsc/flext/flext-core/.claude/aihub-hooks/claude-sessionstart.py",
+          "statusMessage": "Applying synchronized governance",
+          "timeout": 10,
+          "type": "command"
+        }
+      ],
+      "matcher": "startup|resume|clear|compact"
+    },
+    "SubagentStart": {
+      "hooks": [
+        {
+          "command": "python3 /home/marlonsc/flext/flext-core/.claude/aihub-hooks/claude-subagentstart.py",
+          "statusMessage": "Applying synchronized governance",
+          "timeout": 10,
+          "type": "command"
+        }
+      ]
+    },
+    "UserPromptSubmit": {
+      "hooks": [
+        {
+          "command": "python3 /home/marlonsc/flext/flext-core/.claude/aihub-hooks/claude-userpromptsubmit.py",
+          "statusMessage": "Applying synchronized governance",
+          "timeout": 10,
+          "type": "command"
+        }
+      ]
+    }
+  },
+  "events": {
+    "context_refresh": {
+      "clients": [
+        "local"
+      ],
+      "coverage": "exact",
+      "native": [
+        "SessionStart"
+      ],
+      "status": "SUPPORTED"
+    },
+    "prompt_submit": {
+      "clients": [
+        "local"
+      ],
+      "coverage": "exact",
+      "native": [
+        "UserPromptSubmit"
+      ],
+      "status": "SUPPORTED"
+    },
+    "session_start": {
+      "clients": [
+        "local"
+      ],
+      "coverage": "exact",
+      "native": [
+        "SessionStart"
+      ],
+      "status": "SUPPORTED"
+    },
+    "subagent_start": {
+      "clients": [
+        "local"
+      ],
+      "coverage": "exact",
+      "native": [
+        "SubagentStart"
+      ],
+      "status": "SUPPORTED"
+    }
+  },
+  "managed": {
+    ".claude/aihub-hooks/claude-sessionstart.py": {
+      "digest": "867c98133785dbe5c89c1923750f45b772a81140679ea4f0103e496b4c635f24",
+      "mode": "0755"
+    },
+    ".claude/aihub-hooks/claude-subagentstart.py": {
+      "digest": "81814dcaca9b73393c3b5119b0771d257bfb03f55e6ef07da634d83f1e4b4e07",
+      "mode": "0755"
+    },
+    ".claude/aihub-hooks/claude-userpromptsubmit.py": {
+      "digest": "bc6c7b23ac47943a6ae6cf88b803bbb63115fa779e088e4d35d24a2fef711e80",
+      "mode": "0755"
+    }
+  },
+  "owner": "agents-governance",
+  "provider": "claude",
+  "version": 3
+}

@@ -1,0 +1,32 @@
+{
+  "context": "project",
+  "destination": ".gemini/agents",
+  "managed": {
+    "python-reviewer.md": {
+      "activation": [
+        "marker:pyproject.toml"
+      ],
+      "adapter_version": 1,
+      "destination": "python-reviewer.md",
+      "origin": "agents:agents:gemini",
+      "physical_digest": "90550453569169edffa15cffa272aa5dc5f066ed8c0bb77acc001f5452867870",
+      "slug": "python-reviewer",
+      "source_digest": "827013ad94953698543ad72870f2118ee5e5565a1d5daf434e515d8410b27573",
+      "source_type": "agent"
+    }
+  },
+  "owner": "agents-governance",
+  "project": ".",
+  "providers": [
+    "gemini"
+  ],
+  "selection": {
+    "agents": [],
+    "opt_ins": [],
+    "selected_tags": [
+      "flext"
+    ]
+  },
+  "surface": "agents",
+  "version": 5
+}

@@ -1,0 +1,7 @@
+interface:
+  display_name: "API Design"
+  short_description: "Source-backed REST resource contracts"
+  brand_color: "#F97316"
+  default_prompt: "Use $rest-api-design to derive one REST contract from the project's owners and consumers."
+policy:
+  allow_implicit_invocation: true

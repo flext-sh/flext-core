@@ -1,0 +1,7 @@
+interface:
+  display_name: "Security Review"
+  short_description: "Causal security defect remediation"
+  brand_color: "#EF4444"
+  default_prompt: "Use $security-review to reproduce the first security defect, correct its owner, and prove zero residue."
+policy:
+  allow_implicit_invocation: true

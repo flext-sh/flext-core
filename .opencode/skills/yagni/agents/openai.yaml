@@ -1,0 +1,7 @@
+interface:
+  display_name: "YAGNI"
+  short_description: "Exterminate capability without current consumers"
+  brand_color: "#B45309"
+  default_prompt: "Use $yagni to remove behavior, options, abstractions, and dependencies without a current requirement, consumer, and runtime path."
+policy:
+  allow_implicit_invocation: true
