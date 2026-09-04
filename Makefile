@@ -48,6 +48,10 @@ APPLYING := $(if $(filter-out N,$(strip $(APPLY))),$(strip $(APPLY)))
 ARGS ?=
 CHECK_GATES ?=
 DEPENDENCY ?=
+# Y forces `deps upgrade` to refresh cached uv source metadata for DEPENDENCY
+# (--refresh-package <DEPENDENCY>), or for every package when DEPENDENCY is
+# empty (--refresh); any other non-N value is an error.
+DEPS_REFRESH ?= N
 FAIL_FAST ?= 0
 FILE ?=
 MATCH ?=
@@ -73,6 +77,7 @@ override PYTEST_PROGRESS_ARGS := --verbose
 override PYTEST_REPORT_ARGS := -ra --durations=25 --durations-min=0.001 --tb=short
 override PYTEST_DIAG_ARGS := -rA --durations=0 --tb=long --showlocals
 override PYTEST_PARALLEL_WORKERS := 2
+override PYTEST_PARALLEL_WORKER_MEMORY_GB := 2
 override PYTEST_PARALLEL_DISTRIBUTION := worksteal
 override PYTEST_PROFILE_SORT := cumulative
 override PYTEST_PROFILE_LIMIT := 50
@@ -87,7 +92,9 @@ override export FLEXT_PYTEST_REPORTS_RAW := $(value PYTEST_REPORTS_DIR)
 override export FLEXT_PYTEST_WHAT_RAW := $(value WHAT)
 override export FLEXT_PYTEST_VERBOSE_RAW := $(value VERBOSE)
 override export FLEXT_PYTEST_COV_RAW := $(value COV)
+override export FLEXT_PYTEST_PROFILE_RAW := $(value PROFILE)
 WHAT ?=
+PROFILE ?=
 # End SECTION: user overrides
 
 # === SECTION: derived paths (managed) ===
@@ -102,7 +109,7 @@ SELF_MAKEFILE := $(abspath $(firstword $(MAKEFILE_LIST)))
 MAKEFILE_ROOT := $(patsubst %/,%,$(dir $(SELF_MAKEFILE)))
 PROJECT_ROOT := $(MAKEFILE_ROOT)
 SETUP_BIN := $(PROJECT_ROOT)/.bin
-SETUP_MISE_VERSION := 2026.9.0
+SETUP_MISE_VERSION := latest
 ifeq ($(OS),Windows_NT)
 TRACKED_MISE := $(PROJECT_ROOT)/bin/mise.cmd
 else
@@ -174,7 +181,7 @@ _ALLOWED_WHATS_run := default
 _ALLOWED_WHATS_status := diagnostics
 _ALLOWED_WHATS_docs := all generate fix audit build validate
 _ALLOWED_WHATS_clean := status generated
-_ALLOWED_WHATS_release := status
+_ALLOWED_WHATS_release := plan version tag build publish
 _ALLOWED_WHATS_gen := check all apply init
 _ALLOWED_WHATS_mod := check all apply
 else
@@ -190,7 +197,7 @@ _ALLOWED_WHATS_run := default $(patsubst _custom_run_%,%,$(filter _custom_run_%,
 _ALLOWED_WHATS_status := diagnostics $(patsubst _custom_status_%,%,$(filter _custom_status_%,$(CUSTOM_DECLARED_TARGETS)))
 _ALLOWED_WHATS_docs := all generate fix audit build validate $(patsubst _custom_docs_%,%,$(filter _custom_docs_%,$(CUSTOM_DECLARED_TARGETS)))
 _ALLOWED_WHATS_clean := status generated $(patsubst _custom_clean_%,%,$(filter _custom_clean_%,$(CUSTOM_DECLARED_TARGETS)))
-_ALLOWED_WHATS_release := status $(patsubst _custom_release_%,%,$(filter _custom_release_%,$(CUSTOM_DECLARED_TARGETS)))
+_ALLOWED_WHATS_release := plan version tag build publish $(patsubst _custom_release_%,%,$(filter _custom_release_%,$(CUSTOM_DECLARED_TARGETS)))
 _ALLOWED_WHATS_gen := check all apply init $(patsubst _custom_gen_%,%,$(filter _custom_gen_%,$(CUSTOM_DECLARED_TARGETS)))
 _ALLOWED_WHATS_mod := check all apply $(patsubst _custom_mod_%,%,$(filter _custom_mod_%,$(CUSTOM_DECLARED_TARGETS)))
 endif
@@ -224,7 +231,7 @@ _DEFAULT_run := default
 _DEFAULT_status := diagnostics
 _DEFAULT_docs := validate
 _DEFAULT_clean := status
-_DEFAULT_release := status
+_DEFAULT_release := plan
 _DEFAULT_gen := check
 _DEFAULT_mod := check
 
@@ -235,6 +242,7 @@ _APPLY_WHAT_fix := apply
 _APPLY_WHAT_run := default
 _APPLY_WHAT_docs := generate
 _APPLY_WHAT_clean := generated
+_APPLY_WHAT_release := version
 _APPLY_WHAT_gen := apply
 _APPLY_WHAT_mod := apply
 
@@ -303,19 +311,12 @@ _bootstrap_setup_tools:
 	@set -eu; \
 	project_root="$(PROJECT_ROOT)"; \
 	mise="$(SETUP_MISE)"; \
-	mise_version="$(SETUP_MISE_VERSION)"; \
 	uv_required="0.12"; \
 	if [ ! -f "$$mise" ]; then \
 		printf 'ERROR: missing generated mise launcher: %s; run make gen WHAT=apply APPLY=Y\n' "$$mise" >&2; \
 		exit 2; \
 	fi; \
-	current=$$(env -u MISE_INSTALL_PATH -u MISE_VERSION "$$mise" --version); \
-	current=$${current%% *}; \
-	if [ "$$current" != "$$mise_version" ]; then \
-		printf 'ERROR: mise launcher version mismatch: expected %s, got %s\n' \
-			"$$mise_version" "$$current" >&2; \
-		exit 2; \
-	fi; \
+	env -u MISE_INSTALL_PATH -u MISE_VERSION "$$mise" --version >/dev/null; \
 	if [ ! -f "$$project_root/mise.lock" ]; then \
 		printf 'ERROR: missing generated mise.lock; run make gen WHAT=apply APPLY=Y and commit it\n' >&2; \
 		exit 2; \
@@ -372,7 +373,7 @@ SETUP_ENVIRONMENT_RECIPE = set -eu; \
 		if [ ! -x "$(RUNTIME_PYTHON)" ]; then \
 			$(UV) venv "$(RUNTIME_VENV)"; \
 		fi; \
-		$(UV) sync --project "$(PROJECT_ROOT)" $(UV_SYNC_FLAGS) --link-mode "$(UV_LINK_MODE)"; \
+		$(UV) sync --frozen --project "$(PROJECT_ROOT)" $(UV_SYNC_FLAGS) --link-mode "$(UV_LINK_MODE)"; \
 	fi; \
 	direnv allow "$(PROJECT_ROOT)"
 
@@ -501,7 +502,7 @@ define _run_for_selected_projects
 	done
 endef
 
-.PHONY: $(PUBLIC_VERBS) _builtin_help_usage _builtin_setup_environment _builtin_deps_check _builtin_deps_lock _builtin_deps_upgrade _builtin_build_artifacts _builtin_check_all _builtin_check_lint _builtin_check_pyrefly _builtin_check_mypy _builtin_check_pyright _builtin_check_security _builtin_check_markdown _builtin_check_smells _builtin_check_direnv _builtin_test_all _builtin_test_full _builtin_test_cache-status _builtin_test_cache-clear _builtin_test_cache-checkpoint _builtin_fmt_check _builtin_fmt_all _builtin_fmt_apply _builtin_fix_check _builtin_fix_all _builtin_fix_apply _builtin_run_default _builtin_status_diagnostics _builtin_docs_all _builtin_docs_generate _builtin_docs_fix _builtin_docs_audit _builtin_docs_build _builtin_docs_validate _builtin_clean_status _builtin_clean_generated _builtin_release_status _builtin_gen_check _builtin_gen_all _builtin_gen_apply _builtin_gen_init _builtin_mod_check _builtin_mod_all _builtin_mod_apply
+.PHONY: $(PUBLIC_VERBS) _builtin_help_usage _builtin_setup_environment _builtin_deps_check _builtin_deps_lock _builtin_deps_upgrade _builtin_build_artifacts _builtin_check_all _builtin_check_lint _builtin_check_pyrefly _builtin_check_mypy _builtin_check_pyright _builtin_check_security _builtin_check_markdown _builtin_check_smells _builtin_check_direnv _builtin_test_all _builtin_test_full _builtin_test_cache-status _builtin_test_cache-clear _builtin_test_cache-checkpoint _builtin_fmt_check _builtin_fmt_all _builtin_fmt_apply _builtin_fix_check _builtin_fix_all _builtin_fix_apply _builtin_run_default _builtin_status_diagnostics _builtin_docs_all _builtin_docs_generate _builtin_docs_fix _builtin_docs_audit _builtin_docs_build _builtin_docs_validate _builtin_clean_status _builtin_clean_generated _builtin_release_plan _builtin_release_version _builtin_release_tag _builtin_release_build _builtin_release_publish _builtin_gen_check _builtin_gen_all _builtin_gen_apply _builtin_gen_init _builtin_mod_check _builtin_mod_all _builtin_mod_apply
 
 # `setup` builds the environment it would otherwise require. `help` documents
 # how to build it, so demanding an interpreter to print that documentation
@@ -606,7 +607,7 @@ _builtin_help_usage:
 
 
 
-	@printf '  %-10s WHAT=%s\n' 'release' "$$(printf '%s' '$(_ALLOWED_WHATS_release)' | awk '{$$1=$$1; gsub(/ /, "|"); print}')";
+	@printf '  %-10s WHAT=%s APPLY=Y\n' 'release' "$$(printf '%s' '$(_ALLOWED_WHATS_release)' | awk '{$$1=$$1; gsub(/ /, "|"); print}')";
 
 
 
@@ -620,6 +621,8 @@ _builtin_help_usage:
 	@printf '  %-10s %s\n' 'WORKSPACE' 'target repository (default: current project)';
 	@printf '  %-10s %s\n' 'BEAD' 'tracker item bound to a checkpoint';
 	@printf '  %-10s %s\n' 'BASE' 'integration branch used by checkpoint';
+	@printf '  %-10s %s\n' 'DEPENDENCY' 'deps upgrade: one distribution name (default: every package)';
+	@printf '  %-10s %s\n' 'DEPS_REFRESH' 'Y refreshes uv source cache on deps upgrade';
 	@printf '\n%s\n' 'Custom hooks (custom.mk):';
 	@printf '  %s\n' 'Define pre-<verb>, post-<verb>, pre-<verb>-<what>, post-<verb>-<what>';
 	@printf '  %s\n' 'in custom.mk to wrap one declared handler.';
@@ -820,8 +823,12 @@ _builtin_deps_upgrade: _builtin_require_environment
 				printf 'ERROR: DEPENDENCY must be one normalized distribution name\n' >&2; \
 				exit 2 ;; \
 		esac; \
-	fi
-	$(call _run_for_selected_projects,$(if $(strip $(DEPENDENCY)),--upgrade-package "$(strip $(DEPENDENCY))",--upgrade))
+	fi; \
+	case "$(strip $(DEPS_REFRESH))" in \
+		N|Y) ;; \
+		*) printf 'ERROR: DEPS_REFRESH must be Y when set\n' >&2; exit 2 ;; \
+	esac
+	$(call _run_for_selected_projects,$(if $(strip $(DEPENDENCY)),--upgrade-package "$(strip $(DEPENDENCY))",--upgrade)$(if $(filter Y,$(DEPS_REFRESH)),$(if $(strip $(DEPENDENCY)), --refresh-package "$(strip $(DEPENDENCY))", --refresh)))
 	@set -eu; \
 	selected="$(strip $(SELECTED_PROJECTS))"; \
 	if [ -z "$$selected" ]; then selected="."; fi; \
@@ -965,8 +972,9 @@ _builtin_fmt_all: _builtin_require_environment
 
 _builtin_fmt_apply: _builtin_fmt_all
 
-# Read-only fixed-point after `make fix APPLY=Y` (serialize-make strips APPLY and
-# re-runs default_what=check). Dual of `ruff check --fix` — never mutate here.
+# Read-only fixed point: plain `make fix` re-checks via its config-owned default
+# WHAT (mutations require explicit APPLY=Y). Dual of `ruff check --fix` — never
+# mutate here.
 _builtin_fix_check: _builtin_require_environment
 	@$(UV_RUN) ruff check $(RUFF_PATHS)
 
@@ -1046,10 +1054,28 @@ _builtin_clean_generated:
 		-delete
 
 
-_builtin_release_status: _builtin_require_environment
-	@$(UV) lock --project "$(PROJECT_ROOT)" --check
-	@git -C "$(PROJECT_ROOT)" diff --quiet
-	@git -C "$(PROJECT_ROOT)" diff --cached --quiet
+# Release protocol. `plan` derives the next version from merged pull-request
+# titles and guards against any version change made outside the protocol;
+# `version` opens the release pull request; `tag` marks the merged release
+# commit; `build` writes the artifact receipt; `publish` uploads exactly what
+# the receipt attests (INDEX=Y adds the package index).
+_builtin_release_plan: _builtin_require_environment
+	@$(PROJECT_FLEXT_INFRA) release run --workspace "$(PROJECT_ROOT)" --phase plan $(if $(strip $(PR_TITLE)),--pr-title "$(PR_TITLE)")
+
+_builtin_release_version: _builtin_require_environment
+	$(call _require_apply)
+	@$(PROJECT_FLEXT_INFRA) release run --workspace "$(PROJECT_ROOT)" --phase version --apply
+
+_builtin_release_tag: _builtin_require_environment
+	$(call _require_apply)
+	@$(PROJECT_FLEXT_INFRA) release run --workspace "$(PROJECT_ROOT)" --phase tag --apply
+
+_builtin_release_build: _builtin_require_environment
+	@$(PROJECT_FLEXT_INFRA) release run --workspace "$(PROJECT_ROOT)" --phase build --apply
+
+_builtin_release_publish: _builtin_require_environment
+	$(call _require_apply)
+	@$(PROJECT_FLEXT_INFRA) release run --workspace "$(PROJECT_ROOT)" --phase publish --apply $(if $(filter Y,$(INDEX)),--index)
 
 # Generation has one owner. Conform preserves the caller's scope and applies
 # the complete dependency/tooling projection before it verifies its fixed point.
@@ -1057,6 +1083,17 @@ _builtin_release_status: _builtin_require_environment
 # floors; gen must never run a second pyproject writer over conform's result.
 define _mise_launcher_apply
 	@set -eu; \
+	mise_version="$(SETUP_MISE_VERSION)"; \
+	if [ "$$mise_version" = latest ]; then \
+		mise_release_url=$$(curl -fsSIL -o /dev/null -w '%{url_effective}' \
+			https://github.com/jdx/mise/releases/latest); \
+		mise_version=$${mise_release_url##*/v}; \
+		case "$$mise_version" in \
+			[0-9]*.[0-9]*.[0-9]*) ;; \
+			*) printf 'ERROR: invalid Mise latest release redirect: %s\n' \
+				"$$mise_release_url" >&2; exit 2 ;; \
+		esac; \
+	fi; \
 	scratch_parent="$(PROJECT_ROOT)/.test-tmp"; \
 	mkdir -p "$$scratch_parent"; \
 	scratch=$$(mktemp -d "$$scratch_parent/mise-launcher.XXXXXX"); \
@@ -1069,7 +1106,7 @@ define _mise_launcher_apply
 		MISE_STATE_DIR="$$scratch/state" TMPDIR="$$scratch/tmp" \
 		MISE_CEILING_PATHS="$$scratch_parent" MISE_TRUSTED_CONFIG_PATHS="$$scratch" \
 		env -u MISE_INSTALL_PATH -u MISE_VERSION "$(SETUP_MISE)" -C "$$scratch" generate install-script \
-		--version "$(SETUP_MISE_VERSION)" \
+		--version "$$mise_version" \
 		--write "$$scratch/mise" --windows \
 		>"$$scratch/generate.log" 2>&1; then \
 		cat "$$scratch/generate.log"; \
@@ -1108,41 +1145,46 @@ define _mise_lock_apply
 		if [ ! -f "$$project_root/.mise.toml" ]; then \
 			printf 'ERROR: missing generated .mise.toml in %s\n' "$$project_root" >&2; exit 2; \
 		fi; \
-		scratch_parent="$$project_root/.test-tmp"; mkdir -p "$$scratch_parent"; \
-		scratch=$$(mktemp -d "$$scratch_parent/mise-lock.XXXXXX"); \
-		trap 'find "$$scratch" -depth -delete' EXIT; \
-		cp "$$project_root/.mise.toml" "$$scratch/.mise.toml"; \
-		locked_count=$$(awk '$$0 == "locked = true" { count++ } END { print count + 0 }' "$$scratch/.mise.toml"); \
-		if [ "$$locked_count" -ne 1 ]; then \
-			printf 'ERROR: expected one locked tool_config setting in %s\n' "$$project_root/.mise.toml" >&2; exit 2; \
-		fi; \
-		sed -i 's/^locked = true$$/locked = false/' "$$scratch/.mise.toml"; \
-		mkdir -p "$$scratch/data" "$$scratch/cache" \
-			"$$scratch/state" "$$scratch/tmp"; \
-		: > "$$scratch/global-config.toml"; \
-		if MISE_GITHUB_CREDENTIAL_COMMAND="$$credential_command" \
-			MISE_GLOBAL_CONFIG_FILE="$$scratch/global-config.toml" \
-			XDG_CACHE_HOME="$$scratch/cache" XDG_STATE_HOME="$$scratch/state" \
-			MISE_DATA_DIR="$$scratch/data" MISE_CACHE_DIR="$$scratch/cache" \
-			MISE_STATE_DIR="$$scratch/state" TMPDIR="$$scratch/tmp" \
-			MISE_CEILING_PATHS="$$scratch_parent" MISE_TRUSTED_CONFIG_PATHS="$$scratch" \
-			env -u MISE_INSTALL_PATH -u MISE_VERSION "$(SETUP_MISE)" -C "$$scratch" lock \
-			--platform "$(MISE_LOCK_PLATFORMS)" >"$$scratch/lock.log" 2>&1; then \
-			cat "$$scratch/lock.log"; \
+		if [ "$$project" != . ] && cmp "$(PROJECT_ROOT)/.mise.toml" "$$project_root/.mise.toml" >/dev/null 2>&1; then \
+			$(PROJECT_FLEXT_INFRA) codegen mise-artifacts \
+				--project "$$project" --from-root --apply; \
 		else \
-			status=$$?; cat "$$scratch/lock.log"; exit "$$status"; \
+			scratch_parent="$$project_root/.test-tmp"; mkdir -p "$$scratch_parent"; \
+			scratch=$$(mktemp -d "$$scratch_parent/mise-lock.XXXXXX"); \
+			trap 'find "$$scratch" -depth -delete' EXIT; \
+			cp "$$project_root/.mise.toml" "$$scratch/.mise.toml"; \
+			locked_count=$$(awk '$$0 == "locked = true" { count++ } END { print count + 0 }' "$$scratch/.mise.toml"); \
+			if [ "$$locked_count" -ne 1 ]; then \
+				printf 'ERROR: expected one locked tool_config setting in %s\n' "$$project_root/.mise.toml" >&2; exit 2; \
+			fi; \
+			sed -i 's/^locked = true$$/locked = false/' "$$scratch/.mise.toml"; \
+			mkdir -p "$$scratch/data" "$$scratch/cache" \
+				"$$scratch/state" "$$scratch/tmp"; \
+			: > "$$scratch/global-config.toml"; \
+			if MISE_GITHUB_CREDENTIAL_COMMAND="$$credential_command" \
+				MISE_GLOBAL_CONFIG_FILE="$$scratch/global-config.toml" \
+				XDG_CACHE_HOME="$$scratch/cache" XDG_STATE_HOME="$$scratch/state" \
+				MISE_DATA_DIR="$$scratch/data" MISE_CACHE_DIR="$$scratch/cache" \
+				MISE_STATE_DIR="$$scratch/state" TMPDIR="$$scratch/tmp" \
+				MISE_CEILING_PATHS="$$scratch_parent" MISE_TRUSTED_CONFIG_PATHS="$$scratch" \
+				env -u MISE_INSTALL_PATH -u MISE_VERSION "$(SETUP_MISE)" -C "$$scratch" lock \
+				--platform "$(MISE_LOCK_PLATFORMS)" >"$$scratch/lock.log" 2>&1; then \
+				cat "$$scratch/lock.log"; \
+			else \
+				status=$$?; cat "$$scratch/lock.log"; exit "$$status"; \
+			fi; \
+			if grep -Fq 'mise WARN' "$$scratch/lock.log"; then \
+				printf 'ERROR: Mise lock generation emitted warnings for %s\n' "$$project_root" >&2; exit 2; \
+			else \
+				status=$$?; if [ "$$status" -ne 1 ]; then exit "$$status"; fi; \
+			fi; \
+			$(PROJECT_FLEXT_INFRA) codegen mise-artifacts \
+				--workspace "$$scratch" --apply; \
+			lock_tmp="$$project_root/.mise.lock.new.$$$$"; \
+			cp "$$scratch/mise.lock" "$$lock_tmp"; \
+			mv -f "$$lock_tmp" "$$project_root/mise.lock"; \
+			find "$$scratch" -depth -delete; trap - EXIT; \
 		fi; \
-		if grep -Fq 'mise WARN' "$$scratch/lock.log"; then \
-			printf 'ERROR: Mise lock generation emitted warnings for %s\n' "$$project_root" >&2; exit 2; \
-		else \
-			status=$$?; if [ "$$status" -ne 1 ]; then exit "$$status"; fi; \
-		fi; \
-		$(PROJECT_FLEXT_INFRA) codegen mise-artifacts \
-			--workspace "$$scratch" --apply; \
-		lock_tmp="$$project_root/.mise.lock.new.$$$$"; \
-		cp "$$scratch/mise.lock" "$$lock_tmp"; \
-		mv -f "$$lock_tmp" "$$project_root/mise.lock"; \
-		find "$$scratch" -depth -delete; trap - EXIT; \
 	done
 endef
 
@@ -1174,6 +1216,7 @@ endef
 
 _builtin_gen_check: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) codegen conform --root "$(PROJECT_ROOT)" --scope "$(CODEGEN_SCOPE)" --mode check
+	@$(PROJECT_FLEXT_INFRA) codegen lazy-init --workspace "$(PROJECT_ROOT)" --check
 	$(call _generated_docs,--check)
 	$(call _mise_artifacts_check)
 
@@ -1186,6 +1229,7 @@ _builtin_gen_all:
 	$(call _require_apply)
 	@: "$${MISE_GITHUB_CREDENTIAL_COMMAND:?ERROR: make gen apply requires MISE_GITHUB_CREDENTIAL_COMMAND}"
 	@$(PROJECT_FLEXT_INFRA) codegen conform --root "$(PROJECT_ROOT)" --scope "$(CODEGEN_SCOPE)" --mode apply
+	@$(PROJECT_FLEXT_INFRA) codegen lazy-init --workspace "$(PROJECT_ROOT)" --apply
 	$(call _generated_docs,--apply)
 	$(call _mise_launcher_apply)
 	$(call _mise_lock_apply)

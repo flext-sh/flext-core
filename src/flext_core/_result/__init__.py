@@ -25,22 +25,19 @@ __all__: tuple[str, ...] = (
     "FlextResultUnwrap",
 )
 
-install_lazy_exports(
-    __name__,
-    globals(),
-    MappingProxyType(
-        build_lazy_import_map(
-            MappingProxyType({
-                ".base": ("FlextResultBase",),
-                ".behavior": ("FlextResultBehavior",),
-                ".composition": ("FlextResultComposition",),
-                ".construction": ("FlextResultConstruction",),
-                ".transforms": ("FlextResultTransforms",),
-                ".unwrap": ("FlextResultUnwrap",),
-            }),
-            alias_groups=MappingProxyType({}),
-            sort_keys=False,
-        )
-    ),
-    public_exports=__all__,
+_LAZY_IMPORTS = MappingProxyType(
+    build_lazy_import_map(
+        MappingProxyType({
+            ".base": ("FlextResultBase",),
+            ".behavior": ("FlextResultBehavior",),
+            ".composition": ("FlextResultComposition",),
+            ".construction": ("FlextResultConstruction",),
+            ".transforms": ("FlextResultTransforms",),
+            ".unwrap": ("FlextResultUnwrap",),
+        }),
+        alias_groups=MappingProxyType({}),
+        sort_keys=False,
+    )
 )
+
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

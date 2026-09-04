@@ -7,7 +7,7 @@
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
 - Package: `flext_core`
-- Version: `0.12.0rc0`
+- Version: `0.12.0`
 - Description: Enterprise Foundation Framework - Modern Python 3.13 + Clean
   Architecture
 - Doc summary: Flext Core package.
@@ -19,13 +19,13 @@
   `solid`
 - Main facades: `FlextConfig`, `FlextConstants`, `FlextContainer`,
   `FlextContext`, `FlextDecorators`, `FlextDispatcher`, `FlextExceptions`,
-  `FlextHandlers` (+12 more)
+  `FlextHandlers` (+14 more)
 - Alias exports: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
 - Public symbol exports: `FlextConfig`, `FlextConstants`, `FlextContainer`,
   `FlextContext`, `FlextDecorators`, `FlextDispatcher`, `FlextExceptions`,
-  `FlextHandlers`, `FlextLazy`, `FlextMixins` (+12 more)
+  `FlextHandlers`, `FlextLazy`, `FlextLazyAttribute` (+15 more)
 - Exported module shortcuts: _none_
-- Generated module pages: `0`
+- Generated module pages: `18`
 
 ## Next Pages
 

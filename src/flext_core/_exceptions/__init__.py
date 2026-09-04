@@ -33,30 +33,25 @@ __all__: tuple[str, ...] = (
     "_factories_parts",
 )
 
-install_lazy_exports(
-    __name__,
-    globals(),
-    MappingProxyType(
-        build_lazy_import_map(
-            MappingProxyType({
-                "._base_parts": ("_base_parts",),
-                "._base_parts.flextexceptionsbase_part_01": (
-                    "FlextBaseErrorMetadataMixin",
-                ),
-                "._base_parts.flextexceptionsbase_part_02": (
-                    "FlextBaseErrorStateMixin",
-                ),
-                "._factories_parts": ("_factories_parts",),
-                ".base": ("FlextExceptionsBase",),
-                ".factories": ("FlextExceptionsFactories",),
-                ".helpers": ("FlextExceptionsHelpers",),
-                ".metrics": ("FlextExceptionsMetrics",),
-                ".template": ("FlextExceptionsTemplate",),
-                ".types": ("FlextExceptionsTypes",),
-            }),
-            alias_groups=MappingProxyType({}),
-            sort_keys=False,
-        )
-    ),
-    public_exports=__all__,
+_LAZY_IMPORTS = MappingProxyType(
+    build_lazy_import_map(
+        MappingProxyType({
+            "._base_parts": ("_base_parts",),
+            "._base_parts.flextexceptionsbase_part_01": (
+                "FlextBaseErrorMetadataMixin",
+            ),
+            "._base_parts.flextexceptionsbase_part_02": ("FlextBaseErrorStateMixin",),
+            "._factories_parts": ("_factories_parts",),
+            ".base": ("FlextExceptionsBase",),
+            ".factories": ("FlextExceptionsFactories",),
+            ".helpers": ("FlextExceptionsHelpers",),
+            ".metrics": ("FlextExceptionsMetrics",),
+            ".template": ("FlextExceptionsTemplate",),
+            ".types": ("FlextExceptionsTypes",),
+        }),
+        alias_groups=MappingProxyType({}),
+        sort_keys=False,
+    )
 )
+
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

@@ -13,11 +13,8 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # Source: template (distro-specific seed contract)
 # The seed is the whole host contract: curl fetches mise, git is what uv shells
 # out to for the flext-infra git+https requirement, make invokes the verbs.
-# libicu-devel is pulled in because tokei (cargo-backed) needs a Rust toolchain,
-# which in turn needs it — mise provisions Rust, so the native
-# ICU headers must be present at the system layer.
 RUN dnf install -y \
-      bash ca-certificates curl git make libatomic libicu-devel \
+      bash ca-certificates curl git make libatomic \
     && dnf clean all \
     && useradd --create-home --shell /bin/bash runner
 # End SECTION: base packages

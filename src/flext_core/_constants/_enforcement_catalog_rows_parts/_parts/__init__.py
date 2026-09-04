@@ -16,22 +16,19 @@ if TYPE_CHECKING:
     )
 __all__: tuple[str, ...] = ("INFRA_DETECTOR_ROWS_CORE", "INFRA_DETECTOR_ROWS_PATTERNS")
 
-install_lazy_exports(
-    __name__,
-    globals(),
-    MappingProxyType(
-        build_lazy_import_map(
-            MappingProxyType({
-                ".flextconstantsenforcementcatalogrows_part_01_a": (
-                    "INFRA_DETECTOR_ROWS_CORE",
-                ),
-                ".flextconstantsenforcementcatalogrows_part_01_b": (
-                    "INFRA_DETECTOR_ROWS_PATTERNS",
-                ),
-            }),
-            alias_groups=MappingProxyType({}),
-            sort_keys=False,
-        )
-    ),
-    public_exports=__all__,
+_LAZY_IMPORTS = MappingProxyType(
+    build_lazy_import_map(
+        MappingProxyType({
+            ".flextconstantsenforcementcatalogrows_part_01_a": (
+                "INFRA_DETECTOR_ROWS_CORE",
+            ),
+            ".flextconstantsenforcementcatalogrows_part_01_b": (
+                "INFRA_DETECTOR_ROWS_PATTERNS",
+            ),
+        }),
+        alias_groups=MappingProxyType({}),
+        sort_keys=False,
+    )
 )
+
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)
