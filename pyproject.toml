@@ -1,8 +1,8 @@
-# @flext-managed: continuous
-# @flext-regenerate: make deps WHAT=upgrade APPLY=Y
-# @flext-ssot: flext-infra/src/flext_infra/_constants/deps.py
-# @flext-ssot-dependencies: flext-infra/config/codegen.yaml (project_defaults.dev, dependency_profiles)
-# @flext-maintenance: do not edit managed sections; edit the SSOT
+# @flext-generated: continuous
+# @flext-owner: flext-infra/src/flext_infra/_constants/deps.py
+# @flext-adjust: edit the dependency owner; never this projection
+# @flext-regenerate: make deps APPLY=Y
+# @flext-owner-dependencies: flext-infra/config/codegen.yaml (scaffold.project.dev, dependency_profiles, runtime_dependency_overlays)
 # [MANAGED] FLEXT pyproject standardization
 # Sections with [MANAGED] are enforced by flext_infra.deps.modernizer.
 # Sections with [CUSTOM] are project-specific extension points.
@@ -22,22 +22,22 @@ classifiers = [
 ]
 dependencies = [
   "beartype>=0.22.9",
-  "cachetools>=6.2.6",
+  "cachetools>=7.1.7",
   "dependency-injector>=4.49.1",
   "docker>=7.2.0",
   "limits>=5.8.0",
   "orjson>=3.12.0",
   "packaging>=26.3",
   "pybreaker>=1.4.1",
-  "pydantic>=2.13.4",
-  "pydantic-core>=2.46.4",
+  "pydantic>=2.14.0b1",
+  "pydantic-core>=2.48.0",
   "pydantic-extra-types[semver]>=2.11.1",
   "pydantic-settings>=2.15.0",
   "python-dotenv>=1.2.3",
   "python-on-whales>=0.81.0",
   "pyyaml>=6.0.3",
   "rope>=1.14.0",
-  "structlog>=25.5.0,<26",
+  "structlog>=25.5.0",
   "tomlkit>=0.15.1",
   "wrapt>=2.3.0",
 ]
@@ -511,7 +511,6 @@ skip-magic-trailing-comma = true
 [tool.ruff.lint]
 # FLEXT Ruff suppression rationale (validated against semantic facet order):
 # FLEXT ruff[import-outside-top-level]: Public facade models are imported lazily only at validation and construction sites to preserve the c-t-p-m-u graph and prevent runtime cycles.
-# FLEXT ruff[unsorted-imports]: Ruff sorts TYPE_CHECKING imports lexically and reverses the mandatory semantic c-t-p-m-u dependency order in FLEXT facades.
 ignore = [
   "ambiguous-unicode-character-comment",
   "ambiguous-unicode-character-docstring",
@@ -531,6 +530,7 @@ ignore = [
   "multi-line-summary-second-line",
   "no-self-use",
   "non-imperative-mood",
+  "pytest-fixture-autouse",
   "too-many-arguments",
   "too-many-branches",
   "too-many-locals",
@@ -542,7 +542,6 @@ ignore = [
   "typing-only-first-party-import",
   "typing-only-standard-library-import",
   "typing-only-third-party-import",
-  "unsorted-imports",
 ]
 select = ["ALL"]
 
@@ -596,6 +595,7 @@ in_place = true
 sort_first = ["build-system", "dependency-groups", "project", "tool"]
 
 [tool.uv]
+constraint-dependencies = ["structlog<26"]
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 exclude-newer = "7 days"
 link-mode = "copy"
@@ -656,7 +656,7 @@ dev = [
   "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev",
   "hypothesis>=6.165.10",
   "interrogate>=1.7.0",
-  "isort>=8.0.1",
+  "isort>=9.0.1",
   "libcst>=1.9.0",
   "matplotlib-stubs>=0.3.11",
   "mkdocs>=1.6.1",
@@ -681,11 +681,11 @@ dev = [
   "mypy>=2.3.1",
   "pip-audit>=2.10.1",
   "pre-commit>=4.6.2",
-  "pylint>=4.0.7",
+  "pylint>=4.0.8",
   "pyrefly>=1.2.0",
   "pyright>=1.1.411",
   "pytest>=9.1.1",
-  "pytest-benchmark>=5.2.3",
+  "pytest-benchmark>=5.3.0",
   "pytest-clarity>=1.0.1",
   "pytest-codeblocks>=0.18.0",
   "pytest-cov>=7.1.0",
@@ -701,20 +701,20 @@ dev = [
   "pyupgrade>=3.21.2",
   "radon>=6.0.1",
   "rope>=1.14.0",
-  "ruff>=0.16.0",
-  "rumdl>=0.2.45",
+  "ruff>=0.16.5",
+  "rumdl>=0.2.62",
   "types-cachetools>=7.0.0.20260713",
-  "types-cffi>=2.0.0.20260518",
+  "types-cffi>=2.1.0.20260827",
   "types-click>=7.1.8",
   "types-defusedxml>=0.7.0.20260504",
-  "types-docker>=7.2.0.20260819",
+  "types-docker>=7.2.0.20260827",
   "types-flask>=1.1.6",
   "types-jsonschema>=4.26.0.20260518",
-  "types-ldap3>=2.9.13.20260518",
-  "types-openpyxl>=3.1.5.20260807",
+  "types-ldap3>=2.9.13.20260827",
+  "types-openpyxl>=3.1.5.20260827",
   "types-paramiko>=5.0.0.20260724",
-  "types-protobuf>=7.35.1.20260822",
-  "types-psutil>=7.2.2.20260518",
+  "types-protobuf>=7.35.1.20260827",
+  "types-psutil>=7.2.2.20260827",
   "types-psycopg2>=2.9.21.20260724",
   "types-pyasn1>=0.6.0.20260724",
   "types-pyopenssl>=24.1.0.20240722",

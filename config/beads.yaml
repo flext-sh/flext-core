@@ -1,4 +1,4 @@
 version: 1
-workspace: flext-core
-database: flext-core
-issue_prefix: flext-core
+workspace: flext
+database: flext
+issue_prefix: flext

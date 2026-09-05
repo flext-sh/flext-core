@@ -17,6 +17,8 @@ locked = true
 # Source: config:python_version, config:codegen.scaffold.project.dev native toolchain floors
 #         (kubectl_version, helm_version, kind_version, taplo_version, ast_grep_version,
 #          gitleaks_version, scc_version, kubeconform_version, qlty_version,
+#          node_version, jscpd_version,
+#          waza_version,
 #          beads (selector/version/prerelease), gascity (selector/version/prerelease))
 [tools]
 python = "3.13"
@@ -39,6 +41,13 @@ kubeconform = "0.8"
 # qlty ships no mise registry alias; the github backend selector is the only
 # resolvable form (bare 'qlty' fails mise install: 'not found in registry').
 "github:qltysh/qlty" = "0.642"
+# jscpd (the `duplication` check gate) ships no bare registry alias; mise's npm
+# backend installs it on the pinned Node runtime, so the gate finds `jscpd` on
+# PATH without resolving a runner or a version of its own.
+node = "26.8"
+"npm:jscpd" = "5.1.2"
+# Waza ships as a GitHub release and is invoked only by the public Make verb.
+"github:microsoft/waza" = "0.38.7"
 # Go runtime for the Go projects in this workspace.
 go = "1.26"
 [tools."github:marlon-costa-dc/beads"]

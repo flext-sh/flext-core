@@ -69,7 +69,7 @@ class _CqrsPagination(m.FlexibleInternalModel):
     @computed_field
     @property
     def offset(self) -> int:
-        """Calculate offset from page and size."""
+        """Offset from page and size."""
         return (self.page - 1) * self.size
 
 
