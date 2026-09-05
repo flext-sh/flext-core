@@ -65,6 +65,10 @@ override PATH := $(RUNTIME_BIN):$(CALLER_PATH)
 override export FLEXT_INFRA_PYTHON := $(RUNTIME_PYTHON)
 export FLEXT_INFRA_PYTHON UV UV_PROJECT UV_PROJECT_ENVIRONMENT VIRTUAL_ENV PATH
 
+CPROFILE_REPORT_ROOT := $(PROJECT_ROOT)/.reports/cprofile
+DEPS_CPROFILE_PATH := $(CPROFILE_REPORT_ROOT)/deps.pstats
+DEPS_CPROFILE_REPORT := $(CPROFILE_REPORT_ROOT)/deps.txt
+
 RUNTIME_STATE_ROOT := $(abspath $(dir $(REPOSITORY_ROOT))/.flext-runtime)
 PROJECT_STATE_ROOT := $(RUNTIME_STATE_ROOT)/$(notdir $(PROJECT_ROOT))
 PROJECT_SCRATCH_ROOT := $(PROJECT_STATE_ROOT)/scratch
@@ -79,7 +83,8 @@ PYTEST_PROCESS_TIMEOUT_SECONDS := 660
 PYTEST_BOUNDED := timeout --signal=TERM --kill-after=5s "$(PYTEST_PROCESS_TIMEOUT_SECONDS)s"
 
 UV_RUN := env -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u UV_PROJECT_ENVIRONMENT PYTHONPATH="$(PROJECT_ROOT)/src" $(UV) run --project "$(PROJECT_ROOT)" --no-sync
-PROJECT_FLEXT_INFRA := if [ ! -x "$(RUNTIME_PYTHON)" ]; then printf 'ERROR: missing managed Python %s\n' "$(RUNTIME_PYTHON)" >&2; exit 2; fi; env -u PYTHONPATH -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u UV_PROJECT_ENVIRONMENT PYTHONPATH="$(PROJECT_ROOT)/src" "$(RUNTIME_PYTHON)" -m flext_infra
+PROJECT_PYTHON := if [ ! -x "$(RUNTIME_PYTHON)" ]; then printf 'ERROR: missing managed Python %s\n' "$(RUNTIME_PYTHON)" >&2; exit 2; fi; env -u PYTHONPATH -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u UV_PROJECT_ENVIRONMENT PYTHONPATH="$(PROJECT_ROOT)/src" "$(RUNTIME_PYTHON)"
+PROJECT_FLEXT_INFRA := $(PROJECT_PYTHON) -m flext_infra
 SELF_MAKE := $(MAKE) --no-print-directory -f "$(SELF_MAKEFILE)"
 CUSTOM_MAKEFILE := $(PROJECT_ROOT)/custom.mk
 CUSTOM_DECLARED_TARGETS :=
@@ -523,7 +528,9 @@ _builtin-status:
 
 _builtin-deps:
 	@$(UV) lock --project "$(PROJECT_ROOT)" --upgrade
-	@$(PROJECT_FLEXT_INFRA) deps modernize --workspace "$(PROJECT_ROOT)" --apply --rewrite-constraints --skip-check
+	@mkdir -p "$(CPROFILE_REPORT_ROOT)"
+	@$(PROJECT_PYTHON) -m cProfile -o "$(DEPS_CPROFILE_PATH)" -m flext_infra deps modernize --workspace "$(PROJECT_ROOT)" --apply --rewrite-constraints --skip-check
+	@$(PROJECT_FLEXT_INFRA) validate cprofile-report --workspace "$(PROJECT_ROOT)" --profile "$(DEPS_CPROFILE_PATH)" --output "$(DEPS_CPROFILE_REPORT)" --sort "cumulative" --limit "50"
 	@$(UV) lock --project "$(PROJECT_ROOT)"
 
 _builtin-self-build:
