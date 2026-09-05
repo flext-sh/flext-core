@@ -2,7 +2,7 @@
 # @flext-owner: flext-infra/src/flext_infra/_constants/deps.py
 # @flext-adjust: edit the dependency owner; never this projection
 # @flext-regenerate: make deps APPLY=Y
-# @flext-owner-dependencies: flext-infra/config/codegen.yaml (scaffold.project.dev, dependency_profiles, runtime_dependency_overlays)
+# @flext-owner-dependencies: flext-infra/config/codegen.yaml (scaffold.project.dev, scaffold.project.external_runtime_packages, dependency_profiles, runtime_dependency_overlays)
 # [MANAGED] FLEXT pyproject standardization
 # Sections with [MANAGED] are enforced by flext_infra.deps.modernizer.
 # Sections with [CUSTOM] are project-specific extension points.
@@ -645,7 +645,6 @@ dev = [
   "bandit>=1.9.4",
   "black>=26.5.1",
   "blacken-docs>=1.20.0",
-  "code-review-graph[all]>=2.3.8",
   "codespell>=2.4.3",
   "deptry>=0.25.1",
   "detect-secrets>=1.5.0",
