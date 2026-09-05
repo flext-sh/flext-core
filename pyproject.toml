@@ -587,7 +587,6 @@ split-on-trailing-comma = false
   "undocumented-public-function",
   "undocumented-public-method",
 ]
-"scripts/cmd/**/*.py" = ["invalid-module-name", "shebang-not-executable"]
 "**/examples/**/*.py" = ["invalid-module-name", "shebang-not-executable"]
 
 # [MANAGED] tomlsort

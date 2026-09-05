@@ -13,17 +13,12 @@ if TYPE_CHECKING:
     from .parser_targets_part_02 import FlextUtilitiesParserTargets
 __all__: tuple[str, ...] = ("FlextUtilitiesParserTargets",)
 
-install_lazy_exports(
-    __name__,
-    globals(),
-    MappingProxyType(
-        build_lazy_import_map(
-            MappingProxyType({
-                ".parser_targets_part_02": ("FlextUtilitiesParserTargets",)
-            }),
-            alias_groups=MappingProxyType({}),
-            sort_keys=False,
-        )
-    ),
-    public_exports=__all__,
+_LAZY_IMPORTS = MappingProxyType(
+    build_lazy_import_map(
+        MappingProxyType({".parser_targets_part_02": ("FlextUtilitiesParserTargets",)}),
+        alias_groups=MappingProxyType({}),
+        sort_keys=False,
+    )
 )
+
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)
