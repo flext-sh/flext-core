@@ -1,61 +1,68 @@
-# Testing Guide
+<!-- AUTO-GENERATED FILE — regenerate through `make gen APPLY=Y` from the workspace root. -->
+<!-- Source of truth: `docs/guides/testing.md`; adjust that source, never this projection. -->
+
+# flext-core - Testing
 
 <!-- TOC START -->
-- [Overview](#overview)
-- [Assert r[T] Outcomes](#assert-rt-outcomes)
-- [Test Container Registration](#test-container-registration)
-- [Reuse Official Example Tests](#reuse-official-example-tests)
-- [Recommended Strategy](#recommended-strategy)
+- [Test design](#test-design)
+- [Canonical execution](#canonical-execution)
+- [Generated documentation](#generated-documentation)
+- [Related guides](#related-guides)
 <!-- TOC END -->
 
-## Overview
+> Project profile: `flext-core`
 
-This guide shows practical test patterns aligned with current FLEXT APIs.
+FLEXT tests prove observable runtime behavior through public package facades. The
+workspace root `AGENTS.md` and the nearest package scope remain authoritative.
 
-## Assert r[T] Outcomes
+## Test design
 
-```python
-from __future__ import annotations
+- Exercise only public `api.py` surfaces and canonical `c`, `t`, `p`, `m`, and
+  `u` facades.
+- Put shared setup in the unified `conftest.py` and typed fixtures under
+  `tests/fixtures/`.
+- Use `tm` matchers and shared `flext-tests` builders for assertions and test
+  data.
+- Read project-owned values from typed config or settings. Never freeze current
+  defaults in tests, examples, or golden files.
+- Use real, bounded dependencies. Mocks, fakes, stubs, patching, monkeypatch
+  mutation, and assertions about private construction are prohibited.
+- Treat warnings, skips, empty collection, and suppressed failures as red.
 
-from flext_core import p, r
+## Canonical execution
 
+Run tests only through the dispatcher at the workspace root:
 
-def validate_username(username: str) -> p.Result[str]:
-    if not username:
-        return r[str].fail("username_required")
-    return r[str].ok(username)
-
-
-ok = validate_username("alice")
-ko = validate_username("")
-
-assert ok.success
-assert ko.failure
+```bash
+make test APPLY=Y
 ```
 
-## Test Container Registration
+The test verb owns test selection and the retained Testmon cache. Never clear or
+bypass that cache, and never invoke the underlying test runner directly.
 
-```python
-from flext_core import FlextContainer
+Run the complete verification gate through the same dispatcher:
 
-container = FlextContainer()
-_ = container.bind("service", "ready")
-
-resolved = container.resolve("service")
-assert resolved.success
-assert resolved.value == "ready"
+```bash
+make check APPLY=Y
 ```
 
-## Reuse Official Example Tests
+Selectors such as project names, file names, patterns, or changed-only flags are
+not part of this command surface. If a required workflow is missing, repair the
+root Make owner and rerun its declared verb.
 
-```python
-from examples.ex_11_flext_service import ExampleService
+## Generated documentation
 
-ExampleService.run()
+Member copies of this guide are generated projections. Change this root source
+and regenerate from the workspace root:
+
+```bash
+make gen APPLY=Y
 ```
 
-## Recommended Strategy
+Do not edit a member projection by hand.
 
-- Prefer public behavior assertions (`success`, `failure`, `value`, `error`).
-- Keep tests deterministic and isolated.
-- Reuse `examples/` as contract references when APIs evolve.
+## Related guides
+
+- Development
+- Troubleshooting
+- Testing standards
