@@ -151,6 +151,7 @@ class TestsFlextCoreSettingsWorkDir:
                 "XDG_RUNTIME_DIR": "/xdg/runtime",
             }
         ):
+
             class _CliSettings(FlextSettings):
                 model_config = FlextSettings.model_config | {"env_prefix": "CLI_LIB_"}
 
@@ -198,6 +199,7 @@ class TestsFlextCoreSettingsWorkDir:
             env_vars={"XDG_CACHE_HOME": "/xdg/cache", "XDG_DATA_HOME": "/xdg/data"},
             vars_to_clear=("FLEXT_APP_NAMESPACE",),
         ):
+
             class _AiHubSettings(FlextSettings):
                 model_config = FlextSettings.model_config | {"env_prefix": "AI_HUB_"}
 

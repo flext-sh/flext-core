@@ -47,9 +47,7 @@ def _raise_circuit_breaker_error() -> None:
 def _raise_configuration_error() -> None:
     """Raise one ConfigurationError example for handler exercise."""
     raise e.ConfigurationError(
-        m.Examples.ErrorMessages.BAD_CFG,
-        config_key="db.host",
-        config_source="env",
+        m.Examples.ErrorMessages.BAD_CFG, config_key="db.host", config_source="env"
     )
 
 
@@ -87,9 +85,7 @@ def _raise_flext_type_error() -> None:
 def _raise_not_found_error() -> None:
     """Raise one NotFoundError example for handler exercise."""
     raise e.NotFoundError(
-        m.Examples.ErrorMessages.MISSING,
-        resource_type="User",
-        resource_id="404",
+        m.Examples.ErrorMessages.MISSING, resource_type="User", resource_id="404"
     )
 
 

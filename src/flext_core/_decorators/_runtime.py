@@ -9,13 +9,9 @@ from __future__ import annotations
 import time
 from functools import wraps
 from typing import TYPE_CHECKING
-
-from flext_core._constants.mixins import FlextConstantsMixins as cm
-from flext_core._constants.timeout import FlextConstantsTimeout as ct
-from flext_core._constants.validation import FlextConstantsValidation as cv
 from flext_core._decorators._combined import FlextDecoratorsCombined
 from flext_core._exceptions.types import FlextExceptionsTypes as et
-from flext_core._models.container import FlextModelsContainer as mc
+from flext_core import c, m
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -31,10 +27,10 @@ class FlextDecoratorsRuntime(FlextDecoratorsCombined):
         """Mark functions as factories for DI container discovery."""
 
         def decorator(func: Callable[P, T]) -> Callable[P, T]:
-            settings = mc.FactoryDecoratorConfig(
+            settings = m.FactoryDecoratorConfig(
                 name=name, singleton=singleton, lazy=lazy
             )
-            setattr(func, cm.FACTORY_ATTR, settings)
+            setattr(func, c.FACTORY_ATTR, settings)
             return func
 
         return decorator
@@ -47,7 +43,7 @@ class FlextDecoratorsRuntime(FlextDecoratorsCombined):
         max_duration = (
             timeout_seconds
             if timeout_seconds is not None
-            else ct.DEFAULT_TIMEOUT_SECONDS
+            else c.DEFAULT_TIMEOUT_SECONDS
         )
 
         def decorator(
@@ -70,7 +66,7 @@ class FlextDecoratorsRuntime(FlextDecoratorsCombined):
                         )
                         raise et.FlextTimeoutError(
                             msg,
-                            error_code=error_code or cv.ErrorCode.TIMEOUT_ERROR.value,
+                            error_code=error_code or c.ErrorCode.TIMEOUT_ERROR.value,
                             timeout_seconds=max_duration,
                             operation=func.__name__,
                             duration_seconds=duration,

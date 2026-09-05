@@ -82,9 +82,7 @@ class TestPackagedConfigWithUserPreferences:
             assert config.greeting == "packaged"
             assert config.level == 1
 
-    def test_user_preferences_override_only_declared_keys(
-        self, tmp_path: Path
-    ) -> None:
+    def test_user_preferences_override_only_declared_keys(self, tmp_path: Path) -> None:
         """Given a user YAML, When loaded, Then it wins and leaves the rest."""
         xdg = tmp_path / "xdg"
         with u.Tests.env_vars_context(env_vars={"XDG_CONFIG_HOME": str(xdg)}):
@@ -104,9 +102,7 @@ class TestPackagedConfigWithUserPreferences:
             assert config.greeting == "operator"
             assert config.level == 7
 
-    def test_absent_user_config_keeps_packaged_defaults(
-        self, tmp_path: Path
-    ) -> None:
+    def test_absent_user_config_keeps_packaged_defaults(self, tmp_path: Path) -> None:
         """Given no user directory, When loaded, Then defaults still apply."""
         with u.Tests.env_vars_context(
             env_vars={"XDG_CONFIG_HOME": str(tmp_path / "empty-xdg")}

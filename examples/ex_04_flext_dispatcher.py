@@ -119,7 +119,7 @@ class Ex04DispatchDsl:
         dispatcher = cls.build_dispatcher()
         result = dispatcher.dispatch(m.Examples.Ping(value="dispatcher-example"))
         if result.failure:
-            return r[str].fail(result.error or "dispatcher example failed")
+            return r[str].from_failure(result)
         return r[str].ok(str(result.value))
 
 

@@ -266,9 +266,7 @@ class TestsFlextCoreLazyExports:
             lazy_map = {"u": (module_name, "u")}
 
             # Act
-            partial_resolved = lazy.get(
-                "u", lazy_map, module_globals, "test_lazy_pkg"
-            )
+            partial_resolved = lazy.get("u", lazy_map, module_globals, "test_lazy_pkg")
 
             # Assert
             assert partial_resolved is PartialAlias

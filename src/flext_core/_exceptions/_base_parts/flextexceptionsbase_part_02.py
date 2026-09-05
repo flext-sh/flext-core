@@ -5,20 +5,15 @@ from __future__ import annotations
 import time
 import uuid
 from typing import TYPE_CHECKING, ClassVar, override
-
-from flext_core._constants.errors import FlextConstantsErrors as ce
-from flext_core._constants.validation import FlextConstantsValidation as cv
-from flext_core._models.containers import FlextModelsContainers as mc
 from flext_core._runtime._metadata_validation import (
     FlextRuntimeMetadataValidation as FlextRuntime,
 )
 
 from .flextexceptionsbase_part_01 import FlextBaseErrorMetadataMixin
+from flext_core import c, m
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
-
-    from flext_core._models.base import FlextModelsBase as m
     from flext_core._protocols.result import FlextProtocolsResult as pr
     from flext_core._typings.base import FlextTypingBase as tb
     from flext_core._typings.services import FlextTypesServices as ts
@@ -33,24 +28,24 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
     auto_log: bool
     args: tuple[str, ...]
 
-    _error_domains: ClassVar[Mapping[str, ce.ErrorDomain]] = {
-        cv.ErrorCode.VALIDATION_ERROR: ce.ErrorDomain.VALIDATION,
-        cv.ErrorCode.TYPE_ERROR: ce.ErrorDomain.VALIDATION,
-        cv.ErrorCode.ALREADY_EXISTS: ce.ErrorDomain.VALIDATION,
-        cv.ErrorCode.CONFIG_ERROR: ce.ErrorDomain.INTERNAL,
-        cv.ErrorCode.CONFIGURATION_ERROR: ce.ErrorDomain.INTERNAL,
-        cv.ErrorCode.ATTRIBUTE_ERROR: ce.ErrorDomain.INTERNAL,
-        cv.ErrorCode.OPERATION_ERROR: ce.ErrorDomain.INTERNAL,
-        cv.ErrorCode.AUTHENTICATION_ERROR: ce.ErrorDomain.AUTH,
-        cv.ErrorCode.AUTHORIZATION_ERROR: ce.ErrorDomain.AUTH,
-        cv.ErrorCode.PERMISSION_ERROR: ce.ErrorDomain.AUTH,
-        cv.ErrorCode.CONNECTION_ERROR: ce.ErrorDomain.NETWORK,
-        cv.ErrorCode.EXTERNAL_SERVICE_ERROR: ce.ErrorDomain.NETWORK,
-        cv.ErrorCode.TIMEOUT_ERROR: ce.ErrorDomain.TIMEOUT,
-        cv.ErrorCode.NOT_FOUND_ERROR: ce.ErrorDomain.NOT_FOUND,
-        cv.ErrorCode.NOT_FOUND: ce.ErrorDomain.NOT_FOUND,
-        cv.ErrorCode.RESOURCE_NOT_FOUND: ce.ErrorDomain.NOT_FOUND,
-        cv.ErrorCode.UNKNOWN_ERROR: ce.ErrorDomain.UNKNOWN,
+    _error_domains: ClassVar[Mapping[str, c.ErrorDomain]] = {
+        c.ErrorCode.VALIDATION_ERROR: c.ErrorDomain.VALIDATION,
+        c.ErrorCode.TYPE_ERROR: c.ErrorDomain.VALIDATION,
+        c.ErrorCode.ALREADY_EXISTS: c.ErrorDomain.VALIDATION,
+        c.ErrorCode.CONFIG_ERROR: c.ErrorDomain.INTERNAL,
+        c.ErrorCode.CONFIGURATION_ERROR: c.ErrorDomain.INTERNAL,
+        c.ErrorCode.ATTRIBUTE_ERROR: c.ErrorDomain.INTERNAL,
+        c.ErrorCode.OPERATION_ERROR: c.ErrorDomain.INTERNAL,
+        c.ErrorCode.AUTHENTICATION_ERROR: c.ErrorDomain.AUTH,
+        c.ErrorCode.AUTHORIZATION_ERROR: c.ErrorDomain.AUTH,
+        c.ErrorCode.PERMISSION_ERROR: c.ErrorDomain.AUTH,
+        c.ErrorCode.CONNECTION_ERROR: c.ErrorDomain.NETWORK,
+        c.ErrorCode.EXTERNAL_SERVICE_ERROR: c.ErrorDomain.NETWORK,
+        c.ErrorCode.TIMEOUT_ERROR: c.ErrorDomain.TIMEOUT,
+        c.ErrorCode.NOT_FOUND_ERROR: c.ErrorDomain.NOT_FOUND,
+        c.ErrorCode.NOT_FOUND: c.ErrorDomain.NOT_FOUND,
+        c.ErrorCode.RESOURCE_NOT_FOUND: c.ErrorDomain.NOT_FOUND,
+        c.ErrorCode.UNKNOWN_ERROR: c.ErrorDomain.UNKNOWN,
     }
 
     @property
@@ -58,7 +53,7 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
         """Canonical routing domain derived from the structured error code."""
         if not self.error_code:
             return None
-        domain = self._error_domains.get(self.error_code, ce.ErrorDomain.UNKNOWN)
+        domain = self._error_domains.get(self.error_code, c.ErrorDomain.UNKNOWN)
         return domain.value
 
     @property
@@ -97,14 +92,14 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
                 source_dict = FlextRuntime.normalize_metadata_input_mapping(
                     source_value
                 )
-            except ce.EXC_PYDANTIC_TYPE_VALUE:
+            except c.EXC_PYDANTIC_TYPE_VALUE:
                 continue
             if not source_dict:
                 continue
             for key, value in source_dict.items():
                 if value is not None:
                     final_kwargs_dict[key] = FlextRuntime.normalize_to_metadata(value)
-        final_kwargs = mc.ConfigMap.model_validate(final_kwargs_dict)
+        final_kwargs = m.ConfigMap.model_validate(final_kwargs_dict)
         self.correlation_id = (
             f"exc_{uuid.uuid4().hex[:8]}"
             if auto_correlation and (not correlation_id)

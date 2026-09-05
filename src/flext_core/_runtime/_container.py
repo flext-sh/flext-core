@@ -12,10 +12,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Literal, TypeGuard
 
 from pydantic import BaseModel
-
-from flext_core._constants.errors import FlextConstantsErrors as ce
-from flext_core._models.containers import FlextModelsContainers as mc
-from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._protocols.context import FlextProtocolsContext as pcx
 from flext_core._protocols.handler import FlextProtocolsHandler as ph
 from flext_core._protocols.logging import FlextProtocolsLogging as pl
@@ -25,8 +21,10 @@ from flext_core._typings.typeadapters import FlextTypesTypeAdapters as tta
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore as ugc
 
 from ._metadata_validation import FlextRuntimeMetadataValidation
+from flext_core import c
 
 if TYPE_CHECKING:
+    from flext_core import m
     from flext_core._protocols.base import FlextProtocolsBase as pb
     from flext_core._typings.services import FlextTypesServices as ts
 
@@ -62,13 +60,13 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
                 normalized_item = tta.json_dict_adapter().validate_python(item)
             case list():
                 normalized_item = list(tta.json_list_adapter().validate_python(item))
-            case bool() | int() | float() | str() | None | mp.BaseModel():
+            case bool() | int() | float() | str() | None | m.BaseModel():
                 normalized_item = item
             case _:
                 err_template = (
-                    ce.ERR_RUNTIME_MAPPING_INVALID_TYPE
+                    c.ERR_RUNTIME_MAPPING_INVALID_TYPE
                     if container_kind == "mapping"
-                    else ce.ERR_RUNTIME_SEQUENCE_INVALID_TYPE
+                    else c.ERR_RUNTIME_SEQUENCE_INVALID_TYPE
                 )
                 msg = err_template.format(type_name=type(item))
                 raise TypeError(msg)
@@ -77,10 +75,12 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
     @staticmethod
     def normalize_registerable_service(
         value: ts.RegisterableService | ts.GuardInput,
-    ) -> ts.RegisterableService | mc.ConfigMap | mc.ObjectList:
+    ) -> ts.RegisterableService | m.ConfigMap | m.ObjectList:
         """Normalize container registration payloads to canonical runtime types."""
+        from flext_core import m
+
         if isinstance(value, Mapping):
-            return mc.ConfigMap(
+            return m.ConfigMap(
                 root={
                     key_s: FlextRuntimeContainer._normalize_payload_item(
                         item, container_kind="mapping"
@@ -89,7 +89,7 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
                 }
             )
         if isinstance(value, Sequence) and not isinstance(value, tb.STR_BINARY_TYPES):
-            return mc.ObjectList(
+            return m.ObjectList(
                 root=[
                     FlextRuntimeContainer._normalize_payload_item(
                         item, container_kind="sequence"
@@ -105,7 +105,7 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
         if FlextRuntimeContainer._is_registerable_runtime_service(value):
             return value
         raise ValueError(
-            ce.ERR_RUNTIME_SERVICE_MUST_BE_REGISTERABLE.format(
+            c.ERR_RUNTIME_SERVICE_MUST_BE_REGISTERABLE.format(
                 type_name=type(value).__name__
             )
         )
@@ -123,19 +123,21 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
         val: ts.JsonPayload
         | tb.Scalar
         | Path
-        | mc.ConfigMap
-        | mc.Dict
+        | m.ConfigMap
+        | m.Dict
         | AbstractSet[tb.Scalar],
     ) -> ts.RuntimeData:
         """Normalize any value to RuntimeData."""
+        from flext_core import m
+
         normalized_data: ts.RuntimeData
         if val is None:
             normalized_data = ""
-        elif isinstance(val, (mc.ConfigMap, mc.Dict)):
+        elif isinstance(val, (m.ConfigMap, m.Dict)):
             normalized_data = FlextRuntimeContainer._normalize_dict_entries(
                 list(val.root.items())
             )
-        elif isinstance(val, mc.ObjectList):
+        elif isinstance(val, m.ObjectList):
             normalized_data = list(
                 tta.json_list_adapter().validate_python([
                     FlextRuntimeContainer.normalize_to_json_value(v) for v in val.root
