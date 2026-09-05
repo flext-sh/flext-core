@@ -25,6 +25,7 @@ if TYPE_CHECKING:
     from .container import FlextContainer
     from .context import FlextContext
     from .decorators import FlextDecorators, d
+    from .dispatcher import FlextDispatcher
     from .exceptions import FlextExceptions, e
     from .handlers import FlextHandlers, h
     from .lazy import FlextLazy, FlextLazyAttribute, lazy_attribute
@@ -48,6 +49,7 @@ __all__: tuple[str, ...] = (
     "FlextContainer",
     "FlextContext",
     "FlextDecorators",
+    "FlextDispatcher",
     "FlextExceptions",
     "FlextHandlers",
     "FlextLazy",
@@ -97,6 +99,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".container": ("FlextContainer",),
             ".context": ("FlextContext",),
             ".decorators": ("FlextDecorators", "d"),
+            ".dispatcher": ("FlextDispatcher",),
             ".exceptions": ("FlextExceptions", "e"),
             ".handlers": ("FlextHandlers", "h"),
             ".lazy": ("FlextLazy", "FlextLazyAttribute", "lazy_attribute"),
