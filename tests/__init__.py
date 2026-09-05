@@ -17,7 +17,8 @@ if TYPE_CHECKING:
     from flext_core import FlextConstants
     from flext_tests import FlextTestsConstants
 
-    from .base import s
+    from .base import TestsFlextServiceBase, TestsFlextServiceBase as s
+    from .conftest import collect_ignore_glob, mock_external_service
     from .integration.migration_validation_cases import (
         TestsFlextFlextMigrationApplicationCase,
         capture_stdout,
@@ -43,10 +44,10 @@ if TYPE_CHECKING:
         TestsFlextFlextSettingsPrecedenceCase,
     )
     from .integration.system_integration_cases import TestsFlextFlextSystemWorkflowCases
-    from .models import m
-    from .protocols import p
-    from .typings import t
-    from .utilities import u
+    from .models import TestsFlextModels, TestsFlextModels as m
+    from .protocols import TestsFlextProtocols, TestsFlextProtocols as p
+    from .typings import TestsFlextTypes, TestsFlextTypes as t
+    from .utilities import TestsFlextUtilities, TestsFlextUtilities as u
 __all__: tuple[str, ...] = (
     "FlextConstants",
     "FlextTestsConstants",
@@ -57,18 +58,25 @@ __all__: tuple[str, ...] = (
     "TestsFlextFlextSettingsPrecedenceCase",
     "TestsFlextFlextSystemWorkflowCases",
     "TestsFlextLifecycleService",
+    "TestsFlextModels",
     "TestsFlextNotificationService",
+    "TestsFlextProtocols",
+    "TestsFlextServiceBase",
     "TestsFlextServiceConfig",
     "TestsFlextSettingsConfigTestCase",
     "TestsFlextSettingsConfigTestFactories",
     "TestsFlextSettingsThreadSafetyTest",
+    "TestsFlextTypes",
     "TestsFlextUserQueryService",
     "TestsFlextUserServiceEntity",
+    "TestsFlextUtilities",
     "benchmark",
     "capture_stdout",
+    "collect_ignore_glob",
     "fixtures",
     "integration",
     "m",
+    "mock_external_service",
     "p",
     "s",
     "t",
@@ -79,8 +87,9 @@ __all__: tuple[str, ...] = (
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
-            ".base": ("s",),
+            ".base": ("TestsFlextServiceBase", "s"),
             ".benchmark": ("benchmark",),
+            ".conftest": ("collect_ignore_glob", "mock_external_service"),
             ".fixtures": ("fixtures",),
             ".integration": ("integration",),
             ".integration.migration_validation_cases": (
@@ -110,11 +119,11 @@ _LAZY_IMPORTS = MappingProxyType(
             ".integration.system_integration_cases": (
                 "TestsFlextFlextSystemWorkflowCases",
             ),
-            ".models": ("m",),
-            ".protocols": ("p",),
-            ".typings": ("t",),
+            ".models": ("TestsFlextModels", "m"),
+            ".protocols": ("TestsFlextProtocols", "p"),
+            ".typings": ("TestsFlextTypes", "t"),
             ".unit": ("unit",),
-            ".utilities": ("u",),
+            ".utilities": ("TestsFlextUtilities", "u"),
             "flext_core": ("FlextConstants",),
             "flext_tests": ("FlextTestsConstants",),
         }),

@@ -115,10 +115,7 @@ url_api = "https://api.github.com/repos/direnv/direnv/releases/assets/274610569"
 [[tools."github:marlon-costa-dc/beads"]]
 version = "1.2.2-fd1"
 backend = "github:marlon-costa-dc/beads"
-specifiers = [
-    "1.2.2-fd1",
-    "latest",
-]
+specifiers = ["latest"]
 
 [tools."github:marlon-costa-dc/beads"."platforms.linux-arm64"]
 checksum = "sha256:883dad274a211707c9c7ac34ac4a038de2fdebbe5e608846d8f50c03670a6a58"
@@ -166,10 +163,7 @@ provenance = "github-attestations"
 [[tools."github:marlon-costa-dc/gascity"]]
 version = "1.4.1-fc2"
 backend = "github:marlon-costa-dc/gascity"
-specifiers = [
-    "1.4.1-fc2",
-    "latest",
-]
+specifiers = ["latest"]
 
 [tools."github:marlon-costa-dc/gascity"."platforms.linux-arm64"]
 checksum = "sha256:3f2e869b890ff1bea4d25f336645fa6edf096d34e5187ebbe9d7a2d276db0531"

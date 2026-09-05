@@ -23,12 +23,6 @@ export GEN_INIT_ONLY
 endif
 endif
 endif
-ifeq ($(filter command line override,$(origin SETUP_BOOTSTRAP_ONLY)),)
-ifneq ($(filter setup,$(MAKECMDGOALS)),)
-SETUP_BOOTSTRAP_ONLY := Y
-export SETUP_BOOTSTRAP_ONLY
-endif
-endif
 
 # === SECTION: project identity (managed) ===
 # Source: config:dist / config:make_profile / config:workspace_root_rel / config:uv_link_mode
@@ -115,12 +109,15 @@ SELF_MAKEFILE := $(abspath $(firstword $(MAKEFILE_LIST)))
 MAKEFILE_ROOT := $(patsubst %/,%,$(dir $(SELF_MAKEFILE)))
 PROJECT_ROOT := $(MAKEFILE_ROOT)
 SETUP_BIN := $(PROJECT_ROOT)/.bin
+SETUP_MISE_VERSION := latest
 ifeq ($(OS),Windows_NT)
 TRACKED_MISE := $(PROJECT_ROOT)/bin/mise.cmd
 else
 TRACKED_MISE := $(PROJECT_ROOT)/bin/mise
 endif
 override SETUP_MISE := $(TRACKED_MISE)
+MISE_LOCK_PLATFORMS := linux-x64,linux-arm64,linux-x64-musl,linux-arm64-musl,macos-x64,macos-arm64,windows-x64
+MISE_LOCK_PROJECTS := .
 override export FLEXT_PYTEST_TARGET_RAW := tests
 WORKSPACE ?= $(PROJECT_ROOT)
 # === SECTION: WORKSPACE_ROOT isolation (managed) ===
@@ -312,230 +309,43 @@ export FLEXT_INFRA_PYTHON UV UV_PROJECT UV_PROJECT_ENVIRONMENT VIRTUAL_ENV PATH
 
 _bootstrap_setup_tools:
 	@set -eu; \
+	project_root="$(PROJECT_ROOT)"; \
+	mise="$(SETUP_MISE)"; \
 	uv_required="0.12"; \
-	if [ ! -f "$(SETUP_MISE)" ]; then \
-		printf 'ERROR: missing generated mise launcher: %s; run make gen WHAT=apply APPLY=Y\n' "$(SETUP_MISE)" >&2; \
+	if [ ! -f "$$mise" ]; then \
+		printf 'ERROR: missing generated mise launcher: %s; run make gen WHAT=apply APPLY=Y\n' "$$mise" >&2; \
 		exit 2; \
 	fi; \
-	if [ ! -f "$(PROJECT_ROOT)/mise.lock" ]; then \
+	env -u MISE_INSTALL_PATH -u MISE_VERSION "$$mise" --version >/dev/null; \
+	if [ ! -f "$$project_root/mise.lock" ]; then \
 		printf 'ERROR: missing generated mise.lock; run make gen WHAT=apply APPLY=Y and commit it\n' >&2; \
 		exit 2; \
 	fi; \
-	project_root="$(PROJECT_ROOT)"; \
-	mise="$(SETUP_MISE)"; \
-	mise_storage_root="$(MISE_DATA_DIR)"; \
-	caller_home="$${HOME:-}"; \
-	caller_xdg_data_home="$${XDG_DATA_HOME:-}"; \
-	if [ -z "$$caller_xdg_data_home" ] && [ -n "$$caller_home" ]; then \
-		caller_xdg_data_home="$$caller_home/.local/share"; \
-	fi; \
-	caller_path="$$PATH"; \
-	mise_credential_command="$${MISE_GITHUB_CREDENTIAL_COMMAND:-}"; \
-caller_comspec="$(COMSPEC)"; \
-caller_pathext="$(PATHEXT)"; \
-caller_systemroot="$(SYSTEMROOT)"; \
-caller_windir="$(WINDIR)"; \
-if [ -z "$$mise_storage_root" ]; then \
-		if [ -n "$$caller_xdg_data_home" ]; then \
-			mise_storage_root="$$caller_xdg_data_home/mise"; \
-		elif [ -n "$$caller_home" ]; then \
-			mise_storage_root="$$caller_home/.local/share/mise"; \
-		else \
-			printf 'ERROR: MISE_DATA_DIR, XDG_DATA_HOME, or HOME must identify persistent Mise storage\n' >&2; \
-			exit 2; \
-		fi; \
-	fi; \
-	case "$$mise_storage_root" in \
-		/*) ;; \
-		*) printf 'ERROR: MISE_DATA_DIR must be absolute: %s\n' "$$mise_storage_root" >&2; exit 2 ;; \
-	esac; \
-	case "$$mise_storage_root/" in \
-		*'/../'*|*'/./'*|*'//'*) printf 'ERROR: MISE_DATA_DIR must be normalized: %s\n' "$$mise_storage_root" >&2; exit 2 ;; \
-	esac; \
-	project_root=$$(cd "$$project_root" && pwd -P); \
-	project_parent=$${project_root%/*}; \
-	if [ -z "$$project_parent" ]; then project_parent=/; fi; \
-	if [ -L "$$mise_storage_root" ]; then \
-		printf 'ERROR: MISE_DATA_DIR must not be a symlink: %s\n' "$$mise_storage_root" >&2; \
-		exit 2; \
-	fi; \
-	umask 077; \
-	mkdir -p "$$mise_storage_root"; \
-	if [ -L "$$mise_storage_root" ]; then \
-		printf 'ERROR: MISE_DATA_DIR became a symlink: %s\n' "$$mise_storage_root" >&2; \
-		exit 2; \
-	fi; \
-	mise_storage_root=$$(cd "$$mise_storage_root" && pwd -P); \
-	case "$$mise_storage_root/" in \
-		/tmp/|/tmp/*) printf 'ERROR: persistent Mise storage must not live under /tmp: %s\n' "$$mise_storage_root" >&2; exit 2 ;; \
-	esac; \
-	case "$$mise_storage_root/" in \
-		"$$project_root/"*) printf 'ERROR: persistent Mise storage must be outside the checkout: %s\n' "$$mise_storage_root" >&2; exit 2 ;; \
-	esac; \
-	case "$$project_root/" in \
-		"$$mise_storage_root/"*) printf 'ERROR: persistent Mise storage must not contain the checkout: %s\n' "$$mise_storage_root" >&2; exit 2 ;; \
-	esac; \
-	for persistent_path in "$$mise_storage_root" "$$mise_storage_root/cache" "$$mise_storage_root/state" "$$mise_storage_root/installs" "$$mise_storage_root/shims" "$$mise_storage_root/bootstrap"; do \
-		if [ -L "$$persistent_path" ]; then \
-			printf 'ERROR: persistent Mise path must not be a symlink: %s\n' "$$persistent_path" >&2; exit 2; \
-		fi; \
-		mkdir -p "$$persistent_path"; \
-		if [ -L "$$persistent_path" ]; then \
-			printf 'ERROR: persistent Mise path became a symlink: %s\n' "$$persistent_path" >&2; exit 2; \
-		fi; \
-		persistent_physical=$$(cd "$$persistent_path" && pwd -P); \
-		case "$$persistent_physical" in \
-			"$$mise_storage_root"|"$$mise_storage_root"/*) ;; \
-			*) printf 'ERROR: persistent Mise path escaped storage: %s\n' "$$persistent_physical" >&2; exit 2 ;; \
-		esac; \
-	done; \
 	scratch_parent="$$project_root/.test-tmp"; \
-	if [ -L "$$scratch_parent" ]; then \
-		printf 'ERROR: Mise scratch parent must not be a symlink: %s\n' "$$scratch_parent" >&2; exit 2; \
-	fi; \
 	mkdir -p "$$scratch_parent"; \
-	scratch=$$(mktemp -d "$$scratch_parent/mise-toolchain.XXXXXX"); \
+	scratch=$$(mktemp -d "$$scratch_parent/mise-setup.XXXXXX"); \
 	trap 'find "$$scratch" -depth -delete' EXIT; \
-	mkdir -p "$$scratch/receipt/bin" "$$scratch/runtime" "$$scratch/home" "$$scratch/home" "$$scratch/appdata" "$$scratch/appdata" "$$scratch/xdg-config" "$$scratch/xdg-data" "$$scratch/xdg-cache" "$$scratch/xdg-state" "$$scratch/gh-config" "$$scratch/config" "$$scratch/tmp" "$$scratch/." "$$scratch/system-config" "$$scratch/system-data" "$$scratch/system-installs" "$$scratch/system-shims" "$$scratch/tmp" "$$scratch/tmp" "$$scratch/tmp"; \
-: > "$$scratch/global-config.toml"; chmod 600 "$$scratch/global-config.toml"; \
-: > "$$scratch/system-config/config.toml"; chmod 600 "$$scratch/system-config/config.toml"; \
-: > "$$scratch/gitconfig"; chmod 600 "$$scratch/gitconfig"; \
-: > "$$scratch/netrc"; chmod 600 "$$scratch/netrc"; \
-mise_exec() { \
-		mise_config_mode="$$1"; shift; \
-		case "$$mise_config_mode" in \
-			no-config) mise_config_argument='MISE_NO_CONFIG=1' ;; \
-			project) mise_config_argument= ;; \
-			*) printf 'ERROR: invalid Mise config mode: %s\n' "$$mise_config_mode" >&2; return 2 ;; \
-		esac; \
-		mise_credential_argument=; \
-		if [ -n "$$mise_credential_command" ]; then \
-			mise_credential_argument="MISE_GITHUB_CREDENTIAL_COMMAND=$$mise_credential_command"; \
-		fi; \
-		env -i \
-'GIT_CONFIG_NOSYSTEM=1' \
-'GIT_TERMINAL_PROMPT=0' \
-'LANG=C' \
-'LC_ALL=C' \
-'MISE_SAFE=1' \
-'MISE_PARANOID=true' \
-'MISE_NO_ENV=1' \
-'MISE_NO_HOOKS=1' \
-'MISE_AUTO_ENV=false' \
-'MISE_AUTO_INSTALL=false' \
-'MISE_EXEC_AUTO_INSTALL=false' \
-'MISE_TASK_RUN_AUTO_INSTALL=false' \
-'MISE_AUTO_UPDATE=false' \
-'MISE_HTTP_RETRIES=0' \
-'MISE_NETRC=false' \
-'MISE_NOT_FOUND_AUTO_INSTALL=false' \
-'MISE_NOT_FOUND_SYSTEM_FALLBACK=false' \
-'MISE_OVERRIDE_CONFIG_FILENAMES=.mise.toml' \
-'MISE_OVERRIDE_TOOL_VERSIONS_FILENAMES=none' \
-'MISE_GITHUB_GH_CLI_TOKENS=false' \
-'MISE_GITHUB_USE_GIT_CREDENTIALS=false' \
-'MISE_GITHUB_OAUTH_CLIENT_ID=' \
-'MISE_GITHUB_OAUTH_EXPORT_ENV=' \
-'MISE_GITHUB_OAUTH_OPEN_BROWSER=false' \
-"HOME=$$scratch/home" \
-"USERPROFILE=$$scratch/home" \
-"APPDATA=$$scratch/appdata" \
-"LOCALAPPDATA=$$scratch/appdata" \
-"XDG_CONFIG_HOME=$$scratch/xdg-config" \
-"XDG_DATA_HOME=$$scratch/xdg-data" \
-"XDG_CACHE_HOME=$$scratch/xdg-cache" \
-"XDG_STATE_HOME=$$scratch/xdg-state" \
-"GH_CONFIG_DIR=$$scratch/gh-config" \
-"NETRC=$$scratch/netrc" \
-"GIT_CONFIG_GLOBAL=$$scratch/gitconfig" \
-"MISE_NETRC_FILE=$$scratch/netrc" \
-"MISE_GLOBAL_CONFIG_FILE=$$scratch/global-config.toml" \
-"MISE_CONFIG_DIR=$$scratch/config" \
-"MISE_TMP_DIR=$$scratch/tmp" \
-"MISE_GLOBAL_CONFIG_ROOT=$$scratch/." \
-"MISE_SYSTEM_CONFIG_DIR=$$scratch/system-config" \
-"MISE_SYSTEM_CONFIG_FILE=$$scratch/system-config/config.toml" \
-"MISE_SYSTEM_DATA_DIR=$$scratch/system-data" \
-"MISE_SYSTEM_INSTALLS_DIR=$$scratch/system-installs" \
-"MISE_SYSTEM_SHIMS_DIR=$$scratch/system-shims" \
-"TMPDIR=$$scratch/tmp" \
-"TMP=$$scratch/tmp" \
-"TEMP=$$scratch/tmp" \
-"MISE_DATA_DIR=$$mise_storage_root" \
-"MISE_CACHE_DIR=$$mise_storage_root/cache" \
-"MISE_STATE_DIR=$$mise_storage_root/state" \
-"MISE_INSTALLS_DIR=$$mise_storage_root/installs" \
-"MISE_SHIMS_DIR=$$mise_storage_root/shims" \
-"GIT_CEILING_DIRECTORIES=$$project_parent" \
-			"MISE_CEILING_PATHS=$$project_parent" \
-			"MISE_TRUSTED_CONFIG_PATHS=$$project_root" \
-			"MISE_INSTALL_PATH=$$mise_install_path" \
-"PATH=$$caller_path" \
-"COMSPEC=$$caller_comspec" \
-"PATHEXT=$$caller_pathext" \
-"SYSTEMROOT=$$caller_systemroot" \
-"WINDIR=$$caller_windir" \
-$${mise_config_argument:+"$$mise_config_argument"} \
-			$${mise_credential_argument:+"$$mise_credential_argument"} \
-			"$$@"; \
-	}; \
-	mise_checked() { \
-		mise_log="$$1"; shift; \
-		if "$$@" >"$$mise_log" 2>&1; then :; \
-		else mise_status=$$?; cat "$$mise_log"; return "$$mise_status"; fi; \
-		cat "$$mise_log"; \
-		if grep -Fq 'mise WARN' "$$mise_log"; then \
-			printf 'ERROR: Mise emitted a warning\n' >&2; return 2; \
-		fi; \
-	}; \
-	case "$${OS:-}" in \
-		Windows_NT) mise_runtime_suffix='.exe'; latest_mise="$$scratch/receipt/bin/mise.cmd" ;; \
-		*) mise_runtime_suffix=; latest_mise="$$scratch/receipt/bin/mise" ;; \
-	esac; \
-	latest_url=$$(curl -fsSIL --proto '=https' --proto-redir '=https' \
-		-o /dev/null -w '%{url_effective}' \
-		https://github.com/jdx/mise/releases/latest); \
-	case "$$latest_url" in \
-		https://github.com/jdx/mise/releases/tag/v*) mise_release=$${latest_url##*/v} ;; \
-		*) printf 'ERROR: Mise latest redirect is invalid: %s\n' "$$latest_url" >&2; exit 2 ;; \
-	esac; \
-	case "$$mise_release" in \
-		''|*[!0-9.]*|.*|*.|*..*) printf 'ERROR: resolved Mise returned invalid version: %s\n' "$$mise_release" >&2; exit 2 ;; \
-	esac; \
-	old_ifs=$$IFS; IFS=.; set -- $$mise_release; IFS=$$old_ifs; \
-	if [ "$$#" -ne 3 ]; then \
-		printf 'ERROR: resolved Mise returned invalid version: %s\n' "$$mise_release" >&2; exit 2; \
-	fi; \
-	mise_install_path="$$mise_storage_root/bootstrap/mise-$$mise_release$$mise_runtime_suffix"; \
-	mise_checked "$$scratch/generate.log" mise_exec no-config "$$mise" -C "$$scratch" generate install-script --write "$$scratch/receipt/bin/mise" --windows --version "$$mise_release"; \
-	chmod +x "$$scratch/receipt/bin/mise"; \
-	mise_checked "$$scratch/receipt-version.log" mise_exec no-config "$$latest_mise" --version; \
-	receipt_runtime=$$(cat "$$scratch/receipt-version.log"); \
-	case "$$receipt_runtime" in "$$mise_release"|"$$mise_release "*|'mise '"$$mise_release"*) ;; \
-		*) printf 'ERROR: newest Mise receipt differs: resolved=%s receipt=%s\n' "$$mise_release" "$$receipt_runtime" >&2; exit 2 ;; \
-	esac; \
-	printf 'mise setup runtime=%s storage=%s\n' "$$receipt_runtime" "$$mise_storage_root"; \
-	mise_checked "$$scratch/install.log" mise_exec project "$$latest_mise" -C "$$project_root" install --locked --yes; \
-	mise_checked "$$scratch/uv-version.log" mise_exec project "$$latest_mise" -C "$$project_root" exec -- uv --version; \
-	uv_output=$$(cat "$$scratch/uv-version.log"); \
+	global_config="$$scratch/global-config.toml"; \
+	config_dir="$$scratch/config"; \
+	mkdir -p "$$config_dir"; \
+	: > "$$global_config"; \
+	MISE_CONFIG_DIR="$$config_dir" MISE_GLOBAL_CONFIG_FILE="$$global_config" \
+		env -u MISE_INSTALL_PATH -u MISE_VERSION "$$mise" trust "$$project_root/.mise.toml"; \
+	MISE_CONFIG_DIR="$$config_dir" MISE_GLOBAL_CONFIG_FILE="$$global_config" \
+		env -u MISE_INSTALL_PATH -u MISE_VERSION "$$mise" -C "$$project_root" install --locked --yes; \
+	uv_output=$$(MISE_CONFIG_DIR="$$config_dir" \
+		MISE_GLOBAL_CONFIG_FILE="$$global_config" \
+		env -u MISE_INSTALL_PATH -u MISE_VERSION "$$mise" -C "$$project_root" \
+		exec -- uv --version); \
 	case "$$uv_output" in \
 		'uv '*) uv_actual=$${uv_output#uv }; uv_actual=$${uv_actual%% *} ;; \
 		*) printf 'ERROR: uv --version returned an invalid value\n' >&2; exit 2 ;; \
 	esac; \
 	case "$$uv_actual" in \
 		"$$uv_required"|"$$uv_required".*) ;; \
-		*) printf 'ERROR: mise must install uv %s.x, found %s\n' "$$uv_required" "$$uv_actual" >&2; exit 2 ;; \
-	esac; \
-	mise_checked "$$scratch/direnv-path.log" mise_exec project "$$latest_mise" -C "$$project_root" which direnv; \
-	direnv_executable=$$(cat "$$scratch/direnv-path.log"); \
-	if [ ! -x "$$direnv_executable" ]; then \
-		printf 'ERROR: Mise resolved a non-executable direnv path: %s\n' "$$direnv_executable" >&2; exit 2; \
-	fi; \
-	if [ -n "$${GITHUB_PATH:-}" ]; then \
-		printf '%s\n' "$$project_root/bin" >> "$$GITHUB_PATH"; \
-printf '%s\n' "$$mise_storage_root/shims" >> "$$GITHUB_PATH"; \
-fi; \
-	mise_checked "$$scratch/lifecycle.log" mise_exec project "$$latest_mise" -C "$$project_root" exec -- env "SETUP_DIRENV=$$direnv_executable" "SETUP_DIRENV_XDG_DATA_HOME=$$caller_xdg_data_home" $(SELF_MAKE) _setup_lifecycle
+		*) printf 'ERROR: mise must install uv %s.x, found %s\n' \
+			"$$uv_required" "$$uv_actual" >&2; exit 2 ;; \
+	esac
 
 ifeq ($(MAKE_PROFILE),workspace)
 CODEGEN_SCOPE := all
@@ -565,8 +375,7 @@ SETUP_ENVIRONMENT_RECIPE = set -eu; \
 		fi; \
 		$(UV) sync --frozen --project "$(PROJECT_ROOT)" $(UV_SYNC_FLAGS) --link-mode "$(UV_LINK_MODE)"; \
 	fi; \
-	XDG_DATA_HOME="$${SETUP_DIRENV_XDG_DATA_HOME:?missing persistent direnv data home}" \
-		"$${SETUP_DIRENV:?missing Mise-resolved direnv executable}" allow "$(PROJECT_ROOT)"
+	direnv allow "$(PROJECT_ROOT)"
 
 # A delegated runtime lives in another checkout, so this project has no local
 # environment of its own. Generated tooling still addresses the environment by
@@ -701,9 +510,11 @@ endef
 # repository that has no environment yet — it is the verb that MAKES the tree
 # provisionable, so requiring a provisioned tree first is circular. All three
 # still dispatch; they only drop the prerequisite.
-# `gen WHAT=init` bootstraps only this generated Makefile and may run before an
-# environment exists. It is excluded from the require-environment fan-out and
-# runs directly so an old parsed dispatcher cannot continue into stale recipes.
+# `gen WHAT=init` bootstraps a repository that may not even have an
+# environment, so it is excluded from the require-environment fan-out
+# outright, and its own target runs the init selector directly instead of
+# going through _dispatch (which re-enters make and re-parses everything the
+# init bypass exists to skip).
 ifeq ($(filter gen,$(PUBLIC_VERBS)),gen)
 $(filter-out setup gen,$(PUBLIC_VERBS)): _builtin_require_environment
 	$(call _dispatch,$@)
@@ -729,6 +540,8 @@ endif
 # to build), but it still runs the pre-/post-setup lifecycle hooks so a project
 # declaring them in the custom handler surface is actually honoured.
 setup: _bootstrap_setup_tools
+	@env -u MISE_INSTALL_PATH -u MISE_VERSION "$(SETUP_MISE)" -C "$(PROJECT_ROOT)" exec -- \
+		$(SELF_MAKE) _setup_lifecycle
 
 .PHONY: _setup_lifecycle
 _setup_lifecycle:
@@ -1264,12 +1077,148 @@ _builtin_release_publish: _builtin_require_environment
 	$(call _require_apply)
 	@$(PROJECT_FLEXT_INFRA) release run --workspace "$(PROJECT_ROOT)" --phase publish --apply $(if $(filter Y,$(INDEX)),--index)
 
-# Generation has one transaction owner. Conform preserves the caller's scope and
-# journals ordinary, Mise, lazy-init, and documentation phases through one fixed
-# point. Dependency upgrades remain a separate explicit verb because they rewrite
-# lock floors; gen never runs another writer before or after conform's journal.
+# Generation has one owner. Conform preserves the caller's scope and applies
+# the complete dependency/tooling projection before it verifies its fixed point.
+# Dependency upgrades remain a separate explicit verb because they rewrite lock
+# floors; gen must never run a second pyproject writer over conform's result.
+define _mise_launcher_apply
+	@set -eu; \
+	mise_version="$(SETUP_MISE_VERSION)"; \
+	if [ "$$mise_version" = latest ]; then \
+		mise_release_url=$$(curl -fsSIL -o /dev/null -w '%{url_effective}' \
+			https://github.com/jdx/mise/releases/latest); \
+		mise_version=$${mise_release_url##*/v}; \
+		case "$$mise_version" in \
+			[0-9]*.[0-9]*.[0-9]*) ;; \
+			*) printf 'ERROR: invalid Mise latest release redirect: %s\n' \
+				"$$mise_release_url" >&2; exit 2 ;; \
+		esac; \
+	fi; \
+	scratch_parent="$(PROJECT_ROOT)/.test-tmp"; \
+	mkdir -p "$$scratch_parent"; \
+	scratch=$$(mktemp -d "$$scratch_parent/mise-launcher.XXXXXX"); \
+	trap 'find "$$scratch" -depth -delete' EXIT; \
+	mkdir -p "$$scratch/data" "$$scratch/cache" "$$scratch/state" "$$scratch/tmp"; \
+	: > "$$scratch/global-config.toml"; \
+	if MISE_GLOBAL_CONFIG_FILE="$$scratch/global-config.toml" \
+		XDG_CACHE_HOME="$$scratch/cache" XDG_STATE_HOME="$$scratch/state" \
+		MISE_DATA_DIR="$$scratch/data" MISE_CACHE_DIR="$$scratch/cache" \
+		MISE_STATE_DIR="$$scratch/state" TMPDIR="$$scratch/tmp" \
+		MISE_CEILING_PATHS="$$scratch_parent" MISE_TRUSTED_CONFIG_PATHS="$$scratch" \
+		env -u MISE_INSTALL_PATH -u MISE_VERSION "$(SETUP_MISE)" -C "$$scratch" generate install-script \
+		--version "$$mise_version" \
+		--write "$$scratch/mise" --windows \
+		>"$$scratch/generate.log" 2>&1; then \
+		cat "$$scratch/generate.log"; \
+	else \
+		status=$$?; cat "$$scratch/generate.log"; exit "$$status"; \
+	fi; \
+	if grep -Fq 'mise WARN' "$$scratch/generate.log"; then \
+		printf 'ERROR: Mise launcher generation emitted warnings\n' >&2; exit 2; \
+	else \
+		status=$$?; if [ "$$status" -ne 1 ]; then exit "$$status"; fi; \
+	fi; \
+	for project in $(MISE_LOCK_PROJECTS); do \
+		if [ "$$project" = . ]; then project_root="$(PROJECT_ROOT)"; \
+		else project_root="$(PROJECT_ROOT)/$$project"; fi; \
+		if [ ! -f "$$project_root/.mise.toml" ]; then \
+			printf 'ERROR: missing generated .mise.toml in %s\n' "$$project_root" >&2; exit 2; \
+		fi; \
+		mkdir -p "$$project_root/bin"; \
+		shell_tmp="$$project_root/bin/.mise.new.$$$$"; \
+		windows_tmp="$$project_root/bin/.mise.cmd.new.$$$$"; \
+		cp "$$scratch/mise" "$$shell_tmp"; \
+		cp "$$scratch/mise.cmd" "$$windows_tmp"; \
+		chmod +x "$$shell_tmp"; \
+		mv -f "$$shell_tmp" "$$project_root/bin/mise"; \
+		mv -f "$$windows_tmp" "$$project_root/bin/mise.cmd"; \
+	done
+endef
+
+define _mise_lock_apply
+	@set -eu; \
+	: "$${MISE_GITHUB_CREDENTIAL_COMMAND:?ERROR: make gen apply requires MISE_GITHUB_CREDENTIAL_COMMAND}"; \
+	credential_command="$$MISE_GITHUB_CREDENTIAL_COMMAND"; \
+	for project in $(MISE_LOCK_PROJECTS); do \
+		if [ "$$project" = . ]; then project_root="$(PROJECT_ROOT)"; \
+		else project_root="$(PROJECT_ROOT)/$$project"; fi; \
+		if [ ! -f "$$project_root/.mise.toml" ]; then \
+			printf 'ERROR: missing generated .mise.toml in %s\n' "$$project_root" >&2; exit 2; \
+		fi; \
+		if [ "$$project" != . ] && cmp "$(PROJECT_ROOT)/.mise.toml" "$$project_root/.mise.toml" >/dev/null 2>&1; then \
+			$(PROJECT_FLEXT_INFRA) codegen mise-artifacts \
+				--project "$$project" --from-root --apply; \
+		else \
+			scratch_parent="$$project_root/.test-tmp"; mkdir -p "$$scratch_parent"; \
+			scratch=$$(mktemp -d "$$scratch_parent/mise-lock.XXXXXX"); \
+			trap 'find "$$scratch" -depth -delete' EXIT; \
+			cp "$$project_root/.mise.toml" "$$scratch/.mise.toml"; \
+			locked_count=$$(awk '$$0 == "locked = true" { count++ } END { print count + 0 }' "$$scratch/.mise.toml"); \
+			if [ "$$locked_count" -ne 1 ]; then \
+				printf 'ERROR: expected one locked tool_config setting in %s\n' "$$project_root/.mise.toml" >&2; exit 2; \
+			fi; \
+			sed -i 's/^locked = true$$/locked = false/' "$$scratch/.mise.toml"; \
+			mkdir -p "$$scratch/data" "$$scratch/cache" \
+				"$$scratch/state" "$$scratch/tmp"; \
+			: > "$$scratch/global-config.toml"; \
+			if MISE_GITHUB_CREDENTIAL_COMMAND="$$credential_command" \
+				MISE_GLOBAL_CONFIG_FILE="$$scratch/global-config.toml" \
+				XDG_CACHE_HOME="$$scratch/cache" XDG_STATE_HOME="$$scratch/state" \
+				MISE_DATA_DIR="$$scratch/data" MISE_CACHE_DIR="$$scratch/cache" \
+				MISE_STATE_DIR="$$scratch/state" TMPDIR="$$scratch/tmp" \
+				MISE_CEILING_PATHS="$$scratch_parent" MISE_TRUSTED_CONFIG_PATHS="$$scratch" \
+				env -u MISE_INSTALL_PATH -u MISE_VERSION "$(SETUP_MISE)" -C "$$scratch" lock \
+				--platform "$(MISE_LOCK_PLATFORMS)" >"$$scratch/lock.log" 2>&1; then \
+				cat "$$scratch/lock.log"; \
+			else \
+				status=$$?; cat "$$scratch/lock.log"; exit "$$status"; \
+			fi; \
+			if grep -Fq 'mise WARN' "$$scratch/lock.log"; then \
+				printf 'ERROR: Mise lock generation emitted warnings for %s\n' "$$project_root" >&2; exit 2; \
+			else \
+				status=$$?; if [ "$$status" -ne 1 ]; then exit "$$status"; fi; \
+			fi; \
+			$(PROJECT_FLEXT_INFRA) codegen mise-artifacts \
+				--workspace "$$scratch" --apply; \
+			lock_tmp="$$project_root/.mise.lock.new.$$$$"; \
+			cp "$$scratch/mise.lock" "$$lock_tmp"; \
+			mv -f "$$lock_tmp" "$$project_root/mise.lock"; \
+			find "$$scratch" -depth -delete; trap - EXIT; \
+		fi; \
+	done
+endef
+
+define _mise_artifacts_check
+	@set -eu; \
+	for project in $(MISE_LOCK_PROJECTS); do \
+		if [ "$$project" = . ]; then project_root="$(PROJECT_ROOT)"; \
+		else project_root="$(PROJECT_ROOT)/$$project"; fi; \
+		$(PROJECT_FLEXT_INFRA) codegen mise-artifacts \
+			--workspace "$$project_root" --check; \
+		if [ "$$project" != . ]; then \
+			if cmp "$(PROJECT_ROOT)/bin/mise" "$$project_root/bin/mise"; then :; else \
+				status=$$?; if [ "$$status" -eq 1 ]; then \
+					printf 'ERROR: Unix Mise launcher differs in %s\n' "$$project_root" >&2; exit 2; \
+				else exit "$$status"; fi; \
+			fi; \
+			if cmp "$(PROJECT_ROOT)/bin/mise.cmd" "$$project_root/bin/mise.cmd"; then :; else \
+				status=$$?; if [ "$$status" -eq 1 ]; then \
+					printf 'ERROR: Windows Mise launcher differs in %s\n' "$$project_root" >&2; exit 2; \
+				else exit "$$status"; fi; \
+			fi; \
+		fi; \
+	done
+endef
+
+define _generated_docs
+	@$(PROJECT_FLEXT_INFRA) docs generate --workspace "$(PROJECT_ROOT)" --output-dir "$(PROJECT_ROOT)/.reports/docs" $(1) $(DOCS_PROJECT_ARGS)
+endef
+
 _builtin_gen_check: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) codegen conform --root "$(PROJECT_ROOT)" --scope "$(CODEGEN_SCOPE)" --mode check
+	@$(PROJECT_FLEXT_INFRA) codegen lazy-init --workspace "$(PROJECT_ROOT)" --check
+	$(call _generated_docs,--check)
+	$(call _mise_artifacts_check)
 
 _builtin_gen_init:
 	$(call _require_apply)
@@ -1280,5 +1229,10 @@ _builtin_gen_all:
 	$(call _require_apply)
 	@: "$${MISE_GITHUB_CREDENTIAL_COMMAND:?ERROR: make gen apply requires MISE_GITHUB_CREDENTIAL_COMMAND}"
 	@$(PROJECT_FLEXT_INFRA) codegen conform --root "$(PROJECT_ROOT)" --scope "$(CODEGEN_SCOPE)" --mode apply
+	@$(PROJECT_FLEXT_INFRA) codegen lazy-init --workspace "$(PROJECT_ROOT)" --apply
+	$(call _generated_docs,--apply)
+	$(call _mise_launcher_apply)
+	$(call _mise_lock_apply)
+	$(call _mise_artifacts_check)
 
 _builtin_gen_apply: _builtin_gen_all

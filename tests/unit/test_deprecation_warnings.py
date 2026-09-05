@@ -9,8 +9,29 @@ no internal collaborator is spied on.
 from __future__ import annotations
 
 import pytest
+from flext_core import r
 
-from tests import p, r
+from tests import p
+
+
+def _double(value: int) -> int:
+    return value * 2
+
+
+def _increment(value: int) -> p.Result[int]:
+    return r[int].ok(value + 1)
+
+
+def _shout(error: str) -> str:
+    return error.upper()
+
+
+def _forty_two(_error: str) -> int:
+    return 42
+
+
+def _zero(_error: str) -> int:
+    return 0
 
 
 class TestsFlextCoreDeprecationWarnings:
@@ -59,43 +80,43 @@ class TestsFlextCoreDeprecationWarnings:
         assert result.unwrap_or(default) == expected
 
     def test_map_transforms_success_value(self) -> None:
-        result: p.Result[int] = r[int].ok(5).map(lambda x: x * 2)
+        result: p.Result[int] = r[int].ok(5).map(_double)
 
         assert result.success is True
         assert result.unwrap() == 10
 
     def test_map_is_skipped_on_failure(self) -> None:
-        result: p.Result[int] = r[int].fail("boom").map(lambda x: x * 2)
+        result: p.Result[int] = r[int].fail("boom").map(_double)
 
         assert result.failure is True
         assert result.error == "boom"
 
     def test_flat_map_chains_fallible_success(self) -> None:
-        result: p.Result[int] = r[int].ok(5).flat_map(lambda x: r[int].ok(x + 1))
+        result: p.Result[int] = r[int].ok(5).flat_map(_increment)
 
         assert result.unwrap() == 6
 
     def test_flat_map_short_circuits_on_failure(self) -> None:
-        result: p.Result[int] = r[int].fail("boom").flat_map(lambda x: r[int].ok(x + 1))
+        result: p.Result[int] = r[int].fail("boom").flat_map(_increment)
 
         assert result.failure is True
         assert result.error == "boom"
 
     def test_map_error_transforms_failure_only(self) -> None:
-        failed: p.Result[int] = r[int].fail("boom").map_error(lambda e: e.upper())
-        succeeded: p.Result[int] = r[int].ok(1).map_error(lambda e: e.upper())
+        failed: p.Result[int] = r[int].fail("boom").map_error(_shout)
+        succeeded: p.Result[int] = r[int].ok(1).map_error(_shout)
 
         assert failed.error == "BOOM"
         assert succeeded.unwrap() == 1
 
     def test_recover_supplies_value_on_failure(self) -> None:
-        result: p.Result[int] = r[int].fail("boom").recover(lambda _e: 42)
+        result: p.Result[int] = r[int].fail("boom").recover(_forty_two)
 
         assert result.success is True
         assert result.unwrap() == 42
 
     def test_recover_leaves_success_untouched(self) -> None:
-        result: p.Result[int] = r[int].ok(5).recover(lambda _e: 0)
+        result: p.Result[int] = r[int].ok(5).recover(_zero)
 
         assert result.unwrap() == 5
 

@@ -50,9 +50,34 @@ jobs:
           submodules: false
           fetch-depth: 0
 
-      # make setup is the only toolchain installer. It bootstraps the newest
-      # released Mise, installs the committed fleet toolchain, publishes that
-      # environment through GITHUB_PATH, and prepares the project runtime.
+      - name: Install mise toolchain
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c  # v4.3.0
+
+
+      # Why: the official uv cache must never be reused across differently
+      # resolved projects — cache identity is owned ONLY by uv.lock. The uv
+      # version comes from the same toolchain SSOT that renders .mise.toml,
+      # keeping one version source for local (mise) and CI (setup-uv).
+      - name: Set up uv with lock-owned cache
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
+        with:
+          version: 0.12
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+          cache-suffix: locked
+
+      # The direnv check gate runs a real `direnv exec` activation smoke. The
+      # preinstalled runner image has no direnv binary, so provision it here —
+      # the gate is intentional and its binary must exist wherever CI=Y make
+      # check runs. The smoke runs unattended, where no one can answer
+      # `direnv allow`, so allow the checkout's .envrc up front: `direnv allow
+      # <path>` computes and stores the same path-hash record an interactive
+      # allow writes. .envrc is tracked, so it exists right after checkout.
+      # This trusts only this repo's own generated file, on this runner only.
+      - name: Install direnv (check-gate dependency)
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq direnv
+          direnv allow "${{ github.workspace }}/.envrc"
       - name: Restore testmon cache
         id: testmon-restore
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4.3.0
@@ -67,6 +92,13 @@ jobs:
       - name: setup (blocking)
         # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
         run: CI=Y make setup
+
+      # `make setup` renders .envrc; direnv must re-allow it here because the
+      # unattended smoke cannot answer `direnv allow`. Any content change
+      # re-blocks, so the allow MUST run after every render — including this one.
+      - name: direnv allow (rendered .envrc)
+        run: direnv allow "${{ github.workspace }}/.envrc"
+
       - name: gen check (blocking)
         run: CI=Y make gen WHAT=check
 
@@ -153,6 +185,9 @@ jobs:
         with:
           fetch-depth: 0
           submodules: false
+      - name: Install mise toolchain
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c  # v4.3.0
+
       - name: Boot
         run: make setup
       - name: Release plan and guard
