@@ -11,11 +11,11 @@ from .ex_07_flext_exceptions_helpers import Ex07FlextExceptionSubclasses
 from .models import m
 
 
-
-
 def _raise_value_error() -> None:
     """Raise the style example error."""
     raise ValueError(m.Examples.ErrorMessages.BOOM)
+
+
 class Ex07FlextExceptions(Ex07FlextExceptionSubclasses):
     """Exercise e API with deterministic output checks."""
 

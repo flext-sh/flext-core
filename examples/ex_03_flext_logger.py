@@ -12,11 +12,11 @@ from examples.shared import ExamplesFlextShared
 from flext_core import u
 
 
-
-
 def _raise_value_error(message: str) -> None:
     """Raise the logged example error."""
     raise ValueError(message)
+
+
 class Ex03FlextLogger(ExamplesFlextShared):
     """Exercise FlextUtilitiesLogging public APIs against the golden file."""
 
