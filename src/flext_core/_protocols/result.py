@@ -17,9 +17,9 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from types import TracebackType
 
+    from flext_core import FlextModels as m
     from flext_core._typings.base import FlextTypingBase as t
     from flext_core._typings.services import FlextTypesServices as ts
-    from flext_core import FlextModels as m
 
 
 class FlextProtocolsResult:

@@ -17,8 +17,8 @@ from flext_core._constants.project_metadata import FlextConstantsProjectMetadata
 from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
 from flext_core._protocols.project_metadata import FlextProtocolsProjectMetadata as ppm
 from flext_core._protocols.result import FlextProtocolsResult as p
-from flext_core.result import FlextResult as _Result
 from flext_core._typings.base import FlextTypingBase as t
+from flext_core.result import FlextResult as _Result
 
 if TYPE_CHECKING:
     from pathlib import Path

@@ -20,9 +20,9 @@ from flext_core import (
     FlextTypes as t,
     r,
 )
-from flext_core.models import FlextModels as m
 from flext_core._utilities.generators import FlextUtilitiesGenerators as ug
 from flext_core._utilities.logging_context import FlextUtilitiesLoggingContext as ulc
+from flext_core.models import FlextModels as m
 
 if TYPE_CHECKING:
     import types
