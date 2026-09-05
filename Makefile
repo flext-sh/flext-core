@@ -117,7 +117,7 @@ endef
 
 define RUN_PUBLIC
 	$(if $(filter pre-$(1),$(CUSTOM_DECLARED_TARGETS)),@$(SELF_MAKE) pre-$(1))
-	@$(SELF_MAKE) _builtin-$(1)
+	$(if $(filter _custom-$(1),$(CUSTOM_DECLARED_TARGETS)),@$(SELF_MAKE) _custom-$(1),@$(SELF_MAKE) _builtin-$(1))
 	$(if $(filter post-$(1),$(CUSTOM_DECLARED_TARGETS)),@$(SELF_MAKE) post-$(1))
 endef
 
@@ -455,6 +455,7 @@ setup:
 
 _require-environment:
 	@if [ ! -x "$(RUNTIME_PYTHON)" ]; then printf 'ERROR: missing environment interpreter %s; run make setup APPLY=Y\n' "$(RUNTIME_PYTHON)" >&2; exit 2; fi
+	@mkdir -p "$(PROJECT_SCRATCH_ROOT)" "$(TESTMON_STATE_ROOT)" "$(PYTHONPYCACHEPREFIX)"
 
 _setup-lifecycle: _setup-submodules
 	$(if $(filter pre-setup,$(CUSTOM_DECLARED_TARGETS)),@$(SELF_MAKE) pre-setup)
