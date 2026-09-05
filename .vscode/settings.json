@@ -21,10 +21,10 @@
     "**/.agents": true,
     "**/.beads": true,
     "**/.benchmarks": true,
+    "**/.bkp": true,
     "**/.cache": true,
     "**/.claude": true,
     "**/.direnv": true,
-    "**/.code-review-graph": true,
     "**/.codegraph": true,
     "**/.dolt": true,
     "**/.dolt_dropped_databases": true,
@@ -40,7 +40,6 @@
     "**/.scope": true,
     "**/.serena": true,
     "**/.sisyphus": true,
-    "**/.state": true,
     "**/.superpowers": true,
     "**/.trash": true,
     "**/.turbo": true,
@@ -50,16 +49,7 @@
     "**/dist": true,
     "**/node_modules": true,
     "**/site": true,
-    "**/target": true,
-    "**/.archive": true,
-    "**/.bin": true,
-    "**/.tools": true,
-    "**/.bkp": true,
-    "**/.testmondata": true,
-    "**/.testmondata-wal": true,
-    "**/.testmondata-shm": true,
-    "**/.test-tmp": true,
-    "**/.test-runtime": true
+    "**/target": true
   },
   "files.watcherExclude": {
     "**/__pycache__/**": true,
@@ -67,10 +57,10 @@
     "**/.agents/**": true,
     "**/.beads/**": true,
     "**/.benchmarks/**": true,
+    "**/.bkp/**": true,
     "**/.cache/**": true,
     "**/.claude/**": true,
     "**/.direnv/**": true,
-    "**/.code-review-graph/**": true,
     "**/.codegraph/**": true,
     "**/.dolt/**": true,
     "**/.dolt_dropped_databases/**": true,
@@ -87,7 +77,6 @@
     "**/.scope/**": true,
     "**/.serena/**": true,
     "**/.sisyphus/**": true,
-    "**/.state/**": true,
     "**/.superpowers/**": true,
     "**/.trash/**": true,
     "**/.turbo/**": true,
@@ -97,16 +86,7 @@
     "**/build/**": true,
     "**/dist/**": true,
     "**/node_modules/**": true,
-    "**/target/**": true,
-    "**/.archive/**": true,
-    "**/.bin/**": true,
-    "**/.tools/**": true,
-    "**/.bkp/**": true,
-    "**/.testmondata/**": true,
-    "**/.testmondata-wal/**": true,
-    "**/.testmondata-shm/**": true,
-    "**/.test-tmp/**": true,
-    "**/.test-runtime/**": true
+    "**/target/**": true
   },
   "search.exclude": {
     "**/__pycache__": true,
@@ -114,10 +94,10 @@
     "**/.agents": true,
     "**/.beads": true,
     "**/.benchmarks": true,
+    "**/.bkp": true,
     "**/.cache": true,
     "**/.claude": true,
     "**/.direnv": true,
-    "**/.code-review-graph": true,
     "**/.codegraph": true,
     "**/.dolt": true,
     "**/.dolt_dropped_databases": true,
@@ -133,7 +113,6 @@
     "**/.scope": true,
     "**/.serena": true,
     "**/.sisyphus": true,
-    "**/.state": true,
     "**/.superpowers": true,
     "**/.trash": true,
     "**/.turbo": true,
@@ -143,16 +122,7 @@
     "**/dist": true,
     "**/node_modules": true,
     "**/site": true,
-    "**/target": true,
-    "**/.archive": true,
-    "**/.bin": true,
-    "**/.tools": true,
-    "**/.bkp": true,
-    "**/.testmondata": true,
-    "**/.testmondata-wal": true,
-    "**/.testmondata-shm": true,
-    "**/.test-tmp": true,
-    "**/.test-runtime": true
+    "**/target": true
   },
   "python.analysis.diagnosticSeverityOverrides": {
     "reportUntypedBaseClass": "none"
@@ -160,5 +130,6 @@
   "terminal.integrated.env.linux": {
     "PATH": "${workspaceFolder}/.venv/bin:${env:PATH}",
     "VIRTUAL_ENV": "${workspaceFolder}/.venv"
-  }
+  },
+  "shellcheck.useRepositoryRootAsCwd": true
 }

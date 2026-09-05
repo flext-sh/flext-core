@@ -3,26 +3,17 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_tests import c, d, e, h, m, p, r, s, t, td, tf, tk, tm, tv, u, x
-
-    from .test_container_memory import TestsFlextContainerMemory, get_memory_usage
-    from .test_container_performance import TestsFlextContainerPerformance
-    from .test_lazy_performance import TestsFlextLazyPerformance
 __all__: tuple[str, ...] = (
-    "TestsFlextContainerMemory",
-    "TestsFlextContainerPerformance",
-    "TestsFlextLazyPerformance",
     "c",
     "d",
     "e",
-    "get_memory_usage",
     "h",
     "m",
     "p",
@@ -41,9 +32,6 @@ __all__: tuple[str, ...] = (
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
-            ".test_container_memory": ("TestsFlextContainerMemory", "get_memory_usage"),
-            ".test_container_performance": ("TestsFlextContainerPerformance",),
-            ".test_lazy_performance": ("TestsFlextLazyPerformance",),
             "flext_tests": (
                 "c",
                 "d",
@@ -61,7 +49,7 @@ _LAZY_IMPORTS = MappingProxyType(
                 "tv",
                 "u",
                 "x",
-            ),
+            )
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,

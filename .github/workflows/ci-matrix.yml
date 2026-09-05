@@ -64,12 +64,12 @@ jobs:
           CI: Y
         run: |
           docker run --rm -e CI=Y ci-matrix-${{ matrix.distro }} make help
-          docker run --rm -e CI=Y ci-matrix-${{ matrix.distro }} make check
+          docker run --rm -e CI=Y ci-matrix-${{ matrix.distro }} make check APPLY=Y
           # ci-matrix proves bootstrap + check across distros; it never runs make test.
   # End SECTION: distro-matrix
 
   # === SECTION: macos (managed) ===
-  # Source: template + config:github_actions.checkout/mise
+  # Source: template + config:github_actions.checkout + generated Make setup
   macos:
     runs-on: macos-latest
     env:
@@ -81,22 +81,19 @@ jobs:
           # No step needs authenticated git after checkout; persisting the
           # token into .git/config would expose it to every later command.
           persist-credentials: false
-      - name: Install mise toolchain
-        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c  # v4.3.0
-
       - name: Bootstrap
-        run: CI=Y make setup
+        run: CI=Y make setup APPLY=Y
       - name: Verb surface
         run: CI=Y make help
       # The canonical gate, not just the verb surface: this matrix exists to
       # catch platform-specific failures, and `make help` exercises none of
       # the gates. The linux job already runs it.
       - name: Canonical check
-        run: CI=Y make check
+        run: CI=Y make check APPLY=Y
   # End SECTION: macos
 
   # === SECTION: windows (managed) ===
-  # Source: template + config:github_actions.checkout/mise
+  # Source: template + config:github_actions.checkout + generated Make setup
   windows:
     runs-on: windows-latest
     env:
@@ -108,12 +105,9 @@ jobs:
           # No step needs authenticated git after checkout; persisting the
           # token into .git/config would expose it to every later command.
           persist-credentials: false
-      - name: Install mise toolchain
-        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c  # v4.3.0
-
       - name: Bootstrap
         shell: bash
-        run: CI=Y make setup
+        run: CI=Y make setup APPLY=Y
       - name: Verb surface
         shell: bash
         run: CI=Y make help
@@ -122,5 +116,5 @@ jobs:
       # the gates. The linux job already runs it.
       - name: Canonical check
         shell: bash
-        run: CI=Y make check
+        run: CI=Y make check APPLY=Y
 # End SECTION: windows

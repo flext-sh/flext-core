@@ -3,15 +3,16 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from . import _class_visitor_parts as _class_visitor_parts
-    from . import _helpers_parts as _helpers_parts
+    from . import (
+        _class_visitor_parts as _class_visitor_parts,
+        _helpers_parts as _helpers_parts,
+    )
     from ._alias_visitor import FlextUtilitiesBeartypeAliasVisitor
     from ._class_visitor_parts._parts.class_visitor_part_02_01 import (
         alias_first_violation,

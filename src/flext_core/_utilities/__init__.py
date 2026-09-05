@@ -3,22 +3,23 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from . import _beartype as _beartype
-    from . import _checker_parts as _checker_parts
-    from . import _enforcement_collect_parts as _enforcement_collect_parts
-    from . import _enforcement_parts as _enforcement_parts
-    from . import _logging_config_parts as _logging_config_parts
-    from . import _logging_context_parts as _logging_context_parts
-    from . import _mapper_access_parts as _mapper_access_parts
-    from . import _mapper_extract_parts as _mapper_extract_parts
-    from . import _parser_targets_parts as _parser_targets_parts
+    from . import (
+        _beartype as _beartype,
+        _checker_parts as _checker_parts,
+        _enforcement_collect_parts as _enforcement_collect_parts,
+        _enforcement_parts as _enforcement_parts,
+        _logging_config_parts as _logging_config_parts,
+        _logging_context_parts as _logging_context_parts,
+        _mapper_access_parts as _mapper_access_parts,
+        _mapper_extract_parts as _mapper_extract_parts,
+        _parser_targets_parts as _parser_targets_parts,
+    )
     from ._beartype._alias_visitor import FlextUtilitiesBeartypeAliasVisitor
     from ._beartype._class_visitor_parts._parts.class_visitor_part_02_01 import (
         alias_first_violation,

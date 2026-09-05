@@ -75,6 +75,10 @@
 **/build/
 **/.eggs/
 
+# Local runtime configuration
+config.json
+settings.json
+
 # Skill validation temporary reports
 baseline.json
 report.json
@@ -270,17 +274,11 @@ __pyrefly_virtual__/
 .omo/
 .pylance_cache/
 .pytest_cache/
-.test-tmp/
-.test-runtime/
-.testmondata
-.testmondata-wal
-.testmondata-shm
 .ropeproject/
 .ruff_cache/
 .scope/
 .serena/
 .sisyphus/
-.state/
 .superpowers/
 .trash/
 .turbo/
@@ -312,7 +310,6 @@ CLAUDE.local.md
 !.github/scripts/
 !.github/scripts/check-beads-policy.sh
 !.github/scripts/check-cqrs-compliance.sh
-!.github/scripts/flext-law-loop.sh
 !.github/scripts/install-git-hooks.sh
 !tests/fixtures/
 !tests/fixtures/ci/
@@ -327,7 +324,6 @@ CLAUDE.local.md
 !.github/workflows/ci.yml
 !.github/workflows/docs.yml
 !.github/workflows/release.yml
-!sgconfig.yml
 !.vscode/settings.json
 !LICENSE
 !config/
