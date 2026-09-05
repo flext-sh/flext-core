@@ -224,9 +224,11 @@ class TestsFlextCoreSettingsWorkDir:
 
     def test_environment_application_namespace_rejects_paths(self) -> None:
         """Environment application identity cannot escape its XDG root."""
-        with u.Tests.env_vars_context(env_vars={"FLEXT_APP_NAMESPACE": "../outside"}):
-            with pytest.raises(ValueError, match="one non-empty path segment"):
-                _ = FlextSettings.fetch_global().data_dir
+        with (
+            u.Tests.env_vars_context(env_vars={"FLEXT_APP_NAMESPACE": "../outside"}),
+            pytest.raises(ValueError, match="one non-empty path segment"),
+        ):
+            _ = FlextSettings.fetch_global().data_dir
 
     def test_application_scoped_directory_override_wins(self, tmp_path: Path) -> None:
         """The consuming application's directory override wins over XDG roots."""
