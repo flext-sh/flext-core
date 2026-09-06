@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal, overload
 
-from flext_core._decorators._railway import FlextDecoratorsRailway
 from flext_core import m
+from flext_core._decorators._railway import FlextDecoratorsRailway
 
 if TYPE_CHECKING:
     from collections.abc import Callable

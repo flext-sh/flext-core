@@ -12,6 +12,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Literal, TypeGuard
 
 from pydantic import BaseModel
+
+from flext_core import c
 from flext_core._protocols.context import FlextProtocolsContext as pcx
 from flext_core._protocols.handler import FlextProtocolsHandler as ph
 from flext_core._protocols.logging import FlextProtocolsLogging as pl
@@ -21,7 +23,6 @@ from flext_core._typings.typeadapters import FlextTypesTypeAdapters as tta
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore as ugc
 
 from ._metadata_validation import FlextRuntimeMetadataValidation
-from flext_core import c
 
 if TYPE_CHECKING:
     from flext_core import m
@@ -46,6 +47,7 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
         item: pb.AttributeProbe, *, container_kind: Literal["mapping", "sequence"]
     ) -> ts.JsonPayload:
         """Normalize one container item to its canonical payload form."""
+        from flext_core._models.pydantic import FlextModelsPydantic
         normalized_item: ts.JsonPayload
         match item:
             case datetime():
@@ -60,7 +62,7 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
                 normalized_item = tta.json_dict_adapter().validate_python(item)
             case list():
                 normalized_item = list(tta.json_list_adapter().validate_python(item))
-            case bool() | int() | float() | str() | None | m.BaseModel():
+            case bool() | int() | float() | str() | None | FlextModelsPydantic.BaseModel():
                 normalized_item = item
             case _:
                 err_template = (
@@ -77,10 +79,10 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
         value: ts.RegisterableService | ts.GuardInput,
     ) -> ts.RegisterableService | m.ConfigMap | m.ObjectList:
         """Normalize container registration payloads to canonical runtime types."""
-        from flext_core import m
+        from flext_core._models.containers import FlextModelsContainers
 
         if isinstance(value, Mapping):
-            return m.ConfigMap(
+            return FlextModelsContainers.ConfigMap(
                 root={
                     key_s: FlextRuntimeContainer._normalize_payload_item(
                         item, container_kind="mapping"
@@ -89,7 +91,7 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
                 }
             )
         if isinstance(value, Sequence) and not isinstance(value, tb.STR_BINARY_TYPES):
-            return m.ObjectList(
+            return FlextModelsContainers.ObjectList(
                 root=[
                     FlextRuntimeContainer._normalize_payload_item(
                         item, container_kind="sequence"

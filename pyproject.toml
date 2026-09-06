@@ -492,7 +492,6 @@ exclude = [
   "vendor",
   "venv",
 ]
-fix = false
 line-length = 88
 namespace-packages = ["examples", "scripts", "tests"]
 preview = true

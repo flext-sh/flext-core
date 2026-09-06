@@ -9,9 +9,10 @@ from __future__ import annotations
 import time
 from functools import wraps
 from typing import TYPE_CHECKING
+
+from flext_core import c, m
 from flext_core._decorators._combined import FlextDecoratorsCombined
 from flext_core._exceptions.types import FlextExceptionsTypes as et
-from flext_core import c, m
 
 if TYPE_CHECKING:
     from collections.abc import Callable

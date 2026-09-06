@@ -10,9 +10,10 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
+
+from flext_core import c
 from flext_core._protocols.result import FlextProtocolsResult as prt
 from flext_core._typings.typeadapters import FlextTypesTypeAdapters as tta
-from flext_core import c
 
 if TYPE_CHECKING:
     from flext_core._typings.base import FlextTypingBase as tb

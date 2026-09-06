@@ -10,7 +10,7 @@ import time
 from functools import wraps
 from typing import TYPE_CHECKING
 
-from flext_core import c, FlextUtilities as u
+from flext_core import FlextUtilities as u, c
 from flext_core._decorators._logging_payloads import FlextDecoratorsLoggingPayloads
 
 if TYPE_CHECKING:
