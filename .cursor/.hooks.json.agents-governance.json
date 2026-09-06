@@ -1,0 +1,92 @@
+{
+  "config": "hooks.json",
+  "context": "project",
+  "entries": {
+    "beforeSubmitPrompt": {
+      "command": "python3 /home/marlonsc/flext/flext-core/.cursor/aihub-hooks/cursor-beforesubmitprompt.py",
+      "failClosed": true,
+      "timeout": 10
+    },
+    "preCompact": {
+      "command": "python3 /home/marlonsc/flext/flext-core/.cursor/aihub-hooks/cursor-precompact.py",
+      "failClosed": true,
+      "timeout": 10
+    },
+    "sessionStart": {
+      "command": "python3 /home/marlonsc/flext/flext-core/.cursor/aihub-hooks/cursor-sessionstart.py",
+      "failClosed": true,
+      "timeout": 10
+    },
+    "subagentStart": {
+      "command": "python3 /home/marlonsc/flext/flext-core/.cursor/aihub-hooks/cursor-subagentstart.py",
+      "failClosed": true,
+      "timeout": 10
+    }
+  },
+  "events": {
+    "context_refresh": {
+      "clients": [
+        "cloud",
+        "local"
+      ],
+      "coverage": "advisory",
+      "native": [
+        "preCompact"
+      ],
+      "status": "SUPPORTED"
+    },
+    "prompt_submit": {
+      "clients": [
+        "cloud",
+        "local"
+      ],
+      "coverage": "advisory",
+      "native": [
+        "beforeSubmitPrompt"
+      ],
+      "status": "SUPPORTED"
+    },
+    "session_start": {
+      "clients": [
+        "local"
+      ],
+      "coverage": "exact",
+      "native": [
+        "sessionStart"
+      ],
+      "status": "SUPPORTED"
+    },
+    "subagent_start": {
+      "clients": [
+        "cloud",
+        "local"
+      ],
+      "coverage": "advisory",
+      "native": [
+        "subagentStart"
+      ],
+      "status": "SUPPORTED"
+    }
+  },
+  "managed": {
+    ".cursor/aihub-hooks/cursor-beforesubmitprompt.py": {
+      "digest": "59defbfa266d148e9c785c098f9654edb68f176180ddba757fd6f55a3952ae67",
+      "mode": "0755"
+    },
+    ".cursor/aihub-hooks/cursor-precompact.py": {
+      "digest": "e61a6313fe6f1dfcf974f71667ac7ae8a432881822cfca94f9ca3b189c2d924c",
+      "mode": "0755"
+    },
+    ".cursor/aihub-hooks/cursor-sessionstart.py": {
+      "digest": "b5cefaf5e5be500ce27dd0b30e1aa440fc0b790dcc8c7ff470bfe32daf0661c7",
+      "mode": "0755"
+    },
+    ".cursor/aihub-hooks/cursor-subagentstart.py": {
+      "digest": "29b25a0f996ab391de677d9a07bfbc093a01e66b8ebcce53c8b0c1738977841d",
+      "mode": "0755"
+    }
+  },
+  "owner": "agents-governance",
+  "provider": "cursor",
+  "version": 3
+}
