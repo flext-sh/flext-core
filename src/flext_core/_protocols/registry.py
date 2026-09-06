@@ -11,9 +11,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
-from flext_core._constants.mixins import FlextConstantsMixins as c
-
 from .base import FlextProtocolsBase
+from flext_core import c
 
 if TYPE_CHECKING:
     from collections.abc import Callable

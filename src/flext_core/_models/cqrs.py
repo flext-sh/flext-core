@@ -7,6 +7,8 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+from __future__ import annotations
+
 from types import MappingProxyType
 from typing import Annotated, ClassVar, Literal
 
@@ -69,7 +71,7 @@ class _CqrsPagination(m.FlexibleInternalModel):
     @computed_field
     @property
     def offset(self) -> int:
-        """Calculate offset from page and size."""
+        """Offset from page and size."""
         return (self.page - 1) * self.size
 
 

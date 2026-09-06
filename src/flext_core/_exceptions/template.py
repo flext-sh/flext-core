@@ -6,20 +6,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextConstants as c, FlextRuntime, FlextTypes as t
-from flext_core._models.containers import FlextModelsContainers as mc
-from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core import m, FlextConstants as c, FlextRuntime, FlextTypes as t
 
 
 class FlextExceptionsTemplate:
     """Template rendering helpers for exception and result messages."""
 
-    type TemplateValues = t.MappingKV[str, t.JsonPayload | None] | mc.ConfigMap
+    type TemplateValues = t.MappingKV[str, t.JsonPayload | None] | m.ConfigMap
 
     @staticmethod
     def template_values(
-        params: mp.BaseModel | None, values: FlextExceptionsTemplate.TemplateValues
-    ) -> mc.ConfigMap:
+        params: m.BaseModel | None, values: FlextExceptionsTemplate.TemplateValues
+    ) -> m.ConfigMap:
         """Build template substitution values using params data and field metadata."""
         payload: t.JsonDict = (
             {
@@ -43,13 +41,13 @@ class FlextExceptionsTemplate:
             for key, value in values.items()
             if value is not None
         }
-        return mc.ConfigMap.model_validate(payload)
+        return m.ConfigMap.model_validate(payload)
 
     @staticmethod
     def render_template(
         template: str,
         *,
-        params: mp.BaseModel | None = None,
+        params: m.BaseModel | None = None,
         **values: t.JsonPayload | None,
     ) -> str:
         """Render a message template from params + explicit values.
@@ -67,8 +65,8 @@ class FlextExceptionsTemplate:
 
     @staticmethod
     def result_error_data(
-        params: mp.BaseModel | None, **values: t.JsonPayload | None
-    ) -> mc.ConfigMap | None:
+        params: m.BaseModel | None, **values: t.JsonPayload | None
+    ) -> m.ConfigMap | None:
         """Build canonical error_data payload from params and explicit values."""
         payload = FlextExceptionsTemplate.template_values(params, values)
         return payload or None

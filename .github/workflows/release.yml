@@ -2,11 +2,11 @@
 #
 # Release protocol projection. The workflow selects which protocol phase to
 # run; every decision (next version, guard, tag identity, receipt, upload set)
-# is made by `make release`, never here.
+# is made by the direct `make release-*` and `make publication` verbs, never here.
 #
 # - A push to the integration branch whose head is NOT the protocol's release
-#   commit opens or updates the release pull request (`make release
-#   WHAT=version APPLY=Y`); when nothing is releasable the run is a no-op.
+#   commit opens or updates the release pull request (`make release-version
+#   APPLY=Y`); when nothing is releasable the run is a no-op.
 # - A push whose head IS the release commit (the merged release pull request)
 #   tags it, builds the receipt and publishes exactly what the receipt attests.
 # - `workflow_dispatch` re-runs build and publication for an existing tag.
@@ -77,24 +77,32 @@ jobs:
       pull-requests: write # Open or update the release pull request.
     env:
       CI: Y
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # A pull request opened with the default GITHUB_TOKEN triggers no CI, so
+      # the release PR would reach merge unvalidated (flext-1wjg1.16.5). The
+      # lane push and the PR use the organization automation token; when that
+      # secret is absent the job fails loud instead of degrading silently.
+      GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
     steps:
+      - name: Require the release automation token
+        run: |
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::error::secrets.RELEASE_TOKEN is not configured: a release pull request opened with GITHUB_TOKEN triggers no CI. Configure the organization secret and rerun." >&2
+            exit 1
+          fi
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           fetch-depth: 0
           submodules: false
-      - name: Install mise toolchain
-        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c  # v4.3.0
-
+          token: ${{ secrets.RELEASE_TOKEN }}
       - name: Release identity
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
       - name: Boot
-        run: make setup
+        run: make setup APPLY=Y
       - name: Release pull request
-        run: make release WHAT=version APPLY=Y
+        run: make release-version APPLY=Y
 
   publish:
     name: Tag, build and publish the release commit
@@ -114,18 +122,15 @@ jobs:
           fetch-depth: 0
           ref: ${{ needs.identity.outputs.ref }}
           submodules: false
-      - name: Install mise toolchain
-        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c  # v4.3.0
-
       - name: Release identity
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
       - name: Boot
-        run: make setup
+        run: make setup APPLY=Y
       - name: Tag
-        run: make release WHAT=tag APPLY=Y
+        run: make release-tag APPLY=Y
       - name: Build receipt
-        run: make release WHAT=build
+        run: make release-build APPLY=Y
       - name: Publish
-        run: make release WHAT=publish APPLY=Y
+        run: make publication APPLY=Y

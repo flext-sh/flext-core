@@ -8,7 +8,6 @@ attribute access, no patching, no collaborator spying.
 
 from __future__ import annotations
 
-
 import pytest
 
 from flext_tests import tm

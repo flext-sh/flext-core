@@ -8,9 +8,8 @@ No private attribute, internal collaborator or implementation detail is inspecte
 
 from __future__ import annotations
 
-from typing import NoReturn
-
 from collections.abc import Callable
+from typing import NoReturn
 
 import pytest
 

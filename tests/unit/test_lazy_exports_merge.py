@@ -30,9 +30,7 @@ if TYPE_CHECKING:
 class TestsFlextCoreLazyExportsMerge:
     """Behavior contract for merge/cache/normalize/build-map helpers."""
 
-    def test_merge_normalizes_child_relative_targets_to_absolute_paths(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_merge_normalizes_child_relative_targets_to_absolute_paths(self) -> None:
         child_package_name = "test_lazy_pkg_merge.child"
         alpha_module_name = f"{child_package_name}.alpha"
 
@@ -44,16 +42,17 @@ class TestsFlextCoreLazyExportsMerge:
             pass
 
         alpha_module.__dict__["Alpha"] = Alpha
-        monkeypatch.setitem(sys.modules, child_package_name, child_package)
-        monkeypatch.setitem(sys.modules, alpha_module_name, alpha_module)
+        sys.modules[child_package_name] = child_package
+        sys.modules[alpha_module_name] = alpha_module
+        try:
+            merged = merge_lazy_imports((child_package_name,), {})
 
-        merged = merge_lazy_imports((child_package_name,), {})
+            assert merged["Alpha"] == (alpha_module_name, "Alpha")
+        finally:
+            sys.modules.pop(child_package_name, None)
+            sys.modules.pop(alpha_module_name, None)
 
-        assert merged["Alpha"] == (alpha_module_name, "Alpha")
-
-    def test_merge_normalizes_relative_child_package_paths_against_parent(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_merge_normalizes_relative_child_package_paths_against_parent(self) -> None:
         parent_package_name = "test_lazy_pkg_parent"
         child_package_name = f"{parent_package_name}.child"
         alpha_module_name = f"{child_package_name}.alpha"
@@ -66,29 +65,34 @@ class TestsFlextCoreLazyExportsMerge:
             pass
 
         alpha_module.__dict__["Alpha"] = Alpha
-        monkeypatch.setitem(sys.modules, child_package_name, child_package)
-        monkeypatch.setitem(sys.modules, alpha_module_name, alpha_module)
+        sys.modules[child_package_name] = child_package
+        sys.modules[alpha_module_name] = alpha_module
+        try:
+            merged = merge_lazy_imports(
+                (".child",), {}, module_name=parent_package_name
+            )
 
-        merged = merge_lazy_imports((".child",), {}, module_name=parent_package_name)
+            assert merged["Alpha"] == (alpha_module_name, "Alpha")
+        finally:
+            sys.modules.pop(child_package_name, None)
+            sys.modules.pop(alpha_module_name, None)
 
-        assert merged["Alpha"] == (alpha_module_name, "Alpha")
-
-    def test_merge_keeps_local_map_when_child_has_no_lazy_imports(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_merge_keeps_local_map_when_child_has_no_lazy_imports(self) -> None:
         """Non-lazy child packages contribute no lazy entries."""
         parent_package_name = "test_lazy_pkg_without_child_map"
         child_package_name = f"{parent_package_name}.child"
         child_package = ModuleType(child_package_name)
-        monkeypatch.setitem(sys.modules, child_package_name, child_package)
+        sys.modules[child_package_name] = child_package
+        try:
+            merged = merge_lazy_imports(
+                (".child",),
+                {"Local": (f"{parent_package_name}.local", "Local")},
+                module_name=parent_package_name,
+            )
 
-        merged = merge_lazy_imports(
-            (".child",),
-            {"Local": (f"{parent_package_name}.local", "Local")},
-            module_name=parent_package_name,
-        )
-
-        assert merged == {"Local": (f"{parent_package_name}.local", "Local")}
+            assert merged == {"Local": (f"{parent_package_name}.local", "Local")}
+        finally:
+            sys.modules.pop(child_package_name, None)
 
     def test_merge_relative_child_path_without_module_name_raises_value_error(
         self,
@@ -135,57 +139,59 @@ class TestsFlextCoreLazyExportsMerge:
         """Relative targets bind to the module; absolute targets pass through."""
         assert normalize_lazy_imports(module_path, raw) == expected
 
-    def test_installed_getattr_resolves_submodule_and_caches_it(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_installed_getattr_resolves_submodule_and_caches_it(self) -> None:
         """The published ``__getattr__`` returns the live submodule object."""
         package_name = "test_lazy_pkg_state"
         module_name = f"{package_name}.module"
         child_module = ModuleType(module_name)
 
         lazy.reset()
-        monkeypatch.setitem(sys.modules, package_name, ModuleType(package_name))
-        monkeypatch.setitem(sys.modules, module_name, child_module)
+        sys.modules[package_name] = ModuleType(package_name)
+        sys.modules[module_name] = child_module
+        try:
+            module_globals: t.ModuleGlobals = {}
+            install_lazy_exports(
+                package_name, module_globals, {"module": module_name}, publish_all=False
+            )
 
-        module_globals: t.ModuleGlobals = {}
-        install_lazy_exports(
-            package_name, module_globals, {"module": module_name}, publish_all=False
-        )
+            getattr_fn = module_globals["__getattr__"]
+            assert callable(getattr_fn)
+            assert getattr_fn("module") is child_module
+            assert lazy.cache_stats["module_cache"] >= 1
+        finally:
+            sys.modules.pop(package_name, None)
+            sys.modules.pop(module_name, None)
 
-        getattr_fn = module_globals["__getattr__"]
-        assert callable(getattr_fn)
-        assert getattr_fn("module") is child_module
-        assert lazy.cache_stats["module_cache"] >= 1
-
-    def test_reset_clears_all_cache_stats_to_zero(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_reset_clears_all_cache_stats_to_zero(self) -> None:
         """After a resolution + reset, every diagnostic counter returns to zero."""
         package_name = "test_lazy_pkg_reset"
         module_name = f"{package_name}.module"
 
         lazy.reset()
-        monkeypatch.setitem(sys.modules, package_name, ModuleType(package_name))
-        monkeypatch.setitem(sys.modules, module_name, ModuleType(module_name))
+        sys.modules[package_name] = ModuleType(package_name)
+        sys.modules[module_name] = ModuleType(module_name)
+        try:
+            module_globals: t.ModuleGlobals = {}
+            install_lazy_exports(
+                package_name, module_globals, {"module": module_name}, publish_all=False
+            )
+            getattr_fn = module_globals["__getattr__"]
+            assert callable(getattr_fn)
+            getattr_fn("module")
+            assert lazy.cache_stats["module_cache"] >= 1
 
-        module_globals: t.ModuleGlobals = {}
-        install_lazy_exports(
-            package_name, module_globals, {"module": module_name}, publish_all=False
-        )
-        getattr_fn = module_globals["__getattr__"]
-        assert callable(getattr_fn)
-        getattr_fn("module")
-        assert lazy.cache_stats["module_cache"] >= 1
+            lazy.reset()
 
-        lazy.reset()
-
-        assert lazy.cache_stats == {
-            "module_cache": 0,
-            "child_lazy_cache": 0,
-            "child_merge_cache": 0,
-            "normalized_map_cache": 0,
-            "install_cache": 0,
-        }
+            assert lazy.cache_stats == {
+                "module_cache": 0,
+                "child_lazy_cache": 0,
+                "child_merge_cache": 0,
+                "normalized_map_cache": 0,
+                "install_cache": 0,
+            }
+        finally:
+            sys.modules.pop(package_name, None)
+            sys.modules.pop(module_name, None)
 
     def test_build_map_returns_keys_in_alphabetic_order_by_default(self) -> None:
         mapping = lazy.build_map({"pkg.mod": ("zeta", "alpha")})

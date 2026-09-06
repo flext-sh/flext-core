@@ -3,80 +3,33 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from . import benchmark as benchmark
-    from . import fixtures as fixtures
-    from . import integration as integration
-    from . import unit as unit
     from flext_core import FlextConstants
     from flext_tests import FlextTestsConstants
 
-    from .base import TestsFlextServiceBase, TestsFlextServiceBase as s
-    from .conftest import collect_ignore_glob, mock_external_service
-    from .integration.migration_validation_cases import (
-        TestsFlextFlextMigrationApplicationCase,
-        capture_stdout,
+    from . import (
+        benchmark as benchmark,
+        fixtures as fixtures,
+        integration as integration,
+        unit as unit,
     )
-    from .integration.service_fixtures import (
-        TestsFlextFlextServiceFixtures,
-        TestsFlextLifecycleService,
-        TestsFlextNotificationService,
-        TestsFlextServiceConfig,
-        TestsFlextUserQueryService,
-        TestsFlextUserServiceEntity,
-    )
-    from .integration.service_lifecycle_cases import (
-        TestsFlextFlextServiceLifecycleCases,
-    )
-    from .integration.settings_integration_factories import (
-        TestsFlextFlextSettingsFactories,
-        TestsFlextSettingsConfigTestCase,
-        TestsFlextSettingsConfigTestFactories,
-        TestsFlextSettingsThreadSafetyTest,
-    )
-    from .integration.settings_integration_precedence import (
-        TestsFlextFlextSettingsPrecedenceCase,
-    )
-    from .integration.system_integration_cases import TestsFlextFlextSystemWorkflowCases
-    from .models import TestsFlextModels, TestsFlextModels as m
-    from .protocols import TestsFlextProtocols, TestsFlextProtocols as p
-    from .typings import TestsFlextTypes, TestsFlextTypes as t
-    from .utilities import TestsFlextUtilities, TestsFlextUtilities as u
+    from .base import s
+    from .models import m
+    from .protocols import p
+    from .typings import t
+    from .utilities import u
 __all__: tuple[str, ...] = (
     "FlextConstants",
     "FlextTestsConstants",
-    "TestsFlextFlextMigrationApplicationCase",
-    "TestsFlextFlextServiceFixtures",
-    "TestsFlextFlextServiceLifecycleCases",
-    "TestsFlextFlextSettingsFactories",
-    "TestsFlextFlextSettingsPrecedenceCase",
-    "TestsFlextFlextSystemWorkflowCases",
-    "TestsFlextLifecycleService",
-    "TestsFlextModels",
-    "TestsFlextNotificationService",
-    "TestsFlextProtocols",
-    "TestsFlextServiceBase",
-    "TestsFlextServiceConfig",
-    "TestsFlextSettingsConfigTestCase",
-    "TestsFlextSettingsConfigTestFactories",
-    "TestsFlextSettingsThreadSafetyTest",
-    "TestsFlextTypes",
-    "TestsFlextUserQueryService",
-    "TestsFlextUserServiceEntity",
-    "TestsFlextUtilities",
     "benchmark",
-    "capture_stdout",
-    "collect_ignore_glob",
     "fixtures",
     "integration",
     "m",
-    "mock_external_service",
     "p",
     "s",
     "t",
@@ -87,43 +40,15 @@ __all__: tuple[str, ...] = (
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
-            ".base": ("TestsFlextServiceBase", "s"),
+            ".base": ("s",),
             ".benchmark": ("benchmark",),
-            ".conftest": ("collect_ignore_glob", "mock_external_service"),
             ".fixtures": ("fixtures",),
             ".integration": ("integration",),
-            ".integration.migration_validation_cases": (
-                "TestsFlextFlextMigrationApplicationCase",
-                "capture_stdout",
-            ),
-            ".integration.service_fixtures": (
-                "TestsFlextFlextServiceFixtures",
-                "TestsFlextLifecycleService",
-                "TestsFlextNotificationService",
-                "TestsFlextServiceConfig",
-                "TestsFlextUserQueryService",
-                "TestsFlextUserServiceEntity",
-            ),
-            ".integration.service_lifecycle_cases": (
-                "TestsFlextFlextServiceLifecycleCases",
-            ),
-            ".integration.settings_integration_factories": (
-                "TestsFlextFlextSettingsFactories",
-                "TestsFlextSettingsConfigTestCase",
-                "TestsFlextSettingsConfigTestFactories",
-                "TestsFlextSettingsThreadSafetyTest",
-            ),
-            ".integration.settings_integration_precedence": (
-                "TestsFlextFlextSettingsPrecedenceCase",
-            ),
-            ".integration.system_integration_cases": (
-                "TestsFlextFlextSystemWorkflowCases",
-            ),
-            ".models": ("TestsFlextModels", "m"),
-            ".protocols": ("TestsFlextProtocols", "p"),
-            ".typings": ("TestsFlextTypes", "t"),
+            ".models": ("m",),
+            ".protocols": ("p",),
+            ".typings": ("t",),
             ".unit": ("unit",),
-            ".utilities": ("TestsFlextUtilities", "u"),
+            ".utilities": ("u",),
             "flext_core": ("FlextConstants",),
             "flext_tests": ("FlextTestsConstants",),
         }),
