@@ -49,22 +49,23 @@ jobs:
         with:
           submodules: false
           fetch-depth: 0
+      # Mise resolves GitHub credentials only through the declared command
+      # (never a token in the environment). The Mise transaction strips the
+      # inherited environment, so on a runner that command reads the job's own
+      # token from a 0600 file outside the checkout. The `runner` context is
+      # unavailable in job-level `env`, so the resolved command is exported to
+      # the following steps through GITHUB_ENV.
+      - name: Declare the Mise GitHub credential source
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          install -m 600 /dev/null "$RUNNER_TEMP/mise-github-token"
+          printf '%s' "$GITHUB_TOKEN" > "$RUNNER_TEMP/mise-github-token"
+          echo "MISE_GITHUB_CREDENTIAL_COMMAND=cat $RUNNER_TEMP/mise-github-token" >> "$GITHUB_ENV"
 
-      - name: Install mise toolchain
-        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c  # v4.3.0
-
-
-      # Why: the official uv cache must never be reused across differently
-      # resolved projects — cache identity is owned ONLY by uv.lock. The uv
-      # version comes from the same toolchain SSOT that renders .mise.toml,
-      # keeping one version source for local (mise) and CI (setup-uv).
-      - name: Set up uv with lock-owned cache
-        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
-        with:
-          version: 0.12
-          enable-cache: true
-          cache-dependency-glob: uv.lock
-          cache-suffix: locked
+      # make setup is the only toolchain installer. Its committed Mise seed
+      # resolves and executes the newest signed Mise release, then installs the
+      # exact tool versions recorded in mise.lock before any other Make verb.
 
       # The direnv check gate runs a real `direnv exec` activation smoke. The
       # preinstalled runner image has no direnv binary, so provision it here —
@@ -92,13 +93,6 @@ jobs:
       - name: setup (blocking)
         # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
         run: CI=Y make setup
-
-      # `make setup` renders .envrc; direnv must re-allow it here because the
-      # unattended smoke cannot answer `direnv allow`. Any content change
-      # re-blocks, so the allow MUST run after every render — including this one.
-      - name: direnv allow (rendered .envrc)
-        run: direnv allow "${{ github.workspace }}/.envrc"
-
       - name: gen check (blocking)
         run: CI=Y make gen WHAT=check
 
@@ -113,7 +107,7 @@ jobs:
         run: CI=Y make check
 
       # Why (aihub-v01jg): CI=Y runs ONE HALF of the gate set
-      # (lint pyright security markdown smells direnv); the complement
+      # (lint pyright security markdown smells direnv duplication); the complement
       # (pyrefly mypy) is owned by
       # CI=N and, without this step, ran on developer
       # machines only. That split let real defects reach main twice: five
@@ -185,9 +179,6 @@ jobs:
         with:
           fetch-depth: 0
           submodules: false
-      - name: Install mise toolchain
-        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c  # v4.3.0
-
       - name: Boot
         run: make setup
       - name: Release plan and guard

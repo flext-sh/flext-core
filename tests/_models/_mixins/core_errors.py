@@ -70,29 +70,14 @@ class TestsFlextModelsCoreErrorsMixin:
         def __len__(self) -> int:
             return 1
 
-    class _ValidationLikeError(ValueError):
-        """Validation-like error for tests."""
-
-        def errors(self) -> t.SequenceOf[t.JsonMapping]:
-            return [{"loc": ["value"], "msg": "bad value"}]
-
     type TestCaseMap = t.MappingKV[str, t.Tests.TestobjectSerializable]
     type InputPayloadMap = t.MappingKV[str, t.Tests.TestobjectSerializable]
-
-    class _MsgWithCommandId(m.BaseModel):
-        command_id: str = "cmd-1"
-
-    class _MsgWithMessageId(m.BaseModel):
-        message_id: str = "msg-1"
 
     class SampleModel(m.BaseModel):
         """Sample model for testing."""
 
         name: str
         value: int
-
-    class _SvcModel(m.BaseModel):
-        value: str
 
     class BrokenDumpModel:
         """Test fake whose ``model_dump`` returns wrong type.
@@ -109,47 +94,6 @@ class TestsFlextModelsCoreErrorsMixin:
         @staticmethod
         def model_dump() -> bool:
             return True
-
-    class _ErrorsModel(m.BaseModel):
-        value: int
-
-        @classmethod
-        @override
-        def model_validate(
-            cls,
-            obj: t.JsonValue,
-            *,
-            strict: bool | None = None,
-            extra: str | None = None,
-            from_attributes: bool | None = None,
-            context: t.JsonMapping | None = None,
-            by_alias: bool | None = None,
-            by_name: bool | None = None,
-        ) -> Never:
-            _ = strict, extra, from_attributes, context, by_alias, by_name
-            _ = obj
-            raise TestsFlextModelsCoreErrorsMixin._ValidationLikeError
-
-    class _PlainErrorModel(m.BaseModel):
-        value: int
-
-        @classmethod
-        @override
-        def model_validate(
-            cls,
-            obj: t.JsonValue,
-            *,
-            strict: bool | None = None,
-            extra: str | None = None,
-            from_attributes: bool | None = None,
-            context: t.JsonMapping | None = None,
-            by_alias: bool | None = None,
-            by_name: bool | None = None,
-        ) -> Never:
-            _ = strict, extra, from_attributes, context, by_alias, by_name
-            _ = obj
-            msg = c.Tests.PLAIN_BOOM
-            raise RuntimeError(msg)
 
     class TargetModel(m.BaseModel):
         value: int

@@ -17,7 +17,7 @@ repos:
     # complete pytest+coverage run.
     # Every hook step owns a shell because Git exports repository-local state,
     # including GIT_INDEX_FILE during pre-commit. A member hook that delegates
-    # setup to its workspace root must clear those variables first or the root
+    # setup to its repository root must clear those variables first or the root
     # reads the member's temporary index and reports governed gitlinks missing.
     # WHAT/MAKEFLAGS/APPLY are cleared in the same prefix so caller selectors
     # and write intent cannot leak into an independently declared hook step.

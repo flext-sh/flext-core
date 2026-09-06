@@ -160,5 +160,6 @@
   "terminal.integrated.env.linux": {
     "PATH": "${workspaceFolder}/.venv/bin:${env:PATH}",
     "VIRTUAL_ENV": "${workspaceFolder}/.venv"
-  }
+  },
+  "shellcheck.useRepositoryRootAsCwd": true
 }

@@ -86,12 +86,7 @@ if TYPE_CHECKING:
     from .test_handler_discovery_module import TestsFlextHandlerDiscoveryModule
     from .test_handlers_dispatch import TestsFlextHandlersDispatch
     from .test_handlers_factory import TestsFlextCoreHandlersFactory
-    from .test_handlers_lifecycle import (
-        HANDLER_TYPES,
-        HandlerTypeScenario,
-        TestsFlextHandlersLifecycle,
-        VALIDATION_TYPES,
-    )
+    from .test_handlers_lifecycle import TestsFlextHandlersLifecycle
     from .test_handlers_properties import TestsFlextCoreHandlersProperties
     from .test_handlers_validation_context import (
         TestsFlextCoreHandlersValidationContext,
@@ -165,11 +160,8 @@ if TYPE_CHECKING:
     )
     from .test_version import TestsFlextCoreVersion
 __all__: tuple[str, ...] = (
-    "HANDLER_TYPES",
     "LEGACY_GENERIC_NAMES",
     "LOG_LEVELS",
-    "VALIDATION_TYPES",
-    "HandlerTypeScenario",
     "TestPackagedConfigWithUserPreferences",
     "TestsFlextBeartypeEngineAnnotations",
     "TestsFlextBeartypeEngineNamespaceHooks",
@@ -383,12 +375,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".test_handler_discovery_module": ("TestsFlextHandlerDiscoveryModule",),
             ".test_handlers_dispatch": ("TestsFlextHandlersDispatch",),
             ".test_handlers_factory": ("TestsFlextCoreHandlersFactory",),
-            ".test_handlers_lifecycle": (
-                "HANDLER_TYPES",
-                "HandlerTypeScenario",
-                "TestsFlextHandlersLifecycle",
-                "VALIDATION_TYPES",
-            ),
+            ".test_handlers_lifecycle": ("TestsFlextHandlersLifecycle",),
             ".test_handlers_properties": ("TestsFlextCoreHandlersProperties",),
             ".test_handlers_validation_context": (
                 "TestsFlextCoreHandlersValidationContext",

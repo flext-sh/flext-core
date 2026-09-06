@@ -83,24 +83,6 @@ class TestsFlextModelsCoreStateMixin:
             msg = c.Tests.CANNOT_INSTANTIATE
             raise ValueError(msg)
 
-    class _DumpErrorModel(m.BaseModel):
-        value: int = 1
-
-    class _Opts(m.BaseModel):
-        value: int = 1
-
-    class _FakeSettings(m.BaseModel):
-        """Fake settings with model_copy support."""
-
-        timeout: int = 10
-
-        @property
-        def data(self) -> t.JsonMapping:
-            return {"timeout": self.timeout}
-
-    class _Model(m.BaseModel):
-        value: int
-
     class _SampleEntity(m.BaseModel):
         """Test entity for domain utility tests."""
 
@@ -109,29 +91,12 @@ class TestsFlextModelsCoreStateMixin:
         unique_id: str = "test-123"
         name: str = "test"
 
-    class _FrozenEntity(m.BaseModel):
-        """Frozen entity for immutability tests."""
-
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
-
-        unique_id: str = "frozen-1"
-
-    class _GoodModel(m.BaseModel):
-        value: int = 7
-
     class ComplexModel(m.BaseModel):
         """Complex test model."""
 
         id: int
         data: t.JsonMapping
         items: t.StrSequence
-
-    class _Cfg(m.BaseModel):
-        x: int = 0
-        y: str = "a"
-
-    class _BadCopyModel(m.BaseModel):
-        x: int = 1
 
 
 __all__: list[str] = ["TestsFlextModelsCoreStateMixin"]

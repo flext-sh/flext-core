@@ -531,6 +531,7 @@ ignore = [
   "multi-line-summary-second-line",
   "no-self-use",
   "non-imperative-mood",
+  "pytest-fixture-autouse",
   "too-many-arguments",
   "too-many-branches",
   "too-many-locals",
@@ -596,6 +597,7 @@ in_place = true
 sort_first = ["build-system", "dependency-groups", "project", "tool"]
 
 [tool.uv]
+constraint-dependencies = ["structlog<26"]
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 exclude-newer = "7 days"
 link-mode = "copy"

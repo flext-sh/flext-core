@@ -77,16 +77,24 @@ jobs:
       pull-requests: write # Open or update the release pull request.
     env:
       CI: Y
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # A pull request opened with the default GITHUB_TOKEN triggers no CI, so
+      # the release PR would reach merge unvalidated (flext-1wjg1.16.5). The
+      # lane push and the PR use the organization automation token; when that
+      # secret is absent the job fails loud instead of degrading silently.
+      GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
     steps:
+      - name: Require the release automation token
+        run: |
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::error::secrets.RELEASE_TOKEN is not configured: a release pull request opened with GITHUB_TOKEN triggers no CI. Configure the organization secret and rerun." >&2
+            exit 1
+          fi
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           fetch-depth: 0
           submodules: false
-      - name: Install mise toolchain
-        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c  # v4.3.0
-
+          token: ${{ secrets.RELEASE_TOKEN }}
       - name: Release identity
         run: |
           git config user.name "github-actions[bot]"
@@ -114,9 +122,6 @@ jobs:
           fetch-depth: 0
           ref: ${{ needs.identity.outputs.ref }}
           submodules: false
-      - name: Install mise toolchain
-        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c  # v4.3.0
-
       - name: Release identity
         run: |
           git config user.name "github-actions[bot]"
