@@ -14,13 +14,12 @@ from typing import TYPE_CHECKING, ClassVar, Self
 import structlog
 
 from flext_core import (
-    FlextConstants as c,
+    u, FlextConstants as c,
     FlextExceptions as e,
     FlextProtocols as p,
     FlextTypes as t,
     r,
 )
-from flext_core._utilities.generators import FlextUtilitiesGenerators
 from flext_core._utilities.logging_context import FlextUtilitiesLoggingContext as ulc
 from flext_core.models import FlextModels as m
 
@@ -370,7 +369,7 @@ class FlextUtilitiesLogging(ulc):
             if service_version:
                 _ = sl.contextvars.bind_contextvars(service_version=service_version)
             if enable_context_correlation:
-                correlation_id = f"flext-{FlextUtilitiesGenerators.generate_id().replace('-', '')[:12]}"
+                correlation_id = f"flext-{u.generate_id().replace('-', '')[:12]}"
                 _ = sl.contextvars.bind_contextvars(correlation_id=correlation_id)
             sl.fetch_logger(__name__).info(
                 "Service infrastructure initialized",
