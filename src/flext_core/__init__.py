@@ -3,20 +3,21 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
-from .__version__ import __author__ as __author__
-from .__version__ import __author_email__ as __author_email__
-from .__version__ import __description__ as __description__
-from .__version__ import __license__ as __license__
-from .__version__ import __title__ as __title__
-from .__version__ import __url__ as __url__
-from .__version__ import __version__ as __version__
-from .__version__ import __version_info__ as __version_info__
+from .__version__ import (
+    __author__ as __author__,
+    __author_email__ as __author_email__,
+    __description__ as __description__,
+    __license__ as __license__,
+    __title__ as __title__,
+    __url__ as __url__,
+    __version__ as __version__,
+    __version_info__ as __version_info__,
+)
 
 if TYPE_CHECKING:
     from ._config import FlextConfig, config
@@ -28,7 +29,7 @@ if TYPE_CHECKING:
     from .dispatcher import FlextDispatcher
     from .exceptions import FlextExceptions, e
     from .handlers import FlextHandlers, h
-    from .lazy import FlextLazy
+    from .lazy import FlextLazy, FlextLazyAttribute, lazy_attribute
     from .loggings import FlextUtilitiesLogging
     from .mixins import FlextMixins, x
     from .models import FlextModels, FlextModels as m
@@ -38,7 +39,11 @@ if TYPE_CHECKING:
     from .runtime import FlextRuntime
     from .service import FlextService, s
     from .typings import FlextTypes, FlextTypes as t
-    from .utilities import FlextUtilities, FlextUtilities as u
+    from .utilities import (
+        FlextUtilities,
+        FlextUtilities as u,
+        FlextUtilitiesRuntimeViolationRegistry,
+    )
 __all__: tuple[str, ...] = (
     "FlextConfig",
     "FlextConstants",
@@ -49,6 +54,7 @@ __all__: tuple[str, ...] = (
     "FlextExceptions",
     "FlextHandlers",
     "FlextLazy",
+    "FlextLazyAttribute",
     "FlextMixins",
     "FlextModels",
     "FlextProtocols",
@@ -60,6 +66,7 @@ __all__: tuple[str, ...] = (
     "FlextTypes",
     "FlextUtilities",
     "FlextUtilitiesLogging",
+    "FlextUtilitiesRuntimeViolationRegistry",
     "__author__",
     "__author_email__",
     "__description__",
@@ -73,6 +80,7 @@ __all__: tuple[str, ...] = (
     "d",
     "e",
     "h",
+    "lazy_attribute",
     "m",
     "p",
     "r",
@@ -83,36 +91,37 @@ __all__: tuple[str, ...] = (
     "x",
 )
 
-install_lazy_exports(
-    __name__,
-    globals(),
-    MappingProxyType(
-        build_lazy_import_map(
-            MappingProxyType({
-                "._config": ("FlextConfig", "config"),
-                "._settings": ("FlextSettings", "settings"),
-                ".constants": ("FlextConstants", "c"),
-                ".container": ("FlextContainer",),
-                ".context": ("FlextContext",),
-                ".decorators": ("FlextDecorators", "d"),
-                ".dispatcher": ("FlextDispatcher",),
-                ".exceptions": ("FlextExceptions", "e"),
-                ".handlers": ("FlextHandlers", "h"),
-                ".lazy": ("FlextLazy",),
-                ".loggings": ("FlextUtilitiesLogging",),
-                ".mixins": ("FlextMixins", "x"),
-                ".models": ("FlextModels", "m"),
-                ".protocols": ("FlextProtocols", "p"),
-                ".registry": ("FlextRegistry",),
-                ".result": ("FlextResult", "r"),
-                ".runtime": ("FlextRuntime",),
-                ".service": ("FlextService", "s"),
-                ".typings": ("FlextTypes", "t"),
-                ".utilities": ("FlextUtilities", "u"),
-            }),
-            alias_groups=MappingProxyType({}),
-            sort_keys=False,
-        )
-    ),
-    public_exports=__all__,
+_LAZY_IMPORTS = MappingProxyType(
+    build_lazy_import_map(
+        MappingProxyType({
+            "._config": ("FlextConfig", "config"),
+            "._settings": ("FlextSettings", "settings"),
+            ".constants": ("FlextConstants", "c"),
+            ".container": ("FlextContainer",),
+            ".context": ("FlextContext",),
+            ".decorators": ("FlextDecorators", "d"),
+            ".dispatcher": ("FlextDispatcher",),
+            ".exceptions": ("FlextExceptions", "e"),
+            ".handlers": ("FlextHandlers", "h"),
+            ".lazy": ("FlextLazy", "FlextLazyAttribute", "lazy_attribute"),
+            ".loggings": ("FlextUtilitiesLogging",),
+            ".mixins": ("FlextMixins", "x"),
+            ".models": ("FlextModels", "m"),
+            ".protocols": ("FlextProtocols", "p"),
+            ".registry": ("FlextRegistry",),
+            ".result": ("FlextResult", "r"),
+            ".runtime": ("FlextRuntime",),
+            ".service": ("FlextService", "s"),
+            ".typings": ("FlextTypes", "t"),
+            ".utilities": (
+                "FlextUtilities",
+                "FlextUtilitiesRuntimeViolationRegistry",
+                "u",
+            ),
+        }),
+        alias_groups=MappingProxyType({}),
+        sort_keys=False,
+    )
 )
+
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

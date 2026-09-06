@@ -207,9 +207,11 @@ class FlextLazy(FlextLazyPart01):
             names = tuple(dict.fromkeys((*normalized, *all_exports)))
 
         module_globals["_LAZY_IMPORTS"] = normalized
-        module_globals["__getattr__"] = lambda name: self.get(
-            name, normalized, module_globals, module_name
-        )
+
+        def _module_getattr(name: str) -> ModuleGlobalValue:
+            return self.get(name, normalized, module_globals, module_name)
+
+        module_globals["__getattr__"] = _module_getattr
         module_globals["__dir__"] = lambda: list(names)
         if publish_all:
             module_globals["__all__"] = names

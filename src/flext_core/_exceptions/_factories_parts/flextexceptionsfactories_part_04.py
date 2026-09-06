@@ -8,8 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core import FlextConstants as c, FlextProtocols as p
-from flext_core._models.exception_params import FlextModelsExceptionParams as m
+from flext_core import m, FlextConstants as c, FlextProtocols as p
 
 from .flextexceptionsfactories_part_03 import (
     FlextExceptionsFactories as FlextExceptionsFactoriesPart03,

@@ -18,7 +18,7 @@ class TestsFlextModelsDomainMixin:
     class EmailResponse(m.BaseModel):
         """Shared email response model for tests."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         status: str
         message_id: str
@@ -26,7 +26,7 @@ class TestsFlextModelsDomainMixin:
     class DomainTestEntity(m.Entity):
         """Test entity for domain tests."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=False)
 
         name: Annotated[str, m.Field(description="Entity display name.")]
         value: Annotated[t.JsonValue, m.Field(description="Entity payload value.")]
@@ -34,7 +34,7 @@ class TestsFlextModelsDomainMixin:
     class DomainTestValue(m.Value):
         """Test value object for domain tests."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         data: Annotated[str, m.Field(description="Value payload string.")] = ""
         count: Annotated[int, m.Field(description="Occurrence counter.")]
@@ -42,7 +42,7 @@ class TestsFlextModelsDomainMixin:
     class CustomEntity(m.BaseModel):
         """Custom entity with configurable ID attribute."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=False)
 
         custom_id: str | None = None
 
@@ -53,7 +53,7 @@ class TestsFlextModelsDomainMixin:
     class SimpleValue(m.BaseModel):
         """Simple value object — tests behavior when model_dump is absent at runtime."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=False)
 
         data: str = ""
 
@@ -64,7 +64,7 @@ class TestsFlextModelsDomainMixin:
     class ComplexValue(m.BaseModel):
         """Value object with non-hashable attributes."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=False)
 
         data: str = ""
         items: Annotated[t.StrSequence, m.Field(default_factory=list)]
@@ -78,7 +78,7 @@ class TestsFlextModelsDomainMixin:
     class NoDict(m.BaseModel):
         """Model for testing value-comparison fallback paths in domain utilities."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=False)
 
         value: int = 0
 
@@ -107,7 +107,7 @@ class TestsFlextModelsDomainMixin:
     class ParseOptions(m.BaseModel):
         """Test-local parse options after production model removal."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         strip: bool = True
         remove_empty: bool = True
@@ -116,7 +116,7 @@ class TestsFlextModelsDomainMixin:
     class ParseDelimitedCase(m.BaseModel):
         """Test case for parse_delimited method."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
             frozen=True, arbitrary_types_allowed=True
         )
 
@@ -134,7 +134,7 @@ class TestsFlextModelsDomainMixin:
     class SplitEscapeCase(m.BaseModel):
         """Test case for split_on_char_with_escape method."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         text: str
         split_char: str
@@ -146,7 +146,7 @@ class TestsFlextModelsDomainMixin:
     class NormalizeWhitespaceCase(m.BaseModel):
         """Test case for normalize_whitespace method."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         text: str
         pattern: str = r"\s+"
@@ -158,7 +158,7 @@ class TestsFlextModelsDomainMixin:
     class RegexPipelineCase(m.BaseModel):
         """Test case for apply_regex_pipeline method."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         text: str
         patterns: t.SequenceOf[tuple[str, str] | tuple[str, str, int]]
@@ -169,7 +169,7 @@ class TestsFlextModelsDomainMixin:
     class ObjectKeyCase(m.BaseModel):
         """Test case for get_object_key method."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
             frozen=True, arbitrary_types_allowed=True
         )
 

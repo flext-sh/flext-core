@@ -19,7 +19,8 @@
 
 ## Contexto consolidado (flext)
 
-- O `AGENTS.md` do repositório `flext-sh/flext` define política de **ponteiro único**: regras canônicas ficam em `CLAUDE.md` (sem duplicar governança em múltiplos arquivos).
+- O `AGENTS.md` do repositório `flext-sh/flext` define política de **ponteiro único**: regras canônicas ficam em
+  `CLAUDE.md` (sem duplicar governança em múltiplos arquivos).
 - O `CLAUDE.md` reforça: **DRY/SOLID obrigatório**, proibição de duplicação, sem atalhos e com validação factual.
 - Este plano segue esse mesmo modelo: poucas regras, execução objetiva, evidência por comando.
 

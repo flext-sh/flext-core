@@ -25,7 +25,8 @@
 
 ## Escopo
 
-Padronizar o restante do código para reduzir duplicação e lógica ad-hoc, sem compromisso de retrocompatibilidade, alinhando com a arquitetura em camadas (L0–L3), CQRS e DI já documentadas no projeto.
+Padronizar o restante do código para reduzir duplicação e lógica ad-hoc, sem compromisso de retrocompatibilidade,
+alinhando com a arquitetura em camadas (L0–L3), CQRS e DI já documentadas no projeto.
 
 ## Resultado esperado (DoD do programa)
 
@@ -146,4 +147,5 @@ ______________________________________________________________________
 
 ## Nota de contexto
 
-Para incorporar padrões de `flext-sh/flext`, é necessário acesso local ao repositório (arquivos `AGENTS.md`/docs de arquitetura). Neste ambiente atual, somente `flext-core` está disponível.
+Para incorporar padrões de `flext-sh/flext`, é necessário acesso local ao repositório (arquivos `AGENTS.md`/docs de
+arquitetura). Neste ambiente atual, somente `flext-core` está disponível.

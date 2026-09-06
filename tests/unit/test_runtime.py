@@ -45,10 +45,11 @@ class TestsFlextCoreRuntime:
     def test_normalize_to_metadata_flattens_sequence_members(self) -> None:
         normalized = FlextRuntime.normalize_to_metadata([1, Path("/x"), None])
 
-        assert normalized == [1, "/x", ""]
+        assert normalized == [1, "/x", None]
 
-    def test_normalize_to_json_value_maps_none_to_empty_string(self) -> None:
-        assert FlextRuntime.normalize_to_json_value(None) == ""
+    def test_normalize_to_json_value_keeps_none_as_json_null(self) -> None:
+        """``None`` is a JsonValue in its own right, never coerced to a string."""
+        assert FlextRuntime.normalize_to_json_value(None) is None
 
     def test_normalize_to_json_mapping_normalizes_each_value(self) -> None:
         normalized = FlextRuntime.normalize_to_json_mapping({"a": 1, "b": Path("/z")})
