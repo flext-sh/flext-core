@@ -343,3 +343,4 @@ CLAUDE.local.md
 !config/gitleaks-release.toml
 !config/workspace.yaml
 !custom.mk
+worktrees/
