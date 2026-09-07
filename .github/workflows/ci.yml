@@ -140,7 +140,7 @@ jobs:
       # construction, so running both here costs one extra pass and closes the
       # hole rather than trusting everyone to run the other half by hand.
       - name: check complement (blocking)
-        run: CI=N make check
+        run: CI=N make check APPLY=Y
 
       - name: test (blocking)
         # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
