@@ -12,8 +12,9 @@ from typing import TYPE_CHECKING
 from dependency_injector import containers, providers, wiring
 from dependency_injector.containers import Container
 
-from ._dependency_options import FlextRuntimeDependencyOptions
 from flext_core import c
+
+from ._dependency_options import FlextRuntimeDependencyOptions
 
 if TYPE_CHECKING:
     from collections.abc import Callable, MutableSequence

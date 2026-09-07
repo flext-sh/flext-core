@@ -10,11 +10,12 @@ from collections.abc import Mapping
 from typing import TypeVar, cast
 
 from pydantic import BaseModel, PrivateAttr
+
+from flext_core import c
 from flext_core._protocols.result import FlextProtocolsResult as prt
 from flext_core._typings.base import FlextTypingBase as t
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
 from flext_core._typings.services import FlextTypesServices as ts
-from flext_core import c
 
 type JsonMapping = Mapping[str, tp.JsonValue]
 type JsonDict = dict[str, tp.JsonValue]

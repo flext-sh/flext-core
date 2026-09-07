@@ -14,6 +14,7 @@ ResultViewT_co = TypeVar("ResultViewT_co", covariant=True)
 if TYPE_CHECKING:
     from collections.abc import Callable
     from types import TracebackType
+
     from flext_core import m
     from flext_core._typings.base import FlextTypingBase as t
     from flext_core._typings.services import FlextTypesServices as ts

@@ -20,6 +20,7 @@ from flext_core.result import FlextResult as _Result
 
 if TYPE_CHECKING:
     from pathlib import Path
+
     from flext_core._protocols.project_metadata import (
         FlextProtocolsProjectMetadata as ppm,
     )
