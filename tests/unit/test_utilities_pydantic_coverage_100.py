@@ -2,18 +2,14 @@
 
 from __future__ import annotations
 
+import operator
 from collections.abc import Callable
 
 import pytest
 
-from flext_core import m as core_m
-from flext_core import u
+from flext_core import m as core_m, u
 from tests.models import m
 from tests.typings import t
-
-
-def _private_label(validated_data: dict[str, str]) -> str:
-    return validated_data["label"]
 
 
 def _input_reader() -> Callable[[str], str]:
@@ -24,8 +20,24 @@ class _PrivateAttrContract(core_m.BaseModel):
     label: str
     _model_values: list[str] = core_m.PrivateAttr(default_factory=list)
     _utility_values: list[str] = u.PrivateAttr(default_factory=list)
-    _label_copy: str = core_m.PrivateAttr(default_factory=_private_label)
+    _label_copy: str = core_m.PrivateAttr(default_factory=operator.itemgetter("label"))
     _reader: Callable[[str], str] = u.PrivateAttr(default_factory=_input_reader)
+
+    def model_values(self) -> list[str]:
+        """Expose the model-owned private list for behavior assertions."""
+        return self._model_values
+
+    def utility_values(self) -> list[str]:
+        """Expose the facade-owned private list for behavior assertions."""
+        return self._utility_values
+
+    def label_copy(self) -> str:
+        """Expose the model-owned private label copy for behavior assertions."""
+        return self._label_copy
+
+    def reader(self) -> Callable[[str], str]:
+        """Expose the facade-owned private reader for behavior assertions."""
+        return self._reader
 
 
 class TestsFlextUtilitiesPydantic:
@@ -134,15 +146,15 @@ class TestsFlextUtilitiesPydantic:
         first = _PrivateAttrContract(label="first")
         second = _PrivateAttrContract(label="second")
 
-        first._model_values.append("model")
-        first._utility_values.append("utility")
+        first.model_values().append("model")
+        first.utility_values().append("utility")
 
-        assert first._model_values == ["model"]
-        assert second._model_values == []
-        assert first._utility_values == ["utility"]
-        assert second._utility_values == []
-        assert first._label_copy == "first"
-        assert second._label_copy == "second"
-        assert first._reader is input
-        assert second._reader is input
+        assert first.model_values() == ["model"]
+        assert second.model_values() == []
+        assert first.utility_values() == ["utility"]
+        assert second.utility_values() == []
+        assert first.label_copy() == "first"
+        assert second.label_copy() == "second"
+        assert first.reader() is input
+        assert second.reader() is input
         assert first.model_dump() == {"label": "first"}

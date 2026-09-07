@@ -14,4 +14,6 @@ class TestsFlextUtilitiesCaseFactoriesMixin(
     """Service case factory helpers."""
 
 
-__all__: list[str] = ["TestsFlextUtilitiesCaseFactoriesMixin"]
+u = TestsFlextUtilitiesCaseFactoriesMixin
+
+__all__: list[str] = ["TestsFlextUtilitiesCaseFactoriesMixin", "u"]

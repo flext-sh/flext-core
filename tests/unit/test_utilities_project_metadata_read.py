@@ -1,6 +1,6 @@
 """Project metadata read utility tests.
 
-``u.read_project_metadata(root)`` returns ``p.Result[m.ProjectMetadata]`` — a
+``_read(root)`` returns ``p.Result[m.ProjectMetadata]`` — a
 Result-wrapped, frozen model whose PEP 621 payload lives under the nested
 ``project`` field. Tests assert the observable success value and the
 Result failure contract for missing/incomplete pyproject inputs.
@@ -8,10 +8,12 @@ Result failure contract for missing/incomplete pyproject inputs.
 
 from __future__ import annotations
 
+import tomllib
 from typing import TYPE_CHECKING
 
 import pytest
 
+from flext_core import r
 from flext_tests import tm
 from tests.constants import c
 from tests.models import m
@@ -20,6 +22,19 @@ from tests.utilities import u
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+
+def _read(root: Path) -> r[m.ProjectMetadata]:
+    """Read project metadata through the canonical owner chain."""
+    resolved = root.resolve()
+    try:
+        document = u.read_project_document_cached(resolved)
+        meta = u.build_project_metadata(resolved, document)
+    except (OSError, ValueError, tomllib.TOMLDecodeError) as exc:
+        return r[m.ProjectMetadata].fail(
+            f"cannot read project metadata from {resolved}: {exc}", exception=exc
+        )
+    return r[m.ProjectMetadata].ok(meta)
 
 
 class TestsFlextUtilitiesProjectMetadataRead:
@@ -50,7 +65,7 @@ class TestsFlextUtilitiesProjectMetadataRead:
             description = "LDIF"
             """,
         )
-        meta = u.read_project_metadata(root).unwrap()
+        meta = _read(root).unwrap()
         tm.that(meta, is_=m.ProjectMetadata)
         tm.that(meta.project.name, eq=c.Tests.SAMPLE_PROJECT_NAME)
         tm.that(meta.class_stem, eq=c.Tests.SAMPLE_PROJECT_CLASS_STEM)
@@ -70,7 +85,7 @@ class TestsFlextUtilitiesProjectMetadataRead:
             ]
             """,
         )
-        meta = u.read_project_metadata(root).unwrap()
+        meta = _read(root).unwrap()
         tm.that(
             tuple(author.name for author in meta.project.authors),
             eq=(c.Tests.SAMPLE_AUTHOR_ALICE, c.Tests.SAMPLE_AUTHOR_BOB),
@@ -87,7 +102,7 @@ class TestsFlextUtilitiesProjectMetadataRead:
             version = "{c.Tests.SAMPLE_PROJECT_VERSION}"
             """,
         )
-        meta = u.read_project_metadata(root).unwrap()
+        meta = _read(root).unwrap()
         tm.that(meta.package_name, eq=c.Tests.SAMPLE_PROJECT_NAME.replace("-", "_"))
         tm.that(meta.class_stem, eq=c.Tests.SAMPLE_PROJECT_CLASS_STEM)
 
@@ -104,7 +119,7 @@ class TestsFlextUtilitiesProjectMetadataRead:
             urls = {{Homepage = "https://example.com"}}
             """,
         )
-        meta = u.read_project_metadata(root).unwrap()
+        meta = _read(root).unwrap()
         tm.that(meta.project.requires_python, eq=">=3.13")
         tm.that(meta.project.urls.homepage, eq="https://example.com")
 
@@ -119,7 +134,7 @@ class TestsFlextUtilitiesProjectMetadataRead:
             version = "{c.Tests.SAMPLE_PROJECT_VERSION}"
             """,
         )
-        meta = u.read_project_metadata(root).unwrap()
+        meta = _read(root).unwrap()
         tm.that(meta.project.requires_python, eq="")
         tm.that(meta.project.urls.homepage, eq="")
         tm.that(meta.project.authors, eq=())
@@ -133,7 +148,7 @@ class TestsFlextUtilitiesProjectMetadataRead:
             version = "{c.Tests.SAMPLE_PROJECT_VERSION}"
             """,
         )
-        meta = u.read_project_metadata(root).unwrap()
+        meta = _read(root).unwrap()
         tm.rejects_assignment(
             meta, "package_name", "mutated", expected=m.ValidationError
         )
@@ -141,7 +156,7 @@ class TestsFlextUtilitiesProjectMetadataRead:
     def test_read_project_metadata_fails_on_missing_pyproject(
         self, tmp_path: Path
     ) -> None:
-        result = u.read_project_metadata(tmp_path)
+        result = _read(tmp_path)
         tm.that(result.failure, eq=True)
 
     @pytest.mark.parametrize(
@@ -156,6 +171,6 @@ class TestsFlextUtilitiesProjectMetadataRead:
         self, tmp_path: Path, body: str, match_pattern: str
     ) -> None:
         root = write_pyproject(tmp_path, body)
-        result = u.read_project_metadata(root)
+        result = _read(root)
         tm.that(result.failure, eq=True)
         tm.that(match_pattern in (result.error or ""), eq=True)

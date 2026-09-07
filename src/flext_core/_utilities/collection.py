@@ -36,8 +36,6 @@ class FlextUtilitiesCollection(
         value: mc.ConfigMap | t.JsonMapping | None,
     ) -> t.JsonMapping:
         """Normalize domain event payloads into plain flat mappings."""
-        from flext_core import FlextRuntime
-
         if value is None:
             empty_data: t.JsonMapping = {}
             return empty_data
