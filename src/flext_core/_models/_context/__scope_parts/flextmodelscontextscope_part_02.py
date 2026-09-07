@@ -34,7 +34,9 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
         hooks: Annotated[
             t.ContextHookMap,
             mp.Field(
-                default_factory=lambda: MappingProxyType({}),
+                default_factory=lambda: MappingProxyType(
+                    dict[str, t.SequenceOf[t.ContextHookCallable]]()
+                ),
                 description="Lifecycle hooks keyed by event name",
             ),
         ] = mp.Field(
@@ -67,7 +69,12 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
                 str, contextvars.ContextVar[FlextModelsContainers.ConfigMap | None]
             ],
             mp.Field(
-                default_factory=lambda: MappingProxyType({}),
+                default_factory=lambda: MappingProxyType(
+                    dict[
+                        str,
+                        contextvars.ContextVar[FlextModelsContainers.ConfigMap | None],
+                    ]()
+                ),
                 description="ContextVar registry keyed by scope name",
             ),
         ] = mp.Field(
