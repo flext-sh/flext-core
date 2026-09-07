@@ -1,0 +1,7 @@
+interface:
+  display_name: "SSOT"
+  short_description: "Enforce one writable authority per concept"
+  brand_color: "#7C3AED"
+  default_prompt: "Use $ssot to select one writable authority, rewire every consumer, remove competing sources, and prove projection convergence."
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,21 @@
+---
+description: Running security scanners or closing findings from security reports.
+globs: []
+alwaysApply: true
+---
+
+# Every reproducible security finding blocks closure
+
+Project-owned `docs/security/*-triage.md` files are evidence reports, not task
+trackers. Each finding requires the active canonical tracker, a decision,
+owner-source correction, reproducible evidence, and a clean scanner rerun. A
+false-positive or compatibility classification requires prior operator
+discussion, its reproducible technical proof, and explicit authorization. This
+applies to every severity and every released scanner version. While the tracker
+is suspended, create no substitute tracker or ledger, preserve evidence only in
+separately authorized Git/PR/CI surfaces, and leave tracker closure open.
+
+Never close via risk acceptance, generic ignore files, `nosemgrep`, `|| true`,
+exit-code suppression, vulnerable old/new coexistence, or an unverified base
+image change. Never cap, downgrade, or substitute a released scanner to avoid
+its findings.

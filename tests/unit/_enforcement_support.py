@@ -20,6 +20,11 @@ def messages(report: m.Report, *, fragment: str) -> list[str]:
     return [v.message for v in report.violations if fragment in v.message]
 
 
+def synthetic_method(_self: object) -> None:
+    """Typed method body for synthetic classes built by :func:`make_class`."""
+    return
+
+
 def make_class(name: str, body: dict[str, object]) -> type:
     cls = type(name, (), body)
     cls.__qualname__ = name  # strip test-method qualname prefix

@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import re
 import tomllib
+from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
@@ -49,10 +50,12 @@ class FlextUtilitiesConfig:
     def _expand_str(value: str, env: Mapping[str, str]) -> str:
         """Expand innermost ``${...}`` repeatedly so nested defaults resolve."""
         current = value
+
+        def _expand_match(match: re.Match[str]) -> str:
+            return FlextUtilitiesConfig._expand_one(match, env)
+
         for _ in range(c.CONFIG_EXPAND_MAX_PASSES):
-            expanded = FlextUtilitiesConfig._EXPAND_PATTERN.sub(
-                lambda match: FlextUtilitiesConfig._expand_one(match, env), current
-            )
+            expanded = FlextUtilitiesConfig._EXPAND_PATTERN.sub(_expand_match, current)
             if expanded == current:
                 return expanded
             current = expanded

@@ -34,12 +34,16 @@ ______________________________________________________________________
 
 ## 1) Problema atual (direto ao ponto)
 
-No estado atual de `flext-core`, a fachada `FlextModels` cresce com muitas subclasses de reexport sem comportamento próprio, gerando duplicidade de nomes e alto custo cognitivo. Em paralelo, já existe uma foundation sólida (`StrictBoundaryModel`, `FlexibleInternalModel`, `ImmutableValueModel`, `ArbitraryTypesModel`) que pode ser usada como padrão único de intenção.
+No estado atual de `flext-core`, a fachada `FlextModels` cresce com muitas subclasses de reexport sem comportamento
+próprio, gerando duplicidade de nomes e alto custo cognitivo. Em paralelo, já existe uma foundation sólida
+(`StrictBoundaryModel`, `FlexibleInternalModel`, `ImmutableValueModel`, `ArbitraryTypesModel`) que pode ser usada como
+padrão único de intenção.
 
 ### Evidências principais no código
 
 - Reexports flat e wrappers em `models.py` (ex.: snapshots/progress/handler/settings).
-- Duplicidade semântica explícita (`ProcessingRequest`/`ProcessingConfig`, `CollectionsCategories`/`Categories`, versões flat e aninhadas de handler).
+- Duplicidade semântica explícita (`ProcessingRequest`/`ProcessingConfig`, `CollectionsCategories`/`Categories`, versões
+  flat e aninhadas de handler).
 - Base comum clara em `models/base.py` para consolidar comportamento de validação.
 - Containers com API compartilhada em `models/containers.py`, com espaço para redução de wrappers sem semântica real.
 

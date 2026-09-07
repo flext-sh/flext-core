@@ -1,65 +1,77 @@
-# Development Guide
+<!-- AUTO-GENERATED FILE — regenerate through `make gen APPLY=Y` from the workspace root. -->
+<!-- Source of truth: `docs/guides/development.md`; adjust that source, never this projection. -->
+
+# flext-core - Development
 
 <!-- TOC START -->
-- [Overview](#overview)
-- [1. Build a Result Pipeline](#1-build-a-result-pipeline)
-- [2. Configure Runtime Settings](#2-configure-runtime-settings)
-- [3. Wire Services Through Container](#3-wire-services-through-container)
-- [4. Validate Against Examples](#4-validate-against-examples)
+- [Start at the workspace root](#start-at-the-workspace-root)
+- [Forward workflow](#forward-workflow)
+- [Architecture and tests](#architecture-and-tests)
+- [Documentation ownership](#documentation-ownership)
+- [Related guides](#related-guides)
 <!-- TOC END -->
 
-## Overview
+> Project profile: `flext-core`
 
-This page summarizes the daily development loop using executable examples.
+The root `AGENTS.md`, branch-matched `flext-law`, nearest package scope, and
+active Bead define the development contract. This page is the executable
+summary, not a second policy owner.
 
-## 1. Build a Result Pipeline
+## Start at the workspace root
 
-```python
-from __future__ import annotations
+Discover and prepare the declared command surface before changing code:
 
-from flext_core import p, r
+```bash
+make setup APPLY=Y
+make help
+```
 
+Use only verbs printed by `make help`. Do not add project, file, pattern,
+changed-only, fix, or phase selectors to narrow a standard verb.
 
-def normalize_email(email: str) -> p.Result[str]:
-    if "@" not in email:
-        return r[str].fail("invalid_email")
-    return r[str].ok(email.strip().lower())
+## Forward workflow
 
+1. Read the canonical config, settings, generator, public facade, consumers,
+   tests, and docs for the bounded change.
+2. Use the semantic refactoring owner instead of manually rewiring consumers.
+3. Remove the superseded owner in the same change and prove zero residue.
+4. Regenerate every managed projection from its source.
+5. Run the native gates without bypassing their orchestration.
 
-result = r[str].ok(" USER@EXAMPLE.COM ").flat_map(normalize_email)
-assert result.success
-assert result.value == "user@example.com"```
-## 2. Configure Runtime Settings
+```bash
+make gen APPLY=Y
+make mod APPLY=Y
+make gen APPLY=Y
+make gen APPLY=Y
+make fix APPLY=Y
+make fmt APPLY=Y
+make check APPLY=Y
+make test APPLY=Y
+make conform APPLY=Y
+```
 
-```python
-from flext_core import FlextSettings
+The final generation run proves the fixed point. The test verb always retains
+and uses Testmon; a direct test-runner invocation is invalid evidence.
 
-settings = FlextSettings.fetch_global(overrides={"debug": True, "log_level": "DEBUG"})
-assert settings.debug is True
-assert settings.log_level == "DEBUG"```
-## 3. Wire Services Through Container
+## Architecture and tests
 
-```python
-from flext_core import FlextContainer, u
+- Generic reusable behavior survives in canonical `c`, `t`, `p`, `m`, or `u`
+  ownership, with runtime behavior in `u`, services, `api.py`, or `cli.py`.
+- Tests use public facades, `tm`, the unified `conftest.py`, and typed shared
+  fixtures.
+- Mocks, fakes, stubs, patching, private construction, duplicated setup, and
+  hardcoded project-owned values are prohibited.
+- Failures and warnings are corrected at their owning source, never suppressed,
+  retried, normalized, or bypassed.
 
-container = FlextContainer()
-_ = container.factory("logger", lambda: u.fetch_logger(__name__))
-logger_result = container.resolve("logger")
+## Documentation ownership
 
-assert logger_result.success```
-## 4. Validate Against Examples
+Root guides are the writable source for generated member guides. Update the
+root source, then use `make gen APPLY=Y`; never hand-edit generated copies.
 
-```python
-import io
-from contextlib import redirect_stdout
+## Related guides
 
-from examples.ex_02_flext_settings import Ex02FlextSettings
-from examples.ex_12_flext_registry import Ex12RegistryDsl
-
-stream = io.StringIO()
-with redirect_stdout(stream):
-    Ex02FlextSettings("docs/guides/development.md").exercise()
-
-stream = io.StringIO()
-with redirect_stdout(stream):
-    Ex12RegistryDsl("docs/guides/development.md").exercise()```
+- Getting started
+- Configuration
+- Testing
+- Troubleshooting

@@ -15,13 +15,16 @@ from typing import TYPE_CHECKING, ClassVar
 from flext_core._constants.file import FlextConstantsFile as cf
 from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cpm
 from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
-from flext_core._protocols.project_metadata import FlextProtocolsProjectMetadata as ppm
-from flext_core._protocols.result import FlextProtocolsResult as p
-from flext_core.result import FlextResult as _Result
 from flext_core._typings.base import FlextTypingBase as t
+from flext_core.result import FlextResult as _Result
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+    from flext_core._protocols.project_metadata import (
+        FlextProtocolsProjectMetadata as ppm,
+    )
+    from flext_core._protocols.result import FlextProtocolsResult as p
 
 
 class FlextUtilitiesProjectMetadata(mpm):
@@ -93,14 +96,14 @@ class FlextUtilitiesProjectMetadata(mpm):
             document = FlextUtilitiesProjectMetadata.read_project_document_cached(
                 project_root
             )
-            return _Result[ppm.ProjectMetadata].ok(
+            return _Result[mpm.ProjectMetadata].ok(
                 FlextUtilitiesProjectMetadata.build_project_metadata(
                     project_root, document
                 )
             )
         except (OSError, ValueError, tomllib.TOMLDecodeError) as exc:
             msg = f"cannot read project metadata from {root}: {exc}"
-            return _Result[ppm.ProjectMetadata].fail(msg, exception=exc)
+            return _Result[mpm.ProjectMetadata].fail(msg, exception=exc)
 
     @staticmethod
     def derive_class_stem(project_name: str) -> str:

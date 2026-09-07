@@ -11,8 +11,7 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
-from flext_core._constants.errors import FlextConstantsErrors as ce
-from flext_core._constants.mixins import FlextConstantsMixins as cm
+from flext_core import c
 from flext_core._protocols.result import FlextProtocolsResult as prt
 from flext_core._typings.typeadapters import FlextTypesTypeAdapters as tta
 
@@ -43,7 +42,7 @@ class FlextRuntimeMetadataValidation(FlextRuntimeMetadata):
                 for key, item in value.items()
             }
         if not isinstance(value, prt.HasModelDump):
-            raise TypeError(ce.ERR_RUNTIME_ATTRIBUTES_MUST_BE_DICT_LIKE)
+            raise TypeError(c.ERR_RUNTIME_ATTRIBUTES_MUST_BE_DICT_LIKE)
         dumped = value.model_dump(mode="json")
         return {
             key: None
@@ -66,7 +65,7 @@ class FlextRuntimeMetadataValidation(FlextRuntimeMetadata):
         for key in normalized_mapping:
             if key.startswith("_"):
                 raise ValueError(
-                    ce.ERR_RUNTIME_KEYS_WITH_UNDERSCORE_RESERVED.format(key=key)
+                    c.ERR_RUNTIME_KEYS_WITH_UNDERSCORE_RESERVED.format(key=key)
                 )
         validated_metadata: tb.JsonMapping = tta.metadata_map_adapter().validate_python({
             key: item for key, item in normalized_mapping.items() if item is not None
@@ -79,7 +78,7 @@ class FlextRuntimeMetadataValidation(FlextRuntimeMetadata):
     ) -> TModel:
         """Normalize metadata-like input into the provided metadata model."""
         if value is None:
-            return metadata_model.model_validate({cm.FIELD_ATTRIBUTES: {}})
+            return metadata_model.model_validate({c.FIELD_ATTRIBUTES: {}})
         if isinstance(value, metadata_model):
             return value
         if isinstance(value, Mapping):
@@ -87,7 +86,7 @@ class FlextRuntimeMetadataValidation(FlextRuntimeMetadata):
         else:
             raw_mapping_obj = value.model_dump(mode="json")
         return metadata_model.model_validate({
-            cm.FIELD_ATTRIBUTES: dict(raw_mapping_obj)
+            c.FIELD_ATTRIBUTES: dict(raw_mapping_obj)
         })
 
 

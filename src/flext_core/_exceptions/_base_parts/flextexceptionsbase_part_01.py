@@ -5,10 +5,8 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableMapping
 from typing import TYPE_CHECKING
 
-from flext_core._constants.errors import FlextConstantsErrors as ce
-from flext_core._constants.mixins import FlextConstantsMixins as cm
+from flext_core import c, m
 from flext_core._exceptions.helpers import FlextExceptionsHelpers
-from flext_core._models.base import FlextModelsBase as m
 from flext_core._protocols.result import FlextProtocolsResult as pr
 from flext_core._runtime._metadata_validation import (
     FlextRuntimeMetadataValidation as FlextRuntime,
@@ -32,7 +30,7 @@ class FlextBaseErrorMetadataMixin:
                 for key, value in merged_kwargs.items()
             }
             resolved_metadata = m.Metadata.model_validate({
-                cm.FIELD_ATTRIBUTES: normalized_attrs
+                c.FIELD_ATTRIBUTES: normalized_attrs
             })
         else:
             metadata_model = FlextExceptionsHelpers.safe_metadata(metadata)
@@ -47,7 +45,7 @@ class FlextBaseErrorMetadataMixin:
                         continue
                     merged_attrs[key] = FlextRuntime.normalize_to_metadata(value)
                 resolved_metadata = m.Metadata.model_validate({
-                    cm.FIELD_ATTRIBUTES: merged_attrs
+                    c.FIELD_ATTRIBUTES: merged_attrs
                 })
             else:
                 metadata_dict: tb.MappingKV[str, ts.JsonPayload | None] | None = None
@@ -56,7 +54,7 @@ class FlextBaseErrorMetadataMixin:
                         metadata_dict = FlextRuntime.normalize_metadata_input_mapping(
                             metadata
                         )
-                    except ce.EXC_PYDANTIC_TYPE_VALUE:
+                    except c.EXC_PYDANTIC_TYPE_VALUE:
                         metadata_dict = None
                 resolved_metadata = (
                     FlextBaseErrorMetadataMixin._normalize_metadata_from_dict(
@@ -64,7 +62,7 @@ class FlextBaseErrorMetadataMixin:
                     )
                     if metadata_dict is not None
                     else m.Metadata.model_validate({
-                        cm.FIELD_ATTRIBUTES: {"value": str(metadata)}
+                        c.FIELD_ATTRIBUTES: {"value": str(metadata)}
                     })
                 )
         return resolved_metadata
@@ -86,7 +84,7 @@ class FlextBaseErrorMetadataMixin:
                     continue
                 merged_attrs[k] = FlextRuntime.normalize_to_metadata(v)
         return m.Metadata.model_validate({
-            cm.FIELD_ATTRIBUTES: {
+            c.FIELD_ATTRIBUTES: {
                 k: FlextRuntime.normalize_to_metadata(v)
                 for k, v in merged_attrs.items()
                 if v is not None

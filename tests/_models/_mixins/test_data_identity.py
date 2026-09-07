@@ -38,7 +38,7 @@ class TestsFlextModelsTestDataIdentityMixin:
     class Identifiers(m.BaseModel):
         """Test identifiers and IDs."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         user_id: Annotated[str, m.Field(description="Default test user identifier")] = (
             "test_user_123"
@@ -62,7 +62,7 @@ class TestsFlextModelsTestDataIdentityMixin:
     class Names(m.BaseModel):
         """Test module and component names."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         module_name: Annotated[str, m.Field(description="Default test module name")] = (
             "test_module"

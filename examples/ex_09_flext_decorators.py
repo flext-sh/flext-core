@@ -37,8 +37,13 @@ class Ex09FlextDecorators:
         return run()
 
 
-if __name__ == "__main__":
+def _main() -> None:
+    """Run the example as a script; names stay local so the package exports none."""
     result = run()
     if not result.success:
         msg = "decorator example failed"
         raise RuntimeError(msg)
+
+
+if __name__ == "__main__":
+    _main()

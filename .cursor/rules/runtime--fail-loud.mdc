@@ -1,0 +1,24 @@
+---
+description: Raw exception propagation and first-defect validation.
+globs: []
+alwaysApply: true
+---
+
+# Fail loud on the first defect
+
+The first exception terminates the workflow with its original traceback and
+causal chain. CLI boundaries, validators, and orchestrators do not catch
+workflow failures. They never translate a failure into a finding, warning,
+skip, boolean, sentinel, empty collection, partial result, log-only event,
+formatted error, or manually selected exit code.
+
+Validators execute in deterministic dependency order and raise on the first
+defect. They do not aggregate independent errors. A later invocation may expose
+the next defect only after the earlier owner is corrected.
+
+Only cleanup and rollback may catch an exception. They must retain the original
+exception as the one re-raised, attach any cleanup/rollback exception to its
+causal evidence, and never replace the original failure with cleanup success or
+failure.
+
+See also: `strict-execution.md` (rule file) — aggregate parent policy.

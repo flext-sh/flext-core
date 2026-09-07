@@ -10,8 +10,7 @@ import warnings
 from functools import wraps
 from typing import TYPE_CHECKING, ClassVar, TypeIs
 
-from flext_core import FlextContainer
-from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core import FlextContainer, m
 from flext_core._protocols.logging import FlextProtocolsLogging as pl
 from flext_core._typings.base import FlextTypingBase as tb
 from flext_core._typings.services import FlextTypesServices as ts
@@ -29,7 +28,7 @@ if TYPE_CHECKING:
 class FlextDecoratorsBase:
     """Base helpers shared by concrete decorator namespaces."""
 
-    type _LoggerCarrier = pl.HasLogger | pl.Logger | ts.JsonPayload | mp.BaseModel
+    type _LoggerCarrier = pl.HasLogger | pl.Logger | ts.JsonPayload | m.BaseModel
     _CAUGHT_EXCEPTIONS: tuple[type[Exception], ...] = (
         AttributeError,
         TypeError,
@@ -47,7 +46,7 @@ class FlextDecoratorsBase:
         """Return whether value carries or can route logging context."""
         _ = cls
         return isinstance(
-            value, (pl.Logger, pl.HasLogger, mp.BaseModel, *tb.CONTAINER_TYPES)
+            value, (pl.Logger, pl.HasLogger, m.BaseModel, *tb.CONTAINER_TYPES)
         )
 
     @classmethod

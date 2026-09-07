@@ -9,8 +9,7 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING
 
-from flext_core._constants.base import FlextConstantsBase as cb
-from flext_core._constants.infrastructure import FlextConstantsInfrastructure as ci
+from flext_core import c
 from flext_core._decorators._base import FlextDecoratorsBase
 
 if TYPE_CHECKING:
@@ -44,11 +43,11 @@ class FlextDecoratorsLoggingPayloads(FlextDecoratorsBase):
         """Build structured operation-success log payload."""
         payload: tb.MutableJsonMapping = {"function": func_name, "success": True}
         if correlation_id is not None:
-            payload[ci.ContextKey.CORRELATION_ID] = correlation_id
+            payload[c.ContextKey.CORRELATION_ID] = correlation_id
         if track_perf:
             duration = time.perf_counter() - start_time
-            payload["duration_ms"] = duration * cb.DEFAULT_SIZE
-            payload[ci.MetadataKey.DURATION_SECONDS] = duration
+            payload["duration_ms"] = duration * c.DEFAULT_SIZE
+            payload[c.MetadataKey.DURATION_SECONDS] = duration
         return payload
 
 

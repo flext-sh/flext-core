@@ -11,6 +11,17 @@ if TYPE_CHECKING:
 class FlextConstantsEnforcementFixActions:
     """Fix-action metadata consumed by flext-infra enforcement fixers."""
 
+    _PYDANTIC_SYMBOLS_TO_REPLACE: Final[t.JsonDict] = {
+        "BaseModel": "m.BaseModel",
+        "ConfigDict": "m.ConfigDict",
+        "Field": "u.Field",
+        "PrivateAttr": "u.PrivateAttr",
+        "TypeAdapter": "m.TypeAdapter",
+        "computed_field": "u.computed_field",
+        "field_validator": "u.field_validator",
+        "model_validator": "u.model_validator",
+    }
+
     ENFORCEMENT_FIX_ACTIONS: Final[t.MappingKV[str, t.JsonMapping]] = {
         "ENFORCE-008": {
             "kind": "transformer",
@@ -116,16 +127,7 @@ class FlextConstantsEnforcementFixActions:
             "target": "import_modernizer",
             "params": {
                 "imports_to_remove": ["pydantic"],
-                "symbols_to_replace": {
-                    "BaseModel": "m.BaseModel",
-                    "ConfigDict": "m.ConfigDict",
-                    "Field": "u.Field",
-                    "PrivateAttr": "u.PrivateAttr",
-                    "TypeAdapter": "m.TypeAdapter",
-                    "computed_field": "u.computed_field",
-                    "field_validator": "u.field_validator",
-                    "model_validator": "u.model_validator",
-                },
+                "symbols_to_replace": _PYDANTIC_SYMBOLS_TO_REPLACE,
                 "runtime_aliases": ["m", "u"],
                 "blocked_aliases": [],
             },
@@ -166,16 +168,7 @@ class FlextConstantsEnforcementFixActions:
             "target": "import_modernizer",
             "params": {
                 "imports_to_remove": ["pydantic"],
-                "symbols_to_replace": {
-                    "BaseModel": "m.BaseModel",
-                    "ConfigDict": "m.ConfigDict",
-                    "Field": "u.Field",
-                    "PrivateAttr": "u.PrivateAttr",
-                    "TypeAdapter": "m.TypeAdapter",
-                    "computed_field": "u.computed_field",
-                    "field_validator": "u.field_validator",
-                    "model_validator": "u.model_validator",
-                },
+                "symbols_to_replace": _PYDANTIC_SYMBOLS_TO_REPLACE,
                 "runtime_aliases": ["m", "u"],
                 "blocked_aliases": [],
             },

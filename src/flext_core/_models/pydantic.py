@@ -18,7 +18,7 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from re import Pattern
 from types import EllipsisType
-from typing import Literal, dataclass_transform, overload
+from typing import Literal, dataclass_transform
 
 from pydantic import (
     AfterValidator,
@@ -82,30 +82,6 @@ def _field[DefaultT](
     return field_factory(default, **kwargs)
 
 
-@overload
-def _private_attr[PrivateT](
-    default: PrivateT | PydanticUndefinedType = PydanticUndefined,
-    *,
-    init: Literal[False] = False,
-) -> PrivateT: ...
-
-
-@overload
-def _private_attr[PrivateT](
-    *,
-    default_factory: Callable[[], PrivateT],
-    init: Literal[False] = False,
-) -> PrivateT: ...
-
-
-@overload
-def _private_attr[PrivateT, ValidatedT](
-    *,
-    default_factory: Callable[[dict[str, ValidatedT]], PrivateT],
-    init: Literal[False] = False,
-) -> PrivateT: ...
-
-
 def _private_attr[PrivateT](
     default: PrivateT | PydanticUndefinedType = PydanticUndefined,
     *,
@@ -114,11 +90,7 @@ def _private_attr[PrivateT](
 ) -> PrivateT:
     """Typed FLEXT facade for ``pydantic.PrivateAttr``."""
     private_attr_factory: Callable[..., PrivateT] = PydanticPrivateAttr
-    return private_attr_factory(
-        default,
-        default_factory=default_factory,
-        init=init,
-    )
+    return private_attr_factory(default, default_factory=default_factory, init=init)
 
 
 class FlextModelsPydantic:

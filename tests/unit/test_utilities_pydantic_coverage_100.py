@@ -83,7 +83,7 @@ class TestsFlextUtilitiesPydantic:
         assert payload_jsonable == payload_dict
 
     def test_validate_call_rejects_invalid_argument_values(self) -> None:
-        @u.validate_call()
+        @u.validate_call
         def double_positive(value: t.PositiveInt) -> int:
             doubled: int = value * 2
             return doubled
@@ -101,7 +101,7 @@ class TestsFlextUtilitiesPydantic:
             })
         )
 
-        @u.validate_call()
+        @u.validate_call
         def build_runtime_options(
             options: m.RuntimeBootstrapOptions,
             override_subproject: str,
@@ -130,9 +130,7 @@ class TestsFlextUtilitiesPydantic:
         ]
         assert resolved.settings_overrides == {"dry_run": True}
 
-    def test_private_attr_factories_preserve_pydantic_instance_semantics(
-        self,
-    ) -> None:
+    def test_private_attr_factories_preserve_pydantic_instance_semantics(self) -> None:
         first = _PrivateAttrContract(label="first")
         second = _PrivateAttrContract(label="second")
 

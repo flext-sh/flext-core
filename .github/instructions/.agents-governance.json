@@ -1,0 +1,452 @@
+{
+  "context": "project",
+  "destination": ".github/instructions",
+  "managed": {
+    "architecture--engineering-core.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "architecture--engineering-core.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "19237803de32675bef0422d3bc9c82f328a83ac92e80ee87bd2e5e8aefcd1f9b",
+      "slug": "architecture/engineering-core",
+      "source_digest": "706b18fc4efec92f228a074bea359a21b1e91c8265466795aba7f9739940856e",
+      "source_type": "rule"
+    },
+    "architecture--generalized-abstraction.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "architecture--generalized-abstraction.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "1ec467641296fca56f0e713c4641c75b7dcedf8698d82aabb1ecd72128263e5e",
+      "slug": "architecture/generalized-abstraction",
+      "source_digest": "12e898df6180e23c7ecd00dcef98e36404ab420475ce68f683d0625077904ece",
+      "source_type": "rule"
+    },
+    "architecture--governance-artifact-composition.instructions.md": {
+      "activation": [
+        "route:project"
+      ],
+      "adapter_version": 1,
+      "destination": "architecture--governance-artifact-composition.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "1be03ba0c7e11201dd99f127d2dfce30c6ca3b6fe09968306e8da8adde1d5697",
+      "slug": "architecture/governance-artifact-composition",
+      "source_digest": "cf57f4ac8b6218d02dc799f4b08bb803fa59f1dda68dc682ee0c57bbdfc6db57",
+      "source_type": "rule"
+    },
+    "communication--caveman.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "communication--caveman.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "5fcf9464c66a06531ebfe128eddb7a133ba226c05a5da5c37c17f76f764b1734",
+      "slug": "communication/caveman",
+      "source_digest": "783f1b7ee03e61d4755f7bfc391dcca81f3e44a7613f155fc7e7238d0f8785f2",
+      "source_type": "rule"
+    },
+    "coordination--fix-forward-collaboration.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "coordination--fix-forward-collaboration.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "c6a5851bc12a0e2f3eb0a1a3d74ee0986596ae545628a5debf4c7426dfd14101",
+      "slug": "coordination/fix-forward-collaboration",
+      "source_digest": "14882a304d4c273d1fa2463378942b6cd44267c49bbdb766ae52126b2c906563",
+      "source_type": "rule"
+    },
+    "coordination--multiagent-edit-breadcrumb.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "coordination--multiagent-edit-breadcrumb.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "8cd42cc65898127bbf35ceaea298b5db9685f3c0ea7e8927f8f5ae3ffaf35acc",
+      "slug": "coordination/multiagent-edit-breadcrumb",
+      "source_digest": "054af9c6f59764f42feb0e05e06addc1f31401b8858c2fe237f61221d57113b8",
+      "source_type": "rule"
+    },
+    "coordination--operator-precedence.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "coordination--operator-precedence.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "8ded007fec61122d036c1fecedfb4cfaed0d1f832331c5117988cf739829889c",
+      "slug": "coordination/operator-precedence",
+      "source_digest": "695db64ebc52e1f78f71602b6346989ca976c5deee71eac7764654b04d4a67b3",
+      "source_type": "rule"
+    },
+    "coordination--plan-topic-monopoly.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "coordination--plan-topic-monopoly.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "6d3ffb9bc2f310ee8bdba844abeca2ec0a5f435e77af352d6a174c600385cdd3",
+      "slug": "coordination/plan-topic-monopoly",
+      "source_digest": "8eb11455c674c252a8eb587c4efeff6ecb141a7edbc12ff161b14acd22b513c8",
+      "source_type": "rule"
+    },
+    "coordination--session-governance.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "coordination--session-governance.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "36b3fe2aad50533bf020e15031da921623faa1eb80a066bf13666e4c0e94e342",
+      "slug": "coordination/session-governance",
+      "source_digest": "0db5e5bd94072f357e08f6830a20980297b383d547da70226942307888678348",
+      "source_type": "rule"
+    },
+    "coordination--shared-venv-guard.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "coordination--shared-venv-guard.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "eeea6099b81d0d099ecda2c4c5b3078bfbf5619007dd4f39891039874ef3948e",
+      "slug": "coordination/shared-venv-guard",
+      "source_digest": "c9758f69d5a0386f6347957dcef0151e07fb520db7217e475da8064388dc3525",
+      "source_type": "rule"
+    },
+    "ethics--professional-integrity.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "ethics--professional-integrity.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "22a98968ae32695a9c1660d1aed9a15379b0064e0a3f6a2c8efa6e7be09ef025",
+      "slug": "ethics/professional-integrity",
+      "source_digest": "5b61f10a6378fc95324acf6f5ba3e7a8a77a65a4f1b5a1278fdf01d51028da9c",
+      "source_type": "rule"
+    },
+    "git--destructive-git-guard.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "git--destructive-git-guard.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "3c0147ce952baf292237ca6c77ddf53c13bc0d23ca73378c4864af30b359ad1b",
+      "slug": "git/destructive-git-guard",
+      "source_digest": "750f724875c0a44b5a1343d010ca99d7ceb9f7ffdeb4582d13f4848d60cd05ba",
+      "source_type": "rule"
+    },
+    "python--config-settings-ssot.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "python--config-settings-ssot.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "69dcf2214ded8d1c8ff4830722db3f1d9a63ea822668b65e7ba1d3ed2e4e35bd",
+      "slug": "python/config-settings-ssot",
+      "source_digest": "e1d1ddbe4bb9b0153391bf3ab749642a4416c20a1d04b0b3796bc8075b72aa11",
+      "source_type": "rule"
+    },
+    "python--no-hidden-errors.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "python--no-hidden-errors.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "4830ea7e872a97a3e4e885f4c1c8c166cef6d758c291811eec2a9f087410c9b7",
+      "slug": "python/no-hidden-errors",
+      "source_digest": "51d36c283451859096508cab29c4fc86adb6edff553258970cd7d815e9d9b2b0",
+      "source_type": "rule"
+    },
+    "python.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "python.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "b00b8a68934f5ffc337328c2842566900567a1feba05ae8327469b7ce5801049",
+      "slug": "python",
+      "source_digest": "b6ea2eae95d88859caeea3127ba9196a815bb63cca50480b9709583174078de7",
+      "source_type": "rule"
+    },
+    "runtime--atomic-effects.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "runtime--atomic-effects.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "68db05a37cdcc17374670124c6dc210b718febc6197f91ffbfef61a54db4111c",
+      "slug": "runtime/atomic-effects",
+      "source_digest": "96c3f589108761926610a1703c0bc10cefd9be7cf29ef602c26c99b14079d6d4",
+      "source_type": "rule"
+    },
+    "runtime--causal-subprocess.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "runtime--causal-subprocess.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "ebba2f5c1c77342bdf305a702f0a8a18033f413b2e59de1179756f048525c34d",
+      "slug": "runtime/causal-subprocess",
+      "source_digest": "8c096d198d24d198b650a1a693375950edffeb30fd08b35e756d0aa7c03c122e",
+      "source_type": "rule"
+    },
+    "runtime--fail-loud.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "runtime--fail-loud.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "45988875dec39c3b5eace6763b802527f3852c04a6f9d6daf32bdde953ed0e88",
+      "slug": "runtime/fail-loud",
+      "source_digest": "a496a4fd85ba2be44bdb4b5b7430963ebc7f4494d5ac1bf764580d0b9dedd981",
+      "source_type": "rule"
+    },
+    "runtime--no-fallback.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "runtime--no-fallback.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "1b41acb9033eb99333112ffb7ff92aea46068fb1f12b8afe4a787f7a38a1f536",
+      "slug": "runtime/no-fallback",
+      "source_digest": "92dee80a490b194a7f42f88a643b6c7de015f1beace9c60f7683837e46d097ad",
+      "source_type": "rule"
+    },
+    "runtime--no-keyring.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "runtime--no-keyring.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "df46983198fac951329f69e5e43befd73b2a7417b8d37ee9f3a43d2ac45d0a6b",
+      "slug": "runtime/no-keyring",
+      "source_digest": "be020c47da3cc777bfdf77a054ed5051773f8edfbd87136af28b5b9d7d2ece8c",
+      "source_type": "rule"
+    },
+    "runtime--preflight-before-effects.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "runtime--preflight-before-effects.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "870a1af045d7d45d0a8cd766c27069e2a6e1c29eeeba256efe8c804e2195b66c",
+      "slug": "runtime/preflight-before-effects",
+      "source_digest": "f7835edfccacdc70c13e2e92f1bc1ae540566bb1ebf87666bc8f4dbf815aa0f6",
+      "source_type": "rule"
+    },
+    "runtime--required-environment.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "runtime--required-environment.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "29109f8c120de8231a5bb481cf434c49deab2c0e1634ce3d1713c2b637231c26",
+      "slug": "runtime/required-environment",
+      "source_digest": "be0e4b47a03e5159374d331167997c9b2db9e63892d94e9adee11c8e0164ae0a",
+      "source_type": "rule"
+    },
+    "runtime--strict-execution.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "runtime--strict-execution.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "a93cc8e1f27dc4389c6246ed4848e35e69edb14ebebd64aaeadcce88049b6f57",
+      "slug": "runtime/strict-execution",
+      "source_digest": "81625551a5a9aae9fa6ac513d358c165089d2ef388b38b9f8ffdaf13b6970703",
+      "source_type": "rule"
+    },
+    "runtime--zero-residue.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "runtime--zero-residue.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "bc47ed13b5867f93f13b79fb06500c84c053f2361efb3999ce2cd0d9793b12eb",
+      "slug": "runtime/zero-residue",
+      "source_digest": "1fec1bdeea792fdd17f67bb654e9e35437042a0c192e37e2a7e12df871fa3273",
+      "source_type": "rule"
+    },
+    "rust.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "rust.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "29fdb41a4669069121e1820dc1b0a29f72629abc53bca2a63ae181a38d0c9854",
+      "slug": "rust",
+      "source_digest": "476918f4550b963888d435db060f9ef9c939041dee5b7f68802f79f8b1038cab",
+      "source_type": "rule"
+    },
+    "security--prompt-defense.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "security--prompt-defense.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "0ae4922ef8b0dcd3e299684c04a20c8b21751ccebde649b7df97d9297cd5550c",
+      "slug": "security/prompt-defense",
+      "source_digest": "0919ae991a4bd9139addd92af5b86acf0677ad768997e1bf9c5d699f46d3a27e",
+      "source_type": "rule"
+    },
+    "security--scanner-closure.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "security--scanner-closure.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "435ecc8079181bef7e9d7b0ba6b5510bb73b4ec3177b58cf8f95e1285413d6fe",
+      "slug": "security/scanner-closure",
+      "source_digest": "b001ae66efaee5a74a5385bc0e76235b7eb81b4439c53fdb7139c07d4568506d",
+      "source_type": "rule"
+    },
+    "security--supply-chain.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "security--supply-chain.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "28ec79715e457a9f0f7322e25af97add4adb28b64f44dd981946ba67192cc563",
+      "slug": "security/supply-chain",
+      "source_digest": "55da3f7e63b8b48a09f7c1c8fb9cc19d49fb8a7d82091d8be04a77f2595649ca",
+      "source_type": "rule"
+    },
+    "shell--bash-guard-chaining-precision.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "shell--bash-guard-chaining-precision.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "0b0a04ff0a9c2b748a4223df2fa1fcd790f27f5c213be57e5c6112f1d23752b4",
+      "slug": "shell/bash-guard-chaining-precision",
+      "source_digest": "a0d4e55b98ad4f191af78150dba465a5fcca794fc4f2f992b8f51a6ffa2ce772",
+      "source_type": "rule"
+    },
+    "storage.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "storage.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "64fd5f1991577bd08d8d87629b5d7ae1ac68ae4e6215f6266022518a92a494e7",
+      "slug": "storage",
+      "source_digest": "80495cc371f36cea00c0a2a4ec06effebe0ea5301f4b2e9b0d04bc87ee2b9923",
+      "source_type": "rule"
+    },
+    "testing--observable-runtime.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "testing--observable-runtime.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "f3a6680b701caf13da8551083f4b89f254a7d21272f7b0f360d81d5ac8c074cd",
+      "slug": "testing/observable-runtime",
+      "source_digest": "0d97c73059d1710716b11d5983c2817553733ad216fb565fa6ca8cfeab572aa0",
+      "source_type": "rule"
+    },
+    "typescript.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "typescript.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "9a1e4515073ebe80e479780b96f91114ddc96123d83b6ebaa04f697e1dd9f1ba",
+      "slug": "typescript",
+      "source_digest": "744e7f9c81de0e27a1ead79816e96793684723cc42795e50b52832fc8f87d022",
+      "source_type": "rule"
+    },
+    "workflow--canonical-commands.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "workflow--canonical-commands.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "9286e747d900dce1be567eb71dd03dda74647d74f988669161283f03da815cde",
+      "slug": "workflow/canonical-commands",
+      "source_digest": "30b7216f9c97d8d1a3b3f4d0ba4de1a0efbe709f1beadfa12ca9050da8a1349c",
+      "source_type": "rule"
+    },
+    "workflow--generators-not-projections.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "workflow--generators-not-projections.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "e50cf980dd85623a8367057740152947e206a8fcee22c5ab5bfaa2193f65037a",
+      "slug": "workflow/generators-not-projections",
+      "source_digest": "b21bcc564fb1f5d0c4323b008f287ed99f93687efadbe56fc79d7461a573e38a",
+      "source_type": "rule"
+    },
+    "workflow--living-documentation.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "workflow--living-documentation.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "0591b4aa5853d5b2ef8cb9e1b52dbfedf45dfc8f46f96941c3efb0f3d93b39c2",
+      "slug": "workflow/living-documentation",
+      "source_digest": "9e3ec2a1292a276fce6c6e55e35e1968beaaf4b6d5b7074f9ce82cd8cb5fd43a",
+      "source_type": "rule"
+    },
+    "workflow--runtime-is-reality.instructions.md": {
+      "activation": [
+        "route:both"
+      ],
+      "adapter_version": 1,
+      "destination": "workflow--runtime-is-reality.instructions.md",
+      "origin": "agents:rules:copilot",
+      "physical_digest": "c1c9ff2d46b12bd497cbcc1dcc431a029a676e2bc96e6c5c9b11e2f09efb759b",
+      "slug": "workflow/runtime-is-reality",
+      "source_digest": "c6763e0f0f6116a4113813707deec61b6d3d18960797fdf2cb253b325d4d3977",
+      "source_type": "rule"
+    }
+  },
+  "owner": "agents-governance",
+  "project": ".",
+  "providers": [
+    "copilot"
+  ],
+  "selection": {
+    "agents": [],
+    "opt_ins": [],
+    "selected_tags": [
+      "flext"
+    ]
+  },
+  "surface": "rules",
+  "version": 5
+}

@@ -4,10 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_core._constants.errors import FlextConstantsErrors as ce
-from flext_core._constants.infrastructure import FlextConstantsInfrastructure as ci
-from flext_core._constants.mixins import FlextConstantsMixins as cm
-from flext_core._constants.validation import FlextConstantsValidation as cv
+from flext_core import c
 from flext_core._exceptions.helpers import FlextExceptionsHelpers
 from flext_core._runtime._metadata_validation import (
     FlextRuntimeMetadataValidation as FlextRuntime,
@@ -19,7 +16,7 @@ from .flextexceptionsbase_part_02 import FlextBaseErrorStateMixin
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
 
-    from flext_core._models.pydantic import FlextModelsPydantic as mp
+    from flext_core import m
     from flext_core._protocols.result import FlextProtocolsResult as pr
     from flext_core._typings.services import FlextTypesServices as ts
 
@@ -27,14 +24,14 @@ if TYPE_CHECKING:
 class FlextBaseError(FlextBaseErrorStateMixin, Exception):
     """Base exception with correlation metadata and error codes."""
 
-    params_cls: ClassVar[ts.ModelClass[mp.BaseModel] | None] = None
+    params_cls: ClassVar[ts.ModelClass[m.BaseModel] | None] = None
     excluded_context_keys: ClassVar[set[str] | frozenset[str] | None] = None
 
     def __init__(
         self,
         message: str,
         *,
-        error_code: str = cv.ErrorCode.UNKNOWN_ERROR,
+        error_code: str = c.ErrorCode.UNKNOWN_ERROR,
         context: tb.MappingKV[str, ts.JsonPayload | None]
         | pr.HasModelDump
         | None = None,
@@ -45,7 +42,7 @@ class FlextBaseError(FlextBaseErrorStateMixin, Exception):
         merged_kwargs: tb.MappingKV[str, ts.JsonPayload | None]
         | pr.HasModelDump
         | None = None,
-        params: mp.BaseModel | None = None,
+        params: m.BaseModel | None = None,
         **extra_kwargs: tb.JsonValue,
     ) -> None:
         """Initialize base error with message and optional metadata."""
@@ -53,7 +50,7 @@ class FlextBaseError(FlextBaseErrorStateMixin, Exception):
         if declaredparams_cls is not None:
             resolved_error_code = (
                 str(getattr(type(self), "_default_error_code", error_code))
-                if error_code == cv.ErrorCode.UNKNOWN_ERROR
+                if error_code == c.ErrorCode.UNKNOWN_ERROR
                 else error_code
             )
             combined_extra: MutableMapping[str, ts.JsonPayload | None] = {}
@@ -61,7 +58,7 @@ class FlextBaseError(FlextBaseErrorStateMixin, Exception):
                 merged_kwargs_map = FlextRuntime.normalize_metadata_input_mapping(
                     merged_kwargs
                 )
-            except ce.EXC_PYDANTIC_TYPE_VALUE:
+            except c.EXC_PYDANTIC_TYPE_VALUE:
                 merged_kwargs_map = None
             if merged_kwargs_map:
                 combined_extra.update({
@@ -84,13 +81,13 @@ class FlextBaseError(FlextBaseErrorStateMixin, Exception):
             resolved_named: MutableMapping[str, ts.JsonPayload | None] = {}
             for key in declared_param_keys:
                 resolved_named.setdefault(key, remaining_extra.pop(key, None))
-            preserved_metadata_raw = remaining_extra.pop(cm.FIELD_METADATA, None)
+            preserved_metadata_raw = remaining_extra.pop(c.FIELD_METADATA, None)
             preserved_metadata = (
                 FlextRuntime.normalize_to_metadata(preserved_metadata_raw)
                 if preserved_metadata_raw is not None
                 else None
             )
-            correlation_id_raw = remaining_extra.pop(ci.ContextKey.CORRELATION_ID, None)
+            correlation_id_raw = remaining_extra.pop(c.ContextKey.CORRELATION_ID, None)
             correlation_id_str = FlextExceptionsHelpers.safe_optional_str(
                 correlation_id_raw
             )

@@ -11,9 +11,7 @@ from typing import TYPE_CHECKING
 
 from pydantic import ValidationError as PydanticValidationError
 
-from flext_core._constants.errors import FlextConstantsErrors as ce
-from flext_core._constants.mixins import FlextConstantsMixins as cm
-from flext_core._models.base import FlextModelsBase as m
+from flext_core import c, m
 from flext_core._protocols.result import FlextProtocolsResult as pr
 from flext_core._runtime._metadata_validation import (
     FlextRuntimeMetadataValidation as FlextRuntime,
@@ -42,7 +40,7 @@ class FlextExceptionsHelpers:
                 source_mapping = FlextRuntime.normalize_metadata_input_mapping(
                     source_value
                 )
-            except ce.EXC_PYDANTIC_TYPE_VALUE:
+            except c.EXC_PYDANTIC_TYPE_VALUE:
                 continue
             if not source_mapping:
                 continue
@@ -67,7 +65,7 @@ class FlextExceptionsHelpers:
                 if isinstance(value, (Mapping, pr.HasModelDump)):
                     try:
                         attrs_map = FlextRuntime.normalize_metadata_input_mapping(value)
-                    except ce.EXC_PYDANTIC_TYPE_VALUE:
+                    except c.EXC_PYDANTIC_TYPE_VALUE:
                         attrs_map = None
                     if attrs_map is not None:
                         attrs = {
@@ -76,7 +74,7 @@ class FlextExceptionsHelpers:
                             if item is not None
                         }
                         metadata = m.Metadata.model_validate({
-                            cm.FIELD_ATTRIBUTES: attrs
+                            c.FIELD_ATTRIBUTES: attrs
                         })
         return metadata
 

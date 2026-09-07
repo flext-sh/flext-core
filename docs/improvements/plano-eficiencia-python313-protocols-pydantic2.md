@@ -2,7 +2,8 @@
 
 ## Objetivo
 
-Definir **ações objetivas, priorizadas e mensuráveis** para reduzir custo de runtime no `flext-core`, mantendo tipagem forte e segurança de contrato.
+Definir **ações objetivas, priorizadas e mensuráveis** para reduzir custo de runtime no `flext-core`, mantendo tipagem
+forte e segurança de contrato.
 
 ---
 
@@ -20,7 +21,8 @@ Definir **ações objetivas, priorizadas e mensuráveis** para reduzir custo de 
 
 ### B) Introspecção de protocolo com varredura de `mro()` sem cache
 
-- Em `src/flext_core/protocols.py`, `_ProtocolIntrospection.validate_protocol_compliance()` percorre `target_cls.mro()` e anotações para cada validação.
+- Em `src/flext_core/protocols.py`, `_ProtocolIntrospection.validate_protocol_compliance()` percorre `target_cls.mro()`
+  e anotações para cada validação.
 - Em carga de módulos/classes, esse padrão escala mal quando há muitas subclasses/protocolos.
 
 **Efeito prático**: piora de cold-start/import e custo de bootstrap.
@@ -54,7 +56,8 @@ Definir **ações objetivas, priorizadas e mensuráveis** para reduzir custo de 
 
 1. **Trocar runtime protocol dispatch por função pré-compilada no registro**
    - Arquivo: `src/flext_core/dispatcher.py`.
-   - Ação: no `register_handler()`, resolver uma vez o executor (`dispatch_message` / `handle` / `execute` / callable) e armazenar callable final.
+   - Ação: no `register_handler()`, resolver uma vez o executor (`dispatch_message` / `handle` / `execute` / callable) e
+     armazenar callable final.
    - Resultado esperado: `_execute_handler()` deixa de fazer cadeia de `isinstance(...Protocol)` por mensagem.
    - Critério de aceite: benchmark de dispatch com ganho de throughput e redução de p95.
 
@@ -112,8 +115,10 @@ Definir **ações objetivas, priorizadas e mensuráveis** para reduzir custo de 
 1. **Adapters reutilizáveis**: construir `TypeAdapter` uma vez e reutilizar.
 2. **Coleções com `default_factory`**: evitar `default=[]` / `default={}`.
 3. **Validação na borda**: usar validação mais estrita em input externo; evitar revalidar internamente sem necessidade.
-4. **Evitar trabalho duplicado**: se o objeto já é `BaseModel` válido do tipo esperado, evitar roundtrip de validação/dump sem ganho funcional.
-5. **Erros de validação agregados de forma estável**: padronizar construção de mensagens para manter custo previsível e facilitar profiling.
+4. **Evitar trabalho duplicado**: se o objeto já é `BaseModel` válido do tipo esperado, evitar roundtrip de
+   validação/dump sem ganho funcional.
+5. **Erros de validação agregados de forma estável**: padronizar construção de mensagens para manter custo previsível e
+   facilitar profiling.
 
 ---
 

@@ -7,6 +7,8 @@ Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
+from __future__ import annotations
+
 from types import MappingProxyType
 from typing import Annotated, ClassVar, Literal
 
@@ -69,7 +71,7 @@ class _CqrsPagination(m.FlexibleInternalModel):
     @computed_field
     @property
     def offset(self) -> int:
-        """Calculate offset from page and size."""
+        """Offset from page and size."""
         return (self.page - 1) * self.size
 
 
@@ -130,7 +132,7 @@ class FlextModelsCqrs:
                 title="Query Filters",
                 examples=[{"status": "active", "tenant": "acme"}],
             ),
-        ] = Field(default_factory=lambda: MappingProxyType({}))
+        ] = Field(default_factory=lambda: MappingProxyType[str, t.Scalar]({}))
         pagination: Annotated[
             _CqrsPagination,
             Field(
@@ -238,11 +240,11 @@ class FlextModelsCqrs:
         ] = Field(default_factory=lambda: _u().generate_prefixed_id("evt"))
         data: Annotated[
             t.MappingKV[str, t.Scalar], Field(description="Event payload data")
-        ] = Field(default_factory=lambda: MappingProxyType({}))
+        ] = Field(default_factory=lambda: MappingProxyType[str, t.Scalar]({}))
         metadata: Annotated[
             t.MappingKV[str, t.Scalar],
             Field(description="Event metadata (timestamps, correlation IDs, etc.)"),
-        ] = Field(default_factory=lambda: MappingProxyType({}))
+        ] = Field(default_factory=lambda: MappingProxyType[str, t.Scalar]({}))
 
     type FlextMessage = t.MessageUnion[Command, Query, Event]
 

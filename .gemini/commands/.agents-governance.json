@@ -1,0 +1,80 @@
+{
+  "context": "project",
+  "destination": ".gemini/commands",
+  "managed": {
+    "add-language-rules.toml": {
+      "activation": [
+        "route:project"
+      ],
+      "adapter_version": 1,
+      "destination": "add-language-rules.toml",
+      "origin": "agents:commands:gemini",
+      "physical_digest": "eb564712d9ce52e6b83f80cd3a9676584f823150b26d601cd5a8d6350e429d06",
+      "slug": "add-language-rules",
+      "source_digest": "522761b63a5ed3e603366593b46262d9b1f58ad7cc6c31a3f7fe984c6a8e217c",
+      "source_type": "command"
+    },
+    "database-migration.toml": {
+      "activation": [
+        "route:project"
+      ],
+      "adapter_version": 1,
+      "destination": "database-migration.toml",
+      "origin": "agents:commands:gemini",
+      "physical_digest": "be6fbf6689e7d0c3993e9ec0f5afea47c09b219c3f8fa4fcb326ed7a79b93ba7",
+      "slug": "database-migration",
+      "source_digest": "ab62c89b79a3fc994b48ed38949be3537d09768410aa3a947fd0c94c16a94d6d",
+      "source_type": "command"
+    },
+    "feature-development.toml": {
+      "activation": [
+        "route:project"
+      ],
+      "adapter_version": 1,
+      "destination": "feature-development.toml",
+      "origin": "agents:commands:gemini",
+      "physical_digest": "c1e6ee6ba994e757d5ea3102ebc8deb4cc1c59fd9a134d7389d66c4252beb050",
+      "slug": "feature-development",
+      "source_digest": "78e6cf5bfd0658dddac110cfc9384eef081c9b4168efb289ace47133bb65b637",
+      "source_type": "command"
+    },
+    "ralph-loop.toml": {
+      "activation": [
+        "route:project"
+      ],
+      "adapter_version": 1,
+      "destination": "ralph-loop.toml",
+      "origin": "agents:commands:gemini",
+      "physical_digest": "d03356070e0a5b61570b9df01ac345d43758ce026b4e01448c4058a050888b40",
+      "slug": "ralph-loop",
+      "source_digest": "23641104524c20a7ba5c16f8214b22ab08efb1994f1d65c5beff544719f25fbb",
+      "source_type": "command"
+    },
+    "synthesize-governance.toml": {
+      "activation": [
+        "route:project"
+      ],
+      "adapter_version": 1,
+      "destination": "synthesize-governance.toml",
+      "origin": "agents:commands:gemini",
+      "physical_digest": "f30ebe61c266a21d9fb2590e2cfb74733cdfd58462f6f3b5cae2c6b93d95ce04",
+      "slug": "synthesize-governance",
+      "source_digest": "df8fba70bf0fe878a8ac9a740ddf06e995c47dd9bf581e8f615d1974bb00da3d",
+      "source_type": "command"
+    }
+  },
+  "owner": "agents-governance",
+  "project": ".",
+  "providers": [
+    "gemini"
+  ],
+  "selection": {
+    "agents": [],
+    "opt_ins": [],
+    "selected_tags": [
+      "flext"
+    ]
+  },
+  "surface": "commands",
+  "version": 5
+}
