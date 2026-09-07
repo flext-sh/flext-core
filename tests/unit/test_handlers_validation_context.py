@@ -20,17 +20,17 @@ from tests.typings import t
 from tests.unit._handlers_support import TestsFlextFlextHandlers
 from tests.utilities import u
 
-HANDLER_TYPES = TestsFlextFlextHandlers.HANDLER_TYPES
-VALIDATION_TYPES = TestsFlextFlextHandlers.VALIDATION_TYPES
-
 
 class TestsFlextCoreHandlersValidationContext(TestsFlextFlextHandlers):
     """Contract tests for the public handler validation/context behavior."""
 
     @pytest.mark.parametrize(
         ("handler_type", "handler_mode"),
-        [(scenario.handler_type, scenario.handler_mode) for scenario in HANDLER_TYPES],
-        ids=[scenario.name for scenario in HANDLER_TYPES],
+        [
+            (scenario.handler_type, scenario.handler_mode)
+            for scenario in TestsFlextFlextHandlers.HANDLER_TYPES
+        ],
+        ids=[scenario.name for scenario in TestsFlextFlextHandlers.HANDLER_TYPES],
     )
     def test_validate_message_accepts_message_for_every_handler_type(
         self, handler_type: c.HandlerType, handler_mode: c.HandlerType
@@ -52,8 +52,8 @@ class TestsFlextCoreHandlersValidationContext(TestsFlextFlextHandlers):
 
     @pytest.mark.parametrize(
         ("type_name", "message"),
-        VALIDATION_TYPES,
-        ids=[item[0] for item in VALIDATION_TYPES],
+        TestsFlextFlextHandlers.VALIDATION_TYPES,
+        ids=[item[0] for item in TestsFlextFlextHandlers.VALIDATION_TYPES],
     )
     def test_validate_message_accepts_supported_payload_types(
         self, type_name: str, message: t.JsonValue
@@ -209,8 +209,8 @@ class TestsFlextCoreHandlersValidationContext(TestsFlextFlextHandlers):
 
     @pytest.mark.parametrize(
         "handler_type",
-        [scenario.handler_type for scenario in HANDLER_TYPES],
-        ids=[scenario.name for scenario in HANDLER_TYPES],
+        [scenario.handler_type for scenario in TestsFlextFlextHandlers.HANDLER_TYPES],
+        ids=[scenario.name for scenario in TestsFlextFlextHandlers.HANDLER_TYPES],
     )
     def test_handler_properties_reflect_configuration(
         self, handler_type: c.HandlerType

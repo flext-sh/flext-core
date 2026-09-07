@@ -16,10 +16,6 @@ from tests.utilities import u
 if TYPE_CHECKING:
     from tests.protocols import p
 
-HANDLER_TYPES = TestsFlextFlextHandlers.HANDLER_TYPES
-HandlerTypeScenario = TestsFlextFlextHandlers.HandlerTypeScenario
-VALIDATION_TYPES = TestsFlextFlextHandlers.VALIDATION_TYPES
-
 
 class TestsFlextHandlersLifecycle(TestsFlextFlextHandlers):
     """Assert the public contract callers depend on, never internals."""
@@ -41,9 +37,11 @@ class TestsFlextHandlersLifecycle(TestsFlextFlextHandlers):
         assert handler.mode == c.HandlerType.QUERY
         assert handler.handler_name == "Query Handler"
 
-    @pytest.mark.parametrize("scenario", HANDLER_TYPES, ids=lambda s: s.name)
+    @pytest.mark.parametrize(
+        "scenario", TestsFlextFlextHandlers.HANDLER_TYPES, ids=lambda s: s.name
+    )
     def test_mode_reflects_configured_handler_mode(
-        self, scenario: HandlerTypeScenario
+        self, scenario: TestsFlextFlextHandlers.HandlerTypeScenario
     ) -> None:
         settings = u.Tests.create_handler_config(
             f"h_{scenario.name}",
@@ -112,8 +110,8 @@ class TestsFlextHandlersLifecycle(TestsFlextFlextHandlers):
 
     @pytest.mark.parametrize(
         ("label", "message"),
-        VALIDATION_TYPES,
-        ids=[label for label, _ in VALIDATION_TYPES],
+        TestsFlextFlextHandlers.VALIDATION_TYPES,
+        ids=[label for label, _ in TestsFlextFlextHandlers.VALIDATION_TYPES],
     )
     def test_validation_accepts_every_non_null_payload_shape(
         self, label: str, message: t.JsonPayload
