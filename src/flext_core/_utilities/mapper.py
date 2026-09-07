@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING
 
 from flext_core import m, r, t
 from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._utilities.collection import FlextUtilitiesCollection
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 from flext_core._utilities.mapper_extract import FlextUtilitiesMapperExtract
 from flext_core.runtime import FlextRuntime
