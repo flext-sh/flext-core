@@ -9,9 +9,9 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_tests import c, d, e, h, m, p, r, s, t, td, tf, tk, tm, tv, u, x
+    from flext_tests import c, d, e, h, m, p, r, s, t, td, tf, tk, tm, tv, x
 
-    from .case_factories import TestsFlextUtilitiesCaseFactoriesMixin
+    from .case_factories import TestsFlextUtilitiesCaseFactoriesMixin, u
     from .case_generators import TestsFlextUtilitiesCaseGeneratorsMixin
     from .case_service_factories import TestsFlextUtilitiesCaseServiceFactoriesMixin
     from .contracts import TestsFlextUtilitiesContractsMixin
@@ -77,7 +77,7 @@ __all__: tuple[str, ...] = (
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
-            ".case_factories": ("TestsFlextUtilitiesCaseFactoriesMixin",),
+            ".case_factories": ("TestsFlextUtilitiesCaseFactoriesMixin", "u"),
             ".case_generators": ("TestsFlextUtilitiesCaseGeneratorsMixin",),
             ".case_service_factories": (
                 "TestsFlextUtilitiesCaseServiceFactoriesMixin",
@@ -116,7 +116,6 @@ _LAZY_IMPORTS = MappingProxyType(
                 "tk",
                 "tm",
                 "tv",
-                "u",
                 "x",
             ),
         }),

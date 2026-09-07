@@ -48,6 +48,7 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
     ) -> ts.JsonPayload:
         """Normalize one container item to its canonical payload form."""
         from flext_core._models.pydantic import FlextModelsPydantic
+
         normalized_item: ts.JsonPayload
         match item:
             case datetime():
@@ -62,7 +63,14 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
                 normalized_item = tta.json_dict_adapter().validate_python(item)
             case list():
                 normalized_item = list(tta.json_list_adapter().validate_python(item))
-            case bool() | int() | float() | str() | None | FlextModelsPydantic.BaseModel():
+            case (
+                bool()
+                | int()
+                | float()
+                | str()
+                | None
+                | FlextModelsPydantic.BaseModel()
+            ):
                 normalized_item = item
             case _:
                 err_template = (

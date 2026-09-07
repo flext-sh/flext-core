@@ -21,9 +21,9 @@ RUN apt-get update \
 # End SECTION: base packages
 
 # === SECTION: managed tool bootstrap (managed) ===
-# Source: generated bin/mise + .mise.toml + mise.lock
+# Source: generated bin/mise + .mise.toml
 # The canonical make setup verb below owns the official newest-Mise bootstrap
-# and every locked tool installation as the same unprivileged runtime user.
+# and every latest tool installation as the same unprivileged runtime user.
 ENV HOME=/home/runner \
     XDG_DATA_HOME=/home/runner/.local/share \
     XDG_CACHE_HOME=/home/runner/.cache \

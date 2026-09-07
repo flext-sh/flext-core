@@ -61,7 +61,7 @@ ifeq ($(FLEXT_STANDALONE),1)
 FLEXT_MODE := standalone
 else
 # Caller may already know the workspace root (e.g., when including flext-infra/base.mk).
-ifdef FLEXT_WORKSPACE_ROOT
+ifdef FLEXT_REPOSITORY_ROOT
 FLEXT_MODE := workspace
 else
 # Pure Make detection: if base.mk lives in a parent dir, we are inside a workspace.
@@ -76,11 +76,11 @@ endif
 
 ifeq ($(FLEXT_MODE),workspace)
 # Prefer the caller-provided workspace root; fall back to the directory holding base.mk.
-WORKSPACE_ROOT := $(FLEXT_WORKSPACE_ROOT)
-ifndef WORKSPACE_ROOT
-WORKSPACE_ROOT := $(BASE_MK_DIR)
+REPOSITORY_ROOT := $(FLEXT_REPOSITORY_ROOT)
+ifndef REPOSITORY_ROOT
+REPOSITORY_ROOT := $(BASE_MK_DIR)
 endif
-WORKSPACE_VENV := $(WORKSPACE_ROOT)/.venv
+WORKSPACE_VENV := $(REPOSITORY_ROOT)/.venv
 ifeq ($(wildcard $(WORKSPACE_VENV)),)
 ACTIVE_VENV := $(PROJECT_ROOT)/.venv
 export POETRY_VIRTUALENVS_PATH := $(PROJECT_ROOT)
@@ -88,12 +88,12 @@ export POETRY_VIRTUALENVS_IN_PROJECT := true
 export POETRY_VIRTUALENVS_CREATE := true
 else
 ACTIVE_VENV := $(WORKSPACE_VENV)
-export POETRY_VIRTUALENVS_PATH := $(WORKSPACE_ROOT)
+export POETRY_VIRTUALENVS_PATH := $(REPOSITORY_ROOT)
 export POETRY_VIRTUALENVS_IN_PROJECT := false
 export POETRY_VIRTUALENVS_CREATE := false
 endif
 else
-WORKSPACE_ROOT := $(PROJECT_ROOT)
+REPOSITORY_ROOT := $(PROJECT_ROOT)
 ACTIVE_VENV := $(PROJECT_ROOT)/.venv
 export POETRY_VIRTUALENVS_PATH := $(PROJECT_ROOT)
 export POETRY_VIRTUALENVS_IN_PROJECT := true
@@ -124,7 +124,7 @@ PYRIGHT_LOG := .pyright/daemon.log
 
 # Export for subprocesses
 export PROJECT_NAME PYTHON_VERSION
-export FLEXT_ROOT := $(WORKSPACE_ROOT)
+export FLEXT_ROOT := $(REPOSITORY_ROOT)
 
 # === MYPY RESOURCE LIMIT ===
 # mro-0ftd.3.11: every Mypy process inherits validated memory and time caps.
@@ -144,7 +144,7 @@ endif
 # === CACHE ===
 LINT_CACHE_DIR := .lint-cache
 CACHE_TIMEOUT := 300
-BASE_INFRA_VALIDATE := env -u PYTHONPATH -u MYPYPATH PYTHONPATH="$(WORKSPACE_ROOT)/flext-infra/src" $(if $(wildcard $(VENV_PYTHON)),$(VENV_PYTHON),python) -m flext_infra validate
+BASE_INFRA_VALIDATE := env -u PYTHONPATH -u MYPYPATH PYTHONPATH="$(REPOSITORY_ROOT)/flext-infra/src" $(if $(wildcard $(VENV_PYTHON)),$(VENV_PYTHON),python) -m flext_infra validate
 
 $(LINT_CACHE_DIR):
 	$(Q)mkdir -p $(LINT_CACHE_DIR)
@@ -156,12 +156,12 @@ $(STANDARD_VERBS): _preflight
 
 define ENFORCE_WORKSPACE_VENV
 if [ "$(FLEXT_MODE)" = "workspace" ]; then \
-	if [ -d "$(WORKSPACE_ROOT)/.venv" ]; then \
-		if [ -d ".venv" ] && [ "$(CURDIR)" != "$(WORKSPACE_ROOT)" ]; then \
+	if [ -d "$(REPOSITORY_ROOT)/.venv" ]; then \
+		if [ -d ".venv" ] && [ "$(CURDIR)" != "$(REPOSITORY_ROOT)" ]; then \
 			echo "ERROR: [preflight] Project-local .venv violates the workspace environment contract: $(CURDIR)/.venv"; \
 			exit 1; \
 		fi; \
-	elif [ "$(CURDIR)" = "$(WORKSPACE_ROOT)" ]; then \
+	elif [ "$(CURDIR)" = "$(REPOSITORY_ROOT)" ]; then \
 		echo "ERROR: [preflight] Workspace venv not found. Run 'make boot' at workspace root."; \
 		exit 1; \
 	elif [ "$(filter boot,$(MAKECMDGOALS))" != "boot" ] && [ ! -d "$(ACTIVE_VENV)" ]; then \
@@ -180,9 +180,9 @@ endef
 
 # mro-wkii.17.27 (codex): validation verbs detect drift without mutating files.
 define VALIDATE_CANONICAL_BASE_MK
-if [ "$(FLEXT_MODE)" = "workspace" ] && [ "$(CURDIR)" != "$(WORKSPACE_ROOT)" ]; then \
-	if ! $(BASE_INFRA_VALIDATE) basemk-validate --workspace "$(WORKSPACE_ROOT)/flext-infra"; then \
-		echo "ERROR: [preflight] Canonical base.mk is stale. Run 'make -C $(WORKSPACE_ROOT) build WHAT=sync PROJECT=$(PROJECT_NAME)'."; \
+if [ "$(FLEXT_MODE)" = "workspace" ] && [ "$(CURDIR)" != "$(REPOSITORY_ROOT)" ]; then \
+	if ! $(BASE_INFRA_VALIDATE) basemk-validate --repository "$(REPOSITORY_ROOT)/flext-infra"; then \
+		echo "ERROR: [preflight] Canonical base.mk is stale. Run 'make -C $(REPOSITORY_ROOT) build WHAT=sync PROJECT=$(PROJECT_NAME)'."; \
 		exit 1; \
 	fi; \
 elif [ "$(FLEXT_MODE)" = "standalone" ]; then \
@@ -194,7 +194,7 @@ _preflight: ## Preflight: validate base.mk and enforce venv contract
 	$(Q)$(VALIDATE_CANONICAL_BASE_MK)
 	$(Q)$(ENFORCE_WORKSPACE_VENV)
 
-PROJECT_INFRA_HOME := $(WORKSPACE_ROOT)/flext-infra
+PROJECT_INFRA_HOME := $(REPOSITORY_ROOT)/flext-infra
 ifeq ($(wildcard $(PROJECT_INFRA_HOME)/src/flext_infra),)
 PROJECT_INFRA_HOME := $(PROJECT_ROOT)
 endif
@@ -202,13 +202,13 @@ PROJECT_INFRA_SRC := $(PROJECT_INFRA_HOME)/src
 # mro-wkii.17.27 (codex): boot provisions the venv before normal commands use it.
 PROJECT_INFRA_BOOT := env -u PYTHONPATH -u MYPYPATH PYTHONPATH="$(PROJECT_INFRA_SRC)" $(POETRY) run python -m flext_infra
 PROJECT_INFRA_ROOT := env -u PYTHONPATH -u MYPYPATH PYTHONPATH="$(PROJECT_INFRA_SRC)" $(VENV_PYTHON) -m flext_infra
-PROJECT_INFRA_CHECK := FLEXT_WORKSPACE_ROOT="$(WORKSPACE_ROOT)" $(PROJECT_INFRA_ROOT) check
-PROJECT_INFRA_CODEGEN := FLEXT_WORKSPACE_ROOT="$(WORKSPACE_ROOT)" $(PROJECT_INFRA_ROOT) codegen
-PROJECT_INFRA_DEPS := FLEXT_WORKSPACE_ROOT="$(WORKSPACE_ROOT)" $(PROJECT_INFRA_BOOT) deps
-PROJECT_INFRA_DOCS := FLEXT_WORKSPACE_ROOT="$(WORKSPACE_ROOT)" $(PROJECT_INFRA_ROOT) docs
-PROJECT_INFRA_GITHUB := FLEXT_WORKSPACE_ROOT="$(WORKSPACE_ROOT)" $(PROJECT_INFRA_ROOT) github
-PROJECT_INFRA_REFACTOR := FLEXT_WORKSPACE_ROOT="$(WORKSPACE_ROOT)" $(PROJECT_INFRA_ROOT) refactor
-PROJECT_INFRA_VALIDATE := FLEXT_WORKSPACE_ROOT="$(WORKSPACE_ROOT)" $(PROJECT_INFRA_ROOT) validate
+PROJECT_INFRA_CHECK := FLEXT_REPOSITORY_ROOT="$(REPOSITORY_ROOT)" $(PROJECT_INFRA_ROOT) check
+PROJECT_INFRA_CODEGEN := FLEXT_REPOSITORY_ROOT="$(REPOSITORY_ROOT)" $(PROJECT_INFRA_ROOT) codegen
+PROJECT_INFRA_DEPS := FLEXT_REPOSITORY_ROOT="$(REPOSITORY_ROOT)" $(PROJECT_INFRA_BOOT) deps
+PROJECT_INFRA_DOCS := FLEXT_REPOSITORY_ROOT="$(REPOSITORY_ROOT)" $(PROJECT_INFRA_ROOT) docs
+PROJECT_INFRA_GITHUB := FLEXT_REPOSITORY_ROOT="$(REPOSITORY_ROOT)" $(PROJECT_INFRA_ROOT) github
+PROJECT_INFRA_REFACTOR := FLEXT_REPOSITORY_ROOT="$(REPOSITORY_ROOT)" $(PROJECT_INFRA_ROOT) refactor
+PROJECT_INFRA_VALIDATE := FLEXT_REPOSITORY_ROOT="$(REPOSITORY_ROOT)" $(PROJECT_INFRA_ROOT) validate
 
 # Verb hook seam: custom.mk may define pre-<verb>, post-<verb>, pre-<verb>-<what>,
 # and post-<verb>-<what> targets to append work at the start or end of any verb,
@@ -376,7 +376,7 @@ boot: ## Complete setup
 
 _boot_impl:
 	# mro-j47u: generated boot consumes the sole public extra-paths route.
-	$(Q)$(PROJECT_INFRA_DEPS) extra-paths --apply --workspace "$(CURDIR)"
+	$(Q)$(PROJECT_INFRA_DEPS) extra-paths --apply --repository "$(CURDIR)"
 	$(Q)uv lock
 	$(Q)uv sync --all-extras --all-groups
 	$(Q)if git rev-parse --git-dir >/dev/null 2>&1; then \
@@ -460,10 +460,10 @@ _check_impl:
 		exit $$status; \
 	fi; \
 	project_key="$(PROJECT_NAME)"; \
-	if [ "$(CURDIR)" = "$(WORKSPACE_ROOT)" ]; then \
+	if [ "$(CURDIR)" = "$(REPOSITORY_ROOT)" ]; then \
 		project_key="."; \
 	fi; \
-	$(PROJECT_INFRA_CHECK) run --workspace "$(WORKSPACE_ROOT)" --gates "$$gates" --reports-dir "$(CURDIR)/.reports/check" --projects "$$project_key" $(if $(filter 1,$(FIX)),$(if $(filter 1,$(CHECK_ONLY)),,--fix),) $(if $(filter 1,$(CHECK_ONLY)),--check-only,) $(if $(RUFF_ARGS),--ruff-args "$(RUFF_ARGS)",) $(if $(PYRIGHT_ARGS),--pyright-args "$(PYRIGHT_ARGS)",); \
+	$(PROJECT_INFRA_CHECK) run --repository "$(REPOSITORY_ROOT)" --gates "$$gates" --reports-dir "$(CURDIR)/.reports/check" --projects "$$project_key" $(if $(filter 1,$(FIX)),$(if $(filter 1,$(CHECK_ONLY)),,--fix),) $(if $(filter 1,$(CHECK_ONLY)),--check-only,) $(if $(RUFF_ARGS),--ruff-args "$(RUFF_ARGS)",) $(if $(PYRIGHT_ARGS),--pyright-args "$(PYRIGHT_ARGS)",); \
 	exit $$?
 
 fix-enforcement: ## Auto-fix enforcement-catalog violations (APPLY=1 to apply, PROJECTS=..., RULES=...)
@@ -478,7 +478,7 @@ _fix_enforcement_impl:
 	if [ -n "$(PROJECTS)" ]; then projects_arg="--projects $(PROJECTS)"; fi; \
 	rules_arg=""; \
 	if [ -n "$(RULES)" ]; then rules_arg="--rules $(RULES)"; fi; \
-	$(PROJECT_INFRA_CHECK) fix-enforcement --workspace "$(WORKSPACE_ROOT)" $$apply_flag $$projects_arg $$rules_arg; \
+	$(PROJECT_INFRA_CHECK) fix-enforcement --repository "$(REPOSITORY_ROOT)" $$apply_flag $$projects_arg $$rules_arg; \
 	exit $$?
 
 scan: ## Run all security checks
@@ -488,11 +488,11 @@ scan: ## Run all security checks
 
 _scan_impl:
 	$(Q)project_key="$(PROJECT_NAME)"; \
-	if [ "$(CURDIR)" = "$(WORKSPACE_ROOT)" ]; then \
+	if [ "$(CURDIR)" = "$(REPOSITORY_ROOT)" ]; then \
 		project_key="."; \
 	fi; \
 	$(PROJECT_INFRA_CHECK) run \
-		--workspace "$(WORKSPACE_ROOT)" \
+		--repository "$(REPOSITORY_ROOT)" \
 		--gates "security" \
 		--reports-dir "$(CURDIR)/.reports/scan" \
 		--projects "$$project_key"; \
@@ -517,7 +517,7 @@ _fmt_impl:
 	else \
 		$(POETRY) run ruff format $$_fmt_target --quiet; \
 	fi
-	$(Q)if [ "$(CURDIR)" = "$(WORKSPACE_ROOT)" ] && [ -n "$(ALL_PROJECTS)" ]; then \
+	$(Q)if [ "$(CURDIR)" = "$(REPOSITORY_ROOT)" ] && [ -n "$(ALL_PROJECTS)" ]; then \
 		md_roots=". $(ALL_PROJECTS)"; \
 	else \
 		md_roots="."; \
@@ -536,8 +536,8 @@ _fmt_impl:
 	md_files=$$(printf '%s\n' "$$md_files" | awk 'NF' | while IFS= read -r f; do [ -f "$$f" ] && printf '%s\n' "$$f"; done | sort -u); \
 	if [ -n "$$md_files" ]; then \
 		md_config=""; \
-		if [ -f "$(WORKSPACE_ROOT)/.markdownlint.json" ]; then \
-			md_config="--config $(WORKSPACE_ROOT)/.markdownlint.json"; \
+		if [ -f "$(REPOSITORY_ROOT)/.markdownlint.json" ]; then \
+			md_config="--config $(REPOSITORY_ROOT)/.markdownlint.json"; \
 		elif [ -f ".markdownlint.json" ]; then \
 			md_config="--config .markdownlint.json"; \
 		fi; \
@@ -574,7 +574,7 @@ _docs_impl:
 				*) echo "ERROR: invalid DOCS_PHASE=$$phase (allowed: all|generate|fix|audit|build|validate)"; exit 2 ;; \
 			esac; \
 		if [ "$$phase" = "fix" ] && [ "$$all_mode" = "1" ]; then extra="--apply"; fi; \
-		cmd="$$subcmd --workspace . --output-dir .reports/docs"; \
+		cmd="$$subcmd --repository . --output-dir .reports/docs"; \
 		if [ -n "$$extra" ]; then cmd="$$cmd $$extra"; fi; \
 		eval $$cmd || exit $$?; \
 	done
@@ -586,8 +586,8 @@ docs-serve: ## Serve documentation via the flext-infra docs engine
 	$(call _run_verb_hooks,post,docs-serve,$(WHAT))
 
 _docs_serve_impl:
-	$(Q)$(PROJECT_INFRA_DOCS) serve --workspace .
-	$(Q)$(PROJECT_INFRA_DOCS) serve --workspace .
+	$(Q)$(PROJECT_INFRA_DOCS) serve --repository .
+	$(Q)$(PROJECT_INFRA_DOCS) serve --repository .
 
 test: ## Run pytest only
 	$(call _run_verb_hooks,pre,test,$(WHAT))
@@ -728,7 +728,7 @@ _val_impl:
 		$(POETRY) run radon mi $(SRC_DIR) -n C -s --sort; \
 	fi; \
 	if echo "$$gates" | grep -qw docstring; then \
-		$(PROJECT_INFRA_DOCS) audit --workspace . --checks docstrings --docstring-min $(DOCSTRING_MIN) --output-dir .reports/docs; \
+		$(PROJECT_INFRA_DOCS) audit --repository . --checks docstrings --docstring-min $(DOCSTRING_MIN) --output-dir .reports/docs; \
 	fi
 
 run: ## Run a project-specific action (WHAT=<action> -> _custom_run_<action> in custom.mk)
@@ -741,7 +741,7 @@ daemon-start-mypy: ## Start dmypy daemon for this project
 	$(Q)$(VALIDATE_MYPY_LIMITS); if $(MYPY_BOUNDED) $(VENV_PYTHON) -m mypy.dmypy --status-file "$(DMPY_SOCKET)" status >/dev/null 2>&1; then \
 		echo "dmypy already running for $(PROJECT_NAME) at $(DMPY_SOCKET)"; \
 	else \
-		$(MYPY_BOUNDED) $(VENV_PYTHON) -m mypy.dmypy --status-file "$(DMPY_SOCKET)" start --timeout "$(MYPY_TIMEOUT_SECONDS)" -- --config-file "$(WORKSPACE_ROOT)/pyproject.toml" || { $(REPORT_MYPY_FAILURE); exit $$code; }; \
+		$(MYPY_BOUNDED) $(VENV_PYTHON) -m mypy.dmypy --status-file "$(DMPY_SOCKET)" start --timeout "$(MYPY_TIMEOUT_SECONDS)" -- --config-file "$(REPOSITORY_ROOT)/pyproject.toml" || { $(REPORT_MYPY_FAILURE); exit $$code; }; \
 	fi
 
 daemon-stop-mypy: ## Stop dmypy daemon for this project
