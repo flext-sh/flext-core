@@ -85,7 +85,11 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
     @staticmethod
     def normalize_registerable_service(
         value: ts.RegisterableService | ts.GuardInput,
-    ) -> ts.RegisterableService | FlextModelsContainers.ConfigMap | FlextModelsContainers.ObjectList:
+    ) -> (
+        ts.RegisterableService
+        | FlextModelsContainers.ConfigMap
+        | FlextModelsContainers.ObjectList
+    ):
         """Normalize container registration payloads to canonical runtime types."""
         from flext_core._models.containers import FlextModelsContainers
 
@@ -138,12 +142,12 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
         | AbstractSet[tb.Scalar],
     ) -> ts.RuntimeData:
         """Normalize any value to RuntimeData."""
-        from flext_core import m
-
         normalized_data: ts.RuntimeData
         if val is None:
             normalized_data = ""
-        elif isinstance(val, (FlextModelsContainers.ConfigMap, FlextModelsContainers.Dict)):
+        elif isinstance(
+            val, (FlextModelsContainers.ConfigMap, FlextModelsContainers.Dict)
+        ):
             normalized_data = FlextRuntimeContainer._normalize_dict_entries(
                 list(val.root.items())
             )
