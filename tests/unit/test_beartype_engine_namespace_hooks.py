@@ -120,7 +120,7 @@ class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
             tmp_path, files, import_target, ast_shape="no_core_tests_namespace"
         )
 
-        tm.that(result.exit_code, eq=0, msg=result.stderr)
+        tm.that(result.outcome.raw_return_code, eq=0, msg=result.stderr)
         tm.that(result.stdout.strip(), eq="None", msg=f"{case_id}: {result.stdout}")
 
     def test_private_attr_probe_detects_getattr_on_private_attribute(
@@ -147,7 +147,7 @@ class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
             ast_shape="private_attr_probe",
         )
 
-        tm.that(result.exit_code, eq=0, msg=result.stderr)
+        tm.that(result.outcome.raw_return_code, eq=0, msg=result.stderr)
         payload = result.stdout.strip()
         tm.that(payload, ne="None", msg=payload)
         tm.that(payload, has="'probe': 'getattr'", msg=payload)
@@ -178,7 +178,7 @@ class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
             ast_shape="private_attr_probe",
         )
 
-        tm.that(result.exit_code, eq=0, msg=result.stderr)
+        tm.that(result.outcome.raw_return_code, eq=0, msg=result.stderr)
         tm.that(result.stdout.strip(), eq="None", msg=result.stdout)
 
     def test_apply_returns_none_for_unrecognized_ast_shape(
@@ -205,5 +205,5 @@ class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
             ast_shape="totally_unrecognized_shape",
         )
 
-        tm.that(result.exit_code, eq=0, msg=result.stderr)
+        tm.that(result.outcome.raw_return_code, eq=0, msg=result.stderr)
         tm.that(result.stdout.strip(), eq="None", msg=result.stdout)

@@ -98,7 +98,7 @@ class TestsFlextCoreBeartypeEngineRuntime(TestsFlextBeartypeEngine):
 
         # Assert
         combined_output = result.stdout + result.stderr
-        assert result.exit_code == 0, combined_output
+        assert result.outcome.raw_return_code == 0, combined_output
         assert f"runtime_exc {expected_exc}" in result.stdout
         assert "warning_count 0" in result.stdout
 
@@ -138,5 +138,5 @@ class TestsFlextCoreBeartypeEngineRuntime(TestsFlextBeartypeEngine):
 
         # Assert: import must not silently succeed; stdout proves the success
         # print never executed.
-        assert result.exit_code != 0
+        assert result.outcome.raw_return_code != 0
         assert "unexpected_success" not in result.stdout

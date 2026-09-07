@@ -66,4 +66,6 @@ _typed_scenarios: t.SequenceOf[TestsFlextModelsMixins.TypedRetrievalScenario] = 
 ]
 TestsFlextModelsMixins.ContainerScenarios.TYPED_RETRIEVAL_SCENARIOS = _typed_scenarios
 
-__all__: list[str] = ["TestsFlextModelsMixins"]
+m = TestsFlextModelsMixins
+
+__all__: list[str] = ["TestsFlextModelsMixins", "m"]

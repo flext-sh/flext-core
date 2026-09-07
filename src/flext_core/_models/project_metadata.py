@@ -97,8 +97,7 @@ class _ProjectMetadataFields:
             ),
         ]
         title: Annotated[
-            str,
-            Field(min_length=1, description="Project README section heading"),
+            str, Field(min_length=1, description="Project README section heading")
         ]
         content: Annotated[
             str | None,
@@ -127,9 +126,7 @@ class _ProjectMetadataFields:
                 or bool(windows_path.drive)
                 or any(part in {"", ".", ".."} for part in rendered.split("/"))
             ):
-                msg = (
-                    "README include path must be a portable repository-relative path"
-                )
+                msg = "README include path must be a portable repository-relative path"
                 raise ValueError(msg)
             return path
 

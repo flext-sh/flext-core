@@ -37,6 +37,8 @@ class Ex03FlextLogger(ExamplesFlextShared):
             _raise_value_error(message)
         except ValueError as exc:
             return Ex03FlextLogger._ok(logger.exception(label, exception=exc))
+        msg = f"expected ValueError({message!r}) was not raised"
+        raise AssertionError(msg)
 
     def _exercise_container(self) -> None:
         """Exercise container-aware logger creation."""
