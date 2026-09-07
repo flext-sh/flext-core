@@ -9,8 +9,8 @@ no internal collaborator is spied on.
 from __future__ import annotations
 
 import pytest
-from flext_core import r
 
+from flext_core import r
 from tests import p
 
 

@@ -33,7 +33,7 @@ class TestsFlextModelsCoreStateMixin:
     class SettingsModelForTest(m.BaseModel):
         """Test configuration model (mutable for set_parameter tests)."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
             validate_assignment=True, extra="forbid"
         )
 
@@ -49,7 +49,7 @@ class TestsFlextModelsCoreStateMixin:
     class SingletonClassForTest(m.BaseModel):
         """Test singleton class with Pydantic validation."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
             validate_assignment=True, extra="forbid"
         )
 
@@ -75,7 +75,7 @@ class TestsFlextModelsCoreStateMixin:
     class BadSettingsForTest(m.BaseModel):
         """Settings that fails to instantiate."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(validate_assignment=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(validate_assignment=True)
 
         def __init__(self, **kwargs: t.Scalar) -> None:
             """Raise error on init."""
@@ -83,13 +83,41 @@ class TestsFlextModelsCoreStateMixin:
             msg = c.Tests.CANNOT_INSTANTIATE
             raise ValueError(msg)
 
+    class _DumpErrorModel(m.BaseModel):
+        value: int = 1
+
+    class _Opts(m.BaseModel):
+        value: int = 1
+
+    class _FakeSettings(m.BaseModel):
+        """Fake settings with model_copy support."""
+
+        timeout: int = 10
+
+        @property
+        def data(self) -> t.JsonMapping:
+            return {"timeout": self.timeout}
+
+    class _Model(m.BaseModel):
+        value: int
+
     class _SampleEntity(m.BaseModel):
         """Test entity for domain utility tests."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=False)
 
         unique_id: str = "test-123"
         name: str = "test"
+
+    class _FrozenEntity(m.BaseModel):
+        """Frozen entity for immutability tests."""
+
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
+
+        unique_id: str = "frozen-1"
+
+    class _GoodModel(m.BaseModel):
+        value: int = 7
 
     class ComplexModel(m.BaseModel):
         """Complex test model."""
@@ -97,6 +125,13 @@ class TestsFlextModelsCoreStateMixin:
         id: int
         data: t.JsonMapping
         items: t.StrSequence
+
+    class _Cfg(m.BaseModel):
+        x: int = 0
+        y: str = "a"
+
+    class _BadCopyModel(m.BaseModel):
+        x: int = 1
 
 
 __all__: list[str] = ["TestsFlextModelsCoreStateMixin"]

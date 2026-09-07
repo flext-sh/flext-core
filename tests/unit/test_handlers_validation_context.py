@@ -128,7 +128,7 @@ class TestsFlextCoreHandlersValidationContext(TestsFlextFlextHandlers):
     def test_validate_message_accepts_frozen_model_message(self) -> None:
         # Arrange
         class FrozenMessage(m.Value):
-            model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+            model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
             value: str
             number: int
 

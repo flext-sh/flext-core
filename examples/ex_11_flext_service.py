@@ -32,7 +32,7 @@ class _EchoService(s[str]):
     def execute(self) -> p.Result[str]:
         validation = self.validate_business_rules()
         if validation.failure:
-            return r[str].fail(validation.error or "rule_validation_failed")
+            return r[str].from_failure(validation)
         return r[str].ok(f"echo:{self.payload.text}")
 
     def service_info(self) -> t.JsonMapping:

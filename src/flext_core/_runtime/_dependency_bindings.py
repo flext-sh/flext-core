@@ -12,10 +12,8 @@ from typing import TYPE_CHECKING
 from dependency_injector import containers, providers, wiring
 from dependency_injector.containers import Container
 
-from flext_core._constants.errors import FlextConstantsErrors as ce
-from flext_core._constants.file import FlextConstantsFile as cf
-
 from ._dependency_options import FlextRuntimeDependencyOptions
+from flext_core import c
 
 if TYPE_CHECKING:
     from collections.abc import Callable, MutableSequence
@@ -103,7 +101,7 @@ class FlextRuntimeDependencyBindings(FlextRuntimeDependencyOptions):
             configured_container: FlextRuntimeDependencyBindings.DynamicContainerWithConfig = di_container
             configured_container.settings = configuration_provider
         else:
-            setattr(di_container, cf.Directory.CONFIG, configuration_provider)
+            setattr(di_container, c.Directory.CONFIG, configuration_provider)
         return configuration_provider
 
     @staticmethod
@@ -127,7 +125,7 @@ class FlextRuntimeDependencyBindings(FlextRuntimeDependencyOptions):
         """Register a factory using Singleton/Factory providers."""
         if hasattr(di_container, name):
             raise ValueError(
-                ce.ERR_RUNTIME_PROVIDER_ALREADY_REGISTERED.format(name=name)
+                c.ERR_RUNTIME_PROVIDER_ALREADY_REGISTERED.format(name=name)
             )
         provider: providers.Provider[T] = (
             providers.Singleton(factory) if cache else providers.Factory(factory)
@@ -142,7 +140,7 @@ class FlextRuntimeDependencyBindings(FlextRuntimeDependencyOptions):
         """Register a concrete instance using ``providers.Object``."""
         if hasattr(di_container, name):
             raise ValueError(
-                ce.ERR_RUNTIME_PROVIDER_ALREADY_REGISTERED.format(name=name)
+                c.ERR_RUNTIME_PROVIDER_ALREADY_REGISTERED.format(name=name)
             )
         provider: providers.Provider[T] = providers.Object(instance)
         setattr(di_container, name, provider)
@@ -155,7 +153,7 @@ class FlextRuntimeDependencyBindings(FlextRuntimeDependencyOptions):
         """Register a resource provider for lifecycle-managed dependencies."""
         if hasattr(di_container, name):
             raise ValueError(
-                ce.ERR_RUNTIME_PROVIDER_ALREADY_REGISTERED.format(name=name)
+                c.ERR_RUNTIME_PROVIDER_ALREADY_REGISTERED.format(name=name)
             )
         provider: providers.Provider[T] = providers.Resource(factory)
         setattr(di_container, name, provider)

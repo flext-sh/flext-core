@@ -195,6 +195,46 @@ checksum = "sha256:84f8dba0220b6381f26a1922a65e0e732e82524f390def16b027a6113207b
 url = "https://github.com/marlon-costa-dc/gascity/releases/download/v1.4.1-fc2/gascity_1.4.1-fc2_darwin_amd64.tar.gz"
 url_api = "https://api.github.com/repos/marlon-costa-dc/gascity/releases/assets/538755516"
 
+[[tools."github:microsoft/waza"]]
+version = "0.38.7"
+backend = "github:microsoft/waza"
+specifiers = ["0.38.7"]
+
+[tools."github:microsoft/waza"."platforms.linux-arm64"]
+checksum = "sha256:142ea836bbc8324154f52d3278cb7c9a9fa4e1be7480b44d3841309b56f7b039"
+url = "https://github.com/microsoft/waza/releases/download/v0.38.7/waza-linux-arm64"
+url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/520984886"
+
+[tools."github:microsoft/waza"."platforms.linux-arm64-musl"]
+checksum = "sha256:142ea836bbc8324154f52d3278cb7c9a9fa4e1be7480b44d3841309b56f7b039"
+url = "https://github.com/microsoft/waza/releases/download/v0.38.7/waza-linux-arm64"
+url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/520984886"
+
+[tools."github:microsoft/waza"."platforms.linux-x64"]
+checksum = "sha256:e227cd884173de796bc28c6cb1828498f250297e0e606a4e4504d14465ff879f"
+url = "https://github.com/microsoft/waza/releases/download/v0.38.7/waza-linux-amd64"
+url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/520984881"
+
+[tools."github:microsoft/waza"."platforms.linux-x64-musl"]
+checksum = "sha256:e227cd884173de796bc28c6cb1828498f250297e0e606a4e4504d14465ff879f"
+url = "https://github.com/microsoft/waza/releases/download/v0.38.7/waza-linux-amd64"
+url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/520984881"
+
+[tools."github:microsoft/waza"."platforms.macos-arm64"]
+checksum = "sha256:82a4f44c7d95b13e54607ab0bb9da618bb134c51c94a64be73bedbf7bcd4e778"
+url = "https://github.com/microsoft/waza/releases/download/v0.38.7/waza-darwin-arm64"
+url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/520984880"
+
+[tools."github:microsoft/waza"."platforms.macos-x64"]
+checksum = "sha256:e282ae6cc2f819125e8e5aaf2351caf8e066c74a853c7cdf1591cd4fb4657a1a"
+url = "https://github.com/microsoft/waza/releases/download/v0.38.7/waza-darwin-amd64"
+url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/520984885"
+
+[tools."github:microsoft/waza"."platforms.windows-x64"]
+checksum = "sha256:451d05c510341019e71c8e94d2ff4ed9f809f8f198bcf5fc31ab31038c5076c9"
+url = "https://github.com/microsoft/waza/releases/download/v0.38.7/waza-windows-amd64.exe"
+url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/520984898"
+
 [[tools."github:qltysh/qlty"]]
 version = "0.642.0"
 backend = "github:qltysh/qlty"

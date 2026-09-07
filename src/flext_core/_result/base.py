@@ -10,12 +10,11 @@ from collections.abc import Mapping
 from typing import TypeVar, cast
 
 from pydantic import BaseModel, PrivateAttr
-
-from flext_core._constants.errors import FlextConstantsErrors as _err
 from flext_core._protocols.result import FlextProtocolsResult as prt
 from flext_core._typings.base import FlextTypingBase as t
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
 from flext_core._typings.services import FlextTypesServices as ts
+from flext_core import c
 
 type JsonMapping = Mapping[str, tp.JsonValue]
 type JsonDict = dict[str, tp.JsonValue]
@@ -49,17 +48,17 @@ class FlextResultBase[T](BaseModel):
             return
         arg0 = args[0]
         if arg0 is None or arg0 is type(None):
-            raise ValueError(_err.ERR_RESULT_TYPE_PARAM_NONE_FORBIDDEN)
+            raise ValueError(c.ERR_RESULT_TYPE_PARAM_NONE_FORBIDDEN)
         if arg0 is object:
-            raise ValueError(_err.ERR_RESULT_TYPE_PARAM_OBJECT_FORBIDDEN)
+            raise ValueError(c.ERR_RESULT_TYPE_PARAM_OBJECT_FORBIDDEN)
 
     @staticmethod
     def reject_banned_success_payload(value: object) -> None:
         """Reject ``None`` and bare ``object()`` as success payloads."""
         if value is None:
-            raise ValueError(_err.ERR_RESULT_SUCCESS_PAYLOAD_CANNOT_BE_NONE)
+            raise ValueError(c.ERR_RESULT_SUCCESS_PAYLOAD_CANNOT_BE_NONE)
         if type(value) is object:
-            raise ValueError(_err.ERR_RESULT_SUCCESS_PAYLOAD_CANNOT_BE_OBJECT)
+            raise ValueError(c.ERR_RESULT_SUCCESS_PAYLOAD_CANNOT_BE_OBJECT)
 
     @staticmethod
     def validate_error_data(

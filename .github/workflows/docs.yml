@@ -37,16 +37,13 @@ jobs:
           fetch-depth: 0
 
       - name: Sync workspace toolchain
-        run: make setup
+        run: make setup APPLY=Y
 
       - name: Generation drift (blocking)
-        run: make gen WHAT=check
+        run: make conform APPLY=Y
 
-      - name: Docs audit (blocking)
-        run: make docs WHAT=audit
-
-      - name: Docs validate (blocking)
-        run: make docs WHAT=validate
+      - name: Docs lifecycle (blocking)
+        run: make docs APPLY=Y
 
       # Failure diagnostics execute only after the original Make step has
       # already propagated its exact status to Actions.
@@ -85,7 +82,7 @@ jobs:
             apps/*/.reports/**/audit-report.md
             apps/*/.reports/**/validate-summary.json
             apps/*/.reports/**/validate-report.md
-          if-no-files-found: ignore
+          if-no-files-found: error
           retention-days: 7
 
   build:
@@ -103,10 +100,10 @@ jobs:
           fetch-depth: 0
 
       - name: Sync workspace toolchain
-        run: make setup
+        run: make setup APPLY=Y
 
       - name: Build site
-        run: make docs WHAT=build
+        run: make docs APPLY=Y
 
       - name: Verify byte-identical repository
         run: |

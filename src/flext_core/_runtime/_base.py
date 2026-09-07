@@ -8,10 +8,8 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, ClassVar
-
-from flext_core._constants.errors import FlextConstantsErrors as ce
-from flext_core._constants.logging import FlextConstantsLogging as cl
 from flext_core._typings.base import FlextTypingBase as tb
+from flext_core import c
 
 if TYPE_CHECKING:
     from flext_core._protocols.logging import FlextProtocolsLogging as pl
@@ -29,7 +27,7 @@ class FlextRuntimeBase:
         """Return the bound metadata model class or raise a runtime contract error."""
         metadata_cls = cls.Metadata
         if metadata_cls is None:
-            msg = ce.ERR_RUNTIME_METADATA_MODEL_NOT_BOUND
+            msg = c.ERR_RUNTIME_METADATA_MODEL_NOT_BOUND
             raise RuntimeError(msg)
         return metadata_cls
 
@@ -51,13 +49,13 @@ class FlextRuntimeBase:
 
     @staticmethod
     def resolve_effective_log_level(
-        *, trace: bool, debug: bool, log_level: cl.LogLevel
-    ) -> cl.LogLevel:
+        *, trace: bool, debug: bool, log_level: c.LogLevel
+    ) -> c.LogLevel:
         """Resolve log level: DEBUG if trace, INFO if debug, else log_level."""
         if trace:
-            return cl.LogLevel.DEBUG
+            return c.LogLevel.DEBUG
         if debug:
-            return cl.LogLevel.INFO
+            return c.LogLevel.INFO
         return log_level
 
     @staticmethod
