@@ -156,11 +156,11 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
         return None
 
     @staticmethod
-    def _find_workspace_root(abs_path: Path) -> Path | None:
+    def _find_repository_root(abs_path: Path) -> Path | None:
         """Find workspace root by looking for common markers."""
         current = abs_path.parent
         for _ in range(10):
-            if any((current / marker).exists() for marker in c.WORKSPACE_ROOT_MARKERS):
+            if any((current / marker).exists() for marker in c.REPOSITORY_ROOT_MARKERS):
                 return current
             if current == current.parent:
                 break
@@ -171,10 +171,10 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
     def _format_caller_source_path(caller_frame: types.FrameType) -> str | None:
         filename = caller_frame.f_code.co_filename
         abs_path = Path(filename).resolve()
-        workspace_root = FlextUtilitiesLoggingContext._find_workspace_root(abs_path)
-        if workspace_root is None:
+        repository_root = FlextUtilitiesLoggingContext._find_repository_root(abs_path)
+        if repository_root is None:
             return None
-        relative_path = abs_path.relative_to(workspace_root)
+        relative_path = abs_path.relative_to(repository_root)
         if relative_path.parts and relative_path.parts[0] == c.VENV_DIR_NAME:
             return None
         file_path = str(relative_path)
