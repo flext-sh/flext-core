@@ -865,7 +865,7 @@ _builtin_deps_upgrade: _builtin_require_environment
 	if [ -z "$$selected" ]; then selected="."; fi; \
 	set --; \
 	for project in $$selected; do set -- "$$@" --projects "$$project"; done; \
-	$(PROJECT_FLEXT_INFRA) deps modernize --repository "$(PROJECT_ROOT)" \
+	$(PROJECT_FLEXT_INFRA) deps modernize --repository-root "$(PROJECT_ROOT)" \
 		--apply --rewrite-constraints --skip-check "$$@"
 	$(call _run_for_all_projects,)
 
@@ -890,7 +890,7 @@ _builtin_check_all: _builtin_require_environment
 		printf 'ERROR: no check gates remain after CI=Y filtering\n' >&2; \
 		exit 2; \
 	fi; \
-	$(PROJECT_FLEXT_INFRA) check run --repository "$(PROJECT_ROOT)" --gates "$$gates" --projects .
+	$(PROJECT_FLEXT_INFRA) check run --repository-root "$(PROJECT_ROOT)" --gates "$$gates" --projects .
 
 _builtin_test_all: _builtin_require_environment
 
@@ -920,7 +920,7 @@ _builtin_fix_check: _builtin_require_environment
 _builtin_fix_all: _builtin_require_environment
 	$(call _require_apply)
 	@$(UV_RUN) ruff check --fix $(RUFF_PATHS)
-	@$(PROJECT_FLEXT_INFRA) check run --repository "$(PROJECT_ROOT)" --gates "lint,markdown,canonical-alias,smells" --projects . --fix
+	@$(PROJECT_FLEXT_INFRA) check run --repository-root "$(PROJECT_ROOT)" --gates "lint,markdown,canonical-alias,smells" --projects . --apply
 
 _builtin_fix_apply: _builtin_fix_all
 
@@ -928,7 +928,7 @@ _builtin_fix_apply: _builtin_fix_all
 # declared safe, applied through its registered adapter.
 _builtin_fix_enforcement: _builtin_require_environment
 	$(call _require_apply)
-	@$(PROJECT_FLEXT_INFRA) check fix-enforcement --repository "$(PROJECT_ROOT)" --safe-only --apply
+	@$(PROJECT_FLEXT_INFRA) check fix-enforcement --repository-root "$(PROJECT_ROOT)" --safe-only --apply
 
 
 _builtin_run_default: _builtin_require_environment
@@ -948,7 +948,7 @@ _builtin_docs_all:
 	@set -eu; \
 	for action in $(DOCS_ACTIONS); do \
 		case "$$action" in fix) mode=$(if $(filter Y,$(APPLY)),--apply,--check) ;; *) mode= ;; esac; \
-		$(PROJECT_FLEXT_INFRA) docs "$$action" --repository "$(PROJECT_ROOT)" --output-dir "$(PROJECT_ROOT)/.reports/docs" $$mode $(DOCS_PROJECT_ARGS); \
+		$(PROJECT_FLEXT_INFRA) docs "$$action" --repository-root "$(PROJECT_ROOT)" --output-dir "$(PROJECT_ROOT)/.reports/docs" $$mode $(DOCS_PROJECT_ARGS); \
 	done
 
 _builtin_clean_generated:
@@ -984,22 +984,22 @@ _builtin_clean_generated:
 # commit; `build` writes the artifact receipt; `publish` uploads exactly what
 # the receipt attests (INDEX=Y adds the package index).
 _builtin_release_plan: _builtin_require_environment
-	@$(PROJECT_FLEXT_INFRA) release run --repository "$(PROJECT_ROOT)" --phase plan $(if $(strip $(PR_TITLE)),--pr-title "$(PR_TITLE)")
+	@$(PROJECT_FLEXT_INFRA) release run --repository-root "$(PROJECT_ROOT)" --phase plan $(if $(strip $(PR_TITLE)),--pr-title "$(PR_TITLE)")
 
 _builtin_release_version: _builtin_require_environment
 	$(call _require_apply)
-	@$(PROJECT_FLEXT_INFRA) release run --repository "$(PROJECT_ROOT)" --phase version --apply
+	@$(PROJECT_FLEXT_INFRA) release run --repository-root "$(PROJECT_ROOT)" --phase version --apply
 
 _builtin_release_tag: _builtin_require_environment
 	$(call _require_apply)
-	@$(PROJECT_FLEXT_INFRA) release run --repository "$(PROJECT_ROOT)" --phase tag --apply
+	@$(PROJECT_FLEXT_INFRA) release run --repository-root "$(PROJECT_ROOT)" --phase tag --apply
 
 _builtin_release_build: _builtin_require_environment
-	@$(PROJECT_FLEXT_INFRA) release run --repository "$(PROJECT_ROOT)" --phase build --apply
+	@$(PROJECT_FLEXT_INFRA) release run --repository-root "$(PROJECT_ROOT)" --phase build --apply
 
 _builtin_release_publish: _builtin_require_environment
 	$(call _require_apply)
-	@$(PROJECT_FLEXT_INFRA) release run --repository "$(PROJECT_ROOT)" --phase publish --apply $(if $(filter Y,$(INDEX)),--index)
+	@$(PROJECT_FLEXT_INFRA) release run --repository-root "$(PROJECT_ROOT)" --phase publish --apply $(if $(filter Y,$(INDEX)),--index)
 
 # Generation has one transaction owner. Conform preserves the caller's scope and
 # journals ordinary, Mise, lazy-init, and documentation phases through one fixed
@@ -1010,8 +1010,8 @@ _builtin_gen_check: _builtin_require_environment
 
 _builtin_gen_init:
 	$(call _require_apply)
-	@$(PROJECT_FLEXT_INFRA) codegen init --repository "$(PROJECT_ROOT)" --apply
-	@$(PROJECT_FLEXT_INFRA) codegen init --repository "$(PROJECT_ROOT)" --check
+	@$(PROJECT_FLEXT_INFRA) codegen init --repository-root "$(PROJECT_ROOT)" --apply
+	@$(PROJECT_FLEXT_INFRA) codegen init --repository-root "$(PROJECT_ROOT)" --check
 
 _builtin_gen_all:
 	$(call _require_apply)
@@ -1051,4 +1051,4 @@ _builtin-mod: _builtin_mod_apply
 _builtin-waza:
 	@cd "$(PROJECT_ROOT)" && "$(SETUP_MISE)" exec -- waza check --no-update-check
 _builtin-duplication:
-	@$(PROJECT_FLEXT_INFRA) check run --repository "$(PROJECT_ROOT)" --gates duplication --projects .
+	@$(PROJECT_FLEXT_INFRA) check run --repository-root "$(PROJECT_ROOT)" --gates duplication --projects .
