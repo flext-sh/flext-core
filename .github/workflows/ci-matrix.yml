@@ -82,7 +82,7 @@ jobs:
           # token into .git/config would expose it to every later command.
           persist-credentials: false
       - name: Bootstrap
-        run: CI=Y make setup APPLY=Y
+        run: CI=Y make setup
       - name: Verb surface
         run: CI=Y make help
       # The canonical gate, not just the verb surface: this matrix exists to
@@ -107,7 +107,7 @@ jobs:
           persist-credentials: false
       - name: Bootstrap
         shell: bash
-        run: CI=Y make setup APPLY=Y
+        run: CI=Y make setup
       - name: Verb surface
         shell: bash
         run: CI=Y make help

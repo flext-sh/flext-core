@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping
 from typing import TYPE_CHECKING
+
+from flext_core import c, m
 from flext_core._exceptions.helpers import FlextExceptionsHelpers
 from flext_core._protocols.result import FlextProtocolsResult as pr
 from flext_core._runtime._metadata_validation import (
     FlextRuntimeMetadataValidation as FlextRuntime,
 )
-from flext_core import c, m
 
 if TYPE_CHECKING:
     from flext_core._typings.base import FlextTypingBase as tb

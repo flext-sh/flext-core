@@ -27,10 +27,7 @@ ENV HOME=/home/runner \
     XDG_DATA_HOME=/home/runner/.local/share \
     XDG_CACHE_HOME=/home/runner/.cache \
     XDG_STATE_HOME=/home/runner/.local/state \
-    MISE_DATA_DIR=/home/runner/.local/share/mise \
-    MISE_CACHE_DIR=/home/runner/.cache/mise \
-    MISE_STATE_DIR=/home/runner/.local/state/mise \
-    MISE_TRUSTED_CONFIG_PATHS=/workspace
+    MISE_DATA_DIR=/home/runner/.local/share/mise
 WORKDIR /workspace
 RUN --mount=type=bind,source=.,target=/source,ro \
     cp -R /source/. /workspace/ \
@@ -48,7 +45,7 @@ ENV PATH="/home/runner/.local/share/mise/shims:${PATH}"
 # mentioned uv.lock/flext-core, which turned the proof into a bypass -- a
 # broken bootstrap still produced a green image.
 ENV CI=Y
-RUN make setup APPLY=Y
+RUN make setup
 # End SECTION: bootstrap proof
 
 ENTRYPOINT []

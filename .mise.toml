@@ -9,6 +9,7 @@
 [settings]
 # The lockfile is a generated, committed projection of immutable tool metadata.
 lockfile = true
+lockfile_platforms = ["linux-x64", "linux-arm64", "linux-x64-musl", "linux-arm64-musl", "macos-x64", "macos-arm64"]
 
 [tool_config]
 locked = true
@@ -17,45 +18,45 @@ locked = true
 # Source: config:python_version, config:codegen.scaffold.project.dev native toolchain floors
 #         (kubectl_version, helm_version, kind_version, taplo_version, ast_grep_version,
 #          gitleaks_version, scc_version, kubeconform_version, qlty_version,
-#          node_version, jscpd_version,
-#          waza_version,
+#          node_version, jscpd_version, waza_version,
 #          beads (selector/version/prerelease), gascity (selector/version/prerelease))
 [tools]
 python = "3.13"
-uv = "0.12"
+uv = "latest"
 # Native toolchain (single source: Infra.codegen.toolchain in codegen.yaml).
-kubectl = "1.32"
-helm = "3.19"
-kind = "0.31"
-direnv = "2.37"
-taplo = "0.10"
-ast-grep = "0.45"
-gitleaks = "8.30"
+kubectl = "latest"
+helm = "latest"
+kind = "latest"
+direnv = "latest"
+taplo = "latest"
+ast-grep = "latest"
+gitleaks = "latest"
 # scc (the loc-cap gate's code counter) ships no bare mise registry alias, so
 # pin the aqua backend explicitly (matching the qlty selector below). Its
 # aqua-registry entry carries an evergreen catch-all rule with real
 # per-platform release assets, so it never falls back to a source build,
 # which keeps the offline setup/gen/check/test path source-build-free.
-"aqua:boyter/scc" = "4.0"
-kubeconform = "0.8"
-# qlty ships no mise registry alias; the github backend selector is the only
-# resolvable form (bare 'qlty' fails mise install: 'not found in registry').
-"github:qltysh/qlty" = "0.642"
-# jscpd (the `duplication` check gate) ships no bare registry alias; mise's npm
-# backend installs it on the pinned Node runtime, so the gate finds `jscpd` on
-# PATH without resolving a runner or a version of its own.
+"aqua:boyter/scc" = "latest"
+kubeconform = "latest"
 node = "26.8"
 "npm:jscpd" = "5.1.2"
-# Waza ships as a GitHub release and is invoked only by the public Make verb.
 "github:microsoft/waza" = "0.38.7"
 # Go runtime for the Go projects in this workspace.
 go = "1.26"
+# qlty ships no mise registry alias; the github backend selector is the only
+# resolvable form (bare 'qlty' fails mise install: 'not found in registry').
+# GitHub Artifact Attestations is an external-token capability and is not
+# selected by setup/gen; the lock still authenticates the downloaded bytes by
+# checksum without silently requiring a personal GitHub credential.
+[tools."github:qltysh/qlty"]
+version = "0.642.0"
+github_attestations = false
 [tools."github:marlon-costa-dc/beads"]
 version = "latest"
 prerelease = true
-
+github_attestations = false
 [tools."github:marlon-costa-dc/gascity"]
 version = "latest"
 prerelease = true
-
+github_attestations = false
 # End SECTION: tools

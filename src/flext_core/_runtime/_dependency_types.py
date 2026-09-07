@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Annotated, ClassVar
 
 from dependency_injector import containers, providers
 from pydantic import BaseModel, ConfigDict
+
 from flext_core._typings.base import FlextTypingBase as tb
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
 from flext_core._typings.services import FlextTypesServices as ts

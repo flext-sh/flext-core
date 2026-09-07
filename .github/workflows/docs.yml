@@ -4,10 +4,9 @@ name: Docs
 "on":
   push:
     branches:
-      - dev
-      - develop
-      - 0.12.0-dev
       - main
+      - 0.12.0-dev
+      - 0.20.0-dev
     paths:
       - "docs/**"
       - "mkdocs.yml"
@@ -36,8 +35,37 @@ jobs:
           submodules: false
           fetch-depth: 0
 
+      # A private git dependency cannot be cloned with the workflow's own
+      # token: secrets.GITHUB_TOKEN is scoped to the repository that runs the
+      # workflow, and uv drives dependency clones through plain git, which
+      # carries no credential at all. The declared App mints an installation
+      # token for the owner, and git reads it from a 0600 file outside the
+      # checkout — never from the environment of the build itself.
+      - name: Mint the private-dependency installation token
+        id: private_dependency_token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1  # v3.2.0
+        with:
+          app-id: ${{ secrets.CI_DEPENDENCIES_APP_ID }}
+          private-key: ${{ secrets.CI_DEPENDENCIES_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Authenticate git for private dependencies
+        env:
+          PRIVATE_DEPENDENCY_TOKEN: ${{ steps.private_dependency_token.outputs.token }}
+        run: |
+          set -euo pipefail
+          : "${RUNNER_TEMP:?RUNNER_TEMP is required for private dependency identity}"
+          if [ -z "${PRIVATE_DEPENDENCY_TOKEN}" ]; then
+            echo "::error::the CI_DEPENDENCIES_APP_ID App produced no installation token — a private git dependency cannot be resolved"
+            exit 1
+          fi
+          store="$RUNNER_TEMP/flext-private-dependency-credentials"
+          install -m 600 /dev/null "$store"
+          printf 'https://x-access-token:%s@github.com\n' "$PRIVATE_DEPENDENCY_TOKEN" > "$store"
+          git config --global credential.helper "store --file=$store"
+
       - name: Sync workspace toolchain
-        run: make setup APPLY=Y
+        run: make setup
 
       - name: Generation drift (blocking)
         run: make conform APPLY=Y
@@ -99,8 +127,37 @@ jobs:
           submodules: false
           fetch-depth: 0
 
+      # A private git dependency cannot be cloned with the workflow's own
+      # token: secrets.GITHUB_TOKEN is scoped to the repository that runs the
+      # workflow, and uv drives dependency clones through plain git, which
+      # carries no credential at all. The declared App mints an installation
+      # token for the owner, and git reads it from a 0600 file outside the
+      # checkout — never from the environment of the build itself.
+      - name: Mint the private-dependency installation token
+        id: private_dependency_token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1  # v3.2.0
+        with:
+          app-id: ${{ secrets.CI_DEPENDENCIES_APP_ID }}
+          private-key: ${{ secrets.CI_DEPENDENCIES_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Authenticate git for private dependencies
+        env:
+          PRIVATE_DEPENDENCY_TOKEN: ${{ steps.private_dependency_token.outputs.token }}
+        run: |
+          set -euo pipefail
+          : "${RUNNER_TEMP:?RUNNER_TEMP is required for private dependency identity}"
+          if [ -z "${PRIVATE_DEPENDENCY_TOKEN}" ]; then
+            echo "::error::the CI_DEPENDENCIES_APP_ID App produced no installation token — a private git dependency cannot be resolved"
+            exit 1
+          fi
+          store="$RUNNER_TEMP/flext-private-dependency-credentials"
+          install -m 600 /dev/null "$store"
+          printf 'https://x-access-token:%s@github.com\n' "$PRIVATE_DEPENDENCY_TOKEN" > "$store"
+          git config --global credential.helper "store --file=$store"
+
       - name: Sync workspace toolchain
-        run: make setup APPLY=Y
+        run: make setup
 
       - name: Build site
         run: make docs APPLY=Y
