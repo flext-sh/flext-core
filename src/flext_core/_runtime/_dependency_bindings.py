@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 from dependency_injector import containers, providers, wiring
 from dependency_injector.containers import Container
 
-from flext_core import c
+from flext_core import FlextConstants as c
 
 from ._dependency_options import FlextRuntimeDependencyOptions
 
