@@ -1,0 +1,7 @@
+interface:
+  display_name: "Anti Hardcode"
+  short_description: "Eliminate critical operational hardcodes at their owner"
+  brand_color: "#B91C1C"
+  default_prompt: "Use $anti-hardcode to migrate embedded operational values into one typed configuration owner."
+policy:
+  allow_implicit_invocation: true

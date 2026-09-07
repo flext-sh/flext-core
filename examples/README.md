@@ -19,7 +19,8 @@
 
 **Version**: 0.12.0-dev | **Status**: Production Ready
 
-Comprehensive examples demonstrating FLEXT-Core patterns and best practices. All examples are self-contained and can be run independently.
+Comprehensive examples demonstrating FLEXT-Core patterns and best practices. All examples are self-contained and can be
+run independently.
 
 ## Quick Start
 
@@ -64,7 +65,8 @@ python examples/01_basic_result.py
 **Decorators & Automation**:
 
 - **05_utilities_advanced.py** — Advanced utility patterns and helper functions.
-- **06_decorators_complete.py** — Complete decorator showcase: `@inject`, `@log_operation`, `@railway`, `@with_context`, `@combined`.
+- **06_decorators_complete.py** — Complete decorator showcase: `@inject`, `@log_operation`, `@railway`, `@with_context`,
+  `@combined`.
 
 ### 🏗️ Application Layer & Integration
 
@@ -118,5 +120,5 @@ After running examples:
 ## See Also
 
 - [Getting Started Guide](../docs/guides/getting-started.md) - Quick start with FLEXT-Core
-- [Documentation Index](../docs/INDEX.md) - Complete documentation navigation
+- [Documentation Index](../docs/index.md) - Complete documentation navigation
 - [API Reference](../docs/api-reference/) - Full API documentation

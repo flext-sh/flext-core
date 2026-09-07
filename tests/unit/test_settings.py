@@ -16,6 +16,7 @@ import pytest
 from pydantic import ValidationError
 
 from flext_core import FlextSettings
+from flext_tests import u
 
 
 class TestsFlextCoreSettings:
@@ -101,85 +102,83 @@ class TestsFlextCoreSettingsWorkDir:
         assert s.work_dir.name == "flext"
         FlextSettings.reset_for_testing()
 
-    def test_default_root_is_platform_cache_home(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_default_root_is_platform_cache_home(self) -> None:
         """Default root follows the platform cache convention."""
         FlextSettings.reset_for_testing()
         if sys.platform == "darwin":
+            env_context = u.Tests.env_vars_context()
             expected = Path.home() / "Library" / "Caches" / "flext"
         elif sys.platform == "win32":
-            monkeypatch.setenv("LOCALAPPDATA", str(Path.home() / "AppData" / "Local"))
+            env_context = u.Tests.env_vars_context(
+                env_vars={"LOCALAPPDATA": str(Path.home() / "AppData" / "Local")}
+            )
             expected = Path.home() / "AppData" / "Local" / "flext"
         else:
-            monkeypatch.delenv("XDG_CACHE_HOME", raising=False)
+            env_context = u.Tests.env_vars_context(vars_to_clear=("XDG_CACHE_HOME",))
             expected = Path.home() / ".cache" / "flext"
-        assert FlextSettings.fetch_global().work_dir == expected
+        with env_context:
+            assert FlextSettings.fetch_global().work_dir == expected
         FlextSettings.reset_for_testing()
 
-    def test_linux_honours_xdg_cache_home(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_linux_honours_xdg_cache_home(self) -> None:
         """On Linux XDG_CACHE_HOME redirects the work_dir root."""
         if sys.platform not in {"linux", "linux2"}:
             pytest.skip("XDG_CACHE_HOME is Linux-specific")
         FlextSettings.reset_for_testing()
-        monkeypatch.setenv("XDG_CACHE_HOME", "/xdg/cache")
-        assert FlextSettings.fetch_global().work_dir == Path("/xdg/cache/flext")
+        with u.Tests.env_vars_context(env_vars={"XDG_CACHE_HOME": "/xdg/cache"}):
+            assert FlextSettings.fetch_global().work_dir == Path("/xdg/cache/flext")
         FlextSettings.reset_for_testing()
 
-    def test_env_override_wins(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> None:
+    def test_env_override_wins(self, tmp_path: Path) -> None:
         """FLEXT_WORK_DIR overrides the derived default."""
         FlextSettings.reset_for_testing()
         custom_dir = tmp_path / "flext-custom-wd"
         custom_dir.mkdir()
-        monkeypatch.setenv("FLEXT_WORK_DIR", str(custom_dir))
-        assert FlextSettings.fetch_global().work_dir == custom_dir
+        with u.Tests.env_vars_context(env_vars={"FLEXT_WORK_DIR": str(custom_dir)}):
+            assert FlextSettings.fetch_global().work_dir == custom_dir
         FlextSettings.reset_for_testing()
 
-    def test_libraries_share_consuming_application_namespace(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_libraries_share_consuming_application_namespace(self) -> None:
         """Imported library settings resolve through the outer application identity."""
         if sys.platform not in {"linux", "linux2"}:
             pytest.skip("XDG directories are Linux-specific")
-        roots = {
-            "XDG_CACHE_HOME": "/xdg/cache",
-            "XDG_DATA_HOME": "/xdg/data",
-            "XDG_STATE_HOME": "/xdg/state",
-            "XDG_CONFIG_HOME": "/xdg/config",
-            "XDG_RUNTIME_DIR": "/xdg/runtime",
-        }
-        for name, value in roots.items():
-            monkeypatch.setenv(name, value)
+        with u.Tests.env_vars_context(
+            env_vars={
+                "XDG_CACHE_HOME": "/xdg/cache",
+                "XDG_DATA_HOME": "/xdg/data",
+                "XDG_STATE_HOME": "/xdg/state",
+                "XDG_CONFIG_HOME": "/xdg/config",
+                "XDG_RUNTIME_DIR": "/xdg/runtime",
+            }
+        ):
 
-        class _CliSettings(FlextSettings):
-            model_config = FlextSettings.model_config | {"env_prefix": "CLI_LIB_"}
+            class _CliSettings(FlextSettings):
+                model_config = FlextSettings.model_config | {"env_prefix": "CLI_LIB_"}
 
-        class _MeltanoSettings(FlextSettings):
-            model_config = FlextSettings.model_config | {"env_prefix": "MELTANO_LIB_"}
+            class _MeltanoSettings(FlextSettings):
+                model_config = FlextSettings.model_config | {
+                    "env_prefix": "MELTANO_LIB_"
+                }
 
-        cli_settings = _CliSettings.fetch_global()
-        meltano_settings = _MeltanoSettings.fetch_global()
-        FlextSettings.set_app_namespace("flext-tap-oracle")
+            cli_settings = _CliSettings.fetch_global()
+            meltano_settings = _MeltanoSettings.fetch_global()
+            FlextSettings.set_app_namespace("flext-tap-oracle")
 
-        expected = (
-            Path("/xdg/cache/flext-tap-oracle"),
-            Path("/xdg/data/flext-tap-oracle"),
-            Path("/xdg/state/flext-tap-oracle"),
-            Path("/xdg/config/flext-tap-oracle"),
-            Path("/xdg/runtime/flext-tap-oracle"),
-        )
-        for library_settings in (cli_settings, meltano_settings):
-            assert (
-                library_settings.work_dir,
-                library_settings.data_dir,
-                library_settings.state_dir,
-                library_settings.config_dir,
-                library_settings.runtime_dir,
-            ) == expected
+            expected = (
+                Path("/xdg/cache/flext-tap-oracle"),
+                Path("/xdg/data/flext-tap-oracle"),
+                Path("/xdg/state/flext-tap-oracle"),
+                Path("/xdg/config/flext-tap-oracle"),
+                Path("/xdg/runtime/flext-tap-oracle"),
+            )
+            for library_settings in (cli_settings, meltano_settings):
+                assert (
+                    library_settings.work_dir,
+                    library_settings.data_dir,
+                    library_settings.state_dir,
+                    library_settings.config_dir,
+                    library_settings.runtime_dir,
+                ) == expected
 
     def test_application_namespace_is_first_wins(self) -> None:
         """A later library bootstrap cannot replace the outer application identity."""
@@ -187,9 +186,7 @@ class TestsFlextCoreSettingsWorkDir:
         FlextSettings.set_app_namespace("flext-cli")
         assert FlextSettings.fetch_global().work_dir.name == "flext-tap-oracle"
 
-    def test_unregistered_owner_namespace_prevails_by_default(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_unregistered_owner_namespace_prevails_by_default(self) -> None:
         """Without registration, the owning project's own namespace is the default.
 
         Registration is never mandatory: a standalone project (e.g. ``ai-hub``)
@@ -198,18 +195,19 @@ class TestsFlextCoreSettingsWorkDir:
         """
         if sys.platform not in {"linux", "linux2"}:
             pytest.skip("XDG directories are Linux-specific")
-        monkeypatch.setenv("XDG_CACHE_HOME", "/xdg/cache")
-        monkeypatch.setenv("XDG_DATA_HOME", "/xdg/data")
-        monkeypatch.delenv("FLEXT_APP_NAMESPACE", raising=False)
+        with u.Tests.env_vars_context(
+            env_vars={"XDG_CACHE_HOME": "/xdg/cache", "XDG_DATA_HOME": "/xdg/data"},
+            vars_to_clear=("FLEXT_APP_NAMESPACE",),
+        ):
 
-        class _AiHubSettings(FlextSettings):
-            model_config = FlextSettings.model_config | {"env_prefix": "AI_HUB_"}
+            class _AiHubSettings(FlextSettings):
+                model_config = FlextSettings.model_config | {"env_prefix": "AI_HUB_"}
 
-        _AiHubSettings.reset_for_testing()
-        s = _AiHubSettings.fetch_global()
-        assert s.cache_dir == Path("/xdg/cache/ai-hub")
-        assert s.data_dir == Path("/xdg/data/ai-hub")
-        _AiHubSettings.reset_for_testing()
+            _AiHubSettings.reset_for_testing()
+            s = _AiHubSettings.fetch_global()
+            assert s.cache_dir == Path("/xdg/cache/ai-hub")
+            assert s.data_dir == Path("/xdg/data/ai-hub")
+            _AiHubSettings.reset_for_testing()
 
     def test_computed_directories_serialize_with_current_application(self) -> None:
         """Pydantic serialization exposes directories for the current application."""
@@ -219,59 +217,61 @@ class TestsFlextCoreSettingsWorkDir:
         assert Path(str(dumped["cache_dir"])).name == "flext-tap-oracle"
         assert Path(str(dumped["config_dir"])).name == "flext-tap-oracle"
 
-    def test_environment_supplies_application_namespace(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_environment_supplies_application_namespace(self) -> None:
         """FLEXT_APP_NAMESPACE identifies the app when bootstrap is unavailable."""
-        monkeypatch.setenv("FLEXT_APP_NAMESPACE", "flext-target-ldap")
-        assert FlextSettings.fetch_global().data_dir.name == "flext-target-ldap"
+        with u.Tests.env_vars_context(
+            env_vars={"FLEXT_APP_NAMESPACE": "flext-target-ldap"}
+        ):
+            assert FlextSettings.fetch_global().data_dir.name == "flext-target-ldap"
 
-    def test_environment_application_namespace_rejects_paths(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_environment_application_namespace_rejects_paths(self) -> None:
         """Environment application identity cannot escape its XDG root."""
-        monkeypatch.setenv("FLEXT_APP_NAMESPACE", "../outside")
-        with pytest.raises(ValueError, match="one non-empty path segment"):
+        with (
+            u.Tests.env_vars_context(env_vars={"FLEXT_APP_NAMESPACE": "../outside"}),
+            pytest.raises(ValueError, match="one non-empty path segment"),
+        ):
             _ = FlextSettings.fetch_global().data_dir
 
-    def test_application_scoped_directory_override_wins(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> None:
+    def test_application_scoped_directory_override_wins(self, tmp_path: Path) -> None:
         """The consuming application's directory override wins over XDG roots."""
         override = tmp_path / "application-work"
-        monkeypatch.setenv("FLEXT_TAP_ORACLE_WORK_DIR", str(override))
-        FlextSettings.set_app_namespace("flext-tap-oracle")
-        assert FlextSettings.fetch_global().work_dir == override
+        with u.Tests.env_vars_context(
+            env_vars={"FLEXT_TAP_ORACLE_WORK_DIR": str(override)}
+        ):
+            FlextSettings.set_app_namespace("flext-tap-oracle")
+            assert FlextSettings.fetch_global().work_dir == override
 
-    def test_runtime_dir_falls_back_under_work_dir(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> None:
+    def test_runtime_dir_falls_back_under_work_dir(self, tmp_path: Path) -> None:
         """The runtime directory falls back below an explicit work directory."""
         work_dir = tmp_path / "work"
-        monkeypatch.delenv("XDG_RUNTIME_DIR", raising=False)
-        FlextSettings.set_app_namespace("flext")
-        monkeypatch.setenv("FLEXT_WORK_DIR", str(work_dir))
-        FlextSettings.reset_for_testing()
-        assert FlextSettings.fetch_global().runtime_dir == work_dir / "run"
+        with u.Tests.env_vars_context(
+            env_vars={"FLEXT_WORK_DIR": str(work_dir)},
+            vars_to_clear=("XDG_RUNTIME_DIR",),
+        ):
+            FlextSettings.set_app_namespace("flext")
+            FlextSettings.reset_for_testing()
+            assert FlextSettings.fetch_global().runtime_dir == work_dir / "run"
         FlextSettings.reset_for_testing()
 
-    def test_explicit_runtime_directory_override_wins(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> None:
+    def test_explicit_runtime_directory_override_wins(self, tmp_path: Path) -> None:
         """The project runtime override wins over XDG_RUNTIME_DIR."""
         runtime_dir = tmp_path / "runtime"
-        monkeypatch.setenv("XDG_RUNTIME_DIR", "/xdg/runtime")
-        FlextSettings.set_app_namespace("flext")
-        monkeypatch.setenv("FLEXT_RUNTIME_DIR", str(runtime_dir))
-        FlextSettings.reset_for_testing()
-        assert FlextSettings.fetch_global().runtime_dir == runtime_dir
+        with u.Tests.env_vars_context(
+            env_vars={
+                "XDG_RUNTIME_DIR": "/xdg/runtime",
+                "FLEXT_RUNTIME_DIR": str(runtime_dir),
+            }
+        ):
+            FlextSettings.set_app_namespace("flext")
+            FlextSettings.reset_for_testing()
+            assert FlextSettings.fetch_global().runtime_dir == runtime_dir
         FlextSettings.reset_for_testing()
 
-    def test_runtime_directories_reject_relative_overrides(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_runtime_directories_reject_relative_overrides(self) -> None:
         """Relative runtime directory overrides fail validation."""
-        monkeypatch.setenv("FLEXT_TAP_ORACLE_STATE_DIR", "relative-state")
-        FlextSettings.set_app_namespace("flext-tap-oracle")
-        with pytest.raises(ValueError, match="must be absolute"):
-            _ = FlextSettings.fetch_global().state_dir
+        with u.Tests.env_vars_context(
+            env_vars={"FLEXT_TAP_ORACLE_STATE_DIR": "relative-state"}
+        ):
+            FlextSettings.set_app_namespace("flext-tap-oracle")
+            with pytest.raises(ValueError, match="must be absolute"):
+                _ = FlextSettings.fetch_global().state_dir

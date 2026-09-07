@@ -71,7 +71,9 @@ if not failure.failure:
     raise RuntimeError(message)
 if failure.error_code != expected_error_code:
     message = "Unexpected error code"
-    raise RuntimeError(message)```
+    raise RuntimeError(message)
+```
+
 ## Reading State Safely
 
 ```python
@@ -95,7 +97,9 @@ if not failed.failure:
     raise RuntimeError(message)
 if failed.error != expected_error:
     message = "Unexpected failure message"
-    raise RuntimeError(message)```
+    raise RuntimeError(message)
+```
+
 ## flat_map Composition
 
 Use `flat_map` when each step already returns `p.Result[...]`.
@@ -129,7 +133,9 @@ if not result.success:
     raise RuntimeError(message)
 if result.value != expected_email:
     message = "Unexpected normalized email value"
-    raise RuntimeError(message)```
+    raise RuntimeError(message)
+```
+
 ## map, map_error, and recover
 
 ```python
@@ -158,7 +164,9 @@ if not recovered.success:
     raise RuntimeError(message)
 if recovered.value != expected_guest:
     message = "Unexpected recovered value"
-    raise RuntimeError(message)```
+    raise RuntimeError(message)
+```
+
 Prefer `map` for pure value transformations and `map_error` when the failure
 text needs to be normalized for the next boundary. `recover` converts a
 failure into a success value; if the fallback itself is another
@@ -191,7 +199,9 @@ if failure_value != expected_failure_value:
     raise RuntimeError(message)
 if length_value != expected_length_value:
     message = "Unexpected transformed value from map_or"
-    raise RuntimeError(message)```
+    raise RuntimeError(message)
+```
+
 ## Factory Helpers
 
 Use the result factory helpers when the boundary behavior is already known:
@@ -225,7 +235,9 @@ if not validated.success:
     raise RuntimeError(message)
 if not invalid.failure:
     message = "Expected validation failure"
-    raise RuntimeError(message)```
+    raise RuntimeError(message)
+```
+
 For ad-hoc local failures there is also `r[T].fail_op(...)`, but for
 structured cross-boundary failures prefer the canonical `e.fail_*` helpers
 shown below.
@@ -255,7 +267,9 @@ lazy_fallback = r[int].fail("still_nope").unwrap_or_else(lambda: 99)
 expected_lazy_fallback = 99
 if lazy_fallback != expected_lazy_fallback:
     message = "Unexpected unwrap_or_else fallback value"
-    raise RuntimeError(message)```
+    raise RuntimeError(message)
+```
+
 ## lash for Failure Branching
 
 Use `lash` to transform failures into alternate result flows.
@@ -280,7 +294,9 @@ if not result.success:
     raise RuntimeError(message)
 if result.value != expected_value:
     message = "Unexpected lash fallback value"
-    raise RuntimeError(message)```
+    raise RuntimeError(message)
+```
+
 ## FlextExceptions at Result Boundaries
 
 Use `e.fail_*` when the function already returns `p.Result[T]` but the failure
@@ -337,7 +353,9 @@ if failed_parse_error_data is None:
     raise RuntimeError(message)
 if failed_parse_error_data["operation"] != "parse age":
     message = "Unexpected operation error payload"
-    raise RuntimeError(message)```
+    raise RuntimeError(message)
+```
+
 ## Typed Exceptions with Metadata
 
 Raised `e.*Error` instances keep structured fields, metadata, and optional
@@ -370,7 +388,9 @@ if error.correlation_id is None:
 scope = error.metadata.attributes.get("scope")
 if scope != "profile-service":
     message = "Unexpected metadata scope"
-    raise RuntimeError(message)```
+    raise RuntimeError(message)
+```
+
 ## None Handling Techniques
 
 `None` should stay explicit. Keep optional business absence local, but convert
@@ -425,7 +445,9 @@ if missing_error_data["cause"] != "cannot be None":
     raise RuntimeError(message)
 if not blank_result.failure:
     message = "Expected blank validation failure"
-    raise RuntimeError(message)```
+    raise RuntimeError(message)
+```
+
 ## Exception Propagation with Context
 
 When you must switch from a foreign exception to a typed FLEXT exception, use
@@ -476,7 +498,9 @@ if service_name != "profile-api":
     raise RuntimeError(message)
 if captured.correlation_id is None:
     message = "Expected propagated correlation id"
-    raise RuntimeError(message)```
+    raise RuntimeError(message)
+```
+
 This is the same shape used by retry-style boundaries: translate the foreign
 exception once, enrich it with operation metadata, and preserve the original
 cause for debugging.
@@ -511,7 +535,9 @@ if not passed.success:
     raise RuntimeError(message)
 if passed.value != expected_items:
     message = "Unexpected traversal value"
-    raise RuntimeError(message)```
+    raise RuntimeError(message)
+```
+
 ```python
 """Wrap resource setup, use, and cleanup in a result."""
 
@@ -542,7 +568,9 @@ if not resource_result.success:
     raise RuntimeError(message)
 if resource_result.value != expected_identifier:
     message = "Unexpected resource identifier"
-    raise RuntimeError(message)```
+    raise RuntimeError(message)
+```
+
 ## Decorator Integration
 
 ### @d.railway
@@ -578,7 +606,9 @@ if not fail_result.failure:
     raise RuntimeError(message)
 if fail_result.error_code != expected_error_code:
     message = "Unexpected railway error code"
-    raise RuntimeError(message)```
+    raise RuntimeError(message)
+```
+
 ### @d.retry + @d.railway
 
 When retries exhaust, `@d.retry` raises `e.FlextTimeoutError`; with outer
@@ -628,7 +658,9 @@ if result.value != expected_value:
     raise RuntimeError(message)
 if attempts["count"] != expected_attempts:
     message = "Unexpected retry attempt count"
-    raise RuntimeError(message)```
+    raise RuntimeError(message)
+```
+
 ### @d.combined
 
 `@d.combined` supports operation logging, optional DI injection, and optional
@@ -656,7 +688,9 @@ if not result.success:
     raise RuntimeError(message)
 if result.value != expected_total:
     message = "Unexpected combined decorator value"
-    raise RuntimeError(message)```
+    raise RuntimeError(message)
+```
+
 ## Organizing Error Handling
 
 - Adapter and boundary functions should catch foreign exceptions once and

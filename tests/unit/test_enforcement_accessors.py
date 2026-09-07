@@ -13,7 +13,7 @@ import pytest
 
 from flext_core.utilities import FlextUtilitiesBeartypeEngine
 from tests.models import m
-from tests.unit._enforcement_support import make_class
+from tests.unit._enforcement_support import make_class, synthetic_method
 from tests.utilities import u
 
 _INHERITANCE_FRAGMENT = "must inherit FlextSettings"
@@ -26,7 +26,7 @@ class TestsFlextCoreEnforcementAccessors:
     @pytest.mark.parametrize("prefix", ["get_user", "set_config", "is_ready"])
     def test_forbidden_accessor_prefix_is_flagged(self, prefix: str) -> None:
         # Arrange
-        cls = make_class("FlextCoreAccessed", {prefix: lambda _self: None})
+        cls = make_class("FlextCoreAccessed", {prefix: synthetic_method})
 
         # Act
         report = u.check(cls)
@@ -41,7 +41,7 @@ class TestsFlextCoreEnforcementAccessors:
     @pytest.mark.parametrize("prefix", ["fetch_remote", "resolve_ref", "compute_total"])
     def test_domain_verb_method_is_allowed(self, prefix: str) -> None:
         # Arrange
-        cls = make_class("FlextCoreVerb", {prefix: lambda _self: None})
+        cls = make_class("FlextCoreVerb", {prefix: synthetic_method})
 
         # Act
         messages = [
@@ -55,7 +55,7 @@ class TestsFlextCoreEnforcementAccessors:
 
     def test_accessor_violation_locates_the_owning_class(self) -> None:
         # Arrange
-        cls = make_class("FlextCoreAccessedGet", {"get_user": lambda _self: None})
+        cls = make_class("FlextCoreAccessedGet", {"get_user": synthetic_method})
 
         # Act
         accessor = next(
@@ -135,7 +135,7 @@ class TestsFlextCoreEnforcementAccessors:
 
     def test_clean_class_yields_an_empty_report(self) -> None:
         # Arrange
-        cls = make_class("FlextCoreService", {"fetch_value": lambda _self: None})
+        cls = make_class("FlextCoreService", {"fetch_value": synthetic_method})
 
         # Act
         report = u.check(cls)

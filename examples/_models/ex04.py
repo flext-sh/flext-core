@@ -32,7 +32,8 @@ class ExamplesFlextModelsEx04:
             str, u.Field(description="Command type placeholder for get user operation")
         ] = ""
         query_type: Annotated[
-            str, u.Field(description="Query type identifier for get user operation")
+            str | None,
+            u.Field(description="Query type identifier for get user operation"),
         ] = "ex04_get_user"
         event_type: Annotated[
             str, u.Field(description="Event type placeholder for get user operation")
@@ -113,7 +114,7 @@ class ExamplesFlextModelsEx04:
             u.Field(description="Command type placeholder for unknown query operation"),
         ] = ""
         query_type: Annotated[
-            str,
+            str | None,
             u.Field(description="Query type identifier for unknown query operation"),
         ] = "ex04_unknown_query"
         event_type: Annotated[

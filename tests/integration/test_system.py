@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_core import p, FlextContainer
+from flext_core import FlextContainer, p
 from flext_tests import e, r, tm
 from tests.constants import c
 from tests.utilities import u

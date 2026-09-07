@@ -24,7 +24,7 @@ Canonical references:
 
 ## Layered Topology
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │              Application / Orchestration (L3)               │
 │  dispatcher.py, handlers.py, decorators.py, registry.py     │
@@ -143,5 +143,5 @@ make type-check
 make test-fast
 ```
 
-```
+```text
 ```

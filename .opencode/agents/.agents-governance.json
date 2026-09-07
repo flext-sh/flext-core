@@ -1,0 +1,32 @@
+{
+  "context": "project",
+  "destination": ".opencode/agents",
+  "managed": {
+    "python-reviewer.md": {
+      "activation": [
+        "marker:pyproject.toml"
+      ],
+      "adapter_version": 1,
+      "destination": "python-reviewer.md",
+      "origin": "agents:agents:opencode",
+      "physical_digest": "68d79a1e2d977e0c2d20c943b078816b1b9e15e093193357d7fc2efeb14a54fe",
+      "slug": "python-reviewer",
+      "source_digest": "812d1e5b772b64367fc005cf12bafb2a62898ca6e6d8ee3e3489d9020d45e12f",
+      "source_type": "agent"
+    }
+  },
+  "owner": "agents-governance",
+  "project": ".",
+  "providers": [
+    "opencode"
+  ],
+  "selection": {
+    "agents": [],
+    "opt_ins": [],
+    "selected_tags": [
+      "flext"
+    ]
+  },
+  "surface": "agents",
+  "version": 5
+}

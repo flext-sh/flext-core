@@ -147,7 +147,7 @@ BREAKING CHANGES (Phase 4 - v0.9.9):
 - register[T]() now uses generic type T instead of t.JsonValue
 - register_factory[T]() now uses Callable[[], T] instead of Callable[[], t.JsonValue]
 - get_typed[T]() now returns r[T] instead of r[t.JsonValue]
-
+```
 
 Add migration guide from v0.9.8 to v0.9.9.
 
@@ -174,7 +174,7 @@ ______________________________________________________________________
 
 Add a decision tree for choosing methods:
 
-```
+```text
 
 Need a service?
 ├─ Service always exists? → resolve(name, type_cls=Type)
@@ -285,10 +285,10 @@ ______________________________________________________________________
 
 ## Conclusion
 
-The Dependency Injection guide is **highly accurate and well-written**. Unlike the Railway guide, it doesn't miss critical methods. The main improvement is adding **supporting content** (decision trees, performance notes, migrations) rather than correcting errors.
+The Dependency Injection guide is **highly accurate and well-written**. Unlike the Railway guide, it doesn't miss
+critical methods. The main improvement is adding **supporting content** (decision trees, performance notes, migrations)
+rather than correcting errors.
 
 **Status**: ✅ PRODUCTION READY with minor enhancements recommended
 
 **Next**: Audit Domain-Driven Design guide
-
-```
