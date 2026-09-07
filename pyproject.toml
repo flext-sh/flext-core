@@ -474,9 +474,12 @@ mi_min = "B"
 exclude = [
   "**/.archive/**",
   "**/__pyrefly_virtual__/**",
+  "**/aihub-hooks/**",
   ".archive",
   ".archive/**",
   ".git",
+  ".github/hooks",
+  ".github/hooks/**",
   ".mypy_cache",
   ".pytest_cache",
   ".ruff_cache",

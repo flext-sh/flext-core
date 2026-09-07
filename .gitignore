@@ -28,6 +28,7 @@
 .cursor/aihub-hooks/
 .gemini/aihub-hooks/
 .opencode/aihub-hooks/
+.github/hooks/
 */hooks.json
 */.hooks.json.agents-governance.json
 .claude/settings.local.json
@@ -351,9 +352,6 @@ CLAUDE.local.md
 !.qlty/
 !.qlty/qlty.toml
 !.vscode/settings.json
-!LICENSE
 !config/
 !config/build-constraints.txt
 !config/gitleaks-release.toml
-!config/workspace.yaml
-!custom.mk
