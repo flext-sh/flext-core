@@ -865,7 +865,7 @@ _builtin_deps_upgrade: _builtin_require_environment
 	if [ -z "$$selected" ]; then selected="."; fi; \
 	set --; \
 	for project in $$selected; do set -- "$$@" --projects "$$project"; done; \
-	$(PROJECT_FLEXT_INFRA) deps modernize --repository-root "$(PROJECT_ROOT)" \
+	$(PROJECT_FLEXT_INFRA) deps modernize --workspace "$(PROJECT_ROOT)" \
 		--apply --rewrite-constraints --skip-check "$$@"
 	$(call _run_for_all_projects,)
 
