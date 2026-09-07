@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import operator
 from collections.abc import Callable
+from operator import itemgetter
 
 import pytest
 
@@ -20,24 +20,36 @@ class _PrivateAttrContract(core_m.BaseModel):
     label: str
     _model_values: list[str] = core_m.PrivateAttr(default_factory=list)
     _utility_values: list[str] = u.PrivateAttr(default_factory=list)
-    _label_copy: str = core_m.PrivateAttr(default_factory=operator.itemgetter("label"))
+    _label_copy: str = core_m.PrivateAttr(default_factory=itemgetter("label"))
     _reader: Callable[[str], str] = u.PrivateAttr(default_factory=_input_reader)
 
-    def model_values(self) -> list[str]:
-        """Expose the model-owned private list for behavior assertions."""
-        return self._model_values
+    def record_model(self, value: str) -> None:
+        """Append to the core-model private history."""
+        self._model_values.append(value)
 
-    def utility_values(self) -> list[str]:
-        """Expose the facade-owned private list for behavior assertions."""
-        return self._utility_values
+    def record_utility(self, value: str) -> None:
+        """Append to the utility private history."""
+        self._utility_values.append(value)
 
-    def label_copy(self) -> str:
-        """Expose the model-owned private label copy for behavior assertions."""
+    @property
+    def recorded_model_values(self) -> list[str]:
+        """Snapshot of the core-model private history."""
+        return list(self._model_values)
+
+    @property
+    def recorded_utility_values(self) -> list[str]:
+        """Snapshot of the utility private history."""
+        return list(self._utility_values)
+
+    @property
+    def label_echo(self) -> str:
+        """Copy of the validated label captured at init time."""
         return self._label_copy
 
-    def reader(self) -> Callable[[str], str]:
-        """Expose the facade-owned private reader for behavior assertions."""
-        return self._reader
+    @property
+    def reads_standard_input(self) -> bool:
+        """Whether the default reader resolved to the builtin input."""
+        return self._reader is input
 
 
 class TestsFlextUtilitiesPydantic:
@@ -146,15 +158,15 @@ class TestsFlextUtilitiesPydantic:
         first = _PrivateAttrContract(label="first")
         second = _PrivateAttrContract(label="second")
 
-        first.model_values().append("model")
-        first.utility_values().append("utility")
+        first.record_model("model")
+        first.record_utility("utility")
 
-        assert first.model_values() == ["model"]
-        assert second.model_values() == []
-        assert first.utility_values() == ["utility"]
-        assert second.utility_values() == []
-        assert first.label_copy() == "first"
-        assert second.label_copy() == "second"
-        assert first.reader() is input
-        assert second.reader() is input
+        assert first.recorded_model_values == ["model"]
+        assert second.recorded_model_values == []
+        assert first.recorded_utility_values == ["utility"]
+        assert second.recorded_utility_values == []
+        assert first.label_echo == "first"
+        assert second.label_echo == "second"
+        assert first.reads_standard_input
+        assert second.reads_standard_input
         assert first.model_dump() == {"label": "first"}
