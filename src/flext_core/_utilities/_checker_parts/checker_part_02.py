@@ -14,10 +14,10 @@ import inspect
 from typing import TYPE_CHECKING, get_origin, get_type_hints
 
 from flext_core import FlextConstants as c, r
-from flext_core._protocols.result import FlextProtocolsResult as p
-from flext_core._typings.base import FlextTypingBase as tb
-from flext_core._typings.services import FlextTypesServices as ts
 
+from ..._protocols.result import FlextProtocolsResult as p
+from ..._typings.base import FlextTypingBase as tb
+from ..._typings.services import FlextTypesServices as ts
 from .checker_part_01 import FlextUtilitiesChecker as FlextUtilitiesCheckerPart01
 
 if TYPE_CHECKING:

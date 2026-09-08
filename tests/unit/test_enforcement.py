@@ -12,8 +12,9 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tests.unit._enforcement_support import make_class, messages, synthetic_method
 from tests.utilities import u
+
+from ._enforcement_support import make_class, messages, synthetic_method
 
 if TYPE_CHECKING:
     from flext_core import m

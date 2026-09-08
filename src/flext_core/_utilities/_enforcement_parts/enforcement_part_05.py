@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._constants.regex import FlextConstantsRegex as cre
-
+from ..._constants.enforcement import FlextConstantsEnforcement as c
+from ..._constants.regex import FlextConstantsRegex as cre
 from .enforcement_part_04 import (
     FlextUtilitiesEnforcement as FlextUtilitiesEnforcementPart04,
 )

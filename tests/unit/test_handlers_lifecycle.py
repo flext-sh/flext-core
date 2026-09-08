@@ -10,8 +10,9 @@ from flext_tests import h, r
 from tests.constants import c
 from tests.models import m
 from tests.typings import t
-from tests.unit._handlers_support import TestsFlextFlextHandlers
 from tests.utilities import u
+
+from ._handlers_support import TestsFlextFlextHandlers
 
 if TYPE_CHECKING:
     from tests.protocols import p

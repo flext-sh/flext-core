@@ -7,9 +7,10 @@ from pathlib import Path
 from typing import Annotated
 
 from flext_core import FlextRuntime, m, p, r, t
-from flext_core._models.containers import FlextModelsContainers
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._utilities.mapper_access import FlextUtilitiesMapperAccess
+
+from ..._models.containers import FlextModelsContainers
+from ..._models.pydantic import FlextModelsPydantic
+from ..mapper_access import FlextUtilitiesMapperAccess
 
 
 class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):

@@ -21,7 +21,8 @@ from pathlib import Path
 # Do NOT "optimize" this into a TYPE_CHECKING block. Same precedent: model_options.py,
 # model_runtime.py. Contact owner of bead ai-hub-mkzg before touching this line.
 from flext_core import FlextProtocols as p, FlextTypes as t, r
-from flext_core._constants.environment import FlextConstantsEnvironment
+
+from .._constants.environment import FlextConstantsEnvironment
 
 
 class FlextUtilitiesSettings:

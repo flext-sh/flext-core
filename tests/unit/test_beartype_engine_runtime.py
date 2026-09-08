@@ -29,7 +29,8 @@ import pytest
 from beartype import BeartypeConf, BeartypeStrategy
 
 import flext_core
-from tests.unit._beartype_engine_support import TestsFlextBeartypeEngine
+
+from ._beartype_engine_support import TestsFlextBeartypeEngine
 
 _FLEXT_CORE_ROOT: Path = Path(__file__).resolve().parents[2]
 

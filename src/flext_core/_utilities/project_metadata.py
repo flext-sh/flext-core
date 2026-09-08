@@ -12,17 +12,15 @@ import tomllib
 from functools import cache
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_core._constants.file import FlextConstantsFile as cf
-from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cpm
-from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
-from flext_core._typings.base import FlextTypingBase as t
+from .._constants.file import FlextConstantsFile as cf
+from .._constants.project_metadata import FlextConstantsProjectMetadata as cpm
+from .._models.project_metadata import FlextModelsProjectMetadata as mpm
+from .._typings.base import FlextTypingBase as t
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from flext_core._protocols.project_metadata import (
-        FlextProtocolsProjectMetadata as ppm,
-    )
+    from .._protocols.project_metadata import FlextProtocolsProjectMetadata as ppm
 
 
 class FlextUtilitiesProjectMetadata(mpm):
@@ -58,7 +56,9 @@ class FlextUtilitiesProjectMetadata(mpm):
             class_stem = flext.project.class_stem_override or cls.derive_class_stem(
                 package_name
             )
-            resolved_project = mpm.Project(name=package_name, version="0.0.0")
+            resolved_project = mpm.Project(
+                name=package_name, version=cpm.PROJECT_VERSION_PLACEHOLDER
+            )
             return mpm.ProjectMetadata(
                 root=root,
                 package_name=package_name,

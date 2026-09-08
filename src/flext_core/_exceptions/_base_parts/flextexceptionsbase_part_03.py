@@ -5,20 +5,21 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import c
-from flext_core._exceptions.helpers import FlextExceptionsHelpers
-from flext_core._runtime._metadata_validation import (
+
+from ..._runtime._metadata_validation import (
     FlextRuntimeMetadataValidation as FlextRuntime,
 )
-from flext_core._typings.base import FlextTypingBase as tb
-
+from ..._typings.base import FlextTypingBase as tb
+from ..helpers import FlextExceptionsHelpers
 from .flextexceptionsbase_part_02 import FlextBaseErrorStateMixin
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
 
     from flext_core import m
-    from flext_core._protocols.result import FlextProtocolsResult as pr
-    from flext_core._typings.services import FlextTypesServices as ts
+
+    from ..._protocols.result import FlextProtocolsResult as pr
+    from ..._typings.services import FlextTypesServices as ts
 
 
 class FlextBaseError(FlextBaseErrorStateMixin, Exception):

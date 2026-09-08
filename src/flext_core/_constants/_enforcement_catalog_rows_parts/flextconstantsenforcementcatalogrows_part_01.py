@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from typing import Final
 
-from flext_core._constants._enforcement_catalog_rows_parts._parts.flextconstantsenforcementcatalogrows_part_01_a import (
+from ._parts.flextconstantsenforcementcatalogrows_part_01_a import (
     INFRA_DETECTOR_ROWS_CORE,
 )
-from flext_core._constants._enforcement_catalog_rows_parts._parts.flextconstantsenforcementcatalogrows_part_01_b import (
+from ._parts.flextconstantsenforcementcatalogrows_part_01_b import (
     INFRA_DETECTOR_ROWS_PATTERNS,
 )
-from flext_core._constants._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_05 import (
+from .flextconstantsenforcementcatalogrows_part_05 import (
     FlextConstantsEnforcementCatalogInfraRowsExtended,
 )
 

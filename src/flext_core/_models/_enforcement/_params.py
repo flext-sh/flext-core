@@ -10,8 +10,7 @@ from typing import Literal
 
 from pydantic import Field
 
-from flext_core._typings.base import FlextTypingBase as t
-
+from ..._typings.base import FlextTypingBase as t
 from ._base import EnforcementModelBase, FlextModelsEnforcementBase
 
 

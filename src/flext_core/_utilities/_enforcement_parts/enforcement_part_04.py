@@ -4,16 +4,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal, cast
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-
+from ..._constants.enforcement import FlextConstantsEnforcement as c
+from ..._models.enforcement import FlextModelsEnforcement as me
 from .enforcement_part_01 import PREDICATE_BINDINGS
 from .enforcement_part_03 import (
     FlextUtilitiesEnforcement as FlextUtilitiesEnforcementPart03,
 )
 
 if TYPE_CHECKING:
-    from flext_core._typings.base import FlextTypingBase as t
+    from ..._typings.base import FlextTypingBase as t
 
 
 class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):

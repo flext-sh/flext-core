@@ -17,8 +17,9 @@ from flext_core import r
 from flext_tests import tm
 from tests.constants import c
 from tests.models import m
-from tests.unit._project_metadata_support import write_pyproject
 from tests.utilities import u
+
+from ._project_metadata_support import write_pyproject
 
 if TYPE_CHECKING:
     from pathlib import Path

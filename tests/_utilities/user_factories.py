@@ -6,7 +6,8 @@ from itertools import count
 from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_tests import m as tm
-from tests._utilities.railway_services import TestsFlextUtilitiesRailwayServicesMixin
+
+from .railway_services import TestsFlextUtilitiesRailwayServicesMixin
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

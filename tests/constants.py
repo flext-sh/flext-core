@@ -10,14 +10,15 @@ from __future__ import annotations
 
 from flext_core import FlextConstants
 from flext_tests import FlextTestsConstants
-from tests._constants.domain import TestsFlextConstantsDomain
-from tests._constants.errors import TestsFlextConstantsErrors
-from tests._constants.fixtures import TestsFlextConstantsFixtures
-from tests._constants.loggings import TestsFlextConstantsLoggings
-from tests._constants.other import TestsFlextConstantsOther
-from tests._constants.result import TestsFlextConstantsResult
-from tests._constants.services import TestsFlextConstantsServices
-from tests._constants.settings import TestsFlextConstantsSettings
+
+from ._constants.domain import TestsFlextConstantsDomain
+from ._constants.errors import TestsFlextConstantsErrors
+from ._constants.fixtures import TestsFlextConstantsFixtures
+from ._constants.loggings import TestsFlextConstantsLoggings
+from ._constants.other import TestsFlextConstantsOther
+from ._constants.result import TestsFlextConstantsResult
+from ._constants.services import TestsFlextConstantsServices
+from ._constants.settings import TestsFlextConstantsSettings
 
 
 class TestsFlextConstants(FlextTestsConstants, FlextConstants):

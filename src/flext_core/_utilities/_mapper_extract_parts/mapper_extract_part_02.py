@@ -9,9 +9,9 @@ from flext_core import (
     FlextResult as r,
     FlextTypes as t,
 )
-from flext_core._models.exception_params import FlextModelsExceptionParams
-from flext_core._utilities.guards import FlextUtilitiesGuards
 
+from ..._models.exception_params import FlextModelsExceptionParams
+from ..guards import FlextUtilitiesGuards
 from .mapper_extract_part_01 import (
     FlextUtilitiesMapperExtract as FlextUtilitiesMapperExtractPart01,
 )

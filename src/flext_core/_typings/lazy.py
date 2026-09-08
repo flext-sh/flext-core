@@ -13,7 +13,6 @@ type FlextLazyModuleGlobalValue = (
     | t.StrSequence
     | ModuleType
     | type
-    | Callable[..., FlextLazyModuleGlobalValue]
     | Callable[..., t.JsonValue | t.StrSequence | ModuleType | type | None]
     | None
 )

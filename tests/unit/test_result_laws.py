@@ -12,7 +12,8 @@ from hypothesis import given, settings, strategies as st
 
 from flext_tests import r
 from tests.protocols import p
-from tests.unit._result_scenarios import ResultOperationType
+
+from ._result_scenarios import ResultOperationType
 
 
 class TestsFlextCoreResultLaws:

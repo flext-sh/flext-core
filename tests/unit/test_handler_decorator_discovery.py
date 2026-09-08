@@ -24,16 +24,12 @@ if TYPE_CHECKING:
 class TestsFlextCoreHandlerDecoratorDiscovery:
     """Public contract: decorate -> discover -> invoke preserves the r[T] outcome."""
 
-    @staticmethod
-    def _module(name: str) -> types.ModuleType:
-        return types.ModuleType(name)
-
     def test_discovered_module_handler_invokes_with_success_outcome(self) -> None:
         @dataclass
         class CreateCommand:
             name: str
 
-        module = self._module("success_module")
+        module = types.ModuleType("success_module")
 
         @h.handler(command=CreateCommand, priority=100)
         def handle_create(cmd: CreateCommand) -> p.Result[str]:
@@ -54,7 +50,7 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         class DeleteCommand:
             user_id: str
 
-        module = self._module("failure_module")
+        module = types.ModuleType("failure_module")
 
         @h.handler(command=DeleteCommand)
         def handle_delete(cmd: DeleteCommand) -> p.Result[str]:
@@ -70,10 +66,10 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         assert outcome.error == "missing_u42"
 
     def test_scan_module_returns_empty_when_no_handlers_decorated(self) -> None:
-        module = self._module("plain_module")
+        module = types.ModuleType("plain_module")
 
         def plain(value: int) -> p.Result[int]:
-            return r[int].ok(value)
+            return r[int].ok(value * 2)
 
         module.__dict__["plain"] = plain
         module.__dict__["constant"] = "not-a-handler"
@@ -84,7 +80,7 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         class Command:
             pass
 
-        module = self._module("privacy_module")
+        module = types.ModuleType("privacy_module")
 
         @h.handler(command=Command)
         def _private_handler(cmd: Command) -> p.Result[str]:
@@ -110,7 +106,7 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         class Command:
             pass
 
-        module = self._module("config_module")
+        module = types.ModuleType("config_module")
 
         @h.handler(command=Command, priority=priority)
         def handle(cmd: Command) -> p.Result[str]:

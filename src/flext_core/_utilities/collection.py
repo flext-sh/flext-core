@@ -19,9 +19,9 @@ from flext_core import (
     FlextResult as r,
     FlextTypes as t,
 )
-from flext_core._models.containers import FlextModelsContainers as mc
-from flext_core._runtime._metadata import FlextRuntimeMetadata
 
+from .._models.containers import FlextModelsContainers as mc
+from .._runtime._metadata import FlextRuntimeMetadata
 from .collection_iter import FlextUtilitiesCollectionIter
 from .collection_merge import FlextUtilitiesCollectionMerge
 

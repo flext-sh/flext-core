@@ -14,15 +14,15 @@ from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
 from flext_core import c, t
-from flext_core._models.base import FlextModelsBase as m
-from flext_core._models.containers import FlextModelsContainers as mc
-from flext_core._models.domain_event import FlextModelsDomainEvent as mde
-from flext_core._protocols.result import FlextProtocolsResult as prt
 
+from .._models.base import FlextModelsBase as m
+from .._models.containers import FlextModelsContainers as mc
+from .._models.domain_event import FlextModelsDomainEvent as mde
+from .._protocols.result import FlextProtocolsResult as prt
 from .guards import FlextUtilitiesGuards as u
 
 if TYPE_CHECKING:
-    from flext_core._protocols.base import FlextProtocolsBase as pb
+    from .._protocols.base import FlextProtocolsBase as pb
 
 
 class FlextUtilitiesDomain:

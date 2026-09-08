@@ -74,7 +74,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingContextPart01):
     @staticmethod
     def _should_include_stack_trace() -> bool:
         try:
-            return logging.getLogger().getEffectiveLevel() <= logging.DEBUG
+            return logging.root.getEffectiveLevel() <= logging.DEBUG
         except c.EXC_ATTR_RUNTIME_TYPE as exc:
             FlextUtilitiesLoggingContext._report_internal_logging_failure(
                 c.LoggingOperation.SHOULD_INCLUDE_STACK, exc

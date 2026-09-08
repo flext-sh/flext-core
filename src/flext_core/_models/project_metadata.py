@@ -15,9 +15,9 @@ from typing import Annotated, ClassVar, Self
 
 from pydantic import AliasChoices, Field, field_validator, model_validator
 
-from flext_core._constants.regex import FlextConstantsRegex as cr
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._typings.base import FlextTypingBase as t
+from .._constants.regex import FlextConstantsRegex as cr
+from .._typings.base import FlextTypingBase as t
+from .pydantic import FlextModelsPydantic
 
 
 class _ProjectMetadataContract(FlextModelsPydantic.BaseModel):

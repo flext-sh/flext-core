@@ -2,19 +2,11 @@
 
 from __future__ import annotations
 
-from tests._utilities.validation_network import (
-    TestsFlextUtilitiesValidationNetworkScenarios,
-)
-from tests._utilities.validation_numeric import (
-    TestsFlextUtilitiesValidationNumericScenarios,
-)
-from tests._utilities.validation_pattern import (
-    TestsFlextUtilitiesValidationPatternScenarios,
-)
-from tests._utilities.validation_string import (
-    TestsFlextUtilitiesValidationStringScenarios,
-)
-from tests._utilities.validation_uri import TestsFlextUtilitiesValidationUriScenarios
+from .validation_network import TestsFlextUtilitiesValidationNetworkScenarios
+from .validation_numeric import TestsFlextUtilitiesValidationNumericScenarios
+from .validation_pattern import TestsFlextUtilitiesValidationPatternScenarios
+from .validation_string import TestsFlextUtilitiesValidationStringScenarios
+from .validation_uri import TestsFlextUtilitiesValidationUriScenarios
 
 
 class TestsFlextUtilitiesValidationScenariosMixin:

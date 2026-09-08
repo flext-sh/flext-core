@@ -12,14 +12,15 @@ from typing import TYPE_CHECKING
 from pydantic import ValidationError as PydanticValidationError
 
 from flext_core import c, m
-from flext_core._protocols.result import FlextProtocolsResult as pr
-from flext_core._runtime._metadata_validation import (
+
+from .._protocols.result import FlextProtocolsResult as pr
+from .._runtime._metadata_validation import (
     FlextRuntimeMetadataValidation as FlextRuntime,
 )
 
 if TYPE_CHECKING:
-    from flext_core._typings.base import FlextTypingBase as tb
-    from flext_core._typings.services import FlextTypesServices as ts
+    from .._typings.base import FlextTypingBase as tb
+    from .._typings.services import FlextTypesServices as ts
 
 
 class FlextExceptionsHelpers:

@@ -6,8 +6,7 @@ import sys
 from types import ModuleType
 from typing import TYPE_CHECKING, cast
 
-from flext_core._typings.lazy import FlextTypesLazy
-
+from .._typings.lazy import FlextTypesLazy
 from .flextlazy_part_01 import (
     FlextLazy as FlextLazyPart01,
     LazyImportDict,
@@ -211,7 +210,11 @@ class FlextLazy(FlextLazyPart01):
         def _module_getattr(name: str) -> ModuleGlobalValue:
             return self.get(name, normalized, module_globals, module_name)
 
-        module_globals["__getattr__"] = _module_getattr
+        target = sys.modules.get(module_name)
+        if target is None:
+            msg = f"module {module_name!r} is not registered in sys.modules"
+            raise RuntimeError(msg)
+        target.__getattr__ = _module_getattr
         module_globals["__dir__"] = lambda: list(names)
         if publish_all:
             module_globals["__all__"] = names

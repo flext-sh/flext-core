@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from tests._utilities.case_generators import TestsFlextUtilitiesCaseGeneratorsMixin
-from tests._utilities.case_service_factories import (
-    TestsFlextUtilitiesCaseServiceFactoriesMixin,
-)
+from .case_generators import TestsFlextUtilitiesCaseGeneratorsMixin
+from .case_service_factories import TestsFlextUtilitiesCaseServiceFactoriesMixin
 
 
 class TestsFlextUtilitiesCaseFactoriesMixin(

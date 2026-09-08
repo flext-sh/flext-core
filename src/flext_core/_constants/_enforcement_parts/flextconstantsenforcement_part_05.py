@@ -5,14 +5,13 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Final
 
-from flext_core._constants._enforcement_data import SMELL_RULES_TEXT
-
+from .._enforcement_data import SMELL_RULES_TEXT
 from .flextconstantsenforcement_part_09 import NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from flext_core._typings.base import FlextTypingBase as t
+    from ..._typings.base import FlextTypingBase as t
 
 _BASE_ENFORCEMENT_RULES_TEXT: dict[str, t.StrPair] = {
     "no_any": ("Any is FORBIDDEN (detected recursively)", "Use a t.* type contract."),

@@ -39,7 +39,7 @@ class _EchoService(s[str]):
         return {"service": type(self).__name__, "payload": self.payload.text}
 
     def valid(self) -> bool:
-        validation: p.SuccessCheckable = self.validate_business_rules()
+        validation: p.Result[bool] = self.validate_business_rules()
         return validation.success
 
     def validate_business_rules(self) -> p.Result[bool]:

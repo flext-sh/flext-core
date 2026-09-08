@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from .collections import FlextModelsCollections
     from .config import FlextModelsConfig
     from .container import FlextModelsContainer
-    from .containers import FlextModelsContainers, mc
+    from .containers import FlextModelsContainers
     from .context import FlextModelsContext
     from .cqrs import FlextModelsCqrs
     from .dispatcher import FlextModelsDispatcher
@@ -85,7 +85,6 @@ __all__: tuple[str, ...] = (
     "_context",
     "_enforcement",
     "_exception_params_parts",
-    "mc",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
@@ -114,7 +113,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".collections": ("FlextModelsCollections",),
             ".config": ("FlextModelsConfig",),
             ".container": ("FlextModelsContainer",),
-            ".containers": ("FlextModelsContainers", "mc"),
+            ".containers": ("FlextModelsContainers",),
             ".context": ("FlextModelsContext",),
             ".cqrs": ("FlextModelsCqrs",),
             ".dispatcher": ("FlextModelsDispatcher",),
