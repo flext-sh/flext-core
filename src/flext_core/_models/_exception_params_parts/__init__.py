@@ -15,7 +15,7 @@ __all__: tuple[str, ...] = ("FlextModelsExceptionParams",)
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
-            ".flextmodelsexceptionparams_part_03": ("FlextModelsExceptionParams",)
+            ".flextmodelsexceptionparams_part_03": ("FlextModelsExceptionParams",),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
