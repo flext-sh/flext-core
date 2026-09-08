@@ -10,8 +10,8 @@ from __future__ import annotations
 from enum import StrEnum
 
 import pytest
-
 from flext_tests import tm
+
 from tests.constants import c
 from tests.typings import t
 

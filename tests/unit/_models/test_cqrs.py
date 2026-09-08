@@ -12,9 +12,9 @@ from __future__ import annotations
 from typing import Annotated
 
 import pytest
+from flext_tests import tm
 
 from flext_core import c, t
-from flext_tests import tm
 from tests.models import m
 
 

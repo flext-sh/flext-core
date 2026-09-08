@@ -11,8 +11,8 @@ from __future__ import annotations
 import operator
 
 import pytest
-
 from flext_tests import e
+
 from tests.constants import c
 from tests.protocols import p
 

@@ -11,8 +11,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-
 from flext_tests import e
+
 from tests.constants import c
 
 if TYPE_CHECKING:

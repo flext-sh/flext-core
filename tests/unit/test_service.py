@@ -16,9 +16,9 @@ from collections.abc import Mapping
 from typing import override
 
 import pytest
+from flext_tests import FlextTestsCase, FlextTestsSettings, r
 from pydantic import BaseModel
 
-from flext_tests import FlextTestsCase, FlextTestsSettings, r
 from tests.base import s
 from tests.models import m
 from tests.protocols import p

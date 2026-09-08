@@ -214,6 +214,7 @@ class FlextLazy(FlextLazyPart01):
         if target is None:
             msg = f"module {module_name!r} is not registered in sys.modules"
             raise RuntimeError(msg)
+        module_globals["__getattr__"] = _module_getattr
         target.__getattr__ = _module_getattr
         module_globals["__dir__"] = lambda: list(names)
         if publish_all:

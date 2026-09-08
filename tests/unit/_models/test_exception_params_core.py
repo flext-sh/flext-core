@@ -6,8 +6,8 @@ import math
 from typing import TYPE_CHECKING
 
 import pytest
-
 from flext_tests import tm
+
 from tests.constants import c
 from tests.models import m
 

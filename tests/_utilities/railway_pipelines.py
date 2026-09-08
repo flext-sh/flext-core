@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_tests import e, m as tm, r
+
 from tests.constants import c
 from tests.models import m
 

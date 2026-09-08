@@ -12,9 +12,9 @@ from dataclasses import dataclass
 from typing import cast
 
 import pytest
+from flext_tests import r, tm
 
 from flext_core import FlextResult, e, m
-from flext_tests import r, tm
 from tests.protocols import p
 
 

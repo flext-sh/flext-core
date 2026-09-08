@@ -8,8 +8,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextConstants
 from flext_tests import FlextTestsConstants
+
+from flext_core import FlextConstants
 
 from ._constants.domain import TestsFlextConstantsDomain
 from ._constants.errors import TestsFlextConstantsErrors
