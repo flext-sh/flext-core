@@ -53,12 +53,7 @@ classifiers = [
   "Topic :: Software Development :: Libraries :: Application Frameworks",
   "Typing :: Typed",
 ]
-dependencies = [
-  "beartype>=0.22.9",
-  "flext-core",
-  "pydantic>=2.13.4",
-  "pydantic-settings>=2.15.0",
-]
+dependencies = ["pydantic>=2.13.4", "pydantic-settings>=2.15.0"]
 description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
 keywords = [
   "clean-architecture",
@@ -544,10 +539,6 @@ torch = false
 ruff = false
 faker = false
 pytest-randomly = false
-
-[tool.uv.sources.flext-core]
-git = "https://github.com/flext-sh/flext-core.git"
-branch = "0.12.0-dev"
 
 [tool.uv.sources.flext-infra]
 git = "https://github.com/flext-sh/flext-infra.git"
