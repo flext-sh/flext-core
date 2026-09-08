@@ -546,7 +546,7 @@ faker = false
 pytest-randomly = false
 
 [tool.uv.sources.flext-core]
-git = "git@github.com:flext-sh/flext-core.git"
+git = "https://github.com/flext-sh/flext-core.git"
 branch = "0.12.0-dev"
 
 [tool.uv.sources.flext-infra]
