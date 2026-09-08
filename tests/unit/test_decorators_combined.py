@@ -6,9 +6,9 @@ import time
 from typing import TYPE_CHECKING
 
 import pytest
+from flext_tests import d, e, r
 from hypothesis import given, settings, strategies as st
 
-from flext_tests import d, e, r
 from tests.utilities import u
 
 from ._decorators_support import TestsFlextDecoratorsLegacy

@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, override
 
 from flext_tests.base import FlextTestsServiceBase as _FlextTestsServiceBase
+
 from tests.constants import c
 
 if TYPE_CHECKING:

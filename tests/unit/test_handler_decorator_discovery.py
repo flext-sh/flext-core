@@ -14,7 +14,6 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import pytest
-
 from flext_tests import h, r
 
 if TYPE_CHECKING:

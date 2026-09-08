@@ -12,8 +12,8 @@ from collections.abc import Callable
 from typing import NoReturn
 
 import pytest
-
 from flext_tests import d, e, r, tm
+
 from tests.protocols import p
 
 _COMBINED_SUM = 6

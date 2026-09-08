@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Annotated, ClassVar, override
 
 from flext_tests import r
+
 from tests.base import s
 from tests.models import m
 from tests.utilities import u

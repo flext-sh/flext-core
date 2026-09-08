@@ -7,9 +7,9 @@ import warnings
 from typing import TYPE_CHECKING
 
 import pytest
+from flext_tests import d, e, r, tm
 
 from flext_core import FlextContainer
-from flext_tests import d, e, r, tm
 from tests.models import m
 
 if TYPE_CHECKING:

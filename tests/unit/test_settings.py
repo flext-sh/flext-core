@@ -13,10 +13,10 @@ import sys
 from pathlib import Path
 
 import pytest
+from flext_tests import u
 from pydantic import ValidationError
 
 from flext_core import FlextSettings
-from flext_tests import u
 
 
 class TestsFlextCoreSettings:

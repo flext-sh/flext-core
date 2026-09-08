@@ -7,8 +7,9 @@ import time
 from contextlib import redirect_stdout
 from typing import TYPE_CHECKING
 
-from flext_core import FlextContainer
 from flext_tests import r, tm
+
+from flext_core import FlextContainer
 from tests.typings import t
 from tests.utilities import u
 

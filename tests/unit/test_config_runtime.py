@@ -10,11 +10,11 @@ shim, no ``def settings(self) -> XSettings: return XSettings.fetch_global()`` ov
 
 from __future__ import annotations
 
+from flext_tests import tm
 from pydantic import ValidationError
 
 import flext_core as fc
 from flext_core import FlextConfig, FlextSettings, config, settings
-from flext_tests import tm
 
 
 class TestsFlextCoreConfigSettingsCanonical:
