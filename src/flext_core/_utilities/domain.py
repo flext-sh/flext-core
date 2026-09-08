@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING
 from flext_core import c, t
 
 from .._models.base import FlextModelsBase as m
+from .._models.containers import FlextModelsContainers
 from .._models.domain_event import FlextModelsDomainEvent as mde
 from .._protocols.result import FlextProtocolsResult as prt
 from .guards import FlextUtilitiesGuards as u
