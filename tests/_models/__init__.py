@@ -9,9 +9,9 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from . import _mixins as _mixins
     from flext_tests import c, d, e, h, p, r, s, t, td, tf, tk, tm, tv, u, x
 
+    from . import _mixins as _mixins
     from .mixins import TestsFlextModelsMixins, m
 __all__: tuple[str, ...] = (
     "TestsFlextModelsMixins",
