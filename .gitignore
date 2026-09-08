@@ -267,6 +267,9 @@ legado/
 *.tpl.rej
 
 # --- codegen conform: generated runtime ignores ---
+mise.lock
+.mise.lock
+**/.mise.lock
 .direnv/
 .reports/
 .venv

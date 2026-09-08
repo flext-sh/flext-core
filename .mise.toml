@@ -9,13 +9,23 @@
 # NOTE: mise carries the Python runtime and native tools from the config SSOT.
 # Python dependencies remain owned by uv.lock. Mise resolves every tool to the
 # newest published release at setup time: the fleet runs unlocked and current.
+# Never run `mise lock`. Never commit mise.lock.
+
+# === SECTION: settings (managed) ===
+# Source: config:codegen.toolchain.mise_lockfile / mise_locked
+[settings]
+lockfile = false
+locked = false
+[tool_config]
+locked = false
+# End SECTION: settings
 
 # === SECTION: tools (managed) ===
 # Source: config:python_version, config:codegen.scaffold.project.dev native toolchain floors
 #         (kubectl_version, helm_version, kind_version, taplo_version, ast_grep_version,
-#          gitleaks_version, scc_version, kubeconform_version, qlty_version,
-#          node_version, jscpd_version, waza_version,
-#          beads (selector/version/prerelease), gascity (selector/version/prerelease))
+#          gitleaks_version, scc_selector/scc_version, kubeconform_version, qlty_selector/qlty_version,
+#          node_version, jscpd_selector/jscpd_version, waza_selector/waza_version,
+#          beads (selector/track/version/prerelease/branch), gascity (selector/track/version/prerelease/branch))
 [tools]
 python = "3.13"
 uv = "latest"
@@ -27,30 +37,21 @@ direnv = "latest"
 taplo = "latest"
 ast-grep = "latest"
 gitleaks = "latest"
-# scc (the loc-cap gate's code counter) ships no bare mise registry alias, so
-# pin the aqua backend explicitly (matching the qlty selector below). Its
-# aqua-registry entry carries an evergreen catch-all rule with real
-# per-platform release assets, so it never falls back to a source build,
-# which keeps the offline setup/gen/check/test path source-build-free.
 "aqua:boyter/scc" = "latest"
 kubeconform = "latest"
-node = "26.8"
-"npm:jscpd" = "5.1.2"
-"github:microsoft/waza" = "0.38.7"
-# Go runtime for the Go projects in this workspace.
-go = "1.26"
-# qlty ships no mise registry alias; the github backend selector is the only
-# resolvable form (bare 'qlty' fails mise install: 'not found in registry').
-# GitHub Artifact Attestations is an external-token capability and is not
-# selected by setup/gen, so installation never silently requires a personal
-# GitHub credential.
+node = "latest"
+"npm:jscpd" = "latest"
+"github:microsoft/waza" = "latest"
+go = "latest"
 [tools."github:qltysh/qlty"]
-version = "0.642.0"
+version = "latest"
 github_attestations = false
+
 [tools."github:marlon-costa-dc/beads"]
 version = "latest"
 prerelease = true
 github_attestations = false
+
 [tools."github:marlon-costa-dc/gascity"]
 version = "latest"
 prerelease = true
