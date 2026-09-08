@@ -18,8 +18,6 @@ import typing
 from contextlib import suppress
 from typing import TYPE_CHECKING, ClassVar, override
 
-import structlog
-
 from flext_core import FlextConstants as c, FlextProtocols as p, FlextTypes as t
 
 if TYPE_CHECKING:

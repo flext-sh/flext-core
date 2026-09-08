@@ -101,12 +101,12 @@ class FlextModelsHandler:
             ),
         ] = None
         metrics_state_data: Annotated[
-            mc.Dict,
+            FlextModelsContainers.Dict,
             mp.Field(
-                default_factory=lambda: mc.Dict(root={}),
+                default_factory=lambda: FlextModelsContainers.Dict(root={}),
                 description="Mutable metrics payload for the active handler execution.",
             ),
-        ] = mp.Field(default_factory=lambda: mc.Dict(root={}))
+        ] = mp.Field(default_factory=lambda: FlextModelsContainers.Dict(root={}))
 
         @up.computed_field
         @property

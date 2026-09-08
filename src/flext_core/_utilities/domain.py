@@ -154,7 +154,9 @@ class FlextUtilitiesDomain:
     def add_domain_event(
         entity: pb.HasDomainEvents,
         event_type: str,
-        data: mc.ConfigMap | t.MappingKV[str, t.JsonPayload | None] | None = None,
+        data: FlextModelsContainers.ConfigMap
+        | t.MappingKV[str, t.JsonPayload | None]
+        | None = None,
         aggregate_id: str | None = None,
     ) -> mde.Entry:
         """Create a domain event and append it to the entity's event buffer.
@@ -164,11 +166,11 @@ class FlextUtilitiesDomain:
         ``BeforeValidator`` on ``Entry.data`` handles all normalization.
         """
         if data is None:
-            normalized_data = mc.ConfigMap(root={})
-        elif isinstance(data, mc.ConfigMap):
+            normalized_data = FlextModelsContainers.ConfigMap(root={})
+        elif isinstance(data, FlextModelsContainers.ConfigMap):
             normalized_data = data
         else:
-            normalized_data = mc.ConfigMap.model_validate(data)
+            normalized_data = FlextModelsContainers.ConfigMap.model_validate(data)
         entry = mde.Entry(
             event_type=event_type,
             aggregate_id=aggregate_id if aggregate_id is not None else entity.unique_id,

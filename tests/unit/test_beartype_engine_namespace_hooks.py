@@ -15,6 +15,7 @@ from pathlib import Path
 
 import pytest
 
+from flext_core import u
 from flext_tests import tm
 from tests.protocols import p
 from tests.typings import t
@@ -54,7 +55,7 @@ class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
             from flext_core.utilities import (
                 FlextUtilitiesBeartypeEngine as be,
             )
-            from flext_core import c
+            from flext_core import u, c
             from flext_core.models import (
                 FlextModelsEnforcement as me,
             )

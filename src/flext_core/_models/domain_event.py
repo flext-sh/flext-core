@@ -49,11 +49,12 @@ class FlextModelsDomainEvent:
             ),
         ]
         data: Annotated[
-            mc.ConfigMap, mp.BeforeValidator(u.normalize_domain_event_data)
+            FlextModelsContainers.ConfigMap,
+            mp.BeforeValidator(u.normalize_domain_event_data),
         ] = mp.Field(
             validate_default=True,
             description="Event data container",
-            default_factory=lambda: mc.ConfigMap(root={}),
+            default_factory=lambda: FlextModelsContainers.ConfigMap(root={}),
         )
 
     DomainEvent = Entry
