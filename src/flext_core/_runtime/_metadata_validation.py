@@ -12,12 +12,13 @@ from typing import TYPE_CHECKING
 from pydantic import BaseModel
 
 from flext_core import FlextConstants as c
-from flext_core._protocols.result import FlextProtocolsResult as prt
-from flext_core._typings.typeadapters import FlextTypesTypeAdapters as tta
+
+from .._protocols.result import FlextProtocolsResult as prt
+from .._typings.typeadapters import FlextTypesTypeAdapters as tta
 
 if TYPE_CHECKING:
-    from flext_core._typings.base import FlextTypingBase as tb
-    from flext_core._typings.services import FlextTypesServices as ts
+    from .._typings.base import FlextTypingBase as tb
+    from .._typings.services import FlextTypesServices as ts
 
 from ._metadata import FlextRuntimeMetadata
 

@@ -20,17 +20,13 @@ from tests.utilities import u
 class TestsFlextDecoratorsDiscovery:
     """Behavior contract for u.scan_module — used by FlextContainer to register factories."""
 
-    @staticmethod
-    def _module(name: str) -> types.ModuleType:
-        return types.ModuleType(name)
-
     def test_scan_module_with_no_factories_returns_empty_list(self) -> None:
-        mod = self._module("empty_mod")
+        mod = types.ModuleType("empty_mod")
 
         assert u.scan_module(mod) == []
 
     def test_scan_module_ignores_undecorated_functions(self) -> None:
-        mod = self._module("plain_mod")
+        mod = types.ModuleType("plain_mod")
 
         def plain() -> p.Result[int]:
             return r[int].ok(1)
@@ -40,14 +36,14 @@ class TestsFlextDecoratorsDiscovery:
         assert u.scan_module(mod) == []
 
     def test_scan_module_ignores_non_callable_attributes(self) -> None:
-        mod = self._module("noncallable_mod")
+        mod = types.ModuleType("noncallable_mod")
         mod.__dict__["some_string"] = "not callable"
         mod.__dict__["some_number"] = 42
 
         assert u.scan_module(mod) == []
 
     def test_scan_module_discovers_decorated_public_function(self) -> None:
-        mod = self._module("factory_mod")
+        mod = types.ModuleType("factory_mod")
 
         @d.factory("my_service")
         def build_service() -> p.Result[int]:
@@ -63,7 +59,7 @@ class TestsFlextDecoratorsDiscovery:
         assert config.name == "my_service"
 
     def test_scan_module_skips_private_names(self) -> None:
-        mod = self._module("private_mod")
+        mod = types.ModuleType("private_mod")
 
         @d.factory("hidden")
         def _private_factory() -> p.Result[int]:
@@ -80,7 +76,7 @@ class TestsFlextDecoratorsDiscovery:
     def test_scan_module_preserves_config_metadata(
         self, *, singleton: bool, lazy: bool
     ) -> None:
-        mod = self._module("metadata_mod")
+        mod = types.ModuleType("metadata_mod")
 
         @d.factory("configured", singleton=singleton, lazy=lazy)
         def build() -> p.Result[int]:
@@ -97,7 +93,7 @@ class TestsFlextDecoratorsDiscovery:
         }
 
     def test_scan_module_returns_results_sorted_by_attribute_name(self) -> None:
-        mod = self._module("multi_mod")
+        mod = types.ModuleType("multi_mod")
 
         @d.factory("z")
         def zebra() -> p.Result[int]:
@@ -117,7 +113,7 @@ class TestsFlextDecoratorsDiscovery:
     def test_scan_module_returns_only_decorated_functions_from_mixed_module(
         self,
     ) -> None:
-        mod = self._module("mixed_mod")
+        mod = types.ModuleType("mixed_mod")
 
         @d.factory("kept")
         def decorated() -> p.Result[int]:
@@ -135,7 +131,7 @@ class TestsFlextDecoratorsDiscovery:
         assert [name for name, _ in result] == ["decorated"]
 
     def test_scan_module_is_idempotent(self) -> None:
-        mod = self._module("idempotent_mod")
+        mod = types.ModuleType("idempotent_mod")
 
         @d.factory("svc")
         def build() -> p.Result[int]:

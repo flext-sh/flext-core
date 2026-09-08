@@ -9,8 +9,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_core import FlextConstants as c, FlextProtocols as p, m
-from flext_core._exceptions.template import FlextExceptionsTemplate
 
+from ..template import FlextExceptionsTemplate
 from .flextexceptionsfactories_part_01 import (
     FlextExceptionsFactories as FlextExceptionsFactoriesPart01,
 )

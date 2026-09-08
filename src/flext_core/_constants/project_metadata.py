@@ -18,3 +18,4 @@ class FlextConstantsProjectMetadata:
         ("flext-core", "Flext"),
     )
     PYPROJECT_FILENAME: Final[str] = "pyproject.toml"
+    FALLBACK_PROJECT_VERSION: Final[str] = "0.0.0"

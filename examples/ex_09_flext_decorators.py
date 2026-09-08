@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from functools import wraps
 from typing import TYPE_CHECKING
 
@@ -13,10 +14,11 @@ if TYPE_CHECKING:
 
 
 def _log_result[T](fn: Callable[..., T]) -> Callable[..., T]:
-    """Decorator that passes through a result-returning function unchanged."""
+    """Decorator that logs each call, then delegates to the wrapped function."""
 
     @wraps(fn)
     def _wrapper(*args: object, **kwargs: object) -> T:
+        logging.getLogger(__name__).info("[_log_result] calling %s", fn.__name__)
         return fn(*args, **kwargs)
 
     return _wrapper

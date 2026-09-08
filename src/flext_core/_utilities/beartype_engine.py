@@ -12,13 +12,12 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from types import MappingProxyType
-from typing import ClassVar, override
+from typing import ClassVar
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._protocols.base import FlextProtocolsBase as p
-from flext_core._typings.base import FlextTypingBase as t
-
+from .._constants.enforcement import FlextConstantsEnforcement as c
+from .._models.pydantic import FlextModelsPydantic as mp
+from .._protocols.base import FlextProtocolsBase as p
+from .._typings.base import FlextTypingBase as t
 from ._beartype._helpers_parts.helpers_part_03 import FlextUtilitiesBeartypeHelpers
 from ._beartype.attr_visitor import FlextUtilitiesBeartypeAttrVisitor
 from ._beartype.class_visitor import FlextUtilitiesBeartypeClassVisitor
@@ -79,40 +78,6 @@ class FlextUtilitiesBeartypeEngine(
     def contains_any(hint: t.TypeHintSpecifier | None) -> bool:
         return FlextUtilitiesBeartypeHelpers.contains_any_recursive(hint, seen=set())
 
-    @override
-    @staticmethod
-    def has_forbidden_collection_origin(
-        hint: t.TypeHintSpecifier | None, forbidden: frozenset[str]
-    ) -> tuple[bool, str]:
-        return FlextUtilitiesBeartypeHelpers.has_forbidden_collection_origin(
-            hint, forbidden
-        )
-
-    @override
-    @staticmethod
-    def has_runtime_protocol_marker(value: type) -> bool:
-        return FlextUtilitiesBeartypeHelpers.has_runtime_protocol_marker(value)
-
-    @override
-    @staticmethod
-    def has_nested_namespace(value: type) -> bool:
-        return FlextUtilitiesBeartypeHelpers.has_nested_namespace(value)
-
-    @override
-    @staticmethod
-    def count_union_members(hint: t.TypeHintSpecifier | None) -> int:
-        return FlextUtilitiesBeartypeHelpers.count_union_members(hint)
-
-    @override
-    @staticmethod
-    def matches_str_none_union(hint: t.TypeHintSpecifier | None) -> bool:
-        return FlextUtilitiesBeartypeHelpers.matches_str_none_union(hint)
-
-    @override
-    @staticmethod
-    def alias_contains_any(alias_value: t.TypeHintSpecifier | None) -> bool:
-        return FlextUtilitiesBeartypeHelpers.alias_contains_any(alias_value)
-
     @classmethod
     def apply(
         cls,
@@ -149,6 +114,4 @@ class FlextUtilitiesBeartypeEngine(
     })
 
 
-ube = FlextUtilitiesBeartypeEngine
-
-__all__: list[str] = ["FlextUtilitiesBeartypeEngine", "ube"]
+__all__: list[str] = ["FlextUtilitiesBeartypeEngine"]

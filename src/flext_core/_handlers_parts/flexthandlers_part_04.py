@@ -14,8 +14,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_core import c, r, u
-from flext_core._utilities.handler import FlextUtilitiesHandler
 
+from .._utilities.handler import FlextUtilitiesHandler
 from .flexthandlers_part_03 import FlextHandlers as FlextHandlersPart03
 
 if TYPE_CHECKING:

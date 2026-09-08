@@ -17,8 +17,9 @@ from typing import TYPE_CHECKING, Annotated
 from pydantic import Field
 
 from flext_core import c, p, r, t
-from flext_core._models.base import FlextModelsBase
-from flext_core._utilities.args import FlextUtilitiesArgs
+
+from .._models.base import FlextModelsBase
+from .args import FlextUtilitiesArgs
 
 if TYPE_CHECKING:
     from collections.abc import Callable

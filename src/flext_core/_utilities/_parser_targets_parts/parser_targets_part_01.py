@@ -6,10 +6,11 @@ from collections.abc import Mapping
 from enum import StrEnum
 
 from flext_core import c, p, r, t
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
-from flext_core._utilities.model import FlextUtilitiesModel
-from flext_core._utilities.parser_coerce import FlextUtilitiesParserCoerce
+
+from ..._models.pydantic import FlextModelsPydantic
+from ..guards_type_model import FlextUtilitiesGuardsTypeModel
+from ..model import FlextUtilitiesModel
+from ..parser_coerce import FlextUtilitiesParserCoerce
 
 
 class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
@@ -62,13 +63,10 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
                 ),
             )
 
-        def _on_success(validated: T) -> p.Result[T]:
-            return r[T].ok(validated)
-
         parsed_direct: T = (
             FlextUtilitiesModel
             .validate_value(target, value)
-            .fold(_on_failure, _on_success)
+            .fold(_on_failure, r[T].ok)
             .unwrap()
         )
         return parsed_direct

@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core._protocols.base import FlextProtocolsBase
-from flext_core._protocols.result import FlextProtocolsResult
+from ..base import FlextProtocolsBase
+from ..result import FlextProtocolsResult
 
 if TYPE_CHECKING:
     from flext_core import FlextTypes as t

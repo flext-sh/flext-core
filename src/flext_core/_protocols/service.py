@@ -14,9 +14,8 @@ from collections.abc import Mapping
 from contextlib import AbstractContextManager
 from typing import Protocol, runtime_checkable
 
-from flext_core._typings.base import FlextTypingBase as tb
-from flext_core._typings.services import FlextTypesServices as ts
-
+from .._typings.base import FlextTypingBase as tb
+from .._typings.services import FlextTypesServices as ts
 from .base import FlextProtocolsBase
 from .container import FlextProtocolsContainer
 from .context import FlextProtocolsContext

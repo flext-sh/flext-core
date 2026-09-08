@@ -19,8 +19,8 @@ from flext_core import (
     FlextResult as r,
     FlextTypes as t,
 )
-from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
 
+from .guards_type_model import FlextUtilitiesGuardsTypeModel
 from .parser_targets import FlextUtilitiesParserTargets
 
 

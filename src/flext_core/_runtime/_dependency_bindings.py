@@ -20,9 +20,9 @@ if TYPE_CHECKING:
     from collections.abc import Callable, MutableSequence
     from types import ModuleType
 
-    from flext_core._protocols.container import FlextProtocolsContainer as pc
-    from flext_core._typings.base import FlextTypingBase as tb
-    from flext_core._typings.services import FlextTypesServices as ts
+    from .._protocols.container import FlextProtocolsContainer as pc
+    from .._typings.base import FlextTypingBase as tb
+    from .._typings.services import FlextTypesServices as ts
 
 
 class FlextRuntimeDependencyBindings(FlextRuntimeDependencyOptions):

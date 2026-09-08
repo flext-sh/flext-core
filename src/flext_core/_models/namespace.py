@@ -12,12 +12,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core._utilities.enforcement import FlextUtilitiesEnforcement as ue
+from .._constants.enforcement import FlextConstantsEnforcement as c
+from .._typings.base import FlextTypingBase as t
+from .._utilities.enforcement import FlextUtilitiesEnforcement as ue
 
 if TYPE_CHECKING:
-    from flext_core._typings.pydantic import FlextTypesPydantic as tp
+    from .._typings.pydantic import FlextTypesPydantic as tp
 
 
 class FlextModelsNamespace:

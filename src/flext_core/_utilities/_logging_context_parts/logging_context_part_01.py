@@ -20,9 +20,10 @@ from flext_core import (
     FlextRuntime,
     FlextTypes as t,
 )
-from flext_core._utilities.collection import FlextUtilitiesCollection
-from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
-from flext_core._utilities.logging_config import FlextUtilitiesLoggingConfig
+
+from ..collection import FlextUtilitiesCollection
+from ..guards_type_model import FlextUtilitiesGuardsTypeModel
+from ..logging_config import FlextUtilitiesLoggingConfig
 
 if TYPE_CHECKING:
     import types

@@ -85,12 +85,9 @@ class Ex01r(Ex01ResultAdvancedSections):
             else m.ConfigMap(root={}),
         )
 
-        @r.safe
-        def parse_int(value: str) -> int:
-            return int(value)
-
-        safe_ok = parse_int("42")
-        safe_fail = parse_int("x")
+        safe_int = r.safe(int)
+        safe_ok = safe_int("42")
+        safe_fail = safe_int("x")
         self.audit_check("safe.success.unwrap_or", safe_ok.unwrap_or(0))
         self.audit_check("safe.failure.error", safe_fail.error)
 

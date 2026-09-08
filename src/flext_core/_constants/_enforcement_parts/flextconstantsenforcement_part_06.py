@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Final
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from flext_core._typings.base import FlextTypingBase as t
+    from ..._typings.base import FlextTypingBase as t
 
 
 class FlextConstantsEnforcementTargets:

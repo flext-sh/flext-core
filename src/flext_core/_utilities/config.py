@@ -18,10 +18,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import r
-from flext_core._constants.config import FlextConstantsConfig as c
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore as g
-from flext_core._utilities.reliability import FlextUtilitiesReliability as rel
+
+from .._constants.config import FlextConstantsConfig as c
+from .._typings.base import FlextTypingBase as t
+from .guards_type_core import FlextUtilitiesGuardsTypeCore as g
+from .reliability import FlextUtilitiesReliability as rel
 
 if TYPE_CHECKING:
     from collections.abc import Mapping

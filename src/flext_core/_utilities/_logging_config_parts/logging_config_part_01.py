@@ -18,8 +18,6 @@ import typing
 from contextlib import suppress
 from typing import ClassVar, override
 
-import structlog
-
 from flext_core import FlextConstants as c, FlextProtocols as p, FlextTypes as t
 
 
@@ -68,7 +66,9 @@ class FlextUtilitiesLoggingConfig:
             existing: p.Logger | None = getattr(self, "_writer_logger", None)
             if existing is not None:
                 return existing
-            created: p.Logger = structlog.get_logger(__name__)
+            created: p.Logger = FlextUtilitiesLoggingConfig.structlog().get_logger(
+                __name__
+            )
             self._writer_logger = created
             return created
 

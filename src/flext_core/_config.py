@@ -42,7 +42,7 @@ from yaml import MappingNode, SafeLoader
 from yaml.constructor import ConstructorError
 from yaml.resolver import BaseResolver
 
-from flext_core._settings import app_env_prefix, platform_config_root
+from ._settings import app_env_prefix, platform_config_root
 
 
 class _UniqueKeySafeLoader(SafeLoader):

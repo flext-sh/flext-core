@@ -17,7 +17,8 @@ from __future__ import annotations
 from typing import override
 
 from flext_tests import m
-from tests._models.mixins import TestsFlextModelsMixins
+
+from ._models.mixins import TestsFlextModelsMixins
 
 
 class TestsFlextModels(m):

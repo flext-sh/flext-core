@@ -578,7 +578,7 @@ class FlextContainer(p.Container):
         module_symbols = vars(caller_module)
         for factory_name, factory_config in factories:
             factory_func = module_symbols.get(factory_name)
-            if factory_func is None or not u.factory(factory_func):
+            if factory_func is None or not callable(factory_func):
                 continue
 
             _ = instance.factory(factory_config.name, factory_func)

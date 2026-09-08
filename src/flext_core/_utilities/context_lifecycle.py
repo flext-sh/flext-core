@@ -19,7 +19,8 @@ from flext_core import (
     FlextRuntime,
     FlextTypes as t,
 )
-from flext_core._utilities.context_crud import FlextUtilitiesContextCrud
+
+from .context_crud import FlextUtilitiesContextCrud
 
 
 class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):

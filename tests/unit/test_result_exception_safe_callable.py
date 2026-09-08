@@ -7,11 +7,10 @@ from typing import TYPE_CHECKING
 import pytest
 
 from flext_tests import r, tm
-from tests.unit._result_exception_support import TestsFlextResultExceptionCarrying
+
+from ._result_exception_support import TestsFlextResultExceptionCarrying
 
 if TYPE_CHECKING:
-    from collections.abc import Sized
-
     from tests.protocols import p
 
 
@@ -97,9 +96,7 @@ class TestsFlextCoreResultExceptionSafeCallable(TestsFlextResultExceptionCarryin
         tm.that(result.exception, is_=ValueError)
 
     def test_safe_captures_type_error(self) -> None:
-        @r.safe
-        def get_length(obj: Sized) -> int:
-            return len(obj)
+        get_length = r.safe(len)
 
         result: p.Result[int] = get_length(self.BrokenSized())
         tm.that(result.failure, eq=True)

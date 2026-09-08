@@ -11,14 +11,15 @@ from functools import wraps
 from typing import TYPE_CHECKING
 
 from flext_core import c, m, r
-from flext_core._decorators._logging import FlextDecoratorsLogging
-from flext_core._exceptions.types import FlextExceptionsTypes as et
+
+from .._exceptions.types import FlextExceptionsTypes as et
+from ._logging import FlextDecoratorsLogging
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core._protocols.logging import FlextProtocolsLogging as pl
-    from flext_core._protocols.result import FlextProtocolsResult as pr
+    from .._protocols.logging import FlextProtocolsLogging as pl
+    from .._protocols.result import FlextProtocolsResult as pr
 
 
 class FlextDecoratorsRailway(FlextDecoratorsLogging):

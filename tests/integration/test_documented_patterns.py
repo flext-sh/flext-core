@@ -246,10 +246,9 @@ class TestsFlextCoreDocumentedPatterns:
 
     def test_combined_decorator_wraps_return_in_success_result(self) -> None:
         """The combined decorator exposes a successful result for a plain return."""
-
-        @d.combined(operation_name="sum_values", railway_enabled=True, track_perf=False)
-        def sum_values(values: list[int]) -> int:
-            return sum(values)
+        sum_values = d.combined(
+            operation_name="sum_values", railway_enabled=True, track_perf=False
+        )(sum)
 
         # Act
         result = sum_values([1, 2, 3])

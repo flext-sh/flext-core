@@ -28,7 +28,7 @@ from pydantic import (
 )
 from pydantic_core import from_json, to_json, to_jsonable_python
 
-from flext_core._models.pydantic import FlextModelsPydantic as mp
+from .._models.pydantic import FlextModelsPydantic as mp
 
 
 class FlextUtilitiesPydantic:

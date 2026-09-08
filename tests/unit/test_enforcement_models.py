@@ -14,8 +14,9 @@ from flext_core.utilities import FlextUtilitiesEnforcement
 from tests.constants import c
 from tests.models import m
 from tests.typings import t
-from tests.unit._enforcement_support import messages
 from tests.utilities import u
+
+from ._enforcement_support import messages
 
 
 class TestsFlextEnforcementModels:

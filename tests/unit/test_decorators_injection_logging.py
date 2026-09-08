@@ -15,7 +15,8 @@ from flext_core.container import FlextContainer
 from flext_core.context import FlextContext
 from flext_tests import d
 from tests.models import m
-from tests.unit._decorators_support import capture_stdout
+
+from ._decorators_support import capture_stdout
 
 
 class TestsFlextCoreDecoratorsInjectionLogging:

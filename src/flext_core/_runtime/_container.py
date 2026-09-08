@@ -14,20 +14,20 @@ from typing import TYPE_CHECKING, Literal, TypeGuard
 from pydantic import BaseModel
 
 from flext_core import FlextConstants as c
-from flext_core._models.containers import FlextModelsContainers
-from flext_core._protocols.context import FlextProtocolsContext as pcx
-from flext_core._protocols.handler import FlextProtocolsHandler as ph
-from flext_core._protocols.logging import FlextProtocolsLogging as pl
-from flext_core._protocols.settings import FlextProtocolsSettings as ps
-from flext_core._typings.base import FlextTypingBase as tb
-from flext_core._typings.typeadapters import FlextTypesTypeAdapters as tta
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore as ugc
 
+from .._models.containers import FlextModelsContainers
+from .._protocols.context import FlextProtocolsContext as pcx
+from .._protocols.handler import FlextProtocolsHandler as ph
+from .._protocols.logging import FlextProtocolsLogging as pl
+from .._protocols.settings import FlextProtocolsSettings as ps
+from .._typings.base import FlextTypingBase as tb
+from .._typings.typeadapters import FlextTypesTypeAdapters as tta
+from .._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore as ugc
 from ._metadata_validation import FlextRuntimeMetadataValidation
 
 if TYPE_CHECKING:
-    from flext_core._protocols.base import FlextProtocolsBase as pb
-    from flext_core._typings.services import FlextTypesServices as ts
+    from .._protocols.base import FlextProtocolsBase as pb
+    from .._typings.services import FlextTypesServices as ts
 
 
 class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
@@ -47,7 +47,7 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
         item: pb.AttributeProbe, *, container_kind: Literal["mapping", "sequence"]
     ) -> ts.JsonPayload:
         """Normalize one container item to its canonical payload form."""
-        from flext_core._models.pydantic import FlextModelsPydantic
+        from .._models.pydantic import FlextModelsPydantic
 
         normalized_item: ts.JsonPayload
         match item:
@@ -91,7 +91,7 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
         | FlextModelsContainers.ObjectList
     ):
         """Normalize container registration payloads to canonical runtime types."""
-        from flext_core._models.containers import FlextModelsContainers
+        from .._models.containers import FlextModelsContainers
 
         if isinstance(value, Mapping):
             return FlextModelsContainers.ConfigMap(

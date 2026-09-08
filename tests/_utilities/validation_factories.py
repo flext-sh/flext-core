@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, override
 
-from tests._utilities.services import TestsFlextUtilitiesServicesMixin
-from tests._utilities.user_factories import TestsFlextUtilitiesUserFactoriesMixin
 from tests.constants import c
+
+from .services import TestsFlextUtilitiesServicesMixin
+from .user_factories import TestsFlextUtilitiesUserFactoriesMixin
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
