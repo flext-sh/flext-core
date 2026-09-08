@@ -66,9 +66,9 @@ class FlextUtilitiesLoggingConfig:
             existing: p.Logger | None = getattr(self, "_writer_logger", None)
             if existing is not None:
                 return existing
-            created: p.Logger = FlextUtilitiesLoggingConfig.structlog().get_logger(
-                __name__
-            )
+            from flext_core import u
+
+            created: p.Logger = u.fetch_logger(__name__)
             self._writer_logger = created
             return created
 
