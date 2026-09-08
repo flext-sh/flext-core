@@ -9,7 +9,8 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from . import _base_parts as _base_parts, _factories_parts as _factories_parts
+    from . import _base_parts as _base_parts
+    from . import _factories_parts as _factories_parts
     from ._base_parts.flextexceptionsbase_part_01 import FlextBaseErrorMetadataMixin
     from ._base_parts.flextexceptionsbase_part_02 import FlextBaseErrorStateMixin
     from .base import FlextExceptionsBase

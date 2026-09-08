@@ -9,15 +9,13 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
+    from . import benchmark as benchmark
+    from . import fixtures as fixtures
+    from . import integration as integration
+    from . import unit as unit
     from flext_core import FlextConstants
     from flext_tests import FlextTestsConstants
 
-    from . import (
-        benchmark as benchmark,
-        fixtures as fixtures,
-        integration as integration,
-        unit as unit,
-    )
     from .base import TestsFlextServiceBase, TestsFlextServiceBase as s
     from .models import TestsFlextModels, TestsFlextModels as m
     from .protocols import TestsFlextProtocols, TestsFlextProtocols as p
