@@ -25,7 +25,7 @@ from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore 
 from ._metadata_validation import FlextRuntimeMetadataValidation
 
 if TYPE_CHECKING:
-    from flext_core import m
+    from flext_core._models.containers import FlextModelsContainers
     from flext_core._protocols.base import FlextProtocolsBase as pb
     from flext_core._typings.services import FlextTypesServices as ts
 
@@ -142,6 +142,8 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
         | AbstractSet[tb.Scalar],
     ) -> ts.RuntimeData:
         """Normalize any value to RuntimeData."""
+        from flext_core._models.containers import FlextModelsContainers
+
         normalized_data: ts.RuntimeData
         if val is None:
             normalized_data = ""
