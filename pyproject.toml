@@ -58,6 +58,7 @@ dependencies = [
   "flext-core",
   "pydantic>=2.13.4",
   "pydantic-settings>=2.15.0",
+  "structlog>=26.1.0",
 ]
 description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
 keywords = [
