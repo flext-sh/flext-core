@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Literal, TypeGuard
 
 from pydantic import BaseModel
 
-from flext_core import c, m
+from flext_core import c
 from flext_core._protocols.context import FlextProtocolsContext as pcx
 from flext_core._protocols.handler import FlextProtocolsHandler as ph
 from flext_core._protocols.logging import FlextProtocolsLogging as pl
@@ -25,6 +25,7 @@ from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore 
 from ._metadata_validation import FlextRuntimeMetadataValidation
 
 if TYPE_CHECKING:
+    from flext_core import m
     from flext_core._protocols.base import FlextProtocolsBase as pb
     from flext_core._typings.services import FlextTypesServices as ts
 
