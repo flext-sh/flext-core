@@ -12,12 +12,7 @@ if TYPE_CHECKING:
     from flext_core import FlextConstants
     from flext_tests import FlextTestsConstants
 
-    from . import (
-        benchmark as benchmark,
-        fixtures as fixtures,
-        integration as integration,
-        unit as unit,
-    )
+    from . import benchmark, fixtures, integration, unit
     from .base import TestsFlextServiceBase, TestsFlextServiceBase as s
     from .models import TestsFlextModels, TestsFlextModels as m
     from .protocols import TestsFlextProtocols, TestsFlextProtocols as p

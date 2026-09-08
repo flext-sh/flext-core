@@ -9,11 +9,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from . import (
-        _container_parts as _container_parts,
-        _context_parts as _context_parts,
-        _logging_parts as _logging_parts,
-    )
+    from . import _container_parts, _context_parts, _logging_parts
     from .base import FlextProtocolsBase
     from .config import FlextProtocolsConfig
     from .container import FlextProtocolsContainer
