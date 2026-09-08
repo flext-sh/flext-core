@@ -375,6 +375,7 @@ filterwarnings = [
 ]
 markers = [
   "smoke: public-interface smoke tests",
+  "core: core facade contract tests",
   "unit: unit tests",
   "integration: integration tests",
   "performance: performance and benchmark tests",
