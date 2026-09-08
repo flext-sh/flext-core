@@ -3,15 +3,17 @@
 
 from __future__ import annotations
 
-from types import MappingProxyType
 from typing import TYPE_CHECKING
+
+from types import MappingProxyType
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
+    from . import _models as _models
+    from . import _shared_parts as _shared_parts
     from flext_core import c as _c, d, e, h, r, s, x
 
-    from . import _models as _models, _shared_parts as _shared_parts
     from .constants import c
     from .models import ExamplesFlextModels, ExamplesFlextModels as m
     from .protocols import p

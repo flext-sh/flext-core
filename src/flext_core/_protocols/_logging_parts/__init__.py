@@ -3,8 +3,9 @@
 
 from __future__ import annotations
 
-from types import MappingProxyType
 from typing import TYPE_CHECKING
+
+from types import MappingProxyType
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
@@ -15,7 +16,7 @@ __all__: tuple[str, ...] = ("FlextProtocolsLogging",)
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
-            ".flextprotocolslogging_part_03": ("FlextProtocolsLogging",)
+            ".flextprotocolslogging_part_03": ("FlextProtocolsLogging",),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
