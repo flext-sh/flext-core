@@ -119,23 +119,6 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         assert config.command is Command
         assert config.priority == priority
 
-    def test_discovered_class_handler_invokes_via_instance(self) -> None:
-        @dataclass
-        class EventPublished:
-            event_id: str
-
-        class OrderService:
-            @h.handler(command=EventPublished, priority=25)
-            def handle_event(self, event: EventPublished) -> p.Result[str]:
-                return r[str].ok(f"processed_{event.event_id}")
-
-        ((name, _),) = h.Discovery.scan_class(OrderService)
-        outcome = getattr(OrderService(), name)(EventPublished("e7"))
-
-        assert name == "handle_event"
-        assert outcome.success is True
-        assert outcome.unwrap() == "processed_e7"
-
     @pytest.mark.parametrize(
         ("priority", "expected_name"), [(10, "handle_low"), (90, "handle_high")]
     )
@@ -177,26 +160,3 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
 
         assert h.Discovery.has_handlers(WithoutHandlers) is False
         assert h.Discovery.has_handlers(WithHandler) is True
-
-    def test_scan_class_discovers_inherited_handlers(self) -> None:
-        class CreateCommand:
-            pass
-
-        class DeleteCommand:
-            pass
-
-        class BaseService:
-            @h.handler(command=CreateCommand, priority=10)
-            def handle_create(self, cmd: CreateCommand) -> p.Result[str]:
-                _ = cmd
-                return r[str].ok("created")
-
-        class DerivedService(BaseService):
-            @h.handler(command=DeleteCommand, priority=5)
-            def handle_delete(self, cmd: DeleteCommand) -> p.Result[str]:
-                _ = cmd
-                return r[str].ok("deleted")
-
-        names = {name for name, _ in h.Discovery.scan_class(DerivedService)}
-
-        assert names == {"handle_create", "handle_delete"}

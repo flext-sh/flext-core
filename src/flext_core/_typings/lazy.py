@@ -22,7 +22,9 @@ class FlextTypesLazy:
     """Typing namespace for package-level lazy export internals."""
 
     type ModuleGlobalValue = FlextLazyModuleGlobalValue
-    type ModuleGlobals = MutableMapping[str, FlextLazyModuleGlobalValue]
+    type ModuleGlobals = MutableMapping[
+        str, FlextLazyModuleGlobalValue | Callable[..., FlextLazyModuleGlobalValue]
+    ]
 
 
 __all__: list[str] = ["FlextTypesLazy"]

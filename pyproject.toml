@@ -15,9 +15,15 @@ classifiers = [
   "Typing :: Typed",
 ]
 dependencies = [
+  "annotated-types>=0.8.0",
   "beartype>=0.22.9",
+  "dependency-injector>=4.49.1",
+  "packaging>=26.3",
   "pydantic>=2.13.4",
   "pydantic-settings>=2.15.0",
+  "pyyaml>=6.0.3",
+  "structlog>=26.1.0",
+  "typing-extensions>=4.16.0",
 ]
 description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
 keywords = [

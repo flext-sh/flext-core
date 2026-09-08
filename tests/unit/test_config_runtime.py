@@ -10,11 +10,16 @@ shim, no ``def settings(self) -> XSettings: return XSettings.fetch_global()`` ov
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from flext_tests import tm
 from pydantic import ValidationError
 
 import flext_core as fc
 from flext_core import FlextConfig, FlextSettings, config, settings
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class TestsFlextCoreConfigSettingsCanonical:
@@ -30,6 +35,33 @@ class TestsFlextCoreConfigSettingsCanonical:
         """S2: ``settings`` is a ready-to-use FlextSettings instance used directly."""
         assert isinstance(settings, FlextSettings)
         assert isinstance(settings.model_dump(), dict)
+
+    def test_config_subclasses_keep_independent_singletons(
+        self, tmp_path: Path
+    ) -> None:
+        """Creating and resetting a child never borrows or resets its parent slot."""
+
+        class ParentConfig(FlextConfig):
+            CONFIG_DIR = str(tmp_path)
+
+        parent = ParentConfig.fetch_global()
+
+        class ChildConfig(ParentConfig):
+            pass
+
+        class SiblingConfig(ParentConfig):
+            pass
+
+        child = ChildConfig.fetch_global()
+        sibling = SiblingConfig.fetch_global()
+        assert type(parent) is ParentConfig
+        assert type(child) is ChildConfig
+        assert type(sibling) is SiblingConfig
+        assert ChildConfig.fetch_global() is child
+        ChildConfig.reset_for_testing()
+        assert ChildConfig.fetch_global() is not child
+        assert ParentConfig.fetch_global() is parent
+        assert SiblingConfig.fetch_global() is sibling
 
     def test_config_is_open_no_model(self) -> None:
         """S3: config is OPEN (extra=allow, zero declared fields — no app_name)."""

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, override
 
 from tests.constants import c
 from tests.models import m
@@ -20,7 +20,7 @@ class TestsFlextUtilitiesCaseServiceFactoriesMixin(
 ):
     """Service case construction helpers."""
 
-    class ServiceTestCaseFactory:
+    class ServiceTestCaseFactory(TestsFlextUtilitiesServiceFactoriesMixin.WordRotation):
         """Factory for m.Tests.ServiceTestCase."""
 
         _service_types: ClassVar[Sequence[c.Tests.ServiceType]] = [
@@ -38,13 +38,6 @@ class TestsFlextUtilitiesCaseServiceFactoriesMixin(
             service_type = cls._service_types[cls._type_index % len(cls._service_types)]
             cls._type_index += 1
             return service_type
-
-        @classmethod
-        def _next_word(cls) -> str:
-            """Get next word from rotation."""
-            word = cls._words[cls._word_index % len(cls._words)]
-            cls._word_index += 1
-            return word
 
         @classmethod
         def build(
@@ -80,10 +73,11 @@ class TestsFlextUtilitiesCaseServiceFactoriesMixin(
             return [cls.build() for _ in range(size)]
 
         @classmethod
+        @override
         def reset(cls) -> None:
             """Reset factory state."""
             cls._type_index = 0
-            cls._word_index = 0
+            super().reset()
 
     class ServiceFactoryRegistry:
         """Registry for service factories using pattern matching."""

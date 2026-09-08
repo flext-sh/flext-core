@@ -118,7 +118,9 @@ class TestsFlextCorePydanticDeclarations:
         assert box.model_dump() == {"item": {"name": "flext", "detail": "advanced"}}
 
     def test_fail_fast_reports_only_the_first_list_error(self) -> None:
-        adapter = m.TypeAdapter(Annotated[list[int], m.FailFast()])
+        adapter: m.TypeAdapter[list[int]] = m.TypeAdapter(
+            Annotated[list[int], m.FailFast()]
+        )
 
         assert adapter.validate_python([1, 2]) == [1, 2]
 
@@ -137,7 +139,7 @@ class TestsFlextCorePydanticDeclarations:
             _GreetingCard(payload=object())
 
     def test_validate_as_builds_custom_type_from_native_model(self) -> None:
-        adapter = m.TypeAdapter(
+        adapter: m.TypeAdapter[_Vector] = m.TypeAdapter(
             Annotated[
                 _Vector,
                 m.ValidateAs(

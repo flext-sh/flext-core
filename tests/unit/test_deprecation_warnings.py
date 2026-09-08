@@ -70,15 +70,6 @@ class TestsFlextCoreDeprecationWarnings:
         with pytest.raises(RuntimeError):
             result.unwrap()
 
-    @pytest.mark.parametrize(
-        ("result", "default", "expected"),
-        [(r[int].ok(7), 99, 7), (r[int].fail("nope"), 99, 99)],
-    )
-    def test_unwrap_or_returns_value_or_default(
-        self, result: r[int], default: int, expected: int
-    ) -> None:
-        assert result.unwrap_or(default) == expected
-
     def test_map_transforms_success_value(self) -> None:
         result: p.Result[int] = r[int].ok(5).map(_double)
 

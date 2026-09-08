@@ -52,9 +52,7 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
         if value is None:
             default_result_initial: p.Result[T] = (
                 FlextUtilitiesParser._parse_with_default(
-                    opts.default,
-                    opts.default_factory,
-                    c.ERR_PARSER_VALUE_IS_NONE.format(field_prefix=fp),
+                    opts, c.ERR_PARSER_VALUE_IS_NONE.format(field_prefix=fp)
                 )
             )
             resolved_value = default_result_initial.unwrap()
@@ -68,9 +66,7 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
                     )
                     resolved_value = (
                         FlextUtilitiesParser._parse_with_default(
-                            opts.default,
-                            opts.default_factory,
-                            r.require_error(enum_result),
+                            opts, r.require_error(enum_result)
                         ).unwrap()
                         if enum_result.failure
                         else enum_result.value
@@ -81,9 +77,7 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
                     )
                     resolved_value = (
                         FlextUtilitiesParser._parse_with_default(
-                            opts.default,
-                            opts.default_factory,
-                            r.require_error(model_result),
+                            opts, r.require_error(model_result)
                         ).unwrap()
                         if model_result.failure
                         else model_result.value
@@ -96,8 +90,7 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
                         prim
                         if prim is not None
                         else FlextUtilitiesParser._parse_with_default(
-                            opts.default,
-                            opts.default_factory,
+                            opts,
                             c.ERR_PARSER_PARSE_FAILED_FOR_TARGET.format(
                                 field_prefix=fp,
                                 value=value,

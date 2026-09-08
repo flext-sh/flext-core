@@ -9,11 +9,11 @@
 # bd reads `issue_prefix` (underscore). Do not emit `issue-prefix`.
 issue_prefix: "flext"
 dolt.auto-start: false
-dolt.mode: server
 export.auto: false
 backup.enabled: false
 gc.endpoint_origin: inherited_city
 gc.endpoint_status: verified
 types.custom: molecule,convoy,message,event,gate,merge-request,agent,role,rig,session,spec,convergence,step
 dolt:
+  mode: server
   disable-event-flush: true

@@ -199,12 +199,6 @@ class FlextConfig(BaseSettings):
     _lock: ClassVar[RLock] = RLock()
     _instance: ClassVar[FlextConfig | None] = None
 
-    def __init_subclass__(cls, **kwargs: object) -> None:
-        """Give every concrete subclass its own isolated singleton slot."""
-        _ = kwargs
-        super().__init_subclass__()
-        cls._instance = None
-
     @classmethod
     def _package_namespace(cls) -> str:
         """Return the namespace segment owned by the declaring package.
@@ -334,11 +328,11 @@ class FlextConfig(BaseSettings):
     @classmethod
     def fetch_global(cls) -> Self:
         """Return the shared frozen singleton (lazy; built on first access)."""
-        instance = cls._instance
+        instance = cls.__dict__.get("_instance")
         if isinstance(instance, cls):
             return instance
         with cls._lock:
-            instance = cls._instance
+            instance = cls.__dict__.get("_instance")
             if isinstance(instance, cls):
                 return instance
             created = cls()
