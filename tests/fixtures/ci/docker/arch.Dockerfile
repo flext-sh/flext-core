@@ -8,11 +8,7 @@
 FROM archlinux:base
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-
-# === SECTION: base packages (managed) ===
-# Source: template (distro-specific seed contract)
-# The seed is the whole host contract: curl fetches mise, git is what uv shells
-# out to for the flext-infra git+https requirement, make invokes the verbs.
+# === SECTION: base packages (pacman) ===
 RUN pacman -Syu --noconfirm --needed \
       bash ca-certificates curl git make \
     && pacman -Scc --noconfirm \

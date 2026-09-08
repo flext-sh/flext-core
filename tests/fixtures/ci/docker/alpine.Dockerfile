@@ -4,8 +4,7 @@
 # Source: template (base/tests/fixtures/ci/docker/alpine.Dockerfile.j2)
 # Free: no
 # End SECTION: header
-# Clean-machine proof: project bootstrap + canonical make verbs on Alpine
-# (musl, POSIX /bin/sh at runtime; bash installed for the project scripts).
+# Clean-machine proof: project bootstrap + canonical make verbs on Alpine. (musl, POSIX /bin/sh at runtime; bash installed for the project scripts).
 FROM alpine:3.21
 
 # === SECTION: base packages (managed) ===

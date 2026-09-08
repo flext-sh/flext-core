@@ -19,6 +19,7 @@ from flext_core import c, p, t
 
 from .._utilities.pydantic import FlextUtilitiesPydantic as up
 from .base import FlextModelsBase as m
+from .containers import FlextModelsContainers
 from .pydantic import FlextModelsPydantic as mp
 
 

@@ -16,6 +16,7 @@ from flext_core import FlextTypes as t
 
 from .._utilities.collection import FlextUtilitiesCollection as u
 from .base import FlextModelsBase as m
+from .containers import FlextModelsContainers
 from .pydantic import FlextModelsPydantic as mp
 
 
