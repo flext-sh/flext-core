@@ -9,11 +9,9 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from . import (
-        _enforcement_catalog_rows_parts as _enforcement_catalog_rows_parts,
-        _enforcement_data as _enforcement_data,
-        _enforcement_parts as _enforcement_parts,
-    )
+    from . import _enforcement_catalog_rows_parts as _enforcement_catalog_rows_parts
+    from . import _enforcement_data as _enforcement_data
+    from . import _enforcement_parts as _enforcement_parts
     from ._enforcement_catalog_rows_parts._parts.flextconstantsenforcementcatalogrows_part_01_a import (
         INFRA_DETECTOR_ROWS_CORE,
     )
