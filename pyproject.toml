@@ -600,7 +600,6 @@ in_place = true
 sort_first = ["build-system", "dependency-groups", "project", "tool"]
 
 [tool.uv]
-constraint-dependencies = ["structlog<26"]
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 exclude-newer = "7 days"
 link-mode = "copy"
@@ -625,6 +624,8 @@ name = "flext-cli"
 
 [tool.uv.exclude-newer-package]
 cryptography = false
+faker = false
+ruff = false
 torch = false
 
 [tool.vulture]

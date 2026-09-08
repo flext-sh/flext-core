@@ -32,6 +32,10 @@ class FlextUtilitiesLoggingConfig:
     @staticmethod
     def structlog() -> types.ModuleType:
         """Return the imported structlog module for owner-internal access."""
+        # Local import keeps structlog unloaded until logging initializes
+        # while binding the name this function returns.
+        import structlog
+
         return structlog
 
     class _AsyncLogWriter(io.TextIOBase):
