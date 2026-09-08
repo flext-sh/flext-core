@@ -20,7 +20,6 @@ from flext_core import (
     FlextTypes as t,
 )
 
-from .._models.containers import FlextModelsContainers as mc
 from .._runtime._metadata import FlextRuntimeMetadata
 from .collection_iter import FlextUtilitiesCollectionIter
 from .collection_merge import FlextUtilitiesCollectionMerge

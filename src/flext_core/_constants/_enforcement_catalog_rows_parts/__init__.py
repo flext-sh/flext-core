@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from . import _parts as _parts
+    from . import _parts
     from ._parts.flextconstantsenforcementcatalogrows_part_01_a import (
         INFRA_DETECTOR_ROWS_CORE,
     )

@@ -9,11 +9,13 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from . import _base_parts as _base_parts
-    from . import _container_parts as _container_parts
-    from . import _context as _context
-    from . import _enforcement as _enforcement
-    from . import _exception_params_parts as _exception_params_parts
+    from . import (
+        _base_parts,
+        _container_parts,
+        _context,
+        _enforcement,
+        _exception_params_parts,
+    )
     from ._context._data import FlextModelsContextData
     from ._context._export import FlextModelsContextExport
     from ._context._metadata import FlextModelsContextMetadata

@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from . import _parts as _parts
+    from . import _parts
     from ._parts.class_visitor_part_02_01 import alias_first_violation
     from ._parts.class_visitor_part_02_02 import (
         redundant_inner_violation,

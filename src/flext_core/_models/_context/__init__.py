@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from . import __scope_parts as __scope_parts
+    from . import __scope_parts
     from ._data import FlextModelsContextData
     from ._export import FlextModelsContextExport
     from ._metadata import FlextModelsContextMetadata
