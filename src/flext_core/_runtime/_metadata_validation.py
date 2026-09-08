@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
-from flext_core import c
+from flext_core import FlextConstants as c
 from flext_core._protocols.result import FlextProtocolsResult as prt
 from flext_core._typings.typeadapters import FlextTypesTypeAdapters as tta
 
