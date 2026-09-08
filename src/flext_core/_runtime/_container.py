@@ -26,7 +26,6 @@ from .._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore as ugc
 from ._metadata_validation import FlextRuntimeMetadataValidation
 
 if TYPE_CHECKING:
-    from flext_core import m
     from .._protocols.base import FlextProtocolsBase as pb
     from .._typings.services import FlextTypesServices as ts
 
