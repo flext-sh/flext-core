@@ -47,7 +47,7 @@ jobs:
       matrix:
         distro: [ubuntu, debian, fedora, alpine, arch]
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/checkout@v7
         with:
           submodules: false
           # No step needs authenticated git after checkout; persisting the
@@ -76,7 +76,7 @@ jobs:
     env:
       CI: Y
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/checkout@v7
         with:
           submodules: false
           # No step needs authenticated git after checkout; persisting the
@@ -100,7 +100,7 @@ jobs:
     env:
       CI: Y
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/checkout@v7
         with:
           submodules: false
           # No step needs authenticated git after checkout; persisting the

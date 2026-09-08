@@ -43,7 +43,7 @@ jobs:
       CI: Y
     steps:
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        uses: actions/checkout@v7
         with:
           submodules: false
           fetch-depth: 0
@@ -99,13 +99,12 @@ jobs:
           git config --global url."https://x-access-token:${access_token}@github.com/".insteadOf "https://github.com/"
           rm -f "$key_path"
 
-
       # make setup is the only toolchain installer. It bootstraps the newest
       # released Mise, installs the committed fleet toolchain, publishes that
       # environment through GITHUB_PATH, and prepares the project runtime.
       - name: Restore testmon cache
         id: testmon-restore
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4.3.0
+        uses: actions/cache@v4
         with:
           path: |
             ${{ github.workspace }}/../.flext-runtime/*/testmon/.testmondata
@@ -120,9 +119,9 @@ jobs:
       - name: gen check (blocking)
         run: CI=Y make conform APPLY=Y
 
-      # Setup installs the committed lock as-is (`uv sync --frozen`); a stale
-      # lock is a reviewed change through `make deps`, so CI proves it here
-      # instead of letting a runner rewrite it.
+      # Setup syncs against the committed lock and refreshes it in place (`uv
+      # sync`); the fleet runs unlocked, so the deps audit proves the resolved
+      # graph instead of preserving a frozen snapshot.
       - name: deps check (blocking)
         run: CI=Y make audit APPLY=Y
 
@@ -167,7 +166,7 @@ jobs:
           done
       - name: Upload reports on failure
         if: ${{ failure() }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        uses: actions/upload-artifact@v4
         with:
           name: flext-ci-reports-${{ github.run_id }}
           # Structured reports only — omit raw pytest/tool logs that may carry
@@ -199,7 +198,7 @@ jobs:
       CI: Y
     steps:
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: false
@@ -274,7 +273,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout promoted head
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
       - name: Block WIP heads from protected integration branches

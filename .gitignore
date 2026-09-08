@@ -22,14 +22,7 @@
 .agents/skills/*/report.json
 
 # Agent hooks and operator config (runtime state, never source)
-.agents/aihub-hooks/
-.claude/aihub-hooks/
-.codex/aihub-hooks/
-.cursor/aihub-hooks/
-.gemini/aihub-hooks/
-.opencode/aihub-hooks/
 .github/hooks/
-*/hooks.json
 */.hooks.json.agents-governance.json
 .claude/settings.local.json
 
