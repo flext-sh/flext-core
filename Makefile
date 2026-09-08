@@ -860,7 +860,11 @@ _builtin_deps_lock:
 
 _builtin_deps_upgrade: _builtin_require_environment
 	$(call _require_apply)
-	$(call _run_for_all_projects,--upgrade)
+	# Branch-tracked git dependencies are moving sources by declaration
+	# (workspace.yaml owns the branch): --refresh re-reads their metadata so a
+	# stale cached requires-dist can never block or skew the resolution
+	# (flext-62fbu). The cooldown, not the cache, governs version movement.
+	$(call _run_for_all_projects,--upgrade --refresh)
 	@set -eu; \
 	selected="$(strip $(SELECTED_PROJECTS))"; \
 	if [ -z "$$selected" ]; then selected="."; fi; \
