@@ -213,6 +213,11 @@ caller_comspec="$(COMSPEC)"; \
 caller_pathext="$(PATHEXT)"; \
 caller_systemroot="$(SYSTEMROOT)"; \
 caller_windir="$(WINDIR)"; \
+caller_github_token="$(GITHUB_TOKEN)"; \
+caller_gh_token="$(GH_TOKEN)"; \
+caller_mise_github_token="$(MISE_GITHUB_TOKEN)"; \
+caller_mise_github_credential_command="$(MISE_GITHUB_CREDENTIAL_COMMAND)"; \
+caller_mise_http_timeout="$(MISE_HTTP_TIMEOUT)"; \
 if [ -z "$$mise_storage_root" ]; then \
 		if [ -n "$$caller_xdg_data_home" ]; then \
 			mise_storage_root="$$caller_xdg_data_home/mise"; \
@@ -349,6 +354,11 @@ mise_exec() { \
 "PATHEXT=$$caller_pathext" \
 "SYSTEMROOT=$$caller_systemroot" \
 "WINDIR=$$caller_windir" \
+"GITHUB_TOKEN=$$caller_github_token" \
+"GH_TOKEN=$$caller_gh_token" \
+"MISE_GITHUB_TOKEN=$$caller_mise_github_token" \
+"MISE_GITHUB_CREDENTIAL_COMMAND=$$caller_mise_github_credential_command" \
+"MISE_HTTP_TIMEOUT=$$caller_mise_http_timeout" \
 $${mise_config_argument:+"$$mise_config_argument"} \
 			"$$@"; \
 	}; \
@@ -899,7 +909,7 @@ _builtin_check_all: _builtin_require_environment
 		printf 'ERROR: no check gates remain after CI=Y filtering\n' >&2; \
 		exit 2; \
 	fi; \
-	$(PROJECT_FLEXT_INFRA) check run --workspace "$(PROJECT_ROOT)" --gates "$$gates" --projects .
+	$(PROJECT_FLEXT_INFRA) check run --repository-root "$(PROJECT_ROOT)" --gates "$$gates" --projects .
 
 _builtin_test_all: _builtin_require_environment
 
@@ -930,7 +940,7 @@ _builtin_fix_check: _builtin_require_environment
 _builtin_fix_all: _builtin_require_environment
 	$(call _require_apply)
 	@$(UV_RUN) ruff check --preview --fix --unsafe-fixes $(RUFF_PATHS)
-	@$(PROJECT_FLEXT_INFRA) check run --workspace "$(PROJECT_ROOT)" --gates "lint,markdown,canonical-alias,smells" --projects . --apply
+	@$(PROJECT_FLEXT_INFRA) check run --repository-root "$(PROJECT_ROOT)" --gates "lint,markdown,canonical-alias,smells" --projects . --apply
 
 _builtin_fix_apply: _builtin_fix_all
 
@@ -938,7 +948,7 @@ _builtin_fix_apply: _builtin_fix_all
 # declared safe, applied through its registered adapter.
 _builtin_fix_enforcement: _builtin_require_environment
 	$(call _require_apply)
-	@$(PROJECT_FLEXT_INFRA) check fix-enforcement --workspace "$(PROJECT_ROOT)" --safe-only --apply
+	@$(PROJECT_FLEXT_INFRA) check fix-enforcement --repository-root "$(PROJECT_ROOT)" --safe-only --apply
 
 
 _builtin_run_default: _builtin_require_environment
@@ -958,7 +968,7 @@ _builtin_docs_all:
 	@set -eu; \
 	for action in $(DOCS_ACTIONS); do \
 		case "$$action" in fix) mode=$(if $(filter Y,$(APPLY)),--apply,--check) ;; *) mode= ;; esac; \
-		$(PROJECT_FLEXT_INFRA) docs "$$action" --workspace "$(PROJECT_ROOT)" --output-dir "$(PROJECT_ROOT)/.reports/docs" $$mode $(DOCS_PROJECT_ARGS); \
+		$(PROJECT_FLEXT_INFRA) docs "$$action" --repository-root "$(PROJECT_ROOT)" --output-dir "$(PROJECT_ROOT)/.reports/docs" $$mode $(DOCS_PROJECT_ARGS); \
 	done
 
 _builtin_clean_generated:
@@ -1020,8 +1030,8 @@ _builtin_gen_check: _builtin_require_environment
 
 _builtin_gen_init:
 	$(call _require_apply)
-	@$(PROJECT_FLEXT_INFRA) codegen init --workspace "$(PROJECT_ROOT)" --apply
-	@$(PROJECT_FLEXT_INFRA) codegen init --workspace "$(PROJECT_ROOT)" --check
+	@$(PROJECT_FLEXT_INFRA) codegen init --repository-root "$(PROJECT_ROOT)" --apply
+	@$(PROJECT_FLEXT_INFRA) codegen init --repository-root "$(PROJECT_ROOT)" --check
 
 _builtin_gen_all:
 	$(call _require_apply)
@@ -1061,4 +1071,4 @@ _builtin-mod: _builtin_mod_apply
 _builtin-waza:
 	@cd "$(PROJECT_ROOT)" && "$(SETUP_MISE)" exec -- waza check --no-update-check
 _builtin-duplication:
-	@$(PROJECT_FLEXT_INFRA) check run --workspace "$(PROJECT_ROOT)" --gates duplication --projects .
+	@$(PROJECT_FLEXT_INFRA) check run --repository-root "$(PROJECT_ROOT)" --gates duplication --projects .

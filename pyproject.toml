@@ -41,61 +41,6 @@ dev = [
   "yamlfix>=1.19.1",
 ]
 
-[project]
-classifiers = [
-  "Development Status :: 3 - Alpha",
-  "Framework :: Pydantic :: 2",
-  "Framework :: Pydantic",
-  "Intended Audience :: Developers",
-  "Operating System :: OS Independent",
-  "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.13",
-  "Topic :: Software Development :: Libraries :: Application Frameworks",
-  "Typing :: Typed",
-]
-dependencies = [
-  "annotated-types>=0.8.0",
-  "beartype>=0.22.9",
-  "dependency-injector>=4.49.1",
-  "flext-core",
-  "packaging>=26.3",
-  "pydantic>=2.13.4",
-  "pydantic-settings>=2.15.0",
-  "structlog>=26.1.0",
-  "typing-extensions>=4.16.0",
-  "pyyaml>=6.0.3",
-]
-description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
-keywords = [
-  "clean-architecture",
-  "ddd",
-  "enterprise",
-  "flext",
-  "modern",
-  "solid",
-]
-license = "MIT"
-name = "flext-core"
-readme = "README.md"
-requires-python = ">=3.13,<3.14"
-version = "0.12.0"
-
-[[project.authors]]
-email = "team@flext.sh"
-name = "FLEXT Team"
-
-[[project.maintainers]]
-email = "team@flext.sh"
-name = "FLEXT Team"
-
-[project.scripts]
-flext-core = "flext_core.cli:main"
-
-[project.urls]
-Documentation = "https://github.com/flext-sh/flext-core/blob/main/README.md"
-Homepage = "https://github.com/flext-sh/flext-core"
-Repository = "https://github.com/flext-sh/flext-core"
-
 [tool.codespell]
 check-filenames = true
 ignore-words-list = "crate,nd"
@@ -551,18 +496,6 @@ ruff = false
 faker = false
 pytest-randomly = false
 
-[tool.uv.sources.flext-core]
-git = "https://github.com/flext-sh/flext-core.git"
-branch = "0.12.0-dev"
-
-[tool.uv.sources.flext-infra]
-git = "https://github.com/flext-sh/flext-infra.git"
-branch = "0.12.0-dev"
-
-[tool.uv.sources.flext-tests]
-git = "https://github.com/flext-sh/flext-tests.git"
-branch = "0.12.0-dev"
-
 [[tool.uv.exclude-dependencies]]
 dependencies = ["flext-core"]
 
@@ -598,3 +531,47 @@ ignore-property-decorators = true
 [tool.radon]
 cc_min = "B"
 mi_min = "B"
+
+[project]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Framework :: Pydantic :: 2",
+  "Framework :: Pydantic",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Libraries :: Application Frameworks",
+  "Typing :: Typed",
+]
+dependencies = ["pydantic>=2.13.4", "pydantic-settings>=2.15.0"]
+description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
+keywords = [
+  "clean-architecture",
+  "ddd",
+  "enterprise",
+  "flext",
+  "modern",
+  "solid",
+]
+license = "MIT"
+name = "flext-core"
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+version = "0.12.0"
+
+[[project.authors]]
+email = "team@flext.sh"
+name = "FLEXT Team"
+
+[[project.maintainers]]
+email = "team@flext.sh"
+name = "FLEXT Team"
+
+[project.scripts]
+flext-core = "flext_core.cli:main"
+
+[project.urls]
+Documentation = "https://github.com/flext-sh/flext-core/blob/main/README.md"
+Homepage = "https://github.com/flext-sh/flext-core"
+Repository = "https://github.com/flext-sh/flext-core"
