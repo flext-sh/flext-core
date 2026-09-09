@@ -48,10 +48,6 @@ plugins:
           paths:
             - src
           docstring_style: auto
-          docstring_options:
-            warnings: false
-            warn_unknown_params: false
-            warn_missing_types: false
           options:
             show_root_heading: true
             show_root_full_path: false
@@ -98,6 +94,6 @@ nav:
 not_in_nav: |
   api-reference/generated/**
 validation:
-  omitted_files: ignore
+  omitted_files: warn
   absolute_links: warn
   unrecognized_links: warn
