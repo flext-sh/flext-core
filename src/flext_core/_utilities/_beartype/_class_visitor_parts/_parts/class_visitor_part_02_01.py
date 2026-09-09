@@ -78,10 +78,10 @@ def alias_first_violation(
     # constant (see FlextConstantsEnforcementTargets) — evaluation iterates
     # that set AND any private (underscore-prefixed) sub-package path
     # component, so adding a new private sub-package is automatic.
-    _module_parts = module_name.split(".")
-    if len(_module_parts) > 1 and (
-        _module_parts[1] in c.ENFORCEMENT_PRIVATE_FAMILY_PACKAGES
-        or any(part.startswith("_") for part in _module_parts[1:])
+    module_parts = module_name.split(".")
+    if len(module_parts) > 1 and (
+        module_parts[1] in c.ENFORCEMENT_PRIVATE_FAMILY_PACKAGES
+        or any(part.startswith("_") for part in module_parts[1:])
     ):
         return NO_VIOLATION
 

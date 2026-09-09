@@ -146,10 +146,7 @@ class FlextUtilitiesBeartypeHelpers:
         from ``TransportPlugin``) are valid inner classes of protocol trees;
         the ``proto_inner_kind`` rule (ENFORCE-083) must not flag them.
         """
-        return any(
-            getattr(base, "_is_protocol", False)
-            for base in value.__mro__[1:]
-        )
+        return any(getattr(base, "_is_protocol", False) for base in value.__mro__[1:])
 
 
 __all__: list[str] = ["FlextUtilitiesBeartypeHelpers"]

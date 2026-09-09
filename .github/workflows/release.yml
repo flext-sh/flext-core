@@ -106,6 +106,8 @@ jobs:
     timeout-minutes: 180
     permissions:
       contents: write # Push the release tag and create the GitHub release.
+      id-token: write # Trusted publishing to the package index.
+    environment: pypi
     env:
       CI: Y
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -120,8 +122,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      - name: Bootstrap the pinned toolchain
-        run: make setup BOOTSTRAP_ONLY=Y
       - name: Boot
         run: make setup
       - name: Tag
@@ -129,4 +129,4 @@ jobs:
       - name: Build receipt
         run: make release-build APPLY=Y
       - name: Publish
-        run: make publication APPLY=Y
+        run: make publication APPLY=Y INDEX=Y

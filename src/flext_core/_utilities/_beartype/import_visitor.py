@@ -155,10 +155,10 @@ class _ImportBlacklistVisitor:
         constant (derived from ``ENFORCEMENT_CANONICAL_FILES``); evaluation
         iterates that set rather than hardcoding path fragments.
         """
+        if "." not in origin or "." not in module_name:
+            return False
         origin_parts = origin.split(".")
         module_parts = module_name.split(".")
-        if len(origin_parts) < 2 or len(module_parts) < 2:
-            return False
         return (
             origin_parts[0] == module_parts[0]
             and origin_parts[1] in c.ENFORCEMENT_PRIVATE_FAMILY_PACKAGES

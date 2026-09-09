@@ -23,9 +23,7 @@
 
 Import canonical aliases from the package root:
 
-```python
-
-```
+The examples below import only the aliases they consume from `flext_core`.
 
 | Alias | Purpose |
 | ------- | --------- |
@@ -46,7 +44,8 @@ Import canonical aliases from the package root:
 
 ## Result flow
 
-Fallible paths return `r[T]`. Avoid raw exceptions or ad-hoc error dicts for control flow.
+Use `r[T]` to construct explicit success or domain-failure results. Do not convert
+unexpected runtime exceptions into success or ad-hoc error dictionaries.
 
 ```python
 from __future__ import annotations
@@ -80,8 +79,8 @@ Subprojects extend `FlextSettings` with their own `env_prefix`:
 from flext_core import FlextSettings, m
 
 
-class FlextCliSettings(FlextSettings):
-    model_config = m.SettingsConfigDict(env_prefix="FLEXT_CLI_", extra="ignore")
+class GreetingSettings(FlextSettings):
+    model_config = m.SettingsConfigDict(env_prefix="GREETING_", extra="forbid")
 ```
 
 ## Container
@@ -109,10 +108,21 @@ logger.info("user.created", user_id=42)
 ## Service runtime
 
 ```python
-from flext_core import s, FlextSettings
+from typing import override
 
-settings = FlextSettings.fetch_global()
-runtime = s(settings=settings)
+from flext_core import p, r, s
+
+
+class GreetingService(s[str]):
+    @override
+    def execute(self) -> p.Result[str]:
+        return r[str].ok("Hello!")
+
+
+runtime = GreetingService.fetch_global()
+result = runtime.execute()
+assert result.success
+assert result.value == "Hello!"
 ```
 
 ## Good practices
@@ -124,9 +134,9 @@ runtime = s(settings=settings)
 
 ## Bad practices
 
-```python
-
-```
+Do not instantiate the base service to execute domain logic: its `execute()`
+raises `NotImplementedError`. Implement the typed operation in a concrete service,
+and obtain its singleton through `fetch_global()`.
 
 ## Related
 
