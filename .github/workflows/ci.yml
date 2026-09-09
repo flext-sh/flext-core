@@ -81,15 +81,15 @@ jobs:
           input="$(printf %s "$header" | b64url).$(printf %s "$payload" | b64url)"
           signature=$(printf %s "$input" | openssl dgst -sha256 -sign "$key_path" | b64url)
           jwt="$input.$signature"
-          installation_id=$(curl -sfS -X POST \
+          installation_id=$(curl -sfS -X GET \
             -H "Authorization: Bearer $jwt" \
             -H "Accept: application/vnd.github+json" \
             https://api.github.com/app/installations \
             | python3 -c 'import json, sys
-            entries = json.load(sys.stdin)
-            if len(entries) != 1:
-                sys.exit(f"expected exactly one app installation, got {len(entries)}")
-            print(entries[0]["id"])')
+          entries = json.load(sys.stdin)
+          if len(entries) != 1:
+              sys.exit(f"expected exactly one app installation, got {len(entries)}")
+          print(entries[0]["id"])')
           access_token=$(curl -sfS -X POST \
             -H "Authorization: Bearer $jwt" \
             -H "Accept: application/vnd.github+json" \
@@ -236,15 +236,15 @@ jobs:
           input="$(printf %s "$header" | b64url).$(printf %s "$payload" | b64url)"
           signature=$(printf %s "$input" | openssl dgst -sha256 -sign "$key_path" | b64url)
           jwt="$input.$signature"
-          installation_id=$(curl -sfS -X POST \
+          installation_id=$(curl -sfS -X GET \
             -H "Authorization: Bearer $jwt" \
             -H "Accept: application/vnd.github+json" \
             https://api.github.com/app/installations \
             | python3 -c 'import json, sys
-            entries = json.load(sys.stdin)
-            if len(entries) != 1:
-                sys.exit(f"expected exactly one app installation, got {len(entries)}")
-            print(entries[0]["id"])')
+          entries = json.load(sys.stdin)
+          if len(entries) != 1:
+              sys.exit(f"expected exactly one app installation, got {len(entries)}")
+          print(entries[0]["id"])')
           access_token=$(curl -sfS -X POST \
             -H "Authorization: Bearer $jwt" \
             -H "Accept: application/vnd.github+json" \

@@ -57,17 +57,36 @@ Homepage = "https://github.com/flext-sh/flext-core"
 Repository = "https://github.com/flext-sh/flext-core"
 
 [dependency-groups]
-codegen = ["flext-infra"]
+codegen = [
+  "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
+]
 dev = [
   "actionlint-py>=1.7.12.24",
   "bandit>=1.9.4",
-  "flext-tests",
+  "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev",
+  "mkdocs",
+  "mkdocs-autorefs",
+  "mkdocs-exclude>=1.0.2",
+  "mkdocs-git-revision-date-localized-plugin>=1.5.4",
+  "mkdocs-material>=9.7.7",
+  "mkdocs-mermaid2-plugin>=1.2.3",
+  "mkdocs-minify-plugin>=0.8.0",
+  "mkdocs-redirects>=1.2.3",
+  "mkdocs-section-index>=0.3.12",
+  "mkdocstrings>=1.0.6",
+  "mkdocstrings-python>=2.0.8",
   "mypy>=2.3.1",
+  "pymdown-extensions",
   "pyrefly>=1.2.0",
   "pyright>=1.1.411",
   "pytest>=9.1.1",
+  "pytest-benchmark",
+  "pytest-cov",
+  "pytest-markdown-docs",
   "pytest-randomly>=4.1.0",
   "pytest-testmon>=2.2.0",
+  "pytest-timeout",
+  "pytest-xdist",
   "ruff>=0.16.5",
   "rumdl>=0.2.62",
   "types-cachetools>=7.0.0.20260713",
@@ -154,6 +173,7 @@ python_version = "3.13"
 check_untyped_defs = true
 explicit_package_bases = true
 extra_checks = true
+follow_untyped_imports = true
 local_partial_types = true
 namespace_packages = true
 no_implicit_reexport = true
@@ -378,7 +398,9 @@ addopts = [
   "--strict-markers",
   "--markdown-docs",
   "--durations=10",
+  "--timeout=10",
 ]
+flext_slow_timeout_seconds = "60"
 filterwarnings = [
   "error",
   "module::flext_core._constants.enforcement.FlextMroViolation",
