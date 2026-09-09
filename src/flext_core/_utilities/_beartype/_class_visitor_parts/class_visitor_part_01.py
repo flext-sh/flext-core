@@ -103,6 +103,7 @@ class FlextUtilitiesBeartypeClassVisitor:
                 ubh.has_runtime_protocol_marker(value)
                 or ubh.has_nested_namespace(value)
                 or ubh.has_abstract_contract(value)
+                or ubh.has_protocol_ancestor(value)
             ):
                 pass
             else:

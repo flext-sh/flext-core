@@ -82,6 +82,9 @@ class FlextUtilitiesBeartypeAliasVisitor:
             case "no_self_root_import_in_core_files" if (
                 filename in c.ENFORCEMENT_CANONICAL_FILES
             ):
+                _canonical_stems = frozenset(
+                    name.removesuffix(".py") for name in c.ENFORCEMENT_CANONICAL_FILES
+                )
                 violation = next(
                     (
                         {"package": package, "alias": alias_char}
@@ -89,11 +92,13 @@ class FlextUtilitiesBeartypeAliasVisitor:
                         if (alias_value := getattr(module, alias_char, None))
                         is not None
                         and (
-                            (_ubh.object_module_name_for(alias_value) or "").split(
-                                ".", 1
-                            )[0]
+                            origin := _ubh.object_module_name_for(alias_value) or ""
                         )
-                        == package
+                        and origin.split(".", 1)[0] == package
+                        and origin != module_name
+                        and origin not in {
+                            f"{package}.{stem}" for stem in _canonical_stems
+                        }
                     ),
                     _NO_VIOLATION,
                 )
