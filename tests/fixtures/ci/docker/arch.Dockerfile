@@ -19,11 +19,8 @@ RUN pacman -Syu --noconfirm --needed \
 # Source: generated bin/mise + .mise.toml
 # The canonical make setup verb below owns the official newest-Mise bootstrap
 # and every latest tool installation as the same unprivileged runtime user.
-# GITHUB_TOKEN (passed by ci-matrix as a build-arg) authenticates Mise's
-# GitHub API reads so provisioning never trips anonymous rate limits; mise
-# consumes it through MISE_GITHUB_TOKEN natively.
-ARG GITHUB_TOKEN
-ENV MISE_GITHUB_TOKEN=${GITHUB_TOKEN}
+# The setup RUN receives Mise's credential only through a BuildKit secret.
+# Never persist build credentials in ARG, ENV, layers, or image configuration.
 ENV HOME=/home/runner \
     XDG_DATA_HOME=/home/runner/.local/share \
     XDG_CACHE_HOME=/home/runner/.cache \
@@ -46,7 +43,8 @@ ENV PATH="/home/runner/.local/share/mise/shims:${PATH}"
 # mentioned uv.lock/flext-core, which turned the proof into a bypass -- a
 # broken bootstrap still produced a green image.
 ENV CI=Y
-RUN make setup
+RUN --mount=type=secret,id=github_token,env=MISE_GITHUB_TOKEN,required=true \
+    make setup APPLY=Y
 # End SECTION: bootstrap proof
 
 ENTRYPOINT []

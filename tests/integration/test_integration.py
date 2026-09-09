@@ -37,7 +37,6 @@ class TestsFlextCoreIntegration:
     model state. No private attributes, internals, or collaborator spying.
     """
 
-    @pytest.mark.core
     def test_result_and_container_compose_on_public_surface(
         self, clean_container: p.Container, sample_data: t.JsonMapping
     ) -> None:
@@ -54,7 +53,6 @@ class TestsFlextCoreIntegration:
         tm.that(resolved.success, eq=True)
         tm.that(resolved.value, eq=test_value)
 
-    @pytest.mark.core
     def test_freshly_constructed_container_satisfies_container_protocol(self) -> None:
         """A default FlextContainer honors the public Container protocol."""
         # Act

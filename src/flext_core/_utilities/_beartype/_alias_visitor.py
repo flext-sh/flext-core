@@ -74,7 +74,11 @@ class FlextUtilitiesBeartypeAliasVisitor:
                     None,
                 )
                 if alias_char and getattr(module, alias_char, None) is not target:
-                    violation = {"alias": alias_char, "class": target_name}
+                    violation = {
+                        "alias": alias_char,
+                        "class": target_name,
+                        "rebind_form": f"{alias_char} = {target_name}",
+                    }
             case "no_self_root_import_in_core_files" if (
                 filename in c.ENFORCEMENT_CANONICAL_FILES
             ):

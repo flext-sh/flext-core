@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib
 import sys
+from collections.abc import Iterator
 from importlib.machinery import ModuleSpec
 from pathlib import Path
 from types import ModuleType
@@ -27,7 +28,7 @@ class TestsFlextCoreLazyExports:
     """Behavioral contract: what the lazy export surface promises callers."""
 
     @pytest.fixture
-    def registered_alpha_module(self) -> tuple[str, type]:
+    def registered_alpha_module(self) -> Iterator[tuple[str, type]]:
         """Register a real child module exposing ``Alpha`` and return its name."""
         lazy.reset()
         module_name = "test_lazy_pkg.alpha"
@@ -40,7 +41,7 @@ class TestsFlextCoreLazyExports:
         sys.modules["test_lazy_pkg"] = ModuleType("test_lazy_pkg")
         sys.modules[module_name] = child
         try:
-            return module_name, Alpha
+            yield module_name, Alpha
         finally:
             sys.modules.pop("test_lazy_pkg", None)
             sys.modules.pop(module_name, None)
