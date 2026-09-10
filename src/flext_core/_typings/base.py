@@ -62,6 +62,16 @@ class FlextTypingBase(tp, ta):
     type MutableFlatContainer = (
         MutableFlatContainerMapping | MutableSequenceOf[tp.JsonValue]
     )
+    # TOML has no null; the canonical TOML value shape is an explicit recursive
+    # union (str | int | float | bool | datetime | list | mapping), never None.
+    # Mirrors the Json family style: a self-referential ``type`` alias plus a
+    # ``MappingKV`` table alias. SSOT for all fleet consumers (cosmos-charts,
+    # cosmos-gitops); nobody redeclares it locally.
+    type TomlValue = (
+        str | int | float | bool | datetime | list[TomlValue] | Mapping[str, TomlValue]
+    )
+    type TomlTable = MappingKV[str, TomlValue]
+    type MutableTomlTable = MutableMapping[str, TomlValue]
     # Canonical consumer aliases (flat; no recursion — tp.JsonValue carries depth)
     type MutableOptionalFeatureFlagMapping = MutableMapping[str, str | bool | None]
     type IntMapping = MappingKV[str, int]
