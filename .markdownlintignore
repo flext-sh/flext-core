@@ -1,7 +1,8 @@
 # @flext-managed: continuous
-# @flext-regenerate: make gen APPLY=Y
+# @flext-regenerate: make gen
 # @flext-ssot: flext-infra/config/tooling.yaml
 # @flext-maintenance: do not edit generated projections; edit the SSOT and regenerate
+AGENTS.md
 .kilo/**
 .omo/**
 .tmp/**
