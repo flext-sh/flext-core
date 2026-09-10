@@ -15,7 +15,7 @@ __all__: tuple[str, ...] = ("FlextModelsContextScope",)
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
-            ".flextmodelscontextscope_part_03": ("FlextModelsContextScope",)
+            ".flextmodelscontextscope_part_03": ("FlextModelsContextScope",),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,

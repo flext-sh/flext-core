@@ -15,7 +15,7 @@ __all__: tuple[str, ...] = ("FlextProtocolsContext",)
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
-            ".flextprotocolscontext_part_03": ("FlextProtocolsContext",)
+            ".flextprotocolscontext_part_03": ("FlextProtocolsContext",),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
