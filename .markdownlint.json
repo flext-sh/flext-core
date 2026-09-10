@@ -33,5 +33,17 @@
   "MD057": false,
   "MD060": false,
   "MD076": false,
-  "default": true
+  "default": true,
+  "per-file-ignores": {
+    "docs/architecture/communities/README.md": [
+      "MD058"
+    ],
+    "docs/architecture/crg-reports/large-functions.md": [
+      "MD075",
+      "MD013"
+    ],
+    "docs/knowledge-index.md": [
+      "MD058"
+    ]
+  }
 }
