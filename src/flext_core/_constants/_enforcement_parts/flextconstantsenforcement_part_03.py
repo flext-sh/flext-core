@@ -33,6 +33,24 @@ class FlextConstantsEnforcementNamespace:
         "Utilities",
     )
 
+    NAMESPACE_FAMILY_PREFIX: Final[str] = "flext_"
+    """Declared family namespace prefix (import-name grammar).
+
+    Discovery seed for runtime family-surface derivation: candidate
+    distributions whose normalized name starts with this prefix are family
+    members when their root publishes the lazy export contract. The prefix
+    narrows discovery only; membership is proven by the published contract,
+    never by an enumerated roster.
+    """
+
+    FAMILY_SURFACE_MIN_PUBLISHED: Final[int] = 1
+    """Minimum family roots that must publish the lazy export contract.
+
+    Threshold for the family-surface derivation: a runtime where no
+    distribution publishes the contract is a broken installation and fails
+    loud instead of deriving an empty surface.
+    """
+
     ENFORCEMENT_NAMESPACE_FACADE_ROOTS: Final[frozenset[str]] = frozenset(
         {f"Flext{name}" for name in NAMESPACE_LAYER_NAMES}
         | {"FlextModelsBase", "FlextModelsNamespace", "EnforcedModel"}

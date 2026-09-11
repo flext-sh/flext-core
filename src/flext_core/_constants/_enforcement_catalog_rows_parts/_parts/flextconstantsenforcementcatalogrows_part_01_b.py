@@ -199,6 +199,19 @@ INFRA_DETECTOR_ROWS_PATTERNS: Final[
             "one Tests<Module> class (one nested class per test module)."
         ),
     ),
+    (
+        "ENFORCE-099",
+        "HIGH",
+        "consumer_import_violations",
+        "4-import-law",
+        ("flext-import-rules", "flext-consumption-law"),
+        False,
+        (
+            "Consumer import violates R1 facade-only grammar: "
+            "legal iff `from <pkg> import X` with `X in pkg.__all__`; "
+            "any `pkg.<submodule>` path is a violation."
+        ),
+    ),
 )
 
 
