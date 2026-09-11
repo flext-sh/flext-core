@@ -122,6 +122,14 @@ jobs:
             testmon-v1-${{ runner.os }}-${{ runner.arch }}-py3.13-
 
       - name: setup (blocking)
+        # Why (resumption-f1 2026-09-11): GitHub-hosted runners share egress
+        # IPs, so the unauthenticated 60 req/h REST budget is exhausted before
+        # mise finishes resolving the moving @latest backends (observed 403 on
+        # beads/waza: setup died before any gate). The job token authenticates
+        # resolution without changing the moving-release toolchain contract.
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          MISE_GITHUB_TOKEN: ${{ github.token }}
         # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
         run: CI=Y make setup
       - name: gen check (blocking)
