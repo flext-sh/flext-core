@@ -11,6 +11,8 @@ from ._alias_visitor import FlextUtilitiesBeartypeAliasVisitor
 from ._library_visitor import FlextUtilitiesBeartypeLibraryVisitor
 from .helpers import FlextUtilitiesBeartypeHelpers as _ubh
 
+_MIN_FAMILY_MODULE_PARTS = 2
+
 
 class FlextUtilitiesBeartypeImportVisitor:
     """IMPORT_BLACKLIST + ALIAS_REBIND + LIBRARY_IMPORT visitor facade."""
@@ -159,6 +161,11 @@ class _ImportBlacklistVisitor:
             return False
         origin_parts = origin.split(".")
         module_parts = module_name.split(".")
+        if (
+            len(origin_parts) < _MIN_FAMILY_MODULE_PARTS
+            or len(module_parts) < _MIN_FAMILY_MODULE_PARTS
+        ):
+            return False
         return (
             origin_parts[0] == module_parts[0]
             and origin_parts[1] in c.ENFORCEMENT_PRIVATE_FAMILY_PACKAGES

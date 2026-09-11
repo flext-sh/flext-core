@@ -45,20 +45,29 @@ UV_LINK_MODE := copy
 # === SECTION: public boundary (managed) ===
 # GNU Make built-ins are dot-prefixed; .SHELLSTATUS carries origin "override"
 # on Make >= 4.4, so they are excluded from caller-input detection.
+# Operator decision 2026-09-10: unknown command-line inputs no longer fail the
+# run. The Makefile ignores them and prints a warning, so ordinary invocations
+# like `make test` or `make setup` always start with zero variables.
+# WHAT is a declared public input whenever script dispatch is active: the
+# generated `_dispatch` reads it and every promoted script verb's own help
+# documents `make <verb> WHAT=<action>` (cosmos-3flk9).
 PUBLIC_INPUTS := APPLY INDEX
 COMMAND_LINE_INPUTS := $(foreach name,$(filter-out .%,$(.VARIABLES)),$(if $(filter command line override,$(origin $(name))),$(name)))
 UNKNOWN_INPUTS := $(filter-out $(PUBLIC_INPUTS),$(COMMAND_LINE_INPUTS))
 ifneq ($(strip $(UNKNOWN_INPUTS)),)
-$(error Unsupported Make input(s): $(UNKNOWN_INPUTS); public operations accept only APPLY=Y and INDEX=Y)
+$(warning Ignoring unsupported Make input(s): $(UNKNOWN_INPUTS); declared public inputs are $(PUBLIC_INPUTS))
 endif
-APPLY ?= N
-ifneq ($(filter $(APPLY),N Y),$(APPLY))
+APPLY ?= Y
+# filter-out keeps the guard true independent of argument order: a guard that
+# passed $(APPLY) as the filter *pattern* turned a valid APPLY=Y into the
+# pattern "Y Y" and returned two words, so the guard failed on every run.
+ifneq ($(filter-out Y Y,$(strip $(APPLY))),)
 $(error APPLY must be Y when enabled)
 endif
 # INDEX refines receipt-attested publication: Y uploads to the package index,
-# N publishes GitHub assets only. Publication itself stays APPLY-gated.
+# N publishes GitHub assets only. APPLY gates remain for explicit opt-out
 INDEX ?=
-ifneq ($(filter-out Y N N,$(strip $(INDEX))),)
+ifneq ($(filter-out Y Y N,$(strip $(INDEX))),)
 $(error INDEX must be Y, N, or unset)
 endif
 APPLYING := $(if $(filter Y,$(APPLY)),Y)
@@ -126,6 +135,7 @@ endif
 PUBLIC_VERBS := help setup deps build check test fmt fix fix-enforcement audit status docs clean release-plan release-version release-tag release-build publication gen conform initialize mod waza duplication
 BUILTIN_VERBS := help setup deps build check test fmt fix fix-enforcement audit status docs clean release-plan release-version release-tag release-build publication gen conform initialize mod waza duplication
 SCRIPT_VERBS :=
+
 CUSTOM_MAKEFILE := $(MAKEFILE_ROOT)/custom.mk
 CUSTOM_DECLARED_TARGETS :=
 ifneq ($(wildcard $(CUSTOM_MAKEFILE)),)
@@ -215,7 +225,7 @@ _bootstrap_setup_tools:
 	@set -eu; \
 	uv_selector="latest"; \
 	if [ ! -f "$(SETUP_MISE)" ]; then \
-		printf 'ERROR: missing generated mise launcher: %s; run make gen APPLY=Y\n' "$(SETUP_MISE)" >&2; \
+		printf 'ERROR: missing generated mise launcher: %s; run make gen\n' "$(SETUP_MISE)" >&2; \
 		exit 2; \
 	fi; \
 	project_root="$(PROJECT_ROOT)"; \
@@ -512,9 +522,14 @@ PROJECT_FLEXT_INFRA := if [ ! -x "$(FLEXT_INFRA_PYTHON)" ]; then printf 'ERROR: 
 # `uv sync --check` permanently divergent. A standalone project owns its venv
 # alone and has no workspace packages to include.
 SHARED_RUNTIME := $(if $(filter-out $(PROJECT_ROOT),$(RUNTIME_ROOT)),1,$(if $(strip $(WORKSPACE_SUBPROJECTS)),1,))
-# CI must verify the committed lock against declared metadata before syncing.
+# CI must verify the committed lock against declared metadata before syncing;
 # --frozen bypasses that check and can omit newly declared runtime dependencies.
-UV_SYNC_FLAGS := $(if $(SHARED_RUNTIME),--all-packages ,)--all-extras --all-groups $(if $(CI),--locked ,)
+# Locally, --refresh re-resolves branch-tracked git dependencies (flext-* pinned
+# to the integration branch are moving sources by declaration, flext-62fbu), so
+# `make setup` always provisions the current package tips. Deleting uv.lock is
+# never needed: setup reconciles the stale-git-ref case itself (operator
+# request 2026-09-10).
+UV_SYNC_FLAGS := $(if $(SHARED_RUNTIME),--all-packages ,)--all-extras --all-groups $(if $(CI),--locked ,--refresh)
 
 -include custom.mk
 SELF_MAKE := "$(SELF_MAKE_EXECUTABLE)" --no-print-directory -f "$(SELF_MAKEFILE)"
@@ -524,6 +539,21 @@ define RUN_PUBLIC
 	$(if $(filter _custom-$(1),$(CUSTOM_DECLARED_TARGETS)),+@$(SELF_MAKE) _custom-$(1),+@$(SELF_MAKE) _builtin-$(1))
 	$(if $(filter post-$(1),$(CUSTOM_DECLARED_TARGETS)),+@$(SELF_MAKE) post-$(1))
 endef
+
+
+# Without script dispatch, a WHAT-specific custom handler still routes before
+# the builtin; anything else falls through to the canonical builtin target.
+define _dispatch
+	@set -eu; \
+	what="$(WHAT)"; \
+	custom="_custom_$(1)_$$what"; \
+	if [ -n "$$what" ] && $(SELF_MAKE) -n "$$custom" >/dev/null 2>&1; then \
+		$(SELF_MAKE) "$$custom"; \
+	else \
+		$(SELF_MAKE) "_builtin-$(1)"; \
+	fi
+endef
+
 
 define _require_apply
 	@if [ "$(APPLY)" != "Y" ]; then \
@@ -662,50 +692,51 @@ _builtin-help:
 
 	@printf '  %-16s %s\n' 'setup' 'Provision the declared environment and hooks.';
 
-	@printf '  %-16s %s (APPLY=Y)\n' 'deps' 'Upgrade, lock, and conform every declared dependency.';
+	@printf '  %-16s %s\n' 'deps' 'Upgrade, lock, and conform every declared dependency.';
 
-	@printf '  %-16s %s (APPLY=Y)\n' 'build' 'Build the project distribution artifacts.';
+	@printf '  %-16s %s\n' 'build' 'Build the project distribution artifacts.';
 
-	@printf '  %-16s %s (APPLY=Y)\n' 'check' 'Run every configured non-test gate.';
+	@printf '  %-16s %s\n' 'check' 'Run every configured non-test gate.';
 
-	@printf '  %-16s %s (APPLY=Y)\n' 'test' 'Run the complete suite through the persistent testmon cache.';
+	@printf '  %-16s %s\n' 'test' 'Run the complete suite through the persistent testmon cache.';
 
-	@printf '  %-16s %s (APPLY=Y)\n' 'fmt' 'Apply ruff format --preview and ruff check --fix --unsafe-fixes --preview. Ruff is the rule; change code, never ruff.';
+	@printf '  %-16s %s\n' 'fmt' 'Apply ruff format --preview and ruff check --fix --unsafe-fixes --preview. Ruff is the rule; change code, never ruff.';
 
-	@printf '  %-16s %s (APPLY=Y)\n' 'fix' 'Apply ruff check --fix --unsafe-fixes --preview plus every other configured safe correction. Ruff is the rule; change code, never ruff.';
+	@printf '  %-16s %s\n' 'fix' 'Apply ruff check --fix --unsafe-fixes --preview plus every other configured safe correction. Ruff is the rule; change code, never ruff.';
 
-	@printf '  %-16s %s (APPLY=Y)\n' 'fix-enforcement' 'Apply the safe fix actions declared by the enforcement catalog.';
+	@printf '  %-16s %s\n' 'fix-enforcement' 'Apply the safe fix actions declared by the enforcement catalog.';
 
 	@printf '  %-16s %s\n' 'audit' 'Inspect ownership, dependency, and generated-state health.';
 
 	@printf '  %-16s %s\n' 'status' 'Report the resolved runtime and repository state.';
 
-	@printf '  %-16s %s (APPLY=Y)\n' 'docs' 'Generate, repair, build, and validate documentation.';
+	@printf '  %-16s %s\n' 'docs' 'Generate, repair, build, and validate documentation.';
 
-	@printf '  %-16s %s (APPLY=Y)\n' 'clean' 'Remove every declared disposable artifact.';
+	@printf '  %-16s %s\n' 'clean' 'Remove every declared disposable artifact.';
 
-	@printf '  %-16s %s (APPLY=Y)\n' 'release-plan' 'Resolve the release decision through the public protocol.';
+	@printf '  %-16s %s\n' 'release-plan' 'Resolve the release decision through the public protocol.';
 
-	@printf '  %-16s %s (APPLY=Y)\n' 'release-version' 'Materialize the planned version.';
+	@printf '  %-16s %s\n' 'release-version' 'Materialize the planned version.';
 
-	@printf '  %-16s %s (APPLY=Y)\n' 'release-tag' 'Tag the verified release commit.';
+	@printf '  %-16s %s\n' 'release-tag' 'Tag the verified release commit.';
 
-	@printf '  %-16s %s (APPLY=Y)\n' 'release-build' 'Build the release receipt and artifacts.';
+	@printf '  %-16s %s\n' 'release-build' 'Build the release receipt and artifacts.';
 
-	@printf '  %-16s %s (APPLY=Y)\n' 'publication' 'Publish only receipt-attested release artifacts.';
+	@printf '  %-16s %s\n' 'publication' 'Publish only receipt-attested release artifacts.';
 
-	@printf '  %-16s %s (APPLY=Y)\n' 'gen' 'Regenerate every managed projection atomically.';
+	@printf '  %-16s %s\n' 'gen' 'Regenerate every managed projection atomically.';
 
-	@printf '  %-16s %s (APPLY=Y)\n' 'conform' 'Prove generated projections are at their fixed point.';
+	@printf '  %-16s %s\n' 'conform' 'Prove generated projections are at their fixed point.';
 
-	@printf '  %-16s %s (APPLY=Y)\n' 'initialize' 'Materialize the declared package initializer graph.';
+	@printf '  %-16s %s\n' 'initialize' 'Materialize the declared package initializer graph.';
 
-	@printf '  %-16s %s (APPLY=Y)\n' 'mod' 'Apply the declared structural codemods.';
+	@printf '  %-16s %s\n' 'mod' 'Apply the declared structural codemods.';
 
-	@printf '  %-16s %s (APPLY=Y)\n' 'waza' 'Validate provider-neutral governance semantics with Waza.';
+	@printf '  %-16s %s\n' 'waza' 'Validate provider-neutral governance semantics with Waza.';
 
-	@printf '  %-16s %s (APPLY=Y)\n' 'duplication' 'Run the canonical jscpd duplicate-code gate.';
+	@printf '  %-16s %s\n' 'duplication' 'Run the canonical jscpd duplicate-code gate.';
 
+	@printf '%s\n' 'Verbs apply by default; pass APPLY=N where the verb supports a check mode.';
 
 # A project owns the sources declared by its manifest. The generated setup
 # reconciler validates every initialized checkout before mutation, initializes
@@ -728,8 +759,12 @@ _builtin-help:
 #       Nested gitlinks belong to their own setup.
 # Free: no
 # End SECTION: submodule setup
+# Why (flext-mphw1): runners expose umask 002 and `submodule update --init`
+# materializes tracked files as 0664; canonical Mise artifact gates demand
+# exact modes, so provisioning normalizes the umask before checkout.
 _builtin_setup_submodules:
 	@set -eu; \
+	umask 022; \
 	root="$(PROJECT_ROOT)"; \
 	if [ ! -f "$$root/.gitmodules" ]; then exit 0; fi; \
 	profile="$(MAKE_PROFILE)"; \
@@ -855,7 +890,7 @@ endif
 # === SECTION: setup environment (managed) ===
 # Source: computed (MAKE_PROFILE routing) + operator contract (mro-e9j0.6 C7)
 # Operator contract: setup PROVISIONS tooling only — mise, venv, dependencies.
-# It never generates, conforms, or mutates project code; `make gen` (APPLY=Y)
+# It never generates, conforms, or mutates project code; `make gen` is the
 # is the single public conformance/generation surface.
 # Setup always reconciles directly from the lock. The venv is created when
 # missing and is never cleared while present, because a concurrent lane may be
@@ -943,8 +978,8 @@ _builtin_build_artifacts:
 	@$(UV) build --project "$(PROJECT_ROOT)"
 
 # `check` is read-only by contract: it never mutates the tree. Fixing is owned
-# by `make fix APPLY=Y` and formatting by `make fmt APPLY=Y`, both run BEFORE
-# check. APPLY here made the same tools run twice with conflicting intents,
+# by `make fix` and formatting by `make fmt`, both run BEFORE check. APPLY here
+# made the same tools run twice with conflicting intents,
 # so it is rejected instead of silently honoured; FIX=1 became the `fix` verb.
 # CI=Y keeps make.ci.check_gates, the strict complement of
 # make.ci.local_check_gates.
@@ -1128,3 +1163,5 @@ _builtin-waza:
 	@cd "$(PROJECT_ROOT)" && "$(SETUP_MISE)" exec -- waza check --no-update-check
 _builtin-duplication:
 	@$(PROJECT_FLEXT_INFRA) check run --repository-root "$(PROJECT_ROOT)" --gates duplication --projects .
+
+
