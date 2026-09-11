@@ -76,7 +76,10 @@ class TestsFlextCoreUtilitiesSettings:
             os.environ.pop(probe_env_var, None)
 
         tm.that(snapshot.env_file, eq=str(env_file.resolve()))
-        tm.that(snapshot.process_environment[FlextSettings.ENV_FILE_ENV_VAR], eq=str(env_file))
+        tm.that(
+            snapshot.process_environment[FlextSettings.ENV_FILE_ENV_VAR],
+            eq=str(env_file),
+        )
         tm.that(snapshot.process_environment[probe_env_var], eq="integration")
         tm.that(snapshot.log_level, eq=c.LogLevel.DEBUG)
 
@@ -123,7 +126,10 @@ class TestsFlextCoreUtilitiesSettings:
         tm.ok(resolved_summary)
         tm.that(
             resolved_summary.value,
-            eq={"env_file": FlextSettings.ENV_FILE_DEFAULT, "log_level": c.LogLevel.INFO},
+            eq={
+                "env_file": FlextSettings.ENV_FILE_DEFAULT,
+                "log_level": c.LogLevel.INFO,
+            },
         )
 
     def test_register_factory_surfaces_factory_failure_as_result(self) -> None:

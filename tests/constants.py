@@ -12,14 +12,16 @@ from flext_tests import FlextTestsConstants
 
 from flext_core import FlextConstants
 
-from ._constants.domain import TestsFlextConstantsDomain
-from ._constants.errors import TestsFlextConstantsErrors
-from ._constants.fixtures import TestsFlextConstantsFixtures
-from ._constants.loggings import TestsFlextConstantsLoggings
-from ._constants.other import TestsFlextConstantsOther
-from ._constants.result import TestsFlextConstantsResult
-from ._constants.services import TestsFlextConstantsServices
-from ._constants.settings import TestsFlextConstantsSettings
+from ._constants import (
+    TestsFlextConstantsDomain,
+    TestsFlextConstantsErrors,
+    TestsFlextConstantsFixtures,
+    TestsFlextConstantsLoggings,
+    TestsFlextConstantsOther,
+    TestsFlextConstantsResult,
+    TestsFlextConstantsServices,
+    TestsFlextConstantsSettings,
+)
 
 
 class TestsFlextConstants(FlextTestsConstants, FlextConstants):

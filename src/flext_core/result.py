@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
+from ._protocols.result import FlextProtocolsResult as prt
 from ._result.base import JsonDict
 from ._result.behavior import FlextResultBehavior
 from ._result.composition import FlextResultComposition
-from ._result.construction import FlextResultConstruction
+from ._result.construction import FlextResultConstruction, copy_result, ok_result
 from ._result.transforms import FlextResultTransforms
 from ._result.unwrap import FlextResultUnwrap
 
@@ -47,11 +48,10 @@ if TYPE_CHECKING:
 
     from flext_core import p, t
 
-    class FlextResult[T](_FlextResult[T], prt.Result[T]):
+    class FlextResult[T](_FlextResult[T]):
         """Type-safe result with monadic railway-oriented operations."""
 
         @classmethod
-        @override
         def ok[V](cls, value: V) -> FlextResult[V]:
             """Create a successful result carrying ``value``."""
             ...
@@ -84,7 +84,6 @@ if TYPE_CHECKING:
             ...
 
         @classmethod
-        @override
         def from_result[V](cls, source: p.Result[V]) -> FlextResult[V]:
             """Copy an abstract result into this concrete facade."""
             ...
@@ -93,6 +92,16 @@ else:
 
     class FlextResult[T](_FlextResult[T]):
         """Type-safe result with monadic railway-oriented operations."""
+
+        @classmethod
+        def ok[V](cls, value: V) -> FlextResult[V]:
+            """Create a successful result carrying ``value``."""
+            return cast("FlextResult[V]", ok_result(cls, value))
+
+        @classmethod
+        def from_result[V](cls, source: prt.Result[V]) -> FlextResult[V]:
+            """Copy an abstract result into this concrete facade."""
+            return cast("FlextResult[V]", copy_result(cls, source))
 
 
 r = FlextResult
