@@ -28,18 +28,23 @@ from pydantic import (
     BeforeValidator,
     ConfigDict as _PydanticConfigDict,
     Discriminator,
+    FailFast,
     Field,
     FieldSerializationInfo,
     GetCoreSchemaHandler,
     GetJsonSchemaHandler,
     GetPydanticSchema,
+    InstanceOf,
     JsonValue,
     PlainSerializer,
     PlainValidator,
     PrivateAttr as PydanticPrivateAttr,
     RootModel as PydanticRootModel,
+    SerializeAsAny,
     SkipValidation,
+    StringConstraints,
     TypeAdapter as PydanticTypeAdapter,
+    ValidateAs,
     ValidationError,
     ValidationInfo,
     WrapSerializer,
@@ -138,14 +143,22 @@ class FlextModelsPydantic:
     computed_field = staticmethod(computed_field)
     field_validator = field_validator
 
+    # Annotation constraints and tagged-union discrimination
+    Discriminator = Discriminator
+    StringConstraints = StringConstraints
+
     # Annotation validators
     AfterValidator = AfterValidator
     BeforeValidator = BeforeValidator
+    FailFast = FailFast
+    InstanceOf = InstanceOf
     PlainValidator = PlainValidator
+    ValidateAs = ValidateAs
     WrapValidator = WrapValidator
 
     # Serializers
     PlainSerializer = PlainSerializer
+    SerializeAsAny = SerializeAsAny
     WrapSerializer = WrapSerializer
 
     # Validation and serialization context helpers

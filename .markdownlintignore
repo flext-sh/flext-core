@@ -1,10 +1,13 @@
+# @flext-managed: continuous
+# @flext-regenerate: make gen
+# @flext-ssot: flext-infra/config/tooling.yaml
+# @flext-maintenance: do not edit generated projections; edit the SSOT and regenerate
+AGENTS.md
+.kilo/**
 .omo/**
-.beads/**
 .tmp/**
 .claude/**
 .vscode/**
-.codegraph/**
-.code-review-graph/**
 .serena/**
 .snapshots/**
 .benchmarks/**
@@ -22,3 +25,6 @@ htmlcov/**
 legado/**
 .github/**
 site/**
+docs/knowledge-index.md
+docs/architecture/communities/README.md
+docs/architecture/crg-reports/**

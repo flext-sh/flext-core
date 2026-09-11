@@ -12,8 +12,8 @@ from collections.abc import Callable
 from typing import NoReturn
 
 import pytest
-
 from flext_tests import d, e, r, tm
+
 from tests.protocols import p
 
 _COMBINED_SUM = 6
@@ -249,7 +249,7 @@ class TestsFlextCoreDocumentedPatterns:
 
         @d.combined(operation_name="sum_values", railway_enabled=True, track_perf=False)
         def sum_values(values: list[int]) -> int:
-            return sum(values)
+            return sum(values, 0)
 
         # Act
         result = sum_values([1, 2, 3])

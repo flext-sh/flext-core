@@ -9,9 +9,9 @@ from __future__ import annotations
 from typing import Annotated, Self
 
 from flext_core import FlextProtocols as p
-from flext_core._models.base import FlextModelsBase
-from flext_core._models.pydantic import FlextModelsPydantic as mp
 
+from ...base import FlextModelsBase
+from ...pydantic import FlextModelsPydantic as mp
 from .flextmodelscontextscope_part_02 import (
     FlextModelsContextScope as FlextModelsContextScopePart02,
 )

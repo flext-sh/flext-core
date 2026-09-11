@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._typings.base import FlextTypingBase as t
-
+from ..._constants.enforcement import FlextConstantsEnforcement as c
+from ..._models.enforcement import FlextModelsEnforcement as me
+from ..._typings.base import FlextTypingBase as t
 from .helpers import FlextUtilitiesBeartypeHelpers as _ubh
 
 _NO_VIOLATION: t.StrMapping | None = None
@@ -75,22 +74,28 @@ class FlextUtilitiesBeartypeAliasVisitor:
                     None,
                 )
                 if alias_char and getattr(module, alias_char, None) is not target:
-                    violation = {"alias": alias_char, "class": target_name}
+                    violation = {
+                        "alias": alias_char,
+                        "class": target_name,
+                        "rebind_form": f"{alias_char} = {target_name}",
+                    }
             case "no_self_root_import_in_core_files" if (
                 filename in c.ENFORCEMENT_CANONICAL_FILES
             ):
+                canonical_stems = frozenset(
+                    name.removesuffix(".py") for name in c.ENFORCEMENT_CANONICAL_FILES
+                )
                 violation = next(
                     (
                         {"package": package, "alias": alias_char}
                         for alias_char in _ubh.runtime_alias_names(package)
                         if (alias_value := getattr(module, alias_char, None))
                         is not None
-                        and (
-                            (_ubh.object_module_name_for(alias_value) or "").split(
-                                ".", 1
-                            )[0]
-                        )
-                        == package
+                        and (origin := _ubh.object_module_name_for(alias_value) or "")
+                        and origin.split(".", 1)[0] == package
+                        and origin != module_name
+                        and origin
+                        not in {f"{package}.{stem}" for stem in canonical_stems}
                     ),
                     _NO_VIOLATION,
                 )

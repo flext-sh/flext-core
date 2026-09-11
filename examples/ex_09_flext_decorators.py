@@ -6,17 +6,18 @@ from functools import wraps
 from typing import TYPE_CHECKING
 
 from examples.protocols import p
-from flext_core import r
+from flext_core import r, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
 
 def _log_result[T](fn: Callable[..., T]) -> Callable[..., T]:
-    """Decorator that passes through a result-returning function unchanged."""
+    """Decorator that logs each call, then passes the result through."""
 
     @wraps(fn)
     def _wrapper(*args: object, **kwargs: object) -> T:
+        _ = u.fetch_logger(fn.__name__).info(f"calling {fn.__name__}")
         return fn(*args, **kwargs)
 
     return _wrapper

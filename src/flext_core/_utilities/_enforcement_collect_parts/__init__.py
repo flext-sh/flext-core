@@ -15,7 +15,7 @@ __all__: tuple[str, ...] = ("FlextUtilitiesEnforcementCollect",)
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
-            ".enforcement_collect_part_02": ("FlextUtilitiesEnforcementCollect",)
+            ".enforcement_collect_part_02": ("FlextUtilitiesEnforcementCollect",),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,

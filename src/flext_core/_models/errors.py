@@ -9,10 +9,10 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import Annotated, Self
 
-from flext_core._models.base import FlextModelsBase as m
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
+from .._typings.base import FlextTypingBase as t
+from .._utilities.pydantic import FlextUtilitiesPydantic as up
+from .base import FlextModelsBase as m
+from .pydantic import FlextModelsPydantic as mp
 
 
 class FlextModelsErrors:

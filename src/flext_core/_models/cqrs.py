@@ -22,7 +22,8 @@ from pydantic import (
 )
 
 from flext_core import c, t
-from flext_core._models.base import FlextModelsBase as m
+
+from .base import FlextModelsBase as m
 
 
 def _u() -> type:

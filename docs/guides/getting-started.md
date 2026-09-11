@@ -3,6 +3,8 @@
 
 # flext-core - Getting Started
 
+> Project profile: `flext-core`
+
 <!-- TOC START -->
 - [Prepare the workspace](#prepare-the-workspace)
 - [Make a bounded change](#make-a-bounded-change)
@@ -10,8 +12,6 @@
 - [Documentation ownership](#documentation-ownership)
 - [Next steps](#next-steps)
 <!-- TOC END -->
-
-> Project profile: `flext-core`
 
 Work from the FLEXT workspace root. The root `AGENTS.md`, branch-matched
 `flext-law`, nearest package scope, and active Bead define the current contract.
@@ -21,7 +21,7 @@ Work from the FLEXT workspace root. The root `AGENTS.md`, branch-matched
 Run the canonical bootstrap and discover the live command grammar:
 
 ```bash
-make setup APPLY=Y
+make setup
 make help
 ```
 

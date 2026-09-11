@@ -4,8 +4,7 @@
 # Source: template (base/tests/fixtures/ci/docker/alpine.Dockerfile.j2)
 # Free: no
 # End SECTION: header
-# Clean-machine proof: project bootstrap + canonical make verbs on Alpine
-# (musl, POSIX /bin/sh at runtime; bash installed for the project scripts).
+# Clean-machine proof: project bootstrap + canonical make verbs on Alpine. (musl, POSIX /bin/sh at runtime; bash installed for the project scripts).
 FROM alpine:3.21
 
 # === SECTION: base packages (managed) ===
@@ -23,17 +22,16 @@ RUN apk add --no-cache \
 # End SECTION: base packages
 
 # === SECTION: managed tool bootstrap (managed) ===
-# Source: generated bin/mise + .mise.toml + mise.lock
+# Source: generated bin/mise + .mise.toml
 # The canonical make setup verb below owns the official newest-Mise bootstrap
-# and every locked tool installation as the same unprivileged runtime user.
+# and every latest tool installation as the same unprivileged runtime user.
+# The setup RUN receives Mise's credential only through a BuildKit secret.
+# Never persist build credentials in ARG, ENV, layers, or image configuration.
 ENV HOME=/home/runner \
     XDG_DATA_HOME=/home/runner/.local/share \
     XDG_CACHE_HOME=/home/runner/.cache \
     XDG_STATE_HOME=/home/runner/.local/state \
-    MISE_DATA_DIR=/home/runner/.local/share/mise \
-    MISE_CACHE_DIR=/home/runner/.cache/mise \
-    MISE_STATE_DIR=/home/runner/.local/state/mise \
-    MISE_TRUSTED_CONFIG_PATHS=/workspace
+    MISE_DATA_DIR=/home/runner/.local/share/mise
 WORKDIR /workspace
 RUN --mount=type=bind,source=.,target=/source,ro \
     cp -R /source/. /workspace/ \
@@ -51,7 +49,8 @@ ENV PATH="/home/runner/.local/share/mise/shims:${PATH}"
 # mentioned uv.lock/flext-core, which turned the proof into a bypass -- a
 # broken bootstrap still produced a green image.
 ENV CI=Y
-RUN make setup APPLY=Y
+RUN --mount=type=secret,id=github_token,env=MISE_GITHUB_TOKEN,required=true \
+    make setup APPLY=Y
 # End SECTION: bootstrap proof
 
 ENTRYPOINT []

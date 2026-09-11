@@ -15,8 +15,8 @@ from contextlib import redirect_stdout
 from typing import override
 
 import pytest
-
 from flext_tests import r
+
 from tests.models import m
 from tests.protocols import p
 from tests.typings import t

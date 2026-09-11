@@ -8,8 +8,8 @@ from contextlib import redirect_stdout
 from typing import TYPE_CHECKING, NoReturn
 
 import pytest
-
 from flext_tests import tm
+
 from tests.utilities import u
 
 if TYPE_CHECKING:

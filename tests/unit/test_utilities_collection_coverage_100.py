@@ -6,9 +6,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
+from flext_tests import tm
 
 from flext_core import u
-from flext_tests import tm
 from tests.models import m
 
 if TYPE_CHECKING:
@@ -67,11 +67,11 @@ class TestsFlextCoreUtilitiesCollection:
     def test_normalize_domain_event_data_flattens_public_payloads(
         self, tmp_path: Path
     ) -> None:
-        workspace_root = tmp_path / "flext"
-        workspace_root.mkdir()
+        repository_root = tmp_path / "flext"
+        repository_root.mkdir()
         config_payload = m.ConfigMap.model_validate({
             "event": "sync-users",
-            "workspace_root": workspace_root,
+            "repository_root": repository_root,
             "attempt_count": 2,
             "ignored": None,
         })
@@ -86,7 +86,7 @@ class TestsFlextCoreUtilitiesCollection:
             normalized_config,
             eq={
                 "event": "sync-users",
-                "workspace_root": str(workspace_root),
+                "repository_root": str(repository_root),
                 "attempt_count": 2,
             },
         )

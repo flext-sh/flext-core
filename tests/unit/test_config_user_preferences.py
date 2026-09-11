@@ -21,7 +21,6 @@ from pathlib import Path
 from types import ModuleType
 
 import pytest
-
 from flext_tests import u
 
 _SUBCLASS_SOURCE = '''

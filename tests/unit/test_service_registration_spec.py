@@ -5,9 +5,9 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
+from flext_tests import tm
 
 from flext_core import u
-from flext_tests import tm
 from tests.models import m
 
 

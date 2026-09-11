@@ -8,12 +8,14 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, ClassVar
-from flext_core._typings.base import FlextTypingBase as tb
-from flext_core import c
+
+from flext_core import FlextConstants as c
+
+from .._typings.base import FlextTypingBase as tb
 
 if TYPE_CHECKING:
-    from flext_core._protocols.logging import FlextProtocolsLogging as pl
-    from flext_core._typings.services import FlextTypesServices as ts
+    from .._protocols.logging import FlextProtocolsLogging as pl
+    from .._typings.services import FlextTypesServices as ts
 
 
 # mro-i6nq.8: Keep the runtime base free of unused provider passthroughs.

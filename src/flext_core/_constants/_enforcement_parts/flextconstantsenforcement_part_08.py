@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
-    from flext_core._typings.base import FlextTypingBase as t
+    from ..._typings.base import FlextTypingBase as t
 
 
 class FlextConstantsEnforcementFixActions:

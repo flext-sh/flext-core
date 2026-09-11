@@ -41,7 +41,7 @@ jobs:
       ref: ${{ steps.head.outputs.ref }}
     steps:
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
           persist-credentials: false
@@ -77,30 +77,24 @@ jobs:
       pull-requests: write # Open or update the release pull request.
     env:
       CI: Y
-      # A pull request opened with the default GITHUB_TOKEN triggers no CI, so
-      # the release PR would reach merge unvalidated (flext-1wjg1.16.5). The
-      # lane push and the PR use the organization automation token; when that
-      # secret is absent the job fails loud instead of degrading silently.
-      GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+      # GitHub standard: the built-in GITHUB_TOKEN with the declared job
+      # permissions (contents: write, pull-requests: write) opens and updates
+      # the release pull request. The integration lane CI runs on push events,
+      # so the release PR carries no PR-triggered CI by design.
+      GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Require the release automation token
-        run: |
-          if [ -z "${GH_TOKEN:-}" ]; then
-            echo "::error::secrets.RELEASE_TOKEN is not configured: a release pull request opened with GITHUB_TOKEN triggers no CI. Configure the organization secret and rerun." >&2
-            exit 1
-          fi
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: false
-          token: ${{ secrets.RELEASE_TOKEN }}
+          token: ${{ github.token }}
       - name: Release identity
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
       - name: Boot
-        run: make setup APPLY=Y
+        run: make setup
       - name: Release pull request
         run: make release-version APPLY=Y
 
@@ -112,12 +106,14 @@ jobs:
     timeout-minutes: 180
     permissions:
       contents: write # Push the release tag and create the GitHub release.
+      id-token: write # Trusted publishing to the package index.
+    environment: pypi
     env:
       CI: Y
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout release commit
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ needs.identity.outputs.ref }}
@@ -127,10 +123,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
       - name: Boot
-        run: make setup APPLY=Y
+        run: make setup
       - name: Tag
         run: make release-tag APPLY=Y
       - name: Build receipt
         run: make release-build APPLY=Y
       - name: Publish
-        run: make publication APPLY=Y
+        run: make publication APPLY=Y INDEX=Y

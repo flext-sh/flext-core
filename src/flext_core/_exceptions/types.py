@@ -10,8 +10,9 @@ from typing import ClassVar
 
 from pydantic import ValidationError as _PydanticValidationError
 
-from flext_core import m, FlextConstants as c, FlextTypes as t
-from flext_core._exceptions.base import FlextExceptionsBase
+from flext_core import FlextConstants as c, FlextTypes as t, m
+
+from .base import FlextExceptionsBase
 
 
 class FlextExceptionsTypes(FlextExceptionsBase):

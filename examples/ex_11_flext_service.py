@@ -3,17 +3,13 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, override
+from typing import Annotated, override
 
 from examples.models import m
-from examples.protocols import p
 from examples.shared import ExamplesFlextShared
 from examples.typings import t
 from examples.utilities import u
-from flext_core import r, s
-
-if TYPE_CHECKING:
-    from flext_core import p
+from flext_core import p, r, s
 
 
 class _EchoService(s[str]):
@@ -39,7 +35,7 @@ class _EchoService(s[str]):
         return {"service": type(self).__name__, "payload": self.payload.text}
 
     def valid(self) -> bool:
-        validation: p.SuccessCheckable = self.validate_business_rules()
+        validation: p.Result[bool] = self.validate_business_rules()
         return validation.success
 
     def validate_business_rules(self) -> p.Result[bool]:

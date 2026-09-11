@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import importlib
+import sys
 import time
 from types import ModuleType
 
 import pytest
+from flext_tests import tm
 
 import flext_core
 from flext_core.lazy import install_lazy_exports, lazy
-from flext_tests import tm
 from tests.constants import c
 
 type LazyImportEntry = str | tuple[str, str]
@@ -49,12 +50,16 @@ class TestsFlextLazyPerformance:
                         module_name
                     )
                 )
-                install_lazy_exports(
-                    module_name,
-                    virtual_module.__dict__,
-                    lazy_map,
-                    publish_all=index % 2 == 0,
-                )
+                sys.modules[module_name] = virtual_module
+                try:
+                    install_lazy_exports(
+                        module_name,
+                        virtual_module.__dict__,
+                        lazy_map,
+                        publish_all=index % 2 == 0,
+                    )
+                finally:
+                    del sys.modules[module_name]
 
             for symbol_name in c.Tests.LAZY_BENCHMARK_REAL_SYMBOLS:
                 getattr(reloaded_module, symbol_name)

@@ -10,11 +10,13 @@ from collections.abc import Mapping
 from typing import TypeVar, cast
 
 from pydantic import BaseModel, PrivateAttr
-from flext_core._protocols.result import FlextProtocolsResult as prt
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core._typings.pydantic import FlextTypesPydantic as tp
-from flext_core._typings.services import FlextTypesServices as ts
+
 from flext_core import c
+
+from .._protocols.result import FlextProtocolsResult as prt
+from .._typings.base import FlextTypingBase as t
+from .._typings.pydantic import FlextTypesPydantic as tp
+from .._typings.services import FlextTypesServices as ts
 
 type JsonMapping = Mapping[str, tp.JsonValue]
 type JsonDict = dict[str, tp.JsonValue]
@@ -64,7 +66,7 @@ class FlextResultBase[T](BaseModel):
     def validate_error_data(
         error_data: t.JsonMapping | ts.ConfigModelInput | None,
     ) -> JsonDict | None:
-        from flext_core._runtime._metadata import FlextRuntimeMetadata as FlextRuntime
+        from .._runtime._metadata import FlextRuntimeMetadata as FlextRuntime
 
         normalized = FlextRuntime.normalize_model_input_mapping(error_data)
         if normalized is None:

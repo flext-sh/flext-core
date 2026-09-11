@@ -21,8 +21,9 @@ from typing import TYPE_CHECKING, ClassVar
 
 from flext_core.utilities import FlextUtilitiesEnforcement
 from tests.constants import c
-from tests.unit._enforcement_support import make_class
 from tests.utilities import u
+
+from ._enforcement_support import make_class
 
 if TYPE_CHECKING:
     from pathlib import Path

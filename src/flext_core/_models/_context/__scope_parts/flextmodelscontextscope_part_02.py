@@ -11,10 +11,10 @@ from types import MappingProxyType
 from typing import Annotated, Self
 
 from flext_core import FlextConstants as c, FlextTypes as t
-from flext_core._models.base import FlextModelsBase
-from flext_core._models.containers import FlextModelsContainers
-from flext_core._models.pydantic import FlextModelsPydantic as mp
 
+from ...base import FlextModelsBase
+from ...containers import FlextModelsContainers
+from ...pydantic import FlextModelsPydantic as mp
 from .flextmodelscontextscope_part_01 import (
     FlextModelsContextScope as FlextModelsContextScopePart01,
 )
@@ -34,7 +34,9 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
         hooks: Annotated[
             t.ContextHookMap,
             mp.Field(
-                default_factory=lambda: MappingProxyType({}),
+                default_factory=lambda: MappingProxyType(
+                    dict[str, t.SequenceOf[t.ContextHookCallable]]()
+                ),
                 description="Lifecycle hooks keyed by event name",
             ),
         ] = mp.Field(
@@ -67,7 +69,12 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
                 str, contextvars.ContextVar[FlextModelsContainers.ConfigMap | None]
             ],
             mp.Field(
-                default_factory=lambda: MappingProxyType({}),
+                default_factory=lambda: MappingProxyType(
+                    dict[
+                        str,
+                        contextvars.ContextVar[FlextModelsContainers.ConfigMap | None],
+                    ]()
+                ),
                 description="ContextVar registry keyed by scope name",
             ),
         ] = mp.Field(

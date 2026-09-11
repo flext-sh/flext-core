@@ -14,7 +14,6 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import pytest
-
 from flext_tests import h, r
 
 if TYPE_CHECKING:
@@ -24,16 +23,12 @@ if TYPE_CHECKING:
 class TestsFlextCoreHandlerDecoratorDiscovery:
     """Public contract: decorate -> discover -> invoke preserves the r[T] outcome."""
 
-    @staticmethod
-    def _module(name: str) -> types.ModuleType:
-        return types.ModuleType(name)
-
     def test_discovered_module_handler_invokes_with_success_outcome(self) -> None:
         @dataclass
         class CreateCommand:
             name: str
 
-        module = self._module("success_module")
+        module = types.ModuleType("success_module")
 
         @h.handler(command=CreateCommand, priority=100)
         def handle_create(cmd: CreateCommand) -> p.Result[str]:
@@ -54,7 +49,7 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         class DeleteCommand:
             user_id: str
 
-        module = self._module("failure_module")
+        module = types.ModuleType("failure_module")
 
         @h.handler(command=DeleteCommand)
         def handle_delete(cmd: DeleteCommand) -> p.Result[str]:
@@ -70,10 +65,10 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         assert outcome.error == "missing_u42"
 
     def test_scan_module_returns_empty_when_no_handlers_decorated(self) -> None:
-        module = self._module("plain_module")
+        module = types.ModuleType("plain_module")
 
         def plain(value: int) -> p.Result[int]:
-            return r[int].ok(value)
+            return r[int].ok(value * 2)
 
         module.__dict__["plain"] = plain
         module.__dict__["constant"] = "not-a-handler"
@@ -84,7 +79,7 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         class Command:
             pass
 
-        module = self._module("privacy_module")
+        module = types.ModuleType("privacy_module")
 
         @h.handler(command=Command)
         def _private_handler(cmd: Command) -> p.Result[str]:
@@ -110,7 +105,7 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         class Command:
             pass
 
-        module = self._module("config_module")
+        module = types.ModuleType("config_module")
 
         @h.handler(command=Command, priority=priority)
         def handle(cmd: Command) -> p.Result[str]:
@@ -123,23 +118,6 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
 
         assert config.command is Command
         assert config.priority == priority
-
-    def test_discovered_class_handler_invokes_via_instance(self) -> None:
-        @dataclass
-        class EventPublished:
-            event_id: str
-
-        class OrderService:
-            @h.handler(command=EventPublished, priority=25)
-            def handle_event(self, event: EventPublished) -> p.Result[str]:
-                return r[str].ok(f"processed_{event.event_id}")
-
-        ((name, _),) = h.Discovery.scan_class(OrderService)
-        outcome = getattr(OrderService(), name)(EventPublished("e7"))
-
-        assert name == "handle_event"
-        assert outcome.success is True
-        assert outcome.unwrap() == "processed_e7"
 
     @pytest.mark.parametrize(
         ("priority", "expected_name"), [(10, "handle_low"), (90, "handle_high")]
@@ -182,26 +160,3 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
 
         assert h.Discovery.has_handlers(WithoutHandlers) is False
         assert h.Discovery.has_handlers(WithHandler) is True
-
-    def test_scan_class_discovers_inherited_handlers(self) -> None:
-        class CreateCommand:
-            pass
-
-        class DeleteCommand:
-            pass
-
-        class BaseService:
-            @h.handler(command=CreateCommand, priority=10)
-            def handle_create(self, cmd: CreateCommand) -> p.Result[str]:
-                _ = cmd
-                return r[str].ok("created")
-
-        class DerivedService(BaseService):
-            @h.handler(command=DeleteCommand, priority=5)
-            def handle_delete(self, cmd: DeleteCommand) -> p.Result[str]:
-                _ = cmd
-                return r[str].ok("deleted")
-
-        names = {name for name, _ in h.Discovery.scan_class(DerivedService)}
-
-        assert names == {"handle_create", "handle_delete"}

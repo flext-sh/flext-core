@@ -11,8 +11,6 @@ import time
 import traceback
 from typing import TYPE_CHECKING, ClassVar, Self
 
-import structlog
-
 from flext_core import (
     FlextConstants as c,
     FlextExceptions as e,
@@ -20,8 +18,9 @@ from flext_core import (
     FlextTypes as t,
     r,
 )
-from flext_core._utilities.logging_context import FlextUtilitiesLoggingContext as ulc
 from flext_core.models import FlextModels as m
+
+from ._utilities.logging_context import FlextUtilitiesLoggingContext as ulc
 
 if TYPE_CHECKING:
     import types
@@ -116,7 +115,7 @@ class FlextUtilitiesLogging(ulc):
         if not name:
             msg = "logger name is required"
             raise ValueError(msg)
-        logger: p.Logger = structlog.get_logger(name)
+        logger: p.Logger = cls.structlog().get_logger(name)
         return logger
 
     def bind(self, **context: t.JsonPayload) -> Self:

@@ -16,11 +16,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
+from flext_tests import tm
 
 import flext_core as core
-from flext_tests import tm
 from tests.typings import t
-from tests.unit._typings_support import FLAT_ALIAS_NAMES, PUBLIC_ALIAS_NAMES
+
+from ._typings_support import FLAT_ALIAS_NAMES, PUBLIC_ALIAS_NAMES
 
 LEGACY_GENERIC_NAMES: tuple[str, ...] = (
     "EnumT",

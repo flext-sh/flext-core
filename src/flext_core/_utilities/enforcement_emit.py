@@ -5,13 +5,13 @@ from __future__ import annotations
 import warnings
 from types import MappingProxyType
 
-from flext_core._constants.enforcement import (
+from .._constants.enforcement import (
     FlextConstantsEnforcement as c,
     FlextMroViolation,
     FlextSmellViolation,
 )
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._typings.base import FlextTypingBase as t
+from .._models.enforcement import FlextModelsEnforcement as me
+from .._typings.base import FlextTypingBase as t
 
 _BEARTYPE_TAG_TO_RULE: MappingProxyType[str, t.StrPair] = MappingProxyType({
     tag: (rule_id, anchor)

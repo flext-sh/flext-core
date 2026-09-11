@@ -2,11 +2,54 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from operator import itemgetter
+
 import pytest
 
-from flext_core import u
+from flext_core import m as core_m, u
 from tests.models import m
 from tests.typings import t
+
+
+def _input_reader() -> Callable[[str], str]:
+    return input
+
+
+class _PrivateAttrContract(core_m.BaseModel):
+    label: str
+    _model_values: list[str] = core_m.PrivateAttr(default_factory=list)
+    _utility_values: list[str] = u.PrivateAttr(default_factory=list)
+    _label_copy: str = core_m.PrivateAttr(default_factory=itemgetter("label"))
+    _reader: Callable[[str], str] = u.PrivateAttr(default_factory=_input_reader)
+
+    def record_model(self, value: str) -> None:
+        """Append to the core-model private history."""
+        self._model_values.append(value)
+
+    def record_utility(self, value: str) -> None:
+        """Append to the utility private history."""
+        self._utility_values.append(value)
+
+    @property
+    def recorded_model_values(self) -> list[str]:
+        """Snapshot of the core-model private history."""
+        return list(self._model_values)
+
+    @property
+    def recorded_utility_values(self) -> list[str]:
+        """Snapshot of the utility private history."""
+        return list(self._utility_values)
+
+    @property
+    def label_echo(self) -> str:
+        """Copy of the validated label captured at init time."""
+        return self._label_copy
+
+    @property
+    def reads_standard_input(self) -> bool:
+        """Whether the default reader resolved to the builtin input."""
+        return self._reader is input
 
 
 class TestsFlextUtilitiesPydantic:
@@ -110,3 +153,20 @@ class TestsFlextUtilitiesPydantic:
             "flext.cli.jobs",
         ]
         assert resolved.settings_overrides == {"dry_run": True}
+
+    def test_private_attr_factories_preserve_pydantic_instance_semantics(self) -> None:
+        first = _PrivateAttrContract(label="first")
+        second = _PrivateAttrContract(label="second")
+
+        first.record_model("model")
+        first.record_utility("utility")
+
+        assert first.recorded_model_values == ["model"]
+        assert second.recorded_model_values == []
+        assert first.recorded_utility_values == ["utility"]
+        assert second.recorded_utility_values == []
+        assert first.label_echo == "first"
+        assert second.label_echo == "second"
+        assert first.reads_standard_input
+        assert second.reads_standard_input
+        assert first.model_dump() == {"label": "first"}

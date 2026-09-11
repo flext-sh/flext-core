@@ -13,10 +13,11 @@ from __future__ import annotations
 from typing import Annotated
 
 from flext_core import FlextTypes as t
-from flext_core._models.base import FlextModelsBase as m
-from flext_core._models.containers import FlextModelsContainers as mc
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._utilities.collection import FlextUtilitiesCollection as u
+
+from .._utilities.collection import FlextUtilitiesCollection as u
+from .base import FlextModelsBase as m
+from .containers import FlextModelsContainers
+from .pydantic import FlextModelsPydantic as mp
 
 
 class FlextModelsDomainEvent:
@@ -48,11 +49,12 @@ class FlextModelsDomainEvent:
             ),
         ]
         data: Annotated[
-            mc.ConfigMap, mp.BeforeValidator(u.normalize_domain_event_data)
+            FlextModelsContainers.ConfigMap,
+            mp.BeforeValidator(u.normalize_domain_event_data),
         ] = mp.Field(
             validate_default=True,
             description="Event data container",
-            default_factory=lambda: mc.ConfigMap(root={}),
+            default_factory=lambda: FlextModelsContainers.ConfigMap(root={}),
         )
 
     DomainEvent = Entry

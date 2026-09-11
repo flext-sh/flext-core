@@ -10,15 +10,15 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from . import (
-        _beartype as _beartype,
-        _checker_parts as _checker_parts,
-        _enforcement_collect_parts as _enforcement_collect_parts,
-        _enforcement_parts as _enforcement_parts,
-        _logging_config_parts as _logging_config_parts,
-        _logging_context_parts as _logging_context_parts,
-        _mapper_access_parts as _mapper_access_parts,
-        _mapper_extract_parts as _mapper_extract_parts,
-        _parser_targets_parts as _parser_targets_parts,
+        _beartype,
+        _checker_parts,
+        _enforcement_collect_parts,
+        _enforcement_parts,
+        _logging_config_parts,
+        _logging_context_parts,
+        _mapper_access_parts,
+        _mapper_extract_parts,
+        _parser_targets_parts,
     )
     from ._beartype._alias_visitor import FlextUtilitiesBeartypeAliasVisitor
     from ._beartype._class_visitor_parts._parts.class_visitor_part_02_01 import (
@@ -47,7 +47,7 @@ if TYPE_CHECKING:
     from ._guards_type_protocol_types import ProtocolGuardInput
     from .args import FlextUtilitiesArgs
     from .beartype_conf import FlextUtilitiesBeartypeConf
-    from .beartype_engine import FlextUtilitiesBeartypeEngine, ube
+    from .beartype_engine import FlextUtilitiesBeartypeEngine
     from .beartype_typingext_patch import FlextUtilitiesBeartypeTypingExtPatch
     from .checker import FlextUtilitiesChecker
     from .collection import FlextUtilitiesCollection
@@ -164,7 +164,6 @@ __all__: tuple[str, ...] = (
     "execute_dispatcher_handler",
     "redundant_inner_violation",
     "self_ref_violation",
-    "ube",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
@@ -210,7 +209,7 @@ _LAZY_IMPORTS = MappingProxyType(
             "._parser_targets_parts": ("_parser_targets_parts",),
             ".args": ("FlextUtilitiesArgs",),
             ".beartype_conf": ("FlextUtilitiesBeartypeConf",),
-            ".beartype_engine": ("FlextUtilitiesBeartypeEngine", "ube"),
+            ".beartype_engine": ("FlextUtilitiesBeartypeEngine",),
             ".beartype_typingext_patch": ("FlextUtilitiesBeartypeTypingExtPatch",),
             ".checker": ("FlextUtilitiesChecker",),
             ".collection": ("FlextUtilitiesCollection",),

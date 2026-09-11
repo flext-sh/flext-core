@@ -19,12 +19,10 @@ from flext_core import (
     FlextRuntime,
     FlextTypes as t,
 )
-from flext_core._utilities._logging_context_parts.logging_context_part_01 import (
-    FlextUtilitiesLoggingContext,
-)
-from flext_core._utilities.context_state import FlextUtilitiesContextState
 
 from ._context_crud_set import FlextUtilitiesContextCrudSetMixin
+from ._logging_context_parts.logging_context_part_01 import FlextUtilitiesLoggingContext
+from .context_state import FlextUtilitiesContextState
 
 if TYPE_CHECKING:
     import contextvars

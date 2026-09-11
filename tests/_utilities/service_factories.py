@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from tests._utilities.user_factories import TestsFlextUtilitiesUserFactoriesMixin
-from tests._utilities.validation_factories import (
-    TestsFlextUtilitiesValidationFactoriesMixin,
-)
+from .user_factories import TestsFlextUtilitiesUserFactoriesMixin
+from .validation_factories import TestsFlextUtilitiesValidationFactoriesMixin
 
 
 class TestsFlextUtilitiesServiceFactoriesMixin(

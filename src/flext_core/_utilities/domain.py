@@ -14,15 +14,15 @@ from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
 from flext_core import c, t
-from flext_core._models.base import FlextModelsBase as m
-from flext_core._models.containers import FlextModelsContainers as mc
-from flext_core._models.domain_event import FlextModelsDomainEvent as mde
-from flext_core._protocols.result import FlextProtocolsResult as prt
 
+from .._models.base import FlextModelsBase as m
+from .._models.containers import FlextModelsContainers
+from .._models.domain_event import FlextModelsDomainEvent as mde
+from .._protocols.result import FlextProtocolsResult as prt
 from .guards import FlextUtilitiesGuards as u
 
 if TYPE_CHECKING:
-    from flext_core._protocols.base import FlextProtocolsBase as pb
+    from .._protocols.base import FlextProtocolsBase as pb
 
 
 class FlextUtilitiesDomain:
@@ -154,7 +154,9 @@ class FlextUtilitiesDomain:
     def add_domain_event(
         entity: pb.HasDomainEvents,
         event_type: str,
-        data: mc.ConfigMap | t.MappingKV[str, t.JsonPayload | None] | None = None,
+        data: FlextModelsContainers.ConfigMap
+        | t.MappingKV[str, t.JsonPayload | None]
+        | None = None,
         aggregate_id: str | None = None,
     ) -> mde.Entry:
         """Create a domain event and append it to the entity's event buffer.
@@ -164,11 +166,11 @@ class FlextUtilitiesDomain:
         ``BeforeValidator`` on ``Entry.data`` handles all normalization.
         """
         if data is None:
-            normalized_data = mc.ConfigMap(root={})
-        elif isinstance(data, mc.ConfigMap):
+            normalized_data = FlextModelsContainers.ConfigMap(root={})
+        elif isinstance(data, FlextModelsContainers.ConfigMap):
             normalized_data = data
         else:
-            normalized_data = mc.ConfigMap.model_validate(data)
+            normalized_data = FlextModelsContainers.ConfigMap.model_validate(data)
         entry = mde.Entry(
             event_type=event_type,
             aggregate_id=aggregate_id if aggregate_id is not None else entity.unique_id,

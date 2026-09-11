@@ -97,13 +97,13 @@ class FlextUtilitiesParserCoerce:
 
     @staticmethod
     def _parse_with_default[T](
-        default: T | None, default_factory: Callable[[], T] | None, error_msg: str
+        options: FlextUtilitiesParserCoerce.ParseOptions[T], error_msg: str
     ) -> p.Result[T]:
         """Return default or error for parse failures."""
-        if default is not None:
-            return r[T].ok(default)
-        if default_factory is not None:
-            return r[T].ok(default_factory())
+        if options.default is not None:
+            return r[T].ok(options.default)
+        if options.default_factory is not None:
+            return r[T].ok(options.default_factory())
         return r[T].fail(error_msg)
 
     @staticmethod

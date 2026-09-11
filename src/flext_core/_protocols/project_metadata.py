@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core._protocols.base import FlextProtocolsBase as pb
+from .base import FlextProtocolsBase as pb
 
 if TYPE_CHECKING:
-    from pathlib import Path
+    from pathlib import Path, PurePosixPath
 
 
 # NOTE (multi-agent, mro-wkii.17.23 / agent: uv_overlay_owner): interfaces
@@ -79,6 +79,22 @@ class FlextProtocolsProjectMetadata:
         def class_stem_override(self) -> str | None: ...
 
     @runtime_checkable
+    class ProjectToolFlextReadmeSection(pb.Model, Protocol):
+        """One ordered project README section declaration."""
+
+        @property
+        def id(self) -> str: ...
+
+        @property
+        def title(self) -> str: ...
+
+        @property
+        def content(self) -> str | None: ...
+
+        @property
+        def include(self) -> PurePosixPath | None: ...
+
+    @runtime_checkable
     class ProjectToolFlextDocs(pb.Model, Protocol):
         """Documentation policy fields."""
 
@@ -93,6 +109,13 @@ class FlextProtocolsProjectMetadata:
 
         @property
         def exclude_docs(self) -> tuple[str, ...]: ...
+
+        @property
+        def readme_sections(
+            self,
+        ) -> tuple[
+            FlextProtocolsProjectMetadata.ProjectToolFlextReadmeSection, ...
+        ]: ...
 
     @runtime_checkable
     class ProjectToolFlextWorkspace(pb.Model, Protocol):

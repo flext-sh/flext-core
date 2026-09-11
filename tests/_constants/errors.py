@@ -27,7 +27,6 @@ class TestsFlextConstantsErrors:
     PROCESSING_ERROR_DEFAULT: Final[str] = "Processing error"
     BAD_DICT_GET: Final[str] = "Bad dict get"
     BAD_LIST_ITERATION: Final[str] = "Bad list iteration"
-    PLAIN_BOOM: Final[str] = "plain boom"
     CANNOT_INSTANTIATE: Final[str] = "Cannot instantiate"
     UNEXPECTED_MESSAGE_TYPE: Final[str] = "Unexpected message type"
     VALIDATION_FAILED_FOR_TEST: Final[str] = "Validation failed for test"

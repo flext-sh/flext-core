@@ -3,6 +3,8 @@
 
 # flext-core - Onboarding
 
+> Project profile: `flext-core`
+
 <!-- TOC START -->
 - [Resolve authority](#resolve-authority)
 - [Prepare and discover](#prepare-and-discover)
@@ -12,8 +14,6 @@
 - [Command grammar](#command-grammar)
 - [Related guides](#related-guides)
 <!-- TOC END -->
-
-> Project profile: `flext-core`
 
 Use this sequence before changing any FLEXT package. All actions start at the
 workspace root.
@@ -33,7 +33,7 @@ Confirm the package's canonical config, settings, public API, and owned `c`, `t`
 ## Prepare and discover
 
 ```bash
-make setup APPLY=Y
+make setup
 make help
 ```
 

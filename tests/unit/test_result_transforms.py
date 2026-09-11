@@ -12,8 +12,8 @@ import operator
 from typing import TYPE_CHECKING
 
 import pytest
-
 from flext_tests import r, tm
+
 from tests.utilities import u
 
 if TYPE_CHECKING:

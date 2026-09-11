@@ -17,8 +17,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, override
 
 import pytest
-
 from flext_tests import h, r
+
 from tests.base import s
 
 if TYPE_CHECKING:

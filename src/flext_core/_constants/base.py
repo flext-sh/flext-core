@@ -45,3 +45,4 @@ class FlextConstantsBase:
     DEFAULT_SIZE: Final[int] = 1000
     MAX_ITEMS: Final[int] = 10000
     DEFAULT_EMPTY_STRING: Final[str] = ""
+    DEFAULT_METADATA_SCHEMA_VERSION: Final[str] = "1.0.0"

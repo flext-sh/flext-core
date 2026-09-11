@@ -10,14 +10,15 @@ import time
 from functools import wraps
 from typing import TYPE_CHECKING
 
-from flext_core import c, FlextUtilities as u
-from flext_core._decorators._logging_payloads import FlextDecoratorsLoggingPayloads
+from flext_core import FlextUtilities as u, c
+
+from ._logging_payloads import FlextDecoratorsLoggingPayloads
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core._protocols.logging import FlextProtocolsLogging as pl
-    from flext_core._typings.base import FlextTypingBase as tb
+    from .._protocols.logging import FlextProtocolsLogging as pl
+    from .._typings.base import FlextTypingBase as tb
 
 
 class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):

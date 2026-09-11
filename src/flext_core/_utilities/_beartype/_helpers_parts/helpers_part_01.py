@@ -8,7 +8,7 @@ import sys
 from typing import TYPE_CHECKING, Any, TypeAliasType, get_args, get_origin
 
 if TYPE_CHECKING:
-    from flext_core._typings.base import FlextTypingBase as t
+    from ...._typings.base import FlextTypingBase as t
 
 
 class FlextUtilitiesBeartypeHelpers:
@@ -137,6 +137,16 @@ class FlextUtilitiesBeartypeHelpers:
             ):
                 return True
         return False
+
+    @staticmethod
+    def has_protocol_ancestor(value: type) -> bool:
+        """Return True when any base in the MRO is a runtime Protocol.
+
+        Concrete Protocol implementations (e.g. ``FlextWebTransport`` inheriting
+        from ``TransportPlugin``) are valid inner classes of protocol trees;
+        the ``proto_inner_kind`` rule (ENFORCE-083) must not flag them.
+        """
+        return any(getattr(base, "_is_protocol", False) for base in value.__mro__[1:])
 
 
 __all__: list[str] = ["FlextUtilitiesBeartypeHelpers"]

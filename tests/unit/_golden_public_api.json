@@ -420,7 +420,7 @@
         "VENV_DIR_NAME",
         "VERSION",
         "ValidationError",
-        "WORKSPACE_ROOT_MARKERS",
+        "REPOSITORY_ROOT_MARKERS",
         "WarningLevel",
         "ZERO"
     ],

@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_tests import r, tm
+
 from tests.constants import c
 from tests.typings import t
 from tests.utilities import u

@@ -13,8 +13,9 @@ from beartype import BeartypeConf, BeartypeStrategy
 from flext_core.utilities import FlextUtilitiesBeartypeConf
 from tests.constants import c
 from tests.typings import t
-from tests.unit._beartype_engine_support import AnyAlias, CleanAlias, NestedAnyAlias
 from tests.utilities import u
+
+from ._beartype_engine_support import AnyAlias, CleanAlias, NestedAnyAlias
 
 _FORBIDDEN: frozenset[str] = frozenset({"dict", "list", "set"})
 
