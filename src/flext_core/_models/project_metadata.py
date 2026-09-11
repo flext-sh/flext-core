@@ -176,6 +176,25 @@ class _ProjectMetadataFields:
             Field(default=False, description="Attach project to its parent workspace"),
         ] = False
 
+    class ProjectToolFlextNamespace(_ProjectMetadataContract):
+        """``[tool.flext.namespace]`` contract."""
+
+        enabled: Annotated[
+            bool | None,
+            Field(default=None, description="Explicit namespace-enforcement toggle"),
+        ] = None
+        scan_dirs: Annotated[
+            t.StrTuple,
+            Field(default=(), description="Explicit namespace scan directories"),
+        ] = ()
+        include_dynamic_dirs: Annotated[
+            bool | None,
+            Field(
+                default=None,
+                description="Whether non-canonical tracked dirs join the scan",
+            ),
+        ] = None
+
 
 class _ProjectMetadataAggregates(_ProjectMetadataFields):
     """Validated PEP 621 and FLEXT aggregate declarations."""
@@ -236,6 +255,13 @@ class _ProjectMetadataAggregates(_ProjectMetadataFields):
                 description="Workspace attachment policy",
             ),
         ] = Field(default_factory=_ProjectMetadataFields.ProjectToolFlextWorkspace)
+        namespace: Annotated[
+            _ProjectMetadataFields.ProjectToolFlextNamespace,
+            Field(
+                default_factory=_ProjectMetadataFields.ProjectToolFlextNamespace,
+                description="Namespace enforcement policy",
+            ),
+        ] = Field(default_factory=_ProjectMetadataFields.ProjectToolFlextNamespace)
 
 
 class _ProjectMetadataDocument(_ProjectMetadataAggregates):

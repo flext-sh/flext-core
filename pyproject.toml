@@ -22,7 +22,7 @@ dependencies = [
   "pydantic>=2.13.5",
   "pydantic-settings>=2.15.0",
   "pyyaml>=6.0.3",
-  "structlog>=25.5.0",
+  "structlog>=25.5.0,<26",
   "typing-extensions>=4.16.0",
 ]
 description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
