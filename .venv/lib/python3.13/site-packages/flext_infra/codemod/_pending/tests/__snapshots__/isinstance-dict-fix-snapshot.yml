@@ -1,0 +1,9 @@
+id: isinstance-dict-fix
+snapshots:
+  isinstance(x, dict):
+    fixed: isinstance(x, Mapping)
+    labels:
+    - source: isinstance(x, dict)
+      style: primary
+      start: 0
+      end: 19

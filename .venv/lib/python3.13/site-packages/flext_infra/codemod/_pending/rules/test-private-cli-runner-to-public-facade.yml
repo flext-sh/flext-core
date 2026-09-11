@@ -1,0 +1,36 @@
+id: test-private-cli-runner-to-public-facade
+language: python
+severity: hint
+files:
+  - "**/tests/**/*.py"
+  - "tests/**/*.py"
+ignores:
+  - "**/legado/**"
+message: >-
+  A FlextMeltanoCli test that receives the typed public facade must execute
+  through its run method instead of a private framework runner and app.
+rule:
+  kind: call
+  all:
+    - pattern: runner.invoke(app, $ARGS)
+    - inside:
+        kind: function_definition
+        stopBy: end
+        has:
+          kind: typed_parameter
+          regex: "^meltano_cli: FlextMeltanoCli$"
+          stopBy: end
+    - inside:
+        kind: module
+        stopBy: end
+        has:
+          kind: import_from_statement
+          stopBy: end
+          all:
+            - has:
+                field: module_name
+                regex: "^flext_[a-z0-9_]+\\.cli$"
+            - has:
+                pattern: FlextMeltanoCli
+                stopBy: end
+fix: "meltano_cli.run($ARGS)"

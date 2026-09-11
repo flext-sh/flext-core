@@ -1,0 +1,66 @@
+# Ban hardcoded config-owned values outside the config/settings SSOT (P0).
+#
+# Universal law P0 + §16: pins, paths, URLs, and profile names are owned by
+# config/settings/templates — never hardcoded in code or tests. A module
+# that repeats one of those values as a literal creates a second, silent
+# source of truth that drifts from the owner. Config/settings are SSOT:
+# read `config.<Ns>.*` / `settings.<Ns>.*`, never repeat the value.
+#
+# Detection is SHAPE-BASED, never a project name list:
+#   * an http(s) URL literal bound to a field/argument
+#   * an absolute POSIX path literal (/home/..., /opt/..., /usr/..., /etc/...)
+#   * a toolchain/pin literal (N.N or N.N.N version bound to a config field)
+#
+# The declaration sites are NOT violations and are excluded by construction:
+# `_constants/**`, `constants.py`, `_config*`, `_settings*`, `config/**` and
+# `**/templates/**` DECLARE the canonical value.
+#
+# Detection-only: the correct replacement depends on which SSOT owns the
+# value in that context, so an automatic rewrite would guess.
+
+---
+id: ban-hardcoded-config
+language: Python
+severity: error
+rule:
+  all:
+    - pattern: $LIT
+    - kind: string
+    - any:
+        - regex: '^(?:"|\x27)\d+\.\d+(?:\.\d+)?(?:"|\x27)$'
+        - regex: '^(?:"|\x27)https?://[^\s"\x27]+(?:"|\x27)$'
+        - regex: '^(?:"|\x27)/(?:home|opt|usr|etc|var|srv)/[^\s"\x27]*(?:"|\x27)$'
+    # Only a value BOUND to a field/argument is a duplicated source of truth;
+    # a positional literal is function input data, never a second SSOT.
+    - inside:
+        any:
+          - kind: keyword_argument
+          - kind: pair
+          - kind: assignment
+        stopBy: end
+message: >-
+  Hardcoded config-owned value (pin, URL or absolute path) bound to a field.
+  Pins, paths, URLs and profiles must be read from config.<Ns>.* /
+  settings.<Ns>.* — never repeated as a literal outside the SSOT.
+note: >-
+  Migration: locate the owning config/settings declaration (config.<Ns>.* or
+  settings.<Ns>.*), replace the literal with that typed read, and if the
+  value has no SSOT owner yet, add it to the owning config overlay first —
+  do not keep the literal.
+files:
+  - "**/*.py"
+ignores:
+  - "**/.git/**"
+  - "**/.venv/**"
+  - "**/__pycache__/**"
+  - "**/_constants/**"
+  - "**/constants.py"
+  - "**/_config*/**"
+  - "**/_config.py"
+  - "**/_settings*/**"
+  - "**/_settings.py"
+  - "**/config/**"
+  - "**/templates/**"
+  - "**/node_modules/**"
+  - "**/*_pb2.py"
+  - "**/*_pb2_grpc.py"

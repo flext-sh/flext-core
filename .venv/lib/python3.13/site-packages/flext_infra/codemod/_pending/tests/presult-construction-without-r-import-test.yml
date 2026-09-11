@@ -1,0 +1,15 @@
+id: presult-construction-without-r-import
+valid:
+  - |
+    from flext_sample import p, r
+    return p.Result[Path].fail(err)
+  - |
+    from flext_sample import r
+    return r[Path].ok(value)
+invalid:
+  - |
+    from flext_sample import p
+    return p.Result[Path].ok(value)
+  - |
+    from flext_sample import p
+    return p.Result[Path].fail(err)

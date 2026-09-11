@@ -1,0 +1,72 @@
+id: recursive-type-alias
+snapshots:
+  type ModuleGlobalValue = JsonValue | Callable[..., ModuleGlobalValue] | None:
+    labels:
+    - source: type ModuleGlobalValue = JsonValue | Callable[..., ModuleGlobalValue] | None
+      style: primary
+      start: 0
+      end: 76
+    - source: ModuleGlobalValue
+      style: secondary
+      start: 5
+      end: 22
+    - source: Callable[..., ModuleGlobalValue]
+      style: secondary
+      start: 37
+      end: 69
+  type Nested = str | list[Nested]:
+    labels:
+    - source: type Nested = str | list[Nested]
+      style: primary
+      start: 0
+      end: 32
+    - source: Nested
+      style: secondary
+      start: 5
+      end: 11
+    - source: list[Nested]
+      style: secondary
+      start: 20
+      end: 32
+  type TomlValue = Primitives | list[FlextTestsMakeTypesMixin.TomlValue] | dict[str, FlextTestsMakeTypesMixin.TomlValue]:
+    labels:
+    - source: type TomlValue = Primitives | list[FlextTestsMakeTypesMixin.TomlValue] | dict[str, FlextTestsMakeTypesMixin.TomlValue]
+      style: primary
+      start: 0
+      end: 118
+    - source: TomlValue
+      style: secondary
+      start: 5
+      end: 14
+    - source: list[FlextTestsMakeTypesMixin.TomlValue]
+      style: secondary
+      start: 30
+      end: 70
+  type TomlValue = Primitives | list[TomlValue] | dict[str, TomlValue]:
+    labels:
+    - source: type TomlValue = Primitives | list[TomlValue] | dict[str, TomlValue]
+      style: primary
+      start: 0
+      end: 68
+    - source: TomlValue
+      style: secondary
+      start: 5
+      end: 14
+    - source: list[TomlValue]
+      style: secondary
+      start: 30
+      end: 45
+  type YamlValue = YamlScalar | list[YamlValue] | Mapping[str, YamlValue]:
+    labels:
+    - source: type YamlValue = YamlScalar | list[YamlValue] | Mapping[str, YamlValue]
+      style: primary
+      start: 0
+      end: 71
+    - source: YamlValue
+      style: secondary
+      start: 5
+      end: 14
+    - source: list[YamlValue]
+      style: secondary
+      start: 30
+      end: 45

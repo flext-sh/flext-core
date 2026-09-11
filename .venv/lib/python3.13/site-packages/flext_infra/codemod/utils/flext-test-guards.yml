@@ -1,0 +1,30 @@
+# Reusable ast-grep utility rules for the FLEXT test-assertion codemods.
+#
+# GLOBAL utilities (wired via `utilDirs` in sgconfig.yml) so every assert->tm
+# rule references one shared, audited guard via `matches:` instead of
+# duplicating a 7-line import-presence block. Improving a guard here improves
+# every consuming rule at once (SSOT for the codemod guards).
+#
+# Reference from a rule:
+#   rule:
+#     all:
+#       - <the assert shape>
+#       - not: { matches: assert-has-message }
+#       - inside:
+#           kind: module
+#           stopBy: end
+#           has: { matches: tm-imported-from-flext, stopBy: end }
+
+# tm imported from a flext facade in the module. Gate for every tm-emitting fix:
+# rewriting to `tm.*` is only F821-safe when tm is actually in scope.
+id: tm-imported-from-flext
+language: python
+rule:
+  kind: import_from_statement
+  all:
+    - has:
+        pattern: tm
+        stopBy: end
+    - has:
+        field: module_name
+        regex: "^flext(?:_[a-z0-9_]+)?$"

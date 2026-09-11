@@ -1,0 +1,10 @@
+id: requires-singer-message-handling
+language: python
+rule:
+  any:
+    - pattern: singer.write_message($$$ARGS)
+    - pattern: singer.RecordMessage($$$ARGS)
+    - pattern: singer.SchemaMessage($$$ARGS)
+    - pattern: singer.StateMessage($$$ARGS)
+message: "Singer message handling found (tracking)"
+severity: warning

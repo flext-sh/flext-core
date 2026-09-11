@@ -1,0 +1,14 @@
+id: result-error-fallback-diagnostic
+snapshots:
+  message = result.error or 'unknown failure':
+    labels:
+    - source: result.error or 'unknown failure'
+      style: primary
+      start: 10
+      end: 43
+  return r[str].fail(result.error or 'read failed'):
+    labels:
+    - source: result.error or 'read failed'
+      style: primary
+      start: 19
+      end: 48

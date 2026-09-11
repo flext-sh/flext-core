@@ -1,0 +1,84 @@
+id: wrap-handler-guard
+snapshots:
+  ? |
+    class Cli:
+        def _guard(self, handler):
+            return handler
+        route = m.Cli.ResultCommandRoute(name="c", handler=self._handle_check)
+  : fixed: |
+      class Cli:
+          def _guard(self, handler):
+              return handler
+          route = m.Cli.ResultCommandRoute(name="c", handler=self._guard(self._handle_check))
+    labels:
+    - source: handler=self._handle_check
+      style: primary
+      start: 112
+      end: 138
+    - source: handler
+      style: secondary
+      start: 112
+      end: 119
+    - source: self._handle_check
+      style: secondary
+      start: 120
+      end: 138
+    - source: _guard
+      style: secondary
+      start: 19
+      end: 25
+    - source: |-
+        def _guard(self, handler):
+                return handler
+      style: secondary
+      start: 15
+      end: 64
+    - source: |-
+        class Cli:
+            def _guard(self, handler):
+                return handler
+            route = m.Cli.ResultCommandRoute(name="c", handler=self._handle_check)
+      style: secondary
+      start: 0
+      end: 139
+  ? |
+    class Cli:
+        def _guard(self, handler):
+            return handler
+        route = m.Cli.ResultCommandRoute(name="x", handler=self._handle_build)
+  : fixed: |
+      class Cli:
+          def _guard(self, handler):
+              return handler
+          route = m.Cli.ResultCommandRoute(name="x", handler=self._guard(self._handle_build))
+    labels:
+    - source: handler=self._handle_build
+      style: primary
+      start: 112
+      end: 138
+    - source: handler
+      style: secondary
+      start: 112
+      end: 119
+    - source: self._handle_build
+      style: secondary
+      start: 120
+      end: 138
+    - source: _guard
+      style: secondary
+      start: 19
+      end: 25
+    - source: |-
+        def _guard(self, handler):
+                return handler
+      style: secondary
+      start: 15
+      end: 64
+    - source: |-
+        class Cli:
+            def _guard(self, handler):
+                return handler
+            route = m.Cli.ResultCommandRoute(name="x", handler=self._handle_build)
+      style: secondary
+      start: 0
+      end: 139

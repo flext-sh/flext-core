@@ -1,0 +1,119 @@
+id: property-docstring-check-to-whether
+snapshots:
+  ? |
+    @computed_field
+    @property
+    def has_errors(self) -> bool:
+        """Determine if any validation errors exist."""
+        return bool(self._errors)
+  : fixed: |
+      @computed_field
+      @property
+      def has_errors(self) -> bool:
+          """Whether any validation errors exist."""
+          return bool(self._errors)
+    labels:
+    - source: '"""Determine if any validation errors exist."""'
+      style: primary
+      start: 60
+      end: 107
+    - source: '@property'
+      style: secondary
+      start: 16
+      end: 25
+    - source: |-
+        @computed_field
+        @property
+        def has_errors(self) -> bool:
+            """Determine if any validation errors exist."""
+            return bool(self._errors)
+      style: secondary
+      start: 0
+      end: 137
+  ? |
+    @property
+    def is_enabled(self) -> bool:
+        """Check if the feature is enabled.
+
+        The second paragraph remains byte-for-byte unchanged.
+        """
+        return self._enabled
+  : fixed: "@property\ndef is_enabled(self) -> bool:\n    \"\"\"Whether the feature is enabled.\n    \n    The second paragraph remains byte-for-byte unchanged.\n    \"\"\"\n    return self._enabled\n"
+    labels:
+    - source: |-
+        """Check if the feature is enabled.
+
+            The second paragraph remains byte-for-byte unchanged.
+            """
+      style: primary
+      start: 44
+      end: 146
+    - source: '@property'
+      style: secondary
+      start: 0
+      end: 9
+    - source: |-
+        @property
+        def is_enabled(self) -> bool:
+            """Check if the feature is enabled.
+
+            The second paragraph remains byte-for-byte unchanged.
+            """
+            return self._enabled
+      style: secondary
+      start: 0
+      end: 171
+  ? |
+    @property
+    def is_expired(self) -> bool:
+        """Check if the token is expired."""
+        return self._expired
+  : fixed: |
+      @property
+      def is_expired(self) -> bool:
+          """Whether the token is expired."""
+          return self._expired
+    labels:
+    - source: '"""Check if the token is expired."""'
+      style: primary
+      start: 44
+      end: 80
+    - source: '@property'
+      style: secondary
+      start: 0
+      end: 9
+    - source: |-
+        @property
+        def is_expired(self) -> bool:
+            """Check if the token is expired."""
+            return self._expired
+      style: secondary
+      start: 0
+      end: 105
+  ? |
+    @property
+    def is_ready(self) -> bool:
+        '''Check whether the service is ready.'''
+        return self._ready
+  : fixed: |
+      @property
+      def is_ready(self) -> bool:
+          '''Whether the service is ready.'''
+          return self._ready
+    labels:
+    - source: '''''''Check whether the service is ready.'''''''
+      style: primary
+      start: 42
+      end: 83
+    - source: '@property'
+      style: secondary
+      start: 0
+      end: 9
+    - source: |-
+        @property
+        def is_ready(self) -> bool:
+            '''Check whether the service is ready.'''
+            return self._ready
+      style: secondary
+      start: 0
+      end: 106

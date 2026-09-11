@@ -1,0 +1,16 @@
+id: no-direct-db-import
+language: python
+rule:
+  any:
+  - kind: import_statement
+    has:
+      kind: dotted_name
+      regex: "^(sqlalchemy|oracledb|cx_Oracle|ldap3)$"
+      stopBy: end
+  - kind: import_from_statement
+    has:
+      kind: dotted_name
+      field: module_name
+      regex: "^(sqlalchemy|oracledb|cx_Oracle|ldap3)"
+message: "Direct DB library import - use flext_core adapter"
+severity: error

@@ -1,0 +1,11 @@
+id: ban-default-factory-dict
+language: python
+rule:
+  pattern: field($$$ARGS)
+  has:
+    pattern:
+      context: "f(default_factory=dict)"
+      selector: keyword_argument
+    stopBy: end
+message: default_factory=dict is banned
+severity: error

@@ -1,0 +1,4 @@
+id: detect-result-t.JsonValue
+language: python
+rule:
+  pattern: p.Result[t.JsonValue]

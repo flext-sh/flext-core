@@ -1,0 +1,6 @@
+id: no-assert-true
+valid:
+  - "assert x == 1"
+  - "assert len(items) > 0"
+invalid:
+  - "assert True"

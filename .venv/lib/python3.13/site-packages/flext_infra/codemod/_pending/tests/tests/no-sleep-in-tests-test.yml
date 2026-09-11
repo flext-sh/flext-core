@@ -1,0 +1,7 @@
+id: no-sleep-in-tests
+valid:
+  - "mock.patch('time.sleep')"
+  - "import time"
+invalid:
+  - "time.sleep(1)"
+  - "time.sleep(0.5)"

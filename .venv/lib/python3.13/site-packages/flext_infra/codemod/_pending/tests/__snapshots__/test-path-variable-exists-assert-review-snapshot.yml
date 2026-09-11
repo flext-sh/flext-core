@@ -1,0 +1,58 @@
+id: test-path-variable-exists-assert-review
+snapshots:
+  ? |
+    from flext_infra import tm
+    def test_report() -> None:
+        assert not report_path.exists()
+  : labels:
+    - source: assert not report_path.exists()
+      style: primary
+      start: 58
+      end: 89
+    - source: tm
+      style: secondary
+      start: 24
+      end: 26
+    - source: flext_infra
+      style: secondary
+      start: 5
+      end: 16
+    - source: from flext_infra import tm
+      style: secondary
+      start: 0
+      end: 26
+    - source: |
+        from flext_infra import tm
+        def test_report() -> None:
+            assert not report_path.exists()
+      style: secondary
+      start: 0
+      end: 90
+  ? |
+    from flext_infra import tm
+    def test_report() -> None:
+        assert report_path.exists()
+  : labels:
+    - source: assert report_path.exists()
+      style: primary
+      start: 58
+      end: 85
+    - source: tm
+      style: secondary
+      start: 24
+      end: 26
+    - source: flext_infra
+      style: secondary
+      start: 5
+      end: 16
+    - source: from flext_infra import tm
+      style: secondary
+      start: 0
+      end: 26
+    - source: |
+        from flext_infra import tm
+        def test_report() -> None:
+            assert report_path.exists()
+      style: secondary
+      start: 0
+      end: 86

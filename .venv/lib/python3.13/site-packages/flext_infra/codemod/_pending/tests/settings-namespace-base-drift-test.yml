@@ -1,0 +1,8 @@
+id: settings-namespace-base-drift
+# Detection-only rule: `invalid` = should be flagged; `valid` = should not.
+valid:
+  - assert hasattr(settings.Tests, "model_dump")
+  - assert isinstance(x, m.BaseModel)
+invalid:
+  - assert isinstance(settings.Tests, m.SettingsValue)
+  - assert isinstance(test_settings.Tests, m.SettingsValue)

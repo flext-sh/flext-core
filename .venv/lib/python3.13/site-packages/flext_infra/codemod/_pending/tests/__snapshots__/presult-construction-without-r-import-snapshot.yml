@@ -1,0 +1,18 @@
+id: presult-construction-without-r-import
+snapshots:
+  ? |
+    from flext_sample import p
+    return p.Result[Path].fail(err)
+  : labels:
+    - source: p.Result[Path].fail(err)
+      style: primary
+      start: 34
+      end: 58
+  ? |
+    from flext_sample import p
+    return p.Result[Path].ok(value)
+  : labels:
+    - source: p.Result[Path].ok(value)
+      style: primary
+      start: 34
+      end: 58

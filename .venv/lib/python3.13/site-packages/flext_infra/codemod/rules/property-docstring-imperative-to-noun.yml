@@ -1,0 +1,109 @@
+# Ruff D421 (property-docstring-starts-with-verb) root-cause codemod.
+#
+# Two sibling rules, one canonical file (SSOT):
+#   R1 property-docstring-imperative-to-noun
+#      Strips a strippable imperative first-word verb whose removal leaves a
+#      valid noun phrase (Return/Get/Set/Compute/...): the plain verb-strip case.
+#          """Return the validated value."""   ->   """The validated value."""
+#   R2 property-docstring-check-to-whether
+#      Rewrites the conditional-predicate head `Check/Determine [if|whether] X`
+#      into the noun phrase `Whether X` — stripping only the verb here would
+#      leave a dangling connective ("""If X"""), which is grammatically wrong.
+#          """Check if the token is expired."""  ->  """Whether the token is expired."""
+#
+# `Check`/`Checks`/`Determine`/`Determines` are DELIBERATELY excluded from R1's
+# verb set: they almost always precede `if`/`whether` on a boolean @property and
+# are owned exclusively by R2. Splitting keeps each transform correct and
+# idempotent instead of one over-broad strip that mangles the connective.
+#
+# Structural safety contract (both rules):
+#   1. node is the Python `string`, opens with triple quotes.
+#   2. it is inside a decorated_definition owning the exact decorator @property
+#      (@override / @computed_field siblings allowed; @cached_property excluded
+#       because its regex "^@property$" does not match).
+#   3. src/, scripts/, cmd/, bin/, and package trees are all covered; generated
+#      / vendored / archival trees are excluded.
+# Idempotent: each fix removes its own trigger head, so a re-scan finds zero.
+id: property-docstring-imperative-to-noun
+language: python
+severity: hint
+files:
+  - "**/*.py"
+ignores:
+  - "**/.claude/**"
+  - "**/.git/**"
+  - "**/.venv/**"
+  - "**/legado/**"
+  - "**/legacy/**"
+  - "**/node_modules/**"
+  - "**/*_pb2.py"
+  - "**/*_pb2_grpc.py"
+message: >-
+  A property docstring must describe the attribute as a noun phrase, not issue
+  an imperative command. Fix: remove the exact verb prefix and capitalize only
+  the first retained character, preserving quote style and remaining content.
+  See docs/ast-grep-property-docstrings.md.
+rule:
+  all:
+    - pattern: $DOC
+    - kind: string
+    - regex: '^(?:"""|\x27\x27\x27)(?:Return|Returns|Get|Gets|Set|Sets|Compute|Computes|Calculate|Calculates|Fetch|Fetches|Retrieve|Retrieves|Provide|Provides|Build|Builds|Generate|Generates|Create|Creates|Give|Gives|Yield|Yields|Produce|Produces)\s+\S'
+    - inside:
+        kind: decorated_definition
+        has:
+          kind: decorator
+          regex: "^@property$"
+        stopBy: end
+transform:
+  QUOTE:
+    substring: { source: $DOC, startChar: 0, endChar: 3 }
+  TAIL:
+    replace:
+      source: $DOC
+      replace: '^(?:"""|\x27\x27\x27)(?:Return|Returns|Get|Gets|Set|Sets|Compute|Computes|Calculate|Calculates|Fetch|Fetches|Retrieve|Retrieves|Provide|Provides|Build|Builds|Generate|Generates|Create|Creates|Give|Gives|Yield|Yields|Produce|Produces)\s+'
+      by: ''
+  FIRST:
+    substring: { source: $TAIL, startChar: 0, endChar: 1 }
+  FIRST_UP:
+    convert: { source: $FIRST, toCase: upperCase }
+  REST:
+    substring: { source: $TAIL, startChar: 1 }
+fix: $QUOTE$FIRST_UP$REST
+---
+# R2: `Check/Determine [if|whether] X` -> `Whether X` on a boolean @property.
+id: property-docstring-check-to-whether
+language: python
+severity: hint
+files:
+  - "**/*.py"
+ignores:
+  - "**/.claude/**"
+  - "**/.git/**"
+  - "**/.venv/**"
+  - "**/legado/**"
+  - "**/legacy/**"
+  - "**/node_modules/**"
+  - "**/*_pb2.py"
+  - "**/*_pb2_grpc.py"
+message: >-
+  A boolean @property docstring must read as a noun phrase. Fix: rewrite the
+  predicate head `Check/Determine [if|whether] X` into `Whether X`, preserving
+  quote style and the remaining content. See docs/ast-grep-property-docstrings.md.
+rule:
+  all:
+    - pattern: $DOC
+    - kind: string
+    - regex: '^(?:"""|\x27\x27\x27)(?:Check|Checks|Determine|Determines)\s+(?:if|whether)\s+\S'
+    - inside:
+        kind: decorated_definition
+        has:
+          kind: decorator
+          regex: "^@property$"
+        stopBy: end
+transform:
+  FIXED:
+    replace:
+      source: $DOC
+      replace: '^((?:"""|\x27\x27\x27))(?:Check|Checks|Determine|Determines)\s+(?:if|whether)\s+'
+      by: '${1}Whether '
+fix: $FIXED

@@ -1,0 +1,34 @@
+id: assert-is-none-to-tm
+snapshots:
+  ? |
+    from flext_tests import tm
+    def test_i():
+        assert x is None
+  : fixed: |
+      from flext_tests import tm
+      def test_i():
+          tm.that(x, none=True)
+    labels:
+    - source: assert x is None
+      style: primary
+      start: 45
+      end: 61
+    - source: tm
+      style: secondary
+      start: 24
+      end: 26
+    - source: flext_tests
+      style: secondary
+      start: 5
+      end: 16
+    - source: from flext_tests import tm
+      style: secondary
+      start: 0
+      end: 26
+    - source: |
+        from flext_tests import tm
+        def test_i():
+            assert x is None
+      style: secondary
+      start: 0
+      end: 62

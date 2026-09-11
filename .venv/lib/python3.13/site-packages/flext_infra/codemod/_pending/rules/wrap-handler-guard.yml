@@ -1,0 +1,28 @@
+id: wrap-handler-guard
+language: python
+severity: hint
+message: >-
+  Wrap a bare self-handler once with the owning _guard so error handling stays
+  centralized at the CLI boundary. The owner class must already define _guard.
+ignores:
+  - "**/legado/**"
+rule:
+  kind: keyword_argument
+  all:
+    - has:
+        field: name
+        regex: "^handler$"
+    - has:
+        field: value
+        kind: attribute
+        pattern: self.$HANDLER
+    - inside:
+        kind: class_definition
+        stopBy: end
+        has:
+          kind: function_definition
+          stopBy: end
+          has:
+            field: name
+            regex: "^_guard$"
+fix: "handler=self._guard(self.$HANDLER)"

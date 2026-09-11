@@ -1,0 +1,67 @@
+id: presult-construct-to-r-ok
+language: python
+severity: warning
+message: >-
+  p.Result[T] is an annotation protocol, not a constructor. Construct with the
+  concrete r[T] alias while retaining p.Result[T] as the return contract.
+ignores:
+  - "**/legado/**"
+rule:
+  pattern: p.Result[$T].ok($$$A)
+  inside:
+    kind: module
+    stopBy: end
+    has:
+      kind: import_from_statement
+      stopBy: end
+      has:
+        kind: identifier
+        regex: "^r$"
+        stopBy: end
+fix: 'r[$T].ok($$$A)'
+---
+id: presult-construct-to-r-fail
+language: python
+severity: warning
+message: >-
+  p.Result[T] is an annotation protocol, not a constructor. Construct with the
+  concrete r[T] alias while retaining p.Result[T] as the return contract.
+ignores:
+  - "**/legado/**"
+rule:
+  pattern: p.Result[$T].fail($$$A)
+  inside:
+    kind: module
+    stopBy: end
+    has:
+      kind: import_from_statement
+      stopBy: end
+      has:
+        kind: identifier
+        regex: "^r$"
+        stopBy: end
+fix: 'r[$T].fail($$$A)'
+---
+id: presult-construction-without-r-import
+language: python
+severity: hint
+message: >-
+  p.Result is an annotation protocol, not a constructor. Import the canonical r
+  facade in semantic c/t/p/m/u/r order before applying the receiver rewrite.
+ignores:
+  - "**/legado/**"
+rule:
+  any:
+    - pattern: p.Result[$T].ok($$$A)
+    - pattern: p.Result[$T].fail($$$A)
+  not:
+    inside:
+      kind: module
+      stopBy: end
+      has:
+        kind: import_from_statement
+        stopBy: end
+        has:
+          kind: identifier
+          regex: "^r$"
+          stopBy: end

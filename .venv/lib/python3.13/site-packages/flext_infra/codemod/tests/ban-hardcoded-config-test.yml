@@ -1,0 +1,17 @@
+id: ban-hardcoded-config
+valid:
+  - |
+    python_version = config.Infra.python_version
+  - |
+    parse_version("3.13")
+  - |
+    label = "ordinary"
+invalid:
+  - |
+    python_version = "3.13"
+  - |
+    config = {"tool_version": "1.2.3"}
+  - |
+    endpoint = "https://example.com"
+  - |
+    install_root = "/opt/flext"

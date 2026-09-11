@@ -1,0 +1,65 @@
+id: ban-typing-dict-import
+language: python
+rule:
+  any:
+    - pattern: from typing import Dict
+    - pattern: from typing import Dict, $$$AFTER
+    - pattern: from typing import $$$BEFORE, Dict
+    - pattern: from typing import $$$BEFORE, Dict, $$$AFTER
+message: "typing.Dict import is banned — use the canonical t.* or Mapping contract; use builtin dict only for owned mutation"
+severity: error
+---
+id: ban-typing-list-import
+language: python
+rule:
+  any:
+    - pattern: from typing import List
+    - pattern: from typing import List, $$$AFTER
+    - pattern: from typing import $$$BEFORE, List
+    - pattern: from typing import $$$BEFORE, List, $$$AFTER
+message: "typing.List import is banned — use builtin list"
+severity: error
+---
+id: ban-typing-optional-import
+language: python
+rule:
+  any:
+    - pattern: from typing import Optional
+    - pattern: from typing import Optional, $$$AFTER
+    - pattern: from typing import $$$BEFORE, Optional
+    - pattern: from typing import $$$BEFORE, Optional, $$$AFTER
+message: "typing.Optional import is banned — use X | None"
+severity: error
+---
+id: ban-typing-union-import
+language: python
+rule:
+  any:
+    - pattern: from typing import Union
+    - pattern: from typing import Union, $$$AFTER
+    - pattern: from typing import $$$BEFORE, Union
+    - pattern: from typing import $$$BEFORE, Union, $$$AFTER
+message: "typing.Union import is banned — use X | Y"
+severity: error
+---
+id: ban-typing-tuple-import
+language: python
+rule:
+  any:
+    - pattern: from typing import Tuple
+    - pattern: from typing import Tuple, $$$AFTER
+    - pattern: from typing import $$$BEFORE, Tuple
+    - pattern: from typing import $$$BEFORE, Tuple, $$$AFTER
+message: "typing.Tuple import is banned — use builtin tuple"
+severity: error
+---
+id: ban-typing-set-import
+language: python
+rule:
+  any:
+    - pattern: from typing import Set
+    - pattern: from typing import Set, $$$AFTER
+    - pattern: from typing import $$$BEFORE, Set
+    - pattern: from typing import $$$BEFORE, Set, $$$AFTER
+message: "typing.Set import is banned — use builtin set"
+severity: error

@@ -1,0 +1,99 @@
+id: test-private-cli-runner-to-public-facade
+snapshots:
+  ? |
+    from flext_meltano.cli import FlextMeltanoCli
+    def pipeline_create(meltano_cli: FlextMeltanoCli) -> None:
+        result = runner.invoke(
+            app,
+            ["pipeline", "create", "--pipeline-name", "daily"],
+        )
+  : fixed: |
+      from flext_meltano.cli import FlextMeltanoCli
+      def pipeline_create(meltano_cli: FlextMeltanoCli) -> None:
+          result = meltano_cli.run(["pipeline", "create", "--pipeline-name", "daily"])
+    labels:
+    - source: |-
+        runner.invoke(
+                app,
+                ["pipeline", "create", "--pipeline-name", "daily"],
+            )
+      style: primary
+      start: 118
+      end: 211
+    - source: 'meltano_cli: FlextMeltanoCli'
+      style: secondary
+      start: 66
+      end: 94
+    - source: |-
+        def pipeline_create(meltano_cli: FlextMeltanoCli) -> None:
+            result = runner.invoke(
+                app,
+                ["pipeline", "create", "--pipeline-name", "daily"],
+            )
+      style: secondary
+      start: 46
+      end: 211
+    - source: flext_meltano.cli
+      style: secondary
+      start: 5
+      end: 22
+    - source: FlextMeltanoCli
+      style: secondary
+      start: 30
+      end: 45
+    - source: from flext_meltano.cli import FlextMeltanoCli
+      style: secondary
+      start: 0
+      end: 45
+    - source: |
+        from flext_meltano.cli import FlextMeltanoCli
+        def pipeline_create(meltano_cli: FlextMeltanoCli) -> None:
+            result = runner.invoke(
+                app,
+                ["pipeline", "create", "--pipeline-name", "daily"],
+            )
+      style: secondary
+      start: 0
+      end: 212
+  ? |
+    from flext_meltano.cli import FlextMeltanoCli
+    def pipeline_help(meltano_cli: FlextMeltanoCli) -> None:
+        result = runner.invoke(app, ["pipeline", "--help"])
+  : fixed: |
+      from flext_meltano.cli import FlextMeltanoCli
+      def pipeline_help(meltano_cli: FlextMeltanoCli) -> None:
+          result = meltano_cli.run(["pipeline", "--help"])
+    labels:
+    - source: runner.invoke(app, ["pipeline", "--help"])
+      style: primary
+      start: 116
+      end: 158
+    - source: 'meltano_cli: FlextMeltanoCli'
+      style: secondary
+      start: 64
+      end: 92
+    - source: |-
+        def pipeline_help(meltano_cli: FlextMeltanoCli) -> None:
+            result = runner.invoke(app, ["pipeline", "--help"])
+      style: secondary
+      start: 46
+      end: 158
+    - source: flext_meltano.cli
+      style: secondary
+      start: 5
+      end: 22
+    - source: FlextMeltanoCli
+      style: secondary
+      start: 30
+      end: 45
+    - source: from flext_meltano.cli import FlextMeltanoCli
+      style: secondary
+      start: 0
+      end: 45
+    - source: |
+        from flext_meltano.cli import FlextMeltanoCli
+        def pipeline_help(meltano_cli: FlextMeltanoCli) -> None:
+            result = runner.invoke(app, ["pipeline", "--help"])
+      style: secondary
+      start: 0
+      end: 159

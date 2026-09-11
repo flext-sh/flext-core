@@ -1,0 +1,18 @@
+id: ban-pass-through-wrapper-async-def
+valid:
+  - |
+    async def normalize(value: str) -> str:
+        return await target(value.strip())
+invalid:
+  - |
+    async def plain(value):
+        return await target(value)
+  - |
+    async def typed(value: str) -> str:
+        return await target(value)
+  - |
+    async def defaulted(value: str = "x") -> str:
+        return await target(value)
+  - |
+    async def variadic(*args: str, **kwargs: str) -> str:
+        return await target(*args, **kwargs)

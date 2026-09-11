@@ -1,0 +1,30 @@
+id: git-public-argv-facade-call
+snapshots:
+  ? |
+    captured = u.Infra.git_capture(workspace, ("status", "--porcelain=v1", "-z"))
+  : labels:
+    - source: u.Infra.git_capture(workspace, ("status", "--porcelain=v1", "-z"))
+      style: primary
+      start: 11
+      end: 77
+  ? |
+    payload = u.Infra.git_capture_bytes(root, ("ls-files", "--stage", "-z"))
+  : labels:
+    - source: u.Infra.git_capture_bytes(root, ("ls-files", "--stage", "-z"))
+      style: primary
+      start: 10
+      end: 72
+  ? |
+    result = u.Infra.git_run(repo_root, ("status",))
+  : labels:
+    - source: u.Infra.git_run(repo_root, ("status",))
+      style: primary
+      start: 9
+      end: 48
+  ? |
+    seeded = FlextInfraUtilitiesGit.git_capture(root, ("branch", "base"))
+  : labels:
+    - source: FlextInfraUtilitiesGit.git_capture(root, ("branch", "base"))
+      style: primary
+      start: 9
+      end: 69

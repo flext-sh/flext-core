@@ -1,0 +1,12 @@
+id: ban-default-factory-dict
+snapshots:
+  x = field(default_factory=dict):
+    labels:
+    - source: field(default_factory=dict)
+      style: primary
+      start: 4
+      end: 31
+    - source: default_factory=dict
+      style: secondary
+      start: 10
+      end: 30

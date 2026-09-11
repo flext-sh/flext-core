@@ -1,0 +1,27 @@
+---
+id: ban-gitpython-import-outside-owner
+language: Python
+rule:
+  pattern: import git
+severity: error
+message: Importing GitPython directly is banned outside the _git/ owner. Use u.Infra.git_* typed facade instead.
+files:
+  - "**/*.py"
+ignores:
+  - "src/flext_infra/_utilities/_git/**"
+  - "**/.git/**"
+  - "**/__pycache__/**"
+
+---
+id: ban-gitpython-from-import-outside-owner
+language: Python
+rule:
+  pattern: from git import $NAME
+severity: error
+message: Importing from GitPython directly is banned outside the _git/ owner. Use u.Infra.git_* typed facade instead.
+files:
+  - "**/*.py"
+ignores:
+  - "src/flext_infra/_utilities/_git/**"
+  - "**/.git/**"
+  - "**/__pycache__/**"

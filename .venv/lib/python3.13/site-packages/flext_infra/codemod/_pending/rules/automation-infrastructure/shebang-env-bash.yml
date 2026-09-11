@@ -1,0 +1,8 @@
+id: shebang-env-bash
+language: python
+rule:
+  kind: comment
+  regex: "^#!/usr/bin/env (bash|python3)"
+  nthChild: 1
+message: "Shebang found (tracking)"
+severity: warning

@@ -1,0 +1,6 @@
+id: detect-result-t.JsonValue
+valid:
+- "r[str]"
+- "r[int]"
+invalid:
+- "r[t.JsonValue]"

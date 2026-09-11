@@ -1,0 +1,6 @@
+id: ban-typing-dict-attribute
+valid:
+  - "x = typing.Mapping"
+  - "x = typing.List"
+invalid:
+  - "x = typing.Dict"

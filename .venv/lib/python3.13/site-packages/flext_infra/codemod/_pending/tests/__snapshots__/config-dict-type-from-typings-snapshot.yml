@@ -1,0 +1,64 @@
+id: config-dict-type-from-typings
+snapshots:
+  ? |
+    from flext_cli import t
+    from typing import ClassVar
+    class E:
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+  : fixed: |
+      from flext_cli import t
+      from typing import ClassVar
+      class E:
+          model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
+    labels:
+    - source: 'model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)'
+      style: primary
+      start: 65
+      end: 129
+    - source: t
+      style: secondary
+      start: 22
+      end: 23
+    - source: from flext_cli import t
+      style: secondary
+      start: 0
+      end: 23
+    - source: |
+        from flext_cli import t
+        from typing import ClassVar
+        class E:
+            model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+      style: secondary
+      start: 0
+      end: 130
+  ? |
+    from flext_ldif import c, t
+    from typing import ClassVar
+    class D:
+        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(extra="forbid")
+  : fixed: |
+      from flext_ldif import c, t
+      from typing import ClassVar
+      class D:
+          model_config: ClassVar[t.ConfigDict] = m.ConfigDict(extra="forbid")
+    labels:
+    - source: 'model_config: ClassVar[p.ConfigDict] = m.ConfigDict(extra="forbid")'
+      style: primary
+      start: 69
+      end: 136
+    - source: t
+      style: secondary
+      start: 26
+      end: 27
+    - source: from flext_ldif import c, t
+      style: secondary
+      start: 0
+      end: 27
+    - source: |
+        from flext_ldif import c, t
+        from typing import ClassVar
+        class D:
+            model_config: ClassVar[p.ConfigDict] = m.ConfigDict(extra="forbid")
+      style: secondary
+      start: 0
+      end: 137

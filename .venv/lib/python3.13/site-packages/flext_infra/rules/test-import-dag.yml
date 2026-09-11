@@ -1,0 +1,12 @@
+version: "1"
+facet_order: [c, t, p, m, u]
+facet_files:
+  c: constants.py
+  t: typings.py
+  p: protocols.py
+  m: models.py
+  u: utilities.py
+fixture_parts: [conftest, fixtures]
+test_module_prefix: test_
+shared_package: flext_tests
+shared_allowed_imports: [flext_core, flext_cli, flext_infra, flext_tests]

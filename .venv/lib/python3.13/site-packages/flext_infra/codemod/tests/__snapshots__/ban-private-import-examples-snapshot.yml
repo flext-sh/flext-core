@@ -1,0 +1,16 @@
+id: ban-private-import-examples
+snapshots:
+  ? |
+    from flext_core._constants import FlextConstants
+  : labels:
+    - source: from flext_core._constants import FlextConstants
+      style: primary
+      start: 0
+      end: 48
+  ? |
+    import flext_core._exceptions as exceptions
+  : labels:
+    - source: import flext_core._exceptions as exceptions
+      style: primary
+      start: 0
+      end: 43

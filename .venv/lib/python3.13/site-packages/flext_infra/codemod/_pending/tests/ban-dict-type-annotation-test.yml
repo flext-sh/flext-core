@@ -1,0 +1,10 @@
+id: ban-dict-type-annotation
+valid:
+- "x: t.IntMapping = {}"
+- "x: t.StrSequence = []"
+- "x: set[int] = set()"
+- "from collections.abc import Mapping"
+invalid:
+- "x: t.IntMapping = {}"
+- "x: Dict[str, int] = {}"
+- "y: t.MappingKV[str, t.SequenceOf[int]] = {}"

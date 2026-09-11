@@ -1,0 +1,19 @@
+id: caught-exception-string-failure
+valid:
+  - |
+    try:
+        read()
+    except OSError as exc:
+        return e.fail_operation("read config", exc)
+  - "return r[str].fail(str(exc))"
+invalid:
+  - |
+    try:
+        read()
+    except OSError as exc:
+        return r[str].fail(str(exc))
+  - |
+    try:
+        connect()
+    except ConnectionError as error:
+        return r.fail(str(error))

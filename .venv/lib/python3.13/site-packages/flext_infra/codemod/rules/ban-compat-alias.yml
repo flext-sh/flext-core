@@ -1,0 +1,48 @@
+# Ban module-level backward-compatibility aliases (epic i2h4).
+#
+# FLEXT law: atomic consumer updates with direct uses and NO compatibility
+# shims; complete cutover on refactors (Universal law §4/§28). A module-level
+# `Old = New` assignment that exists only to keep an old name alive creates
+# old+new coexistence — the exact banned pattern. Consumers must be migrated
+# to the canonical name in the same change.
+#
+# Detection is SHAPE-BASED: a bare identifier-to-identifier assignment at
+# module top level. Re-exports via `__all__`, dunder protocol assignments
+# (`__version__ = ...`), and class/dataclass fields never match.
+#
+# Detection-only: the correct replacement is to rename at the owner and
+# update every consumer in the same cutover.
+
+---
+id: ban-compat-alias
+language: Python
+severity: error
+rule:
+  all:
+    - pattern: $OLD = $NEW
+    - inside:
+        kind: expression_statement
+        inside:
+          kind: module
+constraints:
+  OLD:
+    kind: identifier
+    regex: '^[A-Za-z]\w*$'
+  NEW:
+    kind: identifier
+    regex: '^[A-Za-z]\w*$'
+message: >-
+  Backward-compatibility alias `$OLD = $NEW` at module level is banned.
+  Rename at the owner and migrate every consumer in the same cutover —
+  no old+new coexistence.
+note: >-
+  Migration: keep only the canonical name ($NEW), delete the alias, update
+  all importers of $OLD in the same change, and let pyrefly/mypy pinpoint
+  any missed consumer. If the alias is a deliberate public re-export, expose
+  the symbol through the owning facade `__init__` projection instead.
+files:
+  - "**/*.py"
+ignores:
+  - "**/.git/**"
+  - "**/.venv/**"
+  - "**/__pycache__/**"

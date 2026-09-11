@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Test Tree Rules Schema",
+  "description": "Schema validating the test-tree structural enforcement parameters",
+  "type": "object",
+  "required": ["version", "test_dir_globs", "test_fn_prefix", "required_class_prefix"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Config version"
+    },
+    "test_dir_globs": {
+      "type": "array",
+      "description": "Globs (relative to project root) whose files are tests",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "test_fn_prefix": {
+      "type": "string",
+      "description": "Prefix marking a module-level function as a test function",
+      "minLength": 1
+    },
+    "required_class_prefix": {
+      "type": "string",
+      "description": "Class prefix a test function must be nested under",
+      "minLength": 1
+    }
+  }
+}

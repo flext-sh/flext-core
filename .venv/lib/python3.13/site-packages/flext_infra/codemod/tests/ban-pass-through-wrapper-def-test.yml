@@ -1,0 +1,22 @@
+id: ban-pass-through-wrapper-def
+valid:
+  - |
+    def normalize(value: str) -> str:
+        return target(value.strip())
+  - |
+    def traced(value: str) -> str:
+        logger.info("dispatch")
+        return target(value)
+invalid:
+  - |
+    def plain(value):
+        return target(value)
+  - |
+    def typed(value: str) -> str:
+        return target(value)
+  - |
+    def defaulted(value: str = "x") -> str:
+        return target(value)
+  - |
+    def variadic(*args: str, **kwargs: str) -> str:
+        return target(*args, **kwargs)

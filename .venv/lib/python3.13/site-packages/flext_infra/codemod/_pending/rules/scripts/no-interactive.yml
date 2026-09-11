@@ -1,0 +1,6 @@
+id: ban-read-p-default
+language: bash
+rule:
+  pattern: read -p $$$ARGS
+message: "Interactive prompts (read -p) are forbidden by default. Gate behind --interactive flag."
+severity: error

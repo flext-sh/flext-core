@@ -1,0 +1,7 @@
+id: docs-no-todo-fixme
+language: html
+rule:
+  kind: text
+  regex: (TODO|FIXME|TBD)
+message: Documentation should not contain TODO/FIXME/TBD placeholders.
+severity: warning

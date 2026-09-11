@@ -1,0 +1,26 @@
+id: git-public-argv-facade-call
+valid:
+  # private execute layer: module-level functions under _git/ keep the names;
+  # a bare call is the canonical shape there and must NOT match
+  - |
+    from flext_infra._utilities._git.repo import git_capture, git_run
+
+    captured = git_capture(repo_root, ("rev-parse", "HEAD"))
+    checked = git_run(repo_root, ("status",))
+  # public typed semantic surface: one request in, one report out, no raw argv
+  - |
+    status = u.Infra.git_status(m.Infra.GitStatusRequest(repo_root=root))
+  # unrelated facade method names are untouched by the demotion guard
+  - |
+    top = u.Infra.git_root(m.Infra.GitRepoRequest(repo_root=root))
+invalid:
+  # demoted receiver on the utilities facade namespace
+  - |
+    result = u.Infra.git_run(repo_root, ("status",))
+  - |
+    captured = u.Infra.git_capture(workspace, ("status", "--porcelain=v1", "-z"))
+  - |
+    payload = u.Infra.git_capture_bytes(root, ("ls-files", "--stage", "-z"))
+  # demoted receiver on the concrete utilities class
+  - |
+    seeded = FlextInfraUtilitiesGit.git_capture(root, ("branch", "base"))

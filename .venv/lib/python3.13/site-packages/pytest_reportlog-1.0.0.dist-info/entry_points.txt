@@ -1,0 +1,2 @@
+[pytest11]
+pytest_reportlog = pytest_reportlog.plugin

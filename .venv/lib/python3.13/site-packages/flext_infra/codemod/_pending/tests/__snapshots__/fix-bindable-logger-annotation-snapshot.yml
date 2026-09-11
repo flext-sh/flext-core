@@ -1,0 +1,9 @@
+id: fix-bindable-logger-annotation
+snapshots:
+  'logger: BindableLogger = get_logger()':
+    fixed: 'logger: p.Logger = get_logger()'
+    labels:
+    - source: 'logger: BindableLogger = get_logger()'
+      style: primary
+      start: 0
+      end: 37

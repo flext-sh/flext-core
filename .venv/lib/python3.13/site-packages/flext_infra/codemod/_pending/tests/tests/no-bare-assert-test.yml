@@ -1,0 +1,10 @@
+id: no-bare-assert
+valid:
+  - "assert x == y"
+  - "assert x > 0"
+  - "assert not x"
+  - "assert func()"
+  - "assert (x)"
+invalid:
+  - "assert x"
+  - "assert result"

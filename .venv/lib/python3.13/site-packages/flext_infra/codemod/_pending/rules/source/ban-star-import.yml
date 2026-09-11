@@ -1,0 +1,9 @@
+id: ban-star-import-src
+language: python
+rule:
+  kind: import_from_statement
+  has:
+    kind: wildcard_import
+    stopBy: end
+message: "Star import banned in src"
+severity: error

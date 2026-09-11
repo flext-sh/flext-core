@@ -1,0 +1,24 @@
+{% import "mkdocs_macros.j2" as mk -%}
+# AUTO-GENERATED — DO NOT EDIT MANUALLY
+site_name: {{ site_title }} Documentation
+site_description: Generated documentation for {{ site_title }}
+site_url: {{ site_url }}
+repo_name: {{ repo_name }}
+repo_url: {{ repo_url }}
+edit_uri: edit/main/{{ scope_name }}/
+docs_dir: docs
+site_dir: .reports/docs/site
+
+{{ exclude_docs_block }}{{ mk.material_theme() }}
+
+{{ mk.plugins_block(exclude_plugin_block, mkdocstrings_paths_block) }}
+
+{{ mk.markdown_extensions_block() }}
+
+nav:
+  - Home: index.md
+  - Guides: guides/README.md
+  - API Reference: api-reference/README.md
+
+{{ mk.not_in_nav_block() }}
+{{ mk.validation_block() }}

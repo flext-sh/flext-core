@@ -1,0 +1,42 @@
+id: ban-pass-through-wrapper-async-def
+snapshots:
+  ? |
+    async def defaulted(value: str = "x") -> str:
+        return await target(value)
+  : labels:
+    - source: |-
+        async def defaulted(value: str = "x") -> str:
+            return await target(value)
+      style: primary
+      start: 0
+      end: 76
+  ? |
+    async def plain(value):
+        return await target(value)
+  : labels:
+    - source: |-
+        async def plain(value):
+            return await target(value)
+      style: primary
+      start: 0
+      end: 54
+  ? |
+    async def typed(value: str) -> str:
+        return await target(value)
+  : labels:
+    - source: |-
+        async def typed(value: str) -> str:
+            return await target(value)
+      style: primary
+      start: 0
+      end: 66
+  ? |
+    async def variadic(*args: str, **kwargs: str) -> str:
+        return await target(*args, **kwargs)
+  : labels:
+    - source: |-
+        async def variadic(*args: str, **kwargs: str) -> str:
+            return await target(*args, **kwargs)
+      style: primary
+      start: 0
+      end: 94

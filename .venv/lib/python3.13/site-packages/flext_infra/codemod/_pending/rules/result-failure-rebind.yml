@@ -1,0 +1,35 @@
+id: result-error-fallback-diagnostic
+language: python
+severity: hint
+message: >-
+  Rebuilding a failure from result.error loses error_code, error_data and the
+  typed exception. Use from_failure for propagation or an e.fail_* factory when
+  the current layer adds new context. Detection only.
+ignores:
+  - "**/legado/**"
+rule:
+  kind: boolean_operator
+  pattern: $RESULT.error or $FALLBACK
+constraints:
+  RESULT:
+    kind: identifier
+---
+id: result-failure-rebind
+language: python
+severity: warning
+message: >-
+  Preserve the complete failure inside its proven failure guard by rebinding it
+  instead of rebuilding it from error text.
+ignores:
+  - "**/legado/**"
+rule:
+  pattern: r[$TYPE].fail($RESULT.error or $FALLBACK)
+  inside:
+    pattern: |
+      if $RESULT.failure:
+          $$$BODY
+    stopBy: end
+constraints:
+  RESULT:
+    kind: identifier
+fix: r[$TYPE].from_failure($RESULT)

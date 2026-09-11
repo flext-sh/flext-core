@@ -1,0 +1,5 @@
+id: direct-get-logger-fix
+language: python
+rule:
+  pattern: "structlog.get_logger()"
+fix: "u.fetch_logger(__name__)"

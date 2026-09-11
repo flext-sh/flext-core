@@ -1,0 +1,17 @@
+id: flext-settings-base-rename
+snapshots:
+  from flext_core.settings import FlextSettingsBase:
+    fixed: from flext_core import FlextSettings
+    labels:
+    - source: from flext_core.settings import FlextSettingsBase
+      style: primary
+      start: 0
+      end: 49
+    - source: flext_core.settings
+      style: secondary
+      start: 5
+      end: 24
+    - source: FlextSettingsBase
+      style: secondary
+      start: 32
+      end: 49

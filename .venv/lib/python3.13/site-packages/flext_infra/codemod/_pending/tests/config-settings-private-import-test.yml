@@ -1,0 +1,11 @@
+id: config-settings-private-import
+valid:
+  - from flext_core import config, settings
+  - from flext_infra import c, config, m, p, settings, t, u
+  - from ._config import config as config
+  - from pydantic_settings import BaseSettings
+invalid:
+  - from flext_core._config import FlextConfig
+  - from flext_core._settings import settings
+  - from flext_dbt_oracle_wms._config import config
+  - from flext_meltano._settings import FlextMeltanoSettings as Settings

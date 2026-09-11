@@ -1,0 +1,3 @@
+# mro-wkii.17.26 (codex): keep canonical package configuration versioned so
+# editable installs, clean wheels, and unrelated working directories agree.
+{}

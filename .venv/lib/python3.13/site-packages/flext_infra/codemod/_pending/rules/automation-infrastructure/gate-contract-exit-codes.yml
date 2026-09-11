@@ -1,0 +1,9 @@
+id: gate-contract-exit-codes
+language: python
+rule:
+  any:
+    - pattern: sys.exit($$$ARGS)
+    - kind: identifier
+      regex: "^(EXIT_PASS|EXIT_FAIL|EXIT_USAGE|EXIT_INFRA)$"
+message: "Exit code contract found (tracking)"
+severity: warning

@@ -1,0 +1,42 @@
+id: ban-pass-through-wrapper-def
+snapshots:
+  ? |
+    def defaulted(value: str = "x") -> str:
+        return target(value)
+  : labels:
+    - source: |-
+        def defaulted(value: str = "x") -> str:
+            return target(value)
+      style: primary
+      start: 0
+      end: 64
+  ? |
+    def plain(value):
+        return target(value)
+  : labels:
+    - source: |-
+        def plain(value):
+            return target(value)
+      style: primary
+      start: 0
+      end: 42
+  ? |
+    def typed(value: str) -> str:
+        return target(value)
+  : labels:
+    - source: |-
+        def typed(value: str) -> str:
+            return target(value)
+      style: primary
+      start: 0
+      end: 54
+  ? |
+    def variadic(*args: str, **kwargs: str) -> str:
+        return target(*args, **kwargs)
+  : labels:
+    - source: |-
+        def variadic(*args: str, **kwargs: str) -> str:
+            return target(*args, **kwargs)
+      style: primary
+      start: 0
+      end: 82

@@ -1,0 +1,9 @@
+id: fix-legacy-settings-class
+language: python
+rule:
+  pattern: |
+    class Config:
+      $$$BODY
+fix: model_config = ConfigDict()
+message: "Rewrite class Config -> model_config = ConfigDict()"
+severity: error

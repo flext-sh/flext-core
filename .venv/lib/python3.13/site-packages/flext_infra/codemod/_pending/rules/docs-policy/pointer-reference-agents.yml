@@ -1,0 +1,7 @@
+id: pointer-reference-agents
+language: yaml
+rule:
+  kind: flow_node
+  regex: AGENTS\.md
+message: Pointer files must reference the canonical AGENTS.md policy.
+severity: warning

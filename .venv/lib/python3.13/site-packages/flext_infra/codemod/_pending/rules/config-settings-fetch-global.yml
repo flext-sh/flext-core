@@ -1,0 +1,42 @@
+# FLEXT config/settings SSOT: the package-root singleton is constructed once
+# from its validated Pydantic v2 root model. Legacy fetch_global declarations
+# and calls are intermediary access paths and must disappear atomically.
+#
+# Detection only. Replacing a call requires resolving its owning package,
+# namespace, and model field; a generic fix could silently change identity.
+# Calls and declarations owned by services/APIs/containers are intentionally
+# excluded: their lifecycle contract is unrelated to config/settings SSOT.
+id: config-settings-fetch-global
+language: python
+severity: error
+message: >-
+  fetch_global is a forbidden config/settings intermediary; consume the
+  package-root validated singleton directly and remove the legacy declaration.
+ignores:
+  - '**/legado/**'
+rule:
+  any:
+    - all:
+        - pattern: $OWNER.fetch_global($$$ARGS)
+        - regex: >-
+            (?i)(?:\b(?:config|settings)(?:_cls|_type)?|\b[A-Za-z_]\w*(?:Config|Settings))\.fetch_global\s*\(
+    - all:
+        - pattern: $OWNER.fetch_global($$$ARGS)
+        - inside:
+            stopBy: end
+            kind: class_definition
+            has:
+              field: name
+              regex: '(?:Config|Settings)$'
+    - all:
+        - kind: function_definition
+          has:
+            kind: identifier
+            field: name
+            regex: '^fetch_global$'
+        - inside:
+            stopBy: end
+            kind: class_definition
+            has:
+              field: name
+              regex: '(?:Config|Settings)$'

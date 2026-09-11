@@ -1,0 +1,7 @@
+id: readme-ecosystem-link
+language: html
+rule:
+  kind: text
+  regex: Part of the.*FLEXT.*ecosystem
+message: README.md must link back to flext-sh/flext.
+severity: warning

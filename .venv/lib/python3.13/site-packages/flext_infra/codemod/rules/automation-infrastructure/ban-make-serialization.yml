@@ -1,0 +1,24 @@
+id: ban-make-serialization
+language: python
+severity: error
+files:
+  - "**/*.py"
+ignores:
+  - "**/.git/**"
+  - "**/.venv/**"
+  - "**/node_modules/**"
+message: >-
+  Make serialization and lock lifecycle ownership is retired. Public Make verbs
+  dispatch directly. Do not add serialization locks, serialized targets, Make
+  serialization models, or compatibility routes.
+rule:
+  any:
+    - pattern: $RECV.serialization_lock_execute($$$ARGS)
+    - pattern: $RECV.make_serialization($$$ARGS)
+    - pattern: $RECV.serialize_make($$$ARGS)
+    - pattern: |-
+        class MakeSerializationSpec:
+            $$$BODY
+    - pattern: |-
+        class MakeSerializationSpec($BASE):
+            $$$BODY

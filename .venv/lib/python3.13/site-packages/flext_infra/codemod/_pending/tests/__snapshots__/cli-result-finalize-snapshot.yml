@@ -1,0 +1,48 @@
+id: cli-result-finalize
+snapshots:
+  ? |
+    from flext_sample import c, cli, r
+    def main() -> int:
+        result = SampleCli().run([])
+        return 0 if result.success else 1
+  : fixed: |
+      from flext_sample import c, cli, r
+      def main() -> int:
+          result = SampleCli().run([])
+          return cli.finalize_result(result)
+    labels:
+    - source: return 0 if result.success else 1
+      style: primary
+      start: 91
+      end: 124
+    - source: result = SampleCli().run([])
+      style: secondary
+      start: 58
+      end: 86
+    - source: main
+      style: secondary
+      start: 39
+      end: 43
+    - source: |-
+        def main() -> int:
+            result = SampleCli().run([])
+            return 0 if result.success else 1
+      style: secondary
+      start: 35
+      end: 124
+    - source: cli
+      style: secondary
+      start: 28
+      end: 31
+    - source: from flext_sample import c, cli, r
+      style: secondary
+      start: 0
+      end: 34
+    - source: |
+        from flext_sample import c, cli, r
+        def main() -> int:
+            result = SampleCli().run([])
+            return 0 if result.success else 1
+      style: secondary
+      start: 0
+      end: 125

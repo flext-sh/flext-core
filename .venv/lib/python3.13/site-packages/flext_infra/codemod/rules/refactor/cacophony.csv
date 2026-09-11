@@ -1,0 +1,4 @@
+old,new
+MeltanoExecutor,Executor
+LdifChangeType,ChangeType
+LdifClient,Client

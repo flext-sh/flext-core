@@ -1,0 +1,28 @@
+id: test-flext-tests-enforcement-public-import
+snapshots:
+  ? |
+    from flext_tests._fixtures.enforcement import (
+        InfraReport,
+        load_infra_report,
+    )
+  : fixed: |
+      from flext_tests.enforcement import (
+          InfraReport,
+          load_infra_report,
+      )
+    labels:
+    - source: |-
+        from flext_tests._fixtures.enforcement import (
+            InfraReport,
+            load_infra_report,
+        )
+      style: primary
+      start: 0
+      end: 89
+  from flext_tests._fixtures.enforcement import load_infra_report:
+    fixed: from flext_tests.enforcement import load_infra_report
+    labels:
+    - source: from flext_tests._fixtures.enforcement import load_infra_report
+      style: primary
+      start: 0
+      end: 63

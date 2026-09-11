@@ -1,0 +1,46 @@
+id: ban-hardcoded-config
+snapshots:
+  ? |
+    config = {"tool_version": "1.2.3"}
+  : labels:
+    - source: '"1.2.3"'
+      style: primary
+      start: 26
+      end: 33
+    - source: '"tool_version": "1.2.3"'
+      style: secondary
+      start: 10
+      end: 33
+  ? |
+    endpoint = "https://example.com"
+  : labels:
+    - source: '"https://example.com"'
+      style: primary
+      start: 11
+      end: 32
+    - source: endpoint = "https://example.com"
+      style: secondary
+      start: 0
+      end: 32
+  ? |
+    install_root = "/opt/flext"
+  : labels:
+    - source: '"/opt/flext"'
+      style: primary
+      start: 15
+      end: 27
+    - source: install_root = "/opt/flext"
+      style: secondary
+      start: 0
+      end: 27
+  ? |
+    python_version = "3.13"
+  : labels:
+    - source: '"3.13"'
+      style: primary
+      start: 17
+      end: 23
+    - source: python_version = "3.13"
+      style: secondary
+      start: 0
+      end: 23

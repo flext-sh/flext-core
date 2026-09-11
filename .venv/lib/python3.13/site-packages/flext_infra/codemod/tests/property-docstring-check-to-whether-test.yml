@@ -1,0 +1,60 @@
+id: property-docstring-check-to-whether
+valid:
+  # not a property -> must NOT match
+  - |
+    def is_expired() -> bool:
+        """Check if the token is expired."""
+        return True
+  # cached_property is not exact @property -> must NOT match
+  - |
+    @cached_property
+    def is_expired(self) -> bool:
+        """Check if the token is expired."""
+        return self._expired
+  # already a noun phrase -> must NOT match (idempotency)
+  - |
+    @property
+    def is_expired(self) -> bool:
+        """Whether the token is expired."""
+        return self._expired
+  # plain strippable verb (owned by R1, not this rule) -> must NOT match
+  - |
+    @property
+    def value(self) -> str:
+        """Return the validated value."""
+        return self._value
+  # Check without if/whether is a plain strip case (R1), not this rule
+  - |
+    @property
+    def status(self) -> str:
+        """Check the current status label."""
+        return self._status
+invalid:
+  # Check if -> Whether
+  - |
+    @property
+    def is_expired(self) -> bool:
+        """Check if the token is expired."""
+        return self._expired
+  # Check whether -> Whether, single-quote style
+  - |
+    @property
+    def is_ready(self) -> bool:
+        '''Check whether the service is ready.'''
+        return self._ready
+  # Determine if -> Whether under @computed_field + @property sibling
+  - |
+    @computed_field
+    @property
+    def has_errors(self) -> bool:
+        """Determine if any validation errors exist."""
+        return bool(self._errors)
+  # multiline: only the predicate head is rewritten, remaining paragraph preserved
+  - |
+    @property
+    def is_enabled(self) -> bool:
+        """Check if the feature is enabled.
+
+        The second paragraph remains byte-for-byte unchanged.
+        """
+        return self._enabled

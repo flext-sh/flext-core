@@ -1,0 +1,41 @@
+# Ban private-module imports in consumer code (epic i2h4 flext-core refactor).
+#
+# FLEXT law: a module living outside a private `_*/` implementation directory
+# is a CONSUMER of that package and must never import any `_`-prefixed
+# module from it. Consumers bind to the public facade (`from <pkg> import
+# c, t, p, m, u, r, e, x, h, d, s`); files inside the owning `_*/` directory
+# are the implementation and may reference their siblings.
+#
+# Detection-only: the correct replacement is the public facade projection of
+# the private symbol.
+#
+# Bead: i2h4 (flext-core private-import cutover).
+
+---
+id: ban-private-import-consumer
+language: Python
+severity: error
+rule:
+  any:
+    - all:
+        - kind: import_from_statement
+        - regex: '^from\s+[\w.]*\._(constants|exceptions|models|typings|utilities)(\.[\w.]+)*\s+import\b'
+    - all:
+        - kind: import_statement
+        - regex: '^import\s+[\w.]*\._(constants|exceptions|models|typings|utilities)(\.[\w.]+)*(\s+as\s+\w+)?\s*$'
+message: >-
+  Importing from a private `_`-prefixed module is banned in consumer code.
+  Use the public facade instead (from <pkg> import c, t, p, m, u, r, e, x,
+  h, d, s).
+note: >-
+  Migration: replace `from <pkg>._foo import Bar` with the facade projection
+  (`from <pkg> import m` / `u` / `t` / ... then `m.Bar`). Only modules inside
+  the same `_*/` implementation directory may import private siblings, and
+  even then the narrower ban-private-import-behavior gate applies.
+files:
+  - "**/*.py"
+ignores:
+  - "**/.git/**"
+  - "**/.venv/**"
+  - "**/__pycache__/**"
+  - "**/_*/**"

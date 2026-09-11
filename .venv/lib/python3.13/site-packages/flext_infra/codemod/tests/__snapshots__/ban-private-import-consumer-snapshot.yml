@@ -1,0 +1,16 @@
+id: ban-private-import-consumer
+snapshots:
+  ? |
+    from flext_core._utilities import FlextUtilities
+  : labels:
+    - source: from flext_core._utilities import FlextUtilities
+      style: primary
+      start: 0
+      end: 48
+  ? |
+    import flext_core._models as models
+  : labels:
+    - source: import flext_core._models as models
+      style: primary
+      start: 0
+      end: 35

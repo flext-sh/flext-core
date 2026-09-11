@@ -1,0 +1,26 @@
+id: config-dict-type-missing-t-import
+# `valid` MUST NOT match: the module imports `t` (safe -> the auto-fix rule owns
+# it), or the annotation is already canonical / out of scope.
+valid:
+  - |
+    from flext_ldif import c, t
+    from typing import ClassVar
+    class A:
+        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(extra="forbid")
+  - |
+    from flext_ldif import t
+    from typing import ClassVar
+    class B:
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict()
+# `invalid` MUST match: p/m.ConfigDict in a module that imports no `t`.
+invalid:
+  - |
+    from flext_ldif import p
+    from typing import ClassVar
+    class C:
+        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+  - |
+    from flext_core import m
+    from typing import ClassVar
+    class D:
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict()

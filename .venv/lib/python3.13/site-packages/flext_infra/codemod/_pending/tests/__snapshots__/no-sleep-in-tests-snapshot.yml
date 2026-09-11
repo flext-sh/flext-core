@@ -1,0 +1,14 @@
+id: no-sleep-in-tests
+snapshots:
+  time.sleep(0.5):
+    labels:
+    - source: time.sleep(0.5)
+      style: primary
+      start: 0
+      end: 15
+  time.sleep(1):
+    labels:
+    - source: time.sleep(1)
+      style: primary
+      start: 0
+      end: 13

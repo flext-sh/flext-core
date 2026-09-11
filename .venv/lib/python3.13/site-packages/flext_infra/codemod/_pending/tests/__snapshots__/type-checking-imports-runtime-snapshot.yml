@@ -1,0 +1,52 @@
+id: type-checking-imports-runtime
+snapshots:
+  ? |
+    from flext_sample import p, t
+
+    if t.TYPE_CHECKING:
+        from flext_sample import p
+        from pathlib import Path
+  : labels:
+    - source: |-
+        if t.TYPE_CHECKING:
+            from flext_sample import p
+            from pathlib import Path
+      style: primary
+      start: 31
+      end: 110
+    - source: from flext_sample import p
+      style: secondary
+      start: 55
+      end: 81
+  ? |
+    from typing import TYPE_CHECKING
+
+    if TYPE_CHECKING:
+        from pathlib import Path
+  : labels:
+    - source: |-
+        if TYPE_CHECKING:
+            from pathlib import Path
+      style: primary
+      start: 34
+      end: 80
+    - source: from pathlib import Path
+      style: secondary
+      start: 56
+      end: 80
+  ? |
+    import typing
+
+    if typing.TYPE_CHECKING:
+        import types
+  : labels:
+    - source: |-
+        if typing.TYPE_CHECKING:
+            import types
+      style: primary
+      start: 15
+      end: 56
+    - source: import types
+      style: secondary
+      start: 44
+      end: 56

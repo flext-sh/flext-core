@@ -1,0 +1,7 @@
+id: require-shebang-in-sh
+language: python
+rule:
+  kind: comment
+  regex: "^#!/usr/bin/env"
+message: "Shebang found (tracking)"
+severity: warning

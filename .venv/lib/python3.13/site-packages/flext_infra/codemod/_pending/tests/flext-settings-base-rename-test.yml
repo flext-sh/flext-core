@@ -1,0 +1,11 @@
+id: flext-settings-base-rename
+# `valid` code MUST NOT match (safety: no data loss on multi-import / alias).
+valid:
+  - from flext_core.settings import FlextSettingsBase, OtherThing
+  - from flext_core.settings import OtherThing, FlextSettingsBase
+  - from flext_core.settings import FlextSettingsBase as Base
+  - import flext_core.settings
+  - from flext_core import FlextSettings
+# `invalid` code MUST match and be rewritten.
+invalid:
+  - from flext_core.settings import FlextSettingsBase

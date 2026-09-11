@@ -1,0 +1,6 @@
+id: no-sleep-in-tests
+language: python
+rule:
+  pattern: "time.sleep($$$ARGS)"
+message: "time.sleep() in tests - use mocking or freezegun"
+severity: error

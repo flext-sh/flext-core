@@ -1,0 +1,6 @@
+id: prefer-orjson-dumps
+language: python
+rule:
+  pattern: "json.dumps($$$ARGS)"
+message: "Use orjson.dumps() instead of json.dumps()"
+severity: error

@@ -1,0 +1,11 @@
+id: ban-private-import-examples
+valid:
+  - |
+    from flext_core import c
+  - |
+    import flext_core.constants as constants
+invalid:
+  - |
+    from flext_core._constants import FlextConstants
+  - |
+    import flext_core._exceptions as exceptions

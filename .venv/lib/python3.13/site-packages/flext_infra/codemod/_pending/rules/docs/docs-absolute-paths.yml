@@ -1,0 +1,7 @@
+id: docs-absolute-paths
+language: html
+rule:
+  kind: text
+  regex: (/home/|/Users/|[A-Za-z]:\\)
+message: Documentation should not contain absolute system paths.
+severity: warning

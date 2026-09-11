@@ -1,0 +1,34 @@
+id: assert-truthy-to-tm
+snapshots:
+  ? |
+    from flext_tests import tm
+    def test_i():
+        assert result.is_valid
+  : fixed: |
+      from flext_tests import tm
+      def test_i():
+          tm.that(result.is_valid, eq=True)
+    labels:
+    - source: assert result.is_valid
+      style: primary
+      start: 45
+      end: 67
+    - source: tm
+      style: secondary
+      start: 24
+      end: 26
+    - source: flext_tests
+      style: secondary
+      start: 5
+      end: 16
+    - source: from flext_tests import tm
+      style: secondary
+      start: 0
+      end: 26
+    - source: |
+        from flext_tests import tm
+        def test_i():
+            assert result.is_valid
+      style: secondary
+      start: 0
+      end: 68

@@ -1,0 +1,14 @@
+id: require-env-prefix
+language: python
+rule:
+  kind: keyword_argument
+  all:
+  - has:
+      kind: identifier
+      regex: "^env_prefix$"
+      field: name
+  - has:
+      kind: string
+      field: value
+message: "env_prefix configuration found (tracking)"
+severity: warning

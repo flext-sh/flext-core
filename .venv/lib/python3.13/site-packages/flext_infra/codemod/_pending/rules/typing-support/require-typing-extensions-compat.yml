@@ -1,0 +1,10 @@
+id: require-typing-extensions-compat
+language: python
+rule:
+  kind: import_from_statement
+  has:
+    kind: dotted_name
+    field: module_name
+    regex: "^typing_extensions$"
+message: "typing_extensions import found (tracking)"
+severity: warning

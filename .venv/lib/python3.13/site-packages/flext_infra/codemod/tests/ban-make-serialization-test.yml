@@ -1,0 +1,16 @@
+id: ban-make-serialization
+valid:
+  - |
+    @model_serializer
+    def serialize_report(self) -> dict[str, str]:
+        return {"status": self.status}
+  - |
+    report.model_dump_json()
+  - |
+    package_registry.register(provider)
+invalid:
+  - |
+    u.Infra.serialization_lock_execute(paths, timeout)
+  - |
+    class MakeSerializationSpec(BaseModel):
+        pass

@@ -1,0 +1,19 @@
+id: broad-except-return-default
+language: python
+severity: warning
+message: >-
+  Broad `except Exception` swallows a failure into a silent default. Narrow the
+  exception and return the canonical FLEXT Result instead. Detection only; see
+  SKILL.md before changing the error boundary.
+ignores:
+  - "**/legado/**"
+rule:
+  kind: except_clause
+  all:
+    - has: { pattern: Exception, stopBy: end }
+    - has:
+        stopBy: end
+        any:
+          - pattern: "return {}"
+          - pattern: "return None"
+          - pattern: "return []"

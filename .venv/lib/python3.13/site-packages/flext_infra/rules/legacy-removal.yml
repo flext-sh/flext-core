@@ -1,0 +1,55 @@
+# Regras para remoção de código legado
+# Usado por LegacyRemovalRule
+
+rules:
+  - id: remove-compatibility-aliases
+    name: "Remove compatibility aliases"
+    description: "Remove OldName = NewName patterns"
+    enabled: true
+    severity: error
+    pattern: '^(\w+)\s*=\s*(\w+)$'
+    allow_aliases: ["c", "m", "r", "t", "u", "p", "d", "e", "h", "s", "x"]
+    allow_target_suffixes:
+      [
+        "Constants",
+        "Models",
+        "Protocols",
+        "Utilities",
+        "Types",
+        "Handlers",
+        "Services",
+        "Mixins",
+      ]
+    conditions:
+      - type: module_level
+        value: true
+    auto_fix: true
+    fix_action: remove
+
+  - id: remove-wrapper-functions
+    name: "Remove wrapper functions"
+    description: "Remove functions that just call another function"
+    enabled: true
+    severity: warning
+    pattern: 'def\s+(\w+)\((.*)\):\s*return\s+(\w+)\(\2\)'
+    auto_fix: true
+    fix_action: inline_and_remove
+
+  - id: remove-deprecated-classes
+    name: "Remove deprecated classes"
+    description: "Remove classes marked as deprecated"
+    enabled: true
+    severity: error
+    pattern: 'class\s+(\w+).*deprecated'
+    flags: [ignore_case]
+    auto_fix: true
+    fix_action: remove_and_update_refs
+
+  - id: remove-import-bypasses
+    name: "Remove import bypasses"
+    description: "Remove try/except ImportError patterns for old imports"
+    enabled: true
+    severity: warning
+    pattern: 'try:\s*from\s+(\w+)\s+import\s+(\w+)\s*except\s+ImportError:\s*from\s+(\w+)\s+import\s+\2'
+    auto_fix: true
+    fix_action: keep_try_only

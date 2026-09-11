@@ -1,0 +1,8 @@
+id: service-error-logger
+valid:
+  - "self._logger.info('rendered', path=str(output))"
+  - "self._logger.warning('cache miss', key=key)"
+  - "logger.exception(error, error_code=error_code)"
+invalid:
+  - "self._logger.error('invalid config', path=str(config_path))"
+  - "self._logger.exception('read failed', error=str(exc))"

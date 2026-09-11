@@ -1,0 +1,26 @@
+id: detect-bindable-logger
+snapshots:
+  'logger: BindableLogger':
+    labels:
+    - source: 'logger: BindableLogger'
+      style: primary
+      start: 0
+      end: 22
+  'logger: BindableLogger = get_logger()':
+    labels:
+    - source: 'logger: BindableLogger = get_logger()'
+      style: primary
+      start: 0
+      end: 37
+  'x: BindableLogger':
+    labels:
+    - source: 'x: BindableLogger'
+      style: primary
+      start: 0
+      end: 17
+  'x: BindableLogger = init()':
+    labels:
+    - source: 'x: BindableLogger = init()'
+      style: primary
+      start: 0
+      end: 26

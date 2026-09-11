@@ -1,0 +1,14 @@
+id: service-error-logger
+snapshots:
+  self._logger.error('invalid config', path=str(config_path)):
+    labels:
+    - source: self._logger.error('invalid config', path=str(config_path))
+      style: primary
+      start: 0
+      end: 59
+  self._logger.exception('read failed', error=str(exc)):
+    labels:
+    - source: self._logger.exception('read failed', error=str(exc))
+      style: primary
+      start: 0
+      end: 53

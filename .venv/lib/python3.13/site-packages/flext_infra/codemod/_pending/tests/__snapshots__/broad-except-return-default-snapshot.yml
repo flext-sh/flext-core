@@ -1,0 +1,42 @@
+id: broad-except-return-default
+snapshots:
+  ? |
+    try:
+        load()
+    except Exception:
+        return {}
+  : labels:
+    - source: |-
+        except Exception:
+            return {}
+      style: primary
+      start: 16
+      end: 47
+    - source: Exception
+      style: secondary
+      start: 23
+      end: 32
+    - source: return {}
+      style: secondary
+      start: 38
+      end: 47
+  ? |
+    try:
+        risky()
+    except Exception:
+        return None
+  : labels:
+    - source: |-
+        except Exception:
+            return None
+      style: primary
+      start: 17
+      end: 50
+    - source: Exception
+      style: secondary
+      start: 24
+      end: 33
+    - source: return None
+      style: secondary
+      start: 39
+      end: 50

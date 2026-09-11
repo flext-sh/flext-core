@@ -1,0 +1,21 @@
+# FLEXT config/settings SSOT: consumers import the validated singleton from the
+# package root. Absolute imports from a private root module bypass that public
+# identity and create a second access surface.
+#
+# Detection only. The owning package and every use of the imported name must be
+# resolved before rewriting, so a generic textual fix would be unsafe.
+id: config-settings-private-import
+language: python
+severity: error
+message: >-
+  Import config/settings from the package root singleton; direct absolute
+  imports from a private _config or _settings module are forbidden.
+ignores:
+  - '**/__init__.py'
+  - '**/legado/**'
+rule:
+  kind: import_from_statement
+  has:
+    kind: dotted_name
+    field: module_name
+    regex: '^flext_[a-z0-9_]+\._(?:config|settings)$'

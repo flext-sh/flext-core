@@ -1,0 +1,14 @@
+id: settings-namespace-base-drift
+snapshots:
+  assert isinstance(settings.Tests, m.SettingsValue):
+    labels:
+    - source: isinstance(settings.Tests, m.SettingsValue)
+      style: primary
+      start: 7
+      end: 50
+  assert isinstance(test_settings.Tests, m.SettingsValue):
+    labels:
+    - source: isinstance(test_settings.Tests, m.SettingsValue)
+      style: primary
+      start: 7
+      end: 55

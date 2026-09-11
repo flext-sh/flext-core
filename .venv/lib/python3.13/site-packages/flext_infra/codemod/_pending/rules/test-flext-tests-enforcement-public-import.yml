@@ -1,0 +1,15 @@
+id: test-flext-tests-enforcement-public-import
+language: python
+severity: hint
+files:
+  - "**/tests/**/*.py"
+  - "tests/**/*.py"
+ignores:
+  - "**/legado/**"
+message: >-
+  Active tests consume enforcement helpers through the public flext_tests
+  facade. The exact module match preserves every imported name.
+rule:
+  kind: import_from_statement
+  pattern: from flext_tests._fixtures.enforcement import $$$NAMES
+fix: from flext_tests.enforcement import $$$NAMES

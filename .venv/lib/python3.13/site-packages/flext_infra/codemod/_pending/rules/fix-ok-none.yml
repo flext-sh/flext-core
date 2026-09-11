@@ -1,0 +1,15 @@
+id: fix-ok-none-r
+language: python
+rule:
+  pattern: p.Result[$T].ok(None)
+fix: p.Result[$T].ok(True)
+message: "Rewrite r[T].ok(None) -> p.Result[T].ok(True)"
+severity: error
+---
+id: fix-ok-none-result
+language: python
+rule:
+  pattern: p.Result[$T].ok(None)
+fix: p.Result[$T].ok(True)
+message: "Rewrite r[T].ok(None) -> p.Result[T].ok(True)"
+severity: error

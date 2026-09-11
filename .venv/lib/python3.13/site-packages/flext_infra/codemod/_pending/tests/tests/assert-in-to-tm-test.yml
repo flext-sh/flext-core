@@ -1,0 +1,12 @@
+id: assert-in-to-tm
+# valid: no tm import (guard excludes) => this rule must NOT match.
+valid:
+  - |
+    def test_v():
+        assert k in mapping
+# invalid: same shape WITH tm imported from a flext facade => must match+fix.
+invalid:
+  - |
+    from flext_tests import tm
+    def test_i():
+        assert k in mapping

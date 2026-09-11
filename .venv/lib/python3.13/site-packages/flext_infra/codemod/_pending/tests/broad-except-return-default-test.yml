@@ -1,0 +1,18 @@
+id: broad-except-return-default
+valid:
+  - |
+    try:
+        risky()
+    except ValueError as exc:
+        return r[int].fail("bad value", exception=exc)
+invalid:
+  - |
+    try:
+        risky()
+    except Exception:
+        return None
+  - |
+    try:
+        load()
+    except Exception:
+        return {}

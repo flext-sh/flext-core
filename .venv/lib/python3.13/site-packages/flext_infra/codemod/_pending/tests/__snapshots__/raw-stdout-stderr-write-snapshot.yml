@@ -1,0 +1,14 @@
+id: raw-stdout-stderr-write
+snapshots:
+  'sys.stderr.write(f''error: {message}\n'')':
+    labels:
+    - source: 'sys.stderr.write(f''error: {message}\n'')'
+      style: primary
+      start: 0
+      end: 39
+  sys.stdout.write('hello\n'):
+    labels:
+    - source: sys.stdout.write('hello\n')
+      style: primary
+      start: 0
+      end: 27

@@ -1,0 +1,22 @@
+id: cli-result-finalize
+valid:
+  - |
+    from flext_sample import cli
+    def main() -> int:
+        result = SampleCli().run([])
+        return cli.finalize_result(result)
+  - |
+    def main() -> int:
+        result = SampleCli().run([])
+        return 0 if result.success else 1
+  - |
+    from flext_sample import cli
+    def status() -> int:
+        result = service.run()
+        return 0 if result.success else 1
+invalid:
+  - |
+    from flext_sample import c, cli, r
+    def main() -> int:
+        result = SampleCli().run([])
+        return 0 if result.success else 1

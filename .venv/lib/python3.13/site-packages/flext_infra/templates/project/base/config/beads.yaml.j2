@@ -1,0 +1,7 @@
+version: {{ beads.version }}
+workspace: {{ beads.workspace | tojson }}
+database: {{ beads.database | tojson }}
+issue_prefix: {{ beads.issue_prefix | tojson }}
+{% if beads.custom_issue_types %}custom_issue_types:
+{% for issue_type in beads.custom_issue_types %}  - {{ issue_type | tojson }}
+{% endfor %}{% endif %}

@@ -1,0 +1,61 @@
+id: ban-model-rebuild-call
+language: python
+rule:
+  pattern: $MODEL.model_rebuild($$$ARGS)
+message: model_rebuild() is a critical violation; resolve references at definition time
+severity: error
+---
+id: ban-pydantic-v1-dict
+language: python
+rule:
+  pattern: $MODEL.dict($$$ARGS)
+message: Pydantic v1 .dict() is banned; use model_dump()
+severity: error
+---
+id: ban-pydantic-v1-parse-obj
+language: python
+rule:
+  pattern: $MODEL.parse_obj($ARG)
+message: Pydantic v1 parse_obj() is banned; use model_validate()
+severity: error
+---
+id: ban-pydantic-v1-parse-raw
+language: python
+rule:
+  pattern: $MODEL.parse_raw($ARG)
+message: Pydantic v1 parse_raw() is banned; use model_validate_json()
+severity: error
+---
+id: ban-pydantic-v1-json
+language: python
+rule:
+  pattern: $MODEL.json($$$ARGS)
+message: Pydantic v1 .json() is banned; use model_dump_json()
+severity: error
+---
+id: ban-pydantic-v1-from-orm
+language: python
+rule:
+  pattern: $MODEL.from_orm($ARG)
+message: Pydantic v1 from_orm() is banned; use model_validate()
+severity: error
+---
+id: ban-pydantic-v1-validator-decorator
+language: python
+rule:
+  pattern: |
+    @validator($$$ARGS)
+    def $FN($$$PARAMS):
+      $$$BODY
+message: Pydantic v1 @validator is banned; use @u.field_validator
+severity: error
+---
+id: ban-pydantic-v1-root-validator-decorator
+language: python
+rule:
+  pattern: |
+    @root_validator($$$ARGS)
+    def $FN($$$PARAMS):
+      $$$BODY
+message: Pydantic v1 @root_validator is banned; use @u.model_validator
+severity: error

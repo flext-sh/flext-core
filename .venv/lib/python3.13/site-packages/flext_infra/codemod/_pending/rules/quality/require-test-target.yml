@@ -1,0 +1,7 @@
+id: require-test-target
+language: yaml
+rule:
+  kind: flow_node
+  regex: (pytest|ruff|test)
+message: Core gate configuration files should include test gate command wiring.
+severity: warning

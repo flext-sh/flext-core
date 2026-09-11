@@ -1,0 +1,17 @@
+id: service-error-logger
+language: python
+severity: hint
+message: >-
+  Service-layer self._logger.error/exception can duplicate Result failure
+  handling. Propagate typed context and log once at the public CLI boundary.
+  Detection only; retain observability info/warning events.
+ignores:
+  - "**/legado/**"
+  - "**/cli.py"
+  - "**/cli/**"
+  - "**/_cli/**"
+  - "**/_cli_parts/**"
+rule:
+  any:
+    - pattern: self._logger.error($$$ARGS)
+    - pattern: self._logger.exception($$$ARGS)

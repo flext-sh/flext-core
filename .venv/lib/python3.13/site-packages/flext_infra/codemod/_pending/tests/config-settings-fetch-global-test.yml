@@ -1,0 +1,31 @@
+id: config-settings-fetch-global
+valid:
+  - value = settings.FlextInfra.Codegen
+  - value = config.FlextCore.Logging
+  - value = registry.fetch("global")
+  - value = FlextPluginApi.fetch_global()
+  - value = PlatformService.fetch_global()
+  - |
+    class FlextPluginApi:
+        def fetch_global(cls):
+            return cls()
+  - |
+    def load_global(cls):
+        return cls()
+  - |
+    def fetch_global(cls, *, force_reload=False):
+        return cls()
+invalid:
+  - value = FlextConfig.fetch_global()
+  - value = FlextCliSettings.fetch_global()
+  - value = settings.fetch_global(force_reload=True)
+  - value = config.fetch_global()
+  - value = settings_cls.fetch_global()
+  - |
+    class FlextProjectConfig:
+        def load(cls):
+            return cls.fetch_global()
+  - |
+    class FlextProjectSettings:
+        def fetch_global(cls, *, force_reload=False):
+            return cls()

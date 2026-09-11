@@ -1,0 +1,28 @@
+id: type-checking-imports-runtime
+valid:
+  - |
+    from pathlib import Path
+
+    VALUE: Path | None = None
+  - |
+    from typing import TYPE_CHECKING
+
+    if TYPE_CHECKING:
+        Alias: type[str] = str
+invalid:
+  - |
+    from typing import TYPE_CHECKING
+
+    if TYPE_CHECKING:
+        from pathlib import Path
+  - |
+    from flext_sample import p, t
+
+    if t.TYPE_CHECKING:
+        from flext_sample import p
+        from pathlib import Path
+  - |
+    import typing
+
+    if typing.TYPE_CHECKING:
+        import types

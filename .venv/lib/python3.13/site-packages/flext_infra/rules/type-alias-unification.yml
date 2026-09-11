@@ -1,0 +1,8 @@
+rules:
+  - id: unify-typings
+    name: "Unify legacy typing aliases and unions"
+    description: "Convert TypeAlias syntax, remove unused typing imports, and canonicalize inline unions to t.*"
+    enabled: true
+    severity: error
+    auto_fix: true
+    fix_action: unify_typings

@@ -1,0 +1,16 @@
+id: ban-private-import-behavior
+snapshots:
+  ? |
+    from flext_core._models import FlextModels
+  : labels:
+    - source: from flext_core._models import FlextModels
+      style: primary
+      start: 0
+      end: 42
+  ? |
+    import flext_core._utilities as utilities
+  : labels:
+    - source: import flext_core._utilities as utilities
+      style: primary
+      start: 0
+      end: 41

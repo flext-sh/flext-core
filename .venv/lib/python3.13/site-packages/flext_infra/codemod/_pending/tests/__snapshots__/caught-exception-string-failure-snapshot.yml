@@ -1,0 +1,58 @@
+id: caught-exception-string-failure
+snapshots:
+  ? |
+    try:
+        connect()
+    except ConnectionError as error:
+        return r.fail(str(error))
+  : labels:
+    - source: r.fail(str(error))
+      style: primary
+      start: 63
+      end: 81
+    - source: error
+      style: secondary
+      start: 45
+      end: 50
+    - source: error
+      style: secondary
+      start: 45
+      end: 50
+    - source: ConnectionError as error
+      style: secondary
+      start: 26
+      end: 50
+    - source: |-
+        except ConnectionError as error:
+            return r.fail(str(error))
+      style: secondary
+      start: 19
+      end: 81
+  ? |
+    try:
+        read()
+    except OSError as exc:
+        return r[str].fail(str(exc))
+  : labels:
+    - source: r[str].fail(str(exc))
+      style: primary
+      start: 50
+      end: 71
+    - source: exc
+      style: secondary
+      start: 34
+      end: 37
+    - source: exc
+      style: secondary
+      start: 34
+      end: 37
+    - source: OSError as exc
+      style: secondary
+      start: 23
+      end: 37
+    - source: |-
+        except OSError as exc:
+            return r[str].fail(str(exc))
+      style: secondary
+      start: 16
+      end: 71

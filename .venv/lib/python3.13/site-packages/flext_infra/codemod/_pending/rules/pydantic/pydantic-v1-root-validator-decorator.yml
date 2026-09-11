@@ -1,0 +1,13 @@
+id: pydantic-v1-root-validator-decorator
+language: python
+rule:
+  kind: decorator
+  has:
+    kind: call
+    has:
+      kind: identifier
+      regex: "^root_validator$"
+      stopBy: end
+    stopBy: end
+message: "Pydantic v1 @root_validator - use @u.model_validator"
+severity: error

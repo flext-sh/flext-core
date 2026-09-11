@@ -1,0 +1,52 @@
+id: presult-construct-to-r-fail
+snapshots:
+  ? |
+    from flext_sample import p, r
+    return p.Result[Path].fail(err, exception=exc)
+  : fixed: |
+      from flext_sample import p, r
+      return r[Path].fail(err, exception=exc)
+    labels:
+    - source: p.Result[Path].fail(err, exception=exc)
+      style: primary
+      start: 37
+      end: 76
+    - source: r
+      style: secondary
+      start: 28
+      end: 29
+    - source: from flext_sample import p, r
+      style: secondary
+      start: 0
+      end: 29
+    - source: |
+        from flext_sample import p, r
+        return p.Result[Path].fail(err, exception=exc)
+      style: secondary
+      start: 0
+      end: 77
+  ? |
+    from flext_sample import p, r
+    return p.Result[p.Sample.CheckResult].fail("boom", error_code="x")
+  : fixed: |
+      from flext_sample import p, r
+      return r[p.Sample.CheckResult].fail("boom", error_code="x")
+    labels:
+    - source: p.Result[p.Sample.CheckResult].fail("boom", error_code="x")
+      style: primary
+      start: 37
+      end: 96
+    - source: r
+      style: secondary
+      start: 28
+      end: 29
+    - source: from flext_sample import p, r
+      style: secondary
+      start: 0
+      end: 29
+    - source: |
+        from flext_sample import p, r
+        return p.Result[p.Sample.CheckResult].fail("boom", error_code="x")
+      style: secondary
+      start: 0
+      end: 97

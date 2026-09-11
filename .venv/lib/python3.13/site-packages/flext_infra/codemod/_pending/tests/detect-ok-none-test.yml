@@ -1,0 +1,8 @@
+id: detect-ok-none
+valid:
+  - "r[int].ok(True)"
+  - "r[str].ok(True)"
+  - "obj.ok(None)"
+invalid:
+  - "r[int].ok(None)"
+  - "r[str].ok(None)"

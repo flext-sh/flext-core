@@ -1,0 +1,7 @@
+id: readme-has-installation
+language: html
+rule:
+  kind: text
+  regex: ^## Installation
+message: README.md must have a '## Installation' section.
+severity: warning

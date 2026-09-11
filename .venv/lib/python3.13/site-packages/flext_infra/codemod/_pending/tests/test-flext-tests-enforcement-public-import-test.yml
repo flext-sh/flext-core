@@ -1,0 +1,12 @@
+id: test-flext-tests-enforcement-public-import
+valid:
+  - from flext_tests.enforcement import load_infra_report
+  - from flext_tests._fixtures.settings import TestsSettings
+  - import flext_tests._fixtures.enforcement
+invalid:
+  - from flext_tests._fixtures.enforcement import load_infra_report
+  - |
+    from flext_tests._fixtures.enforcement import (
+        InfraReport,
+        load_infra_report,
+    )

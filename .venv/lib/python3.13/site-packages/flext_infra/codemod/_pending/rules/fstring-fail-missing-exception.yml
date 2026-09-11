@@ -1,0 +1,89 @@
+id: fstring-fail-missing-exception
+language: python
+severity: hint
+message: >-
+  r.fail(f"...{exc}") drops the typed exception. Preserve exception=exc; use a
+  contextual e.fail_* factory when the current layer adds meaning. See SKILL.md.
+ignores:
+  - "**/legado/**"
+rule:
+  pattern: $R.fail($MESSAGE)
+  all:
+    - has:
+        field: arguments
+        has:
+          kind: interpolation
+          stopBy: end
+          has:
+            field: expression
+            kind: identifier
+            regex: "^exc$"
+    - not:
+        has:
+          kind: keyword_argument
+          stopBy: end
+          has:
+            field: name
+            regex: "^exception$"
+    - inside:
+        kind: except_clause
+        stopBy: end
+        has:
+          field: value
+          kind: as_pattern
+          has:
+            field: alias
+            kind: as_pattern_target
+            has:
+              kind: identifier
+              regex: "^exc$"
+constraints:
+  R:
+    regex: '^r(?:\[.+\])?$'
+fix: '$R.fail($MESSAGE, exception=exc)'
+---
+id: fstring-fail-missing-exception-review
+language: python
+severity: warning
+message: >-
+  A caught exception is interpolated into r.fail with additional arguments, so
+  an automatic edit cannot prove syntax or semantic preservation. Review and
+  preserve the typed exception explicitly or use a contextual e.fail_* factory.
+ignores:
+  - "**/legado/**"
+rule:
+  pattern: $R.fail($$$ARGS)
+  all:
+    - not:
+        pattern: $R.fail($MESSAGE)
+    - has:
+        field: arguments
+        has:
+          kind: interpolation
+          stopBy: end
+          has:
+            field: expression
+            kind: identifier
+            regex: "^exc$"
+    - not:
+        has:
+          kind: keyword_argument
+          stopBy: end
+          has:
+            field: name
+            regex: "^exception$"
+    - inside:
+        kind: except_clause
+        stopBy: end
+        has:
+          field: value
+          kind: as_pattern
+          has:
+            field: alias
+            kind: as_pattern_target
+            has:
+              kind: identifier
+              regex: "^exc$"
+constraints:
+  R:
+    regex: '^r(?:\[.+\])?$'

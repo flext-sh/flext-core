@@ -1,0 +1,10 @@
+id: require-future-annotations
+language: python
+rule:
+  kind: module
+  not:
+    has:
+      pattern: from __future__ import annotations
+      stopBy: end
+message: "Python modules must import annotations from __future__"
+severity: error

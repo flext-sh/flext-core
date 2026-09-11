@@ -1,0 +1,7 @@
+{% for section in gitignore_sections -%}
+# {{ section.name }}
+{% for pattern in section.patterns -%}
+{{ pattern }}
+{% endfor -%}
+{% if not loop.last %}{{ "\n" }}{% endif -%}
+{% endfor -%}

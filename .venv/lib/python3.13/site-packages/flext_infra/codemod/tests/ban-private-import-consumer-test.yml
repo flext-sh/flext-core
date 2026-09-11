@@ -1,0 +1,11 @@
+id: ban-private-import-consumer
+valid:
+  - |
+    from flext_core import u
+  - |
+    import flext_core.utilities as utilities
+invalid:
+  - |
+    from flext_core._utilities import FlextUtilities
+  - |
+    import flext_core._models as models

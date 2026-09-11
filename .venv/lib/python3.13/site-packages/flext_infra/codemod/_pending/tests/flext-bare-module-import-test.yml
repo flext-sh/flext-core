@@ -1,0 +1,8 @@
+id: flext-bare-module-import
+valid:
+  - import os
+  - from flext_core import r
+invalid:
+  - import flext_core.result
+  - import flext_core
+  - import flext_core as fc

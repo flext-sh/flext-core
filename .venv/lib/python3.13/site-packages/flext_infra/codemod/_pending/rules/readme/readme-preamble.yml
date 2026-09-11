@@ -1,0 +1,7 @@
+id: readme-preamble
+language: html
+rule:
+  kind: text
+  regex: \*\*Reviewed\*\*.*\*\*Version\*\*
+message: README.md must start with a standardized preamble (Reviewed|Version).
+severity: warning

@@ -1,0 +1,99 @@
+id: fstring-fail-missing-exception
+snapshots:
+  ? |
+    try:
+        read()
+    except OSError as exc:
+        return r[str].fail(
+            f"read failed: {exc}",
+        )
+  : fixed: |
+      try:
+          read()
+      except OSError as exc:
+          return r[str].fail(f"read failed: {exc}", exception=exc)
+    labels:
+    - source: |-
+        r[str].fail(
+                f"read failed: {exc}",
+            )
+      style: primary
+      start: 50
+      end: 99
+    - source: exc
+      style: secondary
+      start: 87
+      end: 90
+    - source: '{exc}'
+      style: secondary
+      start: 86
+      end: 91
+    - source: '{exc}'
+      style: secondary
+      start: 86
+      end: 91
+    - source: exc
+      style: secondary
+      start: 34
+      end: 37
+    - source: exc
+      style: secondary
+      start: 34
+      end: 37
+    - source: OSError as exc
+      style: secondary
+      start: 23
+      end: 37
+    - source: |-
+        except OSError as exc:
+            return r[str].fail(
+                f"read failed: {exc}",
+            )
+      style: secondary
+      start: 16
+      end: 99
+  ? |
+    try:
+        read()
+    except OSError as exc:
+        return r[str].fail(f"read failed: {exc}")
+  : fixed: |
+      try:
+          read()
+      except OSError as exc:
+          return r[str].fail(f"read failed: {exc}", exception=exc)
+    labels:
+    - source: 'r[str].fail(f"read failed: {exc}")'
+      style: primary
+      start: 50
+      end: 84
+    - source: exc
+      style: secondary
+      start: 78
+      end: 81
+    - source: '{exc}'
+      style: secondary
+      start: 77
+      end: 82
+    - source: '{exc}'
+      style: secondary
+      start: 77
+      end: 82
+    - source: exc
+      style: secondary
+      start: 34
+      end: 37
+    - source: exc
+      style: secondary
+      start: 34
+      end: 37
+    - source: OSError as exc
+      style: secondary
+      start: 23
+      end: 37
+    - source: |-
+        except OSError as exc:
+            return r[str].fail(f"read failed: {exc}")
+      style: secondary
+      start: 16
+      end: 84

@@ -1,0 +1,29 @@
+id: git-public-argv-receiver-strip
+snapshots:
+  ? |
+    captured = u.Infra.git_capture(workspace, ("status", "--porcelain=v1", "-z"))
+  : fixed: |
+      captured = git_capture(workspace, ("status", "--porcelain=v1", "-z"))
+    labels:
+    - source: u.Infra.git_capture(workspace, ("status", "--porcelain=v1", "-z"))
+      style: primary
+      start: 11
+      end: 77
+  ? |
+    payload = FlextInfraUtilitiesGit.git_capture_bytes(root, ("ls-files", "-z"))
+  : fixed: |
+      payload = git_capture_bytes(root, ("ls-files", "-z"))
+    labels:
+    - source: FlextInfraUtilitiesGit.git_capture_bytes(root, ("ls-files", "-z"))
+      style: primary
+      start: 10
+      end: 76
+  ? |
+    result = u.Infra.git_run(repo_root, ("status",))
+  : fixed: |
+      result = git_run(repo_root, ("status",))
+    labels:
+    - source: u.Infra.git_run(repo_root, ("status",))
+      style: primary
+      start: 9
+      end: 48

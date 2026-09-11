@@ -1,0 +1,6 @@
+id: ban-print-in-src-structlog
+language: python
+rule:
+  pattern: "print($$$ARGS)"
+message: "print() in library source is banned; emit a structured event through u.fetch_logger"
+severity: error

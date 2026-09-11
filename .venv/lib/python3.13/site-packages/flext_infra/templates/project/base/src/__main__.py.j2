@@ -1,0 +1,14 @@
+"""``python -m {{ package_name }}`` entry point — delegates to ``cli.main``.
+
+Copyright (c) {{ year }} {{ author_name }}. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+from flext_cli import cli
+
+from {{ package_name }}.cli import main
+
+if __name__ == "__main__":
+    cli.exit(main())

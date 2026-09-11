@@ -572,6 +572,7 @@ define _run_for_all_projects
 endef
 
 .PHONY: $(PUBLIC_VERBS) $(addprefix _builtin-,$(PUBLIC_VERBS))
+.PHONY: _builtin_gen_check _builtin_gen_init _builtin_gen_all _builtin_gen_apply
 
 
 help:

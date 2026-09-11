@@ -1,0 +1,78 @@
+id: config-settings-fetch-global
+snapshots:
+  ? |
+    class FlextProjectConfig:
+        def load(cls):
+            return cls.fetch_global()
+  : labels:
+    - source: cls.fetch_global()
+      style: primary
+      start: 60
+      end: 78
+    - source: FlextProjectConfig
+      style: secondary
+      start: 6
+      end: 24
+    - source: |-
+        class FlextProjectConfig:
+            def load(cls):
+                return cls.fetch_global()
+      style: secondary
+      start: 0
+      end: 78
+  ? |
+    class FlextProjectSettings:
+        def fetch_global(cls, *, force_reload=False):
+            return cls()
+  : labels:
+    - source: |-
+        def fetch_global(cls, *, force_reload=False):
+                return cls()
+      style: primary
+      start: 32
+      end: 98
+    - source: fetch_global
+      style: secondary
+      start: 36
+      end: 48
+    - source: FlextProjectSettings
+      style: secondary
+      start: 6
+      end: 26
+    - source: |-
+        class FlextProjectSettings:
+            def fetch_global(cls, *, force_reload=False):
+                return cls()
+      style: secondary
+      start: 0
+      end: 98
+  value = FlextCliSettings.fetch_global():
+    labels:
+    - source: FlextCliSettings.fetch_global()
+      style: primary
+      start: 8
+      end: 39
+  value = FlextConfig.fetch_global():
+    labels:
+    - source: FlextConfig.fetch_global()
+      style: primary
+      start: 8
+      end: 34
+  value = config.fetch_global():
+    labels:
+    - source: config.fetch_global()
+      style: primary
+      start: 8
+      end: 29
+  value = settings.fetch_global(force_reload=True):
+    labels:
+    - source: settings.fetch_global(force_reload=True)
+      style: primary
+      start: 8
+      end: 48
+  value = settings_cls.fetch_global():
+    labels:
+    - source: settings_cls.fetch_global()
+      style: primary
+      start: 8
+      end: 35

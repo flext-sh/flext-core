@@ -1,0 +1,26 @@
+id: ban-typing-dict-import
+snapshots:
+  from typing import Dict:
+    labels:
+    - source: from typing import Dict
+      style: primary
+      start: 0
+      end: 23
+  from typing import Dict, List:
+    labels:
+    - source: from typing import Dict, List
+      style: primary
+      start: 0
+      end: 29
+  from typing import List, Dict:
+    labels:
+    - source: from typing import List, Dict
+      style: primary
+      start: 0
+      end: 29
+  from typing import List, Dict, Tuple:
+    labels:
+    - source: from typing import List, Dict, Tuple
+      style: primary
+      start: 0
+      end: 36

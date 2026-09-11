@@ -1,0 +1,11 @@
+id: ban-private-import-behavior
+valid:
+  - |
+    from flext_core import m
+  - |
+    import flext_core.models as models
+invalid:
+  - |
+    from flext_core._models import FlextModels
+  - |
+    import flext_core._utilities as utilities

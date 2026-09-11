@@ -1,0 +1,12 @@
+id: no-sync-requests-in-src
+language: python
+rule:
+  any:
+    - pattern: "requests.get($$$ARGS)"
+    - pattern: "requests.post($$$ARGS)"
+    - pattern: "requests.put($$$ARGS)"
+    - pattern: "requests.delete($$$ARGS)"
+    - pattern: "requests.patch($$$ARGS)"
+    - pattern: "requests.head($$$ARGS)"
+message: "Sync requests in async code - use httpx or aiohttp"
+severity: error

@@ -1,0 +1,323 @@
+# FLEXT test-assertion codemod: `assert` is never allowed in FLEXT tests; the
+# canonical matcher family is `tm` (flext-tests). This ONE file consolidates the
+# whole assert->tm family (previously ~10 shape-partial rules) into a
+# matcher-COMPLETE set that covers every assertion aspect from the verified
+# SKILL.md matcher map, sharing the guards through the global utils
+# (tm-imported-from-flext, assert-has-message) so there is no duplicated block.
+#
+# Every rule below:
+#   * fires only in test files (files: tests/**), skips legado/;
+#   * skips messaged asserts (not: matches: assert-has-message) — intent preserved;
+#   * rewrites only when `tm` is imported from a flext facade
+#     (inside: has: matches: tm-imported-from-flext) so it can never emit an
+#     undefined name (Ruff F821). Modules without the tm import are reported by
+#     the detection-only companion assert-to-tm-missing-import.
+#
+# Matcher map (assert form -> tm form), each an ordered rule so the most specific
+# shape wins before the truthy fallback:
+#   assert a == b        -> tm.that(a, eq=b)
+#   assert a != b        -> tm.that(a, ne=b)
+#   assert x is None     -> tm.that(x, none=True)
+#   assert x is not None -> tm.that(x, none=False)
+#   assert isinstance x  -> tm.that(x, is_=T)
+#   assert x in y        -> tm.that(y, has=x)
+#   assert x not in y    -> tm.that(y, lacks=x)
+#   assert not expr      -> tm.that(expr, eq=False)   [comparison shapes excluded]
+#   assert expr          -> tm.that(expr, eq=True)    [truthy fallback, see assert-truthy-to-tm.yml]
+id: assert-eq-to-tm
+language: python
+severity: hint
+files:
+  - "**/tests/**/*.py"
+  - "tests/**/*.py"
+ignores:
+  - "**/legado/**"
+  - "**/legacy/**"
+rule:
+  kind: assert_statement
+  all:
+    - pattern: "assert $A == $B"
+    - not: { matches: assert-has-message }
+    - inside:
+        kind: module
+        stopBy: end
+        has: { matches: tm-imported-from-flext, stopBy: end }
+fix: "tm.that($A, eq=$B)"
+message: "assert a == b -> tm.that(a, eq=b) (FLEXT tests use tm, never assert)."
+
+---
+id: assert-ne-to-tm
+language: python
+severity: hint
+files:
+  - "**/tests/**/*.py"
+  - "tests/**/*.py"
+ignores:
+  - "**/legado/**"
+  - "**/legacy/**"
+rule:
+  kind: assert_statement
+  all:
+    - pattern: "assert $A != $B"
+    - not: { matches: assert-has-message }
+    - inside:
+        kind: module
+        stopBy: end
+        has: { matches: tm-imported-from-flext, stopBy: end }
+fix: "tm.that($A, ne=$B)"
+message: "assert a != b -> tm.that(a, ne=b)."
+
+---
+id: assert-is-none-to-tm
+language: python
+severity: hint
+files:
+  - "**/tests/**/*.py"
+  - "tests/**/*.py"
+ignores:
+  - "**/legado/**"
+  - "**/legacy/**"
+rule:
+  kind: assert_statement
+  all:
+    - pattern: "assert $X is None"
+    - not: { matches: assert-has-message }
+    - inside:
+        kind: module
+        stopBy: end
+        has: { matches: tm-imported-from-flext, stopBy: end }
+fix: "tm.that($X, none=True)"
+message: "assert x is None -> tm.that(x, none=True)."
+
+---
+id: assert-is-not-none-to-tm
+language: python
+severity: hint
+files:
+  - "**/tests/**/*.py"
+  - "tests/**/*.py"
+ignores:
+  - "**/legado/**"
+  - "**/legacy/**"
+rule:
+  kind: assert_statement
+  all:
+    - pattern: "assert $X is not None"
+    - not: { matches: assert-has-message }
+    - inside:
+        kind: module
+        stopBy: end
+        has: { matches: tm-imported-from-flext, stopBy: end }
+fix: "tm.that($X, none=False)"
+message: "assert x is not None -> tm.that(x, none=False)."
+
+---
+id: assert-isinstance-to-tm
+language: python
+severity: hint
+files:
+  - "**/tests/**/*.py"
+  - "tests/**/*.py"
+ignores:
+  - "**/legado/**"
+  - "**/legacy/**"
+rule:
+  kind: assert_statement
+  all:
+    - pattern: "assert isinstance($X, $T)"
+    - not: { matches: assert-has-message }
+    - inside:
+        kind: module
+        stopBy: end
+        has: { matches: tm-imported-from-flext, stopBy: end }
+fix: "tm.that($X, is_=$T)"
+message: "assert isinstance(x, T) -> tm.that(x, is_=T)."
+
+---
+id: assert-in-to-tm
+language: python
+severity: hint
+files:
+  - "**/tests/**/*.py"
+  - "tests/**/*.py"
+ignores:
+  - "**/legado/**"
+  - "**/legacy/**"
+rule:
+  kind: assert_statement
+  all:
+    - pattern: "assert $X in $Y"
+    - not: { pattern: "assert $X not in $Y" }
+    - not: { matches: assert-has-message }
+    - inside:
+        kind: module
+        stopBy: end
+        has: { matches: tm-imported-from-flext, stopBy: end }
+fix: "tm.that($Y, has=$X)"
+message: "assert x in y -> tm.that(y, has=x)."
+
+---
+id: assert-not-in-to-tm
+language: python
+severity: hint
+files:
+  - "**/tests/**/*.py"
+  - "tests/**/*.py"
+ignores:
+  - "**/legado/**"
+  - "**/legacy/**"
+rule:
+  kind: assert_statement
+  all:
+    - pattern: "assert $X not in $Y"
+    - not: { matches: assert-has-message }
+    - inside:
+        kind: module
+        stopBy: end
+        has: { matches: tm-imported-from-flext, stopBy: end }
+fix: "tm.that($Y, lacks=$X)"
+message: "assert x not in y -> tm.that(y, lacks=x)."
+
+---
+id: assert-not-to-tm
+language: python
+severity: hint
+files:
+  - "**/tests/**/*.py"
+  - "tests/**/*.py"
+ignores:
+  - "**/legado/**"
+  - "**/legacy/**"
+rule:
+  kind: assert_statement
+  all:
+    - pattern: "assert not $EXPR"
+    - not: { matches: assert-has-message }
+    - inside:
+        kind: module
+        stopBy: end
+        has: { matches: tm-imported-from-flext, stopBy: end }
+fix: "tm.that($EXPR, eq=False)"
+message: "assert not expr -> tm.that(expr, eq=False)."
+
+---
+# Result-outcome asserts: the tm matcher returns the unwrapped value, so prefer
+# tm.ok / tm.fail over a truthy check. These run conceptually before the truthy
+# fallback, which explicitly excludes .success / .failure to avoid a double fix.
+id: assert-result-success-to-tm
+language: python
+severity: hint
+files:
+  - "**/tests/**/*.py"
+  - "tests/**/*.py"
+ignores:
+  - "**/legado/**"
+  - "**/legacy/**"
+rule:
+  kind: assert_statement
+  all:
+    - pattern: "assert $R.success"
+    - not: { matches: assert-has-message }
+    - inside:
+        kind: module
+        stopBy: end
+        has: { matches: tm-imported-from-flext, stopBy: end }
+fix: "tm.ok($R)"
+message: "assert r.success -> tm.ok(r) (returns the unwrapped value)."
+
+---
+id: assert-result-failure-to-tm
+language: python
+severity: hint
+files:
+  - "**/tests/**/*.py"
+  - "tests/**/*.py"
+ignores:
+  - "**/legado/**"
+  - "**/legacy/**"
+rule:
+  kind: assert_statement
+  all:
+    - pattern: "assert $R.failure"
+    - not: { matches: assert-has-message }
+    - inside:
+        kind: module
+        stopBy: end
+        has: { matches: tm-imported-from-flext, stopBy: end }
+fix: "tm.fail($R)"
+message: "assert r.failure -> tm.fail(r) (returns the failure detail)."
+
+---
+# Truthy fallback: any remaining `assert <expr>` becomes tm.that(expr, eq=True).
+# LAST in the family; excludes every shape owned by a specific matcher above
+# (comparison_operator covers ==/!=/is/is not/in/not in; not_operator; isinstance;
+# .success/.failure) so it never produces a false or lossy rewrite.
+id: assert-truthy-to-tm
+language: python
+severity: hint
+files:
+  - "**/tests/**/*.py"
+  - "tests/**/*.py"
+ignores:
+  - "**/legado/**"
+  - "**/legacy/**"
+rule:
+  kind: assert_statement
+  all:
+    - pattern: "assert $EXPR"
+    - not: { has: { kind: comparison_operator } }
+    - not: { has: { kind: not_operator } }
+    - not: { pattern: "assert isinstance($X, $T)" }
+    - not: { pattern: "assert $R.success" }
+    - not: { pattern: "assert $R.failure" }
+    - not: { matches: assert-has-message }
+    - inside:
+        kind: module
+        stopBy: end
+        has: { matches: tm-imported-from-flext, stopBy: end }
+fix: "tm.that($EXPR, eq=True)"
+message: "assert expr -> tm.that(expr, eq=True) (truthy fallback)."
+
+---
+id: assert-is-true-to-tm
+language: python
+severity: hint
+files:
+  - "**/tests/**/*.py"
+  - "tests/**/*.py"
+ignores:
+  - "**/legado/**"
+  - "**/legacy/**"
+rule:
+  kind: assert_statement
+  all:
+    - pattern: "assert $EXPR is True"
+    - not: { matches: assert-has-message }
+    - inside:
+        kind: module
+        stopBy: end
+        has: { matches: tm-imported-from-flext, stopBy: end }
+fix: "tm.that($EXPR, eq=True)"
+message: "assert x is True -> tm.that(x, eq=True) (explicit identity; assert-truthy excludes comparisons)."
+
+---
+id: assert-is-false-to-tm
+language: python
+severity: hint
+files:
+  - "**/tests/**/*.py"
+  - "tests/**/*.py"
+ignores:
+  - "**/legado/**"
+  - "**/legacy/**"
+rule:
+  kind: assert_statement
+  all:
+    - pattern: "assert $EXPR is False"
+    - not: { matches: assert-has-message }
+    - inside:
+        kind: module
+        stopBy: end
+        has: { matches: tm-imported-from-flext, stopBy: end }
+fix: "tm.that($EXPR, eq=False)"
+message: "assert x is False -> tm.that(x, eq=False) (explicit identity; assert-not covers 'not x')."

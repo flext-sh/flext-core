@@ -1,0 +1,9 @@
+# Reusable guard: an assert statement that carries an explicit failure message
+# (`assert <cond>, <msg>`). The message encodes author intent, so the assert->tm
+# codemods skip it (referenced via `not: { matches: assert-has-message }`) and
+# leave it for human review rather than dropping the message.
+id: assert-has-message
+language: python
+rule:
+  kind: assert_statement
+  pattern: "assert $COND, $MSG"

@@ -1,0 +1,42 @@
+id: config-settings-private-import
+snapshots:
+  from flext_core._config import FlextConfig:
+    labels:
+    - source: from flext_core._config import FlextConfig
+      style: primary
+      start: 0
+      end: 42
+    - source: flext_core._config
+      style: secondary
+      start: 5
+      end: 23
+  from flext_core._settings import settings:
+    labels:
+    - source: from flext_core._settings import settings
+      style: primary
+      start: 0
+      end: 41
+    - source: flext_core._settings
+      style: secondary
+      start: 5
+      end: 25
+  from flext_dbt_oracle_wms._config import config:
+    labels:
+    - source: from flext_dbt_oracle_wms._config import config
+      style: primary
+      start: 0
+      end: 47
+    - source: flext_dbt_oracle_wms._config
+      style: secondary
+      start: 5
+      end: 33
+  from flext_meltano._settings import FlextMeltanoSettings as Settings:
+    labels:
+    - source: from flext_meltano._settings import FlextMeltanoSettings as Settings
+      style: primary
+      start: 0
+      end: 68
+    - source: flext_meltano._settings
+      style: secondary
+      start: 5
+      end: 28

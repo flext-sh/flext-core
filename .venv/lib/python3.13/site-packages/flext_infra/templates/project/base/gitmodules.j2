@@ -1,0 +1,7 @@
+{# Only mutable first-party governed members are lifecycle-managed Git links.
+   External and fork paths remain observed read-only facts and never enter
+   conform-owned sync/init/checkout/update surfaces. -#}
+{% for gitlink in workspace_gitlinks %}[submodule "{{ gitlink.repository.name }}"]
+	path = {{ gitlink.repository.path }}
+	url = {{ gitlink.repository.url }}
+	branch = {{ gitlink.branch }}{{ "\n\n" if not loop.last else "\n" }}{% endfor -%}

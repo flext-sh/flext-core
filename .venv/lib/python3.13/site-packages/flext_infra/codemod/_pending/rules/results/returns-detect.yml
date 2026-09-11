@@ -1,0 +1,25 @@
+id: ban-direct-success-constructor
+language: python
+rule:
+  pattern: Success($ARG)
+  not:
+    inside:
+      kind: module
+      has:
+        pattern: from flext_core import $$$
+      stopBy: end
+message: "Direct Success() constructor — use r[T].ok() factory"
+severity: error
+---
+id: ban-direct-failure-constructor
+language: python
+rule:
+  pattern: Failure($ARG)
+  not:
+    inside:
+      kind: module
+      has:
+        pattern: from flext_core import $$$
+      stopBy: end
+message: "Direct Failure() constructor — use r.fail() factory"
+severity: error

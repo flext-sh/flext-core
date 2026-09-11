@@ -1,0 +1,7 @@
+id: readme-has-architecture
+language: html
+rule:
+  kind: text
+  regex: ^## Architecture
+message: README.md must have a '## Architecture' section.
+severity: warning

@@ -1,0 +1,48 @@
+# FLEXT typing codemod (detection-only companion of config-dict-type-from-typings).
+#
+# Flags a `model_config: ClassVar[p.ConfigDict|m.ConfigDict]` whose module does
+# NOT import the typings facade `t`. The correct type is `t.ConfigDict`, but a
+# blind rewrite here would emit an undefined name (`t`), causing Ruff F821 /
+# Pyrefly missing-name. This rule has NO `fix:` on purpose: the `t` import must
+# be added first (`from <ns> import ..., t`), after which the auto-fixing rule
+# config-dict-type-from-typings rewrites the annotation safely.
+#
+# Why the split: ast-grep cannot conditionally insert an import in a single
+# textual `fix`, and `ruff --fix` only removes unused imports (never adds a
+# missing one). So an import-unsafe rewrite is emitted as a detection, per the
+# library's "detection only when a generic textual fix would be unsafe" contract.
+id: config-dict-type-missing-t-import
+language: python
+severity: error
+files:
+  - "**/*.py"
+ignores:
+  - "**/.claude/**"
+  - "**/.git/**"
+  - "**/.venv/**"
+  - "**/legado/**"
+  - "**/legacy/**"
+  - "**/node_modules/**"
+  - "**/*_pb2.py"
+  - "**/*_pb2_grpc.py"
+rule:
+  pattern: "model_config: ClassVar[$WRONG.ConfigDict] = $VAL"
+  inside:
+    stopBy: end
+    kind: module
+    not:
+      has:
+        stopBy: end
+        kind: import_from_statement
+        has:
+          stopBy: end
+          kind: identifier
+          regex: "^t$"
+constraints:
+  WRONG:
+    regex: "^[pm]$"
+message: >-
+  model_config type must be t.ConfigDict, but this module does not import `t`.
+  Add the typings import (e.g. `from <namespace> import ..., t`) first, then the
+  config-dict-type-from-typings rule rewrites the annotation. No auto-fix here to
+  avoid emitting an undefined name (Ruff F821 / Pyrefly missing-attribute).

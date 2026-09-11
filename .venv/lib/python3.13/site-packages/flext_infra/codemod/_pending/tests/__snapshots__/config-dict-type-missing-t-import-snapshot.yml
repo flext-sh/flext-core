@@ -1,0 +1,38 @@
+id: config-dict-type-missing-t-import
+snapshots:
+  ? |
+    from flext_core import m
+    from typing import ClassVar
+    class D:
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict()
+  : labels:
+    - source: 'model_config: ClassVar[m.ConfigDict] = m.ConfigDict()'
+      style: primary
+      start: 66
+      end: 119
+    - source: |
+        from flext_core import m
+        from typing import ClassVar
+        class D:
+            model_config: ClassVar[m.ConfigDict] = m.ConfigDict()
+      style: secondary
+      start: 0
+      end: 120
+  ? |
+    from flext_ldif import p
+    from typing import ClassVar
+    class C:
+        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+  : labels:
+    - source: 'model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)'
+      style: primary
+      start: 66
+      end: 130
+    - source: |
+        from flext_ldif import p
+        from typing import ClassVar
+        class C:
+            model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+      style: secondary
+      start: 0
+      end: 131

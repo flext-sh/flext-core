@@ -1,0 +1,26 @@
+id: pure-propagation-ladder
+snapshots:
+  ? |
+    if result.failure:
+        return r[p.Sample.Plan].fail(
+            result.error,
+            error_code=result.error_code,
+            error_data=result.error_data,
+            exception=result.exception,
+        )
+  : fixed: |+
+      if result.failure:
+          return r[p.Sample.Plan].from_failure(result)
+
+    labels:
+    - source: |-
+        if result.failure:
+            return r[p.Sample.Plan].fail(
+                result.error,
+                error_code=result.error_code,
+                error_data=result.error_data,
+                exception=result.exception,
+            )
+      style: primary
+      start: 0
+      end: 192

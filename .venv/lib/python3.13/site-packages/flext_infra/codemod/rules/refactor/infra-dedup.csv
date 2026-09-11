@@ -1,0 +1,11 @@
+old,new
+t.Infra.MutableInfraMapping,t.MutableJsonMapping
+t.Infra.InfraSequence,t.JsonList
+t.Infra.InfraMapping,t.JsonMapping
+t.Infra.InfraValue,t.JsonValue
+t.Infra.RegexPattern,t.RegexPattern
+t.Infra.RegexMatch,t.RegexMatch
+c.Infra.ENFORCEMENT_CANONICAL_ALIASES,c.ENFORCEMENT_CANONICAL_ALIASES
+c.Infra.ENFORCEMENT_PROJECT_ALIAS_OWNERS,c.ENFORCEMENT_PROJECT_ALIAS_OWNERS
+c.Infra.ENFORCEMENT_LIBRARY_OWNERS,c.ENFORCEMENT_LIBRARY_OWNERS
+c.Infra.PYPROJECT_FILENAME,c.PYPROJECT_FILENAME

@@ -27,6 +27,7 @@ from ._utilities.discovery import FlextUtilitiesDiscovery
 from ._utilities.domain import FlextUtilitiesDomain
 from ._utilities.enforcement import FlextUtilitiesEnforcement
 from ._utilities.enum import FlextUtilitiesEnum
+from ._utilities.family_surface import FlextUtilitiesFamilySurface
 from ._utilities.generators import FlextUtilitiesGenerators
 from ._utilities.guards import FlextUtilitiesGuards
 from ._utilities.mapper import FlextUtilitiesMapper
@@ -59,6 +60,7 @@ class FlextUtilities(
     FlextUtilitiesDomain,
     FlextUtilitiesEnforcement,
     FlextUtilitiesEnum,
+    FlextUtilitiesFamilySurface,
     FlextUtilitiesGenerators,
     FlextUtilitiesGuards,
     FlextUtilitiesMapper,

@@ -1,0 +1,30 @@
+id: test-private-cli-runner-to-public-facade
+valid:
+  - |
+    from flext_meltano.cli import FlextMeltanoCli
+    def already_public(meltano_cli: FlextMeltanoCli) -> None:
+        result = meltano_cli.run(["pipeline", "--help"])
+  - |
+    from flext_meltano.cli import FlextMeltanoCli
+    def missing_facade(other: FlextMeltanoCli) -> None:
+        result = runner.invoke(app, ["pipeline"])
+  - |
+    from other.cli import FlextMeltanoCli
+    def non_flext(meltano_cli: FlextMeltanoCli) -> None:
+        result = runner.invoke(app, ["pipeline"])
+  - |
+    from flext_meltano.cli import FlextMeltanoCli
+    def extra_options(meltano_cli: FlextMeltanoCli) -> None:
+        result = runner.invoke(app, ["pipeline"], catch_exceptions=False)
+invalid:
+  - |
+    from flext_meltano.cli import FlextMeltanoCli
+    def pipeline_help(meltano_cli: FlextMeltanoCli) -> None:
+        result = runner.invoke(app, ["pipeline", "--help"])
+  - |
+    from flext_meltano.cli import FlextMeltanoCli
+    def pipeline_create(meltano_cli: FlextMeltanoCli) -> None:
+        result = runner.invoke(
+            app,
+            ["pipeline", "create", "--pipeline-name", "daily"],
+        )

@@ -1,0 +1,34 @@
+id: config-dict-type-from-typings
+# `valid` MUST NOT match: already canonical, out of scope, or the module lacks
+# the `t` import (that case belongs to config-dict-type-missing-t-import).
+valid:
+  # already canonical
+  - |
+    from flext_ldif import t
+    from typing import ClassVar
+    class A:
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict()
+  # different member (SettingsConfigDict) out of scope
+  - |
+    from flext_ldif import t
+    from typing import ClassVar
+    class B:
+        model_config: ClassVar[p.SettingsConfigDict] = m.SettingsConfigDict()
+  # F821-unsafe: no `t` import anywhere in the module -> guard excludes it
+  - |
+    from flext_ldif import p
+    from typing import ClassVar
+    class C:
+        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+# `invalid` MUST match and rewrite to t.ConfigDict (module imports `t`).
+invalid:
+  - |
+    from flext_ldif import c, t
+    from typing import ClassVar
+    class D:
+        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(extra="forbid")
+  - |
+    from flext_cli import t
+    from typing import ClassVar
+    class E:
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)

@@ -1,0 +1,36 @@
+id: cli-result-finalize
+language: python
+severity: warning
+message: >-
+  Finalize the Result once at the public main boundary so the canonical
+  flext-cli handler emits the failure and derives the process exit code.
+ignores:
+  - "**/legado/**"
+rule:
+  all:
+    - pattern: return 0 if $RESULT.success else 1
+    - follows:
+        pattern:
+          context: $RESULT = $CALL
+          selector: expression_statement
+        stopBy: neighbor
+    - inside:
+        kind: function_definition
+        stopBy: end
+        has:
+          field: name
+          regex: "^main$"
+    - inside:
+        kind: module
+        stopBy: end
+        has:
+          kind: import_from_statement
+          stopBy: end
+          has:
+            kind: identifier
+            regex: "^cli$"
+            stopBy: end
+constraints:
+  RESULT:
+    kind: identifier
+fix: return cli.finalize_result($RESULT)

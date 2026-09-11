@@ -1,0 +1,21 @@
+id: concrete-mixin-runtime-ellipsis
+valid:
+  - |
+    class RuntimeMixin:
+        def run(self) -> int:
+            return 0
+  - |
+    class RuntimeProtocol(Protocol):
+        def run(self) -> int: ...
+  - |
+    class RuntimeMixin(ABC):
+        @abstractmethod
+        def run(self) -> int: ...
+  - |
+    if TYPE_CHECKING:
+        class RuntimeMixin:
+            def run(self) -> int: ...
+invalid:
+  - |
+    class RuntimeMixin:
+        def run(self) -> int: ...

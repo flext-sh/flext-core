@@ -1,0 +1,7 @@
+id: result-error-fallback-diagnostic
+valid:
+  - "return r[str].from_failure(result)"
+  - "return e.fail_operation('read config', exc)"
+invalid:
+  - "return r[str].fail(result.error or 'read failed')"
+  - "message = result.error or 'unknown failure'"

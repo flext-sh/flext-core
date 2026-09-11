@@ -1,0 +1,11 @@
+id: fix-ok-none-r
+valid:
+  - "r[int].ok(True)"
+invalid:
+  - "r[int].ok(None)"
+---
+id: fix-ok-none-result
+valid:
+  - "r[str].ok(True)"
+invalid:
+  - "r[str].ok(None)"

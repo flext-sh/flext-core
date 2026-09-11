@@ -33,6 +33,16 @@ class FlextConstantsEnforcementNamespace:
         "Utilities",
     )
 
+    NAMESPACE_FAMILY_PREFIX: Final[str] = "flext_"
+    """Declared family namespace prefix (import-name grammar).
+
+    Discovery seed for runtime family-surface derivation: candidate
+    distributions whose normalized name starts with this prefix are family
+    members when their root publishes the lazy export contract. The prefix
+    narrows discovery only; membership is proven by the published contract,
+    never by an enumerated roster.
+    """
+
     ENFORCEMENT_NAMESPACE_FACADE_ROOTS: Final[frozenset[str]] = frozenset(
         {f"Flext{name}" for name in NAMESPACE_LAYER_NAMES}
         | {"FlextModelsBase", "FlextModelsNamespace", "EnforcedModel"}

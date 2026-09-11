@@ -1,0 +1,26 @@
+id: caught-exception-string-failure
+language: python
+severity: warning
+message: >-
+  Converting a caught exception to str discards the typed cause. Select the
+  contextual e.fail_* factory; if none fits, preserve exception= explicitly.
+  Detection only; see SKILL.md.
+ignores:
+  - "**/legado/**"
+rule:
+  pattern: $R.fail(str($EXC))
+  inside:
+    kind: except_clause
+    stopBy: end
+    has:
+      field: value
+      kind: as_pattern
+      has:
+        field: alias
+        kind: as_pattern_target
+        has:
+          kind: identifier
+          pattern: $EXC
+constraints:
+  R:
+    regex: '^r(?:\[.+\])?$'

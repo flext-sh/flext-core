@@ -1,0 +1,7 @@
+id: readme-has-license
+language: html
+rule:
+  kind: text
+  regex: ^## License
+message: README.md must have a '## License' section.
+severity: warning

@@ -1,0 +1,8 @@
+id: ban-typing-dict-attribute
+snapshots:
+  x = typing.Dict:
+    labels:
+    - source: typing.Dict
+      style: primary
+      start: 4
+      end: 15

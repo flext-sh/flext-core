@@ -1,0 +1,12 @@
+id: raw-stdout-stderr-write
+language: python
+severity: hint
+message: >-
+  Raw stdout/stderr write bypasses the canonical FLEXT u.* output sink.
+  Detection only; select the owning facade sink at the public boundary.
+ignores:
+  - "**/legado/**"
+rule:
+  any:
+    - pattern: sys.stdout.write($$$)
+    - pattern: sys.stderr.write($$$)

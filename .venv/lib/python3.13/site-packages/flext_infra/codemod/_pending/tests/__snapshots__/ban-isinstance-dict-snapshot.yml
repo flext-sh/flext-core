@@ -1,0 +1,26 @@
+id: ban-isinstance-dict
+snapshots:
+  isinstance(x, (dict, list)):
+    labels:
+    - source: isinstance(x, (dict, list))
+      style: primary
+      start: 0
+      end: 27
+  isinstance(x, (str, dict)):
+    labels:
+    - source: isinstance(x, (str, dict))
+      style: primary
+      start: 0
+      end: 26
+  isinstance(x, (str, dict, list)):
+    labels:
+    - source: isinstance(x, (str, dict, list))
+      style: primary
+      start: 0
+      end: 32
+  isinstance(x, dict):
+    labels:
+    - source: isinstance(x, dict)
+      style: primary
+      start: 0
+      end: 19

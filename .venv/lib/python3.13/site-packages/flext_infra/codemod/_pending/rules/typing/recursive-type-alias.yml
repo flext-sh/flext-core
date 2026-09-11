@@ -1,0 +1,72 @@
+# Detect self-recursive PEP 695 `type X = ...` aliases whose right-hand side
+# expands X through a container (list/dict/set/tuple/Sequence/Mapping/Callable),
+# i.e. `type X = ... list[X] ...`. Mypy follows such an alias structurally and
+# the type graph grows without a fixpoint, exhausting memory (observed: 35 GiB
+# on the flext-ldif 13-path gate, bead flext-0ftd.3).
+#
+# ROOT-CAUSE FIX (never suppress): replace the recursive alias with the finite
+# canonical `t.JsonValue` / `t.JsonMapping` alias, or model the recursive shape
+# as a `p.*` protocol / declaration-only `m.*` Pydantic model owned at the
+# canonical facet. The self-referential `type` statement is always removed.
+#
+# DETECTION-ONLY (severity: warning, no `fix:`): the correct replacement varies
+# per site (JSON leaf vs protocol vs model), so this rule surfaces candidates a
+# human/agent judges — it never rewrites (flext-codemod-astgrep SKILL, lesson
+# "detection-first for judgement rules").
+#
+# ENGINE NOTES (ast-grep 0.43.0, this workspace): the tree-sitter-python build
+# here parses `type X = ...` as an ERROR node in `--pattern` mode, so a
+# `pattern:` matcher for the whole statement cannot be used; `kind:
+# type_alias_statement` DOES match in the scan engine, and a `has: { pattern:
+# <subscript> }` child matches the RHS container. Backreferences are NOT
+# supported by the regex matcher, so exact name self-equality is expressed
+# instead through ast-grep cross-`has` metavar equality: `$NAME` is bound to the
+# alias name in the first `has` and required inside the container in the second,
+# so a finite `type X = dict[str, str]` never matches — only a true self-
+# reference `type X = ... dict[str, X] ...`. Zero false positives on finite
+# container aliases (proven on the workspace dry-run).
+id: recursive-type-alias
+language: python
+severity: warning
+message: >-
+  Self-recursive `type` alias with a container RHS — Mypy expands it without a
+  fixpoint (35 GiB memory-explosion class). Replace with the finite `t.JsonValue`
+  / `t.JsonMapping` alias or a `p.*` protocol / `m.*` model; remove the recursive
+  `type` statement. No suppression.
+rule:
+  kind: type_alias_statement
+  all:
+    # Bind $NAME to the alias name (the statement's first identifier child).
+    - has: { pattern: $NAME }
+    # Require the SAME $NAME inside a recursive container in the RHS — ast-grep
+    # enforces cross-`has` metavar equality, so a finite `type X = dict[str, str]`
+    # never matches, only a true self-reference `type X = ... dict[str, X] ...`.
+    - has:
+        stopBy: end
+        any:
+          # Bare self-reference (module-level alias): `type X = ... list[X] ...`.
+          - pattern: list[$NAME]
+          - pattern: set[$NAME]
+          - pattern: frozenset[$NAME]
+          - pattern: tuple[$$$T, $NAME]
+          - pattern: dict[$K, $NAME]
+          - pattern: Mapping[$K, $NAME]
+          - pattern: MutableMapping[$K, $NAME]
+          - pattern: Sequence[$NAME]
+          - pattern: MutableSequence[$NAME]
+          - pattern: Callable[$ARGS, $NAME]
+          - pattern: Callable[..., $NAME]
+          # Qualified self-reference (class-scoped alias): a nested-class alias
+          # refers to itself as `Owner.X`, e.g.
+          # `type X = ... list[FlextTestsMakeTypesMixin.X] ...`.
+          - pattern: list[$CLS.$NAME]
+          - pattern: set[$CLS.$NAME]
+          - pattern: frozenset[$CLS.$NAME]
+          - pattern: tuple[$$$T, $CLS.$NAME]
+          - pattern: dict[$K, $CLS.$NAME]
+          - pattern: Mapping[$K, $CLS.$NAME]
+          - pattern: MutableMapping[$K, $CLS.$NAME]
+          - pattern: Sequence[$CLS.$NAME]
+          - pattern: MutableSequence[$CLS.$NAME]
+          - pattern: Callable[$ARGS, $CLS.$NAME]
+          - pattern: Callable[..., $CLS.$NAME]

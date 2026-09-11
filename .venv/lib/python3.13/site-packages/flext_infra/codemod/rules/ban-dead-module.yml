@@ -1,0 +1,35 @@
+# Ban dead `__init__.py` modules (epic i2h4 flext-core refactor).
+#
+# FLEXT law: no hidden/dead code; complete cutover. An `__init__.py` that is
+# empty, comment-only, or declares `__all__ = []` with zero exports is a dead
+# module marker — it signals a package whose projection was removed (or never
+# existed) while the directory shell survives. Either the package projects
+# real symbols through the facade, or the shell is deleted with its content.
+#
+# Detection matches the WHOLE module text: whitespace/comments plus an
+# optional empty `__all__ = []` declaration and nothing else.
+#
+# Detection-only: the correct replacement is either a real facade projection
+# or deletion of the dead package shell.
+
+---
+id: ban-dead-init-module
+language: Python
+severity: error
+rule:
+  kind: module
+  regex: '(?s)^\s*(#[^\n]*\n\s*)*(__all__\s*=\s*\[\s*\]\s*)?$'
+message: >-
+  Dead module: this __init__.py is empty or only declares `__all__ = []`
+  with no exports. Either project real symbols through the facade or delete
+  the dead package shell.
+note: >-
+  Migration: if the package still owns behavior, project its public symbols
+  here (lazy generated facade projection). If the content moved, delete the
+  shell via safe-delete and remove the directory from the package topology.
+files:
+  - "**/__init__.py"
+ignores:
+  - "**/.git/**"
+  - "**/.venv/**"
+  - "**/__pycache__/**"

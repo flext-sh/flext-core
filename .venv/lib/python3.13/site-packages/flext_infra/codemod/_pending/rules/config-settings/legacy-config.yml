@@ -1,0 +1,8 @@
+id: ban-legacy-settings-class
+language: python
+rule:
+  pattern: |
+    class Config:
+      $$$BODY
+message: "Legacy Pydantic v1 Config class is banned — use ConfigDict"
+severity: error

@@ -1,0 +1,52 @@
+{% if license == "MIT" -%}
+MIT License
+
+Copyright (c) {{ year }} {{ author_name }}
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+{% else -%}
+PROPRIETARY AND CONFIDENTIAL
+
+Copyright (c) {{ year }} {{ author_name }}. All rights reserved.
+
+This software and its associated documentation (the "Protected Material") are
+strictly confidential and access-restricted, and are the exclusive property of
+{{ author_name }}.
+
+1. ACCESS AUTHORIZATION
+   Access to the Protected Material is permitted exclusively to individuals
+   with express, documented authorization from {{ author_name }}.
+
+2. ABSOLUTE PROHIBITIONS
+   It is strictly forbidden to copy, redistribute, sublicense, publish, or
+   otherwise disclose any part of the Protected Material without prior written
+   authorization from {{ author_name }}.
+
+3. OWNERSHIP AND CONFIDENTIALITY
+   All Protected Material remains the exclusive property of {{ author_name }}.
+   No ownership right is transferred. The duty of confidentiality is perpetual.
+
+4. NO WARRANTY
+   The Protected Material is provided "AS IS", without warranty of any kind.
+   In no event shall the copyright holder be liable for any claim, damages, or
+   other liability arising from the use of the Protected Material.
+
+Unauthorized access, use, or distribution constitutes a security violation and
+will be treated as such under applicable law.
+{% endif -%}

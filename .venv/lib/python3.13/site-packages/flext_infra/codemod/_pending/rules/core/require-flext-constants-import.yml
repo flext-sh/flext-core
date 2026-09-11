@@ -1,0 +1,15 @@
+id: require-flext-constants-import
+language: python
+rule:
+  kind: import_from_statement
+  all:
+  - has:
+      kind: dotted_name
+      field: module_name
+      regex: "^flext_core"
+  - has:
+      kind: identifier
+      regex: "^(FlextConstants|c)$"
+      stopBy: end
+message: "FlextConstants import found (tracking)"
+severity: warning

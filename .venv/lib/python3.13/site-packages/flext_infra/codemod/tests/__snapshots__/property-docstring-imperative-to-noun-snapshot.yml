@@ -1,0 +1,119 @@
+id: property-docstring-imperative-to-noun
+snapshots:
+  ? |
+    @computed_field
+    @property
+    def value(self) -> str:
+        '''Compute the validated result.'''
+        return self._value
+  : fixed: |
+      @computed_field
+      @property
+      def value(self) -> str:
+          '''The validated result.'''
+          return self._value
+    labels:
+    - source: '''''''Compute the validated result.'''''''
+      style: primary
+      start: 54
+      end: 89
+    - source: '@property'
+      style: secondary
+      start: 16
+      end: 25
+    - source: |-
+        @computed_field
+        @property
+        def value(self) -> str:
+            '''Compute the validated result.'''
+            return self._value
+      style: secondary
+      start: 0
+      end: 112
+  ? |
+    @property
+    def enabled(self) -> bool:
+        """Return whether the feature is enabled.
+
+        The second paragraph remains byte-for-byte unchanged.
+        """
+        return self._enabled
+  : fixed: "@property\ndef enabled(self) -> bool:\n    \"\"\"Whether the feature is enabled.\n    \n    The second paragraph remains byte-for-byte unchanged.\n    \"\"\"\n    return self._enabled\n"
+    labels:
+    - source: |-
+        """Return whether the feature is enabled.
+
+            The second paragraph remains byte-for-byte unchanged.
+            """
+      style: primary
+      start: 41
+      end: 149
+    - source: '@property'
+      style: secondary
+      start: 0
+      end: 9
+    - source: |-
+        @property
+        def enabled(self) -> bool:
+            """Return whether the feature is enabled.
+
+            The second paragraph remains byte-for-byte unchanged.
+            """
+            return self._enabled
+      style: secondary
+      start: 0
+      end: 174
+  ? |
+    @property
+    def status(self) -> str:
+        """Get the current status."""
+        return self._status
+  : fixed: |
+      @property
+      def status(self) -> str:
+          """The current status."""
+          return self._status
+    labels:
+    - source: '"""Get the current status."""'
+      style: primary
+      start: 39
+      end: 68
+    - source: '@property'
+      style: secondary
+      start: 0
+      end: 9
+    - source: |-
+        @property
+        def status(self) -> str:
+            """Get the current status."""
+            return self._status
+      style: secondary
+      start: 0
+      end: 92
+  ? |
+    @property
+    def value(self) -> str:
+        """Return validation result."""
+        return self._value
+  : fixed: |
+      @property
+      def value(self) -> str:
+          """Validation result."""
+          return self._value
+    labels:
+    - source: '"""Return validation result."""'
+      style: primary
+      start: 38
+      end: 69
+    - source: '@property'
+      style: secondary
+      start: 0
+      end: 9
+    - source: |-
+        @property
+        def value(self) -> str:
+            """Return validation result."""
+            return self._value
+      style: secondary
+      start: 0
+      end: 92

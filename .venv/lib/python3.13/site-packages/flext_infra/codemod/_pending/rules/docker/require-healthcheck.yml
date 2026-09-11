@@ -1,0 +1,9 @@
+id: require-healthcheck
+language: yaml
+rule:
+  kind: block_mapping_pair
+  has:
+    field: key
+    regex: "^(HEALTHCHECK|healthcheck)$"
+message: "Healthcheck configuration found (tracking)"
+severity: warning

@@ -1,0 +1,6 @@
+id: ban-direct-structlog-getlogger
+language: python
+rule:
+  pattern: structlog.get_logger($$$ARGS)
+message: "Direct structlog.get_logger() is banned; use the project u.fetch_logger facade"
+severity: error

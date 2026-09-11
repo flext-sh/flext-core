@@ -1,0 +1,7 @@
+id: pointer-no-duplication-policy
+language: yaml
+rule:
+  kind: flow_node
+  regex: (Governance|Full Policy|Architecture Overview)
+message: Pointer files should not duplicate full policy or architecture content.
+severity: warning

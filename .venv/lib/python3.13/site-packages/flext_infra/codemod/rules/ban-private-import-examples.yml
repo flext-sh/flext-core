@@ -1,0 +1,40 @@
+# Ban private-module imports in examples/ and scripts/ (epic i2h4).
+#
+# Universal law §19 (no hidden code): examples/ and scripts/ share the src/
+# gates. Example and tooling code is the PUBLIC documentation of the package
+# surface — it must demonstrate the facade-only consumption pattern and must
+# never teach consumers to reach into `_`-prefixed private modules.
+#
+# Detection-only: the correct replacement is the public facade projection.
+
+---
+id: ban-private-import-examples
+language: Python
+severity: error
+rule:
+  any:
+    - all:
+        - kind: import_from_statement
+        - regex: '^from\s+[\w.]*\._(constants|exceptions|models|typings|utilities)(\.[\w.]+)*\s+import\b'
+    - all:
+        - kind: import_statement
+        - regex: '^import\s+[\w.]*\._(constants|exceptions|models|typings|utilities)(\.[\w.]+)*(\s+as\s+\w+)?\s*$'
+message: >-
+  Importing from a private `_`-prefixed module is banned in examples/ and
+  scripts/. Demonstrate the public facade (from <pkg> import c, t, p, m, u,
+  r, e, x, h, d, s) instead.
+note: >-
+  Migration: replace the private import with the facade projection the
+  example should teach (e.g. `from flext_core import u` then
+  `u.FlextUtilities...`). If no public projection exists, the example is
+  exercising an internal contract — move it under the owning package's
+  tests/ or expose the symbol on the facade.
+files:
+  - "examples/**/*.py"
+  - "scripts/**/*.py"
+  - "**/examples/**/*.py"
+  - "**/scripts/**/*.py"
+ignores:
+  - "**/.git/**"
+  - "**/.venv/**"
+  - "**/__pycache__/**"

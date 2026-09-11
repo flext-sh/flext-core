@@ -1,0 +1,26 @@
+# FLEXT 0.20.0 migration: FlextSettingsBase -> FlextSettings
+#
+# The base settings class was renamed/consolidated: the module
+# `flext_core.settings` and the name `FlextSettingsBase` no longer exist; the
+# canonical base is `FlextSettings` exported from the `flext_core` root.
+#
+# SAFETY: matches ONLY a clean single-name, non-aliased import. Multi-imports
+# (`..., Other`) and aliased imports (`... as X`) are excluded to prevent data
+# loss / broken rewrites — handle those by hand (rare).
+#
+# Verified: matches line 1 only of the 5-line sample in tests/; excludes
+# multi-import, reordered multi-import, `as`-alias, and `import flext_core.settings`.
+id: flext-settings-base-rename
+language: python
+severity: warning
+message: "FlextSettingsBase is removed in flext 0.20.0; use FlextSettings from flext_core."
+ignores:
+  - "**/legado/**"
+rule:
+  kind: import_from_statement
+  all:
+    - has: { field: module_name, regex: '^flext_core\.settings$' }
+    - has: { field: name, regex: "^FlextSettingsBase$", stopBy: end }
+    - not: { regex: "," }
+    - not: { regex: " as " }
+fix: from flext_core import FlextSettings

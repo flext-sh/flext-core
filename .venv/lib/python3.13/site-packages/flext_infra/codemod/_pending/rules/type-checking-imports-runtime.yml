@@ -1,0 +1,36 @@
+id: type-checking-imports-runtime
+language: python
+severity: warning
+message: >-
+  Imports hidden behind TYPE_CHECKING are not runtime-resolvable. Move required
+  imports into the canonical load order and put declaration-only contracts in
+  p.* Protocols. Detection only because mixed guarded bodies need semantic
+  review; do not use a compensating script or blind hoist.
+files:
+  - "**/*.py"
+ignores:
+  - "**/__init__.py"
+  - "**/legado/**"
+rule:
+  all:
+    - any:
+        - pattern:
+            context: |
+              if TYPE_CHECKING:
+                  $$$BODY
+            selector: if_statement
+        - pattern:
+            context: |
+              if t.TYPE_CHECKING:
+                  $$$BODY
+            selector: if_statement
+        - pattern:
+            context: |
+              if typing.TYPE_CHECKING:
+                  $$$BODY
+            selector: if_statement
+    - has:
+        stopBy: end
+        any:
+          - kind: import_statement
+          - kind: import_from_statement

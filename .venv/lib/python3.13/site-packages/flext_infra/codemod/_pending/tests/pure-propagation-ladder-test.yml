@@ -1,0 +1,19 @@
+id: pure-propagation-ladder
+valid:
+  - "return self._run(args).flat_map(self._finalize)"
+  - |
+    if result.failure:
+        return r[p.Sample.Plan].fail(
+            result.error or "context",
+            error_code=result.error_code,
+            exception=result.exception,
+        )
+invalid:
+  - |
+    if result.failure:
+        return r[p.Sample.Plan].fail(
+            result.error,
+            error_code=result.error_code,
+            error_data=result.error_data,
+            exception=result.exception,
+        )

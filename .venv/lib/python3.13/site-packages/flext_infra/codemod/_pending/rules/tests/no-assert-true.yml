@@ -1,0 +1,6 @@
+id: no-assert-true
+language: python
+rule:
+  pattern: assert True
+message: "assert True is always true - use proper assertion"
+severity: error

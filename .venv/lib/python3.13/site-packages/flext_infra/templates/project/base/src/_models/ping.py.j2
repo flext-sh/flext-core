@@ -1,0 +1,32 @@
+"""{{ ns }} field-only Pydantic v2 ping models composed into ``m.{{ ns }}``.
+
+The ``models.py`` facade composes this declaration with the config and settings
+parts into the canonical ``{{ ns }}`` namespace.
+
+Copyright (c) {{ year }} {{ author_name }}. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+from typing import Annotated, ClassVar
+
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class {{ class_stem }}ModelsPing:
+    """{{ ns }} ping-command models (Pydantic v2, built the 2-way)."""
+
+    class PingInput(BaseModel):
+        """Input model for the ``ping`` health-check command (no fields)."""
+
+        model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid", frozen=True)
+
+    class PingResult(BaseModel):
+        """Result model for the ``ping`` health-check command."""
+
+        model_config: ClassVar[ConfigDict] = ConfigDict(extra="forbid", frozen=True)
+        message: Annotated[str, Field(description="Health-check reply message.")]
+
+
+__all__: list[str] = ["{{ class_stem }}ModelsPing"]

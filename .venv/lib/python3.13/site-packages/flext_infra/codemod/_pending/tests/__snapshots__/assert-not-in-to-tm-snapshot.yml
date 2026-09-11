@@ -1,0 +1,34 @@
+id: assert-not-in-to-tm
+snapshots:
+  ? |
+    from flext_tests import tm
+    def test_i():
+        assert k not in mapping
+  : fixed: |
+      from flext_tests import tm
+      def test_i():
+          tm.that(mapping, lacks=k)
+    labels:
+    - source: assert k not in mapping
+      style: primary
+      start: 45
+      end: 68
+    - source: tm
+      style: secondary
+      start: 24
+      end: 26
+    - source: flext_tests
+      style: secondary
+      start: 5
+      end: 16
+    - source: from flext_tests import tm
+      style: secondary
+      start: 0
+      end: 26
+    - source: |
+        from flext_tests import tm
+        def test_i():
+            assert k not in mapping
+      style: secondary
+      start: 0
+      end: 69

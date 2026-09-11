@@ -1,0 +1,25 @@
+id: wrap-handler-guard
+valid:
+  - |
+    class Cli:
+        def _guard(self, handler):
+            return handler
+        route = m.Cli.ResultCommandRoute(
+            name="x", handler=self._guard(self._handle_x)
+        )
+  - "m.Cli.ResultCommandRoute(name='x', success_formatter=self._fmt_x)"
+  - "m.Cli.ResultCommandRoute(name='x', handler=self._service.migrate)"
+  - |
+    class Cli:
+        route = m.Cli.ResultCommandRoute(name="x", handler=self._handle_x)
+invalid:
+  - |
+    class Cli:
+        def _guard(self, handler):
+            return handler
+        route = m.Cli.ResultCommandRoute(name="x", handler=self._handle_build)
+  - |
+    class Cli:
+        def _guard(self, handler):
+            return handler
+        route = m.Cli.ResultCommandRoute(name="c", handler=self._handle_check)

@@ -1,0 +1,27 @@
+id: fstring-fail-missing-exception-review
+valid:
+  - |
+    try:
+        read()
+    except OSError as exc:
+        return r[str].fail(f"read failed: {exc}")
+  - |
+    try:
+        read()
+    except OSError as exc:
+        return r[str].fail(f"read failed: {exc}", exception=exc)
+  - "return r[str].fail(f'read failed: {exc}', error_code='READ')"
+invalid:
+  - |
+    try:
+        read()
+    except OSError as exc:
+        return r[str].fail(
+            f"read failed: {exc}",
+            error_code="READ",
+        )
+  - |
+    try:
+        read()
+    except OSError as exc:
+        return r[str].fail(f"read failed: {exc}", "READ")

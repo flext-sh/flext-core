@@ -1,0 +1,15 @@
+# Test-tree structural rules — loaded dynamically by the declarative enforcement
+# engine (config-driven; NEVER hardcode these values in Python).
+# Business rule: every test_* function must live inside a Tests* nested class
+# (one nested class per test module). These parameters drive the detector engine.
+version: "1.0.0"
+
+# Glob(s) (relative to project root) whose Python files are treated as tests.
+test_dir_globs:
+  - "tests/**"
+
+# A module-level function whose name starts with this prefix is a test function.
+test_fn_prefix: "test_"
+
+# The class prefix a test function must be nested under (e.g. TestsFooSmoke).
+required_class_prefix: "Tests"

@@ -1,0 +1,9 @@
+id: detect-bindable-logger
+valid:
+  - "logger: Logger"
+  - "logger: FlextLogger = get_logger()"
+invalid:
+  - "logger: BindableLogger"
+  - "logger: BindableLogger = get_logger()"
+  - "x: BindableLogger"
+  - "x: BindableLogger = init()"

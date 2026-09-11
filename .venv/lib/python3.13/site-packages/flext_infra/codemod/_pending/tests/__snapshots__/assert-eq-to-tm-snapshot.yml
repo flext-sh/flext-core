@@ -1,0 +1,34 @@
+id: assert-eq-to-tm
+snapshots:
+  ? |
+    from flext_tests import tm
+    def test_i():
+        assert a == b
+  : fixed: |
+      from flext_tests import tm
+      def test_i():
+          tm.that(a, eq=b)
+    labels:
+    - source: assert a == b
+      style: primary
+      start: 45
+      end: 58
+    - source: tm
+      style: secondary
+      start: 24
+      end: 26
+    - source: flext_tests
+      style: secondary
+      start: 5
+      end: 16
+    - source: from flext_tests import tm
+      style: secondary
+      start: 0
+      end: 26
+    - source: |
+        from flext_tests import tm
+        def test_i():
+            assert a == b
+      style: secondary
+      start: 0
+      end: 59

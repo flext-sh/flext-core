@@ -1,0 +1,8 @@
+# A plain `import flext_<ns>...` can never bind a facade alias.
+id: flext-bare-module-import
+language: python
+severity: error
+message: "Use `from flext_<ns> import <alias>` for the canonical facade, never `import flext_<ns>...` (a module import cannot bind a facade alias)."
+rule:
+  kind: import_statement
+  has: { kind: identifier, stopBy: end, regex: '^flext_[a-z0-9_]+$' }

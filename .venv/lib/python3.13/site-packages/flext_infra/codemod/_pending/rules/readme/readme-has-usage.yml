@@ -1,0 +1,7 @@
+id: readme-has-usage
+language: html
+rule:
+  kind: text
+  regex: ^## Usage
+message: README.md must have a '## Usage' section.
+severity: warning

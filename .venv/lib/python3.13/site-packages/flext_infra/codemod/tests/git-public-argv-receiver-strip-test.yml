@@ -1,0 +1,16 @@
+id: git-public-argv-receiver-strip
+valid:
+  # already stripped: the private module function called directly
+  - |
+    captured = git_capture(repo_root, ("rev-parse", "HEAD"))
+  # typed semantic surface is never rewritten
+  - |
+    status = u.Infra.git_status(m.Infra.GitStatusRequest(repo_root=root))
+invalid:
+  # mechanical demotion: drop the demoted facade receiver in tests
+  - |
+    captured = u.Infra.git_capture(workspace, ("status", "--porcelain=v1", "-z"))
+  - |
+    payload = FlextInfraUtilitiesGit.git_capture_bytes(root, ("ls-files", "-z"))
+  - |
+    result = u.Infra.git_run(repo_root, ("status",))
