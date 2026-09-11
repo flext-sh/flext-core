@@ -20,16 +20,14 @@ from typing import Annotated, ClassVar, override
 
 from pydantic import ConfigDict
 
-from flext_core._models._base_parts.flextmodelsbase_part_01 import (
-    FlextModelsBase as FlextModelsBasePart01,
-)
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._runtime._metadata_validation import (
-    FlextRuntimeMetadataValidation as ur,
-)
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core._utilities.generators import FlextUtilitiesGenerators as ug
 from flext_core.constants import FlextConstants as c
+
+from ..._constants.project_metadata import FlextConstantsProjectMetadata as cpm
+from ..._runtime._metadata_validation import FlextRuntimeMetadataValidation as ur
+from ..._typings.base import FlextTypingBase as t
+from ..._utilities.generators import FlextUtilitiesGenerators as ug
+from ..pydantic import FlextModelsPydantic as mp
+from .flextmodelsbase_part_01 import FlextModelsBase as FlextModelsBasePart01
 
 
 class FlextModelsBase(FlextModelsBasePart01):
@@ -65,12 +63,12 @@ class FlextModelsBase(FlextModelsBasePart01):
         version: Annotated[
             str,
             mp.Field(
-                default="1.0.0",
+                default=cpm.METADATA_SCHEMA_VERSION_DEFAULT,
                 description="Semantic version string representing the metadata schema revision.",
                 title="Metadata Version",
                 examples=["1.0.0", "1.2.3"],
             ),
-        ] = "1.0.0"
+        ] = cpm.METADATA_SCHEMA_VERSION_DEFAULT
         created_by: Annotated[
             str | None,
             mp.Field(
@@ -105,7 +103,7 @@ class FlextModelsBase(FlextModelsBasePart01):
                 title="Attributes",
                 examples=[{"source": "api", "priority": "high"}],
             ),
-        ] = mp.Field(default_factory=lambda: MappingProxyType({}))
+        ] = mp.Field(default_factory=lambda: MappingProxyType[str, t.JsonValue]({}))
         metadata_value: Annotated[
             t.Scalar | None,
             mp.Field(default=None, description="Scalar metadata value."),

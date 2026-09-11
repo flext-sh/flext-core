@@ -12,8 +12,8 @@ import math
 from datetime import UTC, datetime
 
 import pytest
-
 from flext_tests import m as ftm, tm
+
 from tests.models import m
 from tests.typings import t
 

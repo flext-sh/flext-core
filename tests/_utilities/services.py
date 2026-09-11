@@ -5,9 +5,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Annotated, ClassVar, override
 
 from flext_tests import r, u
-from tests._utilities.railway_services import TestsFlextUtilitiesRailwayServicesMixin
+
 from tests.base import s
 from tests.constants import c
+
+from .railway_services import TestsFlextUtilitiesRailwayServicesMixin
 
 if TYPE_CHECKING:
     from tests.protocols import p

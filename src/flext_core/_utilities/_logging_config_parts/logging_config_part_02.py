@@ -19,24 +19,17 @@ from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
 from structlog.stdlib import add_log_level
 
 from flext_core import FlextConstants as c, FlextProtocols as p, FlextTypes as t
-from flext_core._models.pydantic import FlextModelsPydantic as mp
 
+from ..._models.pydantic import FlextModelsPydantic as mp
 from .logging_config_part_01 import (
     FlextUtilitiesLoggingConfig as FlextUtilitiesLoggingConfigPart01,
 )
 
 if typing.TYPE_CHECKING:
-    import types
-
     from structlog.types import Processor
 
 
 class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
-    @staticmethod
-    def structlog() -> types.ModuleType:
-        """Return the imported structlog module."""
-        return structlog
-
     @staticmethod
     def level_based_context_filter(
         logger: p.Logger | None, method_name: str, event_dict: t.ScalarMapping

@@ -17,9 +17,9 @@ import uuid
 from typing import TYPE_CHECKING
 
 import pytest
-
-from flext_core import p, FlextContainer
 from flext_tests import e, r, tm
+
+from flext_core import FlextContainer, p
 from tests.constants import c
 from tests.utilities import u
 

@@ -1,114 +1,72 @@
-<!-- Generated from docs/guides/skill-automation-pattern.md for flext-core. -->
-
-<!-- Source of truth: workspace docs/guides/. -->
+<!-- AUTO-GENERATED FILE — regenerate through `make gen APPLY=Y` from the workspace root. -->
+<!-- Source of truth: `docs/guides/skill-automation-pattern.md`; adjust that source, never this projection. -->
 
 # flext-core - Skill Automation Pattern
 
 > Project profile: `flext-core`
 
 <!-- TOC START -->
-- [Goal](#goal)
-- [Required Outputs](#required-outputs)
-- [Standard Skill Contract](#standard-skill-contract)
-- [Standard Skill Format](#standard-skill-format)
-- [Implementation Checklist](#implementation-checklist)
-- [Example (Current Pattern)](#example-current-pattern)
-- [Verification Commands](#verification-commands)
-- [Adoption Rule](#adoption-rule)
+- [Ownership](#ownership)
+- [Required change shape](#required-change-shape)
+- [Canonical execution](#canonical-execution)
 <!-- TOC END -->
 
-This guide defines the standard way to create reusable automation skills in this repository.
+Skills document intent and route execution to canonical owners. They do not
+create parallel rule engines, registries, scripts, command grammars, or manual
+consumer rewiring.
 
-## Goal
+## Ownership
 
-Create automations that are reproducible, script-first, and enforceable by CI-style commands.
+- Typed configuration owns enforceable policy data.
+- Canonical `c`, `t`, `p`, `m`, and `u` facades own reusable declarations and
+  behavior.
+- flext-infra owns semantic discovery, ast-grep/Rope transformations, local LSP
+  analysis, Git repositories, generation, and enforcement.
+- ai-hub owns GitHub and CRG runtime services. FLEXT may consume its public
+  commands, hooks, MCP routes, and daemons as optional enrichment, never as a
+  library dependency; absence of that runtime is not an error.
+- A skill points to those owners and explains when to use them.
 
-## Required Outputs
+Generated baselines, projections, and reports are evidence, never a writable
+policy source or an allowlist.
 
-For each new automation family, deliver all items below:
+## Required change shape
 
-1. One skill folder: `.agents/skills/<automation-name>/` containing:
-   - `SKILL.md` — canonical skill document
-   - `rules.yml` — detection rules (ast-grep, ripgrep, or custom)
-   - `rules/` — ast-grep rule files (if any)
-   - `baseline.json` — violation baseline (auto-generated)
-1. One docs page in `docs/guides/` (if cross-cutting)
+1. Research the current owner, consumers, fallbacks, tests, docs, and generated
+   projections.
+2. Encode the generalized invariant at its typed flext-infra owner.
+3. Add a semantic transformation that can reproduce every consumer rewire.
+4. Rewire consumers, remove the old owner, and prove zero residue.
+5. Update the skill and canonical documentation in the same change.
+6. Regenerate and run every declared gate.
 
-## Standard Skill Contract
+Tests for skill automation use public facades, `tm`, the unified `conftest.py`,
+and typed shared fixtures. Mocks, fakes, stubs, patching, private construction,
+and hardcoded project-owned values are prohibited.
 
-Skills are validated by the generic runner:
+## Canonical execution
 
-```bash
-python3 scripts/core/skill_validate.py --skill <name>
-python3 scripts/core/skill_validate.py --skill <name> --mode strict
-python3 scripts/core/skill_validate.py --skill <name> --update-baseline
-```
-
-The runner auto-discovers all skills:
-
-```bash
-python3 scripts/core/skill_validate.py --all
-```
-
-## Standard Skill Format
-
-The skill must follow the canonical format from `skill-format-universal` and include:
-
-- Concrete paths under `## Scope`
-- Existing anchors under `## References`
-- Enforceable behaviors under `## Rules`
-- Copyable commands under `## Instructions`
-- Ordered execution in `## Workflow`
-- Good/Bad examples under `## Examples`
-- Executable checks under `## Verification`
-
-## Implementation Checklist
-
-1. Define the invariant (policy or quality requirement).
-1. Create `rules.yml` with detection rules (ast-grep, ripgrep, or custom).
-1. Place ast-grep rule files in skill `rules/` directory.
-1. Initialize baseline with `python3 scripts/core/skill_validate.py --skill <name> --update-baseline`.
-1. Write or update skill doc with exact commands.
-1. Add or update a docs guide in `docs/guides/` (if cross-cutting).
-1. Run `python3 scripts/core/skill_validate.py --all` to verify integration.
-
-## Example (Current Pattern)
-
-Current repository implementation uses the **self-contained skill architecture**. Each skill
-folder (`.agents/skills/<skill>/`) owns its own `rules.yml`, `rules/` ast-grep files,
-`baseline.json`, and `report.json`. The generic runner `scripts/core/skill_validate.py`
-discovers and executes everything.
-
-**Dict/Any Policy Gate**:
-
-- Skill: `.agents/skills/flext-strict-typing/SKILL.md`
-- Rules: `.agents/skills/flext-strict-typing/rules.yml` (10 rules: 8 ast-grep + 2 ripgrep)
-- AST rules: `.agents/skills/flext-strict-typing/rules/*.yml`
-- Baseline: `.agents/skills/flext-strict-typing/baseline.json`
-
-**Pydantic v2 Policy Gate**:
-
-- Skill: `.agents/skills/lib-pydantic-v2/SKILL.md`
-- Rules: `.agents/skills/lib-pydantic-v2/rules.yml` (8 ast-grep rules)
-- AST rules: `.agents/skills/lib-pydantic-v2/rules/*.yml`
-- Baseline: `.agents/skills/lib-pydantic-v2/baseline.json`
-
-**Generic runner**:
-
-- `scripts/core/skill_validate.py` — auto-discovers `.agents/skills/*/rules.yml`
-
-## Verification Commands
+Run only from the workspace root:
 
 ```bash
-python3 scripts/core/skill_validate.py --list-skills
-python3 scripts/core/skill_validate.py --skill flext-strict-typing
-python3 scripts/core/skill_validate.py --skill lib-pydantic-v2
-python3 scripts/core/skill_validate.py --all
+make setup
+make help
+make gen APPLY=Y
+make mod APPLY=Y
+make gen APPLY=Y
+make gen APPLY=Y
+make fix APPLY=Y
+make fmt APPLY=Y
+make check APPLY=Y
+make test APPLY=Y
+make conform APPLY=Y
+make waza APPLY=Y
 ```
 
-## Adoption Rule
+The final generation run proves the fixed point. `make mod APPLY=Y` owns
+structural transformations; no direct script or tool invocation is valid.
+`make test APPLY=Y` always retains Testmon.
 
-For future automation work, do not introduce manual-only procedures. Ship scripts + skill + docs together in the same change.
-
-```
-```
+Do not add project, file, pattern, action, phase, fix, or changed-only selectors.
+A missing capability is implemented at the canonical Make/flext-infra owner
+before the declared verb is rerun.

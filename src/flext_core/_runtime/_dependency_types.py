@@ -12,10 +12,10 @@ from typing import Annotated, ClassVar
 from dependency_injector import containers, providers
 from pydantic import BaseModel, ConfigDict
 
-from flext_core._models.containers import FlextModelsContainers as mc
-from flext_core._typings.base import FlextTypingBase as tb
-from flext_core._typings.pydantic import FlextTypesPydantic as tp
-from flext_core._typings.services import FlextTypesServices as ts
+from .._models.containers import FlextModelsContainers
+from .._typings.base import FlextTypingBase as tb
+from .._typings.pydantic import FlextTypesPydantic as tp
+from .._typings.services import FlextTypesServices as ts
 
 
 class FlextRuntimeDependencyTypes:
@@ -38,7 +38,7 @@ class FlextRuntimeDependencyTypes:
 
         model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
 
-        settings: mc.ConfigMap | None = None
+        settings: FlextModelsContainers.ConfigMap | None = None
         services: (
             tb.MappingKV[str, Annotated[ts.RegisterableService, tp.SkipValidation]]
             | None

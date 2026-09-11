@@ -122,7 +122,7 @@ class TestsFlextCoreEnforcementWarningVisibility:
         # Assert: the warning survives to the caller's output.
         assert result.success, result.error
         output = result.value.stdout + result.value.stderr
-        assert result.value.exit_code == 0, output
+        assert result.value.outcome.raw_return_code == 0, output
         assert "FlextMroViolation" in output, (
             "runtime enforcement warning suppressed by shipped filterwarnings:\n"
             + output

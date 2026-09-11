@@ -220,3 +220,8 @@ class FlextDispatcher:
                 c.ERR_HANDLER_RETURNED_NON_CONTAINER_VALUE,
             )
         return result
+
+
+# Why: the generated package facade exports a root module's explicit public
+# ABI; without this declaration FlextDispatcher vanished from flext_core.
+__all__: list[str] = ["FlextDispatcher"]

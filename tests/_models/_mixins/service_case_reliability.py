@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Annotated, ClassVar
 
 from flext_core import m
+from tests.typings import t
 
 
 class TestsFlextModelsServiceCaseReliabilityMixin:
@@ -13,7 +14,7 @@ class TestsFlextModelsServiceCaseReliabilityMixin:
     class ReliabilityScenario(m.BaseModel):
         """Single scenario for reliability testing (circuit breaker, retry)."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         name: Annotated[str, m.Field(description="Unique reliability scenario name")]
         strategy: Annotated[str, m.Field(description="Reliability strategy under test")]

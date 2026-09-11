@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_tests import r, tm, u
+
 from tests.constants import c
 
 if TYPE_CHECKING:
@@ -79,7 +80,7 @@ class TestsFlextUtilitiesContractsMixin:
                 self.processed_items.append(processed)
                 return r[str].ok(processed)
             except (ValueError, TypeError, RuntimeError) as e:
-                return r[str].fail(f"Processing failed: {e}")
+                return r[str].fail(f"Processing failed: {e}", exception=e)
 
         def get_call_count(self) -> int:
             """Get number of times process() was called."""

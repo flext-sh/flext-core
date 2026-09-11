@@ -11,8 +11,6 @@ import time
 import traceback
 from typing import TYPE_CHECKING, ClassVar, Self
 
-import structlog
-
 from flext_core import (
     FlextConstants as c,
     FlextExceptions as e,
@@ -21,8 +19,8 @@ from flext_core import (
     r,
 )
 from flext_core.models import FlextModels as m
-from flext_core._utilities.generators import FlextUtilitiesGenerators as ug
-from flext_core._utilities.logging_context import FlextUtilitiesLoggingContext as ulc
+
+from ._utilities.logging_context import FlextUtilitiesLoggingContext as ulc
 
 if TYPE_CHECKING:
     import types
@@ -117,7 +115,7 @@ class FlextUtilitiesLogging(ulc):
         if not name:
             msg = "logger name is required"
             raise ValueError(msg)
-        logger: p.Logger = structlog.get_logger(name)
+        logger: p.Logger = cls.structlog().get_logger(name)
         return logger
 
     def bind(self, **context: t.JsonPayload) -> Self:
@@ -352,75 +350,6 @@ class FlextUtilitiesLogging(ulc):
                 _ = self.logger.error(
                     f"{self._operation_name} {status}",
                     **FlextUtilitiesLogging.to_container_context(context.root),
-                )
-
-    class Integration:
-        """Application-layer integration helpers using structlog directly."""
-
-        @staticmethod
-        def setup_service_infrastructure(
-            *,
-            service_name: str,
-            service_version: str | None = None,
-            enable_context_correlation: bool = True,
-        ) -> None:
-            """Set up complete service infrastructure."""
-            sl = FlextUtilitiesLogging.structlog()
-            _ = sl.contextvars.bind_contextvars(service_name=service_name)
-            if service_version:
-                _ = sl.contextvars.bind_contextvars(service_version=service_version)
-            if enable_context_correlation:
-                correlation_id = f"flext-{ug.generate_id().replace('-', '')[:12]}"
-                _ = sl.contextvars.bind_contextvars(correlation_id=correlation_id)
-            sl.fetch_logger(__name__).info(
-                "Service infrastructure initialized",
-                service_name=service_name,
-                service_version=service_version,
-                correlation_enabled=enable_context_correlation,
-            )
-
-        @staticmethod
-        def track_domain_event(
-            event_name: str,
-            aggregate_id: str | None = None,
-            event_data: m.ConfigMap | None = None,
-        ) -> None:
-            """Track domain event with context correlation."""
-            sl = FlextUtilitiesLogging.structlog()
-            context_vars = sl.contextvars.get_contextvars()
-            correlation_id = context_vars.get(c.ContextKey.CORRELATION_ID)
-            sl.fetch_logger(__name__).info(
-                "Domain event emitted",
-                event_name=event_name,
-                aggregate_id=aggregate_id,
-                event_data=event_data,
-                correlation_id=correlation_id,
-            )
-
-        @staticmethod
-        def track_service_resolution(
-            service_name: str,
-            *,
-            resolved: bool = True,
-            error_message: str | None = None,
-        ) -> None:
-            """Track service resolution with context correlation."""
-            sl = FlextUtilitiesLogging.structlog()
-            context_vars = sl.contextvars.get_contextvars()
-            correlation_id = context_vars.get(c.ContextKey.CORRELATION_ID)
-            logger = sl.fetch_logger(__name__)
-            if resolved:
-                logger.info(
-                    "Service resolved",
-                    service_name=service_name,
-                    correlation_id=correlation_id,
-                )
-            else:
-                logger.error(
-                    "Service resolution failed",
-                    service_name=service_name,
-                    error=error_message,
-                    correlation_id=correlation_id,
                 )
 
     @classmethod

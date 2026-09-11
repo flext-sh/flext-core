@@ -27,7 +27,9 @@ class CreateUserService(s):
 service = CreateUserService()
 result = service.execute()
 assert result.success
-assert result.value == "user_created"```
+assert result.value == "user_created"
+```
+
 ## Validate Before Execute
 
 ```python
@@ -48,10 +50,13 @@ class ValidateThenCreateService(s):
 
 
 assert ValidateThenCreateService(username="alice").execute().success
-assert ValidateThenCreateService(username="").execute().failure```
+assert ValidateThenCreateService(username="").execute().failure
+```
+
 ## examples-backed service flows
 
 ```python
 from examples.ex_11_flext_service import ExampleService
 
-ExampleService.run()```
+ExampleService.run()
+```

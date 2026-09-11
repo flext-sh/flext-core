@@ -4,11 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from tests._utilities.case_service_factories import (
-    TestsFlextUtilitiesCaseServiceFactoriesMixin,
-)
 from tests.constants import c
 from tests.models import m
+
+from .case_service_factories import TestsFlextUtilitiesCaseServiceFactoriesMixin
 
 if TYPE_CHECKING:
     from tests.typings import t

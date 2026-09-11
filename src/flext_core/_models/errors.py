@@ -9,10 +9,10 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import Annotated, Self
 
-from flext_core._models.base import FlextModelsBase as m
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
+from .._typings.base import FlextTypingBase as t
+from .._utilities.pydantic import FlextUtilitiesPydantic as up
+from .base import FlextModelsBase as m
+from .pydantic import FlextModelsPydantic as mp
 
 
 class FlextModelsErrors:
@@ -28,7 +28,7 @@ class FlextModelsErrors:
         exception_counts: Annotated[
             t.IntMapping,
             mp.Field(description="Per-exception occurrence totals keyed by type name."),
-        ] = mp.Field(default_factory=lambda: MappingProxyType({}))
+        ] = mp.Field(default_factory=lambda: MappingProxyType[str, int]({}))
         exception_counts_summary: Annotated[
             str,
             mp.Field(description="Human-readable summary for logs and diagnostics."),
@@ -61,7 +61,7 @@ class FlextModelsErrors:
         exception_counts: Annotated[
             t.IntMapping,
             mp.Field(description="Recorded counts keyed by exception type name."),
-        ] = mp.Field(default_factory=lambda: MappingProxyType({}))
+        ] = mp.Field(default_factory=lambda: MappingProxyType[str, int]({}))
 
         @up.computed_field
         @property

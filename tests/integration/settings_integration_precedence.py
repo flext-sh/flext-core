@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core import FlextSettings
 from flext_tests import tm
+
+from flext_core import FlextSettings
 from tests.utilities import u
 
 from .settings_integration_factories import TestsFlextFlextSettingsFactories

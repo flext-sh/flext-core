@@ -5,11 +5,10 @@ from __future__ import annotations
 import inspect
 from collections.abc import Iterator
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._protocols.base import FlextProtocolsBase as pb
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as ub
-
+from ..._constants.enforcement import FlextConstantsEnforcement as c
+from ..._protocols.base import FlextProtocolsBase as pb
+from ..._typings.base import FlextTypingBase as t
+from ..beartype_engine import FlextUtilitiesBeartypeEngine as ub
 from .enforcement_collect_part_01 import (
     FlextUtilitiesEnforcementCollect as FlextUtilitiesEnforcementCollectPart01,
 )

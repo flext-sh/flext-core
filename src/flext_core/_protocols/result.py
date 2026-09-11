@@ -8,8 +8,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, Self, TypeVar, overload, runtime_checkable
 
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-
 ResultT = TypeVar("ResultT")
 ResultViewT_co = TypeVar("ResultViewT_co", covariant=True)
 
@@ -17,9 +15,10 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from types import TracebackType
 
-    from flext_core._typings.base import FlextTypingBase as t
-    from flext_core._typings.services import FlextTypesServices as ts
-    from flext_core import FlextModels as m
+    from flext_core import m
+
+    from .._typings.base import FlextTypingBase as t
+    from .._typings.services import FlextTypesServices as ts
 
 
 class FlextProtocolsResult:
@@ -143,7 +142,7 @@ class FlextProtocolsResult:
             self, func: Callable[[str], U]
         ) -> FlextProtocolsResult.Result[ResultT | U]: ...
 
-        def to_model[U: mp.BaseModel](
+        def to_model[U: m.BaseModel](
             self, model: type[U]
         ) -> FlextProtocolsResult.Result[U]: ...
 

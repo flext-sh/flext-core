@@ -14,8 +14,9 @@ from flext_core.utilities import FlextUtilitiesEnforcement
 from tests.constants import c
 from tests.models import m
 from tests.typings import t
-from tests.unit._enforcement_support import messages
 from tests.utilities import u
+
+from ._enforcement_support import messages
 
 
 class TestsFlextEnforcementModels:
@@ -47,7 +48,10 @@ class TestsFlextEnforcementModels:
         class _M(m.ArbitraryTypesModel):
             data: Annotated[
                 t.StrMapping,
-                m.Field(default_factory=lambda: MappingProxyType({}), description="d"),
+                m.Field(
+                    default_factory=lambda: MappingProxyType[str, str]({}),
+                    description="d",
+                ),
             ]
 
         assert not messages(u.check(_M), fragment="bare ")
@@ -76,7 +80,7 @@ class TestsFlextEnforcementModels:
             items: Annotated[
                 t.MutableJsonMapping,
                 m.Field(
-                    default_factory=lambda: MappingProxyType({}),
+                    default_factory=lambda: MappingProxyType[str, t.JsonValue]({}),
                     description="Mutable JSON mapping contract.",
                 ),
             ]

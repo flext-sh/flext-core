@@ -6,14 +6,14 @@ from contextlib import suppress
 from typing import TYPE_CHECKING
 
 from flext_core import c, t
-from flext_core._utilities.model import FlextUtilitiesModel
 
+from ..model import FlextUtilitiesModel
 from .parser_targets_part_01 import (
     FlextUtilitiesParserTargets as FlextUtilitiesParserTargetsPart01,
 )
 
 if TYPE_CHECKING:
-    from flext_core._utilities.parser_coerce import FlextUtilitiesParserCoerce
+    from ..parser_coerce import FlextUtilitiesParserCoerce
 
 
 class FlextUtilitiesParserTargets(FlextUtilitiesParserTargetsPart01):
@@ -27,12 +27,9 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserTargetsPart01):
         """Fall back to primitive type parsing."""
         opts, fp = FlextUtilitiesParserTargets._resolve_opts(options, kwargs)
         if value is None:
-            parsed_default: T = FlextUtilitiesParserTargets._parse_with_default(
-                opts.default,
-                opts.default_factory,
-                c.ERR_PARSER_VALUE_IS_NONE.format(field_prefix=fp),
+            return FlextUtilitiesParserTargets._parse_with_default(
+                opts, c.ERR_PARSER_VALUE_IS_NONE.format(field_prefix=fp)
             ).unwrap()
-            return parsed_default
         if target is str:
             coerced_value = value if isinstance(value, str) else str(value)
             validated_str: T = FlextUtilitiesModel.validate_value(

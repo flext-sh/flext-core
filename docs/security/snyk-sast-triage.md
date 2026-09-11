@@ -19,6 +19,7 @@ Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `r
 ## Achados
 
 ### 1 · 🟡 MEDIUM · Use of Hardcoded Passwords
+
 **Local**: `examples/_models/output.py:41` · **CWE**: -
 
 ```python
@@ -36,6 +37,7 @@ Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `r
 **Decisão**:
 
 ### 2 · ⚪ LOW · Use of Hardcoded Credentials
+
 **Local**: `tests/_models/_mixins/test_data_identity.py:43` · **CWE**: -
 
 ```python
@@ -53,6 +55,7 @@ Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `r
 **Decisão**:
 
 ### 3 · ⚪ LOW · Use of Hardcoded Credentials
+
 **Local**: `tests/_models/_mixins/test_data_values.py:45` · **CWE**: -
 
 ```python
@@ -70,6 +73,7 @@ Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `r
 **Decisão**:
 
 ### 4 · ⚪ LOW · Use of Hardcoded Credentials
+
 **Local**: `tests/integration/test_service.py:73` · **CWE**: -
 
 ```python
@@ -87,6 +91,7 @@ Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `r
 **Decisão**:
 
 ### 5 · ⚪ LOW · Use of Hardcoded Credentials
+
 **Local**: `tests/integration/test_service.py:147` · **CWE**: -
 
 ```python
@@ -104,6 +109,7 @@ Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `r
 **Decisão**:
 
 ### 6 · ⚪ LOW · Use of Hardcoded Passwords
+
 **Local**: `tests/unit/test_result_factory_dip.py:169` · **CWE**: -
 
 ```python
@@ -121,6 +127,7 @@ Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `r
 **Decisão**:
 
 ### 7 · ⚪ LOW · Use of Hardcoded Passwords
+
 **Local**: `tests/unit/test_result_factory_dip.py:215` · **CWE**: -
 
 ```python
@@ -138,6 +145,7 @@ Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `r
 **Decisão**:
 
 ### 8 · ⚪ LOW · Use of Hardcoded Passwords
+
 **Local**: `tests/unit/test_result_factory_dip.py:226` · **CWE**: -
 
 ```python
@@ -155,6 +163,7 @@ Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `r
 **Decisão**:
 
 ### 9 · ⚪ LOW · Use of Hardcoded Passwords
+
 **Local**: `tests/unit/test_result_factory_dip.py:229` · **CWE**: -
 
 ```python

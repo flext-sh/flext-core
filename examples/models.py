@@ -4,22 +4,23 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from examples._models.errors import ExamplesFlextModelsErrors
-from examples._models.ex00 import ExamplesFlextModelsEx00
-from examples._models.ex01 import ExamplesFlextModelsEx01
-from examples._models.ex02 import ExamplesFlextModelsEx02
-from examples._models.ex03 import ExamplesFlextModelsEx03
-from examples._models.ex04 import ExamplesFlextModelsEx04
-from examples._models.ex05 import ExamplesFlextModelsEx05
-from examples._models.ex07 import ExamplesFlextModelsEx07
-from examples._models.ex08 import ExamplesFlextModelsEx08
-from examples._models.ex10 import ExamplesFlextModelsEx10
-from examples._models.ex11 import ExamplesFlextModelsEx11
-from examples._models.ex12 import ExamplesFlextModelsEx12
-from examples._models.ex14 import ExamplesFlextModelsEx14
-from examples._models.output import ExamplesFlextModelsOutput
-from examples._models.shared import ExamplesFlextSharedHandle, ExamplesFlextSharedPerson
 from flext_core import m
+
+from ._models.errors import ExamplesFlextModelsErrors
+from ._models.ex00 import ExamplesFlextModelsEx00
+from ._models.ex01 import ExamplesFlextModelsEx01
+from ._models.ex02 import ExamplesFlextModelsEx02
+from ._models.ex03 import ExamplesFlextModelsEx03
+from ._models.ex04 import ExamplesFlextModelsEx04
+from ._models.ex05 import ExamplesFlextModelsEx05
+from ._models.ex07 import ExamplesFlextModelsEx07
+from ._models.ex08 import ExamplesFlextModelsEx08
+from ._models.ex10 import ExamplesFlextModelsEx10
+from ._models.ex11 import ExamplesFlextModelsEx11
+from ._models.ex12 import ExamplesFlextModelsEx12
+from ._models.ex14 import ExamplesFlextModelsEx14
+from ._models.output import ExamplesFlextModelsOutput
+from ._models.shared import ExamplesFlextSharedHandle, ExamplesFlextSharedPerson
 
 if TYPE_CHECKING:
     from examples.typings import t

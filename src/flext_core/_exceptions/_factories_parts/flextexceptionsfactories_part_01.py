@@ -9,12 +9,11 @@ from __future__ import annotations
 from importlib import import_module
 from typing import TYPE_CHECKING, TypeVar
 
-from flext_core import FlextConstants as c, FlextProtocols as p
-from flext_core._exceptions.template import FlextExceptionsTemplate
-from flext_core._models.exception_params import FlextModelsExceptionParams as m
-from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core import FlextConstants as c, FlextProtocols as p, m
 
-TExceptionParams = TypeVar("TExceptionParams", bound=mp.BaseModel)
+from ..template import FlextExceptionsTemplate
+
+TExceptionParams = TypeVar("TExceptionParams", bound=m.BaseModel)
 
 if TYPE_CHECKING:
     from flext_core import r
@@ -41,7 +40,7 @@ class FlextExceptionsFactories:
     def _failure_message(
         operation: str,
         *,
-        params: mp.BaseModel | None = None,
+        params: m.BaseModel | None = None,
         error: Exception | str | None = None,
     ) -> str:
         """Render the canonical failure message with or without an error cause."""
@@ -83,7 +82,7 @@ class FlextExceptionsFactories:
     @staticmethod
     def _fail_result[TResult](
         message: str,
-        params: mp.BaseModel | None,
+        params: m.BaseModel | None,
         *,
         options: m.ExceptionFactoryOptions | None = None,
         default_error_code: str,

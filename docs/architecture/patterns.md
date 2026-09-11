@@ -31,7 +31,9 @@ def to_slug(name: str) -> p.Result[str]:
 
 slug = r[str].ok("Alice Doe").flat_map(validate_name).flat_map(to_slug)
 assert slug.success
-assert slug.value == "alice-doe"```
+assert slug.value == "alice-doe"
+```
+
 ## Container Pattern
 
 ```python
@@ -42,7 +44,9 @@ _ = container.bind("feature_flag", "enabled")
 
 flag = container.resolve("feature_flag")
 assert flag.success
-assert flag.value == "enabled"```
+assert flag.value == "enabled"
+```
+
 ## Dispatcher Pattern (examples-backed)
 
 ```python
@@ -50,4 +54,5 @@ from examples.ex_04_flext_dispatcher import Ex04DispatchDsl
 
 result = Ex04DispatchDsl.run()
 assert result.success
-assert result.value == "pong:dispatcher-example"```
+assert result.value == "pong:dispatcher-example"
+```

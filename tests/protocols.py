@@ -18,11 +18,12 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_tests import p
 
 if TYPE_CHECKING:
-    from tests._models.mixins import (
+    from tests.typings import t
+
+    from ._models.mixins import (
         TestsFlextModelsMixins,
         TestsFlextModelsMixins as _Mixins,
     )
-    from tests.typings import t
 
     AttrObject = _Mixins.AttrObject
     BadMapping = _Mixins.BadMapping

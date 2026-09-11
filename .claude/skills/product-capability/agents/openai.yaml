@@ -1,0 +1,7 @@
+interface:
+  display_name: "Product Capability"
+  short_description: "Evidence-backed product capability contracts"
+  brand_color: "#0EA5E9"
+  default_prompt: "Use $product-capability to turn approved product intent into one bounded capability contract."
+policy:
+  allow_implicit_invocation: true

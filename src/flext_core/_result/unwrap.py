@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-from flext_core._constants.errors import FlextConstantsErrors as c
+from flext_core import c
 
 from .composition import FlextResultComposition
 

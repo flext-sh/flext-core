@@ -20,8 +20,8 @@ from flext_core import (
     FlextResult as r,
     FlextTypes as t,
 )
-from flext_core._models.containers import FlextModelsContainers
 
+from ..._models.containers import FlextModelsContainers
 from .mapper_access_part_01 import (
     FlextUtilitiesMapperAccess as FlextUtilitiesMapperAccessPart01,
 )

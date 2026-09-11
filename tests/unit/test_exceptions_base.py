@@ -6,8 +6,8 @@ import time
 from typing import TYPE_CHECKING
 
 import pytest
-
 from flext_tests import e
+
 from tests.constants import c
 from tests.models import m
 

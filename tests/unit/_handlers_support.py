@@ -6,6 +6,7 @@ import math
 from typing import TYPE_CHECKING, Annotated, ClassVar, override
 
 from flext_tests import h, r
+
 from tests.constants import c
 from tests.models import m
 from tests.typings import t
@@ -124,7 +125,7 @@ class TestsFlextFlextHandlers:
     class HandlerTypeScenario(m.Value):
         """Scenario for handler types."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
         name: Annotated[str, m.Field(description="Handler type scenario name")]
         handler_type: Annotated[c.HandlerType, m.Field(description="Type")]
         handler_mode: Annotated[c.HandlerType, m.Field(description="Mode")]

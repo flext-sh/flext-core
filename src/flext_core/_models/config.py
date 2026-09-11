@@ -13,8 +13,9 @@ from __future__ import annotations
 from typing import Annotated, ClassVar
 
 from flext_core import FlextTypes as t
-from flext_core._models.base import FlextModelsBase as m
-from flext_core._models.pydantic import FlextModelsPydantic as mp
+
+from .base import FlextModelsBase as m
+from .pydantic import FlextModelsPydantic as mp
 
 
 class FlextModelsConfig:

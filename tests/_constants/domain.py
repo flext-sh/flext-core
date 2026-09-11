@@ -34,3 +34,6 @@ class TestsFlextConstantsDomain:
     STATUS_ACTIVE: Final[StatusEnum] = StatusEnum.ACTIVE
     STATUS_PENDING: Final[StatusEnum] = StatusEnum.PENDING
     STATUS_INACTIVE: Final[StatusEnum] = StatusEnum.INACTIVE
+
+
+c = TestsFlextConstantsDomain

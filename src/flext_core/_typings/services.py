@@ -13,16 +13,16 @@ from pathlib import Path
 from types import GenericAlias, ModuleType, UnionType
 from typing import TypeAliasType
 
-from flext_core._protocols.base import FlextProtocolsBase as p
-from flext_core._protocols.container import FlextProtocolsContainer as pc
-from flext_core._protocols.context import FlextProtocolsContext as pcx
-from flext_core._protocols.handler import FlextProtocolsHandler as ph
-from flext_core._protocols.logging import FlextProtocolsLogging as pl
-from flext_core._protocols.registry import FlextProtocolsRegistry as pr
-from flext_core._protocols.result import FlextProtocolsResult as prt
-from flext_core._protocols.settings import FlextProtocolsSettings as ps
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core._typings.pydantic import FlextTypesPydantic as tp
+from .._protocols.base import FlextProtocolsBase as p
+from .._protocols.container import FlextProtocolsContainer as pc
+from .._protocols.context import FlextProtocolsContext as pcx
+from .._protocols.handler import FlextProtocolsHandler as ph
+from .._protocols.logging import FlextProtocolsLogging as pl
+from .._protocols.registry import FlextProtocolsRegistry as pr
+from .._protocols.result import FlextProtocolsResult as prt
+from .._protocols.settings import FlextProtocolsSettings as ps
+from .base import FlextTypingBase as t
+from .pydantic import FlextTypesPydantic as tp
 
 
 class FlextTypesServices:

@@ -11,7 +11,6 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import pytest
-
 from flext_tests import h, r, tm
 
 if TYPE_CHECKING:
@@ -117,6 +116,9 @@ class TestsFlextCoreHandlerDiscoveryClass:
         tm.that(name, eq="handle_event")
         tm.that(settings.command is EventPublished, eq=True)
         tm.that(settings.priority, eq=25)
+        outcome = getattr(OrderService(), name)(EventPublished("e7"))
+        assert outcome.success is True
+        assert outcome.unwrap() == "processed_e7"
 
     def test_scan_class_uses_default_priority_when_unspecified(self) -> None:
         # Arrange

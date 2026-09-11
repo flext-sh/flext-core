@@ -6,10 +6,11 @@ from collections.abc import Mapping
 from enum import StrEnum
 
 from flext_core import c, p, r, t
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
-from flext_core._utilities.model import FlextUtilitiesModel
-from flext_core._utilities.parser_coerce import FlextUtilitiesParserCoerce
+
+from ..._models.pydantic import FlextModelsPydantic
+from ..guards_type_model import FlextUtilitiesGuardsTypeModel
+from ..model import FlextUtilitiesModel
+from ..parser_coerce import FlextUtilitiesParserCoerce
 
 
 class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
@@ -37,34 +38,29 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
     ) -> T:
         """Try a direct type call."""
         opts, fp = FlextUtilitiesParserTargets._resolve_opts(options, kwargs)
-        default = opts.default
-        default_factory = opts.default_factory
         if value is None:
-            parsed_default: T = FlextUtilitiesParserTargets._parse_with_default(
-                default,
-                default_factory,
-                c.ERR_PARSER_VALUE_IS_NONE.format(field_prefix=fp),
+            return FlextUtilitiesParserTargets._parse_with_default(
+                opts, c.ERR_PARSER_VALUE_IS_NONE.format(field_prefix=fp)
             ).unwrap()
-            return parsed_default
         if isinstance(value, target):
             return value
         target_name = target.__name__ if hasattr(target, "__name__") else "type"
+
+        def _on_failure(error: str) -> p.Result[T]:
+            return FlextUtilitiesParserTargets._parse_with_default(
+                opts,
+                c.ERR_PARSER_CANNOT_PARSE_TO_TARGET.format(
+                    field_prefix=fp,
+                    source_type=value.__class__.__name__,
+                    target_name=target_name,
+                    error=error,
+                ),
+            )
+
         parsed_direct: T = (
             FlextUtilitiesModel
             .validate_value(target, value)
-            .fold(
-                lambda error: FlextUtilitiesParserTargets._parse_with_default(
-                    default,
-                    default_factory,
-                    c.ERR_PARSER_CANNOT_PARSE_TO_TARGET.format(
-                        field_prefix=fp,
-                        source_type=value.__class__.__name__,
-                        target_name=target_name,
-                        error=error,
-                    ),
-                ),
-                lambda validated: validated,
-            )
+            .fold(_on_failure, r[T].ok)
             .unwrap()
         )
         return parsed_direct
@@ -136,12 +132,9 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
         if not FlextUtilitiesGuardsTypeModel.model_type(target):
             raise TypeError(c.ERR_PARSER_TARGET_NOT_BASEMODEL.format(field_prefix=fp))
         if value is None:
-            parsed_default: T = FlextUtilitiesParserTargets._parse_with_default(
-                opts.default,
-                opts.default_factory,
-                c.ERR_PARSER_VALUE_IS_NONE.format(field_prefix=fp),
+            return FlextUtilitiesParserTargets._parse_with_default(
+                opts, c.ERR_PARSER_VALUE_IS_NONE.format(field_prefix=fp)
             ).unwrap()
-            return parsed_default
         if not isinstance(value, Mapping) and not isinstance(
             value, FlextModelsPydantic.BaseModel
         ):

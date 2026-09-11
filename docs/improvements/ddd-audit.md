@@ -21,6 +21,7 @@ ______________________________________________________________________
 
 ## Recommended Actions
 
-1. Update integration callouts to reference `FlextDispatcher` (dispatcher registration + dispatch) instead of the removed bus layer.
+1. Update integration callouts to reference `FlextDispatcher` (dispatcher registration + dispatch) instead of the
+   removed bus layer.
 1. Add a brief note on how aggregates can publish events handled through dispatcher-managed subscribers.
 1. Keep imports scoped to the symbols used in each example.

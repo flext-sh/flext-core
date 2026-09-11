@@ -14,11 +14,12 @@ import operator
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import r, t
-from flext_core._models.collections import FlextModelsCollections
-from flext_core._protocols.result import FlextProtocolsResult as p
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
-from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
-from flext_core._utilities.guards_type_protocol import FlextUtilitiesGuardsTypeProtocol
+
+from .._models.collections import FlextModelsCollections
+from .._protocols.result import FlextProtocolsResult as p
+from .guards_type_core import FlextUtilitiesGuardsTypeCore
+from .guards_type_model import FlextUtilitiesGuardsTypeModel
+from .guards_type_protocol import FlextUtilitiesGuardsTypeProtocol
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping, Sized

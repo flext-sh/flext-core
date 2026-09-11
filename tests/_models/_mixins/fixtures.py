@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from tests._models._mixins.fixture_payloads import TestsFlextModelsFixturePayloadsMixin
-from tests._models._mixins.fixture_suite import TestsFlextModelsFixtureSuiteMixin
+from .fixture_payloads import TestsFlextModelsFixturePayloadsMixin
+from .fixture_suite import TestsFlextModelsFixtureSuiteMixin
 
 
 class TestsFlextModelsFixtureDictsMixin(

@@ -1,0 +1,33 @@
+{
+  "hooks": {
+    "beforeSubmitPrompt": [
+      {
+        "command": "python3 /home/marlonsc/flext/flext-core/.cursor/aihub-hooks/cursor-beforesubmitprompt.py",
+        "failClosed": true,
+        "timeout": 10
+      }
+    ],
+    "preCompact": [
+      {
+        "command": "python3 /home/marlonsc/flext/flext-core/.cursor/aihub-hooks/cursor-precompact.py",
+        "failClosed": true,
+        "timeout": 10
+      }
+    ],
+    "sessionStart": [
+      {
+        "command": "python3 /home/marlonsc/flext/flext-core/.cursor/aihub-hooks/cursor-sessionstart.py",
+        "failClosed": true,
+        "timeout": 10
+      }
+    ],
+    "subagentStart": [
+      {
+        "command": "python3 /home/marlonsc/flext/flext-core/.cursor/aihub-hooks/cursor-subagentstart.py",
+        "failClosed": true,
+        "timeout": 10
+      }
+    ]
+  },
+  "version": 1
+}

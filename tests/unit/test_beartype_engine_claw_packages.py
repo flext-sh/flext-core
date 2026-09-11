@@ -15,7 +15,8 @@ from pathlib import Path
 
 from flext_core.utilities import FlextUtilitiesBeartypeConf
 from tests.typings import t
-from tests.unit._beartype_engine_support import TestsFlextBeartypeEngine
+
+from ._beartype_engine_support import TestsFlextBeartypeEngine
 
 _CLAW_INIT = (
     textwrap.dedent(
@@ -111,7 +112,7 @@ class TestsFlextCoreBeartypeEngineClawPackages(TestsFlextBeartypeEngine):
         )
 
         # Assert
-        assert result.exit_code == 0, result.stderr
+        assert result.outcome.raw_return_code == 0, result.stderr
         assert "claw_import_ok" in result.stdout
 
     def test_claw_supports_recursive_aliases_in_synthetic_package(
@@ -148,7 +149,7 @@ class TestsFlextCoreBeartypeEngineClawPackages(TestsFlextBeartypeEngine):
         )
 
         # Assert: import succeeds and the aliased runtime value is intact.
-        assert result.exit_code == 0, result.stderr
+        assert result.outcome.raw_return_code == 0, result.stderr
         assert "aliasprobe_value x" in result.stdout
 
     def test_claw_config_imports_flext_core_without_error(self) -> None:
@@ -175,5 +176,5 @@ class TestsFlextCoreBeartypeEngineClawPackages(TestsFlextBeartypeEngine):
 
         # Assert: instrumentation succeeds and the public facade stays intact.
         combined_output = result.stdout + result.stderr
-        assert result.exit_code == 0, combined_output
+        assert result.outcome.raw_return_code == 0, combined_output
         assert "flext_core_facade True" in combined_output

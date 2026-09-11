@@ -18,7 +18,7 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from re import Pattern
 from types import EllipsisType
-from typing import dataclass_transform
+from typing import Literal, dataclass_transform
 
 from pydantic import (
     AfterValidator,
@@ -28,18 +28,23 @@ from pydantic import (
     BeforeValidator,
     ConfigDict as _PydanticConfigDict,
     Discriminator,
+    FailFast,
     Field,
     FieldSerializationInfo,
     GetCoreSchemaHandler,
     GetJsonSchemaHandler,
     GetPydanticSchema,
+    InstanceOf,
     JsonValue,
     PlainSerializer,
     PlainValidator,
-    PrivateAttr,
+    PrivateAttr as PydanticPrivateAttr,
     RootModel as PydanticRootModel,
+    SerializeAsAny,
     SkipValidation,
+    StringConstraints,
     TypeAdapter as PydanticTypeAdapter,
+    ValidateAs,
     ValidationError,
     ValidationInfo,
     WrapSerializer,
@@ -82,6 +87,17 @@ def _field[DefaultT](
     return field_factory(default, **kwargs)
 
 
+def _private_attr[PrivateT](
+    default: PrivateT | PydanticUndefinedType = PydanticUndefined,
+    *,
+    default_factory: Callable[..., PrivateT] | None = None,
+    init: Literal[False] = False,
+) -> PrivateT:
+    """Typed FLEXT facade for ``pydantic.PrivateAttr``."""
+    private_attr_factory: Callable[..., PrivateT] = PydanticPrivateAttr
+    return private_attr_factory(default, default_factory=default_factory, init=init)
+
+
 class FlextModelsPydantic:
     """Public base model classes from pydantic v2.
 
@@ -94,19 +110,22 @@ class FlextModelsPydantic:
     """
 
     @dataclass_transform(
-        kw_only_default=True, field_specifiers=(_field, Field, PrivateAttr)
+        kw_only_default=True,
+        field_specifiers=(_field, Field, PydanticPrivateAttr, _private_attr),
     )
     class BaseModel(PydanticBaseModel):
         """Canonical BaseModel exported through the FLEXT models facade."""
 
     @dataclass_transform(
-        kw_only_default=True, field_specifiers=(_field, Field, PrivateAttr)
+        kw_only_default=True,
+        field_specifiers=(_field, Field, PydanticPrivateAttr, _private_attr),
     )
     class BaseSettings(PydanticBaseSettings):
         """Canonical BaseSettings exported through the FLEXT models facade."""
 
     @dataclass_transform(
-        kw_only_default=True, field_specifiers=(_field, Field, PrivateAttr)
+        kw_only_default=True,
+        field_specifiers=(_field, Field, PydanticPrivateAttr, _private_attr),
     )
     class RootModel[RootValueT](PydanticRootModel[RootValueT]):
         """Canonical RootModel exported through the FLEXT models facade."""
@@ -116,10 +135,7 @@ class FlextModelsPydantic:
     SettingsConfigDict = _PydanticSettingsConfigDict
 
     Field = staticmethod(_field)
-    # NOTE (multi-agent): mro-ecfu — staticmethod wrap matches Field above and
-    # u.PrivateAttr (_utilities/pydantic.py): pyright cannot model an unwrapped
-    # function class attribute called through the facade (mixins.py:59 error).
-    PrivateAttr = staticmethod(PrivateAttr)
+    PrivateAttr = staticmethod(_private_attr)
     SkipValidation = SkipValidation
     # Same unwrapped-class-attribute problem as PrivateAttr above: pyright
     # binds the bare decorator through the facade and infers the facade type
@@ -127,14 +143,22 @@ class FlextModelsPydantic:
     computed_field = staticmethod(computed_field)
     field_validator = field_validator
 
+    # Annotation constraints and tagged-union discrimination
+    Discriminator = Discriminator
+    StringConstraints = StringConstraints
+
     # Annotation validators
     AfterValidator = AfterValidator
     BeforeValidator = BeforeValidator
+    FailFast = FailFast
+    InstanceOf = InstanceOf
     PlainValidator = PlainValidator
+    ValidateAs = ValidateAs
     WrapValidator = WrapValidator
 
     # Serializers
     PlainSerializer = PlainSerializer
+    SerializeAsAny = SerializeAsAny
     WrapSerializer = WrapSerializer
 
     # Validation and serialization context helpers

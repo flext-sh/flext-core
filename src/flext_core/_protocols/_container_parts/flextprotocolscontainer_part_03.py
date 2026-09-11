@@ -10,9 +10,10 @@ from typing import TYPE_CHECKING, Protocol, override, runtime_checkable
 
 if TYPE_CHECKING:
     from flext_core import FlextModels as m
-    from flext_core._protocols.context import FlextProtocolsContext
-    from flext_core._protocols.settings import FlextProtocolsSettings
-from flext_core._protocols._container_parts.flextprotocolscontainer_part_02 import (
+
+    from ..context import FlextProtocolsContext
+    from ..settings import FlextProtocolsSettings
+from .flextprotocolscontainer_part_02 import (
     FlextProtocolsContainer as FlextProtocolsContainerPart02,
 )
 

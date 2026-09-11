@@ -10,14 +10,11 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import ClassVar, TypeGuard
 
-from flext_core import (
-    FlextProtocols as p,
-    FlextResult as r,
-    FlextRuntime,
-    FlextTypes as t,
-)
-from flext_core._constants.cqrs import FlextConstantsCqrs as _c_cqrs
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core import FlextProtocols as p, FlextResult as r, FlextTypes as t
+
+from .._constants.cqrs import FlextConstantsCqrs as _c_cqrs
+from .._runtime._metadata import FlextRuntimeMetadata
+from .guards_type_core import FlextUtilitiesGuardsTypeCore
 
 
 class FlextUtilitiesCollectionMerge:
@@ -40,7 +37,10 @@ class FlextUtilitiesCollectionMerge:
         if FlextUtilitiesCollectionMerge._is_json_mapping(
             current_val
         ) and FlextUtilitiesCollectionMerge._is_json_mapping(value):
-            result[key] = FlextRuntime.normalize_to_metadata({**current_val, **value})
+            result[key] = FlextRuntimeMetadata.normalize_to_metadata({
+                **current_val,
+                **value,
+            })
             return r[bool].ok(True)
         result[key] = value
         return r[bool].ok(True)
@@ -87,7 +87,10 @@ class FlextUtilitiesCollectionMerge:
             if FlextUtilitiesCollectionMerge._is_json_list(
                 current_val
             ) and FlextUtilitiesCollectionMerge._is_json_list(value):
-                result[key] = FlextRuntime.normalize_to_metadata([*current_val, *value])
+                result[key] = FlextRuntimeMetadata.normalize_to_metadata([
+                    *current_val,
+                    *value,
+                ])
                 continue
             result[key] = value
         return r[t.JsonMapping].ok(result)

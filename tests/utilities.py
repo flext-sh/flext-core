@@ -3,18 +3,15 @@
 from __future__ import annotations
 
 from flext_tests import u as tests_u
-from tests._utilities.case_factories import TestsFlextUtilitiesCaseFactoriesMixin
-from tests._utilities.contracts import TestsFlextUtilitiesContractsMixin
-from tests._utilities.dispatch import TestsFlextUtilitiesDispatchMixin
-from tests._utilities.parser_reliability import (
-    TestsFlextUtilitiesParserReliabilityMixin,
-)
-from tests._utilities.railway import TestsFlextUtilitiesRailwayMixin
-from tests._utilities.service_factories import TestsFlextUtilitiesServiceFactoriesMixin
-from tests._utilities.services import TestsFlextUtilitiesServicesMixin
-from tests._utilities.validation_scenarios import (
-    TestsFlextUtilitiesValidationScenariosMixin,
-)
+
+from ._utilities.case_factories import TestsFlextUtilitiesCaseFactoriesMixin
+from ._utilities.contracts import TestsFlextUtilitiesContractsMixin
+from ._utilities.dispatch import TestsFlextUtilitiesDispatchMixin
+from ._utilities.parser_reliability import TestsFlextUtilitiesParserReliabilityMixin
+from ._utilities.railway import TestsFlextUtilitiesRailwayMixin
+from ._utilities.service_factories import TestsFlextUtilitiesServiceFactoriesMixin
+from ._utilities.services import TestsFlextUtilitiesServicesMixin
+from ._utilities.validation_scenarios import TestsFlextUtilitiesValidationScenariosMixin
 
 
 class TestsFlextUtilities(tests_u):

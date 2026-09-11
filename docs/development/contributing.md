@@ -34,7 +34,8 @@
   - [Support Levels](#support-levels)
 <!-- TOC END -->
 
-Thank you for your interest in contributing to FLEXT-Core! This guide provides comprehensive instructions for contributing to the project.
+Thank you for your interest in contributing to FLEXT-Core! This guide provides comprehensive instructions for
+contributing to the project.
 
 ## Code of Conduct
 
@@ -264,28 +265,28 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
 
 ### Adding New Features
 
-**1. Foundation Layer Changes**
+#### 1. Foundation Layer Changes
 
 - Be extremely cautious - affects entire ecosystem
 - Consider backward compatibility impact
 - Update type definitions in `typings.py`
 - Add comprehensive tests
 
-**2. Domain Layer Changes**
+#### 2. Domain Layer Changes
 
 - Focus on business logic only
 - Use `FlextModels` for entities and value objects
 - Implement validation in `model_post_init`
 - Add domain events for significant state changes
 
-**3. Application Layer Changes**
+#### 3. Application Layer Changes
 
 - Use CQRS patterns with `FlextDispatcher`
 - Implement handlers for commands/queries
 - Add middleware for cross-cutting concerns
 - Register components with `u.build_registry()`
 
-**4. Infrastructure Layer Changes**
+#### 4. Infrastructure Layer Changes
 
 - Abstract external dependencies
 - Use `p` for runtime contracts
