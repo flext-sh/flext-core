@@ -1,4 +1,4 @@
-<!-- AUTO-GENERATED FILE — regenerate through `make gen APPLY=Y` from the workspace root. -->
+<!-- AUTO-GENERATED FILE — regenerate through `make gen` from the workspace root. -->
 <!-- Source of truth: `docs/guides/skill-automation-pattern.md`; adjust that source, never this projection. -->
 
 # flext-core - Skill Automation Pattern
@@ -51,21 +51,21 @@ Run only from the workspace root:
 ```bash
 make setup
 make help
-make gen APPLY=Y
-make mod APPLY=Y
-make gen APPLY=Y
-make gen APPLY=Y
-make fix APPLY=Y
-make fmt APPLY=Y
-make check APPLY=Y
-make test APPLY=Y
-make conform APPLY=Y
-make waza APPLY=Y
+make gen
+make mod
+make gen
+make gen
+make fix
+make fmt
+make check
+make test
+make conform
+make waza
 ```
 
-The final generation run proves the fixed point. `make mod APPLY=Y` owns
+The final generation run proves the fixed point. `make mod` owns
 structural transformations; no direct script or tool invocation is valid.
-`make test APPLY=Y` always retains Testmon.
+`make test` always retains Testmon.
 
 Do not add project, file, pattern, action, phase, fix, or changed-only selectors.
 A missing capability is implemented at the canonical Make/flext-infra owner

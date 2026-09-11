@@ -86,7 +86,11 @@ def _docs_open(file: str | Path, mode: str = "r") -> object:
 
 def _identity_decorator(*_args: object, **_kwargs: object) -> object:
     """Return a decorator that leaves documented functions unchanged."""
-    return lambda fn: fn
+
+    def _identity(fn: object) -> object:
+        return fn
+
+    return _identity
 
 
 def pytest_markdown_docs_globals() -> dict[str, object]:

@@ -49,7 +49,7 @@ ENV PATH="/home/runner/.local/share/mise/shims:${PATH}"
 # broken bootstrap still produced a green image.
 ENV CI=Y
 RUN --mount=type=secret,id=github_token,env=MISE_GITHUB_TOKEN,required=true \
-    make setup APPLY=Y
+    make setup
 # End SECTION: bootstrap proof
 
 ENTRYPOINT []

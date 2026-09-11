@@ -1,4 +1,4 @@
-<!-- AUTO-GENERATED FILE — regenerate through `make gen APPLY=Y` from the workspace root. -->
+<!-- AUTO-GENERATED FILE — regenerate through `make gen` from the workspace root. -->
 <!-- Source of truth: `docs/guides/security.md`; adjust that source, never this projection. -->
 
 # flext-core - Security Guide

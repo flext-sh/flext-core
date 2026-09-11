@@ -125,17 +125,17 @@ jobs:
         # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
         run: CI=Y make setup
       - name: gen check (blocking)
-        run: CI=Y make conform APPLY=Y
+        run: CI=Y make conform 
 
       # Setup syncs against the committed lock and refreshes it in place (`uv
       # sync`); the fleet runs unlocked, so the deps audit proves the resolved
       # graph instead of preserving a frozen snapshot.
       - name: deps check (blocking)
-        run: CI=Y make audit APPLY=Y
+        run: CI=Y make audit
 
       - name: check (blocking)
         # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
-        run: CI=Y make check APPLY=Y
+        run: CI=Y make check
 
       # Why (aihub-v01jg): CI=Y runs ONE HALF of the gate set
       # (lint pyright silent-failure deferred-self-reference security markdown loc-cap boundary runtime-census namespace tier-whitelist smells codemod layout canonical-alias direnv duplication); the complement
@@ -147,11 +147,11 @@ jobs:
       # construction, so running both here costs one extra pass and closes the
       # hole rather than trusting everyone to run the other half by hand.
       - name: check complement (blocking)
-        run: CI=N make check APPLY=Y
+        run: CI=N make check
 
       - name: test (blocking)
         # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
-        run: CI=Y make test APPLY=Y
+        run: CI=Y make test
 
       - name: Dump reports on failure
         if: ${{ failure() }}
@@ -267,7 +267,7 @@ jobs:
       - name: Release plan and guard
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
-        run: make release-plan APPLY=Y
+        run: make release-plan 
   # End SECTION: release-plan job
 
   # === SECTION: merge-guard job (managed) ===
