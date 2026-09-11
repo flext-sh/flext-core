@@ -1,5 +1,0 @@
-id: fix-bindable-logger-annotation
-language: python
-rule:
-  pattern: "$NAME: BindableLogger = $INIT"
-fix: "$NAME: p.Logger = $INIT"

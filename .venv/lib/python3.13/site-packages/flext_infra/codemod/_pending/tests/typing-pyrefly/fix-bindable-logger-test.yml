@@ -1,5 +1,0 @@
-id: fix-bindable-logger-annotation
-valid:
-  - "logger: p.Logger = get_logger()"
-invalid:
-  - "logger: BindableLogger = get_logger()"

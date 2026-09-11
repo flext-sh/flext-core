@@ -1,7 +1,0 @@
-id: gitignore-has-pycache-pattern
-language: yaml
-rule:
-  kind: flow_node
-  regex: __pycache__/
-message: Missing __pycache__/ pattern in .gitignore.
-severity: warning

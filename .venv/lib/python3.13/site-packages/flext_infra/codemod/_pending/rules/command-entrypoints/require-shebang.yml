@@ -1,7 +1,0 @@
-id: require-shebang
-language: python
-rule:
-  kind: comment
-  regex: "^#!/usr/bin/env"
-message: "Shebang line found (tracking)"
-severity: warning

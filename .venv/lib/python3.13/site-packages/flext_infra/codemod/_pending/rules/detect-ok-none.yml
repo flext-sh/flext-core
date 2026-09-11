@@ -1,6 +1,0 @@
-id: detect-ok-none
-language: python
-rule:
-  any:
-    - pattern: p.Result[$T].ok(None)
-    - pattern: p.Result[$T].ok(None)

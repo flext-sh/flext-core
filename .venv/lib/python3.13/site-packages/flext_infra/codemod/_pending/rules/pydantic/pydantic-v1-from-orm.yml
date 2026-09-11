@@ -1,6 +1,0 @@
-id: pydantic-v1-from-orm
-language: python
-rule:
-  pattern: $OBJ.from_orm($$$ARGS)
-message: "Pydantic v1 .from_orm() - use model_validate()"
-severity: error

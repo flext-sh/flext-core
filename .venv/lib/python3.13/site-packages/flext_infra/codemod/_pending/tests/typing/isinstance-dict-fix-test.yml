@@ -1,6 +1,0 @@
-id: isinstance-dict-fix
-valid:
-  - "isinstance(x, Mapping)"
-  - "isinstance(x, str)"
-invalid:
-  - "isinstance(x, dict)"

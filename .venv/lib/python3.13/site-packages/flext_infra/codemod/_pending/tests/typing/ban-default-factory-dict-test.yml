@@ -1,6 +1,0 @@
-id: ban-default-factory-dict
-valid:
-- "x = field(default_factory=list)"
-- "x = field(default=None)"
-invalid:
-- "x = field(default_factory=dict)"

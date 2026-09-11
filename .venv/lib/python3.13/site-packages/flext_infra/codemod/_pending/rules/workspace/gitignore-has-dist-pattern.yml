@@ -1,7 +1,0 @@
-id: gitignore-has-dist-pattern
-language: yaml
-rule:
-  kind: flow_node
-  regex: dist/
-message: Missing dist/ pattern in .gitignore.
-severity: warning

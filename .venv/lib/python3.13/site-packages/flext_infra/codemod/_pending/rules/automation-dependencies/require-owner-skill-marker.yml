@@ -1,7 +1,0 @@
-id: require-owner-skill-marker
-language: python
-rule:
-  kind: comment
-  regex: "^#\\s*Owner-Skill:"
-message: "Owner-Skill marker found (tracking)"
-severity: warning

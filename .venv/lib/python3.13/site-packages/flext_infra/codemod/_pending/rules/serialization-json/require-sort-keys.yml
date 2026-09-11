@@ -1,6 +1,0 @@
-id: require-sort-keys
-language: python
-rule:
-  pattern: orjson.OPT_SORT_KEYS
-message: "orjson OPT_SORT_KEYS usage found (tracking)"
-severity: warning

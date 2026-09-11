@@ -1,7 +1,0 @@
-id: no-trailing-whitespace-in-md
-language: html
-rule:
-  kind: text
-  regex: '[ \t]+$'
-message: Markdown files should not have trailing whitespace.
-severity: warning

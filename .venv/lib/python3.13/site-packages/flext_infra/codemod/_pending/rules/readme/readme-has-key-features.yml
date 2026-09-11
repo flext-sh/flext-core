@@ -1,7 +1,0 @@
-id: readme-has-key-features
-language: html
-rule:
-  kind: text
-  regex: ^## Key Features
-message: README.md must have a '## Key Features' section.
-severity: warning

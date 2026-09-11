@@ -1,5 +1,0 @@
-id: isinstance-dict-fix
-language: python
-rule:
-  pattern: "isinstance($X, dict)"
-fix: "isinstance($X, Mapping)"

@@ -1,7 +1,0 @@
-id: raw-stdout-stderr-write
-valid:
-  - "u.out('hello')"
-  - "u.err(f'error: {message}')"
-invalid:
-  - "sys.stdout.write('hello\\n')"
-  - "sys.stderr.write(f'error: {message}\\n')"

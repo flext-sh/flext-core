@@ -1,9 +1,0 @@
-id: require-workflow-name
-language: yaml
-rule:
-  kind: block_mapping_pair
-  has:
-    field: key
-    regex: "^name$"
-message: "Workflow name found (tracking)"
-severity: warning

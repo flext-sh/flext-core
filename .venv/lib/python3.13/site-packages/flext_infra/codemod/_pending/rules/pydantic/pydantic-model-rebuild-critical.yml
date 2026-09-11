@@ -1,6 +1,0 @@
-id: pydantic-model-rebuild-critical
-language: python
-rule:
-  pattern: $OBJ.model_rebuild($$$ARGS)
-message: "model_rebuild() is TOTALMENTE PROHIBIDO. Resolve type references at definition time or use Protocols."
-severity: error

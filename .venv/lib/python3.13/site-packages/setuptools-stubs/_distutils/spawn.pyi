@@ -1,6 +1,0 @@
-from _typeshed import StrOrBytesPath
-from collections.abc import Sequence
-from subprocess import _ENV
-
-def spawn(cmd: Sequence[StrOrBytesPath], *, env: _ENV | None = None, **kwargs) -> None: ...
-def find_executable(executable: str, path: str | None = None) -> str | None: ...

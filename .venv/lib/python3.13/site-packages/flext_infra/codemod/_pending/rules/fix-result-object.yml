@@ -1,5 +1,0 @@
-id: fix-result-t.JsonValue
-language: python
-rule:
-  pattern: p.Result[t.JsonValue]
-fix: p.Result[t.JsonValue]

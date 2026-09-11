@@ -1,6 +1,0 @@
-id: no-asyncio-run-in-src
-language: python
-rule:
-  pattern: "asyncio.run($$$ARGS)"
-message: "asyncio.run() blocks event loop - use await instead"
-severity: error

@@ -1,7 +1,0 @@
-id: readme-has-contributing
-language: html
-rule:
-  kind: text
-  regex: ^## Contributing
-message: README.md must have a '## Contributing' section.
-severity: warning

@@ -1,9 +1,0 @@
-id: detect-bindable-logger
-language: python
-rule:
-  any:
-    - pattern: "logger: BindableLogger"
-    - pattern: "logger: BindableLogger = $INIT"
-    - pattern: "$NAME: BindableLogger"
-    - pattern: "$NAME: BindableLogger = $INIT"
-    - pattern: "-> BindableLogger"

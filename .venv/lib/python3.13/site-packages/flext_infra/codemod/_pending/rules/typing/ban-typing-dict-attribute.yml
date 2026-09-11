@@ -1,8 +1,0 @@
-id: ban-typing-dict-attribute
-language: python
-rule:
-  all:
-    - kind: attribute
-    - pattern: typing.Dict
-message: typing.Dict is banned
-severity: error

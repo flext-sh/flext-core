@@ -1,6 +1,0 @@
-id: no-blocking-sleep-in-async
-language: python
-rule:
-  pattern: "time.sleep($$$ARGS)"
-message: "time.sleep() blocks async event loop - use asyncio.sleep()"
-severity: error
