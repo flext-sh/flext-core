@@ -566,7 +566,6 @@ whitelines = 1
 
 [tool.uv]
 link-mode = "copy"
-exclude-newer = "0 days"
 constraint-dependencies = ["structlog<26"]
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 

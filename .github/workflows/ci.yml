@@ -138,7 +138,7 @@ jobs:
         run: CI=Y make check
 
       # Why (aihub-v01jg): CI=Y runs ONE HALF of the gate set
-      # (lint pyright silent-failure deferred-self-reference security markdown loc-cap boundary runtime-census namespace tier-whitelist smells codemod layout canonical-alias direnv duplication); the complement
+      # (lint pyright silent-failure deferred-self-reference security markdown loc-cap boundary runtime-census namespace tier-whitelist smells codemod layout canonical-alias direnv duplication budget); the complement
       # (pyrefly mypy) is owned by
       # CI=N and, without this step, ran on developer
       # machines only. That split let real defects reach main twice: five
