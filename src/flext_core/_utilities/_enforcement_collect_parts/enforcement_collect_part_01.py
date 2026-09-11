@@ -7,14 +7,14 @@ from collections.abc import Callable, Iterator
 from enum import EnumType
 from pathlib import Path
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._protocols.base import FlextProtocolsBase as pb
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core._typings.pydantic import FlextTypesPydantic as tp
-from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as ub
-from flext_core._utilities.enforcement_emit import FlextUtilitiesEnforcementEmit
-from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata as upm
+from ..._constants.enforcement import FlextConstantsEnforcement as c
+from ..._models.pydantic import FlextModelsPydantic as mp
+from ..._protocols.base import FlextProtocolsBase as pb
+from ..._typings.base import FlextTypingBase as t
+from ..._typings.pydantic import FlextTypesPydantic as tp
+from ..beartype_engine import FlextUtilitiesBeartypeEngine as ub
+from ..enforcement_emit import FlextUtilitiesEnforcementEmit
+from ..project_metadata import FlextUtilitiesProjectMetadata as upm
 
 _ERR_ENFORCEMENT_NAMESPACE_METADATA = (
     "Cannot read project metadata for enforcement namespace resolution"

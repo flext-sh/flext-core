@@ -12,6 +12,11 @@ from examples.shared import ExamplesFlextShared
 from flext_core import u
 
 
+def _raise_value_error(message: str) -> None:
+    """Raise the logged example error."""
+    raise ValueError(message)
+
+
 class Ex03FlextLogger(ExamplesFlextShared):
     """Exercise FlextUtilitiesLogging public APIs against the golden file."""
 
@@ -29,9 +34,11 @@ class Ex03FlextLogger(ExamplesFlextShared):
         """Exercise exception logging from an active exception handler."""
         message = "boom"
         try:
-            raise ValueError(message)
+            _raise_value_error(message)
         except ValueError as exc:
             return Ex03FlextLogger._ok(logger.exception(label, exception=exc))
+        msg = f"expected ValueError({message!r}) was not raised"
+        raise AssertionError(msg)
 
     def _exercise_container(self) -> None:
         """Exercise container-aware logger creation."""

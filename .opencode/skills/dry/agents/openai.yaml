@@ -1,0 +1,7 @@
+interface:
+  display_name: "DRY"
+  short_description: "Exterminate structural waste without code golf"
+  brand_color: "#166534"
+  default_prompt: "Use $dry to remove duplication, god patterns, dead code, and needless work while preserving complete readable behavior."
+policy:
+  allow_implicit_invocation: true

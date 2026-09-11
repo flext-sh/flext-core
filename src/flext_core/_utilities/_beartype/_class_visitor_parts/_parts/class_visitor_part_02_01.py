@@ -2,14 +2,12 @@
 
 from __future__ import annotations
 
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_01 import (
-    BINARY_ARITY,
-    NO_VIOLATION,
-)
-from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers as ubh
-from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata as upm
+from ....._constants.enforcement import FlextConstantsEnforcement as c
+from ....._models.enforcement import FlextModelsEnforcement as me
+from ....._typings.base import FlextTypingBase as t
+from ....project_metadata import FlextUtilitiesProjectMetadata as upm
+from ...helpers import FlextUtilitiesBeartypeHelpers as ubh
+from ..class_visitor_part_01 import BINARY_ARITY, NO_VIOLATION
 
 
 def _peer_first_allowed(
@@ -71,6 +69,21 @@ def alias_first_violation(
         "flext_core.examples",
         "flext_core.scripts",
     ))
+
+    # Private family classes (e.g. FlextApiConstantsApi in _constants/api.py)
+    # are composed by their parent facade through MRO (R1, R3).  The
+    # alias/peer-first checks (ENFORCE-047, ENFORCE-049) only constrain
+    # public facade classes, so private family modules are exempt.
+    # The family set is driven by the ENFORCEMENT_PRIVATE_FAMILY_PACKAGES
+    # constant (see FlextConstantsEnforcementTargets) — evaluation iterates
+    # that set AND any private (underscore-prefixed) sub-package path
+    # component, so adding a new private sub-package is automatic.
+    module_parts = module_name.split(".")
+    if len(module_parts) > 1 and (
+        module_parts[1] in c.ENFORCEMENT_PRIVATE_FAMILY_PACKAGES
+        or any(part.startswith("_") for part in module_parts[1:])
+    ):
+        return NO_VIOLATION
 
     base_count = len(target.__bases__)
     first_base = target.__bases__[0]

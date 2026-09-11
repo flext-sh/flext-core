@@ -3,14 +3,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from . import _parts as _parts
+    from . import _parts
     from ._parts.flextconstantsenforcementcatalogrows_part_01_a import (
         INFRA_DETECTOR_ROWS_CORE,
     )
@@ -43,38 +42,35 @@ __all__: tuple[str, ...] = (
     "_parts",
 )
 
-install_lazy_exports(
-    __name__,
-    globals(),
-    MappingProxyType(
-        build_lazy_import_map(
-            MappingProxyType({
-                "._parts": ("_parts",),
-                "._parts.flextconstantsenforcementcatalogrows_part_01_a": (
-                    "INFRA_DETECTOR_ROWS_CORE",
-                ),
-                "._parts.flextconstantsenforcementcatalogrows_part_01_b": (
-                    "INFRA_DETECTOR_ROWS_PATTERNS",
-                ),
-                ".flextconstantsenforcementcatalogrows_part_01": (
-                    "FlextConstantsEnforcementCatalogInfraRows",
-                ),
-                ".flextconstantsenforcementcatalogrows_part_02": (
-                    "FlextConstantsEnforcementCatalogSkillRows",
-                ),
-                ".flextconstantsenforcementcatalogrows_part_03": (
-                    "FlextConstantsEnforcementCatalogToolRows",
-                ),
-                ".flextconstantsenforcementcatalogrows_part_04": (
-                    "FlextConstantsEnforcementCatalogBeartypeRows",
-                ),
-                ".flextconstantsenforcementcatalogrows_part_05": (
-                    "FlextConstantsEnforcementCatalogInfraRowsExtended",
-                ),
-            }),
-            alias_groups=MappingProxyType({}),
-            sort_keys=False,
-        )
-    ),
-    public_exports=__all__,
+_LAZY_IMPORTS = MappingProxyType(
+    build_lazy_import_map(
+        MappingProxyType({
+            "._parts": ("_parts",),
+            "._parts.flextconstantsenforcementcatalogrows_part_01_a": (
+                "INFRA_DETECTOR_ROWS_CORE",
+            ),
+            "._parts.flextconstantsenforcementcatalogrows_part_01_b": (
+                "INFRA_DETECTOR_ROWS_PATTERNS",
+            ),
+            ".flextconstantsenforcementcatalogrows_part_01": (
+                "FlextConstantsEnforcementCatalogInfraRows",
+            ),
+            ".flextconstantsenforcementcatalogrows_part_02": (
+                "FlextConstantsEnforcementCatalogSkillRows",
+            ),
+            ".flextconstantsenforcementcatalogrows_part_03": (
+                "FlextConstantsEnforcementCatalogToolRows",
+            ),
+            ".flextconstantsenforcementcatalogrows_part_04": (
+                "FlextConstantsEnforcementCatalogBeartypeRows",
+            ),
+            ".flextconstantsenforcementcatalogrows_part_05": (
+                "FlextConstantsEnforcementCatalogInfraRowsExtended",
+            ),
+        }),
+        alias_groups=MappingProxyType({}),
+        sort_keys=False,
+    )
 )
+
+install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

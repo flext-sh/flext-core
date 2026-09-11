@@ -32,7 +32,9 @@ from flext_core import FlextSettings
 
 settings = FlextSettings(log_level="INFO", debug=False, trace=False)
 assert settings.log_level == "INFO"
-assert settings.debug is False```
+assert settings.debug is False
+```
+
 Read `log_level` directly; `debug` and `trace` are independent typed flags on the model.
 
 ```python
@@ -41,7 +43,9 @@ from flext_core import FlextSettings
 settings = FlextSettings(log_level="INFO", debug=True, trace=False)
 assert settings.log_level == "INFO"
 assert settings.debug is True
-assert settings.trace is False```
+assert settings.trace is False
+```
+
 ## Singleton Access
 
 Use `fetch_global()` for canonical global access.
@@ -54,7 +58,9 @@ derived = FlextSettings.fetch_global(overrides={"debug": True})
 
 assert isinstance(base, FlextSettings)
 assert isinstance(derived, FlextSettings)
-assert derived.debug is True```
+assert derived.debug is True
+```
+
 ## Safe Override Application
 
 Use `clone` to derive a modified copy without mutating the original.
@@ -67,7 +73,9 @@ updated = settings.clone(debug=True)
 
 assert updated is not settings
 assert updated.debug is True
-assert settings.debug is False```
+assert settings.debug is False
+```
+
 ## Context-Specific Settings
 
 Use `fetch_global(overrides=...)` to derive worker/request-level configuration from the global singleton.
@@ -80,7 +88,9 @@ worker_settings = FlextSettings.fetch_global(
 )
 
 assert worker_settings.debug is True
-assert worker_settings.log_level == "DEBUG"```
+assert worker_settings.log_level == "DEBUG"
+```
+
 ## Custom Settings Models
 
 Subclass `FlextSettings` to define bounded domain settings; base fields are inherited.
@@ -101,14 +111,18 @@ docs_settings = DocsDemoSettings()
 assert isinstance(docs_settings, DocsDemoSettings)
 assert isinstance(docs_settings, FlextSettings)
 assert docs_settings.feature_enabled is True
-assert docs_settings.log_level == "INFO"```
+assert docs_settings.log_level == "INFO"
+```
+
 ## Environment Variables
 
 FLEXT settings are environment-aware through Pydantic settings.
 
 ```bash
 export FLEXT_LOG_LEVEL=DEBUG
-export FLEXT_DEBUG=true```
+export FLEXT_DEBUG=true
+```
+
 Then in code:
 
 ```python
@@ -116,7 +130,9 @@ from flext_core import FlextSettings
 
 settings = FlextSettings()
 assert isinstance(settings.log_level, str)
-assert isinstance(settings.debug, bool)```
+assert isinstance(settings.debug, bool)
+```
+
 ## Best Practices
 
 - Read settings from `FlextSettings.fetch_global()` in application entrypoints.

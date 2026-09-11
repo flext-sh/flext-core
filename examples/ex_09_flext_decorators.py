@@ -6,17 +6,18 @@ from functools import wraps
 from typing import TYPE_CHECKING
 
 from examples.protocols import p
-from flext_core import r
+from flext_core import r, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
 
 def _log_result[T](fn: Callable[..., T]) -> Callable[..., T]:
-    """Decorator that passes through a result-returning function unchanged."""
+    """Decorator that logs each call, then passes the result through."""
 
     @wraps(fn)
     def _wrapper(*args: object, **kwargs: object) -> T:
+        _ = u.fetch_logger(fn.__name__).info(f"calling {fn.__name__}")
         return fn(*args, **kwargs)
 
     return _wrapper
@@ -37,8 +38,13 @@ class Ex09FlextDecorators:
         return run()
 
 
-if __name__ == "__main__":
+def _main() -> None:
+    """Run the example as a script; names stay local so the package exports none."""
     result = run()
     if not result.success:
         msg = "decorator example failed"
         raise RuntimeError(msg)
+
+
+if __name__ == "__main__":
+    _main()

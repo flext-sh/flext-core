@@ -17,11 +17,11 @@ from flext_core import (
     FlextConstants as c,
     FlextProtocols as p,
     FlextResult as r,
-    FlextRuntime,
     FlextTypes as t,
 )
-from flext_core._models.containers import FlextModelsContainers as mc
 
+from .._models.containers import FlextModelsContainers
+from .._runtime._metadata import FlextRuntimeMetadata
 from .collection_iter import FlextUtilitiesCollectionIter
 from .collection_merge import FlextUtilitiesCollectionMerge
 
@@ -33,18 +33,20 @@ class FlextUtilitiesCollection(
 
     @staticmethod
     def normalize_domain_event_data(
-        value: mc.ConfigMap | t.JsonMapping | None,
+        value: FlextModelsContainers.ConfigMap | t.JsonMapping | None,
     ) -> t.JsonMapping:
         """Normalize domain event payloads into plain flat mappings."""
         if value is None:
             empty_data: t.JsonMapping = {}
             return empty_data
-        raw_source = value.root if isinstance(value, mc.ConfigMap) else value
+        raw_source = (
+            value.root if isinstance(value, FlextModelsContainers.ConfigMap) else value
+        )
         normalized: t.MutableJsonMapping = {}
         for key, item in raw_source.items():
             if item is None:
                 continue
-            normalized[key] = FlextRuntime.normalize_to_metadata(item)
+            normalized[key] = FlextRuntimeMetadata.normalize_to_metadata(item)
         return normalized
 
     @staticmethod

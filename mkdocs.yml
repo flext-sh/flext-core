@@ -48,10 +48,6 @@ plugins:
           paths:
             - src
           docstring_style: auto
-          docstring_options:
-            warnings: false
-            warn_unknown_params: false
-            warn_missing_types: false
           options:
             show_root_heading: true
             show_root_full_path: false
@@ -61,7 +57,15 @@ plugins:
             merge_init_into_class: true
             docstring_section_style: spacy
   - git-revision-date-localized:
-      enable_creation_date: true
+      # Why: enable_creation_date resolves via 'git log --diff-filter=Ar', which returns
+      # EMPTY for pages whose only add-commit is a merge commit. The plugin then falls back
+      # to time.time() (build clock), making first_revision > last_revision always true,
+      # which logs a warning that mkdocs --strict turns into a build failure. Revision date
+      # from the last commit touching the page is the intended and robust behavior.
+      # enable_git_follow is off for the same reason: following renames re-reads
+      # history per page and reintroduces the same empty-result fallback.
+      enable_creation_date: false
+      enable_git_follow: false
       type: date
       exclude:
         - api-reference/generated/**
@@ -90,6 +94,6 @@ nav:
 not_in_nav: |
   api-reference/generated/**
 validation:
-  omitted_files: ignore
+  omitted_files: warn
   absolute_links: warn
   unrecognized_links: warn

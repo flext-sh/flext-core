@@ -20,7 +20,9 @@ from examples.ex_04_flext_dispatcher import Ex04DispatchDsl
 
 result = Ex04DispatchDsl.run()
 assert result.success
-assert result.value == "pong:dispatcher-example"```
+assert result.value == "pong:dispatcher-example"
+```
+
 ## Command Handling with r[T]
 
 ```python
@@ -39,7 +41,9 @@ ok = create_user({"email": "user@example.com"})
 ko = create_user({})
 
 assert ok.success
-assert ko.failure```
+assert ko.failure
+```
+
 ## Context and Metrics (Illustrative Internals)
 
 ```text
@@ -52,7 +56,9 @@ Typical runtime interactions:
 handler.push_context({"operation": "create_user"})
 handler.record_metric("users_created", 1)
 metrics = handler.get_metrics()
-handler.pop_context()```
+handler.pop_context()
+```
+
 ## Best Practices
 
 - Keep handlers small and deterministic.

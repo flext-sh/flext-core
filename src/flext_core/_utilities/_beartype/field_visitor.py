@@ -9,11 +9,10 @@ from typing import Annotated, TypeAliasType, Union, get_args, get_origin
 
 from pydantic.fields import FieldInfo
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._typings.base import FlextTypingBase as t
-
+from ..._constants.enforcement import FlextConstantsEnforcement as c
+from ..._models.enforcement import FlextModelsEnforcement as me
+from ..._models.pydantic import FlextModelsPydantic as mp
+from ..._typings.base import FlextTypingBase as t
 from .helpers import FlextUtilitiesBeartypeHelpers as _ubh
 
 

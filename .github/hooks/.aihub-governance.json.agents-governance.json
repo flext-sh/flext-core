@@ -1,0 +1,72 @@
+{
+  "config": "aihub-governance.json",
+  "context": "project",
+  "entries": {},
+  "events": {
+    "context_refresh": {
+      "clients": [
+        "local"
+      ],
+      "coverage": "advisory",
+      "native": [
+        "preCompact"
+      ],
+      "status": "SUPPORTED"
+    },
+    "prompt_submit": {
+      "clients": [
+        "local"
+      ],
+      "coverage": "advisory",
+      "native": [
+        "userPromptSubmitted"
+      ],
+      "status": "SUPPORTED"
+    },
+    "session_start": {
+      "clients": [
+        "local"
+      ],
+      "coverage": "exact",
+      "native": [
+        "sessionStart"
+      ],
+      "status": "SUPPORTED"
+    },
+    "subagent_start": {
+      "clients": [
+        "local"
+      ],
+      "coverage": "exact",
+      "native": [
+        "subagentStart"
+      ],
+      "status": "SUPPORTED"
+    }
+  },
+  "managed": {
+    ".github/hooks/aihub-governance.json": {
+      "digest": "88c12ac487c49902e5c4a2186958e3ac40f4823eaaaef1dc6e4a2bd074d98d40",
+      "mode": "0644"
+    },
+    ".github/hooks/aihub-hooks/copilot-precompact.py": {
+      "digest": "e61a6313fe6f1dfcf974f71667ac7ae8a432881822cfca94f9ca3b189c2d924c",
+      "mode": "0755"
+    },
+    ".github/hooks/aihub-hooks/copilot-sessionstart.py": {
+      "digest": "283670595c65c8ade7b299d05e4f6f6a3c3709fc50976210b1e3fe7bb0e0b6ad",
+      "mode": "0755"
+    },
+    ".github/hooks/aihub-hooks/copilot-subagentstart.py": {
+      "digest": "283670595c65c8ade7b299d05e4f6f6a3c3709fc50976210b1e3fe7bb0e0b6ad",
+      "mode": "0755"
+    },
+    ".github/hooks/aihub-hooks/copilot-userpromptsubmitted.py": {
+      "digest": "e61a6313fe6f1dfcf974f71667ac7ae8a432881822cfca94f9ca3b189c2d924c",
+      "mode": "0755"
+    }
+  },
+  "owner": "agents-governance",
+  "provider": "copilot",
+  "version": 3
+}

@@ -35,7 +35,7 @@ from typing import Annotated, ClassVar, ForwardRef, cast, get_args, get_origin
 
 import typing_extensions as _typing_extensions
 
-from flext_core._typings.base import FlextTypingBase as t
+from .._typings.base import FlextTypingBase as t
 
 
 class FlextUtilitiesBeartypeTypingExtPatch:

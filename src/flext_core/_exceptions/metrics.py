@@ -8,16 +8,13 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_core import FlextTypes as t
-from flext_core._models.errors import FlextModelsErrors
+from flext_core import FlextTypes as t, m
 
 
 class FlextExceptionsMetrics:
     """Exception occurrence metrics tracking."""
 
-    _metrics_state: ClassVar[FlextModelsErrors.ExceptionMetricsState] = (
-        FlextModelsErrors.ExceptionMetricsState()
-    )
+    _metrics_state: ClassVar[m.ExceptionMetricsState] = m.ExceptionMetricsState()
 
     @classmethod
     def record_exception(cls, exception_type: type[BaseException]) -> None:
@@ -30,7 +27,7 @@ class FlextExceptionsMetrics:
         cls._metrics_state = cls._metrics_state.clear()
 
     @classmethod
-    def resolve_metrics_snapshot(cls) -> FlextModelsErrors.ExceptionMetricsSnapshot:
+    def resolve_metrics_snapshot(cls) -> m.ExceptionMetricsSnapshot:
         """Get the typed public metrics snapshot."""
         return cls._metrics_state.snapshot()
 

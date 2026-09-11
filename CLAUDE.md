@@ -8,9 +8,12 @@
 5. Owner first: use the project's declared facades/primitives; do not reimplement them locally.
 6. Gate discipline: if a gate blocks, stop and escalate with the exact command/edit; never route around it.
 7. Landing: native gates, commit, fast-forward push, bead evidence.
-8. Push rejection: FF push rejected on divergence → stop; no autonomous rebase/force-push; escalate with git error + local vs remote SHAs.
-9. Escalation: impossible rule → exact error. Rule conflict → present both with numbers. Unclear → one targeted question. Never guess.
-10. Precedence: NEWEST > OLDEST. USER REQUEST > BEADS > ADRs > SKILLs > DOCS > default. Adjust lower/older to higher/newer. Doubt → ASK USER FIRST.
+8. Push rejection: FF push rejected on divergence → stop; no autonomous rebase/force-push; escalate with git error +
+   local vs remote SHAs.
+9. Escalation: impossible rule → exact error. Rule conflict → present both with numbers. Unclear → one targeted
+   question. Never guess.
+10. Precedence: NEWEST > OLDEST. USER REQUEST > BEADS > ADRs > SKILLs > DOCS > default. Adjust lower/older to
+    higher/newer. Doubt → ASK USER FIRST.
 <!-- /AIHUB-INVIOLABLE-LAW-PRELUDE -->
 
 ## CLAUDE.md

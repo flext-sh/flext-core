@@ -8,13 +8,12 @@ No private attribute, internal collaborator or implementation detail is inspecte
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import NoReturn
 
-from collections.abc import Callable
-
 import pytest
-
 from flext_tests import d, e, r, tm
+
 from tests.protocols import p
 
 _COMBINED_SUM = 6
@@ -24,16 +23,20 @@ _INCREMENTED_VALUE = 4
 _RECOVERED_VALUE = 99
 
 
+def _increment(value: int) -> int:
+    return value + 1
+
+
+def _triple(value: int) -> int:
+    return value * 3
+
+
 class TestsFlextCoreDocumentedPatterns:
     """Public-contract behavior of the documented result/exception/decorator DSL."""
 
     @pytest.mark.parametrize(
         ("seed", "transform", "expected"),
-        [
-            (1, lambda value: value + 1, 2),
-            (10, lambda value: value * 3, 30),
-            (-5, abs, 5),
-        ],
+        [(1, _increment, 2), (10, _triple, 30), (-5, abs, 5)],
     )
     def test_map_transforms_success_value(
         self, seed: int, transform: Callable[[int], int], expected: int
@@ -246,7 +249,7 @@ class TestsFlextCoreDocumentedPatterns:
 
         @d.combined(operation_name="sum_values", railway_enabled=True, track_perf=False)
         def sum_values(values: list[int]) -> int:
-            return sum(values)
+            return sum(values, 0)
 
         # Act
         result = sum_values([1, 2, 3])

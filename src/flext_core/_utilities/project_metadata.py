@@ -12,16 +12,15 @@ import tomllib
 from functools import cache
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_core._constants.file import FlextConstantsFile as cf
-from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cpm
-from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
-from flext_core._protocols.project_metadata import FlextProtocolsProjectMetadata as ppm
-from flext_core._protocols.result import FlextProtocolsResult as p
-from flext_core.result import FlextResult as _Result
-from flext_core._typings.base import FlextTypingBase as t
+from .._constants.file import FlextConstantsFile as cf
+from .._constants.project_metadata import FlextConstantsProjectMetadata as cpm
+from .._models.project_metadata import FlextModelsProjectMetadata as mpm
+from .._typings.base import FlextTypingBase as t
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+    from .._protocols.project_metadata import FlextProtocolsProjectMetadata as ppm
 
 
 class FlextUtilitiesProjectMetadata(mpm):
@@ -49,7 +48,7 @@ class FlextUtilitiesProjectMetadata(mpm):
     @classmethod
     def build_project_metadata(
         cls, root: Path, document: mpm.PyprojectDocument
-    ) -> ppm.ProjectMetadata:
+    ) -> mpm.ProjectMetadata:
         project = document.project
         flext = document.tool.flext
         if project is None:
@@ -57,7 +56,9 @@ class FlextUtilitiesProjectMetadata(mpm):
             class_stem = flext.project.class_stem_override or cls.derive_class_stem(
                 package_name
             )
-            resolved_project = mpm.Project(name=package_name, version="0.0.0")
+            resolved_project = mpm.Project(
+                name=package_name, version=cpm.PROJECT_VERSION_PLACEHOLDER
+            )
             return mpm.ProjectMetadata(
                 root=root,
                 package_name=package_name,
@@ -77,30 +78,6 @@ class FlextUtilitiesProjectMetadata(mpm):
             project=resolved_project,
             flext=flext,
         )
-
-    @staticmethod
-    def read_project_metadata(root: Path) -> p.Result[ppm.ProjectMetadata]:
-        """Read project metadata from ``pyproject.toml`` and return a protocol result.
-
-        The method remains as a compatibility surface for existing consumers while
-        delegating the canonical behavior to:
-
-        - ``read_project_document_cached``
-        - ``build_project_metadata``
-        """
-        try:
-            project_root = root.resolve()
-            document = FlextUtilitiesProjectMetadata.read_project_document_cached(
-                project_root
-            )
-            return _Result[ppm.ProjectMetadata].ok(
-                FlextUtilitiesProjectMetadata.build_project_metadata(
-                    project_root, document
-                )
-            )
-        except (OSError, ValueError, tomllib.TOMLDecodeError) as exc:
-            msg = f"cannot read project metadata from {root}: {exc}"
-            return _Result[ppm.ProjectMetadata].fail(msg, exception=exc)
 
     @staticmethod
     def derive_class_stem(project_name: str) -> str:

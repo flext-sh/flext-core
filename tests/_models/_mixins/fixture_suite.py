@@ -16,7 +16,7 @@ class TestsFlextModelsFixtureSuiteMixin:
     class AutomatedTestScenario(m.BaseModel):
         """Pydantic v2 model for automated test scenarios."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         description: str
         input: t.JsonValue
@@ -34,7 +34,7 @@ class TestsFlextModelsFixtureSuiteMixin:
     class UtilityEntityModel(m.Entity):
         """Shared entity model for generic test fixtures."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=False)
 
         name: Annotated[str, m.Field(description="Fixture entity name.")]
         value: Annotated[t.JsonValue, m.Field(description="Fixture entity payload.")]
@@ -42,14 +42,14 @@ class TestsFlextModelsFixtureSuiteMixin:
     class UtilityValueModel(m.Value):
         """Shared value model for generic test fixtures."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         value: Annotated[t.JsonValue, m.Field(description="Fixture value payload.")]
 
     class MockScenarioData(m.BaseModel):
         """Mock scenario test data."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         given: t.MappingKV[str, t.Primitives]
         when: t.MappingKV[str, t.Primitives]
@@ -60,7 +60,7 @@ class TestsFlextModelsFixtureSuiteMixin:
     class NestedDataDict(m.BaseModel):
         """Nested test data."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         key: str
         value: t.Primitives
@@ -69,7 +69,7 @@ class TestsFlextModelsFixtureSuiteMixin:
     class FixtureDataDict(m.BaseModel):
         """Test data for FlextTestBuilder."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         id: str
         correlation_id: str
@@ -84,7 +84,7 @@ class TestsFlextModelsFixtureSuiteMixin:
     class FixtureCaseDict(m.BaseModel):
         """Individual test case configuration."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         email: str
         input: str
@@ -92,7 +92,7 @@ class TestsFlextModelsFixtureSuiteMixin:
     class SuccessCaseDict(m.BaseModel):
         """Success test case."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         email: str
         input: str
@@ -100,7 +100,7 @@ class TestsFlextModelsFixtureSuiteMixin:
     class FailureCaseDict(m.BaseModel):
         """Failure test case."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         email: str
         input: str
@@ -108,7 +108,7 @@ class TestsFlextModelsFixtureSuiteMixin:
     class SetupDataDict(m.BaseModel):
         """Setup data for test suite."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         initialization_step: str
         configuration_key: str
@@ -118,7 +118,7 @@ class TestsFlextModelsFixtureSuiteMixin:
     class FixtureSuiteDict(m.BaseModel):
         """Test suite configuration."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         suite_name: str
         scenario_count: int
@@ -128,7 +128,7 @@ class TestsFlextModelsFixtureSuiteMixin:
     class UserDataFixtureDict(m.BaseModel):
         """User fixture data."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         username: str
         email: str
@@ -137,7 +137,7 @@ class TestsFlextModelsFixtureSuiteMixin:
     class RequestDataFixtureDict(m.BaseModel):
         """Request fixture data."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         method: str
         path: str
@@ -146,7 +146,7 @@ class TestsFlextModelsFixtureSuiteMixin:
     class FixtureFixturesDict(m.BaseModel):
         """Test fixtures configuration."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         user: t.MappingKV[str, TestsFlextModelsFixtureSuiteMixin.UserDataFixtureDict]
         request: t.MappingKV[

@@ -18,7 +18,8 @@
 
 ## Overview
 
-Complete review and update of flext-core documentation to align with actual codebase state (`0.12.0-dev`). All documents now reflect current APIs, architecture, and patterns.
+Complete review and update of flext-core documentation to align with actual codebase state (`0.12.0-dev`). All documents
+now reflect current APIs, architecture, and patterns.
 
 ## Files Updated
 
@@ -113,7 +114,7 @@ For even more comprehensive documentation:
 
 All documentation is now production-ready and consistent with the 0.12.0-dev codebase:
 
-```
+```text
 ✅ README.md                        (Main project introduction)
 ✅ docs/quick-start.md              (5-minute getting started)
 ✅ docs/guides/README.md            (Component guides index)

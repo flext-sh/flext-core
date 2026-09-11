@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, override
 
-from tests._utilities.services import TestsFlextUtilitiesServicesMixin
-from tests._utilities.user_factories import TestsFlextUtilitiesUserFactoriesMixin
 from tests.constants import c
+
+from .services import TestsFlextUtilitiesServicesMixin
+from .user_factories import TestsFlextUtilitiesUserFactoriesMixin
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -62,13 +63,8 @@ class TestsFlextUtilitiesValidationFactoriesMixin(
                 user_id=cls._resolve_user_id(user_id)
             )
 
-    class _ValidatingFactoryBase[T]:
-        """Shared word-rotating state for validating-service factories.
-
-        Subclasses override ``_make_instance`` with the typed return;
-        the base owns ``_words``, ``_word_index``, ``_next_word``,
-        ``build``, ``build_batch``, and ``reset``.
-        """
+    class WordRotation:
+        """Independent per-factory word rotation."""
 
         _words: ClassVar[Sequence[str]] = ("alpha", "bravo", "charlie", "delta", "echo")
         _word_index: ClassVar[int] = 0
@@ -79,6 +75,14 @@ class TestsFlextUtilitiesValidationFactoriesMixin(
             word = cls._words[cls._word_index % len(cls._words)]
             cls._word_index += 1
             return word
+
+        @classmethod
+        def reset(cls) -> None:
+            """Reset per-subclass factory counter."""
+            cls._word_index = 0
+
+    class _ValidatingFactoryBase[T](WordRotation):
+        """Construct validating services using the shared word rotation."""
 
         @classmethod
         def _make_instance(cls, value_input: str, min_length: int) -> T:
@@ -100,11 +104,6 @@ class TestsFlextUtilitiesValidationFactoriesMixin(
         def build_batch(cls, size: int) -> list[T]:
             """Build multiple validating-service instances."""
             return [cls.build() for _ in range(size)]
-
-        @classmethod
-        def reset(cls) -> None:
-            """Reset per-subclass factory counter."""
-            cls._word_index = 0
 
     class ValidatingServiceAutoFactory(
         _ValidatingFactoryBase[TestsFlextUtilitiesServicesMixin.ValidatingServiceAuto]

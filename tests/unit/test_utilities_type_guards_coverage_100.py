@@ -6,8 +6,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
-from flext_core import u
 from flext_tests import tm
+
+from flext_core import u
 from tests.models import m
 
 if TYPE_CHECKING:
@@ -20,8 +21,8 @@ class TestsFlextCoreUtilitiesTypeGuards:
     def test_public_type_guards_validate_normalized_dispatch_metadata(
         self, tmp_path: Path
     ) -> None:
-        workspace_root = tmp_path / "flext"
-        workspace_root.mkdir()
+        repository_root = tmp_path / "flext"
+        repository_root.mkdir()
         envelope = m.Tests.DispatchEnvelope(
             command_name="sync-users",
             correlation_id="corr_12345678",
@@ -30,13 +31,13 @@ class TestsFlextCoreUtilitiesTypeGuards:
             started_at=datetime(2026, 5, 5, 12, 0, tzinfo=UTC),
         )
         normalized_payload = u.normalize_to_metadata(envelope)
-        normalized_workspace_root = u.normalize_to_metadata(workspace_root)
+        normalized_repository_root = u.normalize_to_metadata(repository_root)
         normalized_retry_window = u.normalize_to_metadata(None)
         normalized_modes = u.normalize_to_metadata({"delta", "full"})
 
         metadata: dict[str, t.JsonValue] = {
             "payload": normalized_payload,
-            "workspace_root": normalized_workspace_root,
+            "repository_root": normalized_repository_root,
             "retry_window": normalized_retry_window,
             "modes": normalized_modes,
         }
@@ -63,7 +64,7 @@ class TestsFlextCoreUtilitiesTypeGuards:
         assert u.chk(payload["command_name"], command_spec)
         assert u.chk(payload["attempt_count"], gte=1, lte=3, not_in=[0])
         assert u.chk(payload["command_name"], gt="alpha", none=False, empty=False)
-        tm.that(metadata["workspace_root"], eq=str(workspace_root))
+        tm.that(metadata["repository_root"], eq=str(repository_root))
         tm.that(metadata["retry_window"], eq="")
         assert isinstance(payload["started_at"], str)
         tm.that(datetime.fromisoformat(payload["started_at"]), eq=envelope.started_at)

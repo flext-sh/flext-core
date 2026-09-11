@@ -14,7 +14,7 @@ import inspect
 import sys
 import threading
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, ClassVar, Self, TypeGuard, overload, override
+from typing import TYPE_CHECKING, ClassVar, Self, TypeGuard, cast, overload, override
 
 from dependency_injector import containers as di_containers
 
@@ -578,10 +578,10 @@ class FlextContainer(p.Container):
         module_symbols = vars(caller_module)
         for factory_name, factory_config in factories:
             factory_func = module_symbols.get(factory_name)
-            if factory_func is None or not u.factory(factory_func):
+            if factory_func is None or not callable(factory_func):
                 continue
-
-            _ = instance.factory(factory_config.name, factory_func)
+            impl: t.FactoryCallable = cast("t.FactoryCallable", factory_func)
+            _ = instance.factory(factory_config.name, impl)
 
     def _apply_explicit_bootstrap(
         self, registration: m.ServiceRegistrationSpec

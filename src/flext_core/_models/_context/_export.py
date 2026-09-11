@@ -12,10 +12,10 @@ from typing import Annotated
 from pydantic import BeforeValidator, Field
 
 from flext_core import t
-from flext_core._models.base import FlextModelsBase as m
-from flext_core._models.containers import FlextModelsContainers
-from flext_core._models.entity import FlextModelsEntity
 
+from ..base import FlextModelsBase as m
+from ..containers import FlextModelsContainers
+from ..entity import FlextModelsEntity
 from ._data import FlextModelsContextData
 
 
@@ -30,7 +30,7 @@ class FlextModelsContextExport:
         data: Annotated[
             t.MappingKV[str, t.JsonPayload],
             Field(
-                default_factory=lambda: MappingProxyType({}),
+                default_factory=lambda: MappingProxyType[str, t.JsonPayload]({}),
                 description="All context data from all scopes",
             ),
         ]
@@ -52,7 +52,7 @@ class FlextModelsContextExport:
                 )
             ),
             Field(
-                default_factory=lambda: MappingProxyType({}),
+                default_factory=lambda: MappingProxyType[str, t.JsonValue]({}),
                 description="Usage statistics (operation counts, timing info)",
             ),
         ]

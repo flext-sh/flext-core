@@ -87,7 +87,7 @@ class Ex01r(Ex01ResultAdvancedSections):
 
         @r.safe
         def parse_int(value: str) -> int:
-            return int(value)
+            return int(value.strip())
 
         safe_ok = parse_int("42")
         safe_fail = parse_int("x")

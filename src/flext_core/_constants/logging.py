@@ -42,7 +42,7 @@ class FlextConstantsLogging:
     BACKUP_COUNT: Final[int] = 5
 
     # Workspace / path detection
-    WORKSPACE_ROOT_MARKERS: Final[frozenset[str]] = frozenset({
+    REPOSITORY_ROOT_MARKERS: Final[frozenset[str]] = frozenset({
         "pyproject.toml",
         ".git",
         "poetry.lock",

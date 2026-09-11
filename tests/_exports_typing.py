@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from tests._exports_typing_facades import (
+from ._exports_typing_facades import (
     TestsFlextConstants,
     TestsFlextModels,
     TestsFlextProtocols,
@@ -26,7 +26,7 @@ from tests._exports_typing_facades import (
     u,
     x,
 )
-from tests._exports_typing_integration import (
+from ._exports_typing_integration import (
     TestsFlextCleanConstants,
     TestsFlextCleanModels,
     TestsFlextCleanProtocols,
@@ -37,7 +37,7 @@ from tests._exports_typing_integration import (
     TestsFlextLazyPerformance,
     TestsFlextSettingsIntegration,
 )
-from tests._exports_typing_unit import (
+from ._exports_typing_unit import (
     TestsFlextConstantsNew,
     TestsFlextCoreDecorators,
     TestsFlextCoreEnumUtilities,
@@ -75,7 +75,7 @@ from tests._exports_typing_unit import (
     TestsFlextUtilitiesPydantic,
     TestsFlextUtilitiesText,
 )
-from tests._models.mixins import TestsFlextModelsMixins
+from ._models.mixins import TestsFlextModelsMixins
 
 __all__: list[str] = [
     "TestsFlextCleanConstants",

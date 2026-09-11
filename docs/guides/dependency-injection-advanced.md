@@ -22,7 +22,9 @@ Use the canonical container example as the reference path.
 from examples.ex_08_flext_container import Ex08FlextContainer
 
 demo = Ex08FlextContainer("docs/guides/dependency-injection-advanced.md")
-demo.exercise()```
+demo.exercise()
+```
+
 The `Ex08FlextContainer` flow exercises binding, factories, resolution, and scoped containers.
 
 ## Core Container Operations
@@ -39,7 +41,9 @@ settings_name = container.resolve("settings_name")
 logger = container.resolve("logger")
 
 assert settings_name.success
-assert logger.success```
+assert logger.success
+```
+
 ## Scoped Containers
 
 ```python
@@ -52,7 +56,9 @@ scoped = root.scope(subproject="tenant_a")
 tenant = scoped.resolve("tenant")
 
 assert tenant.success
-assert tenant.value == "default"```
+assert tenant.value == "default"
+```
+
 ## Batch Registration Pattern
 
 `FlextContainer` does not expose `batch_register`; use explicit loop registration for deterministic failure points.
@@ -77,7 +83,9 @@ def bind_services(
 container = FlextContainer()
 result = bind_services(container, (("service_a", "ok"), ("service_b", "ok")))
 
-assert result.success```
+assert result.success
+```
+
 ## Best Practices
 
 - Keep service names stable and explicit.

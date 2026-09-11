@@ -13,7 +13,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-
 from flext_tests import r, tm
 
 if TYPE_CHECKING:
@@ -30,6 +29,42 @@ def _raiser(exc: Exception) -> Callable[[object], Never]:
         raise exc
 
     return _callback
+
+
+def _map_case(exc: Exception) -> p.Result[int]:
+    return r[int].ok(5).map(_raiser(exc))
+
+
+def _flat_map_case(exc: Exception) -> p.Result[int]:
+    return r[int].ok(5).flat_map(_raiser(exc))
+
+
+def _flow_through_case(exc: Exception) -> p.Result[int]:
+    return r[int].ok(5).flow_through(_raiser(exc))
+
+
+def _map_error_case(exc: Exception) -> p.Result[int]:
+    return r[int].fail("error").map_error(_raiser(exc))
+
+
+def _recover_case(exc: Exception) -> p.Result[int]:
+    return r[int].fail("error").recover(_raiser(exc))
+
+
+def _lash_case(exc: Exception) -> p.Result[int]:
+    return r[int].fail("error").lash(_raiser(exc))
+
+
+def _filter_case(exc: Exception) -> p.Result[int]:
+    return r[int].ok(5).filter(_raiser(exc))
+
+
+def _tap_case(exc: Exception) -> p.Result[int]:
+    return r[int].ok(5).tap(_raiser(exc))
+
+
+def _tap_error_case(exc: Exception) -> p.Result[int]:
+    return r[int].fail("error").tap_error(_raiser(exc))
 
 
 class TestsFlextCoreResultExceptionMapping:
@@ -142,27 +177,15 @@ class TestsFlextCoreResultExceptionMapping:
     @pytest.mark.parametrize(
         "invoke",
         [
-            pytest.param(lambda exc: r[int].ok(5).map(_raiser(exc)), id="map"),
-            pytest.param(
-                lambda exc: r[int].ok(5).flat_map(_raiser(exc)), id="flat_map"
-            ),
-            pytest.param(
-                lambda exc: r[int].ok(5).flow_through(_raiser(exc)), id="flow_through"
-            ),
-            pytest.param(
-                lambda exc: r[int].fail("error").map_error(_raiser(exc)), id="map_error"
-            ),
-            pytest.param(
-                lambda exc: r[int].fail("error").recover(_raiser(exc)), id="recover"
-            ),
-            pytest.param(
-                lambda exc: r[int].fail("error").lash(_raiser(exc)), id="lash"
-            ),
-            pytest.param(lambda exc: r[int].ok(5).filter(_raiser(exc)), id="filter"),
-            pytest.param(lambda exc: r[int].ok(5).tap(_raiser(exc)), id="tap"),
-            pytest.param(
-                lambda exc: r[int].fail("error").tap_error(_raiser(exc)), id="tap_error"
-            ),
+            pytest.param(_map_case, id="map"),
+            pytest.param(_flat_map_case, id="flat_map"),
+            pytest.param(_flow_through_case, id="flow_through"),
+            pytest.param(_map_error_case, id="map_error"),
+            pytest.param(_recover_case, id="recover"),
+            pytest.param(_lash_case, id="lash"),
+            pytest.param(_filter_case, id="filter"),
+            pytest.param(_tap_case, id="tap"),
+            pytest.param(_tap_error_case, id="tap_error"),
         ],
     )
     def test_callback_exception_becomes_carried_failure(

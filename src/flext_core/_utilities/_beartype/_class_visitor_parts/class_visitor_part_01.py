@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from enum import EnumType
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers as ubh
+from ...._constants.enforcement import FlextConstantsEnforcement as c
+from ...._models.enforcement import FlextModelsEnforcement as me
+from ...._typings.base import FlextTypingBase as t
+from ..helpers import FlextUtilitiesBeartypeHelpers as ubh
 
 NO_VIOLATION: t.StrMapping | None = None
 BARE_VIOLATION: t.StrMapping = {}
@@ -103,6 +103,7 @@ class FlextUtilitiesBeartypeClassVisitor:
                 ubh.has_runtime_protocol_marker(value)
                 or ubh.has_nested_namespace(value)
                 or ubh.has_abstract_contract(value)
+                or ubh.has_protocol_ancestor(value)
             ):
                 pass
             else:

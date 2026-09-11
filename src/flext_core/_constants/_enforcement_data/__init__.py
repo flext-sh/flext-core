@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Final
 from pydantic import BaseModel, Field
 
 if TYPE_CHECKING:
-    from flext_core._typings.base import FlextTypingBase as t
+    from ..._typings.base import FlextTypingBase as t
 
 
 class _SmellThresholds(BaseModel):

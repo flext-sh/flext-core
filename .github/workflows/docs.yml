@@ -6,6 +6,7 @@ name: Docs
     branches:
       - main
       - 0.12.0-dev
+      - 0.20.0-dev
     paths:
       - "docs/**"
       - "mkdocs.yml"
@@ -29,68 +30,44 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        uses: actions/checkout@v7
         with:
           submodules: false
           fetch-depth: 0
 
-      - name: Setup Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
-        with:
-          python-version: "3.13"
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
-        with:
-          enable-cache: true
-
       - name: Sync workspace toolchain
         run: make setup
 
-      # mro-o6h5 (agent: kimi) — failure diagnostics: per-project logs live under
-      # .reports/workspace/docs/*.log and were invisible in CI ("0 errors" FAILs);
-      # dump them inline + per-project audit-report.md for non-zero issue counts +
-      # upload as artifact so the real error is always reachable.
-      - name: Docs audit (blocking)
+      - name: Generation drift (blocking)
+        run: make conform APPLY=Y
+
+      - name: Docs lifecycle (blocking)
+        run: make docs APPLY=Y
+
+      # Failure diagnostics execute only after the original Make step has
+      # already propagated its exact status to Actions.
+      - name: Dump docs reports on failure
+        if: failure()
         run: |
-          .venv/bin/python -m flext_infra docs audit --workspace . --output-dir .reports/docs || {
-            while IFS= read -r -d '' f; do
-              echo "::group::$f"
-              tail -n 80 "$f"
-              echo "::endgroup::"
-            done < <(
-              find .reports apps \
+          set -eu
+          for report_root in .reports apps; do
+            if [ -d "$report_root" ]; then
+              find "$report_root" \
                 \( -path '*/audit-summary.json' -o -path '*/audit-report.md' \
                    -o -path '*/validate-summary.json' -o -path '*/validate-report.md' \) \
-                -type f -print0 2>/dev/null || true
-            )
-            exit 1
-          }
+                -type f -exec sh -eu -c '
+                  for report_file do
+                    printf "::group::%s\n" "$report_file"
+                    tail -n 80 "$report_file"
+                    printf "::endgroup::\n"
+                  done
+                ' sh {} +
+            fi
+          done
 
-      - name: Docs generate (materialize contract artifacts)
-        run: .venv/bin/python -m flext_infra docs generate --workspace . --output-dir .reports/docs --apply
-
-      - name: Docs validate (blocking)
-        run: |
-          .venv/bin/python -m flext_infra docs validate --workspace . --output-dir .reports/docs || {
-            while IFS= read -r -d '' f; do
-              echo "::group::$f"
-              tail -n 80 "$f"
-              echo "::endgroup::"
-            done < <(
-              find .reports apps \
-                \( -path '*/validate-summary.json' -o -path '*/validate-report.md' \
-                   -o -path '*/audit-summary.json' -o -path '*/audit-report.md' \) \
-                -type f -print0 2>/dev/null || true
-            )
-            exit 1
-          }
-
-      # mro-o6h5 (agent: kimi) — include-hidden-files: .reports/ is a dot-dir and
-      # upload-artifact skips hidden paths by default (artifact silently empty).
       - name: Upload docs reports on failure
         if: failure()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        uses: actions/upload-artifact@v4
         with:
           name: docs-reports
           # Structured docs reports only — omit raw docs log trees that may carry
@@ -104,7 +81,7 @@ jobs:
             apps/*/.reports/**/audit-report.md
             apps/*/.reports/**/validate-summary.json
             apps/*/.reports/**/validate-report.md
-          if-no-files-found: ignore
+          if-no-files-found: error
           retention-days: 7
 
   build:
@@ -116,40 +93,32 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        uses: actions/checkout@v7
         with:
           submodules: false
           fetch-depth: 0
 
-      - name: Setup Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
-        with:
-          python-version: "3.13"
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
-        with:
-          enable-cache: true
-
       - name: Sync workspace toolchain
         run: make setup
 
-      - name: Generate docs
-        run: .venv/bin/python -m flext_infra docs generate --workspace . --output-dir .reports/docs --apply
-
       - name: Build site
-        run: .venv/bin/python -m flext_infra docs build --workspace . --output-dir .reports/docs
+        run: make docs APPLY=Y
+
+      - name: Verify byte-identical repository
+        run: |
+          git diff --exit-code -- .
+          git diff --cached --exit-code -- .
 
       # Pages configure/upload exist only to feed deploy on main. Running them on
       # every integration push fails closed when Pages is unset and is wasted
       # work when deploy is skipped (deploy already gates on refs/heads/main).
       - name: Configure Pages
         if: github.ref == 'refs/heads/main'
-        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d  # v6.0.0
+        uses: actions/configure-pages@v6
 
       - name: Upload site artifact
         if: github.ref == 'refs/heads/main'
-        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9  # v5.0.0
+        uses: actions/upload-pages-artifact@v5
         with:
           path: .reports/docs/site
 
@@ -168,4 +137,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128  # v5.0.0
+        uses: actions/deploy-pages@v5

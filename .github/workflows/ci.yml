@@ -12,24 +12,16 @@ name: CI
 "on":
   push:
     branches:
-      - dev
-      - develop
-      - 0.12.0-dev
       - main
+      - 0.12.0-dev
+      - 0.20.0-dev
   pull_request:
     branches:
-      - dev
-      - develop
-      - 0.12.0-dev
       - main
+      - 0.12.0-dev
+      - 0.20.0-dev
     types: [opened, synchronize, reopened, ready_for_review]
 # End SECTION: triggers
-
-# === SECTION: permissions (managed) ===
-# Source: template (minimal read-only permissions)
-permissions:
-  contents: read
-# End SECTION: permissions
 
 # Why: one active run per workflow and branch prevents obsolete CI from consuming runners.
 concurrency:
@@ -41,6 +33,9 @@ jobs:
   # Source: template + config:github_actions.*
   ci:
     name: ci
+    # Only the checkout job needs repository contents.
+    permissions:
+      contents: read
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -48,51 +43,115 @@ jobs:
       CI: Y
     steps:
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        uses: actions/checkout@v7
         with:
           submodules: false
           fetch-depth: 0
+      # Cross-repo private git dependencies: the workflow token is scoped to
+      # this repository only, so `uv sync` cannot clone sibling private repos
+      # (make setup fails inside the git dependency fetch). When the org
+      # installs the datacosmos-ci-dependencies GitHub App and exposes
+      # CI_DEPENDENCIES_APP_ID / CI_DEPENDENCIES_APP_PRIVATE_KEY, mint a
+      # short-lived installation token and scope it to github.com clones.
+      # Absent secrets make this step a recorded NOT EXECUTED: dependency
+      # access then remains the repository's own contract, and the external
+      # credential gate is not selected on this runner.
+      - name: Mint cross-repo dependency credential
+        env:
+          CI_DEPS_APP_ID: ${{ secrets.CI_DEPENDENCIES_APP_ID }}
+          CI_DEPS_APP_KEY: ${{ secrets.CI_DEPENDENCIES_APP_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "$CI_DEPS_APP_ID" ] || [ -z "$CI_DEPS_APP_KEY" ]; then
+            echo "NOT EXECUTED: CI_DEPENDENCIES_* secrets absent, no cross-repo credential minted"
+            exit 0
+          fi
+          identity_root="$RUNNER_TEMP/flext-cross-repo-deps"
+          install -d -m 700 "$identity_root"
+          key_path="$identity_root/app-key.pem"
+          printf '%s\n' "$CI_DEPS_APP_KEY" > "$key_path.new"
+          chmod 600 "$key_path.new"
+          mv "$key_path.new" "$key_path"
+          b64url() {
+            openssl base64 -A | tr '+/' '-_' | tr -d '='
+          }
+          now=$(date +%s)
+          header='{"alg":"RS256","typ":"JWT"}'
+          payload=$(printf '{"iat":%s,"exp":%s,"iss":"%s"}' "$((now - 60))" "$((now + 540))" "$CI_DEPS_APP_ID")
+          input="$(printf %s "$header" | b64url).$(printf %s "$payload" | b64url)"
+          signature=$(printf %s "$input" | openssl dgst -sha256 -sign "$key_path" | b64url)
+          jwt="$input.$signature"
+          installation_id=$(curl -sfS -X GET \
+            -H "Authorization: Bearer $jwt" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/app/installations \
+            | python3 -c 'import json, sys
+          entries = json.load(sys.stdin)
+          if len(entries) != 1:
+              sys.exit(f"expected exactly one app installation, got {len(entries)}")
+          print(entries[0]["id"])')
+          access_token=$(curl -sfS -X POST \
+            -H "Authorization: Bearer $jwt" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/app/installations/$installation_id/access_tokens" \
+            | python3 -c 'import json, sys; print(json.load(sys.stdin)["token"])')
+          echo "::add-mask::$access_token"
+          git config --global url."https://x-access-token:${access_token}@github.com/".insteadOf "https://github.com/"
+          rm -f "$key_path"
 
-      - name: Install mise toolchain
-        uses: jdx/mise-action@3c2e0cf82a5b2e5249f0d3635a4d83d0ae861518  # v4.2.5
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
-        with:
-          enable-cache: true
-          prune-cache: false
+      # Why: GitHub runners expose umask 002, so git checkout materializes
+      # group-writable modes (0664) for tracked files. Canonical Mise
+      # artifacts demand exact modes (0o644) and the conform gate fails loud
+      # on any drift, so checkout content is normalized to canonical modes
+      # once, before any gate runs.
+      - name: Normalize checkout modes
+        run: chmod -R go-w .
+      # make setup is the only toolchain installer. It bootstraps the newest
+      # released Mise, installs the committed fleet toolchain, publishes that
+      # environment through GITHUB_PATH, and prepares the project runtime.
       - name: Restore testmon cache
         id: testmon-restore
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830  # v4.3.0
+        uses: actions/cache@v4
         with:
           path: |
-            .testmondata
+            ${{ github.workspace }}/../.flext-runtime/*/testmon/.testmondata
           key: testmon-v1-${{ runner.os }}-${{ runner.arch }}-py3.13-${{ hashFiles('uv.lock', '**/uv.lock') }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             testmon-v1-${{ runner.os }}-${{ runner.arch }}-py3.13-${{ hashFiles('uv.lock', '**/uv.lock') }}-
             testmon-v1-${{ runner.os }}-${{ runner.arch }}-py3.13-
 
-
-
       - name: setup (blocking)
-        # Why (mro-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
+        # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
         run: CI=Y make setup
+      - name: gen check (blocking)
+        run: CI=Y make conform APPLY=Y
 
-      - name: gen (blocking)
-        # Why (mro-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
-        run: CI=Y make gen WHAT=apply APPLY=Y
-
-      - name: fmt (blocking)
-        # Why (mro-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
-        run: CI=Y make fmt WHAT=apply APPLY=Y
-
-      - name: fix (blocking)
-        # Why (mro-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
-        run: CI=Y make fix WHAT=apply APPLY=Y
+      # Setup syncs against the committed lock and refreshes it in place (`uv
+      # sync`); the fleet runs unlocked, so the deps audit proves the resolved
+      # graph instead of preserving a frozen snapshot.
+      - name: deps check (blocking)
+        run: CI=Y make audit APPLY=Y
 
       - name: check (blocking)
-        # Why (mro-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
-        run: CI=Y make check
+        # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
+        run: CI=Y make check APPLY=Y
+
+      # Why (aihub-v01jg): CI=Y runs ONE HALF of the gate set
+      # (lint pyright silent-failure deferred-self-reference security markdown loc-cap boundary runtime-census namespace tier-whitelist smells codemod layout canonical-alias direnv duplication); the complement
+      # (pyrefly mypy) is owned by
+      # CI=N and, without this step, ran on developer
+      # machines only. That split let real defects reach main twice: five
+      # missing-attribute errors and an inconsistent-inheritance error, each
+      # green in CI and red locally. The two contexts are strict complements by
+      # construction, so running both here costs one extra pass and closes the
+      # hole rather than trusting everyone to run the other half by hand.
+      - name: check complement (blocking)
+        run: CI=N make check APPLY=Y
+
+      - name: test (blocking)
+        # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
+        run: CI=Y make test APPLY=Y
 
       - name: Dump reports on failure
         if: ${{ failure() }}
@@ -100,18 +159,22 @@ jobs:
           set -eu
           # Structured reports only — same allowlist as Upload reports (no raw
           # pytest/tool logs: those may carry connection strings / env secrets).
-          while IFS= read -r -d '' f; do
-            echo "::group::$f"
-            tail -n 200 "$f"
-            echo "::endgroup::"
-          done < <(
-            find .reports apps \
-              \( -path '*/junit.xml' -o -path '*/coverage.xml' -o -path '*/coverage.json' \) \
-              -type f -print0 2>/dev/null || true
-          )
+          for report_root in .reports apps; do
+            if [ -d "$report_root" ]; then
+              find "$report_root" \
+                \( -path '*/junit.xml' -o -path '*/coverage.xml' -o -path '*/coverage.json' \) \
+                -type f -exec sh -eu -c '
+                  for report_file do
+                    printf "::group::%s\n" "$report_file"
+                    tail -n 200 "$report_file"
+                    printf "::endgroup::\n"
+                  done
+                ' sh {} +
+            fi
+          done
       - name: Upload reports on failure
         if: ${{ failure() }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        uses: actions/upload-artifact@v4
         with:
           name: flext-ci-reports-${{ github.run_id }}
           # Structured reports only — omit raw pytest/tool logs that may carry
@@ -127,37 +190,117 @@ jobs:
           retention-days: 7
   # End SECTION: ci job
 
+  # === SECTION: release-plan job (managed) ===
+  # The release protocol's read-only decision on every pull request: the title
+  # must be a Conventional Commits title (it becomes the merge commit subject
+  # the next release is derived from), and no pyproject version may change
+  # outside the protocol's own release commit.
+  release-plan:
+    name: release-plan
+    permissions:
+      contents: read
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == false }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CI: Y
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          submodules: false
+      # Cross-repo private git dependencies: the workflow token is scoped to
+      # this repository only, so `uv sync` cannot clone sibling private repos
+      # (make setup fails inside the git dependency fetch). When the org
+      # installs the datacosmos-ci-dependencies GitHub App and exposes
+      # CI_DEPENDENCIES_APP_ID / CI_DEPENDENCIES_APP_PRIVATE_KEY, mint a
+      # short-lived installation token and scope it to github.com clones.
+      # Absent secrets make this step a recorded NOT EXECUTED: dependency
+      # access then remains the repository's own contract, and the external
+      # credential gate is not selected on this runner.
+      - name: Mint cross-repo dependency credential
+        env:
+          CI_DEPS_APP_ID: ${{ secrets.CI_DEPENDENCIES_APP_ID }}
+          CI_DEPS_APP_KEY: ${{ secrets.CI_DEPENDENCIES_APP_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "$CI_DEPS_APP_ID" ] || [ -z "$CI_DEPS_APP_KEY" ]; then
+            echo "NOT EXECUTED: CI_DEPENDENCIES_* secrets absent, no cross-repo credential minted"
+            exit 0
+          fi
+          identity_root="$RUNNER_TEMP/flext-cross-repo-deps"
+          install -d -m 700 "$identity_root"
+          key_path="$identity_root/app-key.pem"
+          printf '%s\n' "$CI_DEPS_APP_KEY" > "$key_path.new"
+          chmod 600 "$key_path.new"
+          mv "$key_path.new" "$key_path"
+          b64url() {
+            openssl base64 -A | tr '+/' '-_' | tr -d '='
+          }
+          now=$(date +%s)
+          header='{"alg":"RS256","typ":"JWT"}'
+          payload=$(printf '{"iat":%s,"exp":%s,"iss":"%s"}' "$((now - 60))" "$((now + 540))" "$CI_DEPS_APP_ID")
+          input="$(printf %s "$header" | b64url).$(printf %s "$payload" | b64url)"
+          signature=$(printf %s "$input" | openssl dgst -sha256 -sign "$key_path" | b64url)
+          jwt="$input.$signature"
+          installation_id=$(curl -sfS -X GET \
+            -H "Authorization: Bearer $jwt" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/app/installations \
+            | python3 -c 'import json, sys
+          entries = json.load(sys.stdin)
+          if len(entries) != 1:
+              sys.exit(f"expected exactly one app installation, got {len(entries)}")
+          print(entries[0]["id"])')
+          access_token=$(curl -sfS -X POST \
+            -H "Authorization: Bearer $jwt" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/app/installations/$installation_id/access_tokens" \
+            | python3 -c 'import json, sys; print(json.load(sys.stdin)["token"])')
+          echo "::add-mask::$access_token"
+          git config --global url."https://x-access-token:${access_token}@github.com/".insteadOf "https://github.com/"
+          rm -f "$key_path"
+
+      - name: Boot
+        run: make setup
+      - name: Release plan and guard
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: make release-plan APPLY=Y
+  # End SECTION: release-plan job
+
   # === SECTION: merge-guard job (managed) ===
   merge-guard:
     name: merge-guard
-    # Always run on PRs so a WIP/DRAFT source cannot slip past the skipped CI job.
-    if: ${{ github.event_name == 'pull_request' }}
+    permissions:
+      contents: read
+    # Draft is the typed WIP state: no repository Action is selected until the
+    # operator promotes the same PR to Review with a non-WIP head.
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
     steps:
-      - name: Block WIP/DRAFT merges into protected integration branches
+      - name: Checkout promoted head
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+      - name: Block WIP heads from protected integration branches
         env:
           BASE_REF: ${{ github.base_ref }}
-          HEAD_REF: ${{ github.head_ref }}
-          IS_DRAFT: ${{ github.event.pull_request.draft }}
         run: |
           set -eu
           case "$BASE_REF" in
             dev|develop|0.12.0-dev)
               ;;
             *)
-              echo "Merge guard passed for $HEAD_REF -> $BASE_REF"
+              echo "Merge guard passed for $(git rev-parse HEAD) -> $BASE_REF"
               exit 0
               ;;
           esac
-          if [ "$IS_DRAFT" = "true" ]; then
-            echo "DRAFT PR cannot merge into ${BASE_REF}"
+          subject=$(git log -1 --format=%s)
+          if [[ "$subject" == \[WIP\]* ]]; then
+            echo "WIP head cannot merge into ${BASE_REF}: ${subject}"
             exit 1
           fi
-          for pattern in '^wip/' 'WIP'; do
-            if [[ "$HEAD_REF" =~ $pattern ]]; then
-              echo "WIP branch ${HEAD_REF} cannot merge into ${BASE_REF}"
-              exit 1
-            fi
-          done
-          echo "Merge guard passed for $HEAD_REF -> $BASE_REF"
+          echo "Merge guard passed for $(git rev-parse HEAD) -> $BASE_REF"
   # End SECTION: merge-guard job

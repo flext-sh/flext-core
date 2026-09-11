@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core._protocols.result import FlextProtocolsResult as prt
-
+from ._protocols.result import FlextProtocolsResult as prt
 from ._result.base import JsonDict
 from ._result.behavior import FlextResultBehavior
 from ._result.composition import FlextResultComposition

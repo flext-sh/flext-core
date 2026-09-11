@@ -10,19 +10,16 @@ import time
 from functools import wraps
 from typing import TYPE_CHECKING
 
-from flext_core import r
-from flext_core._constants.errors import FlextConstantsErrors as ce
-from flext_core._constants.infrastructure import FlextConstantsInfrastructure as ci
-from flext_core._constants.validation import FlextConstantsValidation as cv
-from flext_core._decorators._logging import FlextDecoratorsLogging
-from flext_core._exceptions.types import FlextExceptionsTypes as et
-from flext_core._models.settings import FlextModelsSettings as ms
+from flext_core import c, m, r
+
+from .._exceptions.types import FlextExceptionsTypes as et
+from ._logging import FlextDecoratorsLogging
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core._protocols.logging import FlextProtocolsLogging as pl
-    from flext_core._protocols.result import FlextProtocolsResult as pr
+    from .._protocols.logging import FlextProtocolsLogging as pl
+    from .._protocols.result import FlextProtocolsResult as pr
 
 
 class FlextDecoratorsRailway(FlextDecoratorsLogging):
@@ -66,16 +63,16 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
         error_code: str | None = None,
     ) -> Callable[[Callable[PCallback, TResult]], Callable[PCallback, TResult]]:
         """Retry failed operations using configured backoff."""
-        attempts = max_attempts if max_attempts is not None else ci.MAX_RETRY_ATTEMPTS
+        attempts = max_attempts if max_attempts is not None else c.MAX_RETRY_ATTEMPTS
         delay = (
             delay_seconds
             if delay_seconds is not None
-            else float(ci.DEFAULT_RETRY_DELAY_SECONDS)
+            else float(c.DEFAULT_RETRY_DELAY_SECONDS)
         )
         strategy = (
             backoff_strategy
             if backoff_strategy is not None
-            else ci.DEFAULT_BACKOFF_STRATEGY
+            else c.DEFAULT_BACKOFF_STRATEGY
         )
 
         def decorator(
@@ -91,10 +88,10 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
                 logger = cls._resolve_logger(
                     logger_carrier, func_module=func.__module__
                 )
-                retry_settings = ms.RetryConfiguration.model_validate({
+                retry_settings = m.RetryConfiguration.model_validate({
                     "max_retries": attempts,
                     "initial_delay_seconds": delay,
-                    "exponential_backoff": strategy == ci.DEFAULT_BACKOFF_STRATEGY,
+                    "exponential_backoff": strategy == c.DEFAULT_BACKOFF_STRATEGY,
                     "retry_on_exceptions": [],
                     "retry_on_status_codes": [],
                 })
@@ -115,7 +112,7 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
                     effective_error_code = (
                         error_code
                         if error_code is not None
-                        else cv.ErrorCode.TIMEOUT_ERROR.value
+                        else c.ErrorCode.TIMEOUT_ERROR.value
                     )
                     timeout_message = (
                         f"Operation {func.__name__} failed after {attempts} attempts"
@@ -140,15 +137,15 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
         func_name: str,
         logger: pl.Logger,
         *,
-        retry_settings: ms.RetryConfiguration,
+        retry_settings: m.RetryConfiguration,
     ) -> TResult | Exception:
         """Execute retry loop with closure; return last exception on exhaustion."""
         attempts = retry_settings.max_retries
         delay = retry_settings.initial_delay_seconds
         strategy = (
-            ci.DEFAULT_BACKOFF_STRATEGY
+            c.DEFAULT_BACKOFF_STRATEGY
             if retry_settings.exponential_backoff
-            else ci.BackoffStrategy.LINEAR
+            else c.BackoffStrategy.LINEAR
         )
         last_exception: Exception | None = None
         current_delay = delay
@@ -174,14 +171,14 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
                     error=str(exc),
                     error_type=exc.__class__.__name__,
                 )
-                if strategy == ci.DEFAULT_BACKOFF_STRATEGY:
+                if strategy == c.DEFAULT_BACKOFF_STRATEGY:
                     current_delay *= 2
-                elif strategy == ci.BackoffStrategy.LINEAR:
+                elif strategy == c.BackoffStrategy.LINEAR:
                     current_delay += delay
                 if attempt == attempts:
                     break
         if last_exception is None:
-            msg = ce.ERR_RUNTIME_RETRY_LOOP_ENDED_WITHOUT_RESULT
+            msg = c.ERR_RUNTIME_RETRY_LOOP_ENDED_WITHOUT_RESULT
             return RuntimeError(msg)
         return last_exception
 

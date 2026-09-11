@@ -16,10 +16,11 @@ from collections.abc import MutableSequence
 from typing import Annotated, ClassVar
 
 from flext_core import c, p, t
-from flext_core._models.base import FlextModelsBase as m
-from flext_core._models.containers import FlextModelsContainers as mc
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
+
+from .._utilities.pydantic import FlextUtilitiesPydantic as up
+from .base import FlextModelsBase as m
+from .containers import FlextModelsContainers
+from .pydantic import FlextModelsPydantic as mp
 
 
 class FlextModelsHandler:
@@ -100,12 +101,12 @@ class FlextModelsHandler:
             ),
         ] = None
         metrics_state_data: Annotated[
-            mc.Dict,
+            FlextModelsContainers.Dict,
             mp.Field(
-                default_factory=lambda: mc.Dict(root={}),
+                default_factory=lambda: FlextModelsContainers.Dict(root={}),
                 description="Mutable metrics payload for the active handler execution.",
             ),
-        ] = mp.Field(default_factory=lambda: mc.Dict(root={}))
+        ] = mp.Field(default_factory=lambda: FlextModelsContainers.Dict(root={}))
 
         @up.computed_field
         @property

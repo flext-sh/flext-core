@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Final
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from flext_core._typings.base import FlextTypingBase as t
+    from ..._typings.base import FlextTypingBase as t
 
 
 class FlextConstantsEnforcementTargets:
@@ -55,6 +55,24 @@ class FlextConstantsEnforcementTargets:
         "utilities.py",
     })
     """The five canonical facade files per project (AGENTS.md §2.2)."""
+
+    ENFORCEMENT_PRIVATE_FAMILY_PACKAGES: Final[frozenset[str]] = frozenset(
+        f"_{name.removesuffix('.py')}" for name in ENFORCEMENT_CANONICAL_FILES
+    )
+    """Private-family sub-package suffixes derived from canonical files.
+
+    When a canonical file (``constants.py``) imports a class whose runtime
+    origin lives under the matching private sub-package (``_constants``),
+    the ``no_concrete_namespace_import`` rule (ENFORCE-046) treats it as a
+    legitimate local family import — not a forbidden bare ``Flext*`` class
+    import.  Facade classes must compose their private family
+    (``FlextApi[Tipo]*``) classes through MRO (R1), so this exemption is
+    scoped to same-package, private-sub-package origins only.
+
+    Evaluation is automatic: derived from :attr:`ENFORCEMENT_CANONICAL_FILES`,
+    so adding a new canonical file automatically extends the allowed family
+    set.  No parallel hardcoded list exists.
+    """
 
     ENFORCEMENT_ACCESSOR_RENAMES: Final[Mapping[str, t.StrPair]] = MappingProxyType({
         "is_success_result": (

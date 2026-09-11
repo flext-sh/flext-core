@@ -16,17 +16,27 @@ import sys
 import threading
 import typing
 from contextlib import suppress
-from typing import ClassVar, override
-
-import structlog
+from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_core import FlextConstants as c, FlextProtocols as p, FlextTypes as t
+
+if TYPE_CHECKING:
+    import types
 
 
 class FlextUtilitiesLoggingConfig:
     """Structlog configuration, async writer, and processor chain assembly."""
 
     _structlog_configured: ClassVar[bool]
+
+    @staticmethod
+    def structlog() -> types.ModuleType:
+        """Return the imported structlog module for owner-internal access."""
+        # Local import keeps structlog unloaded until logging initializes
+        # while binding the name this function returns.
+        import structlog
+
+        return structlog
 
     class _AsyncLogWriter(io.TextIOBase):
         """Background log writer using a queue and a separate thread."""
@@ -68,7 +78,9 @@ class FlextUtilitiesLoggingConfig:
             existing: p.Logger | None = getattr(self, "_writer_logger", None)
             if existing is not None:
                 return existing
-            created: p.Logger = structlog.get_logger(__name__)
+            created: p.Logger = FlextUtilitiesLoggingConfig.structlog().get_logger(
+                __name__
+            )
             self._writer_logger = created
             return created
 

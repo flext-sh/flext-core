@@ -14,10 +14,11 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from flext_core import FlextRuntime, c, e, m, p, r, t
-from flext_core._models.containers import FlextModelsContainers
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._utilities.guards import FlextUtilitiesGuards
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+
+from ..._models.containers import FlextModelsContainers
+from ..._models.pydantic import FlextModelsPydantic
+from ..guards import FlextUtilitiesGuards
+from ..guards_type_core import FlextUtilitiesGuardsTypeCore
 
 
 class FlextUtilitiesMapperAccess:

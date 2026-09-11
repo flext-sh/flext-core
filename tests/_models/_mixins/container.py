@@ -17,7 +17,7 @@ class TestsFlextModelsContainerMixin:
     class ServiceScenario(m.BaseModel):
         """Test scenario for service registration and retrieval."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
             frozen=True, arbitrary_types_allowed=True
         )
         name: Annotated[str, m.Field(description="Service scenario name")]
@@ -29,7 +29,7 @@ class TestsFlextModelsContainerMixin:
     class TypedRetrievalScenario(m.BaseModel):
         """Test scenario for typed service retrieval."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
             frozen=True, arbitrary_types_allowed=True
         )
         name: Annotated[str, m.Field(description="Typed retrieval scenario name")]

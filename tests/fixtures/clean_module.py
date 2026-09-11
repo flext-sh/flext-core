@@ -12,6 +12,7 @@ from types import MappingProxyType
 from typing import Annotated, ClassVar, Final, Protocol, runtime_checkable
 
 from flext_tests import r
+
 from tests.models import m
 from tests.protocols import p
 from tests.typings import t
@@ -30,7 +31,7 @@ class TestsFlextCleanModels:
             class GoodEntity(m.ArbitraryTypesModel):
                 """Well-formed entity."""
 
-                model_config: ClassVar[m.ConfigDict] = m.ConfigDict(extra="forbid")
+                model_config: ClassVar[t.ConfigDict] = m.ConfigDict(extra="forbid")
 
                 name: Annotated[str, u.Field(description="Entity display name.")] = ""
                 tags: Annotated[
@@ -40,7 +41,7 @@ class TestsFlextCleanModels:
                 metadata: Annotated[
                     t.StrMapping,
                     u.Field(
-                        default_factory=lambda: MappingProxyType({}),
+                        default_factory=lambda: MappingProxyType[str, str]({}),
                         description="Attribute map.",
                     ),
                 ]
@@ -52,7 +53,7 @@ class TestsFlextCleanModels:
             class GoodFrozenValue(m.FrozenValueModel):
                 """Frozen value object."""
 
-                model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+                model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
                     frozen=True, extra="forbid"
                 )
 

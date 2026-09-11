@@ -31,7 +31,9 @@ def ensure_even(value: int) -> p.Result[int]:
 
 result = r[int].ok(starting_value).map(lambda n: n + increment).flat_map(ensure_even)
 assert result.success
-assert result.value == expected_value```
+assert result.value == expected_value
+```
+
 ## Audit Check: recover
 
 ```python
@@ -39,4 +41,5 @@ from flext_core import r
 
 fallback = r[int].fail("missing").recover(lambda _err: 1)
 assert fallback.success
-assert fallback.value == 1```
+assert fallback.value == 1
+```

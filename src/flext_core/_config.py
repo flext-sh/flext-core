@@ -25,6 +25,7 @@ from __future__ import annotations
 import inspect
 import os
 from collections.abc import Callable
+from importlib.resources.abc import Traversable
 from pathlib import Path
 from threading import RLock
 from typing import Any, ClassVar, Self, cast, override
@@ -41,7 +42,7 @@ from yaml import MappingNode, SafeLoader
 from yaml.constructor import ConstructorError
 from yaml.resolver import BaseResolver
 
-from flext_core._settings import app_env_prefix, platform_config_root
+from ._settings import app_env_prefix, platform_config_root
 
 
 class _UniqueKeySafeLoader(SafeLoader):
@@ -113,7 +114,7 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
         return data
 
     @override
-    def _read_file(self, file_path: Path) -> dict[str, JsonValue]:
+    def _read_file(self, file_path: Path | Traversable) -> dict[str, JsonValue]:
         """Parse one YAML config file exactly once with strict mapping keys."""
         with file_path.open(encoding=self.yaml_file_encoding) as yaml_file:
             loader = _UniqueKeySafeLoader(yaml_file)
@@ -197,12 +198,6 @@ class FlextConfig(BaseSettings):
 
     _lock: ClassVar[RLock] = RLock()
     _instance: ClassVar[FlextConfig | None] = None
-
-    def __init_subclass__(cls, **kwargs: object) -> None:
-        """Give every concrete subclass its own isolated singleton slot."""
-        _ = kwargs
-        super().__init_subclass__()
-        cls._instance = None
 
     @classmethod
     def _package_namespace(cls) -> str:
@@ -333,11 +328,11 @@ class FlextConfig(BaseSettings):
     @classmethod
     def fetch_global(cls) -> Self:
         """Return the shared frozen singleton (lazy; built on first access)."""
-        instance = cls._instance
+        instance = cls.__dict__.get("_instance")
         if isinstance(instance, cls):
             return instance
         with cls._lock:
-            instance = cls._instance
+            instance = cls.__dict__.get("_instance")
             if isinstance(instance, cls):
                 return instance
             created = cls()

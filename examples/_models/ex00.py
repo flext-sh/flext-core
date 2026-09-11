@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from examples._models.errors import ExamplesFlextModelsErrors as _err
 from flext_core import c, m, p, r, t, u
+
+from .errors import ExamplesFlextModelsErrors as _err
 
 
 class ExamplesFlextModelsEx00:

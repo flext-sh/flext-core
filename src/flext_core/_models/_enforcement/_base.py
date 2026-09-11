@@ -9,8 +9,8 @@ from __future__ import annotations
 from enum import StrEnum, unique
 from typing import ClassVar
 
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._typings.base import FlextTypingBase as t
+from ..._typings.base import FlextTypingBase as t
+from ..pydantic import FlextModelsPydantic as mp
 
 
 class EnforcementModelBase(mp.BaseModel):

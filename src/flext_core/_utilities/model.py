@@ -17,9 +17,10 @@ from flext_core import (
     FlextResult as r,
     FlextTypes as t,
 )
-from flext_core._models.base import FlextModelsBase as m
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._utilities.args import FlextUtilitiesArgs as ua
+
+from .._models.base import FlextModelsBase as m
+from .._models.pydantic import FlextModelsPydantic as mp
+from .args import FlextUtilitiesArgs as ua
 
 
 class FlextUtilitiesModel:
