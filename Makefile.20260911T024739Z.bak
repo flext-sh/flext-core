@@ -1,7 +1,7 @@
 # @flext-generated: continuous
 # @flext-owner: flext-infra/config/codegen.yaml + flext-infra/src/flext_infra/templates/project/base/Makefile.j2
 # @flext-adjust: edit the owner configuration or template; never this projection
-# @flext-regenerate: make gen APPLY=Y
+# @flext-regenerate: make gen
 # flext-core — selector-free generated project interface.
 # Managed by flext-infra codegen conform for new and existing repositories.
 # === SECTION: header (managed) ===
@@ -59,7 +59,7 @@ $(warning Ignoring unsupported Make input(s): $(UNKNOWN_INPUTS); declared public
 endif
 APPLY ?= Y
 # filter-out keeps the guard true independent of argument order: a guard that
-# passed $(APPLY) as the filter *pattern* turned a valid APPLY=Y into the
+# passed $(APPLY) as the filter *pattern* turned a valid into the
 # pattern "Y Y" and returned two words, so the guard failed on every run.
 ifneq ($(filter-out Y Y,$(strip $(APPLY))),)
 $(error APPLY must be Y when enabled)
@@ -557,7 +557,7 @@ endef
 
 define _require_apply
 	@if [ "$(APPLY)" != "Y" ]; then \
-		printf 'ERROR: this action requires APPLY=Y\n' >&2; \
+		printf 'ERROR: this action requires\n' >&2; \
 		exit 2; \
 	fi
 endef

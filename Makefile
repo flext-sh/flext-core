@@ -549,7 +549,7 @@ endef
 
 define _require_apply
 	@if [ "$(APPLY)" = "N" ]; then \
-		printf 'ERROR: this action requires APPLY=Y\n' >&2; \
+		printf 'ERROR: this action requires\n' >&2; \
 		exit 2; \
 	fi
 endef
@@ -913,7 +913,8 @@ _builtin_deps_upgrade: _builtin_require_environment
 	# Branch-tracked git dependencies are moving sources by declaration
 	# (workspace.yaml owns the branch): --refresh re-reads their metadata so a
 	# stale cached requires-dist can never block or skew the resolution
-	# (flext-62fbu). The cooldown, not the cache, governs version movement.
+	# (flext-62fbu). The refresh re-reads metadata so version movement is
+	# always resolved from live upstream state.
 	$(call _run_for_all_projects,--upgrade --refresh)
 	@set -eu; \
 	selected="$(strip $(SELECTED_PROJECTS))"; \
