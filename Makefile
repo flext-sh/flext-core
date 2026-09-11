@@ -548,8 +548,8 @@ endef
 
 
 define _require_apply
-	@if [ "$()" != "" ]; then \
-		printf 'ERROR: this action requires =\n' >&2; \
+	@if [ "$(APPLY)" = "N" ]; then \
+		printf 'ERROR: this action requires APPLY=Y\n' >&2; \
 		exit 2; \
 	fi
 endef
