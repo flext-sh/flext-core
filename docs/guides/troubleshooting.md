@@ -1,4 +1,4 @@
-<!-- AUTO-GENERATED FILE — regenerate through `make gen APPLY=Y` from the workspace root. -->
+<!-- AUTO-GENERATED FILE — regenerate through `make gen` from the workspace root. -->
 <!-- Source of truth: `docs/guides/troubleshooting.md`; adjust that source, never this projection. -->
 
 # flext-core - Troubleshooting
@@ -41,24 +41,24 @@ file, pattern, changed-only, fix, or phase selectors.
 After correcting the source, use only the applicable canonical verbs:
 
 ```bash
-make gen APPLY=Y
-make mod APPLY=Y
-make gen APPLY=Y
-make gen APPLY=Y
-make fix APPLY=Y
-make fmt APPLY=Y
-make check APPLY=Y
-make test APPLY=Y
-make conform APPLY=Y
+make gen
+make mod
+make gen
+make gen
+make fix
+make fmt
+make check
+make test
+make conform
 ```
 
-Test diagnosis still runs through `make test APPLY=Y`, with the retained Testmon
+Test diagnosis still runs through `make test`, with the retained Testmon
 cache. Direct or cache-clearing test runs do not count as evidence.
 
 ## Documentation failures
 
 For stale member guides, change the matching root file under `docs/guides/` and
-run `make gen APPLY=Y`. Generated member guides carry their source and exact
+run `make gen`. Generated member guides carry their source and exact
 regeneration command in the header; never patch those projections.
 
 For a docs audit failure, remove the invalid command or test-double example at

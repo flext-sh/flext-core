@@ -1,4 +1,4 @@
-<!-- AUTO-GENERATED FILE — regenerate through `make gen APPLY=Y` from the workspace root. -->
+<!-- AUTO-GENERATED FILE — regenerate through `make gen` from the workspace root. -->
 <!-- Source of truth: `docs/guides/configuration.md`; adjust that source, never this projection. -->
 
 # flext-core - Configuration
@@ -41,11 +41,11 @@ source, never the member projection.
 Run configuration propagation and validation from the workspace root:
 
 ```bash
-make gen APPLY=Y
-make gen APPLY=Y
-make check APPLY=Y
-make test APPLY=Y
-make conform APPLY=Y
+make gen
+make gen
+make check
+make test
+make conform
 ```
 
 The second generation run must be a fixed point. Test validation retains the
