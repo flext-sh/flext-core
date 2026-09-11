@@ -6,15 +6,13 @@ import functools
 import importlib
 import importlib.metadata
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, cast
 
 from .._constants.enforcement import FlextConstantsEnforcement as c
 from ..lazy import normalize_lazy_imports
 
 if TYPE_CHECKING:
     from .._typings.base import FlextTypingBase as t
-
-_MIN_PUBLISHED_CONTRACT: Final[int] = 1
 
 
 class FlextUtilitiesFamilySurface:
@@ -31,9 +29,9 @@ class FlextUtilitiesFamilySurface:
 
     @staticmethod
     @functools.lru_cache(maxsize=1)
-    def _surface_snapshot() -> (
-        tuple[tuple[str, frozenset[str], t.MappingKV[str, t.StrPair | str]], ...]
-    ):
+    def _surface_snapshot() -> tuple[
+        tuple[str, frozenset[str], t.MappingKV[str, t.StrPair | str]], ...
+    ]:
         """Import every family root once and snapshot its published contract."""
         snapshot: list[
             tuple[str, frozenset[str], t.MappingKV[str, t.StrPair | str]]
@@ -49,10 +47,12 @@ class FlextUtilitiesFamilySurface:
             if published is None or raw_map is None:
                 continue
             normalized = normalize_lazy_imports(module.__name__, raw_map)
-            snapshot.append(
-                (name, frozenset(published), MappingProxyType(dict(normalized))),
-            )
-        if len(snapshot) < _MIN_PUBLISHED_CONTRACT:
+            snapshot.append((
+                name,
+                frozenset(published),
+                MappingProxyType(dict(normalized)),
+            ))
+        if len(snapshot) < c.FAMILY_SURFACE_MIN_PUBLISHED:
             msg = (
                 "family-surface derivation found no distribution publishing "
                 "the lazy export contract under prefix "
@@ -72,9 +72,7 @@ class FlextUtilitiesFamilySurface:
         declaration = tuple(name[0].lower() for name in c.NAMESPACE_LAYER_NAMES)
         owners = {
             name: tuple(alias for alias in declaration if alias in published)
-            for name, published, _ in (
-                FlextUtilitiesFamilySurface._surface_snapshot()
-            )
+            for name, published, _ in (FlextUtilitiesFamilySurface._surface_snapshot())
         }
         return MappingProxyType(owners)
 
@@ -82,30 +80,45 @@ class FlextUtilitiesFamilySurface:
     def compatibility_alias_renames() -> t.MappingKV[str, str]:
         """Map published long facade class name to its canonical alias.
 
-        Derived by inverting every family root's normalized lazy map for
-        single-letter canonical aliases — replacing the frozen per-member
-        table and covering every member and published facade automatically.
-        Two aliases claiming one long name is a contract violation and fails.
+        Derived by grouping each family root's normalized lazy map entries
+        by owner module: a module that publishes both a single-letter
+        canonical alias and a long ``Flext*`` class name publishes the same
+        facade in two forms, and consumers must use the canonical alias.
+        Two aliases claiming one long name is a contract violation and
+        fails. The derivation reads only the published contract, so every
+        current and future member is covered without per-member tables.
         """
-        renames: dict[str, str] = {}
+        grouped = {}
         for _, _, entries in FlextUtilitiesFamilySurface._surface_snapshot():
             for alias, entry in entries.items():
-                if len(alias) != 1 or alias not in c.ENFORCEMENT_CANONICAL_ALIASES:
-                    continue
-                if not isinstance(entry, tuple):
-                    continue
-                long_name = entry[1]
+                module = entry if isinstance(entry, str) else entry[0]
+                kind = "aliases" if len(alias) == 1 else "names"
+                if module not in grouped:
+                    grouped[module] = cast(
+                        "t.MutableMappingKV[str, list[str]]",
+                        {"aliases": [], "names": []},
+                    )
+                bucket = grouped[module]
+                bucket[kind].append(alias)
+        renames: t.MutableMappingKV[str, str] = {}
+        for module, bucket in grouped.items():
+            letters = [
+                alias
+                for alias in bucket["aliases"]
+                if alias in c.ENFORCEMENT_CANONICAL_ALIASES
+            ]
+            for long_name in bucket["names"]:
                 if not long_name.startswith("Flext"):
                     continue
-                previous = renames.get(long_name)
-                if previous is not None and previous != alias:
-                    msg = (
-                        f"published family surface maps {long_name!r} to both "
-                        f"{previous!r} and {alias!r}"
-                    )
-                    raise ValueError(msg)
-                renames[long_name] = alias
-        return MappingProxyType(renames)
+                for alias in letters:
+                    previous = renames.setdefault(long_name, alias)
+                    if previous != alias:
+                        msg = (
+                            f"published family surface maps {long_name!r} to "
+                            f"both {previous!r} and {alias!r} via {module!r}"
+                        )
+                        raise ValueError(msg)
+        return cast("t.StrMapping", MappingProxyType(renames))
 
 
 __all__: list[str] = ["FlextUtilitiesFamilySurface"]

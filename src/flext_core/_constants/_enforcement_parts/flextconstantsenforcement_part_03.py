@@ -43,6 +43,14 @@ class FlextConstantsEnforcementNamespace:
     never by an enumerated roster.
     """
 
+    FAMILY_SURFACE_MIN_PUBLISHED: Final[int] = 1
+    """Minimum family roots that must publish the lazy export contract.
+
+    Threshold for the family-surface derivation: a runtime where no
+    distribution publishes the contract is a broken installation and fails
+    loud instead of deriving an empty surface.
+    """
+
     ENFORCEMENT_NAMESPACE_FACADE_ROOTS: Final[frozenset[str]] = frozenset(
         {f"Flext{name}" for name in NAMESPACE_LAYER_NAMES}
         | {"FlextModelsBase", "FlextModelsNamespace", "EnforcedModel"}
