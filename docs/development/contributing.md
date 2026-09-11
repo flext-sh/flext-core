@@ -148,13 +148,13 @@ make val
 # Individual checks
 make check CHECK_GATES=lint       # Ruff linting (ZERO tolerance)
 make check CHECK_GATES=mypy,pyright  # Type checking (strict)
-make test WHAT=all                # Full test suite with coverage
+make test                # Full test suite with coverage
 make check CHECK_GATES=security   # Bandit security scan
 
 # Quick validation during development
-make check WHAT=all               # All read-only gates
-make fmt WHAT=apply APPLY=Y       # Auto-format code
-make fix WHAT=apply APPLY=Y       # Auto-fix findings (markdown, smells)
+make check               # All read-only gates
+make fmt WHAT=apply       # Auto-format code
+make fix WHAT=apply       # Auto-fix findings (markdown, smells)
 ```
 
 ### Testing
