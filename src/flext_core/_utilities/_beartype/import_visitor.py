@@ -157,6 +157,8 @@ class _ImportBlacklistVisitor:
         constant (derived from ``ENFORCEMENT_CANONICAL_FILES``); evaluation
         iterates that set rather than hardcoding path fragments.
         """
+        if "." not in origin or "." not in module_name:
+            return False
         origin_parts = origin.split(".")
         module_parts = module_name.split(".")
         if (

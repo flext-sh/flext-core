@@ -67,7 +67,7 @@ jobs:
           CI: Y
         run: |
           docker run --rm -e CI=Y ci-matrix-${{ matrix.distro }} make help
-          docker run --rm -e CI=Y ci-matrix-${{ matrix.distro }} make check APPLY=Y
+          docker run --rm -e CI=Y ci-matrix-${{ matrix.distro }} make check 
           # ci-matrix proves bootstrap + check across distros; it never runs make test.
   # End SECTION: distro-matrix
 
@@ -92,7 +92,7 @@ jobs:
       # catch platform-specific failures, and `make help` exercises none of
       # the gates. The linux job already runs it.
       - name: Canonical check
-        run: CI=Y make check APPLY=Y
+        run: CI=Y make check 
   # End SECTION: macos
 
   # === SECTION: windows (managed) ===
@@ -119,5 +119,5 @@ jobs:
       # the gates. The linux job already runs it.
       - name: Canonical check
         shell: bash
-        run: CI=Y make check APPLY=Y
+        run: CI=Y make check 
 # End SECTION: windows

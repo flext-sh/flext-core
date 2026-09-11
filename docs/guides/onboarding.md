@@ -1,4 +1,4 @@
-<!-- AUTO-GENERATED FILE — regenerate through `make gen APPLY=Y` from the workspace root. -->
+<!-- AUTO-GENERATED FILE — regenerate through `make gen` from the workspace root. -->
 <!-- Source of truth: `docs/guides/onboarding.md`; adjust that source, never this projection. -->
 
 # flext-core - Onboarding
@@ -43,12 +43,12 @@ surface. Never enter a member directory to run a parallel tool command.
 ## Establish the baseline
 
 ```bash
-make gen APPLY=Y
-make fix APPLY=Y
-make fmt APPLY=Y
-make check APPLY=Y
-make test APPLY=Y
-make conform APPLY=Y
+make gen
+make fix
+make fmt
+make check
+make test
+make conform
 ```
 
 Tests run only through the retained Testmon cache. Warnings, skips, empty
@@ -71,10 +71,10 @@ collection, missing tools, and suppressed failures are red.
 Change the source owner, then regenerate and prove the fixed point:
 
 ```bash
-make gen APPLY=Y
-make mod APPLY=Y
-make gen APPLY=Y
-make gen APPLY=Y
+make gen
+make mod
+make gen
+make gen
 ```
 
 Generated member guides identify their root source and exact regeneration rule.
