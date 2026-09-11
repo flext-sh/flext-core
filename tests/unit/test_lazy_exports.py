@@ -101,15 +101,19 @@ class TestsFlextCoreLazyExports:
         assert result.success, result.error
         assert result.value.stdout == ""
 
-    def test_install_without_publish_all_omits_dunder_all(self) -> None:
+    def test_install_without_publish_all_omits_dunder_all(
+        self, registered_alpha_module: tuple[str, type]
+    ) -> None:
         # Arrange
-        module_globals: t.ModuleGlobals = {}
+        module_name, _ = registered_alpha_module
+        package_name = module_name.rpartition(".")[0]
+        module_globals: t.ModuleGlobals = vars(sys.modules[package_name])
 
         # Act
         install_lazy_exports(
-            "test_pkg.transformers",
+            package_name,
             module_globals,
-            {"Alpha": ("test_pkg.transformers.alpha", "Alpha")},
+            {"Alpha": (module_name, "Alpha")},
             publish_all=False,
         )
 
@@ -119,13 +123,17 @@ class TestsFlextCoreLazyExports:
         assert callable(dir_fn)
         assert dir_fn() == ["Alpha"]
 
-    def test_install_with_publish_all_publishes_dunder_all(self) -> None:
+    def test_install_with_publish_all_publishes_dunder_all(
+        self, registered_alpha_module: tuple[str, type]
+    ) -> None:
         # Arrange
-        module_globals: t.ModuleGlobals = {}
+        module_name, _ = registered_alpha_module
+        package_name = module_name.rpartition(".")[0]
+        module_globals: t.ModuleGlobals = vars(sys.modules[package_name])
 
         # Act
         install_lazy_exports(
-            "test_pkg", module_globals, {"Alpha": ("test_pkg.alpha", "Alpha")}
+            package_name, module_globals, {"Alpha": (module_name, "Alpha")}
         )
 
         # Assert
@@ -134,18 +142,19 @@ class TestsFlextCoreLazyExports:
         assert callable(dir_fn)
         assert dir_fn() == ["Alpha"]
 
-    def test_install_with_public_exports_filters_dunder_all(self) -> None:
+    def test_install_with_public_exports_filters_dunder_all(
+        self, registered_alpha_module: tuple[str, type]
+    ) -> None:
         # Arrange
-        module_globals: t.ModuleGlobals = {}
+        module_name, alpha_cls = registered_alpha_module
+        package_name = module_name.rpartition(".")[0]
+        module_globals: t.ModuleGlobals = vars(sys.modules[package_name])
 
         # Act — private symbol wired but excluded from the published surface
         install_lazy_exports(
-            "test_pkg",
+            package_name,
             module_globals,
-            {
-                "Alpha": ("test_pkg.alpha", "Alpha"),
-                "InternalAlpha": ("test_pkg._alpha", "InternalAlpha"),
-            },
+            {"Alpha": (module_name, "Alpha"), "InternalAlpha": (module_name, "Alpha")},
             public_exports=("Alpha",),
         )
 
@@ -154,6 +163,8 @@ class TestsFlextCoreLazyExports:
         dir_fn = module_globals["__dir__"]
         assert callable(dir_fn)
         assert dir_fn() == ["Alpha"]
+
+        assert sys.modules[package_name].Alpha is alpha_cls
 
     def test_installed_getattr_resolves_absolute_target(
         self, registered_alpha_module: tuple[str, type]
@@ -198,14 +209,14 @@ class TestsFlextCoreLazyExports:
         target_name = "test_lazy_alias_target"
         target = ModuleType(target_name)
         target.__dict__["alias"] = "resolved"
+        package_name = "test_lazy_alias_pkg"
+        package = ModuleType(package_name)
         sys.modules[target_name] = target
+        sys.modules[package_name] = package
         try:
-            module_globals: t.ModuleGlobals = {}
+            module_globals: t.ModuleGlobals = vars(package)
             install_lazy_exports(
-                "test_lazy_alias_pkg",
-                module_globals,
-                {"alias": target_name},
-                publish_all=False,
+                package_name, module_globals, {"alias": target_name}, publish_all=False
             )
 
             # Act
@@ -217,12 +228,17 @@ class TestsFlextCoreLazyExports:
             assert "test_lazy_alias_pkg.alias" not in sys.modules
         finally:
             sys.modules.pop(target_name, None)
+            sys.modules.pop(package_name, None)
 
-    def test_installed_getattr_raises_attribute_error_for_unknown_name(self) -> None:
+    def test_installed_getattr_raises_attribute_error_for_unknown_name(
+        self, registered_alpha_module: tuple[str, type]
+    ) -> None:
         # Arrange
-        module_globals: t.ModuleGlobals = {}
+        module_name, _ = registered_alpha_module
+        package_name = module_name.rpartition(".")[0]
+        module_globals: t.ModuleGlobals = vars(sys.modules[package_name])
         install_lazy_exports(
-            "test_pkg", module_globals, {"Alpha": ("test_pkg.alpha", "Alpha")}
+            package_name, module_globals, {"Alpha": (module_name, "Alpha")}
         )
         getattr_fn = module_globals["__getattr__"]
         assert callable(getattr_fn)
