@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 
     from . import benchmark, fixtures, integration, unit
     from .base import TestsFlextServiceBase, TestsFlextServiceBase as s
+    from .constants import TestsFlextConstants, TestsFlextConstants as c
     from .models import TestsFlextModels, TestsFlextModels as m
     from .protocols import TestsFlextProtocols, TestsFlextProtocols as p
     from .typings import TestsFlextTypes, TestsFlextTypes as t
@@ -22,12 +23,14 @@ if TYPE_CHECKING:
 __all__: tuple[str, ...] = (
     "FlextConstants",
     "FlextTestsConstants",
+    "TestsFlextConstants",
     "TestsFlextModels",
     "TestsFlextProtocols",
     "TestsFlextServiceBase",
     "TestsFlextTypes",
     "TestsFlextUtilities",
     "benchmark",
+    "c",
     "fixtures",
     "integration",
     "m",
@@ -43,6 +46,7 @@ _LAZY_IMPORTS = MappingProxyType(
         MappingProxyType({
             ".base": ("TestsFlextServiceBase", "s"),
             ".benchmark": ("benchmark",),
+            ".constants": ("TestsFlextConstants", "c"),
             ".fixtures": ("fixtures",),
             ".integration": ("integration",),
             ".models": ("TestsFlextModels", "m"),
