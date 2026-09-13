@@ -664,6 +664,10 @@ duplication: _builtin_require_environment
 # project declares them (help, .PHONY) and must also be able to run them.
 
 
+# Repository-owned extra verbs dispatch exactly like canonical ones: the
+# project declares them (help, .PHONY) and must also be able to run them.
+
+
 # `setup` keeps its own recipe (it must not require the environment it is about
 # to build), but it still runs the pre-/post-setup lifecycle hooks so a project
 # declaring them in the custom handler surface is actually honoured.
