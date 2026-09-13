@@ -67,6 +67,7 @@ if TYPE_CHECKING:
     from .enforcement_collect import FlextUtilitiesEnforcementCollect
     from .enforcement_emit import FlextUtilitiesEnforcementEmit
     from .enum import FlextUtilitiesEnum
+    from .family_surface import FlextUtilitiesFamilySurface
     from .generators import FlextUtilitiesGenerators
     from .guards import FlextUtilitiesGuards
     from .guards_type_core import FlextUtilitiesGuardsTypeCore
@@ -125,6 +126,7 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesEnforcementCollect",
     "FlextUtilitiesEnforcementEmit",
     "FlextUtilitiesEnum",
+    "FlextUtilitiesFamilySurface",
     "FlextUtilitiesGenerators",
     "FlextUtilitiesGuards",
     "FlextUtilitiesGuardsTypeCore",
@@ -229,6 +231,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".enforcement_collect": ("FlextUtilitiesEnforcementCollect",),
             ".enforcement_emit": ("FlextUtilitiesEnforcementEmit",),
             ".enum": ("FlextUtilitiesEnum",),
+            ".family_surface": ("FlextUtilitiesFamilySurface",),
             ".generators": ("FlextUtilitiesGenerators",),
             ".guards": ("FlextUtilitiesGuards",),
             ".guards_type_core": ("FlextUtilitiesGuardsTypeCore",),

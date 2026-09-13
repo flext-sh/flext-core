@@ -8,6 +8,7 @@ from pydantic import BaseModel, ValidationError
 
 from flext_core import c
 
+from .._protocols.result import FlextProtocolsResult as prt
 from .base import FlextResultBase
 from .behavior import FlextResultBehavior
 
@@ -98,7 +99,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
     def copy_from_result(cls: type[Self], source: p.Result[T]) -> p.Result[T]:
         if source.success:
             try:
-                return cls.ok(source.value)
+                return ok_result(cls, source.value)
             except ValueError as exc:
                 return cls.fail(str(exc))
         return cls.fail(
@@ -119,7 +120,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
                     "p.Result[V]",
                     cls.fail("Callable returned None", error_code=error_code),
                 )
-            return cls.ok(value)
+            return ok_result(cls, value)
         except c.EXC_BROAD_RUNTIME as exc:
             return cast(
                 "p.Result[V]", cls.fail(str(exc), error_code=error_code, exception=exc)
@@ -185,15 +186,9 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
     ) -> p.Result[ModelT]:
         try:
             validated: ModelT = model.model_validate(data)
-            return cls.ok(validated)
+            return ok_result(cls, validated)
         except c.EXC_ATTR_RUNTIME_VALIDATION as exc:
             return cast("p.Result[ModelT]", cls.fail(str(exc), exception=exc))
-
-    @classmethod
-    def ok[V](cls: type[Self], value: V) -> p.Result[V]:
-        cls.reject_banned_result_parameterization()
-        cls.reject_banned_success_payload(value)
-        return cast("p.Result[V]", cls(value=value, success=True))
 
     @staticmethod
     def successful_result(obj: object) -> bool:
@@ -205,22 +200,34 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
         """Check whether an object is a failed result instance."""
         return isinstance(obj, FlextResultBase) and not obj.success
 
-    @classmethod
-    def from_result[V](cls: type[Self], source: p.Result[V]) -> p.Result[V]:
-        if source.success:
-            try:
-                return cls.ok(source.value)
-            except ValueError as exc:
-                return cast("p.Result[V]", cls.fail(str(exc)))
-        return cast(
-            "p.Result[V]",
-            cls.fail(
-                cls.require_error(source),
-                error_code=source.error_code,
-                error_data=source.error_data,
-                exception=source.exception,
-            ),
-        )
+
+def ok_result[V, InstanceT: prt.ResultFactory](
+    cls: type[InstanceT], value: V
+) -> p.Result[V]:
+    """Build a successful result of the ``cls`` result family carrying ``value``."""
+    cls.reject_banned_result_parameterization()
+    cls.reject_banned_success_payload(value)
+    return cast("p.Result[V]", cls(value=value, success=True))
 
 
-__all__: list[str] = ["FlextResultConstruction"]
+def copy_result[V, InstanceT: prt.ResultFactory](
+    cls: type[InstanceT], source: p.Result[V]
+) -> p.Result[V]:
+    """Copy any abstract result into the ``cls`` result family."""
+    if source.success:
+        try:
+            return ok_result(cls, source.value)
+        except ValueError as exc:
+            return cast("p.Result[V]", cls.fail(str(exc)))
+    return cast(
+        "p.Result[V]",
+        cls.fail(
+            cls.require_error(source),
+            error_code=source.error_code,
+            error_data=source.error_data,
+            exception=source.exception,
+        ),
+    )
+
+
+__all__: list[str] = ["FlextResultConstruction", "copy_result", "ok_result"]

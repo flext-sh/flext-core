@@ -13,7 +13,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import os
-from pathlib import Path
 
 # AGENT-COORDINATION (2026-07-11, ai-hub-mkzg): p/t MUST stay a RUNTIME import.
 # beartype.claw evaluates annotations at runtime; moving FlextProtocols/FlextTypes
@@ -22,30 +21,19 @@ from pathlib import Path
 # model_runtime.py. Contact owner of bead ai-hub-mkzg before touching this line.
 from flext_core import FlextProtocols as p, FlextTypes as t, r
 
-from .._constants.environment import FlextConstantsEnvironment
-
 
 class FlextUtilitiesSettings:
-    """Settings utilities for environment resolution and DI registration."""
+    """Settings utilities for environment resolution and DI registration.
+
+    ``resolve_env_file`` was deleted: it duplicated the settings-layer owner
+    (``FlextSettings.resolve_env_file``) without namespace support. Chain law:
+    the algorithm and its protocol constants live once in ``_settings.py``.
+    """
 
     @staticmethod
     def resolve_process_environment() -> dict[str, str]:
         """Resolve the inherited process environment as a plain string mapping."""
         return dict(os.environ)
-
-    @staticmethod
-    def resolve_env_file() -> str:
-        """Resolve .env file path from FLEXT_ENV_FILE env var."""
-        custom_env_file = os.environ.get(FlextConstantsEnvironment.ENV_FILE_ENV_VAR)
-        if custom_env_file:
-            custom_path = Path(custom_env_file)
-            if custom_path.exists():
-                return str(custom_path.resolve())
-            return custom_env_file
-        default_path = Path.cwd() / FlextConstantsEnvironment.ENV_FILE_DEFAULT
-        if default_path.exists():
-            return str(default_path.resolve())
-        return FlextConstantsEnvironment.ENV_FILE_DEFAULT
 
     @staticmethod
     def register_factory(

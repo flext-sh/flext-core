@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextSettings, c, m, u
+from flext_core import FlextSettings, c, m
 
 from .ex_02_flext_settings_helpers import Ex02FlextSettingsFieldChecks
 
@@ -111,9 +111,9 @@ class Ex02FlextSettings(Ex02FlextSettingsFieldChecks):
         FlextSettings.reset_for_testing()
         env_path = Path(__file__).with_name("flext_settings_example.env")
         env_path.write_text("FLEXT_LOG_LEVEL=WARNING\n", encoding="utf-8")
-        previous = self._set_env(c.ENV_FILE_ENV_VAR, str(env_path))
+        previous = self._set_env(FlextSettings.ENV_FILE_ENV_VAR, str(env_path))
         try:
-            resolved = u.resolve_env_file()
+            resolved = FlextSettings.resolve_env_file()
             self.audit_check(
                 "resolve_env_file.matches_requested", resolved == str(env_path)
             )
@@ -131,7 +131,7 @@ class Ex02FlextSettings(Ex02FlextSettingsFieldChecks):
                 created.model_dump().get("service_name"),
             )
         finally:
-            self._restore_env(c.ENV_FILE_ENV_VAR, previous)
+            self._restore_env(FlextSettings.ENV_FILE_ENV_VAR, previous)
             if env_path.exists():
                 env_path.unlink()
 

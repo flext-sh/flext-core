@@ -190,3 +190,15 @@ class TestsFlextModelsProjectMetadata:
 
         assert tool_config.project.class_stem_override is None
         assert tool_config.workspace.attached is False
+
+    def test_project_tool_flext_budget_table_round_trips(self) -> None:
+        """The budget-gate projection emitted by flext-infra ingress-validates."""
+        budget = {"lint": {"time-seconds": 30, "memory-mb": 1024, "tokens": 100000}}
+        tool_config = m.ProjectToolFlext.model_validate({"project": {"budget": budget}})
+
+        assert tool_config.project.budget == budget
+
+    def test_project_tool_flext_budget_defaults_to_none(self) -> None:
+        tool_config = m.ProjectToolFlext()
+
+        assert tool_config.project.budget is None

@@ -8,9 +8,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, Self, TypeVar, overload, runtime_checkable
 
-ResultT = TypeVar("ResultT")
-ResultViewT_co = TypeVar("ResultViewT_co", covariant=True)
-
 if TYPE_CHECKING:
     from collections.abc import Callable
     from types import TracebackType
@@ -19,6 +16,10 @@ if TYPE_CHECKING:
 
     from .._typings.base import FlextTypingBase as t
     from .._typings.services import FlextTypesServices as ts
+
+
+ResultT = TypeVar("ResultT")
+ResultViewT_co = TypeVar("ResultViewT_co", covariant=True)
 
 
 class FlextProtocolsResult:
@@ -175,6 +176,30 @@ class FlextProtocolsResult:
         def model_dump(
             self, *, mode: str = "python"
         ) -> t.MappingKV[str, ts.JsonPayload | None]: ...
+
+    class ResultFactory(Protocol):
+        """Structural factory contract for the concrete result family."""
+
+        @classmethod
+        def reject_banned_result_parameterization(cls) -> None: ...
+
+        @staticmethod
+        def reject_banned_success_payload(value: object) -> None: ...
+
+        @classmethod
+        def require_error(cls, source: FlextProtocolsResult.FailureLike) -> str: ...
+
+        @classmethod
+        def fail(
+            cls,
+            error: str | None,
+            *,
+            error_code: str | None = None,
+            error_data: t.JsonMapping | None = None,
+            exception: BaseException | None = None,
+        ) -> object: ...
+
+        def __init__(self, *, value: object, success: bool) -> None: ...
 
 
 __all__: list[str] = ["FlextProtocolsResult"]
