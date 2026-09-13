@@ -22,7 +22,11 @@ from .__version__ import (
 if TYPE_CHECKING:
     from ._config import FlextConfig, config
     from ._settings import FlextSettings, settings
-    from .constants import FlextConstants, FlextConstants as c
+    from .constants import (
+        FlextConstants,
+        FlextConstants as c,
+        FlextConstantsEnforcement,
+    )
     from .container import FlextContainer
     from .context import FlextContext
     from .decorators import FlextDecorators, d
@@ -47,6 +51,7 @@ if TYPE_CHECKING:
 __all__: tuple[str, ...] = (
     "FlextConfig",
     "FlextConstants",
+    "FlextConstantsEnforcement",
     "FlextContainer",
     "FlextContext",
     "FlextDecorators",
@@ -96,7 +101,7 @@ _LAZY_IMPORTS = MappingProxyType(
         MappingProxyType({
             "._config": ("FlextConfig", "config"),
             "._settings": ("FlextSettings", "settings"),
-            ".constants": ("FlextConstants", "c"),
+            ".constants": ("FlextConstants", "FlextConstantsEnforcement", "c"),
             ".container": ("FlextContainer",),
             ".context": ("FlextContext",),
             ".decorators": ("FlextDecorators", "d"),

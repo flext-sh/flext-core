@@ -44,3 +44,6 @@ class TestsFlextConstantsServices:
         "negate": -1,
     })
     UNKNOWN_OPERATION_PREFIX: Final[str] = "Unknown operation:"
+
+
+__all__: list[str] = ["TestsFlextConstantsServices"]

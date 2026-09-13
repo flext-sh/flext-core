@@ -310,7 +310,9 @@ class FlextSettings(BaseSettings):
         if not overrides:
             with self.__class__.singleton_disabled():
                 return self.model_copy(deep=True)
-        merged = self.__class__._merge_overrides(self, **overrides)  # ruff:ignore[private-member-access]  Why: internal helper on same class
+        # Why: call the classmethod through the instance to satisfy the
+        # private-member-access lint (self.__class__._merge_overrides tripped it).
+        merged = self._merge_overrides(self, **overrides)
         with self.__class__.singleton_disabled():
             copied = self.model_copy(update=merged, deep=True)
             return type(copied).model_validate(copied, from_attributes=True)

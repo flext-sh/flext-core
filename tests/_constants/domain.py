@@ -37,3 +37,5 @@ class TestsFlextConstantsDomain:
 
 
 c = TestsFlextConstantsDomain
+
+__all__: list[str] = ["TestsFlextConstantsDomain"]
