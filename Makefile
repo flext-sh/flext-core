@@ -57,9 +57,9 @@ UV_LINK_MODE := copy
 # is now a hard error, never a warning-plus-mutation, so every declared public
 # input below MUST already be legitimate today or a live invocation breaks.
 # WHAT is the universal action selector (`make <verb> WHAT=<action>`): it
-# routes custom handlers and builtin selectors such as `gen WHAT=init` in every
-# project, and the generated `_dispatch` reads it where script dispatch is
-# active (cosmos-3flk9).
+# routes custom handlers in every project, and the generated `_dispatch` reads
+# it where script dispatch is active (cosmos-3flk9). `initialize` is the
+# hermetic bootstrap verb and derives GEN_INIT_ONLY above.
 PUBLIC_INPUTS := INDEX APPLY FAIL_FAST PR_TITLE ARGS GEN_INIT_ONLY UV PROJECT_INFRA_PYTHONPATH REPOSITORY_ROOT SETUP_BOOTSTRAP_ONLY WHAT CI
 COMMAND_LINE_INPUTS := $(foreach name,$(filter-out .%,$(.VARIABLES)),$(if $(filter command line override,$(origin $(name))),$(name)))
 UNKNOWN_INPUTS := $(filter-out $(PUBLIC_INPUTS),$(COMMAND_LINE_INPUTS))
@@ -158,8 +158,14 @@ SCRIPT_VERBS :=
 # verb (including every script-dispatch verb, which has no check_mode
 # concept) fails loud before dispatch instead of silently mutating or no-op.
 CHECK_CAPABLE_VERBS := deps fmt fix fix-enforcement docs gen mod
+# Why: this file re-parses from scratch in the recursive sub-make RUN_PUBLIC
+# spawns (`$(SELF_MAKE) "_builtin-$(1)"`), so MAKECMDGOALS there is the
+# internal `_builtin-<verb>` target, never the bare public verb name. Without
+# filtering those out, every check_mode verb failed its own APPLY=N dispatch
+# (e.g. `make deps APPLY=N` errored "_builtin-deps has no check mode" from
+# inside the very recursion APPLY=N was supposed to reach).
 ifneq ($(strip $(CHECK_ONLY)),)
-$(foreach goal,$(filter-out help,$(MAKECMDGOALS)),$(if $(filter $(goal),$(CHECK_CAPABLE_VERBS)),,$(error $(goal) has no check mode; APPLY=N is not accepted for this verb)))
+$(foreach goal,$(filter-out help,$(filter-out _%,$(MAKECMDGOALS))),$(if $(filter $(goal),$(CHECK_CAPABLE_VERBS)),,$(error $(goal) has no check mode; APPLY=N is not accepted for this verb)))
 endif
 
 CUSTOM_MAKEFILE := $(MAKEFILE_ROOT)/custom.mk
@@ -653,7 +659,7 @@ gen: _builtin_require_environment
 conform: _builtin_require_environment
 	$(call RUN_PUBLIC,conform)
 
-initialize: _builtin_require_environment
+initialize:
 	$(call RUN_PUBLIC,initialize)
 
 mod: _builtin_require_environment
@@ -664,10 +670,6 @@ waza: _builtin_require_environment
 
 duplication: _builtin_require_environment
 	$(call RUN_PUBLIC,duplication)
-
-
-# Repository-owned extra verbs dispatch exactly like canonical ones: the
-# project declares them (help, .PHONY) and must also be able to run them.
 
 
 # Repository-owned extra verbs dispatch exactly like canonical ones: the
@@ -1128,7 +1130,7 @@ _builtin_gen_init:
 	@$(PROJECT_FLEXT_INFRA) codegen init --repository-root "$(PROJECT_ROOT)" --check
 
 _builtin_gen_all:
-	@$(PROJECT_FLEXT_INFRA) codegen conform --root "$(PROJECT_ROOT)" --scope "$(CODEGEN_SCOPE)" --mode $(if $(CHECK_ONLY),check,apply)
+	@$(PROJECT_FLEXT_INFRA) codegen conform --root "$(PROJECT_ROOT)" --scope "$(CODEGEN_SCOPE)" --mode apply
 
 _builtin_gen_apply: _builtin_gen_all
 
@@ -1144,11 +1146,11 @@ _builtin_mod_check: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) refactor mod
 
 # Selector-free public verbs map one-to-one to their canonical implementation.
-# CHECK_ONLY routes deps/fmt/fix/fix-enforcement/mod (config:make.verbs[]
-# .check_mode) to their read-only sibling target below; gen and docs branch
-# on CHECK_ONLY inside their own recipe body instead (single command, one
-# --mode/--apply argument to flip). Every other mapping is unconditional
-# because CHECK_CAPABLE_VERBS already rejected APPLY=N on those verbs earlier.
+# CHECK_ONLY routes deps/fmt/fix/fix-enforcement/gen/mod (config:make.verbs[]
+# .check_mode) to their read-only sibling target below; docs branches on
+# CHECK_ONLY inside its own recipe body instead (single command, one --apply
+# argument to flip). Every other mapping is unconditional because
+# CHECK_CAPABLE_VERBS already rejected APPLY=N on those verbs earlier.
 _builtin-deps: $(if $(CHECK_ONLY),_builtin_deps_check,_builtin_deps_upgrade)
 _builtin-build: _builtin_build_artifacts
 _builtin-check: _builtin_check_all
