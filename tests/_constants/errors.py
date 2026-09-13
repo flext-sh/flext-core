@@ -33,3 +33,6 @@ class TestsFlextConstantsErrors:
 
     MIN_LENGTH_DEFAULT: Final[int] = 3
     MAX_VALUE: Final[int] = 100
+
+
+__all__: list[str] = ["TestsFlextConstantsErrors"]

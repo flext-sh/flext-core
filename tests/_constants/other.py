@@ -119,3 +119,6 @@ class TestsFlextConstantsOther:
         ("FLEXT_APP", "flext-app"),
         ("flext_app_v2", "flext-app-v2"),
     )
+
+
+__all__: list[str] = ["TestsFlextConstantsOther"]

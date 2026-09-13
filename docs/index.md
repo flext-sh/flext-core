@@ -11,7 +11,7 @@
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
 - Version: `0.12.0`
-- Project class: `domain`
+- Project class: `platform`
 - Package: `flext_core`
 - Description: Enterprise Foundation Framework - Modern Python 3.13 + Clean
   Architecture
@@ -45,8 +45,8 @@ slot registry verification).
 
 ## Quality Gates
 
-Canonical selector-free `make` verbs (`check`, `test`, `fmt`, `conform`, `docs`)
-use `APPLY=Y` — see
+Canonical `make` verbs (`check`, `test`, `fmt`, `conform`, `docs`) mutate by
+default; `APPLY=N` selects check mode where the verb has one — see
 [`/flext/AGENTS.md`](https://github.com/flext-sh/flext/blob/0.12.0-dev/AGENTS.md)
 `Build & Test` and `Required Python quality gates`.
 

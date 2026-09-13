@@ -38,6 +38,7 @@ if TYPE_CHECKING:
     from ._beartype.method_visitor import FlextUtilitiesBeartypeMethodVisitor
     from ._beartype.module_visitor import FlextUtilitiesBeartypeModuleVisitor
     from ._context_crud_set import FlextUtilitiesContextCrudSetMixin
+    from ._enforcement_parts.enforcement_part_01 import PREDICATE_BINDINGS
     from ._enforcement_parts.enforcement_part_05 import FlextUtilitiesEnforcement
     from ._enforcement_parts.enforcement_part_06 import EXTENDED_PREDICATE_BINDINGS
     from ._guards_type_protocol_specs import FlextUtilitiesGuardsTypeProtocolSpecsMixin
@@ -63,11 +64,11 @@ if TYPE_CHECKING:
     from .discovery import FlextUtilitiesDiscovery
     from .dispatcher_execute import execute_dispatcher_handler
     from .domain import FlextUtilitiesDomain
-    from .enforcement import PREDICATE_BINDINGS
     from .enforcement_collect import FlextUtilitiesEnforcementCollect
     from .enforcement_emit import FlextUtilitiesEnforcementEmit
     from .enum import FlextUtilitiesEnum
     from .family_surface import FlextUtilitiesFamilySurface
+    from .files import FlextUtilitiesFiles
     from .generators import FlextUtilitiesGenerators
     from .guards import FlextUtilitiesGuards
     from .guards_type_core import FlextUtilitiesGuardsTypeCore
@@ -127,6 +128,7 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesEnforcementEmit",
     "FlextUtilitiesEnum",
     "FlextUtilitiesFamilySurface",
+    "FlextUtilitiesFiles",
     "FlextUtilitiesGenerators",
     "FlextUtilitiesGuards",
     "FlextUtilitiesGuardsTypeCore",
@@ -195,6 +197,7 @@ _LAZY_IMPORTS = MappingProxyType(
             "._context_crud_set": ("FlextUtilitiesContextCrudSetMixin",),
             "._enforcement_collect_parts": ("_enforcement_collect_parts",),
             "._enforcement_parts": ("_enforcement_parts",),
+            "._enforcement_parts.enforcement_part_01": ("PREDICATE_BINDINGS",),
             "._enforcement_parts.enforcement_part_05": ("FlextUtilitiesEnforcement",),
             "._enforcement_parts.enforcement_part_06": ("EXTENDED_PREDICATE_BINDINGS",),
             "._guards_type_protocol_specs": (
@@ -227,11 +230,11 @@ _LAZY_IMPORTS = MappingProxyType(
             ".discovery": ("FlextUtilitiesDiscovery",),
             ".dispatcher_execute": ("execute_dispatcher_handler",),
             ".domain": ("FlextUtilitiesDomain",),
-            ".enforcement": ("PREDICATE_BINDINGS",),
             ".enforcement_collect": ("FlextUtilitiesEnforcementCollect",),
             ".enforcement_emit": ("FlextUtilitiesEnforcementEmit",),
             ".enum": ("FlextUtilitiesEnum",),
             ".family_surface": ("FlextUtilitiesFamilySurface",),
+            ".files": ("FlextUtilitiesFiles",),
             ".generators": ("FlextUtilitiesGenerators",),
             ".guards": ("FlextUtilitiesGuards",),
             ".guards_type_core": ("FlextUtilitiesGuardsTypeCore",),

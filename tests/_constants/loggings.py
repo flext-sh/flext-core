@@ -14,3 +14,6 @@ class TestsFlextConstantsLoggings:
         """Logging configuration for tests - real inheritance."""
 
         ContextOperation = c.ContextOperation
+
+
+__all__: list[str] = ["TestsFlextConstantsLoggings"]

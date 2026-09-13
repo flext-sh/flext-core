@@ -47,7 +47,7 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
                 email_result: p.Result[m.Tests.EmailResponse] = result.flat_map(
                     lambda email: TestsFlextUtilitiesRailwayPipelinesMixin.make(
                         TestsFlextUtilitiesRailwayPipelinesMixin.SendEmailService,
-                        to=email,
+                        to=str(email),
                         subject="Test",
                     ).execute()
                 )
