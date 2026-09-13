@@ -284,7 +284,7 @@ class FlextRegistry(s[bool]):
         keys = self._state.registered_keys
         if scope == c.RegistrationScope.CLASS:
             keys = self._class_registered_keys
-        plugins = [k.split("::")[1] for k in keys if k.startswith(f"{category}::")]
+        plugins = tuple(k.split("::")[1] for k in keys if k.startswith(f"{category}::"))
         return r[t.StrSequence].ok(plugins)
 
     def _add_successful_registration(
