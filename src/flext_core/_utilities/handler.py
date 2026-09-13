@@ -17,11 +17,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from flext_core import c, r
+from flext_core import c, p, r
 from flext_core.runtime import FlextRuntime
 
 if TYPE_CHECKING:
-    from flext_core import p, t
+    from flext_core import t
 
 
 class FlextUtilitiesHandler:
@@ -73,7 +73,9 @@ class FlextUtilitiesHandler:
 
             validated = r.from_validation(ctx, m.ExecutionContext)
             if validated.failure:
-                return r.fail_op("push handler context", validated.error)
+                return r[p.HandlerRuntimeState].fail_op(
+                    "push handler context", validated.error
+                )
             execution_context: p.ExecutionContext = validated.unwrap()
             pushed_context = execution_context
         return r.ok(

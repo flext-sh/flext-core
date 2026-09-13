@@ -144,13 +144,17 @@ class FlextContainer(p.Container):
             resolved = callable_obj()
         except c.EXC_BROAD_RUNTIME as exc:
             return r[t.RegisterableService].from_result(
-                e.fail_operation(f"resolve {kind}", exc)
+                e.fail_operation(
+                    f"resolve {kind}", exc, result_type=r[t.RegisterableService]
+                )
             )
         if type_cls is not None:
             if self._matches_service_type(resolved, type_cls):
                 return r[T].ok(resolved)
             return r[T].from_result(
-                e.fail_type_mismatch(type_cls.__name__, type(resolved).__name__)
+                e.fail_type_mismatch(
+                    type_cls.__name__, type(resolved).__name__, result_type=r[T]
+                )
             )
         return r[t.RegisterableService].ok(resolved)
 
@@ -496,7 +500,9 @@ class FlextContainer(p.Container):
                 delattr(di_ns, name)
         if removed:
             return r[bool].ok(True)
-        return r[bool].from_result(e.fail_not_found("service", name))
+        return r[bool].from_result(
+            e.fail_not_found("service", name, result_type=r[bool])
+        )
 
     @override
     def wire(
@@ -517,12 +523,16 @@ class FlextContainer(p.Container):
         result = self.resolve(c.ServiceName.COMMAND_BUS)
         if result.failure:
             return r[p.Dispatcher].from_result(
-                e.fail_not_found("dispatcher", c.ServiceName.COMMAND_BUS)
+                e.fail_not_found(
+                    "dispatcher", c.ServiceName.COMMAND_BUS, result_type=r[p.Dispatcher]
+                )
             )
         if isinstance(result.value, p.Dispatcher):
             return r[p.Dispatcher].ok(result.value)
         return r[p.Dispatcher].from_result(
-            e.fail_type_mismatch("dispatcher", u.type_name(result.value))
+            e.fail_type_mismatch(
+                "dispatcher", u.type_name(result.value), result_type=r[p.Dispatcher]
+            )
         )
 
     def __init__(
