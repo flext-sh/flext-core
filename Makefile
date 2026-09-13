@@ -45,17 +45,20 @@ UV_LINK_MODE := copy
 # === SECTION: public boundary (managed) ===
 # GNU Make built-ins are dot-prefixed; .SHELLSTATUS carries origin "override"
 # on Make >= 4.4, so they are excluded from caller-input detection.
-# Operator decision 2026-09-10: unknown command-line inputs no longer fail the
-# run. The Makefile ignores them and prints a warning, so ordinary invocations
-# like `make test` or `make setup` always start with zero variables.
-# WHAT is a declared public input whenever script dispatch is active: the
-# generated `_dispatch` reads it and every promoted script verb's own help
-# documents `make <verb> WHAT=<action>` (cosmos-3flk9).
-PUBLIC_INPUTS := INDEX
+# Operator decision 2026-09-12 (option A): APPLY is a public input again.
+# Unset/empty APPLY mutates (today's default); APPLY=N selects the read-only
+# check recipe on every verb that declares one. An unknown command-line input
+# is now a hard error, never a warning-plus-mutation, so every declared public
+# input below MUST already be legitimate today or a live invocation breaks.
+# WHAT is the universal action selector (`make <verb> WHAT=<action>`): it
+# routes custom handlers and builtin selectors such as `gen WHAT=init` in every
+# project, and the generated `_dispatch` reads it where script dispatch is
+# active (cosmos-3flk9).
+PUBLIC_INPUTS := INDEX APPLY FAIL_FAST PR_TITLE ARGS GEN_INIT_ONLY UV PROJECT_INFRA_PYTHONPATH REPOSITORY_ROOT SETUP_BOOTSTRAP_ONLY WHAT CI
 COMMAND_LINE_INPUTS := $(foreach name,$(filter-out .%,$(.VARIABLES)),$(if $(filter command line override,$(origin $(name))),$(name)))
 UNKNOWN_INPUTS := $(filter-out $(PUBLIC_INPUTS),$(COMMAND_LINE_INPUTS))
 ifneq ($(strip $(UNKNOWN_INPUTS)),)
-$(warning Ignoring unsupported Make input(s): $(UNKNOWN_INPUTS); declared public inputs are $(PUBLIC_INPUTS))
+$(error Unsupported Make input(s): $(UNKNOWN_INPUTS); declared public inputs are $(PUBLIC_INPUTS))
 endif
 # INDEX refines receipt-attested publication: Y uploads to the package index,
 # N publishes GitHub assets only.
@@ -63,6 +66,13 @@ INDEX ?=
 ifneq ($(filter-out N,$(strip $(INDEX))),)
 $(error INDEX must be , N, or unset)
 endif
+# APPLY selects check mode on verbs that declare one (make.verbs[].check_mode);
+# CHECK_ONLY is the single selector every such verb's dispatch consumes below.
+APPLY ?=
+ifneq ($(filter-out N,$(strip $(APPLY))),)
+$(error APPLY must be N or unset)
+endif
+CHECK_ONLY := $(filter N,$(APPLY))
 PYTEST_DIAG_ARGS := -rA --durations=0 --tb=long --showlocals
 PYTEST_REPORT_ARGS := -ra --durations=25 --durations-min=0.001 --tb=short
 PYTEST_PROCESS_TIMEOUT_SECONDS := 660
@@ -107,7 +117,13 @@ endif
 override SETUP_MISE := $(TRACKED_MISE)
 override export FLEXT_PYTEST_TARGET_RAW := tests
 PROJECT_STATE_ROOT := $(abspath $(PROJECT_ROOT)/../.flext-runtime/$(notdir $(PROJECT_ROOT)))
-PROJECT_SCRATCH_ROOT := $(PROJECT_STATE_ROOT)/scratch
+# Scratch never lives inside a versioned tree: the home scratch root mirrors
+# the absolute checkout path so a sandbox is never a tracked scope of any
+# enclosing repository (workspace or linked worktree).
+ifeq ($(strip $(HOME)),)
+$(error HOME is required to derive the scratch root)
+endif
+PROJECT_SCRATCH_ROOT := $(HOME)/tmp/.flext-runtime$(abspath $(PROJECT_ROOT))/scratch
 TESTMON_DATAFILE := $(PROJECT_STATE_ROOT)/testmon/.testmondata
 export TESTMON_DATAFILE
 # === SECTION: REPOSITORY_ROOT isolation (managed) ===
@@ -127,6 +143,14 @@ endif
 PUBLIC_VERBS := help setup deps build check test fmt fix fix-enforcement audit status docs clean release-plan release-version release-tag release-build publication gen conform initialize mod waza duplication
 BUILTIN_VERBS := help setup deps build check test fmt fix fix-enforcement audit status docs clean release-plan release-version release-tag release-build publication gen conform initialize mod waza duplication
 SCRIPT_VERBS :=
+# CHECK_CAPABLE_VERBS is the declared subset of make.verbs that implements a
+# read-only recipe (config:make.verbs[].check_mode). APPLY=N on any other
+# verb (including every script-dispatch verb, which has no check_mode
+# concept) fails loud before dispatch instead of silently mutating or no-op.
+CHECK_CAPABLE_VERBS := deps fmt fix fix-enforcement docs gen mod
+ifneq ($(strip $(CHECK_ONLY)),)
+$(foreach goal,$(filter-out help,$(MAKECMDGOALS)),$(if $(filter $(goal),$(CHECK_CAPABLE_VERBS)),,$(error $(goal) has no check mode; APPLY=N is not accepted for this verb)))
+endif
 
 CUSTOM_MAKEFILE := $(MAKEFILE_ROOT)/custom.mk
 CUSTOM_DECLARED_TARGETS :=
@@ -547,13 +571,6 @@ define _dispatch
 endef
 
 
-define _require_apply
-	@if [ "$(APPLY)" = "N" ]; then \
-		printf 'ERROR: this action requires\n' >&2; \
-		exit 2; \
-	fi
-endef
-
 define _run_for_all_projects
 	@set -eu; \
 	for project in $(SELECTED_PROJECTS); do \
@@ -568,95 +585,72 @@ endef
 
 
 help:
-	$(call _require_apply)
 	$(call RUN_PUBLIC,help)
 
 deps: _builtin_require_environment
-	$(call _require_apply)
 	$(call RUN_PUBLIC,deps)
 
 build: _builtin_require_environment
-	$(call _require_apply)
 	$(call RUN_PUBLIC,build)
 
 check: _builtin_require_environment
-	$(call _require_apply)
 	$(call RUN_PUBLIC,check)
 
 test: _builtin_require_environment
-	$(call _require_apply)
 	$(call RUN_PUBLIC,test)
 
 fmt: _builtin_require_environment
-	$(call _require_apply)
 	$(call RUN_PUBLIC,fmt)
 
 fix: _builtin_require_environment
-	$(call _require_apply)
 	$(call RUN_PUBLIC,fix)
 
 fix-enforcement: _builtin_require_environment
-	$(call _require_apply)
 	$(call RUN_PUBLIC,fix-enforcement)
 
 audit: _builtin_require_environment
-	$(call _require_apply)
 	$(call RUN_PUBLIC,audit)
 
 status: _builtin_require_environment
-	$(call _require_apply)
 	$(call RUN_PUBLIC,status)
 
 docs: _builtin_require_environment
-	$(call _require_apply)
 	$(call RUN_PUBLIC,docs)
 
 clean: _builtin_require_environment
-	$(call _require_apply)
 	$(call RUN_PUBLIC,clean)
 
 release-plan: _builtin_require_environment
-	$(call _require_apply)
 	$(call RUN_PUBLIC,release-plan)
 
 release-version: _builtin_require_environment
-	$(call _require_apply)
 	$(call RUN_PUBLIC,release-version)
 
 release-tag: _builtin_require_environment
-	$(call _require_apply)
 	$(call RUN_PUBLIC,release-tag)
 
 release-build: _builtin_require_environment
-	$(call _require_apply)
 	$(call RUN_PUBLIC,release-build)
 
 publication: _builtin_require_environment
-	$(call _require_apply)
 	$(call RUN_PUBLIC,publication)
 
 gen: _builtin_require_environment
-	$(call _require_apply)
 	$(call RUN_PUBLIC,gen)
 
 conform: _builtin_require_environment
-	$(call _require_apply)
 	$(call RUN_PUBLIC,conform)
 
 initialize: _builtin_require_environment
-	$(call _require_apply)
 	$(call RUN_PUBLIC,initialize)
 
 mod: _builtin_require_environment
-	$(call _require_apply)
 	$(call RUN_PUBLIC,mod)
 
 waza: _builtin_require_environment
-	$(call _require_apply)
 	$(call RUN_PUBLIC,waza)
 
 duplication: _builtin_require_environment
-	$(call _require_apply)
 	$(call RUN_PUBLIC,duplication)
 
 
@@ -736,7 +730,7 @@ _builtin-help:
 
 	@printf '  %-16s %s\n' 'duplication' 'Run the canonical jscpd duplicate-code gate.';
 
-	@printf '%s\n' 'Verbs apply by default; pass =N where the verb supports a check mode.';
+	@printf '%s\n' 'Verbs mutate by default; pass APPLY=N to run a check-capable verb read-only.';
 
 # A project owns the sources declared by its manifest. The generated setup
 # reconciler validates every initialized checkout before mutation, initializes
@@ -909,11 +903,9 @@ _builtin_deps_check: _builtin_require_environment
 	$(call _run_for_all_projects,--check)
 
 _builtin_deps_lock:
-	$(call _require_apply)
 	$(call _run_for_all_projects,)
 
 _builtin_deps_upgrade: _builtin_require_environment
-	$(call _require_apply)
 	# Branch-tracked git dependencies are moving sources by declaration
 	# (workspace.yaml owns the branch): --refresh re-reads their metadata so a
 	# stale cached requires-dist can never block or skew the resolution
@@ -958,12 +950,10 @@ _builtin-self-check: _builtin_require_environment
 	$(PROJECT_FLEXT_INFRA) check run --repository-root "$(PROJECT_ROOT)" --gates "$$gates" --projects .
 
 _builtin-self-fmt: _builtin_require_environment
-	$(call _require_apply)
 	@$(UV_RUN) ruff format --preview $(RUFF_PATHS)
 	@$(UV_RUN) ruff check --preview --fix --unsafe-fixes $(RUFF_PATHS)
 
 _builtin-self-fix: _builtin_require_environment
-	$(call _require_apply)
 	@$(UV_RUN) ruff check --preview --fix --unsafe-fixes $(RUFF_PATHS)
 	@$(PROJECT_FLEXT_INFRA) check run --repository-root "$(PROJECT_ROOT)" --gates "lint,markdown,canonical-alias,smells" --projects . --apply
 
@@ -1014,7 +1004,6 @@ _builtin_fmt_check: _builtin_require_environment
 	@$(UV_RUN) ruff format --preview --check $(RUFF_PATHS)
 
 _builtin_fmt_all: _builtin_require_environment
-	$(call _require_apply)
 	@$(UV_RUN) ruff format --preview $(RUFF_PATHS)
 	@$(UV_RUN) ruff check --preview --fix --unsafe-fixes $(RUFF_PATHS)
 
@@ -1024,7 +1013,6 @@ _builtin_fix_check: _builtin_require_environment
 	@$(UV_RUN) ruff check --preview --no-fix $(RUFF_PATHS)
 
 _builtin_fix_all: _builtin_require_environment
-	$(call _require_apply)
 	@$(UV_RUN) ruff check --preview --fix --unsafe-fixes $(RUFF_PATHS)
 	@$(PROJECT_FLEXT_INFRA) check run --repository-root "$(PROJECT_ROOT)" --gates "lint,markdown,canonical-alias,smells" --projects . --apply
 
@@ -1033,10 +1021,12 @@ _builtin_fix_apply: _builtin_fix_all
 # Catalog-driven enforcement fixes: every ENFORCE rule whose fix action is
 # declared safe, applied through its registered adapter.
 _builtin_fix_enforcement: _builtin_require_environment
-	$(call _require_apply)
 	@$(PROJECT_FLEXT_INFRA) check fix-enforcement --repository-root "$(PROJECT_ROOT)" --safe-only --apply
 
-
+# Omitting --apply is the owner's own dry-run contract (WriteMixin.apply
+# defaults False): the same catalog scan, no mutation.
+_builtin_fix_enforcement_check: _builtin_require_environment
+	@$(PROJECT_FLEXT_INFRA) check fix-enforcement --repository-root "$(PROJECT_ROOT)" --safe-only
 
 
 _builtin_run_default: _builtin_require_environment
@@ -1052,15 +1042,16 @@ _builtin_status_diagnostics: _builtin_require_environment
 	fi
 	@git -C "$(PROJECT_ROOT)" status --short
 
+# In-process fan-out (no per-project subprocess fork), so CHECK_ONLY branches
+# directly here in both profiles: APPLY=N never passes --apply for any action.
 _builtin_docs_all:
 	@set -eu; \
 	for action in $(DOCS_ACTIONS); do \
-		case "$$action" in fix) mode=$(if $(filter ,$()),--apply,--check) ;; *) mode= ;; esac; \
+		case "$$action" in fix) mode=$(if $(CHECK_ONLY),,--apply) ;; *) mode= ;; esac; \
 		$(PROJECT_FLEXT_INFRA) docs "$$action" --repository-root "$(PROJECT_ROOT)" --output-dir ".reports/docs" $$mode $(DOCS_PROJECT_ARGS); \
 	done
 
 _builtin_clean_generated:
-	$(call _require_apply)
 
 	@find "$(PROJECT_ROOT)" -type d \
 		\( -name __pycache__ -o -name .mypy_cache -o -name .pytest_cache -o -name .ruff_cache -o -name .pyrefly_cache -o -name .benchmarks -o -name .hypothesis \) \
@@ -1068,7 +1059,7 @@ _builtin_clean_generated:
 
 
 	@set -eu; \
-	for target in "$(PROJECT_ROOT)/.test-tmp" "$(PROJECT_ROOT)/.test-runtime" "$(PROJECT_ROOT)/build" "$(PROJECT_ROOT)/dist" "$(PROJECT_ROOT)/htmlcov" "$(PROJECT_ROOT)/.reports"; do \
+	for target in "$(PROJECT_ROOT)/.flext-runtime" "$(PROJECT_ROOT)/build" "$(PROJECT_ROOT)/dist" "$(PROJECT_ROOT)/htmlcov" "$(PROJECT_ROOT)/.reports"; do \
 		if [ -e "$$target" ]; then find "$$target" -depth -delete; \
 		elif [ -L "$$target" ]; then find "$$target" -depth -delete; fi; \
 	done
@@ -1085,6 +1076,13 @@ _builtin_clean_generated:
 		\( -name '*.pstats' \) \
 		-delete
 
+	@set -eu; \
+	if [ -L "$(PROJECT_SCRATCH_ROOT)" ]; then \
+		printf 'ERROR: scratch root %s must be physical, found a symlink\n' "$(PROJECT_SCRATCH_ROOT)" >&2; \
+		exit 2; \
+	elif [ -d "$(PROJECT_SCRATCH_ROOT)" ]; then \
+		find "$(PROJECT_SCRATCH_ROOT)" -depth -delete; \
+	fi
 
 # Release protocol. `plan` derives the next version from merged pull-request
 # titles and guards against any version change made outside the protocol;
@@ -1095,18 +1093,15 @@ _builtin_release_plan: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) release run --phase plan $(if $(strip $(PR_TITLE)),--pr-title "$(PR_TITLE)")
 
 _builtin_release_version: _builtin_require_environment
-	$(call _require_apply)
 	@$(PROJECT_FLEXT_INFRA) release run --phase version --apply
 
 _builtin_release_tag: _builtin_require_environment
-	$(call _require_apply)
 	@$(PROJECT_FLEXT_INFRA) release run --phase tag --apply
 
 _builtin_release_build: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) release run --phase build --apply
 
 _builtin_release_publish: _builtin_require_environment
-	$(call _require_apply)
 	@$(PROJECT_FLEXT_INFRA) release run --phase publish --apply $(if $(filter Y,$(INDEX)),--index)
 
 # Generation has one transaction owner. Conform preserves the caller's scope and
@@ -1117,13 +1112,11 @@ _builtin_gen_check: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) codegen conform --root "$(PROJECT_ROOT)" --scope "$(CODEGEN_SCOPE)" --mode check
 
 _builtin_gen_init:
-	$(call _require_apply)
 	@$(PROJECT_FLEXT_INFRA) codegen init --repository-root "$(PROJECT_ROOT)" --apply
 	@$(PROJECT_FLEXT_INFRA) codegen init --repository-root "$(PROJECT_ROOT)" --check
 
 _builtin_gen_all:
-	$(call _require_apply)
-	@$(PROJECT_FLEXT_INFRA) codegen conform --root "$(PROJECT_ROOT)" --scope "$(CODEGEN_SCOPE)" --mode apply
+	@$(PROJECT_FLEXT_INFRA) codegen conform --root "$(PROJECT_ROOT)" --scope "$(CODEGEN_SCOPE)" --mode $(if $(CHECK_ONLY),check,apply)
 
 _builtin_gen_apply: _builtin_gen_all
 
@@ -1132,14 +1125,25 @@ _builtin_gen_apply: _builtin_gen_all
 _builtin_mod_apply: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) refactor mod --apply
 
+# Omitting --apply is the owner's own scan-only contract
+# (FlextInfraCodemodBatchApply.effective_dry_run): prove the fixed point,
+# mutate nothing.
+_builtin_mod_check: _builtin_require_environment
+	@$(PROJECT_FLEXT_INFRA) refactor mod
+
 # Selector-free public verbs map one-to-one to their canonical implementation.
-_builtin-deps: _builtin_deps_upgrade
+# CHECK_ONLY routes deps/fmt/fix/fix-enforcement/mod (config:make.verbs[]
+# .check_mode) to their read-only sibling target below; gen and docs branch
+# on CHECK_ONLY inside their own recipe body instead (single command, one
+# --mode/--apply argument to flip). Every other mapping is unconditional
+# because CHECK_CAPABLE_VERBS already rejected APPLY=N on those verbs earlier.
+_builtin-deps: $(if $(CHECK_ONLY),_builtin_deps_check,_builtin_deps_upgrade)
 _builtin-build: _builtin_build_artifacts
 _builtin-check: _builtin_check_all
 _builtin-test: _builtin_test_all
-_builtin-fmt: _builtin_fmt_all
-_builtin-fix: _builtin_fix_all
-_builtin-fix-enforcement: _builtin_fix_enforcement
+_builtin-fmt: $(if $(CHECK_ONLY),_builtin_fmt_check,_builtin_fmt_all)
+_builtin-fix: $(if $(CHECK_ONLY),_builtin_fix_check,_builtin_fix_all)
+_builtin-fix-enforcement: $(if $(CHECK_ONLY),_builtin_fix_enforcement_check,_builtin_fix_enforcement)
 _builtin-audit:
 	@if [ "$(MAKE_PROFILE)" = "workspace" ]; then \
 		$(UV) lock --project "$(PROJECT_ROOT)" --check; \
@@ -1159,7 +1163,7 @@ _builtin-publication: _builtin_release_publish
 _builtin-gen: _builtin_gen_all
 _builtin-conform: _builtin_gen_check
 _builtin-initialize: _builtin_gen_init
-_builtin-mod: _builtin_mod_apply
+_builtin-mod: $(if $(CHECK_ONLY),_builtin_mod_check,_builtin_mod_apply)
 _builtin-waza:
 	@cd "$(PROJECT_ROOT)" && "$(SETUP_MISE)" exec -- waza check --no-update-check
 _builtin-duplication:
