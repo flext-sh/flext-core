@@ -21,7 +21,6 @@ import pytest
 from flext_tests import tm
 
 from tests.models import m
-from tests.typings import t
 from tests.utilities import u
 
 if TYPE_CHECKING:
@@ -50,7 +49,7 @@ class TestsFlextCoreEnumUtilities:
     class ParseScenario(m.BaseModel):
         """Declarative parse case for the public ``u.parse`` contract."""
 
-        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
         name: Annotated[str, m.Field(description="Parse scenario name")]
         value: Annotated[str | StrEnum, m.Field(description="Input value to parse")]
         expected_success: Annotated[
