@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
 
-from flext_tests.base import FlextTestsServiceBase as _FlextTestsServiceBase
+from flext_tests import FlextTestsServiceBase as _FlextTestsServiceBase
 
-from tests.constants import c
+from . import c
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from . import p
 
 
 class TestsFlextServiceBase[TDomainResult: p.Base = p.Base](

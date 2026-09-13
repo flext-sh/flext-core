@@ -18,8 +18,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_tests import p
 
 if TYPE_CHECKING:
-    from tests.typings import t
-
+    from . import t
     from ._models.mixins import (
         TestsFlextModelsMixins,
         TestsFlextModelsMixins as _Mixins,
@@ -135,8 +134,7 @@ class TestsFlextProtocols(p):
                 """Map source dictionary keys under the requested policy."""
                 ...
 
-    SuccessCheckable = p.SuccessCheckable
-
 
 p = TestsFlextProtocols
+
 __all__: list[str] = ["TestsFlextProtocols", "p"]

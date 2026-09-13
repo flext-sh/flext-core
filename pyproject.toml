@@ -100,7 +100,7 @@ dev = [
   "types-flask>=1.1.6",
   "types-jsonschema>=4.26.0.20260518",
   "types-ldap3>=2.9.13.20260827",
-  "types-openpyxl>=3.1.5.20260910",
+  "types-openpyxl>=3.1.5.20260827",
   "types-paramiko>=5.0.0.20260724",
   "types-protobuf>=7.35.1.20260827",
   "types-psutil>=7.2.2.20260827",
@@ -144,9 +144,6 @@ omit = [
 [tool.deptry]
 known_first_party = ["flext_core"]
 pep621_dev_dependency_groups = ["dev"]
-
-[tool.flext.docs]
-project_class = "platform"
 
 [tool.hatch.metadata]
 allow-direct-references = true
@@ -566,7 +563,6 @@ whitelines = 1
 
 [tool.uv]
 link-mode = "copy"
-exclude-newer = "0 days"
 constraint-dependencies = ["structlog<26"]
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 
@@ -604,3 +600,111 @@ ignore-property-decorators = true
 [tool.radon]
 cc_min = "B"
 mi_min = "B"
+
+[tool.flext.docs]
+project_class = "platform"
+
+[tool.flext.project.budget.boundary]
+time-seconds = 600
+memory-mb = 2048
+tokens = 1000000
+
+[tool.flext.project.budget.budget]
+time-seconds = 600
+memory-mb = 2048
+tokens = 1000000
+
+[tool.flext.project.budget.canonical-alias]
+time-seconds = 600
+memory-mb = 2048
+tokens = 1000000
+
+[tool.flext.project.budget.codemod]
+time-seconds = 600
+memory-mb = 2048
+tokens = 1000000
+
+[tool.flext.project.budget.deferred-self-reference]
+time-seconds = 600
+memory-mb = 2048
+tokens = 1000000
+
+[tool.flext.project.budget.direnv]
+time-seconds = 600
+memory-mb = 2048
+tokens = 1000000
+
+[tool.flext.project.budget.duplication]
+time-seconds = 600
+memory-mb = 2048
+tokens = 1000000
+
+[tool.flext.project.budget.format]
+time-seconds = 600
+memory-mb = 2048
+tokens = 1000000
+
+[tool.flext.project.budget.layout]
+time-seconds = 600
+memory-mb = 2048
+tokens = 1000000
+
+[tool.flext.project.budget.lint]
+time-seconds = 600
+memory-mb = 2048
+tokens = 1000000
+
+[tool.flext.project.budget.loc-cap]
+time-seconds = 600
+memory-mb = 2048
+tokens = 1000000
+
+[tool.flext.project.budget.markdown]
+time-seconds = 600
+memory-mb = 2048
+tokens = 1000000
+
+[tool.flext.project.budget.mypy]
+time-seconds = 600
+memory-mb = 2048
+tokens = 1000000
+
+[tool.flext.project.budget.namespace]
+time-seconds = 600
+memory-mb = 2048
+tokens = 1000000
+
+[tool.flext.project.budget.pyrefly]
+time-seconds = 600
+memory-mb = 2048
+tokens = 1000000
+
+[tool.flext.project.budget.pyright]
+time-seconds = 600
+memory-mb = 2048
+tokens = 1000000
+
+[tool.flext.project.budget.runtime-census]
+time-seconds = 600
+memory-mb = 2048
+tokens = 1000000
+
+[tool.flext.project.budget.security]
+time-seconds = 600
+memory-mb = 2048
+tokens = 1000000
+
+[tool.flext.project.budget.silent-failure]
+time-seconds = 600
+memory-mb = 2048
+tokens = 1000000
+
+[tool.flext.project.budget.smells]
+time-seconds = 600
+memory-mb = 2048
+tokens = 1000000
+
+[tool.flext.project.budget.tier-whitelist]
+time-seconds = 600
+memory-mb = 2048
+tokens = 1000000

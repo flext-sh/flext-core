@@ -69,9 +69,8 @@ class FlextTypingBase(tp, ta):
     # cosmos-gitops); nobody redeclares it locally.
     # TypeAliasType (not PEP 695 ``type``) because pyrefly cannot resolve the
     # class-scoped self-reference in a ``type`` recursive alias.
-    TomlValue = TypeAliasType(
-        "TomlValue",
-        "str | int | float | bool | datetime | list[TomlValue] | Mapping[str, TomlValue]",
+    type TomlValue = (
+        str | int | float | bool | datetime | list[TomlValue] | Mapping[str, TomlValue]
     )
     type TomlTable = MappingKV[str, TomlValue]
     type MutableTomlTable = MutableMapping[str, TomlValue]

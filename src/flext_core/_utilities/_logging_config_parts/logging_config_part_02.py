@@ -1,7 +1,8 @@
-"""Structlog configuration and processor chain building.
+"""Structlog processor chain assembly and level-based context filtering.
 
 Extracted from FlextUtilitiesLogging as an MRO mixin to keep the facade under
-the 200-line cap (AGENTS.md §3.1).
+the 200-line cap (AGENTS.md §3.1). Handles processor construction,
+structlog parameter resolution, and async writer lifecycle.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
