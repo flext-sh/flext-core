@@ -270,7 +270,11 @@ jobs:
           rm -f "$key_path"
 
       - name: Boot
-        run: make setup
+        # Toolchain resolution needs the same authenticated API budget as ci.
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          MISE_GITHUB_TOKEN: ${{ github.token }}
+        run: CI=Y make setup
       - name: Release plan and guard
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}

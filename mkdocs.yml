@@ -1,10 +1,9 @@
 # AUTO-GENERATED — DO NOT EDIT MANUALLY
-site_name: flext-core Documentation
-site_description: Generated documentation for flext-core
+site_name: FLEXT Workspace
+site_description: Workspace documentation generated from code and curated root docs
 site_url: https://github.com/flext-sh/flext-core/blob/main/README.md
 repo_name: flext-sh/flext
 repo_url: https://github.com/flext-sh/flext-core
-edit_uri: edit/main/flext-core/
 docs_dir: docs
 site_dir: .reports/docs/site
 
@@ -88,8 +87,27 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - Knowledge Index: knowledge-index.md
+  - Architecture:
+      - Overview: architecture/README.md
+      - arc42: architecture/arc42/README.md
+      - Code Communities: architecture/communities/index.md
+      - CRG Risk Reports:
+          - Dead Code: architecture/crg-reports/dead-code.md
+          - Architecture Risk: architecture/crg-reports/architecture.md
+          - Large Functions: architecture/crg-reports/large-functions.md
+  - Standards:
+      - Documentation: standards/documentation.md
+      - Docstrings: standards/docstrings/README.md
   - Guides: guides/README.md
-  - API Reference: api-reference/README.md
+  - Projects: projects/README.md
+  - API Reference:
+      - Index: api-reference/README.md
+      - Foundation: api-reference/foundation.md
+      - Types: api/types.md
+      - API Overview: api-reference/generated/overview.md
+  - Project Catalog: projects/generated/catalog.md
+  - Version Policy: version-policy.md
 
 not_in_nav: |
   api-reference/generated/**
