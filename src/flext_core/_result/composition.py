@@ -8,6 +8,7 @@ from pydantic import ValidationError
 
 from flext_core import c
 
+from .construction import copy_result, ok_result
 from .transforms import FlextResultTransforms
 
 if TYPE_CHECKING:
@@ -32,7 +33,7 @@ class FlextResultComposition[T](FlextResultTransforms[T]):
                 errors.append(cls.require_error(result))
         if errors:
             return cast("p.Result[Sequence[ValueT]]", cls.fail("; ".join(errors)))
-        return cls.ok(successes)
+        return ok_result(cls, successes)
 
     @classmethod
     def traverse[V, U](
@@ -54,11 +55,11 @@ class FlextResultComposition[T](FlextResultTransforms[T]):
                 if result.failure:
                     return cast("p.Result[Sequence[U]]", cls.from_failure(result))
                 results.append(result.value)
-            return cls.ok(results)
+            return ok_result(cls, results)
         all_results: MutableSequence[p.Result[U]] = []
         for item in items:
             try:
-                all_results.append(cls.from_result(func(item)))
+                all_results.append(copy_result(cls, func(item)))
             except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
                 all_results.append(
                     cast("p.Result[U]", cls.fail(str(exc), exception=exc))
@@ -78,7 +79,7 @@ class FlextResultComposition[T](FlextResultTransforms[T]):
             return cast("p.Result[U]", cls.fail(str(exc), exception=exc))
         result: p.Result[U]
         try:
-            result = cls.from_result(op(resource))
+            result = copy_result(cls, op(resource))
         except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
             result = cast("p.Result[U]", cls.fail(str(exc), exception=exc))
         if cleanup:
@@ -103,7 +104,7 @@ class FlextResultComposition[T](FlextResultTransforms[T]):
     ) -> Callable[PFunc, p.Result[U]]:
         def wrapper(*args: PFunc.args, **kwargs: PFunc.kwargs) -> p.Result[U]:
             try:
-                return cls.ok(func(*args, **kwargs))
+                return ok_result(cls, func(*args, **kwargs))
             except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
                 return cast("p.Result[U]", cls.fail(str(exc), exception=exc))
 

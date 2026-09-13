@@ -12,7 +12,7 @@ from .base import FlextProtocolsBase as p
 from .result import FlextProtocolsResult as pr
 
 if TYPE_CHECKING:
-    from flext_core import FlextTypes as t
+    from . import FlextTypes as t
 
 
 class FlextProtocolsSettings:

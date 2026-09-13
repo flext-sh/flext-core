@@ -1,7 +1,8 @@
-"""Structlog configuration and processor chain building.
+"""Structlog configuration, async writer, and processor chain assembly.
 
 Extracted from FlextUtilitiesLogging as an MRO mixin to keep the facade under
-the 200-line cap (AGENTS.md §3.1).
+the 200-line cap (AGENTS.md §3.1). Dedicated to the async writer subsystem:
+queue-based background writer, thread lifecycle, and stream adapter.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

@@ -24,8 +24,10 @@ class FlextConstantsEnvironment:
         LOCAL = "local"
 
     ENV_PREFIX: Final[str] = "FLEXT_"
-    ENV_FILE_DEFAULT: Final[str] = ".env"
-    ENV_FILE_ENV_VAR: Final[str] = "FLEXT_ENV_FILE"
-    ENV_NESTED_DELIMITER: Final[str] = "__"
-    DEFAULT_APP_NAME: Final[str] = "flext"
-    DEFAULT_TIMEZONE: Final[str] = "UTC"
+    """Root env prefix invariant (consumed forward by m for derived defaults).
+
+    ``ENV_FILE_ENV_VAR``/``ENV_FILE_DEFAULT`` moved to their chain-law owner
+    ``_settings.py`` (settings is the bottom layer); consume them via
+    ``FlextSettings.ENV_FILE_*``. ``DEFAULT_APP_NAME``/``DEFAULT_TIMEZONE``
+    were deleted: zero consumers (YAGNI).
+    """

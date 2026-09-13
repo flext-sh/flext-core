@@ -85,6 +85,19 @@ class _ProjectMetadataFields:
         class_stem_override: Annotated[
             str | None, Field(default=None, description="Explicit class stem override")
         ] = None
+        budget: Annotated[
+            t.JsonMapping | None,
+            Field(
+                default=None,
+                description=(
+                    "Per-gate resource budget table emitted by the flext-infra "
+                    "budget-gate projection into the managed "
+                    "``[tool.flext.project.budget]`` section. The ingress owns "
+                    "the validated shape so the generator's own output always "
+                    "round-trips through this contract."
+                ),
+            ),
+        ] = None
 
     class ProjectToolFlextReadmeSection(_ProjectMetadataContract):
         """One ordered project README section declaration."""

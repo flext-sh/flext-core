@@ -100,7 +100,7 @@ dev = [
   "types-flask>=1.1.6",
   "types-jsonschema>=4.26.0.20260518",
   "types-ldap3>=2.9.13.20260827",
-  "types-openpyxl>=3.1.5.20260910",
+  "types-openpyxl>=3.1.5.20260827",
   "types-paramiko>=5.0.0.20260724",
   "types-protobuf>=7.35.1.20260827",
   "types-psutil>=7.2.2.20260827",
@@ -566,7 +566,6 @@ whitelines = 1
 
 [tool.uv]
 link-mode = "copy"
-exclude-newer = "0 days"
 constraint-dependencies = ["structlog<26"]
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 

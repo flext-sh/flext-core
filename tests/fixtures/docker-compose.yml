@@ -7,6 +7,7 @@ services:
       - "8080:80"
     environment:
       - NGINX_HOST=localhost
+      - FLEXT_FIXTURE_ROLE=core-nginx
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
       interval: 10s
@@ -20,6 +21,7 @@ services:
       POSTGRES_DB: test
       POSTGRES_USER: testuser
       POSTGRES_PASSWORD: testpass
+      FLEXT_FIXTURE_ROLE=core-postgres
     ports:
       - "5432:5432"
     healthcheck:
