@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 from flext_tests import r, tm
 
@@ -187,7 +189,9 @@ class TestsFlextCoreResult:
     def test_parameterized_none_and_object_are_forbidden(self) -> None:
         """``r[None]`` and ``r[object]`` specializations are rejected."""
         with pytest.raises(ValueError, match="parameterized with None"):
-            r[None].ok(True)
+            # Why: r[None] raises before the value is inspected; cast keeps
+            # the call statically None-typed while proving the runtime guard.
+            r[None].ok(cast("None", True))
         with pytest.raises(ValueError, match="parameterized with object"):
             r[object].ok({"k": "v"})
         with pytest.raises(ValueError, match="parameterized with None"):
