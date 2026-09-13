@@ -124,7 +124,6 @@ class FlextTypesPydantic:
     type BaseModel = pydantic.BaseModel
     type TypeAdapterType[T] = pydantic.TypeAdapter[T]
     TypeAdapter = pydantic.TypeAdapter
-    ConfigDict = pydantic.ConfigDict
     ImportString = pydantic.ImportString
     InstanceOf = pydantic.InstanceOf
     Secret = pydantic.Secret

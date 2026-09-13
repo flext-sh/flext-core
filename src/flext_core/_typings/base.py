@@ -31,8 +31,9 @@ from .pydantic import FlextTypesPydantic as tp
 # finding cannot be resolved from flext-core alone — it needs a ruff
 # per-file-ignore (UP040, TC008) or an equivalent codemod-detector exemption
 # from flext-infra.
-type TomlValue = (
-    str | int | float | bool | datetime | list[TomlValue] | Mapping[str, TomlValue]
+TomlValue = TypeAliasType(
+    "TomlValue",
+    str | int | float | bool | datetime | list["TomlValue"] | Mapping[str, "TomlValue"],
 )
 
 

@@ -31,6 +31,7 @@ from pydantic import (
     FailFast,
     Field,
     FieldSerializationInfo,
+    FileUrl,
     GetCoreSchemaHandler,
     GetJsonSchemaHandler,
     GetPydanticSchema,
@@ -40,6 +41,7 @@ from pydantic import (
     PlainValidator,
     PrivateAttr as PydanticPrivateAttr,
     RootModel as PydanticRootModel,
+    SecretStr,
     SerializeAsAny,
     SkipValidation,
     StringConstraints,
@@ -51,6 +53,7 @@ from pydantic import (
     WrapValidator,
     computed_field,
     field_validator,
+    model_validator,
 )
 from pydantic.fields import FieldInfo
 from pydantic_core import PydanticUndefined, PydanticUndefinedType, SchemaValidator
@@ -142,10 +145,26 @@ class FlextModelsPydantic:
     # for every decorated property (reportIndexIssue on real consumers).
     computed_field = staticmethod(computed_field)
     field_validator = field_validator
+    # Why (abstraction boundary): ENFORCE-070 makes flext-core the sole owner of
+    # pydantic, and the tier-whitelist gate rejects a bare ``pydantic`` import in
+    # every downstream project. A name that this facade does not re-export
+    # therefore has no compliant spelling at all: the consumer must either import
+    # pydantic directly (gate violation) or reach forward into a later layer
+    # (namespace chain violation). ``model_validator`` is the canonical
+    # model-level counterpart of ``field_validator`` above, and its absence alone
+    # forced bare pydantic imports across 32 downstream modules.
+    model_validator = model_validator
 
     # Annotation constraints and tagged-union discrimination
     Discriminator = Discriminator
     StringConstraints = StringConstraints
+    # Field alias declaration and the scalar/URL field types a declaration layer
+    # needs; all four were reachable only through a bare pydantic import before.
+    AliasChoices = AliasChoices
+    AliasPath = AliasPath
+    JsonValue = JsonValue
+    SecretStr = SecretStr
+    FileUrl = FileUrl
 
     # Annotation validators
     AfterValidator = AfterValidator
