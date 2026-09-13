@@ -1,5 +1,7 @@
 """Logging context binding and value normalization.
 
+MRO part 01: context dictionary merge, bind/unbind operations.
+
 Extracted from FlextUtilitiesLogging as an MRO mixin to keep the facade under
 the 200-line cap (AGENTS.md §3.1).
 

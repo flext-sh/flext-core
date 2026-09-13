@@ -39,7 +39,7 @@ class TestsFlextCoreDecorators:
         _ = di.bind("injected.value", "dep-value")
 
         @d.inject(dep="injected.value")
-        def fn(*, dep: str = "fallback") -> str:
+        def fn(*, dep: str) -> str:
             return dep
 
         tm.that(fn(), eq="dep-value")
@@ -50,10 +50,10 @@ class TestsFlextCoreDecorators:
         _ = clean_container
 
         @d.inject(dep="missing.key")
-        def fn(*, dep: str = "fallback") -> str:
+        def fn(*, dep: str = "default-value") -> str:
             return dep
 
-        tm.that(fn(), eq="fallback")
+        tm.that(fn(), eq="default-value")
 
     def test_timeout_raises_when_call_exceeds_limit(self) -> None:
         @d.timeout(timeout_seconds=0.001, error_code="TMO")

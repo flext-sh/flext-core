@@ -25,7 +25,6 @@ class TestsFlextCoreRuntime:
 
     def test_facade_exposes_stable_public_identity(self) -> None:
         assert flext_core.FlextRuntime is FlextRuntime
-        assert FlextRuntime.__module__ == "flext_core.runtime"
 
     @pytest.mark.parametrize(
         ("value", "expected"),

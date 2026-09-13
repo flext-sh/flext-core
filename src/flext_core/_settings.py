@@ -31,13 +31,17 @@ import threading
 from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Annotated, ClassVar, Self
+from typing import Annotated, ClassVar, Final, Self
 
 from pydantic import BaseModel, Field, computed_field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-_ENV_FILE_ENV_VAR = "FLEXT_ENV_FILE"
-_ENV_FILE_DEFAULT = ".env"
+ENV_FILE_ENV_VAR: Final[str] = "FLEXT_ENV_FILE"
+"""Bootstrap env var that overrides the .env path (settings-layer protocol owner)."""
+
+ENV_FILE_DEFAULT: Final[str] = ".env"
+"""Default .env file name (settings-layer protocol owner)."""
+
 _ERR_TRACE_REQUIRES_DEBUG = "trace mode requires debug mode to be enabled"
 
 
@@ -47,7 +51,7 @@ def _resolve_env_file(namespace: str | None = None) -> str:
     Module-level so it can seed ``model_config`` before the class body
     finishes evaluating.
     """
-    custom_env_file = os.environ.get(_ENV_FILE_ENV_VAR)
+    custom_env_file = os.environ.get(ENV_FILE_ENV_VAR)
     if custom_env_file:
         custom_path = Path(custom_env_file)
         if custom_path.exists():
@@ -57,10 +61,10 @@ def _resolve_env_file(namespace: str | None = None) -> str:
         scoped = Path.cwd() / f".env.flext-{namespace}"
         if scoped.exists():
             return str(scoped.resolve())
-    default_path = Path.cwd() / _ENV_FILE_DEFAULT
+    default_path = Path.cwd() / ENV_FILE_DEFAULT
     if default_path.exists():
         return str(default_path.resolve())
-    return _ENV_FILE_DEFAULT
+    return ENV_FILE_DEFAULT
 
 
 def _platform_cache_root() -> Path:
@@ -182,9 +186,19 @@ class FlextSettings(BaseSettings):
         arbitrary_types_allowed=True,
     )
 
+    ENV_FILE_ENV_VAR: ClassVar[str] = ENV_FILE_ENV_VAR
+    """Public facade surface for the bootstrap env var name (settings owns it)."""
+
+    ENV_FILE_DEFAULT: ClassVar[str] = ENV_FILE_DEFAULT
+    """Public facade surface for the default .env file name (settings owns it)."""
+
     @staticmethod
-    def _resolve_env_file(namespace: str | None = None) -> str:
-        """Delegate to the module-level ``_resolve_env_file`` helper."""
+    def resolve_env_file(namespace: str | None = None) -> str:
+        """Resolve the effective ``.env`` path honouring ``FLEXT_ENV_FILE``.
+
+        Settings-layer canonical owner; the former utility duplicate was
+        removed (chain law: ``c`` consumes ``settings``, never the reverse).
+        """
         return _resolve_env_file(namespace)
 
     debug: Annotated[bool, Field(description="Enable debug mode")] = False
