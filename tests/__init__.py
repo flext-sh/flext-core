@@ -13,15 +13,21 @@ if TYPE_CHECKING:
     from flext_tests import FlextTestsConstants
 
     from . import benchmark, fixtures, integration, unit
-    from .base import s
-    from .constants import c
-    from .models import m
-    from .protocols import p
-    from .typings import t
-    from .utilities import u
+    from .base import TestsFlextServiceBase, TestsFlextServiceBase as s
+    from .constants import TestsFlextConstants, TestsFlextConstants as c
+    from .models import TestsFlextModels, TestsFlextModels as m
+    from .protocols import TestsFlextProtocols, TestsFlextProtocols as p
+    from .typings import TestsFlextTypes, TestsFlextTypes as t
+    from .utilities import TestsFlextUtilities, TestsFlextUtilities as u
 __all__: tuple[str, ...] = (
     "FlextConstants",
     "FlextTestsConstants",
+    "TestsFlextConstants",
+    "TestsFlextModels",
+    "TestsFlextProtocols",
+    "TestsFlextServiceBase",
+    "TestsFlextTypes",
+    "TestsFlextUtilities",
     "benchmark",
     "c",
     "fixtures",
@@ -37,16 +43,16 @@ __all__: tuple[str, ...] = (
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
-            ".base": ("s",),
+            ".base": ("TestsFlextServiceBase", "s"),
             ".benchmark": ("benchmark",),
-            ".constants": ("c",),
+            ".constants": ("TestsFlextConstants", "c"),
             ".fixtures": ("fixtures",),
             ".integration": ("integration",),
-            ".models": ("m",),
-            ".protocols": ("p",),
-            ".typings": ("t",),
+            ".models": ("TestsFlextModels", "m"),
+            ".protocols": ("TestsFlextProtocols", "p"),
+            ".typings": ("TestsFlextTypes", "t"),
             ".unit": ("unit",),
-            ".utilities": ("u",),
+            ".utilities": ("TestsFlextUtilities", "u"),
             "flext_core": ("FlextConstants",),
             "flext_tests": ("FlextTestsConstants",),
         }),

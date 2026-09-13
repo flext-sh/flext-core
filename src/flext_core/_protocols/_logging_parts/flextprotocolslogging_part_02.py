@@ -13,7 +13,7 @@ from ..base import FlextProtocolsBase
 if TYPE_CHECKING:
     from datetime import datetime
 
-    from flext_core import FlextTypes as t
+    from flext_core import t
 
     from ..result import FlextProtocolsResult
 from .flextprotocolslogging_part_01 import (

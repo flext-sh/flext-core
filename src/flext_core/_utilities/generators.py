@@ -19,7 +19,7 @@ from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from flext_core import FlextConstants as c, FlextTypes as t
+from flext_core import c, t
 
 
 # NOTE (multi-agent): mro-i6nq.12 — consolidated _generators_parts/part_01..02 (one

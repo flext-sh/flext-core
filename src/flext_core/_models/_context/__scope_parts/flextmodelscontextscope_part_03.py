@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Annotated, Self
 
-from flext_core import FlextProtocols as p
+from flext_core import p
 
 from ...base import FlextModelsBase
 from ...pydantic import FlextModelsPydantic as mp

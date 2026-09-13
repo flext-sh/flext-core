@@ -12,14 +12,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-from flext_core import (
-    FlextConstants as c,
-    FlextExceptions as e,
-    FlextModels as m,
-    FlextProtocols as p,
-    FlextResult as r,
-    FlextTypes as t,
-)
+from flext_core import c, e, m, p, r, t
 
 from ..._models.containers import FlextModelsContainers
 from .mapper_access_part_01 import (

@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol, override, runtime_checkable
 
 if TYPE_CHECKING:
-    from flext_core import FlextModels as m
+    from flext_core import m
 
     from ..context import FlextProtocolsContext
     from ..settings import FlextProtocolsSettings

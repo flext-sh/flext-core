@@ -17,7 +17,7 @@ from .base import FlextProtocolsBase as p
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core import FlextConstants as c, FlextTypes as t
+    from flext_core import c, t
 
     from .container import FlextProtocolsContainer as pc
     from .result import FlextProtocolsResult as pr

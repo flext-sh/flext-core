@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flext_core import m, u
+from flext_core import m
 
 
 class ExamplesFlextModelsEx07:
@@ -11,22 +11,22 @@ class ExamplesFlextModelsEx07:
     class CreateUserCommand(m.Command):
         """Create user command model."""
 
-        name: str = u.Field(description="User display name")
-        email: str = u.Field(description="User email address")
+        name: str = m.Field(description="User display name")
+        email: str = m.Field(description="User email address")
 
     class UserCreatedEvent(m.Event):
         """User-created event model."""
 
-        event_type: str = u.Field(description="Event type identifier")
-        aggregate_id: str = u.Field(description="Aggregate root identifier")
-        name: str = u.Field(description="User name from event")
+        event_type: str = m.Field(description="Event type identifier")
+        aggregate_id: str = m.Field(description="Aggregate root identifier")
+        name: str = m.Field(description="User name from event")
 
     class GetUserQuery(m.Query):
         """Get user query model."""
 
-        user_id: str = u.Field(description="User identifier to query")
+        user_id: str = m.Field(description="User identifier to query")
 
     class DemoPlugin(m.Value):
         """Demo plugin model."""
 
-        name: str = u.Field(description="Plugin name")
+        name: str = m.Field(description="Plugin name")

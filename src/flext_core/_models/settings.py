@@ -13,7 +13,7 @@ from typing import Annotated, ClassVar, Self
 
 from pydantic import AliasChoices, ConfigDict, model_validator
 
-from flext_core import FlextConstants as c, FlextTypes as t
+from flext_core import c, t
 
 from .._protocols.settings import FlextProtocolsSettings as p
 from .base import FlextModelsBase as m

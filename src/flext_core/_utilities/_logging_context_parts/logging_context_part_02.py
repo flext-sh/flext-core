@@ -14,7 +14,7 @@ import logging
 from contextlib import suppress
 from typing import TYPE_CHECKING
 
-from flext_core import FlextConstants as c
+from flext_core import c
 
 from .logging_context_part_01 import (
     FlextUtilitiesLoggingContext as FlextUtilitiesLoggingContextPart01,

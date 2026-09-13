@@ -15,7 +15,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Annotated
 
-from flext_core import FlextConstants as c, FlextTypes as t
+from flext_core import c, t
 
 from ..._runtime._container import FlextRuntimeContainer as FlextRuntime
 from ..._typings.pydantic import FlextTypesPydantic as tp

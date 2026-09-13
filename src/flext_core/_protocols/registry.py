@@ -11,14 +11,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
-from flext_core import FlextConstants as c
+from flext_core import c
 
 from .base import FlextProtocolsBase
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core import FlextModels as m, FlextTypes as t
+    from flext_core import m, t
 
     from .handler import FlextProtocolsHandler
     from .result import FlextProtocolsResult

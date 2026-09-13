@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flext_core import c, m, p, r, u
+from flext_core import c, m, p, r
 
 
 class ExamplesFlextModelsEx02:
@@ -11,8 +11,8 @@ class ExamplesFlextModelsEx02:
     class DatabaseService(m.Value):
         """Database service model used in example 02 settings integration."""
 
-        settings: m.ConfigMap = u.Field(description="Database connection settings")
-        status: c.Status = u.Field(
+        settings: m.ConfigMap = m.Field(description="Database connection settings")
+        status: c.Status = m.Field(
             c.Status.PENDING,
             description="Service connection status",
             validate_default=True,
@@ -29,8 +29,8 @@ class ExamplesFlextModelsEx02:
     class CacheService(m.Value):
         """Cache service model used in example 02 settings integration."""
 
-        settings: m.ConfigMap = u.Field(description="Cache connection settings")
-        status: c.Status = u.Field(
+        settings: m.ConfigMap = m.Field(description="Cache connection settings")
+        status: c.Status = m.Field(
             c.Status.PENDING,
             description="Service connection status",
             validate_default=True,
@@ -46,8 +46,8 @@ class ExamplesFlextModelsEx02:
     class EmailService(m.Value):
         """Email service model used in example 02 settings integration."""
 
-        settings: m.ConfigMap = u.Field(description="Email service settings")
-        status: c.Status = u.Field(
+        settings: m.ConfigMap = m.Field(description="Email service settings")
+        status: c.Status = m.Field(
             c.Status.PENDING,
             description="Service connection status",
             validate_default=True,

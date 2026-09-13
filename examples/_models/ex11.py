@@ -4,36 +4,36 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import FlextSettings, m, p, r, u
+from flext_core import FlextSettings, m, p, r
 
 
 class ExamplesFlextModelsEx11:
     """Examples namespace wrapper for ex11 models."""
 
     class Payload(m.Value):
-        text: Annotated[str, u.Field(description="Payload text content")]
+        text: Annotated[str, m.Field(description="Payload text content")]
 
     class EntityStub(m.Value):
-        unique_id: Annotated[str, u.Field(description="Unique entity identifier")]
+        unique_id: Annotated[str, m.Field(description="Unique entity identifier")]
 
     class ServiceHandlerConfig(FlextSettings):
         enabled: Annotated[
-            bool, u.Field(description="Whether the service is enabled")
+            bool, m.Field(description="Whether the service is enabled")
         ] = True
 
     class ServiceHandlerLike(m.BaseModel):
         message_type: Annotated[
-            type[m.Value], u.Field(description="Message type handled by this handler")
+            type[m.Value], m.Field(description="Message type handled by this handler")
         ] = m.Value
 
         def handle(self, message: ExamplesFlextModelsEx11.Payload) -> p.Result[str]:
             return r[str].ok(message.text)
 
     class ProcessorProtocolGood(m.Value):
-        status: Annotated[str, u.Field(description="Processing outcome status")] = "ok"
+        status: Annotated[str, m.Field(description="Processing outcome status")] = "ok"
 
     class ProcessorProtocolBad(m.Value):
-        status: Annotated[str, u.Field(description="Processing failure status")] = "bad"
+        status: Annotated[str, m.Field(description="Processing failure status")] = "bad"
 
     class ServiceCommandBusStub(m.BaseModel):
         pass

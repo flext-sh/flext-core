@@ -19,7 +19,7 @@ import os
 # under TYPE_CHECKING raises NameError at import (test_beartype_engine_claw_packages).
 # Do NOT "optimize" this into a TYPE_CHECKING block. Same precedent: model_options.py,
 # model_runtime.py. Contact owner of bead ai-hub-mkzg before touching this line.
-from flext_core import FlextProtocols as p, FlextTypes as t, r
+from flext_core import p, r, t
 
 
 class FlextUtilitiesSettings:

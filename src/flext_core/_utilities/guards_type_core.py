@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, TypeGuard, TypeIs
 
-from flext_core import FlextTypes as t
+from flext_core import t
 
 if TYPE_CHECKING:
     from pydantic import BaseModel as PydanticBaseModel

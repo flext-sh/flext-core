@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import m, u
+from flext_core import m
 
 
 class ExamplesFlextModelsEx12:
@@ -12,24 +12,24 @@ class ExamplesFlextModelsEx12:
 
     class CommandA(m.Command):
         command_type: Annotated[
-            str, u.Field(description="Command type identifier for command A")
+            str, m.Field(description="Command type identifier for command A")
         ] = "ex12_command_a"
         query_type: Annotated[
-            str, u.Field(description="Query type placeholder for command A")
+            str, m.Field(description="Query type placeholder for command A")
         ] = ""
-        event_type: Annotated[str, u.Field(description="Event type for command A")] = (
+        event_type: Annotated[str, m.Field(description="Event type for command A")] = (
             "ex12_event_a"
         )
-        value: Annotated[str, u.Field(description="Command A payload")]
+        value: Annotated[str, m.Field(description="Command A payload")]
 
     class CommandB(m.Command):
         command_type: Annotated[
-            str, u.Field(description="Command type identifier for command B")
+            str, m.Field(description="Command type identifier for command B")
         ] = "ex12_command_b"
         query_type: Annotated[
-            str, u.Field(description="Query type placeholder for command B")
+            str, m.Field(description="Query type placeholder for command B")
         ] = ""
-        event_type: Annotated[str, u.Field(description="Event type for command B")] = (
+        event_type: Annotated[str, m.Field(description="Event type for command B")] = (
             "ex12_event_b"
         )
-        amount: Annotated[int, u.Field(description="Command B payload")]
+        amount: Annotated[int, m.Field(description="Command B payload")]

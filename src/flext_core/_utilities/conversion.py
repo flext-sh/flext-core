@@ -11,7 +11,7 @@ from __future__ import annotations
 import math
 from contextlib import suppress
 
-from flext_core import FlextConstants as c, FlextTypes as t
+from flext_core import c, t
 
 
 class FlextUtilitiesConversion:

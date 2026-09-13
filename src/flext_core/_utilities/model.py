@@ -10,13 +10,7 @@ from __future__ import annotations
 
 from importlib import import_module
 
-from flext_core import (
-    FlextConstants as c,
-    FlextExceptions as e,
-    FlextProtocols as p,
-    FlextResult as r,
-    FlextTypes as t,
-)
+from flext_core import c, e, p, r, t
 
 from .._models.base import FlextModelsBase as m
 from .._models.pydantic import FlextModelsPydantic as mp

@@ -15,7 +15,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Annotated, ClassVar, Self
 
-from flext_core.constants import FlextConstants as c
+from flext_core.constants import c
 
 from ..._runtime._metadata_validation import FlextRuntimeMetadataValidation as ur
 from ..._typings.base import FlextTypingBase as t

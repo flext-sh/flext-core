@@ -10,7 +10,7 @@ import contextvars
 from types import MappingProxyType
 from typing import Annotated, Self
 
-from flext_core import FlextConstants as c, FlextTypes as t
+from flext_core import c, t
 
 from ...base import FlextModelsBase
 from ...containers import FlextModelsContainers

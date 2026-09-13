@@ -12,7 +12,7 @@ from __future__ import annotations
 import operator
 from typing import TYPE_CHECKING
 
-from flext_core import FlextConstants as c, FlextTypes as t
+from flext_core import c, t
 
 from .._models.container import FlextModelsContainer
 

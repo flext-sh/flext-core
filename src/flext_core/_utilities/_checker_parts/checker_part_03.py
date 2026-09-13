@@ -15,7 +15,7 @@ from typing import get_args, get_origin
 
 from pydantic import BaseModel
 
-from flext_core import FlextConstants as c, r
+from flext_core import c, r
 
 from ..._protocols.base import FlextProtocolsBase as pb
 from ..._protocols.result import FlextProtocolsResult as p

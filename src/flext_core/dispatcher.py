@@ -4,13 +4,7 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence, Sequence
 
-from flext_core import (
-    FlextConstants as c,
-    FlextProtocols as p,
-    FlextTypes as t,
-    FlextUtilities as u,
-    r,
-)
+from flext_core import c, p, r, t, u
 
 
 class FlextDispatcher:
