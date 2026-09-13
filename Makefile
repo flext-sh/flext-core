@@ -27,6 +27,12 @@ SETUP_BOOTSTRAP_ONLY := Y
 export SETUP_BOOTSTRAP_ONLY
 endif
 endif
+ifeq ($(filter command line override,$(origin GEN_INIT_ONLY)),)
+ifneq ($(filter initialize,$(MAKECMDGOALS)),)
+GEN_INIT_ONLY := Y
+export GEN_INIT_ONLY
+endif
+endif
 
 # === SECTION: project identity (managed) ===
 # Source: config:dist / config:make_profile / config:repository_root_rel / config:uv_link_mode
@@ -135,7 +141,11 @@ export TESTMON_DATAFILE
 # run inside MAKEFILE_ROOT: run from a foreign CWD they would report THAT
 # checkout's topology and redirect the verb to the wrong tree.
 ifeq ($(filter command line override,$(origin REPOSITORY_ROOT)),)
+ifneq ($(GEN_INIT_ONLY),)
+REPOSITORY_ROOT := $(MAKEFILE_ROOT)
+else
 REPOSITORY_ROOT := $(shell cd "$(MAKEFILE_ROOT)" && root=$$(git rev-parse --show-superproject-working-tree 2>/dev/null); if [ -n "$$root" ]; then printf '%s\n' "$$root"; else git rev-parse --show-toplevel 2>/dev/null || printf '%s\n' "$(MAKEFILE_ROOT)"; fi)
+endif
 endif
 # End SECTION: REPOSITORY_ROOT isolation
 # === SECTION: verb dispatch (managed) ===
@@ -547,7 +557,9 @@ SHARED_RUNTIME := $(if $(filter-out $(PROJECT_ROOT),$(RUNTIME_ROOT)),1,$(if $(st
 # request 2026-09-10).
 UV_SYNC_FLAGS := $(if $(SHARED_RUNTIME),--all-packages ,)--all-extras --all-groups $(if $(CI),--locked ,--refresh)
 
+ifeq ($(GEN_INIT_ONLY),)
 -include custom.mk
+endif
 SELF_MAKE := "$(SELF_MAKE_EXECUTABLE)" --no-print-directory -f "$(SELF_MAKEFILE)"
 
 define RUN_PUBLIC
@@ -740,7 +752,7 @@ _builtin-help:
 
 # === SECTION: submodule setup (managed) ===
 # Source: template (submodule_setup_recipe.j2)
-# Computed: workspace uses DECLARED_REPOSITORIES from config; standalone discovers
+# Computed: workspace uses MANAGED_GITLINKS from config; standalone discovers
 #           submodules with flext-managed=true from .gitmodules at runtime.
 # Rule: setup PROVISIONS an absent governed gitlink and VERIFIES a present one.
 #       An absent checkout holds no work, so setup initializes it at the recorded
@@ -1160,7 +1172,7 @@ _builtin-release-version: _builtin_release_version
 _builtin-release-tag: _builtin_release_tag
 _builtin-release-build: _builtin_release_build
 _builtin-publication: _builtin_release_publish
-_builtin-gen: _builtin_gen_all
+_builtin-gen: $(if $(CHECK_ONLY),_builtin_gen_check,_builtin_gen_all)
 _builtin-conform: _builtin_gen_check
 _builtin-initialize: _builtin_gen_init
 _builtin-mod: $(if $(CHECK_ONLY),_builtin_mod_check,_builtin_mod_apply)
