@@ -199,8 +199,11 @@ class FlextConstantsEnforcementTargets:
         "rich": "flext-cli",
         "rope": "flext-infra",
         "orjson": "flext-cli",
-        "yaml": "flext-cli",
-        "pyyaml": "flext-cli",
+        # Why: flext-core declares pyyaml as its own direct runtime dependency
+        # and uses it in _config.py (foundational config loading); flext-cli
+        # depends on flext-core, so the owner must be the lower layer.
+        "yaml": "flext-core",
+        "pyyaml": "flext-core",
         "click": "flext-cli",
         "ldap3": "flext-ldap",
         "singer_sdk": "flext-meltano",

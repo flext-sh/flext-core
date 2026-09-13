@@ -44,13 +44,18 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
                     )
                 )
             elif operation == "send_email":
-                email_result: p.Result[m.Tests.EmailResponse] = result.flat_map(
-                    lambda email: TestsFlextUtilitiesRailwayPipelinesMixin.make(
+
+                def _send(
+                    email: str | tm.Tests.User | m.Tests.EmailResponse,
+                ) -> p.Result[m.Tests.EmailResponse]:
+                    to = email if isinstance(email, str) else str(email)
+                    return TestsFlextUtilitiesRailwayPipelinesMixin.make(
                         TestsFlextUtilitiesRailwayPipelinesMixin.SendEmailService,
-                        to=str(email),
+                        to=to,
                         subject="Test",
                     ).execute()
-                )
+
+                email_result: p.Result[m.Tests.EmailResponse] = result.flat_map(_send)
                 result = email_result.map(lambda response: response)
             elif operation == "get_status":
                 result = result.map(
@@ -75,7 +80,7 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
         if raw_user_result.failure:
             msg = raw_user_result.error or c.Tests.USER_NOT_FOUND
             raise e.BaseError(msg)
-        raw_user = raw_user_result.unwrap_or(None)
+        raw_user = raw_user_result.value
         if not isinstance(raw_user, tm.Tests.User):
             msg = c.Tests.USER_NOT_FOUND
             raise e.BaseError(msg)
@@ -93,7 +98,7 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
                 if raw_response_result.failure:
                     msg = raw_response_result.error or c.Tests.INVALID_EMAIL
                     raise e.BaseError(msg)
-                raw_response = raw_response_result.unwrap_or(None)
+                raw_response = raw_response_result.value
                 if not isinstance(raw_response, m.Tests.EmailResponse):
                     msg = c.Tests.INVALID_EMAIL
                     raise e.BaseError(msg)

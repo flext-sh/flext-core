@@ -142,15 +142,15 @@ class Ex12RegistryFlow(ExamplesFlextShared):
         self.audit_check("summary.fail.failure", summary_fail_failure)
         ok_result = r[str].ok(ok_value)
         fail_result = r[str].fail(fail_message, error_code=fail_code)
-        self.audit_check("mixin.ok.unwrap_or", ok_result.unwrap_or("") == ok_value)
+        self.audit_check("mixin.ok.unwrap_or", ok_result.value == ok_value)
         self.audit_check("mixin.fail.error", fail_result.error == fail_message)
         self.audit_check("mixin.fail.error_code", fail_result.error_code == fail_code)
         self.audit_check(
-            "ensure_result.raw", r[int].ok(ensured_raw).unwrap_or(0) == ensured_raw
+            "ensure_result.raw", r[int].ok(ensured_raw).value == ensured_raw
         )
         self.audit_check(
             "ensure_result.existing",
-            r[int].ok(ensured_existing).unwrap_or(0) == ensured_existing,
+            r[int].ok(ensured_existing).value == ensured_existing,
         )
         self.audit_check("to_dict.none", m.ConfigMap(root={}))
         self.audit_check(
