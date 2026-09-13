@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import ClassVar, TypeGuard
 
-from flext_core import FlextProtocols as p, FlextResult as r, FlextTypes as t
+from flext_core import p, r, t
 
 from .._constants.cqrs import FlextConstantsCqrs as _c_cqrs
 from .._runtime._metadata import FlextRuntimeMetadata

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import FlextTypes as t
+from flext_core import t
 
 from .._utilities.collection import FlextUtilitiesCollection as u
 from .base import FlextModelsBase as m

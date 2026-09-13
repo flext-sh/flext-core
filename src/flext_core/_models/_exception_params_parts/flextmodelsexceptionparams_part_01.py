@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
-from flext_core import FlextConstants as c, FlextTypes as t
+from flext_core import c, t
 
 from ..._typings.pydantic import FlextTypesPydantic as tp
 from ..base import FlextModelsBase as m

@@ -13,7 +13,7 @@ from ..base import FlextProtocolsBase
 if TYPE_CHECKING:
     from types import ModuleType
 
-    from flext_core import FlextTypes as t
+    from flext_core import t
 
 
 class FlextProtocolsContainer:

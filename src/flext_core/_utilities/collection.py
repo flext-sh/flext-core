@@ -13,12 +13,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableSequence, Sequence
 
-from flext_core import (
-    FlextConstants as c,
-    FlextProtocols as p,
-    FlextResult as r,
-    FlextTypes as t,
-)
+from flext_core import c, p, r, t
 
 from .._models.containers import FlextModelsContainers
 from .._runtime._metadata import FlextRuntimeMetadata

@@ -18,7 +18,7 @@ from .result import FlextProtocolsResult as pr
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from flext_core import FlextTypes as t
+    from flext_core import t
 
 
 class FlextProtocolsConfig:

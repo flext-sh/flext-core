@@ -13,12 +13,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 
-from flext_core import (
-    FlextConstants as c,
-    FlextProtocols as p,
-    FlextResult as r,
-    FlextTypes as t,
-)
+from flext_core import c, p, r, t
 
 from .guards_type_model import FlextUtilitiesGuardsTypeModel
 from .parser_targets import FlextUtilitiesParserTargets

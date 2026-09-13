@@ -4,14 +4,7 @@ from __future__ import annotations
 
 from typing import overload
 
-from flext_core import (
-    FlextConstants as c,
-    FlextExceptions as e,
-    FlextProtocols as p,
-    FlextResult as r,
-    FlextRuntime,
-    FlextTypes as t,
-)
+from flext_core import FlextRuntime, c, e, p, r, t
 
 from .context_state import FlextUtilitiesContextState
 from .model import FlextUtilitiesModel

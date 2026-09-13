@@ -12,7 +12,7 @@ from typing import Annotated
 
 from pydantic import field_validator
 
-from flext_core import FlextConstants as c, FlextTypes as t
+from flext_core import c, t
 
 from ..base import FlextModelsBase as m
 from ..pydantic import FlextModelsPydantic as mp

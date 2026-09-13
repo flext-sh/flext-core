@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_core import FlextTypes as t
+from flext_core import t
 
 from .._constants.infrastructure import FlextConstantsInfrastructure as _c
 from .._models.context import FlextModelsContext

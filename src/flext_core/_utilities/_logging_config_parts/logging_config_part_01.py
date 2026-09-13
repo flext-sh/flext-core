@@ -19,7 +19,7 @@ import typing
 from contextlib import suppress
 from typing import TYPE_CHECKING, ClassVar, override
 
-from flext_core import FlextConstants as c, FlextProtocols as p, FlextTypes as t
+from flext_core import c, p, t
 
 if TYPE_CHECKING:
     import types

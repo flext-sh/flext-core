@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from types import ModuleType
 
-    from flext_core import FlextModels as m, FlextTypes as t
+    from flext_core import m, t
 
     from ..context import FlextProtocolsContext
     from ..handler import FlextProtocolsHandler

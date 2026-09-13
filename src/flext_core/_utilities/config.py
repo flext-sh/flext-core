@@ -27,7 +27,7 @@ from .reliability import FlextUtilitiesReliability as rel
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from flext_core import FlextProtocols as p
+    from flext_core import p
 
 
 class FlextUtilitiesConfig:

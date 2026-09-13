@@ -9,7 +9,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import Annotated
 
-from flext_core import FlextConstants as c, FlextTypes as t
+from flext_core import c, t
 
 from ...base import FlextModelsBase
 from ...pydantic import FlextModelsPydantic as mp

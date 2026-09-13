@@ -20,7 +20,7 @@ from typing import Annotated, ClassVar, override
 
 from pydantic import ConfigDict
 
-from flext_core.constants import FlextConstants as c
+from flext_core.constants import c
 
 from ..._constants.project_metadata import FlextConstantsProjectMetadata as cpm
 from ..._runtime._metadata_validation import FlextRuntimeMetadataValidation as ur

@@ -12,13 +12,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import ClassVar, Self
 
-from flext_core import (
-    FlextConstants as c,
-    FlextModels as m,
-    FlextProtocols as p,
-    FlextRuntime,
-    FlextTypes as t,
-)
+from flext_core import FlextRuntime, c, m, p, t
 
 from .context_crud import FlextUtilitiesContextCrud
 

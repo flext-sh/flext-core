@@ -13,7 +13,7 @@ from __future__ import annotations
 import inspect
 from typing import TYPE_CHECKING, get_origin, get_type_hints
 
-from flext_core import FlextConstants as c, r
+from flext_core import c, r
 
 from ..._protocols.result import FlextProtocolsResult as p
 from ..._typings.base import FlextTypingBase as tb

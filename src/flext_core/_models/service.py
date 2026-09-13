@@ -13,7 +13,7 @@ from collections.abc import Sequence
 from types import ModuleType
 from typing import Annotated
 
-from flext_core import FlextProtocols as p, FlextTypes as t
+from flext_core import p, t
 
 from .._typings.pydantic import FlextTypesPydantic as tp
 from .._utilities.pydantic import FlextUtilitiesPydantic as up

@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
-    from flext_core import FlextTypes as t
+    from flext_core import t
 
 
 class FlextConstantsProjectMetadata:

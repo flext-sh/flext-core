@@ -9,7 +9,7 @@ from __future__ import annotations
 from importlib import import_module
 from typing import TYPE_CHECKING, TypeVar
 
-from flext_core import FlextConstants as c, FlextProtocols as p, m
+from flext_core import c, m, p
 
 from ..template import FlextExceptionsTemplate
 

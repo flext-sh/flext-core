@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import Annotated
 
-from flext_core import FlextTypes as t
+from flext_core import t
 
 from .._protocols.handler import FlextProtocolsHandler as p
 from .._utilities.pydantic import FlextUtilitiesPydantic as up

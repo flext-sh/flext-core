@@ -12,7 +12,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Annotated
 
-from flext_core import FlextConstants as c, FlextTypes as t
+from flext_core import c, t
 
 from ..._utilities.pydantic import FlextUtilitiesPydantic
 from ..entity import FlextModelsEntity

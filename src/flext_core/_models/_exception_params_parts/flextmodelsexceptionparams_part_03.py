@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import FlextTypes as t
+from flext_core import t
 
 from ..pydantic import FlextModelsPydantic as mp
 from .flextmodelsexceptionparams_part_01 import (
