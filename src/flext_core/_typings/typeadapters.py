@@ -17,6 +17,8 @@ from collections.abc import Callable, Mapping
 from enum import StrEnum
 from functools import cache
 
+from pydantic import ConfigDict
+
 from .annotateds import FlextTypesAnnotateds as ta
 from .base import FlextTypingBase as t
 from .core import FlextTypesCore as tc
@@ -45,7 +47,7 @@ class FlextTypesTypeAdapters:
     @classmethod
     @cache
     def strict_json_mapping_adapter(cls) -> tp.TypeAdapterType[t.JsonMapping]:
-        return tp.TypeAdapter(t.JsonMapping, config=tp.ConfigDict(strict=True))
+        return tp.TypeAdapter(t.JsonMapping, config=ConfigDict(strict=True))
 
     @classmethod
     @cache
@@ -79,7 +81,7 @@ class FlextTypesTypeAdapters:
     @classmethod
     @cache
     def strict_json_list_adapter(cls) -> tp.TypeAdapterType[t.JsonList]:
-        return tp.TypeAdapter(t.JsonList, config=tp.ConfigDict(strict=True))
+        return tp.TypeAdapter(t.JsonList, config=ConfigDict(strict=True))
 
     @classmethod
     @cache
@@ -181,7 +183,7 @@ class FlextTypesTypeAdapters:
     @classmethod
     @cache
     def strict_str_sequence_adapter(cls) -> tp.TypeAdapterType[t.StrSequence]:
-        return tp.TypeAdapter(t.StrSequence, config=tp.ConfigDict(strict=True))
+        return tp.TypeAdapter(t.StrSequence, config=ConfigDict(strict=True))
 
     @classmethod
     @cache
