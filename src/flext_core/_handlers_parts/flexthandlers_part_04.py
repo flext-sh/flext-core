@@ -11,15 +11,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from flext_core import c, r, u
+from flext_core import c, p, r, t, u
 
 from .._utilities.handler import FlextUtilitiesHandler
 from .flexthandlers_part_03 import FlextHandlers as FlextHandlersPart03
-
-if TYPE_CHECKING:
-    from flext_core import p, t
 
 
 class FlextHandlers[MessageT_contra, ResultT](
@@ -50,7 +45,9 @@ class FlextHandlers[MessageT_contra, ResultT](
         """Pop execution context from the local handler stack."""
         result = FlextUtilitiesHandler.pop_context(self._runtime_state)
         if result.failure:
-            return r.fail_op("pop handler context", result.error)
+            return r[p.RootDict[t.JsonPayload]].fail_op(
+                "pop handler context", result.error
+            )
         self._runtime_state, context = result.unwrap()
         return r.ok(context)
 
@@ -58,7 +55,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         """Push execution context onto the local handler stack."""
         result = FlextUtilitiesHandler.push_context(self._runtime_state, ctx)
         if result.failure:
-            return r.fail_op("push handler context", result.error)
+            return r[bool].fail_op("push handler context", result.error)
         self._runtime_state = result.unwrap()
         return r.ok(True)
 

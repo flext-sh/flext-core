@@ -428,7 +428,6 @@ testpaths = ["tests"]
 exclude = [
   "**/.archive/**",
   "**/__pyrefly_virtual__/**",
-  "**/aihub-hooks/**",
   ".archive",
   ".archive/**",
   ".git",
@@ -603,6 +602,7 @@ mi_min = "B"
 
 [tool.flext.docs]
 project_class = "platform"
+
 
 [tool.flext.project.budget.boundary]
 time-seconds = 600

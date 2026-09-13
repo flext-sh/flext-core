@@ -48,6 +48,11 @@
 /.aihub/
 /.cursor/mcp.json
 
+# RESIDUE: never track backups or repo-local policy copies
+*.bak
+config/build-constraints.txt
+*aihub-prior*
+
 # Aider AI data
 .aider/
 .aider.conf.yml
@@ -289,8 +294,7 @@ __pyrefly_virtual__/
 .omo/
 .pylance_cache/
 .pytest_cache/
-.test-tmp/
-.test-runtime/
+.flext-runtime/
 .testmondata
 .testmondata-wal
 .testmondata-shm
@@ -349,5 +353,4 @@ CLAUDE.local.md
 !.qlty/qlty.toml
 !.vscode/settings.json
 !config/
-!config/build-constraints.txt
 !config/gitleaks-release.toml
