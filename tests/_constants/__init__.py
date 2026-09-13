@@ -58,6 +58,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".services": ("TestsFlextConstantsServices",),
             ".settings": ("TestsFlextConstantsSettings",),
             "flext_tests": (
+                "c",
                 "d",
                 "e",
                 "h",

@@ -14,7 +14,7 @@
 - Classifiers: `Development Status :: 3 - Alpha`, `Framework :: Pydantic :: 2`,
   `Framework :: Pydantic`, `Intended Audience :: Developers`, `Operating System
   :: OS Independent`, `Programming Language :: Python :: 3 :: Only` (+3 more)
-- Project class: `platform`
+- Project class: `domain`
 - Keywords: `clean-architecture`, `ddd`, `enterprise`, `flext`, `modern`,
   `solid`
 - Main facades: `FlextConfig`, `FlextConstants`, `FlextContainer`,
