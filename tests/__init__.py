@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
     from . import benchmark, fixtures, integration, unit
     from .base import TestsFlextServiceBase, TestsFlextServiceBase as s
-    from .constants import TestsFlextConstants, TestsFlextConstants as c
+    from .constants import TestsFlextConstants, c
     from .models import TestsFlextModels, TestsFlextModels as m
     from .protocols import TestsFlextProtocols, TestsFlextProtocols as p
     from .typings import TestsFlextTypes, TestsFlextTypes as t

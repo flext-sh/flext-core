@@ -602,8 +602,7 @@ cc_min = "B"
 mi_min = "B"
 
 [tool.flext.docs]
-package_name = "flext_core"
-
+project_class = "platform"
 
 [tool.flext.project.budget.boundary]
 time-seconds = 600
