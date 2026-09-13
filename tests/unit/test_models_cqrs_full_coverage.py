@@ -166,24 +166,24 @@ class TestsFlextCoreModelsCqrs:
     @pytest.mark.parametrize(
         ("payload", "expected_cls"),
         [
-            ({"message_type": "command", "command_type": "run"}, "Command"),
-            ({"message_type": "query", "filters": {}}, "Query"),
+            ({"message_type": "command", "command_type": "run"}, m.Command),
+            ({"message_type": "query", "filters": {}}, m.Query),
             (
                 {
                     "message_type": "event",
                     "event_type": "created",
                     "aggregate_id": "agg-1",
                 },
-                "Event",
+                m.Event,
             ),
         ],
     )
     def test_flext_message_union_discriminates_on_message_type(
-        self, payload: dict[str, str | dict[str, str]], expected_cls: str
+        self, payload: dict[str, str | dict[str, str]], expected_cls: type
     ) -> None:
         adapter = m.TypeAdapter(m.FlextMessage.__value__)
 
         parsed = adapter.validate_python(payload)
 
-        assert type(parsed).__name__ == expected_cls
+        assert isinstance(parsed, expected_cls)
         assert parsed.message_type == payload["message_type"]
