@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import time
 import warnings
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 import pytest
@@ -42,7 +43,12 @@ class TestsFlextCoreDecorators:
         def fn(*, dep: str) -> str:
             return dep
 
-        tm.that(fn(), eq="dep-value")
+        # Why: the decorator injects `dep` at runtime when the caller omits
+        # it, but its ParamSpec-preserving signature keeps `dep` statically
+        # required. Call through a `Callable[..., str]` reference — permissive
+        # by design (PEP 484), not `Any` — to type the deliberate zero-arg call.
+        injected_fn: Callable[..., str] = fn
+        tm.that(injected_fn(), eq="dep-value")
 
     def test_inject_falls_back_when_binding_missing(
         self, clean_container: p.Container

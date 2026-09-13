@@ -12,7 +12,8 @@ if TYPE_CHECKING:
     from flext_core import c, d, e, h, p, r, s, t, u, x
 
     from .errors import m
-    from .shared import ExamplesFlextSharedHandle, ExamplesFlextSharedPerson
+    from .handle import ExamplesFlextSharedHandle
+    from .person import ExamplesFlextSharedPerson
 __all__: tuple[str, ...] = (
     "ExamplesFlextSharedHandle",
     "ExamplesFlextSharedPerson",
@@ -33,7 +34,8 @@ _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
             ".errors": ("m",),
-            ".shared": ("ExamplesFlextSharedHandle", "ExamplesFlextSharedPerson"),
+            ".handle": ("ExamplesFlextSharedHandle",),
+            ".person": ("ExamplesFlextSharedPerson",),
             "flext_core": ("c", "d", "e", "h", "p", "r", "s", "t", "u", "x"),
         }),
         alias_groups=MappingProxyType({}),

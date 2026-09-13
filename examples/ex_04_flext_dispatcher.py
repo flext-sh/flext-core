@@ -224,8 +224,7 @@ class _Ex04DispatchGolden(ExamplesFlextShared):
             "publish(no_subscribers).is_success", publish_without_subscribers.success
         )
         self.audit_check(
-            "publish(no_subscribers).value",
-            publish_without_subscribers.unwrap_or(False),
+            "publish(no_subscribers).value", publish_without_subscribers.value
         )
 
 

@@ -19,8 +19,9 @@ from ._models.ex10 import ExamplesFlextModelsEx10
 from ._models.ex11 import ExamplesFlextModelsEx11
 from ._models.ex12 import ExamplesFlextModelsEx12
 from ._models.ex14 import ExamplesFlextModelsEx14
+from ._models.handle import ExamplesFlextSharedHandle
 from ._models.output import ExamplesFlextModelsOutput
-from ._models.shared import ExamplesFlextSharedHandle, ExamplesFlextSharedPerson
+from ._models.person import ExamplesFlextSharedPerson
 
 if TYPE_CHECKING:
     from examples.typings import t

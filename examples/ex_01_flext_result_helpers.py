@@ -23,7 +23,7 @@ class Ex01ResultAdvancedSections(ExamplesFlextShared):
 
         self.audit_check(
             "traverse.success",
-            r[Sequence[int]].traverse([2, 4, 6], to_even, fail_fast=True).unwrap_or([]),
+            r[Sequence[int]].traverse([2, 4, 6], to_even, fail_fast=True).value,
         )
         self.audit_check(
             "traverse.fail_fast",
@@ -37,7 +37,7 @@ class Ex01ResultAdvancedSections(ExamplesFlextShared):
         acc_fail = r.accumulate_errors(
             r[int].ok(1), r[int].fail("e1"), r[int].fail("e2")
         )
-        self.audit_check("accumulate_errors.success", acc_ok.unwrap_or([]))
+        self.audit_check("accumulate_errors.success", acc_ok.value)
         self.audit_check("accumulate_errors.failure", acc_fail.error)
         cleaned_values: MutableSequence[int] = []
 

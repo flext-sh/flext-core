@@ -13,7 +13,6 @@ from __future__ import annotations
 import logging
 import sys
 import typing
-from contextlib import suppress
 
 import structlog
 from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
@@ -145,14 +144,12 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
         if logger_factory is not None:
             return logger_factory
         if async_logging:
-            with suppress(AttributeError):
-                print_logger_factory = structlog.PrintLoggerFactory
-                if callable(print_logger_factory):
-                    return cls._build_async_logger_factory(print_logger_factory)
-            with suppress(AttributeError):
-                write_logger_factory = structlog.WriteLoggerFactory
-                if callable(write_logger_factory):
-                    return cls._build_async_logger_factory(write_logger_factory)
+            print_logger_factory = getattr(structlog, "PrintLoggerFactory", None)
+            if callable(print_logger_factory):
+                return cls._build_async_logger_factory(print_logger_factory)
+            write_logger_factory = getattr(structlog, "WriteLoggerFactory", None)
+            if callable(write_logger_factory):
+                return cls._build_async_logger_factory(write_logger_factory)
         return None
 
     @classmethod
