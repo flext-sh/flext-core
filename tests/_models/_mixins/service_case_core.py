@@ -39,7 +39,7 @@ class TestsFlextModelsServiceCaseCoreMixin:
     class ServiceTestCase(m.BaseModel):
         """Test case for service."""
 
-        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         service_type: Annotated[
             str | None, m.Field(description="Service type for factory-driven tests")
@@ -67,7 +67,7 @@ class TestsFlextModelsServiceCaseCoreMixin:
     class RailwayTestCase(m.BaseModel):
         """Test case for railway pattern."""
 
-        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         user_ids: Annotated[
             t.StrSequence, m.Field(description="User identifiers used in pipeline")

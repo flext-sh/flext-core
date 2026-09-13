@@ -14,7 +14,7 @@ class TestsFlextModelsTestDataValuesMixin:
     class ErrorData(m.BaseModel):
         """Test error codes and messages."""
 
-        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         error_code: Annotated[str, m.Field(description="Default test error code")] = (
             "TEST_ERROR_001"
@@ -35,7 +35,7 @@ class TestsFlextModelsTestDataValuesMixin:
     class Data(m.BaseModel):
         """Test field names and data values."""
 
-        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         field_name: Annotated[str, m.Field(description="Default test field name")] = (
             "test_field"
@@ -68,7 +68,7 @@ class TestsFlextModelsTestDataValuesMixin:
     class PatternData(m.BaseModel):
         """Test patterns and formats."""
 
-        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         slug_input: Annotated[
             str, m.Field(description="Input value for slug conversion tests")
@@ -83,7 +83,7 @@ class TestsFlextModelsTestDataValuesMixin:
     class NumericValues(m.BaseModel):
         """Test port and numeric values."""
 
-        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         port: Annotated[int, m.Field(description="Default test port")] = 8080
         timeout: Annotated[int, m.Field(description="Default timeout in seconds")] = 30
