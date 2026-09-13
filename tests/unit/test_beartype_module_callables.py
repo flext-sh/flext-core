@@ -11,8 +11,6 @@ from __future__ import annotations
 
 import sys
 import types
-from collections.abc import Iterator
-from contextlib import contextmanager
 from typing import Never
 
 import pytest
@@ -20,14 +18,25 @@ import pytest
 from flext_core import u
 
 _OUTSIDE_CONTEXT = "Working outside of application context"
+_PROBE_MODULE = "probe_module_with_proxy"
 
 
 class _ForwardingProxy:
-    """A stand-in with werkzeug ``LocalProxy``'s forwarding behaviour."""
+    """A stand-in with werkzeug ``LocalProxy``'s forwarding behaviour.
+
+    ``__class__`` is declared exactly as ``object`` declares it, so the
+    override stays consistent for the type checker while still forwarding the
+    question the way the real proxy does.
+    """
 
     @property
-    def __class__(self) -> type:
+    def __class__(self) -> type[_ForwardingProxy]:
         """Forward the type question to an object that is not there."""
+        raise RuntimeError(_OUTSIDE_CONTEXT)
+
+    @__class__.setter
+    def __class__(self, value: type[_ForwardingProxy]) -> None:
+        """Forward the assignment too, so the override stays read-write."""
         raise RuntimeError(_OUTSIDE_CONTEXT)
 
     def __getattr__(self, name: str) -> Never:
@@ -43,33 +52,26 @@ def _defined_here() -> int:
 class TestsFlextCoreBeartypeModuleCallables:
     """Behaviour of the module-callable walk over a hostile namespace."""
 
-    @staticmethod
-    @contextmanager
-    def _module_with_proxy() -> Iterator[types.ModuleType]:
-        """Publish a module whose namespace holds a function and a proxy.
+    def test_proxy_is_skipped_and_the_real_function_is_yielded(self) -> None:
+        """The walk completes, ignoring the proxy and keeping the function.
 
-        The walk keeps only functions the module itself defines, and that
-        question is answered through the import system, so the module has to
-        be reachable there while the case runs.
+        The walk keeps only functions the module itself defines, and answers
+        that question through the import system, so the probe module has to be
+        reachable there while the case runs.
         """
-        module = types.ModuleType("probe_module_with_proxy")
+        module = types.ModuleType(_PROBE_MODULE)
         original_module_name = _defined_here.__module__
-        _defined_here.__module__ = module.__name__
+        _defined_here.__module__ = _PROBE_MODULE
         module.__dict__["defined_here"] = _defined_here
         module.__dict__["current_app"] = _ForwardingProxy()
-        sys.modules[module.__name__] = module
+        sys.modules[_PROBE_MODULE] = module
         try:
-            yield module
-        finally:
-            del sys.modules[module.__name__]
-            _defined_here.__module__ = original_module_name
-
-    def test_proxy_is_skipped_and_the_real_function_is_yielded(self) -> None:
-        """The walk completes, ignoring the proxy and keeping the function."""
-        with TestsFlextCoreBeartypeModuleCallables._module_with_proxy() as module:
             yielded = [
                 function.__name__ for function in u.iter_module_callables(module)
             ]
+        finally:
+            del sys.modules[_PROBE_MODULE]
+            _defined_here.__module__ = original_module_name
 
         assert yielded == [_defined_here.__name__]
 
