@@ -15,3 +15,6 @@ class TestsFlextConstantsSettings:
 
         LogLevel = c.LogLevel
         Environment = c.Environment
+
+
+__all__: list[str] = ["TestsFlextConstantsSettings"]

@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from .base import FlextResultBase
     from .behavior import FlextResultBehavior
     from .composition import FlextResultComposition
-    from .construction import FlextResultConstruction
+    from .construction import FlextResultConstruction, copy_result, ok_result
     from .transforms import FlextResultTransforms
     from .unwrap import FlextResultUnwrap
 __all__: tuple[str, ...] = (
@@ -22,6 +22,8 @@ __all__: tuple[str, ...] = (
     "FlextResultConstruction",
     "FlextResultTransforms",
     "FlextResultUnwrap",
+    "copy_result",
+    "ok_result",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
@@ -30,7 +32,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".base": ("FlextResultBase",),
             ".behavior": ("FlextResultBehavior",),
             ".composition": ("FlextResultComposition",),
-            ".construction": ("FlextResultConstruction",),
+            ".construction": ("FlextResultConstruction", "copy_result", "ok_result"),
             ".transforms": ("FlextResultTransforms",),
             ".unwrap": ("FlextResultUnwrap",),
         }),

@@ -54,8 +54,8 @@ slot registry verification).
   filtered by `flext-*`. The FLEXT cascade is encoded in the inheritance lists
   of the facade classes listed under Module Map above.
 - Public extensions exposed by this project: `FlextConfig`, `FlextConstants`,
-  `FlextContainer`, `FlextContext`, `FlextDecorators`, `FlextDispatcher` (+16
-  more).
+  `FlextConstantsEnforcement`, `FlextContainer`, `FlextContext`,
+  `FlextDecorators` (+17 more).
 - Library abstraction boundaries: see AGENTS.md §2.7.
 
 ## Quality Gates

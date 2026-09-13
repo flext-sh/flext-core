@@ -29,3 +29,6 @@ class TestsFlextConstantsResult:
         RAILWAY_OPERATION_SQUARE,
         RAILWAY_OPERATION_NEGATE,
     })
+
+
+__all__: list[str] = ["TestsFlextConstantsResult"]

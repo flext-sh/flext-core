@@ -16,6 +16,15 @@ from typing import ForwardRef, TypeAliasType
 from .annotateds import FlextTypesAnnotateds as ta
 from .pydantic import FlextTypesPydantic as tp
 
+# TOML has no null; the canonical TOML value shape is an explicit recursive
+# union (str | int | float | bool | datetime | list | mapping), never None.
+# Declared at module scope (not nested in the class body) because pyrefly
+# cannot resolve a class-scoped self-reference inside a ``type`` recursive
+# alias; the class re-exports this same alias as ``TomlValue`` below.
+type TomlValue = (
+    str | int | float | bool | datetime | list[TomlValue] | Mapping[str, TomlValue]
+)
+
 
 class FlextTypingBase(tp, ta):
     """Base type alias namespace for Flext core type-safe contracts."""
@@ -62,16 +71,12 @@ class FlextTypingBase(tp, ta):
     type MutableFlatContainer = (
         MutableFlatContainerMapping | MutableSequenceOf[tp.JsonValue]
     )
-    # TOML has no null; the canonical TOML value shape is an explicit recursive
-    # union (str | int | float | bool | datetime | list | mapping), never None.
-    # Mirrors the Json family style: a self-referential ``type`` alias plus a
+    # Re-export of the module-level recursive alias above (see its docstring
+    # for why it cannot be declared directly inside this class body).
+    # Mirrors the Json family style: a self-referential alias plus a
     # ``MappingKV`` table alias. SSOT for all fleet consumers (cosmos-charts,
     # cosmos-gitops); nobody redeclares it locally.
-    # TypeAliasType (not PEP 695 ``type``) because pyrefly cannot resolve the
-    # class-scoped self-reference in a ``type`` recursive alias.
-    type TomlValue = (
-        str | int | float | bool | datetime | list[TomlValue] | Mapping[str, TomlValue]
-    )
+    TomlValue = TomlValue
     type TomlTable = MappingKV[str, TomlValue]
     type MutableTomlTable = MutableMapping[str, TomlValue]
     # Canonical consumer aliases (flat; no recursion — tp.JsonValue carries depth)
