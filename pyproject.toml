@@ -604,7 +604,6 @@ mi_min = "B"
 [tool.flext.docs]
 project_class = "platform"
 
-
 [tool.flext.project.budget.boundary]
 time-seconds = 600
 memory-mb = 2048
