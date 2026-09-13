@@ -52,7 +52,7 @@ if TYPE_CHECKING:
         """Type-safe result with monadic railway-oriented operations."""
 
         @classmethod
-        def ok[V](cls, value: V) -> FlextResult[V]:
+        def ok(cls, value: T) -> FlextResult[T]:
             """Create a successful result carrying ``value``."""
             ...
 
@@ -94,9 +94,9 @@ else:
         """Type-safe result with monadic railway-oriented operations."""
 
         @classmethod
-        def ok[V](cls, value: V) -> FlextResult[V]:
+        def ok(cls, value: T) -> FlextResult[T]:
             """Create a successful result carrying ``value``."""
-            return cast("FlextResult[V]", ok_result(cls, value))
+            return cast("FlextResult[T]", ok_result(cls, value))
 
         @classmethod
         def from_result[V](cls, source: prt.Result[V]) -> FlextResult[V]:
