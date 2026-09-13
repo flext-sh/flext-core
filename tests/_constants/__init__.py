@@ -11,7 +11,7 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 if TYPE_CHECKING:
     from flext_tests import d, e, h, m, p, r, s, t, td, tf, tk, tm, tv, u, x
 
-    from .domain import TestsFlextConstantsDomain
+    from .domain import TestsFlextConstantsDomain, c
     from .errors import TestsFlextConstantsErrors
     from .fixtures import TestsFlextConstantsFixtures
     from .loggings import TestsFlextConstantsLoggings
@@ -49,7 +49,7 @@ __all__: tuple[str, ...] = (
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
-            ".domain": ("TestsFlextConstantsDomain",),
+            ".domain": ("TestsFlextConstantsDomain", "c"),
             ".errors": ("TestsFlextConstantsErrors",),
             ".fixtures": ("TestsFlextConstantsFixtures",),
             ".loggings": ("TestsFlextConstantsLoggings",),

@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from .._typings.services import FlextTypesServices as ts
 
 
-ResultT = TypeVar("ResultT")
+ResultT = TypeVar("ResultT", covariant=True)
 ResultViewT_co = TypeVar("ResultViewT_co", covariant=True)
 
 
@@ -61,7 +61,7 @@ class FlextProtocolsResult:
 
     @runtime_checkable
     class Result(Protocol[ResultT]):
-        """Structural railway result contract; invariant payload."""
+        """Structural railway result contract; covariant payload."""
 
         @property
         def error(self) -> str | None: ...

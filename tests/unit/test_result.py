@@ -121,10 +121,9 @@ class TestsFlextCoreResult:
 
     def test_recover_maps_failure_to_success_value(self) -> None:
         """Recovering a failure produces a success from its error."""
-        fallback: int = -1
-        recovered = r[int].fail("err").recover(lambda _: fallback)
+        recovered = r[int].fail("err").recover(lambda _: -1)
 
-        tm.ok(recovered, eq=fallback)
+        tm.ok(recovered, eq=-1)
 
     @pytest.mark.parametrize(("value", "keeps"), [(9, True), (2, False)])
     def test_filter_keeps_or_rejects_by_predicate(
