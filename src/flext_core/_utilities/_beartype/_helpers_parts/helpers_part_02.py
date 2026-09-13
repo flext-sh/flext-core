@@ -112,20 +112,33 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart01):
     def iter_module_callables(
         module: _types_mod.ModuleType,
     ) -> Iterator[_types_mod.FunctionType]:
+        """Yield the plain functions a module defines itself.
+
+        A module namespace holds everything it imported, including lazy
+        proxies that forward every attribute -- ``__class__`` among them -- to
+        an object that may not exist yet. Flask publishes two of those at
+        module level, so any consumer importing it puts them here, and
+        resolving one outside its context raises. ``isinstance`` consults
+        ``__class__`` and ``getattr`` swallows only ``AttributeError``, so the
+        walk used to die with the proxy's own error and the runtime-census
+        gate crashed instead of reporting findings.
+
+        The exact ``type`` comparisons below answer from the object's real
+        type without resolving anything: a proxy is not a function and never
+        can be. ``FunctionType`` cannot be subclassed, so this accepts exactly
+        what an ``isinstance`` test accepted.
+        """
         module_name = module.__name__
         for member in vars(module).values():
-            value = (
+            function = (
                 member.__func__
-                if isinstance(member, (classmethod, staticmethod))
+                if type(member) in {classmethod, staticmethod}
                 else member
             )
-            code = getattr(value, "__code__", None)
-            if (
-                isinstance(value, _types_mod.FunctionType)
-                and isinstance(code, _types_mod.CodeType)
-                and getattr(inspect.getmodule(value), "__name__", None) == module_name
-            ):
-                yield value
+            if type(function) is not _types_mod.FunctionType:
+                continue
+            if getattr(inspect.getmodule(function), "__name__", None) == module_name:
+                yield function
 
     @staticmethod
     def function_param_names(fn: _types_mod.FunctionType) -> t.StrSequence:
