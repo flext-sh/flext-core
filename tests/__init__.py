@@ -9,26 +9,19 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
+    from flext_core import FlextConstants
     from flext_tests import FlextTestsConstants
 
-    from flext_core import FlextConstants
-
     from . import benchmark, fixtures, integration, unit
-    from .base import TestsFlextServiceBase, TestsFlextServiceBase as s
-    from .constants import TestsFlextConstants, TestsFlextConstants as c
-    from .models import TestsFlextModels, TestsFlextModels as m
-    from .protocols import TestsFlextProtocols, TestsFlextProtocols as p
-    from .typings import TestsFlextTypes, TestsFlextTypes as t
-    from .utilities import TestsFlextUtilities, TestsFlextUtilities as u
+    from .base import s
+    from .constants import c
+    from .models import m
+    from .protocols import p
+    from .typings import t
+    from .utilities import u
 __all__: tuple[str, ...] = (
     "FlextConstants",
     "FlextTestsConstants",
-    "TestsFlextConstants",
-    "TestsFlextModels",
-    "TestsFlextProtocols",
-    "TestsFlextServiceBase",
-    "TestsFlextTypes",
-    "TestsFlextUtilities",
     "benchmark",
     "c",
     "fixtures",
@@ -44,16 +37,16 @@ __all__: tuple[str, ...] = (
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
-            ".base": ("TestsFlextServiceBase", "s"),
+            ".base": ("s",),
             ".benchmark": ("benchmark",),
-            ".constants": ("TestsFlextConstants", "c"),
+            ".constants": ("c",),
             ".fixtures": ("fixtures",),
             ".integration": ("integration",),
-            ".models": ("TestsFlextModels", "m"),
-            ".protocols": ("TestsFlextProtocols", "p"),
-            ".typings": ("TestsFlextTypes", "t"),
+            ".models": ("m",),
+            ".protocols": ("p",),
+            ".typings": ("t",),
             ".unit": ("unit",),
-            ".utilities": ("TestsFlextUtilities", "u"),
+            ".utilities": ("u",),
             "flext_core": ("FlextConstants",),
             "flext_tests": ("FlextTestsConstants",),
         }),
