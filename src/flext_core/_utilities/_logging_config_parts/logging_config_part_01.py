@@ -124,7 +124,7 @@ class FlextUtilitiesLoggingConfig:
             if self.stop_event.is_set():
                 return
             self.stop_event.set()
-            with suppress(Exception):
+            with suppress(queue.Full):
                 self.queue.put_nowait(None)
             if self.thread.is_alive():
                 self.thread.join(timeout=2.0)
@@ -133,7 +133,7 @@ class FlextUtilitiesLoggingConfig:
         @override
         def write(self, s: str, /) -> int:
             """Write message to queue (non-blocking)."""
-            with suppress(Exception):
+            with suppress(queue.Full):
                 self.queue.put(s, block=c.ASYNC_BLOCK_ON_FULL)
             return len(s)
 

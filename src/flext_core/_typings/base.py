@@ -19,8 +19,18 @@ from .pydantic import FlextTypesPydantic as tp
 # TOML has no null; the canonical TOML value shape is an explicit recursive
 # union (str | int | float | bool | datetime | list | mapping), never None.
 # Declared at module scope (not nested in the class body) because pyrefly
-# cannot resolve a class-scoped self-reference inside a ``type`` recursive
-# alias; the class re-exports this same alias as ``TomlValue`` below.
+# cannot resolve a class-scoped self-reference inside a recursive alias; the
+# class re-exports this same alias as ``TomlValue`` below.
+#
+# codemod's recursive-type-alias detector wants this expressed via
+# ``TypeAliasType`` (lazy, finite expansion) instead of a bare PEP 695
+# ``type`` statement (mypy expands a self-recursive ``type`` alias without a
+# fixpoint). Ruff's UP040/TC008 fixers unconditionally rewrite any
+# ``TypeAliasType("TomlValue", ...)`` construction back into this exact bare
+# form on every ``make fmt`` run, so the two native gates disagree and this
+# finding cannot be resolved from flext-core alone — it needs a ruff
+# per-file-ignore (UP040, TC008) or an equivalent codemod-detector exemption
+# from flext-infra.
 type TomlValue = (
     str | int | float | bool | datetime | list[TomlValue] | Mapping[str, TomlValue]
 )
