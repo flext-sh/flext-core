@@ -1,4 +1,4 @@
-# FLEXT Workspace API Overview
+# flext-core API Overview
 
 <!-- TOC START -->
 - [Next Pages](#next-pages)
@@ -6,16 +6,29 @@
 
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
+- Package: `flext_core`
 - Version: `0.12.0`
 - Description: Enterprise Foundation Framework - Modern Python 3.13 + Clean
   Architecture
-- Governed projects: `0`
-- Project classes: _none_
-
-Generated from workspace discovery, `pyproject.toml`, public exports, and
-docstrings.
+- Doc summary: Flext Core package.
+- Classifiers: `Development Status :: 3 - Alpha`, `Framework :: Pydantic :: 2`,
+  `Framework :: Pydantic`, `Intended Audience :: Developers`, `Operating System
+  :: OS Independent`, `Programming Language :: Python :: 3 :: Only` (+3 more)
+- Project class: `platform`
+- Keywords: `clean-architecture`, `ddd`, `enterprise`, `flext`, `modern`,
+  `solid`
+- Main facades: `FlextConfig`, `FlextConstants`, `FlextConstantsEnforcement`,
+  `FlextContainer`, `FlextContext`, `FlextDecorators`, `FlextDispatcher`,
+  `FlextExceptions` (+15 more)
+- Alias exports: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
+- Public symbol exports: `FlextConfig`, `FlextConstants`,
+  `FlextConstantsEnforcement`, `FlextContainer`, `FlextContext`,
+  `FlextDecorators`, `FlextDispatcher`, `FlextExceptions`, `FlextHandlers`,
+  `FlextLazy` (+16 more)
+- Exported module shortcuts: _none_
+- Generated module pages: `18`
 
 ## Next Pages
 
-- [Workspace Module Pages](projects/index.md)
-- [Project Catalog](../../projects/generated/catalog.md)
+- [Public API](public-api.md)
+- [Module Index](modules/index.md)
