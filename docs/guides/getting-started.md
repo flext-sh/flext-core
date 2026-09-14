@@ -45,7 +45,6 @@ make fix
 make fmt
 make check
 make test
-make conform
 ```
 
 The final generation pass proves the fixed point. Test execution remains inside

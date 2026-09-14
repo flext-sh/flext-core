@@ -5,6 +5,10 @@
 !.beads/metadata.json
 !.beads/identity.toml
 
+# uv lockfile is never tracked
+uv.lock
+**/uv.lock
+
 # BLOCK: AI/Agent Local Data (NEVER track these)
 .claude/local/
 .claude/history/
