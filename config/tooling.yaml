@@ -1,0 +1,4 @@
+ManagedArtifacts:
+  Ruff:
+    per_file_ignores:
+      src/flext_core/_typings/base.py: [UP040, TC008]
