@@ -49,6 +49,7 @@ make fix
 make fmt
 make check
 make test
+make gen
 ```
 
 Test diagnosis still runs through `make test`, with the retained Testmon
