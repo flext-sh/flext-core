@@ -51,16 +51,14 @@ UV_LINK_MODE := copy
 # === SECTION: public boundary (managed) ===
 # GNU Make built-ins are dot-prefixed; .SHELLSTATUS carries origin "override"
 # on Make >= 4.4, so they are excluded from caller-input detection.
-# Operator decision 2026-09-12 (option A): APPLY is a public input again.
-# Unset/empty APPLY mutates (today's default); APPLY=N selects the read-only
-# check recipe on every verb that declares one. An unknown command-line input
-# is now a hard error, never a warning-plus-mutation, so every declared public
-# input below MUST already be legitimate today or a live invocation breaks.
 # WHAT is the universal action selector (`make <verb> WHAT=<action>`): it
 # routes custom handlers in every project, and the generated `_dispatch` reads
 # it where script dispatch is active (cosmos-3flk9). `initialize` is the
 # hermetic bootstrap verb and derives GEN_INIT_ONLY above.
-PUBLIC_INPUTS := INDEX APPLY FAIL_FAST PR_TITLE ARGS GEN_INIT_ONLY UV PROJECT_INFRA_PYTHONPATH REPOSITORY_ROOT SETUP_BOOTSTRAP_ONLY WHAT CI
+# Verbs mutate by default — there is no dry-run selector. Read-only check mode
+# is owned exclusively by dedicated check verbs (e.g. `make check`), never a
+# flag on a mutating verb.
+PUBLIC_INPUTS := INDEX FAIL_FAST PR_TITLE ARGS GEN_INIT_ONLY UV PROJECT_INFRA_PYTHONPATH REPOSITORY_ROOT SETUP_BOOTSTRAP_ONLY WHAT CI
 COMMAND_LINE_INPUTS := $(foreach name,$(filter-out .%,$(.VARIABLES)),$(if $(filter command line override,$(origin $(name))),$(name)))
 UNKNOWN_INPUTS := $(filter-out $(PUBLIC_INPUTS),$(COMMAND_LINE_INPUTS))
 ifneq ($(strip $(UNKNOWN_INPUTS)),)
@@ -72,13 +70,6 @@ INDEX ?=
 ifneq ($(filter-out N,$(strip $(INDEX))),)
 $(error INDEX must be , N, or unset)
 endif
-# APPLY selects check mode on verbs that declare one (make.verbs[].check_mode);
-# CHECK_ONLY is the single selector every such verb's dispatch consumes below.
-APPLY ?=
-ifneq ($(filter-out N,$(strip $(APPLY))),)
-$(error APPLY must be N or unset)
-endif
-CHECK_ONLY := $(filter N,$(APPLY))
 PYTEST_DIAG_ARGS := -rA --durations=0 --tb=long --showlocals
 PYTEST_REPORT_ARGS := -ra --durations=25 --durations-min=0.001 --tb=short
 PYTEST_PROCESS_TIMEOUT_SECONDS := 660
@@ -153,20 +144,6 @@ endif
 PUBLIC_VERBS := help setup deps build check test fmt fix fix-enforcement audit status docs clean release-plan release-version release-tag release-build publication gen conform initialize mod waza duplication
 BUILTIN_VERBS := help setup deps build check test fmt fix fix-enforcement audit status docs clean release-plan release-version release-tag release-build publication gen conform initialize mod waza duplication
 SCRIPT_VERBS :=
-# CHECK_CAPABLE_VERBS is the declared subset of make.verbs that implements a
-# read-only recipe (config:make.verbs[].check_mode). APPLY=N on any other
-# verb (including every script-dispatch verb, which has no check_mode
-# concept) fails loud before dispatch instead of silently mutating or no-op.
-CHECK_CAPABLE_VERBS := deps fmt fix fix-enforcement docs gen mod
-# Why: this file re-parses from scratch in the recursive sub-make RUN_PUBLIC
-# spawns (`$(SELF_MAKE) "_builtin-$(1)"`), so MAKECMDGOALS there is the
-# internal `_builtin-<verb>` target, never the bare public verb name. Without
-# filtering those out, every check_mode verb failed its own APPLY=N dispatch
-# (e.g. `make deps APPLY=N` errored "_builtin-deps has no check mode" from
-# inside the very recursion APPLY=N was supposed to reach).
-ifneq ($(strip $(CHECK_ONLY)),)
-$(foreach goal,$(filter-out help,$(filter-out _%,$(MAKECMDGOALS))),$(if $(filter $(goal),$(CHECK_CAPABLE_VERBS)),,$(error $(goal) has no check mode; APPLY=N is not accepted for this verb)))
-endif
 
 CUSTOM_MAKEFILE := $(MAKEFILE_ROOT)/custom.mk
 CUSTOM_DECLARED_TARGETS :=
@@ -561,7 +538,11 @@ SHARED_RUNTIME := $(if $(filter-out $(PROJECT_ROOT),$(RUNTIME_ROOT)),1,$(if $(st
 # `make setup` always provisions the current package tips. Deleting uv.lock is
 # never needed: setup reconciles the stale-git-ref case itself (operator
 # request 2026-09-10).
-UV_SYNC_FLAGS := $(if $(SHARED_RUNTIME),--all-packages ,)--all-extras --all-groups $(if $(CI),--locked ,--refresh)
+# No lock is committed, so there is nothing for `--locked` to honour: the fleet
+# resolves dependency floors from pyproject on every setup, in CI exactly as
+# locally. `--refresh` re-reads branch-tracked git metadata so a cached
+# requires-dist can never skew the resolution (operator 2026-09-14).
+UV_SYNC_FLAGS := $(if $(SHARED_RUNTIME),--all-packages ,)--all-extras --all-groups --refresh
 
 ifeq ($(GEN_INIT_ONLY),)
 -include custom.mk
@@ -745,7 +726,7 @@ _builtin-help:
 
 	@printf '  %-16s %s\n' 'duplication' 'Run the canonical jscpd duplicate-code gate.';
 
-	@printf '%s\n' 'Verbs mutate by default; pass APPLY=N to run a check-capable verb read-only.';
+	@printf '%s\n' 'Verbs mutate by default; read-only check mode is owned by dedicated check verbs (e.g. make check).';
 
 # A project owns the sources declared by its manifest. The generated setup
 # reconciler validates every initialized checkout before mutation, initializes
@@ -1057,12 +1038,12 @@ _builtin_status_diagnostics: _builtin_require_environment
 	fi
 	@git -C "$(PROJECT_ROOT)" status --short
 
-# In-process fan-out (no per-project subprocess fork), so CHECK_ONLY branches
-# directly here in both profiles: APPLY=N never passes --apply for any action.
+# In-process fan-out (no per-project subprocess fork), so docs actions always
+# apply (mutate) through the single --apply argument.
 _builtin_docs_all:
 	@set -eu; \
 	for action in $(DOCS_ACTIONS); do \
-		case "$$action" in fix) mode=$(if $(CHECK_ONLY),,--apply) ;; *) mode= ;; esac; \
+		case "$$action" in fix) mode=--apply ;; *) mode= ;; esac; \
 		$(PROJECT_FLEXT_INFRA) docs "$$action" --repository-root "$(PROJECT_ROOT)" --output-dir ".reports/docs" $$mode $(DOCS_PROJECT_ARGS); \
 	done
 
@@ -1147,18 +1128,16 @@ _builtin_mod_check: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) refactor mod
 
 # Selector-free public verbs map one-to-one to their canonical implementation.
-# CHECK_ONLY routes deps/fmt/fix/fix-enforcement/gen/mod (config:make.verbs[]
-# .check_mode) to their read-only sibling target below; docs branches on
-# CHECK_ONLY inside its own recipe body instead (single command, one --apply
-# argument to flip). Every other mapping is unconditional because
-# CHECK_CAPABLE_VERBS already rejected APPLY=N on those verbs earlier.
-_builtin-deps: $(if $(CHECK_ONLY),_builtin_deps_check,_builtin_deps_upgrade)
+# Dispatch tables map each public verb to its builtin implementation. Mutating
+# verbs always run their apply variant — read-only check mode is owned
+# exclusively by the dedicated `check` verb.
+_builtin-deps: _builtin_deps_upgrade
 _builtin-build: _builtin_build_artifacts
 _builtin-check: _builtin_check_all
 _builtin-test: _builtin_test_all
-_builtin-fmt: $(if $(CHECK_ONLY),_builtin_fmt_check,_builtin_fmt_all)
-_builtin-fix: $(if $(CHECK_ONLY),_builtin_fix_check,_builtin_fix_all)
-_builtin-fix-enforcement: $(if $(CHECK_ONLY),_builtin_fix_enforcement_check,_builtin_fix_enforcement)
+_builtin-fmt: _builtin_fmt_all
+_builtin-fix: _builtin_fix_all
+_builtin-fix-enforcement: _builtin_fix_enforcement
 _builtin-audit:
 	@if [ "$(MAKE_PROFILE)" = "workspace" ]; then \
 		$(UV) lock --project "$(PROJECT_ROOT)" --check; \
@@ -1175,10 +1154,10 @@ _builtin-release-version: _builtin_release_version
 _builtin-release-tag: _builtin_release_tag
 _builtin-release-build: _builtin_release_build
 _builtin-publication: _builtin_release_publish
-_builtin-gen: $(if $(CHECK_ONLY),_builtin_gen_check,_builtin_gen_all)
+_builtin-gen: _builtin_gen_all
 _builtin-conform: _builtin_gen_check
 _builtin-initialize: _builtin_gen_init
-_builtin-mod: $(if $(CHECK_ONLY),_builtin_mod_check,_builtin_mod_apply)
+_builtin-mod: _builtin_mod_apply
 _builtin-waza:
 	@cd "$(PROJECT_ROOT)" && "$(SETUP_MISE)" exec -- waza check --no-update-check
 _builtin-duplication:
