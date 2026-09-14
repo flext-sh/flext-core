@@ -60,8 +60,8 @@ slot registry verification).
 
 ## Quality Gates
 
-Canonical `make` verbs (`gen`, `check`, `test`, `fmt`, `docs`) execute their
-declared operations directly — see
+Canonical `make` verbs (`gen`, `check`, `test`, `fmt`, `docs`) always apply;
+none has a check or dry-run mode — see
 [`/flext/AGENTS.md`](https://github.com/flext-sh/flext/blob/0.12.0-dev/AGENTS.md)
 `Build & Test` and `Required Python quality gates`.
 
