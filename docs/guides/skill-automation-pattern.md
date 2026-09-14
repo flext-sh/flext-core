@@ -59,7 +59,6 @@ make fix
 make fmt
 make check
 make test
-make conform
 make waza
 ```
 

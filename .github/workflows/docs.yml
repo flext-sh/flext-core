@@ -39,7 +39,10 @@ jobs:
         run: make setup
 
       - name: Generation drift (blocking)
-        run: make conform 
+        run: |
+          make gen
+          git status --short
+          test -z "$(git status --porcelain --untracked-files=all)"
 
       - name: Docs lifecycle (blocking)
         run: make docs 

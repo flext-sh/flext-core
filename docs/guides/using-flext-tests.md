@@ -122,7 +122,7 @@ workspace inventory.
 
 Repository conformance and the complete generated Makefile are owned solely by
 `flext-infra codegen conform`. Discover the current selector-free verbs through
-`make help` in the owning repository root. Mutating execution requires `APPLY=Y`;
+`make help` in the owning repository root. Every verb always applies;
 do not add a `WHAT` selector or duplicate the dispatcher in a test helper.
 
 Tests for this contract exercise the generated public commands and observable
