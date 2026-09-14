@@ -163,6 +163,13 @@ jobs:
         # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
         run: CI=Y make test
 
+      # Mutating gates and tests must validate the committed candidate.
+      # Repairs left in the runner checkout require a new commit and CI run.
+      - name: Candidate cleanliness (blocking)
+        run: |
+          git status --short
+          test -z "$(git status --porcelain --untracked-files=all)"
+
       - name: Dump reports on failure
         if: ${{ failure() }}
         run: |
