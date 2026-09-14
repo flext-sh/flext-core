@@ -440,7 +440,7 @@ $${mise_config_argument:+"$$mise_config_argument"} \
 printf '%s\n' "$$mise_storage_root/shims" >> "$$GITHUB_PATH"; \
 fi; \
 	printf 'setup: entering lifecycle (submodules, environment, hooks) make=%s\n' "$(SELF_MAKE_EXECUTABLE)"; \
-	mise_exec project "$$latest_mise" -C "$$project_root" exec -- env "SETUP_DIRENV=$$direnv_executable" "SETUP_DIRENV_XDG_DATA_HOME=$$caller_xdg_data_home" "CI=$(CI)" "=$()" $(SELF_MAKE) _setup_lifecycle
+	mise_exec project "$$latest_mise" -C "$$project_root" exec -- env "SETUP_DIRENV=$$direnv_executable" "SETUP_DIRENV_XDG_DATA_HOME=$$caller_xdg_data_home" "CI=$(CI)" $(SELF_MAKE) _setup_lifecycle
 
 ifeq ($(MAKE_PROFILE),workspace)
 CODEGEN_SCOPE := all
@@ -516,13 +516,6 @@ PROJECT_FLEXT_INFRA := if [ ! -x "$(FLEXT_INFRA_PYTHON)" ]; then printf 'ERROR: 
 # `uv sync --check` permanently divergent. A standalone project owns its venv
 # alone and has no workspace packages to include.
 SHARED_RUNTIME := $(if $(filter-out $(PROJECT_ROOT),$(RUNTIME_ROOT)),1,$(if $(strip $(WORKSPACE_SUBPROJECTS)),1,))
-# CI must verify the committed lock against declared metadata before syncing;
-# --frozen bypasses that check and can omit newly declared runtime dependencies.
-# Locally, --refresh re-resolves branch-tracked git dependencies (flext-* pinned
-# to the integration branch are moving sources by declaration, flext-62fbu), so
-# `make setup` always provisions the current package tips. Deleting uv.lock is
-# never needed: setup reconciles the stale-git-ref case itself (operator
-# request 2026-09-10).
 # No lock is committed, so there is nothing for `--locked` to honour: the fleet
 # resolves dependency floors from pyproject on every setup, in CI exactly as
 # locally. `--refresh` re-reads branch-tracked git metadata so a cached
