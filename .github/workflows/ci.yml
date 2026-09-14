@@ -131,8 +131,11 @@ jobs:
           MISE_GITHUB_TOKEN: ${{ github.token }}
         # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
         run: CI=Y make setup
-      - name: gen check (blocking)
-        run: CI=Y make conform 
+      - name: gen fixed point (blocking)
+        run: |
+          CI=Y make gen
+          git status --short
+          test -z "$(git status --porcelain --untracked-files=all)"
 
       # Setup syncs against the committed lock and refreshes it in place (`uv
       # sync`); the fleet runs unlocked, so the deps audit proves the resolved
@@ -145,7 +148,7 @@ jobs:
         run: CI=Y make check
 
       # Why (aihub-v01jg): CI=Y runs ONE HALF of the gate set
-      # (lint pyright silent-failure deferred-self-reference security markdown loc-cap boundary runtime-census namespace tier-whitelist index-declarations smells codemod layout canonical-alias direnv duplication budget); the complement
+      # (lint pyright silent-failure deferred-self-reference security markdown loc-cap boundary runtime-census namespace tier-whitelist index-declarations smells codemod layout canonical-alias direnv duplication); the complement
       # (pyrefly mypy) is owned by
       # CI=N and, without this step, ran on developer
       # machines only. That split let real defects reach main twice: five

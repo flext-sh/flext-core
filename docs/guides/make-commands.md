@@ -41,11 +41,10 @@ make fix
 make fmt
 make check
 make test
-make conform
 ```
 
-The final generation pass proves the fixed point. `APPLY=Y` is the sole mutation
-flag. No project, file, pattern, action, phase, fix, or changed-only selector may
+The final generation pass proves the fixed point. Every verb always applies; there
+is no mutation flag. No project, file, pattern, action, phase, fix, or changed-only selector may
 be attached to a standard verb.
 
 ## Test contract
