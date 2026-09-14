@@ -10,15 +10,13 @@ markers, and the golden-file artifacts -- never any harness internals.
 
 from __future__ import annotations
 
-import asyncio
-import os
 import re
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
+from flext_tests import tm, u
 
 from tests.constants import c
 
@@ -35,23 +33,6 @@ class TestsFlextExamplesExecution:
     def _repo_root() -> Path:
         """Return the flext-core repository root that hosts ``examples/``."""
         return Path(__file__).resolve().parents[c.Tests.REPO_ROOT_PARENT_DEPTH]
-
-    @staticmethod
-    async def _run_example(module_name: str, repo_root: Path) -> tuple[int, str, str]:
-        """Execute an example via ``python -m`` in a clean environment."""
-        env: t.MutableStrMapping = dict(os.environ)
-        env.pop("PYTHONPATH", None)
-        process = await asyncio.create_subprocess_exec(
-            sys.executable,
-            "-m",
-            module_name,
-            cwd=repo_root,
-            env=env,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        stdout, stderr = await process.communicate()
-        return (tm.not_none(process.returncode), stdout.decode(), stderr.decode())
 
     @pytest.mark.parametrize(
         ("example_name", "module_name", "script_name"), c.Tests.PUBLIC_EXAMPLES
@@ -76,9 +57,15 @@ class TestsFlextExamplesExecution:
         expected_path = script_path.with_suffix(".expected")
         actual_path.unlink(missing_ok=True)
 
-        returncode, stdout, stderr = asyncio.run(
-            self._run_example(module_name, repo_root)
+        output = tm.ok(
+            u.Cli.run_raw(
+                [sys.executable, "-m", module_name],
+                cwd=repo_root,
+                remove_env_keys=("PYTHONPATH",),
+            )
         )
+        returncode = output.outcome.raw_return_code
+        stdout, stderr = output.stdout, output.stderr
 
         tm.that(returncode, eq=0)
         tm.that(stdout, has=f"PASS: {example_name}")
