@@ -25,7 +25,7 @@ locked = false
 #         (kubectl_version, helm_version, kind_version, taplo_version, ast_grep_version,
 #          gitleaks_version, scc_selector/scc_version, kubeconform_version, qlty_selector/qlty_version,
 #          node_version, jscpd_selector/jscpd_version, waza_selector/waza_version,
-#          beads (selector/track/version/prerelease/branch), gascity (selector/track/version/prerelease/branch))
+#          beads (selector/track/version/prerelease/branch))
 [tools]
 python = "3.13"
 uv = "latest"
@@ -48,11 +48,6 @@ version = "latest"
 github_attestations = false
 
 [tools."github:marlon-costa-dc/beads"]
-version = "latest"
-prerelease = true
-github_attestations = false
-
-[tools."github:marlon-costa-dc/gascity"]
 version = "latest"
 prerelease = true
 github_attestations = false
