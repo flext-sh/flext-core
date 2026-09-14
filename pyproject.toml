@@ -436,8 +436,18 @@ testpaths = ["tests"]
 exclude = [
   "**/.archive/**",
   "**/__pyrefly_virtual__/**",
+  ".agents/aihub-hooks",
+  ".agents/aihub-hooks/**",
   ".archive",
   ".archive/**",
+  ".claude/aihub-hooks",
+  ".claude/aihub-hooks/**",
+  ".codex/aihub-hooks",
+  ".codex/aihub-hooks/**",
+  ".cursor/aihub-hooks",
+  ".cursor/aihub-hooks/**",
+  ".gemini/aihub-hooks",
+  ".gemini/aihub-hooks/**",
   ".git",
   ".github/hooks",
   ".github/hooks/**",
@@ -548,6 +558,10 @@ split-on-trailing-comma = false
   "undocumented-public-class",
   "undocumented-public-function",
   "undocumented-public-method",
+]
+"src/flext_core/_typings/base.py" = [
+  "non-pep695-type-alias",
+  "quoted-type-alias",
 ]
 
 [tool.tomlsort]
