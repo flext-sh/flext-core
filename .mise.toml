@@ -7,7 +7,7 @@
 # Free: no
 # End SECTION: header
 # NOTE: mise carries the Python runtime and native tools from the config SSOT.
-# Python dependency declarations remain owned by pyproject.toml. Mise resolves tools to the
+# Python dependencies remain owned by uv.lock. Mise resolves every tool to the
 # newest published release at setup time: the fleet runs unlocked and current.
 # Never run `mise lock`. Never commit mise.lock.
 

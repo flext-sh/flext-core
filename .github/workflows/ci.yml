@@ -115,9 +115,9 @@ jobs:
         with:
           path: |
             ${{ github.workspace }}/../.flext-runtime/*/testmon/.testmondata
-          key: testmon-v1-${{ runner.os }}-${{ runner.arch }}-py3.13-${{ hashFiles('pyproject.toml', '**/pyproject.toml') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: testmon-v1-${{ runner.os }}-${{ runner.arch }}-py3.13-${{ hashFiles('uv.lock', '**/uv.lock') }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
-            testmon-v1-${{ runner.os }}-${{ runner.arch }}-py3.13-${{ hashFiles('pyproject.toml', '**/pyproject.toml') }}-
+            testmon-v1-${{ runner.os }}-${{ runner.arch }}-py3.13-${{ hashFiles('uv.lock', '**/uv.lock') }}-
             testmon-v1-${{ runner.os }}-${{ runner.arch }}-py3.13-
 
       - name: setup (blocking)
