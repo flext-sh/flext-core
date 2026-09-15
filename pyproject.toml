@@ -87,6 +87,7 @@ dev = [
   "pytest-cov",
   "pytest-markdown-docs",
   "pytest-randomly>=4.1.0",
+  "pytest-reportlog",
   "pytest-testmon>=2.2.0",
   "pytest-timeout",
   "pytest-xdist",
@@ -604,6 +605,8 @@ dependencies = ["flext-core"]
 
 [tool.uv.exclude-dependencies.package]
 name = "flext-cli"
+
+[tool.uv.workspace]
 [tool.bandit]
 severity = "MEDIUM"
 skips = ["B101"]

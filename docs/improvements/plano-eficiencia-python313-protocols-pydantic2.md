@@ -80,7 +80,7 @@ forte e segurança de contrato.
 
 ## P1 — estrutural (médio risco, alto retorno)
 
-4. **Adicionar cache de conformidade de protocolo em `_ProtocolIntrospection`**
+1. **Adicionar cache de conformidade de protocolo em `_ProtocolIntrospection`**
    - Arquivo: `src/flext_core/protocols.py`.
    - Ação:
      - cache para membros exigidos por protocolo;
@@ -88,20 +88,20 @@ forte e segurança de contrato.
    - Observação: invalidar cache quando subclasses dinâmicas forem registradas.
    - Critério de aceite: redução mensurável de tempo em testes de bootstrap/import.
 
-5. **Tornar validação profunda por metaclass configurável por ambiente**
+2. **Tornar validação profunda por metaclass configurável por ambiente**
    - Arquivo: `src/flext_core/protocols.py` (metaclass `ProtocolModelMeta`).
    - Ação: modo estrito em CI/dev; modo leve em produção.
    - Critério de aceite: cold-start melhor em produção sem perda de segurança em CI.
 
 ## P2 — governança e hardening contínuo
 
-6. **Definir guideline oficial de Pydantic v2 para o projeto**
+1. **Definir guideline oficial de Pydantic v2 para o projeto**
    - Documento interno com regras obrigatórias:
      - `default_factory` para coleções mutáveis;
      - `TypeAdapter` cacheado fora de loops/validators quentes;
      - validação estrita apenas na fronteira de entrada.
 
-7. **Criar microbenchmarks e budget no CI**
+2. **Criar microbenchmarks e budget no CI**
    - Cenários mínimos:
      - dispatch com/sem resolução pré-compilada;
      - validação com adapter inline vs cacheado;
