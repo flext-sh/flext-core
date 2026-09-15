@@ -22,18 +22,17 @@ import pytest
 from flext_core import FlextSettings, m, t
 
 
-class _AliasFieldSettings(FlextSettings):
-    """Minimal subclass: one field declared only via validation_alias (no populate_by_name)."""
-
-    model_config = m.SettingsConfigDict(extra="forbid", populate_by_name=False)
-
-    pandoc_bin: Annotated[
-        str, m.Field(validation_alias=t.AliasChoices("PANDOC", "FLEXT_PANDOC"))
-    ] = "pandoc"
-
-
 class TestsFlextCoreSettingsValidationAlias:
     """Public override-helper behavior for settings carrying validation_alias fields."""
+
+    class _AliasFieldSettings(FlextSettings):
+        """Minimal subclass: one field declared only via validation_alias (no populate_by_name)."""
+
+        model_config = m.SettingsConfigDict(extra="forbid", populate_by_name=False)
+
+        pandoc_bin: Annotated[
+            str, m.Field(validation_alias=t.AliasChoices("PANDOC", "FLEXT_PANDOC"))
+        ] = "pandoc"
 
     def setup_method(self) -> None:
         _AliasFieldSettings.reset_for_testing()
@@ -123,3 +122,6 @@ class TestsFlextCoreSettingsValidationAlias:
 
 
 __all__: t.MutableSequenceOf[str] = ["TestsFlextCoreSettingsValidationAlias"]
+
+
+_AliasFieldSettings = TestsFlextCoreSettingsValidationAlias._AliasFieldSettings

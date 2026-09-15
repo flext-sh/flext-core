@@ -21,16 +21,14 @@ if TYPE_CHECKING:
     from tests.typings import t
 
 
-class _CreateCommand:
-    """Sample command payload used to decorate discovered handlers."""
-
-
-class _DeleteCommand:
-    """Second sample command payload for multi-handler modules."""
-
-
 class TestsFlextHandlerDiscoveryModule:
     """Public-contract tests for module handler discovery."""
+
+    class _CreateCommand:
+        """Sample command payload used to decorate discovered handlers."""
+
+    class _DeleteCommand:
+        """Second sample command payload for multi-handler modules."""
 
     def test_scan_module_discovers_every_decorated_public_function(self) -> None:
         """All decorated public functions are discovered."""
@@ -217,3 +215,7 @@ class TestsFlextHandlerDiscoveryModule:
 
         # Assert
         tm.that(result, eq=expected)
+
+
+_CreateCommand = TestsFlextHandlerDiscoveryModule._CreateCommand
+_DeleteCommand = TestsFlextHandlerDiscoveryModule._DeleteCommand

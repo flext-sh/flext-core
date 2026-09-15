@@ -14,14 +14,13 @@ from flext_core import m, t
 from tests.utilities import u
 
 
-class _SampleModel(m.BaseModel):
-    """Minimal real Pydantic model used to probe model-exclusion behavior."""
-
-    value: int = 1
-
-
 class TestsFlextCoreGuards:
     """Public-contract behavior of the flext-core type guards."""
+
+    class _SampleModel(m.BaseModel):
+        """Minimal real Pydantic model used to probe model-exclusion behavior."""
+
+        value: int = 1
 
     # ------------------------------------------------------------------
     # matches_type — string specs
@@ -270,3 +269,6 @@ class TestsFlextCoreGuards:
         assert u.type_name(1) == "int"
         assert u.type_name([1]) == "list"
         assert u.type_name(None) == "NoneType"
+
+
+_SampleModel = TestsFlextCoreGuards._SampleModel

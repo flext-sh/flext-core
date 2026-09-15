@@ -48,7 +48,7 @@ if TYPE_CHECKING:
 
     from flext_core import p, t
 
-    class FlextResult[T](_FlextResult[T]):
+    class FlextResult[T](_FlextResult[T], p.Result[T]):
         """Type-safe result with monadic railway-oriented operations."""
 
         @classmethod

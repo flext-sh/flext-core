@@ -18,7 +18,7 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from re import Pattern
 from types import EllipsisType
-from typing import Literal, TypeAlias, dataclass_transform
+from typing import Literal, dataclass_transform
 
 from pydantic import (
     AfterValidator,
@@ -64,7 +64,6 @@ from pydantic_settings import (
     SettingsConfigDict as _PydanticSettingsConfigDict,
     YamlConfigSettingsSource,
 )
-from pydantic_settings.sources.types import ConfigFileSourceType, Traversable
 
 type _FieldValue = JsonValue | Path
 type _FieldSchemaExtra = Mapping[str, _FieldValue | Sequence[_FieldValue]]
@@ -205,5 +204,5 @@ class FlextModelsPydantic:
     EnvSettingsSource = EnvSettingsSource
     PydanticBaseSettingsSource = PydanticBaseSettingsSource
     YamlConfigSettingsSource = YamlConfigSettingsSource
-    ConfigFileSourceType: TypeAlias = ConfigFileSourceType
-    Traversable: TypeAlias = Traversable
+    type ConfigFileSourceType = ConfigFileSourceType
+    type Traversable = Traversable

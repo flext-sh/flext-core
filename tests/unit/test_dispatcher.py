@@ -23,45 +23,42 @@ from tests.typings import t
 from tests.utilities import u
 
 
-class RouteMessage(m.BaseModel):
-    """Routable test message satisfying the ``p.Routable`` contract.
-
-    Declares all three CQRS route discriminators so a single model can stand
-    in for a command, a query or an event depending on which field is set.
-    """
-
-    command_type: str | None = None
-    query_type: str | None = None
-    event_type: str | None = None
-
-
-class RecordingHandler:
-    """Handler that records every message it receives and returns a payload."""
-
-    def __init__(self, route: str) -> None:
-        self.message_type = route
-        self.received: list[p.Routable] = []
-
-    def handle(self, message: p.Routable) -> p.Result[t.JsonPayload]:
-        self.received.append(message)
-        return r[t.JsonPayload].ok({"route": self.message_type})
-
-
-class FailingHandler(RecordingHandler):
-    """Handler whose execution always raises, exercising the failure path."""
-
-    def __init__(self, route: str, failure_detail: str) -> None:
-        super().__init__(route)
-        self.failure_detail = failure_detail
-
-    @override
-    def handle(self, message: p.Routable) -> p.Result[t.JsonPayload]:
-        self.received.append(message)
-        raise RuntimeError(self.failure_detail)
-
-
 class TestsFlextCoreDispatcher:
     """Public-behavior contract for the flext-core message dispatcher."""
+
+    class RouteMessage(m.BaseModel):
+        """Routable test message satisfying the ``p.Routable`` contract.
+
+        Declares all three CQRS route discriminators so a single model can stand
+        in for a command, a query or an event depending on which field is set.
+        """
+
+        command_type: str | None = None
+        query_type: str | None = None
+        event_type: str | None = None
+
+    class RecordingHandler:
+        """Handler that records every message it receives and returns a payload."""
+
+        def __init__(self, route: str) -> None:
+            self.message_type = route
+            self.received: list[p.Routable] = []
+
+        def handle(self, message: p.Routable) -> p.Result[t.JsonPayload]:
+            self.received.append(message)
+            return r[t.JsonPayload].ok({"route": self.message_type})
+
+    class FailingHandler(RecordingHandler):
+        """Handler whose execution always raises, exercising the failure path."""
+
+        def __init__(self, route: str, failure_detail: str) -> None:
+            super().__init__(route)
+            self.failure_detail = failure_detail
+
+        @override
+        def handle(self, message: p.Routable) -> p.Result[t.JsonPayload]:
+            self.received.append(message)
+            raise RuntimeError(self.failure_detail)
 
     @pytest.fixture
     def dispatcher(self) -> p.Dispatcher:
@@ -242,3 +239,8 @@ class TestsFlextCoreDispatcher:
 
 
 __all__: list[str] = ["TestsFlextCoreDispatcher"]
+
+
+RouteMessage = TestsFlextCoreDispatcher.RouteMessage
+RecordingHandler = TestsFlextCoreDispatcher.RecordingHandler
+FailingHandler = TestsFlextCoreDispatcher.FailingHandler

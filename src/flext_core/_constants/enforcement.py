@@ -36,14 +36,6 @@ from ._enforcement_parts.flextconstantsenforcement_part_08 import (
 from .enforcement_catalog_rows import FlextConstantsEnforcementCatalogRows
 
 
-class FlextMroViolation(UserWarning):
-    """Runtime governance violation emitted by the FLEXT enforcement engine."""
-
-
-class FlextSmellViolation(FlextMroViolation):
-    """Runtime code-smell violation emitted by the FLEXT enforcement engine."""
-
-
 class FlextConstantsEnforcement(
     FlextConstantsEnforcementCatalogRows,
     FlextConstantsEnforcementEnums,
@@ -57,9 +49,18 @@ class FlextConstantsEnforcement(
 ):
     """Constants governing Pydantic v2 enforcement behavior."""
 
+    class FlextMroViolation(UserWarning):
+        """Runtime governance violation emitted by the FLEXT enforcement engine."""
+
+    class FlextSmellViolation(FlextMroViolation):
+        """Runtime code-smell violation emitted by the FLEXT enforcement engine."""
+
 
 # mro-pulj (codex): the declaring module owns every supported root import;
 # generated registries must not be required to publish this violation model.
+FlextMroViolation = FlextConstantsEnforcement.FlextMroViolation
+FlextSmellViolation = FlextConstantsEnforcement.FlextSmellViolation
+
 __all__: list[str] = [
     "FlextConstantsEnforcement",
     "FlextMroViolation",

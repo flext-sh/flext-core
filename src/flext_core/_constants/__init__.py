@@ -9,7 +9,12 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from . import _enforcement_catalog_rows_parts, _enforcement_data, _enforcement_parts
+    from . import (
+        _enforcement_catalog_rows_parts,
+        _enforcement_data,
+        _enforcement_parts,
+        _errors_parts,
+    )
     from ._enforcement_catalog_rows_parts._parts.flextconstantsenforcementcatalogrows_part_01_a import (
         INFRA_DETECTOR_ROWS_CORE,
     )
@@ -57,6 +62,19 @@ if TYPE_CHECKING:
     )
     from ._enforcement_parts.flextconstantsenforcement_part_09 import (
         NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT,
+    )
+    from ._errors_parts.flextconstantserrors_part_01 import FlextConstantsErrorsMessages
+    from ._errors_parts.flextconstantserrors_part_02 import (
+        FlextConstantsErrorsRuntimeExceptions,
+    )
+    from ._errors_parts.flextconstantserrors_part_03 import (
+        FlextConstantsErrorsValidationExceptions,
+    )
+    from ._errors_parts.flextconstantserrors_part_04 import (
+        FlextConstantsErrorsDomainParser,
+    )
+    from ._errors_parts.flextconstantserrors_part_05 import (
+        FlextConstantsErrorsRuntimeSettings,
     )
     from .base import FlextConstantsBase
     from .config import FlextConstantsConfig
@@ -106,6 +124,11 @@ __all__: tuple[str, ...] = (
     "FlextConstantsEnforcementTargets",
     "FlextConstantsEnvironment",
     "FlextConstantsErrors",
+    "FlextConstantsErrorsDomainParser",
+    "FlextConstantsErrorsMessages",
+    "FlextConstantsErrorsRuntimeExceptions",
+    "FlextConstantsErrorsRuntimeSettings",
+    "FlextConstantsErrorsValidationExceptions",
     "FlextConstantsFile",
     "FlextConstantsGuards",
     "FlextConstantsInfrastructure",
@@ -124,6 +147,7 @@ __all__: tuple[str, ...] = (
     "_enforcement_catalog_rows_parts",
     "_enforcement_data",
     "_enforcement_parts",
+    "_errors_parts",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
@@ -179,6 +203,22 @@ _LAZY_IMPORTS = MappingProxyType(
             ),
             "._enforcement_parts.flextconstantsenforcement_part_09": (
                 "NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT",
+            ),
+            "._errors_parts": ("_errors_parts",),
+            "._errors_parts.flextconstantserrors_part_01": (
+                "FlextConstantsErrorsMessages",
+            ),
+            "._errors_parts.flextconstantserrors_part_02": (
+                "FlextConstantsErrorsRuntimeExceptions",
+            ),
+            "._errors_parts.flextconstantserrors_part_03": (
+                "FlextConstantsErrorsValidationExceptions",
+            ),
+            "._errors_parts.flextconstantserrors_part_04": (
+                "FlextConstantsErrorsDomainParser",
+            ),
+            "._errors_parts.flextconstantserrors_part_05": (
+                "FlextConstantsErrorsRuntimeSettings",
             ),
             ".base": ("FlextConstantsBase",),
             ".config": ("FlextConstantsConfig",),

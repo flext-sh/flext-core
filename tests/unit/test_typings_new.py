@@ -16,11 +16,10 @@ from tests.constants import c
 from tests.typings import t
 
 
-class _Color(StrEnum):
-    RED = "red"
-
-
 class TestsFlextCoreTypingsNew:
+    class _Color(StrEnum):
+        RED = "red"
+
     def test_json_value_adapter_accepts_nested_json(self) -> None:
         """json_value_adapter validates arbitrarily nested JSON payloads."""
         payload: t.JsonValue = {"k": [1, 2, "x", True, None]}
@@ -104,3 +103,6 @@ class TestsFlextCoreTypingsNew:
         container = set(t.CONTAINER_TYPES)
         tm.that(primitives <= scalar, eq=True)
         tm.that(scalar <= container, eq=True)
+
+
+_Color = TestsFlextCoreTypingsNew._Color

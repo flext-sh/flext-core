@@ -12,17 +12,11 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import Annotated, ClassVar, Literal
 
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-    ValidationError,
-    computed_field,
-    field_validator,
-)
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from flext_core import c, t
 
+from ._cqrs_parts.flextmodelscqrs_part_01 import _CqrsPagination
 from .base import FlextModelsBase as m
 
 
@@ -36,44 +30,6 @@ def _u() -> type:
 # NOTE (multi-agent): mro-i6nq.12 — consolidated _cqrs_parts/part_01..02 (one
 # FlextModelsCqrs namespace class split across a numbered MRO chain) into this
 # single facade module.
-class _CqrsPagination(m.FlexibleInternalModel):
-    """Pagination model for query results.
-
-    Defined at module level so it can be referenced in Query annotations
-    without forward-reference issues (Pydantic can resolve it statically).
-    Exposed as FlextModelsCqrs.Pagination.
-    """
-
-    model_config: ClassVar[ConfigDict] = ConfigDict(
-        json_schema_extra={
-            "title": "Pagination",
-            "description": "Pagination model for query results with computed fields",
-        }
-    )
-    page: Annotated[
-        t.PositiveInt,
-        Field(description="Page number (1-based indexing)", examples=[1, 2, 10, 100]),
-    ] = c.DEFAULT_RETRY_DELAY_SECONDS
-    size: Annotated[
-        t.PositiveInt,
-        Field(
-            le=c.MAX_PAGE_SIZE,
-            description="Number of items per page (max 1000)",
-            examples=[10, 20, 50, 100],
-        ),
-    ] = c.DEFAULT_PAGE_SIZE
-
-    @computed_field
-    @property
-    def limit(self) -> int:
-        """Limit alias for size."""
-        return self.size
-
-    @computed_field
-    @property
-    def offset(self) -> int:
-        """Offset from page and size."""
-        return (self.page - 1) * self.size
 
 
 class FlextModelsCqrs:

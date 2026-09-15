@@ -16,6 +16,7 @@ from typing import ForwardRef, TypeAliasType
 from .annotateds import FlextTypesAnnotateds as ta
 from .pydantic import FlextTypesPydantic as tp
 
+
 class FlextTypingBase(tp, ta):
     """Base type alias namespace for Flext core type-safe contracts."""
 

@@ -13,8 +13,10 @@ if TYPE_CHECKING:
         _base_parts,
         _container_parts,
         _context,
+        _cqrs_parts,
         _enforcement,
         _exception_params_parts,
+        _project_metadata_parts,
     )
     from ._context._data import FlextModelsContextData
     from ._context._export import FlextModelsContextExport
@@ -83,8 +85,10 @@ __all__: tuple[str, ...] = (
     "_base_parts",
     "_container_parts",
     "_context",
+    "_cqrs_parts",
     "_enforcement",
     "_exception_params_parts",
+    "_project_metadata_parts",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
@@ -99,6 +103,7 @@ _LAZY_IMPORTS = MappingProxyType(
             "._context._proxy_var": ("FlextModelsContextProxyVar",),
             "._context._scope": ("FlextModelsContextScope",),
             "._context._tokens": ("FlextModelsContextTokens",),
+            "._cqrs_parts": ("_cqrs_parts",),
             "._enforcement": ("_enforcement",),
             "._enforcement._base": (
                 "EnforcementModelBase",
@@ -108,6 +113,7 @@ _LAZY_IMPORTS = MappingProxyType(
             "._enforcement._params": ("FlextModelsEnforcementParams",),
             "._enforcement._sources": ("FlextModelsEnforcementSources",),
             "._exception_params_parts": ("_exception_params_parts",),
+            "._project_metadata_parts": ("_project_metadata_parts",),
             ".base": ("FlextModelsBase",),
             ".builder": ("FlextModelsBuilder",),
             ".collections": ("FlextModelsCollections",),

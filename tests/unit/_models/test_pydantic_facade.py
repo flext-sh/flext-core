@@ -15,84 +15,73 @@ import pytest
 from tests.models import m
 
 
-class _VectorInput(m.BaseModel):
-    """Natively validated input shape for the ValidateAs hook."""
-
-    x: int
-    y: int
-
-
-class _Vector:
-    """Custom type populated from a natively validated model."""
-
-    def __init__(self, x: int, y: int) -> None:
-        self.x = x
-        self.y = y
-
-    def magnitude_squared(self) -> int:
-        """Squared length of the vector."""
-        return self.x * self.x + self.y * self.y
-
-
-class _Cat(m.BaseModel):
-    """Discriminated union member for the cat tag."""
-
-    kind: Literal["cat"]
-    meow: str
-
-
-class _Dog(m.BaseModel):
-    """Discriminated union member for the dog tag."""
-
-    kind: Literal["dog"]
-    bark: str
-
-
-class _Pet(m.BaseModel):
-    """Field resolved to a union member through the discriminator tag."""
-
-    animal: Annotated[_Cat | _Dog, m.Discriminator("kind")]
-
-
-class _Item(m.BaseModel):
-    """Base item serialized through a base-typed field."""
-
-    name: str
-
-
-class _DetailedItem(_Item):
-    """Subclass field preserved at serialization time via SerializeAsAny."""
-
-    detail: str
-
-
-class _Box(m.BaseModel):
-    """Container whose base-typed field serializes runtime subclasses."""
-
-    item: Annotated[_Item, m.SerializeAsAny()]
-
-
-class _Greeter:
-    """Plain runtime class guarded by InstanceOf."""
-
-    def hello(self) -> str:
-        return "hello"
-
-
-class _GreetingCard(m.BaseModel):
-    """Model whose payload must be a Greeter instance."""
-
-    payload: m.InstanceOf[_Greeter]
-
-
-class _Constrained(m.BaseModel):
-    """Model field constrained through StringConstraints."""
-
-    code: Annotated[str, m.StringConstraints(min_length=3, pattern=r"^[a-z]+$")]
-
-
 class TestsFlextCorePydanticDeclarations:
     """Behavioral contract for the advanced pydantic facade exports."""
+
+    class _VectorInput(m.BaseModel):
+        """Natively validated input shape for the ValidateAs hook."""
+
+        x: int
+        y: int
+
+    class _Vector:
+        """Custom type populated from a natively validated model."""
+
+        def __init__(self, x: int, y: int) -> None:
+            self.x = x
+            self.y = y
+
+        def magnitude_squared(self) -> int:
+            """Squared length of the vector."""
+            return self.x * self.x + self.y * self.y
+
+    class _Cat(m.BaseModel):
+        """Discriminated union member for the cat tag."""
+
+        kind: Literal["cat"]
+        meow: str
+
+    class _Dog(m.BaseModel):
+        """Discriminated union member for the dog tag."""
+
+        kind: Literal["dog"]
+        bark: str
+
+    class _Pet(m.BaseModel):
+        """Field resolved to a union member through the discriminator tag."""
+
+        animal: Annotated[_Cat | _Dog, m.Discriminator("kind")]
+
+    class _Item(m.BaseModel):
+        """Base item serialized through a base-typed field."""
+
+        name: str
+
+    class _DetailedItem(_Item):
+        """Subclass field preserved at serialization time via SerializeAsAny."""
+
+        detail: str
+
+    class _Box(m.BaseModel):
+        """Container whose base-typed field serializes runtime subclasses."""
+
+        item: Annotated[_Item, m.SerializeAsAny()]
+
+    class _Greeter:
+        """Plain runtime class guarded by InstanceOf."""
+
+        def hello(self) -> str:
+            return "hello"
+
+    class _GreetingCard(m.BaseModel):
+        """Model whose payload must be a Greeter instance."""
+
+        payload: m.InstanceOf[_Greeter]
+
+    class _Constrained(m.BaseModel):
+        """Model field constrained through StringConstraints."""
+
+        code: Annotated[str, m.StringConstraints(min_length=3, pattern=r"^[a-z]+$")]
 
     def test_string_constraints_accept_valid_and_reject_invalid_values(self) -> None:
         assert _Constrained(code="abc").code == "abc"
@@ -155,3 +144,16 @@ class TestsFlextCorePydanticDeclarations:
 
         with pytest.raises(m.ValidationError):
             adapter.validate_python({"x": "no-int", "y": 2})
+
+
+_VectorInput = TestsFlextCorePydanticDeclarations._VectorInput
+_Vector = TestsFlextCorePydanticDeclarations._Vector
+_Cat = TestsFlextCorePydanticDeclarations._Cat
+_Dog = TestsFlextCorePydanticDeclarations._Dog
+_Pet = TestsFlextCorePydanticDeclarations._Pet
+_Item = TestsFlextCorePydanticDeclarations._Item
+_DetailedItem = TestsFlextCorePydanticDeclarations._DetailedItem
+_Box = TestsFlextCorePydanticDeclarations._Box
+_Greeter = TestsFlextCorePydanticDeclarations._Greeter
+_GreetingCard = TestsFlextCorePydanticDeclarations._GreetingCard
+_Constrained = TestsFlextCorePydanticDeclarations._Constrained

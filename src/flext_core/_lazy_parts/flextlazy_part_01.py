@@ -92,6 +92,33 @@ class FlextLazy(BaseModel):
     ) -> tuple[str, int]:
         return (module_path, id(raw))
 
+    @staticmethod
+    def _resolve_lazy_target(module_path: str, target: str) -> str:
+        """Resolve one lazy-import target relative to its owning module path.
+
+        Absolute targets pass through. Relative targets count leading dots as
+        parent levels (``.x`` = sibling, ``..x`` = parent sibling) the same way
+        Python resolves package-relative imports; a bare ``..`` names the
+        parent package itself.
+        """
+        if not target.startswith("."):
+            return target
+        if not module_path:
+            msg = "relative lazy-import paths require a parent module name"
+            raise ValueError(msg)
+        depth = len(target) - len(target.lstrip("."))
+        suffix = target[depth:]
+        parts = module_path.split(".")
+        if depth > len(parts):
+            msg = (
+                f"relative lazy-import path {target!r} escapes root module "
+                f"{module_path!r}"
+            )
+            raise ValueError(msg)
+        base = parts[: len(parts) - (depth - 1)] if depth > 1 else parts
+        resolved = ".".join(base)
+        return f"{resolved}.{suffix}" if suffix else resolved
+
     def _norm_map(self, module_path: str, raw: LazyImportMap | None) -> LazyImportDict:
         cache_key = self._norm_cache_key(module_path, raw)
         cached = self.normalized_map_cache.get(cache_key)
@@ -107,10 +134,10 @@ class FlextLazy(BaseModel):
         out: LazyImportDict = {}
         for name, entry in validated.items():
             if isinstance(entry, str):
-                out[name] = f"{module_path}{entry}" if entry.startswith(".") else entry
+                out[name] = self._resolve_lazy_target(module_path, entry)
                 continue
             target, attr = self._alias_adapter.validate_python(entry)
-            resolved = f"{module_path}{target}" if target.startswith(".") else target
+            resolved = self._resolve_lazy_target(module_path, target)
             out[name] = (resolved, attr)
 
         self.normalized_map_cache[cache_key] = out

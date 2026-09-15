@@ -24,29 +24,6 @@ _OUTSIDE_CONTEXT = "Working outside of application context"
 _PROBE_MODULE = "probe_module_with_proxy"
 
 
-class _ForwardingProxy:
-    """A stand-in with werkzeug ``LocalProxy``'s forwarding behaviour.
-
-    ``__class__`` accepts any class through the canonical attribute-probe
-    contract, preserving the writable ``object`` interface while forwarding
-    the question the way the real proxy does.
-    """
-
-    @property
-    def __class__(self) -> type[_ForwardingProxy]:
-        """Forward the type question to an object that is not there."""
-        raise RuntimeError(_OUTSIDE_CONTEXT)
-
-    @__class__.setter
-    def __class__(self, value: type[p.AttributeProbe]) -> None:
-        """Forward the assignment too, so the override stays read-write."""
-        raise RuntimeError(_OUTSIDE_CONTEXT)
-
-    def __getattr__(self, name: str) -> Never:
-        """Forward every attribute to an object that is not there."""
-        raise RuntimeError(_OUTSIDE_CONTEXT)
-
-
 def _defined_here() -> int:
     """Stand for a real function the module under test owns."""
     return 1
@@ -54,6 +31,28 @@ def _defined_here() -> int:
 
 class TestsFlextCoreBeartypeModuleCallables:
     """Behaviour of the module-callable walk over a hostile namespace."""
+
+    class _ForwardingProxy:
+        """A stand-in with werkzeug ``LocalProxy``'s forwarding behaviour.
+
+        ``__class__`` accepts any class through the canonical attribute-probe
+        contract, preserving the writable ``object`` interface while forwarding
+        the question the way the real proxy does.
+        """
+
+        @property
+        def __class__(self) -> type[_ForwardingProxy]:
+            """Forward the type question to an object that is not there."""
+            raise RuntimeError(_OUTSIDE_CONTEXT)
+
+        @__class__.setter
+        def __class__(self, value: type[p.AttributeProbe]) -> None:
+            """Forward the assignment too, so the override stays read-write."""
+            raise RuntimeError(_OUTSIDE_CONTEXT)
+
+        def __getattr__(self, name: str) -> Never:
+            """Forward every attribute to an object that is not there."""
+            raise RuntimeError(_OUTSIDE_CONTEXT)
 
     def test_proxy_is_skipped_and_the_real_function_is_yielded(self) -> None:
         """The walk completes, ignoring the proxy and keeping the function.
@@ -97,3 +96,6 @@ class TestsFlextCoreBeartypeModuleCallables:
 
 
 __all__: list[str] = ["TestsFlextCoreBeartypeModuleCallables"]
+
+
+_ForwardingProxy = TestsFlextCoreBeartypeModuleCallables._ForwardingProxy

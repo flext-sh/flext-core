@@ -18,37 +18,35 @@ from flext_core import FlextResult, e, m
 from tests.protocols import p
 
 
-@dataclass(frozen=True, slots=True)
-class _ForeignOk:
-    """Minimal success-shaped result returned by a flow_through step."""
-
-    value: int
-    success: bool = True
-    failure: bool = False
-    error: str | None = None
-    error_code: str | None = None
-    error_data: Mapping[str, str | int | bool | None] | None = None
-    exception: BaseException | None = None
-
-    def unwrap(self) -> int:
-        return self.value
-
-
-@dataclass(frozen=True, slots=True)
-class _ForeignFail:
-    """Minimal failure-shaped result returned by a flow_through step."""
-
-    error: str
-    success: bool = False
-    failure: bool = True
-    error_code: str | None = "E_FOREIGN"
-    error_data: Mapping[str, str | int | bool | None] | None = None
-    exception: BaseException | None = None
-    value: int | None = None
-
-
 class TestsFlextCoreResultFactoryDip:
     """Public factory and protocol contracts after the p.Result DIP refactor."""
+
+    @dataclass(frozen=True, slots=True)
+    class _ForeignOk:
+        """Minimal success-shaped result returned by a flow_through step."""
+
+        value: int
+        success: bool = True
+        failure: bool = False
+        error: str | None = None
+        error_code: str | None = None
+        error_data: Mapping[str, str | int | bool | None] | None = None
+        exception: BaseException | None = None
+
+        def unwrap(self) -> int:
+            return self.value
+
+    @dataclass(frozen=True, slots=True)
+    class _ForeignFail:
+        """Minimal failure-shaped result returned by a flow_through step."""
+
+        error: str
+        success: bool = False
+        failure: bool = True
+        error_code: str | None = "E_FOREIGN"
+        error_data: Mapping[str, str | int | bool | None] | None = None
+        exception: BaseException | None = None
+        value: int | None = None
 
     def test_from_result_copies_success_payload(self) -> None:
         source: p.Result[str] = r[str].ok("payload")
@@ -234,3 +232,7 @@ class TestsFlextCoreResultFactoryDip:
         tm.that(result.error_data.get("host"), eq="kept")
         assert "password" not in result.error_data
         assert "api_key" not in result.error_data
+
+
+_ForeignOk = TestsFlextCoreResultFactoryDip._ForeignOk
+_ForeignFail = TestsFlextCoreResultFactoryDip._ForeignFail
