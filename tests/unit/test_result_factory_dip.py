@@ -101,7 +101,10 @@ class TestsFlextCoreResultFactoryDip:
 
     def test_flow_through_normalizes_foreign_success_onto_facade(self) -> None:
         def foreign_step(value: int) -> p.Result[int]:
-            return cast("p.Result[int]", TestsFlextCoreResultFactoryDip._ForeignOk(value=value + 1))
+            return cast(
+                "p.Result[int]",
+                TestsFlextCoreResultFactoryDip._ForeignOk(value=value + 1),
+            )
 
         def facade_step(value: int) -> p.Result[int]:
             return r[int].ok(value * 10)
@@ -112,7 +115,10 @@ class TestsFlextCoreResultFactoryDip:
 
     def test_flow_through_normalizes_foreign_failure_onto_facade(self) -> None:
         def foreign_fail(_value: int) -> p.Result[int]:
-            return cast("p.Result[int]", TestsFlextCoreResultFactoryDip._ForeignFail(error="foreign-stop"))
+            return cast(
+                "p.Result[int]",
+                TestsFlextCoreResultFactoryDip._ForeignFail(error="foreign-stop"),
+            )
 
         def unreachable(_value: int) -> p.Result[int]:
             return r[int].ok(999)

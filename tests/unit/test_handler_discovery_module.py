@@ -35,13 +35,19 @@ class TestsFlextHandlerDiscoveryModule:
         # Arrange
         module = types.ModuleType("decorated_module")
 
-        @h.handler(command=TestsFlextHandlerDiscoveryModule._CreateCommand, priority=100)
-        def handle_create(cmd: TestsFlextHandlerDiscoveryModule._CreateCommand) -> p.Result[str]:
+        @h.handler(
+            command=TestsFlextHandlerDiscoveryModule._CreateCommand, priority=100
+        )
+        def handle_create(
+            cmd: TestsFlextHandlerDiscoveryModule._CreateCommand,
+        ) -> p.Result[str]:
             _ = cmd
             return r[str].ok("created")
 
         @h.handler(command=TestsFlextHandlerDiscoveryModule._DeleteCommand, priority=50)
-        def handle_delete(cmd: TestsFlextHandlerDiscoveryModule._DeleteCommand) -> p.Result[str]:
+        def handle_delete(
+            cmd: TestsFlextHandlerDiscoveryModule._DeleteCommand,
+        ) -> p.Result[str]:
             _ = cmd
             return r[str].ok("deleted")
 
@@ -63,12 +69,16 @@ class TestsFlextHandlerDiscoveryModule:
         module = types.ModuleType("private_check_module")
 
         @h.handler(command=TestsFlextHandlerDiscoveryModule._CreateCommand)
-        def _private_handler(cmd: TestsFlextHandlerDiscoveryModule._CreateCommand) -> p.Result[str]:
+        def _private_handler(
+            cmd: TestsFlextHandlerDiscoveryModule._CreateCommand,
+        ) -> p.Result[str]:
             _ = cmd
             return r[str].ok("private")
 
         @h.handler(command=TestsFlextHandlerDiscoveryModule._CreateCommand)
-        def public_handler(cmd: TestsFlextHandlerDiscoveryModule._CreateCommand) -> p.Result[str]:
+        def public_handler(
+            cmd: TestsFlextHandlerDiscoveryModule._CreateCommand,
+        ) -> p.Result[str]:
             _ = cmd
             return r[str].ok("public")
 
@@ -89,7 +99,9 @@ class TestsFlextHandlerDiscoveryModule:
         module = types.ModuleType("mixed_members_module")
 
         @h.handler(command=TestsFlextHandlerDiscoveryModule._CreateCommand)
-        def decorated(cmd: TestsFlextHandlerDiscoveryModule._CreateCommand) -> p.Result[str]:
+        def decorated(
+            cmd: TestsFlextHandlerDiscoveryModule._CreateCommand,
+        ) -> p.Result[str]:
             _ = cmd
             return r[str].ok("ok")
 
@@ -141,12 +153,16 @@ class TestsFlextHandlerDiscoveryModule:
         module = types.ModuleType("tie_break_module")
 
         @h.handler(command=TestsFlextHandlerDiscoveryModule._CreateCommand, priority=5)
-        def bravo(cmd: TestsFlextHandlerDiscoveryModule._CreateCommand) -> p.Result[str]:
+        def bravo(
+            cmd: TestsFlextHandlerDiscoveryModule._CreateCommand,
+        ) -> p.Result[str]:
             _ = cmd
             return r[str].ok("b")
 
         @h.handler(command=TestsFlextHandlerDiscoveryModule._CreateCommand, priority=5)
-        def alpha(cmd: TestsFlextHandlerDiscoveryModule._CreateCommand) -> p.Result[str]:
+        def alpha(
+            cmd: TestsFlextHandlerDiscoveryModule._CreateCommand,
+        ) -> p.Result[str]:
             _ = cmd
             return r[str].ok("a")
 
@@ -165,7 +181,9 @@ class TestsFlextHandlerDiscoveryModule:
         module = types.ModuleType("metadata_module")
 
         @h.handler(command=TestsFlextHandlerDiscoveryModule._DeleteCommand, priority=7)
-        def handle(cmd: TestsFlextHandlerDiscoveryModule._DeleteCommand) -> p.Result[str]:
+        def handle(
+            cmd: TestsFlextHandlerDiscoveryModule._DeleteCommand,
+        ) -> p.Result[str]:
             _ = cmd
             return r[str].ok("done")
 
@@ -175,7 +193,9 @@ class TestsFlextHandlerDiscoveryModule:
         _, _, config = h.Discovery.scan_module(module)[0]
 
         # Assert
-        tm.that(config.command is TestsFlextHandlerDiscoveryModule._DeleteCommand, eq=True)
+        tm.that(
+            config.command is TestsFlextHandlerDiscoveryModule._DeleteCommand, eq=True
+        )
         tm.that(config.priority, eq=7)
 
     def test_scan_module_returns_empty_for_module_without_handlers(self) -> None:
@@ -202,7 +222,9 @@ class TestsFlextHandlerDiscoveryModule:
         module = types.ModuleType("coercion_module")
 
         @h.handler(command=TestsFlextHandlerDiscoveryModule._CreateCommand)
-        def produce(cmd: TestsFlextHandlerDiscoveryModule._CreateCommand) -> t.JsonValue:
+        def produce(
+            cmd: TestsFlextHandlerDiscoveryModule._CreateCommand,
+        ) -> t.JsonValue:
             _ = cmd
             return returned
 

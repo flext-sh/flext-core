@@ -50,7 +50,11 @@ class TestsFlextCorePydanticDeclarations:
     class _Pet(m.BaseModel):
         """Field resolved to a union member through the discriminator tag."""
 
-        animal: Annotated[TestsFlextCorePydanticDeclarations._Cat | TestsFlextCorePydanticDeclarations._Dog, m.Discriminator("kind")]
+        animal: Annotated[
+            TestsFlextCorePydanticDeclarations._Cat
+            | TestsFlextCorePydanticDeclarations._Dog,
+            m.Discriminator("kind"),
+        ]
 
     class _Item(m.BaseModel):
         """Base item serialized through a base-typed field."""
@@ -93,16 +97,24 @@ class TestsFlextCorePydanticDeclarations:
             TestsFlextCorePydanticDeclarations._Constrained(code="ABC")
 
     def test_discriminator_resolves_union_member_from_tag(self) -> None:
-        pet = TestsFlextCorePydanticDeclarations._Pet.model_validate({"animal": {"kind": "dog", "bark": "woof"}})
+        pet = TestsFlextCorePydanticDeclarations._Pet.model_validate({
+            "animal": {"kind": "dog", "bark": "woof"}
+        })
 
         assert isinstance(pet.animal, TestsFlextCorePydanticDeclarations._Dog)
         assert pet.animal.bark == "woof"
 
         with pytest.raises(m.ValidationError):
-            TestsFlextCorePydanticDeclarations._Pet.model_validate({"animal": {"kind": "cow", "moo": "moo"}})
+            TestsFlextCorePydanticDeclarations._Pet.model_validate({
+                "animal": {"kind": "cow", "moo": "moo"}
+            })
 
     def test_serialize_as_any_keeps_subclass_fields_in_dump(self) -> None:
-        box = TestsFlextCorePydanticDeclarations._Box(item=TestsFlextCorePydanticDeclarations._DetailedItem(name="flext", detail="advanced"))
+        box = TestsFlextCorePydanticDeclarations._Box(
+            item=TestsFlextCorePydanticDeclarations._DetailedItem(
+                name="flext", detail="advanced"
+            )
+        )
 
         assert box.model_dump() == {"item": {"name": "flext", "detail": "advanced"}}
 
@@ -128,13 +140,18 @@ class TestsFlextCorePydanticDeclarations:
             TestsFlextCorePydanticDeclarations._GreetingCard(payload=object())
 
     def test_validate_as_builds_custom_type_from_native_model(self) -> None:
-        adapter: m.TypeAdapter[TestsFlextCorePydanticDeclarations._Vector] = m.TypeAdapter(
-            Annotated[
-                TestsFlextCorePydanticDeclarations._Vector,
-                m.ValidateAs(
-                    TestsFlextCorePydanticDeclarations._VectorInput, lambda validated: TestsFlextCorePydanticDeclarations._Vector(validated.x, validated.y)
-                ),
-            ]
+        adapter: m.TypeAdapter[TestsFlextCorePydanticDeclarations._Vector] = (
+            m.TypeAdapter(
+                Annotated[
+                    TestsFlextCorePydanticDeclarations._Vector,
+                    m.ValidateAs(
+                        TestsFlextCorePydanticDeclarations._VectorInput,
+                        lambda validated: TestsFlextCorePydanticDeclarations._Vector(
+                            validated.x, validated.y
+                        ),
+                    ),
+                ]
+            )
         )
 
         vector = adapter.validate_python({"x": 1, "y": 2})

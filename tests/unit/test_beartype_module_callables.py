@@ -41,7 +41,9 @@ class TestsFlextCoreBeartypeModuleCallables:
         """
 
         @property
-        def __class__(self) -> type[TestsFlextCoreBeartypeModuleCallables._ForwardingProxy]:
+        def __class__(
+            self,
+        ) -> type[TestsFlextCoreBeartypeModuleCallables._ForwardingProxy]:
             """Forward the type question to an object that is not there."""
             raise RuntimeError(_OUTSIDE_CONTEXT)
 
@@ -65,7 +67,9 @@ class TestsFlextCoreBeartypeModuleCallables:
         original_module_name = _defined_here.__module__
         _defined_here.__module__ = _PROBE_MODULE
         module.__dict__["defined_here"] = _defined_here
-        module.__dict__["current_app"] = TestsFlextCoreBeartypeModuleCallables._ForwardingProxy()
+        module.__dict__["current_app"] = (
+            TestsFlextCoreBeartypeModuleCallables._ForwardingProxy()
+        )
         sys.modules[_PROBE_MODULE] = module
         try:
             yielded = [

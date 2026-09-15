@@ -41,6 +41,7 @@ class TestsFlextCoreDispatcher:
         """Handler that records every message it receives and returns a payload."""
 
         def __init__(self, route: str) -> None:
+            """Initialize with a route discriminator and an empty received log."""
             self.message_type = route
             self.received: list[p.Routable] = []
 
@@ -52,6 +53,7 @@ class TestsFlextCoreDispatcher:
         """Handler whose execution always raises, exercising the failure path."""
 
         def __init__(self, route: str, failure_detail: str) -> None:
+            """Initialize with a route discriminator and the failure payload."""
             super().__init__(route)
             self.failure_detail = failure_detail
 
