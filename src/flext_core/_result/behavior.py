@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Self, overload, override
+from typing import Self, override
 
 from .base import FlextResultBase
 
@@ -37,11 +37,7 @@ class FlextResultBehavior[T](FlextResultBase[T]):
     ) -> None:
         pass
 
-    @overload
-    def __or__(self, default: T) -> T: ...
-    @overload
-    def __or__[D](self, default: D) -> T | D: ...
-    def __or__[D](self, default: T | D) -> T | D:
+    def __or__[D](self, default: D) -> T | D:
         if self.success:
             return self._payload
         return default

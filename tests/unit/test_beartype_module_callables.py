@@ -11,11 +11,14 @@ from __future__ import annotations
 
 import sys
 import types
-from typing import Never
+from typing import TYPE_CHECKING, Never
 
 import pytest
 
 from flext_core import u
+
+if TYPE_CHECKING:
+    from flext_core import p
 
 _OUTSIDE_CONTEXT = "Working outside of application context"
 _PROBE_MODULE = "probe_module_with_proxy"
@@ -24,9 +27,9 @@ _PROBE_MODULE = "probe_module_with_proxy"
 class _ForwardingProxy:
     """A stand-in with werkzeug ``LocalProxy``'s forwarding behaviour.
 
-    ``__class__`` is declared exactly as ``object`` declares it, so the
-    override stays consistent for the type checker while still forwarding the
-    question the way the real proxy does.
+    ``__class__`` accepts any class through the canonical attribute-probe
+    contract, preserving the writable ``object`` interface while forwarding
+    the question the way the real proxy does.
     """
 
     @property
@@ -35,7 +38,7 @@ class _ForwardingProxy:
         raise RuntimeError(_OUTSIDE_CONTEXT)
 
     @__class__.setter
-    def __class__(self, value: type[_ForwardingProxy]) -> None:
+    def __class__(self, value: type[p.AttributeProbe]) -> None:
         """Forward the assignment too, so the override stays read-write."""
         raise RuntimeError(_OUTSIDE_CONTEXT)
 
@@ -88,6 +91,9 @@ class TestsFlextCoreBeartypeModuleCallables:
 
         with pytest.raises(RuntimeError, match=_OUTSIDE_CONTEXT):
             _ = proxy.__code__
+
+        with pytest.raises(RuntimeError, match=_OUTSIDE_CONTEXT):
+            proxy.__class__ = object
 
 
 __all__: list[str] = ["TestsFlextCoreBeartypeModuleCallables"]
