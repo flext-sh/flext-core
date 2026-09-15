@@ -73,7 +73,9 @@ class FlextProtocolsContext:
     class ContextExport(Protocol):
         """Context export/serialization operations."""
 
-        def export(self, *, as_dict: bool = ...) -> t.MappingKV[str, t.JsonPayload] | Self:
+        def export(
+            self, *, as_dict: bool = ...
+        ) -> t.MappingKV[str, t.JsonPayload] | Self:
             """Export context state as a dict or the context instance itself."""
             ...
 

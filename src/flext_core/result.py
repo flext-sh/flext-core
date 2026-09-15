@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from ._protocols.result import FlextProtocolsResult as prt
 from ._result.base import JsonDict
 from ._result.behavior import FlextResultBehavior
 from ._result.composition import FlextResultComposition
-from ._result.construction import FlextResultConstruction, copy_result, ok_result
+from ._result.construction import FlextResultConstruction
 from ._result.transforms import FlextResultTransforms
 from ._result.unwrap import FlextResultUnwrap
 
@@ -104,6 +104,9 @@ if TYPE_CHECKING:
         def failed_result(cls, obj: object) -> bool:
             """Check if object is a failed result."""
             ...
+
+else:
+    FlextResult = _FlextResult
 
 
 r = FlextResult

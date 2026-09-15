@@ -34,11 +34,17 @@ class FlextUtilitiesFiles:
             path.parent.mkdir(parents=True, exist_ok=True)
             descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o644)
         except OSError as exc:
-            return cast("p.ResultView[int]", r.fail(f"atomic append open failed: {exc}", exception=exc))
+            return cast(
+                "p.ResultView[int]",
+                r.fail(f"atomic append open failed: {exc}", exception=exc),
+            )
         try:
             written = os.write(descriptor, data.encode(encoding))
         except OSError as exc:
-            return cast("p.ResultView[int]", r.fail(f"atomic append write failed: {exc}", exception=exc))
+            return cast(
+                "p.ResultView[int]",
+                r.fail(f"atomic append write failed: {exc}", exception=exc),
+            )
         finally:
             os.close(descriptor)
         return cast("p.ResultView[int]", r[int].ok(written))
@@ -61,12 +67,18 @@ class FlextUtilitiesFiles:
                 tmp.write(payload)
                 staged = Path(tmp.name)
         except OSError as exc:
-            return cast("p.ResultView[int]", r.fail(f"atomic write stage failed: {exc}", exception=exc))
+            return cast(
+                "p.ResultView[int]",
+                r.fail(f"atomic write stage failed: {exc}", exception=exc),
+            )
         try:
             staged.replace(path)
         except OSError as exc:
             staged.unlink(missing_ok=True)
-            return cast("p.ResultView[int]", r.fail(f"atomic write rename failed: {exc}", exception=exc))
+            return cast(
+                "p.ResultView[int]",
+                r.fail(f"atomic write rename failed: {exc}", exception=exc),
+            )
         return cast("p.ResultView[int]", r[int].ok(len(payload)))
 
 

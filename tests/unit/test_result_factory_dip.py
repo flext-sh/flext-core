@@ -138,7 +138,9 @@ class TestsFlextCoreResultFactoryDip:
             assert isinstance(copied, FlextResult)
 
     def test_from_failure_rebuilds_foreign_failure_like(self) -> None:
-        foreign = _ForeignFail(error="foreign-fail", error_code="E_FOREIGN", error_data={"k": 1})
+        foreign = _ForeignFail(
+            error="foreign-fail", error_code="E_FOREIGN", error_data={"k": 1}
+        )
         rebuilt: p.Result[int] = r[int].from_failure(foreign)
         tm.fail(rebuilt, has="foreign-fail")
         tm.that(rebuilt.error_code, eq="E_FOREIGN")

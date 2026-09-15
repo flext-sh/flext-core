@@ -88,7 +88,9 @@ class FlextTypesServices:
     type ContextHookCallable = Callable[[t.Scalar], JsonPayload]
     type ContextHookMap = t.MappingKV[str, t.SequenceOf[ContextHookCallable]]
 
-    type HandlerCallable = Callable[..., tp.BaseModelType | prt.ResultView[ScalarOrModel]]
+    type HandlerCallable = Callable[
+        ..., tp.BaseModelType | prt.ResultView[ScalarOrModel]
+    ]
     type DispatchableHandler = (
         tp.BaseModelType
         | ph.DispatchMessage

@@ -16,7 +16,9 @@ from flext_core._protocols.result import FlextProtocolsResult as prt
 class _CreateUserHandler:
     message_type = m.Examples.CreateUser
 
-    def handle(self, message: p.Routable) -> t.JsonPayload | prt.ResultView[t.JsonPayload] | None:
+    def handle(
+        self, message: p.Routable
+    ) -> t.JsonPayload | prt.ResultView[t.JsonPayload] | None:
         if not isinstance(message, m.Examples.CreateUser):
             return r[str].fail("unexpected_message")
         return r[str].ok(f"created:{message.username}")
@@ -36,7 +38,9 @@ class _GetUserHandler:
 class _DeleteUserHandler:
     message_type = m.Examples.DeleteUser
 
-    def execute(self, message: p.Routable) -> t.JsonPayload | prt.ResultView[t.JsonPayload] | None:
+    def execute(
+        self, message: p.Routable
+    ) -> t.JsonPayload | prt.ResultView[t.JsonPayload] | None:
         if not isinstance(message, m.Examples.DeleteUser):
             return r[str].fail("unexpected_message")
         return r[str].ok(f"deleted:{message.username}")
@@ -46,7 +50,9 @@ class _AutoFallbackHandler:
     def can_handle(self, message_type: type) -> bool:
         return message_type is m.Examples.UnknownQuery
 
-    def handle(self, message: p.Routable) -> t.JsonPayload | prt.ResultView[t.JsonPayload] | None:
+    def handle(
+        self, message: p.Routable
+    ) -> t.JsonPayload | prt.ResultView[t.JsonPayload] | None:
         if not isinstance(message, m.Examples.UnknownQuery):
             return r[str].fail("unexpected_message")
         return r[str].ok("auto:fallback")
@@ -58,7 +64,9 @@ class _EventSubscriber:
     def __init__(self) -> None:
         self.events: list[str] = []
 
-    def handle(self, message: p.Routable) -> t.JsonPayload | prt.ResultView[t.JsonPayload] | None:
+    def handle(
+        self, message: p.Routable
+    ) -> t.JsonPayload | prt.ResultView[t.JsonPayload] | None:
         if not isinstance(message, m.Examples.UserCreated):
             return r[bool].fail("unexpected_message")
         self.events.append(message.username)
@@ -71,7 +79,9 @@ class _AuditSubscriber:
     def __init__(self) -> None:
         self.events: list[str] = []
 
-    def handle(self, message: p.Routable) -> t.JsonPayload | prt.ResultView[t.JsonPayload] | None:
+    def handle(
+        self, message: p.Routable
+    ) -> t.JsonPayload | prt.ResultView[t.JsonPayload] | None:
         if not isinstance(message, m.Examples.UserCreated):
             return r[bool].fail("unexpected_message")
         self.events.append(f"audit:{message.username}")
@@ -81,7 +91,9 @@ class _AuditSubscriber:
 class _PingHandler:
     message_type = m.Examples.Ping
 
-    def __call__(self, message: p.Routable) -> t.JsonPayload | prt.ResultView[t.JsonPayload] | None:
+    def __call__(
+        self, message: p.Routable
+    ) -> t.JsonPayload | prt.ResultView[t.JsonPayload] | None:
         if not isinstance(message, m.Examples.Ping):
             return r[str].fail("unexpected_message")
         return r[str].ok(f"pong:{message.value}")
@@ -90,13 +102,17 @@ class _PingHandler:
 class _FailingDeleteHandler:
     message_type = m.Examples.FailingDelete
 
-    def __call__(self, message: p.Routable) -> t.JsonPayload | prt.ResultView[t.JsonPayload] | None:
+    def __call__(
+        self, message: p.Routable
+    ) -> t.JsonPayload | prt.ResultView[t.JsonPayload] | None:
         if not isinstance(message, m.Examples.FailingDelete):
             return r[str].fail("unexpected_message")
         return r[str].fail("delete_failed")
 
 
-def _no_route_handler(message: p.Routable) -> t.JsonPayload | prt.ResultView[t.JsonPayload] | None:
+def _no_route_handler(
+    message: p.Routable,
+) -> t.JsonPayload | prt.ResultView[t.JsonPayload] | None:
     _ = message
     return r[str].ok("no-route")
 

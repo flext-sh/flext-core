@@ -209,9 +209,7 @@ class FlextContainer(p.Container):
         else:
             result = cast(
                 "p.Result[t.RegisterableService]",
-                r[t.RegisterableService].from_result(
-                    e.fail_not_found("service", name)
-                ),
+                r[t.RegisterableService].from_result(e.fail_not_found("service", name)),
             )
         return result
 
