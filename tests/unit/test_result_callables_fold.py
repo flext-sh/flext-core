@@ -41,7 +41,8 @@ class TestsFlextCoreResultCallablesFold:
         def double(x: int) -> p.Result[int]:
             return r[int].ok(x * 2)
 
-        final: p.Result[int] = r[int].ok(5).flow_through(add_one, double)
+        source: p.Result[int] = r[int].ok(5)
+        final: p.Result[int] = source.flow_through(add_one, double)
         value: int = tm.ok(final)
         tm.that(value, eq=12)
 
