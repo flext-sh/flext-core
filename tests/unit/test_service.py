@@ -17,7 +17,6 @@ from typing import override
 
 import pytest
 from flext_tests import FlextTestsCase, FlextTestsSettings, r
-from pydantic import BaseModel
 
 from tests.base import s
 from tests.models import m
@@ -112,14 +111,14 @@ class TestsFlextService(FlextTestsCase):
         settings = m.Tests.ServiceUserService().settings
 
         assert isinstance(settings, FlextTestsSettings)
-        assert isinstance(settings.Tests, BaseModel)
+        assert isinstance(settings.Tests, m.BaseModel)
 
     def test_fetch_settings_returns_typed_tests_settings(self) -> None:
         with self._PureService.isolated_test_runtime():
             settings = self._PureService.fetch_settings()
 
             assert isinstance(settings, FlextTestsSettings)
-            assert isinstance(settings.Tests, BaseModel)
+            assert isinstance(settings.Tests, m.BaseModel)
 
     def test_fetch_logger_matches_shared_service_logger(self) -> None:
         with self._PureService.isolated_test_runtime():

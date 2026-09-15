@@ -2,17 +2,15 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import cast
 
 from flext_tests import e, m as tm, r
 
 from tests.constants import c
 from tests.models import m
+from tests.protocols import p
 
 from .railway_services import TestsFlextUtilitiesRailwayServicesMixin
-
-if TYPE_CHECKING:
-    from tests.protocols import p
 
 
 class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayServicesMixin):
@@ -24,8 +22,11 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
     ) -> p.ResultView[str | tm.Tests.User | m.Tests.EmailResponse]:
         """Execute the documented V1 railway pipeline."""
         if not case.user_ids:
-            return r[str | tm.Tests.User | m.Tests.EmailResponse].fail(
-                c.Tests.NO_USER_IDS_PROVIDED
+            return cast(
+                "p.ResultView[str | tm.Tests.User | m.Tests.EmailResponse]",
+                r[str | tm.Tests.User | m.Tests.EmailResponse].fail(
+                    c.Tests.NO_USER_IDS_PROVIDED
+                ),
             )
         user_result: p.Result[tm.Tests.User] = (
             TestsFlextUtilitiesRailwayPipelinesMixin.make(
@@ -75,7 +76,7 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
                     )
 
                 result = result.map(_get_status)
-        return result
+        return cast("p.ResultView[str | tm.Tests.User | m.Tests.EmailResponse]", result)
 
     @staticmethod
     def execute_v2_pipeline(case: m.Tests.RailwayTestCase) -> tm.Tests.User | str:

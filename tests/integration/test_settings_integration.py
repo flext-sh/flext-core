@@ -8,9 +8,8 @@ from __future__ import annotations
 
 import pytest
 from flext_tests import tm
-from pydantic import ValidationError
 
-from flext_core import FlextContainer, FlextSettings
+from flext_core import FlextContainer, FlextSettings, m
 
 
 class TestsFlextSettingsIntegration:
@@ -79,7 +78,7 @@ class TestsFlextSettingsIntegration:
 
     def test_trace_without_debug_is_rejected(self) -> None:
         """trace=True without debug raises the documented invariant error."""
-        with pytest.raises(ValidationError, match="trace mode requires debug"):
+        with pytest.raises(m.ValidationError, match="trace mode requires debug"):
             FlextSettings.update_global(trace=True, debug=False)
 
     def test_clone_produces_independent_copy_with_overrides(self) -> None:

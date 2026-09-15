@@ -12,8 +12,8 @@ from pydantic import Field
 
 from ..._typings.base import FlextTypingBase as t
 from .flextmodelsprojectmetadata_part_01 import (
-    _ProjectMetadataContract,
     PyprojectIngressContract,
+    _ProjectMetadataContract,
 )
 from .flextmodelsprojectmetadata_part_02 import _ProjectMetadataFields
 

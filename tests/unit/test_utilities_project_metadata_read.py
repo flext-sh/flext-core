@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import tomllib
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import cast
 
 import pytest
 from flext_tests import tm
@@ -23,21 +23,21 @@ from tests.utilities import u
 
 from ._project_metadata_support import write_pyproject
 
-if TYPE_CHECKING:
-    pass
 
-
-def _read(root: Path) -> p.Result[m.ProjectMetadata]:
+def _read(root: Path) -> p.ResultView[m.ProjectMetadata]:
     """Read project metadata through the canonical owner chain."""
     resolved = root.resolve()
     try:
         document = u.read_project_document_cached(resolved)
         meta = u.build_project_metadata(resolved, document)
     except (OSError, ValueError, tomllib.TOMLDecodeError) as exc:
-        return r[m.ProjectMetadata].fail(
-            f"cannot read project metadata from {resolved}: {exc}", exception=exc
+        return cast(
+            "p.ResultView[m.ProjectMetadata]",
+            r[m.ProjectMetadata].fail(
+                f"cannot read project metadata from {resolved}: {exc}", exception=exc
+            ),
         )
-    return r[m.ProjectMetadata].ok(meta)
+    return cast("p.ResultView[m.ProjectMetadata]", r[m.ProjectMetadata].ok(meta))
 
 
 class TestsFlextUtilitiesProjectMetadataRead:
@@ -68,7 +68,7 @@ class TestsFlextUtilitiesProjectMetadataRead:
             description = "LDIF"
             """,
         )
-        meta = _read(root).unwrap()
+        meta = _read(root).value
         tm.that(meta, is_=m.ProjectMetadata)
         tm.that(meta.project.name, eq=c.Tests.SAMPLE_PROJECT_NAME)
         tm.that(meta.class_stem, eq=c.Tests.SAMPLE_PROJECT_CLASS_STEM)
@@ -88,7 +88,7 @@ class TestsFlextUtilitiesProjectMetadataRead:
             ]
             """,
         )
-        meta = _read(root).unwrap()
+        meta = _read(root).value
         tm.that(
             tuple(author.name for author in meta.project.authors),
             eq=(c.Tests.SAMPLE_AUTHOR_ALICE, c.Tests.SAMPLE_AUTHOR_BOB),
@@ -105,7 +105,7 @@ class TestsFlextUtilitiesProjectMetadataRead:
             version = "{c.Tests.SAMPLE_PROJECT_VERSION}"
             """,
         )
-        meta = _read(root).unwrap()
+        meta = _read(root).value
         tm.that(meta.package_name, eq=c.Tests.SAMPLE_PROJECT_NAME.replace("-", "_"))
         tm.that(meta.class_stem, eq=c.Tests.SAMPLE_PROJECT_CLASS_STEM)
 
@@ -122,7 +122,7 @@ class TestsFlextUtilitiesProjectMetadataRead:
             urls = {{Homepage = "https://example.com"}}
             """,
         )
-        meta = _read(root).unwrap()
+        meta = _read(root).value
         tm.that(meta.project.requires_python, eq=">=3.13")
         tm.that(meta.project.urls.homepage, eq="https://example.com")
 
@@ -137,7 +137,7 @@ class TestsFlextUtilitiesProjectMetadataRead:
             version = "{c.Tests.SAMPLE_PROJECT_VERSION}"
             """,
         )
-        meta = _read(root).unwrap()
+        meta = _read(root).value
         tm.that(meta.project.requires_python, eq="")
         tm.that(meta.project.urls.homepage, eq="")
         tm.that(meta.project.authors, eq=())
@@ -151,7 +151,7 @@ class TestsFlextUtilitiesProjectMetadataRead:
             version = "{c.Tests.SAMPLE_PROJECT_VERSION}"
             """,
         )
-        meta = _read(root).unwrap()
+        meta = _read(root).value
         tm.rejects_assignment(
             meta, "package_name", "mutated", expected=m.ValidationError
         )

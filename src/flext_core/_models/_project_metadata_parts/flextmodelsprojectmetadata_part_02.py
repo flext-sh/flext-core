@@ -14,8 +14,8 @@ from pydantic import AliasChoices, Field, field_validator, model_validator
 from ..._constants.regex import FlextConstantsRegex as cr
 from ..._typings.base import FlextTypingBase as t
 from .flextmodelsprojectmetadata_part_01 import (
-    _ProjectMetadataContract,
     PyprojectIngressContract,
+    _ProjectMetadataContract,
 )
 
 

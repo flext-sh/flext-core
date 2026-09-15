@@ -12,7 +12,6 @@ from typing import Annotated
 
 import pytest
 from flext_tests import tm
-from pydantic import ValidationError
 
 from tests.models import m
 
@@ -73,7 +72,7 @@ class TestsFlextCoreBase:
     def test_base_model_rejects_invalid_payloads(
         self, payload: dict[str, object]
     ) -> None:
-        with pytest.raises(ValidationError):
+        with pytest.raises(m.ValidationError):
             self.Sample.model_validate(payload)
 
     def test_value_objects_are_equal_when_all_fields_match(self) -> None:
@@ -109,11 +108,11 @@ class TestsFlextCoreBase:
     def test_value_object_is_immutable(self) -> None:
         value = self.SampleValue(amount=2, label="chf")
 
-        tm.rejects_assignment(value, "amount", 3, expected=ValidationError)
+        tm.rejects_assignment(value, "amount", 3, expected=m.ValidationError)
 
     @pytest.mark.parametrize("amount", ["1", 1.5])
     def test_value_object_strictly_validates_field_types(
         self, amount: str | float
     ) -> None:
-        with pytest.raises(ValidationError):
+        with pytest.raises(m.ValidationError):
             self.SampleValue.model_validate({"amount": amount, "label": "strict"})

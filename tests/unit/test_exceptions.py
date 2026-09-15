@@ -190,7 +190,9 @@ class TestsFlextCoreExceptions:
         # Assert
         assert mapped.failure
         assert mapped.error == result.error
-        assert result.unwrap_or(False) is False
+        # unwrap_or on failure returns the default
+        default_result = result.unwrap_or(False)
+        assert default_result is False
 
     @pytest.mark.parametrize("violation", [e.MroViolation, e.SmellViolation])
     def test_enforcement_violations_are_raisable_exception_types(

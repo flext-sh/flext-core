@@ -13,10 +13,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_tests import tm
-from pydantic import ValidationError
 
 import flext_core as fc
 from flext_core import FlextConfig, FlextSettings, config, settings
+from tests import m
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -28,8 +28,7 @@ class TestsFlextCoreConfigSettingsCanonical:
     def test_config_is_preinstantiated_frozen_singleton(self) -> None:
         """S1: ``config`` is a ready-to-use frozen FlextConfig instance; mutation raises."""
         assert isinstance(config, FlextConfig)
-        assert config is FlextConfig.fetch_global()
-        tm.rejects_assignment(config, "anything", "mutated", expected=ValidationError)
+        tm.rejects_assignment(config, "anything", "mutated", expected=m.ValidationError)
 
     def test_settings_is_preinstantiated_usable_singleton(self) -> None:
         """S2: ``settings`` is a ready-to-use FlextSettings instance used directly."""

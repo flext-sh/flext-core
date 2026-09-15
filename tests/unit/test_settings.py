@@ -14,9 +14,9 @@ from pathlib import Path
 
 import pytest
 from flext_tests import u
-from pydantic import ValidationError
 
 from flext_core import FlextSettings
+from tests import m
 
 
 class TestsFlextCoreSettings:
@@ -274,7 +274,7 @@ class TestsFlextCoreSettings:
 
     def test_trace_requires_debug_invariant(self) -> None:
         """trace=True without debug raises the documented validation error."""
-        with pytest.raises(ValidationError):
+        with pytest.raises(m.ValidationError):
             FlextSettings.update_global(trace=True, debug=False)
         FlextSettings.reset_for_testing()
 

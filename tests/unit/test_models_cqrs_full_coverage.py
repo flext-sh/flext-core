@@ -9,7 +9,6 @@ private attributes, internal collaborators, or module internals are touched.
 from __future__ import annotations
 
 import pytest
-from pydantic import ValidationError
 
 from tests.constants import c
 from tests.models import m
@@ -48,12 +47,12 @@ class TestsFlextCoreModelsCqrs:
 
     @pytest.mark.parametrize("size", [c.MAX_PAGE_SIZE + 1, 5000])
     def test_pagination_rejects_size_above_maximum(self, size: int) -> None:
-        with pytest.raises(ValidationError):
+        with pytest.raises(m.ValidationError):
             m.Pagination(size=size)
 
     @pytest.mark.parametrize(("page", "size"), [(0, 10), (1, 0), (-1, 10)])
     def test_pagination_rejects_non_positive_bounds(self, page: int, size: int) -> None:
-        with pytest.raises(ValidationError):
+        with pytest.raises(m.ValidationError):
             m.Pagination(page=page, size=size)
 
     # ------------------------------------------------------------------ #
@@ -155,7 +154,7 @@ class TestsFlextCoreModelsCqrs:
         assert handler.handler_type == handler_type
 
     def test_handler_rejects_empty_identity(self) -> None:
-        with pytest.raises(ValidationError):
+        with pytest.raises(m.ValidationError):
             m.Handler(
                 handler_type=c.HandlerType.COMMAND, handler_id="", handler_name=""
             )

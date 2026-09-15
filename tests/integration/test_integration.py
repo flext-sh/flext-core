@@ -109,8 +109,10 @@ class TestsFlextCoreIntegration:
     def test_result_unwrap_or_returns_default_on_failure(self) -> None:
         """Unwrapping yields the value on success and the default on failure."""
         # Assert - success keeps its value, failure falls back to the default
-        tm.that(r[int].ok(_UNWRAP_VALUE).unwrap_or(0), eq=_UNWRAP_VALUE)
-        tm.that(r[int].fail("missing").unwrap_or(0), eq=0)
+        success_result = r[int].ok(_UNWRAP_VALUE)
+        tm.that(success_result.unwrap(), eq=_UNWRAP_VALUE)
+        failure_result = r[int].fail("missing")
+        tm.that(failure_result.unwrap_or(0), eq=0)
 
     def test_container_factory_resolves_computed_value(
         self,
