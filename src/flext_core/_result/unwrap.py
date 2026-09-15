@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING
 
 from flext_core import c
 
@@ -21,22 +21,10 @@ class FlextResultUnwrap[T](FlextResultComposition[T]):
             raise RuntimeError(msg)
         return self.value
 
-    @overload
-    def unwrap_or(self, default: T) -> T: ...
-    @overload
-    def unwrap_or[DefaultT](self, default: DefaultT) -> T | DefaultT: ...
-
     def unwrap_or[DefaultT](self, default: DefaultT) -> T | DefaultT:
         if self.success:
             return self._payload
         return default
-
-    @overload
-    def unwrap_or_else(self, func: Callable[[], T]) -> T: ...
-    @overload
-    def unwrap_or_else[DefaultT](
-        self, func: Callable[[], DefaultT]
-    ) -> T | DefaultT: ...
 
     def unwrap_or_else[DefaultT](self, func: Callable[[], DefaultT]) -> T | DefaultT:
         if self.success:
