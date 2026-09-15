@@ -13,12 +13,23 @@ from typing import TYPE_CHECKING
 import pytest
 from flext_tests import r, tm
 
+from tests.typings import t
+
 if TYPE_CHECKING:
     from tests.protocols import p
-    from tests.typings import t
 
 
 class TestsFlextCoreResultCallablesFold:
+    def test_recursive_json_result_satisfies_protocol(self) -> None:
+        """Recursive JSON results support the same public protocol as scalars."""
+        payload: t.JsonValue = {"nested": ["value", None, {"count": 1}]}
+        result: p.Result[t.JsonValue] = r[t.JsonValue].ok(payload)
+
+        tm.that(result.unwrap(), eq=payload)
+        tm.that(result.unwrap_or("unused"), eq=payload)
+        tm.that(result.unwrap_or_else(lambda: "unused"), eq=payload)
+        tm.that(result | "unused", eq=payload)
+
     @pytest.mark.parametrize("value", [True, False, 0, 1, "", "value"])
     def test_ok_carries_value_as_success(self, *, value: bool | int | str) -> None:
         """ok() yields a success whose value is the wrapped payload."""
