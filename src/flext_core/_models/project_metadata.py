@@ -15,33 +15,33 @@ from typing import Annotated
 from pydantic import Field
 
 from ._project_metadata_parts.flextmodelsprojectmetadata_part_01 import (
-    _PyprojectIngressContract,
+    PyprojectIngressContract,
 )
 from ._project_metadata_parts.flextmodelsprojectmetadata_part_03 import (
-    _ProjectMetadataAggregates,
+    ProjectMetadataAggregates,
 )
 from ._project_metadata_parts.flextmodelsprojectmetadata_part_04 import (
-    _ProjectMetadataDocument,
+    ProjectMetadataDocument,
 )
 
 
-class FlextModelsProjectMetadata(_ProjectMetadataDocument):
+class FlextModelsProjectMetadata(ProjectMetadataDocument):
     """Public project metadata model facade."""
 
-    class PyprojectDocument(_PyprojectIngressContract):
+    class PyprojectDocument(PyprojectIngressContract):
         """Complete validated project document ingress."""
 
         project: Annotated[
-            _ProjectMetadataAggregates.Project | None,
+            ProjectMetadataAggregates.Project | None,
             Field(default=None, description="Optional PEP 621 project table"),
         ] = None
         tool: Annotated[
-            _ProjectMetadataDocument.PyprojectTool,
+            ProjectMetadataDocument.PyprojectTool,
             Field(
-                default_factory=_ProjectMetadataDocument.PyprojectTool,
+                default_factory=ProjectMetadataDocument.PyprojectTool,
                 description="Owned tool tables",
             ),
-        ] = Field(default_factory=_ProjectMetadataDocument.PyprojectTool)
+        ] = Field(default_factory=ProjectMetadataDocument.PyprojectTool)
 
 
 __all__: list[str] = ["FlextModelsProjectMetadata"]

@@ -182,7 +182,7 @@ class FlextProtocolsHandler:
 
         def dispatch_message(
             self, message: p.Routable, operation: str = ...
-        ) -> pr.Result[t.JsonPayload] | t.JsonPayload | None: ...
+        ) -> prt.ResultView[t.JsonPayload] | t.JsonPayload | None: ...
 
     @runtime_checkable
     class Handle(Protocol):
@@ -190,7 +190,7 @@ class FlextProtocolsHandler:
 
         def handle(
             self, message: p.Routable
-        ) -> pr.Result[t.JsonPayload] | t.JsonPayload | None: ...
+        ) -> prt.ResultView[t.JsonPayload] | t.JsonPayload | None: ...
 
     @runtime_checkable
     class Execute(Protocol):
@@ -198,7 +198,7 @@ class FlextProtocolsHandler:
 
         def execute(
             self, message: p.Routable
-        ) -> pr.Result[t.JsonPayload] | t.JsonPayload | None: ...
+        ) -> prt.ResultView[t.JsonPayload] | t.JsonPayload | None: ...
 
     @runtime_checkable
     class AutoDiscoverableHandler(Protocol):

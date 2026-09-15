@@ -33,7 +33,7 @@ class FlextResultComposition[T](FlextResultTransforms[T]):
                 errors.append(cls.require_error(result))
         if errors:
             return cast("p.Result[Sequence[ValueT]]", cls.fail("; ".join(errors)))
-        return ok_result(cls, successes)
+        return cast("p.Result[Sequence[ValueT]]", ok_result(cls, successes))
 
     @classmethod
     def traverse[V, U](
@@ -55,7 +55,7 @@ class FlextResultComposition[T](FlextResultTransforms[T]):
                 if result.failure:
                     return cast("p.Result[Sequence[U]]", cls.from_failure(result))
                 results.append(result.value)
-            return ok_result(cls, results)
+            return cast("p.Result[Sequence[U]]", ok_result(cls, results))
         all_results: MutableSequence[p.Result[U]] = []
         for item in items:
             try:

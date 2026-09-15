@@ -16,7 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 
 from flext_core import c, t
 
-from ._cqrs_parts.flextmodelscqrs_part_01 import _CqrsPagination
+from ._cqrs_parts.flextmodelscqrs_part_01 import CqrsPagination
 from .base import FlextModelsBase as m
 
 
@@ -66,7 +66,7 @@ class FlextModelsCqrs:
             Field(description="Identity of the principal that issued this command."),
         ] = None
 
-    Pagination = _CqrsPagination
+    Pagination = CqrsPagination
 
     class Query(m.ArbitraryTypesModel):
         """Query model for CQRS query operations."""
@@ -91,13 +91,13 @@ class FlextModelsCqrs:
             ),
         ] = Field(default_factory=lambda: MappingProxyType[str, t.Scalar]({}))
         pagination: Annotated[
-            _CqrsPagination,
+            CqrsPagination,
             Field(
                 description="Pagination settings controlling page number and page size for query results.",
                 title="Pagination",
                 examples=[{"page": 1, "size": 50}],
             ),
-        ] = Field(default_factory=_CqrsPagination)
+        ] = Field(default_factory=CqrsPagination)
         query_id: Annotated[
             t.NonEmptyStr,
             Field(
@@ -118,9 +118,9 @@ class FlextModelsCqrs:
         ) -> BaseModel:
             """Convert pagination to Pagination instance."""
             # Allow subclasses to override Pagination via class attribute,
-            # fallback to the default _CqrsPagination
+            # fallback to the default CqrsPagination
             pagination_cls: type[BaseModel] = getattr(
-                cls, "Pagination", _CqrsPagination
+                cls, "Pagination", CqrsPagination
             )
             normalized_input = _u().normalize_model_input_mapping(v)
             if normalized_input is None:

@@ -18,19 +18,7 @@ from flext_core import c, t
 from ..base import FlextModelsBase as m
 
 
-def _u() -> type:
-    """Deferred facade access: cqrs is loaded by the m facade itself."""
-    from flext_core import u
-
-    return u
-
-
-# NOTE (multi-agent): mro-i6nq.12 — consolidated _cqrs_parts/part_01..02 (one
-# FlextModelsCqrs namespace class split across a numbered MRO chain) into this
-# single facade module.
-
-
-class _CqrsPagination(m.FlexibleInternalModel):
+class CqrsPagination(m.FlexibleInternalModel):
     """Pagination model for query results.
 
     Defined at module level so it can be referenced in Query annotations

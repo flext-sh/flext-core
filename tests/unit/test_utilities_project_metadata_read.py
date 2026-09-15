@@ -9,6 +9,7 @@ Result failure contract for missing/incomplete pyproject inputs.
 from __future__ import annotations
 
 import tomllib
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
@@ -17,12 +18,13 @@ from flext_tests import tm
 from flext_core import r
 from tests.constants import c
 from tests.models import m
+from tests.protocols import p
 from tests.utilities import u
 
 from ._project_metadata_support import write_pyproject
 
 if TYPE_CHECKING:
-    from pathlib import Path
+    pass
 
 
 def _read(root: Path) -> p.Result[m.ProjectMetadata]:

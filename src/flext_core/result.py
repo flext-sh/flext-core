@@ -44,11 +44,9 @@ class _FlextResult[T](
 
 
 if TYPE_CHECKING:
-    from typing import override
-
     from flext_core import p, t
 
-    class FlextResult[T](_FlextResult[T], p.Result[T]):
+    class FlextResult[T]:
         """Type-safe result with monadic railway-oriented operations."""
 
         @classmethod
@@ -57,7 +55,6 @@ if TYPE_CHECKING:
             ...
 
         @classmethod
-        @override
         def fail(
             cls,
             error: str | None,
@@ -70,7 +67,6 @@ if TYPE_CHECKING:
             ...
 
         @classmethod
-        @override
         def fail_op(
             cls, operation: str, exc: Exception | str | None = None
         ) -> FlextResult[T]:
@@ -78,13 +74,12 @@ if TYPE_CHECKING:
             ...
 
         @classmethod
-        @override
         def from_failure(cls, source: p.FailureLike) -> FlextResult[T]:
             """Rebuild this concrete facade from any failed result-like."""
             ...
 
         @classmethod
-        def from_result[V](cls, source: p.Result[V]) -> FlextResult[V]:
+        def from_result[V](cls, source: prt.Result[V]) -> FlextResult[V]:
             """Copy an abstract result into this concrete facade."""
             ...
 

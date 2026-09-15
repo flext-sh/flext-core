@@ -19,7 +19,7 @@ class _ProjectMetadataContract(FlextModelsPydantic.BaseModel):
     )
 
 
-class _PyprojectIngressContract(_ProjectMetadataContract):
+class PyprojectIngressContract(_ProjectMetadataContract):
     """Frozen declaration base for standards-owned TOML tables."""
 
     model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (

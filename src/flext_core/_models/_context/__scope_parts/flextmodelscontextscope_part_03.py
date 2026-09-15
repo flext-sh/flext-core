@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, Self
+from typing import Annotated
 
 from flext_core import p
 
@@ -33,11 +33,6 @@ class FlextModelsContextScope(FlextModelsContextScopePart02):
         def configured(self) -> bool:
             """Whether a container is configured for service access."""
             return self.container is not None
-
-        def with_container(self, container: p.Container | None) -> Self:
-            """Replace the configured container immutably."""
-            updated_state: Self = self.model_copy(update={"container": container})
-            return updated_state
 
 
 __all__: list[str] = ["FlextModelsContextScope"]

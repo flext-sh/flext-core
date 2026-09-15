@@ -15,14 +15,14 @@ from ..._constants.regex import FlextConstantsRegex as cr
 from ..._typings.base import FlextTypingBase as t
 from .flextmodelsprojectmetadata_part_01 import (
     _ProjectMetadataContract,
-    _PyprojectIngressContract,
+    PyprojectIngressContract,
 )
 
 
 class _ProjectMetadataFields:
     """Leaf field contracts shared by the aggregate model layers."""
 
-    class ProjectAuthor(_PyprojectIngressContract):
+    class ProjectAuthor(PyprojectIngressContract):
         """One PEP 621 project author."""
 
         name: Annotated[str, Field(default="", description="Author display name")] = ""
@@ -30,7 +30,7 @@ class _ProjectMetadataFields:
             ""
         )
 
-    class ProjectUrls(_PyprojectIngressContract):
+    class ProjectUrls(PyprojectIngressContract):
         """Canonical project URL fields from the PEP 621 URL table."""
 
         homepage: Annotated[

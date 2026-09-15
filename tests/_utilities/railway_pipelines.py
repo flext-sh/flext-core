@@ -21,7 +21,7 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
     @staticmethod
     def execute_v1_pipeline(
         case: m.Tests.RailwayTestCase,
-    ) -> p.Result[str | tm.Tests.User | m.Tests.EmailResponse]:
+    ) -> p.ResultView[str | tm.Tests.User | m.Tests.EmailResponse]:
         """Execute the documented V1 railway pipeline."""
         if not case.user_ids:
             return r[str | tm.Tests.User | m.Tests.EmailResponse].fail(
@@ -90,6 +90,7 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
         if raw_user_result.failure:
             msg = raw_user_result.error or c.Tests.USER_NOT_FOUND
             raise e.BaseError(msg)
+        user: tm.Tests.User | str = raw_user_result.value
         for operation in case.operations:
             if operation == "get_email":
                 user = user.email if isinstance(user, tm.Tests.User) else user

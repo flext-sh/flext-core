@@ -145,7 +145,9 @@ class FlextContext(m.ManagedModel):
     @classmethod
     def configure_container(cls, container: p.Container) -> None:
         """Register the global DI container instance."""
-        cls._container_state = cls._container_state.with_container(container)
+        cls._container_state = cls._container_state.model_copy(
+            update={"container": container}
+        )
 
     @staticmethod
     def fetch_service(service_name: str) -> p.Result[t.RegisterableService]:

@@ -13,24 +13,24 @@ from pydantic import Field
 
 from .flextmodelsprojectmetadata_part_01 import (
     _ProjectMetadataContract,
-    _PyprojectIngressContract,
+    PyprojectIngressContract,
 )
-from .flextmodelsprojectmetadata_part_03 import _ProjectMetadataAggregates
+from .flextmodelsprojectmetadata_part_03 import ProjectMetadataAggregates
 
 
-class _ProjectMetadataDocument(_ProjectMetadataAggregates):
+class ProjectMetadataDocument(ProjectMetadataAggregates):
     """Validated TOML document sub-tables and canonical domain aggregate."""
 
-    class PyprojectTool(_PyprojectIngressContract):
+    class PyprojectTool(PyprojectIngressContract):
         """Owned subset of the top-level ``[tool]`` table."""
 
         flext: Annotated[
-            _ProjectMetadataAggregates.ProjectToolFlext,
+            ProjectMetadataAggregates.ProjectToolFlext,
             Field(
-                default_factory=_ProjectMetadataAggregates.ProjectToolFlext,
+                default_factory=ProjectMetadataAggregates.ProjectToolFlext,
                 description="Validated FLEXT project policy",
             ),
-        ] = Field(default_factory=_ProjectMetadataAggregates.ProjectToolFlext)
+        ] = Field(default_factory=ProjectMetadataAggregates.ProjectToolFlext)
 
     class ProjectMetadata(_ProjectMetadataContract):
         """Canonical project metadata retaining exact validated source objects."""
@@ -39,10 +39,10 @@ class _ProjectMetadataDocument(_ProjectMetadataAggregates):
         package_name: Annotated[str, Field(min_length=1, description="Import package")]
         class_stem: Annotated[str, Field(min_length=1, description="Class stem")]
         project: Annotated[
-            _ProjectMetadataAggregates.Project,
+            ProjectMetadataAggregates.Project,
             Field(description="Exact validated PEP 621 project object"),
         ]
         flext: Annotated[
-            _ProjectMetadataAggregates.ProjectToolFlext,
+            ProjectMetadataAggregates.ProjectToolFlext,
             Field(description="Exact validated tool.flext object"),
         ]

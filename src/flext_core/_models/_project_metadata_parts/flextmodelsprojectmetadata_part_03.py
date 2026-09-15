@@ -13,15 +13,15 @@ from pydantic import Field
 from ..._typings.base import FlextTypingBase as t
 from .flextmodelsprojectmetadata_part_01 import (
     _ProjectMetadataContract,
-    _PyprojectIngressContract,
+    PyprojectIngressContract,
 )
 from .flextmodelsprojectmetadata_part_02 import _ProjectMetadataFields
 
 
-class _ProjectMetadataAggregates(_ProjectMetadataFields):
+class ProjectMetadataAggregates(_ProjectMetadataFields):
     """Validated PEP 621 and FLEXT aggregate declarations."""
 
-    class Project(_PyprojectIngressContract):
+    class Project(PyprojectIngressContract):
         """Complete owned PEP 621 project metadata used by FLEXT."""
 
         name: Annotated[str, Field(min_length=1)]

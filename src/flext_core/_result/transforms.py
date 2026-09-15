@@ -131,8 +131,11 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
         if self.success:
             return cast("p.Result[T | U]", self)
         try:
-            return ok_result(
-                self.__class__, func(self.require_error(self._as_result()))
+            return cast(
+                "p.Result[T | U]",
+                ok_result(
+                    self.__class__, func(self.require_error(self._as_result()))
+                ),
             )
         except c.EXC_BROAD_RUNTIME as exc:
             return cast("p.Result[T | U]", self.__class__.fail(str(exc), exception=exc))
