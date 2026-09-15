@@ -18,7 +18,7 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from re import Pattern
 from types import EllipsisType
-from typing import Literal, dataclass_transform
+from typing import Literal, TypeAlias, dataclass_transform
 
 from pydantic import (
     AfterValidator,
@@ -205,5 +205,5 @@ class FlextModelsPydantic:
     EnvSettingsSource = EnvSettingsSource
     PydanticBaseSettingsSource = PydanticBaseSettingsSource
     YamlConfigSettingsSource = YamlConfigSettingsSource
-    ConfigFileSourceType = ConfigFileSourceType
-    Traversable = Traversable
+    ConfigFileSourceType: TypeAlias = ConfigFileSourceType
+    Traversable: TypeAlias = Traversable
