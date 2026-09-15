@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
 import yaml
+import yaml.constructor
 
 from flext_core import r
 
@@ -45,7 +46,7 @@ class FlextUtilitiesConfig:
 
         CSafeLoader = yaml.CSafeLoader
         MappingNode = yaml.MappingNode
-        ConstructorError = yaml.ConstructorError
+        ConstructorError = yaml.constructor.ConstructorError
         SafeLoader = yaml.SafeLoader
         YAMLError = yaml.YAMLError
 
