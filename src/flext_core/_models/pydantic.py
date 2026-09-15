@@ -62,7 +62,9 @@ from pydantic_settings import (
     EnvSettingsSource,
     PydanticBaseSettingsSource,
     SettingsConfigDict as _PydanticSettingsConfigDict,
+    YamlConfigSettingsSource,
 )
+from pydantic_settings.sources.types import ConfigFileSourceType, Traversable
 
 type _FieldValue = JsonValue | Path
 type _FieldSchemaExtra = Mapping[str, _FieldValue | Sequence[_FieldValue]]
@@ -202,3 +204,6 @@ class FlextModelsPydantic:
     # Settings sources (from pydantic_settings)
     EnvSettingsSource = EnvSettingsSource
     PydanticBaseSettingsSource = PydanticBaseSettingsSource
+    YamlConfigSettingsSource = YamlConfigSettingsSource
+    ConfigFileSourceType = ConfigFileSourceType
+    Traversable = Traversable
