@@ -6,10 +6,11 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Annotated
 
-from flext_core import FlextRuntime, m, p, r, t
+from flext_core import m, p, r, t
 
 from ..._models.containers import FlextModelsContainers
 from ..._models.pydantic import FlextModelsPydantic
+from ...runtime import FlextRuntime
 from ..mapper_access import FlextUtilitiesMapperAccess
 
 

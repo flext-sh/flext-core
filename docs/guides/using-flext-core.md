@@ -53,7 +53,7 @@ from __future__ import annotations
 from flext_core import r
 
 
-def safe_divide(a: float, b: float) -> r[float]:
+def safe_divide(a: float, b: float) -> p.Result[float]:
     if b == 0:
         return r[float].fail("division_by_zero")
     return r.ok(a / b)

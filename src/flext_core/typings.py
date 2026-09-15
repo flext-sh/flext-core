@@ -1,7 +1,5 @@
 """Type aliases and generics for the FLEXT ecosystem - Thin MRO Facade.
 
-from flext_core import FlextTypes as Types
-
 Zero internal imports - depends only on stdlib, pydantic, pydantic-settings.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.

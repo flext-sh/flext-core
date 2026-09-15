@@ -11,8 +11,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_core import FlextRuntime, c, m, p, r, t
+from flext_core import c, m, p, r, t
 
+from ..runtime import FlextRuntime
 from ._context_crud_set import FlextUtilitiesContextCrudSetMixin
 from ._logging_context_parts.logging_context_part_01 import FlextUtilitiesLoggingContext
 from .context_state import FlextUtilitiesContextState

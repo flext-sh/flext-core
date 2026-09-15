@@ -13,10 +13,11 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-from flext_core import FlextRuntime, c, e, m, p, r, t
+from flext_core import c, e, m, p, r, t
 
 from ..._models.containers import FlextModelsContainers
 from ..._models.pydantic import FlextModelsPydantic
+from ...runtime import FlextRuntime
 from ..guards import FlextUtilitiesGuards
 from ..guards_type_core import FlextUtilitiesGuardsTypeCore
 

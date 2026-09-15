@@ -47,6 +47,7 @@ if TYPE_CHECKING:
     )
     from ._guards_type_protocol_types import ProtocolGuardInput
     from .args import FlextUtilitiesArgs
+    from .base import FlextUtilitiesBase
     from .beartype_conf import FlextUtilitiesBeartypeConf
     from .beartype_engine import FlextUtilitiesBeartypeEngine
     from .beartype_typingext_patch import FlextUtilitiesBeartypeTypingExtPatch
@@ -96,6 +97,7 @@ __all__: tuple[str, ...] = (
     "EXTENDED_PREDICATE_BINDINGS",
     "PREDICATE_BINDINGS",
     "FlextUtilitiesArgs",
+    "FlextUtilitiesBase",
     "FlextUtilitiesBeartypeAliasVisitor",
     "FlextUtilitiesBeartypeAttrVisitor",
     "FlextUtilitiesBeartypeClassVisitor",
@@ -213,6 +215,7 @@ _LAZY_IMPORTS = MappingProxyType(
             "._mapper_extract_parts": ("_mapper_extract_parts",),
             "._parser_targets_parts": ("_parser_targets_parts",),
             ".args": ("FlextUtilitiesArgs",),
+            ".base": ("FlextUtilitiesBase",),
             ".beartype_conf": ("FlextUtilitiesBeartypeConf",),
             ".beartype_engine": ("FlextUtilitiesBeartypeEngine",),
             ".beartype_typingext_patch": ("FlextUtilitiesBeartypeTypingExtPatch",),

@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from flext_core import c
 
-from flext_core import c as _c
 
-if TYPE_CHECKING:
-    from examples.typings import t
+class ExamplesFlextConstants:
+    """Constants facade for examples."""
 
-c = _c
 
-__all__: t.MutableSequenceOf[str] = ["c"]
+__all__: list[str] = ["c"]

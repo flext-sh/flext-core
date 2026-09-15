@@ -20,8 +20,12 @@ from .__version__ import (
 )
 
 if TYPE_CHECKING:
+    from . import services
     from ._config import FlextConfig, config
     from ._settings import FlextSettings, settings
+    from .api import FlextApi, core
+    from .base import FlextBase
+    from .cli import FlextCli
     from .constants import (
         FlextConstants,
         FlextConstants as c,
@@ -49,6 +53,9 @@ if TYPE_CHECKING:
         FlextUtilitiesRuntimeViolationRegistry,
     )
 __all__: tuple[str, ...] = (
+    "FlextApi",
+    "FlextBase",
+    "FlextCli",
     "FlextConfig",
     "FlextConstants",
     "FlextConstantsEnforcement",
@@ -82,6 +89,7 @@ __all__: tuple[str, ...] = (
     "__version_info__",
     "c",
     "config",
+    "core",
     "d",
     "e",
     "h",
@@ -90,6 +98,7 @@ __all__: tuple[str, ...] = (
     "p",
     "r",
     "s",
+    "services",
     "settings",
     "t",
     "u",
@@ -101,6 +110,9 @@ _LAZY_IMPORTS = MappingProxyType(
         MappingProxyType({
             "._config": ("FlextConfig", "config"),
             "._settings": ("FlextSettings", "settings"),
+            ".api": ("FlextApi", "core"),
+            ".base": ("FlextBase",),
+            ".cli": ("FlextCli",),
             ".constants": ("FlextConstants", "FlextConstantsEnforcement", "c"),
             ".container": ("FlextContainer",),
             ".context": ("FlextContext",),
@@ -117,6 +129,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".result": ("FlextResult", "r"),
             ".runtime": ("FlextRuntime",),
             ".service": ("FlextService", "s"),
+            ".services": ("services",),
             ".typings": ("FlextTypes", "t"),
             ".utilities": (
                 "FlextUtilities",

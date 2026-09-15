@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-def _read(root: Path) -> r[m.ProjectMetadata]:
+def _read(root: Path) -> p.Result[m.ProjectMetadata]:
     """Read project metadata through the canonical owner chain."""
     resolved = root.resolve()
     try:

@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, ClassVar
 import yaml
 import yaml.constructor
 
-from flext_core import r
+from flext_core import p, r
 
 from .._constants.config import FlextConstantsConfig as c
 from .._typings.base import FlextTypingBase as t
@@ -29,8 +29,6 @@ from .reliability import FlextUtilitiesReliability as rel
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
-
-    from flext_core import p
 
 
 class FlextUtilitiesConfig:
@@ -50,6 +48,63 @@ class FlextUtilitiesConfig:
         SafeLoader = yaml.SafeLoader
         YAMLError = yaml.YAMLError
         BaseResolver = yaml.resolver.BaseResolver
+
+        @staticmethod
+        def safe_load(stream: str) -> t.JsonValue:
+            """Parse a YAML string → validated JSON value."""
+            return yaml.safe_load(stream)
+
+        @staticmethod
+        def safe_dump(
+            data: t.JsonValue,
+            *,
+            sort_keys: bool = False,
+            indent: int = 2,
+            allow_unicode: bool = True,
+            default_flow_style: bool = False,
+        ) -> str:
+            """Serialize a JSON value → YAML string."""
+            return yaml.safe_dump(
+                data,
+                sort_keys=sort_keys,
+                indent=indent,
+                allow_unicode=allow_unicode,
+                default_flow_style=default_flow_style,
+            )
+
+        @staticmethod
+        def safe_load_file(path: Path) -> t.JsonValue:
+            """Load a YAML file → validated JSON value."""
+            with path.open(encoding="utf-8") as fh:
+                return yaml.safe_load(fh)
+
+        @staticmethod
+        def yaml_safe_load(path: Path) -> p.Result[t.JsonMapping]:
+            """Load a YAML file → ``r[JsonMapping]``."""
+            if not path.is_file():
+                return r[t.JsonMapping].fail(f"YAML file not found: {path}")
+            try:
+                return r[t.JsonMapping].ok(
+                    FlextUtilitiesConfig.Yaml.safe_load_file(path)
+                )
+            except OSError as exc:
+                return r[t.JsonMapping].fail(f"YAML read error: {exc}", exception=exc)
+
+        @staticmethod
+        def yaml_dump(
+            path: Path, data: t.JsonMapping, *, sort_keys: bool = False, indent: int = 2
+        ) -> p.Result[bool]:
+            """Write a payload as YAML file → ``r[bool]``."""
+            try:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                validated = FlextUtilitiesConfig.Yaml.safe_dump(
+                    data, sort_keys=sort_keys, indent=indent
+                )
+                with path.open("w", encoding="utf-8") as fh:
+                    fh.write(validated)
+                return r[bool].ok(True)
+            except OSError as exc:
+                return r[bool].fail(f"YAML write error: {exc}", exception=exc)
 
     _EXPAND_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
         r"\$\{(?P<name>[A-Za-z_][A-Za-z0-9_]*)(?::-(?P<default>[^{}]*))?\}"

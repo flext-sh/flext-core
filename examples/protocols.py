@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
-from flext_core import FlextProtocols
+from flext_core import p
 
-p: type[FlextProtocols] = FlextProtocols
+
+class ExamplesFlextProtocols:
+    """Protocols facade for examples."""
+
 
 __all__: list[str] = ["p"]

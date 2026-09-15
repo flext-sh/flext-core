@@ -9,20 +9,18 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core import c as _c, d, e, h, r, s, x
+    from flext_core import d, e, h, r, s, x
 
     from . import _models, _shared_parts
     from .constants import c
     from .models import ExamplesFlextModels, ExamplesFlextModels as m
     from .protocols import p
     from .shared import ExamplesFlextShared
-    from .typings import ExamplesFlextTypes, ExamplesFlextTypes as t
+    from .typings import t
     from .utilities import u
 __all__: tuple[str, ...] = (
     "ExamplesFlextModels",
     "ExamplesFlextShared",
-    "ExamplesFlextTypes",
-    "_c",
     "_models",
     "_shared_parts",
     "c",
@@ -47,11 +45,11 @@ _LAZY_IMPORTS = MappingProxyType(
             ".models": ("ExamplesFlextModels", "m"),
             ".protocols": ("p",),
             ".shared": ("ExamplesFlextShared",),
-            ".typings": ("ExamplesFlextTypes", "t"),
+            ".typings": ("t",),
             ".utilities": ("u",),
             "flext_core": ("d", "e", "h", "r", "s", "x"),
         }),
-        alias_groups=MappingProxyType({"flext_core": (("_c", "c"),)}),
+        alias_groups=MappingProxyType({}),
         sort_keys=False,
     )
 )

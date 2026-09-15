@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from typing import overload
 
-from flext_core import FlextRuntime, c, e, p, r, t
+from flext_core import c, e, p, r, t
 
+from ..runtime import FlextRuntime
 from .context_state import FlextUtilitiesContextState
 from .model import FlextUtilitiesModel
 

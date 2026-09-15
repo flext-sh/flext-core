@@ -19,7 +19,9 @@ class FlextUtilitiesFiles:
     """Atomic file primitives owned once by flext-core ``u``."""
 
     @staticmethod
-    def append_atomic(path: Path, data: str, *, encoding: str = "utf-8") -> r[int]:
+    def append_atomic(
+        path: Path, data: str, *, encoding: str = "utf-8"
+    ) -> p.Result[int]:
         """Atomically append text to a file through ``O_APPEND``.
 
         The append flag keeps concurrent writers line-atomic; creation is
@@ -39,7 +41,9 @@ class FlextUtilitiesFiles:
         return r[int].ok(written)
 
     @staticmethod
-    def write_atomic(path: Path, data: str, *, encoding: str = "utf-8") -> r[int]:
+    def write_atomic(
+        path: Path, data: str, *, encoding: str = "utf-8"
+    ) -> p.Result[int]:
         """Atomically replace a file's contents via temp file + rename."""
         payload = data.encode(encoding)
         try:

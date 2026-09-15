@@ -14,8 +14,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_core import FlextRuntime, c, e, p, r, t
+from flext_core import c, e, p, r, t
 
+from ...runtime import FlextRuntime
 from ..collection import FlextUtilitiesCollection
 from ..guards_type_model import FlextUtilitiesGuardsTypeModel
 from ..logging_config import FlextUtilitiesLoggingConfig
