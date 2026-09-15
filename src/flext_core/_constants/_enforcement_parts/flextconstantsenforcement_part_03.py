@@ -177,6 +177,15 @@ class FlextConstantsEnforcementNamespace:
     ENFORCEMENT_CLASSVAR_EXEMPT_NAMES: Final[frozenset[str]] = frozenset({
         "model_config",
         "logger",
+        # Adapter-strategy contract fields: per-surface polymorphic contracts
+        # and factory registries owned by the service families that resolve
+        # them (deploy surfaces, governance projectors). They are typed
+        # behavior bindings, not namespace constants, and relocating them to
+        # _constants would invert the constants->services dependency.
+        "EMPTY",
+        "MERGES_EXISTING",
+        "ADAPTERS",
+        "PROJECTORS",
     })
     """ClassVar attribute names that are framework idioms and stay in place."""
 
