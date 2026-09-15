@@ -17,6 +17,8 @@ import tomllib
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
+import yaml
+
 from flext_core import r
 
 from .._constants.config import FlextConstantsConfig as c
@@ -32,6 +34,20 @@ if TYPE_CHECKING:
 
 class FlextUtilitiesConfig:
     """Minimal stdlib-backed config load, merge, and env-override helpers."""
+
+    class Yaml:
+        """Owner facade for the yaml primitives config consumers route through.
+
+        Consumer projects must reach yaml via ``u.Config.Yaml`` so no consumer
+        module imports yaml directly (transport ownership stays with
+        flext-core, ENFORCE-070).
+        """
+
+        CSafeLoader = yaml.CSafeLoader
+        MappingNode = yaml.MappingNode
+        ConstructorError = yaml.ConstructorError
+        SafeLoader = yaml.SafeLoader
+        YAMLError = yaml.YAMLError
 
     _EXPAND_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
         r"\$\{(?P<name>[A-Za-z_][A-Za-z0-9_]*)(?::-(?P<default>[^{}]*))?\}"
