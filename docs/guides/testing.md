@@ -40,6 +40,15 @@ make test
 The test verb owns test selection and the retained Testmon cache. Never clear or
 bypass that cache, and never invoke the underlying test runner directly.
 
+CI and generated pre-commit hooks use the configured `make.ci.value` token.
+In that context, flext-infra deselects
+`tooling.tools.pytest.ci-excluded-markers`, currently `slow`, consistently in
+collection, execution and coverage. Local runs and pre-push retain slow tests.
+The runner records these exclusions as `not_executed_ci_markers`; they are
+neither passed tests nor proof that a timeout was repaired. Mark expensive
+integration cases with `pytest.mark.slow` rather than changing global addopts
+or duplicating a marker expression in each project.
+
 Run the complete verification gate through the same dispatcher:
 
 ```bash

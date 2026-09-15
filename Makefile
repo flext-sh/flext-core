@@ -145,9 +145,8 @@ MYPY_PATHS := $(strip $(foreach d,src tests examples,$(if $(wildcard $(PROJECT_R
 # End SECTION: lint/type paths
 
 # === SECTION: project tool owner (managed) ===
-# Source: caller-selected uv command; make setup owns environment provisioning.
-UV ?= uv
-UV_REQUESTED := $(UV)
+# Source: the repository's declared Mise toolchain, provisioned by make setup.
+override UV := "$(SETUP_MISE)" -C "$(PROJECT_ROOT)" exec -- uv
 CALLER_PATH := $(PATH)
 CALLER_VIRTUAL_ENV := $(patsubst %/,%,$(VIRTUAL_ENV))
 # End SECTION: project tool owner
@@ -190,23 +189,13 @@ ifeq ($(SANITIZED_CALLER_PATH),$(CALLER_VIRTUAL_ENV_BIN))
 SANITIZED_CALLER_PATH :=
 endif
 endif
-ifneq ($(filter Y,$(GEN_INIT_ONLY) $(SETUP_BOOTSTRAP_ONLY)),)
-RESOLVED_UV :=
-else
-RESOLVED_UV := $(shell PATH="$(SANITIZED_CALLER_PATH)" command -v "$(UV_REQUESTED)")
-# Operator 2026-09-14: parsing never aborts every verb over a missing tool; only
-# the recipe that runs uv fails, so gen and setup can still recover the checkout.
-ifneq ($(.SHELLSTATUS),0)
-$(warning uv executable not found on PATH: $(UV_REQUESTED); recipes that run uv fail until make setup provisions it)
-endif
-endif
-override UV := $(if $(strip $(RESOLVED_UV)),$(RESOLVED_UV),$(UV_REQUESTED))
 override FLEXT_INFRA_PYTHON := $(FLEXT_INFRA_RUNTIME_PYTHON)
 override UV_PROJECT := $(RUNTIME_ROOT)
 override UV_PROJECT_ENVIRONMENT := $(RUNTIME_VENV)
 override VIRTUAL_ENV := $(RUNTIME_VENV)
 override PATH := $(RUNTIME_BIN):$(SANITIZED_CALLER_PATH)
-export FLEXT_INFRA_PYTHON UV UV_PROJECT UV_PROJECT_ENVIRONMENT VIRTUAL_ENV PATH
+unexport UV
+export FLEXT_INFRA_PYTHON UV_PROJECT UV_PROJECT_ENVIRONMENT VIRTUAL_ENV PATH
 
 .PHONY: _bootstrap_setup_tools
 
@@ -276,7 +265,7 @@ if [ -z "$$mise_storage_root" ]; then \
 	case "$$project_root/" in \
 		"$$mise_storage_root/"*) printf 'ERROR: persistent Mise storage must not contain the checkout: %s\n' "$$mise_storage_root" >&2; exit 2 ;; \
 	esac; \
-	for persistent_path in "$$mise_storage_root" "$$mise_storage_root/cache" "$$mise_storage_root/state" "$$mise_storage_root/installs" "$$mise_storage_root/shims" "$$mise_storage_root/bootstrap"; do \
+	for persistent_path in "$$mise_storage_root" "$$mise_storage_root/cache" "$$mise_storage_root/state" "$$mise_storage_root/installs" "$$mise_storage_root/shims" "$$mise_storage_root/uv-cache" "$$mise_storage_root/bootstrap"; do \
 		if [ -L "$$persistent_path" ]; then \
 			printf 'ERROR: persistent Mise path must not be a symlink: %s\n' "$$persistent_path" >&2; exit 2; \
 		fi; \
@@ -363,6 +352,7 @@ mise_exec() { \
 "MISE_STATE_DIR=$$mise_storage_root/state" \
 "MISE_INSTALLS_DIR=$$mise_storage_root/installs" \
 "MISE_SHIMS_DIR=$$mise_storage_root/shims" \
+"UV_CACHE_DIR=$$mise_storage_root/uv-cache" \
 "GIT_CEILING_DIRECTORIES=$$project_parent" \
 			"MISE_CEILING_PATHS=$$project_parent" \
 			"MISE_TRUSTED_CONFIG_PATHS=$$project_root" \
@@ -501,13 +491,13 @@ DOCS_PROJECT_ARGS := $(foreach project,$(SELECTED_PROJECTS),--projects $(project
 # PYTHONPATH would make `make test` in a linked worktree execute that primary
 # tree instead of this checkout. Prefer PROJECT_ROOT/src so the Makefile owner
 # always wins over the shared editable (terminus T4 / path-purity).
-# Preserve the Make-owned UV_PROJECT_ENVIRONMENT used by setup. --project alone
-# can select a parent uv workspace's default venv, even for a standalone member.
-UV_RUN := env -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u PROJECT_ROOT PYTHONPATH="$(PROJECT_ROOT)/src" $(UV) run --project "$(RUNTIME_ROOT)" --no-sync
+# Execute the interpreter provisioned by setup without discovering a project
+# workspace or creating a dependency-resolution file during a runtime command.
+UV_RUN := env -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u PROJECT_ROOT PYTHONPATH="$(PROJECT_ROOT)/src" $(UV) run --no-project --python "$(RUNTIME_PYTHON)"
 PROJECT_INFRA_PYTHONPATH ?= $(MAKEFILE_ROOT)/src
-PROJECT_FLEXT_INFRA := if [ ! -x "$(FLEXT_INFRA_PYTHON)" ]; then printf 'ERROR: FLEXT_INFRA_PYTHON must name an executable managed Python\n' >&2; exit 2; fi; env -u PYTHONPATH -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u UV_PROJECT_ENVIRONMENT PATH="$(dir $(FLEXT_INFRA_PYTHON)):$(SANITIZED_CALLER_PATH)" PYTHONPATH="$(PROJECT_INFRA_PYTHONPATH)" $(FLEXT_INFRA_PYTHON) -m flext_infra
+PROJECT_FLEXT_INFRA := if [ ! -x "$(FLEXT_INFRA_PYTHON)" ]; then printf 'ERROR: FLEXT_INFRA_PYTHON must name an executable managed Python\n' >&2; exit 2; fi; "$(SETUP_MISE)" -C "$(PROJECT_ROOT)" exec -- env -u PYTHONPATH -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u UV_PROJECT_ENVIRONMENT PYTHONPATH="$(PROJECT_INFRA_PYTHONPATH)" $(FLEXT_INFRA_PYTHON) -m flext_infra
 # Scaffold dev tools live in the validated optional dev
-# profile; a fresh project must create its lock before later check-mode locks.
+# profile; setup resolves the declared dependency branches at their current tips.
 # Keyed on the environment's OWNER, not on the caller's profile. A member has
 # no local venv -- RUNTIME_VENV is RUNTIME_ROOT/.venv -- so every checkout that
 # provisions a shared environment must describe the same contents. A member
@@ -518,9 +508,9 @@ PROJECT_FLEXT_INFRA := if [ ! -x "$(FLEXT_INFRA_PYTHON)" ]; then printf 'ERROR: 
 SHARED_RUNTIME := $(if $(filter-out $(PROJECT_ROOT),$(RUNTIME_ROOT)),1,$(if $(strip $(WORKSPACE_SUBPROJECTS)),1,))
 # No lock is committed, so there is nothing for `--locked` to honour: the fleet
 # resolves dependency floors from pyproject on every setup, in CI exactly as
-# locally. `--refresh` re-reads branch-tracked git metadata so a cached
-# requires-dist can never skew the resolution (operator 2026-09-14).
-UV_SYNC_FLAGS := $(if $(SHARED_RUNTIME),--all-packages ,)--all-extras --all-groups --refresh
+# locally. `--upgrade` advances existing local resolutions; `--refresh` re-reads
+# branch metadata instead of retaining a cached tip (operator 2026-09-14).
+UV_SYNC_FLAGS := $(if $(SHARED_RUNTIME),--all-packages ,)--all-extras --all-groups --upgrade --refresh
 
 ifeq ($(GEN_INIT_ONLY),)
 -include custom.mk
@@ -982,7 +972,6 @@ _builtin_status_diagnostics: _builtin_require_environment
 	@printf 'profile=%s\nproject=%s\nruntime=%s\n' \
 		'$(MAKE_PROFILE)' '$(PROJECT_ROOT)' '$(RUNTIME_ROOT)'
 	@$(UV) --version
-	@$(UV) lock --project "$(PROJECT_ROOT)" --check
 	@if [ -x "$(RUNTIME_PYTHON)" ]; then \
 		$(UV) pip check --python "$(RUNTIME_VENV)"; \
 	fi
@@ -1075,11 +1064,6 @@ _builtin-fmt: _builtin_fmt_all
 _builtin-fix: _builtin_fix_all
 _builtin-fix-enforcement: _builtin_fix_enforcement
 _builtin-audit:
-	@if [ "$(MAKE_PROFILE)" = "workspace" ]; then \
-		$(UV) lock --project "$(PROJECT_ROOT)" --check; \
-	else \
-		printf '%s\n' "audit: dependency truth is owned by the fleet workspace lock (design B, flext-62fbu); run the audit at the fleet root."; \
-	fi
 	@$(UV) pip check --python "$(RUNTIME_VENV)"
 	@$(PROJECT_FLEXT_INFRA) codegen conform --root "$(PROJECT_ROOT)" --scope "$(CODEGEN_SCOPE)" --mode check
 _builtin-status: _builtin_status_diagnostics

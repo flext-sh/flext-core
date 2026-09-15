@@ -144,13 +144,17 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
         if logger_factory is not None:
             return logger_factory
         if async_logging:
-            print_logger_factory: object = getattr(structlog, "PrintLoggerFactory", None)
+            print_logger_factory: object = getattr(
+                structlog, "PrintLoggerFactory", None
+            )
             if callable(print_logger_factory):
                 factory_builder = typing.cast(
                     "typing.Callable[..., t.LoggerFactory]", print_logger_factory
                 )
                 return cls._build_async_logger_factory(factory_builder)
-            write_logger_factory: object = getattr(structlog, "WriteLoggerFactory", None)
+            write_logger_factory: object = getattr(
+                structlog, "WriteLoggerFactory", None
+            )
             if callable(write_logger_factory):
                 factory_builder = typing.cast(
                     "typing.Callable[..., t.LoggerFactory]", write_logger_factory

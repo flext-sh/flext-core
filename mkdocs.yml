@@ -86,13 +86,8 @@ markdown_extensions:
   - pymdownx.tasklist:
       custom_checkbox: true
 
-nav:
-  - Home: index.md
-  - Guides: guides/README.md
-  - API Reference: api-reference/README.md
-
-not_in_nav: |
-  api-reference/generated/**
+# MkDocs discovers the complete documentation tree, including maintained pages.
+# A fixed three-page nav silently omitted every domain guide and decision record.
 validation:
   omitted_files: warn
   absolute_links: warn

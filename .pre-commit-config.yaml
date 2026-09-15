@@ -19,8 +19,8 @@ repos:
     # including GIT_INDEX_FILE during pre-commit. A member hook that delegates
     # setup to its repository root must clear those variables first or the root
     # reads the member's temporary index and reports governed gitlinks missing.
-    # MAKEFLAGS/APPLY are cleared in the same prefix so inherited write intent
-    # cannot leak into an independently declared hook step.
+    # Inherited Make flags are cleared in the same prefix so each hook step
+    # executes its independently declared operation.
     # Stage gates (operator law 2026-08-24): each stage renders only when its
     # config gate (make.pre_commit / make.pre_push) is enabled. Disabled by
     # default; re-enable case by case in config/codegen.yaml.
