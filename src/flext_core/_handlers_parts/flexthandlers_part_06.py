@@ -11,9 +11,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, cast, override
 
-from flext_core import c, r, t
+from flext_core import c, p, r, t
 
 from .flexthandlers_part_05 import FlextHandlers as FlextHandlersPart05
 
@@ -74,7 +74,7 @@ class FlextHandlers[MessageT_contra, ResultT](
                 try:
                     result = self._handler_fn(message)
                     if isinstance(result, r):
-                        return result
+                        return cast("p.Result[t.Scalar]", result)
                     return r[t.Scalar].ok(result)
                 except c.EXC_BROAD_RUNTIME as exc:
                     self.logger.debug("Callable handler execution failed", exc_info=exc)

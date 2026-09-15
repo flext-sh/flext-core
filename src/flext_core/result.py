@@ -50,7 +50,7 @@ if TYPE_CHECKING:
         """Type-safe result with monadic railway-oriented operations."""
 
         @classmethod
-        def ok(cls, value: T) -> FlextResult[T]:
+        def ok(cls, value: T) -> p.Result[T]:
             """Create a successful result carrying ``value``."""
             ...
 
@@ -62,19 +62,19 @@ if TYPE_CHECKING:
             error_code: str | None = None,
             error_data: t.JsonMapping | t.ConfigModelInput | None = None,
             exception: BaseException | None = None,
-        ) -> FlextResult[T]:
+        ) -> p.Result[T]:
             """Create a failed result with the given error payload."""
             ...
 
         @classmethod
         def fail_op(
             cls, operation: str, exc: Exception | str | None = None
-        ) -> FlextResult[T]:
+        ) -> p.Result[T]:
             """Create a failed result for a named operation."""
             ...
 
         @classmethod
-        def from_failure(cls, source: p.FailureLike) -> FlextResult[T]:
+        def from_failure(cls, source: p.FailureLike) -> p.Result[T]:
             """Rebuild this concrete facade from any failed result-like."""
             ...
 

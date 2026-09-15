@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import inspect
 import sys
-from typing import TYPE_CHECKING, Annotated, ClassVar, Self, override
+from typing import TYPE_CHECKING, Annotated, ClassVar, Self, cast, override
 
 from pydantic import PrivateAttr
 
@@ -467,7 +467,7 @@ class FlextRegistry(s[bool]):
             try:
                 validation_result = validate(plugin)
                 if validation_result.failure:
-                    result = validation_result
+                    result = cast("p.Result[bool]", validation_result)
             except c.EXC_RUNTIME_TYPE as exc:
                 result = e.fail_operation("validate plugin registration", exc)
         if result.success:
