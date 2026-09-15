@@ -143,28 +143,23 @@ class FlextContainer(p.Container):
         try:
             resolved = callable_obj()
         except c.EXC_BROAD_RUNTIME as exc:
-            return cast(
-                "p.Result[t.RegisterableService]",
-                r[t.RegisterableService].from_result(
-                    e.fail_operation(
-                        f"resolve {kind}", exc, result_type=r[t.RegisterableService]
-                    )
-                ),
+            return r[t.RegisterableService].from_result(
+                e.fail_operation(
+                    f"resolve {kind}", exc, result_type=r[t.RegisterableService]
+                )
             )
         if type_cls is not None:
             if self._matches_service_type(resolved, type_cls):
-                return cast("p.Result[T]", r[T].ok(resolved))
+                return r[T].ok(resolved)
             return cast(
-                "p.Result[T]",
+                "p.Result[T] | p.Result[t.RegisterableService]",
                 r[T].from_result(
                     e.fail_type_mismatch(
                         type_cls.__name__, type(resolved).__name__, result_type=r[T]
                     )
                 ),
             )
-        return cast(
-            "p.Result[t.RegisterableService]", r[t.RegisterableService].ok(resolved)
-        )
+        return r[t.RegisterableService].ok(resolved)
 
     @overload
     def resolve[T: t.RegisterableService](
@@ -202,15 +197,21 @@ class FlextContainer(p.Container):
             elif isinstance(service, type_cls):
                 result = r[T].ok(service)
             else:
-                result = r[T].from_result(
-                    e.fail_type_mismatch(type_cls.__name__, type(service).__name__)
+                result = cast(
+                    "p.Result[T]",
+                    r[T].from_result(
+                        e.fail_type_mismatch(type_cls.__name__, type(service).__name__)
+                    ),
                 )
         elif callable_registration is not None:
             kind, callable_obj = callable_registration
             result = self._resolve_callable(callable_obj, kind, type_cls)
         else:
-            result = r[t.RegisterableService].from_result(
-                e.fail_not_found("service", name)
+            result = cast(
+                "p.Result[t.RegisterableService]",
+                r[t.RegisterableService].from_result(
+                    e.fail_not_found("service", name)
+                ),
             )
         return result
 

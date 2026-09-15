@@ -31,7 +31,7 @@ class FlextUtilitiesSettings:
     """
 
     @staticmethod
-    def resolve_process_environment() -> dict[str, str]:
+    def resolve_process_environment() -> t.StrMapping:
         """Resolve the inherited process environment as a plain string mapping."""
         return dict(os.environ)
 

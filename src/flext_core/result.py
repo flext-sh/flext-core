@@ -79,7 +79,7 @@ if TYPE_CHECKING:
             ...
 
         @classmethod
-        def from_result[V](cls, source: prt.Result[V]) -> FlextResult[V]:
+        def from_result[V](cls, source: prt.Result[V]) -> p.Result[V]:
             """Copy an abstract result into this concrete facade."""
             ...
 
@@ -89,14 +89,14 @@ else:
         """Type-safe result with monadic railway-oriented operations."""
 
         @classmethod
-        def ok(cls, value: T) -> FlextResult[T]:
+        def ok(cls, value: T) -> p.Result[T]:
             """Create a successful result carrying ``value``."""
-            return cast("FlextResult[T]", ok_result(cls, value))
+            return cast("p.Result[T]", ok_result(cls, value))
 
         @classmethod
-        def from_result[V](cls, source: prt.Result[V]) -> FlextResult[V]:
+        def from_result[V](cls, source: prt.Result[V]) -> p.Result[V]:
             """Copy an abstract result into this concrete facade."""
-            return cast("FlextResult[V]", copy_result(cls, source))
+            return cast("p.Result[V]", copy_result(cls, source))
 
 
 r = FlextResult

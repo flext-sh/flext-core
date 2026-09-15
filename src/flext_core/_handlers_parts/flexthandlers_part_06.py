@@ -20,8 +20,6 @@ from .flexthandlers_part_05 import FlextHandlers as FlextHandlersPart05
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core import p
-
 
 class FlextHandlers[MessageT_contra, ResultT](
     FlextHandlersPart05[MessageT_contra, ResultT]

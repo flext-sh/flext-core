@@ -120,7 +120,7 @@ class FlextContext(m.ManagedModel):
             data=self.data.model_copy(deep=True), metadata=self.metadata.model_copy()
         )
 
-    def export(self, *, as_dict: bool = True) -> dict[str, t.JsonPayload] | Self:
+    def export(self, *, as_dict: bool = True) -> t.MappingKV[str, t.JsonPayload] | Self:
         """Export scope contents. Returns dict when as_dict=True (default)."""
         if as_dict:
             return dict(self.data.root)

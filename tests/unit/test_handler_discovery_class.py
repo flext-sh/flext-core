@@ -7,7 +7,6 @@ Exercises only the public contract of ``h.Discovery``:
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import pytest
@@ -15,6 +14,7 @@ from flext_tests import h, r, tm
 
 if TYPE_CHECKING:
     from tests.protocols import p
+    from tests.models import m
 
 
 class TestsFlextCoreHandlerDiscoveryClass:
@@ -22,13 +22,13 @@ class TestsFlextCoreHandlerDiscoveryClass:
 
     def test_scan_class_discovers_every_decorated_method(self) -> None:
         # Arrange
-        class CreateCommand:
+        class CreateCommand(m.BaseModel):
             pass
 
-        class DeleteCommand:
+        class DeleteCommand(m.BaseModel):
             pass
 
-        class QueryCommand:
+        class QueryCommand(m.BaseModel):
             pass
 
         class Service:
@@ -61,13 +61,13 @@ class TestsFlextCoreHandlerDiscoveryClass:
 
     def test_scan_class_orders_handlers_by_priority_descending(self) -> None:
         # Arrange
-        class LowCommand:
+        class LowCommand(m.BaseModel):
             pass
 
-        class MidCommand:
+        class MidCommand(m.BaseModel):
             pass
 
-        class HighCommand:
+        class HighCommand(m.BaseModel):
             pass
 
         class Service:
@@ -98,8 +98,7 @@ class TestsFlextCoreHandlerDiscoveryClass:
 
     def test_scan_class_binds_config_command_and_priority(self) -> None:
         # Arrange
-        @dataclass
-        class EventPublished:
+        class EventPublished(m.BaseModel):
             event_id: str
 
         class OrderService:
@@ -116,13 +115,13 @@ class TestsFlextCoreHandlerDiscoveryClass:
         tm.that(name, eq="handle_event")
         tm.that(settings.command is EventPublished, eq=True)
         tm.that(settings.priority, eq=25)
-        outcome = getattr(OrderService(), name)(EventPublished("e7"))
+        outcome = getattr(OrderService(), name)(EventPublished(event_id="e7"))
         assert outcome.success is True
         assert outcome.unwrap() == "processed_e7"
 
     def test_scan_class_uses_default_priority_when_unspecified(self) -> None:
         # Arrange
-        class PlainCommand:
+        class PlainCommand(m.BaseModel):
             pass
 
         class Service:
@@ -156,7 +155,7 @@ class TestsFlextCoreHandlerDiscoveryClass:
         self, *, expected_present: bool
     ) -> None:
         # Arrange
-        class Command:
+        class Command(m.BaseModel):
             pass
 
         class ServiceWithHandler:
@@ -179,10 +178,10 @@ class TestsFlextCoreHandlerDiscoveryClass:
 
     def test_scan_class_includes_inherited_handlers(self) -> None:
         # Arrange
-        class CreateCommand:
+        class CreateCommand(m.BaseModel):
             pass
 
-        class DeleteCommand:
+        class DeleteCommand(m.BaseModel):
             pass
 
         class BaseService:
@@ -207,10 +206,10 @@ class TestsFlextCoreHandlerDiscoveryClass:
 
     def test_scan_class_is_idempotent(self) -> None:
         # Arrange
-        class CommandA:
+        class CommandA(m.BaseModel):
             pass
 
-        class CommandB:
+        class CommandB(m.BaseModel):
             pass
 
         class Service:

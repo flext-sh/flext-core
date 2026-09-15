@@ -13,7 +13,6 @@ method; that is an implementation detail of how discovery is wired.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import TYPE_CHECKING, override
 
 import pytest
@@ -23,6 +22,7 @@ from tests.base import s
 
 if TYPE_CHECKING:
     from tests.protocols import p
+    from tests.models import m
 
 
 class TestsFlextHandlerDecoratorEdges:
@@ -30,7 +30,7 @@ class TestsFlextHandlerDecoratorEdges:
 
     def test_scan_class_exposes_declared_command_and_priority(self) -> None:
         # Arrange
-        class CreateCommand:
+        class CreateCommand(m.BaseModel):
             pass
 
         class Service:
@@ -51,7 +51,7 @@ class TestsFlextHandlerDecoratorEdges:
 
     def test_defaults_are_applied_when_priority_and_timeout_omitted(self) -> None:
         # Arrange
-        class CreateCommand:
+        class CreateCommand(m.BaseModel):
             pass
 
         class Service:
@@ -71,7 +71,7 @@ class TestsFlextHandlerDecoratorEdges:
 
     def test_none_timeout_is_preserved(self) -> None:
         # Arrange
-        class CreateCommand:
+        class CreateCommand(m.BaseModel):
             pass
 
         class Service:
@@ -89,7 +89,7 @@ class TestsFlextHandlerDecoratorEdges:
     @pytest.mark.parametrize("timeout", [0.5, 5.0, 120.0])
     def test_explicit_timeout_is_preserved(self, timeout: float) -> None:
         # Arrange
-        class CreateCommand:
+        class CreateCommand(m.BaseModel):
             pass
 
         class Service:
@@ -106,10 +106,10 @@ class TestsFlextHandlerDecoratorEdges:
 
     def test_stacked_decorators_innermost_wins(self) -> None:
         # Arrange: the innermost decorator runs first and takes precedence.
-        class CreateCommand:
+        class CreateCommand(m.BaseModel):
             pass
 
-        class DeleteCommand:
+        class DeleteCommand(m.BaseModel):
             pass
 
         class Service:
@@ -128,13 +128,13 @@ class TestsFlextHandlerDecoratorEdges:
 
     def test_scan_class_sorts_handlers_by_priority_descending(self) -> None:
         # Arrange
-        class LowCommand:
+        class LowCommand(m.BaseModel):
             pass
 
-        class MidCommand:
+        class MidCommand(m.BaseModel):
             pass
 
-        class HighCommand:
+        class HighCommand(m.BaseModel):
             pass
 
         class Service:
@@ -166,7 +166,7 @@ class TestsFlextHandlerDecoratorEdges:
 
     def test_has_handlers_reflects_presence_of_decorated_methods(self) -> None:
         # Arrange
-        class CreateCommand:
+        class CreateCommand(m.BaseModel):
             pass
 
         class Decorated:
@@ -195,8 +195,7 @@ class TestsFlextHandlerDecoratorEdges:
 
     def test_decorated_method_stays_callable_and_returns_success(self) -> None:
         # Arrange: decoration must not alter the method's runtime behavior.
-        @dataclass
-        class CreateCommand:
+        class CreateCommand(m.BaseModel):
             name: str
 
         class Service:
@@ -205,7 +204,7 @@ class TestsFlextHandlerDecoratorEdges:
                 return r[str].ok(f"created_{cmd.name}")
 
         # Act
-        result = Service().handle(CreateCommand("alpha"))
+        result = Service().handle(CreateCommand(name="alpha"))
 
         # Assert
         assert result.success
@@ -213,8 +212,7 @@ class TestsFlextHandlerDecoratorEdges:
 
     def test_service_integration_discovers_handler_via_scan_class(self) -> None:
         # Arrange: a real FlextService subclass with a decorated handler.
-        @dataclass
-        class CreateCommand:
+        class CreateCommand(m.BaseModel):
             name: str
 
         class Service(s[str]):

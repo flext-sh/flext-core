@@ -10,7 +10,6 @@ returned ``(name, ...)`` tuples, the public ``DecoratorConfig`` fields, and the
 from __future__ import annotations
 
 import types
-from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import pytest
@@ -18,14 +17,14 @@ from flext_tests import h, r
 
 if TYPE_CHECKING:
     from tests.protocols import p
+    from tests.models import m
 
 
 class TestsFlextCoreHandlerDecoratorDiscovery:
     """Public contract: decorate -> discover -> invoke preserves the r[T] outcome."""
 
     def test_discovered_module_handler_invokes_with_success_outcome(self) -> None:
-        @dataclass
-        class CreateCommand:
+        class CreateCommand(m.BaseModel):
             name: str
 
         module = types.ModuleType("success_module")
@@ -37,7 +36,7 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         module.__dict__["handle_create"] = handle_create
 
         ((name, _, config),) = h.Discovery.scan_module(module)
-        outcome = handle_create(CreateCommand("alice"))
+        outcome = handle_create(CreateCommand(name="alice"))
 
         assert name == "handle_create"
         assert config.command is CreateCommand
@@ -45,8 +44,7 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         assert outcome.unwrap() == "created_alice"
 
     def test_discovered_module_handler_preserves_failure_outcome(self) -> None:
-        @dataclass
-        class DeleteCommand:
+        class DeleteCommand(m.BaseModel):
             user_id: str
 
         module = types.ModuleType("failure_module")
@@ -58,7 +56,7 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         module.__dict__["handle_delete"] = handle_delete
 
         ((name, _, _),) = h.Discovery.scan_module(module)
-        outcome = handle_delete(DeleteCommand("u42"))
+        outcome = handle_delete(DeleteCommand(user_id="u42"))
 
         assert name == "handle_delete"
         assert outcome.failure is True
@@ -76,7 +74,7 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         assert h.Discovery.scan_module(module) == []
 
     def test_scan_module_excludes_private_functions(self) -> None:
-        class Command:
+        class Command(m.BaseModel):
             pass
 
         module = types.ModuleType("privacy_module")
@@ -102,7 +100,7 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
     def test_scan_module_reports_decorated_priority_and_command(
         self, priority: int
     ) -> None:
-        class Command:
+        class Command(m.BaseModel):
             pass
 
         module = types.ModuleType("config_module")
@@ -125,7 +123,7 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
     def test_scan_class_reports_command_and_priority(
         self, priority: int, expected_name: str
     ) -> None:
-        class Command:
+        class Command(m.BaseModel):
             pass
 
         class Service:
@@ -145,7 +143,7 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         assert by_name[expected_name].command is Command
 
     def test_has_handlers_reflects_presence_of_decorated_methods(self) -> None:
-        class Command:
+        class Command(m.BaseModel):
             pass
 
         class WithoutHandlers:
@@ -160,3 +158,10 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
 
         assert h.Discovery.has_handlers(WithoutHandlers) is False
         assert h.Discovery.has_handlers(WithHandler) is True
+
+    def test_scan_class_returns_empty_for_undecorated_class(self) -> None:
+        class Plain:
+            def handle(self) -> p.Result[str]:
+                return r[str].ok("ok")
+
+        assert h.Discovery.scan_class(Plain) == []

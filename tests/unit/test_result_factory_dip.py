@@ -8,45 +8,46 @@ a foreign result-like value.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import pytest
 from flext_tests import r, tm
 
 from flext_core import FlextResult, e, m
-from tests.protocols import p
+
+if TYPE_CHECKING:
+    from tests.protocols import p
+
+
+class _ForeignOk(m.BaseModel):
+    """Minimal success-shaped result returned by a flow_through step."""
+
+    value: int
+    success: bool = True
+    failure: bool = False
+    error: str | None = None
+    error_code: str | None = None
+    error_data: Mapping[str, str | int | bool | None] | None = None
+    exception: BaseException | None = None
+
+    def unwrap(self) -> int:
+        return self.value
+
+
+class _ForeignFail(m.BaseModel):
+    """Minimal failure-shaped result returned by a flow_through step."""
+
+    error: str
+    success: bool = False
+    failure: bool = True
+    error_code: str | None = "E_FOREIGN"
+    error_data: Mapping[str, str | int | bool | None] | None = None
+    exception: BaseException | None = None
+    value: int | None = None
 
 
 class TestsFlextCoreResultFactoryDip:
     """Public factory and protocol contracts after the p.Result DIP refactor."""
-
-    @dataclass(frozen=True, slots=True)
-    class _ForeignOk:
-        """Minimal success-shaped result returned by a flow_through step."""
-
-        value: int
-        success: bool = True
-        failure: bool = False
-        error: str | None = None
-        error_code: str | None = None
-        error_data: Mapping[str, str | int | bool | None] | None = None
-        exception: BaseException | None = None
-
-        def unwrap(self) -> int:
-            return self.value
-
-    @dataclass(frozen=True, slots=True)
-    class _ForeignFail:
-        """Minimal failure-shaped result returned by a flow_through step."""
-
-        error: str
-        success: bool = False
-        failure: bool = True
-        error_code: str | None = "E_FOREIGN"
-        error_data: Mapping[str, str | int | bool | None] | None = None
-        exception: BaseException | None = None
-        value: int | None = None
 
     def test_from_result_copies_success_payload(self) -> None:
         source: p.Result[str] = r[str].ok("payload")
@@ -101,10 +102,7 @@ class TestsFlextCoreResultFactoryDip:
 
     def test_flow_through_normalizes_foreign_success_onto_facade(self) -> None:
         def foreign_step(value: int) -> p.Result[int]:
-            return cast(
-                "p.Result[int]",
-                TestsFlextCoreResultFactoryDip._ForeignOk(value=value + 1),
-            )
+            return cast("p.Result[int]", _ForeignOk(value=value + 1))
 
         def facade_step(value: int) -> p.Result[int]:
             return r[int].ok(value * 10)
@@ -115,10 +113,7 @@ class TestsFlextCoreResultFactoryDip:
 
     def test_flow_through_normalizes_foreign_failure_onto_facade(self) -> None:
         def foreign_fail(_value: int) -> p.Result[int]:
-            return cast(
-                "p.Result[int]",
-                TestsFlextCoreResultFactoryDip._ForeignFail(error="foreign-stop"),
-            )
+            return cast("p.Result[int]", _ForeignFail(error="foreign-stop"))
 
         def unreachable(_value: int) -> p.Result[int]:
             return r[int].ok(999)
@@ -145,9 +140,7 @@ class TestsFlextCoreResultFactoryDip:
             assert isinstance(copied, FlextResult)
 
     def test_from_failure_rebuilds_foreign_failure_like(self) -> None:
-        foreign = TestsFlextCoreResultFactoryDip._ForeignFail(
-            error="foreign-fail", error_code="E_FOREIGN", error_data={"k": 1}
-        )
+        foreign = _ForeignFail(error="foreign-fail", error_code="E_FOREIGN", error_data={"k": 1})
         rebuilt: p.Result[int] = r[int].from_failure(foreign)
         tm.fail(rebuilt, has="foreign-fail")
         tm.that(rebuilt.error_code, eq="E_FOREIGN")
