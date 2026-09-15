@@ -1,6 +1,6 @@
 """Direct factory and protocol contracts for the Result DIP surface.
 
-Pins ``from_result`` / ``from_failure`` / ``copy_from_result``, runtime
+Pins ``from_result`` / ``from_failure``, runtime
 ``p.Result`` conformance, and ``flow_through`` normalization when a step returns
 a foreign result-like value.
 """
@@ -17,7 +17,7 @@ from flext_core import FlextResult, e, m
 from tests.protocols import p
 
 
-class _ForeignOk(m.BaseModel):
+class _ForeignOk(m.ArbitraryTypesModel):
     """Minimal success-shaped result returned by a flow_through step."""
 
     value: int
@@ -26,13 +26,13 @@ class _ForeignOk(m.BaseModel):
     error: str | None = None
     error_code: str | None = None
     error_data: Mapping[str, str | int | bool | None] | None = None
-    exception: BaseException | None = None
+    exception: Exception | None = None
 
     def unwrap(self) -> int:
         return self.value
 
 
-class _ForeignFail(m.BaseModel):
+class _ForeignFail(m.ArbitraryTypesModel):
     """Minimal failure-shaped result returned by a flow_through step."""
 
     error: str
@@ -40,7 +40,7 @@ class _ForeignFail(m.BaseModel):
     failure: bool = True
     error_code: str | None = "E_FOREIGN"
     error_data: Mapping[str, str | int | bool | None] | None = None
-    exception: BaseException | None = None
+    exception: Exception | None = None
     value: int | None = None
 
 
@@ -79,14 +79,14 @@ class TestsFlextCoreResultFactoryDip:
         with pytest.raises(ValueError, match="successful result"):
             _ = r[int].from_failure(r[int].ok(1))
 
-    def test_copy_from_result_preserves_success(self) -> None:
+    def test_from_result_preserves_success(self) -> None:
         source: p.Result[int] = r[int].ok(9)
-        copied: p.Result[int] = r.copy_from_result(source)
+        copied: p.Result[int] = r.from_result(source)
         tm.ok(copied, eq=9)
 
-    def test_copy_from_result_preserves_failure(self) -> None:
+    def test_from_result_preserves_failure(self) -> None:
         source: p.Result[int] = r[int].fail("copy-fail", error_code="E_COPY")
-        copied: p.Result[int] = r.copy_from_result(source)
+        copied: p.Result[int] = r.from_result(source)
         tm.fail(copied, has="copy-fail")
         tm.that(copied.error_code, eq="E_COPY")
 
@@ -147,14 +147,14 @@ class TestsFlextCoreResultFactoryDip:
         tm.that(rebuilt.error_data, eq={"k": 1})
         assert isinstance(rebuilt, FlextResult)
 
-    def test_copy_from_result_preserves_exception_identity_on_flext_result(
+    def test_from_result_preserves_exception_identity_on_flext_result(
         self,
     ) -> None:
         cause = RuntimeError("root-cause")
         source: p.Result[int] = r[int].fail(
             "copy-exc", error_code="E_EXC", exception=cause
         )
-        copied: p.Result[int] = r.copy_from_result(source)
+        copied: p.Result[int] = r.from_result(source)
         tm.fail(copied, has="copy-exc")
         tm.that(copied.error_code, eq="E_EXC")
         assert copied.exception is cause

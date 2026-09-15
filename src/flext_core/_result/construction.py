@@ -36,6 +36,11 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
         return error or ""
 
     @classmethod
+    def ok[V](cls: type[Self], value: V) -> p.Result[V]:
+        """Create a successful result carrying ``value``."""
+        return ok_result(cls, value)
+
+    @classmethod
     def from_failure(cls: type[Self], source: p.FailureLike) -> p.Result[T]:
         if source.success:
             msg = c.ERR_RESULT_FAILURE_REQUIRED
@@ -96,18 +101,9 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
         return payload or None
 
     @classmethod
-    def copy_from_result(cls: type[Self], source: p.Result[T]) -> p.Result[T]:
-        if source.success:
-            try:
-                return ok_result(cls, source.value)
-            except ValueError as exc:
-                return cls.fail(str(exc))
-        return cls.fail(
-            cls.require_error(source),
-            error_code=source.error_code,
-            error_data=source.error_data,
-            exception=source.exception,
-        )
+    def from_result[V](cls: type[Self], source: p.Result[V]) -> p.Result[V]:
+        """Copy an abstract result into this concrete result family."""
+        return copy_result(cls, source)
 
     @classmethod
     def create_from_callable[V](

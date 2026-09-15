@@ -196,7 +196,7 @@ class FlextProtocolsResult:
         ) -> object: ...
 
         @classmethod
-        def copy_from_result[V](
+        def from_result[V](
             cls, source: FlextProtocolsResult.Result[V]
         ) -> object: ...
 

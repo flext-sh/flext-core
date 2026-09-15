@@ -143,6 +143,18 @@ class FlextConstantsEnforcementTargets:
             "version_at_least",
             "Rewrite version predicate to the canonical boolean helper",
         ),
+        "is_internal_backend": (
+            "internal_backend",
+            "Rewrite backend predicate to the direct boolean property",
+        ),
+        "is_dirty_tree": (
+            "dirty_tree",
+            "Rewrite git predicate to the direct boolean helper",
+        ),
+        "set_proxy_credential": (
+            "provide_proxy_credential",
+            "Rewrite credential setter to the canonical provide verb",
+        ),
     })
     """SSOT: legacy accessor name → (canonical replacement, human-readable reason).
 
@@ -150,6 +162,17 @@ class FlextConstantsEnforcementTargets:
     necessarily lives here because flext-core owns the names being renamed.
     Refactor verbs in flext-infra read this mapping; adding a new rename =
     one entry here, no parallel list.
+    """
+
+    ENFORCEMENT_ACCESSOR_EXTERNAL_CONTRACTS: Final[frozenset[str]] = frozenset({
+        "get_field_value",
+    })
+    """Accessor names owned by immutable external framework contracts.
+
+    ``pydantic_settings.BaseSettingsSource.get_field_value`` is overridden by
+    name in every settings source; renaming it would break the external
+    protocol. Accessors listed here are exempt from loose-accessor warnings
+    and enforcement — they are never candidates for canonical-verb rewrites.
     """
 
     ENFORCEMENT_COMPATIBILITY_ALIAS_RENAMES: Final[Mapping[str, str]] = (

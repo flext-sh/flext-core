@@ -84,11 +84,6 @@ if TYPE_CHECKING:
             ...
 
         @classmethod
-        def copy_from_result[V](cls, source: p.Result[V]) -> p.Result[V]:
-            """Copy an abstract result into this concrete facade."""
-            ...
-
-        @classmethod
         def from_validation[ModelT: t.BaseModelType](
             cls, data: object, model: type[ModelT]
         ) -> p.Result[ModelT]:
