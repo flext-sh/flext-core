@@ -1,5 +1,6 @@
 {
   "backend": "dolt",
   "database": "dolt",
+  "dolt_mode": "server",
   "dolt_database": "flext"
 }

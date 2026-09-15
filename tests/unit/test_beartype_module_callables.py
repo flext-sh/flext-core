@@ -41,7 +41,7 @@ class TestsFlextCoreBeartypeModuleCallables:
         """
 
         @property
-        def __class__(self) -> type[_ForwardingProxy]:
+        def __class__(self) -> type[TestsFlextCoreBeartypeModuleCallables._ForwardingProxy]:
             """Forward the type question to an object that is not there."""
             raise RuntimeError(_OUTSIDE_CONTEXT)
 
@@ -65,7 +65,7 @@ class TestsFlextCoreBeartypeModuleCallables:
         original_module_name = _defined_here.__module__
         _defined_here.__module__ = _PROBE_MODULE
         module.__dict__["defined_here"] = _defined_here
-        module.__dict__["current_app"] = _ForwardingProxy()
+        module.__dict__["current_app"] = TestsFlextCoreBeartypeModuleCallables._ForwardingProxy()
         sys.modules[_PROBE_MODULE] = module
         try:
             yielded = [
@@ -83,7 +83,7 @@ class TestsFlextCoreBeartypeModuleCallables:
         Without this, the case above could pass against a proxy that quietly
         answers, and would no longer prove anything.
         """
-        proxy = _ForwardingProxy()
+        proxy = TestsFlextCoreBeartypeModuleCallables._ForwardingProxy()
 
         with pytest.raises(RuntimeError, match=_OUTSIDE_CONTEXT):
             isinstance(proxy, classmethod)
@@ -96,6 +96,3 @@ class TestsFlextCoreBeartypeModuleCallables:
 
 
 __all__: list[str] = ["TestsFlextCoreBeartypeModuleCallables"]
-
-
-_ForwardingProxy = TestsFlextCoreBeartypeModuleCallables._ForwardingProxy

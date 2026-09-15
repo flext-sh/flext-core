@@ -77,7 +77,7 @@ class TestsFlextCoreGuards:
     ) -> None:
         # A populated model would otherwise satisfy dict-like checks; the guard
         # contract deliberately excludes Pydantic models from these specs.
-        assert u.matches_type(_SampleModel(), spec) is False
+        assert u.matches_type(TestsFlextCoreGuards._SampleModel(), spec) is False
 
     # ------------------------------------------------------------------
     # matches_type — type and tuple specs
@@ -269,6 +269,3 @@ class TestsFlextCoreGuards:
         assert u.type_name(1) == "int"
         assert u.type_name([1]) == "list"
         assert u.type_name(None) == "NoneType"
-
-
-_SampleModel = TestsFlextCoreGuards._SampleModel

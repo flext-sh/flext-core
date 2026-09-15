@@ -29,7 +29,9 @@ class TestsFlextCoreBase:
     class SampleValue(m.Value):
         """Value object with two descriptive fields for equality/hash tests."""
 
-        amount: Annotated[int, m.Field(description="Numeric amount of the value object.")]
+        amount: Annotated[
+            int, m.Field(description="Numeric amount of the value object.")
+        ]
         label: Annotated[str, m.Field(description="Human-readable label of the value.")]
 
     def test_base_model_dump_returns_declared_field_values(self) -> None:

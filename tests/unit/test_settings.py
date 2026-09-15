@@ -51,7 +51,9 @@ class TestsFlextCoreSettings:
                 )
                 expected = Path.home() / "AppData" / "Local" / "flext"
             else:
-                env_context = u.Tests.env_vars_context(vars_to_clear=("XDG_CACHE_HOME",))
+                env_context = u.Tests.env_vars_context(
+                    vars_to_clear=("XDG_CACHE_HOME",)
+                )
                 expected = Path.home() / ".cache" / "flext"
             with env_context:
                 assert FlextSettings.fetch_global().work_dir == expected
@@ -90,7 +92,9 @@ class TestsFlextCoreSettings:
             ):
 
                 class _CliSettings(FlextSettings):
-                    model_config = FlextSettings.model_config | {"env_prefix": "CLI_LIB_"}
+                    model_config = FlextSettings.model_config | {
+                        "env_prefix": "CLI_LIB_"
+                    }
 
                 class _MeltanoSettings(FlextSettings):
                     model_config = FlextSettings.model_config | {
@@ -138,7 +142,9 @@ class TestsFlextCoreSettings:
             ):
 
                 class _AiHubSettings(FlextSettings):
-                    model_config = FlextSettings.model_config | {"env_prefix": "AI_HUB_"}
+                    model_config = FlextSettings.model_config | {
+                        "env_prefix": "AI_HUB_"
+                    }
 
                 _AiHubSettings.reset_for_testing()
                 s = _AiHubSettings.fetch_global()
@@ -164,12 +170,16 @@ class TestsFlextCoreSettings:
         def test_environment_application_namespace_rejects_paths(self) -> None:
             """Environment application identity cannot escape its XDG root."""
             with (
-                u.Tests.env_vars_context(env_vars={"FLEXT_APP_NAMESPACE": "../outside"}),
+                u.Tests.env_vars_context(
+                    env_vars={"FLEXT_APP_NAMESPACE": "../outside"}
+                ),
                 pytest.raises(ValueError, match="one non-empty path segment"),
             ):
                 _ = FlextSettings.fetch_global().data_dir
 
-        def test_application_scoped_directory_override_wins(self, tmp_path: Path) -> None:
+        def test_application_scoped_directory_override_wins(
+            self, tmp_path: Path
+        ) -> None:
             """The consuming application's directory override wins over XDG roots."""
             override = tmp_path / "application-work"
             with u.Tests.env_vars_context(

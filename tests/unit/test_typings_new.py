@@ -86,7 +86,7 @@ class TestsFlextCoreTypingsNew:
 
     def test_enum_type_adapter_accepts_strenum_class(self) -> None:
         """enum_type_adapter validates StrEnum subclasses as type values."""
-        tm.that(t.enum_type_adapter().validate_python(_Color) is _Color, eq=True)
+        tm.that(t.enum_type_adapter().validate_python(TestsFlextCoreTypingsNew._Color) is TestsFlextCoreTypingsNew._Color, eq=True)
 
     def test_str_sequence_adapter_preserves_order(self) -> None:
         """str_sequence_adapter validates ordered string sequences."""
@@ -103,6 +103,3 @@ class TestsFlextCoreTypingsNew:
         container = set(t.CONTAINER_TYPES)
         tm.that(primitives <= scalar, eq=True)
         tm.that(scalar <= container, eq=True)
-
-
-_Color = TestsFlextCoreTypingsNew._Color

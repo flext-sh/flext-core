@@ -120,4 +120,6 @@ class TestsFlextCoreTypingsValidationNumbers:
         tm.that(twice, eq=once)
 
 
-TestsFlextCoreTypingsStrippedStr = TestsFlextCoreTypingsValidationNumbers.TestsFlextCoreTypingsStrippedStr
+TestsFlextCoreTypingsStrippedStr = (
+    TestsFlextCoreTypingsValidationNumbers.TestsFlextCoreTypingsStrippedStr
+)

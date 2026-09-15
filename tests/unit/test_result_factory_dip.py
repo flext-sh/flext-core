@@ -101,7 +101,7 @@ class TestsFlextCoreResultFactoryDip:
 
     def test_flow_through_normalizes_foreign_success_onto_facade(self) -> None:
         def foreign_step(value: int) -> p.Result[int]:
-            return cast("p.Result[int]", _ForeignOk(value=value + 1))
+            return cast("p.Result[int]", TestsFlextCoreResultFactoryDip._ForeignOk(value=value + 1))
 
         def facade_step(value: int) -> p.Result[int]:
             return r[int].ok(value * 10)
@@ -112,7 +112,7 @@ class TestsFlextCoreResultFactoryDip:
 
     def test_flow_through_normalizes_foreign_failure_onto_facade(self) -> None:
         def foreign_fail(_value: int) -> p.Result[int]:
-            return cast("p.Result[int]", _ForeignFail(error="foreign-stop"))
+            return cast("p.Result[int]", TestsFlextCoreResultFactoryDip._ForeignFail(error="foreign-stop"))
 
         def unreachable(_value: int) -> p.Result[int]:
             return r[int].ok(999)
@@ -139,7 +139,7 @@ class TestsFlextCoreResultFactoryDip:
             assert isinstance(copied, FlextResult)
 
     def test_from_failure_rebuilds_foreign_failure_like(self) -> None:
-        foreign = _ForeignFail(
+        foreign = TestsFlextCoreResultFactoryDip._ForeignFail(
             error="foreign-fail", error_code="E_FOREIGN", error_data={"k": 1}
         )
         rebuilt: p.Result[int] = r[int].from_failure(foreign)
@@ -232,7 +232,3 @@ class TestsFlextCoreResultFactoryDip:
         tm.that(result.error_data.get("host"), eq="kept")
         assert "password" not in result.error_data
         assert "api_key" not in result.error_data
-
-
-_ForeignOk = TestsFlextCoreResultFactoryDip._ForeignOk
-_ForeignFail = TestsFlextCoreResultFactoryDip._ForeignFail

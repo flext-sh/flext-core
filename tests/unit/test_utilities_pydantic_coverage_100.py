@@ -154,8 +154,8 @@ class TestsFlextUtilitiesPydantic:
         assert resolved.settings_overrides == {"dry_run": True}
 
     def test_private_attr_factories_preserve_pydantic_instance_semantics(self) -> None:
-        first = _PrivateAttrContract(label="first")
-        second = _PrivateAttrContract(label="second")
+        first = TestsFlextUtilitiesPydantic._PrivateAttrContract(label="first")
+        second = TestsFlextUtilitiesPydantic._PrivateAttrContract(label="second")
 
         first.record_model("model")
         first.record_utility("utility")
@@ -169,9 +169,3 @@ class TestsFlextUtilitiesPydantic:
         assert first.reads_standard_input
         assert second.reads_standard_input
         assert first.model_dump() == {"label": "first"}
-
-
-_PrivateAttrContract = TestsFlextUtilitiesPydantic._PrivateAttrContract
-
-
-_PrivateAttrContract = TestsFlextUtilitiesPydantic._PrivateAttrContract

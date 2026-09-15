@@ -50,7 +50,7 @@ class TestsFlextCorePydanticDeclarations:
     class _Pet(m.BaseModel):
         """Field resolved to a union member through the discriminator tag."""
 
-        animal: Annotated[_Cat | _Dog, m.Discriminator("kind")]
+        animal: Annotated[TestsFlextCorePydanticDeclarations._Cat | TestsFlextCorePydanticDeclarations._Dog, m.Discriminator("kind")]
 
     class _Item(m.BaseModel):
         """Base item serialized through a base-typed field."""
@@ -65,7 +65,7 @@ class TestsFlextCorePydanticDeclarations:
     class _Box(m.BaseModel):
         """Container whose base-typed field serializes runtime subclasses."""
 
-        item: Annotated[_Item, m.SerializeAsAny()]
+        item: Annotated[TestsFlextCorePydanticDeclarations._Item, m.SerializeAsAny()]
 
     class _Greeter:
         """Plain runtime class guarded by InstanceOf."""
@@ -76,7 +76,7 @@ class TestsFlextCorePydanticDeclarations:
     class _GreetingCard(m.BaseModel):
         """Model whose payload must be a Greeter instance."""
 
-        payload: m.InstanceOf[_Greeter]
+        payload: m.InstanceOf[TestsFlextCorePydanticDeclarations._Greeter]
 
     class _Constrained(m.BaseModel):
         """Model field constrained through StringConstraints."""
@@ -84,25 +84,25 @@ class TestsFlextCorePydanticDeclarations:
         code: Annotated[str, m.StringConstraints(min_length=3, pattern=r"^[a-z]+$")]
 
     def test_string_constraints_accept_valid_and_reject_invalid_values(self) -> None:
-        assert _Constrained(code="abc").code == "abc"
+        assert TestsFlextCorePydanticDeclarations._Constrained(code="abc").code == "abc"
 
         with pytest.raises(m.ValidationError):
-            _Constrained(code="ab")
+            TestsFlextCorePydanticDeclarations._Constrained(code="ab")
 
         with pytest.raises(m.ValidationError):
-            _Constrained(code="ABC")
+            TestsFlextCorePydanticDeclarations._Constrained(code="ABC")
 
     def test_discriminator_resolves_union_member_from_tag(self) -> None:
-        pet = _Pet.model_validate({"animal": {"kind": "dog", "bark": "woof"}})
+        pet = TestsFlextCorePydanticDeclarations._Pet.model_validate({"animal": {"kind": "dog", "bark": "woof"}})
 
-        assert isinstance(pet.animal, _Dog)
+        assert isinstance(pet.animal, TestsFlextCorePydanticDeclarations._Dog)
         assert pet.animal.bark == "woof"
 
         with pytest.raises(m.ValidationError):
-            _Pet.model_validate({"animal": {"kind": "cow", "moo": "moo"}})
+            TestsFlextCorePydanticDeclarations._Pet.model_validate({"animal": {"kind": "cow", "moo": "moo"}})
 
     def test_serialize_as_any_keeps_subclass_fields_in_dump(self) -> None:
-        box = _Box(item=_DetailedItem(name="flext", detail="advanced"))
+        box = TestsFlextCorePydanticDeclarations._Box(item=TestsFlextCorePydanticDeclarations._DetailedItem(name="flext", detail="advanced"))
 
         assert box.model_dump() == {"item": {"name": "flext", "detail": "advanced"}}
 
@@ -119,41 +119,28 @@ class TestsFlextCorePydanticDeclarations:
         assert len(exc_info.value.errors()) == 1
 
     def test_instance_of_accepts_instance_and_rejects_foreign_object(self) -> None:
-        greeter = _Greeter()
-        card = _GreetingCard(payload=greeter)
+        greeter = TestsFlextCorePydanticDeclarations._Greeter()
+        card = TestsFlextCorePydanticDeclarations._GreetingCard(payload=greeter)
 
         assert card.payload is greeter
 
         with pytest.raises(m.ValidationError):
-            _GreetingCard(payload=object())
+            TestsFlextCorePydanticDeclarations._GreetingCard(payload=object())
 
     def test_validate_as_builds_custom_type_from_native_model(self) -> None:
-        adapter: m.TypeAdapter[_Vector] = m.TypeAdapter(
+        adapter: m.TypeAdapter[TestsFlextCorePydanticDeclarations._Vector] = m.TypeAdapter(
             Annotated[
-                _Vector,
+                TestsFlextCorePydanticDeclarations._Vector,
                 m.ValidateAs(
-                    _VectorInput, lambda validated: _Vector(validated.x, validated.y)
+                    TestsFlextCorePydanticDeclarations._VectorInput, lambda validated: TestsFlextCorePydanticDeclarations._Vector(validated.x, validated.y)
                 ),
             ]
         )
 
         vector = adapter.validate_python({"x": 1, "y": 2})
 
-        assert isinstance(vector, _Vector)
+        assert isinstance(vector, TestsFlextCorePydanticDeclarations._Vector)
         assert (vector.x, vector.y) == (1, 2)
 
         with pytest.raises(m.ValidationError):
             adapter.validate_python({"x": "no-int", "y": 2})
-
-
-_VectorInput = TestsFlextCorePydanticDeclarations._VectorInput
-_Vector = TestsFlextCorePydanticDeclarations._Vector
-_Cat = TestsFlextCorePydanticDeclarations._Cat
-_Dog = TestsFlextCorePydanticDeclarations._Dog
-_Pet = TestsFlextCorePydanticDeclarations._Pet
-_Item = TestsFlextCorePydanticDeclarations._Item
-_DetailedItem = TestsFlextCorePydanticDeclarations._DetailedItem
-_Box = TestsFlextCorePydanticDeclarations._Box
-_Greeter = TestsFlextCorePydanticDeclarations._Greeter
-_GreetingCard = TestsFlextCorePydanticDeclarations._GreetingCard
-_Constrained = TestsFlextCorePydanticDeclarations._Constrained

@@ -35,14 +35,14 @@ class TestsFlextCoreSettingsValidationAlias:
         ] = "pandoc"
 
     def setup_method(self) -> None:
-        _AliasFieldSettings.reset_for_testing()
+        TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.reset_for_testing()
 
     def teardown_method(self) -> None:
-        _AliasFieldSettings.reset_for_testing()
+        TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.reset_for_testing()
 
     def test_default_value_when_no_override_applied(self) -> None:
         # Arrange / Act
-        settings = _AliasFieldSettings.fetch_global()
+        settings = TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.fetch_global()
 
         # Assert — declared default surfaces through the public field.
         assert settings.pandoc_bin == "pandoc"
@@ -54,25 +54,25 @@ class TestsFlextCoreSettingsValidationAlias:
         self, override_value: str
     ) -> None:
         # Act — must not raise "Extra inputs are not permitted".
-        returned = _AliasFieldSettings.update_global(pandoc_bin=override_value)
+        returned = TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.update_global(pandoc_bin=override_value)
 
         # Assert — returned value carries the override AND it propagates.
         assert returned.pandoc_bin == override_value
-        assert _AliasFieldSettings.fetch_global().pandoc_bin == override_value
+        assert TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.fetch_global().pandoc_bin == override_value
 
     def test_update_global_is_idempotent_across_repeated_calls(self) -> None:
         # Act
-        first = _AliasFieldSettings.update_global(pandoc_bin="pandoc-a")
-        second = _AliasFieldSettings.update_global(pandoc_bin="pandoc-a")
+        first = TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.update_global(pandoc_bin="pandoc-a")
+        second = TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.update_global(pandoc_bin="pandoc-a")
 
         # Assert — repeated identical override yields the same observable state.
         assert first.pandoc_bin == "pandoc-a"
         assert second.pandoc_bin == "pandoc-a"
-        assert _AliasFieldSettings.fetch_global().pandoc_bin == "pandoc-a"
+        assert TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.fetch_global().pandoc_bin == "pandoc-a"
 
     def test_clone_override_does_not_mutate_global_singleton(self) -> None:
         # Arrange
-        base = _AliasFieldSettings.fetch_global()
+        base = TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.fetch_global()
 
         # Act
         cloned = base.clone(pandoc_bin="cloned_pandoc")
@@ -80,12 +80,12 @@ class TestsFlextCoreSettingsValidationAlias:
         # Assert — clone is isolated; global keeps its prior value.
         assert cloned.pandoc_bin == "cloned_pandoc"
         assert base.pandoc_bin == "pandoc"
-        assert _AliasFieldSettings.fetch_global().pandoc_bin == "pandoc"
+        assert TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.fetch_global().pandoc_bin == "pandoc"
 
     def test_clone_without_overrides_is_independent_copy(self) -> None:
         # Arrange
-        _AliasFieldSettings.update_global(pandoc_bin="global_pandoc")
-        base = _AliasFieldSettings.fetch_global()
+        TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.update_global(pandoc_bin="global_pandoc")
+        base = TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.fetch_global()
 
         # Act
         copy = base.clone()
@@ -96,18 +96,18 @@ class TestsFlextCoreSettingsValidationAlias:
 
     def test_fetch_global_overrides_yield_isolated_snapshot(self) -> None:
         # Arrange — materialize the singleton so overrides route through clone.
-        _AliasFieldSettings.fetch_global()
+        TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.fetch_global()
 
         # Act — overrides on fetch_global must not touch the shared singleton.
-        snapshot = _AliasFieldSettings.fetch_global(overrides={"pandoc_bin": "snap"})
+        snapshot = TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.fetch_global(overrides={"pandoc_bin": "snap"})
 
         # Assert
         assert snapshot.pandoc_bin == "snap"
-        assert _AliasFieldSettings.fetch_global().pandoc_bin == "pandoc"
+        assert TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.fetch_global().pandoc_bin == "pandoc"
 
     def test_model_dump_exposes_override_through_public_field_name(self) -> None:
         # Arrange
-        settings = _AliasFieldSettings.update_global(pandoc_bin="dumped_pandoc")
+        settings = TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.update_global(pandoc_bin="dumped_pandoc")
 
         # Act
         dumped = settings.model_dump()
@@ -118,10 +118,7 @@ class TestsFlextCoreSettingsValidationAlias:
     def test_unknown_override_key_raises_value_error(self) -> None:
         # Act / Assert — typo guard rejects undeclared fields at the boundary.
         with pytest.raises(ValueError, match="Unknown settings override"):
-            _AliasFieldSettings.update_global(not_a_field="x")
+            TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.update_global(not_a_field="x")
 
 
 __all__: t.MutableSequenceOf[str] = ["TestsFlextCoreSettingsValidationAlias"]
-
-
-_AliasFieldSettings = TestsFlextCoreSettingsValidationAlias._AliasFieldSettings
