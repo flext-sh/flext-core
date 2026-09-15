@@ -90,11 +90,6 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
         if raw_user_result.failure:
             msg = raw_user_result.error or c.Tests.USER_NOT_FOUND
             raise e.BaseError(msg)
-        raw_user = raw_user_result.value
-        if not isinstance(raw_user, tm.Tests.User):
-            msg = c.Tests.USER_NOT_FOUND
-            raise e.BaseError(msg)
-        user: tm.Tests.User | str = raw_user
         for operation in case.operations:
             if operation == "get_email":
                 user = user.email if isinstance(user, tm.Tests.User) else user

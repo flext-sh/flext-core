@@ -52,7 +52,7 @@ class TestsFlextCoreResultExceptionSafeCallable(TestsFlextResultExceptionCarryin
         def divide(a: int, b: int) -> float:
             return a / b
 
-        chained: p.Result[float] = divide(10, 2).flat_map(lambda value: r.ok(value + 1))  # type: ignore[return-value]
+        chained: p.Result[float] = divide(10, 2).flat_map(lambda value: r.ok(value + 1))
         tm.that(chained.success, eq=True)
         tm.that(chained.value, eq=6.0)
 
