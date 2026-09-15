@@ -8,15 +8,13 @@ a foreign result-like value.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 import pytest
 from flext_tests import r, tm
 
 from flext_core import FlextResult, e, m
-
-if TYPE_CHECKING:
-    from tests.protocols import p
+from tests.protocols import p
 
 
 class _ForeignOk(m.BaseModel):

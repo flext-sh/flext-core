@@ -83,20 +83,27 @@ if TYPE_CHECKING:
             """Copy an abstract result into this concrete facade."""
             ...
 
-else:
-
-    class FlextResult[T](_FlextResult[T]):
-        """Type-safe result with monadic railway-oriented operations."""
-
         @classmethod
-        def ok(cls, value: T) -> p.Result[T]:
-            """Create a successful result carrying ``value``."""
-            return cast("p.Result[T]", ok_result(cls, value))
-
-        @classmethod
-        def from_result[V](cls, source: prt.Result[V]) -> p.Result[V]:
+        def copy_from_result[V](cls, source: p.Result[V]) -> p.Result[V]:
             """Copy an abstract result into this concrete facade."""
-            return cast("p.Result[V]", copy_result(cls, source))
+            ...
+
+        @classmethod
+        def from_validation[ModelT: t.BaseModelType](
+            cls, data: object, model: type[ModelT]
+        ) -> p.Result[ModelT]:
+            """Validate data against a Pydantic model and return a result."""
+            ...
+
+        @classmethod
+        def successful_result(cls, obj: object) -> bool:
+            """Check if object is a successful result."""
+            ...
+
+        @classmethod
+        def failed_result(cls, obj: object) -> bool:
+            """Check if object is a failed result."""
+            ...
 
 
 r = FlextResult

@@ -172,6 +172,7 @@ class FlextProtocolsResult:
             self, *, mode: str = "python"
         ) -> t.MappingKV[str, ts.JsonPayload | None]: ...
 
+    @runtime_checkable
     class ResultFactory(Protocol):
         """Structural factory contract for the concrete result family."""
 
@@ -193,6 +194,20 @@ class FlextProtocolsResult:
             error_data: t.JsonMapping | None = None,
             exception: BaseException | None = None,
         ) -> object: ...
+
+        @classmethod
+        def copy_from_result[V](
+            cls, source: FlextProtocolsResult.Result[V]
+        ) -> object: ...
+
+        @classmethod
+        def from_validation(cls, data: object, model: type[object]) -> object: ...
+
+        @classmethod
+        def failed_result(cls, result: object) -> bool: ...
+
+        @classmethod
+        def successful_result(cls, result: object) -> bool: ...
 
         def __init__(self, *, value: object, success: bool) -> None: ...
 

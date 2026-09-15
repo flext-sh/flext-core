@@ -19,10 +19,10 @@ import pytest
 from flext_tests import h, r
 
 from tests.base import s
+from tests.models import m
 
 if TYPE_CHECKING:
     from tests.protocols import p
-    from tests.models import m
 
 
 class TestsFlextHandlerDecoratorEdges:

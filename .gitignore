@@ -53,9 +53,12 @@ uv.lock
 /.aihub/
 /.cursor/mcp.json
 
+<<<<<<< Updated upstream
 # Banned residue (never source, any profile)
 *aihub-prior*
 
+=======
+>>>>>>> Stashed changes
 # RESIDUE: never track backups or repo-local policy copies
 *.bak
 config/build-constraints.txt
