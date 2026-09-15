@@ -49,6 +49,7 @@ class FlextUtilitiesConfig:
         ConstructorError = yaml.constructor.ConstructorError
         SafeLoader = yaml.SafeLoader
         YAMLError = yaml.YAMLError
+        BaseResolver = yaml.resolver.BaseResolver
 
     _EXPAND_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
         r"\$\{(?P<name>[A-Za-z_][A-Za-z0-9_]*)(?::-(?P<default>[^{}]*))?\}"
