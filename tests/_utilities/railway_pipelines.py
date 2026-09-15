@@ -38,11 +38,13 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
         )
         for operation in case.operations:
             if operation == "get_email":
-                result = result.map(
-                    lambda user: (
-                        user.email if isinstance(user, tm.Tests.User) else str(user)
-                    )
-                )
+
+                def _get_email(
+                    user: str | tm.Tests.User | m.Tests.EmailResponse,
+                ) -> str:
+                    return user.email if isinstance(user, tm.Tests.User) else str(user)
+
+                result = result.map(_get_email)
             elif operation == "send_email":
 
                 def _send(
@@ -56,15 +58,23 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
                     ).execute()
 
                 email_result: p.Result[m.Tests.EmailResponse] = result.flat_map(_send)
-                result = email_result.map(lambda response: response)
+
+                def _identity(response: m.Tests.EmailResponse) -> m.Tests.EmailResponse:
+                    return response
+
+                result = email_result.map(_identity)
             elif operation == "get_status":
-                result = result.map(
-                    lambda response: (
+
+                def _get_status(
+                    response: str | tm.Tests.User | m.Tests.EmailResponse,
+                ) -> str:
+                    return (
                         response.status
                         if isinstance(response, m.Tests.EmailResponse)
                         else str(response)
                     )
-                )
+
+                result = result.map(_get_status)
         return result
 
     @staticmethod

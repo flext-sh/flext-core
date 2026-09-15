@@ -59,6 +59,11 @@ _ALIASES: tuple[tuple[object, str], ...] = (
 )
 
 
+def _increment_step(value: int) -> p.Result[int]:
+    """Fallible increment used to exercise ``flat_map`` bindings."""
+    return r[int].ok(value + 1)
+
+
 class TestsFlextCorePublicApiContract:
     """Assert the observable behavior promised by the flext_core public surface."""
 
@@ -152,8 +157,8 @@ class TestsFlextCorePublicApiContract:
     def test_flat_map_chains_success_and_short_circuits_failure(self) -> None:
         """``flat_map`` binds the next fallible step, skipping it on failure."""
         # Arrange / Act
-        chained = r.ok(3).flat_map(lambda v: r.ok(v + 1))
-        short = r.fail("boom").flat_map(lambda v: r.ok(v + 1))
+        chained = r[int].ok(3).flat_map(_increment_step)
+        short = r[int].fail("boom").flat_map(_increment_step)
         # Assert
         assert chained.value == 4
         assert short.failure is True

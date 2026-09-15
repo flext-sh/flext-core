@@ -12,7 +12,9 @@ repos:
     # pre-commit is the fast mutation pass and runs the CI gate set
     # (CI=Y). pre-push is the local blocking gate and runs
     # the full set with CI=N. Context never changes the
-    # declared operation or narrows its complete gate composition.
+    # declared operation. Pytest deselects tooling.tools.pytest.ci_excluded_markers
+    # only with CI=Y, shared by CI and pre-commit. Local and
+    # pre-push runs retain those tests; deselection is recorded in test reports.
     # Every hook step owns a shell because Git exports repository-local state,
     # including GIT_INDEX_FILE during pre-commit. A member hook that delegates
     # setup to its repository root must clear those variables first or the root
