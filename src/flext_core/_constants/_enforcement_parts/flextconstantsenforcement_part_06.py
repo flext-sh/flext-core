@@ -153,7 +153,7 @@ class FlextConstantsEnforcementTargets:
     """
 
     ENFORCEMENT_ACCESSOR_EXTERNAL_CONTRACTS: Final[frozenset[str]] = frozenset({
-        "get_field_value",
+        "get_field_value"
     })
     """Accessor names owned by immutable external framework contracts.
 
