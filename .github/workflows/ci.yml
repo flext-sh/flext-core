@@ -288,7 +288,7 @@ jobs:
       - name: Release plan and guard
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
-        run: make release-plan 
+        run: make release-plan
   # End SECTION: release-plan job
 
   # === SECTION: merge-guard job (managed) ===
