@@ -12,7 +12,6 @@ if TYPE_CHECKING:
     from flext_tests import c, d, e, h, m, p, r, s, t, td, tf, tk, tm, tv, u, x
 
     from . import _models, _utilities
-    from .test_beartype_module_callables import TestsFlextCoreBeartypeModuleCallables
     from .test_constants_new import TestsFlextConstantsNew
     from .test_coverage_loggings import TestsFlextCoverageLoggings
     from .test_dispatcher import TestsFlextCoreDispatcher
@@ -26,7 +25,6 @@ if TYPE_CHECKING:
     from .test_utilities_coverage import TestsFlextCoreUtilitiesCoverage
 __all__: tuple[str, ...] = (
     "TestsFlextConstantsNew",
-    "TestsFlextCoreBeartypeModuleCallables",
     "TestsFlextCoreDispatcher",
     "TestsFlextCoreRegistry",
     "TestsFlextCoreSettingsValidationAlias",
@@ -60,9 +58,6 @@ _LAZY_IMPORTS = MappingProxyType(
         MappingProxyType({
             "._models": ("_models",),
             "._utilities": ("_utilities",),
-            ".test_beartype_module_callables": (
-                "TestsFlextCoreBeartypeModuleCallables",
-            ),
             ".test_constants_new": ("TestsFlextConstantsNew",),
             ".test_coverage_loggings": ("TestsFlextCoverageLoggings",),
             ".test_dispatcher": ("TestsFlextCoreDispatcher",),

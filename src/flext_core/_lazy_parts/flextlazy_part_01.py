@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib
 import sys
 from collections.abc import Callable, Mapping, Sequence
+from importlib.util import resolve_name
 from typing import TYPE_CHECKING
 
 from pydantic import (
@@ -107,10 +108,10 @@ class FlextLazy(BaseModel):
         out: LazyImportDict = {}
         for name, entry in validated.items():
             if isinstance(entry, str):
-                out[name] = f"{module_path}{entry}" if entry.startswith(".") else entry
+                out[name] = self._child_path(entry, module_path)
                 continue
             target, attr = self._alias_adapter.validate_python(entry)
-            resolved = f"{module_path}{target}" if target.startswith(".") else target
+            resolved = self._child_path(target, module_path)
             out[name] = (resolved, attr)
 
         self.normalized_map_cache[cache_key] = out
@@ -167,7 +168,7 @@ class FlextLazy(BaseModel):
         if not path.startswith("."):
             return path
         if module_name:
-            return f"{module_name}{path}"
+            return resolve_name(path, module_name)
         raise ValueError(self.err_relative_path_requires_module)
 
     def reset(self) -> None:
