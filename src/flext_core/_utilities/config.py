@@ -87,6 +87,10 @@ class FlextUtilitiesConfig:
                 return r[t.JsonMapping].ok(
                     FlextUtilitiesConfig.Yaml.safe_load_file(path)
                 )
+            except yaml.YAMLError as exc:
+                return r[t.JsonMapping].fail(
+                    f"YAML parse error: {exc}", exception=exc
+                )
             except OSError as exc:
                 return r[t.JsonMapping].fail(f"YAML read error: {exc}", exception=exc)
 
