@@ -89,6 +89,7 @@ __all__: tuple[str, ...] = (
     "__version_info__",
     "c",
     "config",
+    "core",
     "d",
     "e",
     "h",
@@ -109,7 +110,7 @@ _LAZY_IMPORTS = MappingProxyType(
         MappingProxyType({
             "._config": ("FlextConfig", "config"),
             "._settings": ("FlextSettings", "settings"),
-            ".api": ("FlextApi",),
+            ".api": ("FlextApi", "core"),
             ".base": ("FlextBase",),
             ".cli": ("FlextCli",),
             ".constants": ("FlextConstants", "FlextConstantsEnforcement", "c"),
