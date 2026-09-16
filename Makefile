@@ -1100,6 +1100,9 @@ _builtin_test_all: _builtin_require_environment
 # fmt applies corrections and reports remaining diagnostics without failing:
 # violations are expected and their repair belongs to fix; only a real
 # tool failure (ruff exit >= 2) breaks the Make verb.
+# fmt applies corrections and reports remaining diagnostics without failing:
+# violations are expected and their repair belongs to fix; only a real
+# tool failure (ruff exit >= 2) breaks the Make verb.
 # Their reports preserve the same verdict as the underlying quality gates.
 _builtin_fmt_all: _builtin_require_environment
 	@set -eu; \
