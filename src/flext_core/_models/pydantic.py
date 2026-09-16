@@ -204,9 +204,12 @@ class FlextModelsPydantic:
     # Schema and JSON utilities (from pydantic_core)
     SchemaValidator = SchemaValidator
 
-    # Settings sources (from pydantic_settings)
+    # Settings sources (from pydantic_settings). ``PydanticBaseSettings`` is the
+    # raw base that ``settings_customise_sources`` declares for ``settings_cls``;
+    # overrides annotate it so their signature matches the inherited hook.
+    PydanticBaseSettings = PydanticBaseSettings
     EnvSettingsSource = EnvSettingsSource
     PydanticBaseSettingsSource = PydanticBaseSettingsSource
     YamlConfigSettingsSource = YamlConfigSettingsSource
-    ConfigFileSourceType = _ConfigFileSourceType
+    type ConfigFileSourceType = _ConfigFileSourceType
     Traversable = _Traversable

@@ -38,15 +38,9 @@ from pydantic_settings import (
     YamlConfigSettingsSource,
 )
 from pydantic_settings.sources import PathType
-from pydantic_settings.sources.types import ConfigFileSourceType
 from yaml import MappingNode, SafeLoader
 from yaml.constructor import ConstructorError
 from yaml.resolver import BaseResolver
-
-try:
-    from yaml import CSafeLoader
-except ImportError:  # libyaml not installed — fall back to pure-Python loader
-    CSafeLoader = SafeLoader
 
 from ._settings import app_env_prefix, platform_config_root
 
@@ -197,23 +191,6 @@ class FlextConfig(BaseSettings):
     # the empty default preserves deterministic directory auto-discovery.
     CONFIG_FILENAMES: ClassVar[tuple[str, ...]] = ()
     YAML_CONFIG_SECTION: ClassVar[str | None] = None
-
-    # Re-exported for leaf-module consumers (e.g., ai-hub/_config.py) that need
-    # pydantic/pydantic-settings/yaml primitives without importing the m/t/u
-    # facade chain directly.
-    JsonValue: ClassVar = JsonValue
-    BaseSettings: ClassVar = BaseSettings
-    PydanticBaseSettingsSource: ClassVar = PydanticBaseSettingsSource
-    SettingsConfigDict: ClassVar = SettingsConfigDict
-    YamlConfigSettingsSource: ClassVar = YamlConfigSettingsSource
-    ConfigFileSourceType: ClassVar = ConfigFileSourceType
-    CSafeLoader: ClassVar[type] = CSafeLoader
-    SafeLoader: ClassVar[type] = SafeLoader
-    MappingNode: ClassVar[type] = MappingNode
-    ConstructorError: ClassVar[type] = ConstructorError
-    BaseResolver: ClassVar[type] = BaseResolver
-    Traversable: ClassVar = Traversable
-    PathType: ClassVar = PathType
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         frozen=True, extra="allow", env_prefix="FLEXT_CONFIG_"
