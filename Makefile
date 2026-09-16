@@ -1097,23 +1097,11 @@ _builtin_test_all: _builtin_require_environment
 
 # Ruff is the style/autofix rule (make.ruff in codegen.yaml). Every
 # invocation uses --preview. Never weaken ruff to keep a file; change the code.
-# fmt applies corrections and reports remaining diagnostics without failing:
-# violations are expected and their repair belongs to fix; only a real
-# tool failure (ruff exit >= 2) breaks the Make verb.
+# fmt and fix apply corrections and fail while diagnostics remain.
 # Their reports preserve the same verdict as the underlying quality gates.
 _builtin_fmt_all: _builtin_require_environment
-	@set -eu; \
-		$(UV_RUN) ruff format --preview $(RUFF_PATHS); \
-		if $(UV_RUN) ruff check --preview --fix --unsafe-fixes $(RUFF_PATHS); then \
-			printf 'INFO: fmt lint clean\n'; \
-		else \
-			stamprc=$$?; \
-			if [ $$stamprc -le 1 ]; then \
-				printf 'INFO: fmt diagnostics remain (report-only, repair belongs to fix)\n'; \
-			else \
-				exit $$stamprc; \
-			fi; \
-		fi
+	@$(UV_RUN) ruff format --preview $(RUFF_PATHS)
+	@$(UV_RUN) ruff check --preview --fix --unsafe-fixes $(RUFF_PATHS)
 
 _builtin_fix_all: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) check run --repository-root "$(PROJECT_ROOT)" --gates "lint,markdown,canonical-alias,smells" --projects . --apply --report-findings
