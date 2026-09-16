@@ -45,7 +45,7 @@ jobs:
           test -z "$(git status --porcelain --untracked-files=all)"
 
       - name: Docs lifecycle (blocking)
-        run: make docs 
+        run: make docs
 
       # Failure diagnostics execute only after the original Make step has
       # already propagated its exact status to Actions.
@@ -105,7 +105,7 @@ jobs:
         run: make setup
 
       - name: Build site
-        run: make docs 
+        run: make docs
 
       - name: Verify byte-identical repository
         run: |

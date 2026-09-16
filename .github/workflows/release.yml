@@ -96,7 +96,7 @@ jobs:
       - name: Boot
         run: make setup
       - name: Release pull request
-        run: make release-version 
+        run: make release-version
 
   publish:
     name: Tag, build and publish the release commit
@@ -125,8 +125,8 @@ jobs:
       - name: Boot
         run: make setup
       - name: Tag
-        run: make release-tag 
+        run: make release-tag
       - name: Build receipt
-        run: make release-build 
+        run: make release-build
       - name: Publish
         run: make publication  INDEX=Y
