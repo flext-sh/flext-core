@@ -147,9 +147,7 @@ class TestsFlextCoreResultFactoryDip:
         tm.that(rebuilt.error_data, eq={"k": 1})
         assert isinstance(rebuilt, FlextResult)
 
-    def test_from_result_preserves_exception_identity_on_flext_result(
-        self,
-    ) -> None:
+    def test_from_result_preserves_exception_identity_on_flext_result(self) -> None:
         cause = RuntimeError("root-cause")
         source: p.Result[int] = r[int].fail(
             "copy-exc", error_code="E_EXC", exception=cause
