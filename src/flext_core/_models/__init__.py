@@ -24,10 +24,20 @@ if TYPE_CHECKING:
     from ._context._proxy_var import FlextModelsContextProxyVar
     from ._context._scope import FlextModelsContextScope
     from ._context._tokens import FlextModelsContextTokens
+    from ._cqrs_parts.flextmodelscqrs_part_01 import CqrsPagination
     from ._enforcement._base import EnforcementModelBase, FlextModelsEnforcementBase
     from ._enforcement._catalog import FlextModelsEnforcementCatalog
     from ._enforcement._params import FlextModelsEnforcementParams
     from ._enforcement._sources import FlextModelsEnforcementSources
+    from ._project_metadata_parts.flextmodelsprojectmetadata_part_01 import (
+        PyprojectIngressContract,
+    )
+    from ._project_metadata_parts.flextmodelsprojectmetadata_part_03 import (
+        ProjectMetadataAggregates,
+    )
+    from ._project_metadata_parts.flextmodelsprojectmetadata_part_04 import (
+        ProjectMetadataDocument,
+    )
     from .base import FlextModelsBase
     from .builder import FlextModelsBuilder
     from .collections import FlextModelsCollections
@@ -50,6 +60,7 @@ if TYPE_CHECKING:
     from .service import FlextModelsService
     from .settings import FlextModelsSettings
 __all__: tuple[str, ...] = (
+    "CqrsPagination",
     "EnforcementModelBase",
     "FlextModelsBase",
     "FlextModelsBuilder",
@@ -82,6 +93,9 @@ __all__: tuple[str, ...] = (
     "FlextModelsRegistry",
     "FlextModelsService",
     "FlextModelsSettings",
+    "ProjectMetadataAggregates",
+    "ProjectMetadataDocument",
+    "PyprojectIngressContract",
     "_base_parts",
     "_container_parts",
     "_context",
@@ -104,6 +118,7 @@ _LAZY_IMPORTS = MappingProxyType(
             "._context._scope": ("FlextModelsContextScope",),
             "._context._tokens": ("FlextModelsContextTokens",),
             "._cqrs_parts": ("_cqrs_parts",),
+            "._cqrs_parts.flextmodelscqrs_part_01": ("CqrsPagination",),
             "._enforcement": ("_enforcement",),
             "._enforcement._base": (
                 "EnforcementModelBase",
@@ -114,6 +129,15 @@ _LAZY_IMPORTS = MappingProxyType(
             "._enforcement._sources": ("FlextModelsEnforcementSources",),
             "._exception_params_parts": ("_exception_params_parts",),
             "._project_metadata_parts": ("_project_metadata_parts",),
+            "._project_metadata_parts.flextmodelsprojectmetadata_part_01": (
+                "PyprojectIngressContract",
+            ),
+            "._project_metadata_parts.flextmodelsprojectmetadata_part_03": (
+                "ProjectMetadataAggregates",
+            ),
+            "._project_metadata_parts.flextmodelsprojectmetadata_part_04": (
+                "ProjectMetadataDocument",
+            ),
             ".base": ("FlextModelsBase",),
             ".builder": ("FlextModelsBuilder",),
             ".collections": ("FlextModelsCollections",),
