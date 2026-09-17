@@ -50,7 +50,7 @@ unexpected runtime exceptions into success or ad-hoc error dictionaries.
 ```python
 from __future__ import annotations
 
-from flext_core import r
+from flext_core import p, r
 
 
 def safe_divide(a: float, b: float) -> p.Result[float]:
@@ -76,12 +76,11 @@ assert isinstance(settings.model_dump(), dict)
 Subprojects extend `FlextSettings` with their own `env_prefix`:
 
 ```python
-from flext_core import FlextSettings
-from pydantic import SettingsConfigDict
+from flext_core import FlextSettings, m
 
 
 class GreetingSettings(FlextSettings):
-    model_config = SettingsConfigDict(env_prefix="GREETING_", extra="forbid")
+    model_config = m.SettingsConfigDict(env_prefix="GREETING_", extra="forbid")
 ```
 
 ## Container

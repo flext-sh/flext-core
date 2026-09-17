@@ -107,7 +107,7 @@ Each example produces structured output demonstrating the patterns. Examples inc
 
 - **Python**: 3.13+ (required)
 - **Installation**: `pip install -e .` from project root
-- **Dependencies**: All dependencies installed via `poetry install` or `pip install -e .`
+- **Dependencies**: All dependencies installed via `uv sync` or `pip install -e .`
 
 ## Next Steps
 
