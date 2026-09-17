@@ -24,8 +24,8 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import e
-from tests.typings import t
+from flext_core import e, m
+from tests import t
 
 _CLEAN_MODULE = "tests.fixtures.clean_module"
 _BAD_MODULE = "tests_flext_enforcement_integration_fixtures_bad"
@@ -36,45 +36,43 @@ import typing
 from collections.abc import MutableSequence
 from typing import Annotated, ClassVar
 
-from flext_core import m as core_m
-from flext_core.models import FlextModelsNamespace
-from tests.models import m
-from tests.utilities import u
+from flext_core import m
+from tests import u
 
 
-class TestsFlextBadAnyField(core_m.ArbitraryTypesModel):
+class TestsFlextBadAnyField(m.ArbitraryTypesModel):
     data: Annotated[typing.Any, u.Field(description="Intentionally Any.")] = None
 
 
-class TestsFlextBadBareCollection(core_m.ArbitraryTypesModel):
+class TestsFlextBadBareCollection(m.ArbitraryTypesModel):
     items: list[str] = u.Field(default_factory=list, description="Bare list.")
 
 
-class TestsFlextBadMutableDefault(core_m.ArbitraryTypesModel):
+class TestsFlextBadMutableDefault(m.ArbitraryTypesModel):
     items: Annotated[
         MutableSequence[str],
         u.Field(description="Mutable default list."),
     ] = ["x"]
 
 
-class TestsFlextBadMissingDesc(core_m.ArbitraryTypesModel):
+class TestsFlextBadMissingDesc(m.ArbitraryTypesModel):
     undocumented: str = ""
 
 
-class TestsFlextBadInlineUnion(core_m.ArbitraryTypesModel):
+class TestsFlextBadInlineUnion(m.ArbitraryTypesModel):
     value: Annotated[
         str | int | float | bool | bytes,
         u.Field(description="Five-arm inline union."),
     ] = ""
 
 
-class TestsFlextBadFrozen(core_m.ImmutableValueModel):
+class TestsFlextBadFrozen(m.ImmutableValueModel):
     model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
 
     payload: Annotated[str, u.Field(description="Data payload.")] = ""
 
 
-class TestsFlextBadAccessors(FlextModelsNamespace):
+class TestsFlextBadAccessors(m.FlextModelsNamespace):
     def get_value(self) -> int:
         return 0
 
@@ -85,15 +83,15 @@ class TestsFlextBadAccessors(FlextModelsNamespace):
         return True
 
 
-class TestsFlextBadWorkerSettings(FlextModelsNamespace):
+class TestsFlextBadWorkerSettings(m.FlextModelsNamespace):
     pass
 
 
-class TestsFlextBadConstants(FlextModelsNamespace):
+class TestsFlextBadConstants(m.FlextModelsNamespace):
     items: ClassVar[list[str]] = ["a", "b"]
 
 
-class TestsFlextBadClassVarConstant(FlextModelsNamespace):
+class TestsFlextBadClassVarConstant(m.FlextModelsNamespace):
     GROUPS: ClassVar[frozenset[str]] = frozenset({"a", "b"})
 """
 

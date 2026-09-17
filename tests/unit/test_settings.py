@@ -13,10 +13,9 @@ import sys
 from pathlib import Path
 
 import pytest
-from flext_tests import u
 
 from flext_core import FlextSettings
-from tests import m
+from tests import m, u
 
 
 class TestsFlextCoreSettings:
