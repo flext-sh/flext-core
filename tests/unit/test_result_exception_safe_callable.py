@@ -1,4 +1,11 @@
-"""Behavioral tests for r.safe / create_from_callable exception carrying."""
+"""Behavioral tests for r.safe / create_from_callable exception carrying.
+
+Every test asserts the public contract of ``r.safe`` and
+``r[T].create_from_callable`` through observable outcome only: the
+success/failure flag, the carried value, the carried error message, the
+carried error code, and the carried exception object. No private attribute,
+no source-text assertion, no mock, and no collaborator patching.
+"""
 
 from __future__ import annotations
 
@@ -14,6 +21,8 @@ if TYPE_CHECKING:
 
 
 class TestsFlextCoreResultExceptionSafeCallable(TestsFlextResultExceptionCarrying):
+    """Public-contract behavior of ``r.safe`` and ``r[T].create_from_callable``."""
+
     def test_safe_carries_exception(self) -> None:
         @r.safe
         def divide(a: int, b: int) -> float:
@@ -43,7 +52,10 @@ class TestsFlextCoreResultExceptionSafeCallable(TestsFlextResultExceptionCarryin
         def divide(a: int, b: int) -> float:
             return a / b
 
-        mapped: p.Result[float] = divide(10, 2).map(lambda value: value * 2)
+        def double(value: float) -> float:
+            return value * 2
+
+        mapped: p.Result[float] = divide(10, 2).map(double)
         tm.that(mapped.success, eq=True)
         tm.that(mapped.value, eq=10.0)
 
@@ -52,7 +64,10 @@ class TestsFlextCoreResultExceptionSafeCallable(TestsFlextResultExceptionCarryin
         def divide(a: int, b: int) -> float:
             return a / b
 
-        chained: p.Result[float] = divide(10, 2).flat_map(lambda value: r.ok(value + 1))
+        def bump(value: float) -> p.Result[float]:
+            return r.ok(value + 1)
+
+        chained: p.Result[float] = divide(10, 2).flat_map(bump)
         tm.that(chained.success, eq=True)
         tm.that(chained.value, eq=6.0)
 
@@ -61,7 +76,10 @@ class TestsFlextCoreResultExceptionSafeCallable(TestsFlextResultExceptionCarryin
         def divide(a: int, b: int) -> float:
             return a / b
 
-        mapped: p.Result[float] = divide(10, 0).map(lambda value: value * 2)
+        def double(value: float) -> float:
+            return value * 2
+
+        mapped: p.Result[float] = divide(10, 0).map(double)
         tm.that(mapped.failure, eq=True)
         tm.that(mapped.exception, is_=ZeroDivisionError)
 
