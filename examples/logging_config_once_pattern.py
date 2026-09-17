@@ -117,7 +117,7 @@ def main() -> None:
     db_config = m.ConfigMap(
         root={"host": c.LOCALHOST, "port": 5432, "database": "mydb", "pool_size": 10}
     )
-    db_service = ExamplesFlextDatabaseService.model_construct(db_config=db_config)
+    db_service = ExamplesFlextDatabaseService(db_config=db_config)
     db_service.logger.info("Example started", example="database_service")
     result = db_service.execute()
     if result.success:
