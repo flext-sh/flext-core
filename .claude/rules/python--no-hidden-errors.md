@@ -1,6 +1,6 @@
 ---
 paths:
-- '**/*.py'
+  - "**/*.py"
 ---
 
 # Python failures remain explicit

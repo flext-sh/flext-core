@@ -205,8 +205,11 @@ class FlextModelsPydantic:
     SchemaValidator = SchemaValidator
 
     # Settings sources (from pydantic_settings)
-    # The Pydantic hook contract accepts this wide base. Consumers that override
-    # settings_customise_sources must use it rather than narrowing to BaseSettings.
+    # NOTE (multi-agent, flext-3jjja): the Pydantic hook contract accepts this wide
+    # base; consumers overriding ``settings_customise_sources`` annotate
+    # ``settings_cls: type[PydanticBaseSettings]`` through the facade (Liskov-correct
+    # parameter widening). Removing or narrowing this alias re-forces forbidden
+    # direct ``pydantic_settings`` imports in every fleet consumer.
     PydanticBaseSettings = PydanticBaseSettings
     EnvSettingsSource = EnvSettingsSource
     PydanticBaseSettingsSource = PydanticBaseSettingsSource

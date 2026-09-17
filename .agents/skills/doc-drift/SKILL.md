@@ -1,6 +1,6 @@
 ---
 name: doc-drift
-description: 'documentation drift, runtime contracts, authority reconciliation'
+description: "documentation drift, runtime contracts, authority reconciliation"
 metadata:
   aihub.tags: '["policy:atomic-effects","policy:causal-subprocess","policy:fail-loud","policy:no-fallback","policy:preflight-before-effects","policy:strict-execution","policy:zero-residue","provenance:agents-owned","role:documentation","updates:manual","usage:on-demand"]'
 ---

@@ -1,17 +1,18 @@
 # flext-core Contract Budget (c/t/p/m/u)
 
 <!-- TOC START -->
+
 - [Rules (locked)](#rules-locked)
 - [Baseline](#baseline)
-- [Budget: t.* (FlextTypingBase + FlextTypesServices + FlextTypingContainers + FlextTypesPydantic + FlextTypesAnnotateds)](#budget-t-flexttypingbase-flexttypesservices-flexttypingcontainers-flexttypespydantic-flexttypesannotateds)
+- [Budget: t.\* (FlextTypingBase + FlextTypesServices + FlextTypingContainers + FlextTypesPydantic + FlextTypesAnnotateds)](#budget-t-flexttypingbase-flexttypesservices-flexttypingcontainers-flexttypespydantic-flexttypesannotateds)
   - [FlextTypingBase — KEEP (flat, composable)](#flexttypingbase-keep-flat-composable)
   - [FlextTypingBase — REMOVE / MIGRATE](#flexttypingbase-remove-migrate)
   - [FlextTypesServices — KEEP (signature composition only)](#flexttypesservices-keep-signature-composition-only)
   - [FlextTypesServices — REMOVE](#flexttypesservices-remove)
-- [Budget: p.*(FlextProtocols*)](#budget-pflextprotocols)
-- [Budget: m.*(FlextModels*)](#budget-mflextmodels)
-- [Budget: u.* (FlextUtilities)](#budget-u-flextutilities)
-- [Budget: c.* (FlextConstants)](#budget-c-flextconstants)
+- [Budget: p._(FlextProtocols_)](#budget-pflextprotocols)
+- [Budget: m._(FlextModels_)](#budget-mflextmodels)
+- [Budget: u.\* (FlextUtilities)](#budget-u-flextutilities)
+- [Budget: c.\* (FlextConstants)](#budget-c-flextconstants)
 - [Execution order (strict)](#execution-order-strict)
 - [Invariants audited each module](#invariants-audited-each-module)
 <!-- TOC END -->
@@ -45,7 +46,7 @@
   - 212 total `missing-attribute`
   - balance: mis-wired arguments, unknown-name, implicit-any — cleared as side-effect of A-D
 
-## Budget: t.* (FlextTypingBase + FlextTypesServices + FlextTypingContainers + FlextTypesPydantic + FlextTypesAnnotateds)
+## Budget: t.\* (FlextTypingBase + FlextTypesServices + FlextTypingContainers + FlextTypesPydantic + FlextTypesAnnotateds)
 
 ### FlextTypingBase — KEEP (flat, composable)
 
@@ -98,7 +99,7 @@
 - `TypeOriginSpecifier = TypeHintSpecifier` — remove.
 - `ScopedContainerRegistry`, `ScopedScalarRegistry` — move to `m.*` (container model).
 
-## Budget: p.*(FlextProtocols*)
+## Budget: p._(FlextProtocols_)
 
 Keep only behavioral:
 
@@ -114,7 +115,7 @@ Keep only behavioral:
 Nothing else. All dict/list recursive hints in protocol signatures must switch to `t.FlatContainerMapping` /
 `t.StrMapping` / `m.*` / concrete payload models.
 
-## Budget: m.*(FlextModels*)
+## Budget: m._(FlextModels_)
 
 SSOT for structured/validated payloads. Primary rewiring targets (replace recursive dicts):
 
@@ -140,7 +141,7 @@ Models flagged for validator-consolidation (move custom logic into `field_valida
 
 Each of these gets a pass in Stage B.
 
-## Budget: u.* (FlextUtilities)
+## Budget: u.\* (FlextUtilities)
 
 Keep only pure helpers:
 
@@ -157,7 +158,7 @@ Remove / collapse:
 - `reliability.py` audit vs. actual callers
 - `logging_context.py` redundant with `m.Context` — trim
 
-## Budget: c.* (FlextConstants)
+## Budget: c.\* (FlextConstants)
 
 Keep domain constants and error codes. Accept runtime tuples relocated from `_typings/base.py`:
 
@@ -172,18 +173,18 @@ Concrete base classes (`ContainerMappingBase`, etc.) move to `_models/containers
 
 ## Execution order (strict)
 
-1. **A1 — Freeze t.***:
+1. **A1 — Freeze t.\***:
    - Delete commented `# DEPRECATED` blocks in `_typings/services.py` and `_typings/core.py`.
    - Remove `ProtocolModelCarrier`, `DomainModelCarrier`, `ResourceCallable`, `HandlerLike`, `TypeOriginSpecifier`,
      `ServiceMap` dup variants, `ScopedContainerRegistry`, `ScopedScalarRegistry` — following grep check that each has
      no active caller or can be inlined.
    - Move `PRIMITIVES_TYPES`/etc. + concrete `*Base` classes out of `_typings/base.py` → `_constants/` or `_models/containers.py`.
    - Rewrite `typeadapters.py` to use `t.FlatContainerMapping` instead of `t.RecursiveContainerMapping`.
-2. **A2 — Freeze p.***: audit every protocol signature; replace any `Mapping[str, Any-nested]` with
+2. **A2 — Freeze p.\***: audit every protocol signature; replace any `Mapping[str, Any-nested]` with
    `t.FlatContainerMapping` or concrete `m.*`.
-3. **B — m.* absorbs validation**: starting with context + domain_event + registry + handler, embed validators; comment
+3. **B — m.\* absorbs validation**: starting with context + domain_event + registry + handler, embed validators; comment
    (`# REWIRE:`) any logic that doesn't fit Pydantic and plan its migration for Stage C.
-4. **C — u.* trim**: rewire utilities to `t.FlatContainerMapping` / `m.*`. Strip narrowing. Each utility module
+4. **C — u.\* trim**: rewire utilities to `t.FlatContainerMapping` / `m.*`. Strip narrowing. Each utility module
    ruff+pyrefly zero before moving on.
 5. **D — Consumer rewiring**: `context.py`, `handlers.py`, `runtime.py`, `registry.py`, `service.py`, `mixins.py` →
    canonical paths only.

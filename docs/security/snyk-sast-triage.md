@@ -6,10 +6,10 @@ Gerado do scan Snyk (dump 2026-08-06). Bead: `mro-flgu`
 
 **9 achados** — critical 0, high 0, medium 1, low 8
 
-| categoria | achados |
-|---|---|
-| Use of Hardcoded Passwords | 5 |
-| Use of Hardcoded Credentials | 4 |
+| categoria                    | achados |
+| ---------------------------- | ------- |
+| Use of Hardcoded Passwords   | 5       |
+| Use of Hardcoded Credentials | 4       |
 
 ## Como usar este documento
 
@@ -42,9 +42,9 @@ Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `r
 
 ```python
        39          """Test identifiers and IDs."""
-       40  
+       40
        41          model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
-       42  
+       42
 >>>    43          user_id: Annotated[str, m.Field(description="Default test user identifier")] = (
        44              "test_user_123"
        45          )
@@ -77,7 +77,7 @@ Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `r
 **Local**: `tests/integration/test_service.py:73` · **CWE**: -
 
 ```python
-       69  
+       69
        70      def test_fetch_user_returns_applied_custom_entity(self) -> None:
        71          """fetch_user() returns previously applied custom user data verbatim."""
        72          service = self.UserQueryService()
@@ -113,7 +113,7 @@ Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `r
 **Local**: `tests/unit/test_result_factory_dip.py:169` · **CWE**: -
 
 ```python
-      165  
+      165
       166      def test_fail_from_exception_redacts_sensitive_error_data_keys(self) -> None:
       167          exc = e.OperationError(
       168              "denied",
@@ -131,7 +131,7 @@ Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `r
 **Local**: `tests/unit/test_result_factory_dip.py:215` · **CWE**: -
 
 ```python
-      211  
+      211
       212      def test_fail_explicit_error_data_redacts_sensitive_keys(self) -> None:
       213          result: p.Result[int] = r[int].fail(
       214              "denied",
@@ -149,7 +149,7 @@ Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `r
 **Local**: `tests/unit/test_result_factory_dip.py:226` · **CWE**: -
 
 ```python
-      222  
+      222
       223      def test_fail_explicit_error_data_wins_but_still_redacts_with_exception(
       224          self,
       225      ) -> None:

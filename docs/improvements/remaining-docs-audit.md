@@ -1,6 +1,7 @@
 # Remaining Docs Audit
 
 <!-- TOC START -->
+
 - [Key Findings](#key-findings)
 - [Recommended Remediations](#recommended-remediations)
 <!-- TOC END -->
@@ -11,7 +12,7 @@
 **Date**: 2025-11-15
 **Status**: ⚠️ Cleanup required for legacy bus references
 
-______________________________________________________________________
+---
 
 ## Key Findings
 

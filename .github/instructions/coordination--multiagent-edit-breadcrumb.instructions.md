@@ -1,5 +1,5 @@
 ---
-applyTo: '**/*.py,**/*.md,**/*.toml,**/*.yaml,**/*.yml'
+applyTo: "**/*.py,**/*.md,**/*.toml,**/*.yaml,**/*.yml"
 ---
 
 # Coordinate shared-file edits; never clobber WIP

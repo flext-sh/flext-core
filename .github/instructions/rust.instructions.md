@@ -1,5 +1,5 @@
 ---
-applyTo: '*.rs,**/*.rs,Cargo.toml'
+applyTo: "*.rs,**/*.rs,Cargo.toml"
 ---
 
 # Rust rules

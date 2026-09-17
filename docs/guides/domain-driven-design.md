@@ -1,6 +1,7 @@
 # Domain-Driven Design Guide
 
 <!-- TOC START -->
+
 - [Overview](#overview)
 - [Value Validation with r[T]](#value-validation-with-rt)
 - [Entity Command Flow](#entity-command-flow)
@@ -77,4 +78,4 @@ with redirect_stdout(stream):
 - Keep domain validation deterministic.
 - Model failures explicitly with `r[T]`.
 - Keep orchestration in services/handlers, not in entities.
-de
+  de

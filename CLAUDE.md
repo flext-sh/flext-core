@@ -1,4 +1,5 @@
 <!-- AIHUB-INVIOLABLE-LAW-PRELUDE v1 -->
+
 # AI Hub Inviolable Law — Strict Prelude
 
 1. Truth: never claim done/green/resolved without command, exit code, decisive output.
@@ -13,7 +14,7 @@
 9. Escalation: impossible rule → exact error. Rule conflict → present both with numbers. Unclear → one targeted
    question. Never guess.
 10. Precedence: NEWEST > OLDEST. USER REQUEST > BEADS > ADRs > SKILLs > DOCS > default. Adjust lower/older to
-    higher/newer. Doubt → ASK USER FIRST.
+higher/newer. Doubt → ASK USER FIRST.
 <!-- /AIHUB-INVIOLABLE-LAW-PRELUDE -->
 
 ## CLAUDE.md

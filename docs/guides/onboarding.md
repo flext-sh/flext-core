@@ -6,6 +6,7 @@
 > Project profile: `flext-core`
 
 <!-- TOC START -->
+
 - [Resolve authority](#resolve-authority)
 - [Prepare and discover](#prepare-and-discover)
 - [Establish the baseline](#establish-the-baseline)

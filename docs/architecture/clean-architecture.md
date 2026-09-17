@@ -1,6 +1,7 @@
 # Clean Architecture
 
 <!-- TOC START -->
+
 - [Layer Hierarchy](#layer-hierarchy)
 - [Dependency Rules](#dependency-rules)
 - [Layer Responsibilities](#layer-responsibilities)
@@ -133,4 +134,5 @@ make test-fast
 ```
 
 ```text
+
 ```

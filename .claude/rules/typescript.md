@@ -1,10 +1,10 @@
 ---
 paths:
-- '*.ts'
-- '*.tsx'
-- '**/*.ts'
-- '**/*.tsx'
-- tsconfig.json
+  - "*.ts"
+  - "*.tsx"
+  - "**/*.ts"
+  - "**/*.tsx"
+  - tsconfig.json
 ---
 
 # TypeScript rules

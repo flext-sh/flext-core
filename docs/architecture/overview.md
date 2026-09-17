@@ -1,6 +1,7 @@
 # Architecture Overview
 
 <!-- TOC START -->
+
 - [Layered Topology](#layered-topology)
 - [Layer Catalog (source-aligned)](#layer-catalog-source-aligned)
 - [Key Execution Flows](#key-execution-flows)
@@ -144,4 +145,5 @@ make test-fast
 ```
 
 ```text
+
 ```

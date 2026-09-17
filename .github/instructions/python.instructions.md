@@ -1,5 +1,5 @@
 ---
-applyTo: '*.py,**/*.py,pyproject.toml'
+applyTo: "*.py,**/*.py,pyproject.toml"
 ---
 
 # Python rules

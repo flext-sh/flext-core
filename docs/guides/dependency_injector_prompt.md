@@ -1,6 +1,7 @@
 # dependency-injector pattern prompt
 
 <!-- TOC START -->
+
 - No sections found
 <!-- TOC END -->
 

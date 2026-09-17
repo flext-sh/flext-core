@@ -1,6 +1,6 @@
 ---
 name: code-review-expert
-description: 'code review, correctness analysis, regression detection'
+description: "code review, correctness analysis, regression detection"
 metadata:
   aihub.tags: '["policy:causal-subprocess","policy:fail-loud","policy:no-fallback","policy:preflight-before-effects","policy:strict-execution","provenance:agents-owned","role:review","updates:manual","usage:on-demand"]'
 ---

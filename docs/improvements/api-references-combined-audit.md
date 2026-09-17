@@ -1,6 +1,7 @@
 # API References Combined Audit Report
 
 <!-- TOC START -->
+
 - [Executive Summary](#executive-summary)
 - [Current State by File](#current-state-by-file)
   - [foundation.md (Layers 0, 0.5, 1)](#foundationmd-layers-0-05-1)
@@ -17,7 +18,7 @@
 **Date**: 2025-11-15
 **Status**: ⚠️ Needs minor cleanups (legacy mentions + coverage clarity)
 
-______________________________________________________________________
+---
 
 ## Executive Summary
 
@@ -32,7 +33,7 @@ ______________________________________________________________________
 1. **Alias clarity**: The convenience aliases exported by `flext_core` (`u, t, c, m, p, r, p, e, d, s, x, h`) are
    implied but not explicitly explained in the docs; add a compact cheat sheet to avoid confusion.
 
-______________________________________________________________________
+---
 
 ## Current State by File
 
@@ -62,7 +63,7 @@ ______________________________________________________________________
 - **Strengths**: `FlextSettings`, `FlextLogger`, and `FlextContext` samples map to the current code.
 - **Gaps**: Briefly document protocol usage (runtime-checkable) and how logging picks up request/user context.
 
-______________________________________________________________________
+---
 
 ## Recommended Fixes
 

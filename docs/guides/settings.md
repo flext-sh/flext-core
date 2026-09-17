@@ -1,6 +1,7 @@
 # FLEXT Settings Guide
 
 <!-- TOC START -->
+
 - [Overview](#overview)
 - [Basic Usage](#basic-usage)
 - [Singleton Access](#singleton-access)

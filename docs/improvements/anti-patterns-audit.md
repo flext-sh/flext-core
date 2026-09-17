@@ -1,6 +1,7 @@
 # Anti-Patterns Audit (Current)
 
 <!-- TOC START -->
+
 - [Scope](#scope)
 - [Result pattern sanity](#result-pattern-sanity)
 - [examples-backed sanity](#examples-backed-sanity)

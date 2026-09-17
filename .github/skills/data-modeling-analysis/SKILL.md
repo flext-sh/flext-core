@@ -1,6 +1,6 @@
 ---
 name: data-modeling-analysis
-description: 'data models, serialization boundaries, validation design'
+description: "data models, serialization boundaries, validation design"
 metadata:
   aihub.tags: '["policy:fail-loud","policy:no-fallback","policy:preflight-before-effects","policy:strict-execution","provenance:agents-owned","role:architecture","updates:manual","usage:on-demand"]'
 ---

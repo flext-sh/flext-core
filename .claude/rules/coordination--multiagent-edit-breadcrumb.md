@@ -1,10 +1,10 @@
 ---
 paths:
-- '**/*.py'
-- '**/*.md'
-- '**/*.toml'
-- '**/*.yaml'
-- '**/*.yml'
+  - "**/*.py"
+  - "**/*.md"
+  - "**/*.toml"
+  - "**/*.yaml"
+  - "**/*.yml"
 ---
 
 # Coordinate shared-file edits; never clobber WIP

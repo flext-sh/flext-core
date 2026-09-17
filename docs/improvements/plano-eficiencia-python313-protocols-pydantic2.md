@@ -55,6 +55,7 @@ forte e segurança de contrato.
 ## P0 — aplicar imediatamente (alto impacto / baixo risco)
 
 1. **Trocar runtime protocol dispatch por função pré-compilada no registro**
+
    - Arquivo: `src/flext_core/dispatcher.py`.
    - Ação: no `register_handler()`, resolver uma vez o executor (`dispatch_message` / `handle` / `execute` / callable) e
      armazenar callable final.
@@ -62,6 +63,7 @@ forte e segurança de contrato.
    - Critério de aceite: benchmark de dispatch com ganho de throughput e redução de p95.
 
 2. **Cachear `TypeAdapter` em `ClassVar`/módulo nos validadores quentes**
+
    - Arquivos iniciais:
      - `src/flext_core/_models/cqrs.py` (`validate_pagination`)
      - `src/flext_core/_models/settings.py` (`validate_batch`)
@@ -81,6 +83,7 @@ forte e segurança de contrato.
 ## P1 — estrutural (médio risco, alto retorno)
 
 1. **Adicionar cache de conformidade de protocolo em `_ProtocolIntrospection`**
+
    - Arquivo: `src/flext_core/protocols.py`.
    - Ação:
      - cache para membros exigidos por protocolo;
@@ -96,6 +99,7 @@ forte e segurança de contrato.
 ## P2 — governança e hardening contínuo
 
 1. **Definir guideline oficial de Pydantic v2 para o projeto**
+
    - Documento interno com regras obrigatórias:
      - `default_factory` para coleções mutáveis;
      - `TypeAdapter` cacheado fora de loops/validators quentes;

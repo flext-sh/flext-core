@@ -6,6 +6,7 @@
 > Project profile: `flext-core`
 
 <!-- TOC START -->
+
 - [Start at the workspace root](#start-at-the-workspace-root)
 - [Forward workflow](#forward-workflow)
 - [Architecture and tests](#architecture-and-tests)

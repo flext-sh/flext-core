@@ -1,6 +1,7 @@
 # CQRS Architecture
 
 <!-- TOC START -->
+
 - [Overview](#overview)
 - [Executable Dispatcher Flow](#executable-dispatcher-flow)
 - [Command Handling with r[T]](#command-handling-with-rt)

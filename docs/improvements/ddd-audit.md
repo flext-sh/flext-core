@@ -1,6 +1,7 @@
 # Domain-Driven Design Guide - Audit Report
 
 <!-- TOC START -->
+
 - [Findings](#findings)
 - [Recommended Actions](#recommended-actions)
 <!-- TOC END -->
@@ -11,7 +12,7 @@
 **Date**: 2025-11-15
 **Status**: ✅ Examples compile; adjust integration notes
 
-______________________________________________________________________
+---
 
 ## Findings
 

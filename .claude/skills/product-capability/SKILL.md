@@ -1,6 +1,6 @@
 ---
 name: product-capability
-description: 'product intent, capability contracts, requirement boundaries'
+description: "product intent, capability contracts, requirement boundaries"
 metadata:
   aihub.tags: '["policy:fail-loud","policy:no-fallback","policy:preflight-before-effects","policy:strict-execution","provenance:agents-owned","role:planning","updates:manual","usage:on-demand"]'
 ---

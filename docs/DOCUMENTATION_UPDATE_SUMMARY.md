@@ -1,6 +1,7 @@
 # Documentation Update Summary — 2026-04-14
 
 <!-- TOC START -->
+
 - [Overview](#overview)
 - [Files Updated](#files-updated)
   - [Core Documentation (8 files)](#core-documentation-8-files)
@@ -25,8 +26,8 @@ now reflect current APIs, architecture, and patterns.
 
 ### Core Documentation (8 files)
 
-| File                                      | Status      | Changes                                             |
-| ----------------------------------------- | ----------- | --------------------------------------------------- |
+| File                                      | Status       | Changes                                             |
+| ----------------------------------------- | ------------ | --------------------------------------------------- |
 | `README.md`                               | ✅ Updated   | Features, examples, architecture sections rewritten |
 | `docs/index.md`                           | ✅ Updated   | Version, export count, structure refreshed          |
 | `docs/quick-start.md`                     | ✅ Rewritten | Completely new with practical examples              |
@@ -79,8 +80,8 @@ now reflect current APIs, architecture, and patterns.
 
 ## Major Discrepancies Fixed
 
-| Issue                                                  | Status       |
-| ------------------------------------------------------ | ------------ |
+| Issue                                                  | Status        |
+| ------------------------------------------------------ | ------------- |
 | Version mismatch (0.10 → 0.12)                         | ✅ Fixed      |
 | Incorrect FlextResult API (`.is_success` → `.success`) | ✅ Fixed      |
 | Missing Container methods (`factory()`, `resource()`)  | ✅ Documented |

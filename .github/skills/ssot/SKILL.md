@@ -1,6 +1,6 @@
 ---
 name: ssot
-description: 'single authority, projection convergence, ownership mapping'
+description: "single authority, projection convergence, ownership mapping"
 license: MIT
 metadata:
   aihub.tags: '["policy:atomic-effects","policy:fail-loud","policy:no-fallback","policy:preflight-before-effects","policy:strict-execution","policy:zero-residue","provenance:agents-owned","role:governance","updates:manual","usage:router"]'

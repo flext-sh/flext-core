@@ -345,6 +345,7 @@ CLAUDE.local.md
 !.github/scripts/check-beads-policy.sh
 !.github/scripts/check-cqrs-compliance.sh
 !.github/scripts/install-git-hooks.sh
+!.github/scripts/flext-law-loop.sh
 !tests/fixtures/
 !tests/fixtures/ci/
 !tests/fixtures/ci/docker/
@@ -358,6 +359,9 @@ CLAUDE.local.md
 !.github/workflows/ci.yml
 !.github/workflows/docs.yml
 !.github/workflows/release.yml
+!.github/workflows/_fragments/
+!.github/workflows/_fragments/cross_repo_dependency_credential
+!.github/workflows/_fragments/testmon_cache
 !.qlty/
 !.qlty/qlty.toml
 !.vscode/settings.json

@@ -1,6 +1,7 @@
 # Error Handling Guide
 
 <!-- TOC START -->
+
 - [Overview](#overview)
 - [Basic Pattern](#basic-pattern)
 - [Recovery Pattern](#recovery-pattern)

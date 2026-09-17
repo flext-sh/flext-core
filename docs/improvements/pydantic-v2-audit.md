@@ -1,6 +1,7 @@
 # Pydantic v2 Audit (Current)
 
 <!-- TOC START -->
+
 - [Summary](#summary)
 - [Check: model_dump usage](#check-modeldump-usage)
 - [Check: ConfigDict usage](#check-configdict-usage)

@@ -1,6 +1,6 @@
 ---
 name: dry
-description: 'semantic duplication, god patterns, structural remediation'
+description: "semantic duplication, god patterns, structural remediation"
 license: MIT
 metadata:
   aihub.tags: '["policy:atomic-effects","policy:causal-subprocess","policy:fail-loud","policy:no-fallback","policy:preflight-before-effects","policy:strict-execution","policy:zero-residue","provenance:agents-owned","role:refactoring","updates:manual","usage:router"]'

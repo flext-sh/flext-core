@@ -1,6 +1,7 @@
 # Pydantic v2 Patterns
 
 <!-- TOC START -->
+
 - [Overview](#overview)
 - [Base Model + Field](#base-model-field)
 - [ConfigDict + model_dump](#configdict-modeldump)

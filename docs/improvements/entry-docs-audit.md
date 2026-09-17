@@ -1,6 +1,7 @@
 # Entry Docs Audit
 
 <!-- TOC START -->
+
 - [Highlights](#highlights)
 - [Issues to Address](#issues-to-address)
 - [Recommended Updates](#recommended-updates)
@@ -12,7 +13,7 @@
 **Date**: 2025-11-15
 **Status**: ⚠️ Minor alignment needed (layer listing + dispatcher wording)
 
-______________________________________________________________________
+---
 
 ## Highlights
 

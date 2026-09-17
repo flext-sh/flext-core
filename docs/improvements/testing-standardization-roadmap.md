@@ -1,6 +1,7 @@
 # Roadmap objetivo de padronização de testes (restante do projeto)
 
 <!-- TOC START -->
+
 - [Contexto consolidado (flext)](#contexto-consolidado-flext)
 - [Escopo desta fase](#escopo-desta-fase)
 - [Entregáveis obrigatórios (curto prazo)](#entregveis-obrigatrios-curto-prazo)

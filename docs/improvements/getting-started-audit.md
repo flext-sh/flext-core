@@ -1,6 +1,7 @@
 # Getting Started Guide - Audit Report
 
 <!-- TOC START -->
+
 - [Findings](#findings)
 - [Recommended Actions](#recommended-actions)
 <!-- TOC END -->
@@ -11,7 +12,7 @@
 **Date**: 2025-11-15
 **Status**: ✅ Import cleanup complete; align narrative to dispatcher-first flow
 
-______________________________________________________________________
+---
 
 ## Findings
 
@@ -23,7 +24,7 @@ ______________________________________________________________________
    matches the current package surface.
 1. **Examples**: All code samples compile against the current API after the import reduction. No runtime changes needed.
 
-______________________________________________________________________
+---
 
 ## Recommended Actions
 

@@ -1,14 +1,15 @@
 ---
 name: python-reviewer
-description: Expert Python code reviewer specializing in PEP 8 compliance, Pythonic
+description:
+  Expert Python code reviewer specializing in PEP 8 compliance, Pythonic
   idioms, type hints, security, and performance. Use for all Python code changes.
   MUST BE USED for Python projects.
 kind: local
 tools:
-- read_file
-- grep_search
-- glob
-- run_shell_command
+  - read_file
+  - grep_search
+  - glob
+  - run_shell_command
 ---
 
 # Prompt defense baseline
