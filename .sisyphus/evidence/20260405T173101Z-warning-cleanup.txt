@@ -8,10 +8,10 @@ Scope:
 - flext-infra/src/flext_infra/detectors/_base_detector.py
 
 Commands:
-- cd /home/marlonsc/flext/flext-core && make check FILES="tests/models.py tests/helpers/factories_impl.py tests/unit/test_enforcement.py" CHECK_GATES=lint,mypy,pyright,pyrefly
-- cd /home/marlonsc/flext/flext-tests && make check FILES="src/flext_tests/_validator/models.py" CHECK_GATES=lint,mypy,pyright,pyrefly
-- cd /home/marlonsc/flext/flext-infra && make check FILES="src/flext_infra/detectors/_base_detector.py" CHECK_GATES=lint,mypy,pyright,pyrefly
-- cd /home/marlonsc/flext/flext-core && make test
+- cd ~/flext/flext-core && make check FILES="tests/models.py tests/helpers/factories_impl.py tests/unit/test_enforcement.py" CHECK_GATES=lint,mypy,pyright,pyrefly
+- cd ~/flext/flext-tests && make check FILES="src/flext_tests/_validator/models.py" CHECK_GATES=lint,mypy,pyright,pyrefly
+- cd ~/flext/flext-infra && make check FILES="src/flext_infra/detectors/_base_detector.py" CHECK_GATES=lint,mypy,pyright,pyrefly
+- cd ~/flext/flext-core && make test
 
 Results:
 - All targeted checks passed in the three affected projects.

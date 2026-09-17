@@ -2,7 +2,7 @@
 site_name: flext-core Documentation
 site_description: Generated documentation for flext-core
 site_url: https://github.com/flext-sh/flext-core/blob/main/README.md
-repo_name: flext-sh/flext
+repo_name: flext-sh/flext-core
 repo_url: https://github.com/flext-sh/flext-core
 edit_uri: edit/main/flext-core/
 docs_dir: docs
