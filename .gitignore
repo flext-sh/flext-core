@@ -361,8 +361,6 @@ CLAUDE.local.md
 !.github/workflows/release.yml
 !.github/workflows/_fragments/
 !.github/workflows/_fragments/cross_repo_dependency_credential
-!.github/workflows/_fragments/private_dependency_auth
-!.github/workflows/_fragments/private_submodules_init
 !.github/workflows/_fragments/testmon_cache
 !.qlty/
 !.qlty/qlty.toml

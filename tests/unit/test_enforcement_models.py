@@ -8,7 +8,6 @@ from types import MappingProxyType
 from typing import Annotated
 
 import pytest
-from pydantic.warnings import PydanticDeprecatedSince20
 
 from flext_core.utilities import FlextUtilitiesEnforcement
 from tests.constants import c
@@ -108,7 +107,7 @@ class TestsFlextEnforcementModels:
         assert not messages(u.check(_M), fragment="missing description")
 
     def test_v1_config_class_detected(self) -> None:
-        with pytest.warns(PydanticDeprecatedSince20):
+        with pytest.warns(c.PydanticDeprecatedSince20):
 
             class _M(m.ArbitraryTypesModel):
                 class Config:

@@ -110,7 +110,7 @@ jobs:
     environment: pypi
     env:
       CI: Y
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout release commit
         uses: actions/checkout@v7

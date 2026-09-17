@@ -1162,7 +1162,7 @@ _builtin_clean_generated:
 
 
 	@set -eu; \
-	for target in "$(PROJECT_ROOT)/.coverage" "$(PROJECT_ROOT)/.testmondata"; do \
+	for target in "$(PROJECT_ROOT)/.coverage" "$(PROJECT_ROOT)/.testmondata" "$(PROJECT_ROOT)/flext-infra-codegen-transaction-journal.json.lock"; do \
 		if [ -e "$$target" ]; then rm -- "$$target"; \
 		elif [ -L "$$target" ]; then rm -- "$$target"; fi; \
 	done
@@ -1172,13 +1172,6 @@ _builtin_clean_generated:
 		\( -name '*.pstats' \) \
 		-delete
 
-	@set -eu; \
-	if [ -L "$(PROJECT_SCRATCH_ROOT)" ]; then \
-		printf 'ERROR: scratch root %s must be physical, found a symlink\n' "$(PROJECT_SCRATCH_ROOT)" >&2; \
-		exit 2; \
-	elif [ -d "$(PROJECT_SCRATCH_ROOT)" ]; then \
-		find "$(PROJECT_SCRATCH_ROOT)" -depth -delete; \
-	fi
 
 # Release protocol. `plan` derives the next version from merged pull-request
 # titles and guards against any version change made outside the protocol;
