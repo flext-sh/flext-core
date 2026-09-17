@@ -51,10 +51,9 @@ We are committed to providing a welcoming and inclusive environment. Please be r
 
 ### Prerequisites
 
-- **Python**: 3.13+ (required)
-- **Poetry**: Latest version (recommended)
-- **Git**: For source checkout
-- **Make**: For development commands
+  - **Python**: 3.13+ (required)
+  - **Git**: For source checkout
+  - **Make**: For development commands
 
 ### Development Setup
 
@@ -66,8 +65,8 @@ cd flext-core
 # Setup development environment
 make setup
 
-# Verify installation
-python -c "from flext_core import r; u.Cli.print('✅ FLEXT-Core ready')"
+    # Verify installation
+    from flext_core import r; print('✅ FLEXT-Core ready')
 ```
 
 ## How to Contribute
@@ -134,7 +133,7 @@ python -c "from flext_core import r; u.Cli.print('✅ FLEXT-Core ready')"
 1. **Make changes**: Implement your feature or fix
 1. **Write tests**: Add comprehensive tests
 1. **Update docs**: Update documentation if needed
-1. **Run checks**: `make val` (lint + type-check + tests)
+   1. **Run checks**: `make check` (lint + type-check + tests)
 1. **Submit PR**: Create pull request with clear description
 
 ## Development Workflow
@@ -143,18 +142,16 @@ python -c "from flext_core import r; u.Cli.print('✅ FLEXT-Core ready')"
 
 ```bash
 # Complete validation (required before PR)
-make val
+make check
 
 # Individual checks
-make check CHECK_GATES=lint       # Ruff linting (ZERO tolerance)
-make check CHECK_GATES=mypy,pyright  # Type checking (strict)
-make test                # Full test suite with coverage
-make check CHECK_GATES=security   # Bandit security scan
+make check                    # Ruff linting + type checking (strict)
+make test                     # Full test suite with coverage
 
 # Quick validation during development
-make check               # All read-only gates
-make fmt WHAT=apply       # Auto-format code
-make fix WHAT=apply       # Auto-fix findings (markdown, smells)
+make check                    # All read-only gates
+make fmt                      # Auto-format code
+make fix                      # Auto-fix findings (markdown, smells)
 ```
 
 ### Testing
@@ -171,13 +168,9 @@ make fix WHAT=apply       # Auto-fix findings (markdown, smells)
 # All tests with coverage
 make test
 
-# Specific test types
-make test-unit         # Unit tests only
-make test-integration  # Integration tests only
-
 # Specific modules
 pytest tests/unit/test_result.py -v
-pytest tests/unit/test_container.py::TestFlextContainer::test_singleton -v
+pytest tests/unit/test_container.py -v
 ```
 
 **Test Markers:**
@@ -197,9 +190,8 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
 **Mandatory Requirements:**
 
 - **Zero Ruff violations** - Code quality enforced
-- **Zero MyPy errors** - Type safety guaranteed
-- **Zero PyRight errors** - Enhanced type checking
-- **PEP 8 compliance** - 79 character line length
+- **Zero MyPy/PyRight errors** - Type safety guaranteed
+- **PEP 8 compliance** - 88 character line length
 - **Python 3.13+** - Modern syntax and features
 
 **Best Practices:**
@@ -207,7 +199,7 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
 - Use `r[T]` for all operations that can fail
 - Register services with `FlextContainer()`
 - Follow DDD patterns with `FlextModels.Entity/Value/AggregateRoot`
-- Use `FlextLogger` with context propagation
+- Use `FlextUtilitiesLogging` with context propagation
 - Write tests using `flext_tests` infrastructure (no mocks)
 - Keep functions small and focused (single responsibility)
 
@@ -222,17 +214,17 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
    python --version
 
    # Reinstall dependencies
-   make install
+   make setup
    ```
 
 1. **Type Errors**
 
    ```bash
    # Run type checker
-   make type-check
+   make check
 
-   # Check specific files
-   mypy src/flext_core/your_module.py
+    # Check specific files
+    make check
    ```
 
 1. **Test Failures**
@@ -299,14 +291,26 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
 
 ```text
 src/flext_core/
-├── __init__.py # Public API exports
-├── result.py # Railway pattern implementation
-├── container.py # Dependency injection
-├── models.py # DDD base classes
-├── service.py # Domain service base
-├── bus.py # Message bus
-├── settings.py # Configuration management
-├── loggings.py # Structured logging
+├── __init__.py       # Public API exports (auto-generated)
+├── result.py         # Railway result type (r)
+├── container.py      # Dependency injection
+├── models.py         # DDD base classes (m)
+├── service.py        # Domain service base (s)
+├── constants.py      # Constants facade (c)
+├── typings.py        # Type aliases (t)
+├── protocols.py      # Runtime protocols (p)
+├── _settings.py      # Settings management
+├── _config.py        # Config management
+├── loggings.py       # Structured logging
+├── runtime.py        # structlog/dependency-injector bridge
+├── registry.py       # Shared registration helpers
+├── context.py        # Contextvars metadata propagation
+├── dispatcher.py     # CQRS dispatch
+├── handlers.py       # Handler pipeline
+├── decorators.py     # Decorators (d)
+├── exceptions.py     # Exception hierarchy (e)
+├── mixins.py         # Mixins (x)
+├── utilities.py      # Utilities facade (u)
 └── ... (other modules)
 ```
 

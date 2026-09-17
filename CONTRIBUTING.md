@@ -40,7 +40,7 @@ make test-fast
 Before merge, run the full gate:
 
 ```bash
-make validate
+make check
 ```
 
 ## Architecture and Typing Rules

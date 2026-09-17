@@ -13,7 +13,7 @@ of the 1.0.0 modernization plan.
 
 ```bash
 cd flext-core
-poetry run pytest tests/integration -v
+make test
 ```
 
 Highlighted scenarios:
@@ -25,8 +25,8 @@ Highlighted scenarios:
 Support scripts (optional, run manually when reviewing exports or wiring):
 
 ```bash
-poetry run python tests/integration/test_wildcard_exports.py --list
-poetry run python tests/integration/test_integration.py --detail
+python tests/integration/test_wildcard_exports.py --list
+python tests/integration/test_integration.py --detail
 ```
 
 Keep this document updated when new integration scenarios are introduced during the modernization rollout.
