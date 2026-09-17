@@ -205,6 +205,9 @@ class FlextModelsPydantic:
     SchemaValidator = SchemaValidator
 
     # Settings sources (from pydantic_settings)
+    # The Pydantic hook contract accepts this wide base. Consumers that override
+    # settings_customise_sources must use it rather than narrowing to BaseSettings.
+    PydanticBaseSettings = PydanticBaseSettings
     EnvSettingsSource = EnvSettingsSource
     PydanticBaseSettingsSource = PydanticBaseSettingsSource
     YamlConfigSettingsSource = YamlConfigSettingsSource
