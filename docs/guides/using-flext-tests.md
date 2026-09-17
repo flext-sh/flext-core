@@ -156,7 +156,6 @@ def test_settings_override() -> None:
 
 ## Related
 
-- `.agents/skills/using-flext-tests/SKILL.md`
-- `.agents/skills/coding-standards/SKILL.md`
 - `flext-tests/src/flext_tests/_fixtures/settings.py`
-- `docs/architecture/adr/004-generic-make-framework-in-flext-tests.md`
+- Architecture ADR 004
+- Testing standards

@@ -1100,9 +1100,6 @@ _builtin_test_all: _builtin_require_environment
 # fmt applies corrections and reports remaining diagnostics without failing:
 # violations are expected and their repair belongs to fix; only a real
 # tool failure (ruff exit >= 2) breaks the Make verb.
-# fmt applies corrections and reports remaining diagnostics without failing:
-# violations are expected and their repair belongs to fix; only a real
-# tool failure (ruff exit >= 2) breaks the Make verb.
 # Their reports preserve the same verdict as the underlying quality gates.
 _builtin_fmt_all: _builtin_require_environment
 	@set -eu; \
@@ -1110,11 +1107,11 @@ _builtin_fmt_all: _builtin_require_environment
 		if $(UV_RUN) ruff check --preview --fix --unsafe-fixes $(RUFF_PATHS); then \
 			printf 'INFO: fmt lint clean\n'; \
 		else \
-			stamprc=$$?; \
-			if [ $$stamprc -le 1 ]; then \
+			rc=$$?; \
+			if [ $$rc -le 1 ]; then \
 				printf 'INFO: fmt diagnostics remain (report-only, repair belongs to fix)\n'; \
 			else \
-				exit $$stamprc; \
+				exit $$rc; \
 			fi; \
 		fi
 

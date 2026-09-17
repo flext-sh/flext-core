@@ -161,6 +161,5 @@ assert greet_handler(GreetInput(name="Ada")) == "Hello, Ada!"
 
 ## Related
 
-- `.agents/skills/using-flext-cli/SKILL.md`
-- `.agents/skills/coding-standards/SKILL.md`
 - `flext-cli/src/flext_cli/services/cli.py`
+- Foundation API reference

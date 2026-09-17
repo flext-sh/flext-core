@@ -10,6 +10,7 @@ site_dir: .reports/docs/site
 
 exclude_docs: |
   /README.md
+  /API/**
 
 theme:
   name: material

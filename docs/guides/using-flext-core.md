@@ -56,7 +56,7 @@ from flext_core import r
 def safe_divide(a: float, b: float) -> p.Result[float]:
     if b == 0:
         return r[float].fail("division_by_zero")
-    return r.ok(a / b)
+    return r[float].ok(a / b)
 
 
 assert safe_divide(10, 2).success
@@ -76,11 +76,12 @@ assert isinstance(settings.model_dump(), dict)
 Subprojects extend `FlextSettings` with their own `env_prefix`:
 
 ```python
-from flext_core import FlextSettings, m
+from flext_core import FlextSettings
+from pydantic import SettingsConfigDict
 
 
 class GreetingSettings(FlextSettings):
-    model_config = m.SettingsConfigDict(env_prefix="GREETING_", extra="forbid")
+    model_config = SettingsConfigDict(env_prefix="GREETING_", extra="forbid")
 ```
 
 ## Container
@@ -140,6 +141,5 @@ and obtain its singleton through `fetch_global()`.
 
 ## Related
 
-- `.agents/skills/using-flext-core/SKILL.md`
-- `.agents/skills/coding-standards/SKILL.md`
 - `flext-core/src/flext_core/README.md`
+- Foundation API reference
