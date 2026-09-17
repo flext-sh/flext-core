@@ -11,6 +11,7 @@
 - [Documentation configuration](#documentation-configuration)
 - [Apply and validate](#apply-and-validate)
 - [Related guides](#related-guides)
+
 <!-- TOC END -->
 
 Configuration has one writable authority. Prefer typed `config/*.yaml` and

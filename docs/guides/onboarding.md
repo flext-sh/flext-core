@@ -14,6 +14,7 @@
 - [Generated surfaces](#generated-surfaces)
 - [Command grammar](#command-grammar)
 - [Related guides](#related-guides)
+
 <!-- TOC END -->
 
 Use this sequence before changing any FLEXT package. All actions start at the

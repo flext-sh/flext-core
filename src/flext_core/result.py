@@ -49,6 +49,14 @@ if TYPE_CHECKING:
     class FlextResult[T]:
         """Type-safe result with monadic railway-oriented operations."""
 
+        error: str | None
+        error_code: str | None
+        error_data: t.JsonMapping | None
+        success: bool
+        exception: BaseException | None
+        failure: bool
+        value: T | None
+
         @classmethod
         def ok(cls, value: T) -> p.Result[T]:
             """Create a successful result carrying ``value``."""
@@ -99,6 +107,9 @@ if TYPE_CHECKING:
         def failed_result(cls, obj: object) -> bool:
             """Check if object is a failed result."""
             ...
+
+        @classmethod
+        def require_error(cls, source: prt.FailureLike) -> str: ...
 
 else:
     FlextResult = _FlextResult

@@ -7,6 +7,7 @@
 - [Entity Command Flow](#entity-command-flow)
 - [Use Maintainer DDD-Like Examples](#use-maintainer-ddd-like-examples)
 - [DDD Checklist](#ddd-checklist)
+
 <!-- TOC END -->
 
 ## Overview

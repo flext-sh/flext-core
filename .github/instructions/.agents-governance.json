@@ -3,9 +3,7 @@
   "destination": ".github/instructions",
   "managed": {
     "architecture--engineering-core.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "architecture--engineering-core.instructions.md",
       "origin": "agents:rules:copilot",
@@ -15,9 +13,7 @@
       "source_type": "rule"
     },
     "architecture--generalized-abstraction.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "architecture--generalized-abstraction.instructions.md",
       "origin": "agents:rules:copilot",
@@ -27,9 +23,7 @@
       "source_type": "rule"
     },
     "architecture--governance-artifact-composition.instructions.md": {
-      "activation": [
-        "route:project"
-      ],
+      "activation": ["route:project"],
       "adapter_version": 1,
       "destination": "architecture--governance-artifact-composition.instructions.md",
       "origin": "agents:rules:copilot",
@@ -39,9 +33,7 @@
       "source_type": "rule"
     },
     "communication--caveman.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "communication--caveman.instructions.md",
       "origin": "agents:rules:copilot",
@@ -51,9 +43,7 @@
       "source_type": "rule"
     },
     "coordination--fix-forward-collaboration.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "coordination--fix-forward-collaboration.instructions.md",
       "origin": "agents:rules:copilot",
@@ -63,9 +53,7 @@
       "source_type": "rule"
     },
     "coordination--multiagent-edit-breadcrumb.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "coordination--multiagent-edit-breadcrumb.instructions.md",
       "origin": "agents:rules:copilot",
@@ -75,9 +63,7 @@
       "source_type": "rule"
     },
     "coordination--operator-precedence.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "coordination--operator-precedence.instructions.md",
       "origin": "agents:rules:copilot",
@@ -87,9 +73,7 @@
       "source_type": "rule"
     },
     "coordination--plan-topic-monopoly.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "coordination--plan-topic-monopoly.instructions.md",
       "origin": "agents:rules:copilot",
@@ -99,9 +83,7 @@
       "source_type": "rule"
     },
     "coordination--session-governance.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "coordination--session-governance.instructions.md",
       "origin": "agents:rules:copilot",
@@ -111,9 +93,7 @@
       "source_type": "rule"
     },
     "coordination--shared-venv-guard.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "coordination--shared-venv-guard.instructions.md",
       "origin": "agents:rules:copilot",
@@ -123,9 +103,7 @@
       "source_type": "rule"
     },
     "ethics--professional-integrity.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "ethics--professional-integrity.instructions.md",
       "origin": "agents:rules:copilot",
@@ -135,9 +113,7 @@
       "source_type": "rule"
     },
     "git--destructive-git-guard.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "git--destructive-git-guard.instructions.md",
       "origin": "agents:rules:copilot",
@@ -147,9 +123,7 @@
       "source_type": "rule"
     },
     "python--config-settings-ssot.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "python--config-settings-ssot.instructions.md",
       "origin": "agents:rules:copilot",
@@ -159,9 +133,7 @@
       "source_type": "rule"
     },
     "python--no-hidden-errors.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "python--no-hidden-errors.instructions.md",
       "origin": "agents:rules:copilot",
@@ -171,9 +143,7 @@
       "source_type": "rule"
     },
     "python.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "python.instructions.md",
       "origin": "agents:rules:copilot",
@@ -183,9 +153,7 @@
       "source_type": "rule"
     },
     "runtime--atomic-effects.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "runtime--atomic-effects.instructions.md",
       "origin": "agents:rules:copilot",
@@ -195,9 +163,7 @@
       "source_type": "rule"
     },
     "runtime--causal-subprocess.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "runtime--causal-subprocess.instructions.md",
       "origin": "agents:rules:copilot",
@@ -207,9 +173,7 @@
       "source_type": "rule"
     },
     "runtime--fail-loud.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "runtime--fail-loud.instructions.md",
       "origin": "agents:rules:copilot",
@@ -219,9 +183,7 @@
       "source_type": "rule"
     },
     "runtime--no-fallback.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "runtime--no-fallback.instructions.md",
       "origin": "agents:rules:copilot",
@@ -231,9 +193,7 @@
       "source_type": "rule"
     },
     "runtime--no-keyring.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "runtime--no-keyring.instructions.md",
       "origin": "agents:rules:copilot",
@@ -243,9 +203,7 @@
       "source_type": "rule"
     },
     "runtime--preflight-before-effects.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "runtime--preflight-before-effects.instructions.md",
       "origin": "agents:rules:copilot",
@@ -255,9 +213,7 @@
       "source_type": "rule"
     },
     "runtime--required-environment.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "runtime--required-environment.instructions.md",
       "origin": "agents:rules:copilot",
@@ -267,9 +223,7 @@
       "source_type": "rule"
     },
     "runtime--strict-execution.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "runtime--strict-execution.instructions.md",
       "origin": "agents:rules:copilot",
@@ -279,9 +233,7 @@
       "source_type": "rule"
     },
     "runtime--zero-residue.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "runtime--zero-residue.instructions.md",
       "origin": "agents:rules:copilot",
@@ -291,9 +243,7 @@
       "source_type": "rule"
     },
     "rust.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "rust.instructions.md",
       "origin": "agents:rules:copilot",
@@ -303,9 +253,7 @@
       "source_type": "rule"
     },
     "security--prompt-defense.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "security--prompt-defense.instructions.md",
       "origin": "agents:rules:copilot",
@@ -315,9 +263,7 @@
       "source_type": "rule"
     },
     "security--scanner-closure.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "security--scanner-closure.instructions.md",
       "origin": "agents:rules:copilot",
@@ -327,9 +273,7 @@
       "source_type": "rule"
     },
     "security--supply-chain.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "security--supply-chain.instructions.md",
       "origin": "agents:rules:copilot",
@@ -339,9 +283,7 @@
       "source_type": "rule"
     },
     "shell--bash-guard-chaining-precision.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "shell--bash-guard-chaining-precision.instructions.md",
       "origin": "agents:rules:copilot",
@@ -351,9 +293,7 @@
       "source_type": "rule"
     },
     "storage.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "storage.instructions.md",
       "origin": "agents:rules:copilot",
@@ -363,9 +303,7 @@
       "source_type": "rule"
     },
     "testing--observable-runtime.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "testing--observable-runtime.instructions.md",
       "origin": "agents:rules:copilot",
@@ -375,9 +313,7 @@
       "source_type": "rule"
     },
     "typescript.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "typescript.instructions.md",
       "origin": "agents:rules:copilot",
@@ -387,9 +323,7 @@
       "source_type": "rule"
     },
     "workflow--canonical-commands.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "workflow--canonical-commands.instructions.md",
       "origin": "agents:rules:copilot",
@@ -399,9 +333,7 @@
       "source_type": "rule"
     },
     "workflow--generators-not-projections.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "workflow--generators-not-projections.instructions.md",
       "origin": "agents:rules:copilot",
@@ -411,9 +343,7 @@
       "source_type": "rule"
     },
     "workflow--living-documentation.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "workflow--living-documentation.instructions.md",
       "origin": "agents:rules:copilot",
@@ -423,9 +353,7 @@
       "source_type": "rule"
     },
     "workflow--runtime-is-reality.instructions.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "workflow--runtime-is-reality.instructions.md",
       "origin": "agents:rules:copilot",
@@ -437,15 +365,11 @@
   },
   "owner": "agents-governance",
   "project": ".",
-  "providers": [
-    "copilot"
-  ],
+  "providers": ["copilot"],
   "selection": {
     "agents": [],
     "opt_ins": [],
-    "selected_tags": [
-      "flext"
-    ]
+    "selected_tags": ["flext"]
   },
   "surface": "rules",
   "version": 5

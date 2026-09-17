@@ -6,6 +6,7 @@
 - [Basic Pattern](#basic-pattern)
 - [Recovery Pattern](#recovery-pattern)
 - [Error Mapping Pattern](#error-mapping-pattern)
+
 <!-- TOC END -->
 
 ## Overview

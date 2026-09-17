@@ -4,6 +4,7 @@
 
 - [Active Decisions](#active-decisions)
 - [Decision Check: Result Contract](#decision-check-result-contract)
+
 <!-- TOC END -->
 
 ## Active Decisions

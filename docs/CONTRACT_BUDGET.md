@@ -15,6 +15,7 @@
 - [Budget: c.\* (FlextConstants)](#budget-c-flextconstants)
 - [Execution order (strict)](#execution-order-strict)
 - [Invariants audited each module](#invariants-audited-each-module)
+
 <!-- TOC END -->
 
 **Owner**: this session

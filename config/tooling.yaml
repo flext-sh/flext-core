@@ -1,4 +1,5 @@
 ManagedArtifacts:
   Ruff:
     per_file_ignores:
-      src/flext_core/_typings/base.py: [non-pep695-type-alias, quoted-type-alias]
+      src/flext_core/_typings/base.py:
+        [non-pep695-type-alias, quoted-type-alias]

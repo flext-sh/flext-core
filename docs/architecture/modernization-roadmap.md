@@ -22,6 +22,7 @@
 - [Métricas objetivas de acompanhamento](#mtricas-objetivas-de-acompanhamento)
 - [Checklist de fechamento](#checklist-de-fechamento)
 - [Nota de contexto](#nota-de-contexto)
+
 <!-- TOC END -->
 
 ## Escopo

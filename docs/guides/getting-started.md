@@ -12,6 +12,7 @@
 - [Command boundaries](#command-boundaries)
 - [Documentation ownership](#documentation-ownership)
 - [Next steps](#next-steps)
+
 <!-- TOC END -->
 
 Work from the FLEXT workspace root. The root `AGENTS.md`, branch-matched

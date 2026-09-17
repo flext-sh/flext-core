@@ -6,6 +6,7 @@
 - [Check: model_dump usage](#check-modeldump-usage)
 - [Check: ConfigDict usage](#check-configdict-usage)
 - [Check: examples-backed settings flow](#check-examples-backed-settings-flow)
+
 <!-- TOC END -->
 
 ## Summary

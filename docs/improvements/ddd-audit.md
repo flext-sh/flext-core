@@ -4,6 +4,7 @@
 
 - [Findings](#findings)
 - [Recommended Actions](#recommended-actions)
+
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency

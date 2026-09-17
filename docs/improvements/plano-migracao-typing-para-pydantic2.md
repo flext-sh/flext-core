@@ -18,6 +18,7 @@
 - [6) Métricas de sucesso](#6-mtricas-de-sucesso)
 - [7) Anti-padrões proibidos](#7-anti-padres-proibidos)
 - [8) Resultado esperado em 30 dias](#8-resultado-esperado-em-30-dias)
+
 <!-- TOC END -->
 
 ## Contexto aplicado (flext-sh/flext)

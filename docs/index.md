@@ -7,6 +7,7 @@
 - [Collection Rules](#collection-rules)
 - [Quality Gates](#quality-gates)
 - [Governance Pointer](#governance-pointer)
+
 <!-- TOC END -->
 
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->

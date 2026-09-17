@@ -14,6 +14,7 @@
 - [Validação padrão por PR](#validao-padro-por-pr)
 - [Riscos e contenção](#riscos-e-conteno)
 - [Próxima ação imediata](#prxima-ao-imediata)
+
 <!-- TOC END -->
 
 **Meta única**: reduzir duplicação e aumentar confiabilidade dos testes sem overengineering, com entregas pequenas e verificáveis.

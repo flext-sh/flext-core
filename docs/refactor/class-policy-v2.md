@@ -8,6 +8,7 @@
 - [Casos de Excecao](#casos-de-excecao)
 - [Nao Simplificar `_private`](#nao-simplificar-private)
 - [MRO por Projeto](#mro-por-projeto)
+
 <!-- TOC END -->
 
 ## Declaracao de Regras v2

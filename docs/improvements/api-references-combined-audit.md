@@ -9,6 +9,7 @@
   - [application.md (Layer 3)](#applicationmd-layer-3)
   - [infrastructure.md (Layer 4)](#infrastructuremd-layer-4)
 - [Recommended Fixes](#recommended-fixes)
+
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency

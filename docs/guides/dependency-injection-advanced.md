@@ -8,6 +8,7 @@
 - [Scoped Containers](#scoped-containers)
 - [Batch Registration Pattern](#batch-registration-pattern)
 - [Best Practices](#best-practices)
+
 <!-- TOC END -->
 
 ## Overview

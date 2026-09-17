@@ -3,9 +3,7 @@
   "destination": ".gemini/skills",
   "managed": {
     "anti-hardcode": {
-      "activation": [
-        "project-generic"
-      ],
+      "activation": ["project-generic"],
       "adapter_version": 1,
       "destination": "anti-hardcode",
       "origin": "agents:skills",
@@ -15,9 +13,7 @@
       "source_type": "skill"
     },
     "architecture-documentation": {
-      "activation": [
-        "project-generic"
-      ],
+      "activation": ["project-generic"],
       "adapter_version": 1,
       "destination": "architecture-documentation",
       "origin": "agents:skills",
@@ -27,9 +23,7 @@
       "source_type": "skill"
     },
     "backend-patterns": {
-      "activation": [
-        "project-generic"
-      ],
+      "activation": ["project-generic"],
       "adapter_version": 1,
       "destination": "backend-patterns",
       "origin": "agents:skills",
@@ -39,9 +33,7 @@
       "source_type": "skill"
     },
     "code-review-expert": {
-      "activation": [
-        "project-generic"
-      ],
+      "activation": ["project-generic"],
       "adapter_version": 1,
       "destination": "code-review-expert",
       "origin": "agents:skills",
@@ -51,9 +43,7 @@
       "source_type": "skill"
     },
     "config-schema-migration": {
-      "activation": [
-        "project-generic"
-      ],
+      "activation": ["project-generic"],
       "adapter_version": 1,
       "destination": "config-schema-migration",
       "origin": "agents:skills",
@@ -63,9 +53,7 @@
       "source_type": "skill"
     },
     "data-modeling-analysis": {
-      "activation": [
-        "project-generic"
-      ],
+      "activation": ["project-generic"],
       "adapter_version": 1,
       "destination": "data-modeling-analysis",
       "origin": "agents:skills",
@@ -75,9 +63,7 @@
       "source_type": "skill"
     },
     "doc-drift": {
-      "activation": [
-        "project-generic"
-      ],
+      "activation": ["project-generic"],
       "adapter_version": 1,
       "destination": "doc-drift",
       "origin": "agents:skills",
@@ -87,9 +73,7 @@
       "source_type": "skill"
     },
     "documentation-criteria": {
-      "activation": [
-        "project-generic"
-      ],
+      "activation": ["project-generic"],
       "adapter_version": 1,
       "destination": "documentation-criteria",
       "origin": "agents:skills",
@@ -99,9 +83,7 @@
       "source_type": "skill"
     },
     "dry": {
-      "activation": [
-        "project-generic"
-      ],
+      "activation": ["project-generic"],
       "adapter_version": 1,
       "destination": "dry",
       "origin": "agents:skills",
@@ -111,9 +93,7 @@
       "source_type": "skill"
     },
     "eval-harness": {
-      "activation": [
-        "project-generic"
-      ],
+      "activation": ["project-generic"],
       "adapter_version": 1,
       "destination": "eval-harness",
       "origin": "agents:skills",
@@ -123,9 +103,7 @@
       "source_type": "skill"
     },
     "extermination-mode": {
-      "activation": [
-        "project-generic"
-      ],
+      "activation": ["project-generic"],
       "adapter_version": 1,
       "destination": "extermination-mode",
       "origin": "agents:skills",
@@ -135,9 +113,7 @@
       "source_type": "skill"
     },
     "fail-fast": {
-      "activation": [
-        "project-generic"
-      ],
+      "activation": ["project-generic"],
       "adapter_version": 1,
       "destination": "fail-fast",
       "origin": "agents:skills",
@@ -147,9 +123,7 @@
       "source_type": "skill"
     },
     "flext-development": {
-      "activation": [
-        "selected-tag:flext"
-      ],
+      "activation": ["selected-tag:flext"],
       "adapter_version": 1,
       "destination": "flext-development",
       "origin": "agents:skills",
@@ -159,9 +133,7 @@
       "source_type": "skill"
     },
     "implementation-plan-review": {
-      "activation": [
-        "project-generic"
-      ],
+      "activation": ["project-generic"],
       "adapter_version": 1,
       "destination": "implementation-plan-review",
       "origin": "agents:skills",
@@ -171,9 +143,7 @@
       "source_type": "skill"
     },
     "product-capability": {
-      "activation": [
-        "project-generic"
-      ],
+      "activation": ["project-generic"],
       "adapter_version": 1,
       "destination": "product-capability",
       "origin": "agents:skills",
@@ -183,10 +153,7 @@
       "source_type": "skill"
     },
     "python-development": {
-      "activation": [
-        "marker:pyproject.toml",
-        "marker:uv.lock"
-      ],
+      "activation": ["marker:pyproject.toml", "marker:uv.lock"],
       "adapter_version": 1,
       "destination": "python-development",
       "origin": "agents:skills",
@@ -196,10 +163,7 @@
       "source_type": "skill"
     },
     "python-parallelization": {
-      "activation": [
-        "marker:pyproject.toml",
-        "marker:uv.lock"
-      ],
+      "activation": ["marker:pyproject.toml", "marker:uv.lock"],
       "adapter_version": 1,
       "destination": "python-parallelization",
       "origin": "agents:skills",
@@ -209,9 +173,7 @@
       "source_type": "skill"
     },
     "rest-api-design": {
-      "activation": [
-        "project-generic"
-      ],
+      "activation": ["project-generic"],
       "adapter_version": 1,
       "destination": "rest-api-design",
       "origin": "agents:skills",
@@ -221,9 +183,7 @@
       "source_type": "skill"
     },
     "search-first": {
-      "activation": [
-        "project-generic"
-      ],
+      "activation": ["project-generic"],
       "adapter_version": 1,
       "destination": "search-first",
       "origin": "agents:skills",
@@ -233,9 +193,7 @@
       "source_type": "skill"
     },
     "security-review": {
-      "activation": [
-        "project-generic"
-      ],
+      "activation": ["project-generic"],
       "adapter_version": 1,
       "destination": "security-review",
       "origin": "agents:skills",
@@ -245,9 +203,7 @@
       "source_type": "skill"
     },
     "simplify": {
-      "activation": [
-        "project-generic"
-      ],
+      "activation": ["project-generic"],
       "adapter_version": 1,
       "destination": "simplify",
       "origin": "agents:skills",
@@ -257,9 +213,7 @@
       "source_type": "skill"
     },
     "solid": {
-      "activation": [
-        "project-generic"
-      ],
+      "activation": ["project-generic"],
       "adapter_version": 1,
       "destination": "solid",
       "origin": "agents:skills",
@@ -269,9 +223,7 @@
       "source_type": "skill"
     },
     "ssot": {
-      "activation": [
-        "project-generic"
-      ],
+      "activation": ["project-generic"],
       "adapter_version": 1,
       "destination": "ssot",
       "origin": "agents:skills",
@@ -281,9 +233,7 @@
       "source_type": "skill"
     },
     "tdd-workflow": {
-      "activation": [
-        "project-generic"
-      ],
+      "activation": ["project-generic"],
       "adapter_version": 1,
       "destination": "tdd-workflow",
       "origin": "agents:skills",
@@ -293,9 +243,7 @@
       "source_type": "skill"
     },
     "technical-writing-style": {
-      "activation": [
-        "project-generic"
-      ],
+      "activation": ["project-generic"],
       "adapter_version": 1,
       "destination": "technical-writing-style",
       "origin": "agents:skills",
@@ -305,9 +253,7 @@
       "source_type": "skill"
     },
     "workspace-toolchain": {
-      "activation": [
-        "project-generic"
-      ],
+      "activation": ["project-generic"],
       "adapter_version": 1,
       "destination": "workspace-toolchain",
       "origin": "agents:skills",
@@ -317,9 +263,7 @@
       "source_type": "skill"
     },
     "yagni": {
-      "activation": [
-        "project-generic"
-      ],
+      "activation": ["project-generic"],
       "adapter_version": 1,
       "destination": "yagni",
       "origin": "agents:skills",
@@ -331,15 +275,11 @@
   },
   "owner": "agents-governance",
   "project": ".",
-  "providers": [
-    "gemini"
-  ],
+  "providers": ["gemini"],
   "selection": {
     "agents": [],
     "opt_ins": [],
-    "selected_tags": [
-      "flext"
-    ]
+    "selected_tags": ["flext"]
   },
   "surface": "skills",
   "version": 5

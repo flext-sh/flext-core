@@ -15,6 +15,7 @@
 - [Make/codegen boundary](#makecodegen-boundary)
 - [Bad practices](#bad-practices)
 - [Related](#related)
+
 <!-- TOC END -->
 
 <!-- mro-wkii.17.7 (agent: codex) — keep test-toolkit guidance separate from Make/codegen ownership. -->

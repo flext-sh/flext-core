@@ -6,6 +6,7 @@
 - [Result Composition Pattern](#result-composition-pattern)
 - [Container Pattern](#container-pattern)
 - [Dispatcher Pattern (examples-backed)](#dispatcher-pattern-examples-backed)
+
 <!-- TOC END -->
 
 ## Overview

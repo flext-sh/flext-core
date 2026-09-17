@@ -8,6 +8,7 @@
 - [Context Binding](#context-binding)
 - [Request Handler Pattern](#request-handler-pattern)
 - [Best Practices](#best-practices)
+
 <!-- TOC END -->
 
 ## Overview

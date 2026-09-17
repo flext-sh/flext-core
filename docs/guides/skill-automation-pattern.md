@@ -10,6 +10,7 @@
 - [Ownership](#ownership)
 - [Required change shape](#required-change-shape)
 - [Canonical execution](#canonical-execution)
+
 <!-- TOC END -->
 
 Skills document intent and route execution to canonical owners. They do not
