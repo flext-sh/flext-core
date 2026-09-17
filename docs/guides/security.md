@@ -1,5 +1,5 @@
 <!-- AUTO-GENERATED FILE — regenerate through `make gen` from the workspace root. -->
-<!-- Source of truth: `docs/guides/security.md`; adjust that source, never this projection. -->
+<!-- Source of truth: `<workspace-root>/docs/guides/security.md`; adjust that workspace source, never this member projection. -->
 
 # flext-core - Security Guide
 

@@ -4,17 +4,17 @@
 - [Overview](#overview)
 - [Creating Results](#creating-results)
 - [Reading State Safely](#reading-state-safely)
-- [flat_map Composition](#flatmap-composition)
-- [map, map_error, and recover](#map-maperror-and-recover)
-- [map_or for Defaulted Reads](#mapor-for-defaulted-reads)
+- [flat_map Composition](#flat_map-composition)
+- [map, map_error, and recover](#map-map_error-and-recover)
+- [map_or for Defaulted Reads](#map_or-for-defaulted-reads)
 - [Factory Helpers](#factory-helpers)
-- [unwrap_or and unwrap_or_else](#unwrapor-and-unwraporelse)
+- [unwrap_or and unwrap_or_else](#unwrap_or-and-unwrap_or_else)
 - [lash for Failure Branching](#lash-for-failure-branching)
 - [FlextExceptions at Result Boundaries](#flextexceptions-at-result-boundaries)
 - [Typed Exceptions with Metadata](#typed-exceptions-with-metadata)
 - [None Handling Techniques](#none-handling-techniques)
 - [Exception Propagation with Context](#exception-propagation-with-context)
-- [traverse and with_resource](#traverse-and-withresource)
+- [traverse and with_resource](#traverse-and-with_resource)
 - [Decorator Integration](#decorator-integration)
   - [@d.railway](#drailway)
   - [@d.retry + @d.railway](#dretry-drailway)
@@ -465,8 +465,12 @@ def fetch_remote_profile() -> str:
     """Convert an infrastructure exception into a typed timeout error."""
     socket_message = "socket stalled"
     timeout_message = "Remote profile lookup timed out"
-    try:
+
+    def _raise_socket_error() -> None:
         raise RuntimeError(socket_message)
+
+    try:
+        _raise_socket_error()
     except RuntimeError as exc:
         raise e.FlextTimeoutError(
             timeout_message,
