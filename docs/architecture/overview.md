@@ -75,12 +75,12 @@ Canonical references:
   - Domain façade modules (`models.py`, `models/*`, `mixins.py`, `service.py`)
     host Pydantic-backed DDD entities, aggregates, validators, and mixins for
     timestamps, versioning, and domain events.
-   - Infrastructure sits beside the domain types: `_settings.py` (`FlextSettings`
-     via `BaseSettings`), `context.py` (contextvars metadata propagation),
-     `loggings.py` (`FlextUtilitiesLogging`), `utilities.py`/`_utilities/*`
-     (validation, pagination, caching, data mappers, reliability helpers), and
-     `container.py` (dependency-injector singleton plus scoped container
-     factory).
+    - Infrastructure sits beside the domain types: `_settings.py` (`FlextSettings`
+    via `BaseSettings`), `context.py` (contextvars metadata propagation),
+    `loggings.py` (`FlextUtilitiesLogging`), `utilities.py`/`_utilities/*`
+    (validation, pagination, caching, data mappers, reliability helpers), and
+    `container.py` (dependency-injector singleton plus scoped container
+    factory).
 
 - **L3 – application orchestration**
 

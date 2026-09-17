@@ -51,9 +51,9 @@ We are committed to providing a welcoming and inclusive environment. Please be r
 
 ### Prerequisites
 
-  - **Python**: 3.13+ (required)
-  - **Git**: For source checkout
-  - **Make**: For development commands
+- **Python**: 3.13+ (required)
+- **Git**: For source checkout
+- **Make**: For development commands
 
 ### Development Setup
 
