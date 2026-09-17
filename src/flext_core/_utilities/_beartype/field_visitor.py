@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+import contextlib
 import inspect
 from types import UnionType
 from typing import Annotated, TypeAliasType, Union, get_args, get_origin
@@ -77,6 +78,11 @@ class FlextUtilitiesBeartypeFieldVisitor:
         resolved_annotation = inspect.get_annotations(model_type, eval_str=False).get(
             name
         )
+        if isinstance(resolved_annotation, str):
+            with contextlib.suppress(NameError, TypeError):
+                resolved_annotation = inspect.get_annotations(
+                    model_type, eval_str=True
+                ).get(name)
         has_annotated_description = False
         if get_origin(resolved_annotation) is Annotated:
             has_annotated_description = any(

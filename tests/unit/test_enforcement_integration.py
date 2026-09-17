@@ -24,7 +24,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import e, m
+from flext_core import e
 from tests import t
 
 _CLEAN_MODULE = "tests.fixtures.clean_module"
