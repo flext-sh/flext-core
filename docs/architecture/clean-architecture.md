@@ -31,7 +31,7 @@ describes the dependency rules and per-layer responsibilities.
 │  (orchestration & middleware)       │  _dispatcher/reliability.py, _dispatcher/timeout.py
 ├─────────────────────────────────────┤
 │  L2: Domain & Infrastructure        │  models.py, models/*, mixins.py, service.py
-│  (DDD, DI, settings, context)         │  utilities.py, _utilities/*, settings.py, context.py,
+│  (DDD, DI, settings, context)         │  utilities.py, _utilities/*, _settings.py, context.py,
 │                                     │  loggings.py, container.py
 ├─────────────────────────────────────┤
 │  L1: Foundation & Bridge            │  result.py, exceptions.py, registry.py

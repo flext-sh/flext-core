@@ -4,7 +4,7 @@
       {
         "hooks": [
           {
-            "command": "python3 /home/marlonsc/flext/flext-core/.gemini/aihub-hooks/gemini-beforeagent.py",
+            "command": "python3 ~/flext/flext-core/.gemini/aihub-hooks/gemini-beforeagent.py",
             "name": "aihub-governance-beforeagent",
             "timeout": 10000,
             "type": "command"
@@ -17,7 +17,7 @@
       {
         "hooks": [
           {
-            "command": "python3 /home/marlonsc/flext/flext-core/.gemini/aihub-hooks/gemini-precompress.py",
+            "command": "python3 ~/flext/flext-core/.gemini/aihub-hooks/gemini-precompress.py",
             "name": "aihub-governance-precompress",
             "timeout": 10000,
             "type": "command"
@@ -29,7 +29,7 @@
       {
         "hooks": [
           {
-            "command": "python3 /home/marlonsc/flext/flext-core/.gemini/aihub-hooks/gemini-sessionstart.py",
+            "command": "python3 ~/flext/flext-core/.gemini/aihub-hooks/gemini-sessionstart.py",
             "name": "aihub-governance-sessionstart",
             "timeout": 10000,
             "type": "command"

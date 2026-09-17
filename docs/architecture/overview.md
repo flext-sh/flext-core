@@ -34,7 +34,7 @@ Canonical references:
 ┌─────────────────────────────────────────────────────────────┐
 │             Domain & Infrastructure Services (L2)           │
 │  models.py, models/*, mixins.py, service.py                │
-│  utilities.py, _utilities/*, settings.py, context.py          │
+│  utilities.py, _utilities/*, _settings.py, context.py          │
 │  loggings.py, container.py                                  │
 └─────────────────────────────────────────────────────────────┘
                             ↓

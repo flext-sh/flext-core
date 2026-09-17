@@ -51,10 +51,9 @@ We are committed to providing a welcoming and inclusive environment. Please be r
 
 ### Prerequisites
 
-- **Python**: 3.13+ (required)
-- **uv**: Latest version (recommended)
-- **Git**: For source checkout
-- **Make**: For development commands
+  - **Python**: 3.13+ (required)
+  - **Git**: For source checkout
+  - **Make**: For development commands
 
 ### Development Setup
 
@@ -224,8 +223,8 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
    # Run type checker
    make check
 
-   # Check specific files
-   uv run mypy src/flext_core/your_module.py
+    # Check specific files
+    make check
    ```
 
 1. **Test Failures**

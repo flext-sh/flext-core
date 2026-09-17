@@ -38,15 +38,13 @@ ______________________________________________________________________
 ## Running the Suite
 
 ```bash
-poetry run pytest tests/unit -q
-poetry run pytest tests/integration -m "not slow"
-poetry run pytest --cov=src/flext_core --cov-report=term-missing
+make test
 ```
 
 For dispatcher pilots, run the focused marker:
 
 ```bash
-poetry run pytest tests/patterns -m dispatcher
+make test
 ```
 
 ______________________________________________________________________
