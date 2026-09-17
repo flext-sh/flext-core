@@ -1,5 +1,20 @@
 # Triagem Snyk Code (SAST) — flext-sh/flext-core
 
+<!-- TOC START -->
+- [Resumo](#resumo)
+- [Como usar este documento](#como-usar-este-documento)
+- [Achados](#achados)
+  - [1 · 🟡 MEDIUM · Use of Hardcoded Passwords](#1-medium-use-of-hardcoded-passwords)
+  - [2 · ⚪ LOW · Use of Hardcoded Credentials](#2-low-use-of-hardcoded-credentials)
+  - [3 · ⚪ LOW · Use of Hardcoded Credentials](#3-low-use-of-hardcoded-credentials)
+  - [4 · ⚪ LOW · Use of Hardcoded Credentials](#4-low-use-of-hardcoded-credentials)
+  - [5 · ⚪ LOW · Use of Hardcoded Credentials](#5-low-use-of-hardcoded-credentials)
+  - [6 · ⚪ LOW · Use of Hardcoded Passwords](#6-low-use-of-hardcoded-passwords)
+  - [7 · ⚪ LOW · Use of Hardcoded Passwords](#7-low-use-of-hardcoded-passwords)
+  - [8 · ⚪ LOW · Use of Hardcoded Passwords](#8-low-use-of-hardcoded-passwords)
+  - [9 · ⚪ LOW · Use of Hardcoded Passwords](#9-low-use-of-hardcoded-passwords)
+<!-- TOC END -->
+
 Gerado do scan Snyk (dump 2026-08-06). Bead: `mro-flgu`
 
 ## Resumo
@@ -22,7 +37,7 @@ Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `r
 
 **Local**: `examples/_models/output.py:41` · **CWE**: -
 
-```python
+```text
        37          LABEL_VALUE_SEPARATOR: ClassVar[str] = ": "
        38          RESULT_LINE_PATTERN: ClassVar[t.RegexPattern] = c.PATTERN_EXAMPLE_RESULT_LINE_RE
        39          TEMPLATE_BY_KIND: ClassVar[Mapping[OutputKind, OutputTemplate]] = (
@@ -40,7 +55,7 @@ Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `r
 
 **Local**: `tests/_models/_mixins/test_data_identity.py:43` · **CWE**: -
 
-```python
+```text
        39          """Test identifiers and IDs."""
        40  
        41          model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
@@ -58,7 +73,7 @@ Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `r
 
 **Local**: `tests/_models/_mixins/test_data_values.py:45` · **CWE**: -
 
-```python
+```text
        41          )
        42          config_key: Annotated[str, m.Field(description="Default test settings key")] = (
        43              "test_key"
@@ -76,7 +91,7 @@ Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `r
 
 **Local**: `tests/integration/test_service.py:73` · **CWE**: -
 
-```python
+```text
        69  
        70      def test_fetch_user_returns_applied_custom_entity(self) -> None:
        71          """fetch_user() returns previously applied custom user data verbatim."""
@@ -94,7 +109,7 @@ Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `r
 
 **Local**: `tests/integration/test_service.py:147` · **CWE**: -
 
-```python
+```text
       143      ) -> None:
       144          """Bound services resolve back and remain fully functional."""
       145          user_service = self.UserQueryService()
@@ -112,7 +127,7 @@ Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `r
 
 **Local**: `tests/unit/test_result_factory_dip.py:169` · **CWE**: -
 
-```python
+```text
       165  
       166      def test_fail_from_exception_redacts_sensitive_error_data_keys(self) -> None:
       167          exc = e.OperationError(
@@ -130,7 +145,7 @@ Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `r
 
 **Local**: `tests/unit/test_result_factory_dip.py:215` · **CWE**: -
 
-```python
+```text
       211  
       212      def test_fail_explicit_error_data_redacts_sensitive_keys(self) -> None:
       213          result: p.Result[int] = r[int].fail(
@@ -148,7 +163,7 @@ Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `r
 
 **Local**: `tests/unit/test_result_factory_dip.py:226` · **CWE**: -
 
-```python
+```text
       222  
       223      def test_fail_explicit_error_data_wins_but_still_redacts_with_exception(
       224          self,
@@ -166,7 +181,7 @@ Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `r
 
 **Local**: `tests/unit/test_result_factory_dip.py:229` · **CWE**: -
 
-```python
+```text
       225      ) -> None:
       226          exc = e.OperationError("x", context={"password": "from-exc", "host": "h"})
       227          result: p.Result[int] = r[int].fail(

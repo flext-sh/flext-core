@@ -1,7 +1,7 @@
 # Quick Start
 
 <!-- TOC START -->
-- [Step 1: p.Result[T] basics](#step-1-presultt-basics)
+- [Step 1: p.Result\[T\] basics](#step-1-presultt-basics)
 - [Step 2: Container basics](#step-2-container-basics)
 - [Step 3: Dispatcher example](#step-3-dispatcher-example)
 <!-- TOC END -->

@@ -1,5 +1,5 @@
 <!-- AUTO-GENERATED FILE — regenerate through `make gen` from the workspace root. -->
-<!-- Source of truth: `docs/guides/getting-started.md`; adjust that source, never this projection. -->
+<!-- Source of truth: `<workspace-root>/docs/guides/getting-started.md`; adjust that workspace source, never this member projection. -->
 
 # flext-core - Getting Started
 
