@@ -1,5 +1,5 @@
 ---
-applyTo: '**'
+applyTo: "**"
 ---
 
 # Supply-chain changes remain intentionally delayed and least privileged

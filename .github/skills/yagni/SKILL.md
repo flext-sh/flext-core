@@ -1,6 +1,6 @@
 ---
 name: yagni
-description: 'speculative scope, current consumers, necessity analysis'
+description: "speculative scope, current consumers, necessity analysis"
 license: MIT
 metadata:
   aihub.tags: '["policy:atomic-effects","policy:fail-loud","policy:no-fallback","policy:preflight-before-effects","policy:strict-execution","policy:zero-residue","provenance:agents-owned","role:scope","updates:manual","usage:router"]'

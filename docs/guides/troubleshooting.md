@@ -6,11 +6,13 @@
 > Project profile: `flext-core`
 
 <!-- TOC START -->
+
 - [Establish the command surface](#establish-the-command-surface)
 - [Repair at the owner](#repair-at-the-owner)
 - [Documentation failures](#documentation-failures)
 - [Test failures](#test-failures)
 - [Related guides](#related-guides)
+
 <!-- TOC END -->
 
 Troubleshooting preserves the same command, ownership, and failure contracts as

@@ -6,6 +6,7 @@
 > Project profile: `flext-core`
 
 <!-- TOC START -->
+
 - [Aliases](#aliases)
 - [Purpose](#purpose)
 - [Settings](#settings)
@@ -14,6 +15,7 @@
 - [Good practices](#good-practices)
 - [Bad practices](#bad-practices)
 - [Related](#related)
+
 <!-- TOC END -->
 
 `flext_cli` provides a unified Typer abstraction for model-driven CLI applications.
@@ -24,15 +26,15 @@ Import the aliases used by each example from the public `flext_cli` package root
 
 `flext_cli` reexports `d`, `e`, `h`, `r`, `x` from `flext_core`.
 
-| Alias | Purpose |
-| ------- | --------- |
-| `c` | constants |
-| `m` | models |
-| `p` | protocols |
-| `r` | result (reexported from `flext_core`) |
-| `s` | service / runtime (`FlextCliServiceBase`) |
-| `t` | typings |
-| `u` | utilities |
+| Alias | Purpose                                   |
+| ----- | ----------------------------------------- |
+| `c`   | constants                                 |
+| `m`   | models                                    |
+| `p`   | protocols                                 |
+| `r`   | result (reexported from `flext_core`)     |
+| `s`   | service / runtime (`FlextCliServiceBase`) |
+| `t`   | typings                                   |
+| `u`   | utilities                                 |
 
 **Important:** `s` is the service/runtime alias. CLI settings are accessed via `FlextCliSettings` (no short alias).
 

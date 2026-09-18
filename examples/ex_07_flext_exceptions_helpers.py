@@ -123,6 +123,8 @@ class Ex07FlextExceptionSubclasses(ExamplesFlextShared):
         except e.ValidationError as exc:
             self.audit_check("ValidationError.field", exc.field or "")
             self.audit_check("ValidationError.value", str(exc.value or ""))
+            converted = e.fail_validation(exc.field or "field", error=exc)
+            self.audit_check("ValidationError.fail_validation", str(converted.failure))
         try:
             _raise_configuration_error()
         except e.ConfigurationError as exc:

@@ -1,6 +1,6 @@
 ---
 name: config-schema-migration
-description: 'configuration migration, schema cutover, consumer rewiring'
+description: "configuration migration, schema cutover, consumer rewiring"
 metadata:
   aihub.tags: '["policy:atomic-effects","policy:fail-loud","policy:no-fallback","policy:preflight-before-effects","policy:strict-execution","policy:zero-residue","provenance:agents-owned","role:migration","updates:manual","usage:router"]'
 ---

@@ -1,6 +1,6 @@
 ---
 name: security-review
-description: 'security findings, attack surfaces, dependency risk'
+description: "security findings, attack surfaces, dependency risk"
 metadata:
   aihub.tags: '["policy:atomic-effects","policy:causal-subprocess","policy:fail-loud","policy:no-fallback","policy:no-keyring","policy:preflight-before-effects","policy:required-environment","policy:strict-execution","policy:zero-residue","provenance:agents-owned","role:security","updates:manual","usage:on-demand"]'
 ---

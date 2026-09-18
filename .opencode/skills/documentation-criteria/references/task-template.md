@@ -35,9 +35,9 @@
 
 ## Verification
 
-| Criterion | Command or consumer | Pass condition |
-|---|---|---|
-| {criterion} | {surface} | {decisive result} |
+| Criterion   | Command or consumer | Pass condition    |
+| ----------- | ------------------- | ----------------- |
+| {criterion} | {surface}           | {decisive result} |
 
 ## Completion evidence
 

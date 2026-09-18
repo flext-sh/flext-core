@@ -13,7 +13,7 @@
 Test coverage aligns with the 1.0.0 modernization pillars: dispatcher unification, context-first observability, and
 shared configuration/runtime services.
 
-______________________________________________________________________
+---
 
 ## Layout
 
@@ -33,7 +33,7 @@ Notable files:
 - `integration/test_wildcard_exports_clean.py` – protects the public API surface.
 - `patterns/test_patterns_commands.py` – codifies CQRS usage expected downstream.
 
-______________________________________________________________________
+---
 
 ## Running the Suite
 
@@ -47,7 +47,7 @@ For dispatcher pilots, run the focused marker:
 make test
 ```
 
-______________________________________________________________________
+---
 
 ## Modernization Expectations
 

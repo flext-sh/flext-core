@@ -6,7 +6,9 @@
 > Project profile: `flext-core`
 
 <!-- TOC START -->
+
 - [Dependabot vulnerability governance](#dependabot-vulnerability-governance)
+
 <!-- TOC END -->
 
 Security practices are governed by project-specific policies and central architecture ADRs.

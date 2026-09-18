@@ -37,34 +37,21 @@
   },
   "events": {
     "context_refresh": {
-      "clients": [
-        "local"
-      ],
+      "clients": ["local"],
       "coverage": "equivalent",
-      "native": [
-        "PreCompress",
-        "BeforeAgent"
-      ],
+      "native": ["PreCompress", "BeforeAgent"],
       "status": "SUPPORTED"
     },
     "prompt_submit": {
-      "clients": [
-        "local"
-      ],
+      "clients": ["local"],
       "coverage": "exact",
-      "native": [
-        "BeforeAgent"
-      ],
+      "native": ["BeforeAgent"],
       "status": "SUPPORTED"
     },
     "session_start": {
-      "clients": [
-        "local"
-      ],
+      "clients": ["local"],
       "coverage": "exact",
-      "native": [
-        "SessionStart"
-      ],
+      "native": ["SessionStart"],
       "status": "SUPPORTED"
     },
     "subagent_start": {

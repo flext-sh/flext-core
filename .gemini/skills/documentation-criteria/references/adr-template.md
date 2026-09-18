@@ -22,11 +22,11 @@ observed facts from future direction.}
 
 ## Options considered
 
-| Option | Benefits | Costs and risks | Result |
-|---|---|---|---|
-| {option A} | {benefits} | {trade-offs} | Accepted or rejected |
-| {option B} | {benefits} | {trade-offs} | Accepted or rejected |
-| {other viable option, if any} | {benefits} | {trade-offs} | Accepted or rejected |
+| Option                        | Benefits   | Costs and risks | Result               |
+| ----------------------------- | ---------- | --------------- | -------------------- |
+| {option A}                    | {benefits} | {trade-offs}    | Accepted or rejected |
+| {option B}                    | {benefits} | {trade-offs}    | Accepted or rejected |
+| {other viable option, if any} | {benefits} | {trade-offs}    | Accepted or rejected |
 
 ```mermaid
 flowchart LR
@@ -38,8 +38,8 @@ flowchart LR
 
 ## Architecture impact
 
-| Area | Change | Owner | Unchanged boundary |
-|---|---|---|---|
+| Area   | Change   | Owner             | Unchanged boundary           |
+| ------ | -------- | ----------------- | ---------------------------- |
 | {area} | {impact} | {canonical owner} | {what remains outside scope} |
 
 ## Consequences
@@ -50,10 +50,10 @@ flowchart LR
 
 ## State of implementation
 
-| Decision part | Status | Durable evidence |
-|---|---|---|
-| {part} | Implemented | {source, contract, or runtime owner} |
-| {part} | Direction | {tracking owner; do not claim as current behavior} |
+| Decision part | Status      | Durable evidence                                   |
+| ------------- | ----------- | -------------------------------------------------- |
+| {part}        | Implemented | {source, contract, or runtime owner}               |
+| {part}        | Direction   | {tracking owner; do not claim as current behavior} |
 
 Transient command output, dates, and rollout progress belong in the owning
 tracker record rather than this ADR.

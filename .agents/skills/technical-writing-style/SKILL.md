@@ -1,6 +1,6 @@
 ---
 name: technical-writing-style
-description: 'technical writing, evidence based, documentation clarity'
+description: "technical writing, evidence based, documentation clarity"
 metadata:
   aihub.tags: '["policy:fail-loud","policy:no-fallback","policy:preflight-before-effects","policy:strict-execution","provenance:agents-owned","role:documentation","updates:manual","usage:on-demand"]'
 ---

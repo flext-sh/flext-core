@@ -1,6 +1,6 @@
 ---
 paths:
-- '**/*.py'
+  - "**/*.py"
 ---
 
 # Read configuration through the project's typed owner

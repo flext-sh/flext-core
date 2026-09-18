@@ -1,6 +1,7 @@
 # Dependency Injection Guide - Audit Report
 
 <!-- TOC START -->
+
 - [Audit Summary](#audit-summary)
   - [✅ Verified Methods (All Accurate)](#verified-methods-all-accurate)
   - [✅ Additional Methods Found (Not Critical)](#additional-methods-found-not-critical)
@@ -24,6 +25,7 @@
   - [Medium Priority](#medium-priority)
   - [Low Priority](#low-priority)
 - [Conclusion](#conclusion)
+
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
@@ -33,7 +35,7 @@
 **Date**: 2025-10-21
 **Status**: ✅ ACCURATE - All documented methods verified
 
-______________________________________________________________________
+---
 
 ## Audit Summary
 
@@ -115,7 +117,7 @@ All documented methods exist and line numbers are accurate:
    - Internal utility
    - Not necessary to document
 
-______________________________________________________________________
+---
 
 ## Strengths of Current Documentation
 
@@ -125,7 +127,7 @@ ______________________________________________________________________
 1. **Integration**: r integration clearly shown
 1. **Best Practices**: DO/DON'T sections are valuable
 
-______________________________________________________________________
+---
 
 ## Minor Improvements Needed
 
@@ -144,9 +146,9 @@ The guide mentions v0.9.9 breaking changes but could be clearer:
 ```markdown
 BREAKING CHANGES (Phase 4 - v0.9.9):
 
-- register[T]() now uses generic type T instead of t.JsonValue
-- register_factory[T]() now uses Callable[[], T] instead of Callable[[], t.JsonValue]
-- get_typed[T]() now returns r[T] instead of r[t.JsonValue]
+- register[T](<>) now uses generic type T instead of t.JsonValue
+- register_factory[T](<>) now uses Callable[[], T] instead of Callable[[], t.JsonValue]
+- get_typed[T](<>) now returns r[T] instead of r[t.JsonValue]
 ```
 
 Add migration guide from v0.9.8 to v0.9.9.
@@ -166,7 +168,7 @@ Guide mentions examples but could directly reference:
 - `examples/02_dependency_injection.py` - Complete DI demonstration
 - Integration examples showing DI in action
 
-______________________________________________________________________
+---
 
 ## Recommended Additions
 
@@ -209,7 +211,7 @@ Expand testing section with:
 - Fixture setup patterns
 - Integration test strategies
 
-______________________________________________________________________
+---
 
 ## Cross-Reference Verification
 
@@ -224,7 +226,7 @@ ______________________________________________________________________
 - ⚠️ Link to AGENTS.md could be more specific (which section?)
 - ✅ Examples reference is generic but works
 
-______________________________________________________________________
+---
 
 ## Accuracy Assessment
 
@@ -236,7 +238,7 @@ ______________________________________________________________________
 - Examples: ✅ All work correctly
 - Type information: ✅ Correct including v0.9.9 generics
 
-______________________________________________________________________
+---
 
 ## Completeness Assessment
 
@@ -259,7 +261,7 @@ ______________________________________________________________________
 - More testing patterns
 - Service lifecycle management
 
-______________________________________________________________________
+---
 
 ## Recommendations
 
@@ -281,7 +283,7 @@ ______________________________________________________________________
 1. Create comparison table of all methods
 1. Add troubleshooting section
 
-______________________________________________________________________
+---
 
 ## Conclusion
 

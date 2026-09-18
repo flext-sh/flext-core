@@ -1,5 +1,5 @@
 ---
-applyTo: '*.ts,*.tsx,**/*.ts,**/*.tsx,tsconfig.json'
+applyTo: "*.ts,*.tsx,**/*.ts,**/*.tsx,tsconfig.json"
 ---
 
 # TypeScript rules

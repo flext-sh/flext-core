@@ -14,14 +14,14 @@ if TYPE_CHECKING:
     from ._logging import FlextDecoratorsLogging
     from ._logging_payloads import FlextDecoratorsLoggingPayloads
     from ._railway import FlextDecoratorsRailway
-    from ._runtime import FlextDecoratorsRuntime
+    from ._runtime import FlextDecorators
 __all__: tuple[str, ...] = (
+    "FlextDecorators",
     "FlextDecoratorsBase",
     "FlextDecoratorsCombined",
     "FlextDecoratorsLogging",
     "FlextDecoratorsLoggingPayloads",
     "FlextDecoratorsRailway",
-    "FlextDecoratorsRuntime",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
@@ -32,7 +32,7 @@ _LAZY_IMPORTS = MappingProxyType(
             "._logging": ("FlextDecoratorsLogging",),
             "._logging_payloads": ("FlextDecoratorsLoggingPayloads",),
             "._railway": ("FlextDecoratorsRailway",),
-            "._runtime": ("FlextDecoratorsRuntime",),
+            "._runtime": ("FlextDecorators",),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,

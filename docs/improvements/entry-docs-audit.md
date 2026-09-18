@@ -1,9 +1,11 @@
 # Entry Docs Audit
 
 <!-- TOC START -->
+
 - [Highlights](#highlights)
 - [Issues to Address](#issues-to-address)
 - [Recommended Updates](#recommended-updates)
+
 <!-- TOC END -->
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
@@ -12,7 +14,7 @@
 **Date**: 2025-11-15
 **Status**: ⚠️ Minor alignment needed (layer listing + dispatcher wording)
 
-______________________________________________________________________
+---
 
 ## Highlights
 

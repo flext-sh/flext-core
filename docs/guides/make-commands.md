@@ -6,12 +6,14 @@
 > Project profile: `flext-core`
 
 <!-- TOC START -->
+
 - [Discover commands](#discover-commands)
 - [Canonical workflow](#canonical-workflow)
 - [Test contract](#test-contract)
 - [Failure contract](#failure-contract)
 - [Scope and generation](#scope-and-generation)
 - [Related guides](#related-guides)
+
 <!-- TOC END -->
 
 `make help` at the workspace root is the executable authority for command

@@ -1,7 +1,9 @@
 # dependency-injector pattern prompt
 
 <!-- TOC START -->
+
 - No sections found
+
 <!-- TOC END -->
 
 Use this prompt whenever you evolve **flext-core** or downstream projects to keep the dependency-injector integration

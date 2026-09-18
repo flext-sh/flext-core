@@ -204,10 +204,12 @@ class FlextModelsPydantic:
     # Schema and JSON utilities (from pydantic_core)
     SchemaValidator = SchemaValidator
 
-    # Settings sources (from pydantic_settings). ``PydanticBaseSettings`` is the
-    # raw base that ``settings_customise_sources`` declares for ``settings_cls``;
-    # overrides annotate it so their signature matches the inherited hook.
-    PydanticBaseSettings = PydanticBaseSettings
+    # Settings sources (from pydantic_settings)
+    # NOTE (multi-agent, flext-3jjja): the Pydantic hook contract accepts this wide
+    # base; consumers overriding ``settings_customise_sources`` annotate
+    # ``settings_cls: type[PydanticBaseSettings]`` through the facade (Liskov-correct
+    # parameter widening). Removing or narrowing this alias re-forces forbidden
+    # direct ``pydantic_settings`` imports in every fleet consumer.    PydanticBaseSettings = PydanticBaseSettings
     EnvSettingsSource = EnvSettingsSource
     PydanticBaseSettingsSource = PydanticBaseSettingsSource
     YamlConfigSettingsSource = YamlConfigSettingsSource

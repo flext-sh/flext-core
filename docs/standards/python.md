@@ -1,10 +1,12 @@
 # Python Standards
 
 <!-- TOC START -->
+
 - [Core Rules](#core-rules)
 - [Result Contract Example](#result-contract-example)
 - [Settings Contract Example](#settings-contract-example)
 - [Container Contract Example](#container-contract-example)
+
 <!-- TOC END -->
 
 ## Core Rules

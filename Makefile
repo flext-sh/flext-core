@@ -200,7 +200,8 @@ export FLEXT_INFRA_PYTHON UV_PROJECT UV_PROJECT_ENVIRONMENT VIRTUAL_ENV PATH
 .PHONY: _bootstrap_setup_tools
 
 _bootstrap_setup_tools:
-	@set -eu; \
+	# The lifecycle invokes recursive make through mise, so preserve jobserver FDs.
+	+@set -eu; \
 	uv_selector="latest"; \
 	if [ ! -f "$(SETUP_MISE)" ]; then \
 		printf 'ERROR: missing generated mise launcher: %s; run make gen\n' "$(SETUP_MISE)" >&2; \
@@ -1048,7 +1049,7 @@ _builtin-self-check: _builtin_require_environment
 		printf 'ERROR: no check gates remain after CI=Y filtering\n' >&2; \
 		exit 2; \
 	fi; \
-	$(PROJECT_FLEXT_INFRA) check run --repository-root "$(PROJECT_ROOT)" --gates "$$gates" --projects . --apply
+	$(PROJECT_FLEXT_INFRA) check run --repository-root "$(PROJECT_ROOT)" --gates "$$gates" --projects .
 
 _builtin-self-fmt: _builtin_require_environment
 	@$(UV_RUN) ruff format --preview $(RUFF_PATHS)
@@ -1056,6 +1057,9 @@ _builtin-self-fmt: _builtin_require_environment
 
 _builtin-self-fix: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) check run --repository-root "$(PROJECT_ROOT)" --gates "lint,markdown,canonical-alias,smells" --projects . --apply --report-findings
+
+_builtin-self-fix-enforcement: _builtin_require_environment
+	@$(PROJECT_FLEXT_INFRA) check fix-enforcement --repository-root "$(PROJECT_ROOT)" --safe-only --apply
 
 _builtin-self-build:
 	@$(UV) build --project "$(PROJECT_ROOT)"
@@ -1162,7 +1166,7 @@ _builtin_clean_generated:
 
 
 	@set -eu; \
-	for target in "$(PROJECT_ROOT)/.coverage" "$(PROJECT_ROOT)/.testmondata"; do \
+	for target in "$(PROJECT_ROOT)/.coverage" "$(PROJECT_ROOT)/.testmondata" "$(PROJECT_ROOT)/flext-infra-codegen-transaction-journal.json.lock"; do \
 		if [ -e "$$target" ]; then rm -- "$$target"; \
 		elif [ -L "$$target" ]; then rm -- "$$target"; fi; \
 	done
@@ -1172,13 +1176,6 @@ _builtin_clean_generated:
 		\( -name '*.pstats' \) \
 		-delete
 
-	@set -eu; \
-	if [ -L "$(PROJECT_SCRATCH_ROOT)" ]; then \
-		printf 'ERROR: scratch root %s must be physical, found a symlink\n' "$(PROJECT_SCRATCH_ROOT)" >&2; \
-		exit 2; \
-	elif [ -d "$(PROJECT_SCRATCH_ROOT)" ]; then \
-		find "$(PROJECT_SCRATCH_ROOT)" -depth -delete; \
-	fi
 
 # Release protocol. `plan` derives the next version from merged pull-request
 # titles and guards against any version change made outside the protocol;

@@ -1,5 +1,5 @@
 ---
-applyTo: '**/*.py'
+applyTo: "**/*.py"
 ---
 
 # Read configuration through the project's typed owner

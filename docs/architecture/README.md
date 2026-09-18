@@ -1,6 +1,8 @@
 <!-- TOC START -->
+
 - [Core Layers](#core-layers)
 - [Executable CQRS reference](#executable-cqrs-reference)
+
 <!-- TOC END -->
 
 # Architecture Overview

@@ -1,6 +1,6 @@
 ---
 name: implementation-plan-review
-description: 'implementation plans, decision completeness, adversarial review'
+description: "implementation plans, decision completeness, adversarial review"
 metadata:
   aihub.tags: '["policy:causal-subprocess","policy:fail-loud","policy:no-fallback","policy:preflight-before-effects","policy:strict-execution","provenance:agents-owned","role:planning","updates:manual","usage:on-demand"]'
 ---

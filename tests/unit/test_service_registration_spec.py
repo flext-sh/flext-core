@@ -21,7 +21,7 @@ class TestsServiceRegistrationSpecOwner:
     def test_utility_normalizes_raw_registration_mappings(self) -> None:
         """The canonical utility converts every raw registration mapping."""
         registration = u.normalize_service_registration_spec(
-            m.ServiceRegistrationSpec.model_construct(
+            m.ServiceRegistrationSpec(
                 services={"service": "value"},
                 factories={"factory": _factory},
                 resources={"resource": _factory},
@@ -51,7 +51,7 @@ class TestsServiceRegistrationSpecOwner:
 
     def test_utility_preserves_non_mapping_services_error(self) -> None:
         """Malformed service collections retain the characterized error contract."""
-        registration = m.ServiceRegistrationSpec.model_construct(services=["invalid"])
+        registration = m.ServiceRegistrationSpec(services=["invalid"])
 
         with pytest.raises(AttributeError, match="has no attribute 'items'"):
             _ = u.normalize_service_registration_spec(registration)

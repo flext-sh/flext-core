@@ -6,6 +6,7 @@
 > Project profile: `flext-core`
 
 <!-- TOC START -->
+
 - [Resolve authority](#resolve-authority)
 - [Prepare and discover](#prepare-and-discover)
 - [Establish the baseline](#establish-the-baseline)
@@ -13,6 +14,7 @@
 - [Generated surfaces](#generated-surfaces)
 - [Command grammar](#command-grammar)
 - [Related guides](#related-guides)
+
 <!-- TOC END -->
 
 Use this sequence before changing any FLEXT package. All actions start at the

@@ -6,6 +6,7 @@
 > Project profile: `flext-core`
 
 <!-- TOC START -->
+
 - [Aliases](#aliases)
 - [Essential fixtures](#essential-fixtures)
 - [Resetting singletons manually](#resetting-singletons-manually)
@@ -14,6 +15,7 @@
 - [Make/codegen boundary](#makecodegen-boundary)
 - [Bad practices](#bad-practices)
 - [Related](#related)
+
 <!-- TOC END -->
 
 <!-- mro-wkii.17.7 (agent: codex) — keep test-toolkit guidance separate from Make/codegen ownership. -->
@@ -28,16 +30,16 @@ Import the aliases each test consumes from the public `flext_tests` package root
 `flext_tests` reexports `d`, `e`, `h`, `r`, `x` from `flext_infra` and exposes domain helpers (`tk`, `td`, `tf`, `tv`,
 `tm`).
 
-| Alias | Purpose |
-| ------- | --------- |
-| `c` | constants |
-| `e` | errors / exceptions (reexported) |
-| `m` | models |
-| `p` | protocols |
-| `r` | result (reexported) |
-| `s` | service / test runtime (`FlextTestsServiceBase`) |
-| `t` | typings |
-| `u` | utilities |
+| Alias | Purpose                                          |
+| ----- | ------------------------------------------------ |
+| `c`   | constants                                        |
+| `e`   | errors / exceptions (reexported)                 |
+| `m`   | models                                           |
+| `p`   | protocols                                        |
+| `r`   | result (reexported)                              |
+| `s`   | service / test runtime (`FlextTestsServiceBase`) |
+| `t`   | typings                                          |
+| `u`   | utilities                                        |
 
 **Important:** `s` is the service/test-runtime alias. Test settings are accessed via `FlextTestsSettings` (no short
 alias).
@@ -46,13 +48,13 @@ alias).
 
 Add `flext_tests` to your project test dependencies and use these fixtures in `conftest.py` or directly in tests:
 
-| Fixture | Purpose |
-| --------- | --------- |
-| `reset_settings` | Explicit fixture resetting `FlextSettings`, `FlextTestsSettings`, and `FlextContainer` before and after its consumer. |
-| `test_runtime` | Explicit fixture binding `c`, `e`, `m`, `p`, `r`, `t`, `u` and `service`/`settings`/`logger` on `FlextTestsCase` instances. |
-| `settings` | Clean `FlextTestsSettings(debug=True, trace=False)`. |
-| `settings_factory` | Factory for creating project-specific settings instances. |
-| `temp_dir` / `temp_file` | Temporary paths isolated per test. |
+| Fixture                  | Purpose                                                                                                                     |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| `reset_settings`         | Explicit fixture resetting `FlextSettings`, `FlextTestsSettings`, and `FlextContainer` before and after its consumer.       |
+| `test_runtime`           | Explicit fixture binding `c`, `e`, `m`, `p`, `r`, `t`, `u` and `service`/`settings`/`logger` on `FlextTestsCase` instances. |
+| `settings`               | Clean `FlextTestsSettings(debug=True, trace=False)`.                                                                        |
+| `settings_factory`       | Factory for creating project-specific settings instances.                                                                   |
+| `temp_dir` / `temp_file` | Temporary paths isolated per test.                                                                                          |
 
 With the settings plugin loaded, its `pytest_runtest_setup` and
 `pytest_runtest_teardown` hooks perform automatic isolation. The two explicit

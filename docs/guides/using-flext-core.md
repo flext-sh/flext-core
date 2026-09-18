@@ -6,6 +6,7 @@
 > Project profile: `flext-core`
 
 <!-- TOC START -->
+
 - [Aliases](#aliases)
 - [Result flow](#result-flow)
 - [Settings](#settings)
@@ -15,6 +16,7 @@
 - [Good practices](#good-practices)
 - [Bad practices](#bad-practices)
 - [Related](#related)
+
 <!-- TOC END -->
 
 `flext_core` is the base package for result flow, settings, container wiring, logging, and service runtime.
@@ -25,19 +27,19 @@ Import canonical aliases from the package root:
 
 The examples below import only the aliases they consume from `flext_core`.
 
-| Alias | Purpose |
-| ------- | --------- |
-| `c` | constants / constants namespace |
-| `d` | decorators |
-| `e` | errors / exceptions |
-| `h` | handlers |
-| `m` | models / Pydantic helpers |
-| `p` | protocols |
-| `r` | result (`FlextResult`) |
-| `s` | service / runtime (`FlextService`) |
-| `t` | typings |
-| `u` | utilities |
-| `x` | mixins / execution |
+| Alias | Purpose                            |
+| ----- | ---------------------------------- |
+| `c`   | constants / constants namespace    |
+| `d`   | decorators                         |
+| `e`   | errors / exceptions                |
+| `h`   | handlers                           |
+| `m`   | models / Pydantic helpers          |
+| `p`   | protocols                          |
+| `r`   | result (`FlextResult`)             |
+| `s`   | service / runtime (`FlextService`) |
+| `t`   | typings                            |
+| `u`   | utilities                          |
+| `x`   | mixins / execution                 |
 
 **Important:** `s` is the service/runtime alias. Settings classes (`FlextSettings`, `FlextCliSettings`,
 `FlextTestsSettings`) have no short alias.

@@ -1,6 +1,7 @@
 # Railway-Oriented Programming with r[T]
 
 <!-- TOC START -->
+
 - [Overview](#overview)
 - [Creating Results](#creating-results)
 - [Reading State Safely](#reading-state-safely)
@@ -21,6 +22,7 @@
   - [@d.combined](#dcombined)
 - [Organizing Error Handling](#organizing-error-handling)
 - [Best Practices](#best-practices)
+
 <!-- TOC END -->
 
 ## Overview

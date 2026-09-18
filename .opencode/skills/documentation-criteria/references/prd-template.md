@@ -19,8 +19,8 @@
 
 ## Users and use cases
 
-| User | Need | Use case |
-|---|---|---|
+| User      | Need   | Use case              |
+| --------- | ------ | --------------------- |
 | {persona} | {need} | {observable workflow} |
 
 ## User stories
@@ -29,24 +29,24 @@
 
 ## Requirements
 
-| ID | Priority | Requirement | Phase |
-|---|---|---|---|
-| R-001 | Must | {requirement} | MVP |
+| ID    | Priority | Requirement   | Phase |
+| ----- | -------- | ------------- | ----- |
+| R-001 | Must     | {requirement} | MVP   |
 
 Use Must, Should, Could, and Won't for priority. Keep future requirements
 separate from the MVP.
 
 ## Acceptance criteria
 
-| ID | Requirement | Pass condition |
-|---|---|---|
-| AC-001 | R-001 | {observable, binary condition} |
+| ID     | Requirement | Pass condition                 |
+| ------ | ----------- | ------------------------------ |
+| AC-001 | R-001       | {observable, binary condition} |
 
 ## Success metrics
 
-| Metric | Numeric target | Measurement method | Review point |
-|---|---:|---|---|
-| {metric} | {target} | {source and calculation} | {date or event} |
+| Metric   | Numeric target | Measurement method       | Review point    |
+| -------- | -------------: | ------------------------ | --------------- |
+| {metric} |       {target} | {source and calculation} | {date or event} |
 
 ## User journey
 
@@ -67,11 +67,11 @@ flowchart LR
 ## Assumptions and risks
 
 | Assumption or risk | Validation or response |
-|---|---|
-| {item} | {evidence or action} |
+| ------------------ | ---------------------- |
+| {item}             | {evidence or action}   |
 
 ## Approval
 
-| Stakeholder | Decision | Date |
-|---|---|---|
-| {role} | Pending | {YYYY-MM-DD} |
+| Stakeholder | Decision | Date         |
+| ----------- | -------- | ------------ |
+| {role}      | Pending  | {YYYY-MM-DD} |

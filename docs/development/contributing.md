@@ -1,6 +1,7 @@
 # Contributing to FLEXT-Core
 
 <!-- TOC START -->
+
 - [Code of Conduct](#code-of-conduct)
 - [Canonical Rules](#canonical-rules)
 - [Quick Start](#quick-start)
@@ -28,7 +29,7 @@
 - [Getting Help](#getting-help)
   - [Resources](#resources)
   - [Support Levels](#support-levels)
-<!-- TOC END -->
+  <!-- TOC END -->
 
 Thank you for your interest in contributing to FLEXT-Core! This guide provides comprehensive instructions for
 contributing to the project.
@@ -412,7 +413,7 @@ Contributors who make significant improvements may be:
 - Custom feature development
 - Training and consulting
 
-______________________________________________________________________
+---
 
 Thank you for contributing to FLEXT-Core! Your contributions help make this a better framework for the entire ecosystem.
 

@@ -4,43 +4,27 @@
   "entries": {},
   "events": {
     "context_refresh": {
-      "clients": [
-        "local"
-      ],
+      "clients": ["local"],
       "coverage": "advisory",
-      "native": [
-        "preCompact"
-      ],
+      "native": ["preCompact"],
       "status": "SUPPORTED"
     },
     "prompt_submit": {
-      "clients": [
-        "local"
-      ],
+      "clients": ["local"],
       "coverage": "advisory",
-      "native": [
-        "userPromptSubmitted"
-      ],
+      "native": ["userPromptSubmitted"],
       "status": "SUPPORTED"
     },
     "session_start": {
-      "clients": [
-        "local"
-      ],
+      "clients": ["local"],
       "coverage": "exact",
-      "native": [
-        "sessionStart"
-      ],
+      "native": ["sessionStart"],
       "status": "SUPPORTED"
     },
     "subagent_start": {
-      "clients": [
-        "local"
-      ],
+      "clients": ["local"],
       "coverage": "exact",
-      "native": [
-        "subagentStart"
-      ],
+      "native": ["subagentStart"],
       "status": "SUPPORTED"
     }
   },

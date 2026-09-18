@@ -21,15 +21,18 @@ seguido de práticas recomendadas (“Pydantic way” + princípios SOLID).
 ## Bad patterns identificados
 
 1. **Dependência de APIs internas/privadas para metaclass de Protocol + Pydantic**
+
    - `typing._ProtocolMeta` e `pydantic._internal._model_construction.ModelMetaclass` são imports internos e frágeis a
      mudanças de versão.
    - Risco: quebra silenciosa em upgrades de Python/Pydantic.
 
 2. **Detecção e validação manual de Protocol por introspecção frágil**
+
    - Uso de atributos internos como `__protocol_attrs__` e lógica heurística para inferir protocol em runtime.
    - Risco: comportamento inconsistente entre versões e branchs de tipagem.
 
 3. **Protocol de configuração genérico demais, mas consumidores exigem campos extras via `getattr`**
+
    - `p.Config` define poucos campos, enquanto consumidores dependem de vários atributos opcionais não declarados no contrato.
    - Sintoma: repetição de `getattr(config, "...", default)` e defaults espalhados.
    - Impacto SOLID: viola ISP e enfraquece DIP (dependência em “detalhes implícitos”).

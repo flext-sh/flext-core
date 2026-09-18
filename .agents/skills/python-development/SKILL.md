@@ -1,6 +1,6 @@
 ---
 name: python-development
-description: 'python, package development, toolchain detection'
+description: "python, package development, toolchain detection"
 metadata:
   aihub.tags: '["activation:detected","detect:marker:poetry.lock","detect:marker:pyproject.toml","detect:marker:requirements-dev.txt","detect:marker:requirements.txt","detect:marker:uv.lock","policy:causal-subprocess","policy:fail-loud","policy:no-fallback","policy:preflight-before-effects","policy:strict-execution","policy:zero-residue","provenance:agents-owned","route:project","technology:python","updates:manual","usage:router"]'
 ---

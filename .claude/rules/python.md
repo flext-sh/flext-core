@@ -1,8 +1,8 @@
 ---
 paths:
-- '*.py'
-- '**/*.py'
-- pyproject.toml
+  - "*.py"
+  - "**/*.py"
+  - pyproject.toml
 ---
 
 # Python rules

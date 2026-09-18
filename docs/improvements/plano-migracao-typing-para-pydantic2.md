@@ -1,6 +1,7 @@
 # Plano objetivo: padronização e desduplicação de modelos (OO + MRO)
 
 <!-- TOC START -->
+
 - [Contexto aplicado (flext-sh/flext)](#contexto-aplicado-flext-shflext)
 - [1) Problema atual (direto ao ponto)](#1-problema-atual-direto-ao-ponto)
   - [Evidências principais no código](#evidencias-principais-no-codigo)
@@ -17,6 +18,7 @@
 - [6) Métricas de sucesso](#6-metricas-de-sucesso)
 - [7) Anti-padrões proibidos](#7-anti-padroes-proibidos)
 - [8) Resultado esperado em 30 dias](#8-resultado-esperado-em-30-dias)
+
 <!-- TOC END -->
 
 ## Contexto aplicado (flext-sh/flext)
@@ -30,7 +32,7 @@ Este plano foi ajustado considerando o contexto do ecossistema FLEXT (AGENTS/CLA
 
 Premissa desta versão: **não manter compatibilidade legada**.
 
-______________________________________________________________________
+---
 
 ## 1) Problema atual (direto ao ponto)
 
@@ -47,7 +49,7 @@ padrão único de intenção.
 - Base comum clara em `models/base.py` para consolidar comportamento de validação.
 - Containers com API compartilhada em `models/containers.py`, com espaço para redução de wrappers sem semântica real.
 
-______________________________________________________________________
+---
 
 ## 2) Princípios mandatórios (YAGNI, DRY, SOLID)
 
@@ -62,7 +64,7 @@ ______________________________________________________________________
 1. **MRO curto:** máximo de 3 níveis públicos (Foundation -> Domain -> Facade opcional).
 1. **Deletion-first:** primeiro tentar remover; só depois adicionar.
 
-______________________________________________________________________
+---
 
 ## 3) Alvo arquitetural
 
@@ -83,7 +85,7 @@ Entrar apenas se cumprir todos:
 
 Se falhar em 1 item -> rejeitar.
 
-______________________________________________________________________
+---
 
 ## 4) Plano de execução em 4 fases
 
@@ -131,7 +133,7 @@ Critério de aceite:
 
 - regressão de duplicidade detectada automaticamente.
 
-______________________________________________________________________
+---
 
 ## 5) Backlog inicial (ordem recomendada)
 
@@ -141,7 +143,7 @@ ______________________________________________________________________
 1. **Config errors:** reduzir explosão de classes nominais quando sem ganho funcional.
 1. **Generic snapshots/progress/value:** manter apenas reexports canônicos de domínio.
 
-______________________________________________________________________
+---
 
 ## 6) Métricas de sucesso
 
@@ -151,7 +153,7 @@ ______________________________________________________________________
 - **M4:** 100% dos modelos mapeados para base de intenção.
 - **M5:** 1 caminho canônico de import por conceito principal.
 
-______________________________________________________________________
+---
 
 ## 7) Anti-padrões proibidos
 
@@ -161,7 +163,7 @@ ______________________________________________________________________
 - `model_config` copiado sem necessidade.
 - expansão da fachada como espelho completo de `models`.
 
-______________________________________________________________________
+---
 
 ## 8) Resultado esperado em 30 dias
 

@@ -6,11 +6,12 @@
 > **Standalone / independent mode:** when `../AGENTS.md` does not resolve, pin the parent raw `AGENTS.md` URL to the same branch/release as this package (never `main`).
 
 <!-- AIHUB-AGENTS-SCOPE-LOCAL-BEGIN -->
+
 **Package:** `flext_core` · ~30.9k src LOC · deps: **none** (foundation of the dependency graph)
 
 ## Overview
 
-Enterprise Foundation Framework (Python 3.13 + Clean Architecture). Defines the facade alphabet every other `flext-*` package composes via MRO. Depends on nothing; must never import another `flext-*` package. No public `api.py` — this package *is* the foundation.
+Enterprise Foundation Framework (Python 3.13 + Clean Architecture). Defines the facade alphabet every other `flext-*` package composes via MRO. Depends on nothing; must never import another `flext-*` package. No public `api.py` — this package _is_ the foundation.
 
 ## Structure
 
@@ -26,15 +27,15 @@ src/flext_core/
 
 ## Code Map
 
-| Symbol | Kind | Location | Role |
-| --- | --- | --- | --- |
-| `FlextTypes` (`t`) | class | `typings.py` | composite type aliases |
-| `FlextConstants` (`c`) | class | `constants.py` | constants facade |
-| `FlextProtocols` (`p`) | class | `protocols.py` | structural protocols |
-| `FlextModels` (`m`) | class | `models.py` | Pydantic-2 models |
-| `FlextResult` (`r`) | class | `result.py` | railway result (ADR-001) |
-| `FlextContainer` | class | `container.py` | DI container |
-| `FlextService` (`s`) | class | `service.py` | singleton service base |
+| Symbol                 | Kind  | Location       | Role                     |
+| ---------------------- | ----- | -------------- | ------------------------ |
+| `FlextTypes` (`t`)     | class | `typings.py`   | composite type aliases   |
+| `FlextConstants` (`c`) | class | `constants.py` | constants facade         |
+| `FlextProtocols` (`p`) | class | `protocols.py` | structural protocols     |
+| `FlextModels` (`m`)    | class | `models.py`    | Pydantic-2 models        |
+| `FlextResult` (`r`)    | class | `result.py`    | railway result (ADR-001) |
+| `FlextContainer`       | class | `container.py` | DI container             |
+| `FlextService` (`s`)   | class | `service.py`   | singleton service base   |
 
 ## Conventions (specific to this package)
 
@@ -50,10 +51,12 @@ src/flext_core/
 make check PROJECT=flext-core
 make test  PROJECT=flext-core
 ```
+
 <!-- AIHUB-AGENTS-SCOPE-LOCAL-END -->
 
 <!-- AIHUB-GOVERNANCE-INSTRUCTIONS-BEGIN -->
 <!-- AIHUB-GOVERNANCE-CAPSULE v1 sha256:e1b7a9ae088643bf660b78ff1aea55d49076ec46518707976d77c78ed23db5db -->
+
 # Generated session governance capsule
 
 This projection is derived by `agentsctl sync`; edit canonical `AGENTS.md`, `rules/`, `skills/`, or `commands/`, never this output. The operator's newest request has precedence. Provider hooks are delivery mechanisms, not policy owners.
@@ -256,4 +259,5 @@ sufficient.
 
 Skills: caveman, context-canary, fix-forward-collaboration, governance-audit, operator-correction-learning, plan-focus-recovery, sprint-closure, strategic-compact, verification-loop
 Commands: add-language-rules, database-migration, feature-development, ghi-list, pr-list, ralph-loop, security-triage, synthesize-governance
+
 <!-- AIHUB-GOVERNANCE-INSTRUCTIONS-END -->

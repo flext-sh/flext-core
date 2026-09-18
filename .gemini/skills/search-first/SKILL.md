@@ -1,6 +1,6 @@
 ---
 name: search-first
-description: 'owner discovery, reusable code, architecture research'
+description: "owner discovery, reusable code, architecture research"
 license: MIT
 metadata:
   aihub.tags: '["policy:causal-subprocess","policy:fail-loud","policy:no-fallback","policy:preflight-before-effects","policy:strict-execution","provenance:agents-owned","role:discovery","updates:manual","usage:router"]'

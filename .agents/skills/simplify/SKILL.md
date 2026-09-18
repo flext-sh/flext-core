@@ -1,6 +1,6 @@
 ---
 name: simplify
-description: 'inline simplification, readable code, behavior preservation'
+description: "inline simplification, readable code, behavior preservation"
 license: MIT
 metadata:
   aihub.tags: '["policy:causal-subprocess","policy:fail-loud","policy:no-fallback","policy:preflight-before-effects","policy:strict-execution","policy:zero-residue","provenance:agents-owned","role:refactoring","updates:manual","usage:router"]'

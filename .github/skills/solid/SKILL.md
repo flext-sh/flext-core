@@ -1,6 +1,6 @@
 ---
 name: solid
-description: 'solid principles, responsibility boundaries, dependency direction'
+description: "solid principles, responsibility boundaries, dependency direction"
 license: MIT
 metadata:
   aihub.tags: '["policy:atomic-effects","policy:fail-loud","policy:no-fallback","policy:preflight-before-effects","policy:strict-execution","policy:zero-residue","provenance:agents-owned","role:architecture","updates:manual","usage:router"]'

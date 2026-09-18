@@ -21,14 +21,14 @@ default path, or publish a partial document set.
 
 Retain an artifact only when its current consumer needs its distinct authority:
 
-| Artifact | Sole owned concern | Read when selected |
-|---|---|---|
-| PRD | user/business problem, current scope, measurable acceptance | `PRD template` (skill file) |
-| UI specification | screens, states, transitions, interaction, accessibility | `UI template` (skill file) |
-| ADR | durable technical decision, viable options, consequences | `ADR template` (skill file) |
-| Design document | current-system evidence, interfaces, data flow, implementation and proof | `design template` (skill file) |
-| Work plan | dependency-ordered delivery and integration evidence | `plan template` (skill file) |
-| Task | one bounded owned result required by the project's execution owner | `task template` (skill file) |
+| Artifact         | Sole owned concern                                                       | Read when selected             |
+| ---------------- | ------------------------------------------------------------------------ | ------------------------------ |
+| PRD              | user/business problem, current scope, measurable acceptance              | `PRD template` (skill file)    |
+| UI specification | screens, states, transitions, interaction, accessibility                 | `UI template` (skill file)     |
+| ADR              | durable technical decision, viable options, consequences                 | `ADR template` (skill file)    |
+| Design document  | current-system evidence, interfaces, data flow, implementation and proof | `design template` (skill file) |
+| Work plan        | dependency-ordered delivery and integration evidence                     | `plan template` (skill file)   |
+| Task             | one bounded owned result required by the project's execution owner       | `task template` (skill file)   |
 
 Use the project's declared document owner and location. Do not copy mutable
 schemas, policy, configuration values, rollout status, or tracker state into a

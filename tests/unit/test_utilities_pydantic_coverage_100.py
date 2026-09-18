@@ -7,9 +7,8 @@ from operator import itemgetter
 
 import pytest
 
-from flext_core import m as core_m, u
-from tests.models import m
-from tests.typings import t
+from flext_core import FlextModels, u
+from tests import m, t
 
 
 def _input_reader() -> Callable[[str], str]:
@@ -17,11 +16,11 @@ def _input_reader() -> Callable[[str], str]:
 
 
 class TestsFlextUtilitiesPydantic:
-    class _PrivateAttrContract(core_m.BaseModel):
+    class _PrivateAttrContract(FlextModels.BaseModel):
         label: str
-        _model_values: list[str] = core_m.PrivateAttr(default_factory=list)
+        _model_values: list[str] = FlextModels.PrivateAttr(default_factory=list)
         _utility_values: list[str] = u.PrivateAttr(default_factory=list)
-        _label_copy: str = core_m.PrivateAttr(default_factory=itemgetter("label"))
+        _label_copy: str = FlextModels.PrivateAttr(default_factory=itemgetter("label"))
         _reader: Callable[[str], str] = u.PrivateAttr(default_factory=_input_reader)
 
         def record_model(self, value: str) -> None:

@@ -6,11 +6,13 @@
 > Project profile: `flext-core`
 
 <!-- TOC START -->
+
 - [Prepare the workspace](#prepare-the-workspace)
 - [Make a bounded change](#make-a-bounded-change)
 - [Command boundaries](#command-boundaries)
 - [Documentation ownership](#documentation-ownership)
 - [Next steps](#next-steps)
+
 <!-- TOC END -->
 
 Work from the FLEXT workspace root. The root `AGENTS.md`, branch-matched

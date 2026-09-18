@@ -1,5 +1,5 @@
 ---
-applyTo: '**/*.py'
+applyTo: "**/*.py"
 ---
 
 # Python failures remain explicit

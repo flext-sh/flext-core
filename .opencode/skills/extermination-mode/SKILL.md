@@ -1,6 +1,6 @@
 ---
 name: extermination-mode
-description: 'zero residue, contract removal, consumer rewiring'
+description: "zero residue, contract removal, consumer rewiring"
 metadata:
   aihub.tags: '["policy:atomic-effects","policy:causal-subprocess","policy:fail-loud","policy:no-fallback","policy:preflight-before-effects","policy:strict-execution","policy:zero-residue","provenance:agents-owned","role:migration","updates:manual","usage:router"]'
 ---

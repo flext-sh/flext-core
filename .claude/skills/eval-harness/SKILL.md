@@ -1,6 +1,6 @@
 ---
 name: eval-harness
-description: 'behavioral evaluation, material graders, eval scenarios'
+description: "behavioral evaluation, material graders, eval scenarios"
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob
 metadata:
   aihub.tags: '["policy:atomic-effects","policy:causal-subprocess","policy:fail-loud","policy:no-fallback","policy:preflight-before-effects","policy:strict-execution","policy:zero-residue","provenance:agents-owned","role:verification","updates:manual","usage:on-demand"]'

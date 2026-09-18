@@ -1,7 +1,9 @@
 # flext-core API Overview
 
 <!-- TOC START -->
+
 - [Next Pages](#next-pages)
+
 <!-- TOC END -->
 
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
@@ -13,7 +15,7 @@
 - Doc summary: Flext Core package.
 - Classifiers: `Development Status :: 3 - Alpha`, `Framework :: Pydantic :: 2`,
   `Framework :: Pydantic`, `Intended Audience :: Developers`, `Operating System
-  :: OS Independent`, `Programming Language :: Python :: 3 :: Only` (+3 more)
+:: OS Independent`, `Programming Language :: Python :: 3 :: Only` (+3 more)
 - Project class: `domain`
 - Keywords: `clean-architecture`, `ddd`, `enterprise`, `flext`, `modern`,
   `solid`

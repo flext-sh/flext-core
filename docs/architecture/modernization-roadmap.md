@@ -1,6 +1,7 @@
 # Roadmap Objetivo de Modernização (Python 3.13, OO/MRO, Pydantic v2)
 
 <!-- TOC START -->
+
 - [Escopo](#escopo)
 - [Resultado esperado (DoD do programa)](#resultado-esperado-dod-do-programa)
 - [Princípios de execução](#principios-de-execucao)
@@ -21,6 +22,7 @@
 - [Métricas objetivas de acompanhamento](#metricas-objetivas-de-acompanhamento)
 - [Checklist de fechamento](#checklist-de-fechamento)
 - [Nota de contexto](#nota-de-contexto)
+
 <!-- TOC END -->
 
 ## Escopo
@@ -35,7 +37,7 @@ alinhando com a arquitetura em camadas (L0–L3), CQRS e DI já documentadas no 
 1. **Módulos críticos com menor complexidade** (`runtime`, `checker`, `handlers`, `container`, `models/*`).
 1. **Testes de regressão** cobrindo casos de compatibilidade e serialização.
 
-______________________________________________________________________
+---
 
 ## Princípios de execução
 
@@ -44,7 +46,7 @@ ______________________________________________________________________
 - **SOLID:** separar extração de tipo, decisão de compatibilidade e tratamento de erro.
 - **Arquitetura atual:** preservar fronteiras L0–L3 (contratos → runtime bridge → domínio/infra → orquestração).
 
-______________________________________________________________________
+---
 
 ## Backlog objetivo por trilha
 
@@ -69,7 +71,7 @@ ______________________________________________________________________
 - [ ] Zero uso novo de `__mro__` nos arquivos migrados.
 - [ ] Testes unitários dedicados para classe, instância, `origin`, `Union` e coleções.
 
-______________________________________________________________________
+---
 
 ## Trilha B — Pydantic v2 avançado
 
@@ -89,7 +91,7 @@ ______________________________________________________________________
 - [ ] Redução de validators duplicados com cobertura equivalente.
 - [ ] Sem mudança de comportamento observável nos testes existentes.
 
-______________________________________________________________________
+---
 
 ## Trilha C — Simplificação estrutural (SOLID + YAGNI)
 
@@ -107,7 +109,7 @@ ______________________________________________________________________
 - [ ] Menor complexidade ciclomática nos módulos críticos.
 - [ ] Cada política com testes diretos (não apenas integração por fluxo final).
 
-______________________________________________________________________
+---
 
 ## Plano de execução por ondas (foco em risco)
 
@@ -126,7 +128,7 @@ ______________________________________________________________________
 - [ ] Refactor de `models/*` para reduzir validators redundantes.
 - [ ] Limpeza de fallbacks/YAGNI e endurecimento de contratos.
 
-______________________________________________________________________
+---
 
 ## Métricas objetivas de acompanhamento
 
@@ -136,7 +138,7 @@ ______________________________________________________________________
 - Branch coverage nos módulos críticos.
 - Complexidade ciclomática de `runtime`, `checker`, `handlers`.
 
-______________________________________________________________________
+---
 
 ## Checklist de fechamento
 
