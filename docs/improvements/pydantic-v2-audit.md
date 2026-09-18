@@ -3,7 +3,7 @@
 <!-- TOC START -->
 
 - [Summary](#summary)
-- [Check: model_dump usage](#check-modeldump-usage)
+- [Check: model_dump usage](#check-model_dump-usage)
 - [Check: ConfigDict usage](#check-configdict-usage)
 - [Check: examples-backed settings flow](#check-examples-backed-settings-flow)
 

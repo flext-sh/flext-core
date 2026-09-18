@@ -107,7 +107,7 @@ Each example produces structured output demonstrating the patterns. Examples inc
 
 - **Python**: 3.13+ (required)
 - **Installation**: `pip install -e .` from project root
-- **Dependencies**: All dependencies installed via `poetry install` or `pip install -e .`
+- **Dependencies**: provisioned from the workspace root with `make setup`
 
 ## Next Steps
 

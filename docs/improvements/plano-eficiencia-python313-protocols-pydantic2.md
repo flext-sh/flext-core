@@ -1,5 +1,27 @@
 # Plano objetivo de eficiência: Python 3.13 (MRO), Protocols e Pydantic v2
 
+<!-- TOC START -->
+- [Objetivo](#objetivo)
+- [Diagnóstico aprofundado (estado atual no código)](#diagnostico-aprofundado-estado-atual-no-codigo)
+  - [A) Dispatcher usa Protocol runtime-checkable no hot path](#a-dispatcher-usa-protocol-runtime-checkable-no-hot-path)
+  - [B) Introspecção de protocolo com varredura de mro() sem cache](#b-introspeccao-de-protocolo-com-varredura-de-mro-sem-cache)
+  - [C) TypeAdapter(...) criado dentro de validação (repetição evitável)](#c-typeadapter-criado-dentro-de-validacao-repeticao-evitavel)
+  - [D) Campos Pydantic com default=\[\] (coleções mutáveis)](#d-campos-pydantic-com-default-colecoes-mutaveis)
+  - [E) Validações e coerções que podem ser simplificadas com práticas atuais do Pydantic v2](#e-validacoes-e-coercoes-que-podem-ser-simplificadas-com-praticas-atuais-do-pydantic-v2)
+- [O que precisa ser feito (objetivo, por ordem)](#o-que-precisa-ser-feito-objetivo-por-ordem)
+- [P0 — aplicar imediatamente (alto impacto / baixo risco)](#p0-aplicar-imediatamente-alto-impacto-baixo-risco)
+- [P1 — estrutural (médio risco, alto retorno)](#p1-estrutural-medio-risco-alto-retorno)
+- [P2 — governança e hardening contínuo](#p2-governanca-e-hardening-continuo)
+- [Recomendações Pydantic v2 (atualizadas) para aplicar aqui](#recomendacoes-pydantic-v2-atualizadas-para-aplicar-aqui)
+- [Plano de execução em PRs pequenos (recomendado)](#plano-de-execucao-em-prs-pequenos-recomendado)
+  - [PR 1 (rápido)](#pr-1-rapido)
+  - [PR 2 (segurança + consistência)](#pr-2-seguranca-consistencia)
+  - [PR 3 (estrutura)](#pr-3-estrutura)
+  - [PR 4 (controle de regressão)](#pr-4-controle-de-regressao)
+- [Métricas esperadas](#metricas-esperadas)
+- [Definição objetiva de “pronto”](#definicao-objetiva-de-pronto)
+<!-- TOC END -->
+
 ## Objetivo
 
 Definir **ações objetivas, priorizadas e mensuráveis** para reduzir custo de runtime no `flext-core`, mantendo tipagem
@@ -54,11 +76,10 @@ forte e segurança de contrato.
 
 ## P0 — aplicar imediatamente (alto impacto / baixo risco)
 
-1. **Trocar runtime protocol dispatch por função pré-compilada no registro**
-
-   - Arquivo: `src/flext_core/dispatcher.py`.
-   - Ação: no `register_handler()`, resolver uma vez o executor (`dispatch_message` / `handle` / `execute` / callable) e
-     armazenar callable final.
+1. **Trocar runtime protocol dispatch por função pré-compilada no registro** ✅ concluído - Arquivo: `src/flext_core/dispatcher.py`.
+   - Estado: o registro de handler já resolve uma vez o executor (`dispatch_message` / `handle` / `execute` / callable)
+     via `match handler` e armazena o callable final em `self._handlers`. O `_execute_handler()` chama o callable
+     previamente resolvido sem cadeia de `isinstance(...Protocol)` por mensagem.
    - Resultado esperado: `_execute_handler()` deixa de fazer cadeia de `isinstance(...Protocol)` por mensagem.
    - Critério de aceite: benchmark de dispatch com ganho de throughput e redução de p95.
 
@@ -128,11 +149,11 @@ forte e segurança de contrato.
 
 ## Plano de execução em PRs pequenos (recomendado)
 
-### PR 1 (rápido)
+### PR 1 (rápido) ✅ concluído
 
-- `dispatcher.py`: resolver executor no `register_handler` e armazenar callable.
-- `_models/cqrs.py`: cache do adapter de paginação.
-- `_models/settings.py`: cache do adapter de batch.
+- `dispatcher.py`: executor já resolvido no `register_handler` e armazenado como callable — implementado.
+- `_models/cqrs.py`: cache do adapter de paginação — pendente.
+- `_models/settings.py`: cache do adapter de batch — pendente.
 
 ### PR 2 (segurança + consistência)
 

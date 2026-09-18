@@ -1,5 +1,7 @@
 """Type-safe result type for operations."""
 
+from __future__ import annotations
+
 from ._result.base import JsonDict
 from ._result.behavior import FlextResultBehavior
 from ._result.composition import FlextResultComposition
@@ -22,7 +24,7 @@ class _FlextResult[T](
         error_code: str | None = None,
         error_data: JsonDict | None = None,
         *,
-        value: object | None = None,
+        value: T | None = None,
         error: str | None = None,
         success: bool = True,
         exception: BaseException | None = None,
@@ -38,7 +40,8 @@ class _FlextResult[T](
         )
 
 
-FlextResult = _FlextResult
+class FlextResult[T](_FlextResult[T]):
+    """Public concrete result facade; runtime and typing share one MRO."""
 
 
 r = FlextResult

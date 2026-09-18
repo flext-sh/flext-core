@@ -16,7 +16,7 @@ from flext_core import c, p, r, t, u
 
 
 def _adapt_dispatcher_output(
-    raw_output: t.JsonPayload | p.ResultView[t.JsonPayload] | None,
+    raw_output: t.JsonPayload | p.Result[t.JsonPayload] | None,
     dispatch_result: type[r[t.JsonPayload]],
 ) -> p.Result[t.JsonPayload]:
     result: p.Result[t.JsonPayload]
@@ -24,7 +24,7 @@ def _adapt_dispatcher_output(
         result = dispatch_result.fail_op(
             "validate handler return payload", c.ERR_HANDLER_RETURNED_NONE
         )
-    elif isinstance(raw_output, p.ResultView):
+    elif isinstance(raw_output, p.Result):
         if raw_output.failure:
             result = dispatch_result.from_failure(raw_output)
         else:
@@ -53,11 +53,21 @@ def _adapt_dispatcher_output(
 def _normalize_dispatcher_output(
     raw_candidate: t.JsonPayload | p.ResultView[t.JsonPayload] | None,
     dispatch_result: type[r[t.JsonPayload]],
-) -> t.JsonPayload | p.ResultView[t.JsonPayload] | None:
-    if isinstance(raw_candidate, p.ResultView):
+) -> t.JsonPayload | p.Result[t.JsonPayload] | None:
+    if isinstance(raw_candidate, r):
         return raw_candidate
     if raw_candidate is None:
         return None
+    if isinstance(raw_candidate, p.ResultView):
+        if raw_candidate.failure:
+            return dispatch_result.from_failure(raw_candidate)
+        success_value = raw_candidate.value
+        if u.container(success_value) or u.pydantic_model(success_value):
+            return dispatch_result.ok(success_value)
+        return dispatch_result.fail_op(
+            "normalize handler result view",
+            c.ERR_HANDLER_RETURNED_NON_CONTAINER_SUCCESS_RESULT,
+        )
     if u.container(raw_candidate) or u.pydantic_model(raw_candidate):
         return raw_candidate
     return dispatch_result.fail_op(

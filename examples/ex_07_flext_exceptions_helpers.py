@@ -5,6 +5,7 @@ from __future__ import annotations
 from flext_core import e
 
 from .models import m
+from .protocols import p
 from .shared import ExamplesFlextShared
 
 
@@ -123,7 +124,9 @@ class Ex07FlextExceptionSubclasses(ExamplesFlextShared):
         except e.ValidationError as exc:
             self.audit_check("ValidationError.field", exc.field or "")
             self.audit_check("ValidationError.value", str(exc.value or ""))
-            converted = e.fail_validation(exc.field or "field", error=exc)
+            converted: p.Result[bool] = e.fail_validation(
+                exc.field or "field", error=exc
+            )
             self.audit_check("ValidationError.fail_validation", str(converted.failure))
         try:
             _raise_configuration_error()

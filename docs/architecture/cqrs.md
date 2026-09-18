@@ -4,7 +4,7 @@
 
 - [Overview](#overview)
 - [Executable Dispatcher Flow](#executable-dispatcher-flow)
-- [Command Handling with r[T]](#command-handling-with-rt)
+- [Command Handling with r\[T\]](#command-handling-with-rt)
 - [Context and Metrics (Illustrative Internals)](#context-and-metrics-illustrative-internals)
 - [Best Practices](#best-practices)
 

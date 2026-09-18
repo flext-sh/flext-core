@@ -176,6 +176,16 @@ class FlextDispatcher:
             return raw_candidate
         if raw_candidate is None:
             return None
+        if isinstance(raw_candidate, p.ResultView):
+            if raw_candidate.failure:
+                return dispatch_result.from_failure(raw_candidate)
+            success_value = raw_candidate.value
+            if u.container(success_value) or u.pydantic_model(success_value):
+                return dispatch_result.ok(success_value)
+            return dispatch_result.fail_op(
+                "normalize handler result view",
+                c.ERR_HANDLER_RETURNED_NON_CONTAINER_SUCCESS_RESULT,
+            )
         if u.container(raw_candidate) or u.pydantic_model(raw_candidate):
             return raw_candidate
         return dispatch_result.fail_op(

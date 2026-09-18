@@ -1,5 +1,18 @@
 # Auditoria: Protocols + Pydantic + SOLID (FLEXT)
 
+<!-- TOC START -->
+- [Contexto](#contexto)
+- [Bad patterns identificados](#bad-patterns-identificados)
+- [Best practices recomendadas](#best-practices-recomendadas)
+  - [1) Protocols mínimos por caso de uso (ISP/DIP)](#1-protocols-minimos-por-caso-de-uso-ispdip)
+  - [2) Preferir tipos públicos e estáveis](#2-preferir-tipos-publicos-e-estaveis)
+  - [3) Pydantic way: validação explícita nas bordas](#3-pydantic-way-validacao-explicita-nas-bordas)
+  - [4) Evitar “protocol detection” heurístico](#4-evitar-protocol-detection-heuristico)
+  - [5) Centralizar defaults de configuração](#5-centralizar-defaults-de-configuracao)
+- [Plano incremental sugerido](#plano-incremental-sugerido)
+- [Checklist prático (PR review)](#checklist-pratico-pr-review)
+<!-- TOC END -->
+
 ## Contexto
 
 Este documento identifica _bad patterns_ observados no uso de `Protocol` e na integração com Pydantic no projeto,

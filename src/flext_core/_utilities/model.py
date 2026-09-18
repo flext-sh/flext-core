@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from importlib import import_module
+from typing import overload
 
 from flext_core import c, e, p, r, t
 
@@ -146,6 +147,36 @@ class FlextUtilitiesModel:
             ):
                 return resolved
         return settings_base
+
+    @overload
+    @staticmethod
+    def validate_value[TValue](
+        target: type[TValue],
+        data: t.JsonPayload,
+        *,
+        from_json: bool = False,
+        strict: bool | None = None,
+    ) -> p.Result[TValue]: ...
+
+    @overload
+    @staticmethod
+    def validate_value[TValue](
+        target: t.ValueAdapter[TValue],
+        data: t.JsonPayload,
+        *,
+        from_json: bool = False,
+        strict: bool | None = None,
+    ) -> p.Result[TValue]: ...
+
+    @overload
+    @staticmethod
+    def validate_value(
+        target: t.DynamicTypeHint,
+        data: t.JsonPayload,
+        *,
+        from_json: bool = False,
+        strict: bool | None = None,
+    ) -> p.Result[t.JsonValue]: ...
 
     @staticmethod
     def validate_value[TValue](

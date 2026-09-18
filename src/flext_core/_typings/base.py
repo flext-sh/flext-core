@@ -156,3 +156,4 @@ class FlextTypingBase(tp, ta):
     type TypeHintSpecifier = (
         type[object] | str | UnionType | GenericAlias | TypeAliasType | ForwardRef
     )
+    type DynamicTypeHint = str | UnionType | TypeAliasType | ForwardRef

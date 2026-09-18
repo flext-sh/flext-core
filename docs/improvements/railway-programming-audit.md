@@ -3,7 +3,7 @@
 <!-- TOC START -->
 
 - [Current Status](#current-status)
-- [Audit Check: map + flat_map](#audit-check-map-flatmap)
+- [Audit Check: map + flat_map](#audit-check-map-flat_map)
 - [Audit Check: recover](#audit-check-recover)
 
 <!-- TOC END -->

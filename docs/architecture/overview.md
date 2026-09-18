@@ -36,7 +36,7 @@ Canonical references:
 ┌─────────────────────────────────────────────────────────────┐
 │             Domain & Infrastructure Services (L2)           │
 │  models.py, models/*, mixins.py, service.py                │
-│  utilities.py, _utilities/*, settings.py, context.py          │
+│  utilities.py, _utilities/*, _settings.py, context.py          │
 │  loggings.py, container.py                                  │
 └─────────────────────────────────────────────────────────────┘
                             ↓
@@ -77,9 +77,9 @@ Canonical references:
   - Domain façade modules (`models.py`, `models/*`, `mixins.py`, `service.py`)
     host Pydantic-backed DDD entities, aggregates, validators, and mixins for
     timestamps, versioning, and domain events.
-  - Infrastructure sits beside the domain types: `settings.py` (settings via
-    `BaseSettings`), `context.py` (contextvars metadata propagation),
-    `loggings.py` (structlog defaults), `utilities.py`/`_utilities/*`
+    - Infrastructure sits beside the domain types: `_settings.py` (`FlextSettings`
+    via `BaseSettings`), `context.py` (contextvars metadata propagation),
+    `loggings.py` (`FlextUtilitiesLogging`), `utilities.py`/`_utilities/*`
     (validation, pagination, caching, data mappers, reliability helpers), and
     `container.py` (dependency-injector singleton plus scoped container
     factory).
@@ -140,9 +140,8 @@ guide.
 Run from `flext-core/`:
 
 ```bash
-make lint
-make type-check
-make test-fast
+make check
+make test
 ```
 
 ```text

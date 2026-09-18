@@ -1,5 +1,5 @@
 <!-- AUTO-GENERATED FILE — regenerate through `make gen` from the workspace root. -->
-<!-- Source of truth: `docs/guides/using-flext-core.md`; adjust that source, never this projection. -->
+<!-- Source of truth: `<workspace-root>/docs/guides/using-flext-core.md`; adjust that workspace source, never this member projection. -->
 
 # flext-core - Using flext-core
 
@@ -60,7 +60,7 @@ from flext_core import p, r
 def safe_divide(a: float, b: float) -> p.Result[float]:
     if b == 0:
         return r[float].fail("division_by_zero")
-    return r.ok(a / b)
+    return r[float].ok(a / b)
 
 
 assert safe_divide(10, 2).success
@@ -144,6 +144,5 @@ and obtain its singleton through `fetch_global()`.
 
 ## Related
 
-- `.agents/skills/using-flext-core/SKILL.md`
-- `.agents/skills/coding-standards/SKILL.md`
 - `flext-core/src/flext_core/README.md`
+- Foundation API reference

@@ -4,8 +4,8 @@
 
 - [Contexto consolidado (flext)](#contexto-consolidado-flext)
 - [Escopo desta fase](#escopo-desta-fase)
-- [Entregáveis obrigatórios (curto prazo)](#entregveis-obrigatrios-curto-prazo)
-- [Plano de execução em 4 PRs (objetivo e incremental)](#plano-de-execuo-em-4-prs-objetivo-e-incremental)
+- [Entregáveis obrigatórios (curto prazo)](#entregaveis-obrigatorios-curto-prazo)
+- [Plano de execução em 4 PRs (objetivo e incremental)](#plano-de-execucao-em-4-prs-objetivo-e-incremental)
 - [Regras de design (enxutas)](#regras-de-design-enxutas)
   - [DRY](#dry)
   - [SOLID](#solid)
@@ -14,7 +14,6 @@
 - [Validação padrão por PR](#validao-padro-por-pr)
 - [Riscos e contenção](#riscos-e-conteno)
 - [Próxima ação imediata](#prxima-ao-imediata)
-
 <!-- TOC END -->
 
 **Meta única**: reduzir duplicação e aumentar confiabilidade dos testes sem overengineering, com entregas pequenas e verificáveis.

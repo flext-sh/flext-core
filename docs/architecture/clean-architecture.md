@@ -33,7 +33,7 @@ describes the dependency rules and per-layer responsibilities.
 │  (orchestration & middleware)       │  _dispatcher/reliability.py, _dispatcher/timeout.py
 ├─────────────────────────────────────┤
 │  L2: Domain & Infrastructure        │  models.py, models/*, mixins.py, service.py
-│  (DDD, DI, settings, context)         │  utilities.py, _utilities/*, settings.py, context.py,
+│  (DDD, DI, settings, context)         │  utilities.py, _utilities/*, _settings.py, context.py,
 │                                     │  loggings.py, container.py
 ├─────────────────────────────────────┤
 │  L1: Foundation & Bridge            │  result.py, exceptions.py, registry.py
@@ -87,11 +87,11 @@ from flext_core import FlextDispatcher  # not allowed inside result.py
   - Domain modules (`models.py`, `models/`, `mixins.py`, `service.py`) wrap
     Pydantic v2 for aggregates, events, validators, and cross-cutting mixins
     (timestamps, versioning, soft deletes).
-  - Infrastructure modules carry operational concerns: `settings.py` (settings),
-    `context.py` (contextvars propagation), `loggings.py` (structured logging
-    defaults), `_utilities/` and `utilities.py` (pagination, validators, cache
-    helpers, reliability utilities), and `container.py` (DI singleton plus
-    scoped containers).
+    - Infrastructure modules carry operational concerns: `_settings.py`
+    (`FlextSettings`), `context.py` (contextvars propagation),
+    `loggings.py` (`FlextUtilitiesLogging`), `_utilities/` and
+    `utilities.py` (pagination, validators, cache helpers, reliability
+    utilities), and `container.py` (DI singleton plus scoped containers).
 
 - **L3 – Application / Orchestration**
 
@@ -129,9 +129,8 @@ circular dependencies and keeps FLEXT-Core safe for reuse across services.
 Run from `flext-core/`:
 
 ```bash
-make lint
-make type-check
-make test-fast
+make check
+make test
 ```
 
 ```text

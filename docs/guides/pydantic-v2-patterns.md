@@ -4,8 +4,8 @@
 
 - [Overview](#overview)
 - [Base Model + Field](#base-model-field)
-- [ConfigDict + model_dump](#configdict-modeldump)
-- [field_validator](#fieldvalidator)
+- [ConfigDict + model_dump](#configdict-model_dump)
+- [field_validator](#field_validator)
 - [examples-backed sanity check](#examples-backed-sanity-check)
 
 <!-- TOC END -->

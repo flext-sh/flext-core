@@ -143,18 +143,6 @@ class FlextConstantsEnforcementTargets:
             "version_at_least",
             "Rewrite version predicate to the canonical boolean helper",
         ),
-        "is_internal_backend": (
-            "internal_backend",
-            "Rewrite backend predicate to the direct boolean property",
-        ),
-        "is_dirty_tree": (
-            "dirty_tree",
-            "Rewrite git predicate to the direct boolean helper",
-        ),
-        "set_proxy_credential": (
-            "provide_proxy_credential",
-            "Rewrite credential setter to the canonical provide verb",
-        ),
     })
     """SSOT: legacy accessor name → (canonical replacement, human-readable reason).
 

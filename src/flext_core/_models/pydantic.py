@@ -214,5 +214,5 @@ class FlextModelsPydantic:
     EnvSettingsSource = EnvSettingsSource
     PydanticBaseSettingsSource = PydanticBaseSettingsSource
     YamlConfigSettingsSource = YamlConfigSettingsSource
-    ConfigFileSourceType = _ConfigFileSourceType
+    type ConfigFileSourceType = _ConfigFileSourceType
     Traversable = _Traversable

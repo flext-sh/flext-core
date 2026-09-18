@@ -3,7 +3,7 @@
 <!-- TOC START -->
 
 - [Overview](#overview)
-- [Value Validation with r[T]](#value-validation-with-rt)
+- [Value Validation with r\[T\]](#value-validation-with-rt)
 - [Entity Command Flow](#entity-command-flow)
 - [Use Maintainer DDD-Like Examples](#use-maintainer-ddd-like-examples)
 - [DDD Checklist](#ddd-checklist)

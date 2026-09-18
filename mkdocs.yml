@@ -38,6 +38,7 @@ theme:
         icon: material/weather-sunny
         name: Switch to light mode
 
+
 plugins:
   - search
   - autorefs
