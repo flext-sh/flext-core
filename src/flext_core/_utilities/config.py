@@ -15,7 +15,7 @@ from __future__ import annotations
 import re
 import tomllib
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, cast
 
 import yaml
 import yaml.constructor
@@ -52,8 +52,7 @@ class FlextUtilitiesConfig:
         @staticmethod
         def safe_load(stream: str) -> t.JsonValue:
             """Parse a YAML string → validated JSON value."""
-            loaded: t.JsonValue = yaml.safe_load(stream)
-            return loaded
+            return cast("t.JsonValue", yaml.safe_load(stream))
 
         @staticmethod
         def safe_dump(
@@ -77,8 +76,7 @@ class FlextUtilitiesConfig:
         def safe_load_file(path: Path) -> t.JsonValue:
             """Load a YAML file → validated JSON value."""
             with path.open(encoding="utf-8") as fh:
-                loaded: t.JsonValue = yaml.safe_load(fh)
-                return loaded
+                return cast("t.JsonValue", yaml.safe_load(fh))
 
         @staticmethod
         def yaml_safe_load(path: Path) -> p.Result[t.JsonMapping]:

@@ -221,6 +221,9 @@ class FlextProtocolsResult:
         def require_error(cls, source: FlextProtocolsResult.FailureLike) -> str: ...
 
         @classmethod
+        def ok(cls, value: object) -> object: ...
+
+        @classmethod
         def fail(
             cls,
             error: str | None,
