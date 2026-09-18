@@ -14,8 +14,9 @@ from __future__ import annotations
 
 import re
 import tomllib
+from collections.abc import Mapping
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 import yaml
 import yaml.constructor
@@ -27,8 +28,27 @@ from .._typings.base import FlextTypingBase as t
 from .guards_type_core import FlextUtilitiesGuardsTypeCore as g
 from .reliability import FlextUtilitiesReliability as rel
 
-if TYPE_CHECKING:
-    from collections.abc import Mapping
+
+def _as_json_value(loaded: object) -> t.JsonValue:
+    """Normalize a decoded YAML document into the canonical JSON value.
+
+    ``yaml.safe_load`` is untyped; the decoded object is narrowed here so the
+    public surface always returns ``t.JsonValue`` (or fails loudly on a
+    non-JSON document shape).
+    """
+    if loaded is None or isinstance(loaded, (str, int, float, bool)):
+        return loaded
+    if isinstance(loaded, list):
+        return _as_json_values(loaded)
+    if isinstance(loaded, Mapping):
+        return {str(key): _as_json_value(value) for key, value in loaded.items()}
+    msg = f"unsupported YAML document type: {type(loaded).__name__}"
+    raise TypeError(msg)
+
+
+def _as_json_values(loaded: list[object]) -> list[t.JsonValue]:
+    """Normalize a decoded YAML sequence into canonical JSON values."""
+    return [_as_json_value(item) for item in loaded]
 
 
 class FlextUtilitiesConfig:
@@ -52,7 +72,7 @@ class FlextUtilitiesConfig:
         @staticmethod
         def safe_load(stream: str) -> t.JsonValue:
             """Parse a YAML string → validated JSON value."""
-            return yaml.safe_load(stream)
+            return _as_json_value(yaml.safe_load(stream))
 
         @staticmethod
         def safe_dump(
@@ -76,7 +96,8 @@ class FlextUtilitiesConfig:
         def safe_load_file(path: Path) -> t.JsonValue:
             """Load a YAML file → validated JSON value."""
             with path.open(encoding="utf-8") as fh:
-                return yaml.safe_load(fh)
+                loaded = yaml.safe_load(fh)
+            return _as_json_value(loaded)
 
         @staticmethod
         def yaml_safe_load(path: Path) -> p.Result[t.JsonMapping]:
@@ -84,11 +105,14 @@ class FlextUtilitiesConfig:
             if not path.is_file():
                 return r[t.JsonMapping].fail(f"YAML file not found: {path}")
             try:
-                return r[t.JsonMapping].ok(
-                    FlextUtilitiesConfig.Yaml.safe_load_file(path)
-                )
+                loaded = FlextUtilitiesConfig.Yaml.safe_load_file(path)
             except OSError as exc:
                 return r[t.JsonMapping].fail(f"YAML read error: {exc}", exception=exc)
+            if not isinstance(loaded, Mapping):
+                return r[t.JsonMapping].fail(
+                    f"YAML root is not a mapping: {type(loaded).__name__}"
+                )
+            return r[t.JsonMapping].ok(loaded)
 
         @staticmethod
         def yaml_dump(
@@ -98,7 +122,7 @@ class FlextUtilitiesConfig:
             try:
                 path.parent.mkdir(parents=True, exist_ok=True)
                 validated = FlextUtilitiesConfig.Yaml.safe_dump(
-                    data, sort_keys=sort_keys, indent=indent
+                    dict(data), sort_keys=sort_keys, indent=indent
                 )
                 with path.open("w", encoding="utf-8") as fh:
                     fh.write(validated)

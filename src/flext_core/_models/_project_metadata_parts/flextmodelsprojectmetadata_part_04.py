@@ -12,8 +12,8 @@ from typing import Annotated
 from pydantic import Field
 
 from .flextmodelsprojectmetadata_part_01 import (
+    ProjectMetadataContract,
     PyprojectIngressContract,
-    _ProjectMetadataContract,
 )
 from .flextmodelsprojectmetadata_part_03 import ProjectMetadataAggregates
 
@@ -32,7 +32,7 @@ class ProjectMetadataDocument(ProjectMetadataAggregates):
             ),
         ] = Field(default_factory=ProjectMetadataAggregates.ProjectToolFlext)
 
-    class ProjectMetadata(_ProjectMetadataContract):
+    class ProjectMetadata(ProjectMetadataContract):
         """Canonical project metadata retaining exact validated source objects."""
 
         root: Annotated[Path, Field(description="Project root")]

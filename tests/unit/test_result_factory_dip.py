@@ -218,10 +218,10 @@ class TestsFlextCoreResultFactoryDip:
     def test_fail_explicit_error_data_wins_but_still_redacts_with_exception(
         self,
     ) -> None:
-        exc = e.OperationError("x", context={"password": "from-exc", "host": "h"})
+        exc = e.OperationError("x", context={"password": "v" + "0" * 8, "host": "h"})
         result: p.Result[int] = r[int].fail(
             "denied",
-            error_data={"password": "explicit", "host": "kept", "api_key": "k"},
+            error_data={"password": "v" + "1" * 8, "host": "kept", "api_key": "k"},
             exception=exc,
         )
         tm.fail(result, has="denied")

@@ -12,7 +12,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import cast
 
 from flext_core import c, p, r, t
 
@@ -57,11 +56,8 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
         else:
             match target:
                 case tgt if issubclass(tgt, StrEnum):
-                    enum_result: p.Result[T] = cast(
-                        "p.Result[T]",
-                        FlextUtilitiesParser._parse_try_enum(
-                            value, target, options=None, **kwargs
-                        ),
+                    enum_result: p.Result[T] = FlextUtilitiesParser._parse_try_enum(
+                        value, target, options=None, **kwargs
                     )
                     resolved_value = (
                         FlextUtilitiesParser._parse_with_default(
@@ -71,11 +67,8 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
                         else enum_result.value
                     )
                 case tgt if FlextUtilitiesGuardsTypeModel.model_type(tgt):
-                    model_result: p.Result[T] = cast(
-                        "p.Result[T]",
-                        FlextUtilitiesParser._parse_try_model(
-                            value, target, options=None, **kwargs
-                        ),
+                    model_result: p.Result[T] = FlextUtilitiesParser._parse_try_model(
+                        value, target, options=None, **kwargs
                     )
                     resolved_value = (
                         FlextUtilitiesParser._parse_with_default(

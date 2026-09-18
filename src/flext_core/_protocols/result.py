@@ -173,6 +173,41 @@ class FlextProtocolsResult:
         ) -> t.MappingKV[str, ts.JsonPayload | None]: ...
 
     @runtime_checkable
+    class ResultFactoryMinimal(Protocol):
+        """Minimal factory contract satisfied by result mixin classes.
+
+        This is a subset of ``ResultFactory`` containing only the methods
+        required by ``copy_result`` and ``ok_result``. Mixin classes
+        (``FlextResultTransforms``, ``FlextResultComposition``,
+        ``FlextResultConstruction``) structurally satisfy this via
+        inheritance from ``FlextResultConstruction``.
+        """
+
+        @classmethod
+        def reject_banned_result_parameterization(cls) -> None: ...
+
+        @staticmethod
+        def reject_banned_success_payload(value: object) -> None: ...
+
+        @classmethod
+        def require_error(cls, source: FlextProtocolsResult.FailureLike) -> str: ...
+
+        @classmethod
+        def fail(
+            cls,
+            error: str | None,
+            *,
+            error_code: str | None = None,
+            error_data: t.JsonMapping | None = None,
+            exception: BaseException | None = None,
+        ) -> object: ...
+
+        @classmethod
+        def ok(cls, value: object) -> object: ...
+
+        def __init__(self, *, value: object, success: bool) -> None: ...
+
+    @runtime_checkable
     class ResultFactory(Protocol):
         """Structural factory contract for the concrete result family."""
 

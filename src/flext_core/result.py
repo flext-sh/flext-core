@@ -1,10 +1,5 @@
 """Type-safe result type for operations."""
 
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
-from ._protocols.result import FlextProtocolsResult as prt
 from ._result.base import JsonDict
 from ._result.behavior import FlextResultBehavior
 from ._result.composition import FlextResultComposition
@@ -27,7 +22,7 @@ class _FlextResult[T](
         error_code: str | None = None,
         error_data: JsonDict | None = None,
         *,
-        value: T | None = None,
+        value: object | None = None,
         error: str | None = None,
         success: bool = True,
         exception: BaseException | None = None,
@@ -43,76 +38,7 @@ class _FlextResult[T](
         )
 
 
-if TYPE_CHECKING:
-    from flext_core import p, t
-
-    class FlextResult[T]:
-        """Type-safe result with monadic railway-oriented operations."""
-
-        error: str | None
-        error_code: str | None
-        error_data: t.JsonMapping | None
-        success: bool
-        exception: BaseException | None
-        failure: bool
-        value: T | None
-
-        @classmethod
-        def ok(cls, value: T) -> p.Result[T]:
-            """Create a successful result carrying ``value``."""
-            ...
-
-        @classmethod
-        def fail(
-            cls,
-            error: str | None,
-            *,
-            error_code: str | None = None,
-            error_data: t.JsonMapping | t.ConfigModelInput | None = None,
-            exception: BaseException | None = None,
-        ) -> p.Result[T]:
-            """Create a failed result with the given error payload."""
-            ...
-
-        @classmethod
-        def fail_op(
-            cls, operation: str, exc: Exception | str | None = None
-        ) -> p.Result[T]:
-            """Create a failed result for a named operation."""
-            ...
-
-        @classmethod
-        def from_failure(cls, source: p.FailureLike) -> p.Result[T]:
-            """Rebuild this concrete facade from any failed result-like."""
-            ...
-
-        @classmethod
-        def from_result[V](cls, source: prt.Result[V]) -> p.Result[V]:
-            """Copy an abstract result into this concrete facade."""
-            ...
-
-        @classmethod
-        def from_validation[ModelT: t.BaseModelType](
-            cls, data: object, model: type[ModelT]
-        ) -> p.Result[ModelT]:
-            """Validate data against a Pydantic model and return a result."""
-            ...
-
-        @classmethod
-        def successful_result(cls, obj: object) -> bool:
-            """Check if object is a successful result."""
-            ...
-
-        @classmethod
-        def failed_result(cls, obj: object) -> bool:
-            """Check if object is a failed result."""
-            ...
-
-        @classmethod
-        def require_error(cls, source: prt.FailureLike) -> str: ...
-
-else:
-    FlextResult = _FlextResult
+FlextResult = _FlextResult
 
 
 r = FlextResult

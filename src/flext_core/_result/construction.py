@@ -197,7 +197,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
         return isinstance(obj, FlextResultBase) and not obj.success
 
 
-def ok_result[V, InstanceT: prt.ResultFactory](
+def ok_result[V, InstanceT: prt.ResultFactoryMinimal](
     cls: type[InstanceT], value: V
 ) -> p.Result[V]:
     """Build a successful result of the ``cls`` result family carrying ``value``."""
@@ -206,7 +206,7 @@ def ok_result[V, InstanceT: prt.ResultFactory](
     return cast("p.Result[V]", cls(value=value, success=True))
 
 
-def copy_result[V, InstanceT: prt.ResultFactory](
+def copy_result[V, InstanceT: prt.ResultFactoryMinimal](
     cls: type[InstanceT], source: p.Result[V]
 ) -> p.Result[V]:
     """Copy any abstract result into the ``cls`` result family."""

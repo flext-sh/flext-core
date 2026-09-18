@@ -168,11 +168,11 @@ class FlextDispatcher:
 
     @staticmethod
     def _normalize_dispatcher_output(
-        raw_candidate: t.JsonPayload | p.Result[t.JsonPayload] | None,
+        raw_candidate: t.JsonPayload | p.ResultView[t.JsonPayload] | None,
         dispatch_result: type[r[t.JsonPayload]],
-    ) -> t.JsonPayload | p.Result[t.JsonPayload] | None:
+    ) -> t.JsonPayload | p.ResultView[t.JsonPayload] | None:
         """Normalize raw handler output to Result or payload candidate."""
-        if isinstance(raw_candidate, r):
+        if isinstance(raw_candidate, p.ResultView):
             return raw_candidate
         if raw_candidate is None:
             return None
@@ -185,7 +185,7 @@ class FlextDispatcher:
 
     @staticmethod
     def _adapt_dispatcher_output(
-        raw_output: t.JsonPayload | p.Result[t.JsonPayload] | None,
+        raw_output: t.JsonPayload | p.ResultView[t.JsonPayload] | None,
         dispatch_result: type[r[t.JsonPayload]],
     ) -> p.Result[t.JsonPayload]:
         """Adapt normalized output to the canonical ``r[t.JsonPayload]`` contract."""
@@ -194,7 +194,7 @@ class FlextDispatcher:
             result = dispatch_result.fail_op(
                 "validate handler return payload", c.ERR_HANDLER_RETURNED_NONE
             )
-        elif isinstance(raw_output, p.Result):
+        elif isinstance(raw_output, p.ResultView):
             if raw_output.failure:
                 result = dispatch_result.from_failure(raw_output)
             else:
