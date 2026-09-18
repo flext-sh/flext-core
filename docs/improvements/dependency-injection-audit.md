@@ -145,9 +145,9 @@ The guide mentions v0.9.9 breaking changes but could be clearer:
 ```markdown
 BREAKING CHANGES (Phase 4 - v0.9.9):
 
-- register[T](<>) now uses generic type T instead of t.JsonValue
-- register_factory[T](<>) now uses Callable[[], T] instead of Callable[[], t.JsonValue]
-- get_typed[T](<>) now returns r[T] instead of r[t.JsonValue]
+- register[T]() now uses generic type T instead of t.JsonValue
+- register_factory[T]() now uses Callable[[], T] instead of Callable[[], t.JsonValue]
+- get_typed[T]() now returns r[T] instead of r[t.JsonValue]
 ```
 
 Add migration guide from v0.9.8 to v0.9.9.

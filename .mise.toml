@@ -47,7 +47,7 @@ node = "latest"
 go = "latest"
 make = "latest"
 [tools."github:qltysh/qlty"]
-version = "latest"
+version = "0.642.0"
 github_attestations = false
 
 [tools."github:marlon-costa-dc/beads"]

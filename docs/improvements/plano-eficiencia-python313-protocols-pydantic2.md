@@ -88,6 +88,7 @@ inesperados e debugging mais caro.
 
 1. **Trocar runtime protocol dispatch por função pré-compilada no registro** ✅
    concluído - Arquivo: `src/flext_core/dispatcher.py`.
+
    - Estado: o registro de handler já resolve uma vez o executor (`dispatch_message` /
      `handle` / `execute` / callable) via `match handler` e armazena o callable final em
      `self._handlers`. O `_execute_handler()` chama o callable previamente resolvido sem

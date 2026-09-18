@@ -29,7 +29,14 @@ uv.lock
 # Agent hooks and operator config (runtime state, never source)
 .github/hooks/
 */.hooks.json.agents-governance.json
+.claude/settings.json
+.claude/*.agents-governance.json
+.gemini/settings.json
+.gemini/*.agents-governance.json
 .claude/settings.local.json
+
+# Operator-private local config overrides
+/config/codegen-overrides.local.yaml
 
 # Gas City skill projections (runtime state, never source)
 .agents/skills/.gc-skill-ownership.json

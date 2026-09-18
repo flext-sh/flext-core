@@ -151,7 +151,6 @@ class TestsFlextConstantsNew:
         "version",
         [
             "0.12.0",
-            "0.12.0",
             "0.12.0.rc0",
             "1.2.3a1",
             "1.2.3b2",
