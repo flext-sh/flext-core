@@ -38,7 +38,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
     @classmethod
     def ok[V](cls: type[Self], value: V) -> p.Result[V]:
         """Create a successful result carrying ``value``."""
-        return ok_result(cls, value)
+        return ok_result(cls._factory(), value)
 
     @classmethod
     def from_failure(cls: type[Self], source: p.FailureLike) -> p.Result[T]:
@@ -103,7 +103,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
     @classmethod
     def from_result[V](cls: type[Self], source: p.Result[V]) -> p.Result[V]:
         """Copy an abstract result into this concrete result family."""
-        return copy_result(cls, source)
+        return copy_result(cls._factory(), source)
 
     @classmethod
     def create_from_callable[V](
@@ -116,7 +116,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
                     "p.Result[V]",
                     cls.fail("Callable returned None", error_code=error_code),
                 )
-            return ok_result(cls, value)
+            return ok_result(cls._factory(), value)
         except c.EXC_BROAD_RUNTIME as exc:
             return cast(
                 "p.Result[V]", cls.fail(str(exc), error_code=error_code, exception=exc)
@@ -182,7 +182,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
     ) -> p.Result[ModelT]:
         try:
             validated: ModelT = model.model_validate(data)
-            return ok_result(cls, validated)
+            return ok_result(cls._factory(), validated)
         except c.EXC_ATTR_RUNTIME_VALIDATION as exc:
             return cast("p.Result[ModelT]", cls.fail(str(exc), exception=exc))
 

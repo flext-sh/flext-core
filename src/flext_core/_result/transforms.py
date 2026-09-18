@@ -45,7 +45,7 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
                 ),
             )
         try:
-            return copy_result(self.__class__, func(self._payload))
+            return copy_result(self._factory(), func(self._payload))
         except c.EXC_BROAD_RUNTIME as exc:
             return cast("p.Result[U]", self.__class__.fail(str(exc), exception=exc))
 
@@ -55,7 +55,7 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
         for func in funcs:
             if current.success:
                 try:
-                    current = copy_result(factory, func(current.value))
+                    current = copy_result(self._factory(), func(current.value))
                 except c.EXC_BROAD_RUNTIME as exc:
                     current = factory.fail(str(exc), exception=exc)
             else:
@@ -75,7 +75,7 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
                 return cast(
                     "p.Result[T | U]",
                     copy_result(
-                        self.__class__, func(self.require_error(self._as_result()))
+                        self._factory(), func(self.require_error(self._as_result()))
                     ),
                 )
             except c.EXC_BROAD_RUNTIME as exc:
@@ -87,7 +87,7 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
     def map[U](self, func: Callable[[T], U]) -> p.Result[U]:
         if self.success:
             try:
-                return ok_result(self.__class__, func(self._payload))
+                return ok_result(self._factory(), func(self._payload))
             except c.EXC_BROAD_RUNTIME as exc:
                 return cast("p.Result[U]", self.__class__.fail(str(exc), exception=exc))
         return cast(
@@ -133,7 +133,9 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
         try:
             return cast(
                 "p.Result[T | U]",
-                ok_result(self.__class__, func(self.require_error(self._as_result()))),
+                ok_result(
+                    self._factory(), func(self.require_error(self._as_result()))
+                ),
             )
         except c.EXC_BROAD_RUNTIME as exc:
             return cast("p.Result[T | U]", self.__class__.fail(str(exc), exception=exc))
@@ -166,7 +168,7 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
                 ),
             )
         try:
-            return ok_result(self.__class__, model.model_validate(self._payload))
+            return ok_result(self._factory(), model.model_validate(self._payload))
         except c.EXC_ATTR_RUNTIME_VALIDATION as exc:
             return cast("p.Result[U]", self.__class__.fail(str(exc), exception=exc))
 

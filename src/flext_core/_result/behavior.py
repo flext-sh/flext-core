@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Self, override
 
+from .._protocols.result import FlextProtocolsResult as prt
 from .base import FlextResultBase
 
 
@@ -25,6 +26,14 @@ class FlextResultBehavior[T](FlextResultBase[T]):
     @property
     def exception(self) -> BaseException | None:
         return self._exception
+
+    @classmethod
+    def _factory(cls) -> type[prt.ResultFactory]:
+        """Return the concrete MRO only after structural factory validation."""
+        if isinstance(cls, prt.ResultFactory):
+            return cls
+        msg = f"{cls.__name__} does not implement the result factory contract"
+        raise TypeError(msg)
 
     def __enter__(self) -> Self:
         return self
