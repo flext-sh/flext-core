@@ -8,7 +8,9 @@ name: CI
 
 # === SECTION: triggers (managed) ===
 # Source: operator CI policy — integration push/PR = blocking CI only;
-# main push/PR (non-draft) = blocking CI; draft and other branches = none.
+# main push/PR (non-draft) = blocking CI; draft and other branches = none;
+# workflow_call changes no direct-run behavior and declares the optional
+# cross-repo dependency-credential secret contract in workflow scope.
 "on":
   push:
     branches:
@@ -21,6 +23,19 @@ name: CI
       - 0.12.0-dev
       - 0.20.0-dev
     types: [opened, synchronize, reopened, ready_for_review]
+  workflow_call:
+    secrets:
+      CI_DEPENDENCIES_APP_ID:
+        required: false
+        description: >-
+          Optional datacosmos-ci-dependencies GitHub App id; when absent the
+          cross-repo credential step records NOT EXECUTED and public sibling
+          dependencies resolve anonymously.
+      CI_DEPENDENCIES_APP_PRIVATE_KEY:
+        required: false
+        description: >-
+          Optional GitHub App private key minting the short-lived installation
+          token for cross-repo private git dependencies.
 # End SECTION: triggers
 
 # Why: one active run per workflow and branch prevents obsolete CI from consuming runners.
@@ -48,8 +63,9 @@ jobs:
           submodules: false
           fetch-depth: 0
       # Cross-repo private git dependencies: the workflow token is scoped to
-      # this repository only, so `uv sync` cannot clone sibling private repos
-      # (make setup fails inside the git dependency fetch). When the org
+      # this repository only, so it cannot clone siblings that turn private.
+      # Every declared sibling is public today and resolves anonymously; the
+      # credential exists for the private-sibling scenario. When the org
       # installs the datacosmos-ci-dependencies GitHub App and exposes
       # CI_DEPENDENCIES_APP_ID / CI_DEPENDENCIES_APP_PRIVATE_KEY, mint a
       # short-lived installation token and scope it to github.com clones.
@@ -228,8 +244,9 @@ jobs:
           fetch-depth: 0
           submodules: false
       # Cross-repo private git dependencies: the workflow token is scoped to
-      # this repository only, so `uv sync` cannot clone sibling private repos
-      # (make setup fails inside the git dependency fetch). When the org
+      # this repository only, so it cannot clone siblings that turn private.
+      # Every declared sibling is public today and resolves anonymously; the
+      # credential exists for the private-sibling scenario. When the org
       # installs the datacosmos-ci-dependencies GitHub App and exposes
       # CI_DEPENDENCIES_APP_ID / CI_DEPENDENCIES_APP_PRIVATE_KEY, mint a
       # short-lived installation token and scope it to github.com clones.
