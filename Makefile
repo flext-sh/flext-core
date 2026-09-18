@@ -410,6 +410,12 @@ $${mise_config_argument:+"$$mise_config_argument"} \
 		printf 'ERROR: Mise receipt returned invalid version: %s\n' "$$receipt_runtime" >&2; exit 2; \
 	fi; \
 	printf 'mise setup receipt=%s storage=%s\n' "$$runtime_release" "$$mise_storage_root"; \
+	for stale_mise_lock in "$$project_root/mise.lock" "$$project_root/.mise.lock"; do \
+		if [ -f "$$stale_mise_lock" ]; then \
+			printf 'WARN: removing stale Mise lock %s (fleet policy is unlocked; a committed lock only blocks provenance re-resolution)\n' "$$stale_mise_lock" >&2; \
+			rm -f "$$stale_mise_lock"; \
+		fi; \
+	done; \
 	mise_checked "$$scratch/install.log" mise_exec project "$$latest_mise" -C "$$project_root" install --yes; \
 	mise_checked "$$scratch/uv-version.log" mise_exec project "$$latest_mise" -C "$$project_root" exec -- uv --version; \
 	uv_output=$$(cat "$$scratch/uv-version.log"); \

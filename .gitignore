@@ -319,6 +319,11 @@ __pyrefly_virtual__/
 .turbo/
 .venv.*/
 *.egg-info/
+_tmp_*/
+*.bak/
+*.orig/
+*.rej/
+*.swp/
 build/
 dist/
 node_modules/
