@@ -12,8 +12,8 @@
 
 ## Overview
 
-FLEXT CQRS orchestration centers on dispatcher + handlers + result contracts.
-This page uses executable examples and text-only internals where appropriate.
+FLEXT CQRS orchestration centers on dispatcher + handlers + result contracts. This page
+uses executable examples and text-only internals where appropriate.
 
 ## Executable Dispatcher Flow
 

@@ -1,13 +1,15 @@
 # flext-core Guides
 
 <!-- TOC START -->
+
 - No sections found
+
 <!-- TOC END -->
 
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
-Curated operational guides live here. Keep API behavior in generated reference
-pages sourced from code and docstrings.
+Curated operational guides live here. Keep API behavior in generated reference pages
+sourced from code and docstrings.
 
 - [Anti patterns best practices](anti-patterns-best-practices.md)
 - [Configuration](configuration.md)

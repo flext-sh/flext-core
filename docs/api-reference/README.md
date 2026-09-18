@@ -1,9 +1,11 @@
 # flext-core API Reference
 
 <!-- TOC START -->
+
 - [Source of Truth](#source-of-truth)
 - [Generated Pages](#generated-pages)
 - [Surface Summary](#surface-summary)
+
 <!-- TOC END -->
 
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
@@ -25,8 +27,8 @@ This section is generated from public exports and real docstrings.
 
 ## Surface Summary
 
-- Primary facades: `FlextApi`, `FlextBase`, `FlextCli`, `FlextConfig`,
-  `FlextConstants`, `FlextConstantsEnforcement` (+20 more)
+- Primary facades: `FlextApi`, `FlextBase`, `FlextCli`, `FlextConfig`, `FlextConstants`,
+  `FlextConstantsEnforcement` (+20 more)
 - Generated module pages: `22`
 
 Back to [project docs](../index.md).

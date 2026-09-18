@@ -19,7 +19,8 @@
 
 <!-- TOC END -->
 
-`flext_core` is the base package for result flow, settings, container wiring, logging, and service runtime.
+`flext_core` is the base package for result flow, settings, container wiring, logging,
+and service runtime.
 
 ## Aliases
 
@@ -41,8 +42,8 @@ The examples below import only the aliases they consume from `flext_core`.
 | `u`   | utilities                          |
 | `x`   | mixins / execution                 |
 
-**Important:** `s` is the service/runtime alias. Settings classes (`FlextSettings`, `FlextCliSettings`,
-`FlextTestsSettings`) have no short alias.
+**Important:** `s` is the service/runtime alias. Settings classes (`FlextSettings`,
+`FlextCliSettings`, `FlextTestsSettings`) have no short alias.
 
 ## Result flow
 
@@ -133,14 +134,15 @@ assert result.value == "Hello!"
 
 - Use aliases instead of importing nested modules directly.
 - Use `r[T]` for fallible paths.
-- Reset singletons in tests with `FlextSettings.reset_for_testing()` and `FlextContainer.reset_for_testing()`.
+- Reset singletons in tests with `FlextSettings.reset_for_testing()` and
+  `FlextContainer.reset_for_testing()`.
 - Remember: `s` = service/runtime, never settings.
 
 ## Bad practices
 
-Do not instantiate the base service to execute domain logic: its `execute()`
-raises `NotImplementedError`. Implement the typed operation in a concrete service,
-and obtain its singleton through `fetch_global()`.
+Do not instantiate the base service to execute domain logic: its `execute()` raises
+`NotImplementedError`. Implement the typed operation in a concrete service, and obtain
+its singleton through `fetch_global()`.
 
 ## Related
 

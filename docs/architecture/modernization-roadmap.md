@@ -27,14 +27,18 @@
 
 ## Escopo
 
-Padronizar o restante do código para reduzir duplicação e lógica ad-hoc, sem compromisso de retrocompatibilidade,
-alinhando com a arquitetura em camadas (L0–L3), CQRS e DI já documentadas no projeto.
+Padronizar o restante do código para reduzir duplicação e lógica ad-hoc, sem compromisso
+de retrocompatibilidade, alinhando com a arquitetura em camadas (L0–L3), CQRS e DI já
+documentadas no projeto.
 
 ## Resultado esperado (DoD do programa)
 
-1. **Checks de tipo/hierarquia** centralizados em uma API interna única (sem novos usos diretos de `__mro__`).
-1. **Validação Pydantic v2** consolidada (adapters reutilizáveis + menos validators duplicados).
-1. **Módulos críticos com menor complexidade** (`runtime`, `checker`, `handlers`, `container`, `models/*`).
+1. **Checks de tipo/hierarquia** centralizados em uma API interna única (sem novos usos
+   diretos de `__mro__`).
+1. **Validação Pydantic v2** consolidada (adapters reutilizáveis + menos validators
+   duplicados).
+1. **Módulos críticos com menor complexidade** (`runtime`, `checker`, `handlers`,
+   `container`, `models/*`).
 1. **Testes de regressão** cobrindo casos de compatibilidade e serialização.
 
 ---
@@ -44,7 +48,8 @@ alinhando com a arquitetura em camadas (L0–L3), CQRS e DI já documentadas no 
 - **YAGNI:** remover fallback e abstração não exercitados por testes.
 - **DRY:** uma única implementação para cada regra de compatibilidade.
 - **SOLID:** separar extração de tipo, decisão de compatibilidade e tratamento de erro.
-- **Arquitetura atual:** preservar fronteiras L0–L3 (contratos → runtime bridge → domínio/infra → orquestração).
+- **Arquitetura atual:** preservar fronteiras L0–L3 (contratos → runtime bridge →
+  domínio/infra → orquestração).
 
 ---
 
@@ -63,7 +68,8 @@ alinhando com a arquitetura em camadas (L0–L3), CQRS e DI já documentadas no 
   - [ ] `_utilities/checker.py`
   - [ ] `handlers.py`
   - [ ] `container.py`
-- [ ] Proibir novos checks manuais por `__mro__` (exceto introspecção explícita documentada).
+- [ ] Proibir novos checks manuais por `__mro__` (exceto introspecção explícita
+      documentada).
 
 ### Critérios de aceite
 
@@ -82,8 +88,10 @@ alinhando com a arquitetura em camadas (L0–L3), CQRS e DI já documentadas no 
   - [ ] metadata
   - [ ] tags
   - [ ] payload/settings map
-- [ ] Unificar validators redundantes em `models/container.py`, `models/settings.py`, `models/cqrs.py`.
-- [ ] Introduzir `Annotated[...]` com constraints nativas para remover validação manual onde aplicável.
+- [ ] Unificar validators redundantes em `models/container.py`, `models/settings.py`,
+      `models/cqrs.py`.
+- [ ] Introduzir `Annotated[...]` com constraints nativas para remover validação manual
+      onde aplicável.
 
 ### Critérios de aceite
 
@@ -149,5 +157,6 @@ alinhando com a arquitetura em camadas (L0–L3), CQRS e DI já documentadas no 
 
 ## Nota de contexto
 
-Para incorporar padrões de `flext-sh/flext`, é necessário acesso local ao repositório (arquivos `AGENTS.md`/docs de
-arquitetura). Neste ambiente atual, somente `flext-core` está disponível.
+Para incorporar padrões de `flext-sh/flext`, é necessário acesso local ao repositório
+(arquivos `AGENTS.md`/docs de arquitetura). Neste ambiente atual, somente `flext-core`
+está disponível.

@@ -33,8 +33,8 @@
 | ----- | -------- | ------------- | ----- |
 | R-001 | Must     | {requirement} | MVP   |
 
-Use Must, Should, Could, and Won't for priority. Keep future requirements
-separate from the MVP.
+Use Must, Should, Could, and Won't for priority. Keep future requirements separate from
+the MVP.
 
 ## Acceptance criteria
 

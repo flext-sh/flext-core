@@ -15,8 +15,8 @@
 
 ## Overview
 
-`FlextSettings` is the canonical runtime configuration model in `flext-core`.
-It is a Pydantic v2 settings model with:
+`FlextSettings` is the canonical runtime configuration model in `flext-core`. It is a
+Pydantic v2 settings model with:
 
 - Typed fields
 - Environment resolution
@@ -80,7 +80,8 @@ assert settings.debug is False
 
 ## Context-Specific Settings
 
-Use `fetch_global(overrides=...)` to derive worker/request-level configuration from the global singleton.
+Use `fetch_global(overrides=...)` to derive worker/request-level configuration from the
+global singleton.
 
 ```python
 from flext_core import FlextSettings

@@ -47,8 +47,7 @@ flowchart TD
 
 ## Interactions
 
-Write behavior in EARS form: When {trigger}, the product shall {observable
-response}.
+Write behavior in EARS form: When {trigger}, the product shall {observable response}.
 
 | ID     | Trigger   | Response   | PRD criterion |
 | ------ | --------- | ---------- | ------------- |
@@ -76,5 +75,5 @@ response}.
 
 ## Prototype assets
 
-Store supporting prototypes through the project's declared attachment owner.
-Assets are examples; this specification and the design document remain authoritative.
+Store supporting prototypes through the project's declared attachment owner. Assets are
+examples; this specification and the design document remain authoritative.

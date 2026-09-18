@@ -2,8 +2,8 @@
 
 ## Purpose
 
-`flext_core` provides base contracts for result flow, settings, container wiring,
-and dispatcher-driven orchestration.
+`flext_core` provides base contracts for result flow, settings, container wiring, and
+dispatcher-driven orchestration.
 
 ## Minimal Runtime Examples
 

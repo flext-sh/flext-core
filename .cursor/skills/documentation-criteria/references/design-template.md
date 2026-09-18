@@ -8,8 +8,8 @@
 
 ## Existing system analysis
 
-Describe the current runtime path, its owner, and the integration boundary this
-change uses.
+Describe the current runtime path, its owner, and the integration boundary this change
+uses.
 
 ### Code inspection evidence
 
@@ -78,8 +78,8 @@ flowchart LR
 
 ### Data representation decision
 
-{Explain why the selected representation owns the data and which alternatives
-were rejected.}
+{Explain why the selected representation owns the data and which alternatives were
+rejected.}
 
 ### Field propagation
 

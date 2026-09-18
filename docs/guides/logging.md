@@ -13,7 +13,8 @@
 
 ## Overview
 
-FLEXT logging is built on `structlog` through `FlextUtilitiesLogging`. The logger supports:
+FLEXT logging is built on `structlog` through `FlextUtilitiesLogging`. The logger
+supports:
 
 - Global context for app-wide metadata
 - Scoped context for request/operation data
@@ -47,7 +48,8 @@ with redirect_stdout(stream):
 _ = FlextUtilitiesLogging.unbind_global_context("service", "environment")
 ```
 
-Use `unbind_global_context` when you want to remove selected keys, or `clear_global_context` when you want a full reset.
+Use `unbind_global_context` when you want to remove selected keys, or
+`clear_global_context` when you want a full reset.
 
 ```python
 from flext_core import FlextUtilitiesLogging

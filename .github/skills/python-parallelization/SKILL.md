@@ -7,10 +7,10 @@ metadata:
 
 # Python Parallelization
 
-Read `the selection and proof procedure` (skill file) before changing
-Python concurrency, parallelism, or throughput behavior.
+Read `the selection and proof procedure` (skill file) before changing Python
+concurrency, parallelism, or throughput behavior.
 
-This skill owns workload classification, bounded execution, cancellation,
-cleanup, and measured speedup. Use `python-development` for general Python
-implementation, typing, debugging, testing, and packaging. Never select async,
-threads, processes, or vectorization without repository and workload evidence.
+This skill owns workload classification, bounded execution, cancellation, cleanup, and
+measured speedup. Use `python-development` for general Python implementation, typing,
+debugging, testing, and packaging. Never select async, threads, processes, or
+vectorization without repository and workload evidence.

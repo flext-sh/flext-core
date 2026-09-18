@@ -14,16 +14,20 @@
 - [Validação padrão por PR](#validao-padro-por-pr)
 - [Riscos e contenção](#riscos-e-conteno)
 - [Próxima ação imediata](#prxima-ao-imediata)
+
 <!-- TOC END -->
 
-**Meta única**: reduzir duplicação e aumentar confiabilidade dos testes sem overengineering, com entregas pequenas e verificáveis.
+**Meta única**: reduzir duplicação e aumentar confiabilidade dos testes sem
+overengineering, com entregas pequenas e verificáveis.
 
 ## Contexto consolidado (flext)
 
-- O `AGENTS.md` do repositório `flext-sh/flext` define política de **ponteiro único**: regras canônicas ficam em
-  `CLAUDE.md` (sem duplicar governança em múltiplos arquivos).
-- O `CLAUDE.md` reforça: **DRY/SOLID obrigatório**, proibição de duplicação, sem atalhos e com validação factual.
-- Este plano segue esse mesmo modelo: poucas regras, execução objetiva, evidência por comando.
+- O `AGENTS.md` do repositório `flext-sh/flext` define política de **ponteiro único**:
+  regras canônicas ficam em `CLAUDE.md` (sem duplicar governança em múltiplos arquivos).
+- O `CLAUDE.md` reforça: **DRY/SOLID obrigatório**, proibição de duplicação, sem atalhos
+  e com validação factual.
+- Este plano segue esse mesmo modelo: poucas regras, execução objetiva, evidência por
+  comando.
 
 ## Escopo desta fase
 
@@ -95,4 +99,5 @@ python -m py_compile tests/unit/contracts/*.py
 
 ## Próxima ação imediata
 
-Executar **PR-1 (cache_contract)** com foco exclusivo em deduplicação real e evidência de ganho no diff.
+Executar **PR-1 (cache_contract)** com foco exclusivo em deduplicação real e evidência
+de ganho no diff.

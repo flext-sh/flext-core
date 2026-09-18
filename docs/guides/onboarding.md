@@ -17,8 +17,8 @@
 
 <!-- TOC END -->
 
-Use this sequence before changing any FLEXT package. All actions start at the
-workspace root.
+Use this sequence before changing any FLEXT package. All actions start at the workspace
+root.
 
 ## Resolve authority
 
@@ -29,8 +29,8 @@ Read, in order:
 3. the nearest package `AGENTS.md`;
 4. the active Bead and its current evidence.
 
-Confirm the package's canonical config, settings, public API, and owned `c`, `t`,
-`p`, `m`, and `u` surfaces before adding or moving a symbol.
+Confirm the package's canonical config, settings, public API, and owned `c`, `t`, `p`,
+`m`, and `u` surfaces before adding or moving a symbol.
 
 ## Prepare and discover
 
@@ -39,8 +39,8 @@ make setup
 make help
 ```
 
-The workspace virtual environment and root dispatcher are the only command
-surface. Never enter a member directory to run a parallel tool command.
+The workspace virtual environment and root dispatcher are the only command surface.
+Never enter a member directory to run a parallel tool command.
 
 ## Establish the baseline
 
@@ -53,20 +53,19 @@ make test
 make gen
 ```
 
-Tests run only through the retained Testmon cache. Warnings, skips, empty
-collection, missing tools, and suppressed failures are red.
+Tests run only through the retained Testmon cache. Warnings, skips, empty collection,
+missing tools, and suppressed failures are red.
 
 ## Change safely
 
 - Use semantic refactoring automation for hierarchy discovery and rewiring.
-- Put generic reusable behavior in canonical `c`, `t`, `p`, `m`, or `u`
-  ownership.
-- Exercise only public facades with `tm`, the unified `conftest.py`, and typed
-  shared fixtures.
-- Do not use mocks, fakes, stubs, patching, monkeypatch mutation, private
-  construction, or hardcoded project values.
-- Remove the old owner after every consumer is rewired; leave no compatibility
-  path or duplicate registry.
+- Put generic reusable behavior in canonical `c`, `t`, `p`, `m`, or `u` ownership.
+- Exercise only public facades with `tm`, the unified `conftest.py`, and typed shared
+  fixtures.
+- Do not use mocks, fakes, stubs, patching, monkeypatch mutation, private construction,
+  or hardcoded project values.
+- Remove the old owner after every consumer is rewired; leave no compatibility path or
+  duplicate registry.
 
 ## Generated surfaces
 
@@ -79,14 +78,14 @@ make gen
 make gen
 ```
 
-Generated member guides identify their root source and exact regeneration rule.
-Never edit those projections by hand.
+Generated member guides identify their root source and exact regeneration rule. Never
+edit those projections by hand.
 
 ## Command grammar
 
-Do not add project, file, pattern, phase, fix, or changed-only selectors to the
-standard verbs. If `make help` does not expose a required workflow, repair its
-canonical Make owner before continuing.
+Do not add project, file, pattern, phase, fix, or changed-only selectors to the standard
+verbs. If `make help` does not expose a required workflow, repair its canonical Make
+owner before continuing.
 
 ## Related guides
 

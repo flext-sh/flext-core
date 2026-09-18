@@ -10,16 +10,16 @@ metadata:
 # SOLID
 
 Enforce cohesive responsibilities, safe extension, substitutable contracts,
-consumer-sized interfaces, and inward dependency direction with the same strict
-evidence standard as `dry`.
+consumer-sized interfaces, and inward dependency direction with the same strict evidence
+standard as `dry`.
 
-Consume the current consumers retained by `yagni` and the authority map selected
-by `ssot`. Emit only the responsibility, contract, and dependency boundary needed
-for implementation; accept one recheck after `dry`. The global order is owned by
-`search-first`. Read the
-`SOLID remediation procedure` (skill file) for confirmed violations.
+Consume the current consumers retained by `yagni` and the authority map selected by
+`ssot`. Emit only the responsibility, contract, and dependency boundary needed for
+implementation; accept one recheck after `dry`. The global order is owned by
+`search-first`. Read the `SOLID remediation procedure` (skill file) for confirmed
+violations.
 
-SOLID is not permission to add interfaces, inheritance, factories, plugins, or
-layers speculatively. A small cohesive function with no architectural boundary
-needs only inline `simplify`. Missing consumers, contracts, or runtime evidence
-blocks redesign rather than authorizing pattern cargo cult.
+SOLID is not permission to add interfaces, inheritance, factories, plugins, or layers
+speculatively. A small cohesive function with no architectural boundary needs only
+inline `simplify`. Missing consumers, contracts, or runtime evidence blocks redesign
+rather than authorizing pattern cargo cult.

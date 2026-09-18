@@ -30,10 +30,9 @@
 
 **Reviewed**: 2026-02-17 | **Scope**: Canonical rules alignment and link consistency
 
-**Document**: `docs/guides/dependency-injection-advanced.md`
-**Source**: `src/flext_core/container.py`
-**Date**: 2025-10-21
-**Status**: ✅ ACCURATE - All documented methods verified
+**Document**: `docs/guides/dependency-injection-advanced.md` **Source**:
+`src/flext_core/container.py` **Date**: 2025-10-21 **Status**: ✅ ACCURATE - All
+documented methods verified
 
 ---
 
@@ -287,9 +286,10 @@ Expand testing section with:
 
 ## Conclusion
 
-The Dependency Injection guide is **highly accurate and well-written**. Unlike the Railway guide, it doesn't miss
-critical methods. The main improvement is adding **supporting content** (decision trees, performance notes, migrations)
-rather than correcting errors.
+The Dependency Injection guide is **highly accurate and well-written**. Unlike the
+Railway guide, it doesn't miss critical methods. The main improvement is adding
+**supporting content** (decision trees, performance notes, migrations) rather than
+correcting errors.
 
 **Status**: ✅ PRODUCTION READY with minor enhancements recommended
 

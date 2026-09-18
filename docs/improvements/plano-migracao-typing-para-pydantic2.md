@@ -36,18 +36,20 @@ Premissa desta versão: **não manter compatibilidade legada**.
 
 ## 1) Problema atual (direto ao ponto)
 
-No estado atual de `flext-core`, a fachada `FlextModels` cresce com muitas subclasses de reexport sem comportamento
-próprio, gerando duplicidade de nomes e alto custo cognitivo. Em paralelo, já existe uma foundation sólida
-(`StrictBoundaryModel`, `FlexibleInternalModel`, `ImmutableValueModel`, `ArbitraryTypesModel`) que pode ser usada como
-padrão único de intenção.
+No estado atual de `flext-core`, a fachada `FlextModels` cresce com muitas subclasses de
+reexport sem comportamento próprio, gerando duplicidade de nomes e alto custo cognitivo.
+Em paralelo, já existe uma foundation sólida (`StrictBoundaryModel`,
+`FlexibleInternalModel`, `ImmutableValueModel`, `ArbitraryTypesModel`) que pode ser
+usada como padrão único de intenção.
 
 ### Evidências principais no código
 
 - Reexports flat e wrappers em `models.py` (ex.: snapshots/progress/handler/settings).
-- Duplicidade semântica explícita (`ProcessingRequest`/`ProcessingConfig`, `CollectionsCategories`/`Categories`, versões
-  flat e aninhadas de handler).
+- Duplicidade semântica explícita (`ProcessingRequest`/`ProcessingConfig`,
+  `CollectionsCategories`/`Categories`, versões flat e aninhadas de handler).
 - Base comum clara em `models/base.py` para consolidar comportamento de validação.
-- Containers com API compartilhada em `models/containers.py`, com espaço para redução de wrappers sem semântica real.
+- Containers com API compartilhada em `models/containers.py`, com espaço para redução de
+  wrappers sem semântica real.
 
 ---
 
@@ -93,9 +95,11 @@ Se falhar em 1 item -> rejeitar.
 
 Entregáveis:
 
-- tabela `public_class | base_chain | has_own_fields | has_own_methods | canonical_candidate`;
+- tabela
+  `public_class | base_chain | has_own_fields | has_own_methods | canonical_candidate`;
 - lista de duplicidades por conceito;
-- baseline de métricas (contagem de símbolos públicos, profundidade MRO, pares duplicados).
+- baseline de métricas (contagem de símbolos públicos, profundidade MRO, pares
+  duplicados).
 
 ## Fase B — Canonicalização da API pública (3–4 dias)
 
@@ -125,7 +129,8 @@ Critério de aceite:
 
 Ações:
 
-- adicionar testes arquiteturais simples (falham ao detectar subclasses públicas vazias novas);
+- adicionar testes arquiteturais simples (falham ao detectar subclasses públicas vazias
+  novas);
 - adicionar regra de review: sem justificativa funcional, sem nova classe pública;
 - monitorar métricas em CI.
 
@@ -139,7 +144,8 @@ Critério de aceite:
 
 1. **Handler:** unificar flat vs aninhado.
 1. **Processing:** colapsar `ProcessingRequest`/`ProcessingConfig`.
-1. **Collections:** escolher convenção única (`Collections*` ou nomes curtos) e remover duplicatas.
+1. **Collections:** escolher convenção única (`Collections*` ou nomes curtos) e remover
+   duplicatas.
 1. **Config errors:** reduzir explosão de classes nominais quando sem ganho funcional.
 1. **Generic snapshots/progress/value:** manter apenas reexports canônicos de domínio.
 

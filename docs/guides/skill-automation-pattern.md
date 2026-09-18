@@ -13,24 +13,23 @@
 
 <!-- TOC END -->
 
-Skills document intent and route execution to canonical owners. They do not
-create parallel rule engines, registries, scripts, command grammars, or manual
-consumer rewiring.
+Skills document intent and route execution to canonical owners. They do not create
+parallel rule engines, registries, scripts, command grammars, or manual consumer
+rewiring.
 
 ## Ownership
 
 - Typed configuration owns enforceable policy data.
-- Canonical `c`, `t`, `p`, `m`, and `u` facades own reusable declarations and
-  behavior.
+- Canonical `c`, `t`, `p`, `m`, and `u` facades own reusable declarations and behavior.
 - flext-infra owns semantic discovery, ast-grep/Rope transformations, local LSP
   analysis, Git repositories, generation, and enforcement.
-- ai-hub owns GitHub and CRG runtime services. FLEXT may consume its public
-  commands, hooks, MCP routes, and daemons as optional enrichment, never as a
-  library dependency; absence of that runtime is not an error.
+- ai-hub owns GitHub and CRG runtime services. FLEXT may consume its public commands,
+  hooks, MCP routes, and daemons as optional enrichment, never as a library dependency;
+  absence of that runtime is not an error.
 - A skill points to those owners and explains when to use them.
 
-Generated baselines, projections, and reports are evidence, never a writable
-policy source or an allowlist.
+Generated baselines, projections, and reports are evidence, never a writable policy
+source or an allowlist.
 
 ## Required change shape
 
@@ -42,9 +41,9 @@ policy source or an allowlist.
 5. Update the skill and canonical documentation in the same change.
 6. Regenerate and run every declared gate.
 
-Tests for skill automation use public facades, `tm`, the unified `conftest.py`,
-and typed shared fixtures. Mocks, fakes, stubs, patching, private construction,
-and hardcoded project-owned values are prohibited.
+Tests for skill automation use public facades, `tm`, the unified `conftest.py`, and
+typed shared fixtures. Mocks, fakes, stubs, patching, private construction, and
+hardcoded project-owned values are prohibited.
 
 ## Canonical execution
 
@@ -65,10 +64,10 @@ make gen
 make waza
 ```
 
-The final generation run proves the fixed point. `make mod` owns
-structural transformations; no direct script or tool invocation is valid.
-`make test` always retains Testmon.
+The final generation run proves the fixed point. `make mod` owns structural
+transformations; no direct script or tool invocation is valid. `make test` always
+retains Testmon.
 
-Do not add project, file, pattern, action, phase, fix, or changed-only selectors.
-A missing capability is implemented at the canonical Make/flext-infra owner
-before the declared verb is rerun.
+Do not add project, file, pattern, action, phase, fix, or changed-only selectors. A
+missing capability is implemented at the canonical Make/flext-infra owner before the
+declared verb is rerun.

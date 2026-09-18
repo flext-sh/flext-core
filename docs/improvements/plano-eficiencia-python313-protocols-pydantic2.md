@@ -1,6 +1,7 @@
 # Plano objetivo de eficiência: Python 3.13 (MRO), Protocols e Pydantic v2
 
 <!-- TOC START -->
+
 - [Objetivo](#objetivo)
 - [Diagnóstico aprofundado (estado atual no código)](#diagnostico-aprofundado-estado-atual-no-codigo)
   - [A) Dispatcher usa Protocol runtime-checkable no hot path](#a-dispatcher-usa-protocol-runtime-checkable-no-hot-path)
@@ -20,12 +21,13 @@
   - [PR 4 (controle de regressão)](#pr-4-controle-de-regressao)
 - [Métricas esperadas](#metricas-esperadas)
 - [Definição objetiva de “pronto”](#definicao-objetiva-de-pronto)
+
 <!-- TOC END -->
 
 ## Objetivo
 
-Definir **ações objetivas, priorizadas e mensuráveis** para reduzir custo de runtime no `flext-core`, mantendo tipagem
-forte e segurança de contrato.
+Definir **ações objetivas, priorizadas e mensuráveis** para reduzir custo de runtime no
+`flext-core`, mantendo tipagem forte e segurança de contrato.
 
 ---
 
@@ -37,34 +39,42 @@ forte e segurança de contrato.
   - `isinstance(handler, DispatchMessageProtocol)`
   - `isinstance(handler, HandleProtocol)`
   - `isinstance(handler, ExecuteProtocol)`
-- Esses `Protocol` são `@runtime_checkable`, então cada `isinstance` é estrutural e mais caro que despacho por função pré-resolvida.
+- Esses `Protocol` são `@runtime_checkable`, então cada `isinstance` é estrutural e mais
+  caro que despacho por função pré-resolvida.
 
 **Efeito prático**: custo repetido por mensagem no caminho crítico.
 
 ### B) Introspecção de protocolo com varredura de `mro()` sem cache
 
-- Em `src/flext_core/protocols.py`, `_ProtocolIntrospection.validate_protocol_compliance()` percorre `target_cls.mro()`
-  e anotações para cada validação.
-- Em carga de módulos/classes, esse padrão escala mal quando há muitas subclasses/protocolos.
+- Em `src/flext_core/protocols.py`,
+  `_ProtocolIntrospection.validate_protocol_compliance()` percorre `target_cls.mro()` e
+  anotações para cada validação.
+- Em carga de módulos/classes, esse padrão escala mal quando há muitas
+  subclasses/protocolos.
 
 **Efeito prático**: piora de cold-start/import e custo de bootstrap.
 
 ### C) `TypeAdapter(...)` criado dentro de validação (repetição evitável)
 
-- Em `src/flext_core/_models/cqrs.py`, `validate_pagination()` cria `TypeAdapter(...)` a cada chamada.
-- Em `src/flext_core/_models/settings.py`, `BatchProcessingConfig.validate_batch()` também instancia adapter no fluxo.
+- Em `src/flext_core/_models/cqrs.py`, `validate_pagination()` cria `TypeAdapter(...)` a
+  cada chamada.
+- Em `src/flext_core/_models/settings.py`, `BatchProcessingConfig.validate_batch()`
+  também instancia adapter no fluxo.
 
 **Efeito prático**: custo extra de construção de schema/adaptador em caminho frequente.
 
 ### D) Campos Pydantic com `default=[]` (coleções mutáveis)
 
-- Há `Field(default=[])` em múltiplos modelos (`entity.py`, `service.py`, `generic.py`, `containers.py`, `settings.py`).
+- Há `Field(default=[])` em múltiplos modelos (`entity.py`, `service.py`, `generic.py`,
+  `containers.py`, `settings.py`).
 
-**Efeito prático**: além de risco semântico, aumenta chance de comportamentos inesperados e debugging mais caro.
+**Efeito prático**: além de risco semântico, aumenta chance de comportamentos
+inesperados e debugging mais caro.
 
 ### E) Validações e coerções que podem ser simplificadas com práticas atuais do Pydantic v2
 
-- Já existe uso correto de `ConfigDict`, `field_validator`, `model_validator` e adapters em parte da base.
+- Já existe uso correto de `ConfigDict`, `field_validator`, `model_validator` e adapters
+  em parte da base.
 - Falta padronização para:
   - adapters cacheados por classe/módulo;
   - defaults mutáveis com `default_factory`;
@@ -76,11 +86,14 @@ forte e segurança de contrato.
 
 ## P0 — aplicar imediatamente (alto impacto / baixo risco)
 
-1. **Trocar runtime protocol dispatch por função pré-compilada no registro** ✅ concluído - Arquivo: `src/flext_core/dispatcher.py`.
-   - Estado: o registro de handler já resolve uma vez o executor (`dispatch_message` / `handle` / `execute` / callable)
-     via `match handler` e armazena o callable final em `self._handlers`. O `_execute_handler()` chama o callable
-     previamente resolvido sem cadeia de `isinstance(...Protocol)` por mensagem.
-   - Resultado esperado: `_execute_handler()` deixa de fazer cadeia de `isinstance(...Protocol)` por mensagem.
+1. **Trocar runtime protocol dispatch por função pré-compilada no registro** ✅
+   concluído - Arquivo: `src/flext_core/dispatcher.py`.
+   - Estado: o registro de handler já resolve uma vez o executor (`dispatch_message` /
+     `handle` / `execute` / callable) via `match handler` e armazena o callable final em
+     `self._handlers`. O `_execute_handler()` chama o callable previamente resolvido sem
+     cadeia de `isinstance(...Protocol)` por mensagem.
+   - Resultado esperado: `_execute_handler()` deixa de fazer cadeia de
+     `isinstance(...Protocol)` por mensagem.
    - Critério de aceite: benchmark de dispatch com ganho de throughput e redução de p95.
 
 2. **Cachear `TypeAdapter` em `ClassVar`/módulo nos validadores quentes**
@@ -88,7 +101,8 @@ forte e segurança de contrato.
    - Arquivos iniciais:
      - `src/flext_core/_models/cqrs.py` (`validate_pagination`)
      - `src/flext_core/_models/settings.py` (`validate_batch`)
-   - Ação: mover adapters para constantes de classe/módulo (`ClassVar[TypeAdapter[...]]`).
+   - Ação: mover adapters para constantes de classe/módulo
+     (`ClassVar[TypeAdapter[...]]`).
    - Critério de aceite: zero criação dinâmica de adapter nesses métodos.
 
 3. **Eliminar `Field(default=[])` em modelos Pydantic**
@@ -99,7 +113,8 @@ forte e segurança de contrato.
      - `src/flext_core/_models/containers.py`
      - `src/flext_core/_models/settings.py`
    - Ação: substituir por `Field(default_factory=list)`.
-   - Critério de aceite: `rg "default=\[\]" src/flext_core/_models` sem ocorrências em modelos.
+   - Critério de aceite: `rg "default=\[\]" src/flext_core/_models` sem ocorrências em
+     modelos.
 
 ## P1 — estrutural (médio risco, alto retorno)
 
@@ -139,11 +154,12 @@ forte e segurança de contrato.
 
 1. **Adapters reutilizáveis**: construir `TypeAdapter` uma vez e reutilizar.
 2. **Coleções com `default_factory`**: evitar `default=[]` / `default={}`.
-3. **Validação na borda**: usar validação mais estrita em input externo; evitar revalidar internamente sem necessidade.
-4. **Evitar trabalho duplicado**: se o objeto já é `BaseModel` válido do tipo esperado, evitar roundtrip de
-   validação/dump sem ganho funcional.
-5. **Erros de validação agregados de forma estável**: padronizar construção de mensagens para manter custo previsível e
-   facilitar profiling.
+3. **Validação na borda**: usar validação mais estrita em input externo; evitar
+   revalidar internamente sem necessidade.
+4. **Evitar trabalho duplicado**: se o objeto já é `BaseModel` válido do tipo esperado,
+   evitar roundtrip de validação/dump sem ganho funcional.
+5. **Erros de validação agregados de forma estável**: padronizar construção de mensagens
+   para manter custo previsível e facilitar profiling.
 
 ---
 
@@ -151,7 +167,8 @@ forte e segurança de contrato.
 
 ### PR 1 (rápido) ✅ concluído
 
-- `dispatcher.py`: executor já resolvido no `register_handler` e armazenado como callable — implementado.
+- `dispatcher.py`: executor já resolvido no `register_handler` e armazenado como
+  callable — implementado.
 - `_models/cqrs.py`: cache do adapter de paginação — pendente.
 - `_models/settings.py`: cache do adapter de batch — pendente.
 

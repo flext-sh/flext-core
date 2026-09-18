@@ -7,4 +7,7 @@ metadata:
 
 # Security Review
 
-Activate for credentials, authentication, authorization, untrusted input, dependencies, containers, persistence, network boundaries, or scanner output. Follow the complete `router procedure` (project file) and preserve its owners, evidence contracts, failure propagation, and required output standard.
+Activate for credentials, authentication, authorization, untrusted input, dependencies,
+containers, persistence, network boundaries, or scanner output. Follow the complete
+`router procedure` (project file) and preserve its owners, evidence contracts, failure
+propagation, and required output standard.

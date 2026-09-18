@@ -20,15 +20,15 @@
 
 <!-- mro-wkii.17.7 (agent: codex) — keep test-toolkit guidance separate from Make/codegen ownership. -->
 
-`flext_tests` is the shared test toolkit. It provides fixtures, matchers, file helpers, and a test runtime that binds
-the canonical aliases.
+`flext_tests` is the shared test toolkit. It provides fixtures, matchers, file helpers,
+and a test runtime that binds the canonical aliases.
 
 ## Aliases
 
 Import the aliases each test consumes from the public `flext_tests` package root.
 
-`flext_tests` reexports `d`, `e`, `h`, `r`, `x` from `flext_infra` and exposes domain helpers (`tk`, `td`, `tf`, `tv`,
-`tm`).
+`flext_tests` reexports `d`, `e`, `h`, `r`, `x` from `flext_infra` and exposes domain
+helpers (`tk`, `td`, `tf`, `tv`, `tm`).
 
 | Alias | Purpose                                          |
 | ----- | ------------------------------------------------ |
@@ -41,12 +41,13 @@ Import the aliases each test consumes from the public `flext_tests` package root
 | `t`   | typings                                          |
 | `u`   | utilities                                        |
 
-**Important:** `s` is the service/test-runtime alias. Test settings are accessed via `FlextTestsSettings` (no short
-alias).
+**Important:** `s` is the service/test-runtime alias. Test settings are accessed via
+`FlextTestsSettings` (no short alias).
 
 ## Essential fixtures
 
-Add `flext_tests` to your project test dependencies and use these fixtures in `conftest.py` or directly in tests:
+Add `flext_tests` to your project test dependencies and use these fixtures in
+`conftest.py` or directly in tests:
 
 | Fixture                  | Purpose                                                                                                                     |
 | ------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
@@ -57,8 +58,8 @@ Add `flext_tests` to your project test dependencies and use these fixtures in `c
 | `temp_dir` / `temp_file` | Temporary paths isolated per test.                                                                                          |
 
 With the settings plugin loaded, its `pytest_runtest_setup` and
-`pytest_runtest_teardown` hooks perform automatic isolation. The two explicit
-fixtures above are not declared with `autouse=True`.
+`pytest_runtest_teardown` hooks perform automatic isolation. The two explicit fixtures
+above are not declared with `autouse=True`.
 
 ```python
 from __future__ import annotations
@@ -120,29 +121,26 @@ def test_safe_divide() -> None:
 
 ## Make/codegen boundary
 
-`flext_tests` owns test fixtures, models, assertions, and public-behavior test
-support only. It does not own a Make registry, dispatcher, generator, or
-workspace inventory.
+`flext_tests` owns test fixtures, models, assertions, and public-behavior test support
+only. It does not own a Make registry, dispatcher, generator, or workspace inventory.
 
 Repository conformance and the complete generated Makefile are owned solely by
 `flext-infra codegen conform`. Discover the current selector-free verbs through
-`make help` in the owning repository root. Each verb executes its operation directly;
-do not add a `WHAT` selector or duplicate the dispatcher in a test helper.
+`make help` in the owning repository root. Each verb executes its operation directly; do
+not add a `WHAT` selector or duplicate the dispatcher in a test helper.
 
-Tests for this contract exercise the generated public commands and observable
-artifacts. They do not reproduce command metadata or assert private routing
-implementation. See
-ADR-004 for
-the canonical decision.
+Tests for this contract exercise the generated public commands and observable artifacts.
+They do not reproduce command metadata or assert private routing implementation. See
+ADR-004 for the canonical decision.
 
 ## Bad practices
 
-Do not mutate a global singleton without the settings plugin or explicit reset
-fixture providing isolation. Do not import a separate result implementation from
-`returns`; exercise the public `r` facade used by the production consumer.
+Do not mutate a global singleton without the settings plugin or explicit reset fixture
+providing isolation. Do not import a separate result implementation from `returns`;
+exercise the public `r` facade used by the production consumer.
 
-For a standalone test without the settings plugin, keep the reset on both sides
-of the mutation, including assertion failure:
+For a standalone test without the settings plugin, keep the reset on both sides of the
+mutation, including assertion failure:
 
 ```python
 from flext_core import FlextSettings

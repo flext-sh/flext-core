@@ -15,8 +15,8 @@
 
 <!-- TOC END -->
 
-Work from the FLEXT workspace root. The root `AGENTS.md`, branch-matched
-`flext-law`, nearest package scope, and active Bead define the current contract.
+Work from the FLEXT workspace root. The root `AGENTS.md`, branch-matched `flext-law`,
+nearest package scope, and active Bead define the current contract.
 
 ## Prepare the workspace
 
@@ -32,8 +32,8 @@ parallel command surface.
 
 ## Make a bounded change
 
-1. Read config, settings, the generator, public facades, consumers, tests, and
-   docs before mutation.
+1. Read config, settings, the generator, public facades, consumers, tests, and docs
+   before mutation.
 2. Use the canonical semantic refactoring owner for consumer rewiring.
 3. Remove superseded code and prove zero residue in the same slice.
 4. Regenerate managed surfaces and run the complete native gates.
@@ -55,10 +55,9 @@ The final generation pass proves the fixed point. Test execution remains inside
 
 ## Command boundaries
 
-Do not invoke underlying generators, linters, type checkers, or test runners.
-Do not add project, file, pattern, phase, fix, or changed-only selectors. A
-missing workflow is repaired at the root Make owner and then rerun through its
-declared verb.
+Do not invoke underlying generators, linters, type checkers, or test runners. Do not add
+project, file, pattern, phase, fix, or changed-only selectors. A missing workflow is
+repaired at the root Make owner and then rerun through its declared verb.
 
 ## Documentation ownership
 

@@ -19,16 +19,15 @@ workspace root `AGENTS.md` and the nearest package scope remain authoritative.
 
 ## Test design
 
-- Exercise only public `api.py` surfaces and canonical `c`, `t`, `p`, `m`, and
-  `u` facades.
+- Exercise only public `api.py` surfaces and canonical `c`, `t`, `p`, `m`, and `u`
+  facades.
 - Put shared setup in the unified `conftest.py` and typed fixtures under
   `tests/fixtures/`.
-- Use `tm` matchers and shared `flext-tests` builders for assertions and test
-  data.
-- Read project-owned values from typed config or settings. Never freeze current
-  defaults in tests, examples, or golden files.
-- Use real, bounded dependencies. Mocks, fakes, stubs, patching, monkeypatch
-  mutation, and assertions about private construction are prohibited.
+- Use `tm` matchers and shared `flext-tests` builders for assertions and test data.
+- Read project-owned values from typed config or settings. Never freeze current defaults
+  in tests, examples, or golden files.
+- Use real, bounded dependencies. Mocks, fakes, stubs, patching, monkeypatch mutation,
+  and assertions about private construction are prohibited.
 - Treat warnings, skips, empty collection, and suppressed failures as red.
 
 ## Canonical execution
@@ -39,17 +38,16 @@ Run tests only through the dispatcher at the workspace root:
 make test
 ```
 
-The test verb owns test selection and the retained Testmon cache. Never clear or
-bypass that cache, and never invoke the underlying test runner directly.
+The test verb owns test selection and the retained Testmon cache. Never clear or bypass
+that cache, and never invoke the underlying test runner directly.
 
-CI and generated pre-commit hooks use the configured `make.ci.value` token.
-In that context, flext-infra deselects
-`tooling.tools.pytest.ci-excluded-markers`, currently `slow`, consistently in
-collection, execution and coverage. Local runs and pre-push retain slow tests.
-The runner records these exclusions as `not_executed_ci_markers`; they are
-neither passed tests nor proof that a timeout was repaired. Mark expensive
-integration cases with `pytest.mark.slow` rather than changing global addopts
-or duplicating a marker expression in each project.
+CI and generated pre-commit hooks use the configured `make.ci.value` token. In that
+context, flext-infra deselects `tooling.tools.pytest.ci-excluded-markers`, currently
+`slow`, consistently in collection, execution and coverage. Local runs and pre-push
+retain slow tests. The runner records these exclusions as `not_executed_ci_markers`;
+they are neither passed tests nor proof that a timeout was repaired. Mark expensive
+integration cases with `pytest.mark.slow` rather than changing global addopts or
+duplicating a marker expression in each project.
 
 Run the complete verification gate through the same dispatcher:
 
@@ -57,14 +55,14 @@ Run the complete verification gate through the same dispatcher:
 make check
 ```
 
-Selectors such as project names, file names, patterns, or changed-only flags are
-not part of this command surface. If a required workflow is missing, repair the
-root Make owner and rerun its declared verb.
+Selectors such as project names, file names, patterns, or changed-only flags are not
+part of this command surface. If a required workflow is missing, repair the root Make
+owner and rerun its declared verb.
 
 ## Generated documentation
 
-Member copies of this guide are generated projections. Change this root source
-and regenerate from the workspace root:
+Member copies of this guide are generated projections. Change this root source and
+regenerate from the workspace root:
 
 ```bash
 make gen

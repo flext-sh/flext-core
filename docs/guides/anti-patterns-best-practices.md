@@ -13,7 +13,8 @@
 
 ## Overview
 
-This guide separates intentionally wrong examples (text only) from executable best-practice snippets.
+This guide separates intentionally wrong examples (text only) from executable
+best-practice snippets.
 
 ## Common Anti-Patterns (Illustrative)
 

@@ -13,8 +13,8 @@
 
 ## Overview
 
-This guide focuses on real `FlextContainer` usage with the current API.
-Examples are backed by executable code from the `examples/` package.
+This guide focuses on real `FlextContainer` usage with the current API. Examples are
+backed by executable code from the `examples/` package.
 
 ## Reusing Official Example Code
 
@@ -27,7 +27,8 @@ demo = Ex08FlextContainer("docs/guides/dependency-injection-advanced.md")
 demo.exercise()
 ```
 
-The `Ex08FlextContainer` flow exercises binding, factories, resolution, and scoped containers.
+The `Ex08FlextContainer` flow exercises binding, factories, resolution, and scoped
+containers.
 
 ## Core Container Operations
 
@@ -63,7 +64,8 @@ assert tenant.value == "default"
 
 ## Batch Registration Pattern
 
-`FlextContainer` does not expose `batch_register`; use explicit loop registration for deterministic failure points.
+`FlextContainer` does not expose `batch_register`; use explicit loop registration for
+deterministic failure points.
 
 ```python
 from __future__ import annotations

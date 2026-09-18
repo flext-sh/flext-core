@@ -13,10 +13,9 @@
 
 **Status**: Current | **Version**: 0.12.0-dev | **Date**: 2026-04-14
 
-FLEXT-Core implements CQRS on top of a clean-architecture skeleton. The outline
-below mirrors the `src/flext_core` layout (Python 3.13+, Pydantic v2) and
-references `clean-architecture.md` for the
-dependency rules and rationale.
+FLEXT-Core implements CQRS on top of a clean-architecture skeleton. The outline below
+mirrors the `src/flext_core` layout (Python 3.13+, Pydantic v2) and references
+`clean-architecture.md` for the dependency rules and rationale.
 
 Canonical references:
 
@@ -56,59 +55,55 @@ Canonical references:
 
 - **L0 – contracts and primitives**
 
-  - `constants.py` centralizes error codes, retry defaults, cache TTLs, and
-    logging keys as immutable data.
-  - `typings.py` provides structured aliases for handler callables, cache
-    payloads, configuration shapes, and message generics.
-  - `protocols.py` exposes runtime-checkable interfaces for configuration,
-    contexts, containers, and handlers.
+  - `constants.py` centralizes error codes, retry defaults, cache TTLs, and logging keys
+    as immutable data.
+  - `typings.py` provides structured aliases for handler callables, cache payloads,
+    configuration shapes, and message generics.
+  - `protocols.py` exposes runtime-checkable interfaces for configuration, contexts,
+    containers, and handlers.
 
 - **L1 – runtime bridge and results**
 
-  - `runtime.py` wraps structlog and dependency-injector factories so higher
-    layers can configure logging and DI without depending on third-party types.
-  - `result.py` delivers the railway-oriented `r`; `exceptions.py`
-    contains the CQRS exception hierarchy consumed by handlers.
+  - `runtime.py` wraps structlog and dependency-injector factories so higher layers can
+    configure logging and DI without depending on third-party types.
+  - `result.py` delivers the railway-oriented `r`; `exceptions.py` contains the CQRS
+    exception hierarchy consumed by handlers.
   - `registry.py` offers the shared registration helpers reused by dispatcher,
     container, and decorators.
 
 - **L2 – domain and infrastructure services**
 
-  - Domain façade modules (`models.py`, `models/*`, `mixins.py`, `service.py`)
-    host Pydantic-backed DDD entities, aggregates, validators, and mixins for
-    timestamps, versioning, and domain events.
-    - Infrastructure sits beside the domain types: `_settings.py` (`FlextSettings`
-    via `BaseSettings`), `context.py` (contextvars metadata propagation),
-    `loggings.py` (`FlextUtilitiesLogging`), `utilities.py`/`_utilities/*`
-    (validation, pagination, caching, data mappers, reliability helpers), and
-    `container.py` (dependency-injector singleton plus scoped container
-    factory).
+  - Domain façade modules (`models.py`, `models/*`, `mixins.py`, `service.py`) host
+    Pydantic-backed DDD entities, aggregates, validators, and mixins for timestamps,
+    versioning, and domain events.
+    - Infrastructure sits beside the domain types: `_settings.py` (`FlextSettings` via
+      `BaseSettings`), `context.py` (contextvars metadata propagation), `loggings.py`
+      (`FlextUtilitiesLogging`), `utilities.py`/`_utilities/*` (validation, pagination,
+      caching, data mappers, reliability helpers), and `container.py`
+      (dependency-injector singleton plus scoped container factory).
 
 - **L3 – application orchestration**
 
   - `dispatcher.py` drives CQRS routing with reliability policies from
     `_dispatcher/reliability.py` (circuit breakers, retries, rate limiting) and
     `_dispatcher/timeout.py` (deadline enforcement).
-  - `handlers.py`, `decorators.py`, and the application `registry.py` define the
-    handler pipeline, middleware hooks, and registration helpers consumed by
-    services.
+  - `handlers.py`, `decorators.py`, and the application `registry.py` define the handler
+    pipeline, middleware hooks, and registration helpers consumed by services.
 
 ## Key Execution Flows
 
-- **Command/query dispatch** — `FlextDispatcher.dispatch` enriches the
-  `FlextContext`, applies rate limiting, circuit breaking, retries, and timeout
-  enforcement, then executes the registered handler with structured logging and
-  optional query caching.
-- **Dependency injection** — `FlextContainer` hosts a dependency-injector
-  container. Registrations and resolutions return `r` so handler
-  wiring can surface errors without raising exceptions.
+- **Command/query dispatch** — `FlextDispatcher.dispatch` enriches the `FlextContext`,
+  applies rate limiting, circuit breaking, retries, and timeout enforcement, then
+  executes the registered handler with structured logging and optional query caching.
+- **Dependency injection** — `FlextContainer` hosts a dependency-injector container.
+  Registrations and resolutions return `r` so handler wiring can surface errors without
+  raising exceptions.
 - **Domain validation** — `FlextModels` exposes Pydantic entities, values, and
-  aggregates. Domain events collected on aggregates can be published through
-  dispatcher subscribers.
+  aggregates. Domain events collected on aggregates can be published through dispatcher
+  subscribers.
 
-These flows keep orchestration decoupled from infrastructure concerns while
-preserving the unidirectional boundaries described in the clean-architecture
-guide.
+These flows keep orchestration decoupled from infrastructure concerns while preserving
+the unidirectional boundaries described in the clean-architecture guide.
 
 ## Next Steps
 

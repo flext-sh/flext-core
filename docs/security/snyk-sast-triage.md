@@ -1,6 +1,7 @@
 # Triagem Snyk Code (SAST) — flext-sh/flext-core
 
 <!-- TOC START -->
+
 - [Resumo](#resumo)
 - [Como usar este documento](#como-usar-este-documento)
 - [Achados](#achados)
@@ -13,6 +14,7 @@
   - [7 · ⚪ LOW · Use of Hardcoded Passwords](#7-low-use-of-hardcoded-passwords)
   - [8 · ⚪ LOW · Use of Hardcoded Passwords](#8-low-use-of-hardcoded-passwords)
   - [9 · ⚪ LOW · Use of Hardcoded Passwords](#9-low-use-of-hardcoded-passwords)
+
 <!-- TOC END -->
 
 Gerado do scan Snyk (dump 2026-08-06). Bead: `mro-flgu`
@@ -28,8 +30,9 @@ Gerado do scan Snyk (dump 2026-08-06). Bead: `mro-flgu`
 
 ## Como usar este documento
 
-Cada achado traz o **código real** extraído da worktree (linha `>>>` = sink reportado), a regra completa e o CWE.
-Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar em `.snyk`) / `risco-aceito` (com prazo).
+Cada achado traz o **código real** extraído da worktree (linha `>>>` = sink reportado),
+a regra completa e o CWE. Preencha **Decisão**: `corrigir` / `falso-positivo` (registrar
+em `.snyk`) / `risco-aceito` (com prazo).
 
 ## Achados
 

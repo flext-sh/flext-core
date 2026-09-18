@@ -7,11 +7,11 @@ metadata:
 
 # Python Development
 
-Apply the active project's Python version, dependency owner, public contracts,
-and canonical commands.
+Apply the active project's Python version, dependency owner, public contracts, and
+canonical commands.
 
-Read the `single owner procedure` (skill file) for implementation,
-debugging, testing, packaging, and native-gate evidence.
+Read the `single owner procedure` (skill file) for implementation, debugging, testing,
+packaging, and native-gate evidence.
 
 Use the distinct `python-parallelization` skill for async, thread, process,
 vectorization, or throughput changes. Do not impose a tool, framework, or style

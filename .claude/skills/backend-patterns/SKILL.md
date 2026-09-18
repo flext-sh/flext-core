@@ -8,6 +8,6 @@ metadata:
 # Backend Patterns
 
 Activate for backend ownership, request lifecycles, persistence, transactions,
-messaging, caching, or background processing. Read the
-`complete procedure` (skill file) before changing a boundary. A
-local implementation fix with no architectural decision does not activate.
+messaging, caching, or background processing. Read the `complete procedure` (skill file)
+before changing a boundary. A local implementation fix with no architectural decision
+does not activate.

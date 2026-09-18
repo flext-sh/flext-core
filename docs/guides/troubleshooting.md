@@ -15,9 +15,9 @@
 
 <!-- TOC END -->
 
-Troubleshooting preserves the same command, ownership, and failure contracts as
-normal development. Diagnose from the workspace root and keep the first raw
-traceback or non-zero exit as the causal evidence.
+Troubleshooting preserves the same command, ownership, and failure contracts as normal
+development. Diagnose from the workspace root and keep the first raw traceback or
+non-zero exit as the causal evidence.
 
 ## Establish the command surface
 
@@ -25,20 +25,20 @@ traceback or non-zero exit as the causal evidence.
 make help
 ```
 
-Use the exact declared root verb. Do not invoke an underlying linter, type
-checker, test runner, generator, or ad-hoc script, and do not attach project,
-file, pattern, changed-only, fix, or phase selectors.
+Use the exact declared root verb. Do not invoke an underlying linter, type checker, test
+runner, generator, or ad-hoc script, and do not attach project, file, pattern,
+changed-only, fix, or phase selectors.
 
 ## Repair at the owner
 
-- Generated output is evidence, not an edit target. Correct config, settings,
-  templates, or generator ownership first.
-- A broken or missing Make verb is a defect in the root dispatcher. Repair that
-  owner before resuming the workflow.
+- Generated output is evidence, not an edit target. Correct config, settings, templates,
+  or generator ownership first.
+- A broken or missing Make verb is a defect in the root dispatcher. Repair that owner
+  before resuming the workflow.
 - Do not catch, retry, fall back, normalize, suppress, skip, or partially apply a
   failing operation.
-- Warnings, skipped checks, empty output, and missing tools remain failures until
-  their owner is corrected.
+- Warnings, skipped checks, empty output, and missing tools remain failures until their
+  owner is corrected.
 
 After correcting the source, use only the applicable canonical verbs:
 
@@ -54,24 +54,23 @@ make test
 make gen
 ```
 
-Test diagnosis still runs through `make test`, with the retained Testmon
-cache. Direct or cache-clearing test runs do not count as evidence.
+Test diagnosis still runs through `make test`, with the retained Testmon cache. Direct
+or cache-clearing test runs do not count as evidence.
 
 ## Documentation failures
 
-For stale member guides, change the matching root file under `docs/guides/` and
-run `make gen`. Generated member guides carry their source and exact
-regeneration command in the header; never patch those projections.
+For stale member guides, change the matching root file under `docs/guides/` and run
+`make gen`. Generated member guides carry their source and exact regeneration command in
+the header; never patch those projections.
 
-For a docs audit failure, remove the invalid command or test-double example at
-the canonical root source. Do not add an allowlist or weaken the audit.
+For a docs audit failure, remove the invalid command or test-double example at the
+canonical root source. Do not add an allowlist or weaken the audit.
 
 ## Test failures
 
-Tests must observe public facades and use `tm`, the unified `conftest.py`, and
-typed shared fixtures. Replace mocks, fakes, stubs, patching, monkeypatch
-mutation, private construction, and hardcoded project values at their owning
-test infrastructure.
+Tests must observe public facades and use `tm`, the unified `conftest.py`, and typed
+shared fixtures. Replace mocks, fakes, stubs, patching, monkeypatch mutation, private
+construction, and hardcoded project values at their owning test infrastructure.
 
 ## Related guides
 

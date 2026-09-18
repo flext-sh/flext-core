@@ -8,8 +8,8 @@
 
 ## Context
 
-{State the constraint or conflict that requires a durable decision. Separate
-observed facts from future direction.}
+{State the constraint or conflict that requires a durable decision. Separate observed
+facts from future direction.}
 
 ## Decision
 
@@ -55,5 +55,5 @@ flowchart LR
 | {part}        | Implemented | {source, contract, or runtime owner}               |
 | {part}        | Direction   | {tracking owner; do not claim as current behavior} |
 
-Transient command output, dates, and rollout progress belong in the owning
-tracker record rather than this ADR.
+Transient command output, dates, and rollout progress belong in the owning tracker
+record rather than this ADR.

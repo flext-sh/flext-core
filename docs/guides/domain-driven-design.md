@@ -78,5 +78,4 @@ with redirect_stdout(stream):
 
 - Keep domain validation deterministic.
 - Model failures explicitly with `r[T]`.
-- Keep orchestration in services/handlers, not in entities.
-  de
+- Keep orchestration in services/handlers, not in entities. de

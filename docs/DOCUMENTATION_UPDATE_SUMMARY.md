@@ -20,8 +20,9 @@
 
 ## Overview
 
-Complete review and update of flext-core documentation to align with actual codebase state (`0.12.0-dev`). All documents
-now reflect current APIs, architecture, and patterns.
+Complete review and update of flext-core documentation to align with actual codebase
+state (`0.12.0-dev`). All documents now reflect current APIs, architecture, and
+patterns.
 
 ## Files Updated
 
@@ -69,7 +70,8 @@ now reflect current APIs, architecture, and patterns.
 
 - ✅ Lazy loading system explained
 - ✅ 11 alias facades documented (c, d, e, h, m, p, r, s, t, u, x)
-- ✅ 6 submódule trees documented (constants, exceptions, models, protocols, typings, utilities)
+- ✅ 6 submódule trees documented (constants, exceptions, models, protocols, typings,
+  utilities)
 - ✅ Protocol contracts (10+) listed and explained
 - ✅ Dependency flow (L3 → L0) visualized
 
@@ -106,7 +108,8 @@ now reflect current APIs, architecture, and patterns.
 
 For even more comprehensive documentation:
 
-1. Create individual guide files for each component (result-handling.md, dependency-injection.md, etc.)
+1. Create individual guide files for each component (result-handling.md,
+   dependency-injection.md, etc.)
 2. Add performance benchmarks and guidelines
 3. Create migration guides for legacy code
 4. Add more advanced patterns and use cases

@@ -7,8 +7,7 @@ metadata:
 
 # Technical Writing Style
 
-Activate when writing or revising technical prose, including guides, ADRs,
-runbooks, references, and code-facing explanations. Read the
-`complete procedure` (skill file), preserve meaning and evidence,
-and prefer deletion over decorative rewriting. It does not own product voice or
-marketing copy.
+Activate when writing or revising technical prose, including guides, ADRs, runbooks,
+references, and code-facing explanations. Read the `complete procedure` (skill file),
+preserve meaning and evidence, and prefer deletion over decorative rewriting. It does
+not own product voice or marketing copy.

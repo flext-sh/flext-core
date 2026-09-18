@@ -45,8 +45,10 @@ make check
 
 ## Architecture and Typing Rules
 
-- Follow repository layering and import rules documented in `README.md` and `docs/architecture/`.
-- Prefer explicit types and project aliases (`r`, `t`, `p`, `u`) used across `src/flext_core/`.
+- Follow repository layering and import rules documented in `README.md` and
+  `docs/architecture/`.
+- Prefer explicit types and project aliases (`r`, `t`, `p`, `u`) used across
+  `src/flext_core/`.
 - Do not add compatibility shims or hidden fallback paths without a documented reason.
 
 ## Pull Request Expectations

@@ -31,18 +31,21 @@
   - [Support Levels](#support-levels)
   <!-- TOC END -->
 
-Thank you for your interest in contributing to FLEXT-Core! This guide provides comprehensive instructions for
-contributing to the project.
+Thank you for your interest in contributing to FLEXT-Core! This guide provides
+comprehensive instructions for contributing to the project.
 
 ## Code of Conduct
 
-We are committed to providing a welcoming and inclusive environment. Please be respectful and constructive in all interactions.
+We are committed to providing a welcoming and inclusive environment. Please be
+respectful and constructive in all interactions.
 
 ## Canonical Rules
 
 - Root project governance lives in `AGENTS.md` at the workspace root.
-- For `flext-core` changes, follow `rules-flext-core`, `flext-import-rules`, and `flext-strict-typing`.
-- Keep examples and snippets aligned with Python 3.13 typing style (`X | None`, `Sequence[T]`, `Mapping[K, V]`).
+- For `flext-core` changes, follow `rules-flext-core`, `flext-import-rules`, and
+  `flext-strict-typing`.
+- Keep examples and snippets aligned with Python 3.13 typing style (`X | None`,
+  `Sequence[T]`, `Mapping[K, V]`).
 
 ## Quick Start
 
@@ -142,13 +145,13 @@ make setup
 make check
 
 # Individual checks
-make check                    # Ruff linting + type checking (strict)
-make test                     # Full test suite with coverage
+make check # Ruff linting + type checking (strict)
+make test  # Full test suite with coverage
 
 # Quick validation during development
-make check                    # All read-only gates
-make fmt                      # Auto-format code
-make fix                      # Auto-fix findings (markdown, smells)
+make check # All read-only gates
+make fmt   # Auto-format code
+make fix   # Auto-fix findings (markdown, smells)
 ```
 
 ### Testing
@@ -174,9 +177,9 @@ pytest tests/unit/test_container.py -v
 
 ```bash
 # Run by marker
-pytest -m unit              # Unit tests only
-pytest -m integration       # Integration tests only
-pytest -m "not slow"        # Exclude slow tests
+pytest -m unit        # Unit tests only
+pytest -m integration # Integration tests only
+pytest -m "not slow"  # Exclude slow tests
 
 # With coverage
 pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=term-missing
@@ -209,7 +212,7 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
    ```bash
    # Ensure Python 3.13+
    python --version
-
+   
    # Reinstall dependencies
    make setup
    ```
@@ -219,9 +222,9 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
    ```bash
    # Run type checker
    make check
-
-    # Check specific files
-    make check
+   
+   # Check specific files
+   make check
    ```
 
 1. **Test Failures**
@@ -229,7 +232,7 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
    ```bash
    # Run with verbose output
    pytest tests/ -v --tb=short
-
+   
    # Debug specific test
    pytest tests/unit/test_result.py::Testr::test_ok -v -s
    ```
@@ -395,8 +398,10 @@ Contributors who make significant improvements may be:
 - **Documentation**: Complete documentation
 - **Examples**: Working code examples
 - **Tests**: Usage patterns and best practices
-- **[Issues](https://github.com/flext-sh/flext-core/issues)**: Report bugs or ask questions
-- **[Discussions](https://github.com/flext-sh/flext-core/discussions)**: Community discussions
+- **[Issues](https://github.com/flext-sh/flext-core/issues)**: Report bugs or ask
+  questions
+- **[Discussions](https://github.com/flext-sh/flext-core/discussions)**: Community
+  discussions
 
 ### Support Levels
 
@@ -415,6 +420,7 @@ Contributors who make significant improvements may be:
 
 ---
 
-Thank you for contributing to FLEXT-Core! Your contributions help make this a better framework for the entire ecosystem.
+Thank you for contributing to FLEXT-Core! Your contributions help make this a better
+framework for the entire ecosystem.
 
 **Happy coding!** 🚀

@@ -27,14 +27,14 @@
 
 ## Overview
 
-`r[T]` is FLEXT's result container for explicit success and failure flows, while
-`e` exposes the structured `FlextExceptions` DSL used both for raised typed
-exceptions and for `fail_*` helpers that already return `p.Result[T]`.
+`r[T]` is FLEXT's result container for explicit success and failure flows, while `e`
+exposes the structured `FlextExceptions` DSL used both for raised typed exceptions and
+for `fail_*` helpers that already return `p.Result[T]`.
 
 - Success path: `r[T].ok(value)`
 - Failure path: `r[T].fail(message, error_code=..., error_data=...)`
-- Structured result failures: `e.fail_operation(...)`,
-  `e.fail_not_found(...)`, `e.fail_validation(...)`
+- Structured result failures: `e.fail_operation(...)`, `e.fail_not_found(...)`,
+  `e.fail_validation(...)`
 - Typed raised exceptions: `e.ValidationError(...)`, `e.FlextTimeoutError(...)`,
   `e.NotFoundError(...)`
 
@@ -46,9 +46,8 @@ Canonical implementations and live examples:
 - [`examples/ex_01_flext_result.py`](https://github.com/flext-sh/flext-core/blob/0.12.0-dev/examples/ex_01_flext_result.py)
 - [`tests/unit/test_exceptions.py`](https://github.com/flext-sh/flext-core/blob/0.12.0-dev/tests/unit/test_exceptions.py)
 
-The goal is predictable composition without exception-driven control flow in
-the core path, while still allowing typed exception propagation at the outer
-boundaries.
+The goal is predictable composition without exception-driven control flow in the core
+path, while still allowing typed exception propagation at the outer boundaries.
 
 All snippets below are standalone and executable.
 
@@ -169,15 +168,14 @@ if recovered.value != expected_guest:
     raise RuntimeError(message)
 ```
 
-Prefer `map` for pure value transformations and `map_error` when the failure
-text needs to be normalized for the next boundary. `recover` converts a
-failure into a success value; if the fallback itself is another
-result-producing step, prefer `lash` instead.
+Prefer `map` for pure value transformations and `map_error` when the failure text needs
+to be normalized for the next boundary. `recover` converts a failure into a success
+value; if the fallback itself is another result-producing step, prefer `lash` instead.
 
 ## map_or for Defaulted Reads
 
-`map_or` is the compact form used in many runtime call sites when a result must
-be reduced to a plain value with a default.
+`map_or` is the compact form used in many runtime call sites when a result must be
+reduced to a plain value with a default.
 
 ```python
 """Reduce a result into a plain value with a default."""
@@ -207,8 +205,8 @@ if length_value != expected_length_value:
 ## Factory Helpers
 
 Use the result factory helpers when the boundary behavior is already known:
-`create_from_callable` for exception-to-result adaptation and
-`from_validation` for model parsing.
+`create_from_callable` for exception-to-result adaptation and `from_validation` for
+model parsing.
 
 ```python
 """Convert a callable and model validation into results."""
@@ -240,9 +238,8 @@ if not invalid.failure:
     raise RuntimeError(message)
 ```
 
-For ad-hoc local failures there is also `r[T].fail_op(...)`, but for
-structured cross-boundary failures prefer the canonical `e.fail_*` helpers
-shown below.
+For ad-hoc local failures there is also `r[T].fail_op(...)`, but for structured
+cross-boundary failures prefer the canonical `e.fail_*` helpers shown below.
 
 ## unwrap_or and unwrap_or_else
 
@@ -301,8 +298,8 @@ if result.value != expected_value:
 
 ## FlextExceptions at Result Boundaries
 
-Use `e.fail_*` when the function already returns `p.Result[T]` but the failure
-should carry canonical `error_code` and `error_data`.
+Use `e.fail_*` when the function already returns `p.Result[T]` but the failure should
+carry canonical `error_code` and `error_data`.
 
 ```python
 """Use e.fail_* helpers at result-returning boundaries."""
@@ -395,9 +392,8 @@ if scope != "profile-service":
 
 ## None Handling Techniques
 
-`None` should stay explicit. Keep optional business absence local, but convert
-required `None` inputs into structured validation failures as early as
-possible.
+`None` should stay explicit. Keep optional business absence local, but convert required
+`None` inputs into structured validation failures as early as possible.
 
 ```python
 """Keep None semantics explicit."""
@@ -507,9 +503,8 @@ if captured.correlation_id is None:
     raise RuntimeError(message)
 ```
 
-This is the same shape used by retry-style boundaries: translate the foreign
-exception once, enrich it with operation metadata, and preserve the original
-cause for debugging.
+This is the same shape used by retry-style boundaries: translate the foreign exception
+once, enrich it with operation metadata, and preserve the original cause for debugging.
 
 ## traverse and with_resource
 
@@ -617,8 +612,8 @@ if fail_result.error_code != expected_error_code:
 
 ### @d.retry + @d.railway
 
-When retries exhaust, `@d.retry` raises `e.FlextTimeoutError`; with outer
-`@d.railway`, the exception is converted back into `p.Result[T]`.
+When retries exhaust, `@d.retry` raises `e.FlextTimeoutError`; with outer `@d.railway`,
+the exception is converted back into `p.Result[T]`.
 
 ```python
 """Combine retry and railway decorators."""
@@ -669,8 +664,8 @@ if attempts["count"] != expected_attempts:
 
 ### @d.combined
 
-`@d.combined` supports operation logging, optional DI injection, and optional
-railway wrapping.
+`@d.combined` supports operation logging, optional DI injection, and optional railway
+wrapping.
 
 ```python
 """Use the combined decorator with railway wrapping enabled."""
@@ -699,30 +694,30 @@ if result.value != expected_total:
 
 ## Organizing Error Handling
 
-- Adapter and boundary functions should catch foreign exceptions once and
-  convert them with `e.fail_*` or raise a typed `e.*Error`.
+- Adapter and boundary functions should catch foreign exceptions once and convert them
+  with `e.fail_*` or raise a typed `e.*Error`.
 - Orchestration functions should mostly stay in `p.Result[T]` and compose with
   `flat_map`, `map`, `map_error`, `recover`, and `lash`.
-- Normalize required `None` inputs at the first boundary that understands the
-  business meaning, typically with `e.fail_validation(...)`.
-- Preserve cause chains with `raise ... from exc` whenever you translate from a
-  foreign exception to `e.*Error`.
-- Collapse `p.Result[T]` into plain values only at the output edge with
-  `map_or`, `unwrap_or`, or `unwrap_or_else`.
+- Normalize required `None` inputs at the first boundary that understands the business
+  meaning, typically with `e.fail_validation(...)`.
+- Preserve cause chains with `raise ... from exc` whenever you translate from a foreign
+  exception to `e.*Error`.
+- Collapse `p.Result[T]` into plain values only at the output edge with `map_or`,
+  `unwrap_or`, or `unwrap_or_else`.
 
 ## Best Practices
 
 - Return `p.Result[T]` from fallible operations in the core flow.
 - Use `e.fail_*` for structured failures in result-returning boundaries.
-- Raise typed `e.*Error` at imperative or transport boundaries and preserve the
-  cause with `raise ... from exc`.
-- Treat `None` as business semantics, not as a generic failure marker. Convert
-  required `None` inputs early.
-- Use `flat_map` for steps that already return results and `lash` when the
-  recovery branch also returns a result.
+- Raise typed `e.*Error` at imperative or transport boundaries and preserve the cause
+  with `raise ... from exc`.
+- Treat `None` as business semantics, not as a generic failure marker. Convert required
+  `None` inputs early.
+- Use `flat_map` for steps that already return results and `lash` when the recovery
+  branch also returns a result.
 - Use `map` only for pure value transformations.
 - Use `map_error` and `recover` for explicit error strategy.
-- Use `map_or` and `unwrap_or` only when the caller must collapse a result into
-  a plain value.
-- Include `error_code`, `error_data`, metadata, and correlation when a failure
-  crosses a boundary.
+- Use `map_or` and `unwrap_or` only when the caller must collapse a result into a plain
+  value.
+- Include `error_code`, `error_data`, metadata, and correlation when a failure crosses a
+  boundary.

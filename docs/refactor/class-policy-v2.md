@@ -14,9 +14,9 @@
 ## Declaracao de Regras v2
 
 - Arquivos: `class-policy-v2.yml` e `class-policy-v2.schema.json`
-- Campos principais: `project_kind`, `facade_family`, `module_family`, `source_symbol`, `target_facade_class`,
-  `target_namespace_path`, `expected_base_chain`, `forbidden_targets`, `confidence`, `pre_checks`, `post_checks`,
-  `rewrite_scope`
+- Campos principais: `project_kind`, `facade_family`, `module_family`, `source_symbol`,
+  `target_facade_class`, `target_namespace_path`, `expected_base_chain`,
+  `forbidden_targets`, `confidence`, `pre_checks`, `post_checks`, `rewrite_scope`
 - `confidence`: escala `0.0` a `1.0`
 - `pre_checks` e `post_checks`: lista de objetos com `type` e `params`
 
@@ -24,7 +24,8 @@
 
 - `models`: composicao sob `m`, bloqueado para `u/d/dispatcher`
 - `_utilities`: consolidacao sob `u`, mudanca de assinatura exige validacao
-- `_dispatcher`: consolidacao sob `FlextDispatcher`, propagacao cross-project obrigatoria
+- `_dispatcher`: consolidacao sob `FlextDispatcher`, propagacao cross-project
+  obrigatoria
 - `_decorators`: consolidacao em namespace de decorators, contrato callable preservado
 - `_runtime`: whitelist obrigatoria, default deny
 
@@ -49,7 +50,8 @@
 
 ## Nao Simplificar `_private`
 
-- `models`, `_utilities`, `_dispatcher`, `_decorators`, `_runtime` possuem politicas distintas
+- `models`, `_utilities`, `_dispatcher`, `_decorators`, `_runtime` possuem politicas
+  distintas
 - Misturar familias quebra contratos de namespace e MRO
 - O pipeline deve bloquear transformacoes fora da politica declarada
 

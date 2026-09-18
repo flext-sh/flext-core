@@ -11,10 +11,10 @@ Every project and projected agent applies all of these policies together:
 - `no keyring` (rule file);
 - `zero residue` (rule file).
 
-The policies are cumulative. A project rule may make them narrower or reject
-more inputs; it cannot relax, catch, normalize, skip, defer, or route around any
-of them. Existing opposing behavior is a blocking violation to exterminate at
-its owner, never grandfathered compatibility.
+The policies are cumulative. A project rule may make them narrower or reject more
+inputs; it cannot relax, catch, normalize, skip, defer, or route around any of them.
+Existing opposing behavior is a blocking violation to exterminate at its owner, never
+grandfathered compatibility.
 
-Resolve gate applicability before invocation. A dormant external-token gate is
-not executed; selecting or invoking it applies every policy above.
+Resolve gate applicability before invocation. A dormant external-token gate is not
+executed; selecting or invoking it applies every policy above.

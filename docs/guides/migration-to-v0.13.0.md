@@ -26,10 +26,11 @@
 
 ## Purpose
 
-This guide describes how to migrate the FLEXT workspace to the `0.13.0` platform baseline.
+This guide describes how to migrate the FLEXT workspace to the `0.13.0` platform
+baseline.
 
-It is organized by project category so teams can move in a controlled order without reintroducing the patterns being
-removed.
+It is organized by project category so teams can move in a controlled order without
+reintroducing the patterns being removed.
 
 ## Migration Order
 
@@ -54,10 +55,9 @@ Required actions:
 - narrow `d` to the forward decorator set
 - reshape `FlextContainer` around `add_service/add_factory/add_resource`
 - reshape `FlextDispatcher` to absorb handler registration
-- keep public data boundaries on Pydantic v2 `m.BaseModel` subclasses
-  validated with `model_validate(...)`; do not add `TypedDict`,
-  `dataclass`, `NamedTuple`, or ad-hoc dictionary payload contracts in
-  governed `src/` code
+- keep public data boundaries on Pydantic v2 `m.BaseModel` subclasses validated with
+  `model_validate(...)`; do not add `TypedDict`, `dataclass`, `NamedTuple`, or ad-hoc
+  dictionary payload contracts in governed `src/` code
 
 ## Track 2: Platform Packages
 
@@ -161,8 +161,8 @@ These concepts do not survive into the forward public architecture:
 - hidden DI spread through unrelated classes
 - public compatibility layers
 - numbered examples as part of the forward taxonomy
-- structured domain payloads modeled as `TypedDict`, `dataclass`,
-  `NamedTuple`, or loose dictionaries instead of Pydantic v2 models
+- structured domain payloads modeled as `TypedDict`, `dataclass`, `NamedTuple`, or loose
+  dictionaries instead of Pydantic v2 models
 
 ## Taxonomy Migration Checklists
 
@@ -206,10 +206,10 @@ A migration wave is done when:
 - the project no longer depends on public `x`
 - runtime bootstrapping is owned by `s`
 - extension storage, if it exists, is stored in `FlextCatalog`
-- governed `src/` code has no remaining `TypedDict`, `dataclass`,
-  `NamedTuple`, or `namedtuple(...)` domain-model declarations
-- public structured inputs and outputs are represented by facade Pydantic v2
-  models and are validated at boundaries with `model_validate(...)` or
-  `model_validate_json(...)`
+- governed `src/` code has no remaining `TypedDict`, `dataclass`, `NamedTuple`, or
+  `namedtuple(...)` domain-model declarations
+- public structured inputs and outputs are represented by facade Pydantic v2 models and
+  are validated at boundaries with `model_validate(...)` or `model_validate_json(...)`
 - `tests/`, `examples/`, and `scripts/` follow the baseline taxonomy
-- local docs point to the workspace baseline instead of describing conflicting architecture
+- local docs point to the workspace baseline instead of describing conflicting
+  architecture

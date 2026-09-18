@@ -19,8 +19,8 @@
 
 **Version**: 0.12.0-dev | **Status**: Production Ready
 
-Comprehensive examples demonstrating FLEXT-Core patterns and best practices. All examples are self-contained and can be
-run independently.
+Comprehensive examples demonstrating FLEXT-Core patterns and best practices. All
+examples are self-contained and can be run independently.
 
 ## Quick Start
 
@@ -42,44 +42,56 @@ python examples/01_basic_result.py
 
 **Basic Concepts**:
 
-- **00_single_import_demo.py** — Minimal import verification helper. Demonstrates basic package import.
-- **01_basic_result.py** — Railway-oriented `r` patterns (map, flat_map, fail paths). **Start here for ROP basics**.
+- **00_single_import_demo.py** — Minimal import verification helper. Demonstrates basic
+  package import.
+- **01_basic_result.py** — Railway-oriented `r` patterns (map, flat_map, fail paths).
+  **Start here for ROP basics**.
 
 **Dependency Injection & Configuration**:
 
-- **02_dependency_injection.py** — `FlextContainer` usage, service registration, and logger resolution.
-- **04_config_basics.py** — `FlextSettings` settings loading, validation, and environment-specific configurations.
+- **02_dependency_injection.py** — `FlextContainer` usage, service registration, and
+  logger resolution.
+- **04_config_basics.py** — `FlextSettings` settings loading, validation, and
+  environment-specific configurations.
 
 **Domain Modeling**:
 
-- **03_models_basics.py** — Entities, Values, and AggregateRoot basics with `FlextModels`. Domain-driven design fundamentals.
+- **03_models_basics.py** — Entities, Values, and AggregateRoot basics with
+  `FlextModels`. Domain-driven design fundamentals.
 
 ### 🔧 Advanced Patterns & Utilities
 
 **Context & Utilities**:
 
-- **09_context_management.py** — `FlextContext` request/user/operation scopes and correlation ID propagation.
-- **12_utilities_comprehensive.py** — Validation, type guards, and helper utilities from `_utilities` module.
+- **09_context_management.py** — `FlextContext` request/user/operation scopes and
+  correlation ID propagation.
+- **12_utilities_comprehensive.py** — Validation, type guards, and helper utilities from
+  `_utilities` module.
 - **logging_config_once_pattern.py** — Idempotent logging configuration helper pattern.
 
 **Decorators & Automation**:
 
 - **05_utilities_advanced.py** — Advanced utility patterns and helper functions.
-- **06_decorators_complete.py** — Complete decorator showcase: `@inject`, `@log_operation`, `@railway`, `@with_context`,
-  `@combined`.
+- **06_decorators_complete.py** — Complete decorator showcase: `@inject`,
+  `@log_operation`, `@railway`, `@with_context`, `@combined`.
 
 ### 🏗️ Application Layer & Integration
 
 **Handlers & Dispatchers**:
 
-- **07_registry_dispatcher.py** — `FlextRegistry` and `FlextDispatcher` patterns for CQRS command/query routing.
-- **14_flext_handlers_complete.py** — Handler base class, validation hooks, and dispatcher-style execution.
+- **07_registry_dispatcher.py** — `FlextRegistry` and `FlextDispatcher` patterns for
+  CQRS command/query routing.
+- **14_flext_handlers_complete.py** — Handler base class, validation hooks, and
+  dispatcher-style execution.
 
 **Advanced Processing**:
 
-- **08_integration_complete.py** — Complete integration example combining all FLEXT-Core patterns.
-- **15_automation_showcase.py** — Context enrichment helpers and tracing-friendly execution wrappers.
-- **16_layer3_advanced_processing.py** — Dispatcher reliability patterns (timeouts, retries, caching, circuit breakers).
+- **08_integration_complete.py** — Complete integration example combining all FLEXT-Core
+  patterns.
+- **15_automation_showcase.py** — Context enrichment helpers and tracing-friendly
+  execution wrappers.
+- **16_layer3_advanced_processing.py** — Dispatcher reliability patterns (timeouts,
+  retries, caching, circuit breakers).
 
 ## Example Guide Mapping
 
@@ -113,12 +125,16 @@ Each example produces structured output demonstrating the patterns. Examples inc
 
 After running examples:
 
-1. **Read Guides**: Explore [Documentation Guides](../docs/guides/) for detailed explanations
-1. **API Reference**: Check [API Reference](../docs/api-reference/) for complete API documentation
-1. **Patterns**: Review [Service Patterns](../docs/guides/service-patterns.md) for production patterns
+1. **Read Guides**: Explore [Documentation Guides](../docs/guides/) for detailed
+   explanations
+1. **API Reference**: Check [API Reference](../docs/api-reference/) for complete API
+   documentation
+1. **Patterns**: Review [Service Patterns](../docs/guides/service-patterns.md) for
+   production patterns
 
 ## See Also
 
-- [Getting Started Guide](../docs/guides/getting-started.md) - Quick start with FLEXT-Core
+- [Getting Started Guide](../docs/guides/getting-started.md) - Quick start with
+  FLEXT-Core
 - [Documentation Index](../docs/index.md) - Complete documentation navigation
 - [API Reference](../docs/api-reference/) - Full API documentation

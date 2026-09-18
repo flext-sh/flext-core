@@ -6,9 +6,9 @@
 
 <!-- TOC END -->
 
-Use this prompt whenever you evolve **flext-core** or downstream projects to keep the dependency-injector integration
-pattern aligned (bridge L0.5/L1 + container L2 + handlers L3), without breaking the ABI or reintroducing ad-hoc
-registries.
+Use this prompt whenever you evolve **flext-core** or downstream projects to keep the
+dependency-injector integration pattern aligned (bridge L0.5/L1 + container L2 +
+handlers L3), without breaking the ABI or reintroducing ad-hoc registries.
 
 ```text
 You are responsible for applying and reinforcing the dependency-injector-based pattern across the codebase. Follow these
