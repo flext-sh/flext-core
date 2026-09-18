@@ -52,11 +52,12 @@ class FlextUtilitiesConfig:
         @staticmethod
         def safe_load(stream: str) -> t.JsonValue:
             """Parse a YAML string → validated JSON value."""
-            return yaml.safe_load(stream)
+            loaded: t.JsonValue = yaml.safe_load(stream)
+            return loaded
 
         @staticmethod
         def safe_dump(
-            data: t.JsonValue,
+            data: t.JsonValue | t.JsonMapping,
             *,
             sort_keys: bool = False,
             indent: int = 2,
@@ -76,7 +77,8 @@ class FlextUtilitiesConfig:
         def safe_load_file(path: Path) -> t.JsonValue:
             """Load a YAML file → validated JSON value."""
             with path.open(encoding="utf-8") as fh:
-                return yaml.safe_load(fh)
+                loaded: t.JsonValue = yaml.safe_load(fh)
+                return loaded
 
         @staticmethod
         def yaml_safe_load(path: Path) -> p.Result[t.JsonMapping]:
@@ -84,13 +86,14 @@ class FlextUtilitiesConfig:
             if not path.is_file():
                 return r[t.JsonMapping].fail(f"YAML file not found: {path}")
             try:
-                return r[t.JsonMapping].ok(
-                    FlextUtilitiesConfig.Yaml.safe_load_file(path)
-                )
+                loaded = FlextUtilitiesConfig.Yaml.safe_load_file(path)
             except yaml.YAMLError as exc:
                 return r[t.JsonMapping].fail(f"YAML parse error: {exc}", exception=exc)
             except OSError as exc:
                 return r[t.JsonMapping].fail(f"YAML read error: {exc}", exception=exc)
+            if not g.mapping(loaded):
+                return r[t.JsonMapping].fail(f"YAML top level is not a mapping: {path}")
+            return r[t.JsonMapping].ok(loaded)
 
         @staticmethod
         def yaml_dump(

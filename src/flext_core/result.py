@@ -43,6 +43,7 @@ class _FlextResult[T](
 class FlextResult[T](_FlextResult[T]):
     """Public concrete result facade; runtime and typing share one MRO."""
 
+
 r = FlextResult
 
 

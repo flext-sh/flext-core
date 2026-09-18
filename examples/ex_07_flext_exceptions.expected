@@ -20,6 +20,7 @@ base.auto_corr.prefix: True
 [subclasses]
 ValidationError.field: 'email'
 ValidationError.value: 'bad'
+ValidationError.fail_validation: 'True'
 ConfigurationError.config_key: 'db.host'
 ConfigurationError.config_source: 'env'
 ConnectionError.host: '127.0.0.1'

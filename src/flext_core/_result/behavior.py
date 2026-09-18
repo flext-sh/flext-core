@@ -2,10 +2,28 @@
 
 from __future__ import annotations
 
-from typing import Self, override
+from typing import Self, TypeIs, override
 
 from .._protocols.result import FlextProtocolsResult as prt
 from .base import FlextResultBase
+
+_RESULT_FACTORY_CONTRACT: tuple[str, ...] = (
+    "reject_banned_result_parameterization",
+    "reject_banned_success_payload",
+    "require_error",
+    "fail",
+    "from_result",
+    "from_validation",
+    "failed_result",
+    "successful_result",
+)
+
+
+def _is_result_factory(cls: type[object]) -> TypeIs[type[prt.ResultFactory]]:
+    """Narrow a class to the result factory contract after member validation."""
+    return all(
+        callable(getattr(cls, member, None)) for member in _RESULT_FACTORY_CONTRACT
+    )
 
 
 class FlextResultBehavior[T](FlextResultBase[T]):
@@ -30,10 +48,11 @@ class FlextResultBehavior[T](FlextResultBase[T]):
     @classmethod
     def _factory(cls) -> type[prt.ResultFactory]:
         """Return the concrete MRO only after structural factory validation."""
-        if isinstance(cls, prt.ResultFactory):
-            return cls
-        msg = f"{cls.__name__} does not implement the result factory contract"
-        raise TypeError(msg)
+        factory_cls: type[object] = cls
+        if not _is_result_factory(factory_cls):
+            msg = f"{cls.__name__} does not implement the result factory contract"
+            raise TypeError(msg)
+        return factory_cls
 
     def __enter__(self) -> Self:
         return self

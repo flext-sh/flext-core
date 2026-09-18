@@ -7,4 +7,8 @@ class FlextApi:
     """API facade for flext-core."""
 
 
-__all__: list[str] = ["FlextApi"]
+core: FlextApi = FlextApi()
+"""Process-wide ``FlextApi`` facade singleton."""
+
+
+__all__: list[str] = ["FlextApi", "core"]

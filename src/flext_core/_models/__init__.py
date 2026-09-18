@@ -30,7 +30,11 @@ if TYPE_CHECKING:
     from ._enforcement._params import FlextModelsEnforcementParams
     from ._enforcement._sources import FlextModelsEnforcementSources
     from ._project_metadata_parts.flextmodelsprojectmetadata_part_01 import (
+        ProjectMetadataContract,
         PyprojectIngressContract,
+    )
+    from ._project_metadata_parts.flextmodelsprojectmetadata_part_02 import (
+        ProjectMetadataFields,
     )
     from ._project_metadata_parts.flextmodelsprojectmetadata_part_03 import (
         ProjectMetadataAggregates,
@@ -94,7 +98,9 @@ __all__: tuple[str, ...] = (
     "FlextModelsService",
     "FlextModelsSettings",
     "ProjectMetadataAggregates",
+    "ProjectMetadataContract",
     "ProjectMetadataDocument",
+    "ProjectMetadataFields",
     "PyprojectIngressContract",
     "_base_parts",
     "_container_parts",
@@ -130,7 +136,11 @@ _LAZY_IMPORTS = MappingProxyType(
             "._exception_params_parts": ("_exception_params_parts",),
             "._project_metadata_parts": ("_project_metadata_parts",),
             "._project_metadata_parts.flextmodelsprojectmetadata_part_01": (
+                "ProjectMetadataContract",
                 "PyprojectIngressContract",
+            ),
+            "._project_metadata_parts.flextmodelsprojectmetadata_part_02": (
+                "ProjectMetadataFields",
             ),
             "._project_metadata_parts.flextmodelsprojectmetadata_part_03": (
                 "ProjectMetadataAggregates",

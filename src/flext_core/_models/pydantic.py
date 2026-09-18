@@ -209,7 +209,8 @@ class FlextModelsPydantic:
     # base; consumers overriding ``settings_customise_sources`` annotate
     # ``settings_cls: type[PydanticBaseSettings]`` through the facade (Liskov-correct
     # parameter widening). Removing or narrowing this alias re-forces forbidden
-    # direct ``pydantic_settings`` imports in every fleet consumer.    PydanticBaseSettings = PydanticBaseSettings
+    # direct ``pydantic_settings`` imports in every fleet consumer.
+    PydanticBaseSettings = PydanticBaseSettings
     EnvSettingsSource = EnvSettingsSource
     PydanticBaseSettingsSource = PydanticBaseSettingsSource
     YamlConfigSettingsSource = YamlConfigSettingsSource

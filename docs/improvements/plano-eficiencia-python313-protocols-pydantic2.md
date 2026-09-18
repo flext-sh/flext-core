@@ -76,7 +76,7 @@ forte e segurança de contrato.
 
 ## P0 — aplicar imediatamente (alto impacto / baixo risco)
 
-1. **Trocar runtime protocol dispatch por função pré-compilada no registro** ✅ concluído   - Arquivo: `src/flext_core/dispatcher.py`.
+1. **Trocar runtime protocol dispatch por função pré-compilada no registro** ✅ concluído - Arquivo: `src/flext_core/dispatcher.py`.
    - Estado: o registro de handler já resolve uma vez o executor (`dispatch_message` / `handle` / `execute` / callable)
      via `match handler` e armazena o callable final em `self._handlers`. O `_execute_handler()` chama o callable
      previamente resolvido sem cadeia de `isinstance(...Protocol)` por mensagem.

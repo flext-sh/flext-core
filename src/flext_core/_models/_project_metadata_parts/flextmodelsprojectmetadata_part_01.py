@@ -11,7 +11,7 @@ from typing import ClassVar
 from ..pydantic import FlextModelsPydantic
 
 
-class _ProjectMetadataContract(FlextModelsPydantic.BaseModel):
+class ProjectMetadataContract(FlextModelsPydantic.BaseModel):
     """Frozen declaration base for owned project metadata."""
 
     model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
@@ -19,7 +19,7 @@ class _ProjectMetadataContract(FlextModelsPydantic.BaseModel):
     )
 
 
-class PyprojectIngressContract(_ProjectMetadataContract):
+class PyprojectIngressContract(ProjectMetadataContract):
     """Frozen declaration base for standards-owned TOML tables."""
 
     model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (

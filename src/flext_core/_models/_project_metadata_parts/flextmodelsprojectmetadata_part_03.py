@@ -12,13 +12,13 @@ from pydantic import Field
 
 from ..._typings.base import FlextTypingBase as t
 from .flextmodelsprojectmetadata_part_01 import (
+    ProjectMetadataContract,
     PyprojectIngressContract,
-    _ProjectMetadataContract,
 )
-from .flextmodelsprojectmetadata_part_02 import _ProjectMetadataFields
+from .flextmodelsprojectmetadata_part_02 import ProjectMetadataFields
 
 
-class ProjectMetadataAggregates(_ProjectMetadataFields):
+class ProjectMetadataAggregates(ProjectMetadataFields):
     """Validated PEP 621 and FLEXT aggregate declarations."""
 
     class Project(PyprojectIngressContract):
@@ -28,16 +28,16 @@ class ProjectMetadataAggregates(_ProjectMetadataFields):
         version: Annotated[str, Field(min_length=1)]
         description: str = ""
         authors: Annotated[
-            tuple[_ProjectMetadataFields.ProjectAuthor, ...],
+            tuple[ProjectMetadataFields.ProjectAuthor, ...],
             Field(default=(), description="Project authors"),
         ] = ()
         urls: Annotated[
-            _ProjectMetadataFields.ProjectUrls,
+            ProjectMetadataFields.ProjectUrls,
             Field(
-                default_factory=_ProjectMetadataFields.ProjectUrls,
+                default_factory=ProjectMetadataFields.ProjectUrls,
                 description="Project URLs",
             ),
-        ] = Field(default_factory=_ProjectMetadataFields.ProjectUrls)
+        ] = Field(default_factory=ProjectMetadataFields.ProjectUrls)
         requires_python: Annotated[
             str,
             Field(default="", alias="requires-python", description="Python constraint"),
@@ -53,34 +53,34 @@ class ProjectMetadataAggregates(_ProjectMetadataFields):
             t.StrTuple, Field(default=(), description="Project search keywords")
         ] = ()
 
-    class ProjectToolFlext(_ProjectMetadataContract):
+    class ProjectToolFlext(ProjectMetadataContract):
         """Complete ``[tool.flext]`` contract."""
 
         project: Annotated[
-            _ProjectMetadataFields.ProjectToolFlextProject,
+            ProjectMetadataFields.ProjectToolFlextProject,
             Field(
-                default_factory=_ProjectMetadataFields.ProjectToolFlextProject,
+                default_factory=ProjectMetadataFields.ProjectToolFlextProject,
                 description="Project naming policy",
             ),
-        ] = Field(default_factory=_ProjectMetadataFields.ProjectToolFlextProject)
+        ] = Field(default_factory=ProjectMetadataFields.ProjectToolFlextProject)
         docs: Annotated[
-            _ProjectMetadataFields.ProjectToolFlextDocs,
+            ProjectMetadataFields.ProjectToolFlextDocs,
             Field(
-                default_factory=_ProjectMetadataFields.ProjectToolFlextDocs,
+                default_factory=ProjectMetadataFields.ProjectToolFlextDocs,
                 description="Documentation policy",
             ),
-        ] = Field(default_factory=_ProjectMetadataFields.ProjectToolFlextDocs)
+        ] = Field(default_factory=ProjectMetadataFields.ProjectToolFlextDocs)
         workspace: Annotated[
-            _ProjectMetadataFields.ProjectToolFlextWorkspace,
+            ProjectMetadataFields.ProjectToolFlextWorkspace,
             Field(
-                default_factory=_ProjectMetadataFields.ProjectToolFlextWorkspace,
+                default_factory=ProjectMetadataFields.ProjectToolFlextWorkspace,
                 description="Workspace attachment policy",
             ),
-        ] = Field(default_factory=_ProjectMetadataFields.ProjectToolFlextWorkspace)
+        ] = Field(default_factory=ProjectMetadataFields.ProjectToolFlextWorkspace)
         namespace: Annotated[
-            _ProjectMetadataFields.ProjectToolFlextNamespace,
+            ProjectMetadataFields.ProjectToolFlextNamespace,
             Field(
-                default_factory=_ProjectMetadataFields.ProjectToolFlextNamespace,
+                default_factory=ProjectMetadataFields.ProjectToolFlextNamespace,
                 description="Namespace enforcement policy",
             ),
-        ] = Field(default_factory=_ProjectMetadataFields.ProjectToolFlextNamespace)
+        ] = Field(default_factory=ProjectMetadataFields.ProjectToolFlextNamespace)

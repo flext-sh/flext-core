@@ -51,7 +51,9 @@ class TestsServiceRegistrationSpecOwner:
 
     def test_utility_preserves_non_mapping_services_error(self) -> None:
         """Malformed service collections retain the characterized error contract."""
-        registration = m.ServiceRegistrationSpec(services=["invalid"])
+        registration = m.ServiceRegistrationSpec.model_validate({
+            "services": ["invalid"]
+        })
 
         with pytest.raises(AttributeError, match="has no attribute 'items'"):
             _ = u.normalize_service_registration_spec(registration)

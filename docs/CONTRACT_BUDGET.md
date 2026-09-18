@@ -9,17 +9,10 @@
   - [FlextTypingBase — REMOVE / MIGRATE](#flexttypingbase-remove-migrate)
   - [FlextTypesServices — KEEP (signature composition only)](#flexttypesservices-keep-signature-composition-only)
   - [FlextTypesServices — REMOVE](#flexttypesservices-remove)
-<<<<<<< HEAD
-- [Budget: p.(FlextProtocols)](#budget-pflextprotocols)
-- [Budget: m.(FlextModels)](#budget-mflextmodels)
-- [Budget: u.* (FlextUtilities)](#budget-u-flextutilities)
-- [Budget: c.* (FlextConstants)](#budget-c-flextconstants)
-=======
 - [Budget: p._(FlextProtocols_)](#budget-pflextprotocols)
 - [Budget: m._(FlextModels_)](#budget-mflextmodels)
 - [Budget: u.\* (FlextUtilities)](#budget-u-flextutilities)
 - [Budget: c.\* (FlextConstants)](#budget-c-flextconstants)
->>>>>>> origin/0.12.0-dev
 - [Execution order (strict)](#execution-order-strict)
 - [Invariants audited each module](#invariants-audited-each-module)
 

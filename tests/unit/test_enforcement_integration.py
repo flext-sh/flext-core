@@ -37,6 +37,7 @@ from collections.abc import MutableSequence
 from typing import Annotated, ClassVar
 
 from flext_core import m
+from flext_core.models import FlextModelsNamespace
 from tests import u
 
 
@@ -72,7 +73,7 @@ class TestsFlextBadFrozen(m.ImmutableValueModel):
     payload: Annotated[str, u.Field(description="Data payload.")] = ""
 
 
-class TestsFlextBadAccessors(m.FlextModelsNamespace):
+class TestsFlextBadAccessors(FlextModelsNamespace):
     def get_value(self) -> int:
         return 0
 
@@ -83,15 +84,15 @@ class TestsFlextBadAccessors(m.FlextModelsNamespace):
         return True
 
 
-class TestsFlextBadWorkerSettings(m.FlextModelsNamespace):
+class TestsFlextBadWorkerSettings(FlextModelsNamespace):
     pass
 
 
-class TestsFlextBadConstants(m.FlextModelsNamespace):
+class TestsFlextBadConstants(FlextModelsNamespace):
     items: ClassVar[list[str]] = ["a", "b"]
 
 
-class TestsFlextBadClassVarConstant(m.FlextModelsNamespace):
+class TestsFlextBadClassVarConstant(FlextModelsNamespace):
     GROUPS: ClassVar[frozenset[str]] = frozenset({"a", "b"})
 """
 
