@@ -54,7 +54,7 @@ ONLY after all src green.
   - balance: mis-wired arguments, unknown-name, implicit-any — cleared as side-effect of
     A-D
 
-## Budget: t.\* (FlextTypingBase + FlextTypesServices + FlextTypingContainers + FlextTypesPydantic + FlextTypesAnnotateds)
+## Budget: t.\* (typing facade: base, services, containers, pydantic, annotateds)
 
 ### FlextTypingBase — KEEP (flat, composable)
 

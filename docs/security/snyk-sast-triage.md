@@ -63,7 +63,8 @@ em `.snyk`) / `risco-aceito` (com prazo).
        40
        41          model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
        42
->>>    43          user_id: Annotated[str, m.Field(description="Default test user identifier")] = (
+>>>    43          user_id: Annotated[str, m.Field(
+                      description="Default test user identifier")] = (
        44              "test_user_123"
        45          )
        46          session_id: Annotated[
@@ -78,10 +79,12 @@ em `.snyk`) / `risco-aceito` (com prazo).
 
 ```text
        41          )
-       42          config_key: Annotated[str, m.Field(description="Default test settings key")] = (
+       42          config_key: Annotated[str, m.Field(
+                      description="Default test settings key")] = (
        43              "test_key"
        44          )
->>>    45          username: Annotated[str, m.Field(description="Default test username")] = (
+>>>    45          username: Annotated[str, m.Field(
+                      description="Default test username")] = (
        46              "test_user"
        47          )
        48          email: Annotated[str, m.Field(description="Default test email")] = (
@@ -94,7 +97,7 @@ em `.snyk`) / `risco-aceito` (com prazo).
 
 **Local**: `tests/integration/test_service.py:73` · **CWE**: -
 
-```python
+```python notest
        69       70      def test_fetch_user_returns_applied_custom_entity(self) -> None:
        71          """fetch_user() returns previously applied custom user data verbatim."""
        72          service = self.UserQueryService()
@@ -129,8 +132,9 @@ em `.snyk`) / `risco-aceito` (com prazo).
 
 **Local**: `tests/unit/test_result_factory_dip.py:169` · **CWE**: -
 
-```python
-      165      166      def test_fail_from_exception_redacts_sensitive_error_data_keys(self) -> None:
+```python notest
+      165      166      def test_fail_from_exception_redacts_sensitive_error_data_keys(
+                  self) -> None:
       167          exc = e.OperationError(
       168              "denied",
 >>>   169              context={"password": "s3cret", "host": "db.example", "token": "t0k"},
@@ -146,11 +150,13 @@ em `.snyk`) / `risco-aceito` (com prazo).
 
 **Local**: `tests/unit/test_result_factory_dip.py:215` · **CWE**: -
 
-```python
-      211      212      def test_fail_explicit_error_data_redacts_sensitive_keys(self) -> None:
+```python notest
+      211      212      def test_fail_explicit_error_data_redacts_sensitive_keys(
+                  self) -> None:
       213          result: p.Result[int] = r[int].fail(
       214              "denied",
->>>   215              error_data={"password": "s3cret", "host": "db.example", "token": "t0k"},
+>>>   215              error_data={
+                  "password": "s3cret", "host": "db.example", "token": "t0k"},
       216          )
       217          tm.fail(result, has="denied")
       218          assert result.error_data is not None
@@ -163,11 +169,12 @@ em `.snyk`) / `risco-aceito` (com prazo).
 
 **Local**: `tests/unit/test_result_factory_dip.py:226` · **CWE**: -
 
-```python
+```python notest
       222      223      def test_fail_explicit_error_data_wins_but_still_redacts_with_exception(
       224          self,
       225      ) -> None:
->>>   226          exc = e.OperationError("x", context={"password": "from-exc", "host": "h"})
+>>>   226          exc = e.OperationError(
+              "x", context={"password": "from-exc", "host": "h"})
       227          result: p.Result[int] = r[int].fail(
       228              "denied",
       229              error_data={"password": "explicit", "host": "kept", "api_key": "k"},
@@ -182,7 +189,8 @@ em `.snyk`) / `risco-aceito` (com prazo).
 
 ```text
       225      ) -> None:
-      226          exc = e.OperationError("x", context={"password": "from-exc", "host": "h"})
+      226          exc = e.OperationError(
+              "x", context={"password": "from-exc", "host": "h"})
       227          result: p.Result[int] = r[int].fail(
       228              "denied",
 >>>   229              error_data={"password": "explicit", "host": "kept", "api_key": "k"},

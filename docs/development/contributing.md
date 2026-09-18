@@ -212,7 +212,7 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
    ```bash
    # Ensure Python 3.13+
    python --version
-   
+
    # Reinstall dependencies
    make setup
    ```
@@ -222,7 +222,7 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
    ```bash
    # Run type checker
    make check
-   
+
    # Check specific files
    make check
    ```
@@ -232,7 +232,7 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
    ```bash
    # Run with verbose output
    pytest tests/ -v --tb=short
-   
+
    # Debug specific test
    pytest tests/unit/test_result.py::Testr::test_ok -v -s
    ```

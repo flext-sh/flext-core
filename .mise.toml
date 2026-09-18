@@ -24,7 +24,8 @@ locked = false
 # Source: config:python_version, config:codegen.scaffold.project.dev native toolchain floors
 #         (kubectl_version, helm_version, kind_version, taplo_version, ast_grep_version,
 #          gitleaks_version, scc_selector/scc_version, kubeconform_version, qlty_selector/qlty_version,
-#          node_version, jscpd_selector/jscpd_version, waza_version, go_version, make_version,
+#          node_version, jscpd_selector/jscpd_version, prettier_selector/prettier_version,
+#          waza_version, go_version, make_version,
 #          beads (selector/track/version/prerelease/branch), gascity (selector/track/version/prerelease/branch))
 [tools]
 python = "3.13"
@@ -41,6 +42,7 @@ gitleaks = "latest"
 kubeconform = "latest"
 node = "latest"
 "github:kucherenko/jscpd" = "latest"
+"npm:prettier" = "3.5.3"
 "github:microsoft/waza" = "latest"
 go = "latest"
 make = "latest"

@@ -71,7 +71,7 @@ Definir **ações objetivas, priorizadas e mensuráveis** para reduzir custo de 
 **Efeito prático**: além de risco semântico, aumenta chance de comportamentos
 inesperados e debugging mais caro.
 
-### E) Validações e coerções que podem ser simplificadas com práticas atuais do Pydantic v2
+### E) Validations and coercions simplifiable with current Pydantic v2 practices
 
 - Já existe uso correto de `ConfigDict`, `field_validator`, `model_validator` e adapters
   em parte da base.

@@ -79,7 +79,8 @@ overengineering, com entregas pequenas e verificáveis.
 Rodar sempre (escopo mínimo):
 
 ```bash
-PYTHONPATH=src pytest -q tests/unit/test_utilities.py tests/unit/test_coverage_utilities.py tests/unit/test_utilities_text_full_coverage.py
+PYTHONPATH=src pytest -q tests/unit/test_utilities.py \
+  tests/unit/test_coverage_utilities.py tests/unit/test_utilities_text_full_coverage.py
 ```
 
 Quando houver novos contratos, incluir também:
