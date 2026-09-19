@@ -18,6 +18,7 @@ from pathlib import Path
 import pytest
 from flext_tests import tm
 
+import flext_core
 from tests.typings import t
 
 from ._typings_support import FLAT_ALIAS_NAMES, PUBLIC_ALIAS_NAMES
@@ -63,7 +64,7 @@ class TestsFlextCoreTypingsAliases:
     @pytest.mark.parametrize("legacy_name", LEGACY_GENERIC_NAMES)
     def test_flext_core_hides_shared_generic_helpers(self, legacy_name: str) -> None:
         """flext_core must not expose shared TypeVar/ParamSpec helpers publicly."""
-        tm.that(hasattr(core, legacy_name), eq=False)
+        tm.that(hasattr(flext_core, legacy_name), eq=False)
 
     def test_primitives_types_membership(self) -> None:
         """PRIMITIVES_TYPES is exactly (str, int, float, bool)."""

@@ -23,7 +23,8 @@ if TYPE_CHECKING:
 pytestmark = [pytest.mark.integration]
 
 _DOUBLED_RESULT = 42
-_UNWRAP_VALUE = 7
+_UNWRAP_VALUE: Final[int] = 7
+_UNWRAP_DEFAULT: Final[int] = 0
 _UUID_DASH_COUNT = 4
 _UUID_TEXT_LENGTH = 36
 
@@ -112,8 +113,7 @@ class TestsFlextCoreIntegration:
         success_result = r[int].ok(_UNWRAP_VALUE)
         tm.that(success_result.unwrap(), eq=_UNWRAP_VALUE)
         failure_result = r[int].fail("missing")
-        UNWRAP_DEFAULT: Final[int] = 0
-        tm.that(failure_result.unwrap_or(UNWRAP_DEFAULT), eq=UNWRAP_DEFAULT)
+        tm.that(failure_result.unwrap_or(_UNWRAP_DEFAULT), eq=_UNWRAP_DEFAULT)
 
     def test_container_factory_resolves_computed_value(
         self,
