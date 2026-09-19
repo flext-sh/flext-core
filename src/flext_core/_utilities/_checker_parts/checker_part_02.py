@@ -66,14 +66,16 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart01):
         cls, handle_method: Callable[..., ts.ModuleExport], handler_class: type
     ) -> tb.MappingKV[str, tb.TypeHintSpecifier | None]:
         """Safely extract type hints, returning empty dict on error."""
+        hints: tb.MappingKV[str, tb.TypeHintSpecifier | None] = {}
         try:
-            return get_type_hints(
+            hints = get_type_hints(
                 handle_method,
                 globalns=handle_method.__globals__,
                 localns=dict(vars(handler_class)),
             )
         except (NameError, AttributeError, TypeError):
-            return {}
+            hints = {}
+        return hints
 
     @classmethod
     def _handle_instance_check(

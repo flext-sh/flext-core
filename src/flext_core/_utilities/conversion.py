@@ -9,7 +9,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
-from contextlib import suppress
 
 from flext_core import c, t
 
@@ -85,8 +84,12 @@ class FlextUtilitiesConversion:
                 else default
             )
         if isinstance(value, str):
-            with suppress(ValueError, OverflowError):
+            parsed: float | None
+            try:
                 parsed = float(value)
+            except (ValueError, OverflowError):
+                parsed = None
+            else:
                 if math.isfinite(parsed):
                     return int(parsed)
         return default

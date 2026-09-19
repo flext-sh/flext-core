@@ -36,11 +36,13 @@ from typing import Annotated, ClassVar, Final, Self
 from pydantic import BaseModel, Field, computed_field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-ENV_FILE_ENV_VAR: Final[str] = "FLEXT_ENV_FILE"
-"""Bootstrap env var that overrides the .env path (settings-layer protocol owner)."""
+from ._constants.settings import FlextConstantsSettings
 
 ENV_FILE_DEFAULT: Final[str] = ".env"
 """Default .env file name (settings-layer protocol owner)."""
+
+ENV_FILE_ENV_VAR = FlextConstantsSettings.ENV_FILE_ENV_VAR
+"""Bootstrap env var that overrides the .env path (SSOT: ``_constants/settings``)."""
 
 _ERR_TRACE_REQUIRES_DEBUG = "trace mode requires debug mode to be enabled"
 
@@ -186,8 +188,9 @@ class FlextSettings(BaseSettings):
         arbitrary_types_allowed=True,
     )
 
-    ENV_FILE_ENV_VAR: ClassVar[str] = ENV_FILE_ENV_VAR
-    """Public facade surface for the bootstrap env var name (settings owns it)."""
+    # ENV_FILE_ENV_VAR moved to its SSOT owner
+    # ``FlextConstantsSettings`` in ``_constants/settings.py`` (ENFORCE-079);
+    # consume it as ``c.ENV_FILE_ENV_VAR``.
 
     ENV_FILE_DEFAULT: ClassVar[str] = ENV_FILE_DEFAULT
     """Public facade surface for the default .env file name (settings owns it)."""

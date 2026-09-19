@@ -84,7 +84,7 @@ class FlextUtilitiesBeartypeAttrVisitor:
         try:
             raw_annotations = inspect.get_annotations(target, eval_str=False)
         except (NameError, AttributeError, TypeError):
-            return False
+            raw_annotations = {}
         raw = raw_annotations.get(name)
         return isinstance(raw, str) and (
             raw.startswith("ClassVar") or "ClassVar[" in raw

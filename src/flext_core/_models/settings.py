@@ -112,16 +112,9 @@ class FlextModelsSettings:
                 raise ValueError(c.ERR_MODEL_MAX_DELAY_LESS_THAN_INITIAL)
             return self
 
-    DOMAIN_MODEL_CONFIG: ClassVar[ConfigDict] = ConfigDict(
-        use_enum_values=True,
-        validate_assignment=True,
-        validate_return=True,
-        validate_default=True,
-        str_strip_whitespace=True,
-        arbitrary_types_allowed=False,
-        extra="forbid",
-    )
-    "Domain model configuration defaults.\n\n    Moved from FlextConstants.DOMAIN_MODEL_CONFIG because\n    constants.py cannot import ConfigDict from pydantic.\n\n    Use m.DOMAIN_MODEL_CONFIG instead of c.DOMAIN_MODEL_CONFIG.\n    "
+    # DOMAIN_MODEL_CONFIG moved to its SSOT owner
+    # ``FlextConstantsSettings`` in ``_constants/settings.py`` (ENFORCE-079);
+    # consume it as ``c.DOMAIN_MODEL_CONFIG``.
 
 
 __all__: t.MutableSequenceOf[str] = ["FlextModelsSettings"]

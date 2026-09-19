@@ -165,10 +165,12 @@ class FlextUtilitiesGuardsTypeCore:
     def in_(value: t.GuardInput, container: t.GuardInput) -> bool:
         """Check if value is in container, handling TypeError gracefully."""
         if isinstance(container, (list, tuple, set, dict)):
+            contains: bool
             try:
-                return value in container
+                contains = value in container
             except TypeError:
-                return False
+                contains = False
+            return contains
         return False
 
 

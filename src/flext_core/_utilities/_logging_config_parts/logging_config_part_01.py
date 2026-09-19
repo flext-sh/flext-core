@@ -16,7 +16,6 @@ import queue
 import sys
 import threading
 import typing
-from contextlib import suppress
 from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_core import c, p, t
@@ -116,16 +115,21 @@ class FlextUtilitiesLoggingConfig:
                 return
             try:
                 flush_fn()
-            except (OSError, ValueError, TypeError, AttributeError):
-                return
+            except (OSError, ValueError, TypeError, AttributeError) as exc:
+                self._writer_log.warning("Async log writer flush failed", exc_info=exc)
 
         def shutdown(self) -> None:
             """Stop worker thread and flush remaining messages."""
             if self.stop_event.is_set():
                 return
             self.stop_event.set()
-            with suppress(queue.Full):
+            try:
                 self.queue.put_nowait(None)
+            except queue.Full as exc:
+                self._writer_log.warning(
+                    "Async log queue full during shutdown; sentinel dropped",
+                    exc_info=exc,
+                )
             if self.thread.is_alive():
                 self.thread.join(timeout=2.0)
             self.flush()
@@ -133,8 +137,12 @@ class FlextUtilitiesLoggingConfig:
         @override
         def write(self, s: str, /) -> int:
             """Write message to queue (non-blocking)."""
-            with suppress(queue.Full):
+            try:
                 self.queue.put(s, block=c.ASYNC_BLOCK_ON_FULL)
+            except queue.Full as exc:
+                self._writer_log.warning(
+                    "Async log queue full; message dropped", exc_info=exc
+                )
             return len(s)
 
         def _write_queued_message(self, msg: str) -> None:
@@ -159,8 +167,13 @@ class FlextUtilitiesLoggingConfig:
                     self._writer_log.warning(
                         "Async log writer stream operation failed", exc_info=exc
                     )
-                    with suppress(OSError, ValueError, TypeError):
+                    try:
                         _ = self._target_stream.write("Error in async log writer\n")
+                    except (OSError, ValueError, TypeError) as write_exc:
+                        self._writer_log.warning(
+                            "Failed to write async writer error notice",
+                            exc_info=write_exc,
+                        )
 
     _async_writer: ClassVar[_AsyncLogWriter | None] = None
 

@@ -8,7 +8,7 @@ violation types — never private attributes or internal collaborators.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 from flext_tests import e
@@ -191,8 +191,9 @@ class TestsFlextCoreExceptions:
         assert mapped.failure
         assert mapped.error == result.error
         # unwrap_or on failure returns the default
-        default_result = result.unwrap_or(False)
-        assert default_result is False
+        unwrap_default: Final[bool] = False
+        default_result = result.unwrap_or(unwrap_default)
+        assert default_result is unwrap_default
 
     @pytest.mark.parametrize("violation", [e.MroViolation, e.SmellViolation])
     def test_enforcement_violations_are_raisable_exception_types(

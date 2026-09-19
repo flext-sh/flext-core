@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 from flext_tests import r, tm
@@ -112,7 +112,8 @@ class TestsFlextCoreIntegration:
         success_result = r[int].ok(_UNWRAP_VALUE)
         tm.that(success_result.unwrap(), eq=_UNWRAP_VALUE)
         failure_result = r[int].fail("missing")
-        tm.that(failure_result.unwrap_or(0), eq=0)
+        UNWRAP_DEFAULT: Final[int] = 0
+        tm.that(failure_result.unwrap_or(UNWRAP_DEFAULT), eq=UNWRAP_DEFAULT)
 
     def test_container_factory_resolves_computed_value(
         self,
