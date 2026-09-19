@@ -77,6 +77,19 @@ class ProjectMetadataFields:
                 ),
             ),
         ] = None
+        duplication: Annotated[
+            t.JsonMapping | None,
+            Field(
+                default=None,
+                description=(
+                    "Duplication-gate scope overrides table read by the "
+                    "flext-infra duplication gate from the managed "
+                    "``[tool.flext.project.duplication]`` section. The ingress "
+                    "owns the validated shape so the generator's own output "
+                    "always round-trips through this contract."
+                ),
+            ),
+        ] = None
 
     class ProjectToolFlextReadmeSection(ProjectMetadataContract):
         """One ordered project README section declaration."""
