@@ -372,9 +372,6 @@ CLAUDE.local.md
 !.github/workflows/ci.yml
 !.github/workflows/docs.yml
 !.github/workflows/release.yml
-!.github/workflows/_fragments/
-!.github/workflows/_fragments/cross_repo_dependency_credential
-!.github/workflows/_fragments/testmon_cache
 !.qlty/
 !.qlty/qlty.toml
 !.vscode/settings.json
