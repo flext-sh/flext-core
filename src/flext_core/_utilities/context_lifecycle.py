@@ -83,6 +83,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
         label: str,
     ) -> m.ConfigMap | None:
         """Normalize an arbitrary mapping into a scope-compatible map."""
+        config_map: m.ConfigMap | None
         try:
             source_mapping: t.JsonMapping = t.json_mapping_adapter().validate_python(
                 source
@@ -92,12 +93,13 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
                     source_mapping
                 )
             )
-            return m.ConfigMap.model_validate(normalized_payload)
+            config_map = m.ConfigMap.model_validate(normalized_payload)
         except c.EXC_BASIC_TYPE as exc:
             FlextUtilitiesContextLifecycle.logger.debug(
                 f"Context {label} validation failed", exc_info=exc
             )
-            return None
+            config_map = None
+        return config_map
 
     def _extract_config_map(
         self, other: p.Context | t.MappingKV[str, t.JsonPayload] | t.JsonMapping

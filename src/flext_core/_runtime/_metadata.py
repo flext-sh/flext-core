@@ -11,8 +11,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from .._typings.base import FlextTypingBase as tb
-from .._typings.typeadapters import FlextTypesTypeAdapters as tta
+from .. import t
 from .._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel as ugm
 from ._base import FlextRuntimeBase
 
@@ -28,37 +27,37 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
     @staticmethod
     def normalize_to_json_value(
         value: ts.JsonPayload
-        | tb.Scalar
+        | t.Scalar
         | Path
         | m.ConfigMap
         | m.Dict
-        | AbstractSet[tb.Scalar]
+        | AbstractSet[t.Scalar]
         | m.BaseModel
         | None,
-    ) -> tb.JsonValue:
+    ) -> t.JsonValue:
         """Normalize arbitrary runtime input to one validated ``JsonValue``."""
         from flext_core import m
 
-        validated_value: tb.JsonValue
+        validated_value: t.JsonValue
         if value is None:
-            validated_value = tta.json_value_adapter().validate_python(None)
+            validated_value = t.json_value_adapter().validate_python(None)
 
         elif ugm.has_model_dump(value):
-            validated_value = tta.json_value_adapter().validate_python(
+            validated_value = t.json_value_adapter().validate_python(
                 value.model_dump(mode="json")
             )
         elif isinstance(value, m.BaseModel):
-            validated_value = tta.json_value_adapter().validate_python(str(value))
+            validated_value = t.json_value_adapter().validate_python(str(value))
         else:
-            validated_value = tta.json_value_adapter().validate_python(
+            validated_value = t.json_value_adapter().validate_python(
                 FlextRuntimeMetadata.normalize_to_metadata(value)
             )
         return validated_value
 
     @staticmethod
     def normalize_to_json_mapping(
-        value: tb.MappingKV[str, ts.JsonPayload | tb.Scalar],
-    ) -> tb.JsonMapping:
+        value: t.MappingKV[str, ts.JsonPayload | t.Scalar],
+    ) -> t.JsonMapping:
         """Normalize a mapping to a validated ``JsonMapping``."""
         return FlextRuntimeMetadata._normalize_dict_entries([
             (key, item) for key, item in value.items()
@@ -66,11 +65,11 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
 
     @staticmethod
     def _normalize_dict_entries(
-        items: tb.SequenceOf[tb.Pair[str, ts.JsonPayload]],
-    ) -> tb.JsonDict:
+        items: t.SequenceOf[t.Pair[str, ts.JsonPayload]],
+    ) -> t.JsonDict:
         """Normalize key-value pairs for container dict construction."""
         return dict(
-            tta.json_mapping_adapter().validate_python({
+            t.json_mapping_adapter().validate_python({
                 key: FlextRuntimeMetadata.normalize_to_json_value(item)
                 for key, item in items
             })
@@ -81,9 +80,9 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
         value: m.BaseModel
         | m.Dict
         | ts.ConfigModelInput
-        | tb.MappingKV[str, ts.JsonPayload]
+        | t.MappingKV[str, ts.JsonPayload]
         | None,
-    ) -> tb.JsonMapping | None:
+    ) -> t.JsonMapping | None:
         """Normalize model-like input to a plain mapping."""
         from flext_core import m
 
@@ -98,23 +97,23 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
                 (key, item) for key, item in value.items()
             ])
         return dict(
-            tta.json_mapping_adapter().validate_python(value.model_dump(mode="json"))
+            t.json_mapping_adapter().validate_python(value.model_dump(mode="json"))
         )
 
     @staticmethod
     def normalize_to_metadata(
         val: ts.JsonPayload
-        | tb.Scalar
+        | t.Scalar
         | Path
         | m.ConfigMap
         | m.Dict
-        | AbstractSet[tb.Scalar]
+        | AbstractSet[t.Scalar]
         | None,
-    ) -> tb.JsonValue:
+    ) -> t.JsonValue:
         """Normalize input into metadata-compatible JSON-native values."""
         from flext_core import m
 
-        normalized_value: tb.JsonValue
+        normalized_value: t.JsonValue
         if isinstance(val, (m.ConfigMap, m.Dict)):
             normalized_value = FlextRuntimeMetadata._normalize_dict_entries(
                 list(val.root.items())
@@ -125,7 +124,7 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
             normalized_value = val.isoformat()
         elif isinstance(val, Path):
             normalized_value = str(val)
-        elif isinstance(val, tb.PRIMITIVES_TYPES):
+        elif isinstance(val, t.PRIMITIVES_TYPES):
             normalized_value = val
         elif ugm.has_model_dump(val):
             normalized_value = FlextRuntimeMetadata.normalize_to_json_value(val)
@@ -137,7 +136,7 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
             isinstance(val, Sequence) and not isinstance(val, (str, bytes, bytearray))
         ):
             normalized_value = list(
-                tta.json_list_adapter().validate_python([
+                t.json_list_adapter().validate_python([
                     FlextRuntimeMetadata.normalize_to_json_value(item) for item in val
                 ])
             )

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from contextlib import suppress
 from typing import TYPE_CHECKING
 
 from flext_core import c, t
@@ -45,10 +44,12 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserTargetsPart01):
         coerce_fn = coerce_map.get(target)
         if coerce_fn is not None:
             coerced_val = None
-            with suppress(TypeError, ValueError):
+            try:
                 result = coerce_fn(value)
                 if not result.failure:
                     coerced_val = result.value
+            except (TypeError, ValueError):
+                coerced_val = None
             return (
                 FlextUtilitiesModel.validate_value(target, coerced_val).unwrap()
                 if coerced_val is not None

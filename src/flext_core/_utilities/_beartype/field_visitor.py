@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import ast
-import contextlib
 import inspect
 from types import UnionType
 from typing import Annotated, TypeAliasType, Union, get_args, get_origin
@@ -50,6 +49,8 @@ class FlextUtilitiesBeartypeFieldVisitor:
             try:
                 expression = ast.parse(unwrapped, mode="eval").body
             except SyntaxError:
+                expression = None
+            if expression is None:
                 return 0
             members = cls._ast_union_members(expression)
             if len(members) == 1:
@@ -79,10 +80,12 @@ class FlextUtilitiesBeartypeFieldVisitor:
             name
         )
         if isinstance(resolved_annotation, str):
-            with contextlib.suppress(NameError, TypeError):
-                resolved_annotation = inspect.get_annotations(
-                    model_type, eval_str=True
-                ).get(name)
+            try:
+                resolved = inspect.get_annotations(model_type, eval_str=True).get(name)
+            except (NameError, TypeError):
+                resolved = None
+            else:
+                resolved_annotation = resolved
         has_annotated_description = False
         if get_origin(resolved_annotation) is Annotated:
             has_annotated_description = any(

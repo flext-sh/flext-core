@@ -79,13 +79,9 @@ class FlextUtilitiesBeartypeAttrVisitor:
                 origin, "_name", ""
             )
             return origin_name == "ClassVar" or str(ann).endswith("ClassVar")
-        # Fallback for string annotations whose defining module is unavailable
-        # (e.g. synthetic test classes) — keep detection strict but do not fail.
-        try:
-            raw_annotations = inspect.get_annotations(target, eval_str=False)
-        except (NameError, AttributeError, TypeError):
-            return False
-        raw = raw_annotations.get(name)
+        # String annotations whose defining module is unavailable (synthetic
+        # test classes) are read unevaluated; any failure escapes with its cause.
+        raw = inspect.get_annotations(target, eval_str=False).get(name)
         return isinstance(raw, str) and (
             raw.startswith("ClassVar") or "ClassVar[" in raw
         )

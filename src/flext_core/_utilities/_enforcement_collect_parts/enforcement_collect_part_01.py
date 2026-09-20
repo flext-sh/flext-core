@@ -80,7 +80,7 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         try:
             project_root = FlextUtilitiesEnforcementCollect._owning_project_root(target)
         except RuntimeError:
-            return None
+            project_root = None
         if project_root is None:
             return None
         top = (getattr(target, "__module__", "") or "").split(".", 1)[0]

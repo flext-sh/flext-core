@@ -75,10 +75,12 @@ class FlextUtilitiesGuardsTypeProtocolSpecsMixin:
     def _check_protocol(cls, value: ProtocolGuardInput, name: str) -> bool:
         if name == c.FIELD_CONTEXT:
             return cls.context(value)
+        matched = False
         try:
-            return cls._get_protocol_specs()[name](value)
+            matched = cls._get_protocol_specs()[name](value)
         except c.EXC_ATTR_RUNTIME_TYPE:
-            return False
+            matched = False
+        return matched
 
 
 __all__: list[str] = ["FlextUtilitiesGuardsTypeProtocolSpecsMixin"]

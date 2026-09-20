@@ -6,9 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
-from flext_core import c, t
+from flext_core import c
+
+if TYPE_CHECKING:
+    from flext_core import t
 
 
 class TestsFlextConstantsOther:
