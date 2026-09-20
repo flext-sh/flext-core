@@ -20,7 +20,10 @@ from typing import TYPE_CHECKING, ClassVar, cast
 import yaml
 import yaml.constructor
 
-from flext_core import p, r
+from flext_core import r
+
+if TYPE_CHECKING:
+    from flext_core import p
 
 from .._constants.config import FlextConstantsConfig as c
 from .._typings.base import FlextTypingBase as t

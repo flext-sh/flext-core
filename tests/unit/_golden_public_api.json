@@ -519,7 +519,11 @@
     "timeout",
     "with_correlation"
   ],
-  "FlextDispatcher": ["dispatch", "publish", "register_handler"],
+  "FlextDispatcher": [
+    "dispatch",
+    "publish",
+    "register_handler"
+  ],
   "FlextExceptions": [
     "AttributeAccessError",
     "AuthenticationError",
@@ -753,7 +757,6 @@
     "ContextRuntimeState",
     "ContextStatistics",
     "ContractModel",
-    "DOMAIN_MODEL_CONFIG",
     "DecoratorConfig",
     "DeprecatedSyntaxParams",
     "Dict",

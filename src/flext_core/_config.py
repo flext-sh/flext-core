@@ -42,6 +42,7 @@ from yaml import MappingNode, SafeLoader
 from yaml.constructor import ConstructorError
 from yaml.resolver import BaseResolver
 
+from ._constants.config import FlextConstantsConfig
 from ._settings import app_env_prefix, platform_config_root
 
 
@@ -186,7 +187,6 @@ class FlextConfig(BaseSettings):
     no per-domain wiring is required.
     """
 
-    CONFIG_DIR: ClassVar[str] = "config"
     # NOTE (multi-agent): exact-file consumers declare their YAML surface here;
     # the empty default preserves deterministic directory auto-discovery.
     CONFIG_FILENAMES: ClassVar[tuple[str, ...]] = ()
@@ -233,7 +233,7 @@ class FlextConfig(BaseSettings):
         override = os.environ.get(f"{app_env_prefix(namespace)}CONFIG_DIR")
         if override:
             return Path(override)
-        config_dir = Path(cls.CONFIG_DIR)
+        config_dir = Path(FlextConstantsConfig.CONFIG_DIR_NAME)
         if config_dir.is_absolute():
             return config_dir
         module_path = Path(inspect.getfile(cls)).resolve()
