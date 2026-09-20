@@ -140,7 +140,10 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart02):
             )
         org = get_origin(norm)
         if isinstance(org, TypeAliasType):
-            org = get_origin(org.__value__) or org.__value__
+            resolved = h.resolve_type_alias_value(org)
+            if resolved is None:
+                return False
+            org = get_origin(resolved) or resolved
         tgt = org or norm
         return tgt is exp
 
