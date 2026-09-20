@@ -21,18 +21,9 @@ if TYPE_CHECKING:
     from .typings import t
     from .utilities import u
 __all__: tuple[str, ...] = (
-    "FlextConstants",
-    "FlextTestsConstants",
-    "benchmark",
-    "c",
-    "fixtures",
-    "integration",
-    "m",
-    "p",
-    "s",
-    "t",
-    "u",
-    "unit",
+    "FlextConstants", "FlextTestsConstants", "benchmark", "c",
+    "fixtures", "integration", "m", "p",
+    "s", "t", "u", "unit",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
