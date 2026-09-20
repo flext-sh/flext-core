@@ -3,6 +3,12 @@
 # run the project's canonical generation surface (`make gen`).
 version: 3
 name: flext-core
+# Why (green mandate, cosmos-3flk9 decision A): production sources are the
+# namespace validator's declared scope — tests host pytest conventions and
+# scripts/examples are thin command and documentation surfaces. Lint, type,
+# constant, and magic-value rules stay fleet-tree-wide.
+namespace_scan_dirs:
+  - src
 repository:
   name: flext-core
   distribution: flext-core

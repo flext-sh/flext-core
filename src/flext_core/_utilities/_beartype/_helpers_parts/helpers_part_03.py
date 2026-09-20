@@ -88,7 +88,11 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart02):
         h = FlextUtilitiesBeartypeHelpers
         try:
             return h.contains_any_recursive(alias_value, seen=set())
-        except (TypeError, AttributeError, RuntimeError, RecursionError):
+        except (TypeError, AttributeError, NameError, RuntimeError, RecursionError):
+            # NameError: a PEP 695 alias whose RHS references TYPE_CHECKING-only
+            # names resolves lazily and raises when the engine forces __value__.
+            # Best-effort string inspection keeps the census reporting the rest
+            # of the module instead of aborting the whole gate.
             return "Any" in str(alias_value)
 
     @staticmethod
