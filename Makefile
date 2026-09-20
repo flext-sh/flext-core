@@ -535,7 +535,7 @@ SHARED_RUNTIME := $(if $(filter-out $(PROJECT_ROOT),$(RUNTIME_ROOT)),1,$(if $(st
 # resolves dependency floors from pyproject on every setup, in CI exactly as
 # locally. `--upgrade` advances existing local resolutions; `--refresh` re-reads
 # branch metadata instead of retaining a cached tip (operator 2026-09-14).
-UV_SYNC_FLAGS := $(if $(SHARED_RUNTIME),--all-packages --reinstall-package flext-infra ,)--all-extras --all-groups --upgrade --refresh
+UV_SYNC_FLAGS := $(if $(SHARED_RUNTIME),--all-packages ,)--all-extras --all-groups --upgrade --refresh
 
 ifeq ($(GEN_INIT_ONLY),)
 -include custom.mk
