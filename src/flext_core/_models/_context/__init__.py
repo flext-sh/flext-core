@@ -17,8 +17,13 @@ if TYPE_CHECKING:
     from ._scope import FlextModelsContextScope
     from ._tokens import FlextModelsContextTokens
 __all__: tuple[str, ...] = (
-    "FlextModelsContextData", "FlextModelsContextExport", "FlextModelsContextMetadata", "FlextModelsContextProxyVar",
-    "FlextModelsContextScope", "FlextModelsContextTokens", "__scope_parts",
+    "FlextModelsContextData",
+    "FlextModelsContextExport",
+    "FlextModelsContextMetadata",
+    "FlextModelsContextProxyVar",
+    "FlextModelsContextScope",
+    "FlextModelsContextTokens",
+    "__scope_parts",
 )
 
 _LAZY_IMPORTS = MappingProxyType(

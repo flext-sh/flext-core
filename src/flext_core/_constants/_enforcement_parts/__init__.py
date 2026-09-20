@@ -21,8 +21,14 @@ if TYPE_CHECKING:
         NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT,
     )
 __all__: tuple[str, ...] = (
-    "NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT", "FlextConstantsEnforcementEnums", "FlextConstantsEnforcementFixActions", "FlextConstantsEnforcementNamespace",
-    "FlextConstantsEnforcementRuleText", "FlextConstantsEnforcementRules", "FlextConstantsEnforcementRuntime", "FlextConstantsEnforcementSmellData",
+    "NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT",
+    "FlextConstantsEnforcementEnums",
+    "FlextConstantsEnforcementFixActions",
+    "FlextConstantsEnforcementNamespace",
+    "FlextConstantsEnforcementRuleText",
+    "FlextConstantsEnforcementRules",
+    "FlextConstantsEnforcementRuntime",
+    "FlextConstantsEnforcementSmellData",
     "FlextConstantsEnforcementTargets",
 )
 

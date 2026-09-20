@@ -14,7 +14,10 @@ if TYPE_CHECKING:
     from ._params import FlextModelsEnforcementParams
     from ._sources import FlextModelsEnforcementSources
 __all__: tuple[str, ...] = (
-    "EnforcementModelBase", "FlextModelsEnforcementBase", "FlextModelsEnforcementCatalog", "FlextModelsEnforcementParams",
+    "EnforcementModelBase",
+    "FlextModelsEnforcementBase",
+    "FlextModelsEnforcementCatalog",
+    "FlextModelsEnforcementParams",
     "FlextModelsEnforcementSources",
 )
 

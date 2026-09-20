@@ -17,10 +17,22 @@ if TYPE_CHECKING:
     from .typings import ScriptsFlextTypes, ScriptsFlextTypes as t
     from .utilities import ScriptsFlextUtilities, ScriptsFlextUtilities as u
 __all__: tuple[str, ...] = (
-    "ScriptsFlextConstants", "ScriptsFlextModels", "ScriptsFlextProtocols", "ScriptsFlextTypes",
-    "ScriptsFlextUtilities", "c", "d", "e",
-    "h", "m", "p", "r",
-    "s", "t", "u", "x",
+    "ScriptsFlextConstants",
+    "ScriptsFlextModels",
+    "ScriptsFlextProtocols",
+    "ScriptsFlextTypes",
+    "ScriptsFlextUtilities",
+    "c",
+    "d",
+    "e",
+    "h",
+    "m",
+    "p",
+    "r",
+    "s",
+    "t",
+    "u",
+    "x",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
