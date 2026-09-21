@@ -91,9 +91,12 @@ class TestsFlextCoreEnforcementAccessors:
             'Field "undoc"' in msg and "missing description" in msg for msg in messages
         )
 
-    def test_settings_named_class_must_inherit_flext_settings(self) -> None:
-        # Arrange
-        cls = make_class("FlextWorkerSettings", {})
+    def test_declared_settings_model_must_inherit_flext_settings(self) -> None:
+        # Arrange — a class that DECLARES itself a pydantic-settings model but
+        # bypasses the FlextSettings owner.
+        cls = type("FlextWorkerSettings", (m.BaseSettings,), {})
+        cls.__qualname__ = cls.__name__
+        cls.__module__ = "flext_core.synthetic"
 
         # Act
         inheritance = [
@@ -103,6 +106,20 @@ class TestsFlextCoreEnforcementAccessors:
         # Assert — flagged, and tagged with the catalog rule id callers can filter on.
         assert inheritance
         assert inheritance[0].rule_id == "ENFORCE-042"
+
+    def test_settings_named_plain_class_is_not_a_settings_target(self) -> None:
+        # Arrange — a namespace holder whose name ends in "Settings" declares no
+        # pydantic-settings base; the rule derives its target from the
+        # declaration, never from the name.
+        cls = make_class("FlextWorkerSettings", {})
+
+        # Act
+        inheritance = [
+            v for v in u.check(cls).violations if _INHERITANCE_FRAGMENT in v.message
+        ]
+
+        # Assert
+        assert not inheritance
 
     def test_nested_settings_class_is_exempt_from_inheritance_rule(self) -> None:
         # Arrange — a real inner class inside a namespace container is metadata,
