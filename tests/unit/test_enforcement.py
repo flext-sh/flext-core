@@ -90,8 +90,10 @@ class TestsFlextCoreEnforcement:
     def test_declared_settings_model_requires_flext_settings(
         self, class_name: str, *, declares_settings_base: bool, expect_finding: bool
     ) -> None:
-        """A class that DECLARES a pydantic-settings base must route through
-        ``FlextSettings``; a name ending in ``Settings`` proves nothing."""
+        """A class that DECLARES a pydantic-settings base must route through ``FlextSettings``.
+
+        A name ending in ``Settings`` proves nothing.
+        """
         bases = (m.BaseSettings,) if declares_settings_base else ()
         cls = type(class_name, bases, {})
         cls.__qualname__ = class_name
