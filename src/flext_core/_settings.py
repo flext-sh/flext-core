@@ -36,11 +36,13 @@ from typing import Annotated, ClassVar, Final, Self
 from pydantic import BaseModel, Field, computed_field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from ._constants.settings import FlextConstantsSettings
+
 ENV_FILE_DEFAULT: Final[str] = ".env"
 """Default .env file name (settings-layer protocol owner)."""
 
-ENV_FILE_ENV_VAR: Final[str] = "FLEXT_ENV_FILE"
-"""Bootstrap env var that overrides the .env path (settings-layer owner)."""
+ENV_FILE_ENV_VAR = FlextConstantsSettings.ENV_FILE_ENV_VAR
+"""Bootstrap env var that overrides the .env path (SSOT: ``_constants/settings``)."""
 
 _ERR_TRACE_REQUIRES_DEBUG = "trace mode requires debug mode to be enabled"
 
@@ -184,17 +186,7 @@ class FlextSettings(BaseSettings):
         extra="ignore",
         validate_assignment=True,
         arbitrary_types_allowed=True,
-        # ENFORCE-042: namespace-holder MRO composition makes every composite
-        # facade a pydantic-metaclass class; facades rebind foreign classes as
-        # nested namespaces, so class-valued namespace entries are ignored at
-        # model construction and stay plain class attributes.
-        ignored_types=(type,),
     )
-
-    # ``ENV_FILE_ENV_VAR`` is owned by this module (constant above) since the
-    # ENFORCE-042 ownership flip removed the ``_constants`` import here (chain
-    # law: constants consume settings, never the reverse);
-    # ``c.ENV_FILE_ENV_VAR`` still resolves through ``FlextConstantsSettings``.
 
     ENV_FILE_DEFAULT: ClassVar[str] = ENV_FILE_DEFAULT
     """Public facade surface for the default .env file name (settings owns it)."""

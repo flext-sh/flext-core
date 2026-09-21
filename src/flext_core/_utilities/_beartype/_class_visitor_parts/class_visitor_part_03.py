@@ -34,12 +34,16 @@ class FlextUtilitiesBeartypeClassVisitor(FlextUtilitiesBeartypeClassVisitorPart0
         skip_roots = (
             c.ENFORCEMENT_NAMESPACE_FACADE_ROOTS | c.ENFORCEMENT_INFRASTRUCTURE_BASES
         )
-        inherits_flext_settings = any(
-            base.__name__ == "FlextSettings" for base in target.__mro__[1:]
-        )
+        # A settings class is one that DECLARES itself a pydantic-settings model
+        # (``BaseSettings`` in its MRO), never one whose name ends in "Settings":
+        # namespace holders such as ``FlextConstantsSettings`` are plain classes
+        # and are not targets (ADR-018: derive from the declaration, never from
+        # a name).
+        base_names = {base.__name__ for base in target.__mro__[1:]}
+        inherits_flext_settings = "FlextSettings" in base_names
         is_settings_target = all((
             params.require_settings_base,
-            target_name.endswith("Settings"),
+            "BaseSettings" in base_names,
             is_top_level,
             target_name != "FlextSettings",
         ))
