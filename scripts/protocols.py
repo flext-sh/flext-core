@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from flext_cli import p
+from flext_core import p
 
 
 class ScriptsFlextProtocols(p):
