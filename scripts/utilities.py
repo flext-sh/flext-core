@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from flext_cli import u
-
+from flext_core import u
 from scripts import t
 
 

@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum, unique
-from typing import Final
+from typing import ClassVar
 
 
 class FlextConstantsSerialization:
@@ -41,5 +41,5 @@ class FlextConstantsSerialization:
         BACKSLASHREPLACE = "backslashreplace"
         XMLCHARREFREPLACE = "xmlcharrefreplace"
 
-    DEFAULT_ENCODING: Final[str] = "utf-8"
-    DEFAULT_DECODE_ERROR_HANDLER: Final[str] = DecodeErrorHandler.REPLACE
+    DEFAULT_ENCODING: ClassVar[str] = "utf-8"
+    DEFAULT_DECODE_ERROR_HANDLER: ClassVar[str] = DecodeErrorHandler.REPLACE

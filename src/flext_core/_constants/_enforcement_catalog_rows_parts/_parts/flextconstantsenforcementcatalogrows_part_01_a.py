@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Final
-
-INFRA_DETECTOR_ROWS_CORE: Final[
-    tuple[tuple[str, str, str, str, tuple[str, ...], bool, str], ...]
+INFRA_DETECTOR_ROWS_CORE: tuple[
+    tuple[str, str, str, str, tuple[str, ...], bool, str], ...
 ] = (
     (
         "ENFORCE-001",

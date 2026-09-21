@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -35,13 +35,13 @@ class FlextConstantsEnforcementRules:
         MODEL_REBUILD_ATTR = "model_rebuild"
         """ENFORCE-041: ``ast.Attribute.attr`` matched as ``BaseModel.model_rebuild``."""
 
-    ENFORCE_FLEXT_CORE_PATH_MARKERS: Final[frozenset[str]] = frozenset({
+    ENFORCE_FLEXT_CORE_PATH_MARKERS: ClassVar[frozenset[str]] = frozenset({
         "flext_core",
         "flext-core",
     })
     """Path fragments identifying flext-core source files (ENFORCE-039 exemption)."""
 
-    ENFORCE_NON_WORKSPACE_PATH_MARKERS: Final[frozenset[str]] = frozenset({
+    ENFORCE_NON_WORKSPACE_PATH_MARKERS: ClassVar[frozenset[str]] = frozenset({
         "/usr/lib/",
         "/usr/local/lib/",
         "dist-packages",
@@ -49,7 +49,7 @@ class FlextConstantsEnforcementRules:
     })
     """Filesystem path fragments identifying third-party source."""
 
-    ENFORCE_PRIVATE_PROBE_BUILTINS: Final[frozenset[str]] = frozenset({
+    ENFORCE_PRIVATE_PROBE_BUILTINS: ClassVar[frozenset[str]] = frozenset({
         "getattr",
         "hasattr",
         "setattr",
@@ -60,7 +60,7 @@ class FlextConstantsEnforcementRules:
     # Mapping tags to their (problem_template, fix_template, category).
     # New code should use m.EnforcementCatalog instead.
 
-    ENFORCEMENT_TAG_CATEGORY: Final[Mapping[str, EnforcementCategory]] = (
+    ENFORCEMENT_TAG_CATEGORY: ClassVar[Mapping[str, EnforcementCategory]] = (
         MappingProxyType({
             "alias_any": EnforcementCategory.ATTR,
             "alias_first_multi_parent": EnforcementCategory.NAMESPACE,
@@ -116,7 +116,7 @@ class FlextConstantsEnforcementRules:
     )
     """Tag → category mapping for old enforcement API."""
 
-    ENFORCEMENT_TAG_LAYER: Final[Mapping[str, str]] = MappingProxyType({
+    ENFORCEMENT_TAG_LAYER: ClassVar[Mapping[str, str]] = MappingProxyType({
         "alias_any": "Types",
         "const_lowercase": "Constants",
         "const_mutable": "Constants",

@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum, unique
-from typing import Final
+from typing import ClassVar
 
 from .timeout import FlextConstantsTimeout
 
@@ -15,8 +15,8 @@ from .timeout import FlextConstantsTimeout
 class FlextConstantsInfrastructure:
     """Constants for context, container, dispatcher, resilience, and persistence."""
 
-    DEFAULT_MAX_FACTORIES: Final[int] = 500
-    MAX_FACTORIES: Final[int] = 5000
+    DEFAULT_MAX_FACTORIES: ClassVar[int] = 500
+    MAX_FACTORIES: ClassVar[int] = 5000
 
     @unique
     class ContextScope(StrEnum):
@@ -47,7 +47,7 @@ class FlextConstantsInfrastructure:
         REQUEST_TIMESTAMP = "request_timestamp"
         SERVICE_MODULE = "service_module"
 
-    SENSITIVE_ERROR_DATA_KEYS: Final[frozenset[str]] = frozenset({
+    SENSITIVE_ERROR_DATA_KEYS: ClassVar[frozenset[str]] = frozenset({
         "password",
         "passwd",
         "secret",
@@ -86,7 +86,7 @@ class FlextConstantsInfrastructure:
         COMMAND = "command"
         QUERY = "query"
 
-    DEFAULT_HANDLER_MODE: Final[str] = HandlerMode.COMMAND
+    DEFAULT_HANDLER_MODE: ClassVar[str] = HandlerMode.COMMAND
 
     @unique
     class BackoffStrategy(StrEnum):
@@ -95,25 +95,25 @@ class FlextConstantsInfrastructure:
         EXPONENTIAL = "exponential"
         LINEAR = "linear"
 
-    DEFAULT_BACKOFF_STRATEGY: Final[str] = BackoffStrategy.EXPONENTIAL
-    MAX_RETRY_ATTEMPTS: Final[int] = 3
-    DEFAULT_RETRY_DELAY_SECONDS: Final[int] = 1
-    DEFAULT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT: Final[int] = (
+    DEFAULT_BACKOFF_STRATEGY: ClassVar[str] = BackoffStrategy.EXPONENTIAL
+    MAX_RETRY_ATTEMPTS: ClassVar[int] = 3
+    DEFAULT_RETRY_DELAY_SECONDS: ClassVar[int] = 1
+    DEFAULT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT: ClassVar[int] = (
         FlextConstantsTimeout.DEFAULT_RECOVERY_TIMEOUT_SECONDS
     )
 
-    DATABASE_URL: Final[str] = "sqlite:///:memory:"
-    DEFAULT_CONNECTION_POOL_SIZE: Final[int] = 10
-    MAX_CONNECTION_POOL_SIZE: Final[int] = 100
-    MIN_POOL_SIZE: Final[int] = 1
+    DATABASE_URL: ClassVar[str] = "sqlite:///:memory:"
+    DEFAULT_CONNECTION_POOL_SIZE: ClassVar[int] = 10
+    MAX_CONNECTION_POOL_SIZE: ClassVar[int] = 100
+    MIN_POOL_SIZE: ClassVar[int] = 1
 
-    CHECKER_HANDLER_ORIGIN_NAMES: Final[frozenset[str]] = frozenset({
+    CHECKER_HANDLER_ORIGIN_NAMES: ClassVar[frozenset[str]] = frozenset({
         "FlextHandlers",
         "h",
     })
     "Generic-origin names identifying the handler namespace in the type system."
 
-    CONTEXT_MERGEABLE_SCOPES: Final[frozenset[str]] = frozenset({
+    CONTEXT_MERGEABLE_SCOPES: ClassVar[frozenset[str]] = frozenset({
         ContextScope.GLOBAL,
         ContextScope.USER,
         ContextScope.SESSION,

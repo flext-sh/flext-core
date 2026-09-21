@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Final
+from typing import ClassVar
 
 from ._parts.flextconstantsenforcementcatalogrows_part_01_a import (
     INFRA_DETECTOR_ROWS_CORE,
@@ -18,7 +18,7 @@ from .flextconstantsenforcementcatalogrows_part_05 import (
 class FlextConstantsEnforcementCatalogInfraRows:
     """Infra detector rows for the enforcement catalog."""
 
-    INFRA_DETECTOR_ROWS: Final[
+    INFRA_DETECTOR_ROWS: ClassVar[
         tuple[tuple[str, str, str, str, tuple[str, ...], bool, str], ...]
     ] = (
         *INFRA_DETECTOR_ROWS_CORE,
@@ -30,7 +30,7 @@ class FlextConstantsEnforcementCatalogInfraRows:
     # isolation, but shipped ``enabled=False`` so the workspace gate does not
     # fire on them until their existing offenders are cleared. Move an id out of
     # this set (same cycle the offenders reach zero) to activate the rule.
-    STAGED_INFRA_RULE_IDS: Final[frozenset[str]] = frozenset({"ENFORCE-098"})
+    STAGED_INFRA_RULE_IDS: ClassVar[frozenset[str]] = frozenset({"ENFORCE-098"})
 
 
 __all__ = ["FlextConstantsEnforcementCatalogInfraRows"]

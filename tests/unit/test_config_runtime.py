@@ -41,7 +41,7 @@ class TestsFlextCoreConfigSettingsCanonical:
         """Creating and resetting a child never borrows or resets its parent slot."""
 
         class ParentConfig(FlextConfig):
-            CONFIG_DIR = str(tmp_path)
+            CONFIG_DIR: str = str(tmp_path)
 
         parent = ParentConfig.fetch_global()
 
