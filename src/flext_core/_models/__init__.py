@@ -10,8 +10,13 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from . import (
-        _base_parts, _container_parts, _context, _cqrs_parts,
-        _enforcement, _exception_params_parts, _project_metadata_parts,
+        _base_parts,
+        _container_parts,
+        _context,
+        _cqrs_parts,
+        _enforcement,
+        _exception_params_parts,
+        _project_metadata_parts,
     )
     from ._context._data import FlextModelsContextData
     from ._context._export import FlextModelsContextExport
