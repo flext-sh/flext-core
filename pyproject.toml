@@ -149,6 +149,9 @@ pep621_dev_dependency_groups = ["dev"]
 [tool.flext.docs]
 package_name = "flext_core"
 
+[tool.flext.namespace]
+scan_dirs = ["src"]
+
 [tool.hatch.metadata]
 allow-direct-references = true
 
