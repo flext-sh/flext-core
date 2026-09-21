@@ -17,7 +17,10 @@ if TYPE_CHECKING:
     )
     from .class_visitor_part_03 import FlextUtilitiesBeartypeClassVisitor
 __all__: tuple[str, ...] = (
-    "FlextUtilitiesBeartypeClassVisitor", "_parts", "alias_first_violation", "redundant_inner_violation",
+    "FlextUtilitiesBeartypeClassVisitor",
+    "_parts",
+    "alias_first_violation",
+    "redundant_inner_violation",
     "self_ref_violation",
 )
 
@@ -27,7 +30,8 @@ _LAZY_IMPORTS = MappingProxyType(
             "._parts": ("_parts",),
             "._parts.class_visitor_part_02_01": ("alias_first_violation",),
             "._parts.class_visitor_part_02_02": (
-                "redundant_inner_violation", "self_ref_violation",
+                "redundant_inner_violation",
+                "self_ref_violation",
             ),
             ".class_visitor_part_03": ("FlextUtilitiesBeartypeClassVisitor",),
         }),

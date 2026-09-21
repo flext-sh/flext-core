@@ -32,8 +32,14 @@ if TYPE_CHECKING:
         FlextConstantsEnforcementCatalogInfraRowsExtended,
     )
 __all__: tuple[str, ...] = (
-    "INFRA_DETECTOR_ROWS_CORE", "INFRA_DETECTOR_ROWS_PATTERNS", "FlextConstantsEnforcementCatalogBeartypeRows", "FlextConstantsEnforcementCatalogInfraRows",
-    "FlextConstantsEnforcementCatalogInfraRowsExtended", "FlextConstantsEnforcementCatalogSkillRows", "FlextConstantsEnforcementCatalogToolRows", "_parts",
+    "INFRA_DETECTOR_ROWS_CORE",
+    "INFRA_DETECTOR_ROWS_PATTERNS",
+    "FlextConstantsEnforcementCatalogBeartypeRows",
+    "FlextConstantsEnforcementCatalogInfraRows",
+    "FlextConstantsEnforcementCatalogInfraRowsExtended",
+    "FlextConstantsEnforcementCatalogSkillRows",
+    "FlextConstantsEnforcementCatalogToolRows",
+    "_parts",
 )
 
 _LAZY_IMPORTS = MappingProxyType(

@@ -28,10 +28,21 @@ if TYPE_CHECKING:
     from .method_visitor import FlextUtilitiesBeartypeMethodVisitor
     from .module_visitor import FlextUtilitiesBeartypeModuleVisitor
 __all__: tuple[str, ...] = (
-    "FlextUtilitiesBeartypeAliasVisitor", "FlextUtilitiesBeartypeAttrVisitor", "FlextUtilitiesBeartypeClassVisitor", "FlextUtilitiesBeartypeDeprecatedVisitor",
-    "FlextUtilitiesBeartypeFieldVisitor", "FlextUtilitiesBeartypeHelpers", "FlextUtilitiesBeartypeImportVisitor", "FlextUtilitiesBeartypeLibraryVisitor",
-    "FlextUtilitiesBeartypeMethodVisitor", "FlextUtilitiesBeartypeModuleVisitor", "_class_visitor_parts", "_helpers_parts",
-    "alias_first_violation", "redundant_inner_violation", "self_ref_violation",
+    "FlextUtilitiesBeartypeAliasVisitor",
+    "FlextUtilitiesBeartypeAttrVisitor",
+    "FlextUtilitiesBeartypeClassVisitor",
+    "FlextUtilitiesBeartypeDeprecatedVisitor",
+    "FlextUtilitiesBeartypeFieldVisitor",
+    "FlextUtilitiesBeartypeHelpers",
+    "FlextUtilitiesBeartypeImportVisitor",
+    "FlextUtilitiesBeartypeLibraryVisitor",
+    "FlextUtilitiesBeartypeMethodVisitor",
+    "FlextUtilitiesBeartypeModuleVisitor",
+    "_class_visitor_parts",
+    "_helpers_parts",
+    "alias_first_violation",
+    "redundant_inner_violation",
+    "self_ref_violation",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
@@ -43,7 +54,8 @@ _LAZY_IMPORTS = MappingProxyType(
                 "alias_first_violation",
             ),
             "._class_visitor_parts._parts.class_visitor_part_02_02": (
-                "redundant_inner_violation", "self_ref_violation",
+                "redundant_inner_violation",
+                "self_ref_violation",
             ),
             "._helpers_parts": ("_helpers_parts",),
             "._library_visitor": ("FlextUtilitiesBeartypeLibraryVisitor",),
