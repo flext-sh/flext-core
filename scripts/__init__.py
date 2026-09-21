@@ -10,6 +10,7 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_cli import s
+
     from flext_core import d, e, h, r, x
 
     from .constants import ScriptsFlextConstants, ScriptsFlextConstants as c
