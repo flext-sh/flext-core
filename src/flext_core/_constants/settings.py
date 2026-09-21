@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Final, Self
+from typing import ClassVar, Self
 
 from pydantic import ConfigDict
 
@@ -37,17 +37,17 @@ class FlextConstantsSettings(FlextSettings):
 
     __hash__ = object.__hash__
 
-    SHORT_UUID_LENGTH: Final[int] = 8
+    SHORT_UUID_LENGTH: ClassVar[int] = 8
 
-    ENV_FILE_ENV_VAR: Final[str] = "FLEXT_ENV_FILE"
+    ENV_FILE_ENV_VAR: ClassVar[str] = "FLEXT_ENV_FILE"
     """Bootstrap env var that overrides the .env path (settings protocol owner)."""
 
-    EXTRA_CONFIG_FORBID: Final = "forbid"
-    EXTRA_CONFIG_IGNORE: Final = "ignore"
-    SERIALIZATION_ISO8601: Final = "iso8601"
-    SERIALIZATION_BASE64: Final = "base64"
+    EXTRA_CONFIG_FORBID: ClassVar = "forbid"
+    EXTRA_CONFIG_IGNORE: ClassVar = "ignore"
+    SERIALIZATION_ISO8601: ClassVar = "iso8601"
+    SERIALIZATION_BASE64: ClassVar = "base64"
 
-    DOMAIN_MODEL_CONFIG: Final[ConfigDict] = ConfigDict(
+    DOMAIN_MODEL_CONFIG: ClassVar[ConfigDict] = ConfigDict(
         use_enum_values=True,
         validate_assignment=True,
         validate_return=True,

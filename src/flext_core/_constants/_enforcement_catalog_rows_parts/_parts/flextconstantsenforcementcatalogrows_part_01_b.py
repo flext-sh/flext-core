@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Final
+from typing import ClassVar
 
-INFRA_DETECTOR_ROWS_PATTERNS: Final[
+INFRA_DETECTOR_ROWS_PATTERNS: ClassVar[
     tuple[tuple[str, str, str, str, tuple[str, ...], bool, str], ...]
 ] = (
     (
@@ -68,7 +68,7 @@ INFRA_DETECTOR_ROWS_PATTERNS: Final[
         "3-2-types-and-contracts",
         ("flext-strict-typing",),
         False,
-        "`from typing import Dict` — banned in favor of dict / Mapping.",
+        "`from typing import ClassVar, Dict` — banned in favor of dict / Mapping.",
     ),
     (
         "ENFORCE-033",
@@ -86,7 +86,7 @@ INFRA_DETECTOR_ROWS_PATTERNS: Final[
         "3-2-types-and-contracts",
         ("flext-strict-typing",),
         False,
-        "`from typing import List` — banned in favor of list / t.SequenceOf.",
+        "`from typing import ClassVar, List` — banned in favor of list / t.SequenceOf.",
     ),
     (
         "ENFORCE-092",

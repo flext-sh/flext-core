@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableSequence
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Final
+from typing import ClassVar, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from flext_core import t
@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 class FlextConstantsGuards:
     """Static type-predicate registry for u.matches_type dispatch."""
 
-    STRING_TYPE_PREDICATES: Final[Mapping[str, Callable[[t.GuardInput], bool]]] = (
+    STRING_TYPE_PREDICATES: ClassVar[Mapping[str, Callable[[t.GuardInput], bool]]] = (
         MappingProxyType({
             "str": lambda v: isinstance(v, str),
             "dict": lambda v: isinstance(v, dict),

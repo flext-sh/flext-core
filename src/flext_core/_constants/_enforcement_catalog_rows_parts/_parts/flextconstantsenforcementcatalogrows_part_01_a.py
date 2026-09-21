@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Final
+from typing import ClassVar
 
-INFRA_DETECTOR_ROWS_CORE: Final[
+INFRA_DETECTOR_ROWS_CORE: ClassVar[
     tuple[tuple[str, str, str, str, tuple[str, ...], bool, str], ...]
 ] = (
     (

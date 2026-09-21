@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Final
+from typing import ClassVar, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..._typings.base import FlextTypingBase as t
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 class FlextConstantsEnforcementFixActions:
     """Fix-action metadata consumed by flext-infra enforcement fixers."""
 
-    _PYDANTIC_SYMBOLS_TO_REPLACE: Final[t.JsonDict] = {
+    _PYDANTIC_SYMBOLS_TO_REPLACE: ClassVar[t.JsonDict] = {
         "BaseModel": "m.BaseModel",
         "ConfigDict": "m.ConfigDict",
         "Field": "u.Field",
@@ -22,7 +22,7 @@ class FlextConstantsEnforcementFixActions:
         "model_validator": "u.model_validator",
     }
 
-    ENFORCEMENT_FIX_ACTIONS: Final[t.MappingKV[str, t.JsonMapping]] = {
+    ENFORCEMENT_FIX_ACTIONS: ClassVar[t.MappingKV[str, t.JsonMapping]] = {
         "ENFORCE-008": {
             "kind": "transformer",
             "target": "future_import",

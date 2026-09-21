@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum, unique
-from typing import Final
+from typing import ClassVar
 
 
 class FlextConstantsEnvironment:
@@ -23,7 +23,7 @@ class FlextConstantsEnvironment:
         TESTING = "testing"
         LOCAL = "local"
 
-    ENV_PREFIX: Final[str] = "FLEXT_"
+    ENV_PREFIX: ClassVar[str] = "FLEXT_"
     """Root env prefix invariant (consumed forward by m for derived defaults).
 
     ``ENV_FILE_ENV_VAR``/``ENV_FILE_DEFAULT`` moved to their chain-law owner

@@ -6,15 +6,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Final
+from typing import ClassVar
 
 
 class FlextConstantsTimeout:
     """SSOT for all timeout-related constants."""
 
-    DEFAULT_TIMEOUT_SECONDS: Final[int] = 30
-    MIN_TIMEOUT_SECONDS: Final[int] = 1
-    MAX_TIMEOUT_SECONDS: Final[int] = 3600
-    CACHE_TTL: Final[int] = 300
-    DEFAULT_RECOVERY_TIMEOUT_SECONDS: Final[int] = 60
-    DEFAULT_MAX_DELAY_SECONDS: Final[float] = 60.0
+    DEFAULT_TIMEOUT_SECONDS: ClassVar[int] = 30
+    MIN_TIMEOUT_SECONDS: ClassVar[int] = 1
+    MAX_TIMEOUT_SECONDS: ClassVar[int] = 3600
+    CACHE_TTL: ClassVar[int] = 300
+    DEFAULT_RECOVERY_TIMEOUT_SECONDS: ClassVar[int] = 60
+    DEFAULT_MAX_DELAY_SECONDS: ClassVar[float] = 60.0

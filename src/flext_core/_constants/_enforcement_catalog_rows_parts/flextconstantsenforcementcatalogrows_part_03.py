@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Final
+from typing import ClassVar
 
 
 class FlextConstantsEnforcementCatalogToolRows:
     """Ruff, tests-validator, and ast-grep rows."""
 
-    RUFF_ROWS: Final[tuple[tuple[str, str, str, tuple[str, ...], str], ...]] = (
+    RUFF_ROWS: ClassVar[tuple[tuple[str, str, str, tuple[str, ...], str], ...]] = (
         (
             "ENFORCE-023",
             "HIGH",
@@ -32,7 +32,7 @@ class FlextConstantsEnforcementCatalogToolRows:
         ),
     )
 
-    TESTS_VALIDATOR_ROWS: Final[
+    TESTS_VALIDATOR_ROWS: ClassVar[
         tuple[tuple[str, str, str, tuple[str, ...], tuple[str, ...], str], ...]
     ] = (
         (
