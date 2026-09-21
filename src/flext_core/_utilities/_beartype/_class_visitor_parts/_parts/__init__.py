@@ -12,7 +12,9 @@ if TYPE_CHECKING:
     from .class_visitor_part_02_01 import alias_first_violation
     from .class_visitor_part_02_02 import redundant_inner_violation, self_ref_violation
 __all__: tuple[str, ...] = (
-    "alias_first_violation", "redundant_inner_violation", "self_ref_violation",
+    "alias_first_violation",
+    "redundant_inner_violation",
+    "self_ref_violation",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
@@ -20,7 +22,8 @@ _LAZY_IMPORTS = MappingProxyType(
         MappingProxyType({
             ".class_visitor_part_02_01": ("alias_first_violation",),
             ".class_visitor_part_02_02": (
-                "redundant_inner_violation", "self_ref_violation",
+                "redundant_inner_violation",
+                "self_ref_violation",
             ),
         }),
         alias_groups=MappingProxyType({}),

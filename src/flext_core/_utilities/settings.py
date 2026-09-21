@@ -13,6 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import os
+from typing import Self
 
 # AGENT-COORDINATION (2026-07-11, ai-hub-mkzg): p/t MUST stay a RUNTIME import.
 # beartype.claw evaluates annotations at runtime; moving FlextProtocols/FlextTypes
@@ -21,14 +22,35 @@ import os
 # model_runtime.py. Contact owner of bead ai-hub-mkzg before touching this line.
 from flext_core import p, r, t
 
+from .._settings import FlextSettings
 
-class FlextUtilitiesSettings:
+
+class FlextUtilitiesSettings(FlextSettings):
     """Settings utilities for environment resolution and DI registration.
 
     ``resolve_env_file`` was deleted: it duplicated the settings-layer owner
     (``FlextSettings.resolve_env_file``) without namespace support. Chain law:
     the algorithm and its protocol constants live once in ``_settings.py``.
+    The MRO carries ``FlextSettings`` (ENFORCE-042); the class is a namespace
+    holder, never instantiated.
     """
+
+    # ENFORCE-042 namespace-holder contract: ``FlextSettings`` contributes
+    # namespacing only — instance machinery stays plain object semantics so the
+    # settings singleton/validation machinery cannot leak into instantiated
+    # facade composites (e.g. the ``u`` logging facade).
+    def __new__(cls, *args: object, **kwargs: object) -> Self:
+        return object.__new__(cls)
+
+    def __init__(self, *args: object, **kwargs: object) -> None:
+        _ = self, args, kwargs
+
+    def __setattr__(self, name: str, value: object) -> None:
+        object.__setattr__(self, name, value)
+
+    __eq__ = object.__eq__
+
+    __hash__ = object.__hash__
 
     @staticmethod
     def resolve_process_environment() -> t.StrMapping:

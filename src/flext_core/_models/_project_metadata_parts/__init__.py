@@ -17,7 +17,10 @@ if TYPE_CHECKING:
     from .flextmodelsprojectmetadata_part_03 import ProjectMetadataAggregates
     from .flextmodelsprojectmetadata_part_04 import ProjectMetadataDocument
 __all__: tuple[str, ...] = (
-    "ProjectMetadataAggregates", "ProjectMetadataContract", "ProjectMetadataDocument", "ProjectMetadataFields",
+    "ProjectMetadataAggregates",
+    "ProjectMetadataContract",
+    "ProjectMetadataDocument",
+    "ProjectMetadataFields",
     "PyprojectIngressContract",
 )
 
@@ -25,7 +28,8 @@ _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
             ".flextmodelsprojectmetadata_part_01": (
-                "ProjectMetadataContract", "PyprojectIngressContract",
+                "ProjectMetadataContract",
+                "PyprojectIngressContract",
             ),
             ".flextmodelsprojectmetadata_part_02": ("ProjectMetadataFields",),
             ".flextmodelsprojectmetadata_part_03": ("ProjectMetadataAggregates",),
