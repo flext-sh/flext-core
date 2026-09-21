@@ -16,36 +16,17 @@ from pydantic import AliasChoices, ConfigDict, model_validator
 from flext_core import c, t
 
 from .._protocols.settings import FlextProtocolsSettings as p
-from .._settings import FlextSettings
 from .base import FlextModelsBase as m
 from .pydantic import FlextModelsPydantic as mp
 
 
-class FlextModelsSettings(FlextSettings):
+class FlextModelsSettings:
     """Settings pattern container class.
 
     This class acts as a namespace container for settings patterns.
     All nested classes are accessed via FlextModels.Settings.* in the main
-    models.py. The MRO carries ``FlextSettings`` (ENFORCE-042); the class is a
-    namespace holder, never instantiated.
+    models.py.
     """
-
-    # ENFORCE-042 namespace-holder contract: ``FlextSettings`` contributes
-    # namespacing only — instance machinery stays plain object semantics so the
-    # settings singleton/validation machinery cannot leak into instantiated
-    # facade composites (e.g. the ``u`` logging facade).
-    def __new__(cls, *args: object, **kwargs: object) -> Self:
-        return object.__new__(cls)
-
-    def __init__(self, *args: object, **kwargs: object) -> None:
-        _ = self, args, kwargs
-
-    def __setattr__(self, name: str, value: object) -> None:
-        object.__setattr__(self, name, value)
-
-    __eq__ = object.__eq__
-
-    __hash__ = object.__hash__
 
     class AutoSettings(m.ArbitraryTypesModel):
         """Automatic settings wrapper for canonical FLEXT settings classes."""
