@@ -149,7 +149,7 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
 
     @staticmethod
     def _field_items(
-        model_type: type[mp.BaseModel], tag: str
+        model_type: type[mp.BaseModel | mp.PydanticBaseSettings], tag: str
     ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
         own_ann = set(vars(model_type).get("__annotations__", {}))
         for name, info in model_type.model_fields.items():
