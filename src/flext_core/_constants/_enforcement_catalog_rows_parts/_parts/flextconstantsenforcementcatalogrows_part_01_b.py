@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from typing import ClassVar
-
-INFRA_DETECTOR_ROWS_PATTERNS: ClassVar[
-    tuple[tuple[str, str, str, str, tuple[str, ...], bool, str], ...]
+INFRA_DETECTOR_ROWS_PATTERNS: tuple[
+    tuple[str, str, str, str, tuple[str, ...], bool, str], ...
 ] = (
     (
         "ENFORCE-026",

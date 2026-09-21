@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import importlib.resources
-from typing import ClassVar, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field
 
@@ -60,22 +60,22 @@ def _load_smell_data() -> _SmellData:
     return _SmellData.model_validate_json(text)
 
 
-_SMELL_DATA: ClassVar[_SmellData] = _load_smell_data()
+_SMELL_DATA: _SmellData = _load_smell_data()
 
-ENFORCEMENT_SMELL_TAGS: ClassVar[tuple[str, ...]] = _SMELL_DATA.tags
-SMELL_THRESHOLDS: ClassVar[t.MappingKV[str, int]] = _SMELL_DATA.thresholds.model_dump()
-SMELL_FIX_STRATEGIES: ClassVar[t.MappingKV[str, _SmellFixStrategy]] = (
+ENFORCEMENT_SMELL_TAGS: tuple[str, ...] = _SMELL_DATA.tags
+SMELL_THRESHOLDS: t.MappingKV[str, int] = _SMELL_DATA.thresholds.model_dump()
+SMELL_FIX_STRATEGIES: t.MappingKV[str, _SmellFixStrategy] = (
     _SMELL_DATA.fix_strategy
 )
-SMELL_RULES_TEXT: ClassVar[t.MappingKV[str, tuple[str, str]]] = _SMELL_DATA.rules_text
-SMELL_BEARTYPE_ROWS: ClassVar[
-    tuple[tuple[str, str, str, str, tuple[str, ...], str], ...]
+SMELL_RULES_TEXT: t.MappingKV[str, tuple[str, str]] = _SMELL_DATA.rules_text
+SMELL_BEARTYPE_ROWS: tuple[
+    tuple[str, str, str, str, tuple[str, ...], str], ...
 ] = tuple(
     (row.id, row.severity, row.tag, row.anchor, row.skills, row.description)
     for row in _SMELL_DATA.beartype_rows
 )
-SMELL_CODE_SMELL_ROWS: ClassVar[
-    tuple[tuple[str, str, str, str, tuple[str, ...], str], ...]
+SMELL_CODE_SMELL_ROWS: tuple[
+    tuple[str, str, str, str, tuple[str, ...], str], ...
 ] = tuple(
     (row.id, row.severity, row.tag, row.anchor, row.skills, row.description)
     for row in _SMELL_DATA.code_smell_rows

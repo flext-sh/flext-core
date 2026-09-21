@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from types import MappingProxyType
-from typing import ClassVar, TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from .._enforcement_data import SMELL_RULES_TEXT
 from .flextconstantsenforcement_part_09 import NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT
