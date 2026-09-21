@@ -190,6 +190,8 @@ class FlextConstantsEnforcementNamespace:
         "MERGES_EXISTING",
         "ADAPTERS",
         "PROJECTORS",
+        # Why: CLI command-service registry tuple; moving it to _constants would invert constants->services.
+        "COMMANDS",
     })
     """ClassVar attribute names that are framework idioms and stay in place."""
 
