@@ -18,8 +18,14 @@ if TYPE_CHECKING:
     from ._metadata import FlextRuntimeMetadata
     from ._metadata_validation import FlextRuntimeMetadataValidation
 __all__: tuple[str, ...] = (
-    "FlextRuntimeBase", "FlextRuntimeContainer", "FlextRuntimeDependencyBindings", "FlextRuntimeDependencyIntegration",
-    "FlextRuntimeDependencyOptions", "FlextRuntimeDependencyTypes", "FlextRuntimeMetadata", "FlextRuntimeMetadataValidation",
+    "FlextRuntimeBase",
+    "FlextRuntimeContainer",
+    "FlextRuntimeDependencyBindings",
+    "FlextRuntimeDependencyIntegration",
+    "FlextRuntimeDependencyOptions",
+    "FlextRuntimeDependencyTypes",
+    "FlextRuntimeMetadata",
+    "FlextRuntimeMetadataValidation",
 )
 
 _LAZY_IMPORTS = MappingProxyType(

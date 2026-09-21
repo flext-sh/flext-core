@@ -14,9 +14,18 @@ if TYPE_CHECKING:
     from .shared_part_01 import ExamplesFlextSharedBase
     from .shared_part_02 import ExamplesFlextShared
 __all__: tuple[str, ...] = (
-    "ExamplesFlextShared", "ExamplesFlextSharedBase", "c", "d",
-    "e", "h", "m", "p",
-    "r", "s", "t", "u",
+    "ExamplesFlextShared",
+    "ExamplesFlextSharedBase",
+    "c",
+    "d",
+    "e",
+    "h",
+    "m",
+    "p",
+    "r",
+    "s",
+    "t",
+    "u",
     "x",
 )
 

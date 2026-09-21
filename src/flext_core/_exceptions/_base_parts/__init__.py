@@ -13,7 +13,9 @@ if TYPE_CHECKING:
     from .flextexceptionsbase_part_02 import FlextBaseErrorStateMixin
     from .flextexceptionsbase_part_03 import FlextExceptionsBase
 __all__: tuple[str, ...] = (
-    "FlextBaseErrorMetadataMixin", "FlextBaseErrorStateMixin", "FlextExceptionsBase",
+    "FlextBaseErrorMetadataMixin",
+    "FlextBaseErrorStateMixin",
+    "FlextExceptionsBase",
 )
 
 _LAZY_IMPORTS = MappingProxyType(

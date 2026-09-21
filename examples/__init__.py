@@ -19,10 +19,21 @@ if TYPE_CHECKING:
     from .typings import t
     from .utilities import u
 __all__: tuple[str, ...] = (
-    "ExamplesFlextModels", "ExamplesFlextShared", "_models", "_shared_parts",
-    "c", "d", "e", "h",
-    "m", "p", "r", "s",
-    "t", "u", "x",
+    "ExamplesFlextModels",
+    "ExamplesFlextShared",
+    "_models",
+    "_shared_parts",
+    "c",
+    "d",
+    "e",
+    "h",
+    "m",
+    "p",
+    "r",
+    "s",
+    "t",
+    "u",
+    "x",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
