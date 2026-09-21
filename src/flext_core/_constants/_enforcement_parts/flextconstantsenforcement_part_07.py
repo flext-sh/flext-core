@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, ClassVar
 
 from .._enforcement_data import (
     ENFORCEMENT_SMELL_TAGS,
@@ -20,19 +20,19 @@ if TYPE_CHECKING:
 class FlextConstantsEnforcementSmellData:
     """JSON-loaded smell enforcement rules and thresholds."""
 
-    ENFORCEMENT_SMELL_TAGS: Final[tuple[str, ...]] = ENFORCEMENT_SMELL_TAGS
-    SMELL_THRESHOLDS: Final[t.IntMapping] = SMELL_THRESHOLDS
-    ENFORCEMENT_SMELL_FIX_STRATEGIES: Final[
+    ENFORCEMENT_SMELL_TAGS: ClassVar[tuple[str, ...]] = ENFORCEMENT_SMELL_TAGS
+    SMELL_THRESHOLDS: ClassVar[t.IntMapping] = SMELL_THRESHOLDS
+    ENFORCEMENT_SMELL_FIX_STRATEGIES: ClassVar[
         t.MappingKV[str, t.MappingKV[str, t.JsonValue]]
     ] = {tag: strategy.model_dump() for tag, strategy in SMELL_FIX_STRATEGIES.items()}
-    SMELL_FIX_STRATEGIES: Final[t.MappingKV[str, t.MappingKV[str, t.JsonValue]]] = {
+    SMELL_FIX_STRATEGIES: ClassVar[t.MappingKV[str, t.MappingKV[str, t.JsonValue]]] = {
         tag: strategy.model_dump() for tag, strategy in SMELL_FIX_STRATEGIES.items()
     }
-    SMELL_RULES_TEXT: Final[t.StrPairMapping] = SMELL_RULES_TEXT
-    SMELL_BEARTYPE_ROWS: Final[
+    SMELL_RULES_TEXT: ClassVar[t.StrPairMapping] = SMELL_RULES_TEXT
+    SMELL_BEARTYPE_ROWS: ClassVar[
         tuple[tuple[str, str, str, str, tuple[str, ...], str], ...]
     ] = SMELL_BEARTYPE_ROWS
-    SMELL_CODE_SMELL_ROWS: Final[
+    SMELL_CODE_SMELL_ROWS: ClassVar[
         tuple[tuple[str, str, str, str, tuple[str, ...], str], ...]
     ] = SMELL_CODE_SMELL_ROWS
 

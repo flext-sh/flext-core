@@ -7,27 +7,27 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum, unique
-from typing import Final
+from typing import ClassVar
 
 
 class FlextConstantsCqrs:
     """Constants for CQRS patterns and workflows."""
 
-    DEFAULT_COMMAND_TYPE: Final[str] = "generic_command"
-    DEFAULT_TIMESTAMP: Final[str] = ""
-    DEFAULT_RETRIES: Final[int] = 0
-    MIN_RETRIES: Final[int] = 0
-    MAX_RETRIES: Final[int] = 5
-    DEFAULT_MAX_COMMAND_RETRIES: Final[int] = 0
+    DEFAULT_COMMAND_TYPE: ClassVar[str] = "generic_command"
+    DEFAULT_TIMESTAMP: ClassVar[str] = ""
+    DEFAULT_RETRIES: ClassVar[int] = 0
+    MIN_RETRIES: ClassVar[int] = 0
+    MAX_RETRIES: ClassVar[int] = 5
+    DEFAULT_MAX_COMMAND_RETRIES: ClassVar[int] = 0
     # DEFAULT_PAGE_SIZE and MAX_PAGE_SIZE inherited from FlextConstantsBase via FlextConstants MRO
-    DEFAULT_MAX_VALIDATION_ERRORS: Final[int] = 10
-    DEFAULT_MINIMUM_THROUGHPUT: Final[int] = 10
-    DEFAULT_PARALLEL_EXECUTION: Final[bool] = False
-    DEFAULT_STOP_ON_ERROR: Final[bool] = True
-    CQRS_OPERATION_FAILED: Final[str] = "CQRS_OPERATION_FAILED"
-    COMMAND_VALIDATION_FAILED: Final[str] = "COMMAND_VALIDATION_FAILED"
-    QUERY_VALIDATION_FAILED: Final[str] = "QUERY_VALIDATION_FAILED"
-    HANDLER_CONFIG_INVALID: Final[str] = "HANDLER_CONFIG_INVALID"
+    DEFAULT_MAX_VALIDATION_ERRORS: ClassVar[int] = 10
+    DEFAULT_MINIMUM_THROUGHPUT: ClassVar[int] = 10
+    DEFAULT_PARALLEL_EXECUTION: ClassVar[bool] = False
+    DEFAULT_STOP_ON_ERROR: ClassVar[bool] = True
+    CQRS_OPERATION_FAILED: ClassVar[str] = "CQRS_OPERATION_FAILED"
+    COMMAND_VALIDATION_FAILED: ClassVar[str] = "COMMAND_VALIDATION_FAILED"
+    QUERY_VALIDATION_FAILED: ClassVar[str] = "QUERY_VALIDATION_FAILED"
+    HANDLER_CONFIG_INVALID: ClassVar[str] = "HANDLER_CONFIG_INVALID"
 
     @unique
     class HandlerType(StrEnum):

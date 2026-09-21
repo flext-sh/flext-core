@@ -45,16 +45,10 @@ class FlextUtilitiesBeartypeAttrVisitor:
                 return {"kind": mk}
         if params.require_uppercase_name and name != name.upper():
             return _BARE_VIOLATION
-        if params.forbid_any_in_alias:
-            try:
-                alias_value = getattr(value, "__value__", None)
-            except NameError:
-                # A PEP 695 alias whose RHS references TYPE_CHECKING-only names
-                # resolves lazily and raises here; forcing it must not abort the
-                # census for the rest of the module.
-                alias_value = None
-            if _ubh.alias_contains_any(alias_value):
-                return _BARE_VIOLATION
+        if params.forbid_any_in_alias and _ubh.alias_contains_any(
+            _ubh.resolve_type_alias_value(value)
+        ):
+            return _BARE_VIOLATION
         if (
             params.require_typeadapter_naming
             and type(value).__name__ == "TypeAdapter"

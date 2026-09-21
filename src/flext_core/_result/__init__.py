@@ -16,14 +16,8 @@ if TYPE_CHECKING:
     from .transforms import FlextResultTransforms
     from .unwrap import FlextResultUnwrap
 __all__: tuple[str, ...] = (
-    "FlextResultBase",
-    "FlextResultBehavior",
-    "FlextResultComposition",
-    "FlextResultConstruction",
-    "FlextResultTransforms",
-    "FlextResultUnwrap",
-    "copy_result",
-    "ok_result",
+    "FlextResultBase", "FlextResultBehavior", "FlextResultComposition", "FlextResultConstruction",
+    "FlextResultTransforms", "FlextResultUnwrap", "copy_result", "ok_result",
 )
 
 _LAZY_IMPORTS = MappingProxyType(

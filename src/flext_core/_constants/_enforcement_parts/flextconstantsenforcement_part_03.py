@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, ClassVar
 
 from .flextconstantsenforcement_part_01 import FlextConstantsEnforcementEnums
 
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 class FlextConstantsEnforcementNamespace:
     """MRO namespace and violation-shape constants."""
 
-    ENFORCEMENT_NAMESPACE_MODE: Final[
+    ENFORCEMENT_NAMESPACE_MODE: ClassVar[
         FlextConstantsEnforcementEnums.EnforcementMode
     ] = FlextConstantsEnforcementEnums.EnforcementMode.WARN
     """Separate mode for namespace checks — see EnforcementMode."""
@@ -25,7 +25,7 @@ class FlextConstantsEnforcementNamespace:
     # ENFORCEMENT_NAMESPACE_FACADE_ROOTS (Flext{Name}) and
     # ENFORCEMENT_NAMESPACE_LAYER_MAP ((Name, name.lower())) below — adding
     # a layer requires editing only this tuple.
-    NAMESPACE_LAYER_NAMES: Final[tuple[str, ...]] = (
+    NAMESPACE_LAYER_NAMES: ClassVar[tuple[str, ...]] = (
         "Constants",
         "Models",
         "Protocols",
@@ -33,7 +33,7 @@ class FlextConstantsEnforcementNamespace:
         "Utilities",
     )
 
-    NAMESPACE_FAMILY_PREFIX: Final[str] = "flext_"
+    NAMESPACE_FAMILY_PREFIX: ClassVar[str] = "flext_"
     """Declared family namespace prefix (import-name grammar).
 
     Discovery seed for runtime family-surface derivation: candidate
@@ -43,7 +43,7 @@ class FlextConstantsEnforcementNamespace:
     never by an enumerated roster.
     """
 
-    FAMILY_SURFACE_MIN_PUBLISHED: Final[int] = 1
+    FAMILY_SURFACE_MIN_PUBLISHED: ClassVar[int] = 1
     """Minimum family roots that must publish the lazy export contract.
 
     Threshold for the family-surface derivation: a runtime where no
@@ -51,18 +51,18 @@ class FlextConstantsEnforcementNamespace:
     loud instead of deriving an empty surface.
     """
 
-    ENFORCEMENT_NAMESPACE_FACADE_ROOTS: Final[frozenset[str]] = frozenset(
+    ENFORCEMENT_NAMESPACE_FACADE_ROOTS: ClassVar[frozenset[str]] = frozenset(
         {f"Flext{name}" for name in NAMESPACE_LAYER_NAMES}
         | {"FlextModelsBase", "FlextModelsNamespace", "EnforcedModel"}
     )
     """Root facade class names — skip namespace prefix check on these."""
 
-    ENFORCEMENT_NAMESPACE_LAYER_MAP: Final[t.StrPairTuple] = tuple(
+    ENFORCEMENT_NAMESPACE_LAYER_MAP: ClassVar[t.StrPairTuple] = tuple(
         (name, name.lower()) for name in NAMESPACE_LAYER_NAMES
     )
     """Class name suffix → layer name mapping for cross-layer detection."""
 
-    NAMESPACE_CLASS_TO_MODULE_OVERRIDES: Final[Mapping[str, str]] = MappingProxyType({})
+    NAMESPACE_CLASS_TO_MODULE_OVERRIDES: ClassVar[Mapping[str, str]] = MappingProxyType({})
     """Class-name → owning-package overrides for facade-layer classes that
     do not follow the ``Flext<Project><Layer><Concern>`` convention.
 
@@ -73,7 +73,7 @@ class FlextConstantsEnforcementNamespace:
     declaration that the workspace genuinely deviates from the convention,
     and that deviation must be justified at the call site that needs it."""
 
-    ENFORCEMENT_LAYER_ALLOWS: Final[Mapping[str, frozenset[str]]] = MappingProxyType({
+    ENFORCEMENT_LAYER_ALLOWS: ClassVar[Mapping[str, frozenset[str]]] = MappingProxyType({
         "constants": frozenset({"StrEnum"}),
         "models": frozenset(),
         "protocols": frozenset({"Protocol"}),
@@ -98,22 +98,22 @@ class FlextConstantsEnforcementNamespace:
     # ``problem`` (what is wrong), and the ``fix`` (remediation). Adding
     # a new check never requires editing this constant.
 
-    ENFORCEMENT_MSG_VIOLATION: Final[str] = "{location}: {problem}. {fix}"
+    ENFORCEMENT_MSG_VIOLATION: ClassVar[str] = "{location}: {problem}. {fix}"
     """Single message shape — location + problem + fix."""
 
-    ENFORCEMENT_VALUE_OBJECT_BASES: Final[frozenset[str]] = frozenset({
+    ENFORCEMENT_VALUE_OBJECT_BASES: ClassVar[frozenset[str]] = frozenset({
         "FrozenValueModel",
         "ImmutableValueModel",
     })
     """Base-class names that require ``frozen=True`` configuration."""
 
-    ENFORCEMENT_INLINE_UNION_MAX: Final[int] = 2
+    ENFORCEMENT_INLINE_UNION_MAX: ClassVar[int] = 2
     """Inline union arms allowed before centralization is required."""
 
-    ENFORCEMENT_NESTED_MRO_MIN_DEPTH: Final[int] = 2
+    ENFORCEMENT_NESTED_MRO_MIN_DEPTH: ClassVar[int] = 2
     """Minimum qualname depth for a class to count as nested inside a container."""
 
-    ENFORCEMENT_CANONICAL_ALIASES: Final[frozenset[str]] = frozenset({
+    ENFORCEMENT_CANONICAL_ALIASES: ClassVar[frozenset[str]] = frozenset({
         "c",
         "m",
         "p",
@@ -128,7 +128,7 @@ class FlextConstantsEnforcementNamespace:
     })
     """Canonical short aliases exposed by FLEXT facade namespaces."""
 
-    ENFORCEMENT_PROJECT_ALIAS_OWNERS: Final[Mapping[str, tuple[str, ...]]] = (
+    ENFORCEMENT_PROJECT_ALIAS_OWNERS: ClassVar[Mapping[str, tuple[str, ...]]] = (
         MappingProxyType(
             dict.fromkeys(
                 (
@@ -174,7 +174,7 @@ class FlextConstantsEnforcementNamespace:
     ``from flext_core import c`` inside a project that owns ``c`` locally.
     """
 
-    ENFORCEMENT_CLASSVAR_EXEMPT_NAMES: Final[frozenset[str]] = frozenset({
+    ENFORCEMENT_CLASSVAR_EXEMPT_NAMES: ClassVar[frozenset[str]] = frozenset({
         "model_config",
         "logger",
         # Adapter-strategy contract fields: per-surface polymorphic contracts

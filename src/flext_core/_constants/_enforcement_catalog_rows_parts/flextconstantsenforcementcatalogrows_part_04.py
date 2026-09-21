@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Final
+from typing import ClassVar
 
 
 class FlextConstantsEnforcementCatalogBeartypeRows:
     """Beartype hook rows for the enforcement catalog."""
 
-    BEARTYPE_ROWS: Final[
+    BEARTYPE_ROWS: ClassVar[
         tuple[tuple[str, str, str, str, tuple[str, ...], str], ...]
     ] = (
         (

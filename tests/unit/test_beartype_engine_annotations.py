@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import typing
 from collections.abc import Mapping
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -23,6 +24,9 @@ from ._beartype_engine_support import (
     NestedAnyAlias,
     TestsFlextBeartypeEngine,
 )
+
+if TYPE_CHECKING:
+    from pathlib import PurePath as LazyResolvableType
 
 
 class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
@@ -117,3 +121,12 @@ class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
     ) -> None:
         """alias_contains_any detects Any inside a resolved type-alias value."""
         assert be.alias_contains_any(alias_value) is expected
+
+    def test_alias_inspection_tolerates_lazy_alias_without_runtime_names(self) -> None:
+        """A TYPE_CHECKING-only alias stays lazy: inspection must not crash."""
+
+        class Host:
+            type LazyAlias = LazyResolvableType | str
+
+        assert be.resolve_type_alias_value(Host.LazyAlias) is None
+        assert be.alias_contains_any(Host.LazyAlias) is False

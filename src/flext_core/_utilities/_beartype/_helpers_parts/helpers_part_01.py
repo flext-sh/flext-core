@@ -5,7 +5,7 @@ from __future__ import annotations
 import functools
 import importlib
 import sys
-from typing import TYPE_CHECKING, Any, TypeAliasType, get_args, get_origin
+from typing import TYPE_CHECKING, Any, TypeAliasType, cast, get_args, get_origin
 
 if TYPE_CHECKING:
     from ...._typings.base import FlextTypingBase as t
@@ -71,6 +71,28 @@ class FlextUtilitiesBeartypeHelpers:
         )
 
     @staticmethod
+    def resolve_type_alias_value(alias: object) -> t.TypeHintSpecifier | None:
+        """Return a PEP 695 alias's value, or None when it cannot resolve now.
+
+        Why: alias values are lazily evaluated, and an alias that references a
+        later layer through a TYPE_CHECKING-only import is unresolvable at
+        runtime BY LAW (the reverse-import rule forbids the runtime import).
+        Runtime enforcement cannot inspect such a value; the static type gates
+        still own its annotations. Returning None keeps that boundary explicit
+        instead of letting a NameError abort the whole gate.
+        """
+        if not isinstance(alias, TypeAliasType):
+            return None
+        try:
+            # ``TypeAliasType.__value__`` is typed as ``object`` while the
+            # runtime value of a resolvable alias is always a type-hint
+            # specifier; the explicit narrow keeps the caller contract exact
+            # without weakening it to ``object`` at the boundary.
+            return cast("t.TypeHintSpecifier", alias.__value__)
+        except NameError:
+            return None
+
+    @staticmethod
     def unwrap_type_alias(
         hint: t.TypeHintSpecifier | None,
     ) -> t.TypeHintSpecifier | None:
@@ -81,7 +103,10 @@ class FlextUtilitiesBeartypeHelpers:
             if current_id in seen:
                 return current
             seen.add(current_id)
-            current = current.__value__
+            resolved = FlextUtilitiesBeartypeHelpers.resolve_type_alias_value(current)
+            if resolved is None:
+                return current
+            current = resolved
         return current
 
     @staticmethod

@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Final
+from typing import ClassVar
 
 from pydantic import ValidationError as _PydanticValidationError
 
@@ -14,33 +14,33 @@ from pydantic import ValidationError as _PydanticValidationError
 class FlextConstantsErrorsValidationExceptions:
     """Validation-heavy exception families for boundary catches."""
 
-    EXC_VALIDATION_TYPE: Final[tuple[type[Exception], ...]] = (
+    EXC_VALIDATION_TYPE: ClassVar[tuple[type[Exception], ...]] = (
         TypeError,
         _PydanticValidationError,
     )
     """Pydantic validation + type-validation catch for model-coercion boundaries."""
 
-    EXC_VALIDATION_VALUE: Final[tuple[type[Exception], ...]] = (
+    EXC_VALIDATION_VALUE: ClassVar[tuple[type[Exception], ...]] = (
         ValueError,
         _PydanticValidationError,
     )
     """Pydantic validation + value-validation catch for input-coercion boundaries."""
 
-    EXC_PYDANTIC_TYPE_VALUE: Final[tuple[type[Exception], ...]] = (
+    EXC_PYDANTIC_TYPE_VALUE: ClassVar[tuple[type[Exception], ...]] = (
         _PydanticValidationError,
         TypeError,
         ValueError,
     )
     """Pydantic + typing + value-validation catch for model-construction flows."""
 
-    EXC_VALIDATION_TYPE_VALUE: Final[tuple[type[Exception], ...]] = (
+    EXC_VALIDATION_TYPE_VALUE: ClassVar[tuple[type[Exception], ...]] = (
         TypeError,
         ValueError,
         _PydanticValidationError,
     )
     """Pydantic validation + typing + value catch for full validation boundaries."""
 
-    EXC_ATTR_KEY_TYPE_VALUE: Final[tuple[type[Exception], ...]] = (
+    EXC_ATTR_KEY_TYPE_VALUE: ClassVar[tuple[type[Exception], ...]] = (
         AttributeError,
         KeyError,
         TypeError,
@@ -48,7 +48,7 @@ class FlextConstantsErrorsValidationExceptions:
     )
     """Attribute + mapping + typing catch for object-state + dict boundaries."""
 
-    EXC_FS_KEY_VALUE: Final[tuple[type[Exception], ...]] = (
+    EXC_FS_KEY_VALUE: ClassVar[tuple[type[Exception], ...]] = (
         FileNotFoundError,
         KeyError,
         OSError,
@@ -56,7 +56,7 @@ class FlextConstantsErrorsValidationExceptions:
     )
     """Filesystem read + mapping + value-validation catch for config-file flows."""
 
-    EXC_FS_FULL_DECODE: Final[tuple[type[Exception], ...]] = (
+    EXC_FS_FULL_DECODE: ClassVar[tuple[type[Exception], ...]] = (
         FileNotFoundError,
         OSError,
         PermissionError,
@@ -65,7 +65,7 @@ class FlextConstantsErrorsValidationExceptions:
     )
     """Filesystem + permissions + decoding + value catch for full-text-file flows."""
 
-    EXC_KEY_OS_TYPE_VALUE: Final[tuple[type[Exception], ...]] = (
+    EXC_KEY_OS_TYPE_VALUE: ClassVar[tuple[type[Exception], ...]] = (
         KeyError,
         OSError,
         TypeError,
@@ -73,10 +73,10 @@ class FlextConstantsErrorsValidationExceptions:
     )
     """Mapping + filesystem + typing catch for IO-bound config flows."""
 
-    EXC_OS_SYNTAX: Final[tuple[type[Exception], ...]] = (OSError, SyntaxError)
+    EXC_OS_SYNTAX: ClassVar[tuple[type[Exception], ...]] = (OSError, SyntaxError)
     """Filesystem + syntax catch for source-parsing boundaries."""
 
-    EXC_ATTR_RUNTIME_VALIDATION: Final[tuple[type[Exception], ...]] = (
+    EXC_ATTR_RUNTIME_VALIDATION: ClassVar[tuple[type[Exception], ...]] = (
         AttributeError,
         RuntimeError,
         TypeError,
@@ -85,7 +85,7 @@ class FlextConstantsErrorsValidationExceptions:
     )
     """Pydantic validation + runtime + attr catch for full model boundaries."""
 
-    EXC_OS_VALIDATION: Final[tuple[type[Exception], ...]] = (
+    EXC_OS_VALIDATION: ClassVar[tuple[type[Exception], ...]] = (
         OSError,
         TypeError,
         ValueError,
@@ -93,7 +93,7 @@ class FlextConstantsErrorsValidationExceptions:
     )
     """IO + validation + typing catch for config-file model boundaries."""
 
-    EXC_ATTR_KEY_OS_TYPE_VALUE: Final[tuple[type[Exception], ...]] = (
+    EXC_ATTR_KEY_OS_TYPE_VALUE: ClassVar[tuple[type[Exception], ...]] = (
         AttributeError,
         KeyError,
         OSError,
@@ -102,7 +102,7 @@ class FlextConstantsErrorsValidationExceptions:
     )
     """Object + mapping + filesystem + typing catch for full IO+state flows."""
 
-    EXC_FS_TYPE_VALIDATION: Final[tuple[type[Exception], ...]] = (
+    EXC_FS_TYPE_VALIDATION: ClassVar[tuple[type[Exception], ...]] = (
         FileNotFoundError,
         TypeError,
         ValueError,

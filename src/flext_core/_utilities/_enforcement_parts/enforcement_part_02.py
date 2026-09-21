@@ -59,7 +59,12 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         every row in ``c.ENFORCEMENT_RULES`` through here and pipes the
         result into :meth:`_apply_rule`.
         """
-        is_model = issubclass(target, mp.BaseModel)
+        # A class is a model by DECLARATION: the canonical FLEXT base or a
+        # pydantic-settings base declared directly (which is exactly what the
+        # settings-inheritance rule must see to report the bypass).
+        is_model = issubclass(target, mp.BaseModel) or issubclass(
+            target, mp.PydanticBaseSettings
+        )
         rule_layer = c.ENFORCEMENT_TAG_LAYER.get(tag, "")
         if "[" in target.__name__:
             return

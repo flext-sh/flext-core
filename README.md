@@ -26,8 +26,13 @@ Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture
 
 ## Module Map
 
-::: flext_core options: members: false show_root_heading: false show_root_toc_entry:
-false show_source: false
+::: flext_core
+
+    options:
+      members: false
+      show_root_heading: false
+      show_root_toc_entry: false
+      show_source: false
 
 ## Collection Rules
 
@@ -51,15 +56,16 @@ verification).
   by `flext-*`. The FLEXT cascade is encoded in the inheritance lists of the facade
   classes listed under Module Map above.
 - Public extensions exposed by this project: `FlextApi`, `FlextBase`, `FlextCli`,
-  `FlextConfig`, `FlextConstants`, `FlextConstantsEnforcement` (+20 more).
+  `FlextConfig`, `FlextConstants`, `FlextConstantsEnforcement` (+21 more).
 - Library abstraction boundaries: see AGENTS.md §2.7.
 
 ## Quality Gates
 
 Canonical `make` verbs (`gen`, `check`, `test`, `fmt`, `docs`) execute their declared
-operations directly — see
-[`/flext/AGENTS.md`](https://github.com/flext-sh/flext/blob/0.12.0-dev/AGENTS.md)
-`Build & Test` and `Required Python quality gates`.
+operations directly.
+
+See [`/flext/AGENTS.md`](https://github.com/flext-sh/flext/blob/0.12.0-dev/AGENTS.md)
+for the build, test, and Python quality gates.
 
 ## Governance Pointer
 

@@ -8,16 +8,12 @@ collector internals, per-rule private helpers, or emit machinery.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
+from tests.models import m
 from tests.utilities import u
 
 from ._enforcement_support import make_class, messages, synthetic_method
-
-if TYPE_CHECKING:
-    from flext_core import m
 
 
 class TestsFlextCoreEnforcement:
@@ -84,14 +80,22 @@ class TestsFlextCoreEnforcement:
         assert not messages(report, fragment="accessor method")
 
     @pytest.mark.parametrize(
-        ("class_name", "expect_finding"),
-        [("FlextWorkerSettings", True), ("FlextCoreService", False)],
+        ("class_name", "declares_settings_base", "expect_finding"),
+        [
+            ("FlextWorkerSettings", True, True),
+            ("FlextWorkerSettings", False, False),
+            ("FlextCoreService", False, False),
+        ],
     )
-    def test_settings_named_class_requires_inheritance(
-        self, class_name: str, *, expect_finding: bool
+    def test_declared_settings_model_requires_flext_settings(
+        self, class_name: str, *, declares_settings_base: bool, expect_finding: bool
     ) -> None:
-        """Only ``*Settings`` classes must inherit ``FlextSettings``."""
-        cls = make_class(class_name, {})
+        """A class that DECLARES a pydantic-settings base must route through
+        ``FlextSettings``; a name ending in ``Settings`` proves nothing."""
+        bases = (m.BaseSettings,) if declares_settings_base else ()
+        cls = type(class_name, bases, {})
+        cls.__qualname__ = class_name
+        cls.__module__ = "flext_core.synthetic"
 
         report = u.check(cls)
         found = bool(messages(report, fragment="must inherit FlextSettings"))

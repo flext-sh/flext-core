@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum, unique
-from typing import Final
+from typing import ClassVar
 
 
 class FlextConstantsFile:
@@ -24,6 +24,6 @@ class FlextConstantsFile:
         TEMP = "temp"
 
     # Workspace / project file names — canonical SSOT for path resolution
-    PYPROJECT_FILENAME: Final[str] = "pyproject.toml"
-    GIT_DIR_NAME: Final[str] = ".git"
-    POETRY_LOCK_FILENAME: Final[str] = "poetry.lock"
+    PYPROJECT_FILENAME: ClassVar[str] = "pyproject.toml"
+    GIT_DIR_NAME: ClassVar[str] = ".git"
+    POETRY_LOCK_FILENAME: ClassVar[str] = "poetry.lock"

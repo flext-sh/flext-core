@@ -24,7 +24,8 @@ class FlextModelsSettings:
     """Settings pattern container class.
 
     This class acts as a namespace container for settings patterns.
-    All nested classes are accessed via FlextModels.Settings.* in the main models.py.
+    All nested classes are accessed via FlextModels.Settings.* in the main
+    models.py.
     """
 
     class AutoSettings(m.ArbitraryTypesModel):

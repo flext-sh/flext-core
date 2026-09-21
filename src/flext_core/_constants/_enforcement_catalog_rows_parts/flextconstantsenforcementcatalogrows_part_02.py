@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Final
+from typing import ClassVar
 
 
 class FlextConstantsEnforcementCatalogSkillRows:
     """Skill pointer rows for the enforcement catalog."""
 
-    SKILL_POINTER_ROWS: Final[
+    SKILL_POINTER_ROWS: ClassVar[
         tuple[tuple[str, str, str, str, str, tuple[str, ...], str], ...]
     ] = (
         (

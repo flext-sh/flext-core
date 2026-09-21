@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -14,10 +14,10 @@ if TYPE_CHECKING:
 class FlextConstantsEnforcementTargets:
     """Target sets and external library ownership constants."""
 
-    ENFORCEMENT_RECURSIVE_TAGS: Final[frozenset[str]] = frozenset({"const_mutable"})
+    ENFORCEMENT_RECURSIVE_TAGS: ClassVar[frozenset[str]] = frozenset({"const_mutable"})
     """Tags that must recurse into inner namespace classes during scanning."""
 
-    ENFORCEMENT_NAMESPACE_TARGET_TAGS: Final[frozenset[str]] = frozenset({
+    ENFORCEMENT_NAMESPACE_TARGET_TAGS: ClassVar[frozenset[str]] = frozenset({
         "alias_first_multi_parent",
         "alias_rebound_at_module_end",
         "cast_outside_core",
@@ -41,13 +41,12 @@ class FlextConstantsEnforcementTargets:
         "no_wrapper_root_alias_import",
         "pass_through_wrapper",
         "private_attr_probe",
-        "settings_inheritance",
         "sibling_models_type_checking",
         "utilities_explicit_class_when_self_ref",
     })
     """NAMESPACE tags that use simple class-target dispatch (yield qn, (target,))."""
 
-    ENFORCEMENT_CANONICAL_FILES: Final[frozenset[str]] = frozenset({
+    ENFORCEMENT_CANONICAL_FILES: ClassVar[frozenset[str]] = frozenset({
         "constants.py",
         "models.py",
         "protocols.py",
@@ -56,7 +55,7 @@ class FlextConstantsEnforcementTargets:
     })
     """The five canonical facade files per project (AGENTS.md §2.2)."""
 
-    ENFORCEMENT_PRIVATE_FAMILY_PACKAGES: Final[frozenset[str]] = frozenset(
+    ENFORCEMENT_PRIVATE_FAMILY_PACKAGES: ClassVar[frozenset[str]] = frozenset(
         f"_{name.removesuffix('.py')}" for name in ENFORCEMENT_CANONICAL_FILES
     )
     """Private-family sub-package suffixes derived from canonical files.
@@ -74,7 +73,7 @@ class FlextConstantsEnforcementTargets:
     set.  No parallel hardcoded list exists.
     """
 
-    ENFORCEMENT_ACCESSOR_RENAMES: Final[Mapping[str, t.StrPair]] = MappingProxyType({
+    ENFORCEMENT_ACCESSOR_RENAMES: ClassVar[Mapping[str, t.StrPair]] = MappingProxyType({
         "is_success_result": (
             "successful_result",
             "Rename result helper to the canonical success helper",
@@ -152,7 +151,7 @@ class FlextConstantsEnforcementTargets:
     one entry here, no parallel list.
     """
 
-    ENFORCEMENT_ACCESSOR_EXTERNAL_CONTRACTS: Final[frozenset[str]] = frozenset({
+    ENFORCEMENT_ACCESSOR_EXTERNAL_CONTRACTS: ClassVar[frozenset[str]] = frozenset({
         "get_field_value"
     })
     """Accessor names owned by immutable external framework contracts.
@@ -163,7 +162,7 @@ class FlextConstantsEnforcementTargets:
     and enforcement — they are never candidates for canonical-verb rewrites.
     """
 
-    ENFORCEMENT_COMPATIBILITY_ALIAS_RENAMES: Final[Mapping[str, str]] = (
+    ENFORCEMENT_COMPATIBILITY_ALIAS_RENAMES: ClassVar[Mapping[str, str]] = (
         MappingProxyType({
             # flext-core canonical facade aliases
             "FlextConstants": "c",
@@ -200,7 +199,7 @@ class FlextConstantsEnforcementTargets:
     adding a new compatibility alias = one entry here, no parallel list.
     """
 
-    ENFORCEMENT_LIBRARY_OWNERS: Final[Mapping[str, str]] = MappingProxyType({
+    ENFORCEMENT_LIBRARY_OWNERS: ClassVar[Mapping[str, str]] = MappingProxyType({
         "pydantic": "flext-core",
         "pydantic_settings": "flext-core",
         "pydantic_core": "flext-core",

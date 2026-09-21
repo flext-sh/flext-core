@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, ClassVar
 
 from .._enforcement_data import SMELL_RULES_TEXT
 from .flextconstantsenforcement_part_09 import NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT
@@ -125,7 +125,7 @@ _BASE_ENFORCEMENT_RULES_TEXT: dict[str, t.StrPair] = {
 class FlextConstantsEnforcementRuleText:
     """Legacy problem/fix text indexed by enforcement tag."""
 
-    ENFORCEMENT_RULES_TEXT: Final[Mapping[str, t.StrPair]] = MappingProxyType({
+    ENFORCEMENT_RULES_TEXT: ClassVar[Mapping[str, t.StrPair]] = MappingProxyType({
         **_BASE_ENFORCEMENT_RULES_TEXT,
         **SMELL_RULES_TEXT,
     })

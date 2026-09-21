@@ -14,18 +14,9 @@ if TYPE_CHECKING:
     from .handle import ExamplesFlextSharedHandle
     from .person import ExamplesFlextSharedPerson
 __all__: tuple[str, ...] = (
-    "ExamplesFlextSharedHandle",
-    "ExamplesFlextSharedPerson",
-    "c",
-    "d",
-    "e",
-    "h",
-    "m",
-    "p",
-    "r",
-    "s",
-    "t",
-    "u",
+    "ExamplesFlextSharedHandle", "ExamplesFlextSharedPerson", "c", "d",
+    "e", "h", "m", "p",
+    "r", "s", "t", "u",
     "x",
 )
 

@@ -188,10 +188,6 @@ class FlextSettings(BaseSettings):
         arbitrary_types_allowed=True,
     )
 
-    # ENV_FILE_ENV_VAR moved to its SSOT owner
-    # ``FlextConstantsSettings`` in ``_constants/settings.py`` (ENFORCE-079);
-    # consume it as ``c.ENV_FILE_ENV_VAR``.
-
     ENV_FILE_DEFAULT: ClassVar[str] = ENV_FILE_DEFAULT
     """Public facade surface for the default .env file name (settings owns it)."""
 

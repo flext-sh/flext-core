@@ -16,12 +16,8 @@ if TYPE_CHECKING:
     from ._railway import FlextDecoratorsRailway
     from ._runtime import FlextDecorators
 __all__: tuple[str, ...] = (
-    "FlextDecorators",
-    "FlextDecoratorsBase",
-    "FlextDecoratorsCombined",
-    "FlextDecoratorsLogging",
-    "FlextDecoratorsLoggingPayloads",
-    "FlextDecoratorsRailway",
+    "FlextDecorators", "FlextDecoratorsBase", "FlextDecoratorsCombined", "FlextDecoratorsLogging",
+    "FlextDecoratorsLoggingPayloads", "FlextDecoratorsRailway",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
