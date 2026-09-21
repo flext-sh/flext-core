@@ -69,18 +69,29 @@ jobs:
       # installs its cross-repo dependency GitHub App and exposes
       # CI_DEPENDENCIES_APP_ID / CI_DEPENDENCIES_APP_PRIVATE_KEY, mint a
       # short-lived installation token and scope it to github.com clones.
-      # Absent secrets make this step a recorded NOT EXECUTED: dependency
-      # access then remains the repository's own contract, and the external
-      # credential gate is not selected on this runner.
+      # Absent secrets make this step a recorded NOT EXECUTED while the
+      # repository has not declared the credential requirement; a repository
+      # that declares the CI_DEPENDENCIES_REQUIRED repo variable fails the
+      # job non-zero with a typed message and without exposing any secret
+      # value (cosmos-1yzig: absence normalized as success is a defect).
       - name: Mint cross-repo dependency credential
         env:
           CI_DEPS_APP_ID: ${{ secrets.CI_DEPENDENCIES_APP_ID }}
           CI_DEPS_APP_KEY: ${{ secrets.CI_DEPENDENCIES_APP_PRIVATE_KEY }}
+          CI_DEPS_REQUIRED: ${{ vars.CI_DEPENDENCIES_REQUIRED }}
         run: |
           set -euo pipefail
           if [ -z "$CI_DEPS_APP_ID" ] || [ -z "$CI_DEPS_APP_KEY" ]; then
-            echo "NOT EXECUTED: CI_DEPENDENCIES_* secrets absent, no cross-repo credential minted"
-            exit 0
+            case "$CI_DEPS_REQUIRED" in
+              1 | true | TRUE | True | yes | YES | Yes)
+                echo "ERROR[CI_CREDENTIAL_REQUIRED]: CI_DEPENDENCIES_APP_ID/CI_DEPENDENCIES_APP_PRIVATE_KEY are declared required by this repository and are absent or empty" >&2
+                exit 1
+                ;;
+              *)
+                echo "NOT EXECUTED: CI_DEPENDENCIES_* secrets absent, no cross-repo credential minted"
+                exit 0
+                ;;
+            esac
           fi
           identity_root="$RUNNER_TEMP/flext-cross-repo-deps"
           install -d -m 700 "$identity_root"
@@ -97,20 +108,14 @@ jobs:
           input="$(printf %s "$header" | b64url).$(printf %s "$payload" | b64url)"
           signature=$(printf %s "$input" | openssl dgst -sha256 -sign "$key_path" | b64url)
           jwt="$input.$signature"
-          installation_id=$(curl -sfS -X GET \
-            -H "Authorization: Bearer $jwt" \
-            -H "Accept: application/vnd.github+json" \
-            https://api.github.com/app/installations \
-            | python3 -c 'import json, sys
-          entries = json.load(sys.stdin)
-          if len(entries) != 1:
-              sys.exit(f"expected exactly one app installation, got {len(entries)}")
-          print(entries[0]["id"])')
-          access_token=$(curl -sfS -X POST \
-            -H "Authorization: Bearer $jwt" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/app/installations/$installation_id/access_tokens" \
-            | python3 -c 'import json, sys; print(json.load(sys.stdin)["token"])')
+          # Credential mint without curl-pipe-to-shell (semgrep gha-curl-pipe-shell):
+          # responses land in a temp file and are parsed from disk, never piped.
+          response_file="$identity_root/github-api-response.json"
+          curl -sfS -X GET -H "Authorization: Bearer $jwt" -H "Accept: application/vnd.github+json" -o "$response_file" https://api.github.com/app/installations
+          installation_id=$(python3 -c 'import json, sys; entries = json.load(open(sys.argv[1])); assert len(entries) == 1, f"expected exactly one app installation, got {len(entries)}"; print(entries[0]["id"])' "$response_file")
+          curl -sfS -X POST -H "Authorization: Bearer $jwt" -H "Accept: application/vnd.github+json" -o "$response_file" "https://api.github.com/app/installations/$installation_id/access_tokens"
+          access_token=$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["token"])' "$response_file")
+          rm -f "$response_file"
           echo "::add-mask::$access_token"
           git config --global url."https://x-access-token:${access_token}@github.com/".insteadOf "https://github.com/"
           rm -f "$key_path"
@@ -250,18 +255,29 @@ jobs:
       # installs its cross-repo dependency GitHub App and exposes
       # CI_DEPENDENCIES_APP_ID / CI_DEPENDENCIES_APP_PRIVATE_KEY, mint a
       # short-lived installation token and scope it to github.com clones.
-      # Absent secrets make this step a recorded NOT EXECUTED: dependency
-      # access then remains the repository's own contract, and the external
-      # credential gate is not selected on this runner.
+      # Absent secrets make this step a recorded NOT EXECUTED while the
+      # repository has not declared the credential requirement; a repository
+      # that declares the CI_DEPENDENCIES_REQUIRED repo variable fails the
+      # job non-zero with a typed message and without exposing any secret
+      # value (cosmos-1yzig: absence normalized as success is a defect).
       - name: Mint cross-repo dependency credential
         env:
           CI_DEPS_APP_ID: ${{ secrets.CI_DEPENDENCIES_APP_ID }}
           CI_DEPS_APP_KEY: ${{ secrets.CI_DEPENDENCIES_APP_PRIVATE_KEY }}
+          CI_DEPS_REQUIRED: ${{ vars.CI_DEPENDENCIES_REQUIRED }}
         run: |
           set -euo pipefail
           if [ -z "$CI_DEPS_APP_ID" ] || [ -z "$CI_DEPS_APP_KEY" ]; then
-            echo "NOT EXECUTED: CI_DEPENDENCIES_* secrets absent, no cross-repo credential minted"
-            exit 0
+            case "$CI_DEPS_REQUIRED" in
+              1 | true | TRUE | True | yes | YES | Yes)
+                echo "ERROR[CI_CREDENTIAL_REQUIRED]: CI_DEPENDENCIES_APP_ID/CI_DEPENDENCIES_APP_PRIVATE_KEY are declared required by this repository and are absent or empty" >&2
+                exit 1
+                ;;
+              *)
+                echo "NOT EXECUTED: CI_DEPENDENCIES_* secrets absent, no cross-repo credential minted"
+                exit 0
+                ;;
+            esac
           fi
           identity_root="$RUNNER_TEMP/flext-cross-repo-deps"
           install -d -m 700 "$identity_root"
@@ -278,20 +294,14 @@ jobs:
           input="$(printf %s "$header" | b64url).$(printf %s "$payload" | b64url)"
           signature=$(printf %s "$input" | openssl dgst -sha256 -sign "$key_path" | b64url)
           jwt="$input.$signature"
-          installation_id=$(curl -sfS -X GET \
-            -H "Authorization: Bearer $jwt" \
-            -H "Accept: application/vnd.github+json" \
-            https://api.github.com/app/installations \
-            | python3 -c 'import json, sys
-          entries = json.load(sys.stdin)
-          if len(entries) != 1:
-              sys.exit(f"expected exactly one app installation, got {len(entries)}")
-          print(entries[0]["id"])')
-          access_token=$(curl -sfS -X POST \
-            -H "Authorization: Bearer $jwt" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/app/installations/$installation_id/access_tokens" \
-            | python3 -c 'import json, sys; print(json.load(sys.stdin)["token"])')
+          # Credential mint without curl-pipe-to-shell (semgrep gha-curl-pipe-shell):
+          # responses land in a temp file and are parsed from disk, never piped.
+          response_file="$identity_root/github-api-response.json"
+          curl -sfS -X GET -H "Authorization: Bearer $jwt" -H "Accept: application/vnd.github+json" -o "$response_file" https://api.github.com/app/installations
+          installation_id=$(python3 -c 'import json, sys; entries = json.load(open(sys.argv[1])); assert len(entries) == 1, f"expected exactly one app installation, got {len(entries)}"; print(entries[0]["id"])' "$response_file")
+          curl -sfS -X POST -H "Authorization: Bearer $jwt" -H "Accept: application/vnd.github+json" -o "$response_file" "https://api.github.com/app/installations/$installation_id/access_tokens"
+          access_token=$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["token"])' "$response_file")
+          rm -f "$response_file"
           echo "::add-mask::$access_token"
           git config --global url."https://x-access-token:${access_token}@github.com/".insteadOf "https://github.com/"
           rm -f "$key_path"
