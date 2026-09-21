@@ -101,7 +101,9 @@ class FlextConstantsErrorsDomainParser:
     ERR_MODEL_MAX_DELAY_LESS_THAN_INITIAL: ClassVar[str] = (
         "max_delay_seconds must be >= initial_delay_seconds"
     )
-    ERR_ENTITY_INVARIANT_VIOLATED: ClassVar[str] = "Invariant violated: {invariant_name}"
+    ERR_ENTITY_INVARIANT_VIOLATED: ClassVar[str] = (
+        "Invariant violated: {invariant_name}"
+    )
     ERR_ENTITY_AGGREGATE_INVARIANT_FAILURE: ClassVar[str] = (
         "Aggregate invariant violation: {error}"
     )
@@ -128,7 +130,9 @@ class FlextConstantsErrorsDomainParser:
     ERR_COLLECTION_INVALID_ENUM_VALUE: ClassVar[str] = (
         "Invalid {enum_name} value: '{value}'"
     )
-    ERR_COLLECTION_EXPECTED_SEQUENCE: ClassVar[str] = "Expected sequence, got {type_name}"
+    ERR_COLLECTION_EXPECTED_SEQUENCE: ClassVar[str] = (
+        "Expected sequence, got {type_name}"
+    )
     ERR_COLLECTION_PROCESSING_FAILED_FOR_ITEM: ClassVar[str] = (
         "Processing failed for item: {item}"
     )
@@ -137,7 +141,9 @@ class FlextConstantsErrorsDomainParser:
     )
     ERR_CONFIG_INVALID_DB_URL_SCHEME: ClassVar[str] = "Invalid database URL scheme"
     ERR_CONFIG_TRACE_REQUIRES_DEBUG: ClassVar[str] = "Trace mode requires debug mode"
-    ERR_CONFIG_FACTORY_REGISTRATION_FAILED: ClassVar[str] = "Factory registration failed"
+    ERR_CONFIG_FACTORY_REGISTRATION_FAILED: ClassVar[str] = (
+        "Factory registration failed"
+    )
     ERR_CONFIG_FACTORY_REGISTRATION_FAILED_FOR_NAME: ClassVar[str] = (
         "Factory registration failed for {name}: {error}"
     )

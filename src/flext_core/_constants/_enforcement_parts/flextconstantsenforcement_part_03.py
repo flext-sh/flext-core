@@ -62,7 +62,9 @@ class FlextConstantsEnforcementNamespace:
     )
     """Class name suffix → layer name mapping for cross-layer detection."""
 
-    NAMESPACE_CLASS_TO_MODULE_OVERRIDES: ClassVar[Mapping[str, str]] = MappingProxyType({})
+    NAMESPACE_CLASS_TO_MODULE_OVERRIDES: ClassVar[Mapping[str, str]] = (
+        MappingProxyType({})
+    )
     """Class-name → owning-package overrides for facade-layer classes that
     do not follow the ``Flext<Project><Layer><Concern>`` convention.
 
@@ -73,13 +75,15 @@ class FlextConstantsEnforcementNamespace:
     declaration that the workspace genuinely deviates from the convention,
     and that deviation must be justified at the call site that needs it."""
 
-    ENFORCEMENT_LAYER_ALLOWS: ClassVar[Mapping[str, frozenset[str]]] = MappingProxyType({
-        "constants": frozenset({"StrEnum"}),
-        "models": frozenset(),
-        "protocols": frozenset({"Protocol"}),
-        "types": frozenset(),
-        "utilities": frozenset(),
-    })
+    ENFORCEMENT_LAYER_ALLOWS: ClassVar[Mapping[str, frozenset[str]]] = (
+        MappingProxyType({
+            "constants": frozenset({"StrEnum"}),
+            "models": frozenset(),
+            "protocols": frozenset({"Protocol"}),
+            "types": frozenset(),
+            "utilities": frozenset(),
+        })
+    )
     """SSOT: per-layer inner-class kinds that cross-layer checks permit.
 
     Every canonical facade layer MUST be enumerated here so the

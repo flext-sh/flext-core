@@ -9,7 +9,9 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_cli import d, e, h, r, s, x
+    from flext_cli import s
+
+    from flext_core import d, e, h, r, x
 
     from .constants import ScriptsFlextConstants, ScriptsFlextConstants as c
     from .models import ScriptsFlextModels, ScriptsFlextModels as m
@@ -17,10 +19,22 @@ if TYPE_CHECKING:
     from .typings import ScriptsFlextTypes, ScriptsFlextTypes as t
     from .utilities import ScriptsFlextUtilities, ScriptsFlextUtilities as u
 __all__: tuple[str, ...] = (
-    "ScriptsFlextConstants", "ScriptsFlextModels", "ScriptsFlextProtocols", "ScriptsFlextTypes",
-    "ScriptsFlextUtilities", "c", "d", "e",
-    "h", "m", "p", "r",
-    "s", "t", "u", "x",
+    "ScriptsFlextConstants",
+    "ScriptsFlextModels",
+    "ScriptsFlextProtocols",
+    "ScriptsFlextTypes",
+    "ScriptsFlextUtilities",
+    "c",
+    "d",
+    "e",
+    "h",
+    "m",
+    "p",
+    "r",
+    "s",
+    "t",
+    "u",
+    "x",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
@@ -31,7 +45,8 @@ _LAZY_IMPORTS = MappingProxyType(
             ".protocols": ("ScriptsFlextProtocols", "p"),
             ".typings": ("ScriptsFlextTypes", "t"),
             ".utilities": ("ScriptsFlextUtilities", "u"),
-            "flext_cli": ("d", "e", "h", "r", "s", "x"),
+            "flext_cli": ("s",),
+            "flext_core": ("d", "e", "h", "r", "x"),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,

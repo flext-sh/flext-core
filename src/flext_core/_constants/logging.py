@@ -80,7 +80,9 @@ class FlextConstantsLogging:
     LOG_REGISTERED_EVENT_SUBSCRIBER: ClassVar[str] = _TEMPLATE_REGISTERED.format(
         subject="event subscriber"
     )
-    LOG_REGISTERED_HANDLER: ClassVar[str] = _TEMPLATE_REGISTERED.format(subject="handler")
+    LOG_REGISTERED_HANDLER: ClassVar[str] = _TEMPLATE_REGISTERED.format(
+        subject="handler"
+    )
     LOG_HANDLER_EXECUTION_FAILED: ClassVar[str] = "Handler execution failed"
     LOG_HANDLER_PIPELINE_FAILURE: ClassVar[str] = "Critical handler pipeline failure"
     LOG_TRACKED_OPERATION_EXPECTED_EXCEPTION: ClassVar[str] = (
@@ -88,4 +90,6 @@ class FlextConstantsLogging:
     )
     LOG_SERVICE_REGISTRATION_FAILED: ClassVar[str] = "Service registration failed"
     LOG_INTERNAL_OPERATION_FAILED: ClassVar[str] = "Internal logger operation failed"
-    LOG_CONTEXT_REMOVAL_FAILED: ClassVar[str] = "Failed to validate context after removal"
+    LOG_CONTEXT_REMOVAL_FAILED: ClassVar[str] = (
+        "Failed to validate context after removal"
+    )

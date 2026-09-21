@@ -102,7 +102,10 @@ class FlextConstantsErrorsRuntimeExceptions:
     EXC_OS_VALUE: ClassVar[tuple[type[Exception], ...]] = (OSError, ValueError)
     """Filesystem + value-validation catch for path/IO boundaries."""
 
-    EXC_OS_DECODING: ClassVar[tuple[type[Exception], ...]] = (OSError, UnicodeDecodeError)
+    EXC_OS_DECODING: ClassVar[tuple[type[Exception], ...]] = (
+        OSError,
+        UnicodeDecodeError,
+    )
     """Filesystem read + unicode decoding catch for text-file boundaries."""
 
     EXC_ATTR_RUNTIME_TYPE: ClassVar[tuple[type[Exception], ...]] = (

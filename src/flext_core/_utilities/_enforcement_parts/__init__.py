@@ -13,7 +13,9 @@ if TYPE_CHECKING:
     from .enforcement_part_05 import FlextUtilitiesEnforcement
     from .enforcement_part_06 import EXTENDED_PREDICATE_BINDINGS
 __all__: tuple[str, ...] = (
-    "EXTENDED_PREDICATE_BINDINGS", "PREDICATE_BINDINGS", "FlextUtilitiesEnforcement",
+    "EXTENDED_PREDICATE_BINDINGS",
+    "PREDICATE_BINDINGS",
+    "FlextUtilitiesEnforcement",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
