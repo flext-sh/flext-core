@@ -84,7 +84,7 @@ class TestsFlextBadAccessors(FlextModelsNamespace):
         return True
 
 
-class TestsFlextBadWorkerSettings(FlextModelsNamespace):
+class TestsFlextBadWorkerSettings(m.BaseSettings, FlextModelsNamespace):
     pass
 
 

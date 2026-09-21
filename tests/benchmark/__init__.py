@@ -10,56 +10,20 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_tests import c, d, e, h, m, p, r, s, t, td, tf, tk, tm, tv, u, x
-
-    from .test_container_memory import TestsFlextContainerMemory
-    from .test_container_performance import TestsFlextContainerPerformance
-    from .test_lazy_performance import TestsFlextLazyPerformance
 __all__: tuple[str, ...] = (
-    "TestsFlextContainerMemory",
-    "TestsFlextContainerPerformance",
-    "TestsFlextLazyPerformance",
-    "c",
-    "d",
-    "e",
-    "h",
-    "m",
-    "p",
-    "r",
-    "s",
-    "t",
-    "td",
-    "tf",
-    "tk",
-    "tm",
-    "tv",
-    "u",
-    "x",
+    "c", "d", "e", "h",
+    "m", "p", "r", "s",
+    "t", "td", "tf", "tk",
+    "tm", "tv", "u", "x",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
-            ".test_container_memory": ("TestsFlextContainerMemory",),
-            ".test_container_performance": ("TestsFlextContainerPerformance",),
-            ".test_lazy_performance": ("TestsFlextLazyPerformance",),
             "flext_tests": (
-                "c",
-                "d",
-                "e",
-                "h",
-                "m",
-                "p",
-                "r",
-                "s",
-                "t",
-                "td",
-                "tf",
-                "tk",
-                "tm",
-                "tv",
-                "u",
-                "x",
-            ),
+                "c", "d", "e", "h", "m", "p", "r", "s", "t", "td", "tf", "tk", "tm",
+                "tv", "u", "x",
+            )
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,

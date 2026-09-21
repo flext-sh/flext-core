@@ -41,7 +41,6 @@ class FlextConstantsEnforcementTargets:
         "no_wrapper_root_alias_import",
         "pass_through_wrapper",
         "private_attr_probe",
-        "settings_inheritance",
         "sibling_models_type_checking",
         "utilities_explicit_class_when_self_ref",
     })
