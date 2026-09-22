@@ -13,13 +13,9 @@ class TestsFlextCoreEnforcementTargetIdentity:
     """Exercise classification through the public enforcement report."""
 
     @pytest.mark.parametrize("indirect", [False, True])
-    def test_config_lineage_is_not_settings(self, indirect: bool) -> None:
-        parent = (
-            type("FlextParentConfig", (FlextConfig,), {}) if indirect else FlextConfig
-        )
-        target = type(
-            "FlextWorkerConfig", (parent,), {"__module__": "flext_core.synthetic"}
-        )
+    def test_config_lineage_is_not_settings(self, *, indirect: bool) -> None:
+        parent = type("FlextParentConfig", (FlextConfig,), {}) if indirect else FlextConfig
+        target = type("FlextWorkerConfig", (parent,), {"__module__": "flext_core.synthetic"})
 
         assert not any(v.rule_id == "ENFORCE-042" for v in u.check(target).violations)
 
@@ -34,7 +30,7 @@ class TestsFlextCoreEnforcementTargetIdentity:
 
     @pytest.mark.parametrize("lookalike_config", [False, True])
     def test_raw_settings_and_config_name_impostor_remain_invalid(
-        self, lookalike_config: bool
+        self, *, lookalike_config: bool
     ) -> None:
         parent = (
             type("FlextConfig", (m.BaseSettings,), {})
@@ -50,7 +46,7 @@ class TestsFlextCoreEnforcementTargetIdentity:
     @pytest.mark.parametrize("multiple_bases", [False, True])
     @pytest.mark.parametrize("facade_module", [False, True])
     def test_only_declared_facade_modules_require_alias_first(
-        self, multiple_bases: bool, facade_module: bool
+        self, *, multiple_bases: bool, facade_module: bool
     ) -> None:
         package = c.__module__.split(".", 1)[0]
         service_module = f"{package}.services.worker"
