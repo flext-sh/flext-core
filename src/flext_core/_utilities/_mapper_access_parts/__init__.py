@@ -10,6 +10,8 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from .mapper_access_part_02 import FlextUtilitiesMapperAccess
+
+
 __all__: tuple[str, ...] = ("FlextUtilitiesMapperAccess",)
 
 _LAZY_IMPORTS = MappingProxyType(

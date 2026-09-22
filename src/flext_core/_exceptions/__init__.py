@@ -18,6 +18,8 @@ if TYPE_CHECKING:
     from .helpers import FlextExceptionsHelpers
     from .metrics import FlextExceptionsMetrics
     from .template import FlextExceptionsTemplate
+
+
 __all__: tuple[str, ...] = (
     "FlextBaseErrorMetadataMixin",
     "FlextBaseErrorStateMixin",

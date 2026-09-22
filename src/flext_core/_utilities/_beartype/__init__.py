@@ -27,6 +27,8 @@ if TYPE_CHECKING:
     from .import_visitor import FlextUtilitiesBeartypeImportVisitor
     from .method_visitor import FlextUtilitiesBeartypeMethodVisitor
     from .module_visitor import FlextUtilitiesBeartypeModuleVisitor
+
+
 __all__: tuple[str, ...] = (
     "FlextUtilitiesBeartypeAliasVisitor",
     "FlextUtilitiesBeartypeAttrVisitor",

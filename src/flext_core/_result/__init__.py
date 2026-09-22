@@ -15,6 +15,8 @@ if TYPE_CHECKING:
     from .construction import FlextResultConstruction, copy_result, ok_result
     from .transforms import FlextResultTransforms
     from .unwrap import FlextResultUnwrap
+
+
 __all__: tuple[str, ...] = (
     "FlextResultBase",
     "FlextResultBehavior",

@@ -13,6 +13,8 @@ if TYPE_CHECKING:
     from ._catalog import FlextModelsEnforcementCatalog
     from ._params import FlextModelsEnforcementParams
     from ._sources import FlextModelsEnforcementSources
+
+
 __all__: tuple[str, ...] = (
     "EnforcementModelBase",
     "FlextModelsEnforcementBase",

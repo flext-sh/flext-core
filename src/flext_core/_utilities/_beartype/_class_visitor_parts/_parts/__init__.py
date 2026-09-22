@@ -11,6 +11,8 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 if TYPE_CHECKING:
     from .class_visitor_part_02_01 import alias_first_violation
     from .class_visitor_part_02_02 import redundant_inner_violation, self_ref_violation
+
+
 __all__: tuple[str, ...] = (
     "alias_first_violation",
     "redundant_inner_violation",

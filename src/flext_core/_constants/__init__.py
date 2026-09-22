@@ -100,6 +100,8 @@ if TYPE_CHECKING:
     from .status import FlextConstantsStatus
     from .timeout import FlextConstantsTimeout
     from .validation import FlextConstantsValidation
+
+
 __all__: tuple[str, ...] = (
     "INFRA_DETECTOR_ROWS_CORE",
     "INFRA_DETECTOR_ROWS_PATTERNS",

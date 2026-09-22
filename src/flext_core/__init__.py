@@ -44,6 +44,8 @@ if TYPE_CHECKING:
     from .service import FlextService, FlextService as s
     from .typings import FlextTypes, FlextTypes as t
     from .utilities import FlextUtilities, FlextUtilities as u
+
+
 __all__: tuple[str, ...] = (
     "FlextApi",
     "FlextBase",

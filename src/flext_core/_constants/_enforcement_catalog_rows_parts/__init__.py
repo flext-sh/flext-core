@@ -31,6 +31,8 @@ if TYPE_CHECKING:
     from .flextconstantsenforcementcatalogrows_part_05 import (
         FlextConstantsEnforcementCatalogInfraRowsExtended,
     )
+
+
 __all__: tuple[str, ...] = (
     "INFRA_DETECTOR_ROWS_CORE",
     "INFRA_DETECTOR_ROWS_PATTERNS",

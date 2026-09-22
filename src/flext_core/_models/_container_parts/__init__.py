@@ -10,6 +10,8 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from .flextmodelscontainer_part_04 import FlextModelsContainer
+
+
 __all__: tuple[str, ...] = ("FlextModelsContainer",)
 
 _LAZY_IMPORTS = MappingProxyType(

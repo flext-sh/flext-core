@@ -20,6 +20,8 @@ if TYPE_CHECKING:
     from .flextconstantsenforcement_part_09 import (
         NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT,
     )
+
+
 __all__: tuple[str, ...] = (
     "NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT",
     "FlextConstantsEnforcementEnums",

@@ -62,6 +62,8 @@ if TYPE_CHECKING:
     from .registry import FlextModelsRegistry
     from .service import FlextModelsService
     from .settings import FlextModelsSettings
+
+
 __all__: tuple[str, ...] = (
     "CqrsPagination",
     "EnforcementModelBase",

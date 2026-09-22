@@ -11,6 +11,8 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 if TYPE_CHECKING:
     from .handle import ExamplesFlextSharedHandle
     from .person import ExamplesFlextSharedPerson
+
+
 __all__: tuple[str, ...] = ("ExamplesFlextSharedHandle", "ExamplesFlextSharedPerson")
 
 _LAZY_IMPORTS = MappingProxyType(
