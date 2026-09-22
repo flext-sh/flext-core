@@ -26,17 +26,18 @@ RUN apt-get update \
 # and every latest tool installation as the same unprivileged runtime user.
 # The setup RUN receives Mise's credential only through a BuildKit secret.
 # Never persist build credentials in ARG, ENV, layers, or image configuration.
-ENV HOME=/home/runner \
-    XDG_DATA_HOME=/home/runner/.local/share \
-    XDG_CACHE_HOME=/home/runner/.cache \
-    XDG_STATE_HOME=/home/runner/.local/state \
-    MISE_DATA_DIR=/home/runner/.local/share/mise
+ARG RUNNER_USER=runner
+ENV HOME=/home/${RUNNER_USER}
+ENV XDG_DATA_HOME=${HOME}/.local/share \
+    XDG_CACHE_HOME=${HOME}/.cache \
+    XDG_STATE_HOME=${HOME}/.local/state \
+    MISE_DATA_DIR=${HOME}/.local/share/mise
 WORKDIR /workspace
 RUN --mount=type=bind,source=.,target=/source,ro \
     cp -R /source/. /workspace/ \
     && chown -R runner:runner /workspace
 USER runner
-ENV PATH="/home/runner/.local/share/mise/shims:${PATH}"
+ENV PATH="$MISE_DATA_DIR/shims:${PATH}"
 # End SECTION: managed tool bootstrap
 
 # === SECTION: bootstrap proof (managed) ===

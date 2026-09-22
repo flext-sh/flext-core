@@ -9,13 +9,28 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core import d, e, h, r, s, x
+    from pydantic_core import from_json, to_json, to_jsonable_python
 
-    from .constants import ScriptsFlextConstants, ScriptsFlextConstants as c
-    from .models import ScriptsFlextModels, ScriptsFlextModels as m
-    from .protocols import ScriptsFlextProtocols, ScriptsFlextProtocols as p
-    from .typings import ScriptsFlextTypes, ScriptsFlextTypes as t
-    from .utilities import ScriptsFlextUtilities, ScriptsFlextUtilities as u
+    from flext_core import (
+        config,
+        core,
+        d,
+        e,
+        h,
+        lazy,
+        lazy_attribute,
+        normalize_lazy_imports,
+        r,
+        s,
+        settings,
+        x,
+    )
+
+    from .constants import ScriptsFlextConstants, c
+    from .models import ScriptsFlextModels, m
+    from .protocols import ScriptsFlextProtocols, p
+    from .typings import ScriptsFlextTypes, t
+    from .utilities import ScriptsFlextUtilities, u
 __all__: tuple[str, ...] = (
     "ScriptsFlextConstants",
     "ScriptsFlextModels",
@@ -23,14 +38,23 @@ __all__: tuple[str, ...] = (
     "ScriptsFlextTypes",
     "ScriptsFlextUtilities",
     "c",
+    "config",
+    "core",
     "d",
     "e",
+    "from_json",
     "h",
+    "lazy",
+    "lazy_attribute",
     "m",
+    "normalize_lazy_imports",
     "p",
     "r",
     "s",
+    "settings",
     "t",
+    "to_json",
+    "to_jsonable_python",
     "u",
     "x",
 )
@@ -43,7 +67,21 @@ _LAZY_IMPORTS = MappingProxyType(
             ".protocols": ("ScriptsFlextProtocols", "p"),
             ".typings": ("ScriptsFlextTypes", "t"),
             ".utilities": ("ScriptsFlextUtilities", "u"),
-            "flext_core": ("d", "e", "h", "r", "s", "x"),
+            "flext_core": (
+                "config",
+                "core",
+                "d",
+                "e",
+                "h",
+                "lazy",
+                "lazy_attribute",
+                "normalize_lazy_imports",
+                "r",
+                "s",
+                "settings",
+                "x",
+            ),
+            "pydantic_core": ("from_json", "to_json", "to_jsonable_python"),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,

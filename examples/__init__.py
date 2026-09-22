@@ -9,11 +9,26 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core import d, e, h, r, s, x
+    from pydantic_core import from_json, to_json, to_jsonable_python
+
+    from flext_core import (
+        config,
+        core,
+        d,
+        e,
+        h,
+        lazy,
+        lazy_attribute,
+        normalize_lazy_imports,
+        r,
+        s,
+        settings,
+        x,
+    )
 
     from . import _models, _shared_parts
     from .constants import c
-    from .models import ExamplesFlextModels, ExamplesFlextModels as m
+    from .models import ExamplesFlextModels, m
     from .protocols import p
     from .shared import ExamplesFlextShared
     from .typings import t
@@ -24,14 +39,23 @@ __all__: tuple[str, ...] = (
     "_models",
     "_shared_parts",
     "c",
+    "config",
+    "core",
     "d",
     "e",
+    "from_json",
     "h",
+    "lazy",
+    "lazy_attribute",
     "m",
+    "normalize_lazy_imports",
     "p",
     "r",
     "s",
+    "settings",
     "t",
+    "to_json",
+    "to_jsonable_python",
     "u",
     "x",
 )
@@ -47,7 +71,21 @@ _LAZY_IMPORTS = MappingProxyType(
             ".shared": ("ExamplesFlextShared",),
             ".typings": ("t",),
             ".utilities": ("u",),
-            "flext_core": ("d", "e", "h", "r", "s", "x"),
+            "flext_core": (
+                "config",
+                "core",
+                "d",
+                "e",
+                "h",
+                "lazy",
+                "lazy_attribute",
+                "normalize_lazy_imports",
+                "r",
+                "s",
+                "settings",
+                "x",
+            ),
+            "pydantic_core": ("from_json", "to_json", "to_jsonable_python"),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,

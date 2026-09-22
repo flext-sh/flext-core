@@ -9,53 +9,68 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_tests import FlextTestsConstants
+    from flext_cli import cli
+    from flext_infra import docs_main, infra, main
+    from flext_tests import (
+        active_rules,
+        api,
+        config,
+        discover_repository_root,
+        install_local_packages,
+        load_infra_report,
+        settings,
+        split_csv,
+    )
+    from pydantic_core import from_json, to_json, to_jsonable_python
 
-    from flext_core import FlextConstants
+    from flext_core import core, lazy_attribute
 
     from . import benchmark, fixtures, integration, unit
-    from .base import TestsFlextServiceBase, TestsFlextServiceBase as s
-    from .constants import TestsFlextConstants, TestsFlextConstants as c
-    from .models import TestsFlextModels, TestsFlextModels as m
-    from .protocols import TestsFlextProtocols, TestsFlextProtocols as p
-    from .typings import TestsFlextTypes, TestsFlextTypes as t
-    from .utilities import TestsFlextUtilities, TestsFlextUtilities as u
 __all__: tuple[str, ...] = (
-    "FlextConstants",
-    "FlextTestsConstants",
-    "TestsFlextConstants",
-    "TestsFlextModels",
-    "TestsFlextProtocols",
-    "TestsFlextServiceBase",
-    "TestsFlextTypes",
-    "TestsFlextUtilities",
+    "active_rules",
+    "api",
     "benchmark",
-    "c",
+    "cli",
+    "config",
+    "core",
+    "discover_repository_root",
+    "docs_main",
     "fixtures",
+    "from_json",
+    "infra",
+    "install_local_packages",
     "integration",
-    "m",
-    "p",
-    "s",
-    "t",
-    "u",
+    "lazy_attribute",
+    "load_infra_report",
+    "main",
+    "settings",
+    "split_csv",
+    "to_json",
+    "to_jsonable_python",
     "unit",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
-            ".base": ("TestsFlextServiceBase", "s"),
             ".benchmark": ("benchmark",),
-            ".constants": ("TestsFlextConstants", "c"),
             ".fixtures": ("fixtures",),
             ".integration": ("integration",),
-            ".models": ("TestsFlextModels", "m"),
-            ".protocols": ("TestsFlextProtocols", "p"),
-            ".typings": ("TestsFlextTypes", "t"),
             ".unit": ("unit",),
-            ".utilities": ("TestsFlextUtilities", "u"),
-            "flext_core": ("FlextConstants",),
-            "flext_tests": ("FlextTestsConstants",),
+            "flext_cli": ("cli",),
+            "flext_core": ("core", "lazy_attribute"),
+            "flext_infra": ("docs_main", "infra", "main"),
+            "flext_tests": (
+                "active_rules",
+                "api",
+                "config",
+                "discover_repository_root",
+                "install_local_packages",
+                "load_infra_report",
+                "settings",
+                "split_csv",
+            ),
+            "pydantic_core": ("from_json", "to_json", "to_jsonable_python"),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
