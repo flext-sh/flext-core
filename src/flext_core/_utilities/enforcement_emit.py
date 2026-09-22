@@ -30,7 +30,7 @@ class FlextUtilitiesEnforcementEmit:
         detail: t.StrMapping | None = None,
         category: c.EnforcementCategory | None = None,
     ) -> me.Violation:
-        # Look up problem/fix from legacy text mapping (derived from rows)
+        # Look up problem/fix templates from the canonical text mapping
         problem, fix = c.ENFORCEMENT_RULES_TEXT[tag]
         subs = detail or {}
         message = c.ENFORCEMENT_MSG_VIOLATION.format(
