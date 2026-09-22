@@ -35,7 +35,7 @@ class FlextUtilitiesModelOptions(FlextUtilitiesModel):
             case Mapping() as source_mapping:
                 resolved = m.RuntimeBootstrapOptions.model_validate(source_mapping)
             case _:
-                options_resolver = getattr(source, "_runtime_bootstrap_options", None)
+                options_resolver = getattr(source, "runtime_bootstrap_options", None)
                 raw_options = options_resolver() if callable(options_resolver) else None
                 if raw_options is not None:
                     resolved = cls.resolve_runtime_options(raw_options)
