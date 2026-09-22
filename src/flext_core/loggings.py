@@ -364,7 +364,10 @@ class FlextUtilitiesLogging(ulc):
                     key: value for key, value in context.items() if value is not None
                 })
             )
-        logger: p.Logger = cls(name, context=merged_context)
+        # Construct the concrete logging owner, never ``cls``: this classmethod
+        # is re-exposed through foreign test/utility facades whose construction
+        # would return a facade instance instead of a logger.
+        logger: p.Logger = FlextUtilitiesLogging(name, context=merged_context)
         return logger
 
 

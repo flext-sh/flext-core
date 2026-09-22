@@ -83,7 +83,7 @@ class TestsFlextCoverageLoggings:
     def test_fetch_logger_returns_usable_service_logger(self) -> None:
         logger = u.fetch_logger("user-service")
 
-        tm.that(logger, none=False)
+        assert logger is not None
         result = self.assert_captured_log_success(
             lambda: logger.info("service ready"), contains="service ready"
         )

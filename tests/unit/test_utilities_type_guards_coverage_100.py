@@ -100,4 +100,7 @@ class TestsFlextCoreUtilitiesTypeGuards:
         tm.that(cast("list[str]", fallback_tags), eq=["cli"])
         tm.that(cast("int", guarded_attempt), eq=2)
         tm.fail(failed_guard)
-        tm.that(failed_guard.error, eq="Guard validation raised an exception")
+        tm.that(
+            failed_guard.error,
+            eq="Guard validation raised ValueError: invalid metadata",
+        )
