@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import pytest
-
 from flext_cli import c
+
 from flext_core import FlextConfig, FlextSettings
 from tests import m, u
 
@@ -14,14 +14,20 @@ class TestsFlextCoreEnforcementTargetIdentity:
 
     @pytest.mark.parametrize("indirect", [False, True])
     def test_config_lineage_is_not_settings(self, indirect: bool) -> None:
-        parent = type("FlextParentConfig", (FlextConfig,), {}) if indirect else FlextConfig
-        target = type("FlextWorkerConfig", (parent,), {"__module__": "flext_core.synthetic"})
+        parent = (
+            type("FlextParentConfig", (FlextConfig,), {}) if indirect else FlextConfig
+        )
+        target = type(
+            "FlextWorkerConfig", (parent,), {"__module__": "flext_core.synthetic"}
+        )
 
         assert not any(v.rule_id == "ENFORCE-042" for v in u.check(target).violations)
 
     def test_settings_lineage_remains_valid(self) -> None:
         target = type(
-            "FlextWorkerSettings", (FlextSettings,), {"__module__": "flext_core.synthetic"}
+            "FlextWorkerSettings",
+            (FlextSettings,),
+            {"__module__": "flext_core.synthetic"},
         )
 
         assert not any(v.rule_id == "ENFORCE-042" for v in u.check(target).violations)
@@ -48,9 +54,7 @@ class TestsFlextCoreEnforcementTargetIdentity:
     ) -> None:
         package = c.__module__.split(".", 1)[0]
         service_module = f"{package}.services.worker"
-        parent = type(
-            f"{c.__name__}Worker", (), {"__module__": service_module}
-        )
+        parent = type(f"{c.__name__}Worker", (), {"__module__": service_module})
         peer = type("Peer", (), {"__module__": service_module})
         target = type(
             c.__name__,
@@ -67,11 +71,7 @@ class TestsFlextCoreEnforcementTargetIdentity:
         assert bool(violations) is facade_module
 
     def test_declared_facade_with_alias_first_remains_valid(self) -> None:
-        target = type(
-            c.__name__,
-            (c,),
-            {"__module__": c.__module__},
-        )
+        target = type(c.__name__, (c,), {"__module__": c.__module__})
 
         assert not any(
             v.rule_id in {"ENFORCE-047", "ENFORCE-049"}
