@@ -305,8 +305,11 @@ class FlextContainer(p.Container):
         self._internal_registrations.discard(name)
         try:
             self._update_registered_object_service(name, impl)
-        except c.EXC_ATTR_RUNTIME_TYPE:
+        except c.EXC_ATTR_RUNTIME_TYPE as exc:
             del self._services[name]
+            raise e.ValidationError(
+                c.ERR_CONTAINER_REGISTRATION_FAILED.format(name=name, reason=exc)
+            ) from exc
         return self
 
     @override
@@ -342,8 +345,11 @@ class FlextContainer(p.Container):
                 cache=self._global_config.enable_factory_caching,
             )
             setattr(self._di_bridge, name, getattr(self._di_services, name))
-        except c.EXC_ATTR_RUNTIME_TYPE:
+        except c.EXC_ATTR_RUNTIME_TYPE as exc:
             del self._factories[name]
+            raise e.ValidationError(
+                c.ERR_CONTAINER_REGISTRATION_FAILED.format(name=name, reason=exc)
+            ) from exc
         return self
 
     @override
@@ -361,8 +367,11 @@ class FlextContainer(p.Container):
         try:
             u.DependencyIntegration.register_resource(self._di_resources, name, impl)
             setattr(self._di_bridge, name, getattr(self._di_resources, name))
-        except c.EXC_ATTR_RUNTIME_TYPE:
+        except c.EXC_ATTR_RUNTIME_TYPE as exc:
             del self._resources[name]
+            raise e.ValidationError(
+                c.ERR_CONTAINER_REGISTRATION_FAILED.format(name=name, reason=exc)
+            ) from exc
         return self
 
     def _update_registered_object_service(

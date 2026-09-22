@@ -17,6 +17,9 @@ class FlextConstantsErrorsRuntimeSettings:
         "Factory '{name}' returned value that does not satisfy RegisterableService"
         " protocol. Expected a canonical registerable service, protocol, or callable."
     )
+    ERR_CONTAINER_REGISTRATION_FAILED: Final[str] = (
+        "Container registration of '{name}' failed: {reason}"
+    )
     ERR_CONTAINER_CONFIG_NOT_INITIALIZED: Final[str] = (
         "Configuration must be initialized via initialize_registrations"
     )
