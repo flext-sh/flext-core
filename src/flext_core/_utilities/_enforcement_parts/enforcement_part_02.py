@@ -87,7 +87,10 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
 
         items: Iterator[tuple[str, tuple[p.AttributeProbe, ...]]] = iter(())
         if category is c.EnforcementCategory.FIELD:
-            if is_model:
+            # Field collection is uniform across every model base: settings
+            # classes subclass BaseModel, so this check matches is_model while
+            # handing _field_items exactly one type[BaseModel].
+            if issubclass(target, mp.BaseModel):
                 items = FlextUtilitiesEnforcement._field_items(target, tag)
         elif category is c.EnforcementCategory.MODEL_CLASS:
             if is_model:
