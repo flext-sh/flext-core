@@ -18,7 +18,7 @@ from ._logging import FlextDecoratorsLogging
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from .._protocols.logging import FlextProtocolsLogging as pl
+    from .._protocols.loggings import FlextProtocolsLogging as pl
     from .._protocols.result import FlextProtocolsResult as pr
 
 
@@ -45,7 +45,9 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
                     return r[TValue].ok(result)
                 except cls._CAUGHT_EXCEPTIONS as exc:
                     effective_error_code = (
-                        error_code if error_code is not None else "OPERATION_ERROR"
+                        error_code
+                        if error_code is not None
+                        else c.ErrorCode.OPERATION_ERROR.value
                     )
                     error_msg = f"{func.__name__} failed: {type(exc).__name__}: {exc}"
                     return r[TValue].fail(error_msg, error_code=effective_error_code)

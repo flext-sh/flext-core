@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from .container import FlextProtocolsContainer
     from .context import FlextProtocolsContext
     from .handler import FlextProtocolsHandler
-    from .logging import FlextProtocolsLogging
+    from .loggings import FlextProtocolsLogging
     from .project_metadata import FlextProtocolsProjectMetadata
     from .pydantic import FlextProtocolsPydantic
     from .registry import FlextProtocolsRegistry
@@ -51,7 +51,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".container": ("FlextProtocolsContainer",),
             ".context": ("FlextProtocolsContext",),
             ".handler": ("FlextProtocolsHandler",),
-            ".logging": ("FlextProtocolsLogging",),
+            ".loggings": ("FlextProtocolsLogging",),
             ".project_metadata": ("FlextProtocolsProjectMetadata",),
             ".pydantic": ("FlextProtocolsPydantic",),
             ".registry": ("FlextProtocolsRegistry",),

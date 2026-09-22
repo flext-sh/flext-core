@@ -56,9 +56,10 @@ class FlextConstantsEnforcementRules:
     })
     """ENFORCE-044: builtins that probe attributes by name."""
 
-    # --- Legacy: tag metadata for old enforcement API ---
-    # Mapping tags to their (problem_template, fix_template, category).
-    # New code should use m.EnforcementCatalog instead.
+    # --- Runtime-engine tag metadata (canonical text owner) ---
+    # Maps each runtime violation tag to its (problem_template, fix_template,
+    # category). m.EnforcementCatalog holds rule specs (ids, severities,
+    # sources); these maps own the emitted problem/fix text templates.
 
     ENFORCEMENT_TAG_CATEGORY: ClassVar[Mapping[str, EnforcementCategory]] = (
         MappingProxyType({

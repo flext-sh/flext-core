@@ -90,7 +90,7 @@ if TYPE_CHECKING:
     from .file import FlextConstantsFile
     from .guards import FlextConstantsGuards
     from .infrastructure import FlextConstantsInfrastructure
-    from .logging import FlextConstantsLogging
+    from .loggings import FlextConstantsLogging
     from .mixins import FlextConstantsMixins
     from .project_metadata import FlextConstantsProjectMetadata
     from .pydantic import FlextConstantsPydantic
@@ -234,7 +234,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".file": ("FlextConstantsFile",),
             ".guards": ("FlextConstantsGuards",),
             ".infrastructure": ("FlextConstantsInfrastructure",),
-            ".logging": ("FlextConstantsLogging",),
+            ".loggings": ("FlextConstantsLogging",),
             ".mixins": ("FlextConstantsMixins",),
             ".project_metadata": ("FlextConstantsProjectMetadata",),
             ".pydantic": ("FlextConstantsPydantic",),

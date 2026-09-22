@@ -24,7 +24,8 @@ class FlextConstantsEnvironment:
         LOCAL = "local"
 
     ENV_PREFIX: ClassVar[str] = "FLEXT_"
-    """Root env prefix invariant (consumed forward by m for derived defaults).
+    """Root env prefix invariant (SSOT: seeds the settings layer's model_config
+    and is consumed forward by m for derived defaults).
 
     ``ENV_FILE_ENV_VAR``/``ENV_FILE_DEFAULT`` moved to their chain-law owner
     ``_settings.py`` (settings is the bottom layer); consume them via

@@ -131,7 +131,7 @@ class FlextUtilitiesLoggingConfig:
                     exc_info=exc,
                 )
             if self.thread.is_alive():
-                self.thread.join(timeout=2.0)
+                self.thread.join(timeout=c.LOG_SHUTDOWN_JOIN_SECONDS)
             self.flush()
 
         @override
@@ -155,7 +155,7 @@ class FlextUtilitiesLoggingConfig:
             """Worker thread processing log queue."""
             while True:
                 try:
-                    msg = self.queue.get(timeout=0.1)
+                    msg = self.queue.get(timeout=c.LOG_WORKER_POLL_SECONDS)
                     if msg is None:
                         break
                     self._write_queued_message(msg)

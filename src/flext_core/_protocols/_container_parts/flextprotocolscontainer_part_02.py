@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
     from ..context import FlextProtocolsContext
     from ..handler import FlextProtocolsHandler
-    from ..logging import FlextProtocolsLogging
+    from ..loggings import FlextProtocolsLogging
     from ..result import FlextProtocolsResult
 from .flextprotocolscontainer_part_01 import (
     FlextProtocolsContainer as FlextProtocolsContainerPart01,

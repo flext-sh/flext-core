@@ -13,6 +13,8 @@ import time
 import pytest
 from flext_tests import d, e, r
 
+from flext_core import c
+
 
 class TestsFlextCoreDecoratorsRailwayRetry:
     """Public-contract behavior of the railway/retry/timeout decorators."""
@@ -183,4 +185,4 @@ class TestsFlextCoreDecoratorsRailwayRetry:
         # Act / Assert
         with pytest.raises(e.FlextTimeoutError) as info:
             slow_operation()
-        assert info.value.error_code == "OPERATION_TIMEOUT"
+        assert info.value.error_code == c.ErrorCode.TIMEOUT_ERROR.value

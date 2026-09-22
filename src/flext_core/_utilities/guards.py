@@ -224,8 +224,8 @@ class FlextUtilitiesGuards(
         fail_msg = "Guard validation failed"
         try:
             validation_passed = FlextUtilitiesGuards._check_validator(value, validator)
-        except (TypeError, ValueError, AttributeError):
-            fail_msg = "Guard validation raised an exception"
+        except (TypeError, ValueError, AttributeError) as exc:
+            fail_msg = f"Guard validation raised {type(exc).__name__}: {exc}"
             validation_passed = False
         if validation_passed:
             return (

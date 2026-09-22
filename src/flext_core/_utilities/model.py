@@ -137,15 +137,6 @@ class FlextUtilitiesModel:
             and callable(getattr(candidate, "model_copy", None))
         ):
             return candidate
-        resolver = getattr(service_or_cls, "_get_service_settings_type", None)
-        if callable(resolver):
-            resolved = resolver()
-            if (
-                isinstance(resolved, type)
-                and callable(getattr(resolved, "fetch_global", None))
-                and callable(getattr(resolved, "model_copy", None))
-            ):
-                return resolved
         return settings_base
 
     @overload

@@ -36,6 +36,7 @@ from typing import Annotated, ClassVar, Final, Self
 from pydantic import BaseModel, Field, computed_field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from ._constants.environment import FlextConstantsEnvironment
 from ._constants.settings import FlextConstantsSettings
 
 ENV_FILE_DEFAULT: Final[str] = ".env"
@@ -164,10 +165,10 @@ def _validate_app_namespace(namespace: str) -> str:
 def _namespace_dir_name(env_prefix: str) -> str:
     """Derive the owning project's namespace segment from its ``env_prefix``.
 
-    ``FLEXT_`` -> ``flext``; ``AI_HUB_`` -> ``ai-hub``; empty -> ``flext``. This
+    ``FLEXT_`` -> ``flext``; ``AI_HUB_`` -> ``ai-hub``. This
     is the default when no application identity was registered.
     """
-    return env_prefix.rstrip("_").lower().replace("_", "-") or "flext"
+    return env_prefix.rstrip("_").lower().replace("_", "-")
 
 
 class FlextSettings(BaseSettings):
@@ -178,7 +179,7 @@ class FlextSettings(BaseSettings):
     """
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
-        env_prefix="FLEXT_",
+        env_prefix=FlextConstantsEnvironment.ENV_PREFIX,
         env_nested_delimiter="__",
         env_file=_resolve_env_file(),
         env_file_encoding="utf-8",
@@ -368,7 +369,9 @@ class FlextSettings(BaseSettings):
         standalone project (e.g. ``ai-hub``) transparently owns its own
         directories without being forced to call ``set_app_namespace``.
         """
-        env_prefix = cls.model_config.get("env_prefix") or "FLEXT_"
+        env_prefix = (
+            cls.model_config.get("env_prefix") or FlextConstantsEnvironment.ENV_PREFIX
+        )
         return _namespace_dir_name(env_prefix)
 
     @classmethod

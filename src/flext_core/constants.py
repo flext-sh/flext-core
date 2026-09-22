@@ -17,7 +17,7 @@ from ._constants.errors import FlextConstantsErrors
 from ._constants.file import FlextConstantsFile
 from ._constants.guards import FlextConstantsGuards
 from ._constants.infrastructure import FlextConstantsInfrastructure
-from ._constants.logging import FlextConstantsLogging
+from ._constants.loggings import FlextConstantsLogging
 from ._constants.mixins import FlextConstantsMixins
 from ._constants.project_metadata import FlextConstantsProjectMetadata
 from ._constants.pydantic import FlextConstantsPydantic

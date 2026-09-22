@@ -417,6 +417,10 @@ $${mise_config_argument:+"$$mise_config_argument"} \
 		fi; \
 	done; \
 	mise_checked "$$scratch/install.log" mise_exec project "$$latest_mise" -C "$$project_root" install --yes; \
+	# ``mise install`` may reuse an installed fuzzy match. Upgrade Python inside \
+	# the configured minor line so ``python = \"3.13\"`` always resolves the \
+	# newest available 3.13 patch without rewriting the project selector. \
+	mise_checked "$$scratch/python-upgrade.log" mise_exec project "$$latest_mise" -C "$$project_root" upgrade --no-prune python; \
 	mise_checked "$$scratch/uv-version.log" mise_exec project "$$latest_mise" -C "$$project_root" exec -- uv --version; \
 	uv_output=$$(cat "$$scratch/uv-version.log"); \
 	case "$$uv_output" in \
@@ -468,8 +472,9 @@ endif
 # `flext-infra workspace orchestrate` primitive (verb allowlist + CLI group come
 # from the constants SSOT, never hardcoded here). Members and standalone projects
 # run the gate locally. Every member runs; the summary names every failure.
-# Provisioning is declared once and shared by every profile. Creating a missing
-# venv is provisioning; clearing a present one is destruction, so it never happens.
+# Provisioning is declared once and shared by every profile. A venv records the
+# exact base interpreter used to create it, so setup replaces it when Mise moves
+# the configured Python minor line to a newer patch.
 # A symlinked RUNTIME_VENV is a BORROWED environment: a linked worktree (a
 # lane checkout) shares the primary checkout's environment so the two never
 # diverge. Syncing it would rewrite the editable pointers the owner and every
@@ -479,8 +484,12 @@ SETUP_ENVIRONMENT_RECIPE = set -eu; \
 	if [ -L "$(RUNTIME_VENV)" ]; then \
 		printf 'setup: borrowed environment %s is owned by another checkout\n' "$(RUNTIME_VENV)"; \
 	else \
+		desired_python=$$("$(SETUP_MISE)" -C "$(PROJECT_ROOT)" which python); \
 		if [ ! -x "$(RUNTIME_PYTHON)" ]; then \
-			$(UV) venv "$(RUNTIME_VENV)"; \
+			$(UV) venv --python "$$desired_python" "$(RUNTIME_VENV)"; \
+		elif [ "$$(readlink -f "$(RUNTIME_PYTHON)")" != "$$(readlink -f "$$desired_python")" ]; then \
+			printf 'setup: replacing environment for Python %s\n' "$$desired_python"; \
+			$(UV) venv --clear --python "$$desired_python" "$(RUNTIME_VENV)"; \
 		fi; \
 		$(UV) sync --project "$(PROJECT_ROOT)" $(UV_SYNC_FLAGS) --link-mode "$(UV_LINK_MODE)"; \
 	fi; \
