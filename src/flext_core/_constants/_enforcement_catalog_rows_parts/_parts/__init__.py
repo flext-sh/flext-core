@@ -13,10 +13,7 @@ if TYPE_CHECKING:
     from .flextconstantsenforcementcatalogrows_part_01_b import (
         INFRA_DETECTOR_ROWS_PATTERNS,
     )
-__all__: tuple[str, ...] = (
-    "INFRA_DETECTOR_ROWS_CORE",
-    "INFRA_DETECTOR_ROWS_PATTERNS",
-)
+__all__: tuple[str, ...] = ("INFRA_DETECTOR_ROWS_CORE", "INFRA_DETECTOR_ROWS_PATTERNS")
 
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
