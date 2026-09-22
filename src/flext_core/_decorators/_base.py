@@ -14,7 +14,7 @@ from flext_core import FlextContainer, m
 from flext_core.context import FlextContext
 from flext_core.loggings import FlextUtilitiesLogging
 
-from .._protocols.logging import FlextProtocolsLogging as pl
+from .._protocols.loggings import FlextProtocolsLogging as pl
 from .._typings.base import FlextTypingBase as tb
 from .._typings.services import FlextTypesServices as ts
 

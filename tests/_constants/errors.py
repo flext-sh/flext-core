@@ -6,33 +6,33 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Final
+from typing import ClassVar
 
 
 class TestsFlextConstantsErrors:
     """Flat error and validation constants for flext-core tests."""
 
-    USER_NOT_FOUND: Final[str] = "User not found"
-    INVALID_EMAIL: Final[str] = "Invalid email address"
-    VALUE_TOO_LOW: Final[str] = "Value must be positive"
-    VALUE_TOO_HIGH: Final[str] = "Value must be <= 100"
-    TEST_ERROR: Final[str] = "Test error"
-    DISPATCHER_UNCONFIGURED: Final[str] = "dispatcher-unconfigured"
-    DISPATCHER_FAIL: Final[str] = "dispatcher-fail"
-    NO_USER_IDS_PROVIDED: Final[str] = "No user IDs provided"
-    SUBCLASSES_MUST_IMPLEMENT_EXECUTE: Final[str] = (
+    USER_NOT_FOUND: ClassVar[str] = "User not found"
+    INVALID_EMAIL: ClassVar[str] = "Invalid email address"
+    VALUE_TOO_LOW: ClassVar[str] = "Value must be positive"
+    VALUE_TOO_HIGH: ClassVar[str] = "Value must be <= 100"
+    TEST_ERROR: ClassVar[str] = "Test error"
+    DISPATCHER_UNCONFIGURED: ClassVar[str] = "dispatcher-unconfigured"
+    DISPATCHER_FAIL: ClassVar[str] = "dispatcher-fail"
+    NO_USER_IDS_PROVIDED: ClassVar[str] = "No user IDs provided"
+    SUBCLASSES_MUST_IMPLEMENT_EXECUTE: ClassVar[str] = (
         "Subclasses must implement execute()"
     )
-    HANDLER_ID_CANNOT_BE_EMPTY: Final[str] = "Handler ID cannot be empty"
-    PROCESSING_ERROR_DEFAULT: Final[str] = "Processing error"
-    BAD_DICT_GET: Final[str] = "Bad dict get"
-    BAD_LIST_ITERATION: Final[str] = "Bad list iteration"
-    CANNOT_INSTANTIATE: Final[str] = "Cannot instantiate"
-    UNEXPECTED_MESSAGE_TYPE: Final[str] = "Unexpected message type"
-    VALIDATION_FAILED_FOR_TEST: Final[str] = "Validation failed for test"
+    HANDLER_ID_CANNOT_BE_EMPTY: ClassVar[str] = "Handler ID cannot be empty"
+    PROCESSING_ERROR_DEFAULT: ClassVar[str] = "Processing error"
+    BAD_DICT_GET: ClassVar[str] = "Bad dict get"
+    BAD_LIST_ITERATION: ClassVar[str] = "Bad list iteration"
+    CANNOT_INSTANTIATE: ClassVar[str] = "Cannot instantiate"
+    UNEXPECTED_MESSAGE_TYPE: ClassVar[str] = "Unexpected message type"
+    VALIDATION_FAILED_FOR_TEST: ClassVar[str] = "Validation failed for test"
 
-    MIN_LENGTH_DEFAULT: Final[int] = 3
-    MAX_VALUE: Final[int] = 100
+    MIN_LENGTH_DEFAULT: ClassVar[int] = 3
+    MAX_VALUE: ClassVar[int] = 100
 
 
 __all__: list[str] = ["TestsFlextConstantsErrors"]

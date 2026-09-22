@@ -10,6 +10,7 @@ import pytest
 from flext_tests import tm
 
 from flext_core import FlextContainer, FlextSettings, u
+from tests import u as test_u
 from tests.constants import c
 from tests.models import m
 
@@ -18,19 +19,13 @@ if TYPE_CHECKING:
 
 
 class TestsFlextCoreUtilitiesSettings:
-    _original_env_file: str | None
     _original_cwd: Path
 
     def setup_method(self) -> None:
-        self._original_env_file = os.environ.pop(c.ENV_FILE_ENV_VAR, None)
         self._original_cwd = Path.cwd()
         FlextContainer.reset_for_testing()
 
     def teardown_method(self) -> None:
-        if self._original_env_file is not None:
-            os.environ[c.ENV_FILE_ENV_VAR] = self._original_env_file
-        else:
-            os.environ.pop(c.ENV_FILE_ENV_VAR, None)
         os.chdir(self._original_cwd)
         FlextContainer.reset_for_testing()
 
@@ -60,9 +55,9 @@ class TestsFlextCoreUtilitiesSettings:
         env_file = tmp_path / FlextSettings.ENV_FILE_DEFAULT
         env_file.write_text("FLEXT_APP_NAME=test-app\n", encoding="utf-8")
         probe_env_var = "FLEXT_TEST_BOOTSTRAP_MODE"
-        os.environ[c.ENV_FILE_ENV_VAR] = str(env_file)
-        os.environ[probe_env_var] = "integration"
-        try:
+        with test_u.Tests.env_vars_context(
+            env_vars={c.ENV_FILE_ENV_VAR: str(env_file), probe_env_var: "integration"}
+        ):
             snapshot = m.Tests.BootstrapSnapshot(
                 env_file=FlextSettings.resolve_env_file(),
                 process_environment=u.resolve_process_environment(),
@@ -72,8 +67,6 @@ class TestsFlextCoreUtilitiesSettings:
                     )
                 ),
             )
-        finally:
-            os.environ.pop(probe_env_var, None)
 
         tm.that(snapshot.env_file, eq=str(env_file.resolve()))
         tm.that(snapshot.process_environment[c.ENV_FILE_ENV_VAR], eq=str(env_file))
@@ -86,18 +79,20 @@ class TestsFlextCoreUtilitiesSettings:
         os.chdir(tmp_path)
         default_env_file = tmp_path / FlextSettings.ENV_FILE_DEFAULT
         default_env_file.write_text("FLEXT_DEBUG=true\n", encoding="utf-8")
-
-        cwd_resolved = FlextSettings.resolve_env_file()
-
-        default_env_file.unlink()
         missing_override = str(tmp_path / "missing.env")
-        os.environ[c.ENV_FILE_ENV_VAR] = missing_override
+
+        with test_u.Tests.env_vars_context(vars_to_clear=[c.ENV_FILE_ENV_VAR]):
+            cwd_resolved = FlextSettings.resolve_env_file()
+            default_env_file.unlink()
+            with test_u.Tests.env_vars_context(
+                env_vars={c.ENV_FILE_ENV_VAR: missing_override}
+            ):
+                override_resolved = FlextSettings.resolve_env_file()
+            fallback_resolved = FlextSettings.resolve_env_file()
 
         tm.that(cwd_resolved, eq=str(default_env_file.resolve()))
-        tm.that(FlextSettings.resolve_env_file(), eq=missing_override)
-
-        os.environ.pop(c.ENV_FILE_ENV_VAR, None)
-        tm.that(FlextSettings.resolve_env_file(), eq=FlextSettings.ENV_FILE_DEFAULT)
+        tm.that(override_resolved, eq=missing_override)
+        tm.that(fallback_resolved, eq=FlextSettings.ENV_FILE_DEFAULT)
 
     def test_register_factory_reports_success_and_resolvable_service(self) -> None:
         container = FlextContainer()

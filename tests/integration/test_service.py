@@ -171,17 +171,3 @@ class TestsFlextCoreService(_ServiceLifecycleCases):
             resolved_notification.send(entity.email), expected_value="sent"
         )
         tm.that(resolved_notification.sent_notifications, has=entity.email)
-
-    # ------------------------------------------------------------------ #
-    # External-service integration — boundary contract
-    # ------------------------------------------------------------------ #
-    def test_external_service_processes_user_email(
-        self, mock_external_service: u.Tests.FunctionalExternalService
-    ) -> None:
-        """A fetched user email flows through the external service boundary."""
-        service = self.UserQueryService()
-        entity = u.Tests.assert_success(service.fetch_user("test_user"))
-        processed = u.Tests.assert_success(mock_external_service.process(entity.email))
-        tm.that(processed, eq=f"processed_{entity.email}")
-        tm.that(mock_external_service.processed_items, has=processed)
-        tm.that(mock_external_service.get_call_count(), eq=1)

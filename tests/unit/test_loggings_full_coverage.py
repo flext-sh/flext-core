@@ -67,13 +67,13 @@ class TestsFlextLoggings:
     def test_create_module_logger_returns_usable_logger_instance(
         self, logger: p.Logger
     ) -> None:
-        tm.that(logger, none=False)
+        assert logger is not None
 
     def test_bind_returns_logger_accepting_subsequent_log_calls(
         self, logger: p.Logger
     ) -> None:
         bound = logger.bind(service_name="svc", correlation_id="cid")
-        tm.that(bound, none=False)
+        assert bound is not None
         result = self._assert_log_output(
             lambda: bound.info("bound ok"), contains="bound ok"
         )
@@ -83,7 +83,7 @@ class TestsFlextLoggings:
         self, logger: p.Logger
     ) -> None:
         refreshed = logger.bind(initial="x").new(fresh="y")
-        tm.that(refreshed, none=False)
+        assert refreshed is not None
         result = self._assert_log_output(
             lambda: refreshed.info("new ok"), contains="new ok"
         )

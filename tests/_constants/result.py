@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Final, Literal
+from typing import ClassVar, Literal
 
 
 class TestsFlextConstantsResult:
@@ -15,13 +15,13 @@ class TestsFlextConstantsResult:
     type RailwayOperation = Literal[
         "get_email", "send_email", "get_status", "double", "square", "negate"
     ]
-    RAILWAY_OPERATION_GET_EMAIL: Final[RailwayOperation] = "get_email"
-    RAILWAY_OPERATION_SEND_EMAIL: Final[RailwayOperation] = "send_email"
-    RAILWAY_OPERATION_GET_STATUS: Final[RailwayOperation] = "get_status"
-    RAILWAY_OPERATION_DOUBLE: Final[RailwayOperation] = "double"
-    RAILWAY_OPERATION_SQUARE: Final[RailwayOperation] = "square"
-    RAILWAY_OPERATION_NEGATE: Final[RailwayOperation] = "negate"
-    RAILWAY_OPERATIONS: Final[frozenset[RailwayOperation]] = frozenset({
+    RAILWAY_OPERATION_GET_EMAIL: ClassVar[RailwayOperation] = "get_email"
+    RAILWAY_OPERATION_SEND_EMAIL: ClassVar[RailwayOperation] = "send_email"
+    RAILWAY_OPERATION_GET_STATUS: ClassVar[RailwayOperation] = "get_status"
+    RAILWAY_OPERATION_DOUBLE: ClassVar[RailwayOperation] = "double"
+    RAILWAY_OPERATION_SQUARE: ClassVar[RailwayOperation] = "square"
+    RAILWAY_OPERATION_NEGATE: ClassVar[RailwayOperation] = "negate"
+    RAILWAY_OPERATIONS: ClassVar[frozenset[RailwayOperation]] = frozenset({
         RAILWAY_OPERATION_GET_EMAIL,
         RAILWAY_OPERATION_SEND_EMAIL,
         RAILWAY_OPERATION_GET_STATUS,

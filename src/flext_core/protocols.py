@@ -11,7 +11,7 @@ from ._protocols.config import FlextProtocolsConfig
 from ._protocols.container import FlextProtocolsContainer
 from ._protocols.context import FlextProtocolsContext
 from ._protocols.handler import FlextProtocolsHandler
-from ._protocols.logging import FlextProtocolsLogging
+from ._protocols.loggings import FlextProtocolsLogging
 from ._protocols.project_metadata import FlextProtocolsProjectMetadata
 from ._protocols.pydantic import FlextProtocolsPydantic
 from ._protocols.registry import FlextProtocolsRegistry

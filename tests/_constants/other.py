@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import c
 
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 class TestsFlextConstantsOther:
-    PUBLIC_EXAMPLES: Final[tuple[tuple[str, str, str], ...]] = (
+    PUBLIC_EXAMPLES: ClassVar[tuple[tuple[str, str, str], ...]] = (
         ("ex_01_flext_result", "examples.ex_01_flext_result", "ex_01_flext_result.py"),
         (
             "ex_02_flext_settings",
@@ -40,9 +40,9 @@ class TestsFlextConstantsOther:
         ),
     )
 
-    VALIDATOR_METHODS: Final[t.StrSequence] = ("imports", "types", "bypass", "layer")
+    VALIDATOR_METHODS: ClassVar[t.StrSequence] = ("imports", "types", "bypass", "layer")
 
-    LAZY_BENCHMARK_REAL_SYMBOLS: Final[t.StrSequence] = (
+    LAZY_BENCHMARK_REAL_SYMBOLS: ClassVar[t.StrSequence] = (
         "FlextConstants",
         "FlextContainer",
         "FlextContext",
@@ -58,7 +58,7 @@ class TestsFlextConstantsOther:
         "t",
         "u",
     )
-    LAZY_BENCHMARK_EXTRA_INSTALL_MAPS: Final[tuple[dict[str, str], ...]] = (
+    LAZY_BENCHMARK_EXTRA_INSTALL_MAPS: ClassVar[tuple[dict[str, str], ...]] = (
         {
             "_types": ".typings:FlextTypes",
             "_models": ".models:FlextModels",
@@ -76,8 +76,8 @@ class TestsFlextConstantsOther:
         },
     )
 
-    CORE_PACKAGE_NAME: Final[str] = "flext-core"
-    PACKAGE_INFO_REQUIRED_KEYS: Final[frozenset[str]] = frozenset({
+    CORE_PACKAGE_NAME: ClassVar[str] = "flext-core"
+    PACKAGE_INFO_REQUIRED_KEYS: ClassVar[frozenset[str]] = frozenset({
         "name",
         "version",
         "description",
@@ -86,16 +86,16 @@ class TestsFlextConstantsOther:
         "license",
         "url",
     })
-    AT_LEAST_CASES: Final[tuple[tuple[int, int, int, bool], ...]] = (
+    AT_LEAST_CASES: ClassVar[tuple[tuple[int, int, int, bool], ...]] = (
         (0, 0, 0, True),
         (999, 0, 0, False),
     )
-    AT_LEAST_CASE_IDS: Final[t.StrSequence] = (
+    AT_LEAST_CASE_IDS: ClassVar[t.StrSequence] = (
         "at-or-above-zero",
         "below-impossibly-high-major",
     )
 
-    CORE_SAFE_STRING_VALID_CASES: Final[tuple[tuple[str, str], ...]] = (
+    CORE_SAFE_STRING_VALID_CASES: ClassVar[tuple[tuple[str, str], ...]] = (
         ("hello", "hello"),
         ("  hello  ", "hello"),
         ("hello\t", "hello"),
@@ -106,13 +106,13 @@ class TestsFlextConstantsOther:
         ("123start", "123start"),
         ("invalid@symbol", "invalid@symbol"),
     )
-    CORE_SAFE_STRING_INVALID_CASES: Final[tuple[tuple[str | None, str], ...]] = (
+    CORE_SAFE_STRING_INVALID_CASES: ClassVar[tuple[tuple[str | None, str], ...]] = (
         (None, c.ERR_TEXT_NONE_NOT_ALLOWED),
         ("", c.ERR_TEXT_EMPTY_NOT_ALLOWED),
         ("   ", c.ERR_TEXT_EMPTY_NOT_ALLOWED),
         ("\t", c.ERR_TEXT_EMPTY_NOT_ALLOWED),
     )
-    CORE_FORMAT_APP_ID_CASES: Final[tuple[tuple[str, str], ...]] = (
+    CORE_FORMAT_APP_ID_CASES: ClassVar[tuple[tuple[str, str], ...]] = (
         ("MyApp", "myapp"),
         ("My App", "my-app"),
         ("my_app", "my-app"),

@@ -43,6 +43,7 @@ class FlextConstantsBase:
 
     DEFAULT_BACKOFF_MULTIPLIER: ClassVar[float] = 2.0
     DEFAULT_SIZE: ClassVar[int] = 1000
+    MS_PER_SECOND: ClassVar[int] = 1000
     MAX_ITEMS: ClassVar[int] = 10000
     DEFAULT_EMPTY_STRING: ClassVar[str] = ""
     DEFAULT_METADATA_SCHEMA_VERSION: ClassVar[str] = "1.0.0"
