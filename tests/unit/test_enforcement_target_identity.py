@@ -6,8 +6,7 @@ import pytest
 
 from flext_cli import c
 from flext_core import FlextConfig, FlextSettings
-from tests.models import m
-from tests.utilities import u
+from tests import m, u
 
 
 class TestsFlextCoreEnforcementTargetIdentity:
