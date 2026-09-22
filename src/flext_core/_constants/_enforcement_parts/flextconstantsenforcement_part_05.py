@@ -123,13 +123,13 @@ _BASE_ENFORCEMENT_RULES_TEXT: dict[str, t.StrPair] = {
 
 
 class FlextConstantsEnforcementRuleText:
-    """Legacy problem/fix text indexed by enforcement tag."""
+    """Canonical problem/fix text templates indexed by enforcement tag."""
 
     ENFORCEMENT_RULES_TEXT: ClassVar[Mapping[str, t.StrPair]] = MappingProxyType({
         **_BASE_ENFORCEMENT_RULES_TEXT,
         **SMELL_RULES_TEXT,
     })
-    """Legacy: problem/fix text indexed by tag. Use m.EnforcementCatalog for new code."""
+    """Problem/fix text templates per tag; consumed by the enforcement emitter."""
 
 
 __all__: list[str] = ["FlextConstantsEnforcementRuleText"]
