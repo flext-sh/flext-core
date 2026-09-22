@@ -62,8 +62,16 @@ def alias_first_violation(
         package_name = target.__module__.split(".", 1)[0]
         project_prefix = upm.derive_class_stem(package_name)
     tier_facade_prefixes = (project_prefix, f"Tests{project_prefix}")
-    is_facade = is_module_level and target.__name__.startswith(tier_facade_prefixes)
     module_name = getattr(target, "__module__", "") or ""
+    package_name = module_name.split(".", 1)[0]
+    alias_rows = ubh.lazy_alias_suffixes(package_name)
+    # A project prefix also names ordinary services. Facade ordering applies
+    # only inside the package's declared alias modules.
+    is_facade = all((
+        is_module_level,
+        target.__name__.startswith(tier_facade_prefixes),
+        any(module_name == module_path for _, module_path, _ in alias_rows),
+    ))
     is_core_root = module_name.startswith("flext_core.") and not module_name.startswith((
         "flext_core.tests",
         "flext_core.examples",
@@ -90,8 +98,7 @@ def alias_first_violation(
     first_name = getattr(first_base, "__name__", "")
     # Strip generic parameters so ``FlextService[T]`` → ``FlextService``
     unparametrized_name = first_name.split("[")[0]
-    package_name = module_name.split(".", 1)[0]
-    suffixes = tuple(suffix for _, _, suffix in ubh.lazy_alias_suffixes(package_name))
+    suffixes = tuple(suffix for _, _, suffix in alias_rows)
     valid_suffixes = suffixes + tuple(f"{suffix}Base" for suffix in suffixes)
     alias_base_sets = [
         {

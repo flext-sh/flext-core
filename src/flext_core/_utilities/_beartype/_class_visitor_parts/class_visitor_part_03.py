@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from ...._config import FlextConfig
 from ...._constants.enforcement import FlextConstantsEnforcement as c
 from ...._models.enforcement import FlextModelsEnforcement as me
 from ...._typings.base import FlextTypingBase as t
@@ -36,14 +37,15 @@ class FlextUtilitiesBeartypeClassVisitor(FlextUtilitiesBeartypeClassVisitorPart0
         )
         # A settings class is one that DECLARES itself a pydantic-settings model
         # (``BaseSettings`` in its MRO), never one whose name ends in "Settings":
-        # namespace holders such as ``FlextConstantsSettings`` are plain classes
-        # and are not targets (ADR-018: derive from the declaration, never from
-        # a name).
+        # namespace holders are not targets. FlextConfig is a separate canonical
+        # BaseSettings lineage (ADR-005), not a FlextSettings consumer. Check its
+        # identity so an unrelated class named FlextConfig cannot bypass the rule.
         base_names = {base.__name__ for base in target.__mro__[1:]}
         inherits_flext_settings = "FlextSettings" in base_names
         is_settings_target = all((
             params.require_settings_base,
             "BaseSettings" in base_names,
+            not issubclass(target, FlextConfig),
             is_top_level,
             target_name != "FlextSettings",
         ))
