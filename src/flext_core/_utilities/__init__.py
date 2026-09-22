@@ -38,8 +38,6 @@ if TYPE_CHECKING:
     from ._beartype.method_visitor import FlextUtilitiesBeartypeMethodVisitor
     from ._beartype.module_visitor import FlextUtilitiesBeartypeModuleVisitor
     from ._context_crud_set import FlextUtilitiesContextCrudSetMixin
-    from ._enforcement_parts.enforcement_part_01 import PREDICATE_BINDINGS
-    from ._enforcement_parts.enforcement_part_05 import FlextUtilitiesEnforcement
     from ._enforcement_parts.enforcement_part_06 import EXTENDED_PREDICATE_BINDINGS
     from ._guards_type_protocol_specs import FlextUtilitiesGuardsTypeProtocolSpecsMixin
     from ._guards_type_protocol_string import (
@@ -65,6 +63,7 @@ if TYPE_CHECKING:
     from .discovery import FlextUtilitiesDiscovery
     from .dispatcher_execute import execute_dispatcher_handler
     from .domain import FlextUtilitiesDomain
+    from .enforcement import PREDICATE_BINDINGS, FlextUtilitiesEnforcement
     from .enforcement_collect import FlextUtilitiesEnforcementCollect
     from .enforcement_emit import FlextUtilitiesEnforcementEmit
     from .enums import FlextUtilitiesEnum
@@ -199,8 +198,6 @@ _LAZY_IMPORTS = MappingProxyType(
             "._context_crud_set": ("FlextUtilitiesContextCrudSetMixin",),
             "._enforcement_collect_parts": ("_enforcement_collect_parts",),
             "._enforcement_parts": ("_enforcement_parts",),
-            "._enforcement_parts.enforcement_part_01": ("PREDICATE_BINDINGS",),
-            "._enforcement_parts.enforcement_part_05": ("FlextUtilitiesEnforcement",),
             "._enforcement_parts.enforcement_part_06": ("EXTENDED_PREDICATE_BINDINGS",),
             "._guards_type_protocol_specs": (
                 "FlextUtilitiesGuardsTypeProtocolSpecsMixin",
@@ -233,6 +230,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".discovery": ("FlextUtilitiesDiscovery",),
             ".dispatcher_execute": ("execute_dispatcher_handler",),
             ".domain": ("FlextUtilitiesDomain",),
+            ".enforcement": ("FlextUtilitiesEnforcement", "PREDICATE_BINDINGS"),
             ".enforcement_collect": ("FlextUtilitiesEnforcementCollect",),
             ".enforcement_emit": ("FlextUtilitiesEnforcementEmit",),
             ".enums": ("FlextUtilitiesEnum",),
