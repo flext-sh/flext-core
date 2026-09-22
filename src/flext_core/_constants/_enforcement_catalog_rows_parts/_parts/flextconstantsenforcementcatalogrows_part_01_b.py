@@ -2,8 +2,13 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from flext_core import t
+
 INFRA_DETECTOR_ROWS_PATTERNS: tuple[
-    tuple[str, str, str, str, tuple[str, ...], bool, str], ...
+    tuple[str, str, str, str, t.VariadicTuple[str], bool, str], ...
 ] = (
     (
         "ENFORCE-026",
@@ -66,7 +71,7 @@ INFRA_DETECTOR_ROWS_PATTERNS: tuple[
         "3-2-types-and-contracts",
         ("flext-strict-typing",),
         False,
-        "`from typing import ClassVar, Dict` — banned in favor of dict / Mapping.",
+        "`from typing import TYPE_CHECKING, ClassVar, Dict` — banned in favor of dict / Mapping.",
     ),
     (
         "ENFORCE-033",

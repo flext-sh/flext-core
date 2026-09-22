@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 class FlextConstantsEnforcementSmellData:
     """JSON-loaded smell enforcement rules and thresholds."""
 
-    ENFORCEMENT_SMELL_TAGS: ClassVar[tuple[str, ...]] = ENFORCEMENT_SMELL_TAGS
+    ENFORCEMENT_SMELL_TAGS: ClassVar[t.VariadicTuple[str]] = ENFORCEMENT_SMELL_TAGS
     SMELL_THRESHOLDS: ClassVar[t.IntMapping] = SMELL_THRESHOLDS
     ENFORCEMENT_SMELL_FIX_STRATEGIES: ClassVar[
         t.MappingKV[str, t.MappingKV[str, t.JsonValue]]
@@ -30,10 +30,10 @@ class FlextConstantsEnforcementSmellData:
     }
     SMELL_RULES_TEXT: ClassVar[t.StrPairMapping] = SMELL_RULES_TEXT
     SMELL_BEARTYPE_ROWS: ClassVar[
-        tuple[tuple[str, str, str, str, tuple[str, ...], str], ...]
+        tuple[tuple[str, str, str, str, t.VariadicTuple[str], str], ...]
     ] = SMELL_BEARTYPE_ROWS
     SMELL_CODE_SMELL_ROWS: ClassVar[
-        tuple[tuple[str, str, str, str, tuple[str, ...], str], ...]
+        tuple[tuple[str, str, str, str, t.VariadicTuple[str], str], ...]
     ] = SMELL_CODE_SMELL_ROWS
 
 

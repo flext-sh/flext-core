@@ -28,7 +28,7 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
     metadata: m.Metadata
     timestamp: float
     auto_log: bool
-    args: tuple[str, ...]
+    args: tb.VariadicTuple[str]
 
     _error_domains: ClassVar[Mapping[str, c.ErrorDomain]] = {
         c.ErrorCode.VALIDATION_ERROR: c.ErrorDomain.VALIDATION,

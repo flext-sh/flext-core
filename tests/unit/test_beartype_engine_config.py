@@ -68,7 +68,7 @@ class TestsFlextCoreBeartypeEngineConfig:
         [
             (dict[str, int], (True, "dict")),
             (list[int], (True, "list")),
-            (tuple[int, ...], (False, "")),
+            (t.VariadicTuple[int], (False, "")),
             (str, (False, "")),
             (None, (False, "")),
         ],

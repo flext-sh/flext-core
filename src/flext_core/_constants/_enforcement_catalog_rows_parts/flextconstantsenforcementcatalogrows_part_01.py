@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from ._parts.flextconstantsenforcementcatalogrows_part_01_a import (
     INFRA_DETECTOR_ROWS_CORE,
@@ -14,12 +14,15 @@ from .flextconstantsenforcementcatalogrows_part_05 import (
     FlextConstantsEnforcementCatalogInfraRowsExtended,
 )
 
+if TYPE_CHECKING:
+    from flext_core import t
+
 
 class FlextConstantsEnforcementCatalogInfraRows:
     """Infra detector rows for the enforcement catalog."""
 
     INFRA_DETECTOR_ROWS: ClassVar[
-        tuple[tuple[str, str, str, str, tuple[str, ...], bool, str], ...]
+        tuple[tuple[str, str, str, str, t.VariadicTuple[str], bool, str], ...]
     ] = (
         *INFRA_DETECTOR_ROWS_CORE,
         *INFRA_DETECTOR_ROWS_PATTERNS,

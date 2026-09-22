@@ -55,7 +55,7 @@ class FlextUtilitiesCollection(
 
     @staticmethod
     def find[TItem](
-        items: t.SequenceOf[TItem] | tuple[TItem, ...] | t.MappingKV[str, TItem],
+        items: t.SequenceOf[TItem] | t.VariadicTuple[TItem] | t.MappingKV[str, TItem],
         predicate: Callable[[TItem], bool],
     ) -> p.Result[TItem]:
         """Find first item matching predicate; returns r[T]."""

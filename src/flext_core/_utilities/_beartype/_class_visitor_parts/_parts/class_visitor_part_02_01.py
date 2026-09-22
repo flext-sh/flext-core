@@ -17,8 +17,8 @@ def _peer_first_allowed(
     base_count: int,
     first_name: str,
     unparametrized_name: str,
-    valid_suffixes: tuple[str, ...],
-    tier_facade_prefixes: tuple[str, ...],
+    valid_suffixes: t.VariadicTuple[str],
+    tier_facade_prefixes: t.VariadicTuple[str],
     shared_peer_alias_base: set[type],
 ) -> bool:
     """Return True when a facade may place a peer base first."""
@@ -38,7 +38,7 @@ def _requires_alias_first(
     is_core_root: bool,
     is_alias_or_alias_base_first: bool,
     unparametrized_name: str,
-    valid_suffixes: tuple[str, ...],
+    valid_suffixes: t.VariadicTuple[str],
     allows_peer_first: bool,
 ) -> bool:
     """Return True when a facade base must be an alias/alias-base first."""

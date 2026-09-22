@@ -94,7 +94,7 @@ class FlextTypingBase(tp, ta):
         bool,
     )
     NUMERIC_TYPES: tuple[type[int], type[float]] = (int, float)
-    SEQUENCE_PAIR_TYPES: tuple[type, ...] = (list, tuple)
+    SEQUENCE_PAIR_TYPES: VariadicTuple[type] = (list, tuple)
     STR_BYTES_TYPES: tuple[type[str], type[bytes]] = (str, bytes)
     STR_BINARY_TYPES: tuple[type[str], type[bytes], type[bytearray]] = (
         str,
@@ -107,7 +107,7 @@ class FlextTypingBase(tp, ta):
     CONTAINER_TYPES: tuple[
         type[str], type[int], type[float], type[bool], type[datetime], type[Path]
     ] = (str, int, float, bool, datetime, Path)
-    CONTAINER_AND_COLLECTION_TYPES: tuple[type, ...] = (
+    CONTAINER_AND_COLLECTION_TYPES: VariadicTuple[type] = (
         *CONTAINER_TYPES,
         list,
         dict,
@@ -129,7 +129,7 @@ class FlextTypingBase(tp, ta):
     type StrIntPair = Pair[str, int]
     type StrPairSequence = SequenceOf[StrPair]
     type MutableStrPairSequence = MutableSequenceOf[StrPair]
-    type StrPairTuple = tuple[StrPair, ...]
+    type StrPairTuple = VariadicTuple[StrPair]
     type StrPairMapping = MappingKV[str, StrPair]
     type MutableStrPairMapping = MutableMappingKV[str, StrPair]
     type StrPairTupleMapping = MappingKV[str, StrPairTuple]
@@ -140,7 +140,7 @@ class FlextTypingBase(tp, ta):
     type MutableOptionalStrPairSequence = MutableSequenceOf[OptionalStrPair]
     type StrSequencePair = Pair[str, StrSequence]
     type StrSequencePairSequence = SequenceOf[StrSequencePair]
-    type StrSequencePairTuple = tuple[StrSequencePair, ...]
+    type StrSequencePairTuple = VariadicTuple[StrSequencePair]
     type StrPairSequencePair = Pair[str, StrPairSequence]
     type StrPairSequencePairSequence = SequenceOf[StrPairSequencePair]
     type LazyImportEntry = str | StrPair

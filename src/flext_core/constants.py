@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from ._constants.base import FlextConstantsBase
 from ._constants.config import FlextConstantsConfig
 from ._constants.cqrs import FlextConstantsCqrs
@@ -25,6 +27,9 @@ from ._constants.settings import FlextConstantsSettings
 from ._constants.status import FlextConstantsStatus
 from ._constants.timeout import FlextConstantsTimeout
 from ._constants.validation import FlextConstantsValidation
+
+if TYPE_CHECKING:
+    from flext_core import t
 
 
 class FlextConstants(
@@ -54,4 +59,4 @@ class FlextConstants(
 # mro-j47u: publish the canonical constants alias with no stray runtime surface.
 c = FlextConstants
 
-__all__: tuple[str, ...] = ("FlextConstants", "FlextConstantsEnforcement", "c")
+__all__: t.VariadicTuple[str] = ("FlextConstants", "FlextConstantsEnforcement", "c")

@@ -28,7 +28,7 @@ from collections.abc import Callable
 from importlib.resources.abc import Traversable
 from pathlib import Path
 from threading import RLock
-from typing import Any, ClassVar, Self, cast, override
+from typing import TYPE_CHECKING, Any, ClassVar, Self, cast, override
 
 from pydantic import JsonValue
 from pydantic_settings import (
@@ -44,6 +44,9 @@ from yaml.resolver import BaseResolver
 
 from ._constants.config import FlextConstantsConfig
 from ._settings import app_env_prefix, platform_config_root
+
+if TYPE_CHECKING:
+    from flext_core import t
 
 
 class _UniqueKeySafeLoader(SafeLoader):
@@ -189,7 +192,7 @@ class FlextConfig(BaseSettings):
 
     # NOTE (multi-agent): exact-file consumers declare their YAML surface here;
     # the empty default preserves deterministic directory auto-discovery.
-    CONFIG_FILENAMES: ClassVar[tuple[str, ...]] = ()
+    CONFIG_FILENAMES: ClassVar[t.VariadicTuple[str]] = ()
     YAML_CONFIG_SECTION: ClassVar[str | None] = None
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
@@ -308,7 +311,7 @@ class FlextConfig(BaseSettings):
         env_settings: PydanticBaseSettingsSource,
         dotenv_settings: PydanticBaseSettingsSource,
         file_secret_settings: PydanticBaseSettingsSource,
-    ) -> tuple[PydanticBaseSettingsSource, ...]:
+    ) -> t.VariadicTuple[PydanticBaseSettingsSource]:
         """Env + every ``config/*.yaml`` deep-merged; no dotenv/secret sources."""
         _ = (dotenv_settings, file_secret_settings)
         return (

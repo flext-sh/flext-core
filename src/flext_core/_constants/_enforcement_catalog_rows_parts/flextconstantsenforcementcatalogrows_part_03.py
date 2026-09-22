@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
+
+if TYPE_CHECKING:
+    from flext_core import t
 
 
 class FlextConstantsEnforcementCatalogToolRows:
     """Ruff, tests-validator, and ast-grep rows."""
 
-    RUFF_ROWS: ClassVar[tuple[tuple[str, str, str, tuple[str, ...], str], ...]] = (
+    RUFF_ROWS: ClassVar[tuple[tuple[str, str, str, t.VariadicTuple[str], str], ...]] = (
         (
             "ENFORCE-023",
             "HIGH",
@@ -33,7 +36,9 @@ class FlextConstantsEnforcementCatalogToolRows:
     )
 
     TESTS_VALIDATOR_ROWS: ClassVar[
-        tuple[tuple[str, str, str, tuple[str, ...], tuple[str, ...], str], ...]
+        tuple[
+            tuple[str, str, str, t.VariadicTuple[str], t.VariadicTuple[str], str], ...
+        ]
     ] = (
         (
             "ENFORCE-015",

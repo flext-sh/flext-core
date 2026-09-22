@@ -17,7 +17,7 @@ from typing import ClassVar, Final, Protocol, runtime_checkable
 
 import pytest
 
-from flext_core import m
+from flext_core import m, t
 from tests.utilities import u
 
 
@@ -109,7 +109,7 @@ class TestsFlextCoreEnforcementLayers:
     @staticmethod
     def _constants_tuple() -> type:
         class _CConstants:
-            ITEMS: Final[tuple[str, ...]] = ("a", "b")
+            ITEMS: Final[t.VariadicTuple[str]] = ("a", "b")
 
         return _CConstants
 

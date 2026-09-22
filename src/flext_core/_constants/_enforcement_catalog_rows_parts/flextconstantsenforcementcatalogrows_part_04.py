@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
+
+if TYPE_CHECKING:
+    from flext_core import t
 
 
 class FlextConstantsEnforcementCatalogBeartypeRows:
     """Beartype hook rows for the enforcement catalog."""
 
     BEARTYPE_ROWS: ClassVar[
-        tuple[tuple[str, str, str, str, tuple[str, ...], str], ...]
+        tuple[tuple[str, str, str, str, t.VariadicTuple[str], str], ...]
     ] = (
         (
             "ENFORCE-039",

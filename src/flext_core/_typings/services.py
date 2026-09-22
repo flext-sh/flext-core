@@ -179,7 +179,7 @@ class FlextTypesServices:
         | RegisterableService
         | t.SequenceOf[JsonPayload]
         | tuple[tp.JsonValue, ...]
-        | tuple[type, ...]
+        | t.VariadicTuple[type]
         | type
         | TypeAliasType
         | tzinfo

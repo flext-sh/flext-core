@@ -196,13 +196,13 @@ class FlextUtilitiesGuards(
     @staticmethod
     def _check_validator(
         value: t.JsonValue,
-        validator: Callable[[t.JsonValue], bool] | type | tuple[type, ...] | None,
+        validator: Callable[[t.JsonValue], bool] | type | t.VariadicTuple[type] | None,
     ) -> bool:
         """Evaluate validator against value. Returns True if guard passes."""
         if isinstance(validator, type):
             return isinstance(value, validator)
         if isinstance(validator, tuple):
-            tuple_types: tuple[type, ...] = tuple(
+            tuple_types: t.VariadicTuple[type] = tuple(
                 item for item in validator if isinstance(item, type)
             )
             return len(tuple_types) == len(validator) and isinstance(value, tuple_types)
@@ -215,7 +215,7 @@ class FlextUtilitiesGuards(
         value: t.JsonValue,
         validator: Callable[[t.JsonValue], bool]
         | type
-        | tuple[type, ...]
+        | t.VariadicTuple[type]
         | None = None,
         *,
         default: t.Scalar | t.JsonList | t.JsonMapping | None = None,

@@ -10,6 +10,8 @@ from .flextconstantsenforcement_part_01 import FlextConstantsEnforcementEnums
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
+    from flext_core import t
+
 
 class FlextConstantsEnforcementRuntime:
     """Runtime modes, base exemptions, and collection contracts."""
@@ -40,7 +42,7 @@ class FlextConstantsEnforcementRuntime:
     ``.beads/artifacts/mro-31mj/fix-waves/L0-beartype``.
     """
 
-    BEARTYPE_CLAW_SKIP_PACKAGES: ClassVar[tuple[str, ...]] = (
+    BEARTYPE_CLAW_SKIP_PACKAGES: ClassVar[t.VariadicTuple[str]] = (
         "flext_core._models.context",
         "flext_core._typings",
         "flext_core._utilities.logging_config",
@@ -103,7 +105,7 @@ class FlextConstantsEnforcementRuntime:
     )
     """Derived view: collection names used by annotation-origin checks."""
 
-    ENFORCEMENT_MUTABLE_RUNTIME_TYPES: ClassVar[tuple[type, ...]] = tuple(
+    ENFORCEMENT_MUTABLE_RUNTIME_TYPES: ClassVar[t.VariadicTuple[type]] = tuple(
         ENFORCEMENT_FORBIDDEN_COLLECTIONS
     )
     """Derived view: concrete types used by ``isinstance`` checks."""
