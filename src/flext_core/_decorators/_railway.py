@@ -12,13 +12,13 @@ from typing import TYPE_CHECKING
 
 from flext_core import c, m, r
 
-from .._exceptions.types import FlextExceptionsTypes as et
+from .._exceptions.exception_types import FlextExceptionsTypes as et
 from ._logging import FlextDecoratorsLogging
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from .._protocols.logging import FlextProtocolsLogging as pl
+    from .._protocols.loggings import FlextProtocolsLogging as pl
     from .._protocols.result import FlextProtocolsResult as pr
 
 

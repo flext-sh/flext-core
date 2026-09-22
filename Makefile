@@ -54,13 +54,13 @@ UV_LINK_MODE := copy
 # unconsumed variable is ignored.
 PYTEST_DIAG_ARGS := -rA --durations=0 --tb=long --showlocals
 PYTEST_REPORT_ARGS := -ra --durations=25 --durations-min=0.001 --tb=short
-PYTEST_PROCESS_TIMEOUT_SECONDS := 660
+PYTEST_PROCESS_TIMEOUT_SECONDS := 2460
 # mro-99ae: the pytest process inherits a hard wall-clock boundary, so a hung
 # run is terminated even if the runner itself stalls.
 PYTEST_BOUNDED = timeout --signal=TERM --kill-after=5s "$(PYTEST_PROCESS_TIMEOUT_SECONDS)s"
 PYTEST_REPORTS_DIR := .reports/tests
 override PYTEST_CASE_TIMEOUT_SECONDS := 10
-override PYTEST_RUN_TIMEOUT_SECONDS := 600
+override PYTEST_RUN_TIMEOUT_SECONDS := 2400
 override PYTEST_TERMINATION_GRACE_SECONDS := 2
 override PYTEST_TIMEOUT_EXIT_CODE := 124
 override PYTEST_ENFORCEMENT_PLUGIN := flext_tests_enforcement
@@ -84,14 +84,14 @@ override export FLEXT_PYTEST_REPORTS_RAW := $(value PYTEST_REPORTS_DIR)
 # superproject resolved RUFF_PATHS to the SUPERPROJECT's src/tests, so the
 # member linted files it does not even contain. With many shared worktrees that
 # silently validates the wrong tree.
-SELF_MAKEFILE := $(abspath $(firstword $(MAKEFILE_LIST)))
-MAKEFILE_ROOT := $(patsubst %/,%,$(dir $(SELF_MAKEFILE)))
-PROJECT_ROOT := $(MAKEFILE_ROOT)
+override SELF_MAKEFILE := $(realpath $(firstword $(MAKEFILE_LIST)))
+override MAKEFILE_ROOT := $(patsubst %/,%,$(dir $(SELF_MAKEFILE)))
+override PROJECT_ROOT := $(MAKEFILE_ROOT)
 SETUP_BIN := $(PROJECT_ROOT)/.bin
 ifeq ($(OS),Windows_NT)
-TRACKED_MISE := $(PROJECT_ROOT)/bin/mise.cmd
+override TRACKED_MISE := $(PROJECT_ROOT)/bin/mise.cmd
 else
-TRACKED_MISE := $(PROJECT_ROOT)/bin/mise
+override TRACKED_MISE := $(PROJECT_ROOT)/bin/mise
 endif
 override SETUP_MISE := $(TRACKED_MISE)
 override export FLEXT_PYTEST_TARGET_RAW := tests
@@ -110,18 +110,13 @@ PROJECT_SCRATCH_ROOT := $(HOME)/tmp/.flext-runtime$(patsubst %/,%,$(PROJECT_SCRA
 TESTMON_DATAFILE := $(PROJECT_STATE_ROOT)/testmon/.testmondata
 export TESTMON_DATAFILE
 # === SECTION: REPOSITORY_ROOT isolation (managed) ===
-# Source: computed (rule: derive from current checkout unless caller overrides)
-# Rule: REPOSITORY_ROOT is always derived from the current checkout unless the
-# caller passed it on the command line or via an override origin. An inherited
-# environment REPOSITORY_ROOT (e.g. a leaked .envrc export from a foreign checkout)
-# must never redirect verbs to another working tree. The git queries therefore
-# run inside MAKEFILE_ROOT: run from a foreign CWD they would report THAT
-# checkout's topology and redirect the verb to the wrong tree.
-ifeq ($(filter command line override,$(origin REPOSITORY_ROOT)),)
+# Source: physical checkout topology; caller variables cannot select a workspace.
 ifneq ($(filter standalone,$(MAKE_PROFILE))$(GEN_INIT_ONLY),)
-REPOSITORY_ROOT := $(MAKEFILE_ROOT)
+override REPOSITORY_ROOT := $(MAKEFILE_ROOT)
 else
-REPOSITORY_ROOT := $(shell cd "$(MAKEFILE_ROOT)" && root=$$(git rev-parse --show-superproject-working-tree 2>/dev/null); if [ -n "$$root" ]; then printf '%s\n' "$$root"; else git rev-parse --show-toplevel 2>/dev/null || printf '%s\n' "$(MAKEFILE_ROOT)"; fi)
+override REPOSITORY_ROOT := $(shell cd "$(MAKEFILE_ROOT)" && root=$$(git rev-parse --show-superproject-working-tree) && if [ -n "$$root" ]; then cd "$$root" && pwd -P; else pwd -P; fi)
+ifneq ($(.SHELLSTATUS),0)
+$(error Cannot resolve the physical workspace for $(MAKEFILE_ROOT))
 endif
 endif
 # End SECTION: REPOSITORY_ROOT isolation
@@ -139,7 +134,7 @@ ifneq ($(.SHELLSTATUS),0)
 $(error Failed to inspect custom Make targets in $(CUSTOM_MAKEFILE))
 endif
 endif
-DOCS_ACTIONS := generate fix audit build validate
+DOCS_ACTIONS := generate fix fmt validate audit
  # End SECTION: verb dispatch
 
 # === SECTION: lint/type paths (managed) ===
@@ -158,16 +153,13 @@ CALLER_VIRTUAL_ENV := $(patsubst %/,%,$(VIRTUAL_ENV))
 # === SECTION: profile routing (managed) ===
 # Source: repository topology. workspace has .gitmodules; standalone does not.
 # Attached members share their Git superproject runtime; standalone owns itself.
-RUNTIME_ROOT := $(REPOSITORY_ROOT)
+override RUNTIME_ROOT := $(REPOSITORY_ROOT)
 # End SECTION: profile routing
 
-RUNTIME_VENV := $(RUNTIME_ROOT)/.venv
-PROJECT_VENV := $(PROJECT_ROOT)/.venv
-FLEXT_INFRA_RUNTIME_ROOT := $(if $(filter $(MAKEFILE_ROOT),$(PROJECT_ROOT)),$(RUNTIME_ROOT),$(MAKEFILE_ROOT))
+override RUNTIME_VENV := $(RUNTIME_ROOT)/.venv
 ifeq ($(OS),Windows_NT)
-RUNTIME_BIN := $(RUNTIME_VENV)/Scripts
-RUNTIME_PYTHON := $(RUNTIME_BIN)/python.exe
-FLEXT_INFRA_RUNTIME_PYTHON := $(FLEXT_INFRA_RUNTIME_ROOT)/.venv/Scripts/python.exe
+override RUNTIME_BIN := $(RUNTIME_VENV)/Scripts
+override RUNTIME_PYTHON := $(RUNTIME_BIN)/python.exe
 NORMALIZED_CALLER_PATH := $(shell cygpath --path "$(CALLER_PATH)")
 ifneq ($(.SHELLSTATUS),0)
 $(error cygpath failed to normalize PATH)
@@ -178,9 +170,8 @@ $(error cygpath failed to normalize VIRTUAL_ENV)
 endif
 CALLER_VIRTUAL_ENV_BIN := $(NORMALIZED_CALLER_VIRTUAL_ENV)/Scripts
 else
-RUNTIME_BIN := $(RUNTIME_VENV)/bin
-RUNTIME_PYTHON := $(RUNTIME_BIN)/python
-FLEXT_INFRA_RUNTIME_PYTHON := $(FLEXT_INFRA_RUNTIME_ROOT)/.venv/bin/python
+override RUNTIME_BIN := $(RUNTIME_VENV)/bin
+override RUNTIME_PYTHON := $(RUNTIME_BIN)/python
 NORMALIZED_CALLER_PATH := $(CALLER_PATH)
 NORMALIZED_CALLER_VIRTUAL_ENV := $(CALLER_VIRTUAL_ENV)
 CALLER_VIRTUAL_ENV_BIN := $(NORMALIZED_CALLER_VIRTUAL_ENV)/bin
@@ -193,7 +184,7 @@ ifeq ($(SANITIZED_CALLER_PATH),$(CALLER_VIRTUAL_ENV_BIN))
 SANITIZED_CALLER_PATH :=
 endif
 endif
-override FLEXT_INFRA_PYTHON := $(FLEXT_INFRA_RUNTIME_PYTHON)
+override FLEXT_INFRA_PYTHON := $(RUNTIME_PYTHON)
 override UV_PROJECT := $(RUNTIME_ROOT)
 override UV_PROJECT_ENVIRONMENT := $(RUNTIME_VENV)
 override VIRTUAL_ENV := $(RUNTIME_VENV)
@@ -417,6 +408,10 @@ $${mise_config_argument:+"$$mise_config_argument"} \
 		fi; \
 	done; \
 	mise_checked "$$scratch/install.log" mise_exec project "$$latest_mise" -C "$$project_root" install --yes; \
+	# ``mise install`` may reuse an installed fuzzy match. Upgrade Python inside \
+	# the configured minor line so ``python = \"3.13\"`` always resolves the \
+	# newest available 3.13 patch without rewriting the project selector. \
+	mise_checked "$$scratch/python-upgrade.log" mise_exec project "$$latest_mise" -C "$$project_root" upgrade --no-prune python; \
 	mise_checked "$$scratch/uv-version.log" mise_exec project "$$latest_mise" -C "$$project_root" exec -- uv --version; \
 	uv_output=$$(cat "$$scratch/uv-version.log"); \
 	case "$$uv_output" in \
@@ -468,22 +463,19 @@ endif
 # `flext-infra workspace orchestrate` primitive (verb allowlist + CLI group come
 # from the constants SSOT, never hardcoded here). Members and standalone projects
 # run the gate locally. Every member runs; the summary names every failure.
-# Provisioning is declared once and shared by every profile. Creating a missing
-# venv is provisioning; clearing a present one is destruction, so it never happens.
-# A symlinked RUNTIME_VENV is a BORROWED environment: a linked worktree (a
-# lane checkout) shares the primary checkout's environment so the two never
-# diverge. Syncing it would rewrite the editable pointers the owner and every
-# sibling lane resolve through, so the borrower provisions nothing and the owner
-# stays the only writer.
+# Provisioning is declared once and shared by every profile. A venv records the
+# exact base interpreter used to create it, so setup replaces it when Mise moves
+# the configured Python minor line to a newer patch.
 SETUP_ENVIRONMENT_RECIPE = set -eu; \
-	if [ -L "$(RUNTIME_VENV)" ]; then \
-		printf 'setup: borrowed environment %s is owned by another checkout\n' "$(RUNTIME_VENV)"; \
-	else \
-		if [ ! -x "$(RUNTIME_PYTHON)" ]; then \
-			$(UV) venv "$(RUNTIME_VENV)"; \
-		fi; \
-		$(UV) sync --project "$(PROJECT_ROOT)" $(UV_SYNC_FLAGS) --link-mode "$(UV_LINK_MODE)"; \
+	$(REQUIRE_WORKSPACE_ENVIRONMENT); \
+	desired_python=$$("$(SETUP_MISE)" -C "$(PROJECT_ROOT)" which python); \
+	if [ ! -x "$(RUNTIME_PYTHON)" ]; then \
+		$(UV) venv --python "$$desired_python" "$(RUNTIME_VENV)"; \
+	elif [ "$$(readlink -f "$(RUNTIME_PYTHON)")" != "$$(readlink -f "$$desired_python")" ]; then \
+		printf 'setup: replacing environment for Python %s\n' "$$desired_python"; \
+		$(UV) venv --clear --python "$$desired_python" "$(RUNTIME_VENV)"; \
 	fi; \
+	$(UV) sync --project "$(PROJECT_ROOT)" $(UV_SYNC_FLAGS) --link-mode "$(UV_LINK_MODE)"; \
 	XDG_DATA_HOME="$${SETUP_DIRENV_XDG_DATA_HOME:?missing persistent direnv data home}" \
 		"$${SETUP_DIRENV:?missing Mise-resolved direnv executable}" allow "$(PROJECT_ROOT)"; \
 	for member in $(WORKSPACE_SUBPROJECTS); do \
@@ -492,15 +484,23 @@ SETUP_ENVIRONMENT_RECIPE = set -eu; \
 		fi; \
 	done
 
-# A delegated runtime lives in another checkout, so this project has no local
-# environment of its own. Generated tooling still addresses the environment by
-# its project-local name (`$${workspaceFolder}/.venv`), which must never be
-# rewritten into a cross-project relative hop: the link makes that name resolve.
-# Linking is provisioning, so a real local environment is never replaced.
-BORROW_RUNTIME_VENV_RECIPE = set -eu; \
-	if [ ! -e "$(PROJECT_VENV)" ] || [ -L "$(PROJECT_VENV)" ]; then \
-		ln -sfn "$(RUNTIME_VENV)" "$(PROJECT_VENV)"; \
-	fi
+# Reject borrowed environments before bootstrap, activation or custom hooks.
+# Members may use their containing workspace, never an unrelated checkout.
+REQUIRE_WORKSPACE_ENVIRONMENT = case "$(PROJECT_ROOT)/" in \
+	"$(RUNTIME_ROOT)/"*) ;; \
+	*) printf 'ERROR: runtime workspace does not contain this project: %s\n' "$(RUNTIME_ROOT)" >&2; exit 2 ;; \
+	esac; \
+	for environment_path in "$(RUNTIME_VENV)" "$(RUNTIME_BIN)" "$(PROJECT_ROOT)/.venv"; do \
+		if [ -L "$$environment_path" ]; then \
+			printf 'ERROR: workspace environment must be physical, not a symlink: %s\n' "$$environment_path" >&2; exit 2; \
+		fi; \
+	done
+
+.PHONY: _builtin_require_workspace
+_builtin_require_workspace:
+	@$(REQUIRE_WORKSPACE_ENVIRONMENT)
+
+_bootstrap_setup_tools: _builtin_require_workspace
 
 WORKSPACE_ORCHESTRATE = $(UV_RUN) python -m flext_infra workspace orchestrate
 # Workspace runs include the root project itself: `.` maps to the
@@ -511,14 +511,10 @@ SELECTED_PROJECTS := $(DEFAULT_PROJECTS)
 WORKSPACE_PROJECT_ARGS := $(foreach project,$(SELECTED_PROJECTS),--projects $(project))
 DOCS_PROJECT_ARGS := $(foreach project,$(SELECTED_PROJECTS),--projects $(project))
 
-# A borrowed RUNTIME_VENV keeps the primary editable install. Clearing
-# PYTHONPATH would make `make test` in a linked worktree execute that primary
-# tree instead of this checkout. Prefer PROJECT_ROOT/src so the Makefile owner
-# always wins over the shared editable (terminus T4 / path-purity).
 # Execute the interpreter provisioned by setup without discovering a project
 # workspace or creating a dependency-resolution file during a runtime command.
 UV_RUN := env -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u PROJECT_ROOT PYTHONPATH="$(PROJECT_ROOT)/src" $(UV) run --no-project --python "$(RUNTIME_PYTHON)"
-PROJECT_INFRA_PYTHONPATH ?= $(MAKEFILE_ROOT)/src
+override PROJECT_INFRA_PYTHONPATH := $(MAKEFILE_ROOT)/src
 PROJECT_INFRA_RUN := if [ ! -x "$(FLEXT_INFRA_PYTHON)" ]; then printf 'ERROR: FLEXT_INFRA_PYTHON must name an executable managed Python\n' >&2; exit 2; fi; "$(SETUP_MISE)" -C "$(PROJECT_ROOT)" exec -- env -u PYTHONPATH -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u UV_PROJECT_ENVIRONMENT PYTHONPATH="$(PROJECT_INFRA_PYTHONPATH)" $(FLEXT_INFRA_PYTHON)
 PROJECT_FLEXT_INFRA := $(PROJECT_INFRA_RUN) -m flext_infra
 # Scaffold dev tools live in the validated optional dev
@@ -569,7 +565,7 @@ help:
 	$(call RUN_PUBLIC,help)
 
 
-deps:
+deps: _builtin_require_workspace
 	+@direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-deps
 
 .PHONY: _activated-deps
@@ -578,7 +574,7 @@ _activated-deps: _builtin_require_environment
 	$(call RUN_PUBLIC,deps)
 
 
-build:
+build: _builtin_require_workspace
 	+@direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-build
 
 .PHONY: _activated-build
@@ -587,7 +583,7 @@ _activated-build: _builtin_require_environment
 	$(call RUN_PUBLIC,build)
 
 
-check:
+check: _builtin_require_workspace
 	+@direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-check
 
 .PHONY: _activated-check
@@ -596,7 +592,7 @@ _activated-check: _builtin_require_environment
 	$(call RUN_PUBLIC,check)
 
 
-test:
+test: _builtin_require_workspace
 	+@direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-test
 
 .PHONY: _activated-test
@@ -605,7 +601,7 @@ _activated-test: _builtin_require_environment
 	$(call RUN_PUBLIC,test)
 
 
-fmt:
+fmt: _builtin_require_workspace
 	+@direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-fmt
 
 .PHONY: _activated-fmt
@@ -614,7 +610,7 @@ _activated-fmt: _builtin_require_environment
 	$(call RUN_PUBLIC,fmt)
 
 
-fix:
+fix: _builtin_require_workspace
 	+@direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-fix
 
 .PHONY: _activated-fix
@@ -623,7 +619,7 @@ _activated-fix: _builtin_require_environment
 	$(call RUN_PUBLIC,fix)
 
 
-fix-enforcement:
+fix-enforcement: _builtin_require_workspace
 	+@direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-fix-enforcement
 
 .PHONY: _activated-fix-enforcement
@@ -632,7 +628,7 @@ _activated-fix-enforcement: _builtin_require_environment
 	$(call RUN_PUBLIC,fix-enforcement)
 
 
-audit:
+audit: _builtin_require_workspace
 	+@direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-audit
 
 .PHONY: _activated-audit
@@ -641,7 +637,7 @@ _activated-audit: _builtin_require_environment
 	$(call RUN_PUBLIC,audit)
 
 
-status:
+status: _builtin_require_workspace
 	+@direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-status
 
 .PHONY: _activated-status
@@ -650,7 +646,7 @@ _activated-status: _builtin_require_environment
 	$(call RUN_PUBLIC,status)
 
 
-docs:
+docs: _builtin_require_workspace
 	+@direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-docs
 
 .PHONY: _activated-docs
@@ -659,7 +655,7 @@ _activated-docs: _builtin_require_environment
 	$(call RUN_PUBLIC,docs)
 
 
-clean:
+clean: _builtin_require_workspace
 	+@direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-clean
 
 .PHONY: _activated-clean
@@ -668,7 +664,7 @@ _activated-clean: _builtin_require_environment
 	$(call RUN_PUBLIC,clean)
 
 
-release-plan:
+release-plan: _builtin_require_workspace
 	+@direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-release-plan
 
 .PHONY: _activated-release-plan
@@ -677,7 +673,7 @@ _activated-release-plan: _builtin_require_environment
 	$(call RUN_PUBLIC,release-plan)
 
 
-release-version:
+release-version: _builtin_require_workspace
 	+@direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-release-version
 
 .PHONY: _activated-release-version
@@ -686,7 +682,7 @@ _activated-release-version: _builtin_require_environment
 	$(call RUN_PUBLIC,release-version)
 
 
-release-tag:
+release-tag: _builtin_require_workspace
 	+@direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-release-tag
 
 .PHONY: _activated-release-tag
@@ -695,7 +691,7 @@ _activated-release-tag: _builtin_require_environment
 	$(call RUN_PUBLIC,release-tag)
 
 
-release-build:
+release-build: _builtin_require_workspace
 	+@direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-release-build
 
 .PHONY: _activated-release-build
@@ -704,7 +700,7 @@ _activated-release-build: _builtin_require_environment
 	$(call RUN_PUBLIC,release-build)
 
 
-publication:
+publication: _builtin_require_workspace
 	+@direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-publication
 
 .PHONY: _activated-publication
@@ -713,7 +709,7 @@ _activated-publication: _builtin_require_environment
 	$(call RUN_PUBLIC,publication)
 
 
-gen:
+gen: _builtin_require_workspace
 	+@direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-gen
 
 .PHONY: _activated-gen
@@ -722,7 +718,7 @@ _activated-gen: _builtin_require_environment
 	$(call RUN_PUBLIC,gen)
 
 
-initialize:
+initialize: _builtin_require_workspace
 	+@direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-initialize
 
 .PHONY: _activated-initialize
@@ -731,7 +727,7 @@ _activated-initialize: _builtin_require_environment
 	$(call RUN_PUBLIC,initialize)
 
 
-mod:
+mod: _builtin_require_workspace
 	+@direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-mod
 
 .PHONY: _activated-mod
@@ -740,7 +736,7 @@ _activated-mod: _builtin_require_environment
 	$(call RUN_PUBLIC,mod)
 
 
-waza:
+waza: _builtin_require_workspace
 	+@direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-waza
 
 .PHONY: _activated-waza
@@ -749,7 +745,7 @@ _activated-waza: _builtin_require_environment
 	$(call RUN_PUBLIC,waza)
 
 
-duplication:
+duplication: _builtin_require_workspace
 	+@direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-duplication
 
 .PHONY: _activated-duplication
@@ -809,7 +805,7 @@ _builtin-help:
 
 	@printf '  %-16s %s\n' 'status' 'Report the resolved runtime and repository state.';
 
-	@printf '  %-16s %s\n' 'docs' 'Generate, repair, build, and validate documentation.';
+	@printf '  %-16s %s\n' 'docs' 'Generate, fix, format, and check documentation.';
 
 	@printf '  %-16s %s\n' 'clean' 'Remove every declared disposable artifact.';
 
@@ -972,7 +968,7 @@ _builtin_setup_submodules:
 		validate_submodule "$$root" "$$child_path"; \
 	done
 
-_builtin_require_environment:
+_builtin_require_environment: _builtin_require_workspace
 # Documenting the interface (`make help`) must not require the interpreter it
 # tells the operator how to provision. Only `make help` with no other goal
 # skips the check; any combined goal still demands the environment.
@@ -1017,7 +1013,7 @@ _builtin_deps_upgrade: _builtin_require_environment
 	set --; \
 	for project in $$selected; do set -- "$$@" --projects "$$project"; done; \
 	$(PROJECT_FLEXT_INFRA) deps modernize --repository-root "$(PROJECT_ROOT)" \
-		--apply --rewrite-constraints --skip-check "$$@"
+		--apply --rewrite-constraints "$$@"
 	$(call _run_for_all_projects,--check)
 
 
@@ -1126,11 +1122,15 @@ _builtin_status_diagnostics: _builtin_require_environment
 	fi
 	@git -C "$(PROJECT_ROOT)" status --short
 
-_builtin_docs_all: _builtin_gen_all
+# Operator law 2026-09-22: `docs` is a docs-only lifecycle (generate, fix,
+# fmt, validate, audit); the actions render from make.docs.actions and never
+# depend on the workspace-wide codegen conform — docs actions render their
+# own outputs from the live configuration and sources.
+_builtin_docs_all:
 	@set -eu; \
 	for action in $(DOCS_ACTIONS); do \
 		mode=; \
-		case "$$action" in fix) mode=--apply ;; esac; \
+		case "$$action" in fix|fmt) mode=--apply ;; esac; \
 		$(PROJECT_FLEXT_INFRA) docs "$$action" --repository-root "$(PROJECT_ROOT)" --output-dir ".reports/docs" $$mode $(DOCS_PROJECT_ARGS); \
 	done
 

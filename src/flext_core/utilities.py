@@ -26,7 +26,7 @@ from ._utilities.conversion import FlextUtilitiesConversion
 from ._utilities.discovery import FlextUtilitiesDiscovery
 from ._utilities.domain import FlextUtilitiesDomain
 from ._utilities.enforcement import FlextUtilitiesEnforcement
-from ._utilities.enum import FlextUtilitiesEnum
+from ._utilities.enums import FlextUtilitiesEnum
 from ._utilities.family_surface import FlextUtilitiesFamilySurface
 from ._utilities.files import FlextUtilitiesFiles
 from ._utilities.generators import FlextUtilitiesGenerators

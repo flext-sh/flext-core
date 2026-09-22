@@ -9,7 +9,8 @@
   - [Prefer Current Settings API](#prefer-current-settings-api)
   - [Prefer Explicit Container Registration](#prefer-explicit-container-registration)
   - [Reuse Maintainer Examples](#reuse-maintainer-examples)
-  <!-- TOC END -->
+
+<!-- TOC END -->
 
 ## Overview
 

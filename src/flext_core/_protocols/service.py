@@ -20,7 +20,7 @@ from .base import FlextProtocolsBase
 from .container import FlextProtocolsContainer
 from .context import FlextProtocolsContext
 from .handler import FlextProtocolsHandler
-from .logging import FlextProtocolsLogging
+from .loggings import FlextProtocolsLogging
 from .registry import FlextProtocolsRegistry
 from .result import FlextProtocolsResult
 from .settings import FlextProtocolsSettings

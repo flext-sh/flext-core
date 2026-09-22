@@ -29,9 +29,8 @@ Notable files:
 
 - `unit/test_dispatcher.py` – validates handler registration and metadata propagation.
 - `unit/test_context.py` – enforces context correlation semantics.
-- `unit/test_container_100_percent.py` – ensures DI guarantees ahead of ecosystem
-  adoption.
-- `integration/test_wildcard_exports_clean.py` – protects the public API surface.
+- runtime_bootstrap_options
+- runtime_bootstrap_options
 - `patterns/test_patterns_commands.py` – codifies CQRS usage expected downstream.
 
 ---

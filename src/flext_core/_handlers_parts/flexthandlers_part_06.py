@@ -83,7 +83,6 @@ class FlextHandlers[MessageT_contra, ResultT](
         resolved_type = handler_type or c.HandlerType.COMMAND
         resolved_name: str = handler_name or str(
             getattr(handler_callable, "__name__", "unknown_handler")
-            or "unknown_handler"
         )
         from flext_core import m
 

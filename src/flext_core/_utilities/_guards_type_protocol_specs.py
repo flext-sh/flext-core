@@ -8,7 +8,7 @@ from flext_core import c, t
 from .._protocols.container import FlextProtocolsContainer as pc
 from .._protocols.context import FlextProtocolsContext as pcx
 from .._protocols.handler import FlextProtocolsHandler as ph
-from .._protocols.logging import FlextProtocolsLogging as pl
+from .._protocols.loggings import FlextProtocolsLogging as pl
 from .._protocols.result import FlextProtocolsResult as pr
 from .._protocols.service import FlextProtocolsService as psrv
 from .._protocols.settings import FlextProtocolsSettings as ps

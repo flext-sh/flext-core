@@ -10,10 +10,10 @@
   - [DRY](#dry)
   - [SOLID](#solid)
   - [YAGNI](#yagni)
-- [Métricas objetivas de sucesso](#mtricas-objetivas-de-sucesso)
-- [Validação padrão por PR](#validao-padro-por-pr)
-- [Riscos e contenção](#riscos-e-conteno)
-- [Próxima ação imediata](#prxima-ao-imediata)
+- [Métricas objetivas de sucesso](#metricas-objetivas-de-sucesso)
+- [Validação padrão por PR](#validacao-padrao-por-pr)
+- [Riscos e contenção](#riscos-e-contencao)
+- [Próxima ação imediata](#proxima-acao-imediata)
 
 <!-- TOC END -->
 

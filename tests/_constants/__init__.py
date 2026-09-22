@@ -9,8 +9,6 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_tests import c, d, e, h, m, p, r, s, t, td, tf, tk, tm, tv, u, x
-
     from .domain import TestsFlextConstantsDomain
     from .errors import TestsFlextConstantsErrors
     from .fixtures import TestsFlextConstantsFixtures
@@ -28,22 +26,6 @@ __all__: tuple[str, ...] = (
     "TestsFlextConstantsResult",
     "TestsFlextConstantsServices",
     "TestsFlextConstantsSettings",
-    "c",
-    "d",
-    "e",
-    "h",
-    "m",
-    "p",
-    "r",
-    "s",
-    "t",
-    "td",
-    "tf",
-    "tk",
-    "tm",
-    "tv",
-    "u",
-    "x",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
@@ -57,24 +39,6 @@ _LAZY_IMPORTS = MappingProxyType(
             ".result": ("TestsFlextConstantsResult",),
             ".services": ("TestsFlextConstantsServices",),
             ".settings": ("TestsFlextConstantsSettings",),
-            "flext_tests": (
-                "c",
-                "d",
-                "e",
-                "h",
-                "m",
-                "p",
-                "r",
-                "s",
-                "t",
-                "td",
-                "tf",
-                "tk",
-                "tm",
-                "tv",
-                "u",
-                "x",
-            ),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,

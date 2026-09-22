@@ -47,7 +47,7 @@ class FlextDecoratorsLoggingPayloads(FlextDecoratorsBase):
             payload[c.ContextKey.CORRELATION_ID] = correlation_id
         if track_perf:
             duration = time.perf_counter() - start_time
-            payload["duration_ms"] = duration * c.DEFAULT_SIZE
+            payload["duration_ms"] = duration * c.MS_PER_SECOND
             payload[c.MetadataKey.DURATION_SECONDS] = duration
         return payload
 

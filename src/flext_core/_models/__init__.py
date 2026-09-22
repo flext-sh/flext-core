@@ -44,13 +44,12 @@ if TYPE_CHECKING:
     )
     from .base import FlextModelsBase
     from .builder import FlextModelsBuilder
-    from .collections import FlextModelsCollections
+    from .collection_models import FlextModelsCollections
     from .config import FlextModelsConfig
     from .container import FlextModelsContainer
     from .containers import FlextModelsContainers
     from .context import FlextModelsContext
     from .cqrs import FlextModelsCqrs
-    from .dispatcher import FlextModelsDispatcher
     from .domain_event import FlextModelsDomainEvent
     from .enforcement import FlextModelsEnforcement
     from .entity import FlextModelsEntity
@@ -80,7 +79,6 @@ __all__: tuple[str, ...] = (
     "FlextModelsContextScope",
     "FlextModelsContextTokens",
     "FlextModelsCqrs",
-    "FlextModelsDispatcher",
     "FlextModelsDomainEvent",
     "FlextModelsEnforcement",
     "FlextModelsEnforcementBase",
@@ -150,13 +148,12 @@ _LAZY_IMPORTS = MappingProxyType(
             ),
             ".base": ("FlextModelsBase",),
             ".builder": ("FlextModelsBuilder",),
-            ".collections": ("FlextModelsCollections",),
+            ".collection_models": ("FlextModelsCollections",),
             ".config": ("FlextModelsConfig",),
             ".container": ("FlextModelsContainer",),
             ".containers": ("FlextModelsContainers",),
             ".context": ("FlextModelsContext",),
             ".cqrs": ("FlextModelsCqrs",),
-            ".dispatcher": ("FlextModelsDispatcher",),
             ".domain_event": ("FlextModelsDomainEvent",),
             ".enforcement": ("FlextModelsEnforcement",),
             ".entity": ("FlextModelsEntity",),

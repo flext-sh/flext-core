@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 
 from flext_core import c, m
 
-from .._exceptions.types import FlextExceptionsTypes as et
+from .._exceptions.exception_types import FlextExceptionsTypes as et
 from ._combined import FlextDecoratorsCombined
 
 if TYPE_CHECKING:

@@ -97,7 +97,7 @@ em `.snyk`) / `risco-aceito` (com prazo).
 
 **Local**: `tests/integration/test_service.py:73` · **CWE**: -
 
-```python notest
+```{.python .notest}
        69       70      def test_fetch_user_returns_applied_custom_entity(self) -> None:
        71          """fetch_user() returns previously applied custom user data verbatim."""
        72          service = self.UserQueryService()
@@ -132,7 +132,7 @@ em `.snyk`) / `risco-aceito` (com prazo).
 
 **Local**: `tests/unit/test_result_factory_dip.py:169` · **CWE**: -
 
-```python notest
+```{.python .notest}
       165      166      def test_fail_from_exception_redacts_sensitive_error_data_keys(
                   self) -> None:
       167          exc = e.OperationError(
@@ -150,7 +150,7 @@ em `.snyk`) / `risco-aceito` (com prazo).
 
 **Local**: `tests/unit/test_result_factory_dip.py:215` · **CWE**: -
 
-```python notest
+```{.python .notest}
       211      212      def test_fail_explicit_error_data_redacts_sensitive_keys(
                   self) -> None:
       213          result: p.Result[int] = r[int].fail(
@@ -169,7 +169,7 @@ em `.snyk`) / `risco-aceito` (com prazo).
 
 **Local**: `tests/unit/test_result_factory_dip.py:226` · **CWE**: -
 
-```python notest
+```{.python .notest}
       222      223      def test_fail_explicit_error_data_wins_but_still_redacts_with_exception(
       224          self,
       225      ) -> None:

@@ -18,10 +18,8 @@ make test
 
 Highlighted scenarios:
 
-- `test_config_singleton_integration.py` – shared configuration lifecycle wired into the
-  global container.
-- `test_wildcard_exports_clean.py` – protects the official public API surface exposed by
-  `flext_core.__all__`.
+- runtime_bootstrap_options
+- runtime_bootstrap_options
 - `test_system.py` / `test_service.py` – end-to-end dispatcher flows that exercise
   context propagation and logging.
 

@@ -80,6 +80,7 @@ class TestsFlextLazyPerformance:
         lazy.reset()
         elapsed = self.LazyBenchmark.run(reset_between_iterations=True, iterations=120)
         tm.that(elapsed, gt=0.0)
+        tm.that(lazy.cache_stats["install_cache"], gt=0)
 
     @pytest.mark.benchmark
     def test_lazy_install_and_resolution_warm_path(self) -> None:

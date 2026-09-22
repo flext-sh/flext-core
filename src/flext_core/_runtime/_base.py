@@ -14,7 +14,7 @@ from flext_core import c
 from .._typings.base import FlextTypingBase as tb
 
 if TYPE_CHECKING:
-    from .._protocols.logging import FlextProtocolsLogging as pl
+    from .._protocols.loggings import FlextProtocolsLogging as pl
     from .._typings.services import FlextTypesServices as ts
 
 

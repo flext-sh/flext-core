@@ -17,7 +17,7 @@ from ._logging_payloads import FlextDecoratorsLoggingPayloads
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from .._protocols.logging import FlextProtocolsLogging as pl
+    from .._protocols.loggings import FlextProtocolsLogging as pl
     from .._typings.base import FlextTypingBase as tb
 
 
@@ -121,7 +121,7 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
             if correlation_id is not None:
                 exc_kw[c.ContextKey.CORRELATION_ID] = correlation_id
             if track_perf:
-                exc_kw["duration_ms"] = tracked_duration * c.DEFAULT_SIZE
+                exc_kw["duration_ms"] = tracked_duration * c.MS_PER_SECOND
                 exc_kw[c.MetadataKey.DURATION_SECONDS] = tracked_duration
             logger.exception(op_name, exception=exc, **exc_kw)
             raise

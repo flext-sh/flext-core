@@ -92,7 +92,7 @@ class FlextMixins(m.ArbitraryTypesModel):
 
     @classmethod
     def _get_or_create_logger(cls) -> p.Logger:
-        """Get or create a DI-injected logger with fallback to direct creation."""
+        """Get or create a DI-injected logger for this component class."""
         logger_name = f"{cls.__module__}.{cls.__name__}"
         with cls._cache_lock:
             if logger_name in cls._logger_cache:
