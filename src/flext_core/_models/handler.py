@@ -115,7 +115,7 @@ class FlextModelsHandler:
             if self.started_at is None:
                 return 0.0
             elapsed: float = time.time() - self.started_at
-            return round(elapsed * c.DEFAULT_SIZE, 2)
+            return round(elapsed * c.MS_PER_SECOND, 2)
 
     class HandlerRuntimeState(m.ArbitraryTypesModel):
         """Aggregate runtime state for the active handler pipeline."""

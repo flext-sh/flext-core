@@ -17,7 +17,7 @@ from flext_core import c
 
 from .._protocols.context import FlextProtocolsContext as pcx
 from .._protocols.handler import FlextProtocolsHandler as ph
-from .._protocols.logging import FlextProtocolsLogging as pl
+from .._protocols.loggings import FlextProtocolsLogging as pl
 from .._protocols.settings import FlextProtocolsSettings as ps
 from .._typings.base import FlextTypingBase as tb
 from .._typings.typeadapters import FlextTypesTypeAdapters as tta

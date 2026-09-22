@@ -67,7 +67,7 @@ if TYPE_CHECKING:
     from .domain import FlextUtilitiesDomain
     from .enforcement_collect import FlextUtilitiesEnforcementCollect
     from .enforcement_emit import FlextUtilitiesEnforcementEmit
-    from .enum import FlextUtilitiesEnum
+    from .enums import FlextUtilitiesEnum
     from .family_surface import FlextUtilitiesFamilySurface
     from .files import FlextUtilitiesFiles
     from .generators import FlextUtilitiesGenerators
@@ -235,7 +235,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".domain": ("FlextUtilitiesDomain",),
             ".enforcement_collect": ("FlextUtilitiesEnforcementCollect",),
             ".enforcement_emit": ("FlextUtilitiesEnforcementEmit",),
-            ".enum": ("FlextUtilitiesEnum",),
+            ".enums": ("FlextUtilitiesEnum",),
             ".family_surface": ("FlextUtilitiesFamilySurface",),
             ".files": ("FlextUtilitiesFiles",),
             ".generators": ("FlextUtilitiesGenerators",),

@@ -9,8 +9,6 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_tests import c, d, e, h, m, p, r, s, t, td, tf, tk, tm, tv, u, x
-
     from .container import TestsFlextModelsContainerMixin
     from .core import TestsFlextModelsCoreMixin
     from .core_errors import TestsFlextModelsCoreErrorsMixin
@@ -46,22 +44,6 @@ __all__: tuple[str, ...] = (
     "TestsFlextModelsTestDataIdentityMixin",
     "TestsFlextModelsTestDataMixin",
     "TestsFlextModelsTestDataValuesMixin",
-    "c",
-    "d",
-    "e",
-    "h",
-    "m",
-    "p",
-    "r",
-    "s",
-    "t",
-    "td",
-    "tf",
-    "tk",
-    "tm",
-    "tv",
-    "u",
-    "x",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
@@ -86,24 +68,6 @@ _LAZY_IMPORTS = MappingProxyType(
             ".test_data": ("TestsFlextModelsTestDataMixin",),
             ".test_data_identity": ("TestsFlextModelsTestDataIdentityMixin",),
             ".test_data_values": ("TestsFlextModelsTestDataValuesMixin",),
-            "flext_tests": (
-                "c",
-                "d",
-                "e",
-                "h",
-                "m",
-                "p",
-                "r",
-                "s",
-                "t",
-                "td",
-                "tf",
-                "tk",
-                "tm",
-                "tv",
-                "u",
-                "x",
-            ),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,

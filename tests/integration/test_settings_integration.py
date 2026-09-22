@@ -10,6 +10,8 @@ import pytest
 from flext_tests import tm
 
 from flext_core import FlextContainer, FlextSettings, m
+from tests import u as test_u
+from tests.constants import c
 
 
 class TestsFlextSettingsIntegration:
@@ -38,30 +40,35 @@ class TestsFlextSettingsIntegration:
         tm.that(after is not before, eq=True)
 
     def test_container_resolves_settings_to_the_global_singleton(self) -> None:
-        """The container's settings resolve to the same global instance."""
+        """The container's bound settings resolve to the global singleton."""
         global_settings = FlextSettings.fetch_global()
         container = FlextContainer()
-        tm.that(container, none=False)
-        tm.that(FlextSettings.fetch_global() is global_settings, eq=True)
+        tm.that(container.settings is global_settings, eq=True)
+        resolved = test_u.Tests.assert_success(
+            container.resolve(str(c.Directory.CONFIG))
+        )
+        tm.that(resolved is global_settings, eq=True)
 
     def test_default_settings_expose_documented_public_defaults(self) -> None:
-        """Universal fields default to documented scalar values."""
+        """Universal fields initialize from their declared SSOT defaults."""
         settings = FlextSettings.fetch_global()
-        tm.that(settings.debug, eq=False)
-        tm.that(settings.trace, eq=False)
+        defaults = FlextSettings.model_fields
+        tm.that(settings.debug, eq=defaults["debug"].default)
+        tm.that(settings.trace, eq=defaults["trace"].default)
+        tm.that(settings.log_level, eq=defaults["log_level"].default)
         tm.that(
             {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}, has=settings.log_level
         )
-        tm.that(settings.timezone, eq="UTC")
-        tm.that(settings.async_logging, eq=True)
+        tm.that(settings.timezone, eq=defaults["timezone"].default)
+        tm.that(settings.async_logging, eq=defaults["async_logging"].default)
 
-    def test_environment_variables_override_settings(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_environment_variables_override_settings(self) -> None:
         """FLEXT_-prefixed env vars populate the settings fields."""
-        monkeypatch.setenv("FLEXT_LOG_LEVEL", "ERROR")
-        FlextSettings.reset_for_testing()
-        settings = FlextSettings.fetch_global()
+        with test_u.Tests.env_vars_context(
+            vars_to_clear=["FLEXT_LOG_LEVEL"], env_vars={"FLEXT_LOG_LEVEL": "ERROR"}
+        ):
+            FlextSettings.reset_for_testing()
+            settings = FlextSettings.fetch_global()
         tm.that(settings.log_level, eq="ERROR")
 
     def test_explicit_overrides_win_over_defaults(self) -> None:

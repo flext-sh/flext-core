@@ -18,7 +18,7 @@ from ._logging import FlextDecoratorsLogging
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from .._protocols.logging import FlextProtocolsLogging as pl
+    from .._protocols.loggings import FlextProtocolsLogging as pl
     from .._protocols.result import FlextProtocolsResult as pr
 
 

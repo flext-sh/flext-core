@@ -13,6 +13,7 @@ from functools import cache
 from typing import TYPE_CHECKING, ClassVar
 
 from .._constants.file import FlextConstantsFile as cf
+from .._constants.mixins import FlextConstantsMixins as cmx
 from .._constants.project_metadata import FlextConstantsProjectMetadata as cpm
 from .._models.project_metadata import FlextModelsProjectMetadata as mpm
 from .._typings.base import FlextTypingBase as t
@@ -52,7 +53,7 @@ class FlextUtilitiesProjectMetadata(mpm):
         project = document.project
         flext = document.tool.flext
         if project is None:
-            package_name = flext.docs.package_name or "unknown"
+            package_name = flext.docs.package_name or cmx.IDENTIFIER_UNKNOWN
             class_stem = flext.project.class_stem_override or cls.derive_class_stem(
                 package_name
             )

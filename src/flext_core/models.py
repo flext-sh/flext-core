@@ -20,7 +20,6 @@ from ._models.container import FlextModelsContainer
 from ._models.containers import FlextModelsContainers
 from ._models.context import FlextModelsContext
 from ._models.cqrs import FlextModelsCqrs
-from ._models.dispatcher import FlextModelsDispatcher
 from ._models.domain_event import FlextModelsDomainEvent
 from ._models.enforcement import FlextModelsEnforcement
 from ._models.entity import FlextModelsEntity
@@ -44,7 +43,6 @@ class FlextModels(
     FlextModelsContainer,
     FlextModelsContext,
     FlextModelsCqrs,
-    FlextModelsDispatcher,
     FlextModelsDomainEvent,
     FlextModelsEnforcement,
     FlextModelsEntity,

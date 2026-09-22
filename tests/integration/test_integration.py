@@ -116,9 +116,7 @@ class TestsFlextCoreIntegration:
         tm.that(failure_result.unwrap_or(_UNWRAP_DEFAULT), eq=_UNWRAP_DEFAULT)
 
     def test_container_factory_resolves_computed_value(
-        self,
-        clean_container: p.Container,
-        mock_external_service: u.Tests.FunctionalExternalService,
+        self, clean_container: p.Container
     ) -> None:
         """A registered factory resolves to the value produced by its callable."""
         # Arrange
@@ -126,7 +124,7 @@ class TestsFlextCoreIntegration:
         expected = f"processed_{input_data}"
 
         def create_result() -> str:
-            processed: p.Result[str] = mock_external_service.process(input_data)
+            processed: p.Result[str] = r[str].ok(f"processed_{input_data}")
             if not processed.success:
                 raise AssertionError(processed.error)
             value: str = processed.value
