@@ -153,6 +153,14 @@ jobs:
         # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
         run: CI=Y make setup
       - name: gen fixed point (blocking)
+        # Why (docs-gen private sources): the docs generation resolves the
+        # governed workspaces' documentation state, which fetches private
+        # sibling repos — unauthenticated fetches fail with "docs generation
+        # source state is absent or unauthenticated". The job token
+        # authenticates those reads without changing the toolchain contract.
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          MISE_GITHUB_TOKEN: ${{ github.token }}
         run: |
           CI=Y make gen
           git status --short
@@ -332,6 +340,10 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: 1
+          # Inspect the PR head commit, not the refs/pull/N/merge commit that
+          # actions/checkout selects by default on pull_request events; the
+          # merge commit subject would never carry the WIP marker.
+          ref: ${{ github.event.pull_request.head.sha }}
       - name: Block WIP heads from protected integration branches
         env:
           BASE_REF: ${{ github.base_ref }}
@@ -346,7 +358,7 @@ jobs:
               ;;
           esac
           subject=$(git log -1 --format=%s)
-          if [[ "$subject" == \[WIP\]* ]]; then
+          if printf '%s' "$subject" | grep -qiE '^\[WIP\]|^WIP|^wip'; then
             echo "WIP head cannot merge into ${BASE_REF}: ${subject}"
             exit 1
           fi
