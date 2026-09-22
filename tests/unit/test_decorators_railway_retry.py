@@ -54,7 +54,7 @@ class TestsFlextCoreDecoratorsRailwayRetry:
 
     @pytest.mark.parametrize(
         ("error_code", "expected_code"),
-        [(None, "OPERATION_ERROR"), ("CUSTOM_ERROR", "CUSTOM_ERROR")],
+        [(None, c.ErrorCode.OPERATION_ERROR.value), ("CUSTOM_ERROR", "CUSTOM_ERROR")],
     )
     def test_railway_failure_carries_expected_error_code(
         self, error_code: str | None, expected_code: str

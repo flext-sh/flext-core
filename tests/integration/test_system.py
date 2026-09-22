@@ -180,7 +180,7 @@ class TestsFlextCoreSystem:
         ("factory", "message", "code"),
         [
             (e.ValidationError, "campo_invalido", "VALIDATION_ERROR"),
-            (e.OperationError, "operacao_falhada", "OPERATION_ERROR"),
+            (e.OperationError, "operacao_falhada", c.ErrorCode.OPERATION_ERROR.value),
         ],
     )
     def test_exception_carries_code_and_message_publicly(

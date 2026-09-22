@@ -15,7 +15,7 @@ from __future__ import annotations
 import pytest
 from flext_tests import d, e, r
 
-from flext_core.container import FlextContainer
+from flext_core import FlextContainer, c
 
 
 class TestsFlextCoreDecorators:
@@ -71,7 +71,7 @@ class TestsFlextCoreDecorators:
         outcome = failing()
 
         assert outcome.failure
-        assert outcome.error_code == "OPERATION_ERROR"
+        assert outcome.error_code == c.ErrorCode.OPERATION_ERROR.value
 
     def test_retry_returns_value_on_first_success(self) -> None:
         """Retry returns the raw value without extra attempts on success."""
