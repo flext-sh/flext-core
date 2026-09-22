@@ -28,7 +28,8 @@ class TestsFlextBeartypeEngine:
         """Run a Python snippet in a subprocess and capture text output."""
         result = u.Cli.run_raw([sys.executable, "-c", script], cwd=cwd)
         if result.success:
-            return result.value
+            output: p.Cli.CommandOutput = result.value
+            return output
         return m.Cli.CommandOutput(
             stdout="",
             stderr=result.error or "python snippet execution failed",
