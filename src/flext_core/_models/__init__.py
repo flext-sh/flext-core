@@ -44,7 +44,7 @@ if TYPE_CHECKING:
     )
     from .base import FlextModelsBase
     from .builder import FlextModelsBuilder
-    from .collections import FlextModelsCollections
+    from .collection_models import FlextModelsCollections
     from .config import FlextModelsConfig
     from .container import FlextModelsContainer
     from .containers import FlextModelsContainers
@@ -148,7 +148,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ),
             ".base": ("FlextModelsBase",),
             ".builder": ("FlextModelsBuilder",),
-            ".collections": ("FlextModelsCollections",),
+            ".collection_models": ("FlextModelsCollections",),
             ".config": ("FlextModelsConfig",),
             ".container": ("FlextModelsContainer",),
             ".containers": ("FlextModelsContainers",),
