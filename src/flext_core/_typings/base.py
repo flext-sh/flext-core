@@ -138,7 +138,7 @@ class FlextTypingBase(tp, ta):
     type OptionalStrPairMapping = MappingKV[str, OptionalStrPair]
     type OptionalStrPairCollection = OptionalStrPairList | OptionalStrPairMapping
     type MutableOptionalStrPairSequence = MutableSequenceOf[OptionalStrPair]
-    type StrSequencePair = Pair[str, StrSequence]
+    type StrSequencePair = tuple[str, StrSequence]
     type StrSequencePairSequence = SequenceOf[StrSequencePair]
     type StrSequencePairTuple = VariadicTuple[StrSequencePair]
     type StrPairSequencePair = Pair[str, StrPairSequence]
