@@ -8,6 +8,7 @@
 <!-- TOC START -->
 
 - [Ownership order](#ownership-order)
+- [Public exports manifest](#public-exports-manifest)
 - [Documentation configuration](#documentation-configuration)
 - [Apply and validate](#apply-and-validate)
 - [Related guides](#related-guides)
@@ -27,6 +28,20 @@ generated projections.
 
 Never duplicate an owned value in tests, examples, JSON side files, templates, or local
 registries. Tests read the same typed owner as production.
+
+## Public exports manifest
+
+`config/exports.yaml` is the declarative SSOT for the workspace root's public export
+contract (RC-B). When the manifest exists, the lazy-init filesystem scan becomes a
+validator: any divergence between the manifest and the scan fails generation instead of
+mutating silently.
+
+- The manifest lists the names of the root package's static public export contract.
+- Runtime lazy-alias machinery (single-letter facade aliases such as `d`, `e`, `h`, `r`,
+  `x`) is not part of the static contract; the scan does not attribute those aliases to
+  the root package and the manifest must not list them.
+- Intentional public-API changes update the manifest in the same change; deleting a
+  module without updating the manifest fails gen pointing at the orphaned entry.
 
 ## Documentation configuration
 

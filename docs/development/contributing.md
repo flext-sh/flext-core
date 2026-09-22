@@ -29,7 +29,8 @@
 - [Getting Help](#getting-help)
   - [Resources](#resources)
   - [Support Levels](#support-levels)
-  <!-- TOC END -->
+
+<!-- TOC END -->
 
 Thank you for your interest in contributing to FLEXT-Core! This guide provides
 comprehensive instructions for contributing to the project.
