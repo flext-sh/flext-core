@@ -31,7 +31,7 @@ type MutableLazyImportMap = dict[str, LazyImportEntry]
 type LazyImportAliasGroups = Mapping[str, Sequence[StrPair]]
 
 
-class FlextLazy(BaseModel):
+class FlextLazyPart01(BaseModel):
     """Canonical lazy API as a container with runtime reuse caches."""
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
@@ -201,7 +201,7 @@ class FlextLazy(BaseModel):
 
 
 __all__: list[str] = [
-    "FlextLazy",
+    "FlextLazyPart01",
     "LazyImportAliasGroups",
     "LazyImportDict",
     "LazyImportEntry",

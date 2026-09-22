@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, cast
 
 from .._typings.lazy import FlextTypesLazy
 from .flextlazy_part_01 import (
-    FlextLazy as FlextLazyPart01,
+    FlextLazyPart01,
     LazyImportDict,
     LazyImportMap,
     MutableLazyImportMap,
