@@ -151,7 +151,8 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
     def _field_items(
         # ``model_fields`` resolves through ``BaseModel``; settings classes
         # subclass it, so the bare model base is the canonical collector type.
-        model_type: type[mp.BaseModel], tag: str
+        model_type: type[mp.BaseModel],
+        tag: str,
     ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
         own_ann = set(vars(model_type).get("__annotations__", {}))
         for name, info in model_type.model_fields.items():
