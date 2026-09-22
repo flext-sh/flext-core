@@ -93,7 +93,7 @@ class TestsFlextCoreGuards:
         ],
     )
     def test_matches_type_type_and_tuple_specs(
-        self, value: t.JsonValue, spec: type | tuple[type, ...], *, expected: bool
+        self, value: t.JsonValue, spec: type | t.VariadicTuple[type], *, expected: bool
     ) -> None:
         assert u.matches_type(value, spec) is expected
 

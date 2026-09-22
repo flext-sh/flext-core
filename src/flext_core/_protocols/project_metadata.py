@@ -9,6 +9,8 @@ from .base import FlextProtocolsBase as pb
 if TYPE_CHECKING:
     from pathlib import Path, PurePosixPath
 
+    from flext_core import t
+
 
 # NOTE (multi-agent, mro-wkii.17.23 / agent: uv_overlay_owner): interfaces
 # describe canonical model identities without transporting mappings or copies.
@@ -55,7 +57,7 @@ class FlextProtocolsProjectMetadata:
         def requires_python(self) -> str: ...
 
         @property
-        def dependencies(self) -> tuple[str, ...]: ...
+        def dependencies(self) -> t.VariadicTuple[str]: ...
 
         @property
         def authors(
@@ -66,10 +68,10 @@ class FlextProtocolsProjectMetadata:
         def urls(self) -> FlextProtocolsProjectMetadata.ProjectUrls: ...
 
         @property
-        def classifiers(self) -> tuple[str, ...]: ...
+        def classifiers(self) -> t.VariadicTuple[str]: ...
 
         @property
-        def keywords(self) -> tuple[str, ...]: ...
+        def keywords(self) -> t.VariadicTuple[str]: ...
 
     @runtime_checkable
     class ProjectToolFlextProject(pb.Model, Protocol):
@@ -108,7 +110,7 @@ class FlextProtocolsProjectMetadata:
         def site_title(self) -> str | None: ...
 
         @property
-        def exclude_docs(self) -> tuple[str, ...]: ...
+        def exclude_docs(self) -> t.VariadicTuple[str]: ...
 
         @property
         def readme_sections(

@@ -42,7 +42,7 @@ class FlextUtilitiesBeartypeTypingExtPatch:
     """Idempotent beartype patches for ``typing_extensions`` PEP 695 aliases."""
 
     type _TypeHintSpecifier = t.TypeHintSpecifier | _typing_extensions.TypeAliasType
-    type _HintPep695AliasValue = type | tuple[type, ...]
+    type _HintPep695AliasValue = type | t.VariadicTuple[type]
     type _Pep695Getter = Callable[[_TypeHintSpecifier, str], _TypeHintSpecifier]
 
     _applied: ClassVar[bool] = False

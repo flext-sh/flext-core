@@ -110,7 +110,7 @@ class TestsFlextCoreServiceBootstrap:
         ],
     )
     def test_resolve_mapping_sanitizes_wire_packages_by_element_type(
-        self, wire_packages: list[str | int], expected: tuple[str, ...] | None
+        self, wire_packages: list[str | int], expected: t.VariadicTuple[str] | None
     ) -> None:
         """Wire package mappings retain only wholly valid string sequences."""
         resolved = u.resolve_runtime_options({

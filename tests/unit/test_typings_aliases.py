@@ -23,7 +23,7 @@ from tests.typings import t
 
 from ._typings_support import FLAT_ALIAS_NAMES, PUBLIC_ALIAS_NAMES
 
-LEGACY_GENERIC_NAMES: tuple[str, ...] = (
+LEGACY_GENERIC_NAMES: t.VariadicTuple[str] = (
     "EnumT",
     "MessageT_contra",
     "P",

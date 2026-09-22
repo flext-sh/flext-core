@@ -25,7 +25,7 @@ class FlextConstantsEnforcementNamespace:
     # ENFORCEMENT_NAMESPACE_FACADE_ROOTS (Flext{Name}) and
     # ENFORCEMENT_NAMESPACE_LAYER_MAP ((Name, name.lower())) below — adding
     # a layer requires editing only this tuple.
-    NAMESPACE_LAYER_NAMES: ClassVar[tuple[str, ...]] = (
+    NAMESPACE_LAYER_NAMES: ClassVar[t.VariadicTuple[str]] = (
         "Constants",
         "Models",
         "Protocols",
@@ -132,7 +132,7 @@ class FlextConstantsEnforcementNamespace:
     })
     """Canonical short aliases exposed by FLEXT facade namespaces."""
 
-    ENFORCEMENT_PROJECT_ALIAS_OWNERS: ClassVar[Mapping[str, tuple[str, ...]]] = (
+    ENFORCEMENT_PROJECT_ALIAS_OWNERS: ClassVar[Mapping[str, t.VariadicTuple[str]]] = (
         MappingProxyType(
             dict.fromkeys(
                 (

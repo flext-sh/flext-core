@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Self, TypeIs, override
+from typing import TYPE_CHECKING, Self, TypeIs, override
 
 from .._protocols.result import FlextProtocolsResult as prt
 from .base import FlextResultBase
 
-_RESULT_FACTORY_CONTRACT: tuple[str, ...] = (
+if TYPE_CHECKING:
+    from flext_core import t
+
+_RESULT_FACTORY_CONTRACT: t.VariadicTuple[str] = (
     "reject_banned_result_parameterization",
     "reject_banned_success_payload",
     "require_error",

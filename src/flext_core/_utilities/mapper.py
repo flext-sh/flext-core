@@ -27,7 +27,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
 
     @staticmethod
     def agg[T](
-        items: t.SequenceOf[T] | tuple[T, ...],
+        items: t.SequenceOf[T] | t.VariadicTuple[T],
         field: str | Callable[[T], t.Numeric],
         *,
         fn: Callable[[Sequence[t.Numeric]], t.Numeric] | None = None,

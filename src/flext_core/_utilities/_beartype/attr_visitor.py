@@ -16,10 +16,17 @@ from .helpers import FlextUtilitiesBeartypeHelpers as _ubh
 _NO_VIOLATION: t.StrMapping | None = None
 _BARE_VIOLATION: t.StrMapping = {}
 
-_CONSTANT_LITERAL_TYPES: tuple[type, ...] = (int, float, str, bool, bytes, type(None))
+_CONSTANT_LITERAL_TYPES: t.VariadicTuple[type] = (
+    int,
+    float,
+    str,
+    bool,
+    bytes,
+    type(None),
+)
 """Scalar literal types accepted as canonical constant values."""
 
-_CONSTANT_CONTAINER_TYPES: tuple[type, ...] = (
+_CONSTANT_CONTAINER_TYPES: t.VariadicTuple[type] = (
     frozenset,
     tuple,
     dict,

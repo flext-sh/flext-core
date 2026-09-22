@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-TESTS_FLEXT_CORE_PUBLIC_EXPORTS: tuple[str, ...] = (
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from flext_core import t
+
+TESTS_FLEXT_CORE_PUBLIC_EXPORTS: t.VariadicTuple[str] = (
     "TestsFlextAutomatedArchitecture",
     "TestsFlextCleanConstants",
     "TestsFlextCleanModels",

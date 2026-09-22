@@ -62,7 +62,7 @@ class FlextUtilitiesFamilySurface:
         return tuple(snapshot)
 
     @staticmethod
-    def project_alias_owners() -> t.MappingKV[str, tuple[str, ...]]:
+    def project_alias_owners() -> t.MappingKV[str, t.VariadicTuple[str]]:
         """Map family package name to the declaration aliases it publishes.
 
         Derived from each root's ``__all__`` intersected with the
