@@ -36,14 +36,6 @@ name: CI
         description: >-
           Optional GitHub App private key minting the short-lived installation
           token for cross-repo private git dependencies.
-    inputs:
-      CI_DEPENDENCIES_REQUIRED:
-        required: false
-        type: string
-        description: >-
-          Optional flag indicating if cross-repo dependency credentials are
-          required. When absent or falsy, missing secrets are recorded as
-          NOT EXECUTED. When truthy, missing secrets fail the job.
 # End SECTION: triggers
 
 # Why: one active run per workflow and branch prevents obsolete CI from consuming runners.
@@ -86,7 +78,7 @@ jobs:
         env:
           CI_DEPS_APP_ID: ${{ secrets.CI_DEPENDENCIES_APP_ID }}
           CI_DEPS_APP_KEY: ${{ secrets.CI_DEPENDENCIES_APP_PRIVATE_KEY }}
-          CI_DEPS_REQUIRED: ${{ inputs.CI_DEPENDENCIES_REQUIRED || vars.CI_DEPENDENCIES_REQUIRED || '0' }}
+          CI_DEPS_REQUIRED: '0'
         run: |
           set -euo pipefail
           if [ -z "$CI_DEPS_APP_ID" ] || [ -z "$CI_DEPS_APP_KEY" ]; then
@@ -280,7 +272,7 @@ jobs:
         env:
           CI_DEPS_APP_ID: ${{ secrets.CI_DEPENDENCIES_APP_ID }}
           CI_DEPS_APP_KEY: ${{ secrets.CI_DEPENDENCIES_APP_PRIVATE_KEY }}
-          CI_DEPS_REQUIRED: ${{ inputs.CI_DEPENDENCIES_REQUIRED || vars.CI_DEPENDENCIES_REQUIRED || '0' }}
+          CI_DEPS_REQUIRED: '0'
         run: |
           set -euo pipefail
           if [ -z "$CI_DEPS_APP_ID" ] || [ -z "$CI_DEPS_APP_KEY" ]; then
