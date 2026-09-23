@@ -9,77 +9,60 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
+    from flext_cli import cli, main
     from flext_tests import (
+        active_rules,
         api,
-        cli,
         config,
+        discover_repository_root,
         install_local_packages,
         load_infra_report,
-        main,
-        services,
         settings,
+        split_csv,
     )
 
     from flext_core import core, lazy_attribute
 
     from . import benchmark, fixtures, integration, unit
-    from .base import TestsFlextServiceBase, TestsFlextServiceBase as s
-    from .constants import TestsFlextConstants, TestsFlextConstants as c
-    from .models import TestsFlextModels
-    from .protocols import TestsFlextProtocols
-    from .typings import TestsFlextTypes
-    from .utilities import TestsFlextUtilities, TestsFlextUtilities as u
 
 
 __all__: tuple[str, ...] = (
-    "TestsFlextConstants",
-    "TestsFlextModels",
-    "TestsFlextProtocols",
-    "TestsFlextServiceBase",
-    "TestsFlextTypes",
-    "TestsFlextUtilities",
+    "active_rules",
     "api",
     "benchmark",
-    "c",
     "cli",
     "config",
     "core",
+    "discover_repository_root",
     "fixtures",
     "install_local_packages",
     "integration",
     "lazy_attribute",
     "load_infra_report",
     "main",
-    "s",
-    "services",
     "settings",
-    "u",
+    "split_csv",
     "unit",
 )
 
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
-            ".base": ("TestsFlextServiceBase", "s"),
             ".benchmark": ("benchmark",),
-            ".constants": ("TestsFlextConstants", "c"),
             ".fixtures": ("fixtures",),
             ".integration": ("integration",),
-            ".models": ("TestsFlextModels",),
-            ".protocols": ("TestsFlextProtocols",),
-            ".typings": ("TestsFlextTypes",),
             ".unit": ("unit",),
-            ".utilities": ("TestsFlextUtilities", "u"),
+            "flext_cli": ("cli", "main"),
             "flext_core": ("core", "lazy_attribute"),
             "flext_tests": (
+                "active_rules",
                 "api",
-                "cli",
                 "config",
+                "discover_repository_root",
                 "install_local_packages",
                 "load_infra_report",
-                "main",
-                "services",
                 "settings",
+                "split_csv",
             ),
         }),
         alias_groups=MappingProxyType({}),
