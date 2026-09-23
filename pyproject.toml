@@ -178,6 +178,7 @@ exclude = ""
 mypy_path = ["src"]
 plugins = ["pydantic.mypy"]
 python_version = "3.13"
+allow_redefinition = true
 check_untyped_defs = true
 explicit_package_bases = true
 extra_checks = true
