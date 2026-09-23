@@ -92,6 +92,8 @@ if TYPE_CHECKING:
     from .runtime_violation_registry import FlextUtilitiesRuntimeViolationRegistry
     from .settings import FlextUtilitiesSettings
     from .text import FlextUtilitiesText
+
+
 __all__: tuple[str, ...] = (
     "EXTENDED_PREDICATE_BINDINGS",
     "PREDICATE_BINDINGS",

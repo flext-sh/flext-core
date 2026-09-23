@@ -472,6 +472,7 @@ exclude = [
 ]
 fix = false
 line-length = 88
+namespace-packages = ["tests", "examples", "scripts"]
 preview = true
 respect-gitignore = true
 show-fixes = true

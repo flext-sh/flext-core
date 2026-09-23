@@ -10,6 +10,8 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from .parser_targets_part_02 import FlextUtilitiesParserTargets
+
+
 __all__: tuple[str, ...] = ("FlextUtilitiesParserTargets",)
 
 _LAZY_IMPORTS = MappingProxyType(

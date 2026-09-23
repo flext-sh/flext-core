@@ -16,6 +16,8 @@ if TYPE_CHECKING:
     from .flextmodelsprojectmetadata_part_02 import ProjectMetadataFields
     from .flextmodelsprojectmetadata_part_03 import ProjectMetadataAggregates
     from .flextmodelsprojectmetadata_part_04 import ProjectMetadataDocument
+
+
 __all__: tuple[str, ...] = (
     "ProjectMetadataAggregates",
     "ProjectMetadataContract",

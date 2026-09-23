@@ -24,6 +24,8 @@ if TYPE_CHECKING:
     from flext_core import core, lazy_attribute
 
     from . import benchmark, fixtures, integration, unit
+
+
 __all__: tuple[str, ...] = (
     "active_rules",
     "api",

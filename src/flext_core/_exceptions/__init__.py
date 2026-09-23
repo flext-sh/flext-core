@@ -13,11 +13,13 @@ if TYPE_CHECKING:
     from ._base_parts.flextexceptionsbase_part_01 import FlextBaseErrorMetadataMixin
     from ._base_parts.flextexceptionsbase_part_02 import FlextBaseErrorStateMixin
     from .base import FlextExceptionsBase
+    from .exception_types import FlextExceptionsTypes
     from .factories import FlextExceptionsFactories
     from .helpers import FlextExceptionsHelpers
     from .metrics import FlextExceptionsMetrics
     from .template import FlextExceptionsTemplate
-    from .types import FlextExceptionsTypes
+
+
 __all__: tuple[str, ...] = (
     "FlextBaseErrorMetadataMixin",
     "FlextBaseErrorStateMixin",
@@ -41,11 +43,11 @@ _LAZY_IMPORTS = MappingProxyType(
             "._base_parts.flextexceptionsbase_part_02": ("FlextBaseErrorStateMixin",),
             "._factories_parts": ("_factories_parts",),
             ".base": ("FlextExceptionsBase",),
+            ".exception_types": ("FlextExceptionsTypes",),
             ".factories": ("FlextExceptionsFactories",),
             ".helpers": ("FlextExceptionsHelpers",),
             ".metrics": ("FlextExceptionsMetrics",),
             ".template": ("FlextExceptionsTemplate",),
-            ".types": ("FlextExceptionsTypes",),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,

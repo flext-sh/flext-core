@@ -17,6 +17,8 @@ if TYPE_CHECKING:
     from .result import TestsFlextConstantsResult
     from .services import TestsFlextConstantsServices
     from .settings import TestsFlextConstantsSettings
+
+
 __all__: tuple[str, ...] = (
     "TestsFlextConstantsDomain",
     "TestsFlextConstantsErrors",

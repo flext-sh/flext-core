@@ -31,6 +31,8 @@ if TYPE_CHECKING:
     from .shared import ExamplesFlextShared
     from .typings import t
     from .utilities import u
+
+
 __all__: tuple[str, ...] = (
     "ExamplesFlextModels",
     "ExamplesFlextShared",

@@ -22,6 +22,8 @@ if TYPE_CHECKING:
     from .result import FlextProtocolsResult
     from .service import FlextProtocolsService
     from .settings import FlextProtocolsSettings
+
+
 __all__: tuple[str, ...] = (
     "FlextProtocolsBase",
     "FlextProtocolsConfig",

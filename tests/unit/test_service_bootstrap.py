@@ -40,7 +40,7 @@ class TestsFlextCoreServiceBootstrap:
             m.Field(description="Runtime dispatcher override exposed by the source."),
         ] = None
 
-        def _runtime_bootstrap_options(self) -> m.RuntimeBootstrapOptions:
+        def runtime_bootstrap_options(self) -> m.RuntimeBootstrapOptions:
             return m.RuntimeBootstrapOptions(
                 subproject="source-options", wire_packages=("source-options",)
             )

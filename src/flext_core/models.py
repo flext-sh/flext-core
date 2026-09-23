@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from ._models.base import FlextModelsBase
 from ._models.builder import FlextModelsBuilder
-from ._models.collections import FlextModelsCollections
+from ._models.collection_models import FlextModelsCollections
 from ._models.config import FlextModelsConfig
 from ._models.container import FlextModelsContainer
 from ._models.containers import FlextModelsContainers

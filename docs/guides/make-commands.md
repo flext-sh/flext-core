@@ -9,6 +9,8 @@
 
 - [Discover commands](#discover-commands)
 - [Canonical workflow](#canonical-workflow)
+- [Verb single-pass contract](#verb-single-pass-contract)
+- [Markdown quality pipeline](#markdown-quality-pipeline)
 - [Test contract](#test-contract)
 - [Failure contract](#failure-contract)
 - [Scope and generation](#scope-and-generation)
@@ -54,6 +56,40 @@ phase, fix, or changed-only selector may be attached to a standard verb.
 `make help` is the complete live inventory. Additional declared verbs such as `deps`,
 `docs`, `audit`, `status`, `waza`, `duplication`, and the release verbs retain their own
 single operation and are invoked only when their scope applies.
+
+## Verb single-pass contract
+
+Each mutating verb owns exactly one operation per tool, and `make check` is strictly
+read-only — no verb repeats another verb's work across the canonical sequence
+`make fix && make fmt && make check`:
+
+| Gate / tool                       | `make check` (read-only)           | `make fmt` (formatters) | `make fix` (one mutation)                  |
+| --------------------------------- | ---------------------------------- | ----------------------- | ------------------------------------------ |
+| `lint` — ruff                     | read-only `ruff` verdict           | —                       | one `ruff` repair pass                     |
+| `format` — ruff                   | — (mutating)                       | `ruff` format pass      | —                                          |
+| `markdown` — rumdl                | `rumdl check`                      | —                       | `rumdl fmt`                                |
+| `markdown-format` — prettier      | `prettier --check`                 | `prettier --write`      | —                                          |
+| `markdown-code` — ruff (embedded) | format verdict on parseable blocks | —                       | one format pass, clean round-trips spliced |
+| `canonical-alias`, `smells`       | read-only scan                     | —                       | declared repair                            |
+
+`make fmt` never runs a lint pass and `make fix` never formats: each operation runs once
+per verb, residue found by a mutation is reported there and enforced only by
+`make check`, and `make fix`/`make fmt` repeated on a green tree are no-ops.
+
+## Markdown quality pipeline
+
+The markdown standard lives once in `flext-infra/config/tooling.yaml`
+(`Infra.tooling.tools.markdown`) and is projected to every repository by `make gen`:
+
+- `rumdl` is the linter (markdownlint-compatible `MD*` rules through the generated
+  `.markdownlint.json` / `.markdownlintignore`); syntax findings inside embedded code
+  belong to the flext-tests markdown validator, not to a second linter.
+- `prettier` (pinned 3.5.x — newer releases dropped prose reflow) is the formatter:
+  `prettier --check` in `make check`, `prettier --write` in `make fmt`.
+- `markdown-code` holds parseable embedded Python and doctest examples to the
+  ruff-format contract; unparseable documentation fragments are prose and stay with the
+  validator. Generated and provider-projected trees (`.agents`, `.claude`, `.gemini`,
+  `AGENTS.md`, `target/`, and friends) are excluded by the same SSOT list.
 
 ## Test contract
 

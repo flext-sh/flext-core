@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import r, t
 
-from .._models.collections import FlextModelsCollections
+from .._models.collection_models import FlextModelsCollections
 from .._protocols.result import FlextProtocolsResult as p
 from .guards_type_core import FlextUtilitiesGuardsTypeCore
 from .guards_type_model import FlextUtilitiesGuardsTypeModel

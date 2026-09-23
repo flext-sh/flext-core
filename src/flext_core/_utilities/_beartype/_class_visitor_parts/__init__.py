@@ -16,6 +16,8 @@ if TYPE_CHECKING:
         self_ref_violation,
     )
     from .class_visitor_part_03 import FlextUtilitiesBeartypeClassVisitor
+
+
 __all__: tuple[str, ...] = (
     "FlextUtilitiesBeartypeClassVisitor",
     "_parts",
