@@ -64,10 +64,6 @@ from pydantic_settings import (
     SettingsConfigDict as _PydanticSettingsConfigDict,
     YamlConfigSettingsSource,
 )
-from pydantic_settings.sources.types import (
-    ConfigFileSourceType as _ConfigFileSourceType,
-    Traversable as _Traversable,
-)
 
 type _FieldValue = JsonValue | Path
 type _FieldSchemaExtra = Mapping[str, _FieldValue | Sequence[_FieldValue]]
@@ -124,12 +120,13 @@ class FlextModelsPydantic:
     class BaseModel(PydanticBaseModel):
         """Canonical BaseModel exported through the FLEXT models facade."""
 
-    @dataclass_transform(
-        kw_only_default=True,
-        field_specifiers=(_field, Field, PydanticPrivateAttr, _private_attr),
-    )
-    class BaseSettings(PydanticBaseSettings):
-        """Canonical BaseSettings exported through the FLEXT models facade."""
+    # Plain re-export alias, deliberately NOT a subclass definition: the
+    # pydantic mypy plugin crashes (assertion in add_method, "All arguments
+    # must be fully typed") synthesizing __init__ for a BaseSettings
+    # subclass, which silently degrades every dependent facade to Any under
+    # the gate's JSON output. The alias binds the exact upstream class, so
+    # consumer MRO and runtime behavior are identical.
+    BaseSettings = PydanticBaseSettings
 
     @dataclass_transform(
         kw_only_default=True,
@@ -214,5 +211,3 @@ class FlextModelsPydantic:
     EnvSettingsSource = EnvSettingsSource
     PydanticBaseSettingsSource = PydanticBaseSettingsSource
     YamlConfigSettingsSource = YamlConfigSettingsSource
-    type ConfigFileSourceType = _ConfigFileSourceType
-    Traversable = _Traversable
