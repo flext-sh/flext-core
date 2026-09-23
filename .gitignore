@@ -372,6 +372,7 @@ CLAUDE.local.md
 !.github/workflows/release.yml
 !.qlty/
 !.qlty/qlty.toml
+!.sonarcloud.properties
 !.vscode/settings.json
 !config/
 !config/gitleaks-release.toml
