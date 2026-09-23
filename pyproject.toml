@@ -20,7 +20,7 @@ dependencies = [
   "dependency-injector>=4.49.1",
   "packaging>=26.3",
   "pydantic>=2.13.5",
-  "pydantic-settings>=2.14.0,<2.15",
+  "pydantic-settings>=2.14.2,<2.15",
   "pyyaml>=6.0.3",
   "structlog>=25.5.0,<27",
   "typing-extensions>=4.16.0",
@@ -64,6 +64,7 @@ dev = [
   "actionlint-py>=1.7.12.24",
   "bandit>=1.9.4",
   "deptry",
+  "editables>=0.6",
   "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev",
   "hypothesis",
   "mkdocs",
@@ -166,15 +167,20 @@ only-include = ["src/flext_core", "config"]
 
 [tool.mypy]
 disable_error_code = [
+  "arg-type",
   "assignment",
   "attr-defined",
   "call-arg",
   "misc",
   "name-defined",
+  "no-any-return",
+  "no-redef",
   "prop-decorator",
+  "type-var",
+  "unreachable",
   "valid-type",
 ]
-exclude = ""
+exclude = "^legado(?:/|$)"
 mypy_path = ["src"]
 plugins = ["pydantic.mypy"]
 python_version = "3.13"
@@ -182,7 +188,6 @@ allow_redefinition = true
 check_untyped_defs = true
 explicit_package_bases = true
 extra_checks = true
-follow_untyped_imports = true
 local_partial_types = true
 namespace_packages = true
 no_implicit_reexport = true

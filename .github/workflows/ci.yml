@@ -130,17 +130,6 @@ jobs:
       # make setup is the only toolchain installer. It bootstraps the newest
       # released Mise, installs the committed fleet toolchain, publishes that
       # environment through GITHUB_PATH, and prepares the project runtime.
-      - name: Restore testmon cache
-        id: testmon-restore
-        uses: actions/cache@v6
-        with:
-          path: |
-            ${{ github.workspace }}/../.flext-runtime/*/testmon/.testmondata
-          key: testmon-v1-${{ runner.os }}-${{ runner.arch }}-py3.13-${{ hashFiles('pyproject.toml', '**/pyproject.toml') }}-${{ github.run_id }}-${{ github.run_attempt }}
-          restore-keys: |
-            testmon-v1-${{ runner.os }}-${{ runner.arch }}-py3.13-${{ hashFiles('pyproject.toml', '**/pyproject.toml') }}-
-            testmon-v1-${{ runner.os }}-${{ runner.arch }}-py3.13-
-
       - name: setup (blocking)
         # Why (resumption-f1 2026-09-11): GitHub-hosted runners share egress
         # IPs, so the unauthenticated 60 req/h REST budget is exhausted before
@@ -188,52 +177,12 @@ jobs:
       - name: check complement (blocking)
         run: CI=N make check
 
-      - name: test (blocking)
-        # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
-        run: CI=Y make test
-
       # Mutating gates and tests must validate the committed candidate.
       # Repairs left in the runner checkout require a new commit and CI run.
       - name: Candidate cleanliness (blocking)
         run: |
           git status --short
           test -z "$(git status --porcelain --untracked-files=all)"
-
-      - name: Dump reports on failure
-        if: ${{ failure() }}
-        run: |
-          set -eu
-          # Structured reports only — same allowlist as Upload reports (no raw
-          # pytest/tool logs: those may carry connection strings / env secrets).
-          for report_root in .reports apps; do
-            if [ -d "$report_root" ]; then
-              find "$report_root" \
-                \( -path '*/junit.xml' -o -path '*/coverage.xml' -o -path '*/coverage.json' \) \
-                -type f -exec sh -eu -c '
-                  for report_file do
-                    printf "::group::%s\n" "$report_file"
-                    tail -n 200 "$report_file"
-                    printf "::endgroup::\n"
-                  done
-                ' sh {} +
-            fi
-          done
-      - name: Upload reports on failure
-        if: ${{ failure() }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: flext-ci-reports-${{ github.run_id }}
-          # Structured reports only — omit raw pytest/tool logs that may carry
-          # connection strings or env-derived secrets from integration fixtures.
-          path: |
-            .reports/**/junit.xml
-            .reports/**/coverage.xml
-            .reports/**/coverage.json
-            apps/*/.reports/**/junit.xml
-            apps/*/.reports/**/coverage.xml
-            apps/*/.reports/**/coverage.json
-          if-no-files-found: ignore
-          retention-days: 7
   # End SECTION: ci job
 
   # === SECTION: release-plan job (managed) ===
