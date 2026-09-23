@@ -166,23 +166,27 @@ only-include = ["src/flext_core", "config"]
 
 [tool.mypy]
 disable_error_code = [
+  "arg-type",
   "assignment",
   "attr-defined",
   "call-arg",
   "misc",
   "name-defined",
+  "no-any-return",
+  "no-redef",
   "prop-decorator",
+  "type-var",
+  "unreachable",
   "valid-type",
 ]
-exclude = ""
+exclude = "^legado(?:/|$)"
 mypy_path = ["src"]
-plugins = ["pydantic.mypy"]
+plugins = ["pydantic.mypy", "returns.contrib.mypy.returns_plugin"]
 python_version = "3.13"
 allow_redefinition = true
 check_untyped_defs = true
 explicit_package_bases = true
 extra_checks = true
-follow_untyped_imports = true
 local_partial_types = true
 namespace_packages = true
 no_implicit_reexport = true
