@@ -181,7 +181,7 @@ disable_error_code = [
 ]
 exclude = "^legado(?:/|$)"
 mypy_path = ["src"]
-plugins = ["pydantic.mypy", "returns.contrib.mypy.returns_plugin"]
+plugins = ["pydantic.mypy"]
 python_version = "3.13"
 allow_redefinition = true
 check_untyped_defs = true
