@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
     from . import _models, _shared_parts
     from .constants import c
-    from .models import ExamplesFlextModels, m
+    from .models import ExamplesFlextModels, ExamplesFlextModels as m
     from .protocols import p
     from .shared import ExamplesFlextShared
     from .typings import t

@@ -9,12 +9,46 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_tests import api
+    from flext_tests import api, d, e, h, r, td, tf, tk, tm, tv, x
 
     from . import benchmark, fixtures, integration, unit
+    from .base import TestsFlextServiceBase, TestsFlextServiceBase as s
+    from .constants import TestsFlextConstants, TestsFlextConstants as c
+    from .models import TestsFlextModels, TestsFlextModels as m
+    from .protocols import TestsFlextProtocols, TestsFlextProtocols as p
+    from .typings import TestsFlextTypes, TestsFlextTypes as t
+    from .utilities import TestsFlextUtilities, TestsFlextUtilities as u
 
 
-__all__: tuple[str, ...] = ("api", "benchmark", "fixtures", "integration", "unit")
+__all__: tuple[str, ...] = (
+    "TestsFlextConstants",
+    "TestsFlextModels",
+    "TestsFlextProtocols",
+    "TestsFlextServiceBase",
+    "TestsFlextTypes",
+    "TestsFlextUtilities",
+    "api",
+    "benchmark",
+    "c",
+    "d",
+    "e",
+    "fixtures",
+    "h",
+    "integration",
+    "m",
+    "p",
+    "r",
+    "s",
+    "t",
+    "td",
+    "tf",
+    "tk",
+    "tm",
+    "tv",
+    "u",
+    "unit",
+    "x",
+)
 
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
@@ -22,8 +56,24 @@ _LAZY_IMPORTS = MappingProxyType(
             ".benchmark": ("benchmark",),
             ".fixtures": ("fixtures",),
             ".integration": ("integration",),
+            ".models": ("TestsFlextModels", "m"),
+            ".protocols": ("TestsFlextProtocols", "p"),
+            ".typings": ("TestsFlextTypes", "t"),
             ".unit": ("unit",),
-            "flext_tests": ("api",),
+            ".utilities": ("TestsFlextUtilities", "u"),
+            "flext_tests": (
+                "api",
+                "d",
+                "e",
+                "h",
+                "r",
+                "td",
+                "tf",
+                "tk",
+                "tm",
+                "tv",
+                "x",
+            ),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,

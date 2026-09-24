@@ -48,9 +48,11 @@ class FlextLazyPart01(BaseModel):
         default_factory=dict
     )
 
-    normalized_map_cache: dict[tuple[str, int], LazyImportDict] = Field(
-        default_factory=dict
-    )
+    # The entry keeps its source map alive: an ``id()`` key alone is reused once a
+    # transient map is freed, and would serve another map's normalization.
+    normalized_map_cache: dict[
+        tuple[str, int], tuple[LazyImportMap | None, LazyImportDict]
+    ] = Field(default_factory=dict)
 
     install_cache: dict[str, tuple[int, int, int, int, bool]] = Field(
         default_factory=dict
@@ -98,8 +100,8 @@ class FlextLazyPart01(BaseModel):
     def _norm_map(self, module_path: str, raw: LazyImportMap | None) -> LazyImportDict:
         cache_key = self._norm_cache_key(module_path, raw)
         cached = self.normalized_map_cache.get(cache_key)
-        if cached is not None:
-            return cached
+        if cached is not None and cached[0] is raw:
+            return cached[1]
 
         try:
             validated = self._map_adapter.validate_python(raw)
@@ -116,7 +118,7 @@ class FlextLazyPart01(BaseModel):
             resolved = self._child_path(target, module_path)
             out[name] = (resolved, attr)
 
-        self.normalized_map_cache[cache_key] = out
+        self.normalized_map_cache[cache_key] = (raw, out)
         return out
 
     def _must_activate_core_beartype(self, module_path: str) -> bool:

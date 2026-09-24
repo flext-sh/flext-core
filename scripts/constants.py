@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from flext_core import c
+from flext_core import FlextConstants
 from scripts import t
 
 
-class ScriptsFlextConstants(c):
+class ScriptsFlextConstants(FlextConstants):
     """Constants for flext."""
 
 

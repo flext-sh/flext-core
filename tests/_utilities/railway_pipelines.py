@@ -105,11 +105,9 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
                 if raw_response_result.failure:
                     msg = raw_response_result.error or c.Tests.INVALID_EMAIL
                     raise e.BaseError(msg)
-                raw_response = raw_response_result.value
-                if not isinstance(raw_response, m.Tests.EmailResponse):
-                    msg = c.Tests.INVALID_EMAIL
-                    raise e.BaseError(msg)
-                response_obj: m.Tests.EmailResponse = raw_response
+                # The service's result payload is EmailResponse by contract;
+                # pyright proves the isinstance guard redundant here.
+                response_obj: m.Tests.EmailResponse = raw_response_result.value
                 user = response_obj.status
         return user
 
