@@ -15,10 +15,10 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 
-from flext_tests import t
+from flext_tests import FlextTestsTypes
 
 
-class TestsFlextTypes(t):
+class TestsFlextTypes(FlextTestsTypes):
     """Type system foundation for flext-core tests - extends TestsFlextTypes.
 
     Architecture: Extends TestsFlextTypes with flext-core-specific type definitions.
@@ -37,21 +37,25 @@ class TestsFlextTypes(t):
         Only defines types that are truly flext-core-specific.
         """
 
-        class Tests(t.Tests):
+        class Tests(FlextTestsTypes.Tests):
             """flext-core test types namespace."""
 
-            type ServiceConfigMapping = t.MappingKV[
-                str, t.Tests.TestobjectSerializable | MutableSequence[str]
+            type ServiceConfigMapping = FlextTestsTypes.MappingKV[
+                str, FlextTestsTypes.Tests.TestobjectSerializable | MutableSequence[str]
             ]
             "Service configuration mapping specific to flext-core services."
-            type HandlerConfigMapping = t.MappingKV[
-                str, t.Tests.TestobjectSerializable | MutableSequence[str]
+            type HandlerConfigMapping = FlextTestsTypes.MappingKV[
+                str, FlextTestsTypes.Tests.TestobjectSerializable | MutableSequence[str]
             ]
             "Handler configuration mapping specific to flext-core handlers."
 
-            type TestCaseMap = t.MappingKV[str, t.Tests.TestobjectSerializable]
+            type TestCaseMap = FlextTestsTypes.MappingKV[
+                str, FlextTestsTypes.Tests.TestobjectSerializable
+            ]
 
-            type InputPayloadMap = t.MappingKV[str, t.Tests.TestobjectSerializable]
+            type InputPayloadMap = FlextTestsTypes.MappingKV[
+                str, FlextTestsTypes.Tests.TestobjectSerializable
+            ]
 
             type CentralizedUnion = str | int | float | None
             "Centralized multi-arm alias used by enforcement regression fixtures."

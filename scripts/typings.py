@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from flext_core import t
+from flext_core import FlextTypes
 
 
-class ScriptsFlextTypes(t):
+class ScriptsFlextTypes(FlextTypes):
     """Type aliases for flext."""
 
 

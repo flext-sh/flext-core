@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core import m
+from flext_core import FlextModels
 
 from ._models.errors import ExamplesFlextModelsErrors
 from ._models.ex00 import ExamplesFlextModelsEx00
@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from examples.typings import t
 
 
-class ExamplesFlextModels(m):
+class ExamplesFlextModels(FlextModels):
     """Public examples model facade — composes all _models/* via MRO."""
 
     class Examples(
