@@ -38,10 +38,10 @@ class TestsFlextCorePydanticSettingsFacade:
     def test_pydantic_base_settings_alias_is_the_real_pydantic_settings_base(
         self,
     ) -> None:
-        # Facade-mediated identity: the wide alias is exactly the direct base of
-        # the canonical FLEXT settings class, i.e. the real pydantic-settings
-        # BaseSettings, never a narrowed subclass or a substitute.
-        assert m.BaseSettings.__bases__ == (m.PydanticBaseSettings,)
+        # Facade-mediated identity: ``m.BaseSettings`` is the real pydantic-settings
+        # BaseSettings itself (an alias, not a subclass), exactly as the wide
+        # ``m.PydanticBaseSettings`` export.
+        assert m.BaseSettings is m.PydanticBaseSettings
 
     def test_settings_override_annotated_through_alias_is_consulted(self) -> None:
         with test_u.Tests.env_vars_context(env_vars={"TOPIC": "from-env"}):
