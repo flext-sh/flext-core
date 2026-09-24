@@ -9,20 +9,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core import (
-        config,
-        core,
-        d,
-        e,
-        h,
-        lazy,
-        lazy_attribute,
-        normalize_lazy_imports,
-        r,
-        s,
-        settings,
-        x,
-    )
+    from flext_core import d, e, h, r, s, x
 
     from .constants import ScriptsFlextConstants, c
     from .models import ScriptsFlextModels, m
@@ -38,19 +25,13 @@ __all__: tuple[str, ...] = (
     "ScriptsFlextTypes",
     "ScriptsFlextUtilities",
     "c",
-    "config",
-    "core",
     "d",
     "e",
     "h",
-    "lazy",
-    "lazy_attribute",
     "m",
-    "normalize_lazy_imports",
     "p",
     "r",
     "s",
-    "settings",
     "t",
     "u",
     "x",
@@ -64,20 +45,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".protocols": ("ScriptsFlextProtocols", "p"),
             ".typings": ("ScriptsFlextTypes", "t"),
             ".utilities": ("ScriptsFlextUtilities", "u"),
-            "flext_core": (
-                "config",
-                "core",
-                "d",
-                "e",
-                "h",
-                "lazy",
-                "lazy_attribute",
-                "normalize_lazy_imports",
-                "r",
-                "s",
-                "settings",
-                "x",
-            ),
+            "flext_core": ("d", "e", "h", "r", "s", "x"),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
