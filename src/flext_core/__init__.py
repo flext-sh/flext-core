@@ -20,6 +20,22 @@ from .__version__ import (
 )
 
 if TYPE_CHECKING:
+    from flext_cli import cli, main
+    from flext_infra import docs_main, infra
+    from flext_tests import (
+        active_rules,
+        api,
+        discover_repository_root,
+        install_local_packages,
+        load_infra_report,
+        split_csv,
+        td,
+        tf,
+        tk,
+        tm,
+        tv,
+    )
+
     from . import services
     from ._config import FlextConfig, config
     from ._settings import FlextSettings, settings
@@ -89,20 +105,35 @@ __all__: tuple[str, ...] = (
     "__url__",
     "__version__",
     "__version_info__",
+    "active_rules",
+    "api",
     "c",
+    "cli",
     "config",
     "core",
     "d",
+    "discover_repository_root",
+    "docs_main",
     "e",
     "h",
+    "infra",
+    "install_local_packages",
     "lazy_attribute",
+    "load_infra_report",
     "m",
+    "main",
     "p",
     "r",
     "s",
     "services",
     "settings",
+    "split_csv",
     "t",
+    "td",
+    "tf",
+    "tk",
+    "tm",
+    "tv",
     "u",
     "x",
 )

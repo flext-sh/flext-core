@@ -27,6 +27,7 @@ __all__: tuple[str, ...] = (
     "TestsFlextServiceBase",
     "TestsFlextTypes",
     "TestsFlextUtilities",
+    "active_rules",
     "api",
     "benchmark",
     "c",
@@ -62,6 +63,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".unit": ("unit",),
             ".utilities": ("TestsFlextUtilities", "u"),
             "flext_tests": (
+                "active_rules",
                 "api",
                 "d",
                 "e",
