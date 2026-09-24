@@ -26,7 +26,11 @@ if TYPE_CHECKING:
     from .api import FlextApi, core
     from .base import FlextBase
     from .cli import FlextCli
-    from .constants import FlextConstants, FlextConstants as c
+    from .constants import (
+        FlextConstants,
+        FlextConstants as c,
+        FlextConstantsEnforcement,
+    )
     from .container import FlextContainer
     from .context import FlextContext
     from .decorators import FlextDecorators, d
@@ -43,7 +47,11 @@ if TYPE_CHECKING:
     from .runtime import FlextRuntime
     from .service import FlextService, FlextService as s
     from .typings import FlextTypes, FlextTypes as t
-    from .utilities import FlextUtilities, FlextUtilities as u
+    from .utilities import (
+        FlextUtilities,
+        FlextUtilities as u,
+        FlextUtilitiesRuntimeViolationRegistry,
+    )
 
 
 __all__: tuple[str, ...] = (
@@ -52,6 +60,7 @@ __all__: tuple[str, ...] = (
     "FlextCli",
     "FlextConfig",
     "FlextConstants",
+    "FlextConstantsEnforcement",
     "FlextContainer",
     "FlextContext",
     "FlextDecorators",
@@ -71,6 +80,7 @@ __all__: tuple[str, ...] = (
     "FlextTypes",
     "FlextUtilities",
     "FlextUtilitiesLogging",
+    "FlextUtilitiesRuntimeViolationRegistry",
     "__author__",
     "__author_email__",
     "__description__",
@@ -105,7 +115,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".api": ("FlextApi", "core"),
             ".base": ("FlextBase",),
             ".cli": ("FlextCli",),
-            ".constants": ("FlextConstants", "c"),
+            ".constants": ("FlextConstants", "FlextConstantsEnforcement", "c"),
             ".container": ("FlextContainer",),
             ".context": ("FlextContext",),
             ".decorators": ("FlextDecorators", "d"),
@@ -123,7 +133,11 @@ _LAZY_IMPORTS = MappingProxyType(
             ".service": ("FlextService", "s"),
             ".services": ("services",),
             ".typings": ("FlextTypes", "t"),
-            ".utilities": ("FlextUtilities", "u"),
+            ".utilities": (
+                "FlextUtilities",
+                "FlextUtilitiesRuntimeViolationRegistry",
+                "u",
+            ),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
