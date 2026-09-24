@@ -28,12 +28,6 @@ if TYPE_CHECKING:
     from tests.typings import t
 
 
-# Note: the top-level class name is intentionally ``TestsFlextEnforcementAptHooks``
-# (not ``TestsFlextCore...``). Three export modules import this exact name
-# (tests/_exports_lazy_part_03.py, tests/_exports_typing_unit.py,
-# tests/unit/_exports_lazy_part_02.py) and are out of scope for this change, so
-# renaming would break collection. The name follows the repo's ``TestsFlext<Module>``
-# convention, which coexists with ``TestsFlextCore<Module>`` across tests/unit/.
 class TestsFlextEnforcementAptHooks:
     """Public catalog + runtime contract for the A-PT enforcement rules."""
 

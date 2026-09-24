@@ -9,41 +9,12 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_cli import cli, main
-    from flext_tests import (
-        active_rules,
-        api,
-        config,
-        discover_repository_root,
-        install_local_packages,
-        load_infra_report,
-        settings,
-        split_csv,
-    )
-
-    from flext_core import core, lazy_attribute
+    from flext_tests import api
 
     from . import benchmark, fixtures, integration, unit
 
 
-__all__: tuple[str, ...] = (
-    "active_rules",
-    "api",
-    "benchmark",
-    "cli",
-    "config",
-    "core",
-    "discover_repository_root",
-    "fixtures",
-    "install_local_packages",
-    "integration",
-    "lazy_attribute",
-    "load_infra_report",
-    "main",
-    "settings",
-    "split_csv",
-    "unit",
-)
+__all__: tuple[str, ...] = ("api", "benchmark", "fixtures", "integration", "unit")
 
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
@@ -52,18 +23,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".fixtures": ("fixtures",),
             ".integration": ("integration",),
             ".unit": ("unit",),
-            "flext_cli": ("cli", "main"),
-            "flext_core": ("core", "lazy_attribute"),
-            "flext_tests": (
-                "active_rules",
-                "api",
-                "config",
-                "discover_repository_root",
-                "install_local_packages",
-                "load_infra_report",
-                "settings",
-                "split_csv",
-            ),
+            "flext_tests": ("api",),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
