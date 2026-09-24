@@ -18,11 +18,13 @@ if TYPE_CHECKING:
         _exception_params_parts,
         _project_metadata_parts,
     )
+    from ._context.__scope_parts.flextmodelscontextscope_part_03 import (
+        FlextModelsContextScope,
+    )
     from ._context._data import FlextModelsContextData
     from ._context._export import FlextModelsContextExport
     from ._context._metadata import FlextModelsContextMetadata
     from ._context._proxy_var import FlextModelsContextProxyVar
-    from ._context._scope import FlextModelsContextScope
     from ._context._tokens import FlextModelsContextTokens
     from ._cqrs_parts.flextmodelscqrs_part_01 import CqrsPagination
     from ._enforcement._base import EnforcementModelBase, FlextModelsEnforcementBase
@@ -117,11 +119,13 @@ _LAZY_IMPORTS = MappingProxyType(
             "._base_parts": ("_base_parts",),
             "._container_parts": ("_container_parts",),
             "._context": ("_context",),
+            "._context.__scope_parts.flextmodelscontextscope_part_03": (
+                "FlextModelsContextScope",
+            ),
             "._context._data": ("FlextModelsContextData",),
             "._context._export": ("FlextModelsContextExport",),
             "._context._metadata": ("FlextModelsContextMetadata",),
             "._context._proxy_var": ("FlextModelsContextProxyVar",),
-            "._context._scope": ("FlextModelsContextScope",),
             "._context._tokens": ("FlextModelsContextTokens",),
             "._cqrs_parts": ("_cqrs_parts",),
             "._cqrs_parts.flextmodelscqrs_part_01": ("CqrsPagination",),

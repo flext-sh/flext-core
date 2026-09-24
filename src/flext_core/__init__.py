@@ -20,13 +20,33 @@ from .__version__ import (
 )
 
 if TYPE_CHECKING:
+    from flext_cli import cli, main
+    from flext_infra import docs_main, infra
+    from flext_tests import (
+        active_rules,
+        api,
+        discover_repository_root,
+        install_local_packages,
+        load_infra_report,
+        split_csv,
+        td,
+        tf,
+        tk,
+        tm,
+        tv,
+    )
+
     from . import services
     from ._config import FlextConfig, config
     from ._settings import FlextSettings, settings
     from .api import FlextApi, core
     from .base import FlextBase
     from .cli import FlextCli
-    from .constants import FlextConstants, FlextConstants as c
+    from .constants import (
+        FlextConstants,
+        FlextConstants as c,
+        FlextConstantsEnforcement,
+    )
     from .container import FlextContainer
     from .context import FlextContext
     from .decorators import FlextDecorators, d
@@ -43,7 +63,11 @@ if TYPE_CHECKING:
     from .runtime import FlextRuntime
     from .service import FlextService, FlextService as s
     from .typings import FlextTypes, FlextTypes as t
-    from .utilities import FlextUtilities, FlextUtilities as u
+    from .utilities import (
+        FlextUtilities,
+        FlextUtilities as u,
+        FlextUtilitiesRuntimeViolationRegistry,
+    )
 
 
 __all__: tuple[str, ...] = (
@@ -52,6 +76,7 @@ __all__: tuple[str, ...] = (
     "FlextCli",
     "FlextConfig",
     "FlextConstants",
+    "FlextConstantsEnforcement",
     "FlextContainer",
     "FlextContext",
     "FlextDecorators",
@@ -71,6 +96,7 @@ __all__: tuple[str, ...] = (
     "FlextTypes",
     "FlextUtilities",
     "FlextUtilitiesLogging",
+    "FlextUtilitiesRuntimeViolationRegistry",
     "__author__",
     "__author_email__",
     "__description__",
@@ -79,20 +105,35 @@ __all__: tuple[str, ...] = (
     "__url__",
     "__version__",
     "__version_info__",
+    "active_rules",
+    "api",
     "c",
+    "cli",
     "config",
     "core",
     "d",
+    "discover_repository_root",
+    "docs_main",
     "e",
     "h",
+    "infra",
+    "install_local_packages",
     "lazy_attribute",
+    "load_infra_report",
     "m",
+    "main",
     "p",
     "r",
     "s",
     "services",
     "settings",
+    "split_csv",
     "t",
+    "td",
+    "tf",
+    "tk",
+    "tm",
+    "tv",
     "u",
     "x",
 )
@@ -105,7 +146,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".api": ("FlextApi", "core"),
             ".base": ("FlextBase",),
             ".cli": ("FlextCli",),
-            ".constants": ("FlextConstants", "c"),
+            ".constants": ("FlextConstants", "FlextConstantsEnforcement", "c"),
             ".container": ("FlextContainer",),
             ".context": ("FlextContext",),
             ".decorators": ("FlextDecorators", "d"),
@@ -123,7 +164,26 @@ _LAZY_IMPORTS = MappingProxyType(
             ".service": ("FlextService", "s"),
             ".services": ("services",),
             ".typings": ("FlextTypes", "t"),
-            ".utilities": ("FlextUtilities", "u"),
+            ".utilities": (
+                "FlextUtilities",
+                "FlextUtilitiesRuntimeViolationRegistry",
+                "u",
+            ),
+            "flext_cli": ("cli", "main"),
+            "flext_infra": ("docs_main", "infra"),
+            "flext_tests": (
+                "active_rules",
+                "api",
+                "discover_repository_root",
+                "install_local_packages",
+                "load_infra_report",
+                "split_csv",
+                "td",
+                "tf",
+                "tk",
+                "tm",
+                "tv",
+            ),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
