@@ -1,8 +1,8 @@
 """Behavioral contract tests for the pydantic-settings facade on ``m``.
 
 Exercises the wide pydantic-settings exports consumed through ``m`` exactly as
-fleet consumers do: observable identity and override behavior only, never
-pydantic internals.
+fleet consumers do: observable override behavior only, never pydantic
+internals or identity introspection.
 """
 
 from __future__ import annotations
@@ -35,13 +35,22 @@ class TestsFlextCorePydanticSettingsFacade:
             _ = (settings_cls, env_settings, dotenv_settings, file_secret_settings)
             return (init_settings,)
 
-    def test_pydantic_base_settings_alias_is_the_real_pydantic_settings_base(
-        self,
-    ) -> None:
-        # Facade-mediated identity: the wide alias is exactly the direct base of
-        # the canonical FLEXT settings class, i.e. the real pydantic-settings
-        # BaseSettings, never a narrowed subclass or a substitute.
-        assert m.BaseSettings.__bases__ == (m.PydanticBaseSettings,)
+    def test_base_settings_alias_provides_real_env_resolution(self) -> None:
+        """The wide alias behaves as genuine pydantic-settings.
+
+        Only the real settings base resolves constructor fields from the
+        environment by default; a narrowed substitute (e.g. a plain model
+        subclass) would leave the default in place.
+        """
+
+        class _EnvSettings(m.BaseSettings):
+            """Settings whose topic prefix is owned by the environment."""
+
+            topic_prefix: str = "unset"
+
+        with test_u.Tests.env_vars_context(env_vars={"TOPIC_PREFIX": "from-env"}):
+            assert _EnvSettings().topic_prefix == "from-env"
+        assert _EnvSettings(topic_prefix="explicit").topic_prefix == "explicit"
 
     def test_settings_override_annotated_through_alias_is_consulted(self) -> None:
         with test_u.Tests.env_vars_context(env_vars={"TOPIC": "from-env"}):

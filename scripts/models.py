@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from flext_core import m
+from flext_core import FlextModels
 from scripts import t
 
 
-class ScriptsFlextModels(m):
+class ScriptsFlextModels(FlextModels):
     """Domain models for flext."""
 
 

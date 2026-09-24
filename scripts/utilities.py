@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from flext_core import u
+from flext_core import FlextUtilities
 from scripts import t
 
 
-class ScriptsFlextUtilities(u):
+class ScriptsFlextUtilities(FlextUtilities):
     """Utility functions for flext."""
 
 

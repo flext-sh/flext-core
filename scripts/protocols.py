@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from flext_core import p
+from flext_core import FlextProtocols
 
 
-class ScriptsFlextProtocols(p):
+class ScriptsFlextProtocols(FlextProtocols):
     """Protocol definitions for flext."""
 
 

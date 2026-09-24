@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_tests import p
+from flext_tests import FlextTestsProtocols
 
 if TYPE_CHECKING:
     from . import t
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     BadMapping = _Mixins.BadMapping
 
 
-class TestsFlextProtocols(p):
+class TestsFlextProtocols(FlextTestsProtocols):
     """Protocol definitions for flext-core tests - extends TestsFlextProtocols.
 
     Architecture: Extends TestsFlextProtocols with flext-core-specific protocol
@@ -41,7 +41,7 @@ class TestsFlextProtocols(p):
     - All generic protocols come from TestsFlextProtocols
     """
 
-    class Tests(p.Tests):
+    class Tests(FlextTestsProtocols.Tests):
         """flext-core test protocols namespace."""
 
         @runtime_checkable

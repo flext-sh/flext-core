@@ -122,8 +122,8 @@ endif
 # End SECTION: REPOSITORY_ROOT isolation
 # === SECTION: verb dispatch (managed) ===
 # Source: config:make.verbs and the canonical gate vocabulary.
-PUBLIC_VERBS := help setup deps build check test fmt fix fix-enforcement audit status docs clean release-plan release-version release-tag release-build publication gen initialize mod waza duplication
-BUILTIN_VERBS := help setup deps build check test fmt fix fix-enforcement audit status docs clean release-plan release-version release-tag release-build publication gen initialize mod waza duplication
+PUBLIC_VERBS := help setup deps build check test fmt fix fix-enforcement audit status docs clean release-plan release-version release-tag release-build publication gen initialize mod waza duplication sonarcloud-sync
+BUILTIN_VERBS := help setup deps build check test fmt fix fix-enforcement audit status docs clean release-plan release-version release-tag release-build publication gen initialize mod waza duplication sonarcloud-sync
 SCRIPT_VERBS :=
 
 CUSTOM_MAKEFILE := $(MAKEFILE_ROOT)/custom.mk
@@ -754,6 +754,15 @@ _activated-duplication: _builtin_require_environment
 	$(call RUN_PUBLIC,duplication)
 
 
+sonarcloud-sync: _builtin_require_workspace
+	+@direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-sonarcloud-sync
+
+.PHONY: _activated-sonarcloud-sync
+_activated-sonarcloud-sync: _builtin_require_environment
+
+	$(call RUN_PUBLIC,sonarcloud-sync)
+
+
 # Repository-owned extra verbs dispatch exactly like canonical ones: the
 # project declares them (help, .PHONY) and must also be able to run them.
 
@@ -828,6 +837,8 @@ _builtin-help:
 	@printf '  %-16s %s\n' 'waza' 'Validate provider-neutral governance semantics with Waza.';
 
 	@printf '  %-16s %s\n' 'duplication' 'Run the canonical jscpd duplicate-code gate.';
+
+	@printf '  %-16s %s\n' 'sonarcloud-sync' 'Write the SSOT SonarCloud issue exclusions to the server-side project settings (requires SONAR_TOKEN).';
 
 
 # A project owns the sources declared by its manifest. The generated setup
@@ -1061,6 +1072,14 @@ _builtin-self-clean: _builtin_clean_generated
 
 _builtin-self-docs: _builtin_docs_all
 
+# SonarCloud server-side issue exclusions (SSOT: codegen.sonarcloud). The verb
+# writes an external service with SONAR_TOKEN from the environment; it belongs
+# to no setup/gen/check/test workflow row and never runs implicitly.
+_builtin_sonarcloud_sync_project: _builtin_require_environment
+	@$(PROJECT_FLEXT_INFRA) maintenance sonarcloud-sync --repository-root "$(PROJECT_ROOT)"
+
+_builtin-self-sonarcloud-sync: _builtin_sonarcloud_sync_project
+
 
 _builtin_build_artifacts:
 	@$(UV) build --project "$(PROJECT_ROOT)"
@@ -1108,6 +1127,8 @@ _builtin_fix_all: _builtin_require_environment
 # declared safe, applied through its registered adapter.
 _builtin_fix_enforcement: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) check fix-enforcement --repository-root "$(PROJECT_ROOT)" --safe-only --apply
+
+_builtin_sonarcloud_sync_all: _builtin_sonarcloud_sync_project
 
 
 _builtin_run_default: _builtin_require_environment
@@ -1223,5 +1244,6 @@ _builtin-waza:
 	@cd "$(PROJECT_ROOT)" && "$(SETUP_MISE)" exec -- waza check --no-update-check
 _builtin-duplication:
 	@$(PROJECT_FLEXT_INFRA) check run --repository-root "$(PROJECT_ROOT)" --gates "duplication" --projects .
+_builtin-sonarcloud-sync: _builtin_sonarcloud_sync_all
 
 

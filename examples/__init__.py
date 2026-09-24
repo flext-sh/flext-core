@@ -9,27 +9,13 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_cli import cli, main
-    from flext_infra import docs_main, infra
-    from flext_tests import (
-        active_rules,
-        api,
-        discover_repository_root,
-        install_local_packages,
-        load_infra_report,
-        split_csv,
-        td,
-        tf,
-        tk,
-        tm,
-        tv,
-    )
+    from flext_core import d, e, h, r, s, x
 
     from flext_core import config, core, d, e, h, lazy_attribute, r, s, settings, x
 
     from . import _models, _shared_parts
     from .constants import c
-    from .models import ExamplesFlextModels, m
+    from .models import ExamplesFlextModels, ExamplesFlextModels as m
     from .protocols import p
     from .shared import ExamplesFlextShared
     from .typings import t
@@ -44,25 +30,15 @@ __all__: tuple[str, ...] = (
     "active_rules",
     "api",
     "c",
-    "cli",
-    "config",
-    "core",
     "d",
     "discover_repository_root",
     "docs_main",
     "e",
     "h",
-    "infra",
-    "install_local_packages",
-    "lazy_attribute",
-    "load_infra_report",
     "m",
-    "main",
     "p",
     "r",
     "s",
-    "settings",
-    "split_csv",
     "t",
     "td",
     "tf",
@@ -84,33 +60,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".shared": ("ExamplesFlextShared",),
             ".typings": ("t",),
             ".utilities": ("u",),
-            "flext_cli": ("cli", "main"),
-            "flext_core": (
-                "config",
-                "core",
-                "d",
-                "e",
-                "h",
-                "lazy_attribute",
-                "r",
-                "s",
-                "settings",
-                "x",
-            ),
-            "flext_infra": ("docs_main", "infra"),
-            "flext_tests": (
-                "active_rules",
-                "api",
-                "discover_repository_root",
-                "install_local_packages",
-                "load_infra_report",
-                "split_csv",
-                "td",
-                "tf",
-                "tk",
-                "tm",
-                "tv",
-            ),
+            "flext_core": ("d", "e", "h", "r", "s", "x"),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
