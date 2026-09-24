@@ -12,44 +12,17 @@ if TYPE_CHECKING:
     from flext_tests import api
 
     from . import benchmark, fixtures, integration, unit
-    from .base import TestsFlextServiceBase, TestsFlextServiceBase as s
-    from .constants import TestsFlextConstants, TestsFlextConstants as c
-    from .models import TestsFlextModels
-    from .protocols import TestsFlextProtocols
-    from .typings import TestsFlextTypes
-    from .utilities import TestsFlextUtilities, TestsFlextUtilities as u
 
 
-__all__: tuple[str, ...] = (
-    "TestsFlextConstants",
-    "TestsFlextModels",
-    "TestsFlextProtocols",
-    "TestsFlextServiceBase",
-    "TestsFlextTypes",
-    "TestsFlextUtilities",
-    "api",
-    "benchmark",
-    "c",
-    "fixtures",
-    "integration",
-    "s",
-    "u",
-    "unit",
-)
+__all__: tuple[str, ...] = ("api", "benchmark", "fixtures", "integration", "unit")
 
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
-            ".base": ("TestsFlextServiceBase", "s"),
             ".benchmark": ("benchmark",),
-            ".constants": ("TestsFlextConstants", "c"),
             ".fixtures": ("fixtures",),
             ".integration": ("integration",),
-            ".models": ("TestsFlextModels",),
-            ".protocols": ("TestsFlextProtocols",),
-            ".typings": ("TestsFlextTypes",),
             ".unit": ("unit",),
-            ".utilities": ("TestsFlextUtilities", "u"),
             "flext_tests": ("api",),
         }),
         alias_groups=MappingProxyType({}),
