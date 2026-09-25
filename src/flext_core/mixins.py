@@ -20,41 +20,35 @@ if TYPE_CHECKING:
 class FlextMixins(m.ArbitraryTypesModel):
     """Composable behaviors for dispatcher-driven services and handlers."""
 
-    settings_type: t.SettingsClass | None = m.Field(
+    settings_type: Annotated[t.SettingsClass | None, t.SkipJsonSchema()] = m.Field(
         default=None,
         validate_default=True,
         exclude=True,
         description="FlextSettings class used to initialize the service runtime.",
     )
 
-    runtime_settings: Annotated[
-        p.Settings | None,
-        t.SkipValidation,
-        m.Field(
-            default=None,
-            exclude=True,
-            description="Pre-built settings instance used directly for the runtime.",
-        ),
-    ] = None
-
-    settings_overrides: t.ScalarMapping | None = m.Field(
+    runtime_settings: t.Port[p.Settings | None] = m.Field(
         default=None,
-        validate_default=True,
         exclude=True,
-        description="Settings overrides applied at instantiation.",
+        description="Pre-built settings instance used directly for the runtime.",
     )
 
-    initial_context: Annotated[
-        p.Context | None,
-        t.SkipValidation,
+    settings_overrides: Annotated[t.ScalarMapping | None, t.SkipJsonSchema()] = (
         m.Field(
             default=None,
+            validate_default=True,
             exclude=True,
-            description="Initial context for the service scope.",
-        ),
-    ] = None
+            description="Settings overrides applied at instantiation.",
+        )
+    )
 
-    _runtime: m.ServiceRuntime | None = u.PrivateAttr(default_factory=lambda: None)
+    initial_context: t.Port[p.Context | None] = m.Field(
+        default=None,
+        exclude=True,
+        description="Initial context for the service scope.",
+    )
+
+    _runtime: m.ServiceRuntime | None = u.PrivateAttr(default=None)
 
     _operation_stats: MutableMapping[str, m.ConfigMap] = u.PrivateAttr(
         default_factory=dict[str, m.ConfigMap]
@@ -149,11 +143,9 @@ class FlextMixins(m.ArbitraryTypesModel):
             self._context_type.apply_operation_name("")
 
     def _get_runtime(self) -> m.ServiceRuntime:
-        """Get or create a runtime triple shared across mixin consumers."""
-        runtime = self._runtime
-        if isinstance(runtime, m.ServiceRuntime):
-            return runtime
-        self._runtime = u.build_service_runtime(self)
+        """Build this component's runtime once and reuse it."""
+        if self._runtime is None:
+            self._runtime = u.build_service_runtime(self)
         return self._runtime
 
 

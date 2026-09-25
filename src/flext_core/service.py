@@ -4,10 +4,26 @@
 railway-style result handling for domain services. It relies on structural
 typing to satisfy `p.Service` and provides a clean service lifecycle.
 
+Service contract (ADR-019):
+
+- A dependency is a port: a field typed ``t.Port[p.X]``, where ``p.X`` is a
+  plain ``@runtime_checkable`` Protocol, declared with
+  ``m.Field(exclude=True, description=...)``. Pydantic validates the value with
+  ``isinstance`` on construction and on assignment, and the port never enters
+  the JSON Schema. A port whose type is not a plain Protocol class (a
+  subscripted generic, a concrete class) is rejected when the subclass is
+  created; Pydantic itself rejects a Protocol that is not runtime-checkable.
+- The project's ``api.py`` is the single composition root: it constructs each
+  service with its adapters. A service never reads a global to find a
+  collaborator; settings reach it through the runtime its base declares.
+- A failure leaves as ``p.Result`` carrying its cause; ``unwrap()`` chains it.
+
 Singleton kernel (mirrors `FlextSettings`):
 
 - per-class `_instance` ClassVar with thread-safe lock,
-- `fetch_global()` — return the per-class shared singleton,
+- `fetch_global()` — return the per-class shared singleton, built with no
+  arguments, so it serves only services without ports; a service with a
+  required port raises ``ValidationError`` there,
 - `reset_for_testing()` — drop the singleton slot for test isolation.
 
 Per-project `Flext<X>ServiceBase` MUST inherit `fetch_global` /
@@ -21,11 +37,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from typing import ClassVar, Self, Unpack
+from types import NoneType, UnionType
+from typing import ClassVar, Self, Unpack, get_args, get_origin, is_protocol, override
 
 from pydantic import ConfigDict
 
-from flext_core import p, t, x
+from flext_core import c, p, t, x
 
 
 class FlextService[TDomainResult = p.Base](x):
@@ -51,22 +68,35 @@ class FlextService[TDomainResult = p.Base](x):
         cls._instance = None
 
     @classmethod
+    @override
+    def __pydantic_on_complete__(cls) -> None:
+        """Reject a port whose type ``isinstance`` cannot validate."""
+        super().__pydantic_on_complete__()
+        for name, field in cls.model_fields.items():
+            if get_origin(field.annotation) is not t.Port:
+                continue
+            (declared,) = get_args(field.annotation)
+            members = (
+                get_args(declared) if isinstance(declared, UnionType) else (declared,)
+            )
+            for member in members:
+                if member is not NoneType and not is_protocol(member):
+                    msg = c.ERR_SERVICE_PORT_TYPE.format(
+                        service=cls.__name__, field=name, port_type=member
+                    )
+                    raise TypeError(msg)
+
+    @classmethod
     def fetch_global(cls) -> Self:
         """Return the per-class shared singleton.
 
         Mirrors `FlextSettings.fetch_global` so consumers have a single
         canonical accessor across services and settings (§3.5).
         """
-        existing = getattr(cls, "_instance", None)
-        if isinstance(existing, cls):
-            return existing
         with cls._lock:
-            existing = getattr(cls, "_instance", None)
-            if isinstance(existing, cls):
-                return existing
-            instance = cls()
-            cls._instance = instance
-            return instance
+            if cls._instance is None:
+                cls._instance = cls()
+            return cls._instance
 
     @classmethod
     def reset_for_testing(cls) -> None:

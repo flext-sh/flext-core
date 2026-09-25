@@ -96,49 +96,6 @@ class FlextUtilitiesModel:
         context_cls: p.ContextType = context_module.FlextContext
         return context_cls
 
-    @staticmethod
-    def _runtime_type() -> type:
-        """Resolve FlextRuntime lazily to avoid runtime import cycles."""
-        runtime_module = import_module("flext_core")
-        runtime_cls: type = runtime_module.FlextRuntime
-        return runtime_cls
-
-    @classmethod
-    def _normalize_runtime_override_mapping(
-        cls, value: t.MappingKV[str, t.JsonPayload | t.Scalar] | None
-    ) -> t.JsonMapping | None:
-        """Normalize runtime override mappings to canonical JsonMapping."""
-        if value is None:
-            return None
-        runtime_type = cls._runtime_type()
-        validated: t.JsonMapping = t.json_mapping_adapter().validate_python({
-            key: runtime_type.normalize_to_metadata(item) for key, item in value.items()
-        })
-        return validated
-
-    @staticmethod
-    def service_settings_type(
-        service_or_cls: p.Base | p.SettingsType | t.SettingsClass,
-    ) -> t.SettingsClass:
-        """Resolve the concrete settings type used by a service-like object."""
-        settings_base = FlextUtilitiesModel._settings_base()
-        fetch_global = getattr(service_or_cls, "fetch_global", None)
-        model_copy = getattr(service_or_cls, "model_copy", None)
-        if (
-            isinstance(service_or_cls, type)
-            and callable(fetch_global)
-            and callable(model_copy)
-        ):
-            return service_or_cls
-        candidate = getattr(service_or_cls, "settings_type", None)
-        if (
-            isinstance(candidate, type)
-            and callable(getattr(candidate, "fetch_global", None))
-            and callable(getattr(candidate, "model_copy", None))
-        ):
-            return candidate
-        return settings_base
-
     @overload
     @staticmethod
     def validate_value[TValue](
