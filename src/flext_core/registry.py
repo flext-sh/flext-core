@@ -43,7 +43,9 @@ class FlextRegistry(s[bool]):
     _class_registered_keys: ClassVar[set[str]] = set()
 
     dispatcher: t.Port[p.Dispatcher | None] = m.Field(
-        None, exclude=True, description="The dispatcher instance for executing handlers."
+        None,
+        exclude=True,
+        description="The dispatcher instance for executing handlers.",
     )
 
     @override

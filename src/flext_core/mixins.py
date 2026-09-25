@@ -33,19 +33,15 @@ class FlextMixins(m.ArbitraryTypesModel):
         description="Pre-built settings instance used directly for the runtime.",
     )
 
-    settings_overrides: Annotated[t.ScalarMapping | None, t.SkipJsonSchema()] = (
-        m.Field(
-            default=None,
-            validate_default=True,
-            exclude=True,
-            description="Settings overrides applied at instantiation.",
-        )
+    settings_overrides: Annotated[t.ScalarMapping | None, t.SkipJsonSchema()] = m.Field(
+        default=None,
+        validate_default=True,
+        exclude=True,
+        description="Settings overrides applied at instantiation.",
     )
 
     initial_context: t.Port[p.Context | None] = m.Field(
-        default=None,
-        exclude=True,
-        description="Initial context for the service scope.",
+        default=None, exclude=True, description="Initial context for the service scope."
     )
 
     _runtime: m.ServiceRuntime | None = u.PrivateAttr(default=None)

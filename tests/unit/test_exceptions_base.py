@@ -75,14 +75,18 @@ class TestsFlextCoreExceptionsBase:
         assert result.error_data["operation"] == "register service"
         assert result.error_data["reason"] == "boom"
 
-    def test_failure_result_short_circuits_map_and_recovers(self) -> None:
+    def test_failure_result_short_circuits_map_and_rejects_unwrap(self) -> None:
         result: p.Result[bool] = e.fail_operation(
             "register service", ValueError("boom")
         )
         mapped = result.map(lambda _value: False)
         assert mapped.failure
         assert mapped.error == result.error
-        assert result.unwrap_or(True) is True
+        with pytest.raises(RuntimeError) as raised:
+            mapped.unwrap()
+        assert str(raised.value) == c.ERR_RESULT_CANNOT_UNWRAP.format(
+            error=result.error
+        )
 
     def test_fail_not_found_returns_structured_failure(self) -> None:
         result: p.Result[bool] = e.fail_not_found("service", "command_bus")

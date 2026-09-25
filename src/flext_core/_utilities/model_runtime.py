@@ -101,7 +101,10 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
 
     @classmethod
     def build_registry(
-        cls, dispatcher: p.Dispatcher | None = None, *, auto_discover_handlers: bool = False
+        cls,
+        dispatcher: p.Dispatcher | None = None,
+        *,
+        auto_discover_handlers: bool = False,
     ) -> p.Registry:
         """Materialize the canonical registry implementation behind ``p.Registry``."""
         registry_module = import_module("flext_core.registry")
@@ -143,7 +146,8 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
             else cls._context_type().create()
         )
         container = (
-            cls._container_type()
+            cls
+            ._container_type()
             .shared()
             .scope(
                 registration=m.ServiceRegistrationSpec(

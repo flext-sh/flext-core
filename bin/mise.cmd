@@ -21,9 +21,9 @@ rem delete something it never created.
 set "download_path="
 set "sums="
 
-rem Unlocked fleet: converge on the newest published mise release. Only an
-rem explicit MISE_VERSION pins; the default resolves the latest tag through
-rem the releases/latest redirect and fails loud when resolution is impossible.
+rem The generated Makefile exports MISE_VERSION from the committed pin file
+rem that only `make upg` writes. Without it (`upg` itself), resolve the latest
+rem tag through the releases/latest redirect and fail loud when impossible.
 set "resolved_version="
 if defined MISE_VERSION set "resolved_version=%MISE_VERSION%"
 if not defined resolved_version (

@@ -161,11 +161,23 @@ class TestsFlextCoreResultExceptionFailures:
 
         tm.that(failure.unwrap_or(99), eq=99)
 
-    def test_unwrap_raises_on_carried_failure(self) -> None:
-        failure: p.Result[int] = r[int].fail("bad", exception=ValueError("boom"))
+    def test_unwrap_raises_on_carried_failure_with_its_cause(self) -> None:
+        exc = ValueError("boom")
+        failure: p.Result[int] = r[int].fail("bad", exception=exc)
 
-        with pytest.raises(RuntimeError, match="bad"):
+        with pytest.raises(RuntimeError, match="bad") as raised:
             failure.unwrap()
+
+        tm.that(raised.value.__cause__ is exc, eq=True)
+
+    def test_value_access_raises_on_carried_failure_with_its_cause(self) -> None:
+        exc = ValueError("boom")
+        failure: p.Result[int] = r[int].fail("bad", exception=exc)
+
+        with pytest.raises(RuntimeError, match="bad") as raised:
+            _ = failure.value
+
+        tm.that(raised.value.__cause__ is exc, eq=True)
 
     def test_recover_produces_success_from_carried_failure(self) -> None:
         failure: p.Result[int] = r[int].fail("bad", exception=ValueError("boom"))

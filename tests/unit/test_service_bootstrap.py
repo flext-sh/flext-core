@@ -1,20 +1,21 @@
-"""Behavioral tests for the slim service bootstrap surface.
+"""Behavioral tests for the service bootstrap and port contract (ADR-019).
 
-Asserts observable public contract only: the ``execute`` result of a concrete
-service and the resolved :class:`RuntimeBootstrapOptions` returned by
-``resolve_runtime_options`` for every supported source shape. No private
-attribute access, no collaborator spying, no internal patching.
+Asserts the observable public contract only: a service's ``execute`` result, the
+options ``u.resolve_runtime_options`` returns for every supported source, the
+runtime a service builds, and the validation of ports and runtime seeds. No
+private attribute access, no collaborator spying, no internal patching.
 """
 
 from __future__ import annotations
 
-from typing import Annotated, override
+from typing import override
 
 import pytest
 from flext_tests import r, tm
 
-from flext_core import FlextSettings
+from flext_core import FlextContext, FlextSettings
 from tests.base import s
+from tests.constants import c
 from tests.models import m
 from tests.protocols import p
 from tests.typings import t
@@ -22,28 +23,7 @@ from tests.utilities import u
 
 
 class TestsFlextCoreServiceBootstrap:
-    """Public-contract tests for service execution and option resolution."""
-
-    class RuntimeBootstrapSource(m.ArbitraryTypesModel):
-        """Service-like source exposing the runtime bootstrap resolution hook."""
-
-        subproject: Annotated[
-            str | None,
-            m.Field(description="Runtime subproject value exposed by the source."),
-        ] = None
-        wire_packages: Annotated[
-            t.StrSequence | None,
-            m.Field(description="Runtime package wiring hints exposed by the source."),
-        ] = None
-        runtime_dispatcher: Annotated[
-            p.Dispatcher | None,
-            m.Field(description="Runtime dispatcher override exposed by the source."),
-        ] = None
-
-        def runtime_bootstrap_options(self) -> m.RuntimeBootstrapOptions:
-            return m.RuntimeBootstrapOptions(
-                subproject="source-options", wire_packages=("source-options",)
-            )
+    """Public-contract tests for service execution, runtime options and ports."""
 
     class ConcreteTestService(s[bool]):
         """Concrete service whose execute contract yields a successful result."""
@@ -67,21 +47,21 @@ class TestsFlextCoreServiceBootstrap:
 
         tm.that(result.unwrap(), eq=True)
 
-    # --- resolve_runtime_options: empty / passthrough ------------------
+    # --- resolve_runtime_options ---------------------------------------
 
     def test_resolve_with_no_source_yields_empty_options(self) -> None:
-        """Missing bootstrap input resolves to empty options."""
+        """Missing bootstrap input resolves to options that inject nothing."""
         resolved = u.resolve_runtime_options()
 
-        tm.that(resolved.model_dump(exclude_none=True), eq={})
+        tm.that(dict(resolved), eq=dict(m.RuntimeBootstrapOptions()))
 
     def test_resolve_returns_supplied_model_unchanged(self) -> None:
-        """A supplied options model retains its public values."""
-        options = m.RuntimeBootstrapOptions(subproject="keep")
+        """A supplied options model is the resolved options."""
+        options = m.RuntimeBootstrapOptions(settings_overrides={"app_name": "keep"})
 
         resolved = u.resolve_runtime_options(options)
 
-        tm.that(resolved.subproject, eq="keep")
+        tm.that(resolved is options, eq=True)
 
     def test_runtime_options_accepts_settings_class_contract(self) -> None:
         """Settings class validation uses its method-only class protocol."""
@@ -89,77 +69,136 @@ class TestsFlextCoreServiceBootstrap:
 
         tm.that(options.settings_type is FlextSettings, eq=True)
 
-    def test_resolve_is_idempotent_for_resolved_model(self) -> None:
-        """Resolving an already normalized model is idempotent."""
-        once = u.resolve_runtime_options({"subproject": "demo"})
+    def test_service_base_hook_decides_the_settings_type(self) -> None:
+        """The hook of the service base supplies the runtime settings class."""
+        service = self.ConcreteTestService()
+        declared = self.ConcreteTestService.runtime_bootstrap_options().settings_type
 
-        twice = u.resolve_runtime_options(once)
+        resolved = u.resolve_runtime_options(service)
 
-        tm.that(twice.model_dump(), eq=once.model_dump())
+        tm.that(declared is not None, eq=True)
+        tm.that(resolved.settings_type is declared, eq=True)
+        tm.that(isinstance(service.settings, FlextSettings), eq=True)
+        tm.that(type(service.settings) is declared, eq=True)
 
-    # --- resolve_runtime_options: mapping validation -------------------
+    def test_instance_seed_wins_over_the_hook(self) -> None:
+        """A settings class seeded on the instance overrides the hook."""
+        service = self.ConcreteTestService(settings_type=FlextSettings)
 
-    @pytest.mark.parametrize(
-        ("wire_packages", "expected"),
-        [
-            (["valid", 3], None),
-            (["only-int", 7, 9], None),
-            (["a", "b"], ("a", "b")),
-            (["x"], ("x",)),
-            ([], ()),
-        ],
-    )
-    def test_resolve_mapping_sanitizes_wire_packages_by_element_type(
-        self, wire_packages: list[str | int], expected: t.VariadicTuple[str] | None
-    ) -> None:
-        """Wire package mappings retain only wholly valid string sequences."""
-        resolved = u.resolve_runtime_options({
-            "subproject": "demo",
-            "wire_packages": wire_packages,
-        })
+        resolved = u.resolve_runtime_options(service)
 
-        tm.that(resolved.subproject, eq="demo")
-        tm.that(resolved.wire_packages, eq=expected)
+        tm.that(resolved.settings_type is FlextSettings, eq=True)
+        tm.that(type(service.settings) is FlextSettings, eq=True)
 
-    # --- resolve_runtime_options: service-like source ------------------
+    def test_context_seed_becomes_the_runtime_context(self) -> None:
+        """An initial context seeded on the instance is the runtime context."""
+        context = FlextContext.create()
 
-    def test_resolve_uses_source_bootstrap_hook_when_attrs_absent(self) -> None:
-        """The source hook supplies options when public attributes are absent."""
-        source = self.RuntimeBootstrapSource()
+        service = self.ConcreteTestService(initial_context=context)
 
-        resolved = u.resolve_runtime_options(source)
+        tm.that(service.context is context, eq=True)
 
-        tm.that(resolved.subproject, eq="source-options")
-        tm.that(resolved.wire_packages, eq=("source-options",))
+    def test_settings_seed_rejects_a_non_settings_value(self) -> None:
+        """A runtime settings seed that is not ``p.Settings`` fails validation."""
+        with pytest.raises(m.ValidationError):
+            self.ConcreteTestService.model_validate({
+                "runtime_settings": c.Tests.DEFAULT_ERROR_MESSAGE
+            })
 
-    def test_resolve_source_attrs_override_bootstrap_hook(self) -> None:
-        """Explicit source attributes override values from its bootstrap hook."""
-        dispatcher = u.Tests.OkDispatcher()
-        source = self.RuntimeBootstrapSource(
-            subproject="source-attrs",
-            wire_packages=("source-attrs",),
-            runtime_dispatcher=dispatcher,
+    def test_build_service_runtime_binds_the_container_collaborators(self) -> None:
+        """The runtime uses the container's context and command bus."""
+        declared = self.ConcreteTestService.runtime_bootstrap_options().settings_type
+
+        runtime = u.build_service_runtime(self.ConcreteTestService())
+
+        tm.that(type(runtime.settings) is declared, eq=True)
+        tm.that(runtime.context is runtime.container.context, eq=True)
+        tm.that(runtime.dispatcher is runtime.container.dispatcher().unwrap(), eq=True)
+
+    # --- Ports -----------------------------------------------------------
+
+    def test_port_accepts_a_conforming_adapter(self) -> None:
+        """A service executes through a real adapter of its port."""
+        service = u.Tests.CountingService(counter=u.Tests.MemoryCounter())
+
+        tm.that(service.execute().unwrap(), eq=1)
+        tm.that(service.execute().unwrap(), eq=2)
+
+    def test_port_rejects_a_non_conforming_value_on_construction(self) -> None:
+        """A value that does not satisfy the port protocol fails validation."""
+        with pytest.raises(m.ValidationError):
+            u.Tests.CountingService.model_validate({
+                "counter": c.Tests.DEFAULT_ERROR_MESSAGE
+            })
+
+    def test_port_rejects_a_non_conforming_value_on_assignment(self) -> None:
+        """Assigning a non-conforming value to a port fails validation."""
+        service = u.Tests.CountingService(counter=u.Tests.MemoryCounter())
+        port_name = next(
+            iter(
+                u.Tests.CountingService.model_fields.keys()
+                - self.ConcreteTestService.model_fields.keys()
+            )
         )
 
-        resolved = u.resolve_runtime_options(source)
+        with pytest.raises(m.ValidationError):
+            setattr(service, port_name, c.Tests.DEFAULT_ERROR_MESSAGE)
 
-        tm.that(resolved.subproject, eq="source-attrs")
-        tm.that(resolved.wire_packages, eq=("source-attrs",))
-        tm.that(resolved.dispatcher is dispatcher, eq=True)
+    def test_fetch_global_of_a_port_service_raises(self) -> None:
+        """A service with a required port has no argument-free singleton."""
+        with pytest.raises(m.ValidationError):
+            u.Tests.CountingService.fetch_global()
 
-    def test_resolve_keyword_overrides_take_precedence_over_source(self) -> None:
-        """Keyword overrides take precedence over every source value."""
-        dispatcher = u.Tests.OkDispatcher()
-        source = self.RuntimeBootstrapSource(
-            subproject="source-attrs",
-            wire_packages=("source-attrs",),
-            runtime_dispatcher=dispatcher,
+    def test_service_schema_lists_only_data_fields(self) -> None:
+        """Ports and runtime seeds never enter the service JSON Schema."""
+        port_schema = u.Tests.CountingService.model_json_schema()
+        data_schema = u.Tests.ValidatingService.model_json_schema()
+
+        tm.that(port_schema.get("properties", {}), eq={})
+        tm.that(
+            set(data_schema["properties"]),
+            eq=set(u.Tests.ValidatingService.model_fields)
+            - set(self.ConcreteTestService.model_fields),
         )
 
-        resolved = u.resolve_runtime_options(
-            source, subproject="override", wire_packages=("override",)
+    def test_subscripted_port_type_is_rejected_at_class_creation(self) -> None:
+        """A port typed by a subscripted generic cannot be validated."""
+        with pytest.raises(TypeError) as raised:
+            u.create_model(
+                "SubscriptedPortService",
+                __base__=self.ConcreteTestService,
+                result=(
+                    t.Port[p.Result[int]],
+                    m.Field(exclude=True, description="Subscripted generic port."),
+                ),
+            )
+
+        tm.that(
+            str(raised.value),
+            eq=c.ERR_SERVICE_PORT_TYPE.format(
+                service="SubscriptedPortService",
+                field="result",
+                port_type=p.Result[int],
+            ),
         )
 
-        tm.that(resolved.subproject, eq="override")
-        tm.that(list(resolved.wire_packages or ()), eq=["override"])
-        tm.that(resolved.dispatcher is dispatcher, eq=True)
+    def test_concrete_port_type_is_rejected_at_class_creation(self) -> None:
+        """A port typed by a concrete class is not a port."""
+        with pytest.raises(TypeError) as raised:
+            u.create_model(
+                "ConcretePortService",
+                __base__=self.ConcreteTestService,
+                counter=(
+                    t.Port[u.Tests.MemoryCounter],
+                    m.Field(exclude=True, description="Concrete class port."),
+                ),
+            )
+
+        tm.that(
+            str(raised.value),
+            eq=c.ERR_SERVICE_PORT_TYPE.format(
+                service="ConcretePortService",
+                field="counter",
+                port_type=u.Tests.MemoryCounter,
+            ),
+        )

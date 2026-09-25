@@ -14,7 +14,6 @@ sourced from code and docstrings.
 - [Anti patterns best practices](anti-patterns-best-practices.md)
 - [Configuration](configuration.md)
 - [Dependency injection advanced](dependency-injection-advanced.md)
-- [Dependency_injector_prompt](dependency_injector_prompt.md)
 - [Development](development.md)
 - [Domain driven design](domain-driven-design.md)
 - [Error handling](error-handling.md)

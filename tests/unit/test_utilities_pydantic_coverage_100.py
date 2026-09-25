@@ -116,41 +116,23 @@ class TestsFlextUtilitiesPydantic:
 
     def test_public_facade_resolves_runtime_bootstrap_options_from_json(self) -> None:
         runtime_options = m.RuntimeBootstrapOptions.model_validate_json(
-            u.to_json({
-                "subproject": "source-runtime",
-                "wire_packages": ["flext.core.runtime", "tests.runtime"],
-                "settings_overrides": {"dry_run": True},
-            })
+            u.to_json({"settings_overrides": {"dry_run": True}})
         )
 
         @u.validate_call
-        def build_runtime_options(
+        def resolve_options(
             options: m.RuntimeBootstrapOptions,
-            override_subproject: str,
-            override_packages: t.StrSequence,
         ) -> m.RuntimeBootstrapOptions:
-            return u.resolve_runtime_options(
-                options,
-                subproject=override_subproject.strip().replace("_", "-"),
-                wire_packages=override_packages,
-            )
+            return u.resolve_runtime_options(options)
 
-        resolved = build_runtime_options(
-            runtime_options, " cli_runtime ", ("flext.cli.runtime", "flext.cli.jobs")
-        )
+        resolved = resolve_options(runtime_options)
 
-        assert runtime_options.subproject == "source-runtime"
-        assert list(runtime_options.wire_packages or ()) == [
-            "flext.core.runtime",
-            "tests.runtime",
-        ]
-        assert runtime_options.settings_overrides == {"dry_run": True}
-        assert resolved.subproject == "cli-runtime"
-        assert list(resolved.wire_packages or ()) == [
-            "flext.cli.runtime",
-            "flext.cli.jobs",
-        ]
         assert resolved.settings_overrides == {"dry_run": True}
+        assert resolved.settings is None
+        assert resolved.context is None
+        assert resolved.model_dump(mode="json") == {
+            "settings_overrides": {"dry_run": True}
+        }
 
     def test_private_attr_factories_preserve_pydantic_instance_semantics(self) -> None:
         first = TestsFlextUtilitiesPydantic._PrivateAttrContract(label="first")
