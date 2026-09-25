@@ -25,8 +25,7 @@ locked = false
 #         (kubectl_version, helm_version, kind_version, taplo_version, ast_grep_version,
 #          gitleaks_version, scc_selector/scc_version, kubeconform_version, qlty_selector/qlty_version,
 #          node_version, jscpd_selector/jscpd_version, prettier_selector/prettier_version,
-#          waza_version, go_version, make_version,
-#          beads (selector/track/version/prerelease/branch), gascity (selector/track/version/prerelease/branch))
+#          waza_version, go_version, make_version)
 [tools]
 python = "3.13"
 uv = "latest"
@@ -48,10 +47,5 @@ go = "latest"
 make = "latest"
 [tools."github:qltysh/qlty"]
 version = "0.642.0"
-github_attestations = false
-
-[tools."github:marlon-costa-dc/beads"]
-version = "latest"
-prerelease = true
 github_attestations = false
 # End SECTION: tools

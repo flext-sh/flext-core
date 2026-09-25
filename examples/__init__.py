@@ -11,8 +11,6 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 if TYPE_CHECKING:
     from flext_core import d, e, h, r, s, x
 
-    from flext_core import config, core, d, e, h, lazy_attribute, r, s, settings, x
-
     from . import _models, _shared_parts
     from .constants import c
     from .models import ExamplesFlextModels, ExamplesFlextModels as m
@@ -27,12 +25,8 @@ __all__: tuple[str, ...] = (
     "ExamplesFlextShared",
     "_models",
     "_shared_parts",
-    "active_rules",
-    "api",
     "c",
     "d",
-    "discover_repository_root",
-    "docs_main",
     "e",
     "h",
     "m",
@@ -40,11 +34,6 @@ __all__: tuple[str, ...] = (
     "r",
     "s",
     "t",
-    "td",
-    "tf",
-    "tk",
-    "tm",
-    "tv",
     "u",
     "x",
 )
