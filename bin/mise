@@ -6,10 +6,12 @@ __mise_bootstrap() {
     local mise_data_dir="${MISE_DATA_DIR:-${XDG_DATA_HOME:-${HOME}/.local/share}/mise}"
     # mise itself expands a leading ~ in these (env::var_path -> file::replace_path); parameter
     # expansion does not, so without this a tilde value ends up as a relative directory. CI YAML
-    # supplies exactly this shape (MISE_DATA_DIR: ~/.local/share/mise).
+    # supplies exactly this shape (MISE_DATA_DIR: ~/.local/share/mise). The patterns stay
+    # quoted: bash tilde-expands an unquoted case pattern, so an absolute value would match
+    # ~/* and gain a second ${HOME} prefix.
     case ${mise_data_dir} in
-      ~) mise_data_dir=${HOME} ;;
-      ~/*) mise_data_dir=${HOME}/${mise_data_dir#\~/} ;;
+      "~") mise_data_dir=${HOME} ;;
+      "~/"*) mise_data_dir=${HOME}/${mise_data_dir#\~/} ;;
       *) : ;;
     esac
     local cache_home="${XDG_CACHE_HOME:-${HOME}/.cache}/mise"

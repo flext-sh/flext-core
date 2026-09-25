@@ -9,7 +9,9 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_tests import api, d, e, h, r, td, tf, tk, tm, tv, x
+    from flext_tests import api, td, tf, tk, tm, tv
+
+    from flext_core import d, e, h, r, x
 
     from . import benchmark, fixtures, integration, unit
     from .base import TestsFlextServiceBase, TestsFlextServiceBase as s
@@ -27,7 +29,6 @@ __all__: tuple[str, ...] = (
     "TestsFlextServiceBase",
     "TestsFlextTypes",
     "TestsFlextUtilities",
-    "active_rules",
     "api",
     "benchmark",
     "c",
@@ -54,7 +55,9 @@ __all__: tuple[str, ...] = (
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
+            ".base": ("TestsFlextServiceBase", "s"),
             ".benchmark": ("benchmark",),
+            ".constants": ("TestsFlextConstants", "c"),
             ".fixtures": ("fixtures",),
             ".integration": ("integration",),
             ".models": ("TestsFlextModels", "m"),
@@ -62,20 +65,8 @@ _LAZY_IMPORTS = MappingProxyType(
             ".typings": ("TestsFlextTypes", "t"),
             ".unit": ("unit",),
             ".utilities": ("TestsFlextUtilities", "u"),
-            "flext_tests": (
-                "active_rules",
-                "api",
-                "d",
-                "e",
-                "h",
-                "r",
-                "td",
-                "tf",
-                "tk",
-                "tm",
-                "tv",
-                "x",
-            ),
+            "flext_core": ("d", "e", "h", "r", "x"),
+            "flext_tests": ("api", "td", "tf", "tk", "tm", "tv"),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
