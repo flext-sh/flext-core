@@ -46,7 +46,6 @@ class FlextProtocolsService:
             cls,
         ) -> FlextProtocolsContext.RuntimeBootstrapOptions:
             """Return the runtime bootstrap options this service base declares."""
-            ...
 
     # ------------------------------------------------------------------
     # MixinsInfrastructure — mirrors FlextMixins public instance surface

@@ -50,7 +50,6 @@ class TestsFlextProtocols(FlextTestsProtocols):
 
             def next_value(self) -> int:
                 """Advance the counter and return its new value."""
-                ...
 
         @runtime_checkable
         class ExtractFieldCallable(Protocol):

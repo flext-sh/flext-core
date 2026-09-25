@@ -241,6 +241,7 @@ _bootstrap_setup_tools:
 		caller_xdg_data_home="$$caller_home/.local/share"; \
 	fi; \
 	caller_path="$$PATH"; \
+mise_lockfile_platforms="linux-x64,linux-arm64,macos-x64,macos-arm64,windows-x64"; \
 caller_comspec="$${COMSPEC:-}"; \
 caller_pathext="$${PATHEXT:-}"; \
 caller_systemroot="$${SYSTEMROOT:-}"; \
@@ -370,9 +371,9 @@ mise_exec() { \
 'MISE_GITHUB_OAUTH_CLIENT_ID=' \
 'MISE_GITHUB_OAUTH_EXPORT_ENV=' \
 'MISE_GITHUB_OAUTH_OPEN_BROWSER=false' \
-'MISE_LOCKFILE=false' \
-'MISE_LOCKED=false' \
-'MISE_LOCKFILE_PLATFORMS=linux-x64,linux-arm64,macos-x64,macos-arm64,windows-x64' \
+'MISE_LOCKFILE=true' \
+'MISE_LOCKED=true' \
+"MISE_LOCKFILE_PLATFORMS=$$mise_lockfile_platforms" \
 "HOME=$$scratch/home" \
 "USERPROFILE=$$scratch/home" \
 "APPDATA=$$scratch/appdata" \
@@ -458,17 +459,16 @@ $${mise_config_argument:+"$$mise_config_argument"} \
 	fi; \
 	caller_mise_version="$$runtime_release"; \
 	printf 'mise setup receipt=%s storage=%s\n' "$$runtime_release" "$$mise_storage_root"; \
-	# Only ``upg`` resolves: it re-resolves every ``latest`` selector and the \
-	# Python minor line into mise.lock, with download URLs and checksums. \
+	# Only ``upg`` resolves. Artifact tools own a five-platform URL/checksum \
+	# matrix; npm owns one platform-independent Aube dependency graph. \
 	if [ "$(TOOL_BOOTSTRAP_RESOLVE)" = "1" ]; then \
-		mise_checked "$$scratch/lock.log" mise_exec project "$$latest_mise" -C "$$project_root" lock --bump; \
+		mise_checked "$$scratch/lock-artifacts.log" mise_exec project "$$latest_mise" -C "$$project_root" lock --bump python uv kubectl helm kind direnv taplo ast-grep gitleaks "aqua:boyter/scc" kubeconform node go make "github:qltysh/qlty" "github:kucherenko/jscpd" "github:microsoft/waza"; \
+		mise_lockfile_platforms=; \
+		mise_checked "$$scratch/lock-npm-prettier.log" mise_exec project "$$latest_mise" -C "$$project_root" lock --bump "npm:prettier"; \
+		mise_lockfile_platforms="linux-x64,linux-arm64,macos-x64,macos-arm64,windows-x64"; \
 	fi; \
 	# ``locked`` mode installs exactly what the committed mise.lock pins. \
 	mise_checked "$$scratch/install.log" mise_exec project "$$latest_mise" -C "$$project_root" install --yes; \
-	# ``mise install`` may reuse an installed fuzzy match. Upgrade Python inside \
-	# the configured minor line so ``python = \"3.13\"`` always resolves the \
-	# newest available 3.13 patch without rewriting the project selector. \
-	mise_checked "$$scratch/python-upgrade.log" mise_exec project "$$latest_mise" -C "$$project_root" upgrade --no-prune python; \
 	mise_checked "$$scratch/uv-version.log" mise_exec project "$$latest_mise" -C "$$project_root" exec -- uv --version; \
 	uv_output=$$(cat "$$scratch/uv-version.log"); \
 	case "$$uv_output" in \
@@ -1093,7 +1093,7 @@ _builtin_setup_submodules:
 	done
 
 .PHONY: _builtin_require_github_auth
-_bootstrap_setup_tools: _builtin_require_github_auth $(if $(filter upg,$(MAKECMDGOALS)),,_builtin_require_mise_pin)
+_bootstrap_setup_tools: _builtin_require_github_auth $(if $(filter upg,$(MAKECMDGOALS)),,.WAIT _builtin_require_mise_pin)
 _builtin_require_github_auth:
 	@if [ "$(GITHUB_CREDENTIAL_READ_STATUS)" != "0" ]; then \
 		printf 'ERROR: gh credential source failed with exit %s\n' "$(GITHUB_CREDENTIAL_READ_STATUS)" >&2; \
@@ -1152,12 +1152,21 @@ endif
 # `upg` is the only recipe that resolves: the bootstrap above bumps mise.lock
 # before installing, and this lifecycle upgrades every uv.lock, provisions the
 # environment frozen from the new locks, and conforms dependency floors.
+# The floors land in the codegen SSOT, so `gen` projects them into every
+# pyproject and the locks are re-resolved against those raised floors before
+# the frozen reprovision: the committed lock must match the committed
+# pyproject, or `setup --locked` (the CI path) rejects it.
 # Branch-tracked git dependencies are moving sources by declaration
 # (workspace.yaml owns the branch): --refresh re-reads their metadata so a
 # stale cached requires-dist can never block or skew the resolution
-# (flext-62fbu).
+# (flext-62fbu). Like `setup`, it runs the declared pre-/post-upg lifecycle
+# hooks, post-upg inside the activated environment.
 .PHONY: _upg_lifecycle
 _upg_lifecycle: _builtin_setup_submodules
+	@set -eu; \
+	case " $(CUSTOM_DECLARED_TARGETS) " in \
+		*" pre-upg "*) $(SELF_MAKE) pre-upg ;; \
+	esac
 	$(call _run_for_all_projects,--upgrade --refresh)
 	@$(SELF_MAKE) _builtin_setup_environment
 	@set -eu; \
@@ -1167,7 +1176,19 @@ _upg_lifecycle: _builtin_setup_submodules
 	for project in $$selected; do set -- "$$@" --projects "$$project"; done; \
 	$(PROJECT_FLEXT_INFRA) deps modernize --repository-root "$(PROJECT_ROOT)" \
 		--apply --rewrite-constraints "$$@"
+	@$(SELF_MAKE) gen
+	$(call _run_for_all_projects,)
+	@$(SELF_MAKE) _builtin_setup_environment
 	$(call _run_for_all_projects,--check)
+	+@XDG_DATA_HOME="$${SETUP_DIRENV_XDG_DATA_HOME:?missing persistent direnv data home}" \
+		"$${SETUP_DIRENV:?missing Mise-resolved direnv executable}" exec "$(PROJECT_ROOT)" $(SELF_MAKE) _upg_activated
+
+.PHONY: _upg_activated
+_upg_activated:
+	@set -eu; \
+	case " $(CUSTOM_DECLARED_TARGETS) " in \
+		*" post-upg "*) $(SELF_MAKE) post-upg ;; \
+	esac
 
 
 # _builtin-self-* targets serve the workspace root itself (project selector

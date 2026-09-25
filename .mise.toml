@@ -14,11 +14,11 @@
 # === SECTION: settings (managed) ===
 # Source: config:codegen.toolchain.mise_lockfile / mise_locked / mise_lockfile_platforms
 [settings]
-lockfile = false
-locked = false
+lockfile = true
+locked = true
 lockfile_platforms = ["linux-x64", "linux-arm64", "macos-x64", "macos-arm64", "windows-x64"]
 [tool_config]
-locked = false
+locked = true
 # End SECTION: settings
 
 # === SECTION: tools (managed) ===

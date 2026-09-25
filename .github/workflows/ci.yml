@@ -145,7 +145,7 @@ jobs:
         run: |
           CI=Y make gen
           git status --short
-          test -z "$(git status --porcelain --untracked-files=all)"
+          test -z "$(git status --porcelain --untracked-files=all --ignore-submodules=none)"
 
       # Setup installs frozen from the committed uv.lock (`uv sync --locked`)
       # and never rewrites it; the deps audit proves that locked graph.
@@ -168,7 +168,7 @@ jobs:
       - name: Candidate cleanliness (blocking)
         run: |
           git status --short
-          test -z "$(git status --porcelain --untracked-files=all)"
+          test -z "$(git status --porcelain --untracked-files=all --ignore-submodules=none)"
   # End SECTION: ci job
 
   # === SECTION: release-plan job (managed) ===

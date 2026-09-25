@@ -84,16 +84,13 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart02):
         return str in (a := get_args(h2)) and type(None) in a
 
     @staticmethod
-    def alias_contains_any(alias_value: t.TypeHintSpecifier | None) -> bool:
+    def alias_contains_any(
+        alias_value: t.TypeHintSpecifier | None,
+        *,
+        owner: _types_mod.ModuleType | type | None = None,
+    ) -> bool:
         h = FlextUtilitiesBeartypeHelpers
-        try:
-            return h.contains_any_recursive(alias_value, seen=set())
-        except (TypeError, AttributeError, NameError, RuntimeError, RecursionError):
-            # NameError: a PEP 695 alias whose RHS references TYPE_CHECKING-only
-            # names resolves lazily and raises when the engine forces __value__.
-            # Best-effort string inspection keeps the census reporting the rest
-            # of the module instead of aborting the whole gate.
-            return "Any" in str(alias_value)
+        return h.contains_any_recursive(alias_value, seen=set(), owner=owner)
 
     @staticmethod
     def mutable_kind(value: p.AttributeProbe) -> str | None:

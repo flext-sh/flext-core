@@ -26,7 +26,9 @@ if TYPE_CHECKING:
     from .helpers import FlextUtilitiesBeartypeHelpers
     from .import_visitor import FlextUtilitiesBeartypeImportVisitor
     from .method_visitor import FlextUtilitiesBeartypeMethodVisitor
+    from .module_source import FlextUtilitiesBeartypeModuleSource
     from .module_visitor import FlextUtilitiesBeartypeModuleVisitor
+    from .type_aliases import FlextUtilitiesBeartypeTypeAliases
 
 
 __all__: tuple[str, ...] = (
@@ -39,7 +41,9 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesBeartypeImportVisitor",
     "FlextUtilitiesBeartypeLibraryVisitor",
     "FlextUtilitiesBeartypeMethodVisitor",
+    "FlextUtilitiesBeartypeModuleSource",
     "FlextUtilitiesBeartypeModuleVisitor",
+    "FlextUtilitiesBeartypeTypeAliases",
     "_class_visitor_parts",
     "_helpers_parts",
     "alias_first_violation",
@@ -68,7 +72,9 @@ _LAZY_IMPORTS = MappingProxyType(
             ".helpers": ("FlextUtilitiesBeartypeHelpers",),
             ".import_visitor": ("FlextUtilitiesBeartypeImportVisitor",),
             ".method_visitor": ("FlextUtilitiesBeartypeMethodVisitor",),
+            ".module_source": ("FlextUtilitiesBeartypeModuleSource",),
             ".module_visitor": ("FlextUtilitiesBeartypeModuleVisitor",),
+            ".type_aliases": ("FlextUtilitiesBeartypeTypeAliases",),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
