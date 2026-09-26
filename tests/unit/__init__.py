@@ -16,7 +16,10 @@ __all__: tuple[str, ...] = ("_models", "_utilities")
 
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
-        MappingProxyType({"._models": ("_models",), "._utilities": ("_utilities",)}),
+        MappingProxyType({
+            "._models": ("_models",),
+            "._utilities": ("_utilities",),
+        }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
     )
