@@ -141,6 +141,3 @@ class TestsFlextMixins:
         FlextContext.apply_correlation_id("trace-42")
 
         assert FlextContext.resolve_correlation_id() == "trace-42"
-
-
-__all__: t.MutableSequenceOf[str] = ["TestsFlextMixins"]

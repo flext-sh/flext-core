@@ -162,6 +162,3 @@ class TestsFlextService(FlextTestsCase):
         with service.track("load_users") as metrics:
             assert isinstance(metrics, Mapping)
             assert metrics["operation_name"] == "load_users"
-
-
-__all__: list[str] = ["TestsFlextService"]

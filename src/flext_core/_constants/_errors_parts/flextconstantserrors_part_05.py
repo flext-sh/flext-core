@@ -93,6 +93,49 @@ class FlextConstantsErrorsRuntimeSettings:
         "@runtime_checkable Protocol class; isinstance cannot validate a "
         "subscripted generic, and a concrete class is not a port"
     )
+    ERR_SERVICE_OPERATION: Final[str] = (
+        "Service operation {service}.{operation} (module {module}, annotation "
+        "{annotation}) {defect}"
+    )
+    ERR_SERVICE_OPERATION_ASYNC: Final[str] = (
+        "must be synchronous. Fix: declare it with a plain def."
+    )
+    ERR_SERVICE_OPERATION_GENERIC: Final[str] = (
+        "must not be generic. Fix: remove its type parameters."
+    )
+    ERR_SERVICE_OPERATION_SIGNATURE: Final[str] = (
+        "must take self and at most one positional request parameter without "
+        "default. Fix: accept one Pydantic request model or nothing."
+    )
+    ERR_SERVICE_OPERATION_DOCSTRING: Final[str] = (
+        "must have a docstring. Fix: add a one-line summary docstring."
+    )
+    ERR_SERVICE_OPERATION_NAME: Final[str] = (
+        "must annotate with a dotted name. Fix: use a module-level name such as "
+        "m.Ns.Request, or p.Result[...] for the return."
+    )
+    ERR_SERVICE_OPERATION_EVALUATED: Final[str] = (
+        "is evaluated instead of a string annotation. Fix: add "
+        "`from __future__ import annotations` to the module."
+    )
+    ERR_SERVICE_OPERATION_UNBOUND: Final[str] = (
+        "names a symbol unbound in the module at runtime (imported only under "
+        "TYPE_CHECKING, or undefined). Fix: import it at module runtime."
+    )
+    ERR_SERVICE_OPERATION_REQUEST: Final[str] = (
+        "must take a Pydantic model class as the request. Fix: annotate the "
+        "request with a Pydantic model subclass."
+    )
+    ERR_SERVICE_OPERATION_RESULT: Final[str] = (
+        "must return p.Result. Fix: annotate the return as p.Result[...]."
+    )
+    ERR_SERVICE_OPERATION_COLLISION: Final[str] = (
+        "is declared by sibling classes {owners}. Fix: rename one of them."
+    )
+    ERR_SERVICE_NO_OPERATIONS: Final[str] = (
+        "{service} (module {module}) declares no operation. Fix: declare a "
+        "public method below FlextService that returns p.Result."
+    )
 
     # --- Lazy loading ---
     ERR_LAZY_RELATIVE_PATH_REQUIRES_MODULE: Final[str] = (

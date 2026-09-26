@@ -245,6 +245,3 @@ class TestsFlextCoreUtilitiesCollection:
         tm.that(result.value["a"], eq=1)
         tm.that(result.value["c"], eq=3)
         tm.that(result.value["b"], is_=dict)
-
-
-__all__: list[str] = ["TestsFlextCoreUtilitiesCollection"]

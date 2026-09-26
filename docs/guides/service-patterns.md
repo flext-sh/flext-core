@@ -7,6 +7,7 @@
 - [Ports](#ports)
 - [Composition root](#composition-root)
 - [Settings and the runtime hook](#settings-and-the-runtime-hook)
+- [Operations are the API](#operations-are-the-api)
 - [Failures](#failures)
 - [Forbidden forms](#forbidden-forms)
 - [examples-backed service flows](#examples-backed-service-flows)
@@ -18,8 +19,8 @@
 A service is one use case: a `FlextService` (`s`) subclass whose public methods return
 `p.Result[...]` and whose collaborators are ports. The fleet contract is
 [ADR-019](https://github.com/flext-sh/flext/blob/0.12.0-dev/docs/architecture/adr/019-service-contract-ports-operations.md).
-Typed operations and the CLI derived from them arrive in later slices of that ADR; this
-guide covers what the kernel enforces today.
+The CLI derived from typed operations arrives in a later slice of that ADR; this guide
+covers what the kernel provides today.
 
 | Layer            | Where                         | Role                                                          |
 | ---------------- | ----------------------------- | ------------------------------------------------------------- |
@@ -164,6 +165,63 @@ class FlextBillingServiceBase(s[m.Billing.Invoice]):
 - A service never reads a global `settings` or `config`; the root passes values through
   fields or the runtime. A base never redeclares `__init__` nor uses
   `settings or X.fetch_global()`.
+
+## Operations are the API
+
+A public instance method declared below `FlextService` is an operation. It takes nothing
+or exactly one Pydantic request model, returns `p.Result[...]` and has a one-line
+docstring, which is its summary. `u.service_operations(Service)` discovers the
+operations of a service class and returns frozen `m.ServiceOperation` values (`name`,
+`summary`, `request`), sorted by name:
+
+```python
+from __future__ import annotations
+
+from flext_core import m, p, r, s, u
+
+
+class GreetRequest(m.Value):
+    """Greeting input."""
+
+    name: str = m.Field(description="Name to greet.")
+
+
+class GreeterService(s[str]):
+    """Greet people."""
+
+    def greet(self, request: GreetRequest) -> p.Result[str]:
+        """Greet a person by name."""
+        return r[str].ok(f"hello {request.name}")
+
+    def ping(self) -> p.Result[str]:
+        """Answer a liveness ping."""
+        return r[str].ok("pong")
+
+
+operations = u.service_operations(GreeterService)
+assert [op.name for op in operations] == ["greet", "ping"]
+assert operations[0].request is GreetRequest
+assert operations[1].request is None
+assert operations[1].summary == "Answer a liveness ping."
+```
+
+- Every name `FlextService` exposes is excluded even when overridden (`execute`,
+  `track`, `model_*`, …), together with private names, ports and other fields,
+  properties, computed fields, classmethods, staticmethods, and Pydantic validators and
+  serializers.
+- Discovery is lazy: the CLI and tools call it; class creation never checks operation
+  shape. The result is cached per class.
+- Annotations are resolved without `eval`. The module declares
+  `from __future__ import annotations`, so each annotation is a string that is parsed;
+  its dotted name resolves the first part in the module namespace of the method and the
+  rest by attribute. A request model imported only under `TYPE_CHECKING` is unbound at
+  runtime and fails: import it at module runtime.
+- A malformed operation raises `TypeError` naming the operation, the annotation, the
+  module and the fix: an async or generic method, `*args`, `**kwargs`, keyword-only
+  parameters or defaults, more than one request, a missing docstring, a request that is
+  not a Pydantic model class, or a return that is not `p.Result[...]`. Two sibling
+  classes declaring one operation name, and a service without operations, fail the same
+  way.
 
 ## Failures
 

@@ -12,4 +12,4 @@ Project links resolve to the generated root API reference for each governed FLEX
 package.
 
 | project | class | package | description |
-| ------- | ----- | ------- | ----------- |
+|---|---|---|---|

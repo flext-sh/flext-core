@@ -86,5 +86,19 @@ class FlextModelsService:
             description="Pre-built dispatcher injected into the runtime.",
         )
 
+    class ServiceOperation(m.FrozenModel):
+        """One typed operation of a service, as ``u.service_operations`` reports it.
+
+        An operation is a public instance method declared below ``FlextService``
+        that takes nothing or one Pydantic request model and returns
+        ``p.Result``; its one-line docstring is the summary.
+        """
+
+        name: str = mp.Field(description="Method name that implements the operation.")
+        summary: str = mp.Field(description="First docstring line of the operation.")
+        request: t.ModelClass[t.BaseModelType] | None = mp.Field(
+            description="Pydantic request model, or None for an input-less operation."
+        )
+
 
 __all__: t.MutableSequenceOf[str] = ["FlextModelsService"]

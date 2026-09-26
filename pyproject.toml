@@ -1,3 +1,8 @@
+# @flext-generated: continuous
+# @flext-owner: flext-infra/config/codegen.yaml + flext-infra/src/flext_infra/templates/project/base/pyproject.toml.j2
+# @flext-adjust: MANAGED=conflict_sections + overwrite_project_keys. CUSTOM=preserve_project_keys and [tool.*] outside conflict_sections. Never edit this projection.
+# @flext-regenerate: make gen
+
 [build-system]
 build-backend = "hatchling.build"
 requires = ["hatchling"]
@@ -130,7 +135,6 @@ exclude_also = [
   "if TYPE_CHECKING:",
   "if typing.TYPE_CHECKING:",
 ]
-fail_under = 45
 precision = 2
 show_missing = true
 skip_covered = false

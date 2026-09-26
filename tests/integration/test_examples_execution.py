@@ -13,15 +13,11 @@ from __future__ import annotations
 import re
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import tm, u
 
 from tests.constants import c
-
-if TYPE_CHECKING:
-    from tests.typings import t
 
 _CHECK_COUNT_RE = re.compile(r"\((\d+) checks\)")
 
@@ -77,6 +73,3 @@ class TestsFlextExamplesExecution:
 
         tm.that(expected_path.exists(), eq=True)
         tm.that(actual_path.exists(), eq=False)
-
-
-__all__: t.MutableSequenceOf[str] = ["TestsFlextExamplesExecution"]
