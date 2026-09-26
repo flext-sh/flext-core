@@ -240,12 +240,12 @@ class FlextSettings(BaseSettings):
     @classmethod
     def _initialized_instance(cls) -> Self | None:
         """Return the cached singleton only after Pydantic finished init."""
-        existing = getattr(cls, "_instance", None)
+        existing = cls._instance
         if isinstance(existing, cls) and hasattr(existing, "__pydantic_fields_set__"):
             return existing
         if existing is not None:
             with cls._lock:
-                if getattr(cls, "_instance", None) is existing:
+                if cls._instance is existing:
                     cls._instance = None
         return None
 

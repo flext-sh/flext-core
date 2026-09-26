@@ -27,6 +27,7 @@ class FlextBaseError(FlextBaseErrorStateMixin, Exception):
 
     params_cls: ClassVar[ts.ModelClass[m.BaseModel] | None] = None
     excluded_context_keys: ClassVar[set[str] | frozenset[str] | None] = None
+    _default_error_code: ClassVar[str] = c.ErrorCode.UNKNOWN_ERROR
 
     def __init__(
         self,
@@ -50,7 +51,7 @@ class FlextBaseError(FlextBaseErrorStateMixin, Exception):
         declaredparams_cls = self.__class__.params_cls
         if declaredparams_cls is not None:
             resolved_error_code = (
-                str(getattr(type(self), "_default_error_code", error_code))
+                type(self)._default_error_code
                 if error_code == c.ErrorCode.UNKNOWN_ERROR
                 else error_code
             )

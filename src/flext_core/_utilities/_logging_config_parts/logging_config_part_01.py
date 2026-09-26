@@ -55,6 +55,7 @@ class FlextUtilitiesLoggingConfig:
             self._stream_newlines: str | t.VariadicTuple[str] | None = getattr(
                 stream, "newlines", None
             )
+            self._writer_logger: p.Logger | None = None
             self.queue: queue.Queue[str | None] = queue.Queue(maxsize=c.MAX_ITEMS)
             self.stop_event = threading.Event()
             self.thread = threading.Thread(
@@ -62,7 +63,6 @@ class FlextUtilitiesLoggingConfig:
             )
             self.thread.start()
             _ = atexit.register(self.shutdown)
-            self._writer_logger: p.Logger | None = None
 
         @property
         def _target_stream(self) -> typing.TextIO:
@@ -75,7 +75,7 @@ class FlextUtilitiesLoggingConfig:
         @property
         def _writer_log(self) -> p.Logger:
             """Logger for async log writer."""
-            existing: p.Logger | None = getattr(self, "_writer_logger", None)
+            existing = self._writer_logger
             if existing is not None:
                 return existing
             created: p.Logger = FlextUtilitiesLoggingConfig.structlog().get_logger(
