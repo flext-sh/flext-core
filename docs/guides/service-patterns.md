@@ -117,8 +117,9 @@ else:
 ## Composition root
 
 The project's `api.py` is the only module that builds adapters and passes them to
-services (pure dependency injection). One adapter shared by two services is a variable
-passed to both constructors:
+services. Pure dependency injection through constructors is the definitive composition
+model: there is no protocol-keyed container binding and no `compose()` step. One adapter
+shared by two services is a variable passed to both constructors:
 
 ```python notest
 from __future__ import annotations
@@ -133,7 +134,9 @@ audit = AuditService(clock=clock)
 - `fetch_global()` builds the per-class singleton with no arguments, so it serves only
   services without ports. A service with a required port raises `ValidationError` there.
 - `FlextContainer` is the registry of the core runtime (settings, context, command bus,
-  logger). Services and adapters never call it.
+  logger). Services and adapters never call it. Its writes follow one rule path: an
+  empty, duplicate or reserved name raises `e.ValidationError`; see
+  [Dependency Injection Advanced](dependency-injection-advanced.md).
 
 ## Settings and the runtime hook
 

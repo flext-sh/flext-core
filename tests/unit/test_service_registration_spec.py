@@ -1,14 +1,19 @@
-"""Characterization tests for container bootstrap registration parsing."""
+"""Behavioral tests for the container bootstrap registration spec."""
 
 from __future__ import annotations
 
-from typing import cast
+from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import tm
 
-from flext_core import u
+from flext_core.container import FlextContainer
+from tests import e
+from tests.constants import c
 from tests.models import m
+
+if TYPE_CHECKING:
+    from tests.protocols import p
 
 
 def _factory() -> str:
@@ -16,67 +21,61 @@ def _factory() -> str:
 
 
 class TestsServiceRegistrationSpecOwner:
-    """Behavioral ownership contract for bootstrap registration normalization."""
+    """The spec validates its declarations; the container registers them."""
 
-    def test_utility_normalizes_raw_registration_mappings(self) -> None:
-        """The canonical utility converts every raw registration mapping."""
-        registration = u.normalize_service_registration_spec(
-            m.ServiceRegistrationSpec(
-                services={"service": "value"},
+    def test_spec_rejects_non_mapping_services(self) -> None:
+        """A service collection that is not a mapping fails validation."""
+        with pytest.raises(c.ValidationError):
+            _ = m.ServiceRegistrationSpec.model_validate({"services": ["invalid"]})
+
+    def test_spec_rejects_non_callable_factory(self) -> None:
+        """A factory declaration that is not callable fails validation."""
+        with pytest.raises(c.ValidationError):
+            _ = m.ServiceRegistrationSpec.model_validate({
+                "factories": {"factory": "not-callable"}
+            })
+
+    def test_container_registers_raw_and_prebuilt_declarations(
+        self, clean_container: p.Container
+    ) -> None:
+        """Raw values and prebuilt records declared by a spec both resolve."""
+        container = FlextContainer(
+            registration=m.ServiceRegistrationSpec(
+                services={
+                    "service": "value",
+                    "record": m.ServiceRegistration(
+                        name="record", service="kept", service_type="str"
+                    ),
+                },
                 factories={"factory": _factory},
-                resources={"resource": _factory},
+                resources={
+                    "resource": m.ResourceRegistration(
+                        name="resource", factory=_factory
+                    )
+                },
             )
         )
 
-        tm.that(registration.services is not None, eq=True)
-        services = registration.services or {}
-
-        service_record = cast("m.ServiceRegistration", services["service"])
-        assert isinstance(service_record, m.ServiceRegistration)
-        tm.that(service_record.name, eq="service")
-        tm.that(service_record.service, eq="value")
-        tm.that(service_record.service_type, eq="str")
-        tm.that(registration.factories is not None, eq=True)
-        factories = registration.factories or {}
-        factory_record = cast("m.FactoryRegistration", factories["factory"])
-        assert isinstance(factory_record, m.FactoryRegistration)
-        tm.that(factory_record.name, eq="factory")
-        tm.that(factory_record.factory is _factory, eq=True)
-        tm.that(registration.resources is not None, eq=True)
-        resources = registration.resources or {}
-        resource_record = cast("m.ResourceRegistration", resources["resource"])
-        assert isinstance(resource_record, m.ResourceRegistration)
-        tm.that(resource_record.name, eq="resource")
-        tm.that(resource_record.factory is _factory, eq=True)
-
-    def test_utility_preserves_non_mapping_services_error(self) -> None:
-        """Malformed service collections retain the characterized error contract."""
-        registration = m.ServiceRegistrationSpec.model_validate({
-            "services": ["invalid"]
-        })
-
-        with pytest.raises(AttributeError, match="has no attribute 'items'"):
-            _ = u.normalize_service_registration_spec(registration)
-
-    def test_utility_preserves_prebuilt_registration_records(self) -> None:
-        """Already-normalized registrations retain their object identity."""
-        service = m.ServiceRegistration(
-            name="service", service="value", service_type="str"
+        tm.that(container is clean_container, eq=True)
+        tm.that(
+            sorted(container.names()), eq=["factory", "record", "resource", "service"]
         )
-        factory = m.FactoryRegistration(name="factory", factory=_factory)
-        resource = m.ResourceRegistration(name="resource", factory=_factory)
+        tm.ok(container.resolve("service"), eq="value")
+        tm.ok(container.resolve("record"), eq="kept")
+        tm.ok(container.resolve("factory"), eq="factory-value")
+        tm.ok(container.resolve("resource"), eq="factory-value")
 
-        registration = u.normalize_service_registration_spec(
-            m.ServiceRegistrationSpec(
-                services={"service": service},
-                factories={"factory": factory},
-                resources={"resource": resource},
-            )
-        )
+    def test_container_rejects_spec_redeclaring_a_registered_name(
+        self, clean_container: p.Container
+    ) -> None:
+        """Applying a spec to a container that holds its names raises."""
+        spec = m.ServiceRegistrationSpec(services={"service": "value"})
+        _ = clean_container.bind("service", "first")
 
-        tm.that((registration.services or {})["service"] is service, eq=True)
-        tm.that((registration.factories or {})["factory"] is factory, eq=True)
-        tm.that((registration.resources or {})["resource"] is resource, eq=True)
+        with pytest.raises(e.ValidationError, match="service"):
+            _ = FlextContainer(registration=spec)
+
+        tm.ok(clean_container.resolve("service"), eq="first")
 
     def test_model_declares_no_registration_behavior(self) -> None:
         """The Pydantic model exposes only declarative schema members."""

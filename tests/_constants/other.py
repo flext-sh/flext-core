@@ -34,6 +34,11 @@ class TestsFlextConstantsOther:
             "ex_07_flext_exceptions.py",
         ),
         (
+            "ex_08_flext_container",
+            "examples.ex_08_flext_container",
+            "ex_08_flext_container.py",
+        ),
+        (
             "ex_11_flext_service",
             "examples.ex_11_flext_service",
             "ex_11_flext_service.py",

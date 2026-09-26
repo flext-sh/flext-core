@@ -18,7 +18,6 @@ from typing import Annotated
 from flext_core import c, t
 
 from ..._runtime._container import FlextRuntimeContainer as FlextRuntime
-from ..._typings.pydantic import FlextTypesPydantic as tp
 from ..._utilities.generators import FlextUtilitiesGenerators as ug
 from ..base import FlextModelsBase as m
 from ..containers import FlextModelsContainers
@@ -32,8 +31,8 @@ class FlextModelsContainer(FlextModelsContainerPart01):
     class ResourceRegistration(m.ArbitraryTypesModel):
         """Model for lifecycle-managed resource registrations.
 
-        Captures resource factories that dependency-injector should wrap via
-        ``providers.Resource`` for connection-style dependencies (DB/HTTP).
+        Captures resource factories invoked on every resolve for
+        connection-style dependencies (DB/HTTP).
         """
 
         name: Annotated[
@@ -41,7 +40,6 @@ class FlextModelsContainer(FlextModelsContainerPart01):
         ]
         factory: Annotated[
             t.ResourceCallable,
-            tp.SkipValidation,
             mp.Field(
                 ..., description="Factory returning the lifecycle-managed resource"
             ),

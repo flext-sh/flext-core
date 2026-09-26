@@ -17,14 +17,6 @@ class Ex08ContainerLifecycle(Ex08ContainerScoped):
     ) -> None:
         """Exercise lifecycle helpers and cleanup APIs."""
         self.section("internal_and_cleanup")
-        container.initialize_di_components()
-        self.audit_check(
-            "initialize_di_components.bridge_exists", hasattr(container, "_di_bridge")
-        )
-        self.audit_check(
-            "initialize_di_components.container_exists",
-            hasattr(container, "_di_container"),
-        )
         container.initialize_registrations(
             registration=m.ServiceRegistrationSpec(
                 settings=root.settings.clone(), context=root.context
@@ -33,17 +25,17 @@ class Ex08ContainerLifecycle(Ex08ContainerScoped):
         self.audit_check(
             "initialize_registrations.list_services_empty", len(container.names())
         )
-        container.sync_config_to_di()
-        container.register_existing_providers()
-        container.register_core_services()
         self.audit_check(
-            "sync_settings_to_di.service_settings_present", container.has("settings")
+            "core_services.settings_internal",
+            not container.has("settings") and container.resolve("settings").success,
         )
         self.audit_check(
-            "register_core_services.logger_present", container.has("logger")
+            "core_services.logger_internal",
+            not container.has("logger") and container.resolve("logger").success,
         )
         self.audit_check(
-            "register_core_services.command_bus_present", container.has("command_bus")
+            "core_services.command_bus_internal",
+            not container.has("command_bus") and container.dispatcher().success,
         )
         logger_default = container.logger(f"examples.{self.rand_str(6)}")
         logger_custom = container.logger(f"examples.{self.rand_str(6)}")
