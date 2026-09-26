@@ -579,7 +579,7 @@ dev = [
 [[package]]
 name = "flext-infra"
 version = "0.12.0"
-source = { git = "https://github.com/flext-sh/flext-infra.git?rev=0.12.0-dev#b75fd83dd8080c7d80f722459f1c4aa7960b9929" }
+source = { git = "https://github.com/flext-sh/flext-infra.git?rev=0.12.0-dev#8c0c20ecac04bed3c8e96c3a9e84fde68c1714bb" }
 dependencies = [
     { name = "annotated-types" },
     { name = "beartype" },
@@ -1708,14 +1708,10 @@ wheels = [
 
 [[package]]
 name = "rope"
-version = "1.14.0"
-source = { registry = "https://pypi.org/simple" }
+version = "1.14.0+dc.2"
+source = { git = "https://github.com/marlon-costa-dc/rope.git?rev=1.14.0%2Bdc.2#d2571e8cfabe2e00de7783e153403ac0cf4828d4" }
 dependencies = [
     { name = "pytoolconfig", extra = ["global"] },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/74/3a/85e60d154f26ecdc1d47a63ac58bd9f32a5a9f3f771f6672197f02a00ade/rope-1.14.0.tar.gz", hash = "sha256:8803e3b667315044f6270b0c69a10c0679f9f322ed8efe6245a93ceb7658da69", size = 296801, upload-time = "2025-07-12T17:46:07.786Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/75/35/130469d1901da2b3a5a377539b4ffcd8a5c983f1c9e3ba5ffdd8d71ae314/rope-1.14.0-py3-none-any.whl", hash = "sha256:00a7ea8c0c376fc0b053b2f2f8ef3bfb8b50fecf1ebf3eb80e4f8bd7f1941918", size = 207143, upload-time = "2025-07-12T17:46:05.928Z" },
 ]
 
 [[package]]
