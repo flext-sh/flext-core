@@ -192,6 +192,3 @@ class TestsFlextCoreUtilitiesCoverage:
         """safe_string raises ValueError for None, empty, or whitespace input."""
         with pytest.raises(ValueError, match="Text"):
             u.safe_string(text)
-
-
-__all__: list[str] = ["TestsFlextCoreUtilitiesCoverage"]

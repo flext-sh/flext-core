@@ -155,6 +155,3 @@ class TestsFlextCoreSettingsValidationAlias:
             TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.update_global(
                 not_a_field="x"
             )
-
-
-__all__: t.MutableSequenceOf[str] = ["TestsFlextCoreSettingsValidationAlias"]

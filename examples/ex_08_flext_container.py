@@ -22,7 +22,7 @@ class Ex08FlextContainer(Ex08ContainerLifecycle):
         root = self._exercise_singleton_and_creation()
         self._exercise_registration_and_resolution(root)
         self._exercise_fluent_and_settings(root)
-        scoped_full = self._exercise_wiring_and_scoped(root)
+        scoped_full = self._exercise_scoped(root)
         self._exercise_internal_and_cleanup(scoped_full, root)
 
     def _exercise_fluent_and_settings(self, container: p.Container) -> None:

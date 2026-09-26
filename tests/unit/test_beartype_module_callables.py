@@ -97,6 +97,3 @@ class TestsFlextCoreBeartypeModuleCallables:
 
         with pytest.raises(RuntimeError, match=_OUTSIDE_CONTEXT):
             proxy.__class__ = object
-
-
-__all__: list[str] = ["TestsFlextCoreBeartypeModuleCallables"]

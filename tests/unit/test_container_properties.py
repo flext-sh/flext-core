@@ -9,6 +9,8 @@ from flext_tests import tm
 from hypothesis import assume, given, settings, strategies as st
 
 from flext_core.container import FlextContainer
+from tests import e
+from tests.constants import c
 
 
 class TestsFlextCoreContainerProperties:
@@ -19,17 +21,6 @@ class TestsFlextCoreContainerProperties:
     ``snapshot``/``shared``) and asserts return values and ``r[T]`` outcomes,
     never internal registries or DI wiring.
     """
-
-    _RESERVED_CONTAINER_ATTRS: frozenset[str] = frozenset({
-        "override",
-        "overridden",
-        "providers",
-        "reset_override",
-        "reset_last_overriding",
-        "set_providers",
-        "declarative_parent",
-        "settings",
-    })
 
     @pytest.fixture
     def container(self) -> Iterator[FlextContainer]:
@@ -131,12 +122,14 @@ class TestsFlextCoreContainerProperties:
 
     # -- invariants --------------------------------------------------------
 
-    def test_bind_is_idempotent_first_write_wins(
+    def test_bind_duplicate_raises_and_first_write_stays(
         self, container: FlextContainer
     ) -> None:
-        """Re-binding an existing name keeps the original value."""
+        """Re-binding an existing name raises and keeps the original value."""
         _ = container.bind("dup", 1)
-        _ = container.bind("dup", 2)
+
+        with pytest.raises(e.ValidationError, match="dup"):
+            _ = container.bind("dup", 2)
 
         tm.ok(container.resolve("dup", type_cls=int), eq=1)
 
@@ -173,7 +166,7 @@ class TestsFlextCoreContainerProperties:
         """For any valid name, factory registration then resolution roundtrips."""
         container = FlextContainer.shared()
         sanitized = "".join(ch for ch in name if ch.isalnum()) or "svc"
-        assume(sanitized not in self._RESERVED_CONTAINER_ATTRS)
+        assume(sanitized not in c.CONTAINER_RESERVED_NAMES)
 
         _ = container.factory(sanitized, lambda value=sanitized: value)
 

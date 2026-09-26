@@ -15,11 +15,11 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Annotated
 
-from flext_core import c, t
+from flext_core import t
 
 from ..._runtime._container import FlextRuntimeContainer as FlextRuntime
-from ..._typings.pydantic import FlextTypesPydantic as tp
 from ..._utilities.generators import FlextUtilitiesGenerators as ug
+from ..._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore as ug_type
 from ..._utilities.pydantic import FlextUtilitiesPydantic as up
 from ..base import FlextModelsBase as m
 from ..containers import FlextModelsContainers
@@ -41,7 +41,6 @@ class FlextModelsContainer:
         ]
         service: Annotated[
             t.RegisterableService,
-            tp.SkipValidation,
             mp.Field(
                 ..., description="Service instance (protocols, models, callables)"
             ),
@@ -63,13 +62,15 @@ class FlextModelsContainer:
                 None, description="Additional service metadata (JSON-serializable)"
             ),
         ] = None
-        service_type: Annotated[
-            str | None,
-            mp.Field(None, description="Service type name (e.g., 'DatabaseService')"),
-        ] = None
         tags: Annotated[
             t.StrSequence, mp.Field(description="Service tags for categorization")
         ] = mp.Field(default_factory=tuple)
+
+        @mp.computed_field
+        @property
+        def service_type(self) -> str:
+            """Type name of the registered service, derived from the service."""
+            return ug_type.type_name(self.service)
 
         @up.field_validator("service", mode="before")
         @classmethod
@@ -94,7 +95,6 @@ class FlextModelsContainer:
         ]
         factory: Annotated[
             t.FactoryCallable,
-            tp.SkipValidation,
             mp.Field(
                 ..., description="Factory function that creates service instances"
             ),
@@ -105,17 +105,6 @@ class FlextModelsContainer:
                 description="Timestamp when factory was registered (configured timezone)"
             ),
         ] = mp.Field(default_factory=ug.now)
-        is_singleton: Annotated[
-            bool,
-            mp.Field(False, description="Whether factory creates singleton instances"),
-        ] = False
-        cached_instance: Annotated[
-            t.RegisterableService | None,
-            tp.SkipValidation,
-            mp.Field(
-                None, description="Cached singleton instance (if is_singleton=True)"
-            ),
-        ] = None
         metadata: Annotated[
             m.Metadata | FlextModelsContainers.ConfigMap | None,
             mp.BeforeValidator(
@@ -127,13 +116,6 @@ class FlextModelsContainer:
                 None, description="Additional factory metadata (JSON-serializable)"
             ),
         ] = None
-        invocation_count: Annotated[
-            t.NonNegativeInt,
-            mp.Field(
-                c.DEFAULT_MAX_COMMAND_RETRIES,
-                description="Number of times factory has been invoked",
-            ),
-        ] = c.DEFAULT_MAX_COMMAND_RETRIES
 
 
 __all__: list[str] = ["FlextModelsContainer"]

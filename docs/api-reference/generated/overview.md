@@ -8,26 +8,14 @@
 
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
-- Package: `flext_core`
 - Version: `0.12.0`
 - Description: Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture
-- Doc summary: Flext Core package.
-- Classifiers: Development Status :: 3 - Alpha, Framework :: Pydantic :: 2, Framework ::
-  Pydantic, Intended Audience :: Developers, Operating System :: OS Independent,
-  Programming Language :: Python :: 3 :: Only, Programming Language :: Python :: 3.13,
-  Topic :: Software Development :: Libraries :: Application Frameworks, Typing :: Typed
-- Project class: `domain`
-- Keywords: `clean-architecture`, `ddd`, `enterprise`, `flext`, `modern`, `solid`
-- Main facades: `FlextApi`, `FlextBase`, `FlextCli`, `FlextConfig`, `FlextConstants`,
-  `FlextConstantsEnforcement`, `FlextContainer`, `FlextContext` (+18 more)
-- Alias exports: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
-- Public symbol exports: `FlextApi`, `FlextBase`, `FlextCli`, `FlextConfig`,
-  `FlextConstants`, `FlextConstantsEnforcement`, `FlextContainer`, `FlextContext`,
-  `FlextDecorators`, `FlextDispatcher` (+20 more)
-- Exported module shortcuts: `services`
-- Generated module pages: `22`
+- Governed projects: `0`
+- Project classes: _none_
+
+Generated from workspace discovery, `pyproject.toml`, public exports, and docstrings.
 
 ## Next Pages
 
-- [Public API](public-api.md)
-- [Module Index](modules/index.md)
+- [Workspace Module Pages](projects/index.md)
+- [Project Catalog](../../projects/generated/catalog.md)

@@ -303,7 +303,7 @@ src/flext_core/
 ├── _settings.py      # Settings management
 ├── _config.py        # Config management
 ├── loggings.py       # Structured logging
-├── runtime.py        # structlog/dependency-injector bridge
+├── runtime.py        # Runtime normalization and validation
 ├── registry.py       # Shared registration helpers
 ├── context.py        # Contextvars metadata propagation
 ├── dispatcher.py     # CQRS dispatch

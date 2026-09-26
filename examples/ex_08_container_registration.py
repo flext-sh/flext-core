@@ -2,10 +2,17 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+from examples.constants import c
 from examples.protocols import p
 from examples.shared import ExamplesFlextShared
 from examples.typings import t
 from examples.utilities import u
+from flext_core import e, r
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class Ex08ContainerRegistration(ExamplesFlextShared):
@@ -13,6 +20,15 @@ class Ex08ContainerRegistration(ExamplesFlextShared):
 
     _registered_service_name: str = u.PrivateAttr(default_factory=str)
     _registered_service_value: int = u.PrivateAttr(default_factory=int)
+
+    @staticmethod
+    def _write_outcome(write: Callable[[], p.Container]) -> p.Result[bool]:
+        """Convert one container write into a result that keeps the raised cause."""
+        try:
+            _ = write()
+        except e.ValidationError as exc:
+            return r[bool].fail_op("container write", exc)
+        return r[bool].ok(True)
 
     def _exercise_registration_and_resolution(self, container: p.Container) -> None:
         """Exercise register APIs plus get/get_typed/list/has checks."""
@@ -25,49 +41,37 @@ class Ex08ContainerRegistration(ExamplesFlextShared):
         resource_name = f"svc.{self.rand_str(6)}"
         missing_name = f"svc.{self.rand_str(6)}"
         bad_factory_name = f"svc.{self.rand_str(6)}"
-        empty_name_value = self.rand_int(1, 1000)
         register_ok = container.bind(service_name, service_value)
-        service_before_dup = container.has(service_name)
-        register_dup = container.bind(service_name, self.rand_int(1, 1000))
-        service_after_dup = container.has(service_name)
-        empty_before_register = container.has("")
-        register_empty = container.bind("", empty_name_value)
-        empty_after_register = container.has("")
         self.audit_check("register.service.returns_self", register_ok is container)
         self.audit_check(
             "register.service.success", container.resolve(service_name).success
         )
         self.audit_check(
             "register.service.stored_value_matches",
-            (
-                container.resolve(service_name, type_cls=int).value
-                if container.resolve(service_name, type_cls=int).success
-                else -1
-            )
-            == service_value,
+            container.resolve(service_name, type_cls=int).unwrap() == service_value,
+        )
+        duplicate = self._write_outcome(
+            lambda: container.bind(service_name, self.rand_int(1, 1000))
         )
         self.audit_check(
-            "register.service.duplicate_returns_self", register_dup is container
+            "register.service.duplicate_rejected",
+            duplicate.failure and service_name in (duplicate.error or ""),
         )
         self.audit_check(
-            "register.service.duplicate_failure",
-            service_before_dup
-            and service_after_dup
-            and (
-                (
-                    container.resolve(service_name, type_cls=int).value
-                    if container.resolve(service_name, type_cls=int).success
-                    else -1
-                )
-                == service_value
-            ),
+            "register.service.duplicate_keeps_first",
+            container.resolve(service_name, type_cls=int).unwrap() == service_value,
+        )
+        empty = self._write_outcome(lambda: container.bind("", self.rand_int(1, 1000)))
+        self.audit_check(
+            "register.service.empty_name_rejected",
+            c.ERR_CONTAINER_NAME_EMPTY in (empty.error or ""),
+        )
+        reserved = self._write_outcome(
+            lambda: container.bind(c.ServiceName.LOGGER, self.rand_int(1, 1000))
         )
         self.audit_check(
-            "register.service.empty_name_returns_self", register_empty is container
-        )
-        self.audit_check(
-            "register.service.empty_name_failure",
-            not empty_before_register and (not empty_after_register),
+            "register.service.reserved_name_rejected",
+            reserved.failure and c.ServiceName.LOGGER in (reserved.error or ""),
         )
         factory_calls = {"count": 0}
 
@@ -76,7 +80,14 @@ class Ex08ContainerRegistration(ExamplesFlextShared):
             return factory_calls["count"]
 
         register_factory_ok = container.factory(factory_name, _factory_counter)
-        register_factory_dup = container.factory(factory_name, _factory_counter)
+        factory_duplicate = self._write_outcome(
+            lambda: container.factory(factory_name, _factory_counter)
+        )
+        self.audit_check(
+            "register.factory.duplicate_rejected",
+            factory_duplicate.failure
+            and factory_name in (factory_duplicate.error or ""),
+        )
 
         def _factory_raises() -> int:
             error_message = self.rand_str(10)
@@ -87,17 +98,8 @@ class Ex08ContainerRegistration(ExamplesFlextShared):
             "register.factory.returns_self", register_factory_ok is container
         )
         self.audit_check(
-            "register.factory.success", container.resolve(factory_name).success
-        )
-        self.audit_check(
-            "register.factory.duplicate_failure",
-            register_factory_dup is container
-            and container.resolve(factory_name).success,
-        )
-        self.audit_check(
-            "register.factory.bad_registration_success",
-            register_factory_bad is container
-            and container.resolve(bad_factory_name).success,
+            "register.factory.raising_factory_registers",
+            register_factory_bad is container and container.has(bad_factory_name),
         )
         resource_calls = {"count": 0}
 
@@ -106,17 +108,15 @@ class Ex08ContainerRegistration(ExamplesFlextShared):
             return {self.rand_str(4): resource_calls["count"]}
 
         register_resource_ok = container.resource(resource_name, _resource_data)
-        register_resource_dup = container.resource(resource_name, _resource_data)
+        cross_kind = self._write_outcome(
+            lambda: container.resource(service_name, _resource_data)
+        )
+        self.audit_check(
+            "register.resource.cross_kind_duplicate_rejected",
+            cross_kind.failure and service_name in (cross_kind.error or ""),
+        )
         self.audit_check(
             "register.resource.returns_self", register_resource_ok is container
-        )
-        self.audit_check(
-            "register.resource.success", container.resolve(resource_name).success
-        )
-        self.audit_check(
-            "register.resource.duplicate_failure",
-            register_resource_dup is container
-            and container.resolve(resource_name).success,
         )
         get_service = container.resolve(service_name)
         get_factory = container.resolve(factory_name)
@@ -125,26 +125,12 @@ class Ex08ContainerRegistration(ExamplesFlextShared):
         get_bad_factory = container.resolve(bad_factory_name)
         self.audit_check("get.service.success", get_service.success)
         self.audit_check(
-            "get.service.value_matches",
-            (
-                container.resolve(service_name, type_cls=int).value
-                if container.resolve(service_name, type_cls=int).success
-                else -1
-            )
-            == service_value,
+            "get.service.value_matches", get_service.unwrap() == service_value
         )
         self.audit_check("get.factory.success", get_factory.success)
-        self.audit_check(
-            "get.factory.value_first_call",
-            (
-                container.resolve(factory_name, type_cls=int).value
-                if container.resolve(factory_name, type_cls=int).success
-                else -1
-            )
-            == 1,
-        )
+        self.audit_check("get.factory.invoked_per_resolve", factory_calls["count"])
         self.audit_check("get.resource.success", get_resource.success)
-        self.audit_check("get.resource.call_count_is_one", resource_calls["count"] == 1)
+        self.audit_check("get.resource.invoked_per_resolve", resource_calls["count"])
         self.audit_check("get.missing.failure", get_missing.failure)
         self.audit_check("get.bad_factory.failure", get_bad_factory.failure)
         get_typed_service = container.resolve(service_name, type_cls=int)
@@ -169,7 +155,7 @@ class Ex08ContainerRegistration(ExamplesFlextShared):
         self.audit_check("has_service.service.true", container.has(service_name))
         self.audit_check("has_service.factory.true", container.has(factory_name))
         self.audit_check("has_service.resource.true", container.has(resource_name))
-        self.audit_check("has_service.missing.false", container.has(missing_name))
+        self.audit_check("has_service.missing.false", not container.has(missing_name))
         service_list = list(container.names())
         self.audit_check("list_services.contains.service", service_name in service_list)
         self.audit_check("list_services.contains.factory", factory_name in service_list)

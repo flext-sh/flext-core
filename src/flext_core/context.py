@@ -18,7 +18,7 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Annotated, ClassVar, Self
 
-from flext_core import c, m, p, r, t, u
+from flext_core import c, e, m, p, r, t, u
 
 # NOTE (multi-agent): mro-i6nq.12 — Generator is annotation-only; importing it
 # under TYPE_CHECKING keeps the public runtime facade graph lazy.
@@ -160,12 +160,11 @@ class FlextContext(m.ManagedModel):
     ) -> p.Result[bool]:
         """Register a named service in the global container."""
         container = FlextContext.resolve_container()
-        _ = container.bind(service_name, service)
-        return (
-            r[bool].ok(True)
-            if container.has(service_name)
-            else r[bool].fail(f"Service '{service_name}' was not registered")
-        )
+        try:
+            _ = container.bind(service_name, service)
+        except e.ValidationError as exc:
+            return r[bool].fail_op("register service", exc)
+        return r[bool].ok(True)
 
     @staticmethod
     def resolve_correlation_id() -> str | None:
