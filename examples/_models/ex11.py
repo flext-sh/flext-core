@@ -13,9 +13,6 @@ class ExamplesFlextModelsEx11:
     class Payload(m.Value):
         text: Annotated[str, m.Field(description="Payload text content")]
 
-    class EntityStub(m.Value):
-        unique_id: Annotated[str, m.Field(description="Unique entity identifier")]
-
     class ServiceHandlerConfig(FlextSettings):
         enabled: Annotated[
             bool, m.Field(description="Whether the service is enabled")
@@ -34,6 +31,3 @@ class ExamplesFlextModelsEx11:
 
     class ProcessorProtocolBad(m.Value):
         status: Annotated[str, m.Field(description="Processing failure status")] = "bad"
-
-    class ServiceCommandBusStub(m.BaseModel):
-        pass

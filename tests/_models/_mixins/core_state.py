@@ -89,15 +89,6 @@ class TestsFlextModelsCoreStateMixin:
     class _Opts(m.BaseModel):
         value: int = 1
 
-    class _FakeSettings(m.BaseModel):
-        """Fake settings with model_copy support."""
-
-        timeout: int = 10
-
-        @property
-        def data(self) -> t.JsonMapping:
-            return {"timeout": self.timeout}
-
     class _Model(m.BaseModel):
         value: int
 

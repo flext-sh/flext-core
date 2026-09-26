@@ -78,16 +78,11 @@ class TestsFlextCoreResultLaws:
         assert chained.value == 12
 
     def test_flat_map_short_circuits_on_failure(self) -> None:
-        called: list[int] = []
-
-        def spy(v: int) -> p.Result[int]:
-            called.append(v)
-            return r[int].ok(v)
-
-        chained = r[int].fail("boom").flat_map(spy)
+        chained = r[int].fail("boom").flat_map(
+            lambda v: r[int].fail(f"step ran with {v}")
+        )
         assert chained.failure is True
         assert chained.error == "boom"
-        assert called == []
 
     # ------------------------------------------------------------------ #
     # filter / recover / lash / fold / map_error contract                #

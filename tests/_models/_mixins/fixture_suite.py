@@ -46,17 +46,6 @@ class TestsFlextModelsFixtureSuiteMixin:
 
         value: Annotated[t.JsonValue, m.Field(description="Fixture value payload.")]
 
-    class MockScenarioData(m.BaseModel):
-        """Mock scenario test data."""
-
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
-
-        given: t.MappingKV[str, t.Primitives]
-        when: t.MappingKV[str, t.Primitives]
-        then: t.MappingKV[str, t.Primitives]
-        tags: t.StrSequence
-        priority: str
-
     class NestedDataDict(m.BaseModel):
         """Nested test data."""
 
