@@ -59,11 +59,6 @@ class FlextLazyAttribute[T]:
 
 
 class FlextLazy(FlextLazyPart01):
-    @staticmethod
-    def _module_is_initializing(module: ModuleType) -> bool:
-        """Return whether Python is still executing a module body."""
-        return bool(getattr(getattr(module, "__spec__", None), "_initializing", False))
-
     def attribute[T](
         self,
         name: str,
