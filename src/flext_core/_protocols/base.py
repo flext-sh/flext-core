@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable, MutableSequence
     from types import TracebackType
 
-    from flext_core import m, p, t
+    from flext_core import m, t
 
 
 class FlextProtocolsBase:
