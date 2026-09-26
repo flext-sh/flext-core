@@ -8,6 +8,7 @@ from ...._constants.enforcement import FlextConstantsEnforcement as c
 from ...._models.enforcement import FlextModelsEnforcement as me
 from ...._typings.base import FlextTypingBase as t
 from ..helpers import FlextUtilitiesBeartypeHelpers as ubh
+from ..module_source import FlextUtilitiesBeartypeModuleSource
 
 NO_VIOLATION: t.StrMapping | None = None
 BARE_VIOLATION: t.StrMapping = {}
@@ -111,7 +112,7 @@ class FlextUtilitiesBeartypeClassVisitor:
         if (
             params.require_runtime_checkable
             and ubh.has_runtime_protocol_marker(value)
-            and not getattr(value, "_is_runtime_protocol", False)
+            and not FlextUtilitiesBeartypeModuleSource.declares_runtime_checkable(value)
         ):
             return BARE_VIOLATION
         return NO_VIOLATION

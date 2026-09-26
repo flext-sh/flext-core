@@ -9,7 +9,7 @@ import sys
 import textwrap
 from collections.abc import Iterator
 from types import ModuleType
-from typing import TypeAliasType
+from typing import TypeAliasType, runtime_checkable
 
 from ..._models.enforcement import FlextModelsEnforcement as me
 
@@ -21,6 +21,35 @@ class FlextUtilitiesBeartypeModuleSource:
     def parse(module: ModuleType) -> ast.Module:
         """Read the defining source without normalizing inspection failures."""
         return ast.parse(inspect.getsource(module), filename=inspect.getfile(module))
+
+    @staticmethod
+    def declares_runtime_checkable(target: type) -> bool:
+        """Prove from its source that ``target`` is decorated by ``runtime_checkable``.
+
+        Each decorator name or dotted path is resolved in the defining module's
+        namespace, so ``runtime_checkable``, ``typing.runtime_checkable`` and any
+        import alias of it are recognized by identity.
+        """
+        source = textwrap.dedent(inspect.getsource(target))
+        declaration = ast.parse(source, filename=inspect.getfile(target)).body[0]
+        if not isinstance(declaration, ast.ClassDef):
+            msg = f"Class source does not open with its declaration: {target!r}"
+            raise TypeError(msg)
+        namespace = vars(sys.modules[target.__module__])
+        for expression in declaration.decorator_list:
+            path: list[str] = []
+            node = expression
+            while isinstance(node, ast.Attribute):
+                path.insert(0, node.attr)
+                node = node.value
+            if not isinstance(node, ast.Name) or node.id not in namespace:
+                continue
+            resolved = namespace[node.id]
+            for attribute in path:
+                resolved = getattr(resolved, attribute)
+            if resolved is runtime_checkable:
+                return True
+        return False
 
     @classmethod
     def _declarations(

@@ -13,7 +13,13 @@ from __future__ import annotations
 
 import typing
 from abc import ABC, abstractmethod
-from typing import ClassVar, Final, Protocol, runtime_checkable
+from typing import (
+    ClassVar,
+    Final,
+    Protocol,
+    runtime_checkable,
+    runtime_checkable as checkable_protocol,
+)
 
 import pytest
 
@@ -132,6 +138,33 @@ class TestsFlextCoreEnforcementLayers:
         return _PProtocols
 
     @staticmethod
+    def _protocols_runtime_dotted() -> type:
+        class _PProtocols:
+            @typing.runtime_checkable
+            class InnerProto(Protocol):
+                def do(self) -> None: ...
+
+        return _PProtocols
+
+    @staticmethod
+    def _protocols_runtime_aliased() -> type:
+        class _PProtocols:
+            @checkable_protocol
+            class InnerProto(Protocol):
+                def do(self) -> None: ...
+
+        return _PProtocols
+
+    @staticmethod
+    def _protocols_other_decorator() -> type:
+        class _PProtocols:
+            @typing.final
+            class InnerProto(Protocol):
+                def do(self) -> None: ...
+
+        return _PProtocols
+
+    @staticmethod
     def _types_clean_alias() -> type:
         class _TTypes:
             type GoodAlias = str
@@ -178,6 +211,12 @@ class TestsFlextCoreEnforcementLayers:
                 "proto_inner_kind",
             ),
             ("_protocols_non_runtime", "protocols", "Protocols", "proto_not_runtime"),
+            (
+                "_protocols_other_decorator",
+                "protocols",
+                "Protocols",
+                "proto_not_runtime",
+            ),
             ("_types_any_alias", "types", "Types", "alias_any"),
             (
                 "_utilities_instance_method",
@@ -207,6 +246,8 @@ class TestsFlextCoreEnforcementLayers:
             ("_protocols_abc", "protocols", "proto_inner_kind"),
             ("_protocols_abc", "protocols", "proto_not_runtime"),
             ("_protocols_runtime", "protocols", "proto_not_runtime"),
+            ("_protocols_runtime_dotted", "protocols", "proto_not_runtime"),
+            ("_protocols_runtime_aliased", "protocols", "proto_not_runtime"),
             ("_types_clean_alias", "types", "alias_any"),
             ("_utilities_static_method", "utilities", "utility_not_static"),
             ("_utilities_class_method", "utilities", "utility_not_static"),
