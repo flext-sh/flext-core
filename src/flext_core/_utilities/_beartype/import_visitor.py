@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from types import ModuleType
 
 from ..._constants.enforcement import FlextConstantsEnforcement as c
 from ..._models.enforcement import FlextModelsEnforcement as me
@@ -88,11 +89,14 @@ class _ImportBlacklistVisitor:
                     if isinstance(value, type)
                     and name.startswith(tier_prefixes)
                     and (origin := _ubh.object_module_name_for(value) or "").startswith(
-                        "flext_"
+                        c.NAMESPACE_FAMILY_PREFIX
                     )
                     and origin != module_name
                     and not _ImportBlacklistVisitor._is_local_family_import(
                         origin, module_name
+                    )
+                    and not _ImportBlacklistVisitor._is_pattern_b_peer(
+                        value, origin, module
                     )
                 ),
                 no_violation,
@@ -169,6 +173,27 @@ class _ImportBlacklistVisitor:
         return (
             origin_parts[0] == module_parts[0]
             and origin_parts[1] in c.ENFORCEMENT_PRIVATE_FAMILY_PACKAGES
+        )
+
+    @staticmethod
+    def _is_pattern_b_peer(value: type, origin: str, module: ModuleType) -> bool:
+        """Return True when a family facade extends a peer family facade by class.
+
+        The ENFORCE-046 catalog row exempts a Pattern-B peer: a module of a
+        family package whose own facade class lists ``value`` as a base, where
+        ``value`` is itself declared by a peer's canonical facade module
+        (``from flext_cli import FlextCliConstants`` then
+        ``class FlextMeltanoConstants(FlextCliConstants)``). A consumer outside
+        the family keeps the alias base (Pattern A).
+        """
+        return (
+            module.__name__.startswith(c.NAMESPACE_FAMILY_PREFIX)
+            and f"{origin.rpartition('.')[2]}.py" in c.ENFORCEMENT_CANONICAL_FILES
+            and any(
+                value in declared.__bases__
+                for declared in vars(module).values()
+                if isinstance(declared, type) and declared.__module__ == module.__name__
+            )
         )
 
     @staticmethod
