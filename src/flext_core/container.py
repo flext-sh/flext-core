@@ -354,7 +354,7 @@ class FlextContainer(p.Container):
                 context=scoped_context,
                 services={
                     **{
-                        name: record
+                        name: record.service
                         for name, record in inherited.items()
                         if isinstance(record, m.ServiceRegistration)
                     },
@@ -362,7 +362,7 @@ class FlextContainer(p.Container):
                 },
                 factories={
                     **{
-                        name: record
+                        name: record.factory
                         for name, record in inherited.items()
                         if isinstance(record, m.FactoryRegistration)
                     },
@@ -370,7 +370,7 @@ class FlextContainer(p.Container):
                 },
                 resources={
                     **{
-                        name: record
+                        name: record.factory
                         for name, record in inherited.items()
                         if isinstance(record, m.ResourceRegistration)
                     },
