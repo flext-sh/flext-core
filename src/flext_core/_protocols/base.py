@@ -91,14 +91,6 @@ class FlextProtocolsBase:
         """Query type identifier."""
 
     @runtime_checkable
-    class Executable(Base, Protocol):
-        """Protocol for objects that can be executed and report service info."""
-
-        def execute(self) -> p.Result[t.JsonPayload]: ...
-
-        def service_info(self) -> t.JsonMapping: ...
-
-    @runtime_checkable
     class ConfigObject(Protocol):
         """Protocol for mapping-like configuration payloads."""
 
