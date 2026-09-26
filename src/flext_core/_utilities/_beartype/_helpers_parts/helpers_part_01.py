@@ -9,7 +9,6 @@ from types import ModuleType
 from typing import (
     TYPE_CHECKING,
     Any,
-    Protocol,
     TypeAliasType,
     cast,
     get_args,
@@ -155,7 +154,7 @@ class FlextUtilitiesBeartypeHelpers:
 
     @staticmethod
     def has_runtime_protocol_marker(value: type) -> bool:
-        return value is Protocol or is_protocol(value)
+        return is_protocol(value)
 
     @staticmethod
     def has_abstract_contract(value: type) -> bool:
@@ -181,9 +180,7 @@ class FlextUtilitiesBeartypeHelpers:
         from ``TransportPlugin``) are valid inner classes of protocol trees;
         the ``proto_inner_kind`` rule (ENFORCE-083) must not flag them.
         """
-        return any(
-            base is Protocol or is_protocol(base) for base in value.__mro__[1:]
-        )
+        return any(is_protocol(base) for base in value.__mro__[1:])
 
 
 __all__: list[str] = ["FlextUtilitiesBeartypeHelpers"]

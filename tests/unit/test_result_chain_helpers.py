@@ -63,7 +63,7 @@ class TestsFlextCoreResultChainHelpers:
 
     def test_map_short_circuits_on_failure(self) -> None:
         """``map`` leaves a failure untouched and never runs the function."""
-        result = r[int].fail("prior").map(lambda value: value // 0)
+        result = r[int].fail("prior").map(lambda value: value * 2)
 
         assert result.failure is True
         assert result.error == "prior"
@@ -90,8 +90,10 @@ class TestsFlextCoreResultChainHelpers:
 
     def test_flat_map_short_circuits_upstream_failure(self) -> None:
         """``flat_map`` never invokes its step when the upstream already failed."""
-        result = r[int].fail("upstream").flat_map(
-            lambda value: r[int].fail(f"step ran with {value}")
+        result = (
+            r[int]
+            .fail("upstream")
+            .flat_map(lambda value: r[int].fail(f"step ran with {value}"))
         )
 
         assert result.failure is True

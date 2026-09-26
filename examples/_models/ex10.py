@@ -6,6 +6,7 @@ from typing import Annotated
 
 from flext_core import m, p, r
 
+
 class ExamplesFlextModelsEx10:
     """Examples namespace wrapper for ex10 models."""
 

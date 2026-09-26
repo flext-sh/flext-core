@@ -51,7 +51,7 @@ class FlextBaseError(FlextBaseErrorStateMixin, Exception):
         declaredparams_cls = self.__class__.params_cls
         if declaredparams_cls is not None:
             resolved_error_code = (
-                type(self)._default_error_code
+                self._default_error_code
                 if error_code == c.ErrorCode.UNKNOWN_ERROR
                 else error_code
             )

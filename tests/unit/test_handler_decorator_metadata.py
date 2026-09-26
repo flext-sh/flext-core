@@ -63,7 +63,7 @@ class TestsFlextHandlerDecoratorMetadata:
 
         _, config = h.Discovery.scan_class(Service)[0]
         tm.that(config.priority, eq=priority)
-        tm.that(config.timeout, eq=timeout)
+        tm.that(config.model_dump()["timeout"], eq=timeout)
 
     def test_negative_priority_is_rejected(self) -> None:
         class CreateCommand:
@@ -108,7 +108,7 @@ class TestsFlextHandlerDecoratorMetadata:
                 return r[str].ok("handled")
 
         _, config = h.Discovery.scan_class(Service)[0]
-        tm.that(config.middleware, eq=middleware_types)
+        tm.that(config.model_dump()["middleware"], eq=middleware_types)
 
     def test_middleware_is_captured_by_value_not_reference(self) -> None:
         class CreateCommand:
@@ -133,7 +133,10 @@ class TestsFlextHandlerDecoratorMetadata:
         # Mutating the caller's list after decoration must not leak into config.
         middleware_types.append(PassthroughMiddleware)
         _, config = h.Discovery.scan_class(Service)[0]
-        tm.that(len(config.middleware), eq=1)
+        declared = m.DecoratorConfig(
+            command=CreateCommand, middleware=[PassthroughMiddleware]
+        )
+        tm.that(config.model_dump(), eq=declared.model_dump())
 
     def test_decorator_returns_same_callable(self) -> None:
         class CreateCommand:
