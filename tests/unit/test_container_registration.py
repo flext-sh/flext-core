@@ -8,6 +8,8 @@ import pytest
 from flext_tests import tm
 
 from flext_core.container import FlextContainer
+from tests import e
+from tests.constants import c
 from tests.models import m
 from tests.protocols import p
 from tests.utilities import u
@@ -67,31 +69,25 @@ class TestsFlextCoreContainerRegistration:
             clean_container.resolve(scenario.name), expected_value=scenario.service
         )
 
-    def test_bind_duplicate_name_preserves_first_binding(
+    def test_bind_duplicate_name_raises_and_keeps_first_binding(
         self, clean_container: p.Container
     ) -> None:
-        """Re-binding an existing name is a no-op; the first value wins."""
+        """Re-binding a registered name raises; the first value stays bound."""
         _ = clean_container.bind("service1", "value1")
-        _ = clean_container.bind("service1", "value2")
+
+        with pytest.raises(e.ValidationError, match="service1"):
+            _ = clean_container.bind("service1", "value2")
 
         u.Tests.assert_success(
             clean_container.resolve("service1"), expected_value="value1"
         )
 
-    def test_bind_empty_name_is_rejected(self, clean_container: p.Container) -> None:
-        """An empty service name is never registered."""
-        result = clean_container.bind("", "service")
+    def test_bind_empty_name_raises(self, clean_container: p.Container) -> None:
+        """An empty service name raises and registers nothing."""
+        with pytest.raises(e.ValidationError, match=c.ERR_CONTAINER_NAME_EMPTY):
+            _ = clean_container.bind("", "service")
 
-        tm.that(
-            result is clean_container,
-            eq=True,
-            msg="bind must stay fluent even when rejecting an empty name",
-        )
-        tm.that(
-            clean_container.has(""),
-            eq=False,
-            msg="Empty-named service must not be registered",
-        )
+        tm.that(clean_container.names(), empty=True)
 
     def test_resolve_unknown_name_fails(self, clean_container: p.Container) -> None:
         """Resolving an unregistered name yields a failing result naming it."""
@@ -146,31 +142,25 @@ class TestsFlextCoreContainerRegistration:
             msg="Factory must be invoked to produce the resolved value",
         )
 
-    def test_factory_duplicate_name_preserves_first_factory(
+    def test_factory_duplicate_name_raises_and_keeps_first_factory(
         self, clean_container: p.Container
     ) -> None:
-        """Re-registering a factory name keeps the original callable."""
+        """Re-registering a factory name raises; the original callable stays."""
         clean_container.factory("factory1", u.Tests.create_factory("value1"))
-        clean_container.factory("factory1", u.Tests.create_factory("value2"))
+
+        with pytest.raises(e.ValidationError, match="factory1"):
+            clean_container.factory("factory1", u.Tests.create_factory("value2"))
 
         u.Tests.assert_success(
             clean_container.resolve("factory1"), expected_value="value1"
         )
 
-    def test_factory_empty_name_is_rejected(self, clean_container: p.Container) -> None:
-        """An empty factory name is never registered."""
-        result = clean_container.factory("", u.Tests.create_factory("value"))
+    def test_factory_empty_name_raises(self, clean_container: p.Container) -> None:
+        """An empty factory name raises and registers nothing."""
+        with pytest.raises(e.ValidationError, match=c.ERR_CONTAINER_NAME_EMPTY):
+            clean_container.factory("", u.Tests.create_factory("value"))
 
-        tm.that(
-            clean_container.has(""),
-            eq=False,
-            msg="Empty-named factory must not be registered",
-        )
-        tm.that(
-            result is clean_container,
-            eq=True,
-            msg="factory must stay fluent when rejecting an empty name",
-        )
+        tm.that(clean_container.names(), empty=True)
 
     def test_drop_removes_registered_service(
         self, clean_container: p.Container

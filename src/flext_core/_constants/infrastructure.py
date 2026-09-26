@@ -9,6 +9,8 @@ from __future__ import annotations
 from enum import StrEnum, unique
 from typing import ClassVar
 
+from .file import FlextConstantsFile
+from .mixins import FlextConstantsMixins
 from .timeout import FlextConstantsTimeout
 
 
@@ -78,6 +80,14 @@ class FlextConstantsInfrastructure:
 
         LOGGER = "logger"
         COMMAND_BUS = "command_bus"
+
+    CONTAINER_RESERVED_NAMES: ClassVar[frozenset[str]] = frozenset({
+        FlextConstantsFile.Directory.CONFIG,
+        ServiceName.LOGGER,
+        FlextConstantsMixins.FIELD_CONTEXT,
+        ServiceName.COMMAND_BUS,
+    })
+    """Names the container writes for the core runtime; public writes reject them."""
 
     @unique
     class HandlerMode(StrEnum):

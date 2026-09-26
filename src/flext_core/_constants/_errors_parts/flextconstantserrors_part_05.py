@@ -13,38 +13,20 @@ class FlextConstantsErrorsRuntimeSettings:
     """Container, runtime, exceptions, lazy, and settings errors."""
 
     # --- Container / Runtime ---
-    ERR_CONTAINER_FACTORY_INVALID_REGISTERABLE: Final[str] = (
-        "Factory '{name}' returned value that does not satisfy RegisterableService"
-        " protocol. Expected a canonical registerable service, protocol, or callable."
-    )
     ERR_CONTAINER_REGISTRATION_FAILED: Final[str] = (
         "Container registration of '{name}' failed: {reason}"
     )
-    ERR_CONTAINER_CONFIG_NOT_INITIALIZED: Final[str] = (
-        "Configuration must be initialized via initialize_registrations"
+    ERR_CONTAINER_NAME_EMPTY: Final[str] = (
+        "Container registration requires a non-empty name"
     )
-    ERR_CONTAINER_CONTEXT_NOT_INITIALIZED: Final[str] = (
-        "Context not initialized. Provide context during container creation via "
-        "FlextContainer(registration=m.ServiceRegistrationSpec(context=...)) or "
-        "FlextContainer.shared(context=...)"
+    ERR_CONTAINER_NAME_DUPLICATE: Final[str] = (
+        "Container name '{name}' is already registered; drop it before rebinding"
     )
-    ERR_CONTAINER_PROVIDE_HELPER_NOT_INITIALIZED: Final[str] = (
-        "DI bridge Provide helper not initialized"
+    ERR_CONTAINER_NAME_RESERVED: Final[str] = (
+        "Container name '{name}' is reserved for the core runtime services"
     )
-    ERR_CONTAINER_PROVIDE_HELPER_UNSUPPORTED_TYPE: Final[str] = (
-        "DI bridge Provide helper returned unsupported type"
-    )
-    ERR_CONTAINER_BRIDGE_MUST_HAVE_CONFIG_PROVIDER: Final[str] = (
-        "Bridge must have settings provider"
-    )
-    ERR_CONTAINER_BRIDGE_CONFIG_PROVIDER_CANNOT_BE_NONE: Final[str] = (
-        "Bridge settings provider cannot be None"
-    )
-    ERR_CONTAINER_BRIDGE_CONFIG_PROVIDER_MUST_SUPPORT_OVERRIDE: Final[str] = (
-        "Bridge settings provider must support override()"
-    )
-    ERR_RUNTIME_PROVIDER_ALREADY_REGISTERED: Final[str] = (
-        "Provider '{name}' is already registered"
+    ERR_CONTAINER_CALLER_UNRESOLVED: Final[str] = (
+        "auto_register_factories requires a caller module imported in sys.modules"
     )
     ERR_RUNTIME_METADATA_MODEL_NOT_BOUND: Final[str] = (
         "FlextRuntime.Metadata is not bound to a concrete model"
@@ -146,7 +128,6 @@ class FlextConstantsErrorsRuntimeSettings:
     ERR_SETTINGS_NAMESPACE_NOT_REGISTERED: Final[str] = (
         "Namespace '{namespace}' not registered"
     )
-    ERR_SETTINGS_DI_PROVIDER_NOT_INITIALIZED: Final[str] = "DI provider not initialized"
     ERR_SETTINGS_CLASS_REQUIRED_FOR_NON_DECORATOR: Final[str] = (
         "settings_class is required when decorator=False"
     )

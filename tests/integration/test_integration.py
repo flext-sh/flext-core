@@ -14,6 +14,7 @@ from flext_tests import r, tm
 
 from flext_core import FlextContainer
 from flext_core.__version__ import __version__
+from tests import e
 from tests.protocols import p
 from tests.utilities import u
 
@@ -151,15 +152,16 @@ class TestsFlextCoreIntegration:
         tm.that(resolved.error, none=False)
         tm.that(tm.not_none(resolved.error), has="does_not_exist")
 
-    def test_container_bind_is_idempotent_for_existing_name(
+    def test_container_bind_rejects_existing_name(
         self, clean_container: p.Container
     ) -> None:
-        """Re-binding an existing name preserves the first value (no overwrite)."""
+        """Re-binding an existing name raises and preserves the first value."""
         # Arrange
         _ = clean_container.bind("svc", "first")
 
         # Act
-        _ = clean_container.bind("svc", "second")
+        with pytest.raises(e.ValidationError, match="svc"):
+            _ = clean_container.bind("svc", "second")
         resolved = clean_container.resolve("svc")
 
         # Assert

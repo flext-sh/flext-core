@@ -154,36 +154,3 @@ class TestsFlextCoreRuntime:
     def test_normalize_registerable_service_rejects_unregisterable_value(self) -> None:
         with pytest.raises(ValueError, match="RegisterableService"):
             FlextRuntime.normalize_registerable_service(bytearray(b"unsupported"))
-
-    def test_create_container_exposes_registered_object_provider(self) -> None:
-        container = FlextRuntime.DependencyIntegration.create_container(
-            services={"alpha": "beta"}
-        )
-
-        assert container.alpha() == "beta"
-
-    def test_register_factory_with_cache_yields_singleton_instances(self) -> None:
-        container = FlextRuntime.DependencyIntegration.create_container()
-        _ = FlextRuntime.DependencyIntegration.register_factory(
-            container, "svc", object, cache=True
-        )
-
-        assert container.svc() is container.svc()
-
-    def test_register_factory_without_cache_yields_distinct_instances(self) -> None:
-        container = FlextRuntime.DependencyIntegration.create_container()
-        _ = FlextRuntime.DependencyIntegration.register_factory(
-            container, "svc", object, cache=False
-        )
-
-        assert container.svc() is not container.svc()
-
-    def test_register_object_rejects_duplicate_provider_name(self) -> None:
-        container = FlextRuntime.DependencyIntegration.create_container(
-            services={"alpha": "beta"}
-        )
-
-        with pytest.raises(ValueError, match="already registered"):
-            _ = FlextRuntime.DependencyIntegration.register_object(
-                container, "alpha", "other"
-            )

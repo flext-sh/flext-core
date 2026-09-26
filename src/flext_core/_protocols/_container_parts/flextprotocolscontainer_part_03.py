@@ -23,10 +23,6 @@ class FlextProtocolsContainer(FlextProtocolsContainerPart02):
     class ContainerLifecycle(FlextProtocolsContainerPart02.Container, Protocol):
         """Extended container contract for bootstrap and lifecycle operations."""
 
-        def initialize_di_components(self) -> None:
-            """Initialize DI bridge and backing containers."""
-            ...
-
         def initialize_registrations(
             self, *, registration: m.ServiceRegistrationSpec | None = None
         ) -> None:
@@ -36,14 +32,6 @@ class FlextProtocolsContainer(FlextProtocolsContainerPart02):
         @override
         def register_core_services(self) -> None:
             """Register the canonical core service set into the container."""
-            ...
-
-        def register_existing_providers(self) -> None:
-            """Hydrate dependency providers from current registrations."""
-            ...
-
-        def sync_config_to_di(self) -> None:
-            """Synchronize validated configuration into DI providers."""
             ...
 
     @runtime_checkable

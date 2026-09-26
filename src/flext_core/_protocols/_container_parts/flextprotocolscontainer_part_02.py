@@ -12,9 +12,6 @@ from ..base import FlextProtocolsBase
 from ..settings import FlextProtocolsSettings
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-    from types import ModuleType
-
     from flext_core import m, t
 
     from ..context import FlextProtocolsContext
@@ -45,11 +42,6 @@ class FlextProtocolsContainer(FlextProtocolsContainerPart01):
         @property
         def context(self) -> FlextProtocolsContext.Context:
             """Execution context bound to the container."""
-            ...
-
-        @property
-        def provide(self) -> Callable[[str], t.RegisterableService]:
-            """The dependency-injector Provide helper scoped to the bridge."""
             ...
 
         def clear(self) -> None:
@@ -127,16 +119,6 @@ class FlextProtocolsContainer(FlextProtocolsContainerPart01):
             registration: m.ServiceRegistrationSpec | None = None,
         ) -> Self:
             """Create an isolated container scope with optional overrides."""
-            ...
-
-        def wire(
-            self,
-            *,
-            modules: t.SequenceOf[ModuleType] | None = None,
-            packages: t.StrSequence | None = None,
-            classes: t.SequenceOf[type] | None = None,
-        ) -> None:
-            """Wire modules/packages to the DI bridge for @inject/Provide usage."""
             ...
 
 
