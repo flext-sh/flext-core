@@ -135,7 +135,9 @@ class FlextContainer(p.Container):
         name: str, value: m.ServiceRegistration | t.RegisterableService
     ) -> m.ServiceRegistration:
         """Build (or keep) the validated record of an object-backed service."""
-        if isinstance(value, m.ServiceRegistration):
+        # A class object (RegisterableService admits type[object]) is a service
+        # to record, never an already-validated record.
+        if isinstance(value, m.ServiceRegistration) and not isinstance(value, type):
             return value
         return m.ServiceRegistration(
             name=name, service=value, service_type=u.type_name(value)
