@@ -13,11 +13,11 @@ from __future__ import annotations
 
 import ast
 import functools
-from collections import ChainMap
 import inspect
 import operator
+from collections import ChainMap
 from types import FunctionType
-from typing import TYPE_CHECKING, get_origin
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
@@ -172,17 +172,18 @@ class FlextUtilitiesDiscovery:
         annotation: t.TypeHintSpecifier,
         *,
         subscript: bool = False,
-    ) -> t.TypeHintSpecifier | None:
+    ) -> t.TypeHintSpecifier:
         """Resolve an annotation to its object without ``eval``.
 
-        A string annotation is parsed, never evaluated: its dotted name resolves
-        the first part in the function's module namespace (globals, then
-        builtins, as Python itself resolves a module-level name) and the rest by
-        attribute. ``subscript`` resolves the origin of ``X[...]``.
+        The module declares ``from __future__ import annotations`` (fleet law),
+        so every annotation is a string: it is parsed, never evaluated. Its
+        dotted name resolves the first part in the function's module namespace
+        (globals, then builtins, as Python resolves a module-level name) and the
+        rest by attribute. ``subscript`` resolves the origin of ``X[...]``.
         """
         error = FlextUtilitiesDiscovery._error
         if not isinstance(annotation, str):
-            return get_origin(annotation) if subscript else annotation
+            raise error(where, annotation, c.ERR_SERVICE_OPERATION_EVALUATED)
         node = ast.parse(annotation, mode="eval").body
         if subscript:
             if not isinstance(node, ast.Subscript):

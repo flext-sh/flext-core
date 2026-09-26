@@ -191,6 +191,3 @@ class TestsFlextConstantsNew:
         """LDAP DN validation rejects the CodeQL adversarial shape."""
         adversarial = "A=+" + ",A=+ " * 256 + ",A="
         tm.that(bool(c.PATTERN_LDAP_DN_RE.fullmatch(adversarial)), eq=False)
-
-
-__all__: list[str] = ["TestsFlextConstantsNew"]

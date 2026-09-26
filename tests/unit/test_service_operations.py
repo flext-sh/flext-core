@@ -20,8 +20,6 @@ from tests.protocols import p
 from tests.typings import t
 from tests.utilities import u
 
-from ._service_operations_support import TestsFlextCoreServiceOperationsEvaluated
-
 if TYPE_CHECKING:
     from flext_core import FlextSettings
 
@@ -205,17 +203,6 @@ class TestsFlextCoreServiceOperations:
 
         tm.that(u.service_operations(self.CommandService) is first, eq=True)
 
-    def test_evaluated_annotations_are_accepted(self) -> None:
-        """Annotations already evaluated to objects resolve the same way."""
-        operations = u.service_operations(
-            TestsFlextCoreServiceOperationsEvaluated.EvaluatedService
-        )
-
-        tm.that(
-            [(op.name, op.request) for op in operations],
-            eq=[("dispatch", m.Tests.DispatchRequest), ("status", None)],
-        )
-
     def test_override_of_a_parent_operation_is_not_a_collision(self) -> None:
         """A subclass overriding its parent's operation keeps one operation."""
         operations = u.service_operations(self.OverridingService)
@@ -274,28 +261,6 @@ class TestsFlextCoreServiceOperations:
             ),
         )
 
-    @pytest.mark.parametrize(
-        ("service_type", "defect"),
-        [
-            (
-                TestsFlextCoreServiceOperationsEvaluated.EvaluatedPlainReturnService,
-                c.ERR_SERVICE_OPERATION_RESULT,
-            ),
-            (
-                TestsFlextCoreServiceOperationsEvaluated.EvaluatedPlainRequestService,
-                c.ERR_SERVICE_OPERATION_REQUEST,
-            ),
-        ],
-    )
-    def test_malformed_evaluated_annotation_raises(
-        self, service_type: type[s[bool]], defect: str
-    ) -> None:
-        """Evaluated annotations are held to the same shape."""
-        with pytest.raises(TypeError) as raised:
-            u.service_operations(service_type)
-
-        tm.that(str(raised.value).endswith(defect), eq=True)
-
     def test_sibling_name_collision_raises(self) -> None:
         """Two sibling classes declaring one operation name fail discovery."""
         with pytest.raises(TypeError) as raised:
@@ -320,4 +285,3 @@ class TestsFlextCoreServiceOperations:
                 service=self.EmptyService.__qualname__, module=__name__
             ),
         )
-

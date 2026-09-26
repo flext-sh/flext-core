@@ -211,10 +211,11 @@ assert operations[1].summary == "Answer a liveness ping."
   serializers.
 - Discovery is lazy: the CLI and tools call it; class creation never checks operation
   shape. The result is cached per class.
-- Annotations are resolved without `eval`. A string annotation is parsed; its dotted name
-  resolves the first part in the module namespace of the method and the rest by
-  attribute. A request model imported only under `TYPE_CHECKING` is unbound at runtime
-  and fails: import it at module runtime.
+- Annotations are resolved without `eval`. The module declares
+  `from __future__ import annotations`, so each annotation is a string that is parsed;
+  its dotted name resolves the first part in the module namespace of the method and the
+  rest by attribute. A request model imported only under `TYPE_CHECKING` is unbound at
+  runtime and fails: import it at module runtime.
 - A malformed operation raises `TypeError` naming the operation, the annotation, the
   module and the fix: an async or generic method, `*args`, `**kwargs`, keyword-only
   parameters or defaults, more than one request, a missing docstring, a request that is

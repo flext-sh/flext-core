@@ -146,6 +146,3 @@ class TestsFlextCoreRegistry:
         assert summary.success is expected_success
         assert summary.failure is (not expected_success)
         assert len(summary.registered) == 1
-
-
-__all__: t.MutableSequenceOf[str] = ["TestsFlextCoreRegistry"]

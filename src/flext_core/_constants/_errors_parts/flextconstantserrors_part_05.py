@@ -114,6 +114,10 @@ class FlextConstantsErrorsRuntimeSettings:
         "must annotate with a dotted name. Fix: use a module-level name such as "
         "m.Ns.Request, or p.Result[...] for the return."
     )
+    ERR_SERVICE_OPERATION_EVALUATED: Final[str] = (
+        "is evaluated instead of a string annotation. Fix: add "
+        "`from __future__ import annotations` to the module."
+    )
     ERR_SERVICE_OPERATION_UNBOUND: Final[str] = (
         "names a symbol unbound in the module at runtime (imported only under "
         "TYPE_CHECKING, or undefined). Fix: import it at module runtime."
