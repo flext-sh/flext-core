@@ -79,8 +79,8 @@ Canonical references:
     - Infrastructure sits beside the domain types: `_settings.py` (`FlextSettings` via
       `BaseSettings`), `context.py` (contextvars metadata propagation), `loggings.py`
       (`FlextUtilitiesLogging`), `utilities.py`/`_utilities/*` (validation, pagination,
-      caching, data mappers, reliability helpers), and `container.py`
-      (the core runtime registry: one validated write path, singleton plus scopes).
+      caching, data mappers, reliability helpers), and `container.py` (the core runtime
+      registry: one validated write path, singleton plus scopes).
 
 - **L3 – application orchestration**
 

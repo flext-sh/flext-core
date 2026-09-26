@@ -135,11 +135,11 @@ class FlextContainer(p.Container):
         name: str, value: m.ServiceRegistration | t.RegisterableService
     ) -> m.ServiceRegistration:
         """Build (or keep) the validated record of an object-backed service."""
-        if isinstance(value, m.ServiceRegistration):
-            return value
-        return m.ServiceRegistration(
-            name=name, service=value, service_type=u.type_name(value)
-        )
+        if isinstance(value, type) or not isinstance(value, m.ServiceRegistration):
+            return m.ServiceRegistration(
+                name=name, service=value, service_type=u.type_name(value)
+            )
+        return value
 
     @staticmethod
     def _factory_record(
@@ -259,13 +259,10 @@ class FlextContainer(p.Container):
             return result
         if self._matches_service_type(result.value, type_cls):
             return r[T].ok(result.value)
-        return cast(
-            "p.Result[T]",
-            r[T].from_result(
-                e.fail_type_mismatch(
-                    type_cls.__name__, type(result.value).__name__, result_type=r[T]
-                )
-            ),
+        return r[T].from_result(
+            e.fail_type_mismatch(
+                type_cls.__name__, type(result.value).__name__, result_type=r[T]
+            )
         )
 
     @override
@@ -321,8 +318,13 @@ class FlextContainer(p.Container):
     @override
     def register_core_services(self) -> None:
         """Register the reserved core services that are not registered yet."""
-        core: tuple[tuple[str, Callable[[], m.ServiceRegistration | m.FactoryRegistration]], ...] = (
-            (c.Directory.CONFIG, partial(self._service_record, c.Directory.CONFIG, self._config)),
+        core: tuple[
+            tuple[str, Callable[[], m.ServiceRegistration | m.FactoryRegistration]], ...
+        ] = (
+            (
+                c.Directory.CONFIG,
+                partial(self._service_record, c.Directory.CONFIG, self._config),
+            ),
             (
                 c.ServiceName.LOGGER,
                 partial(
@@ -331,7 +333,10 @@ class FlextContainer(p.Container):
                     partial(u.fetch_logger, c.LOGGER_NAME_FLEXT_CORE),
                 ),
             ),
-            (c.FIELD_CONTEXT, partial(self._service_record, c.FIELD_CONTEXT, self._context)),
+            (
+                c.FIELD_CONTEXT,
+                partial(self._service_record, c.FIELD_CONTEXT, self._context),
+            ),
             (
                 c.ServiceName.COMMAND_BUS,
                 lambda: self._service_record(

@@ -8,12 +8,11 @@ from flext_core import FlextSettings
 
 from .ex_08_container_registration import Ex08ContainerRegistration
 
+
 class Ex08ContainerScoped(Ex08ContainerRegistration):
     """Scoped container checks for the container example."""
 
-    def _exercise_scoped(
-        self, container: p.ContainerLifecycle
-    ) -> p.ContainerLifecycle:
+    def _exercise_scoped(self, container: p.ContainerLifecycle) -> p.ContainerLifecycle:
         """Exercise scope with all supported parameter styles."""
         self.section("scoped")
         scoped_default = container.scope()
@@ -37,7 +36,9 @@ class Ex08ContainerScoped(Ex08ContainerRegistration):
                 context=explicit_context,
                 services={scoped_service_name: scoped_service_value},
                 factories={scoped_factory_name: lambda: scoped_factory_value},
-                resources={scoped_resource_name: lambda: {"res": scoped_resource_value}},
+                resources={
+                    scoped_resource_name: lambda: {"res": scoped_resource_value}
+                },
             ),
         )
         self.audit_check("scoped.default.new_instance", scoped_default is not container)

@@ -97,12 +97,8 @@ class TestsFlextCoreContainerTruthful:
         """The scoped settings and context services are the scope's own."""
         scoped = clean_container.scope(subproject="unit")
 
-        tm.that(
-            tm.ok(scoped.resolve(c.Directory.CONFIG)) is scoped.settings, eq=True
-        )
-        tm.that(
-            tm.ok(scoped.resolve(c.FIELD_CONTEXT)) is scoped.context, eq=True
-        )
+        tm.that(tm.ok(scoped.resolve(c.Directory.CONFIG)) is scoped.settings, eq=True)
+        tm.that(tm.ok(scoped.resolve(c.FIELD_CONTEXT)) is scoped.context, eq=True)
         tm.that(scoped.settings is clean_container.settings, eq=False)
 
     def test_scope_spec_overrides_inherited_registration(
