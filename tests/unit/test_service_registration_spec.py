@@ -35,35 +35,32 @@ class TestsServiceRegistrationSpecOwner:
                 "factories": {"factory": "not-callable"}
             })
 
-    def test_container_registers_raw_and_prebuilt_declarations(
+    def test_container_registers_the_declared_raw_values(
         self, clean_container: p.Container
     ) -> None:
-        """Raw values and prebuilt records declared by a spec both resolve."""
+        """Services, factories and resources declared by a spec all resolve."""
         container = FlextContainer(
             registration=m.ServiceRegistrationSpec(
-                services={
-                    "service": "value",
-                    "record": m.ServiceRegistration(
-                        name="record", service="kept", service_type="str"
-                    ),
-                },
+                services={"service": "value"},
                 factories={"factory": _factory},
-                resources={
-                    "resource": m.ResourceRegistration(
-                        name="resource", factory=_factory
-                    )
-                },
+                resources={"resource": _factory},
             )
         )
 
         tm.that(container is clean_container, eq=True)
-        tm.that(
-            sorted(container.names()), eq=["factory", "record", "resource", "service"]
-        )
+        tm.that(sorted(container.names()), eq=["factory", "resource", "service"])
         tm.ok(container.resolve("service"), eq="value")
-        tm.ok(container.resolve("record"), eq="kept")
         tm.ok(container.resolve("factory"), eq="factory-value")
         tm.ok(container.resolve("resource"), eq="factory-value")
+
+    def test_spec_rejects_a_prebuilt_record_as_a_factory(self) -> None:
+        """A spec declares raw values only; a registration record is not one."""
+        record = m.FactoryRegistration(name="factory", factory=_factory)
+
+        with pytest.raises(c.ValidationError):
+            _ = m.ServiceRegistrationSpec.model_validate({
+                "factories": {"factory": record}
+            })
 
     def test_container_rejects_spec_redeclaring_a_registered_name(
         self, clean_container: p.Container

@@ -19,6 +19,7 @@ from flext_core import t
 
 from ..._runtime._container import FlextRuntimeContainer as FlextRuntime
 from ..._utilities.generators import FlextUtilitiesGenerators as ug
+from ..._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore as ug_type
 from ..._utilities.pydantic import FlextUtilitiesPydantic as up
 from ..base import FlextModelsBase as m
 from ..containers import FlextModelsContainers
@@ -61,13 +62,15 @@ class FlextModelsContainer:
                 None, description="Additional service metadata (JSON-serializable)"
             ),
         ] = None
-        service_type: Annotated[
-            str | None,
-            mp.Field(None, description="Service type name (e.g., 'DatabaseService')"),
-        ] = None
         tags: Annotated[
             t.StrSequence, mp.Field(description="Service tags for categorization")
         ] = mp.Field(default_factory=tuple)
+
+        @mp.computed_field
+        @property
+        def service_type(self) -> str:
+            """Type name of the registered service, derived from the service."""
+            return ug_type.type_name(self.service)
 
         @up.field_validator("service", mode="before")
         @classmethod

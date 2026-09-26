@@ -53,10 +53,7 @@ class FlextModelsContainer(FlextModelsContainerPart02):
             ),
         ] = None
         services: Annotated[
-            t.MappingKV[
-                str, FlextModelsContainer.ServiceRegistration | t.RegisterableService
-            ]
-            | None,
+            t.MappingKV[str, t.RegisterableService] | None,
             mp.Field(
                 None,
                 title="Services",
@@ -65,10 +62,7 @@ class FlextModelsContainer(FlextModelsContainerPart02):
             ),
         ] = None
         factories: Annotated[
-            t.MappingKV[
-                str, FlextModelsContainer.FactoryRegistration | t.FactoryCallable
-            ]
-            | None,
+            t.MappingKV[str, t.FactoryCallable] | None,
             mp.Field(
                 None,
                 title="Factories",
@@ -77,10 +71,7 @@ class FlextModelsContainer(FlextModelsContainerPart02):
             ),
         ] = None
         resources: Annotated[
-            t.MappingKV[
-                str, FlextModelsContainer.ResourceRegistration | t.ResourceCallable
-            ]
-            | None,
+            t.MappingKV[str, t.ResourceCallable] | None,
             mp.Field(
                 None,
                 title="Resources",

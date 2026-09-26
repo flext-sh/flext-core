@@ -130,37 +130,6 @@ class FlextContainer(p.Container):
         """Narrow a resolved service through its structural runtime type."""
         return isinstance(value, expected)
 
-    @staticmethod
-    def _service_record(
-        name: str, value: m.ServiceRegistration | t.RegisterableService
-    ) -> m.ServiceRegistration:
-        """Build (or keep) the validated record of an object-backed service."""
-        # A class object (RegisterableService admits type[object]) is a service
-        # to record, never an already-validated record.
-        if isinstance(value, m.ServiceRegistration) and not isinstance(value, type):
-            return value
-        return m.ServiceRegistration(
-            name=name, service=value, service_type=u.type_name(value)
-        )
-
-    @staticmethod
-    def _factory_record(
-        name: str, value: m.FactoryRegistration | t.FactoryCallable
-    ) -> m.FactoryRegistration:
-        """Build (or keep) the validated record of a factory."""
-        if isinstance(value, m.FactoryRegistration):
-            return value
-        return m.FactoryRegistration(name=name, factory=value)
-
-    @staticmethod
-    def _resource_record(
-        name: str, value: m.ResourceRegistration | t.ResourceCallable
-    ) -> m.ResourceRegistration:
-        """Build (or keep) the validated record of a resource."""
-        if isinstance(value, m.ResourceRegistration):
-            return value
-        return m.ResourceRegistration(name=name, factory=value)
-
     def _write(
         self,
         name: str,
@@ -195,26 +164,32 @@ class FlextContainer(p.Container):
     def _write_spec(self, spec: m.ServiceRegistrationSpec) -> None:
         """Write every service, factory and resource declared by a spec."""
         for name, service in (spec.services or {}).items():
-            _ = self._write(name, partial(self._service_record, name, service))
+            _ = self.bind(name, service)
         for name, factory in (spec.factories or {}).items():
-            _ = self._write(name, partial(self._factory_record, name, factory))
+            _ = self.factory(name, factory)
         for name, resource in (spec.resources or {}).items():
-            _ = self._write(name, partial(self._resource_record, name, resource))
+            _ = self.resource(name, resource)
 
     @override
     def bind(self, name: str, impl: t.RegisterableService) -> Self:
         """Bind a concrete service instance or value."""
-        return self._write(name, partial(self._service_record, name, impl))
+        return self._write(
+            name, partial(m.ServiceRegistration, name=name, service=impl)
+        )
 
     @override
     def factory(self, name: str, impl: t.FactoryCallable) -> Self:
         """Bind a factory callable invoked on every resolve."""
-        return self._write(name, partial(self._factory_record, name, impl))
+        return self._write(
+            name, partial(m.FactoryRegistration, name=name, factory=impl)
+        )
 
     @override
     def resource(self, name: str, impl: t.ResourceCallable) -> Self:
         """Bind a resource factory invoked on every resolve."""
-        return self._write(name, partial(self._resource_record, name, impl))
+        return self._write(
+            name, partial(m.ResourceRegistration, name=name, factory=impl)
+        )
 
     def _resolve_callable(
         self, callable_obj: t.FactoryCallable, kind: str
@@ -325,24 +300,28 @@ class FlextContainer(p.Container):
         ] = (
             (
                 c.Directory.CONFIG,
-                partial(self._service_record, c.Directory.CONFIG, self._config),
+                partial(
+                    m.ServiceRegistration, name=c.Directory.CONFIG, service=self._config
+                ),
             ),
             (
                 c.ServiceName.LOGGER,
                 partial(
-                    self._factory_record,
-                    c.ServiceName.LOGGER,
-                    partial(u.fetch_logger, c.LOGGER_NAME_FLEXT_CORE),
+                    m.FactoryRegistration,
+                    name=c.ServiceName.LOGGER,
+                    factory=partial(u.fetch_logger, c.LOGGER_NAME_FLEXT_CORE),
                 ),
             ),
             (
                 c.FIELD_CONTEXT,
-                partial(self._service_record, c.FIELD_CONTEXT, self._context),
+                partial(
+                    m.ServiceRegistration, name=c.FIELD_CONTEXT, service=self._context
+                ),
             ),
             (
                 c.ServiceName.COMMAND_BUS,
-                lambda: self._service_record(
-                    c.ServiceName.COMMAND_BUS, u.build_dispatcher()
+                lambda: m.ServiceRegistration(
+                    name=c.ServiceName.COMMAND_BUS, service=u.build_dispatcher()
                 ),
             ),
         )
@@ -487,14 +466,18 @@ class FlextContainer(p.Container):
             self._config = registration.settings
             _ = self._write(
                 c.Directory.CONFIG,
-                partial(self._service_record, c.Directory.CONFIG, self._config),
+                partial(
+                    m.ServiceRegistration, name=c.Directory.CONFIG, service=self._config
+                ),
                 internal=True,
             )
         if registration.context is not None:
             self._context = registration.context
             _ = self._write(
                 c.FIELD_CONTEXT,
-                partial(self._service_record, c.FIELD_CONTEXT, self._context),
+                partial(
+                    m.ServiceRegistration, name=c.FIELD_CONTEXT, service=self._context
+                ),
                 internal=True,
             )
 
