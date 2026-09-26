@@ -11,7 +11,6 @@ from ._utilities.parser_reliability import TestsFlextUtilitiesParserReliabilityM
 from ._utilities.railway import TestsFlextUtilitiesRailwayMixin
 from ._utilities.service_factories import TestsFlextUtilitiesServiceFactoriesMixin
 from ._utilities.services import TestsFlextUtilitiesServicesMixin
-from ._utilities.validation_scenarios import TestsFlextUtilitiesValidationScenariosMixin
 
 
 class TestsFlextUtilities(FlextTestsUtilities):
@@ -23,7 +22,6 @@ class TestsFlextUtilities(FlextTestsUtilities):
         TestsFlextUtilitiesParserReliabilityMixin,
         TestsFlextUtilitiesServiceFactoriesMixin,
         TestsFlextUtilitiesServicesMixin,
-        TestsFlextUtilitiesValidationScenariosMixin,
         TestsFlextUtilitiesRailwayMixin,
         TestsFlextUtilitiesDispatchMixin,
         FlextTestsUtilities.Tests,

@@ -61,18 +61,6 @@ class TestsFlextUtilitiesServicesMixin:
                 )
             return r[str].ok(self.value_input.upper())
 
-    class FailingService(s[str]):
-        """Service that always fails."""
-
-        error_message: Annotated[
-            str, u.Field(description="Failure message emitted by execute().")
-        ] = c.Tests.DEFAULT_ERROR_MESSAGE
-
-        @override
-        def execute(self) -> p.Result[str]:
-            """Fail unconditionally with the configured message."""
-            return r[str].fail(self.error_message)
-
     class GetUserServiceAuto(TestsFlextUtilitiesRailwayServicesMixin.GetUserService):
         """Auto-executing `GetUserService`."""
 
@@ -80,11 +68,6 @@ class TestsFlextUtilitiesServicesMixin:
 
     class ValidatingServiceAuto(ValidatingService):
         """Auto-executing `ValidatingService`."""
-
-        auto_execute: ClassVar[bool] = True
-
-    class FailingServiceAuto(FailingService):
-        """Auto-executing FailingService."""
 
         auto_execute: ClassVar[bool] = True
 

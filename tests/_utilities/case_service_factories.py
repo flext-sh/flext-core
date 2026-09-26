@@ -79,40 +79,5 @@ class TestsFlextUtilitiesCaseServiceFactoriesMixin(
             cls._type_index = 0
             super().reset()
 
-    class ServiceFactoryRegistry:
-        """Registry for service factories using pattern matching."""
-
-        @classmethod
-        def create_service(
-            cls, case: m.Tests.ServiceTestCase
-        ) -> (
-            TestsFlextUtilitiesCaseServiceFactoriesMixin.GetUserService
-            | TestsFlextUtilitiesCaseServiceFactoriesMixin.ValidatingService
-            | TestsFlextUtilitiesCaseServiceFactoriesMixin.FailingService
-        ):
-            """Create appropriate service based on case type using pattern matching."""
-            service: (
-                TestsFlextUtilitiesCaseServiceFactoriesMixin.GetUserService
-                | TestsFlextUtilitiesCaseServiceFactoriesMixin.ValidatingService
-                | TestsFlextUtilitiesCaseServiceFactoriesMixin.FailingService
-            )
-            match case.service_type:
-                case c.Tests.SERVICE_TEST_TYPE_GET_USER:
-                    service = TestsFlextUtilitiesCaseServiceFactoriesMixin.GetUserServiceFactory.build(
-                        user_id=case.input_value
-                    )
-                case c.Tests.SERVICE_TEST_TYPE_VALIDATE:
-                    service = TestsFlextUtilitiesCaseServiceFactoriesMixin.ValidatingServiceFactory.build(
-                        value_input=case.input_value, min_length=case.extra_param
-                    )
-                case c.Tests.SERVICE_TEST_TYPE_FAIL:
-                    service = TestsFlextUtilitiesCaseServiceFactoriesMixin.FailingServiceFactory.build(
-                        error_message=case.input_value or c.Tests.DEFAULT_ERROR_MESSAGE
-                    )
-                case _:
-                    msg = f"Unsupported service type: {case.service_type}"
-                    raise ValueError(msg)
-            return service
-
 
 __all__: list[str] = ["TestsFlextUtilitiesCaseServiceFactoriesMixin"]

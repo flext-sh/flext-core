@@ -2,49 +2,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated, ClassVar
+from typing import ClassVar
 
 from flext_core import m
-from tests.constants import c
-
-if TYPE_CHECKING:
-    from collections.abc import MutableSequence
-
-    from tests.typings import t
 
 
 class TestsFlextModelsCoreStateMixin:
     """Core state model helpers."""
-
-    class CacheTestModel(m.BaseModel):
-        """Test model for cache key generation."""
-
-        name: str
-        value: int
-        tags: Annotated[MutableSequence[str], m.Field(default_factory=list)]
-        meta: Annotated[t.MutableStrMapping, m.Field(default_factory=dict)]
-
-    class NestedModel(m.BaseModel):
-        """Nested Pydantic model for cache testing."""
-
-        inner: TestsFlextModelsCoreStateMixin.CacheTestModel
-        count: int
-
-    class SettingsModelForTest(m.BaseModel):
-        """Test configuration model (mutable for set_parameter tests)."""
-
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-            validate_assignment=True, extra="forbid"
-        )
-
-        name: str = "default_settings"
-        timeout: Annotated[int, m.Field(ge=0)] = 30
-        enabled: bool = True
-
-    class InvalidModelForTest(m.BaseModel):
-        """Model with invalid model_dump."""
-
-        value: str = "test"
 
     class SingletonClassForTest(m.BaseModel):
         """Test singleton class with Pydantic validation."""
@@ -72,26 +36,6 @@ class TestsFlextModelsCoreStateMixin:
             """Reset singleton instance for test isolation."""
             cls._instance = None
 
-    class BadSettingsForTest(m.BaseModel):
-        """Settings that fails to instantiate."""
-
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(validate_assignment=True)
-
-        def __init__(self, **kwargs: t.Scalar) -> None:
-            """Raise error on init."""
-            super().__init__(**kwargs)
-            msg = c.Tests.CANNOT_INSTANTIATE
-            raise ValueError(msg)
-
-    class _DumpErrorModel(m.BaseModel):
-        value: int = 1
-
-    class _Opts(m.BaseModel):
-        value: int = 1
-
-    class _Model(m.BaseModel):
-        value: int
-
     class _SampleEntity(m.BaseModel):
         """Test entity for domain utility tests."""
 
@@ -99,30 +43,6 @@ class TestsFlextModelsCoreStateMixin:
 
         unique_id: str = "test-123"
         name: str = "test"
-
-    class _FrozenEntity(m.BaseModel):
-        """Frozen entity for immutability tests."""
-
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
-
-        unique_id: str = "frozen-1"
-
-    class _GoodModel(m.BaseModel):
-        value: int = 7
-
-    class ComplexModel(m.BaseModel):
-        """Complex test model."""
-
-        id: int
-        data: t.JsonMapping
-        items: t.StrSequence
-
-    class _Cfg(m.BaseModel):
-        x: int = 0
-        y: str = "a"
-
-    class _BadCopyModel(m.BaseModel):
-        x: int = 1
 
 
 __all__: list[str] = ["TestsFlextModelsCoreStateMixin"]

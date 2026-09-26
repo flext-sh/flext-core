@@ -18,34 +18,6 @@ class TestsFlextUtilitiesValidationFactoriesMixin(
 ):
     """Validation and failing service factory helpers."""
 
-    class _FailingFactoryBase[T]:
-        """Shared constructor contract for failing-service factories."""
-
-        @classmethod
-        def build(cls, *, error_message: str = c.Tests.DEFAULT_ERROR_MESSAGE) -> T:
-            """Build a failing-service instance; subclasses provide the type."""
-            raise NotImplementedError
-
-        @classmethod
-        def build_batch(cls, size: int) -> list[T]:
-            """Build multiple failing-service instances."""
-            return [cls.build() for _ in range(size)]
-
-    class FailingServiceFactory(
-        _FailingFactoryBase[TestsFlextUtilitiesServicesMixin.FailingService]
-    ):
-        """Factory for FailingService."""
-
-        @classmethod
-        @override
-        def build(
-            cls, *, error_message: str = c.Tests.DEFAULT_ERROR_MESSAGE
-        ) -> TestsFlextUtilitiesValidationFactoriesMixin.FailingService:
-            """Build a FailingService instance."""
-            return TestsFlextUtilitiesValidationFactoriesMixin.FailingService(
-                error_message=error_message
-            )
-
     class GetUserServiceAutoFactory(
         TestsFlextUtilitiesUserFactoriesMixin.GetUserFactoryBase[
             TestsFlextUtilitiesServicesMixin.GetUserServiceAuto
@@ -133,21 +105,6 @@ class TestsFlextUtilitiesValidationFactoriesMixin(
             """Construct a ValidatingService instance."""
             return TestsFlextUtilitiesValidationFactoriesMixin.ValidatingService(
                 value_input=value_input, min_length=min_length
-            )
-
-    class FailingServiceAutoFactory(
-        _FailingFactoryBase[TestsFlextUtilitiesServicesMixin.FailingServiceAuto]
-    ):
-        """Factory for FailingServiceAuto."""
-
-        @classmethod
-        @override
-        def build(
-            cls, *, error_message: str = c.Tests.DEFAULT_ERROR_MESSAGE
-        ) -> TestsFlextUtilitiesValidationFactoriesMixin.FailingServiceAuto:
-            """Build a FailingServiceAuto instance."""
-            return TestsFlextUtilitiesValidationFactoriesMixin.FailingServiceAuto(
-                error_message=error_message
             )
 
 
