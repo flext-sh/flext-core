@@ -149,7 +149,8 @@ endif
 endif
 # End SECTION: REPOSITORY_ROOT isolation
 # === SECTION: verb dispatch (managed) ===
-# Source: config:make.verbs and the canonical gate vocabulary.
+# Source: config:make.verbs and the canonical gate vocabulary. A verb exists
+# only in the profiles it declares (make.verbs[].profiles).
 PUBLIC_VERBS := help setup upg build check test test-full fmt fix fix-enforcement audit status docs clean release-plan release-version release-tag release-build publication gen initialize mod waza duplication sonarcloud-sync
 BUILTIN_VERBS := help setup upg build check test test-full fmt fix fix-enforcement audit status docs clean release-plan release-version release-tag release-build publication gen initialize mod waza duplication sonarcloud-sync
 SCRIPT_VERBS :=

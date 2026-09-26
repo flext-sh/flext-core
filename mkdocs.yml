@@ -1,10 +1,9 @@
 # AUTO-GENERATED — DO NOT EDIT MANUALLY
-site_name: flext-core Documentation
-site_description: Generated documentation for flext-core
+site_name: flext-core
+site_description: Workspace documentation generated from code and curated root docs
 site_url: https://github.com/flext-sh/flext-core/blob/main/README.md
 repo_name: flext-sh/flext-core
 repo_url: https://github.com/flext-sh/flext-core
-edit_uri: edit/main/flext-core/
 docs_dir: docs
 site_dir: .reports/docs/site
 
@@ -88,7 +87,9 @@ markdown_extensions:
       custom_checkbox: true
 
 # MkDocs discovers the complete documentation tree, including maintained pages.
-# A fixed three-page nav silently omitted every domain guide and decision record.
+# A fixed three-page nav silently omitted guides, standards, and decisions.
+not_in_nav: |
+  api-reference/generated/**
 validation:
   omitted_files: warn
   absolute_links: warn
