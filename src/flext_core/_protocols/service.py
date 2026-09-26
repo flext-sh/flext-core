@@ -96,58 +96,19 @@ class FlextProtocolsService:
     # ------------------------------------------------------------------
 
     @runtime_checkable
-    class Service[T](FlextProtocolsBase.Base, Protocol):
-        """Domain service interface.
+    class Service[T](FlextProtocolsBase.Base, MixinsInfrastructure, Protocol):
+        """Domain service interface: the runtime surface plus ``execute``.
 
-        Mirrors the public instance API of ``FlextService[T]`` so consumers
-        can depend on ``p.Service`` for typing instead of the concrete class.
+        Every ``FlextService[T]`` satisfies it structurally. The runtime surface
+        (settings, container, context, logger, track and the runtime seeds) is
+        inherited from ``MixinsInfrastructure`` — declared once — and a service
+        adds only its domain ``execute``. Capabilities some services offer
+        (business-rule validation, metadata) are declared by the member protocols
+        that consume them, never here.
         """
-
-        # --- runtime access (from FlextMixins via MRO) ---
-
-        @property
-        def settings(self) -> FlextProtocolsSettings.Settings:
-            """Service-scoped settings."""
-            ...
-
-        @property
-        def container(self) -> FlextProtocolsContainer.Container:
-            """Container bound to the service context/settings."""
-            ...
-
-        @property
-        def context(self) -> FlextProtocolsContext.Context:
-            """Service-scoped execution context."""
-            ...
-
-        # --- core contract ---
 
         def execute(self) -> FlextProtocolsResult.Result[T]:
             """Execute domain service logic."""
-            ...
-
-        def service_info(self) -> tb.JsonMapping:
-            """Get service metadata and configuration information."""
-            ...
-
-        def valid(self) -> bool:
-            """Check if service is in valid state for execution."""
-            ...
-
-        def validate_business_rules(self) -> FlextProtocolsResult.Result[bool]:
-            """Validate business rules with extensible validation pipeline."""
-            ...
-
-        # --- result helpers ---
-
-        def ok[V](self, value: V) -> FlextProtocolsResult.Result[V]:
-            """Wrap a successful value into a result."""
-            ...
-
-        def fail_op(
-            self, operation: str, exc: Exception | str | None = ...
-        ) -> FlextProtocolsResult.Result[T]:
-            """Return a failure result for an operation that failed."""
             ...
 
     @runtime_checkable
