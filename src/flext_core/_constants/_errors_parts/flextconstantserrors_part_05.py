@@ -87,6 +87,13 @@ class FlextConstantsErrorsRuntimeSettings:
         "Unsupported handler type: {handler_type}"
     )
 
+    # --- Services ---
+    ERR_SERVICE_PORT_TYPE: Final[str] = (
+        "{service}.{field}: port type {port_type!r} must be a plain "
+        "@runtime_checkable Protocol class; isinstance cannot validate a "
+        "subscripted generic, and a concrete class is not a port"
+    )
+
     # --- Lazy loading ---
     ERR_LAZY_RELATIVE_PATH_REQUIRES_MODULE: Final[str] = (
         "relative child module paths require module_name"

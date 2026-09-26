@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import sys
+
 from ....._constants.enforcement import FlextConstantsEnforcement as c
 from ....._models.enforcement import FlextModelsEnforcement as me
 from ....._typings.base import FlextTypingBase as t
@@ -64,7 +66,12 @@ def alias_first_violation(
     tier_facade_prefixes = (project_prefix, f"Tests{project_prefix}")
     module_name = getattr(target, "__module__", "") or ""
     package_name = module_name.split(".", 1)[0]
-    alias_rows = ubh.lazy_alias_suffixes(package_name)
+    # A facade lives in its package's alias modules, and the import that created
+    # a real class already loaded its package; a class whose package is not
+    # loaded is synthetic and declares no facade.
+    alias_rows = (
+        ubh.lazy_alias_suffixes(package_name) if package_name in sys.modules else ()
+    )
     # A project prefix also names ordinary services. Facade ordering applies
     # only inside the package's declared alias modules.
     is_facade = all((

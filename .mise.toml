@@ -7,25 +7,27 @@
 # Free: no
 # End SECTION: header
 # NOTE: mise carries the Python runtime and native tools from the config SSOT.
-# Python dependency declarations remain owned by pyproject.toml. Mise resolves tools to the
-# newest published release at setup time: the fleet runs unlocked and current.
-# Never run `mise lock`. Never commit mise.lock.
+# Python dependency declarations remain owned by pyproject.toml. Tools are declared
+# `latest`; only `make upg` resolves them and writes the committed mise.lock.
+# Setup installs frozen from that lock and never re-resolves.
 
 # === SECTION: settings (managed) ===
-# Source: config:codegen.toolchain.mise_lockfile / mise_locked
+# Source: config:codegen.toolchain.mise_lockfile / mise_locked / mise_lockfile_platforms
 [settings]
-lockfile = false
-locked = false
+lockfile = true
+locked = true
+lockfile_platforms = ["linux-x64", "linux-arm64", "macos-x64", "macos-arm64", "windows-x64"]
 [tool_config]
-locked = false
+locked = true
 # End SECTION: settings
 
 # === SECTION: tools (managed) ===
 # Source: config:python_version, config:codegen.scaffold.project.dev native toolchain floors
 #         (kubectl_version, helm_version, kind_version, taplo_version, ast_grep_version,
 #          gitleaks_version, scc_selector/scc_version, kubeconform_version, qlty_selector/qlty_version,
-#          node_version, jscpd_selector/jscpd_version, prettier_selector/prettier_version,
-#          waza_version, go_version, make_version)
+#          node_version, jscpd_selector/jscpd_version/jscpd_asset_patterns,
+#          prettier_selector/prettier_version, waza_selector/waza_version/waza_version_prefix,
+#          go_version, make_version)
 [tools]
 python = "3.13"
 uv = "latest"
@@ -40,12 +42,21 @@ gitleaks = "latest"
 "aqua:boyter/scc" = "latest"
 kubeconform = "latest"
 node = "latest"
-"github:kucherenko/jscpd" = "latest"
 "npm:prettier" = "3.5.3"
-"github:microsoft/waza" = "latest"
 go = "latest"
 make = "latest"
 [tools."github:qltysh/qlty"]
 version = "0.642.0"
 github_attestations = false
+[tools."github:kucherenko/jscpd"]
+version = "latest"
+[tools."github:kucherenko/jscpd".platforms]
+linux-x64 = { asset_pattern = "jscpd-linux-x64-gnu.tar.gz" }
+linux-arm64 = { asset_pattern = "jscpd-linux-arm64-gnu.tar.gz" }
+macos-x64 = { asset_pattern = "jscpd-darwin-x64.tar.gz" }
+macos-arm64 = { asset_pattern = "jscpd-darwin-arm64.tar.gz" }
+windows-x64 = { asset_pattern = "jscpd-windows-x64-msvc.tar.gz" }
+[tools."github:microsoft/waza"]
+version = "latest"
+version_prefix = "v"
 # End SECTION: tools

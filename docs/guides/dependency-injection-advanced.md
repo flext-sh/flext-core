@@ -16,6 +16,12 @@
 This guide focuses on real `FlextContainer` usage with the current API. Examples are
 backed by executable code from the `examples/` package.
 
+Services do not use the container. A service declares each collaborator as a port
+(`t.Port[p.X]`) and the project's `api.py` passes adapters to its constructor; see
+[Service Patterns](service-patterns.md). `FlextContainer` is the registry of the core
+runtime (settings, context, command bus, logger) and the tool for infrastructure code
+that composes that runtime.
+
 ## Reusing Official Example Code
 
 Use the canonical container example as the reference path.
@@ -80,7 +86,7 @@ def bind_services(
         _ = container.bind(name, service)
         resolved = container.resolve(name)
         if resolved.failure:
-            return r[bool].fail(f"failed_to_bind:{name}")
+            return r[bool].from_failure(resolved)
     return r[bool].ok(True)
 
 
@@ -94,5 +100,8 @@ assert result.success
 
 - Keep service names stable and explicit.
 - Prefer `bind` for concrete instances and `factory` for deferred construction.
-- Validate each critical resolution step with `result.success`.
+- Validate each critical resolution step with `result.success`, and propagate a failure
+  with its cause (`r[T].from_failure(result)`).
 - Use `scope(...)` for isolation when composing runtime contexts.
+- Never resolve a service's collaborator from the container inside the service; pass it
+  as a port from the composition root.

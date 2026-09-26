@@ -5,9 +5,14 @@
 !.beads/metadata.json
 !.beads/identity.toml
 
-# uv lockfile is never tracked
-uv.lock
-**/uv.lock
+# mise native dependency graphs
+!/.mise/
+/.mise/*
+!/.mise/locks/
+!/.mise/locks/**
+/.mise/locks/*.local/
+/mise*.local.lock
+/.mise*.local.lock
 
 # BLOCK: AI/Agent Local Data (NEVER track these)
 .claude/local/
@@ -31,7 +36,9 @@ uv.lock
 */.hooks.json.agents-governance.json
 .claude/*.agents-governance.json
 .gemini/*.agents-governance.json
+.claude/settings.json
 .claude/settings.local.json
+.gemini/settings.json
 
 # Operator-private local config overrides
 /config/codegen-overrides.local.yaml
@@ -279,9 +286,6 @@ legado/
 *.tpl.rej
 
 # --- codegen conform: generated runtime ignores ---
-mise.lock
-.mise.lock
-**/.mise.lock
 .direnv/
 .reports/
 .venv
@@ -355,7 +359,6 @@ CLAUDE.local.md
 !.github/scripts/
 !.github/scripts/check-beads-policy.sh
 !.github/scripts/check-cqrs-compliance.sh
-!.github/scripts/install-git-hooks.sh
 !.github/scripts/flext-law-loop.sh
 !tests/fixtures/
 !tests/fixtures/ci/

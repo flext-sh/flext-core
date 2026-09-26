@@ -22,7 +22,7 @@ name: CI
       - main
       - 0.12.0-dev
       - 0.20.0-dev
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review, edited]
   workflow_call:
     secrets:
       CI_DEPENDENCIES_APP_ID:
@@ -56,6 +56,7 @@ jobs:
     timeout-minutes: 60
     env:
       CI: Y
+      GITHUB_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -127,18 +128,12 @@ jobs:
       # once, before any gate runs.
       - name: Normalize checkout modes
         run: chmod -R go-w .
-      # make setup is the only toolchain installer. It bootstraps the newest
-      # released Mise, installs the committed fleet toolchain, publishes that
-      # environment through GITHUB_PATH, and prepares the project runtime.
+      # make setup is the frozen installer. It bootstraps the committed Mise
+      # release and installs the fleet toolchain from the committed
+      # mise.lock and the dependencies frozen from the committed uv.lock,
+      # publishes that environment through GITHUB_PATH, and prepares the
+      # project runtime. CI never runs `make upg`: it never re-resolves.
       - name: setup (blocking)
-        # Why (resumption-f1 2026-09-11): GitHub-hosted runners share egress
-        # IPs, so the unauthenticated 60 req/h REST budget is exhausted before
-        # mise finishes resolving the moving @latest backends (observed 403 on
-        # beads/waza: setup died before any gate). The job token authenticates
-        # resolution without changing the moving-release toolchain contract.
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          MISE_GITHUB_TOKEN: ${{ github.token }}
         # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
         run: CI=Y make setup
       - name: gen fixed point (blocking)
@@ -147,17 +142,13 @@ jobs:
         # sibling repos — unauthenticated fetches fail with "docs generation
         # source state is absent or unauthenticated". The job token
         # authenticates those reads without changing the toolchain contract.
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          MISE_GITHUB_TOKEN: ${{ github.token }}
         run: |
           CI=Y make gen
           git status --short
-          test -z "$(git status --porcelain --untracked-files=all)"
+          test -z "$(git status --porcelain --untracked-files=all --ignore-submodules=none)"
 
-      # Setup syncs against the committed lock and refreshes it in place (`uv
-      # sync`); the fleet runs unlocked, so the deps audit proves the resolved
-      # graph instead of preserving a frozen snapshot.
+      # Setup installs frozen from the committed uv.lock (`uv sync --locked`)
+      # and never rewrites it; the deps audit proves that locked graph.
       - name: deps check (blocking)
         run: CI=Y make audit
 
@@ -165,15 +156,10 @@ jobs:
         # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
         run: CI=Y make check
 
-      # Why (aihub-v01jg): CI=Y runs ONE HALF of the gate set
-      # (lint pyright silent-failure deferred-self-reference security markdown loc-cap boundary runtime-census namespace tier-whitelist index-declarations smells codemod layout canonical-alias direnv duplication); the complement
-      # (pyrefly mypy) is owned by
-      # CI=N and, without this step, ran on developer
-      # machines only. That split let real defects reach main twice: five
-      # missing-attribute errors and an inconsistent-inheritance error, each
-      # green in CI and red locally. The two contexts are strict complements by
-      # construction, so running both here costs one extra pass and closes the
-      # hole rather than trusting everyone to run the other half by hand.
+      # Both blocking steps derive from the same active default universe.
+      # CI=Y runs lint pyright silent-failure deferred-self-reference security markdown loc-cap tier-whitelist index-declarations smells layout canonical-alias direnv.
+      # CI=N runs pyrefly mypy.
+      # The partitions are disjoint and together execute every active gate.
       - name: check complement (blocking)
         run: CI=N make check
 
@@ -182,7 +168,7 @@ jobs:
       - name: Candidate cleanliness (blocking)
         run: |
           git status --short
-          test -z "$(git status --porcelain --untracked-files=all)"
+          test -z "$(git status --porcelain --untracked-files=all --ignore-submodules=none)"
   # End SECTION: ci job
 
   # === SECTION: release-plan job (managed) ===
@@ -199,6 +185,7 @@ jobs:
     timeout-minutes: 30
     env:
       CI: Y
+      GITHUB_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -264,10 +251,6 @@ jobs:
           rm -f "$key_path"
 
       - name: Boot
-        # Toolchain resolution needs the same authenticated API budget as ci.
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          MISE_GITHUB_TOKEN: ${{ github.token }}
         run: CI=Y make setup
       - name: Release plan and guard
         env:

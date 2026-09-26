@@ -188,6 +188,7 @@ allow_redefinition = true
 check_untyped_defs = true
 explicit_package_bases = true
 extra_checks = true
+follow_untyped_imports = true
 local_partial_types = true
 namespace_packages = true
 no_implicit_reexport = true
@@ -198,6 +199,11 @@ warn_return_any = true
 warn_unreachable = true
 warn_unused_ignores = true
 follow_imports = "normal"
+
+[[tool.mypy.overrides]]
+module = ["rope.*"]
+disable_error_code = []
+follow_untyped_imports = true
 
 [tool.pydantic-mypy]
 init_forbid_extra = true

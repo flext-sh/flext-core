@@ -19,9 +19,7 @@ from .._typings.services import FlextTypesServices as ts
 from .base import FlextProtocolsBase
 from .container import FlextProtocolsContainer
 from .context import FlextProtocolsContext
-from .handler import FlextProtocolsHandler
 from .loggings import FlextProtocolsLogging
-from .registry import FlextProtocolsRegistry
 from .result import FlextProtocolsResult
 from .settings import FlextProtocolsSettings
 
@@ -29,47 +27,25 @@ from .settings import FlextProtocolsSettings
 class FlextProtocolsService:
     """Protocols for service execution, mixin infrastructure, and repository access."""
 
-    @runtime_checkable
-    class CloneableRuntime(Protocol):
-        """Structural protocol for runtime instances that support cloning.
+    # ------------------------------------------------------------------
+    # RuntimeBootstrapProvider — a service base that declares its runtime
+    # ------------------------------------------------------------------
 
-        Exposes dispatcher, registry, context, container, and settings as read/write
-        properties for type-safe cloning without private member access.
+    @runtime_checkable
+    class RuntimeBootstrapProvider(Protocol):
+        """Structural contract of a service base that declares its runtime options.
+
+        Project service bases implement ``runtime_bootstrap_options`` as a
+        classmethod to bind their settings class once. The runtime reads the hook
+        through this protocol, so ``FlextMixins`` never declares it and no base
+        override needs a decorator.
         """
 
-        @property
-        def dispatcher(self) -> FlextProtocolsHandler.Dispatcher | None: ...
-
-        @dispatcher.setter
-        def dispatcher(
-            self, value: FlextProtocolsHandler.Dispatcher | None, /
-        ) -> None: ...
-
-        @property
-        def registry(self) -> FlextProtocolsRegistry.Registry | None: ...
-
-        @registry.setter
-        def registry(
-            self, value: FlextProtocolsRegistry.Registry | None, /
-        ) -> None: ...
-
-        @property
-        def context(self) -> FlextProtocolsContext.Context: ...
-
-        @context.setter
-        def context(self, value: FlextProtocolsContext.Context, /) -> None: ...
-
-        @property
-        def settings(self) -> FlextProtocolsSettings.Settings: ...
-
-        @settings.setter
-        def settings(self, value: FlextProtocolsSettings.Settings, /) -> None: ...
-
-        @property
-        def container(self) -> FlextProtocolsContainer.Container: ...
-
-        @container.setter
-        def container(self, value: FlextProtocolsContainer.Container, /) -> None: ...
+        @classmethod
+        def runtime_bootstrap_options(
+            cls,
+        ) -> FlextProtocolsContext.RuntimeBootstrapOptions:
+            """Return the runtime bootstrap options this service base declares."""
 
     # ------------------------------------------------------------------
     # MixinsInfrastructure — mirrors FlextMixins public instance surface
@@ -80,9 +56,14 @@ class FlextProtocolsService:
         """Structural protocol for the shared infrastructure provided by ``FlextMixins``.
 
         ``FlextMixins`` (alias ``x``) is the base class for Service, Handler, and
-        Registry. This protocol exposes its public runtime-access surface so
-        consumers can depend on the abstraction instead of the concrete.
+        Registry. This protocol exposes its public runtime seeds and runtime-access
+        surface so consumers depend on the abstraction instead of the concrete.
         """
+
+        settings_type: ts.SettingsClass | None
+        runtime_settings: FlextProtocolsSettings.Settings | None
+        settings_overrides: tb.ScalarMapping | None
+        initial_context: FlextProtocolsContext.Context | None
 
         @property
         def settings(self) -> FlextProtocolsSettings.Settings:

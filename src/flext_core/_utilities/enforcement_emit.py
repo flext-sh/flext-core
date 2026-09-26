@@ -65,7 +65,12 @@ class FlextUtilitiesEnforcementEmit:
 
     @staticmethod
     def emit(report: me.Report, *, mode: c.EnforcementMode | None = None) -> None:
-        """Emit violations as warnings (or raise TypeError in STRICT mode)."""
+        """Emit violations as warnings (or raise TypeError in STRICT mode).
+
+        Legal TYPE_CHECKING deferrals remain in ``report.deferred``; they are
+        not runtime violations. Consumers claiming complete inspection must
+        also require ``report.complete``.
+        """
         if report.empty:
             return
         active = mode or c.ENFORCEMENT_MODE

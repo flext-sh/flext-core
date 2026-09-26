@@ -1,7 +1,8 @@
-"""Domain service patterns extracted from FlextModels.
+"""Domain service runtime models extracted from FlextModels.
 
-This module contains the FlextModelsService class with all domain service-related patterns
-as nested classes. It should NOT be imported directly - use FlextModels.Service instead.
+This module contains the FlextModelsService class with the service runtime and
+bootstrap option models as nested classes. It should NOT be imported directly -
+use FlextModels.Service instead.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,14 +10,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-from types import ModuleType
 from typing import Annotated
 
 from flext_core import p, t
 
 from .._typings.pydantic import FlextTypesPydantic as tp
-from .._utilities.pydantic import FlextUtilitiesPydantic as up
 from .base import FlextModelsBase as m
 from .pydantic import FlextModelsPydantic as mp
 
@@ -31,160 +29,62 @@ class FlextModelsService:
     class ServiceRuntime(m.ArbitraryTypesModel):
         """Shared runtime state for services and infrastructure collaborators.
 
-        Represents the core service runtime with configuration, context,
-        dependency injection container, and the internal dispatcher/registry
-        implementations exposed only through protocol-typed fields.
+        Every collaborator is a validated port: construction rejects a value that
+        does not satisfy its protocol, so a runtime can never carry a fake
+        settings, context, container or dispatcher.
         """
 
-        settings: Annotated[
-            p.Settings,
-            tp.SkipValidation,
-            mp.Field(
-                description="Service configuration settings for runtime behavior."
-            ),
-        ]
-        context: Annotated[
-            p.Context,
-            tp.SkipValidation,
-            mp.Field(
-                description="Execution context carrying correlation and tracing metadata."
-            ),
-        ]
-        container: Annotated[
-            p.Container,
-            tp.SkipValidation,
-            mp.Field(
-                description="Dependency injection container for service resolution."
-            ),
-        ]
-        dispatcher: Annotated[
-            p.Dispatcher | None,
-            tp.SkipValidation,
-            mp.Field(
-                None,
-                description="Dispatcher resolved for CQRS routing in this runtime.",
-            ),
-        ] = None
-        registry: Annotated[
-            p.Registry | None,
-            tp.SkipValidation,
-            mp.Field(
-                None,
-                description="Registry bound to the runtime when one is materialized.",
-            ),
-        ] = None
+        settings: tp.Port[p.Settings] = mp.Field(
+            exclude=True,
+            description="Service configuration settings for runtime behavior.",
+        )
+        context: tp.Port[p.Context] = mp.Field(
+            exclude=True,
+            description="Execution context carrying correlation and tracing metadata.",
+        )
+        container: tp.Port[p.Container] = mp.Field(
+            exclude=True,
+            description="Dependency injection container scoped to this runtime.",
+        )
+        dispatcher: tp.Port[p.Dispatcher] = mp.Field(
+            exclude=True,
+            description="Dispatcher resolved for CQRS routing in this runtime.",
+        )
 
     class RuntimeBootstrapOptions(m.ArbitraryTypesModel):
-        """Options for runtime bootstrapping."""
+        """Options a service base declares to build its runtime.
 
-        settings: Annotated[
-            p.Settings | None,
-            tp.SkipValidation,
+        Every field is optional: an absent value means the runtime derives it
+        from its canonical owner (the settings class, a fresh context, the
+        container's command bus).
+        """
+
+        settings: tp.Port[p.Settings | None] = mp.Field(
+            None,
+            exclude=True,
+            description="Pre-built settings instance used directly for the runtime.",
+        )
+        settings_type: Annotated[t.SettingsClass | None, tp.SkipJsonSchema()] = (
             mp.Field(
                 None,
-                description="Pre-built settings instance used directly for the runtime.",
-                validate_default=True,
-            ),
-        ] = None
-        settings_type: t.SettingsClass | None = mp.Field(
-            None,
-            description="FlextSettings class used to load runtime settings.",
-            validate_default=True,
+                exclude=True,
+                description="FlextSettings class used to load runtime settings.",
+            )
         )
         settings_overrides: t.ScalarMapping | None = mp.Field(
             None,
             description="Key-value overrides applied on top of the loaded configuration.",
-            validate_default=True,
         )
-        context: Annotated[
-            p.Context | None,
-            tp.SkipValidation,
-            mp.Field(
-                None,
-                description="Pre-built execution context to inject into the runtime.",
-                validate_default=True,
-            ),
-        ] = None
-        dispatcher: Annotated[
-            p.Dispatcher | None,
-            tp.SkipValidation,
-            mp.Field(
-                None,
-                description="Pre-built dispatcher injected into the runtime DSL.",
-                validate_default=True,
-            ),
-        ] = None
-        registry: Annotated[
-            p.Registry | None,
-            tp.SkipValidation,
-            mp.Field(
-                None,
-                description="Pre-built registry injected into the runtime DSL.",
-                validate_default=True,
-            ),
-        ] = None
-        subproject: str | None = mp.Field(
+        context: tp.Port[p.Context | None] = mp.Field(
             None,
-            description="Subproject name used to scope configuration and wiring.",
-            validate_default=True,
+            exclude=True,
+            description="Pre-built execution context to inject into the runtime.",
         )
-        services: Annotated[
-            t.MappingKV[str, Annotated[t.RegisterableService, tp.SkipValidation]]
-            | None,
-            mp.Field(
-                None,
-                description="Named services to register in the dependency container.",
-                validate_default=True,
-            ),
-        ] = None
-        factories: Annotated[
-            t.MappingKV[str, Annotated[t.FactoryCallable, tp.SkipValidation]] | None,
-            mp.Field(
-                None,
-                description="Named factory callables to register in the dependency container.",
-                validate_default=True,
-            ),
-        ] = None
-        resources: Annotated[
-            t.MappingKV[str, Annotated[t.ResourceCallable, tp.SkipValidation]] | None,
-            mp.Field(
-                None,
-                description="Named lifecycle resources to register in the dependency container.",
-                validate_default=True,
-            ),
-        ] = None
-        container_overrides: t.ScalarMapping | None = mp.Field(
+        dispatcher: tp.Port[p.Dispatcher | None] = mp.Field(
             None,
-            description="Provider overrides applied to the dependency container.",
-            validate_default=True,
+            exclude=True,
+            description="Pre-built dispatcher injected into the runtime.",
         )
-        wire_modules: t.SequenceOf[ModuleType | str] | None = mp.Field(
-            None,
-            description="Modules to wire for dependency-injector resolution.",
-            validate_default=True,
-        )
-        wire_packages: t.StrSequence | None = mp.Field(
-            None,
-            description="Package names to consider for dependency wiring.",
-            validate_default=True,
-        )
-        wire_classes: t.SequenceOf[type] | None = mp.Field(
-            None,
-            description="Classes whose modules are wired for dependency resolution.",
-            validate_default=True,
-        )
-
-        @up.field_validator("wire_packages", mode="before")
-        @classmethod
-        def validate_wire_packages(
-            cls, value: t.JsonPayload | None
-        ) -> t.JsonPayload | None:
-            if not isinstance(value, Sequence) or isinstance(
-                value, (str, bytes, bytearray)
-            ):
-                return value
-            normalized = tuple(item for item in value if isinstance(item, str))
-            return normalized if len(normalized) == len(value) else None
 
 
 __all__: t.MutableSequenceOf[str] = ["FlextModelsService"]

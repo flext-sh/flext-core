@@ -45,6 +45,13 @@ class TestsFlextProtocols(FlextTestsProtocols):
         """flext-core test protocols namespace."""
 
         @runtime_checkable
+        class Counter(FlextTestsProtocols.Base, Protocol):
+            """Dependency port of the service contract tests: a monotonic counter."""
+
+            def next_value(self) -> int:
+                """Advance the counter and return its new value."""
+
+        @runtime_checkable
         class ExtractFieldCallable(Protocol):
             """Protocol for _extract_field_value callable."""
 

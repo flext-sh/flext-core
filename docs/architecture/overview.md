@@ -95,9 +95,11 @@ Canonical references:
 - **Command/query dispatch** — `FlextDispatcher.dispatch` enriches the `FlextContext`,
   applies rate limiting, circuit breaking, retries, and timeout enforcement, then
   executes the registered handler with structured logging and optional query caching.
-- **Dependency injection** — `FlextContainer` hosts a dependency-injector container.
-  Registrations and resolutions return `r` so handler wiring can surface errors without
-  raising exceptions.
+- **Dependency injection** — a service declares each collaborator as a port
+  (`t.Port[p.X]`, validated with `isinstance` on construction and assignment), and the
+  project's `api.py` composes adapters into services by constructor. `FlextContainer` is
+  the registry of the core runtime (settings, context, command bus, logger); services
+  and adapters never call it. See [Service Patterns](../guides/service-patterns.md).
 - **Domain validation** — `FlextModels` exposes Pydantic entities, values, and
   aggregates. Domain events collected on aggregates can be published through dispatcher
   subscribers.
