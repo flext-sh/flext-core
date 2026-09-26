@@ -135,11 +135,11 @@ class FlextContainer(p.Container):
         name: str, value: m.ServiceRegistration | t.RegisterableService
     ) -> m.ServiceRegistration:
         """Build (or keep) the validated record of an object-backed service."""
-        if isinstance(value, type) or not isinstance(value, m.ServiceRegistration):
-            return m.ServiceRegistration(
-                name=name, service=value, service_type=u.type_name(value)
-            )
-        return value
+        if isinstance(value, m.ServiceRegistration):
+            return value
+        return m.ServiceRegistration(
+            name=name, service=value, service_type=u.type_name(value)
+        )
 
     @staticmethod
     def _factory_record(
