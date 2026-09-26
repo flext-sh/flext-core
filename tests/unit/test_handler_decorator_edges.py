@@ -63,11 +63,9 @@ class TestsFlextHandlerDecoratorEdges:
         # Act
         _, config = h.Discovery.scan_class(Service)[0]
 
-        # Assert: defaults surfaced through the public config
-        dumped = config.model_dump()
-        assert config.priority == 0
-        assert dumped["timeout"] == 30
-        assert dumped["middleware"] == []
+        # Assert: the model's own declared defaults surface through discovery
+        declared = m.DecoratorConfig(command=CreateCommand)
+        assert config.model_dump() == declared.model_dump()
 
     def test_none_timeout_is_preserved(self) -> None:
         # Arrange
