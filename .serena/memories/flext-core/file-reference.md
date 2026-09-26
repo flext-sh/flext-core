@@ -29,7 +29,7 @@ src/flext_core/
 ```python
 from flext_core import r, c, m, t, p, u, e, s, d, h
 # or full facades:
-from flext_core import FlextResult, FlextContainer, FlextDispatcher, ...
+from flext_core import FlextResult, FlextContainer, FlextDispatcher
 ```
 
 **Last Updated**: 2026-04-14
