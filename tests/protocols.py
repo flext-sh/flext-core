@@ -76,20 +76,6 @@ class TestsFlextProtocols(FlextTestsProtocols):
                 ...
 
         @runtime_checkable
-        class BuildApplyConvertCallable(Protocol):
-            """Protocol for _op_convert callable."""
-
-            def __call__(
-                self,
-                current: t.StrSequence | str | int,
-                operations: t.MappingKV[str, t.MapperInput],
-                default_val: t.JsonValue,
-                on_error: str,
-            ) -> t.JsonValue:
-                """Apply conversion operations to the current mapper value."""
-                ...
-
-        @runtime_checkable
         class ExtractTransformOptionsCallable(Protocol):
             """Protocol for _extract_transform_options callable."""
 
@@ -99,22 +85,6 @@ class TestsFlextProtocols(FlextTestsProtocols):
                 bool, bool, bool, t.StrMapping | None, set[str] | None, set[str] | None
             ]:
                 """Extract normalized transform options from mapper input."""
-                ...
-
-        @runtime_checkable
-        class BuildApplyOpCallable(Protocol):
-            """Protocol for op callable (sort/unique/slice/group)."""
-
-            def __call__(
-                self,
-                current: tuple[str, str]
-                | tuple[int, int, int]
-                | t.SequenceOf[TestsFlextModelsMixins.GroupModel],
-                operations: t.MappingKV[str, t.MapperInput],
-                default_val: t.JsonValue,
-                on_error: str,
-            ) -> t.JsonMapping | t.JsonList | t.JsonValue:
-                """Apply sort, unique, slice, or group mapper operations."""
                 ...
 
         @runtime_checkable

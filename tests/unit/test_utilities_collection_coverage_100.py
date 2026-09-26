@@ -9,6 +9,7 @@ import pytest
 from flext_tests import tm
 
 from flext_core import u
+from tests.constants import c
 from tests.models import m
 
 if TYPE_CHECKING:
@@ -197,24 +198,33 @@ class TestsFlextCoreUtilitiesCollection:
         predicate: Callable[[t.JsonValue], bool] | None,
         expected: t.JsonList,
     ) -> None:
-        result = u.process(items, processor, on_error="collect", predicate=predicate)
+        result = u.process(items, processor, predicate=predicate)
         tm.ok(result)
         tm.that(result.value, eq=expected)
 
-    def test_process_supports_skip_and_fail_error_modes(self) -> None:
+    def test_process_first_failure_ends_run_carrying_its_exception(self) -> None:
+        visited: list[t.JsonValue] = []
+        raised: list[ValueError] = []
+
         def project_identifier(value: t.JsonValue) -> str:
-            if value == 2:
-                error_message = "cannot process item"
-                raise ValueError(error_message)
+            visited.append(value)
+            if value in {2, 3}:
+                error = ValueError(f"cannot process item {value}")
+                raised.append(error)
+                raise error
             return f"item:{value}"
 
-        skipped = u.process([1, 2, 3], project_identifier, on_error="skip")
-        failed = u.process([1, 2, 3], project_identifier, on_error="fail")
+        failed = u.process([1, 2, 3], project_identifier)
 
-        tm.ok(skipped)
-        tm.that(skipped.value, eq=["item:1", "item:3"])
         tm.fail(failed)
-        tm.that(failed.error, eq="Processing failed for item: 2")
+        tm.that(visited, eq=[1, 2])
+        tm.that(failed.exception is raised[0], eq=True)
+        tm.that(
+            failed.error,
+            eq=c.ERR_COLLECTION_PROCESSING_FAILED_FOR_ITEM.format(
+                item=2, error=str(raised[0])
+            ),
+        )
 
     # --- merge_mappings --------------------------------------------------
 
