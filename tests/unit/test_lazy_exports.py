@@ -278,40 +278,75 @@ class TestsFlextCoreLazyExports:
         assert resolved is alpha_cls
         assert module_globals["Alpha"] is alpha_cls
 
-    def test_get_does_not_cache_symbol_from_initializing_module(
-        self, tmp_path: Path
-    ) -> None:
-        # Arrange: a real module that resolves its own alias through ``lazy``
-        # while its body is still executing, then rebinds that alias.
+    @pytest.fixture
+    def rebinding_package(self, tmp_path: Path) -> Iterator[str]:
+        """Write a real lazy package whose child rebinds ``u`` mid-body.
+
+        ``pkg/__init__.py`` lazily exports ``u`` from ``pkg.child``; the child
+        binds a first class, resolves ``pkg.u`` while its own body is still
+        executing (same-thread circular import), then rebinds ``u``.
+        """
         lazy.reset()
-        module_name = "flext_lazy_partial_probe"
-        (tmp_path / f"{module_name}.py").write_text(
-            "from flext_core.lazy import lazy\n"
-            "class PartialAlias: ...\n"
-            "u = PartialAlias\n"
-            "CACHE = {}\n"
-            f"LAZY_MAP = {{'u': ('{module_name}', 'u')}}\n"
-            "RESOLVED_DURING_INIT = lazy.get('u', LAZY_MAP, CACHE, 'probe_pkg')\n"
-            "CACHED_DURING_INIT = 'u' in CACHE\n"
+        package_name = "flext_lazy_rebinding_pkg"
+        package_dir = tmp_path / package_name
+        package_dir.mkdir()
+        (package_dir / "__init__.py").write_text(
+            "from flext_core.lazy import install_lazy_exports\n"
+            "install_lazy_exports(__name__, globals(), {'u': '.child'})\n",
+            encoding="utf-8",
+        )
+        (package_dir / "child.py").write_text(
+            "class FirstAlias: ...\n"
+            "u = FirstAlias\n"
+            f"import {package_name}\n"
+            f"RESOLVED_DURING_INIT = {package_name}.u\n"
+            f"CACHED_DURING_INIT = 'u' in vars({package_name})\n"
             "class FinalAlias: ...\n"
             "u = FinalAlias\n",
             encoding="utf-8",
         )
         sys.path.insert(0, str(tmp_path))
         try:
-            # Act
-            module = importlib.import_module(module_name)
-            final_resolved = lazy.get("u", module.LAZY_MAP, module.CACHE, "probe_pkg")
-
-            # Assert: the partial binding was served but never cached; the
-            # completed module's binding is the one that gets cached.
-            assert module.RESOLVED_DURING_INIT is module.PartialAlias
-            assert module.CACHED_DURING_INIT is False
-            assert final_resolved is module.FinalAlias
-            assert module.CACHE["u"] is module.FinalAlias
+            yield package_name
         finally:
             sys.path.remove(str(tmp_path))
-            sys.modules.pop(module_name, None)
+            for name in [
+                name
+                for name in sys.modules
+                if name == package_name or name.startswith(f"{package_name}.")
+            ]:
+                sys.modules.pop(name)
+            lazy.reset()
+
+    def test_get_serves_but_never_caches_symbol_of_initializing_module(
+        self, rebinding_package: str
+    ) -> None:
+        # Act — first access imports the child, whose body resolves ``u`` again
+        package = importlib.import_module(rebinding_package)
+        first_access = package.u
+        child = importlib.import_module(f"{rebinding_package}.child")
+
+        # Assert — the mid-body resolution saw the current binding, uncached;
+        # the completed module's final binding is what gets cached.
+        assert child.RESOLVED_DURING_INIT is child.FirstAlias
+        assert child.CACHED_DURING_INIT is False
+        assert first_access is child.FinalAlias
+        assert vars(package)["u"] is child.FinalAlias
+        assert package.u is child.FinalAlias
+
+    def test_get_caches_symbol_of_fully_imported_module(
+        self, rebinding_package: str
+    ) -> None:
+        # Arrange — import the child completely before any lazy resolution
+        child = importlib.import_module(f"{rebinding_package}.child")
+        package = importlib.import_module(rebinding_package)
+
+        # Act
+        resolved = package.u
+
+        # Assert — resolution from a finished module is cached in module globals
+        assert resolved is child.FinalAlias
+        assert vars(package)["u"] is child.FinalAlias
 
     def test_attribute_resolves_class_namespace_symbol_and_caches_global(
         self, registered_alpha_module: tuple[str, type]

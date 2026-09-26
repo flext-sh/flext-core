@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib
+import inspect
 import sys
 from collections.abc import Callable, Mapping, Sequence
 from importlib.util import resolve_name
@@ -21,7 +22,7 @@ from pydantic import (
 from .._typings.base import FlextTypingBase as t
 
 if TYPE_CHECKING:
-    from types import ModuleType
+    from types import FrameType, ModuleType
 
 type StrPair = tuple[str, str]
 type LazyImportEntry = str | StrPair
@@ -137,6 +138,33 @@ class FlextLazyPart01(BaseModel):
         """Return normalized lazy-import entries for runtime metadata readers."""
         return self._norm_map(module_path, raw)
 
+    @staticmethod
+    def _module_is_initializing(module: ModuleType) -> bool:
+        """Return whether this thread is still executing ``module``'s body.
+
+        ``importlib.import_module`` waits on the per-module import lock while
+        another thread initializes a module, so the only partial module it can
+        hand back is one this thread is importing (a circular import). That
+        state is public runtime data: a ``<module>`` code frame on the current
+        stack whose globals are the module namespace.
+        """
+        frame: FrameType | None = inspect.currentframe()
+        if frame is None:
+            msg = (
+                "flext_core lazy exports require interpreter stack frames "
+                "(inspect.currentframe() returned None; CPython is required)"
+            )
+            raise RuntimeError(msg)
+        namespace = vars(module)
+        try:
+            while frame is not None:
+                if frame.f_code.co_name == "<module>" and frame.f_globals is namespace:
+                    return True
+                frame = frame.f_back
+            return False
+        finally:
+            del frame
+
     def _load(self, module_path: str) -> ModuleType:
         cached = self.module_cache.get(module_path)
         if cached is not None:
@@ -150,8 +178,9 @@ class FlextLazyPart01(BaseModel):
                 self._activate_core_beartype()
             finally:
                 self._activating_core_beartype = False
-        mod = sys.modules.get(module_path) or self._import_module(module_path)
-        self.module_cache[module_path] = mod
+        mod = self._import_module(module_path)
+        if not self._module_is_initializing(mod):
+            self.module_cache[module_path] = mod
         return mod
 
     def _child_map(self, module_path: str) -> LazyImportDict:
