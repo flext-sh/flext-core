@@ -87,7 +87,8 @@ class TestsFlextCoreEnforcementLayers:
     def _protocols_non_runtime() -> type:
         class _PProtocols:
             class InnerProto(Protocol):
-                def do(self) -> None: ...
+                def do(self) -> None:
+                    """Declare the protocol operation."""
 
         return _PProtocols
 
@@ -124,7 +125,8 @@ class TestsFlextCoreEnforcementLayers:
         class _PProtocols:
             class SomeContract(ABC):
                 @abstractmethod
-                def do(self) -> None: ...
+                def do(self) -> None:
+                    """Declare the protocol operation."""
 
         return _PProtocols
 
@@ -133,7 +135,8 @@ class TestsFlextCoreEnforcementLayers:
         class _PProtocols:
             @runtime_checkable
             class InnerProto(Protocol):
-                def do(self) -> None: ...
+                def do(self) -> None:
+                    """Declare the protocol operation."""
 
         return _PProtocols
 
@@ -142,7 +145,8 @@ class TestsFlextCoreEnforcementLayers:
         class _PProtocols:
             @typing.runtime_checkable
             class InnerProto(Protocol):
-                def do(self) -> None: ...
+                def do(self) -> None:
+                    """Declare the protocol operation."""
 
         return _PProtocols
 
@@ -151,7 +155,8 @@ class TestsFlextCoreEnforcementLayers:
         class _PProtocols:
             @checkable_protocol
             class InnerProto(Protocol):
-                def do(self) -> None: ...
+                def do(self) -> None:
+                    """Declare the protocol operation."""
 
         return _PProtocols
 
@@ -160,7 +165,8 @@ class TestsFlextCoreEnforcementLayers:
         class _PProtocols:
             @typing.final
             class InnerProto(Protocol):
-                def do(self) -> None: ...
+                def do(self) -> None:
+                    """Declare the protocol operation."""
 
         return _PProtocols
 
