@@ -192,6 +192,10 @@ class FlextConstantsEnforcementNamespace:
         "PROJECTORS",
         # Why: CLI command-service registry tuple; moving it to _constants would invert constants->services.
         "COMMANDS",
+        # Why: FlextConfig's own filename hook — the base declares it and the
+        # loader reads it through `cls`, so a consumer override stays on the
+        # config class; relocating it to _constants breaks the framework read.
+        "CONFIG_FILENAMES",
     })
     """ClassVar attribute names that are framework idioms and stay in place."""
 
