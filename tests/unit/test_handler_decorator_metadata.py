@@ -1,10 +1,10 @@
 """Behavioral tests for the ``h.handler`` decorator public contract.
 
-The decorator's documented contract is: it attaches a public
-``m.DecoratorConfig`` metadata object (reachable through the public constant
-``c.HANDLER_ATTR``) to the decorated callable so registries can auto-discover
-handlers, while returning the original callable unchanged. These tests exercise
-that observable contract only.
+The decorator's documented contract is: the declared ``m.DecoratorConfig`` is
+surfaced through the public discovery API (``h.Discovery``) so registries can
+auto-discover handlers, while the original callable is returned unchanged.
+These tests exercise that observable contract only, never the marker attribute
+the decorator uses internally.
 """
 
 from __future__ import annotations
@@ -15,12 +15,12 @@ import pytest
 from flext_tests import h, r, tm
 
 from tests.constants import c
+from tests.models import m
 
 if TYPE_CHECKING:
     from collections.abc import Callable, MutableSequence
 
     from tests.base import s
-    from tests.models import m
     from tests.protocols import p
 
 
@@ -35,7 +35,7 @@ class TestsFlextHandlerDecoratorMetadata:
                 _ = cmd
                 return r[str].ok("handled")
 
-        config: m.DecoratorConfig = getattr(Service.handle_user, c.HANDLER_ATTR)
+        _, config = h.Discovery.scan_class(Service)[0]
         tm.that(config.command is CreateCommand, eq=True)
         tm.that(config.priority, eq=10)
 
@@ -44,7 +44,7 @@ class TestsFlextHandlerDecoratorMetadata:
             def handle_user(self) -> p.Result[str]:
                 return r[str].ok("handled")
 
-        tm.that(hasattr(Service.handle_user, c.HANDLER_ATTR), eq=False)
+        tm.that(h.Discovery.has_handlers(Service), eq=False)
 
     @pytest.mark.parametrize(
         ("priority", "timeout"), [(0, None), (1, 0.5), (42, 5.0), (7, 30.0)]
@@ -61,9 +61,9 @@ class TestsFlextHandlerDecoratorMetadata:
                 _ = cmd
                 return r[str].ok("handled")
 
-        config: m.DecoratorConfig = getattr(Service.handle_user, c.HANDLER_ATTR)
+        _, config = h.Discovery.scan_class(Service)[0]
         tm.that(config.priority, eq=priority)
-        tm.that(config.timeout, eq=timeout)
+        tm.that(config.model_dump()["timeout"], eq=timeout)
 
     def test_negative_priority_is_rejected(self) -> None:
         class CreateCommand:
@@ -91,10 +91,9 @@ class TestsFlextHandlerDecoratorMetadata:
                 _ = cmd
                 return r[str].ok("handled")
 
-        config: m.DecoratorConfig = getattr(Service.handle_user, c.HANDLER_ATTR)
-        tm.that(config.priority, eq=c.DEFAULT_MAX_COMMAND_RETRIES)
-        tm.that(config.timeout, eq=c.DEFAULT_TIMEOUT_SECONDS)
-        tm.that(config.middleware, empty=True)
+        _, config = h.Discovery.scan_class(Service)[0]
+        declared = m.DecoratorConfig(command=CreateCommand)
+        tm.that(config.model_dump(), eq=declared.model_dump())
 
     def test_middleware_sequence_is_recorded(self) -> None:
         class CreateCommand:
@@ -108,8 +107,8 @@ class TestsFlextHandlerDecoratorMetadata:
                 _ = cmd
                 return r[str].ok("handled")
 
-        config: m.DecoratorConfig = getattr(Service.handle_user, c.HANDLER_ATTR)
-        tm.that(config.middleware, eq=middleware_types)
+        _, config = h.Discovery.scan_class(Service)[0]
+        tm.that(config.model_dump()["middleware"], eq=middleware_types)
 
     def test_middleware_is_captured_by_value_not_reference(self) -> None:
         class CreateCommand:
@@ -133,8 +132,11 @@ class TestsFlextHandlerDecoratorMetadata:
 
         # Mutating the caller's list after decoration must not leak into config.
         middleware_types.append(PassthroughMiddleware)
-        config: m.DecoratorConfig = getattr(Service.handle_user, c.HANDLER_ATTR)
-        tm.that(len(config.middleware), eq=1)
+        _, config = h.Discovery.scan_class(Service)[0]
+        declared = m.DecoratorConfig(
+            command=CreateCommand, middleware=[PassthroughMiddleware]
+        )
+        tm.that(config.model_dump(), eq=declared.model_dump())
 
     def test_decorator_returns_same_callable(self) -> None:
         class CreateCommand:
@@ -162,6 +164,6 @@ class TestsFlextHandlerDecoratorMetadata:
                 _ = cmd
                 return r[str].ok("handled")
 
-        config: m.DecoratorConfig = getattr(Service.handle_user, c.HANDLER_ATTR)
+        _, config = h.Discovery.scan_class(Service)[0]
         tm.that(config.command is CreateCommand, eq=True)
         tm.that(config.priority, eq=1)

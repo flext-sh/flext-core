@@ -10,27 +10,6 @@ from flext_core import m
 class TestsFlextModelsTestDataValuesMixin:
     """Static value test data helpers."""
 
-    class ErrorData(m.BaseModel):
-        """Test error codes and messages."""
-
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
-
-        error_code: Annotated[str, m.Field(description="Default test error code")] = (
-            "TEST_ERROR_001"
-        )
-        validation_error: Annotated[
-            str, m.Field(description="Default validation error message")
-        ] = "test_error"
-        operation_error: Annotated[
-            str, m.Field(description="Default operation error message")
-        ] = "Op failed"
-        settings_error: Annotated[
-            str, m.Field(description="Default configuration error message")
-        ] = "Settings failed"
-        timeout_error: Annotated[
-            str, m.Field(description="Default timeout error message")
-        ] = "Operation timeout"
-
     class Data(m.BaseModel):
         """Test field names and data values."""
 
@@ -63,31 +42,6 @@ class TestsFlextModelsTestDataValuesMixin:
         message: Annotated[str, m.Field(description="Default test message")] = (
             "test_message"
         )
-
-    class PatternData(m.BaseModel):
-        """Test patterns and formats."""
-
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
-
-        slug_input: Annotated[
-            str, m.Field(description="Input value for slug conversion tests")
-        ] = "Test_String"
-        slug_expected: Annotated[
-            str, m.Field(description="Expected slug conversion output")
-        ] = "test_string"
-        uuid_format: Annotated[
-            str, m.Field(description="Sample UUID format for tests")
-        ] = "550e8400-e29b-41d4-a716-446655440000"
-
-    class NumericValues(m.BaseModel):
-        """Test port and numeric values."""
-
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
-
-        port: Annotated[int, m.Field(description="Default test port")] = 8080
-        timeout: Annotated[int, m.Field(description="Default timeout in seconds")] = 30
-        retry_count: Annotated[int, m.Field(description="Default retry count")] = 3
-        batch_size: Annotated[int, m.Field(description="Default test batch size")] = 100
 
     # --- from test_container.py ---
 

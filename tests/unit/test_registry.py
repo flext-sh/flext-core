@@ -21,10 +21,10 @@ class TestsFlextCoreRegistry:
     @pytest.fixture
     def registry(self) -> p.Registry:
         """Build a registry backed by an accepting dispatcher."""
-        return u.build_registry(dispatcher=u.Tests.OkDispatcher())
+        return u.build_registry(dispatcher=u.build_dispatcher())
 
     def test_execute_succeeds_when_dispatcher_present(self) -> None:
-        registry = u.build_registry(dispatcher=u.Tests.OkDispatcher())
+        registry = u.build_registry(dispatcher=u.build_dispatcher())
 
         outcome = registry.execute()
 
@@ -42,13 +42,16 @@ class TestsFlextCoreRegistry:
         assert details.status == c.Status.ACTIVE
         assert details.handler_mode == c.HandlerType.COMMAND
 
-    def test_register_handler_propagates_dispatcher_failure(self) -> None:
-        registry = u.build_registry(dispatcher=u.Tests.FailDispatcher())
+    def test_register_handler_propagates_dispatcher_failure(
+        self, registry: p.Registry
+    ) -> None:
+        def unroutable(message: p.Routable) -> None:
+            _ = message
 
-        registration = registry.register_handler(u.Tests.Handler())
+        registration = registry.register_handler(unroutable)
 
         assert registration.failure
-        assert c.Tests.DISPATCHER_FAIL in (registration.error or "")
+        assert c.ERR_HANDLER_ROUTE_DISCOVERY_REQUIRED in (registration.error or "")
 
     def test_register_handlers_batch_reports_every_success(
         self, registry: p.Registry
@@ -95,8 +98,8 @@ class TestsFlextCoreRegistry:
         assert registry.fetch_plugin("validators", "local").failure
 
     def test_class_scope_plugin_is_visible_across_instances(self) -> None:
-        writer = u.build_registry(dispatcher=u.Tests.OkDispatcher())
-        reader = u.build_registry(dispatcher=u.Tests.OkDispatcher())
+        writer = u.build_registry(dispatcher=u.build_dispatcher())
+        reader = u.build_registry(dispatcher=u.build_dispatcher())
 
         registration = writer.register_plugin(
             "validators", "shared", "plugin", scope=c.RegistrationScope.CLASS

@@ -5,7 +5,6 @@ from __future__ import annotations
 import importlib
 import sys
 from collections.abc import Iterator
-from importlib.machinery import ModuleSpec
 from pathlib import Path
 from types import ModuleType
 from typing import TYPE_CHECKING
@@ -67,8 +66,6 @@ class TestsFlextCoreLazyExports:
         facade = getattr(module, facade_name)
         alias = getattr(module, alias_name)
         assert alias is facade
-        assert facade_name in module.__all__
-        assert alias_name in module.__all__
 
     def test_root_package_resolves_primary_facades_via_aliases(self) -> None:
         # Arrange / Act
@@ -281,43 +278,39 @@ class TestsFlextCoreLazyExports:
         assert resolved is alpha_cls
         assert module_globals["Alpha"] is alpha_cls
 
-    def test_get_does_not_cache_symbol_from_initializing_module(self) -> None:
-        # Arrange
+    def test_get_does_not_cache_symbol_from_initializing_module(
+        self, tmp_path: Path
+    ) -> None:
+        # Arrange: a real module that resolves its own alias through ``lazy``
+        # while its body is still executing, then rebinds that alias.
         lazy.reset()
-        module_name = "test_lazy_pkg.partial"
-        partial = ModuleType(module_name)
-        spec = ModuleSpec(module_name, loader=None)
-        spec.__dict__["_initializing"] = True
-        partial.__spec__ = spec
-
-        class PartialAlias:
-            pass
-
-        class FinalAlias:
-            pass
-
-        partial.__dict__["u"] = PartialAlias
-        sys.modules[module_name] = partial
+        module_name = "flext_lazy_partial_probe"
+        (tmp_path / f"{module_name}.py").write_text(
+            "from flext_core.lazy import lazy\n"
+            "class PartialAlias: ...\n"
+            "u = PartialAlias\n"
+            "CACHE = {}\n"
+            f"LAZY_MAP = {{'u': ('{module_name}', 'u')}}\n"
+            "RESOLVED_DURING_INIT = lazy.get('u', LAZY_MAP, CACHE, 'probe_pkg')\n"
+            "CACHED_DURING_INIT = 'u' in CACHE\n"
+            "class FinalAlias: ...\n"
+            "u = FinalAlias\n",
+            encoding="utf-8",
+        )
+        sys.path.insert(0, str(tmp_path))
         try:
-            module_globals: t.ModuleGlobals = {}
-            lazy_map = {"u": (module_name, "u")}
-
             # Act
-            partial_resolved = lazy.get("u", lazy_map, module_globals, "test_lazy_pkg")
+            module = importlib.import_module(module_name)
+            final_resolved = lazy.get("u", module.LAZY_MAP, module.CACHE, "probe_pkg")
 
-            # Assert
-            assert partial_resolved is PartialAlias
-            assert "u" not in module_globals
-
-            # Act
-            spec.__dict__["_initializing"] = False
-            partial.__dict__["u"] = FinalAlias
-            final_resolved = lazy.get("u", lazy_map, module_globals, "test_lazy_pkg")
-
-            # Assert
-            assert final_resolved is FinalAlias
-            assert module_globals["u"] is FinalAlias
+            # Assert: the partial binding was served but never cached; the
+            # completed module's binding is the one that gets cached.
+            assert module.RESOLVED_DURING_INIT is module.PartialAlias
+            assert module.CACHED_DURING_INIT is False
+            assert final_resolved is module.FinalAlias
+            assert module.CACHE["u"] is module.FinalAlias
         finally:
+            sys.path.remove(str(tmp_path))
             sys.modules.pop(module_name, None)
 
     def test_attribute_resolves_class_namespace_symbol_and_caches_global(

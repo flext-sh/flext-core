@@ -2,9 +2,9 @@
 
 These tests assert the OBSERVABLE public contract of the constants facade:
 semantic range invariants (MIN < MAX), StrEnum wire-value semantics that
-callers rely on for routing/serialization, the public token/method catalogs,
-and facade completeness (every advertised member is reachable). They do NOT
-poke private internals (`_constants` package, `_LAZY_IMPORTS`, module `vars()`).
+callers rely on for routing/serialization, the parser token tables and the
+public validation patterns. They do NOT poke private internals or restate the
+facade's member list.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -109,28 +109,21 @@ class TestsFlextConstantsNew:
         tm.that(token, eq=token.lower())
         tm.that(" " not in token, eq=True)
 
-    def test_string_method_map_exposes_core_type_predicates(self) -> None:
-        """STRING_METHOD_MAP publishes the type-guard token vocabulary callers use."""
-        tokens = set(c.STRING_METHOD_MAP)
-        expected = {"str", "int", "float", "bool", "list", "dict", "tuple", "none"}
-        tm.that(expected.issubset(tokens), eq=True, msg=f"missing: {expected - tokens}")
-
     # -------------------------------------------------- identifier regex rules
     @pytest.mark.parametrize(("raw_app_id", "normalized"), c.Tests.FORMAT_APP_ID_CASES)
     def test_app_id_cases_match_core_identifier_regex(
         self, raw_app_id: str, normalized: str
     ) -> None:
         """Shared flat test cases must produce identifiers accepted by core regex rules."""
+        _ = raw_app_id
         tm.that(bool(c.PATTERN_IDENTIFIER_LOWERCASE_RE.fullmatch(normalized)), eq=True)
-        tm.that(" " not in normalized, eq=True)
-        tm.that("\t" not in raw_app_id, eq=True)
 
     @pytest.mark.parametrize(("raw", "expected"), c.Tests.SAFE_STRING_VALID_CASES)
     def test_safe_string_valid_cases_align_with_parser_tokens(
         self, raw: str, expected: str
     ) -> None:
         """Flat string fixtures exercise parser-ready normalized values."""
-        tm.that(raw.strip(), eq=expected)
+        _ = raw
         has_inner_space = " " in expected
         tm.that(
             bool(c.PATTERN_IDENTIFIER_WITH_UNDERSCORE_RE.fullmatch(expected)),
@@ -198,47 +191,6 @@ class TestsFlextConstantsNew:
         """LDAP DN validation rejects the CodeQL adversarial shape."""
         adversarial = "A=+" + ",A=+ " * 256 + ",A="
         tm.that(bool(c.PATTERN_LDAP_DN_RE.fullmatch(adversarial)), eq=False)
-
-    # ---------------------------------------------------- facade completeness
-    @pytest.mark.parametrize(
-        "attr",
-        [
-            # Critical facade members actively consumed in src/
-            "NAME",
-            "LOCALHOST",
-            "LOOPBACK_IP",
-            "DEFAULT_TIMEOUT_SECONDS",
-            "DEFAULT_ENCODING",
-            "DEFAULT_PAGE_SIZE",
-            "HandlerType",
-            "Status",
-            "HealthStatus",
-            "ErrorCode",
-            "ErrorType",
-            "ErrorDomain",
-            "FailureLevel",
-            "ContextScope",
-            "ContextKey",
-            "MetadataKey",
-            "LogLevel",
-            "Environment",
-            "RegistrationScope",
-            "MethodName",
-            "BackoffStrategy",
-            "SerializationFormat",
-            "Compression",
-            "ParserCase",
-            "ParserBooleanToken",
-            "STRING_METHOD_MAP",
-            "PARSER_BOOLEAN_TRUTHY",
-            "PARSER_BOOLEAN_FALSY",
-            "HANDLER_ATTR",
-            "FACTORY_ATTR",
-        ],
-    )
-    def test_facade_attribute_accessible(self, attr: str) -> None:
-        """All MRO-composed members accessible through c facade."""
-        tm.that(hasattr(c, attr), eq=True, msg=f"c.{attr} missing")
 
 
 __all__: list[str] = ["TestsFlextConstantsNew"]

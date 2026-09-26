@@ -70,6 +70,8 @@ class FlextContainer(p.Container):
 
     _di_container: di_containers.DynamicContainer
 
+    _di_initialized: bool = False
+
     _services: MutableMapping[str, m.ServiceRegistration]
 
     _factories: MutableMapping[str, m.FactoryRegistration]
@@ -241,6 +243,7 @@ class FlextContainer(p.Container):
             error_msg = "Bridge settings provider missing"
             raise TypeError(error_msg)
         self._di_container.settings = config_provider
+        self._di_initialized = True
 
     def initialize_registrations(
         self, *, registration: m.ServiceRegistrationSpec | None = None
@@ -555,7 +558,7 @@ class FlextContainer(p.Container):
         self, *, registration: m.ServiceRegistrationSpec | None = None
     ) -> None:
         """Initialize the singleton container (idempotent)."""
-        if hasattr(self, "_di_container"):
+        if self._di_initialized:
             init_registration = registration or m.ServiceRegistrationSpec()
             self._apply_explicit_bootstrap(init_registration)
             self.register_core_services()

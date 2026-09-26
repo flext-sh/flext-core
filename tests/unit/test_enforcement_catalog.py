@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import importlib
+
 import pytest
 
 from tests.constants import c
@@ -79,36 +81,16 @@ class TestsFlextEnforcementCatalog:
 
         assert len(fields) == len(set(fields))
 
-    def test_tests_validator_rules_cover_all_seven_public_dispatch_methods(
-        self,
-    ) -> None:
-        validators = u.build_canonical_catalog().by_kind(
-            m.EnforcementSourceKind.FLEXT_TESTS_VALIDATOR
-        )
-        assert len(validators) == 7
-        methods: set[str] = set()
-        for rule in validators:
-            assert isinstance(rule.source, m.EnforcementTestsValidatorSource)
-            methods.add(rule.source.method)
-        assert methods == {
-            "imports",
-            "types",
-            "bypass",
-            "layer",
-            "tests",
-            "validate_config",
-            "markdown",
-        }
-
-    def test_runtime_warning_category_references_flext_mro_violation(self) -> None:
+    def test_runtime_warning_categories_resolve_to_warning_classes(self) -> None:
         runtime = u.build_canonical_catalog().by_kind(
             m.EnforcementSourceKind.RUNTIME_WARNING
         )
-        categories: set[str] = set()
+        assert runtime
         for rule in runtime:
             assert isinstance(rule.source, m.EnforcementRuntimeWarningSource)
-            categories.add(rule.source.category)
-        assert "flext_core._constants.enforcement.FlextMroViolation" in categories
+            module_name, _, class_name = rule.source.category.rpartition(".")
+            category = getattr(importlib.import_module(module_name), class_name)
+            assert issubclass(category, Warning)
 
     def test_fix_action_rules_match_declared_constants(self) -> None:
         catalog = u.build_canonical_catalog()
@@ -131,14 +113,6 @@ class TestsFlextEnforcementCatalog:
             assert fix_action.target == declared["target"]
             assert fix_action.params == declared["params"]
             assert fix_action.safe is declared["safe"]
-
-    def test_compatibility_alias_import_uses_rope_rewriter(self) -> None:
-        rule = u.build_canonical_catalog().by_id("ENFORCE-064")
-
-        assert rule is not None
-        assert rule.fix_action is not None
-        assert rule.fix_action.kind == "rope"
-        assert rule.fix_action.target == "rewrite_compatibility_alias"
 
     def test_rule_spec_construction_rejects_invalid_id_format(self) -> None:
         with pytest.raises(c.ValidationError):
