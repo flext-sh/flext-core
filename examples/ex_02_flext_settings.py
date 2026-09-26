@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextSettings, c, m
+from flext_core import FlextSettings, c
 
 from .ex_02_flext_settings_helpers import Ex02FlextSettingsFieldChecks
 
@@ -106,7 +106,7 @@ class Ex02FlextSettings(Ex02FlextSettingsFieldChecks):
         self.audit_check("fetch_global.override.timezone", via_fetch.timezone)
 
     def _exercise_resolve_env_file_and_auto_settings(self) -> None:
-        """Exercise ``resolve_env_file`` and ``AutoSettings``."""
+        """Exercise environment file resolution and typed settings access."""
         self.section("resolve_env_file_and_auto_settings")
         FlextSettings.reset_for_testing()
         env_path = Path(__file__).with_name("flext_settings_example.env")
@@ -117,17 +117,12 @@ class Ex02FlextSettings(Ex02FlextSettingsFieldChecks):
             self.audit_check(
                 "resolve_env_file.matches_requested", resolved == str(env_path)
             )
-            auto = m.AutoSettings(
-                settings_class=self._TestConfig,
-                env_prefix=c.ENV_PREFIX,
-                env_file=resolved,
-            )
-            created = auto.create_settings()
+            created = self._TestConfig.fetch_global()
             self.audit_check(
-                "AutoSettings.create_settings.type", type(created).__name__
+                "Settings.fetch_global.type", type(created).__name__
             )
             self.audit_check(
-                "AutoSettings.create_settings.service_name",
+                "Settings.fetch_global.service_name",
                 created.model_dump().get("service_name"),
             )
         finally:
