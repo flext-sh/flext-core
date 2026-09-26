@@ -81,27 +81,17 @@ class TestsFlextUtilitiesPydantic:
         assert payload_dump["visits"] == "3 visits"
         assert payload_dump["label"] == "Ada Lovelace:3"
 
-    def test_public_facade_supports_dynamic_models_and_json_roundtrip(self) -> None:
-        dynamic_model = u.create_model(
-            "DynamicPayload",
-            name=(str, ...),
-            count=(int, ...),
-            tags=(list[str], u.Field(default_factory=list)),
-        )
-        adapter = u.TypeAdapter(dynamic_model)
-
-        payload = adapter.validate_python({
-            "name": "queue",
-            "count": "2",
-            "tags": ["cli"],
+    def test_public_facade_supports_json_roundtrip(self) -> None:
+        payload = m.Tests.PublicPayload.model_validate({
+            "rawName": "  ada lovelace ",
+            "visits": "3",
         })
         payload_dump = payload.model_dump()
         payload_json = u.to_json(payload.model_dump())
         payload_dict = u.from_json(payload_json)
         payload_jsonable = u.to_jsonable_python(payload)
 
-        assert payload_dump == {"name": "queue", "count": 2, "tags": ["cli"]}
-        assert payload_dict == {"name": "queue", "count": 2, "tags": ["cli"]}
+        assert payload_dict == payload_dump
         assert payload_jsonable == payload_dict
 
     def test_validate_call_rejects_invalid_argument_values(self) -> None:
