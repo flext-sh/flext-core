@@ -164,10 +164,14 @@ class TestsFlextCoreServiceBootstrap:
     def test_subscripted_port_type_is_rejected_at_class_creation(self) -> None:
         """A port typed by a subscripted generic cannot be validated."""
         try:
-            class SubscriptedPortService(TestsFlextCoreServiceBootstrap.ConcreteTestService):
+
+            class SubscriptedPortService(
+                TestsFlextCoreServiceBootstrap.ConcreteTestService
+            ):
                 result: t.Port[p.Result[int]] = m.Field(
                     exclude=True, description="Subscripted generic port."
                 )
+
         except TypeError as raised:
             tm.that(
                 str(raised),
@@ -178,15 +182,21 @@ class TestsFlextCoreServiceBootstrap:
                 ),
             )
         else:
-            pytest.fail(f"{SubscriptedPortService.__name__} was unexpectedly constructed")
+            pytest.fail(
+                f"{SubscriptedPortService.__name__} was unexpectedly constructed"
+            )
 
     def test_concrete_port_type_is_rejected_at_class_creation(self) -> None:
         """A port typed by a concrete class is not a port."""
         try:
-            class ConcretePortService(TestsFlextCoreServiceBootstrap.ConcreteTestService):
+
+            class ConcretePortService(
+                TestsFlextCoreServiceBootstrap.ConcreteTestService
+            ):
                 counter: t.Port[u.Tests.MemoryCounter] = m.Field(
                     exclude=True, description="Concrete class port."
                 )
+
         except TypeError as raised:
             tm.that(
                 str(raised),
