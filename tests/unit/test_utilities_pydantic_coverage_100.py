@@ -92,7 +92,7 @@ class TestsFlextUtilitiesPydantic:
         payload_jsonable = u.to_jsonable_python(payload)
 
         assert payload_dict == payload_dump
-        assert payload_jsonable == payload_dict
+        assert payload_jsonable == payload.model_dump(mode="json", by_alias=True)
 
     def test_validate_call_rejects_invalid_argument_values(self) -> None:
         @u.validate_call
