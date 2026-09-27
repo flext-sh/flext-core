@@ -120,7 +120,7 @@ The project's `api.py` is the only module that builds adapters and passes them t
 services (pure dependency injection). One adapter shared by two services is a variable
 passed to both constructors:
 
-```python notest
+```{.python .notest}
 from __future__ import annotations
 
 clock = SystemClock()
@@ -140,7 +140,7 @@ audit = AuditService(clock=clock)
 The project base declares its settings class once, in a classmethod the core reads
 through `p.RuntimeBootstrapProvider`; `FlextService` itself declares no hook:
 
-```python notest
+```{.python .notest}
 from __future__ import annotations
 
 
