@@ -17,6 +17,7 @@ from typing import (
 )
 
 from ...._models.enforcement import FlextModelsEnforcement as me
+from ...family_surface import FlextUtilitiesFamilySurface
 from ..type_aliases import FlextUtilitiesBeartypeTypeAliases
 
 if TYPE_CHECKING:
@@ -76,6 +77,25 @@ class FlextUtilitiesBeartypeHelpers:
             )
             if module_path.split(".", 1)[0] == package_name
             and suffix in {"Constants", "Models", "Protocols", "Types", "Utilities"}
+        )
+
+    @staticmethod
+    def is_family_facade(target: type) -> bool:
+        """Return True when a family package publishes ``target`` as a letter facade.
+
+        Both facts come from their owners: the generated ``_LAZY_IMPORTS``
+        binds each one-letter alias to its class, and the family surface
+        names the packages that publish that contract.
+        """
+        package_name = target.__module__.split(".", 1)[0]
+        if package_name not in FlextUtilitiesFamilySurface.project_alias_owners():
+            return False
+        return any(
+            vars(sys.modules[module_path]).get(alias) is target
+            for alias, module_path, _ in FlextUtilitiesBeartypeHelpers.lazy_alias_suffixes(
+                package_name
+            )
+            if module_path in sys.modules
         )
 
     @staticmethod
