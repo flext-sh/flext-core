@@ -15,7 +15,6 @@ from pydantic import AliasChoices, ConfigDict, model_validator
 
 from flext_core import c, t
 
-from .._protocols.settings import FlextProtocolsSettings as p
 from .base import FlextModelsBase as m
 from .pydantic import FlextModelsPydantic as mp
 
@@ -27,34 +26,6 @@ class FlextModelsSettings:
     All nested classes are accessed via FlextModels.Settings.* in the main
     models.py.
     """
-
-    class AutoSettings(m.ArbitraryTypesModel):
-        """Automatic settings wrapper for canonical FLEXT settings classes."""
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            frozen=True, arbitrary_types_allowed=True
-        )
-
-        settings_class: Annotated[
-            type[p.SettingsType], mp.Field(description="Settings class to instantiate")
-        ]
-        env_prefix: Annotated[
-            str,
-            mp.Field(
-                default=c.ENV_PREFIX,
-                description="Environment variable prefix for settings resolution",
-            ),
-        ] = c.ENV_PREFIX
-        env_file: Annotated[
-            str | None,
-            mp.Field(
-                default=None,
-                description="Path to .env file for environment variable loading",
-            ),
-        ] = None
-
-        def create_settings(self) -> p.Settings:
-            return self.settings_class.fetch_global()
 
     class SettingsValue(m.ImmutableValueModel):
         """Frozen settings branch model that preserves Pydantic env coercion."""

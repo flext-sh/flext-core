@@ -163,42 +163,38 @@ class TestsFlextCoreServiceBootstrap:
 
     def test_subscripted_port_type_is_rejected_at_class_creation(self) -> None:
         """A port typed by a subscripted generic cannot be validated."""
-        with pytest.raises(TypeError) as raised:
-            u.create_model(
-                "SubscriptedPortService",
-                __base__=self.ConcreteTestService,
-                result=(
-                    t.Port[p.Result[int]],
-                    m.Field(exclude=True, description="Subscripted generic port."),
+        try:
+            class SubscriptedPortService(TestsFlextCoreServiceBootstrap.ConcreteTestService):
+                result: t.Port[p.Result[int]] = m.Field(
+                    exclude=True, description="Subscripted generic port."
+                )
+        except TypeError as raised:
+            tm.that(
+                str(raised),
+                eq=c.ERR_SERVICE_PORT_TYPE.format(
+                    service="SubscriptedPortService",
+                    field="result",
+                    port_type=p.Result[int],
                 ),
             )
-
-        tm.that(
-            str(raised.value),
-            eq=c.ERR_SERVICE_PORT_TYPE.format(
-                service="SubscriptedPortService",
-                field="result",
-                port_type=p.Result[int],
-            ),
-        )
+        else:
+            pytest.fail(f"{SubscriptedPortService.__name__} was unexpectedly constructed")
 
     def test_concrete_port_type_is_rejected_at_class_creation(self) -> None:
         """A port typed by a concrete class is not a port."""
-        with pytest.raises(TypeError) as raised:
-            u.create_model(
-                "ConcretePortService",
-                __base__=self.ConcreteTestService,
-                counter=(
-                    t.Port[u.Tests.MemoryCounter],
-                    m.Field(exclude=True, description="Concrete class port."),
+        try:
+            class ConcretePortService(TestsFlextCoreServiceBootstrap.ConcreteTestService):
+                counter: t.Port[u.Tests.MemoryCounter] = m.Field(
+                    exclude=True, description="Concrete class port."
+                )
+        except TypeError as raised:
+            tm.that(
+                str(raised),
+                eq=c.ERR_SERVICE_PORT_TYPE.format(
+                    service="ConcretePortService",
+                    field="counter",
+                    port_type=u.Tests.MemoryCounter,
                 ),
             )
-
-        tm.that(
-            str(raised.value),
-            eq=c.ERR_SERVICE_PORT_TYPE.format(
-                service="ConcretePortService",
-                field="counter",
-                port_type=u.Tests.MemoryCounter,
-            ),
-        )
+        else:
+            pytest.fail(f"{ConcretePortService.__name__} was unexpectedly constructed")
