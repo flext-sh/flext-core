@@ -8,7 +8,6 @@ from .._enforcement_data import (
     ENFORCEMENT_SMELL_TAGS,
     SMELL_BEARTYPE_ROWS,
     SMELL_CODE_SMELL_ROWS,
-    SMELL_FIX_STRATEGIES,
     SMELL_RULES_TEXT,
     SMELL_THRESHOLDS,
 )
@@ -22,12 +21,6 @@ class FlextConstantsEnforcementSmellData:
 
     ENFORCEMENT_SMELL_TAGS: ClassVar[t.VariadicTuple[str]] = ENFORCEMENT_SMELL_TAGS
     SMELL_THRESHOLDS: ClassVar[t.IntMapping] = SMELL_THRESHOLDS
-    ENFORCEMENT_SMELL_FIX_STRATEGIES: ClassVar[
-        t.MappingKV[str, t.MappingKV[str, t.JsonValue]]
-    ] = {tag: strategy.model_dump() for tag, strategy in SMELL_FIX_STRATEGIES.items()}
-    SMELL_FIX_STRATEGIES: ClassVar[t.MappingKV[str, t.MappingKV[str, t.JsonValue]]] = {
-        tag: strategy.model_dump() for tag, strategy in SMELL_FIX_STRATEGIES.items()
-    }
     SMELL_RULES_TEXT: ClassVar[t.StrPairMapping] = SMELL_RULES_TEXT
     SMELL_BEARTYPE_ROWS: ClassVar[
         tuple[tuple[str, str, str, str, t.VariadicTuple[str], str], ...]

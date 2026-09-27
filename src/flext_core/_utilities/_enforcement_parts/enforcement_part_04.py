@@ -2,17 +2,12 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal, cast
-
 from ..._constants.enforcement import FlextConstantsEnforcement as c
 from ..._models.enforcement import FlextModelsEnforcement as me
 from .enforcement_part_01 import PREDICATE_BINDINGS
 from .enforcement_part_03 import (
     FlextUtilitiesEnforcement as FlextUtilitiesEnforcementPart03,
 )
-
-if TYPE_CHECKING:
-    from ..._typings.base import FlextTypingBase as t
 
 
 class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
@@ -22,13 +17,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
         raw = c.ENFORCEMENT_FIX_ACTIONS.get(rule_id)
         if raw is None:
             return None
-        fix = cast("dict[str, t.JsonValue]", raw)
-        return me.EnforcementFixAction(
-            kind=cast("Literal['gate', 'manual', 'rope', 'transformer']", fix["kind"]),
-            target=cast("str", fix["target"]),
-            params=cast("t.JsonMapping", fix.get("params", {})),
-            safe=cast("bool", fix.get("safe", True)),
-        )
+        return me.EnforcementFixAction.model_validate(raw)
 
     @classmethod
     def build_canonical_catalog(cls) -> me.EnforcementCatalog:
