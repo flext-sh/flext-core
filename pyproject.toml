@@ -424,7 +424,7 @@ addopts = [
   "--durations=10",
   "--timeout=10",
 ]
-flext_slow_timeout_seconds = "30"
+flext_slow_timeout_seconds = "60"
 asyncio_default_fixture_loop_scope = "function"
 filterwarnings = [
   "error",

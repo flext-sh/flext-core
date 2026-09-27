@@ -32,7 +32,6 @@ WORKDIR /workspace
 RUN --mount=type=bind,source=.,target=/source,ro \
     cp -R /source/. /workspace/ \
     && chown -R runner:runner /workspace
-COPY --from=git --chown=runner:runner . /workspace/.git/
 USER runner
 ENV PATH="$MISE_DATA_DIR/shims:${PATH}"
 # End SECTION: managed tool bootstrap

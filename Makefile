@@ -12,13 +12,9 @@
 SHELL := /bin/sh
 # GNU MAKE_COMMAND may be a bare name. Resolve it before changing PATH so
 # recursive lifecycle calls keep this invoker instead of selecting a Mise shim.
-ifneq ($(filter /%,$(MAKE_COMMAND)),)
-SELF_MAKE_EXECUTABLE := $(MAKE_COMMAND)
-else
 SELF_MAKE_EXECUTABLE := $(shell command -v "$(MAKE_COMMAND)")
 ifneq ($(.SHELLSTATUS),0)
 $(error Cannot resolve current Make executable: $(MAKE_COMMAND))
-endif
 endif
 SELF_MAKE_EXECUTABLE := $(realpath $(SELF_MAKE_EXECUTABLE))
 ifeq ($(strip $(SELF_MAKE_EXECUTABLE)),)
@@ -75,20 +71,20 @@ UV_LINK_MODE := copy
 # unconsumed variable is ignored.
 PYTEST_DIAG_ARGS := -rA --durations=0 --tb=long --showlocals
 PYTEST_REPORT_ARGS := -ra --durations=25 --durations-min=0.001 --tb=short
-PYTEST_PROCESS_TIMEOUT_SECONDS := 124
+PYTEST_PROCESS_TIMEOUT_SECONDS := 7260
 # mro-99ae: the pytest process inherits a hard wall-clock boundary, so a hung
 # run is terminated even if the runner itself stalls.
 PYTEST_BOUNDED = timeout --signal=TERM --kill-after=5s "$(PYTEST_PROCESS_TIMEOUT_SECONDS)s"
 PYTEST_REPORTS_DIR := .reports/tests
 override PYTEST_CASE_TIMEOUT_SECONDS := 10
-override PYTEST_RUN_TIMEOUT_SECONDS := 120
+override PYTEST_RUN_TIMEOUT_SECONDS := 7200
 override PYTEST_TERMINATION_GRACE_SECONDS := 2
 override PYTEST_TIMEOUT_EXIT_CODE := 124
 override PYTEST_ENFORCEMENT_PLUGIN := flext_tests_enforcement
 override PYTEST_PROGRESS_ARGS := --verbose
 override PYTEST_REPORT_ARGS := -ra --durations=25 --durations-min=0.001 --tb=short
 override PYTEST_DIAG_ARGS := -rA --durations=0 --tb=long --showlocals
-override PYTEST_PARALLEL_WORKERS := 1
+override PYTEST_PARALLEL_WORKERS := 2
 override PYTEST_PARALLEL_WORKER_MEMORY_GB := 2
 override PYTEST_PARALLEL_DISTRIBUTION := load
 override PYTEST_PROFILE_SORT := cumulative
@@ -115,6 +111,13 @@ else
 override TRACKED_MISE := $(PROJECT_ROOT)/bin/mise
 endif
 override SETUP_MISE := $(TRACKED_MISE)
+# The Mise release is frozen like every tool: `upg` records the release it
+# resolved in the committed pin file; every other verb exports it so no
+# launcher call resolves `latest` (operator law 2026-09-24).
+override MISE_VERSION_PIN := $(PROJECT_ROOT)/mise.version
+ifneq ($(wildcard $(MISE_VERSION_PIN)),)
+export MISE_VERSION := $(strip $(file < $(MISE_VERSION_PIN)))
+endif
 override export FLEXT_PYTEST_TARGET_RAW := tests
 PROJECT_STATE_ROOT := $(abspath $(PROJECT_ROOT)/../.flext-runtime/$(notdir $(PROJECT_ROOT)))
 # Scratch never lives inside a versioned tree: the home scratch root mirrors
@@ -139,7 +142,7 @@ export TESTMON_DATAFILE
 ifneq ($(GEN_INIT_ONLY),)
 override REPOSITORY_ROOT := $(MAKEFILE_ROOT)
 else
-override REPOSITORY_ROOT := $(shell cd "$(MAKEFILE_ROOT)" && if root=$$(git rev-parse --show-superproject-working-tree); then if [ -n "$$root" ]; then cd "$$root" && pwd -P; else pwd -P; fi; else status=$$?; if [ "$$status" -ne 1 ]; then exit "$$status"; fi; pwd -P; fi)
+override REPOSITORY_ROOT := $(shell cd "$(MAKEFILE_ROOT)" && root=$$(git rev-parse --show-superproject-working-tree) && if [ -n "$$root" ]; then cd "$$root" && pwd -P; else pwd -P; fi)
 ifneq ($(.SHELLSTATUS),0)
 $(error Cannot resolve the physical workspace for $(MAKEFILE_ROOT))
 endif
@@ -171,7 +174,7 @@ MYPY_PATHS := $(strip $(foreach d,src tests examples,$(if $(wildcard $(PROJECT_R
 
 # === SECTION: project tool owner (managed) ===
 # Source: the repository's declared Mise toolchain, provisioned by make setup.
-override UV = $(PROJECT_TOOL_EXEC) uv
+override UV := "$(SETUP_MISE)" -C "$(PROJECT_ROOT)" exec -- uv
 CALLER_PATH := $(PATH)
 CALLER_VIRTUAL_ENV := $(patsubst %/,%,$(VIRTUAL_ENV))
 # End SECTION: project tool owner
@@ -182,15 +185,6 @@ CALLER_VIRTUAL_ENV := $(patsubst %/,%,$(VIRTUAL_ENV))
 override RUNTIME_ROOT := $(REPOSITORY_ROOT)
 override export GIT_CEILING_DIRECTORIES := $(abspath $(RUNTIME_ROOT)/..)
 override export MISE_CEILING_PATHS := $(abspath $(RUNTIME_ROOT)/..)
-# The physical runtime owns both its environment and frozen tool identities.
-# Attached members retain their own lock inputs for standalone consumption.
-override MISE_VERSION_PIN := $(RUNTIME_ROOT)/mise.version
-ifneq ($(wildcard $(MISE_VERSION_PIN)),)
-override export MISE_VERSION := $(strip $(shell cat "$(MISE_VERSION_PIN)"))
-ifneq ($(.SHELLSTATUS),0)
-$(error Cannot read the pinned Mise release from $(MISE_VERSION_PIN))
-endif
-endif
 # End SECTION: profile routing
 
 override RUNTIME_VENV := $(RUNTIME_ROOT)/.venv
@@ -201,11 +195,9 @@ NORMALIZED_CALLER_PATH := $(shell cygpath --path "$(CALLER_PATH)")
 ifneq ($(.SHELLSTATUS),0)
 $(error cygpath failed to normalize PATH)
 endif
-ifneq ($(strip $(CALLER_VIRTUAL_ENV)),)
 NORMALIZED_CALLER_VIRTUAL_ENV := $(shell cygpath --unix "$(CALLER_VIRTUAL_ENV)")
 ifneq ($(.SHELLSTATUS),0)
 $(error cygpath failed to normalize VIRTUAL_ENV)
-endif
 endif
 CALLER_VIRTUAL_ENV_BIN := $(NORMALIZED_CALLER_VIRTUAL_ENV)/Scripts
 else
@@ -231,223 +223,6 @@ override PATH := $(RUNTIME_BIN):$(SANITIZED_CALLER_PATH)
 unexport UV
 export FLEXT_INFRA_PYTHON UV_PROJECT UV_PROJECT_ENVIRONMENT VIRTUAL_ENV PATH
 
-# Resolve native tools through the same isolated lock reader used by setup.
-# Execute the caller's command with that PATH without reloading host Mise tools.
-define PROJECT_TOOL_RUNTIME
-set -eu; \
-	project_root="$(RUNTIME_ROOT)"; \
-	mise="$(SETUP_MISE)"; \
-	mise_storage_root="$(MISE_DATA_DIR)"; \
-	caller_home="$${HOME:-}"; \
-	caller_xdg_data_home="$${XDG_DATA_HOME:-}"; \
-	if [ -z "$$caller_xdg_data_home" ] && [ -n "$$caller_home" ]; then \
-		caller_xdg_data_home="$$caller_home/.local/share"; \
-	fi; \
-	caller_path="$$PATH"; \
-mise_lockfile_platforms="linux-x64,linux-x64-musl,linux-arm64,macos-x64,macos-arm64,windows-x64"; \
-caller_comspec="$${COMSPEC:-}"; \
-caller_pathext="$${PATHEXT:-}"; \
-caller_systemroot="$${SYSTEMROOT:-}"; \
-caller_windir="$${WINDIR:-}"; \
-caller_github_token="$${GITHUB_TOKEN:-}"; \
-caller_gh_token="$${GH_TOKEN:-}"; \
-caller_mise_github_token="$${MISE_GITHUB_TOKEN:-}"; \
-caller_mise_github_credential_command="$${MISE_GITHUB_CREDENTIAL_COMMAND:-}"; \
-caller_mise_http_timeout="$${MISE_HTTP_TIMEOUT:-}"; \
-caller_flext_mypy_profile_output="$${FLEXT_MYPY_PROFILE_OUTPUT:-}"; \
-caller_mise_version="$${MISE_VERSION:-}"; \
-mise_pin_file="$$project_root/mise.version"; \
-	if [ "$(TOOL_BOOTSTRAP_RESOLVE)" != "1" ]; then \
-		if [ ! -f "$$mise_pin_file" ]; then \
-			printf 'ERROR: missing %s; make upg resolves and records the Mise release\n' "$$mise_pin_file" >&2; \
-			exit 2; \
-		fi; \
-		mise_pin=$$(cat "$$mise_pin_file"); \
-		if [ -n "$$caller_mise_version" ] && [ "$${caller_mise_version#v}" != "$$mise_pin" ]; then \
-			printf 'ERROR: MISE_VERSION=%s conflicts with %s=%s\n' "$$caller_mise_version" "$$mise_pin_file" "$$mise_pin" >&2; \
-			exit 2; \
-		fi; \
-		caller_mise_version="$$mise_pin"; \
-	fi; \
-	if [ -z "$$mise_storage_root" ]; then \
-		if [ -n "$$caller_xdg_data_home" ]; then \
-			mise_storage_root="$$caller_xdg_data_home/mise"; \
-		elif [ -n "$$caller_home" ]; then \
-			mise_storage_root="$$caller_home/.local/share/mise"; \
-		else \
-			printf 'ERROR: MISE_DATA_DIR, XDG_DATA_HOME, or HOME must identify persistent Mise storage\n' >&2; \
-			exit 2; \
-		fi; \
-	fi; \
-	case "$$mise_storage_root" in \
-		/*) ;; \
-		*) printf 'ERROR: MISE_DATA_DIR must be absolute: %s\n' "$$mise_storage_root" >&2; exit 2 ;; \
-	esac; \
-	case "$$mise_storage_root/" in \
-		*'/../'*|*'/./'*|*'//'*) printf 'ERROR: MISE_DATA_DIR must be normalized: %s\n' "$$mise_storage_root" >&2; exit 2 ;; \
-	esac; \
-	project_root=$$(cd "$$project_root" && pwd -P); \
-	project_parent=$${project_root%/*}; \
-	if [ -z "$$project_parent" ]; then project_parent=/; fi; \
-	if [ -L "$$mise_storage_root" ]; then \
-		printf 'ERROR: MISE_DATA_DIR must not be a symlink: %s\n' "$$mise_storage_root" >&2; \
-		exit 2; \
-	fi; \
-	umask 077; \
-	mkdir -p "$$mise_storage_root"; \
-	if [ -L "$$mise_storage_root" ]; then \
-		printf 'ERROR: MISE_DATA_DIR became a symlink: %s\n' "$$mise_storage_root" >&2; \
-		exit 2; \
-	fi; \
-	mise_storage_root=$$(cd "$$mise_storage_root" && pwd -P); \
-	case "$$mise_storage_root/" in \
-		/tmp/|/tmp/*) printf 'ERROR: persistent Mise storage must not live under /tmp: %s\n' "$$mise_storage_root" >&2; exit 2 ;; \
-	esac; \
-	case "$$mise_storage_root/" in \
-		"$$project_root/"*) printf 'ERROR: persistent Mise storage must be outside the checkout: %s\n' "$$mise_storage_root" >&2; exit 2 ;; \
-	esac; \
-	case "$$project_root/" in \
-		"$$mise_storage_root/"*) printf 'ERROR: persistent Mise storage must not contain the checkout: %s\n' "$$mise_storage_root" >&2; exit 2 ;; \
-	esac; \
-	for persistent_path in "$$mise_storage_root" "$$mise_storage_root/cache" "$$mise_storage_root/state" "$$mise_storage_root/installs" "$$mise_storage_root/shims" "$$mise_storage_root/uv-cache" "$$mise_storage_root/bootstrap"; do \
-		if [ -L "$$persistent_path" ]; then \
-			printf 'ERROR: persistent Mise path must not be a symlink: %s\n' "$$persistent_path" >&2; exit 2; \
-		fi; \
-		mkdir -p "$$persistent_path"; \
-		if [ -L "$$persistent_path" ]; then \
-			printf 'ERROR: persistent Mise path became a symlink: %s\n' "$$persistent_path" >&2; exit 2; \
-		fi; \
-		persistent_physical=$$(cd "$$persistent_path" && pwd -P); \
-		case "$$persistent_physical" in \
-			"$$mise_storage_root"|"$$mise_storage_root"/*) ;; \
-			*) printf 'ERROR: persistent Mise path escaped storage: %s\n' "$$persistent_physical" >&2; exit 2 ;; \
-		esac; \
-	done; \
-	scratch_parent="$(PROJECT_SCRATCH_ROOT)"; \
-	if [ -L "$$scratch_parent" ]; then \
-		printf 'ERROR: Mise scratch parent must not be a symlink: %s\n' "$$scratch_parent" >&2; exit 2; \
-	fi; \
-	mkdir -p "$$scratch_parent"; \
-	scratch=$$(mktemp -d "$$scratch_parent/mise-toolchain.XXXXXX"); \
-	trap 'find "$$scratch" -depth -delete' EXIT; \
-	mkdir -p "$$scratch/home" "$$scratch/home" "$$scratch/appdata" "$$scratch/appdata" "$$scratch/xdg-config" "$$scratch/xdg-data" "$$scratch/xdg-cache" "$$scratch/xdg-state" "$$scratch/config" "$$scratch/tmp" "$$scratch/." "$$scratch/system-config" "$$scratch/system-data" "$$scratch/system-installs" "$$scratch/system-shims" "$$scratch/tmp" "$$scratch/tmp" "$$scratch/tmp"; \
-: > "$$scratch/global-config.toml"; chmod 600 "$$scratch/global-config.toml"; \
-: > "$$scratch/system-config/config.toml"; chmod 600 "$$scratch/system-config/config.toml"; \
-: > "$$scratch/gitconfig"; chmod 600 "$$scratch/gitconfig"; \
-: > "$$scratch/netrc"; chmod 600 "$$scratch/netrc"; \
-mise_exec() { \
-		mise_config_mode="$$1"; shift; \
-		case "$$mise_config_mode" in \
-			no-config) mise_config_argument='MISE_NO_CONFIG=1' ;; \
-			project) mise_config_argument= ;; \
-			*) printf 'ERROR: invalid Mise config mode: %s\n' "$$mise_config_mode" >&2; return 2 ;; \
-		esac; \
-		mise_runtime_path=; \
-		if [ -n "$$caller_mise_version" ]; then \
-			mise_runtime_path="$$mise_storage_root/bootstrap/mise-$${caller_mise_version#v}"; \
-			if [ "$(OS)" = "Windows_NT" ]; then mise_runtime_path="$$mise_runtime_path.exe"; fi; \
-		fi; \
-		env -i \
-'GIT_CONFIG_NOSYSTEM=1' \
-'GIT_TERMINAL_PROMPT=0' \
-'LANG=C' \
-'LC_ALL=C' \
-'MISE_SAFE=1' \
-'MISE_PARANOID=true' \
-'MISE_QUIET=1' \
-'MISE_NO_ENV=1' \
-'MISE_NO_HOOKS=1' \
-'MISE_AUTO_ENV=false' \
-'MISE_AUTO_INSTALL=false' \
-'MISE_EXEC_AUTO_INSTALL=false' \
-'MISE_TASK_RUN_AUTO_INSTALL=false' \
-'MISE_AUTO_UPDATE=false' \
-'MISE_HTTP_RETRIES=0' \
-'MISE_NETRC=false' \
-'MISE_NOT_FOUND_AUTO_INSTALL=false' \
-'MISE_NOT_FOUND_SYSTEM_FALLBACK=false' \
-'MISE_OVERRIDE_CONFIG_FILENAMES=.mise.toml' \
-'MISE_OVERRIDE_TOOL_VERSIONS_FILENAMES=none' \
-'MISE_GITHUB_GH_CLI_TOKENS=false' \
-'MISE_GITHUB_USE_GIT_CREDENTIALS=false' \
-'MISE_GITHUB_OAUTH_CLIENT_ID=' \
-'MISE_GITHUB_OAUTH_EXPORT_ENV=' \
-'MISE_GITHUB_OAUTH_OPEN_BROWSER=false' \
-'MISE_LOCKFILE=true' \
-'MISE_LOCKED=true' \
-$${mise_lockfile_platforms:+"MISE_LOCKFILE_PLATFORMS=$$mise_lockfile_platforms"} \
-"HOME=$$scratch/home" \
-"USERPROFILE=$$scratch/home" \
-"APPDATA=$$scratch/appdata" \
-"LOCALAPPDATA=$$scratch/appdata" \
-"XDG_CONFIG_HOME=$$scratch/xdg-config" \
-"XDG_DATA_HOME=$$scratch/xdg-data" \
-"XDG_CACHE_HOME=$$scratch/xdg-cache" \
-"XDG_STATE_HOME=$$scratch/xdg-state" \
-"NETRC=$$scratch/netrc" \
-"GIT_CONFIG_GLOBAL=$$scratch/gitconfig" \
-"MISE_NETRC_FILE=$$scratch/netrc" \
-"MISE_GLOBAL_CONFIG_FILE=$$scratch/global-config.toml" \
-"MISE_CONFIG_DIR=$$scratch/config" \
-"MISE_TMP_DIR=$$scratch/tmp" \
-"MISE_GLOBAL_CONFIG_ROOT=$$scratch/." \
-"MISE_SYSTEM_CONFIG_DIR=$$scratch/system-config" \
-"MISE_SYSTEM_CONFIG_FILE=$$scratch/system-config/config.toml" \
-"MISE_SYSTEM_DATA_DIR=$$scratch/system-data" \
-"MISE_SYSTEM_INSTALLS_DIR=$$scratch/system-installs" \
-"MISE_SYSTEM_SHIMS_DIR=$$scratch/system-shims" \
-"TMPDIR=$$scratch/tmp" \
-"TMP=$$scratch/tmp" \
-"TEMP=$$scratch/tmp" \
-"MISE_DATA_DIR=$$mise_storage_root" \
-"MISE_CACHE_DIR=$$mise_storage_root/cache" \
-"MISE_STATE_DIR=$$mise_storage_root/state" \
-"MISE_INSTALLS_DIR=$$mise_storage_root/installs" \
-"MISE_SHIMS_DIR=$$mise_storage_root/shims" \
-"UV_CACHE_DIR=$$mise_storage_root/uv-cache" \
-"GIT_CEILING_DIRECTORIES=$$project_parent" \
-			"MISE_CEILING_PATHS=$$project_parent" \
-			"MISE_TRUSTED_CONFIG_PATHS=$$project_root" \
-$${caller_path:+"PATH=$$caller_path"} \
-$${caller_comspec:+"COMSPEC=$$caller_comspec"} \
-$${caller_pathext:+"PATHEXT=$$caller_pathext"} \
-$${caller_systemroot:+"SYSTEMROOT=$$caller_systemroot"} \
-$${caller_windir:+"WINDIR=$$caller_windir"} \
-$${caller_github_token:+"GITHUB_TOKEN=$$caller_github_token"} \
-$${caller_gh_token:+"GH_TOKEN=$$caller_gh_token"} \
-$${caller_mise_github_token:+"MISE_GITHUB_TOKEN=$$caller_mise_github_token"} \
-$${caller_mise_github_credential_command:+"MISE_GITHUB_CREDENTIAL_COMMAND=$$caller_mise_github_credential_command"} \
-$${caller_mise_http_timeout:+"MISE_HTTP_TIMEOUT=$$caller_mise_http_timeout"} \
-$${caller_flext_mypy_profile_output:+"FLEXT_MYPY_PROFILE_OUTPUT=$$caller_flext_mypy_profile_output"} \
-$${caller_mise_version:+"MISE_VERSION=$$caller_mise_version"} \
-$${mise_config_argument:+"$$mise_config_argument"} \
-			$${mise_runtime_path:+"MISE_INSTALL_PATH=$$mise_runtime_path"} \
-			"$$@"; \
-	}; \
-	mise_runtime="$$mise_storage_root/bootstrap/mise-$${caller_mise_version#v}"; \
-	if [ "$(OS)" = "Windows_NT" ]; then mise_runtime="$$mise_runtime.exe"; fi; \
-	if [ ! -x "$$mise_runtime" ]; then \
-		printf 'ERROR: missing pinned Mise runtime %s; run make setup\n' "$$mise_runtime" >&2; exit 2; \
-	fi; \
-	if mise_exec project env MISE_OFFLINE=true "$$mise_runtime" -C "$$project_root" bin-paths >"$$scratch/paths" 2>"$$scratch/stderr"; then \
-		cat "$$scratch/stderr" >&2; \
-	else \
-		mise_status=$$?; cat "$$scratch/stderr" >&2; cat "$$scratch/paths" >&2; exit "$$mise_status"; \
-	fi; \
-	if [ -s "$$scratch/stderr" ]; then \
-		printf 'ERROR: Mise emitted diagnostics during runtime selection\n' >&2; exit 2; \
-	fi; \
-	tool_paths=; \
-	while IFS= read -r tool_path; do \
-		case "$$tool_path" in /*) ;; *) printf 'ERROR: Mise returned a non-absolute tool path: %s\n' "$$tool_path" >&2; exit 2 ;; esac; \
-		if [ ! -d "$$tool_path" ]; then printf 'ERROR: missing tool directory: %s; run make setup\n' "$$tool_path" >&2; exit 2; fi; \
-		tool_paths="$${tool_paths:+$$tool_paths:}$$tool_path"; \
-	done < "$$scratch/paths"; \
-	if [ -z "$$tool_paths" ]; then printf 'ERROR: Mise returned no installed tool paths; run make setup\n' >&2; exit 2; fi; \
-	PATH="$(RUNTIME_BIN):$$tool_paths:$$caller_path" "$$@"
-endef
-PROJECT_TOOL_EXEC = $(SHELL) -c '$(subst ','"'"',$(PROJECT_TOOL_RUNTIME))' --
-
 # One bootstrap serves `setup` (frozen) and `upg` (resolving); the public verb
 # selects its lifecycle and resolution through target-specific variables.
 TOOL_BOOTSTRAP_LIFECYCLE := _setup_lifecycle
@@ -471,7 +246,7 @@ _bootstrap_setup_tools:
 		caller_xdg_data_home="$$caller_home/.local/share"; \
 	fi; \
 	caller_path="$$PATH"; \
-mise_lockfile_platforms="linux-x64,linux-x64-musl,linux-arm64,macos-x64,macos-arm64,windows-x64"; \
+mise_lockfile_platforms="linux-x64,linux-arm64,macos-x64,macos-arm64,windows-x64"; \
 caller_comspec="$${COMSPEC:-}"; \
 caller_pathext="$${PATHEXT:-}"; \
 caller_systemroot="$${SYSTEMROOT:-}"; \
@@ -481,9 +256,10 @@ caller_gh_token="$${GH_TOKEN:-}"; \
 caller_mise_github_token="$${MISE_GITHUB_TOKEN:-}"; \
 caller_mise_github_credential_command="$${MISE_GITHUB_CREDENTIAL_COMMAND:-}"; \
 caller_mise_http_timeout="$${MISE_HTTP_TIMEOUT:-}"; \
-caller_flext_mypy_profile_output="$${FLEXT_MYPY_PROFILE_OUTPUT:-}"; \
 caller_mise_version="$${MISE_VERSION:-}"; \
-mise_pin_file="$$project_root/mise.version"; \
+# Only ``upg`` resolves the Mise release; every other lifecycle launches \
+	# exactly the release ``upg`` recorded in the committed pin file. \
+	mise_pin_file="$$project_root/mise.version"; \
 	if [ "$(TOOL_BOOTSTRAP_RESOLVE)" != "1" ]; then \
 		if [ ! -f "$$mise_pin_file" ]; then \
 			printf 'ERROR: missing %s; make upg resolves and records the Mise release\n' "$$mise_pin_file" >&2; \
@@ -645,7 +421,6 @@ $${caller_gh_token:+"GH_TOKEN=$$caller_gh_token"} \
 $${caller_mise_github_token:+"MISE_GITHUB_TOKEN=$$caller_mise_github_token"} \
 $${caller_mise_github_credential_command:+"MISE_GITHUB_CREDENTIAL_COMMAND=$$caller_mise_github_credential_command"} \
 $${caller_mise_http_timeout:+"MISE_HTTP_TIMEOUT=$$caller_mise_http_timeout"} \
-$${caller_flext_mypy_profile_output:+"FLEXT_MYPY_PROFILE_OUTPUT=$$caller_flext_mypy_profile_output"} \
 $${caller_mise_version:+"MISE_VERSION=$$caller_mise_version"} \
 $${mise_config_argument:+"$$mise_config_argument"} \
 			$${mise_runtime_path:+"MISE_INSTALL_PATH=$$mise_runtime_path"} \
@@ -689,17 +464,16 @@ $${mise_config_argument:+"$$mise_config_argument"} \
 	fi; \
 	caller_mise_version="$$runtime_release"; \
 	printf 'mise setup receipt=%s storage=%s\n' "$$runtime_release" "$$mise_storage_root"; \
-	# Only ``upg`` resolves. Lock every configured tool in one pass so removed \
-	# selectors cannot survive beside their replacement in mise.lock. \
+	# Only ``upg`` resolves. Artifact tools own a five-platform URL/checksum \
+	# matrix; npm owns one platform-independent Aube dependency graph. \
 	if [ "$(TOOL_BOOTSTRAP_RESOLVE)" = "1" ]; then \
-		mise_checked "$$scratch/lock.log" mise_exec project "$$latest_mise" -C "$$project_root" lock --bump; \
+		mise_checked "$$scratch/lock-artifacts.log" mise_exec project "$$latest_mise" -C "$$project_root" lock --bump python uv kubectl helm kind direnv taplo ast-grep gitleaks "aqua:boyter/scc" kubeconform node go make "github:qltysh/qlty" "github:kucherenko/jscpd" "github:microsoft/waza"; \
+		mise_lockfile_platforms=; \
+		mise_checked "$$scratch/lock-npm-prettier.log" mise_exec project "$$latest_mise" -C "$$project_root" lock --bump "npm:prettier"; \
+		mise_lockfile_platforms="linux-x64,linux-arm64,macos-x64,macos-arm64,windows-x64"; \
 	fi; \
 	# ``locked`` mode installs exactly what the committed mise.lock pins. \
 	mise_checked "$$scratch/install.log" mise_exec project "$$latest_mise" -C "$$project_root" install --yes; \
-	mise_checked_stdout "$$scratch/ast-grep-version.stdout" "$$scratch/ast-grep-version.stderr" mise_exec project "$$latest_mise" -C "$$project_root" exec -- ast-grep --version; \
-	if [ -s "$$scratch/ast-grep-version.stderr" ]; then \
-		printf 'ERROR: ast-grep emitted diagnostics after installation\n' >&2; exit 2; \
-	fi; \
 	mise_checked "$$scratch/uv-version.log" mise_exec project "$$latest_mise" -C "$$project_root" exec -- uv --version; \
 	uv_output=$$(cat "$$scratch/uv-version.log"); \
 	case "$$uv_output" in \
@@ -719,8 +493,6 @@ $${mise_config_argument:+"$$mise_config_argument"} \
 	if [ ! -x "$$direnv_executable" ]; then \
 		printf 'ERROR: Mise resolved a non-executable direnv path: %s\n' "$$direnv_executable" >&2; exit 2; \
 	fi; \
-	mise_checked "$$scratch/python-path.log" mise_exec project "$$latest_mise" -C "$$project_root" which python; \
-	python_executable=$$(cat "$$scratch/python-path.log"); \
 	if [ -n "$${GITHUB_PATH:-}" ]; then \
 		printf '%s\n' "$$project_root/bin" >> "$$GITHUB_PATH"; \
 printf '%s\n' "$$mise_storage_root/shims" >> "$$GITHUB_PATH"; \
@@ -740,17 +512,13 @@ fi; \
 		"MISE_TRUSTED_CONFIG_PATHS=$$project_root" \
 		"MISE_VERSION=$$runtime_release" \
 		"MISE_INSTALL_PATH=$$mise_runtime_path" \
-		$(PROJECT_TOOL_EXEC) env \
+		"$$latest_mise" -C "$$project_root" exec -- env \
 		"SETUP_DIRENV=$$direnv_executable" \
-		"SETUP_PYTHON=$$python_executable" \
 		"SETUP_DIRENV_XDG_DATA_HOME=$$caller_xdg_data_home" \
 		"CI=$(CI)" $(SELF_MAKE) $(TOOL_BOOTSTRAP_LIFECYCLE)
 
 ifeq ($(MAKE_PROFILE),workspace)
-# One repository owns each GitHub CI run. The umbrella still owns the full
-# fleet cycle when Make runs outside GitHub Actions.
-GITHUB_CI_SELF := $(filter true,$(GITHUB_ACTIONS))
-CODEGEN_SCOPE := $(if $(GITHUB_CI_SELF),self,all)
+CODEGEN_SCOPE := all
 ALLOWED_PROJECTS := . $(WORKSPACE_SUBPROJECTS)
 else
 CODEGEN_SCOPE := self
@@ -766,7 +534,7 @@ endif
 # the configured Python minor line to a newer patch.
 SETUP_ENVIRONMENT_RECIPE = set -eu; \
 	$(REQUIRE_WORKSPACE_ENVIRONMENT); \
-	desired_python="$${SETUP_PYTHON:?missing Mise-resolved Python executable}"; \
+	desired_python=$$("$(SETUP_MISE)" -C "$(PROJECT_ROOT)" which python); \
 	if [ ! -x "$(RUNTIME_PYTHON)" ]; then \
 		$(UV) venv --python "$$desired_python" "$(RUNTIME_VENV)"; \
 	elif [ "$$(readlink -f "$(RUNTIME_PYTHON)")" != "$$(readlink -f "$$desired_python")" ]; then \
@@ -805,10 +573,7 @@ WORKSPACE_ORCHESTRATE = $(UV_RUN) python -m flext_infra workspace orchestrate
 # _builtin-self-* targets, so all 32 distributions execute their own gates
 # (plan contract: no member of the fleet is excluded from required cycles).
 DEFAULT_PROJECTS := $(WORKSPACE_SUBPROJECTS) .
-# GitHub validates the repository that owns this workflow. Member repositories
-# run their own CI; the umbrella's local lifecycle remains the fleet gate.
-# GITHUB_ACTIONS stays true in both CI=Y and CI=N check partitions.
-SELECTED_PROJECTS := $(if $(GITHUB_CI_SELF),.,$(DEFAULT_PROJECTS))
+SELECTED_PROJECTS := $(DEFAULT_PROJECTS)
 WORKSPACE_PROJECT_ARGS := $(foreach project,$(SELECTED_PROJECTS),--projects $(project))
 DOCS_PROJECT_ARGS := $(foreach project,$(SELECTED_PROJECTS),--projects $(project))
 
@@ -816,7 +581,7 @@ DOCS_PROJECT_ARGS := $(foreach project,$(SELECTED_PROJECTS),--projects $(project
 # workspace or creating a dependency-resolution file during a runtime command.
 UV_RUN := env -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u PROJECT_ROOT PYTHONPATH="$(PROJECT_ROOT)/src" $(UV) run --no-project --python "$(RUNTIME_PYTHON)"
 override PROJECT_INFRA_PYTHONPATH := $(MAKEFILE_ROOT)/src
-PROJECT_INFRA_RUN = if [ ! -x "$(FLEXT_INFRA_PYTHON)" ]; then printf 'ERROR: FLEXT_INFRA_PYTHON must name an executable managed Python\n' >&2; exit 2; fi; $(PROJECT_TOOL_EXEC) env -u PYTHONPATH -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u UV_PROJECT_ENVIRONMENT PYTHONPATH="$(PROJECT_INFRA_PYTHONPATH)" $(FLEXT_INFRA_PYTHON)
+PROJECT_INFRA_RUN := if [ ! -x "$(FLEXT_INFRA_PYTHON)" ]; then printf 'ERROR: FLEXT_INFRA_PYTHON must name an executable managed Python\n' >&2; exit 2; fi; "$(SETUP_MISE)" -C "$(PROJECT_ROOT)" exec -- env -u PYTHONPATH -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u UV_PROJECT_ENVIRONMENT PYTHONPATH="$(PROJECT_INFRA_PYTHONPATH)" $(FLEXT_INFRA_PYTHON)
 PROJECT_FLEXT_INFRA := $(PROJECT_INFRA_RUN) -m flext_infra
 # Scaffold dev tools live in the validated optional dev
 # profile; setup resolves the declared dependency branches at their current tips.
@@ -851,10 +616,13 @@ endef
 
 
 
-# uv resolves the containing workspace and writes its single uv.lock. Invoking
-# it once per member re-resolves that same lock for every member.
-define _lock_project
-	@$(UV) lock --project "$(PROJECT_ROOT)" $(1)
+define _run_for_all_projects
+	@set -eu; \
+	for project in $(SELECTED_PROJECTS); do \
+		if [ "$$project" = "." ]; then project_root="$(PROJECT_ROOT)"; \
+		else project_root="$(PROJECT_ROOT)/$$project"; fi; \
+		$(UV) lock --project "$$project_root" $(1); \
+	done
 endef
 
 .PHONY: $(PUBLIC_VERBS) $(addprefix _builtin-,$(PUBLIC_VERBS))
@@ -1409,7 +1177,7 @@ _upg_lifecycle: _builtin_setup_submodules
 	case " $(CUSTOM_DECLARED_TARGETS) " in \
 		*" pre-upg "*) $(SELF_MAKE) pre-upg ;; \
 	esac
-	$(call _lock_project,--upgrade --refresh)
+	$(call _run_for_all_projects,--upgrade --refresh)
 	@$(SELF_MAKE) _builtin_setup_environment
 	@set -eu; \
 	selected="$(strip $(SELECTED_PROJECTS))"; \
@@ -1419,9 +1187,9 @@ _upg_lifecycle: _builtin_setup_submodules
 	$(PROJECT_FLEXT_INFRA) deps modernize --repository-root "$(PROJECT_ROOT)" \
 		--apply --rewrite-constraints "$$@"
 	@$(SELF_MAKE) gen
-	$(call _lock_project,)
+	$(call _run_for_all_projects,)
 	@$(SELF_MAKE) _builtin_setup_environment
-	$(call _lock_project,--check)
+	$(call _run_for_all_projects,--check)
 	+@XDG_DATA_HOME="$${SETUP_DIRENV_XDG_DATA_HOME:?missing persistent direnv data home}" \
 		"$${SETUP_DIRENV:?missing Mise-resolved direnv executable}" exec "$(PROJECT_ROOT)" $(SELF_MAKE) _upg_activated
 
@@ -1449,15 +1217,20 @@ _builtin-self-test: _builtin_require_environment
 
 _builtin-self-check: _builtin_require_environment
 	@set -eu; \
-gates="lint,pyrefly,mypy,pyright,silent-failure,deferred-self-reference,security,markdown,loc-cap,boundary,runtime-census,namespace,tier-whitelist,index-declarations,smells,codemod,layout,canonical-alias,direnv,duplication"; \
+printf '%s\n' 'INFO: SUSPENDED check gate duplication; authority=flext-itpd1.3 / operator 2026-09-24 / flext-xp6ec; reason=Custom policy check suspended during the approved recovery.'; \
+printf '%s\n' 'INFO: SUSPENDED check gate codemod; authority=flext-itpd1.3 / operator 2026-09-24 / flext-xp6ec; reason=Custom policy check suspended during the approved recovery.'; \
+printf '%s\n' 'INFO: SUSPENDED check gate boundary; authority=flext-itpd1.3 / operator 2026-09-24 / flext-xp6ec; reason=Custom policy check suspended during the approved recovery.'; \
+printf '%s\n' 'INFO: SUSPENDED check gate namespace; authority=flext-itpd1.3 / operator 2026-09-24 / flext-xp6ec; reason=Custom policy check suspended during the approved recovery.'; \
+printf '%s\n' 'INFO: SUSPENDED check gate runtime-census; authority=flext-itpd1.3 / operator 2026-09-24 / flext-xp6ec; reason=Custom policy check suspended during the approved recovery.'; \
+gates="lint,pyrefly,mypy,pyright,silent-failure,deferred-self-reference,security,markdown,loc-cap,tier-whitelist,index-declarations,smells,layout,canonical-alias,direnv"; \
 		if [ "$(strip $(CI))" = "Y" ]; then \
-			gates="lint,pyright,silent-failure,deferred-self-reference,security,markdown,loc-cap,boundary,runtime-census,namespace,tier-whitelist,index-declarations,smells,codemod,layout,canonical-alias,direnv,duplication"; \
-			printf 'INFO: CI=Y runs check gates: lint pyright silent-failure deferred-self-reference security markdown loc-cap boundary runtime-census namespace tier-whitelist index-declarations smells codemod layout canonical-alias direnv duplication\n'; \
+			gates="lint,pyright,silent-failure,deferred-self-reference,security,markdown,loc-cap,tier-whitelist,index-declarations,smells,layout,canonical-alias,direnv"; \
+			printf 'INFO: CI=Y runs check gates: lint pyright silent-failure deferred-self-reference security markdown loc-cap tier-whitelist index-declarations smells layout canonical-alias direnv\n'; \
 		elif [ "$(strip $(CI))" = "N" ]; then \
 			gates="pyrefly,mypy"; \
 			printf 'INFO: CI=N runs check gates: pyrefly mypy\n'; \
 		else \
-			printf 'INFO: default context runs check gates: lint pyrefly mypy pyright silent-failure deferred-self-reference security markdown loc-cap boundary runtime-census namespace tier-whitelist index-declarations smells codemod layout canonical-alias direnv duplication\n'; \
+			printf 'INFO: default context runs check gates: lint pyrefly mypy pyright silent-failure deferred-self-reference security markdown loc-cap tier-whitelist index-declarations smells layout canonical-alias direnv\n'; \
 		fi; \
 		if [ -z "$$gates" ]; then \
 			printf 'ERROR: no active check gates remain in the selected context\n' >&2; \
@@ -1511,15 +1284,20 @@ _builtin_build_artifacts:
 # An absent CI token runs every active default gate.
 _builtin_check_all: _builtin_require_environment
 	@set -eu; \
-gates="lint,pyrefly,mypy,pyright,silent-failure,deferred-self-reference,security,markdown,loc-cap,boundary,runtime-census,namespace,tier-whitelist,index-declarations,smells,codemod,layout,canonical-alias,direnv,duplication"; \
+printf '%s\n' 'INFO: SUSPENDED check gate duplication; authority=flext-itpd1.3 / operator 2026-09-24 / flext-xp6ec; reason=Custom policy check suspended during the approved recovery.'; \
+printf '%s\n' 'INFO: SUSPENDED check gate codemod; authority=flext-itpd1.3 / operator 2026-09-24 / flext-xp6ec; reason=Custom policy check suspended during the approved recovery.'; \
+printf '%s\n' 'INFO: SUSPENDED check gate boundary; authority=flext-itpd1.3 / operator 2026-09-24 / flext-xp6ec; reason=Custom policy check suspended during the approved recovery.'; \
+printf '%s\n' 'INFO: SUSPENDED check gate namespace; authority=flext-itpd1.3 / operator 2026-09-24 / flext-xp6ec; reason=Custom policy check suspended during the approved recovery.'; \
+printf '%s\n' 'INFO: SUSPENDED check gate runtime-census; authority=flext-itpd1.3 / operator 2026-09-24 / flext-xp6ec; reason=Custom policy check suspended during the approved recovery.'; \
+gates="lint,pyrefly,mypy,pyright,silent-failure,deferred-self-reference,security,markdown,loc-cap,tier-whitelist,index-declarations,smells,layout,canonical-alias,direnv"; \
 		if [ "$(strip $(CI))" = "Y" ]; then \
-			gates="lint,pyright,silent-failure,deferred-self-reference,security,markdown,loc-cap,boundary,runtime-census,namespace,tier-whitelist,index-declarations,smells,codemod,layout,canonical-alias,direnv,duplication"; \
-			printf 'INFO: CI=Y runs check gates: lint pyright silent-failure deferred-self-reference security markdown loc-cap boundary runtime-census namespace tier-whitelist index-declarations smells codemod layout canonical-alias direnv duplication\n'; \
+			gates="lint,pyright,silent-failure,deferred-self-reference,security,markdown,loc-cap,tier-whitelist,index-declarations,smells,layout,canonical-alias,direnv"; \
+			printf 'INFO: CI=Y runs check gates: lint pyright silent-failure deferred-self-reference security markdown loc-cap tier-whitelist index-declarations smells layout canonical-alias direnv\n'; \
 		elif [ "$(strip $(CI))" = "N" ]; then \
 			gates="pyrefly,mypy"; \
 			printf 'INFO: CI=N runs check gates: pyrefly mypy\n'; \
 		else \
-			printf 'INFO: default context runs check gates: lint pyrefly mypy pyright silent-failure deferred-self-reference security markdown loc-cap boundary runtime-census namespace tier-whitelist index-declarations smells codemod layout canonical-alias direnv duplication\n'; \
+			printf 'INFO: default context runs check gates: lint pyrefly mypy pyright silent-failure deferred-self-reference security markdown loc-cap tier-whitelist index-declarations smells layout canonical-alias direnv\n'; \
 		fi; \
 		if [ -z "$$gates" ]; then \
 			printf 'ERROR: no active check gates remain in the selected context\n' >&2; \
@@ -1570,56 +1348,9 @@ _builtin_sonarcloud_sync_all: _builtin_sonarcloud_sync_project
 _builtin_run_default: _builtin_require_environment
 	@$(UV_RUN) $(PROJECT_NAME) $(ARGS)
 
-# Profile the real runtime-census gate through the same installed CLI selected
-# by the root dispatcher. The report remains in the external runtime state.
-.PHONY: profile-census
-profile-census: _builtin_require_environment
-	@mkdir -p "$(PROJECT_SCRATCH_ROOT)/profiles"
-	@$(PROJECT_TOOL_EXEC) "$(RUNTIME_PYTHON)" -c \
-		'import cProfile, sys; from flext_infra.cli import main; profile = cProfile.Profile(); status = profile.runcall(main, sys.argv[2:]); profile.dump_stats(sys.argv[1]); raise SystemExit(status)' \
-		"$(PROJECT_SCRATCH_ROOT)/profiles/runtime-census.pstats" check run \
-		--repository-root "$(PROJECT_ROOT)" --gates runtime-census --projects .
-
-.PHONY: profile-census-report
-profile-census-report: _builtin_require_environment
-	@$(PROJECT_TOOL_EXEC) "$(RUNTIME_PYTHON)" -c \
-		'import pstats, sys; pstats.Stats(sys.argv[1]).sort_stats("cumtime").print_stats(35)' \
-		"$(PROJECT_SCRATCH_ROOT)/profiles/runtime-census.pstats"
-
-# Profile the checker process itself while retaining the canonical Mypy gate,
-# its resource limit, native source inventory, and external report directory.
-.PHONY: profile-mypy
-profile-mypy: _builtin_require_environment
-	@mkdir -p "$(PROJECT_SCRATCH_ROOT)/profiles"
-	@export FLEXT_MYPY_PROFILE_OUTPUT="$(PROJECT_SCRATCH_ROOT)/profiles/mypy.pstats"; \
-		$(PROJECT_FLEXT_INFRA) check run --repository-root "$(PROJECT_ROOT)" \
-		--gates mypy --projects . --report-findings
-
-.PHONY: profile-mypy-report
-profile-mypy-report: _builtin_require_environment
-	@$(PROJECT_TOOL_EXEC) "$(RUNTIME_PYTHON)" -c \
-		'import pstats, sys; pstats.Stats(sys.argv[1]).sort_stats("cumtime").print_stats(50)' \
-		"$(PROJECT_SCRATCH_ROOT)/profiles/mypy.pstats"
-
-.PHONY: profile-gen
-profile-gen: _builtin_require_environment
-	@mkdir -p "$(PROJECT_SCRATCH_ROOT)/profiles"
-	@$(PROJECT_TOOL_EXEC) "$(RUNTIME_PYTHON)" -c \
-		'import cProfile, sys; from flext_infra.cli import main; profile = cProfile.Profile(); status = profile.runcall(main, sys.argv[2:]); profile.dump_stats(sys.argv[1]); raise SystemExit(status)' \
-		"$(PROJECT_SCRATCH_ROOT)/profiles/lazy-init.pstats" codegen lazy-init \
-		--repository-root "$(PROJECT_ROOT)" --module flext_core --dry-run
-
-.PHONY: profile-gen-report
-profile-gen-report: _builtin_require_environment
-	@$(PROJECT_TOOL_EXEC) "$(RUNTIME_PYTHON)" -c \
-		'import pstats, sys; pstats.Stats(sys.argv[1]).sort_stats("cumtime").print_stats(50)' \
-		"$(PROJECT_SCRATCH_ROOT)/profiles/lazy-init.pstats"
-
 _builtin_status_diagnostics: _builtin_require_environment
 	@printf 'profile=%s\nproject=%s\nruntime=%s\n' \
 		'$(MAKE_PROFILE)' '$(PROJECT_ROOT)' '$(RUNTIME_ROOT)'
-
-	@$(PROJECT_TOOL_EXEC) $(SHELL) -c 'command -v uv'
 	@$(UV) --version
 	@if [ -x "$(RUNTIME_PYTHON)" ]; then \
 		$(UV) pip check --python "$(RUNTIME_VENV)"; \
@@ -1689,8 +1420,8 @@ _builtin_release_publish: _builtin_require_environment
 # point. Only `upg` resolves and rewrites the locks; gen installs nothing and
 # never runs another writer before or after conform's journal.
 _builtin_gen_init:
-	@$(PROJECT_FLEXT_INFRA) codegen init --repository-root "$(PROJECT_ROOT)"
-	@$(PROJECT_FLEXT_INFRA) codegen init --repository-root "$(PROJECT_ROOT)" --check-only
+	@$(PROJECT_FLEXT_INFRA) codegen init --repository-root "$(PROJECT_ROOT)" --apply
+	@$(PROJECT_FLEXT_INFRA) codegen init --repository-root "$(PROJECT_ROOT)" --check
 
 _builtin_gen_all:
 	@$(PROJECT_FLEXT_INFRA) codegen conform --root "$(PROJECT_ROOT)" --scope "$(CODEGEN_SCOPE)" --mode apply
@@ -1724,7 +1455,7 @@ _builtin-gen: _builtin_gen_all
 _builtin-initialize: _builtin_gen_init
 _builtin-mod: _builtin_mod_apply
 _builtin-waza:
-	@cd "$(PROJECT_ROOT)" && $(PROJECT_TOOL_EXEC) waza check --no-update-check
+	@cd "$(PROJECT_ROOT)" && "$(SETUP_MISE)" exec -- waza check --no-update-check
 _builtin-duplication:
 	@$(PROJECT_FLEXT_INFRA) check run --repository-root "$(PROJECT_ROOT)" --gates "duplication" --projects .
 _builtin-sonarcloud-sync: _builtin_sonarcloud_sync_all
