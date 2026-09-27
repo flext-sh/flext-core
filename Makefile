@@ -75,13 +75,13 @@ UV_LINK_MODE := copy
 # unconsumed variable is ignored.
 PYTEST_DIAG_ARGS := -rA --durations=0 --tb=long --showlocals
 PYTEST_REPORT_ARGS := -ra --durations=25 --durations-min=0.001 --tb=short
-PYTEST_PROCESS_TIMEOUT_SECONDS := 184
+PYTEST_PROCESS_TIMEOUT_SECONDS := 124
 # mro-99ae: the pytest process inherits a hard wall-clock boundary, so a hung
 # run is terminated even if the runner itself stalls.
 PYTEST_BOUNDED = timeout --signal=TERM --kill-after=5s "$(PYTEST_PROCESS_TIMEOUT_SECONDS)s"
 PYTEST_REPORTS_DIR := .reports/tests
-override PYTEST_CASE_TIMEOUT_SECONDS := 15
-override PYTEST_RUN_TIMEOUT_SECONDS := 180
+override PYTEST_CASE_TIMEOUT_SECONDS := 10
+override PYTEST_RUN_TIMEOUT_SECONDS := 120
 override PYTEST_TERMINATION_GRACE_SECONDS := 2
 override PYTEST_TIMEOUT_EXIT_CODE := 124
 override PYTEST_ENFORCEMENT_PLUGIN := flext_tests_enforcement
@@ -851,13 +851,10 @@ endef
 
 
 
-define _run_for_all_projects
-	@set -eu; \
-	for project in $(SELECTED_PROJECTS); do \
-		if [ "$$project" = "." ]; then project_root="$(PROJECT_ROOT)"; \
-		else project_root="$(PROJECT_ROOT)/$$project"; fi; \
-		$(UV) lock --project "$$project_root" $(1); \
-	done
+# uv resolves the containing workspace and writes its single uv.lock. Invoking
+# it once per member re-resolves that same lock for every member.
+define _lock_project
+	@$(UV) lock --project "$(PROJECT_ROOT)" $(1)
 endef
 
 .PHONY: $(PUBLIC_VERBS) $(addprefix _builtin-,$(PUBLIC_VERBS))
@@ -1412,7 +1409,7 @@ _upg_lifecycle: _builtin_setup_submodules
 	case " $(CUSTOM_DECLARED_TARGETS) " in \
 		*" pre-upg "*) $(SELF_MAKE) pre-upg ;; \
 	esac
-	$(call _run_for_all_projects,--upgrade --refresh)
+	$(call _lock_project,--upgrade --refresh)
 	@$(SELF_MAKE) _builtin_setup_environment
 	@set -eu; \
 	selected="$(strip $(SELECTED_PROJECTS))"; \
@@ -1422,9 +1419,9 @@ _upg_lifecycle: _builtin_setup_submodules
 	$(PROJECT_FLEXT_INFRA) deps modernize --repository-root "$(PROJECT_ROOT)" \
 		--apply --rewrite-constraints "$$@"
 	@$(SELF_MAKE) gen
-	$(call _run_for_all_projects,)
+	$(call _lock_project,)
 	@$(SELF_MAKE) _builtin_setup_environment
-	$(call _run_for_all_projects,--check)
+	$(call _lock_project,--check)
 	+@XDG_DATA_HOME="$${SETUP_DIRENV_XDG_DATA_HOME:?missing persistent direnv data home}" \
 		"$${SETUP_DIRENV:?missing Mise-resolved direnv executable}" exec "$(PROJECT_ROOT)" $(SELF_MAKE) _upg_activated
 

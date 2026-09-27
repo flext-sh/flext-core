@@ -156,7 +156,9 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
                 and rule_layer.lower() == effective_layer
             ):
                 for _name, inner in FlextUtilitiesEnforcement._iter_inner(target):
-                    if isinstance(inner, EnumType):
+                    if isinstance(inner, EnumType) or not ub.defined_inside(
+                        inner, target.__qualname__
+                    ):
                         continue
                     nested = FlextUtilitiesEnforcement.check(
                         inner, layer=effective_layer
