@@ -12,9 +12,12 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from types import MappingProxyType
-from typing import ClassVar, override
+from typing import ClassVar, TypeAliasType, override
+
+from pydantic.fields import FieldInfo
 
 from .._constants.enforcement import FlextConstantsEnforcement as c
+from .._models.enforcement import FlextModelsEnforcement as me
 from .._models.pydantic import FlextModelsPydantic as mp
 from .._protocols.base import FlextProtocolsBase as p
 from .._typings.base import FlextTypingBase as t
@@ -26,6 +29,7 @@ from ._beartype.field_visitor import FlextUtilitiesBeartypeFieldVisitor
 from ._beartype.import_visitor import FlextUtilitiesBeartypeImportVisitor
 from ._beartype.method_visitor import FlextUtilitiesBeartypeMethodVisitor
 from ._beartype.module_visitor import FlextUtilitiesBeartypeModuleVisitor
+from ._beartype.type_aliases import FlextUtilitiesBeartypeTypeAliases
 from .beartype_typingext_patch import (
     FlextUtilitiesBeartypeTypingExtPatch as _FlextUtilitiesBeartypeTypingExtPatch,
 )
@@ -77,6 +81,48 @@ class FlextUtilitiesBeartypeEngine(
     @staticmethod
     def contains_any(hint: t.TypeHintSpecifier | None) -> bool:
         return FlextUtilitiesBeartypeHelpers.contains_any_recursive(hint, seen=set())
+
+    @staticmethod
+    def deferred_aliases(
+        params: mp.BaseModel, owner: type, *args: p.AttributeProbe
+    ) -> tuple[me.DeferredAlias, ...]:
+        """Account for unavailable alias values before a value-dependent rule."""
+        if isinstance(params, me.AttrShapeParams):
+            if params.forbid_any_in_alias:
+                match args:
+                    case (_, alias) if isinstance(alias, TypeAliasType):
+                        return FlextUtilitiesBeartypeTypeAliases.deferred(
+                            alias, recursive=True, owner=owner
+                        )
+                    case _:
+                        return ()
+            return ()
+        if not isinstance(params, me.FieldShapeParams) or not args:
+            return ()
+        info = args[-1]
+        if not isinstance(info, FieldInfo) or params.require_description:
+            return ()
+        if params.forbid_any or params.forbid_bare_collection:
+            return FlextUtilitiesBeartypeTypeAliases.deferred(
+                info.annotation, recursive=params.forbid_any, owner=owner
+            )
+        if params.forbid_mutable_default:
+            return ()
+        if (
+            params.forbid_raw_default_factory
+            and FlextUtilitiesBeartypeHelpers.mutable_default_factory_kind(
+                info.default_factory
+            )
+            is not None
+        ):
+            return FlextUtilitiesBeartypeTypeAliases.deferred(
+                info.annotation, unwrap_annotated=True, inspect_origin=True, owner=owner
+            )
+        if params.forbid_str_none_empty:
+            return FlextUtilitiesBeartypeTypeAliases.deferred(
+                info.annotation, owner=owner
+            )
+        return ()
 
     @override
     @staticmethod

@@ -36,7 +36,9 @@ if TYPE_CHECKING:
     from ._beartype.helpers import FlextUtilitiesBeartypeHelpers
     from ._beartype.import_visitor import FlextUtilitiesBeartypeImportVisitor
     from ._beartype.method_visitor import FlextUtilitiesBeartypeMethodVisitor
+    from ._beartype.module_source import FlextUtilitiesBeartypeModuleSource
     from ._beartype.module_visitor import FlextUtilitiesBeartypeModuleVisitor
+    from ._beartype.type_aliases import FlextUtilitiesBeartypeTypeAliases
     from ._context_crud_set import FlextUtilitiesContextCrudSetMixin
     from ._enforcement_parts.enforcement_part_06 import EXTENDED_PREDICATE_BINDINGS
     from ._guards_type_protocol_specs import FlextUtilitiesGuardsTypeProtocolSpecsMixin
@@ -110,7 +112,9 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesBeartypeImportVisitor",
     "FlextUtilitiesBeartypeLibraryVisitor",
     "FlextUtilitiesBeartypeMethodVisitor",
+    "FlextUtilitiesBeartypeModuleSource",
     "FlextUtilitiesBeartypeModuleVisitor",
+    "FlextUtilitiesBeartypeTypeAliases",
     "FlextUtilitiesBeartypeTypingExtPatch",
     "FlextUtilitiesChecker",
     "FlextUtilitiesCollection",
@@ -195,7 +199,9 @@ _LAZY_IMPORTS = MappingProxyType(
             "._beartype.helpers": ("FlextUtilitiesBeartypeHelpers",),
             "._beartype.import_visitor": ("FlextUtilitiesBeartypeImportVisitor",),
             "._beartype.method_visitor": ("FlextUtilitiesBeartypeMethodVisitor",),
+            "._beartype.module_source": ("FlextUtilitiesBeartypeModuleSource",),
             "._beartype.module_visitor": ("FlextUtilitiesBeartypeModuleVisitor",),
+            "._beartype.type_aliases": ("FlextUtilitiesBeartypeTypeAliases",),
             "._checker_parts": ("_checker_parts",),
             "._context_crud_set": ("FlextUtilitiesContextCrudSetMixin",),
             "._enforcement_collect_parts": ("_enforcement_collect_parts",),

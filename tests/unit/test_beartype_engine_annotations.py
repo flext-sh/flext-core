@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_core.utilities import FlextUtilitiesBeartypeEngine as be
+from flext_core import u
 from tests.typings import t
 
 from ._beartype_engine_support import (
@@ -53,7 +53,7 @@ class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
         self, hint: t.TypeHintSpecifier | None, *, expected: bool
     ) -> None:
         """contains_any is True iff typing.Any appears at any nesting depth."""
-        assert be.contains_any(hint) is expected
+        assert u.contains_any(hint) is expected
 
     @pytest.mark.parametrize(
         ("hint", "expected"),
@@ -71,7 +71,7 @@ class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
         self, hint: t.TypeHintSpecifier | None, expected: tuple[bool, str]
     ) -> None:
         """Bare mutable collection origins are flagged with their name."""
-        assert be.has_forbidden_collection_origin(hint, self.FORBIDDEN) == expected
+        assert u.has_forbidden_collection_origin(hint, self.FORBIDDEN) == expected
 
     @pytest.mark.parametrize(
         ("hint", "expected"),
@@ -88,7 +88,7 @@ class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
         self, hint: t.TypeHintSpecifier | None, *, expected: int
     ) -> None:
         """count_union_members counts non-None members; 0 for non-unions."""
-        assert be.count_union_members(hint) == expected
+        assert u.count_union_members(hint) == expected
 
     @pytest.mark.parametrize(
         ("hint", "expected"),
@@ -105,7 +105,7 @@ class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
         self, hint: t.TypeHintSpecifier | None, *, expected: bool
     ) -> None:
         """Union matches iff both str and None are members."""
-        assert be.matches_str_none_union(hint) is expected
+        assert u.matches_str_none_union(hint) is expected
 
     @pytest.mark.parametrize(
         ("alias_value", "expected"),
@@ -120,13 +120,13 @@ class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
         self, alias_value: t.TypeHintSpecifier | None, *, expected: bool
     ) -> None:
         """alias_contains_any detects Any inside a resolved type-alias value."""
-        assert be.alias_contains_any(alias_value) is expected
+        assert u.alias_contains_any(alias_value) is expected
 
-    def test_alias_inspection_tolerates_lazy_alias_without_runtime_names(self) -> None:
-        """A TYPE_CHECKING-only alias stays lazy: inspection must not crash."""
+    def test_alias_inspection_uses_explicit_owner_for_static_only_names(self) -> None:
+        """Explicit owner context proves a local static-only alias deferral."""
 
         class Host:
             type LazyAlias = LazyResolvableType | str
 
-        assert be.resolve_type_alias_value(Host.LazyAlias) is None
-        assert be.alias_contains_any(Host.LazyAlias) is False
+        assert u.resolve_type_alias_value(Host.LazyAlias, owner=Host) is None
+        assert u.alias_contains_any(Host.LazyAlias, owner=Host) is False

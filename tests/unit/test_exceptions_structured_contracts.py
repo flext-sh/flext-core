@@ -11,7 +11,7 @@ from __future__ import annotations
 import operator
 
 import pytest
-from flext_tests import e
+from flext_tests import e, tm
 
 from tests.constants import c
 from tests.protocols import p
@@ -165,13 +165,16 @@ class TestsFlextCoreExceptionsStructuredContracts:
         assert mapped.failure
         assert mapped.error_code == expected_code
 
-        # unwrap_or yields the caller's default on failure.
-        assert result.unwrap_or(True) is True
+        # Strict extraction preserves the failure instead of inventing a value.
+        with pytest.raises(RuntimeError) as raised:
+            result.unwrap()
+        assert str(raised.value) == c.ERR_RESULT_CANNOT_UNWRAP.format(
+            error=result.error
+        )
 
         # recover converts a failure into a caller-defined success value.
         recovered = result.recover(lambda _error: False)
-        assert recovered.success
-        assert recovered.unwrap_or(True) is False
+        tm.ok(recovered, eq=False)
 
         # tap_error observes the error without altering the failure channel.
         observed: list[bool] = []

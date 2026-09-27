@@ -10,7 +10,6 @@ from ..._constants.enforcement import FlextConstantsEnforcement as c
 from ..._models.enforcement import FlextModelsEnforcement as me
 from ..._models.pydantic import FlextModelsPydantic as mp
 from ..._protocols.base import FlextProtocolsBase as p
-from ..._typings.base import FlextTypingBase as t
 from ..beartype_engine import FlextUtilitiesBeartypeEngine as ub
 from ..enforcement_collect import FlextUtilitiesEnforcementCollect
 from .enforcement_part_01 import PREDICATE_BINDINGS
@@ -31,23 +30,34 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         qualname: str,
         items: Iterator[tuple[str, tuple[p.AttributeProbe, ...]]],
         category: c.EnforcementCategory,
-    ) -> t.SequenceOf[me.Violation]:
-        """Apply the visitor for ``tag`` to each item; emit violation on non-None.
+    ) -> me.Report:
+        """Apply a rule, separating proven deferrals from executed predicates.
 
         Catalog rules without a runtime predicate binding (static-only or
         beartype-driven entries keyed as ``ENFORCE-NNN``) are skipped gracefully.
         """
         binding = PREDICATE_BINDINGS.get(tag)
         if binding is None:
-            return ()
+            return me.Report()
         kind, params = binding
-        return [
-            FlextUtilitiesEnforcement._violation(
-                tag, location, qualname, detail, category=category
-            )
-            for location, args in items
-            if (detail := ub.apply(kind, params, *args)) is not None
-        ]
+        violations: list[me.Violation] = []
+        deferred: list[me.DeferredInspection] = []
+        for location, args in items:
+            unavailable = ub.deferred_aliases(params, _target, *args)
+            if unavailable:
+                deferred.extend(
+                    me.DeferredInspection(tag=tag, location=location, alias=alias)
+                    for alias in unavailable
+                )
+                continue
+            detail = ub.apply(kind, params, *args)
+            if detail is not None:
+                violations.append(
+                    FlextUtilitiesEnforcement._violation(
+                        tag, location, qualname, detail, category=category
+                    )
+                )
+        return me.Report(violations=violations, deferred=deferred)
 
     @staticmethod
     def _items_for(
@@ -125,6 +135,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         Attr-rule recursion is handled via ``c.ENFORCEMENT_RECURSIVE_TAGS``.
         """
         violations: list[me.Violation] = []
+        deferred: list[me.DeferredInspection] = []
         effective_layer = layer or FlextUtilitiesEnforcement.detect_layer(target) or ""
         qn = target.__qualname__
         for tag, category in c.ENFORCEMENT_TAG_CATEGORY.items():
@@ -134,9 +145,11 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
             items = FlextUtilitiesEnforcement._items_for(
                 target, tag, category, effective_layer
             )
-            violations.extend(
-                FlextUtilitiesEnforcement._apply_rule(target, tag, qn, items, category)
+            report = FlextUtilitiesEnforcement._apply_rule(
+                target, tag, qn, items, category
             )
+            violations.extend(report.violations)
+            deferred.extend(report.deferred)
             if (
                 category is c.EnforcementCategory.ATTR
                 and tag in c.ENFORCEMENT_RECURSIVE_TAGS
@@ -145,12 +158,12 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
                 for _name, inner in FlextUtilitiesEnforcement._iter_inner(target):
                     if isinstance(inner, EnumType):
                         continue
-                    violations.extend(
-                        FlextUtilitiesEnforcement.check(
-                            inner, layer=effective_layer
-                        ).violations
+                    nested = FlextUtilitiesEnforcement.check(
+                        inner, layer=effective_layer
                     )
-        return me.Report(violations=violations)
+                    violations.extend(nested.violations)
+                    deferred.extend(nested.deferred)
+        return me.Report(violations=violations, deferred=deferred)
 
     @staticmethod
     def check(target: type, *, layer: str | None = None) -> me.Report:

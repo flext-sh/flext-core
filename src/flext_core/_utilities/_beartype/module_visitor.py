@@ -10,6 +10,7 @@ from ..._constants.enforcement import FlextConstantsEnforcement as c
 from ..._models.enforcement import FlextModelsEnforcement as me
 from ..._typings.base import FlextTypingBase as t
 from .helpers import FlextUtilitiesBeartypeHelpers
+from .module_source import FlextUtilitiesBeartypeModuleSource
 
 _NO_VIOLATION: t.StrMapping | None = None
 _MODULE_EXEMPT_FILES: frozenset[str] = frozenset({
@@ -67,13 +68,8 @@ class FlextUtilitiesBeartypeModuleVisitor:
         if not package.startswith("flext_") or filename.startswith("_"):
             return _NO_VIOLATION
         try:
-            source_lines, _start = inspect.getsourcelines(module)
-        except (OSError, TypeError):
-            return _NO_VIOLATION
-        source = "".join(source_lines)
-        try:
-            tree = ast.parse(source, filename=src_file)
-        except SyntaxError:
+            tree = FlextUtilitiesBeartypeModuleSource.parse(module)
+        except (OSError, TypeError, SyntaxError):
             return _NO_VIOLATION
         top_level_class_count = sum(
             1

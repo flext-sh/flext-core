@@ -29,7 +29,9 @@ if TYPE_CHECKING:
     from ._cqrs_parts.flextmodelscqrs_part_01 import CqrsPagination
     from ._enforcement._base import EnforcementModelBase, FlextModelsEnforcementBase
     from ._enforcement._catalog import FlextModelsEnforcementCatalog
+    from ._enforcement._inspection import FlextModelsEnforcementInspection
     from ._enforcement._params import FlextModelsEnforcementParams
+    from ._enforcement._resolution import FlextModelsEnforcementResolution
     from ._enforcement._sources import FlextModelsEnforcementSources
     from ._project_metadata_parts.flextmodelsprojectmetadata_part_01 import (
         ProjectMetadataContract,
@@ -87,7 +89,9 @@ __all__: tuple[str, ...] = (
     "FlextModelsEnforcement",
     "FlextModelsEnforcementBase",
     "FlextModelsEnforcementCatalog",
+    "FlextModelsEnforcementInspection",
     "FlextModelsEnforcementParams",
+    "FlextModelsEnforcementResolution",
     "FlextModelsEnforcementSources",
     "FlextModelsEntity",
     "FlextModelsErrors",
@@ -135,7 +139,9 @@ _LAZY_IMPORTS = MappingProxyType(
                 "FlextModelsEnforcementBase",
             ),
             "._enforcement._catalog": ("FlextModelsEnforcementCatalog",),
+            "._enforcement._inspection": ("FlextModelsEnforcementInspection",),
             "._enforcement._params": ("FlextModelsEnforcementParams",),
+            "._enforcement._resolution": ("FlextModelsEnforcementResolution",),
             "._enforcement._sources": ("FlextModelsEnforcementSources",),
             "._exception_params_parts": ("_exception_params_parts",),
             "._project_metadata_parts": ("_project_metadata_parts",),
