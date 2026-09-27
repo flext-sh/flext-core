@@ -118,9 +118,7 @@ class Ex02FlextSettings(Ex02FlextSettingsFieldChecks):
                 "resolve_env_file.matches_requested", resolved == str(env_path)
             )
             created = self._TestConfig.fetch_global()
-            self.audit_check(
-                "Settings.fetch_global.type", type(created).__name__
-            )
+            self.audit_check("Settings.fetch_global.type", type(created).__name__)
             self.audit_check(
                 "Settings.fetch_global.service_name",
                 created.model_dump().get("service_name"),
