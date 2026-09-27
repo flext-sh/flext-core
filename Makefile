@@ -254,6 +254,7 @@ caller_gh_token="$${GH_TOKEN:-}"; \
 caller_mise_github_token="$${MISE_GITHUB_TOKEN:-}"; \
 caller_mise_github_credential_command="$${MISE_GITHUB_CREDENTIAL_COMMAND:-}"; \
 caller_mise_http_timeout="$${MISE_HTTP_TIMEOUT:-}"; \
+caller_flext_mypy_profile_output="$${FLEXT_MYPY_PROFILE_OUTPUT:-}"; \
 caller_mise_version="$${MISE_VERSION:-}"; \
 mise_pin_file="$$project_root/mise.version"; \
 	if [ "$(TOOL_BOOTSTRAP_RESOLVE)" != "1" ]; then \
@@ -417,6 +418,7 @@ $${caller_gh_token:+"GH_TOKEN=$$caller_gh_token"} \
 $${caller_mise_github_token:+"MISE_GITHUB_TOKEN=$$caller_mise_github_token"} \
 $${caller_mise_github_credential_command:+"MISE_GITHUB_CREDENTIAL_COMMAND=$$caller_mise_github_credential_command"} \
 $${caller_mise_http_timeout:+"MISE_HTTP_TIMEOUT=$$caller_mise_http_timeout"} \
+$${caller_flext_mypy_profile_output:+"FLEXT_MYPY_PROFILE_OUTPUT=$$caller_flext_mypy_profile_output"} \
 $${caller_mise_version:+"MISE_VERSION=$$caller_mise_version"} \
 $${mise_config_argument:+"$$mise_config_argument"} \
 			$${mise_runtime_path:+"MISE_INSTALL_PATH=$$mise_runtime_path"} \
@@ -479,6 +481,7 @@ caller_gh_token="$${GH_TOKEN:-}"; \
 caller_mise_github_token="$${MISE_GITHUB_TOKEN:-}"; \
 caller_mise_github_credential_command="$${MISE_GITHUB_CREDENTIAL_COMMAND:-}"; \
 caller_mise_http_timeout="$${MISE_HTTP_TIMEOUT:-}"; \
+caller_flext_mypy_profile_output="$${FLEXT_MYPY_PROFILE_OUTPUT:-}"; \
 caller_mise_version="$${MISE_VERSION:-}"; \
 mise_pin_file="$$project_root/mise.version"; \
 	if [ "$(TOOL_BOOTSTRAP_RESOLVE)" != "1" ]; then \
@@ -642,6 +645,7 @@ $${caller_gh_token:+"GH_TOKEN=$$caller_gh_token"} \
 $${caller_mise_github_token:+"MISE_GITHUB_TOKEN=$$caller_mise_github_token"} \
 $${caller_mise_github_credential_command:+"MISE_GITHUB_CREDENTIAL_COMMAND=$$caller_mise_github_credential_command"} \
 $${caller_mise_http_timeout:+"MISE_HTTP_TIMEOUT=$$caller_mise_http_timeout"} \
+$${caller_flext_mypy_profile_output:+"FLEXT_MYPY_PROFILE_OUTPUT=$$caller_flext_mypy_profile_output"} \
 $${caller_mise_version:+"MISE_VERSION=$$caller_mise_version"} \
 $${mise_config_argument:+"$$mise_config_argument"} \
 			$${mise_runtime_path:+"MISE_INSTALL_PATH=$$mise_runtime_path"} \
@@ -692,10 +696,6 @@ $${mise_config_argument:+"$$mise_config_argument"} \
 	fi; \
 	# ``locked`` mode installs exactly what the committed mise.lock pins. \
 	mise_checked "$$scratch/install.log" mise_exec project "$$latest_mise" -C "$$project_root" install --yes; \
-	# Existing npm tools may have been installed by Mise's old aube backend, \
-	# which omits ast-grep's required postinstall binary selection. Reinstall \
-	# this one configured tool with the declared npm backend. \
-	mise_checked "$$scratch/ast-grep-install.log" mise_exec project "$$latest_mise" -C "$$project_root" install --force --yes "npm:@ast-grep/cli"; \
 	mise_checked_stdout "$$scratch/ast-grep-version.stdout" "$$scratch/ast-grep-version.stderr" mise_exec project "$$latest_mise" -C "$$project_root" exec -- ast-grep --version; \
 	if [ -s "$$scratch/ast-grep-version.stderr" ]; then \
 		printf 'ERROR: ast-grep emitted diagnostics after installation\n' >&2; exit 2; \
@@ -1585,6 +1585,21 @@ profile-census-report: _builtin_require_environment
 	@$(PROJECT_TOOL_EXEC) "$(RUNTIME_PYTHON)" -c \
 		'import pstats, sys; pstats.Stats(sys.argv[1]).sort_stats("cumtime").print_stats(35)' \
 		"$(PROJECT_SCRATCH_ROOT)/profiles/runtime-census.pstats"
+
+# Profile the checker process itself while retaining the canonical Mypy gate,
+# its resource limit, native source inventory, and external report directory.
+.PHONY: profile-mypy
+profile-mypy: _builtin_require_environment
+	@mkdir -p "$(PROJECT_SCRATCH_ROOT)/profiles"
+	@export FLEXT_MYPY_PROFILE_OUTPUT="$(PROJECT_SCRATCH_ROOT)/profiles/mypy.pstats"; \
+		$(PROJECT_FLEXT_INFRA) check run --repository-root "$(PROJECT_ROOT)" \
+		--gates mypy --projects . --report-findings
+
+.PHONY: profile-mypy-report
+profile-mypy-report: _builtin_require_environment
+	@$(PROJECT_TOOL_EXEC) "$(RUNTIME_PYTHON)" -c \
+		'import pstats, sys; pstats.Stats(sys.argv[1]).sort_stats("cumtime").print_stats(50)' \
+		"$(PROJECT_SCRATCH_ROOT)/profiles/mypy.pstats"
 
 .PHONY: profile-gen
 profile-gen: _builtin_require_environment
