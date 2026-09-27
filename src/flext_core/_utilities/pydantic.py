@@ -18,7 +18,6 @@ from pydantic import (
     WrapSerializer,
     WrapValidator,
     computed_field,
-    create_model,
     field_serializer,
     field_validator,
     model_serializer,
@@ -67,7 +66,6 @@ class FlextUtilitiesPydantic:
     ConfigDict = mp.ConfigDict
     FieldSerializationInfo = mp.FieldSerializationInfo
     TypeAdapter = mp.TypeAdapter
-    create_model = create_model
     validate_call = validate_call
     with_config = with_config
 
