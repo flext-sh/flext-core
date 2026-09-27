@@ -372,6 +372,7 @@ CLAUDE.local.md
 !.github/workflows/ci.yml
 !.github/workflows/docs.yml
 !.github/workflows/release.yml
+!docs/docs_config.json
 !.qlty/
 !.qlty/qlty.toml
 !.sonarcloud.properties
