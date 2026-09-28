@@ -56,9 +56,12 @@ src/flext_core/
 
 ## Commands
 
+Run from the workspace root (selector-free; the root dispatcher routes to every
+member — `PROJECT=` is not a root Make variable):
+
 ```bash
-make check PROJECT=flext-core
-make test PROJECT=flext-core
+make check
+make test
 ```
 
 <!-- AIHUB-AGENTS-SCOPE-LOCAL-END -->
