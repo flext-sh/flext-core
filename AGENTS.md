@@ -5,7 +5,8 @@
 > skills + parent/root `AGENTS.md` + this scope delta. Do not re-embed universal law.
 >
 > **Standalone / independent mode:** when `../AGENTS.md` does not resolve, pin the
-> parent raw `AGENTS.md` URL to the same branch/release as this package (never `main`).
+> parent raw `AGENTS.md` URL to the same branch/release as this package (never
+> `main`): <https://raw.githubusercontent.com/flext-sh/flext/0.12.0-dev/AGENTS.md>
 
 <!-- AIHUB-AGENTS-SCOPE-LOCAL-BEGIN -->
 
