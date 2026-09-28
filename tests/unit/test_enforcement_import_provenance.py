@@ -21,9 +21,16 @@ class TestsEnforcementImportProvenance:
             ("from flext_core import m\nError = m.ValidationError", "ENFORCE-070", False),
             ("from pydantic_core import ValidationError", "ENFORCE-070", True),
             ("import pydantic_core as dependency", "ENFORCE-070", True),
+            ("dependency = __import__('pydantic_core')", "ENFORCE-070", True),
             (
                 "from .base import FlextProbeBase as Dependency\n"
                 "class FlextProbeDerived(Dependency):\n    pass",
+                "ENFORCE-066",
+                False,
+            ),
+            (
+                "from .base import FlextProbeBase as Dependency\n"
+                "class FlextProbeDerived:\n    child: Dependency",
                 "ENFORCE-066",
                 False,
             ),
