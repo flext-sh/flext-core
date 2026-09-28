@@ -25,6 +25,7 @@ from __future__ import annotations
 import inspect
 import os
 from collections.abc import Callable
+from dataclasses import dataclass
 from importlib.resources.abc import Traversable
 from pathlib import Path
 from threading import RLock
@@ -90,23 +91,23 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
     reinstantiating the source or overriding ``settings_customise_sources``.
     """
 
-    def __init__(
-        self,
-        settings_cls: type[BaseSettings],
-        yaml_file: PathType | None = None,
-        yaml_file_encoding: str | None = None,
-        yaml_config_section: str | None = None,
-        *,
-        deep_merge: bool = False,
-        transform: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
-    ) -> None:
-        self._transform = transform
+    @dataclass(slots=True)
+    class _InitParams:
+        settings_cls: type[BaseSettings]
+        yaml_file: PathType | None = None
+        yaml_file_encoding: str | None = None
+        yaml_config_section: str | None = None
+        deep_merge: bool = False
+        transform: Callable[[dict[str, Any]], dict[str, Any]] | None = None
+
+    def __init__(self, params: _InitParams) -> None:
+        self._transform = params.transform
         super().__init__(
-            settings_cls,
-            yaml_file=yaml_file,
-            yaml_file_encoding=yaml_file_encoding,
-            yaml_config_section=yaml_config_section,
-            deep_merge=deep_merge,
+            params.settings_cls,
+            yaml_file=params.yaml_file,
+            yaml_file_encoding=params.yaml_file_encoding,
+            yaml_config_section=params.yaml_config_section,
+            deep_merge=params.deep_merge,
         )
 
     @override
@@ -320,11 +321,13 @@ class FlextConfig(BaseSettings):
             # NOTE (multi-agent): one canonical loader rejects duplicate keys
             # before settings construction; consumers never add local parsers.
             StrictYamlConfigSource(
-                settings_cls,
-                yaml_file=cls._config_files(),
-                yaml_config_section=cls.YAML_CONFIG_SECTION,
-                deep_merge=True,
-                transform=cls._transform_loaded_yaml,
+                StrictYamlConfigSource._InitParams(
+                    settings_cls=settings_cls,
+                    yaml_file=cls._config_files(),
+                    yaml_config_section=cls.YAML_CONFIG_SECTION,
+                    deep_merge=True,
+                    transform=cls._transform_loaded_yaml,
+                )
             ),
         )
 
