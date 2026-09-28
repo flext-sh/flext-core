@@ -109,11 +109,24 @@ class FlextUtilitiesBeartypeModuleVisitor:
             or filename in _MODULE_EXEMPT_FILES
         ):
             return _NO_VIOLATION
+        candidates = tuple(
+            (name, value)
+            for name, value in vars(module).items()
+            if _is_module_alias_candidate(name, value)
+        )
+        if not candidates:
+            return _NO_VIOLATION
+        try:
+            tree = FlextUtilitiesBeartypeModuleSource.parse(module)
+        except (OSError, TypeError, SyntaxError):
+            tree = None
         return next(
             (
                 {"alias": name, "target": value.__name__, "file": filename}
-                for name, value in vars(module).items()
-                if _is_module_alias_candidate(name, value)
+                for name, value in candidates
+                if not FlextUtilitiesBeartypeModuleSource.internal_dependency(
+                    tree, name
+                )
             ),
             _NO_VIOLATION,
         )
