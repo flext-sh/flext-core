@@ -128,8 +128,17 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
 
     @staticmethod
     def _iter_inner(target: type) -> Iterator[tuple[str, type]]:
+        """Yield the public classes declared inside ``target``.
+
+        A class the body only references (``REGEX_ERROR = re.error``) is not
+        one of the target's declarations and is never audited as the project's.
+        """
         for name, value in vars(target).items():
-            if isinstance(value, type) and not name.startswith("_"):
+            if (
+                isinstance(value, type)
+                and not name.startswith("_")
+                and ub.defined_inside(value, target.__qualname__)
+            ):
                 yield name, value
 
     @staticmethod
@@ -219,8 +228,6 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
             node: type, path: str
         ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
             for name, value in FlextUtilitiesEnforcementCollect._iter_inner(node):
-                if not ub.defined_inside(value, node.__qualname__):
-                    continue
                 full = f"{path}.{name}"
                 yield full, (value, layer)
                 if not isinstance(value, EnumType):

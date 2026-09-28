@@ -138,9 +138,9 @@ class TestsFlextCoreEnforcementSources:
             })
 
     def test_fix_action_defaults_safe_true_and_empty_params(self) -> None:
-        action = m.EnforcementFixAction(kind="gate", target="loose-symbol-gate")
-        assert action.kind == "gate"
-        assert action.target == "loose-symbol-gate"
+        action = m.EnforcementFixAction(kind="manual", target="remove_bypass")
+        assert action.kind == "manual"
+        assert action.target == "remove_bypass"
         assert action.safe is True
         assert dict(action.params) == {}
 

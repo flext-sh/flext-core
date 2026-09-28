@@ -80,16 +80,14 @@ class TestsFlextCoreLazyExports:
         assert package.u is package.FlextUtilities
         assert {"FlextConstants", "FlextUtilities", "u"} <= set(package.__all__)
 
-    def test_model_facade_does_not_initialize_dependency_runtime(self) -> None:
-        """Loading model declarations must not initialize the optional DI stack."""
+    def test_model_facade_does_not_import_web_runtime(self) -> None:
+        """Loading model declarations must not import the web framework stack."""
         script = (
             "import sys\n"
             "from flext_core import m\n"
             "assert m.StrictModel\n"
             "for name in sorted(sys.modules):\n"
-            "    if name == 'fastapi' or name.startswith('fastapi.') "
-            "or name == 'dependency_injector' "
-            "or name.startswith('dependency_injector.'):\n"
+            "    if name == 'fastapi' or name.startswith('fastapi.'):\n"
             "        print(name)\n"
         )
 

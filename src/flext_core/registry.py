@@ -279,17 +279,25 @@ class FlextRegistry(s[bool]):
             service: Service instance to register
 
         Returns:
-            r[bool]: Success (True) if registered or failure with error details.
+            r[bool]: Success (True) when registered, or when the same value is
+            already registered under ``name``; failure for a different value
+            under a registered name, or an empty or reserved name.
 
         """
-        was_registered = self.container.has(name)
         normalized_service = self._normalize_registration_impl(service)
-        _ = self.container.bind(name, normalized_service)
-        if was_registered or self.container.has(name):
-            return r[bool].ok(True)
-        return r[bool].fail_op(
-            "register service in registry", f"Service '{name}' was not registered"
-        )
+        if self.container.has(name):
+            existing = self.container.resolve(name)
+            if existing.success and existing.value == normalized_service:
+                return r[bool].ok(True)
+            return r[bool].fail_op(
+                "register service in registry",
+                c.ERR_CONTAINER_NAME_DUPLICATE.format(name=name),
+            )
+        try:
+            _ = self.container.bind(name, normalized_service)
+        except e.ValidationError as exc:
+            return e.fail_operation("register service in registry", exc)
+        return r[bool].ok(True)
 
     def register_bindings(
         self, bindings: t.MappingKV[t.RegistryBindingKey, t.DispatchableHandler]

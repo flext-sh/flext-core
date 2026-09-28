@@ -4,90 +4,13 @@ from __future__ import annotations
 
 from importlib import import_module
 
-from flext_core import m, p, t
+from flext_core import m, p
 
 from .model_options import FlextUtilitiesModelOptions
 
 
 class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
     """Runtime DSL: dispatcher, registry, and service-runtime construction."""
-
-    @staticmethod
-    def normalize_service_registrations(
-        registrations: t.MappingKV[str, m.ServiceRegistration | t.RegisterableService]
-        | None,
-    ) -> t.MappingKV[str, m.ServiceRegistration] | None:
-        """Normalize service values into service registration records."""
-        return (
-            None
-            if registrations is None
-            else {
-                name: (
-                    value
-                    if isinstance(value, m.ServiceRegistration)
-                    else m.ServiceRegistration(
-                        name=name, service=value, service_type=value.__class__.__name__
-                    )
-                )
-                for name, value in registrations.items()
-            }
-        )
-
-    @staticmethod
-    def normalize_factory_registrations(
-        registrations: t.MappingKV[str, m.FactoryRegistration | t.FactoryCallable]
-        | None,
-    ) -> t.MappingKV[str, m.FactoryRegistration] | None:
-        """Normalize factory callables into factory registration records."""
-        return (
-            None
-            if registrations is None
-            else {
-                name: (
-                    value
-                    if isinstance(value, m.FactoryRegistration)
-                    else m.FactoryRegistration(name=name, factory=value)
-                )
-                for name, value in registrations.items()
-            }
-        )
-
-    @staticmethod
-    def normalize_resource_registrations(
-        registrations: t.MappingKV[str, m.ResourceRegistration | t.ResourceCallable]
-        | None,
-    ) -> t.MappingKV[str, m.ResourceRegistration] | None:
-        """Normalize resource callables into resource registration records."""
-        return (
-            None
-            if registrations is None
-            else {
-                name: (
-                    value
-                    if isinstance(value, m.ResourceRegistration)
-                    else m.ResourceRegistration(name=name, factory=value)
-                )
-                for name, value in registrations.items()
-            }
-        )
-
-    @classmethod
-    def normalize_service_registration_spec(
-        cls, registration: m.ServiceRegistrationSpec
-    ) -> m.ServiceRegistrationSpec:
-        """Normalize declarative bootstrap values into registration records."""
-        normalized: m.ServiceRegistrationSpec = registration.model_copy(
-            update={
-                "services": cls.normalize_service_registrations(registration.services),
-                "factories": cls.normalize_factory_registrations(
-                    registration.factories
-                ),
-                "resources": cls.normalize_resource_registrations(
-                    registration.resources
-                ),
-            }
-        )
-        return normalized
 
     @classmethod
     def build_dispatcher(cls) -> p.Dispatcher:

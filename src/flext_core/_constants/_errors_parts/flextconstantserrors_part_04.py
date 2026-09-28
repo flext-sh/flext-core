@@ -134,7 +134,7 @@ class FlextConstantsErrorsDomainParser:
         "Expected sequence, got {type_name}"
     )
     ERR_COLLECTION_PROCESSING_FAILED_FOR_ITEM: ClassVar[str] = (
-        "Processing failed for item: {item}"
+        "Processing failed for item {item}: {error}"
     )
     ERR_COLLECTION_EXPECTED_STR_FOR_ENUM: ClassVar[str] = (
         "Expected str for enum conversion, got {type_name}"

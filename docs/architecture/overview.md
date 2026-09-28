@@ -42,7 +42,7 @@ Canonical references:
 ┌─────────────────────────────────────────────────────────────┐
 │                Foundation & Bridge Layers (L1)              │
 │  result.py, exceptions.py, registry.py                      │
-│  runtime.py (structlog/dependency-injector bridge)          │
+│  runtime.py (runtime normalization and validation)          │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -64,8 +64,8 @@ Canonical references:
 
 - **L1 – runtime bridge and results**
 
-  - `runtime.py` wraps structlog and dependency-injector factories so higher layers can
-    configure logging and DI without depending on third-party types.
+  - `runtime.py` normalizes runtime payloads and validates metadata so higher layers
+    never handle raw third-party types.
   - `result.py` delivers the railway-oriented `r`; `exceptions.py` contains the CQRS
     exception hierarchy consumed by handlers.
   - `registry.py` offers the shared registration helpers reused by dispatcher,
@@ -79,8 +79,8 @@ Canonical references:
     - Infrastructure sits beside the domain types: `_settings.py` (`FlextSettings` via
       `BaseSettings`), `context.py` (contextvars metadata propagation), `loggings.py`
       (`FlextUtilitiesLogging`), `utilities.py`/`_utilities/*` (validation, pagination,
-      caching, data mappers, reliability helpers), and `container.py`
-      (dependency-injector singleton plus scoped container factory).
+      caching, data mappers, reliability helpers), and `container.py` (the core runtime
+      registry: one validated write path, singleton plus scopes).
 
 - **L3 – application orchestration**
 

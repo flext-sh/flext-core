@@ -37,7 +37,7 @@ responsibilities.
 │                                     │  loggings.py, container.py
 ├─────────────────────────────────────┤
 │  L1: Foundation & Bridge            │  result.py, exceptions.py, registry.py
-│  (railway result, error surface)    │  runtime.py (structlog/dependency-injector bridge)
+│  (railway result, error surface)    │  runtime.py (runtime normalization and validation)
 ├─────────────────────────────────────┤
 │  L0: Pure Contracts                 │  constants.py, typings.py, protocols.py
 │  (immutable constants & protocols)  │
@@ -78,8 +78,8 @@ from flext_core import FlextDispatcher  # not allowed inside result.py
   - `exceptions.py` centralizes typed exceptions surfaced by dispatcher orchestration.
   - `registry.py` shares low-level registration helpers reused by dispatcher and
     container flows.
-  - `runtime.py` bridges structlog and dependency-injector while deliberately avoiding
-    imports from L2/L3 to prevent cycles.
+  - `runtime.py` normalizes runtime payloads and validates metadata while deliberately
+    avoiding imports from L2/L3 to prevent cycles.
 
 - **L2 – Domain & Infrastructure**
 

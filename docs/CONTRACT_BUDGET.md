@@ -125,7 +125,7 @@ Keep only behavioral:
 - `Result`, `ResultLike`, `SuccessCheckable`, `StructuredError`, `ErrorDomainProtocol`
 - `Model` (structural), `Routable`, `Dispatcher`, `Handle`, `Execute`,
   `AutoDiscoverableHandler`
-- `Context`, `Container` (protocol, not the concrete class), `ProviderLike`
+- `Context`, `Container` (protocol, not the concrete class)
 - `Settings`, `Configurable`
 - `Logger`, `OutputLogger`, `Flushable`
 - `Registry`, `RegistryBacked`
