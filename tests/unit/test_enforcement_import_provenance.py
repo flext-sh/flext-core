@@ -18,19 +18,40 @@ class TestsEnforcementImportProvenance:
     @pytest.mark.parametrize(
         ("binding", "rule", "rejected"),
         [
-            ("from flext_core import m\nError = m.ValidationError", "ENFORCE-070", False),
+            (
+                "from flext_core import m\nError = m.ValidationError",
+                "ENFORCE-070",
+                False,
+            ),
+            (
+                "import flext_core\nError = flext_core.m.ValidationError",
+                "ENFORCE-070",
+                False,
+            ),
+            (
+                (
+                    "from flext_core import m\n"
+                    "Intermediate = m.ValidationError\nError = Intermediate"
+                ),
+                "ENFORCE-070",
+                False,
+            ),
             ("from pydantic_core import ValidationError", "ENFORCE-070", True),
             ("import pydantic_core as dependency", "ENFORCE-070", True),
             ("dependency = __import__('pydantic_core')", "ENFORCE-070", True),
             (
-                "from .base import FlextProbeBase as Dependency\n"
-                "class FlextProbeDerived(Dependency):\n    pass",
+                (
+                    "from .base import FlextProbeBase as Dependency\n"
+                    "class FlextProbeDerived(Dependency):\n    pass"
+                ),
                 "ENFORCE-066",
                 False,
             ),
             (
-                "from .base import FlextProbeBase as Dependency\n"
-                "class FlextProbeDerived:\n    child: Dependency",
+                (
+                    "from .base import FlextProbeBase as Dependency\n"
+                    "class FlextProbeDerived:\n    child: Dependency"
+                ),
                 "ENFORCE-066",
                 False,
             ),
@@ -40,8 +61,18 @@ class TestsEnforcementImportProvenance:
                 True,
             ),
             (
-                "from .base import FlextProbeBase as LegacyName\n"
-                "__all__ = ['LegacyName', 'FlextProbeConsumer']",
+                (
+                    "from .base import FlextProbeBase as LegacyName\n"
+                    "__all__ = ['LegacyName', 'FlextProbeConsumer']"
+                ),
+                "ENFORCE-066",
+                True,
+            ),
+            (
+                (
+                    "from .base import FlextProbeBase as LegacyName\n"
+                    "__all__ = ['FlextProbeConsumer']\n__all__ += ['LegacyName']"
+                ),
                 "ENFORCE-066",
                 True,
             ),
@@ -54,22 +85,22 @@ class TestsEnforcementImportProvenance:
         package = tmp_path / "flext_probe"
         package.mkdir()
         (tmp_path / "pyproject.toml").write_text(
-            '[project]\nname = "flext-probe"\nversion = "0.0.0"\n',
-            encoding="utf-8",
+            '[project]\nname = "flext-probe"\nversion = "0.0.0"\n', encoding="utf-8"
         )
         (package / "__init__.py").write_text("", encoding="utf-8")
         (package / "base.py").write_text(
             "class FlextProbeBase:\n    pass\n", encoding="utf-8"
         )
         (package / "consumer.py").write_text(
-            f"{binding}\n\nclass FlextProbeConsumer:\n    pass\n",
-            encoding="utf-8",
+            f"{binding}\n\nclass FlextProbeConsumer:\n    pass\n", encoding="utf-8"
         )
         sys.path.insert(0, str(tmp_path))
         try:
             module = importlib.import_module("flext_probe.consumer")
             report = u.check(module.FlextProbeConsumer)
-            tm.that(any(item.rule_id == rule for item in report.violations), eq=rejected)
+            tm.that(
+                any(item.rule_id == rule for item in report.violations), eq=rejected
+            )
         finally:
             sys.path.remove(str(tmp_path))
             for name in ("flext_probe.consumer", "flext_probe.base", "flext_probe"):
