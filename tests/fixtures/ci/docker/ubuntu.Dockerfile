@@ -15,7 +15,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # out to for the flext-infra git+https requirement, make invokes the verbs.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-       bash ca-certificates curl git libatomic1 make \
+       bash ca-certificates curl git make \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --create-home --shell /bin/bash runner
 # End SECTION: base packages
@@ -37,7 +37,6 @@ WORKDIR /workspace
 RUN --mount=type=bind,source=.,target=/source,ro \
     cp -R /source/. /workspace/ \
     && chown -R runner:runner /workspace
-COPY --from=git --chown=runner:runner . /workspace/.git/
 USER runner
 ENV PATH="$MISE_DATA_DIR/shims:${PATH}"
 # End SECTION: managed tool bootstrap

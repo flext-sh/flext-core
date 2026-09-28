@@ -237,10 +237,10 @@ class FlextConstantsEnforcementFixActions:
             "safe": True,
         },
         "ENFORCE-074": {
-            "kind": "gate",
-            "target": "smells",
-            "params": {"smell_tag": "smell_boolean_logic"},
-            "safe": True,
+            "kind": "manual",
+            "target": "simplify_boolean_logic",
+            "params": {},
+            "safe": False,
         },
         "ENFORCE-079": {
             "kind": "rope",
@@ -267,15 +267,15 @@ class FlextConstantsEnforcementFixActions:
             "safe": True,
         },
         "ENFORCE-083": {
-            "kind": "gate",
-            "target": "smells",
-            "params": {"smell_tag": "type_ignore"},
+            "kind": "manual",
+            "target": "remove_bypass",
+            "params": {},
             "safe": True,
         },
         "ENFORCE-084": {
-            "kind": "gate",
-            "target": "smells",
-            "params": {"smell_tag": "noqa"},
+            "kind": "manual",
+            "target": "remove_bypass",
+            "params": {},
             "safe": True,
         },
         "ENFORCE-090": {
