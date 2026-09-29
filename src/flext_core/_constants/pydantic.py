@@ -89,7 +89,7 @@ class FlextConstantsPydantic:
 
     # pydantic_core sentinels and special values
     MISSING = MISSING
-    PydanticUndefined = PydanticUndefined
+    PYDANTIC_UNDEFINED = PydanticUndefined
     PydanticUndefinedType = PydanticUndefinedType
     PydanticUseDefault = PydanticUseDefault
     PydanticOmit = PydanticOmit

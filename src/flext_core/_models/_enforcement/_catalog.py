@@ -35,7 +35,7 @@ class FlextModelsEnforcementCatalog(FlextModelsEnforcementSources):
 
         id: Annotated[str, Field(pattern=c.PATTERN_ENFORCE_RULE_ID)]
         description: str
-        severity: c.Enforcement.EnforcementRuleSeverity
+        severity: c.EnforcementRuleSeverity
         source: Annotated[EnforcementRuleSource, Discriminator("kind")]
         agents_md_anchor: str = ""
         skills: t.StrSequence = ()
@@ -76,7 +76,7 @@ class FlextModelsEnforcementCatalog(FlextModelsEnforcementSources):
             return tuple(rule for rule in self.rules if rule.enabled)
 
         def by_kind(
-            self, kind: c.Enforcement.EnforcementSourceKind
+            self, kind: c.EnforcementSourceKind
         ) -> tuple[FlextModelsEnforcementCatalog.EnforcementRuleSpec, ...]:
             """Filter rules by source kind."""
             return tuple(rule for rule in self.rules if rule.source.kind == kind.value)
