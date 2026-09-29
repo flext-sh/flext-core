@@ -73,7 +73,7 @@ class TestsFlextCoreTypingsAliases:
 
     def test_numeric_types_membership(self) -> None:
         """NUMERIC_TYPES is exactly (int, float)."""
-        tm.that(t.NUMERIC_TYPES, eq=(int, float))
+        tm.that(c.NUMERIC_TYPES, eq=(int, float))
 
     def test_scalar_types_membership(self) -> None:
         """SCALAR_TYPES is exactly (str, int, float, bool, datetime)."""
@@ -107,7 +107,7 @@ class TestsFlextCoreTypingsAliases:
     ) -> None:
         """The type-check tuples classify values correctly via isinstance."""
         tm.that(isinstance(value, c.PRIMITIVES_TYPES), eq=is_primitive)
-        tm.that(isinstance(value, t.NUMERIC_TYPES), eq=is_numeric)
+        tm.that(isinstance(value, c.NUMERIC_TYPES), eq=is_numeric)
         tm.that(isinstance(value, t.SCALAR_TYPES), eq=is_scalar)
 
     @pytest.mark.parametrize(

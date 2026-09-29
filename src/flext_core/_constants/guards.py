@@ -35,6 +35,9 @@ class FlextConstantsGuards:
     )
     """Scalar primitive runtime types for isinstance checks (SSOT; ``c.*``)."""
 
+    NUMERIC_TYPES: Final[tuple[type[int], type[float]]] = (int, float)
+    """Numeric runtime types for isinstance checks (SSOT; ``c.*``)."""
+
     STRING_TYPE_PREDICATES: ClassVar[Mapping[str, Callable[[t.GuardInput], bool]]] = (
         MappingProxyType({
             "str": lambda v: isinstance(v, str),
