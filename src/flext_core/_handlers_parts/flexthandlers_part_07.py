@@ -133,7 +133,7 @@ class FlextHandlers[MessageT_contra, ResultT](
                     result = resolved_callable(message)
                     if result is None:
                         return None
-                    if isinstance(result, t.SCALAR_TYPES):
+                    if isinstance(result, c.SCALAR_TYPES):
                         return result
                     return str(result)
 

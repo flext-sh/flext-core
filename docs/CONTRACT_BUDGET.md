@@ -74,8 +74,8 @@ ONLY after all src green.
   `MutableContainerMappingBase`, `MutableContainerListBase` — MOVE OUT to `_constants/`
   (they are runtime classes, not types).
 - Tuples `PRIMITIVES_TYPES`/`NUMERIC_TYPES`/`SEQUENCE_PAIR_TYPES`/`STR_BYTES_TYPES`/
-  `STR_BINARY_TYPES`/`SCALAR_TYPES`/`CONTAINER_TYPES`/`CONTAINER_AND_COLLECTION_TYPES`
-  — MOVED to `_constants/guards.py` (runtime, not typing); read them as `c.<NAME>`.
+  `STR_BINARY_TYPES`/`SCALAR_TYPES`/`CONTAINER_TYPES`/`CONTAINER_AND_COLLECTION_TYPES` —
+  MOVED to `_constants/guards.py` (runtime, not typing); read them as `c.<NAME>`.
 
 ### FlextTypingBase — REMOVE / MIGRATE
 
@@ -207,7 +207,8 @@ Concrete base classes (`ContainerMappingBase`, etc.) move to `_models/containers
      `ScopedContainerRegistry`, `ScopedScalarRegistry` — following grep check that each
      has no active caller or can be inlined.
    - Move the concrete `*Base` classes out of `_typings/base.py` →
-     `_models/containers.py` (the runtime tuples already live in `_constants/guards.py`).
+     `_models/containers.py` (the runtime tuples already live in
+     `_constants/guards.py`).
    - Rewrite `typeadapters.py` to use `t.FlatContainerMapping` instead of
      `t.RecursiveContainerMapping`.
 2. **A2 — Freeze p.\***: audit every protocol signature; replace any

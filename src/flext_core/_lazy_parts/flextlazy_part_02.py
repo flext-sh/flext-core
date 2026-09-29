@@ -106,7 +106,9 @@ class FlextLazy(FlextLazyPart01):
             # CPython's from-import swallows an AttributeError escaping a module
             # __getattr__ together with its cause; a target module that fails
             # to execute is a defect, never a missing name, so it fails loud.
-            msg = f"lazy import of {module_path!r} for {name!r} in {module_name!r} failed"
+            msg = (
+                f"lazy import of {module_path!r} for {name!r} in {module_name!r} failed"
+            )
             raise ImportError(msg, name=module_path) from exc
         if not attr:
             if not self._module_is_initializing(mod):

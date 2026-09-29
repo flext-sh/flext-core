@@ -59,9 +59,7 @@ class FlextConstantsGuards:
     """Scalar runtime types for isinstance checks (SSOT; ``c.*``)."""
 
     CONTAINER_TYPES: Final[
-        tuple[
-            type[str], type[int], type[float], type[bool], type[datetime], type[Path]
-        ]
+        tuple[type[str], type[int], type[float], type[bool], type[datetime], type[Path]]
     ] = (str, int, float, bool, datetime, Path)
     """Container leaf runtime types for isinstance checks (SSOT; ``c.*``)."""
 

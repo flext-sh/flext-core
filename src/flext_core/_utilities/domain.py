@@ -71,8 +71,8 @@ class FlextUtilitiesDomain:
         Returns True if same type and all attributes equal.
         """
         result: bool
-        if isinstance(obj_a, t.SCALAR_TYPES):
-            result = obj_a == obj_b if isinstance(obj_b, t.SCALAR_TYPES) else False
+        if isinstance(obj_a, c.SCALAR_TYPES):
+            result = obj_a == obj_b if isinstance(obj_b, c.SCALAR_TYPES) else False
         elif u.scalar(obj_b):
             result = False
         else:
