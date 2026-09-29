@@ -177,19 +177,13 @@ url = "https://github.com/kucherenko/jscpd/releases/download/v5.3.3/jscpd-linux-
 url_api = "https://api.github.com/repos/kucherenko/jscpd/releases/assets/595512981"
 provenance = "github-attestations"
 
+
 [tools."github:kucherenko/jscpd"."platforms.linux-x64-musl"]
 checksum = "sha256:0a1f298a7e010d439be0b21fb8271cf92fca10f9b10fa8eb111320f3d129b62c"
 url = "https://github.com/kucherenko/jscpd/releases/download/v5.3.3/jscpd-linux-x64-gnu.tar.gz"
 url_api = "https://api.github.com/repos/kucherenko/jscpd/releases/assets/595512981"
 provenance = "github-attestations"
 
-[[tools."github:kucherenko/jscpd"]]
-version = "5.3.3"
-backend = "github:kucherenko/jscpd"
-specifiers = ["latest"]
-
-[tools."github:kucherenko/jscpd".options]
-asset_pattern = "jscpd-linux-arm64-gnu.tar.gz"
 
 [tools."github:kucherenko/jscpd"."platforms.macos-arm64"]
 checksum = "sha256:a90634a456876a8985abd4c4e6674355f4d76f2166fec10d0f295ee5e17c5d6c"
@@ -197,13 +191,6 @@ url = "https://github.com/kucherenko/jscpd/releases/download/v5.3.3/jscpd-darwin
 url_api = "https://api.github.com/repos/kucherenko/jscpd/releases/assets/595512987"
 provenance = "github-attestations"
 
-[[tools."github:kucherenko/jscpd"]]
-version = "5.3.3"
-backend = "github:kucherenko/jscpd"
-specifiers = ["latest"]
-
-[tools."github:kucherenko/jscpd".options]
-asset_pattern = "jscpd-linux-x64-gnu.tar.gz"
 
 [tools."github:kucherenko/jscpd"."platforms.macos-x64"]
 checksum = "sha256:d107a9c8fddfd718bfc4d98252d1123ea70ee942b7d0ae3324968de7df53e5b9"
@@ -211,13 +198,6 @@ url = "https://github.com/kucherenko/jscpd/releases/download/v5.3.3/jscpd-darwin
 url_api = "https://api.github.com/repos/kucherenko/jscpd/releases/assets/595512991"
 provenance = "github-attestations"
 
-[[tools."github:kucherenko/jscpd"]]
-version = "5.3.3"
-backend = "github:kucherenko/jscpd"
-specifiers = ["latest"]
-
-[tools."github:kucherenko/jscpd".options]
-asset_pattern = "jscpd-darwin-x64.tar.gz"
 
 [tools."github:kucherenko/jscpd"."platforms.windows-x64"]
 checksum = "sha256:75152cab799db1b894b4c8ba57934291d90174459f2db394bd1243a389c78071"
