@@ -102,7 +102,7 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
                     for key_s, item in value.items()
                 }
             )
-        if isinstance(value, Sequence) and not isinstance(value, tb.STR_BINARY_TYPES):
+        if isinstance(value, Sequence) and not isinstance(value, c.STR_BINARY_TYPES):
             return FlextModelsContainers.ObjectList(
                 root=[
                     FlextRuntimeContainer._normalize_payload_item(
@@ -169,7 +169,7 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
             normalized_data = FlextRuntimeContainer._normalize_dict_entries(
                 list(val.items())
             )
-        elif isinstance(val, Sequence) and not isinstance(val, tb.STR_BYTES_TYPES):
+        elif isinstance(val, Sequence) and not isinstance(val, c.STR_BYTES_TYPES):
             normalized_data = list(
                 tta.json_list_adapter().validate_python([
                     FlextRuntimeContainer.normalize_to_json_value(item_raw)

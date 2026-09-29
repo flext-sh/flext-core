@@ -196,6 +196,25 @@ class FlextConstantsEnforcementNamespace:
         # loader reads it through `cls`, so a consumer override stays on the
         # config class; relocating it to _constants breaks the framework read.
         "CONFIG_FILENAMES",
+        # Why: FlextConfig's own YAML-section hook — same framework idiom as
+        # CONFIG_FILENAMES: the loader reads it through `cls` per subclass and
+        # FlextConfig must not import _constants (constants import it as base).
+        "YAML_CONFIG_SECTION",
+        # Why: typing-layer runtime values owned by FlextTypingBase itself.
+        # They are consumed through the base class by 69 core modules and the
+        # member fleet (`t.PRIMITIVES_TYPES` isinstance checks), and relocating
+        # them to _constants inverts the t→c bootstrap dependency: the lazy
+        # machinery (flext_core/__init__ → lazy → _typings.base) loads the base
+        # before `_constants/__init__` exists, so any runtime edge from the
+        # base into `_constants` is a proven circular import.
+        "PRIMITIVES_TYPES",
+        "NUMERIC_TYPES",
+        "SEQUENCE_PAIR_TYPES",
+        "STR_BYTES_TYPES",
+        "STR_BINARY_TYPES",
+        "SCALAR_TYPES",
+        "CONTAINER_TYPES",
+        "CONTAINER_AND_COLLECTION_TYPES",
     })
     """ClassVar attribute names that are framework idioms and stay in place."""
 
