@@ -40,36 +40,36 @@ class FlextConstantsGuards:
     NUMERIC_TYPES: Final[tuple[type[int], type[float]]] = (int, float)
     """Numeric runtime types for isinstance checks (SSOT; ``c.*``)."""
 
-    SEQUENCE_PAIR_TYPES: Final[tuple[type, ...]] = (list, tuple)
-    """Sequence container runtime types (SSOT; ``c.*``)."""
+    SEQUENCE_PAIR_TYPES: Final[t.VariadicTuple[type]] = (list, tuple)
+    """List and tuple runtime types for isinstance checks (SSOT; ``c.*``)."""
 
     STR_BYTES_TYPES: Final[tuple[type[str], type[bytes]]] = (str, bytes)
-    """String/bytes runtime types (SSOT; ``c.*``)."""
+    """Text and bytes runtime types for isinstance checks (SSOT; ``c.*``)."""
 
     STR_BINARY_TYPES: Final[tuple[type[str], type[bytes], type[bytearray]]] = (
         str,
         bytes,
         bytearray,
     )
-    """String/bytes/bytearray runtime types (SSOT; ``c.*``)."""
+    """Text and binary runtime types for isinstance checks (SSOT; ``c.*``)."""
 
     SCALAR_TYPES: Final[
         tuple[type[str], type[int], type[float], type[bool], type[datetime]]
     ] = (str, int, float, bool, datetime)
-    """Scalar runtime types (SSOT; ``c.*``)."""
+    """Scalar runtime types for isinstance checks (SSOT; ``c.*``)."""
 
     CONTAINER_TYPES: Final[
         tuple[type[str], type[int], type[float], type[bool], type[datetime], type[Path]]
     ] = (str, int, float, bool, datetime, Path)
-    """Container value runtime types (SSOT; ``c.*``)."""
+    """Container leaf runtime types for isinstance checks (SSOT; ``c.*``)."""
 
-    CONTAINER_AND_COLLECTION_TYPES: Final[tuple[type, ...]] = (
+    CONTAINER_AND_COLLECTION_TYPES: Final[t.VariadicTuple[type]] = (
         *CONTAINER_TYPES,
         list,
         dict,
         tuple,
     )
-    """Container plus built-in collection runtime types (SSOT; ``c.*``)."""
+    """Container leaves plus collection runtime types (SSOT; ``c.*``)."""
 
     STRING_TYPE_PREDICATES: ClassVar[Mapping[str, Callable[[t.GuardInput], bool]]] = (
         MappingProxyType({
