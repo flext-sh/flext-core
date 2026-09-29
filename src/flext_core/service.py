@@ -40,15 +40,14 @@ import threading
 from types import NoneType, UnionType
 from typing import ClassVar, Self, Unpack, get_args, get_origin, is_protocol, override
 
-from pydantic import ConfigDict
 
-from flext_core import c, p, t, x
+from flext_core import c, m, p, t, x
 
 
 class FlextService[TDomainResult = p.Base](x):
     """Base class for domain services in FLEXT applications."""
 
-    model_config: ClassVar[ConfigDict] = ConfigDict(
+    model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
         strict=True,
         arbitrary_types_allowed=True,
         extra="forbid",
@@ -61,7 +60,7 @@ class FlextService[TDomainResult = p.Base](x):
     _lock: ClassVar[threading.RLock] = threading.RLock()
     _instance: ClassVar[Self | None] = None
 
-    def __init_subclass__(cls, **kwargs: Unpack[ConfigDict]) -> None:
+    def __init_subclass__(cls, **kwargs: Unpack[m.ConfigDict]) -> None:
         """Inject a per-class singleton slot for every concrete subclass."""
         _ = kwargs
         super().__init_subclass__()
