@@ -16,14 +16,18 @@
 [settings]
 lockfile = true
 locked = true
-lockfile_platforms = ["linux-x64", "linux-arm64", "macos-x64", "macos-arm64", "windows-x64"]
+lockfile_platforms = ["linux-x64", "linux-x64-musl", "linux-arm64", "macos-x64", "macos-arm64", "windows-x64"]
+[settings.npm]
+# Aube replays the locked dependency graph. Only the configured ast-grep
+# package is approved below to run its native binary-selection lifecycle.
+package_manager = "aube"
 [tool_config]
 locked = true
 # End SECTION: settings
 
 # === SECTION: tools (managed) ===
 # Source: config:python_version, config:codegen.scaffold.project.dev native toolchain floors
-#         (kubectl_version, helm_version, kind_version, taplo_version, ast_grep_version,
+#         (kubectl_version, helm_version, kind_version, taplo_version, ast_grep_selector/ast_grep_version,
 #          gitleaks_version, scc_selector/scc_version, kubeconform_version, qlty_selector/qlty_version,
 #          node_version, jscpd_selector/jscpd_version/jscpd_asset_patterns,
 #          prettier_selector/prettier_version, waza_selector/waza_version/waza_version_prefix,
@@ -37,7 +41,7 @@ helm = "latest"
 kind = "latest"
 direnv = "latest"
 taplo = "latest"
-ast-grep = "latest"
+"npm:@ast-grep/cli" = { version = "latest", allow_builds = ["@ast-grep/cli"] }
 gitleaks = "latest"
 "aqua:boyter/scc" = "latest"
 kubeconform = "latest"
@@ -47,11 +51,11 @@ go = "latest"
 make = "latest"
 [tools."github:qltysh/qlty"]
 version = "0.642.0"
-github_attestations = false
 [tools."github:kucherenko/jscpd"]
 version = "latest"
 [tools."github:kucherenko/jscpd".platforms]
 linux-x64 = { asset_pattern = "jscpd-linux-x64-gnu.tar.gz" }
+linux-x64-musl = { asset_pattern = "jscpd-linux-x64-musl.tar.gz" }
 linux-arm64 = { asset_pattern = "jscpd-linux-arm64-gnu.tar.gz" }
 macos-x64 = { asset_pattern = "jscpd-darwin-x64.tar.gz" }
 macos-arm64 = { asset_pattern = "jscpd-darwin-arm64.tar.gz" }

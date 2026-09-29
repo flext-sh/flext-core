@@ -48,7 +48,9 @@ jobs:
   # Source: template + config:github_actions.*
   ci:
     name: ci
-    # Only the checkout job needs repository contents.
+    # Only the checkout job needs repository contents; packages: read is
+    # granted solely to distributions declared in codegen
+    # ci_package_registry_read, whose gates resolve GitHub Packages.
     permissions:
       contents: read
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
@@ -128,6 +130,33 @@ jobs:
       # once, before any gate runs.
       - name: Normalize checkout modes
         run: chmod -R go-w .
+
+      # Why (flext-7jnr0): every fresh runner paid a cold full-dependency Mypy,
+      # Pyrefly and Ruff analysis. The caches below are content-addressed by the
+      # committed dependency locks, so a warm cache is always valid for the same
+      # lock and can never hide a finding; it only removes the cold recompute.
+      # Why (flext-gd3m1): the same pair keeps the locked Mise tool storage, so
+      # a cold runner never re-downloads the pinned tarballs, where a network
+      # blip failed setup.
+      - name: Restore tool caches
+        id: tool-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            __pycache__
+            .mypy_cache
+            .pytest_cache
+            .ruff_cache
+            .pyrefly_cache
+            .benchmarks
+            .hypothesis
+            ~/.cache/uv
+            ~/.cache/pyright
+            ~/.local/share/mise
+          key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-3.13-tools-
+
       # make setup is the frozen installer. It bootstraps the committed Mise
       # release and installs the fleet toolchain from the committed
       # mise.lock and the dependencies frozen from the committed uv.lock,
@@ -157,7 +186,7 @@ jobs:
         run: CI=Y make check
 
       # Both blocking steps derive from the same active default universe.
-      # CI=Y runs lint pyright silent-failure deferred-self-reference security markdown loc-cap tier-whitelist index-declarations smells layout canonical-alias direnv.
+      # CI=Y runs lint pyright silent-failure deferred-self-reference security markdown loc-cap boundary runtime-census tier-whitelist index-declarations codemod layout canonical-alias direnv duplication.
       # CI=N runs pyrefly mypy.
       # The partitions are disjoint and together execute every active gate.
       - name: check complement (blocking)
@@ -169,6 +198,26 @@ jobs:
         run: |
           git status --short
           test -z "$(git status --porcelain --untracked-files=all --ignore-submodules=none)"
+
+      # Why (flext-7jnr0): save on every outcome — including a failing gate — so
+      # the next run starts warm. Only written when the restore missed.
+      - name: Save tool caches
+        if: ${{ always() && steps.tool-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            __pycache__
+            .mypy_cache
+            .pytest_cache
+            .ruff_cache
+            .pyrefly_cache
+            .benchmarks
+            .hypothesis
+            ~/.cache/uv
+            ~/.cache/pyright
+            ~/.local/share/mise
+          key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
+
   # End SECTION: ci job
 
   # === SECTION: release-plan job (managed) ===

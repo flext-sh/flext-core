@@ -71,8 +71,4 @@ SMELL_CODE_SMELL_ROWS: tuple[tuple[str, str, str, str, tuple[str, ...], str], ..
     )
 )
 
-__all__: list[str] = [
-    "ENFORCEMENT_SMELL_TAGS",
-    "SMELL_RULES_TEXT",
-    "SMELL_THRESHOLDS",
-]
+__all__: list[str] = ["ENFORCEMENT_SMELL_TAGS", "SMELL_RULES_TEXT", "SMELL_THRESHOLDS"]
