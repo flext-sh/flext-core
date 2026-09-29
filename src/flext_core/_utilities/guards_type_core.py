@@ -114,7 +114,7 @@ class FlextUtilitiesGuardsTypeCore:
     def primitive(
         value: t.GuardInput | t.JsonPayload | t.JsonValue,
     ) -> TypeIs[t.Primitives]:
-        """Check if value is a primitive type c.PRIMITIVES_TYPES)."""
+        """Check if value is a primitive type (c.PRIMITIVES_TYPES)."""
         return isinstance(value, c.PRIMITIVES_TYPES)
 
     @staticmethod
