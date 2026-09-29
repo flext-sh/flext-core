@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass
 from functools import wraps
 from typing import TYPE_CHECKING
 
@@ -20,17 +19,6 @@ if TYPE_CHECKING:
 
     from .._protocols.loggings import FlextProtocolsLogging as pl
     from .._typings.base import FlextTypingBase as tb
-
-
-@dataclass(slots=True)
-class _ExecuteLoggedCallParams:
-    func_name: str
-    func_module: str
-    op_name: str
-    logger: pl.Logger
-    correlation_id: str | None
-    track_perf: bool
-    start_time: float
 
 
 class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
@@ -73,15 +61,13 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
                 try:
                     return cls._execute_logged_call(
                         lambda: func(*args, **kwargs),
-                        _ExecuteLoggedCallParams(
-                            func_name=func.__name__,
-                            func_module=func.__module__,
-                            op_name=op_name,
-                            logger=logger,
-                            correlation_id=correlation_id,
-                            track_perf=track_perf,
-                            start_time=start_time,
-                        ),
+                        func_name=func.__name__,
+                        func_module=func.__module__,
+                        op_name=op_name,
+                        logger=logger,
+                        correlation_id=correlation_id,
+                        track_perf=track_perf,
+                        start_time=start_time,
                     )
                 finally:
                     u.clear_scope(c.ContextScope.OPERATION).unwrap()
@@ -102,35 +88,42 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
     def _execute_logged_call[TResult](
         cls,
         call: Callable[[], TResult],
-        params: _ExecuteLoggedCallParams,
+        *,
+        func_name: str,
+        func_module: str,
+        op_name: str,
+        logger: pl.Logger,
+        correlation_id: str | None,
+        track_perf: bool,
+        start_time: float,
     ) -> TResult:
         """Execute the wrapped callable and emit success/failure logs."""
         try:
-            params.logger.debug(
+            logger.debug(
                 "%s_started",
-                params.op_name,
+                op_name,
                 **cls._start_log_payload(
-                    func_name=params.func_name,
-                    func_module=params.func_module,
-                    correlation_id=params.correlation_id,
+                    func_name=func_name,
+                    func_module=func_module,
+                    correlation_id=correlation_id,
                 ),
             )
             result = call()
         except cls._CAUGHT_EXCEPTIONS as exc:
-            tracked_duration = time.perf_counter() - params.start_time if params.track_perf else 0.0
+            tracked_duration = time.perf_counter() - start_time if track_perf else 0.0
             exc_kw: tb.MutableJsonMapping = {
-                "function": params.func_name,
+                "function": func_name,
                 "success": False,
                 "error": str(exc),
                 "error_type": exc.__class__.__name__,
-                "operation": params.op_name,
+                "operation": op_name,
             }
-            if params.correlation_id is not None:
-                exc_kw[c.ContextKey.CORRELATION_ID] = params.correlation_id
-            if params.track_perf:
+            if correlation_id is not None:
+                exc_kw[c.ContextKey.CORRELATION_ID] = correlation_id
+            if track_perf:
                 exc_kw["duration_ms"] = tracked_duration * c.MS_PER_SECOND
                 exc_kw[c.MetadataKey.DURATION_SECONDS] = tracked_duration
-            params.logger.exception(params.op_name, exception=exc, **exc_kw)
+            logger.exception(op_name, exception=exc, **exc_kw)
             raise
         else:
             logger.debug(

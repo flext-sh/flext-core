@@ -79,9 +79,7 @@ def _raise_flext_timeout_error() -> None:
 def _raise_flext_type_error() -> None:
     """Raise one FlextTypeError example for handler exercise."""
     raise e.FlextTypeError(
-        e.FlextTypeError._InitParams(
-            message=m.Examples.ErrorMessages.WRONG_TYPE, expected_type=str, actual_type=int
-        )
+        m.Examples.ErrorMessages.WRONG_TYPE, expected_type=str, actual_type=int
     )
 
 
@@ -121,21 +119,6 @@ class Ex07FlextExceptionSubclasses(ExamplesFlextShared):
 
     def _exercise_specific_exceptions(self) -> None:
         self.section("subclasses")
-        self._exercise_validation_error()
-        self._exercise_configuration_error()
-        self._exercise_connection_error()
-        self._exercise_timeout_error()
-        self._exercise_authentication_error()
-        self._exercise_authorization_error()
-        self._exercise_not_found_error()
-        self._exercise_conflict_error()
-        self._exercise_rate_limit_error()
-        self._exercise_circuit_breaker_error()
-        self._exercise_type_error()
-        self._exercise_operation_error()
-        self._exercise_attribute_access_error()
-
-    def _exercise_validation_error(self) -> None:
         try:
             _raise_validation_error()
         except e.ValidationError as exc:
@@ -145,8 +128,6 @@ class Ex07FlextExceptionSubclasses(ExamplesFlextShared):
                 exc.field or "field", error=exc
             )
             self.audit_check("ValidationError.fail_validation", str(converted.failure))
-
-    def _exercise_configuration_error(self) -> None:
         try:
             _raise_configuration_error()
         except e.ConfigurationError as exc:
@@ -154,61 +135,45 @@ class Ex07FlextExceptionSubclasses(ExamplesFlextShared):
             self.audit_check(
                 "ConfigurationError.config_source", exc.config_source or ""
             )
-
-    def _exercise_connection_error(self) -> None:
         try:
             _raise_flext_connection_error()
         except e.FlextConnectionError as exc:
             self.audit_check("ConnectionError.host", exc.host or "")
             self.audit_check("ConnectionError.port", exc.port or 0)
             self.audit_check("ConnectionError.timeout", exc.timeout or 0.0)
-
-    def _exercise_timeout_error(self) -> None:
         try:
             _raise_flext_timeout_error()
         except e.FlextTimeoutError as exc:
             self.audit_check("TimeoutError.timeout_seconds", exc.timeout_seconds or 0.0)
             self.audit_check("TimeoutError.operation", exc.operation or "")
-
-    def _exercise_authentication_error(self) -> None:
         try:
             _raise_authentication_error()
         except e.AuthenticationError as exc:
             self.audit_check("AuthenticationError.auth_method", exc.auth_method or "")
             self.audit_check("AuthenticationError.user_id", exc.user_id or "")
-
-    def _exercise_authorization_error(self) -> None:
         try:
             _raise_authorization_error()
         except e.AuthorizationError as exc:
             self.audit_check("AuthorizationError.user_id", exc.user_id or "")
             self.audit_check("AuthorizationError.resource", exc.resource or "")
             self.audit_check("AuthorizationError.permission", exc.permission or "")
-
-    def _exercise_not_found_error(self) -> None:
         try:
             _raise_not_found_error()
         except e.NotFoundError as exc:
             self.audit_check("NotFoundError.resource_type", exc.resource_type or "")
             self.audit_check("NotFoundError.resource_id", exc.resource_id or "")
-
-    def _exercise_conflict_error(self) -> None:
         try:
             _raise_conflict_error()
         except e.ConflictError as exc:
             self.audit_check("ConflictError.resource_type", exc.resource_type or "")
             self.audit_check("ConflictError.resource_id", exc.resource_id or "")
             self.audit_check("ConflictError.conflict_reason", exc.conflict_reason or "")
-
-    def _exercise_rate_limit_error(self) -> None:
         try:
             _raise_rate_limit_error()
         except e.RateLimitError as exc:
             self.audit_check("RateLimitError.limit", exc.limit or 0)
             self.audit_check("RateLimitError.window_seconds", exc.window_seconds or 0)
             self.audit_check("RateLimitError.retry_after", exc.retry_after or 0.0)
-
-    def _exercise_circuit_breaker_error(self) -> None:
         try:
             _raise_circuit_breaker_error()
         except e.CircuitBreakerError as exc:
@@ -219,8 +184,6 @@ class Ex07FlextExceptionSubclasses(ExamplesFlextShared):
             self.audit_check(
                 "CircuitBreakerError.reset_timeout", exc.reset_timeout or 0.0
             )
-
-    def _exercise_type_error(self) -> None:
         try:
             _raise_flext_type_error()
         except e.FlextTypeError as exc:
@@ -232,15 +195,11 @@ class Ex07FlextExceptionSubclasses(ExamplesFlextShared):
                 "TypeError.actual_type",
                 exc.actual_type.__name__ if exc.actual_type else "",
             )
-
-    def _exercise_operation_error(self) -> None:
         try:
             _raise_operation_error()
         except e.OperationError as exc:
             self.audit_check("OperationError.operation", exc.operation or "")
             self.audit_check("OperationError.reason", exc.reason or "")
-
-    def _exercise_attribute_access_error(self) -> None:
         try:
             _raise_attribute_access_error()
         except e.AttributeAccessError as exc:

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import c
@@ -12,10 +11,7 @@ from ..._runtime._metadata_validation import (
 )
 from ..._typings.base import FlextTypingBase as tb
 from ..helpers import FlextExceptionsHelpers
-from .flextexceptionsbase_part_02 import (
-    FlextBaseErrorStateMixin,
-    _InitializeBaseStateParams,
-)
+from .flextexceptionsbase_part_02 import FlextBaseErrorStateMixin
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
@@ -26,22 +22,6 @@ if TYPE_CHECKING:
     from ..._typings.services import FlextTypesServices as ts
 
 
-@dataclass(slots=True)
-class _FlextBaseErrorInitParams:
-    message: str
-    error_code: str = c.ErrorCode.UNKNOWN_ERROR
-    context: tb.MappingKV[str, ts.JsonPayload | None] | pr.HasModelDump | None = None
-    metadata: pr.HasModelDump | tb.JsonValue | None = None
-    correlation_id: str | None = None
-    auto_correlation: bool = False
-    auto_log: bool = True
-    merged_kwargs: tb.MappingKV[str, ts.JsonPayload | None] | pr.HasModelDump | None = None
-    params: m.BaseModel | None = None
-    extra_kwargs: tb.MutableJsonMapping | None = None
-    expected_type: str | None = None
-    actual_type: str | None = None
-
-
 class FlextBaseError(FlextBaseErrorStateMixin, Exception):
     """Base exception with correlation metadata and error codes."""
 
@@ -49,19 +29,36 @@ class FlextBaseError(FlextBaseErrorStateMixin, Exception):
     excluded_context_keys: ClassVar[set[str] | frozenset[str] | None] = None
     _default_error_code: ClassVar[str] = c.ErrorCode.UNKNOWN_ERROR
 
-    def __init__(self, params: _FlextBaseErrorInitParams) -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        error_code: str = c.ErrorCode.UNKNOWN_ERROR,
+        context: tb.MappingKV[str, ts.JsonPayload | None]
+        | pr.HasModelDump
+        | None = None,
+        metadata: pr.HasModelDump | tb.JsonValue | None = None,
+        correlation_id: str | None = None,
+        auto_correlation: bool = False,
+        auto_log: bool = True,
+        merged_kwargs: tb.MappingKV[str, ts.JsonPayload | None]
+        | pr.HasModelDump
+        | None = None,
+        params: m.BaseModel | None = None,
+        **extra_kwargs: tb.JsonValue,
+    ) -> None:
         """Initialize base error with message and optional metadata."""
         declaredparams_cls = self.__class__.params_cls
         if declaredparams_cls is not None:
             resolved_error_code = (
                 self._default_error_code
-                if params.error_code == c.ErrorCode.UNKNOWN_ERROR
-                else params.error_code
+                if error_code == c.ErrorCode.UNKNOWN_ERROR
+                else error_code
             )
             combined_extra: MutableMapping[str, ts.JsonPayload | None] = {}
             try:
                 merged_kwargs_map = FlextRuntime.normalize_metadata_input_mapping(
-                    params.merged_kwargs
+                    merged_kwargs
                 )
             except c.EXC_PYDANTIC_TYPE_VALUE:
                 merged_kwargs_map = None
@@ -71,11 +68,10 @@ class FlextBaseError(FlextBaseErrorStateMixin, Exception):
                     for key, value in merged_kwargs_map.items()
                     if value is not None
                 })
-            if params.extra_kwargs:
-                combined_extra.update({
-                    key: FlextRuntime.normalize_to_metadata(value)
-                    for key, value in params.extra_kwargs.items()
-                })
+            combined_extra.update({
+                key: FlextRuntime.normalize_to_metadata(value)
+                for key, value in extra_kwargs.items()
+            })
             declared_param_keys = frozenset(declaredparams_cls.model_fields)
             remaining_extra: tb.MutableJsonMapping = {}
             if combined_extra:
@@ -129,35 +125,31 @@ class FlextBaseError(FlextBaseErrorStateMixin, Exception):
                 if isinstance(field_help, str) and field_help:
                     ctx[f"{key}_description"] = field_help
             self._initialize_base_state(
-                _InitializeBaseStateParams(
-                    message=message,
-                    error_code=resolved_error_code,
-                    context=ctx or None,
-                    metadata=metadata if metadata is not None else preserved_metadata,
-                    correlation_id=(
-                        correlation_id if correlation_id is not None else correlation_id_str
-                    ),
-                    auto_correlation=auto_correlation,
-                    auto_log=auto_log,
-                    merged_kwargs=None,
-                    extra_kwargs={},
-                )
+                message,
+                error_code=resolved_error_code,
+                context=ctx or None,
+                metadata=metadata if metadata is not None else preserved_metadata,
+                correlation_id=(
+                    correlation_id if correlation_id is not None else correlation_id_str
+                ),
+                auto_correlation=auto_correlation,
+                auto_log=auto_log,
+                merged_kwargs=None,
+                extra_kwargs={},
             )
             for key in declared_param_keys:
                 setattr(self, key, getattr(resolved, key))
             return
         self._initialize_base_state(
-            _InitializeBaseStateParams(
-                message=message,
-                error_code=error_code,
-                context=context,
-                metadata=metadata,
-                correlation_id=correlation_id,
-                auto_correlation=auto_correlation,
-                auto_log=auto_log,
-                merged_kwargs=merged_kwargs,
-                extra_kwargs=extra_kwargs,
-            )
+            message,
+            error_code=error_code,
+            context=context,
+            metadata=metadata,
+            correlation_id=correlation_id,
+            auto_correlation=auto_correlation,
+            auto_log=auto_log,
+            merged_kwargs=merged_kwargs,
+            extra_kwargs=extra_kwargs,
         )
 
 
