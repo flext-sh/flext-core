@@ -64,7 +64,7 @@ class FlextUtilitiesCollection(
                 if predicate(v):
                     return r[TItem].ok(v)
             return r[TItem].fail(c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND)
-        if isinstance(items, t.SEQUENCE_PAIR_TYPES):
+        if isinstance(items, c.SEQUENCE_PAIR_TYPES):
             for item in items:
                 if predicate(item):
                     return r[TItem].ok(item)

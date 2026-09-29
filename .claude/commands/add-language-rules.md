@@ -1,6 +1,5 @@
 ---
-description:
-  "Add or extend project-owned language rules through the existing rule architecture."
+description: "Add or extend project-owned language rules through the existing rule architecture."
 argument-hint: "<language> <rule scope or requirement>"
 disable-model-invocation: true
 ---

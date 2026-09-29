@@ -6,7 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from enum import StrEnum, unique
 from typing import ClassVar
 
 from ..._typings.base import FlextTypingBase as t
@@ -66,27 +65,6 @@ class FlextModelsEnforcementBase:
             if not isinstance(fragment, str):
                 return False
             return any(fragment in message for message in self.messages)
-
-    @unique
-    class EnforcementRuleSeverity(StrEnum):
-        """Severity scale for catalog rules."""
-
-        CRITICAL = "CRITICAL"
-        HIGH = "HIGH"
-        MEDIUM = "MEDIUM"
-        LOW = "LOW"
-
-    @unique
-    class EnforcementSourceKind(StrEnum):
-        """Addressable origin layer for a catalog rule."""
-
-        FLEXT_INFRA_DETECTOR = "flext_infra_detector"
-        FLEXT_TESTS_VALIDATOR = "flext_tests_validator"
-        RUNTIME_WARNING = "runtime_warning"
-        BEARTYPE = "beartype"
-        CODE_SMELL = "code_smell"
-        RUFF = "ruff"
-        SKILL_POINTER = "skill_pointer"
 
 
 __all__: list[str] = ["EnforcementModelBase", "FlextModelsEnforcementBase"]

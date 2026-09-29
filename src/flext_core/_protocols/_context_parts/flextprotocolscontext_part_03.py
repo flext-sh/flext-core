@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     from flext_core import p, t
@@ -16,6 +16,7 @@ from .flextprotocolscontext_part_02 import (
 
 
 class FlextProtocolsContext(FlextProtocolsContextPart02):
+    @runtime_checkable
     class RuntimeBootstrapOptions(Protocol):
         """Runtime bootstrap options a service base declares for its runtime."""
 

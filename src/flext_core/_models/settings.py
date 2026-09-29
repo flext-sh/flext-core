@@ -84,9 +84,5 @@ class FlextModelsSettings:
                 raise ValueError(c.ERR_MODEL_MAX_DELAY_LESS_THAN_INITIAL)
             return self
 
-    # DOMAIN_MODEL_CONFIG moved to its SSOT owner
-    # ``FlextConstantsSettings`` in ``_constants/settings.py`` (ENFORCE-079);
-    # consume it as ``c.DOMAIN_MODEL_CONFIG``.
-
 
 __all__: t.MutableSequenceOf[str] = ["FlextModelsSettings"]

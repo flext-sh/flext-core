@@ -14,6 +14,7 @@ from datetime import UTC, datetime
 import pytest
 from flext_tests import m as ftm, tm
 
+from tests.constants import c
 from tests.models import m
 from tests.typings import t
 
@@ -157,7 +158,7 @@ class TestsFlextCoreTypingsContainers:
         with pytest.raises(ftm.ValidationError):
             m.ObjectList.model_validate({"not": "a list"})
 
-    # ---- t.SCALAR_TYPES: runtime scalar contract ---------------------------
+    # ---- c.SCALAR_TYPES: runtime scalar contract ---------------------------
 
     @pytest.mark.parametrize(
         "scalar", ["text", 42, math.pi, True, datetime(2025, 1, 1, tzinfo=UTC)]
@@ -166,14 +167,14 @@ class TestsFlextCoreTypingsContainers:
         self, *, scalar: str | float | bool | datetime
     ) -> None:
         """SCALAR_TYPES is an isinstance-usable tuple covering all scalar kinds."""
-        tm.that(isinstance(scalar, t.SCALAR_TYPES), eq=True)
+        tm.that(isinstance(scalar, c.SCALAR_TYPES), eq=True)
 
     @pytest.mark.parametrize("nonscalar", [["list"], {"dict": 1}, ("tuple",)])
     def test_scalar_types_rejects_containers(
         self, nonscalar: list[str] | dict[str, int] | tuple[str]
     ) -> None:
         """Container values are not members of the scalar runtime contract."""
-        tm.that(isinstance(nonscalar, t.SCALAR_TYPES), eq=False)
+        tm.that(isinstance(nonscalar, c.SCALAR_TYPES), eq=False)
 
     # ---- t tuple aliases: arity contract via validation --------------------
 

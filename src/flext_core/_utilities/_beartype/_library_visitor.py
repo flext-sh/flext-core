@@ -5,6 +5,7 @@ from __future__ import annotations
 from ..._models.enforcement import FlextModelsEnforcement as me
 from ..._typings.base import FlextTypingBase as t
 from .helpers import FlextUtilitiesBeartypeHelpers as _ubh
+from .module_source import FlextUtilitiesBeartypeModuleSource
 
 _NO_VIOLATION: t.StrMapping | None = None
 
@@ -16,7 +17,14 @@ class FlextUtilitiesBeartypeLibraryVisitor:
     def v_library_import(
         params: me.LibraryImportParams, target: type
     ) -> t.StrMapping | None:
-        """LIBRARY_IMPORT — §2.7 library abstraction owner enforcement (Phase 3 hook)."""
+        """LIBRARY_IMPORT — §2.7 library abstraction owner enforcement (Phase 3 hook).
+
+        A namespace member whose runtime origin is an owned library only
+        violates when its module-level binding is not proven to derive from
+        the owner project's imports: bindings rooted in owner imports are
+        facade provenance (legal), while direct imports, aliased imports,
+        and dynamic ``__import__`` acquisitions stay violations.
+        """
         if not params.library_owners:
             return _NO_VIOLATION
         module = _ubh.runtime_module_for(target)
@@ -24,13 +32,22 @@ class FlextUtilitiesBeartypeLibraryVisitor:
             return _NO_VIOLATION
         module_name = getattr(target, "__module__", "") or ""
         package = module_name.split(".")[0].replace("_", "-")
-        for value in vars(module).values():
-            origin = _ubh.object_module_name_for(value)
-            if origin is None:
-                continue
-            origin_root = origin.split(".")[0]
-            owner = params.library_owners.get(origin_root)
-            if owner is None or package == owner:
+        candidates = tuple(
+            (name, origin_root, params.library_owners[origin_root])
+            for name, value in vars(module).items()
+            if (origin := _ubh.object_module_name_for(value)) is not None
+            and (origin_root := origin.split(".")[0]) in params.library_owners
+            and params.library_owners[origin_root] != package
+        )
+        if not candidates:
+            return _NO_VIOLATION
+        try:
+            tree = FlextUtilitiesBeartypeModuleSource.parse(module)
+        except (OSError, TypeError, SyntaxError):
+            tree = None
+        for name, origin_root, owner in candidates:
+            owner_root = owner.replace("-", "_")
+            if FlextUtilitiesBeartypeModuleSource.owner_derived(tree, name, owner_root):
                 continue
             return {"lib": origin_root, "owner": owner, "package": package}
         return _NO_VIOLATION

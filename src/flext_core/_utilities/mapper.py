@@ -10,7 +10,7 @@ from collections.abc import Callable, Mapping, Sequence
 from itertools import starmap
 from typing import TYPE_CHECKING
 
-from flext_core import m, r, t
+from flext_core import c, m, r, t
 from flext_core.runtime import FlextRuntime
 
 from .._models.pydantic import FlextModelsPydantic
@@ -46,7 +46,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
                     raw = item.get(field)
                 else:
                     continue
-                if isinstance(raw, t.NUMERIC_TYPES):
+                if isinstance(raw, c.NUMERIC_TYPES):
                     numeric_values.append(raw)
         agg_fn = fn if fn is not None else sum
         return agg_fn(numeric_values) if numeric_values else 0

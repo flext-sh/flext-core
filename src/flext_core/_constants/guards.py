@@ -17,8 +17,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableSequence
+from datetime import datetime
+from pathlib import Path
 from types import MappingProxyType
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, Final
 
 if TYPE_CHECKING:
     from flext_core import t
@@ -26,6 +28,48 @@ if TYPE_CHECKING:
 
 class FlextConstantsGuards:
     """Static type-predicate registry for u.matches_type dispatch."""
+
+    PRIMITIVES_TYPES: Final[tuple[type[str], type[int], type[float], type[bool]]] = (
+        str,
+        int,
+        float,
+        bool,
+    )
+    """Scalar primitive runtime types for isinstance checks (SSOT; ``c.*``)."""
+
+    NUMERIC_TYPES: Final[tuple[type[int], type[float]]] = (int, float)
+    """Numeric runtime types for isinstance checks (SSOT; ``c.*``)."""
+
+    SEQUENCE_PAIR_TYPES: Final[tuple[type, ...]] = (list, tuple)
+    """Sequence container runtime types (SSOT; ``c.*``)."""
+
+    STR_BYTES_TYPES: Final[tuple[type[str], type[bytes]]] = (str, bytes)
+    """String/bytes runtime types (SSOT; ``c.*``)."""
+
+    STR_BINARY_TYPES: Final[tuple[type[str], type[bytes], type[bytearray]]] = (
+        str,
+        bytes,
+        bytearray,
+    )
+    """String/bytes/bytearray runtime types (SSOT; ``c.*``)."""
+
+    SCALAR_TYPES: Final[
+        tuple[type[str], type[int], type[float], type[bool], type[datetime]]
+    ] = (str, int, float, bool, datetime)
+    """Scalar runtime types (SSOT; ``c.*``)."""
+
+    CONTAINER_TYPES: Final[
+        tuple[type[str], type[int], type[float], type[bool], type[datetime], type[Path]]
+    ] = (str, int, float, bool, datetime, Path)
+    """Container value runtime types (SSOT; ``c.*``)."""
+
+    CONTAINER_AND_COLLECTION_TYPES: Final[tuple[type, ...]] = (
+        *CONTAINER_TYPES,
+        list,
+        dict,
+        tuple,
+    )
+    """Container plus built-in collection runtime types (SSOT; ``c.*``)."""
 
     STRING_TYPE_PREDICATES: ClassVar[Mapping[str, Callable[[t.GuardInput], bool]]] = (
         MappingProxyType({

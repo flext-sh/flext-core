@@ -10,12 +10,11 @@ import warnings
 from functools import wraps
 from typing import TYPE_CHECKING, ClassVar, TypeIs
 
-from flext_core import FlextContainer, m
+from flext_core import FlextContainer, c, m
 from flext_core.context import FlextContext
 from flext_core.loggings import FlextUtilitiesLogging
 
 from .._protocols.loggings import FlextProtocolsLogging as pl
-from .._typings.base import FlextTypingBase as tb
 from .._typings.services import FlextTypesServices as ts
 
 if TYPE_CHECKING:
@@ -47,7 +46,7 @@ class FlextDecoratorsBase:
         """Return whether value carries or can route logging context."""
         _ = cls
         return isinstance(
-            value, (pl.Logger, pl.HasLogger, m.BaseModel, *tb.CONTAINER_TYPES)
+            value, (pl.Logger, pl.HasLogger, m.BaseModel, *c.CONTAINER_TYPES)
         )
 
     @classmethod
