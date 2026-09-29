@@ -10,7 +10,16 @@ if TYPE_CHECKING:
 
 
 class FlextConstantsEnforcementFixActions:
-    """Fix-action metadata consumed by flext-infra enforcement fixers."""
+    """Fix-action metadata consumed by flext-infra enforcement fixers.
+
+    A rule whose repair is a syntax-node codemod rule declares no fix action
+    here. ENFORCE-026, ENFORCE-027, ENFORCE-028, ENFORCE-091, ENFORCE-092 and
+    ENFORCE-094 once drove a whole-file regex transformer that could not tell
+    code from a docstring, comment or string: it rewrote the documentation of
+    the defects it forbids and turned ``typing.List[`` into
+    ``typing.t.SequenceOf[``. Their violations stay reported; the flext-infra
+    ast-grep rules applied by ``make mod`` own the rewrite.
+    """
 
     _PYDANTIC_SYMBOLS_TO_REPLACE: ClassVar[t.JsonDict] = {
         "BaseModel": "m.BaseModel",
@@ -35,57 +44,6 @@ class FlextConstantsEnforcementFixActions:
                 "kind": "transformer",
                 "target": "typing_unifier",
                 "params": {"targets": ["dict"]},
-                "safe": True,
-            },
-            "ENFORCE-026": {
-                "kind": "transformer",
-                "target": "pattern",
-                "params": {
-                    "patterns": [
-                        {
-                            "regex": r"^(?P<indent>\s*)except\s*:(?P<trail>.*)$",
-                            "replacement": r"\g<indent>except Exception:\g<trail>",
-                            "change_message": "Rewrote bare except to except Exception",
-                            "flags": ["MULTILINE"],
-                        }
-                    ]
-                },
-                "safe": True,
-            },
-            "ENFORCE-027": {
-                "kind": "transformer",
-                "target": "pattern",
-                "params": {
-                    "patterns": [
-                        {
-                            "regex": r"\bprint\s*\(\s*(?P<args>[^)]*)\s*\)",
-                            "replacement": r"u.fetch_logger(__name__).info(\g<args>)",
-                            "change_message": "Rewrote u.Cli.print() to u.fetch_logger(__name__).info()",
-                        }
-                    ],
-                    "required_alias": "u",
-                },
-                "safe": False,
-            },
-            "ENFORCE-028": {
-                "kind": "transformer",
-                "target": "pattern",
-                "params": {
-                    "patterns": [
-                        {
-                            "regex": r"^[ \t]*breakpoint\s*\(\s*\)\s*[;\n]",
-                            "replacement": "\n",
-                            "change_message": "Removed debugger statement",
-                            "flags": ["MULTILINE"],
-                        },
-                        {
-                            "regex": r"^[ \t]*import\s+pdb\s*;\s*pdb\.set_trace\s*\(\s*\)\s*[;\n]",
-                            "replacement": "\n",
-                            "change_message": "Removed debugger statement",
-                            "flags": ["MULTILINE"],
-                        },
-                    ]
-                },
                 "safe": True,
             },
             "ENFORCE-029": {
@@ -135,36 +93,6 @@ class FlextConstantsEnforcementFixActions:
                 },
                 "safe": True,
             },
-            "ENFORCE-091": {
-                "kind": "transformer",
-                "target": "pattern",
-                "params": {
-                    "patterns": [
-                        {
-                            "regex": r"\bList\s*\[",
-                            "replacement": "t.SequenceOf[",
-                            "change_message": "Rewrote List[...] to t.SequenceOf[...]",
-                        }
-                    ],
-                    "required_alias": "t",
-                },
-                "safe": True,
-            },
-            "ENFORCE-092": {
-                "kind": "transformer",
-                "target": "pattern",
-                "params": {
-                    "patterns": [
-                        {
-                            "regex": r"\btyping\s*\.\s*List\s*\[",
-                            "replacement": "t.SequenceOf[",
-                            "change_message": "Rewrote typing.List[...] to t.SequenceOf[...]",
-                        }
-                    ],
-                    "required_alias": "t",
-                },
-                "safe": True,
-            },
             "ENFORCE-093": {
                 "kind": "transformer",
                 "target": "import_modernizer",
@@ -175,26 +103,6 @@ class FlextConstantsEnforcementFixActions:
                     "blocked_aliases": [],
                 },
                 "safe": True,
-            },
-            "ENFORCE-094": {
-                "kind": "transformer",
-                "target": "pattern",
-                "params": {
-                    "patterns": [
-                        {
-                            "regex": r"\bstructlog\s*\.\s*get_logger\s*\(\s*\)",
-                            "replacement": "u.fetch_logger(__name__)",
-                            "change_message": "Rewrote structlog.get_logger() to u.fetch_logger(__name__)",
-                        },
-                        {
-                            "regex": r"\bstructlog\s*\.\s*get_logger\s*\(\s*['\"](?P<name>[^'\"]*)['\"]\s*\)",
-                            "replacement": r'u.fetch_logger("\g<name>")',
-                            "change_message": "Rewrote structlog.get_logger(name) to u.fetch_logger(name)",
-                        },
-                    ],
-                    "required_alias": "u",
-                },
-                "safe": False,
             },
             "ENFORCE-048": {
                 "kind": "transformer",
