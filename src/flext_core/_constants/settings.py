@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from types import MappingProxyType
 from typing import Final
 
 from pydantic import ConfigDict
@@ -24,13 +25,15 @@ class FlextConstantsSettings:
     SERIALIZATION_ISO8601: Final = "iso8601"
     SERIALIZATION_BASE64: Final = "base64"
 
-    DOMAIN_MODEL_CONFIG: Final[ConfigDict] = ConfigDict(
-        use_enum_values=True,
-        validate_assignment=True,
-        validate_return=True,
-        validate_default=True,
-        str_strip_whitespace=True,
-        arbitrary_types_allowed=False,
-        extra="forbid",
+    DOMAIN_MODEL_CONFIG: Final[ConfigDict] = MappingProxyType(
+        ConfigDict(
+            use_enum_values=True,
+            validate_assignment=True,
+            validate_return=True,
+            validate_default=True,
+            str_strip_whitespace=True,
+            arbitrary_types_allowed=False,
+            extra="forbid",
+        )
     )
     """Domain model configuration defaults (SSOT; consumed via ``c.*``)."""
