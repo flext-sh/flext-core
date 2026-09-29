@@ -55,7 +55,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
         probe: type = module.Probe
         return probe
 
-    def _apply(self, target: type) -> t.StrMapping | None:
+    def _apply(self, target: type) -> t.StrMapping | tuple[t.StrMapping, ...] | None:
         """Invoke the public engine dispatch for the wrapper-alias-import shape."""
         return be.apply(
             c.EnforcementPredicateKind.DEPRECATED_SYNTAX,
@@ -86,6 +86,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
         violation = self._apply(probe)
 
         assert violation is not None
+        assert not isinstance(violation, tuple)
         assert violation["statement"] == _FORBIDDEN_IMPORT
         assert violation["file"] == "sample.py"
         assert violation["line"] == "1"

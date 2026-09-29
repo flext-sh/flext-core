@@ -103,11 +103,19 @@ class FlextUtilitiesBeartypeAttrVisitor:
     @staticmethod
     def v_classvar_constant(
         params: me.ClassVarConstantParams, target: type
-    ) -> t.StrMapping | None:
-        """CLASSVAR_CONSTANT — flag constants declared outside _constants."""
+    ) -> tuple[t.StrMapping, ...] | None:
+        """CLASSVAR_CONSTANT — flag constants declared outside _constants.
+
+        Returns every violating constant declared on the class in one pass
+        (one finding per constant), so a cure never plays whack-a-mole with
+        the detector.
+        """
         module_name = getattr(target, "__module__", "") or ""
         if module_name.endswith("._constants") or "._constants." in module_name:
-            return _NO_VIOLATION
+            return None
+        class_name = getattr(target, "__qualname__", "<class>")
+        project = module_name.split(".", 1)[0] or "project"
+        findings: list[t.StrMapping] = []
         for name, value in vars(target).items():
             if name.startswith("_") or name != name.upper():
                 continue
@@ -126,14 +134,15 @@ class FlextUtilitiesBeartypeAttrVisitor:
                 continue
             if not FlextUtilitiesBeartypeAttrVisitor._is_constant_value(value):
                 continue
-            project = module_name.split(".", 1)[0] or "project"
-            return {
+            findings.append({
                 "name": name,
                 "module": module_name.rsplit(".", 1)[-1],
-                "class_name": getattr(target, "__qualname__", "<class>"),
+                "class_name": class_name,
                 "full_module": module_name,
                 "implicit": str(is_implicit),
                 "suggested_name": name,
                 "suggested_target": f"{project}._constants",
-            }
-        return _NO_VIOLATION
+            })
+        if not findings:
+            return None
+        return tuple(findings)
