@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import importlib.resources
+from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field
@@ -56,8 +57,12 @@ def _load_smell_data() -> _SmellData:
 _SMELL_DATA: _SmellData = _load_smell_data()
 
 ENFORCEMENT_SMELL_TAGS: tuple[str, ...] = _SMELL_DATA.tags
-SMELL_THRESHOLDS: t.MappingKV[str, int] = _SMELL_DATA.thresholds.model_dump()
-SMELL_RULES_TEXT: t.MappingKV[str, tuple[str, str]] = _SMELL_DATA.rules_text
+SMELL_THRESHOLDS: t.MappingKV[str, int] = MappingProxyType(
+    _SMELL_DATA.thresholds.model_dump()
+)
+SMELL_RULES_TEXT: t.MappingKV[str, tuple[str, str]] = MappingProxyType(
+    _SMELL_DATA.rules_text
+)
 SMELL_BEARTYPE_ROWS: tuple[tuple[str, str, str, str, tuple[str, ...], str], ...] = (
     tuple(
         (row.id, row.severity, row.tag, row.anchor, row.skills, row.description)

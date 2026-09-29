@@ -87,13 +87,6 @@ class FlextTypingBase(tp, ta):
     type MutableHeaderMapping = MutableMapping[str, int | str]
     type MutableConfigValueMapping = MutableMapping[str, str | int | float]
 
-    PRIMITIVES_TYPES: tuple[type[str], type[int], type[float], type[bool]] = (
-        str,
-        int,
-        float,
-        bool,
-    )
-    NUMERIC_TYPES: tuple[type[int], type[float]] = (int, float)
     SEQUENCE_PAIR_TYPES: VariadicTuple[type] = (list, tuple)
     STR_BYTES_TYPES: tuple[type[str], type[bytes]] = (str, bytes)
     STR_BINARY_TYPES: tuple[type[str], type[bytes], type[bytearray]] = (

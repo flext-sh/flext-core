@@ -11,8 +11,12 @@ import time
 import traceback
 from typing import TYPE_CHECKING, ClassVar, Self
 
-from flext_core import c, e, p, r, t
+from flext_core.constants import c
+from flext_core.exceptions import e
 from flext_core.models import m
+from flext_core.protocols import p
+from flext_core.result import r
+from flext_core.typings import t
 
 from ._utilities.logging_context import FlextUtilitiesLoggingContext as ulc
 

@@ -13,7 +13,7 @@ from __future__ import annotations
 import operator
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_core import r, t
+from flext_core import c, r, t
 
 from .._models.collection_models import FlextModelsCollections
 from .._protocols.result import FlextProtocolsResult as p
@@ -68,7 +68,7 @@ class FlextUtilitiesGuards(
     @staticmethod
     def _resolve_numeric(value: t.GuardInput) -> t.Numeric:
         """Extract numeric value (raw for numbers, len for sized types)."""
-        if isinstance(value, t.NUMERIC_TYPES):
+        if isinstance(value, c.NUMERIC_TYPES):
             return value
         if isinstance(value, (str, bytes, list, tuple, dict, set, frozenset)):
             sized_value: Sized = value
@@ -127,7 +127,7 @@ class FlextUtilitiesGuards(
                         result = False
                         break
                     continue
-                if isinstance(spec_val_num, t.NUMERIC_TYPES) and not num_fn(
+                if isinstance(spec_val_num, c.NUMERIC_TYPES) and not num_fn(
                     check_val, spec_val_num
                 ):
                     result = False
