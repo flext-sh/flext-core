@@ -200,7 +200,8 @@ jobs:
           test -z "$(git status --porcelain --untracked-files=all --ignore-submodules=none)"
 
       # Why (flext-7jnr0): save on every outcome — including a failing gate — so
-      # the next run starts warm. Only written when the restore missed.
+      # the next run starts warm. Only written when the restore missed.      # Why: save on every outcome — including a failing gate — so the next run
+      # starts warm. Only written when the restore missed.
       - name: Save tool caches
         if: ${{ always() && steps.tool-cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v6

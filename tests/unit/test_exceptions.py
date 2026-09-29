@@ -99,7 +99,9 @@ class TestsFlextCoreExceptions:
     ) -> None:
         # Act — TypeError accepts either a type or its name and resolves both.
         error = e.FlextTypeError(
-            "type mismatch", expected_type=declared, actual_type=declared
+            e.FlextTypeError._InitParams(
+                message="type mismatch", expected_type=declared, actual_type=declared
+            )
         )
         # Assert
         assert error.expected_type is expected

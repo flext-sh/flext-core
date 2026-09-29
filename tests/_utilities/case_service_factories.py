@@ -2,23 +2,34 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, ClassVar, override
 
 from tests.constants import c
 from tests.models import m
+from flext_tests.typings import t
 
 from .service_factories import TestsFlextUtilitiesServiceFactoriesMixin
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from tests.typings import t
-
 
 class TestsFlextUtilitiesCaseServiceFactoriesMixin(
     TestsFlextUtilitiesServiceFactoriesMixin
 ):
     """Service case construction helpers."""
+
+    @dataclass(slots=True)
+    class _ServiceTestCaseBuildParams:
+        """Parameters for building a ServiceTestCase."""
+
+        service_type: c.Tests.ServiceType | None = None
+        input_value: str | None = None
+        expected_success: bool = True
+        expected_error: str | None = None
+        extra_param: int = c.Tests.MIN_LENGTH_DEFAULT
+        description: str | None = None
 
     class ServiceTestCaseFactory(TestsFlextUtilitiesServiceFactoriesMixin.WordRotation):
         """Factory for m.Tests.ServiceTestCase."""
@@ -40,37 +51,28 @@ class TestsFlextUtilitiesCaseServiceFactoriesMixin(
             return service_type
 
         @classmethod
-        def build(
-            cls,
-            *,
-            service_type: c.Tests.ServiceType | None = None,
-            input_value: str | None = None,
-            expected_success: bool = True,
-            expected_error: str | None = None,
-            extra_param: int = c.Tests.MIN_LENGTH_DEFAULT,
-            description: str | None = None,
-        ) -> m.Tests.ServiceTestCase:
+        def build(cls, params: _ServiceTestCaseBuildParams) -> m.Tests.ServiceTestCase:
             """Build a m.Tests.ServiceTestCase instance."""
-            actual_type = service_type if service_type is not None else cls._next_type()
-            actual_input = input_value if input_value is not None else cls._next_word()
+            actual_type = params.service_type if params.service_type is not None else cls._next_type()
+            actual_input = params.input_value if params.input_value is not None else cls._next_word()
             actual_description = (
-                description
-                if description is not None
+                params.description
+                if params.description is not None
                 else f"Test case for {actual_type} with {actual_input}"
             )
             return m.Tests.ServiceTestCase(
                 service_type=actual_type,
                 input_value=actual_input,
-                expected_success=expected_success,
-                expected_error=expected_error,
-                extra_param=extra_param,
+                expected_success=params.expected_success,
+                expected_error=params.expected_error,
+                extra_param=params.extra_param,
                 description=actual_description,
             )
 
         @classmethod
         def build_batch(cls, size: int) -> t.SequenceOf[m.Tests.ServiceTestCase]:
             """Build multiple m.Tests.ServiceTestCase instances with auto-generated values."""
-            return [cls.build() for _ in range(size)]
+            return [cls.build(cls._ServiceTestCaseBuildParams()) for _ in range(size)]
 
         @classmethod
         @override
