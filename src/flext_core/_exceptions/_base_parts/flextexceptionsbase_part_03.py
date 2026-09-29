@@ -102,7 +102,7 @@ class FlextBaseError(FlextBaseErrorStateMixin, Exception):
                 normalized_value = FlextRuntime.normalize_to_metadata(value)
                 param_values[key] = (
                     normalized_value
-                    if isinstance(normalized_value, tb.SCALAR_TYPES)
+                    if isinstance(normalized_value, c.SCALAR_TYPES)
                     else str(normalized_value)
                 )
             resolved = (

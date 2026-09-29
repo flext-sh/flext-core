@@ -73,9 +73,9 @@ ONLY after all src green.
 - Concrete bases `ContainerMappingBase`, `ContainerListBase`,
   `MutableContainerMappingBase`, `MutableContainerListBase` — MOVE OUT to `_constants/`
   (they are runtime classes, not types).
-- Tuples
-  `PRIMITIVES_TYPES`/`NUMERIC_TYPES`/`SCALAR_TYPES`/`CONTAINER_TYPES`/`CONTAINER_AND_COLLECTION_TYPES`
-  — MOVE to `_constants/` (runtime, not typing).
+- Tuples `PRIMITIVES_TYPES`/`NUMERIC_TYPES`/`SEQUENCE_PAIR_TYPES`/`STR_BYTES_TYPES`/
+  `STR_BINARY_TYPES`/`SCALAR_TYPES`/`CONTAINER_TYPES`/`CONTAINER_AND_COLLECTION_TYPES`
+  — MOVED to `_constants/guards.py` (runtime, not typing); read them as `c.<NAME>`.
 
 ### FlextTypingBase — REMOVE / MIGRATE
 
@@ -186,14 +186,12 @@ Remove / collapse:
 
 ## Budget: c.\* (FlextConstants)
 
-Keep domain constants and error codes. Accept runtime tuples relocated from
-`_typings/base.py`:
+Keep domain constants and error codes. The runtime tuples relocated from
+`_typings/base.py` live flat on `c` (owner `FlextConstantsGuards`, ENFORCE-079):
 
-- `c.Typing.PRIMITIVES_TYPES`
-- `c.Typing.NUMERIC_TYPES`
-- `c.Typing.SCALAR_TYPES`
-- `c.Typing.CONTAINER_TYPES`
-- `c.Typing.CONTAINER_AND_COLLECTION_TYPES`
+- `c.PRIMITIVES_TYPES`, `c.NUMERIC_TYPES`, `c.SEQUENCE_PAIR_TYPES`
+- `c.STR_BYTES_TYPES`, `c.STR_BINARY_TYPES`, `c.SCALAR_TYPES`
+- `c.CONTAINER_TYPES`, `c.CONTAINER_AND_COLLECTION_TYPES`
 
 Concrete base classes (`ContainerMappingBase`, etc.) move to `_models/containers.py` as
 `m.Containers.*` OR to a new `_base_containers.py` in `_utilities/`. Decision: keep in
@@ -208,8 +206,8 @@ Concrete base classes (`ContainerMappingBase`, etc.) move to `_models/containers
      `HandlerLike`, `TypeOriginSpecifier`, `ServiceMap` dup variants,
      `ScopedContainerRegistry`, `ScopedScalarRegistry` — following grep check that each
      has no active caller or can be inlined.
-   - Move `PRIMITIVES_TYPES`/etc. + concrete `*Base` classes out of `_typings/base.py` →
-     `_constants/` or `_models/containers.py`.
+   - Move the concrete `*Base` classes out of `_typings/base.py` →
+     `_models/containers.py` (the runtime tuples already live in `_constants/guards.py`).
    - Rewrite `typeadapters.py` to use `t.FlatContainerMapping` instead of
      `t.RecursiveContainerMapping`.
 2. **A2 — Freeze p.\***: audit every protocol signature; replace any
