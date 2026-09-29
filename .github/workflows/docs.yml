@@ -35,7 +35,6 @@ jobs:
     # governed sibling repos. The job token authenticates both, as in CI.
     env:
       GITHUB_TOKEN: ${{ github.token }}
-      MISE_GITHUB_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -43,8 +42,58 @@ jobs:
           submodules: false
           fetch-depth: 0
 
+      # Why (flext-gd3m1): a cold runner re-downloaded every locked Mise tool
+      # (go included) on every Docs run, and a network blip failed setup. The
+      # cache is content-addressed by the committed locks, so a warm cache is
+      # always valid for the same lock and can never hide a finding; it only
+      # removes the cold download of the pinned tarballs.      # Why (flext-gd3m1): a cold runner re-downloaded every locked Mise tool
+      # (go included) on every run, and a network blip failed setup. The cache
+      # is content-addressed by the committed locks, so a warm cache is always
+      # valid for the same lock and can never hide a finding; it only removes
+      # the cold download of the pinned tarballs.
+      - name: Restore tool caches
+        id: tool-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            __pycache__
+            .mypy_cache
+            .pytest_cache
+            .ruff_cache
+            .pyrefly_cache
+            .benchmarks
+            .hypothesis
+            ~/.cache/uv
+            ~/.cache/pyright
+            ~/.local/share/mise
+          key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-3.13-tools-
+
+
       - name: Sync workspace toolchain
         run: make setup
+
+      # Why: save on every outcome — including a failing gate — so the next run
+      # starts warm. Only written when the restore missed.      # Why: save on every outcome — including a failing gate — so the next run
+      # starts warm. Only written when the restore missed.
+      - name: Save tool caches
+        if: ${{ always() && steps.tool-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            __pycache__
+            .mypy_cache
+            .pytest_cache
+            .ruff_cache
+            .pyrefly_cache
+            .benchmarks
+            .hypothesis
+            ~/.cache/uv
+            ~/.cache/pyright
+            ~/.local/share/mise
+          key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
+
 
       - name: Generation drift (blocking)
         run: |
@@ -105,7 +154,6 @@ jobs:
     # Why: same authenticated toolchain and docs-source resolution as docs-quality.
     env:
       GITHUB_TOKEN: ${{ github.token }}
-      MISE_GITHUB_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -113,8 +161,51 @@ jobs:
           submodules: false
           fetch-depth: 0
 
+      # Why (flext-gd3m1): same cold-download protection as the docs-quality job.      # Why (flext-gd3m1): a cold runner re-downloaded every locked Mise tool
+      # (go included) on every run, and a network blip failed setup. The cache
+      # is content-addressed by the committed locks, so a warm cache is always
+      # valid for the same lock and can never hide a finding; it only removes
+      # the cold download of the pinned tarballs.
+      - name: Restore tool caches
+        id: tool-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            __pycache__
+            .mypy_cache
+            .pytest_cache
+            .ruff_cache
+            .pyrefly_cache
+            .benchmarks
+            .hypothesis
+            ~/.cache/uv
+            ~/.cache/pyright
+            ~/.local/share/mise
+          key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-3.13-tools-
+
+
       - name: Sync workspace toolchain
-        run: make setup
+        run: make setup      # Why: save on every outcome — including a failing gate — so the next run
+      # starts warm. Only written when the restore missed.
+      - name: Save tool caches
+        if: ${{ always() && steps.tool-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            __pycache__
+            .mypy_cache
+            .pytest_cache
+            .ruff_cache
+            .pyrefly_cache
+            .benchmarks
+            .hypothesis
+            ~/.cache/uv
+            ~/.cache/pyright
+            ~/.local/share/mise
+          key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
+
 
       - name: Build site
         run: make docs

@@ -6,9 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from enum import StrEnum, unique
 from typing import ClassVar
 
+from ..._constants.enforcement import FlextConstantsEnforcement
 from ..._typings.base import FlextTypingBase as t
 from ..pydantic import FlextModelsPydantic as mp
 
@@ -67,26 +67,11 @@ class FlextModelsEnforcementBase:
                 return False
             return any(fragment in message for message in self.messages)
 
-    @unique
-    class EnforcementRuleSeverity(StrEnum):
-        """Severity scale for catalog rules."""
+    EnforcementRuleSeverity = FlextConstantsEnforcement.EnforcementRuleSeverity
+    """Severity scale for catalog rules (SSOT: ``_constants`` enums; via ``c.*``)."""
 
-        CRITICAL = "CRITICAL"
-        HIGH = "HIGH"
-        MEDIUM = "MEDIUM"
-        LOW = "LOW"
-
-    @unique
-    class EnforcementSourceKind(StrEnum):
-        """Addressable origin layer for a catalog rule."""
-
-        FLEXT_INFRA_DETECTOR = "flext_infra_detector"
-        FLEXT_TESTS_VALIDATOR = "flext_tests_validator"
-        RUNTIME_WARNING = "runtime_warning"
-        BEARTYPE = "beartype"
-        CODE_SMELL = "code_smell"
-        RUFF = "ruff"
-        SKILL_POINTER = "skill_pointer"
+    EnforcementSourceKind = FlextConstantsEnforcement.EnforcementSourceKind
+    """Origin layer for a catalog rule (SSOT: ``_constants`` enums; via ``c.*``)."""
 
 
 __all__: list[str] = ["EnforcementModelBase", "FlextModelsEnforcementBase"]
