@@ -87,26 +87,6 @@ class FlextTypingBase(tp, ta):
     type MutableHeaderMapping = MutableMapping[str, int | str]
     type MutableConfigValueMapping = MutableMapping[str, str | int | float]
 
-    SEQUENCE_PAIR_TYPES: VariadicTuple[type] = (list, tuple)
-    STR_BYTES_TYPES: tuple[type[str], type[bytes]] = (str, bytes)
-    STR_BINARY_TYPES: tuple[type[str], type[bytes], type[bytearray]] = (
-        str,
-        bytes,
-        bytearray,
-    )
-    SCALAR_TYPES: tuple[
-        type[str], type[int], type[float], type[bool], type[datetime]
-    ] = (str, int, float, bool, datetime)
-    CONTAINER_TYPES: tuple[
-        type[str], type[int], type[float], type[bool], type[datetime], type[Path]
-    ] = (str, int, float, bool, datetime, Path)
-    CONTAINER_AND_COLLECTION_TYPES: VariadicTuple[type] = (
-        *CONTAINER_TYPES,
-        list,
-        dict,
-        tuple,
-    )
-
     type Pair[LeftT, RightT] = tuple[LeftT, RightT]
     type Triple[FirstT, SecondT, ThirdT] = tuple[FirstT, SecondT, ThirdT]
     type Quad[FirstT, SecondT, ThirdT, FourthT] = tuple[
