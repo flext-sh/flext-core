@@ -88,7 +88,7 @@ if /i not "%actual%"=="%expected%" (
 
 rem The parent of MISE_INSTALL_PATH, not install_dir: a caller-supplied MISE_INSTALL_PATH can
 rem name a file anywhere, and creating install_dir instead would leave the move below with no
-rem destination directory. install.sh does the same -- `mkdir -p "$(dirname "$install_path")"` --
+rem destination directory. install.sh does the same -- `mkdir -p "$(dirname "${install_path}")"` --
 rem and the default path lives under install_dir, so this covers that case too.
 for %%i in ("%MISE_INSTALL_PATH%") do set "install_parent=%%~dpi"
 if not exist "%install_parent%" mkdir "%install_parent%"
