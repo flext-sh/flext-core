@@ -134,20 +134,6 @@ backend = "github:kucherenko/jscpd"
 specifiers = ["latest"]
 
 [tools."github:kucherenko/jscpd".options]
-asset_pattern = "jscpd-darwin-arm64.tar.gz"
-
-[tools."github:kucherenko/jscpd"."platforms.macos-arm64"]
-checksum = "sha256:a90634a456876a8985abd4c4e6674355f4d76f2166fec10d0f295ee5e17c5d6c"
-url = "https://github.com/kucherenko/jscpd/releases/download/v5.3.3/jscpd-darwin-arm64.tar.gz"
-url_api = "https://api.github.com/repos/kucherenko/jscpd/releases/assets/595512987"
-provenance = "github-attestations"
-
-[[tools."github:kucherenko/jscpd"]]
-version = "5.3.3"
-backend = "github:kucherenko/jscpd"
-specifiers = ["latest"]
-
-[tools."github:kucherenko/jscpd".options]
 asset_pattern = "jscpd-linux-arm64-gnu.tar.gz"
 
 [tools."github:kucherenko/jscpd"."platforms.linux-arm64"]
@@ -182,7 +168,21 @@ backend = "github:kucherenko/jscpd"
 specifiers = ["latest"]
 
 [tools."github:kucherenko/jscpd".options]
-asset_pattern = "jscpd-darwin-x64.tar.gz"
+asset_pattern = "jscpd-linux-arm64-gnu.tar.gz"
+
+[tools."github:kucherenko/jscpd"."platforms.macos-arm64"]
+checksum = "sha256:a90634a456876a8985abd4c4e6674355f4d76f2166fec10d0f295ee5e17c5d6c"
+url = "https://github.com/kucherenko/jscpd/releases/download/v5.3.3/jscpd-darwin-arm64.tar.gz"
+url_api = "https://api.github.com/repos/kucherenko/jscpd/releases/assets/595512987"
+provenance = "github-attestations"
+
+[[tools."github:kucherenko/jscpd"]]
+version = "5.3.3"
+backend = "github:kucherenko/jscpd"
+specifiers = ["latest"]
+
+[tools."github:kucherenko/jscpd".options]
+asset_pattern = "jscpd-linux-x64-gnu.tar.gz"
 
 [tools."github:kucherenko/jscpd"."platforms.macos-x64"]
 checksum = "sha256:d107a9c8fddfd718bfc4d98252d1123ea70ee942b7d0ae3324968de7df53e5b9"
@@ -196,7 +196,7 @@ backend = "github:kucherenko/jscpd"
 specifiers = ["latest"]
 
 [tools."github:kucherenko/jscpd".options]
-asset_pattern = "jscpd-windows-x64-msvc.tar.gz"
+asset_pattern = "jscpd-darwin-x64.tar.gz"
 
 [tools."github:kucherenko/jscpd"."platforms.windows-x64"]
 checksum = "sha256:75152cab799db1b894b4c8ba57934291d90174459f2db394bd1243a389c78071"
@@ -251,31 +251,37 @@ specifiers = ["0.642.0"]
 checksum = "sha256:700a86c930d64860baba2cb168a2a9778e4dc8e38dc941faf9d4d8b88d57da1d"
 url = "https://github.com/qltysh/qlty/releases/download/v0.642.0/qlty-aarch64-unknown-linux-gnu.tar.xz"
 url_api = "https://api.github.com/repos/qltysh/qlty/releases/assets/514936221"
+provenance = "github-attestations"
 
 [tools."github:qltysh/qlty"."platforms.linux-x64"]
 checksum = "sha256:05e665112fdf8a3d7cdcf4879f6c7d989a6cacd5c527b1890ba68e9c2c5c1d2e"
 url = "https://github.com/qltysh/qlty/releases/download/v0.642.0/qlty-x86_64-unknown-linux-gnu.tar.xz"
 url_api = "https://api.github.com/repos/qltysh/qlty/releases/assets/514936271"
+provenance = "github-attestations"
 
 [tools."github:qltysh/qlty"."platforms.linux-x64-musl"]
 checksum = "sha256:55bca32d6ee8ae5e31d8e12696203fa24b106704a176e0e80655ec93abb25477"
 url = "https://github.com/qltysh/qlty/releases/download/v0.642.0/qlty-x86_64-unknown-linux-musl.tar.xz"
 url_api = "https://api.github.com/repos/qltysh/qlty/releases/assets/514936274"
+provenance = "github-attestations"
 
 [tools."github:qltysh/qlty"."platforms.macos-arm64"]
 checksum = "sha256:b884e1dd05fac9a225130f9df5339ed4c0209d20f4947e58efa1f0e60a8094eb"
 url = "https://github.com/qltysh/qlty/releases/download/v0.642.0/qlty-aarch64-apple-darwin.tar.xz"
 url_api = "https://api.github.com/repos/qltysh/qlty/releases/assets/514936220"
+provenance = "github-attestations"
 
 [tools."github:qltysh/qlty"."platforms.macos-x64"]
 checksum = "sha256:206a916d11b5437a778a3da83686487a75f15c89bf8db371605c407ecf975838"
 url = "https://github.com/qltysh/qlty/releases/download/v0.642.0/qlty-x86_64-apple-darwin.tar.xz"
 url_api = "https://api.github.com/repos/qltysh/qlty/releases/assets/514936261"
+provenance = "github-attestations"
 
 [tools."github:qltysh/qlty"."platforms.windows-x64"]
 checksum = "sha256:ab80a508bd19447887931865ef78bbe58f044a78e8920a2d26b85d0c4ce185b1"
 url = "https://github.com/qltysh/qlty/releases/download/v0.642.0/qlty-x86_64-pc-windows-msvc.zip"
 url_api = "https://api.github.com/repos/qltysh/qlty/releases/assets/514936269"
+provenance = "github-attestations"
 
 [[tools.gitleaks]]
 version = "8.30.1"

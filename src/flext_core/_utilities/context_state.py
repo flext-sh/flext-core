@@ -112,7 +112,7 @@ class FlextUtilitiesContextState:
                 hook_data: t.Scalar
                 if event_data is None:
                     hook_data = ""
-                elif isinstance(event_data, t.SCALAR_TYPES):
+                elif isinstance(event_data, c.SCALAR_TYPES):
                     hook_data = event_data
                 else:
                     hook_data = str(event_data)

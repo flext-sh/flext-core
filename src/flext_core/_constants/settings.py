@@ -6,7 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Final
+from types import MappingProxyType
+from typing import TYPE_CHECKING, Final
 
 
 class FlextConstantsSettings:
