@@ -19,6 +19,7 @@ import pytest
 from flext_tests import tm
 
 import flext_core
+from tests.constants import c
 from tests.typings import t
 
 from ._typings_support import FLAT_ALIAS_NAMES, PUBLIC_ALIAS_NAMES
@@ -68,7 +69,7 @@ class TestsFlextCoreTypingsAliases:
 
     def test_primitives_types_membership(self) -> None:
         """PRIMITIVES_TYPES is exactly (str, int, float, bool)."""
-        tm.that(t.PRIMITIVES_TYPES, eq=(str, int, float, bool))
+        tm.that(c.PRIMITIVES_TYPES, eq=(str, int, float, bool))
 
     def test_numeric_types_membership(self) -> None:
         """NUMERIC_TYPES is exactly (int, float)."""
@@ -105,7 +106,7 @@ class TestsFlextCoreTypingsAliases:
         self, value: object, *, is_primitive: bool, is_numeric: bool, is_scalar: bool
     ) -> None:
         """The type-check tuples classify values correctly via isinstance."""
-        tm.that(isinstance(value, t.PRIMITIVES_TYPES), eq=is_primitive)
+        tm.that(isinstance(value, c.PRIMITIVES_TYPES), eq=is_primitive)
         tm.that(isinstance(value, t.NUMERIC_TYPES), eq=is_numeric)
         tm.that(isinstance(value, t.SCALAR_TYPES), eq=is_scalar)
 

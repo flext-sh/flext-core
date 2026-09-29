@@ -144,7 +144,7 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
             operations: dict[str, t.Scalar] = {
                 key: value
                 for key, value in current_statistics.operations.items()
-                if isinstance(value, t.PRIMITIVES_TYPES)
+                if isinstance(value, c.PRIMITIVES_TYPES)
             }
             current_operation_value = operations.get(operation)
             if isinstance(current_operation_value, int):

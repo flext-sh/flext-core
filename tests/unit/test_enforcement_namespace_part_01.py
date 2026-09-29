@@ -8,11 +8,14 @@ helpers of the enforcement engine.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 import pytest
 
 from tests.utilities import u
 
 _MISSING_PREFIX = "class name missing project prefix"
+type NamespaceTree = Mapping[str, NamespaceTree]
 
 
 class TestsFlextCoreEnforcementNamespacePart01:
@@ -115,3 +118,44 @@ class TestsFlextCoreEnforcementNamespacePart01:
         report = u.check(target)
 
         assert (_MISSING_PREFIX in report) is flagged
+
+    @staticmethod
+    def _namespace_tree(qualname: str, children: NamespaceTree) -> type:
+        """Build a real nested class tree with module-level qualnames."""
+        body = {
+            name: TestsFlextCoreEnforcementNamespacePart01._namespace_tree(
+                f"{qualname}.{name}", grandchildren
+            )
+            for name, grandchildren in children.items()
+        }
+        node = type(qualname.rsplit(".", 1)[-1], (), body)
+        node.__qualname__ = qualname
+        node.__module__ = "flext_core.synthetic"
+        return node
+
+    def test_every_class_past_the_depth_budget_is_reported(self) -> None:
+        """ENFORCE-069 reports each deep class in one pass, not only the first."""
+        root = self._namespace_tree(
+            "FlextDeepNamespace",
+            {
+                "Ldap": {
+                    "Parse": {"ParseResult": {}},
+                    "ServiceContracts": {"SearchContract": {}, "BindContract": {}},
+                },
+                "Shallow": {"Leaf": {}},
+            },
+        )
+
+        report = u.check(root)
+
+        deep_messages = [
+            v.message for v in report.violations if v.rule_id == "ENFORCE-069"
+        ]
+        expected = (
+            "FlextDeepNamespace.Ldap.Parse.ParseResult",
+            "FlextDeepNamespace.Ldap.ServiceContracts.SearchContract",
+            "FlextDeepNamespace.Ldap.ServiceContracts.BindContract",
+        )
+        assert len(deep_messages) == len(expected)
+        for qualname in expected:
+            assert any(f" at {qualname} " in text for text in deep_messages)

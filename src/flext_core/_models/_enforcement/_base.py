@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from ..._constants.enforcement import FlextConstantsEnforcement
 from ..._typings.base import FlextTypingBase as t
 from ..pydantic import FlextModelsPydantic as mp
 
@@ -66,12 +65,6 @@ class FlextModelsEnforcementBase:
             if not isinstance(fragment, str):
                 return False
             return any(fragment in message for message in self.messages)
-
-    EnforcementRuleSeverity = FlextConstantsEnforcement.EnforcementRuleSeverity
-    """Severity scale for catalog rules (SSOT: ``_constants`` enums; via ``c.*``)."""
-
-    EnforcementSourceKind = FlextConstantsEnforcement.EnforcementSourceKind
-    """Origin layer for a catalog rule (SSOT: ``_constants`` enums; via ``c.*``)."""
 
 
 __all__: list[str] = ["EnforcementModelBase", "FlextModelsEnforcementBase"]

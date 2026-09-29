@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, TypeGuard, TypeIs
 
-from flext_core import t
+from flext_core import c, t
 
 if TYPE_CHECKING:
     from pydantic import BaseModel as PydanticBaseModel
@@ -114,8 +114,8 @@ class FlextUtilitiesGuardsTypeCore:
     def primitive(
         value: t.GuardInput | t.JsonPayload | t.JsonValue,
     ) -> TypeIs[t.Primitives]:
-        """Check if value is a primitive type t.PRIMITIVES_TYPES)."""
-        return isinstance(value, t.PRIMITIVES_TYPES)
+        """Check if value is a primitive type (c.PRIMITIVES_TYPES)."""
+        return isinstance(value, c.PRIMITIVES_TYPES)
 
     @staticmethod
     def scalar(

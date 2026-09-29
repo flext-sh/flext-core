@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import inspect
 import os
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from importlib.resources.abc import Traversable
 from pathlib import Path
 from threading import RLock
@@ -134,15 +134,18 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
         return loaded
 
     @override
-    def _read_files(self, files: object, deep_merge: bool = False) -> dict[str, JsonValue]:
+    def _read_files(
+        self,
+        files: PathType | Traversable | Sequence[PathType | Traversable] | None,
+        deep_merge: bool = False,
+    ) -> dict[str, JsonValue]:
         """Read multiple YAML files with list-aware deep merge.
 
         The upstream ``deep_update`` only recurses into dicts; when two files
         declare the same list key (e.g. ``command_rules``), the second file
         *replaces* the first list entirely. This override concatenates lists
         instead, enabling domain-split config files to each contribute rules
-        to the same list. ``files`` keeps the parent source's ``object``
-        parameter contract.
+        to the same list.
         """
         from collections.abc import Sequence as _Sequence
         from pathlib import Path as _Path
@@ -194,7 +197,6 @@ class FlextConfig(BaseSettings):
     # NOTE (multi-agent): exact-file consumers declare their YAML surface here;
     # the empty default preserves deterministic directory auto-discovery.
     CONFIG_FILENAMES: ClassVar[t.VariadicTuple[str]] = ()
-    YAML_CONFIG_SECTION: ClassVar[str | None] = None
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         frozen=True, extra="allow", env_prefix="FLEXT_CONFIG_"
@@ -323,7 +325,6 @@ class FlextConfig(BaseSettings):
             StrictYamlConfigSource(
                 settings_cls,
                 yaml_file=cls._config_files(),
-                yaml_config_section=cls.YAML_CONFIG_SECTION,
                 deep_merge=True,
                 transform=cls._transform_loaded_yaml,
             ),
