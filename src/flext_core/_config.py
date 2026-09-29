@@ -28,7 +28,7 @@ from collections.abc import Callable
 from importlib.resources.abc import Traversable
 from pathlib import Path
 from threading import RLock
-from typing import TYPE_CHECKING, Any, ClassVar, Self, cast, override
+from typing import TYPE_CHECKING, ClassVar, Self, cast, override
 
 from pydantic import JsonValue
 from pydantic_settings import (
@@ -98,7 +98,7 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
         yaml_config_section: str | None = None,
         *,
         deep_merge: bool = False,
-        transform: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
+        transform: Callable[[dict[str, JsonValue]], dict[str, JsonValue]] | None = None,
     ) -> None:
         self._transform = transform
         super().__init__(
@@ -110,7 +110,7 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
         )
 
     @override
-    def __call__(self) -> dict[str, Any]:
+    def __call__(self) -> dict[str, JsonValue]:
         """Return merged YAML data, applying the transform hook if set."""
         data = super().__call__()
         if self._transform is not None:
@@ -293,7 +293,7 @@ class FlextConfig(BaseSettings):
         return cls._yaml_files_in(config_dir) + user_files
 
     @classmethod
-    def _transform_loaded_yaml(cls, data: dict[str, Any]) -> dict[str, Any]:
+    def _transform_loaded_yaml(cls, data: dict[str, JsonValue]) -> dict[str, JsonValue]:
         """Hook for subclasses to transform merged YAML before validation.
 
         Default is identity (no transformation). Override to apply env
