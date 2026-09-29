@@ -20,9 +20,6 @@ from ...._models.enforcement import FlextModelsEnforcement as me
 from ...family_surface import FlextUtilitiesFamilySurface
 from ..type_aliases import FlextUtilitiesBeartypeTypeAliases
 
-from ...._models.enforcement import FlextModelsEnforcement as me
-from ..type_aliases import FlextUtilitiesBeartypeTypeAliases
-
 if TYPE_CHECKING:
     from ...._typings.base import FlextTypingBase as t
 
