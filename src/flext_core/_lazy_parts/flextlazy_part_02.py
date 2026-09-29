@@ -100,7 +100,14 @@ class FlextLazy(FlextLazyPart01):
             else self._alias_adapter.validate_python(entry)
         )
 
-        mod = self._load(module_path)
+        try:
+            mod = self._load(module_path)
+        except AttributeError as exc:
+            # CPython's from-import swallows an AttributeError escaping a module
+            # __getattr__ together with its cause; a target module that fails
+            # to execute is a defect, never a missing name, so it fails loud.
+            msg = f"lazy import of {module_path!r} for {name!r} in {module_name!r} failed"
+            raise ImportError(msg, name=module_path) from exc
         if not attr:
             if not self._module_is_initializing(mod):
                 module_globals[name] = mod
@@ -108,13 +115,18 @@ class FlextLazy(FlextLazyPart01):
 
         try:
             value: ModuleGlobalValue = getattr(mod, attr)
-        except AttributeError:
+        except AttributeError as exc:
             if isinstance(entry, str) and module_path.rsplit(".", 1)[-1] == name:
                 if not self._module_is_initializing(mod):
                     module_globals[name] = mod
                 return mod
-            msg = f"module {module_path!r} has no attribute {attr!r}"
-            raise AttributeError(msg) from None
+            reason = (
+                "is still initializing (circular lazy import) and lacks"
+                if self._module_is_initializing(mod)
+                else "has no attribute"
+            )
+            msg = f"module {module_path!r} {reason} {attr!r}"
+            raise AttributeError(msg) from exc
 
         if not self._module_is_initializing(mod):
             module_globals[name] = value
