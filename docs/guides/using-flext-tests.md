@@ -131,7 +131,8 @@ not add a `WHAT` selector or duplicate the dispatcher in a test helper.
 
 Tests for this contract exercise the generated public commands and observable artifacts.
 They do not reproduce command metadata or assert private routing implementation. See
-ADR-004 for the canonical decision.
+ADR-004 for the
+canonical decision.
 
 ## Bad practices
 

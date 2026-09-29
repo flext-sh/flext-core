@@ -607,7 +607,7 @@ dependencies = [
 [[package]]
 name = "flext-tests"
 version = "0.12.0"
-source = { git = "https://github.com/flext-sh/flext-tests.git?rev=0.12.0-dev#f6d9fa1f2666487da78be61d8991dcf6446edd0b" }
+source = { git = "https://github.com/flext-sh/flext-tests.git?rev=0.12.0-dev#f596ca1459739e2df915a602eb734227046e3434" }
 dependencies = [
     { name = "annotated-types" },
     { name = "beartype" },
