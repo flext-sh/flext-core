@@ -108,11 +108,17 @@ class FlextLazy(FlextLazyPart01):
 
         try:
             value: ModuleGlobalValue = getattr(mod, attr)
-        except AttributeError:
+        except AttributeError as exc:
             if isinstance(entry, str) and module_path.rsplit(".", 1)[-1] == name:
                 if not self._module_is_initializing(mod):
                     module_globals[name] = mod
                 return mod
+            if self._module_is_initializing(mod):
+                msg = (
+                    f"circular lazy import: {module_path!r} is still initializing "
+                    f"while resolving {attr!r} for {module_name!r}"
+                )
+                raise ImportError(msg) from exc
             msg = f"module {module_path!r} has no attribute {attr!r}"
             raise AttributeError(msg) from None
 
