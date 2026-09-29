@@ -93,6 +93,41 @@ checksum = "sha256:4a433984f45ff29c94eeb3af6db5b511c58f5bf74063dccedafcbf473cb8f
 url = "https://github.com/boyter/scc/releases/download/v4.1.0/scc_Windows_x86_64.zip"
 url_api = "https://api.github.com/repos/boyter/scc/releases/assets/549478880"
 
+[[tools."aqua:jdx/mise"]]
+version = "2026.9.15"
+backend = "aqua:jdx/mise"
+specifiers = ["2026.9.15"]
+
+[tools."aqua:jdx/mise"."platforms.linux-arm64"]
+checksum = "sha256:cf9a7c3e64688a7909fa69a4989d3b8daf6dd1b3e583fa0ab7c08139ae6d3dcd"
+url = "https://github.com/jdx/mise/releases/download/v2026.9.15/mise-v2026.9.15-linux-arm64-musl.tar.gz"
+url_api = "https://api.github.com/repos/jdx/mise/releases/assets/592614940"
+provenance = "minisign"
+
+[tools."aqua:jdx/mise"."platforms.linux-x64"]
+checksum = "sha256:e331f3fa3c360c63e996ef70bc183ce178cb16d21f8bf4926c61cf6fa6b9fafd"
+url = "https://github.com/jdx/mise/releases/download/v2026.9.15/mise-v2026.9.15-linux-x64-musl.tar.gz"
+url_api = "https://api.github.com/repos/jdx/mise/releases/assets/592615157"
+provenance = "minisign"
+
+[tools."aqua:jdx/mise"."platforms.linux-x64-musl"]
+checksum = "sha256:e331f3fa3c360c63e996ef70bc183ce178cb16d21f8bf4926c61cf6fa6b9fafd"
+url = "https://github.com/jdx/mise/releases/download/v2026.9.15/mise-v2026.9.15-linux-x64-musl.tar.gz"
+url_api = "https://api.github.com/repos/jdx/mise/releases/assets/592615157"
+provenance = "minisign"
+
+[tools."aqua:jdx/mise"."platforms.macos-arm64"]
+checksum = "sha256:18407dc1ee5c2efdb808ac5272c989692c4ecc951933e84eb44cf5ac554ac2f9"
+url = "https://github.com/jdx/mise/releases/download/v2026.9.15/mise-v2026.9.15-macos-arm64.tar.gz"
+url_api = "https://api.github.com/repos/jdx/mise/releases/assets/592615261"
+provenance = "minisign"
+
+[tools."aqua:jdx/mise"."platforms.macos-x64"]
+checksum = "sha256:8dadf477c1cfd6a235e926f6de867cf0dfacedeb0b7d30ad9c4583b5311989a1"
+url = "https://github.com/jdx/mise/releases/download/v2026.9.15/mise-v2026.9.15-macos-x64.tar.gz"
+url_api = "https://api.github.com/repos/jdx/mise/releases/assets/592615322"
+provenance = "minisign"
+
 [[tools.direnv]]
 version = "2.37.1"
 backend = "aqua:direnv/direnv"
@@ -251,31 +286,37 @@ specifiers = ["0.642.0"]
 checksum = "sha256:700a86c930d64860baba2cb168a2a9778e4dc8e38dc941faf9d4d8b88d57da1d"
 url = "https://github.com/qltysh/qlty/releases/download/v0.642.0/qlty-aarch64-unknown-linux-gnu.tar.xz"
 url_api = "https://api.github.com/repos/qltysh/qlty/releases/assets/514936221"
+provenance = "github-attestations"
 
 [tools."github:qltysh/qlty"."platforms.linux-x64"]
 checksum = "sha256:05e665112fdf8a3d7cdcf4879f6c7d989a6cacd5c527b1890ba68e9c2c5c1d2e"
 url = "https://github.com/qltysh/qlty/releases/download/v0.642.0/qlty-x86_64-unknown-linux-gnu.tar.xz"
 url_api = "https://api.github.com/repos/qltysh/qlty/releases/assets/514936271"
+provenance = "github-attestations"
 
 [tools."github:qltysh/qlty"."platforms.linux-x64-musl"]
 checksum = "sha256:55bca32d6ee8ae5e31d8e12696203fa24b106704a176e0e80655ec93abb25477"
 url = "https://github.com/qltysh/qlty/releases/download/v0.642.0/qlty-x86_64-unknown-linux-musl.tar.xz"
 url_api = "https://api.github.com/repos/qltysh/qlty/releases/assets/514936274"
+provenance = "github-attestations"
 
 [tools."github:qltysh/qlty"."platforms.macos-arm64"]
 checksum = "sha256:b884e1dd05fac9a225130f9df5339ed4c0209d20f4947e58efa1f0e60a8094eb"
 url = "https://github.com/qltysh/qlty/releases/download/v0.642.0/qlty-aarch64-apple-darwin.tar.xz"
 url_api = "https://api.github.com/repos/qltysh/qlty/releases/assets/514936220"
+provenance = "github-attestations"
 
 [tools."github:qltysh/qlty"."platforms.macos-x64"]
 checksum = "sha256:206a916d11b5437a778a3da83686487a75f15c89bf8db371605c407ecf975838"
 url = "https://github.com/qltysh/qlty/releases/download/v0.642.0/qlty-x86_64-apple-darwin.tar.xz"
 url_api = "https://api.github.com/repos/qltysh/qlty/releases/assets/514936261"
+provenance = "github-attestations"
 
 [tools."github:qltysh/qlty"."platforms.windows-x64"]
 checksum = "sha256:ab80a508bd19447887931865ef78bbe58f044a78e8920a2d26b85d0c4ce185b1"
 url = "https://github.com/qltysh/qlty/releases/download/v0.642.0/qlty-x86_64-pc-windows-msvc.zip"
 url_api = "https://api.github.com/repos/qltysh/qlty/releases/assets/514936269"
+provenance = "github-attestations"
 
 [[tools.gitleaks]]
 version = "8.30.1"
