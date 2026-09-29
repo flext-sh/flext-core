@@ -11,7 +11,11 @@ from typing import TYPE_CHECKING
 
 from pydantic import ValidationError as PydanticValidationError
 
-from flext_core import c, m
+from .._constants._errors_parts.flextconstantserrors_part_03 import (
+    FlextConstantsErrorsValidationExceptions,
+)
+from .._constants.mixins import FlextConstantsMixins
+from .._models.base import FlextModelsBase
 
 from .._protocols.result import FlextProtocolsResult as pr
 from .._runtime._metadata_validation import (
@@ -41,7 +45,7 @@ class FlextExceptionsHelpers:
                 source_mapping = FlextRuntime.normalize_metadata_input_mapping(
                     source_value
                 )
-            except c.EXC_PYDANTIC_TYPE_VALUE:
+            except FlextConstantsErrorsValidationExceptions.EXC_PYDANTIC_TYPE_VALUE:
                 continue
             if not source_mapping:
                 continue
@@ -56,17 +60,17 @@ class FlextExceptionsHelpers:
         | tb.MappingKV[str, ts.JsonPayload | None]
         | tb.JsonValue
         | None,
-    ) -> m.Metadata | None:
+    ) -> FlextModelsBase.Metadata | None:
         """Normalize supported metadata inputs to runtime metadata model."""
-        metadata: m.Metadata | None = None
+        metadata: FlextModelsBase.Metadata | None = None
         if value is not None:
             try:
-                metadata = m.Metadata.model_validate(value, from_attributes=True)
+                metadata = FlextModelsBase.Metadata.model_validate(value, from_attributes=True)
             except (PydanticValidationError, TypeError):
                 if isinstance(value, (Mapping, pr.HasModelDump)):
                     try:
                         attrs_map = FlextRuntime.normalize_metadata_input_mapping(value)
-                    except c.EXC_PYDANTIC_TYPE_VALUE:
+                    except FlextConstantsErrorsValidationExceptions.EXC_PYDANTIC_TYPE_VALUE:
                         attrs_map = None
                     if attrs_map is not None:
                         attrs = {
@@ -74,8 +78,8 @@ class FlextExceptionsHelpers:
                             for key, item in attrs_map.items()
                             if item is not None
                         }
-                        metadata = m.Metadata.model_validate({
-                            c.FIELD_ATTRIBUTES: attrs
+                        metadata = FlextModelsBase.Metadata.model_validate({
+                            FlextConstantsMixins.FIELD_ATTRIBUTES: attrs
                         })
         return metadata
 
