@@ -42,22 +42,22 @@ class TestsFlextCoreEnforcementSources:
     @pytest.mark.parametrize(
         ("member", "value"),
         [
-            (m.EnforcementSourceKind.FLEXT_INFRA_DETECTOR, "flext_infra_detector"),
-            (m.EnforcementSourceKind.FLEXT_TESTS_VALIDATOR, "flext_tests_validator"),
-            (m.EnforcementSourceKind.RUNTIME_WARNING, "runtime_warning"),
-            (m.EnforcementSourceKind.BEARTYPE, "beartype"),
-            (m.EnforcementSourceKind.CODE_SMELL, "code_smell"),
-            (m.EnforcementSourceKind.RUFF, "ruff"),
-            (m.EnforcementSourceKind.SKILL_POINTER, "skill_pointer"),
+            (c.Enforcement.EnforcementSourceKind.FLEXT_INFRA_DETECTOR, "flext_infra_detector"),
+            (c.Enforcement.EnforcementSourceKind.FLEXT_TESTS_VALIDATOR, "flext_tests_validator"),
+            (c.Enforcement.EnforcementSourceKind.RUNTIME_WARNING, "runtime_warning"),
+            (c.Enforcement.EnforcementSourceKind.BEARTYPE, "beartype"),
+            (c.Enforcement.EnforcementSourceKind.CODE_SMELL, "code_smell"),
+            (c.Enforcement.EnforcementSourceKind.RUFF, "ruff"),
+            (c.Enforcement.EnforcementSourceKind.SKILL_POINTER, "skill_pointer"),
         ],
     )
     def test_source_kind_member_exposes_expected_value(
-        self, member: m.EnforcementSourceKind, value: str
+        self, member: c.Enforcement.EnforcementSourceKind, value: str
     ) -> None:
         assert member.value == value
 
     def test_source_kind_has_exactly_the_surviving_members(self) -> None:
-        assert {kind.value for kind in m.EnforcementSourceKind} == {
+        assert {kind.value for kind in c.Enforcement.EnforcementSourceKind} == {
             "flext_infra_detector",
             "flext_tests_validator",
             "runtime_warning",
@@ -68,7 +68,7 @@ class TestsFlextCoreEnforcementSources:
         }
 
     def test_source_kind_dropped_the_minimal_ast_variant(self) -> None:
-        assert "minimal_ast" not in {kind.value for kind in m.EnforcementSourceKind}
+        assert "minimal_ast" not in {kind.value for kind in c.Enforcement.EnforcementSourceKind}
 
     # --- discriminator literals across every source model ---
 
@@ -80,7 +80,7 @@ class TestsFlextCoreEnforcementSources:
 
     def test_every_source_kind_enum_value_has_a_source_model(self) -> None:
         model_kinds = {source.model_dump()["kind"] for source in _SOURCE_CASES.values()}
-        assert model_kinds == {kind.value for kind in m.EnforcementSourceKind}
+        assert model_kinds == {kind.value for kind in c.Enforcement.EnforcementSourceKind}
 
     # --- field-level public contract ---
 

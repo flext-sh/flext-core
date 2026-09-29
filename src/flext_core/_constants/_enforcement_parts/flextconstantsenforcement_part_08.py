@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
@@ -22,7 +23,7 @@ class FlextConstantsEnforcementFixActions:
         "model_validator": "u.model_validator",
     }
 
-    ENFORCEMENT_FIX_ACTIONS: ClassVar[t.MappingKV[str, t.JsonMapping]] = {
+    ENFORCEMENT_FIX_ACTIONS: ClassVar[t.MappingKV[str, t.JsonMapping]] = MappingProxyType({
         "ENFORCE-008": {
             "kind": "transformer",
             "target": "future_import",
@@ -566,7 +567,7 @@ class FlextConstantsEnforcementFixActions:
             "params": {},
             "safe": False,
         },
-    }
+    })
 
 
 __all__: list[str] = ["FlextConstantsEnforcementFixActions"]

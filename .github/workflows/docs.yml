@@ -35,7 +35,6 @@ jobs:
     # governed sibling repos. The job token authenticates both, as in CI.
     env:
       GITHUB_TOKEN: ${{ github.token }}
-      MISE_GITHUB_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -105,7 +104,6 @@ jobs:
     # Why: same authenticated toolchain and docs-source resolution as docs-quality.
     env:
       GITHUB_TOKEN: ${{ github.token }}
-      MISE_GITHUB_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
