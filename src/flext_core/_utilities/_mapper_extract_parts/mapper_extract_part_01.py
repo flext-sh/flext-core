@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Annotated
 
-from flext_core import m, p, r, t
+from flext_core import c, m, p, r, t
 
 from ..._models.containers import FlextModelsContainers
 from ..._models.pydantic import FlextModelsPydantic
@@ -84,7 +84,7 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
             narrowed_for_index = (
                 next_val
                 if isinstance(next_val, Sequence)
-                and not isinstance(next_val, t.STR_BYTES_TYPES)
+                and not isinstance(next_val, c.STR_BYTES_TYPES)
                 else FlextRuntime.normalize_to_container(next_val)
             )
             index_result = FlextUtilitiesMapperExtract._extract_handle_array_index(
@@ -123,7 +123,7 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
                 seed_current = m.ConfigMap.model_validate(model_dump_attr())
             elif isinstance(data, p.ValidatorSpec):
                 seed_current = str(data)
-            elif data is None or isinstance(data, (*t.SCALAR_TYPES, Path, list, tuple)):
+            elif data is None or isinstance(data, (*c.SCALAR_TYPES, Path, list, tuple)):
                 seed_current = data
         return seed_current
 

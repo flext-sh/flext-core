@@ -70,7 +70,7 @@ class FlextRuntimeBase:
         """Coerce any runtime value to ``t.Scalar``."""
         if item is None:
             return ""
-        return item if isinstance(item, tb.SCALAR_TYPES) else str(item)
+        return item if isinstance(item, c.SCALAR_TYPES) else str(item)
 
 
 __all__: list[str] = ["FlextRuntimeBase"]
