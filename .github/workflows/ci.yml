@@ -134,11 +134,10 @@ jobs:
       # Why (flext-7jnr0): every fresh runner paid a cold full-dependency Mypy,
       # Pyrefly and Ruff analysis. The caches below are content-addressed by the
       # committed dependency locks, so a warm cache is always valid for the same
-      # lock and can never hide a finding; it only removes the cold recompute.      # Why (flext-gd3m1): a cold runner re-downloaded every locked Mise tool
-      # (go included) on every run, and a network blip failed setup. The cache
-      # is content-addressed by the committed locks, so a warm cache is always
-      # valid for the same lock and can never hide a finding; it only removes
-      # the cold download of the pinned tarballs.
+      # lock and can never hide a finding; it only removes the cold recompute.
+      # Why (flext-gd3m1): the same pair keeps the locked Mise tool storage, so
+      # a cold runner never re-downloads the pinned tarballs, where a network
+      # blip failed setup.
       - name: Restore tool caches
         id: tool-cache
         uses: actions/cache/restore@v6
