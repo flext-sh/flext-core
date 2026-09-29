@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import ClassVar
 
 from pydantic import ValidationError as _PydanticValidationError
@@ -13,6 +14,7 @@ from pydantic import ValidationError as _PydanticValidationError
 from flext_core import c, m, t
 
 from .base import FlextExceptionsBase
+from ._base_parts.flextexceptionsbase_part_03 import _FlextBaseErrorInitParams
 
 
 class FlextExceptionsTypes(FlextExceptionsBase):
@@ -135,28 +137,30 @@ class FlextExceptionsTypes(FlextExceptionsBase):
             "bytes": bytes,
         }
 
-        def __init__(
-            self,
-            message: str,
-            *,
-            expected_type: type | str | None = None,
-            actual_type: type | str | None = None,
-            error_code: str = c.ErrorCode.TYPE_ERROR,
-            context: t.JsonMapping | None = None,
-            correlation_id: str | None = None,
-        ) -> None:
+        @dataclass(slots=True)
+        class _InitParams:
+            message: str
+            expected_type: type | str | None = None
+            actual_type: type | str | None = None
+            error_code: str = c.ErrorCode.TYPE_ERROR
+            context: t.JsonMapping | None = None
+            correlation_id: str | None = None
+
+        def __init__(self, params: _InitParams) -> None:
             """Initialize type error with type information."""
             cls = FlextExceptionsTypes.FlextTypeError
             super().__init__(
-                message,
-                error_code=error_code,
-                expected_type=cls._to_type_name(expected_type),
-                actual_type=cls._to_type_name(actual_type),
-                context=context,
-                correlation_id=correlation_id,
+                _FlextBaseErrorInitParams(
+                    message=params.message,
+                    error_code=params.error_code,
+                    expected_type=cls._to_type_name(params.expected_type),
+                    actual_type=cls._to_type_name(params.actual_type),
+                    context=params.context,
+                    correlation_id=params.correlation_id,
+                )
             )
-            self.expected_type = cls._from_type_name(expected_type)
-            self.actual_type = cls._from_type_name(actual_type)
+            self.expected_type = cls._from_type_name(params.expected_type)
+            self.actual_type = cls._from_type_name(params.actual_type)
 
         @staticmethod
         def _to_type_name(v: type | str | None) -> str | None:

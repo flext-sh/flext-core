@@ -1,6 +1,5 @@
 ---
-description:
-  "Implement one approved feature through project owners, consumers, runtime, and gates."
+description: "Implement one approved feature through project owners, consumers, runtime, and gates."
 ---
 
 # Feature development
