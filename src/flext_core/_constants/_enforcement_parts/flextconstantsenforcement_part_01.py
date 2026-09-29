@@ -77,5 +77,26 @@ class FlextConstantsEnforcementEnums:
         PROTOCOL_TREE = "protocol_tree"
         WRAPPER = "wrapper"
 
+    @unique
+    class EnforcementRuleSeverity(StrEnum):
+        """Severity scale for catalog rules."""
+
+        CRITICAL = "CRITICAL"
+        HIGH = "HIGH"
+        MEDIUM = "MEDIUM"
+        LOW = "LOW"
+
+    @unique
+    class EnforcementSourceKind(StrEnum):
+        """Addressable origin layer for a catalog rule."""
+
+        FLEXT_INFRA_DETECTOR = "flext_infra_detector"
+        FLEXT_TESTS_VALIDATOR = "flext_tests_validator"
+        RUNTIME_WARNING = "runtime_warning"
+        BEARTYPE = "beartype"
+        CODE_SMELL = "code_smell"
+        RUFF = "ruff"
+        SKILL_POINTER = "skill_pointer"
+
 
 __all__ = ["FlextConstantsEnforcementEnums"]

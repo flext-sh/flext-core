@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import pytest
 from flext_tests import tm
 
-from flext_core import FlextContainer, FlextSettings, c, u
+from flext_core import FlextContainer, FlextSettings, u
 from tests import u as test_u
 from tests.constants import c
 from tests.models import m

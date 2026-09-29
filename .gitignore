@@ -306,7 +306,6 @@ __pyrefly_virtual__/
 .dolt_dropped_databases/
 .doltcfg/
 .hypothesis/
-.mimosa/
 .mypy_cache/
 .omo/
 .pylance_cache/

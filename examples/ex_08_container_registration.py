@@ -41,6 +41,15 @@ class Ex08ContainerRegistration(ExamplesFlextShared):
         resource_name = f"svc.{self.rand_str(6)}"
         missing_name = f"svc.{self.rand_str(6)}"
         bad_factory_name = f"svc.{self.rand_str(6)}"
+
+        self._exercise_service_registration(container, service_name, service_value)
+        self._exercise_factory_registration(container, factory_name, bad_factory_name)
+        self._exercise_resource_registration(container, resource_name, service_name)
+        self._exercise_resolution(container, service_name, service_value, factory_name, resource_name, missing_name, bad_factory_name)
+        self._exercise_typed_resolution(container, service_name, service_value, factory_name, resource_name, missing_name)
+        self._exercise_has_and_list(container, service_name, factory_name, resource_name, missing_name)
+
+    def _exercise_service_registration(self, container: p.Container, service_name: str, service_value: int) -> None:
         register_ok = container.bind(service_name, service_value)
         self.audit_check("register.service.returns_self", register_ok is container)
         self.audit_check(
@@ -73,6 +82,8 @@ class Ex08ContainerRegistration(ExamplesFlextShared):
             "register.service.reserved_name_rejected",
             reserved.failure and c.ServiceName.LOGGER in (reserved.error or ""),
         )
+
+    def _exercise_factory_registration(self, container: p.Container, factory_name: str, bad_factory_name: str) -> None:
         factory_calls = {"count": 0}
 
         def _factory_counter() -> int:
@@ -101,6 +112,8 @@ class Ex08ContainerRegistration(ExamplesFlextShared):
             "register.factory.raising_factory_registers",
             register_factory_bad is container and container.has(bad_factory_name),
         )
+
+    def _exercise_resource_registration(self, container: p.Container, resource_name: str, service_name: str) -> None:
         resource_calls = {"count": 0}
 
         def _resource_data() -> t.IntMapping:
@@ -118,6 +131,8 @@ class Ex08ContainerRegistration(ExamplesFlextShared):
         self.audit_check(
             "register.resource.returns_self", register_resource_ok is container
         )
+
+    def _exercise_resolution(self, container: p.Container, service_name: str, service_value: int, factory_name: str, resource_name: str, missing_name: str, bad_factory_name: str) -> None:
         get_service = container.resolve(service_name)
         get_factory = container.resolve(factory_name)
         get_resource = container.resolve(resource_name)
@@ -133,6 +148,8 @@ class Ex08ContainerRegistration(ExamplesFlextShared):
         self.audit_check("get.resource.invoked_per_resolve", resource_calls["count"])
         self.audit_check("get.missing.failure", get_missing.failure)
         self.audit_check("get.bad_factory.failure", get_bad_factory.failure)
+
+    def _exercise_typed_resolution(self, container: p.Container, service_name: str, service_value: int, factory_name: str, resource_name: str, missing_name: str) -> None:
         get_typed_service = container.resolve(service_name, type_cls=int)
         get_typed_service_bad = container.resolve(service_name, type_cls=str)
         get_typed_factory = container.resolve(factory_name, type_cls=int)
@@ -152,6 +169,8 @@ class Ex08ContainerRegistration(ExamplesFlextShared):
             container.resolve(resource_name).success,
         )
         self.audit_check("get_typed.missing.failure", get_typed_missing.failure)
+
+    def _exercise_has_and_list(self, container: p.Container, service_name: str, factory_name: str, resource_name: str, missing_name: str) -> None:
         self.audit_check("has_service.service.true", container.has(service_name))
         self.audit_check("has_service.factory.true", container.has(factory_name))
         self.audit_check("has_service.resource.true", container.has(resource_name))

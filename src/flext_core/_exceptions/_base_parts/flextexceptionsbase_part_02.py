@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import time
 import uuid
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_core import c, m
@@ -18,6 +19,19 @@ if TYPE_CHECKING:
 
     from ..._protocols.result import FlextProtocolsResult as pr
     from ..._typings.base import FlextTypingBase as tb
+
+
+@dataclass(slots=True)
+class _InitializeBaseStateParams:
+    message: str
+    error_code: str
+    context: tb.MappingKV[str, ts.JsonPayload | None] | pr.HasModelDump | None
+    metadata: pr.HasModelDump | tb.JsonValue | None
+    correlation_id: str | None
+    auto_correlation: bool
+    auto_log: bool
+    merged_kwargs: tb.MappingKV[str, ts.JsonPayload | None] | pr.HasModelDump | None
+    extra_kwargs: tb.MappingKV[str, ts.JsonPayload | None]
     from ..._typings.services import FlextTypesServices as ts
 
 
@@ -67,27 +81,13 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
         """Whether this error belongs to the provided routing domain."""
         return self.error_domain == domain
 
-    def _initialize_base_state(
-        self,
-        message: str,
-        *,
-        error_code: str,
-        context: tb.MappingKV[str, ts.JsonPayload | None] | pr.HasModelDump | None,
-        metadata: pr.HasModelDump | tb.JsonValue | None,
-        correlation_id: str | None,
-        auto_correlation: bool,
-        auto_log: bool,
-        merged_kwargs: tb.MappingKV[str, ts.JsonPayload | None]
-        | pr.HasModelDump
-        | None,
-        extra_kwargs: tb.MappingKV[str, ts.JsonPayload | None],
-    ) -> None:
+    def _initialize_base_state(self, params: _InitializeBaseStateParams) -> None:
         """Initialize the shared base error state without subclass metaprogramming."""
-        self.args = (message,)
-        self.message = message
-        self.error_code = error_code
+        self.args = (params.message,)
+        self.message = params.message
+        self.error_code = params.error_code
         final_kwargs_dict: tb.JsonDict = {}
-        for source_value in (merged_kwargs, context, extra_kwargs):
+        for source_value in (params.merged_kwargs, params.context, params.extra_kwargs):
             if source_value is None:
                 continue
             try:
@@ -104,8 +104,8 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
         final_kwargs = m.ConfigMap.model_validate(final_kwargs_dict)
         self.correlation_id = (
             f"exc_{uuid.uuid4().hex[:8]}"
-            if auto_correlation and (not correlation_id)
-            else correlation_id
+            if params.auto_correlation and (not params.correlation_id)
+            else params.correlation_id
         )
         self.metadata = type(self).normalize_metadata(metadata, final_kwargs.root)
         self.timestamp = time.time()
