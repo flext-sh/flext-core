@@ -197,7 +197,6 @@ class FlextConfig(BaseSettings):
     # NOTE (multi-agent): exact-file consumers declare their YAML surface here;
     # the empty default preserves deterministic directory auto-discovery.
     CONFIG_FILENAMES: ClassVar[t.VariadicTuple[str]] = ()
-    YAML_CONFIG_SECTION: ClassVar[str | None] = None
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         frozen=True, extra="allow", env_prefix="FLEXT_CONFIG_"
@@ -326,7 +325,6 @@ class FlextConfig(BaseSettings):
             StrictYamlConfigSource(
                 settings_cls,
                 yaml_file=cls._config_files(),
-                yaml_config_section=cls.YAML_CONFIG_SECTION,
                 deep_merge=True,
                 transform=cls._transform_loaded_yaml,
             ),
