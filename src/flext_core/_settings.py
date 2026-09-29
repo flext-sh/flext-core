@@ -31,7 +31,7 @@ import threading
 from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Annotated, ClassVar, Final, Self
+from typing import Annotated, ClassVar, Self
 
 from pydantic import BaseModel, Field, computed_field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -39,8 +39,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from ._constants.environment import FlextConstantsEnvironment
 from ._constants.settings import FlextConstantsSettings
 
-ENV_FILE_DEFAULT: Final[str] = ".env"
-"""Default .env file name (settings-layer protocol owner)."""
+ENV_FILE_DEFAULT = FlextConstantsSettings.ENV_FILE_DEFAULT
+"""Default .env file name (SSOT: ``_constants/settings``)."""
 
 ENV_FILE_ENV_VAR = FlextConstantsSettings.ENV_FILE_ENV_VAR
 """Bootstrap env var that overrides the .env path (SSOT: ``_constants/settings``)."""
@@ -189,9 +189,6 @@ class FlextSettings(BaseSettings):
         arbitrary_types_allowed=True,
     )
 
-    ENV_FILE_DEFAULT: ClassVar[str] = ENV_FILE_DEFAULT
-    """Public facade surface for the default .env file name (settings owns it)."""
-
     @staticmethod
     def resolve_env_file(namespace: str | None = None) -> str:
         """Resolve the effective ``.env`` path honouring ``FLEXT_ENV_FILE``.
@@ -240,12 +237,12 @@ class FlextSettings(BaseSettings):
     @classmethod
     def _initialized_instance(cls) -> Self | None:
         """Return the cached singleton only after Pydantic finished init."""
-        existing = getattr(cls, "_instance", None)
+        existing = cls._instance
         if isinstance(existing, cls) and hasattr(existing, "__pydantic_fields_set__"):
             return existing
         if existing is not None:
             with cls._lock:
-                if getattr(cls, "_instance", None) is existing:
+                if cls._instance is existing:
                     cls._instance = None
         return None
 

@@ -134,9 +134,9 @@ class TestsFlextCoreHandlerDiscoveryClass:
         # Act
         _, settings = h.Discovery.scan_class(Service)[0]
 
-        # Assert: an undeclared priority falls back to the default (0).
+        # Assert: an undeclared priority falls back to the model's declared default.
         tm.that(settings.command is PlainCommand, eq=True)
-        tm.that(settings.priority, eq=0)
+        tm.that(settings.priority, eq=m.DecoratorConfig(command=PlainCommand).priority)
 
     def test_scan_class_returns_empty_for_class_without_handlers(self) -> None:
         # Arrange

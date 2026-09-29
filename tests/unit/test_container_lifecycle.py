@@ -94,7 +94,7 @@ class TestsFlextContainerLifecycle:
         """Resolve returns the exact value/instance that was registered."""
         container = clean_container
         _ = container.bind("cache", "redis")
-        _ = container.factory("logger", u.Tests.create_factory("logger-instance"))
+        _ = container.factory("audit_log", u.Tests.create_factory("audit-instance"))
 
         tm.ok(
             container.resolve("cache", type_cls=str),
@@ -102,8 +102,8 @@ class TestsFlextContainerLifecycle:
             msg="Bound value must resolve unchanged",
         )
         tm.ok(
-            container.resolve("logger", type_cls=str),
-            eq="logger-instance",
+            container.resolve("audit_log", type_cls=str),
+            eq="audit-instance",
             msg="Factory product must resolve to the produced value",
         )
         tm.that(len(container.names()), eq=2, msg="Both registrations must be counted")
@@ -171,8 +171,8 @@ class TestsFlextContainerLifecycle:
         """
         scoped = clean_container.scope(
             subproject="unit",
-            registration=u.normalize_service_registration_spec(
-                m.ServiceRegistrationSpec(services={"scoped_service": "scoped-value"})
+            registration=m.ServiceRegistrationSpec(
+                services={"scoped_service": "scoped-value"}
             ),
         )
 

@@ -15,16 +15,17 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # out to for the flext-infra git+https requirement, make invokes the verbs.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-       bash ca-certificates curl git make \
+       bash ca-certificates curl git libatomic1 make \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --create-home --shell /bin/bash runner
 # End SECTION: base packages
 
 # === SECTION: managed tool bootstrap (managed) ===
 # Source: generated bin/mise + .mise.toml
-# The canonical make setup verb below owns the official newest-Mise bootstrap
-# and every latest tool installation as the same unprivileged runtime user.
-# The setup RUN receives Mise's credential only through a BuildKit secret.
+# The canonical make setup verb below owns the committed Mise bootstrap
+# and the frozen installation of every tool the committed mise.lock pins, as
+# the same unprivileged runtime user.
+# The setup RUN receives GitHub's credential only through a BuildKit secret.
 # Never persist build credentials in ARG, ENV, layers, or image configuration.
 ARG RUNNER_USER=runner
 ENV HOME=/home/${RUNNER_USER}
@@ -36,6 +37,7 @@ WORKDIR /workspace
 RUN --mount=type=bind,source=.,target=/source,ro \
     cp -R /source/. /workspace/ \
     && chown -R runner:runner /workspace
+COPY --from=git --chown=runner:runner . /workspace/.git/
 USER runner
 ENV PATH="$MISE_DATA_DIR/shims:${PATH}"
 # End SECTION: managed tool bootstrap
@@ -49,7 +51,7 @@ ENV PATH="$MISE_DATA_DIR/shims:${PATH}"
 # mentioned uv.lock/flext-core, which turned the proof into a bypass -- a
 # broken bootstrap still produced a green image.
 ENV CI=Y
-RUN --mount=type=secret,id=github_token,env=MISE_GITHUB_TOKEN,required=true \
+RUN --mount=type=secret,id=github_token,env=GITHUB_TOKEN,required=true \
     make setup
 # End SECTION: bootstrap proof
 

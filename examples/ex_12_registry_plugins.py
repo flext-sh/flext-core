@@ -42,6 +42,12 @@ class Ex12RegistryPlugins(Ex12RegistryFlow):
         class_unreg_missing_name = self.rand_str(6)
         invalid_error = self.rand_str(7)
         boom_message = self.rand_str(7)
+
+        self._exercise_bindings(registry, handler_a, handler_b, custom_binding_name)
+        self._exercise_plugins(registry, plugin_ns, plugin_name_a, plugin_value_a, plugin_name_b, plugin_value_b, plugin_bad_name, plugin_bad_value, plugin_missing_name, plugin_unreg_missing_name, invalid_error, boom_message)
+        self._exercise_class_plugins(registry, class_ns, class_plugin_name, class_plugin_value, class_missing_name, class_unreg_missing_name)
+
+    def _exercise_bindings(self, registry: p.Registry, handler_a: ProtocolHandler, handler_b: ProtocolHandler, custom_binding_name: str) -> None:
         bindings_result = registry.register_bindings({
             m.Examples.CommandA: as_registry_handler(handler_a),
             custom_binding_name: as_registry_handler(handler_b),
@@ -51,6 +57,8 @@ class Ex12RegistryPlugins(Ex12RegistryFlow):
             "register_bindings.registered_len",
             len(bindings_result.value.registered) if bindings_result.success else -1,
         )
+
+    def _exercise_plugins(self, registry: p.Registry, plugin_ns: str, plugin_name_a: str, plugin_value_a: str, plugin_name_b: str, plugin_value_b: str, plugin_bad_name: str, plugin_bad_value: str, plugin_missing_name: str, plugin_unreg_missing_name: str, invalid_error: str, boom_message: str) -> None:
         plugin_ok = registry.register_plugin(plugin_ns, plugin_name_a, plugin_value_a)
         plugin_dup = registry.register_plugin(plugin_ns, plugin_name_a, plugin_value_a)
         plugin_empty = registry.register_plugin(plugin_ns, "", plugin_value_a)
@@ -93,6 +101,8 @@ class Ex12RegistryPlugins(Ex12RegistryFlow):
         )
         self.audit_check("unregister_plugin.ok", plugin_unreg_ok.success)
         self.audit_check("unregister_plugin.missing", plugin_unreg_missing.failure)
+
+    def _exercise_class_plugins(self, registry: p.Registry, class_ns: str, class_plugin_name: str, class_plugin_value: str, class_missing_name: str, class_unreg_missing_name: str) -> None:
         class_ok = registry.register_plugin(
             class_ns,
             class_plugin_name,

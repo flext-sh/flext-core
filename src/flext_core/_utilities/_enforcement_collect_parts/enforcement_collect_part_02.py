@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import inspect
 from collections.abc import Iterator
+from enum import EnumType
 
 from ..._constants.enforcement import FlextConstantsEnforcement as c
 from ..._protocols.base import FlextProtocolsBase as pb
@@ -37,6 +38,22 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementCollectPart01):
                 yield f"{qn}.{name}", (target, name)
 
     @staticmethod
+    def _ns_nested_classes(
+        root: type, node: type
+    ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
+        """Yield every locally declared non-Enum class nested under ``node``."""
+        for value in vars(node).values():
+            if (
+                isinstance(value, type)
+                and not isinstance(value, EnumType)
+                and ub.defined_inside(value, node.__qualname__)
+            ):
+                yield value.__qualname__, (root, value)
+                yield from FlextUtilitiesEnforcementCollect._ns_nested_classes(
+                    root, value
+                )
+
+    @staticmethod
     def _namespace_items(
         target: type, tag: str, effective_layer: str = ""
     ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
@@ -60,6 +77,8 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementCollectPart01):
                 yield from cls._ns_class_prefix(target, qn, project)
             case "cross_strenum" | "cross_protocol":
                 yield from cls._ns_cross(target, qn, effective_layer)
+            case "forbid_deep_namespace":
+                yield from cls._ns_nested_classes(target, target)
             case "nested_mro":
                 yield from cls._ns_nested_mro(target, qn, project)
             case "no_accessor_methods" | "smell_function_parameters":

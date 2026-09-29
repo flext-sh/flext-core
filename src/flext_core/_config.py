@@ -24,11 +24,11 @@ from __future__ import annotations
 
 import inspect
 import os
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from importlib.resources.abc import Traversable
 from pathlib import Path
 from threading import RLock
-from typing import TYPE_CHECKING, Any, ClassVar, Self, cast, override
+from typing import TYPE_CHECKING, ClassVar, Self, cast, override
 
 from pydantic import JsonValue
 from pydantic_settings import (
@@ -98,19 +98,19 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
         yaml_config_section: str | None = None,
         *,
         deep_merge: bool = False,
-        transform: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
+        transform: Callable[[dict[str, JsonValue]], dict[str, JsonValue]] | None = None,
     ) -> None:
         self._transform = transform
         super().__init__(
-            settings_cls,
-            yaml_file=yaml_file,
-            yaml_file_encoding=yaml_file_encoding,
-            yaml_config_section=yaml_config_section,
-            deep_merge=deep_merge,
+            params.settings_cls,
+            yaml_file=params.yaml_file,
+            yaml_file_encoding=params.yaml_file_encoding,
+            yaml_config_section=params.yaml_config_section,
+            deep_merge=params.deep_merge,
         )
 
     @override
-    def __call__(self) -> dict[str, Any]:
+    def __call__(self) -> dict[str, JsonValue]:
         """Return merged YAML data, applying the transform hook if set."""
         data = super().__call__()
         if self._transform is not None:
@@ -134,7 +134,11 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
         return loaded
 
     @override
-    def _read_files(self, files: object, deep_merge: bool = False) -> dict[str, object]:
+    def _read_files(
+        self,
+        files: PathType | Traversable | Sequence[PathType | Traversable] | None,
+        deep_merge: bool = False,
+    ) -> dict[str, JsonValue]:
         """Read multiple YAML files with list-aware deep merge.
 
         The upstream ``deep_update`` only recurses into dicts; when two files
@@ -150,7 +154,7 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
             return {}
         if isinstance(files, str) or not isinstance(files, _Sequence):
             files = [files]
-        merged: dict[str, object] = {}
+        merged: dict[str, JsonValue] = {}
         for file in files:
             raw_path = _Path(file) if isinstance(file, str) else file
             if not isinstance(raw_path, _Path):
@@ -158,7 +162,7 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
             file_path = raw_path.expanduser()
             if not file_path.is_file():
                 continue
-            updating: dict[str, object] = dict(self._read_file(file_path))
+            updating: dict[str, JsonValue] = dict(self._read_file(file_path))
             if deep_merge:
                 merged = self._deep_merge_lists(merged, updating)
             else:
@@ -167,8 +171,8 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
 
     @staticmethod
     def _deep_merge_lists(
-        base: dict[str, object], updating: dict[str, object]
-    ) -> dict[str, object]:
+        base: dict[str, JsonValue], updating: dict[str, JsonValue]
+    ) -> dict[str, JsonValue]:
         """Deep-merge two config dicts, concatenating list values."""
         result = dict(base)
         for key, value in updating.items():
@@ -193,7 +197,6 @@ class FlextConfig(BaseSettings):
     # NOTE (multi-agent): exact-file consumers declare their YAML surface here;
     # the empty default preserves deterministic directory auto-discovery.
     CONFIG_FILENAMES: ClassVar[t.VariadicTuple[str]] = ()
-    YAML_CONFIG_SECTION: ClassVar[str | None] = None
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         frozen=True, extra="allow", env_prefix="FLEXT_CONFIG_"
@@ -293,7 +296,7 @@ class FlextConfig(BaseSettings):
         return cls._yaml_files_in(config_dir) + user_files
 
     @classmethod
-    def _transform_loaded_yaml(cls, data: dict[str, Any]) -> dict[str, Any]:
+    def _transform_loaded_yaml(cls, data: dict[str, JsonValue]) -> dict[str, JsonValue]:
         """Hook for subclasses to transform merged YAML before validation.
 
         Default is identity (no transformation). Override to apply env
@@ -322,7 +325,6 @@ class FlextConfig(BaseSettings):
             StrictYamlConfigSource(
                 settings_cls,
                 yaml_file=cls._config_files(),
-                yaml_config_section=cls.YAML_CONFIG_SECTION,
                 deep_merge=True,
                 transform=cls._transform_loaded_yaml,
             ),

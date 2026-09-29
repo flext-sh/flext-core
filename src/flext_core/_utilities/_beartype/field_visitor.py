@@ -74,8 +74,14 @@ class FlextUtilitiesBeartypeFieldVisitor:
     def _field_description_violation(
         model_type: type, name: str, info: FieldInfo
     ) -> t.StrMapping | None:
+        # Cheap evidence first: class-wide annotation evaluation runs once per
+        # field, so it is reached only when no description is declared plainly.
+        if name.startswith("_") or info.description:
+            return None
         raw_annotations = vars(model_type).get("__annotations__", {})
         raw_annotation = raw_annotations.get(name)
+        if isinstance(raw_annotation, str) and "description=" in raw_annotation:
+            return None
         resolved_annotation = inspect.get_annotations(model_type, eval_str=False).get(
             name
         )
@@ -92,13 +98,7 @@ class FlextUtilitiesBeartypeFieldVisitor:
                 isinstance(meta, FieldInfo) and meta.description
                 for meta in get_args(resolved_annotation)[1:]
             )
-        has_description = any((
-            name.startswith("_"),
-            bool(info.description),
-            isinstance(raw_annotation, str) and "description=" in raw_annotation,
-            has_annotated_description,
-        ))
-        return None if has_description else {}
+        return None if has_annotated_description else {}
 
     @staticmethod
     def _field_violation(

@@ -46,19 +46,9 @@ class FlextProtocolsRegistry:
             cls,
             dispatcher: FlextProtocolsHandler.Dispatcher | None = None,
             *,
-            runtime: m.ServiceRuntime | None = None,
             auto_discover_handlers: bool = False,
         ) -> Self:
             """Create a new registry instance."""
-            ...
-
-        def configure_runtime(
-            self,
-            runtime: m.ServiceRuntime,
-            *,
-            dispatcher: FlextProtocolsHandler.Dispatcher | None = None,
-        ) -> Self:
-            """Bind this registry to a pre-built runtime snapshot."""
             ...
 
         def execute(self) -> FlextProtocolsResult.Result[bool]:

@@ -45,7 +45,7 @@ class FlextUtilitiesMapperAccess:
             )
         if isinstance(value, p.ValidatorSpec):
             return str(value)
-        if isinstance(value, (*t.SCALAR_TYPES, Path)):
+        if isinstance(value, (*c.SCALAR_TYPES, Path)):
             return value
         if isinstance(
             value, Mapping

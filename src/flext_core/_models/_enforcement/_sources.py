@@ -70,7 +70,7 @@ class FlextModelsEnforcementSources(FlextModelsEnforcementBase):
         flext-infra fix orchestrator to route violations to the right fixer.
         """
 
-        kind: Literal["gate", "transformer", "rope", "manual"]
+        kind: Literal["transformer", "rope", "manual"]
         target: str
         params: t.JsonMapping = Field(default_factory=dict)
         safe: bool = True

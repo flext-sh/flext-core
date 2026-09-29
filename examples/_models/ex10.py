@@ -2,12 +2,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 
-from flext_core import m, p, r, t
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
+from flext_core import m, p, r
 
 
 class ExamplesFlextModelsEx10:
@@ -45,13 +42,3 @@ class ExamplesFlextModelsEx10:
 
         def handle(self, message: ExamplesFlextModelsEx10.Message) -> p.Result[str]:
             return r[str].ok(message.text)
-
-    class CommandBusStub(m.BaseModel):
-        def dispatch(self, message: ExamplesFlextModelsEx10.Message) -> p.Result[str]:
-            return r[str].ok(message.text)
-
-    class ServiceStub(m.BaseModel):
-        run: Annotated[
-            Callable[[], t.JsonValue] | None,
-            m.Field(description="Callable returning JSON value or None"),
-        ] = None

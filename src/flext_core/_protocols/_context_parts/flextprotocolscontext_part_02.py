@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     from contextlib import AbstractContextManager
@@ -18,6 +18,7 @@ from .flextprotocolscontext_part_01 import (
 
 
 class FlextProtocolsContext(FlextProtocolsContextPart01):
+    @runtime_checkable
     class ContextRequestNamespace(Protocol):
         """Protocol for request-level helpers on the context class."""
 
@@ -31,6 +32,7 @@ class FlextProtocolsContext(FlextProtocolsContextPart01):
             """Apply the current operation name."""
             ...
 
+    @runtime_checkable
     class ContextPerformanceNamespace(Protocol):
         """Protocol for performance-scoped context helpers."""
 
@@ -41,6 +43,7 @@ class FlextProtocolsContext(FlextProtocolsContextPart01):
             """Create a timed operation scope."""
             ...
 
+    @runtime_checkable
     class ContextSerializationNamespace(Protocol):
         """Protocol for context serialization helpers."""
 
@@ -49,6 +52,7 @@ class FlextProtocolsContext(FlextProtocolsContextPart01):
             """Export the active global context variables."""
             ...
 
+    @runtime_checkable
     class ContextUtilitiesNamespace(Protocol):
         """Protocol for class-level context utilities."""
 
@@ -62,6 +66,7 @@ class FlextProtocolsContext(FlextProtocolsContextPart01):
             """Ensure and return the active correlation id."""
             ...
 
+    @runtime_checkable
     class ContextType(Protocol):
         """Protocol for flat context classes exposing the canonical class API."""
 

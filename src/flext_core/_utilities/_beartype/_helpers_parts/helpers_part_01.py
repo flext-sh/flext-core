@@ -6,7 +6,19 @@ import functools
 import importlib
 import sys
 from types import ModuleType
-from typing import TYPE_CHECKING, Any, TypeAliasType, cast, get_args, get_origin
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    TypeAliasType,
+    cast,
+    get_args,
+    get_origin,
+    is_protocol,
+)
+
+from ...._models.enforcement import FlextModelsEnforcement as me
+from ...family_surface import FlextUtilitiesFamilySurface
+from ..type_aliases import FlextUtilitiesBeartypeTypeAliases
 
 from ...._models.enforcement import FlextModelsEnforcement as me
 from ..type_aliases import FlextUtilitiesBeartypeTypeAliases
@@ -32,12 +44,11 @@ class FlextUtilitiesBeartypeHelpers:
         package = sys.modules.get(package_name)
         if package is None:
             package = importlib.import_module(package_name)
-        if not hasattr(package, "_LAZY_IMPORTS"):
+        published = vars(package).get("_LAZY_IMPORTS")
+        if published is None:
             return ()
         lazy_module = importlib.import_module("flext_core.lazy")
-        lazy_imports = lazy_module.normalize_lazy_imports(
-            package.__name__, package.__dict__["_LAZY_IMPORTS"]
-        )
+        lazy_imports = lazy_module.normalize_lazy_imports(package.__name__, published)
         return tuple(
             (
                 alias,
@@ -69,6 +80,25 @@ class FlextUtilitiesBeartypeHelpers:
             )
             if module_path.split(".", 1)[0] == package_name
             and suffix in {"Constants", "Models", "Protocols", "Types", "Utilities"}
+        )
+
+    @staticmethod
+    def is_family_facade(target: type) -> bool:
+        """Return True when a family package publishes ``target`` as a letter facade.
+
+        Both facts come from their owners: the generated ``_LAZY_IMPORTS``
+        binds each one-letter alias to its class, and the family surface
+        names the packages that publish that contract.
+        """
+        package_name = target.__module__.split(".", 1)[0]
+        if package_name not in FlextUtilitiesFamilySurface.project_alias_owners():
+            return False
+        return any(
+            vars(sys.modules[module_path]).get(alias) is target
+            for alias, module_path, _ in FlextUtilitiesBeartypeHelpers.lazy_alias_suffixes(
+                package_name
+            )
+            if module_path in sys.modules
         )
 
     @staticmethod
@@ -147,7 +177,7 @@ class FlextUtilitiesBeartypeHelpers:
 
     @staticmethod
     def has_runtime_protocol_marker(value: type) -> bool:
-        return bool(getattr(value, "_is_protocol", False))
+        return is_protocol(value)
 
     @staticmethod
     def has_abstract_contract(value: type) -> bool:
@@ -173,7 +203,7 @@ class FlextUtilitiesBeartypeHelpers:
         from ``TransportPlugin``) are valid inner classes of protocol trees;
         the ``proto_inner_kind`` rule (ENFORCE-083) must not flag them.
         """
-        return any(getattr(base, "_is_protocol", False) for base in value.__mro__[1:])
+        return any(is_protocol(base) for base in value.__mro__[1:])
 
 
 __all__: list[str] = ["FlextUtilitiesBeartypeHelpers"]

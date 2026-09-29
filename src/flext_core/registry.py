@@ -11,9 +11,7 @@ from __future__ import annotations
 
 import inspect
 import sys
-from typing import TYPE_CHECKING, Annotated, ClassVar, Self, cast, override
-
-from pydantic import PrivateAttr
+from typing import TYPE_CHECKING, ClassVar, Self, cast, override
 
 # NOTE (multi-agent): mro-i6nq.12 — consolidated _registry_parts/part_01..04 (one
 # FlextRegistry class split across a numbered MRO chain) into this single facade module.
@@ -36,33 +34,23 @@ class FlextRegistry(s[bool]):
     for actual handler registration and execution.
     """
 
-    _state: m.RegistryState = PrivateAttr(default_factory=m.RegistryState)
-    _runtime: m.ServiceRuntime | None = PrivateAttr(default=None)
+    _state: m.RegistryState = u.PrivateAttr(default_factory=m.RegistryState)
 
     _class_plugin_storage: ClassVar[MutableMapping[str, t.RegistrablePlugin]] = {}
 
     _class_registered_keys: ClassVar[set[str]] = set()
 
-    dispatcher: Annotated[
-        p.Dispatcher | None,
-        m.Field(
-            exclude=True, description="The dispatcher instance for executing handlers."
-        ),
-    ] = None
+    dispatcher: t.Port[p.Dispatcher | None] = m.Field(
+        None,
+        exclude=True,
+        description="The dispatcher instance for executing handlers.",
+    )
 
     @override
     def model_post_init(self, __context: t.ScalarMapping | None, /) -> None:
-        """Post-initialization hook for registry.
-
-        Initializes dispatcher state without triggering recursive runtime
-        build (registry IS part of the runtime triple — building it here
-        would recurse via ``build_service_runtime → build_registry``).
-        """
+        """Bind the validated dispatcher to the registry state."""
         super().model_post_init(__context)
-        resolved_dispatcher = (
-            self.dispatcher if isinstance(self.dispatcher, p.Dispatcher) else None
-        )
-        self._state = m.RegistryState(dispatcher=resolved_dispatcher)
+        self._state = m.RegistryState(dispatcher=self.dispatcher)
 
     def __init_subclass__(cls, **kwargs: t.Scalar | m.ConfigMap | t.ScalarList) -> None:
         """Auto-create per-subclass class-level storage.
@@ -81,7 +69,6 @@ class FlextRegistry(s[bool]):
         cls,
         dispatcher: p.Dispatcher | None = None,
         *,
-        runtime: m.ServiceRuntime | None = None,
         auto_discover_handlers: bool = False,
     ) -> Self:
         """Create a new FlextRegistry instance.
@@ -97,7 +84,6 @@ class FlextRegistry(s[bool]):
 
         Args:
             dispatcher: Optional CommandBus instance (defaults to DSL dispatcher)
-            runtime: Optional runtime snapshot whose container/context are reused
             auto_discover_handlers: If True, scan calling module for @handler()
                 decorated functions and auto-register them with deduplication.
                 Default: False.
@@ -106,17 +92,7 @@ class FlextRegistry(s[bool]):
             FlextRegistry instance with auto-discovered handlers if enabled.
 
         """
-        if runtime is None:
-            instance = cls(dispatcher=dispatcher or u.build_dispatcher())
-        else:
-            resolved = (
-                dispatcher
-                if isinstance(dispatcher, p.Dispatcher)
-                else runtime.dispatcher
-            )
-            instance = cls(dispatcher=resolved).configure_runtime(
-                runtime, dispatcher=resolved
-            )
+        instance = cls(dispatcher=dispatcher or u.build_dispatcher())
         if auto_discover_handlers:
             frame = inspect.currentframe()
             if frame and frame.f_back:
@@ -128,24 +104,6 @@ class FlextRegistry(s[bool]):
                     for _handler_name, handler_func, _handler_config in handlers:
                         _ = handler_func
         return instance
-
-    def configure_runtime(
-        self, runtime: m.ServiceRuntime, *, dispatcher: p.Dispatcher | None = None
-    ) -> Self:
-        """Bind this registry to a pre-built runtime snapshot."""
-        resolved_dispatcher = (
-            dispatcher if isinstance(dispatcher, p.Dispatcher) else runtime.dispatcher
-        )
-        self.dispatcher = resolved_dispatcher
-        self._state = self._state.model_copy(update={"dispatcher": resolved_dispatcher})
-        self._runtime = runtime.model_copy(
-            update={"dispatcher": resolved_dispatcher, "registry": self}
-        )
-        return self
-
-    def _create_initial_runtime(self) -> m.ServiceRuntime:
-        """Build the registry runtime without recursively materializing another registry."""
-        return u.build_service_runtime(self, registry=self)
 
     @staticmethod
     def _narrow_value(
@@ -319,17 +277,25 @@ class FlextRegistry(s[bool]):
             service: Service instance to register
 
         Returns:
-            r[bool]: Success (True) if registered or failure with error details.
+            r[bool]: Success (True) when registered, or when the same value is
+            already registered under ``name``; failure for a different value
+            under a registered name, or an empty or reserved name.
 
         """
-        was_registered = self.container.has(name)
         normalized_service = self._normalize_registration_impl(service)
-        _ = self.container.bind(name, normalized_service)
-        if was_registered or self.container.has(name):
-            return r[bool].ok(True)
-        return r[bool].fail_op(
-            "register service in registry", f"Service '{name}' was not registered"
-        )
+        if self.container.has(name):
+            existing = self.container.resolve(name)
+            if existing.success and existing.value == normalized_service:
+                return r[bool].ok(True)
+            return r[bool].fail_op(
+                "register service in registry",
+                c.ERR_CONTAINER_NAME_DUPLICATE.format(name=name),
+            )
+        try:
+            _ = self.container.bind(name, normalized_service)
+        except e.ValidationError as exc:
+            return e.fail_operation("register service in registry", exc)
+        return r[bool].ok(True)
 
     def register_bindings(
         self, bindings: t.MappingKV[t.RegistryBindingKey, t.DispatchableHandler]

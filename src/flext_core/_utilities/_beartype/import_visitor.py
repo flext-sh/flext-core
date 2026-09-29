@@ -88,11 +88,16 @@ class _ImportBlacklistVisitor:
                     if isinstance(value, type)
                     and name.startswith(tier_prefixes)
                     and (origin := _ubh.object_module_name_for(value) or "").startswith(
-                        "flext_"
+                        c.NAMESPACE_FAMILY_PREFIX
                     )
                     and origin != module_name
                     and not _ImportBlacklistVisitor._is_local_family_import(
                         origin, module_name
+                    )
+                    and not (
+                        value in target.__bases__
+                        and _ubh.is_family_facade(target)
+                        and _ubh.is_family_facade(value)
                     )
                 ),
                 no_violation,

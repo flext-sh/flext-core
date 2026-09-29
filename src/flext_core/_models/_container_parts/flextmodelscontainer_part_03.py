@@ -16,7 +16,6 @@ from typing import Annotated, ClassVar
 
 from flext_core import p, t
 
-from ..._typings.pydantic import FlextTypesPydantic as tp
 from ..base import FlextModelsBase as m
 from ..containers import FlextModelsContainers
 from ..pydantic import FlextModelsPydantic as mp
@@ -39,7 +38,6 @@ class FlextModelsContainer(FlextModelsContainerPart02):
 
         settings: Annotated[
             p.Settings | None,
-            tp.SkipValidation,
             mp.Field(
                 None,
                 title="Config",
@@ -48,7 +46,6 @@ class FlextModelsContainer(FlextModelsContainerPart02):
         ] = None
         context: Annotated[
             p.Context | None,
-            tp.SkipValidation,
             mp.Field(
                 None,
                 title="Context",
@@ -56,11 +53,7 @@ class FlextModelsContainer(FlextModelsContainerPart02):
             ),
         ] = None
         services: Annotated[
-            t.MappingKV[
-                str, FlextModelsContainer.ServiceRegistration | t.RegisterableService
-            ]
-            | None,
-            tp.SkipValidation,
+            t.MappingKV[str, t.RegisterableService] | None,
             mp.Field(
                 None,
                 title="Services",
@@ -69,11 +62,7 @@ class FlextModelsContainer(FlextModelsContainerPart02):
             ),
         ] = None
         factories: Annotated[
-            t.MappingKV[
-                str, FlextModelsContainer.FactoryRegistration | t.FactoryCallable
-            ]
-            | None,
-            tp.SkipValidation,
+            t.MappingKV[str, t.FactoryCallable] | None,
             mp.Field(
                 None,
                 title="Factories",
@@ -82,11 +71,7 @@ class FlextModelsContainer(FlextModelsContainerPart02):
             ),
         ] = None
         resources: Annotated[
-            t.MappingKV[
-                str, FlextModelsContainer.ResourceRegistration | t.ResourceCallable
-            ]
-            | None,
-            tp.SkipValidation,
+            t.MappingKV[str, t.ResourceCallable] | None,
             mp.Field(
                 None,
                 title="Resources",

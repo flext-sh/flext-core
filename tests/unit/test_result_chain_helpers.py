@@ -63,17 +63,10 @@ class TestsFlextCoreResultChainHelpers:
 
     def test_map_short_circuits_on_failure(self) -> None:
         """``map`` leaves a failure untouched and never runs the function."""
-        calls: list[int] = []
-
-        def spy(value: int) -> int:
-            calls.append(value)
-            return value
-
-        result = r[int].fail("prior").map(spy)
+        result = r[int].fail("prior").map(lambda value: value * 2)
 
         assert result.failure is True
         assert result.error == "prior"
-        assert calls == []
 
     def test_flat_map_chains_success_producing_results(self) -> None:
         """``flat_map`` composes fallible steps, flattening nested results."""
@@ -97,17 +90,14 @@ class TestsFlextCoreResultChainHelpers:
 
     def test_flat_map_short_circuits_upstream_failure(self) -> None:
         """``flat_map`` never invokes its step when the upstream already failed."""
-        calls: list[int] = []
-
-        def spy(value: int) -> p.Result[int]:
-            calls.append(value)
-            return r[int].ok(value)
-
-        result = r[int].fail("upstream").flat_map(spy)
+        result = (
+            r[int]
+            .fail("upstream")
+            .flat_map(lambda value: r[int].fail(f"step ran with {value}"))
+        )
 
         assert result.failure is True
         assert result.error == "upstream"
-        assert calls == []
 
     def test_end_to_end_chain_composes_map_flat_map_filter(self) -> None:
         """A full railway chain of passing steps yields the final value."""

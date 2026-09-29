@@ -11,10 +11,6 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 if TYPE_CHECKING:
     from ._base import FlextRuntimeBase
     from ._container import FlextRuntimeContainer
-    from ._dependency import FlextRuntimeDependencyIntegration
-    from ._dependency_bindings import FlextRuntimeDependencyBindings
-    from ._dependency_options import FlextRuntimeDependencyOptions
-    from ._dependency_types import FlextRuntimeDependencyTypes
     from ._metadata import FlextRuntimeMetadata
     from ._metadata_validation import FlextRuntimeMetadataValidation
 
@@ -22,10 +18,6 @@ if TYPE_CHECKING:
 __all__: tuple[str, ...] = (
     "FlextRuntimeBase",
     "FlextRuntimeContainer",
-    "FlextRuntimeDependencyBindings",
-    "FlextRuntimeDependencyIntegration",
-    "FlextRuntimeDependencyOptions",
-    "FlextRuntimeDependencyTypes",
     "FlextRuntimeMetadata",
     "FlextRuntimeMetadataValidation",
 )
@@ -35,10 +27,6 @@ _LAZY_IMPORTS = MappingProxyType(
         MappingProxyType({
             "._base": ("FlextRuntimeBase",),
             "._container": ("FlextRuntimeContainer",),
-            "._dependency": ("FlextRuntimeDependencyIntegration",),
-            "._dependency_bindings": ("FlextRuntimeDependencyBindings",),
-            "._dependency_options": ("FlextRuntimeDependencyOptions",),
-            "._dependency_types": ("FlextRuntimeDependencyTypes",),
             "._metadata": ("FlextRuntimeMetadata",),
             "._metadata_validation": ("FlextRuntimeMetadataValidation",),
         }),

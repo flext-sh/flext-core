@@ -240,9 +240,6 @@ class TestsFlextCoreDispatcher:
         assert failure_detail in emitted
 
 
-__all__: list[str] = ["TestsFlextCoreDispatcher"]
-
-
 RouteMessage = TestsFlextCoreDispatcher.RouteMessage
 RecordingHandler = TestsFlextCoreDispatcher.RecordingHandler
 FailingHandler = TestsFlextCoreDispatcher.FailingHandler

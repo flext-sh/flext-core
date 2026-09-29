@@ -17,8 +17,6 @@ class TestsFlextConstantsErrors:
     VALUE_TOO_LOW: ClassVar[str] = "Value must be positive"
     VALUE_TOO_HIGH: ClassVar[str] = "Value must be <= 100"
     TEST_ERROR: ClassVar[str] = "Test error"
-    DISPATCHER_UNCONFIGURED: ClassVar[str] = "dispatcher-unconfigured"
-    DISPATCHER_FAIL: ClassVar[str] = "dispatcher-fail"
     NO_USER_IDS_PROVIDED: ClassVar[str] = "No user IDs provided"
     SUBCLASSES_MUST_IMPLEMENT_EXECUTE: ClassVar[str] = (
         "Subclasses must implement execute()"

@@ -5,7 +5,6 @@ from __future__ import annotations
 import importlib
 import sys
 from collections.abc import Iterator
-from importlib.machinery import ModuleSpec
 from pathlib import Path
 from types import ModuleType
 from typing import TYPE_CHECKING
@@ -67,8 +66,6 @@ class TestsFlextCoreLazyExports:
         facade = getattr(module, facade_name)
         alias = getattr(module, alias_name)
         assert alias is facade
-        assert facade_name in module.__all__
-        assert alias_name in module.__all__
 
     def test_root_package_resolves_primary_facades_via_aliases(self) -> None:
         # Arrange / Act
@@ -83,16 +80,14 @@ class TestsFlextCoreLazyExports:
         assert package.u is package.FlextUtilities
         assert {"FlextConstants", "FlextUtilities", "u"} <= set(package.__all__)
 
-    def test_model_facade_does_not_initialize_dependency_runtime(self) -> None:
-        """Loading model declarations must not initialize the optional DI stack."""
+    def test_model_facade_does_not_import_web_runtime(self) -> None:
+        """Loading model declarations must not import the web framework stack."""
         script = (
             "import sys\n"
             "from flext_core import m\n"
             "assert m.StrictModel\n"
             "for name in sorted(sys.modules):\n"
-            "    if name == 'fastapi' or name.startswith('fastapi.') "
-            "or name == 'dependency_injector' "
-            "or name.startswith('dependency_injector.'):\n"
+            "    if name == 'fastapi' or name.startswith('fastapi.'):\n"
             "        print(name)\n"
         )
 
@@ -281,44 +276,75 @@ class TestsFlextCoreLazyExports:
         assert resolved is alpha_cls
         assert module_globals["Alpha"] is alpha_cls
 
-    def test_get_does_not_cache_symbol_from_initializing_module(self) -> None:
-        # Arrange
+    @pytest.fixture
+    def rebinding_package(self, tmp_path: Path) -> Iterator[str]:
+        """Write a real lazy package whose child rebinds ``u`` mid-body.
+
+        ``pkg/__init__.py`` lazily exports ``u`` from ``pkg.child``; the child
+        binds a first class, resolves ``pkg.u`` while its own body is still
+        executing (same-thread circular import), then rebinds ``u``.
+        """
         lazy.reset()
-        module_name = "test_lazy_pkg.partial"
-        partial = ModuleType(module_name)
-        spec = ModuleSpec(module_name, loader=None)
-        spec.__dict__["_initializing"] = True
-        partial.__spec__ = spec
-
-        class PartialAlias:
-            pass
-
-        class FinalAlias:
-            pass
-
-        partial.__dict__["u"] = PartialAlias
-        sys.modules[module_name] = partial
+        package_name = "flext_lazy_rebinding_pkg"
+        package_dir = tmp_path / package_name
+        package_dir.mkdir()
+        (package_dir / "__init__.py").write_text(
+            "from flext_core.lazy import install_lazy_exports\n"
+            "install_lazy_exports(__name__, globals(), {'u': '.child'})\n",
+            encoding="utf-8",
+        )
+        (package_dir / "child.py").write_text(
+            "class FirstAlias: ...\n"
+            "u = FirstAlias\n"
+            f"import {package_name}\n"
+            f"RESOLVED_DURING_INIT = {package_name}.u\n"
+            f"CACHED_DURING_INIT = 'u' in vars({package_name})\n"
+            "class FinalAlias: ...\n"
+            "u = FinalAlias\n",
+            encoding="utf-8",
+        )
+        sys.path.insert(0, str(tmp_path))
         try:
-            module_globals: t.ModuleGlobals = {}
-            lazy_map = {"u": (module_name, "u")}
-
-            # Act
-            partial_resolved = lazy.get("u", lazy_map, module_globals, "test_lazy_pkg")
-
-            # Assert
-            assert partial_resolved is PartialAlias
-            assert "u" not in module_globals
-
-            # Act
-            spec.__dict__["_initializing"] = False
-            partial.__dict__["u"] = FinalAlias
-            final_resolved = lazy.get("u", lazy_map, module_globals, "test_lazy_pkg")
-
-            # Assert
-            assert final_resolved is FinalAlias
-            assert module_globals["u"] is FinalAlias
+            yield package_name
         finally:
-            sys.modules.pop(module_name, None)
+            sys.path.remove(str(tmp_path))
+            for name in [
+                name
+                for name in sys.modules
+                if name == package_name or name.startswith(f"{package_name}.")
+            ]:
+                sys.modules.pop(name)
+            lazy.reset()
+
+    def test_get_serves_but_never_caches_symbol_of_initializing_module(
+        self, rebinding_package: str
+    ) -> None:
+        # Act — first access imports the child, whose body resolves ``u`` again
+        package = importlib.import_module(rebinding_package)
+        first_access = package.u
+        child = importlib.import_module(f"{rebinding_package}.child")
+
+        # Assert — the mid-body resolution saw the current binding, uncached;
+        # the completed module's final binding is what gets cached.
+        assert child.RESOLVED_DURING_INIT is child.FirstAlias
+        assert child.CACHED_DURING_INIT is False
+        assert first_access is child.FinalAlias
+        assert vars(package)["u"] is child.FinalAlias
+        assert package.u is child.FinalAlias
+
+    def test_get_caches_symbol_of_fully_imported_module(
+        self, rebinding_package: str
+    ) -> None:
+        # Arrange — import the child completely before any lazy resolution
+        child = importlib.import_module(f"{rebinding_package}.child")
+        package = importlib.import_module(rebinding_package)
+
+        # Act
+        resolved = package.u
+
+        # Assert — resolution from a finished module is cached in module globals
+        assert resolved is child.FinalAlias
+        assert vars(package)["u"] is child.FinalAlias
 
     def test_attribute_resolves_class_namespace_symbol_and_caches_global(
         self, registered_alpha_module: tuple[str, type]

@@ -2,17 +2,12 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal, cast
-
 from ..._constants.enforcement import FlextConstantsEnforcement as c
 from ..._models.enforcement import FlextModelsEnforcement as me
 from .enforcement_part_01 import PREDICATE_BINDINGS
 from .enforcement_part_03 import (
     FlextUtilitiesEnforcement as FlextUtilitiesEnforcementPart03,
 )
-
-if TYPE_CHECKING:
-    from ..._typings.base import FlextTypingBase as t
 
 
 class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
@@ -22,13 +17,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
         raw = c.ENFORCEMENT_FIX_ACTIONS.get(rule_id)
         if raw is None:
             return None
-        fix = cast("dict[str, t.JsonValue]", raw)
-        return me.EnforcementFixAction(
-            kind=cast("Literal['gate', 'manual', 'rope', 'transformer']", fix["kind"]),
-            target=cast("str", fix["target"]),
-            params=cast("t.JsonMapping", fix.get("params", {})),
-            safe=cast("bool", fix.get("safe", True)),
-        )
+        return me.EnforcementFixAction.model_validate(raw)
 
     @classmethod
     def build_canonical_catalog(cls) -> me.EnforcementCatalog:
@@ -42,7 +31,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
             me.EnforcementRuleSpec(
                 id=rid,
                 description=desc,
-                severity=me.EnforcementRuleSeverity(sev),
+                severity=c.EnforcementRuleSeverity(sev),
                 source=me.EnforcementInfraDetectorSource(
                     violation_field=vf, match_missing=mm
                 ),
@@ -59,7 +48,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
             me.EnforcementRuleSpec(
                 id=rid,
                 description=desc,
-                severity=me.EnforcementRuleSeverity(sev),
+                severity=c.EnforcementRuleSeverity(sev),
                 source=me.EnforcementBeartypeSource(
                     predicate_kind=PREDICATE_BINDINGS[tag][0]
                 ),
@@ -77,7 +66,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
             me.EnforcementRuleSpec(
                 id=rid,
                 description=desc,
-                severity=me.EnforcementRuleSeverity(sev),
+                severity=c.EnforcementRuleSeverity(sev),
                 source=me.EnforcementCodeSmellSource(smell_tag=tag),
                 agents_md_anchor=anchor,
                 skills=skills,
@@ -90,7 +79,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
             me.EnforcementRuleSpec(
                 id=rid,
                 description=desc,
-                severity=me.EnforcementRuleSeverity(sev),
+                severity=c.EnforcementRuleSeverity(sev),
                 source=me.EnforcementTestsValidatorSource(
                     method=method, rule_ids=rule_ids
                 ),
@@ -104,7 +93,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
             me.EnforcementRuleSpec(
                 id=rid,
                 description=desc,
-                severity=me.EnforcementRuleSeverity(sev),
+                severity=c.EnforcementRuleSeverity(sev),
                 source=me.EnforcementSkillPointerSource(
                     skill=src_skill, anchor=src_anchor
                 ),
@@ -123,7 +112,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
             me.EnforcementRuleSpec(
                 id=rid,
                 description=desc,
-                severity=me.EnforcementRuleSeverity(sev),
+                severity=c.EnforcementRuleSeverity(sev),
                 source=me.EnforcementRuffSource(rule_code=rule_code),
                 skills=skills,
                 notes=ruff_notes,
@@ -145,7 +134,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
                         "FlextMroViolation emitted by the flext-core enforcement "
                         "engine at class-definition time."
                     ),
-                    severity=me.EnforcementRuleSeverity.HIGH,
+                    severity=c.EnforcementRuleSeverity.HIGH,
                     source=me.EnforcementRuntimeWarningSource(
                         category="flext_core._constants.enforcement.FlextMroViolation"
                     ),
@@ -168,7 +157,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
                         "violates AGENTS.md §3.5 (Linter Zero Tolerance + "
                         "Suppressions)."
                     ),
-                    severity=me.EnforcementRuleSeverity.MEDIUM,
+                    severity=c.EnforcementRuleSeverity.MEDIUM,
                     source=me.EnforcementRuffSource(rule_code="PGH003"),
                     agents_md_anchor="3-5-integrity",
                     skills=("flext-strict-typing", "flext-quality-gates"),

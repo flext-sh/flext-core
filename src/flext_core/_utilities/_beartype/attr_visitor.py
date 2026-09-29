@@ -5,7 +5,7 @@ from __future__ import annotations
 import inspect
 from pathlib import Path
 from types import MappingProxyType
-from typing import get_origin
+from typing import ClassVar, get_origin
 
 from ..._constants.enforcement import FlextConstantsEnforcement as c
 from ..._models.enforcement import FlextModelsEnforcement as me
@@ -81,11 +81,7 @@ class FlextUtilitiesBeartypeAttrVisitor:
             annotations_map = {}
         ann = annotations_map.get(name)
         if ann is not None:
-            origin = get_origin(ann)
-            origin_name = getattr(origin, "__qualname__", "") or getattr(
-                origin, "_name", ""
-            )
-            return origin_name == "ClassVar" or str(ann).endswith("ClassVar")
+            return ann is ClassVar or get_origin(ann) is ClassVar
         # String annotations whose defining module is unavailable (synthetic
         # test classes) are read unevaluated; any failure escapes with its cause.
         raw = inspect.get_annotations(target, eval_str=False).get(name)

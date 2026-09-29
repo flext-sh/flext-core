@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import importlib
+
 import pytest
 
 from tests.constants import c
@@ -42,22 +44,22 @@ class TestsFlextEnforcementCatalog:
 
     def test_by_kind_returns_only_matching_source_kind(self) -> None:
         infra = u.build_canonical_catalog().by_kind(
-            m.EnforcementSourceKind.FLEXT_INFRA_DETECTOR
+            c.EnforcementSourceKind.FLEXT_INFRA_DETECTOR
         )
         assert all(
-            rule.source.kind == m.EnforcementSourceKind.FLEXT_INFRA_DETECTOR.value
+            rule.source.kind == c.EnforcementSourceKind.FLEXT_INFRA_DETECTOR.value
             for rule in infra
         )
 
     def test_catalog_covers_every_declared_source_kind(self) -> None:
         present = {rule.source.kind for rule in u.build_canonical_catalog().rules}
-        expected = {member.value for member in m.EnforcementSourceKind}
+        expected = {member.value for member in c.EnforcementSourceKind}
         assert expected <= present
 
     def test_infra_detector_rules_match_declared_infra_rows(self) -> None:
         declared_fields = {row[2] for row in c.INFRA_DETECTOR_ROWS}
         infra = u.build_canonical_catalog().by_kind(
-            m.EnforcementSourceKind.FLEXT_INFRA_DETECTOR
+            c.EnforcementSourceKind.FLEXT_INFRA_DETECTOR
         )
         actual_fields: set[str] = set()
         for rule in infra:
@@ -71,7 +73,7 @@ class TestsFlextEnforcementCatalog:
         """Each auto-fixable infra detector field maps to one catalog rule."""
         fields: list[str] = []
         for rule in u.build_canonical_catalog().by_kind(
-            m.EnforcementSourceKind.FLEXT_INFRA_DETECTOR
+            c.EnforcementSourceKind.FLEXT_INFRA_DETECTOR
         ):
             assert isinstance(rule.source, m.EnforcementInfraDetectorSource)
             if rule.fix_action is not None:
@@ -79,36 +81,16 @@ class TestsFlextEnforcementCatalog:
 
         assert len(fields) == len(set(fields))
 
-    def test_tests_validator_rules_cover_all_seven_public_dispatch_methods(
-        self,
-    ) -> None:
-        validators = u.build_canonical_catalog().by_kind(
-            m.EnforcementSourceKind.FLEXT_TESTS_VALIDATOR
-        )
-        assert len(validators) == 7
-        methods: set[str] = set()
-        for rule in validators:
-            assert isinstance(rule.source, m.EnforcementTestsValidatorSource)
-            methods.add(rule.source.method)
-        assert methods == {
-            "imports",
-            "types",
-            "bypass",
-            "layer",
-            "tests",
-            "validate_config",
-            "markdown",
-        }
-
-    def test_runtime_warning_category_references_flext_mro_violation(self) -> None:
+    def test_runtime_warning_categories_resolve_to_warning_classes(self) -> None:
         runtime = u.build_canonical_catalog().by_kind(
-            m.EnforcementSourceKind.RUNTIME_WARNING
+            c.EnforcementSourceKind.RUNTIME_WARNING
         )
-        categories: set[str] = set()
+        assert runtime
         for rule in runtime:
             assert isinstance(rule.source, m.EnforcementRuntimeWarningSource)
-            categories.add(rule.source.category)
-        assert "flext_core._constants.enforcement.FlextMroViolation" in categories
+            module_name, _, class_name = rule.source.category.rpartition(".")
+            category = getattr(importlib.import_module(module_name), class_name)
+            assert issubclass(category, Warning)
 
     def test_fix_action_rules_match_declared_constants(self) -> None:
         catalog = u.build_canonical_catalog()
@@ -132,20 +114,12 @@ class TestsFlextEnforcementCatalog:
             assert fix_action.params == declared["params"]
             assert fix_action.safe is declared["safe"]
 
-    def test_compatibility_alias_import_uses_rope_rewriter(self) -> None:
-        rule = u.build_canonical_catalog().by_id("ENFORCE-064")
-
-        assert rule is not None
-        assert rule.fix_action is not None
-        assert rule.fix_action.kind == "rope"
-        assert rule.fix_action.target == "rewrite_compatibility_alias"
-
     def test_rule_spec_construction_rejects_invalid_id_format(self) -> None:
         with pytest.raises(c.ValidationError):
             m.EnforcementRuleSpec(
                 id="BAD-999",
                 description="bad",
-                severity=m.EnforcementRuleSeverity.HIGH,
+                severity=c.EnforcementRuleSeverity.HIGH,
                 source=m.EnforcementRuffSource(rule_code="ANN401"),
             )
 
@@ -153,7 +127,7 @@ class TestsFlextEnforcementCatalog:
         rule = m.EnforcementRuleSpec(
             id="ENFORCE-900",
             description="x",
-            severity=m.EnforcementRuleSeverity.LOW,
+            severity=c.EnforcementRuleSeverity.LOW,
             source=m.EnforcementRuffSource(rule_code="ANN401"),
         )
         with pytest.raises(c.ValidationError):
@@ -163,21 +137,21 @@ class TestsFlextEnforcementCatalog:
         infra_rule = m.EnforcementRuleSpec(
             id="ENFORCE-901",
             description="x",
-            severity=m.EnforcementRuleSeverity.HIGH,
+            severity=c.EnforcementRuleSeverity.HIGH,
             source=m.EnforcementInfraDetectorSource(violation_field="loose_objects"),
         )
         assert (
-            infra_rule.source.kind == m.EnforcementSourceKind.FLEXT_INFRA_DETECTOR.value
+            infra_rule.source.kind == c.EnforcementSourceKind.FLEXT_INFRA_DETECTOR.value
         )
 
         ruff_rule = m.EnforcementRuleSpec(
             id="ENFORCE-902",
             description="x",
-            severity=m.EnforcementRuleSeverity.LOW,
+            severity=c.EnforcementRuleSeverity.LOW,
             source=m.EnforcementRuffSource(rule_code="PGH003"),
         )
-        assert ruff_rule.source.kind == m.EnforcementSourceKind.RUFF.value
+        assert ruff_rule.source.kind == c.EnforcementSourceKind.RUFF.value
 
     def test_every_rule_severity_is_an_enum_member(self) -> None:
         for rule in u.build_canonical_catalog().rules:
-            assert isinstance(rule.severity, m.EnforcementRuleSeverity)
+            assert isinstance(rule.severity, c.EnforcementRuleSeverity)

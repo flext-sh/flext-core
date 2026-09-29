@@ -78,10 +78,21 @@ class TestsFlextService(FlextTestsCase):
         assert result.map(operator.not_).failure
         assert result.unwrap_or(default=False) is False
 
-    def test_service_instance_is_a_flext_service(self) -> None:
-        service = m.Tests.ServiceUserService()
+    @staticmethod
+    def _satisfies_service_protocol(candidate: p.Base) -> bool:
+        """Report structural conformance without a type-narrowed argument."""
+        return isinstance(candidate, p.Service)
 
-        assert isinstance(service, s)
+    def test_real_service_satisfies_the_service_protocol(self) -> None:
+        """Every real service satisfies p.Service structurally (S4 contract)."""
+        assert self._satisfies_service_protocol(m.Tests.ServiceUserService())
+        assert self._satisfies_service_protocol(self._PureService())
+
+    def test_model_without_service_runtime_is_not_a_service(self) -> None:
+        """A plain model lacks the runtime surface and execute: not a service."""
+        data = m.Tests.ServiceUserData(user_id=1, name="test_user")
+
+        assert not self._satisfies_service_protocol(data)
 
     # --- ServiceUserData: public model state -----------------------------
 
@@ -162,6 +173,3 @@ class TestsFlextService(FlextTestsCase):
         with service.track("load_users") as metrics:
             assert isinstance(metrics, Mapping)
             assert metrics["operation_name"] == "load_users"
-
-
-__all__: list[str] = ["TestsFlextService"]

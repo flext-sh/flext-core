@@ -18,7 +18,7 @@ class FlextResultUnwrap[T](FlextResultComposition[T]):
     def unwrap(self) -> T:
         if self.failure:
             msg = c.ERR_RESULT_CANNOT_UNWRAP.format(error=self.error)
-            raise RuntimeError(msg)
+            raise RuntimeError(msg) from self.exception
         return self.value
 
     def unwrap_or[DefaultT](self, default: DefaultT) -> T | DefaultT:

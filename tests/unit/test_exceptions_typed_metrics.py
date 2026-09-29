@@ -203,10 +203,12 @@ class TestsFlextCoreExceptionsTypedMetrics:
     def test_type_error_normalizes_expected_and_actual_type(self) -> None:
         # Arrange / Act: mixed str + type inputs
         error = e.FlextTypeError(
-            "Type mismatch",
-            expected_type="str",
-            actual_type=int,
-            context={"source": "api"},
+            e.FlextTypeError._InitParams(
+                message="Type mismatch",
+                expected_type="str",
+                actual_type=int,
+                context={"source": "api"},
+            )
         )
 
         # Assert: both resolve to concrete types on the public attributes

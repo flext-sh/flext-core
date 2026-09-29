@@ -4,15 +4,11 @@ repos:
     hooks:
     # Why: each make verb is its own pre-commit/pre-push hook so the operator
     # sees per-step status (Passed/Failed) natively via the pre-commit runner.
-    # Every step states the CI token instead of inheriting it. A git hook runs
-    # with the invoking environment, so a caller that already exported
-    # CI=Y would otherwise reach the pre-push steps and
-    # revoke exactly the gates a push must not skip (9b604d43: lint, format,
-    # pyrefly; flext-v4p5: pytest). Declaring the token closes that carrier.
+    # Every step owns its CI context instead of inheriting the caller's token.
     # pre-commit is the fast mutation pass and runs the CI gate set
-    # (CI=Y). pre-push is the local blocking gate and runs
-    # the full set with CI=N. Context never changes the
-    # declared operation. Pytest deselects tooling.tools.pytest.ci_excluded_markers
+    # (CI=Y). pre-push check unsets CI to run
+    # every active gate; its other verbs retain CI=N.
+    # Pytest deselects tooling.tools.pytest.ci_excluded_markers
     # only with CI=Y, shared by CI and pre-commit. Local and
     # pre-push runs retain those tests; deselection is recorded in test reports.
     # Every hook step owns a shell because Git exports repository-local state,

@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import importlib.resources
+from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field
@@ -23,12 +24,6 @@ class _SmellThresholds(BaseModel):
     file_cx: int
 
 
-class _SmellFixStrategy(BaseModel):
-    auto: bool
-    fixer: str | None
-    description: str
-
-
 class _SmellCatalogRow(BaseModel):
     id: str
     severity: str
@@ -41,7 +36,6 @@ class _SmellCatalogRow(BaseModel):
 class _SmellData(BaseModel):
     thresholds: _SmellThresholds
     tags: tuple[str, ...]
-    fix_strategy: dict[str, _SmellFixStrategy]
     rules_text: dict[str, tuple[str, str]]
     beartype_rows: tuple[_SmellCatalogRow, ...] = Field(alias="beartype_rows")
     code_smell_rows: tuple[_SmellCatalogRow, ...] = Field(alias="code_smell_rows")
@@ -63,9 +57,12 @@ def _load_smell_data() -> _SmellData:
 _SMELL_DATA: _SmellData = _load_smell_data()
 
 ENFORCEMENT_SMELL_TAGS: tuple[str, ...] = _SMELL_DATA.tags
-SMELL_THRESHOLDS: t.MappingKV[str, int] = _SMELL_DATA.thresholds.model_dump()
-SMELL_FIX_STRATEGIES: t.MappingKV[str, _SmellFixStrategy] = _SMELL_DATA.fix_strategy
-SMELL_RULES_TEXT: t.MappingKV[str, tuple[str, str]] = _SMELL_DATA.rules_text
+SMELL_THRESHOLDS: t.MappingKV[str, int] = MappingProxyType(
+    _SMELL_DATA.thresholds.model_dump()
+)
+SMELL_RULES_TEXT: t.MappingKV[str, tuple[str, str]] = MappingProxyType(
+    _SMELL_DATA.rules_text
+)
 SMELL_BEARTYPE_ROWS: tuple[tuple[str, str, str, str, tuple[str, ...], str], ...] = (
     tuple(
         (row.id, row.severity, row.tag, row.anchor, row.skills, row.description)
@@ -79,9 +76,4 @@ SMELL_CODE_SMELL_ROWS: tuple[tuple[str, str, str, str, tuple[str, ...], str], ..
     )
 )
 
-__all__: list[str] = [
-    "ENFORCEMENT_SMELL_TAGS",
-    "SMELL_FIX_STRATEGIES",
-    "SMELL_RULES_TEXT",
-    "SMELL_THRESHOLDS",
-]
+__all__: list[str] = ["ENFORCEMENT_SMELL_TAGS", "SMELL_RULES_TEXT", "SMELL_THRESHOLDS"]

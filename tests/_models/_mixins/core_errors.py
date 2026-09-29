@@ -2,45 +2,18 @@
 
 from __future__ import annotations
 
-from collections import UserDict, UserList
-from typing import TYPE_CHECKING, Annotated, Never, override
+from collections import UserDict
+from typing import TYPE_CHECKING, Annotated, override
 
 from flext_core import m
-from tests.constants import c
 from tests.typings import t
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterator
+    from collections.abc import Iterator
 
 
 class TestsFlextModelsCoreErrorsMixin:
     """Core error model helpers."""
-
-    class BadDict(UserDict[str, t.Tests.TestobjectSerializable]):
-        """Dict that raises on get()."""
-
-        @override
-        def __getitem__(self, key: str) -> Never:
-            """Raise error on get attempt."""
-            _ = key
-            msg = c.Tests.BAD_DICT_GET
-            raise RuntimeError(msg)
-
-    class BadList(UserList[t.Tests.TestobjectSerializable]):
-        """List that raises on iteration."""
-
-        @override
-        def __iter__(self) -> Iterator[t.Tests.TestobjectSerializable]:
-            """Raise error on iteration."""
-            msg = c.Tests.BAD_LIST_ITERATION
-            raise RuntimeError(msg)
-
-    class BadModelDump:
-        """Object with model_dump that raises."""
-
-        model_dump: Callable[[], t.MappingKV[str, t.Tests.TestobjectSerializable]] = (
-            staticmethod(lambda: (_ for _ in ()).throw(RuntimeError("Bad model_dump")))
-        )
 
     class AttrObject(m.BaseModel):
         """Simple model with name/value attributes for mapper tests."""

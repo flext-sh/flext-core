@@ -9,7 +9,7 @@ import sys
 import textwrap
 from collections.abc import Iterator
 from types import ModuleType
-from typing import TypeAliasType
+from typing import TypeAliasType, runtime_checkable
 
 from ..._models.enforcement import FlextModelsEnforcement as me
 
@@ -21,6 +21,35 @@ class FlextUtilitiesBeartypeModuleSource:
     def parse(module: ModuleType) -> ast.Module:
         """Read the defining source without normalizing inspection failures."""
         return ast.parse(inspect.getsource(module), filename=inspect.getfile(module))
+
+    @staticmethod
+    def declares_runtime_checkable(target: type) -> bool:
+        """Prove from its source that ``target`` is decorated by ``runtime_checkable``.
+
+        Each decorator name or dotted path is resolved in the defining module's
+        namespace, so ``runtime_checkable``, ``typing.runtime_checkable`` and any
+        import alias of it are recognized by identity.
+        """
+        source = textwrap.dedent(inspect.getsource(target))
+        declaration = ast.parse(source, filename=inspect.getfile(target)).body[0]
+        if not isinstance(declaration, ast.ClassDef):
+            msg = f"Class source does not open with its declaration: {target!r}"
+            raise TypeError(msg)
+        namespace = vars(sys.modules[target.__module__])
+        for expression in declaration.decorator_list:
+            path: list[str] = []
+            node = expression
+            while isinstance(node, ast.Attribute):
+                path.insert(0, node.attr)
+                node = node.value
+            if not isinstance(node, ast.Name) or node.id not in namespace:
+                continue
+            resolved = namespace[node.id]
+            for attribute in path:
+                resolved = getattr(resolved, attribute)
+            if resolved is runtime_checkable:
+                return True
+        return False
 
     @classmethod
     def _declarations(
@@ -69,6 +98,113 @@ class FlextUtilitiesBeartypeModuleSource:
         if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
             return (node.name,)
         return ()
+
+    @staticmethod
+    def export_names(tree: ast.Module) -> frozenset[str]:
+        """Collect names a module publishes through ``__all__`` assignments."""
+        exported: set[str] = set()
+        for node in tree.body:
+            if isinstance(node, ast.Assign):
+                targets: tuple[ast.expr, ...] = tuple(node.targets)
+            elif isinstance(node, ast.AugAssign):
+                targets = (node.target,)
+            else:
+                continue
+            if not any(
+                isinstance(target, ast.Name) and target.id == "__all__"
+                for target in targets
+            ):
+                continue
+            if not isinstance(value := node.value, (ast.List, ast.Tuple)):
+                continue
+            exported.update(
+                item.value
+                for item in value.elts
+                if isinstance(item, ast.Constant) and isinstance(item.value, str)
+            )
+        return frozenset(exported)
+
+    @staticmethod
+    def loads(tree: ast.Module, name: str) -> bool:
+        """Prove ``name`` is consumed anywhere in the tree (Load context)."""
+        return any(
+            isinstance(node, ast.Name)
+            and node.id == name
+            and isinstance(node.ctx, ast.Load)
+            for node in ast.walk(tree)
+        )
+
+    @classmethod
+    def internal_dependency(cls, tree: ast.Module | None, name: str) -> bool:
+        """Prove a module-level alias serves its own module, not consumers.
+
+        An alias consumed by in-module declarations (base classes,
+        annotations, calls) and absent from ``__all__`` is a dependency of
+        the module, never a backwards-compat export. Unreadable source
+        fails closed so the alias stays flagged.
+        """
+        if tree is None:
+            return False
+        return name not in cls.export_names(tree) and cls.loads(tree, name)
+
+    @staticmethod
+    def _import_roots(node: ast.Import | ast.ImportFrom) -> frozenset[str]:
+        """Absolute root packages an import statement binds through.
+
+        Relative imports carry no provable absolute root and fail closed.
+        """
+        if isinstance(node, ast.ImportFrom):
+            if node.level or node.module is None:
+                return frozenset()
+            return frozenset({node.module.split(".")[0]})
+        return frozenset(item.name.split(".")[0] for item in node.names)
+
+    @classmethod
+    def owner_derived(cls, tree: ast.Module | None, name: str, owner_root: str) -> bool:
+        """Prove a module-level binding chain is rooted in owner-project imports.
+
+        Follows ``name =`` assignments and attribute chains transitively to
+        the import that rooted the value; only imports from the owner
+        project's own root prove facade provenance. Calls (dynamic
+        imports), relative imports, and unreadable source fail closed, so
+        direct and dynamic acquisition of an owned library keeps violating.
+        """
+        if tree is None:
+            return False
+        bindings: dict[str, ast.stmt] = {}
+        for node in tree.body:
+            if isinstance(node, ast.Assign):
+                bound = tuple(
+                    target.id for target in node.targets if isinstance(target, ast.Name)
+                )
+            elif isinstance(node, (ast.Import, ast.ImportFrom)):
+                bound = cls._bound_names(node)
+            else:
+                continue
+            for bound_name in bound:
+                bindings[bound_name] = node
+        seen: set[str] = set()
+        current: str | None = name
+        while current is not None and current not in seen:
+            seen.add(current)
+            node = bindings.get(current)
+            if node is None:
+                return False
+            if isinstance(node, (ast.Import, ast.ImportFrom)):
+                return cls._import_roots(node) == frozenset({owner_root})
+            if not isinstance(node, ast.Assign):
+                return False
+            value = node.value
+            if isinstance(value, ast.Name):
+                current = value.id
+            elif isinstance(value, ast.Attribute):
+                root: ast.expr = value
+                while isinstance(root, ast.Attribute):
+                    root = root.value
+                current = root.id if isinstance(root, ast.Name) else None
+            else:
+                return False
+        return False
 
     @classmethod
     def _guarded_imports(

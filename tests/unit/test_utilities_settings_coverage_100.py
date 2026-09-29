@@ -52,7 +52,7 @@ class TestsFlextCoreUtilitiesSettings:
     def test_env_override_and_process_environment_are_observable(
         self, tmp_path: Path
     ) -> None:
-        env_file = tmp_path / FlextSettings.ENV_FILE_DEFAULT
+        env_file = tmp_path / c.ENV_FILE_DEFAULT
         env_file.write_text("FLEXT_APP_NAME=test-app\n", encoding="utf-8")
         probe_env_var = "FLEXT_TEST_BOOTSTRAP_MODE"
         with test_u.Tests.env_vars_context(
@@ -77,7 +77,7 @@ class TestsFlextCoreUtilitiesSettings:
         self, tmp_path: Path
     ) -> None:
         os.chdir(tmp_path)
-        default_env_file = tmp_path / FlextSettings.ENV_FILE_DEFAULT
+        default_env_file = tmp_path / c.ENV_FILE_DEFAULT
         default_env_file.write_text("FLEXT_DEBUG=true\n", encoding="utf-8")
         missing_override = str(tmp_path / "missing.env")
 
@@ -92,7 +92,7 @@ class TestsFlextCoreUtilitiesSettings:
 
         tm.that(cwd_resolved, eq=str(default_env_file.resolve()))
         tm.that(override_resolved, eq=missing_override)
-        tm.that(fallback_resolved, eq=FlextSettings.ENV_FILE_DEFAULT)
+        tm.that(fallback_resolved, eq=c.ENV_FILE_DEFAULT)
 
     def test_register_factory_reports_success_and_resolvable_service(self) -> None:
         container = FlextContainer()
@@ -118,10 +118,7 @@ class TestsFlextCoreUtilitiesSettings:
         tm.ok(resolved_summary)
         tm.that(
             resolved_summary.value,
-            eq={
-                "env_file": FlextSettings.ENV_FILE_DEFAULT,
-                "log_level": c.LogLevel.INFO,
-            },
+            eq={"env_file": c.ENV_FILE_DEFAULT, "log_level": c.LogLevel.INFO},
         )
 
     def test_register_factory_surfaces_factory_failure_as_result(self) -> None:

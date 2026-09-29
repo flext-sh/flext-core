@@ -13,8 +13,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import Annotated
+
 import pydantic
 import pydantic_core
+from pydantic import json_schema as pydantic_json_schema
 from pydantic_core import core_schema
 
 type JsonValue = pydantic.JsonValue
@@ -151,9 +154,17 @@ class FlextTypesPydantic:
     Tag = pydantic.Tag
     ValidateAs = pydantic.ValidateAs
     WithJsonSchema = pydantic.WithJsonSchema
+    SkipJsonSchema = pydantic_json_schema.SkipJsonSchema
     SerializeAsAny = pydantic.SerializeAsAny
     SkipValidation = pydantic.SkipValidation
     AllowInfNan = pydantic.AllowInfNan
     Strict = pydantic.Strict
     FailFast = pydantic.FailFast
     OnErrorOmit = pydantic.OnErrorOmit
+
+    # Dependency port: a field typed by a ``@runtime_checkable`` Protocol from
+    # ``p``. Pydantic validates the value with ``isinstance`` on construction and
+    # on assignment, and the port never enters the JSON Schema. Declare the field
+    # with ``m.Field(exclude=True, description=...)``: field-level metadata cannot
+    # live inside a type alias.
+    type Port[P] = Annotated[P, pydantic_json_schema.SkipJsonSchema()]

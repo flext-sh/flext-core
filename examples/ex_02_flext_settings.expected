@@ -27,5 +27,5 @@ fetch_global.override.timezone: 'Asia/Tokyo'
 
 [resolve_env_file_and_auto_settings]
 resolve_env_file.matches_requested: True
-AutoSettings.create_settings.type: '_TestConfig'
-AutoSettings.create_settings.service_name: 'test-service'
+Settings.fetch_global.type: '_TestConfig'
+Settings.fetch_global.service_name: 'test-service'

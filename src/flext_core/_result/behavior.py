@@ -8,6 +8,8 @@ from .._protocols.result import FlextProtocolsResult as prt
 from .base import FlextResultBase
 
 if TYPE_CHECKING:
+    from types import TracebackType
+
     from flext_core import t
 
 _RESULT_FACTORY_CONTRACT: t.VariadicTuple[str] = (
@@ -41,7 +43,7 @@ class FlextResultBehavior[T](FlextResultBase[T]):
         if not self.success:
             error_msg = self.error or ""
             msg = f"Cannot access value of failed result: {error_msg}"
-            raise RuntimeError(msg)
+            raise RuntimeError(msg) from self._exception
         return self._payload
 
     @property
@@ -64,7 +66,7 @@ class FlextResultBehavior[T](FlextResultBase[T]):
         self,
         _exc_type: type[BaseException] | None,
         _exc_val: BaseException | None,
-        _exc_tb: object,
+        _exc_tb: TracebackType | None,
     ) -> None:
         pass
 

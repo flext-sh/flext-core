@@ -38,45 +38,72 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
             lambda user: user
         )
         for operation in case.operations:
-            if operation == "get_email":
+            result = TestsFlextUtilitiesRailwayPipelinesMixin._handle_v1_operation(
+                result, operation
+            )
+        return cast(
+            "p.ResultView[str | tm.Tests.User | m.Tests.EmailResponse]", result
+        )
 
-                def _get_email(
-                    user: str | tm.Tests.User | m.Tests.EmailResponse,
-                ) -> str:
-                    return user.email if isinstance(user, tm.Tests.User) else str(user)
+    @staticmethod
+    def _handle_v1_operation(
+        result: p.Result[str | tm.Tests.User | m.Tests.EmailResponse],
+        operation: str,
+    ) -> p.Result[str | tm.Tests.User | m.Tests.EmailResponse]:
+        if operation == "get_email":
+            return TestsFlextUtilitiesRailwayPipelinesMixin._handle_get_email(result)
+        if operation == "send_email":
+            return TestsFlextUtilitiesRailwayPipelinesMixin._handle_send_email(result)
+        if operation == "get_status":
+            return TestsFlextUtilitiesRailwayPipelinesMixin._handle_get_status(result)
+        return result
 
-                result = result.map(_get_email)
-            elif operation == "send_email":
+    @staticmethod
+    def _handle_get_email(
+        result: p.Result[str | tm.Tests.User | m.Tests.EmailResponse],
+    ) -> p.Result[str | tm.Tests.User | m.Tests.EmailResponse]:
+        def _get_email(
+            user: str | tm.Tests.User | m.Tests.EmailResponse,
+        ) -> str:
+            return user.email if isinstance(user, tm.Tests.User) else str(user)
 
-                def _send(
-                    email: str | tm.Tests.User | m.Tests.EmailResponse,
-                ) -> p.Result[m.Tests.EmailResponse]:
-                    to = email if isinstance(email, str) else str(email)
-                    return TestsFlextUtilitiesRailwayPipelinesMixin.make(
-                        TestsFlextUtilitiesRailwayPipelinesMixin.SendEmailService,
-                        to=to,
-                        subject="Test",
-                    ).execute()
+        return result.map(_get_email)
 
-                email_result: p.Result[m.Tests.EmailResponse] = result.flat_map(_send)
+    @staticmethod
+    def _handle_send_email(
+        result: p.Result[str | tm.Tests.User | m.Tests.EmailResponse],
+    ) -> p.Result[str | tm.Tests.User | m.Tests.EmailResponse]:
+        def _send(
+            email: str | tm.Tests.User | m.Tests.EmailResponse,
+        ) -> p.Result[m.Tests.EmailResponse]:
+            to = email if isinstance(email, str) else str(email)
+            return TestsFlextUtilitiesRailwayPipelinesMixin.make(
+                TestsFlextUtilitiesRailwayPipelinesMixin.SendEmailService,
+                to=to,
+                subject="Test",
+            ).execute()
 
-                def _identity(response: m.Tests.EmailResponse) -> m.Tests.EmailResponse:
-                    return response
+        email_result: p.Result[m.Tests.EmailResponse] = result.flat_map(_send)
 
-                result = email_result.map(_identity)
-            elif operation == "get_status":
+        def _identity(response: m.Tests.EmailResponse) -> m.Tests.EmailResponse:
+            return response
 
-                def _get_status(
-                    response: str | tm.Tests.User | m.Tests.EmailResponse,
-                ) -> str:
-                    return (
-                        response.status
-                        if isinstance(response, m.Tests.EmailResponse)
-                        else str(response)
-                    )
+        return email_result.map(_identity)
 
-                result = result.map(_get_status)
-        return cast("p.ResultView[str | tm.Tests.User | m.Tests.EmailResponse]", result)
+    @staticmethod
+    def _handle_get_status(
+        result: p.Result[str | tm.Tests.User | m.Tests.EmailResponse],
+    ) -> p.Result[str | tm.Tests.User | m.Tests.EmailResponse]:
+        def _get_status(
+            response: str | tm.Tests.User | m.Tests.EmailResponse,
+        ) -> str:
+            return (
+                response.status
+                if isinstance(response, m.Tests.EmailResponse)
+                else str(response)
+            )
+
+        return result.map(_get_status)
 
     @staticmethod
     def execute_v2_pipeline(case: m.Tests.RailwayTestCase) -> tm.Tests.User | str:

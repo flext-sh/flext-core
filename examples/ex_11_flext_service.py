@@ -93,7 +93,9 @@ class _ExampleServiceGolden(ExamplesFlextShared):
 
         self.section("runtime_creation_and_serialization")
         runtime_default = u.build_service_runtime(service)
-        runtime_with_override = u.build_service_runtime(service, subproject="examples")
+        runtime_with_override = u.build_service_runtime(
+            m.RuntimeBootstrapOptions(context=runtime_default.context)
+        )
         info = service.service_info()
         self.audit_check(
             "create_runtime.default.context", type(runtime_default.context).__name__

@@ -11,7 +11,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from .. import t
+from .. import c, t
 from .._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel as ugm
 from ._base import FlextRuntimeBase
 
@@ -124,7 +124,7 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
             normalized_value = val.isoformat()
         elif isinstance(val, Path):
             normalized_value = str(val)
-        elif isinstance(val, t.PRIMITIVES_TYPES):
+        elif isinstance(val, c.PRIMITIVES_TYPES):
             normalized_value = val
         elif ugm.has_model_dump(val):
             normalized_value = FlextRuntimeMetadata.normalize_to_json_value(val)

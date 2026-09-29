@@ -64,7 +64,7 @@ class FlextUtilitiesCollection(
                 if predicate(v):
                     return r[TItem].ok(v)
             return r[TItem].fail(c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND)
-        if isinstance(items, t.SEQUENCE_PAIR_TYPES):
+        if isinstance(items, c.SEQUENCE_PAIR_TYPES):
             for item in items:
                 if predicate(item):
                     return r[TItem].ok(item)
@@ -77,9 +77,12 @@ class FlextUtilitiesCollection(
         processor: Callable[[TItem], TMapped],
         *,
         predicate: Callable[[TItem], bool] | None = None,
-        on_error: str = "fail",
     ) -> p.Result[Sequence[TMapped]]:
-        """Process items with optional filter; ``on_error="skip"`` skips failures."""
+        """Map items (optionally filtered); the first item failure ends the run.
+
+        The returned failure carries the processor's exception and error code
+        so callers keep the originating cause.
+        """
         results: MutableSequence[TMapped] = []
         for item in items:
             item_typed: TItem = item
@@ -89,10 +92,12 @@ class FlextUtilitiesCollection(
                 lambda current_item=item_typed: processor(current_item)
             )
             if process_result.failure:
-                if on_error == "skip":
-                    continue
                 return r[Sequence[TMapped]].fail(
-                    c.ERR_COLLECTION_PROCESSING_FAILED_FOR_ITEM.format(item=item)
+                    c.ERR_COLLECTION_PROCESSING_FAILED_FOR_ITEM.format(
+                        item=item, error=process_result.error
+                    ),
+                    error_code=process_result.error_code,
+                    exception=process_result.exception,
                 )
             processed_item: TMapped = process_result.unwrap()
             results.append(processed_item)
