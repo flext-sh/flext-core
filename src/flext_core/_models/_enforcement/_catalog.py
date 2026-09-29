@@ -13,7 +13,7 @@ from pydantic import Discriminator, Field, model_validator
 from flext_core import c
 
 from ..._typings.base import FlextTypingBase as t
-from ._base import EnforcementModelBase, FlextModelsEnforcementBase
+from ._base import EnforcementModelBase
 from ._sources import FlextModelsEnforcementSources
 
 type EnforcementRuleSource = (
@@ -35,7 +35,7 @@ class FlextModelsEnforcementCatalog(FlextModelsEnforcementSources):
 
         id: Annotated[str, Field(pattern=c.PATTERN_ENFORCE_RULE_ID)]
         description: str
-        severity: FlextModelsEnforcementBase.EnforcementRuleSeverity
+        severity: c.Enforcement.EnforcementRuleSeverity
         source: Annotated[EnforcementRuleSource, Discriminator("kind")]
         agents_md_anchor: str = ""
         skills: t.StrSequence = ()
@@ -76,7 +76,7 @@ class FlextModelsEnforcementCatalog(FlextModelsEnforcementSources):
             return tuple(rule for rule in self.rules if rule.enabled)
 
         def by_kind(
-            self, kind: FlextModelsEnforcementBase.EnforcementSourceKind
+            self, kind: c.Enforcement.EnforcementSourceKind
         ) -> tuple[FlextModelsEnforcementCatalog.EnforcementRuleSpec, ...]:
             """Filter rules by source kind."""
             return tuple(rule for rule in self.rules if rule.source.kind == kind.value)
