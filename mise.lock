@@ -168,7 +168,7 @@ backend = "github:kucherenko/jscpd"
 specifiers = ["latest"]
 
 [tools."github:kucherenko/jscpd".options]
-asset_pattern = "jscpd-darwin-arm64.tar.gz"
+asset_pattern = "jscpd-linux-arm64-gnu.tar.gz"
 
 [tools."github:kucherenko/jscpd"."platforms.macos-arm64"]
 checksum = "sha256:a90634a456876a8985abd4c4e6674355f4d76f2166fec10d0f295ee5e17c5d6c"
@@ -182,7 +182,7 @@ backend = "github:kucherenko/jscpd"
 specifiers = ["latest"]
 
 [tools."github:kucherenko/jscpd".options]
-asset_pattern = "jscpd-darwin-x64.tar.gz"
+asset_pattern = "jscpd-linux-x64-gnu.tar.gz"
 
 [tools."github:kucherenko/jscpd"."platforms.macos-x64"]
 checksum = "sha256:d107a9c8fddfd718bfc4d98252d1123ea70ee942b7d0ae3324968de7df53e5b9"
@@ -196,7 +196,7 @@ backend = "github:kucherenko/jscpd"
 specifiers = ["latest"]
 
 [tools."github:kucherenko/jscpd".options]
-asset_pattern = "jscpd-windows-x64-msvc.tar.gz"
+asset_pattern = "jscpd-darwin-x64.tar.gz"
 
 [tools."github:kucherenko/jscpd"."platforms.windows-x64"]
 checksum = "sha256:75152cab799db1b894b4c8ba57934291d90174459f2db394bd1243a389c78071"
