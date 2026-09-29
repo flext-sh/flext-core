@@ -103,7 +103,7 @@ class TestsFlextCoreTypingsNew:
     def test_tiered_scalar_hierarchy_is_a_subset_chain(self) -> None:
         """Primitives subset Scalar subset Container runtime-type invariant holds."""
         primitives = set(c.PRIMITIVES_TYPES)
-        scalar = set(t.SCALAR_TYPES)
-        container = set(t.CONTAINER_TYPES)
+        scalar = set(c.SCALAR_TYPES)
+        container = set(c.CONTAINER_TYPES)
         tm.that(primitives <= scalar, eq=True)
         tm.that(scalar <= container, eq=True)

@@ -77,7 +77,7 @@ class FlextUtilitiesConversion:
         """Convert value to int with safe fallback; bool returns default."""
         if value is None or isinstance(value, bool):
             return default
-        if isinstance(value, t.NUMERIC_TYPES):
+        if isinstance(value, c.NUMERIC_TYPES):
             return (
                 int(value)
                 if isinstance(value, int) or math.isfinite(value)
@@ -99,7 +99,7 @@ class FlextUtilitiesConversion:
         """Convert value to float with safe fallback; bool returns default."""
         if value is None or isinstance(value, bool):
             return default
-        if isinstance(value, t.NUMERIC_TYPES):
+        if isinstance(value, c.NUMERIC_TYPES):
             return float(value)
         if isinstance(value, str):
             try:

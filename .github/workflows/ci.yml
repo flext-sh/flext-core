@@ -135,6 +135,9 @@ jobs:
       # Pyrefly and Ruff analysis. The caches below are content-addressed by the
       # committed dependency locks, so a warm cache is always valid for the same
       # lock and can never hide a finding; it only removes the cold recompute.
+      # Why (flext-gd3m1): the same pair keeps the locked Mise tool storage, so
+      # a cold runner never re-downloads the pinned tarballs, where a network
+      # blip failed setup.
       - name: Restore tool caches
         id: tool-cache
         uses: actions/cache/restore@v6
@@ -149,9 +152,11 @@ jobs:
             .hypothesis
             ~/.cache/uv
             ~/.cache/pyright
+            ~/.local/share/mise
           key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-3.13-tools-
+
       # make setup is the frozen installer. It bootstraps the committed Mise
       # release and installs the fleet toolchain from the committed
       # mise.lock and the dependencies frozen from the committed uv.lock,
@@ -210,7 +215,9 @@ jobs:
             .hypothesis
             ~/.cache/uv
             ~/.cache/pyright
+            ~/.local/share/mise
           key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
+
   # End SECTION: ci job
 
   # === SECTION: release-plan job (managed) ===
