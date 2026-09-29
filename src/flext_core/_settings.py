@@ -31,16 +31,13 @@ import threading
 from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Annotated, ClassVar, Final, Self
+from typing import Annotated, ClassVar, Self
 
 from pydantic import BaseModel, Field, computed_field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from ._constants.environment import FlextConstantsEnvironment
 from ._constants.settings import FlextConstantsSettings
-
-ENV_FILE_DEFAULT: Final[str] = ".env"
-"""Default .env file name (settings-layer protocol owner)."""
 
 ENV_FILE_ENV_VAR = FlextConstantsSettings.ENV_FILE_ENV_VAR
 """Bootstrap env var that overrides the .env path (SSOT: ``_constants/settings``)."""
@@ -64,10 +61,10 @@ def _resolve_env_file(namespace: str | None = None) -> str:
         scoped = Path.cwd() / f".env.flext-{namespace}"
         if scoped.exists():
             return str(scoped.resolve())
-    default_path = Path.cwd() / ENV_FILE_DEFAULT
+    default_path = Path.cwd() / FlextConstantsSettings.ENV_FILE_DEFAULT
     if default_path.exists():
         return str(default_path.resolve())
-    return ENV_FILE_DEFAULT
+    return FlextConstantsSettings.ENV_FILE_DEFAULT
 
 
 def _platform_cache_root() -> Path:
@@ -188,9 +185,6 @@ class FlextSettings(BaseSettings):
         validate_assignment=True,
         arbitrary_types_allowed=True,
     )
-
-    ENV_FILE_DEFAULT: ClassVar[str] = ENV_FILE_DEFAULT
-    """Public facade surface for the default .env file name (settings owns it)."""
 
     @staticmethod
     def resolve_env_file(namespace: str | None = None) -> str:

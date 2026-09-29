@@ -93,6 +93,7 @@ class FlextTypingBase(tp, ta):
         float,
         bool,
     )
+
     NUMERIC_TYPES: tuple[type[int], type[float]] = (int, float)
     SEQUENCE_PAIR_TYPES: VariadicTuple[type] = (list, tuple)
     STR_BYTES_TYPES: tuple[type[str], type[bytes]] = (str, bytes)
