@@ -101,7 +101,11 @@ STRUCTURED_ERRORS: t.SequenceOf[
     ),
     (
         "type_error",
-        lambda: e.FlextTypeError("Wrong type", expected_type="str", actual_type=int),
+        lambda: e.FlextTypeError(
+            e.FlextTypeError._InitParams(
+                message="Wrong type", expected_type="str", actual_type=int
+            )
+        ),
         c.ErrorDomain.VALIDATION.value,
         c.ErrorCode.TYPE_ERROR,
         {"expected_type": "str", "actual_type": "int"},

@@ -1,6 +1,5 @@
 ---
-description:
-  "Implement one approved feature through project owners, consumers, runtime, and gates."
+description: "Implement one approved feature through project owners, consumers, runtime, and gates."
 argument-hint: "<approved feature contract or specification>"
 disable-model-invocation: true
 ---

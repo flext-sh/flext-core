@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, TypeGuard, TypeIs
 
-from flext_core import t
+from flext_core import c, t
 
 if TYPE_CHECKING:
     from pydantic import BaseModel as PydanticBaseModel
@@ -32,7 +32,7 @@ class FlextUtilitiesGuardsTypeCore:
         value: t.GuardInput | t.JsonPayload | t.JsonValue | PydanticBaseModel,
     ) -> TypeIs[Sequence[t.JsonPayload]]:
         """Check if value is a sequence (list or tuple)."""
-        return isinstance(value, t.SEQUENCE_PAIR_TYPES)
+        return isinstance(value, c.SEQUENCE_PAIR_TYPES)
 
     @staticmethod
     def _object_mapping(
@@ -73,7 +73,7 @@ class FlextUtilitiesGuardsTypeCore:
             return True
         if isinstance(value, (str, bytes, bytearray, Mapping)):
             return not value
-        if isinstance(value, Sequence) and not isinstance(value, t.STR_BINARY_TYPES):
+        if isinstance(value, Sequence) and not isinstance(value, c.STR_BINARY_TYPES):
             return not value
         return False
 
@@ -88,7 +88,7 @@ class FlextUtilitiesGuardsTypeCore:
         """
         if value is None:
             return False
-        if isinstance(value, t.CONTAINER_TYPES):
+        if isinstance(value, c.CONTAINER_TYPES):
             return True
         if FlextUtilitiesGuardsTypeCore._object_sequence(value):
             return FlextUtilitiesGuardsTypeCore._all_container_sequence(value)
@@ -114,15 +114,15 @@ class FlextUtilitiesGuardsTypeCore:
     def primitive(
         value: t.GuardInput | t.JsonPayload | t.JsonValue,
     ) -> TypeIs[t.Primitives]:
-        """Check if value is a primitive type t.PRIMITIVES_TYPES)."""
-        return isinstance(value, t.PRIMITIVES_TYPES)
+        """Check if value is a primitive type (c.PRIMITIVES_TYPES)."""
+        return isinstance(value, c.PRIMITIVES_TYPES)
 
     @staticmethod
     def scalar(
         value: t.GuardInput | t.Scalar | t.JsonPayload | t.JsonValue,
     ) -> TypeIs[t.Scalar]:
         """Check if value is a scalar type (str, int, float, bool, datetime)."""
-        return isinstance(value, t.SCALAR_TYPES)
+        return isinstance(value, c.SCALAR_TYPES)
 
     @staticmethod
     def type_name(value: t.GuardInput | t.JsonPayload | t.JsonValue | None) -> str:
@@ -147,8 +147,8 @@ class FlextUtilitiesGuardsTypeCore:
         value: t.GuardInput | t.JsonPayload | t.JsonValue,
     ) -> TypeIs[Sequence[t.JsonPayload]]:
         """Check if value behaves like a non-string object sequence."""
-        return isinstance(value, t.SEQUENCE_PAIR_TYPES) and not isinstance(
-            value, t.STR_BYTES_TYPES
+        return isinstance(value, c.SEQUENCE_PAIR_TYPES) and not isinstance(
+            value, c.STR_BYTES_TYPES
         )
 
     @staticmethod

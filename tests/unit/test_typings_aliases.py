@@ -19,6 +19,7 @@ import pytest
 from flext_tests import tm
 
 import flext_core
+from tests.constants import c
 from tests.typings import t
 
 from ._typings_support import FLAT_ALIAS_NAMES, PUBLIC_ALIAS_NAMES
@@ -68,24 +69,24 @@ class TestsFlextCoreTypingsAliases:
 
     def test_primitives_types_membership(self) -> None:
         """PRIMITIVES_TYPES is exactly (str, int, float, bool)."""
-        tm.that(t.PRIMITIVES_TYPES, eq=(str, int, float, bool))
+        tm.that(c.PRIMITIVES_TYPES, eq=(str, int, float, bool))
 
     def test_numeric_types_membership(self) -> None:
         """NUMERIC_TYPES is exactly (int, float)."""
-        tm.that(t.NUMERIC_TYPES, eq=(int, float))
+        tm.that(c.NUMERIC_TYPES, eq=(int, float))
 
     def test_scalar_types_membership(self) -> None:
         """SCALAR_TYPES is exactly (str, int, float, bool, datetime)."""
-        tm.that(t.SCALAR_TYPES, eq=(str, int, float, bool, datetime))
+        tm.that(c.SCALAR_TYPES, eq=(str, int, float, bool, datetime))
 
     def test_container_types_membership(self) -> None:
         """CONTAINER_TYPES extends the scalar set with Path."""
-        tm.that(t.CONTAINER_TYPES, eq=(str, int, float, bool, datetime, Path))
+        tm.that(c.CONTAINER_TYPES, eq=(str, int, float, bool, datetime, Path))
 
     def test_container_and_collection_types_include_collections(self) -> None:
         """CONTAINER_AND_COLLECTION_TYPES adds list/dict/tuple to CONTAINER_TYPES."""
         tm.that(
-            t.CONTAINER_AND_COLLECTION_TYPES,
+            c.CONTAINER_AND_COLLECTION_TYPES,
             eq=(str, int, float, bool, datetime, Path, list, dict, tuple),
         )
 
@@ -105,9 +106,9 @@ class TestsFlextCoreTypingsAliases:
         self, value: object, *, is_primitive: bool, is_numeric: bool, is_scalar: bool
     ) -> None:
         """The type-check tuples classify values correctly via isinstance."""
-        tm.that(isinstance(value, t.PRIMITIVES_TYPES), eq=is_primitive)
-        tm.that(isinstance(value, t.NUMERIC_TYPES), eq=is_numeric)
-        tm.that(isinstance(value, t.SCALAR_TYPES), eq=is_scalar)
+        tm.that(isinstance(value, c.PRIMITIVES_TYPES), eq=is_primitive)
+        tm.that(isinstance(value, c.NUMERIC_TYPES), eq=is_numeric)
+        tm.that(isinstance(value, c.SCALAR_TYPES), eq=is_scalar)
 
     @pytest.mark.parametrize(
         "value",
@@ -127,4 +128,4 @@ class TestsFlextCoreTypingsAliases:
         self, value: object
     ) -> None:
         """Every documented container/collection value is recognised by the tuple."""
-        tm.that(isinstance(value, t.CONTAINER_AND_COLLECTION_TYPES), eq=True)
+        tm.that(isinstance(value, c.CONTAINER_AND_COLLECTION_TYPES), eq=True)
