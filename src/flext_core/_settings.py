@@ -39,8 +39,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from ._constants.environment import FlextConstantsEnvironment
 from ._constants.settings import FlextConstantsSettings
 
-ENV_FILE_DEFAULT: Final[str] = ".env"
-"""Default .env file name (settings-layer protocol owner)."""
+ENV_FILE_DEFAULT = FlextConstantsSettings.ENV_FILE_DEFAULT
+"""Default .env file name (SSOT: ``_constants/settings``)."""
 
 ENV_FILE_ENV_VAR = FlextConstantsSettings.ENV_FILE_ENV_VAR
 """Bootstrap env var that overrides the .env path (SSOT: ``_constants/settings``)."""
@@ -188,9 +188,6 @@ class FlextSettings(BaseSettings):
         validate_assignment=True,
         arbitrary_types_allowed=True,
     )
-
-    ENV_FILE_DEFAULT: ClassVar[str] = ENV_FILE_DEFAULT
-    """Public facade surface for the default .env file name (settings owns it)."""
 
     @staticmethod
     def resolve_env_file(namespace: str | None = None) -> str:
