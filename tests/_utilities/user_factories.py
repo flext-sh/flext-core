@@ -2,30 +2,21 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from itertools import count
 from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_tests import m as tm
-from flext_tests.typings import t
 
 from .railway_services import TestsFlextUtilitiesRailwayServicesMixin
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    from tests.typings import t
+
 
 class TestsFlextUtilitiesUserFactoriesMixin(TestsFlextUtilitiesRailwayServicesMixin):
     """User service factory helpers."""
-
-    @dataclass(slots=True)
-    class _UserBuildParams:
-        """Parameters for building a User."""
-
-        user_id: str | None = None
-        name: str | None = None
-        email: str | None = None
-        is_active: bool = True
 
     class UserFactory:
         """Factory for `m.Tests.User` entities using native Python patterns."""
@@ -48,26 +39,33 @@ class TestsFlextUtilitiesUserFactoriesMixin(TestsFlextUtilitiesRailwayServicesMi
             return name
 
         @classmethod
-        def build(cls, params: _UserBuildParams) -> tm.Tests.User:
+        def build(
+            cls,
+            *,
+            user_id: str | None = None,
+            name: str | None = None,
+            email: str | None = None,
+            is_active: bool = True,
+        ) -> tm.Tests.User:
             """Build a `tm.Tests.User` instance with optional overrides."""
             n = next(cls._counter)
-            actual_user_id = params.user_id if params.user_id is not None else f"user_{n:03d}"
-            actual_name = params.name if params.name is not None else cls._next_name()
+            actual_user_id = user_id if user_id is not None else f"user_{n:03d}"
+            actual_name = name if name is not None else cls._next_name()
             actual_email = (
-                params.email if params.email is not None else f"{actual_user_id}@example.com"
+                email if email is not None else f"{actual_user_id}@example.com"
             )
             return tm.Tests.User(
                 id=actual_user_id,
                 unique_id=actual_user_id,
                 name=actual_name,
                 email=actual_email,
-                active=params.is_active,
+                active=is_active,
             )
 
         @classmethod
         def build_batch(cls, size: int) -> t.SequenceOf[tm.Tests.User]:
             """Build multiple `tm.Tests.User` instances with auto-generated values."""
-            return [cls.build(cls._UserBuildParams()) for _ in range(size)]
+            return [cls.build() for _ in range(size)]
 
         @classmethod
         def reset(cls) -> None:
