@@ -199,8 +199,8 @@ jobs:
         run: CI=Y make check
 
       # Both blocking steps derive from the same active default universe.
-      # CI=Y runs lint pyright silent-failure deferred-self-reference security markdown loc-cap boundary runtime-census tier-whitelist index-declarations codemod layout canonical-alias direnv duplication.
-      # CI=N runs pyrefly mypy.
+      # CI=Y runs lint mypy pyright silent-failure deferred-self-reference security markdown loc-cap boundary runtime-census tier-whitelist index-declarations codemod layout canonical-alias direnv duplication.
+      # CI=N runs pyrefly.
       # The partitions are disjoint and together execute every active gate.
       - name: check complement (blocking)
         run: CI=N make check

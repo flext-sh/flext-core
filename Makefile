@@ -708,10 +708,28 @@ caller_mise_version=; \
 	# configured tool in one pass so removed selectors cannot survive beside \
 	# their replacement in mise.lock. \
 	if [ "$(TOOL_BOOTSTRAP_LOCK)" = "1" ]; then \
+		lock_snapshot() { \
+			for lock in mise.lock uv.lock; do \
+				if [ -f "$$project_root/$$lock" ]; then cp "$$project_root/$$lock" "$$project_root/$$lock.bak"; fi; \
+				done; \
+		}; \
+		lock_restore() { \
+			for lock in mise.lock uv.lock; do \
+				if [ -f "$$project_root/$$lock.bak" ]; then mv "$$project_root/$$lock.bak" "$$project_root/$$lock"; fi; \
+				done; \
+		}; \
+		# Recover a lock orphaned by an interrupted previous run, then snapshot and \
+		# restore on any failure so a killed lock never leaves a truncated lock. \
+		for lock in mise.lock uv.lock; do \
+			if [ -f "$$project_root/$$lock.bak" ] && [ ! -f "$$project_root/$$lock" ]; then mv "$$project_root/$$lock.bak" "$$project_root/$$lock"; fi; \
+			done; \
+		lock_snapshot; \
+		trap 'lock_restore' EXIT; \
 		mise_checked "$$scratch/lock.log" mise_exec project "$$pinned_mise" -C "$$project_root" lock --bump; \
 	fi; \
 	# ``locked`` mode installs exactly what the committed mise.lock pins. \
 	mise_checked "$$scratch/install.log" mise_exec project "$$pinned_mise" -C "$$project_root" install --yes; \
+	if [ "$(TOOL_BOOTSTRAP_LOCK)" = "1" ]; then trap - EXIT; rm -f "$$project_root/mise.lock.bak" "$$project_root/uv.lock.bak"; fi; \
 	mise_checked_stdout "$$scratch/ast-grep-version.stdout" "$$scratch/ast-grep-version.stderr" mise_exec project "$$pinned_mise" -C "$$project_root" exec -- ast-grep --version; \
 	if [ -s "$$scratch/ast-grep-version.stderr" ]; then \
 		printf 'ERROR: ast-grep emitted diagnostics after installation\n' >&2; exit 2; \
@@ -1197,7 +1215,7 @@ _builtin-help:
 
 	@printf '  %-16s %s\n' 'setup' 'Provision the declared environment and hooks.';
 
-	@printf '  %-16s %s\n' 'upg' 'Resolve the newest declared releases and write the uv and mise locks.';
+	@printf '  %-16s %s\n' 'upg' 'Resolve the newest declared releases, write the uv and mise locks, then prove the upgraded tree still converges and passes every active check gate.';
 
 	@printf '  %-16s %s\n' 'build' 'Build the project distribution artifacts.';
 
@@ -1499,13 +1517,27 @@ _upg_relock: TOOL_BOOTSTRAP_LIFECYCLE := _upg_converge
 _upg_relock: TOOL_BOOTSTRAP_LOCK := 1
 _upg_relock: _bootstrap_setup_tools
 
+# An upgrade publishes only after the cycle it changed still passes: the
+# generation fixed point is proven above, and every active gate must be
+# green on the upgraded tree, so a package update that breaks types, lint
+# or consistency fails the upgrade itself instead of surfacing later as
+# red tests or red CI.
 .PHONY: _upg_converge
 _upg_converge:
 	$(call _lock_project,)
 	@$(SELF_MAKE) _builtin_setup_environment
 	@$(UV) lock --check --project "$(PROJECT_ROOT)"
+	@set -eu; \
+	before="$$(git -C "$(PROJECT_ROOT)" status --porcelain --untracked-files=all --ignore-submodules=none | sort)"; \
+	$(SELF_MAKE) gen > /dev/null; \
+	after="$$(git -C "$(PROJECT_ROOT)" status --porcelain --untracked-files=all --ignore-submodules=none | sort)"; \
+	if [ "$$before" != "$$after" ]; then \
+		printf 'ERROR: make upg did not converge; `make gen` still rewrites:\n%s\n' "$$after" >&2; \
+		exit 2; \
+	fi
 	+@XDG_DATA_HOME="$${SETUP_DIRENV_XDG_DATA_HOME:?missing persistent direnv data home}" \
 		"$${SETUP_DIRENV:?missing Mise-resolved direnv executable}" exec "$(PROJECT_ROOT)" $(SELF_MAKE) _upg_activated
+	@$(SELF_MAKE) check
 
 .PHONY: _upg_activated
 _upg_activated:
@@ -1533,11 +1565,11 @@ printf '%s\n' 'INFO: SUSPENDED check gate namespace; authority=flext-itpd1.3; op
 printf '%s\n' 'INFO: SUSPENDED check gate smells; authority=operator ruling 2026-09-27 (smells/infra-codegen/slow-tests non-blocking for merge until further notice, coordination gc-wisp-bm2jtn); flext-w41u6; reason=Pre-existing qlty smell backlog (751 in flext-infra, already red on a9af10130) is burned down under flext-w41u6; the gate returns when the ruling is lifted.'; \
 gates="lint,pyrefly,mypy,pyright,silent-failure,deferred-self-reference,security,markdown,loc-cap,boundary,runtime-census,tier-whitelist,index-declarations,codemod,layout,canonical-alias,direnv,duplication"; \
 		if [ "$(strip $(CI))" = "Y" ]; then \
-			gates="lint,pyright,silent-failure,deferred-self-reference,security,markdown,loc-cap,boundary,runtime-census,tier-whitelist,index-declarations,codemod,layout,canonical-alias,direnv,duplication"; \
-			printf 'INFO: CI=Y runs check gates: lint pyright silent-failure deferred-self-reference security markdown loc-cap boundary runtime-census tier-whitelist index-declarations codemod layout canonical-alias direnv duplication\n'; \
+			gates="lint,mypy,pyright,silent-failure,deferred-self-reference,security,markdown,loc-cap,boundary,runtime-census,tier-whitelist,index-declarations,codemod,layout,canonical-alias,direnv,duplication"; \
+			printf 'INFO: CI=Y runs check gates: lint mypy pyright silent-failure deferred-self-reference security markdown loc-cap boundary runtime-census tier-whitelist index-declarations codemod layout canonical-alias direnv duplication\n'; \
 		elif [ "$(strip $(CI))" = "N" ]; then \
-			gates="pyrefly,mypy"; \
-			printf 'INFO: CI=N runs check gates: pyrefly mypy\n'; \
+			gates="pyrefly"; \
+			printf 'INFO: CI=N runs check gates: pyrefly\n'; \
 		else \
 			printf 'INFO: default context runs check gates: lint pyrefly mypy pyright silent-failure deferred-self-reference security markdown loc-cap boundary runtime-census tier-whitelist index-declarations codemod layout canonical-alias direnv duplication\n'; \
 		fi; \
