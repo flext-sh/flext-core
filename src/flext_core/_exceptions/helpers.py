@@ -64,12 +64,16 @@ class FlextExceptionsHelpers:
         metadata: FlextModelsBase.Metadata | None = None
         if value is not None:
             try:
-                metadata = FlextModelsBase.Metadata.model_validate(value, from_attributes=True)
+                metadata = FlextModelsBase.Metadata.model_validate(
+                    value, from_attributes=True
+                )
             except (PydanticValidationError, TypeError):
                 if isinstance(value, (Mapping, pr.HasModelDump)):
                     try:
                         attrs_map = FlextRuntime.normalize_metadata_input_mapping(value)
-                    except FlextConstantsErrorsValidationExceptions.EXC_PYDANTIC_TYPE_VALUE:
+                    except (
+                        FlextConstantsErrorsValidationExceptions.EXC_PYDANTIC_TYPE_VALUE
+                    ):
                         attrs_map = None
                     if attrs_map is not None:
                         attrs = {

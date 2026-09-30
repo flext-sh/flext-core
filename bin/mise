@@ -8,7 +8,8 @@ __mise_bootstrap() {
     # supplies exactly this shape (MISE_DATA_DIR: ~/.local/share/mise).
     case ${mise_data_dir} in
       "~") mise_data_dir=${HOME} ;;
-      "~/"*) mise_data_dir=${HOME}/${mise_data_dir#\~/} ;;
+      "~"*) mise_data_dir=${HOME}/${mise_data_dir#\~/} ;;
+      *) true ;;
     esac
     local cache_home="${XDG_CACHE_HOME:-${HOME}/.cache}/mise"
     local mise_version="${MISE_VERSION:-2026.9.16}"
@@ -126,15 +127,15 @@ __mise_bootstrap() {
           if ! command -v zstd >/dev/null 2>&1; then
             false
           # tar is bsdtar
-          elif tar --version | grep -q 'bsdtar'; then
+          elif tar --version | grep -q 'bsdtar' || true; then
             true
           # busybox tar reports a "1.3x" version that matches the GNU check below, but it
           # cannot decompress .tar.zst itself. Detect it so we fall back to the zstd pipe
           # (or a .tar.gz download) instead of running `tar -xf` on a zstd tarball.
-          elif tar --version 2>&1 | grep -qi 'busybox'; then
+          elif tar --version 2>&1 | grep -qi 'busybox' || true; then
             false
           # tar version is >= 1.31
-          elif tar --version | grep -q '1\.\(3[1-9]\|[4-9][0-9]\)'; then
+          elif tar --version | grep -q '1\.\(3[1-9]\|[4-9][0-9]\)' || true; then
             true
           else
             false
@@ -337,7 +338,7 @@ __mise_bootstrap() {
           debug "mise-setup: tarball=${cache_file}"
 
           debug "validating checksum"
-          cd "$(dirname "${cache_file}")" && get_checksum "${version}" "${os}" "${arch}" "${ext}" | "$(shasum_bin)" -c >/dev/null
+          cd "$(dirname "${cache_file}")" && get_checksum "${version}" "${os}" "${arch}" "${ext}" | "$(shasum_bin)" -c || true >/dev/null
 
           # extract tarball
           if [ -d "${install_path}" ]; then
@@ -348,7 +349,7 @@ __mise_bootstrap() {
           extract_dir="$(mktemp -d)"
           cd "${extract_dir}"
           if [ "${ext}" = "tar.zst" ] && ! tar_supports_zstd; then
-            zstd -d -c "${cache_file}" | tar --no-same-owner -xf -
+            zstd -d -c "${cache_file}" | tar --no-same-owner -xf - || true
           else
             tar --no-same-owner -xf "${cache_file}"
           fi
