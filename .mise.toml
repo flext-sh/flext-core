@@ -29,7 +29,7 @@ locked = true
 # Source: config:python_version, config:codegen.scaffold.project.dev native toolchain floors
 #         (kubectl_version, helm_version, kind_version, taplo_version, ast_grep_selector/ast_grep_version,
 #          gitleaks_version, scc_selector/scc_version, kubeconform_version, qlty_selector/qlty_version,
-#          node_version, jscpd_selector/jscpd_version/jscpd_asset_patterns,
+#          node_version, jscpd_selector/jscpd_version,
 #          prettier_selector/prettier_version, waza_selector/waza_version/waza_version_prefix,
 #          go_version, make_version)
 [tools]
@@ -41,7 +41,7 @@ helm = "latest"
 kind = "latest"
 direnv = "latest"
 taplo = "latest"
-"npm:@ast-grep/cli" = { version = "latest", allow_builds = ["@ast-grep/cli"] }
+"npm:@ast-grep/cli" = { version = "0.45.3", allow_builds = ["@ast-grep/cli"] }
 gitleaks = "latest"
 "aqua:boyter/scc" = "latest"
 kubeconform = "latest"
@@ -53,13 +53,6 @@ make = "latest"
 version = "0.642.0"
 [tools."github:kucherenko/jscpd"]
 version = "latest"
-[tools."github:kucherenko/jscpd".platforms]
-linux-x64 = { asset_pattern = "jscpd-linux-x64-gnu.tar.gz" }
-linux-x64-musl = { asset_pattern = "jscpd-linux-x64-musl.tar.gz" }
-linux-arm64 = { asset_pattern = "jscpd-linux-arm64-gnu.tar.gz" }
-macos-x64 = { asset_pattern = "jscpd-darwin-x64.tar.gz" }
-macos-arm64 = { asset_pattern = "jscpd-darwin-arm64.tar.gz" }
-windows-x64 = { asset_pattern = "jscpd-windows-x64-msvc.tar.gz" }
 [tools."github:microsoft/waza"]
 version = "latest"
 version_prefix = "v"
