@@ -200,7 +200,6 @@ provenance = "github-attestations"
 [[tools."github:kucherenko/jscpd"]]
 version = "5.3.3"
 backend = "github:kucherenko/jscpd"
-specifiers = ["latest"]
 
 [tools."github:kucherenko/jscpd".options]
 asset_pattern = "jscpd-linux-x64-gnu.tar.gz"
