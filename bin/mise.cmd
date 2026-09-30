@@ -20,7 +20,7 @@ rem delete something it never created.
 set "download_path="
 set "sums="
 
-set "pinned_version=2026.9.16"
+set "pinned_version=2026.9.17"
 set "sum_x64=b724be30f9596e5abea693556640e4b5076efebe4fd8d8a8011f98d294b83576"
 set "sum_arm64=a3e8a5e9850cb48dc0ec493820bcd6ab38ad5d431a304ee10b9e9c998977bcd8"
 
@@ -88,7 +88,7 @@ if /i not "%actual%"=="%expected%" (
 
 rem The parent of MISE_INSTALL_PATH, not install_dir: a caller-supplied MISE_INSTALL_PATH can
 rem name a file anywhere, and creating install_dir instead would leave the move below with no
-rem destination directory. install.sh does the same -- `mkdir -p "$(dirname "$install_path")"` --
+rem destination directory. install.sh does the same -- `mkdir -p "$(dirname "${install_path}")"` --
 rem and the default path lives under install_dir, so this covers that case too.
 for %%i in ("%MISE_INSTALL_PATH%") do set "install_parent=%%~dpi"
 if not exist "%install_parent%" mkdir "%install_parent%"
