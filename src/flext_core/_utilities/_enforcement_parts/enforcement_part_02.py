@@ -51,15 +51,12 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
                 )
                 continue
             detail = ub.apply(kind, params, *args)
-            if detail is None:
-                continue
-            details = detail if isinstance(detail, tuple) else (detail,)
-            violations.extend(
-                FlextUtilitiesEnforcement._violation(
-                    tag, location, qualname, one, category=category
+            if detail is not None:
+                violations.append(
+                    FlextUtilitiesEnforcement._violation(
+                        tag, location, qualname, detail, category=category
+                    )
                 )
-                for one in details
-            )
         return me.Report(violations=violations, deferred=deferred)
 
     @staticmethod

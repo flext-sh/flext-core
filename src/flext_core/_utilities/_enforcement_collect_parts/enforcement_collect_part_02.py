@@ -38,6 +38,21 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementCollectPart01):
                 yield f"{qn}.{name}", (target, name)
 
     @staticmethod
+    def _ns_classvar_constants(
+        target: type, qn: str
+    ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
+        """Yield one item per public attribute; the visitor judges each one.
+
+        Granularity lives here (the iterator), never in the visitor: every
+        violating constant of the class surfaces in one pass instead of one
+        per gate round.
+        """
+        for name, value in vars(target).items():
+            if name.startswith("_") or name != name.upper():
+                continue
+            yield f"{qn}.{name}", (target, name, value)
+
+    @staticmethod
     def _ns_nested_classes(
         root: type, node: type
     ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
@@ -83,6 +98,8 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementCollectPart01):
                 yield from cls._ns_nested_mro(target, qn, project)
             case "no_accessor_methods" | "smell_function_parameters":
                 yield from cls._ns_no_accessor_methods(target, qn)
+            case "classvar_constant_outside_constants":
+                yield from cls._ns_classvar_constants(target, qn)
             case _:
                 return
 

@@ -139,20 +139,13 @@ class FlextUtilitiesBeartypeEngine(
         kind: c.EnforcementPredicateKind,
         params: mp.BaseModel,
         *args: p.AttributeProbe,
-    ) -> t.StrMapping | tuple[t.StrMapping, ...] | None:
-        """Dispatch a rule predicate to its visitor by ``predicate_kind``.
-
-        A visitor may return one detail mapping or a tuple of them when a
-        single target carries several violations of the same rule.
-        """
+    ) -> t.StrMapping | None:
+        """Dispatch a rule predicate to its visitor by ``predicate_kind``."""
         visitor = cls._VISITORS.get(kind)
         return _NO_VIOLATION if visitor is None else visitor(params, *args)
 
     _VISITORS: ClassVar[
-        t.MappingKV[
-            c.EnforcementPredicateKind,
-            Callable[..., t.StrMapping | tuple[t.StrMapping, ...] | None],
-        ]
+        t.MappingKV[c.EnforcementPredicateKind, Callable[..., t.StrMapping | None]]
     ] = MappingProxyType({
         c.EnforcementPredicateKind.FIELD_SHAPE: FlextUtilitiesBeartypeFieldVisitor.v_field_shape,
         c.EnforcementPredicateKind.MODEL_CONFIG: FlextUtilitiesBeartypeFieldVisitor.v_model_config,
