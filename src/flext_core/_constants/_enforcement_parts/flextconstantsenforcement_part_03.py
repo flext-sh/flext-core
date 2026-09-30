@@ -200,6 +200,9 @@ class FlextConstantsEnforcementNamespace:
         # CONFIG_FILENAMES: the loader reads it through `cls` per subclass and
         # FlextConfig must not import _constants (constants import it as base).
         "YAML_CONFIG_SECTION",
+        # LibCST reads this protocol attribute on each visitor class to
+        # provision the metadata that visitor declares as dependencies.
+        "METADATA_DEPENDENCIES",
     })
     """ClassVar attribute names that are framework idioms and stay in place."""
 
