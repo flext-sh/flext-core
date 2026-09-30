@@ -53,7 +53,7 @@ The consecutive generation passes prove the fixed point after structural rewrite
 Each verb executes its declared operation directly. No project, file, pattern, action,
 phase, fix, or changed-only selector may be attached to a standard verb.
 
-`make help` is the complete live inventory. Additional declared verbs such as `deps`,
+`make help` is the complete live inventory. Additional declared verbs such as `upg`,
 `docs`, `audit`, `status`, `waza`, `duplication`, and the release verbs retain their own
 single operation and are invoked only when their scope applies.
 
@@ -93,9 +93,18 @@ The markdown standard lives once in `flext-infra/config/tooling.yaml`
 
 ## Test contract
 
-Every test execution uses `make test`. The verb owns impact selection and the retained
-Testmon cache, including complete-suite requests. Direct test-runner commands and
+`make test` runs the incremental selection. `make test-full` first runs that operation,
+then the complete suite, including configured external and CI-excluded markers. The
+runner owns this sequence, one monotonic deadline, and the same persistent Testmon
+database, located by the flext-infra generated configuration. External tests keep their
+declared runtime and authentication requirements. Direct runner commands and
 cache-clearing bypasses are prohibited.
+
+Separate receipts preserve each phase's mode, raw result, inventory, execution, and
+deselection counts. Warnings are counted per subprocess and globally, including any
+explicitly suspended MRO warnings. Only a typed incremental cache hit with database
+integrity checks and complete deselection accounting may execute zero tests; it is never
+reported as tests passed. The full phase must execute its complete nonempty inventory.
 
 ## Failure contract
 
