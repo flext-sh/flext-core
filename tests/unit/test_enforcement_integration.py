@@ -208,3 +208,32 @@ class TestsFlextEnforcementIntegration:
         assert any(class_name in message for message in violation_messages), (
             f"No violation warning named {class_name!r}"
         )
+
+    def test_classvar_constant_detector_reports_every_constant_in_one_pass(
+        self, tmp_path: Path
+    ) -> None:
+        # Arrange: one class holding TWO constants outside _constants. The
+        # detector must surface both in a single pass (no whack-a-mole).
+        module_root = tmp_path
+        module_name = "_flext_census_multi_constant_fixture"
+        (module_root / f"{module_name}.py").write_text(
+            "from typing import ClassVar\n"
+            "from flext_core.models import FlextModelsNamespace\n"
+            "\n"
+            "\n"
+            "class CensusMultiConstant(FlextModelsNamespace):\n"
+            "    GROUPS: ClassVar[frozenset[str]] = frozenset({'a', 'b'})\n"
+            "    LIMITS: ClassVar[frozenset[str]] = frozenset({'x', 'y'})\n",
+            encoding="utf-8",
+        )
+
+        # Act: import and capture the enforcement warnings.
+        messages = _capture_import_warnings(module_name, search_path=module_root)
+
+        # Assert: BOTH constants are reported without any intermediate cure.
+        assert any("GROUPS" in message for message in messages), (
+            "detector missed GROUPS: " + " | ".join(messages)
+        )
+        assert any("LIMITS" in message for message in messages), (
+            "detector missed LIMITS (whack-a-mole regression): " + " | ".join(messages)
+        )

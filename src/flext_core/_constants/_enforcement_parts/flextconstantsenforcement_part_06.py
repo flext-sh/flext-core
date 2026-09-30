@@ -21,7 +21,6 @@ class FlextConstantsEnforcementTargets:
         "alias_first_multi_parent",
         "alias_rebound_at_module_end",
         "cast_outside_core",
-        "classvar_constant_outside_constants",
         "compatibility_alias_import",
         "cross_project_duplicate",
         "deprecated_typealias_syntax",
