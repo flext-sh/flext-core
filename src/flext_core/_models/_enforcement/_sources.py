@@ -6,11 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import Field
 
-from ..._constants.enforcement import FlextConstantsEnforcement as ce
 from ..._typings.base import FlextTypingBase as t
 from ._base import EnforcementModelBase, FlextModelsEnforcementBase
 
@@ -18,12 +17,16 @@ from ._base import EnforcementModelBase, FlextModelsEnforcementBase
 class FlextModelsEnforcementSources(FlextModelsEnforcementBase):
     """Source-discriminator models used by enforcement catalog rules."""
 
-    class EnforcementInfraDetectorSource(EnforcementModelBase):
-        """Rule backed by a ``FlextInfraNamespaceEnforcer`` detector field."""
+    class EnforcementInfraRuleSource(EnforcementModelBase):
+        """Rule applied by the flext-infra rule engine from its rule catalog.
 
-        kind: Literal["flext_infra_detector"] = "flext_infra_detector"
-        violation_field: str
-        match_missing: bool = False
+        ``rule_ids`` name rules declared in flext-infra ``config/rules``; the
+        engine reports typed findings keyed by those ids, and a named id the
+        engine does not declare is a defect, never an empty result.
+        """
+
+        kind: Literal["flext_infra_rule"] = "flext_infra_rule"
+        rule_ids: Annotated[t.StrSequence, Field(min_length=1)]
 
     class EnforcementTestsValidatorSource(EnforcementModelBase):
         """Rule backed by a ``FlextTestsValidator`` classmethod."""
@@ -39,41 +42,16 @@ class FlextModelsEnforcementSources(FlextModelsEnforcementBase):
         category: str
 
     class EnforcementBeartypeSource(EnforcementModelBase):
-        """Rule dispatched through a beartype predicate binding."""
+        """Rule dispatched through the runtime predicate bound to ``tag``."""
 
         kind: Literal["beartype"] = "beartype"
-        predicate_kind: ce.EnforcementPredicateKind
-
-    class EnforcementRuffSource(EnforcementModelBase):
-        """Rule delegated to ruff."""
-
-        kind: Literal["ruff"] = "ruff"
-        rule_code: str
-
-    class EnforcementSkillPointerSource(EnforcementModelBase):
-        """Rule as narrative skill content only."""
-
-        kind: Literal["skill_pointer"] = "skill_pointer"
-        skill: str
-        anchor: str = ""
+        tag: str
 
     class EnforcementCodeSmellSource(EnforcementModelBase):
         """Rule backed by a code-smell predicate (qlty/ metrics)."""
 
         kind: Literal["code_smell"] = "code_smell"
         smell_tag: str
-
-    class EnforcementFixAction(EnforcementModelBase):
-        """Actionable fix contract for an enforcement rule.
-
-        Stored on ``EnforcementRuleSpec.fix_action`` and consumed by the
-        flext-infra fix orchestrator to route violations to the right fixer.
-        """
-
-        kind: Literal["transformer", "rope", "manual"]
-        target: str
-        params: t.JsonMapping = Field(default_factory=dict)
-        safe: bool = True
 
 
 __all__: list[str] = ["FlextModelsEnforcementSources"]

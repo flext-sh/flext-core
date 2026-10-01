@@ -17,13 +17,11 @@ from ._base import EnforcementModelBase
 from ._sources import FlextModelsEnforcementSources
 
 type EnforcementRuleSource = (
-    FlextModelsEnforcementSources.EnforcementInfraDetectorSource
+    FlextModelsEnforcementSources.EnforcementInfraRuleSource
     | FlextModelsEnforcementSources.EnforcementTestsValidatorSource
     | FlextModelsEnforcementSources.EnforcementRuntimeWarningSource
     | FlextModelsEnforcementSources.EnforcementBeartypeSource
     | FlextModelsEnforcementSources.EnforcementCodeSmellSource
-    | FlextModelsEnforcementSources.EnforcementRuffSource
-    | FlextModelsEnforcementSources.EnforcementSkillPointerSource
 )
 
 
@@ -39,13 +37,9 @@ class FlextModelsEnforcementCatalog(FlextModelsEnforcementSources):
         source: Annotated[EnforcementRuleSource, Discriminator("kind")]
         agents_md_anchor: str = ""
         skills: t.StrSequence = ()
-        enabled: bool = True
-        promote_to_error_when_strict: bool = True
-        notes: str = ""
-        fix_action: FlextModelsEnforcementSources.EnforcementFixAction | None = None
 
     class EnforcementCatalog(EnforcementModelBase):
-        """Frozen catalog of all enforcement rules."""
+        """Frozen catalog of all enforcement rules, validated from package data."""
 
         version: int = 1
         rules: tuple[FlextModelsEnforcementCatalog.EnforcementRuleSpec, ...] = ()
@@ -68,12 +62,6 @@ class FlextModelsEnforcementCatalog(FlextModelsEnforcementSources):
                 if rule.id == rule_id:
                     return rule
             return None
-
-        def enabled_rules(
-            self,
-        ) -> tuple[FlextModelsEnforcementCatalog.EnforcementRuleSpec, ...]:
-            """Return only the rules with ``enabled=True``."""
-            return tuple(rule for rule in self.rules if rule.enabled)
 
         def by_kind(
             self, kind: c.EnforcementSourceKind

@@ -1,4 +1,8 @@
-"""JSON package-data loader for enforcement smell rules.
+"""JSON package data for enforcement: the rule catalog and the smell rules.
+
+``catalog.json`` is the enforcement rule catalog; flext-core validates it into
+``m.EnforcementCatalog`` at its consumer. ``smells.json`` carries the smell
+thresholds, tags and rule text loaded here.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -10,7 +14,7 @@ import importlib.resources
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 if TYPE_CHECKING:
     from ..._typings.base import FlextTypingBase as t
@@ -24,23 +28,10 @@ class _SmellThresholds(BaseModel):
     file_cx: int
 
 
-class _SmellCatalogRow(BaseModel):
-    id: str
-    severity: str
-    tag: str
-    anchor: str
-    skills: tuple[str, ...]
-    description: str
-
-
 class _SmellData(BaseModel):
     thresholds: _SmellThresholds
     tags: tuple[str, ...]
     rules_text: dict[str, tuple[str, str]]
-    beartype_rows: tuple[_SmellCatalogRow, ...] = Field(alias="beartype_rows")
-    code_smell_rows: tuple[_SmellCatalogRow, ...] = Field(alias="code_smell_rows")
-
-    model_config = {"populate_by_name": True}
 
 
 def _load_smell_data() -> _SmellData:
@@ -62,18 +53,6 @@ SMELL_THRESHOLDS: t.MappingKV[str, int] = MappingProxyType(
 )
 SMELL_RULES_TEXT: t.MappingKV[str, tuple[str, str]] = MappingProxyType(
     _SMELL_DATA.rules_text
-)
-SMELL_BEARTYPE_ROWS: tuple[tuple[str, str, str, str, tuple[str, ...], str], ...] = (
-    tuple(
-        (row.id, row.severity, row.tag, row.anchor, row.skills, row.description)
-        for row in _SMELL_DATA.beartype_rows
-    )
-)
-SMELL_CODE_SMELL_ROWS: tuple[tuple[str, str, str, str, tuple[str, ...], str], ...] = (
-    tuple(
-        (row.id, row.severity, row.tag, row.anchor, row.skills, row.description)
-        for row in _SMELL_DATA.code_smell_rows
-    )
 )
 
 __all__: list[str] = ["ENFORCEMENT_SMELL_TAGS", "SMELL_RULES_TEXT", "SMELL_THRESHOLDS"]

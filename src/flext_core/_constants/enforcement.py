@@ -30,14 +30,9 @@ from ._enforcement_parts.flextconstantsenforcement_part_06 import (
 from ._enforcement_parts.flextconstantsenforcement_part_07 import (
     FlextConstantsEnforcementSmellData,
 )
-from ._enforcement_parts.flextconstantsenforcement_part_08 import (
-    FlextConstantsEnforcementFixActions,
-)
-from .enforcement_catalog_rows import FlextConstantsEnforcementCatalogRows
 
 
 class FlextConstantsEnforcement(
-    FlextConstantsEnforcementCatalogRows,
     FlextConstantsEnforcementEnums,
     FlextConstantsEnforcementRuntime,
     FlextConstantsEnforcementNamespace,
@@ -45,7 +40,6 @@ class FlextConstantsEnforcement(
     FlextConstantsEnforcementRuleText,
     FlextConstantsEnforcementTargets,
     FlextConstantsEnforcementSmellData,
-    FlextConstantsEnforcementFixActions,
 ):
     """Constants governing Pydantic v2 enforcement behavior."""
 

@@ -6,8 +6,6 @@ from typing import TYPE_CHECKING, ClassVar
 
 from .._enforcement_data import (
     ENFORCEMENT_SMELL_TAGS,
-    SMELL_BEARTYPE_ROWS,
-    SMELL_CODE_SMELL_ROWS,
     SMELL_RULES_TEXT,
     SMELL_THRESHOLDS,
 )
@@ -17,17 +15,14 @@ if TYPE_CHECKING:
 
 
 class FlextConstantsEnforcementSmellData:
-    """JSON-loaded smell enforcement rules and thresholds."""
+    """JSON-loaded smell enforcement thresholds, tags and rule text."""
+
+    ENFORCEMENT_CATALOG_RESOURCE: ClassVar[str] = "catalog.json"
+    """Package-data resource holding the enforcement rule catalog."""
 
     ENFORCEMENT_SMELL_TAGS: ClassVar[t.VariadicTuple[str]] = ENFORCEMENT_SMELL_TAGS
     SMELL_THRESHOLDS: ClassVar[t.IntMapping] = SMELL_THRESHOLDS
     SMELL_RULES_TEXT: ClassVar[t.StrPairMapping] = SMELL_RULES_TEXT
-    SMELL_BEARTYPE_ROWS: ClassVar[
-        tuple[tuple[str, str, str, str, t.VariadicTuple[str], str], ...]
-    ] = SMELL_BEARTYPE_ROWS
-    SMELL_CODE_SMELL_ROWS: ClassVar[
-        tuple[tuple[str, str, str, str, t.VariadicTuple[str], str], ...]
-    ] = SMELL_CODE_SMELL_ROWS
 
 
 __all__: list[str] = ["FlextConstantsEnforcementSmellData"]

@@ -1,0 +1,1092 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "id": "ENFORCE-001",
+      "description": "Loose object detected at module level — every public symbol must be nested inside its facade family.",
+      "severity": "HIGH",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "ban-loose-module-object"
+        ]
+      },
+      "agents_md_anchor": "2-architecture-law",
+      "skills": [
+        "flext-mro-namespace-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-002",
+      "description": "Import alias source is wrong — alias imported from a non-canonical module.",
+      "severity": "HIGH",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "ban-noncanonical-alias-import"
+        ]
+      },
+      "skills": [
+        "flext-import-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-003",
+      "description": "Namespace source violation — canonical alias imported from a project that does not own that slot.",
+      "severity": "HIGH",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "ban-foreign-namespace-source"
+        ]
+      },
+      "skills": [
+        "flext-import-rules",
+        "flext-mro-namespace-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-004",
+      "description": "Internal (private) module import reaches outside its owning package boundary.",
+      "severity": "MEDIUM",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "ban-private-import"
+        ]
+      },
+      "skills": [
+        "flext-import-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-005",
+      "description": "Manual Protocol class declared outside protocols.py / _protocols/ tree.",
+      "severity": "MEDIUM",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "ban-manual-protocol-outside-protocols"
+        ]
+      },
+      "skills": [
+        "flext-mro-namespace-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-006",
+      "description": "Cyclic import detected between modules.",
+      "severity": "CRITICAL",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "ban-cyclic-import"
+        ]
+      },
+      "skills": [
+        "flext-import-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-007",
+      "description": "Runtime alias (c/p/t/m/u/r/s/x/d/e/h) rebound in a module that should not own it.",
+      "severity": "HIGH",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "ban-runtime-alias-rebind"
+        ]
+      },
+      "skills": [
+        "flext-mro-namespace-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-008",
+      "description": "Python module missing `from __future__ import annotations`.",
+      "severity": "MEDIUM",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "require-future-annotations"
+        ]
+      },
+      "skills": [
+        "rules-examples"
+      ]
+    },
+    {
+      "id": "ENFORCE-009",
+      "description": "Manual typing alias declared outside typings.py / _typings/ tree.",
+      "severity": "MEDIUM",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "ban-manual-typing-alias-outside-typings"
+        ]
+      },
+      "skills": [
+        "flext-type-system"
+      ]
+    },
+    {
+      "id": "ENFORCE-010",
+      "description": "Backwards-compatibility alias retained after refactor — should be removed.",
+      "severity": "LOW",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "ban-compat-alias"
+        ]
+      },
+      "skills": [
+        "flext-refactoring-workflow"
+      ]
+    },
+    {
+      "id": "ENFORCE-011",
+      "description": "Class placed in the wrong facade layer (e.g. Protocol in models.py).",
+      "severity": "HIGH",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "ban-class-wrong-facade-layer"
+        ]
+      },
+      "skills": [
+        "flext-mro-namespace-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-012",
+      "description": "MRO composition incomplete — facade does not compose all its domain mixin trees.",
+      "severity": "CRITICAL",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "require-facade-mro-completeness"
+        ]
+      },
+      "skills": [
+        "flext-mro-namespace-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-014",
+      "description": "Canonical facade family is missing (no constants.py / models.py / typings.py / protocols.py / utilities.py).",
+      "severity": "CRITICAL",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "require-canonical-facade-family"
+        ]
+      },
+      "skills": [
+        "flext-mro-namespace-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-015",
+      "description": "Import discipline violation — lazy imports, TYPE_CHECKING misuse, sys.path manipulation, or non-root flext-* imports.",
+      "severity": "HIGH",
+      "source": {
+        "kind": "flext_tests_validator",
+        "method": "imports",
+        "rule_ids": [
+          "IMPORT-001",
+          "IMPORT-002",
+          "IMPORT-003",
+          "IMPORT-004",
+          "IMPORT-006"
+        ]
+      },
+      "skills": [
+        "flext-import-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-016",
+      "description": "Type-system violation — Any/object/legacy typing or type: ignore bypass.",
+      "severity": "HIGH",
+      "source": {
+        "kind": "flext_tests_validator",
+        "method": "types",
+        "rule_ids": [
+          "TYPE-001",
+          "TYPE-002",
+          "TYPE-003"
+        ]
+      },
+      "skills": [
+        "flext-strict-typing",
+        "flext-type-system"
+      ]
+    },
+    {
+      "id": "ENFORCE-017",
+      "description": "Bypass pattern — noqa, pragma: no cover (unapproved), or exception swallowing.",
+      "severity": "HIGH",
+      "source": {
+        "kind": "flext_tests_validator",
+        "method": "bypass",
+        "rule_ids": [
+          "BYPASS-001",
+          "BYPASS-002",
+          "BYPASS-003"
+        ]
+      },
+      "skills": [
+        "flext-agent-strict-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-018",
+      "description": "Layer violation — lower layer importing an upper layer.",
+      "severity": "CRITICAL",
+      "source": {
+        "kind": "flext_tests_validator",
+        "method": "layer",
+        "rule_ids": [
+          "LAYER-001"
+        ]
+      },
+      "skills": [
+        "flext-architecture-layers"
+      ]
+    },
+    {
+      "id": "ENFORCE-019",
+      "description": "Test pattern violation — monkeypatch, Mock/MagicMock, or @patch usage.",
+      "severity": "MEDIUM",
+      "source": {
+        "kind": "flext_tests_validator",
+        "method": "tests",
+        "rule_ids": [
+          "TEST-001",
+          "TEST-002",
+          "TEST-003"
+        ]
+      },
+      "skills": [
+        "testing-patterns"
+      ]
+    },
+    {
+      "id": "ENFORCE-020",
+      "description": "pyproject.toml deviation — mypy ignore_errors, unapproved ruff ignores, or incomplete type strictness.",
+      "severity": "HIGH",
+      "source": {
+        "kind": "flext_tests_validator",
+        "method": "validate_config",
+        "rule_ids": [
+          "CONFIG-001",
+          "CONFIG-003",
+          "CONFIG-004",
+          "CONFIG-005"
+        ]
+      },
+      "skills": [
+        "flext-development-workflow"
+      ]
+    },
+    {
+      "id": "ENFORCE-021",
+      "description": "Markdown code block validation — syntax, forbidden typings, missing future annotations, object as type.",
+      "severity": "MEDIUM",
+      "source": {
+        "kind": "flext_tests_validator",
+        "method": "markdown",
+        "rule_ids": [
+          "MD-001",
+          "MD-002",
+          "MD-003",
+          "MD-004"
+        ]
+      },
+      "skills": [
+        "testing-patterns"
+      ]
+    },
+    {
+      "id": "ENFORCE-022",
+      "description": "FlextMroViolation emitted by the flext-core enforcement engine at class-definition time.",
+      "severity": "HIGH",
+      "source": {
+        "kind": "runtime_warning",
+        "category": "flext_core._constants.enforcement.FlextMroViolation"
+      },
+      "skills": [
+        "flext-mro-namespace-rules",
+        "pydantic-v2-governance"
+      ]
+    },
+    {
+      "id": "ENFORCE-026",
+      "description": "Bare `except:` clause swallows all exceptions including SystemExit.",
+      "severity": "HIGH",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "rewrite-bare-except-to-exception"
+        ]
+      },
+      "agents_md_anchor": "3-1-supreme-law",
+      "skills": [
+        "lib-returns"
+      ]
+    },
+    {
+      "id": "ENFORCE-027",
+      "description": "`u.Cli.print()` call in source code — use structured logging.",
+      "severity": "MEDIUM",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "rewire-print-to-cli-display-text",
+          "rewire-print-to-logger-info"
+        ]
+      },
+      "agents_md_anchor": "3-1-supreme-law",
+      "skills": [
+        "using-flext-core"
+      ]
+    },
+    {
+      "id": "ENFORCE-028",
+      "description": "`breakpoint()` / pdb left in code.",
+      "severity": "HIGH",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "remove-breakpoint-debugger-statement",
+          "remove-pdb-set-trace-statement"
+        ]
+      },
+      "agents_md_anchor": "3-1-supreme-law",
+      "skills": [
+        "coding-standards"
+      ]
+    },
+    {
+      "id": "ENFORCE-029",
+      "description": "`open()` without explicit encoding.",
+      "severity": "MEDIUM",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "add-open-builtin-default-mode-encoding",
+          "add-open-builtin-text-mode-encoding",
+          "add-path-open-default-mode-encoding",
+          "add-path-open-text-mode-encoding"
+        ]
+      },
+      "agents_md_anchor": "3-1-supreme-law",
+      "skills": [
+        "coding-standards"
+      ]
+    },
+    {
+      "id": "ENFORCE-030",
+      "description": "`dict` in type annotation — prefer Mapping / MutableMapping / TypedDict.",
+      "severity": "HIGH",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "ns-contract-banned-dict-annotation"
+        ]
+      },
+      "agents_md_anchor": "3-2-types-and-contracts",
+      "skills": [
+        "flext-strict-typing"
+      ]
+    },
+    {
+      "id": "ENFORCE-031",
+      "description": "`typing.Dict` attribute usage — use collections.abc.Mapping family.",
+      "severity": "HIGH",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "typing-dict-to-mapping-kv"
+        ]
+      },
+      "agents_md_anchor": "3-2-types-and-contracts",
+      "skills": [
+        "flext-strict-typing"
+      ]
+    },
+    {
+      "id": "ENFORCE-032",
+      "description": "`from typing import TYPE_CHECKING, ClassVar, Dict` — banned in favor of dict / Mapping.",
+      "severity": "HIGH",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "typing-dict-to-mapping-kv"
+        ]
+      },
+      "agents_md_anchor": "3-2-types-and-contracts",
+      "skills": [
+        "flext-strict-typing"
+      ]
+    },
+    {
+      "id": "ENFORCE-033",
+      "description": "Hardcoded `__version__` string — use importlib.metadata.",
+      "severity": "HIGH",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "ban-hardcoded-dunder-version"
+        ]
+      },
+      "agents_md_anchor": "3-4-tools-and-modules",
+      "skills": [
+        "rules-pkg"
+      ]
+    },
+    {
+      "id": "ENFORCE-039",
+      "description": "cast() call outside flext-core result internals violates AGENTS.md §3.2 (Strict Types).",
+      "severity": "HIGH",
+      "source": {
+        "kind": "beartype",
+        "tag": "cast_outside_core"
+      },
+      "agents_md_anchor": "3-2-types-and-contracts",
+      "skills": [
+        "flext-strict-typing"
+      ]
+    },
+    {
+      "id": "ENFORCE-041",
+      "description": "model_rebuild() call indicates unresolved forward refs and violates AGENTS.md §3.4 (Tools/Modules/Env).",
+      "severity": "HIGH",
+      "source": {
+        "kind": "beartype",
+        "tag": "model_rebuild_call"
+      },
+      "agents_md_anchor": "3-4-tools-and-modules",
+      "skills": [
+        "pydantic-v2-governance"
+      ]
+    },
+    {
+      "id": "ENFORCE-042",
+      "description": "Settings class missing FlextSettings base or wrong env_prefix violates AGENTS.md §2.6 (Settings Law). Reuses the existing check_settings_inheritance hook — no new detection code per SSOT/DRY.",
+      "severity": "HIGH",
+      "source": {
+        "kind": "beartype",
+        "tag": "settings_inheritance"
+      },
+      "agents_md_anchor": "2-6-settings-law",
+      "skills": [
+        "lib-pydantic-settings"
+      ]
+    },
+    {
+      "id": "ENFORCE-043",
+      "description": "Pass-through wrapper (single-statement return delegating to another callable with identical args) violates AGENTS.md §3.5.",
+      "severity": "MEDIUM",
+      "source": {
+        "kind": "beartype",
+        "tag": "pass_through_wrapper"
+      },
+      "agents_md_anchor": "3-5-integrity",
+      "skills": [
+        "flext-refactoring-workflow"
+      ]
+    },
+    {
+      "id": "ENFORCE-044",
+      "description": "hasattr/getattr/setattr probing of private attributes (single-underscore names) violates AGENTS.md §3.6.",
+      "severity": "HIGH",
+      "source": {
+        "kind": "beartype",
+        "tag": "private_attr_probe"
+      },
+      "agents_md_anchor": "3-6-test-standardization",
+      "skills": [
+        "flext-strict-typing",
+        "testing-patterns"
+      ]
+    },
+    {
+      "id": "ENFORCE-045",
+      "description": "Direct 'from pydantic import ...' in a consumer project (outside its own '_' base pyramid) violates AGENTS.md §2.7 (Library Abstraction Boundaries) + §3.1 (Pydantic v2 Mastery — facade-only access).",
+      "severity": "HIGH",
+      "source": {
+        "kind": "beartype",
+        "tag": "no_pydantic_consumer_import"
+      },
+      "agents_md_anchor": "2-7-library-abstraction-boundaries",
+      "skills": [
+        "flext-import-rules",
+        "pydantic-v2-patterns"
+      ]
+    },
+    {
+      "id": "ENFORCE-046",
+      "description": "Canonical facade files (constants/models/protocols/typings/utilities) must import only c/m/p/t/u aliases from parent — never bare FlextXxx concrete classes (unless Pattern-B peer). Violates AGENTS.md §4 (Import Law).",
+      "severity": "HIGH",
+      "source": {
+        "kind": "beartype",
+        "tag": "no_concrete_namespace_import"
+      },
+      "agents_md_anchor": "4-import-law",
+      "skills": [
+        "flext-import-rules",
+        "flext-mro-namespace-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-047",
+      "description": "Facade-class first base must be an alias (c/m/p/t/u) or a Pattern-B peer FlextXxx — never an arbitrary Flext* concrete class. Violates AGENTS.md §2.2 (One Facade Rule + Pattern-A/B).",
+      "severity": "HIGH",
+      "source": {
+        "kind": "beartype",
+        "tag": "facade_base_is_alias_or_peer"
+      },
+      "agents_md_anchor": "2-2-facades-namespaces-naming-patterns",
+      "skills": [
+        "flext-mro-namespace-rules",
+        "flext-import-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-048",
+      "description": "Inner namespace class with empty body that re-inherits from outer (e.g. 'class Cli(FlextCliTypes): pass') is redundant — parent already exposes the namespace. Violates AGENTS.md §2.3 (Single Root Nested Namespace).",
+      "severity": "MEDIUM",
+      "source": {
+        "kind": "beartype",
+        "tag": "no_redundant_inner_namespace"
+      },
+      "agents_md_anchor": "2-3-mro-inheritance-namespace-composition",
+      "skills": [
+        "flext-mro-namespace-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-049",
+      "description": "Multi-parent facade class must list canonical alias (c/m/p/t/u) as FIRST base — required for C3 MRO linearization. Violates AGENTS.md §2.2 (Pattern-B facade ordering).",
+      "severity": "HIGH",
+      "source": {
+        "kind": "beartype",
+        "tag": "alias_first_multi_parent"
+      },
+      "agents_md_anchor": "2-2-facades-namespaces-naming-patterns",
+      "skills": [
+        "flext-mro-namespace-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-050",
+      "description": "Canonical facade module must rebind its alias at end-of-file (e.g. 't = FlextXxxTypes') — establishes the public contract surface. Violates AGENTS.md §4 (Aliases — assigned once at module bottom).",
+      "severity": "MEDIUM",
+      "source": {
+        "kind": "beartype",
+        "tag": "alias_rebound_at_module_end"
+      },
+      "agents_md_anchor": "4-import-law",
+      "skills": [
+        "flext-import-rules",
+        "flext-mro-namespace-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-051",
+      "description": "Canonical facade files must NOT import c/m/p/t/u from their own package — must import from the parent MRO package to avoid lazy-load circular initialization. Violates AGENTS.md §4 (No Same-Project Cross-Facade Runtime Imports).",
+      "severity": "HIGH",
+      "source": {
+        "kind": "beartype",
+        "tag": "no_self_root_import_in_core_files"
+      },
+      "agents_md_anchor": "4-import-law",
+      "skills": [
+        "flext-import-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-052",
+      "description": "Sibling _models/* imports referenced only in annotations must live under 'if TYPE_CHECKING:' to avoid circular runtime imports. Violates AGENTS.md §4 (Circular Import Resolution — TYPE_CHECKING for annotation-only siblings).",
+      "severity": "HIGH",
+      "source": {
+        "kind": "beartype",
+        "tag": "sibling_models_type_checking"
+      },
+      "agents_md_anchor": "4-import-law",
+      "skills": [
+        "flext-import-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-053",
+      "description": "Multi-parent utilities.py facade must list explicit PARENT class as first base (not alias 'u') to allow pyrefly to resolve the MRO when 'u' is rebound to the local class. Violates AGENTS.md §2.3 (MRO Cascade).",
+      "severity": "HIGH",
+      "source": {
+        "kind": "beartype",
+        "tag": "utilities_explicit_class_when_self_ref"
+      },
+      "agents_md_anchor": "2-3-mro-inheritance-namespace-composition",
+      "skills": [
+        "flext-mro-namespace-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-054",
+      "description": "Deprecated test namespace path '.Core.Tests' is forbidden in tests/examples/scripts. Use flat c/p/t/m/u.Tests.* access only.",
+      "severity": "HIGH",
+      "source": {
+        "kind": "beartype",
+        "tag": "no_core_tests_namespace"
+      },
+      "agents_md_anchor": "0-quick-reference-must-read",
+      "skills": [
+        "flext-mro-namespace-rules",
+        "flext-import-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-055",
+      "description": "Wrapper alias imports in tests/examples/scripts must come from wrapper root package (`from tests|examples|scripts import ...`). Submodule alias imports are forbidden outside `__init__.py`.",
+      "severity": "HIGH",
+      "source": {
+        "kind": "beartype",
+        "tag": "no_wrapper_root_alias_import"
+      },
+      "agents_md_anchor": "0-quick-reference-must-read",
+      "skills": [
+        "flext-import-rules",
+        "flext-mro-namespace-rules",
+        "rules-scripts"
+      ]
+    },
+    {
+      "id": "ENFORCE-064",
+      "description": "Long facade class name import must use the canonical short alias (e.g. `from flext_core import FlextConstants` → `from flext_core import c`). Violates AGENTS.md §4 (Import Law).",
+      "severity": "HIGH",
+      "source": {
+        "kind": "beartype",
+        "tag": "compatibility_alias_import"
+      },
+      "agents_md_anchor": "4-import-law",
+      "skills": [
+        "flext-import-rules",
+        "flext-agent-strict-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-066",
+      "description": "Module-level CapWords alias (`LegacyName = NewName` rename shim or nested-class hoist `X = Facade.Domain.X`) is a backwards-compat alias. Violates AGENTS.md §2.4 (No Backward-Compat Aliases).",
+      "severity": "MEDIUM",
+      "source": {
+        "kind": "beartype",
+        "tag": "no_module_compat_alias"
+      },
+      "agents_md_anchor": "2-4-no-backwards-compat-aliases",
+      "skills": [
+        "flext-mro-namespace-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-067",
+      "description": "Module declares more than one top-level class (Warning subclasses exempt — filterwarnings needs module-level categories). Violates AGENTS.md §3.1 / NS-000 (one class per module).",
+      "severity": "HIGH",
+      "source": {
+        "kind": "beartype",
+        "tag": "one_class_per_module"
+      },
+      "agents_md_anchor": "3-1-supreme-law",
+      "skills": [
+        "flext-mro-namespace-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-068",
+      "description": "Import of a class defined in a private facade tree (_constants/_models/_protocols/_typings/_utilities) from a non-facade, non-private, nested module — or from ANY module of another project — bypasses the canonical facades. Violates AGENTS.md §4 (Import Law).",
+      "severity": "HIGH",
+      "source": {
+        "kind": "beartype",
+        "tag": "no_private_module_bypass"
+      },
+      "agents_md_anchor": "4-import-law",
+      "skills": [
+        "flext-import-rules",
+        "flext-mro-namespace-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-069",
+      "description": "Namespace nesting deeper than facade→domain→leaf (class-in-class-in-class; Enum leaves exempt) breaks the flat single-nesting law. Violates AGENTS.md §2.3.",
+      "severity": "HIGH",
+      "source": {
+        "kind": "beartype",
+        "tag": "forbid_deep_namespace"
+      },
+      "agents_md_anchor": "2-3-mro-inheritance-namespace-composition",
+      "skills": [
+        "flext-mro-namespace-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-070",
+      "description": "External library imported outside its owning abstraction project (ENFORCEMENT_LIBRARY_OWNERS SSOT: pydantic/structlog/dependency_injector/yaml/pyyaml→flext-core, rich/click→flext-cli, ldap3→flext-ldap, singer_sdk→flext-meltano, sqlalchemy/oracledb→flext-db-oracle, grpc→flext-grpc, fastapi→flext-web, httpx→flext-api, rope→flext-infra). Violates AGENTS.md §2.7.",
+      "severity": "HIGH",
+      "source": {
+        "kind": "beartype",
+        "tag": "library_abstraction"
+      },
+      "agents_md_anchor": "2-7-library-abstraction-boundaries",
+      "skills": [
+        "flext-import-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-071",
+      "description": "Function parameter count exceeds FLEXT threshold; decompose or use a domain context object.",
+      "severity": "MEDIUM",
+      "source": {
+        "kind": "beartype",
+        "tag": "smell_function_parameters"
+      },
+      "agents_md_anchor": "3-1-supreme-law",
+      "skills": [
+        "flext-quality-gates"
+      ]
+    },
+    {
+      "id": "ENFORCE-072",
+      "description": "Function has too many return statements; prefer a single result path.",
+      "severity": "MEDIUM",
+      "source": {
+        "kind": "code_smell",
+        "smell_tag": "smell_return_statements"
+      },
+      "agents_md_anchor": "3-1-supreme-law",
+      "skills": [
+        "flext-quality-gates"
+      ]
+    },
+    {
+      "id": "ENFORCE-073",
+      "description": "Function nesting depth exceeds FLEXT threshold; flatten with helpers.",
+      "severity": "MEDIUM",
+      "source": {
+        "kind": "code_smell",
+        "smell_tag": "smell_nested_control_flow"
+      },
+      "agents_md_anchor": "3-1-supreme-law",
+      "skills": [
+        "flext-quality-gates"
+      ]
+    },
+    {
+      "id": "ENFORCE-074",
+      "description": "Boolean-logic complexity exceeds FLEXT threshold; simplify or name predicates.",
+      "severity": "MEDIUM",
+      "source": {
+        "kind": "code_smell",
+        "smell_tag": "smell_boolean_logic"
+      },
+      "agents_md_anchor": "3-1-supreme-law",
+      "skills": [
+        "flext-quality-gates"
+      ]
+    },
+    {
+      "id": "ENFORCE-075",
+      "description": "Function cyclomatic complexity exceeds FLEXT threshold; decompose.",
+      "severity": "MEDIUM",
+      "source": {
+        "kind": "code_smell",
+        "smell_tag": "smell_function_complexity"
+      },
+      "agents_md_anchor": "3-1-supreme-law",
+      "skills": [
+        "flext-quality-gates"
+      ]
+    },
+    {
+      "id": "ENFORCE-076",
+      "description": "Module cyclomatic complexity exceeds FLEXT threshold; split the module.",
+      "severity": "MEDIUM",
+      "source": {
+        "kind": "code_smell",
+        "smell_tag": "smell_file_complexity"
+      },
+      "agents_md_anchor": "3-1-supreme-law",
+      "skills": [
+        "flext-quality-gates"
+      ]
+    },
+    {
+      "id": "ENFORCE-077",
+      "description": "Identical code blocks detected across the workspace; extract shared helpers.",
+      "severity": "LOW",
+      "source": {
+        "kind": "code_smell",
+        "smell_tag": "smell_identical_code"
+      },
+      "agents_md_anchor": "3-1-supreme-law",
+      "skills": [
+        "flext-quality-gates"
+      ]
+    },
+    {
+      "id": "ENFORCE-078",
+      "description": "Similar code blocks detected across the workspace; refactor to shared abstractions.",
+      "severity": "LOW",
+      "source": {
+        "kind": "code_smell",
+        "smell_tag": "smell_similar_code"
+      },
+      "agents_md_anchor": "3-1-supreme-law",
+      "skills": [
+        "flext-quality-gates"
+      ]
+    },
+    {
+      "id": "ENFORCE-079",
+      "description": "ClassVar constant declared outside a _constants module; move to the canonical constants surface and re-export via c.*.",
+      "severity": "MEDIUM",
+      "source": {
+        "kind": "beartype",
+        "tag": "classvar_constant_outside_constants"
+      },
+      "agents_md_anchor": "2-2-facades-namespaces-naming-patterns",
+      "skills": [
+        "flext-mro-namespace-rules",
+        "flext-constants-discipline"
+      ]
+    },
+    {
+      "id": "ENFORCE-080",
+      "description": "Canonical alias imported from flext_core when the current project re-exports the same slot locally. Use from <proj>.constants import c etc. Violates AGENTS.md §4 (Import Law).",
+      "severity": "HIGH",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "ban-foreign-canonical-alias-import"
+        ]
+      },
+      "agents_md_anchor": "4-import-law",
+      "skills": [
+        "flext-import-rules",
+        "flext-mro-namespace-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-081",
+      "description": "Inline or lazy import declared inside a function body or dynamic importlib.import_module call.",
+      "severity": "HIGH",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "ban-inline-import"
+        ]
+      },
+      "agents_md_anchor": "4-import-law",
+      "skills": [
+        "flext-import-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-082",
+      "description": "Exception-silencing pattern (contextlib.suppress, except...: pass, broad except, unwrap_or sentinel, or sentinel return on failure branch).",
+      "severity": "HIGH",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "ban-silent-except-swallow",
+          "ban-silent-failure-sentinel"
+        ]
+      },
+      "agents_md_anchor": "3-1-supreme-law",
+      "skills": [
+        "lib-returns"
+      ]
+    },
+    {
+      "id": "ENFORCE-083",
+      "description": "`# type: ignore` comment silences type checker — remove the bypass and fix the type error.",
+      "severity": "HIGH",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "ban-type-ignore-comment"
+        ]
+      },
+      "agents_md_anchor": "3-1-supreme-law",
+      "skills": [
+        "flext-strict-typing"
+      ]
+    },
+    {
+      "id": "ENFORCE-084",
+      "description": "`# noqa` comment silences lint — remove the bypass and fix the underlying issue.",
+      "severity": "HIGH",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "ban-noqa-comment"
+        ]
+      },
+      "agents_md_anchor": "3-1-supreme-law",
+      "skills": [
+        "flext-strict-typing"
+      ]
+    },
+    {
+      "id": "ENFORCE-090",
+      "description": "Hand-written `.pyi` stub file detected — source type hints are the SSOT; stubs are prohibited.",
+      "severity": "HIGH",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "ban-stub-file"
+        ]
+      },
+      "agents_md_anchor": "3-4-tools-and-modules",
+      "skills": [
+        "flext-strict-typing"
+      ]
+    },
+    {
+      "id": "ENFORCE-091",
+      "description": "`from typing import ClassVar, List` — banned in favor of list / t.SequenceOf.",
+      "severity": "HIGH",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "typing-list-to-sequence-of"
+        ]
+      },
+      "agents_md_anchor": "3-2-types-and-contracts",
+      "skills": [
+        "flext-strict-typing"
+      ]
+    },
+    {
+      "id": "ENFORCE-092",
+      "description": "`typing.List` attribute usage — use t.SequenceOf or collections.abc.Sequence.",
+      "severity": "HIGH",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "typing-list-to-sequence-of"
+        ]
+      },
+      "agents_md_anchor": "3-2-types-and-contracts",
+      "skills": [
+        "flext-strict-typing"
+      ]
+    },
+    {
+      "id": "ENFORCE-093",
+      "description": "Bare pydantic import — use m.BaseModel, m.ConfigDict, m.TypeAdapter, u.Field, u.field_validator, u.model_validator, u.computed_field, u.PrivateAttr.",
+      "severity": "HIGH",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "ban-direct-pydantic-import"
+        ]
+      },
+      "agents_md_anchor": "4-import-law",
+      "skills": [
+        "pydantic-v2-governance",
+        "flext-import-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-094",
+      "description": "Bare structlog import — use u.fetch_logger(__name__) from the project facade.",
+      "severity": "HIGH",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "ban-direct-structlog-import"
+        ]
+      },
+      "agents_md_anchor": "4-import-law",
+      "skills": [
+        "flext-import-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-095",
+      "description": "Bare oracledb import — route through flext-db-oracle / flext-oracle-* facades.",
+      "severity": "HIGH",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "ban-direct-oracledb-import"
+        ]
+      },
+      "agents_md_anchor": "4-import-law",
+      "skills": [
+        "flext-import-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-096",
+      "description": "Bare ldap3 import — route through flext-ldap / flext-target-ldap facades.",
+      "severity": "HIGH",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "ban-direct-ldap3-import"
+        ]
+      },
+      "agents_md_anchor": "4-import-law",
+      "skills": [
+        "flext-import-rules"
+      ]
+    },
+    {
+      "id": "ENFORCE-097",
+      "description": "Magic number or string literal used where a named constant exists or should exist.",
+      "severity": "MEDIUM",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "ban-magic-literal"
+        ]
+      },
+      "agents_md_anchor": "2-2-facades-namespaces-naming-patterns",
+      "skills": [
+        "flext-constants-discipline"
+      ]
+    },
+    {
+      "id": "ENFORCE-098",
+      "description": "Module-level test_* function outside a Tests* class — nest it in one Tests<Module> class (one nested class per test module).",
+      "severity": "HIGH",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "ban-loose-test-function"
+        ]
+      },
+      "agents_md_anchor": "8-testing-r22",
+      "skills": [
+        "testing-patterns"
+      ]
+    },
+    {
+      "id": "ENFORCE-099",
+      "description": "Consumer import violates R1 facade-only grammar: legal iff `from <pkg> import X` with `X in pkg.__all__`; any `pkg.<submodule>` path is a violation.",
+      "severity": "HIGH",
+      "source": {
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "ban-consumer-submodule-import"
+        ]
+      },
+      "agents_md_anchor": "4-import-law",
+      "skills": [
+        "flext-import-rules",
+        "flext-consumption-law"
+      ]
+    }
+  ]
+}

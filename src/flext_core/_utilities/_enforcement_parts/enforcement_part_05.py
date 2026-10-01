@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from ..._constants.enforcement import FlextConstantsEnforcement as c
 from ..._constants.regex import FlextConstantsRegex as cre
-from .enforcement_part_04 import (
-    FlextUtilitiesEnforcement as FlextUtilitiesEnforcementPart04,
+from .enforcement_part_03 import (
+    FlextUtilitiesEnforcement as FlextUtilitiesEnforcementPart03,
 )
 
 
-class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart04):
+class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
     @staticmethod
     def class_name_to_module(class_name: str) -> str:
         """Map a ``Flext<Project><Layer><Concern>`` class to its owning package.
