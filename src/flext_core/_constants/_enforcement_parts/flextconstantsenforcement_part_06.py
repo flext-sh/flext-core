@@ -160,43 +160,6 @@ class FlextConstantsEnforcementTargets:
     and enforcement — they are never candidates for canonical-verb rewrites.
     """
 
-    ENFORCEMENT_COMPATIBILITY_ALIAS_RENAMES: ClassVar[Mapping[str, str]] = (
-        MappingProxyType({
-            # flext-core canonical facade aliases
-            "FlextConstants": "c",
-            "FlextModels": "m",
-            "FlextProtocols": "p",
-            "FlextTypes": "t",
-            "FlextUtilities": "u",
-            "FlextResult": "r",
-            # flext-cli canonical facade aliases
-            "FlextCliConstants": "c",
-            "FlextCliModels": "m",
-            "FlextCliProtocols": "p",
-            "FlextCliTypes": "t",
-            "FlextCliUtilities": "u",
-            # flext-infra canonical facade aliases
-            "FlextInfraConstants": "c",
-            "FlextInfraModels": "m",
-            "FlextInfraProtocols": "p",
-            "FlextInfraTypes": "t",
-            "FlextInfraUtilities": "u",
-            # flext-tests canonical facade aliases
-            "FlextTestsConstants": "c",
-            "FlextTestsModels": "m",
-            "FlextTestsProtocols": "p",
-            "FlextTestsTypes": "t",
-            "FlextTestsUtilities": "u",
-        })
-    )
-    """SSOT: long facade class name → canonical short alias.
-
-    Any ``from <pkg> import <long_name>`` where ``<long_name>`` is present in
-    this mapping must be rewritten to ``from <pkg> import <alias>``. The
-    detector/rewriter in flext-infra sources this mapping from flext-core;
-    adding a new compatibility alias = one entry here, no parallel list.
-    """
-
     ENFORCEMENT_LIBRARY_OWNERS: ClassVar[Mapping[str, str]] = MappingProxyType({
         "pydantic": "flext-core",
         "pydantic_settings": "flext-core",

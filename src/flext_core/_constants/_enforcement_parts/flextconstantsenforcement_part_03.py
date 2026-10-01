@@ -111,9 +111,6 @@ class FlextConstantsEnforcementNamespace:
     })
     """Base-class names that require ``frozen=True`` configuration."""
 
-    ENFORCEMENT_INLINE_UNION_MAX: ClassVar[int] = 2
-    """Inline union arms allowed before centralization is required."""
-
     ENFORCEMENT_NESTED_MRO_MIN_DEPTH: ClassVar[int] = 2
     """Minimum qualname depth for a class to count as nested inside a container."""
 

@@ -25,15 +25,6 @@ class FlextUtilitiesBeartypeImportVisitor:
         return _ImportBlacklistVisitor.v_import_blacklist(params, target)
 
     @staticmethod
-    def v_foreign_canonical_alias_import(
-        params: me.ForeignCanonicalAliasImportParams, target: type
-    ) -> t.StrMapping | None:
-        """FOREIGN_CANONICAL_ALIAS_IMPORT."""
-        return FlextUtilitiesBeartypeAliasVisitor.v_foreign_canonical_alias_import(
-            params, target
-        )
-
-    @staticmethod
     def v_alias_rebind(
         params: me.AliasRebindParams, target: type
     ) -> t.StrMapping | None:

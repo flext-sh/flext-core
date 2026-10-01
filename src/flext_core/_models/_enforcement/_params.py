@@ -6,12 +6,33 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import Field
+from pydantic import Discriminator, Field
 
+from ..._constants.enforcement import FlextConstantsEnforcement as ce
 from ..._typings.base import FlextTypingBase as t
 from ._base import EnforcementModelBase, FlextModelsEnforcementBase
+
+type EnforcementPredicateParams = (
+    FlextModelsEnforcementParams.FieldShapeParams
+    | FlextModelsEnforcementParams.ModelConfigParams
+    | FlextModelsEnforcementParams.LooseSymbolParams
+    | FlextModelsEnforcementParams.ImportBlacklistParams
+    | FlextModelsEnforcementParams.ClassPlacementParams
+    | FlextModelsEnforcementParams.LocCapParams
+    | FlextModelsEnforcementParams.WrapperParams
+    | FlextModelsEnforcementParams.AliasRebindParams
+    | FlextModelsEnforcementParams.CompatibilityAliasParams
+    | FlextModelsEnforcementParams.LibraryImportParams
+    | FlextModelsEnforcementParams.DuplicateSymbolParams
+    | FlextModelsEnforcementParams.DeprecatedSyntaxParams
+    | FlextModelsEnforcementParams.MethodShapeParams
+    | FlextModelsEnforcementParams.AttrShapeParams
+    | FlextModelsEnforcementParams.ClassVarConstantParams
+    | FlextModelsEnforcementParams.ProtocolTreeParams
+    | FlextModelsEnforcementParams.MroShapeParams
+)
 
 
 class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
@@ -57,14 +78,6 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         private_package_only: bool = False
         detect_cycles: bool = False
 
-    class ForeignCanonicalAliasImportParams(EnforcementModelBase):
-        """Parameters for FOREIGN_CANONICAL_ALIAS_IMPORT predicate."""
-
-        kind: Literal["foreign_canonical_alias_import"] = (
-            "foreign_canonical_alias_import"
-        )
-        project_alias_owners: t.StrSequenceMapping = Field(default_factory=dict)
-
     class ClassPlacementParams(EnforcementModelBase):
         """Parameters for CLASS_PLACEMENT predicate."""
 
@@ -103,13 +116,11 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
 
         kind: Literal["compatibility_alias"] = "compatibility_alias"
         alias_renames: t.StrMapping = Field(default_factory=dict)
-        project_alias_owners: t.StrSequenceMapping = Field(default_factory=dict)
 
     class LibraryImportParams(EnforcementModelBase):
-        """Parameters for LIBRARY_IMPORT predicate."""
+        """Parameters for LIBRARY_IMPORT predicate (owners: c.ENFORCEMENT_LIBRARY_OWNERS)."""
 
         kind: Literal["library_import"] = "library_import"
-        library_owners: t.StrMapping = Field(default_factory=dict)
 
     class DuplicateSymbolParams(EnforcementModelBase):
         """Parameters for DUPLICATE_SYMBOL predicate."""
@@ -128,9 +139,11 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         """Parameters for METHOD_SHAPE predicate."""
 
         kind: Literal["method_shape"] = "method_shape"
-        forbidden_prefixes: t.StrSequence = ()
+        forbidden_prefixes: t.StrMapping = Field(default_factory=dict)
+        """Forbidden name prefix → the replacement it suggests."""
         require_static_or_classmethod: bool = False
-        max_params: int = 0
+        smell_threshold: str = ""
+        """Key of ``c.SMELL_THRESHOLDS`` bounding the parameter count, when set."""
 
     class AttrShapeParams(EnforcementModelBase):
         """Parameters for ATTR_SHAPE predicate."""
@@ -162,6 +175,12 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         require_alias_first: bool = False
         forbid_redundant_inner: bool = False
         require_explicit_class_when_self_ref: bool = False
+
+    class EnforcementPredicateSpec(EnforcementModelBase):
+        """One runtime rule binding validated from the predicate package data."""
+
+        predicate: ce.EnforcementPredicateKind
+        params: Annotated[EnforcementPredicateParams, Discriminator("kind")]
 
 
 __all__: list[str] = ["FlextModelsEnforcementParams"]

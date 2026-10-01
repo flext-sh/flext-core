@@ -34,7 +34,6 @@ from .beartype_typingext_patch import (
     FlextUtilitiesBeartypeTypingExtPatch as _FlextUtilitiesBeartypeTypingExtPatch,
 )
 
-_NO_VIOLATION: t.StrMapping | None = None
 # Side-effect: monkey-patch beartype cave so typing_extensions.TypeAliasType
 # (used by pydantic.JsonValue et al.) is accepted as a PEP-695 alias.
 _FlextUtilitiesBeartypeTypingExtPatch.apply()
@@ -140,9 +139,8 @@ class FlextUtilitiesBeartypeEngine(
         params: mp.BaseModel,
         *args: p.AttributeProbe,
     ) -> t.StrMapping | None:
-        """Dispatch a rule predicate to its visitor by ``predicate_kind``."""
-        visitor = cls._VISITORS.get(kind)
-        return _NO_VIOLATION if visitor is None else visitor(params, *args)
+        """Dispatch a rule predicate to its visitor; an unmapped kind raises."""
+        return cls._VISITORS[kind](params, *args)
 
     _VISITORS: ClassVar[
         t.MappingKV[c.EnforcementPredicateKind, Callable[..., t.StrMapping | None]]
@@ -158,7 +156,6 @@ class FlextUtilitiesBeartypeEngine(
         c.EnforcementPredicateKind.LOOSE_SYMBOL: FlextUtilitiesBeartypeClassVisitor.v_loose_symbol,
         c.EnforcementPredicateKind.WRAPPER: FlextUtilitiesBeartypeDeprecatedVisitor.v_wrapper,
         c.EnforcementPredicateKind.IMPORT_BLACKLIST: FlextUtilitiesBeartypeImportVisitor.v_import_blacklist,
-        c.EnforcementPredicateKind.FOREIGN_CANONICAL_ALIAS_IMPORT: FlextUtilitiesBeartypeImportVisitor.v_foreign_canonical_alias_import,
         c.EnforcementPredicateKind.ALIAS_REBIND: FlextUtilitiesBeartypeImportVisitor.v_alias_rebind,
         c.EnforcementPredicateKind.COMPATIBILITY_ALIAS: FlextUtilitiesBeartypeImportVisitor.v_compatibility_alias,
         c.EnforcementPredicateKind.LIBRARY_IMPORT: FlextUtilitiesBeartypeImportVisitor.v_library_import,

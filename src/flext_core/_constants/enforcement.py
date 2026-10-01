@@ -21,9 +21,6 @@ from ._enforcement_parts.flextconstantsenforcement_part_03 import (
 from ._enforcement_parts.flextconstantsenforcement_part_04 import (
     FlextConstantsEnforcementRules,
 )
-from ._enforcement_parts.flextconstantsenforcement_part_05 import (
-    FlextConstantsEnforcementRuleText,
-)
 from ._enforcement_parts.flextconstantsenforcement_part_06 import (
     FlextConstantsEnforcementTargets,
 )
@@ -37,7 +34,6 @@ class FlextConstantsEnforcement(
     FlextConstantsEnforcementRuntime,
     FlextConstantsEnforcementNamespace,
     FlextConstantsEnforcementRules,
-    FlextConstantsEnforcementRuleText,
     FlextConstantsEnforcementTargets,
     FlextConstantsEnforcementSmellData,
 ):

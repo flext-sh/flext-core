@@ -17,10 +17,6 @@
     "smell_similar_code"
   ],
   "rules_text": {
-    "smell_function_parameters": [
-      "function {name} has {count} parameters > max {max}",
-      "Decompose into smaller functions or pass a context/model object only when it carries domain meaning; adding a params model solely to silence this rule is abominable."
-    ],
     "smell_return_statements": [
       "function {name} has {count} return statements > max {max}",
       "Refactor to a single result path; use early returns only when they improve readability."

@@ -5,6 +5,7 @@ from __future__ import annotations
 import inspect
 import types as _types_mod
 
+from ..._constants.enforcement import FlextConstantsEnforcement as c
 from ..._models.enforcement import FlextModelsEnforcement as me
 from ..._typings.base import FlextTypingBase as t
 
@@ -53,10 +54,8 @@ class FlextUtilitiesBeartypeMethodVisitor:
         """
         if len(args) != _BINARY_ARITY:
             return _NO_VIOLATION
-        suggestions = (
-            ("get_", "fetch_/resolve_/compute_"),
-            ("set_", "configure/apply/update or model_copy(update=...)"),
-            ("is_", "a noun/adjective (success, expired, connected, ...)"),
+        max_params = (
+            c.SMELL_THRESHOLDS[params.smell_threshold] if params.smell_threshold else 0
         )
         violation = _NO_VIOLATION
         match args:
@@ -65,28 +64,20 @@ class FlextUtilitiesBeartypeMethodVisitor:
                     violation = next(
                         (
                             {"name": name, "suggestion": suggestion}
-                            for prefix in params.forbidden_prefixes
-                            for known_prefix, suggestion in suggestions
-                            if prefix == known_prefix and name.startswith(prefix)
+                            for prefix, suggestion in params.forbidden_prefixes.items()
+                            if name.startswith(prefix)
                         ),
-                        next(
-                            (
-                                {"name": name, "suggestion": "use a domain verb"}
-                                for prefix in params.forbidden_prefixes
-                                if name.startswith(prefix)
-                            ),
-                            _NO_VIOLATION,
-                        ),
+                        _NO_VIOLATION,
                     )
-                if violation is _NO_VIOLATION and params.max_params > 0:
+                if violation is _NO_VIOLATION and max_params > 0:
                     target = args[0]
                     value = vars(target).get(name)
                     count = _param_count(name, value)
-                    if count is not None and count > params.max_params:
+                    if count is not None and count > max_params:
                         violation = {
                             "name": name,
                             "count": str(count),
-                            "max": str(params.max_params),
+                            "max": str(max_params),
                         }
             case (name, value) if isinstance(name, str) and not isinstance(value, type):
                 if all((
@@ -95,15 +86,13 @@ class FlextUtilitiesBeartypeMethodVisitor:
                     inspect.isfunction(value),
                 )):
                     violation = _BARE_VIOLATION
-                if violation is _BARE_VIOLATION:
-                    violation = _BARE_VIOLATION
-                if violation is _NO_VIOLATION and params.max_params > 0:
+                if violation is _NO_VIOLATION and max_params > 0:
                     count = _param_count(name, value)
-                    if count is not None and count > params.max_params:
+                    if count is not None and count > max_params:
                         violation = {
                             "name": name,
                             "count": str(count),
-                            "max": str(params.max_params),
+                            "max": str(max_params),
                         }
             case _:
                 pass
