@@ -141,46 +141,6 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart01):
                 yield function
 
     @staticmethod
-    def function_param_names(fn: _types_mod.FunctionType) -> t.StrSequence:
-        code = getattr(fn, "__code__", None)
-        return (
-            tuple(name for name in code.co_varnames[: code.co_argcount])
-            if isinstance(code, _types_mod.CodeType)
-            else ()
-        )
-
-    @staticmethod
-    def is_pass_through_bytecode(
-        fn: _types_mod.FunctionType, param_names: t.StrSequence
-    ) -> bool:
-        instructions = [
-            ins
-            for ins in dis.get_instructions(fn)
-            if ins.opname not in {"RESUME", "CACHE", "PUSH_NULL", "COPY_FREE_VARS"}
-        ]
-        if not instructions or instructions[0].opname not in {
-            "LOAD_GLOBAL",
-            "LOAD_DEREF",
-            "LOAD_FAST",
-            "LOAD_NAME",
-        }:
-            return False
-        consumed = 1
-        for expected_arg in param_names:
-            if (
-                consumed >= len(instructions)
-                or instructions[consumed].opname != "LOAD_FAST"
-                or instructions[consumed].argval != expected_arg
-            ):
-                return False
-            consumed += 1
-        return (
-            consumed + 1 < len(instructions)
-            and instructions[consumed].opname in {"CALL", "CALL_FUNCTION"}
-            and instructions[consumed + 1].opname == "RETURN_VALUE"
-        )
-
-    @staticmethod
     def has_call_to_global(
         fn: _types_mod.FunctionType, target_name: str
     ) -> dis.Instruction | None:

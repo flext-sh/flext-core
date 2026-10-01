@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from ..._constants.enforcement import FlextConstantsEnforcement as c
 from ..._models.enforcement import FlextModelsEnforcement as me
 from ..._typings.base import FlextTypingBase as t
 from .helpers import FlextUtilitiesBeartypeHelpers as _ubh
@@ -25,19 +26,18 @@ class FlextUtilitiesBeartypeLibraryVisitor:
         facade provenance (legal), while direct imports, aliased imports,
         and dynamic ``__import__`` acquisitions stay violations.
         """
-        if not params.library_owners:
-            return _NO_VIOLATION
+        _ = params
+        owners = c.ENFORCEMENT_LIBRARY_OWNERS
         module = _ubh.runtime_module_for(target)
         if module is None:
             return _NO_VIOLATION
-        module_name = getattr(target, "__module__", "") or ""
-        package = module_name.split(".")[0].replace("_", "-")
+        package = target.__module__.split(".")[0].replace("_", "-")
         candidates = tuple(
-            (name, origin_root, params.library_owners[origin_root])
+            (name, origin_root, owners[origin_root])
             for name, value in vars(module).items()
             if (origin := _ubh.object_module_name_for(value)) is not None
-            and (origin_root := origin.split(".")[0]) in params.library_owners
-            and params.library_owners[origin_root] != package
+            and (origin_root := origin.split(".")[0]) in owners
+            and owners[origin_root] != package
         )
         if not candidates:
             return _NO_VIOLATION

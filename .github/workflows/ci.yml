@@ -187,7 +187,7 @@ jobs:
         run: |
           CI=Y make gen
           git status --short
-          test -z "$(git status --porcelain --untracked-files=all --ignore-submodules=none || true)"
+          test -z "$(git status --porcelain --untracked-files=all --ignore-submodules=none)"
 
       # Setup installs frozen from the committed uv.lock (`uv sync --locked`)
       # and never rewrites it; the deps audit proves that locked graph.
@@ -210,7 +210,7 @@ jobs:
       - name: Candidate cleanliness (blocking)
         run: |
           git status --short
-          test -z "$(git status --porcelain --untracked-files=all --ignore-submodules=none || true)"
+          test -z "$(git status --porcelain --untracked-files=all --ignore-submodules=none)"
 
       # Why (flext-7jnr0): save on every outcome — including a failing gate — so
       # the next run starts warm. Only written when the restore missed.

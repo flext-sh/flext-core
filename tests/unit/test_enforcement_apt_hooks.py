@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING, ClassVar
 import pytest
 
 from tests.constants import c
+from tests.models import m
 from tests.utilities import u
 
 if TYPE_CHECKING:
@@ -31,16 +32,19 @@ if TYPE_CHECKING:
 class TestsFlextEnforcementAptHooks:
     """Public catalog + runtime contract for the A-PT enforcement rules."""
 
-    A_PT_RULE_IDS: ClassVar[t.StrSequence] = (
+    RUNTIME_RULE_IDS: ClassVar[t.StrSequence] = (
         "ENFORCE-039",
-        "ENFORCE-040",
-        "ENFORCE-041",
         "ENFORCE-042",
-        "ENFORCE-043",
-        "ENFORCE-044",
         "ENFORCE-054",
         "ENFORCE-055",
     )
+    # Static checks the flext-infra rule engine owns in config/rules.
+    STATIC_RULE_IDS: ClassVar[t.StrSequence] = (
+        "ENFORCE-041",
+        "ENFORCE-043",
+        "ENFORCE-044",
+    )
+    A_PT_RULE_IDS: ClassVar[t.StrSequence] = (*RUNTIME_RULE_IDS, *STATIC_RULE_IDS)
 
     # --- Catalog membership & invariants (public spec models) ---
 
@@ -55,15 +59,17 @@ class TestsFlextEnforcementAptHooks:
         assert rule is not None
         assert rule.agents_md_anchor != ""
 
-    @pytest.mark.parametrize("rule_id", A_PT_RULE_IDS)
+    @pytest.mark.parametrize("rule_id", RUNTIME_RULE_IDS)
     def test_a_pt_rule_documents_problem_and_fix(self, rule_id: str) -> None:
         # The published spec is what a caller reads to understand/repair a
         # violation — both narrative fields must be populated.
         rule = u.build_canonical_catalog().by_id(rule_id)
         assert rule is not None
         assert rule.description != ""
-        assert rule.fix_action is not None
-        assert rule.fix_action.target != ""
+        assert isinstance(rule.source, m.EnforcementBeartypeSource)
+        problem, fix = c.ENFORCEMENT_RULES_TEXT[rule.source.tag]
+        assert problem != ""
+        assert fix != ""
 
     @pytest.mark.parametrize("rule_id", A_PT_RULE_IDS)
     def test_a_pt_rule_severity_is_a_named_level(self, rule_id: str) -> None:
@@ -80,31 +86,19 @@ class TestsFlextEnforcementAptHooks:
 
     # --- Per-rule source contract (public discriminated ``source`` model) ---
 
-    @pytest.mark.parametrize(
-        ("rule_id", "predicate_kind"),
-        [
-            ("ENFORCE-039", c.EnforcementPredicateKind.DEPRECATED_SYNTAX),
-            ("ENFORCE-041", c.EnforcementPredicateKind.DEPRECATED_SYNTAX),
-            ("ENFORCE-042", c.EnforcementPredicateKind.LOOSE_SYMBOL),
-            ("ENFORCE-043", c.EnforcementPredicateKind.WRAPPER),
-            ("ENFORCE-044", c.EnforcementPredicateKind.DEPRECATED_SYNTAX),
-            ("ENFORCE-054", c.EnforcementPredicateKind.DEPRECATED_SYNTAX),
-            ("ENFORCE-055", c.EnforcementPredicateKind.DEPRECATED_SYNTAX),
-        ],
-    )
-    def test_beartype_rule_binds_expected_predicate_kind(
-        self, rule_id: str, predicate_kind: c.EnforcementPredicateKind
-    ) -> None:
+    @pytest.mark.parametrize("rule_id", STATIC_RULE_IDS)
+    def test_static_rule_is_owned_by_the_infra_rule_engine(self, rule_id: str) -> None:
         rule = u.build_canonical_catalog().by_id(rule_id)
         assert rule is not None
-        assert rule.source.kind == "beartype"
-        assert rule.source.predicate_kind == predicate_kind
+        assert isinstance(rule.source, m.EnforcementInfraRuleSource)
+        assert rule.source.rule_ids
 
-    def test_enforce_040_is_delegated_to_ruff_pgh003(self) -> None:
-        rule = u.build_canonical_catalog().by_id("ENFORCE-040")
+    @pytest.mark.parametrize("rule_id", RUNTIME_RULE_IDS)
+    def test_beartype_rule_tag_has_a_runtime_category(self, rule_id: str) -> None:
+        rule = u.build_canonical_catalog().by_id(rule_id)
         assert rule is not None
-        assert rule.source.kind == "ruff"
-        assert rule.source.rule_code == "PGH003"
+        assert isinstance(rule.source, m.EnforcementBeartypeSource)
+        assert rule.source.tag in c.ENFORCEMENT_TAG_CATEGORY
 
     # --- Runtime behavior via the public ``u.check`` entrypoint ---
 
