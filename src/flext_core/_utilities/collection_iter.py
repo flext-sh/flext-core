@@ -129,31 +129,36 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
     @overload
     @staticmethod
     def map[TItem, TMapped](
-        items: t.SequenceOf[TItem], mapper: Callable[[TItem], TMapped]
+        items: t.SequenceOf[TItem],
+        mapper: Callable[[TItem], TMapped],
     ) -> t.SequenceOf[TMapped]: ...
 
     @overload
     @staticmethod
     def map[TItem, TMapped](
-        items: t.VariadicTuple[TItem], mapper: Callable[[TItem], TMapped]
+        items: t.VariadicTuple[TItem],
+        mapper: Callable[[TItem], TMapped],
     ) -> t.VariadicTuple[TMapped]: ...
 
     @overload
     @staticmethod
     def map[TItem, TMapped](
-        items: t.MappingKV[str, TItem], mapper: Callable[[TItem], TMapped]
+        items: t.MappingKV[str, TItem],
+        mapper: Callable[[TItem], TMapped],
     ) -> t.MappingKV[str, TMapped]: ...
 
     @overload
     @staticmethod
     def map[TItem, TMapped](
-        items: set[TItem], mapper: Callable[[TItem], TMapped]
+        items: set[TItem],
+        mapper: Callable[[TItem], TMapped],
     ) -> set[TMapped]: ...
 
     @overload
     @staticmethod
     def map[TItem, TMapped](
-        items: frozenset[TItem], mapper: Callable[[TItem], TMapped]
+        items: frozenset[TItem],
+        mapper: Callable[[TItem], TMapped],
     ) -> frozenset[TMapped]: ...
 
     @staticmethod

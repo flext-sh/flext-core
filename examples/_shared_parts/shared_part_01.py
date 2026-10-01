@@ -49,7 +49,7 @@ class ExamplesFlextSharedBase(m.BaseModel):
     def rand_dict(self, n: int = 3) -> m.ConfigMap:
         """Return a ConfigMap with ``n`` random string keys to int values."""
         return m.ConfigMap(
-            root={self.rand_str(4): self.rand_int(0, 100) for _ in range(n)}
+            root={self.rand_str(4): self.rand_int(0, 100) for _ in range(n)},
         )
 
     def rand_float(self, lo: float = -1000.0, hi: float = 1000.0) -> float:

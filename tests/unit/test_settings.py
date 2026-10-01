@@ -46,12 +46,12 @@ class TestsFlextCoreSettings:
                 expected = Path.home() / "Library" / "Caches" / "flext"
             elif sys.platform == "win32":
                 env_context = test_u.Tests.env_vars_context(
-                    env_vars={"LOCALAPPDATA": str(Path.home() / "AppData" / "Local")}
+                    env_vars={"LOCALAPPDATA": str(Path.home() / "AppData" / "Local")},
                 )
                 expected = Path.home() / "AppData" / "Local" / "flext"
             else:
                 env_context = test_u.Tests.env_vars_context(
-                    vars_to_clear=("XDG_CACHE_HOME",)
+                    vars_to_clear=("XDG_CACHE_HOME",),
                 )
                 expected = Path.home() / ".cache" / "flext"
             with env_context:
@@ -64,7 +64,7 @@ class TestsFlextCoreSettings:
                 pytest.skip("XDG_CACHE_HOME is Linux-specific")
             FlextSettings.reset_for_testing()
             with test_u.Tests.env_vars_context(
-                env_vars={"XDG_CACHE_HOME": "/xdg/cache"}
+                env_vars={"XDG_CACHE_HOME": "/xdg/cache"},
             ):
                 assert FlextSettings.fetch_global().work_dir == Path("/xdg/cache/flext")
             FlextSettings.reset_for_testing()
@@ -75,7 +75,7 @@ class TestsFlextCoreSettings:
             custom_dir = tmp_path / "flext-custom-wd"
             custom_dir.mkdir()
             with test_u.Tests.env_vars_context(
-                env_vars={"FLEXT_WORK_DIR": str(custom_dir)}
+                env_vars={"FLEXT_WORK_DIR": str(custom_dir)},
             ):
                 assert FlextSettings.fetch_global().work_dir == custom_dir
             FlextSettings.reset_for_testing()
@@ -91,17 +91,17 @@ class TestsFlextCoreSettings:
                     "XDG_STATE_HOME": "/xdg/state",
                     "XDG_CONFIG_HOME": "/xdg/config",
                     "XDG_RUNTIME_DIR": "/xdg/runtime",
-                }
+                },
             ):
 
                 class _CliSettings(FlextSettings):
                     model_config = FlextSettings.model_config | {
-                        "env_prefix": "CLI_LIB_"
+                        "env_prefix": "CLI_LIB_",
                     }
 
                 class _MeltanoSettings(FlextSettings):
                     model_config = FlextSettings.model_config | {
-                        "env_prefix": "MELTANO_LIB_"
+                        "env_prefix": "MELTANO_LIB_",
                     }
 
                 cli_settings = _CliSettings.fetch_global()
@@ -146,7 +146,7 @@ class TestsFlextCoreSettings:
 
                 class _AiHubSettings(FlextSettings):
                     model_config = FlextSettings.model_config | {
-                        "env_prefix": "AI_HUB_"
+                        "env_prefix": "AI_HUB_",
                     }
 
                 _AiHubSettings.reset_for_testing()
@@ -166,7 +166,7 @@ class TestsFlextCoreSettings:
         def test_environment_supplies_application_namespace(self) -> None:
             """FLEXT_APP_NAMESPACE identifies the app when bootstrap is unavailable."""
             with test_u.Tests.env_vars_context(
-                env_vars={"FLEXT_APP_NAMESPACE": "flext-target-ldap"}
+                env_vars={"FLEXT_APP_NAMESPACE": "flext-target-ldap"},
             ):
                 assert FlextSettings.fetch_global().data_dir.name == "flext-target-ldap"
 
@@ -174,19 +174,20 @@ class TestsFlextCoreSettings:
             """Environment application identity cannot escape its XDG root."""
             with (
                 test_u.Tests.env_vars_context(
-                    env_vars={"FLEXT_APP_NAMESPACE": "../outside"}
+                    env_vars={"FLEXT_APP_NAMESPACE": "../outside"},
                 ),
                 pytest.raises(ValueError, match="one non-empty path segment"),
             ):
                 _ = FlextSettings.fetch_global().data_dir
 
         def test_application_scoped_directory_override_wins(
-            self, tmp_path: Path
+            self,
+            tmp_path: Path,
         ) -> None:
             """The consuming application's directory override wins over XDG roots."""
             override = tmp_path / "application-work"
             with test_u.Tests.env_vars_context(
-                env_vars={"FLEXT_TAP_ORACLE_WORK_DIR": str(override)}
+                env_vars={"FLEXT_TAP_ORACLE_WORK_DIR": str(override)},
             ):
                 FlextSettings.set_app_namespace("flext-tap-oracle")
                 assert FlextSettings.fetch_global().work_dir == override
@@ -210,7 +211,7 @@ class TestsFlextCoreSettings:
                 env_vars={
                     "XDG_RUNTIME_DIR": "/xdg/runtime",
                     "FLEXT_RUNTIME_DIR": str(runtime_dir),
-                }
+                },
             ):
                 FlextSettings.set_app_namespace("flext")
                 FlextSettings.reset_for_testing()
@@ -220,7 +221,7 @@ class TestsFlextCoreSettings:
         def test_runtime_directories_reject_relative_overrides(self) -> None:
             """Relative runtime directory overrides fail validation."""
             with test_u.Tests.env_vars_context(
-                env_vars={"FLEXT_TAP_ORACLE_STATE_DIR": "relative-state"}
+                env_vars={"FLEXT_TAP_ORACLE_STATE_DIR": "relative-state"},
             ):
                 FlextSettings.set_app_namespace("flext-tap-oracle")
                 with pytest.raises(ValueError, match="must be absolute"):

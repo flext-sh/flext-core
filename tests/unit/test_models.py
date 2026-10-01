@@ -40,7 +40,9 @@ class TestsFlextCoreModels:
 
     @pytest.mark.parametrize(("x", "y"), [(2, "a"), (1, "b"), (9, "z")])
     def test_value_objects_with_different_fields_are_unequal(
-        self, x: int, y: str
+        self,
+        x: int,
+        y: str,
     ) -> None:
         base = self._SampleValue(x=1, y="a")
 

@@ -71,7 +71,7 @@ class FlextConstantsEnforcementRuntime:
     """Derived view: collection names used by annotation-origin checks."""
 
     ENFORCEMENT_MUTABLE_RUNTIME_TYPES: ClassVar[t.VariadicTuple[type]] = tuple(
-        ENFORCEMENT_FORBIDDEN_COLLECTIONS
+        ENFORCEMENT_FORBIDDEN_COLLECTIONS,
     )
     """Derived view: concrete types used by ``isinstance`` checks."""
 

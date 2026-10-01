@@ -20,14 +20,15 @@ class ExamplesFlextModelsEx05:
     class UserModel(m.Value):
         name: str = u.Field(description="User display name")
         status: ExamplesFlextModelsEx05.StatusEnum = u.Field(
-            description="User account status"
+            description="User account status",
         )
         age: int = u.Field(description="User age in years")
 
         @u.field_validator("status", mode="before")
         @classmethod
         def normalize_status(
-            cls, value: str | ExamplesFlextModelsEx05.StatusEnum
+            cls,
+            value: str | ExamplesFlextModelsEx05.StatusEnum,
         ) -> ExamplesFlextModelsEx05.StatusEnum:
             if isinstance(value, ExamplesFlextModelsEx05.StatusEnum):
                 return value

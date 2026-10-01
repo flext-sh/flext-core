@@ -66,7 +66,9 @@ class TestsFlextCoreBeartypeEngineRuntime(TestsFlextBeartypeEngine):
         ],
     )
     def test_default_import_does_not_intercept_wrongly_typed_public_call(
-        self, arg_literal: str, expected_exc: str
+        self,
+        arg_literal: str,
+        expected_exc: str,
     ) -> None:
         """A default ``import flext_core`` adds no runtime type enforcement.
 
@@ -92,7 +94,7 @@ class TestsFlextCoreBeartypeEngineRuntime(TestsFlextBeartypeEngine):
                     except (AttributeError, ValueError) as exc:
                         print("runtime_exc", type(exc).__name__)
                     print("warning_count", len(caught))
-                """
+                """,
             ),
             cwd=_FLEXT_CORE_ROOT,
         )
@@ -132,7 +134,7 @@ class TestsFlextCoreBeartypeEngineRuntime(TestsFlextBeartypeEngine):
                 import flext_core
 
                 print("unexpected_success", hasattr(flext_core, "u"))
-                """
+                """,
             ),
             cwd=_FLEXT_CORE_ROOT,
         )

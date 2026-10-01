@@ -7,7 +7,8 @@ from .fixture_suite import TestsFlextModelsFixtureSuiteMixin
 
 
 class TestsFlextModelsFixtureDictsMixin(
-    TestsFlextModelsFixturePayloadsMixin, TestsFlextModelsFixtureSuiteMixin
+    TestsFlextModelsFixturePayloadsMixin,
+    TestsFlextModelsFixtureSuiteMixin,
 ):
     """Fixture dictionary model helpers."""
 

@@ -1,5 +1,9 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Flext Core. Models. Context package."""
+"""Flext Core. Models. Context package.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -9,13 +13,15 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from . import __scope_parts
-    from .__scope_parts.flextmodelscontextscope_part_03 import FlextModelsContextScope
-    from ._data import FlextModelsContextData
-    from ._export import FlextModelsContextExport
-    from ._metadata import FlextModelsContextMetadata
-    from ._proxy_var import FlextModelsContextProxyVar
-    from ._tokens import FlextModelsContextTokens
+    from flext_core._models._context import __scope_parts
+    from flext_core._models._context.__scope_parts.flextmodelscontextscope_part_03 import (
+        FlextModelsContextScope,
+    )
+    from flext_core._models._context._data import FlextModelsContextData
+    from flext_core._models._context._export import FlextModelsContextExport
+    from flext_core._models._context._metadata import FlextModelsContextMetadata
+    from flext_core._models._context._proxy_var import FlextModelsContextProxyVar
+    from flext_core._models._context._tokens import FlextModelsContextTokens
 
 
 __all__: tuple[str, ...] = (
@@ -43,7 +49,7 @@ _LAZY_IMPORTS = MappingProxyType(
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
-    )
+    ),
 )
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

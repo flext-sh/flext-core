@@ -41,13 +41,15 @@ class FlextMixins(m.ArbitraryTypesModel):
     )
 
     initial_context: t.Port[p.Context | None] = m.Field(
-        default=None, exclude=True, description="Initial context for the service scope."
+        default=None,
+        exclude=True,
+        description="Initial context for the service scope.",
     )
 
     _runtime: m.ServiceRuntime | None = u.PrivateAttr(default=None)
 
     _operation_stats: MutableMapping[str, m.ConfigMap] = u.PrivateAttr(
-        default_factory=dict[str, m.ConfigMap]
+        default_factory=dict[str, m.ConfigMap],
     )
 
     _logger_cache: ClassVar[MutableMapping[str, p.Logger]] = {}
@@ -98,7 +100,7 @@ class FlextMixins(m.ArbitraryTypesModel):
         stats: m.ConfigMap = self._operation_stats.get(
             operation_name,
             m.ConfigMap(
-                root={"operation_count": 0, "error_count": 0, "total_duration_ms": 0.0}
+                root={"operation_count": 0, "error_count": 0, "total_duration_ms": 0.0},
             ),
         )
         stats["operation_count"] = u.to_int(stats.get("operation_count", 0)) + 1
@@ -116,7 +118,8 @@ class FlextMixins(m.ArbitraryTypesModel):
                         stats["total_duration_ms"] = total_dur + dur_ms
                 except c.EXC_BROAD_RUNTIME as exc:
                     self.logger.debug(
-                        c.LOG_TRACKED_OPERATION_EXPECTED_EXCEPTION, exc_info=exc
+                        c.LOG_TRACKED_OPERATION_EXPECTED_EXCEPTION,
+                        exc_info=exc,
                     )
                     stats["error_count"] = u.to_int(stats.get("error_count", 0)) + 1
                     raise
@@ -126,7 +129,7 @@ class FlextMixins(m.ArbitraryTypesModel):
                     stats["success_rate"] = (op_count - err_count) / op_count
                     if op_count > 0:
                         total_dur_final = u.to_float(
-                            stats.get("total_duration_ms", 0.0)
+                            stats.get("total_duration_ms", 0.0),
                         )
                         stats["avg_duration_ms"] = total_dur_final / op_count
                     metrics_map["error_count"] = stats["error_count"]

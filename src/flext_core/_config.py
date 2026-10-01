@@ -54,7 +54,10 @@ class _UniqueKeySafeLoader(SafeLoader):
 
 
 def _construct_unique_mapping(
-    loader: SafeLoader, node: MappingNode, *, deep: bool = False
+    loader: SafeLoader,
+    node: MappingNode,
+    *,
+    deep: bool = False,
 ) -> dict[str, JsonValue]:
     """Construct one JSON mapping and fail before a duplicate can overwrite."""
     values: dict[str, JsonValue] = {}
@@ -64,20 +67,27 @@ def _construct_unique_mapping(
             context = "while constructing a config mapping"
             problem = "config mapping keys must be strings"
             raise ConstructorError(
-                context, node.start_mark, problem, key_node.start_mark
+                context,
+                node.start_mark,
+                problem,
+                key_node.start_mark,
             )
         if key in values:
             context = "while constructing a config mapping"
             problem = f"duplicate config key: {key}"
             raise ConstructorError(
-                context, node.start_mark, problem, key_node.start_mark
+                context,
+                node.start_mark,
+                problem,
+                key_node.start_mark,
             )
         values[key] = cast("JsonValue", loader.construct_object(value_node, deep=deep))
     return values
 
 
 _UniqueKeySafeLoader.add_constructor(
-    BaseResolver.DEFAULT_MAPPING_TAG, _construct_unique_mapping
+    BaseResolver.DEFAULT_MAPPING_TAG,
+    _construct_unique_mapping,
 )
 
 
@@ -171,7 +181,8 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
 
     @staticmethod
     def _deep_merge_lists(
-        base: dict[str, JsonValue], updating: dict[str, JsonValue]
+        base: dict[str, JsonValue],
+        updating: dict[str, JsonValue],
     ) -> dict[str, JsonValue]:
         """Deep-merge two config dicts, concatenating list values."""
         result = dict(base)
@@ -199,7 +210,9 @@ class FlextConfig(BaseSettings):
     CONFIG_FILENAMES: ClassVar[t.VariadicTuple[str]] = ()
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
-        frozen=True, extra="allow", env_prefix="FLEXT_CONFIG_"
+        frozen=True,
+        extra="allow",
+        env_prefix="FLEXT_CONFIG_",
     )
 
     _lock: ClassVar[RLock] = RLock()

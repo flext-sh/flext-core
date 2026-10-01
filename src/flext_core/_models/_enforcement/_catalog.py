@@ -54,7 +54,8 @@ class FlextModelsEnforcementCatalog(FlextModelsEnforcementSources):
             return self
 
         def by_id(
-            self, rule_id: str
+            self,
+            rule_id: str,
         ) -> FlextModelsEnforcementCatalog.EnforcementRuleSpec | None:
             """Return the rule with ``rule_id`` or ``None`` if absent."""
             for rule in self.rules:
@@ -63,7 +64,8 @@ class FlextModelsEnforcementCatalog(FlextModelsEnforcementSources):
             return None
 
         def by_kind(
-            self, kind: c.EnforcementSourceKind
+            self,
+            kind: c.EnforcementSourceKind,
         ) -> tuple[FlextModelsEnforcementCatalog.EnforcementRuleSpec, ...]:
             """Filter rules by source kind."""
             return tuple(rule for rule in self.rules if rule.source.kind == kind.value)

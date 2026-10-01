@@ -44,13 +44,13 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
 
         elif ugm.has_model_dump(value):
             validated_value = t.json_value_adapter().validate_python(
-                value.model_dump(mode="json")
+                value.model_dump(mode="json"),
             )
         elif isinstance(value, m.BaseModel):
             validated_value = t.json_value_adapter().validate_python(str(value))
         else:
             validated_value = t.json_value_adapter().validate_python(
-                FlextRuntimeMetadata.normalize_to_metadata(value)
+                FlextRuntimeMetadata.normalize_to_metadata(value),
             )
         return validated_value
 
@@ -72,7 +72,7 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
             t.json_mapping_adapter().validate_python({
                 key: FlextRuntimeMetadata.normalize_to_json_value(item)
                 for key, item in items
-            })
+            }),
         )
 
     @staticmethod
@@ -97,7 +97,7 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
                 (key, item) for key, item in value.items()
             ])
         return dict(
-            t.json_mapping_adapter().validate_python(value.model_dump(mode="json"))
+            t.json_mapping_adapter().validate_python(value.model_dump(mode="json")),
         )
 
     @staticmethod
@@ -116,7 +116,7 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
         normalized_value: t.JsonValue
         if isinstance(val, (m.ConfigMap, m.Dict)):
             normalized_value = FlextRuntimeMetadata._normalize_dict_entries(
-                list(val.root.items())
+                list(val.root.items()),
             )
         elif val is None:
             normalized_value = ""
@@ -130,7 +130,7 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
             normalized_value = FlextRuntimeMetadata.normalize_to_json_value(val)
         elif isinstance(val, Mapping):
             normalized_value = FlextRuntimeMetadata._normalize_dict_entries(
-                list(val.items())
+                list(val.items()),
             )
         elif isinstance(val, AbstractSet) or (
             isinstance(val, Sequence) and not isinstance(val, (str, bytes, bytearray))
@@ -138,7 +138,7 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
             normalized_value = list(
                 t.json_list_adapter().validate_python([
                     FlextRuntimeMetadata.normalize_to_json_value(item) for item in val
-                ])
+                ]),
             )
         elif isinstance(val, (bytes, bytearray)):
             normalized_value = str(val)

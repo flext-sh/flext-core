@@ -37,7 +37,10 @@ class TestsFlextCoreCqrs:
 
         # Act / Assert
         tm.rejects_assignment(
-            command, "message_type", "query", expected=c.ValidationError
+            command,
+            "message_type",
+            "query",
+            expected=c.ValidationError,
         )
 
     def test_command_generates_prefixed_identifier_by_default(self) -> None:
@@ -111,7 +114,10 @@ class TestsFlextCoreCqrs:
 
         # Act / Assert
         tm.rejects_assignment(
-            query, "message_type", "command", expected=c.ValidationError
+            query,
+            "message_type",
+            "command",
+            expected=c.ValidationError,
         )
 
     def test_query_generates_prefixed_identifier_by_default(self) -> None:
@@ -150,10 +156,12 @@ class TestsFlextCoreCqrs:
         assert query.pagination.offset == 5
 
     @pytest.mark.parametrize(
-        "invalid_pagination", [{"page": 0, "size": -5}, {"size": 10_000}, {"page": -1}]
+        "invalid_pagination",
+        [{"page": 0, "size": -5}, {"size": 10_000}, {"page": -1}],
     )
     def test_query_falls_back_to_default_pagination_on_invalid_input(
-        self, invalid_pagination: t.MappingKV[str, t.Scalar]
+        self,
+        invalid_pagination: t.MappingKV[str, t.Scalar],
     ) -> None:
         # Act
         query = m.Query(pagination=invalid_pagination)
@@ -198,7 +206,10 @@ class TestsFlextCoreCqrs:
         [(1, 10, 0), (2, 10, 10), (3, 20, 40), (5, 50, 200)],
     )
     def test_pagination_offset_is_derived_from_page_and_size(
-        self, page: int, size: int, expected_offset: int
+        self,
+        page: int,
+        size: int,
+        expected_offset: int,
     ) -> None:
         # Act
         pagination = m.Pagination(page=page, size=size)
@@ -211,7 +222,8 @@ class TestsFlextCoreCqrs:
         [{"size": c.MAX_PAGE_SIZE + 1}, {"page": 0}, {"page": -3}, {"size": 0}],
     )
     def test_pagination_rejects_out_of_range_values(
-        self, invalid_kwargs: t.MappingKV[str, int]
+        self,
+        invalid_kwargs: t.MappingKV[str, int],
     ) -> None:
         # Act / Assert
         with pytest.raises(c.ValidationError):

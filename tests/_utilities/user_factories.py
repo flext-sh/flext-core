@@ -105,18 +105,20 @@ class TestsFlextUtilitiesUserFactoriesMixin(TestsFlextUtilitiesRailwayServicesMi
             cls._counter = count(1)
 
     class GetUserServiceFactory(
-        GetUserFactoryBase[TestsFlextUtilitiesRailwayServicesMixin.GetUserService]
+        GetUserFactoryBase[TestsFlextUtilitiesRailwayServicesMixin.GetUserService],
     ):
         """Factory for `GetUserService`."""
 
         @classmethod
         @override
         def build(
-            cls, *, user_id: str | None = None
+            cls,
+            *,
+            user_id: str | None = None,
         ) -> TestsFlextUtilitiesUserFactoriesMixin.GetUserService:
             """Build a `GetUserService` instance."""
             return TestsFlextUtilitiesUserFactoriesMixin.GetUserService(
-                user_id=cls._resolve_user_id(user_id)
+                user_id=cls._resolve_user_id(user_id),
             )
 
 

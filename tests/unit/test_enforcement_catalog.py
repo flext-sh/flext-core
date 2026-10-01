@@ -34,7 +34,8 @@ class TestsFlextEnforcementCatalog:
 
     @pytest.mark.parametrize("kind", list(c.EnforcementSourceKind))
     def test_every_source_kind_is_present_and_filtered_by_kind(
-        self, kind: c.EnforcementSourceKind
+        self,
+        kind: c.EnforcementSourceKind,
     ) -> None:
         selected = u.build_canonical_catalog().by_kind(kind)
         assert selected
@@ -42,21 +43,21 @@ class TestsFlextEnforcementCatalog:
 
     def test_beartype_rules_name_a_runtime_tag(self) -> None:
         for rule in u.build_canonical_catalog().by_kind(
-            c.EnforcementSourceKind.BEARTYPE
+            c.EnforcementSourceKind.BEARTYPE,
         ):
             assert isinstance(rule.source, m.EnforcementBeartypeSource)
             assert rule.source.tag in c.ENFORCEMENT_TAG_CATEGORY
 
     def test_code_smell_rules_name_a_smell_tag(self) -> None:
         for rule in u.build_canonical_catalog().by_kind(
-            c.EnforcementSourceKind.CODE_SMELL
+            c.EnforcementSourceKind.CODE_SMELL,
         ):
             assert isinstance(rule.source, m.EnforcementCodeSmellSource)
             assert rule.source.smell_tag in c.ENFORCEMENT_SMELL_TAGS
 
     def test_runtime_warning_categories_resolve_to_warning_classes(self) -> None:
         for rule in u.build_canonical_catalog().by_kind(
-            c.EnforcementSourceKind.RUNTIME_WARNING
+            c.EnforcementSourceKind.RUNTIME_WARNING,
         ):
             assert isinstance(rule.source, m.EnforcementRuntimeWarningSource)
             module_name, _, class_name = rule.source.category.rpartition(".")

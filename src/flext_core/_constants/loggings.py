@@ -75,13 +75,13 @@ class FlextConstantsLogging:
 
     _TEMPLATE_REGISTERED: ClassVar[str] = "Registered {subject}"
     LOG_REGISTERED_AUTO_DISCOVERY_HANDLER: ClassVar[str] = _TEMPLATE_REGISTERED.format(
-        subject="auto-discovery handler"
+        subject="auto-discovery handler",
     )
     LOG_REGISTERED_EVENT_SUBSCRIBER: ClassVar[str] = _TEMPLATE_REGISTERED.format(
-        subject="event subscriber"
+        subject="event subscriber",
     )
     LOG_REGISTERED_HANDLER: ClassVar[str] = _TEMPLATE_REGISTERED.format(
-        subject="handler"
+        subject="handler",
     )
     LOG_HANDLER_EXECUTION_FAILED: ClassVar[str] = "Handler execution failed"
     LOG_HANDLER_PIPELINE_FAILURE: ClassVar[str] = "Critical handler pipeline failure"

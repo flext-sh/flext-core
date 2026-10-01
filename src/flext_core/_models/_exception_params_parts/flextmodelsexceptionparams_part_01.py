@@ -76,7 +76,7 @@ class FlextModelsExceptionParams:
         resource_id: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
             mp.Field(
-                description="Identifier of the resource associated with the failure."
+                description="Identifier of the resource associated with the failure.",
             ),
         ] = None
 
@@ -144,7 +144,8 @@ class FlextModelsExceptionParams:
         timeout: Annotated[
             t.Numeric | None,
             mp.Field(
-                default=None, description="Connection timeout threshold in seconds."
+                default=None,
+                description="Connection timeout threshold in seconds.",
             ),
         ] = None
 

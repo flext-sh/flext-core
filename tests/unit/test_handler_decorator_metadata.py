@@ -47,10 +47,13 @@ class TestsFlextHandlerDecoratorMetadata:
         tm.that(h.Discovery.has_handlers(Service), eq=False)
 
     @pytest.mark.parametrize(
-        ("priority", "timeout"), [(0, None), (1, 0.5), (42, 5.0), (7, 30.0)]
+        ("priority", "timeout"),
+        [(0, None), (1, 0.5), (42, 5.0), (7, 30.0)],
     )
     def test_priority_and_timeout_are_recorded_verbatim(
-        self, priority: int, timeout: float | None
+        self,
+        priority: int,
+        timeout: float | None,
     ) -> None:
         class CreateCommand:
             pass
@@ -134,7 +137,8 @@ class TestsFlextHandlerDecoratorMetadata:
         middleware_types.append(PassthroughMiddleware)
         _, config = h.Discovery.scan_class(Service)[0]
         declared = m.DecoratorConfig(
-            command=CreateCommand, middleware=[PassthroughMiddleware]
+            command=CreateCommand,
+            middleware=[PassthroughMiddleware],
         )
         tm.that(config.model_dump(), eq=declared.model_dump())
 

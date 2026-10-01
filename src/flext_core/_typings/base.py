@@ -90,10 +90,17 @@ class FlextTypingBase(tp, ta):
     type Pair[LeftT, RightT] = tuple[LeftT, RightT]
     type Triple[FirstT, SecondT, ThirdT] = tuple[FirstT, SecondT, ThirdT]
     type Quad[FirstT, SecondT, ThirdT, FourthT] = tuple[
-        FirstT, SecondT, ThirdT, FourthT
+        FirstT,
+        SecondT,
+        ThirdT,
+        FourthT,
     ]
     type Quint[FirstT, SecondT, ThirdT, FourthT, FifthT] = tuple[
-        FirstT, SecondT, ThirdT, FourthT, FifthT
+        FirstT,
+        SecondT,
+        ThirdT,
+        FourthT,
+        FifthT,
     ]
     type VariadicTuple[ItemT] = tuple[ItemT, ...]
     type StrTuple = VariadicTuple[str]

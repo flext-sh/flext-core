@@ -19,7 +19,8 @@ from tests.typings import t
 from ._handlers_support import TestsFlextFlextHandlers
 
 _TOKENS: st.SearchStrategy[str] = st.text(
-    alphabet=st.characters(min_codepoint=33, max_codepoint=126), min_size=1
+    alphabet=st.characters(min_codepoint=33, max_codepoint=126),
+    min_size=1,
 )
 
 
@@ -64,7 +65,7 @@ class TestsFlextCoreHandlersProperties(TestsFlextFlextHandlers):
             return (
                 r[t.Scalar]
                 .ok(
-                    f"pre_{message.decode() if isinstance(message, bytes) else message}"
+                    f"pre_{message.decode() if isinstance(message, bytes) else message}",
                 )
                 .value
             )
@@ -96,11 +97,14 @@ class TestsFlextCoreHandlersProperties(TestsFlextFlextHandlers):
         ],
     )
     def test_handler_type_is_reflected_in_mode(
-        self, handler_type: c.HandlerType
+        self,
+        handler_type: c.HandlerType,
     ) -> None:
         """The requested handler type becomes the handler's public mode."""
         handler = h.create_from_callable(
-            str, handler_name="typed", handler_type=handler_type
+            str,
+            handler_name="typed",
+            handler_type=handler_type,
         )
 
         tm.that(handler.mode, eq=handler_type)

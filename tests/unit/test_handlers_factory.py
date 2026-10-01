@@ -41,7 +41,7 @@ class TestsFlextCoreHandlersFactory(TestsFlextFlextHandlers):
             return (
                 r[t.Scalar]
                 .ok(
-                    f"result_{message.decode() if isinstance(message, bytes) else message}"
+                    f"result_{message.decode() if isinstance(message, bytes) else message}",
                 )
                 .value
             )
@@ -123,7 +123,8 @@ class TestsFlextCoreHandlersFactory(TestsFlextFlextHandlers):
 
     @pytest.mark.parametrize("scenario", TestsFlextFlextHandlers.HANDLER_TYPES)
     def test_mode_reflects_requested_handler_type(
-        self, scenario: TestsFlextFlextHandlers.HandlerTypeScenario
+        self,
+        scenario: TestsFlextFlextHandlers.HandlerTypeScenario,
     ) -> None:
         # Arrange
         def any_callable(message: t.Scalar) -> t.Scalar:
@@ -131,7 +132,8 @@ class TestsFlextCoreHandlersFactory(TestsFlextFlextHandlers):
 
         # Act
         by_type = h.create_from_callable(
-            any_callable, handler_type=scenario.handler_type
+            any_callable,
+            handler_type=scenario.handler_type,
         )
 
         # Assert
@@ -225,10 +227,14 @@ class TestsFlextCoreHandlersFactory(TestsFlextFlextHandlers):
         assert handler.mode == c.HandlerType.COMMAND
 
     @pytest.mark.parametrize(
-        ("payload", "expected_success"), [("non_empty", True), ("", False)]
+        ("payload", "expected_success"),
+        [("non_empty", True), ("", False)],
     )
     def test_validate_message_reports_payload_validity(
-        self, payload: str, *, expected_success: bool
+        self,
+        payload: str,
+        *,
+        expected_success: bool,
     ) -> None:
         # Arrange
         settings = u.Tests.create_handler_config("test_validate", "Test Validate")

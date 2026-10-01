@@ -41,20 +41,24 @@ class TestsFlextTypes(FlextTestsTypes):
             """flext-core test types namespace."""
 
             type ServiceConfigMapping = FlextTestsTypes.MappingKV[
-                str, FlextTestsTypes.Tests.TestobjectSerializable | MutableSequence[str]
+                str,
+                FlextTestsTypes.Tests.TestobjectSerializable | MutableSequence[str],
             ]
             "Service configuration mapping specific to flext-core services."
             type HandlerConfigMapping = FlextTestsTypes.MappingKV[
-                str, FlextTestsTypes.Tests.TestobjectSerializable | MutableSequence[str]
+                str,
+                FlextTestsTypes.Tests.TestobjectSerializable | MutableSequence[str],
             ]
             "Handler configuration mapping specific to flext-core handlers."
 
             type TestCaseMap = FlextTestsTypes.MappingKV[
-                str, FlextTestsTypes.Tests.TestobjectSerializable
+                str,
+                FlextTestsTypes.Tests.TestobjectSerializable,
             ]
 
             type InputPayloadMap = FlextTestsTypes.MappingKV[
-                str, FlextTestsTypes.Tests.TestobjectSerializable
+                str,
+                FlextTestsTypes.Tests.TestobjectSerializable,
             ]
 
             type CentralizedUnion = str | int | float | None

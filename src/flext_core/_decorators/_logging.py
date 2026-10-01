@@ -46,14 +46,16 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
                 if args and cls._is_logger_carrier(args[0]):
                     logger_carrier = args[0]
                 logger = cls._resolve_logger(
-                    logger_carrier, func_module=func.__module__
+                    logger_carrier,
+                    func_module=func.__module__,
                 )
                 correlation_id = cls._resolve_correlation_id(
-                    ensure_correlation=ensure_correlation
+                    ensure_correlation=ensure_correlation,
                 )
                 cls._context_type.apply_operation_name(op_name)
                 binding_result = u.bind_context(
-                    c.ContextScope.OPERATION, operation=op_name
+                    c.ContextScope.OPERATION,
+                    operation=op_name,
                 )
                 if binding_result.failure:
                     binding_result.unwrap()

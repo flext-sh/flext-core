@@ -85,7 +85,8 @@ class TestsTypeAliasResolution:
 
         with pytest.raises(NameError) as raised:
             u.resolve_type_alias_value(
-                alias, owner=TestsTypeAliasDeclarations.InvalidTypes
+                alias,
+                owner=TestsTypeAliasDeclarations.InvalidTypes,
             )
 
         assert raised.value.name == "DeferredPath"
@@ -99,7 +100,7 @@ class TestsTypeAliasResolution:
     def test_unexpected_alias_attribute_error_escapes_the_consumer(self) -> None:
         with pytest.raises(AttributeError) as raised:
             u.alias_contains_any(
-                TestsTypeAliasDeclarations.InvalidAttributeTypes.Invalid
+                TestsTypeAliasDeclarations.InvalidAttributeTypes.Invalid,
             )
 
         assert raised.value.name == "Value"

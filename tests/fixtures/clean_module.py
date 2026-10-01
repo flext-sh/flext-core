@@ -54,7 +54,8 @@ class TestsFlextCleanModels:
                 """Frozen value object."""
 
                 model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-                    frozen=True, extra="forbid"
+                    frozen=True,
+                    extra="forbid",
                 )
 
                 id: Annotated[str, u.Field(description="Opaque value identifier.")]

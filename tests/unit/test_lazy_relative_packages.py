@@ -22,7 +22,10 @@ class TestsFlextCoreLazyRelativePackages:
         ],
     )
     def test_string_targets_resolve_to_the_real_module(
-        self, package: str, relative: str, absolute: str
+        self,
+        package: str,
+        relative: str,
+        absolute: str,
     ) -> None:
         """Both sibling and current-package paths identify importable modules."""
         normalized = normalize_lazy_imports(package, {"module": relative})
@@ -55,11 +58,15 @@ class TestsFlextCoreLazyRelativePackages:
         ],
     )
     def test_merge_loads_relative_child_packages(
-        self, package: str, relative: str
+        self,
+        package: str,
+        relative: str,
     ) -> None:
         """Real child packages without lazy maps preserve the local exports."""
         merged = merge_lazy_imports(
-            (relative,), {"Node": ("xml.dom", "Node")}, module_name=package
+            (relative,),
+            {"Node": ("xml.dom", "Node")},
+            module_name=package,
         )
         assert merged == {"Node": ("xml.dom", "Node")}
 

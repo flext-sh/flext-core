@@ -73,7 +73,8 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart02):
             else structlog.make_filtering_bound_logger(logging.NOTSET)
         )
         factory_to_use = cls._resolve_logger_factory(
-            logger_factory=logger_factory, async_logging=async_logging
+            logger_factory=logger_factory,
+            async_logging=async_logging,
         )
         configure_fn = getattr(structlog, "configure", None)
         if configure_fn is not None and callable(configure_fn):
@@ -107,10 +108,13 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart02):
         """
         cls.ensure_structlog_configured()
         effective = FlextRuntimeBase.resolve_effective_log_level(
-            trace=trace, debug=debug, log_level=c.LogLevel(log_level.upper())
+            trace=trace,
+            debug=debug,
+            log_level=c.LogLevel(log_level.upper()),
         )
         cls._publish_logging_state(
-            configured=True, threshold=cls.level_number(effective)
+            configured=True,
+            threshold=cls.level_number(effective),
         )
 
 

@@ -29,28 +29,32 @@ class FlextUtilitiesHandler:
 
     @staticmethod
     def create_runtime_state(
-        handler_name: str, handler_mode: c.HandlerType
+        handler_name: str,
+        handler_mode: c.HandlerType,
     ) -> p.HandlerRuntimeState:
         """Build runtime state with a fresh execution context."""
         from flext_core import m
 
         return m.HandlerRuntimeState(
             execution_context=m.ExecutionContext(
-                handler_name=handler_name, handler_mode=handler_mode
-            )
+                handler_name=handler_name,
+                handler_mode=handler_mode,
+            ),
         )
 
     @staticmethod
     def start_execution(state: p.HandlerRuntimeState) -> p.HandlerRuntimeState:
         """Stamp the current monotonic time on the active execution context."""
         execution_context = state.execution_context.model_copy(
-            update={"started_at": time.time()}
+            update={"started_at": time.time()},
         )
         return state.model_copy(update={"execution_context": execution_context})
 
     @staticmethod
     def record_metric(
-        ctx: p.ExecutionContext, name: str, value: t.JsonPayload
+        ctx: p.ExecutionContext,
+        name: str,
+        value: t.JsonPayload,
     ) -> p.Result[bool]:
         """Record a metric value onto an execution context's payload."""
         normalized = FlextRuntime.normalize_to_container(value)
@@ -63,7 +67,8 @@ class FlextUtilitiesHandler:
 
     @staticmethod
     def push_context(
-        state: p.HandlerRuntimeState, ctx: t.JsonMapping | p.ExecutionContext
+        state: p.HandlerRuntimeState,
+        ctx: t.JsonMapping | p.ExecutionContext,
     ) -> p.Result[p.HandlerRuntimeState]:
         """Validate a context and return state with an extended stack."""
         if not isinstance(ctx, Mapping):
@@ -74,14 +79,15 @@ class FlextUtilitiesHandler:
             validated = r.from_validation(ctx, m.ExecutionContext)
             if validated.failure:
                 return r[p.HandlerRuntimeState].fail_op(
-                    "push handler context", validated.error
+                    "push handler context",
+                    validated.error,
                 )
             execution_context: p.ExecutionContext = validated.unwrap()
             pushed_context = execution_context
         return r.ok(
             state.model_copy(
-                update={"context_stack": (*state.context_stack, pushed_context)}
-            )
+                update={"context_stack": (*state.context_stack, pushed_context)},
+            ),
         )
 
     @staticmethod
@@ -96,13 +102,13 @@ class FlextUtilitiesHandler:
             return r.ok((state, empty_context))
         popped = state.context_stack[-1]
         next_state = state.model_copy(
-            update={"context_stack": state.context_stack[:-1]}
+            update={"context_stack": state.context_stack[:-1]},
         )
         popped_context: p.RootDict[t.JsonPayload] = m.ConfigMap(
             root={
                 "handler_name": popped.handler_name,
                 c.FIELD_HANDLER_MODE: popped.handler_mode,
-            }
+            },
         )
         return r.ok((next_state, popped_context))
 

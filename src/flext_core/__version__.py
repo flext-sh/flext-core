@@ -77,7 +77,8 @@ class _FlextVersionMetadata:
         cls.__description__ = package_metadata.get("Summary", "")
         cls.__author__, cls.__author_email__ = cls._resolve_author(package_metadata)
         cls.__license__ = package_metadata.get(
-            "License-Expression", ""
+            "License-Expression",
+            "",
         ) or package_metadata.get("License", "")
         cls.__url__ = cls._resolve_homepage(package_metadata)
 

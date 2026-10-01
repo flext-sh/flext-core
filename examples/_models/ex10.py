@@ -24,7 +24,8 @@ class ExamplesFlextModelsEx10:
 
     class ProcessorGood(m.Value):
         marker: Annotated[
-            str, m.Field(description="Marker indicating successful processing")
+            str,
+            m.Field(description="Marker indicating successful processing"),
         ] = "good"
 
         def process(self) -> bool:
@@ -32,12 +33,14 @@ class ExamplesFlextModelsEx10:
 
     class ProcessorBad(m.Value):
         marker: Annotated[
-            str, m.Field(description="Marker indicating failed processing")
+            str,
+            m.Field(description="Marker indicating failed processing"),
         ] = "bad"
 
     class ProtocolHandler(m.BaseModel):
         message_type: Annotated[
-            type[m.Command], m.Field(description="Message type for protocol handler")
+            type[m.Command],
+            m.Field(description="Message type for protocol handler"),
         ] = m.Command
 
         def handle(self, message: ExamplesFlextModelsEx10.Message) -> p.Result[str]:

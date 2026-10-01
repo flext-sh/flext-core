@@ -83,7 +83,9 @@ class FlextUtilitiesBeartypeEngine(
 
     @staticmethod
     def deferred_aliases(
-        params: mp.BaseModel, owner: type, *args: p.AttributeProbe
+        params: mp.BaseModel,
+        owner: type,
+        *args: p.AttributeProbe,
     ) -> tuple[me.DeferredAlias, ...]:
         """Account for unavailable alias values before a value-dependent rule."""
         if isinstance(params, me.AttrShapeParams):
@@ -91,7 +93,9 @@ class FlextUtilitiesBeartypeEngine(
                 match args:
                     case (_, alias) if isinstance(alias, TypeAliasType):
                         return FlextUtilitiesBeartypeTypeAliases.deferred(
-                            alias, recursive=True, owner=owner
+                            alias,
+                            recursive=True,
+                            owner=owner,
                         )
                     case _:
                         return ()
@@ -103,33 +107,41 @@ class FlextUtilitiesBeartypeEngine(
             return ()
         if params.forbid_any or params.forbid_bare_collection:
             return FlextUtilitiesBeartypeTypeAliases.deferred(
-                info.annotation, recursive=params.forbid_any, owner=owner
+                info.annotation,
+                recursive=params.forbid_any,
+                owner=owner,
             )
         if params.forbid_mutable_default:
             return ()
         if (
             params.forbid_raw_default_factory
             and FlextUtilitiesBeartypeHelpers.mutable_default_factory_kind(
-                info.default_factory
+                info.default_factory,
             )
             is not None
         ):
             return FlextUtilitiesBeartypeTypeAliases.deferred(
-                info.annotation, unwrap_annotated=True, inspect_origin=True, owner=owner
+                info.annotation,
+                unwrap_annotated=True,
+                inspect_origin=True,
+                owner=owner,
             )
         if params.forbid_str_none_empty:
             return FlextUtilitiesBeartypeTypeAliases.deferred(
-                info.annotation, owner=owner
+                info.annotation,
+                owner=owner,
             )
         return ()
 
     @override
     @staticmethod
     def has_forbidden_collection_origin(
-        hint: t.TypeHintSpecifier | None, forbidden: frozenset[str]
+        hint: t.TypeHintSpecifier | None,
+        forbidden: frozenset[str],
     ) -> tuple[bool, str]:
         return FlextUtilitiesBeartypeHelpers.has_forbidden_collection_origin(
-            hint, forbidden
+            hint,
+            forbidden,
         )
 
     @classmethod

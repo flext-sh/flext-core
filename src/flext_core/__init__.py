@@ -1,14 +1,16 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Flext Core package."""
+"""Flext Core package.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import build_lazy_import_map, install_lazy_exports
-
-from .__version__ import (
+from flext_core.__version__ import (
     __author__ as __author__,
     __author_email__ as __author_email__,
     __description__ as __description__,
@@ -18,36 +20,37 @@ from .__version__ import (
     __version__ as __version__,
     __version_info__ as __version_info__,
 )
+from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from . import services
-    from ._config import FlextConfig, config
-    from ._settings import FlextSettings, settings
-    from .api import FlextApi, core
-    from .base import FlextBase
-    from .cli import FlextCli
-    from .constants import (
+    from flext_core import services
+    from flext_core._config import FlextConfig, config
+    from flext_core._settings import FlextSettings, settings
+    from flext_core.api import FlextApi, core
+    from flext_core.base import FlextBase
+    from flext_core.cli import FlextCli
+    from flext_core.constants import (
         FlextConstants,
         FlextConstants as c,
         FlextConstantsEnforcement,
     )
-    from .container import FlextContainer
-    from .context import FlextContext
-    from .decorators import FlextDecorators, d
-    from .dispatcher import FlextDispatcher
-    from .exceptions import FlextExceptions, FlextExceptions as e
-    from .handlers import FlextHandlers, h
-    from .lazy import FlextLazy, FlextLazyAttribute, lazy_attribute
-    from .loggings import FlextUtilitiesLogging
-    from .mixins import FlextMixins, FlextMixins as x
-    from .models import FlextModels, FlextModels as m
-    from .protocols import FlextProtocols, FlextProtocols as p
-    from .registry import FlextRegistry
-    from .result import FlextResult, FlextResult as r
-    from .runtime import FlextRuntime
-    from .service import FlextService, FlextService as s
-    from .typings import FlextTypes, FlextTypes as t
-    from .utilities import (
+    from flext_core.container import FlextContainer
+    from flext_core.context import FlextContext
+    from flext_core.decorators import FlextDecorators, d
+    from flext_core.dispatcher import FlextDispatcher
+    from flext_core.exceptions import FlextExceptions, FlextExceptions as e
+    from flext_core.handlers import FlextHandlers, h
+    from flext_core.lazy import FlextLazy, FlextLazyAttribute, lazy_attribute
+    from flext_core.loggings import FlextUtilitiesLogging
+    from flext_core.mixins import FlextMixins, FlextMixins as x
+    from flext_core.models import FlextModels, FlextModels as m
+    from flext_core.protocols import FlextProtocols, FlextProtocols as p
+    from flext_core.registry import FlextRegistry
+    from flext_core.result import FlextResult, FlextResult as r
+    from flext_core.runtime import FlextRuntime
+    from flext_core.service import FlextService, FlextService as s
+    from flext_core.typings import FlextTypes, FlextTypes as t
+    from flext_core.utilities import (
         FlextUtilities,
         FlextUtilities as u,
         FlextUtilitiesRuntimeViolationRegistry,
@@ -141,7 +144,7 @@ _LAZY_IMPORTS = MappingProxyType(
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
-    )
+    ),
 )
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

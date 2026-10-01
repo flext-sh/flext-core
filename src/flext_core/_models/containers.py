@@ -44,7 +44,8 @@ class FlextModelsContainers:
         ]
 
         def __call__(
-            self, value: FlextTypesServices.ScalarOrModel
+            self,
+            value: FlextTypesServices.ScalarOrModel,
         ) -> FlextTypesServices.ScalarOrModel:
             return self.root(value)
 
@@ -85,12 +86,15 @@ class FlextModelsContainers:
             return self.root.items()
 
         def get(
-            self, key: str, default: FlextTypesServices.JsonPayload | None = None
+            self,
+            key: str,
+            default: FlextTypesServices.JsonPayload | None = None,
         ) -> FlextTypesServices.JsonPayload | None:
             return self.root.get(key, default)
 
         def update(
-            self, other: t.MappingKV[str, FlextTypesServices.JsonPayload]
+            self,
+            other: t.MappingKV[str, FlextTypesServices.JsonPayload],
         ) -> None:
             self.root.update(other)
 
@@ -98,7 +102,9 @@ class FlextModelsContainers:
             self.root.clear()
 
         def pop(
-            self, key: str, *args: FlextTypesServices.JsonPayload
+            self,
+            key: str,
+            *args: FlextTypesServices.JsonPayload,
         ) -> FlextTypesServices.JsonPayload:
             return self.root.pop(key, *args)
 
@@ -106,7 +112,9 @@ class FlextModelsContainers:
             return self.root.popitem()
 
         def setdefault(
-            self, key: str, default: FlextTypesServices.JsonPayload
+            self,
+            key: str,
+            default: FlextTypesServices.JsonPayload,
         ) -> FlextTypesServices.JsonPayload:
             return self.root.setdefault(key, default)
 

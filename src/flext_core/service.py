@@ -80,7 +80,9 @@ class FlextService[TDomainResult = p.Base](x):
             for member in members:
                 if member is not NoneType and not is_protocol(member):
                     msg = c.ERR_SERVICE_PORT_TYPE.format(
-                        service=cls.__name__, field=name, port_type=member
+                        service=cls.__name__,
+                        field=name,
+                        port_type=member,
                     )
                     raise TypeError(msg)
 

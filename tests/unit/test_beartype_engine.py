@@ -58,7 +58,10 @@ class TestsFlextCoreBeartypeEngine(TestsFlextBeartypeEngine):
         [("run", True), ("do_thing", True), ("_private", False), ("__dunder__", False)],
     )
     def test_attr_accept_public_rejects_underscore_names(
-        self, name: str, *, expected: bool
+        self,
+        name: str,
+        *,
+        expected: bool,
     ) -> None:
         """Only names without a leading underscore are accepted as public."""
         assert be.attr_accept_public(name) is expected
@@ -74,7 +77,10 @@ class TestsFlextCoreBeartypeEngine(TestsFlextBeartypeEngine):
         ],
     )
     def test_attr_accept_utility_excludes_exempt_and_private(
-        self, name: str, *, expected: bool
+        self,
+        name: str,
+        *,
+        expected: bool,
     ) -> None:
         """Public names pass unless they are dunder-exempt utility methods."""
         assert be.attr_accept_utility(name) is expected
@@ -86,7 +92,8 @@ class TestsFlextCoreBeartypeEngine(TestsFlextBeartypeEngine):
 
     @pytest.mark.parametrize("name", ["_private", "model_fields", "__doc__"])
     def test_attr_accept_constants_rejects_private_and_skip_names(
-        self, name: str
+        self,
+        name: str,
     ) -> None:
         """Private names and skip-listed attributes are rejected regardless of value."""
         value: p.AttributeProbe = 1

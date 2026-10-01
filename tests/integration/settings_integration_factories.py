@@ -20,19 +20,23 @@ class TestsFlextSettingsConfigTestCase(m.BaseModel):
 
     test_name: Annotated[str, m.Field(description="Configuration test case name")]
     config_data: Annotated[
-        t.JsonMapping, m.Field(description="Input configuration payload")
+        t.JsonMapping,
+        m.Field(description="Input configuration payload"),
     ]
     expected_values: Annotated[
-        t.JsonMapping, m.Field(description="Expected effective values")
+        t.JsonMapping,
+        m.Field(description="Expected effective values"),
     ] = m.Field(default_factory=dict)
     file_format: Annotated[str, m.Field(description="Configuration file format")] = (
         "json"
     )
     env_vars: Annotated[
-        t.StrMapping, m.Field(description="Environment variable overrides")
+        t.StrMapping,
+        m.Field(description="Environment variable overrides"),
     ] = m.Field(default_factory=dict)
     description: Annotated[
-        str, m.Field(description="Human-readable test description")
+        str,
+        m.Field(description="Human-readable test description"),
     ] = ""
 
     def create_temp_file(self, temp_dir: Path) -> Path:
@@ -54,13 +58,16 @@ class TestsFlextSettingsThreadSafetyTest(m.BaseModel):
     model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
     thread_count: Annotated[
-        int, m.Field(description="Number of concurrent threads")
+        int,
+        m.Field(description="Number of concurrent threads"),
     ] = 5
     operations_per_thread: Annotated[
-        int, m.Field(description="Operations per thread")
+        int,
+        m.Field(description="Operations per thread"),
     ] = 10
     description: Annotated[
-        str, m.Field(description="Thread safety scenario description")
+        str,
+        m.Field(description="Thread safety scenario description"),
     ] = ""
 
 

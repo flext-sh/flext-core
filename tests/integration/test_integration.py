@@ -40,7 +40,9 @@ class TestsFlextCoreIntegration:
     """
 
     def test_result_and_container_compose_on_public_surface(
-        self, clean_container: p.Container, sample_data: t.JsonMapping
+        self,
+        clean_container: p.Container,
+        sample_data: t.JsonMapping,
     ) -> None:
         """Bound value round-trips through container.resolve as a success r[T]."""
         # Arrange
@@ -117,7 +119,8 @@ class TestsFlextCoreIntegration:
         tm.that(failure_result.unwrap_or(_UNWRAP_DEFAULT), eq=_UNWRAP_DEFAULT)
 
     def test_container_factory_resolves_computed_value(
-        self, clean_container: p.Container
+        self,
+        clean_container: p.Container,
     ) -> None:
         """A registered factory resolves to the value produced by its callable."""
         # Arrange
@@ -141,7 +144,8 @@ class TestsFlextCoreIntegration:
         tm.that(resolved.value, eq=expected)
 
     def test_container_resolve_unknown_name_fails_with_error(
-        self, clean_container: p.Container
+        self,
+        clean_container: p.Container,
     ) -> None:
         """Resolving an unregistered name yields a failure carrying the name."""
         # Act
@@ -153,7 +157,8 @@ class TestsFlextCoreIntegration:
         tm.that(tm.not_none(resolved.error), has="does_not_exist")
 
     def test_container_bind_rejects_existing_name(
-        self, clean_container: p.Container
+        self,
+        clean_container: p.Container,
     ) -> None:
         """Re-binding an existing name raises and preserves the first value."""
         # Arrange

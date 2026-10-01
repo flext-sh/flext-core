@@ -14,7 +14,8 @@ class TestsFlextModelsCoreStateMixin:
         """Test singleton class with Pydantic validation."""
 
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-            validate_assignment=True, extra="forbid"
+            validate_assignment=True,
+            extra="forbid",
         )
 
         _instance: ClassVar[

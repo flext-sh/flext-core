@@ -63,8 +63,8 @@ class FlextUtilitiesContextState:
         value = ctx_var.get()
         return dict(
             FlextUtilitiesContextState._narrow_contextvar_to_configuration_dict(
-                value
-            ).items()
+                value,
+            ).items(),
         )
 
     def _scope_payloads(self) -> t.MappingKV[str, t.JsonMapping]:
@@ -84,7 +84,7 @@ class FlextUtilitiesContextState:
         ctx_var = self._scope_var(scope)
         incoming = self._narrow_contextvar_to_configuration_dict(data)
         current = m.ConfigMap(
-            root=dict(self._narrow_contextvar_to_configuration_dict(ctx_var.get()))
+            root=dict(self._narrow_contextvar_to_configuration_dict(ctx_var.get())),
         )
         updated = current.model_copy(update={"root": {**current.root, **incoming}})
         _ = ctx_var.set(updated)
@@ -101,7 +101,9 @@ class FlextUtilitiesContextState:
         self.state = self.state.with_operation_update(operation)
 
     def _execute_hooks(
-        self, event: str, event_data: t.JsonPayload | t.MappingKV[str, t.JsonPayload]
+        self,
+        event: str,
+        event_data: t.JsonPayload | t.MappingKV[str, t.JsonPayload],
     ) -> None:
         """Execute hooks for an event (DRY helper)."""
         if event not in self.state.hooks:
@@ -129,7 +131,8 @@ class FlextUtilitiesContextState:
                 custom_fields_dict[ck] = FlextRuntime.normalize_to_container(cv)
         except c.EXC_BASIC_TYPE as exc:
             self.logger.debug(
-                "Custom metadata field normalization failed", exc_info=exc
+                "Custom metadata field normalization failed",
+                exc_info=exc,
             )
             custom_fields_dict = {}
         result: dict[str, t.JsonPayload] = {}
@@ -163,9 +166,9 @@ class FlextUtilitiesContextState:
         self.state = self.state.model_copy(
             update={
                 "metadata": meta.model_copy(
-                    update={"attributes": {**meta.attributes, key: value}}
-                )
-            }
+                    update={"attributes": {**meta.attributes, key: value}},
+                ),
+            },
         )
 
 

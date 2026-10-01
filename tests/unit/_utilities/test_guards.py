@@ -41,7 +41,11 @@ class TestsFlextCoreGuards:
         ],
     )
     def test_matches_type_string_spec_reflects_runtime_type(
-        self, value: t.JsonValue | None, spec: str, *, expected: bool
+        self,
+        value: t.JsonValue | None,
+        spec: str,
+        *,
+        expected: bool,
     ) -> None:
         assert u.matches_type(value, spec) is expected
 
@@ -58,7 +62,11 @@ class TestsFlextCoreGuards:
         ],
     )
     def test_matches_type_non_empty_specs_require_content(
-        self, value: t.JsonValue, spec: str, *, expected: bool
+        self,
+        value: t.JsonValue,
+        spec: str,
+        *,
+        expected: bool,
     ) -> None:
         assert u.matches_type(value, spec) is expected
 
@@ -70,10 +78,12 @@ class TestsFlextCoreGuards:
         assert u.matches_type("x", "no_such_spec") is False
 
     @pytest.mark.parametrize(
-        "spec", ["string_non_empty", "dict_non_empty", "list_non_empty"]
+        "spec",
+        ["string_non_empty", "dict_non_empty", "list_non_empty"],
     )
     def test_matches_type_excludes_pydantic_models_from_non_empty_specs(
-        self, spec: str
+        self,
+        spec: str,
     ) -> None:
         # A populated model would otherwise satisfy dict-like checks; the guard
         # contract deliberately excludes Pydantic models from these specs.
@@ -93,7 +103,11 @@ class TestsFlextCoreGuards:
         ],
     )
     def test_matches_type_type_and_tuple_specs(
-        self, value: t.JsonValue, spec: type | t.VariadicTuple[type], *, expected: bool
+        self,
+        value: t.JsonValue,
+        spec: type | t.VariadicTuple[type],
+        *,
+        expected: bool,
     ) -> None:
         assert u.matches_type(value, spec) is expected
 
@@ -120,15 +134,18 @@ class TestsFlextCoreGuards:
         ],
     )
     def test_container_accepts_scalars_and_nested_json(
-        self, value: t.JsonValue
+        self,
+        value: t.JsonValue,
     ) -> None:
         assert u.container(value) is True
 
     @pytest.mark.parametrize(
-        "value", [None, object(), [1, object()], {"a": object()}, {"a": [object()]}]
+        "value",
+        [None, object(), [1, object()], {"a": object()}, {"a": [object()]}],
     )
     def test_container_rejects_none_and_non_json_members(
-        self, value: t.JsonValue | None
+        self,
+        value: t.JsonValue | None,
     ) -> None:
         assert u.container(value) is False
 
@@ -152,7 +169,10 @@ class TestsFlextCoreGuards:
         ],
     )
     def test_scalar_identifies_scalar_values(
-        self, value: t.JsonValue | None, *, expected: bool
+        self,
+        value: t.JsonValue | None,
+        *,
+        expected: bool,
     ) -> None:
         assert u.scalar(value) is expected
 
@@ -168,7 +188,10 @@ class TestsFlextCoreGuards:
         ],
     )
     def test_primitive_identifies_primitive_values(
-        self, value: t.JsonValue, *, expected: bool
+        self,
+        value: t.JsonValue,
+        *,
+        expected: bool,
     ) -> None:
         assert u.primitive(value) is expected
 
@@ -192,7 +215,10 @@ class TestsFlextCoreGuards:
         ],
     )
     def test_list_like_excludes_strings_and_bytes(
-        self, value: t.JsonValue, *, expected: bool
+        self,
+        value: t.JsonValue,
+        *,
+        expected: bool,
     ) -> None:
         assert u.list_like(value) is expected
 
@@ -218,7 +244,10 @@ class TestsFlextCoreGuards:
         ],
     )
     def test_empty_value_reports_absence_or_empty_containers(
-        self, value: t.JsonValue | None, *, expected: bool
+        self,
+        value: t.JsonValue | None,
+        *,
+        expected: bool,
     ) -> None:
         assert u.empty_value(value) is expected
 
@@ -227,7 +256,10 @@ class TestsFlextCoreGuards:
         [("x", True), (" a ", True), ("", False), ("   ", False), (1, False)],
     )
     def test_string_non_empty_requires_non_blank_string(
-        self, value: t.GuardInput, *, expected: bool
+        self,
+        value: t.GuardInput,
+        *,
+        expected: bool,
     ) -> None:
         assert u.string_non_empty(value) is expected
 
@@ -255,7 +287,11 @@ class TestsFlextCoreGuards:
         ],
     )
     def test_in_membership_only_for_true_containers(
-        self, value: t.GuardInput, container: t.GuardInput, *, expected: bool
+        self,
+        value: t.GuardInput,
+        container: t.GuardInput,
+        *,
+        expected: bool,
     ) -> None:
         assert u.in_(value, container) is expected
 

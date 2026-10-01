@@ -25,7 +25,7 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
             return cast(
                 "p.ResultView[str | tm.Tests.User | m.Tests.EmailResponse]",
                 r[str | tm.Tests.User | m.Tests.EmailResponse].fail(
-                    c.Tests.NO_USER_IDS_PROVIDED
+                    c.Tests.NO_USER_IDS_PROVIDED,
                 ),
             )
         user_result: p.Result[tm.Tests.User] = (
@@ -35,7 +35,7 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
             ).execute()
         )
         result: p.Result[str | tm.Tests.User | m.Tests.EmailResponse] = user_result.map(
-            lambda user: user
+            lambda user: user,
         )
         for operation in case.operations:
             if operation == "get_email":

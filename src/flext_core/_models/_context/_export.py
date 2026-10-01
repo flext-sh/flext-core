@@ -23,7 +23,8 @@ class FlextModelsContextExport:
     """Namespace for context export models."""
 
     class ContextExport(
-        FlextModelsContextData.SerializableDataValidatorMixin, FlextModelsEntity.Value
+        FlextModelsContextData.SerializableDataValidatorMixin,
+        FlextModelsEntity.Value,
     ):
         """Typed snapshot returned by export_snapshot."""
 
@@ -49,7 +50,7 @@ class FlextModelsContextExport:
                     FlextModelsContextData.normalize_to_mapping(v)
                     if v is not None
                     else {}
-                )
+                ),
             ),
             Field(
                 default_factory=lambda: MappingProxyType[str, t.JsonValue]({}),

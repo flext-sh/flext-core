@@ -52,14 +52,21 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
             if detail is not None:
                 violations.append(
                     FlextUtilitiesEnforcement._violation(
-                        tag, location, qualname, detail, category=category
-                    )
+                        tag,
+                        location,
+                        qualname,
+                        detail,
+                        category=category,
+                    ),
                 )
         return me.Report(violations=violations, deferred=deferred)
 
     @staticmethod
     def _items_for(
-        target: type, tag: str, category: c.EnforcementCategory, effective_layer: str
+        target: type,
+        tag: str,
+        category: c.EnforcementCategory,
+        effective_layer: str,
     ) -> Iterator[tuple[str, tuple[p.AttributeProbe, ...]]]:
         """Return category-specific (location, args) pairs for one rule tag.
 
@@ -76,7 +83,8 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
             return
 
         def walk(
-            node: type, path: str
+            node: type,
+            path: str,
         ) -> Iterator[tuple[str, tuple[p.AttributeProbe, ...]]]:
             iterator = (
                 FlextUtilitiesEnforcement._iter_effective
@@ -87,7 +95,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
                 nested = f"{path}.{name}"
                 yield nested, (value,)
                 if ub.has_runtime_protocol_marker(value) or ub.has_nested_namespace(
-                    value
+                    value,
                 ):
                     yield from walk(value, nested)
 
@@ -106,7 +114,9 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
                 items = FlextUtilitiesEnforcement._attr_items(target, effective_layer)
         elif category is c.EnforcementCategory.NAMESPACE:
             items = FlextUtilitiesEnforcement._namespace_items(
-                target, tag, effective_layer
+                target,
+                tag,
+                effective_layer,
             )
         elif (
             category is c.EnforcementCategory.PROTOCOL_TREE
@@ -139,10 +149,17 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
                 continue
             rule_layer = c.ENFORCEMENT_TAG_LAYER.get(tag, "")
             items = FlextUtilitiesEnforcement._items_for(
-                target, tag, category, effective_layer
+                target,
+                tag,
+                category,
+                effective_layer,
             )
             report = FlextUtilitiesEnforcement._apply_rule(
-                target, tag, qn, items, category
+                target,
+                tag,
+                qn,
+                items,
+                category,
             )
             violations.extend(report.violations)
             deferred.extend(report.deferred)
@@ -153,11 +170,13 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
             ):
                 for _name, inner in FlextUtilitiesEnforcement._iter_inner(target):
                     if isinstance(inner, EnumType) or not ub.defined_inside(
-                        inner, target.__qualname__
+                        inner,
+                        target.__qualname__,
                     ):
                         continue
                     nested = FlextUtilitiesEnforcement.check(
-                        inner, layer=effective_layer
+                        inner,
+                        layer=effective_layer,
                     )
                     violations.extend(nested.violations)
                     deferred.extend(nested.deferred)
@@ -172,7 +191,8 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
     def check_model_construction(target: type[mp.BaseModel]) -> me.Report:
         """Run only Pydantic construction rules for ``__pydantic_init_subclass__``."""
         return FlextUtilitiesEnforcement._check(
-            target, categories=FlextUtilitiesEnforcement._MODEL_CONSTRUCTION_CATEGORIES
+            target,
+            categories=FlextUtilitiesEnforcement._MODEL_CONSTRUCTION_CATEGORIES,
         )
 
 

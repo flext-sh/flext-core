@@ -148,7 +148,8 @@ class FlextUtilitiesGuardsTypeCore:
     ) -> TypeIs[Sequence[t.JsonPayload]]:
         """Check if value behaves like a non-string object sequence."""
         return isinstance(value, c.SEQUENCE_PAIR_TYPES) and not isinstance(
-            value, c.STR_BYTES_TYPES
+            value,
+            c.STR_BYTES_TYPES,
         )
 
     @staticmethod

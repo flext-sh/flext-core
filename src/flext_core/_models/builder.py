@@ -52,7 +52,7 @@ class FlextModelsBuilder:
         def _append(self, field_name: str, value: tb.JsonValue) -> Self:
             """Append one value to a sequence field while preserving immutability."""
             current_values: tb.VariadicTuple[tb.JsonValue] = tuple(
-                getattr(self.state, field_name)
+                getattr(self.state, field_name),
             )
             return self._set(**{field_name: (*current_values, value)})
 
@@ -76,7 +76,7 @@ class FlextModelsBuilder:
             """Build and append one ContractModel item to a sequence field."""
             model_item = self._model(model_type, **data)
             current_values: tb.VariadicTuple[m.ContractModel] = tuple(
-                getattr(self.state, field_name)
+                getattr(self.state, field_name),
             )
             updated: tb.SequenceOf[m.ContractModel] = (*current_values, model_item)
             return self._set(**{field_name: updated})

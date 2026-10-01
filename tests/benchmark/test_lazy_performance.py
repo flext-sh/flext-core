@@ -47,7 +47,7 @@ class TestsFlextLazyPerformance:
                 module_name = f"flext_core_{index}"
                 virtual_module = (
                     TestsFlextLazyPerformance.LazyBenchmark.new_virtual_module(
-                        module_name
+                        module_name,
                     )
                 )
                 sys.modules[module_name] = virtual_module
@@ -70,7 +70,7 @@ class TestsFlextLazyPerformance:
             start = time.perf_counter()
             for _ in range(iterations):
                 TestsFlextLazyPerformance.LazyBenchmark.exercise_lazy_path(
-                    reset_between_iterations=reset_between_iterations
+                    reset_between_iterations=reset_between_iterations,
                 )
             return time.perf_counter() - start
 

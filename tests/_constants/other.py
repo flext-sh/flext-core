@@ -45,7 +45,6 @@ class TestsFlextConstantsOther:
         ),
     )
 
-
     LAZY_BENCHMARK_REAL_SYMBOLS: ClassVar[t.StrSequence] = (
         "FlextConstants",
         "FlextContainer",

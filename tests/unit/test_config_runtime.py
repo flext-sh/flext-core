@@ -32,7 +32,8 @@ class TestsFlextCoreConfigSettingsCanonical:
         assert isinstance(settings.model_dump(), dict)
 
     def test_config_subclasses_keep_independent_singletons(
-        self, tmp_path: Path
+        self,
+        tmp_path: Path,
     ) -> None:
         """Creating and resetting a child never borrows or resets its parent slot."""
 

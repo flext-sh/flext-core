@@ -15,7 +15,7 @@ from .flexthandlers_part_01 import FlextHandlers as FlextHandlersPart01
 
 
 class FlextHandlers[MessageT_contra, ResultT](
-    FlextHandlersPart01[MessageT_contra, ResultT]
+    FlextHandlersPart01[MessageT_contra, ResultT],
 ):
     """Generated MRO anchor for handler parts."""
 

@@ -22,7 +22,10 @@ class FlextDecoratorsLoggingPayloads(FlextDecoratorsBase):
 
     @staticmethod
     def _start_log_payload(
-        *, func_name: str, func_module: str, correlation_id: str | None
+        *,
+        func_name: str,
+        func_module: str,
+        correlation_id: str | None,
     ) -> tb.MutableJsonMapping:
         """Build structured operation-start log payload."""
         payload: tb.MutableJsonMapping = {

@@ -48,7 +48,7 @@ class ExamplesFlextShared(ExamplesFlextSharedBase):
                         kind=m.Examples.OutputKind.SUCCESS,
                         stem=self.caller_file.stem,
                         checks=checks,
-                    )
+                    ),
                 )
                 return
             actual_path = self.caller_file.with_suffix(".actual")
@@ -60,7 +60,7 @@ class ExamplesFlextShared(ExamplesFlextSharedBase):
                     stem=self.caller_file.stem,
                     expected_name=expected_path.name,
                     actual_name=actual_path.name,
-                )
+                ),
             )
             sys.exit(1)
         _ = expected_path.write_text(actual, encoding="utf-8")
@@ -72,7 +72,7 @@ class ExamplesFlextShared(ExamplesFlextSharedBase):
                 kind=m.Examples.OutputKind.GENERATED,
                 expected_name=expected_path.name,
                 checks=checks,
-            )
+            ),
         )
 
     class Person(m.Examples.Person):

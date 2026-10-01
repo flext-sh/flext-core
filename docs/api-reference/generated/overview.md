@@ -25,7 +25,7 @@
   `FlextConstants`, `FlextConstantsEnforcement`, `FlextContainer`, `FlextContext`,
   `FlextDecorators`, `FlextDispatcher` (+20 more)
 - Exported module shortcuts: `services`
-- Generated module pages: `22`
+- Generated module pages: `21`
 
 ## Next Pages
 

@@ -65,27 +65,32 @@ class TestsFlextLoggings:
         return u.create_module_logger("tests.flext_core.loggings")
 
     def test_create_module_logger_returns_usable_logger_instance(
-        self, logger: p.Logger
+        self,
+        logger: p.Logger,
     ) -> None:
         assert logger is not None
 
     def test_bind_returns_logger_accepting_subsequent_log_calls(
-        self, logger: p.Logger
+        self,
+        logger: p.Logger,
     ) -> None:
         bound = logger.bind(service_name="svc", correlation_id="cid")
         assert bound is not None
         result = self._assert_log_output(
-            lambda: bound.info("bound ok"), contains="bound ok"
+            lambda: bound.info("bound ok"),
+            contains="bound ok",
         )
         tm.ok(result)
 
     def test_new_returns_fresh_bound_logger_without_prior_context(
-        self, logger: p.Logger
+        self,
+        logger: p.Logger,
     ) -> None:
         refreshed = logger.bind(initial="x").new(fresh="y")
         assert refreshed is not None
         result = self._assert_log_output(
-            lambda: refreshed.info("new ok"), contains="new ok"
+            lambda: refreshed.info("new ok"),
+            contains="new ok",
         )
         tm.ok(result)
 
@@ -113,23 +118,30 @@ class TestsFlextLoggings:
         tm.ok(result)
 
     def test_build_exception_context_captures_exception_metadata(
-        self, logger: p.Logger
+        self,
+        logger: p.Logger,
     ) -> None:
         ctx = logger.build_exception_context(
-            exception=ValueError("boom"), exc_info=False, context={"op": "test"}
+            exception=ValueError("boom"),
+            exc_info=False,
+            context={"op": "test"},
         )
         tm.that(ctx, is_=dict, has="exception_type")
 
     def test_build_exception_context_without_exception_returns_context_dict(
-        self, logger: p.Logger
+        self,
+        logger: p.Logger,
     ) -> None:
         ctx = logger.build_exception_context(
-            exception=None, exc_info=False, context={"op": "test"}
+            exception=None,
+            exc_info=False,
+            context={"op": "test"},
         )
         tm.that(ctx, is_=dict)
 
     def test_performance_tracker_context_manager_completes_without_error(
-        self, logger: p.Logger
+        self,
+        logger: p.Logger,
     ) -> None:
         def emit() -> p.Result[bool] | None:
             with u.PerformanceTracker(logger, "operation_under_test"):
@@ -143,7 +155,11 @@ class TestsFlextLoggings:
 
     @pytest.mark.parametrize(("level", "expect_output"), LOG_LEVELS)
     def test_every_log_level_returns_success_result_with_value_true(
-        self, logger: p.Logger, level: str, *, expect_output: bool
+        self,
+        logger: p.Logger,
+        level: str,
+        *,
+        expect_output: bool,
     ) -> None:
         result = self._assert_log_output(
             lambda: getattr(logger, level)("test %s message", level),
@@ -155,11 +171,17 @@ class TestsFlextLoggings:
 
     @pytest.mark.parametrize(("level", "expect_output"), LOG_LEVELS)
     def test_every_log_level_accepts_structured_kwargs_and_returns_success(
-        self, logger: p.Logger, level: str, *, expect_output: bool
+        self,
+        logger: p.Logger,
+        level: str,
+        *,
+        expect_output: bool,
     ) -> None:
         result = self._assert_log_output(
             lambda: getattr(logger, level)(
-                "test message", request_id="r1", actor="tester"
+                "test message",
+                request_id="r1",
+                actor="tester",
             ),
             contains="test message",
             expect_output=expect_output,
@@ -187,13 +209,15 @@ class TestsFlextLoggings:
             _fail()
         except ValueError:
             result = self._assert_log_output(
-                lambda: logger.exception(message), contains=message
+                lambda: logger.exception(message),
+                contains=message,
             )
             tm.ok(result)
             tm.that(result.value, eq=True)
 
     def test_log_source_points_to_call_site_not_logging_internals(
-        self, logger: p.Logger
+        self,
+        logger: p.Logger,
     ) -> None:
         marker = "source probe"
         stream = io.StringIO()

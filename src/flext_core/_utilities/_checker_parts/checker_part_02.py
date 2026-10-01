@@ -38,32 +38,35 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart01):
             if hint is None:
                 return r[tb.TypeHintSpecifier].fail(c.ERR_CHECKER_TYPE_HINT_NONE)
             return r[tb.TypeHintSpecifier].ok(
-                hint if isinstance(hint, (str, type)) else str(hint)
+                hint if isinstance(hint, (str, type)) else str(hint),
             )
         annotation = parameter.annotation
         if annotation is inspect.Signature.empty:
             return r[tb.TypeHintSpecifier].fail(
-                c.ERR_CHECKER_NO_ANNOTATION_OR_TYPE_HINT
+                c.ERR_CHECKER_NO_ANNOTATION_OR_TYPE_HINT,
             )
         return r[tb.TypeHintSpecifier].ok(
-            annotation if isinstance(annotation, (str, type)) else str(annotation)
+            annotation if isinstance(annotation, (str, type)) else str(annotation),
         )
 
     @classmethod
     def _get_method_signature(
-        cls, handle_method: Callable[..., ts.ModuleExport]
+        cls,
+        handle_method: Callable[..., ts.ModuleExport],
     ) -> p.Result[inspect.Signature]:
         """Extract signature from handle method, wrapping errors in Result."""
         try:
             return r[inspect.Signature].ok(inspect.signature(handle_method))
         except c.EXC_TYPE_VALIDATION:
             return r[inspect.Signature].fail(
-                c.ERR_CHECKER_INVALID_HANDLE_METHOD_SIGNATURE
+                c.ERR_CHECKER_INVALID_HANDLE_METHOD_SIGNATURE,
             )
 
     @classmethod
     def _get_type_hints_safe(
-        cls, handle_method: Callable[..., ts.ModuleExport], handler_class: type
+        cls,
+        handle_method: Callable[..., ts.ModuleExport],
+        handler_class: type,
     ) -> tb.MappingKV[str, tb.TypeHintSpecifier | None]:
         """Safely extract type hints, returning empty dict on error."""
         hints: tb.MappingKV[str, tb.TypeHintSpecifier | None] = {}
@@ -79,13 +82,16 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart01):
 
     @classmethod
     def _handle_instance_check(
-        cls, message_type: tb.TypeHintSpecifier, origin_type: tb.TypeHintSpecifier
+        cls,
+        message_type: tb.TypeHintSpecifier,
+        origin_type: tb.TypeHintSpecifier,
     ) -> bool:
         """Instance check for non-type objects; returns True on TypeError."""
         try:
             if isinstance(origin_type, type):
                 matched = isinstance(message_type, origin_type) or cls._is_subclass_of(
-                    message_type, origin_type
+                    message_type,
+                    origin_type,
                 )
             else:
                 matched = True
@@ -105,7 +111,10 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart01):
         """Type checking for types or objects with __origin__."""
         try:
             matched = cls._match_type_or_origin(
-                expected_type, message_type, origin_type, message_origin
+                expected_type,
+                message_type,
+                origin_type,
+                message_origin,
             )
         except TypeError:
             return message_type is expected_type
@@ -129,7 +138,9 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart01):
 
     @classmethod
     def _evaluate_type_compatibility(
-        cls, expected_type: tb.TypeHintSpecifier, message_type: ts.MessageTypeSpecifier
+        cls,
+        expected_type: tb.TypeHintSpecifier,
+        message_type: ts.MessageTypeSpecifier,
     ) -> bool:
         """Evaluate compatibility between expected and actual message types."""
         object_check = cls._check_object_type_compatibility(expected_type)
@@ -138,13 +149,19 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart01):
         origin_type = get_origin(expected_type) or expected_type
         message_origin = get_origin(message_type) or message_type
         dict_check = cls._check_dict_compatibility(
-            expected_type, message_type, origin_type, message_origin
+            expected_type,
+            message_type,
+            origin_type,
+            message_origin,
         )
         if dict_check:
             return dict_check
         if isinstance(message_type, type) or hasattr(message_type, "__origin__"):
             return cls._handle_type_or_origin_check(
-                expected_type, message_type, origin_type, message_origin
+                expected_type,
+                message_type,
+                origin_type,
+                message_origin,
             )
         return cls._handle_instance_check(message_type, origin_type)
 

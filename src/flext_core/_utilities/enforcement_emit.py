@@ -31,7 +31,7 @@ class FlextUtilitiesEnforcementEmit:
                 importlib.resources
                 .files(_enforcement_data)
                 .joinpath(c.ENFORCEMENT_CATALOG_RESOURCE)
-                .read_text(encoding="utf-8")
+                .read_text(encoding="utf-8"),
             )
         return cls._canonical_catalog
 

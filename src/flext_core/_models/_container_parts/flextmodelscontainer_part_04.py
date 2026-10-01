@@ -49,7 +49,8 @@ class FlextModelsContainer(FlextModelsContainerPart03):
         name: Annotated[
             t.NonEmptyStr,
             mp.Field(
-                ..., description="Name to register this factory under in the container"
+                ...,
+                description="Name to register this factory under in the container",
             ),
         ]
         singleton: Annotated[
@@ -59,7 +60,8 @@ class FlextModelsContainer(FlextModelsContainerPart03):
         lazy: Annotated[
             bool,
             mp.Field(
-                True, description="Whether to defer factory invocation until first use"
+                True,
+                description="Whether to defer factory invocation until first use",
             ),
         ] = True
 

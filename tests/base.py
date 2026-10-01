@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 
 class TestsFlextServiceBase[TDomainResult: p.Base = p.Base](
-    _FlextTestsServiceBase[TDomainResult]
+    _FlextTestsServiceBase[TDomainResult],
 ):
     """Project-local test service base with flext-core result typing."""
 

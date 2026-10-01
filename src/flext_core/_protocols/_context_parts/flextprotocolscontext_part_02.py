@@ -92,7 +92,8 @@ class FlextProtocolsContext(FlextProtocolsContextPart01):
 
         @staticmethod
         def register_service(
-            service_name: str, service: t.RegisterableService
+            service_name: str,
+            service: t.RegisterableService,
         ) -> p.Result[bool]:
             """Register a named service through the configured container."""
             ...
@@ -104,7 +105,8 @@ class FlextProtocolsContext(FlextProtocolsContextPart01):
 
         @staticmethod
         def new_correlation(
-            correlation_id: str | None = None, parent_id: str | None = None
+            correlation_id: str | None = None,
+            parent_id: str | None = None,
         ) -> AbstractContextManager[str]:
             """Create a scoped correlation-id context manager."""
             ...
@@ -121,7 +123,8 @@ class FlextProtocolsContext(FlextProtocolsContextPart01):
 
         @staticmethod
         def service_context(
-            service_name: str, version: str | None = None
+            service_name: str,
+            version: str | None = None,
         ) -> AbstractContextManager[None]:
             """Create a service-scoped context manager."""
             ...

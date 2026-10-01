@@ -30,7 +30,11 @@ class TestsFlextCoreUtilitiesDomain:
         ],
     )
     def test_join_produces_expected_string(
-        self, values: list[str], separator: str, case: str | None, expected: str
+        self,
+        values: list[str],
+        separator: str,
+        case: str | None,
+        expected: str,
     ) -> None:
         assert u.join(values, separator=separator, case=case) == expected
 
@@ -51,7 +55,11 @@ class TestsFlextCoreUtilitiesDomain:
         ],
     )
     def test_normalize_returns_expected_string(
-        self, *, value: str | float | bool, case: str | None, expected: str
+        self,
+        *,
+        value: str | float | bool,
+        case: str | None,
+        expected: str,
     ) -> None:
         assert u.normalize(value, case=case) == expected
 
@@ -61,7 +69,9 @@ class TestsFlextCoreUtilitiesDomain:
         [("hello", "hello"), (42, "42"), (42.0, "42"), (9.876, "9.88"), (None, "")],
     )
     def test_to_str_converts_value(
-        self, value: str | float | None, expected: str
+        self,
+        value: str | float | None,
+        expected: str,
     ) -> None:
         assert u.to_str(value) == expected
 
@@ -82,7 +92,9 @@ class TestsFlextCoreUtilitiesDomain:
         ],
     )
     def test_to_str_list_converts_value(
-        self, value: str | list[str] | list[int] | None, expected: list[str]
+        self,
+        value: str | list[str] | list[int] | None,
+        expected: list[str],
     ) -> None:
         assert u.to_str_list(value) == expected
 
@@ -104,7 +116,10 @@ class TestsFlextCoreUtilitiesDomain:
         ],
     )
     def test_to_int_converts_value(
-        self, *, value: float | str | bool | None, expected: int
+        self,
+        *,
+        value: float | str | bool | None,
+        expected: int,
     ) -> None:
         assert u.to_int(value) == expected
 
@@ -117,7 +132,10 @@ class TestsFlextCoreUtilitiesDomain:
         [(5, 5.0), (5.5, 5.5), ("2.5", 2.5), ("bad", 0.0), (None, 0.0), (True, 0.0)],
     )
     def test_to_float_converts_value(
-        self, *, value: float | str | bool | None, expected: float
+        self,
+        *,
+        value: float | str | bool | None,
+        expected: float,
     ) -> None:
         assert u.to_float(value) == expected
 
@@ -138,7 +156,10 @@ class TestsFlextCoreUtilitiesDomain:
         ],
     )
     def test_to_bool_converts_value(
-        self, *, value: bool | int | str | None, expected: bool
+        self,
+        *,
+        value: bool | int | str | None,
+        expected: bool,
     ) -> None:
         assert u.to_bool(value) is expected
 
@@ -162,7 +183,10 @@ class TestsFlextCoreUtilitiesDomain:
         ],
     )
     def test_to_positive_int_rejects_non_positive(
-        self, *, value: float | str | bool | None, expected: int
+        self,
+        *,
+        value: float | str | bool | None,
+        expected: int,
     ) -> None:
         assert u.to_positive_int(value) == expected
 
@@ -175,6 +199,8 @@ class TestsFlextCoreUtilitiesDomain:
         [("value", "value"), ("", None), (None, None), (123, None)],
     )
     def test_to_optional_str_returns_non_empty_string_only(
-        self, value: str | int | None, expected: str | None
+        self,
+        value: str | int | None,
+        expected: str | None,
     ) -> None:
         assert u.to_optional_str(value) == expected

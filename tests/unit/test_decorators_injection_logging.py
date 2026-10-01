@@ -26,7 +26,8 @@ class TestsFlextCoreDecoratorsInjectionLogging:
 
     # --- d.inject --------------------------------------------------------
     def test_inject_resolves_registered_service_from_container(
-        self, container: FlextContainer
+        self,
+        container: FlextContainer,
     ) -> None:
         container.bind("inject_greeter", "HELLO")
 
@@ -37,7 +38,8 @@ class TestsFlextCoreDecoratorsInjectionLogging:
         assert greet("bob") == "HELLO:bob"
 
     def test_inject_explicit_kwarg_overrides_container_value(
-        self, container: FlextContainer
+        self,
+        container: FlextContainer,
     ) -> None:
         container.bind("inject_override", "CONTAINER")
 
@@ -55,7 +57,8 @@ class TestsFlextCoreDecoratorsInjectionLogging:
         assert use() == "fallback"
 
     def test_inject_delivers_pydantic_model_instance(
-        self, container: FlextContainer
+        self,
+        container: FlextContainer,
     ) -> None:
         class InjectedService(m.BaseModel):
             value: str
@@ -93,7 +96,9 @@ class TestsFlextCoreDecoratorsInjectionLogging:
         ],
     )
     def test_log_operation_propagates_wrapped_exception(
-        self, exc_type: type[Exception], message: str
+        self,
+        exc_type: type[Exception],
+        message: str,
     ) -> None:
         @d.log_operation("failing_op")
         def boom() -> None:

@@ -142,10 +142,13 @@ class TestsFlextCoreTypingsValidationScalars:
         ids=["hostname", "uri", "timestamp"],
     )
     @pytest.mark.parametrize(
-        "value", [c.LOCALHOST, "https://example.com", "2025-01-01T00:00:00Z"]
+        "value",
+        [c.LOCALHOST, "https://example.com", "2025-01-01T00:00:00Z"],
     )
     def test_non_empty_string_aliases_accept_non_empty(
-        self, alias: type[str], value: str
+        self,
+        alias: type[str],
+        value: str,
     ) -> None:
         """Non-empty string aliases round-trip any string of length >= 1."""
         adapter: m.TypeAdapter[str] = u.type_adapter(alias)

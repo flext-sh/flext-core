@@ -26,7 +26,9 @@ from .flextprotocolscontainer_part_01 import (
 class FlextProtocolsContainer(FlextProtocolsContainerPart01):
     @runtime_checkable
     class Container(
-        FlextProtocolsSettings.Configurable, FlextProtocolsBase.Base, Protocol
+        FlextProtocolsSettings.Configurable,
+        FlextProtocolsBase.Base,
+        Protocol,
     ):
         """Dependency injection container protocol.
 
@@ -59,12 +61,18 @@ class FlextProtocolsContainer(FlextProtocolsContainerPart01):
 
         @overload
         def resolve[T: t.RegisterableService](
-            self, name: str, *, type_cls: type[T]
+            self,
+            name: str,
+            *,
+            type_cls: type[T],
         ) -> FlextProtocolsResult.Result[T]: ...
 
         @overload
         def resolve(
-            self, name: str, *, type_cls: None = None
+            self,
+            name: str,
+            *,
+            type_cls: None = None,
         ) -> FlextProtocolsResult.Result[t.RegisterableService]: ...
 
         def snapshot(self) -> m.ConfigMap:

@@ -30,7 +30,8 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def same_type(
-        obj_a: t.JsonPayload | prt.HasModelDump, obj_b: t.JsonPayload | prt.HasModelDump
+        obj_a: t.JsonPayload | prt.HasModelDump,
+        obj_b: t.JsonPayload | prt.HasModelDump,
     ) -> bool:
         """Exact-type identity comparison (no MRO traversal).
 
@@ -64,7 +65,8 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def compare_value_objects_by_value(
-        obj_a: t.JsonPayload | prt.HasModelDump, obj_b: t.JsonPayload | prt.HasModelDump
+        obj_a: t.JsonPayload | prt.HasModelDump,
+        obj_b: t.JsonPayload | prt.HasModelDump,
     ) -> bool:
         """Compare two value objects by all attributes (value, not identity).
 
@@ -77,10 +79,12 @@ class FlextUtilitiesDomain:
             result = False
         else:
             obj_a_iterable = hasattr(obj_a, "__iter__") and not hasattr(
-                obj_a, "model_dump"
+                obj_a,
+                "model_dump",
             )
             obj_b_iterable = hasattr(obj_b, "__iter__") and not hasattr(
-                obj_b, "model_dump"
+                obj_b,
+                "model_dump",
             )
             if obj_a_iterable or obj_b_iterable:
                 if isinstance(obj_a, Mapping) and isinstance(obj_b, Mapping):
@@ -92,7 +96,8 @@ class FlextUtilitiesDomain:
             elif not FlextUtilitiesDomain.same_type(obj_b, obj_a):
                 result = False
             elif isinstance(obj_a, m.EnforcedModel) and isinstance(
-                obj_b, m.EnforcedModel
+                obj_b,
+                m.EnforcedModel,
             ):
                 result = obj_a.model_dump() == obj_b.model_dump()
             else:
@@ -113,7 +118,8 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def hash_entity_by_id(
-        entity: t.JsonPayload | prt.HasModelDump, id_attr: str = c.FIELD_ID
+        entity: t.JsonPayload | prt.HasModelDump,
+        id_attr: str = c.FIELD_ID,
     ) -> int:
         """Hash entity by ID + type. Falls back to identity hash if ID missing."""
         if u.scalar(entity):

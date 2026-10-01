@@ -47,7 +47,9 @@ class FlextExceptionsFactories:
         if error is None:
             template_without_error = c.ERR_TEMPLATE_FAILED_WITH_ERROR.split(": ", 1)[0]
             message: str = FlextExceptionsTemplate.render_template(
-                template_without_error, operation=operation, params=params
+                template_without_error,
+                operation=operation,
+                params=params,
             )
             return message
         message_with_error: str = FlextExceptionsTemplate.render_template(
@@ -76,7 +78,7 @@ class FlextExceptionsFactories:
         if params is None:
             return params_type.model_validate(update)
         return params.model_copy(
-            update={key: value for key, value in update.items() if value is not None}
+            update={key: value for key, value in update.items() if value is not None},
         )
 
     @staticmethod
@@ -93,7 +95,8 @@ class FlextExceptionsFactories:
             message,
             error_code=options.error_code or default_error_code,
             error_data=FlextExceptionsTemplate.result_error_data(
-                params, cause=str(error) if error is not None else None
+                params,
+                cause=str(error) if error is not None else None,
             ),
             exception=error if isinstance(error, BaseException) else None,
         )
@@ -114,10 +117,13 @@ class FlextExceptionsFactories:
 
         """
         params = m.OperationErrorParams(
-            operation=operation, reason=str(exc) if exc is not None else None
+            operation=operation,
+            reason=str(exc) if exc is not None else None,
         )
         msg = FlextExceptionsFactories._failure_message(
-            operation, params=params, error=exc
+            operation,
+            params=params,
+            error=exc,
         )
         return FlextExceptionsFactories._fail_result(
             msg,
@@ -143,7 +149,8 @@ class FlextExceptionsFactories:
 
         """
         params = m.NotFoundErrorParams(
-            resource_type=resource_type, resource_id=resource_id
+            resource_type=resource_type,
+            resource_id=resource_id,
         )
         msg = FlextExceptionsTemplate.render_template(
             c.ERR_SERVICE_NOT_FOUND,

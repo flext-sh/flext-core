@@ -91,7 +91,8 @@ class FlextUtilitiesBeartypeModuleVisitor:
 
     @staticmethod
     def v_module_alias(
-        params: me.AliasRebindParams, target: type
+        params: me.AliasRebindParams,
+        target: type,
     ) -> t.StrMapping | None:
         """MODULE_ALIAS — module-level CapWords compat alias / nested-class hoist."""
         if params.expected_form != "no_module_compat_alias":
@@ -125,7 +126,8 @@ class FlextUtilitiesBeartypeModuleVisitor:
                 {"alias": name, "target": value.__name__, "file": filename}
                 for name, value in candidates
                 if not FlextUtilitiesBeartypeModuleSource.internal_dependency(
-                    tree, name
+                    tree,
+                    name,
                 )
             ),
             _NO_VIOLATION,
@@ -133,7 +135,8 @@ class FlextUtilitiesBeartypeModuleVisitor:
 
     @staticmethod
     def v_duplicate_symbol(
-        _params: me.DuplicateSymbolParams, _target: type
+        _params: me.DuplicateSymbolParams,
+        _target: type,
     ) -> t.StrMapping | None:
         """DUPLICATE_SYMBOL — workspace cross-project SSOT (Phase 3 hook).
 

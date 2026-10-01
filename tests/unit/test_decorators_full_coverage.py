@@ -33,7 +33,8 @@ class TestsFlextCoreDecorators:
         tm.that(any(w.category is DeprecationWarning for w in caught), eq=True)
 
     def test_inject_resolves_dependency_from_shared_container(
-        self, clean_container: p.Container
+        self,
+        clean_container: p.Container,
     ) -> None:
         _ = clean_container
         di = FlextContainer.shared()
@@ -51,7 +52,8 @@ class TestsFlextCoreDecorators:
         tm.that(injected_fn(), eq="dep-value")
 
     def test_inject_falls_back_when_binding_missing(
-        self, clean_container: p.Container
+        self,
+        clean_container: p.Container,
     ) -> None:
         _ = clean_container
 
@@ -140,7 +142,8 @@ class TestsFlextCoreDecorators:
         tm.that(calls["n"], eq=2)
 
     def test_combined_applies_injection_on_standard_path(
-        self, clean_container: p.Container
+        self,
+        clean_container: p.Container,
     ) -> None:
         _ = clean_container
         di = FlextContainer.shared()
@@ -153,7 +156,8 @@ class TestsFlextCoreDecorators:
         tm.that(fn(), eq=43)
 
     def test_combined_wraps_with_railway_when_enabled(
-        self, clean_container: p.Container
+        self,
+        clean_container: p.Container,
     ) -> None:
         _ = clean_container
 
@@ -173,7 +177,8 @@ class TestsFlextCoreDecorators:
         tm.that(fn(), eq="ok")
 
     def test_factory_registers_callable_and_produces_value(
-        self, clean_container: p.Container
+        self,
+        clean_container: p.Container,
     ) -> None:
         _ = clean_container
 

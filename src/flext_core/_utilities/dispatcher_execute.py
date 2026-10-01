@@ -22,7 +22,8 @@ def _adapt_dispatcher_output(
     result: p.Result[t.JsonPayload]
     if raw_output is None:
         result = dispatch_result.fail_op(
-            "validate handler return payload", c.ERR_HANDLER_RETURNED_NONE
+            "validate handler return payload",
+            c.ERR_HANDLER_RETURNED_NONE,
         )
     elif isinstance(raw_output, p.Result):
         if raw_output.failure:
@@ -71,7 +72,8 @@ def _normalize_dispatcher_output(
     if u.container(raw_candidate) or u.pydantic_model(raw_candidate):
         return raw_candidate
     return dispatch_result.fail_op(
-        "validate handler return payload", c.ERR_HANDLER_RETURNED_NON_CONTAINER_VALUE
+        "validate handler return payload",
+        c.ERR_HANDLER_RETURNED_NON_CONTAINER_VALUE,
     )
 
 

@@ -22,7 +22,8 @@ class FlextResultComposition[T](FlextResultTransforms[T]):
 
     @classmethod
     def accumulate_errors[ValueT](
-        cls: type[Self], *results: p.Result[ValueT]
+        cls: type[Self],
+        *results: p.Result[ValueT],
     ) -> p.Result[Sequence[ValueT]]:
         successes: MutableSequence[ValueT] = []
         errors: MutableSequence[str] = []
@@ -50,7 +51,8 @@ class FlextResultComposition[T](FlextResultTransforms[T]):
                     result = func(item)
                 except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
                     return cast(
-                        "p.Result[Sequence[U]]", cls.fail(str(exc), exception=exc)
+                        "p.Result[Sequence[U]]",
+                        cls.fail(str(exc), exception=exc),
                     )
                 if result.failure:
                     return cast("p.Result[Sequence[U]]", cls.from_failure(result))
@@ -62,7 +64,7 @@ class FlextResultComposition[T](FlextResultTransforms[T]):
                 all_results.append(copy_result(cls._factory(), func(item)))
             except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
                 all_results.append(
-                    cast("p.Result[U]", cls.fail(str(exc), exception=exc))
+                    cast("p.Result[U]", cls.fail(str(exc), exception=exc)),
                 )
         return cls.accumulate_errors(*all_results)
 
@@ -100,7 +102,8 @@ class FlextResultComposition[T](FlextResultTransforms[T]):
 
     @classmethod
     def safe[U, **PFunc](
-        cls: type[Self], func: Callable[PFunc, U]
+        cls: type[Self],
+        func: Callable[PFunc, U],
     ) -> Callable[PFunc, p.Result[U]]:
         def wrapper(*args: PFunc.args, **kwargs: PFunc.kwargs) -> p.Result[U]:
             try:

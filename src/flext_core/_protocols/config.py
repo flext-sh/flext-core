@@ -33,7 +33,9 @@ class FlextProtocolsConfig:
             ...
 
         def config_merge(
-            self, base: t.JsonMapping, override: t.JsonMapping
+            self,
+            base: t.JsonMapping,
+            override: t.JsonMapping,
         ) -> t.JsonMapping:
             """Deep-merge ``override`` onto ``base``, returning a new mapping."""
             ...

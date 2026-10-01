@@ -19,13 +19,15 @@ class TestsFlextModelsTestDataIdentityMixin:
             "test_module"
         )
         handler_name: Annotated[
-            str, m.Field(description="Default test handler name")
+            str,
+            m.Field(description="Default test handler name"),
         ] = "test_handler"
         chain_name: Annotated[str, m.Field(description="Default test chain name")] = (
             "test_chain"
         )
         command_type: Annotated[
-            str, m.Field(description="Default test command type")
+            str,
+            m.Field(description="Default test command type"),
         ] = "test_command"
         query_type: Annotated[str, m.Field(description="Default test query type")] = (
             "test_query"
@@ -34,13 +36,16 @@ class TestsFlextModelsTestDataIdentityMixin:
             "test_logger"
         )
         app_name: Annotated[
-            str, m.Field(description="Default test application name")
+            str,
+            m.Field(description="Default test application name"),
         ] = "test-app"
         validation_app: Annotated[
-            str, m.Field(description="Default validation test application name")
+            str,
+            m.Field(description="Default validation test application name"),
         ] = "validation-test"
         source_service: Annotated[
-            str, m.Field(description="Default source service name")
+            str,
+            m.Field(description="Default source service name"),
         ] = "test_service"
 
 

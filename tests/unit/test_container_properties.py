@@ -33,7 +33,8 @@ class TestsFlextCoreContainerProperties:
     # -- registration + resolution roundtrips ------------------------------
 
     def test_bind_then_resolve_returns_bound_value(
-        self, container: FlextContainer
+        self,
+        container: FlextContainer,
     ) -> None:
         """A value bound under a name resolves back to that exact value."""
         _ = container.bind("answer", 42)
@@ -41,7 +42,8 @@ class TestsFlextCoreContainerProperties:
         tm.ok(container.resolve("answer", type_cls=int), eq=42)
 
     def test_factory_then_resolve_invokes_factory(
-        self, container: FlextContainer
+        self,
+        container: FlextContainer,
     ) -> None:
         """A registered factory is invoked and its product is resolved."""
         _ = container.factory("greeting", lambda: "hello")
@@ -49,7 +51,8 @@ class TestsFlextCoreContainerProperties:
         tm.ok(container.resolve("greeting", type_cls=str), eq="hello")
 
     def test_resolve_without_type_returns_service(
-        self, container: FlextContainer
+        self,
+        container: FlextContainer,
     ) -> None:
         """Resolving without a type constraint still returns the value."""
         _ = container.bind("plain", "value")
@@ -67,7 +70,8 @@ class TestsFlextCoreContainerProperties:
         tm.that(container.has("late"), eq=True)
 
     def test_names_lists_registered_and_hides_internal(
-        self, container: FlextContainer
+        self,
+        container: FlextContainer,
     ) -> None:
         """``names`` exposes user registrations only, not core services."""
         _ = container.bind("svc_a", 1)
@@ -82,7 +86,8 @@ class TestsFlextCoreContainerProperties:
     # -- error paths -------------------------------------------------------
 
     def test_resolve_unknown_name_fails_not_found(
-        self, container: FlextContainer
+        self,
+        container: FlextContainer,
     ) -> None:
         """Resolving an unregistered name yields a not-found failure."""
         tm.fail(container.resolve("ghost"), has="ghost")
@@ -109,7 +114,8 @@ class TestsFlextCoreContainerProperties:
         tm.fail(container.resolve("temp"), has="temp")
 
     def test_clear_removes_all_user_registrations(
-        self, container: FlextContainer
+        self,
+        container: FlextContainer,
     ) -> None:
         """``clear`` empties user registrations reported by ``names``."""
         _ = container.bind("a", 1)
@@ -123,7 +129,8 @@ class TestsFlextCoreContainerProperties:
     # -- invariants --------------------------------------------------------
 
     def test_bind_duplicate_raises_and_first_write_stays(
-        self, container: FlextContainer
+        self,
+        container: FlextContainer,
     ) -> None:
         """Re-binding an existing name raises and keeps the original value."""
         _ = container.bind("dup", 1)
@@ -134,7 +141,8 @@ class TestsFlextCoreContainerProperties:
         tm.ok(container.resolve("dup", type_cls=int), eq=1)
 
     def test_bind_returns_same_container_for_chaining(
-        self, container: FlextContainer
+        self,
+        container: FlextContainer,
     ) -> None:
         """Mutating operations return the container to support chaining."""
         assert container.bind("x", 1) is container
@@ -145,7 +153,8 @@ class TestsFlextCoreContainerProperties:
         assert FlextContainer.shared() is container
 
     def test_snapshot_exposes_merged_settings_mapping(
-        self, container: FlextContainer
+        self,
+        container: FlextContainer,
     ) -> None:
         """``snapshot`` returns a mapping serializable via its public API."""
         snapshot = container.snapshot()
@@ -159,7 +168,7 @@ class TestsFlextCoreContainerProperties:
             min_size=1,
             max_size=30,
             alphabet=st.characters(min_codepoint=48, max_codepoint=122),
-        )
+        ),
     )
     @settings(max_examples=50)
     def test_register_get_roundtrip_property(self, name: str) -> None:

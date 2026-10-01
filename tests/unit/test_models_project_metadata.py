@@ -34,7 +34,9 @@ class TestsFlextModelsProjectMetadata:
         ],
     )
     def test_derive_class_stem_covers_overrides_and_pascalization(
-        self, project_name: str, expected_stem: str
+        self,
+        project_name: str,
+        expected_stem: str,
     ) -> None:
         assert u.derive_class_stem(project_name) == expected_stem
 
@@ -51,7 +53,9 @@ class TestsFlextModelsProjectMetadata:
         ],
     )
     def test_derive_class_stem_normalizes_kebab_and_snake(
-        self, slug: str, expected: str
+        self,
+        slug: str,
+        expected: str,
     ) -> None:
         assert u.derive_class_stem(slug) == expected
 
@@ -74,7 +78,8 @@ class TestsFlextModelsProjectMetadata:
         return m.ProjectMetadata.model_validate(payload)
 
     def test_project_metadata_exposes_package_name_and_class_stem(
-        self, tmp_path: Path
+        self,
+        tmp_path: Path,
     ) -> None:
         metadata = self._metadata(tmp_path)
 
@@ -141,7 +146,8 @@ class TestsFlextModelsProjectMetadata:
 
         assert project.authors == (
             m.ProjectAuthor(
-                name=c.Tests.SAMPLE_AUTHOR_ALICE, email="alice@example.com"
+                name=c.Tests.SAMPLE_AUTHOR_ALICE,
+                email="alice@example.com",
             ),
             m.ProjectAuthor(name=c.Tests.SAMPLE_AUTHOR_BOB),
         )

@@ -57,7 +57,9 @@ class TestsFlextCoreDecoratorsRailwayRetry:
         [(None, c.ErrorCode.OPERATION_ERROR.value), ("CUSTOM_ERROR", "CUSTOM_ERROR")],
     )
     def test_railway_failure_carries_expected_error_code(
-        self, error_code: str | None, expected_code: str
+        self,
+        error_code: str | None,
+        expected_code: str,
     ) -> None:
         # Arrange
         @d.railway(error_code=error_code)
@@ -144,7 +146,8 @@ class TestsFlextCoreDecoratorsRailwayRetry:
 
         # Act / Assert
         with pytest.raises(
-            e.FlextTimeoutError, match="failed after 2 attempts"
+            e.FlextTimeoutError,
+            match="failed after 2 attempts",
         ) as info:
             always_fails()
         assert info.value.operation == "always_fails"

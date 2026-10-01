@@ -23,7 +23,8 @@ class _ForeignResult(m.ArbitraryTypesModel):
     error: str | None = m.Field(default=None, description="Failure message.")
     error_code: str | None = m.Field(default=None, description="Failure code.")
     error_data: t.JsonMapping | None = m.Field(
-        default=None, description="Failure metadata."
+        default=None,
+        description="Failure metadata.",
     )
     exception: Exception | None = m.Field(default=None, description="Failure cause.")
 
@@ -50,7 +51,10 @@ class TestsFlextCoreResultFactoryDip:
     def test_from_result_copies_failure_metadata(self) -> None:
         cause = ValueError("root")
         source: p.Result[str] = r[str].fail(
-            "broken", error_code="E_BROKEN", error_data={"k": "v"}, exception=cause
+            "broken",
+            error_code="E_BROKEN",
+            error_data={"k": "v"},
+            exception=cause,
         )
         copied: p.Result[str] = r.from_result(source)
         tm.fail(copied, has="broken")
@@ -61,7 +65,10 @@ class TestsFlextCoreResultFactoryDip:
     def test_from_failure_rebuilds_failed_result(self) -> None:
         cause = RuntimeError("x")
         source: p.Result[int] = r[int].fail(
-            "nope", error_code="E_NOPE", error_data={"a": 1}, exception=cause
+            "nope",
+            error_code="E_NOPE",
+            error_data={"a": 1},
+            exception=cause,
         )
         rebuilt: p.Result[int] = r[int].from_failure(source)
         tm.fail(rebuilt, has="nope")
@@ -136,7 +143,9 @@ class TestsFlextCoreResultFactoryDip:
 
     def test_from_failure_rebuilds_foreign_failure_like(self) -> None:
         foreign = _ForeignResult(
-            error="foreign-fail", error_code="E_FOREIGN", error_data={"k": 1}
+            error="foreign-fail",
+            error_code="E_FOREIGN",
+            error_data={"k": 1},
         )
         rebuilt: p.Result[int] = r[int].from_failure(foreign)
         tm.fail(rebuilt, has="foreign-fail")
@@ -147,7 +156,9 @@ class TestsFlextCoreResultFactoryDip:
     def test_from_result_preserves_exception_identity_on_flext_result(self) -> None:
         cause = RuntimeError("root-cause")
         source: p.Result[int] = r[int].fail(
-            "copy-exc", error_code="E_EXC", exception=cause
+            "copy-exc",
+            error_code="E_EXC",
+            exception=cause,
         )
         copied: p.Result[int] = r.from_result(source)
         tm.fail(copied, has="copy-exc")

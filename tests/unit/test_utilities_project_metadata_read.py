@@ -34,7 +34,8 @@ def _read(root: Path) -> p.ResultView[m.ProjectMetadata]:
         return cast(
             "p.ResultView[m.ProjectMetadata]",
             r[m.ProjectMetadata].fail(
-                f"cannot read project metadata from {resolved}: {exc}", exception=exc
+                f"cannot read project metadata from {resolved}: {exc}",
+                exception=exc,
             ),
         )
     return cast("p.ResultView[m.ProjectMetadata]", r[m.ProjectMetadata].ok(meta))
@@ -49,7 +50,9 @@ class TestsFlextUtilitiesProjectMetadataRead:
         ],
     )
     def test_derive_class_stem_produces_pascal_case_from_project_name(
-        self, project_name: str, expected_stem: str
+        self,
+        project_name: str,
+        expected_stem: str,
     ) -> None:
         tm.that(u.derive_class_stem(project_name), eq=expected_stem)
 
@@ -57,7 +60,8 @@ class TestsFlextUtilitiesProjectMetadataRead:
         tm.that(u.derive_class_stem(""), eq="")
 
     def test_read_project_metadata_parses_minimal_pyproject(
-        self, tmp_path: Path
+        self,
+        tmp_path: Path,
     ) -> None:
         root = write_pyproject(
             tmp_path,
@@ -74,7 +78,8 @@ class TestsFlextUtilitiesProjectMetadataRead:
         tm.that(meta.class_stem, eq=c.Tests.SAMPLE_PROJECT_CLASS_STEM)
 
     def test_read_project_metadata_extracts_author_names_from_project_table(
-        self, tmp_path: Path
+        self,
+        tmp_path: Path,
     ) -> None:
         root = write_pyproject(
             tmp_path,
@@ -95,7 +100,8 @@ class TestsFlextUtilitiesProjectMetadataRead:
         )
 
     def test_read_project_metadata_derives_package_name_and_stem_from_name(
-        self, tmp_path: Path
+        self,
+        tmp_path: Path,
     ) -> None:
         root = write_pyproject(
             tmp_path,
@@ -110,7 +116,8 @@ class TestsFlextUtilitiesProjectMetadataRead:
         tm.that(meta.class_stem, eq=c.Tests.SAMPLE_PROJECT_CLASS_STEM)
 
     def test_read_project_metadata_extracts_optional_url_and_requires_python(
-        self, tmp_path: Path
+        self,
+        tmp_path: Path,
     ) -> None:
         root = write_pyproject(
             tmp_path,
@@ -127,7 +134,8 @@ class TestsFlextUtilitiesProjectMetadataRead:
         tm.that(meta.project.urls.homepage, eq="https://example.com")
 
     def test_read_project_metadata_defaults_optional_fields_when_absent(
-        self, tmp_path: Path
+        self,
+        tmp_path: Path,
     ) -> None:
         root = write_pyproject(
             tmp_path,
@@ -153,11 +161,15 @@ class TestsFlextUtilitiesProjectMetadataRead:
         )
         meta = _read(root).value
         tm.rejects_assignment(
-            meta, "package_name", "mutated", expected=m.ValidationError
+            meta,
+            "package_name",
+            "mutated",
+            expected=m.ValidationError,
         )
 
     def test_read_project_metadata_fails_on_missing_pyproject(
-        self, tmp_path: Path
+        self,
+        tmp_path: Path,
     ) -> None:
         result = _read(tmp_path)
         tm.that(result.failure, eq=True)
@@ -171,7 +183,10 @@ class TestsFlextUtilitiesProjectMetadataRead:
         ids=["missing_name", "missing_version"],
     )
     def test_read_project_metadata_fails_on_incomplete_pyproject(
-        self, tmp_path: Path, body: str, match_pattern: str
+        self,
+        tmp_path: Path,
+        body: str,
+        match_pattern: str,
     ) -> None:
         root = write_pyproject(tmp_path, body)
         result = _read(root)

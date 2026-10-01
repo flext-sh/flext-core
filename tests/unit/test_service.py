@@ -97,10 +97,13 @@ class TestsFlextService(FlextTestsCase):
     # --- ServiceUserData: public model state -----------------------------
 
     @pytest.mark.parametrize(
-        ("user_id", "name"), [(1, "test_user"), (2, "other"), (99, "édge-café")]
+        ("user_id", "name"),
+        [(1, "test_user"), (2, "other"), (99, "édge-café")],
     )
     def test_service_user_data_round_trips_public_state(
-        self, user_id: int, name: str
+        self,
+        user_id: int,
+        name: str,
     ) -> None:
         data = m.Tests.ServiceUserData(user_id=user_id, name=name)
 
@@ -155,7 +158,7 @@ class TestsFlextService(FlextTestsCase):
         baseline_level = self._PureService.fetch_settings().log_level
 
         with self._PureService.isolated_test_runtime(
-            log_level="WARNING"
+            log_level="WARNING",
         ) as scoped_service:
             scoped_settings = FlextTestsSettings.model_validate(scoped_service.settings)
 

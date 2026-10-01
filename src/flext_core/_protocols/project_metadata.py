@@ -116,7 +116,8 @@ class FlextProtocolsProjectMetadata:
         def readme_sections(
             self,
         ) -> tuple[
-            FlextProtocolsProjectMetadata.ProjectToolFlextReadmeSection, ...
+            FlextProtocolsProjectMetadata.ProjectToolFlextReadmeSection,
+            ...,
         ]: ...
 
     @runtime_checkable

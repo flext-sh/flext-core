@@ -1,5 +1,9 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Scripts package."""
+"""Scripts package.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -10,12 +14,11 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core import d, e, h, r, s, x
-
-    from .constants import ScriptsFlextConstants, ScriptsFlextConstants as c
-    from .models import ScriptsFlextModels, ScriptsFlextModels as m
-    from .protocols import ScriptsFlextProtocols, ScriptsFlextProtocols as p
-    from .typings import ScriptsFlextTypes, ScriptsFlextTypes as t
-    from .utilities import ScriptsFlextUtilities, ScriptsFlextUtilities as u
+    from scripts.constants import ScriptsFlextConstants, ScriptsFlextConstants as c
+    from scripts.models import ScriptsFlextModels, ScriptsFlextModels as m
+    from scripts.protocols import ScriptsFlextProtocols, ScriptsFlextProtocols as p
+    from scripts.typings import ScriptsFlextTypes, ScriptsFlextTypes as t
+    from scripts.utilities import ScriptsFlextUtilities, ScriptsFlextUtilities as u
 
 
 __all__: tuple[str, ...] = (
@@ -49,7 +52,7 @@ _LAZY_IMPORTS = MappingProxyType(
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
-    )
+    ),
 )
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

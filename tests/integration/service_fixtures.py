@@ -30,7 +30,7 @@ class TestsFlextUserQueryService(s[bool]):
     """Real user query service using ``s``."""
 
     _users: MutableMapping[str, TestsFlextUserServiceEntity] = u.PrivateAttr(
-        default_factory=dict[str, TestsFlextUserServiceEntity]
+        default_factory=dict[str, TestsFlextUserServiceEntity],
     )
     _should_fail: bool = u.PrivateAttr(default_factory=lambda: False)
     _call_count: int = u.PrivateAttr(default_factory=lambda: 0)
@@ -123,7 +123,7 @@ class TestsFlextLifecycleService(s[str]):
 
     _initialized: bool = u.PrivateAttr(default_factory=lambda: False)
     _service_config: TestsFlextServiceConfig | None = u.PrivateAttr(
-        default_factory=lambda: None
+        default_factory=lambda: None,
     )
     _shutdown_called: bool = u.PrivateAttr(default_factory=lambda: False)
     _should_fail_init: bool = u.PrivateAttr(default_factory=lambda: False)
@@ -156,7 +156,10 @@ class TestsFlextLifecycleService(s[str]):
         return r[str].ok("shutdown")
 
     def configure_failure_mode(
-        self, *, fail_init: bool = False, fail_shutdown: bool = False
+        self,
+        *,
+        fail_init: bool = False,
+        fail_shutdown: bool = False,
     ) -> None:
         """Configure initialization and shutdown failure behavior."""
         self._should_fail_init = fail_init
@@ -197,6 +200,9 @@ class TestsFlextFlextServiceFixtures:
 
     @staticmethod
     def _build_service_config(
-        *, name: str, version: str, temp_dir: str
+        *,
+        name: str,
+        version: str,
+        temp_dir: str,
     ) -> TestsFlextServiceConfig:
         return TestsFlextServiceConfig(name=name, version=version, temp_dir=temp_dir)

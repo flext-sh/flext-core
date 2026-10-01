@@ -54,7 +54,8 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
 
     @classmethod
     def _extract_exception_error_code(
-        cls, exception: BaseException | None
+        cls,
+        exception: BaseException | None,
     ) -> str | None:
         if exception is None:
             return None
@@ -63,7 +64,8 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
 
     @classmethod
     def _redacted_error_data_keys(
-        cls, exception: BaseException | None
+        cls,
+        exception: BaseException | None,
     ) -> frozenset[str]:
         """Union of fleet-sensitive keys and the exception's excluded context keys."""
         excluded: set[str] = set(c.SENSITIVE_ERROR_DATA_KEYS)
@@ -75,7 +77,8 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
 
     @classmethod
     def _extract_exception_error_data(
-        cls, exception: BaseException | None
+        cls,
+        exception: BaseException | None,
     ) -> t.JsonDict | None:
         if exception is None:
             return None
@@ -107,7 +110,9 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
 
     @classmethod
     def create_from_callable[V](
-        cls: type[Self], func: Callable[[], V | None], error_code: str | None = None
+        cls: type[Self],
+        func: Callable[[], V | None],
+        error_code: str | None = None,
     ) -> p.Result[V]:
         try:
             value = func()
@@ -119,12 +124,15 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
             return ok_result(cls._factory(), value)
         except c.EXC_BROAD_RUNTIME as exc:
             return cast(
-                "p.Result[V]", cls.fail(str(exc), error_code=error_code, exception=exc)
+                "p.Result[V]",
+                cls.fail(str(exc), error_code=error_code, exception=exc),
             )
 
     @classmethod
     def _filter_sensitive_error_data(
-        cls, payload: t.JsonDict | None, exception: BaseException | None = None
+        cls,
+        payload: t.JsonDict | None,
+        exception: BaseException | None = None,
     ) -> t.JsonDict | None:
         """Drop sensitive keys from any error_data mapping before storage."""
         if payload is None:
@@ -150,7 +158,8 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
         # Why: redact caller-supplied AND auto-extracted error_data (security mro-8taj)
         if error_data is not None:
             resolved_error_data = cls._filter_sensitive_error_data(
-                cls.validate_error_data(error_data), exception
+                cls.validate_error_data(error_data),
+                exception,
             )
         else:
             resolved_error_data = cls._extract_exception_error_data(exception)
@@ -167,7 +176,9 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
 
     @classmethod
     def fail_op(
-        cls: type[Self], operation: str, exc: Exception | str | None = None
+        cls: type[Self],
+        operation: str,
+        exc: Exception | str | None = None,
     ) -> p.Result[T]:
         if isinstance(exc, Exception):
             return cls.fail(f"{operation} failed: {exc}", exception=exc)
@@ -178,7 +189,9 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
 
     @classmethod
     def from_validation[ModelT: BaseModel](
-        cls: type[Self], data: t.ModelInput, model: t.ModelClass[ModelT]
+        cls: type[Self],
+        data: t.ModelInput,
+        model: t.ModelClass[ModelT],
     ) -> p.Result[ModelT]:
         try:
             validated: ModelT = model.model_validate(data)
@@ -198,7 +211,8 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
 
 
 def ok_result[V, InstanceT: prt.ResultFactoryMinimal](
-    cls: type[InstanceT], value: V
+    cls: type[InstanceT],
+    value: V,
 ) -> p.Result[V]:
     """Build a successful result of the ``cls`` result family carrying ``value``."""
     cls.reject_banned_result_parameterization()
@@ -207,7 +221,8 @@ def ok_result[V, InstanceT: prt.ResultFactoryMinimal](
 
 
 def copy_result[V, InstanceT: prt.ResultFactoryMinimal](
-    cls: type[InstanceT], source: p.Result[V]
+    cls: type[InstanceT],
+    source: p.Result[V],
 ) -> p.Result[V]:
     """Copy any abstract result into the ``cls`` result family."""
     if source.success:

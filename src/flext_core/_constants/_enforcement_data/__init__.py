@@ -85,57 +85,58 @@ def _resource_text(name: str) -> str:
 
 _SMELL_DATA: _SmellData = _SmellData.model_validate_json(_resource_text("smells.json"))
 _PREDICATES: dict[str, _PredicateRule] = _PredicateData.model_validate_json(
-    _resource_text("predicates.json")
+    _resource_text("predicates.json"),
 ).predicates
 
 _EXEMPTIONS: _ExemptionData = _ExemptionData.model_validate_json(
-    _resource_text("exemptions.json")
+    _resource_text("exemptions.json"),
 )
 
 ENFORCEMENT_RELAXED_EXTRA_BASES: frozenset[str] = frozenset(
-    _EXEMPTIONS.relaxed_extra_bases
+    _EXEMPTIONS.relaxed_extra_bases,
 )
 ENFORCEMENT_INFRASTRUCTURE_BASES: frozenset[str] = frozenset(
-    _EXEMPTIONS.infrastructure_bases
+    _EXEMPTIONS.infrastructure_bases,
 )
 ENFORCEMENT_CONSTANTS_SKIP_ATTRS: frozenset[str] = frozenset(
-    _EXEMPTIONS.constants_skip_attrs
+    _EXEMPTIONS.constants_skip_attrs,
 )
 ENFORCEMENT_UTILITIES_EXEMPT_METHODS: frozenset[str] = frozenset(
-    _EXEMPTIONS.utilities_exempt_methods
+    _EXEMPTIONS.utilities_exempt_methods,
 )
 ENFORCEMENT_LAYER_ALLOWS: t.MappingKV[str, frozenset[str]] = MappingProxyType({
     layer: frozenset(kinds) for layer, kinds in _EXEMPTIONS.layer_allows.items()
 })
 ENFORCEMENT_VALUE_OBJECT_BASES: frozenset[str] = frozenset(
-    _EXEMPTIONS.value_object_bases
+    _EXEMPTIONS.value_object_bases,
 )
 ENFORCEMENT_NESTED_MRO_MIN_DEPTH: int = _EXEMPTIONS.nested_mro_min_depth
 ENFORCEMENT_CLASSVAR_EXEMPT_NAMES: frozenset[str] = frozenset(
-    _EXEMPTIONS.classvar_exempt_names
+    _EXEMPTIONS.classvar_exempt_names,
 )
 ENFORCE_FLEXT_CORE_PATH_MARKERS: frozenset[str] = frozenset(
-    _EXEMPTIONS.core_path_markers
+    _EXEMPTIONS.core_path_markers,
 )
 ENFORCE_NON_WORKSPACE_PATH_MARKERS: frozenset[str] = frozenset(
-    _EXEMPTIONS.non_workspace_path_markers
+    _EXEMPTIONS.non_workspace_path_markers,
 )
 ENFORCEMENT_ACCESSOR_RENAMES: t.MappingKV[str, tuple[str, str]] = MappingProxyType(
-    _EXEMPTIONS.accessor_renames
+    _EXEMPTIONS.accessor_renames,
 )
 ENFORCEMENT_ACCESSOR_EXTERNAL_CONTRACTS: frozenset[str] = frozenset(
-    _EXEMPTIONS.accessor_external_contracts
+    _EXEMPTIONS.accessor_external_contracts,
 )
 
 ENFORCEMENT_SMELL_TAGS: tuple[str, ...] = _SMELL_DATA.tags
 SMELL_THRESHOLDS: t.MappingKV[str, int] = MappingProxyType(
-    _SMELL_DATA.thresholds.model_dump()
+    _SMELL_DATA.thresholds.model_dump(),
 )
 SMELL_RULES_TEXT: t.MappingKV[str, tuple[str, str]] = MappingProxyType(
-    _SMELL_DATA.rules_text
+    _SMELL_DATA.rules_text,
 )
 ENFORCEMENT_TAG_CATEGORY: t.MappingKV[
-    str, FlextConstantsEnforcementRules.EnforcementCategory
+    str,
+    FlextConstantsEnforcementRules.EnforcementCategory,
 ] = MappingProxyType({tag: rule.category for tag, rule in _PREDICATES.items()})
 ENFORCEMENT_TAG_LAYER: t.MappingKV[str, str] = MappingProxyType({
     tag: rule.layer for tag, rule in _PREDICATES.items() if rule.layer
@@ -164,17 +165,17 @@ __all__: list[str] = [
     "ENFORCEMENT_LAYER_ALLOWS",
     "ENFORCEMENT_NESTED_MRO_MIN_DEPTH",
     "ENFORCEMENT_PREDICATE_SPECS",
-    "ENFORCEMENT_RELAXED_EXTRA_BASES",
-    "ENFORCEMENT_UTILITIES_EXEMPT_METHODS",
-    "ENFORCEMENT_VALUE_OBJECT_BASES",
-    "ENFORCE_FLEXT_CORE_PATH_MARKERS",
-    "ENFORCE_NON_WORKSPACE_PATH_MARKERS",
     "ENFORCEMENT_RECURSIVE_TAGS",
+    "ENFORCEMENT_RELAXED_EXTRA_BASES",
     "ENFORCEMENT_RULES_TEXT",
     "ENFORCEMENT_SMELL_TAGS",
     "ENFORCEMENT_TAG_CATEGORY",
     "ENFORCEMENT_TAG_COLLECT",
     "ENFORCEMENT_TAG_LAYER",
+    "ENFORCEMENT_UTILITIES_EXEMPT_METHODS",
+    "ENFORCEMENT_VALUE_OBJECT_BASES",
+    "ENFORCE_FLEXT_CORE_PATH_MARKERS",
+    "ENFORCE_NON_WORKSPACE_PATH_MARKERS",
     "SMELL_RULES_TEXT",
     "SMELL_THRESHOLDS",
 ]

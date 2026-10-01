@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 class TestsFlextUtilitiesCaseServiceFactoriesMixin(
-    TestsFlextUtilitiesServiceFactoriesMixin
+    TestsFlextUtilitiesServiceFactoriesMixin,
 ):
     """Service case construction helpers."""
 

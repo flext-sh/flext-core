@@ -60,7 +60,9 @@ class TestsFlextUtilitiesPydantic:
         ],
     )
     def test_field_validator_normalizes_aliased_name(
-        self, raw_name: str, expected_name: str
+        self,
+        raw_name: str,
+        expected_name: str,
     ) -> None:
         payload = m.Tests.PublicPayload.model_validate({
             "rawName": raw_name,
@@ -106,7 +108,7 @@ class TestsFlextUtilitiesPydantic:
 
     def test_public_facade_resolves_runtime_bootstrap_options_from_json(self) -> None:
         runtime_options = m.RuntimeBootstrapOptions.model_validate_json(
-            u.to_json({"settings_overrides": {"dry_run": True}})
+            u.to_json({"settings_overrides": {"dry_run": True}}),
         )
 
         @u.validate_call
@@ -121,7 +123,7 @@ class TestsFlextUtilitiesPydantic:
         assert resolved.settings is None
         assert resolved.context is None
         assert resolved.model_dump(mode="json") == {
-            "settings_overrides": {"dry_run": True}
+            "settings_overrides": {"dry_run": True},
         }
 
     def test_private_attr_factories_preserve_pydantic_instance_semantics(self) -> None:

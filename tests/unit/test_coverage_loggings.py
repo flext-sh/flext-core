@@ -66,7 +66,9 @@ class TestsFlextCoverageLoggings:
         ],
     )
     def test_clear_scope_returns_success_for_bound_scopes(
-        self, scope: str, context: dict[str, str]
+        self,
+        scope: str,
+        context: dict[str, str],
     ) -> None:
         bind_result = u.bind_context(scope=scope, **context)
         _ = self.assert_log_result_success(bind_result)
@@ -85,7 +87,8 @@ class TestsFlextCoverageLoggings:
 
         assert logger is not None
         result = self.assert_captured_log_success(
-            lambda: logger.info("service ready"), contains="service ready"
+            lambda: logger.info("service ready"),
+            contains="service ready",
         )
         tm.that(result.value, eq=True)
 
@@ -110,7 +113,9 @@ class TestsFlextCoverageLoggings:
         except OSError as exc:
             result = self.assert_captured_log_success(
                 lambda exc=exc: logger.exception(
-                    "io operation failed", exception=exc, operation="file_read"
+                    "io operation failed",
+                    exception=exc,
+                    operation="file_read",
                 ),
                 contains="io operation failed",
                 expected_tokens=("file_read",),

@@ -48,7 +48,10 @@ class TestsFlextCoreResultLaws:
         [(r[int].ok(7), 99, 7), (r[int].fail("nope"), 99, 99)],
     )
     def test_unwrap_or_returns_value_or_default(
-        self, result: p.Result[int], default: int, expected: int
+        self,
+        result: p.Result[int],
+        default: int,
+        expected: int,
     ) -> None:
         assert result.unwrap_or(default) == expected
 
@@ -111,7 +114,9 @@ class TestsFlextCoreResultLaws:
         [(r[int].ok(4), "ok:4"), (r[int].fail("boom"), "err:boom")],
     )
     def test_fold_dispatches_to_the_matching_branch(
-        self, result: p.Result[int], expected: str
+        self,
+        result: p.Result[int],
+        expected: str,
     ) -> None:
         folded = result.fold(lambda e: f"err:{e}", lambda v: f"ok:{v}")
         assert folded == expected

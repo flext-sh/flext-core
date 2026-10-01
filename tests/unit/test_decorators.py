@@ -44,7 +44,9 @@ class TestsFlextCoreDecorators:
         ],
     )
     def test_railway_converts_exception_to_failure_result(
-        self, raised: Exception, message: str
+        self,
+        raised: Exception,
+        message: str,
     ) -> None:
         """Railway captures caught exceptions as a failure ``r`` with the code."""
 

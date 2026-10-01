@@ -79,7 +79,9 @@ class TestsFlextCorePublicApiContract:
 
     @pytest.mark.parametrize(("alias", "facade_name"), _ALIASES)
     def test_single_letter_alias_is_its_facade(
-        self, alias: object, facade_name: str
+        self,
+        alias: object,
+        facade_name: str,
     ) -> None:
         """Each single-letter alias is the exact same object as its named facade."""
         # Arrange / Act
@@ -199,7 +201,8 @@ class TestsFlextCorePublicApiContract:
 
     @pytest.mark.parametrize("exc_name", ["MroViolation", "SmellViolation"])
     def test_exception_family_members_are_raisable_and_catchable(
-        self, exc_name: str
+        self,
+        exc_name: str,
     ) -> None:
         """Structured exception classes raise with, and preserve, their message."""
         # Arrange

@@ -45,10 +45,12 @@ class TestsFlextCoreLoggingThreshold:
         u.apply_log_level(log_level=c.LogLevel.WARNING, debug=False, trace=False)
 
         info_out = self.captured(
-            lambda: logger.info("info-under-warning"), "info-under-warning"
+            lambda: logger.info("info-under-warning"),
+            "info-under-warning",
         )
         warning_out = self.captured(
-            lambda: logger.warning("warning-at-warning"), "warning-at-warning"
+            lambda: logger.warning("warning-at-warning"),
+            "warning-at-warning",
         )
         tm.that("info-under-warning" in info_out, eq=False)
         tm.that("warning-at-warning" in warning_out, eq=True)
@@ -59,7 +61,8 @@ class TestsFlextCoreLoggingThreshold:
         u.apply_log_level(log_level=c.LogLevel.DEBUG, debug=False, trace=False)
 
         debug_out = self.captured(
-            lambda: logger.debug("debug-at-debug"), "debug-at-debug"
+            lambda: logger.debug("debug-at-debug"),
+            "debug-at-debug",
         )
         tm.that("debug-at-debug" in debug_out, eq=True)
 
@@ -73,7 +76,12 @@ class TestsFlextCoreLoggingThreshold:
         ],
     )
     def test_debug_and_trace_resolve_through_the_runtime_owner(
-        self, *, debug: bool, trace: bool, event_level: str, dropped: bool
+        self,
+        *,
+        debug: bool,
+        trace: bool,
+        event_level: str,
+        dropped: bool,
     ) -> None:
         u.apply_log_level(log_level=c.LogLevel.ERROR, debug=debug, trace=trace)
         event = {"level": event_level, "event": "probe"}

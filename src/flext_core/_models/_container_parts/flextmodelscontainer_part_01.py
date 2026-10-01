@@ -37,33 +37,38 @@ class FlextModelsContainer:
         """
 
         name: Annotated[
-            t.NonEmptyStr, mp.Field(..., description="Service identifier/name")
+            t.NonEmptyStr,
+            mp.Field(..., description="Service identifier/name"),
         ]
         service: Annotated[
             t.RegisterableService,
             mp.Field(
-                ..., description="Service instance (protocols, models, callables)"
+                ...,
+                description="Service instance (protocols, models, callables)",
             ),
         ]
         registration_time: Annotated[
             datetime,
             mp.Field(
-                description="Timestamp when service was registered (configured timezone)"
+                description="Timestamp when service was registered (configured timezone)",
             ),
         ] = mp.Field(default_factory=ug.now)
         metadata: Annotated[
             m.Metadata | FlextModelsContainers.ConfigMap | None,
             mp.BeforeValidator(
                 lambda value: FlextRuntime.validate_metadata_model_input(
-                    value, m.Metadata
-                )
+                    value,
+                    m.Metadata,
+                ),
             ),
             mp.Field(
-                None, description="Additional service metadata (JSON-serializable)"
+                None,
+                description="Additional service metadata (JSON-serializable)",
             ),
         ] = None
         tags: Annotated[
-            t.StrSequence, mp.Field(description="Service tags for categorization")
+            t.StrSequence,
+            mp.Field(description="Service tags for categorization"),
         ] = mp.Field(default_factory=tuple)
 
         @mp.computed_field
@@ -75,7 +80,8 @@ class FlextModelsContainer:
         @up.field_validator("service", mode="before")
         @classmethod
         def validate_service(
-            cls, value: t.RegisterableService
+            cls,
+            value: t.RegisterableService,
         ) -> (
             t.RegisterableService
             | FlextModelsContainers.ConfigMap
@@ -91,29 +97,33 @@ class FlextModelsContainer:
         """
 
         name: Annotated[
-            t.NonEmptyStr, mp.Field(..., description="Factory identifier/name")
+            t.NonEmptyStr,
+            mp.Field(..., description="Factory identifier/name"),
         ]
         factory: Annotated[
             t.FactoryCallable,
             mp.Field(
-                ..., description="Factory function that creates service instances"
+                ...,
+                description="Factory function that creates service instances",
             ),
         ]
         registration_time: Annotated[
             datetime,
             mp.Field(
-                description="Timestamp when factory was registered (configured timezone)"
+                description="Timestamp when factory was registered (configured timezone)",
             ),
         ] = mp.Field(default_factory=ug.now)
         metadata: Annotated[
             m.Metadata | FlextModelsContainers.ConfigMap | None,
             mp.BeforeValidator(
                 lambda value: FlextRuntime.validate_metadata_model_input(
-                    value, m.Metadata
-                )
+                    value,
+                    m.Metadata,
+                ),
             ),
             mp.Field(
-                None, description="Additional factory metadata (JSON-serializable)"
+                None,
+                description="Additional factory metadata (JSON-serializable)",
             ),
         ] = None
 

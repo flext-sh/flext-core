@@ -63,7 +63,9 @@ class TestsFlextCoreEnforcement:
         ],
     )
     def test_accessor_prefix_method_is_flagged(
-        self, class_name: str, member: str
+        self,
+        class_name: str,
+        member: str,
     ) -> None:
         """``get_``/``set_``/``is_`` methods violate the accessor contract."""
         cls = make_class(class_name, {member: synthetic_method})
@@ -88,7 +90,11 @@ class TestsFlextCoreEnforcement:
         ],
     )
     def test_declared_settings_model_requires_flext_settings(
-        self, class_name: str, *, declares_settings_base: bool, expect_finding: bool
+        self,
+        class_name: str,
+        *,
+        declares_settings_base: bool,
+        expect_finding: bool,
     ) -> None:
         """Route a declared pydantic-settings base through ``FlextSettings``.
 

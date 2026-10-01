@@ -66,7 +66,8 @@ class TestsFlextCoreUtilitiesCollection:
     """Behavior contract for u.map / u.find / u.filter / u.count / u.process / u.merge_mappings."""
 
     def test_normalize_domain_event_data_flattens_public_payloads(
-        self, tmp_path: Path
+        self,
+        tmp_path: Path,
     ) -> None:
         repository_root = tmp_path / "flext"
         repository_root.mkdir()
@@ -138,7 +139,8 @@ class TestsFlextCoreUtilitiesCollection:
 
     def test_find_returns_failure_when_mapping_has_no_matching_value(self) -> None:
         result = u.find(
-            {"tenant": "acme", "mode": "full"}, lambda value: value == "delta"
+            {"tenant": "acme", "mode": "full"},
+            lambda value: value == "delta",
         )
 
         tm.fail(result)
@@ -222,7 +224,8 @@ class TestsFlextCoreUtilitiesCollection:
         tm.that(
             failed.error,
             eq=c.ERR_COLLECTION_PROCESSING_FAILED_FOR_ITEM.format(
-                item=2, error=str(raised[0])
+                item=2,
+                error=str(raised[0]),
             ),
         )
 

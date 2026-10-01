@@ -115,7 +115,8 @@ class Ex02FlextSettings(Ex02FlextSettingsFieldChecks):
         try:
             resolved = FlextSettings.resolve_env_file()
             self.audit_check(
-                "resolve_env_file.matches_requested", resolved == str(env_path)
+                "resolve_env_file.matches_requested",
+                resolved == str(env_path),
             )
             created = self._TestConfig.fetch_global()
             self.audit_check("Settings.fetch_global.type", type(created).__name__)

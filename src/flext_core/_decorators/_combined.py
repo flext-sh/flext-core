@@ -45,7 +45,8 @@ class FlextDecoratorsCombined(FlextDecoratorsRailway):
         railway_enabled: Literal[True],
         railway_error_code: str | None = None,
     ) -> Callable[
-        [Callable[PCallback, TResult]], Callable[PCallback, pr.Result[TResult]]
+        [Callable[PCallback, TResult]],
+        Callable[PCallback, pr.Result[TResult]],
     ]: ...
 
     @classmethod
@@ -78,7 +79,8 @@ class FlextDecoratorsCombined(FlextDecoratorsRailway):
                     [Callable[PCallback, pr.Result[TResult]]],
                     Callable[PCallback, pr.Result[TResult]],
                 ] = cls.log_operation(
-                    operation_name=operation_name, track_perf=track_perf
+                    operation_name=operation_name,
+                    track_perf=track_perf,
                 )
                 return operation_logger(result)
 
@@ -91,7 +93,8 @@ class FlextDecoratorsCombined(FlextDecoratorsRailway):
             if inject_deps:
                 result = cls.inject(**inject_deps)(result)
             operation_logger: Callable[
-                [Callable[PCallback, TResult]], Callable[PCallback, TResult]
+                [Callable[PCallback, TResult]],
+                Callable[PCallback, TResult],
             ] = cls.log_operation(operation_name=operation_name, track_perf=track_perf)
             return operation_logger(result)
 

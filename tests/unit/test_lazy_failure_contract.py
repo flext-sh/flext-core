@@ -17,7 +17,8 @@ class TestsFlextCoreLazyFailureContract:
     """Drive the public lazy resolver against real modules."""
 
     def test_broken_target_module_raises_import_error_with_its_cause(
-        self, tmp_path: Path
+        self,
+        tmp_path: Path,
     ) -> None:
         """A target module whose body fails is a defect, never a missing name."""
         package = f"lazy_contract_{tmp_path.name.replace('-', '_')}"
@@ -41,5 +42,8 @@ class TestsFlextCoreLazyFailureContract:
         """A legal absence keeps hasattr and getattr-with-default probes working."""
         with pytest.raises(AttributeError, match="has no attribute"):
             lazy_getattr(
-                "Missing", {"Missing": ("xml.dom", "DoesNotExist")}, {}, "xml.etree"
+                "Missing",
+                {"Missing": ("xml.dom", "DoesNotExist")},
+                {},
+                "xml.etree",
             )

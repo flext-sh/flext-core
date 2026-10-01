@@ -41,15 +41,20 @@ class TestsFlextFacadeFlatSsotAccess:
         ],
     )
     def test_derive_class_stem_pascalizes_unlisted_names(
-        self, project_name: str, expected_stem: str
+        self,
+        project_name: str,
+        expected_stem: str,
     ) -> None:
         assert u.derive_class_stem(project_name) == expected_stem
 
     @pytest.mark.parametrize(
-        ("project_name", "declared_stem"), c.SPECIAL_NAME_OVERRIDES
+        ("project_name", "declared_stem"),
+        c.SPECIAL_NAME_OVERRIDES,
     )
     def test_derive_class_stem_honours_declared_overrides_case_insensitively(
-        self, project_name: str, declared_stem: str
+        self,
+        project_name: str,
+        declared_stem: str,
     ) -> None:
         assert u.derive_class_stem(project_name) == declared_stem
         assert u.derive_class_stem(project_name.upper()) == declared_stem
@@ -70,7 +75,8 @@ class TestsFlextFacadeFlatSsotAccess:
         return m.ProjectMetadata.model_validate(payload)
 
     def test_project_metadata_exposes_declared_field_values(
-        self, tmp_path: Path
+        self,
+        tmp_path: Path,
     ) -> None:
         metadata = self._metadata(tmp_path)
 
@@ -97,7 +103,8 @@ class TestsFlextFacadeFlatSsotAccess:
             })
 
     def test_project_metadata_model_dump_exposes_public_fields(
-        self, tmp_path: Path
+        self,
+        tmp_path: Path,
     ) -> None:
         dumped = self._metadata(tmp_path).model_dump()
 

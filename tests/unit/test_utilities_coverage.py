@@ -37,7 +37,10 @@ class TestsFlextCoreUtilitiesCoverage:
         ],
     )
     def test_to_int_returns_int_or_default(
-        self, value: t.JsonPayload | None, default: int, expected: int
+        self,
+        value: t.JsonPayload | None,
+        default: int,
+        expected: int,
     ) -> None:
         """to_int coerces numeric inputs and falls back to default otherwise."""
         assert u.to_int(value, default=default) == expected
@@ -53,7 +56,10 @@ class TestsFlextCoreUtilitiesCoverage:
         ],
     )
     def test_to_float_returns_float_or_default(
-        self, value: t.JsonPayload | None, default: float, expected: float
+        self,
+        value: t.JsonPayload | None,
+        default: float,
+        expected: float,
     ) -> None:
         """to_float coerces numeric inputs and falls back to default otherwise."""
         assert u.to_float(value, default=default) == expected
@@ -70,7 +76,11 @@ class TestsFlextCoreUtilitiesCoverage:
         ],
     )
     def test_to_bool_returns_truthiness_or_default(
-        self, value: t.JsonPayload | None, *, default: bool, expected: bool
+        self,
+        value: t.JsonPayload | None,
+        *,
+        default: bool,
+        expected: bool,
     ) -> None:
         """to_bool reflects truthiness and uses default only for None."""
         assert u.to_bool(value, default=default) is expected
@@ -90,7 +100,10 @@ class TestsFlextCoreUtilitiesCoverage:
         ],
     )
     def test_to_positive_int_accepts_only_positive_values(
-        self, value: t.JsonPayload | None, default: int, expected: int
+        self,
+        value: t.JsonPayload | None,
+        default: int,
+        expected: int,
     ) -> None:
         """to_positive_int returns strictly positive ints, else the default."""
         assert u.to_positive_int(value, default=default) == expected
@@ -100,7 +113,9 @@ class TestsFlextCoreUtilitiesCoverage:
         [(None, ""), ("hello", "hello"), (3.0, "3"), (2.5, "2.50"), (10, "10")],
     )
     def test_to_str_formats_value(
-        self, value: t.JsonPayload | None, expected: str
+        self,
+        value: t.JsonPayload | None,
+        expected: str,
     ) -> None:
         """to_str renders integral floats without decimals and keeps strings."""
         assert u.to_str(value) == expected
@@ -114,16 +129,21 @@ class TestsFlextCoreUtilitiesCoverage:
         [("", None), ("value", "value"), (None, None), (123, None)],
     )
     def test_to_optional_str_only_returns_non_empty_strings(
-        self, value: t.JsonPayload | None, expected: str | None
+        self,
+        value: t.JsonPayload | None,
+        expected: str | None,
     ) -> None:
         """to_optional_str yields the string only when it is a non-empty str."""
         assert u.to_optional_str(value) == expected
 
     @pytest.mark.parametrize(
-        ("value", "expected"), [("solo", ["solo"]), ([1, 2], ["1", "2"]), (None, [])]
+        ("value", "expected"),
+        [("solo", ["solo"]), ([1, 2], ["1", "2"]), (None, [])],
     )
     def test_to_str_list_produces_list_of_strings(
-        self, value: t.StrictValue | None, expected: list[str]
+        self,
+        value: t.StrictValue | None,
+        expected: list[str],
     ) -> None:
         """to_str_list normalizes scalars and sequences into lists of strings."""
         assert u.to_str_list(value) == expected
@@ -142,7 +162,11 @@ class TestsFlextCoreUtilitiesCoverage:
         ],
     )
     def test_join_concatenates_with_separator_and_case(
-        self, values: list[str], separator: str, case: str | None, expected: str
+        self,
+        values: list[str],
+        separator: str,
+        case: str | None,
+        expected: str,
     ) -> None:
         """Join applies the separator and optional case transform."""
         assert u.join(values, separator=separator, case=case) == expected
@@ -157,7 +181,10 @@ class TestsFlextCoreUtilitiesCoverage:
         ],
     )
     def test_normalize_stringifies_with_case(
-        self, value: t.StrictValue, case: str | None, expected: str
+        self,
+        value: t.StrictValue,
+        case: str | None,
+        expected: str,
     ) -> None:
         """Normalize converts to string then applies the optional case."""
         assert u.normalize(value, case=case) == expected
@@ -172,7 +199,9 @@ class TestsFlextCoreUtilitiesCoverage:
         ],
     )
     def test_format_app_id_normalizes_to_hyphenated_lowercase(
-        self, name: str, expected: str
+        self,
+        name: str,
+        expected: str,
     ) -> None:
         """format_app_id lowercases and replaces spaces/underscores with hyphens."""
         assert u.format_app_id(name) == expected
@@ -182,7 +211,9 @@ class TestsFlextCoreUtilitiesCoverage:
         [("  hi  ", "hi"), ("value", "value"), ("\ttrimmed\n", "trimmed")],
     )
     def test_safe_string_strips_and_returns_non_empty(
-        self, text: str, expected: str
+        self,
+        text: str,
+        expected: str,
     ) -> None:
         """safe_string trims surrounding whitespace and returns the content."""
         assert u.safe_string(text) == expected

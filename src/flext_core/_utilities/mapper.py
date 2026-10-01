@@ -53,7 +53,8 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
 
     @staticmethod
     def _deep_eq_values(
-        val_a: t.JsonPayload | t.JsonValue, val_b: t.JsonPayload | t.JsonValue
+        val_a: t.JsonPayload | t.JsonValue,
+        val_b: t.JsonPayload | t.JsonValue,
     ) -> bool:
         """Recursive deep equality for any two nested items."""
         if val_a is val_b:
@@ -69,8 +70,9 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
         if isinstance(val_a, list) and isinstance(val_b, list):
             return len(val_a) == len(val_b) and all(
                 starmap(
-                    FlextUtilitiesMapper._deep_eq_values, zip(val_a, val_b, strict=True)
-                )
+                    FlextUtilitiesMapper._deep_eq_values,
+                    zip(val_a, val_b, strict=True),
+                ),
             )
         return val_a == val_b
 

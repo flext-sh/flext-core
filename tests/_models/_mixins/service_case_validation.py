@@ -18,17 +18,20 @@ class TestsFlextModelsServiceCaseValidationMixin:
 
         name: Annotated[str, m.Field(description="Unique scenario name")]
         validator_type: Annotated[
-            str, m.Field(description="Validator category under test")
+            str,
+            m.Field(description="Validator category under test"),
         ]
         input_value: Annotated[
-            t.JsonValue | None, m.Field(description="Input value passed to validator")
+            t.JsonValue | None,
+            m.Field(description="Input value passed to validator"),
         ]
         input_params: Annotated[
             t.JsonPayload | None,
             m.Field(description="Optional validator parameters for scenario execution"),
         ] = None
         should_succeed: Annotated[
-            bool, m.Field(description="Whether scenario expects validation success")
+            bool,
+            m.Field(description="Whether scenario expects validation success"),
         ] = True
         expected_value: Annotated[
             t.JsonValue | None,
@@ -39,7 +42,8 @@ class TestsFlextModelsServiceCaseValidationMixin:
             m.Field(description="Expected error substring when validation fails"),
         ] = None
         description: Annotated[
-            str | None, m.Field(description="Human-readable scenario description")
+            str | None,
+            m.Field(description="Human-readable scenario description"),
         ] = None
 
     class Operation(m.BaseModel):
@@ -51,7 +55,8 @@ class TestsFlextModelsServiceCaseValidationMixin:
         failure_count: Annotated[int, m.Field(description="Failed operations")]
         skipped_count: Annotated[int, m.Field(description="Skipped operations")]
         metadata: Annotated[
-            t.JsonMapping, m.Field(description="Additional operation metadata")
+            t.JsonMapping,
+            m.Field(description="Additional operation metadata"),
         ] = m.Field(default_factory=dict)
 
     class Conversion(m.BaseModel):
@@ -66,13 +71,15 @@ class TestsFlextModelsServiceCaseValidationMixin:
             m.Field(default_factory=tuple)
         )
         warnings: Annotated[
-            t.StrSequence, m.Field(description="Conversion warnings")
+            t.StrSequence,
+            m.Field(description="Conversion warnings"),
         ] = m.Field(default_factory=tuple)
         skipped: Annotated[t.JsonList, m.Field(description="Skipped records")] = (
             m.Field(default_factory=list)
         )
         metadata: Annotated[
-            t.JsonMapping, m.Field(description="Additional conversion metadata")
+            t.JsonMapping,
+            m.Field(description="Additional conversion metadata"),
         ] = m.Field(default_factory=dict)
 
     class ParserScenario(m.BaseModel):
@@ -88,20 +95,24 @@ class TestsFlextModelsServiceCaseValidationMixin:
             m.Field(description="Expected parsed output for successful scenarios"),
         ] = None
         should_succeed: Annotated[
-            bool, m.Field(description="Whether parser scenario expects success")
+            bool,
+            m.Field(description="Whether parser scenario expects success"),
         ] = True
         error_contains: Annotated[
-            str | None, m.Field(description="Expected parser error substring")
+            str | None,
+            m.Field(description="Expected parser error substring"),
         ] = None
         description: Annotated[
-            str | None, m.Field(description="Human-readable scenario description")
+            str | None,
+            m.Field(description="Human-readable scenario description"),
         ] = None
 
     class PublicParseCase(m.BaseModel):
         """Data-driven public parser contract scenario."""
 
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-            frozen=True, arbitrary_types_allowed=True
+            frozen=True,
+            arbitrary_types_allowed=True,
         )
 
         name: Annotated[str, m.Field(description="Unique scenario name")]
@@ -110,13 +121,16 @@ class TestsFlextModelsServiceCaseValidationMixin:
             m.Field(description="Public value passed to u.parse()"),
         ]
         target: Annotated[
-            type[object], m.Field(description="Public target type passed to u.parse()")
+            type[object],
+            m.Field(description="Public target type passed to u.parse()"),
         ]
         options: Annotated[
-            m.BaseModel | None, m.Field(description="Optional ParseOptions instance")
+            m.BaseModel | None,
+            m.Field(description="Optional ParseOptions instance"),
         ] = None
         should_succeed: Annotated[
-            bool, m.Field(description="Whether parsing should succeed")
+            bool,
+            m.Field(description="Whether parsing should succeed"),
         ] = True
         expected_value: Annotated[
             t.JsonPayload | None,
@@ -127,10 +141,12 @@ class TestsFlextModelsServiceCaseValidationMixin:
             m.Field(description="Expected parsed model_dump payload"),
         ] = None
         error_contains: Annotated[
-            str | None, m.Field(description="Expected failure error substring")
+            str | None,
+            m.Field(description="Expected failure error substring"),
         ] = None
         description: Annotated[
-            str | None, m.Field(description="Human-readable scenario description")
+            str | None,
+            m.Field(description="Human-readable scenario description"),
         ] = None
 
 

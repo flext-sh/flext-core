@@ -34,7 +34,10 @@ class TestsFlextModelsExceptionParamsCore:
         """extra=forbid + validate_assignment: unknown attribute assignment raises."""
         params = m.ConnectionErrorParams()
         tm.rejects_assignment(
-            params, "unknown_field", "value", expected=c.ValidationError
+            params,
+            "unknown_field",
+            "value",
+            expected=c.ValidationError,
         )
 
     def test_validation_error_params_defaults(self) -> None:
@@ -59,7 +62,9 @@ class TestsFlextModelsExceptionParamsCore:
         ids=["str-value", "int-value", "float-value", "bool-value", "all-none"],
     )
     def test_validation_error_params_scalar_values(
-        self, field: str | None, value: t.Scalar | None
+        self,
+        field: str | None,
+        value: t.Scalar | None,
     ) -> None:
         params = m.ValidationErrorParams(field=field, value=value)
         tm.that(params.field, eq=field)
@@ -78,7 +83,8 @@ class TestsFlextModelsExceptionParamsCore:
 
     def test_configuration_error_params_with_values(self) -> None:
         params = m.ConfigurationErrorParams(
-            config_key="database_url", config_source=".env"
+            config_key="database_url",
+            config_source=".env",
         )
         tm.that(params.config_key, eq="database_url")
         tm.that(params.config_source, eq=".env")
@@ -107,7 +113,8 @@ class TestsFlextModelsExceptionParamsCore:
         ids=["int-timeout", "float-timeout", "zero", "none"],
     )
     def test_connection_error_params_timeout_types(
-        self, timeout_val: float | None
+        self,
+        timeout_val: float | None,
     ) -> None:
         params = m.ConnectionErrorParams(timeout=timeout_val)
         tm.that(params.timeout, eq=timeout_val)
@@ -123,7 +130,10 @@ class TestsFlextModelsExceptionParamsCore:
         ids=["host-and-port", "host-only", "port-only", "neither"],
     )
     def test_connection_target_formats_host_port(
-        self, host: str | None, port: int | None, expected: str
+        self,
+        host: str | None,
+        port: int | None,
+        expected: str,
     ) -> None:
         params = m.ConnectionErrorParams(host=host, port=port)
         tm.that(params.connection_target, eq=expected)
@@ -146,7 +156,9 @@ class TestsFlextModelsExceptionParamsCore:
         tm.that(params.operation, eq="dispatch")
 
     @pytest.mark.parametrize(
-        "seconds", [30, 30.0, 0.5], ids=["int", "float", "fraction"]
+        "seconds",
+        [30, 30.0, 0.5],
+        ids=["int", "float", "fraction"],
     )
     def test_timeout_error_params_numeric_seconds(self, seconds: float) -> None:
         params = m.TimeoutErrorParams(timeout_seconds=seconds)
@@ -164,7 +176,8 @@ class TestsFlextModelsExceptionParamsCore:
 
     def test_authentication_error_params_serialization(self) -> None:
         params = m.AuthenticationErrorParams(
-            auth_method="oauth2", user_id="svc-account"
+            auth_method="oauth2",
+            user_id="svc-account",
         )
         data = params.model_dump()
         tm.that(data["auth_method"], eq="oauth2")

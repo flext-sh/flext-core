@@ -27,16 +27,24 @@ class FlextUtilitiesModel:
         """Options controlling Pydantic model_dump() serialization behavior."""
 
         by_alias: bool | None = mp.Field(
-            None, description="Serialize using field aliases", validate_default=True
+            None,
+            description="Serialize using field aliases",
+            validate_default=True,
         )
         exclude_none: bool | None = mp.Field(
-            None, description="Exclude None-valued fields", validate_default=True
+            None,
+            description="Exclude None-valued fields",
+            validate_default=True,
         )
         exclude_unset: bool | None = mp.Field(
-            None, description="Exclude fields not explicitly set", validate_default=True
+            None,
+            description="Exclude fields not explicitly set",
+            validate_default=True,
         )
         exclude_defaults: bool | None = mp.Field(
-            None, description="Exclude fields matching defaults", validate_default=True
+            None,
+            description="Exclude fields matching defaults",
+            validate_default=True,
         )
         include: set[str] | None = mp.Field(
             None,
@@ -70,11 +78,13 @@ class FlextUtilitiesModel:
 
         """
         opts = ua.resolve_options(
-            options, kwargs, FlextUtilitiesModel.ModelDumpOptions
+            options,
+            kwargs,
+            FlextUtilitiesModel.ModelDumpOptions,
         ).unwrap()
         opts_dict = opts.model_dump(exclude_none=True)
         dumped: t.JsonMapping = t.json_mapping_adapter().validate_python(
-            model.model_dump(mode="json", **opts_dict)
+            model.model_dump(mode="json", **opts_dict),
         )
         return dumped
 
@@ -139,9 +149,7 @@ class FlextUtilitiesModel:
     ) -> p.Result[TValue]:
         """Validate one value through a model class or TypeAdapter."""
         try:
-            adapter = (
-                target if isinstance(target, TypeAdapter) else TypeAdapter(target)
-            )
+            adapter = target if isinstance(target, TypeAdapter) else TypeAdapter(target)
             if from_json:
                 if not isinstance(data, c.STR_BINARY_TYPES):
                     return e.fail_validation(

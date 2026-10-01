@@ -109,7 +109,10 @@ class TestsFlextCoreEnforcementNamespacePart01:
         ],
     )
     def test_tests_module_requires_tests_prefix_composition(
-        self, class_name: str, *, flagged: bool
+        self,
+        class_name: str,
+        *,
+        flagged: bool,
     ) -> None:
         """Classes in ``tests.*`` must carry the composed ``TestsFlext`` prefix."""
         target = type(class_name, (), {})
@@ -124,7 +127,8 @@ class TestsFlextCoreEnforcementNamespacePart01:
         """Build a real nested class tree with module-level qualnames."""
         body = {
             name: TestsFlextCoreEnforcementNamespacePart01._namespace_tree(
-                f"{qualname}.{name}", grandchildren
+                f"{qualname}.{name}",
+                grandchildren,
             )
             for name, grandchildren in children.items()
         }

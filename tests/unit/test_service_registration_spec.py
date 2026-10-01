@@ -32,11 +32,12 @@ class TestsServiceRegistrationSpecOwner:
         """A factory declaration that is not callable fails validation."""
         with pytest.raises(c.ValidationError):
             _ = m.ServiceRegistrationSpec.model_validate({
-                "factories": {"factory": "not-callable"}
+                "factories": {"factory": "not-callable"},
             })
 
     def test_container_registers_the_declared_raw_values(
-        self, clean_container: p.Container
+        self,
+        clean_container: p.Container,
     ) -> None:
         """Services, factories and resources declared by a spec all resolve."""
         container = FlextContainer(
@@ -44,7 +45,7 @@ class TestsServiceRegistrationSpecOwner:
                 services={"service": "value"},
                 factories={"factory": _factory},
                 resources={"resource": _factory},
-            )
+            ),
         )
 
         tm.that(container is clean_container, eq=True)
@@ -59,11 +60,12 @@ class TestsServiceRegistrationSpecOwner:
 
         with pytest.raises(c.ValidationError):
             _ = m.ServiceRegistrationSpec.model_validate({
-                "factories": {"factory": record}
+                "factories": {"factory": record},
             })
 
     def test_container_rejects_spec_redeclaring_a_registered_name(
-        self, clean_container: p.Container
+        self,
+        clean_container: p.Container,
     ) -> None:
         """Applying a spec to a container that holds its names raises."""
         spec = m.ServiceRegistrationSpec(services={"service": "value"})

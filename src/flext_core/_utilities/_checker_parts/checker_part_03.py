@@ -27,11 +27,14 @@ from .checker_part_02 import FlextUtilitiesChecker as FlextUtilitiesCheckerPart0
 class FlextUtilitiesChecker(FlextUtilitiesCheckerPart02):
     @classmethod
     def _extract_generic_message_types(
-        cls, handler_class: type
+        cls,
+        handler_class: type,
     ) -> tb.SequenceOf[tb.TypeHintSpecifier]:
         """Extract message types from generic base annotations."""
         raw_bases: tb.VariadicTuple[tb.TypeHintSpecifier] | tuple[()] = getattr(
-            handler_class, "__orig_bases__", ()
+            handler_class,
+            "__orig_bases__",
+            (),
         )
         generic_bases: tb.VariadicTuple[tb.TypeHintSpecifier] = raw_bases
         message_types: MutableSequence[tb.TypeHintSpecifier] = [
@@ -57,17 +60,20 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart02):
 
     @classmethod
     def _extract_message_type_from_handle(
-        cls, handler_class: type
+        cls,
+        handler_class: type,
     ) -> p.Result[tb.TypeHintSpecifier]:
         """Extract message type from handle method annotations when generics are absent."""
         if not hasattr(handler_class, c.MethodName.HANDLE):
             return r[tb.TypeHintSpecifier].fail(c.ERR_CHECKER_HANDLER_NO_HANDLE_METHOD)
         handle_method_raw: ts.GuardInput | None = getattr(
-            handler_class, c.MethodName.HANDLE, None
+            handler_class,
+            c.MethodName.HANDLE,
+            None,
         )
         if not cls._is_module_export_callable(handle_method_raw):
             return r[tb.TypeHintSpecifier].fail(
-                c.ERR_CHECKER_HANDLER_HANDLE_NOT_CALLABLE
+                c.ERR_CHECKER_HANDLER_HANDLE_NOT_CALLABLE,
             )
         signature_result = cls._get_method_signature(handle_method_raw)
         if signature_result.failure:
@@ -96,7 +102,8 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart02):
 
     @classmethod
     def compute_accepted_message_types(
-        cls, handler_class: type
+        cls,
+        handler_class: type,
     ) -> tb.VariadicTuple[tb.TypeHintSpecifier]:
         """Compute message types accepted by a handler using cached introspection."""
         message_types: MutableSequence[tb.TypeHintSpecifier] = []

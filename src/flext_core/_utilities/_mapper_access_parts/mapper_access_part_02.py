@@ -33,15 +33,18 @@ class FlextUtilitiesMapperAccess(FlextUtilitiesMapperAccessPart01):
         if isinstance(current, FlextModelsContainers.ObjectList):
             sequence: t.SequenceOf[t.JsonValue | t.JsonPayload] = current.root
         elif isinstance(current, Sequence) and not isinstance(
-            current, c.STR_BYTES_TYPES
+            current,
+            c.STR_BYTES_TYPES,
         ):
             sequence = current
         else:
             return r[t.JsonPayload | None].fail_op(
-                "extract array index", c.ERR_MAPPER_NOT_A_SEQUENCE
+                "extract array index",
+                c.ERR_MAPPER_NOT_A_SEQUENCE,
             )
         index_result = FlextUtilitiesMapperAccess._normalize_array_index(
-            array_match, len(sequence)
+            array_match,
+            len(sequence),
         )
         return index_result.map(lambda index: sequence[index])
 
@@ -64,7 +67,8 @@ class FlextUtilitiesMapperAccess(FlextUtilitiesMapperAccessPart01):
 
     @staticmethod
     def _get_raw(
-        data: p.AccessibleData | t.ConfigModelInput, key: str
+        data: p.AccessibleData | t.ConfigModelInput,
+        key: str,
     ) -> t.JsonPayload | t.JsonValue:
         """Get raw values without DSL conversion."""
         match data:
@@ -72,11 +76,11 @@ class FlextUtilitiesMapperAccess(FlextUtilitiesMapperAccessPart01):
                 return FlextUtilitiesMapperAccess._normalize_accessible_value(data[key])
             case m.ConfigMap() | m.Dict() if key in data.root:
                 return FlextUtilitiesMapperAccess._normalize_accessible_value(
-                    data.root[key]
+                    data.root[key],
                 )
             case _ if hasattr(data, key):
                 return FlextUtilitiesMapperAccess._normalize_accessible_value(
-                    getattr(data, key)
+                    getattr(data, key),
                 )
             case _:
                 return ""

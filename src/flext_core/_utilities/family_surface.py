@@ -30,7 +30,8 @@ class FlextUtilitiesFamilySurface:
     @staticmethod
     @functools.lru_cache(maxsize=1)
     def _surface_snapshot() -> tuple[
-        tuple[str, frozenset[str], t.MappingKV[str, t.StrPair | str]], ...
+        tuple[str, frozenset[str], t.MappingKV[str, t.StrPair | str]],
+        ...,
     ]:
         """Import every family root once and snapshot its published contract."""
         snapshot: list[
