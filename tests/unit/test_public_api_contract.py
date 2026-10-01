@@ -67,6 +67,22 @@ def _increment_step(value: int) -> p.Result[int]:
 class TestsFlextCorePublicApiContract:
     """Assert the observable behavior promised by the flext_core public surface."""
 
+    def test_root_lazy_helpers_publish_a_consumer_export(self) -> None:
+        """Generated consumers can compose lazy exports from the foundation root."""
+        build_map = getattr(flext_core, "build_lazy_import_map")
+        install = getattr(flext_core, "install_lazy_exports")
+        assert {"build_lazy_import_map", "install_lazy_exports"} <= set(
+            flext_core.__all__
+        )
+        imports = build_map({"collections": ("Counter",)})
+        namespace: t.ModuleGlobals = {"__name__": "flext_core_consumer"}
+        install(
+            "flext_core_consumer", namespace, imports, public_exports=("Counter",)
+        )
+        resolver = namespace["__getattr__"]
+        assert callable(resolver)
+        assert resolver("Counter").__name__ == "Counter"
+
     @pytest.mark.parametrize("name", _FACADES)
     def test_named_facade_is_importable(self, name: str) -> None:
         """Every advertised facade is reachable from the package root."""
