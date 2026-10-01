@@ -14,11 +14,11 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core import d, e, h, r, s, x
-    from scripts.constants import ScriptsFlextConstants, ScriptsFlextConstants as c
-    from scripts.models import ScriptsFlextModels, ScriptsFlextModels as m
-    from scripts.protocols import ScriptsFlextProtocols, ScriptsFlextProtocols as p
-    from scripts.typings import ScriptsFlextTypes, ScriptsFlextTypes as t
-    from scripts.utilities import ScriptsFlextUtilities, ScriptsFlextUtilities as u
+    from scripts.constants import ScriptsFlextConstants, c
+    from scripts.models import ScriptsFlextModels, m
+    from scripts.protocols import ScriptsFlextProtocols, p
+    from scripts.typings import ScriptsFlextTypes, t
+    from scripts.utilities import ScriptsFlextUtilities, u
 
 
 __all__: tuple[str, ...] = (

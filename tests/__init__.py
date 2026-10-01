@@ -17,12 +17,12 @@ if TYPE_CHECKING:
 
     from flext_core import d, e, h, r, x
     from tests import benchmark, fixtures, integration, unit
-    from tests.base import TestsFlextServiceBase, TestsFlextServiceBase as s
-    from tests.constants import TestsFlextConstants, TestsFlextConstants as c
-    from tests.models import TestsFlextModels, TestsFlextModels as m
-    from tests.protocols import TestsFlextProtocols, TestsFlextProtocols as p
-    from tests.typings import TestsFlextTypes, TestsFlextTypes as t
-    from tests.utilities import TestsFlextUtilities, TestsFlextUtilities as u
+    from tests.base import TestsFlextServiceBase, s
+    from tests.constants import TestsFlextConstants, c
+    from tests.models import TestsFlextModels, m
+    from tests.protocols import TestsFlextProtocols, p
+    from tests.typings import TestsFlextTypes, t
+    from tests.utilities import TestsFlextUtilities, u
 
 
 __all__: tuple[str, ...] = (
