@@ -15,7 +15,7 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 if TYPE_CHECKING:
     from examples import _models, _shared_parts
     from examples.constants import c
-    from examples.models import ExamplesFlextModels, ExamplesFlextModels as m
+    from examples.models import ExamplesFlextModels, m
     from examples.protocols import p
     from examples.shared import ExamplesFlextShared
     from examples.typings import t
