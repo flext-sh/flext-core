@@ -113,7 +113,7 @@ class FlextTypesServices:
     type LoggerWrapperFactory = Callable[[], type[pl.Logger]]
 
     type SortableObjectType = str | int | float
-    type ValueAdapter[T] = tp.TypeAdapterType[T]
+    type ValueAdapter[T] = tp.TypeAdapter[T]
     type MessageTypeSpecifier = type | str | UnionType | GenericAlias | TypeAliasType
     type IncEx = AbstractSet[str] | t.MappingKV[str, AbstractSet[str] | bool]
 

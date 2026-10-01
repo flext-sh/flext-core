@@ -11,21 +11,15 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 if TYPE_CHECKING:
     from .enforcement_part_01 import PREDICATE_BINDINGS
     from .enforcement_part_05 import FlextUtilitiesEnforcement
-    from .enforcement_part_06 import EXTENDED_PREDICATE_BINDINGS
 
 
-__all__: tuple[str, ...] = (
-    "EXTENDED_PREDICATE_BINDINGS",
-    "PREDICATE_BINDINGS",
-    "FlextUtilitiesEnforcement",
-)
+__all__: tuple[str, ...] = ("PREDICATE_BINDINGS", "FlextUtilitiesEnforcement")
 
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
             ".enforcement_part_01": ("PREDICATE_BINDINGS",),
             ".enforcement_part_05": ("FlextUtilitiesEnforcement",),
-            ".enforcement_part_06": ("EXTENDED_PREDICATE_BINDINGS",),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,

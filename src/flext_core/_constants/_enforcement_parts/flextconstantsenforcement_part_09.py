@@ -26,7 +26,7 @@ NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT: dict[str, t.StrPair] = {
     ),
     "no_pydantic_consumer_import": (
         "bare pydantic import FORBIDDEN (R2)",
-        "Use u.Field(), m.BaseModel, m.ConfigDict, m.TypeAdapter, u.model_validator, u.field_validator, u.computed_field, u.PrivateAttr from parent facade.",
+        "Use u.Field(), m.BaseModel, m.ConfigDict, m.TypeAdapter (type), u.type_adapter() (construction), u.model_validator, u.field_validator, u.computed_field, u.PrivateAttr from parent facade.",
     ),
     "facade_base_is_alias_or_peer": (
         "facade class base must be alias, alias-base, or peer concrete class (R4, R5)",

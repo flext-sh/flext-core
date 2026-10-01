@@ -17,6 +17,7 @@ from flext_tests import m as ftm, tm
 from tests.constants import c
 from tests.models import m
 from tests.typings import t
+from tests.utilities import u
 
 
 class TestsFlextCoreTypingsContainers:
@@ -180,14 +181,14 @@ class TestsFlextCoreTypingsContainers:
 
     def test_pair_alias_enforces_two_element_arity(self) -> None:
         """t.Pair validates a 2-tuple and rejects other arities."""
-        adapter: ftm.TypeAdapter[t.Pair[int, str]] = ftm.TypeAdapter(t.Pair[int, str])
+        adapter: ftm.TypeAdapter[t.Pair[int, str]] = u.type_adapter(t.Pair[int, str])
         tm.that(adapter.validate_python((1, "x")), eq=(1, "x"))
         with pytest.raises(ftm.ValidationError):
             adapter.validate_python((1, "x", "extra"))
 
     def test_triple_alias_enforces_three_element_arity(self) -> None:
         """t.Triple validates a 3-tuple and rejects shorter tuples."""
-        adapter: ftm.TypeAdapter[t.Triple[int, str, bool]] = ftm.TypeAdapter(
+        adapter: ftm.TypeAdapter[t.Triple[int, str, bool]] = u.type_adapter(
             t.Triple[int, str, bool]
         )
         tm.that(adapter.validate_python((1, "x", True)), eq=(1, "x", True))
@@ -196,14 +197,14 @@ class TestsFlextCoreTypingsContainers:
 
     def test_int_pair_alias_validates_two_ints(self) -> None:
         """t.IntPair coerces and validates a pair of ints, rejecting wrong arity."""
-        adapter: ftm.TypeAdapter[t.IntPair] = ftm.TypeAdapter(t.IntPair)
+        adapter: ftm.TypeAdapter[t.IntPair] = u.type_adapter(t.IntPair)
         tm.that(adapter.validate_python((1, 2)), eq=(1, 2))
         with pytest.raises(ftm.ValidationError):
             adapter.validate_python((1, 2, 3))
 
     def test_variadic_tuple_alias_accepts_any_length(self) -> None:
         """t.VariadicTuple validates homogeneous tuples of arbitrary length."""
-        adapter: ftm.TypeAdapter[t.VariadicTuple[int]] = ftm.TypeAdapter(
+        adapter: ftm.TypeAdapter[t.VariadicTuple[int]] = u.type_adapter(
             t.VariadicTuple[int]
         )
         tm.that(adapter.validate_python(()), eq=())

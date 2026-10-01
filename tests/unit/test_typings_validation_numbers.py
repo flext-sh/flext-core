@@ -14,6 +14,7 @@ from flext_tests import tm
 from tests.constants import c
 from tests.models import m
 from tests.typings import t
+from tests.utilities import u
 
 
 class TestsFlextCoreTypingsValidationNumbers:
@@ -28,7 +29,7 @@ class TestsFlextCoreTypingsValidationNumbers:
         )
         def test_strips_surrounding_whitespace(self, value: str, expected: str) -> None:
             """A non-blank value is returned with surrounding whitespace removed."""
-            adapter: m.TypeAdapter[str] = m.TypeAdapter(t.StrippedStr)
+            adapter: m.TypeAdapter[str] = u.type_adapter(t.StrippedStr)
 
             result = adapter.validate_python(value)
 
@@ -37,7 +38,7 @@ class TestsFlextCoreTypingsValidationNumbers:
         @pytest.mark.parametrize("value", ["", "   ", "\t\n"])
         def test_rejects_blank_or_whitespace_only(self, value: str) -> None:
             """An empty or whitespace-only value raises the public ValidationError."""
-            adapter: m.TypeAdapter[str] = m.TypeAdapter(t.StrippedStr)
+            adapter: m.TypeAdapter[str] = u.type_adapter(t.StrippedStr)
 
             with pytest.raises(c.ValidationError):
                 adapter.validate_python(value)
@@ -71,7 +72,7 @@ class TestsFlextCoreTypingsValidationNumbers:
         self, alias: type[str | int], value: str | int
     ) -> None:
         """A value inside the constraint validates to itself unchanged."""
-        adapter: m.TypeAdapter[str | int] = m.TypeAdapter(alias)
+        adapter: m.TypeAdapter[str | int] = u.type_adapter(alias)
 
         result = adapter.validate_python(value)
 
@@ -100,7 +101,7 @@ class TestsFlextCoreTypingsValidationNumbers:
         self, alias: type[str | int], value: str | int
     ) -> None:
         """A value outside the constraint raises the public ValidationError."""
-        adapter: m.TypeAdapter[str | int] = m.TypeAdapter(alias)
+        adapter: m.TypeAdapter[str | int] = u.type_adapter(alias)
 
         with pytest.raises(c.ValidationError):
             adapter.validate_python(value)
@@ -112,7 +113,7 @@ class TestsFlextCoreTypingsValidationNumbers:
         self, alias: type[int]
     ) -> None:
         """Re-validating an already-valid value yields the same result."""
-        adapter: m.TypeAdapter[int] = m.TypeAdapter(alias)
+        adapter: m.TypeAdapter[int] = u.type_adapter(alias)
 
         once = adapter.validate_python(100)
         twice = adapter.validate_python(once)

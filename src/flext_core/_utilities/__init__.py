@@ -40,7 +40,6 @@ if TYPE_CHECKING:
     from ._beartype.module_visitor import FlextUtilitiesBeartypeModuleVisitor
     from ._beartype.type_aliases import FlextUtilitiesBeartypeTypeAliases
     from ._context_crud_set import FlextUtilitiesContextCrudSetMixin
-    from ._enforcement_parts.enforcement_part_06 import EXTENDED_PREDICATE_BINDINGS
     from ._guards_type_protocol_specs import FlextUtilitiesGuardsTypeProtocolSpecsMixin
     from ._guards_type_protocol_string import (
         FlextUtilitiesGuardsTypeProtocolStringMixin,
@@ -97,7 +96,6 @@ if TYPE_CHECKING:
 
 
 __all__: tuple[str, ...] = (
-    "EXTENDED_PREDICATE_BINDINGS",
     "PREDICATE_BINDINGS",
     "FlextUtilitiesArgs",
     "FlextUtilitiesBase",
@@ -206,7 +204,6 @@ _LAZY_IMPORTS = MappingProxyType(
             "._context_crud_set": ("FlextUtilitiesContextCrudSetMixin",),
             "._enforcement_collect_parts": ("_enforcement_collect_parts",),
             "._enforcement_parts": ("_enforcement_parts",),
-            "._enforcement_parts.enforcement_part_06": ("EXTENDED_PREDICATE_BINDINGS",),
             "._guards_type_protocol_specs": (
                 "FlextUtilitiesGuardsTypeProtocolSpecsMixin",
             ),
