@@ -42,8 +42,6 @@ class FlextUtilitiesLogging(ulc):
 
     _structlog_instance: p.Logger | None = None
 
-    _structlog_configured: ClassVar[bool] = False
-
     def __init__(
         self,
         name: str,
