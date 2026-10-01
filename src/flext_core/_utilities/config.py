@@ -18,7 +18,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, cast
 
 import yaml
-import yaml.constructor
 
 from flext_core import r
 
@@ -45,12 +44,7 @@ class FlextUtilitiesConfig:
         flext-core, ENFORCE-070).
         """
 
-        CSafeLoader = yaml.CSafeLoader
-        MappingNode = yaml.MappingNode
-        ConstructorError = yaml.constructor.ConstructorError
-        SafeLoader = yaml.SafeLoader
         YAMLError = yaml.YAMLError
-        BaseResolver = yaml.resolver.BaseResolver
 
         @staticmethod
         def safe_load(stream: str) -> t.JsonValue:

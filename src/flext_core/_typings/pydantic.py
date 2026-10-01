@@ -112,26 +112,24 @@ class FlextTypesPydantic:
     type EncodedStr = pydantic.EncodedStr
     type EncodedBytes = pydantic.EncodedBytes
 
-    # JSON and special types
-    # pydantic.Json / ImportString / InstanceOf / Secret are generic
-    # runtime markers recognized by pydantic and the mypy plugin.
-    Json = pydantic.Json
+    # JSON and special types: generic type forms recognized by pydantic.
+    type Json[T] = pydantic.Json[T]
     # JsonValue is also module-level so beartype can resolve forward references
     # emitted from aliases that flow through this class namespace.
     type JsonValue = pydantic.JsonValue
     type BaseModelType = pydantic.BaseModel
-    # NOTE (multi-agent): PEP 695 alias (not a bare class-scope assignment).
-    # A bare ``BaseModel = pydantic.BaseModel`` makes mypy treat the facade
-    # attribute as an instance variable, which breaks isinstance narrowing
-    # for every union containing ``t.BaseModel`` (mypy [unreachable]).
+    # PEP 695 aliases, never bare class-scope assignments: a bare
+    # ``BaseModel = pydantic.BaseModel`` is a variable to mypy, so it is not
+    # valid as a type and breaks isinstance narrowing (mypy [unreachable]).
     type BaseModel = pydantic.BaseModel
-    type TypeAdapterType[T] = pydantic.TypeAdapter[T]
-    TypeAdapter = pydantic.TypeAdapter
-    ImportString = pydantic.ImportString
-    InstanceOf = pydantic.InstanceOf
-    Secret = pydantic.Secret
-    SecretStr = pydantic.SecretStr
+    type TypeAdapter[T] = pydantic.TypeAdapter[T]
+    type ImportString[T] = pydantic.ImportString[T]
+    type InstanceOf[T] = pydantic.InstanceOf[T]
+    type Secret[T] = pydantic.Secret[T]
     type SecretBytes = pydantic.SecretBytes
+
+    class SecretStr(pydantic.SecretStr):
+        """Secret string type, constructible and usable in annotations."""
 
     # IP types
     type IPvAnyAddress = pydantic.IPvAnyAddress
@@ -141,10 +139,12 @@ class FlextTypesPydantic:
     # Constraint helper types (runtime markers / classes)
     StringConstraints = pydantic.StringConstraints
     UrlConstraints = pydantic.UrlConstraints
-    ErrorDetails = pydantic_core.ErrorDetails
-    ErrorType = core_schema.ErrorType
-    ErrorTypeInfo = pydantic_core.ErrorTypeInfo
-    InitErrorDetails = pydantic_core.InitErrorDetails
+
+    # Validation error payload types
+    type ErrorDetails = pydantic_core.ErrorDetails
+    type ErrorType = core_schema.ErrorType
+    type ErrorTypeInfo = pydantic_core.ErrorTypeInfo
+    type InitErrorDetails = pydantic_core.InitErrorDetails
 
     # Annotation and alias helper types (runtime markers / classes)
     AliasGenerator = pydantic.AliasGenerator
