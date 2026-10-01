@@ -12,6 +12,7 @@ import pytest
 
 from tests.constants import c
 from tests.models import m
+from tests.utilities import u
 
 
 class TestsFlextCoreModelsCqrs:
@@ -180,7 +181,7 @@ class TestsFlextCoreModelsCqrs:
     def test_flext_message_union_discriminates_on_message_type(
         self, payload: dict[str, str | dict[str, str]], expected_cls: type
     ) -> None:
-        adapter = m.TypeAdapter(m.FlextMessage.__value__)
+        adapter = u.type_adapter(m.FlextMessage.__value__)
 
         parsed = adapter.validate_python(payload)
 

@@ -13,12 +13,8 @@ from hypothesis import given, settings, strategies as st
 
 from tests.protocols import p
 
-from ._result_scenarios import ResultOperationType
-
 
 class TestsFlextCoreResultLaws:
-    ResultOperationType = ResultOperationType
-
     # ------------------------------------------------------------------ #
     # Construction contract                                              #
     # ------------------------------------------------------------------ #

@@ -11,6 +11,8 @@ from __future__ import annotations
 from importlib import import_module
 from typing import overload
 
+from pydantic import TypeAdapter
+
 from flext_core import c, e, p, r, t
 
 from .._models.base import FlextModelsBase as m
@@ -138,7 +140,7 @@ class FlextUtilitiesModel:
         """Validate one value through a model class or TypeAdapter."""
         try:
             adapter = (
-                target if isinstance(target, mp.TypeAdapter) else mp.TypeAdapter(target)
+                target if isinstance(target, TypeAdapter) else TypeAdapter(target)
             )
             if from_json:
                 if not isinstance(data, c.STR_BINARY_TYPES):

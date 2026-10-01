@@ -158,12 +158,12 @@ class FlextUtilitiesDomain:
         | t.MappingKV[str, t.JsonPayload | None]
         | None = None,
         aggregate_id: str | None = None,
-    ) -> mde.Entry:
+    ) -> mde.DomainEvent:
         """Create a domain event and append it to the entity's event buffer.
 
         Pass ``aggregate_id`` explicitly when the entity's stable identity
         differs from ``unique_id`` (e.g. a surrogate ``id`` field). Pydantic's
-        ``BeforeValidator`` on ``Entry.data`` handles all normalization.
+        ``BeforeValidator`` on ``DomainEvent.data`` handles all normalization.
         """
         if data is None:
             normalized_data = FlextModelsContainers.ConfigMap(root={})
@@ -171,7 +171,7 @@ class FlextUtilitiesDomain:
             normalized_data = data
         else:
             normalized_data = FlextModelsContainers.ConfigMap.model_validate(data)
-        entry = mde.Entry(
+        entry = mde.DomainEvent(
             event_type=event_type,
             aggregate_id=aggregate_id if aggregate_id is not None else entity.unique_id,
             data=normalized_data,

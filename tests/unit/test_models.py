@@ -101,7 +101,7 @@ class TestsFlextCoreModels:
         entity = self._SampleEntity(name="a")
         assert list(entity.domain_events) == []
 
-        entry = m.Entry(event_type="created", aggregate_id=entity.unique_id)
+        entry = m.DomainEvent(event_type="created", aggregate_id=entity.unique_id)
         entity.domain_events.append(entry)
 
         assert list(entity.domain_events) == [entry]

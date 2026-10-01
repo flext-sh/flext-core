@@ -26,10 +26,7 @@ from .flextmodelsbase_part_02 import FlextModelsBase as FlextModelsBasePart02
 
 
 class FlextModelsBase(FlextModelsBasePart02):
-    ArbitraryTypesModel = FlextModelsBasePart02.ArbitraryTypesModel
-    MutableConfiguredMixin = FlextModelsBasePart02.MutableConfiguredMixin
-
-    class TimestampableMixin(MutableConfiguredMixin):
+    class TimestampableMixin(FlextModelsBasePart02.MutableConfiguredMixin):
         """Mixin for timestamps with Pydantic v2 validation and serialization."""
 
         created_at: Annotated[
@@ -59,7 +56,7 @@ class FlextModelsBase(FlextModelsBasePart02):
                 raise ValueError(c.ERR_MODEL_UPDATED_AT_BEFORE_CREATED_AT)
             return self
 
-    class VersionableMixin(MutableConfiguredMixin):
+    class VersionableMixin(FlextModelsBasePart02.MutableConfiguredMixin):
         """Mixin for versioning with optimistic locking."""
 
         version: Annotated[
@@ -109,7 +106,7 @@ class FlextModelsBase(FlextModelsBasePart02):
             ),
         ] = c.DEFAULT_MAX_DELAY_SECONDS
 
-    class TimestampedModel(ArbitraryTypesModel, TimestampableMixin):
+    class TimestampedModel(FlextModelsBasePart02.ArbitraryTypesModel, TimestampableMixin):
         """Model with timestamp fields."""
 
 
