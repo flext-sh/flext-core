@@ -13,6 +13,7 @@ from typing import Annotated, Literal
 import pytest
 
 from tests.models import m
+from tests.typings import t
 from tests.utilities import u
 
 
@@ -87,6 +88,23 @@ class TestsFlextCorePydanticDeclarations:
         """Model field constrained through StringConstraints."""
 
         code: Annotated[str, m.StringConstraints(min_length=3, pattern=r"^[a-z]+$")]
+
+    class _Credentials(m.BaseModel):
+        """Model whose secret field is declared through the typings facade."""
+
+        model_config = m.ConfigDict(frozen=True)
+
+        token: t.SecretStr
+
+    def test_secret_str_field_hides_value_and_round_trips(self) -> None:
+        credentials = TestsFlextCorePydanticDeclarations._Credentials(token="s3cret")
+
+        assert isinstance(credentials.token, t.SecretStr)
+        assert credentials.token.get_secret_value() == "s3cret"
+        assert "s3cret" not in repr(credentials)
+
+        with pytest.raises(m.ValidationError):
+            TestsFlextCorePydanticDeclarations._Credentials.model_validate({})
 
     def test_string_constraints_accept_valid_and_reject_invalid_values(self) -> None:
         assert TestsFlextCorePydanticDeclarations._Constrained(code="abc").code == "abc"
