@@ -68,6 +68,21 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
         return filtered_dict
 
     @staticmethod
+    def drop_below_threshold(
+        logger: p.Logger | None, method_name: str, event_dict: t.ScalarMapping
+    ) -> t.ScalarMapping:
+        """Drop events under the active threshold, read at emit time.
+
+        Reading the threshold per event keeps it re-applicable after loggers
+        were cached by ``cache_logger_on_first_use``.
+        """
+        _ = logger, method_name
+        level = logging.getLevelNamesMapping()[str(event_dict["level"]).upper()]
+        if level < FlextUtilitiesLoggingConfigPart01._log_threshold:
+            raise structlog.DropEvent
+        return event_dict
+
+    @staticmethod
     def _resolve_structlog_params(
         settings: mp.BaseModel | None,
         *,
@@ -124,6 +139,7 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
         processors: t.MutableSequenceOf[Processor] = [
             structlog.contextvars.merge_contextvars,
             add_log_level,
+            cls.drop_below_threshold,
             cls.level_based_context_filter,
             TimeStamper(fmt="iso"),
             StackInfoRenderer(),
