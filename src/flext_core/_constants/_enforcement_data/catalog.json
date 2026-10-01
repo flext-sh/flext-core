@@ -746,8 +746,8 @@
       "description": "Function parameter count exceeds FLEXT threshold; decompose or use a domain context object.",
       "severity": "MEDIUM",
       "source": {
-        "kind": "beartype",
-        "tag": "smell_function_parameters"
+        "kind": "code_smell",
+        "smell_tag": "smell_function_parameters"
       },
       "agents_md_anchor": "3-1-supreme-law",
       "skills": [

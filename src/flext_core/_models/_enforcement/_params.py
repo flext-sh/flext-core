@@ -142,8 +142,6 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         forbidden_prefixes: t.StrMapping = Field(default_factory=dict)
         """Forbidden name prefix → the replacement it suggests."""
         require_static_or_classmethod: bool = False
-        smell_threshold: str = ""
-        """Key of ``c.SMELL_THRESHOLDS`` bounding the parameter count, when set."""
 
     class AttrShapeParams(EnforcementModelBase):
         """Parameters for ATTR_SHAPE predicate."""

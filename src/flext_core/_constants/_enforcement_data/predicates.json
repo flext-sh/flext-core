@@ -511,16 +511,6 @@
         "expected_form": "sibling_models_type_checking"
       }
     },
-    "smell_function_parameters": {
-      "category": "namespace",
-      "problem": "function {name} has {count} parameters > max {max}",
-      "fix": "Decompose into smaller functions or pass a context/model object only when it carries domain meaning; adding a params model solely to silence this rule is abominable.",
-      "predicate": "method_shape",
-      "params": {
-        "kind": "method_shape",
-        "smell_threshold": "params"
-      }
-    },
     "typeadapter_name": {
       "category": "attr",
       "layer": "Types",

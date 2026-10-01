@@ -96,7 +96,7 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementCollectPart01):
                 yield from cls._ns_nested_classes(target, target)
             case "nested_mro":
                 yield from cls._ns_nested_mro(target, qn, project)
-            case "no_accessor_methods" | "smell_function_parameters":
+            case "no_accessor_methods":
                 yield from cls._ns_no_accessor_methods(target, qn)
             case "classvar_constant_outside_constants":
                 yield from cls._ns_classvar_constants(target, qn)
