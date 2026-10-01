@@ -243,12 +243,20 @@ class TestsFlextCoreEnforcementNamespacePart02:
         assert recorded == []
 
     def test_emit_warns_in_warn_mode(self) -> None:
-        """WARN mode surfaces the violation as a ``FlextSmellViolation`` warning."""
+        """WARN mode surfaces the namespace rule as a ``FlextMroViolation``.
+
+        ENFORCE-079 is a constants-discipline rule, not a smell: its catalog tag
+        is not a smell tag, so it never warns as ``FlextSmellViolation``.
+        """
         report = _bad_constant_report()
         assert not report.empty
 
-        with pytest.warns(FlextSmellViolation, match="ENFORCE-079"):
+        with pytest.warns(FlextMroViolation, match="ENFORCE-079") as recorded:
             FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.WARN)
+
+        assert not any(
+            issubclass(record.category, FlextSmellViolation) for record in recorded
+        )
 
     def test_emit_is_a_noop_for_empty_report(self) -> None:
         """An empty report never warns or raises regardless of mode."""

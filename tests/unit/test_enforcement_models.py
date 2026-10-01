@@ -127,11 +127,12 @@ class TestsFlextEnforcementModels:
         assert c.ENFORCEMENT_MODE is c.EnforcementMode.WARN
 
     def test_enforcement_rules_loaded(self) -> None:
-        assert len(c.ENFORCEMENT_RULES_TEXT) > 0
         assert len(c.ENFORCEMENT_TAG_CATEGORY) > 0
         assert all(
             cat in c.EnforcementCategory for cat in c.ENFORCEMENT_TAG_CATEGORY.values()
         )
+        # Every runtime rule row carries its own problem/fix text.
+        assert set(c.ENFORCEMENT_TAG_CATEGORY) <= set(c.ENFORCEMENT_RULES_TEXT)
 
     def test_canonical_flext_core_class_satisfies_prefix_contract(self) -> None:
         """A correctly named ``flext_core`` class raises no class-prefix violation."""

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import dis
 import inspect
 import types as _types_mod
 from collections.abc import Callable, MutableMapping, MutableSequence, MutableSet
@@ -22,35 +21,6 @@ if TYPE_CHECKING:
 
 
 class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart02):
-    @staticmethod
-    def has_attribute_call(
-        fn: _types_mod.FunctionType, attr_name: str
-    ) -> dis.Instruction | None:
-        for ins in dis.get_instructions(fn):
-            if ins.opname == "LOAD_ATTR" and ins.argval == attr_name:
-                return ins
-        return None
-
-    @staticmethod
-    def has_private_attr_probe(
-        fn: _types_mod.FunctionType, builtins_set: frozenset[str]
-    ) -> t.StrPair | None:
-        last_builtin: str | None = None
-        for ins in dis.get_instructions(fn):
-            if ins.opname == "LOAD_GLOBAL" and ins.argval in builtins_set:
-                last_builtin = ins.argval
-            elif ins.opname == "LOAD_CONST" and last_builtin is not None:
-                value = ins.argval
-                if (
-                    isinstance(value, str)
-                    and value.startswith("_")
-                    and not value.startswith("__")
-                ):
-                    return last_builtin, value
-            elif ins.opname in {"CALL", "CALL_FUNCTION"}:
-                last_builtin = None
-        return None
-
     @staticmethod
     def module_filename_for(module: _types_mod.ModuleType) -> str | None:
         filename = getattr(module, "__file__", None)

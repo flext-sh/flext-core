@@ -9,33 +9,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from . import (
-        _enforcement_catalog_rows_parts,
-        _enforcement_data,
-        _enforcement_parts,
-        _errors_parts,
-    )
-    from ._enforcement_catalog_rows_parts._parts.flextconstantsenforcementcatalogrows_part_01_a import (
-        INFRA_DETECTOR_ROWS_CORE,
-    )
-    from ._enforcement_catalog_rows_parts._parts.flextconstantsenforcementcatalogrows_part_01_b import (
-        INFRA_DETECTOR_ROWS_PATTERNS,
-    )
-    from ._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_01 import (
-        FlextConstantsEnforcementCatalogInfraRows,
-    )
-    from ._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_02 import (
-        FlextConstantsEnforcementCatalogSkillRows,
-    )
-    from ._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_03 import (
-        FlextConstantsEnforcementCatalogToolRows,
-    )
-    from ._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_04 import (
-        FlextConstantsEnforcementCatalogBeartypeRows,
-    )
-    from ._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_05 import (
-        FlextConstantsEnforcementCatalogInfraRowsExtended,
-    )
+    from . import _enforcement_data, _enforcement_parts, _errors_parts
     from ._enforcement_parts.flextconstantsenforcement_part_01 import (
         FlextConstantsEnforcementEnums,
     )
@@ -48,20 +22,11 @@ if TYPE_CHECKING:
     from ._enforcement_parts.flextconstantsenforcement_part_04 import (
         FlextConstantsEnforcementRules,
     )
-    from ._enforcement_parts.flextconstantsenforcement_part_05 import (
-        FlextConstantsEnforcementRuleText,
-    )
     from ._enforcement_parts.flextconstantsenforcement_part_06 import (
         FlextConstantsEnforcementTargets,
     )
     from ._enforcement_parts.flextconstantsenforcement_part_07 import (
         FlextConstantsEnforcementSmellData,
-    )
-    from ._enforcement_parts.flextconstantsenforcement_part_08 import (
-        FlextConstantsEnforcementFixActions,
-    )
-    from ._enforcement_parts.flextconstantsenforcement_part_09 import (
-        NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT,
     )
     from ._errors_parts.flextconstantserrors_part_01 import FlextConstantsErrorsMessages
     from ._errors_parts.flextconstantserrors_part_02 import (
@@ -84,7 +49,6 @@ if TYPE_CHECKING:
         FlextMroViolation,
         FlextSmellViolation,
     )
-    from .enforcement_catalog_rows import FlextConstantsEnforcementCatalogRows
     from .environment import FlextConstantsEnvironment
     from .errors import FlextConstantsErrors
     from .file import FlextConstantsFile
@@ -103,23 +67,12 @@ if TYPE_CHECKING:
 
 
 __all__: tuple[str, ...] = (
-    "INFRA_DETECTOR_ROWS_CORE",
-    "INFRA_DETECTOR_ROWS_PATTERNS",
-    "NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT",
     "FlextConstantsBase",
     "FlextConstantsConfig",
     "FlextConstantsCqrs",
     "FlextConstantsEnforcement",
-    "FlextConstantsEnforcementCatalogBeartypeRows",
-    "FlextConstantsEnforcementCatalogInfraRows",
-    "FlextConstantsEnforcementCatalogInfraRowsExtended",
-    "FlextConstantsEnforcementCatalogRows",
-    "FlextConstantsEnforcementCatalogSkillRows",
-    "FlextConstantsEnforcementCatalogToolRows",
     "FlextConstantsEnforcementEnums",
-    "FlextConstantsEnforcementFixActions",
     "FlextConstantsEnforcementNamespace",
-    "FlextConstantsEnforcementRuleText",
     "FlextConstantsEnforcementRules",
     "FlextConstantsEnforcementRuntime",
     "FlextConstantsEnforcementSmellData",
@@ -146,7 +99,6 @@ __all__: tuple[str, ...] = (
     "FlextConstantsValidation",
     "FlextMroViolation",
     "FlextSmellViolation",
-    "_enforcement_catalog_rows_parts",
     "_enforcement_data",
     "_enforcement_parts",
     "_errors_parts",
@@ -155,28 +107,6 @@ __all__: tuple[str, ...] = (
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
-            "._enforcement_catalog_rows_parts": ("_enforcement_catalog_rows_parts",),
-            "._enforcement_catalog_rows_parts._parts.flextconstantsenforcementcatalogrows_part_01_a": (
-                "INFRA_DETECTOR_ROWS_CORE",
-            ),
-            "._enforcement_catalog_rows_parts._parts.flextconstantsenforcementcatalogrows_part_01_b": (
-                "INFRA_DETECTOR_ROWS_PATTERNS",
-            ),
-            "._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_01": (
-                "FlextConstantsEnforcementCatalogInfraRows",
-            ),
-            "._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_02": (
-                "FlextConstantsEnforcementCatalogSkillRows",
-            ),
-            "._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_03": (
-                "FlextConstantsEnforcementCatalogToolRows",
-            ),
-            "._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_04": (
-                "FlextConstantsEnforcementCatalogBeartypeRows",
-            ),
-            "._enforcement_catalog_rows_parts.flextconstantsenforcementcatalogrows_part_05": (
-                "FlextConstantsEnforcementCatalogInfraRowsExtended",
-            ),
             "._enforcement_data": ("_enforcement_data",),
             "._enforcement_parts": ("_enforcement_parts",),
             "._enforcement_parts.flextconstantsenforcement_part_01": (
@@ -191,20 +121,11 @@ _LAZY_IMPORTS = MappingProxyType(
             "._enforcement_parts.flextconstantsenforcement_part_04": (
                 "FlextConstantsEnforcementRules",
             ),
-            "._enforcement_parts.flextconstantsenforcement_part_05": (
-                "FlextConstantsEnforcementRuleText",
-            ),
             "._enforcement_parts.flextconstantsenforcement_part_06": (
                 "FlextConstantsEnforcementTargets",
             ),
             "._enforcement_parts.flextconstantsenforcement_part_07": (
                 "FlextConstantsEnforcementSmellData",
-            ),
-            "._enforcement_parts.flextconstantsenforcement_part_08": (
-                "FlextConstantsEnforcementFixActions",
-            ),
-            "._enforcement_parts.flextconstantsenforcement_part_09": (
-                "NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT",
             ),
             "._errors_parts": ("_errors_parts",),
             "._errors_parts.flextconstantserrors_part_01": (
@@ -230,7 +151,6 @@ _LAZY_IMPORTS = MappingProxyType(
                 "FlextMroViolation",
                 "FlextSmellViolation",
             ),
-            ".enforcement_catalog_rows": ("FlextConstantsEnforcementCatalogRows",),
             ".environment": ("FlextConstantsEnvironment",),
             ".errors": ("FlextConstantsErrors",),
             ".file": ("FlextConstantsFile",),
