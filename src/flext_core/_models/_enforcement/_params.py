@@ -21,7 +21,6 @@ type EnforcementPredicateParams = (
     | FlextModelsEnforcementParams.ImportBlacklistParams
     | FlextModelsEnforcementParams.ClassPlacementParams
     | FlextModelsEnforcementParams.LocCapParams
-    | FlextModelsEnforcementParams.WrapperParams
     | FlextModelsEnforcementParams.AliasRebindParams
     | FlextModelsEnforcementParams.CompatibilityAliasParams
     | FlextModelsEnforcementParams.LibraryImportParams
@@ -97,11 +96,6 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
 
         kind: Literal["loc_cap"] = "loc_cap"
         max_top_level_classes: int = 0
-
-    class WrapperParams(EnforcementModelBase):
-        """Parameters for WRAPPER predicate."""
-
-        kind: Literal["wrapper"] = "wrapper"
 
     class AliasRebindParams(EnforcementModelBase):
         """Parameters for ALIAS_REBIND predicate."""

@@ -463,8 +463,10 @@
       "description": "model_rebuild() call indicates unresolved forward refs and violates AGENTS.md §3.4 (Tools/Modules/Env).",
       "severity": "HIGH",
       "source": {
-        "kind": "beartype",
-        "tag": "model_rebuild_call"
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "ban-model-rebuild"
+        ]
       },
       "agents_md_anchor": "3-4-tools-and-modules",
       "skills": [
@@ -489,8 +491,10 @@
       "description": "Pass-through wrapper (single-statement return delegating to another callable with identical args) violates AGENTS.md §3.5.",
       "severity": "MEDIUM",
       "source": {
-        "kind": "beartype",
-        "tag": "pass_through_wrapper"
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "ban-pass-through-wrapper"
+        ]
       },
       "agents_md_anchor": "3-5-integrity",
       "skills": [
@@ -502,8 +506,10 @@
       "description": "hasattr/getattr/setattr probing of private attributes (single-underscore names) violates AGENTS.md §3.6.",
       "severity": "HIGH",
       "source": {
-        "kind": "beartype",
-        "tag": "private_attr_probe"
+        "kind": "flext_infra_rule",
+        "rule_ids": [
+          "ban-getattr-private-probe"
+        ]
       },
       "agents_md_anchor": "3-6-test-standardization",
       "skills": [

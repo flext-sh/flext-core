@@ -32,15 +32,19 @@ if TYPE_CHECKING:
 class TestsFlextEnforcementAptHooks:
     """Public catalog + runtime contract for the A-PT enforcement rules."""
 
-    A_PT_RULE_IDS: ClassVar[t.StrSequence] = (
+    RUNTIME_RULE_IDS: ClassVar[t.StrSequence] = (
         "ENFORCE-039",
-        "ENFORCE-041",
         "ENFORCE-042",
-        "ENFORCE-043",
-        "ENFORCE-044",
         "ENFORCE-054",
         "ENFORCE-055",
     )
+    # Static checks the flext-infra rule engine owns in config/rules.
+    STATIC_RULE_IDS: ClassVar[t.StrSequence] = (
+        "ENFORCE-041",
+        "ENFORCE-043",
+        "ENFORCE-044",
+    )
+    A_PT_RULE_IDS: ClassVar[t.StrSequence] = (*RUNTIME_RULE_IDS, *STATIC_RULE_IDS)
 
     # --- Catalog membership & invariants (public spec models) ---
 
@@ -55,7 +59,7 @@ class TestsFlextEnforcementAptHooks:
         assert rule is not None
         assert rule.agents_md_anchor != ""
 
-    @pytest.mark.parametrize("rule_id", A_PT_RULE_IDS)
+    @pytest.mark.parametrize("rule_id", RUNTIME_RULE_IDS)
     def test_a_pt_rule_documents_problem_and_fix(self, rule_id: str) -> None:
         # The published spec is what a caller reads to understand/repair a
         # violation — both narrative fields must be populated.
@@ -82,7 +86,14 @@ class TestsFlextEnforcementAptHooks:
 
     # --- Per-rule source contract (public discriminated ``source`` model) ---
 
-    @pytest.mark.parametrize("rule_id", A_PT_RULE_IDS)
+    @pytest.mark.parametrize("rule_id", STATIC_RULE_IDS)
+    def test_static_rule_is_owned_by_the_infra_rule_engine(self, rule_id: str) -> None:
+        rule = u.build_canonical_catalog().by_id(rule_id)
+        assert rule is not None
+        assert isinstance(rule.source, m.EnforcementInfraRuleSource)
+        assert rule.source.rule_ids
+
+    @pytest.mark.parametrize("rule_id", RUNTIME_RULE_IDS)
     def test_beartype_rule_tag_has_a_runtime_category(self, rule_id: str) -> None:
         rule = u.build_canonical_catalog().by_id(rule_id)
         assert rule is not None

@@ -62,39 +62,6 @@ class FlextConstantsEnforcementNamespace:
     )
     """Class name suffix → layer name mapping for cross-layer detection."""
 
-    NAMESPACE_CLASS_TO_MODULE_OVERRIDES: ClassVar[Mapping[str, str]] = (
-        MappingProxyType({})
-    )
-    """Class-name → owning-package overrides for facade-layer classes that
-    do not follow the ``Flext<Project><Layer><Concern>`` convention.
-
-    Consumed by ``FlextUtilitiesEnforcement.class_name_to_module`` for both
-    detection (rules that flag a wrong import path) and correction (refactor
-    verbs that emit the right ``from <module> import <Class>`` line). Keep
-    this empty until a real exception is encountered — adding an entry is a
-    declaration that the workspace genuinely deviates from the convention,
-    and that deviation must be justified at the call site that needs it."""
-
-    ENFORCEMENT_LAYER_ALLOWS: ClassVar[Mapping[str, frozenset[str]]] = (
-        MappingProxyType({
-            "constants": frozenset({"StrEnum"}),
-            "models": frozenset(),
-            "protocols": frozenset({"Protocol"}),
-            "types": frozenset(),
-            "utilities": frozenset(),
-        })
-    )
-    """SSOT: per-layer inner-class kinds that cross-layer checks permit.
-
-    Every canonical facade layer MUST be enumerated here so the
-    ``v_class_placement`` visitor disambiguates the cross-layer branch
-    from the name-prefix branch via membership lookup. Empty frozensets
-    are deliberate — they declare *no* allowed exception for that layer.
-
-    ``check_cross_strenum`` / ``check_cross_protocol`` resolve their
-    ``layer_allows`` argument via ``"StrEnum" in ENFORCEMENT_LAYER_ALLOWS.get(layer, ())``.
-    """
-
     # --- Violation message shape (single parameterized template) ---
     #
     # One template covers every violation: the check supplies the
@@ -104,15 +71,6 @@ class FlextConstantsEnforcementNamespace:
 
     ENFORCEMENT_MSG_VIOLATION: ClassVar[str] = "{location}: {problem}. {fix}"
     """Single message shape — location + problem + fix."""
-
-    ENFORCEMENT_VALUE_OBJECT_BASES: ClassVar[frozenset[str]] = frozenset({
-        "FrozenValueModel",
-        "ImmutableValueModel",
-    })
-    """Base-class names that require ``frozen=True`` configuration."""
-
-    ENFORCEMENT_NESTED_MRO_MIN_DEPTH: ClassVar[int] = 2
-    """Minimum qualname depth for a class to count as nested inside a container."""
 
     ENFORCEMENT_CANONICAL_ALIASES: ClassVar[frozenset[str]] = frozenset({
         "c",
@@ -174,37 +132,6 @@ class FlextConstantsEnforcementNamespace:
     Used by runtime census and flext-infra detectors to flag
     ``from flext_core import c`` inside a project that owns ``c`` locally.
     """
-
-    ENFORCEMENT_CLASSVAR_EXEMPT_NAMES: ClassVar[frozenset[str]] = frozenset({
-        "model_config",
-        "logger",
-        # Adapter-strategy contract fields: per-surface polymorphic contracts
-        # and factory registries owned by the service families that resolve
-        # them (deploy surfaces, governance projectors). They are typed
-        # behavior bindings, not namespace constants, and relocating them to
-        # _constants would invert the constants->services dependency.
-        "EMPTY",
-        "MERGES_EXISTING",
-        "ADAPTERS",
-        "PROJECTORS",
-        # Why: CLI command-service registry tuple; moving it to _constants would invert constants->services.
-        "COMMANDS",
-        # Why: FlextConfig's own filename hook — the base declares it and the
-        # loader reads it through `cls`, so a consumer override stays on the
-        # config class; relocating it to _constants breaks the framework read.
-        "CONFIG_FILENAMES",
-        # Why: FlextConfig's own YAML-section hook — same framework idiom as
-        # CONFIG_FILENAMES: the loader reads it through `cls` per subclass and
-        # FlextConfig must not import _constants (constants import it as base).
-        "YAML_CONFIG_SECTION",
-        # Why: libcst's MetadataDependent protocol reads this class attribute
-        # through the visitor/transformer subclass (metadata wrapper resolves
-        # it before instantiation); it is a typed framework binding like
-        # model_config, not a namespace constant, and relocating the tuple to
-        # _constants would break the libcst metadata resolution contract.
-        "METADATA_DEPENDENCIES",
-    })
-    """ClassVar attribute names that are framework idioms and stay in place."""
 
 
 __all__: list[str] = ["FlextConstantsEnforcementNamespace"]

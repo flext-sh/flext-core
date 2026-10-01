@@ -72,7 +72,6 @@ class FlextConstantsEnforcementEnums:
         MODULE_ALIAS = "module_alias"
         MRO_SHAPE = "mro_shape"
         PROTOCOL_TREE = "protocol_tree"
-        WRAPPER = "wrapper"
 
 
 __all__ = ["FlextConstantsEnforcementEnums"]
