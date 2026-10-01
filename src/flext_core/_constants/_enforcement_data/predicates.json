@@ -1,0 +1,556 @@
+{
+  "predicates": {
+    "alias_any": {
+      "category": "attr",
+      "layer": "Types",
+      "problem": "Any in type alias FORBIDDEN",
+      "fix": "Use t.* contracts.",
+      "predicate": "attr_shape",
+      "params": {
+        "kind": "attr_shape",
+        "forbid_any_in_alias": true
+      }
+    },
+    "alias_first_multi_parent": {
+      "category": "namespace",
+      "collect": "target",
+      "problem": "multi-parent facade must have alias or alias-base first in MRO (R5)",
+      "fix": "Order bases: alias or alias-base first (t or FlextProjectServiceBase), then concrete peer (FlextPeerXxx).",
+      "predicate": "mro_shape",
+      "params": {
+        "kind": "mro_shape",
+        "require_alias_first": true
+      }
+    },
+    "alias_rebound_at_module_end": {
+      "category": "namespace",
+      "collect": "target",
+      "problem": "module must rebind alias at end (R6)",
+      "fix": "Add {rebind_form} as final statement (e.g., t = FlextxxxTypes).",
+      "predicate": "alias_rebind",
+      "params": {
+        "kind": "alias_rebind",
+        "expected_form": "rebound_at_module_end"
+      }
+    },
+    "cast_outside_core": {
+      "category": "namespace",
+      "collect": "target",
+      "problem": "cast() call in {file} is outside flext-core (AGENTS.md §3.2)",
+      "fix": "Replace cast() with FlextResult narrowing or explicit isinstance().",
+      "predicate": "deprecated_syntax",
+      "params": {
+        "kind": "deprecated_syntax",
+        "ast_shape": "cast_outside_core"
+      }
+    },
+    "class_prefix": {
+      "category": "namespace",
+      "collect": "class_prefix",
+      "problem": "class name missing project prefix \"{expected}\"",
+      "fix": "Rename to start with \"{expected}\".",
+      "predicate": "class_placement",
+      "params": {
+        "kind": "class_placement"
+      }
+    },
+    "classvar_constant_outside_constants": {
+      "category": "namespace",
+      "collect": "classvar_constants",
+      "problem": "Constant '{name}' declared in {module} (outside _constants)",
+      "fix": "Move the constant to {suggested_target} and re-export via c.*.",
+      "predicate": "classvar_constant",
+      "params": {
+        "kind": "classvar_constant",
+        "detect_implicit_constants": true
+      }
+    },
+    "compatibility_alias_import": {
+      "category": "namespace",
+      "collect": "target",
+      "problem": "non-canonical compatibility alias import \"{name}\" from {module} in {file}",
+      "fix": "Use the canonical alias `{alias}`: `from {module} import {alias}`.",
+      "predicate": "compatibility_alias",
+      "params": {
+        "kind": "compatibility_alias",
+        "alias_renames": {
+          "FlextConstants": "c",
+          "FlextModels": "m",
+          "FlextProtocols": "p",
+          "FlextTypes": "t",
+          "FlextUtilities": "u",
+          "FlextResult": "r",
+          "FlextCliConstants": "c",
+          "FlextCliModels": "m",
+          "FlextCliProtocols": "p",
+          "FlextCliTypes": "t",
+          "FlextCliUtilities": "u",
+          "FlextInfraConstants": "c",
+          "FlextInfraModels": "m",
+          "FlextInfraProtocols": "p",
+          "FlextInfraTypes": "t",
+          "FlextInfraUtilities": "u",
+          "FlextTestsConstants": "c",
+          "FlextTestsModels": "m",
+          "FlextTestsProtocols": "p",
+          "FlextTestsTypes": "t",
+          "FlextTestsUtilities": "u"
+        }
+      }
+    },
+    "const_lowercase": {
+      "category": "attr",
+      "layer": "Constants",
+      "problem": "constant names must be UPPER_CASE",
+      "fix": "Rename to UPPER_SNAKE_CASE.",
+      "predicate": "attr_shape",
+      "params": {
+        "kind": "attr_shape",
+        "require_uppercase_name": true
+      }
+    },
+    "const_mutable": {
+      "category": "attr",
+      "layer": "Constants",
+      "problem": "mutable constant value FORBIDDEN",
+      "fix": "Use frozenset, tuple, or MappingProxyType.",
+      "predicate": "attr_shape",
+      "params": {
+        "kind": "attr_shape",
+        "forbid_mutable_value": true
+      },
+      "recursive": true
+    },
+    "cross_project_duplicate": {
+      "category": "namespace",
+      "collect": "target",
+      "problem": "{qn} duplicated across {owners} (AGENTS.md §2.3, §3.5)",
+      "fix": "Move the symbol to the highest project in hierarchy and re-export.",
+      "predicate": "duplicate_symbol",
+      "params": {
+        "kind": "duplicate_symbol",
+        "hierarchy": [
+          "flext-core",
+          "flext-cli",
+          "flext-infra"
+        ],
+        "symbol_kinds": [
+          "BaseModel",
+          "Protocol",
+          "StrEnum",
+          "TypeAlias",
+          "frozenset_const"
+        ]
+      }
+    },
+    "cross_protocol": {
+      "category": "namespace",
+      "collect": "cross_layer",
+      "problem": "Protocol in wrong layer",
+      "fix": "Move to protocols (p.*).",
+      "predicate": "class_placement",
+      "params": {
+        "kind": "class_placement",
+        "forbidden_bases": [
+          "Protocol"
+        ]
+      }
+    },
+    "cross_strenum": {
+      "category": "namespace",
+      "collect": "cross_layer",
+      "problem": "StrEnum in wrong layer",
+      "fix": "Move to constants (c.*).",
+      "predicate": "class_placement",
+      "params": {
+        "kind": "class_placement",
+        "forbidden_bases": [
+          "StrEnum"
+        ]
+      }
+    },
+    "deprecated_typealias_syntax": {
+      "category": "namespace",
+      "collect": "target",
+      "problem": "'X: TypeAlias = ...' deprecated in {file}:{line} (AGENTS.md §3.5)",
+      "fix": "Use PEP 695 'type X = ...' syntax.",
+      "predicate": "deprecated_syntax",
+      "params": {
+        "kind": "deprecated_syntax",
+        "ast_shape": "AnnAssign[TypeAlias]"
+      }
+    },
+    "extra_missing": {
+      "category": "model_class",
+      "problem": "model_config missing extra=\"forbid\"",
+      "fix": "Inherit a configured FLEXT base (ArbitraryTypesModel, etc.).",
+      "predicate": "model_config",
+      "params": {
+        "kind": "model_config",
+        "require_extra_forbid": true
+      }
+    },
+    "extra_wrong": {
+      "category": "model_class",
+      "problem": "model_config extra=\"{extra}\" not allowed",
+      "fix": "Use FlexibleModel or FlexibleInternalModel.",
+      "predicate": "model_config",
+      "params": {
+        "kind": "model_config",
+        "allowed_extra_values": []
+      }
+    },
+    "facade_base_is_alias_or_peer": {
+      "category": "namespace",
+      "collect": "target",
+      "problem": "facade class base must be alias, alias-base, or peer concrete class (R4, R5)",
+      "fix": "Use class Base(t): or class Base(FlextProjectServiceBase): for Pattern A; class Base(t, FlextPeerXxx): for Pattern B.",
+      "predicate": "mro_shape",
+      "params": {
+        "kind": "mro_shape",
+        "require_alias_first": true
+      }
+    },
+    "forbid_deep_namespace": {
+      "category": "namespace",
+      "collect": "nested_classes",
+      "problem": "nested namespace depth > 2 at {qn} (AGENTS.md §2.3, single nesting)",
+      "fix": "Flatten: prefix-merge the inner class into its parent domain class.",
+      "predicate": "class_placement",
+      "params": {
+        "kind": "class_placement",
+        "max_nested_class_depth": 2
+      }
+    },
+    "library_abstraction": {
+      "category": "namespace",
+      "collect": "target",
+      "problem": "import of {lib} outside its owner {owner} (AGENTS.md §2.7)",
+      "fix": "Route through the owner facade (u.Observability.* / u.Cli.* / u.Infra.*).",
+      "predicate": "library_import",
+      "params": {
+        "kind": "library_import"
+      }
+    },
+    "missing_description": {
+      "category": "field",
+      "problem": "m.Field() missing description",
+      "fix": "Provide description=\"...\".",
+      "predicate": "field_shape",
+      "params": {
+        "kind": "field_shape",
+        "require_description": true
+      }
+    },
+    "nested_layer_misplacement": {
+      "category": "namespace",
+      "collect": "target",
+      "problem": "{qn} nested in wrong facade family (AGENTS.md §2.2)",
+      "fix": "Move declaration to its canonical _models/_protocols/_typings/ tree.",
+      "predicate": "class_placement",
+      "params": {
+        "kind": "class_placement",
+        "forbidden_bases": [
+          "BaseModel",
+          "Protocol",
+          "RootModel"
+        ],
+        "canonical_path_fragment": "_models/",
+        "check_nested": true
+      }
+    },
+    "nested_mro": {
+      "category": "namespace",
+      "collect": "nested_mro",
+      "problem": "must be nested inside a \"{expected}*\" container class",
+      "fix": "Wrap in a container whose name starts with \"{expected}\".",
+      "predicate": "class_placement",
+      "params": {
+        "kind": "class_placement",
+        "check_nested": true
+      }
+    },
+    "no_accessor_methods": {
+      "category": "namespace",
+      "collect": "accessor_methods",
+      "problem": "accessor method \"{name}\" FORBIDDEN (AGENTS.md §3.1)",
+      "fix": "Rename \"{name}\" to a domain verb ({suggestion}) or expose as a field/@u.computed_field.",
+      "predicate": "method_shape",
+      "params": {
+        "kind": "method_shape",
+        "forbidden_prefixes": {
+          "get_": "fetch_/resolve_/compute_",
+          "set_": "configure/apply/update or model_copy(update=...)",
+          "is_": "a noun/adjective (success, expired, connected, ...)"
+        }
+      }
+    },
+    "no_any": {
+      "category": "field",
+      "problem": "Any is FORBIDDEN (detected recursively)",
+      "fix": "Use a t.* type contract.",
+      "predicate": "field_shape",
+      "params": {
+        "kind": "field_shape",
+        "forbid_any": true
+      }
+    },
+    "no_bare_collection": {
+      "category": "field",
+      "problem": "bare {kind}[...] annotation FORBIDDEN",
+      "fix": "Use {replacement}.",
+      "predicate": "field_shape",
+      "params": {
+        "kind": "field_shape",
+        "forbid_bare_collection": true
+      }
+    },
+    "no_concrete_namespace_import": {
+      "category": "namespace",
+      "collect": "target",
+      "problem": "bare Flext* class import FORBIDDEN (R1, R3)",
+      "fix": "Import alias (t, m, c, u, p) from parent; use in class bases.",
+      "predicate": "import_blacklist",
+      "params": {
+        "kind": "import_blacklist"
+      }
+    },
+    "no_core_tests_namespace": {
+      "category": "namespace",
+      "collect": "target",
+      "problem": "deprecated namespace \"{symbol}\" in {file}:{line}",
+      "fix": "Use flat test namespace access (c/p/t/m/u.Tests.*) with no Core intermediary.",
+      "predicate": "deprecated_syntax",
+      "params": {
+        "kind": "deprecated_syntax",
+        "ast_shape": "no_core_tests_namespace"
+      }
+    },
+    "no_inline_union": {
+      "category": "field",
+      "problem": "complex inline union with {arms} arms",
+      "fix": "Centralize as a t.* type alias in typings.py.",
+      "predicate": "field_shape",
+      "params": {
+        "kind": "field_shape",
+        "forbid_inline_union": true,
+        "max_union_arms": 2
+      }
+    },
+    "no_module_compat_alias": {
+      "category": "namespace",
+      "collect": "target",
+      "problem": "module-level compat alias '{alias} = {target}' in {file} (AGENTS.md §2.4)",
+      "fix": "Delete the alias and use the canonical class path at every call site.",
+      "predicate": "module_alias",
+      "params": {
+        "kind": "alias_rebind",
+        "expected_form": "no_module_compat_alias"
+      }
+    },
+    "no_mutable_default": {
+      "category": "field",
+      "problem": "mutable default {kind}() is FORBIDDEN",
+      "fix": "Use m.Field(default_factory={kind}).",
+      "predicate": "field_shape",
+      "params": {
+        "kind": "field_shape",
+        "forbid_mutable_default": true
+      }
+    },
+    "no_private_module_bypass": {
+      "category": "namespace",
+      "collect": "target",
+      "problem": "import '{import}' reaches private tree {origin} from {file} (AGENTS.md §4)",
+      "fix": "Import via the owning facade (constants/models/protocols/typings/utilities).",
+      "predicate": "import_blacklist",
+      "params": {
+        "kind": "import_blacklist",
+        "private_package_only": true
+      }
+    },
+    "no_pydantic_consumer_import": {
+      "category": "namespace",
+      "collect": "target",
+      "problem": "bare pydantic import FORBIDDEN (R2)",
+      "fix": "Use u.Field(), m.BaseModel, m.ConfigDict, m.TypeAdapter, u.model_validator, u.field_validator, u.computed_field, u.PrivateAttr from parent facade.",
+      "predicate": "import_blacklist",
+      "params": {
+        "kind": "import_blacklist",
+        "forbidden_modules": [
+          "pydantic"
+        ],
+        "forbidden_symbols": [
+          "BaseModel",
+          "Field",
+          "ConfigDict",
+          "TypeAdapter",
+          "field_validator",
+          "model_validator",
+          "computed_field",
+          "PrivateAttr",
+          "AfterValidator",
+          "BeforeValidator"
+        ]
+      }
+    },
+    "no_raw_collections_field_default": {
+      "category": "field",
+      "problem": "Field(default_factory={kind}) conflicts with a read-only field contract",
+      "fix": "Use the immutable equivalent (tuple, MappingProxyType, frozenset) or declare an explicit MutableSequence/MutableMapping/MutableSet contract when in-place mutation is part of the model API.",
+      "predicate": "field_shape",
+      "params": {
+        "kind": "field_shape",
+        "forbid_raw_default_factory": true
+      }
+    },
+    "no_redundant_inner_namespace": {
+      "category": "namespace",
+      "collect": "target",
+      "problem": "redundant inner namespace re-inheritance (R8)",
+      "fix": "Remove empty inner class — MRO already exposes it from parent.",
+      "predicate": "mro_shape",
+      "params": {
+        "kind": "mro_shape",
+        "forbid_redundant_inner": true
+      }
+    },
+    "no_self_root_import_in_core_files": {
+      "category": "namespace",
+      "collect": "target",
+      "problem": "same-package root import in canonical file (R7)",
+      "fix": "Import alias from parent package, not own package.",
+      "predicate": "alias_rebind",
+      "params": {
+        "kind": "alias_rebind",
+        "expected_form": "no_self_root_import_in_core_files"
+      }
+    },
+    "no_str_none_empty": {
+      "category": "field",
+      "problem": "str | None with default=\"\" is wrong",
+      "fix": "Use str with default=\"\" (None has no business meaning here).",
+      "predicate": "field_shape",
+      "params": {
+        "kind": "field_shape",
+        "forbid_str_none_empty": true
+      }
+    },
+    "no_v1_config": {
+      "category": "model_class",
+      "problem": "class Config is Pydantic v1",
+      "fix": "Use model_config: ClassVar[ConfigDict] = ConfigDict(...).",
+      "predicate": "model_config",
+      "params": {
+        "kind": "model_config",
+        "forbid_v1_config": true
+      }
+    },
+    "no_wrapper_root_alias_import": {
+      "category": "namespace",
+      "collect": "target",
+      "problem": "wrapper alias import must use root package in {file}:{line}: \"{statement}\"",
+      "fix": "Use `from tests|examples|scripts import c, p, t, m, u` (no submodule alias imports).",
+      "predicate": "deprecated_syntax",
+      "params": {
+        "kind": "deprecated_syntax",
+        "ast_shape": "no_wrapper_root_alias_import"
+      }
+    },
+    "one_class_per_module": {
+      "category": "namespace",
+      "collect": "target",
+      "problem": "module {file} declares {count} top-level classes > cap {cap} (NS-000)",
+      "fix": "Keep exactly one top-level class per module; absorb extras as MRO mixins.",
+      "predicate": "loc_cap",
+      "params": {
+        "kind": "loc_cap",
+        "max_top_level_classes": 1
+      }
+    },
+    "proto_inner_kind": {
+      "category": "protocol_tree",
+      "problem": "inner class must be Protocol / namespace / ABC",
+      "fix": "Declare a Protocol subclass, namespace holder, or nominal contract.",
+      "predicate": "protocol_tree",
+      "params": {
+        "kind": "protocol_tree",
+        "require_inner_kind_protocol_or_namespace": true
+      }
+    },
+    "proto_not_runtime": {
+      "category": "protocol_tree",
+      "problem": "Protocol must be @runtime_checkable",
+      "fix": "Decorate the Protocol with @runtime_checkable.",
+      "predicate": "protocol_tree",
+      "params": {
+        "kind": "protocol_tree",
+        "require_runtime_checkable": true
+      }
+    },
+    "settings_inheritance": {
+      "category": "model_class",
+      "problem": "\"{name}\" must inherit FlextSettings (AGENTS.md §2.6)",
+      "fix": "Add FlextSettings to the MRO; remove BaseModel/BaseSettings bases.",
+      "predicate": "loose_symbol",
+      "params": {
+        "kind": "loose_symbol",
+        "require_settings_base": true
+      }
+    },
+    "sibling_models_type_checking": {
+      "category": "namespace",
+      "collect": "target",
+      "problem": "sibling models/* import used only in annotation must be TYPE_CHECKING (R9)",
+      "fix": "Wrap annotation-only imports under `if TYPE_CHECKING:`.",
+      "predicate": "alias_rebind",
+      "params": {
+        "kind": "alias_rebind",
+        "expected_form": "sibling_models_type_checking"
+      }
+    },
+    "typeadapter_name": {
+      "category": "attr",
+      "layer": "Types",
+      "problem": "TypeAdapter \"{name}\" needs UPPER_CASE naming",
+      "fix": "Rename to \"ADAPTER_{upper_name}\".",
+      "predicate": "attr_shape",
+      "params": {
+        "kind": "attr_shape",
+        "require_typeadapter_naming": true
+      }
+    },
+    "utilities_explicit_class_when_self_ref": {
+      "category": "namespace",
+      "collect": "target",
+      "problem": "utilities.py with self-referencing method must use explicit class base (R10)",
+      "fix": "Use class FlextXxxUtilities(FlextParentUtilities, FlextPeerUtilities): for parent (not alias).",
+      "predicate": "mro_shape",
+      "params": {
+        "kind": "mro_shape",
+        "require_explicit_class_when_self_ref": true
+      }
+    },
+    "utility_not_static": {
+      "category": "attr",
+      "layer": "Utilities",
+      "problem": "utility must be @staticmethod or @classmethod",
+      "fix": "Utilities must be stateless.",
+      "predicate": "method_shape",
+      "params": {
+        "kind": "method_shape",
+        "require_static_or_classmethod": true
+      }
+    },
+    "value_not_frozen": {
+      "category": "model_class",
+      "problem": "value objects must be frozen=True",
+      "fix": "Inherit from ImmutableValueModel or FrozenValueModel.",
+      "predicate": "model_config",
+      "params": {
+        "kind": "model_config",
+        "require_frozen_for_value_objects": true
+      }
+    }
+  }
+}

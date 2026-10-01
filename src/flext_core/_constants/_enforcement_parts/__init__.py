@@ -13,21 +13,13 @@ if TYPE_CHECKING:
     from .flextconstantsenforcement_part_02 import FlextConstantsEnforcementRuntime
     from .flextconstantsenforcement_part_03 import FlextConstantsEnforcementNamespace
     from .flextconstantsenforcement_part_04 import FlextConstantsEnforcementRules
-    from .flextconstantsenforcement_part_05 import FlextConstantsEnforcementRuleText
     from .flextconstantsenforcement_part_06 import FlextConstantsEnforcementTargets
     from .flextconstantsenforcement_part_07 import FlextConstantsEnforcementSmellData
-    from .flextconstantsenforcement_part_08 import FlextConstantsEnforcementFixActions
-    from .flextconstantsenforcement_part_09 import (
-        NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT,
-    )
 
 
 __all__: tuple[str, ...] = (
-    "NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT",
     "FlextConstantsEnforcementEnums",
-    "FlextConstantsEnforcementFixActions",
     "FlextConstantsEnforcementNamespace",
-    "FlextConstantsEnforcementRuleText",
     "FlextConstantsEnforcementRules",
     "FlextConstantsEnforcementRuntime",
     "FlextConstantsEnforcementSmellData",
@@ -43,18 +35,9 @@ _LAZY_IMPORTS = MappingProxyType(
                 "FlextConstantsEnforcementNamespace",
             ),
             ".flextconstantsenforcement_part_04": ("FlextConstantsEnforcementRules",),
-            ".flextconstantsenforcement_part_05": (
-                "FlextConstantsEnforcementRuleText",
-            ),
             ".flextconstantsenforcement_part_06": ("FlextConstantsEnforcementTargets",),
             ".flextconstantsenforcement_part_07": (
                 "FlextConstantsEnforcementSmellData",
-            ),
-            ".flextconstantsenforcement_part_08": (
-                "FlextConstantsEnforcementFixActions",
-            ),
-            ".flextconstantsenforcement_part_09": (
-                "NAMESPACE_IMPORT_ENFORCEMENT_RULES_TEXT",
             ),
         }),
         alias_groups=MappingProxyType({}),

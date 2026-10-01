@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import importlib.resources
 import warnings
 from types import MappingProxyType
+from typing import ClassVar
 
+from .._constants import _enforcement_data
 from .._constants.enforcement import (
     FlextConstantsEnforcement as c,
     FlextMroViolation,
@@ -13,14 +16,42 @@ from .._constants.enforcement import (
 from .._models.enforcement import FlextModelsEnforcement as me
 from .._typings.base import FlextTypingBase as t
 
-_BEARTYPE_TAG_TO_RULE: MappingProxyType[str, t.StrPair] = MappingProxyType({
-    tag: (rule_id, anchor)
-    for rule_id, _sev, tag, anchor, *_ in (*c.BEARTYPE_ROWS, *c.SMELL_CODE_SMELL_ROWS)
-})
-
 
 class FlextUtilitiesEnforcementEmit:
     """Violation factory + warning/strict emission + exemption rules."""
+
+    _canonical_catalog: ClassVar[me.EnforcementCatalog | None] = None
+    _rules_by_tag: ClassVar[t.MappingKV[str, me.EnforcementRuleSpec] | None] = None
+
+    @classmethod
+    def build_canonical_catalog(cls) -> me.EnforcementCatalog:
+        """Return the enforcement catalog validated from its package data."""
+        if cls._canonical_catalog is None:
+            cls._canonical_catalog = me.EnforcementCatalog.model_validate_json(
+                importlib.resources
+                .files(_enforcement_data)
+                .joinpath(c.ENFORCEMENT_CATALOG_RESOURCE)
+                .read_text(encoding="utf-8")
+            )
+        return cls._canonical_catalog
+
+    @classmethod
+    def rules_by_tag(cls) -> t.MappingKV[str, me.EnforcementRuleSpec]:
+        """Return catalog rules keyed by their runtime predicate or smell tag."""
+        if cls._rules_by_tag is None:
+            cls._rules_by_tag = MappingProxyType({
+                (
+                    rule.source.tag
+                    if isinstance(rule.source, me.EnforcementBeartypeSource)
+                    else rule.source.smell_tag
+                ): rule
+                for rule in cls.build_canonical_catalog().rules
+                if isinstance(
+                    rule.source,
+                    me.EnforcementBeartypeSource | me.EnforcementCodeSmellSource,
+                )
+            })
+        return cls._rules_by_tag
 
     @staticmethod
     def _violation(
@@ -38,7 +69,9 @@ class FlextUtilitiesEnforcementEmit:
             problem=problem.format(**subs) if subs else problem,
             fix=fix.format(**subs) if subs else fix,
         )
-        rule_id, anchor = _BEARTYPE_TAG_TO_RULE.get(tag, ("", ""))
+        rule = FlextUtilitiesEnforcementEmit.rules_by_tag().get(tag)
+        rule_id = rule.id if rule is not None else ""
+        anchor = rule.agents_md_anchor if rule is not None else ""
         message = f"{message} [{rule_id}]" if rule_id else f"{message} [{tag}]"
 
         layer = "Model"
@@ -94,7 +127,11 @@ class FlextUtilitiesEnforcementEmit:
             )
             category = (
                 FlextSmellViolation
-                if v.rule_id and v.rule_id.startswith("ENFORCE-07")
+                if any(
+                    rule.id == v.rule_id
+                    for tag, rule in FlextUtilitiesEnforcementEmit.rules_by_tag().items()
+                    if tag in c.ENFORCEMENT_SMELL_TAGS
+                )
                 else FlextMroViolation
             )
             warnings.warn(msg, category, stacklevel=4)
