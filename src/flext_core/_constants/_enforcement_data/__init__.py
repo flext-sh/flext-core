@@ -56,8 +56,11 @@ class _PredicateData(BaseModel):
 
 def _resource_text(name: str) -> str:
     """Read one enforcement package-data resource."""
-    return importlib.resources.files(__package__).joinpath(name).read_text(
-        encoding="utf-8"
+    return (
+        importlib.resources
+        .files(__package__)
+        .joinpath(name)
+        .read_text(encoding="utf-8")
     )
 
 

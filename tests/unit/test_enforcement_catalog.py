@@ -41,7 +41,9 @@ class TestsFlextEnforcementCatalog:
         assert all(rule.source.kind == kind.value for rule in selected)
 
     def test_beartype_rules_name_a_runtime_tag(self) -> None:
-        for rule in u.build_canonical_catalog().by_kind(c.EnforcementSourceKind.BEARTYPE):
+        for rule in u.build_canonical_catalog().by_kind(
+            c.EnforcementSourceKind.BEARTYPE
+        ):
             assert isinstance(rule.source, m.EnforcementBeartypeSource)
             assert rule.source.tag in c.ENFORCEMENT_TAG_CATEGORY
 
