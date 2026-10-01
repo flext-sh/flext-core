@@ -32,12 +32,13 @@ class FlextModelsCqrs:
             json_schema_extra={
                 "title": "Pagination",
                 "description": "Pagination model for query results with computed fields",
-            }
+            },
         )
         page: Annotated[
             t.PositiveInt,
             Field(
-                description="Page number (1-based indexing)", examples=[1, 2, 10, 100]
+                description="Page number (1-based indexing)",
+                examples=[1, 2, 10, 100],
             ),
         ] = c.DEFAULT_RETRY_DELAY_SECONDS
         size: Annotated[

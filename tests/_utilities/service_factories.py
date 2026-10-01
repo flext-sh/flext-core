@@ -7,7 +7,8 @@ from .validation_factories import TestsFlextUtilitiesValidationFactoriesMixin
 
 
 class TestsFlextUtilitiesServiceFactoriesMixin(
-    TestsFlextUtilitiesValidationFactoriesMixin, TestsFlextUtilitiesUserFactoriesMixin
+    TestsFlextUtilitiesValidationFactoriesMixin,
+    TestsFlextUtilitiesUserFactoriesMixin,
 ):
     """Service factory helpers."""
 

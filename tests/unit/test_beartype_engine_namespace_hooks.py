@@ -64,7 +64,7 @@ class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
                 me.DeprecatedSyntaxParams(ast_shape={ast_shape!r}),
                 Probe,
             )))
-            """
+            """,
         )
         return self._run_python(script, cwd=self._REPO_ROOT)
 
@@ -85,7 +85,7 @@ class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
 
                         class Probe:
                             value = c.Core.Tests.ERR_OK_FAILED
-                        """
+                        """,
                     ).strip()
                     + "\n",
                 },
@@ -101,7 +101,7 @@ class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
                         """
                         class Probe:
                             value = "c.Core.Tests.ERR_OK_FAILED"
-                        """
+                        """,
                     ).strip()
                     + "\n",
                 },
@@ -119,7 +119,10 @@ class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
     ) -> None:
         """``no_core_tests_namespace`` returns None for exempt / non-alias code."""
         result = self._apply_deprecated_syntax(
-            tmp_path, files, import_target, ast_shape="no_core_tests_namespace"
+            tmp_path,
+            files,
+            import_target,
+            ast_shape="no_core_tests_namespace",
         )
 
         tm.that(u.Cli.process_succeeded(result.outcome), eq=True, msg=result.stderr)
@@ -139,7 +142,7 @@ class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
 
                     class Probe:
                         pass
-                    """
+                    """,
                 ).strip()
                 + "\n",
             },

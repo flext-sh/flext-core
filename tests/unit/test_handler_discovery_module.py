@@ -36,7 +36,8 @@ class TestsFlextHandlerDiscoveryModule:
         module = types.ModuleType("decorated_module")
 
         @h.handler(
-            command=TestsFlextHandlerDiscoveryModule._CreateCommand, priority=100
+            command=TestsFlextHandlerDiscoveryModule._CreateCommand,
+            priority=100,
         )
         def handle_create(
             cmd: TestsFlextHandlerDiscoveryModule._CreateCommand,
@@ -194,7 +195,8 @@ class TestsFlextHandlerDiscoveryModule:
 
         # Assert
         tm.that(
-            config.command is TestsFlextHandlerDiscoveryModule._DeleteCommand, eq=True
+            config.command is TestsFlextHandlerDiscoveryModule._DeleteCommand,
+            eq=True,
         )
         tm.that(config.priority, eq=7)
 
@@ -215,7 +217,9 @@ class TestsFlextHandlerDiscoveryModule:
         [(42, 42), ("payload", "payload"), (None, None), ([1, 2], "[1, 2]")],
     )
     def test_discovered_callable_coerces_result_to_scalar_or_none(
-        self, returned: t.JsonValue, expected: t.Scalar | None
+        self,
+        returned: t.JsonValue,
+        expected: t.Scalar | None,
     ) -> None:
         """The discovered callable exposes the documented scalar coercion."""
         # Arrange

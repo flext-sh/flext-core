@@ -30,12 +30,14 @@ class FlextUtilitiesCollectionMerge:
 
     @staticmethod
     def _merge_deep_single_key(
-        result: t.MutableJsonMapping, key: str, value: t.JsonValue
+        result: t.MutableJsonMapping,
+        key: str,
+        value: t.JsonValue,
     ) -> p.Result[bool]:
         """Merge single key in deep merge strategy."""
         current_val = result.get(key)
         if FlextUtilitiesCollectionMerge._is_json_mapping(
-            current_val
+            current_val,
         ) and FlextUtilitiesCollectionMerge._is_json_mapping(value):
             result[key] = FlextRuntimeMetadata.normalize_to_metadata({
                 **current_val,
@@ -47,7 +49,8 @@ class FlextUtilitiesCollectionMerge:
 
     @staticmethod
     def _merge_replace(
-        other: t.JsonMapping, base: t.JsonMapping
+        other: t.JsonMapping,
+        base: t.JsonMapping,
     ) -> p.Result[t.JsonMapping]:
         """Replace strategy: base values overwrite other."""
         result: t.MutableJsonMapping = dict(other)
@@ -56,7 +59,8 @@ class FlextUtilitiesCollectionMerge:
 
     @staticmethod
     def _merge_filter_none(
-        other: t.JsonMapping, base: t.JsonMapping
+        other: t.JsonMapping,
+        base: t.JsonMapping,
     ) -> p.Result[t.JsonMapping]:
         """Filter-none strategy: skip None values from base."""
         result: t.MutableJsonMapping = dict(other)
@@ -65,7 +69,8 @@ class FlextUtilitiesCollectionMerge:
 
     @staticmethod
     def _merge_filter_empty(
-        other: t.JsonMapping, base: t.JsonMapping
+        other: t.JsonMapping,
+        base: t.JsonMapping,
     ) -> p.Result[t.JsonMapping]:
         """Filter-empty strategy: skip empty values from base."""
         result: t.MutableJsonMapping = dict(other)
@@ -78,14 +83,15 @@ class FlextUtilitiesCollectionMerge:
 
     @staticmethod
     def _merge_append(
-        other: t.JsonMapping, base: t.JsonMapping
+        other: t.JsonMapping,
+        base: t.JsonMapping,
     ) -> p.Result[t.JsonMapping]:
         """Append strategy: concatenate lists instead of replacing."""
         result: t.MutableJsonMapping = dict(other)
         for key, value in base.items():
             current_val = result.get(key)
             if FlextUtilitiesCollectionMerge._is_json_list(
-                current_val
+                current_val,
             ) and FlextUtilitiesCollectionMerge._is_json_list(value):
                 result[key] = FlextRuntimeMetadata.normalize_to_metadata([
                     *current_val,
@@ -97,13 +103,16 @@ class FlextUtilitiesCollectionMerge:
 
     @staticmethod
     def _merge_deep(
-        other: t.JsonMapping, base: t.JsonMapping
+        other: t.JsonMapping,
+        base: t.JsonMapping,
     ) -> p.Result[t.JsonMapping]:
         """Deep strategy: recursively merge nested dicts."""
         result: t.MutableJsonMapping = dict(other)
         for key, value in base.items():
             merge_result = FlextUtilitiesCollectionMerge._merge_deep_single_key(
-                result, key, value
+                result,
+                key,
+                value,
             )
             if merge_result.failure:
                 return r[t.JsonMapping].from_failure(merge_result)

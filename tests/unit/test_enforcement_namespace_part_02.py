@@ -112,7 +112,9 @@ class TestsFlextCoreEnforcementNamespacePart02:
         ],
     )
     def test_run_layer_stays_silent_for_exempt_or_clean_classes(
-        self, case: str, factory: ClassFactory
+        self,
+        case: str,
+        factory: ClassFactory,
     ) -> None:
         """Function-local, tests-qualified, and clean classes emit no warnings."""
         target = factory()
@@ -139,7 +141,9 @@ class TestsFlextCoreEnforcementNamespacePart02:
         ],
     )
     def test_check_flags_constant_declared_outside_constants(
-        self, name: str, body: dict[str, object]
+        self,
+        name: str,
+        body: dict[str, object],
     ) -> None:
         """UPPER_CASE constants outside ``_constants`` yield an ENFORCE-079 violation.
 
@@ -197,7 +201,10 @@ class TestsFlextCoreEnforcementNamespacePart02:
         ],
     )
     def test_check_exempts_permitted_constant_shapes(
-        self, case: str, body: dict[str, object], module: str | None
+        self,
+        case: str,
+        body: dict[str, object],
+        module: str | None,
     ) -> None:
         """Constants inside ``_constants``, framework idioms, and lowercase names pass."""
         good = _synthetic("FlextSyntheticExempt", body, module=module)

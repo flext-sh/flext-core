@@ -18,7 +18,10 @@ class FlextUtilitiesConversion:
 
     @staticmethod
     def join(
-        values: t.StrSequence, *, separator: str = " ", case: str | None = None
+        values: t.StrSequence,
+        *,
+        separator: str = " ",
+        case: str | None = None,
     ) -> str:
         """Join string values with separator and optional case conversion."""
         if not values:
@@ -58,7 +61,9 @@ class FlextUtilitiesConversion:
 
     @staticmethod
     def to_str_list(
-        value: t.StrictValue | None, *, default: t.StrSequence | None = None
+        value: t.StrictValue | None,
+        *,
+        default: t.StrSequence | None = None,
     ) -> t.StrSequence:
         """Convert value to list of strings."""
         if value is None:

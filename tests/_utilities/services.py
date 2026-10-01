@@ -34,7 +34,8 @@ class TestsFlextUtilitiesServicesMixin:
         """Service whose only collaborator is the ``p.Tests.Counter`` port."""
 
         counter: t.Port[p.Tests.Counter] = u.Field(
-            exclude=True, description="Counter port the service advances."
+            exclude=True,
+            description="Counter port the service advances.",
         )
 
         @override
@@ -46,10 +47,12 @@ class TestsFlextUtilitiesServicesMixin:
         """Service with validation."""
 
         value_input: Annotated[
-            str, u.Field(description="String input validated by business rules.")
+            str,
+            u.Field(description="String input validated by business rules."),
         ]
         min_length: Annotated[
-            int, u.Field(description="Minimum accepted input length.")
+            int,
+            u.Field(description="Minimum accepted input length."),
         ] = c.Tests.MIN_LENGTH_DEFAULT
 
         @override
@@ -57,7 +60,7 @@ class TestsFlextUtilitiesServicesMixin:
             """Validate and return value."""
             if len(self.value_input) < self.min_length:
                 return r[str].fail(
-                    f"Value must be at least {self.min_length} characters"
+                    f"Value must be at least {self.min_length} characters",
                 )
             return r[str].ok(self.value_input.upper())
 

@@ -63,7 +63,8 @@ class TestsFlextConstantsNew:
         ],
     )
     def test_domain_enums_are_string_valued_for_routing(
-        self, domain_enum: type[enum.Enum]
+        self,
+        domain_enum: type[enum.Enum],
     ) -> None:
         """Every routing enum is a StrEnum whose str() equals its wire value.
 
@@ -82,7 +83,8 @@ class TestsFlextConstantsNew:
         [c.Status, c.ErrorDomain, c.LogLevel, c.Environment, c.SerializationFormat],
     )
     def test_domain_enum_value_lookup_roundtrips(
-        self, domain_enum: type[enum.StrEnum]
+        self,
+        domain_enum: type[enum.StrEnum],
     ) -> None:
         """A caller can reconstruct any member from its public wire value."""
         for member in domain_enum:
@@ -102,7 +104,8 @@ class TestsFlextConstantsNew:
         tm.that(truthy.isdisjoint(falsy), eq=True)
 
     @pytest.mark.parametrize(
-        "token", tuple(c.PARSER_BOOLEAN_TRUTHY) + tuple(c.PARSER_BOOLEAN_FALSY)
+        "token",
+        tuple(c.PARSER_BOOLEAN_TRUTHY) + tuple(c.PARSER_BOOLEAN_FALSY),
     )
     def test_boolean_tokens_are_lowercase_and_spaceless(self, token: str) -> None:
         """Validation token sets remain normalized (lowercase, no whitespace)."""
@@ -112,7 +115,9 @@ class TestsFlextConstantsNew:
     # -------------------------------------------------- identifier regex rules
     @pytest.mark.parametrize(("raw_app_id", "normalized"), c.Tests.FORMAT_APP_ID_CASES)
     def test_app_id_cases_match_core_identifier_regex(
-        self, raw_app_id: str, normalized: str
+        self,
+        raw_app_id: str,
+        normalized: str,
     ) -> None:
         """Shared flat test cases must produce identifiers accepted by core regex rules."""
         _ = raw_app_id
@@ -120,7 +125,9 @@ class TestsFlextConstantsNew:
 
     @pytest.mark.parametrize(("raw", "expected"), c.Tests.SAFE_STRING_VALID_CASES)
     def test_safe_string_valid_cases_align_with_parser_tokens(
-        self, raw: str, expected: str
+        self,
+        raw: str,
+        expected: str,
     ) -> None:
         """Flat string fixtures exercise parser-ready normalized values."""
         _ = raw
@@ -132,12 +139,15 @@ class TestsFlextConstantsNew:
 
     @pytest.mark.parametrize(("raw", "_reason"), c.Tests.SAFE_STRING_INVALID_CASES)
     def test_safe_string_invalid_cases_do_not_match_identifier_regex(
-        self, raw: str | None, _reason: str
+        self,
+        raw: str | None,
+        _reason: str,
     ) -> None:
         """Invalid fixture values should fail core identifier matching."""
         candidate = "" if raw is None else raw.strip()
         tm.that(
-            bool(c.PATTERN_IDENTIFIER_WITH_UNDERSCORE_RE.fullmatch(candidate)), eq=False
+            bool(c.PATTERN_IDENTIFIER_WITH_UNDERSCORE_RE.fullmatch(candidate)),
+            eq=False,
         )
 
     @pytest.mark.parametrize(
@@ -158,7 +168,8 @@ class TestsFlextConstantsNew:
         tm.that(bool(c.PATTERN_SEMVER_RE.fullmatch(version)), eq=True)
 
     @pytest.mark.parametrize(
-        "version", ["1.2", "1.2.3rc", "1.2.3+", "1.2.3..rc0", "1.2.3-"]
+        "version",
+        ["1.2", "1.2.3rc", "1.2.3+", "1.2.3..rc0", "1.2.3-"],
     )
     def test_version_pattern_rejects_incomplete_versions(self, version: str) -> None:
         """Version validation rejects incomplete prerelease and local segments."""
@@ -173,16 +184,19 @@ class TestsFlextConstantsNew:
         ],
     )
     def test_ldap_dn_pattern_accepts_complete_components(
-        self, distinguished_name: str
+        self,
+        distinguished_name: str,
     ) -> None:
         """LDAP DN validation accepts complete comma-delimited components."""
         tm.that(bool(c.PATTERN_LDAP_DN_RE.fullmatch(distinguished_name)), eq=True)
 
     @pytest.mark.parametrize(
-        "distinguished_name", ["", "=value", "CN=", "CN=   ", "CN=value,", "1CN=value"]
+        "distinguished_name",
+        ["", "=value", "CN=", "CN=   ", "CN=value,", "1CN=value"],
     )
     def test_ldap_dn_pattern_rejects_incomplete_components(
-        self, distinguished_name: str
+        self,
+        distinguished_name: str,
     ) -> None:
         """LDAP DN validation rejects missing names, values, and components."""
         tm.that(bool(c.PATTERN_LDAP_DN_RE.fullmatch(distinguished_name)), eq=False)

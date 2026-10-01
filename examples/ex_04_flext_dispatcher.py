@@ -15,7 +15,8 @@ class _CreateUserHandler:
     message_type = m.Examples.CreateUser
 
     def handle(
-        self, message: p.Routable
+        self,
+        message: p.Routable,
     ) -> t.JsonPayload | p.ResultView[t.JsonPayload] | None:
         if not isinstance(message, m.Examples.CreateUser):
             return r[str].fail("unexpected_message")
@@ -26,7 +27,9 @@ class _GetUserHandler:
     message_type = m.Examples.GetUser
 
     def dispatch_message(
-        self, message: p.Routable, operation: str = "dispatch"
+        self,
+        message: p.Routable,
+        operation: str = "dispatch",
     ) -> t.JsonPayload | p.ResultView[t.JsonPayload] | None:
         if not isinstance(message, m.Examples.GetUser):
             return r[str].fail(f"{operation}:unexpected_message")
@@ -37,7 +40,8 @@ class _DeleteUserHandler:
     message_type = m.Examples.DeleteUser
 
     def execute(
-        self, message: p.Routable
+        self,
+        message: p.Routable,
     ) -> t.JsonPayload | p.ResultView[t.JsonPayload] | None:
         if not isinstance(message, m.Examples.DeleteUser):
             return r[str].fail("unexpected_message")
@@ -49,7 +53,8 @@ class _AutoFallbackHandler:
         return message_type is m.Examples.UnknownQuery
 
     def handle(
-        self, message: p.Routable
+        self,
+        message: p.Routable,
     ) -> t.JsonPayload | p.ResultView[t.JsonPayload] | None:
         if not isinstance(message, m.Examples.UnknownQuery):
             return r[str].fail("unexpected_message")
@@ -63,7 +68,8 @@ class _EventSubscriber:
         self.events: list[str] = []
 
     def handle(
-        self, message: p.Routable
+        self,
+        message: p.Routable,
     ) -> t.JsonPayload | p.ResultView[t.JsonPayload] | None:
         if not isinstance(message, m.Examples.UserCreated):
             return r[bool].fail("unexpected_message")
@@ -78,7 +84,8 @@ class _AuditSubscriber:
         self.events: list[str] = []
 
     def handle(
-        self, message: p.Routable
+        self,
+        message: p.Routable,
     ) -> t.JsonPayload | p.ResultView[t.JsonPayload] | None:
         if not isinstance(message, m.Examples.UserCreated):
             return r[bool].fail("unexpected_message")
@@ -90,7 +97,8 @@ class _PingHandler:
     message_type = m.Examples.Ping
 
     def __call__(
-        self, message: p.Routable
+        self,
+        message: p.Routable,
     ) -> t.JsonPayload | p.ResultView[t.JsonPayload] | None:
         if not isinstance(message, m.Examples.Ping):
             return r[str].fail("unexpected_message")
@@ -101,7 +109,8 @@ class _FailingDeleteHandler:
     message_type = m.Examples.FailingDelete
 
     def __call__(
-        self, message: p.Routable
+        self,
+        message: p.Routable,
     ) -> t.JsonPayload | p.ResultView[t.JsonPayload] | None:
         if not isinstance(message, m.Examples.FailingDelete):
             return r[str].fail("unexpected_message")
@@ -148,7 +157,8 @@ class _Ex04DispatchGolden(ExamplesFlextShared):
 
         self.section("register_and_dispatch")
         self.audit_check(
-            "constructor.protocol", type(dispatcher).__name__ == "FlextDispatcher"
+            "constructor.protocol",
+            type(dispatcher).__name__ == "FlextDispatcher",
         )
         self.audit_check(
             "register(Handle).is_success",
@@ -181,11 +191,12 @@ class _Ex04DispatchGolden(ExamplesFlextShared):
 
         self.section("auto_discovery")
         auto_discovery_registration = dispatcher.register_handler(
-            _AutoFallbackHandler()
+            _AutoFallbackHandler(),
         )
         auto_discovery = dispatcher.dispatch(m.Examples.UnknownQuery(payload="x"))
         self.audit_check(
-            "register(can_handle).is_success", auto_discovery_registration.success
+            "register(can_handle).is_success",
+            auto_discovery_registration.success,
         )
         self.audit_check("dispatch(auto_discovery).is_success", auto_discovery.success)
         self.audit_check("dispatch(auto_discovery).value", auto_discovery.unwrap_or(""))
@@ -193,21 +204,24 @@ class _Ex04DispatchGolden(ExamplesFlextShared):
         self.section("error_cases")
         no_route_registration = dispatcher.register_handler(_no_route_handler)
         no_handler = u.build_dispatcher().dispatch(
-            m.Examples.GetUser(username="missing")
+            m.Examples.GetUser(username="missing"),
         )
         failing_registration = dispatcher.register_handler(_FailingDeleteHandler())
         failing_dispatch = dispatcher.dispatch(
-            m.Examples.FailingDelete(username="alice")
+            m.Examples.FailingDelete(username="alice"),
         )
         self.audit_check(
-            "register(no_route_attrs).is_failure", no_route_registration.failure
+            "register(no_route_attrs).is_failure",
+            no_route_registration.failure,
         )
         self.audit_check("dispatch(no_handler).is_failure", no_handler.failure)
         self.audit_check(
-            "register(failing_callable).is_success", failing_registration.success
+            "register(failing_callable).is_success",
+            failing_registration.success,
         )
         self.audit_check(
-            "dispatch(handler_returns_fail).is_failure", failing_dispatch.failure
+            "dispatch(handler_returns_fail).is_failure",
+            failing_dispatch.failure,
         )
 
         self.section("event_publishing")
@@ -215,7 +229,8 @@ class _Ex04DispatchGolden(ExamplesFlextShared):
         audit_subscriber = _AuditSubscriber()
         register_subscriber = dispatcher.register_handler(subscriber, is_event=True)
         register_audit_subscriber = dispatcher.register_handler(
-            audit_subscriber, is_event=True
+            audit_subscriber,
+            is_event=True,
         )
         publish_single = dispatcher.publish(m.Examples.UserCreated(username="alice"))
         publish_list = dispatcher.publish([
@@ -223,23 +238,27 @@ class _Ex04DispatchGolden(ExamplesFlextShared):
             m.Examples.UserCreated(username="bob"),
         ])
         publish_without_subscribers = dispatcher.publish(
-            m.Examples.NoSubscriberEvent(marker="none")
+            m.Examples.NoSubscriberEvent(marker="none"),
         )
         self.audit_check(
-            "register(event_subscriber).is_success", register_subscriber.success
+            "register(event_subscriber).is_success",
+            register_subscriber.success,
         )
         self.audit_check(
-            "register(audit_subscriber).is_success", register_audit_subscriber.success
+            "register(audit_subscriber).is_success",
+            register_audit_subscriber.success,
         )
         self.audit_check("publish(single).is_success", publish_single.success)
         self.audit_check("publish(list).is_success", publish_list.success)
         self.audit_check("subscriber.events", subscriber.events)
         self.audit_check("audit_subscriber.events", audit_subscriber.events)
         self.audit_check(
-            "publish(no_subscribers).is_success", publish_without_subscribers.success
+            "publish(no_subscribers).is_success",
+            publish_without_subscribers.success,
         )
         self.audit_check(
-            "publish(no_subscribers).value", publish_without_subscribers.value
+            "publish(no_subscribers).value",
+            publish_without_subscribers.value,
         )
 
 

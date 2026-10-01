@@ -88,7 +88,9 @@ class TestsFlextCoreExceptionsStructuredContracts:
     def test_specific_errors_are_catchable_as_base_error(self) -> None:
         # Assert: the family shares a common catchable base contract.
         not_found = e.NotFoundError(
-            "User missing", resource_type="User", resource_id="123"
+            "User missing",
+            resource_type="User",
+            resource_id="123",
         )
         with pytest.raises(e.BaseError) as caught:
             raise not_found
@@ -169,7 +171,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
         with pytest.raises(RuntimeError) as raised:
             result.unwrap()
         assert str(raised.value) == c.ERR_RESULT_CANNOT_UNWRAP.format(
-            error=result.error
+            error=result.error,
         )
 
         # recover converts a failure into a caller-defined success value.

@@ -63,7 +63,9 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
         return current
 
     def fold[U](
-        self: Self, on_failure: Callable[[str], U], on_success: Callable[[T], U]
+        self: Self,
+        on_failure: Callable[[str], U],
+        on_success: Callable[[T], U],
     ) -> U:
         if self.success:
             return on_success(self._payload)
@@ -75,12 +77,14 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
                 return cast(
                     "p.Result[T | U]",
                     copy_result(
-                        self._factory(), func(self.require_error(self._as_result()))
+                        self._factory(),
+                        func(self.require_error(self._as_result())),
                     ),
                 )
             except c.EXC_BROAD_RUNTIME as exc:
                 return cast(
-                    "p.Result[T | U]", self.__class__.fail(str(exc), exception=exc)
+                    "p.Result[T | U]",
+                    self.__class__.fail(str(exc), exception=exc),
                 )
         return cast("p.Result[T | U]", self._as_result())
 

@@ -139,7 +139,8 @@ class TestsFlextCoreService(_ServiceLifecycleCases):
     # Dependency injection — resolve round-trip contract
     # ------------------------------------------------------------------ #
     def test_container_resolves_bound_services_functionally(
-        self, clean_container: p.Container
+        self,
+        clean_container: p.Container,
     ) -> None:
         """Bound services resolve back and remain fully functional."""
         user_service = self.UserQueryService()
@@ -158,16 +159,18 @@ class TestsFlextCoreService(_ServiceLifecycleCases):
         _ = clean_container.bind("notification_service", notification_service)
 
         resolved_user = u.Tests.assert_success(
-            clean_container.resolve("user_service", type_cls=self.UserQueryService)
+            clean_container.resolve("user_service", type_cls=self.UserQueryService),
         )
         resolved_notification = u.Tests.assert_success(
             clean_container.resolve(
-                "notification_service", type_cls=self.NotificationService
-            )
+                "notification_service",
+                type_cls=self.NotificationService,
+            ),
         )
 
         entity = u.Tests.assert_success(resolved_user.fetch_user(user_id))
         _ = u.Tests.assert_success(
-            resolved_notification.send(entity.email), expected_value="sent"
+            resolved_notification.send(entity.email),
+            expected_value="sent",
         )
         tm.that(resolved_notification.sent_notifications, has=entity.email)

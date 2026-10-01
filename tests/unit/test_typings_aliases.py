@@ -103,7 +103,12 @@ class TestsFlextCoreTypingsAliases:
         ],
     )
     def test_type_check_tuples_classify_values(
-        self, value: object, *, is_primitive: bool, is_numeric: bool, is_scalar: bool
+        self,
+        value: object,
+        *,
+        is_primitive: bool,
+        is_numeric: bool,
+        is_scalar: bool,
     ) -> None:
         """The type-check tuples classify values correctly via isinstance."""
         tm.that(isinstance(value, c.PRIMITIVES_TYPES), eq=is_primitive)
@@ -125,7 +130,8 @@ class TestsFlextCoreTypingsAliases:
         ],
     )
     def test_container_and_collection_tuple_accepts_every_container_value(
-        self, value: object
+        self,
+        value: object,
     ) -> None:
         """Every documented container/collection value is recognised by the tuple."""
         tm.that(isinstance(value, c.CONTAINER_AND_COLLECTION_TYPES), eq=True)

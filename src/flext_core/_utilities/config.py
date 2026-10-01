@@ -92,13 +92,19 @@ class FlextUtilitiesConfig:
 
         @staticmethod
         def yaml_dump(
-            path: Path, data: t.JsonMapping, *, sort_keys: bool = False, indent: int = 2
+            path: Path,
+            data: t.JsonMapping,
+            *,
+            sort_keys: bool = False,
+            indent: int = 2,
         ) -> p.Result[bool]:
             """Write a payload as YAML file → ``r[bool]``."""
             try:
                 path.parent.mkdir(parents=True, exist_ok=True)
                 validated = FlextUtilitiesConfig.Yaml.safe_dump(
-                    data, sort_keys=sort_keys, indent=indent
+                    data,
+                    sort_keys=sort_keys,
+                    indent=indent,
                 )
                 with path.open("w", encoding="utf-8") as fh:
                     fh.write(validated)
@@ -107,7 +113,7 @@ class FlextUtilitiesConfig:
                 return r[bool].fail(f"YAML write error: {exc}", exception=exc)
 
     _EXPAND_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
-        r"\$\{(?P<name>[A-Za-z_][A-Za-z0-9_]*)(?::-(?P<default>[^{}]*))?\}"
+        r"\$\{(?P<name>[A-Za-z_][A-Za-z0-9_]*)(?::-(?P<default>[^{}]*))?\}",
     )
 
     @staticmethod
@@ -163,7 +169,7 @@ class FlextUtilitiesConfig:
             current = merged.get(key)
             if g.mapping(current) and g.mapping(value):
                 nested: t.JsonValue = dict(
-                    FlextUtilitiesConfig.config_merge(current, value)
+                    FlextUtilitiesConfig.config_merge(current, value),
                 )
                 merged[key] = nested
             else:

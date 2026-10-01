@@ -48,7 +48,10 @@ class TestsFlextCoreBeartypeEngineConfig:
         ],
     )
     def test_contains_any_detects_unrestricted_hints(
-        self, hint: t.TypeHintSpecifier | None, *, expected: bool
+        self,
+        hint: t.TypeHintSpecifier | None,
+        *,
+        expected: bool,
     ) -> None:
         """``contains_any`` is True exactly when a hint admits any value."""
         assert u.contains_any(hint) is expected
@@ -58,7 +61,10 @@ class TestsFlextCoreBeartypeEngineConfig:
         [(AnyAlias, True), (NestedAnyAlias, True), (CleanAlias, False)],
     )
     def test_alias_contains_any_unwraps_type_alias(
-        self, alias: t.TypeHintSpecifier | None, *, expected: bool
+        self,
+        alias: t.TypeHintSpecifier | None,
+        *,
+        expected: bool,
     ) -> None:
         """``alias_contains_any`` follows a PEP 695 alias to its underlying value."""
         assert u.alias_contains_any(alias) is expected
@@ -74,7 +80,9 @@ class TestsFlextCoreBeartypeEngineConfig:
         ],
     )
     def test_has_forbidden_collection_origin_reports_name(
-        self, hint: t.TypeHintSpecifier | None, expected: tuple[bool, str]
+        self,
+        hint: t.TypeHintSpecifier | None,
+        expected: tuple[bool, str],
     ) -> None:
         """Parametrized collection origins map to the forbidden flag + name."""
         assert u.has_forbidden_collection_origin(hint, _FORBIDDEN) == expected
@@ -84,7 +92,9 @@ class TestsFlextCoreBeartypeEngineConfig:
         [(str | int | None, 2), (str | None, 1), (str | int, 2), (str, 0), (None, 0)],
     )
     def test_count_union_members_excludes_none(
-        self, hint: t.TypeHintSpecifier | None, expected: int
+        self,
+        hint: t.TypeHintSpecifier | None,
+        expected: int,
     ) -> None:
         """Union member count ignores ``NoneType`` and non-unions score zero."""
         assert u.count_union_members(hint) == expected
@@ -100,7 +110,10 @@ class TestsFlextCoreBeartypeEngineConfig:
         ],
     )
     def test_matches_str_none_union_is_exact(
-        self, hint: t.TypeHintSpecifier | None, *, expected: bool
+        self,
+        hint: t.TypeHintSpecifier | None,
+        *,
+        expected: bool,
     ) -> None:
         """Only the ``str | None`` shape matches; other unions do not."""
         assert u.matches_str_none_union(hint) is expected

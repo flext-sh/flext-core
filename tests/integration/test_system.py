@@ -49,7 +49,8 @@ class TestsFlextCoreSystem:
     def test_fail_result_exposes_failure_contract(self) -> None:
         """A failed result is failure, exposes the error, and carries the error code."""
         result: p.Result[str] = r[str].fail(
-            "processing_failed", error_code=c.ErrorCode.VALIDATION_ERROR
+            "processing_failed",
+            error_code=c.ErrorCode.VALIDATION_ERROR,
         )
 
         tm.that(result.success, eq=False)
@@ -67,7 +68,9 @@ class TestsFlextCoreSystem:
         [("dados_iniciais", "processado-DADOS-INICIAIS"), ("abc", "processado-ABC")],
     )
     def test_map_chain_transforms_success_value(
-        self, start: str, expected: str
+        self,
+        start: str,
+        expected: str,
     ) -> None:
         """Chained map applies each transform in order to a successful value."""
         result = (
@@ -96,7 +99,11 @@ class TestsFlextCoreSystem:
         ],
     )
     def test_flat_map_chains_or_short_circuits(
-        self, data: str, expected: str, *, expect_success: bool
+        self,
+        data: str,
+        expected: str,
+        *,
+        expect_success: bool,
     ) -> None:
         """flat_map threads a fallible op and short-circuits on its failure."""
 
@@ -166,7 +173,9 @@ class TestsFlextCoreSystem:
         ],
     )
     def test_error_codes_render_as_their_string_value(
-        self, code: str, expected: str
+        self,
+        code: str,
+        expected: str,
     ) -> None:
         """Error-code constants are string-valued and stable."""
         tm.that(code, is_=str)
@@ -184,7 +193,10 @@ class TestsFlextCoreSystem:
         ],
     )
     def test_exception_carries_code_and_message_publicly(
-        self, factory: type[e.BaseError], message: str, code: str
+        self,
+        factory: type[e.BaseError],
+        message: str,
+        code: str,
     ) -> None:
         """Each family exception is a BaseError exposing its code and message."""
         exc = factory(message)
@@ -226,10 +238,14 @@ class TestsFlextCoreSystem:
         tm.that(timestamp, is_=str, empty=False)
 
     @pytest.mark.parametrize(
-        ("value", "expected"), [("payload", True), ("", False), ("   ", False)]
+        ("value", "expected"),
+        [("payload", True), ("", False), ("   ", False)],
     )
     def test_string_non_empty_reports_meaningful_content(
-        self, value: str, *, expected: bool
+        self,
+        value: str,
+        *,
+        expected: bool,
     ) -> None:
         """string_non_empty is True only for strings with non-whitespace content."""
         tm.that(u.string_non_empty(value), eq=expected)
@@ -263,7 +279,8 @@ class TestsFlextCoreSystem:
     def _process_user_data(data: dict[str, str]) -> p.Result[dict[str, str]]:
         if not data:
             return r[dict[str, str]].fail(
-                "Dados não fornecidos", error_code=c.ErrorCode.VALIDATION_ERROR
+                "Dados não fornecidos",
+                error_code=c.ErrorCode.VALIDATION_ERROR,
             )
         processed: dict[str, str] = {}
         for key, value in data.items():

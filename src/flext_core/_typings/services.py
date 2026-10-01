@@ -89,7 +89,8 @@ class FlextTypesServices:
     type ContextHookMap = t.MappingKV[str, t.SequenceOf[ContextHookCallable]]
 
     type HandlerCallable = Callable[
-        ..., tp.BaseModelType | prt.ResultView[ScalarOrModel]
+        ...,
+        tp.BaseModelType | prt.ResultView[ScalarOrModel],
     ]
     type DispatchableHandler = (
         tp.BaseModelType
@@ -103,10 +104,12 @@ class FlextTypesServices:
         ]
     )
     type ResolvedHandlerCallable = Callable[
-        ..., tp.BaseModelType | JsonPayload | prt.ResultView[JsonPayload] | None
+        ...,
+        tp.BaseModelType | JsonPayload | prt.ResultView[JsonPayload] | None,
     ]
     type RoutedHandlerCallable = Callable[
-        [p.Routable], JsonPayload | prt.ResultView[JsonPayload] | None
+        [p.Routable],
+        JsonPayload | prt.ResultView[JsonPayload] | None,
     ]
     type RegistrablePlugin = ScalarOrModel | Callable[..., ScalarOrModel]
     type LoggerFactory = Callable[..., pl.OutputLogger] | None

@@ -20,7 +20,8 @@ class FlextUtilitiesBeartypeClassVisitor:
 
     @staticmethod
     def v_class_placement(
-        params: me.ClassPlacementParams, *args: type | str
+        params: me.ClassPlacementParams,
+        *args: type | str,
     ) -> t.StrMapping | None:
         """CLASS_PLACEMENT — class-name / inner-class layer placement."""
         violation = NO_VIOLATION
@@ -54,7 +55,8 @@ class FlextUtilitiesBeartypeClassVisitor:
                     else NO_VIOLATION
                 )
             case (target, expected) if isinstance(target, type) and isinstance(
-                expected, str
+                expected,
+                str,
             ):
                 if params.check_nested:
                     parts = target.__qualname__.split(".")
@@ -79,7 +81,8 @@ class FlextUtilitiesBeartypeClassVisitor:
 
     @staticmethod
     def v_protocol_tree(
-        params: me.ProtocolTreeParams, value: type
+        params: me.ProtocolTreeParams,
+        value: type,
     ) -> t.StrMapping | None:
         """PROTOCOL_TREE — inner-class kind + runtime_checkable governance."""
         if params.require_inner_kind_protocol_or_namespace:

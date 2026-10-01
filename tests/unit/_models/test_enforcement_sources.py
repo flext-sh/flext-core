@@ -36,7 +36,9 @@ class TestsFlextCoreEnforcementSources:
 
     @pytest.mark.parametrize(("expected_kind", "source"), list(_SOURCE_CASES.items()))
     def test_source_model_dump_round_trips(
-        self, expected_kind: str, source: m.BaseModel
+        self,
+        expected_kind: str,
+        source: m.BaseModel,
     ) -> None:
         dumped = source.model_dump()
         assert dumped["kind"] == expected_kind
@@ -56,7 +58,8 @@ class TestsFlextCoreEnforcementSources:
         ],
     )
     def test_source_model_rejects_missing_required_field(
-        self, factory: type[m.BaseModel]
+        self,
+        factory: type[m.BaseModel],
     ) -> None:
         with pytest.raises(c.ValidationError):
             factory.model_validate({})
@@ -76,7 +79,9 @@ class TestsFlextCoreEnforcementSources:
         ],
     )
     def test_rule_spec_dispatches_source_by_discriminator(
-        self, source_payload: t.JsonMapping, expected_type: type[m.BaseModel]
+        self,
+        source_payload: t.JsonMapping,
+        expected_type: type[m.BaseModel],
     ) -> None:
         spec = m.EnforcementRuleSpec.model_validate({
             "id": "ENFORCE-001",
@@ -97,7 +102,8 @@ class TestsFlextCoreEnforcementSources:
         ],
     )
     def test_rule_spec_rejects_retired_source_discriminators(
-        self, retired_kind: str
+        self,
+        retired_kind: str,
     ) -> None:
         with pytest.raises(c.ValidationError):
             m.EnforcementRuleSpec.model_validate({

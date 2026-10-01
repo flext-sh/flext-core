@@ -64,11 +64,12 @@ class TestPackagedConfigWithUserPreferences:
     """Packaged defaults plus optional user overlay, keyed by package namespace."""
 
     def test_packaged_defaults_load_without_a_source_checkout(
-        self, tmp_path: Path
+        self,
+        tmp_path: Path,
     ) -> None:
         """Given an installed package, When loaded, Then packaged YAML applies."""
         with u.Tests.env_vars_context(
-            env_vars={"XDG_CONFIG_HOME": str(tmp_path / "xdg")}
+            env_vars={"XDG_CONFIG_HOME": str(tmp_path / "xdg")},
         ):
             module = _install_package(
                 tmp_path / "site-packages",
@@ -88,7 +89,8 @@ class TestPackagedConfigWithUserPreferences:
             user_dir = xdg / "synthpkg-beta"
             user_dir.mkdir(parents=True)
             (user_dir / "preferences.yaml").write_text(
-                "greeting: operator\n", encoding="utf-8"
+                "greeting: operator\n",
+                encoding="utf-8",
             )
             module = _install_package(
                 tmp_path / "site-packages",
@@ -104,7 +106,7 @@ class TestPackagedConfigWithUserPreferences:
     def test_absent_user_config_keeps_packaged_defaults(self, tmp_path: Path) -> None:
         """Given no user directory, When loaded, Then defaults still apply."""
         with u.Tests.env_vars_context(
-            env_vars={"XDG_CONFIG_HOME": str(tmp_path / "empty-xdg")}
+            env_vars={"XDG_CONFIG_HOME": str(tmp_path / "empty-xdg")},
         ):
             module = _install_package(
                 tmp_path / "site-packages",
@@ -124,7 +126,8 @@ class TestPackagedConfigWithUserPreferences:
             foreign = xdg / "synthpkg-delta"
             foreign.mkdir(parents=True)
             (foreign / "preferences.yaml").write_text(
-                "greeting: delta\n", encoding="utf-8"
+                "greeting: delta\n",
+                encoding="utf-8",
             )
             site = tmp_path / "site-packages"
             delta = _install_package(site, "synthpkg_delta", "greeting: packaged\n")
@@ -134,7 +137,8 @@ class TestPackagedConfigWithUserPreferences:
             assert epsilon.SynthConfig.fetch_global().greeting == "packaged"
 
     def test_explicit_config_dir_env_override_replaces_the_root(
-        self, tmp_path: Path
+        self,
+        tmp_path: Path,
     ) -> None:
         """Given ``<PKG>_CONFIG_DIR``, When loaded, Then that directory is used."""
         explicit = tmp_path / "explicit-config"
@@ -142,14 +146,17 @@ class TestPackagedConfigWithUserPreferences:
             env_vars={
                 "XDG_CONFIG_HOME": str(tmp_path / "xdg"),
                 "SYNTHPKG_ZETA_CONFIG_DIR": str(explicit),
-            }
+            },
         ):
             explicit.mkdir()
             (explicit / "defaults.yaml").write_text(
-                "greeting: explicit\n", encoding="utf-8"
+                "greeting: explicit\n",
+                encoding="utf-8",
             )
             module = _install_package(
-                tmp_path / "site-packages", "synthpkg_zeta", "greeting: packaged\n"
+                tmp_path / "site-packages",
+                "synthpkg_zeta",
+                "greeting: packaged\n",
             )
 
             assert module.SynthConfig.fetch_global().greeting == "explicit"

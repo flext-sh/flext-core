@@ -37,7 +37,9 @@ class TestsFlextCoreRuntime:
         ],
     )
     def test_normalize_to_metadata_converts_scalars_to_json_native(
-        self, value: t.JsonPayload, expected: t.JsonValue
+        self,
+        value: t.JsonPayload,
+        expected: t.JsonValue,
     ) -> None:
         assert FlextRuntime.normalize_to_metadata(value) == expected
 
@@ -56,10 +58,13 @@ class TestsFlextCoreRuntime:
         assert normalized == {"a": 1, "b": "/z"}
 
     @pytest.mark.parametrize(
-        ("value", "expected"), [(None, ""), (42, 42), ([1, 2], [1, 2])]
+        ("value", "expected"),
+        [(None, ""), (42, 42), ([1, 2], [1, 2])],
     )
     def test_normalize_to_container_returns_runtime_data(
-        self, value: t.JsonPayload, expected: t.JsonValue
+        self,
+        value: t.JsonPayload,
+        expected: t.JsonValue,
     ) -> None:
         assert FlextRuntime.normalize_to_container(value) == expected
 
@@ -70,12 +75,12 @@ class TestsFlextCoreRuntime:
 
     def test_normalize_model_input_mapping_preserves_nested_mapping(self) -> None:
         assert FlextRuntime.normalize_model_input_mapping({"x": {"y": 1}}) == {
-            "x": {"y": 1}
+            "x": {"y": 1},
         }
 
     def test_normalize_model_input_mapping_accepts_root_model(self) -> None:
         normalized = FlextRuntime.normalize_model_input_mapping(
-            m.Dict(root={"a": 1, "b": {"c": 2}})
+            m.Dict(root={"a": 1, "b": {"c": 2}}),
         )
 
         assert normalized == {"a": 1, "b": {"c": 2}}
@@ -93,7 +98,7 @@ class TestsFlextCoreRuntime:
 
     def test_normalize_metadata_input_mapping_reads_model_dump_carrier(self) -> None:
         normalized = FlextRuntime.normalize_metadata_input_mapping(
-            m.Dict(root={"a": 1, "b": None})
+            m.Dict(root={"a": 1, "b": None}),
         )
 
         assert normalized == {"a": 1, "b": None}
@@ -107,7 +112,7 @@ class TestsFlextCoreRuntime:
 
     def test_validate_metadata_attributes_drops_none_values(self) -> None:
         assert FlextRuntime.validate_metadata_attributes({"a": 1, "b": None}) == {
-            "a": 1
+            "a": 1,
         }
 
     def test_validate_metadata_attributes_rejects_reserved_underscore_keys(

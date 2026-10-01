@@ -24,7 +24,9 @@ class PyprojectIngressContract(ProjectMetadataContract):
 
     model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
         FlextModelsPydantic.ConfigDict(
-            frozen=True, extra="ignore", populate_by_name=True
+            frozen=True,
+            extra="ignore",
+            populate_by_name=True,
         )
     )
 

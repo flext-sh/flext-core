@@ -1,5 +1,9 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Examples package."""
+"""Examples package.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -9,15 +13,14 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
+    from examples import _models, _shared_parts
+    from examples.constants import c
+    from examples.models import ExamplesFlextModels, ExamplesFlextModels as m
+    from examples.protocols import p
+    from examples.shared import ExamplesFlextShared
+    from examples.typings import t
+    from examples.utilities import u
     from flext_core import d, e, h, r, s, x
-
-    from . import _models, _shared_parts
-    from .constants import c
-    from .models import ExamplesFlextModels, ExamplesFlextModels as m
-    from .protocols import p
-    from .shared import ExamplesFlextShared
-    from .typings import t
-    from .utilities import u
 
 
 __all__: tuple[str, ...] = (
@@ -53,7 +56,7 @@ _LAZY_IMPORTS = MappingProxyType(
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
-    )
+    ),
 )
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

@@ -33,7 +33,8 @@ class FlextModelsContainer(FlextModelsContainerPart02):
         """
 
         model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            strict=True, arbitrary_types_allowed=True
+            strict=True,
+            arbitrary_types_allowed=True,
         )
 
         settings: Annotated[
@@ -82,7 +83,8 @@ class FlextModelsContainer(FlextModelsContainerPart02):
         user_overrides: (
             FlextModelsContainers.ConfigMap
             | t.MappingKV[
-                str, FlextModelsContainers.ConfigMap | t.ScalarList | t.Scalar
+                str,
+                FlextModelsContainers.ConfigMap | t.ScalarList | t.Scalar,
             ]
             | None
         ) = mp.Field(

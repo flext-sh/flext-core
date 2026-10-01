@@ -63,7 +63,7 @@ class FlextUtilitiesBeartypeHelpers:
         return frozenset(
             alias
             for alias, _, _ in FlextUtilitiesBeartypeHelpers.lazy_alias_suffixes(
-                package_name
+                package_name,
             )
         )
 
@@ -73,7 +73,7 @@ class FlextUtilitiesBeartypeHelpers:
         return frozenset(
             module_path.rsplit(".", 1)[-1]
             for _, module_path, suffix in FlextUtilitiesBeartypeHelpers.lazy_alias_suffixes(
-                package_name
+                package_name,
             )
             if module_path.split(".", 1)[0] == package_name
             and suffix in {"Constants", "Models", "Protocols", "Types", "Utilities"}
@@ -93,14 +93,16 @@ class FlextUtilitiesBeartypeHelpers:
         return any(
             vars(sys.modules[module_path]).get(alias) is target
             for alias, module_path, _ in FlextUtilitiesBeartypeHelpers.lazy_alias_suffixes(
-                package_name
+                package_name,
             )
             if module_path in sys.modules
         )
 
     @staticmethod
     def resolve_type_alias_value(
-        alias: object, *, owner: ModuleType | type | None = None
+        alias: object,
+        *,
+        owner: ModuleType | type | None = None,
     ) -> t.TypeHintSpecifier | None:
         """Return a value, or None for non-aliases and proven static-only imports.
 
@@ -117,7 +119,9 @@ class FlextUtilitiesBeartypeHelpers:
 
     @staticmethod
     def unwrap_type_alias(
-        hint: t.TypeHintSpecifier | None, *, owner: ModuleType | type | None = None
+        hint: t.TypeHintSpecifier | None,
+        *,
+        owner: ModuleType | type | None = None,
     ) -> t.TypeHintSpecifier | None:
         current = hint
         seen: set[int] = set()
@@ -127,7 +131,8 @@ class FlextUtilitiesBeartypeHelpers:
                 return current
             seen.add(current_id)
             resolved = FlextUtilitiesBeartypeHelpers.resolve_type_alias_value(
-                current, owner=owner
+                current,
+                owner=owner,
             )
             if resolved is None:
                 return current
@@ -160,7 +165,8 @@ class FlextUtilitiesBeartypeHelpers:
 
     @staticmethod
     def has_forbidden_collection_origin(
-        hint: t.TypeHintSpecifier | None, forbidden: frozenset[str]
+        hint: t.TypeHintSpecifier | None,
+        forbidden: frozenset[str],
     ) -> tuple[bool, str]:
         h = FlextUtilitiesBeartypeHelpers
         hint = h.unwrap_type_alias(hint)

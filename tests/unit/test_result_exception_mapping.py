@@ -93,7 +93,7 @@ class TestsFlextCoreResultExceptionMapping:
         result: p.Result[int] = r[int].fail("error", exception=exc)
 
         mapped: p.Result[int] = result.map(lambda value: value + 1).map(
-            lambda value: value * 2
+            lambda value: value * 2,
         )
 
         tm.that(mapped.failure, eq=True)
@@ -104,7 +104,7 @@ class TestsFlextCoreResultExceptionMapping:
         result: p.Result[int] = r[int].fail("error", exception=exc)
 
         flat_mapped: p.Result[str] = result.flat_map(
-            lambda value: r[str].ok(str(value))
+            lambda value: r[str].ok(str(value)),
         )
 
         tm.that(flat_mapped.failure, eq=True)
@@ -114,7 +114,7 @@ class TestsFlextCoreResultExceptionMapping:
         result: p.Result[int] = r[int].ok(5)
 
         flat_mapped: p.Result[str] = result.flat_map(
-            lambda value: r[str].ok(str(value))
+            lambda value: r[str].ok(str(value)),
         )
 
         tm.that(flat_mapped.success, eq=True)
@@ -126,7 +126,7 @@ class TestsFlextCoreResultExceptionMapping:
         result: p.Result[int] = r[int].fail("error", exception=exc)
 
         flat_mapped: p.Result[str] = result.flat_map(
-            lambda value: r[int].ok(value + 1)
+            lambda value: r[int].ok(value + 1),
         ).flat_map(lambda value: r[str].ok(str(value)))
 
         tm.that(flat_mapped.failure, eq=True)
@@ -167,8 +167,9 @@ class TestsFlextCoreResultExceptionMapping:
 
         recovered: p.Result[int] = result.lash(
             lambda error: r[int].fail(
-                f"recovery failed: {error}", exception=recovery_exc
-            )
+                f"recovery failed: {error}",
+                exception=recovery_exc,
+            ),
         )
 
         tm.that(recovered.failure, eq=True)
@@ -189,7 +190,8 @@ class TestsFlextCoreResultExceptionMapping:
         ],
     )
     def test_callback_exception_becomes_carried_failure(
-        self, invoke: Callable[[Exception], p.Result[int]]
+        self,
+        invoke: Callable[[Exception], p.Result[int]],
     ) -> None:
         exc = RuntimeError("callback failed")
 

@@ -39,7 +39,8 @@ class FlextModelsBase:
         """Shared preset for assignment validation with forbidden extra fields."""
 
         model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            validate_assignment=True, extra=c.EXTRA_CONFIG_FORBID
+            validate_assignment=True,
+            extra=c.EXTRA_CONFIG_FORBID,
         )
 
     class EnumManagedModel(ManagedModel):
@@ -56,7 +57,8 @@ class FlextModelsBase:
         """Shared preset for strict managed validation boundaries."""
 
         model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            strict=True, validate_default=True
+            strict=True,
+            validate_default=True,
         )
 
     class StrictModel(StrictManagedModel):
@@ -71,7 +73,7 @@ class FlextModelsBase:
         """Base model with arbitrary types support."""
 
         model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            arbitrary_types_allowed=True
+            arbitrary_types_allowed=True,
         )
 
     class StrictBoundaryModel(FrozenModel):

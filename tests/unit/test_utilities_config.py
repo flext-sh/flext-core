@@ -41,7 +41,8 @@ class TestsFlextCoreUtilitiesConfig:
         assert result.failure
 
     def test_config_load_non_mapping_top_level_fails_closed(
-        self, tmp_path: Path
+        self,
+        tmp_path: Path,
     ) -> None:
         # A TOML document whose parsed root is not a plain mapping is rejected.
         path = tmp_path / "arr.toml"
@@ -69,7 +70,8 @@ class TestsFlextCoreUtilitiesConfig:
     def test_config_env_override_expands_string_leaves(self, tmp_path: Path) -> None:
         home = str(tmp_path)
         expanded = u.config_env_override(
-            {"home": "${HOME}", "n": {"p": "${HOME}/x"}, "keep": 5}, {"HOME": home}
+            {"home": "${HOME}", "n": {"p": "${HOME}/x"}, "keep": 5},
+            {"HOME": home},
         )
 
         assert expanded == {"home": home, "n": {"p": f"{home}/x"}, "keep": 5}
@@ -102,7 +104,8 @@ class TestsFlextCoreUtilitiesConfig:
     def test_config_env_override_nested_default_var_present(self) -> None:
         # AI_HUB present -> outer wins, inner default never used.
         expanded = u.config_env_override(
-            "${AI_HUB:-${HOME}/.ai-hub}", {"AI_HUB": "/x/.ai-hub", "HOME": "/x"}
+            "${AI_HUB:-${HOME}/.ai-hub}",
+            {"AI_HUB": "/x/.ai-hub", "HOME": "/x"},
         )
 
         assert expanded == "/x/.ai-hub"

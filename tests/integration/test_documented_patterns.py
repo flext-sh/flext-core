@@ -39,7 +39,10 @@ class TestsFlextCoreDocumentedPatterns:
         [(1, _increment, 2), (10, _triple, 30), (-5, abs, 5)],
     )
     def test_map_transforms_success_value(
-        self, seed: int, transform: Callable[[int], int], expected: int
+        self,
+        seed: int,
+        transform: Callable[[int], int],
+        expected: int,
     ) -> None:
         """Map transforms the public success value with the supplied callable."""
         # Arrange / Act
@@ -90,10 +93,13 @@ class TestsFlextCoreDocumentedPatterns:
         tm.that(result.error, eq="stopped")
 
     @pytest.mark.parametrize(
-        ("result", "expected"), [(r[str].ok("flext"), 5), (r[str].fail("missing"), 0)]
+        ("result", "expected"),
+        [(r[str].ok("flext"), 5), (r[str].fail("missing"), 0)],
     )
     def test_map_or_returns_default_on_failure(
-        self, result: p.Result[str], expected: int
+        self,
+        result: p.Result[str],
+        expected: int,
     ) -> None:
         """Map or returns the mapped length or its declared failure default."""
         # Act / Assert
@@ -177,7 +183,11 @@ class TestsFlextCoreDocumentedPatterns:
         ],
     )
     def test_validation_normalizes_or_fails(
-        self, raw_email: str | None, expected_value: str | None, *, expect_success: bool
+        self,
+        raw_email: str | None,
+        expected_value: str | None,
+        *,
+        expect_success: bool,
     ) -> None:
         """Validation normalizes meaningful email input and rejects empty input."""
 

@@ -34,7 +34,8 @@ class TestsFlextCoreMigrationValidation:
     # Section: Result contract
 
     @pytest.mark.parametrize(
-        ("value", "expected"), [("user_123", "user_123"), ("", ""), ("A B C", "A B C")]
+        ("value", "expected"),
+        [("user_123", "user_123"), ("", ""), ("A B C", "A B C")],
     )
     def test_ok_result_exposes_wrapped_value(self, value: str, expected: str) -> None:
         """A successful result reports success and returns the wrapped value."""
@@ -67,7 +68,10 @@ class TestsFlextCoreMigrationValidation:
         [(r[int].ok(42), 0, 42), (r[int].fail("missing"), 7, 7)],
     )
     def test_unwrap_or_returns_default_only_on_failure(
-        self, result: p.Result[int], default: int, expected: int
+        self,
+        result: p.Result[int],
+        default: int,
+        expected: int,
     ) -> None:
         """unwrap_or yields the value on success and the default on failure."""
         tm.that(result.unwrap_or(default), eq=expected)
@@ -155,7 +159,8 @@ class TestsFlextCoreMigrationValidation:
 
         container.bind("migration_probe_service", RegisteredService())
         resolution = container.resolve(
-            "migration_probe_service", type_cls=RegisteredService
+            "migration_probe_service",
+            type_cls=RegisteredService,
         )
 
         tm.that(resolution.success, eq=True)

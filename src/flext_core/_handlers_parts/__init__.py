@@ -1,5 +1,9 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Flext Core. Handlers Parts package."""
+"""Flext Core. Handlers Parts package.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -9,7 +13,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from .flexthandlers_part_07 import FlextHandlers
+    from flext_core._handlers_parts.flexthandlers_part_07 import FlextHandlers
 
 
 __all__: tuple[str, ...] = ("FlextHandlers",)
@@ -19,7 +23,7 @@ _LAZY_IMPORTS = MappingProxyType(
         MappingProxyType({".flexthandlers_part_07": ("FlextHandlers",)}),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
-    )
+    ),
 )
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

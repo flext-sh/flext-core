@@ -34,7 +34,7 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
     def _owning_project_root(target: type) -> Path | None:
         """Return the pyproject root that physically owns the target source."""
         source_file = FlextUtilitiesEnforcementCollect._resolve_target_source_file(
-            target
+            target,
         )
         if source_file is None:
             return None
@@ -50,7 +50,7 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
             except ValueError:
                 continue
             if relative.is_relative_to(Path("src") / top) or relative.is_relative_to(
-                top
+                top,
             ):
                 # mro-j47u (codex): never attribute .venv/site-packages classes
                 # to the consuming project's pyproject and namespace prefix.
@@ -120,7 +120,7 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         head, _, tail = canonical_project_name.partition("-")
         namespace = upm.derive_class_stem(tail or head)
         project_prefix = class_stem_override or upm.derive_class_stem(
-            canonical_project_name
+            canonical_project_name,
         )
         if top in {"tests", "examples", "scripts"} and top != (src or ""):
             return upm.derive_class_stem(top) + project_prefix, namespace
@@ -195,7 +195,8 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
 
     @staticmethod
     def _attr_items(
-        target: type, layer: str
+        target: type,
+        layer: str,
     ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
         accept = FlextUtilitiesEnforcementCollect._attr_filter(layer)
         qn = target.__qualname__
@@ -205,7 +206,9 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
 
     @staticmethod
     def _ns_class_prefix(
-        target: type, qn: str, project: t.StrPair
+        target: type,
+        qn: str,
+        project: t.StrPair,
     ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
         skip_roots = (
             c.ENFORCEMENT_NAMESPACE_FACADE_ROOTS | c.ENFORCEMENT_INFRASTRUCTURE_BASES
@@ -216,7 +219,9 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
 
     @staticmethod
     def _ns_cross(
-        target: type, qn: str, effective_layer: str
+        target: type,
+        qn: str,
+        effective_layer: str,
     ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
         layer = (
             effective_layer
@@ -225,7 +230,8 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         )
 
         def walk(
-            node: type, path: str
+            node: type,
+            path: str,
         ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
             for name, value in FlextUtilitiesEnforcementCollect._iter_inner(node):
                 full = f"{path}.{name}"

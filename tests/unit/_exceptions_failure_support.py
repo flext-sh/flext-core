@@ -22,7 +22,9 @@ FAILURES: t.SequenceOf[
     (
         "config",
         lambda: e.fail_config_error(
-            "API_KEY", "environment", options=m.ExceptionFactoryOptions(error="missing")
+            "API_KEY",
+            "environment",
+            options=m.ExceptionFactoryOptions(error="missing"),
         ),
         "read config key 'API_KEY'",
         c.ErrorCode.CONFIGURATION_ERROR,
@@ -49,7 +51,9 @@ FAILURES: t.SequenceOf[
     (
         "auth",
         lambda: e.fail_auth(
-            "token", "u-1", options=m.ExceptionFactoryOptions(error="denied")
+            "token",
+            "u-1",
+            options=m.ExceptionFactoryOptions(error="denied"),
         ),
         "authenticate user u-1",
         c.ErrorCode.AUTHENTICATION_ERROR,
@@ -93,7 +97,8 @@ FAILURES: t.SequenceOf[
     (
         "validation",
         lambda: e.fail_validation(
-            m.ValidationErrorParams(field="email", value="bad"), error="invalid"
+            m.ValidationErrorParams(field="email", value="bad"),
+            error="invalid",
         ),
         "validate email",
         c.ErrorCode.VALIDATION_ERROR,

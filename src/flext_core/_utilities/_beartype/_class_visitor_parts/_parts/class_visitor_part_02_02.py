@@ -9,7 +9,10 @@ from ..class_visitor_part_01 import NO_VIOLATION
 
 
 def redundant_inner_violation(
-    target: type, alias_violation: t.StrMapping | None, *, forbid_redundant_inner: bool
+    target: type,
+    alias_violation: t.StrMapping | None,
+    *,
+    forbid_redundant_inner: bool,
 ) -> t.StrMapping | None:
     """Compute the redundant-inner-namespace violation."""
     outer_name, separator, _ = target.__qualname__.partition(".")
@@ -27,7 +30,9 @@ def redundant_inner_violation(
 
 
 def self_ref_violation(
-    target: type, violation: t.StrMapping | None, params: me.MroShapeParams
+    target: type,
+    violation: t.StrMapping | None,
+    params: me.MroShapeParams,
 ) -> t.StrMapping | None:
     """Compute the utilities.py self-root import violation."""
     if violation is not None or not params.require_explicit_class_when_self_ref:

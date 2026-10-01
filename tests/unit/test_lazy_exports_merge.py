@@ -69,7 +69,9 @@ class TestsFlextCoreLazyExportsMerge:
         sys.modules[alpha_module_name] = alpha_module
         try:
             merged = merge_lazy_imports(
-                (".child",), {}, module_name=parent_package_name
+                (".child",),
+                {},
+                module_name=parent_package_name,
             )
 
             assert merged["Alpha"] == (alpha_module_name, "Alpha")
@@ -151,7 +153,10 @@ class TestsFlextCoreLazyExportsMerge:
         try:
             module_globals: t.ModuleGlobals = {}
             install_lazy_exports(
-                package_name, module_globals, {"module": module_name}, publish_all=False
+                package_name,
+                module_globals,
+                {"module": module_name},
+                publish_all=False,
             )
 
             getattr_fn = module_globals["__getattr__"]
@@ -173,7 +178,10 @@ class TestsFlextCoreLazyExportsMerge:
         try:
             module_globals: t.ModuleGlobals = {}
             install_lazy_exports(
-                package_name, module_globals, {"module": module_name}, publish_all=False
+                package_name,
+                module_globals,
+                {"module": module_name},
+                publish_all=False,
             )
             getattr_fn = module_globals["__getattr__"]
             assert callable(getattr_fn)
@@ -211,7 +219,8 @@ class TestsFlextCoreLazyExportsMerge:
     def test_build_map_merges_module_groups_and_alias_groups(self) -> None:
         """Module groups map names to the module; alias groups map to (module, attr)."""
         mapping = lazy.build_map(
-            {"pkg.mod": ("alpha",)}, alias_groups={"pkg.alias": (("beta", "Thing"),)}
+            {"pkg.mod": ("alpha",)},
+            alias_groups={"pkg.alias": (("beta", "Thing"),)},
         )
 
         assert mapping == {"alpha": "pkg.mod", "beta": ("pkg.alias", "Thing")}

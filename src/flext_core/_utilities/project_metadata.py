@@ -30,13 +30,14 @@ class FlextUtilitiesProjectMetadata(mpm):
     _DISTRIBUTION_SEPARATOR_RE: ClassVar[t.RegexPattern] = re.compile(r"[-_.]+")
     _REQUIREMENT_NAME_RE: ClassVar[t.RegexPattern] = re.compile(
         r"^\s*(?P<name>[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?)"
-        r"(?=\s*(?:\[|@|[<>=!~;]|$))"
+        r"(?=\s*(?:\[|@|[<>=!~;]|$))",
     )
 
     @classmethod
     def _normalize_distribution_name(cls, distribution_name: str) -> str:
         return cls._DISTRIBUTION_SEPARATOR_RE.sub(
-            "-", distribution_name.strip().lower()
+            "-",
+            distribution_name.strip().lower(),
         )
 
     @staticmethod
@@ -48,17 +49,20 @@ class FlextUtilitiesProjectMetadata(mpm):
 
     @classmethod
     def build_project_metadata(
-        cls, root: Path, document: mpm.PyprojectDocument
+        cls,
+        root: Path,
+        document: mpm.PyprojectDocument,
     ) -> mpm.ProjectMetadata:
         project = document.project
         flext = document.tool.flext
         if project is None:
             package_name = flext.docs.package_name or cmx.IDENTIFIER_UNKNOWN
             class_stem = flext.project.class_stem_override or cls.derive_class_stem(
-                package_name
+                package_name,
             )
             resolved_project = mpm.Project(
-                name=package_name, version=cpm.PROJECT_VERSION_PLACEHOLDER
+                name=package_name,
+                version=cpm.PROJECT_VERSION_PLACEHOLDER,
             )
             return mpm.ProjectMetadata(
                 root=root,
@@ -94,7 +98,9 @@ class FlextUtilitiesProjectMetadata(mpm):
 
     @classmethod
     def project_uses_distribution(
-        cls, metadata: ppm.ProjectMetadata, distribution_name: str
+        cls,
+        metadata: ppm.ProjectMetadata,
+        distribution_name: str,
     ) -> bool:
         target_name = cls._normalize_distribution_name(distribution_name)
         if not target_name:

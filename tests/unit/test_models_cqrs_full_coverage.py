@@ -36,7 +36,10 @@ class TestsFlextCoreModelsCqrs:
         [(1, 10, 0), (2, 10, 10), (3, 11, 22), (5, 20, 80)],
     )
     def test_pagination_offset_is_derived_from_page_and_size(
-        self, page: int, size: int, expected_offset: int
+        self,
+        page: int,
+        size: int,
+        expected_offset: int,
     ) -> None:
         assert m.Pagination(page=page, size=size).offset == expected_offset
 
@@ -135,7 +138,9 @@ class TestsFlextCoreModelsCqrs:
     # ------------------------------------------------------------------ #
     def test_handler_stores_identity_and_defaults_mode_to_command(self) -> None:
         handler = m.Handler(
-            handler_type=c.HandlerType.QUERY, handler_id="h-1", handler_name="handler"
+            handler_type=c.HandlerType.QUERY,
+            handler_id="h-1",
+            handler_name="handler",
         )
 
         assert handler.handler_id == "h-1"
@@ -148,7 +153,8 @@ class TestsFlextCoreModelsCqrs:
         [c.HandlerType.COMMAND, c.HandlerType.QUERY, c.HandlerType.EVENT],
     )
     def test_handler_accepts_each_handler_type(
-        self, handler_type: c.HandlerType
+        self,
+        handler_type: c.HandlerType,
     ) -> None:
         handler = m.Handler(handler_type=handler_type, handler_id="h", handler_name="n")
 
@@ -157,7 +163,9 @@ class TestsFlextCoreModelsCqrs:
     def test_handler_rejects_empty_identity(self) -> None:
         with pytest.raises(m.ValidationError):
             m.Handler(
-                handler_type=c.HandlerType.COMMAND, handler_id="", handler_name=""
+                handler_type=c.HandlerType.COMMAND,
+                handler_id="",
+                handler_name="",
             )
 
     # ------------------------------------------------------------------ #
@@ -179,7 +187,9 @@ class TestsFlextCoreModelsCqrs:
         ],
     )
     def test_flext_message_union_discriminates_on_message_type(
-        self, payload: dict[str, str | dict[str, str]], expected_cls: type
+        self,
+        payload: dict[str, str | dict[str, str]],
+        expected_cls: type,
     ) -> None:
         adapter = u.type_adapter(m.FlextMessage.__value__)
 

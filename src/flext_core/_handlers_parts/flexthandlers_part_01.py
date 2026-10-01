@@ -48,7 +48,9 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
         """
         super().__init__(
-            settings_type=None, settings_overrides=None, initial_context=None
+            settings_type=None,
+            settings_overrides=None,
+            initial_context=None,
         )
         if settings is not None:
             self._config_model = settings
@@ -56,7 +58,8 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             from flext_core import m
 
             self._config_model = m.Handler(
-                handler_id=f"handler_{id(self)}", handler_name=self.__class__.__name__
+                handler_id=f"handler_{id(self)}",
+                handler_name=self.__class__.__name__,
             )
         handler_type = self._config_model.handler_mode
         valid_handler_types = {
@@ -101,7 +104,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         for klass in cls.mro():
             if klass is FlextHandlers:
                 msg = c.ERR_HANDLER_MISSING_HANDLE_IMPLEMENTATION.format(
-                    qualname=cls.__qualname__
+                    qualname=cls.__qualname__,
                 )
                 raise TypeError(msg)
             if c.MethodName.HANDLE in klass.__dict__:
@@ -136,7 +139,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             if member.value == handler_type:
                 return member
         raise TypeError(
-            c.ERR_HANDLER_UNSUPPORTED_TYPE.format(handler_type=handler_type)
+            c.ERR_HANDLER_UNSUPPORTED_TYPE.format(handler_type=handler_type),
         )
 
 

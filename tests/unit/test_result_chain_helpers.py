@@ -81,7 +81,7 @@ class TestsFlextCoreResultChainHelpers:
             r[int]
             .ok(0)
             .flat_map(
-                lambda x: r[int].fail("division by zero") if x == 0 else r[int].ok(x)
+                lambda x: r[int].fail("division by zero") if x == 0 else r[int].ok(x),
             )
         )
 
@@ -113,7 +113,10 @@ class TestsFlextCoreResultChainHelpers:
 
     @pytest.mark.parametrize(("value", "keeps_success"), [(20, True), (5, False)])
     def test_filter_keeps_or_rejects_by_predicate(
-        self, value: int, *, keeps_success: bool
+        self,
+        value: int,
+        *,
+        keeps_success: bool,
     ) -> None:
         """``filter`` keeps success when the predicate holds, else fails it."""
         result = r[int].ok(value).filter(lambda x: x > 10)
@@ -121,19 +124,25 @@ class TestsFlextCoreResultChainHelpers:
         assert result.success is keeps_success
 
     @pytest.mark.parametrize(
-        ("source", "expected"), [(r[int].ok(5), 5), (r[int].fail("boom"), 99)]
+        ("source", "expected"),
+        [(r[int].ok(5), 5), (r[int].fail("boom"), 99)],
     )
     def test_unwrap_or_returns_value_or_default(
-        self, source: r[int], expected: int
+        self,
+        source: r[int],
+        expected: int,
     ) -> None:
         """``unwrap_or`` returns the value on success and the default on failure."""
         assert source.unwrap_or(99) == expected
 
     @pytest.mark.parametrize(
-        ("source", "expected"), [(r[int].ok(5), 5), (r[int].fail("boom"), 7)]
+        ("source", "expected"),
+        [(r[int].ok(5), 5), (r[int].fail("boom"), 7)],
     )
     def test_unwrap_or_else_computes_default_on_failure(
-        self, source: r[int], expected: int
+        self,
+        source: r[int],
+        expected: int,
     ) -> None:
         """``unwrap_or_else`` calls the supplier only when the result failed."""
         assert source.unwrap_or_else(lambda: 7) == expected
@@ -182,7 +191,9 @@ class TestsFlextCoreResultChainHelpers:
         [(r[int].ok(5), "ok:5"), (r[int].fail("boom"), "err:boom")],
     )
     def test_fold_collapses_to_single_value_per_branch(
-        self, source: r[int], expected: str
+        self,
+        source: r[int],
+        expected: str,
     ) -> None:
         """``fold`` applies the matching branch and returns a plain value."""
         folded = source.fold(lambda err: f"err:{err}", lambda value: f"ok:{value}")
@@ -212,10 +223,13 @@ class TestsFlextCoreResultChainHelpers:
         assert seen_ok == []
 
     @pytest.mark.parametrize(
-        ("source", "expected"), [(r[int].ok(5), 6), (r[int].fail("boom"), 0)]
+        ("source", "expected"),
+        [(r[int].ok(5), 6), (r[int].fail("boom"), 0)],
     )
     def test_map_or_applies_func_or_returns_default(
-        self, source: r[int], expected: int
+        self,
+        source: r[int],
+        expected: int,
     ) -> None:
         """``map_or`` maps a success value, else returns the supplied default."""
 

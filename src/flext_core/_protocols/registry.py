@@ -58,25 +58,30 @@ class FlextProtocolsRegistry:
         # --- handler registration ---
 
         def register(
-            self, name: str, service: t.RegistrablePlugin
+            self,
+            name: str,
+            service: t.RegistrablePlugin,
         ) -> FlextProtocolsResult.Result[bool]:
             """Register a service component."""
             ...
 
         def register_handler(
-            self, handler: t.DispatchableHandler
+            self,
+            handler: t.DispatchableHandler,
         ) -> FlextProtocolsResult.Result[m.RegistrationDetails]:
             """Register a handler instance or callable."""
             ...
 
         def register_handlers(
-            self, handlers: t.SequenceOf[t.DispatchableHandler]
+            self,
+            handlers: t.SequenceOf[t.DispatchableHandler],
         ) -> FlextProtocolsResult.Result[m.RegistrySummary]:
             """Register multiple handlers in batch."""
             ...
 
         def register_bindings(
-            self, bindings: t.MappingKV[t.RegistryBindingKey, t.DispatchableHandler]
+            self,
+            bindings: t.MappingKV[t.RegistryBindingKey, t.DispatchableHandler],
         ) -> FlextProtocolsResult.Result[m.RegistrySummary]:
             """Register message-to-handler bindings."""
             ...

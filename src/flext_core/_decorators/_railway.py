@@ -27,9 +27,11 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
 
     @classmethod
     def railway[**PCallback, TValue](
-        cls, error_code: str | None = None
+        cls,
+        error_code: str | None = None,
     ) -> Callable[
-        [Callable[PCallback, TValue]], Callable[PCallback, pr.Result[TValue]]
+        [Callable[PCallback, TValue]],
+        Callable[PCallback, pr.Result[TValue]],
     ]:
         """Wrap a callable in the FLEXT railway result pattern."""
 
@@ -38,7 +40,8 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
         ) -> Callable[PCallback, pr.Result[TValue]]:
             @wraps(func)
             def wrapper(
-                *args: PCallback.args, **kwargs: PCallback.kwargs
+                *args: PCallback.args,
+                **kwargs: PCallback.kwargs,
             ) -> pr.Result[TValue]:
                 try:
                     result = func(*args, **kwargs)
@@ -88,7 +91,8 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
                     if cls._is_logger_carrier(first_arg_raw):
                         logger_carrier = first_arg_raw
                 logger = cls._resolve_logger(
-                    logger_carrier, func_module=func.__module__
+                    logger_carrier,
+                    func_module=func.__module__,
                 )
                 retry_settings = m.RetryConfiguration.model_validate({
                     "max_retries": attempts,

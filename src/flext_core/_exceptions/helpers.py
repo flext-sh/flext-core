@@ -42,7 +42,7 @@ class FlextExceptionsHelpers:
                 continue
             try:
                 source_mapping = FlextRuntime.normalize_metadata_input_mapping(
-                    source_value
+                    source_value,
                 )
             except FlextConstantsErrorsValidationExceptions.EXC_PYDANTIC_TYPE_VALUE:
                 continue
@@ -65,7 +65,8 @@ class FlextExceptionsHelpers:
         if value is not None:
             try:
                 metadata = FlextModelsBase.Metadata.model_validate(
-                    value, from_attributes=True
+                    value,
+                    from_attributes=True,
                 )
             except (PydanticValidationError, TypeError):
                 if isinstance(value, (Mapping, pr.HasModelDump)):
@@ -82,7 +83,7 @@ class FlextExceptionsHelpers:
                             if item is not None
                         }
                         metadata = FlextModelsBase.Metadata.model_validate({
-                            FlextConstantsMixins.FIELD_ATTRIBUTES: attrs
+                            FlextConstantsMixins.FIELD_ATTRIBUTES: attrs,
                         })
         return metadata
 
@@ -106,7 +107,8 @@ class FlextExceptionsHelpers:
         return {
             key: value
             for key, value in FlextExceptionsHelpers._normalized_source_entries(
-                context, extra_kwargs
+                context,
+                extra_kwargs,
             )
             if key not in excluded
         }
@@ -121,7 +123,8 @@ class FlextExceptionsHelpers:
         return {
             key: value
             for key, value in FlextExceptionsHelpers._normalized_source_entries(
-                context, extra_kwargs
+                context,
+                extra_kwargs,
             )
             if key in keys
         }

@@ -47,10 +47,12 @@ class Ex03FlextLogger(ExamplesFlextShared):
         contextual = logger.bind(container="shared")
         self.audit_check("u.fetch_logger.container.protocol", True)
         self.audit_check(
-            "u.fetch_logger.container.debug.ok", self._ok(logger.debug("debug"))
+            "u.fetch_logger.container.debug.ok",
+            self._ok(logger.debug("debug")),
         )
         self.audit_check(
-            "with_container_context.info.ok", self._ok(contextual.info("container"))
+            "with_container_context.info.ok",
+            self._ok(contextual.info("container")),
         )
 
     def _exercise_factory_methods(self) -> None:
@@ -73,7 +75,8 @@ class Ex03FlextLogger(ExamplesFlextShared):
         )
         self.audit_check("global.info.ok", self._ok(logger.info("global")))
         self.audit_check(
-            "unbind_global_context.ok", self._ok(u.unbind_global_context("application"))
+            "unbind_global_context.ok",
+            self._ok(u.unbind_global_context("application")),
         )
         self.audit_check("clear_global_context.ok", self._ok(u.clear_global_context()))
 
@@ -102,7 +105,7 @@ class Ex03FlextLogger(ExamplesFlextShared):
                     exception=ValueError("boom"),
                     exc_info=False,
                     context={"op": "example"},
-                )
+                ),
             ).__name__,
         )
         self.audit_check("exception.ok", self._exception_ok(logger, "exception"))
@@ -112,7 +115,8 @@ class Ex03FlextLogger(ExamplesFlextShared):
         self.section("level_context")
         logger = u.fetch_logger("examples.ex_03.level")
         self.audit_check(
-            "bind_context_for_level.ok", self._ok(u.bind_context("info", level="info"))
+            "bind_context_for_level.ok",
+            self._ok(u.bind_context("info", level="info")),
         )
         self.audit_check("level.info.ok", self._ok(logger.info("level")))
         self.audit_check("unbind_context_for_level.ok", self._ok(u.clear_scope("info")))
@@ -140,7 +144,8 @@ class Ex03FlextLogger(ExamplesFlextShared):
         self.audit_check("adapter.error.ok", self._ok(adapter.error("error")))
         self.audit_check("adapter.critical.ok", self._ok(adapter.critical("critical")))
         self.audit_check(
-            "adapter.exception.ok", self._exception_ok(adapter, "exception")
+            "adapter.exception.ok",
+            self._exception_ok(adapter, "exception"),
         )
 
     def _exercise_scoped_context(self) -> None:
@@ -160,15 +165,18 @@ class Ex03FlextLogger(ExamplesFlextShared):
             self._ok(u.bind_context("operation", operation="demo")),
         )
         self.audit_check(
-            "bind_context.tenant.ok", self._ok(u.bind_context("tenant", tenant="acme"))
+            "bind_context.tenant.ok",
+            self._ok(u.bind_context("tenant", tenant="acme")),
         )
         self.audit_check("scoped_context.info.ok", self._ok(logger.info("scoped")))
         self.audit_check(
-            "clear_scope.application.ok", self._ok(u.clear_scope("application"))
+            "clear_scope.application.ok",
+            self._ok(u.clear_scope("application")),
         )
         self.audit_check("clear_scope.request.ok", self._ok(u.clear_scope("request")))
         self.audit_check(
-            "clear_scope.operation.ok", self._ok(u.clear_scope("operation"))
+            "clear_scope.operation.ok",
+            self._ok(u.clear_scope("operation")),
         )
 
     @override

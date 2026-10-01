@@ -55,7 +55,8 @@ class TestsFlextFlextMigrationApplicationCase:
 
         app = ApplicationExample()
         result = capture_stdout(
-            lambda: app.process_data({"key": "value"}), contains="Processing data"
+            lambda: app.process_data({"key": "value"}),
+            contains="Processing data",
         )
         tm.that(result.success, eq=True)
         tm.that(result.value["processed"], eq=True)

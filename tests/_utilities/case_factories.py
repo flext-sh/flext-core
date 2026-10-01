@@ -7,7 +7,8 @@ from .case_service_factories import TestsFlextUtilitiesCaseServiceFactoriesMixin
 
 
 class TestsFlextUtilitiesCaseFactoriesMixin(
-    TestsFlextUtilitiesCaseGeneratorsMixin, TestsFlextUtilitiesCaseServiceFactoriesMixin
+    TestsFlextUtilitiesCaseGeneratorsMixin,
+    TestsFlextUtilitiesCaseServiceFactoriesMixin,
 ):
     """Service case factory helpers."""
 

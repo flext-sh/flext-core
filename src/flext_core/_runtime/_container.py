@@ -39,12 +39,15 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
     ) -> TypeGuard[ts.RegisterableService]:
         """Narrow runtime service values accepted by the dependency container."""
         return callable(value) or isinstance(
-            value, (pl.Logger, ps.Settings, pcx.Context, ph.Dispatcher)
+            value,
+            (pl.Logger, ps.Settings, pcx.Context, ph.Dispatcher),
         )
 
     @staticmethod
     def _normalize_payload_item(
-        item: pb.AttributeProbe, *, container_kind: Literal["mapping", "sequence"]
+        item: pb.AttributeProbe,
+        *,
+        container_kind: Literal["mapping", "sequence"],
     ) -> ts.JsonPayload:
         """Normalize one container item to its canonical payload form."""
         from .._models.pydantic import FlextModelsPydantic
@@ -97,19 +100,21 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
             return FlextModelsContainers.ConfigMap(
                 root={
                     key_s: FlextRuntimeContainer._normalize_payload_item(
-                        item, container_kind="mapping"
+                        item,
+                        container_kind="mapping",
                     )
                     for key_s, item in value.items()
-                }
+                },
             )
         if isinstance(value, Sequence) and not isinstance(value, c.STR_BINARY_TYPES):
             return FlextModelsContainers.ObjectList(
                 root=[
                     FlextRuntimeContainer._normalize_payload_item(
-                        item, container_kind="sequence"
+                        item,
+                        container_kind="sequence",
                     )
                     for item in value
-                ]
+                ],
             )
         if (
             isinstance(value, (str, int, float, bool, bytes, datetime, Path, BaseModel))
@@ -120,8 +125,8 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
             return value
         raise ValueError(
             c.ERR_RUNTIME_SERVICE_MUST_BE_REGISTERABLE.format(
-                type_name=type(value).__name__
-            )
+                type_name=type(value).__name__,
+            ),
         )
 
     @staticmethod
@@ -148,16 +153,17 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
         if val is None:
             normalized_data = ""
         elif isinstance(
-            val, (FlextModelsContainers.ConfigMap, FlextModelsContainers.Dict)
+            val,
+            (FlextModelsContainers.ConfigMap, FlextModelsContainers.Dict),
         ):
             normalized_data = FlextRuntimeContainer._normalize_dict_entries(
-                list(val.root.items())
+                list(val.root.items()),
             )
         elif isinstance(val, FlextModelsContainers.ObjectList):
             normalized_data = list(
                 tta.json_list_adapter().validate_python([
                     FlextRuntimeContainer.normalize_to_json_value(v) for v in val.root
-                ])
+                ]),
             )
         elif isinstance(val, BaseModel):
             normalized_data = val
@@ -167,14 +173,14 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
             normalized_data = FlextRuntimeContainer.normalize_to_json_value(val)
         elif isinstance(val, Mapping):
             normalized_data = FlextRuntimeContainer._normalize_dict_entries(
-                list(val.items())
+                list(val.items()),
             )
         elif isinstance(val, Sequence) and not isinstance(val, c.STR_BYTES_TYPES):
             normalized_data = list(
                 tta.json_list_adapter().validate_python([
                     FlextRuntimeContainer.normalize_to_json_value(item_raw)
                     for item_raw in val
-                ])
+                ]),
             )
         else:
             normalized_data = str(val)

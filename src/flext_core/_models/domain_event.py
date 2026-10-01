@@ -39,13 +39,13 @@ class FlextModelsDomainEvent:
         event_type: Annotated[
             t.NonEmptyStr,
             mp.Field(
-                description="Domain event type identifier for subscriber routing."
+                description="Domain event type identifier for subscriber routing.",
             ),
         ]
         aggregate_id: Annotated[
             t.NonEmptyStr,
             mp.Field(
-                description="Identifier of the aggregate root that produced this event."
+                description="Identifier of the aggregate root that produced this event.",
             ),
         ]
         data: Annotated[

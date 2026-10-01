@@ -34,7 +34,8 @@ class FlextUtilitiesReliability:
         """Configuration options for retry logic."""
 
         max_attempts: Annotated[
-            int | None, Field(ge=1, description="Maximum number of retry attempts")
+            int | None,
+            Field(ge=1, description="Maximum number of retry attempts"),
         ] = None
         delay_seconds: Annotated[
             float | None,
@@ -124,7 +125,9 @@ class FlextUtilitiesReliability:
 
         """
         opts_res = FlextUtilitiesArgs.resolve_options(
-            options, kwargs, FlextUtilitiesReliability.RetryOptions
+            options,
+            kwargs,
+            FlextUtilitiesReliability.RetryOptions,
         )
         if opts_res.failure:
             # Preserve the validated options failure metadata for every consumer.
@@ -160,7 +163,7 @@ class FlextUtilitiesReliability:
             r[TResult]
             .from_failure(last_failure)
             .map_error(
-                lambda error: f"Operation failed after {max_att} attempts: {error}"
+                lambda error: f"Operation failed after {max_att} attempts: {error}",
             )
         )
 

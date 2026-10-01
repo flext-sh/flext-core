@@ -72,7 +72,9 @@ class FlextUtilitiesBeartypeFieldVisitor:
 
     @staticmethod
     def _field_description_violation(
-        model_type: type, name: str, info: FieldInfo
+        model_type: type,
+        name: str,
+        info: FieldInfo,
     ) -> t.StrMapping | None:
         # Cheap evidence first: class-wide annotation evaluation runs once per
         # field, so it is reached only when no description is declared plainly.
@@ -83,7 +85,7 @@ class FlextUtilitiesBeartypeFieldVisitor:
         if isinstance(raw_annotation, str) and "description=" in raw_annotation:
             return None
         resolved_annotation = inspect.get_annotations(model_type, eval_str=False).get(
-            name
+            name,
         )
         if isinstance(resolved_annotation, str):
             try:
@@ -109,12 +111,14 @@ class FlextUtilitiesBeartypeFieldVisitor:
     ) -> t.StrMapping | None:
         violation: t.StrMapping | None = None
         if params.forbid_any and _ubh.contains_any_recursive(
-            info.annotation, seen=set()
+            info.annotation,
+            seen=set(),
         ):
             violation = {}
         elif params.forbid_bare_collection:
             bad, origin = _ubh.has_forbidden_collection_origin(
-                info.annotation, c.ENFORCEMENT_FORBIDDEN_COLLECTION_ORIGINS
+                info.annotation,
+                c.ENFORCEMENT_FORBIDDEN_COLLECTION_ORIGINS,
             )
             if bad:
                 replacement = next(
@@ -134,7 +138,8 @@ class FlextUtilitiesBeartypeFieldVisitor:
             params.forbid_raw_default_factory
             and info.default_factory is not None
             and not _ubh.allows_mutable_default_factory(
-                info.annotation, info.default_factory
+                info.annotation,
+                info.default_factory,
             )
         ):
             factory_kind = _ubh.mutable_default_factory_kind(info.default_factory)
@@ -150,7 +155,7 @@ class FlextUtilitiesBeartypeFieldVisitor:
         elif params.forbid_inline_union:
             inline_union_arms = (
                 FlextUtilitiesBeartypeFieldVisitor._declared_union_members(
-                    declared_annotation
+                    declared_annotation,
                 )
             )
             if inline_union_arms > params.max_union_arms:
@@ -178,7 +183,9 @@ class FlextUtilitiesBeartypeFieldVisitor:
                     vars(model_type).get("__annotations__", {}).get(name)
                 )
                 return cls._field_violation(
-                    params, info, declared_annotation=declared_annotation
+                    params,
+                    info,
+                    declared_annotation=declared_annotation,
                 )
             case (info,):
                 if not isinstance(info, FieldInfo):
@@ -189,17 +196,19 @@ class FlextUtilitiesBeartypeFieldVisitor:
 
     @staticmethod
     def v_model_config(
-        params: me.ModelConfigParams, target: type
+        params: me.ModelConfigParams,
+        target: type,
     ) -> t.StrMapping | None:
         """MODEL_CONFIG — Pydantic model_config governance via flags."""
         violation: t.StrMapping | None = None
         has_v1_config = params.forbid_v1_config and isinstance(
-            target.__dict__.get("Config"), type
+            target.__dict__.get("Config"),
+            type,
         )
         if has_v1_config:
             violation = {}
         elif issubclass(target, mp.BaseModel) and not _ubh.has_relaxed_extra_base(
-            target
+            target,
         ):
             extra = target.model_config.get("extra")
             local = target.__dict__.get("model_config", {})

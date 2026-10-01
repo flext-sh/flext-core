@@ -32,7 +32,8 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
         """Materialize the canonical registry implementation behind ``p.Registry``."""
         registry_module = import_module("flext_core.registry")
         registry_candidate = registry_module.FlextRegistry.create(
-            dispatcher=dispatcher, auto_discover_handlers=auto_discover_handlers
+            dispatcher=dispatcher,
+            auto_discover_handlers=auto_discover_handlers,
         )
         if not isinstance(registry_candidate, p.Registry):
             msg = "Resolved registry implementation does not satisfy p.Registry"
@@ -41,7 +42,8 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
 
     @classmethod
     def _resolve_runtime_settings(
-        cls, runtime_options: m.RuntimeBootstrapOptions
+        cls,
+        runtime_options: m.RuntimeBootstrapOptions,
     ) -> p.Settings:
         """Return the injected settings, or load the declared settings class."""
         settings = runtime_options.settings
@@ -53,7 +55,8 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
 
     @classmethod
     def build_service_runtime(
-        cls, source: m.RuntimeBootstrapOptions | p.MixinsInfrastructure | None = None
+        cls,
+        source: m.RuntimeBootstrapOptions | p.MixinsInfrastructure | None = None,
     ) -> m.ServiceRuntime:
         """Materialize settings, context, container and dispatcher for one component.
 
@@ -74,8 +77,9 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
             .shared()
             .scope(
                 registration=m.ServiceRegistrationSpec(
-                    settings=settings, context=context
-                )
+                    settings=settings,
+                    context=context,
+                ),
             )
         )
         dispatcher = (

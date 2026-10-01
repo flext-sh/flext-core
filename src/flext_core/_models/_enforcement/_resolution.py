@@ -16,7 +16,7 @@ class FlextModelsEnforcementResolution:
         """A lazy alias evaluated successfully, retaining its runtime value."""
 
         model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            arbitrary_types_allowed=True
+            arbitrary_types_allowed=True,
         )
         status: Literal["resolved"] = "resolved"
         value: p.AttributeProbe

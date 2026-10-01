@@ -35,7 +35,9 @@ class FlextContext(m.ManagedModel):
     """
 
     model_config = m.ConfigDict(
-        extra="forbid", validate_assignment=False, arbitrary_types_allowed=True
+        extra="forbid",
+        validate_assignment=False,
+        arbitrary_types_allowed=True,
     )
 
     data: Annotated[
@@ -44,7 +46,8 @@ class FlextContext(m.ManagedModel):
     ] = m.Field(default_factory=lambda: m.ConfigMap(root={}))
 
     metadata: Annotated[
-        m.Metadata, m.Field(description="Correlation and service metadata snapshot.")
+        m.Metadata,
+        m.Field(description="Correlation and service metadata snapshot."),
     ] = m.Field(default_factory=m.Metadata)
 
     _container_state: ClassVar[m.ContextContainerState] = m.ContextContainerState()
@@ -93,9 +96,9 @@ class FlextContext(m.ManagedModel):
         self.metadata = self.metadata.model_copy(
             update={
                 "attributes": t.json_mapping_adapter().validate_python(
-                    updated_attributes
-                )
-            }
+                    updated_attributes,
+                ),
+            },
         )
 
     def remove(self, key: str) -> None:
@@ -117,7 +120,8 @@ class FlextContext(m.ManagedModel):
     def clone(self) -> Self:
         """Create an independent copy of this context scope."""
         return self.__class__(
-            data=self.data.model_copy(deep=True), metadata=self.metadata.model_copy()
+            data=self.data.model_copy(deep=True),
+            metadata=self.metadata.model_copy(),
         )
 
     def export(self, *, as_dict: bool = True) -> t.MappingKV[str, t.JsonPayload] | Self:
@@ -146,7 +150,7 @@ class FlextContext(m.ManagedModel):
     def configure_container(cls, container: p.Container) -> None:
         """Register the global DI container instance."""
         cls._container_state = cls._container_state.model_copy(
-            update={"container": container}
+            update={"container": container},
         )
 
     @staticmethod
@@ -156,7 +160,8 @@ class FlextContext(m.ManagedModel):
 
     @staticmethod
     def register_service(
-        service_name: str, service: t.RegisterableService
+        service_name: str,
+        service: t.RegisterableService,
     ) -> p.Result[bool]:
         """Register a named service in the global container."""
         container = FlextContext.resolve_container()
@@ -175,7 +180,8 @@ class FlextContext(m.ManagedModel):
     @staticmethod
     @contextmanager
     def new_correlation(
-        correlation_id: str | None = None, parent_id: str | None = None
+        correlation_id: str | None = None,
+        parent_id: str | None = None,
     ) -> Generator[str]:
         """Scope a correlation ID, restoring the previous one on exit."""
         if correlation_id is None:
@@ -216,7 +222,8 @@ class FlextContext(m.ManagedModel):
     @staticmethod
     @contextmanager
     def service_context(
-        service_name: str, version: str | None = None
+        service_name: str,
+        version: str | None = None,
     ) -> Generator[None]:
         """Scope service name/version in process context."""
         name_token = u.SERVICE_NAME.set(service_name)

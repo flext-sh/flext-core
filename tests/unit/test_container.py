@@ -48,11 +48,13 @@ class TestsFlextCoreContainer:
         """A bound value is resolvable as a successful result carrying that value."""
         clean_container.bind("greeting", "hello")
         u.Tests.assert_success(
-            clean_container.resolve("greeting"), expected_value="hello"
+            clean_container.resolve("greeting"),
+            expected_value="hello",
         )
 
     def test_drop_removes_registration_and_reports_success(
-        self, clean_container: p.Container
+        self,
+        clean_container: p.Container,
     ) -> None:
         """Drop returns ok(True) and the service is no longer resolvable."""
         clean_container.bind("temp", "value")
@@ -68,19 +70,23 @@ class TestsFlextCoreContainer:
             msg="Service must be absent after drop",
         )
         _ = u.Tests.assert_failure(
-            clean_container.resolve("temp"), expected_error="not found"
+            clean_container.resolve("temp"),
+            expected_error="not found",
         )
 
     def test_drop_unknown_service_fails_with_not_found(
-        self, clean_container: p.Container
+        self,
+        clean_container: p.Container,
     ) -> None:
         """Dropping an unregistered name yields a not-found failure result."""
         _ = u.Tests.assert_failure(
-            clean_container.drop("ghost"), expected_error="not found"
+            clean_container.drop("ghost"),
+            expected_error="not found",
         )
 
     def test_logger_requires_explicit_module_name(
-        self, clean_container: p.Container
+        self,
+        clean_container: p.Container,
     ) -> None:
         params = inspect.signature(type(clean_container).logger).parameters
         module_param = params["module_name"]
@@ -91,7 +97,8 @@ class TestsFlextCoreContainer:
         )
 
     def test_clear_empties_all_registrations(
-        self, clean_container: p.Container
+        self,
+        clean_container: p.Container,
     ) -> None:
         """Clear removes every registered name, leaving an empty container."""
         clean_container.bind("a", "1")
@@ -114,7 +121,8 @@ class TestsFlextCoreContainer:
         )
 
     def test_scope_inherits_parent_registrations(
-        self, clean_container: p.Container
+        self,
+        clean_container: p.Container,
     ) -> None:
         """A derived scope can see services registered on its parent."""
         clean_container.bind("shared_svc", "value")
@@ -126,7 +134,8 @@ class TestsFlextCoreContainer:
         )
 
     def test_scope_registrations_do_not_leak_to_parent(
-        self, clean_container: p.Container
+        self,
+        clean_container: p.Container,
     ) -> None:
         """Bindings made inside a scope stay isolated from the parent container."""
         scoped = clean_container.scope()
@@ -138,10 +147,14 @@ class TestsFlextCoreContainer:
         )
 
     @pytest.mark.parametrize(
-        "overrides", [None, {"custom_key": "custom_value"}], ids=["none", "mapping"]
+        "overrides",
+        [None, {"custom_key": "custom_value"}],
+        ids=["none", "mapping"],
     )
     def test_apply_returns_self_for_fluent_chaining(
-        self, overrides: dict[str, str] | None, clean_container: p.Container
+        self,
+        overrides: dict[str, str] | None,
+        clean_container: p.Container,
     ) -> None:
         """Apply returns the same container so callers can chain fluently."""
         tm.that(
@@ -151,7 +164,8 @@ class TestsFlextCoreContainer:
         )
 
     def test_snapshot_exposes_config_via_model_dump(
-        self, clean_container: p.Container
+        self,
+        clean_container: p.Container,
     ) -> None:
         """Snapshot exposes merged settings as a mapping via its public model API."""
         dumped = clean_container.snapshot().model_dump()

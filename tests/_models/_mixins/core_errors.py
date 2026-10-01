@@ -19,10 +19,12 @@ class TestsFlextModelsCoreErrorsMixin:
         """Simple model with name/value attributes for mapper tests."""
 
         name: Annotated[
-            str, m.Field(description="Attribute recursive container name")
+            str,
+            m.Field(description="Attribute recursive container name"),
         ] = "name"
         value: Annotated[
-            int, m.Field(description="Attribute recursive container value")
+            int,
+            m.Field(description="Attribute recursive container value"),
         ] = 1
 
     class BadMapping(UserDict[str, t.JsonValue]):

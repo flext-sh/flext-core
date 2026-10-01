@@ -68,7 +68,8 @@ class FlextUtilitiesChecker:
 
     @classmethod
     def _check_object_type_compatibility(
-        cls, expected_type: tb.TypeHintSpecifier
+        cls,
+        expected_type: tb.TypeHintSpecifier,
     ) -> bool:
         """Check if expected type is a canonical catch-all value contract."""
         return expected_type is ts.JsonPayload

@@ -17,7 +17,8 @@ class FlextUtilitiesModelOptions(FlextUtilitiesModel):
 
     @classmethod
     def resolve_runtime_options(
-        cls, source: m.RuntimeBootstrapOptions | p.MixinsInfrastructure | None = None
+        cls,
+        source: m.RuntimeBootstrapOptions | p.MixinsInfrastructure | None = None,
     ) -> m.RuntimeBootstrapOptions:
         """Resolve the runtime options an options model or a component declares.
 
@@ -35,7 +36,8 @@ class FlextUtilitiesModelOptions(FlextUtilitiesModel):
             case p.MixinsInfrastructure():
                 declared = (
                     m.RuntimeBootstrapOptions.model_validate(
-                        source.runtime_bootstrap_options(), from_attributes=True
+                        source.runtime_bootstrap_options(),
+                        from_attributes=True,
                     )
                     if isinstance(source, p.RuntimeBootstrapProvider)
                     else m.RuntimeBootstrapOptions()

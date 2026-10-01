@@ -18,7 +18,7 @@ from .flexthandlers_part_03 import FlextHandlers as FlextHandlersPart03
 
 
 class FlextHandlers[MessageT_contra, ResultT](
-    FlextHandlersPart03[MessageT_contra, ResultT]
+    FlextHandlersPart03[MessageT_contra, ResultT],
 ):
     def handle(self, message: MessageT_contra) -> p.Result[ResultT]:
         """Handle the message - abstract method to be implemented by subclasses.
@@ -46,7 +46,8 @@ class FlextHandlers[MessageT_contra, ResultT](
         result = FlextUtilitiesHandler.pop_context(self._runtime_state)
         if result.failure:
             return r[p.RootDict[t.JsonPayload]].fail_op(
-                "pop handler context", result.error
+                "pop handler context",
+                result.error,
             )
         self._runtime_state, context = result.unwrap()
         return r.ok(context)
@@ -62,7 +63,9 @@ class FlextHandlers[MessageT_contra, ResultT](
     def record_metric(self, name: str, value: t.JsonPayload) -> p.Result[bool]:
         """Record a metric value in the current handler state."""
         return FlextUtilitiesHandler.record_metric(
-            self._runtime_state.execution_context, name, value
+            self._runtime_state.execution_context,
+            name,
+            value,
         )
 
     def validate_message(self, data: MessageT_contra) -> p.Result[bool]:
@@ -94,12 +97,16 @@ class FlextHandlers[MessageT_contra, ResultT](
         """
         if data is None:
             return r[bool].fail_op(
-                "validate handler message", c.ERR_MESSAGE_CANNOT_BE_NONE
+                "validate handler message",
+                c.ERR_MESSAGE_CANNOT_BE_NONE,
             )
         return r[bool].ok(True)
 
     def _record_execution_metrics(
-        self, *, success: bool, error: str | None = None
+        self,
+        *,
+        success: bool,
+        error: str | None = None,
     ) -> None:
         """Record execution metrics (helper to reduce locals in _run_pipeline)."""
         exec_time = u.to_float(self._runtime_state.execution_context.execution_time_ms)

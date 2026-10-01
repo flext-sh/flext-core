@@ -23,7 +23,10 @@ class FlextUtilitiesFiles:
 
     @staticmethod
     def append_atomic(
-        path: Path, data: str, *, encoding: str = "utf-8"
+        path: Path,
+        data: str,
+        *,
+        encoding: str = "utf-8",
     ) -> p.ResultView[int]:
         """Atomically append text to a file through ``O_APPEND``.
 
@@ -51,7 +54,10 @@ class FlextUtilitiesFiles:
 
     @staticmethod
     def write_atomic(
-        path: Path, data: str, *, encoding: str = "utf-8"
+        path: Path,
+        data: str,
+        *,
+        encoding: str = "utf-8",
     ) -> p.ResultView[int]:
         """Atomically replace a file's contents via temp file + rename."""
         payload = data.encode(encoding)

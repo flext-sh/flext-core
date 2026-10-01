@@ -1,5 +1,9 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Flext Core. Constants package."""
+"""Flext Core. Constants package.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -9,61 +13,67 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from . import _enforcement_data, _enforcement_parts, _errors_parts
-    from ._enforcement_parts.flextconstantsenforcement_part_01 import (
+    from flext_core._constants import (
+        _enforcement_data,
+        _enforcement_parts,
+        _errors_parts,
+    )
+    from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_01 import (
         FlextConstantsEnforcementEnums,
     )
-    from ._enforcement_parts.flextconstantsenforcement_part_02 import (
+    from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_02 import (
         FlextConstantsEnforcementRuntime,
     )
-    from ._enforcement_parts.flextconstantsenforcement_part_03 import (
+    from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_03 import (
         FlextConstantsEnforcementNamespace,
     )
-    from ._enforcement_parts.flextconstantsenforcement_part_04 import (
+    from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_04 import (
         FlextConstantsEnforcementRules,
     )
-    from ._enforcement_parts.flextconstantsenforcement_part_06 import (
+    from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_06 import (
         FlextConstantsEnforcementTargets,
     )
-    from ._enforcement_parts.flextconstantsenforcement_part_07 import (
+    from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_07 import (
         FlextConstantsEnforcementSmellData,
     )
-    from ._errors_parts.flextconstantserrors_part_01 import FlextConstantsErrorsMessages
-    from ._errors_parts.flextconstantserrors_part_02 import (
+    from flext_core._constants._errors_parts.flextconstantserrors_part_01 import (
+        FlextConstantsErrorsMessages,
+    )
+    from flext_core._constants._errors_parts.flextconstantserrors_part_02 import (
         FlextConstantsErrorsRuntimeExceptions,
     )
-    from ._errors_parts.flextconstantserrors_part_03 import (
+    from flext_core._constants._errors_parts.flextconstantserrors_part_03 import (
         FlextConstantsErrorsValidationExceptions,
     )
-    from ._errors_parts.flextconstantserrors_part_04 import (
+    from flext_core._constants._errors_parts.flextconstantserrors_part_04 import (
         FlextConstantsErrorsDomainParser,
     )
-    from ._errors_parts.flextconstantserrors_part_05 import (
+    from flext_core._constants._errors_parts.flextconstantserrors_part_05 import (
         FlextConstantsErrorsRuntimeSettings,
     )
-    from .base import FlextConstantsBase
-    from .config import FlextConstantsConfig
-    from .cqrs import FlextConstantsCqrs
-    from .enforcement import (
+    from flext_core._constants.base import FlextConstantsBase
+    from flext_core._constants.config import FlextConstantsConfig
+    from flext_core._constants.cqrs import FlextConstantsCqrs
+    from flext_core._constants.enforcement import (
         FlextConstantsEnforcement,
         FlextMroViolation,
         FlextSmellViolation,
     )
-    from .environment import FlextConstantsEnvironment
-    from .errors import FlextConstantsErrors
-    from .file import FlextConstantsFile
-    from .guards import FlextConstantsGuards
-    from .infrastructure import FlextConstantsInfrastructure
-    from .loggings import FlextConstantsLogging
-    from .mixins import FlextConstantsMixins
-    from .project_metadata import FlextConstantsProjectMetadata
-    from .pydantic import FlextConstantsPydantic
-    from .regex import FlextConstantsRegex
-    from .serialization import FlextConstantsSerialization
-    from .settings import FlextConstantsSettings
-    from .status import FlextConstantsStatus
-    from .timeout import FlextConstantsTimeout
-    from .validation import FlextConstantsValidation
+    from flext_core._constants.environment import FlextConstantsEnvironment
+    from flext_core._constants.errors import FlextConstantsErrors
+    from flext_core._constants.file import FlextConstantsFile
+    from flext_core._constants.guards import FlextConstantsGuards
+    from flext_core._constants.infrastructure import FlextConstantsInfrastructure
+    from flext_core._constants.loggings import FlextConstantsLogging
+    from flext_core._constants.mixins import FlextConstantsMixins
+    from flext_core._constants.project_metadata import FlextConstantsProjectMetadata
+    from flext_core._constants.pydantic import FlextConstantsPydantic
+    from flext_core._constants.regex import FlextConstantsRegex
+    from flext_core._constants.serialization import FlextConstantsSerialization
+    from flext_core._constants.settings import FlextConstantsSettings
+    from flext_core._constants.status import FlextConstantsStatus
+    from flext_core._constants.timeout import FlextConstantsTimeout
+    from flext_core._constants.validation import FlextConstantsValidation
 
 
 __all__: tuple[str, ...] = (
@@ -169,7 +179,7 @@ _LAZY_IMPORTS = MappingProxyType(
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
-    )
+    ),
 )
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

@@ -23,7 +23,8 @@ class TestsFlextFlextSystemWorkflowCases:
         def processar_dados_usuario(dados: t.StrMapping) -> p.Result[t.StrMapping]:
             if not dados:
                 return r[t.StrMapping].fail(
-                    "Dados não fornecidos", error_code=c.ErrorCode.VALIDATION_ERROR
+                    "Dados não fornecidos",
+                    error_code=c.ErrorCode.VALIDATION_ERROR,
                 )
             dados_processados: t.MutableStrMapping = {}
             for key, value in dados.items():
@@ -57,7 +58,7 @@ class TestsFlextFlextSystemWorkflowCases:
         """Test error recovery scenarios."""
         resultado_com_erro: p.Result[str] = r[str].fail("erro_original")
         resultado_recuperado = resultado_com_erro.lash(
-            lambda _error: r[str].ok("valor_recuperado")
+            lambda _error: r[str].ok("valor_recuperado"),
         )
         tm.that(resultado_recuperado.success, eq=True)
         tm.that(resultado_recuperado.value, eq="valor_recuperado")

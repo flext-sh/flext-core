@@ -194,7 +194,9 @@ class TestsFlextResultTraverseResource:
 
         class ModelDumpCarrier:
             def model_dump(
-                self, *, mode: str = "python"
+                self,
+                *,
+                mode: str = "python",
             ) -> t.MappingKV[str, t.JsonPayload | None]:
                 _ = mode
                 return {"alpha": 1, "beta": "two"}

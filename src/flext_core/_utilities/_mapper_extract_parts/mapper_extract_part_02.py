@@ -27,7 +27,8 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperExtractPart01):
             if current is None:
                 return FlextUtilitiesMapperExtract._extract_fail_or_default(
                     e.render_template(
-                        c.ERR_TEMPLATE_PATH_IS_NONE, path=separator.join(parts[:i])
+                        c.ERR_TEMPLATE_PATH_IS_NONE,
+                        path=separator.join(parts[:i]),
                     ),
                     default=default,
                     required=required,
@@ -52,7 +53,7 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperExtractPart01):
                 required=required,
             )
         return r[t.JsonPayload].ok(
-            current if FlextUtilitiesGuards.container(current) else str(current)
+            current if FlextUtilitiesGuards.container(current) else str(current),
         )
 
     @staticmethod
@@ -67,7 +68,11 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperExtractPart01):
         """Extract nested value via dot-notation path with array index support."""
         try:
             return FlextUtilitiesMapperExtract._extract_path_parts(
-                data, path, default=default, required=required, separator=separator
+                data,
+                path,
+                default=default,
+                required=required,
+                separator=separator,
             )
         except (AttributeError, TypeError, ValueError, KeyError, IndexError) as exc:
             return r[t.JsonPayload].fail_op(
@@ -77,7 +82,8 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperExtractPart01):
                     operation="extract",
                     error=str(exc),
                     params=FlextModelsExceptionParams.OperationErrorParams(
-                        operation="extract", reason=str(exc)
+                        operation="extract",
+                        reason=str(exc),
                     ),
                 ),
             )

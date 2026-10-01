@@ -53,7 +53,9 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart01):
             else c.DEFAULT_EMPTY_STRING
         )
         msg = FlextExceptionsTemplate.render_template(
-            c.ERR_SERVICE_TYPE_MISMATCH, type_name=expected_type, params=params
+            c.ERR_SERVICE_TYPE_MISMATCH,
+            type_name=expected_type,
+            params=params,
         )
         return FlextExceptionsFactories._fail_result(
             msg,
@@ -127,10 +129,13 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart01):
         """
         options, error = FlextExceptionsFactories._resolve_options(options)
         params = m.ConfigurationErrorParams(
-            config_key=config_key, config_source=config_source
+            config_key=config_key,
+            config_source=config_source,
         )
         msg = FlextExceptionsFactories._failure_message(
-            f"read config key {config_key!r}", params=params, error=error
+            f"read config key {config_key!r}",
+            params=params,
+            error=error,
         )
         return FlextExceptionsFactories._fail_result(
             msg,

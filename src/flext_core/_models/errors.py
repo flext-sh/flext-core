@@ -95,7 +95,7 @@ class FlextModelsErrors:
         def clear(self) -> Self:
             """Return a cleared metrics state."""
             cleared: Self = self.model_copy(
-                update={"exception_counts": MappingProxyType({})}
+                update={"exception_counts": MappingProxyType({})},
             )
             return cleared
 

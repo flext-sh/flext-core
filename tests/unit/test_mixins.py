@@ -132,7 +132,9 @@ class TestsFlextMixins:
         [("settings_overrides", "not-a-mapping"), ("settings_type", str)],
     )
     def test_constructor_rejects_invalid_bootstrap_value(
-        self, field_name: str, bad_value: t.GuardInput
+        self,
+        field_name: str,
+        bad_value: t.GuardInput,
     ) -> None:
         with pytest.raises(c.ValidationError):
             self._Service.model_validate({field_name: bad_value})

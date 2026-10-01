@@ -62,7 +62,8 @@ class ProjectMetadataFields:
         """``[tool.flext.project]`` contract."""
 
         class_stem_override: Annotated[
-            str | None, Field(default=None, description="Explicit class stem override")
+            str | None,
+            Field(default=None, description="Explicit class stem override"),
         ] = None
         budget: Annotated[
             t.JsonMapping | None,
@@ -102,7 +103,8 @@ class ProjectMetadataFields:
             ),
         ]
         title: Annotated[
-            str, Field(min_length=1, description="Project README section heading")
+            str,
+            Field(min_length=1, description="Project README section heading"),
         ]
         content: Annotated[
             str | None,
@@ -150,7 +152,8 @@ class ProjectMetadataFields:
             Field(default=None, description="Explicit import package override"),
         ] = None
         project_class: Annotated[
-            str, Field(default="library", description="Documentation project class")
+            str,
+            Field(default="library", description="Documentation project class"),
         ] = "library"
         site_title: Annotated[
             str | None,

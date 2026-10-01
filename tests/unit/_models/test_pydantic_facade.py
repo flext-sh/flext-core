@@ -117,7 +117,7 @@ class TestsFlextCorePydanticDeclarations:
 
     def test_discriminator_resolves_union_member_from_tag(self) -> None:
         pet = TestsFlextCorePydanticDeclarations._Pet.model_validate({
-            "animal": {"kind": "dog", "bark": "woof"}
+            "animal": {"kind": "dog", "bark": "woof"},
         })
 
         assert isinstance(pet.animal, TestsFlextCorePydanticDeclarations._Dog)
@@ -125,21 +125,22 @@ class TestsFlextCorePydanticDeclarations:
 
         with pytest.raises(m.ValidationError):
             TestsFlextCorePydanticDeclarations._Pet.model_validate({
-                "animal": {"kind": "cow", "moo": "moo"}
+                "animal": {"kind": "cow", "moo": "moo"},
             })
 
     def test_serialize_as_any_keeps_subclass_fields_in_dump(self) -> None:
         box = TestsFlextCorePydanticDeclarations._Box(
             item=TestsFlextCorePydanticDeclarations._DetailedItem(
-                name="flext", detail="advanced"
-            )
+                name="flext",
+                detail="advanced",
+            ),
         )
 
         assert box.model_dump() == {"item": {"name": "flext", "detail": "advanced"}}
 
     def test_fail_fast_reports_only_the_first_list_error(self) -> None:
         adapter: m.TypeAdapter[list[int]] = u.type_adapter(
-            Annotated[list[int], m.FailFast()]
+            Annotated[list[int], m.FailFast()],
         )
 
         assert adapter.validate_python([1, 2]) == [1, 2]
@@ -166,10 +167,11 @@ class TestsFlextCorePydanticDeclarations:
                     m.ValidateAs(
                         TestsFlextCorePydanticDeclarations._VectorInput,
                         lambda validated: TestsFlextCorePydanticDeclarations._Vector(
-                            validated.x, validated.y
+                            validated.x,
+                            validated.y,
                         ),
                     ),
-                ]
+                ],
             )
         )
 

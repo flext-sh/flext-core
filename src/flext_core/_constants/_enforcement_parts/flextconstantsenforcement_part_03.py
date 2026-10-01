@@ -53,7 +53,7 @@ class FlextConstantsEnforcementNamespace:
 
     ENFORCEMENT_NAMESPACE_FACADE_ROOTS: ClassVar[frozenset[str]] = frozenset(
         {f"Flext{name}" for name in NAMESPACE_LAYER_NAMES}
-        | {"FlextModelsBase", "FlextModelsNamespace", "EnforcedModel"}
+        | {"FlextModelsBase", "FlextModelsNamespace", "EnforcedModel"},
     )
     """Root facade class names — skip namespace prefix check on these."""
 
@@ -124,7 +124,7 @@ class FlextConstantsEnforcementNamespace:
                     "flext_web",
                 ),
                 ("c", "m", "p", "t", "u"),
-            )
+            ),
         )
     )
     """SSOT: project package name → canonical aliases it re-exports locally.

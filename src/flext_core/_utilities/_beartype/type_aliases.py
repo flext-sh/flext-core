@@ -15,7 +15,9 @@ class FlextUtilitiesBeartypeTypeAliases:
 
     @staticmethod
     def resolve(
-        alias: TypeAliasType, *, owner: ModuleType | type | None = None
+        alias: TypeAliasType,
+        *,
+        owner: ModuleType | type | None = None,
     ) -> me.ResolvedAlias | me.DeferredAlias:
         if owner is not None:
             deferred = FlextUtilitiesBeartypeModuleSource.deferred(alias, owner=owner)
@@ -71,6 +73,9 @@ class FlextUtilitiesBeartypeTypeAliases:
             deferred
             for child in args
             for deferred in cls.deferred(
-                child, recursive=True, owner=owner, seen=visited
+                child,
+                recursive=True,
+                owner=owner,
+                seen=visited,
             )
         )

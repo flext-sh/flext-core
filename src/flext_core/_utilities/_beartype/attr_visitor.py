@@ -43,7 +43,9 @@ class FlextUtilitiesBeartypeAttrVisitor:
 
     @staticmethod
     def v_attr_shape(
-        params: me.AttrShapeParams, name: str, value: tp.JsonValue
+        params: me.AttrShapeParams,
+        name: str,
+        value: tp.JsonValue,
     ) -> t.StrMapping | None:
         """ATTR_SHAPE — class-attribute governance (constants / aliases / TypeAdapters)."""
         if params.forbid_mutable_value:
@@ -53,7 +55,7 @@ class FlextUtilitiesBeartypeAttrVisitor:
         if params.require_uppercase_name and name != name.upper():
             return _BARE_VIOLATION
         if params.forbid_any_in_alias and _ubh.alias_contains_any(
-            _ubh.resolve_type_alias_value(value)
+            _ubh.resolve_type_alias_value(value),
         ):
             return _BARE_VIOLATION
         if (
@@ -91,7 +93,10 @@ class FlextUtilitiesBeartypeAttrVisitor:
 
     @staticmethod
     def _is_implicit_constant(
-        params: me.ClassVarConstantParams, target: type, name: str, value: object
+        params: me.ClassVarConstantParams,
+        target: type,
+        name: str,
+        value: object,
     ) -> bool:
         """Return True when an UPPER_CASE attribute looks like a constant but lacks ClassVar."""
         if not params.detect_implicit_constants:
@@ -102,7 +107,10 @@ class FlextUtilitiesBeartypeAttrVisitor:
 
     @staticmethod
     def v_classvar_constant(
-        params: me.ClassVarConstantParams, target: type, name: str, value: object
+        params: me.ClassVarConstantParams,
+        target: type,
+        name: str,
+        value: object,
     ) -> t.StrMapping | None:
         """CLASSVAR_CONSTANT — flag one constant declared outside _constants.
 
@@ -116,12 +124,16 @@ class FlextUtilitiesBeartypeAttrVisitor:
         if name in c.ENFORCEMENT_CLASSVAR_EXEMPT_NAMES:
             return None
         has_classvar = FlextUtilitiesBeartypeAttrVisitor._has_classvar_annotation(
-            target, name
+            target,
+            name,
         )
         is_implicit = (
             not has_classvar
             and FlextUtilitiesBeartypeAttrVisitor._is_implicit_constant(
-                params, target, name, value
+                params,
+                target,
+                name,
+                value,
             )
         )
         if not (has_classvar or is_implicit):

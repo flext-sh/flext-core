@@ -153,7 +153,9 @@ class TestsFlextCoreHandlerDiscoveryClass:
 
     @pytest.mark.parametrize("expected_present", [True, False])
     def test_has_handlers_reflects_presence_of_decorated_methods(
-        self, *, expected_present: bool
+        self,
+        *,
+        expected_present: bool,
     ) -> None:
         # Arrange
         class Command(m.BaseModel):

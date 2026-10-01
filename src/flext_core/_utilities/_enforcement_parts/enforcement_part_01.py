@@ -10,7 +10,8 @@ from ..._models.pydantic import FlextModelsPydantic as mp
 from ..._typings.base import FlextTypingBase as t
 
 PREDICATE_BINDINGS: t.MappingKV[
-    str, tuple[c.EnforcementPredicateKind, mp.BaseModel]
+    str,
+    tuple[c.EnforcementPredicateKind, mp.BaseModel],
 ] = MappingProxyType({
     tag: (spec.predicate, spec.params)
     for tag, spec in (

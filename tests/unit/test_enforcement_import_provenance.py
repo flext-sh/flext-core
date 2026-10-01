@@ -79,27 +79,36 @@ class TestsEnforcementImportProvenance:
         ],
     )
     def test_real_consumer_import_contract(
-        self, tmp_path: Path, binding: str, rule: str, *, rejected: bool
+        self,
+        tmp_path: Path,
+        binding: str,
+        rule: str,
+        *,
+        rejected: bool,
     ) -> None:
         """Facade dependencies are legal; direct imports and rename exports fail."""
         package = tmp_path / "flext_probe"
         package.mkdir()
         (tmp_path / "pyproject.toml").write_text(
-            '[project]\nname = "flext-probe"\nversion = "0.0.0"\n', encoding="utf-8"
+            '[project]\nname = "flext-probe"\nversion = "0.0.0"\n',
+            encoding="utf-8",
         )
         (package / "__init__.py").write_text("", encoding="utf-8")
         (package / "base.py").write_text(
-            "class FlextProbeBase:\n    pass\n", encoding="utf-8"
+            "class FlextProbeBase:\n    pass\n",
+            encoding="utf-8",
         )
         (package / "consumer.py").write_text(
-            f"{binding}\n\nclass FlextProbeConsumer:\n    pass\n", encoding="utf-8"
+            f"{binding}\n\nclass FlextProbeConsumer:\n    pass\n",
+            encoding="utf-8",
         )
         sys.path.insert(0, str(tmp_path))
         try:
             module = importlib.import_module("flext_probe.consumer")
             report = u.check(module.FlextProbeConsumer)
             tm.that(
-                any(item.rule_id == rule for item in report.violations), eq=rejected
+                any(item.rule_id == rule for item in report.violations),
+                eq=rejected,
             )
         finally:
             sys.path.remove(str(tmp_path))

@@ -14,25 +14,28 @@ if TYPE_CHECKING:
 
 
 class TestsFlextUtilitiesValidationFactoriesMixin(
-    TestsFlextUtilitiesServicesMixin, TestsFlextUtilitiesUserFactoriesMixin
+    TestsFlextUtilitiesServicesMixin,
+    TestsFlextUtilitiesUserFactoriesMixin,
 ):
     """Validation and failing service factory helpers."""
 
     class GetUserServiceAutoFactory(
         TestsFlextUtilitiesUserFactoriesMixin.GetUserFactoryBase[
             TestsFlextUtilitiesServicesMixin.GetUserServiceAuto
-        ]
+        ],
     ):
         """Factory for GetUserServiceAuto."""
 
         @classmethod
         @override
         def build(
-            cls, *, user_id: str | None = None
+            cls,
+            *,
+            user_id: str | None = None,
         ) -> TestsFlextUtilitiesValidationFactoriesMixin.GetUserServiceAuto:
             """Build a GetUserServiceAuto instance."""
             return TestsFlextUtilitiesValidationFactoriesMixin.GetUserServiceAuto(
-                user_id=cls._resolve_user_id(user_id)
+                user_id=cls._resolve_user_id(user_id),
             )
 
     class WordRotation:
@@ -78,33 +81,39 @@ class TestsFlextUtilitiesValidationFactoriesMixin(
             return [cls.build() for _ in range(size)]
 
     class ValidatingServiceAutoFactory(
-        _ValidatingFactoryBase[TestsFlextUtilitiesServicesMixin.ValidatingServiceAuto]
+        _ValidatingFactoryBase[TestsFlextUtilitiesServicesMixin.ValidatingServiceAuto],
     ):
         """Factory for ValidatingServiceAuto."""
 
         @classmethod
         @override
         def _make_instance(
-            cls, value_input: str, min_length: int
+            cls,
+            value_input: str,
+            min_length: int,
         ) -> TestsFlextUtilitiesValidationFactoriesMixin.ValidatingServiceAuto:
             """Construct a ValidatingServiceAuto instance."""
             return TestsFlextUtilitiesValidationFactoriesMixin.ValidatingServiceAuto(
-                value_input=value_input, min_length=min_length
+                value_input=value_input,
+                min_length=min_length,
             )
 
     class ValidatingServiceFactory(
-        _ValidatingFactoryBase[TestsFlextUtilitiesServicesMixin.ValidatingService]
+        _ValidatingFactoryBase[TestsFlextUtilitiesServicesMixin.ValidatingService],
     ):
         """Factory for ``ValidatingService``."""
 
         @classmethod
         @override
         def _make_instance(
-            cls, value_input: str, min_length: int
+            cls,
+            value_input: str,
+            min_length: int,
         ) -> TestsFlextUtilitiesValidationFactoriesMixin.ValidatingService:
             """Construct a ValidatingService instance."""
             return TestsFlextUtilitiesValidationFactoriesMixin.ValidatingService(
-                value_input=value_input, min_length=min_length
+                value_input=value_input,
+                min_length=min_length,
             )
 
 

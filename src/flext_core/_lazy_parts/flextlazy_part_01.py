@@ -46,37 +46,38 @@ class FlextLazyPart01(BaseModel):
     child_lazy_cache: dict[str, LazyImportDict] = Field(default_factory=dict)
 
     child_merge_cache: dict[t.VariadicTuple[str], LazyImportDict] = Field(
-        default_factory=dict
+        default_factory=dict,
     )
 
     # The entry keeps its source map alive: an ``id()`` key alone is reused once a
     # transient map is freed, and would serve another map's normalization.
     normalized_map_cache: dict[
-        tuple[str, int], tuple[LazyImportMap | None, LazyImportDict]
+        tuple[str, int],
+        tuple[LazyImportMap | None, LazyImportDict],
     ] = Field(default_factory=dict)
 
     install_cache: dict[str, tuple[int, int, int, int, bool]] = Field(
-        default_factory=dict
+        default_factory=dict,
     )
 
     _import_module: Callable[[str], ModuleType] = PrivateAttr(
-        default_factory=lambda: importlib.import_module
+        default_factory=lambda: importlib.import_module,
     )
 
     _map_adapter: TypeAdapter[LazyImportDict] = PrivateAttr(
-        default_factory=lambda: TypeAdapter(LazyImportDict)
+        default_factory=lambda: TypeAdapter(LazyImportDict),
     )
 
     _alias_adapter: TypeAdapter[StrPair] = PrivateAttr(
-        default_factory=lambda: TypeAdapter(StrPair)
+        default_factory=lambda: TypeAdapter(StrPair),
     )
 
     _activate_core_beartype: Callable[[], None] = PrivateAttr(
         default_factory=lambda: (
             importlib.import_module(
-                "flext_core._beartype_bootstrap"
+                "flext_core._beartype_bootstrap",
             ).FlextCoreBeartypeBootstrap.activate_package_beartype
-        )
+        ),
     )
 
     _activating_core_beartype: bool = PrivateAttr(default=False)
@@ -94,7 +95,9 @@ class FlextLazyPart01(BaseModel):
         }
 
     def _norm_cache_key(
-        self, module_path: str, raw: LazyImportMap | None
+        self,
+        module_path: str,
+        raw: LazyImportMap | None,
     ) -> tuple[str, int]:
         return (module_path, id(raw))
 
@@ -133,7 +136,9 @@ class FlextLazyPart01(BaseModel):
         )
 
     def normalize_map(
-        self, module_path: str, raw: LazyImportMap | None
+        self,
+        module_path: str,
+        raw: LazyImportMap | None,
     ) -> LazyImportDict:
         """Return normalized lazy-import entries for runtime metadata readers."""
         return self._norm_map(module_path, raw)

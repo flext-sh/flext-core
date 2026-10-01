@@ -36,8 +36,8 @@ class TestsFlextCoreUtilitiesRuntimeViolationRegistry:
                     layer="Runtime",
                     severity="warning",
                     message=message,
-                )
-            ]
+                ),
+            ],
         )
 
     def test_drain_on_empty_buffer_returns_empty_tuple(self) -> None:

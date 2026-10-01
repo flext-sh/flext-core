@@ -133,7 +133,8 @@ class TestsFlextCoreResultCallablesFold:
         """Fold runs the on_success branch for a success."""
         result: p.Result[str] = r[str].ok("hello")
         message = result.fold(
-            on_success=lambda v: f"Got: {v}", on_failure=lambda e: f"Error: {e}"
+            on_success=lambda v: f"Got: {v}",
+            on_failure=lambda e: f"Error: {e}",
         )
         tm.that(message, eq="Got: hello")
 
@@ -141,7 +142,8 @@ class TestsFlextCoreResultCallablesFold:
         """Fold runs the on_failure branch for a failure."""
         result: p.Result[str] = r[str].fail("something broke")
         message = result.fold(
-            on_success=lambda v: f"Got: {v}", on_failure=lambda e: f"Error: {e}"
+            on_success=lambda v: f"Got: {v}",
+            on_failure=lambda e: f"Error: {e}",
         )
         tm.that(message, eq="Error: something broke")
 

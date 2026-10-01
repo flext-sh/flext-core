@@ -77,7 +77,8 @@ class FlextUtilitiesBeartypeModuleSource:
         for child in ast.iter_child_nodes(node):
             yield child
             if not isinstance(
-                child, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)
+                child,
+                (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda),
             ):
                 yield from cls._scope_nodes(child)
 
@@ -208,7 +209,8 @@ class FlextUtilitiesBeartypeModuleSource:
 
     @classmethod
     def _guarded_imports(
-        cls, scopes: tuple[ast.Module | ast.ClassDef, ...]
+        cls,
+        scopes: tuple[ast.Module | ast.ClassDef, ...],
     ) -> set[str]:
         nodes = tuple(node for scope in scopes for node in cls._scope_nodes(scope))
         flag_imports = {
@@ -267,7 +269,10 @@ class FlextUtilitiesBeartypeModuleSource:
 
     @classmethod
     def deferred(
-        cls, alias: TypeAliasType, *, owner: ModuleType | type
+        cls,
+        alias: TypeAliasType,
+        *,
+        owner: ModuleType | type,
     ) -> me.DeferredAlias | None:
         """Prove deferral from the explicitly supplied declaring owner."""
         if vars(owner).get(alias.__name__) is not alias:
@@ -318,7 +323,7 @@ class FlextUtilitiesBeartypeModuleSource:
             and node.id not in available
         }
         guarded = cls._guarded_imports((cls.parse(module),)) | cls._guarded_imports(
-            scopes
+            scopes,
         )
         if not missing or not missing <= guarded:
             return None

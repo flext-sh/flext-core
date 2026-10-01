@@ -45,7 +45,7 @@ class TestsFlextSettingsIntegration:
         container = FlextContainer()
         tm.that(container.settings is global_settings, eq=True)
         resolved = test_u.Tests.assert_success(
-            container.resolve(str(c.Directory.CONFIG))
+            container.resolve(str(c.Directory.CONFIG)),
         )
         tm.that(resolved is global_settings, eq=True)
 
@@ -57,7 +57,8 @@ class TestsFlextSettingsIntegration:
         tm.that(settings.trace, eq=defaults["trace"].default)
         tm.that(settings.log_level, eq=defaults["log_level"].default)
         tm.that(
-            {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}, has=settings.log_level
+            {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"},
+            has=settings.log_level,
         )
         tm.that(settings.timezone, eq=defaults["timezone"].default)
         tm.that(settings.async_logging, eq=defaults["async_logging"].default)
@@ -65,7 +66,8 @@ class TestsFlextSettingsIntegration:
     def test_environment_variables_override_settings(self) -> None:
         """FLEXT_-prefixed env vars populate the settings fields."""
         with test_u.Tests.env_vars_context(
-            vars_to_clear=["FLEXT_LOG_LEVEL"], env_vars={"FLEXT_LOG_LEVEL": "ERROR"}
+            vars_to_clear=["FLEXT_LOG_LEVEL"],
+            env_vars={"FLEXT_LOG_LEVEL": "ERROR"},
         ):
             FlextSettings.reset_for_testing()
             settings = FlextSettings.fetch_global()

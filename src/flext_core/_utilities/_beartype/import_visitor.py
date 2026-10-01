@@ -19,28 +19,32 @@ class FlextUtilitiesBeartypeImportVisitor:
 
     @staticmethod
     def v_import_blacklist(
-        params: me.ImportBlacklistParams, target: type
+        params: me.ImportBlacklistParams,
+        target: type,
     ) -> t.StrMapping | None:
         """IMPORT_BLACKLIST — concrete-class / pydantic consumer-import discipline."""
         return _ImportBlacklistVisitor.v_import_blacklist(params, target)
 
     @staticmethod
     def v_alias_rebind(
-        params: me.AliasRebindParams, target: type
+        params: me.AliasRebindParams,
+        target: type,
     ) -> t.StrMapping | None:
         """ALIAS_REBIND."""
         return FlextUtilitiesBeartypeAliasVisitor.v_alias_rebind(params, target)
 
     @staticmethod
     def v_compatibility_alias(
-        params: me.CompatibilityAliasParams, target: type
+        params: me.CompatibilityAliasParams,
+        target: type,
     ) -> t.StrMapping | None:
         """COMPATIBILITY_ALIAS."""
         return FlextUtilitiesBeartypeAliasVisitor.v_compatibility_alias(params, target)
 
     @staticmethod
     def v_library_import(
-        params: me.LibraryImportParams, target: type
+        params: me.LibraryImportParams,
+        target: type,
     ) -> t.StrMapping | None:
         """LIBRARY_IMPORT."""
         return FlextUtilitiesBeartypeLibraryVisitor.v_library_import(params, target)
@@ -51,7 +55,8 @@ class _ImportBlacklistVisitor:
 
     @staticmethod
     def v_import_blacklist(
-        params: me.ImportBlacklistParams, target: type
+        params: me.ImportBlacklistParams,
+        target: type,
     ) -> t.StrMapping | None:
         """IMPORT_BLACKLIST — concrete-class / pydantic consumer-import discipline."""
         no_violation: t.StrMapping | None = None
@@ -79,11 +84,12 @@ class _ImportBlacklistVisitor:
                     if isinstance(value, type)
                     and name.startswith(tier_prefixes)
                     and (origin := _ubh.object_module_name_for(value) or "").startswith(
-                        c.NAMESPACE_FAMILY_PREFIX
+                        c.NAMESPACE_FAMILY_PREFIX,
                     )
                     and origin != module_name
                     and not _ImportBlacklistVisitor._is_local_family_import(
-                        origin, module_name
+                        origin,
+                        module_name,
                     )
                     and not (
                         value in target.__bases__
@@ -124,7 +130,7 @@ class _ImportBlacklistVisitor:
             ):
                 forbidden = frozenset(params.forbidden_symbols)
                 allowed_roots = frozenset(params.forbidden_modules) or frozenset({
-                    "pydantic"
+                    "pydantic",
                 })
                 violation = next(
                     (

@@ -17,7 +17,8 @@ class FlextUtilitiesBeartypeAliasVisitor:
 
     @staticmethod
     def v_alias_rebind(
-        params: me.AliasRebindParams, target: type
+        params: me.AliasRebindParams,
+        target: type,
     ) -> t.StrMapping | None:
         """ALIAS_REBIND — canonical alias rebind / sibling-import discipline."""
         module = _ubh.runtime_module_for(target)
@@ -75,7 +76,8 @@ class FlextUtilitiesBeartypeAliasVisitor:
 
     @staticmethod
     def v_compatibility_alias(
-        params: me.CompatibilityAliasParams, target: type
+        params: me.CompatibilityAliasParams,
+        target: type,
     ) -> t.StrMapping | None:
         """COMPATIBILITY_ALIAS — long facade class name must use canonical alias."""
         if not params.alias_renames:

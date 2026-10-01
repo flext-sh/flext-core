@@ -97,7 +97,7 @@ class FlextModelsService:
         name: str = mp.Field(description="Method name that implements the operation.")
         summary: str = mp.Field(description="First docstring line of the operation.")
         request: t.ModelClass[t.BaseModelType] | None = mp.Field(
-            description="Pydantic request model, or None for an input-less operation."
+            description="Pydantic request model, or None for an input-less operation.",
         )
 
 

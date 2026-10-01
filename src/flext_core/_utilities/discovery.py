@@ -37,7 +37,8 @@ class FlextUtilitiesDiscovery:
 
     @staticmethod
     def _factory_config_for(
-        module: ModuleType, name: str
+        module: ModuleType,
+        name: str,
     ) -> FlextModelsContainer.FactoryDecoratorConfig | None:
         func = vars(module).get(name)
         if func is None or not callable(func):
@@ -104,19 +105,24 @@ class FlextUtilitiesDiscovery:
             FlextUtilitiesDiscovery._operation(service_type, below, name, member)
             for name in sorted(names)
             if isinstance(
-                member := inspect.getattr_static(service_type, name), FunctionType
+                member := inspect.getattr_static(service_type, name),
+                FunctionType,
             )
         )
         if not operations:
             msg = c.ERR_SERVICE_NO_OPERATIONS.format(
-                service=service_type.__qualname__, module=service_type.__module__
+                service=service_type.__qualname__,
+                module=service_type.__module__,
             )
             raise TypeError(msg)
         return operations
 
     @staticmethod
     def _operation(
-        service_type: type, below: tuple[type, ...], name: str, func: FunctionType
+        service_type: type,
+        below: tuple[type, ...],
+        name: str,
+        func: FunctionType,
     ) -> FlextModelsService.ServiceOperation:
         """Validate one operation's shape and build its typed description."""
         where = (service_type, name, func.__module__)
@@ -162,7 +168,9 @@ class FlextUtilitiesDiscovery:
             if not (isinstance(request, type) and issubclass(request, BaseModel)):
                 raise error(where, annotation, c.ERR_SERVICE_OPERATION_REQUEST)
         return FlextModelsService.ServiceOperation(
-            name=name, summary=doc.strip().splitlines()[0], request=request
+            name=name,
+            summary=doc.strip().splitlines()[0],
+            request=request,
         )
 
     @staticmethod
@@ -222,7 +230,7 @@ class FlextUtilitiesDiscovery:
                 module=module,
                 annotation=annotation,
                 defect=defect,
-            )
+            ),
         )
 
 

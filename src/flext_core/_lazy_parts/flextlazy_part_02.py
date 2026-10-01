@@ -45,14 +45,19 @@ class FlextLazyAttribute[T]:
         self._module_name = module_name
 
     def __get__(
-        self, instance: ModuleGlobalValue | None, owner: type | None = None
+        self,
+        instance: ModuleGlobalValue | None,
+        owner: type | None = None,
     ) -> T:
         """Resolve and cache the target symbol through the owning lazy container."""
         _ = instance, owner
         resolved: T = cast(
             "T",
             self._lazy.get(
-                self._name, self._lazy_imports, self._module_globals, self._module_name
+                self._name,
+                self._lazy_imports,
+                self._module_globals,
+                self._module_name,
             ),
         )
         return resolved
@@ -77,7 +82,11 @@ class FlextLazy(FlextLazyPart01):
         """
         _ = resolved_type
         return FlextLazyAttribute[T](
-            self, name, lazy_imports, module_globals, module_name
+            self,
+            name,
+            lazy_imports,
+            module_globals,
+            module_name,
         )
 
     def get(

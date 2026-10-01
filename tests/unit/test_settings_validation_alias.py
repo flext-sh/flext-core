@@ -31,7 +31,8 @@ class TestsFlextCoreSettingsValidationAlias:
         model_config = m.SettingsConfigDict(extra="forbid", populate_by_name=False)
 
         pandoc_bin: Annotated[
-            str, m.Field(validation_alias=t.AliasChoices("PANDOC", "FLEXT_PANDOC"))
+            str,
+            m.Field(validation_alias=t.AliasChoices("PANDOC", "FLEXT_PANDOC")),
         ] = "pandoc"
 
     def setup_method(self) -> None:
@@ -50,15 +51,17 @@ class TestsFlextCoreSettingsValidationAlias:
         assert settings.pandoc_bin == "pandoc"
 
     @pytest.mark.parametrize(
-        "override_value", ["custom_pandoc", "/usr/bin/pandoc", "pandoc-3.1", "pandoc"]
+        "override_value",
+        ["custom_pandoc", "/usr/bin/pandoc", "pandoc-3.1", "pandoc"],
     )
     def test_update_global_applies_and_propagates_override(
-        self, override_value: str
+        self,
+        override_value: str,
     ) -> None:
         # Act — must not raise "Extra inputs are not permitted".
         returned = (
             TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.update_global(
-                pandoc_bin=override_value
+                pandoc_bin=override_value,
             )
         )
 
@@ -72,11 +75,11 @@ class TestsFlextCoreSettingsValidationAlias:
     def test_update_global_is_idempotent_across_repeated_calls(self) -> None:
         # Act
         first = TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.update_global(
-            pandoc_bin="pandoc-a"
+            pandoc_bin="pandoc-a",
         )
         second = (
             TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.update_global(
-                pandoc_bin="pandoc-a"
+                pandoc_bin="pandoc-a",
             )
         )
 
@@ -106,7 +109,7 @@ class TestsFlextCoreSettingsValidationAlias:
     def test_clone_without_overrides_is_independent_copy(self) -> None:
         # Arrange
         TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.update_global(
-            pandoc_bin="global_pandoc"
+            pandoc_bin="global_pandoc",
         )
         base = TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.fetch_global()
 
@@ -124,7 +127,7 @@ class TestsFlextCoreSettingsValidationAlias:
         # Act — overrides on fetch_global must not touch the shared singleton.
         snapshot = (
             TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.fetch_global(
-                overrides={"pandoc_bin": "snap"}
+                overrides={"pandoc_bin": "snap"},
             )
         )
 
@@ -139,7 +142,7 @@ class TestsFlextCoreSettingsValidationAlias:
         # Arrange
         settings = (
             TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.update_global(
-                pandoc_bin="dumped_pandoc"
+                pandoc_bin="dumped_pandoc",
             )
         )
 
@@ -153,5 +156,5 @@ class TestsFlextCoreSettingsValidationAlias:
         # Act / Assert — typo guard rejects undeclared fields at the boundary.
         with pytest.raises(ValueError, match="Unknown settings override"):
             TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.update_global(
-                not_a_field="x"
+                not_a_field="x",
             )

@@ -45,7 +45,7 @@ class FlextModelsContextData:
         if isinstance(v, mp.BaseModel):
             return FlextModelsContextData._coerce_scalar_mapping(v.model_dump())
         msg = c.ERR_CONTEXT_CANNOT_NORMALIZE_TYPE_TO_MAPPING.format(
-            type_name=type(v).__name__
+            type_name=type(v).__name__,
         )
         raise ValueError(msg)
 
@@ -67,7 +67,8 @@ class FlextModelsContextData:
         @field_validator("data", mode="before")
         @classmethod
         def validate_dict_serializable(
-            cls, v: t.MappingKV[str, t.Scalar] | mp.BaseModel | None
+            cls,
+            v: t.MappingKV[str, t.Scalar] | mp.BaseModel | None,
         ) -> t.MappingKV[str, t.Scalar]:
             """Validate that data values are JSON-serializable."""
             if v is None:
@@ -100,7 +101,8 @@ class FlextModelsContextData:
         @field_validator("metadata", mode="before")
         @classmethod
         def validate_metadata_before(
-            cls, v: t.JsonPayload | None
+            cls,
+            v: t.JsonPayload | None,
         ) -> t.JsonPayload | None:
             """Normalize metadata before Pydantic validates the field."""
             return FlextModelsContextData.normalize_metadata_before(v)

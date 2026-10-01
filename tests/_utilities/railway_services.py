@@ -24,7 +24,8 @@ class TestsFlextUtilitiesRailwayServicesMixin:
         """Service to get user."""
 
         user_id: Annotated[
-            str, u.Field(description="Identifier of the user to fetch.")
+            str,
+            u.Field(description="Identifier of the user to fetch."),
         ] = ""
 
         @override
@@ -37,7 +38,7 @@ class TestsFlextUtilitiesRailwayServicesMixin:
                     unique_id=self.user_id,
                     name=f"{c.Tests.DEFAULT_USER_NAME_PREFIX}{self.user_id}",
                     email=f"user{self.user_id}{c.Tests.DEFAULT_EMAIL_DOMAIN}",
-                )
+                ),
             )
 
     class SendEmailService(s[m.Tests.EmailResponse]):
@@ -51,7 +52,7 @@ class TestsFlextUtilitiesRailwayServicesMixin:
             if "@" not in self.to:
                 return r[m.Tests.EmailResponse].fail(c.Tests.INVALID_EMAIL)
             return r[m.Tests.EmailResponse].ok(
-                m.Tests.EmailResponse(status="sent", message_id=f"msg-{self.to}")
+                m.Tests.EmailResponse(status="sent", message_id=f"msg-{self.to}"),
             )
 
     @staticmethod

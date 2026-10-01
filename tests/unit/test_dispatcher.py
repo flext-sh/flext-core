@@ -83,7 +83,8 @@ class TestsFlextCoreDispatcher:
         assert result.value is True
 
     def test_dispatch_routes_message_to_registered_handler(
-        self, dispatcher: p.Dispatcher
+        self,
+        dispatcher: p.Dispatcher,
     ) -> None:
         # Arrange
         handler = RecordingHandler("routed_cmd")
@@ -100,7 +101,8 @@ class TestsFlextCoreDispatcher:
         assert handler.received == [command]
 
     def test_dispatch_without_matching_handler_fails(
-        self, dispatcher: p.Dispatcher
+        self,
+        dispatcher: p.Dispatcher,
     ) -> None:
         # Arrange: a well-routed message but no handler registered for it.
         command = RouteMessage(command_type="never_registered")
@@ -114,7 +116,8 @@ class TestsFlextCoreDispatcher:
         assert "No handler found" in result.error
 
     def test_dispatch_message_without_route_fails(
-        self, dispatcher: p.Dispatcher
+        self,
+        dispatcher: p.Dispatcher,
     ) -> None:
         # Arrange: no route discriminator set -> unroutable message.
         message = RouteMessage()
@@ -128,7 +131,8 @@ class TestsFlextCoreDispatcher:
         assert "dispatch message" in result.error
 
     def test_registered_handler_is_not_invoked_for_other_routes(
-        self, dispatcher: p.Dispatcher
+        self,
+        dispatcher: p.Dispatcher,
     ) -> None:
         # Arrange
         handler = RecordingHandler("owns_this")
@@ -142,7 +146,8 @@ class TestsFlextCoreDispatcher:
         assert handler.received == []
 
     def test_register_callable_without_route_fails(
-        self, dispatcher: p.Dispatcher
+        self,
+        dispatcher: p.Dispatcher,
     ) -> None:
         # Arrange: callable exposing no message_type / event_type / can_handle.
         def orphan_handler(_message: p.Routable) -> p.Result[t.JsonPayload]:
@@ -157,7 +162,8 @@ class TestsFlextCoreDispatcher:
         assert "message_type" in result.error
 
     def test_publish_invokes_subscriber_and_reports_success(
-        self, dispatcher: p.Dispatcher
+        self,
+        dispatcher: p.Dispatcher,
     ) -> None:
         # Arrange
         subscriber = RecordingHandler("thing_happened")
@@ -173,7 +179,8 @@ class TestsFlextCoreDispatcher:
         assert subscriber.received == [event]
 
     def test_publish_sequence_fans_out_to_each_event(
-        self, dispatcher: p.Dispatcher
+        self,
+        dispatcher: p.Dispatcher,
     ) -> None:
         # Arrange
         subscriber = RecordingHandler("batched")
@@ -188,7 +195,8 @@ class TestsFlextCoreDispatcher:
         assert len(subscriber.received) == 3
 
     def test_publish_without_subscribers_is_successful_noop(
-        self, dispatcher: p.Dispatcher
+        self,
+        dispatcher: p.Dispatcher,
     ) -> None:
         # Arrange: no subscriber registered for this event route.
         event = RouteMessage(event_type="unheard")

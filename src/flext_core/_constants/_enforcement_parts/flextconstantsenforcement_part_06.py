@@ -8,8 +8,6 @@ from typing import TYPE_CHECKING, ClassVar
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from ..._typings.base import FlextTypingBase as t
-
 
 class FlextConstantsEnforcementTargets:
     """Target sets and external library ownership constants."""

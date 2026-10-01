@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 class FlextHandlers[MessageT_contra, ResultT](
-    FlextHandlersPart06[MessageT_contra, ResultT]
+    FlextHandlersPart06[MessageT_contra, ResultT],
 ):
     """Final CQRS handler facade with discovery utilities composed by MRO."""
 
@@ -125,7 +125,8 @@ class FlextHandlers[MessageT_contra, ResultT](
                 settings: p.DecoratorConfig = getattr(func, c.HANDLER_ATTR)
 
                 def narrowed_func(
-                    message: t.JsonPayload, function_name: str = name
+                    message: t.JsonPayload,
+                    function_name: str = name,
                 ) -> t.Scalar | None:
                     resolved_callable = getattr(module, function_name, None)
                     if not callable(resolved_callable):

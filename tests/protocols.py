@@ -50,7 +50,9 @@ class TestsFlextProtocols(FlextTestsProtocols):
             """Protocol for _extract_field_value callable."""
 
             def __call__(
-                self, item: TestsFlextModelsMixins.AttrObject, field_name: str
+                self,
+                item: TestsFlextModelsMixins.AttrObject,
+                field_name: str,
             ) -> t.JsonValue:
                 """Extract one named field value from an attribute object."""
                 ...
@@ -76,9 +78,15 @@ class TestsFlextProtocols(FlextTestsProtocols):
             """Protocol for _extract_transform_options callable."""
 
             def __call__(
-                self, transform_opts: t.MappingKV[str, t.MapperInput]
+                self,
+                transform_opts: t.MappingKV[str, t.MapperInput],
             ) -> tuple[
-                bool, bool, bool, t.StrMapping | None, set[str] | None, set[str] | None
+                bool,
+                bool,
+                bool,
+                t.StrMapping | None,
+                set[str] | None,
+                set[str] | None,
             ]:
                 """Extract normalized transform options from mapper input."""
                 ...

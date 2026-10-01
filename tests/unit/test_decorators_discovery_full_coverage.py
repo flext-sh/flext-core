@@ -74,7 +74,10 @@ class TestsFlextDecoratorsDiscovery:
         [(False, True), (True, False), (True, True), (False, False)],
     )
     def test_scan_module_preserves_config_metadata(
-        self, *, singleton: bool, lazy: bool
+        self,
+        *,
+        singleton: bool,
+        lazy: bool,
     ) -> None:
         mod = types.ModuleType("metadata_mod")
 

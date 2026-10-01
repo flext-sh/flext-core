@@ -40,7 +40,10 @@ class TestsFlextCoreResult:
         """Failure metadata is preserved on the public surface."""
         cause = ValueError("root cause")
         result: p.Result[int] = r[int].fail(
-            "bad", error_code="E_BAD", error_data={"field": "name"}, exception=cause
+            "bad",
+            error_code="E_BAD",
+            error_data={"field": "name"},
+            exception=cause,
         )
 
         tm.that(result.error_code, eq="E_BAD")
@@ -52,7 +55,11 @@ class TestsFlextCoreResult:
         [(True, 0, 7), (False, 0, 0), (False, 99, 99)],
     )
     def test_unwrap_or_returns_value_or_default(
-        self, *, success: bool, default: int, expected: int
+        self,
+        *,
+        success: bool,
+        default: int,
+        expected: int,
     ) -> None:
         """unwrap_or yields the value on success and the default on failure."""
         result: p.Result[int] = r[int].ok(7) if success else r[int].fail("err")
@@ -129,7 +136,10 @@ class TestsFlextCoreResult:
 
     @pytest.mark.parametrize(("value", "keeps"), [(9, True), (2, False)])
     def test_filter_keeps_or_rejects_by_predicate(
-        self, *, value: int, keeps: bool
+        self,
+        *,
+        value: int,
+        keeps: bool,
     ) -> None:
         """Filtering keeps a value passing the predicate, else fails."""
         filtered = r[int].ok(value).filter(lambda x: x > 5)

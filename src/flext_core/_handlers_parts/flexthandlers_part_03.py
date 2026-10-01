@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 
 class FlextHandlers[MessageT_contra, ResultT](
-    FlextHandlersPart02[MessageT_contra, ResultT]
+    FlextHandlersPart02[MessageT_contra, ResultT],
 ):
     @staticmethod
     def handler[**PHandler, TResult](

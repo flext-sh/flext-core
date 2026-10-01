@@ -92,7 +92,7 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
                 continue
             try:
                 source_dict = FlextRuntime.normalize_metadata_input_mapping(
-                    source_value
+                    source_value,
                 )
             except c.EXC_PYDANTIC_TYPE_VALUE:
                 continue

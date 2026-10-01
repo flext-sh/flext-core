@@ -99,7 +99,8 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
 
     @pytest.mark.parametrize("priority", [0, 25, 100])
     def test_scan_module_reports_decorated_priority_and_command(
-        self, priority: int
+        self,
+        priority: int,
     ) -> None:
         class Command(m.BaseModel):
             pass
@@ -119,10 +120,13 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         assert config.priority == priority
 
     @pytest.mark.parametrize(
-        ("priority", "expected_name"), [(10, "handle_low"), (90, "handle_high")]
+        ("priority", "expected_name"),
+        [(10, "handle_low"), (90, "handle_high")],
     )
     def test_scan_class_reports_command_and_priority(
-        self, priority: int, expected_name: str
+        self,
+        priority: int,
+        expected_name: str,
     ) -> None:
         class Command(m.BaseModel):
             pass

@@ -116,7 +116,11 @@ class TestsFlextCoreEntity:
 
     @pytest.mark.parametrize(("x_a", "y_a", "x_b", "y_b"), [(1, 2, 9, 2), (1, 2, 1, 9)])
     def test_values_with_differing_fields_are_not_equal(
-        self, x_a: int, y_a: int, x_b: int, y_b: int
+        self,
+        x_a: int,
+        y_a: int,
+        x_b: int,
+        y_b: int,
     ) -> None:
         assert self._Coord(x=x_a, y=y_a) != self._Coord(x=x_b, y=y_b)
 

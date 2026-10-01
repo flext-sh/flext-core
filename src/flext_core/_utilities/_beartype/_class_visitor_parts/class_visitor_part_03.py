@@ -15,12 +15,14 @@ from .class_visitor_part_02 import (
 class FlextUtilitiesBeartypeClassVisitor(FlextUtilitiesBeartypeClassVisitorPart02):
     @staticmethod
     def v_loose_symbol(
-        params: me.LooseSymbolParams, *args: type | str
+        params: me.LooseSymbolParams,
+        *args: type | str,
     ) -> t.StrMapping | None:
         """LOOSE_SYMBOL — top-level class/function naming + settings inheritance."""
         match args:
             case (target, expected_prefix, *_) if isinstance(
-                target, type
+                target,
+                type,
             ) and isinstance(expected_prefix, str):
                 has_expected_prefix = True
                 expected_prefix_text = expected_prefix
@@ -56,7 +58,7 @@ class FlextUtilitiesBeartypeClassVisitor(FlextUtilitiesBeartypeClassVisitorPart0
             and any(target_name.startswith(prefix) for prefix in allowed_prefixes)
         )
         has_expected_named_prefix = bool(
-            expected_prefix_text
+            expected_prefix_text,
         ) and target_name.startswith(expected_prefix_text)
         is_prefixed_target = all((
             has_expected_prefix,

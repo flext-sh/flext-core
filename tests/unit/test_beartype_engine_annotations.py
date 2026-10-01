@@ -50,7 +50,10 @@ class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
         ],
     )
     def test_contains_any_reports_presence_of_any(
-        self, hint: t.TypeHintSpecifier | None, *, expected: bool
+        self,
+        hint: t.TypeHintSpecifier | None,
+        *,
+        expected: bool,
     ) -> None:
         """contains_any is True iff typing.Any appears at any nesting depth."""
         assert u.contains_any(hint) is expected
@@ -68,7 +71,9 @@ class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
         ],
     )
     def test_has_forbidden_collection_origin_names_offending_origin(
-        self, hint: t.TypeHintSpecifier | None, expected: tuple[bool, str]
+        self,
+        hint: t.TypeHintSpecifier | None,
+        expected: tuple[bool, str],
     ) -> None:
         """Bare mutable collection origins are flagged with their name."""
         assert u.has_forbidden_collection_origin(hint, self.FORBIDDEN) == expected
@@ -85,7 +90,10 @@ class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
         ],
     )
     def test_count_union_members_excludes_none(
-        self, hint: t.TypeHintSpecifier | None, *, expected: int
+        self,
+        hint: t.TypeHintSpecifier | None,
+        *,
+        expected: int,
     ) -> None:
         """count_union_members counts non-None members; 0 for non-unions."""
         assert u.count_union_members(hint) == expected
@@ -102,7 +110,10 @@ class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
         ],
     )
     def test_matches_str_none_union_requires_str_and_none(
-        self, hint: t.TypeHintSpecifier | None, *, expected: bool
+        self,
+        hint: t.TypeHintSpecifier | None,
+        *,
+        expected: bool,
     ) -> None:
         """Union matches iff both str and None are members."""
         assert u.matches_str_none_union(hint) is expected
@@ -117,7 +128,10 @@ class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
         ],
     )
     def test_alias_contains_any_unwraps_alias_values(
-        self, alias_value: t.TypeHintSpecifier | None, *, expected: bool
+        self,
+        alias_value: t.TypeHintSpecifier | None,
+        *,
+        expected: bool,
     ) -> None:
         """alias_contains_any detects Any inside a resolved type-alias value."""
         assert u.alias_contains_any(alias_value) is expected

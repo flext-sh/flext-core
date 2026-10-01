@@ -40,7 +40,8 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
         opts, fp = FlextUtilitiesParserTargets._resolve_opts(options, kwargs)
         if value is None:
             return FlextUtilitiesParserTargets._parse_with_default(
-                opts, c.ERR_PARSER_VALUE_IS_NONE.format(field_prefix=fp)
+                opts,
+                c.ERR_PARSER_VALUE_IS_NONE.format(field_prefix=fp),
             ).unwrap()
         if isinstance(value, target):
             return value
@@ -88,7 +89,8 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
         options_text = [member.value for member in target]
         if not opts.case_insensitive:
             validation_result: p.Result[T] = FlextUtilitiesModel.validate_value(
-                target, value_str
+                target,
+                value_str,
             )
             if validation_result.success:
                 validated_enum: T = validation_result.value
@@ -99,7 +101,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
                     value=value_str,
                     target_name=target_name,
                     options=options_text,
-                )
+                ),
             )
         for member in target:
             member_val = getattr(member, "value", None)
@@ -107,7 +109,8 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
                 continue
             if str(member_val).lower() == value_str.lower():
                 validated_member: T = FlextUtilitiesModel.validate_value(
-                    target, str(member_val)
+                    target,
+                    str(member_val),
                 ).unwrap()
                 return validated_member
         raise ValueError(
@@ -116,7 +119,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
                 value=value_str,
                 target_name=target_name,
                 options=options_text,
-            )
+            ),
         )
 
     @staticmethod
@@ -133,18 +136,24 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
             raise TypeError(c.ERR_PARSER_TARGET_NOT_BASEMODEL.format(field_prefix=fp))
         if value is None:
             return FlextUtilitiesParserTargets._parse_with_default(
-                opts, c.ERR_PARSER_VALUE_IS_NONE.format(field_prefix=fp)
+                opts,
+                c.ERR_PARSER_VALUE_IS_NONE.format(field_prefix=fp),
             ).unwrap()
         if not isinstance(value, Mapping) and not isinstance(
-            value, FlextModelsPydantic.BaseModel
+            value,
+            FlextModelsPydantic.BaseModel,
         ):
             raise TypeError(
                 c.ERR_PARSER_CANNOT_PARSE_SCALAR_TO_MODEL.format(
-                    field_prefix=fp, value=value, target_name=target.__name__
-                )
+                    field_prefix=fp,
+                    value=value,
+                    target_name=target.__name__,
+                ),
             )
         validation_result: p.Result[T] = FlextUtilitiesModel.validate_value(
-            target, value, strict=opts.strict
+            target,
+            value,
+            strict=opts.strict,
         )
         return validation_result.unwrap()
 

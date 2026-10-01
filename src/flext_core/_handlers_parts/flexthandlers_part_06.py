@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 
 class FlextHandlers[MessageT_contra, ResultT](
-    FlextHandlersPart05[MessageT_contra, ResultT]
+    FlextHandlersPart05[MessageT_contra, ResultT],
 ):
     @staticmethod
     def create_from_callable(
@@ -82,7 +82,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             return CallableHandler(handler_fn=handler_callable, settings=handler_config)
         resolved_type = handler_type or c.HandlerType.COMMAND
         resolved_name: str = handler_name or str(
-            getattr(handler_callable, "__name__", "unknown_handler")
+            getattr(handler_callable, "__name__", "unknown_handler"),
         )
         from flext_core import m
 

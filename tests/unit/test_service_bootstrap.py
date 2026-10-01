@@ -102,7 +102,7 @@ class TestsFlextCoreServiceBootstrap:
         """A runtime settings seed that is not ``p.Settings`` fails validation."""
         with pytest.raises(m.ValidationError):
             self.ConcreteTestService.model_validate({
-                "runtime_settings": c.Tests.DEFAULT_ERROR_MESSAGE
+                "runtime_settings": c.Tests.DEFAULT_ERROR_MESSAGE,
             })
 
     def test_build_service_runtime_binds_the_container_collaborators(self) -> None:
@@ -128,7 +128,7 @@ class TestsFlextCoreServiceBootstrap:
         """A value that does not satisfy the port protocol fails validation."""
         with pytest.raises(m.ValidationError):
             u.Tests.CountingService.model_validate({
-                "counter": c.Tests.DEFAULT_ERROR_MESSAGE
+                "counter": c.Tests.DEFAULT_ERROR_MESSAGE,
             })
 
     def test_port_rejects_a_non_conforming_value_on_assignment(self) -> None:
@@ -137,8 +137,8 @@ class TestsFlextCoreServiceBootstrap:
         port_name = next(
             iter(
                 u.Tests.CountingService.model_fields.keys()
-                - self.ConcreteTestService.model_fields.keys()
-            )
+                - self.ConcreteTestService.model_fields.keys(),
+            ),
         )
 
         with pytest.raises(m.ValidationError):
@@ -166,10 +166,11 @@ class TestsFlextCoreServiceBootstrap:
         try:
 
             class SubscriptedPortService(
-                TestsFlextCoreServiceBootstrap.ConcreteTestService
+                TestsFlextCoreServiceBootstrap.ConcreteTestService,
             ):
                 result: t.Port[p.Result[int]] = m.Field(
-                    exclude=True, description="Subscripted generic port."
+                    exclude=True,
+                    description="Subscripted generic port.",
                 )
 
         except TypeError as raised:
@@ -183,7 +184,7 @@ class TestsFlextCoreServiceBootstrap:
             )
         else:
             pytest.fail(
-                f"{SubscriptedPortService.__name__} was unexpectedly constructed"
+                f"{SubscriptedPortService.__name__} was unexpectedly constructed",
             )
 
     def test_concrete_port_type_is_rejected_at_class_creation(self) -> None:
@@ -191,10 +192,11 @@ class TestsFlextCoreServiceBootstrap:
         try:
 
             class ConcretePortService(
-                TestsFlextCoreServiceBootstrap.ConcreteTestService
+                TestsFlextCoreServiceBootstrap.ConcreteTestService,
             ):
                 counter: t.Port[u.Tests.MemoryCounter] = m.Field(
-                    exclude=True, description="Concrete class port."
+                    exclude=True,
+                    description="Concrete class port.",
                 )
 
         except TypeError as raised:

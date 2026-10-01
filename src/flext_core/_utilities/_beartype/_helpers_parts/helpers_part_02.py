@@ -142,7 +142,8 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart01):
 
     @staticmethod
     def has_call_to_global(
-        fn: _types_mod.FunctionType, target_name: str
+        fn: _types_mod.FunctionType,
+        target_name: str,
     ) -> dis.Instruction | None:
         for ins in dis.get_instructions(fn):
             if ins.opname == "LOAD_GLOBAL" and ins.argval == target_name:

@@ -23,7 +23,8 @@ class FlextTypesLazy:
 
     type ModuleGlobalValue = FlextLazyModuleGlobalValue
     type ModuleGlobals = MutableMapping[
-        str, FlextLazyModuleGlobalValue | Callable[..., FlextLazyModuleGlobalValue]
+        str,
+        FlextLazyModuleGlobalValue | Callable[..., FlextLazyModuleGlobalValue],
     ]
 
 

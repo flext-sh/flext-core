@@ -25,7 +25,8 @@ if TYPE_CHECKING:
 
 
 def _counting_operation(
-    fail_before: int, success_value: int
+    fail_before: int,
+    success_value: int,
 ) -> tuple[Callable[[], p.Result[int]], list[int]]:
     """Build an operation that fails ``fail_before`` times then succeeds.
 
@@ -70,7 +71,8 @@ class TestsFlextCoreUtilitiesReliability:
 
     def test_retry_returns_first_attempt_result_when_operation_succeeds(self) -> None:
         op, attempts = _counting_operation(
-            fail_before=1, success_value=self.SUCCESS_VALUE
+            fail_before=1,
+            success_value=self.SUCCESS_VALUE,
         )
 
         result: p.Result[int] = u.retry(op, max_attempts=3, delay_seconds=0.0)
@@ -81,7 +83,8 @@ class TestsFlextCoreUtilitiesReliability:
 
     def test_retry_recovers_after_transient_failures(self) -> None:
         op, attempts = _counting_operation(
-            fail_before=3, success_value=self.SUCCESS_VALUE
+            fail_before=3,
+            success_value=self.SUCCESS_VALUE,
         )
 
         result: p.Result[int] = u.retry(op, max_attempts=5, delay_seconds=0.0)
@@ -92,7 +95,8 @@ class TestsFlextCoreUtilitiesReliability:
 
     def test_retry_reports_failure_after_exhausting_attempts(self) -> None:
         op, attempts = _counting_operation(
-            fail_before=99, success_value=self.SUCCESS_VALUE
+            fail_before=99,
+            success_value=self.SUCCESS_VALUE,
         )
 
         result: p.Result[int] = u.retry(op, max_attempts=3, delay_seconds=0.0)
@@ -131,7 +135,8 @@ class TestsFlextCoreUtilitiesReliability:
 
     @pytest.mark.parametrize("invalid_attempts", [0, -1])
     def test_retry_rejects_non_positive_max_attempts(
-        self, invalid_attempts: int
+        self,
+        invalid_attempts: int,
     ) -> None:
         result: p.Result[int] = u.retry(
             lambda: r[int].fail("unused"),
@@ -144,7 +149,8 @@ class TestsFlextCoreUtilitiesReliability:
 
     def test_retry_accepts_configuration_via_options_model(self) -> None:
         op, attempts = _counting_operation(
-            fail_before=2, success_value=self.SUCCESS_VALUE
+            fail_before=2,
+            success_value=self.SUCCESS_VALUE,
         )
         options = u.RetryOptions(max_attempts=3, delay_seconds=0.0)
 

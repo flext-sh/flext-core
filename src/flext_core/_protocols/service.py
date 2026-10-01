@@ -86,7 +86,8 @@ class FlextProtocolsService:
             ...
 
         def track(
-            self, operation_name: str
+            self,
+            operation_name: str,
         ) -> AbstractContextManager[Mapping[str, ts.JsonPayload]]:
             """Track operation performance with timing and context cleanup."""
             ...
@@ -116,7 +117,9 @@ class FlextProtocolsService:
         """Structural protocol for dispatch-capable service objects in the DI container."""
 
         def dispatch(
-            self, message: FlextProtocolsBase.Model, /
+            self,
+            message: FlextProtocolsBase.Model,
+            /,
         ) -> FlextProtocolsBase.Model:
             """Dispatch a message and return the result."""
             ...

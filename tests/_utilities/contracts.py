@@ -42,7 +42,8 @@ class TestsFlextUtilitiesContractsMixin:
     def assert_safe_string_valid(raw: str, expected: str) -> None:
         """Assert safe string normalization for valid input."""
         TestsFlextUtilitiesContractsMixin.Contract.assert_safe_string_valid(
-            raw, expected
+            raw,
+            expected,
         )
 
     @staticmethod

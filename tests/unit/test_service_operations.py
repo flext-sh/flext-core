@@ -31,7 +31,8 @@ class TestsFlextCoreServiceOperations:
         """Service with one request operation and one input-less operation."""
 
         counter: t.Port[p.Tests.Counter] = m.Field(
-            exclude=True, description="Counter port, never an operation."
+            exclude=True,
+            description="Counter port, never an operation.",
         )
 
         @override
@@ -120,7 +121,9 @@ class TestsFlextCoreServiceOperations:
         """Operation taking two requests."""
 
         def join(
-            self, left: m.Tests.DispatchRequest, right: m.Tests.DispatchRequest
+            self,
+            left: m.Tests.DispatchRequest,
+            right: m.Tests.DispatchRequest,
         ) -> p.Result[bool]:
             """Join two requests."""
             return r[bool].ok(left == right)
@@ -136,7 +139,8 @@ class TestsFlextCoreServiceOperations:
         """Operation whose request has a default."""
 
         def send(
-            self, request: m.Tests.DispatchRequest | None = None
+            self,
+            request: m.Tests.DispatchRequest | None = None,
         ) -> p.Result[bool]:
             """Send an optional request."""
             return r[bool].ok(request is None)
@@ -234,7 +238,10 @@ class TestsFlextCoreServiceOperations:
         ],
     )
     def test_malformed_operation_raises_with_operation_module_and_fix(
-        self, service_type: type[s[bool]], operation: str, defect: str
+        self,
+        service_type: type[s[bool]],
+        operation: str,
+        defect: str,
     ) -> None:
         """Each malformed shape names the operation, module and fix."""
         with pytest.raises(TypeError) as raised:
@@ -269,7 +276,7 @@ class TestsFlextCoreServiceOperations:
         owners = f"{self.ReadSide.__qualname__}, {self.WriteSide.__qualname__}"
         tm.that(
             str(raised.value).endswith(
-                c.ERR_SERVICE_OPERATION_COLLISION.format(owners=owners)
+                c.ERR_SERVICE_OPERATION_COLLISION.format(owners=owners),
             ),
             eq=True,
         )
@@ -282,6 +289,7 @@ class TestsFlextCoreServiceOperations:
         tm.that(
             str(raised.value),
             eq=c.ERR_SERVICE_NO_OPERATIONS.format(
-                service=self.EmptyService.__qualname__, module=__name__
+                service=self.EmptyService.__qualname__,
+                module=__name__,
             ),
         )

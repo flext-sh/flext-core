@@ -33,7 +33,7 @@ class FlextModelsHandler:
             json_schema_extra={
                 "title": "RegistrationDetails",
                 "description": "Handler registration tracking details",
-            }
+            },
         )
         registration_id: Annotated[
             t.NonEmptyStr,
@@ -145,10 +145,12 @@ class FlextModelsHandler:
         """Configuration extracted from @FlextHandlers.handler() decorator."""
 
         model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            frozen=True, arbitrary_types_allowed=True
+            frozen=True,
+            arbitrary_types_allowed=True,
         )
         command: Annotated[
-            type, mp.Field(description="Command type this handler processes")
+            type,
+            mp.Field(description="Command type this handler processes"),
         ]
         priority: Annotated[
             t.NonNegativeInt,

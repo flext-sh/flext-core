@@ -106,7 +106,9 @@ class FlextProtocolsSettings:
 
         @classmethod
         def fetch_global(
-            cls, *, overrides: t.ScalarMapping | None = None
+            cls,
+            *,
+            overrides: t.ScalarMapping | None = None,
         ) -> FlextProtocolsSettings.Settings:
             """Return the global singleton settings instance."""
             ...

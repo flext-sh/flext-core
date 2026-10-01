@@ -24,7 +24,10 @@ class TestsFlextCoreVersion:
     def test_version_attribute_is_semver_formatted_string(self) -> None:
         """The public version is a non-empty semantic or PEP 440 version string."""
         tm.that(
-            FlextVersion.__version__, is_=str, empty=False, match=c.PATTERN_SEMVER_RE
+            FlextVersion.__version__,
+            is_=str,
+            empty=False,
+            match=c.PATTERN_SEMVER_RE,
         )
 
     def test_version_info_is_non_empty_tuple_starting_with_major(self) -> None:
@@ -51,7 +54,9 @@ class TestsFlextCoreVersion:
         ],
     )
     def test_subclass_version_info_is_the_release_triple(
-        self, version: str, tmp_path: Path
+        self,
+        version: str,
+        tmp_path: Path,
     ) -> None:
         """Every supported qualifier preserves the integer release triple."""
         distribution_path = tmp_path / "flext_version_contract.dist-info"
@@ -75,7 +80,9 @@ class TestsFlextCoreVersion:
 
     @pytest.mark.parametrize("version", ["1.2", "1.2.3.4", "1.2.3garbage"])
     def test_subclass_rejects_non_semantic_release_metadata(
-        self, version: str, tmp_path: Path
+        self,
+        version: str,
+        tmp_path: Path,
     ) -> None:
         """Metadata without major, minor, and patch components fails loudly."""
         distribution_path = tmp_path / "flext_version_contract.dist-info"

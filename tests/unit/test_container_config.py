@@ -20,10 +20,14 @@ class TestsFlextCoreContainerConfig:
     """Exercise the public container configuration contract."""
 
     @pytest.mark.parametrize(
-        "settings", m.Tests.ContainerScenarios.CONFIG_SCENARIOS, ids=str
+        "settings",
+        m.Tests.ContainerScenarios.CONFIG_SCENARIOS,
+        ids=str,
     )
     def test_configure_container(
-        self, settings: t.ScalarMapping, clean_container: p.Container
+        self,
+        settings: t.ScalarMapping,
+        clean_container: p.Container,
     ) -> None:
         """Test container configuration."""
         container = clean_container
@@ -106,7 +110,8 @@ class TestsFlextCoreContainerConfig:
         )
 
     def test_apply_none_is_noop_returning_self(
-        self, clean_container: p.Container
+        self,
+        clean_container: p.Container,
     ) -> None:
         """apply(None) must be a no-op that preserves settings and returns self."""
         container = clean_container

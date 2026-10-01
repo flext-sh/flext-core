@@ -41,30 +41,40 @@ class TestsFlextCoreUtilitiesSettings:
         ],
     )
     def test_effective_log_level_prioritises_trace_then_debug_then_request(
-        self, *, trace: bool, debug: bool, requested: c.LogLevel, expected: c.LogLevel
+        self,
+        *,
+        trace: bool,
+        debug: bool,
+        requested: c.LogLevel,
+        expected: c.LogLevel,
     ) -> None:
         resolved = u.resolve_effective_log_level(
-            trace=trace, debug=debug, log_level=requested
+            trace=trace,
+            debug=debug,
+            log_level=requested,
         )
 
         tm.that(resolved, eq=expected)
 
     def test_env_override_and_process_environment_are_observable(
-        self, tmp_path: Path
+        self,
+        tmp_path: Path,
     ) -> None:
         env_file = tmp_path / c.ENV_FILE_DEFAULT
         env_file.write_text("FLEXT_APP_NAME=test-app\n", encoding="utf-8")
         probe_env_var = "FLEXT_TEST_BOOTSTRAP_MODE"
         with test_u.Tests.env_vars_context(
-            env_vars={c.ENV_FILE_ENV_VAR: str(env_file), probe_env_var: "integration"}
+            env_vars={c.ENV_FILE_ENV_VAR: str(env_file), probe_env_var: "integration"},
         ):
             snapshot = m.Tests.BootstrapSnapshot(
                 env_file=FlextSettings.resolve_env_file(),
                 process_environment=u.resolve_process_environment(),
                 log_level=str(
                     u.resolve_effective_log_level(
-                        trace=True, debug=False, log_level=c.LogLevel.ERROR
-                    )
+                        trace=True,
+                        debug=False,
+                        log_level=c.LogLevel.ERROR,
+                    ),
                 ),
             )
 
@@ -74,7 +84,8 @@ class TestsFlextCoreUtilitiesSettings:
         tm.that(snapshot.log_level, eq=c.LogLevel.DEBUG)
 
     def test_env_file_resolves_cwd_default_then_override_then_fallback(
-        self, tmp_path: Path
+        self,
+        tmp_path: Path,
     ) -> None:
         os.chdir(tmp_path)
         default_env_file = tmp_path / c.ENV_FILE_DEFAULT
@@ -85,7 +96,7 @@ class TestsFlextCoreUtilitiesSettings:
             cwd_resolved = FlextSettings.resolve_env_file()
             default_env_file.unlink()
             with test_u.Tests.env_vars_context(
-                env_vars={c.ENV_FILE_ENV_VAR: missing_override}
+                env_vars={c.ENV_FILE_ENV_VAR: missing_override},
             ):
                 override_resolved = FlextSettings.resolve_env_file()
             fallback_resolved = FlextSettings.resolve_env_file()
@@ -103,13 +114,17 @@ class TestsFlextCoreUtilitiesSettings:
                 "env_file": FlextSettings.resolve_env_file(),
                 "log_level": str(
                     u.resolve_effective_log_level(
-                        trace=False, debug=True, log_level=c.LogLevel.WARNING
-                    )
+                        trace=False,
+                        debug=True,
+                        log_level=c.LogLevel.WARNING,
+                    ),
                 ),
             }
 
         success_result = u.register_factory(
-            container, "settings_summary", build_settings_summary
+            container,
+            "settings_summary",
+            build_settings_summary,
         )
         resolved_summary = container.resolve("settings_summary")
 
@@ -130,7 +145,9 @@ class TestsFlextCoreUtilitiesSettings:
             raise RuntimeError(error_message)
 
         failure_result = u.register_factory(
-            container, "broken_settings_summary", failing_factory
+            container,
+            "broken_settings_summary",
+            failing_factory,
         )
 
         tm.fail(failure_result)

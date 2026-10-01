@@ -47,10 +47,12 @@ class ProjectMetadataAggregates(ProjectMetadataFields):
             Field(default=(), description="PEP 508 runtime dependency declarations"),
         ] = ()
         classifiers: Annotated[
-            t.StrTuple, Field(default=(), description="Trove classifiers")
+            t.StrTuple,
+            Field(default=(), description="Trove classifiers"),
         ] = ()
         keywords: Annotated[
-            t.StrTuple, Field(default=(), description="Project search keywords")
+            t.StrTuple,
+            Field(default=(), description="Project search keywords"),
         ] = ()
 
     class ProjectToolFlext(ProjectMetadataContract):

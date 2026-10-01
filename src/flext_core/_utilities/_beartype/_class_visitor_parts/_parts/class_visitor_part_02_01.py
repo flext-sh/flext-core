@@ -54,7 +54,8 @@ def _requires_alias_first(
 
 
 def alias_first_violation(
-    target: type, params: me.MroShapeParams
+    target: type,
+    params: me.MroShapeParams,
 ) -> t.StrMapping | None:
     """Compute the alias/peer-first violation for ``v_mro_shape``."""
     _, separator, _ = target.__qualname__.partition(".")
