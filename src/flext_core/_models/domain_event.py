@@ -27,7 +27,7 @@ class FlextModelsDomainEvent:
     Split into its own module so Entity can import without forward references.
     """
 
-    class Entry(m.IdentifiableMixin, m.TimestampedModel):
+    class DomainEvent(m.IdentifiableMixin, m.TimestampedModel):
         """Base class for domain events."""
 
         message_type: str = mp.Field(
@@ -56,8 +56,6 @@ class FlextModelsDomainEvent:
             description="Event data container",
             default_factory=lambda: FlextModelsContainers.ConfigMap(root={}),
         )
-
-    DomainEvent = Entry
 
 
 __all__: t.MutableSequenceOf[str] = ["FlextModelsDomainEvent"]

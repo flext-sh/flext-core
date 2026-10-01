@@ -15,6 +15,7 @@ from pydantic import (
     PlainSerializer,
     PlainValidator,
     SkipValidation,
+    TypeAdapter as PydanticTypeAdapter,
     WrapSerializer,
     WrapValidator,
     computed_field,
@@ -63,12 +64,14 @@ class FlextUtilitiesPydantic:
     PlainSerializer = PlainSerializer
     WrapSerializer = WrapSerializer
 
-    ConfigDict = mp.ConfigDict
-    FieldSerializationInfo = mp.FieldSerializationInfo
-    TypeAdapter = mp.TypeAdapter
     validate_call = validate_call
     with_config = with_config
 
     from_json = from_json
     to_json = to_json
     to_jsonable_python = to_jsonable_python
+
+    # Adapter construction keeps pydantic's own constructor signature, which
+    # accepts every type form (classes, unions, ``Annotated`` and PEP 695
+    # aliases); ``m.TypeAdapter[T]`` is the matching annotation.
+    type_adapter = PydanticTypeAdapter

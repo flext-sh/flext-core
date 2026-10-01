@@ -107,7 +107,7 @@ INFRA_DETECTOR_ROWS_PATTERNS: tuple[
         "4-import-law",
         ("pydantic-v2-governance", "flext-import-rules"),
         False,
-        "Bare pydantic import — use m.BaseModel, m.ConfigDict, m.TypeAdapter, u.Field, u.field_validator, u.model_validator, u.computed_field, u.PrivateAttr.",
+        "Bare pydantic import — use m.BaseModel, m.ConfigDict, m.TypeAdapter (type), u.type_adapter (construction), u.Field, u.field_validator, u.model_validator, u.computed_field, u.PrivateAttr.",
     ),
     (
         "ENFORCE-094",

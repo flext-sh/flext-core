@@ -13,6 +13,7 @@ from typing import Annotated, Literal
 import pytest
 
 from tests.models import m
+from tests.utilities import u
 
 
 class TestsFlextCorePydanticDeclarations:
@@ -119,7 +120,7 @@ class TestsFlextCorePydanticDeclarations:
         assert box.model_dump() == {"item": {"name": "flext", "detail": "advanced"}}
 
     def test_fail_fast_reports_only_the_first_list_error(self) -> None:
-        adapter: m.TypeAdapter[list[int]] = m.TypeAdapter(
+        adapter: m.TypeAdapter[list[int]] = u.type_adapter(
             Annotated[list[int], m.FailFast()]
         )
 
@@ -141,7 +142,7 @@ class TestsFlextCorePydanticDeclarations:
 
     def test_validate_as_builds_custom_type_from_native_model(self) -> None:
         adapter: m.TypeAdapter[TestsFlextCorePydanticDeclarations._Vector] = (
-            m.TypeAdapter(
+            u.type_adapter(
                 Annotated[
                     TestsFlextCorePydanticDeclarations._Vector,
                     m.ValidateAs(

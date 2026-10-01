@@ -6,6 +6,8 @@ from collections.abc import Iterator
 from enum import EnumType
 from typing import ClassVar
 
+from pydantic_settings import BaseSettings
+
 from ..._constants.enforcement import FlextConstantsEnforcement as c
 from ..._models.enforcement import FlextModelsEnforcement as me
 from ..._models.pydantic import FlextModelsPydantic as mp
@@ -72,9 +74,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         # A class is a model by DECLARATION: the canonical FLEXT base or a
         # pydantic-settings base declared directly (which is exactly what the
         # settings-inheritance rule must see to report the bypass).
-        is_model = issubclass(target, mp.BaseModel) or issubclass(
-            target, mp.PydanticBaseSettings
-        )
+        is_model = issubclass(target, mp.BaseModel) or issubclass(target, BaseSettings)
         rule_layer = c.ENFORCEMENT_TAG_LAYER.get(tag, "")
         if "[" in target.__name__:
             return

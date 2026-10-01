@@ -19,13 +19,7 @@ from flext_tests import FlextTestsProtocols
 
 if TYPE_CHECKING:
     from . import t
-    from ._models.mixins import (
-        TestsFlextModelsMixins,
-        TestsFlextModelsMixins as _Mixins,
-    )
-
-    AttrObject = _Mixins.AttrObject
-    BadMapping = _Mixins.BadMapping
+    from ._models.mixins import TestsFlextModelsMixins
 
 
 class TestsFlextProtocols(FlextTestsProtocols):
@@ -55,7 +49,9 @@ class TestsFlextProtocols(FlextTestsProtocols):
         class ExtractFieldCallable(Protocol):
             """Protocol for _extract_field_value callable."""
 
-            def __call__(self, item: AttrObject, field_name: str) -> t.JsonValue:
+            def __call__(
+                self, item: TestsFlextModelsMixins.AttrObject, field_name: str
+            ) -> t.JsonValue:
                 """Extract one named field value from an attribute object."""
                 ...
 
@@ -92,7 +88,9 @@ class TestsFlextProtocols(FlextTestsProtocols):
             """Protocol for transform callable."""
 
             def __call__(
-                self, source: BadMapping, **kwargs: t.StrMapping
+                self,
+                source: TestsFlextModelsMixins.BadMapping,
+                **kwargs: t.StrMapping,
             ) -> p.Result[t.JsonMapping]:
                 """Transform one mapping source into a result mapping."""
                 ...

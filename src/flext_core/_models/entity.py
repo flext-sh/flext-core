@@ -49,7 +49,7 @@ class FlextModelsEntity:
         """
 
         domain_events: Annotated[
-            MutableSequence[FlextModelsDomainEvent.Entry],
+            MutableSequence[FlextModelsDomainEvent.DomainEvent],
             Field(
                 default_factory=list,
                 description="List of uncommitted domain events for event sourcing",
