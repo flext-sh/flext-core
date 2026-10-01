@@ -18,7 +18,6 @@ from ._sources import FlextModelsEnforcementSources
 
 type EnforcementRuleSource = (
     FlextModelsEnforcementSources.EnforcementInfraRuleSource
-    | FlextModelsEnforcementSources.EnforcementTestsValidatorSource
     | FlextModelsEnforcementSources.EnforcementRuntimeWarningSource
     | FlextModelsEnforcementSources.EnforcementBeartypeSource
     | FlextModelsEnforcementSources.EnforcementCodeSmellSource

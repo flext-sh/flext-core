@@ -45,7 +45,6 @@ class TestsFlextConstantsOther:
         ),
     )
 
-    VALIDATOR_METHODS: ClassVar[t.StrSequence] = ("imports", "types", "bypass", "layer")
 
     LAZY_BENCHMARK_REAL_SYMBOLS: ClassVar[t.StrSequence] = (
         "FlextConstants",

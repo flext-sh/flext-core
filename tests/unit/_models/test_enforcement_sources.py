@@ -21,7 +21,6 @@ from tests.typings import t
 # discriminator literal it must expose on the public ``kind`` field.
 _SOURCE_CASES: dict[str, m.BaseModel] = {
     "flext_infra_rule": m.EnforcementInfraRuleSource(rule_ids=("rule-a",)),
-    "flext_tests_validator": m.EnforcementTestsValidatorSource(method="check_x"),
     "runtime_warning": m.EnforcementRuntimeWarningSource(category="FlextMroWarning"),
     "beartype": m.EnforcementBeartypeSource(tag="tag_a"),
     "code_smell": m.EnforcementCodeSmellSource(smell_tag="complex-method"),
@@ -47,15 +46,10 @@ class TestsFlextCoreEnforcementSources:
         with pytest.raises(c.ValidationError):
             m.EnforcementInfraRuleSource(rule_ids=())
 
-    def test_tests_validator_defaults_rule_ids_to_empty(self) -> None:
-        source = m.EnforcementTestsValidatorSource(method="check_x")
-        assert tuple(source.rule_ids) == ()
-
     @pytest.mark.parametrize(
         "factory",
         [
             m.EnforcementInfraRuleSource,
-            m.EnforcementTestsValidatorSource,
             m.EnforcementRuntimeWarningSource,
             m.EnforcementBeartypeSource,
             m.EnforcementCodeSmellSource,
@@ -93,7 +87,14 @@ class TestsFlextCoreEnforcementSources:
         assert isinstance(spec.source, expected_type)
 
     @pytest.mark.parametrize(
-        "retired_kind", ["minimal_ast", "flext_infra_detector", "ruff", "skill_pointer"]
+        "retired_kind",
+        [
+            "minimal_ast",
+            "flext_infra_detector",
+            "flext_tests_validator",
+            "ruff",
+            "skill_pointer",
+        ],
     )
     def test_rule_spec_rejects_retired_source_discriminators(
         self, retired_kind: str

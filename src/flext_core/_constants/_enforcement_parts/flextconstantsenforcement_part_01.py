@@ -46,7 +46,6 @@ class FlextConstantsEnforcementEnums:
         """Addressable origin layer for a catalog rule."""
 
         FLEXT_INFRA_RULE = "flext_infra_rule"
-        FLEXT_TESTS_VALIDATOR = "flext_tests_validator"
         RUNTIME_WARNING = "runtime_warning"
         BEARTYPE = "beartype"
         CODE_SMELL = "code_smell"

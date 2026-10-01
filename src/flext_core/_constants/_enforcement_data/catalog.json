@@ -190,14 +190,13 @@
       "description": "Import discipline violation — lazy imports, TYPE_CHECKING misuse, sys.path manipulation, or non-root flext-* imports.",
       "severity": "HIGH",
       "source": {
-        "kind": "flext_tests_validator",
-        "method": "imports",
+        "kind": "flext_infra_rule",
         "rule_ids": [
-          "IMPORT-001",
-          "IMPORT-002",
-          "IMPORT-003",
-          "IMPORT-004",
-          "IMPORT-006"
+          "ban-inline-import",
+          "ban-type-checking-block",
+          "ban-import-error-fallback",
+          "ban-sys-path-mutation",
+          "ban-consumer-submodule-import"
         ]
       },
       "skills": [
@@ -209,12 +208,14 @@
       "description": "Type-system violation — Any/object/legacy typing or type: ignore bypass.",
       "severity": "HIGH",
       "source": {
-        "kind": "flext_tests_validator",
-        "method": "types",
+        "kind": "flext_infra_rule",
         "rule_ids": [
-          "TYPE-001",
-          "TYPE-002",
-          "TYPE-003"
+          "ban-type-ignore-comment",
+          "ban-any-annotation",
+          "ban-object-annotation",
+          "ban-legacy-typing-form",
+          "typing-dict-to-mapping-kv",
+          "typing-list-to-sequence-of"
         ]
       },
       "skills": [
@@ -227,12 +228,12 @@
       "description": "Bypass pattern — noqa, pragma: no cover (unapproved), or exception swallowing.",
       "severity": "HIGH",
       "source": {
-        "kind": "flext_tests_validator",
-        "method": "bypass",
+        "kind": "flext_infra_rule",
         "rule_ids": [
-          "BYPASS-001",
-          "BYPASS-002",
-          "BYPASS-003"
+          "ban-noqa-comment",
+          "ban-pragma-no-cover",
+          "ban-silent-except-swallow",
+          "rewrite-bare-except-to-exception"
         ]
       },
       "skills": [
@@ -244,10 +245,9 @@
       "description": "Layer violation — lower layer importing an upper layer.",
       "severity": "CRITICAL",
       "source": {
-        "kind": "flext_tests_validator",
-        "method": "layer",
+        "kind": "flext_infra_rule",
         "rule_ids": [
-          "LAYER-001"
+          "ban-layer-upward-import"
         ]
       },
       "skills": [
@@ -259,12 +259,9 @@
       "description": "Test pattern violation — monkeypatch, Mock/MagicMock, or @patch usage.",
       "severity": "MEDIUM",
       "source": {
-        "kind": "flext_tests_validator",
-        "method": "tests",
+        "kind": "flext_infra_rule",
         "rule_ids": [
-          "TEST-001",
-          "TEST-002",
-          "TEST-003"
+          "ban-test-doubles"
         ]
       },
       "skills": [
@@ -276,13 +273,9 @@
       "description": "pyproject.toml deviation — mypy ignore_errors, unapproved ruff ignores, or incomplete type strictness.",
       "severity": "HIGH",
       "source": {
-        "kind": "flext_tests_validator",
-        "method": "validate_config",
+        "kind": "flext_infra_rule",
         "rule_ids": [
-          "CONFIG-001",
-          "CONFIG-003",
-          "CONFIG-004",
-          "CONFIG-005"
+          "ban-pyproject-type-check-relaxation"
         ]
       },
       "skills": [
@@ -294,13 +287,9 @@
       "description": "Markdown code block validation — syntax, forbidden typings, missing future annotations, object as type.",
       "severity": "MEDIUM",
       "source": {
-        "kind": "flext_tests_validator",
-        "method": "markdown",
+        "kind": "flext_infra_rule",
         "rule_ids": [
-          "MD-001",
-          "MD-002",
-          "MD-003",
-          "MD-004"
+          "ban-markdown-forbidden-typing"
         ]
       },
       "skills": [

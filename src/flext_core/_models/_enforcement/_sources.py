@@ -28,13 +28,6 @@ class FlextModelsEnforcementSources(FlextModelsEnforcementBase):
         kind: Literal["flext_infra_rule"] = "flext_infra_rule"
         rule_ids: Annotated[t.StrSequence, Field(min_length=1)]
 
-    class EnforcementTestsValidatorSource(EnforcementModelBase):
-        """Rule backed by a ``FlextTestsValidator`` classmethod."""
-
-        kind: Literal["flext_tests_validator"] = "flext_tests_validator"
-        method: str
-        rule_ids: t.StrSequence = ()
-
     class EnforcementRuntimeWarningSource(EnforcementModelBase):
         """Rule backed by a ``warnings`` category raised at runtime."""
 
