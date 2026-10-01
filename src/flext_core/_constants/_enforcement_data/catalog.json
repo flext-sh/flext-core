@@ -978,7 +978,7 @@
     },
     {
       "id": "ENFORCE-093",
-      "description": "Bare pydantic import — use m.BaseModel, m.ConfigDict, m.TypeAdapter, u.Field, u.field_validator, u.model_validator, u.computed_field, u.PrivateAttr.",
+      "description": "Bare pydantic import — use m.BaseModel, m.ConfigDict, m.TypeAdapter (type), u.type_adapter (construction), u.Field, u.field_validator, u.model_validator, u.computed_field, u.PrivateAttr.",
       "severity": "HIGH",
       "source": {
         "kind": "flext_infra_rule",
