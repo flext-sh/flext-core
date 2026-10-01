@@ -78,7 +78,7 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
         """
         _ = logger, method_name
         level = logging.getLevelNamesMapping()[str(event_dict["level"]).upper()]
-        if level < FlextUtilitiesLoggingConfigPart01._log_threshold:
+        if level < FlextUtilitiesLoggingConfigPart01.log_threshold():
             raise structlog.DropEvent
         return event_dict
 
