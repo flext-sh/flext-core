@@ -23,37 +23,35 @@ class FlextUtilitiesEnforcementEmit:
     _canonical_catalog: ClassVar[me.EnforcementCatalog | None] = None
     _rules_by_tag: ClassVar[t.MappingKV[str, me.EnforcementRuleSpec] | None] = None
 
-    @staticmethod
-    def build_canonical_catalog() -> me.EnforcementCatalog:
+    @classmethod
+    def build_canonical_catalog(cls) -> me.EnforcementCatalog:
         """Return the enforcement catalog validated from its package data."""
-        owner = FlextUtilitiesEnforcementEmit
-        if owner._canonical_catalog is None:
-            owner._canonical_catalog = me.EnforcementCatalog.model_validate_json(
+        if cls._canonical_catalog is None:
+            cls._canonical_catalog = me.EnforcementCatalog.model_validate_json(
                 importlib.resources
                 .files(_enforcement_data)
                 .joinpath(c.ENFORCEMENT_CATALOG_RESOURCE)
                 .read_text(encoding="utf-8")
             )
-        return owner._canonical_catalog
+        return cls._canonical_catalog
 
-    @staticmethod
-    def rules_by_tag() -> t.MappingKV[str, me.EnforcementRuleSpec]:
+    @classmethod
+    def rules_by_tag(cls) -> t.MappingKV[str, me.EnforcementRuleSpec]:
         """Return catalog rules keyed by their runtime predicate or smell tag."""
-        owner = FlextUtilitiesEnforcementEmit
-        if owner._rules_by_tag is None:
-            owner._rules_by_tag = MappingProxyType({
+        if cls._rules_by_tag is None:
+            cls._rules_by_tag = MappingProxyType({
                 (
                     rule.source.tag
                     if isinstance(rule.source, me.EnforcementBeartypeSource)
                     else rule.source.smell_tag
                 ): rule
-                for rule in owner.build_canonical_catalog().rules
+                for rule in cls.build_canonical_catalog().rules
                 if isinstance(
                     rule.source,
                     me.EnforcementBeartypeSource | me.EnforcementCodeSmellSource,
                 )
             })
-        return owner._rules_by_tag
+        return cls._rules_by_tag
 
     @staticmethod
     def _violation(
