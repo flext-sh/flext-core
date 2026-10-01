@@ -38,6 +38,21 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementCollectPart01):
                 yield f"{qn}.{name}", (target, name)
 
     @staticmethod
+    def _ns_classvar_constants(
+        target: type, qn: str
+    ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
+        """Yield one item per public attribute; the visitor judges each one.
+
+        Granularity lives here (the iterator), never in the visitor: every
+        violating constant of the class surfaces in one pass instead of one
+        per gate round.
+        """
+        for name, value in vars(target).items():
+            if name.startswith("_") or name != name.upper():
+                continue
+            yield f"{qn}.{name}", (target, name, value)
+
+    @staticmethod
     def _ns_nested_classes(
         root: type, node: type
     ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
@@ -69,22 +84,27 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementCollectPart01):
         if project is None:
             return
         cls = FlextUtilitiesEnforcementCollect
-        if tag in c.ENFORCEMENT_NAMESPACE_TARGET_TAGS:
-            yield qn, (target,)
-            return
-        match tag:
+        # The collection strategy is rule data; an unknown strategy is a data
+        # defect and raises instead of collecting nothing.
+        collect = c.ENFORCEMENT_TAG_COLLECT[tag]
+        match collect:
+            case "target":
+                yield qn, (target,)
             case "class_prefix":
                 yield from cls._ns_class_prefix(target, qn, project)
-            case "cross_strenum" | "cross_protocol":
+            case "cross_layer":
                 yield from cls._ns_cross(target, qn, effective_layer)
-            case "forbid_deep_namespace":
+            case "nested_classes":
                 yield from cls._ns_nested_classes(target, target)
             case "nested_mro":
                 yield from cls._ns_nested_mro(target, qn, project)
-            case "no_accessor_methods" | "smell_function_parameters":
+            case "accessor_methods":
                 yield from cls._ns_no_accessor_methods(target, qn)
+            case "classvar_constants":
+                yield from cls._ns_classvar_constants(target, qn)
             case _:
-                return
+                msg = f"unknown namespace collection {collect!r} for tag {tag!r}"
+                raise ValueError(msg)
 
 
 __all__: list[str] = ["FlextUtilitiesEnforcementCollect"]

@@ -6,6 +6,8 @@ from collections.abc import Iterator
 from enum import EnumType
 from typing import ClassVar
 
+from pydantic_settings import BaseSettings
+
 from ..._constants.enforcement import FlextConstantsEnforcement as c
 from ..._models.enforcement import FlextModelsEnforcement as me
 from ..._models.pydantic import FlextModelsPydantic as mp
@@ -18,7 +20,6 @@ from .enforcement_part_01 import PREDICATE_BINDINGS
 class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
     """Rule-driven runtime enforcement (static-only)."""
 
-    _canonical_catalog: ClassVar[me.EnforcementCatalog | None] = None
     _MODEL_CONSTRUCTION_CATEGORIES: ClassVar[frozenset[c.EnforcementCategory]] = (
         frozenset({c.EnforcementCategory.FIELD, c.EnforcementCategory.MODEL_CLASS})
     )
@@ -33,13 +34,10 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
     ) -> me.Report:
         """Apply a rule, separating proven deferrals from executed predicates.
 
-        Catalog rules without a runtime predicate binding (static-only or
-        beartype-driven entries keyed as ``ENFORCE-NNN``) are skipped gracefully.
+        Every runtime tag carries its category and its predicate binding in the
+        same data row, so a tag without a binding is a data defect and raises.
         """
-        binding = PREDICATE_BINDINGS.get(tag)
-        if binding is None:
-            return me.Report()
-        kind, params = binding
+        kind, params = PREDICATE_BINDINGS[tag]
         violations: list[me.Violation] = []
         deferred: list[me.DeferredInspection] = []
         for location, args in items:
@@ -72,9 +70,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         # A class is a model by DECLARATION: the canonical FLEXT base or a
         # pydantic-settings base declared directly (which is exactly what the
         # settings-inheritance rule must see to report the bypass).
-        is_model = issubclass(target, mp.BaseModel) or issubclass(
-            target, mp.PydanticBaseSettings
-        )
+        is_model = issubclass(target, mp.BaseModel) or issubclass(target, BaseSettings)
         rule_layer = c.ENFORCEMENT_TAG_LAYER.get(tag, "")
         if "[" in target.__name__:
             return

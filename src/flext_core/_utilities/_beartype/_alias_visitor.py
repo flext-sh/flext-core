@@ -1,4 +1,4 @@
-"""Alias rebind / compatibility / foreign-canonical alias visitors."""
+"""Alias rebind and compatibility alias visitors."""
 
 from __future__ import annotations
 
@@ -13,40 +13,7 @@ _NO_VIOLATION: t.StrMapping | None = None
 
 
 class FlextUtilitiesBeartypeAliasVisitor:
-    """ALIAS_REBIND / COMPATIBILITY_ALIAS / FOREIGN_CANONICAL_ALIAS_IMPORT visitors."""
-
-    @staticmethod
-    def v_foreign_canonical_alias_import(
-        params: me.ForeignCanonicalAliasImportParams, target: type
-    ) -> t.StrMapping | None:
-        """FOREIGN_CANONICAL_ALIAS_IMPORT — alias owned locally must not be imported from upstream.
-
-        Flags ``from flext_core import c`` (etc.) inside a project that re-exports
-        the same canonical alias locally. The local facade is the only legal source
-        for c/m/p/t/u when the project owns that slot.
-        """
-        if not params.project_alias_owners:
-            return _NO_VIOLATION
-        module = _ubh.runtime_module_for(target)
-        if module is None:
-            return _NO_VIOLATION
-        module_name = module.__name__
-        package = module_name.split(".")[0]
-        if package not in params.project_alias_owners:
-            return _NO_VIOLATION
-        local_aliases = frozenset(params.project_alias_owners[package])
-        for name, value in vars(module).items():
-            if name not in local_aliases:
-                continue
-            origin = _ubh.object_module_name_for(value)
-            if origin is None:
-                continue
-            origin_package = origin.split(".")[0]
-            if origin_package == package:
-                continue
-            if origin_package.startswith("flext_"):
-                return {"alias": name, "origin": origin_package, "local": package}
-        return _NO_VIOLATION
+    """ALIAS_REBIND / COMPATIBILITY_ALIAS visitors."""
 
     @staticmethod
     def v_alias_rebind(

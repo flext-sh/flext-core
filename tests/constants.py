@@ -16,11 +16,9 @@ from ._constants import (
     TestsFlextConstantsDomain,
     TestsFlextConstantsErrors,
     TestsFlextConstantsFixtures,
-    TestsFlextConstantsLoggings,
     TestsFlextConstantsOther,
     TestsFlextConstantsResult,
     TestsFlextConstantsServices,
-    TestsFlextConstantsSettings,
 )
 
 
@@ -30,8 +28,6 @@ class TestsFlextConstants(FlextTestsConstants, FlextConstants):
     class Tests(
         TestsFlextConstantsOther,
         TestsFlextConstantsResult,
-        TestsFlextConstantsSettings,
-        TestsFlextConstantsLoggings,
         TestsFlextConstantsFixtures,
         TestsFlextConstantsServices,
         TestsFlextConstantsErrors,

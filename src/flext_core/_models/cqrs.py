@@ -16,7 +16,9 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 
 from flext_core import c, t
 
-from ._cqrs_parts.flextmodelscqrs_part_01 import CqrsPagination
+from ._cqrs_parts.flextmodelscqrs_part_01 import (
+    FlextModelsCqrs as FlextModelsCqrsPart01,
+)
 from .base import FlextModelsBase as m
 
 
@@ -32,7 +34,7 @@ def _u() -> type:
 # single facade module.
 
 
-class FlextModelsCqrs:
+class FlextModelsCqrs(FlextModelsCqrsPart01):
     """CQRS pattern container class.
 
     This class acts as a namespace container for CQRS patterns.
@@ -66,8 +68,6 @@ class FlextModelsCqrs:
             Field(description="Identity of the principal that issued this command."),
         ] = None
 
-    Pagination = CqrsPagination
-
     class Query(m.ArbitraryTypesModel):
         """Query model for CQRS query operations."""
 
@@ -91,13 +91,13 @@ class FlextModelsCqrs:
             ),
         ] = Field(default_factory=lambda: MappingProxyType[str, t.Scalar]({}))
         pagination: Annotated[
-            CqrsPagination,
+            FlextModelsCqrsPart01.Pagination,
             Field(
                 description="Pagination settings controlling page number and page size for query results.",
                 title="Pagination",
                 examples=[{"page": 1, "size": 50}],
             ),
-        ] = Field(default_factory=CqrsPagination)
+        ] = Field(default_factory=FlextModelsCqrsPart01.Pagination)
         query_id: Annotated[
             t.NonEmptyStr,
             Field(
@@ -117,9 +117,11 @@ class FlextModelsCqrs:
             cls, v: BaseModel | t.MappingKV[str, t.Scalar] | None
         ) -> BaseModel:
             """Convert pagination to Pagination instance."""
-            # Allow subclasses to override Pagination via class attribute,
-            # fallback to the default CqrsPagination
-            pagination_cls: type[BaseModel] = getattr(cls, "Pagination", CqrsPagination)
+            # A query subclass may declare its own nested Pagination model;
+            # otherwise the namespace Pagination model applies.
+            pagination_cls: type[BaseModel] = getattr(
+                cls, "Pagination", FlextModelsCqrsPart01.Pagination
+            )
             normalized_input = _u().normalize_model_input_mapping(v)
             if normalized_input is None:
                 return pagination_cls()

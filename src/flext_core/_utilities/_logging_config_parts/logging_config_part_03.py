@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 import structlog
@@ -20,9 +21,10 @@ from .logging_config_part_02 import (
 if TYPE_CHECKING:
     from structlog.types import Processor
 
-from flext_core import t
+from flext_core import c, t
 
 from ..._models.pydantic import FlextModelsPydantic as mp
+from ..._runtime._base import FlextRuntimeBase
 
 
 class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart02):
@@ -58,14 +60,17 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart02):
             logger_factory=logger_factory,
             cache_logger_on_first_use=cache_logger_on_first_use,
         )
+        threshold = cls.level_number(level)
         processors = cls._build_structlog_processors(
             console_renderer=console_renderer,
             additional_processors=additional_processors,
         )
+        # The threshold is enforced by ``drop_below_threshold`` at emit time,
+        # so the bound logger itself must not filter statically.
         wrapper_arg = (
             wrapper_class_factory()
             if wrapper_class_factory is not None
-            else structlog.make_filtering_bound_logger(level)
+            else structlog.make_filtering_bound_logger(logging.NOTSET)
         )
         factory_to_use = cls._resolve_logger_factory(
             logger_factory=logger_factory, async_logging=async_logging
@@ -78,14 +83,35 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart02):
                 logger_factory=factory_to_use if callable(factory_to_use) else None,
                 cache_logger_on_first_use=cache_logger_on_first_use,
             )
-        cls._structlog_configured = True
+        cls._publish_logging_state(configured=True, threshold=threshold)
 
     @classmethod
     def ensure_structlog_configured(cls) -> None:
         """Ensure structlog is configured (called automatically on first use)."""
         if not cls._structlog_configured:
             cls.configure_structlog()
-            cls._structlog_configured = True
+
+    @staticmethod
+    def level_number(level: int | str) -> int:
+        """Return the stdlib number of a level given by number or name."""
+        if isinstance(level, int):
+            return level
+        return logging.getLevelNamesMapping()[level.upper()]
+
+    @classmethod
+    def apply_log_level(cls, *, log_level: str, debug: bool, trace: bool) -> None:
+        """Apply the effective level of settings values to every logger.
+
+        Resolution is owned by ``resolve_effective_log_level``; the result
+        reaches loggers that were already created and cached.
+        """
+        cls.ensure_structlog_configured()
+        effective = FlextRuntimeBase.resolve_effective_log_level(
+            trace=trace, debug=debug, log_level=c.LogLevel(log_level.upper())
+        )
+        cls._publish_logging_state(
+            configured=True, threshold=cls.level_number(effective)
+        )
 
 
 __all__: list[str] = ["FlextUtilitiesLoggingConfig"]

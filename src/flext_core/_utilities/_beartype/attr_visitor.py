@@ -102,38 +102,39 @@ class FlextUtilitiesBeartypeAttrVisitor:
 
     @staticmethod
     def v_classvar_constant(
-        params: me.ClassVarConstantParams, target: type
+        params: me.ClassVarConstantParams, target: type, name: str, value: object
     ) -> t.StrMapping | None:
-        """CLASSVAR_CONSTANT — flag constants declared outside _constants."""
+        """CLASSVAR_CONSTANT — flag one constant declared outside _constants.
+
+        Granularity belongs to the iterator (one item per public attribute,
+        see ``_ns_classvar_constants``); this visitor judges exactly one
+        attribute per call, per the one-detail-per-call engine contract.
+        """
         module_name = getattr(target, "__module__", "") or ""
         if module_name.endswith("._constants") or "._constants." in module_name:
-            return _NO_VIOLATION
-        for name, value in vars(target).items():
-            if name.startswith("_") or name != name.upper():
-                continue
-            if name in c.ENFORCEMENT_CLASSVAR_EXEMPT_NAMES:
-                continue
-            has_classvar = FlextUtilitiesBeartypeAttrVisitor._has_classvar_annotation(
-                target, name
+            return None
+        if name in c.ENFORCEMENT_CLASSVAR_EXEMPT_NAMES:
+            return None
+        has_classvar = FlextUtilitiesBeartypeAttrVisitor._has_classvar_annotation(
+            target, name
+        )
+        is_implicit = (
+            not has_classvar
+            and FlextUtilitiesBeartypeAttrVisitor._is_implicit_constant(
+                params, target, name, value
             )
-            is_implicit = (
-                not has_classvar
-                and FlextUtilitiesBeartypeAttrVisitor._is_implicit_constant(
-                    params, target, name, value
-                )
-            )
-            if not (has_classvar or is_implicit):
-                continue
-            if not FlextUtilitiesBeartypeAttrVisitor._is_constant_value(value):
-                continue
-            project = module_name.split(".", 1)[0] or "project"
-            return {
-                "name": name,
-                "module": module_name.rsplit(".", 1)[-1],
-                "class_name": getattr(target, "__qualname__", "<class>"),
-                "full_module": module_name,
-                "implicit": str(is_implicit),
-                "suggested_name": name,
-                "suggested_target": f"{project}._constants",
-            }
-        return _NO_VIOLATION
+        )
+        if not (has_classvar or is_implicit):
+            return None
+        if not FlextUtilitiesBeartypeAttrVisitor._is_constant_value(value):
+            return None
+        project = module_name.split(".", 1)[0] or "project"
+        return {
+            "name": name,
+            "module": module_name.rsplit(".", 1)[-1],
+            "class_name": getattr(target, "__qualname__", "<class>"),
+            "full_module": module_name,
+            "implicit": str(is_implicit),
+            "suggested_name": name,
+            "suggested_target": f"{project}._constants",
+        }

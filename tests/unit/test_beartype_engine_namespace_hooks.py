@@ -125,68 +125,8 @@ class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
         tm.that(u.Cli.process_succeeded(result.outcome), eq=True, msg=result.stderr)
         tm.that(result.stdout.strip(), eq="None", msg=f"{case_id}: {result.stdout}")
 
-    def test_private_attr_probe_detects_getattr_on_private_attribute(
-        self, tmp_path: Path
-    ) -> None:
-        """``private_attr_probe`` returns a violation payload for a private probe."""
-        result = self._apply_deprecated_syntax(
-            tmp_path,
-            {
-                "probepkg/__init__.py": "",
-                "probepkg/mod.py": textwrap.dedent(
-                    """
-                    def peek(target):
-                        return getattr(target, "_secret")
-
-
-                    class Probe:
-                        pass
-                    """
-                ).strip()
-                + "\n",
-            },
-            import_target="probepkg.mod",
-            ast_shape="private_attr_probe",
-        )
-
-        tm.that(u.Cli.process_succeeded(result.outcome), eq=True, msg=result.stderr)
-        payload = result.stdout.strip()
-        tm.that(payload, ne="None", msg=payload)
-        tm.that(payload, has="'probe': 'getattr'", msg=payload)
-        tm.that(payload, has="'name': '_secret'", msg=payload)
-        tm.that(payload, has="'file': 'mod.py'", msg=payload)
-
-    def test_private_attr_probe_reports_no_violation_for_clean_module(
-        self, tmp_path: Path
-    ) -> None:
-        """A module with no private-attribute probe yields None (no false positive)."""
-        result = self._apply_deprecated_syntax(
-            tmp_path,
-            {
-                "cleanpkg/__init__.py": "",
-                "cleanpkg/mod.py": textwrap.dedent(
-                    """
-                    def compute(target):
-                        return target.public_value + 1
-
-
-                    class Probe:
-                        pass
-                    """
-                ).strip()
-                + "\n",
-            },
-            import_target="cleanpkg.mod",
-            ast_shape="private_attr_probe",
-        )
-
-        tm.that(u.Cli.process_succeeded(result.outcome), eq=True, msg=result.stderr)
-        tm.that(result.stdout.strip(), eq="None", msg=result.stdout)
-
-    def test_apply_returns_none_for_unrecognized_ast_shape(
-        self, tmp_path: Path
-    ) -> None:
-        """An unknown ``ast_shape`` is a no-op: apply returns None, never raises."""
+    def test_apply_raises_for_unrecognized_ast_shape(self, tmp_path: Path) -> None:
+        """An unknown ``ast_shape`` is a rule-data defect: apply raises, never passes."""
         result = self._apply_deprecated_syntax(
             tmp_path,
             {
@@ -207,5 +147,5 @@ class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
             ast_shape="totally_unrecognized_shape",
         )
 
-        tm.that(u.Cli.process_succeeded(result.outcome), eq=True, msg=result.stderr)
-        tm.that(result.stdout.strip(), eq="None", msg=result.stdout)
+        tm.that(u.Cli.process_succeeded(result.outcome), eq=False, msg=result.stdout)
+        tm.that(result.stderr, has="unknown deprecated-syntax shape", msg=result.stderr)

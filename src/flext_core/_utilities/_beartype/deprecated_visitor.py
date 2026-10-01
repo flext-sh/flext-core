@@ -17,22 +17,7 @@ _TYPING_TYPE_ALIAS = TypeAlias  # sentinel for ``X: TypeAlias = Y`` annotation m
 
 
 class FlextUtilitiesBeartypeDeprecatedVisitor:
-    """DEPRECATED_SYNTAX + WRAPPER visitors via bytecode introspection."""
-
-    @staticmethod
-    def v_wrapper(_params: me.WrapperParams, target: type) -> t.StrMapping | None:
-        """Detect pass-through wrappers via bytecode (ENFORCE-043)."""
-        module = _ubh.runtime_module_for(target)
-        if module is None:
-            return _NO_VIOLATION
-        src_file = _ubh.module_filename_for(module) or ""
-        for fn in _ubh.iter_module_callables(module):
-            param_names = _ubh.function_param_names(fn)
-            if not param_names:
-                continue
-            if _ubh.is_pass_through_bytecode(fn, param_names):
-                return {"name": fn.__name__, "file": Path(src_file).name}
-        return _NO_VIOLATION
+    """DEPRECATED_SYNTAX visitor via runtime introspection."""
 
     @staticmethod
     def v_deprecated_syntax(
@@ -72,27 +57,6 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                         ),
                         _NO_VIOLATION,
                     )
-            case "model_rebuild_call":
-                attr = c.EnforceAstHookSymbol.MODEL_REBUILD_ATTR.value
-                violation = next(
-                    (
-                        {"file": file_name, "line": str(fn.__code__.co_firstlineno)}
-                        for fn in _ubh.iter_module_callables(module)
-                        if _ubh.has_attribute_call(fn, attr) is not None
-                    ),
-                    _NO_VIOLATION,
-                )
-            case "private_attr_probe":
-                probes = c.ENFORCE_PRIVATE_PROBE_BUILTINS
-                violation = next(
-                    (
-                        {"probe": builtin, "name": attr, "file": file_name}
-                        for fn in _ubh.iter_module_callables(module)
-                        if (hit := _ubh.has_private_attr_probe(fn, probes)) is not None
-                        for builtin, attr in (hit,)
-                    ),
-                    _NO_VIOLATION,
-                )
             case "no_core_tests_namespace":
                 wrapper_module = _ubh.runtime_wrapper_module_for(target)
                 if wrapper_module is not None:
@@ -127,12 +91,14 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                     package_name = wrapper_module.__name__.split(".", 1)[0]
                     wrapper_submodules = _ubh.facade_module_names(package_name)
                     violation = _NO_VIOLATION
-                    try:
-                        source = Path(
-                            _ubh.module_filename_for(wrapper_module) or ""
-                        ).read_text(encoding="utf-8")
-                    except OSError:
-                        source = ""
+                    # A module without a source file has no text to scan; a
+                    # declared source that cannot be read raises.
+                    wrapper_file = _ubh.module_filename_for(wrapper_module)
+                    source = (
+                        Path(wrapper_file).read_text(encoding="utf-8")
+                        if wrapper_file is not None
+                        else ""
+                    )
                     if source:
                         violation = next(
                             (
@@ -185,5 +151,6 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                             _NO_VIOLATION,
                         )
             case _:
-                pass
+                msg = f"unknown deprecated-syntax shape {shape!r}"
+                raise ValueError(msg)
         return violation

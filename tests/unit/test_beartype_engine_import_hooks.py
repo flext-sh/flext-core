@@ -134,7 +134,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
     def test_unrelated_shape_reports_no_violation_for_clean_class(
         self, tmp_path: Path
     ) -> None:
-        """An unrelated ast_shape on a clean wrapper class returns no violation."""
+        """Another declared ast_shape on a clean wrapper class returns no violation."""
         probe = self._probe_class(
             tmp_path,
             package="cleanshapeprobe",
@@ -150,7 +150,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
 
         result = be.apply(
             c.EnforcementPredicateKind.DEPRECATED_SYNTAX,
-            me.DeprecatedSyntaxParams(ast_shape="model_rebuild_call"),
+            me.DeprecatedSyntaxParams(ast_shape="no_core_tests_namespace"),
             probe,
         )
 

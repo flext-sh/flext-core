@@ -27,7 +27,21 @@ if TYPE_CHECKING:
 class FlextUtilitiesLoggingConfig:
     """Structlog configuration, async writer, and processor chain assembly."""
 
-    _structlog_configured: ClassVar[bool]
+    # Process-wide logging state: written only through ``_publish_logging_state``
+    # so a subclass (``u``, ``FlextUtilitiesLogging``) never shadows it.
+    _structlog_configured: ClassVar[bool] = False
+    _log_threshold: ClassVar[int]
+
+    @staticmethod
+    def log_threshold() -> int:
+        """Return the process-wide minimum level number that is emitted."""
+        return FlextUtilitiesLoggingConfig._log_threshold
+
+    @staticmethod
+    def _publish_logging_state(*, configured: bool, threshold: int) -> None:
+        """Store the process-wide configuration flag and level threshold."""
+        FlextUtilitiesLoggingConfig._structlog_configured = configured
+        FlextUtilitiesLoggingConfig._log_threshold = threshold
 
     @staticmethod
     def structlog() -> types.ModuleType:
