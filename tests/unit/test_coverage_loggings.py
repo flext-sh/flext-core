@@ -25,6 +25,7 @@ if TYPE_CHECKING:
 
 class TestsFlextCoverageLoggings:
     """Tests for ``FlextCoverageLoggings``."""
+
     @staticmethod
     def make_result_logger(name: str) -> p.Logger:
         """Build a real public logger for behavior tests.

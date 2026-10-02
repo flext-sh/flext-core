@@ -177,6 +177,7 @@ class TestsFlextHandlersLifecycle(TestsFlextFlextHandlers):
 
     def test_subclass_specialises_handle_for_its_own_message_type(self) -> None:
         """Test subclass specialises handle for its own message type."""
+
         class IntHandler(h[t.JsonPayload, t.JsonPayload]):
             def __init__(self, *, settings: m.Handler | None = None) -> None:
                 super().__init__(settings=settings)

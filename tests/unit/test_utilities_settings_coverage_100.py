@@ -24,6 +24,7 @@ if TYPE_CHECKING:
 
 class TestsFlextCoreUtilitiesSettings:
     """Tests for ``FlextCoreUtilitiesSettings``."""
+
     _original_cwd: Path
 
     def setup_method(self) -> None:

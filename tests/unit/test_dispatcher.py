@@ -165,6 +165,7 @@ class TestsFlextCoreDispatcher:
     ) -> None:
         # Arrange: callable exposing no message_type / event_type / can_handle.
         """Test register callable without route fails."""
+
         def orphan_handler(_message: p.Routable) -> p.Result[t.JsonPayload]:
             return r[t.JsonPayload].ok({})
 

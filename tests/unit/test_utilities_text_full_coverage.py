@@ -18,6 +18,7 @@ from tests.utilities import u as test_u
 
 class TestsFlextUtilitiesText(test_u.Tests.Contract):
     """Tests for ``FlextUtilitiesText``."""
+
     @pytest.mark.parametrize(
         ("value", "message"),
         [

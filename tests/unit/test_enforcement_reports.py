@@ -49,6 +49,7 @@ def _hard_violation(
 class TestsFlextCoreEnforcementReports:
     # --- Report container contract -------------------------------------
     """Tests for ``FlextCoreEnforcementReports``."""
+
     def test_empty_report_is_falsy_and_reports_zero_length(self) -> None:
         """Test empty report is falsy and reports zero length."""
         report = m.Report()
@@ -132,6 +133,7 @@ class TestsFlextCoreEnforcementReports:
 
     def test_check_flags_any_typed_field_with_rule_metadata(self) -> None:
         """Test check flags any typed field with rule metadata."""
+
         class _WithAny(m.ArbitraryTypesModel):
             data: Annotated[typing.Any, m.Field(description="d")] = None
 
@@ -144,6 +146,7 @@ class TestsFlextCoreEnforcementReports:
 
     def test_check_messages_embed_bracketed_rule_identifiers(self) -> None:
         """Test check messages embed bracketed rule identifiers."""
+
         class _WithAny(m.ArbitraryTypesModel):
             data: Annotated[typing.Any, m.Field(description="d")] = None
 
@@ -157,6 +160,7 @@ class TestsFlextCoreEnforcementReports:
 
     def test_check_skips_function_local_classes(self) -> None:
         """Test check skips function local classes."""
+
         def _make() -> type:
             class Inner:
                 pass
@@ -169,6 +173,7 @@ class TestsFlextCoreEnforcementReports:
 
     def test_check_model_construction_flags_any_field(self) -> None:
         """Test check model construction flags any field."""
+
         class _WithAny(m.ArbitraryTypesModel):
             data: Annotated[typing.Any, m.Field(description="d")] = None
 
@@ -294,6 +299,7 @@ class TestsFlextCoreEnforcementReports:
 
     def test_emit_of_checked_report_carries_layer_tag_and_fix(self) -> None:
         """Test emit of checked report carries layer tag and fix."""
+
         class _WithAny(m.ArbitraryTypesModel):
             data: Annotated[typing.Any, m.Field(description="d")] = None
 

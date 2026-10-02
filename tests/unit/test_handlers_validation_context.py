@@ -112,6 +112,7 @@ class TestsFlextCoreHandlersValidationContext(TestsFlextFlextHandlers):
     def test_validate_message_accepts_pydantic_model_message(self) -> None:
         # Arrange
         """Test validate message accepts pydantic model message."""
+
         class PydanticMessage(m.Value):
             value: str
 
@@ -127,6 +128,7 @@ class TestsFlextCoreHandlersValidationContext(TestsFlextFlextHandlers):
     def test_validate_message_accepts_multi_field_model_message(self) -> None:
         # Arrange
         """Test validate message accepts multi field model message."""
+
         class MultiFieldMessage(m.Value):
             value: Annotated[str, m.Field(description="Message value")]
             number: Annotated[int, m.Field(description="Message number")]
@@ -143,6 +145,7 @@ class TestsFlextCoreHandlersValidationContext(TestsFlextFlextHandlers):
     def test_validate_message_accepts_frozen_model_message(self) -> None:
         # Arrange
         """Test validate message accepts frozen model message."""
+
         class FrozenMessage(m.Value):
             model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
             value: str

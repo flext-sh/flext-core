@@ -58,6 +58,7 @@ class TestsFlextCoreRegistry:
         registry: p.Registry,
     ) -> None:
         """Test register handler propagates dispatcher failure."""
+
         def unroutable(message: p.Routable) -> None:
             _ = message
 

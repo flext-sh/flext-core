@@ -162,6 +162,7 @@ class TestsFlextLoggings:
         logger: p.Logger,
     ) -> None:
         """Test performance tracker context manager completes without error."""
+
         def emit() -> p.Result[bool] | None:
             with u.PerformanceTracker(logger, "operation_under_test"):
                 nonlocal result

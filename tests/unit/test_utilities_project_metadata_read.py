@@ -49,6 +49,7 @@ def _read(root: Path) -> p.ResultView[m.ProjectMetadata]:
 
 class TestsFlextUtilitiesProjectMetadataRead:
     """Tests for ``FlextUtilitiesProjectMetadataRead``."""
+
     @pytest.mark.parametrize(
         ("project_name", "expected_stem"),
         [

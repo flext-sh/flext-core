@@ -26,6 +26,7 @@ class TestsFlextCoreDecorators:
 
     def test_deprecated_emits_deprecation_warning_and_preserves_return(self) -> None:
         """Test deprecated emits deprecation warning and preserves return."""
+
         @d.deprecated("old API")
         def fn(value: str) -> str:
             return value.upper()
@@ -72,6 +73,7 @@ class TestsFlextCoreDecorators:
 
     def test_timeout_raises_when_call_exceeds_limit(self) -> None:
         """Test timeout raises when call exceeds limit."""
+
         @d.timeout(timeout_seconds=0.001, error_code="TMO")
         def slow() -> str:
             time.sleep(0.05)
@@ -82,6 +84,7 @@ class TestsFlextCoreDecorators:
 
     def test_timeout_reraises_original_exception_when_within_limit(self) -> None:
         """Test timeout reraises original exception when within limit."""
+
         @d.timeout(timeout_seconds=2.0)
         def fails_fast() -> None:
             msg = "fast-fail"
@@ -92,6 +95,7 @@ class TestsFlextCoreDecorators:
 
     def test_timeout_passes_through_when_call_completes_in_time(self) -> None:
         """Test timeout passes through when call completes in time."""
+
         @d.timeout(timeout_seconds=2.0)
         def quick() -> str:
             return "done"
@@ -100,6 +104,7 @@ class TestsFlextCoreDecorators:
 
     def test_timeout_reraises_existing_timeout_error(self) -> None:
         """Test timeout reraises existing timeout error."""
+
         @d.timeout(timeout_seconds=1.0)
         def raises_timeout() -> None:
             msg = "already-timeout"
@@ -110,6 +115,7 @@ class TestsFlextCoreDecorators:
 
     def test_railway_wraps_exception_as_failed_result(self) -> None:
         """Test railway wraps exception as failed result."""
+
         @d.railway(error_code="E_RW")
         def fails() -> int:
             msg = "boom"
@@ -121,6 +127,7 @@ class TestsFlextCoreDecorators:
 
     def test_railway_passes_through_existing_result(self) -> None:
         """Test railway passes through existing result."""
+
         @d.railway()
         def already_result() -> p.Result[int]:
             return r[int].ok(1)
@@ -188,6 +195,7 @@ class TestsFlextCoreDecorators:
 
     def test_with_correlation_ensures_correlation_id_during_call(self) -> None:
         """Test with correlation ensures correlation id during call."""
+
         @d.with_correlation()
         def fn() -> str:
             return "ok"

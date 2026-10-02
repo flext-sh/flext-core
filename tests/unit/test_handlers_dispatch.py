@@ -35,6 +35,7 @@ class TestsFlextHandlersDispatch(TestsFlextFlextHandlers):
 
     def test_execute_returns_processed_payload_for_dict_message(self) -> None:
         """Test execute returns processed payload for dict message."""
+
         class DictHandler(h[t.JsonMapping, t.JsonPayload]):
             @override
             def execute(self, message: t.JsonMapping) -> p.Result[t.JsonPayload]:
@@ -109,6 +110,7 @@ class TestsFlextHandlersDispatch(TestsFlextFlextHandlers):
 
     def test_dispatch_rejects_unhandleable_message_type(self) -> None:
         """Test dispatch rejects unhandleable message type."""
+
         class RestrictiveHandler(TestsFlextFlextHandlers.ConcreteTestHandler):
             @override
             def can_handle(self, message_type: type) -> bool:
@@ -128,6 +130,7 @@ class TestsFlextHandlersDispatch(TestsFlextFlextHandlers):
 
     def test_dispatch_propagates_validation_failure(self) -> None:
         """Test dispatch propagates validation failure."""
+
         class ValidationFailingHandler(TestsFlextFlextHandlers.ConcreteTestHandler):
             @override
             def validate_message(self, data: t.JsonPayload) -> p.Result[bool]:
@@ -147,6 +150,7 @@ class TestsFlextHandlersDispatch(TestsFlextFlextHandlers):
 
     def test_dispatch_converts_handler_exception_to_critical_failure(self) -> None:
         """Test dispatch converts handler exception to critical failure."""
+
         class ExceptionHandler(TestsFlextFlextHandlers.ConcreteTestHandler):
             @override
             def handle(self, message: t.JsonPayload) -> p.Result[t.JsonPayload]:

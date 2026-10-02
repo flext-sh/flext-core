@@ -23,6 +23,7 @@ if TYPE_CHECKING:
 
 class TestsFlextContainerLifecycle:
     """Tests for ``FlextContainerLifecycle``."""
+
     def test_clear_removes_every_registration(
         self,
         clean_container: p.Container,

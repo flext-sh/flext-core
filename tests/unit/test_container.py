@@ -27,6 +27,7 @@ if TYPE_CHECKING:
 
 class TestsFlextCoreContainer:
     """Tests for ``FlextCoreContainer``."""
+
     def test_singleton_returns_same_instance(self) -> None:
         """Constructing the container twice yields the same shared instance."""
         first = FlextContainer()

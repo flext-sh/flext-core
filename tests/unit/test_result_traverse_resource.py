@@ -23,6 +23,7 @@ if TYPE_CHECKING:
 
 class TestsFlextResultTraverseResource:
     """Tests for ``FlextResultTraverseResource``."""
+
     def test_accumulate_errors_all_success(self) -> None:
         """Test accumulate_errors with all successes."""
         results = [r[int].ok(1), r[int].ok(2), r[int].ok(3)]

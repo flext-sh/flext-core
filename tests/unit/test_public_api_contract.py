@@ -82,7 +82,10 @@ class TestsFlextCorePublicApiContract:
         imports = build_map({"collections": ("Counter",)})
         namespace: t.ModuleGlobals = {"__name__": "flext_core_consumer"}
         install(
-            "flext_core_consumer", namespace, imports, public_exports=("Counter",),
+            "flext_core_consumer",
+            namespace,
+            imports,
+            public_exports=("Counter",),
         )
         resolver = namespace["__getattr__"]
         assert callable(resolver)
