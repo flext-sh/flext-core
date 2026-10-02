@@ -65,9 +65,6 @@ if TYPE_CHECKING:
     from flext_core._utilities._beartype.type_aliases import (
         FlextUtilitiesBeartypeTypeAliases,
     )
-    from flext_core._utilities._context_crud_set import (
-        FlextUtilitiesContextCrudSetMixin,
-    )
     from flext_core._utilities._guards_type_protocol_specs import (
         FlextUtilitiesGuardsTypeProtocolSpecsMixin,
     )
@@ -89,9 +86,6 @@ if TYPE_CHECKING:
     from flext_core._utilities.config import FlextUtilitiesConfig
     from flext_core._utilities.console import FlextUtilitiesConsole
     from flext_core._utilities.context import FlextUtilitiesContext
-    from flext_core._utilities.context_crud import FlextUtilitiesContextCrud
-    from flext_core._utilities.context_lifecycle import FlextUtilitiesContextLifecycle
-    from flext_core._utilities.context_state import FlextUtilitiesContextState
     from flext_core._utilities.conversion import FlextUtilitiesConversion
     from flext_core._utilities.discovery import FlextUtilitiesDiscovery
     from flext_core._utilities.dispatcher_execute import execute_dispatcher_handler
@@ -115,6 +109,7 @@ if TYPE_CHECKING:
         FlextUtilitiesGuardsTypeProtocol,
     )
     from flext_core._utilities.handler import FlextUtilitiesHandler
+    from flext_core._utilities.logging import FlextUtilitiesLogging
     from flext_core._utilities.logging_config import FlextUtilitiesLoggingConfig
     from flext_core._utilities.logging_context import FlextUtilitiesLoggingContext
     from flext_core._utilities.mapper import FlextUtilitiesMapper
@@ -162,10 +157,6 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesConfig",
     "FlextUtilitiesConsole",
     "FlextUtilitiesContext",
-    "FlextUtilitiesContextCrud",
-    "FlextUtilitiesContextCrudSetMixin",
-    "FlextUtilitiesContextLifecycle",
-    "FlextUtilitiesContextState",
     "FlextUtilitiesConversion",
     "FlextUtilitiesDiscovery",
     "FlextUtilitiesDomain",
@@ -183,6 +174,7 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesGuardsTypeProtocolSpecsMixin",
     "FlextUtilitiesGuardsTypeProtocolStringMixin",
     "FlextUtilitiesHandler",
+    "FlextUtilitiesLogging",
     "FlextUtilitiesLoggingConfig",
     "FlextUtilitiesLoggingContext",
     "FlextUtilitiesMapper",
@@ -242,7 +234,6 @@ _LAZY_IMPORTS = MappingProxyType(
             "._beartype.module_visitor": ("FlextUtilitiesBeartypeModuleVisitor",),
             "._beartype.type_aliases": ("FlextUtilitiesBeartypeTypeAliases",),
             "._checker_parts": ("_checker_parts",),
-            "._context_crud_set": ("FlextUtilitiesContextCrudSetMixin",),
             "._enforcement_collect_parts": ("_enforcement_collect_parts",),
             "._enforcement_parts": ("_enforcement_parts",),
             "._guards_type_protocol_specs": (
@@ -269,9 +260,6 @@ _LAZY_IMPORTS = MappingProxyType(
             ".config": ("FlextUtilitiesConfig",),
             ".console": ("FlextUtilitiesConsole",),
             ".context": ("FlextUtilitiesContext",),
-            ".context_crud": ("FlextUtilitiesContextCrud",),
-            ".context_lifecycle": ("FlextUtilitiesContextLifecycle",),
-            ".context_state": ("FlextUtilitiesContextState",),
             ".conversion": ("FlextUtilitiesConversion",),
             ".discovery": ("FlextUtilitiesDiscovery",),
             ".dispatcher_execute": ("execute_dispatcher_handler",),
@@ -288,6 +276,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".guards_type_model": ("FlextUtilitiesGuardsTypeModel",),
             ".guards_type_protocol": ("FlextUtilitiesGuardsTypeProtocol",),
             ".handler": ("FlextUtilitiesHandler",),
+            ".logging": ("FlextUtilitiesLogging",),
             ".logging_config": ("FlextUtilitiesLoggingConfig",),
             ".logging_context": ("FlextUtilitiesLoggingContext",),
             ".mapper": ("FlextUtilitiesMapper",),

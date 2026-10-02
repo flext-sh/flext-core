@@ -6,7 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._lazy_parts.flextlazy_part_02 import FlextLazy, FlextLazyAttribute
+from flext_core._lazy_parts.flextlazy_attribute import FlextLazyAttribute
+from flext_core._lazy_parts.flextlazy_part_02 import FlextLazy
 
 lazy = FlextLazy()
 """Shared ``FlextLazy`` singleton used by package-level lazy exports."""

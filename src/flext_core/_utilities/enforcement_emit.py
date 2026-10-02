@@ -15,7 +15,6 @@ from flext_core._constants import _enforcement_data
 from flext_core._constants.enforcement import (
     FlextConstantsEnforcement as c,
     FlextMroViolation,
-    FlextSmellViolation,
 )
 from flext_core._models.enforcement import FlextModelsEnforcement as me
 from flext_core._typings.base import FlextTypingBase as t
@@ -144,7 +143,7 @@ class FlextUtilitiesEnforcementEmit:
                 f"{v.message}\n\nFix: {fix_note}"
             )
             category = (
-                FlextSmellViolation
+                c.FlextSmellViolation
                 if any(
                     rule.id == v.rule_id
                     for tag, rule in FlextUtilitiesEnforcementEmit.rules_by_tag().items()

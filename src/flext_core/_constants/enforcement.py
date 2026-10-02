@@ -49,10 +49,8 @@ class FlextConstantsEnforcement(
 # mro-pulj (codex): the declaring module owns every supported root import;
 # generated registries must not be required to publish this violation model.
 FlextMroViolation = FlextConstantsEnforcement.FlextMroViolation
-FlextSmellViolation = FlextConstantsEnforcement.FlextSmellViolation
 
 __all__: list[str] = [
     "FlextConstantsEnforcement",
     "FlextMroViolation",
-    "FlextSmellViolation",
 ]

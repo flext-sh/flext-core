@@ -423,7 +423,7 @@ class FlextSettings(BaseSettings):
             cls._instance = None
 
     @classmethod
-    def set_app_namespace(cls, namespace: str) -> None:
+    def apply_app_namespace(cls, namespace: str) -> None:
         """Set the outer application identity once for the current process."""
         candidate = _validate_app_namespace(namespace)
         with FlextSettings._lock:
@@ -431,7 +431,7 @@ class FlextSettings(BaseSettings):
                 FlextSettings._app_namespace = candidate
 
     @classmethod
-    def reset_app_namespace(cls) -> None:
+    def reapply_app_namespace(cls) -> None:
         """Clear the process application identity for isolated tests."""
         with FlextSettings._lock:
             FlextSettings._app_namespace = None
@@ -442,7 +442,7 @@ class FlextSettings(BaseSettings):
 
         This is the default identity when no application registered one, so a
         standalone project (e.g. ``ai-hub``) transparently owns its own
-        directories without being forced to call ``set_app_namespace``.
+        directories without being forced to call ``apply_app_namespace``.
 
         Returns:
             The owning project's own namespace, derived from ``env_prefix``.
@@ -458,7 +458,7 @@ class FlextSettings(BaseSettings):
         """Return the effective namespace.
 
         Precedence: an explicitly registered application identity
-        (``set_app_namespace``) wins so every library shares it; then the
+        (``apply_app_namespace``) wins so every library shares it; then the
         ``FLEXT_APP_NAMESPACE`` environment override; otherwise the owning
         project's own namespace prevails as the default (registration is never
         mandatory).
