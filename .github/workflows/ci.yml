@@ -202,7 +202,7 @@ jobs:
         # Fast partition only, derived from the gate registry kind:
         # lint security markdown duplication.
         # Type checkers and flext-infra validators block locally and at
-        # pre-push (CI=N runs pyrefly mypy pyright loc-cap runtime-census index-declarations codemod layout direnv).
+        # pre-push (CI=N runs pyrefly mypy pyright loc-cap runtime-census fresh-import index-declarations codemod layout direnv).
 
       - name: test (blocking)
         # Why: explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
