@@ -32,17 +32,18 @@ class TestsFlextCoreModelsCqrs:
         assert page.page == c.DEFAULT_RETRY_DELAY_SECONDS
         assert page.size == c.DEFAULT_PAGE_SIZE
 
+    @staticmethod
     @pytest.mark.parametrize(("page", "size"), [(1, 10), (3, 11), (2, 50), (10, 100)])
-    def test_pagination_limit_equals_size(self, page: int, size: int) -> None:
+    def test_pagination_limit_equals_size(page: int, size: int) -> None:
         """Test pagination limit equals size."""
         assert m.Pagination(page=page, size=size).limit == size
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("page", "size", "expected_offset"),
         [(1, 10, 0), (2, 10, 10), (3, 11, 22), (5, 20, 80)],
     )
     def test_pagination_offset_is_derived_from_page_and_size(
-        self,
         page: int,
         size: int,
         expected_offset: int,
@@ -58,14 +59,16 @@ class TestsFlextCoreModelsCqrs:
         assert dumped["limit"] == 20
         assert dumped["offset"] == 20
 
+    @staticmethod
     @pytest.mark.parametrize("size", [c.MAX_PAGE_SIZE + 1, 5000])
-    def test_pagination_rejects_size_above_maximum(self, size: int) -> None:
+    def test_pagination_rejects_size_above_maximum(size: int) -> None:
         """Test pagination rejects size above maximum."""
         with pytest.raises(m.ValidationError):
             m.Pagination(size=size)
 
+    @staticmethod
     @pytest.mark.parametrize(("page", "size"), [(0, 10), (1, 0), (-1, 10)])
-    def test_pagination_rejects_non_positive_bounds(self, page: int, size: int) -> None:
+    def test_pagination_rejects_non_positive_bounds(page: int, size: int) -> None:
         """Test pagination rejects non positive bounds."""
         with pytest.raises(m.ValidationError):
             m.Pagination(page=page, size=size)
@@ -180,12 +183,12 @@ class TestsFlextCoreModelsCqrs:
         assert handler.handler_type == c.HandlerType.QUERY
         assert handler.handler_mode == c.HandlerType.COMMAND
 
+    @staticmethod
     @pytest.mark.parametrize(
         "handler_type",
         [c.HandlerType.COMMAND, c.HandlerType.QUERY, c.HandlerType.EVENT],
     )
     def test_handler_accepts_each_handler_type(
-        self,
         handler_type: c.HandlerType,
     ) -> None:
         """Test handler accepts each handler type."""
@@ -206,6 +209,7 @@ class TestsFlextCoreModelsCqrs:
     # ------------------------------------------------------------------ #
     # FlextMessage discriminated union                                   #
     # ------------------------------------------------------------------ #
+    @staticmethod
     @pytest.mark.parametrize(
         ("payload", "expected_cls"),
         [
@@ -222,7 +226,6 @@ class TestsFlextCoreModelsCqrs:
         ],
     )
     def test_flext_message_union_discriminates_on_message_type(
-        self,
         payload: dict[str, str | dict[str, str]],
         expected_cls: type,
     ) -> None:

@@ -111,9 +111,9 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
 
         assert names == ["public_handler"]
 
+    @staticmethod
     @pytest.mark.parametrize("priority", [0, 25, 100])
     def test_scan_module_reports_decorated_priority_and_command(
-        self,
         priority: int,
     ) -> None:
         """Test scan module reports decorated priority and command."""
@@ -135,12 +135,12 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         assert config.command is Command
         assert config.priority == priority
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("priority", "expected_name"),
         [(10, "handle_low"), (90, "handle_high")],
     )
     def test_scan_class_reports_command_and_priority(
-        self,
         priority: int,
         expected_name: str,
     ) -> None:
@@ -150,13 +150,15 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
             pass
 
         class Service:
+            @staticmethod
             @h.handler(command=Command, priority=10)
-            def handle_low(self, cmd: Command) -> p.Result[str]:
+            def handle_low(cmd: Command) -> p.Result[str]:
                 _ = cmd
                 return r[str].ok("low")
 
+            @staticmethod
             @h.handler(command=Command, priority=90)
-            def handle_high(self, cmd: Command) -> p.Result[str]:
+            def handle_high(cmd: Command) -> p.Result[str]:
                 _ = cmd
                 return r[str].ok("high")
 
@@ -165,7 +167,8 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         assert by_name[expected_name].priority == priority
         assert by_name[expected_name].command is Command
 
-    def test_has_handlers_reflects_presence_of_decorated_methods(self) -> None:
+    @staticmethod
+    def test_has_handlers_reflects_presence_of_decorated_methods() -> None:
         """Test has handlers reflects presence of decorated methods."""
 
         class Command(m.BaseModel):
@@ -177,15 +180,17 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
                 return "ok"
 
         class WithHandler:
+            @staticmethod
             @h.handler(command=Command)
-            def handle(self, cmd: Command) -> p.Result[str]:
+            def handle(cmd: Command) -> p.Result[str]:
                 _ = cmd
                 return r[str].ok("done")
 
         assert h.Discovery.has_handlers(WithoutHandlers) is False
         assert h.Discovery.has_handlers(WithHandler) is True
 
-    def test_scan_class_returns_empty_for_undecorated_class(self) -> None:
+    @staticmethod
+    def test_scan_class_returns_empty_for_undecorated_class() -> None:
         """Test scan class returns empty for undecorated class."""
 
         class Plain:

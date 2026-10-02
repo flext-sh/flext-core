@@ -27,8 +27,9 @@ if TYPE_CHECKING:
 class TestsFlextCoreLoggingThreshold:
     """Tests for ``FlextCoreLoggingThreshold``."""
 
+    @staticmethod
     @pytest.fixture(autouse=True)
-    def restore_default_level(self) -> Generator[None]:
+    def restore_default_level() -> Generator[None]:
         """Leave the process-wide threshold at the settings default afterwards."""
         yield
         u.apply_log_level(log_level=c.LogLevel.INFO, debug=False, trace=False)
@@ -79,6 +80,7 @@ class TestsFlextCoreLoggingThreshold:
         )
         tm.that("debug-at-debug" in debug_out, eq=True)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("debug", "trace", "event_level", "dropped"),
         [
@@ -89,7 +91,6 @@ class TestsFlextCoreLoggingThreshold:
         ],
     )
     def test_debug_and_trace_resolve_through_the_runtime_owner(
-        self,
         *,
         debug: bool,
         trace: bool,

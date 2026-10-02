@@ -158,7 +158,8 @@ class TestsFlextCoreServiceOperations:
     class AsyncService(s[bool]):
         """Operation declared async."""
 
-        async def fetch(self) -> p.Result[bool]:
+        @staticmethod
+        async def fetch() -> p.Result[bool]:
             """Fetch asynchronously.
 
             Returns:

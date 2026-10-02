@@ -16,8 +16,9 @@ from tests import m, u
 class TestsFlextCoreEnforcementTargetIdentity:
     """Exercise classification through the public enforcement report."""
 
+    @staticmethod
     @pytest.mark.parametrize("indirect", [False, True])
-    def test_config_lineage_is_not_settings(self, *, indirect: bool) -> None:
+    def test_config_lineage_is_not_settings(*, indirect: bool) -> None:
         """Test config lineage is not settings."""
         parent = (
             type("FlextParentConfig", (FlextConfig,), {}) if indirect else FlextConfig
@@ -41,9 +42,9 @@ class TestsFlextCoreEnforcementTargetIdentity:
 
         assert not any(v.rule_id == "ENFORCE-042" for v in u.check(target).violations)
 
+    @staticmethod
     @pytest.mark.parametrize("lookalike_config", [False, True])
     def test_raw_settings_and_config_name_impostor_remain_invalid(
-        self,
         *,
         lookalike_config: bool,
     ) -> None:
@@ -61,10 +62,10 @@ class TestsFlextCoreEnforcementTargetIdentity:
 
         assert any(v.rule_id == "ENFORCE-042" for v in u.check(target).violations)
 
+    @staticmethod
     @pytest.mark.parametrize("multiple_bases", [False, True])
     @pytest.mark.parametrize("facade_module", [False, True])
     def test_only_declared_facade_modules_require_alias_first(
-        self,
         *,
         multiple_bases: bool,
         facade_module: bool,
