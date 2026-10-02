@@ -4,6 +4,9 @@ Exercises the public contract of ``m.BaseModel`` (plain Pydantic base) and
 ``m.Value`` (immutable, compared-by-value DDD value object) through their
 public API only: construction, validation, serialization, equality, hashing
 and immutability. No private attributes or internals are touched.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations

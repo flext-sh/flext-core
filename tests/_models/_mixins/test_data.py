@@ -1,9 +1,15 @@
-"""Static test data model helper namespace."""
+"""Static test data model helper namespace.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from .test_data_identity import TestsFlextModelsTestDataIdentityMixin
-from .test_data_values import TestsFlextModelsTestDataValuesMixin
+from tests._models._mixins.test_data_identity import (
+    TestsFlextModelsTestDataIdentityMixin,
+)
+from tests._models._mixins.test_data_values import TestsFlextModelsTestDataValuesMixin
 
 
 class TestsFlextModelsTestDataMixin(

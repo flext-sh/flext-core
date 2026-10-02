@@ -20,8 +20,7 @@ import pytest
 
 from flext_core import u
 from tests.typings import t
-
-from ._beartype_engine_support import (
+from tests.unit._beartype_engine_support import (
     AnyAlias,
     CleanAlias,
     NestedAnyAlias,

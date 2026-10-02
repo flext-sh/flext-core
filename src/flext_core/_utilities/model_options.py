@@ -3,13 +3,15 @@
 Houses :meth:`resolve_runtime_options`. Split from ``model_runtime.py`` so each
 layer stays under the 200-LOC cap while the runtime DSL keeps composing via MRO
 inheritance.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
 from flext_core import m, p
-
-from .model import FlextUtilitiesModel
+from flext_core._utilities.model import FlextUtilitiesModel
 
 
 class FlextUtilitiesModelOptions(FlextUtilitiesModel):
@@ -27,6 +29,12 @@ class FlextUtilitiesModelOptions(FlextUtilitiesModel):
         the instance wins over the declared value. Every value is validated by
         ``m.RuntimeBootstrapOptions``, so a non-conforming port raises
         ``ValidationError`` here instead of reaching the runtime.
+
+        Returns:
+            The resulting ``m.RuntimeBootstrapOptions``.
+
+        Raises:
+            TypeError: If unknown runtime bootstrap source.
         """
         match source:
             case None:

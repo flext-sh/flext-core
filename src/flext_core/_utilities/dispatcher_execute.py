@@ -90,6 +90,9 @@ def execute_dispatcher_handler(
     canonical) or a raw payload (container or Pydantic model). All other
     shapes are rejected with the canonical fail-op messages from the
     enforcement constants.
+
+    Returns:
+        The resulting ``p.Result[t.JsonPayload]``.
     """
     dispatch_result = r[t.JsonPayload]
     try:

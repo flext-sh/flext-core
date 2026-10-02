@@ -9,6 +9,9 @@ Every assertion here is over the OBSERVABLE public contract:
 No private attribute/method is inspected; the class-prefix policy (e.g. the
 ``flext_core`` -> ``Flext`` mapping) is asserted through the violations a caller
 actually observes, not through internal resolver internals.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -21,9 +24,8 @@ from typing import TYPE_CHECKING, ClassVar
 
 from flext_core.utilities import FlextUtilitiesEnforcement
 from tests.constants import c
+from tests.unit._enforcement_support import make_class
 from tests.utilities import u
-
-from ._enforcement_support import make_class
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -34,7 +36,11 @@ _PREFIX_FRAGMENT = "class name missing project prefix"
 
 
 def _synthetic(name: str, *, qualname: str, module: str) -> type:
-    """Build a bare target with controlled qualname/module for enforcement."""
+    """Build a bare target with controlled qualname/module for enforcement.
+
+    Returns:
+        The resulting ``type``.
+    """
     target = type(name, (), {})
     target.__qualname__ = qualname
     target.__module__ = module

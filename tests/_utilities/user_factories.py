@@ -1,4 +1,8 @@
-"""User service factory helpers for flext-core tests."""
+"""User service factory helpers for flext-core tests.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -7,7 +11,7 @@ from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_tests import m as tm
 
-from .railway_services import TestsFlextUtilitiesRailwayServicesMixin
+from tests._utilities.railway_services import TestsFlextUtilitiesRailwayServicesMixin
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -33,7 +37,11 @@ class TestsFlextUtilitiesUserFactoriesMixin(TestsFlextUtilitiesRailwayServicesMi
 
         @classmethod
         def _next_name(cls) -> str:
-            """Get next name from rotation."""
+            """Get next name from rotation.
+
+            Returns:
+                The resulting ``str``.
+            """
             name = cls._names[cls._name_index % len(cls._names)]
             cls._name_index += 1
             return name
@@ -47,7 +55,11 @@ class TestsFlextUtilitiesUserFactoriesMixin(TestsFlextUtilitiesRailwayServicesMi
             email: str | None = None,
             is_active: bool = True,
         ) -> tm.Tests.User:
-            """Build a `tm.Tests.User` instance with optional overrides."""
+            """Build a `tm.Tests.User` instance with optional overrides.
+
+            Returns:
+                The resulting ``tm.Tests.User``.
+            """
             n = next(cls._counter)
             actual_user_id = user_id if user_id is not None else f"user_{n:03d}"
             actual_name = name if name is not None else cls._next_name()
@@ -64,7 +76,11 @@ class TestsFlextUtilitiesUserFactoriesMixin(TestsFlextUtilitiesRailwayServicesMi
 
         @classmethod
         def build_batch(cls, size: int) -> t.SequenceOf[tm.Tests.User]:
-            """Build multiple `tm.Tests.User` instances with auto-generated values."""
+            """Build multiple `tm.Tests.User` instances with auto-generated values.
+
+            Returns:
+                The resulting ``t.SequenceOf[tm.Tests.User]``.
+            """
             return [cls.build() for _ in range(size)]
 
         @classmethod
@@ -96,7 +112,11 @@ class TestsFlextUtilitiesUserFactoriesMixin(TestsFlextUtilitiesRailwayServicesMi
 
         @classmethod
         def build_batch(cls, size: int) -> list[T]:
-            """Build multiple GetUser-style instances with auto-generated values."""
+            """Build multiple GetUser-style instances with auto-generated values.
+
+            Returns:
+                The resulting ``list[T]``.
+            """
             return [cls.build() for _ in range(size)]
 
         @classmethod
@@ -116,7 +136,11 @@ class TestsFlextUtilitiesUserFactoriesMixin(TestsFlextUtilitiesRailwayServicesMi
             *,
             user_id: str | None = None,
         ) -> TestsFlextUtilitiesUserFactoriesMixin.GetUserService:
-            """Build a `GetUserService` instance."""
+            """Build a `GetUserService` instance.
+
+            Returns:
+                The resulting ``TestsFlextUtilitiesUserFactoriesMixin.GetUserService``.
+            """
             return TestsFlextUtilitiesUserFactoriesMixin.GetUserService(
                 user_id=cls._resolve_user_id(user_id),
             )

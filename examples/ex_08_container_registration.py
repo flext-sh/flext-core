@@ -1,4 +1,8 @@
-"""Container registration example section."""
+"""Container registration example section.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -23,7 +27,11 @@ class Ex08ContainerRegistration(ExamplesFlextShared):
 
     @staticmethod
     def _write_outcome(write: Callable[[], p.Container]) -> p.Result[bool]:
-        """Convert one container write into a result that keeps the raised cause."""
+        """Convert one container write into a result that keeps the raised cause.
+
+        Returns:
+            The resulting ``p.Result[bool]``.
+        """
         try:
             _ = write()
         except e.ValidationError as exc:

@@ -13,9 +13,8 @@ import pytest
 from flext_tests import d, e, r
 from hypothesis import given, settings, strategies as st
 
+from tests.unit._decorators_support import TestsFlextDecoratorsLegacy
 from tests.utilities import u
-
-from ._decorators_support import TestsFlextDecoratorsLegacy
 
 if TYPE_CHECKING:
     from tests.protocols import p

@@ -11,18 +11,17 @@ from functools import wraps
 from typing import TYPE_CHECKING, ClassVar, TypeIs
 
 from flext_core import FlextContainer, c, m
+from flext_core._protocols.loggings import FlextProtocolsLogging as pl
+from flext_core._typings.services import FlextTypesServices as ts
 from flext_core.context import FlextContext
 from flext_core.loggings import FlextUtilitiesLogging
-
-from .._protocols.loggings import FlextProtocolsLogging as pl
-from .._typings.services import FlextTypesServices as ts
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from .._protocols.base import FlextProtocolsBase as pb
-    from .._protocols.container import FlextProtocolsContainer as pc
-    from .._protocols.context import FlextProtocolsContext as pcx
+    from flext_core._protocols.base import FlextProtocolsBase as pb
+    from flext_core._protocols.container import FlextProtocolsContainer as pc
+    from flext_core._protocols.context import FlextProtocolsContext as pcx
 
 
 class FlextDecoratorsBase:
@@ -59,7 +58,11 @@ class FlextDecoratorsBase:
         func: ts.DispatchableHandler | None = None,
         func_module: str | None = None,
     ) -> pl.Logger:
-        """Resolve the logger associated with the decorated call."""
+        """Resolve the logger associated with the decorated call.
+
+        Returns:
+            The resulting ``pl.Logger``.
+        """
         _ = cls
         if isinstance(first_arg, pl.Logger):
             return first_arg
@@ -77,7 +80,12 @@ class FlextDecoratorsBase:
     def deprecated[**PCallback, TResult](
         reason: str,
     ) -> Callable[[Callable[PCallback, TResult]], Callable[PCallback, TResult]]:
-        """Mark callable as deprecated and emit ``DeprecationWarning`` on use."""
+        """Mark callable as deprecated and emit ``DeprecationWarning`` on use.
+
+        Returns:
+            The resulting ``Callable[[Callable[PCallback, TResult]], Callable[PCallback,
+                TResult]]``.
+        """
 
         def decorator(
             func: Callable[PCallback, TResult],
@@ -100,7 +108,12 @@ class FlextDecoratorsBase:
         cls,
         **dependencies: str,
     ) -> Callable[[Callable[PCallback, TResult]], Callable[PCallback, TResult]]:
-        """Inject dependencies from the configured FLEXT container."""
+        """Inject dependencies from the configured FLEXT container.
+
+        Returns:
+            The resulting ``Callable[[Callable[PCallback, TResult]], Callable[PCallback,
+                TResult]]``.
+        """
 
         def decorator(
             func: Callable[PCallback, TResult],

@@ -1,4 +1,8 @@
-"""Lifecycle service integration cases kept below module LOC cap."""
+"""Lifecycle service integration cases kept below module LOC cap.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -7,9 +11,8 @@ from typing import TYPE_CHECKING
 import pytest
 from flext_tests import tm
 
+from tests.integration.service_fixtures import TestsFlextFlextServiceFixtures
 from tests.utilities import u
-
-from .service_fixtures import TestsFlextFlextServiceFixtures
 
 if TYPE_CHECKING:
     from pathlib import Path

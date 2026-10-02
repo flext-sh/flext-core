@@ -1,4 +1,8 @@
-"""Additional migration validation cases kept outside the collected test module."""
+"""Additional migration validation cases kept outside the collected test module.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -20,7 +24,11 @@ if TYPE_CHECKING:
 
 
 def capture_stdout[T](emit: Callable[[], T], *, contains: str) -> T:
-    """Capture stdout until the expected observable message is emitted."""
+    """Capture stdout until the expected observable message is emitted.
+
+    Returns:
+        The resulting ``T``.
+    """
     stream = io.StringIO()
     with redirect_stdout(stream):
         result = emit()
@@ -46,7 +54,11 @@ class TestsFlextFlextMigrationApplicationCase:
                 self.container = FlextContainer()
 
             def process_data(self, data: t.StrMapping) -> p.Result[t.JsonMapping]:
-                """Typical data processing method."""
+                """Typical data processing method.
+
+                Returns:
+                    The resulting ``p.Result[t.JsonMapping]``.
+                """
                 if not data:
                     return r[t.JsonMapping].fail("Data required")
                 self.logger.info("Processing data", size=len(data))

@@ -8,12 +8,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Self, override
 
-from .._constants.errors import FlextConstantsErrors as ce
-from .._typings.base import FlextTypingBase as tb
-from .base import FlextModelsBase as m
+from flext_core._constants.errors import FlextConstantsErrors as ce
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._typings.base import FlextTypingBase as tb
 
 if TYPE_CHECKING:
-    from .._typings.services import FlextTypesServices as ts
+    from flext_core._typings.services import FlextTypesServices as ts
 
 
 class FlextModelsBuilder:

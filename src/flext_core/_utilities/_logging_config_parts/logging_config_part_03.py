@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 
 import structlog
 
-from .logging_config_part_02 import (
+from flext_core._utilities._logging_config_parts.logging_config_part_02 import (
     FlextUtilitiesLoggingConfig as FlextUtilitiesLoggingConfigPart02,
 )
 
@@ -22,9 +22,8 @@ if TYPE_CHECKING:
     from structlog.types import Processor
 
 from flext_core import c, t
-
-from ..._models.pydantic import FlextModelsPydantic as mp
-from ..._runtime._base import FlextRuntimeBase
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._runtime._base import FlextRuntimeBase
 
 
 class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart02):

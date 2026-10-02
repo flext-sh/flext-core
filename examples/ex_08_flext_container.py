@@ -1,4 +1,8 @@
-"""Golden-file example for FlextContainer public APIs."""
+"""Golden-file example for FlextContainer public APIs.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -6,11 +10,10 @@ from pathlib import Path
 from typing import override
 
 from examples.constants import c
+from examples.ex_08_container_lifecycle import Ex08ContainerLifecycle
 from examples.protocols import p
 from examples.utilities import u
 from flext_core import FlextContainer, r
-
-from .ex_08_container_lifecycle import Ex08ContainerLifecycle
 
 
 class Ex08FlextContainer(Ex08ContainerLifecycle):
@@ -107,7 +110,11 @@ class Ex08FlextContainer(Ex08ContainerLifecycle):
         )
 
     def _exercise_singleton_and_creation(self) -> p.ContainerLifecycle:
-        """Exercise fetch_global/create entrypoints and singleton semantics."""
+        """Exercise fetch_global/create entrypoints and singleton semantics.
+
+        Returns:
+            The resulting ``p.ContainerLifecycle``.
+        """
         self.section("singleton_and_creation")
         FlextContainer.reset_for_testing()
         root = FlextContainer.shared()

@@ -59,7 +59,11 @@ class FlextUtilitiesGenerators:
         kind: str | None,
         prefix: str | None,
     ) -> t.Pair[bool, str | None]:
-        """Resolve ID prefix from kind or custom override."""
+        """Resolve ID prefix from kind or custom override.
+
+        Returns:
+            The resulting ``t.Pair[bool, str | None]``.
+        """
         if prefix is not None:
             return (True, prefix)
         if kind is None:
@@ -81,7 +85,11 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def _generate_id() -> str:
-        """Generate a unique ID using UUID4 (private helper)."""
+        """Generate a unique ID using UUID4 (private helper).
+
+        Returns:
+            The resulting ``str``.
+        """
         return str(uuid.uuid4())
 
     @staticmethod
@@ -90,7 +98,11 @@ class FlextUtilitiesGenerators:
         *parts: t.JsonValue,
         length: int = c.SHORT_UUID_LENGTH,
     ) -> str:
-        """Generate {prefix}_{parts}_{uuid[:length]} formatted ID."""
+        """Generate {prefix}_{parts}_{uuid[:length]} formatted ID.
+
+        Returns:
+            The resulting ``str``.
+        """
         uuid_part = str(uuid.uuid4())[:length]
         if parts:
             middle = "_".join(str(p) for p in parts)
@@ -103,7 +115,11 @@ class FlextUtilitiesGenerators:
         *,
         include_timestamp: bool,
     ) -> t.SequenceOf[t.JsonValue]:
-        """Collect ID parts including optional timestamp prefix."""
+        """Collect ID parts including optional timestamp prefix.
+
+        Returns:
+            The resulting ``t.SequenceOf[t.JsonValue]``.
+        """
         all_parts: t.JsonValueList = []
         if include_timestamp:
             all_parts.append(int(datetime.now(UTC).timestamp()))
@@ -118,7 +134,11 @@ class FlextUtilitiesGenerators:
         separator: str,
         id_length: int,
     ) -> str:
-        """Generate ID with custom separator."""
+        """Generate ID with custom separator.
+
+        Returns:
+            The resulting ``str``.
+        """
         uuid_part = str(uuid.uuid4())[:id_length]
         if all_parts:
             middle = separator.join(str(p) for p in all_parts)
@@ -131,7 +151,11 @@ class FlextUtilitiesGenerators:
         *,
         options: GenerateOptions | None = None,
     ) -> str:
-        """Generate ID by kind or custom prefix (the ONLY public ID generation method)."""
+        """Generate ID by kind or custom prefix (the ONLY public ID generation method).
+
+        Returns:
+            The resulting ``str``.
+        """
         resolved_options = options or FlextUtilitiesGenerators.GenerateOptions()
         _prefix_resolved, actual_prefix = FlextUtilitiesGenerators._determine_prefix(
             kind,
@@ -187,17 +211,29 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def generate_datetime_utc() -> datetime:
-        """Generate current UTC datetime with full microsecond precision."""
+        """Generate current UTC datetime with full microsecond precision.
+
+        Returns:
+            The resulting ``datetime``.
+        """
         return datetime.now(UTC)
 
     @staticmethod
     def generate_id() -> str:
-        """Generate unique ID using UUID4."""
+        """Generate unique ID using UUID4.
+
+        Returns:
+            The resulting ``str``.
+        """
         return FlextUtilitiesGenerators._generate_id()
 
     @staticmethod
     def generate_prefixed_id(prefix: str, length: int | None = None) -> str:
-        """Generate prefixed ID using UUID4 with optional truncation."""
+        """Generate prefixed ID using UUID4 with optional truncation.
+
+        Returns:
+            The resulting ``str``.
+        """
         base_id = str(uuid.uuid4()).replace("-", "")
         if length is not None:
             base_id = base_id[:length]
@@ -205,17 +241,29 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def generate_iso_timestamp() -> str:
-        """Generate ISO timestamp without microseconds (use generate_datetime_utc for precision)."""
+        """Generate ISO timestamp without microseconds (use generate_datetime_utc for precision).
+
+        Returns:
+            The resulting ``str``.
+        """
         return datetime.now(UTC).replace(microsecond=0).isoformat()
 
     @staticmethod
     def resolve_timezone(name: str) -> tzinfo:
-        """Resolve an IANA timezone name to a tzinfo (``UTC`` maps to ``datetime.UTC``)."""
+        """Resolve an IANA timezone name to a tzinfo (``UTC`` maps to ``datetime.UTC``).
+
+        Returns:
+            The resulting ``tzinfo``.
+        """
         return UTC if name.upper() == "UTC" else ZoneInfo(name)
 
     @staticmethod
     def configured_timezone() -> tzinfo:
-        """Resolve the configured timezone from ``FlextSettings.timezone``."""
+        """Resolve the configured timezone from ``FlextSettings.timezone``.
+
+        Returns:
+            The resulting ``tzinfo``.
+        """
         settings_module = import_module("flext_core._settings")
         settings_cls = settings_module.FlextSettings
         return FlextUtilitiesGenerators.resolve_timezone(
@@ -239,7 +287,11 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def from_timestamp(timestamp: float) -> datetime:
-        """Convert a POSIX timestamp to an aware datetime in the configured timezone."""
+        """Convert a POSIX timestamp to an aware datetime in the configured timezone.
+
+        Returns:
+            The resulting ``datetime``.
+        """
         return datetime.fromtimestamp(
             timestamp,
             FlextUtilitiesGenerators.configured_timezone(),
@@ -247,7 +299,11 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def from_iso(value: str) -> datetime:
-        """Parse an ISO-8601 string, assuming the configured timezone when naive."""
+        """Parse an ISO-8601 string, assuming the configured timezone when naive.
+
+        Returns:
+            The resulting ``datetime``.
+        """
         parsed = datetime.fromisoformat(value)
         if parsed.tzinfo is None:
             return parsed.replace(tzinfo=FlextUtilitiesGenerators.configured_timezone())

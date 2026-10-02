@@ -21,12 +21,12 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, JsonValue
 
-from .._enforcement_parts.flextconstantsenforcement_part_04 import (
+from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_04 import (
     FlextConstantsEnforcementRules,
 )
 
 if TYPE_CHECKING:
-    from ..._typings.base import FlextTypingBase as t
+    from flext_core._typings.base import FlextTypingBase as t
 
 
 class _SmellThresholds(BaseModel):
@@ -74,7 +74,11 @@ class _ExemptionData(BaseModel):
 
 
 def _resource_text(name: str) -> str:
-    """Read one enforcement package-data resource."""
+    """Read one enforcement package-data resource.
+
+    Returns:
+        The resulting ``str``.
+    """
     return (
         importlib.resources
         .files(__package__)

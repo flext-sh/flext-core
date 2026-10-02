@@ -1,4 +1,8 @@
-"""Behavior contract for public type guards in metadata and dispatch flows."""
+"""Behavior contract for public type guards in metadata and dispatch flows.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -22,6 +26,7 @@ class TestsFlextCoreUtilitiesTypeGuards:
         self,
         tmp_path: Path,
     ) -> None:
+        """Test public type guards validate normalized dispatch metadata."""
         repository_root = tmp_path / "flext"
         repository_root.mkdir()
         envelope = m.Tests.DispatchEnvelope(
@@ -72,6 +77,7 @@ class TestsFlextCoreUtilitiesTypeGuards:
         tm.that(set(normalized_modes), eq={"delta", "full"})
 
     def test_public_guard_returns_normalized_values_defaults_and_failures(self) -> None:
+        """Test public guard returns normalized values defaults and failures."""
         payload: dict[str, t.JsonValue] = {
             "command_name": "sync-users",
             "attempt_count": 2,

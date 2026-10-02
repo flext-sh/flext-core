@@ -1,4 +1,8 @@
-"""The lazy resolver fails loud on broken modules and stays probe-safe on absence."""
+"""The lazy resolver fails loud on broken modules and stays probe-safe on absence.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 

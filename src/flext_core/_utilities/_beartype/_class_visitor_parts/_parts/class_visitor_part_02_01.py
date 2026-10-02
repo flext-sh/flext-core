@@ -1,15 +1,22 @@
-"""MRO_SHAPE alias/peer-first analysis sidecar."""
+"""MRO_SHAPE alias/peer-first analysis sidecar.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 import sys
 
-from ....._constants.enforcement import FlextConstantsEnforcement as c
-from ....._models.enforcement import FlextModelsEnforcement as me
-from ....._typings.base import FlextTypingBase as t
-from ....project_metadata import FlextUtilitiesProjectMetadata as upm
-from ...helpers import FlextUtilitiesBeartypeHelpers as ubh
-from ..class_visitor_part_01 import BINARY_ARITY, NO_VIOLATION
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._models.enforcement import FlextModelsEnforcement as me
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_01 import (
+    BINARY_ARITY,
+    NO_VIOLATION,
+)
+from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers as ubh
+from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata as upm
 
 
 def _peer_first_allowed(
@@ -57,7 +64,11 @@ def alias_first_violation(
     target: type,
     params: me.MroShapeParams,
 ) -> t.StrMapping | None:
-    """Compute the alias/peer-first violation for ``v_mro_shape``."""
+    """Compute the alias/peer-first violation for ``v_mro_shape``.
+
+    Returns:
+        The resulting ``t.StrMapping | None``.
+    """
     _, separator, _ = target.__qualname__.partition(".")
     is_module_level = not separator
     project_prefix, _ = target.__name__, ""

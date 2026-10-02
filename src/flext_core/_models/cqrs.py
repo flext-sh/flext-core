@@ -15,15 +15,18 @@ from typing import Annotated, ClassVar, Literal
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from flext_core import c, t
-
-from ._cqrs_parts.flextmodelscqrs_part_01 import (
+from flext_core._models._cqrs_parts.flextmodelscqrs_part_01 import (
     FlextModelsCqrs as FlextModelsCqrsPart01,
 )
-from .base import FlextModelsBase as m
+from flext_core._models.base import FlextModelsBase as m
 
 
 def _u() -> type:
-    """Deferred facade access: cqrs is loaded by the m facade itself."""
+    """Deferred facade access: cqrs is loaded by the m facade itself.
+
+    Returns:
+        The resulting ``type``.
+    """
     from flext_core import u
 
     return u
@@ -119,7 +122,11 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
             cls,
             v: BaseModel | t.MappingKV[str, t.Scalar] | None,
         ) -> BaseModel:
-            """Convert pagination to Pagination instance."""
+            """Convert pagination to Pagination instance.
+
+            Returns:
+                The resulting ``BaseModel``.
+            """
             # A query subclass may declare its own nested Pagination model;
             # otherwise the namespace Pagination model applies.
             pagination_cls: type[BaseModel] = getattr(

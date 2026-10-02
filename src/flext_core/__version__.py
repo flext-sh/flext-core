@@ -30,7 +30,11 @@ class _FlextVersionMetadata:
 
     @staticmethod
     def _resolve_author(package_metadata: PackageMetadata) -> tuple[str, str]:
-        """Return the first normalized author identity from package metadata."""
+        """Return the first normalized author identity from package metadata.
+
+        Raises:
+            ValueError: If invalid Author-Email package metadata.
+        """
         raw_email = package_metadata.get("Author-Email", "")
         author_name, author_email = parseaddr(raw_email, strict=True)
         if raw_email and not author_email:
@@ -43,7 +47,11 @@ class _FlextVersionMetadata:
 
     @staticmethod
     def _resolve_homepage(package_metadata: PackageMetadata) -> str:
-        """Return the legacy Home-Page or labeled Homepage project URL."""
+        """Return the legacy Home-Page or labeled Homepage project URL.
+
+        Raises:
+            ValueError: If invalid Homepage project URL metadata.
+        """
         if homepage := package_metadata.get("Home-Page", ""):
             return homepage
         for project_url in package_metadata.get_all("Project-URL") or ():
@@ -59,7 +67,11 @@ class _FlextVersionMetadata:
 
     @staticmethod
     def _resolve_version_info(version: str) -> tuple[int, int, int]:
-        """Return the exact three-component PEP 440 release tuple."""
+        """Return the exact three-component PEP 440 release tuple.
+
+        Raises:
+            ValueError: If invalid three-part semantic version metadata.
+        """
         try:
             major, minor, patch = Version(version).release
         except ValueError as exc:

@@ -14,9 +14,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import t
-
-from .._constants.infrastructure import FlextConstantsInfrastructure as _c
-from .._models.context import FlextModelsContext
+from flext_core._constants.infrastructure import FlextConstantsInfrastructure as _c
+from flext_core._models.context import FlextModelsContext
 
 if TYPE_CHECKING:
     from datetime import datetime
@@ -97,7 +96,11 @@ class FlextUtilitiesContext:
         key: str,
         default: str | None = None,
     ) -> FlextModelsContext.StructlogProxyContextVar[str]:
-        """Create a new StructlogProxyContextVar[str] instance."""
+        """Create a new StructlogProxyContextVar[str] instance.
+
+        Returns:
+            The resulting ``FlextModelsContext.StructlogProxyContextVar[str]``.
+        """
         return FlextModelsContext.StructlogProxyContextVar(key, default=default)
 
     @staticmethod
@@ -105,7 +108,11 @@ class FlextUtilitiesContext:
         key: str,
         default: datetime | None = None,
     ) -> FlextModelsContext.StructlogProxyContextVar[datetime]:
-        """Create a new StructlogProxyContextVar[datetime] instance."""
+        """Create a new StructlogProxyContextVar[datetime] instance.
+
+        Returns:
+            The resulting ``FlextModelsContext.StructlogProxyContextVar[datetime]``.
+        """
         return FlextModelsContext.StructlogProxyContextVar(key, default=default)
 
     @staticmethod
@@ -113,7 +120,12 @@ class FlextUtilitiesContext:
         key: str,
         default: t.JsonMapping | None = None,
     ) -> FlextModelsContext.StructlogProxyContextVar[t.JsonMapping]:
-        """Create a new StructlogProxyContextVar[dict] instance."""
+        """Create a new StructlogProxyContextVar[dict] instance.
+
+        Returns:
+            The resulting
+                ``FlextModelsContext.StructlogProxyContextVar[t.JsonMapping]``.
+        """
         return FlextModelsContext.StructlogProxyContextVar(key, default=default)
 
 

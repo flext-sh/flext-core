@@ -3,6 +3,9 @@
 Pure value-to-primitive coercion (bool/int/float/str + case normalization)
 and the ``ParseOptions`` model. Consumed by the per-target ``_parse_try_*``
 helpers in :mod:`parser_targets` and :mod:`parser` via MRO composition.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -60,14 +63,22 @@ class FlextUtilitiesParserCoerce:
         *,
         case: str = c.ParserCase.LOWER.value,
     ) -> str:
-        """Normalize string value (avoids circular import with u.normalize)."""
+        """Normalize string value (avoids circular import with u.normalize).
+
+        Returns:
+            The resulting ``str``.
+        """
         value_str = value if isinstance(value, str) else str(value)
         op = FlextUtilitiesParserCoerce._CASE_OPS.get(case)
         return op(value_str) if op else value_str
 
     @staticmethod
     def _coerce_to_bool(value: t.JsonPayload) -> p.Result[bool]:
-        """Coerce value to bool. Returns None if not coercible."""
+        """Coerce value to bool. Returns None if not coercible.
+
+        Returns:
+            The resulting ``p.Result[bool]``.
+        """
         if isinstance(value, str):
             normalized_val = FlextUtilitiesParserCoerce._parse_normalize_str(
                 value,
@@ -82,7 +93,11 @@ class FlextUtilitiesParserCoerce:
 
     @staticmethod
     def _coerce_to_float(value: t.JsonPayload) -> p.Result[float]:
-        """Coerce value to float. Returns None if not coercible."""
+        """Coerce value to float. Returns None if not coercible.
+
+        Returns:
+            The resulting ``p.Result[float]``.
+        """
         if isinstance(value, (str, int)):
             return r[float].create_from_callable(
                 lambda: float(value),
@@ -95,7 +110,11 @@ class FlextUtilitiesParserCoerce:
 
     @staticmethod
     def _coerce_to_int(value: t.JsonPayload) -> p.Result[int]:
-        """Coerce value to int. Returns None if not coercible."""
+        """Coerce value to int. Returns None if not coercible.
+
+        Returns:
+            The resulting ``p.Result[int]``.
+        """
         if isinstance(value, (str, float)):
             return r[int].create_from_callable(
                 lambda: int(float(value)),
@@ -125,7 +144,11 @@ class FlextUtilitiesParserCoerce:
         case: str | None = None,
         default: str = "",
     ) -> str:
-        """Normalize string (builder: norm().str())."""
+        """Normalize string (builder: norm().str()).
+
+        Returns:
+            The resulting ``str``.
+        """
         if value is None:
             str_value = default
         elif isinstance(value, str):

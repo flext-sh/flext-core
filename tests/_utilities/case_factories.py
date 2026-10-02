@@ -1,9 +1,15 @@
-"""Service case factory helper namespace."""
+"""Service case factory helper namespace.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from .case_generators import TestsFlextUtilitiesCaseGeneratorsMixin
-from .case_service_factories import TestsFlextUtilitiesCaseServiceFactoriesMixin
+from tests._utilities.case_generators import TestsFlextUtilitiesCaseGeneratorsMixin
+from tests._utilities.case_service_factories import (
+    TestsFlextUtilitiesCaseServiceFactoriesMixin,
+)
 
 
 class TestsFlextUtilitiesCaseFactoriesMixin(

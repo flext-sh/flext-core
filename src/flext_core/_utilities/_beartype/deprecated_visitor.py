@@ -1,4 +1,8 @@
-"""Deprecated syntax detection via bytecode + module introspection."""
+"""Deprecated syntax detection via bytecode + module introspection.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -6,11 +10,13 @@ import inspect
 from pathlib import Path
 from typing import TypeAlias
 
-from ..._constants.enforcement import FlextConstantsEnforcement as c
-from ..._constants.regex import FlextConstantsRegex as cre
-from ..._models.enforcement import FlextModelsEnforcement as me
-from ..._typings.base import FlextTypingBase as t
-from .helpers import FlextUtilitiesBeartypeHelpers as _ubh
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._constants.regex import FlextConstantsRegex as cre
+from flext_core._models.enforcement import FlextModelsEnforcement as me
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._utilities._beartype.helpers import (
+    FlextUtilitiesBeartypeHelpers as _ubh,
+)
 
 _NO_VIOLATION: t.StrMapping | None = None
 _TYPING_TYPE_ALIAS = TypeAlias  # sentinel for ``X: TypeAlias = Y`` annotation match.
@@ -24,7 +30,14 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
         params: me.DeprecatedSyntaxParams,
         target: type,
     ) -> t.StrMapping | None:
-        """DEPRECATED_SYNTAX — runtime introspection routed by ``params.ast_shape``."""
+        """DEPRECATED_SYNTAX — runtime introspection routed by ``params.ast_shape``.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+
+        Raises:
+            ValueError: If unknown deprecated-syntax shape.
+        """
         shape = params.ast_shape
         module = _ubh.runtime_module_for(target)
         if module is None:

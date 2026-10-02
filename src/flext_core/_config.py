@@ -42,8 +42,8 @@ from yaml import MappingNode, SafeLoader
 from yaml.constructor import ConstructorError
 from yaml.resolver import BaseResolver
 
-from ._constants.config import FlextConstantsConfig
-from ._settings import app_env_prefix, platform_config_root
+from flext_core._constants.config import FlextConstantsConfig
+from flext_core._settings import app_env_prefix, platform_config_root
 
 if TYPE_CHECKING:
     from flext_core import t
@@ -59,7 +59,14 @@ def _construct_unique_mapping(
     *,
     deep: bool = False,
 ) -> dict[str, JsonValue]:
-    """Construct one JSON mapping and fail before a duplicate can overwrite."""
+    """Construct one JSON mapping and fail before a duplicate can overwrite.
+
+    Returns:
+        The resulting ``dict[str, JsonValue]``.
+
+    Raises:
+        ConstructorError: If while constructing a config mapping.
+    """
     values: dict[str, JsonValue] = {}
     for key_node, value_node in node.value:
         key = cast("JsonValue", loader.construct_object(key_node, deep=deep))
@@ -129,7 +136,14 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
 
     @override
     def _read_file(self, file_path: Path | Traversable) -> dict[str, JsonValue]:
-        """Parse one YAML config file exactly once with strict mapping keys."""
+        """Parse one YAML config file exactly once with strict mapping keys.
+
+        Returns:
+            The resulting ``dict[str, JsonValue]``.
+
+        Raises:
+            TypeError: If config YAML root must be a mapping.
+        """
         with file_path.open(encoding=self.yaml_file_encoding) as yaml_file:
             loader = _UniqueKeySafeLoader(yaml_file)
             try:
@@ -156,6 +170,9 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
         *replaces* the first list entirely. This override concatenates lists
         instead, enabling domain-split config files to each contribute rules
         to the same list.
+
+        Returns:
+            The resulting ``dict[str, JsonValue]``.
         """
         from collections.abc import Sequence as _Sequence
         from pathlib import Path as _Path
@@ -184,7 +201,11 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
         base: dict[str, JsonValue],
         updating: dict[str, JsonValue],
     ) -> dict[str, JsonValue]:
-        """Deep-merge two config dicts, concatenating list values."""
+        """Deep-merge two config dicts, concatenating list values.
+
+        Returns:
+            The resulting ``dict[str, JsonValue]``.
+        """
         result = dict(base)
         for key, value in updating.items():
             existing = result.get(key)
@@ -247,6 +268,9 @@ class FlextConfig(BaseSettings):
         An operator may relocate the root entirely with
         ``<PACKAGE>_CONFIG_DIR``. Library code must never depend on the process
         CWD, so the legacy CWD-relative lookup is gone.
+
+        Returns:
+            The resulting ``Path``.
         """
         namespace = cls._package_namespace()
         override = os.environ.get(f"{app_env_prefix(namespace)}CONFIG_DIR")
@@ -282,6 +306,14 @@ class FlextConfig(BaseSettings):
 
         Later files win on key collision, so operator preferences override the
         packaged defaults while every undeclared key keeps shipping its default.
+
+        Returns:
+            The resulting ``list[Path]``.
+
+        Raises:
+            FileNotFoundError: If declared config directory does not exist; or if
+                ``missing``.
+            ValueError: If ``invalid``.
         """
         config_dir = cls._config_dir()
         user_files = cls._yaml_files_in(cls._user_config_dir())
@@ -315,6 +347,9 @@ class FlextConfig(BaseSettings):
         Default is identity (no transformation). Override to apply env
         expansion, section filtering, or any data reshaping without
         reimplementing ``settings_customise_sources`` or the YAML source.
+
+        Returns:
+            The resulting ``dict[str, JsonValue]``.
         """
         return data
 
@@ -328,7 +363,11 @@ class FlextConfig(BaseSettings):
         dotenv_settings: PydanticBaseSettingsSource,
         file_secret_settings: PydanticBaseSettingsSource,
     ) -> t.VariadicTuple[PydanticBaseSettingsSource]:
-        """Env + every ``config/*.yaml`` deep-merged; no dotenv/secret sources."""
+        """Env + every ``config/*.yaml`` deep-merged; no dotenv/secret sources.
+
+        Returns:
+            The resulting ``t.VariadicTuple[PydanticBaseSettingsSource]``.
+        """
         _ = (dotenv_settings, file_secret_settings)
         return (
             init_settings,

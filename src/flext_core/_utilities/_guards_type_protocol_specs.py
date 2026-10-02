@@ -10,19 +10,18 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING, TypeIs
 
 from flext_core import c, t
-
-from .._protocols.container import FlextProtocolsContainer as pc
-from .._protocols.context import FlextProtocolsContext as pcx
-from .._protocols.handler import FlextProtocolsHandler as ph
-from .._protocols.loggings import FlextProtocolsLogging as pl
-from .._protocols.result import FlextProtocolsResult as pr
-from .._protocols.service import FlextProtocolsService as psrv
-from .._protocols.settings import FlextProtocolsSettings as ps
+from flext_core._protocols.container import FlextProtocolsContainer as pc
+from flext_core._protocols.context import FlextProtocolsContext as pcx
+from flext_core._protocols.handler import FlextProtocolsHandler as ph
+from flext_core._protocols.loggings import FlextProtocolsLogging as pl
+from flext_core._protocols.result import FlextProtocolsResult as pr
+from flext_core._protocols.service import FlextProtocolsService as psrv
+from flext_core._protocols.settings import FlextProtocolsSettings as ps
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from ._guards_type_protocol_types import ProtocolGuardInput
+    from flext_core._utilities._guards_type_protocol_types import ProtocolGuardInput
 
 
 class FlextUtilitiesGuardsTypeProtocolSpecsMixin:

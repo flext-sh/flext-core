@@ -1,12 +1,15 @@
-"""Runtime DI builders + ``build_service_runtime`` orchestration."""
+"""Runtime DI builders + ``build_service_runtime`` orchestration.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from importlib import import_module
 
 from flext_core import m, p
-
-from .model_options import FlextUtilitiesModelOptions
+from flext_core._utilities.model_options import FlextUtilitiesModelOptions
 
 
 class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
@@ -14,7 +17,15 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
 
     @classmethod
     def build_dispatcher(cls) -> p.Dispatcher:
-        """Materialize the canonical dispatcher implementation behind ``p.Dispatcher``."""
+        """Materialize the canonical dispatcher implementation behind ``p.Dispatcher``.
+
+        Returns:
+            The resulting ``p.Dispatcher``.
+
+        Raises:
+            TypeError: If Resolved dispatcher implementation does not satisfy
+                p.Dispatcher.
+        """
         dispatcher_module = import_module("flext_core.dispatcher")
         dispatcher_candidate = dispatcher_module.FlextDispatcher()
         if not isinstance(dispatcher_candidate, p.Dispatcher):
@@ -29,7 +40,14 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
         *,
         auto_discover_handlers: bool = False,
     ) -> p.Registry:
-        """Materialize the canonical registry implementation behind ``p.Registry``."""
+        """Materialize the canonical registry implementation behind ``p.Registry``.
+
+        Returns:
+            The resulting ``p.Registry``.
+
+        Raises:
+            TypeError: If Resolved registry implementation does not satisfy p.Registry.
+        """
         registry_module = import_module("flext_core.registry")
         registry_candidate = registry_module.FlextRegistry.create(
             dispatcher=dispatcher,
@@ -63,6 +81,9 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
         The container is a scope of the shared container bound to the resolved
         settings and context. A dispatcher the options do not inject is the
         container's command bus; failing to resolve it raises with its cause.
+
+        Returns:
+            The resulting ``m.ServiceRuntime``.
         """
         options = cls.resolve_runtime_options(source)
         settings = cls._resolve_runtime_settings(options)

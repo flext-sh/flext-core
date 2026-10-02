@@ -11,19 +11,19 @@ from typing import TYPE_CHECKING
 
 from pydantic import ValidationError as PydanticValidationError
 
-from .._constants._errors_parts.flextconstantserrors_part_03 import (
+from flext_core._constants._errors_parts.flextconstantserrors_part_03 import (
     FlextConstantsErrorsValidationExceptions,
 )
-from .._constants.mixins import FlextConstantsMixins
-from .._models.base import FlextModelsBase
-from .._protocols.result import FlextProtocolsResult as pr
-from .._runtime._metadata_validation import (
+from flext_core._constants.mixins import FlextConstantsMixins
+from flext_core._models.base import FlextModelsBase
+from flext_core._protocols.result import FlextProtocolsResult as pr
+from flext_core._runtime._metadata_validation import (
     FlextRuntimeMetadataValidation as FlextRuntime,
 )
 
 if TYPE_CHECKING:
-    from .._typings.base import FlextTypingBase as tb
-    from .._typings.services import FlextTypesServices as ts
+    from flext_core._typings.base import FlextTypingBase as tb
+    from flext_core._typings.services import FlextTypesServices as ts
 
 
 class FlextExceptionsHelpers:
@@ -34,7 +34,11 @@ class FlextExceptionsHelpers:
         context: tb.MappingKV[str, ts.JsonPayload | None] | pr.HasModelDump | None,
         extra_kwargs: tb.MappingKV[str, ts.JsonPayload | None],
     ) -> tuple[tuple[str, tb.JsonValue], ...]:
-        """Collect normalized metadata entries from context and kwargs once."""
+        """Collect normalized metadata entries from context and kwargs once.
+
+        Returns:
+            The resulting ``tuple[tuple[str, tb.JsonValue], ...]``.
+        """
         entries: list[tuple[str, tb.JsonValue]] = []
         source_values = (context, extra_kwargs)
         for source_value in source_values:
@@ -60,7 +64,11 @@ class FlextExceptionsHelpers:
         | tb.JsonValue
         | None,
     ) -> FlextModelsBase.Metadata | None:
-        """Normalize supported metadata inputs to runtime metadata model."""
+        """Normalize supported metadata inputs to runtime metadata model.
+
+        Returns:
+            The resulting ``FlextModelsBase.Metadata | None``.
+        """
         metadata: FlextModelsBase.Metadata | None = None
         if value is not None:
             try:
@@ -89,7 +97,11 @@ class FlextExceptionsHelpers:
 
     @staticmethod
     def safe_optional_str(value: ts.JsonPayload | type | None) -> str | None:
-        """Extract optional strict string from dynamic values."""
+        """Extract optional strict string from dynamic values.
+
+        Returns:
+            The resulting ``str | None``.
+        """
         if value is None:
             return None
         if isinstance(value, str):
@@ -102,7 +114,11 @@ class FlextExceptionsHelpers:
         extra_kwargs: tb.MappingKV[str, ts.JsonPayload | None],
         excluded_keys: set[str] | frozenset[str] | None = None,
     ) -> tb.JsonDict:
-        """Build normalized context map from context and kwargs."""
+        """Build normalized context map from context and kwargs.
+
+        Returns:
+            The resulting ``tb.JsonDict``.
+        """
         excluded = excluded_keys or frozenset()
         return {
             key: value
@@ -119,7 +135,11 @@ class FlextExceptionsHelpers:
         extra_kwargs: tb.MappingKV[str, ts.JsonPayload | None],
         keys: set[str] | frozenset[str],
     ) -> tb.JsonDict:
-        """Build parameter map restricted to declared param keys."""
+        """Build parameter map restricted to declared param keys.
+
+        Returns:
+            The resulting ``tb.JsonDict``.
+        """
         return {
             key: value
             for key, value in FlextExceptionsHelpers._normalized_source_entries(

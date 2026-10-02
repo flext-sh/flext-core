@@ -18,8 +18,7 @@ from hypothesis import given, strategies as st
 
 from tests.constants import c
 from tests.typings import t
-
-from ._handlers_support import TestsFlextFlextHandlers
+from tests.unit._handlers_support import TestsFlextFlextHandlers
 
 _TOKENS: st.SearchStrategy[str] = st.text(
     alphabet=st.characters(min_codepoint=33, max_codepoint=126),

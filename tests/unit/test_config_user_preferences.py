@@ -10,6 +10,9 @@ on a source checkout or on the process CWD, so a ``pip``/``uv``/``uvx``/
 These tests build a synthetic installed package on ``sys.path`` — no fixture
 mirrors flext-core's own config, so the contract is proven generically rather
 than for one project.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -38,7 +41,11 @@ class SynthConfig(FlextConfig):
 
 
 def _install_package(root: Path, package: str, defaults: str) -> ModuleType:
-    """Create and import a synthetic installed package rooted at ``root``."""
+    """Create and import a synthetic installed package rooted at ``root``.
+
+    Returns:
+        The resulting ``ModuleType``.
+    """
     package_dir = root / package
     (package_dir / "config").mkdir(parents=True)
     (package_dir / "__init__.py").write_text("", encoding="utf-8")

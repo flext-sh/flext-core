@@ -1,13 +1,19 @@
-"""Class placement, MRO, and protocol tree governance."""
+"""Class placement, MRO, and protocol tree governance.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from ...._config import FlextConfig
-from ...._constants.enforcement import FlextConstantsEnforcement as c
-from ...._models.enforcement import FlextModelsEnforcement as me
-from ...._typings.base import FlextTypingBase as t
-from .class_visitor_part_01 import NO_VIOLATION
-from .class_visitor_part_02 import (
+from flext_core._config import FlextConfig
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._models.enforcement import FlextModelsEnforcement as me
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_01 import (
+    NO_VIOLATION,
+)
+from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_02 import (
     FlextUtilitiesBeartypeClassVisitor as FlextUtilitiesBeartypeClassVisitorPart02,
 )
 
@@ -18,7 +24,11 @@ class FlextUtilitiesBeartypeClassVisitor(FlextUtilitiesBeartypeClassVisitorPart0
         params: me.LooseSymbolParams,
         *args: type | str,
     ) -> t.StrMapping | None:
-        """LOOSE_SYMBOL — top-level class/function naming + settings inheritance."""
+        """LOOSE_SYMBOL — top-level class/function naming + settings inheritance.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+        """
         match args:
             case (target, expected_prefix, *_) if isinstance(
                 target,

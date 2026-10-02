@@ -14,15 +14,14 @@ from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
 from flext_core import c, t
-
-from .._models.base import FlextModelsBase as m
-from .._models.containers import FlextModelsContainers
-from .._models.domain_event import FlextModelsDomainEvent as mde
-from .._protocols.result import FlextProtocolsResult as prt
-from .guards import FlextUtilitiesGuards as u
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.containers import FlextModelsContainers
+from flext_core._models.domain_event import FlextModelsDomainEvent as mde
+from flext_core._protocols.result import FlextProtocolsResult as prt
+from flext_core._utilities.guards import FlextUtilitiesGuards as u
 
 if TYPE_CHECKING:
-    from .._protocols.base import FlextProtocolsBase as pb
+    from flext_core._protocols.base import FlextProtocolsBase as pb
 
 
 class FlextUtilitiesDomain:
@@ -36,6 +35,9 @@ class FlextUtilitiesDomain:
         """Exact-type identity comparison (no MRO traversal).
 
         Returns True only when both objects are the exact same concrete type.
+
+        Returns:
+            The resulting ``bool``.
         """
         return type(obj_a) is type(obj_b)
 
@@ -48,6 +50,9 @@ class FlextUtilitiesDomain:
         """Compare two entities by unique ID (identity, not value).
 
         Returns True if both entities have same type and ID.
+
+        Returns:
+            The resulting ``bool``.
         """
         invalid_entity = u.scalar(entity_a) or isinstance(entity_a, (Sequence, Mapping))
         invalid_other = u.scalar(entity_b) or isinstance(entity_b, (Sequence, Mapping))
@@ -71,6 +76,9 @@ class FlextUtilitiesDomain:
         """Compare two value objects by all attributes (value, not identity).
 
         Returns True if same type and all attributes equal.
+
+        Returns:
+            The resulting ``bool``.
         """
         result: bool
         if isinstance(obj_a, c.SCALAR_TYPES):
@@ -121,7 +129,11 @@ class FlextUtilitiesDomain:
         entity: t.JsonPayload | prt.HasModelDump,
         id_attr: str = c.FIELD_ID,
     ) -> int:
-        """Hash entity by ID + type. Falls back to identity hash if ID missing."""
+        """Hash entity by ID + type. Falls back to identity hash if ID missing.
+
+        Returns:
+            The resulting ``int``.
+        """
         if u.scalar(entity):
             return hash(entity)
         entity_id = getattr(entity, id_attr, None)
@@ -131,7 +143,11 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def hash_value_object_by_value(obj: t.JsonPayload | prt.HasModelDump) -> int:
-        """Hash value object by all attributes. Falls back to repr hash."""
+        """Hash value object by all attributes. Falls back to repr hash.
+
+        Returns:
+            The resulting ``int``.
+        """
         if u.scalar(obj):
             return hash(obj)
         if isinstance(obj, m.EnforcedModel):
@@ -170,6 +186,9 @@ class FlextUtilitiesDomain:
         Pass ``aggregate_id`` explicitly when the entity's stable identity
         differs from ``unique_id`` (e.g. a surrogate ``id`` field). Pydantic's
         ``BeforeValidator`` on ``DomainEvent.data`` handles all normalization.
+
+        Returns:
+            The resulting ``mde.DomainEvent``.
         """
         if data is None:
             normalized_data = FlextModelsContainers.ConfigMap(root={})

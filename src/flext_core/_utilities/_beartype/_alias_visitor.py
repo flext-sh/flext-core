@@ -1,13 +1,19 @@
-"""Alias rebind and compatibility alias visitors."""
+"""Alias rebind and compatibility alias visitors.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from ..._constants.enforcement import FlextConstantsEnforcement as c
-from ..._models.enforcement import FlextModelsEnforcement as me
-from ..._typings.base import FlextTypingBase as t
-from .helpers import FlextUtilitiesBeartypeHelpers as _ubh
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._models.enforcement import FlextModelsEnforcement as me
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._utilities._beartype.helpers import (
+    FlextUtilitiesBeartypeHelpers as _ubh,
+)
 
 _NO_VIOLATION: t.StrMapping | None = None
 
@@ -20,7 +26,11 @@ class FlextUtilitiesBeartypeAliasVisitor:
         params: me.AliasRebindParams,
         target: type,
     ) -> t.StrMapping | None:
-        """ALIAS_REBIND — canonical alias rebind / sibling-import discipline."""
+        """ALIAS_REBIND — canonical alias rebind / sibling-import discipline.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+        """
         module = _ubh.runtime_module_for(target)
         if module is None:
             return _NO_VIOLATION
@@ -79,7 +89,11 @@ class FlextUtilitiesBeartypeAliasVisitor:
         params: me.CompatibilityAliasParams,
         target: type,
     ) -> t.StrMapping | None:
-        """COMPATIBILITY_ALIAS — long facade class name must use canonical alias."""
+        """COMPATIBILITY_ALIAS — long facade class name must use canonical alias.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+        """
         if not params.alias_renames:
             return _NO_VIOLATION
         module = _ubh.runtime_module_for(target)

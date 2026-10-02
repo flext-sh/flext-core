@@ -1,4 +1,8 @@
-"""FlextSettings — exercises ALL public API methods with golden file validation."""
+"""FlextSettings — exercises ALL public API methods with golden file validation.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -6,9 +10,8 @@ import os
 from pathlib import Path
 from typing import override
 
+from examples.ex_02_flext_settings_helpers import Ex02FlextSettingsFieldChecks
 from flext_core import FlextSettings, c
-
-from .ex_02_flext_settings_helpers import Ex02FlextSettingsFieldChecks
 
 
 class Ex02FlextSettings(Ex02FlextSettingsFieldChecks):
@@ -36,7 +39,11 @@ class Ex02FlextSettings(Ex02FlextSettingsFieldChecks):
 
     @staticmethod
     def _strip_flext_env() -> dict[str, str]:
-        """Remove ``FLEXT_``-prefixed vars so field defaults are deterministic."""
+        """Remove ``FLEXT_``-prefixed vars so field defaults are deterministic.
+
+        Returns:
+            The resulting ``dict[str, str]``.
+        """
         saved = {k: v for k, v in os.environ.items() if k.startswith("FLEXT_")}
         for key in saved:
             os.environ.pop(key, None)
@@ -50,7 +57,11 @@ class Ex02FlextSettings(Ex02FlextSettingsFieldChecks):
 
     @staticmethod
     def _set_env(key: str, value: str | None) -> str | None:
-        """Set an env var, returning its previous value."""
+        """Set an env var, returning its previous value.
+
+        Returns:
+            The resulting ``str | None``.
+        """
         previous = os.environ.get(key)
         if value is None:
             os.environ.pop(key, None)

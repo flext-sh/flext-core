@@ -14,14 +14,14 @@ from collections.abc import Mapping
 from contextlib import AbstractContextManager
 from typing import Protocol, runtime_checkable
 
-from .._typings.base import FlextTypingBase as tb
-from .._typings.services import FlextTypesServices as ts
-from .base import FlextProtocolsBase
-from .container import FlextProtocolsContainer
-from .context import FlextProtocolsContext
-from .loggings import FlextProtocolsLogging
-from .result import FlextProtocolsResult
-from .settings import FlextProtocolsSettings
+from flext_core._protocols.base import FlextProtocolsBase
+from flext_core._protocols.container import FlextProtocolsContainer
+from flext_core._protocols.context import FlextProtocolsContext
+from flext_core._protocols.loggings import FlextProtocolsLogging
+from flext_core._protocols.result import FlextProtocolsResult
+from flext_core._protocols.settings import FlextProtocolsSettings
+from flext_core._typings.base import FlextTypingBase as tb
+from flext_core._typings.services import FlextTypesServices as ts
 
 
 class FlextProtocolsService:

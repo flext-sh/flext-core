@@ -1,4 +1,8 @@
-"""Type and module introspection helpers — annotation inspection + bytecode analysis."""
+"""Type and module introspection helpers — annotation inspection + bytecode analysis.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -16,12 +20,14 @@ from typing import (
     is_protocol,
 )
 
-from ...._models.enforcement import FlextModelsEnforcement as me
-from ...family_surface import FlextUtilitiesFamilySurface
-from ..type_aliases import FlextUtilitiesBeartypeTypeAliases
+from flext_core._models.enforcement import FlextModelsEnforcement as me
+from flext_core._utilities._beartype.type_aliases import (
+    FlextUtilitiesBeartypeTypeAliases,
+)
+from flext_core._utilities.family_surface import FlextUtilitiesFamilySurface
 
 if TYPE_CHECKING:
-    from ...._typings.base import FlextTypingBase as t
+    from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextUtilitiesBeartypeHelpers:
@@ -37,7 +43,11 @@ class FlextUtilitiesBeartypeHelpers:
     @staticmethod
     @functools.cache
     def lazy_alias_suffixes(package_name: str) -> tuple[tuple[str, str, str], ...]:
-        """Read package lazy exports; import failures retain their original cause."""
+        """Read package lazy exports; import failures retain their original cause.
+
+        Returns:
+            The resulting ``tuple[tuple[str, str, str], ...]``.
+        """
         package = sys.modules.get(package_name)
         if package is None:
             package = importlib.import_module(package_name)

@@ -1,14 +1,17 @@
-"""Context ``set`` overloads and implementation (extracted for LOC cap)."""
+"""Context ``set`` overloads and implementation (extracted for LOC cap).
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from typing import overload
 
 from flext_core import c, e, p, r, t
-
-from ..runtime import FlextRuntime
-from .context_state import FlextUtilitiesContextState
-from .model import FlextUtilitiesModel
+from flext_core._utilities.context_state import FlextUtilitiesContextState
+from flext_core._utilities.model import FlextUtilitiesModel
+from flext_core.runtime import FlextRuntime
 
 
 class FlextUtilitiesContextCrudSetMixin(FlextUtilitiesContextState):
@@ -39,7 +42,11 @@ class FlextUtilitiesContextCrudSetMixin(FlextUtilitiesContextState):
         *,
         scope: str = c.ContextScope.GLOBAL,
     ) -> p.Result[bool]:
-        """Set one or many values in the context."""
+        """Set one or many values in the context.
+
+        Returns:
+            The resulting ``p.Result[bool]``.
+        """
         operation_result: p.Result[bool] = r[bool].ok(True)
         prepared_update: tuple[t.JsonMapping, t.JsonMapping] | None = None
         if not self.state.active:

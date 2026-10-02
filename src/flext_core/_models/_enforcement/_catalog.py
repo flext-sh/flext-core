@@ -11,10 +11,9 @@ from typing import Annotated
 from pydantic import Discriminator, Field, model_validator
 
 from flext_core import c
-
-from ..._typings.base import FlextTypingBase as t
-from ._base import EnforcementModelBase
-from ._sources import FlextModelsEnforcementSources
+from flext_core._models._enforcement._base import EnforcementModelBase
+from flext_core._models._enforcement._sources import FlextModelsEnforcementSources
+from flext_core._typings.base import FlextTypingBase as t
 
 type EnforcementRuleSource = (
     FlextModelsEnforcementSources.EnforcementInfraRuleSource
@@ -67,7 +66,12 @@ class FlextModelsEnforcementCatalog(FlextModelsEnforcementSources):
             self,
             kind: c.EnforcementSourceKind,
         ) -> tuple[FlextModelsEnforcementCatalog.EnforcementRuleSpec, ...]:
-            """Filter rules by source kind."""
+            """Filter rules by source kind.
+
+            Returns:
+                The resulting ``tuple[FlextModelsEnforcementCatalog.EnforcementRuleSpec,
+                    ...]``.
+            """
             return tuple(rule for rule in self.rules if rule.source.kind == kind.value)
 
 

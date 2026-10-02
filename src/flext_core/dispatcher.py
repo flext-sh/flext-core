@@ -1,4 +1,8 @@
-"""Message dispatch orchestration with reliability features."""
+"""Message dispatch orchestration with reliability features.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -31,7 +35,11 @@ class FlextDispatcher:
         self._event_subscribers = event_subscribers
 
     def dispatch(self, message: p.Routable) -> p.Result[t.JsonPayload]:
-        """Dispatch a CQRS message to its registered handler."""
+        """Dispatch a CQRS message to its registered handler.
+
+        Returns:
+            The resulting ``p.Result[t.JsonPayload]``.
+        """
         try:
             route_name = u.resolve_message_route(message)
         except c.EXC_TYPE_VALIDATION as exc:
@@ -55,7 +63,11 @@ class FlextDispatcher:
         return self._execute_handler(resolved_handler, message, route_name)
 
     def publish(self, event: p.Routable | t.SequenceOf[p.Routable]) -> p.Result[bool]:
-        """Publish events to all registered subscribers."""
+        """Publish events to all registered subscribers.
+
+        Returns:
+            The resulting ``p.Result[bool]``.
+        """
         if isinstance(event, Sequence):
             for evt in event:
                 _ = self.publish(evt)
@@ -86,7 +98,11 @@ class FlextDispatcher:
         *,
         is_event: bool = False,
     ) -> p.Result[bool]:
-        """Register a handler for a specific message type."""
+        """Register a handler for a specific message type.
+
+        Returns:
+            The resulting ``p.Result[bool]``.
+        """
         route_name: str | None = None
         accepted_message_types: tuple[t.TypeHintSpecifier, ...] = tuple(
             u.compute_accepted_message_types(type(handler)),
@@ -159,7 +175,11 @@ class FlextDispatcher:
         message: p.Routable,
         route_name: str,
     ) -> p.Result[t.JsonPayload]:
-        """Execute ``resolved_handler(message)`` and adapt to ``r[JsonPayload]``."""
+        """Execute ``resolved_handler(message)`` and adapt to ``r[JsonPayload]``.
+
+        Returns:
+            The resulting ``p.Result[t.JsonPayload]``.
+        """
         dispatch_result = r[t.JsonPayload]
         try:
             raw_candidate = resolved_handler(message)
@@ -181,7 +201,11 @@ class FlextDispatcher:
         raw_candidate: t.JsonPayload | p.ResultView[t.JsonPayload] | None,
         dispatch_result: type[r[t.JsonPayload]],
     ) -> t.JsonPayload | p.ResultView[t.JsonPayload] | None:
-        """Normalize raw handler output to Result or payload candidate."""
+        """Normalize raw handler output to Result or payload candidate.
+
+        Returns:
+            The resulting ``t.JsonPayload | p.ResultView[t.JsonPayload] | None``.
+        """
         if isinstance(raw_candidate, p.ResultView):
             return raw_candidate
         if raw_candidate is None:
@@ -198,7 +222,11 @@ class FlextDispatcher:
         raw_output: t.JsonPayload | p.ResultView[t.JsonPayload] | None,
         dispatch_result: type[r[t.JsonPayload]],
     ) -> p.Result[t.JsonPayload]:
-        """Adapt normalized output to the canonical ``r[t.JsonPayload]`` contract."""
+        """Adapt normalized output to the canonical ``r[t.JsonPayload]`` contract.
+
+        Returns:
+            The resulting ``p.Result[t.JsonPayload]``.
+        """
         result: p.Result[t.JsonPayload]
         if raw_output is None:
             result = dispatch_result.fail_op(

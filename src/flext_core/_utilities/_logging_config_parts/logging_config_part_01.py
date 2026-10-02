@@ -154,7 +154,11 @@ class FlextUtilitiesLoggingConfig:
 
         @override
         def write(self, s: str, /) -> int:
-            """Write message to queue (non-blocking)."""
+            """Write message to queue (non-blocking).
+
+            Returns:
+                The resulting ``int``.
+            """
             try:
                 self.queue.put(s, block=c.ASYNC_BLOCK_ON_FULL)
             except queue.Full as exc:

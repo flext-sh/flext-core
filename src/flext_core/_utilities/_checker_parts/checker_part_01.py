@@ -12,8 +12,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeIs
 
-from ..._typings.base import FlextTypingBase as tb
-from ..._typings.services import FlextTypesServices as ts
+from flext_core._typings.base import FlextTypingBase as tb
+from flext_core._typings.services import FlextTypesServices as ts
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -34,17 +34,28 @@ class FlextUtilitiesChecker:
 
         Excludes ``type`` objects (classes are callable but are not the
         bound/free functions we expect as handle methods).
+
+        Returns:
+            The resulting ``TypeIs[Callable[..., ts.ModuleExport]]``.
         """
         return callable(value) and not isinstance(value, type)
 
     @staticmethod
     def _is_subclass_of(candidate: tb.TypeHintSpecifier, parent: type) -> bool:
-        """Safe subclass check that never raises TypeError."""
+        """Safe subclass check that never raises TypeError.
+
+        Returns:
+            The resulting ``bool``.
+        """
         return isinstance(candidate, type) and issubclass(candidate, parent)
 
     @classmethod
     def _is_dict_type(cls, candidate: tb.TypeHintSpecifier) -> bool:
-        """Check if candidate is dict or a subclass of dict."""
+        """Check if candidate is dict or a subclass of dict.
+
+        Returns:
+            The resulting ``bool``.
+        """
         return cls._is_subclass_of(candidate, dict)
 
     @classmethod
@@ -55,7 +66,11 @@ class FlextUtilitiesChecker:
         origin_type: tb.TypeHintSpecifier,
         message_origin: tb.TypeHintSpecifier,
     ) -> bool:
-        """Check dict type compatibility between expected and message types."""
+        """Check dict type compatibility between expected and message types.
+
+        Returns:
+            The resulting ``bool``.
+        """
         origin_is_dict = cls._is_dict_type(origin_type)
         message_origin_is_dict = cls._is_dict_type(message_origin)
         if origin_is_dict and (
@@ -71,7 +86,11 @@ class FlextUtilitiesChecker:
         cls,
         expected_type: tb.TypeHintSpecifier,
     ) -> bool:
-        """Check if expected type is a canonical catch-all value contract."""
+        """Check if expected type is a canonical catch-all value contract.
+
+        Returns:
+            The resulting ``bool``.
+        """
         return expected_type is ts.JsonPayload
 
 

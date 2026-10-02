@@ -1,4 +1,8 @@
-"""Field + model annotation governance via Pydantic inspection."""
+"""Field + model annotation governance via Pydantic inspection.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -9,11 +13,13 @@ from typing import Annotated, TypeAliasType, Union, get_args, get_origin
 
 from pydantic.fields import FieldInfo
 
-from ..._constants.enforcement import FlextConstantsEnforcement as c
-from ..._models.enforcement import FlextModelsEnforcement as me
-from ..._models.pydantic import FlextModelsPydantic as mp
-from ..._typings.base import FlextTypingBase as t
-from .helpers import FlextUtilitiesBeartypeHelpers as _ubh
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._models.enforcement import FlextModelsEnforcement as me
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._utilities._beartype.helpers import (
+    FlextUtilitiesBeartypeHelpers as _ubh,
+)
 
 
 class FlextUtilitiesBeartypeFieldVisitor:
@@ -40,7 +46,11 @@ class FlextUtilitiesBeartypeFieldVisitor:
 
     @classmethod
     def _declared_union_members(cls, annotation: object | None) -> int:
-        """Count union arms from declaration syntax without expanding aliases."""
+        """Count union arms from declaration syntax without expanding aliases.
+
+        Returns:
+            The resulting ``int``.
+        """
         declared = annotation
         if isinstance(declared, str):
             unwrapped = _ubh.unwrap_annotated(declared)
@@ -168,7 +178,11 @@ class FlextUtilitiesBeartypeFieldVisitor:
         params: me.FieldShapeParams,
         *args: type | str | FieldInfo,
     ) -> t.StrMapping | None:
-        """FIELD_SHAPE — Pydantic field annotation governance via flags."""
+        """FIELD_SHAPE — Pydantic field annotation governance via flags.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+        """
         match args:
             case (model_type, name, info):
                 if not (
@@ -199,7 +213,11 @@ class FlextUtilitiesBeartypeFieldVisitor:
         params: me.ModelConfigParams,
         target: type,
     ) -> t.StrMapping | None:
-        """MODEL_CONFIG — Pydantic model_config governance via flags."""
+        """MODEL_CONFIG — Pydantic model_config governance via flags.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+        """
         violation: t.StrMapping | None = None
         has_v1_config = params.forbid_v1_config and isinstance(
             target.__dict__.get("Config"),

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from .._enforcement_data import (
+from flext_core._constants._enforcement_data import (
     ENFORCE_FLEXT_CORE_PATH_MARKERS,
     ENFORCE_NON_WORKSPACE_PATH_MARKERS,
     ENFORCEMENT_ACCESSOR_EXTERNAL_CONTRACTS,
@@ -31,10 +31,12 @@ from .._enforcement_data import (
     SMELL_RULES_TEXT,
     SMELL_THRESHOLDS,
 )
-from .flextconstantsenforcement_part_04 import FlextConstantsEnforcementRules
+from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_04 import (
+    FlextConstantsEnforcementRules,
+)
 
 if TYPE_CHECKING:
-    from ..._typings.base import FlextTypingBase as t
+    from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextConstantsEnforcementSmellData:

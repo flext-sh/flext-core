@@ -1,12 +1,20 @@
-"""Library abstraction owner enforcement visitor."""
+"""Library abstraction owner enforcement visitor.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from ..._constants.enforcement import FlextConstantsEnforcement as c
-from ..._models.enforcement import FlextModelsEnforcement as me
-from ..._typings.base import FlextTypingBase as t
-from .helpers import FlextUtilitiesBeartypeHelpers as _ubh
-from .module_source import FlextUtilitiesBeartypeModuleSource
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._models.enforcement import FlextModelsEnforcement as me
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._utilities._beartype.helpers import (
+    FlextUtilitiesBeartypeHelpers as _ubh,
+)
+from flext_core._utilities._beartype.module_source import (
+    FlextUtilitiesBeartypeModuleSource,
+)
 
 _NO_VIOLATION: t.StrMapping | None = None
 
@@ -26,6 +34,9 @@ class FlextUtilitiesBeartypeLibraryVisitor:
         the owner project's imports: bindings rooted in owner imports are
         facade provenance (legal), while direct imports, aliased imports,
         and dynamic ``__import__`` acquisitions stay violations.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
         """
         _ = params
         owners = c.ENFORCEMENT_LIBRARY_OWNERS

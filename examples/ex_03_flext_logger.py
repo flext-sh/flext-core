@@ -1,4 +1,8 @@
-"""Golden-file example for FlextUtilitiesLogging public APIs."""
+"""Golden-file example for FlextUtilitiesLogging public APIs.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -13,7 +17,11 @@ from flext_core import u
 
 
 def _raise_value_error(message: str) -> None:
-    """Raise the logged example error."""
+    """Raise the logged example error.
+
+    Raises:
+        ValueError: Always.
+    """
     raise ValueError(message)
 
 
@@ -31,7 +39,14 @@ class Ex03FlextLogger(ExamplesFlextShared):
 
     @staticmethod
     def _exception_ok(logger: p.Logger, label: str) -> bool:
-        """Exercise exception logging from an active exception handler."""
+        """Exercise exception logging from an active exception handler.
+
+        Returns:
+            The resulting ``bool``.
+
+        Raises:
+            AssertionError: If expected ValueError.
+        """
         message = "boom"
         try:
             _raise_value_error(message)

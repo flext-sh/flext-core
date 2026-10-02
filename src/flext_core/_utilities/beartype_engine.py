@@ -16,21 +16,39 @@ from typing import ClassVar, TypeAliasType, override
 
 from pydantic.fields import FieldInfo
 
-from .._constants.enforcement import FlextConstantsEnforcement as c
-from .._models.enforcement import FlextModelsEnforcement as me
-from .._models.pydantic import FlextModelsPydantic as mp
-from .._protocols.base import FlextProtocolsBase as p
-from .._typings.base import FlextTypingBase as t
-from ._beartype._helpers_parts.helpers_part_03 import FlextUtilitiesBeartypeHelpers
-from ._beartype.attr_visitor import FlextUtilitiesBeartypeAttrVisitor
-from ._beartype.class_visitor import FlextUtilitiesBeartypeClassVisitor
-from ._beartype.deprecated_visitor import FlextUtilitiesBeartypeDeprecatedVisitor
-from ._beartype.field_visitor import FlextUtilitiesBeartypeFieldVisitor
-from ._beartype.import_visitor import FlextUtilitiesBeartypeImportVisitor
-from ._beartype.method_visitor import FlextUtilitiesBeartypeMethodVisitor
-from ._beartype.module_visitor import FlextUtilitiesBeartypeModuleVisitor
-from ._beartype.type_aliases import FlextUtilitiesBeartypeTypeAliases
-from .beartype_typingext_patch import (
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._models.enforcement import FlextModelsEnforcement as me
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._protocols.base import FlextProtocolsBase as p
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._utilities._beartype._helpers_parts.helpers_part_03 import (
+    FlextUtilitiesBeartypeHelpers,
+)
+from flext_core._utilities._beartype.attr_visitor import (
+    FlextUtilitiesBeartypeAttrVisitor,
+)
+from flext_core._utilities._beartype.class_visitor import (
+    FlextUtilitiesBeartypeClassVisitor,
+)
+from flext_core._utilities._beartype.deprecated_visitor import (
+    FlextUtilitiesBeartypeDeprecatedVisitor,
+)
+from flext_core._utilities._beartype.field_visitor import (
+    FlextUtilitiesBeartypeFieldVisitor,
+)
+from flext_core._utilities._beartype.import_visitor import (
+    FlextUtilitiesBeartypeImportVisitor,
+)
+from flext_core._utilities._beartype.method_visitor import (
+    FlextUtilitiesBeartypeMethodVisitor,
+)
+from flext_core._utilities._beartype.module_visitor import (
+    FlextUtilitiesBeartypeModuleVisitor,
+)
+from flext_core._utilities._beartype.type_aliases import (
+    FlextUtilitiesBeartypeTypeAliases,
+)
+from flext_core._utilities.beartype_typingext_patch import (
     FlextUtilitiesBeartypeTypingExtPatch as _FlextUtilitiesBeartypeTypingExtPatch,
 )
 
@@ -87,7 +105,11 @@ class FlextUtilitiesBeartypeEngine(
         owner: type,
         *args: p.AttributeProbe,
     ) -> tuple[me.DeferredAlias, ...]:
-        """Account for unavailable alias values before a value-dependent rule."""
+        """Account for unavailable alias values before a value-dependent rule.
+
+        Returns:
+            The resulting ``tuple[me.DeferredAlias, ...]``.
+        """
         if isinstance(params, me.AttrShapeParams):
             if params.forbid_any_in_alias:
                 match args:
@@ -151,7 +173,11 @@ class FlextUtilitiesBeartypeEngine(
         params: mp.BaseModel,
         *args: p.AttributeProbe,
     ) -> t.StrMapping | None:
-        """Dispatch a rule predicate to its visitor; an unmapped kind raises."""
+        """Dispatch a rule predicate to its visitor; an unmapped kind raises.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+        """
         return cls._VISITORS[kind](params, *args)
 
     _VISITORS: ClassVar[

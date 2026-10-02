@@ -1,19 +1,26 @@
-"""Container scope example section."""
+"""Container scope example section.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
+from examples.ex_08_container_registration import Ex08ContainerRegistration
 from examples.models import m
 from examples.protocols import p
 from flext_core import FlextSettings
-
-from .ex_08_container_registration import Ex08ContainerRegistration
 
 
 class Ex08ContainerScoped(Ex08ContainerRegistration):
     """Scoped container checks for the container example."""
 
     def _exercise_scoped(self, container: p.ContainerLifecycle) -> p.ContainerLifecycle:
-        """Exercise scope with all supported parameter styles."""
+        """Exercise scope with all supported parameter styles.
+
+        Returns:
+            The resulting ``p.ContainerLifecycle``.
+        """
         self.section("scoped")
         scoped_default = container.scope()
         subproject_alpha = self.rand_str(6)

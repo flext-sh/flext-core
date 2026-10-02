@@ -107,6 +107,9 @@ def _capture_import_warnings(
     The whole import runs inside the ``catch_warnings`` block so no warning
     leaks to the surrounding pytest session, and the module is evicted +
     ``sys.path`` restored afterwards so the shared interpreter is left clean.
+
+    Returns:
+        The resulting ``t.StrSequence``.
     """
     inserted = search_path is not None
     if inserted:
@@ -134,6 +137,7 @@ class TestsFlextEnforcementIntegration:
 
     def test_clean_module_import_emits_no_violation_warning(self) -> None:
         # Arrange / Act: importing a fully rule-compliant module.
+        """Test clean module import emits no violation warning."""
         messages = _capture_import_warnings(_CLEAN_MODULE)
 
         # Assert: the hook produces no FLEXT violation warnings.
@@ -147,6 +151,11 @@ class TestsFlextEnforcementIntegration:
         cls,
         tmp_path_factory: pytest.TempPathFactory,
     ) -> t.StrSequence:
+        """Provide ``violation_messages``.
+
+        Returns:
+            The resulting ``t.StrSequence``.
+        """
         module_root = tmp_path_factory.mktemp("enforcement_bad_fixture")
         (module_root / f"{_BAD_MODULE}.py").write_text(
             _BAD_MODULE_SOURCE,
@@ -162,6 +171,7 @@ class TestsFlextEnforcementIntegration:
     ) -> None:
         # The public FlextMroViolation export is a genuine Warning subclass and
         # is the exact category a caller can filter on.
+        """Test every emitted warning is the public category."""
         assert issubclass(e.MroViolation, Warning)
         assert all("violates FLEXT" in message for message in violation_messages)
 
@@ -190,6 +200,7 @@ class TestsFlextEnforcementIntegration:
         rule: str,
     ) -> None:
         # Assert: the observable warning output names the specific violation.
+        """Test rule violation is reported in warning text."""
         assert any(fragment in message for message in violation_messages), (
             f"rule={rule!r}: no warning contained {fragment!r}"
         )
@@ -215,6 +226,7 @@ class TestsFlextEnforcementIntegration:
         class_name: str,
     ) -> None:
         # Assert: every rule-breaking top-level class triggers the hook.
+        """Test each violating class is named in a warning."""
         assert any(class_name in message for message in violation_messages), (
             f"No violation warning named {class_name!r}"
         )
@@ -225,6 +237,7 @@ class TestsFlextEnforcementIntegration:
     ) -> None:
         # Arrange: one class holding TWO constants outside _constants. The
         # detector must surface both in a single pass (no whack-a-mole).
+        """Test classvar constant detector reports every constant in one pass."""
         module_root = tmp_path
         module_name = "_flext_census_multi_constant_fixture"
         (module_root / f"{module_name}.py").write_text(

@@ -10,11 +10,10 @@ import time
 from typing import TYPE_CHECKING
 
 from flext_core import c
-
-from ._base import FlextDecoratorsBase
+from flext_core._decorators._base import FlextDecoratorsBase
 
 if TYPE_CHECKING:
-    from .._typings.base import FlextTypingBase as tb
+    from flext_core._typings.base import FlextTypingBase as tb
 
 
 class FlextDecoratorsLoggingPayloads(FlextDecoratorsBase):
@@ -27,7 +26,11 @@ class FlextDecoratorsLoggingPayloads(FlextDecoratorsBase):
         func_module: str,
         correlation_id: str | None,
     ) -> tb.MutableJsonMapping:
-        """Build structured operation-start log payload."""
+        """Build structured operation-start log payload.
+
+        Returns:
+            The resulting ``tb.MutableJsonMapping``.
+        """
         payload: tb.MutableJsonMapping = {
             "function": func_name,
             "func_module": func_module,
@@ -44,7 +47,11 @@ class FlextDecoratorsLoggingPayloads(FlextDecoratorsBase):
         track_perf: bool,
         start_time: float,
     ) -> tb.MutableJsonMapping:
-        """Build structured operation-success log payload."""
+        """Build structured operation-success log payload.
+
+        Returns:
+            The resulting ``tb.MutableJsonMapping``.
+        """
         payload: tb.MutableJsonMapping = {"function": func_name, "success": True}
         if correlation_id is not None:
             payload[c.ContextKey.CORRELATION_ID] = correlation_id

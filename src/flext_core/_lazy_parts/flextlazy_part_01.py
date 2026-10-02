@@ -1,4 +1,8 @@
-"""PEP 562 lazy export helpers."""
+"""PEP 562 lazy export helpers.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -19,7 +23,7 @@ from pydantic import (
     computed_field,
 )
 
-from .._typings.base import FlextTypingBase as t
+from flext_core._typings.base import FlextTypingBase as t
 
 if TYPE_CHECKING:
     from types import FrameType, ModuleType
@@ -152,6 +156,10 @@ class FlextLazyPart01(BaseModel):
         hand back is one this thread is importing (a circular import). That
         state is public runtime data: a ``<module>`` code frame on the current
         stack whose globals are the module namespace.
+
+        Raises:
+            RuntimeError: If flext_core lazy exports require interpreter stack frames
+                (inspect.currentframe() returned None; CPython is required).
         """
         frame: FrameType | None = inspect.currentframe()
         if frame is None:
@@ -224,7 +232,11 @@ class FlextLazyPart01(BaseModel):
         alias_groups: LazyImportAliasGroups | None = None,
         sort_keys: bool = True,
     ) -> LazyImportDict:
-        """Build one flat lazy-import map."""
+        """Build one flat lazy-import map.
+
+        Returns:
+            The resulting ``LazyImportDict``.
+        """
         out: LazyImportDict = {
             name: module
             for module, names in (module_groups or {}).items()

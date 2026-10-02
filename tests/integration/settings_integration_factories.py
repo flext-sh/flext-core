@@ -1,4 +1,8 @@
-"""Settings integration factories kept outside the collected test module."""
+"""Settings integration factories kept outside the collected test module.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -40,7 +44,11 @@ class TestsFlextSettingsConfigTestCase(m.BaseModel):
     ] = ""
 
     def create_temp_file(self, temp_dir: Path) -> Path:
-        """Create temporary settings file."""
+        """Create temporary settings file.
+
+        Returns:
+            The resulting ``Path``.
+        """
         file_path = temp_dir / f"test_config.{self.file_format}"
         if self.file_format == "json":
             u.Cli.json_write(file_path, self.config_data)
@@ -76,7 +84,11 @@ class TestsFlextSettingsConfigTestFactories:
 
     @staticmethod
     def basic_config_cases() -> t.SequenceOf[TestsFlextSettingsConfigTestCase]:
-        """Generate basic configuration test cases."""
+        """Generate basic configuration test cases.
+
+        Returns:
+            The resulting ``t.SequenceOf[TestsFlextSettingsConfigTestCase]``.
+        """
         return [
             TestsFlextSettingsConfigTestCase(
                 test_name="basic_json",
@@ -104,7 +116,11 @@ class TestsFlextSettingsConfigTestFactories:
 
     @staticmethod
     def thread_safety_cases() -> t.SequenceOf[TestsFlextSettingsThreadSafetyTest]:
-        """Generate thread safety test cases."""
+        """Generate thread safety test cases.
+
+        Returns:
+            The resulting ``t.SequenceOf[TestsFlextSettingsThreadSafetyTest]``.
+        """
         return [
             TestsFlextSettingsThreadSafetyTest(
                 thread_count=3,

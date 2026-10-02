@@ -1,4 +1,8 @@
-"""Reusable service mixins facade."""
+"""Reusable service mixins facade.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -84,7 +88,11 @@ class FlextMixins(m.ArbitraryTypesModel):
 
     @classmethod
     def _get_or_create_logger(cls) -> p.Logger:
-        """Get or create a DI-injected logger for this component class."""
+        """Get or create a DI-injected logger for this component class.
+
+        Returns:
+            The resulting ``p.Logger``.
+        """
         logger_name = f"{cls.__module__}.{cls.__name__}"
         with cls._cache_lock:
             if logger_name in cls._logger_cache:
@@ -96,7 +104,14 @@ class FlextMixins(m.ArbitraryTypesModel):
 
     @contextmanager
     def track(self, operation_name: str) -> Generator[Mapping[str, t.JsonPayload]]:
-        """Track operation performance with timing and automatic context cleanup."""
+        """Track operation performance with timing and automatic context cleanup.
+
+        Yields:
+            Each ``Mapping[str, t.JsonPayload]``.
+
+        Raises:
+            EXC_BROAD_RUNTIME: If a ``c.EXC_BROAD_RUNTIME`` is caught.
+        """
         stats: m.ConfigMap = self._operation_stats.get(
             operation_name,
             m.ConfigMap(
@@ -142,7 +157,11 @@ class FlextMixins(m.ArbitraryTypesModel):
             self._context_type.apply_operation_name("")
 
     def _get_runtime(self) -> m.ServiceRuntime:
-        """Build this component's runtime once and reuse it."""
+        """Build this component's runtime once and reuse it.
+
+        Returns:
+            The resulting ``m.ServiceRuntime``.
+        """
         if self._runtime is None:
             self._runtime = u.build_service_runtime(self)
         return self._runtime

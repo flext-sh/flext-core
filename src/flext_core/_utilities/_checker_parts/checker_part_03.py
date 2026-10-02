@@ -16,12 +16,13 @@ from typing import get_args, get_origin
 from pydantic import BaseModel
 
 from flext_core import c, r
-
-from ..._protocols.base import FlextProtocolsBase as pb
-from ..._protocols.result import FlextProtocolsResult as p
-from ..._typings.base import FlextTypingBase as tb
-from ..._typings.services import FlextTypesServices as ts
-from .checker_part_02 import FlextUtilitiesChecker as FlextUtilitiesCheckerPart02
+from flext_core._protocols.base import FlextProtocolsBase as pb
+from flext_core._protocols.result import FlextProtocolsResult as p
+from flext_core._typings.base import FlextTypingBase as tb
+from flext_core._typings.services import FlextTypesServices as ts
+from flext_core._utilities._checker_parts.checker_part_02 import (
+    FlextUtilitiesChecker as FlextUtilitiesCheckerPart02,
+)
 
 
 class FlextUtilitiesChecker(FlextUtilitiesCheckerPart02):
@@ -30,7 +31,11 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart02):
         cls,
         handler_class: type,
     ) -> tb.SequenceOf[tb.TypeHintSpecifier]:
-        """Extract message types from generic base annotations."""
+        """Extract message types from generic base annotations.
+
+        Returns:
+            The resulting ``tb.SequenceOf[tb.TypeHintSpecifier]``.
+        """
         raw_bases: tb.VariadicTuple[tb.TypeHintSpecifier] | tuple[()] = getattr(
             handler_class,
             "__orig_bases__",
@@ -63,7 +68,11 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart02):
         cls,
         handler_class: type,
     ) -> p.Result[tb.TypeHintSpecifier]:
-        """Extract message type from handle method annotations when generics are absent."""
+        """Extract message type from handle method annotations when generics are absent.
+
+        Returns:
+            The resulting ``p.Result[tb.TypeHintSpecifier]``.
+        """
         if not hasattr(handler_class, c.MethodName.HANDLE):
             return r[tb.TypeHintSpecifier].fail(c.ERR_CHECKER_HANDLER_NO_HANDLE_METHOD)
         handle_method_raw: ts.GuardInput | None = getattr(
@@ -92,7 +101,11 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart02):
         accepted_types: tb.VariadicTuple[tb.TypeHintSpecifier],
         message_type: ts.MessageTypeSpecifier | None,
     ) -> bool:
-        """Check if handler can process this message type."""
+        """Check if handler can process this message type.
+
+        Returns:
+            The resulting ``bool``.
+        """
         if not accepted_types or message_type is None:
             return False
         for expected_type in accepted_types:
@@ -105,7 +118,11 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart02):
         cls,
         handler_class: type,
     ) -> tb.VariadicTuple[tb.TypeHintSpecifier]:
-        """Compute message types accepted by a handler using cached introspection."""
+        """Compute message types accepted by a handler using cached introspection.
+
+        Returns:
+            The resulting ``tb.VariadicTuple[tb.TypeHintSpecifier]``.
+        """
         message_types: MutableSequence[tb.TypeHintSpecifier] = []
         generic_types = cls._extract_generic_message_types(handler_class)
         message_types.extend(generic_types)
@@ -122,6 +139,8 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart02):
         Raises:
             TypeError: If message does not provide a valid route.
 
+        Returns:
+            The resulting ``str``.
         """
         if isinstance(msg, str):
             return msg

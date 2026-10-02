@@ -15,9 +15,9 @@ from flext_core import t
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from .._models.pydantic import FlextModelsPydantic as mp
-    from .._protocols.base import FlextProtocolsBase as pb
-    from .._protocols.result import FlextProtocolsResult as pr
+    from flext_core._models.pydantic import FlextModelsPydantic as mp
+    from flext_core._protocols.base import FlextProtocolsBase as pb
+    from flext_core._protocols.result import FlextProtocolsResult as pr
 
 
 class FlextUtilitiesGuardsTypeModel:

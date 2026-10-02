@@ -68,7 +68,11 @@ class FlextService[TDomainResult = p.Base](x):
     @classmethod
     @override
     def __pydantic_on_complete__(cls) -> None:
-        """Reject a port whose type ``isinstance`` cannot validate."""
+        """Reject a port whose type ``isinstance`` cannot validate.
+
+        Raises:
+            TypeError: If ``member is not NoneType and (not is_protocol(member))``.
+        """
         super().__pydantic_on_complete__()
         for name, field in cls.model_fields.items():
             if get_origin(field.annotation) is not t.Port:

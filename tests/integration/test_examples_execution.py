@@ -6,6 +6,9 @@ value against a committed golden file, and reports the outcome on stdout. These
 tests assert only that observable contract -- process exit status, the announced
 ``PASS`` marker, the reported check count, the absence of failure/traceback
 markers, and the golden-file artifacts -- never any harness internals.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations

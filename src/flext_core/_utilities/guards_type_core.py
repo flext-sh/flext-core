@@ -31,21 +31,33 @@ class FlextUtilitiesGuardsTypeCore:
     def _object_sequence(
         value: t.GuardInput | t.JsonPayload | t.JsonValue | PydanticBaseModel,
     ) -> TypeIs[Sequence[t.JsonPayload]]:
-        """Check if value is a sequence (list or tuple)."""
+        """Check if value is a sequence (list or tuple).
+
+        Returns:
+            The resulting ``TypeIs[Sequence[t.JsonPayload]]``.
+        """
         return isinstance(value, c.SEQUENCE_PAIR_TYPES)
 
     @staticmethod
     def _object_mapping(
         value: t.GuardInput | t.JsonPayload | t.JsonValue | PydanticBaseModel,
     ) -> TypeIs[Mapping[str, t.JsonPayload]]:
-        """Check if value is a mapping type."""
+        """Check if value is a mapping type.
+
+        Returns:
+            The resulting ``TypeIs[Mapping[str, t.JsonPayload]]``.
+        """
         return isinstance(value, Mapping)
 
     @staticmethod
     def _all_container_sequence(
         value: t.SequenceOf[t.JsonValue | t.JsonPayload],
     ) -> bool:
-        """Check if all items in sequence are valid containers."""
+        """Check if all items in sequence are valid containers.
+
+        Returns:
+            The resulting ``bool``.
+        """
         for sequence_item in value:
             if not FlextUtilitiesGuardsTypeCore.container(sequence_item):
                 return False
@@ -55,7 +67,11 @@ class FlextUtilitiesGuardsTypeCore:
     def all_container_mapping_values(
         value: t.MappingKV[str, t.JsonValue | t.JsonPayload],
     ) -> bool:
-        """Check if all values in mapping are valid containers."""
+        """Check if all values in mapping are valid containers.
+
+        Returns:
+            The resulting ``bool``.
+        """
         for mapped_value in value.values():
             if not FlextUtilitiesGuardsTypeCore.container(mapped_value):
                 return False
@@ -63,12 +79,20 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def dict_non_empty(value: t.GuardInput | None) -> bool:
-        """Check if value is a non-empty mapping."""
+        """Check if value is a non-empty mapping.
+
+        Returns:
+            The resulting ``bool``.
+        """
         return bool(isinstance(value, Mapping) and value)
 
     @staticmethod
     def empty_value(value: t.GuardInput | t.JsonPayload | t.JsonValue | None) -> bool:
-        """Check whether a FLEXT value is absent or an empty text/container."""
+        """Check whether a FLEXT value is absent or an empty text/container.
+
+        Returns:
+            The resulting ``bool``.
+        """
         if value is None:
             return True
         if isinstance(value, (str, bytes, bytearray, Mapping)):
@@ -85,6 +109,9 @@ class FlextUtilitiesGuardsTypeCore:
 
         Containers are scalars, paths, or JSON-compatible collections whose
         members recursively satisfy the metadata contract.
+
+        Returns:
+            The resulting ``TypeIs[t.JsonValue]``.
         """
         if value is None:
             return False
@@ -100,28 +127,44 @@ class FlextUtilitiesGuardsTypeCore:
     def list_value(
         value: t.GuardInput | t.JsonPayload | t.JsonValue,
     ) -> TypeIs[t.JsonList]:
-        """Check if value is a list."""
+        """Check if value is a list.
+
+        Returns:
+            The resulting ``TypeIs[t.JsonList]``.
+        """
         return isinstance(value, list)
 
     @staticmethod
     def mapping(
         value: t.GuardInput | t.JsonPayload | t.JsonValue,
     ) -> TypeIs[t.JsonMapping]:
-        """Check if value is a mapping type."""
+        """Check if value is a mapping type.
+
+        Returns:
+            The resulting ``TypeIs[t.JsonMapping]``.
+        """
         return isinstance(value, Mapping)
 
     @staticmethod
     def primitive(
         value: t.GuardInput | t.JsonPayload | t.JsonValue,
     ) -> TypeIs[t.Primitives]:
-        """Check if value is a primitive type (c.PRIMITIVES_TYPES)."""
+        """Check if value is a primitive type (c.PRIMITIVES_TYPES).
+
+        Returns:
+            The resulting ``TypeIs[t.Primitives]``.
+        """
         return isinstance(value, c.PRIMITIVES_TYPES)
 
     @staticmethod
     def scalar(
         value: t.GuardInput | t.Scalar | t.JsonPayload | t.JsonValue,
     ) -> TypeIs[t.Scalar]:
-        """Check if value is a scalar type (str, int, float, bool, datetime)."""
+        """Check if value is a scalar type (str, int, float, bool, datetime).
+
+        Returns:
+            The resulting ``TypeIs[t.Scalar]``.
+        """
         return isinstance(value, c.SCALAR_TYPES)
 
     @staticmethod
@@ -137,7 +180,11 @@ class FlextUtilitiesGuardsTypeCore:
     def dict_like(
         value: t.GuardInput | t.JsonPayload | t.JsonValue,
     ) -> TypeIs[Mapping[str, t.JsonPayload]]:
-        """Check if value behaves like a mapping accepted by FLEXT containers."""
+        """Check if value behaves like a mapping accepted by FLEXT containers.
+
+        Returns:
+            The resulting ``TypeIs[Mapping[str, t.JsonPayload]]``.
+        """
         if isinstance(value, Mapping):
             return True
         return FlextUtilitiesGuardsTypeCore._has_dict_protocol(value)
@@ -146,7 +193,11 @@ class FlextUtilitiesGuardsTypeCore:
     def list_like(
         value: t.GuardInput | t.JsonPayload | t.JsonValue,
     ) -> TypeIs[Sequence[t.JsonPayload]]:
-        """Check if value behaves like a non-string object sequence."""
+        """Check if value behaves like a non-string object sequence.
+
+        Returns:
+            The resulting ``TypeIs[Sequence[t.JsonPayload]]``.
+        """
         return isinstance(value, c.SEQUENCE_PAIR_TYPES) and not isinstance(
             value,
             c.STR_BYTES_TYPES,
@@ -154,17 +205,29 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def string_non_empty(value: t.GuardInput) -> TypeGuard[str]:
-        """Check if value is a non-empty string (after stripping whitespace)."""
+        """Check if value is a non-empty string (after stripping whitespace).
+
+        Returns:
+            The resulting ``TypeGuard[str]``.
+        """
         return isinstance(value, str) and bool(value.strip())
 
     @staticmethod
     def instance_of[T](value: t.GuardInput | T, type_cls: type[T]) -> bool:
-        """Check if value is instance of type class (handles generics)."""
+        """Check if value is instance of type class (handles generics).
+
+        Returns:
+            The resulting ``bool``.
+        """
         return isinstance(value, getattr(type_cls, "__origin__", None) or type_cls)
 
     @staticmethod
     def in_(value: t.GuardInput, container: t.GuardInput) -> bool:
-        """Check if value is in container, handling TypeError gracefully."""
+        """Check if value is in container, handling TypeError gracefully.
+
+        Returns:
+            The resulting ``bool``.
+        """
         if isinstance(container, (list, tuple, set, dict)):
             contains: bool
             try:

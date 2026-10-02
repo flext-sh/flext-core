@@ -121,7 +121,11 @@ class FlextContainer(p.Container):
         service_version: str | None = None,
         correlation_id: str | None = None,
     ) -> p.Logger:
-        """Create a module logger for the specified runtime scope."""
+        """Create a module logger for the specified runtime scope.
+
+        Returns:
+            The resulting ``p.Logger``.
+        """
         _ = service_name, service_version, correlation_id
         logger: p.Logger = FlextUtilitiesLogging.fetch_logger(module_name)
         return logger
@@ -131,7 +135,11 @@ class FlextContainer(p.Container):
         value: t.RegisterableService,
         expected: type[T],
     ) -> TypeGuard[T]:
-        """Narrow a resolved service through its structural runtime type."""
+        """Narrow a resolved service through its structural runtime type.
+
+        Returns:
+            The resulting ``TypeGuard[T]``.
+        """
         return isinstance(value, expected)
 
     def _write(
@@ -149,6 +157,14 @@ class FlextContainer(p.Container):
         This is the only path that mutates the registrations. Public writes
         reject empty, reserved and duplicate names; the container's own core
         writes (``internal``) may only target reserved names.
+
+        Returns:
+            The resulting ``Self``.
+
+        Raises:
+            ValidationError: If ``not name``; or if ``reserved != internal``; or if
+                ``not internal and name in self._registrations``; or if a ``ValueError``
+                is caught.
         """
         if not name:
             raise e.ValidationError(c.ERR_CONTAINER_NAME_EMPTY)
@@ -177,7 +193,11 @@ class FlextContainer(p.Container):
 
     @override
     def bind(self, name: str, impl: t.RegisterableService) -> Self:
-        """Bind a concrete service instance or value."""
+        """Bind a concrete service instance or value.
+
+        Returns:
+            The resulting ``Self``.
+        """
         return self._write(
             name,
             partial(m.ServiceRegistration, name=name, service=impl),
@@ -185,7 +205,11 @@ class FlextContainer(p.Container):
 
     @override
     def factory(self, name: str, impl: t.FactoryCallable) -> Self:
-        """Bind a factory callable invoked on every resolve."""
+        """Bind a factory callable invoked on every resolve.
+
+        Returns:
+            The resulting ``Self``.
+        """
         return self._write(
             name,
             partial(m.FactoryRegistration, name=name, factory=impl),
@@ -193,7 +217,11 @@ class FlextContainer(p.Container):
 
     @override
     def resource(self, name: str, impl: t.ResourceCallable) -> Self:
-        """Bind a resource factory invoked on every resolve."""
+        """Bind a resource factory invoked on every resolve.
+
+        Returns:
+            The resulting ``Self``.
+        """
         return self._write(
             name,
             partial(m.ResourceRegistration, name=name, factory=impl),
@@ -204,7 +232,11 @@ class FlextContainer(p.Container):
         callable_obj: t.FactoryCallable,
         kind: str,
     ) -> p.Result[t.RegisterableService]:
-        """Invoke a factory/resource callable and validate what it produced."""
+        """Invoke a factory/resource callable and validate what it produced.
+
+        Returns:
+            The resulting ``p.Result[t.RegisterableService]``.
+        """
         try:
             resolved = callable_obj()
             _ = u.normalize_registerable_service(resolved)
@@ -241,7 +273,11 @@ class FlextContainer(p.Container):
         *,
         type_cls: type[T] | None = None,
     ) -> p.Result[T] | p.Result[t.RegisterableService]:
-        """Resolve a registered service, factory or resource by name."""
+        """Resolve a registered service, factory or resource by name.
+
+        Returns:
+            The resulting ``p.Result[T] | p.Result[t.RegisterableService]``.
+        """
         match self._registrations.get(name):
             case None:
                 return r[t.RegisterableService].from_result(
@@ -280,7 +316,11 @@ class FlextContainer(p.Container):
 
     @override
     def names(self) -> t.StrSequence:
-        """List the public services, factories, and resources."""
+        """List the public services, factories, and resources.
+
+        Returns:
+            The resulting ``t.StrSequence``.
+        """
         return [name for name in self._registrations if self.has(name)]
 
     def initialize_registrations(
@@ -371,6 +411,9 @@ class FlextContainer(p.Container):
 
         Registrations declared by ``registration`` override inherited names;
         the scope binds its own core services to its own settings and context.
+
+        Returns:
+            The resulting ``Self``.
         """
         spec = registration or m.ServiceRegistrationSpec()
         settings_source = spec.settings if spec.settings is not None else self._config
@@ -415,7 +458,11 @@ class FlextContainer(p.Container):
 
     @override
     def drop(self, name: str) -> p.Result[bool]:
-        """Remove a public service, factory, or resource registration by name."""
+        """Remove a public service, factory, or resource registration by name.
+
+        Returns:
+            The resulting ``p.Result[bool]``.
+        """
         if not self.has(name):
             return r[bool].from_result(
                 e.fail_not_found("service", name, result_type=r[bool]),
@@ -425,7 +472,11 @@ class FlextContainer(p.Container):
 
     @override
     def dispatcher(self) -> p.Result[p.Dispatcher]:
-        """Resolve the canonical dispatcher / command bus."""
+        """Resolve the canonical dispatcher / command bus.
+
+        Returns:
+            The resulting ``p.Result[p.Dispatcher]``.
+        """
         result = self.resolve(c.ServiceName.COMMAND_BUS)
         if result.failure:
             return r[p.Dispatcher].from_result(
@@ -471,7 +522,14 @@ class FlextContainer(p.Container):
 
     @staticmethod
     def _resolve_caller_module(frame: FrameType | None) -> ModuleType:
-        """Resolve the imported module that called ``shared`` or raise."""
+        """Resolve the imported module that called ``shared`` or raise.
+
+        Returns:
+            The resulting ``ModuleType``.
+
+        Raises:
+            ValidationError: If ``module is None``.
+        """
         caller = frame.f_back if frame is not None else None
         module_name = caller.f_globals.get("__name__") if caller is not None else None
         module = sys.modules.get(module_name) if isinstance(module_name, str) else None
@@ -531,7 +589,11 @@ class FlextContainer(p.Container):
 
     @override
     def apply(self, settings: t.UserOverridesMapping | None = None) -> Self:
-        """Apply user-provided overrides to container configuration."""
+        """Apply user-provided overrides to container configuration.
+
+        Returns:
+            The resulting ``Self``.
+        """
         if settings is None:
             return self
         merged = self._user_overrides.model_copy()

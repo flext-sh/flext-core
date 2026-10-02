@@ -9,11 +9,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_core import c, m, p
-
-from ..template import FlextExceptionsTemplate
-from .flextexceptionsfactories_part_01 import (
+from flext_core._exceptions._factories_parts.flextexceptionsfactories_part_01 import (
     FlextExceptionsFactories as FlextExceptionsFactoriesPart01,
 )
+from flext_core._exceptions.template import FlextExceptionsTemplate
 
 if TYPE_CHECKING:
     from flext_core import r

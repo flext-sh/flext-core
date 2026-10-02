@@ -1,4 +1,8 @@
-"""Text and external-service contract helpers for flext-core tests."""
+"""Text and external-service contract helpers for flext-core tests.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 

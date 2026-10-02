@@ -11,8 +11,7 @@ from datetime import datetime
 import structlog.contextvars
 
 from flext_core import t
-
-from ._tokens import FlextModelsContextTokens
+from flext_core._models._context._tokens import FlextModelsContextTokens
 
 
 class FlextModelsContextProxyVar:
@@ -42,7 +41,11 @@ class FlextModelsContextProxyVar:
                 })
 
         def get(self) -> t.JsonPayload | datetime | None:
-            """Get current value from structlog context."""
+            """Get current value from structlog context.
+
+            Returns:
+                The resulting ``t.JsonPayload | datetime | None``.
+            """
             contextvars_data = structlog.contextvars.get_contextvars()
             structlog_context: t.MappingKV[str, t.JsonPayload | datetime] = (
                 contextvars_data
@@ -55,7 +58,11 @@ class FlextModelsContextProxyVar:
             return value
 
         def set(self, value: T | None) -> FlextModelsContextTokens.StructlogProxyToken:
-            """Set value in structlog context."""
+            """Set value in structlog context.
+
+            Returns:
+                The resulting ``FlextModelsContextTokens.StructlogProxyToken``.
+            """
             current_value = self.get()
             if value is not None:
                 _ = structlog.contextvars.bind_contextvars(**{self._key: value})

@@ -1,10 +1,14 @@
-"""Structural project metadata contracts exposed on ``p``."""
+"""Structural project metadata contracts exposed on ``p``.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from .base import FlextProtocolsBase as pb
+from flext_core._protocols.base import FlextProtocolsBase as pb
 
 if TYPE_CHECKING:
     from pathlib import Path, PurePosixPath

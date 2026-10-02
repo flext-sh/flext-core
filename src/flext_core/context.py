@@ -53,12 +53,20 @@ class FlextContext(m.ManagedModel):
     _container_state: ClassVar[m.ContextContainerState] = m.ContextContainerState()
 
     def set(self, key: str, value: t.JsonPayload) -> p.Result[bool]:
-        """Store a value in this context's scope."""
+        """Store a value in this context's scope.
+
+        Returns:
+            The resulting ``p.Result[bool]``.
+        """
         self.data.update({key: value})
         return r[bool].ok(True)
 
     def get(self, key: str) -> p.Result[t.JsonPayload]:
-        """Retrieve a value from this context's scope."""
+        """Retrieve a value from this context's scope.
+
+        Returns:
+            The resulting ``p.Result[t.JsonPayload]``.
+        """
         if key not in self.data.root:
             return r[t.JsonPayload].fail(f"Key '{key}' not found in context")
         value = self.data.root[key]
@@ -67,7 +75,11 @@ class FlextContext(m.ManagedModel):
         return r[t.JsonPayload].ok(value)
 
     def has(self, key: str) -> bool:
-        """Check if a key exists in this context's scope."""
+        """Check if a key exists in this context's scope.
+
+        Returns:
+            The resulting ``bool``.
+        """
         return key in self.data.root
 
     def keys(self) -> t.StrSequence:
@@ -83,7 +95,11 @@ class FlextContext(m.ManagedModel):
         return list(self.data.root.items())
 
     def resolve_metadata(self, key: str) -> p.Result[t.JsonPayload]:
-        """Get a metadata value by key."""
+        """Get a metadata value by key.
+
+        Returns:
+            The resulting ``p.Result[t.JsonPayload]``.
+        """
         if key not in self.metadata.attributes:
             return r[t.JsonPayload].fail(f"Metadata key '{key}' not found")
         raw_value: t.JsonValue = self.metadata.attributes[key]
@@ -110,7 +126,11 @@ class FlextContext(m.ManagedModel):
         self.data.root.clear()
 
     def merge(self, other: p.Context | t.MappingKV[str, t.JsonPayload]) -> Self:
-        """Merge another context or mapping into this context's scope."""
+        """Merge another context or mapping into this context's scope.
+
+        Returns:
+            The resulting ``Self``.
+        """
         if isinstance(other, p.Context):
             self.data.root.update(other.items())
         else:
@@ -118,21 +138,33 @@ class FlextContext(m.ManagedModel):
         return self
 
     def clone(self) -> Self:
-        """Create an independent copy of this context scope."""
+        """Create an independent copy of this context scope.
+
+        Returns:
+            The resulting ``Self``.
+        """
         return self.__class__(
             data=self.data.model_copy(deep=True),
             metadata=self.metadata.model_copy(),
         )
 
     def export(self, *, as_dict: bool = True) -> t.MappingKV[str, t.JsonPayload] | Self:
-        """Export scope contents. Returns dict when as_dict=True (default)."""
+        """Export scope contents. Returns dict when as_dict=True (default).
+
+        Returns:
+            The resulting ``t.MappingKV[str, t.JsonPayload] | Self``.
+        """
         if as_dict:
             return dict(self.data.root)
         return self
 
     @classmethod
     def create(cls, **initial_data: t.JsonPayload) -> p.Context:
-        """Build a context instance seeded with initial scope values."""
+        """Build a context instance seeded with initial scope values.
+
+        Returns:
+            The resulting ``p.Context``.
+        """
         context = cls()
         for key, value in initial_data.items():
             _ = context.set(key, value)
@@ -140,7 +172,14 @@ class FlextContext(m.ManagedModel):
 
     @classmethod
     def resolve_container(cls) -> p.Container:
-        """Get the global DI container instance."""
+        """Get the global DI container instance.
+
+        Returns:
+            The resulting ``p.Container``.
+
+        Raises:
+            RuntimeError: If ``cls._container_state.container is None``.
+        """
         if cls._container_state.container is None:
             msg = c.ERR_RUNTIME_CONTAINER_NOT_INITIALIZED
             raise RuntimeError(msg)
@@ -155,7 +194,11 @@ class FlextContext(m.ManagedModel):
 
     @staticmethod
     def fetch_service(service_name: str) -> p.Result[t.RegisterableService]:
-        """Resolve a named service from the global container."""
+        """Resolve a named service from the global container.
+
+        Returns:
+            The resulting ``p.Result[t.RegisterableService]``.
+        """
         return FlextContext.resolve_container().resolve(service_name)
 
     @staticmethod
@@ -163,7 +206,11 @@ class FlextContext(m.ManagedModel):
         service_name: str,
         service: t.RegisterableService,
     ) -> p.Result[bool]:
-        """Register a named service in the global container."""
+        """Register a named service in the global container.
+
+        Returns:
+            The resulting ``p.Result[bool]``.
+        """
         container = FlextContext.resolve_container()
         try:
             _ = container.bind(service_name, service)
@@ -173,7 +220,11 @@ class FlextContext(m.ManagedModel):
 
     @staticmethod
     def resolve_correlation_id() -> str | None:
-        """Get current correlation ID from process context."""
+        """Get current correlation ID from process context.
+
+        Returns:
+            The resulting ``str | None``.
+        """
         value = u.CORRELATION_ID.get()
         return value if isinstance(value, str) else None
 
@@ -183,7 +234,11 @@ class FlextContext(m.ManagedModel):
         correlation_id: str | None = None,
         parent_id: str | None = None,
     ) -> Generator[str]:
-        """Scope a correlation ID, restoring the previous one on exit."""
+        """Scope a correlation ID, restoring the previous one on exit.
+
+        Yields:
+            Each ``str``.
+        """
         if correlation_id is None:
             correlation_id = u.generate("correlation")
         current = u.CORRELATION_ID.get()
@@ -237,7 +292,11 @@ class FlextContext(m.ManagedModel):
 
     @staticmethod
     def resolve_operation_name() -> str | None:
-        """Get current operation name from process context."""
+        """Get current operation name from process context.
+
+        Returns:
+            The resulting ``str | None``.
+        """
         value = u.OPERATION_NAME.get()
         return str(value) if value is not None else None
 
@@ -249,7 +308,11 @@ class FlextContext(m.ManagedModel):
     @staticmethod
     @contextmanager
     def timed_operation(operation_name: str | None = None) -> Generator[m.ConfigMap]:
-        """Scope a timed operation with performance metadata."""
+        """Scope a timed operation with performance metadata.
+
+        Yields:
+            Each ``m.ConfigMap``.
+        """
         start_time = u.generate_datetime_utc()
         start_perf = time.perf_counter()
         payload = t.json_mapping_adapter().validate_python({
@@ -276,7 +339,11 @@ class FlextContext(m.ManagedModel):
 
     @staticmethod
     def export_full_context() -> t.MappingKV[str, t.Scalar]:
-        """Export all active contextvar values as a flat mapping."""
+        """Export all active contextvar values as a flat mapping.
+
+        Returns:
+            The resulting ``t.MappingKV[str, t.Scalar]``.
+        """
         result: dict[str, t.Scalar] = {}
         if (value := u.CORRELATION_ID.get()) is not None:
             result[c.ContextKey.CORRELATION_ID] = str(value)

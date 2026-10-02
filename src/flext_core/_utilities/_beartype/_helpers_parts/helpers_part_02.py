@@ -1,4 +1,8 @@
-"""Type and module introspection helpers — annotation inspection + bytecode analysis."""
+"""Type and module introspection helpers — annotation inspection + bytecode analysis.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -7,15 +11,15 @@ import inspect
 import types as _types_mod
 from typing import TYPE_CHECKING, Annotated, ClassVar, ForwardRef, get_args, get_origin
 
-from ...._constants.enforcement import FlextConstantsEnforcement as c
-from .helpers_part_01 import (
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._utilities._beartype._helpers_parts.helpers_part_01 import (
     FlextUtilitiesBeartypeHelpers as FlextUtilitiesBeartypeHelpersPart01,
 )
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from ...._typings.base import FlextTypingBase as t
+    from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart01):
@@ -77,6 +81,9 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart01):
         Misses are NOT cached: during ``__init_subclass__`` the class is not
         yet assigned to its module namespace, so a cached miss would poison
         every later post-import check for the same class.
+
+        Returns:
+            The resulting ``_types_mod.ModuleType | None``.
         """
         cached = FlextUtilitiesBeartypeHelpers._RUNTIME_MODULE_CACHE.get(target)
         if cached is not None:

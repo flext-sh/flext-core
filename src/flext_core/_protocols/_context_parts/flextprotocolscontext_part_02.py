@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from contextlib import AbstractContextManager
 
     from flext_core import m, p, t
-from .flextprotocolscontext_part_01 import (
+from flext_core._protocols._context_parts.flextprotocolscontext_part_01 import (
     FlextProtocolsContext as FlextProtocolsContextPart01,
 )
 

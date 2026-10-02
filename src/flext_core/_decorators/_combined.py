@@ -9,14 +9,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Literal, overload
 
 from flext_core import m
-
-from ._railway import FlextDecoratorsRailway
+from flext_core._decorators._railway import FlextDecoratorsRailway
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from .._protocols.result import FlextProtocolsResult as pr
-    from .._typings.base import FlextTypingBase as tb
+    from flext_core._protocols.result import FlextProtocolsResult as pr
+    from flext_core._typings.base import FlextTypingBase as tb
 
 
 class FlextDecoratorsCombined(FlextDecoratorsRailway):
@@ -62,7 +61,12 @@ class FlextDecoratorsCombined(FlextDecoratorsRailway):
         [Callable[PCallback, TResult]],
         Callable[PCallback, TResult] | Callable[PCallback, pr.Result[TResult]],
     ]:
-        """Apply injection, operation logging, and optional railway wrapping."""
+        """Apply injection, operation logging, and optional railway wrapping.
+
+        Returns:
+            The resulting ``Callable[[Callable[PCallback, TResult]], Callable[PCallback,
+                TResult] | Callable[PCallback, pr.Result[TResult]]]``.
+        """
         railway = m.CombinedRailwayOptions.model_validate({
             "enabled": railway_enabled,
             "error_code": railway_error_code,

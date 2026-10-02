@@ -12,11 +12,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import c, m, p, r, t
-
-from ..runtime import FlextRuntime
-from ._context_crud_set import FlextUtilitiesContextCrudSetMixin
-from ._logging_context_parts.logging_context_part_01 import FlextUtilitiesLoggingContext
-from .context_state import FlextUtilitiesContextState
+from flext_core._utilities._context_crud_set import FlextUtilitiesContextCrudSetMixin
+from flext_core._utilities._logging_context_parts.logging_context_part_01 import (
+    FlextUtilitiesLoggingContext,
+)
+from flext_core._utilities.context_state import FlextUtilitiesContextState
+from flext_core.runtime import FlextRuntime
 
 if TYPE_CHECKING:
     import contextvars
@@ -53,7 +54,11 @@ class FlextUtilitiesContextCrud(
         key: str,
         scope: str = c.ContextScope.GLOBAL,
     ) -> p.Result[t.JsonPayload]:
-        """Get a value from the context (fail-fast, no default fallback)."""
+        """Get a value from the context (fail-fast, no default fallback).
+
+        Returns:
+            The resulting ``p.Result[t.JsonPayload]``.
+        """
         if not self.state.active:
             return r[t.JsonPayload].fail_op(
                 c.ContextCrudOperation.GET_VALUE,
@@ -70,26 +75,42 @@ class FlextUtilitiesContextCrud(
         return r[t.JsonPayload].ok(FlextRuntime.normalize_to_container(value))
 
     def has(self, key: str, scope: str = c.ContextScope.GLOBAL) -> bool:
-        """Check if a key exists in the context."""
+        """Check if a key exists in the context.
+
+        Returns:
+            The resulting ``bool``.
+        """
         if not self.state.active:
             return False
         return key in self._contextvar_data(scope)
 
     def items(self) -> t.SequenceOf[t.Pair[str, t.JsonValue]]:
-        """Get all items across scopes."""
+        """Get all items across scopes.
+
+        Returns:
+            The resulting ``t.SequenceOf[t.Pair[str, t.JsonValue]]``.
+        """
         if not self.state.active:
             empty_items: list[t.Pair[str, t.JsonValue]] = []
             return empty_items
         return [item for d in self._iter_scoped_dicts() for item in d.items()]
 
     def keys(self) -> t.StrSequence:
-        """Get all keys across scopes."""
+        """Get all keys across scopes.
+
+        Returns:
+            The resulting ``t.StrSequence``.
+        """
         if not self.state.active:
             return list[str]()
         return list({k for d in self._iter_scoped_dicts() for k in d})
 
     def values(self) -> t.JsonList:
-        """Get all values across scopes."""
+        """Get all values across scopes.
+
+        Returns:
+            The resulting ``t.JsonList``.
+        """
         if not self.state.active:
             empty_values: t.JsonList = []
             return empty_values
