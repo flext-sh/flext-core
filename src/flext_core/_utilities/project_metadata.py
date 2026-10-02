@@ -11,22 +11,21 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
+import sys
 import tomllib
 from functools import cache
+from importlib.metadata import Distribution, DistributionFinder
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_core._constants.file import FlextConstantsFile as cf
 from flext_core._constants.mixins import FlextConstantsMixins as cmx
 from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cpm
 from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
+from flext_core._protocols.project_metadata import FlextProtocolsProjectMetadata as ppm
 from flext_core._typings.base import FlextTypingBase as t
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-    from flext_core._protocols.project_metadata import (
-        FlextProtocolsProjectMetadata as ppm,
-    )
 
 
 class FlextUtilitiesProjectMetadata(mpm):
@@ -99,6 +98,36 @@ class FlextUtilitiesProjectMetadata(mpm):
         parts = normalized.replace("-", "_").split("_")
         return override or "".join(
             part[:1].upper() + part[1:] for part in parts if part
+        )
+
+    @staticmethod
+    def installed_distributions(
+        *,
+        name: str | None = None,
+        path: t.StrSequence | None = None,
+    ) -> t.VariadicTuple[Distribution]:
+        """Enumerate installed distributions over one snapshot of the finder chain.
+
+        ``importlib.metadata.distributions()`` walks the live ``sys.meta_path``
+        lazily: an import that inserts a finder ahead of ``PathFinder`` while
+        the scan runs (in the same loop or in a concurrent thread) makes it
+        yield every distribution twice. Each finder is queried once, from a
+        snapshot taken before the scan.
+
+        Returns:
+            The distributions every snapshotted finder reports, in finder order.
+
+        """
+        context = (
+            DistributionFinder.Context(name=name)
+            if path is None
+            else DistributionFinder.Context(name=name, path=list(path))
+        )
+        return tuple(
+            distribution
+            for finder in tuple(sys.meta_path)
+            if isinstance(finder, ppm.DistributionSource)
+            for distribution in finder.find_distributions(context)
         )
 
     @classmethod
