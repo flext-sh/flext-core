@@ -14,6 +14,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import sys
+import types
+
 import pytest
 from flext_tests import tm
 
@@ -82,13 +85,19 @@ class TestsFlextCorePublicApiContract:
             flext_core.__all__,
         )
         imports = build_map({"collections": ("Counter",)})
-        namespace: t.ModuleGlobals = {"__name__": "flext_core_consumer"}
-        install(
-            "flext_core_consumer",
-            namespace,
-            imports,
-            public_exports=("Counter",),
-        )
+        # ``install`` binds a registered module; the consumer is a real one.
+        consumer = types.ModuleType("flext_core_consumer")
+        namespace: t.ModuleGlobals = vars(consumer)
+        sys.modules[consumer.__name__] = consumer
+        try:
+            install(
+                consumer.__name__,
+                namespace,
+                imports,
+                public_exports=("Counter",),
+            )
+        finally:
+            del sys.modules[consumer.__name__]
         resolver = namespace["__getattr__"]
         assert callable(resolver)
         resolved = resolver("Counter")

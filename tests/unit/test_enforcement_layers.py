@@ -106,11 +106,9 @@ class TestsFlextCoreEnforcementLayers:
 
     @staticmethod
     def _utilities_instance_method() -> type:
-        class _UUtilities:
-            @staticmethod
-            def run() -> None: ...
-
-        return _UUtilities
+        # Built dynamically: the offending shape is an instance method, which a
+        # ``class`` body would see rewritten to ``@staticmethod`` by ``make fix``.
+        return type("_UUtilities", (), {"run": lambda self: None})
 
     @staticmethod
     def _constants_frozenset() -> type:

@@ -13,14 +13,14 @@ from flext_tests import h, r
 
 from tests.constants import c
 from tests.typings import t
-from tests.utilities import TestsFlextUtilities, u
+from tests.utilities import u
 
 if TYPE_CHECKING:
     from tests.models import m
     from tests.protocols import p
 
 
-class TestsFlextHandlersDispatch(TestsFlextUtilities.TestsFlextFlextHandlers):
+class TestsFlextHandlersDispatch(u.TestsFlextFlextHandlers):
     """Assert observable dispatch/execute behavior, not implementation details."""
 
     @staticmethod
@@ -111,7 +111,7 @@ class TestsFlextHandlersDispatch(TestsFlextUtilities.TestsFlextFlextHandlers):
         """Test dispatch rejects unhandleable message type."""
 
         class RestrictiveHandler(
-            TestsFlextUtilities.TestsFlextFlextHandlers.ConcreteTestHandler,
+            u.TestsFlextFlextHandlers.ConcreteTestHandler,
         ):
             @override
             def can_handle(self, message_type: type) -> bool:
@@ -133,7 +133,7 @@ class TestsFlextHandlersDispatch(TestsFlextUtilities.TestsFlextFlextHandlers):
         """Test dispatch propagates validation failure."""
 
         class ValidationFailingHandler(
-            TestsFlextUtilities.TestsFlextFlextHandlers.ConcreteTestHandler,
+            u.TestsFlextFlextHandlers.ConcreteTestHandler,
         ):
             @override
             def validate_message(self, data: t.JsonPayload) -> p.Result[bool]:
@@ -155,7 +155,7 @@ class TestsFlextHandlersDispatch(TestsFlextUtilities.TestsFlextFlextHandlers):
         """Test dispatch converts handler exception to critical failure."""
 
         class ExceptionHandler(
-            TestsFlextUtilities.TestsFlextFlextHandlers.ConcreteTestHandler,
+            u.TestsFlextFlextHandlers.ConcreteTestHandler,
         ):
             @override
             def handle(self, message: t.JsonPayload) -> p.Result[t.JsonPayload]:

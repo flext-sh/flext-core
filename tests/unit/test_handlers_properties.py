@@ -31,24 +31,24 @@ class TestsFlextCoreHandlersProperties(
 ):
     """Public-contract behavior of the callable handler factory."""
 
-    @given(_TOKENS)
     @staticmethod
+    @given(_TOKENS)
     def test_explicit_name_is_exposed_verbatim(handler_name: str) -> None:
         """Any non-empty explicit name is exposed by ``handler_name``."""
         handler = h.create_from_callable(str, handler_name=handler_name)
 
         tm.that(handler.handler_name, eq=handler_name)
 
-    @given(_TOKENS)
     @staticmethod
+    @given(_TOKENS)
     def test_handle_wraps_plain_return_value_as_success(message: str) -> None:
         """``handle`` wraps a callable's plain return in a success result."""
         handler = h.create_from_callable(str, handler_name="echo")
 
         tm.ok(handler.handle(message), eq=message)
 
-    @given(_TOKENS)
     @staticmethod
+    @given(_TOKENS)
     def test_execute_runs_pipeline_and_returns_success(message: str) -> None:
         """``execute`` drives the full pipeline to a success outcome."""
         handler = h.create_from_callable(str, handler_name="echo")

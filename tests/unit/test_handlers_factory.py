@@ -13,10 +13,10 @@ from flext_tests import h, r
 
 from tests.constants import c
 from tests.typings import t
-from tests.utilities import TestsFlextUtilities, u
+from tests.utilities import u
 
 
-class TestsFlextCoreHandlersFactory(TestsFlextUtilities.TestsFlextFlextHandlers):
+class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
     """Assert observable behavior of ``h.create_from_callable`` and handlers."""
 
     @staticmethod
@@ -143,11 +143,11 @@ class TestsFlextCoreHandlersFactory(TestsFlextUtilities.TestsFlextFlextHandlers)
 
     @pytest.mark.parametrize(
         "scenario",
-        TestsFlextUtilities.TestsFlextFlextHandlers.HANDLER_TYPES,
+        u.TestsFlextFlextHandlers.HANDLER_TYPES,
     )
     @staticmethod
     def test_mode_reflects_requested_handler_type(
-        scenario: TestsFlextUtilities.TestsFlextFlextHandlers.HandlerTypeScenario,
+        scenario: u.TestsFlextFlextHandlers.HandlerTypeScenario,
     ) -> None:
         # Arrange
         """Test mode reflects requested handler type."""

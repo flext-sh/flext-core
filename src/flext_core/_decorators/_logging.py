@@ -117,8 +117,7 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
         """
         try:
             logger.debug(
-                "%s_started",
-                op_name,
+                "_".join((op_name, "started")),
                 **cls._start_log_payload(
                     func_name=func_name,
                     func_module=func_module,
@@ -144,8 +143,7 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
             raise
         else:
             logger.debug(
-                "%s_completed",
-                op_name,
+                "_".join((op_name, "completed")),
                 **cls._success_log_payload(
                     func_name=func_name,
                     correlation_id=correlation_id,
