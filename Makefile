@@ -39,10 +39,12 @@ endif
 endif
 
 # GITHUB_TOKEN is the one GitHub credential variable every tool reads (mise,
-# gh, uv), and only the caller's environment supplies it: no recipe reads a
-# stored credential (gh, keyring, netrc) to fill an absent one. A tool-scoped
-# alias of the same credential never reaches a recipe, where it would shadow or
-# outrank it. The value stays in the environment, never in a rendered recipe.
+# gh, uv). The caller's environment supplies it (ai-hub propagates it through
+# .envrc.ai-hub); when it carries none, the network bootstrap selects the first
+# declared toolchain.github_credential_commands entry whose executable is on
+# PATH, and that source must deliver. With no source present, GitHub access is
+# anonymous. A tool-scoped alias of the same credential never reaches a recipe,
+# where it would shadow or outrank it. The value is never printed.
 export GITHUB_TOKEN
 unexport GH_TOKEN MISE_GITHUB_TOKEN GITHUB_API_TOKEN
 
@@ -231,6 +233,7 @@ set -eu; \
 		caller_xdg_data_home="$$caller_home/.local/share"; \
 	fi; \
 	caller_path="$$PATH"; \
+	mise_trusted_config_paths="$$project_root"; \
 mise_lockfile_platforms="linux-x64,linux-x64-musl,linux-arm64,macos-x64,macos-arm64,windows-x64"; \
 caller_comspec="$${COMSPEC:-}"; \
 caller_pathext="$${PATHEXT:-}"; \
@@ -240,6 +243,13 @@ caller_github_token="$${GITHUB_TOKEN:-}"; \
 caller_mise_http_timeout="$${MISE_HTTP_TIMEOUT:-}"; \
 caller_flext_mypy_profile_output="$${FLEXT_MYPY_PROFILE_OUTPUT:-}"; \
 caller_mise_version="$${MISE_VERSION:-}"; \
+if [ -z "$$caller_github_token" ] && command -v gh >/dev/null 2>&1; then \
+		caller_github_token="$$(gh auth token)" \
+			|| { printf 'ERROR: the selected GitHub credential source failed: %s\n' 'gh auth token' >&2; exit 2; }; \
+		if [ -z "$$caller_github_token" ]; then \
+			printf 'ERROR: the selected GitHub credential source printed nothing: %s\n' 'gh auth token' >&2; exit 2; \
+		fi; \
+	fi; \
 mise_pin_file="$(MISE_VERSION_PIN)"; \
 	mise_pin=; \
 	if [ -f "$$mise_pin_file" ]; then \
@@ -311,7 +321,7 @@ mise_pin_file="$(MISE_VERSION_PIN)"; \
 			*) printf 'ERROR: persistent Mise path escaped storage: %s\n' "$$persistent_physical" >&2; exit 2 ;; \
 		esac; \
 	done; \
-	scratch=$$(mktemp -d); \
+	scratch=$$(mktemp -d "$$project_parent/.$${project_root##*/}.mise-bootstrap.XXXXXX"); \
 	trap 'find "$$scratch" -depth -delete' EXIT; \
 	mkdir -p "$$scratch/home" "$$scratch/home" "$$scratch/appdata" "$$scratch/appdata" "$$scratch/xdg-config" "$$scratch/xdg-data" "$$scratch/xdg-cache" "$$scratch/xdg-state" "$$scratch/config" "$$scratch/tmp" "$$scratch/." "$$scratch/system-config" "$$scratch/system-data" "$$scratch/system-installs" "$$scratch/system-shims" "$$scratch/tmp" "$$scratch/tmp" "$$scratch/tmp"; \
 : > "$$scratch/global-config.toml"; chmod 600 "$$scratch/global-config.toml"; \
@@ -391,7 +401,7 @@ $${mise_lockfile_platforms:+"MISE_LOCKFILE_PLATFORMS=$$mise_lockfile_platforms"}
 "UV_CACHE_DIR=$$mise_storage_root/uv-cache" \
 "GIT_CEILING_DIRECTORIES=$$project_parent" \
 			"MISE_CEILING_PATHS=$$project_parent" \
-			"MISE_TRUSTED_CONFIG_PATHS=$$project_root" \
+			"MISE_TRUSTED_CONFIG_PATHS=$$mise_trusted_config_paths" \
 $${caller_path:+"PATH=$$caller_path"} \
 $${caller_comspec:+"COMSPEC=$$caller_comspec"} \
 $${caller_pathext:+"PATHEXT=$$caller_pathext"} \
@@ -454,6 +464,7 @@ _bootstrap_setup_tools:
 		caller_xdg_data_home="$$caller_home/.local/share"; \
 	fi; \
 	caller_path="$$PATH"; \
+	mise_trusted_config_paths="$$project_root"; \
 mise_lockfile_platforms="linux-x64,linux-x64-musl,linux-arm64,macos-x64,macos-arm64,windows-x64"; \
 caller_comspec="$${COMSPEC:-}"; \
 caller_pathext="$${PATHEXT:-}"; \
@@ -463,6 +474,13 @@ caller_github_token="$${GITHUB_TOKEN:-}"; \
 caller_mise_http_timeout="$${MISE_HTTP_TIMEOUT:-}"; \
 caller_flext_mypy_profile_output="$${FLEXT_MYPY_PROFILE_OUTPUT:-}"; \
 caller_mise_version="$${MISE_VERSION:-}"; \
+if [ -z "$$caller_github_token" ] && command -v gh >/dev/null 2>&1; then \
+		caller_github_token="$$(gh auth token)" \
+			|| { printf 'ERROR: the selected GitHub credential source failed: %s\n' 'gh auth token' >&2; exit 2; }; \
+		if [ -z "$$caller_github_token" ]; then \
+			printf 'ERROR: the selected GitHub credential source printed nothing: %s\n' 'gh auth token' >&2; exit 2; \
+		fi; \
+	fi; \
 mise_pin_file="$(MISE_VERSION_PIN)"; \
 	mise_pin=; \
 	if [ -f "$$mise_pin_file" ]; then \
@@ -534,7 +552,7 @@ mise_pin_file="$(MISE_VERSION_PIN)"; \
 			*) printf 'ERROR: persistent Mise path escaped storage: %s\n' "$$persistent_physical" >&2; exit 2 ;; \
 		esac; \
 	done; \
-	scratch=$$(mktemp -d); \
+	scratch=$$(mktemp -d "$$project_parent/.$${project_root##*/}.mise-bootstrap.XXXXXX"); \
 	trap 'find "$$scratch" -depth -delete' EXIT; \
 	mkdir -p "$$scratch/home" "$$scratch/home" "$$scratch/appdata" "$$scratch/appdata" "$$scratch/xdg-config" "$$scratch/xdg-data" "$$scratch/xdg-cache" "$$scratch/xdg-state" "$$scratch/config" "$$scratch/tmp" "$$scratch/." "$$scratch/system-config" "$$scratch/system-data" "$$scratch/system-installs" "$$scratch/system-shims" "$$scratch/tmp" "$$scratch/tmp" "$$scratch/tmp"; \
 : > "$$scratch/global-config.toml"; chmod 600 "$$scratch/global-config.toml"; \
@@ -614,7 +632,7 @@ $${mise_lockfile_platforms:+"MISE_LOCKFILE_PLATFORMS=$$mise_lockfile_platforms"}
 "UV_CACHE_DIR=$$mise_storage_root/uv-cache" \
 "GIT_CEILING_DIRECTORIES=$$project_parent" \
 			"MISE_CEILING_PATHS=$$project_parent" \
-			"MISE_TRUSTED_CONFIG_PATHS=$$project_root" \
+			"MISE_TRUSTED_CONFIG_PATHS=$$mise_trusted_config_paths" \
 $${caller_path:+"PATH=$$caller_path"} \
 $${caller_comspec:+"COMSPEC=$$caller_comspec"} \
 $${caller_pathext:+"PATHEXT=$$caller_pathext"} \
@@ -664,10 +682,10 @@ $${mise_config_argument:+"$$mise_config_argument"} \
 	mise_receipt runtime-version "$$pinned_mise"; \
 	runtime_release="$$receipt_release"; \
 	if [ "$(TOOL_BOOTSTRAP_RESOLVE)" = "1" ]; then \
-		mise_checked_stdout "$$scratch/resolve.stdout" "$$scratch/resolve.stderr" mise_exec no-config env MISE_CACHE_DIR="$$scratch/resolve-cache" MISE_FETCH_REMOTE_VERSIONS_CACHE=0s "$$pinned_mise" latest github:jdx/mise; \
+		mise_checked_stdout "$$scratch/resolve.stdout" "$$scratch/resolve.stderr" mise_exec no-config env MISE_CACHE_DIR="$$scratch/resolve-cache" MISE_FETCH_REMOTE_VERSIONS_CACHE=0s "$$pinned_mise" latest github:jdx/mise@2026.9.13; \
 		resolved_release=$$(cat "$$scratch/resolve.stdout"); \
 		if ! printf '%s\n' "$$resolved_release" | grep -Eq '^[0-9]+(\.[0-9]+){2}$$'; then \
-			printf 'ERROR: mise latest github:jdx/mise returned an invalid release: %s\n' "$$resolved_release" >&2; exit 2; \
+			printf 'ERROR: mise latest github:jdx/mise@2026.9.13 returned an invalid release: %s\n' "$$resolved_release" >&2; exit 2; \
 		fi; \
 		caller_mise_version="$$resolved_release"; \
 		mise_receipt resolved-version "$$pinned_mise"; \
@@ -682,7 +700,7 @@ caller_mise_version=; \
 		if [ "$$receipt_release" != "$$resolved_release" ]; then \
 			printf 'ERROR: generated %s runs Mise %s, not %s\n' "$$pinned_mise" "$$receipt_release" "$$resolved_release" >&2; exit 2; \
 		fi; \
-		printf '%s\n' '# @flext-generated: upg' '# @flext-owner: flext-infra/src/flext_infra/templates/project/base/tool_bootstrap_recipe.j2 (mise latest github:jdx/mise)' '# @flext-adjust: never hand-edit; bin/mise and bin/mise.cmd are generated by mise for exactly this release' '# @flext-regenerate: make upg' "$$resolved_release" > "$$mise_pin_file"; \
+		printf '%s\n' '# @flext-generated: upg' '# @flext-owner: flext-infra/src/flext_infra/templates/project/base/tool_bootstrap_recipe.j2 (toolchain.mise_selector and toolchain.mise_version in flext-infra/config/codegen.yaml)' '# @flext-adjust: never hand-edit; bin/mise and bin/mise.cmd are generated by mise for exactly this release' '# @flext-regenerate: make upg' "$$resolved_release" > "$$mise_pin_file"; \
 		chmod 644 "$$mise_pin_file"; \
 		runtime_release="$$resolved_release"; \
 	elif [ "$$runtime_release" != "$$mise_pin" ]; then \
@@ -699,47 +717,18 @@ caller_mise_version=; \
 		# installed from a private stage, and published by one rename only after \
 		# both succeed. A failed or killed run leaves mise.lock untouched; no \
 		# backup copy exists. \
-		lock_stage="$$(mktemp -d "$$project_root/.mise-lock-stage.XXXXXX")"; \
-		trap 'find "$$lock_stage" -depth -delete' EXIT; \
+		lock_stage="$$(mktemp -d "$$project_parent/.$${project_root##*/}.mise-lock-stage.XXXXXX")"; \
 		cp "$$project_root/.mise.toml" "$$lock_stage/.mise.toml"; \
 		if [ -f "$$project_root/mise.lock" ]; then cp "$$project_root/mise.lock" "$$lock_stage/mise.lock"; fi; \
+		if [ -d "$$project_root/.mise/locks" ]; then mkdir -p "$$lock_stage/.mise"; cp -R "$$project_root/.mise/locks" "$$lock_stage/.mise/locks"; fi; \
+		mise_trusted_config_paths="$$lock_stage"; \
 		mise_checked "$$scratch/lock.log" mise_exec project "$$pinned_mise" -C "$$lock_stage" lock --bump; \
 		mise_checked "$$scratch/install.log" mise_exec project "$$pinned_mise" -C "$$lock_stage" install --yes; \
-		# mise lock writes each tool's dependency sidecar under .mise/locks \
-		# beside the staged lock. Every sidecar the bumped lock references is \
-		# published first (a path the committed lock does not reference yet is \
-		# inert), the lock rename is the commit point, and default-lock sidecars \
-		# it no longer references are removed afterwards. Sidecar paths carry \
-		# their build identity, so a referenced path whose staged content \
-		# differs from the published one fails instead of being replaced under \
-		# the committed lock. \
-		referenced_sidecars=" $$(sed -n 's|.*path = "\(\.mise/locks/[^"]*\)".*|\1|p' "$$lock_stage/mise.lock" | tr '\n' ' ')"; \
-		for relative in $$referenced_sidecars; do \
-			staged="$$lock_stage/$$relative"; \
-			published="$$project_root/$$relative"; \
-			if [ -e "$$published" ]; then \
-				if [ -e "$$staged" ] && ! diff -r "$$staged" "$$published" >&2; then \
-					printf 'ERROR: mise lock rewrote the published sidecar %s under an unchanged path\n' "$$relative" >&2; \
-					exit 2; \
-				fi; \
-			elif [ -d "$$staged" ]; then \
-				mkdir -p "$$(dirname "$$published")"; \
-				mv "$$staged" "$$published"; \
-			else \
-				printf 'ERROR: mise.lock references the sidecar %s that mise lock did not write\n' "$$relative" >&2; \
-				exit 2; \
-			fi; \
-		done; \
-		mv "$$lock_stage/mise.lock" "$$project_root/mise.lock"; \
-		for sidecar in "$$project_root"/.mise/locks/*/*; do \
-			[ -d "$$sidecar" ] || continue; \
-			relative="$${sidecar#"$$project_root"/}"; \
-			case "$$relative" in .mise/locks/mise.*) continue ;; esac; \
-			case "$$referenced_sidecars" in *" $$relative "*) ;; *) find "$$sidecar" -depth -delete ;; esac; \
-		done; \
-		if [ -d "$$project_root/.mise/locks" ]; then find "$$project_root/.mise/locks" -mindepth 1 -type d -empty -delete; fi; \
-		find "$$lock_stage" -depth -delete; \
-		trap - EXIT; \
+		mise_checked "$$scratch/staged-python.log" mise_exec project "$$pinned_mise" -C "$$lock_stage" which python; \
+		staged_python=$$(cat "$$scratch/staged-python.log"); \
+		if [ ! -x "$$staged_python" ]; then printf 'ERROR: staged Mise Python is not executable: %s\n' "$$staged_python" >&2; exit 2; fi; \
+		mise_checked "$$scratch/publish-lock.log" "$$staged_python" "$$project_root/bin/mise-lock-transaction.py" publish "$$project_root" "$$lock_stage"; \
+		mise_trusted_config_paths="$$project_root"; \
 	else \
 		# ``locked`` mode installs exactly what the committed mise.lock pins. \
 		mise_checked "$$scratch/install.log" mise_exec project "$$pinned_mise" -C "$$project_root" install --yes; \
@@ -1303,7 +1292,7 @@ _builtin-help:
 
 	@printf '  %-16s %s\n' 'status' 'Report the resolved runtime and repository state.';
 
-	@printf '  %-16s %s\n' 'verify-clean' 'Verify that generated documentation and managed artifacts leave the Git tree clean.';
+	@printf '  %-16s %s\n' 'verify-clean' 'Verify that managed artifacts and generated documentation match their sources and leave no unstaged change to a tracked file.';
 
 	@printf '  %-16s %s\n' 'docs' 'Generate, fix, format, and check documentation.';
 
@@ -1665,7 +1654,8 @@ case "$$database" in /*) ;; *) printf 'ERROR: persistent testmon database requir
 case "$$database" in "$(PROJECT_ROOT)"/*) printf 'ERROR: persistent testmon database must be outside the checkout: %s\n' "$$database" >&2; exit 2 ;; esac; \
 case "$$database" in "$${TMPDIR:-/tmp}"/*|/tmp/*) printf 'ERROR: persistent testmon database must not live under the temporary directory: %s\n' "$$database" >&2; exit 2 ;; esac; \
 mkdir -p "$$(dirname "$$database")"; \
-TESTMON_DATAFILE="$$database" $(PYTEST_BOUNDED) $(UV_RUN) python -m flext_infra._pytest_entry full
+TESTMON_DATAFILE="$$database" $(PYTEST_BOUNDED) $(UV_RUN) python -m flext_infra._pytest_entry full; \
+TESTMON_DATAFILE="$$database" $(PYTEST_BOUNDED) $(UV_RUN) python -m flext_infra._pytest_entry full-slow
 
 # fmt is format-only (single-pass verb law): ruff formats Python, the
 # fmt_gates formatters run once through the checker's apply mode, and every
