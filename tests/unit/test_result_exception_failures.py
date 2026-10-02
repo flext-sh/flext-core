@@ -27,6 +27,7 @@ if TYPE_CHECKING:
 class TestsFlextCoreResultExceptionFailures:
     """Tests for ``FlextCoreResultExceptionFailures``."""
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("error_msg", "expected_error"),
         [
@@ -36,7 +37,6 @@ class TestsFlextCoreResultExceptionFailures:
         ],
     )
     def test_fail_without_exception_exposes_error_and_no_exception(
-        self,
         error_msg: str | None,
         expected_error: str,
     ) -> None:
@@ -107,7 +107,8 @@ class TestsFlextCoreResultExceptionFailures:
             tm.that(result.error_data.get("reason"), eq="invalid format")
         tm.that(result.exception is exc, eq=True)
 
-    def test_fail_preserves_correlation_id_without_metadata_attributes(self) -> None:
+    @staticmethod
+    def test_fail_preserves_correlation_id_without_metadata_attributes() -> None:
         """Test fail preserves correlation id without metadata attributes."""
 
         class CorrelationOnlyError(ValueError):
@@ -127,7 +128,8 @@ class TestsFlextCoreResultExceptionFailures:
                 eq="corr-only-456",
             )
 
-    def test_fail_enriches_error_data_from_exception_metadata(self) -> None:
+    @staticmethod
+    def test_fail_enriches_error_data_from_exception_metadata() -> None:
         """Test fail enriches error data from exception metadata."""
 
         class MetadataError(ValueError):

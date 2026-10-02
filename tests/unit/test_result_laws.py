@@ -53,12 +53,12 @@ class TestsFlextCoreResultLaws:
         with pytest.raises(RuntimeError, match="boom"):
             result.unwrap()
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("result", "default", "expected"),
         [(r[int].ok(7), 99, 7), (r[int].fail("nope"), 99, 99)],
     )
     def test_unwrap_or_returns_value_or_default(
-        self,
         result: p.Result[int],
         default: int,
         expected: int,
@@ -142,12 +142,12 @@ class TestsFlextCoreResultLaws:
         lashed = r[int].ok(1).lash(lambda _e: r[int].ok(7))
         assert lashed.value == 1
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("result", "expected"),
         [(r[int].ok(4), "ok:4"), (r[int].fail("boom"), "err:boom")],
     )
     def test_fold_dispatches_to_the_matching_branch(
-        self,
         result: p.Result[int],
         expected: str,
     ) -> None:
@@ -197,17 +197,19 @@ class TestsFlextCoreResultLaws:
     # Functor / Monad algebraic laws (property-based)                    #
     # ------------------------------------------------------------------ #
 
+    @staticmethod
     @given(x=st.integers(min_value=-1000, max_value=1000))
     @settings(max_examples=50)
-    def test_functor_identity_law(self, x: int) -> None:
+    def test_functor_identity_law(x: int) -> None:
         """map(id) preserves the value and success state."""
         mapped = r[int].ok(x).map(lambda v: v)
         assert mapped.success is True
         assert mapped.value == r[int].ok(x).value
 
+    @staticmethod
     @given(x=st.integers(min_value=-1000, max_value=1000))
     @settings(max_examples=50)
-    def test_functor_composition_law(self, x: int) -> None:
+    def test_functor_composition_law(x: int) -> None:
         """map(f).map(g) == map(g . f)."""
 
         def f(v: int) -> int:
@@ -220,9 +222,10 @@ class TestsFlextCoreResultLaws:
         composed = r[int].ok(x).map(lambda v: g(f(v)))
         assert sequential.value == composed.value
 
+    @staticmethod
     @given(x=st.integers(min_value=-1000, max_value=1000))
     @settings(max_examples=50)
-    def test_monad_left_unit_law(self, x: int) -> None:
+    def test_monad_left_unit_law(x: int) -> None:
         """ok(x).flat_map(f) == f(x)."""
 
         def f(v: int) -> p.Result[int]:
@@ -230,17 +233,19 @@ class TestsFlextCoreResultLaws:
 
         assert r[int].ok(x).flat_map(f).value == f(x).value
 
+    @staticmethod
     @given(x=st.integers(min_value=-1000, max_value=1000))
     @settings(max_examples=50)
-    def test_monad_right_unit_law(self, x: int) -> None:
+    def test_monad_right_unit_law(x: int) -> None:
         """ok(x).flat_map(ok) == ok(x)."""
         chained = r[int].ok(x).flat_map(r[int].ok)
         assert chained.success is True
         assert chained.value == x
 
+    @staticmethod
     @given(err=st.text(min_size=1, max_size=50))
     @settings(max_examples=50)
-    def test_error_propagates_unchanged_through_map(self, err: str) -> None:
+    def test_error_propagates_unchanged_through_map(err: str) -> None:
         """Test error propagates unchanged through map."""
         propagated = r[int].fail(err).map(lambda v: v + 1)
         assert propagated.failure is True

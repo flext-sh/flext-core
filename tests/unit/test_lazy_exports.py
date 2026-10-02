@@ -25,8 +25,9 @@ if TYPE_CHECKING:
 class TestsFlextCoreLazyExports:
     """Behavioral contract: what the lazy export surface promises callers."""
 
+    @staticmethod
     @pytest.fixture
-    def registered_alpha_module(self) -> Iterator[tuple[str, type]]:
+    def registered_alpha_module() -> Iterator[tuple[str, type]]:
         """Register a real child module exposing ``Alpha`` and return its name.
 
         Yields:
@@ -49,6 +50,7 @@ class TestsFlextCoreLazyExports:
             sys.modules.pop("test_lazy_pkg", None)
             sys.modules.pop(module_name, None)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("module_name", "facade_name", "alias_name"),
         [
@@ -61,7 +63,6 @@ class TestsFlextCoreLazyExports:
         ],
     )
     def test_thin_facade_modules_export_facade_and_short_alias(
-        self,
         module_name: str,
         facade_name: str,
         alias_name: str,
@@ -75,7 +76,8 @@ class TestsFlextCoreLazyExports:
         alias = getattr(module, alias_name)
         assert alias is facade
 
-    def test_root_package_resolves_primary_facades_via_aliases(self) -> None:
+    @staticmethod
+    def test_root_package_resolves_primary_facades_via_aliases() -> None:
         # Arrange / Act
         """Test root package resolves primary facades via aliases."""
         package = importlib.import_module("flext_core")
@@ -89,7 +91,8 @@ class TestsFlextCoreLazyExports:
         assert package.u is package.FlextUtilities
         assert {"FlextConstants", "FlextUtilities", "u"} <= set(package.__all__)
 
-    def test_model_facade_does_not_import_web_runtime(self) -> None:
+    @staticmethod
+    def test_model_facade_does_not_import_web_runtime() -> None:
         """Loading model declarations must not import the web framework stack."""
         script = (
             "import sys\n"
@@ -105,8 +108,8 @@ class TestsFlextCoreLazyExports:
         assert result.success, result.error
         assert result.value.stdout == ""
 
+    @staticmethod
     def test_install_without_publish_all_omits_dunder_all(
-        self,
         registered_alpha_module: tuple[str, type],
     ) -> None:
         # Arrange
@@ -129,8 +132,8 @@ class TestsFlextCoreLazyExports:
         assert callable(dir_fn)
         assert dir_fn() == ["Alpha"]
 
+    @staticmethod
     def test_install_with_publish_all_publishes_dunder_all(
-        self,
         registered_alpha_module: tuple[str, type],
     ) -> None:
         # Arrange
@@ -152,8 +155,8 @@ class TestsFlextCoreLazyExports:
         assert callable(dir_fn)
         assert dir_fn() == ["Alpha"]
 
+    @staticmethod
     def test_install_with_public_exports_filters_dunder_all(
-        self,
         registered_alpha_module: tuple[str, type],
     ) -> None:
         # Arrange
@@ -178,8 +181,8 @@ class TestsFlextCoreLazyExports:
 
         assert sys.modules[package_name].Alpha is alpha_cls
 
+    @staticmethod
     def test_installed_getattr_resolves_absolute_target(
-        self,
         registered_alpha_module: tuple[str, type],
     ) -> None:
         # Arrange
@@ -201,8 +204,8 @@ class TestsFlextCoreLazyExports:
         assert resolved is alpha_cls
         assert module_globals["Alpha"] is alpha_cls
 
+    @staticmethod
     def test_installed_getattr_resolves_relative_target(
-        self,
         registered_alpha_module: tuple[str, type],
     ) -> None:
         # Arrange — relative path resolved against the installing package
@@ -222,7 +225,8 @@ class TestsFlextCoreLazyExports:
         # Assert
         assert getattr_fn("Alpha") is alpha_cls
 
-    def test_installed_getattr_resolves_bare_string_module_entry(self) -> None:
+    @staticmethod
+    def test_installed_getattr_resolves_bare_string_module_entry() -> None:
         # Arrange — a bare-string entry names a module whose same-named attr is used;
         # resolution must succeed without any '<pkg>.alias' child module existing.
         """Test installed getattr resolves bare string module entry."""
@@ -254,8 +258,8 @@ class TestsFlextCoreLazyExports:
             sys.modules.pop(target_name, None)
             sys.modules.pop(package_name, None)
 
+    @staticmethod
     def test_installed_getattr_raises_attribute_error_for_unknown_name(
-        self,
         registered_alpha_module: tuple[str, type],
     ) -> None:
         # Arrange
@@ -275,8 +279,8 @@ class TestsFlextCoreLazyExports:
         with pytest.raises(AttributeError, match="Missing"):
             getattr_fn("Missing")
 
+    @staticmethod
     def test_install_is_idempotent_and_keeps_getattr_working(
-        self,
         registered_alpha_module: tuple[str, type],
     ) -> None:
         # Arrange
@@ -295,8 +299,8 @@ class TestsFlextCoreLazyExports:
         assert getattr_fn("Alpha") is alpha_cls
         assert module_globals["__all__"] == ("Alpha",)
 
+    @staticmethod
     def test_get_resolves_symbol_and_caches_into_module_globals(
-        self,
         registered_alpha_module: tuple[str, type],
     ) -> None:
         # Arrange
@@ -316,8 +320,9 @@ class TestsFlextCoreLazyExports:
         assert resolved is alpha_cls
         assert module_globals["Alpha"] is alpha_cls
 
+    @staticmethod
     @pytest.fixture
-    def rebinding_package(self, tmp_path: Path) -> Iterator[str]:
+    def rebinding_package(tmp_path: Path) -> Iterator[str]:
         """Write a real lazy package whose child rebinds ``u`` mid-body.
 
         ``pkg/__init__.py`` lazily exports ``u`` from ``pkg.child``; the child
@@ -360,8 +365,8 @@ class TestsFlextCoreLazyExports:
                 sys.modules.pop(name)
             lazy.reset()
 
+    @staticmethod
     def test_get_serves_but_never_caches_symbol_of_initializing_module(
-        self,
         rebinding_package: str,
     ) -> None:
         # Act — first access imports the child, whose body resolves ``u`` again
@@ -378,8 +383,8 @@ class TestsFlextCoreLazyExports:
         assert vars(package)["u"] is child.FinalAlias
         assert package.u is child.FinalAlias
 
+    @staticmethod
     def test_get_caches_symbol_of_fully_imported_module(
-        self,
         rebinding_package: str,
     ) -> None:
         # Arrange — import the child completely before any lazy resolution
@@ -394,7 +399,8 @@ class TestsFlextCoreLazyExports:
         assert resolved is child.FinalAlias
         assert vars(package)["u"] is child.FinalAlias
 
-    def test_get_raises_attribute_error_for_name_absent_from_map(self) -> None:
+    @staticmethod
+    def test_get_raises_attribute_error_for_name_absent_from_map() -> None:
         # Arrange
         """Test get raises attribute error for name absent from map."""
         module_globals: t.ModuleGlobals = {}
@@ -403,7 +409,8 @@ class TestsFlextCoreLazyExports:
         with pytest.raises(AttributeError, match="Missing"):
             lazy.get("Missing", {}, module_globals, "test_pkg")
 
-    def test_build_map_produces_flat_sorted_import_map(self) -> None:
+    @staticmethod
+    def test_build_map_produces_flat_sorted_import_map() -> None:
         # Act
         """Test build map produces flat sorted import map."""
         result = build_lazy_import_map(
@@ -416,7 +423,8 @@ class TestsFlextCoreLazyExports:
         assert result["Alpha"] == "pkg.mod"
         assert result["Zeta"] == ("pkg.aliases", "ZetaImpl")
 
-    def test_normalize_map_resolves_relative_paths_against_module(self) -> None:
+    @staticmethod
+    def test_normalize_map_resolves_relative_paths_against_module() -> None:
         # Act
         """Test normalize map resolves relative paths against module."""
         normalized = lazy.normalize_map(
@@ -428,7 +436,8 @@ class TestsFlextCoreLazyExports:
         assert normalized["Rel"] == ("pkg.sub.child", "Rel")
         assert normalized["Abs"] == "other.mod"
 
-    def test_merge_combines_child_and_local_with_local_precedence(self) -> None:
+    @staticmethod
+    def test_merge_combines_child_and_local_with_local_precedence() -> None:
         # Arrange — a child package exposing its own _LAZY_IMPORTS
         """Test merge combines child and local with local precedence."""
         lazy.reset()
@@ -452,8 +461,8 @@ class TestsFlextCoreLazyExports:
         assert "ChildOnly" in merged
         assert merged["Shared"] == ("local.mod", "SharedLocal")
 
+    @staticmethod
     def test_reset_clears_caches_observed_via_cache_stats(
-        self,
         registered_alpha_module: tuple[str, type],
     ) -> None:
         # Arrange — perform an install to populate caches

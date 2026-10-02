@@ -60,8 +60,9 @@ class TestsFlextCoreModelsBaseFullCoverage:
         assert from_root.attributes == {"a": 1}
         assert from_kwargs.attributes == {"b": 2}
 
+    @staticmethod
     @pytest.mark.parametrize("bad_value", [123, "text", 4.5, ["a", "b"]])
-    def test_metadata_attributes_non_mapping_rejected(self, bad_value: object) -> None:
+    def test_metadata_attributes_non_mapping_rejected(bad_value: object) -> None:
         """Test metadata attributes non mapping rejected."""
         with pytest.raises(TypeError, match="attributes must be dict-like"):
             m.Metadata.model_validate({"attributes": bad_value})

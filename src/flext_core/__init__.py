@@ -36,12 +36,7 @@ if TYPE_CHECKING:
     from flext_core.dispatcher import FlextDispatcher
     from flext_core.exceptions import FlextExceptions, e
     from flext_core.handlers import FlextHandlers, h
-    from flext_core.lazy import (
-        FlextLazy,
-        FlextLazyMember,
-        lazy_member,
-        resolve_lazy_members,
-    )
+    from flext_core.lazy import FlextLazy, FlextLazyAttribute, lazy_attribute
     from flext_core.loggings import FlextUtilitiesLogging
     from flext_core.mixins import FlextMixins, x
     from flext_core.models import FlextModels, m
@@ -72,7 +67,7 @@ __all__: tuple[str, ...] = (
     "FlextExceptions",
     "FlextHandlers",
     "FlextLazy",
-    "FlextLazyMember",
+    "FlextLazyAttribute",
     "FlextMixins",
     "FlextModels",
     "FlextProtocols",
@@ -101,11 +96,10 @@ __all__: tuple[str, ...] = (
     "e",
     "h",
     "install_lazy_exports",
-    "lazy_member",
+    "lazy_attribute",
     "m",
     "p",
     "r",
-    "resolve_lazy_members",
     "s",
     "services",
     "settings",
@@ -129,12 +123,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".dispatcher": ("FlextDispatcher",),
             ".exceptions": ("FlextExceptions", "e"),
             ".handlers": ("FlextHandlers", "h"),
-            ".lazy": (
-                "FlextLazy",
-                "FlextLazyMember",
-                "lazy_member",
-                "resolve_lazy_members",
-            ),
+            ".lazy": ("FlextLazy", "FlextLazyAttribute", "lazy_attribute"),
             ".loggings": ("FlextUtilitiesLogging",),
             ".mixins": ("FlextMixins", "x"),
             ".models": ("FlextModels", "m"),

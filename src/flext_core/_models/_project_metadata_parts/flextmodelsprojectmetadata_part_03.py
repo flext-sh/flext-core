@@ -69,7 +69,7 @@ class FlextModelsProjectMetadataAggregates(FlextModelsProjectMetadataFields):
                 description="Project naming policy",
             ),
         ] = Field(
-            default_factory=FlextModelsProjectMetadataFields.ProjectToolFlextProject
+            default_factory=FlextModelsProjectMetadataFields.ProjectToolFlextProject,
         )
         docs: Annotated[
             FlextModelsProjectMetadataFields.ProjectToolFlextDocs,
@@ -85,7 +85,7 @@ class FlextModelsProjectMetadataAggregates(FlextModelsProjectMetadataFields):
                 description="Workspace attachment policy",
             ),
         ] = Field(
-            default_factory=FlextModelsProjectMetadataFields.ProjectToolFlextWorkspace
+            default_factory=FlextModelsProjectMetadataFields.ProjectToolFlextWorkspace,
         )
         namespace: Annotated[
             FlextModelsProjectMetadataFields.ProjectToolFlextNamespace,
@@ -94,5 +94,5 @@ class FlextModelsProjectMetadataAggregates(FlextModelsProjectMetadataFields):
                 description="Namespace enforcement policy",
             ),
         ] = Field(
-            default_factory=FlextModelsProjectMetadataFields.ProjectToolFlextNamespace
+            default_factory=FlextModelsProjectMetadataFields.ProjectToolFlextNamespace,
         )
