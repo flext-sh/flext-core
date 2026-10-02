@@ -58,6 +58,7 @@ class FlextUtilitiesContextCrud(
 
         Returns:
             The resulting ``p.Result[t.JsonPayload]``.
+
         """
         if not self.state.active:
             return r[t.JsonPayload].fail_op(
@@ -79,6 +80,7 @@ class FlextUtilitiesContextCrud(
 
         Returns:
             The resulting ``bool``.
+
         """
         if not self.state.active:
             return False
@@ -89,6 +91,7 @@ class FlextUtilitiesContextCrud(
 
         Returns:
             The resulting ``t.SequenceOf[t.Pair[str, t.JsonValue]]``.
+
         """
         if not self.state.active:
             empty_items: list[t.Pair[str, t.JsonValue]] = []
@@ -100,6 +103,7 @@ class FlextUtilitiesContextCrud(
 
         Returns:
             The resulting ``t.StrSequence``.
+
         """
         if not self.state.active:
             return list[str]()
@@ -110,6 +114,7 @@ class FlextUtilitiesContextCrud(
 
         Returns:
             The resulting ``t.JsonList``.
+
         """
         if not self.state.active:
             empty_values: t.JsonList = []

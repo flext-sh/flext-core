@@ -24,7 +24,8 @@ if TYPE_CHECKING:
 class TestsFlextCoreDecorators:
     """Behavior contract for flext_core.decorators — public API only."""
 
-    def test_deprecated_emits_deprecation_warning_and_preserves_return(self) -> None:
+    @staticmethod
+    def test_deprecated_emits_deprecation_warning_and_preserves_return() -> None:
         """Test deprecated emits deprecation warning and preserves return."""
 
         @d.deprecated("old API")
@@ -38,8 +39,8 @@ class TestsFlextCoreDecorators:
         tm.that(result, eq="OK")
         tm.that(any(w.category is DeprecationWarning for w in caught), eq=True)
 
+    @staticmethod
     def test_inject_resolves_dependency_from_shared_container(
-        self,
         clean_container: p.Container,
     ) -> None:
         """Test inject resolves dependency from shared container."""
@@ -58,8 +59,8 @@ class TestsFlextCoreDecorators:
         injected_fn: Callable[..., str] = fn
         tm.that(injected_fn(), eq="dep-value")
 
+    @staticmethod
     def test_inject_falls_back_when_binding_missing(
-        self,
         clean_container: p.Container,
     ) -> None:
         """Test inject falls back when binding missing."""
@@ -71,7 +72,8 @@ class TestsFlextCoreDecorators:
 
         tm.that(fn(), eq="default-value")
 
-    def test_timeout_raises_when_call_exceeds_limit(self) -> None:
+    @staticmethod
+    def test_timeout_raises_when_call_exceeds_limit() -> None:
         """Test timeout raises when call exceeds limit."""
 
         @d.timeout(timeout_seconds=0.001, error_code="TMO")
@@ -82,7 +84,8 @@ class TestsFlextCoreDecorators:
         with pytest.raises(e.FlextTimeoutError):
             slow()
 
-    def test_timeout_reraises_original_exception_when_within_limit(self) -> None:
+    @staticmethod
+    def test_timeout_reraises_original_exception_when_within_limit() -> None:
         """Test timeout reraises original exception when within limit."""
 
         @d.timeout(timeout_seconds=2.0)
@@ -93,7 +96,8 @@ class TestsFlextCoreDecorators:
         with pytest.raises(ValueError, match="fast-fail"):
             fails_fast()
 
-    def test_timeout_passes_through_when_call_completes_in_time(self) -> None:
+    @staticmethod
+    def test_timeout_passes_through_when_call_completes_in_time() -> None:
         """Test timeout passes through when call completes in time."""
 
         @d.timeout(timeout_seconds=2.0)
@@ -102,7 +106,8 @@ class TestsFlextCoreDecorators:
 
         tm.that(quick(), eq="done")
 
-    def test_timeout_reraises_existing_timeout_error(self) -> None:
+    @staticmethod
+    def test_timeout_reraises_existing_timeout_error() -> None:
         """Test timeout reraises existing timeout error."""
 
         @d.timeout(timeout_seconds=1.0)
@@ -113,7 +118,8 @@ class TestsFlextCoreDecorators:
         with pytest.raises(e.FlextTimeoutError, match="already-timeout"):
             raises_timeout()
 
-    def test_railway_wraps_exception_as_failed_result(self) -> None:
+    @staticmethod
+    def test_railway_wraps_exception_as_failed_result() -> None:
         """Test railway wraps exception as failed result."""
 
         @d.railway(error_code="E_RW")
@@ -125,7 +131,8 @@ class TestsFlextCoreDecorators:
         tm.fail(result)
         tm.that(result.error, contains="boom")
 
-    def test_railway_passes_through_existing_result(self) -> None:
+    @staticmethod
+    def test_railway_passes_through_existing_result() -> None:
         """Test railway passes through existing result."""
 
         @d.railway()
@@ -136,7 +143,8 @@ class TestsFlextCoreDecorators:
         tm.ok(result)
         tm.that(result.unwrap(), eq=1)
 
-    def test_retry_returns_successful_call_without_retry(self) -> None:
+    @staticmethod
+    def test_retry_returns_successful_call_without_retry() -> None:
         """Test retry returns successful call without retry."""
         calls = {"n": 0}
 
@@ -148,7 +156,8 @@ class TestsFlextCoreDecorators:
         tm.that(succeed(), eq="ok")
         tm.that(calls["n"], eq=1)
 
-    def test_retry_retries_until_success(self) -> None:
+    @staticmethod
+    def test_retry_retries_until_success() -> None:
         """Test retry retries until success."""
         calls = {"n": 0}
 
@@ -163,8 +172,8 @@ class TestsFlextCoreDecorators:
         tm.that(flaky(), eq="ok")
         tm.that(calls["n"], eq=2)
 
+    @staticmethod
     def test_combined_applies_injection_on_standard_path(
-        self,
         clean_container: p.Container,
     ) -> None:
         """Test combined applies injection on standard path."""
@@ -178,8 +187,8 @@ class TestsFlextCoreDecorators:
 
         tm.that(fn(), eq=43)
 
+    @staticmethod
     def test_combined_wraps_with_railway_when_enabled(
-        self,
         clean_container: p.Container,
     ) -> None:
         """Test combined wraps with railway when enabled."""
@@ -193,7 +202,8 @@ class TestsFlextCoreDecorators:
         result = fails()
         tm.fail(result)
 
-    def test_with_correlation_ensures_correlation_id_during_call(self) -> None:
+    @staticmethod
+    def test_with_correlation_ensures_correlation_id_during_call() -> None:
         """Test with correlation ensures correlation id during call."""
 
         @d.with_correlation()
@@ -202,8 +212,8 @@ class TestsFlextCoreDecorators:
 
         tm.that(fn(), eq="ok")
 
+    @staticmethod
     def test_factory_registers_callable_and_produces_value(
-        self,
         clean_container: p.Container,
     ) -> None:
         """Test factory registers callable and produces value."""

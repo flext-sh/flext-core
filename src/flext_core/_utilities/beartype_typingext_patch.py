@@ -66,11 +66,14 @@ class FlextUtilitiesBeartypeTypingExtPatch:
         Raises:
             TypeError: If beartype HintPep695TypeAlias cave is unavailable; or if
                 beartype HintPep695TypeAlias contains non-type members.
+
         """
         cavefast = importlib.import_module("beartype._cave._cavefast")
         raw_current = cavefast.__dict__.get("HintPep695TypeAlias")
         if isinstance(raw_current, type):
-            current: cls._HintPep695AliasValue = raw_current
+            current: FlextUtilitiesBeartypeTypingExtPatch._HintPep695AliasValue = (
+                raw_current
+            )
         elif isinstance(raw_current, tuple):
             current_types = tuple(
                 item for item in raw_current if isinstance(item, type)
@@ -112,6 +115,7 @@ class FlextUtilitiesBeartypeTypingExtPatch:
 
         Raises:
             TypeError: If beartype get_hint_pep695_unsubbed_alias hook is unavailable.
+
         """
         pep695 = importlib.import_module("beartype._util.hint.pep.proposal.pep695")
         raw_original = pep695.__dict__.get("get_hint_pep695_unsubbed_alias")
@@ -121,12 +125,15 @@ class FlextUtilitiesBeartypeTypingExtPatch:
 
         # Dynamic module dictionaries expose plugin callables as object; callable()
         # above validates the runtime boundary before narrowing the contract.
-        original = cast("cls._Pep695Getter", raw_original)
+        original = cast(
+            "FlextUtilitiesBeartypeTypingExtPatch._Pep695Getter",
+            raw_original,
+        )
 
         def tagged(
-            hint: cls._TypeHintSpecifier,
+            hint: FlextUtilitiesBeartypeTypingExtPatch._TypeHintSpecifier,
             exception_prefix: str = "",
-        ) -> cls._TypeHintSpecifier:
+        ) -> FlextUtilitiesBeartypeTypingExtPatch._TypeHintSpecifier:
             reduced = original(hint, exception_prefix)
             module_name = getattr(hint, "__module__", None)
             if isinstance(module_name, str) and module_name:
@@ -150,6 +157,7 @@ class FlextUtilitiesBeartypeTypingExtPatch:
 
         Returns:
             The resulting ``_TypeHintSpecifier``.
+
         """
         tag = FlextUtilitiesBeartypeTypingExtPatch._tag_forward_refs
         if isinstance(hint, str):

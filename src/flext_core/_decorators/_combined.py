@@ -66,6 +66,7 @@ class FlextDecoratorsCombined(FlextDecoratorsRailway):
         Returns:
             The resulting ``Callable[[Callable[PCallback, TResult]], Callable[PCallback,
                 TResult] | Callable[PCallback, pr.Result[TResult]]]``.
+
         """
         railway = m.CombinedRailwayOptions.model_validate({
             "enabled": railway_enabled,

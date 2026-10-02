@@ -43,7 +43,12 @@ class FlextDecoratorsBase:
         cls,
         value: pb.AttributeProbe | None,
     ) -> TypeIs[_LoggerCarrier]:
-        """Return whether value carries or can route logging context."""
+        """Return whether value carries or can route logging context.
+
+        Returns:
+            Whether value carries or can route logging context.
+
+        """
         _ = cls
         return isinstance(
             value,
@@ -62,6 +67,7 @@ class FlextDecoratorsBase:
 
         Returns:
             The resulting ``pl.Logger``.
+
         """
         _ = cls
         if isinstance(first_arg, pl.Logger):
@@ -85,6 +91,7 @@ class FlextDecoratorsBase:
         Returns:
             The resulting ``Callable[[Callable[PCallback, TResult]], Callable[PCallback,
                 TResult]]``.
+
         """
 
         def decorator(
@@ -113,6 +120,7 @@ class FlextDecoratorsBase:
         Returns:
             The resulting ``Callable[[Callable[PCallback, TResult]], Callable[PCallback,
                 TResult]]``.
+
         """
 
         def decorator(

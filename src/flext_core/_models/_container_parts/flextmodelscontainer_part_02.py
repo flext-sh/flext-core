@@ -74,11 +74,17 @@ class FlextModelsContainer(FlextModelsContainerPart01):
 
         enable_singleton: Annotated[
             bool,
-            mp.Field(True, description="Enable singleton pattern for factories"),
+            mp.Field(
+                default=True,
+                description="Enable singleton pattern for factories",
+            ),
         ] = True
         enable_factory_caching: Annotated[
             bool,
-            mp.Field(True, description="Enable caching of factory-created instances"),
+            mp.Field(
+                default=True,
+                description="Enable caching of factory-created instances",
+            ),
         ] = True
         max_services: Annotated[
             t.PositiveInt,
@@ -99,20 +105,20 @@ class FlextModelsContainer(FlextModelsContainerPart01):
         enable_auto_registration: Annotated[
             bool,
             mp.Field(
-                False,
+                default=False,
                 description="Enable automatic service registration from decorators",
             ),
         ] = False
         enable_lifecycle_hooks: Annotated[
             bool,
             mp.Field(
-                True,
+                default=True,
                 description="Enable lifecycle hooks (on_register, on_get, etc.)",
             ),
         ] = True
         lazy_loading: Annotated[
             bool,
-            mp.Field(True, description="Enable lazy loading of services"),
+            mp.Field(default=True, description="Enable lazy loading of services"),
         ] = True
 
 

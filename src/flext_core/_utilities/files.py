@@ -37,6 +37,7 @@ class FlextUtilitiesFiles:
 
         Returns:
             The resulting ``p.ResultView[int]``.
+
         """
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -68,6 +69,7 @@ class FlextUtilitiesFiles:
 
         Returns:
             The resulting ``p.ResultView[int]``.
+
         """
         payload = data.encode(encoding)
         try:

@@ -20,14 +20,13 @@ from typing import TYPE_CHECKING, ClassVar, cast
 import yaml
 
 from flext_core import r
-
-if TYPE_CHECKING:
-    from flext_core import p
-
 from flext_core._constants.config import FlextConstantsConfig as c
 from flext_core._typings.base import FlextTypingBase as t
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore as g
 from flext_core._utilities.reliability import FlextUtilitiesReliability as rel
+
+if TYPE_CHECKING:
+    from flext_core import p
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -52,6 +51,7 @@ class FlextUtilitiesConfig:
 
             Returns:
                 The resulting ``t.JsonValue``.
+
             """
             return cast("t.JsonValue", yaml.safe_load(stream))
 
@@ -68,6 +68,7 @@ class FlextUtilitiesConfig:
 
             Returns:
                 The resulting ``str``.
+
             """
             return yaml.safe_dump(
                 data,
@@ -83,6 +84,7 @@ class FlextUtilitiesConfig:
 
             Returns:
                 The resulting ``t.JsonValue``.
+
             """
             with path.open(encoding="utf-8") as fh:
                 return cast("t.JsonValue", yaml.safe_load(fh))
@@ -93,6 +95,7 @@ class FlextUtilitiesConfig:
 
             Returns:
                 The resulting ``p.Result[t.JsonMapping]``.
+
             """
             if not path.is_file():
                 return r[t.JsonMapping].fail(f"YAML file not found: {path}")
@@ -118,6 +121,7 @@ class FlextUtilitiesConfig:
 
             Returns:
                 The resulting ``p.Result[bool]``.
+
             """
             try:
                 path.parent.mkdir(parents=True, exist_ok=True)
@@ -128,7 +132,7 @@ class FlextUtilitiesConfig:
                 )
                 with path.open("w", encoding="utf-8") as fh:
                     fh.write(validated)
-                return r[bool].ok(True)
+                return r[bool].ok(value=True)
             except OSError as exc:
                 return r[bool].fail(f"YAML write error: {exc}", exception=exc)
 
@@ -142,6 +146,7 @@ class FlextUtilitiesConfig:
 
         Returns:
             The resulting ``str``.
+
         """
         name = match.group("name")
         if name in env:
@@ -155,6 +160,7 @@ class FlextUtilitiesConfig:
 
         Returns:
             The resulting ``str``.
+
         """
         current = value
 
@@ -177,6 +183,7 @@ class FlextUtilitiesConfig:
 
         Returns:
             The resulting ``p.Result[t.JsonMapping]``.
+
         """
         if not path.is_file():
             return r[t.JsonMapping].fail(f"{c.ERR_CONFIG_READ_FAILED}: {path}")
@@ -198,6 +205,7 @@ class FlextUtilitiesConfig:
 
         Returns:
             The resulting ``t.JsonDict``.
+
         """
         merged: dict[str, t.JsonValue] = dict(base)
         for key, value in override.items():
@@ -221,6 +229,7 @@ class FlextUtilitiesConfig:
 
         Returns:
             The resulting ``t.JsonValue``.
+
         """
         if isinstance(value, str):
             return FlextUtilitiesConfig._expand_str(value, env)

@@ -37,6 +37,7 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
 
         Raises:
             ValueError: If unknown deprecated-syntax shape.
+
         """
         shape = params.ast_shape
         module = _ubh.runtime_module_for(target)

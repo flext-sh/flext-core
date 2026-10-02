@@ -13,14 +13,13 @@ import pytest
 from flext_tests import d, e, r
 from hypothesis import given, settings, strategies as st
 
-from tests.unit._decorators_support import TestsFlextDecoratorsLegacy
-from tests.utilities import u
+from tests.utilities import TestsFlextUtilities, u
 
 if TYPE_CHECKING:
     from tests.protocols import p
 
 
-class TestsFlextCoreDecoratorsCombined(TestsFlextDecoratorsLegacy):
+class TestsFlextCoreDecoratorsCombined(TestsFlextUtilities.TestsFlextDecoratorsLegacy):
     """Assert observable behavior of ``d.combined`` and decorator stacking."""
 
     @staticmethod
@@ -184,8 +183,8 @@ class TestsFlextCoreDecoratorsCombined(TestsFlextDecoratorsLegacy):
         ("timeout_seconds", "should_raise"),
         [(5.0, False), (0.001, True)],
     )
+    @staticmethod
     def test_timeout_enforces_duration_budget(
-        self,
         timeout_seconds: float,
         *,
         should_raise: bool,
@@ -208,8 +207,8 @@ class TestsFlextCoreDecoratorsCombined(TestsFlextDecoratorsLegacy):
 
     @given(a=st.integers(), b=st.integers(min_value=1, max_value=1000))
     @settings(max_examples=50)
+    @staticmethod
     def test_railway_division_always_returns_success_result(
-        self,
         a: int,
         b: int,
     ) -> None:

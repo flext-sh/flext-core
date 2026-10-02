@@ -92,6 +92,7 @@ class FlextMixins(m.ArbitraryTypesModel):
 
         Returns:
             The resulting ``p.Logger``.
+
         """
         logger_name = f"{cls.__module__}.{cls.__name__}"
         with cls._cache_lock:
@@ -111,6 +112,7 @@ class FlextMixins(m.ArbitraryTypesModel):
 
         Raises:
             EXC_BROAD_RUNTIME: If a ``c.EXC_BROAD_RUNTIME`` is caught.
+
         """
         stats: m.ConfigMap = self._operation_stats.get(
             operation_name,
@@ -161,6 +163,7 @@ class FlextMixins(m.ArbitraryTypesModel):
 
         Returns:
             The resulting ``m.ServiceRuntime``.
+
         """
         if self._runtime is None:
             self._runtime = u.build_service_runtime(self)

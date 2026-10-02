@@ -46,6 +46,7 @@ class FlextUtilitiesFamilySurface:
         Raises:
             RuntimeError: If family-surface derivation found no distribution publishing
                 the lazy export contract under prefix.
+
         """
         snapshot: list[
             tuple[str, frozenset[str], t.MappingKV[str, t.StrPair | str]]
@@ -85,6 +86,7 @@ class FlextUtilitiesFamilySurface:
 
         Returns:
             The resulting ``t.MappingKV[str, t.VariadicTuple[str]]``.
+
         """
         declaration = tuple(name[0].lower() for name in c.NAMESPACE_LAYER_NAMES)
         owners = {
@@ -110,6 +112,7 @@ class FlextUtilitiesFamilySurface:
 
         Raises:
             ValueError: If published family surface maps.
+
         """
         grouped = {}
         for _, _, entries in FlextUtilitiesFamilySurface._surface_snapshot():

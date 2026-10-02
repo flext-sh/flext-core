@@ -25,6 +25,7 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
         Raises:
             TypeError: If Resolved dispatcher implementation does not satisfy
                 p.Dispatcher.
+
         """
         dispatcher_module = import_module("flext_core.dispatcher")
         dispatcher_candidate = dispatcher_module.FlextDispatcher()
@@ -47,6 +48,7 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
 
         Raises:
             TypeError: If Resolved registry implementation does not satisfy p.Registry.
+
         """
         registry_module = import_module("flext_core.registry")
         registry_candidate = registry_module.FlextRegistry.create(
@@ -63,7 +65,12 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
         cls,
         runtime_options: m.RuntimeBootstrapOptions,
     ) -> p.Settings:
-        """Return the injected settings, or load the declared settings class."""
+        """Return the injected settings, or load the declared settings class.
+
+        Returns:
+            The injected settings, or load the declared settings class.
+
+        """
         settings = runtime_options.settings
         overrides = runtime_options.settings_overrides
         if settings is not None:
@@ -84,6 +91,7 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
 
         Returns:
             The resulting ``m.ServiceRuntime``.
+
         """
         options = cls.resolve_runtime_options(source)
         settings = cls._resolve_runtime_settings(options)

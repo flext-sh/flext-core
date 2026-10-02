@@ -14,16 +14,15 @@ from typing import TYPE_CHECKING
 
 import structlog
 
+from flext_core import c, t
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._runtime._base import FlextRuntimeBase
 from flext_core._utilities._logging_config_parts.logging_config_part_02 import (
     FlextUtilitiesLoggingConfig as FlextUtilitiesLoggingConfigPart02,
 )
 
 if TYPE_CHECKING:
     from structlog.types import Processor
-
-from flext_core import c, t
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._runtime._base import FlextRuntimeBase
 
 
 class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart02):
@@ -93,7 +92,12 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart02):
 
     @staticmethod
     def level_number(level: int | str) -> int:
-        """Return the stdlib number of a level given by number or name."""
+        """Return the stdlib number of a level given by number or name.
+
+        Returns:
+            The stdlib number of a level given by number or name.
+
+        """
         if isinstance(level, int):
             return level
         return logging.getLevelNamesMapping()[level.upper()]

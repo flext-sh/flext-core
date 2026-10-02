@@ -27,20 +27,22 @@ def _factory() -> str:
 class TestsServiceRegistrationSpecOwner:
     """The spec validates its declarations; the container registers them."""
 
-    def test_spec_rejects_non_mapping_services(self) -> None:
+    @staticmethod
+    def test_spec_rejects_non_mapping_services() -> None:
         """A service collection that is not a mapping fails validation."""
         with pytest.raises(c.ValidationError):
             _ = m.ServiceRegistrationSpec.model_validate({"services": ["invalid"]})
 
-    def test_spec_rejects_non_callable_factory(self) -> None:
+    @staticmethod
+    def test_spec_rejects_non_callable_factory() -> None:
         """A factory declaration that is not callable fails validation."""
         with pytest.raises(c.ValidationError):
             _ = m.ServiceRegistrationSpec.model_validate({
                 "factories": {"factory": "not-callable"},
             })
 
+    @staticmethod
     def test_container_registers_the_declared_raw_values(
-        self,
         clean_container: p.Container,
     ) -> None:
         """Services, factories and resources declared by a spec all resolve."""
@@ -58,7 +60,8 @@ class TestsServiceRegistrationSpecOwner:
         tm.ok(container.resolve("factory"), eq="factory-value")
         tm.ok(container.resolve("resource"), eq="factory-value")
 
-    def test_spec_rejects_a_prebuilt_record_as_a_factory(self) -> None:
+    @staticmethod
+    def test_spec_rejects_a_prebuilt_record_as_a_factory() -> None:
         """A spec declares raw values only; a registration record is not one."""
         record = m.FactoryRegistration(name="factory", factory=_factory)
 
@@ -67,8 +70,8 @@ class TestsServiceRegistrationSpecOwner:
                 "factories": {"factory": record},
             })
 
+    @staticmethod
     def test_container_rejects_spec_redeclaring_a_registered_name(
-        self,
         clean_container: p.Container,
     ) -> None:
         """Applying a spec to a container that holds its names raises."""
@@ -80,7 +83,8 @@ class TestsServiceRegistrationSpecOwner:
 
         tm.ok(clean_container.resolve("service"), eq="first")
 
-    def test_model_declares_no_registration_behavior(self) -> None:
+    @staticmethod
+    def test_model_declares_no_registration_behavior() -> None:
         """The Pydantic model exposes only declarative schema members."""
         behavior_names = {
             "validate_services",

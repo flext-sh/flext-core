@@ -27,8 +27,12 @@ class FlextRuntimeBase:
     def _require_metadata_model(cls) -> type[pl.Metadata]:
         """Return the bound metadata model class or raise a runtime contract error.
 
+        Returns:
+            The bound metadata model class or raise a runtime contract error.
+
         Raises:
             RuntimeError: If ``metadata_cls is None``.
+
         """
         metadata_cls = cls.Metadata
         if metadata_cls is None:
@@ -45,6 +49,7 @@ class FlextRuntimeBase:
 
         Raises:
             TypeError: If object.__new__ did not return instance of.
+
         """
         instance = object.__new__(class_type)
         if not isinstance(instance, class_type):
@@ -58,6 +63,7 @@ class FlextRuntimeBase:
 
         Returns:
             The resulting ``datetime | None``.
+
         """
         if value is not None and value.tzinfo is None:
             return value.replace(tzinfo=UTC)
@@ -74,6 +80,7 @@ class FlextRuntimeBase:
 
         Returns:
             The resulting ``c.LogLevel``.
+
         """
         if trace:
             return c.LogLevel.DEBUG
@@ -87,6 +94,7 @@ class FlextRuntimeBase:
 
         Returns:
             The resulting ``str``.
+
         """
         return "".join(ch for ch in text.lower() if ch.isalnum())
 
@@ -96,6 +104,7 @@ class FlextRuntimeBase:
 
         Returns:
             The resulting ``tb.Scalar``.
+
         """
         if item is None:
             return ""

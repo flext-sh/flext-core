@@ -38,6 +38,7 @@ class FlextExceptionsHelpers:
 
         Returns:
             The resulting ``tuple[tuple[str, tb.JsonValue], ...]``.
+
         """
         entries: list[tuple[str, tb.JsonValue]] = []
         source_values = (context, extra_kwargs)
@@ -68,6 +69,7 @@ class FlextExceptionsHelpers:
 
         Returns:
             The resulting ``FlextModelsBase.Metadata | None``.
+
         """
         metadata: FlextModelsBase.Metadata | None = None
         if value is not None:
@@ -101,6 +103,7 @@ class FlextExceptionsHelpers:
 
         Returns:
             The resulting ``str | None``.
+
         """
         if value is None:
             return None
@@ -118,6 +121,7 @@ class FlextExceptionsHelpers:
 
         Returns:
             The resulting ``tb.JsonDict``.
+
         """
         excluded = excluded_keys or frozenset()
         return {
@@ -139,6 +143,7 @@ class FlextExceptionsHelpers:
 
         Returns:
             The resulting ``tb.JsonDict``.
+
         """
         return {
             key: value

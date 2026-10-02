@@ -52,8 +52,8 @@ class TestsFlextCoreBeartypeEngineConfig:
             (None, False),
         ],
     )
+    @staticmethod
     def test_contains_any_detects_unrestricted_hints(
-        self,
         hint: t.TypeHintSpecifier | None,
         *,
         expected: bool,
@@ -65,8 +65,8 @@ class TestsFlextCoreBeartypeEngineConfig:
         ("alias", "expected"),
         [(AnyAlias, True), (NestedAnyAlias, True), (CleanAlias, False)],
     )
+    @staticmethod
     def test_alias_contains_any_unwraps_type_alias(
-        self,
         alias: t.TypeHintSpecifier | None,
         *,
         expected: bool,
@@ -84,8 +84,8 @@ class TestsFlextCoreBeartypeEngineConfig:
             (None, (False, "")),
         ],
     )
+    @staticmethod
     def test_has_forbidden_collection_origin_reports_name(
-        self,
         hint: t.TypeHintSpecifier | None,
         expected: tuple[bool, str],
     ) -> None:
@@ -96,8 +96,8 @@ class TestsFlextCoreBeartypeEngineConfig:
         ("hint", "expected"),
         [(str | int | None, 2), (str | None, 1), (str | int, 2), (str, 0), (None, 0)],
     )
+    @staticmethod
     def test_count_union_members_excludes_none(
-        self,
         hint: t.TypeHintSpecifier | None,
         expected: int,
     ) -> None:
@@ -114,8 +114,8 @@ class TestsFlextCoreBeartypeEngineConfig:
             (None, False),
         ],
     )
+    @staticmethod
     def test_matches_str_none_union_is_exact(
-        self,
         hint: t.TypeHintSpecifier | None,
         *,
         expected: bool,

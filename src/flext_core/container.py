@@ -125,6 +125,7 @@ class FlextContainer(p.Container):
 
         Returns:
             The resulting ``p.Logger``.
+
         """
         _ = service_name, service_version, correlation_id
         logger: p.Logger = FlextUtilitiesLogging.fetch_logger(module_name)
@@ -139,6 +140,7 @@ class FlextContainer(p.Container):
 
         Returns:
             The resulting ``TypeGuard[T]``.
+
         """
         return isinstance(value, expected)
 
@@ -165,6 +167,7 @@ class FlextContainer(p.Container):
             ValidationError: If ``not name``; or if ``reserved != internal``; or if
                 ``not internal and name in self._registrations``; or if a ``ValueError``
                 is caught.
+
         """
         if not name:
             raise e.ValidationError(c.ERR_CONTAINER_NAME_EMPTY)
@@ -197,6 +200,7 @@ class FlextContainer(p.Container):
 
         Returns:
             The resulting ``Self``.
+
         """
         return self._write(
             name,
@@ -209,6 +213,7 @@ class FlextContainer(p.Container):
 
         Returns:
             The resulting ``Self``.
+
         """
         return self._write(
             name,
@@ -221,14 +226,15 @@ class FlextContainer(p.Container):
 
         Returns:
             The resulting ``Self``.
+
         """
         return self._write(
             name,
             partial(m.ResourceRegistration, name=name, factory=impl),
         )
 
+    @staticmethod
     def _resolve_callable(
-        self,
         callable_obj: t.FactoryCallable,
         kind: str,
     ) -> p.Result[t.RegisterableService]:
@@ -236,6 +242,7 @@ class FlextContainer(p.Container):
 
         Returns:
             The resulting ``p.Result[t.RegisterableService]``.
+
         """
         try:
             resolved = callable_obj()
@@ -277,6 +284,7 @@ class FlextContainer(p.Container):
 
         Returns:
             The resulting ``p.Result[T] | p.Result[t.RegisterableService]``.
+
         """
         match self._registrations.get(name):
             case None:
@@ -303,7 +311,12 @@ class FlextContainer(p.Container):
 
     @override
     def snapshot(self) -> m.ConfigMap:
-        """Return the merged settings exposed by this container."""
+        """Return the merged settings exposed by this container.
+
+        Returns:
+            The merged settings exposed by this container.
+
+        """
         config_dict = self._global_config.model_dump()
         return m.ConfigMap(
             root={k: u.normalize_to_container(v) for k, v in config_dict.items()},
@@ -311,7 +324,12 @@ class FlextContainer(p.Container):
 
     @override
     def has(self, name: str) -> bool:
-        """Return whether a public service, factory, or resource is registered."""
+        """Return whether a public service, factory, or resource is registered.
+
+        Returns:
+            Whether a public service, factory, or resource is registered.
+
+        """
         return name in self._registrations and name not in c.CONTAINER_RESERVED_NAMES
 
     @override
@@ -320,6 +338,7 @@ class FlextContainer(p.Container):
 
         Returns:
             The resulting ``t.StrSequence``.
+
         """
         return [name for name in self._registrations if self.has(name)]
 
@@ -414,6 +433,7 @@ class FlextContainer(p.Container):
 
         Returns:
             The resulting ``Self``.
+
         """
         spec = registration or m.ServiceRegistrationSpec()
         settings_source = spec.settings if spec.settings is not None else self._config
@@ -462,13 +482,14 @@ class FlextContainer(p.Container):
 
         Returns:
             The resulting ``p.Result[bool]``.
+
         """
         if not self.has(name):
             return r[bool].from_result(
                 e.fail_not_found("service", name, result_type=r[bool]),
             )
         del self._registrations[name]
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     @override
     def dispatcher(self) -> p.Result[p.Dispatcher]:
@@ -476,6 +497,7 @@ class FlextContainer(p.Container):
 
         Returns:
             The resulting ``p.Result[p.Dispatcher]``.
+
         """
         result = self.resolve(c.ServiceName.COMMAND_BUS)
         if result.failure:
@@ -509,6 +531,10 @@ class FlextContainer(p.Container):
         ``auto_register_factories`` registers every ``@d.factory()`` function
         of the calling module; a caller that cannot be resolved to an imported
         module raises ``e.ValidationError``.
+
+        Returns:
+            The canonical shared container instance.
+
         """
         instance = cls()
         if settings is not None or context is not None:
@@ -529,6 +555,7 @@ class FlextContainer(p.Container):
 
         Raises:
             ValidationError: If ``module is None``.
+
         """
         caller = frame.f_back if frame is not None else None
         module_name = caller.f_globals.get("__name__") if caller is not None else None
@@ -593,6 +620,7 @@ class FlextContainer(p.Container):
 
         Returns:
             The resulting ``Self``.
+
         """
         if settings is None:
             return self

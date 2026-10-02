@@ -13,13 +13,12 @@ from pydantic import BaseModel
 
 from flext_core import c
 from flext_core._protocols.result import FlextProtocolsResult as prt
+from flext_core._runtime._metadata import FlextRuntimeMetadata
 from flext_core._typings.typeadapters import FlextTypesTypeAdapters as tta
 
 if TYPE_CHECKING:
     from flext_core._typings.base import FlextTypingBase as tb
     from flext_core._typings.services import FlextTypesServices as ts
-
-from flext_core._runtime._metadata import FlextRuntimeMetadata
 
 
 class FlextRuntimeMetadataValidation(FlextRuntimeMetadata):
@@ -36,6 +35,7 @@ class FlextRuntimeMetadataValidation(FlextRuntimeMetadata):
 
         Raises:
             TypeError: If ``not isinstance(value, prt.HasModelDump)``.
+
         """
         if value is None:
             return None
@@ -67,6 +67,7 @@ class FlextRuntimeMetadataValidation(FlextRuntimeMetadata):
 
         Raises:
             ValueError: If ``key.startswith('_')``.
+
         """
         if value is None:
             return {}
@@ -95,6 +96,7 @@ class FlextRuntimeMetadataValidation(FlextRuntimeMetadata):
 
         Returns:
             The resulting ``TModel``.
+
         """
         if value is None:
             return metadata_model.model_validate({c.FIELD_ATTRIBUTES: {}})

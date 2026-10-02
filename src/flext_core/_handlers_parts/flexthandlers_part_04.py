@@ -21,7 +21,8 @@ from flext_core._utilities.handler import FlextUtilitiesHandler
 class FlextHandlers[MessageT_contra, ResultT](
     FlextHandlersPart03[MessageT_contra, ResultT],
 ):
-    def handle(self, message: MessageT_contra) -> p.Result[ResultT]:
+    @staticmethod
+    def handle(message: MessageT_contra) -> p.Result[ResultT]:
         """Handle the message - abstract method to be implemented by subclasses.
 
         This is the core business logic method that must be implemented by all
@@ -47,6 +48,7 @@ class FlextHandlers[MessageT_contra, ResultT](
 
         Returns:
             The resulting ``p.Result[p.RootDict[t.JsonPayload]]``.
+
         """
         result = FlextUtilitiesHandler.pop_context(self._runtime_state)
         if result.failure:
@@ -62,18 +64,20 @@ class FlextHandlers[MessageT_contra, ResultT](
 
         Returns:
             The resulting ``p.Result[bool]``.
+
         """
         result = FlextUtilitiesHandler.push_context(self._runtime_state, ctx)
         if result.failure:
             return r[bool].fail_op("push handler context", result.error)
         self._runtime_state = result.unwrap()
-        return r.ok(True)
+        return r.ok(value=True)
 
     def record_metric(self, name: str, value: t.JsonPayload) -> p.Result[bool]:
         """Record a metric value in the current handler state.
 
         Returns:
             The resulting ``p.Result[bool]``.
+
         """
         return FlextUtilitiesHandler.record_metric(
             self._runtime_state.execution_context,
@@ -81,7 +85,8 @@ class FlextHandlers[MessageT_contra, ResultT](
             value,
         )
 
-    def validate_message(self, data: MessageT_contra) -> p.Result[bool]:
+    @staticmethod
+    def validate_message(data: MessageT_contra) -> p.Result[bool]:
         """Validate input data using extensible validation pipeline.
 
         Base validation method that can be overridden by subclasses to implement
@@ -113,7 +118,7 @@ class FlextHandlers[MessageT_contra, ResultT](
                 "validate handler message",
                 c.ERR_MESSAGE_CANNOT_BE_NONE,
             )
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     def _record_execution_metrics(
         self,

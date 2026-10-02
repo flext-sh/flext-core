@@ -37,6 +37,7 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
         Returns:
             The resulting ``Callable[[Callable[PCallback, TValue]], Callable[PCallback,
                 pr.Result[TValue]]]``.
+
         """
 
         def decorator(
@@ -76,6 +77,7 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
         Returns:
             The resulting ``Callable[[Callable[PCallback, TResult]], Callable[PCallback,
                 TResult]]``.
+
         """
         attempts = max_attempts if max_attempts is not None else c.MAX_RETRY_ATTEMPTS
         delay = (
@@ -158,6 +160,7 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
 
         Returns:
             The resulting ``TResult | Exception``.
+
         """
         attempts = retry_settings.max_retries
         delay = retry_settings.initial_delay_seconds

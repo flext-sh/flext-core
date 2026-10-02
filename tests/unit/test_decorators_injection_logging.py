@@ -24,18 +24,20 @@ from tests.unit._decorators_support import capture_stdout
 class TestsFlextCoreDecoratorsInjectionLogging:
     """Tests for ``FlextCoreDecoratorsInjectionLogging``."""
 
+    @staticmethod
     @pytest.fixture
-    def container(self) -> FlextContainer:
+    def container() -> FlextContainer:
         """Provide ``container``.
 
         Returns:
             The resulting ``FlextContainer``.
+
         """
         return FlextContainer.shared()
 
     # --- d.inject --------------------------------------------------------
+    @staticmethod
     def test_inject_resolves_registered_service_from_container(
-        self,
         container: FlextContainer,
     ) -> None:
         """Test inject resolves registered service from container."""
@@ -47,8 +49,8 @@ class TestsFlextCoreDecoratorsInjectionLogging:
 
         assert greet("bob") == "HELLO:bob"
 
+    @staticmethod
     def test_inject_explicit_kwarg_overrides_container_value(
-        self,
         container: FlextContainer,
     ) -> None:
         """Test inject explicit kwarg overrides container value."""
@@ -60,7 +62,8 @@ class TestsFlextCoreDecoratorsInjectionLogging:
 
         assert greet(greeter="EXPLICIT") == "EXPLICIT"
 
-    def test_inject_missing_key_preserves_default_argument(self) -> None:
+    @staticmethod
+    def test_inject_missing_key_preserves_default_argument() -> None:
         """Test inject missing key preserves default argument."""
 
         @d.inject(dependency="unregistered_key_xyz")
@@ -69,8 +72,8 @@ class TestsFlextCoreDecoratorsInjectionLogging:
 
         assert use() == "fallback"
 
+    @staticmethod
     def test_inject_delivers_pydantic_model_instance(
-        self,
         container: FlextContainer,
     ) -> None:
         """Test inject delivers pydantic model instance."""
@@ -88,7 +91,8 @@ class TestsFlextCoreDecoratorsInjectionLogging:
 
     # --- d.log_operation -------------------------------------------------
     @pytest.mark.parametrize("payload", ["success", "", "multi word result"])
-    def test_log_operation_returns_wrapped_value_unchanged(self, payload: str) -> None:
+    @staticmethod
+    def test_log_operation_returns_wrapped_value_unchanged(payload: str) -> None:
         """Test log operation returns wrapped value unchanged."""
 
         @d.log_operation("payload_op")
@@ -97,7 +101,8 @@ class TestsFlextCoreDecoratorsInjectionLogging:
 
         assert produce() == payload
 
-    def test_log_operation_with_perf_tracking_returns_value(self) -> None:
+    @staticmethod
+    def test_log_operation_with_perf_tracking_returns_value() -> None:
         """Test log operation with perf tracking returns value."""
 
         @d.log_operation("timed_op", track_perf=True)
@@ -114,8 +119,8 @@ class TestsFlextCoreDecoratorsInjectionLogging:
             (KeyError, "missing"),
         ],
     )
+    @staticmethod
     def test_log_operation_propagates_wrapped_exception(
-        self,
         exc_type: type[Exception],
         message: str,
     ) -> None:
@@ -128,7 +133,8 @@ class TestsFlextCoreDecoratorsInjectionLogging:
         with pytest.raises(exc_type, match=message):
             boom()
 
-    def test_log_operation_emits_operation_name_on_failure(self) -> None:
+    @staticmethod
+    def test_log_operation_emits_operation_name_on_failure() -> None:
         """Test log operation emits operation name on failure."""
 
         @d.log_operation("named_failure_op")
@@ -143,7 +149,8 @@ class TestsFlextCoreDecoratorsInjectionLogging:
         _ = capture_stdout(emit, contains="named_failure_op")
 
     # --- d.with_correlation ----------------------------------------------
-    def test_with_correlation_establishes_correlation_id_during_call(self) -> None:
+    @staticmethod
+    def test_with_correlation_establishes_correlation_id_during_call() -> None:
         """Test with correlation establishes correlation id during call."""
 
         @d.with_correlation()
@@ -152,7 +159,8 @@ class TestsFlextCoreDecoratorsInjectionLogging:
 
         assert inside()
 
-    def test_with_correlation_returns_wrapped_value(self) -> None:
+    @staticmethod
+    def test_with_correlation_returns_wrapped_value() -> None:
         """Test with correlation returns wrapped value."""
 
         @d.with_correlation()
@@ -162,7 +170,8 @@ class TestsFlextCoreDecoratorsInjectionLogging:
         assert produce() == "wrapped"
 
     # --- d.deprecated ----------------------------------------------------
-    def test_deprecated_warns_and_returns_value(self) -> None:
+    @staticmethod
+    def test_deprecated_warns_and_returns_value() -> None:
         """Test deprecated warns and returns value."""
 
         @d.deprecated("use new_api")

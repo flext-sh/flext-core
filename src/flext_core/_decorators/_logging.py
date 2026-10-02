@@ -36,6 +36,7 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
         Returns:
             The resulting ``Callable[[Callable[PCallback, TResult]], Callable[PCallback,
                 TResult]]``.
+
         """
 
         def decorator(
@@ -88,6 +89,7 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
 
         Returns:
             The resulting ``str | None``.
+
         """
         if ensure_correlation:
             return cls._context_type.ensure_correlation_id()
@@ -111,6 +113,7 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
 
         Returns:
             The resulting ``TResult``.
+
         """
         try:
             logger.debug(
@@ -161,6 +164,7 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
         Returns:
             The resulting ``Callable[[Callable[PCallback, TResult]], Callable[PCallback,
                 TResult]]``.
+
         """
 
         def decorator(

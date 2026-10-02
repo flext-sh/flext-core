@@ -44,6 +44,7 @@ class FlextUtilitiesGuardsTypeProtocol(
 
         Returns:
             The resulting ``bool``.
+
         """
         matched = False
         if isinstance(type_spec, str):

@@ -37,6 +37,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
 
         Returns:
             The resulting ``str``.
+
         """
         error = source.error
         return error or ""
@@ -47,6 +48,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
 
         Returns:
             The resulting ``p.Result[V]``.
+
         """
         return ok_result(cls._factory(), value)
 
@@ -81,6 +83,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
 
         Returns:
             The resulting ``frozenset[str]``.
+
         """
         excluded: set[str] = set(c.SENSITIVE_ERROR_DATA_KEYS)
         if exception is not None:
@@ -123,6 +126,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
 
         Returns:
             The resulting ``p.Result[V]``.
+
         """
         return copy_result(cls._factory(), source)
 
@@ -156,6 +160,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
 
         Returns:
             The resulting ``t.JsonDict | None``.
+
         """
         if payload is None:
             return None
@@ -227,6 +232,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
 
         Returns:
             The resulting ``bool``.
+
         """
         return isinstance(obj, FlextResultBase) and obj.success
 
@@ -236,6 +242,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
 
         Returns:
             The resulting ``bool``.
+
         """
         return isinstance(obj, FlextResultBase) and not obj.success
 
@@ -248,6 +255,7 @@ def ok_result[V, InstanceT: prt.ResultFactoryMinimal](
 
     Returns:
         The resulting ``p.Result[V]``.
+
     """
     cls.reject_banned_result_parameterization()
     cls.reject_banned_success_payload(value)
@@ -262,6 +270,7 @@ def copy_result[V, InstanceT: prt.ResultFactoryMinimal](
 
     Returns:
         The resulting ``p.Result[V]``.
+
     """
     if source.success:
         try:

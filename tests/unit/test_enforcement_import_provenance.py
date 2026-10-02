@@ -82,8 +82,8 @@ class TestsEnforcementImportProvenance:
             ),
         ],
     )
+    @staticmethod
     def test_real_consumer_import_contract(
-        self,
         tmp_path: Path,
         binding: str,
         rule: str,

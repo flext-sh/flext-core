@@ -24,6 +24,7 @@ def redundant_inner_violation(
 
     Returns:
         The resulting ``t.StrMapping | None``.
+
     """
     outer_name, separator, _ = target.__qualname__.partition(".")
     has_only_dunder_attrs = all(
@@ -48,6 +49,7 @@ def self_ref_violation(
 
     Returns:
         The resulting ``t.StrMapping | None``.
+
     """
     if violation is not None or not params.require_explicit_class_when_self_ref:
         return NO_VIOLATION

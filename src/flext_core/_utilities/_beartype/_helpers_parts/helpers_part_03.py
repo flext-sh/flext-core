@@ -12,12 +12,13 @@ from collections.abc import Callable, MutableMapping, MutableSequence, MutableSe
 from types import UnionType
 from typing import TYPE_CHECKING, TypeAliasType, Union, get_args, get_origin
 
-# Import directly from base modules to avoid a circular load through the public
-# flext_core facade while this module is still being initialized.
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._utilities._beartype._helpers_parts.helpers_part_02 import (
     FlextUtilitiesBeartypeHelpers as FlextUtilitiesBeartypeHelpersPart02,
 )
+
+# Import directly from base modules to avoid a circular load through the public
+# flext_core facade while this module is still being initialized.
 
 if TYPE_CHECKING:
     from flext_core._protocols.base import FlextProtocolsBase as p

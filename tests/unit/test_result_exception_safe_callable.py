@@ -17,13 +17,15 @@ from typing import TYPE_CHECKING
 import pytest
 from flext_tests import r, tm
 
-from tests.unit._result_exception_support import TestsFlextResultExceptionCarrying
+import tests.utilities
 
 if TYPE_CHECKING:
     from tests.protocols import p
 
 
-class TestsFlextCoreResultExceptionSafeCallable(TestsFlextResultExceptionCarrying):
+class TestsFlextCoreResultExceptionSafeCallable(
+    tests.utilities.TestsFlextUtilities.TestsFlextResultExceptionCarrying,
+):
     """Public-contract behavior of ``r.safe`` and ``r[T].create_from_callable``."""
 
     @staticmethod
@@ -153,8 +155,8 @@ class TestsFlextCoreResultExceptionSafeCallable(TestsFlextResultExceptionCarryin
         [OSError, IndexError],
         ids=("os-error", "lookup-index-error"),
     )
+    @staticmethod
     def test_safe_captures_boundary_exceptions(
-        self,
         exception_type: type[Exception],
     ) -> None:
         """Test safe captures boundary exceptions."""

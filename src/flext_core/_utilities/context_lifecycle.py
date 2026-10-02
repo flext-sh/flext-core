@@ -35,6 +35,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
 
         Returns:
             The resulting ``m.ContextExport | t.MappingKV[str, t.JsonPayload]``.
+
         """
         all_data: dict[str, t.JsonPayload] = {}
         all_scopes = self._scope_payloads()
@@ -77,6 +78,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
 
         Returns:
             The resulting ``t.JsonMapping``.
+
         """
         normalized = {
             k: FlextRuntime.normalize_to_container(v) for k, v in source.items()
@@ -93,6 +95,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
 
         Returns:
             The resulting ``m.ConfigMap | None``.
+
         """
         config_map: m.ConfigMap | None
         try:
@@ -121,6 +124,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
 
         Returns:
             The resulting ``m.ConfigMap | None``.
+
         """
         if isinstance(other, p.Context):
             exported_result = other.export(as_dict=True)
@@ -152,6 +156,7 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
 
         Returns:
             The resulting ``Self``.
+
         """
         if not self.state.active:
             return self

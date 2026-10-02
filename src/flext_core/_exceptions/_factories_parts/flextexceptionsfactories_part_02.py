@@ -40,6 +40,9 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart01):
                 )
             )
 
+        Returns:
+            R[T].fail with a canonical type-mismatch message.
+
         """
         params = (
             details
@@ -79,6 +82,9 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart01):
             return e.fail_validation(
                 m.ValidationErrorParams(field="config_key", value=raw_value), error=exc
             )
+
+        Returns:
+            R[T].fail with a canonical validation-failed message.
 
         """
         params = (
@@ -124,6 +130,9 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart01):
         Usage::
 
             return e.fail_config_error("database.url", "env")
+
+        Returns:
+            R[T].fail with a canonical configuration-error message.
 
         """
         options, error = FlextExceptionsFactories._resolve_options(options)

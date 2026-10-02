@@ -18,20 +18,18 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+import tests.utilities
 from flext_core import u
 from tests.typings import t
-from tests.unit._beartype_engine_support import (
-    AnyAlias,
-    CleanAlias,
-    NestedAnyAlias,
-    TestsFlextBeartypeEngine,
-)
+from tests.unit._beartype_engine_support import AnyAlias, CleanAlias, NestedAnyAlias
 
 if TYPE_CHECKING:
     from pathlib import PurePath as LazyResolvableType
 
 
-class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
+class TestsFlextBeartypeEngineAnnotations(
+    tests.utilities.TestsFlextUtilities.TestsFlextBeartypeEngine,
+):
     """Contract of the beartype annotation-inspection engine."""
 
     @pytest.mark.parametrize(
@@ -51,8 +49,8 @@ class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
             (None, False),
         ],
     )
+    @staticmethod
     def test_contains_any_reports_presence_of_any(
-        self,
         hint: t.TypeHintSpecifier | None,
         *,
         expected: bool,
@@ -91,8 +89,8 @@ class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
             (None, 0),
         ],
     )
+    @staticmethod
     def test_count_union_members_excludes_none(
-        self,
         hint: t.TypeHintSpecifier | None,
         *,
         expected: int,
@@ -111,8 +109,8 @@ class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
             (None, False),
         ],
     )
+    @staticmethod
     def test_matches_str_none_union_requires_str_and_none(
-        self,
         hint: t.TypeHintSpecifier | None,
         *,
         expected: bool,
@@ -129,8 +127,8 @@ class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
             (None, False),
         ],
     )
+    @staticmethod
     def test_alias_contains_any_unwraps_alias_values(
-        self,
         alias_value: t.TypeHintSpecifier | None,
         *,
         expected: bool,

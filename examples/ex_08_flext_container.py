@@ -114,6 +114,7 @@ class Ex08FlextContainer(Ex08ContainerLifecycle):
 
         Returns:
             The resulting ``p.ContainerLifecycle``.
+
         """
         self.section("singleton_and_creation")
         FlextContainer.reset_for_testing()
@@ -131,7 +132,7 @@ class Ex08FlextContainer(Ex08ContainerLifecycle):
             "result.ok.roundtrip",
             r[int].ok(random_ok_val).value == random_ok_val,
         )
-        self.audit_check("runtime.normalize.bool", u.normalize_to_container(True))
+        self.audit_check("runtime.normalize.bool", u.normalize_to_container(val=True))
         self.audit_check("constants.default_max_services", c.DEFAULT_SIZE)
         return root
 

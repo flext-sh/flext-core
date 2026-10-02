@@ -15,8 +15,8 @@ from typing import TYPE_CHECKING
 import pytest
 from flext_tests import r, tm
 
+import tests.utilities
 from tests.constants import c
-from tests.unit._result_exception_support import TestsFlextResultExceptionCarrying
 
 if TYPE_CHECKING:
     from tests.protocols import p
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 
 class TestsFlextCoreResultExceptionTraverseValidation(
-    TestsFlextResultExceptionCarrying,
+    tests.utilities.TestsFlextUtilities.TestsFlextResultExceptionCarrying,
 ):
     """Tests for ``FlextCoreResultExceptionTraverseValidation``."""
 
@@ -32,8 +32,8 @@ class TestsFlextCoreResultExceptionTraverseValidation(
         "raised",
         [ValueError("item error"), TypeError("bad type"), KeyError("missing")],
     )
+    @staticmethod
     def test_traverse_fail_fast_carries_originating_failure_exception(
-        self,
         raised: Exception,
     ) -> None:
         # Arrange
@@ -147,9 +147,11 @@ class TestsFlextCoreResultExceptionTraverseValidation(
         invalid = {"name": "Alice", "age": "not_an_int"}
 
         # Act
-        result = r[TestsFlextResultExceptionCarrying.UserModel].from_validation(
+        result = r[
+            tests.utilities.TestsFlextUtilities.TestsFlextResultExceptionCarrying.UserModel
+        ].from_validation(
             invalid,
-            TestsFlextResultExceptionCarrying.UserModel,
+            tests.utilities.TestsFlextUtilities.TestsFlextResultExceptionCarrying.UserModel,
         )
 
         # Assert
@@ -164,9 +166,11 @@ class TestsFlextCoreResultExceptionTraverseValidation(
         valid: dict[str, t.JsonPayload] = {"name": "Alice", "age": 30}
 
         # Act
-        result = r[TestsFlextResultExceptionCarrying.UserModel].from_validation(
+        result = r[
+            tests.utilities.TestsFlextUtilities.TestsFlextResultExceptionCarrying.UserModel
+        ].from_validation(
             valid,
-            TestsFlextResultExceptionCarrying.UserModel,
+            tests.utilities.TestsFlextUtilities.TestsFlextResultExceptionCarrying.UserModel,
         )
 
         # Assert
@@ -227,8 +231,8 @@ class TestsFlextCoreResultExceptionTraverseValidation(
         ("value", "expected"),
         [(True, True), (False, False), (42, 42)],
     )
+    @staticmethod
     def test_ok_reports_success_and_wraps_value(
-        self,
         *,
         value: bool | int,
         expected: bool | int,

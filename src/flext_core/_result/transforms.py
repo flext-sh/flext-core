@@ -31,6 +31,7 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
 
         Returns:
             The resulting ``p.Result[T]``.
+
         """
         return cast("p.Result[T]", self)
 

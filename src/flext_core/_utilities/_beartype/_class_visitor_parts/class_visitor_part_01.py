@@ -33,6 +33,7 @@ class FlextUtilitiesBeartypeClassVisitor:
 
         Returns:
             The resulting ``t.StrMapping | None``.
+
         """
         violation = NO_VIOLATION
         match args:
@@ -98,6 +99,7 @@ class FlextUtilitiesBeartypeClassVisitor:
 
         Returns:
             The resulting ``t.StrMapping | None``.
+
         """
         if params.require_inner_kind_protocol_or_namespace:
             if (

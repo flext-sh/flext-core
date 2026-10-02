@@ -36,7 +36,12 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
 
     @staticmethod
     def _owning_project_root(target: type) -> Path | None:
-        """Return the pyproject root that physically owns the target source."""
+        """Return the pyproject root that physically owns the target source.
+
+        Returns:
+            The pyproject root that physically owns the target source.
+
+        """
         source_file = FlextUtilitiesEnforcementCollect._resolve_target_source_file(
             target,
         )
@@ -70,6 +75,7 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
 
         Raises:
             RuntimeError: If a ``(OSError, TypeError)`` is caught.
+
         """
         try:
             src_file = inspect.getsourcefile(target)
@@ -88,8 +94,12 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         and ``OSError`` when the source file cannot be read; both produce
         ``None`` here so the dispatcher cleanly skips the target.
 
+        Returns:
+            The package owned by the target's physical project root.
+
         Raises:
             RuntimeError: If a ``(OSError, ValueError)`` is caught.
+
         """
         try:
             project_root = FlextUtilitiesEnforcementCollect._owning_project_root(target)
@@ -112,8 +122,12 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
     def _project(target: type) -> t.StrPair | None:
         """Return (derived_prefix, inner_namespace) or None if unknowable.
 
+        Returns:
+            (derived_prefix, inner_namespace) or None if unknowable.
+
         Raises:
             RuntimeError: If a ``(OSError, ValueError)`` is caught.
+
         """
         top = (getattr(target, "__module__", "") or "").split(".", 1)[0]
         if not top:
@@ -150,6 +164,10 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
 
         A class the body only references (``REGEX_ERROR = re.error``) is not
         one of the target's declarations and is never audited as the project's.
+
+        Yields:
+            Each ``tuple[str, type]``.
+
         """
         for name, value in vars(target).items():
             if (

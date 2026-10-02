@@ -66,6 +66,7 @@ def _construct_unique_mapping(
 
     Raises:
         ConstructorError: If while constructing a config mapping.
+
     """
     values: dict[str, JsonValue] = {}
     for key_node, value_node in node.value:
@@ -128,7 +129,12 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
 
     @override
     def __call__(self) -> dict[str, JsonValue]:
-        """Return merged YAML data, applying the transform hook if set."""
+        """Return merged YAML data, applying the transform hook if set.
+
+        Returns:
+            Merged YAML data, applying the transform hook if set.
+
+        """
         data = super().__call__()
         if self._transform is not None:
             data = self._transform(data)
@@ -143,6 +149,7 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
 
         Raises:
             TypeError: If config YAML root must be a mapping.
+
         """
         with file_path.open(encoding=self.yaml_file_encoding) as yaml_file:
             loader = _UniqueKeySafeLoader(yaml_file)
@@ -173,18 +180,16 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
 
         Returns:
             The resulting ``dict[str, JsonValue]``.
-        """
-        from collections.abc import Sequence as _Sequence
-        from pathlib import Path as _Path
 
+        """
         if files is None:
             return {}
-        if isinstance(files, str) or not isinstance(files, _Sequence):
+        if isinstance(files, str) or not isinstance(files, Sequence):
             files = [files]
         merged: dict[str, JsonValue] = {}
         for file in files:
-            raw_path = _Path(file) if isinstance(file, str) else file
-            if not isinstance(raw_path, _Path):
+            raw_path = Path(file) if isinstance(file, str) else file
+            if not isinstance(raw_path, Path):
                 continue
             file_path = raw_path.expanduser()
             if not file_path.is_file():
@@ -205,6 +210,7 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
 
         Returns:
             The resulting ``dict[str, JsonValue]``.
+
         """
         result = dict(base)
         for key, value in updating.items():
@@ -247,6 +253,10 @@ class FlextConfig(BaseSettings):
         FLEXT distribution owns ``<import-package-with-dashes>`` without
         naming itself anywhere (``flext_core`` -> ``flext-core``,
         ``ai_hub`` -> ``ai-hub``).
+
+        Returns:
+            The namespace segment owned by the declaring package.
+
         """
         package = cls.__module__.split(".", 1)[0]
         return package.replace("_", "-")
@@ -271,6 +281,7 @@ class FlextConfig(BaseSettings):
 
         Returns:
             The resulting ``Path``.
+
         """
         namespace = cls._package_namespace()
         override = os.environ.get(f"{app_env_prefix(namespace)}CONFIG_DIR")
@@ -292,12 +303,21 @@ class FlextConfig(BaseSettings):
         Lives under the platform config root scoped by the package namespace
         (``$XDG_CONFIG_HOME/<namespace>`` on Linux). Packaged defaults stay
         immutable; anything declared here overlays them.
+
+        Returns:
+            The operator's optional preference directory for this package.
+
         """
         return platform_config_root() / cls._package_namespace()
 
     @classmethod
     def _yaml_files_in(cls, directory: Path) -> list[Path]:
-        """Return every YAML file in one directory, sorted for deterministic merge."""
+        """Return every YAML file in one directory, sorted for deterministic merge.
+
+        Returns:
+            Every YAML file in one directory, sorted for deterministic merge.
+
+        """
         return sorted(directory.glob("*.yaml")) + sorted(directory.glob("*.yml"))
 
     @classmethod
@@ -314,6 +334,7 @@ class FlextConfig(BaseSettings):
             FileNotFoundError: If declared config directory does not exist; or if
                 ``missing``.
             ValueError: If ``invalid``.
+
         """
         config_dir = cls._config_dir()
         user_files = cls._yaml_files_in(cls._user_config_dir())
@@ -350,6 +371,7 @@ class FlextConfig(BaseSettings):
 
         Returns:
             The resulting ``dict[str, JsonValue]``.
+
         """
         return data
 
@@ -367,6 +389,7 @@ class FlextConfig(BaseSettings):
 
         Returns:
             The resulting ``t.VariadicTuple[PydanticBaseSettingsSource]``.
+
         """
         _ = (dotenv_settings, file_secret_settings)
         return (
@@ -384,7 +407,12 @@ class FlextConfig(BaseSettings):
 
     @classmethod
     def fetch_global(cls) -> Self:
-        """Return the shared frozen singleton (lazy; built on first access)."""
+        """Return the shared frozen singleton (lazy; built on first access).
+
+        Returns:
+            The shared frozen singleton (lazy; built on first access).
+
+        """
         instance = cls.__dict__.get("_instance")
         if isinstance(instance, cls):
             return instance

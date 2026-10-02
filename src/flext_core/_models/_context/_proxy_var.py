@@ -45,6 +45,7 @@ class FlextModelsContextProxyVar:
 
             Returns:
                 The resulting ``t.JsonPayload | datetime | None``.
+
             """
             contextvars_data = structlog.contextvars.get_contextvars()
             structlog_context: t.MappingKV[str, t.JsonPayload | datetime] = (
@@ -62,6 +63,7 @@ class FlextModelsContextProxyVar:
 
             Returns:
                 The resulting ``FlextModelsContextTokens.StructlogProxyToken``.
+
             """
             current_value = self.get()
             if value is not None:

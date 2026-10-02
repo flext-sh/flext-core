@@ -78,6 +78,7 @@ def _resource_text(name: str) -> str:
 
     Returns:
         The resulting ``str``.
+
     """
     return (
         importlib.resources

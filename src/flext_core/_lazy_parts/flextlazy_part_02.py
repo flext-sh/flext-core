@@ -57,6 +57,7 @@ class FlextLazyAttribute[T]:
 
         Returns:
             The resulting ``T``.
+
         """
         _ = instance, owner
         resolved: T = cast(
@@ -87,6 +88,10 @@ class FlextLazy(FlextLazyPart01):
         where the assignment already carries the annotation
         (``Alpha: Beta = lazy_attribute(...)``); pass it where there is no
         annotation to bind, so the symbol type never degrades to unknown.
+
+        Returns:
+            A descriptor for class-namespace lazy attributes.
+
         """
         _ = resolved_type
         return FlextLazyAttribute[T](
@@ -112,6 +117,7 @@ class FlextLazy(FlextLazyPart01):
         Raises:
             AttributeError: If module.
             ImportError: If lazy import of.
+
         """
         lazy_imports = self._norm_map(module_name, lazy_imports)
         entry = lazy_imports.get(name)
@@ -159,7 +165,8 @@ class FlextLazy(FlextLazyPart01):
             module_globals[name] = value
         return value
 
-    def cleanup(self, module_name: str, lazy_imports: LazyImportMap) -> None:
+    @staticmethod
+    def cleanup(module_name: str, lazy_imports: LazyImportMap) -> None:
         """Remove eager child module attrs."""
         current = sys.modules.get(module_name)
         if current is None:
@@ -186,6 +193,7 @@ class FlextLazy(FlextLazyPart01):
 
         Returns:
             The resulting ``MutableLazyImportMap``.
+
         """
         key = tuple(self._child_path(path, module_name) for path in child_module_paths)
         children: LazyImportDict | None = self.child_merge_cache.get(key)
@@ -225,6 +233,7 @@ class FlextLazy(FlextLazyPart01):
 
         Raises:
             RuntimeError: If module.
+
         """
         pre_signature: tuple[int, int, int, int, bool] = (
             id(module_globals),

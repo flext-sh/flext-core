@@ -27,6 +27,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingContextPart01):
 
         Returns:
             The resulting ``str | None``.
+
         """
         caller_frame: types.FrameType | None
         try:
@@ -51,6 +52,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingContextPart01):
 
         Returns:
             The resulting ``types.FrameType | None``.
+
         """
         frame = inspect.currentframe()
         if frame is None:

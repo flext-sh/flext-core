@@ -110,6 +110,7 @@ def _capture_import_warnings(
 
     Returns:
         The resulting ``t.StrSequence``.
+
     """
     inserted = search_path is not None
     if inserted:
@@ -135,7 +136,8 @@ def _capture_import_warnings(
 class TestsFlextEnforcementIntegration:
     """Import-time enforcement hook behaviour on clean and violating modules."""
 
-    def test_clean_module_import_emits_no_violation_warning(self) -> None:
+    @staticmethod
+    def test_clean_module_import_emits_no_violation_warning() -> None:
         # Arrange / Act: importing a fully rule-compliant module.
         """Test clean module import emits no violation warning."""
         messages = _capture_import_warnings(_CLEAN_MODULE)
@@ -155,6 +157,7 @@ class TestsFlextEnforcementIntegration:
 
         Returns:
             The resulting ``t.StrSequence``.
+
         """
         module_root = tmp_path_factory.mktemp("enforcement_bad_fixture")
         (module_root / f"{_BAD_MODULE}.py").write_text(
@@ -165,8 +168,8 @@ class TestsFlextEnforcementIntegration:
         assert messages, "Importing the violating module emitted no warnings"
         return messages
 
+    @staticmethod
     def test_every_emitted_warning_is_the_public_category(
-        self,
         violation_messages: t.StrSequence,
     ) -> None:
         # The public FlextMroViolation export is a genuine Warning subclass and
@@ -193,8 +196,8 @@ class TestsFlextEnforcementIntegration:
             ("Constant 'GROUPS' declared", "classvar_constant_outside_constants"),
         ],
     )
+    @staticmethod
     def test_rule_violation_is_reported_in_warning_text(
-        self,
         violation_messages: t.StrSequence,
         fragment: str,
         rule: str,
@@ -220,8 +223,8 @@ class TestsFlextEnforcementIntegration:
             "TestsFlextBadClassVarConstant",
         ],
     )
+    @staticmethod
     def test_each_violating_class_is_named_in_a_warning(
-        self,
         violation_messages: t.StrSequence,
         class_name: str,
     ) -> None:
@@ -231,8 +234,8 @@ class TestsFlextEnforcementIntegration:
             f"No violation warning named {class_name!r}"
         )
 
+    @staticmethod
     def test_classvar_constant_detector_reports_every_constant_in_one_pass(
-        self,
         tmp_path: Path,
     ) -> None:
         # Arrange: one class holding TWO constants outside _constants. The

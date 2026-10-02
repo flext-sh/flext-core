@@ -39,7 +39,8 @@ class TestsFlextCoreEnforcement:
         assert u.check(compliant).violations == []
 
     @pytest.mark.parametrize("builtin", [int, str, dict])
-    def test_builtin_class_flagged_missing_project_prefix(self, builtin: type) -> None:
+    @staticmethod
+    def test_builtin_class_flagged_missing_project_prefix(builtin: type) -> None:
         """Types without a project prefix raise a Namespace class-prefix finding."""
         report = u.check(builtin)
 
@@ -67,8 +68,8 @@ class TestsFlextCoreEnforcement:
             ("FlextCoreAccessedIs", "is_ready"),
         ],
     )
+    @staticmethod
     def test_accessor_prefix_method_is_flagged(
-        self,
         class_name: str,
         member: str,
     ) -> None:
@@ -79,7 +80,8 @@ class TestsFlextCoreEnforcement:
         assert messages(report, fragment=f'accessor method "{member}"')
 
     @pytest.mark.parametrize("member", ["fetch_remote", "build_widget"])
-    def test_non_accessor_prefix_method_allowed(self, member: str) -> None:
+    @staticmethod
+    def test_non_accessor_prefix_method_allowed(member: str) -> None:
         """Verb-prefixed methods that are not accessors raise no accessor finding."""
         cls = make_class("FlextCoreAccessedOk", {member: synthetic_method})
 
@@ -94,8 +96,8 @@ class TestsFlextCoreEnforcement:
             ("FlextCoreService", False, False),
         ],
     )
+    @staticmethod
     def test_declared_settings_model_requires_flext_settings(
-        self,
         class_name: str,
         *,
         declares_settings_base: bool,

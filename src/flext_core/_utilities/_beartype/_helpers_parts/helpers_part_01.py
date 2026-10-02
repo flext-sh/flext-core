@@ -47,6 +47,7 @@ class FlextUtilitiesBeartypeHelpers:
 
         Returns:
             The resulting ``tuple[tuple[str, str, str], ...]``.
+
         """
         package = sys.modules.get(package_name)
         if package is None:
@@ -69,7 +70,12 @@ class FlextUtilitiesBeartypeHelpers:
 
     @staticmethod
     def runtime_alias_names(package_name: str) -> frozenset[str]:
-        """Return runtime alias names derived from generated lazy exports."""
+        """Return runtime alias names derived from generated lazy exports.
+
+        Returns:
+            Runtime alias names derived from generated lazy exports.
+
+        """
         return frozenset(
             alias
             for alias, _, _ in FlextUtilitiesBeartypeHelpers.lazy_alias_suffixes(
@@ -79,7 +85,12 @@ class FlextUtilitiesBeartypeHelpers:
 
     @staticmethod
     def facade_module_names(package_name: str) -> frozenset[str]:
-        """Return local facade module names derived from generated lazy exports."""
+        """Return local facade module names derived from generated lazy exports.
+
+        Returns:
+            Local facade module names derived from generated lazy exports.
+
+        """
         return frozenset(
             module_path.rsplit(".", 1)[-1]
             for _, module_path, suffix in FlextUtilitiesBeartypeHelpers.lazy_alias_suffixes(
@@ -96,6 +107,10 @@ class FlextUtilitiesBeartypeHelpers:
         Both facts come from their owners: the generated ``_LAZY_IMPORTS``
         binds each one-letter alias to its class, and the family surface
         names the packages that publish that contract.
+
+        Returns:
+            True when a family package publishes ``target`` as a letter facade.
+
         """
         package_name = target.__module__.split(".", 1)[0]
         if package_name not in FlextUtilitiesFamilySurface.project_alias_owners():
@@ -119,6 +134,10 @@ class FlextUtilitiesBeartypeHelpers:
         An explicit declaring ``owner`` may prove that unavailable
         ``TYPE_CHECKING`` imports make evaluation static-only. Without that
         context, alias evaluation retains its original exception and traceback.
+
+        Returns:
+            A value, or None for non-aliases and proven static-only imports.
+
         """
         if not isinstance(alias, TypeAliasType):
             return None
@@ -215,6 +234,10 @@ class FlextUtilitiesBeartypeHelpers:
         Concrete Protocol implementations (e.g. ``FlextWebTransport`` inheriting
         from ``TransportPlugin``) are valid inner classes of protocol trees;
         the ``proto_inner_kind`` rule (ENFORCE-083) must not flag them.
+
+        Returns:
+            True when any base in the MRO is a runtime Protocol.
+
         """
         return any(is_protocol(base) for base in value.__mro__[1:])
 

@@ -46,6 +46,7 @@ class FlextUtilitiesBeartypeTypeAliases:
 
         Returns:
             The resulting ``tuple[me.DeferredAlias, ...]``.
+
         """
         visited = set() if seen is None else seen
         if id(hint) in visited:

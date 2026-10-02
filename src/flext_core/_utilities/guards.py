@@ -70,6 +70,7 @@ class FlextUtilitiesGuards(
 
         Returns:
             The resulting ``t.Numeric``.
+
         """
         if isinstance(value, c.NUMERIC_TYPES):
             return value
@@ -87,6 +88,7 @@ class FlextUtilitiesGuards(
 
         Returns:
             The resulting ``bool``.
+
         """
         if guard_spec.starts is not None and not value.startswith(guard_spec.starts):
             return False
@@ -98,6 +100,7 @@ class FlextUtilitiesGuards(
 
         Returns:
             The resulting ``bool``.
+
         """
         if isinstance(value, str):
             return isinstance(contains, str) and contains in value
@@ -117,6 +120,7 @@ class FlextUtilitiesGuards(
 
         Returns:
             The resulting ``bool``.
+
         """
         result = True
         for op_name, check_fn in FlextUtilitiesGuards._EQUALITY_OPS.items():
@@ -200,6 +204,7 @@ class FlextUtilitiesGuards(
 
         Returns:
             The resulting ``bool``.
+
         """
         if guard_spec.none is True and value is not None:
             return False
@@ -219,6 +224,7 @@ class FlextUtilitiesGuards(
 
         Returns:
             The resulting ``t.JsonValue``.
+
         """
         return value if FlextUtilitiesGuards.container(value) else str(value)
 
@@ -231,6 +237,7 @@ class FlextUtilitiesGuards(
 
         Returns:
             The resulting ``bool``.
+
         """
         if isinstance(validator, type):
             return isinstance(value, validator)

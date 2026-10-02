@@ -78,6 +78,7 @@ class TestsFlextUtilitiesRailwayServicesMixin:
 
         Returns:
             The resulting ``TestsFlextUtilitiesRailwayServicesMixin.GetUserService``.
+
         """
         return TestsFlextUtilitiesRailwayServicesMixin.make(
             TestsFlextUtilitiesRailwayServicesMixin.GetUserService,

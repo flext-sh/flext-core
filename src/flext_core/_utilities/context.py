@@ -100,6 +100,7 @@ class FlextUtilitiesContext:
 
         Returns:
             The resulting ``FlextModelsContext.StructlogProxyContextVar[str]``.
+
         """
         return FlextModelsContext.StructlogProxyContextVar(key, default=default)
 
@@ -112,6 +113,7 @@ class FlextUtilitiesContext:
 
         Returns:
             The resulting ``FlextModelsContext.StructlogProxyContextVar[datetime]``.
+
         """
         return FlextModelsContext.StructlogProxyContextVar(key, default=default)
 
@@ -125,6 +127,7 @@ class FlextUtilitiesContext:
         Returns:
             The resulting
                 ``FlextModelsContext.StructlogProxyContextVar[t.JsonMapping]``.
+
         """
         return FlextModelsContext.StructlogProxyContextVar(key, default=default)
 

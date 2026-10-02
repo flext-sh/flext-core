@@ -46,8 +46,9 @@ class FlextUtilitiesContextCrudSetMixin(FlextUtilitiesContextState):
 
         Returns:
             The resulting ``p.Result[bool]``.
+
         """
-        operation_result: p.Result[bool] = r[bool].ok(True)
+        operation_result: p.Result[bool] = r[bool].ok(value=True)
         prepared_update: tuple[t.JsonMapping, t.JsonMapping] | None = None
         if not self.state.active:
             operation_result = r[bool].fail_op(
@@ -85,7 +86,7 @@ class FlextUtilitiesContextCrudSetMixin(FlextUtilitiesContextState):
                             {"key": key, "value": normalized_value},
                         )
                 case data, _ if not data:
-                    operation_result = r[bool].ok(True)
+                    operation_result = r[bool].ok(value=True)
                 case payload_mapping, _:
                     mapping_payload = t.json_mapping_adapter().validate_python(
                         payload_mapping,

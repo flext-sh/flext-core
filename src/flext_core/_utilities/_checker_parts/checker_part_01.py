@@ -37,6 +37,7 @@ class FlextUtilitiesChecker:
 
         Returns:
             The resulting ``TypeIs[Callable[..., ts.ModuleExport]]``.
+
         """
         return callable(value) and not isinstance(value, type)
 
@@ -46,6 +47,7 @@ class FlextUtilitiesChecker:
 
         Returns:
             The resulting ``bool``.
+
         """
         return isinstance(candidate, type) and issubclass(candidate, parent)
 
@@ -55,6 +57,7 @@ class FlextUtilitiesChecker:
 
         Returns:
             The resulting ``bool``.
+
         """
         return cls._is_subclass_of(candidate, dict)
 
@@ -70,6 +73,7 @@ class FlextUtilitiesChecker:
 
         Returns:
             The resulting ``bool``.
+
         """
         origin_is_dict = cls._is_dict_type(origin_type)
         message_origin_is_dict = cls._is_dict_type(message_origin)
@@ -90,6 +94,7 @@ class FlextUtilitiesChecker:
 
         Returns:
             The resulting ``bool``.
+
         """
         return expected_type is ts.JsonPayload
 

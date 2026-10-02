@@ -28,6 +28,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
 
         Returns:
             The resulting ``tuple[FlextUtilitiesParserCoerce.ParseOptions[T], str]``.
+
         """
         opts: FlextUtilitiesParserCoerce.ParseOptions[T]
         if options is not None:
@@ -47,6 +48,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
 
         Returns:
             The resulting ``T``.
+
         """
         opts, fp = FlextUtilitiesParserTargets._resolve_opts(options, kwargs)
         if value is None:
@@ -94,6 +96,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
             TypeError: If ``not issubclass(target, StrEnum)``.
             ValueError: Always; or if ``value is None``; or if ``not
                 opts.case_insensitive``.
+
         """
         opts, fp = FlextUtilitiesParserTargets._resolve_opts(options, kwargs)
         if not issubclass(target, StrEnum):
@@ -159,6 +162,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
             TypeError: If ``not FlextUtilitiesGuardsTypeModel.model_type(target)``; or
                 if ``not isinstance(value, Mapping) and (not isinstance(value,
                 FlextModelsPydantic.BaseModel))``.
+
         """
         opts, fp = FlextUtilitiesParserTargets._resolve_opts(options, kwargs)
         if not FlextUtilitiesGuardsTypeModel.model_type(target):

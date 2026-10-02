@@ -69,8 +69,8 @@ def _upper(value: str) -> str:
 class TestsFlextCoreUtilitiesCollection:
     """Behavior contract for u.map / u.find / u.filter / u.count / u.process / u.merge_mappings."""
 
+    @staticmethod
     def test_normalize_domain_event_data_flattens_public_payloads(
-        self,
         tmp_path: Path,
     ) -> None:
         """Test normalize domain event data flattens public payloads."""
@@ -109,8 +109,8 @@ class TestsFlextCoreUtilitiesCollection:
             ({"a": 1, "b": 2}, _times_ten, {"a": 10, "b": 20}),
         ],
     )
+    @staticmethod
     def test_map_applies_function_to_each_element(
-        self,
         items: t.JsonList | tuple[t.JsonValue, ...] | t.JsonMapping,
         mapper: Callable[[t.JsonValue], t.JsonValue],
         expected: t.JsonValue,
@@ -128,8 +128,8 @@ class TestsFlextCoreUtilitiesCollection:
             ([1, 3, 5], _equals_two, None, False),
         ],
     )
+    @staticmethod
     def test_find_returns_matching_element_or_failure(
-        self,
         *,
         items: t.JsonList | tuple[t.JsonValue, ...] | t.JsonMapping,
         predicate: Callable[[t.JsonValue], bool],
@@ -144,7 +144,8 @@ class TestsFlextCoreUtilitiesCollection:
         else:
             tm.fail(result)
 
-    def test_find_returns_failure_when_mapping_has_no_matching_value(self) -> None:
+    @staticmethod
+    def test_find_returns_failure_when_mapping_has_no_matching_value() -> None:
         """Test find returns failure when mapping has no matching value."""
         result = u.find(
             {"tenant": "acme", "mode": "full"},
@@ -167,8 +168,8 @@ class TestsFlextCoreUtilitiesCollection:
             ([2, 4, 6], _is_even, None, [2, 4, 6]),
         ],
     )
+    @staticmethod
     def test_filter_keeps_matching_and_optionally_maps(
-        self,
         items: t.JsonList | tuple[t.JsonValue, ...] | t.JsonMapping,
         predicate: Callable[[t.JsonValue], bool],
         mapper: Callable[[t.JsonValue], t.JsonValue] | None,
@@ -183,8 +184,8 @@ class TestsFlextCoreUtilitiesCollection:
         ("items", "predicate", "expected"),
         [([1, 2, 3, 4], None, 4), ([1, 2, 3, 4], _is_even, 2)],
     )
+    @staticmethod
     def test_count_returns_total_or_matching(
-        self,
         items: t.JsonList,
         predicate: Callable[[t.JsonValue], bool] | None,
         expected: int,
@@ -203,8 +204,8 @@ class TestsFlextCoreUtilitiesCollection:
             ([], _double, None, []),
         ],
     )
+    @staticmethod
     def test_process_applies_processor_with_optional_predicate(
-        self,
         items: t.JsonList,
         processor: Callable[[t.JsonValue], t.JsonValue],
         predicate: Callable[[t.JsonValue], bool] | None,
@@ -215,7 +216,8 @@ class TestsFlextCoreUtilitiesCollection:
         tm.ok(result)
         tm.that(result.value, eq=expected)
 
-    def test_process_first_failure_ends_run_carrying_its_exception(self) -> None:
+    @staticmethod
+    def test_process_first_failure_ends_run_carrying_its_exception() -> None:
         """Test process first failure ends run carrying its exception."""
         visited: list[t.JsonValue] = []
         raised: list[ValueError] = []
@@ -243,7 +245,8 @@ class TestsFlextCoreUtilitiesCollection:
 
     # --- merge_mappings --------------------------------------------------
 
-    def test_merge_mappings_deep_combines_nested_keys(self) -> None:
+    @staticmethod
+    def test_merge_mappings_deep_combines_nested_keys() -> None:
         """Test merge mappings deep combines nested keys."""
         base: t.MappingKV[str, t.JsonValue] = {"a": 1, "b": {"x": 1}}
         other: t.MappingKV[str, t.JsonValue] = {"b": {"y": 2}, "c": 3}
@@ -253,7 +256,8 @@ class TestsFlextCoreUtilitiesCollection:
         tm.that(result.value["c"], eq=3)
         tm.that(result.value["b"], is_=dict)
 
-    def test_merge_mappings_override_replaces_values(self) -> None:
+    @staticmethod
+    def test_merge_mappings_override_replaces_values() -> None:
         """Test merge mappings override replaces values."""
         base: t.MappingKV[str, t.JsonValue] = {"a": 1, "b": {"x": 1}}
         other: t.MappingKV[str, t.JsonValue] = {"b": {"y": 2}, "c": 3}

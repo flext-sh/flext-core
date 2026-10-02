@@ -26,6 +26,7 @@ def _u() -> type:
 
     Returns:
         The resulting ``type``.
+
     """
     from flext_core import u
 
@@ -126,6 +127,7 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
 
             Returns:
                 The resulting ``BaseModel``.
+
             """
             # A query subclass may declare its own nested Pagination model;
             # otherwise the namespace Pagination model applies.

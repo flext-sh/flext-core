@@ -139,8 +139,8 @@ class TestsFlextCoreLazyExportsMerge:
             ),
         ],
     )
+    @staticmethod
     def test_normalize_map_resolves_relative_and_preserves_absolute(
-        self,
         module_path: str,
         raw: dict[str, str | tuple[str, str]],
         expected: dict[str, str | tuple[str, str]],

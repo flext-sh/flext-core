@@ -32,6 +32,7 @@ class FlextExceptionsFactories:
 
         Returns:
             The resulting ``type[r[TValue]]``.
+
         """
         if result_type is not None:
             return result_type
@@ -50,6 +51,7 @@ class FlextExceptionsFactories:
 
         Returns:
             The resulting ``str``.
+
         """
         if error is None:
             template_without_error = c.ERR_TEMPLATE_FAILED_WITH_ERROR.split(": ", 1)[0]
@@ -122,6 +124,9 @@ class FlextExceptionsFactories:
 
             return e.fail_operation("resolve factory service", exc)
 
+        Returns:
+            R[T].fail with a canonical operation-error message.
+
         """
         params = m.OperationErrorParams(
             operation=operation,
@@ -153,6 +158,9 @@ class FlextExceptionsFactories:
         Usage::
 
             return e.fail_not_found("service", name)
+
+        Returns:
+            R[T].fail with a canonical not-found message.
 
         """
         params = m.NotFoundErrorParams(

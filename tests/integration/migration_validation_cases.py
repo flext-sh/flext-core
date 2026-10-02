@@ -28,6 +28,7 @@ def capture_stdout[T](emit: Callable[[], T], *, contains: str) -> T:
 
     Returns:
         The resulting ``T``.
+
     """
     stream = io.StringIO()
     with redirect_stdout(stream):
@@ -42,7 +43,8 @@ def capture_stdout[T](emit: Callable[[], T], *, contains: str) -> T:
 class TestsFlextFlextMigrationApplicationCase:
     """Exercise the public application composition contract."""
 
-    def test_application_functionality_works(self) -> None:
+    @staticmethod
+    def test_application_functionality_works() -> None:
         """Verify application functionality works correctly."""
 
         class ApplicationExample:
@@ -58,6 +60,7 @@ class TestsFlextFlextMigrationApplicationCase:
 
                 Returns:
                     The resulting ``p.Result[t.JsonMapping]``.
+
                 """
                 if not data:
                     return r[t.JsonMapping].fail("Data required")

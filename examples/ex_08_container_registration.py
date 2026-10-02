@@ -31,12 +31,13 @@ class Ex08ContainerRegistration(ExamplesFlextShared):
 
         Returns:
             The resulting ``p.Result[bool]``.
+
         """
         try:
             _ = write()
         except e.ValidationError as exc:
             return r[bool].fail_op("container write", exc)
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     def _exercise_registration_and_resolution(self, container: p.Container) -> None:
         """Exercise register APIs plus get/get_typed/list/has checks."""

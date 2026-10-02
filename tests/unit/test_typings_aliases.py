@@ -51,7 +51,8 @@ class TestsFlextCoreTypingsAliases:
     """Public contract of the ``t`` typing facade and its type-check tuples."""
 
     @pytest.mark.parametrize("alias_name", PUBLIC_ALIAS_NAMES)
-    def test_public_alias_reachable_through_facade(self, alias_name: str) -> None:
+    @staticmethod
+    def test_public_alias_reachable_through_facade(alias_name: str) -> None:
         """Every declared public alias resolves to a real object on ``t``."""
         # Arrange / Act
         resolved = getattr(t, alias_name)
@@ -59,13 +60,15 @@ class TestsFlextCoreTypingsAliases:
         tm.that(resolved, ne=None)
 
     @pytest.mark.parametrize("alias_name", FLAT_ALIAS_NAMES)
-    def test_flat_mapping_alias_reachable_through_facade(self, alias_name: str) -> None:
+    @staticmethod
+    def test_flat_mapping_alias_reachable_through_facade(alias_name: str) -> None:
         """Every flat mapping alias resolves to a real object on ``t``."""
         resolved = getattr(t, alias_name)
         tm.that(resolved, ne=None)
 
     @pytest.mark.parametrize("legacy_name", LEGACY_GENERIC_NAMES)
-    def test_flext_core_hides_shared_generic_helpers(self, legacy_name: str) -> None:
+    @staticmethod
+    def test_flext_core_hides_shared_generic_helpers(legacy_name: str) -> None:
         """flext_core must not expose shared TypeVar/ParamSpec helpers publicly."""
         tm.that(hasattr(flext_core, legacy_name), eq=False)
 
@@ -109,8 +112,8 @@ class TestsFlextCoreTypingsAliases:
             ([1, 2], False, False, False),
         ],
     )
+    @staticmethod
     def test_type_check_tuples_classify_values(
-        self,
         value: object,
         *,
         is_primitive: bool,
@@ -136,8 +139,8 @@ class TestsFlextCoreTypingsAliases:
             (1,),
         ],
     )
+    @staticmethod
     def test_container_and_collection_tuple_accepts_every_container_value(
-        self,
         value: object,
     ) -> None:
         """Every documented container/collection value is recognised by the tuple."""

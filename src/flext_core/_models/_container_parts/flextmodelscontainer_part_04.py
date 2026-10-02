@@ -54,12 +54,15 @@ class FlextModelsContainer(FlextModelsContainerPart03):
         ]
         singleton: Annotated[
             bool,
-            mp.Field(False, description="Whether factory creates singleton instances"),
+            mp.Field(
+                default=False,
+                description="Whether factory creates singleton instances",
+            ),
         ] = False
         lazy: Annotated[
             bool,
             mp.Field(
-                True,
+                default=True,
                 description="Whether to defer factory invocation until first use",
             ),
         ] = True

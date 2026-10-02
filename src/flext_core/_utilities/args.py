@@ -57,6 +57,7 @@ class FlextUtilitiesArgs:
 
         Returns:
             The resulting ``p.Result[M]``.
+
         """
         if options is not None:
             return r[M].ok(options)

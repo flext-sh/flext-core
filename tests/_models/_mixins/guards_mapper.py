@@ -48,6 +48,7 @@ class TestsFlextModelsGuardsMapperMixin:
 
             Raises:
                 RuntimeError: If bad items.
+
             """
             msg = "bad items"
             raise RuntimeError(msg)

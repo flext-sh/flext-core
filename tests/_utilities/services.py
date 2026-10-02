@@ -33,6 +33,7 @@ class TestsFlextUtilitiesServicesMixin:
 
             Returns:
                 The resulting ``int``.
+
             """
             self._value += 1
             return self._value
@@ -51,6 +52,7 @@ class TestsFlextUtilitiesServicesMixin:
 
             Returns:
                 The resulting ``p.Result[int]``.
+
             """
             return r[int].ok(self.counter.next_value())
 
@@ -72,6 +74,7 @@ class TestsFlextUtilitiesServicesMixin:
 
             Returns:
                 The resulting ``p.Result[str]``.
+
             """
             if len(self.value_input) < self.min_length:
                 return r[str].fail(

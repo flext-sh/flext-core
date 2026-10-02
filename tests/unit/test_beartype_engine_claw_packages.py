@@ -16,9 +16,9 @@ from __future__ import annotations
 import textwrap
 from pathlib import Path
 
+import tests.utilities
 from flext_core.utilities import FlextUtilitiesBeartypeConf
 from tests.typings import t
-from tests.unit._beartype_engine_support import TestsFlextBeartypeEngine
 
 _CLAW_INIT = (
     textwrap.dedent(
@@ -33,7 +33,9 @@ _CLAW_INIT = (
 )
 
 
-class TestsFlextCoreBeartypeEngineClawPackages(TestsFlextBeartypeEngine):
+class TestsFlextCoreBeartypeEngineClawPackages(
+    tests.utilities.TestsFlextUtilities.TestsFlextBeartypeEngine,
+):
     """Behavioral contract of the claw conf produced for downstream packages."""
 
     _REPO_ROOT: Path = Path(__file__).resolve().parents[2]

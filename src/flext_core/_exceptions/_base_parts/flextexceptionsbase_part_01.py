@@ -31,6 +31,7 @@ class FlextBaseErrorMetadataMixin:
 
         Returns:
             The resulting ``m.Metadata``.
+
         """
         if metadata is None:
             normalized_attrs = {
@@ -85,6 +86,7 @@ class FlextBaseErrorMetadataMixin:
 
         Returns:
             The resulting ``m.Metadata``.
+
         """
         merged_attrs: MutableMapping[str, tb.JsonValue | None] = {}
         for k, v in metadata_dict.items():

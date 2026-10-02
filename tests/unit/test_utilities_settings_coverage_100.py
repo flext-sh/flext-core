@@ -48,8 +48,8 @@ class TestsFlextCoreUtilitiesSettings:
             (False, False, c.LogLevel.WARNING, c.LogLevel.WARNING),
         ],
     )
+    @staticmethod
     def test_effective_log_level_prioritises_trace_then_debug_then_request(
-        self,
         *,
         trace: bool,
         debug: bool,
@@ -65,8 +65,8 @@ class TestsFlextCoreUtilitiesSettings:
 
         tm.that(resolved, eq=expected)
 
+    @staticmethod
     def test_env_override_and_process_environment_are_observable(
-        self,
         tmp_path: Path,
     ) -> None:
         """Test env override and process environment are observable."""
@@ -93,8 +93,8 @@ class TestsFlextCoreUtilitiesSettings:
         tm.that(snapshot.process_environment[probe_env_var], eq="integration")
         tm.that(snapshot.log_level, eq=c.LogLevel.DEBUG)
 
+    @staticmethod
     def test_env_file_resolves_cwd_default_then_override_then_fallback(
-        self,
         tmp_path: Path,
     ) -> None:
         """Test env file resolves cwd default then override then fallback."""
@@ -116,7 +116,8 @@ class TestsFlextCoreUtilitiesSettings:
         tm.that(override_resolved, eq=missing_override)
         tm.that(fallback_resolved, eq=c.ENV_FILE_DEFAULT)
 
-    def test_register_factory_reports_success_and_resolvable_service(self) -> None:
+    @staticmethod
+    def test_register_factory_reports_success_and_resolvable_service() -> None:
         """Test register factory reports success and resolvable service."""
         container = FlextContainer()
         container.clear()
@@ -148,7 +149,8 @@ class TestsFlextCoreUtilitiesSettings:
             eq={"env_file": c.ENV_FILE_DEFAULT, "log_level": c.LogLevel.INFO},
         )
 
-    def test_register_factory_surfaces_factory_failure_as_result(self) -> None:
+    @staticmethod
+    def test_register_factory_surfaces_factory_failure_as_result() -> None:
         """Test register factory surfaces factory failure as result."""
         container = FlextContainer()
         container.clear()

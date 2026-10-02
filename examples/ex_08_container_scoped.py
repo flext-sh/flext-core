@@ -20,6 +20,7 @@ class Ex08ContainerScoped(Ex08ContainerRegistration):
 
         Returns:
             The resulting ``p.ContainerLifecycle``.
+
         """
         self.section("scoped")
         scoped_default = container.scope()

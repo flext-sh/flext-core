@@ -27,8 +27,8 @@ class TestsFlextUtilitiesText(test_u.Tests.Contract):
             pytest.param("   ", c.ERR_TEXT_EMPTY_NOT_ALLOWED, id="blank"),
         ],
     )
+    @staticmethod
     def test_public_text_helpers_reject_blank_bootstrap_inputs(
-        self,
         value: str | None,
         message: str,
     ) -> None:
@@ -49,8 +49,8 @@ class TestsFlextUtilitiesText(test_u.Tests.Contract):
             pytest.param("__x__", "--x--", "x", id="underscore-padding"),
         ],
     )
+    @staticmethod
     def test_public_text_helpers_derive_stable_identifiers(
-        self,
         raw: str,
         expected_id: str,
         expected_key: str,
@@ -66,7 +66,7 @@ class TestsFlextUtilitiesText(test_u.Tests.Contract):
         assert " " not in app_id
         assert "_" not in app_id
         assert normalized_key == expected_key
-        assert normalized_key.isalnum() or normalized_key == ""
+        assert normalized_key.isalnum() or not normalized_key
 
     @pytest.mark.parametrize(
         "value",
@@ -76,7 +76,8 @@ class TestsFlextUtilitiesText(test_u.Tests.Contract):
             pytest.param("Fleet Sync_App v2", id="app-name"),
         ],
     )
-    def test_public_text_helpers_are_idempotent(self, value: str) -> None:
+    @staticmethod
+    def test_public_text_helpers_are_idempotent(value: str) -> None:
         """Re-applying the helpers to their own output is a fixed point."""
         cleaned = core_u.safe_string(value)
         assert core_u.safe_string(cleaned) == cleaned
@@ -87,8 +88,8 @@ class TestsFlextUtilitiesText(test_u.Tests.Contract):
         normalized_key = core_u.normalize_alnum(cleaned)
         assert core_u.normalize_alnum(normalized_key) == normalized_key
 
+    @staticmethod
     def test_public_text_helpers_prepare_and_persist_app_manifest(
-        self,
         tmp_path: Path,
     ) -> None:
         """App bootstrap uses the public helpers to normalize and persist text."""

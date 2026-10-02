@@ -32,6 +32,7 @@ class TestsFlextCoverageLoggings:
 
         Returns:
             The resulting ``p.Logger``.
+
         """
         return u.create_module_logger(name)
 
@@ -44,6 +45,7 @@ class TestsFlextCoverageLoggings:
 
         Raises:
             AssertionError: If Expected result to not be None.
+
         """
         if result is None:
             msg = "Expected result to not be None"
@@ -63,6 +65,7 @@ class TestsFlextCoverageLoggings:
 
         Returns:
             The resulting ``p.Result[bool]``.
+
         """
         stream = io.StringIO()
         with redirect_stdout(stream):

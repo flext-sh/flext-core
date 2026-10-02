@@ -40,6 +40,7 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
 
         Returns:
             The resulting ``TypeGuard[ts.RegisterableService]``.
+
         """
         return callable(value) or isinstance(
             value,
@@ -59,6 +60,7 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
 
         Raises:
             TypeError: Always.
+
         """
         from flext_core._models.pydantic import FlextModelsPydantic
 
@@ -111,6 +113,7 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
 
         Raises:
             ValueError: Always.
+
         """
         from flext_core._models.containers import FlextModelsContainers
 
@@ -156,6 +159,7 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
 
         Raises:
             TypeError: If ``not callable(value)``.
+
         """
         if not callable(value):
             msg = f"{subject} must be callable, got {value.__class__.__name__}"
@@ -175,6 +179,7 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
 
         Returns:
             The resulting ``ts.RuntimeData``.
+
         """
         from flext_core._models.containers import FlextModelsContainers
 

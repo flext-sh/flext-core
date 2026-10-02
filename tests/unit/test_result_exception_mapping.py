@@ -217,8 +217,8 @@ class TestsFlextCoreResultExceptionMapping:
             pytest.param(_tap_error_case, id="tap_error"),
         ],
     )
+    @staticmethod
     def test_callback_exception_becomes_carried_failure(
-        self,
         invoke: Callable[[Exception], p.Result[int]],
     ) -> None:
         """Test callback exception becomes carried failure."""

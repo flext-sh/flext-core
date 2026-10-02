@@ -35,6 +35,7 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart02):
 
         Returns:
             The resulting ``tb.SequenceOf[tb.TypeHintSpecifier]``.
+
         """
         raw_bases: tb.VariadicTuple[tb.TypeHintSpecifier] | tuple[()] = getattr(
             handler_class,
@@ -72,6 +73,7 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart02):
 
         Returns:
             The resulting ``p.Result[tb.TypeHintSpecifier]``.
+
         """
         if not hasattr(handler_class, c.MethodName.HANDLE):
             return r[tb.TypeHintSpecifier].fail(c.ERR_CHECKER_HANDLER_NO_HANDLE_METHOD)
@@ -105,6 +107,7 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart02):
 
         Returns:
             The resulting ``bool``.
+
         """
         if not accepted_types or message_type is None:
             return False
@@ -122,6 +125,7 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart02):
 
         Returns:
             The resulting ``tb.VariadicTuple[tb.TypeHintSpecifier]``.
+
         """
         message_types: MutableSequence[tb.TypeHintSpecifier] = []
         generic_types = cls._extract_generic_message_types(handler_class)
@@ -136,11 +140,12 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart02):
     def resolve_message_route(cls, msg: pb.Routable | type[pb.Routable] | str) -> str:
         """Resolve route name from Routable attributes or string.
 
+        Returns:
+            The resulting ``str``.
+
         Raises:
             TypeError: If message does not provide a valid route.
 
-        Returns:
-            The resulting ``str``.
         """
         if isinstance(msg, str):
             return msg

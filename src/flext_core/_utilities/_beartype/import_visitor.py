@@ -36,6 +36,7 @@ class FlextUtilitiesBeartypeImportVisitor:
 
         Returns:
             The resulting ``t.StrMapping | None``.
+
         """
         return _ImportBlacklistVisitor.v_import_blacklist(params, target)
 
@@ -48,6 +49,7 @@ class FlextUtilitiesBeartypeImportVisitor:
 
         Returns:
             The resulting ``t.StrMapping | None``.
+
         """
         return FlextUtilitiesBeartypeAliasVisitor.v_alias_rebind(params, target)
 
@@ -60,6 +62,7 @@ class FlextUtilitiesBeartypeImportVisitor:
 
         Returns:
             The resulting ``t.StrMapping | None``.
+
         """
         return FlextUtilitiesBeartypeAliasVisitor.v_compatibility_alias(params, target)
 
@@ -72,6 +75,7 @@ class FlextUtilitiesBeartypeImportVisitor:
 
         Returns:
             The resulting ``t.StrMapping | None``.
+
         """
         return FlextUtilitiesBeartypeLibraryVisitor.v_library_import(params, target)
 
@@ -88,6 +92,7 @@ class _ImportBlacklistVisitor:
 
         Returns:
             The resulting ``t.StrMapping | None``.
+
         """
         no_violation: t.StrMapping | None = None
         module = _ubh.runtime_module_for(target)
@@ -188,6 +193,10 @@ class _ImportBlacklistVisitor:
         :attr:`FlextConstantsEnforcementTargets.ENFORCEMENT_PRIVATE_FAMILY_PACKAGES`
         constant (derived from ``ENFORCEMENT_CANONICAL_FILES``); evaluation
         iterates that set rather than hardcoding path fragments.
+
+        Returns:
+            True when *origin* is a same-package private-family import.
+
         """
         if "." not in origin or "." not in module_name:
             return False
@@ -212,7 +221,12 @@ class _ImportBlacklistVisitor:
         *,
         consumer_exempt: bool,
     ) -> bool:
-        """Return True when a module re-exports a private-family flext symbol."""
+        """Return True when a module re-exports a private-family flext symbol.
+
+        Returns:
+            True when a module re-exports a private-family flext symbol.
+
+        """
         if not isinstance(value, type):
             return False
         if not origin.startswith("flext_"):

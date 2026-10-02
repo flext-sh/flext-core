@@ -30,6 +30,7 @@ class FlextDecoratorsLoggingPayloads(FlextDecoratorsBase):
 
         Returns:
             The resulting ``tb.MutableJsonMapping``.
+
         """
         payload: tb.MutableJsonMapping = {
             "function": func_name,
@@ -51,6 +52,7 @@ class FlextDecoratorsLoggingPayloads(FlextDecoratorsBase):
 
         Returns:
             The resulting ``tb.MutableJsonMapping``.
+
         """
         payload: tb.MutableJsonMapping = {"function": func_name, "success": True}
         if correlation_id is not None:

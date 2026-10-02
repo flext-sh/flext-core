@@ -45,6 +45,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
 
         Returns:
             The resulting ``me.Report``.
+
         """
         kind, params = PREDICATE_BINDINGS[tag]
         violations: list[me.Violation] = []
@@ -85,6 +86,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
 
         Yields:
             Each ``tuple[str, tuple[p.AttributeProbe, ...]]``.
+
         """
         # A class is a model by DECLARATION: the canonical FLEXT base or a
         # pydantic-settings base declared directly (which is exactly what the
@@ -154,6 +156,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
 
         Returns:
             The resulting ``me.Report``.
+
         """
         violations: list[me.Violation] = []
         deferred: list[me.DeferredInspection] = []
@@ -203,6 +206,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
 
         Returns:
             The resulting ``me.Report``.
+
         """
         return FlextUtilitiesEnforcement._check(target, layer=layer)
 
@@ -212,6 +216,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
 
         Returns:
             The resulting ``me.Report``.
+
         """
         return FlextUtilitiesEnforcement._check(
             target,

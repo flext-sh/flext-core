@@ -11,12 +11,11 @@ from __future__ import annotations
 from importlib import import_module
 from typing import overload
 
-from pydantic import TypeAdapter
-
 from flext_core import c, e, p, r, t
 from flext_core._models.base import FlextModelsBase as m
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._utilities.args import FlextUtilitiesArgs as ua
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic as upy
 
 
 class FlextUtilitiesModel:
@@ -93,6 +92,7 @@ class FlextUtilitiesModel:
 
         Returns:
             The resulting ``t.SettingsClass``.
+
         """
         settings_module = import_module("flext_core")
         settings_cls: t.SettingsClass = settings_module.FlextSettings
@@ -104,6 +104,7 @@ class FlextUtilitiesModel:
 
         Returns:
             The resulting ``p.ContainerType``.
+
         """
         container_module = import_module("flext_core")
         container_cls: p.ContainerType = container_module.FlextContainer
@@ -115,6 +116,7 @@ class FlextUtilitiesModel:
 
         Returns:
             The resulting ``p.ContextType``.
+
         """
         context_module = import_module("flext_core")
         context_cls: p.ContextType = context_module.FlextContext
@@ -162,9 +164,14 @@ class FlextUtilitiesModel:
 
         Returns:
             The resulting ``p.Result[TValue]``.
+
         """
         try:
-            adapter = target if isinstance(target, TypeAdapter) else TypeAdapter(target)
+            adapter = (
+                target
+                if isinstance(target, upy.type_adapter)
+                else upy.type_adapter(target)
+            )
             if from_json:
                 if not isinstance(data, c.STR_BINARY_TYPES):
                     return e.fail_validation(

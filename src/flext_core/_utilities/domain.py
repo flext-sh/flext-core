@@ -38,6 +38,7 @@ class FlextUtilitiesDomain:
 
         Returns:
             The resulting ``bool``.
+
         """
         return type(obj_a) is type(obj_b)
 
@@ -53,6 +54,7 @@ class FlextUtilitiesDomain:
 
         Returns:
             The resulting ``bool``.
+
         """
         invalid_entity = u.scalar(entity_a) or isinstance(entity_a, (Sequence, Mapping))
         invalid_other = u.scalar(entity_b) or isinstance(entity_b, (Sequence, Mapping))
@@ -79,6 +81,7 @@ class FlextUtilitiesDomain:
 
         Returns:
             The resulting ``bool``.
+
         """
         result: bool
         if isinstance(obj_a, c.SCALAR_TYPES):
@@ -133,6 +136,7 @@ class FlextUtilitiesDomain:
 
         Returns:
             The resulting ``int``.
+
         """
         if u.scalar(entity):
             return hash(entity)
@@ -147,6 +151,7 @@ class FlextUtilitiesDomain:
 
         Returns:
             The resulting ``int``.
+
         """
         if u.scalar(obj):
             return hash(obj)
@@ -189,6 +194,7 @@ class FlextUtilitiesDomain:
 
         Returns:
             The resulting ``mde.DomainEvent``.
+
         """
         if data is None:
             normalized_data = FlextModelsContainers.ConfigMap(root={})

@@ -84,6 +84,7 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart01):
 
         Returns:
             The resulting ``_types_mod.ModuleType | None``.
+
         """
         cached = FlextUtilitiesBeartypeHelpers._RUNTIME_MODULE_CACHE.get(target)
         if cached is not None:
@@ -134,6 +135,10 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart01):
         type without resolving anything: a proxy is not a function and never
         can be. ``FunctionType`` cannot be subclassed, so this accepts exactly
         what an ``isinstance`` test accepted.
+
+        Yields:
+            Each ``_types_mod.FunctionType``.
+
         """
         module_name = module.__name__
         for member in vars(module).values():

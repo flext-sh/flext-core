@@ -136,8 +136,8 @@ class TestsFlextCoreEnforcementNamespacePart02:
             ("clean_class", lambda: make_class("FlextSyntheticCleanConstants", {})),
         ],
     )
+    @staticmethod
     def test_run_layer_stays_silent_for_exempt_or_clean_classes(
-        self,
         case: str,
         factory: ClassFactory,
     ) -> None:
@@ -165,8 +165,8 @@ class TestsFlextCoreEnforcementNamespacePart02:
             ("implicit_constant", {"GROUPS": frozenset({"foo"})}),
         ],
     )
+    @staticmethod
     def test_check_flags_constant_declared_outside_constants(
-        self,
         name: str,
         body: dict[str, object],
     ) -> None:
@@ -225,8 +225,8 @@ class TestsFlextCoreEnforcementNamespacePart02:
             ),
         ],
     )
+    @staticmethod
     def test_check_exempts_permitted_constant_shapes(
-        self,
         case: str,
         body: dict[str, object],
         module: str | None,

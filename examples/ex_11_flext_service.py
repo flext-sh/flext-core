@@ -57,6 +57,7 @@ class ExampleService:
 
         Returns:
             The resulting ``p.Result[str]``.
+
         """
         service = _EchoService(payload=m.Examples.Payload(text="ok"))
         return service.execute()

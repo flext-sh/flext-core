@@ -43,6 +43,7 @@ class Ex02FlextSettings(Ex02FlextSettingsFieldChecks):
 
         Returns:
             The resulting ``dict[str, str]``.
+
         """
         saved = {k: v for k, v in os.environ.items() if k.startswith("FLEXT_")}
         for key in saved:
@@ -61,6 +62,7 @@ class Ex02FlextSettings(Ex02FlextSettingsFieldChecks):
 
         Returns:
             The resulting ``str | None``.
+
         """
         previous = os.environ.get(key)
         if value is None:

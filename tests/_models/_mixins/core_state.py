@@ -35,6 +35,7 @@ class TestsFlextModelsCoreStateMixin:
 
             Returns:
                 The resulting ``TestsFlextModelsCoreStateMixin.SingletonClassForTest``.
+
             """
             if cls._instance is None:
                 cls._instance = cls()

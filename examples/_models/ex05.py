@@ -48,7 +48,8 @@ class ExamplesFlextModelsEx05:
         )
 
     class GoodProcessor(m.Value):
-        def process(self) -> bool:
+        @staticmethod
+        def process() -> bool:
             return True
 
         @override

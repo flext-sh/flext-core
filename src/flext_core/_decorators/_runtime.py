@@ -32,6 +32,7 @@ class FlextDecorators(FlextDecoratorsCombined):
 
         Returns:
             The resulting ``Callable[[Callable[P, T]], Callable[P, T]]``.
+
         """
 
         def decorator(func: Callable[P, T]) -> Callable[P, T]:
@@ -56,6 +57,7 @@ class FlextDecorators(FlextDecoratorsCombined):
         Returns:
             The resulting ``Callable[[Callable[PCallback, TResult]], Callable[PCallback,
                 TResult]]``.
+
         """
         max_duration = (
             timeout_seconds

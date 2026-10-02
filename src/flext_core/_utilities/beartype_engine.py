@@ -109,6 +109,7 @@ class FlextUtilitiesBeartypeEngine(
 
         Returns:
             The resulting ``tuple[me.DeferredAlias, ...]``.
+
         """
         if isinstance(params, me.AttrShapeParams):
             if params.forbid_any_in_alias:
@@ -177,6 +178,7 @@ class FlextUtilitiesBeartypeEngine(
 
         Returns:
             The resulting ``t.StrMapping | None``.
+
         """
         return cls._VISITORS[kind](params, *args)
 

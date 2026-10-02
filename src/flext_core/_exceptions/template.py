@@ -24,6 +24,7 @@ class FlextExceptionsTemplate:
 
         Returns:
             The resulting ``m.ConfigMap``.
+
         """
         payload: t.JsonDict = (
             {
@@ -66,6 +67,7 @@ class FlextExceptionsTemplate:
 
         Raises:
             ValueError: If a ``KeyError`` is caught.
+
         """
         payload = FlextExceptionsTemplate.template_values(params, values)
         try:
@@ -85,6 +87,7 @@ class FlextExceptionsTemplate:
 
         Returns:
             The resulting ``m.ConfigMap | None``.
+
         """
         payload = FlextExceptionsTemplate.template_values(params, values)
         return payload or None

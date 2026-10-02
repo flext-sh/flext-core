@@ -79,8 +79,8 @@ class TestsFlextModelsExceptionParamsResources:
         ],
         ids=["user", "order", "invoice", "all-none"],
     )
+    @staticmethod
     def test_not_found_error_params_resource_variants(
-        self,
         resource_type: str | None,
         resource_id: str | None,
     ) -> None:
@@ -145,8 +145,8 @@ class TestsFlextModelsExceptionParamsResources:
         [1, 1.5, 0, None],
         ids=["int", "float", "zero", "none"],
     )
+    @staticmethod
     def test_rate_limit_error_params_retry_after_types(
-        self,
         retry_after: float | None,
     ) -> None:
         params = m.RateLimitErrorParams(retry_after=retry_after)

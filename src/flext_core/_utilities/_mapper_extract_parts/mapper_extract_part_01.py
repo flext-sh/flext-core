@@ -43,7 +43,12 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
         default: t.JsonPayload | None,
         required: bool,
     ) -> p.Result[t.JsonPayload]:
-        """Return required failure, configured default, or missing-default failure."""
+        """Return required failure, configured default, or missing-default failure.
+
+        Returns:
+            Required failure, configured default, or missing-default failure.
+
+        """
         if not required and default is not None:
             return r[t.JsonPayload].ok(default)
         return r[t.JsonPayload].fail_op("extract path", msg)
@@ -60,6 +65,7 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
         Returns:
             The resulting ``tuple[t.JsonPayload | None, p.Result[t.JsonPayload] |
                 None]``.
+
         """
         if result.failure:
             if not required and default is not None:
@@ -83,6 +89,7 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
         Returns:
             The resulting ``tuple[t.JsonPayload | None, p.Result[t.JsonPayload] |
                 None]``.
+
         """
         if "[" in part and part.endswith("]"):
             bracket_pos = part.index("[")
@@ -132,6 +139,7 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
         Returns:
             The resulting ``t.JsonPayload | t.JsonMapping |
                 FlextModelsContainers.ConfigMap | None``.
+
         """
         seed_current: (
             t.JsonPayload | t.JsonMapping | FlextModelsContainers.ConfigMap | None

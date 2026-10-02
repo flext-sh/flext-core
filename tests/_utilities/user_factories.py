@@ -41,6 +41,7 @@ class TestsFlextUtilitiesUserFactoriesMixin(TestsFlextUtilitiesRailwayServicesMi
 
             Returns:
                 The resulting ``str``.
+
             """
             name = cls._names[cls._name_index % len(cls._names)]
             cls._name_index += 1
@@ -59,6 +60,7 @@ class TestsFlextUtilitiesUserFactoriesMixin(TestsFlextUtilitiesRailwayServicesMi
 
             Returns:
                 The resulting ``tm.Tests.User``.
+
             """
             n = next(cls._counter)
             actual_user_id = user_id if user_id is not None else f"user_{n:03d}"
@@ -80,6 +82,7 @@ class TestsFlextUtilitiesUserFactoriesMixin(TestsFlextUtilitiesRailwayServicesMi
 
             Returns:
                 The resulting ``t.SequenceOf[tm.Tests.User]``.
+
             """
             return [cls.build() for _ in range(size)]
 
@@ -100,7 +103,12 @@ class TestsFlextUtilitiesUserFactoriesMixin(TestsFlextUtilitiesRailwayServicesMi
 
         @classmethod
         def _resolve_user_id(cls, user_id: str | None) -> str:
-            """Return ``user_id`` or the next auto-generated identifier."""
+            """Return ``user_id`` or the next auto-generated identifier.
+
+            Returns:
+                ``user_id`` or the next auto-generated identifier.
+
+            """
             if user_id is not None:
                 return user_id
             return f"user_{next(cls._counter):03d}"
@@ -116,6 +124,7 @@ class TestsFlextUtilitiesUserFactoriesMixin(TestsFlextUtilitiesRailwayServicesMi
 
             Returns:
                 The resulting ``list[T]``.
+
             """
             return [cls.build() for _ in range(size)]
 
@@ -140,6 +149,7 @@ class TestsFlextUtilitiesUserFactoriesMixin(TestsFlextUtilitiesRailwayServicesMi
 
             Returns:
                 The resulting ``TestsFlextUtilitiesUserFactoriesMixin.GetUserService``.
+
             """
             return TestsFlextUtilitiesUserFactoriesMixin.GetUserService(
                 user_id=cls._resolve_user_id(user_id),

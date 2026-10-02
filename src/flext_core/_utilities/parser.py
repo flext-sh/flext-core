@@ -33,6 +33,7 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
 
         Returns:
             The resulting ``T``.
+
         """
         opts, fp = FlextUtilitiesParser._resolve_opts(options, kwargs)
         return FlextUtilitiesParser._dispatch(value, target, opts, fp, kwargs)
@@ -49,6 +50,7 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
 
         Returns:
             The resulting ``T``.
+
         """
         resolved_value: T
         if value is None:

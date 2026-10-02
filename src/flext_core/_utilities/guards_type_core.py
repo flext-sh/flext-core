@@ -35,6 +35,7 @@ class FlextUtilitiesGuardsTypeCore:
 
         Returns:
             The resulting ``TypeIs[Sequence[t.JsonPayload]]``.
+
         """
         return isinstance(value, c.SEQUENCE_PAIR_TYPES)
 
@@ -46,6 +47,7 @@ class FlextUtilitiesGuardsTypeCore:
 
         Returns:
             The resulting ``TypeIs[Mapping[str, t.JsonPayload]]``.
+
         """
         return isinstance(value, Mapping)
 
@@ -57,6 +59,7 @@ class FlextUtilitiesGuardsTypeCore:
 
         Returns:
             The resulting ``bool``.
+
         """
         for sequence_item in value:
             if not FlextUtilitiesGuardsTypeCore.container(sequence_item):
@@ -71,6 +74,7 @@ class FlextUtilitiesGuardsTypeCore:
 
         Returns:
             The resulting ``bool``.
+
         """
         for mapped_value in value.values():
             if not FlextUtilitiesGuardsTypeCore.container(mapped_value):
@@ -83,6 +87,7 @@ class FlextUtilitiesGuardsTypeCore:
 
         Returns:
             The resulting ``bool``.
+
         """
         return bool(isinstance(value, Mapping) and value)
 
@@ -92,6 +97,7 @@ class FlextUtilitiesGuardsTypeCore:
 
         Returns:
             The resulting ``bool``.
+
         """
         if value is None:
             return True
@@ -112,6 +118,7 @@ class FlextUtilitiesGuardsTypeCore:
 
         Returns:
             The resulting ``TypeIs[t.JsonValue]``.
+
         """
         if value is None:
             return False
@@ -131,6 +138,7 @@ class FlextUtilitiesGuardsTypeCore:
 
         Returns:
             The resulting ``TypeIs[t.JsonList]``.
+
         """
         return isinstance(value, list)
 
@@ -142,6 +150,7 @@ class FlextUtilitiesGuardsTypeCore:
 
         Returns:
             The resulting ``TypeIs[t.JsonMapping]``.
+
         """
         return isinstance(value, Mapping)
 
@@ -153,6 +162,7 @@ class FlextUtilitiesGuardsTypeCore:
 
         Returns:
             The resulting ``TypeIs[t.Primitives]``.
+
         """
         return isinstance(value, c.PRIMITIVES_TYPES)
 
@@ -164,12 +174,18 @@ class FlextUtilitiesGuardsTypeCore:
 
         Returns:
             The resulting ``TypeIs[t.Scalar]``.
+
         """
         return isinstance(value, c.SCALAR_TYPES)
 
     @staticmethod
     def type_name(value: t.GuardInput | t.JsonPayload | t.JsonValue | None) -> str:
-        """Return the concrete runtime type name for any FLEXT payload value."""
+        """Return the concrete runtime type name for any FLEXT payload value.
+
+        Returns:
+            The concrete runtime type name for any FLEXT payload value.
+
+        """
         return type(value).__qualname__
 
     @staticmethod
@@ -184,6 +200,7 @@ class FlextUtilitiesGuardsTypeCore:
 
         Returns:
             The resulting ``TypeIs[Mapping[str, t.JsonPayload]]``.
+
         """
         if isinstance(value, Mapping):
             return True
@@ -197,6 +214,7 @@ class FlextUtilitiesGuardsTypeCore:
 
         Returns:
             The resulting ``TypeIs[Sequence[t.JsonPayload]]``.
+
         """
         return isinstance(value, c.SEQUENCE_PAIR_TYPES) and not isinstance(
             value,
@@ -209,6 +227,7 @@ class FlextUtilitiesGuardsTypeCore:
 
         Returns:
             The resulting ``TypeGuard[str]``.
+
         """
         return isinstance(value, str) and bool(value.strip())
 
@@ -218,6 +237,7 @@ class FlextUtilitiesGuardsTypeCore:
 
         Returns:
             The resulting ``bool``.
+
         """
         return isinstance(value, getattr(type_cls, "__origin__", None) or type_cls)
 
@@ -227,6 +247,7 @@ class FlextUtilitiesGuardsTypeCore:
 
         Returns:
             The resulting ``bool``.
+
         """
         if isinstance(container, (list, tuple, set, dict)):
             contains: bool

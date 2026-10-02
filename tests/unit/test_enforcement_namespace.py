@@ -22,6 +22,8 @@ import sys
 import warnings
 from typing import TYPE_CHECKING, ClassVar
 
+import pytest
+
 from flext_core.utilities import FlextUtilitiesEnforcement
 from tests.constants import c
 from tests.unit._enforcement_support import make_class
@@ -29,8 +31,6 @@ from tests.utilities import u
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-import pytest
 
 _PREFIX_FRAGMENT = "class name missing project prefix"
 
@@ -40,6 +40,7 @@ def _synthetic(name: str, *, qualname: str, module: str) -> type:
 
     Returns:
         The resulting ``type``.
+
     """
     target = type(name, (), {})
     target.__qualname__ = qualname
@@ -87,8 +88,8 @@ class TestsFlextCoreEnforcementNamespace:
             ),
         ],
     )
+    @staticmethod
     def test_exempt_or_compliant_targets_report_no_prefix_violation(
-        self,
         name: str,
         qualname: str,
         module: str,
@@ -100,7 +101,8 @@ class TestsFlextCoreEnforcementNamespace:
 
         assert not any(_PREFIX_FRAGMENT in v.message for v in report.violations)
 
-    def test_flext_core_class_without_prefix_is_flagged_for_flext(self) -> None:
+    @staticmethod
+    def test_flext_core_class_without_prefix_is_flagged_for_flext() -> None:
         """A ``flext_core`` class lacking the prefix is told to start with ``Flext``.
 
         This is the observable side of the ``flext_core -> Flext`` project
@@ -116,7 +118,8 @@ class TestsFlextCoreEnforcementNamespace:
         assert prefix_msgs
         assert all('"Flext"' in msg for msg in prefix_msgs)
 
-    def test_tests_module_class_with_composed_prefix_is_compliant(self) -> None:
+    @staticmethod
+    def test_tests_module_class_with_composed_prefix_is_compliant() -> None:
         """Classes under ``tests.*`` are compliant with the ``TestsFlext`` prefix."""
         target = _synthetic(
             "TestsFlextModelsMixins",
@@ -128,8 +131,8 @@ class TestsFlextCoreEnforcementNamespace:
 
         assert not any(_PREFIX_FRAGMENT in v.message for v in report.violations)
 
+    @staticmethod
     def test_pydantic_generic_specialization_does_not_count_as_namespace_violation(
-        self,
         tmp_path: Path,
     ) -> None:
         """Pydantic's synthetic ``Base[int]`` leak must not add prefix violations."""
@@ -179,8 +182,8 @@ class TestsFlextCoreEnforcementNamespace:
             sys.modules.pop("demo_pkg.base", None)
             sys.modules.pop("demo_pkg.consumer", None)
 
+    @staticmethod
     def test_project_class_stem_override_controls_required_prefix(
-        self,
         tmp_path: Path,
     ) -> None:
         """``[tool.flext.project] class_stem_override`` sets the accepted prefix."""
@@ -215,9 +218,8 @@ class_stem_override = "XmlAPI"
         finally:
             sys.modules.pop("xmlapi", None)
 
-    def test_run_layer_emits_warnings_for_mutable_constant_under_warn_mode(
-        self,
-    ) -> None:
+    @staticmethod
+    def test_run_layer_emits_warnings_for_mutable_constant_under_warn_mode() -> None:
         """Under WARN mode ``run_layer`` warns on a mutable list constant.
 
         Precondition: the namespace mode constant is WARN, so ``run_layer``
@@ -238,7 +240,8 @@ class_stem_override = "XmlAPI"
         assert any("[const_mutable]" in text for text in texts)
         assert any("[ENFORCE-079]" in text for text in texts)
 
-    def test_run_layer_stays_silent_for_clean_class(self) -> None:
+    @staticmethod
+    def test_run_layer_stays_silent_for_clean_class() -> None:
         """``run_layer`` emits nothing for a constant-free class."""
         target = make_class("FlextSyntheticCleanConstants", {})
 
@@ -248,7 +251,8 @@ class_stem_override = "XmlAPI"
 
         assert recorded == []
 
-    def test_run_layer_exempts_tests_qualified_classes(self) -> None:
+    @staticmethod
+    def test_run_layer_exempts_tests_qualified_classes() -> None:
         """A ``Tests``-qualified class with a violating shape is still exempt."""
         target = type(
             "TestsFlextSyntheticConstants",
@@ -264,7 +268,8 @@ class_stem_override = "XmlAPI"
 
         assert recorded == []
 
-    def test_run_layer_skips_function_local_classes(self) -> None:
+    @staticmethod
+    def test_run_layer_skips_function_local_classes() -> None:
         """Function-local classes (``<locals>`` qualname) are never enforced."""
 
         class FlextLocalConstants:
@@ -341,8 +346,8 @@ class_stem_override = "XmlAPI"
             ),
         ],
     )
+    @staticmethod
     def test_constant_placement_governs_enforce_079(
-        self,
         name: str,
         body: dict[str, object],
         module_override: str | None,

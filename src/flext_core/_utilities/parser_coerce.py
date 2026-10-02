@@ -67,6 +67,7 @@ class FlextUtilitiesParserCoerce:
 
         Returns:
             The resulting ``str``.
+
         """
         value_str = value if isinstance(value, str) else str(value)
         op = FlextUtilitiesParserCoerce._CASE_OPS.get(case)
@@ -78,6 +79,7 @@ class FlextUtilitiesParserCoerce:
 
         Returns:
             The resulting ``p.Result[bool]``.
+
         """
         if isinstance(value, str):
             normalized_val = FlextUtilitiesParserCoerce._parse_normalize_str(
@@ -85,9 +87,9 @@ class FlextUtilitiesParserCoerce:
                 case="lower",
             )
             if normalized_val in c.PARSER_BOOLEAN_TRUTHY:
-                return r[bool].ok(True)
+                return r[bool].ok(value=True)
             if normalized_val in c.PARSER_BOOLEAN_FALSY:
-                return r[bool].ok(False)
+                return r[bool].ok(value=False)
             return r[bool].fail(c.ERR_PARSER_COERCE_BOOL_FAILED.format(value=value))
         return r[bool].ok(bool(value))
 
@@ -97,6 +99,7 @@ class FlextUtilitiesParserCoerce:
 
         Returns:
             The resulting ``p.Result[float]``.
+
         """
         if isinstance(value, (str, int)):
             return r[float].create_from_callable(
@@ -114,6 +117,7 @@ class FlextUtilitiesParserCoerce:
 
         Returns:
             The resulting ``p.Result[int]``.
+
         """
         if isinstance(value, (str, float)):
             return r[int].create_from_callable(
@@ -130,7 +134,12 @@ class FlextUtilitiesParserCoerce:
         options: FlextUtilitiesParserCoerce.ParseOptions[T],
         error_msg: str,
     ) -> p.Result[T]:
-        """Return default or error for parse failures."""
+        """Return default or error for parse failures.
+
+        Returns:
+            Default or error for parse failures.
+
+        """
         if options.default is not None:
             return r[T].ok(options.default)
         if options.default_factory is not None:
@@ -148,6 +157,7 @@ class FlextUtilitiesParserCoerce:
 
         Returns:
             The resulting ``str``.
+
         """
         if value is None:
             str_value = default

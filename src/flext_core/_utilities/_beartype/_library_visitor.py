@@ -37,6 +37,7 @@ class FlextUtilitiesBeartypeLibraryVisitor:
 
         Returns:
             The resulting ``t.StrMapping | None``.
+
         """
         _ = params
         owners = c.ENFORCEMENT_LIBRARY_OWNERS

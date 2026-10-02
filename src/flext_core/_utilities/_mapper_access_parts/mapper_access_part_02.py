@@ -32,6 +32,7 @@ class FlextUtilitiesMapperAccess(FlextUtilitiesMapperAccessPart01):
 
         Returns:
             The resulting ``p.Result[t.JsonPayload | None]``.
+
         """
         if isinstance(current, FlextModelsContainers.ObjectList):
             sequence: t.SequenceOf[t.JsonValue | t.JsonPayload] = current.root
@@ -77,6 +78,7 @@ class FlextUtilitiesMapperAccess(FlextUtilitiesMapperAccessPart01):
 
         Returns:
             The resulting ``t.JsonPayload | t.JsonValue``.
+
         """
         match data:
             case dict() | Mapping() if key in data:

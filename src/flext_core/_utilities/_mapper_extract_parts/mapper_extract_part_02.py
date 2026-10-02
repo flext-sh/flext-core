@@ -72,6 +72,7 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperExtractPart01):
 
         Returns:
             The resulting ``p.Result[t.JsonPayload]``.
+
         """
         try:
             return FlextUtilitiesMapperExtract._extract_path_parts(

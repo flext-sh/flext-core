@@ -95,6 +95,7 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
             The resulting ``t.SequenceOf[TItem] | t.SequenceOf[TMapped] |
                 t.VariadicTuple[TItem] | t.VariadicTuple[TMapped] | t.MappingKV[str,
                 TItem] | t.MappingKV[str, TMapped]``.
+
         """
         filtered_output: (
             t.SequenceOf[TItem]
@@ -190,6 +191,7 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
         Returns:
             The resulting ``t.SequenceOf[TMapped] | t.VariadicTuple[TMapped] |
                 t.MappingKV[str, TMapped] | set[TMapped] | frozenset[TMapped]``.
+
         """
         if isinstance(items, list):
             return [mapper(item) for item in items]

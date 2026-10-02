@@ -34,6 +34,7 @@ class FlextUtilitiesCollection(
 
         Returns:
             The resulting ``t.JsonMapping``.
+
         """
         if value is None:
             empty_data: t.JsonMapping = {}
@@ -57,6 +58,7 @@ class FlextUtilitiesCollection(
 
         Returns:
             The resulting ``int``.
+
         """
         if predicate is None:
             return len(items)
@@ -71,6 +73,7 @@ class FlextUtilitiesCollection(
 
         Returns:
             The resulting ``p.Result[TItem]``.
+
         """
         if isinstance(items, Mapping):
             for v in items.values():
@@ -98,6 +101,7 @@ class FlextUtilitiesCollection(
 
         Returns:
             The resulting ``p.Result[Sequence[TMapped]]``.
+
         """
         results: MutableSequence[TMapped] = []
         for item in items:

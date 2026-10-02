@@ -30,7 +30,12 @@ class TestsFlextExamplesExecution:
 
     @staticmethod
     def _repo_root() -> Path:
-        """Return the flext-core repository root that hosts ``examples/``."""
+        """Return the flext-core repository root that hosts ``examples/``.
+
+        Returns:
+            The flext-core repository root that hosts ``examples/``.
+
+        """
         return Path(__file__).resolve().parents[c.Tests.REPO_ROOT_PARENT_DEPTH]
 
     @pytest.mark.parametrize(

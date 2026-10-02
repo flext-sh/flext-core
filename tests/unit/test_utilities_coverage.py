@@ -36,8 +36,8 @@ class TestsFlextCoreUtilitiesCoverage:
             ("not-a-number", 4, 4),
         ],
     )
+    @staticmethod
     def test_to_int_returns_int_or_default(
-        self,
         value: t.JsonPayload | None,
         default: int,
         expected: int,
@@ -55,8 +55,8 @@ class TestsFlextCoreUtilitiesCoverage:
             ("nan-text", 8.0, 8.0),
         ],
     )
+    @staticmethod
     def test_to_float_returns_float_or_default(
-        self,
         value: t.JsonPayload | None,
         default: float,
         expected: float,
@@ -75,8 +75,8 @@ class TestsFlextCoreUtilitiesCoverage:
             (None, False, False),
         ],
     )
+    @staticmethod
     def test_to_bool_returns_truthiness_or_default(
-        self,
         value: t.JsonPayload | None,
         *,
         default: bool,
@@ -99,8 +99,8 @@ class TestsFlextCoreUtilitiesCoverage:
             (None, 9, 9),
         ],
     )
+    @staticmethod
     def test_to_positive_int_accepts_only_positive_values(
-        self,
         value: t.JsonPayload | None,
         default: int,
         expected: int,
@@ -112,8 +112,8 @@ class TestsFlextCoreUtilitiesCoverage:
         ("value", "expected"),
         [(None, ""), ("hello", "hello"), (3.0, "3"), (2.5, "2.50"), (10, "10")],
     )
+    @staticmethod
     def test_to_str_formats_value(
-        self,
         value: t.JsonPayload | None,
         expected: str,
     ) -> None:
@@ -129,8 +129,8 @@ class TestsFlextCoreUtilitiesCoverage:
         ("value", "expected"),
         [("", None), ("value", "value"), (None, None), (123, None)],
     )
+    @staticmethod
     def test_to_optional_str_only_returns_non_empty_strings(
-        self,
         value: t.JsonPayload | None,
         expected: str | None,
     ) -> None:
@@ -141,8 +141,8 @@ class TestsFlextCoreUtilitiesCoverage:
         ("value", "expected"),
         [("solo", ["solo"]), ([1, 2], ["1", "2"]), (None, [])],
     )
+    @staticmethod
     def test_to_str_list_produces_list_of_strings(
-        self,
         value: t.StrictValue | None,
         expected: list[str],
     ) -> None:
@@ -163,8 +163,8 @@ class TestsFlextCoreUtilitiesCoverage:
             ([], " ", None, ""),
         ],
     )
+    @staticmethod
     def test_join_concatenates_with_separator_and_case(
-        self,
         values: list[str],
         separator: str,
         case: str | None,
@@ -182,8 +182,8 @@ class TestsFlextCoreUtilitiesCoverage:
             (5, None, "5"),
         ],
     )
+    @staticmethod
     def test_normalize_stringifies_with_case(
-        self,
         value: t.StrictValue,
         case: str | None,
         expected: str,
@@ -200,8 +200,8 @@ class TestsFlextCoreUtilitiesCoverage:
             ("Mixed Case_Id", "mixed-case-id"),
         ],
     )
+    @staticmethod
     def test_format_app_id_normalizes_to_hyphenated_lowercase(
-        self,
         name: str,
         expected: str,
     ) -> None:
@@ -212,8 +212,8 @@ class TestsFlextCoreUtilitiesCoverage:
         ("text", "expected"),
         [("  hi  ", "hi"), ("value", "value"), ("\ttrimmed\n", "trimmed")],
     )
+    @staticmethod
     def test_safe_string_strips_and_returns_non_empty(
-        self,
         text: str,
         expected: str,
     ) -> None:
@@ -221,7 +221,8 @@ class TestsFlextCoreUtilitiesCoverage:
         assert u.safe_string(text) == expected
 
     @pytest.mark.parametrize("text", [None, "", "   ", "\t\n"])
-    def test_safe_string_rejects_empty_input(self, text: str | None) -> None:
+    @staticmethod
+    def test_safe_string_rejects_empty_input(text: str | None) -> None:
         """safe_string raises ValueError for None, empty, or whitespace input."""
         with pytest.raises(ValueError, match="Text"):
             u.safe_string(text)

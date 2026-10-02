@@ -34,6 +34,7 @@ class FlextUtilitiesMapperAccess:
 
         Returns:
             The resulting ``t.JsonPayload | t.JsonValue``.
+
         """
         if value is None:
             # Preserve nulls so the extraction contract decides fail/default policy.
@@ -71,6 +72,7 @@ class FlextUtilitiesMapperAccess:
 
         Returns:
             The resulting ``p.Result[t.JsonPayload]``.
+
         """
         if raw is None:
             return r[t.JsonPayload].fail_op(
@@ -94,6 +96,7 @@ class FlextUtilitiesMapperAccess:
 
         Returns:
             The resulting ``p.Result[t.JsonPayload]``.
+
         """
         not_found_result: p.Result[t.JsonPayload] = r[t.JsonPayload].fail_op(
             "extract key",

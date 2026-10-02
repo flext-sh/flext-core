@@ -36,6 +36,7 @@ class FlextUtilitiesHandler:
 
         Returns:
             The resulting ``p.HandlerRuntimeState``.
+
         """
         from flext_core import m
 
@@ -52,6 +53,7 @@ class FlextUtilitiesHandler:
 
         Returns:
             The resulting ``p.HandlerRuntimeState``.
+
         """
         execution_context = state.execution_context.model_copy(
             update={"started_at": time.time()},
@@ -68,6 +70,7 @@ class FlextUtilitiesHandler:
 
         Returns:
             The resulting ``p.Result[bool]``.
+
         """
         normalized = FlextRuntime.normalize_to_container(value)
         ctx.metrics_state_data.root[name] = (
@@ -75,7 +78,7 @@ class FlextUtilitiesHandler:
             if isinstance(normalized, (str, int, float, bool, datetime, Path))
             else str(normalized)
         )
-        return r.ok(True)
+        return r.ok(value=True)
 
     @staticmethod
     def push_context(
@@ -86,6 +89,7 @@ class FlextUtilitiesHandler:
 
         Returns:
             The resulting ``p.Result[p.HandlerRuntimeState]``.
+
         """
         if not isinstance(ctx, Mapping):
             pushed_context = ctx.model_copy()
@@ -110,7 +114,12 @@ class FlextUtilitiesHandler:
     def pop_context(
         state: p.HandlerRuntimeState,
     ) -> p.Result[t.Pair[p.HandlerRuntimeState, p.RootDict[t.JsonPayload]]]:
-        """Return state without the top context plus its validated identity."""
+        """Return state without the top context plus its validated identity.
+
+        Returns:
+            State without the top context plus its validated identity.
+
+        """
         from flext_core import m
 
         if not state.context_stack:

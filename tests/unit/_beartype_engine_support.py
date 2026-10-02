@@ -6,44 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import sys
 import typing
 
-from tests.models import m
-from tests.protocols import p
 from tests.typings import t
-from tests.utilities import u
-
-if typing.TYPE_CHECKING:
-    from pathlib import Path
 
 type AnyAlias = str | typing.Any
 type CleanAlias = str | int
 type NestedAnyAlias = t.MappingKV[str, typing.Any]
-
-
-class TestsFlextBeartypeEngine:
-    """Shared beartype engine test support."""
-
-    FORBIDDEN: frozenset[str] = frozenset({"dict", "list", "set"})
-
-    @staticmethod
-    def _run_python(script: str, cwd: Path) -> p.Cli.CommandOutput:
-        """Run a Python snippet in a subprocess and capture text output.
-
-        Returns:
-            The resulting ``p.Cli.CommandOutput``.
-        """
-        result = u.Cli.run_raw([sys.executable, "-c", script], cwd=cwd)
-        if result.success:
-            output: p.Cli.CommandOutput = result.value
-            return output
-        return m.Cli.CommandOutput(
-            stdout="",
-            stderr=result.error or "python snippet execution failed",
-            outcome=m.Cli.ProcessOutcome(
-                raw_return_code=1,
-                timed_out=False,
-                forwarded_signal=None,
-            ),
-        )

@@ -33,6 +33,9 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart03):
 
             return e.fail_conflict("user", user_id, "already active")
 
+        Returns:
+            R[T].fail with a canonical conflict message.
+
         """
         options, error = FlextExceptionsFactories._resolve_options(options)
         params = m.ConflictErrorParams(

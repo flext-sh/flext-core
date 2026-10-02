@@ -66,6 +66,7 @@ class FlextUtilitiesReliability:
 
         Returns:
             The resulting ``p.Result[TResult]``.
+
         """
         if catch is None:
             handled = FlextUtilitiesReliability._RETRYABLE_EXCEPTIONS
@@ -98,6 +99,7 @@ class FlextUtilitiesReliability:
 
         Returns:
             The resulting ``p.Result[TResult]``.
+
         """
         if catch is None:
             handled = FlextUtilitiesReliability._RETRYABLE_EXCEPTIONS

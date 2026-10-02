@@ -132,8 +132,8 @@ class TestsFlextResultTransforms:
         ("value", "predicate_ceiling", "expect_success"),
         [(10, 5, True), (10, 20, False), (6, 5, True), (5, 5, False)],
     )
+    @staticmethod
     def test_filter_keeps_or_drops_success_by_predicate(
-        self,
         value: int,
         predicate_ceiling: int,
         *,
@@ -196,8 +196,8 @@ class TestsFlextResultTransforms:
         ("result", "fallback", "expected"),
         [(r[int].ok(7), 42, 7), (r[int].fail("missing"), 42, 42)],
     )
+    @staticmethod
     def test_unwrap_or_returns_value_or_fallback(
-        self,
         result: p.Result[int],
         fallback: int,
         expected: int,

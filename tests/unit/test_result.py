@@ -62,8 +62,8 @@ class TestsFlextCoreResult:
         ("success", "default", "expected"),
         [(True, 0, 7), (False, 0, 0), (False, 99, 99)],
     )
+    @staticmethod
     def test_unwrap_or_returns_value_or_default(
-        self,
         *,
         success: bool,
         default: int,
@@ -154,8 +154,8 @@ class TestsFlextCoreResult:
         tm.ok(recovered, eq=-1)
 
     @pytest.mark.parametrize(("value", "keeps"), [(9, True), (2, False)])
+    @staticmethod
     def test_filter_keeps_or_rejects_by_predicate(
-        self,
         *,
         value: int,
         keeps: bool,
@@ -228,7 +228,7 @@ class TestsFlextCoreResult:
         with pytest.raises(ValueError, match="parameterized with None"):
             # Why: r[None] raises before the value is inspected; cast keeps
             # the call statically None-typed while proving the runtime guard.
-            r[None].ok(cast("None", True))
+            r[None].ok(cast("None", val=True))
         with pytest.raises(ValueError, match="parameterized with object"):
             r[object].ok({"k": "v"})
         with pytest.raises(ValueError, match="parameterized with None"):

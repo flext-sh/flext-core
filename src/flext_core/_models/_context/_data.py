@@ -26,7 +26,12 @@ class FlextModelsContextData:
     def _coerce_scalar_mapping(
         items: t.MappingKV[str, t.JsonPayload],
     ) -> t.MappingKV[str, t.Scalar]:
-        """Return an immutable mapping with non-scalar values stringified."""
+        """Return an immutable mapping with non-scalar values stringified.
+
+        Returns:
+            An immutable mapping with non-scalar values stringified.
+
+        """
         return MappingProxyType({
             k: val if isinstance(val, c.PRIMITIVES_TYPES) else str(val)
             for k, val in items.items()
@@ -43,6 +48,7 @@ class FlextModelsContextData:
 
         Raises:
             ValueError: Always.
+
         """
         if v is None:
             return _EMPTY_SCALAR_MAPPING
@@ -61,6 +67,7 @@ class FlextModelsContextData:
 
         Returns:
             The resulting ``t.JsonPayload | None``.
+
         """
         if v is None or isinstance(v, m.Metadata):
             return v
@@ -84,6 +91,7 @@ class FlextModelsContextData:
 
             Returns:
                 The resulting ``t.MappingKV[str, t.Scalar]``.
+
             """
             if v is None:
                 return _EMPTY_SCALAR_MAPPING
@@ -122,17 +130,28 @@ class FlextModelsContextData:
 
             Returns:
                 The resulting ``t.JsonPayload | None``.
+
             """
             return FlextModelsContextData.normalize_metadata_before(v)
 
         @classmethod
         def normalize_to_serializable_value(cls, val: t.Scalar) -> t.Scalar:
-            """Return scalar value as-is (already serializable)."""
+            """Return scalar value as-is (already serializable).
+
+            Returns:
+                Scalar value as-is (already serializable).
+
+            """
             return val
 
         @staticmethod
         def normalize_to_container(val: t.Scalar) -> t.Scalar:
-            """Return scalar value as-is."""
+            """Return scalar value as-is.
+
+            Returns:
+                Scalar value as-is.
+
+            """
             return val if isinstance(val, c.PRIMITIVES_TYPES) else str(val)
 
 

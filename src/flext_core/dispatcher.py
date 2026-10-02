@@ -39,6 +39,7 @@ class FlextDispatcher:
 
         Returns:
             The resulting ``p.Result[t.JsonPayload]``.
+
         """
         try:
             route_name = u.resolve_message_route(message)
@@ -67,11 +68,12 @@ class FlextDispatcher:
 
         Returns:
             The resulting ``p.Result[bool]``.
+
         """
         if isinstance(event, Sequence):
             for evt in event:
                 _ = self.publish(evt)
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         route_name = u.resolve_message_route(event)
         handlers = self._event_subscribers.get(route_name, [])
         evt_type = event.__class__
@@ -87,10 +89,10 @@ class FlextDispatcher:
             ):
                 handlers.append((auto_h, resolved_handler))
         if not handlers:
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         for _, resolved_handler in handlers:
             _ = self._execute_handler(resolved_handler, event, route_name)
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     def register_handler(
         self,
@@ -102,6 +104,7 @@ class FlextDispatcher:
 
         Returns:
             The resulting ``p.Result[bool]``.
+
         """
         route_name: str | None = None
         accepted_message_types: tuple[t.TypeHintSpecifier, ...] = tuple(
@@ -153,7 +156,7 @@ class FlextDispatcher:
                     c.LOG_REGISTERED_AUTO_DISCOVERY_HANDLER,
                     handler=str(handler),
                 )
-                return r[bool].ok(True)
+                return r[bool].ok(value=True)
             return r[bool].fail_op(
                 "discover handler route",
                 c.ERR_HANDLER_ROUTE_DISCOVERY_REQUIRED,
@@ -167,7 +170,7 @@ class FlextDispatcher:
         else:
             self._handlers[route_name] = (handler, resolved_handler)
             self.logger.info(c.LOG_REGISTERED_HANDLER, route=route_name)
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     def _execute_handler(
         self,
@@ -179,6 +182,7 @@ class FlextDispatcher:
 
         Returns:
             The resulting ``p.Result[t.JsonPayload]``.
+
         """
         dispatch_result = r[t.JsonPayload]
         try:
@@ -205,6 +209,7 @@ class FlextDispatcher:
 
         Returns:
             The resulting ``t.JsonPayload | p.ResultView[t.JsonPayload] | None``.
+
         """
         if isinstance(raw_candidate, p.ResultView):
             return raw_candidate
@@ -226,6 +231,7 @@ class FlextDispatcher:
 
         Returns:
             The resulting ``p.Result[t.JsonPayload]``.
+
         """
         result: p.Result[t.JsonPayload]
         if raw_output is None:

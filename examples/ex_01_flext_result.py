@@ -144,9 +144,9 @@ class Ex01r(Ex01ResultAdvancedSections):
         self.audit_check("unwrap.success", success.unwrap())
         try:
             _ = failure.unwrap()
-            self.audit_check("unwrap.failure.raises", False)
+            self.audit_check("unwrap.failure.raises", value=False)
         except RuntimeError as exc:
-            self.audit_check("unwrap.failure.raises", True)
+            self.audit_check("unwrap.failure.raises", value=True)
             self.audit_check("unwrap.failure.type", type(exc).__name__)
         self.audit_check("unwrap_or.success", success.unwrap_or("default"))
         self.audit_check("unwrap_or.failure", failure.unwrap_or("default"))

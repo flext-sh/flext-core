@@ -34,7 +34,7 @@ class ExamplesFlextModelsEx00:
             if self.status == c.Status.ACTIVE:
                 return r[bool].fail("Already active")
             self.status = c.Status.ACTIVE
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
 
     class UserInput(m.Value):
         """Raw user input model."""

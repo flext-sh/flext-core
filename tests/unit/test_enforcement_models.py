@@ -193,8 +193,8 @@ class TestsFlextEnforcementModels:
         ("module", "expect_prefix_violation"),
         [("flext_core.synthetic_module", True), ("fence", False)],
     )
+    @staticmethod
     def test_class_prefix_enforced_only_for_knowable_projects(
-        self,
         module: str,
         *,
         expect_prefix_violation: bool,

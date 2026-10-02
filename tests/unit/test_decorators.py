@@ -44,8 +44,8 @@ class TestsFlextCoreDecorators:
             (RuntimeError("boom"), "boom"),
         ],
     )
+    @staticmethod
     def test_railway_converts_exception_to_failure_result(
-        self,
         raised: Exception,
         message: str,
     ) -> None:

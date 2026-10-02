@@ -27,6 +27,7 @@ class FlextUtilitiesBeartypeModuleSource:
 
         Returns:
             The resulting ``ast.Module``.
+
         """
         return ast.parse(inspect.getsource(module), filename=inspect.getfile(module))
 
@@ -43,6 +44,7 @@ class FlextUtilitiesBeartypeModuleSource:
 
         Raises:
             TypeError: If Class source does not open with its declaration.
+
         """
         source = textwrap.dedent(inspect.getsource(target))
         declaration = ast.parse(source, filename=inspect.getfile(target)).body[0]
@@ -120,6 +122,7 @@ class FlextUtilitiesBeartypeModuleSource:
 
         Returns:
             The resulting ``frozenset[str]``.
+
         """
         exported: set[str] = set()
         for node in tree.body:
@@ -149,6 +152,7 @@ class FlextUtilitiesBeartypeModuleSource:
 
         Returns:
             The resulting ``bool``.
+
         """
         return any(
             isinstance(node, ast.Name)
@@ -168,6 +172,7 @@ class FlextUtilitiesBeartypeModuleSource:
 
         Returns:
             The resulting ``bool``.
+
         """
         if tree is None:
             return False
@@ -181,6 +186,7 @@ class FlextUtilitiesBeartypeModuleSource:
 
         Returns:
             The resulting ``frozenset[str]``.
+
         """
         if isinstance(node, ast.ImportFrom):
             if node.level or node.module is None:
@@ -200,6 +206,7 @@ class FlextUtilitiesBeartypeModuleSource:
 
         Returns:
             The resulting ``bool``.
+
         """
         if tree is None:
             return False
@@ -313,6 +320,7 @@ class FlextUtilitiesBeartypeModuleSource:
         Raises:
             ValueError: If Ambiguous type alias declaration; or if Ambiguous type alias
                 binding.
+
         """
         if vars(owner).get(alias.__name__) is not alias:
             return None

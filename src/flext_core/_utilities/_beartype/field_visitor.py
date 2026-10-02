@@ -27,7 +27,12 @@ class FlextUtilitiesBeartypeFieldVisitor:
 
     @staticmethod
     def _ast_union_members(node: ast.expr) -> tuple[ast.expr, ...]:
-        """Return only the top-level members written in a union expression."""
+        """Return only the top-level members written in a union expression.
+
+        Returns:
+            Only the top-level members written in a union expression.
+
+        """
         if isinstance(node, ast.BinOp) and isinstance(node.op, ast.BitOr):
             return (
                 *FlextUtilitiesBeartypeFieldVisitor._ast_union_members(node.left),
@@ -50,6 +55,7 @@ class FlextUtilitiesBeartypeFieldVisitor:
 
         Returns:
             The resulting ``int``.
+
         """
         declared = annotation
         if isinstance(declared, str):
@@ -182,6 +188,7 @@ class FlextUtilitiesBeartypeFieldVisitor:
 
         Returns:
             The resulting ``t.StrMapping | None``.
+
         """
         match args:
             case (model_type, name, info):
@@ -217,6 +224,7 @@ class FlextUtilitiesBeartypeFieldVisitor:
 
         Returns:
             The resulting ``t.StrMapping | None``.
+
         """
         violation: t.StrMapping | None = None
         has_v1_config = params.forbid_v1_config and isinstance(

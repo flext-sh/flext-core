@@ -30,6 +30,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserTargetsPart01):
 
         Returns:
             The resulting ``T | None``.
+
         """
         opts, fp = FlextUtilitiesParserTargets._resolve_opts(options, kwargs)
         if value is None:

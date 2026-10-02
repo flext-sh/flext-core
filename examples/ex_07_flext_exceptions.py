@@ -19,6 +19,7 @@ def _raise_value_error() -> None:
 
     Raises:
         ValueError: Always.
+
     """
     raise ValueError(m.Examples.ErrorMessages.BOOM)
 

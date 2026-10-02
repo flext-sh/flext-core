@@ -70,8 +70,8 @@ class TestsFlextCoreSystem:
         ("start", "expected"),
         [("dados_iniciais", "processado-DADOS-INICIAIS"), ("abc", "processado-ABC")],
     )
+    @staticmethod
     def test_map_chain_transforms_success_value(
-        self,
         start: str,
         expected: str,
     ) -> None:
@@ -102,8 +102,8 @@ class TestsFlextCoreSystem:
             ("dados_invalido", False, "dados_invalidos"),
         ],
     )
+    @staticmethod
     def test_flat_map_chains_or_short_circuits(
-        self,
         data: str,
         expected: str,
         *,
@@ -179,8 +179,8 @@ class TestsFlextCoreSystem:
             (c.ErrorCode.CONFIG_ERROR, "CONFIG_ERROR"),
         ],
     )
+    @staticmethod
     def test_error_codes_render_as_their_string_value(
-        self,
         code: str,
         expected: str,
     ) -> None:
@@ -199,8 +199,8 @@ class TestsFlextCoreSystem:
             (e.OperationError, "operacao_falhada", c.ErrorCode.OPERATION_ERROR.value),
         ],
     )
+    @staticmethod
     def test_exception_carries_code_and_message_publicly(
-        self,
         factory: type[e.BaseError],
         message: str,
         code: str,
@@ -257,8 +257,8 @@ class TestsFlextCoreSystem:
         ("value", "expected"),
         [("payload", True), ("", False), ("   ", False)],
     )
+    @staticmethod
     def test_string_non_empty_reports_meaningful_content(
-        self,
         value: str,
         *,
         expected: bool,

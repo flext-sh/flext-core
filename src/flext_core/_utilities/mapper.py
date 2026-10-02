@@ -35,6 +35,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
 
         Returns:
             The resulting ``t.Numeric``.
+
         """
         items_list: t.SequenceOf[T] = list(items)
         if callable(field):
@@ -63,6 +64,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
 
         Returns:
             The resulting ``bool``.
+
         """
         if val_a is val_b:
             return True
@@ -92,6 +94,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
 
         Returns:
             The resulting ``bool``.
+
         """
         if a is b:
             return True
@@ -104,7 +107,12 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
 
     @staticmethod
     def prop(key: str) -> Callable[[t.ConfigModelInput], t.JsonPayload | t.JsonValue]:
-        """Return an accessor function that extracts the named property from an object."""
+        """Return an accessor function that extracts the named property from an object.
+
+        Returns:
+            An accessor function that extracts the named property from an object.
+
+        """
 
         def accessor(obj: t.ConfigModelInput) -> t.JsonPayload | t.JsonValue:
             result = FlextUtilitiesMapper._get_raw(obj, key)
@@ -127,6 +135,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
 
         Returns:
             The resulting ``p.Result[t.JsonMapping]``.
+
         """
         coerced: t.JsonMapping = (
             {k: FlextRuntime.normalize_to_metadata(v) for k, v in source.root.items()}

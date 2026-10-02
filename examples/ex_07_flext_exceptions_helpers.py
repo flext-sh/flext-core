@@ -17,6 +17,7 @@ def _raise_attribute_access_error() -> None:
 
     Raises:
         AttributeAccessError: Always.
+
     """
     raise e.AttributeAccessError(
         m.Examples.ErrorMessages.BAD_ATTR,
@@ -30,6 +31,7 @@ def _raise_authentication_error() -> None:
 
     Raises:
         AuthenticationError: Always.
+
     """
     raise e.AuthenticationError(
         m.Examples.ErrorMessages.AUTH_FAIL,
@@ -43,6 +45,7 @@ def _raise_authorization_error() -> None:
 
     Raises:
         AuthorizationError: Always.
+
     """
     raise e.AuthorizationError(
         m.Examples.ErrorMessages.NOPE,
@@ -57,6 +60,7 @@ def _raise_circuit_breaker_error() -> None:
 
     Raises:
         CircuitBreakerError: Always.
+
     """
     raise e.CircuitBreakerError(
         m.Examples.ErrorMessages.OPEN,
@@ -71,6 +75,7 @@ def _raise_configuration_error() -> None:
 
     Raises:
         ConfigurationError: Always.
+
     """
     raise e.ConfigurationError(
         m.Examples.ErrorMessages.BAD_CFG,
@@ -84,6 +89,7 @@ def _raise_conflict_error() -> None:
 
     Raises:
         ConflictError: Always.
+
     """
     raise e.ConflictError(
         m.Examples.ErrorMessages.CONFLICT,
@@ -98,6 +104,7 @@ def _raise_flext_connection_error() -> None:
 
     Raises:
         FlextConnectionError: Always.
+
     """
     raise e.FlextConnectionError(
         m.Examples.ErrorMessages.DOWN,
@@ -112,6 +119,7 @@ def _raise_flext_timeout_error() -> None:
 
     Raises:
         FlextTimeoutError: Always.
+
     """
     raise e.FlextTimeoutError(
         m.Examples.ErrorMessages.LATE,
@@ -125,6 +133,7 @@ def _raise_flext_type_error() -> None:
 
     Raises:
         FlextTypeError: Always.
+
     """
     raise e.FlextTypeError(
         m.Examples.ErrorMessages.WRONG_TYPE,
@@ -138,6 +147,7 @@ def _raise_not_found_error() -> None:
 
     Raises:
         NotFoundError: Always.
+
     """
     raise e.NotFoundError(
         m.Examples.ErrorMessages.MISSING,
@@ -151,6 +161,7 @@ def _raise_operation_error() -> None:
 
     Raises:
         OperationError: Always.
+
     """
     raise e.OperationError(
         m.Examples.ErrorMessages.FAILED_OP,
@@ -164,6 +175,7 @@ def _raise_rate_limit_error() -> None:
 
     Raises:
         RateLimitError: Always.
+
     """
     raise e.RateLimitError(
         m.Examples.ErrorMessages.SLOW_DOWN,
@@ -178,6 +190,7 @@ def _raise_validation_error() -> None:
 
     Raises:
         ValidationError: Always.
+
     """
     raise e.ValidationError(
         m.Examples.ErrorMessages.INVALID,

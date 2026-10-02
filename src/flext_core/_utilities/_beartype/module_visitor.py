@@ -33,12 +33,21 @@ def _is_synthetic_parametrized_type(value: object) -> bool:
     into the defining module's namespace (e.g. ``FlextInfraServiceBase[bool]``).
     These are not source-level declarations and must not count toward module
     class caps or backwards-compat alias rules.
+
+    Returns:
+        True for synthetic ``Foo[int]`` specializations.
+
     """
     return isinstance(value, type) and "[" in getattr(value, "__qualname__", "")
 
 
 def _is_module_alias_candidate(name: str, value: object) -> bool:
-    """Return True when a module-level symbol looks like a compat alias."""
+    """Return True when a module-level symbol looks like a compat alias.
+
+    Returns:
+        True when a module-level symbol looks like a compat alias.
+
+    """
     if not isinstance(value, type):
         return False
     if _is_synthetic_parametrized_type(value):
@@ -65,6 +74,7 @@ class FlextUtilitiesBeartypeModuleVisitor:
 
         Returns:
             The resulting ``t.StrMapping | None``.
+
         """
         module = FlextUtilitiesBeartypeHelpers.runtime_module_for(target)
         if module is None:
@@ -107,6 +117,7 @@ class FlextUtilitiesBeartypeModuleVisitor:
 
         Returns:
             The resulting ``t.StrMapping | None``.
+
         """
         if params.expected_form != "no_module_compat_alias":
             return _NO_VIOLATION
@@ -159,5 +170,6 @@ class FlextUtilitiesBeartypeModuleVisitor:
 
         Returns:
             The resulting ``t.StrMapping | None``.
+
         """
         return _NO_VIOLATION

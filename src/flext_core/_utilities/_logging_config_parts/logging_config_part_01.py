@@ -34,7 +34,12 @@ class FlextUtilitiesLoggingConfig:
 
     @staticmethod
     def log_threshold() -> int:
-        """Return the process-wide minimum level number that is emitted."""
+        """Return the process-wide minimum level number that is emitted.
+
+        Returns:
+            The process-wide minimum level number that is emitted.
+
+        """
         return FlextUtilitiesLoggingConfig._log_threshold
 
     @staticmethod
@@ -45,7 +50,12 @@ class FlextUtilitiesLoggingConfig:
 
     @staticmethod
     def structlog() -> types.ModuleType:
-        """Return the imported structlog module for owner-internal access."""
+        """Return the imported structlog module for owner-internal access.
+
+        Returns:
+            The imported structlog module for owner-internal access.
+
+        """
         # Local import keeps structlog unloaded until logging initializes
         # while binding the name this function returns.
         import structlog
@@ -158,6 +168,7 @@ class FlextUtilitiesLoggingConfig:
 
             Returns:
                 The resulting ``int``.
+
             """
             try:
                 self.queue.put(s, block=c.ASYNC_BLOCK_ON_FULL)

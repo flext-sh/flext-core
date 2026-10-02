@@ -49,12 +49,14 @@ class FlextModelsBase(FlextModelsBasePart02):
             ),
         ] = None
 
+        @staticmethod
         @up.field_serializer("created_at", "updated_at", when_used="json")
-        def serialize_timestamps(self, value: datetime | None) -> str | None:
+        def serialize_timestamps(value: datetime | None) -> str | None:
             """Serialize timestamps to ISO 8601 for JSON.
 
             Returns:
                 The resulting ``str | None``.
+
             """
             return value.isoformat() if value else None
 
@@ -68,6 +70,7 @@ class FlextModelsBase(FlextModelsBasePart02):
             Raises:
                 ValueError: If ``self.updated_at is not None and self.updated_at <
                     self.created_at``.
+
             """
             if self.updated_at is not None and self.updated_at < self.created_at:
                 raise ValueError(c.ERR_MODEL_UPDATED_AT_BEFORE_CREATED_AT)
@@ -94,6 +97,7 @@ class FlextModelsBase(FlextModelsBasePart02):
 
             Raises:
                 ValueError: If ``self.version < c.DEFAULT_RETRY_DELAY_SECONDS``.
+
             """
             if self.version < c.DEFAULT_RETRY_DELAY_SECONDS:
                 raise ValueError(

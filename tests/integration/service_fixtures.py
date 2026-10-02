@@ -41,16 +41,22 @@ class TestsFlextUserQueryService(s[bool]):
 
     @override
     def execute(self) -> p.Result[bool]:
-        """Return the service availability."""
+        """Return the service availability.
+
+        Returns:
+            The service availability.
+
+        """
         if self._should_fail:
             return r[bool].fail("User service unavailable")
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     def fetch_user(self, user_id: str) -> p.Result[TestsFlextUserServiceEntity]:
         """Fetch user by ID.
 
         Returns:
             The resulting ``p.Result[TestsFlextUserServiceEntity]``.
+
         """
         self._call_count += 1
         if self._should_fail:
@@ -92,6 +98,7 @@ class TestsFlextNotificationService(s[str]):
 
         Returns:
             The resulting ``p.Result[str]``.
+
         """
         if self._should_fail:
             return r[str].fail("Notification service unavailable")
@@ -102,6 +109,7 @@ class TestsFlextNotificationService(s[str]):
 
         Returns:
             The resulting ``p.Result[str]``.
+
         """
         self._call_count += 1
         if self._should_fail:
@@ -151,6 +159,7 @@ class TestsFlextLifecycleService(s[str]):
 
         Returns:
             The resulting ``p.Result[str]``.
+
         """
         if self._initialized:
             return r[str].ok("initialized")
@@ -161,6 +170,7 @@ class TestsFlextLifecycleService(s[str]):
 
         Returns:
             The resulting ``p.Result[str]``.
+
         """
         if self._should_fail_init:
             return r[str].fail("Initialization failed")
@@ -173,6 +183,7 @@ class TestsFlextLifecycleService(s[str]):
 
         Returns:
             The resulting ``bool``.
+
         """
         return self._initialized and (not self._shutdown_called)
 
@@ -181,6 +192,7 @@ class TestsFlextLifecycleService(s[str]):
 
         Returns:
             The resulting ``p.Result[str]``.
+
         """
         if self._should_fail_shutdown:
             return r[str].fail("Shutdown failed")

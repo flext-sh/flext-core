@@ -36,6 +36,7 @@ class FlextUtilitiesSettings:
 
         Returns:
             The resulting ``t.StrMapping``.
+
         """
         return dict(os.environ)
 
@@ -49,12 +50,13 @@ class FlextUtilitiesSettings:
 
         Returns:
             The resulting ``p.Result[bool]``.
+
         """
         _ = container.factory(name, factory)
         resolved = container.resolve(name)
         if resolved.failure:
             return r[bool].from_failure(resolved)
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
 
 __all__: t.MutableSequenceOf[str] = ["FlextUtilitiesSettings"]

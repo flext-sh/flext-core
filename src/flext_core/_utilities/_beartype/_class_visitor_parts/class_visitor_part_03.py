@@ -28,6 +28,7 @@ class FlextUtilitiesBeartypeClassVisitor(FlextUtilitiesBeartypeClassVisitorPart0
 
         Returns:
             The resulting ``t.StrMapping | None``.
+
         """
         match args:
             case (target, expected_prefix, *_) if isinstance(

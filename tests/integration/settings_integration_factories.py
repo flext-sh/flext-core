@@ -48,6 +48,7 @@ class TestsFlextSettingsConfigTestCase(m.BaseModel):
 
         Returns:
             The resulting ``Path``.
+
         """
         file_path = temp_dir / f"test_config.{self.file_format}"
         if self.file_format == "json":
@@ -88,6 +89,7 @@ class TestsFlextSettingsConfigTestFactories:
 
         Returns:
             The resulting ``t.SequenceOf[TestsFlextSettingsConfigTestCase]``.
+
         """
         return [
             TestsFlextSettingsConfigTestCase(
@@ -120,6 +122,7 @@ class TestsFlextSettingsConfigTestFactories:
 
         Returns:
             The resulting ``t.SequenceOf[TestsFlextSettingsThreadSafetyTest]``.
+
         """
         return [
             TestsFlextSettingsThreadSafetyTest(

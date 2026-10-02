@@ -13,15 +13,14 @@ from flext_tests import h, r
 
 from tests.constants import c
 from tests.typings import t
-from tests.unit._handlers_support import TestsFlextFlextHandlers
-from tests.utilities import u
+from tests.utilities import TestsFlextUtilities, u
 
 if TYPE_CHECKING:
     from tests.models import m
     from tests.protocols import p
 
 
-class TestsFlextHandlersDispatch(TestsFlextFlextHandlers):
+class TestsFlextHandlersDispatch(TestsFlextUtilities.TestsFlextFlextHandlers):
     """Assert observable dispatch/execute behavior, not implementation details."""
 
     @staticmethod
@@ -111,7 +110,9 @@ class TestsFlextHandlersDispatch(TestsFlextFlextHandlers):
     def test_dispatch_rejects_unhandleable_message_type(self) -> None:
         """Test dispatch rejects unhandleable message type."""
 
-        class RestrictiveHandler(TestsFlextFlextHandlers.ConcreteTestHandler):
+        class RestrictiveHandler(
+            TestsFlextUtilities.TestsFlextFlextHandlers.ConcreteTestHandler,
+        ):
             @override
             def can_handle(self, message_type: type) -> bool:
                 _ = message_type
@@ -131,7 +132,9 @@ class TestsFlextHandlersDispatch(TestsFlextFlextHandlers):
     def test_dispatch_propagates_validation_failure(self) -> None:
         """Test dispatch propagates validation failure."""
 
-        class ValidationFailingHandler(TestsFlextFlextHandlers.ConcreteTestHandler):
+        class ValidationFailingHandler(
+            TestsFlextUtilities.TestsFlextFlextHandlers.ConcreteTestHandler,
+        ):
             @override
             def validate_message(self, data: t.JsonPayload) -> p.Result[bool]:
                 _ = data
@@ -151,7 +154,9 @@ class TestsFlextHandlersDispatch(TestsFlextFlextHandlers):
     def test_dispatch_converts_handler_exception_to_critical_failure(self) -> None:
         """Test dispatch converts handler exception to critical failure."""
 
-        class ExceptionHandler(TestsFlextFlextHandlers.ConcreteTestHandler):
+        class ExceptionHandler(
+            TestsFlextUtilities.TestsFlextFlextHandlers.ConcreteTestHandler,
+        ):
             @override
             def handle(self, message: t.JsonPayload) -> p.Result[t.JsonPayload]:
                 _ = message

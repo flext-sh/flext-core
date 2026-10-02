@@ -30,7 +30,12 @@ def _peer_first_allowed(
     tier_facade_prefixes: t.VariadicTuple[str],
     shared_peer_alias_base: set[type],
 ) -> bool:
-    """Return True when a facade may place a peer base first."""
+    """Return True when a facade may place a peer base first.
+
+    Returns:
+        True when a facade may place a peer base first.
+
+    """
     if not is_facade or is_core_root or base_count < BINARY_ARITY:
         return False
     if not first_name.startswith(tier_facade_prefixes):
@@ -50,7 +55,12 @@ def _requires_alias_first(
     valid_suffixes: t.VariadicTuple[str],
     allows_peer_first: bool,
 ) -> bool:
-    """Return True when a facade base must be an alias/alias-base first."""
+    """Return True when a facade base must be an alias/alias-base first.
+
+    Returns:
+        True when a facade base must be an alias/alias-base first.
+
+    """
     if not require_alias_first or not is_facade or is_core_root:
         return False
     if is_alias_or_alias_base_first:
@@ -68,6 +78,7 @@ def alias_first_violation(
 
     Returns:
         The resulting ``t.StrMapping | None``.
+
     """
     _, separator, _ = target.__qualname__.partition(".")
     is_module_level = not separator

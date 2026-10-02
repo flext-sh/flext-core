@@ -56,6 +56,7 @@ class FlextUtilitiesDiscovery:
         Returns:
             The resulting ``t.SequenceOf[tuple[str,
                 FlextModelsContainer.FactoryDecoratorConfig]]``.
+
         """
         return sorted(
             [
@@ -84,8 +85,12 @@ class FlextUtilitiesDiscovery:
         collision, or a service without operations raises ``TypeError`` naming
         the operation, annotation, module and fix. Results are cached per class.
 
+        Returns:
+            The typed operations of a service class, sorted by name.
+
         Raises:
             TypeError: If ``not operations``.
+
         """
         from flext_core import s  # s sits above u: bind it at call time
 
@@ -135,6 +140,7 @@ class FlextUtilitiesDiscovery:
 
         Returns:
             The resulting ``FlextModelsService.ServiceOperation``.
+
         """
         where = (service_type, name, func.__module__)
         error = FlextUtilitiesDiscovery._error
@@ -202,6 +208,7 @@ class FlextUtilitiesDiscovery:
 
         Returns:
             The resulting ``t.TypeHintSpecifier``.
+
         """
         error = FlextUtilitiesDiscovery._error
         if not isinstance(annotation, str):
@@ -239,6 +246,7 @@ class FlextUtilitiesDiscovery:
 
         Returns:
             The resulting ``TypeError``.
+
         """
         service_type, operation, module = where
         return TypeError(

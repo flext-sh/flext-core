@@ -30,6 +30,7 @@ class FlextUtilitiesBeartypeAliasVisitor:
 
         Returns:
             The resulting ``t.StrMapping | None``.
+
         """
         module = _ubh.runtime_module_for(target)
         if module is None:
@@ -93,6 +94,7 @@ class FlextUtilitiesBeartypeAliasVisitor:
 
         Returns:
             The resulting ``t.StrMapping | None``.
+
         """
         if not params.alias_renames:
             return _NO_VIOLATION

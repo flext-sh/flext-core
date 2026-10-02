@@ -36,7 +36,8 @@ class TestsFlextCoreMigrationValidation:
         ("value", "expected"),
         [("user_123", "user_123"), ("", ""), ("A B C", "A B C")],
     )
-    def test_ok_result_exposes_wrapped_value(self, value: str, expected: str) -> None:
+    @staticmethod
+    def test_ok_result_exposes_wrapped_value(value: str, expected: str) -> None:
         """A successful result reports success and returns the wrapped value."""
         result: p.Result[str] = r[str].ok(value)
 
@@ -68,8 +69,8 @@ class TestsFlextCoreMigrationValidation:
         ("result", "default", "expected"),
         [(r[int].ok(42), 0, 42), (r[int].fail("missing"), 7, 7)],
     )
+    @staticmethod
     def test_unwrap_or_returns_default_only_on_failure(
-        self,
         result: p.Result[int],
         default: int,
         expected: int,
@@ -186,25 +187,27 @@ class TestsFlextCoreMigrationValidation:
 
     # -------------------------------------------------------------- service
 
-    def test_service_execute_returns_success(self) -> None:
+    @staticmethod
+    def test_service_execute_returns_success() -> None:
         """A concrete FlextService.execute honors the r[bool] void contract."""
 
         class NoopService(FlextService[bool]):
             @override
             def execute(self, **_kwargs: t.Scalar) -> p.Result[bool]:
-                return r[bool].ok(True)
+                return r[bool].ok(value=True)
 
         outcome = NoopService().execute()
         tm.that(outcome.success, eq=True)
         tm.that(outcome.error, none=True)
 
-    def test_service_method_returns_failure_on_invalid_input(self) -> None:
+    @staticmethod
+    def test_service_method_returns_failure_on_invalid_input() -> None:
         """Domain validation surfaces as an r failure, not a raised error."""
 
         class UserService(FlextService[bool]):
             @override
             def execute(self, **_kwargs: t.Scalar) -> p.Result[bool]:
-                return r[bool].ok(True)
+                return r[bool].ok(value=True)
 
             @staticmethod
             def create_user(username: str, email: str) -> p.Result[t.StrMapping]:

@@ -47,6 +47,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
         Raises:
             ValidationError: If ``handler_type not in valid_handler_types``.
+
         """
         super().__init__(
             settings_type=None,
@@ -140,6 +141,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
         Raises:
             TypeError: Always.
+
         """
         if isinstance(handler_type, c.HandlerType):
             return handler_type

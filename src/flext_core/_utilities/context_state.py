@@ -35,7 +35,12 @@ class FlextUtilitiesContextState:
     def _narrow_contextvar_to_configuration_dict(
         ctx_value: m.ConfigMap | t.MappingKV[str, t.JsonPayload] | p.Model | None,
     ) -> t.JsonMapping:
-        """Return contextvar payload as a flat container mapping with safe default."""
+        """Return contextvar payload as a flat container mapping with safe default.
+
+        Returns:
+            Contextvar payload as a flat container mapping with safe default.
+
+        """
         try:
             normalized = FlextRuntime.normalize_model_input_mapping(ctx_value)
         except c.EXC_ATTR_KEY_TYPE_VALUE as exc:
@@ -56,6 +61,7 @@ class FlextUtilitiesContextState:
 
         Returns:
             The resulting ``contextvars.ContextVar[m.ConfigMap | None]``.
+
         """
         state, scope_var = self.state.resolve_scope_var(scope)
         self.state = state
@@ -67,6 +73,7 @@ class FlextUtilitiesContextState:
 
         Returns:
             The resulting ``t.JsonMapping``.
+
         """
         ctx_var = self._scope_var(scope)
         value = ctx_var.get()
@@ -81,6 +88,7 @@ class FlextUtilitiesContextState:
 
         Returns:
             The resulting ``t.MappingKV[str, t.JsonMapping]``.
+
         """
         if not self.state.active:
             empty_scopes: dict[str, t.JsonMapping] = {}
@@ -138,6 +146,7 @@ class FlextUtilitiesContextState:
 
         Returns:
             The resulting ``t.MappingKV[str, t.JsonPayload]``.
+
         """
         data = self.state.metadata.model_dump()
         custom_fields_raw = data.pop("custom_fields", {})
@@ -172,6 +181,7 @@ class FlextUtilitiesContextState:
 
         Returns:
             The resulting ``p.Result[t.JsonPayload]``.
+
         """
         if key not in self.state.metadata.attributes:
             return r[t.JsonPayload].fail_op(

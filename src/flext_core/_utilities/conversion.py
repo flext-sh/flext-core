@@ -27,6 +27,7 @@ class FlextUtilitiesConversion:
 
         Returns:
             The resulting ``str``.
+
         """
         if not values:
             return ""
@@ -43,6 +44,7 @@ class FlextUtilitiesConversion:
 
         Returns:
             The resulting ``str``.
+
         """
         str_value = FlextUtilitiesConversion.to_str(value)
         if case == "lower":
@@ -57,6 +59,7 @@ class FlextUtilitiesConversion:
 
         Returns:
             The resulting ``str``.
+
         """
         if value is None:
             return default if default is not None else ""
@@ -81,6 +84,7 @@ class FlextUtilitiesConversion:
 
         Returns:
             The resulting ``t.StrSequence``.
+
         """
         if value is None:
             return default if default is not None else list[str]()
@@ -99,6 +103,7 @@ class FlextUtilitiesConversion:
 
         Returns:
             The resulting ``int``.
+
         """
         if value is None or isinstance(value, bool):
             return default
@@ -125,6 +130,7 @@ class FlextUtilitiesConversion:
 
         Returns:
             The resulting ``float``.
+
         """
         if value is None or isinstance(value, bool):
             return default
@@ -143,6 +149,7 @@ class FlextUtilitiesConversion:
 
         Returns:
             The resulting ``bool``.
+
         """
         if value is None:
             return default
@@ -156,6 +163,7 @@ class FlextUtilitiesConversion:
 
         Returns:
             The resulting ``int``.
+
         """
         if value is None or isinstance(value, bool):
             return default
@@ -169,7 +177,12 @@ class FlextUtilitiesConversion:
 
     @staticmethod
     def to_optional_str(value: t.JsonPayload | None) -> str | None:
-        """Return the value unchanged only when it is a non-empty string."""
+        """Return the value unchanged only when it is a non-empty string.
+
+        Returns:
+            The value unchanged only when it is a non-empty string.
+
+        """
         if value is None or not isinstance(value, str):
             return None
         return value or None

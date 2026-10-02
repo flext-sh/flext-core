@@ -33,6 +33,7 @@ class FlextUtilitiesBeartypeMethodVisitor:
 
         Returns:
             The resulting ``t.StrMapping | None``.
+
         """
         if len(args) != _BINARY_ARITY:
             return _NO_VIOLATION

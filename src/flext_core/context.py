@@ -57,15 +57,17 @@ class FlextContext(m.ManagedModel):
 
         Returns:
             The resulting ``p.Result[bool]``.
+
         """
         self.data.update({key: value})
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     def get(self, key: str) -> p.Result[t.JsonPayload]:
         """Retrieve a value from this context's scope.
 
         Returns:
             The resulting ``p.Result[t.JsonPayload]``.
+
         """
         if key not in self.data.root:
             return r[t.JsonPayload].fail(f"Key '{key}' not found in context")
@@ -79,19 +81,35 @@ class FlextContext(m.ManagedModel):
 
         Returns:
             The resulting ``bool``.
+
         """
         return key in self.data.root
 
     def keys(self) -> t.StrSequence:
-        """Return all stored keys."""
+        """Return all stored keys.
+
+        Returns:
+            All stored keys.
+
+        """
         return tuple(self.data.root.keys())
 
     def values(self) -> list[t.JsonPayload]:
-        """Return all stored values."""
+        """Return all stored values.
+
+        Returns:
+            All stored values.
+
+        """
         return list(self.data.root.values())
 
     def items(self) -> list[tuple[str, t.JsonPayload]]:
-        """Return all key-value pairs."""
+        """Return all key-value pairs.
+
+        Returns:
+            All key-value pairs.
+
+        """
         return list(self.data.root.items())
 
     def resolve_metadata(self, key: str) -> p.Result[t.JsonPayload]:
@@ -99,6 +117,7 @@ class FlextContext(m.ManagedModel):
 
         Returns:
             The resulting ``p.Result[t.JsonPayload]``.
+
         """
         if key not in self.metadata.attributes:
             return r[t.JsonPayload].fail(f"Metadata key '{key}' not found")
@@ -130,6 +149,7 @@ class FlextContext(m.ManagedModel):
 
         Returns:
             The resulting ``Self``.
+
         """
         if isinstance(other, p.Context):
             self.data.root.update(other.items())
@@ -142,6 +162,7 @@ class FlextContext(m.ManagedModel):
 
         Returns:
             The resulting ``Self``.
+
         """
         return self.__class__(
             data=self.data.model_copy(deep=True),
@@ -153,6 +174,7 @@ class FlextContext(m.ManagedModel):
 
         Returns:
             The resulting ``t.MappingKV[str, t.JsonPayload] | Self``.
+
         """
         if as_dict:
             return dict(self.data.root)
@@ -164,6 +186,7 @@ class FlextContext(m.ManagedModel):
 
         Returns:
             The resulting ``p.Context``.
+
         """
         context = cls()
         for key, value in initial_data.items():
@@ -179,6 +202,7 @@ class FlextContext(m.ManagedModel):
 
         Raises:
             RuntimeError: If ``cls._container_state.container is None``.
+
         """
         if cls._container_state.container is None:
             msg = c.ERR_RUNTIME_CONTAINER_NOT_INITIALIZED
@@ -198,6 +222,7 @@ class FlextContext(m.ManagedModel):
 
         Returns:
             The resulting ``p.Result[t.RegisterableService]``.
+
         """
         return FlextContext.resolve_container().resolve(service_name)
 
@@ -210,13 +235,14 @@ class FlextContext(m.ManagedModel):
 
         Returns:
             The resulting ``p.Result[bool]``.
+
         """
         container = FlextContext.resolve_container()
         try:
             _ = container.bind(service_name, service)
         except e.ValidationError as exc:
             return r[bool].fail_op("register service", exc)
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     @staticmethod
     def resolve_correlation_id() -> str | None:
@@ -224,6 +250,7 @@ class FlextContext(m.ManagedModel):
 
         Returns:
             The resulting ``str | None``.
+
         """
         value = u.CORRELATION_ID.get()
         return value if isinstance(value, str) else None
@@ -238,6 +265,7 @@ class FlextContext(m.ManagedModel):
 
         Yields:
             Each ``str``.
+
         """
         if correlation_id is None:
             correlation_id = u.generate("correlation")
@@ -266,7 +294,12 @@ class FlextContext(m.ManagedModel):
 
     @staticmethod
     def ensure_correlation_id() -> str:
-        """Return current correlation ID, generating one if absent."""
+        """Return current correlation ID, generating one if absent.
+
+        Returns:
+            Current correlation ID, generating one if absent.
+
+        """
         current = u.CORRELATION_ID.get()
         if isinstance(current, str) and current:
             return current
@@ -296,6 +329,7 @@ class FlextContext(m.ManagedModel):
 
         Returns:
             The resulting ``str | None``.
+
         """
         value = u.OPERATION_NAME.get()
         return str(value) if value is not None else None
@@ -312,6 +346,7 @@ class FlextContext(m.ManagedModel):
 
         Yields:
             Each ``m.ConfigMap``.
+
         """
         start_time = u.generate_datetime_utc()
         start_perf = time.perf_counter()
@@ -343,6 +378,7 @@ class FlextContext(m.ManagedModel):
 
         Returns:
             The resulting ``t.MappingKV[str, t.Scalar]``.
+
         """
         result: dict[str, t.Scalar] = {}
         if (value := u.CORRELATION_ID.get()) is not None:

@@ -53,11 +53,12 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
 
         Returns:
             The resulting ``p.Result[bool]``.
+
         """
         try:
             cls._scoped_contexts[scope] = cls._merge_scoped_context(scope, context)
             cls.structlog().contextvars.bind_contextvars(**context)
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         except c.CONTEXT_EXCEPTIONS as exc:
             return e.fail_operation(f"{c.LoggingOperation.BIND_CONTEXT} '{scope}'", exc)
 
@@ -67,11 +68,12 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
 
         Returns:
             The resulting ``p.Result[bool]``.
+
         """
         try:
             normalized_context = cls.to_container_context(context)
             cls.structlog().contextvars.bind_contextvars(**normalized_context)
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         except c.CONTEXT_EXCEPTIONS as exc:
             return e.fail_operation(c.LoggingOperation.BIND_GLOBAL, exc)
 
@@ -81,12 +83,13 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
 
         Returns:
             The resulting ``p.Result[bool]``.
+
         """
         try:
             cls.structlog().contextvars.clear_contextvars()
             cls._scoped_contexts.clear()
             cls._level_contexts.clear()
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         except c.CONTEXT_EXCEPTIONS as exc:
             return e.fail_operation(c.LoggingOperation.CLEAR_GLOBAL, exc)
 
@@ -96,6 +99,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
 
         Returns:
             The resulting ``p.Result[bool]``.
+
         """
         try:
             if scope in cls._scoped_contexts:
@@ -103,7 +107,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
                 if keys:
                     cls.structlog().contextvars.unbind_contextvars(*keys)
                 cls._scoped_contexts[scope].clear()
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         except c.CONTEXT_EXCEPTIONS as exc:
             return e.fail_operation(f"{c.LoggingOperation.CLEAR_SCOPE} '{scope}'", exc)
 
@@ -113,11 +117,12 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
 
         Returns:
             The resulting ``p.Result[bool]``.
+
         """
         try:
             unbind_keys: t.StrSequence = list(keys)
             cls.structlog().contextvars.unbind_contextvars(*unbind_keys)
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         except c.CONTEXT_EXCEPTIONS as exc:
             return e.fail_operation(c.LoggingOperation.UNBIND_GLOBAL, exc)
 
@@ -129,6 +134,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
 
         Returns:
             The resulting ``t.JsonValue``.
+
         """
         if isinstance(value, Exception):
             return str(value)
@@ -150,6 +156,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
 
         Returns:
             The resulting ``t.JsonMapping``.
+
         """
         return {
             key: FlextUtilitiesLoggingContext._to_container_value(value)
@@ -172,6 +179,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
 
         Returns:
             The resulting ``str | None``.
+
         """
         if c.FRAME_SELF_KEY in frame.f_locals:
             self_obj = frame.f_locals[c.FRAME_SELF_KEY]
@@ -194,6 +202,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
 
         Returns:
             The resulting ``Path | None``.
+
         """
         current = abs_path.parent
         for _ in range(10):

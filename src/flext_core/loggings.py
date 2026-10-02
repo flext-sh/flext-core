@@ -53,6 +53,7 @@ class FlextUtilitiesLogging(ulc):
 
         Raises:
             ValueError: If logger name is required.
+
         """
         super().__init__()
         if not name:
@@ -90,7 +91,12 @@ class FlextUtilitiesLogging(ulc):
         )
 
     def __call__(self) -> Self:
-        """Return self to support factory-style DI registration."""
+        """Return self to support factory-style DI registration.
+
+        Returns:
+            Self to support factory-style DI registration.
+
+        """
         return self
 
     @property
@@ -116,6 +122,7 @@ class FlextUtilitiesLogging(ulc):
 
         Raises:
             ValueError: If logger name is required.
+
         """
         cls.ensure_structlog_configured()
         if not name:
@@ -129,6 +136,7 @@ class FlextUtilitiesLogging(ulc):
 
         Returns:
             The resulting ``Self``.
+
         """
         bound_logger = self.logger.bind(**self.to_container_context(context))
         return self.__class__(self.name, _bound_logger=bound_logger)
@@ -138,6 +146,7 @@ class FlextUtilitiesLogging(ulc):
 
         Returns:
             The resulting ``Self``.
+
         """
         return self.bind(**context)
 
@@ -178,6 +187,7 @@ class FlextUtilitiesLogging(ulc):
 
         Returns:
             The resulting ``t.LogResult``.
+
         """
         message = msg
         filtered_args: tuple[t.JsonValue, ...] = tuple(
@@ -200,7 +210,7 @@ class FlextUtilitiesLogging(ulc):
                 *filtered_args,
                 **FlextUtilitiesLogging._to_scalar_context(context_dict),
             )
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         except c.EXC_BROAD_RUNTIME as exc:
             FlextUtilitiesLogging._report_internal_logging_failure("exception", exc)
             return e.fail_operation("exception logging", exc)
@@ -216,6 +226,7 @@ class FlextUtilitiesLogging(ulc):
 
         Returns:
             The resulting ``t.JsonMapping``.
+
         """
         result: t.JsonDict = {
             k: str(v)
@@ -235,6 +246,7 @@ class FlextUtilitiesLogging(ulc):
 
         Returns:
             The resulting ``Self``.
+
         """
         bound_logger = (
             self.logger.try_unbind(*keys) if safe else self.logger.unbind(*keys)
@@ -246,6 +258,7 @@ class FlextUtilitiesLogging(ulc):
 
         Returns:
             The resulting ``Self``.
+
         """
         return self.unbind(*keys, safe=True)
 
@@ -254,6 +267,7 @@ class FlextUtilitiesLogging(ulc):
 
         Returns:
             The resulting ``t.LogResult``.
+
         """
         return self._log_standard_level(c.LogLevel.WARNING, msg, *args, **kw)
 
@@ -291,12 +305,13 @@ class FlextUtilitiesLogging(ulc):
 
         Returns:
             The resulting ``t.LogResult``.
+
         """
         try:
             level_str = FlextUtilitiesLogging._resolve_level_name(level)
             scalar_context = FlextUtilitiesLogging._resolve_log_context(args, context)
             getattr(self.logger, level_str)(event, **scalar_context)
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         except c.EXC_BROAD_RUNTIME as exc:
             return e.fail_operation("logging", exc)
 
@@ -314,6 +329,7 @@ class FlextUtilitiesLogging(ulc):
 
         Returns:
             The resulting ``t.LogResult``.
+
         """
         return self._log_standard_level(c.LogLevel.CRITICAL, msg, *args, **kw)
 
@@ -322,6 +338,7 @@ class FlextUtilitiesLogging(ulc):
 
         Returns:
             The resulting ``t.LogResult``.
+
         """
         return self._log_standard_level(c.LogLevel.DEBUG, msg, *args, **kw)
 
@@ -330,6 +347,7 @@ class FlextUtilitiesLogging(ulc):
 
         Returns:
             The resulting ``t.LogResult``.
+
         """
         return self._log_standard_level(c.LogLevel.ERROR, msg, *args, **kw)
 
@@ -338,6 +356,7 @@ class FlextUtilitiesLogging(ulc):
 
         Returns:
             The resulting ``t.LogResult``.
+
         """
         return self._log_standard_level(c.LogLevel.INFO, msg, *args, **kw)
 
@@ -352,6 +371,7 @@ class FlextUtilitiesLogging(ulc):
 
         Returns:
             The resulting ``t.LogResult``.
+
         """
         level_enum: c.LogLevel = c.LogLevel(level.upper())
         converted_args: tuple[t.JsonValue, ...] = tuple(
@@ -369,6 +389,7 @@ class FlextUtilitiesLogging(ulc):
 
         Returns:
             The resulting ``t.LogResult``.
+
         """
         try:
             try:
@@ -379,7 +400,7 @@ class FlextUtilitiesLogging(ulc):
                 formatted_message,
                 **FlextUtilitiesLogging._to_scalar_context(kwargs),
             )
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         except c.EXC_BROAD_RUNTIME as exc:
             FlextUtilitiesLogging._report_internal_logging_failure("trace", exc)
             return e.fail_operation("trace logging", exc)
@@ -399,6 +420,7 @@ class FlextUtilitiesLogging(ulc):
 
             Returns:
                 The resulting ``Self``.
+
             """
             self._start_time = time.time()
             return self
@@ -425,12 +447,16 @@ class FlextUtilitiesLogging(ulc):
                 context["exception_message"] = str(exc_val) if exc_val else ""
             if success:
                 _ = self.logger.info(
-                    f"{self._operation_name} {status}",
+                    "%s %s",
+                    self._operation_name,
+                    status,
                     **FlextUtilitiesLogging.to_container_context(context.root),
                 )
             else:
                 _ = self.logger.error(
-                    f"{self._operation_name} {status}",
+                    "%s %s",
+                    self._operation_name,
+                    status,
                     **FlextUtilitiesLogging.to_container_context(context.root),
                 )
 
@@ -440,6 +466,7 @@ class FlextUtilitiesLogging(ulc):
 
         Returns:
             The resulting ``p.Logger``.
+
         """
         return cls.create_module_logger(name)
 
@@ -454,6 +481,7 @@ class FlextUtilitiesLogging(ulc):
 
         Returns:
             The resulting ``p.Logger``.
+
         """
         cls.ensure_structlog_configured()
         merged_context: t.MutableJsonMapping = {}

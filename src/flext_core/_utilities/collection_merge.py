@@ -40,6 +40,7 @@ class FlextUtilitiesCollectionMerge:
 
         Returns:
             The resulting ``p.Result[bool]``.
+
         """
         current_val = result.get(key)
         if FlextUtilitiesCollectionMerge._is_json_mapping(
@@ -49,9 +50,9 @@ class FlextUtilitiesCollectionMerge:
                 **current_val,
                 **value,
             })
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         result[key] = value
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     @staticmethod
     def _merge_replace(
@@ -62,6 +63,7 @@ class FlextUtilitiesCollectionMerge:
 
         Returns:
             The resulting ``p.Result[t.JsonMapping]``.
+
         """
         result: t.MutableJsonMapping = dict(other)
         result.update(base)
@@ -76,6 +78,7 @@ class FlextUtilitiesCollectionMerge:
 
         Returns:
             The resulting ``p.Result[t.JsonMapping]``.
+
         """
         result: t.MutableJsonMapping = dict(other)
         result.update({k: v for k, v in base.items() if v is not None})
@@ -90,6 +93,7 @@ class FlextUtilitiesCollectionMerge:
 
         Returns:
             The resulting ``p.Result[t.JsonMapping]``.
+
         """
         result: t.MutableJsonMapping = dict(other)
         result.update({
@@ -108,6 +112,7 @@ class FlextUtilitiesCollectionMerge:
 
         Returns:
             The resulting ``p.Result[t.JsonMapping]``.
+
         """
         result: t.MutableJsonMapping = dict(other)
         for key, value in base.items():
@@ -132,6 +137,7 @@ class FlextUtilitiesCollectionMerge:
 
         Returns:
             The resulting ``p.Result[t.JsonMapping]``.
+
         """
         result: t.MutableJsonMapping = dict(other)
         for key, value in base.items():
@@ -171,6 +177,7 @@ class FlextUtilitiesCollectionMerge:
         Raises:
             TypeError: If merge_mappings requires an iterable mapping for 'other', got
                 None.
+
         """
         if other is None:
             msg = "merge_mappings requires an iterable mapping for 'other', got None"

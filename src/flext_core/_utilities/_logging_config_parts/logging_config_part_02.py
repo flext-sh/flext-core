@@ -39,6 +39,7 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
 
         Returns:
             The resulting ``t.ScalarMapping``.
+
         """
         level_hierarchy = {
             "debug": 10,
@@ -88,6 +89,7 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
 
         Raises:
             DropEvent: If ``level < FlextUtilitiesLoggingConfigPart01.log_threshold()``.
+
         """
         _ = logger, method_name
         level = logging.getLevelNamesMapping()[str(event_dict["level"]).upper()]
@@ -119,6 +121,7 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
         Returns:
             The resulting ``tuple[int, bool, t.SequenceOf[Processor] | None,
                 t.LoggerWrapperFactory | None, t.LoggerFactory, bool, bool]``.
+
         """
         async_logging = True
         if settings is not None:
@@ -161,6 +164,7 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
 
         Returns:
             The resulting ``t.SequenceOf[Processor]``.
+
         """
         processors: t.MutableSequenceOf[Processor] = [
             structlog.contextvars.merge_contextvars,
@@ -189,6 +193,7 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
 
         Returns:
             The resulting ``t.LoggerFactory | None``.
+
         """
         if logger_factory is not None:
             return logger_factory
@@ -226,6 +231,7 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
 
         Returns:
             The resulting ``t.LoggerFactory``.
+
         """
         if cls._async_writer is None:
             cls._async_writer = cls._AsyncLogWriter(sys.stdout)

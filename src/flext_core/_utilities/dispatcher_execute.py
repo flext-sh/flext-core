@@ -93,6 +93,7 @@ def execute_dispatcher_handler(
 
     Returns:
         The resulting ``p.Result[t.JsonPayload]``.
+
     """
     dispatch_result = r[t.JsonPayload]
     try:

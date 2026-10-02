@@ -63,6 +63,7 @@ class FlextUtilitiesGenerators:
 
         Returns:
             The resulting ``t.Pair[bool, str | None]``.
+
         """
         if prefix is not None:
             return (True, prefix)
@@ -89,6 +90,7 @@ class FlextUtilitiesGenerators:
 
         Returns:
             The resulting ``str``.
+
         """
         return str(uuid.uuid4())
 
@@ -102,6 +104,7 @@ class FlextUtilitiesGenerators:
 
         Returns:
             The resulting ``str``.
+
         """
         uuid_part = str(uuid.uuid4())[:length]
         if parts:
@@ -119,6 +122,7 @@ class FlextUtilitiesGenerators:
 
         Returns:
             The resulting ``t.SequenceOf[t.JsonValue]``.
+
         """
         all_parts: t.JsonValueList = []
         if include_timestamp:
@@ -138,6 +142,7 @@ class FlextUtilitiesGenerators:
 
         Returns:
             The resulting ``str``.
+
         """
         uuid_part = str(uuid.uuid4())[:id_length]
         if all_parts:
@@ -155,6 +160,7 @@ class FlextUtilitiesGenerators:
 
         Returns:
             The resulting ``str``.
+
         """
         resolved_options = options or FlextUtilitiesGenerators.GenerateOptions()
         _prefix_resolved, actual_prefix = FlextUtilitiesGenerators._determine_prefix(
@@ -215,6 +221,7 @@ class FlextUtilitiesGenerators:
 
         Returns:
             The resulting ``datetime``.
+
         """
         return datetime.now(UTC)
 
@@ -224,6 +231,7 @@ class FlextUtilitiesGenerators:
 
         Returns:
             The resulting ``str``.
+
         """
         return FlextUtilitiesGenerators._generate_id()
 
@@ -233,6 +241,7 @@ class FlextUtilitiesGenerators:
 
         Returns:
             The resulting ``str``.
+
         """
         base_id = str(uuid.uuid4()).replace("-", "")
         if length is not None:
@@ -245,6 +254,7 @@ class FlextUtilitiesGenerators:
 
         Returns:
             The resulting ``str``.
+
         """
         return datetime.now(UTC).replace(microsecond=0).isoformat()
 
@@ -254,6 +264,7 @@ class FlextUtilitiesGenerators:
 
         Returns:
             The resulting ``tzinfo``.
+
         """
         return UTC if name.upper() == "UTC" else ZoneInfo(name)
 
@@ -263,6 +274,7 @@ class FlextUtilitiesGenerators:
 
         Returns:
             The resulting ``tzinfo``.
+
         """
         settings_module = import_module("flext_core._settings")
         settings_cls = settings_module.FlextSettings
@@ -272,12 +284,23 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def now() -> datetime:
-        """Return the current timezone-aware datetime in the configured timezone (FlextSettings.timezone)."""
+        """Return the current timezone-aware datetime in the configured timezone (FlextSettings.timezone).
+
+        Returns:
+            The current timezone-aware datetime in the configured timezone
+                (FlextSettings.timezone).
+
+        """
         return datetime.now(FlextUtilitiesGenerators.configured_timezone())
 
     @staticmethod
     def now_iso() -> str:
-        """Return the current ISO timestamp (no microseconds) in the configured timezone."""
+        """Return the current ISO timestamp (no microseconds) in the configured timezone.
+
+        Returns:
+            The current ISO timestamp (no microseconds) in the configured timezone.
+
+        """
         return (
             datetime
             .now(FlextUtilitiesGenerators.configured_timezone())
@@ -291,6 +314,7 @@ class FlextUtilitiesGenerators:
 
         Returns:
             The resulting ``datetime``.
+
         """
         return datetime.fromtimestamp(
             timestamp,
@@ -303,6 +327,7 @@ class FlextUtilitiesGenerators:
 
         Returns:
             The resulting ``datetime``.
+
         """
         parsed = datetime.fromisoformat(value)
         if parsed.tzinfo is None:

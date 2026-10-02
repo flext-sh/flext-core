@@ -55,6 +55,10 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementCollectPart01):
         Granularity lives here (the iterator), never in the visitor: every
         violating constant of the class surfaces in one pass instead of one
         per gate round.
+
+        Yields:
+            Each ``tuple[str, tuple[pb.AttributeProbe, ...]]``.
+
         """
         for name, value in vars(target).items():
             if name.startswith("_") or name != name.upper():
@@ -66,7 +70,12 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementCollectPart01):
         root: type,
         node: type,
     ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
-        """Yield every locally declared non-Enum class nested under ``node``."""
+        """Yield every locally declared non-Enum class nested under ``node``.
+
+        Yields:
+            Each ``tuple[str, tuple[pb.AttributeProbe, ...]]``.
+
+        """
         for value in vars(node).values():
             if (
                 isinstance(value, type)
@@ -92,6 +101,7 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementCollectPart01):
 
         Raises:
             ValueError: If unknown namespace collection.
+
         """
         if (
             ub.defined_in_function_scope(target)

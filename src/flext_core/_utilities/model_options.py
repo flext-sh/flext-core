@@ -35,6 +35,7 @@ class FlextUtilitiesModelOptions(FlextUtilitiesModel):
 
         Raises:
             TypeError: If unknown runtime bootstrap source.
+
         """
         match source:
             case None:

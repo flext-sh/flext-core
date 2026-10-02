@@ -22,8 +22,8 @@ if TYPE_CHECKING:
 class TestsFlextCoreUtilitiesTypeGuards:
     """Behavior contract for public guard helpers on runtime metadata."""
 
+    @staticmethod
     def test_public_type_guards_validate_normalized_dispatch_metadata(
-        self,
         tmp_path: Path,
     ) -> None:
         """Test public type guards validate normalized dispatch metadata."""
@@ -76,7 +76,8 @@ class TestsFlextCoreUtilitiesTypeGuards:
         tm.that(datetime.fromisoformat(payload["started_at"]), eq=envelope.started_at)
         tm.that(set(normalized_modes), eq={"delta", "full"})
 
-    def test_public_guard_returns_normalized_values_defaults_and_failures(self) -> None:
+    @staticmethod
+    def test_public_guard_returns_normalized_values_defaults_and_failures() -> None:
         """Test public guard returns normalized values defaults and failures."""
         payload: dict[str, t.JsonValue] = {
             "command_name": "sync-users",
