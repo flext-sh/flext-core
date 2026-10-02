@@ -1,4 +1,8 @@
-"""Enforcement emission primitives: violation assembly, emit, exemptions."""
+"""Enforcement emission primitives: violation assembly, emit, exemptions.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -25,7 +29,12 @@ class FlextUtilitiesEnforcementEmit:
 
     @classmethod
     def build_canonical_catalog(cls) -> me.EnforcementCatalog:
-        """Return the enforcement catalog validated from its package data."""
+        """Return the enforcement catalog validated from its package data.
+
+        Returns:
+            The enforcement catalog validated from its package data.
+
+        """
         if cls._canonical_catalog is None:
             cls._canonical_catalog = me.EnforcementCatalog.model_validate_json(
                 importlib.resources
@@ -37,7 +46,12 @@ class FlextUtilitiesEnforcementEmit:
 
     @classmethod
     def rules_by_tag(cls) -> t.MappingKV[str, me.EnforcementRuleSpec]:
-        """Return catalog rules keyed by their runtime predicate or smell tag."""
+        """Return catalog rules keyed by their runtime predicate or smell tag.
+
+        Returns:
+            Catalog rules keyed by their runtime predicate or smell tag.
+
+        """
         if cls._rules_by_tag is None:
             cls._rules_by_tag = MappingProxyType({
                 (
@@ -103,6 +117,10 @@ class FlextUtilitiesEnforcementEmit:
         Legal TYPE_CHECKING deferrals remain in ``report.deferred``; they are
         not runtime violations. Consumers claiming complete inspection must
         also require ``report.complete``.
+
+        Raises:
+            TypeError: If ``active is c.EnforcementMode.STRICT``.
+
         """
         if report.empty:
             return
@@ -150,6 +168,10 @@ class FlextUtilitiesEnforcementEmit:
         layer keyword is embedded inside a larger word.
         Generic-specialization brackets (``Foo[Bar]``) are stripped first
         so the search ignores type-parameter noise.
+
+        Returns:
+            The resulting ``str | None``.
+
         """
         name = target.__name__.partition("[")[0]
         for suffix, layer in c.ENFORCEMENT_NAMESPACE_LAYER_MAP:

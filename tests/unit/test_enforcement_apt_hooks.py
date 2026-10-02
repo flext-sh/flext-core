@@ -50,11 +50,13 @@ class TestsFlextEnforcementAptHooks:
 
     @pytest.mark.parametrize("rule_id", A_PT_RULE_IDS)
     def test_a_pt_rule_is_published_in_canonical_catalog(self, rule_id: str) -> None:
+        """Test a pt rule is published in canonical catalog."""
         catalog_ids = {rule.id for rule in u.build_canonical_catalog().rules}
         assert rule_id in catalog_ids
 
     @pytest.mark.parametrize("rule_id", A_PT_RULE_IDS)
     def test_a_pt_rule_carries_agents_md_anchor(self, rule_id: str) -> None:
+        """Test a pt rule carries agents md anchor."""
         rule = u.build_canonical_catalog().by_id(rule_id)
         assert rule is not None
         assert rule.agents_md_anchor != ""
@@ -63,6 +65,7 @@ class TestsFlextEnforcementAptHooks:
     def test_a_pt_rule_documents_problem_and_fix(self, rule_id: str) -> None:
         # The published spec is what a caller reads to understand/repair a
         # violation — both narrative fields must be populated.
+        """Test a pt rule documents problem and fix."""
         rule = u.build_canonical_catalog().by_id(rule_id)
         assert rule is not None
         assert rule.description != ""
@@ -73,11 +76,14 @@ class TestsFlextEnforcementAptHooks:
 
     @pytest.mark.parametrize("rule_id", A_PT_RULE_IDS)
     def test_a_pt_rule_severity_is_a_named_level(self, rule_id: str) -> None:
+        """Test a pt rule severity is a named level."""
         rule = u.build_canonical_catalog().by_id(rule_id)
         assert rule is not None
         assert rule.severity.value != ""
 
-    def test_every_catalog_rule_id_is_well_formed_and_unique(self) -> None:
+    @staticmethod
+    def test_every_catalog_rule_id_is_well_formed_and_unique() -> None:
+        """Test every catalog rule id is well formed and unique."""
         ids = [rule.id for rule in u.build_canonical_catalog().rules]
         for rid in ids:
             assert rid.startswith("ENFORCE-")
@@ -88,6 +94,7 @@ class TestsFlextEnforcementAptHooks:
 
     @pytest.mark.parametrize("rule_id", STATIC_RULE_IDS)
     def test_static_rule_is_owned_by_the_infra_rule_engine(self, rule_id: str) -> None:
+        """Test static rule is owned by the infra rule engine."""
         rule = u.build_canonical_catalog().by_id(rule_id)
         assert rule is not None
         assert isinstance(rule.source, m.EnforcementInfraRuleSource)
@@ -95,6 +102,7 @@ class TestsFlextEnforcementAptHooks:
 
     @pytest.mark.parametrize("rule_id", RUNTIME_RULE_IDS)
     def test_beartype_rule_tag_has_a_runtime_category(self, rule_id: str) -> None:
+        """Test beartype rule tag has a runtime category."""
         rule = u.build_canonical_catalog().by_id(rule_id)
         assert rule is not None
         assert isinstance(rule.source, m.EnforcementBeartypeSource)
@@ -105,6 +113,7 @@ class TestsFlextEnforcementAptHooks:
     def test_check_skips_source_unavailable_target_without_raising(self) -> None:
         # Dynamically constructed classes have no source file. The runtime
         # contract is: never raise, and emit no source-based A-PT violation.
+        """Test check skips source unavailable target without raising."""
         dyn_class = type("FlextAptDynamicProbeFixture", (), {})
         report = u.check(dyn_class)
         emitted_a_pt = {
@@ -116,6 +125,7 @@ class TestsFlextEnforcementAptHooks:
         # Full runtime pipeline (dispatch -> visitors -> emit -> Report). Every
         # violation the engine produces must be well-formed and, when it names a
         # rule, reference a rule that actually exists in the public catalog.
+        """Test check emits only catalog consistent violations."""
         catalog_ids = {rule.id for rule in u.build_canonical_catalog().rules}
         report = u.check(type(self))
         for violation in report.violations:

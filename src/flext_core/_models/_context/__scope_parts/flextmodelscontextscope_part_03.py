@@ -31,7 +31,12 @@ class FlextModelsContextScope(FlextModelsContextScopePart02):
 
         @mp.computed_field
         def configured(self) -> bool:
-            """Whether a container is configured for service access."""
+            """Whether a container is configured for service access.
+
+            Returns:
+                The resulting ``bool``.
+
+            """
             return self.container is not None
 
 

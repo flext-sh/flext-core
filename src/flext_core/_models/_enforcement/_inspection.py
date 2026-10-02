@@ -1,4 +1,8 @@
-"""Rule-level accounting for source-proven alias deferrals."""
+"""Rule-level accounting for source-proven alias deferrals.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 

@@ -5,6 +5,9 @@ their return values for representative type hints. No private attribute or
 method of the engine is accessed; the engine is exercised exclusively through
 its public surface (``contains_any``, ``has_forbidden_collection_origin``,
 ``count_union_members``, ``matches_str_none_union``, ``alias_contains_any``).
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -136,7 +139,8 @@ class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
         """alias_contains_any detects Any inside a resolved type-alias value."""
         assert u.alias_contains_any(alias_value) is expected
 
-    def test_alias_inspection_uses_explicit_owner_for_static_only_names(self) -> None:
+    @staticmethod
+    def test_alias_inspection_uses_explicit_owner_for_static_only_names() -> None:
         """Explicit owner context proves a local static-only alias deferral."""
 
         class Host:

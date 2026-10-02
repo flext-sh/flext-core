@@ -18,6 +18,9 @@ public runtime override) and warn-mode claw activation is a deliberately
 disabled path (blocked upstream in beartype, per the src constant docstring).
 It is only reachable by importing a private module first to trigger a load-order
 side effect, which is exactly the implementation coupling these tests remove.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -38,9 +41,8 @@ _FLEXT_CORE_ROOT: Path = Path(__file__).resolve().parents[2]
 class TestsFlextCoreBeartypeEngineRuntime(TestsFlextBeartypeEngine):
     """Observable contract of flext_core's beartype.claw runtime activation."""
 
-    def test_build_beartype_conf_returns_non_checking_conf_for_shipped_mode(
-        self,
-    ) -> None:
+    @staticmethod
+    def test_build_beartype_conf_returns_non_checking_conf_for_shipped_mode() -> None:
         """The public factory reflects the shipped OFF beartype mode.
 
         The shipped ``BEARTYPE_MODE`` is ``off``; the documented contract of the

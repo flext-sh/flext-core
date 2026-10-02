@@ -1,4 +1,8 @@
-"""Railway pipeline helpers for flext-core tests."""
+"""Railway pipeline helpers for flext-core tests.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -20,7 +24,12 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
     def execute_v1_pipeline(
         case: m.Tests.RailwayTestCase,
     ) -> p.ResultView[str | tm.Tests.User | m.Tests.EmailResponse]:
-        """Execute the documented V1 railway pipeline."""
+        """Execute the documented V1 railway pipeline.
+
+        Returns:
+            The resulting ``p.ResultView[str | tm.Tests.User | m.Tests.EmailResponse]``.
+
+        """
         if not case.user_ids:
             return cast(
                 "p.ResultView[str | tm.Tests.User | m.Tests.EmailResponse]",
@@ -80,7 +89,16 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
 
     @staticmethod
     def execute_v2_pipeline(case: m.Tests.RailwayTestCase) -> tm.Tests.User | str:
-        """Execute the documented V2 railway pipeline."""
+        """Execute the documented V2 railway pipeline.
+
+        Returns:
+            The resulting ``tm.Tests.User | str``.
+
+        Raises:
+            BaseError: If ``not case.user_ids``; or if ``raw_user_result.failure``; or
+                if ``raw_response_result.failure``.
+
+        """
         if not case.user_ids:
             msg = c.Tests.NO_USER_IDS_PROVIDED
             raise e.BaseError(msg)

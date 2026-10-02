@@ -1,4 +1,8 @@
-"""Shared behavior contract for FlextResult."""
+"""Shared behavior contract for FlextResult.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -25,7 +29,12 @@ _RESULT_FACTORY_CONTRACT: t.VariadicTuple[str] = (
 
 
 def _is_result_factory(cls: type[object]) -> TypeIs[type[prt.ResultFactory]]:
-    """Narrow a class to the result factory contract after member validation."""
+    """Narrow a class to the result factory contract after member validation.
+
+    Returns:
+        The resulting ``TypeIs[type[prt.ResultFactory]]``.
+
+    """
     return all(
         callable(getattr(cls, member, None)) for member in _RESULT_FACTORY_CONTRACT
     )
@@ -52,7 +61,15 @@ class FlextResultBehavior[T](FlextResultBase[T]):
 
     @classmethod
     def _factory(cls) -> type[prt.ResultFactory]:
-        """Return the concrete MRO only after structural factory validation."""
+        """Return the concrete MRO only after structural factory validation.
+
+        Returns:
+            The concrete MRO only after structural factory validation.
+
+        Raises:
+            TypeError: If ``not _is_result_factory(factory_cls)``.
+
+        """
         factory_cls: type[object] = cls
         if not _is_result_factory(factory_cls):
             msg = f"{cls.__name__} does not implement the result factory contract"

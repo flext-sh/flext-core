@@ -45,7 +45,12 @@ class FlextModelsErrors:
             return self.total_exceptions > 0
 
         def to_config_map(self) -> t.JsonMapping:
-            """Expose the snapshot through the canonical flat config contract."""
+            """Expose the snapshot through the canonical flat config contract.
+
+            Returns:
+                The resulting ``t.JsonMapping``.
+
+            """
             payload: t.JsonDict = {
                 "total_exceptions": self.total_exceptions,
                 "exception_counts_summary": self.exception_counts_summary,
@@ -85,7 +90,12 @@ class FlextModelsErrors:
             )
 
         def record_exception(self, exception_type: type[BaseException]) -> Self:
-            """Return a new state with one additional recorded exception."""
+            """Return a new state with one additional recorded exception.
+
+            Returns:
+                A new state with one additional recorded exception.
+
+            """
             name = exception_type.__qualname__
             counts = dict(self.exception_counts)
             counts[name] = counts.get(name, 0) + 1
@@ -93,14 +103,24 @@ class FlextModelsErrors:
             return updated
 
         def clear(self) -> Self:
-            """Return a cleared metrics state."""
+            """Return a cleared metrics state.
+
+            Returns:
+                A cleared metrics state.
+
+            """
             cleared: Self = self.model_copy(
                 update={"exception_counts": MappingProxyType({})},
             )
             return cleared
 
         def snapshot(self) -> FlextModelsErrors.ExceptionMetricsSnapshot:
-            """Build the validated public metrics snapshot."""
+            """Build the validated public metrics snapshot.
+
+            Returns:
+                The resulting ``FlextModelsErrors.ExceptionMetricsSnapshot``.
+
+            """
             snapshot: FlextModelsErrors.ExceptionMetricsSnapshot = (
                 FlextModelsErrors.ExceptionMetricsSnapshot.model_validate({
                     "total_exceptions": self.total_exceptions,

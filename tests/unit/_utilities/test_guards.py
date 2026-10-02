@@ -4,6 +4,9 @@ Exercises the public guard surface exposed through the test ``u`` facade
 (``FlextUtilitiesGuardsTypeProtocol`` / ``FlextUtilitiesGuardsTypeCore``).
 Every assertion targets observable return-value behavior of a public guard,
 never an internal helper or private attribute.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -70,11 +73,13 @@ class TestsFlextCoreGuards:
     ) -> None:
         assert u.matches_type(value, spec) is expected
 
-    def test_matches_type_is_case_insensitive_for_string_specs(self) -> None:
+    @staticmethod
+    def test_matches_type_is_case_insensitive_for_string_specs() -> None:
         assert u.matches_type("x", "STR") is True
         assert u.matches_type(1, "Int") is True
 
-    def test_matches_type_unknown_string_spec_returns_false(self) -> None:
+    @staticmethod
+    def test_matches_type_unknown_string_spec_returns_false() -> None:
         assert u.matches_type("x", "no_such_spec") is False
 
     @pytest.mark.parametrize(
@@ -111,7 +116,8 @@ class TestsFlextCoreGuards:
     ) -> None:
         assert u.matches_type(value, spec) is expected
 
-    def test_matches_type_invalid_scalar_spec_returns_false(self) -> None:
+    @staticmethod
+    def test_matches_type_invalid_scalar_spec_returns_false() -> None:
         # An out-of-contract spec (a bare scalar) must not match anything.
         assert u.matches_type("x", 123) is False
 
@@ -149,7 +155,8 @@ class TestsFlextCoreGuards:
     ) -> None:
         assert u.container(value) is False
 
-    def test_all_container_mapping_values_accepts_json_values(self) -> None:
+    @staticmethod
+    def test_all_container_mapping_values_accepts_json_values() -> None:
         mapping: dict[str, t.JsonValue] = {"a": 1, "b": [2, 3], "c": {"d": "e"}}
         assert u.all_container_mapping_values(mapping) is True
 
@@ -198,7 +205,8 @@ class TestsFlextCoreGuards:
     # ------------------------------------------------------------------
     # collection guards
     # ------------------------------------------------------------------
-    def test_mapping_and_list_value_discriminate_collections(self) -> None:
+    @staticmethod
+    def test_mapping_and_list_value_discriminate_collections() -> None:
         assert u.mapping({"k": "v"}) is True
         assert u.mapping([1, 2]) is False
         assert u.list_value([1, 2]) is True
@@ -222,7 +230,8 @@ class TestsFlextCoreGuards:
     ) -> None:
         assert u.list_like(value) is expected
 
-    def test_dict_like_accepts_only_mappings(self) -> None:
+    @staticmethod
+    def test_dict_like_accepts_only_mappings() -> None:
         assert u.dict_like({"k": "v"}) is True
         assert u.dict_like([1, 2]) is False
         assert u.dict_like("text") is False
@@ -263,7 +272,8 @@ class TestsFlextCoreGuards:
     ) -> None:
         assert u.string_non_empty(value) is expected
 
-    def test_dict_non_empty_requires_populated_mapping(self) -> None:
+    @staticmethod
+    def test_dict_non_empty_requires_populated_mapping() -> None:
         assert u.dict_non_empty({"k": 1}) is True
         assert u.dict_non_empty({}) is False
         assert u.dict_non_empty(None) is False
@@ -271,7 +281,8 @@ class TestsFlextCoreGuards:
     # ------------------------------------------------------------------
     # instance_of / in_ / type_name
     # ------------------------------------------------------------------
-    def test_instance_of_matches_concrete_type(self) -> None:
+    @staticmethod
+    def test_instance_of_matches_concrete_type() -> None:
         assert u.instance_of(5, int) is True
         assert u.instance_of("x", int) is False
 
@@ -295,12 +306,14 @@ class TestsFlextCoreGuards:
     ) -> None:
         assert u.in_(value, container) is expected
 
-    def test_in_returns_false_for_unhashable_value(self) -> None:
+    @staticmethod
+    def test_in_returns_false_for_unhashable_value() -> None:
         # A list is unhashable; membership in a set raises TypeError internally,
         # which the guard must swallow into a plain False.
         assert u.in_([1], {1, 2}) is False
 
-    def test_type_name_returns_runtime_qualname(self) -> None:
+    @staticmethod
+    def test_type_name_returns_runtime_qualname() -> None:
         assert u.type_name("x") == "str"
         assert u.type_name(1) == "int"
         assert u.type_name([1]) == "list"

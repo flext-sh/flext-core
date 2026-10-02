@@ -1,4 +1,8 @@
-"""Enforcement rule constants loaded from JSON package data."""
+"""Enforcement rule constants loaded from JSON package data.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 

@@ -1,4 +1,8 @@
-"""Runtime enforcement engine MRO part."""
+"""Runtime enforcement engine MRO part.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -20,6 +24,10 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart02):
           pytest collection does not trigger enforcement noise.
         - Intentional enforcement fixtures (``_enforcement_integration_fixtures``)
           are NOT exempt — they are designed to exercise rule firing.
+
+        Returns:
+            True if the target is exempt from enforcement.
+
         """
         module = getattr(target, "__module__", "") or ""
         qualname = getattr(target, "__qualname__", "") or ""

@@ -1,4 +1,8 @@
-"""Applied log levels govern real emission, including already-cached loggers."""
+"""Applied log levels govern real emission, including already-cached loggers.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -21,6 +25,8 @@ if TYPE_CHECKING:
 
 
 class TestsFlextCoreLoggingThreshold:
+    """Tests for ``FlextCoreLoggingThreshold``."""
+
     @pytest.fixture(autouse=True)
     def restore_default_level(self) -> Generator[None]:
         """Leave the process-wide threshold at the settings default afterwards."""
@@ -29,7 +35,12 @@ class TestsFlextCoreLoggingThreshold:
 
     @staticmethod
     def captured(emit: Callable[[], p.Result[bool]], token: str) -> str:
-        """Run ``emit`` and return stdout once ``token`` shows up or time runs out."""
+        """Run ``emit`` and return stdout once ``token`` shows up or time runs out.
+
+        Returns:
+            The resulting ``str``.
+
+        """
         stream = io.StringIO()
         with redirect_stdout(stream):
             _ = emit()
@@ -39,6 +50,7 @@ class TestsFlextCoreLoggingThreshold:
         return stream.getvalue()
 
     def test_cached_logger_honours_level_applied_after_creation(self) -> None:
+        """Test cached logger honours level applied after creation."""
         logger = u.create_module_logger("threshold.cached")
         _ = logger.info("warm the logger cache")
 
@@ -56,6 +68,7 @@ class TestsFlextCoreLoggingThreshold:
         tm.that("warning-at-warning" in warning_out, eq=True)
 
     def test_lowering_the_level_reenables_debug_output(self) -> None:
+        """Test lowering the level reenables debug output."""
         logger = u.create_module_logger("threshold.debug")
 
         u.apply_log_level(log_level=c.LogLevel.DEBUG, debug=False, trace=False)
@@ -83,6 +96,7 @@ class TestsFlextCoreLoggingThreshold:
         event_level: str,
         dropped: bool,
     ) -> None:
+        """Test debug and trace resolve through the runtime owner."""
         u.apply_log_level(log_level=c.LogLevel.ERROR, debug=debug, trace=trace)
         event = {"level": event_level, "event": "probe"}
 
@@ -92,6 +106,8 @@ class TestsFlextCoreLoggingThreshold:
         else:
             tm.that(u.drop_below_threshold(None, event_level, event), eq=event)
 
-    def test_unknown_level_name_fails_loud(self) -> None:
+    @staticmethod
+    def test_unknown_level_name_fails_loud() -> None:
+        """Test unknown level name fails loud."""
         with pytest.raises(ValueError, match="LOUD"):
             u.apply_log_level(log_level="LOUD", debug=False, trace=False)

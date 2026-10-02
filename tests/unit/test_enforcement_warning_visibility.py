@@ -6,6 +6,9 @@ the categories behave as ``UserWarning`` subclasses (visible by default and
 catchable), the smell category inherits MRO-violation semantics so filtering
 the parent also captures it, and the shipped ``filterwarnings`` configuration
 never silences them again. These tests assert only that observable behaviour.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -26,6 +29,8 @@ if TYPE_CHECKING:
 
 
 class TestsFlextCoreEnforcementWarningVisibility:
+    """Tests for ``FlextCoreEnforcementWarningVisibility``."""
+
     _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
     # The real-filter probe starts a nested pytest. It disables third-party
@@ -39,11 +44,14 @@ class TestsFlextCoreEnforcementWarningVisibility:
     ) -> None:
         # Arrange / Act / Assert: default warning filters surface UserWarning,
         # so a caller sees enforcement violations without extra configuration.
+        """Test enforcement categories are userwarnings."""
         assert issubclass(category, UserWarning)
 
-    def test_smell_violation_is_a_mro_violation(self) -> None:
+    @staticmethod
+    def test_smell_violation_is_a_mro_violation() -> None:
         # A caller filtering or catching FlextMroViolation must also capture
         # the more specific smell category.
+        """Test smell violation is a mro violation."""
         assert issubclass(FlextSmellViolation, FlextMroViolation)
 
     @pytest.mark.parametrize("category", [FlextMroViolation, FlextSmellViolation])
@@ -53,6 +61,7 @@ class TestsFlextCoreEnforcementWarningVisibility:
     ) -> None:
         # Act: emit the violation the way the enforcement engine does.
         # Assert: pytest.warns observes the exact category and its message.
+        """Test emitted violation is observable with message."""
         with pytest.warns(category, match="ENFORCE-probe") as record:
             warnings.warn(
                 "ENFORCE-probe: runtime violation visibility",
@@ -63,9 +72,11 @@ class TestsFlextCoreEnforcementWarningVisibility:
         assert len(record) == 1
         assert record[0].category is category
 
-    def test_parent_category_captures_smell_violation(self) -> None:
+    @staticmethod
+    def test_parent_category_captures_smell_violation() -> None:
         # Catching the parent category must capture a smell violation too,
         # since callers filter on FlextMroViolation broadly.
+        """Test parent category captures smell violation."""
         with pytest.warns(FlextMroViolation) as record:
             warnings.warn(
                 "ENFORCE-probe: smell via parent",
@@ -81,6 +92,7 @@ class TestsFlextCoreEnforcementWarningVisibility:
     ) -> None:
         # Arrange: reconstruct the shipped pytest filterwarnings config so the
         # test fails if a future edit silences enforcement warnings again.
+        """Test real filterwarnings keep mro violations visible."""
         payload = u.config_load(self._PROJECT_ROOT / "pyproject.toml").unwrap()
         tool = cast("t.JsonMapping", payload.get("tool", {}))
         pytest_tool = cast("t.JsonMapping", tool.get("pytest", {}))

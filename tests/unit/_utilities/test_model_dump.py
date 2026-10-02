@@ -3,6 +3,9 @@
 Exercises ``u.dump`` — the observable ``model_dump`` projection and the
 fail-loud contract when inline dump options are invalid. No private
 attributes, collaborators, or internal data structures are inspected.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -16,12 +19,14 @@ from tests.utilities import u
 class TestsFlextCoreModelDump:
     """Public-surface behavior of the ``u.dump`` utility."""
 
-    def test_dump_projects_through_model_dump_json(self) -> None:
+    @staticmethod
+    def test_dump_projects_through_model_dump_json() -> None:
         model = m.Pagination()
 
         assert u.dump(model) == model.model_dump(mode="json")
 
-    def test_dump_fails_loud_on_invalid_inline_options(self) -> None:
+    @staticmethod
+    def test_dump_fails_loud_on_invalid_inline_options() -> None:
         model = m.Pagination()
 
         with pytest.raises(RuntimeError) as raised:

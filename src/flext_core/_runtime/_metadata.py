@@ -35,7 +35,12 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
         | m.BaseModel
         | None,
     ) -> t.JsonValue:
-        """Normalize arbitrary runtime input to one validated ``JsonValue``."""
+        """Normalize arbitrary runtime input to one validated ``JsonValue``.
+
+        Returns:
+            The resulting ``t.JsonValue``.
+
+        """
         from flext_core import m
 
         validated_value: t.JsonValue
@@ -58,7 +63,12 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
     def normalize_to_json_mapping(
         value: t.MappingKV[str, ts.JsonPayload | t.Scalar],
     ) -> t.JsonMapping:
-        """Normalize a mapping to a validated ``JsonMapping``."""
+        """Normalize a mapping to a validated ``JsonMapping``.
+
+        Returns:
+            The resulting ``t.JsonMapping``.
+
+        """
         return FlextRuntimeMetadata._normalize_dict_entries([
             (key, item) for key, item in value.items()
         ])
@@ -67,7 +77,12 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
     def _normalize_dict_entries(
         items: t.SequenceOf[t.Pair[str, ts.JsonPayload]],
     ) -> t.JsonDict:
-        """Normalize key-value pairs for container dict construction."""
+        """Normalize key-value pairs for container dict construction.
+
+        Returns:
+            The resulting ``t.JsonDict``.
+
+        """
         return dict(
             t.json_mapping_adapter().validate_python({
                 key: FlextRuntimeMetadata.normalize_to_json_value(item)
@@ -83,7 +98,12 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
         | t.MappingKV[str, ts.JsonPayload]
         | None,
     ) -> t.JsonMapping | None:
-        """Normalize model-like input to a plain mapping."""
+        """Normalize model-like input to a plain mapping.
+
+        Returns:
+            The resulting ``t.JsonMapping | None``.
+
+        """
         from flext_core import m
 
         if value is None:
@@ -110,7 +130,12 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
         | AbstractSet[t.Scalar]
         | None,
     ) -> t.JsonValue:
-        """Normalize input into metadata-compatible JSON-native values."""
+        """Normalize input into metadata-compatible JSON-native values.
+
+        Returns:
+            The resulting ``t.JsonValue``.
+
+        """
         from flext_core import m
 
         normalized_value: t.JsonValue

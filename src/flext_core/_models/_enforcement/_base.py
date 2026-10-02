@@ -49,19 +49,39 @@ class FlextModelsEnforcementBase:
             return not self.violations
 
         def __len__(self) -> int:
-            """Expose violation count for ``len(report)``."""
+            """Expose violation count for ``len(report)``.
+
+            Returns:
+                The resulting ``int``.
+
+            """
             return len(self.violations)
 
         def __bool__(self) -> bool:
-            """Truthy when violations exist."""
+            """Truthy when violations exist.
+
+            Returns:
+                The resulting ``bool``.
+
+            """
             return bool(self.violations)
 
         def __getitem__(self, index: int) -> str:
-            """Return the nth message for ``report[i]`` access."""
+            """Return the nth message for ``report[i]`` access.
+
+            Returns:
+                The nth message for ``report[i]`` access.
+
+            """
             return self.messages[index]
 
         def __contains__(self, fragment: t.Scalar | None) -> bool:
-            """Search message text with ``fragment in report``."""
+            """Search message text with ``fragment in report``.
+
+            Returns:
+                The resulting ``bool``.
+
+            """
             if not isinstance(fragment, str):
                 return False
             return any(fragment in message for message in self.messages)

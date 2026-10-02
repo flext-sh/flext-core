@@ -37,6 +37,10 @@ class TestsFlextCoreEnforcementLayers:
         The rule tag is the trailing ``[...]`` marker every violation message
         carries; it is the stable public identity of the rule, so tests key on
         it instead of on prose wording.
+
+        Returns:
+            The resulting ``set[tuple[str, str]]``.
+
         """
         pairs: set[tuple[str, str]] = set()
         for violation in report.violations:
@@ -87,7 +91,8 @@ class TestsFlextCoreEnforcementLayers:
     def _protocols_non_runtime() -> type:
         class _PProtocols:
             class InnerProto(Protocol):
-                def do(self) -> None:
+                @staticmethod
+                def do() -> None:
                     """Declare the protocol operation."""
 
         return _PProtocols
@@ -102,7 +107,8 @@ class TestsFlextCoreEnforcementLayers:
     @staticmethod
     def _utilities_instance_method() -> type:
         class _UUtilities:
-            def run(self) -> None: ...
+            @staticmethod
+            def run() -> None: ...
 
         return _UUtilities
 
@@ -135,7 +141,8 @@ class TestsFlextCoreEnforcementLayers:
         class _PProtocols:
             @runtime_checkable
             class InnerProto(Protocol):
-                def do(self) -> None:
+                @staticmethod
+                def do() -> None:
                     """Declare the protocol operation."""
 
         return _PProtocols
@@ -145,7 +152,8 @@ class TestsFlextCoreEnforcementLayers:
         class _PProtocols:
             @typing.runtime_checkable
             class InnerProto(Protocol):
-                def do(self) -> None:
+                @staticmethod
+                def do() -> None:
                     """Declare the protocol operation."""
 
         return _PProtocols
@@ -155,7 +163,8 @@ class TestsFlextCoreEnforcementLayers:
         class _PProtocols:
             @checkable_protocol
             class InnerProto(Protocol):
-                def do(self) -> None:
+                @staticmethod
+                def do() -> None:
                     """Declare the protocol operation."""
 
         return _PProtocols
@@ -165,7 +174,8 @@ class TestsFlextCoreEnforcementLayers:
         class _PProtocols:
             @typing.final
             class InnerProto(Protocol):
-                def do(self) -> None:
+                @staticmethod
+                def do() -> None:
                     """Declare the protocol operation."""
 
         return _PProtocols
@@ -195,6 +205,7 @@ class TestsFlextCoreEnforcementLayers:
 
     def test_check_returns_typed_report(self) -> None:
         # Arrange / Act
+        """Test check returns typed report."""
         report = u.check(self._constants_mutable_list(), layer="constants")
 
         # Assert -- public contract: a typed Report with a list of violations.
@@ -240,6 +251,7 @@ class TestsFlextCoreEnforcementLayers:
         rule_tag: str,
     ) -> None:
         # Arrange
+        """Test non compliant class is flagged."""
         target: type = getattr(self, build)()
 
         # Act
@@ -270,6 +282,7 @@ class TestsFlextCoreEnforcementLayers:
         rule_tag: str,
     ) -> None:
         # Arrange
+        """Test compliant class is not flagged."""
         target: type = getattr(self, build)()
 
         # Act
@@ -280,6 +293,7 @@ class TestsFlextCoreEnforcementLayers:
 
     def test_layer_is_auto_detected_from_class_name(self) -> None:
         # Arrange -- a ``_CConstants``-named class carrying a constants violation.
+        """Test layer is auto detected from class name."""
         target = self._constants_mutable_list()
 
         # Act -- no explicit layer: the checker infers it from the name.
@@ -290,6 +304,7 @@ class TestsFlextCoreEnforcementLayers:
 
     def test_explicit_layer_overrides_auto_detection(self) -> None:
         # Arrange -- same constants violation, forced onto a different layer.
+        """Test explicit layer overrides auto detection."""
         target = self._constants_mutable_list()
 
         # Act
@@ -303,6 +318,7 @@ class TestsFlextCoreEnforcementLayers:
 
     def test_check_is_idempotent(self) -> None:
         # Arrange
+        """Test check is idempotent."""
         target = self._constants_inner_mutable()
 
         # Act
@@ -314,6 +330,7 @@ class TestsFlextCoreEnforcementLayers:
 
     def test_compliant_class_reports_no_layer_violation(self) -> None:
         # Arrange -- a class clean for the constants layer.
+        """Test compliant class reports no layer violation."""
         target = self._constants_frozenset()
 
         # Act

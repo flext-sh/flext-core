@@ -79,7 +79,15 @@ class FlextModelsSettings:
 
         @model_validator(mode="after")
         def validate_delay_consistency(self) -> Self:
-            """Validate delay configuration consistency."""
+            """Validate delay configuration consistency.
+
+            Returns:
+                The resulting ``Self``.
+
+            Raises:
+                ValueError: If ``self.max_delay_seconds < self.initial_delay_seconds``.
+
+            """
             if self.max_delay_seconds < self.initial_delay_seconds:
                 raise ValueError(c.ERR_MODEL_MAX_DELAY_LESS_THAN_INITIAL)
             return self

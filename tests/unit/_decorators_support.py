@@ -1,4 +1,8 @@
-"""Shared fixtures for split decorator unit tests."""
+"""Shared fixtures for split decorator unit tests.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -58,7 +62,8 @@ class TestsFlextDecoratorsLegacy:
     class TestService:
         """Service for testing."""
 
-        def get_value(self) -> str:
+        @staticmethod
+        def get_value() -> str:
             return "test_value"
 
     class ServiceWithLogger:

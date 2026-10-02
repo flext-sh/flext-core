@@ -1,4 +1,8 @@
-"""Typed outcomes of PEP 695 alias evaluation."""
+"""Typed outcomes of PEP 695 alias evaluation.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 

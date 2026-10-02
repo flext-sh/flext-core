@@ -1,4 +1,8 @@
-"""Centralized error messages for public examples."""
+"""Centralized error messages for public examples.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 

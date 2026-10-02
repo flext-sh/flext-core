@@ -6,6 +6,9 @@ the conf it produces must let ``beartype.claw``-instrumented packages import cle
 ``flext_core`` itself) instead of crashing on known beartype/pydantic edge cases.
 Every assertion targets observable behavior (subprocess exit code + stdout, or the
 public return value) — never private state of the factory.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -36,7 +39,8 @@ class TestsFlextCoreBeartypeEngineClawPackages(TestsFlextBeartypeEngine):
 
     _REPO_ROOT: Path = Path(__file__).resolve().parents[2]
 
-    def _write_claw_package(self, root: Path, name: str, modules: t.StrMapping) -> None:
+    @staticmethod
+    def _write_claw_package(root: Path, name: str, modules: t.StrMapping) -> None:
         """Create a claw-bootstrapped package with the given submodule sources."""
         package_dir = root / name
         package_dir.mkdir()
@@ -47,8 +51,14 @@ class TestsFlextCoreBeartypeEngineClawPackages(TestsFlextBeartypeEngine):
                 encoding="utf-8",
             )
 
-    def _import_modules_script(self, root: Path, dotted_modules: t.StrSequence) -> str:
-        """Build a snippet that imports the given modules and prints a marker."""
+    @staticmethod
+    def _import_modules_script(root: Path, dotted_modules: t.StrSequence) -> str:
+        """Build a snippet that imports the given modules and prints a marker.
+
+        Returns:
+            The resulting ``str``.
+
+        """
         lines = [
             "import sys",
             "",
@@ -58,7 +68,8 @@ class TestsFlextCoreBeartypeEngineClawPackages(TestsFlextBeartypeEngine):
         ]
         return "\n".join(lines) + "\n"
 
-    def test_build_beartype_conf_is_idempotent(self) -> None:
+    @staticmethod
+    def test_build_beartype_conf_is_idempotent() -> None:
         """Repeated factory calls yield equal, hash-stable conf values (public API)."""
         # Arrange / Act
         conf_a = FlextUtilitiesBeartypeConf.build_beartype_conf()

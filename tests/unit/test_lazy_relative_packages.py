@@ -1,4 +1,8 @@
-"""Lazy import paths follow Python's package-relative import contract."""
+"""Lazy import paths follow Python's package-relative import contract.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -33,7 +37,8 @@ class TestsFlextCoreLazyRelativePackages:
         assert isinstance(target, str)
         assert importlib.import_module(target) is importlib.import_module(absolute)
 
-    def test_symbol_target_resolves_parent_package(self) -> None:
+    @staticmethod
+    def test_symbol_target_resolves_parent_package() -> None:
         """A symbol mapping preserves its attribute while resolving its module."""
         normalized = normalize_lazy_imports("xml.etree", {"Node": ("..dom", "Node")})
         target = normalized["Node"]
@@ -43,7 +48,8 @@ class TestsFlextCoreLazyRelativePackages:
         expected = importlib.import_module("xml.dom")
         assert getattr(module, attribute) is expected.Node
 
-    def test_relative_path_cannot_escape_the_top_level_package(self) -> None:
+    @staticmethod
+    def test_relative_path_cannot_escape_the_top_level_package() -> None:
         """An invalid parent traversal fails instead of manufacturing a module name."""
         with pytest.raises(ImportError):
             normalize_lazy_imports("xml", {"module": "..dom"})
@@ -70,7 +76,8 @@ class TestsFlextCoreLazyRelativePackages:
         )
         assert merged == {"Node": ("xml.dom", "Node")}
 
-    def test_merge_child_cannot_escape_the_top_level_package(self) -> None:
+    @staticmethod
+    def test_merge_child_cannot_escape_the_top_level_package() -> None:
         """Child discovery rejects traversal beyond the containing package."""
         with pytest.raises(ImportError):
             merge_lazy_imports(("..dom",), {}, module_name="xml")

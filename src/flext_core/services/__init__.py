@@ -1,3 +1,7 @@
-"""Services composition tree for flext-core."""
+"""Services composition tree for flext-core.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations

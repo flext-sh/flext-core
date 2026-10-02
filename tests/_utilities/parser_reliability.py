@@ -1,4 +1,8 @@
-"""Parser and reliability helper namespace."""
+"""Parser and reliability helper namespace.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 

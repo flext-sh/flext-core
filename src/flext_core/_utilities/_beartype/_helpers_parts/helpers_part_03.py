@@ -1,4 +1,8 @@
-"""Type and module introspection helpers — annotation inspection + bytecode analysis."""
+"""Type and module introspection helpers — annotation inspection + bytecode analysis.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 

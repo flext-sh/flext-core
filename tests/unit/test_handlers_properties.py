@@ -3,6 +3,9 @@
 Every test asserts observable public behavior of ``h.create_from_callable``
 and the handler it returns (``handler_name``, ``mode``, ``handle``,
 ``execute`` and their ``r[T]`` outcomes) -- never internal state.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -48,7 +51,8 @@ class TestsFlextCoreHandlersProperties(TestsFlextFlextHandlers):
 
         tm.ok(handler.execute(message), eq=message)
 
-    def test_default_name_falls_back_to_callable_dunder_name(self) -> None:
+    @staticmethod
+    def test_default_name_falls_back_to_callable_dunder_name() -> None:
         """When no name is given, ``handler_name`` uses the callable name."""
 
         def my_named_handler(message: t.Scalar) -> t.Scalar:
@@ -58,7 +62,8 @@ class TestsFlextCoreHandlersProperties(TestsFlextFlextHandlers):
 
         tm.that(handler.handler_name, eq="my_named_handler")
 
-    def test_callable_returning_result_is_passed_through(self) -> None:
+    @staticmethod
+    def test_callable_returning_result_is_passed_through() -> None:
         """A callable already returning ``r[T]`` is not double-wrapped."""
 
         def result_handler(message: t.Scalar) -> t.Scalar:
@@ -74,7 +79,8 @@ class TestsFlextCoreHandlersProperties(TestsFlextFlextHandlers):
 
         tm.ok(handler.handle("x"), eq="pre_x")
 
-    def test_raising_callable_yields_failure_not_exception(self) -> None:
+    @staticmethod
+    def test_raising_callable_yields_failure_not_exception() -> None:
         """A raising callable surfaces as a failure result, never a raise."""
 
         def boom(message: t.Scalar) -> t.Scalar:
@@ -109,7 +115,8 @@ class TestsFlextCoreHandlersProperties(TestsFlextFlextHandlers):
 
         tm.that(handler.mode, eq=handler_type)
 
-    def test_invalid_handler_type_is_rejected(self) -> None:
+    @staticmethod
+    def test_invalid_handler_type_is_rejected() -> None:
         """A handler type outside the HandlerType enum is rejected."""
         with pytest.raises(c.ValidationError):
             h.create_from_callable(

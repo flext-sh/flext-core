@@ -6,6 +6,9 @@ given a class defined in a test/example/script wrapper module, the engine
 returns a violation mapping when that module contains a forbidden facade alias
 import, and ``None`` otherwise. Assertions target the returned
 ``StrMapping | None`` contract, never the engine's internals.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -41,6 +44,10 @@ class TestsFlextCoreBeartypeEngineImportHooks:
         Returns the freshly imported ``Probe`` type bound to a real on-disk
         module, so the engine can introspect it exactly as it would in a live
         enforcement pass.
+
+        Returns:
+            The resulting ``type``.
+
         """
         root = tmp_path / package
         module_dir = root / "tests" if under_tests else root
@@ -59,8 +66,14 @@ class TestsFlextCoreBeartypeEngineImportHooks:
         probe: type = module.Probe
         return probe
 
-    def _apply(self, target: type) -> t.StrMapping | None:
-        """Invoke the public engine dispatch for the wrapper-alias-import shape."""
+    @staticmethod
+    def _apply(target: type) -> t.StrMapping | None:
+        """Invoke the public engine dispatch for the wrapper-alias-import shape.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+
+        """
         return be.apply(
             c.EnforcementPredicateKind.DEPRECATED_SYNTAX,
             me.DeprecatedSyntaxParams(ast_shape="no_wrapper_root_alias_import"),

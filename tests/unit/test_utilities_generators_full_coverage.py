@@ -1,4 +1,8 @@
-"""Behavior contract for public generator utilities in dispatch workflows."""
+"""Behavior contract for public generator utilities in dispatch workflows.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -11,7 +15,11 @@ from tests.models import m
 
 
 class TestsFlextCoreUtilitiesGenerators:
-    def test_public_generators_build_dispatch_audit_metadata(self) -> None:
+    """Tests for ``FlextCoreUtilitiesGenerators``."""
+
+    @staticmethod
+    def test_public_generators_build_dispatch_audit_metadata() -> None:
+        """Test public generators build dispatch audit metadata."""
         request = m.Tests.DispatchRequest(
             command_name="sync-users",
             tenant="tenant-a",
@@ -68,7 +76,9 @@ class TestsFlextCoreUtilitiesGenerators:
         assert datetime.fromisoformat(audit.emitted_at).tzinfo == UTC
         assert audit.generated_at.tzinfo == UTC
 
-    def test_public_generators_accept_prefix_override_for_custom_batches(self) -> None:
+    @staticmethod
+    def test_public_generators_accept_prefix_override_for_custom_batches() -> None:
+        """Test public generators accept prefix override for custom batches."""
         batch_id = u.generate(
             kind="aggregate",
             options=u.GenerateOptions(
@@ -82,7 +92,9 @@ class TestsFlextCoreUtilitiesGenerators:
         assert batch_id.startswith("agg-ldap-delta-")
         assert len(batch_id.removeprefix("agg-ldap-delta-")) == 10
 
-    def test_public_generators_cover_query_and_external_provider_ids(self) -> None:
+    @staticmethod
+    def test_public_generators_cover_query_and_external_provider_ids() -> None:
+        """Test public generators cover query and external provider ids."""
         audit = m.Tests.QueryAudit(
             request_id=u.generate(),
             explicit_id=u.generate(kind="id"),
@@ -120,7 +132,9 @@ class TestsFlextCoreUtilitiesGenerators:
         assert str(UUID(audit.manual_id)) == audit.manual_id
         assert len(audit.external_token) == 8
 
-    def test_public_generators_cover_orchestration_identifier_families(self) -> None:
+    @staticmethod
+    def test_public_generators_cover_orchestration_identifier_families() -> None:
+        """Test public generators cover orchestration identifier families."""
         audit = m.Tests.OrchestrationAudit(
             entity_id=u.generate(
                 kind="entity",

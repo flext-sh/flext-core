@@ -1,4 +1,8 @@
-"""Behavioral tests for the handler callable factory public contract."""
+"""Behavioral tests for the handler callable factory public contract.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -17,8 +21,11 @@ from ._handlers_support import TestsFlextFlextHandlers
 class TestsFlextCoreHandlersFactory(TestsFlextFlextHandlers):
     """Assert observable behavior of ``h.create_from_callable`` and handlers."""
 
-    def test_callable_result_is_wrapped_in_success(self) -> None:
+    @staticmethod
+    def test_callable_result_is_wrapped_in_success() -> None:
         # Arrange
+        """Test callable result is wrapped in success."""
+
         def simple_handler(message: t.Scalar) -> t.Scalar:
             return (
                 f"handled_{message.decode() if isinstance(message, bytes) else message}"
@@ -35,8 +42,11 @@ class TestsFlextCoreHandlersFactory(TestsFlextFlextHandlers):
         assert handler.handler_name == "simple_handler"
         u.Tests.assert_success(handler.handle("test"), expected_value="handled_test")
 
-    def test_callable_returning_result_is_passed_through(self) -> None:
+    @staticmethod
+    def test_callable_returning_result_is_passed_through() -> None:
         # Arrange
+        """Test callable returning result is passed through."""
+
         def result_handler(message: t.Scalar) -> t.Scalar:
             return (
                 r[t.Scalar]
@@ -56,8 +66,11 @@ class TestsFlextCoreHandlersFactory(TestsFlextFlextHandlers):
         # Assert
         u.Tests.assert_success(handler.handle("test"), expected_value="result_test")
 
-    def test_callable_raising_produces_failure_result(self) -> None:
+    @staticmethod
+    def test_callable_raising_produces_failure_result() -> None:
         # Arrange
+        """Test callable raising produces failure result."""
+
         def failing_handler(message: t.Scalar) -> t.Scalar:
             _ = message
             msg = "Handler failed"
@@ -74,8 +87,11 @@ class TestsFlextCoreHandlersFactory(TestsFlextFlextHandlers):
         # Assert
         u.Tests.assert_failure(result, expected_error="Handler failed")
 
-    def test_invalid_mode_raises_validation_error(self) -> None:
+    @staticmethod
+    def test_invalid_mode_raises_validation_error() -> None:
         # Arrange
+        """Test invalid mode raises validation error."""
+
         def invalid_handler(message: t.Scalar) -> t.Scalar:
             return (
                 f"invalid_{message.decode() if isinstance(message, bytes) else message}"
@@ -89,8 +105,11 @@ class TestsFlextCoreHandlersFactory(TestsFlextFlextHandlers):
                 handler_type=cast("c.HandlerType", "invalid_mode"),
             )
 
-    def test_handler_name_defaults_to_callable_name(self) -> None:
+    @staticmethod
+    def test_handler_name_defaults_to_callable_name() -> None:
         # Arrange
+        """Test handler name defaults to callable name."""
+
         def named_callable(message: t.Scalar) -> t.Scalar:
             return (
                 f"named_{message.decode() if isinstance(message, bytes) else message}"
@@ -102,8 +121,11 @@ class TestsFlextCoreHandlersFactory(TestsFlextFlextHandlers):
         # Assert
         assert handler.handler_name == "named_callable"
 
-    def test_handler_config_overrides_name_and_type(self) -> None:
+    @staticmethod
+    def test_handler_config_overrides_name_and_type() -> None:
         # Arrange
+        """Test handler config overrides name and type."""
+
         def any_callable(message: t.Scalar) -> t.Scalar:
             return f"any_{message.decode() if isinstance(message, bytes) else message}"
 
@@ -127,6 +149,8 @@ class TestsFlextCoreHandlersFactory(TestsFlextFlextHandlers):
         scenario: TestsFlextFlextHandlers.HandlerTypeScenario,
     ) -> None:
         # Arrange
+        """Test mode reflects requested handler type."""
+
         def any_callable(message: t.Scalar) -> t.Scalar:
             return f"any_{message.decode() if isinstance(message, bytes) else message}"
 
@@ -141,6 +165,7 @@ class TestsFlextCoreHandlersFactory(TestsFlextFlextHandlers):
 
     def test_execute_returns_processed_success(self) -> None:
         # Arrange
+        """Test execute returns processed success."""
         settings = u.Tests.create_handler_config("test_execute", "Test Execute")
         handler = self.ConcreteTestHandler(settings=settings)
 
@@ -152,6 +177,7 @@ class TestsFlextCoreHandlersFactory(TestsFlextFlextHandlers):
 
     def test_execute_propagates_validation_failure(self) -> None:
         # Arrange
+        """Test execute propagates validation failure."""
         settings = u.Tests.create_handler_config("test_execute", "Test Execute")
         handler = self.ConcreteTestHandler(settings=settings)
 
@@ -163,6 +189,7 @@ class TestsFlextCoreHandlersFactory(TestsFlextFlextHandlers):
 
     def test_handle_rejects_non_string_message(self) -> None:
         # Arrange
+        """Test handle rejects non string message."""
         settings = u.Tests.create_handler_config("test_reject", "Test Reject")
         handler = self.ConcreteTestHandler(settings=settings)
 
@@ -174,6 +201,7 @@ class TestsFlextCoreHandlersFactory(TestsFlextFlextHandlers):
 
     def test_dispatch_message_runs_pipeline_to_success(self) -> None:
         # Arrange
+        """Test dispatch message runs pipeline to success."""
         settings = u.Tests.create_handler_config(
             "test_dispatch",
             "Test Dispatch",
@@ -190,6 +218,7 @@ class TestsFlextCoreHandlersFactory(TestsFlextFlextHandlers):
 
     def test_dispatch_message_rejects_incompatible_operation(self) -> None:
         # Arrange
+        """Test dispatch message rejects incompatible operation."""
         settings = u.Tests.create_handler_config(
             "test_dispatch",
             "Test Dispatch",
@@ -207,6 +236,7 @@ class TestsFlextCoreHandlersFactory(TestsFlextFlextHandlers):
 
     def test_can_handle_message_type(self) -> None:
         # Arrange
+        """Test can handle message type."""
         settings = u.Tests.create_handler_config("test_can_handle", "Test Can Handle")
         handler = self.ConcreteTestHandler(settings=settings)
 
@@ -215,6 +245,7 @@ class TestsFlextCoreHandlersFactory(TestsFlextFlextHandlers):
 
     def test_mode_reflects_configured_handler_type(self) -> None:
         # Arrange
+        """Test mode reflects configured handler type."""
         settings = u.Tests.create_handler_config(
             "test_mode_property",
             "Test Mode Property",
@@ -237,6 +268,7 @@ class TestsFlextCoreHandlersFactory(TestsFlextFlextHandlers):
         expected_success: bool,
     ) -> None:
         # Arrange
+        """Test validate message reports payload validity."""
         settings = u.Tests.create_handler_config("test_validate", "Test Validate")
         handler = self.ValidationTestHandler(settings=settings)
 
@@ -248,6 +280,7 @@ class TestsFlextCoreHandlersFactory(TestsFlextFlextHandlers):
 
     def test_failing_handler_returns_descriptive_failure(self) -> None:
         # Arrange
+        """Test failing handler returns descriptive failure."""
         settings = u.Tests.create_handler_config("test_failing", "Test Failing")
         handler = self.FailingTestHandler(settings=settings)
 

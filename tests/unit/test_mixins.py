@@ -37,10 +37,16 @@ class TestsFlextMixins:
         """Minimal service composing FlextMixins for behavioral exercise."""
 
     def _service(self) -> x:
-        """Build a fresh service instance exposing the mixin surface."""
+        """Build a fresh service instance exposing the mixin surface.
+
+        Returns:
+            The resulting ``x``.
+
+        """
         return self._Service()
 
     def test_settings_property_satisfies_settings_protocol(self) -> None:
+        """Test settings property satisfies settings protocol."""
         service = self._service()
 
         assert service.settings.model_dump()["log_level"] in {
@@ -52,21 +58,25 @@ class TestsFlextMixins:
         }
 
     def test_container_property_satisfies_container_protocol(self) -> None:
+        """Test container property satisfies container protocol."""
         service = self._service()
 
         assert isinstance(service.container, p.Container)
 
     def test_context_property_satisfies_context_protocol(self) -> None:
+        """Test context property satisfies context protocol."""
         service = self._service()
 
         assert isinstance(service.context, p.Context)
 
     def test_logger_property_satisfies_logger_protocol(self) -> None:
+        """Test logger property satisfies logger protocol."""
         service = self._service()
 
         assert isinstance(service.logger, p.Logger)
 
     def test_track_yields_metrics_mapping_with_operation_metadata(self) -> None:
+        """Test track yields metrics mapping with operation metadata."""
         service = self._service()
 
         with service.track("load") as metrics:
@@ -77,6 +87,7 @@ class TestsFlextMixins:
         assert captured["operation_count"] == 1
 
     def test_track_increments_operation_count_across_invocations(self) -> None:
+        """Test track increments operation count across invocations."""
         service = self._service()
 
         with service.track("load") as first:
@@ -88,6 +99,7 @@ class TestsFlextMixins:
         assert second_count == 2
 
     def test_track_returns_body_value_on_success(self) -> None:
+        """Test track returns body value on success."""
         service = self._service()
 
         def run() -> str:
@@ -97,6 +109,7 @@ class TestsFlextMixins:
         assert run() == "done"
 
     def test_track_propagates_exception_raised_in_body(self) -> None:
+        """Test track propagates exception raised in body."""
         service = self._service()
         boom = ValueError("boom")
 
@@ -104,6 +117,7 @@ class TestsFlextMixins:
             raise boom
 
     def test_track_recovers_after_failed_operation(self) -> None:
+        """Test track recovers after failed operation."""
         service = self._service()
         boom = ValueError("boom")
 
@@ -115,11 +129,13 @@ class TestsFlextMixins:
         assert recovered == 2
 
     def test_initial_context_defaults_to_none(self) -> None:
+        """Test initial context defaults to none."""
         service = self._service()
 
         assert service.initial_context is None
 
     def test_settings_overrides_setter_round_trips(self) -> None:
+        """Test settings overrides setter round trips."""
         service = self._service()
         overrides: t.ScalarMapping = {"feature_flag": True, "retries": 3}
 
@@ -136,10 +152,13 @@ class TestsFlextMixins:
         field_name: str,
         bad_value: t.GuardInput,
     ) -> None:
+        """Test constructor rejects invalid bootstrap value."""
         with pytest.raises(c.ValidationError):
             self._Service.model_validate({field_name: bad_value})
 
-    def test_correlation_id_round_trips_through_flext_context(self) -> None:
+    @staticmethod
+    def test_correlation_id_round_trips_through_flext_context() -> None:
+        """Test correlation id round trips through flext context."""
         FlextContext.apply_correlation_id("trace-42")
 
         assert FlextContext.resolve_correlation_id() == "trace-42"

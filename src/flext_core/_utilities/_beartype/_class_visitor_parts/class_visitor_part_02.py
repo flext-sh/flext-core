@@ -1,4 +1,8 @@
-"""Class placement, MRO, and protocol tree governance."""
+"""Class placement, MRO, and protocol tree governance.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -18,7 +22,12 @@ from .class_visitor_part_01 import (
 class FlextUtilitiesBeartypeClassVisitor(FlextUtilitiesBeartypeClassVisitorPart01):
     @staticmethod
     def v_mro_shape(params: me.MroShapeParams, target: type) -> t.StrMapping | None:
-        """MRO_SHAPE — facade base ordering and inner-namespace redundancy."""
+        """MRO_SHAPE — facade base ordering and inner-namespace redundancy.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+
+        """
         if not target.__bases__:
             return NO_VIOLATION
 

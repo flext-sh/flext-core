@@ -9,6 +9,9 @@ These tests assert only the PUBLIC contract of the handler decorator:
 
 They never reach into the private marker attribute the decorator stores on the
 method; that is an implementation detail of how discovery is wired.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -30,6 +33,8 @@ class TestsFlextHandlerDecoratorEdges:
 
     def test_scan_class_exposes_declared_command_and_priority(self) -> None:
         # Arrange
+        """Test scan class exposes declared command and priority."""
+
         class CreateCommand(m.BaseModel):
             pass
 
@@ -51,6 +56,8 @@ class TestsFlextHandlerDecoratorEdges:
 
     def test_defaults_are_applied_when_priority_and_timeout_omitted(self) -> None:
         # Arrange
+        """Test defaults are applied when priority and timeout omitted."""
+
         class CreateCommand(m.BaseModel):
             pass
 
@@ -69,6 +76,8 @@ class TestsFlextHandlerDecoratorEdges:
 
     def test_none_timeout_is_preserved(self) -> None:
         # Arrange
+        """Test none timeout is preserved."""
+
         class CreateCommand(m.BaseModel):
             pass
 
@@ -87,6 +96,8 @@ class TestsFlextHandlerDecoratorEdges:
     @pytest.mark.parametrize("timeout", [0.5, 5.0, 120.0])
     def test_explicit_timeout_is_preserved(self, timeout: float) -> None:
         # Arrange
+        """Test explicit timeout is preserved."""
+
         class CreateCommand(m.BaseModel):
             pass
 
@@ -104,6 +115,8 @@ class TestsFlextHandlerDecoratorEdges:
 
     def test_stacked_decorators_innermost_wins(self) -> None:
         # Arrange: the innermost decorator runs first and takes precedence.
+        """Test stacked decorators innermost wins."""
+
         class CreateCommand(m.BaseModel):
             pass
 
@@ -126,6 +139,8 @@ class TestsFlextHandlerDecoratorEdges:
 
     def test_scan_class_sorts_handlers_by_priority_descending(self) -> None:
         # Arrange
+        """Test scan class sorts handlers by priority descending."""
+
         class LowCommand(m.BaseModel):
             pass
 
@@ -164,6 +179,8 @@ class TestsFlextHandlerDecoratorEdges:
 
     def test_has_handlers_reflects_presence_of_decorated_methods(self) -> None:
         # Arrange
+        """Test has handlers reflects presence of decorated methods."""
+
         class CreateCommand(m.BaseModel):
             pass
 
@@ -174,7 +191,8 @@ class TestsFlextHandlerDecoratorEdges:
                 return r[str].ok("ok")
 
         class Plain:
-            def handle(self, cmd: CreateCommand) -> p.Result[str]:
+            @staticmethod
+            def handle(cmd: CreateCommand) -> p.Result[str]:
                 _ = cmd
                 return r[str].ok("ok")
 
@@ -184,8 +202,11 @@ class TestsFlextHandlerDecoratorEdges:
 
     def test_scan_class_returns_empty_for_undecorated_class(self) -> None:
         # Arrange
+        """Test scan class returns empty for undecorated class."""
+
         class Plain:
-            def handle(self) -> p.Result[str]:
+            @staticmethod
+            def handle() -> p.Result[str]:
                 return r[str].ok("ok")
 
         # Act / Assert
@@ -193,6 +214,8 @@ class TestsFlextHandlerDecoratorEdges:
 
     def test_decorated_method_stays_callable_and_returns_success(self) -> None:
         # Arrange: decoration must not alter the method's runtime behavior.
+        """Test decorated method stays callable and returns success."""
+
         class CreateCommand(m.BaseModel):
             name: str
 
@@ -210,6 +233,8 @@ class TestsFlextHandlerDecoratorEdges:
 
     def test_service_integration_discovers_handler_via_scan_class(self) -> None:
         # Arrange: a real FlextService subclass with a decorated handler.
+        """Test service integration discovers handler via scan class."""
+
         class CreateCommand(m.BaseModel):
             name: str
 

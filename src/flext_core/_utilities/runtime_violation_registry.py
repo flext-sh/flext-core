@@ -38,6 +38,10 @@ class FlextUtilitiesRuntimeViolationRegistry:
 
         Idempotent: a second call returns an empty tuple until new appends
         arrive.
+
+        Returns:
+            Every buffered report and reset the buffer atomically.
+
         """
         with cls._violation_lock:
             drained = tuple(cls._violation_buffer)
