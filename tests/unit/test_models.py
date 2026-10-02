@@ -158,8 +158,9 @@ class TestsFlextCoreModels:
 
     # ----- Pagination value object -------------------------------------------
 
+    @staticmethod
     @pytest.mark.parametrize(("page", "size"), [(1, 10), (3, 25), (5, 100)])
-    def test_pagination_exposes_page_and_size(self, page: int, size: int) -> None:
+    def test_pagination_exposes_page_and_size(page: int, size: int) -> None:
         """Test pagination exposes page and size."""
         pagination = m.Pagination(page=page, size=size)
 

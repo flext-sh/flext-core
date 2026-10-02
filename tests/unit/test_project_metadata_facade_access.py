@@ -31,6 +31,7 @@ class TestsFlextFacadeFlatSsotAccess:
     this symbol by name and are out of edit scope.)
     """
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("project_name", "expected_stem"),
         [
@@ -41,19 +42,18 @@ class TestsFlextFacadeFlatSsotAccess:
         ],
     )
     def test_derive_class_stem_pascalizes_unlisted_names(
-        self,
         project_name: str,
         expected_stem: str,
     ) -> None:
         """Test derive class stem pascalizes unlisted names."""
         assert u.derive_class_stem(project_name) == expected_stem
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("project_name", "declared_stem"),
         c.SPECIAL_NAME_OVERRIDES,
     )
     def test_derive_class_stem_honours_declared_overrides_case_insensitively(
-        self,
         project_name: str,
         declared_stem: str,
     ) -> None:

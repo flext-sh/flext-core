@@ -105,7 +105,8 @@ class ExamplesFlextSharedBase(m.BaseModel):
             self._results.append("")
         self._results.append(f"[{name}]")
 
-    def ser(self, v: object | None) -> str:
+    @staticmethod
+    def ser(v: object | None) -> str:
         """Deterministic, human-readable serialisation for golden-file output.
 
         Returns:

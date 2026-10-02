@@ -48,21 +48,24 @@ class TestsFlextEnforcementAptHooks:
 
     # --- Catalog membership & invariants (public spec models) ---
 
+    @staticmethod
     @pytest.mark.parametrize("rule_id", A_PT_RULE_IDS)
-    def test_a_pt_rule_is_published_in_canonical_catalog(self, rule_id: str) -> None:
+    def test_a_pt_rule_is_published_in_canonical_catalog(rule_id: str) -> None:
         """Test a pt rule is published in canonical catalog."""
         catalog_ids = {rule.id for rule in u.build_canonical_catalog().rules}
         assert rule_id in catalog_ids
 
+    @staticmethod
     @pytest.mark.parametrize("rule_id", A_PT_RULE_IDS)
-    def test_a_pt_rule_carries_agents_md_anchor(self, rule_id: str) -> None:
+    def test_a_pt_rule_carries_agents_md_anchor(rule_id: str) -> None:
         """Test a pt rule carries agents md anchor."""
         rule = u.build_canonical_catalog().by_id(rule_id)
         assert rule is not None
         assert rule.agents_md_anchor != ""
 
+    @staticmethod
     @pytest.mark.parametrize("rule_id", RUNTIME_RULE_IDS)
-    def test_a_pt_rule_documents_problem_and_fix(self, rule_id: str) -> None:
+    def test_a_pt_rule_documents_problem_and_fix(rule_id: str) -> None:
         # The published spec is what a caller reads to understand/repair a
         # violation — both narrative fields must be populated.
         """Test a pt rule documents problem and fix."""
@@ -74,8 +77,9 @@ class TestsFlextEnforcementAptHooks:
         assert problem != ""
         assert fix != ""
 
+    @staticmethod
     @pytest.mark.parametrize("rule_id", A_PT_RULE_IDS)
-    def test_a_pt_rule_severity_is_a_named_level(self, rule_id: str) -> None:
+    def test_a_pt_rule_severity_is_a_named_level(rule_id: str) -> None:
         """Test a pt rule severity is a named level."""
         rule = u.build_canonical_catalog().by_id(rule_id)
         assert rule is not None
@@ -92,16 +96,18 @@ class TestsFlextEnforcementAptHooks:
 
     # --- Per-rule source contract (public discriminated ``source`` model) ---
 
+    @staticmethod
     @pytest.mark.parametrize("rule_id", STATIC_RULE_IDS)
-    def test_static_rule_is_owned_by_the_infra_rule_engine(self, rule_id: str) -> None:
+    def test_static_rule_is_owned_by_the_infra_rule_engine(rule_id: str) -> None:
         """Test static rule is owned by the infra rule engine."""
         rule = u.build_canonical_catalog().by_id(rule_id)
         assert rule is not None
         assert isinstance(rule.source, m.EnforcementInfraRuleSource)
         assert rule.source.rule_ids
 
+    @staticmethod
     @pytest.mark.parametrize("rule_id", RUNTIME_RULE_IDS)
-    def test_beartype_rule_tag_has_a_runtime_category(self, rule_id: str) -> None:
+    def test_beartype_rule_tag_has_a_runtime_category(rule_id: str) -> None:
         """Test beartype rule tag has a runtime category."""
         rule = u.build_canonical_catalog().by_id(rule_id)
         assert rule is not None

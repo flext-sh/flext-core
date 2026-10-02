@@ -217,7 +217,8 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
             existing = result.get(key)
             if isinstance(existing, dict) and isinstance(value, dict):
                 result[key] = FlextStrictYamlConfigSource._deep_merge_lists(
-                    existing, value
+                    existing,
+                    value,
                 )
             elif isinstance(existing, list) and isinstance(value, list):
                 result[key] = [*existing, *value]

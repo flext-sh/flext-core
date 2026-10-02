@@ -28,6 +28,7 @@ class TestsFlextModelsProjectMetadata:
     # ------------------------------------------------------------------
     """Tests for ``FlextModelsProjectMetadata``."""
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("project_name", "expected_stem"),
         [
@@ -39,7 +40,6 @@ class TestsFlextModelsProjectMetadata:
         ],
     )
     def test_derive_class_stem_covers_overrides_and_pascalization(
-        self,
         project_name: str,
         expected_stem: str,
     ) -> None:
@@ -51,6 +51,7 @@ class TestsFlextModelsProjectMetadata:
         """Test derive class stem returns empty for empty project name."""
         assert u.derive_class_stem("") == ""
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("slug", "expected"),
         [
@@ -61,7 +62,6 @@ class TestsFlextModelsProjectMetadata:
         ],
     )
     def test_derive_class_stem_normalizes_kebab_and_snake(
-        self,
         slug: str,
         expected: str,
     ) -> None:
