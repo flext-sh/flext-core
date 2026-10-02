@@ -449,20 +449,11 @@ class FlextUtilitiesLogging(ulc):
             if not success:
                 context["exception_type"] = exc_type.__name__ if exc_type else ""
                 context["exception_message"] = str(exc_val) if exc_val else ""
-            if success:
-                _ = self.logger.info(
-                    "%s %s",
-                    self._operation_name,
-                    status,
-                    **FlextUtilitiesLogging.to_container_context(context.root),
-                )
-            else:
-                _ = self.logger.error(
-                    "%s %s",
-                    self._operation_name,
-                    status,
-                    **FlextUtilitiesLogging.to_container_context(context.root),
-                )
+            # The FLEXT logger never %-interpolates positional args (it records
+            # them as ``arg_<n>`` context), so the event text is composed here.
+            emit = self.logger.info if success else self.logger.error
+            event = " ".join((self._operation_name, status))
+            _ = emit(event, **FlextUtilitiesLogging.to_container_context(context.root))
 
     @classmethod
     def fetch_logger(cls, name: str) -> p.Logger:
