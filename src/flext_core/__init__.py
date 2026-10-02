@@ -10,7 +10,6 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 from flext_core.__version__ import (
     __author__,
     __author_email__,
@@ -21,6 +20,7 @@ from flext_core.__version__ import (
     __version__,
     __version_info__,
 )
+from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core import services
@@ -36,7 +36,12 @@ if TYPE_CHECKING:
     from flext_core.dispatcher import FlextDispatcher
     from flext_core.exceptions import FlextExceptions, e
     from flext_core.handlers import FlextHandlers, h
-    from flext_core.lazy import FlextLazy, FlextLazyAttribute, lazy_attribute
+    from flext_core.lazy import (
+        FlextLazy,
+        FlextLazyMember,
+        lazy_member,
+        resolve_lazy_members,
+    )
     from flext_core.loggings import FlextUtilitiesLogging
     from flext_core.mixins import FlextMixins, x
     from flext_core.models import FlextModels, m
@@ -67,7 +72,7 @@ __all__: tuple[str, ...] = (
     "FlextExceptions",
     "FlextHandlers",
     "FlextLazy",
-    "FlextLazyAttribute",
+    "FlextLazyMember",
     "FlextMixins",
     "FlextModels",
     "FlextProtocols",
@@ -96,10 +101,11 @@ __all__: tuple[str, ...] = (
     "e",
     "h",
     "install_lazy_exports",
-    "lazy_attribute",
+    "lazy_member",
     "m",
     "p",
     "r",
+    "resolve_lazy_members",
     "s",
     "services",
     "settings",
@@ -123,7 +129,12 @@ _LAZY_IMPORTS = MappingProxyType(
             ".dispatcher": ("FlextDispatcher",),
             ".exceptions": ("FlextExceptions", "e"),
             ".handlers": ("FlextHandlers", "h"),
-            ".lazy": ("FlextLazy", "FlextLazyAttribute", "lazy_attribute"),
+            ".lazy": (
+                "FlextLazy",
+                "FlextLazyMember",
+                "lazy_member",
+                "resolve_lazy_members",
+            ),
             ".loggings": ("FlextUtilitiesLogging",),
             ".mixins": ("FlextMixins", "x"),
             ".models": ("FlextModels", "m"),
