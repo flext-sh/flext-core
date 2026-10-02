@@ -11,15 +11,16 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
+
 from flext_core.__version__ import (
-    __author__,
-    __author_email__,
-    __description__,
-    __license__,
-    __title__,
-    __url__,
-    __version__,
-    __version_info__,
+    __author__ as __author__,
+    __author_email__ as __author_email__,
+    __description__ as __description__,
+    __license__ as __license__,
+    __title__ as __title__,
+    __url__ as __url__,
+    __version__ as __version__,
+    __version_info__ as __version_info__,
 )
 
 if TYPE_CHECKING:
@@ -29,27 +30,31 @@ if TYPE_CHECKING:
     from flext_core.api import FlextApi, core
     from flext_core.base import FlextBase
     from flext_core.cli import FlextCli
-    from flext_core.constants import FlextConstants, FlextConstantsEnforcement, c
+    from flext_core.constants import (
+        FlextConstants,
+        FlextConstants as c,
+        FlextConstantsEnforcement,
+    )
     from flext_core.container import FlextContainer
     from flext_core.context import FlextContext
     from flext_core.decorators import FlextDecorators, d
     from flext_core.dispatcher import FlextDispatcher
-    from flext_core.exceptions import FlextExceptions, e
+    from flext_core.exceptions import FlextExceptions, FlextExceptions as e
     from flext_core.handlers import FlextHandlers, h
     from flext_core.lazy import FlextLazy, FlextLazyAttribute, lazy_attribute
     from flext_core.loggings import FlextUtilitiesLogging
-    from flext_core.mixins import FlextMixins, x
-    from flext_core.models import FlextModels, m
-    from flext_core.protocols import FlextProtocols, p
+    from flext_core.mixins import FlextMixins, FlextMixins as x
+    from flext_core.models import FlextModels, FlextModels as m
+    from flext_core.protocols import FlextProtocols, FlextProtocols as p
     from flext_core.registry import FlextRegistry
-    from flext_core.result import FlextResult, r
+    from flext_core.result import FlextResult, FlextResult as r
     from flext_core.runtime import FlextRuntime
-    from flext_core.service import FlextService, s
-    from flext_core.typings import FlextTypes, t
+    from flext_core.service import FlextService, FlextService as s
+    from flext_core.typings import FlextTypes, FlextTypes as t
     from flext_core.utilities import (
         FlextUtilities,
+        FlextUtilities as u,
         FlextUtilitiesRuntimeViolationRegistry,
-        u,
     )
 
 
@@ -88,14 +93,12 @@ __all__: tuple[str, ...] = (
     "__url__",
     "__version__",
     "__version_info__",
-    "build_lazy_import_map",
     "c",
     "config",
     "core",
     "d",
     "e",
     "h",
-    "install_lazy_exports",
     "lazy_attribute",
     "m",
     "p",
