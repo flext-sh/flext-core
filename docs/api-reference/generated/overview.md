@@ -23,7 +23,7 @@
 - Alias exports: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
 - Public symbol exports: `FlextApi`, `FlextBase`, `FlextCli`, `FlextConfig`,
   `FlextConstants`, `FlextConstantsEnforcement`, `FlextContainer`, `FlextContext`,
-  `FlextDecorators`, `FlextDispatcher` (+23 more)
+  `FlextDecorators`, `FlextDispatcher` (+20 more)
 - Exported module shortcuts: `services`
 - Generated module pages: `21`
 
