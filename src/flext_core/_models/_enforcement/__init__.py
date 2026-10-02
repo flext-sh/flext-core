@@ -14,8 +14,8 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._models._enforcement._base import (
-        EnforcementModelBase,
         FlextModelsEnforcementBase,
+        FlextModelsEnforcementModelBase,
     )
     from flext_core._models._enforcement._catalog import FlextModelsEnforcementCatalog
     from flext_core._models._enforcement._inspection import (
@@ -29,10 +29,10 @@ if TYPE_CHECKING:
 
 
 __all__: tuple[str, ...] = (
-    "EnforcementModelBase",
     "FlextModelsEnforcementBase",
     "FlextModelsEnforcementCatalog",
     "FlextModelsEnforcementInspection",
+    "FlextModelsEnforcementModelBase",
     "FlextModelsEnforcementParams",
     "FlextModelsEnforcementResolution",
     "FlextModelsEnforcementSources",
@@ -41,7 +41,7 @@ __all__: tuple[str, ...] = (
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
-            "._base": ("EnforcementModelBase", "FlextModelsEnforcementBase"),
+            "._base": ("FlextModelsEnforcementBase", "FlextModelsEnforcementModelBase"),
             "._catalog": ("FlextModelsEnforcementCatalog",),
             "._inspection": ("FlextModelsEnforcementInspection",),
             "._params": ("FlextModelsEnforcementParams",),

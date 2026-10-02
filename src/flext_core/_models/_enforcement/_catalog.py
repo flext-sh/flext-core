@@ -11,7 +11,7 @@ from typing import Annotated
 from pydantic import Discriminator, Field, model_validator
 
 from flext_core import c
-from flext_core._models._enforcement._base import EnforcementModelBase
+from flext_core._models._enforcement._base import FlextModelsEnforcementModelBase
 from flext_core._models._enforcement._sources import FlextModelsEnforcementSources
 from flext_core._typings.base import FlextTypingBase as t
 
@@ -26,7 +26,7 @@ type EnforcementRuleSource = (
 class FlextModelsEnforcementCatalog(FlextModelsEnforcementSources):
     """Rule-spec and catalog containers for enforcement."""
 
-    class EnforcementRuleSpec(EnforcementModelBase):
+    class EnforcementRuleSpec(FlextModelsEnforcementModelBase):
         """Single rule entry in the enforcement catalog."""
 
         id: Annotated[str, Field(pattern=c.PATTERN_ENFORCE_RULE_ID)]
@@ -36,7 +36,7 @@ class FlextModelsEnforcementCatalog(FlextModelsEnforcementSources):
         agents_md_anchor: str = ""
         skills: t.StrSequence = ()
 
-    class EnforcementCatalog(EnforcementModelBase):
+    class EnforcementCatalog(FlextModelsEnforcementModelBase):
         """Frozen catalog of all enforcement rules, validated from package data."""
 
         version: int = 1

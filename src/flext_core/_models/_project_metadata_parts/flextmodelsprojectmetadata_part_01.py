@@ -11,7 +11,7 @@ from typing import ClassVar
 from flext_core._models.pydantic import FlextModelsPydantic
 
 
-class ProjectMetadataContract(FlextModelsPydantic.BaseModel):
+class FlextModelsProjectMetadataContract(FlextModelsPydantic.BaseModel):
     """Frozen declaration base for owned project metadata."""
 
     model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
@@ -19,17 +19,7 @@ class ProjectMetadataContract(FlextModelsPydantic.BaseModel):
     )
 
 
-class PyprojectIngressContract(ProjectMetadataContract):
-    """Frozen declaration base for standards-owned TOML tables."""
-
-    model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
-        FlextModelsPydantic.ConfigDict(
-            frozen=True,
-            extra="ignore",
-            populate_by_name=True,
-        )
-    )
-
-
 # NOTE (multi-agent, mro-wkii.17.23 / agent: uv_overlay_owner): one non-part,
 # declaration-only owner replaces the method-bearing split model hierarchy.
+# The standards-owned TOML ingress base lives in part_05 (one class per
+# module, NS-000).

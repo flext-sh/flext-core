@@ -57,7 +57,6 @@ if TYPE_CHECKING:
     from flext_core._constants.enforcement import (
         FlextConstantsEnforcement,
         FlextMroViolation,
-        FlextSmellViolation,
     )
     from flext_core._constants.environment import FlextConstantsEnvironment
     from flext_core._constants.errors import FlextConstantsErrors
@@ -108,7 +107,6 @@ __all__: tuple[str, ...] = (
     "FlextConstantsTimeout",
     "FlextConstantsValidation",
     "FlextMroViolation",
-    "FlextSmellViolation",
     "_enforcement_data",
     "_enforcement_parts",
     "_errors_parts",
@@ -156,11 +154,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".base": ("FlextConstantsBase",),
             ".config": ("FlextConstantsConfig",),
             ".cqrs": ("FlextConstantsCqrs",),
-            ".enforcement": (
-                "FlextConstantsEnforcement",
-                "FlextMroViolation",
-                "FlextSmellViolation",
-            ),
+            ".enforcement": ("FlextConstantsEnforcement", "FlextMroViolation"),
             ".environment": ("FlextConstantsEnvironment",),
             ".errors": ("FlextConstantsErrors",),
             ".file": ("FlextConstantsFile",),

@@ -99,7 +99,7 @@ _UniqueKeySafeLoader.add_constructor(
 )
 
 
-class StrictYamlConfigSource(YamlConfigSettingsSource):
+class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
     """Pydantic settings source backed by the unique-key safe loader.
 
     Accepts an optional ``transform`` callable applied to the fully merged
@@ -216,7 +216,9 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
         for key, value in updating.items():
             existing = result.get(key)
             if isinstance(existing, dict) and isinstance(value, dict):
-                result[key] = StrictYamlConfigSource._deep_merge_lists(existing, value)
+                result[key] = FlextStrictYamlConfigSource._deep_merge_lists(
+                    existing, value
+                )
             elif isinstance(existing, list) and isinstance(value, list):
                 result[key] = [*existing, *value]
             else:
@@ -397,7 +399,7 @@ class FlextConfig(BaseSettings):
             env_settings,
             # NOTE (multi-agent): one canonical loader rejects duplicate keys
             # before settings construction; consumers never add local parsers.
-            StrictYamlConfigSource(
+            FlextStrictYamlConfigSource(
                 settings_cls,
                 yaml_file=cls._config_files(),
                 deep_merge=True,

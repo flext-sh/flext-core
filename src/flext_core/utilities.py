@@ -28,6 +28,7 @@ from flext_core._utilities.family_surface import FlextUtilitiesFamilySurface
 from flext_core._utilities.files import FlextUtilitiesFiles
 from flext_core._utilities.generators import FlextUtilitiesGenerators
 from flext_core._utilities.guards import FlextUtilitiesGuards
+from flext_core._utilities.logging import FlextUtilitiesLogging
 from flext_core._utilities.mapper import FlextUtilitiesMapper
 from flext_core._utilities.model_runtime import FlextUtilitiesModelRuntime
 from flext_core._utilities.parser import FlextUtilitiesParser
@@ -39,7 +40,6 @@ from flext_core._utilities.runtime_violation_registry import (
 )
 from flext_core._utilities.settings import FlextUtilitiesSettings
 from flext_core._utilities.text import FlextUtilitiesText
-from flext_core.loggings import FlextUtilitiesLogging
 from flext_core.runtime import FlextRuntime
 
 

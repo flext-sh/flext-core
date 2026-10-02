@@ -31,8 +31,8 @@ if TYPE_CHECKING:
     from flext_core._models._context._proxy_var import FlextModelsContextProxyVar
     from flext_core._models._context._tokens import FlextModelsContextTokens
     from flext_core._models._enforcement._base import (
-        EnforcementModelBase,
         FlextModelsEnforcementBase,
+        FlextModelsEnforcementModelBase,
     )
     from flext_core._models._enforcement._catalog import FlextModelsEnforcementCatalog
     from flext_core._models._enforcement._inspection import (
@@ -44,17 +44,19 @@ if TYPE_CHECKING:
     )
     from flext_core._models._enforcement._sources import FlextModelsEnforcementSources
     from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_01 import (
-        ProjectMetadataContract,
-        PyprojectIngressContract,
+        FlextModelsProjectMetadataContract,
     )
     from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_02 import (
-        ProjectMetadataFields,
+        FlextModelsProjectMetadataFields,
     )
     from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_03 import (
-        ProjectMetadataAggregates,
+        FlextModelsProjectMetadataAggregates,
     )
     from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_04 import (
-        ProjectMetadataDocument,
+        FlextModelsProjectMetadataDocument,
+    )
+    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_05 import (
+        FlextModelsPyprojectIngressContract,
     )
     from flext_core._models.base import FlextModelsBase
     from flext_core._models.builder import FlextModelsBuilder
@@ -79,7 +81,6 @@ if TYPE_CHECKING:
 
 
 __all__: tuple[str, ...] = (
-    "EnforcementModelBase",
     "FlextModelsBase",
     "FlextModelsBuilder",
     "FlextModelsCollections",
@@ -99,6 +100,7 @@ __all__: tuple[str, ...] = (
     "FlextModelsEnforcementBase",
     "FlextModelsEnforcementCatalog",
     "FlextModelsEnforcementInspection",
+    "FlextModelsEnforcementModelBase",
     "FlextModelsEnforcementParams",
     "FlextModelsEnforcementResolution",
     "FlextModelsEnforcementSources",
@@ -108,15 +110,15 @@ __all__: tuple[str, ...] = (
     "FlextModelsHandler",
     "FlextModelsNamespace",
     "FlextModelsProjectMetadata",
+    "FlextModelsProjectMetadataAggregates",
+    "FlextModelsProjectMetadataContract",
+    "FlextModelsProjectMetadataDocument",
+    "FlextModelsProjectMetadataFields",
     "FlextModelsPydantic",
+    "FlextModelsPyprojectIngressContract",
     "FlextModelsRegistry",
     "FlextModelsService",
     "FlextModelsSettings",
-    "ProjectMetadataAggregates",
-    "ProjectMetadataContract",
-    "ProjectMetadataDocument",
-    "ProjectMetadataFields",
-    "PyprojectIngressContract",
     "_base_parts",
     "_container_parts",
     "_context",
@@ -143,8 +145,8 @@ _LAZY_IMPORTS = MappingProxyType(
             "._cqrs_parts": ("_cqrs_parts",),
             "._enforcement": ("_enforcement",),
             "._enforcement._base": (
-                "EnforcementModelBase",
                 "FlextModelsEnforcementBase",
+                "FlextModelsEnforcementModelBase",
             ),
             "._enforcement._catalog": ("FlextModelsEnforcementCatalog",),
             "._enforcement._inspection": ("FlextModelsEnforcementInspection",),
@@ -154,17 +156,19 @@ _LAZY_IMPORTS = MappingProxyType(
             "._exception_params_parts": ("_exception_params_parts",),
             "._project_metadata_parts": ("_project_metadata_parts",),
             "._project_metadata_parts.flextmodelsprojectmetadata_part_01": (
-                "ProjectMetadataContract",
-                "PyprojectIngressContract",
+                "FlextModelsProjectMetadataContract",
             ),
             "._project_metadata_parts.flextmodelsprojectmetadata_part_02": (
-                "ProjectMetadataFields",
+                "FlextModelsProjectMetadataFields",
             ),
             "._project_metadata_parts.flextmodelsprojectmetadata_part_03": (
-                "ProjectMetadataAggregates",
+                "FlextModelsProjectMetadataAggregates",
             ),
             "._project_metadata_parts.flextmodelsprojectmetadata_part_04": (
-                "ProjectMetadataDocument",
+                "FlextModelsProjectMetadataDocument",
+            ),
+            "._project_metadata_parts.flextmodelsprojectmetadata_part_05": (
+                "FlextModelsPyprojectIngressContract",
             ),
             ".base": ("FlextModelsBase",),
             ".builder": ("FlextModelsBuilder",),

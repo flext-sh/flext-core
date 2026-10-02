@@ -101,7 +101,7 @@ class FlextUtilitiesBeartypeHelpers:
         )
 
     @staticmethod
-    def is_family_facade(target: type) -> bool:
+    def family_facade(target: type) -> bool:
         """Return True when a family package publishes ``target`` as a letter facade.
 
         Both facts come from their owners: the generated ``_LAZY_IMPORTS``

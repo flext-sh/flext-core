@@ -20,9 +20,9 @@ rem delete something it never created.
 set "download_path="
 set "sums="
 
-set "pinned_version=2026.9.16"
-set "sum_x64=b724be30f9596e5abea693556640e4b5076efebe4fd8d8a8011f98d294b83576"
-set "sum_arm64=a3e8a5e9850cb48dc0ec493820bcd6ab38ad5d431a304ee10b9e9c998977bcd8"
+set "pinned_version=2026.9.13"
+set "sum_x64=5f049f26f4d4f689512df65c6d965221983429cafa71ef5f01452f7a446450be"
+set "sum_arm64=554acf6fbe9472be6d8aceff993012deda28d53532a3869954c529e0b449f9bb"
 
 rem MISE_VERSION itself is never written to. Everything here runs inside `setlocal`, so assigning
 rem a fallback to it would hand the launched mise an env var the bash branch does not set.
