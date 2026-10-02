@@ -179,8 +179,8 @@ class TestsFlextCoreCqrs:
         "invalid_pagination",
         [{"page": 0, "size": -5}, {"size": 10_000}, {"page": -1}],
     )
+    @staticmethod
     def test_query_falls_back_to_default_pagination_on_invalid_input(
-        self,
         invalid_pagination: t.MappingKV[str, t.Scalar],
     ) -> None:
         # Act
@@ -228,8 +228,8 @@ class TestsFlextCoreCqrs:
         ("page", "size", "expected_offset"),
         [(1, 10, 0), (2, 10, 10), (3, 20, 40), (5, 50, 200)],
     )
+    @staticmethod
     def test_pagination_offset_is_derived_from_page_and_size(
-        self,
         page: int,
         size: int,
         expected_offset: int,
@@ -244,8 +244,8 @@ class TestsFlextCoreCqrs:
         "invalid_kwargs",
         [{"size": c.MAX_PAGE_SIZE + 1}, {"page": 0}, {"page": -3}, {"size": 0}],
     )
+    @staticmethod
     def test_pagination_rejects_out_of_range_values(
-        self,
         invalid_kwargs: t.MappingKV[str, int],
     ) -> None:
         # Act / Assert

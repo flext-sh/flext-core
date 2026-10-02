@@ -33,7 +33,7 @@ class TestsFlextCoreServiceBootstrap:
 
         @override
         def execute(self) -> p.Result[bool]:
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
 
     # --- Service execution contract ------------------------------------
 

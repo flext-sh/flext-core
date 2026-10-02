@@ -8,19 +8,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, Self, overload, override, runtime_checkable
 
-from ..base import FlextProtocolsBase
-from ..settings import FlextProtocolsSettings
+from flext_core._protocols._container_parts.flextprotocolscontainer_part_01 import (
+    FlextProtocolsContainer as FlextProtocolsContainerPart01,
+)
+from flext_core._protocols.base import FlextProtocolsBase
+from flext_core._protocols.settings import FlextProtocolsSettings
 
 if TYPE_CHECKING:
     from flext_core import m, t
-
-    from ..context import FlextProtocolsContext
-    from ..handler import FlextProtocolsHandler
-    from ..loggings import FlextProtocolsLogging
-    from ..result import FlextProtocolsResult
-from .flextprotocolscontainer_part_01 import (
-    FlextProtocolsContainer as FlextProtocolsContainerPart01,
-)
+    from flext_core._protocols.context import FlextProtocolsContext
+    from flext_core._protocols.handler import FlextProtocolsHandler
+    from flext_core._protocols.loggings import FlextProtocolsLogging
+    from flext_core._protocols.result import FlextProtocolsResult
 
 
 class FlextProtocolsContainer(FlextProtocolsContainerPart01):

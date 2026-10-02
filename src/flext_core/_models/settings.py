@@ -14,9 +14,8 @@ from typing import Annotated, ClassVar, Self
 from pydantic import AliasChoices, ConfigDict, model_validator
 
 from flext_core import c, t
-
-from .base import FlextModelsBase as m
-from .pydantic import FlextModelsPydantic as mp
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.pydantic import FlextModelsPydantic as mp
 
 
 class FlextModelsSettings:

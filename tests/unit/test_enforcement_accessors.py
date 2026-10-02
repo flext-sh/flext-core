@@ -16,9 +16,8 @@ import pytest
 
 from flext_core.utilities import FlextUtilitiesBeartypeEngine
 from tests.models import m
+from tests.unit._enforcement_support import make_class, synthetic_method
 from tests.utilities import u
-
-from ._enforcement_support import make_class, synthetic_method
 
 _INHERITANCE_FRAGMENT = "must inherit FlextSettings"
 _ACCESSOR_FRAGMENT = "accessor method"
@@ -28,7 +27,8 @@ class TestsFlextCoreEnforcementAccessors:
     """Public enforcement behavior: what ``u.check`` reports to a caller."""
 
     @pytest.mark.parametrize("prefix", ["get_user", "set_config", "is_ready"])
-    def test_forbidden_accessor_prefix_is_flagged(self, prefix: str) -> None:
+    @staticmethod
+    def test_forbidden_accessor_prefix_is_flagged(prefix: str) -> None:
         # Arrange
         """Test forbidden accessor prefix is flagged."""
         cls = make_class("FlextCoreAccessed", {prefix: synthetic_method})
@@ -44,7 +44,8 @@ class TestsFlextCoreEnforcementAccessors:
         assert "fetch_" in message or "computed_field" in message
 
     @pytest.mark.parametrize("prefix", ["fetch_remote", "resolve_ref", "compute_total"])
-    def test_domain_verb_method_is_allowed(self, prefix: str) -> None:
+    @staticmethod
+    def test_domain_verb_method_is_allowed(prefix: str) -> None:
         # Arrange
         """Test domain verb method is allowed."""
         cls = make_class("FlextCoreVerb", {prefix: synthetic_method})

@@ -1,10 +1,13 @@
-"""Settings example field checks kept below the module LOC cap."""
+"""Settings example field checks kept below the module LOC cap.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
+from examples.shared import ExamplesFlextShared
 from flext_core import FlextSettings
-
-from .shared import ExamplesFlextShared
 
 
 class Ex02FlextSettingsFieldChecks(ExamplesFlextShared):

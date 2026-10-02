@@ -43,8 +43,8 @@ class TestsFlextEnforcementCatalog:
         assert catalog.by_id("ENFORCE-999") is None
 
     @pytest.mark.parametrize("kind", list(c.EnforcementSourceKind))
+    @staticmethod
     def test_every_source_kind_is_present_and_filtered_by_kind(
-        self,
         kind: c.EnforcementSourceKind,
     ) -> None:
         """Test every source kind is present and filtered by kind."""

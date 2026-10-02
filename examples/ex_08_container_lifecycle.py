@@ -1,12 +1,15 @@
-"""Container lifecycle example section."""
+"""Container lifecycle example section.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
+from examples.ex_08_container_scoped import Ex08ContainerScoped
 from examples.models import m
 from examples.protocols import p
 from flext_core import FlextContainer
-
-from .ex_08_container_scoped import Ex08ContainerScoped
 
 
 class Ex08ContainerLifecycle(Ex08ContainerScoped):

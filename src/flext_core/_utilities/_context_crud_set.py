@@ -1,14 +1,17 @@
-"""Context ``set`` overloads and implementation (extracted for LOC cap)."""
+"""Context ``set`` overloads and implementation (extracted for LOC cap).
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from typing import overload
 
 from flext_core import c, e, p, r, t
-
-from ..runtime import FlextRuntime
-from .context_state import FlextUtilitiesContextState
-from .model import FlextUtilitiesModel
+from flext_core._utilities.context_state import FlextUtilitiesContextState
+from flext_core._utilities.model import FlextUtilitiesModel
+from flext_core.runtime import FlextRuntime
 
 
 class FlextUtilitiesContextCrudSetMixin(FlextUtilitiesContextState):
@@ -39,8 +42,13 @@ class FlextUtilitiesContextCrudSetMixin(FlextUtilitiesContextState):
         *,
         scope: str = c.ContextScope.GLOBAL,
     ) -> p.Result[bool]:
-        """Set one or many values in the context."""
-        operation_result: p.Result[bool] = r[bool].ok(True)
+        """Set one or many values in the context.
+
+        Returns:
+            The resulting ``p.Result[bool]``.
+
+        """
+        operation_result: p.Result[bool] = r[bool].ok(value=True)
         prepared_update: tuple[t.JsonMapping, t.JsonMapping] | None = None
         if not self.state.active:
             operation_result = r[bool].fail_op(
@@ -78,7 +86,7 @@ class FlextUtilitiesContextCrudSetMixin(FlextUtilitiesContextState):
                             {"key": key, "value": normalized_value},
                         )
                 case data, _ if not data:
-                    operation_result = r[bool].ok(True)
+                    operation_result = r[bool].ok(value=True)
                 case payload_mapping, _:
                     mapping_payload = t.json_mapping_adapter().validate_python(
                         payload_mapping,

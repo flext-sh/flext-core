@@ -1,14 +1,17 @@
-"""Path-based extract pipeline on top of ``FlextUtilitiesMapperAccess``."""
+"""Path-based extract pipeline on top of ``FlextUtilitiesMapperAccess``.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from flext_core import c, e, p, r, t
-
-from ..._models.exception_params import FlextModelsExceptionParams
-from ..guards import FlextUtilitiesGuards
-from .mapper_extract_part_01 import (
+from flext_core._models.exception_params import FlextModelsExceptionParams
+from flext_core._utilities._mapper_extract_parts.mapper_extract_part_01 import (
     FlextUtilitiesMapperExtract as FlextUtilitiesMapperExtractPart01,
 )
+from flext_core._utilities.guards import FlextUtilitiesGuards
 
 
 class FlextUtilitiesMapperExtract(FlextUtilitiesMapperExtractPart01):
@@ -65,7 +68,12 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperExtractPart01):
         required: bool = False,
         separator: str = ".",
     ) -> p.Result[t.JsonPayload]:
-        """Extract nested value via dot-notation path with array index support."""
+        """Extract nested value via dot-notation path with array index support.
+
+        Returns:
+            The resulting ``p.Result[t.JsonPayload]``.
+
+        """
         try:
             return FlextUtilitiesMapperExtract._extract_path_parts(
                 data,

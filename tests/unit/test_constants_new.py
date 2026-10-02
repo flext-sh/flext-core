@@ -66,8 +66,8 @@ class TestsFlextConstantsNew:
             c.ParserCase,
         ],
     )
+    @staticmethod
     def test_domain_enums_are_string_valued_for_routing(
-        self,
         domain_enum: type[enum.Enum],
     ) -> None:
         """Every routing enum is a StrEnum whose str() equals its wire value.
@@ -86,8 +86,8 @@ class TestsFlextConstantsNew:
         "domain_enum",
         [c.Status, c.ErrorDomain, c.LogLevel, c.Environment, c.SerializationFormat],
     )
+    @staticmethod
     def test_domain_enum_value_lookup_roundtrips(
-        self,
         domain_enum: type[enum.StrEnum],
     ) -> None:
         """A caller can reconstruct any member from its public wire value."""
@@ -113,15 +113,16 @@ class TestsFlextConstantsNew:
         "token",
         tuple(c.PARSER_BOOLEAN_TRUTHY) + tuple(c.PARSER_BOOLEAN_FALSY),
     )
-    def test_boolean_tokens_are_lowercase_and_spaceless(self, token: str) -> None:
+    @staticmethod
+    def test_boolean_tokens_are_lowercase_and_spaceless(token: str) -> None:
         """Validation token sets remain normalized (lowercase, no whitespace)."""
         tm.that(token, eq=token.lower())
         tm.that(" " not in token, eq=True)
 
     # -------------------------------------------------- identifier regex rules
     @pytest.mark.parametrize(("raw_app_id", "normalized"), c.Tests.FORMAT_APP_ID_CASES)
+    @staticmethod
     def test_app_id_cases_match_core_identifier_regex(
-        self,
         raw_app_id: str,
         normalized: str,
     ) -> None:
@@ -130,8 +131,8 @@ class TestsFlextConstantsNew:
         tm.that(bool(c.PATTERN_IDENTIFIER_LOWERCASE_RE.fullmatch(normalized)), eq=True)
 
     @pytest.mark.parametrize(("raw", "expected"), c.Tests.SAFE_STRING_VALID_CASES)
+    @staticmethod
     def test_safe_string_valid_cases_align_with_parser_tokens(
-        self,
         raw: str,
         expected: str,
     ) -> None:
@@ -144,8 +145,8 @@ class TestsFlextConstantsNew:
         )
 
     @pytest.mark.parametrize(("raw", "_reason"), c.Tests.SAFE_STRING_INVALID_CASES)
+    @staticmethod
     def test_safe_string_invalid_cases_do_not_match_identifier_regex(
-        self,
         raw: str | None,
         _reason: str,
     ) -> None:
@@ -169,7 +170,8 @@ class TestsFlextConstantsNew:
             "1.2.3+linux.x86_64",
         ],
     )
-    def test_version_pattern_accepts_semver_and_pep440(self, version: str) -> None:
+    @staticmethod
+    def test_version_pattern_accepts_semver_and_pep440(version: str) -> None:
         """Version validation accepts published and normalized metadata forms."""
         tm.that(bool(c.PATTERN_SEMVER_RE.fullmatch(version)), eq=True)
 
@@ -177,7 +179,8 @@ class TestsFlextConstantsNew:
         "version",
         ["1.2", "1.2.3rc", "1.2.3+", "1.2.3..rc0", "1.2.3-"],
     )
-    def test_version_pattern_rejects_incomplete_versions(self, version: str) -> None:
+    @staticmethod
+    def test_version_pattern_rejects_incomplete_versions(version: str) -> None:
         """Version validation rejects incomplete prerelease and local segments."""
         tm.that(bool(c.PATTERN_SEMVER_RE.fullmatch(version)), eq=False)
 
@@ -189,8 +192,8 @@ class TestsFlextConstantsNew:
             "uid=user-123,dc=example",
         ],
     )
+    @staticmethod
     def test_ldap_dn_pattern_accepts_complete_components(
-        self,
         distinguished_name: str,
     ) -> None:
         """LDAP DN validation accepts complete comma-delimited components."""
@@ -200,8 +203,8 @@ class TestsFlextConstantsNew:
         "distinguished_name",
         ["", "=value", "CN=", "CN=   ", "CN=value,", "1CN=value"],
     )
+    @staticmethod
     def test_ldap_dn_pattern_rejects_incomplete_components(
-        self,
         distinguished_name: str,
     ) -> None:
         """LDAP DN validation rejects missing names, values, and components."""

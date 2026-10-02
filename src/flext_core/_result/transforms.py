@@ -1,4 +1,8 @@
-"""Transform operations for FlextResult."""
+"""Transform operations for FlextResult.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -7,8 +11,11 @@ from typing import TYPE_CHECKING, Self, cast, overload
 from pydantic import BaseModel
 
 from flext_core import c
-
-from .construction import FlextResultConstruction, copy_result, ok_result
+from flext_core._result.construction import (
+    FlextResultConstruction,
+    copy_result,
+    ok_result,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -20,7 +27,12 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
     """Instance transformation methods for result values and errors."""
 
     def _as_result(self) -> p.Result[T]:
-        """Structural view of self as the abstract Result protocol."""
+        """Structural view of self as the abstract Result protocol.
+
+        Returns:
+            The resulting ``p.Result[T]``.
+
+        """
         return cast("p.Result[T]", self)
 
     def filter(self: Self, predicate: Callable[[T], bool]) -> p.Result[T]:

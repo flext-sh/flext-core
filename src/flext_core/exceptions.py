@@ -11,13 +11,13 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from ._constants.enforcement import FlextMroViolation, FlextSmellViolation
-from ._exceptions.base import FlextExceptionsBase
-from ._exceptions.exception_types import FlextExceptionsTypes
-from ._exceptions.factories import FlextExceptionsFactories
-from ._exceptions.helpers import FlextExceptionsHelpers
-from ._exceptions.metrics import FlextExceptionsMetrics
-from ._exceptions.template import FlextExceptionsTemplate
+from flext_core._constants.enforcement import FlextMroViolation, FlextSmellViolation
+from flext_core._exceptions.base import FlextExceptionsBase
+from flext_core._exceptions.exception_types import FlextExceptionsTypes
+from flext_core._exceptions.factories import FlextExceptionsFactories
+from flext_core._exceptions.helpers import FlextExceptionsHelpers
+from flext_core._exceptions.metrics import FlextExceptionsMetrics
+from flext_core._exceptions.template import FlextExceptionsTemplate
 
 
 class FlextExceptions(

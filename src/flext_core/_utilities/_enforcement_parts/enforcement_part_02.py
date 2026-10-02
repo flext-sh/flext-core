@@ -1,4 +1,8 @@
-"""Runtime enforcement engine MRO part."""
+"""Runtime enforcement engine MRO part.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -8,13 +12,15 @@ from typing import ClassVar
 
 from pydantic_settings import BaseSettings
 
-from ..._constants.enforcement import FlextConstantsEnforcement as c
-from ..._models.enforcement import FlextModelsEnforcement as me
-from ..._models.pydantic import FlextModelsPydantic as mp
-from ..._protocols.base import FlextProtocolsBase as p
-from ..beartype_engine import FlextUtilitiesBeartypeEngine as ub
-from ..enforcement_collect import FlextUtilitiesEnforcementCollect
-from .enforcement_part_01 import PREDICATE_BINDINGS
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._models.enforcement import FlextModelsEnforcement as me
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._protocols.base import FlextProtocolsBase as p
+from flext_core._utilities._enforcement_parts.enforcement_part_01 import (
+    PREDICATE_BINDINGS,
+)
+from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as ub
+from flext_core._utilities.enforcement_collect import FlextUtilitiesEnforcementCollect
 
 
 class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
@@ -36,6 +42,10 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
 
         Every runtime tag carries its category and its predicate binding in the
         same data row, so a tag without a binding is a data defect and raises.
+
+        Returns:
+            The resulting ``me.Report``.
+
         """
         kind, params = PREDICATE_BINDINGS[tag]
         violations: list[me.Violation] = []
@@ -73,6 +83,10 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         This is the single category→iterator dispatch — ``check()`` runs
         every row in ``c.ENFORCEMENT_RULES`` through here and pipes the
         result into :meth:`_apply_rule`.
+
+        Yields:
+            Each ``tuple[str, tuple[p.AttributeProbe, ...]]``.
+
         """
         # A class is a model by DECLARATION: the canonical FLEXT base or a
         # pydantic-settings base declared directly (which is exactly what the
@@ -139,6 +153,10 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         no per-category engine duplication; item iterators live in the
         ``_*_items`` / :meth:`_items_for` helpers and vary only by tag.
         Attr-rule recursion is handled via ``c.ENFORCEMENT_RECURSIVE_TAGS``.
+
+        Returns:
+            The resulting ``me.Report``.
+
         """
         violations: list[me.Violation] = []
         deferred: list[me.DeferredInspection] = []
@@ -184,12 +202,22 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
 
     @staticmethod
     def check(target: type, *, layer: str | None = None) -> me.Report:
-        """Query all applicable rules and return a typed report (no emission)."""
+        """Query all applicable rules and return a typed report (no emission).
+
+        Returns:
+            The resulting ``me.Report``.
+
+        """
         return FlextUtilitiesEnforcement._check(target, layer=layer)
 
     @staticmethod
     def check_model_construction(target: type[mp.BaseModel]) -> me.Report:
-        """Run only Pydantic construction rules for ``__pydantic_init_subclass__``."""
+        """Run only Pydantic construction rules for ``__pydantic_init_subclass__``.
+
+        Returns:
+            The resulting ``me.Report``.
+
+        """
         return FlextUtilitiesEnforcement._check(
             target,
             categories=FlextUtilitiesEnforcement._MODEL_CONSTRUCTION_CATEGORIES,

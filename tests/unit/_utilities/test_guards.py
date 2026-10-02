@@ -43,8 +43,8 @@ class TestsFlextCoreGuards:
             ("x", "none", False),
         ],
     )
+    @staticmethod
     def test_matches_type_string_spec_reflects_runtime_type(
-        self,
         value: t.JsonValue | None,
         spec: str,
         *,
@@ -64,8 +64,8 @@ class TestsFlextCoreGuards:
             ([], "list_non_empty", False),
         ],
     )
+    @staticmethod
     def test_matches_type_non_empty_specs_require_content(
-        self,
         value: t.JsonValue,
         spec: str,
         *,
@@ -86,8 +86,8 @@ class TestsFlextCoreGuards:
         "spec",
         ["string_non_empty", "dict_non_empty", "list_non_empty"],
     )
+    @staticmethod
     def test_matches_type_excludes_pydantic_models_from_non_empty_specs(
-        self,
         spec: str,
     ) -> None:
         # A populated model would otherwise satisfy dict-like checks; the guard
@@ -107,8 +107,8 @@ class TestsFlextCoreGuards:
             (5.0, (int, str), False),
         ],
     )
+    @staticmethod
     def test_matches_type_type_and_tuple_specs(
-        self,
         value: t.JsonValue,
         spec: type | t.VariadicTuple[type],
         *,
@@ -139,8 +139,8 @@ class TestsFlextCoreGuards:
             {},
         ],
     )
+    @staticmethod
     def test_container_accepts_scalars_and_nested_json(
-        self,
         value: t.JsonValue,
     ) -> None:
         assert u.container(value) is True
@@ -149,8 +149,8 @@ class TestsFlextCoreGuards:
         "value",
         [None, object(), [1, object()], {"a": object()}, {"a": [object()]}],
     )
+    @staticmethod
     def test_container_rejects_none_and_non_json_members(
-        self,
         value: t.JsonValue | None,
     ) -> None:
         assert u.container(value) is False
@@ -175,8 +175,8 @@ class TestsFlextCoreGuards:
             (None, False),
         ],
     )
+    @staticmethod
     def test_scalar_identifies_scalar_values(
-        self,
         value: t.JsonValue | None,
         *,
         expected: bool,
@@ -194,8 +194,8 @@ class TestsFlextCoreGuards:
             ({"k": 1}, False),
         ],
     )
+    @staticmethod
     def test_primitive_identifies_primitive_values(
-        self,
         value: t.JsonValue,
         *,
         expected: bool,
@@ -222,8 +222,8 @@ class TestsFlextCoreGuards:
             ({"k": 1}, False),
         ],
     )
+    @staticmethod
     def test_list_like_excludes_strings_and_bytes(
-        self,
         value: t.JsonValue,
         *,
         expected: bool,
@@ -252,8 +252,8 @@ class TestsFlextCoreGuards:
             (0, False),
         ],
     )
+    @staticmethod
     def test_empty_value_reports_absence_or_empty_containers(
-        self,
         value: t.JsonValue | None,
         *,
         expected: bool,
@@ -264,8 +264,8 @@ class TestsFlextCoreGuards:
         ("value", "expected"),
         [("x", True), (" a ", True), ("", False), ("   ", False), (1, False)],
     )
+    @staticmethod
     def test_string_non_empty_requires_non_blank_string(
-        self,
         value: t.GuardInput,
         *,
         expected: bool,
@@ -297,8 +297,8 @@ class TestsFlextCoreGuards:
             (1, "not-a-real-container", False),
         ],
     )
+    @staticmethod
     def test_in_membership_only_for_true_containers(
-        self,
         value: t.GuardInput,
         container: t.GuardInput,
         *,

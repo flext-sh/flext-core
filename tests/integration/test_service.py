@@ -16,11 +16,10 @@ from typing import TYPE_CHECKING
 import pytest
 from flext_tests import tm
 
-from tests.utilities import u
-
-from .service_lifecycle_cases import (
+from tests.integration.service_lifecycle_cases import (
     TestsFlextFlextServiceLifecycleCases as _ServiceLifecycleCases,
 )
+from tests.utilities import u
 
 if TYPE_CHECKING:
     from tests.protocols import p

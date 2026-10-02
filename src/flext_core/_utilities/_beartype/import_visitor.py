@@ -1,15 +1,25 @@
-"""Import discipline enforcement — blacklist + alias rebind + library owners."""
+"""Import discipline enforcement — blacklist + alias rebind + library owners.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from ..._constants.enforcement import FlextConstantsEnforcement as c
-from ..._models.enforcement import FlextModelsEnforcement as me
-from ..._typings.base import FlextTypingBase as t
-from ._alias_visitor import FlextUtilitiesBeartypeAliasVisitor
-from ._library_visitor import FlextUtilitiesBeartypeLibraryVisitor
-from .helpers import FlextUtilitiesBeartypeHelpers as _ubh
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._models.enforcement import FlextModelsEnforcement as me
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._utilities._beartype._alias_visitor import (
+    FlextUtilitiesBeartypeAliasVisitor,
+)
+from flext_core._utilities._beartype._library_visitor import (
+    FlextUtilitiesBeartypeLibraryVisitor,
+)
+from flext_core._utilities._beartype.helpers import (
+    FlextUtilitiesBeartypeHelpers as _ubh,
+)
 
 _MIN_FAMILY_MODULE_PARTS = 2
 
@@ -22,7 +32,12 @@ class FlextUtilitiesBeartypeImportVisitor:
         params: me.ImportBlacklistParams,
         target: type,
     ) -> t.StrMapping | None:
-        """IMPORT_BLACKLIST — concrete-class / pydantic consumer-import discipline."""
+        """IMPORT_BLACKLIST — concrete-class / pydantic consumer-import discipline.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+
+        """
         return _ImportBlacklistVisitor.v_import_blacklist(params, target)
 
     @staticmethod
@@ -30,7 +45,12 @@ class FlextUtilitiesBeartypeImportVisitor:
         params: me.AliasRebindParams,
         target: type,
     ) -> t.StrMapping | None:
-        """ALIAS_REBIND."""
+        """ALIAS_REBIND.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+
+        """
         return FlextUtilitiesBeartypeAliasVisitor.v_alias_rebind(params, target)
 
     @staticmethod
@@ -38,7 +58,12 @@ class FlextUtilitiesBeartypeImportVisitor:
         params: me.CompatibilityAliasParams,
         target: type,
     ) -> t.StrMapping | None:
-        """COMPATIBILITY_ALIAS."""
+        """COMPATIBILITY_ALIAS.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+
+        """
         return FlextUtilitiesBeartypeAliasVisitor.v_compatibility_alias(params, target)
 
     @staticmethod
@@ -46,7 +71,12 @@ class FlextUtilitiesBeartypeImportVisitor:
         params: me.LibraryImportParams,
         target: type,
     ) -> t.StrMapping | None:
-        """LIBRARY_IMPORT."""
+        """LIBRARY_IMPORT.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+
+        """
         return FlextUtilitiesBeartypeLibraryVisitor.v_library_import(params, target)
 
 
@@ -58,7 +88,12 @@ class _ImportBlacklistVisitor:
         params: me.ImportBlacklistParams,
         target: type,
     ) -> t.StrMapping | None:
-        """IMPORT_BLACKLIST — concrete-class / pydantic consumer-import discipline."""
+        """IMPORT_BLACKLIST — concrete-class / pydantic consumer-import discipline.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+
+        """
         no_violation: t.StrMapping | None = None
         module = _ubh.runtime_module_for(target)
         if module is None:
@@ -158,6 +193,10 @@ class _ImportBlacklistVisitor:
         :attr:`FlextConstantsEnforcementTargets.ENFORCEMENT_PRIVATE_FAMILY_PACKAGES`
         constant (derived from ``ENFORCEMENT_CANONICAL_FILES``); evaluation
         iterates that set rather than hardcoding path fragments.
+
+        Returns:
+            True when *origin* is a same-package private-family import.
+
         """
         if "." not in origin or "." not in module_name:
             return False
@@ -182,7 +221,12 @@ class _ImportBlacklistVisitor:
         *,
         consumer_exempt: bool,
     ) -> bool:
-        """Return True when a module re-exports a private-family flext symbol."""
+        """Return True when a module re-exports a private-family flext symbol.
+
+        Returns:
+            True when a module re-exports a private-family flext symbol.
+
+        """
         if not isinstance(value, type):
             return False
         if not origin.startswith("flext_"):

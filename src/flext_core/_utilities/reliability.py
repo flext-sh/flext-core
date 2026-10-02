@@ -17,9 +17,8 @@ from typing import TYPE_CHECKING, Annotated
 from pydantic import Field
 
 from flext_core import c, p, r, t
-
-from .._models.base import FlextModelsBase
-from .args import FlextUtilitiesArgs
+from flext_core._models.base import FlextModelsBase
+from flext_core._utilities.args import FlextUtilitiesArgs
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -64,6 +63,10 @@ class FlextUtilitiesReliability:
         any matched exception into ``r[T].fail_op(op_name, exc)``. Use
         ``op_name`` to give the failure a meaningful operation label without
         wrapping in a custom try/except block.
+
+        Returns:
+            The resulting ``p.Result[TResult]``.
+
         """
         if catch is None:
             handled = FlextUtilitiesReliability._RETRYABLE_EXCEPTIONS
@@ -93,6 +96,10 @@ class FlextUtilitiesReliability:
 
         On exception: returns ``r[T].fail_op(op_name, exc)``.
         On Result outcome: propagates the original Result unchanged.
+
+        Returns:
+            The resulting ``p.Result[TResult]``.
+
         """
         if catch is None:
             handled = FlextUtilitiesReliability._RETRYABLE_EXCEPTIONS

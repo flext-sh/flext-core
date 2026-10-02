@@ -15,13 +15,14 @@ from __future__ import annotations
 
 import pytest
 
+import tests.utilities
 from flext_core.utilities import FlextUtilitiesBeartypeEngine as be
 from tests.protocols import p
 
-from ._beartype_engine_support import TestsFlextBeartypeEngine
 
-
-class TestsFlextCoreBeartypeEngine(TestsFlextBeartypeEngine):
+class TestsFlextCoreBeartypeEngine(
+    tests.utilities.TestsFlextUtilities.TestsFlextBeartypeEngine,
+):
     """Contract of the engine's placement + attribute-acceptance predicates."""
 
     @staticmethod
@@ -58,14 +59,19 @@ class TestsFlextCoreBeartypeEngine(TestsFlextBeartypeEngine):
     @staticmethod
     def test_defined_in_function_scope_false_for_module_class() -> None:
         """A module-level class is not reported as function-scoped."""
-        assert be.defined_in_function_scope(TestsFlextBeartypeEngine) is False
+        assert (
+            be.defined_in_function_scope(
+                tests.utilities.TestsFlextUtilities.TestsFlextBeartypeEngine,
+            )
+            is False
+        )
 
     @pytest.mark.parametrize(
         ("name", "expected"),
         [("run", True), ("do_thing", True), ("_private", False), ("__dunder__", False)],
     )
+    @staticmethod
     def test_attr_accept_public_rejects_underscore_names(
-        self,
         name: str,
         *,
         expected: bool,
@@ -83,8 +89,8 @@ class TestsFlextCoreBeartypeEngine(TestsFlextBeartypeEngine):
             ("_private", False),
         ],
     )
+    @staticmethod
     def test_attr_accept_utility_excludes_exempt_and_private(
-        self,
         name: str,
         *,
         expected: bool,
@@ -99,8 +105,8 @@ class TestsFlextCoreBeartypeEngine(TestsFlextBeartypeEngine):
         assert be.attr_accept_constants("MAX_RETRIES", value) is True
 
     @pytest.mark.parametrize("name", ["_private", "model_fields", "__doc__"])
+    @staticmethod
     def test_attr_accept_constants_rejects_private_and_skip_names(
-        self,
         name: str,
     ) -> None:
         """Private names and skip-listed attributes are rejected regardless of value."""

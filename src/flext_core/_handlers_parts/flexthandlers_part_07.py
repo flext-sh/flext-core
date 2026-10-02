@@ -1,12 +1,17 @@
-"""CQRS handler discovery helpers."""
+"""CQRS handler discovery helpers.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 from flext_core import c, t
-
-from .flexthandlers_part_06 import FlextHandlers as FlextHandlersPart06
+from flext_core._handlers_parts.flexthandlers_part_06 import (
+    FlextHandlers as FlextHandlersPart06,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable, MutableSequence

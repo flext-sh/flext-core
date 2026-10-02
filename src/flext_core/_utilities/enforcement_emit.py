@@ -11,14 +11,14 @@ import warnings
 from types import MappingProxyType
 from typing import ClassVar
 
-from .._constants import _enforcement_data
-from .._constants.enforcement import (
+from flext_core._constants import _enforcement_data
+from flext_core._constants.enforcement import (
     FlextConstantsEnforcement as c,
     FlextMroViolation,
     FlextSmellViolation,
 )
-from .._models.enforcement import FlextModelsEnforcement as me
-from .._typings.base import FlextTypingBase as t
+from flext_core._models.enforcement import FlextModelsEnforcement as me
+from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextUtilitiesEnforcementEmit:

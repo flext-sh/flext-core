@@ -52,8 +52,8 @@ class TestsFlextCoreTypingsContainers:
         ("present", "expected"),
         [("key", True), ("missing", False)],
     )
+    @staticmethod
     def test_dict_contains_reports_membership(
-        self,
         present: str,
         *,
         expected: bool,
@@ -193,8 +193,8 @@ class TestsFlextCoreTypingsContainers:
         "scalar",
         ["text", 42, math.pi, True, datetime(2025, 1, 1, tzinfo=UTC)],
     )
+    @staticmethod
     def test_scalar_types_accepts_every_scalar(
-        self,
         *,
         scalar: str | float | bool | datetime,
     ) -> None:
@@ -202,8 +202,8 @@ class TestsFlextCoreTypingsContainers:
         tm.that(isinstance(scalar, c.SCALAR_TYPES), eq=True)
 
     @pytest.mark.parametrize("nonscalar", [["list"], {"dict": 1}, ("tuple",)])
+    @staticmethod
     def test_scalar_types_rejects_containers(
-        self,
         nonscalar: list[str] | dict[str, int] | tuple[str],
     ) -> None:
         """Container values are not members of the scalar runtime contract."""

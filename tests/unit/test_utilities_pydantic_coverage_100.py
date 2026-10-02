@@ -65,8 +65,8 @@ class TestsFlextUtilitiesPydantic:
             ("alan", "Alan"),
         ],
     )
+    @staticmethod
     def test_field_validator_normalizes_aliased_name(
-        self,
         raw_name: str,
         expected_name: str,
     ) -> None:

@@ -43,8 +43,8 @@ class TestsFlextCoreExceptions:
             e.AttributeAccessError,
         ],
     )
+    @staticmethod
     def test_facade_exposes_typed_errors_as_base_error_subclasses(
-        self,
         subclass: type[e.BaseError],
     ) -> None:
         # Act / Assert — every typed error is reachable on the facade and is a
@@ -64,8 +64,8 @@ class TestsFlextCoreExceptions:
             (e.FlextTimeoutError("slow"), c.ErrorDomain.TIMEOUT),
         ],
     )
+    @staticmethod
     def test_error_domain_routes_typed_errors(
-        self,
         error: e.BaseError,
         expected_domain: str,
     ) -> None:
@@ -114,8 +114,8 @@ class TestsFlextCoreExceptions:
         ("declared", "expected"),
         [("int", int), (str, str), ("dict", dict)],
     )
+    @staticmethod
     def test_type_error_resolves_type_names_to_types(
-        self,
         declared: type | str,
         expected: type,
     ) -> None:
@@ -239,8 +239,8 @@ class TestsFlextCoreExceptions:
         assert default_result is unwrap_default
 
     @pytest.mark.parametrize("violation", [e.MroViolation, e.SmellViolation])
+    @staticmethod
     def test_enforcement_violations_are_raisable_exception_types(
-        self,
         violation: type[Exception],
     ) -> None:
         # Assert — enforcement violations are exposed on the facade and raise.

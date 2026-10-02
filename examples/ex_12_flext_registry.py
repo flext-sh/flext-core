@@ -1,11 +1,15 @@
-"""Golden-file example for the registry DSL public APIs."""
+"""Golden-file example for the registry DSL public APIs.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from pathlib import Path
 from typing import override
 
-from .ex_12_registry_plugins import Ex12RegistryPlugins
+from examples.ex_12_registry_plugins import Ex12RegistryPlugins
 
 
 class Ex12RegistryDsl(Ex12RegistryPlugins):

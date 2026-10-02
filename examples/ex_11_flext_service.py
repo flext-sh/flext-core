@@ -1,4 +1,8 @@
-"""Service example exercising the public ``s`` contract and runtime accessors."""
+"""Service example exercising the public ``s`` contract and runtime accessors.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -49,7 +53,12 @@ class ExampleService:
 
     @classmethod
     def run(cls) -> p.Result[str]:
-        """Execute the public example service and return its result."""
+        """Execute the public example service and return its result.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+
+        """
         service = _EchoService(payload=m.Examples.Payload(text="ok"))
         return service.execute()
 

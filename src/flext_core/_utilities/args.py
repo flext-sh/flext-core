@@ -9,9 +9,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import c, r, t
-
-from .._models.pydantic import FlextModelsPydantic as m
-from .._protocols.result import FlextProtocolsResult as p
+from flext_core._models.pydantic import FlextModelsPydantic as m
+from flext_core._protocols.result import FlextProtocolsResult as p
 
 
 class FlextUtilitiesArgs:
@@ -55,6 +54,10 @@ class FlextUtilitiesArgs:
 
         Reduces boilerplate by returning an r[M] which callers can unwrap_or()
         or gracefully fail.
+
+        Returns:
+            The resulting ``p.Result[M]``.
+
         """
         if options is not None:
             return r[M].ok(options)

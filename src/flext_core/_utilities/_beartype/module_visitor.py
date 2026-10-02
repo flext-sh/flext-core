@@ -1,4 +1,8 @@
-"""Module-level introspection — LOC ceiling, class census, alias shims."""
+"""Module-level introspection — LOC ceiling, class census, alias shims.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -6,11 +10,13 @@ import ast
 import inspect
 from pathlib import Path
 
-from ..._constants.enforcement import FlextConstantsEnforcement as c
-from ..._models.enforcement import FlextModelsEnforcement as me
-from ..._typings.base import FlextTypingBase as t
-from .helpers import FlextUtilitiesBeartypeHelpers
-from .module_source import FlextUtilitiesBeartypeModuleSource
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._models.enforcement import FlextModelsEnforcement as me
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers
+from flext_core._utilities._beartype.module_source import (
+    FlextUtilitiesBeartypeModuleSource,
+)
 
 _NO_VIOLATION: t.StrMapping | None = None
 _MODULE_EXEMPT_FILES: frozenset[str] = frozenset({
@@ -27,12 +33,21 @@ def _is_synthetic_parametrized_type(value: object) -> bool:
     into the defining module's namespace (e.g. ``FlextInfraServiceBase[bool]``).
     These are not source-level declarations and must not count toward module
     class caps or backwards-compat alias rules.
+
+    Returns:
+        True for synthetic ``Foo[int]`` specializations.
+
     """
     return isinstance(value, type) and "[" in getattr(value, "__qualname__", "")
 
 
 def _is_module_alias_candidate(name: str, value: object) -> bool:
-    """Return True when a module-level symbol looks like a compat alias."""
+    """Return True when a module-level symbol looks like a compat alias.
+
+    Returns:
+        True when a module-level symbol looks like a compat alias.
+
+    """
     if not isinstance(value, type):
         return False
     if _is_synthetic_parametrized_type(value):
@@ -56,6 +71,10 @@ class FlextUtilitiesBeartypeModuleVisitor:
         lines, which is a static measure flext-infra's tokei gate already owns —
         and the census re-ran it once per class, reporting one module up to eight
         times. Only the class census remains (operator 2026-08-07).
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+
         """
         module = FlextUtilitiesBeartypeHelpers.runtime_module_for(target)
         if module is None:
@@ -94,7 +113,12 @@ class FlextUtilitiesBeartypeModuleVisitor:
         params: me.AliasRebindParams,
         target: type,
     ) -> t.StrMapping | None:
-        """MODULE_ALIAS — module-level CapWords compat alias / nested-class hoist."""
+        """MODULE_ALIAS — module-level CapWords compat alias / nested-class hoist.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+
+        """
         if params.expected_form != "no_module_compat_alias":
             return _NO_VIOLATION
         module = FlextUtilitiesBeartypeHelpers.runtime_module_for(target)
@@ -143,5 +167,9 @@ class FlextUtilitiesBeartypeModuleVisitor:
         Implementation lives in the workspace walker, not the per-class
         runtime hook — needs the cross-project symbol index that only the
         walker can build. Returns None at runtime.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+
         """
         return _NO_VIOLATION

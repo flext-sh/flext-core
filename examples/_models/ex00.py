@@ -8,9 +8,8 @@ from __future__ import annotations
 
 from typing import Annotated
 
+from examples._models.errors import ExamplesFlextModelsErrors as _err
 from flext_core import c, m, p, r, t, u
-
-from .errors import ExamplesFlextModelsErrors as _err
 
 
 class ExamplesFlextModelsEx00:
@@ -35,7 +34,7 @@ class ExamplesFlextModelsEx00:
             if self.status == c.Status.ACTIVE:
                 return r[bool].fail("Already active")
             self.status = c.Status.ACTIVE
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
 
     class UserInput(m.Value):
         """Raw user input model."""

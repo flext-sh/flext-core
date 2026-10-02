@@ -1,4 +1,8 @@
-"""The lazy resolver fails loud on broken modules and stays probe-safe on absence."""
+"""The lazy resolver fails loud on broken modules and stays probe-safe on absence.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -16,8 +20,8 @@ if TYPE_CHECKING:
 class TestsFlextCoreLazyFailureContract:
     """Drive the public lazy resolver against real modules."""
 
+    @staticmethod
     def test_broken_target_module_raises_import_error_with_its_cause(
-        self,
         tmp_path: Path,
     ) -> None:
         """A target module whose body fails is a defect, never a missing name."""
@@ -38,7 +42,8 @@ class TestsFlextCoreLazyFailureContract:
         assert isinstance(caught.value.__cause__, AttributeError)
         tm.that(str(caught.value), has=target)
 
-    def test_absent_symbol_on_a_loaded_module_stays_an_attribute_error(self) -> None:
+    @staticmethod
+    def test_absent_symbol_on_a_loaded_module_stays_an_attribute_error() -> None:
         """A legal absence keeps hasattr and getattr-with-default probes working."""
         with pytest.raises(AttributeError, match="has no attribute"):
             lazy_getattr(

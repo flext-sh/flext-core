@@ -1,4 +1,8 @@
-"""Public enforcement distinguishes dependencies from compatibility exports."""
+"""Public enforcement distinguishes dependencies from compatibility exports.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -78,8 +82,8 @@ class TestsEnforcementImportProvenance:
             ),
         ],
     )
+    @staticmethod
     def test_real_consumer_import_contract(
-        self,
         tmp_path: Path,
         binding: str,
         rule: str,

@@ -27,8 +27,8 @@ class TestsFlextContainerResolution:
         m.Tests.ContainerScenarios.SERVICE_SCENARIOS,
         ids=lambda s: s.name,
     )
+    @staticmethod
     def test_get_service(
-        self,
         scenario: m.Tests.ServiceScenario,
         clean_container: p.Container,
     ) -> None:
@@ -79,8 +79,8 @@ class TestsFlextContainerResolution:
         m.Tests.ContainerScenarios.TYPED_RETRIEVAL_SCENARIOS,
         ids=lambda s: s.name,
     )
+    @staticmethod
     def test_get_typed_correct(
-        self,
         scenario: m.Tests.TypedRetrievalScenario,
         clean_container: p.Container,
     ) -> None:
@@ -124,8 +124,8 @@ class TestsFlextContainerResolution:
         [(True, True), (False, False)],
         ids=["exists", "not_exists"],
     )
+    @staticmethod
     def test_has_service(
-        self,
         *,
         has_service: bool,
         expected: bool,

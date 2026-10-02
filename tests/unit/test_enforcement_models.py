@@ -17,9 +17,8 @@ from flext_core.utilities import FlextUtilitiesEnforcement
 from tests.constants import c
 from tests.models import m
 from tests.typings import t
+from tests.unit._enforcement_support import messages
 from tests.utilities import u
-
-from ._enforcement_support import messages
 
 
 class TestsFlextEnforcementModels:
@@ -194,8 +193,8 @@ class TestsFlextEnforcementModels:
         ("module", "expect_prefix_violation"),
         [("flext_core.synthetic_module", True), ("fence", False)],
     )
+    @staticmethod
     def test_class_prefix_enforced_only_for_knowable_projects(
-        self,
         module: str,
         *,
         expect_prefix_violation: bool,

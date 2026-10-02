@@ -6,18 +6,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from ._protocols.base import FlextProtocolsBase
-from ._protocols.config import FlextProtocolsConfig
-from ._protocols.container import FlextProtocolsContainer
-from ._protocols.context import FlextProtocolsContext
-from ._protocols.handler import FlextProtocolsHandler
-from ._protocols.loggings import FlextProtocolsLogging
-from ._protocols.project_metadata import FlextProtocolsProjectMetadata
-from ._protocols.pydantic import FlextProtocolsPydantic
-from ._protocols.registry import FlextProtocolsRegistry
-from ._protocols.result import FlextProtocolsResult
-from ._protocols.service import FlextProtocolsService
-from ._protocols.settings import FlextProtocolsSettings
+from flext_core._protocols.base import FlextProtocolsBase
+from flext_core._protocols.config import FlextProtocolsConfig
+from flext_core._protocols.container import FlextProtocolsContainer
+from flext_core._protocols.context import FlextProtocolsContext
+from flext_core._protocols.handler import FlextProtocolsHandler
+from flext_core._protocols.loggings import FlextProtocolsLogging
+from flext_core._protocols.project_metadata import FlextProtocolsProjectMetadata
+from flext_core._protocols.pydantic import FlextProtocolsPydantic
+from flext_core._protocols.registry import FlextProtocolsRegistry
+from flext_core._protocols.result import FlextProtocolsResult
+from flext_core._protocols.service import FlextProtocolsService
+from flext_core._protocols.settings import FlextProtocolsSettings
 
 
 class FlextProtocols(

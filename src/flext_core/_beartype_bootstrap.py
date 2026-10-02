@@ -11,7 +11,7 @@ from typing import ClassVar
 
 from beartype.claw import beartype_this_package
 
-from ._typings.base import FlextTypingBase as t
+from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextCoreBeartypeBootstrap:

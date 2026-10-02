@@ -63,8 +63,8 @@ class TestsFlextCoreSettingsValidationAlias:
         "override_value",
         ["custom_pandoc", "/usr/bin/pandoc", "pandoc-3.1", "pandoc"],
     )
+    @staticmethod
     def test_update_global_applies_and_propagates_override(
-        self,
         override_value: str,
     ) -> None:
         # Act — must not raise "Extra inputs are not permitted".

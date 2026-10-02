@@ -6,9 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from .core_errors import TestsFlextModelsCoreErrorsMixin
-from .core_public import TestsFlextModelsCorePublicMixin
-from .core_state import TestsFlextModelsCoreStateMixin
+from tests._models._mixins.core_errors import TestsFlextModelsCoreErrorsMixin
+from tests._models._mixins.core_public import TestsFlextModelsCorePublicMixin
+from tests._models._mixins.core_state import TestsFlextModelsCoreStateMixin
 
 
 class TestsFlextModelsCoreMixin(

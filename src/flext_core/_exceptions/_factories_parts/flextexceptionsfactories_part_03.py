@@ -9,8 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_core import c, m, p
-
-from .flextexceptionsfactories_part_02 import (
+from flext_core._exceptions._factories_parts.flextexceptionsfactories_part_02 import (
     FlextExceptionsFactories as FlextExceptionsFactoriesPart02,
 )
 
@@ -36,6 +35,9 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart02):
                 params=m.ConnectionErrorParams(host="ldap.example.com", port=636),
                 options=m.ExceptionFactoryOptions(error=exc),
             )
+
+        Returns:
+            R[T].fail with a canonical connection-error message.
 
         """
         options, error = FlextExceptionsFactories._resolve_options(options)
@@ -66,6 +68,9 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart02):
         Usage::
 
             return e.fail_timeout(30.0, "fetch_users")
+
+        Returns:
+            R[T].fail with a canonical timeout message.
 
         """
         params = m.TimeoutErrorParams(
@@ -98,6 +103,9 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart02):
 
             return e.fail_auth("ldap", user_id)
 
+        Returns:
+            R[T].fail with a canonical authentication-error message.
+
         """
         options, error = FlextExceptionsFactories._resolve_options(options)
         params = m.AuthenticationErrorParams(auth_method=auth_method, user_id=user_id)
@@ -128,6 +136,9 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart02):
         Usage::
 
             return e.fail_authz(user_id, "admin.panel", "write")
+
+        Returns:
+            R[T].fail with a canonical authorization-error message.
 
         """
         options, error = FlextExceptionsFactories._resolve_options(options)

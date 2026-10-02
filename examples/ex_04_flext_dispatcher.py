@@ -1,4 +1,8 @@
-"""Dispatcher example exercising the public routing APIs with real handlers."""
+"""Dispatcher example exercising the public routing APIs with real handlers.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -14,8 +18,8 @@ from flext_core import p, r, t
 class _CreateUserHandler:
     message_type = m.Examples.CreateUser
 
+    @staticmethod
     def handle(
-        self,
         message: p.Routable,
     ) -> t.JsonPayload | p.ResultView[t.JsonPayload] | None:
         if not isinstance(message, m.Examples.CreateUser):
@@ -26,8 +30,8 @@ class _CreateUserHandler:
 class _GetUserHandler:
     message_type = m.Examples.GetUser
 
+    @staticmethod
     def dispatch_message(
-        self,
         message: p.Routable,
         operation: str = "dispatch",
     ) -> t.JsonPayload | p.ResultView[t.JsonPayload] | None:
@@ -39,8 +43,8 @@ class _GetUserHandler:
 class _DeleteUserHandler:
     message_type = m.Examples.DeleteUser
 
+    @staticmethod
     def execute(
-        self,
         message: p.Routable,
     ) -> t.JsonPayload | p.ResultView[t.JsonPayload] | None:
         if not isinstance(message, m.Examples.DeleteUser):
@@ -49,11 +53,12 @@ class _DeleteUserHandler:
 
 
 class _AutoFallbackHandler:
-    def can_handle(self, message_type: type) -> bool:
+    @staticmethod
+    def can_handle(message_type: type) -> bool:
         return message_type is m.Examples.UnknownQuery
 
+    @staticmethod
     def handle(
-        self,
         message: p.Routable,
     ) -> t.JsonPayload | p.ResultView[t.JsonPayload] | None:
         if not isinstance(message, m.Examples.UnknownQuery):
@@ -74,7 +79,7 @@ class _EventSubscriber:
         if not isinstance(message, m.Examples.UserCreated):
             return r[bool].fail("unexpected_message")
         self.events.append(message.username)
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
 
 class _AuditSubscriber:
@@ -90,7 +95,7 @@ class _AuditSubscriber:
         if not isinstance(message, m.Examples.UserCreated):
             return r[bool].fail("unexpected_message")
         self.events.append(f"audit:{message.username}")
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
 
 class _PingHandler:
@@ -129,7 +134,12 @@ class Ex04DispatchDsl:
 
     @staticmethod
     def build_dispatcher() -> p.Dispatcher:
-        """Create a dispatcher populated with the example handlers."""
+        """Create a dispatcher populated with the example handlers.
+
+        Returns:
+            The resulting ``p.Dispatcher``.
+
+        """
         dispatcher = u.build_dispatcher()
         _ = dispatcher.register_handler(_CreateUserHandler())
         _ = dispatcher.register_handler(_GetUserHandler())
@@ -139,7 +149,12 @@ class Ex04DispatchDsl:
 
     @classmethod
     def run(cls) -> p.Result[str]:
-        """Dispatch a real ping command through the public dispatcher."""
+        """Dispatch a real ping command through the public dispatcher.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+
+        """
         dispatcher = cls.build_dispatcher()
         result = dispatcher.dispatch(m.Examples.Ping(value="dispatcher-example"))
         if result.failure:

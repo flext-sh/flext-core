@@ -1,4 +1,8 @@
-"""Example models for ex12."""
+"""Example models for ex12.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 

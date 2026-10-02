@@ -8,10 +8,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, override
 
+from tests._utilities.service_factories import TestsFlextUtilitiesServiceFactoriesMixin
 from tests.constants import c
 from tests.models import m
-
-from .service_factories import TestsFlextUtilitiesServiceFactoriesMixin
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

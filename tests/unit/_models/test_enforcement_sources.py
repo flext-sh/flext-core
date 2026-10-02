@@ -36,8 +36,8 @@ class TestsFlextCoreEnforcementSources:
         assert model_kinds == {kind.value for kind in c.EnforcementSourceKind}
 
     @pytest.mark.parametrize(("expected_kind", "source"), list(_SOURCE_CASES.items()))
+    @staticmethod
     def test_source_model_dump_round_trips(
-        self,
         expected_kind: str,
         source: m.BaseModel,
     ) -> None:
@@ -59,8 +59,8 @@ class TestsFlextCoreEnforcementSources:
             m.EnforcementCodeSmellSource,
         ],
     )
+    @staticmethod
     def test_source_model_rejects_missing_required_field(
-        self,
         factory: type[m.BaseModel],
     ) -> None:
         with pytest.raises(c.ValidationError):
@@ -80,8 +80,8 @@ class TestsFlextCoreEnforcementSources:
             ),
         ],
     )
+    @staticmethod
     def test_rule_spec_dispatches_source_by_discriminator(
-        self,
         source_payload: t.JsonMapping,
         expected_type: type[m.BaseModel],
     ) -> None:
@@ -103,8 +103,8 @@ class TestsFlextCoreEnforcementSources:
             "skill_pointer",
         ],
     )
+    @staticmethod
     def test_rule_spec_rejects_retired_source_discriminators(
-        self,
         retired_kind: str,
     ) -> None:
         with pytest.raises(c.ValidationError):

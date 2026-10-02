@@ -18,8 +18,8 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_tests import FlextTestsProtocols
 
 if TYPE_CHECKING:
-    from . import t
-    from ._models.mixins import TestsFlextModelsMixins
+    from tests import t
+    from tests._models.mixins import TestsFlextModelsMixins
 
 
 class TestsFlextProtocols(FlextTestsProtocols):

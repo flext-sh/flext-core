@@ -119,8 +119,9 @@ class TestsFlextModelsCorePublicMixin:
         def label(self) -> str:
             return f"{self.raw_name}:{self.visits}"
 
+        @staticmethod
         @u.field_serializer("visits")
-        def serialize_visits(self, value: int) -> str:
+        def serialize_visits(value: int) -> str:
             return f"{value} visits"
 
 

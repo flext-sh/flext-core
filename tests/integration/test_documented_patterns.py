@@ -41,8 +41,8 @@ class TestsFlextCoreDocumentedPatterns:
         ("seed", "transform", "expected"),
         [(1, _increment, 2), (10, _triple, 30), (-5, abs, 5)],
     )
+    @staticmethod
     def test_map_transforms_success_value(
-        self,
         seed: int,
         transform: Callable[[int], int],
         expected: int,
@@ -102,8 +102,8 @@ class TestsFlextCoreDocumentedPatterns:
         ("result", "expected"),
         [(r[str].ok("flext"), 5), (r[str].fail("missing"), 0)],
     )
+    @staticmethod
     def test_map_or_returns_default_on_failure(
-        self,
         result: p.Result[str],
         expected: int,
     ) -> None:
@@ -193,8 +193,8 @@ class TestsFlextCoreDocumentedPatterns:
             ("   ", False, None),
         ],
     )
+    @staticmethod
     def test_validation_normalizes_or_fails(
-        self,
         raw_email: str | None,
         expected_value: str | None,
         *,

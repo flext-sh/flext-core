@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from typing import ClassVar, Literal
 
-from ..._protocols.base import FlextProtocolsBase as p
-from ..pydantic import FlextModelsPydantic as mp
-from ._base import EnforcementModelBase
+from flext_core._models._enforcement._base import EnforcementModelBase
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._protocols.base import FlextProtocolsBase as p
 
 
 class FlextModelsEnforcementResolution:

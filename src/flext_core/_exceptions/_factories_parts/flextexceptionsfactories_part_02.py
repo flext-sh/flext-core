@@ -9,11 +9,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_core import c, m, p
-
-from ..template import FlextExceptionsTemplate
-from .flextexceptionsfactories_part_01 import (
+from flext_core._exceptions._factories_parts.flextexceptionsfactories_part_01 import (
     FlextExceptionsFactories as FlextExceptionsFactoriesPart01,
 )
+from flext_core._exceptions.template import FlextExceptionsTemplate
 
 if TYPE_CHECKING:
     from flext_core import r
@@ -40,6 +39,9 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart01):
                     actual_type=type(raw).__name__,
                 )
             )
+
+        Returns:
+            R[T].fail with a canonical type-mismatch message.
 
         """
         params = (
@@ -80,6 +82,9 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart01):
             return e.fail_validation(
                 m.ValidationErrorParams(field="config_key", value=raw_value), error=exc
             )
+
+        Returns:
+            R[T].fail with a canonical validation-failed message.
 
         """
         params = (
@@ -125,6 +130,9 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart01):
         Usage::
 
             return e.fail_config_error("database.url", "env")
+
+        Returns:
+            R[T].fail with a canonical configuration-error message.
 
         """
         options, error = FlextExceptionsFactories._resolve_options(options)

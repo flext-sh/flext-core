@@ -13,9 +13,8 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 
 from flext_core import c, e, m, p, r, t
-
-from ..._models.containers import FlextModelsContainers
-from .mapper_access_part_01 import (
+from flext_core._models.containers import FlextModelsContainers
+from flext_core._utilities._mapper_access_parts.mapper_access_part_01 import (
     FlextUtilitiesMapperAccess as FlextUtilitiesMapperAccessPart01,
 )
 
@@ -29,7 +28,12 @@ class FlextUtilitiesMapperAccess(FlextUtilitiesMapperAccessPart01):
         | FlextModelsContainers.ObjectList,
         array_match: str,
     ) -> p.Result[t.JsonPayload | None]:
-        """Handle array indexing with negative index support."""
+        """Handle array indexing with negative index support.
+
+        Returns:
+            The resulting ``p.Result[t.JsonPayload | None]``.
+
+        """
         if isinstance(current, FlextModelsContainers.ObjectList):
             sequence: t.SequenceOf[t.JsonValue | t.JsonPayload] = current.root
         elif isinstance(current, Sequence) and not isinstance(
@@ -70,7 +74,12 @@ class FlextUtilitiesMapperAccess(FlextUtilitiesMapperAccessPart01):
         data: p.AccessibleData | t.ConfigModelInput,
         key: str,
     ) -> t.JsonPayload | t.JsonValue:
-        """Get raw values without DSL conversion."""
+        """Get raw values without DSL conversion.
+
+        Returns:
+            The resulting ``t.JsonPayload | t.JsonValue``.
+
+        """
         match data:
             case dict() | Mapping() if key in data:
                 return FlextUtilitiesMapperAccess._normalize_accessible_value(data[key])

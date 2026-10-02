@@ -28,7 +28,7 @@ class TestsFlextCoreResultRecentBehaviors:
     @staticmethod
     def test_ok_carries_value_and_reports_success() -> None:
         """A success result reports success and exposes its value."""
-        result = r[bool].ok(True)
+        result = r[bool].ok(value=True)
 
         assert result.success is True
         assert result.value is True

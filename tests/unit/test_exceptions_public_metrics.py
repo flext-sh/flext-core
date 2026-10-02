@@ -24,8 +24,9 @@ class TestsFlextCoreExceptionsPublicMetrics:
 
     pytestmark = pytest.mark.usefixtures("_isolated_metrics")
 
+    @staticmethod
     @pytest.fixture
-    def _isolated_metrics(self) -> Iterator[None]:
+    def _isolated_metrics() -> Iterator[None]:
         """Guarantee each test observes a clean, isolated metrics state."""
         e.clear_metrics()
         yield
@@ -49,7 +50,7 @@ class TestsFlextCoreExceptionsPublicMetrics:
         # Assert
         assert snapshot.total_exceptions == 0
         assert snapshot.unique_exception_types == 0
-        assert snapshot.exception_counts_summary == ""
+        assert not snapshot.exception_counts_summary
         assert snapshot.has_exceptions is False
         assert dict(snapshot.exception_counts) == {}
 
@@ -85,8 +86,8 @@ class TestsFlextCoreExceptionsPublicMetrics:
             ),
         ],
     )
+    @staticmethod
     def test_totals_and_unique_counts_track_recorded_exceptions(
-        self,
         recorded: Sequence[type[BaseException]],
         expected_total: int,
         expected_unique: int,
@@ -150,7 +151,7 @@ class TestsFlextCoreExceptionsPublicMetrics:
         # Assert
         assert snapshot.total_exceptions == 0
         assert snapshot.unique_exception_types == 0
-        assert snapshot.exception_counts_summary == ""
+        assert not snapshot.exception_counts_summary
         assert snapshot.has_exceptions is False
 
     @staticmethod

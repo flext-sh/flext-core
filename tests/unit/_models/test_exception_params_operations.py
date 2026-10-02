@@ -16,14 +16,16 @@ from flext_tests import tm
 
 from tests.constants import c
 from tests.models import m
-
-from ._exception_params_support import _ALL_PARAMS_IDS, _ALL_PARAMS_MODELS
+from tests.unit._models._exception_params_support import (
+    _ALL_PARAMS_IDS,
+    _ALL_PARAMS_MODELS,
+)
 
 
 class TestsFlextCoreExceptionParamsOperations:
     @pytest.mark.parametrize("model_cls", _ALL_PARAMS_MODELS, ids=_ALL_PARAMS_IDS)
+    @staticmethod
     def test_no_arg_construction_yields_all_none_fields(
-        self,
         model_cls: type[m.ParamsModel],
     ) -> None:
         instance = model_cls()
@@ -31,7 +33,8 @@ class TestsFlextCoreExceptionParamsOperations:
             tm.that(value, none=True)
 
     @pytest.mark.parametrize("model_cls", _ALL_PARAMS_MODELS, ids=_ALL_PARAMS_IDS)
-    def test_unknown_field_is_rejected(self, model_cls: type[m.ParamsModel]) -> None:
+    @staticmethod
+    def test_unknown_field_is_rejected(model_cls: type[m.ParamsModel]) -> None:
         with pytest.raises(c.ValidationError):
             model_cls.model_validate({"bogus_field": "nope"})
 
@@ -40,8 +43,8 @@ class TestsFlextCoreExceptionParamsOperations:
         [("str", "int"), ("list", "dict"), ("BaseModel", "NoneType")],
         ids=["str-int", "list-dict", "model-none"],
     )
+    @staticmethod
     def test_type_error_params_exposes_expected_and_actual(
-        self,
         expected: str,
         actual: str,
     ) -> None:
@@ -74,8 +77,8 @@ class TestsFlextCoreExceptionParamsOperations:
         ],
         ids=["host-port", "host-only", "neither"],
     )
+    @staticmethod
     def test_connection_target_formats_host_and_port(
-        self,
         host: str | None,
         port: int | None,
         expected_target: str,
@@ -92,8 +95,8 @@ class TestsFlextCoreExceptionParamsOperations:
         ],
         ids=["field-int", "port-str", "expected-type-int"],
     )
+    @staticmethod
     def test_strict_typing_rejects_wrong_type(
-        self,
         model_cls: type[m.ParamsModel],
         payload: dict[str, object],
     ) -> None:
@@ -119,6 +122,7 @@ class TestsFlextCoreExceptionParamsOperations:
         ],
         ids=["connection", "authorization", "rate-limit"],
     )
-    def test_model_dump_roundtrip_preserves_values(self, params: m.ParamsModel) -> None:
+    @staticmethod
+    def test_model_dump_roundtrip_preserves_values(params: m.ParamsModel) -> None:
         rebuilt = type(params).model_validate(params.model_dump())
         tm.that(rebuilt.model_dump(), eq=params.model_dump())

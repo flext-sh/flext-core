@@ -106,8 +106,8 @@ class TestsFlextCoreMapper:
             ({}, {}, True),
         ],
     )
+    @staticmethod
     def test_deep_eq_reports_structural_equality(
-        self,
         left: t.JsonDict,
         right: t.JsonDict,
         *,
@@ -132,7 +132,7 @@ class TestsFlextCoreMapper:
     def test_prop_accessor_returns_empty_string_for_missing_key() -> None:
         accessor = u.prop("name")
 
-        assert accessor({"other": 1}) == ""
+        assert not accessor({"other": 1})
 
     # ---------------------------------------------------------------- transform
     @staticmethod

@@ -24,8 +24,9 @@ class TestsFlextCoreContext:
 
     pytestmark = pytest.mark.usefixtures("_isolate_process_context")
 
+    @staticmethod
     @pytest.fixture
-    def _isolate_process_context(self) -> Iterator[None]:
+    def _isolate_process_context() -> Iterator[None]:
         """Keep process-global contextvars from leaking across tests."""
         FlextContext.clear_context()
         yield

@@ -33,8 +33,8 @@ class TestsFlextCoreExceptionsBase:
             e.ConfigurationError,
         ],
     )
+    @staticmethod
     def test_typed_exceptions_are_base_error_subclasses(
-        self,
         subclass: type[e.BaseError],
     ) -> None:
         """Test typed exceptions are base error subclasses."""
@@ -155,8 +155,8 @@ class TestsFlextCoreExceptionsBase:
         ("field", "value", "cause"),
         [("name", "", "empty"), ("email", "bad", "invalid")],
     )
+    @staticmethod
     def test_fail_validation_returns_structured_failure(
-        self,
         field: str,
         value: str,
         cause: str,

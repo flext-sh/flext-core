@@ -19,11 +19,11 @@ from functools import cache
 
 from pydantic import ConfigDict, TypeAdapter
 
-from .annotateds import FlextTypesAnnotateds as ta
-from .base import FlextTypingBase as t
-from .core import FlextTypesCore as tc
-from .pydantic import FlextTypesPydantic as tp
-from .services import FlextTypesServices as ts
+from flext_core._typings.annotateds import FlextTypesAnnotateds as ta
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.core import FlextTypesCore as tc
+from flext_core._typings.pydantic import FlextTypesPydantic as tp
+from flext_core._typings.services import FlextTypesServices as ts
 
 
 class FlextTypesTypeAdapters:

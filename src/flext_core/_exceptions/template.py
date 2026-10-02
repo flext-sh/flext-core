@@ -7,8 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import c, m, t
-
-from ..runtime import FlextRuntime
+from flext_core.runtime import FlextRuntime
 
 
 class FlextExceptionsTemplate:
@@ -21,7 +20,12 @@ class FlextExceptionsTemplate:
         params: m.BaseModel | None,
         values: FlextExceptionsTemplate.TemplateValues,
     ) -> m.ConfigMap:
-        """Build template substitution values using params data and field metadata."""
+        """Build template substitution values using params data and field metadata.
+
+        Returns:
+            The resulting ``m.ConfigMap``.
+
+        """
         payload: t.JsonDict = (
             {
                 key: FlextRuntime.normalize_to_metadata(value)
@@ -57,6 +61,13 @@ class FlextExceptionsTemplate:
         """Render a message template from params + explicit values.
 
         Fail-fast: raises ValueError when any placeholder value is missing.
+
+        Returns:
+            The resulting ``str``.
+
+        Raises:
+            ValueError: If a ``KeyError`` is caught.
+
         """
         payload = FlextExceptionsTemplate.template_values(params, values)
         try:
@@ -72,7 +83,12 @@ class FlextExceptionsTemplate:
         params: m.BaseModel | None,
         **values: t.JsonPayload | None,
     ) -> m.ConfigMap | None:
-        """Build canonical error_data payload from params and explicit values."""
+        """Build canonical error_data payload from params and explicit values.
+
+        Returns:
+            The resulting ``m.ConfigMap | None``.
+
+        """
         payload = FlextExceptionsTemplate.template_values(params, values)
         return payload or None
 

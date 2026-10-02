@@ -125,8 +125,8 @@ class TestsFlextCoreResultChainHelpers:
         assert result.unwrap() == 8
 
     @pytest.mark.parametrize(("value", "keeps_success"), [(20, True), (5, False)])
+    @staticmethod
     def test_filter_keeps_or_rejects_by_predicate(
-        self,
         value: int,
         *,
         keeps_success: bool,
@@ -140,8 +140,8 @@ class TestsFlextCoreResultChainHelpers:
         ("source", "expected"),
         [(r[int].ok(5), 5), (r[int].fail("boom"), 99)],
     )
+    @staticmethod
     def test_unwrap_or_returns_value_or_default(
-        self,
         source: r[int],
         expected: int,
     ) -> None:
@@ -152,8 +152,8 @@ class TestsFlextCoreResultChainHelpers:
         ("source", "expected"),
         [(r[int].ok(5), 5), (r[int].fail("boom"), 7)],
     )
+    @staticmethod
     def test_unwrap_or_else_computes_default_on_failure(
-        self,
         source: r[int],
         expected: int,
     ) -> None:
@@ -209,8 +209,8 @@ class TestsFlextCoreResultChainHelpers:
         ("source", "expected"),
         [(r[int].ok(5), "ok:5"), (r[int].fail("boom"), "err:boom")],
     )
+    @staticmethod
     def test_fold_collapses_to_single_value_per_branch(
-        self,
         source: r[int],
         expected: str,
     ) -> None:
@@ -247,8 +247,8 @@ class TestsFlextCoreResultChainHelpers:
         ("source", "expected"),
         [(r[int].ok(5), 6), (r[int].fail("boom"), 0)],
     )
+    @staticmethod
     def test_map_or_applies_func_or_returns_default(
-        self,
         source: r[int],
         expected: int,
     ) -> None:

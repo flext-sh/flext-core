@@ -1,4 +1,8 @@
-"""Composition helpers for FlextResult."""
+"""Composition helpers for FlextResult.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -7,9 +11,8 @@ from typing import TYPE_CHECKING, Self, cast
 from pydantic import ValidationError
 
 from flext_core import c
-
-from .construction import copy_result, ok_result
-from .transforms import FlextResultTransforms
+from flext_core._result.construction import copy_result, ok_result
+from flext_core._result.transforms import FlextResultTransforms
 
 if TYPE_CHECKING:
     from collections.abc import Callable, MutableSequence, Sequence

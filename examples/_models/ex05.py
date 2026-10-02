@@ -1,4 +1,8 @@
-"""Example 05 mixins models."""
+"""Example 05 mixins models.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -44,7 +48,8 @@ class ExamplesFlextModelsEx05:
         )
 
     class GoodProcessor(m.Value):
-        def process(self) -> bool:
+        @staticmethod
+        def process() -> bool:
             return True
 
         @override
