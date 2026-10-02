@@ -8,11 +8,11 @@ from __future__ import annotations
 
 import functools
 import importlib
-import importlib.metadata
 from types import MappingProxyType
 from typing import TYPE_CHECKING, cast
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata
 from flext_core.lazy import normalize_lazy_imports
 
 if TYPE_CHECKING:
@@ -51,7 +51,7 @@ class FlextUtilitiesFamilySurface:
         snapshot: list[
             tuple[str, frozenset[str], t.MappingKV[str, t.StrPair | str]]
         ] = []
-        for dist in importlib.metadata.distributions():
+        for dist in FlextUtilitiesProjectMetadata.installed_distributions():
             raw_name = dist.metadata["Name"] or ""
             name = raw_name.lower().replace("-", "_")
             if not name.startswith(c.NAMESPACE_FAMILY_PREFIX):

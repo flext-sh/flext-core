@@ -11,6 +11,8 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_core._protocols.base import FlextProtocolsBase as pb
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+    from importlib.metadata import Distribution, DistributionFinder
     from pathlib import Path, PurePosixPath
 
     from flext_core import t
@@ -164,6 +166,21 @@ class FlextProtocolsProjectMetadata:
 
         @property
         def flext(self) -> FlextProtocolsProjectMetadata.ProjectToolFlext: ...
+
+    @runtime_checkable
+    class DistributionSource(Protocol):
+        """A ``sys.meta_path`` entry that reports installed distributions.
+
+        Matches finder instances and finder classes alike (``PathFinder`` sits
+        on ``sys.meta_path`` as a class), exactly as ``importlib.metadata``
+        discovers them.
+        """
+
+        def find_distributions(
+            self,
+            context: DistributionFinder.Context = ...,
+            /,
+        ) -> Iterable[Distribution]: ...
 
 
 __all__: list[str] = ["FlextProtocolsProjectMetadata"]
