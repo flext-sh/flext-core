@@ -139,9 +139,7 @@ class FlextUtilitiesModel:
     ) -> p.Result[TValue]:
         """Validate one value through a model class or TypeAdapter."""
         try:
-            adapter = (
-                target if isinstance(target, TypeAdapter) else TypeAdapter(target)
-            )
+            adapter = target if isinstance(target, TypeAdapter) else TypeAdapter(target)
             if from_json:
                 if not isinstance(data, c.STR_BINARY_TYPES):
                     return e.fail_validation(

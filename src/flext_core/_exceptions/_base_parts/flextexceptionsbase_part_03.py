@@ -92,7 +92,9 @@ class FlextExceptionsBase:
                     if preserved_metadata_raw is not None
                     else None
                 )
-                correlation_id_raw = remaining_extra.pop(c.ContextKey.CORRELATION_ID, None)
+                correlation_id_raw = remaining_extra.pop(
+                    c.ContextKey.CORRELATION_ID, None
+                )
                 correlation_id_str = FlextExceptionsHelpers.safe_optional_str(
                     correlation_id_raw
                 )
@@ -114,7 +116,9 @@ class FlextExceptionsBase:
                     else declaredparams_cls.model_validate(param_values)
                 )
                 ctx = FlextExceptionsHelpers.build_context_map(
-                    context, remaining_extra, excluded_keys=type(self).excluded_context_keys
+                    context,
+                    remaining_extra,
+                    excluded_keys=type(self).excluded_context_keys,
                 )
                 resolved_fields = declaredparams_cls.__pydantic_fields__
                 for key in declared_param_keys:
@@ -133,7 +137,9 @@ class FlextExceptionsBase:
                     context=ctx or None,
                     metadata=metadata if metadata is not None else preserved_metadata,
                     correlation_id=(
-                        correlation_id if correlation_id is not None else correlation_id_str
+                        correlation_id
+                        if correlation_id is not None
+                        else correlation_id_str
                     ),
                     auto_correlation=auto_correlation,
                     auto_log=auto_log,

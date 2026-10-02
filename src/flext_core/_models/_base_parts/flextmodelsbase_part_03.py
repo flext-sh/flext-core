@@ -106,7 +106,9 @@ class FlextModelsBase(FlextModelsBasePart02):
             ),
         ] = c.DEFAULT_MAX_DELAY_SECONDS
 
-    class TimestampedModel(FlextModelsBasePart02.ArbitraryTypesModel, TimestampableMixin):
+    class TimestampedModel(
+        FlextModelsBasePart02.ArbitraryTypesModel, TimestampableMixin
+    ):
         """Model with timestamp fields."""
 
 
