@@ -14,10 +14,9 @@ from typing import overload
 from pydantic import TypeAdapter
 
 from flext_core import c, e, p, r, t
-
-from .._models.base import FlextModelsBase as m
-from .._models.pydantic import FlextModelsPydantic as mp
-from .args import FlextUtilitiesArgs as ua
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._utilities.args import FlextUtilitiesArgs as ua
 
 
 class FlextUtilitiesModel:
@@ -90,21 +89,36 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def _settings_base() -> t.SettingsClass:
-        """Resolve FlextSettings lazily to avoid runtime import cycles."""
+        """Resolve FlextSettings lazily to avoid runtime import cycles.
+
+        Returns:
+            The resulting ``t.SettingsClass``.
+
+        """
         settings_module = import_module("flext_core")
         settings_cls: t.SettingsClass = settings_module.FlextSettings
         return settings_cls
 
     @staticmethod
     def _container_type() -> p.ContainerType:
-        """Resolve FlextContainer lazily to avoid runtime import cycles."""
+        """Resolve FlextContainer lazily to avoid runtime import cycles.
+
+        Returns:
+            The resulting ``p.ContainerType``.
+
+        """
         container_module = import_module("flext_core")
         container_cls: p.ContainerType = container_module.FlextContainer
         return container_cls
 
     @staticmethod
     def _context_type() -> p.ContextType:
-        """Resolve FlextContext lazily to avoid runtime import cycles."""
+        """Resolve FlextContext lazily to avoid runtime import cycles.
+
+        Returns:
+            The resulting ``p.ContextType``.
+
+        """
         context_module = import_module("flext_core")
         context_cls: p.ContextType = context_module.FlextContext
         return context_cls
@@ -147,7 +161,12 @@ class FlextUtilitiesModel:
         from_json: bool = False,
         strict: bool | None = None,
     ) -> p.Result[TValue]:
-        """Validate one value through a model class or TypeAdapter."""
+        """Validate one value through a model class or TypeAdapter.
+
+        Returns:
+            The resulting ``p.Result[TValue]``.
+
+        """
         try:
             adapter = target if isinstance(target, TypeAdapter) else TypeAdapter(target)
             if from_json:

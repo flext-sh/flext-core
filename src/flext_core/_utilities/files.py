@@ -4,6 +4,9 @@ Generic domain utilities: atomic O_APPEND append plus atomic full-write
 (requested in WS-F4); failures return ``r.Fail`` at the ``u`` boundary and
 success carries the typed byte-count payload (results never succeed with
 ``None``).
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -14,8 +17,7 @@ from pathlib import Path
 from typing import cast
 
 from flext_core import p
-
-from ..result import FlextResult as r
+from flext_core.result import FlextResult as r
 
 
 class FlextUtilitiesFiles:
@@ -32,6 +34,10 @@ class FlextUtilitiesFiles:
 
         The append flag keeps concurrent writers line-atomic; creation is
         implicit for a first write. Failures escape as ``r.Fail``.
+
+        Returns:
+            The resulting ``p.ResultView[int]``.
+
         """
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -59,7 +65,12 @@ class FlextUtilitiesFiles:
         *,
         encoding: str = "utf-8",
     ) -> p.ResultView[int]:
-        """Atomically replace a file's contents via temp file + rename."""
+        """Atomically replace a file's contents via temp file + rename.
+
+        Returns:
+            The resulting ``p.ResultView[int]``.
+
+        """
         payload = data.encode(encoding)
         try:
             path.parent.mkdir(parents=True, exist_ok=True)

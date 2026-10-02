@@ -3,6 +3,9 @@
 Every registration passes one write path: empty, duplicate and reserved names
 raise ``e.ValidationError``; the reserved core services stay private to the
 container, including in scopes; factory auto-registration never skips.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations

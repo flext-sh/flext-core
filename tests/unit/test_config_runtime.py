@@ -3,6 +3,9 @@
 Asserts the observable contract: ``config`` and ``settings`` are pre-instantiated
 singletons imported directly (``from flext_core import config, settings``), ``config``
 rejects mutation, and each settings subclass owns an independent singleton slot.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations

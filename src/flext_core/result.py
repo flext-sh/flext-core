@@ -6,12 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from ._result.base import JsonDict
-from ._result.behavior import FlextResultBehavior
-from ._result.composition import FlextResultComposition
-from ._result.construction import FlextResultConstruction
-from ._result.transforms import FlextResultTransforms
-from ._result.unwrap import FlextResultUnwrap
+from flext_core._result.base import JsonDict
+from flext_core._result.behavior import FlextResultBehavior
+from flext_core._result.composition import FlextResultComposition
+from flext_core._result.construction import FlextResultConstruction
+from flext_core._result.transforms import FlextResultTransforms
+from flext_core._result.unwrap import FlextResultUnwrap
 
 
 class _FlextResult[T](

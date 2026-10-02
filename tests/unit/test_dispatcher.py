@@ -5,6 +5,9 @@ facades: handler registration, message dispatch, event publication and the
 protocol-conformance guarantee of the builder. Every assertion targets the
 public return contract (``r[T]`` outcome, payloads, error messages) — never
 internal registries or logging side effects.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -46,6 +49,12 @@ class TestsFlextCoreDispatcher:
             self.received: list[p.Routable] = []
 
         def handle(self, message: p.Routable) -> p.Result[t.JsonPayload]:
+            """Provide ``handle``.
+
+            Returns:
+                The resulting ``p.Result[t.JsonPayload]``.
+
+            """
             self.received.append(message)
             return r[t.JsonPayload].ok({"route": self.message_type})
 
@@ -64,11 +73,17 @@ class TestsFlextCoreDispatcher:
 
     @pytest.fixture
     def dispatcher(self) -> p.Dispatcher:
-        """Return a fresh dispatcher per test (isolation guarantee)."""
+        """Return a fresh dispatcher per test (isolation guarantee).
+
+        Returns:
+            A fresh dispatcher per test (isolation guarantee).
+
+        """
         return u.build_dispatcher()
 
     def test_build_dispatcher_returns_protocol_conformant_instance(self) -> None:
         # Arrange / Act
+        """Test build dispatcher returns protocol conformant instance."""
         dispatcher = u.build_dispatcher()
 
         # Assert: builder promises a Dispatcher-shaped object, not a concrete type.
@@ -76,6 +91,7 @@ class TestsFlextCoreDispatcher:
 
     def test_register_callable_handler_succeeds(self, dispatcher: p.Dispatcher) -> None:
         # Arrange / Act
+        """Test register callable handler succeeds."""
         result = dispatcher.register_handler(RecordingHandler("register_ok"))
 
         # Assert
@@ -87,6 +103,7 @@ class TestsFlextCoreDispatcher:
         dispatcher: p.Dispatcher,
     ) -> None:
         # Arrange
+        """Test dispatch routes message to registered handler."""
         handler = RecordingHandler("routed_cmd")
         _ = dispatcher.register_handler(handler)
         command = RouteMessage(command_type="routed_cmd")
@@ -105,6 +122,7 @@ class TestsFlextCoreDispatcher:
         dispatcher: p.Dispatcher,
     ) -> None:
         # Arrange: a well-routed message but no handler registered for it.
+        """Test dispatch without matching handler fails."""
         command = RouteMessage(command_type="never_registered")
 
         # Act
@@ -120,6 +138,7 @@ class TestsFlextCoreDispatcher:
         dispatcher: p.Dispatcher,
     ) -> None:
         # Arrange: no route discriminator set -> unroutable message.
+        """Test dispatch message without route fails."""
         message = RouteMessage()
 
         # Act
@@ -135,6 +154,7 @@ class TestsFlextCoreDispatcher:
         dispatcher: p.Dispatcher,
     ) -> None:
         # Arrange
+        """Test registered handler is not invoked for other routes."""
         handler = RecordingHandler("owns_this")
         _ = dispatcher.register_handler(handler)
 
@@ -150,6 +170,8 @@ class TestsFlextCoreDispatcher:
         dispatcher: p.Dispatcher,
     ) -> None:
         # Arrange: callable exposing no message_type / event_type / can_handle.
+        """Test register callable without route fails."""
+
         def orphan_handler(_message: p.Routable) -> p.Result[t.JsonPayload]:
             return r[t.JsonPayload].ok({})
 
@@ -166,6 +188,7 @@ class TestsFlextCoreDispatcher:
         dispatcher: p.Dispatcher,
     ) -> None:
         # Arrange
+        """Test publish invokes subscriber and reports success."""
         subscriber = RecordingHandler("thing_happened")
         _ = dispatcher.register_handler(subscriber, is_event=True)
         event = RouteMessage(event_type="thing_happened")
@@ -183,6 +206,7 @@ class TestsFlextCoreDispatcher:
         dispatcher: p.Dispatcher,
     ) -> None:
         # Arrange
+        """Test publish sequence fans out to each event."""
         subscriber = RecordingHandler("batched")
         _ = dispatcher.register_handler(subscriber, is_event=True)
         event = RouteMessage(event_type="batched")
@@ -199,6 +223,7 @@ class TestsFlextCoreDispatcher:
         dispatcher: p.Dispatcher,
     ) -> None:
         # Arrange: no subscriber registered for this event route.
+        """Test publish without subscribers is successful noop."""
         event = RouteMessage(event_type="unheard")
 
         # Act
@@ -210,6 +235,7 @@ class TestsFlextCoreDispatcher:
 
     def test_dispatchers_do_not_share_handler_registrations(self) -> None:
         # Arrange
+        """Test dispatchers do not share handler registrations."""
         registered = u.build_dispatcher()
         _ = registered.register_handler(RecordingHandler("isolated_cmd"))
         other = u.build_dispatcher()
@@ -225,6 +251,7 @@ class TestsFlextCoreDispatcher:
 
     def test_dispatch_logs_handler_exception_type_and_message(self) -> None:
         # Arrange: a handler whose execution raises a runtime failure.
+        """Test dispatch logs handler exception type and message."""
         failure_detail = "upstream inventory unavailable"
 
         # Act: capture what an operator would actually see on the log stream.

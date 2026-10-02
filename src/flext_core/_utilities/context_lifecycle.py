@@ -13,9 +13,8 @@ from collections.abc import Mapping
 from typing import ClassVar, Self
 
 from flext_core import c, m, p, t
-
-from ..runtime import FlextRuntime
-from .context_crud import FlextUtilitiesContextCrud
+from flext_core._utilities.context_crud import FlextUtilitiesContextCrud
+from flext_core.runtime import FlextRuntime
 
 
 class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
@@ -32,7 +31,12 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
         include_metadata: bool = False,
         as_dict: bool = True,
     ) -> m.ContextExport | t.MappingKV[str, t.JsonPayload]:
-        """Export context state using canonical Pydantic models."""
+        """Export context state using canonical Pydantic models.
+
+        Returns:
+            The resulting ``m.ContextExport | t.MappingKV[str, t.JsonPayload]``.
+
+        """
         all_data: dict[str, t.JsonPayload] = {}
         all_scopes = self._scope_payloads()
         for scope_name, scope_payload in all_scopes.items():
@@ -70,7 +74,12 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
     def _normalize_mapping_payload(
         source: (t.MappingKV[str, t.JsonPayload] | t.JsonMapping),
     ) -> t.JsonMapping:
-        """Normalize and validate mapping payloads through canonical adapters."""
+        """Normalize and validate mapping payloads through canonical adapters.
+
+        Returns:
+            The resulting ``t.JsonMapping``.
+
+        """
         normalized = {
             k: FlextRuntime.normalize_to_container(v) for k, v in source.items()
         }
@@ -82,7 +91,12 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
         source: (t.JsonPayload | t.MappingKV[str, t.JsonPayload] | t.JsonMapping),
         label: str,
     ) -> m.ConfigMap | None:
-        """Normalize an arbitrary mapping into a scope-compatible map."""
+        """Normalize an arbitrary mapping into a scope-compatible map.
+
+        Returns:
+            The resulting ``m.ConfigMap | None``.
+
+        """
         config_map: m.ConfigMap | None
         try:
             source_mapping: t.JsonMapping = t.json_mapping_adapter().validate_python(
@@ -106,7 +120,12 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
         self,
         other: p.Context | t.MappingKV[str, t.JsonPayload] | t.JsonMapping,
     ) -> m.ConfigMap | None:
-        """Extract a ConfigMap from any supported merge source."""
+        """Extract a ConfigMap from any supported merge source.
+
+        Returns:
+            The resulting ``m.ConfigMap | None``.
+
+        """
         if isinstance(other, p.Context):
             exported_result = other.export(as_dict=True)
             if isinstance(exported_result, m.ContextExport):
@@ -133,7 +152,12 @@ class FlextUtilitiesContextLifecycle(FlextUtilitiesContextCrud):
         self,
         other: p.Context | t.MappingKV[str, t.JsonPayload] | t.JsonMapping,
     ) -> Self:
-        """Merge another context or dictionary into this context."""
+        """Merge another context or dictionary into this context.
+
+        Returns:
+            The resulting ``Self``.
+
+        """
         if not self.state.active:
             return self
         exported_map = self._extract_config_map(other)

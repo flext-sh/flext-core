@@ -10,10 +10,10 @@ from typing import TYPE_CHECKING, override
 
 from flext_tests import FlextTestsServiceBase as _FlextTestsServiceBase
 
-from . import c
+from tests import c
 
 if TYPE_CHECKING:
-    from . import p
+    from tests import p
 
 
 class TestsFlextServiceBase[TDomainResult: p.Base = p.Base](

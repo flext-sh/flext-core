@@ -5,6 +5,9 @@ Tests the minimal canonical surface: ``fetch_global``/``update_global``/
 (``debug``/``trace``/``log_level``/``timezone``/``async_logging``). Namespaced
 project fields are plain nested Pydantic-2 model Fields; there is no namespace
 registry, ``app_name`` field, ``validate_overrides`` or ``clone_for_injection``.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -25,9 +28,11 @@ class TestsFlextCoreSettings:
         """Platform-aware consuming-application directory contract."""
 
         def setup_method(self) -> None:
+            """Provide ``setup_method``."""
             FlextSettings.reset_app_namespace()
 
         def teardown_method(self) -> None:
+            """Provide ``teardown_method``."""
             FlextSettings.reset_app_namespace()
 
         def test_base_default_derives_flext_namespace(self) -> None:

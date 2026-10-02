@@ -14,8 +14,7 @@ from typing import Annotated, ClassVar
 from pydantic import ConfigDict, Field, computed_field
 
 from flext_core import c, t
-
-from ..base import FlextModelsBase as m
+from flext_core._models.base import FlextModelsBase as m
 
 
 class FlextModelsCqrs:

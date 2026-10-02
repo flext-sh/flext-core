@@ -4,6 +4,9 @@ Every test asserts an observable public contract: model field/state via the
 public API, ``check``/``check_model_construction`` report contents, and the
 warnings/exceptions ``emit`` produces for a caller. No private attribute,
 internal helper, or implementation hook is inspected.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -28,7 +31,12 @@ def _hard_violation(
     rule_id: str = "",
     anchor: str = "",
 ) -> m.Violation:
-    """Build a Model-layer HARD-rules violation for emit-focused tests."""
+    """Build a Model-layer HARD-rules violation for emit-focused tests.
+
+    Returns:
+        The resulting ``m.Violation``.
+
+    """
     return m.Violation(
         qualname=qualname,
         layer="Model",
@@ -41,8 +49,10 @@ def _hard_violation(
 
 class TestsFlextCoreEnforcementReports:
     # --- Report container contract -------------------------------------
+    """Tests for ``FlextCoreEnforcementReports``."""
 
     def test_empty_report_is_falsy_and_reports_zero_length(self) -> None:
+        """Test empty report is falsy and reports zero length."""
         report = m.Report()
 
         assert not report
@@ -51,6 +61,7 @@ class TestsFlextCoreEnforcementReports:
         assert report.messages == []
 
     def test_nonempty_report_exposes_messages_via_public_protocol(self) -> None:
+        """Test nonempty report exposes messages via public protocol."""
         violation = _hard_violation(message="boom")
         report = m.Report(violations=[violation])
 
@@ -62,12 +73,14 @@ class TestsFlextCoreEnforcementReports:
         assert "boom" in report
 
     def test_report_membership_ignores_non_string_fragments(self) -> None:
+        """Test report membership ignores non string fragments."""
         report = m.Report(violations=[_hard_violation(message="boom")])
 
         assert 123 not in report
         assert None not in report
 
     def test_report_aggregates_all_violation_messages_in_order(self) -> None:
+        """Test report aggregates all violation messages in order."""
         first = _hard_violation(message="a")
         second = _hard_violation(message="b")
         report = m.Report(violations=[first, second])
@@ -78,6 +91,7 @@ class TestsFlextCoreEnforcementReports:
     # --- Violation model contract --------------------------------------
 
     def test_violation_optional_fields_default_to_empty(self) -> None:
+        """Test violation optional fields default to empty."""
         violation = m.Violation(
             qualname="X",
             layer="Model",
@@ -91,6 +105,7 @@ class TestsFlextCoreEnforcementReports:
         assert violation.line_number == 0
 
     def test_violation_is_frozen_and_rejects_mutation(self) -> None:
+        """Test violation is frozen and rejects mutation."""
         violation = _hard_violation()
 
         # Pydantic's frozen ValidationError subclasses ValueError.
@@ -98,6 +113,7 @@ class TestsFlextCoreEnforcementReports:
             violation.qualname = "other"
 
     def test_violation_model_dump_exposes_public_fields(self) -> None:
+        """Test violation model dump exposes public fields."""
         violation = m.Violation(
             qualname="Pkg.Cls",
             layer="Model",
@@ -117,6 +133,8 @@ class TestsFlextCoreEnforcementReports:
     # --- check() report contents ---------------------------------------
 
     def test_check_flags_any_typed_field_with_rule_metadata(self) -> None:
+        """Test check flags any typed field with rule metadata."""
+
         class _WithAny(m.ArbitraryTypesModel):
             data: Annotated[typing.Any, m.Field(description="d")] = None
 
@@ -128,6 +146,8 @@ class TestsFlextCoreEnforcementReports:
         )
 
     def test_check_messages_embed_bracketed_rule_identifiers(self) -> None:
+        """Test check messages embed bracketed rule identifiers."""
+
         class _WithAny(m.ArbitraryTypesModel):
             data: Annotated[typing.Any, m.Field(description="d")] = None
 
@@ -140,6 +160,8 @@ class TestsFlextCoreEnforcementReports:
         )
 
     def test_check_skips_function_local_classes(self) -> None:
+        """Test check skips function local classes."""
+
         def _make() -> type:
             class Inner:
                 pass
@@ -151,6 +173,8 @@ class TestsFlextCoreEnforcementReports:
         assert all(violation.layer != "namespace" for violation in report.violations)
 
     def test_check_model_construction_flags_any_field(self) -> None:
+        """Test check model construction flags any field."""
+
         class _WithAny(m.ArbitraryTypesModel):
             data: Annotated[typing.Any, m.Field(description="d")] = None
 
@@ -162,6 +186,7 @@ class TestsFlextCoreEnforcementReports:
     # --- emit() warning/exception behaviour ----------------------------
 
     def test_emit_warn_mode_raises_one_warning_per_violation(self) -> None:
+        """Test emit warn mode raises one warning per violation."""
         report = m.Report(
             violations=[
                 _hard_violation(qualname="X.Y", rule_id="ENFORCE-001", anchor="3.1"),
@@ -182,6 +207,7 @@ class TestsFlextCoreEnforcementReports:
         )
 
     def test_emit_strict_mode_warns_then_raises_on_first_violation(self) -> None:
+        """Test emit strict mode warns then raises on first violation."""
         report = m.Report(
             violations=[
                 _hard_violation(qualname="X.Y", rule_id="ENFORCE-001", anchor="3.1"),
@@ -204,6 +230,7 @@ class TestsFlextCoreEnforcementReports:
         assert str(recorded[0].message) == expected
 
     def test_emit_off_mode_is_silent(self) -> None:
+        """Test emit off mode is silent."""
         report = m.Report(violations=[_hard_violation(message="boom")])
 
         with warnings.catch_warnings(record=True) as recorded:
@@ -220,6 +247,7 @@ class TestsFlextCoreEnforcementReports:
         self,
         mode: c.EnforcementMode,
     ) -> None:
+        """Test emit empty report is silent in every mode."""
         with warnings.catch_warnings(record=True) as recorded:
             warnings.simplefilter("always")
             FlextUtilitiesEnforcement.emit(m.Report(), mode=mode)
@@ -245,6 +273,7 @@ class TestsFlextCoreEnforcementReports:
         anchor: str,
         expected_fix: str,
     ) -> None:
+        """Test emit fix guidance falls back by rule id and anchor."""
         report = m.Report(
             violations=[
                 _hard_violation(message="boom", rule_id=rule_id, anchor=anchor),
@@ -257,6 +286,7 @@ class TestsFlextCoreEnforcementReports:
         assert str(caught[0].message).endswith(expected_fix)
 
     def test_emit_uses_smell_category_for_code_smell_rules(self) -> None:
+        """Test emit uses smell category for code smell rules."""
         report = m.Report(
             violations=[
                 _hard_violation(message="smell [ENFORCE-071]", rule_id="ENFORCE-071"),
@@ -269,6 +299,8 @@ class TestsFlextCoreEnforcementReports:
         assert caught[0].category is FlextSmellViolation
 
     def test_emit_of_checked_report_carries_layer_tag_and_fix(self) -> None:
+        """Test emit of checked report carries layer tag and fix."""
+
         class _WithAny(m.ArbitraryTypesModel):
             data: Annotated[typing.Any, m.Field(description="d")] = None
 

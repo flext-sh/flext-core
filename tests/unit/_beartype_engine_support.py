@@ -1,4 +1,8 @@
-"""Shared beartype engine test helpers."""
+"""Shared beartype engine test helpers.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -25,7 +29,12 @@ class TestsFlextBeartypeEngine:
 
     @staticmethod
     def _run_python(script: str, cwd: Path) -> p.Cli.CommandOutput:
-        """Run a Python snippet in a subprocess and capture text output."""
+        """Run a Python snippet in a subprocess and capture text output.
+
+        Returns:
+            The resulting ``p.Cli.CommandOutput``.
+
+        """
         result = u.Cli.run_raw([sys.executable, "-c", script], cwd=cwd)
         if result.success:
             output: p.Cli.CommandOutput = result.value

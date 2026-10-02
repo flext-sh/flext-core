@@ -16,14 +16,15 @@ from datetime import datetime
 from typing import Annotated
 
 from flext_core import t
-
-from ..._runtime._container import FlextRuntimeContainer as FlextRuntime
-from ..._utilities.generators import FlextUtilitiesGenerators as ug
-from ..._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore as ug_type
-from ..._utilities.pydantic import FlextUtilitiesPydantic as up
-from ..base import FlextModelsBase as m
-from ..containers import FlextModelsContainers
-from ..pydantic import FlextModelsPydantic as mp
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.containers import FlextModelsContainers
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._runtime._container import FlextRuntimeContainer as FlextRuntime
+from flext_core._utilities.generators import FlextUtilitiesGenerators as ug
+from flext_core._utilities.guards_type_core import (
+    FlextUtilitiesGuardsTypeCore as ug_type,
+)
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
 
 
 class FlextModelsContainer:

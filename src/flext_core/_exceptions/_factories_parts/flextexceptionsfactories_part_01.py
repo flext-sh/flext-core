@@ -10,8 +10,7 @@ from importlib import import_module
 from typing import TYPE_CHECKING, TypeVar
 
 from flext_core import c, m, p
-
-from ..template import FlextExceptionsTemplate
+from flext_core._exceptions.template import FlextExceptionsTemplate
 
 TExceptionParams = TypeVar("TExceptionParams", bound=m.BaseModel)
 
@@ -29,7 +28,12 @@ class FlextExceptionsFactories:
     def _result_type[TValue](
         result_type: type[r[TValue]] | None = None,
     ) -> type[r[TValue]]:
-        """Resolve FlextResult lazily to avoid runtime import cycles."""
+        """Resolve FlextResult lazily to avoid runtime import cycles.
+
+        Returns:
+            The resulting ``type[r[TValue]]``.
+
+        """
         if result_type is not None:
             return result_type
         result_module = import_module("flext_core")
@@ -43,7 +47,12 @@ class FlextExceptionsFactories:
         params: m.BaseModel | None = None,
         error: Exception | str | None = None,
     ) -> str:
-        """Render the canonical failure message with or without an error cause."""
+        """Render the canonical failure message with or without an error cause.
+
+        Returns:
+            The resulting ``str``.
+
+        """
         if error is None:
             template_without_error = c.ERR_TEMPLATE_FAILED_WITH_ERROR.split(": ", 1)[0]
             message: str = FlextExceptionsTemplate.render_template(
@@ -115,6 +124,9 @@ class FlextExceptionsFactories:
 
             return e.fail_operation("resolve factory service", exc)
 
+        Returns:
+            R[T].fail with a canonical operation-error message.
+
         """
         params = m.OperationErrorParams(
             operation=operation,
@@ -146,6 +158,9 @@ class FlextExceptionsFactories:
         Usage::
 
             return e.fail_not_found("service", name)
+
+        Returns:
+            R[T].fail with a canonical not-found message.
 
         """
         params = m.NotFoundErrorParams(

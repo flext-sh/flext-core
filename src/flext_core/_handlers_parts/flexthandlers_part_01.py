@@ -14,8 +14,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar, Unpack
 
 from flext_core import c, e, x
-
-from .._utilities.handler import FlextUtilitiesHandler
+from flext_core._utilities.handler import FlextUtilitiesHandler
 
 if TYPE_CHECKING:
     from pydantic import ConfigDict
@@ -45,6 +44,9 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
         Args:
             settings: Optional handler configuration model
+
+        Raises:
+            ValidationError: If ``handler_type not in valid_handler_types``.
 
         """
         super().__init__(
@@ -132,7 +134,15 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
     @staticmethod
     def _handler_type_to_literal(handler_type: c.HandlerType | str) -> c.HandlerType:
-        """Coerce string or StrEnum to canonical HandlerType."""
+        """Coerce string or StrEnum to canonical HandlerType.
+
+        Returns:
+            The resulting ``c.HandlerType``.
+
+        Raises:
+            TypeError: Always.
+
+        """
         if isinstance(handler_type, c.HandlerType):
             return handler_type
         for member in c.HandlerType:

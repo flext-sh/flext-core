@@ -1,20 +1,23 @@
-"""Registry creation, dispatch, and summary example sections."""
+"""Registry creation, dispatch, and summary example sections.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 from examples.constants import c
-from examples.models import m
-from examples.shared import ExamplesFlextShared
-from examples.utilities import u
-from flext_core import h, r
-
-from .ex_12_registry_support import (
+from examples.ex_12_registry_support import (
     ProtocolHandler,
     as_registry_handler,
     discovered_handler,
 )
+from examples.models import m
+from examples.shared import ExamplesFlextShared
+from examples.utilities import u
+from flext_core import h, r
 
 if TYPE_CHECKING:
     from examples.protocols import p

@@ -18,8 +18,7 @@ from pathlib import Path
 
 from flext_core.utilities import FlextUtilitiesBeartypeConf
 from tests.typings import t
-
-from ._beartype_engine_support import TestsFlextBeartypeEngine
+from tests.unit._beartype_engine_support import TestsFlextBeartypeEngine
 
 _CLAW_INIT = (
     textwrap.dedent(

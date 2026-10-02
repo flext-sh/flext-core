@@ -11,13 +11,12 @@ from types import MappingProxyType
 from typing import Annotated, Self
 
 from flext_core import c, t
-
-from ...base import FlextModelsBase
-from ...containers import FlextModelsContainers
-from ...pydantic import FlextModelsPydantic as mp
-from .flextmodelscontextscope_part_01 import (
+from flext_core._models._context.__scope_parts.flextmodelscontextscope_part_01 import (
     FlextModelsContextScope as FlextModelsContextScopePart01,
 )
+from flext_core._models.base import FlextModelsBase
+from flext_core._models.containers import FlextModelsContainers
+from flext_core._models.pydantic import FlextModelsPydantic as mp
 
 
 class FlextModelsContextScope(FlextModelsContextScopePart01):
@@ -92,7 +91,12 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
             cls,
             metadata: FlextModelsBase.Metadata | None = None,
         ) -> Self:
-            """Create default runtime state with canonical built-in scopes."""
+            """Create default runtime state with canonical built-in scopes.
+
+            Returns:
+                The resulting ``Self``.
+
+            """
             global_scope_var: contextvars.ContextVar[
                 FlextModelsContainers.ConfigMap | None
             ] = contextvars.ContextVar("flext_global_context", default=None)
@@ -123,7 +127,13 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
             Self,
             contextvars.ContextVar[FlextModelsContainers.ConfigMap | None],
         ]:
-            """Resolve an existing scope var or create one immutably."""
+            """Resolve an existing scope var or create one immutably.
+
+            Returns:
+                The resulting ``tuple[Self,
+                    contextvars.ContextVar[FlextModelsContainers.ConfigMap | None]]``.
+
+            """
             existing = self.scope_vars.get(scope)
             if existing is not None:
                 return self, existing
@@ -141,7 +151,12 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
             return updated_state, scope_var
 
         def with_operation_update(self, operation: str) -> Self:
-            """Increment canonical statistics for the given operation."""
+            """Increment canonical statistics for the given operation.
+
+            Returns:
+                The resulting ``Self``.
+
+            """
             counter_attr = f"{operation}s"
             statistics_updates: dict[str, t.JsonPayload] = {}
             current_statistics = self.statistics

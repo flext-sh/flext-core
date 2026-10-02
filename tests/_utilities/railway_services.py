@@ -1,4 +1,8 @@
-"""Railway service helpers for flext-core tests."""
+"""Railway service helpers for flext-core tests.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -6,12 +10,11 @@ from typing import TYPE_CHECKING, Annotated, override
 
 from flext_tests import m as tm, r, u
 
+from tests._models.mixins import TestsFlextModelsMixins
 from tests.base import s
 from tests.constants import c
 from tests.models import m
 from tests.typings import t
-
-from .._models.mixins import TestsFlextModelsMixins
 
 if TYPE_CHECKING:
     from tests.protocols import p
@@ -71,7 +74,12 @@ class TestsFlextUtilitiesRailwayServicesMixin:
     def create_user_service(
         case: m.Tests.ServiceTestCase,
     ) -> TestsFlextUtilitiesRailwayServicesMixin.GetUserService:
-        """Create a user service from a documented service case."""
+        """Create a user service from a documented service case.
+
+        Returns:
+            The resulting ``TestsFlextUtilitiesRailwayServicesMixin.GetUserService``.
+
+        """
         return TestsFlextUtilitiesRailwayServicesMixin.make(
             TestsFlextUtilitiesRailwayServicesMixin.GetUserService,
             user_id=case.user_id or case.input_value or "",

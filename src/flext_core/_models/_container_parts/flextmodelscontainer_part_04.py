@@ -15,12 +15,11 @@ from __future__ import annotations
 from typing import Annotated
 
 from flext_core import t
-
-from ..base import FlextModelsBase as m
-from ..pydantic import FlextModelsPydantic as mp
-from .flextmodelscontainer_part_03 import (
+from flext_core._models._container_parts.flextmodelscontainer_part_03 import (
     FlextModelsContainer as FlextModelsContainerPart03,
 )
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.pydantic import FlextModelsPydantic as mp
 
 
 class FlextModelsContainer(FlextModelsContainerPart03):

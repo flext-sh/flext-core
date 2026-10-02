@@ -4,6 +4,9 @@ Every assertion targets the observable public contract of the constrained
 type aliases exposed through ``t.*``: a ``m.TypeAdapter`` either returns the
 validated value unchanged (accept path) or raises ``c.ValidationError``
 (reject path). No implementation internals are inspected.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations

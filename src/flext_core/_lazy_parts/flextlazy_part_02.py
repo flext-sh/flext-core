@@ -11,13 +11,13 @@ import sys
 from types import ModuleType
 from typing import TYPE_CHECKING
 
-from .._typings.lazy import FlextTypesLazy
-from .flextlazy_part_01 import (
+from flext_core._lazy_parts.flextlazy_part_01 import (
     FlextLazyPart01,
     LazyImportDict,
     LazyImportMap,
     MutableLazyImportMap,
 )
+from flext_core._typings.lazy import FlextTypesLazy
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

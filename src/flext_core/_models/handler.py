@@ -16,11 +16,10 @@ from collections.abc import MutableSequence
 from typing import Annotated, ClassVar
 
 from flext_core import c, p, t
-
-from .._utilities.pydantic import FlextUtilitiesPydantic as up
-from .base import FlextModelsBase as m
-from .containers import FlextModelsContainers
-from .pydantic import FlextModelsPydantic as mp
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.containers import FlextModelsContainers
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
 
 
 class FlextModelsHandler:

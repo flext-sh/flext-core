@@ -32,7 +32,12 @@ class FlextUtilitiesSettings:
 
     @staticmethod
     def resolve_process_environment() -> t.StrMapping:
-        """Resolve the inherited process environment as a plain string mapping."""
+        """Resolve the inherited process environment as a plain string mapping.
+
+        Returns:
+            The resulting ``t.StrMapping``.
+
+        """
         return dict(os.environ)
 
     @staticmethod
@@ -41,7 +46,12 @@ class FlextUtilitiesSettings:
         name: str,
         factory: t.FactoryCallable,
     ) -> p.Result[bool]:
-        """Register factory in DI container, verifying resolution succeeds."""
+        """Register factory in DI container, verifying resolution succeeds.
+
+        Returns:
+            The resulting ``p.Result[bool]``.
+
+        """
         _ = container.factory(name, factory)
         resolved = container.resolve(name)
         if resolved.failure:

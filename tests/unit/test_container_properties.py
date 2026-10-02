@@ -1,4 +1,8 @@
-"""Behavioral tests for the FlextContainer public contract."""
+"""Behavioral tests for the FlextContainer public contract.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -24,7 +28,12 @@ class TestsFlextCoreContainerProperties:
 
     @pytest.fixture
     def container(self) -> Iterator[FlextContainer]:
-        """Yield the shared container and reset the singleton afterwards."""
+        """Yield the shared container and reset the singleton afterwards.
+
+        Yields:
+            Each ``FlextContainer``.
+
+        """
         instance = FlextContainer.shared()
         instance.clear()
         yield instance

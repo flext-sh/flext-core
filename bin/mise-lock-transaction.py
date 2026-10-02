@@ -3,6 +3,9 @@
 
 This bootstrap runs with the Python selected by the staged Mise lock, before
 the project's virtual environment exists. It intentionally uses only stdlib.
+Its journal and project-scoped mutex recover process interruption on every
+platform. Directory fsync is POSIX-only; Windows power-loss durability is not
+promised by this transaction.
 """
 
 from __future__ import annotations
@@ -12,9 +15,12 @@ import json
 import os
 import shutil
 import stat
+import subprocess
 import sys
 import tomllib
+from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
+from typing import Iterator
 
 
 class MiseLockTransaction:
@@ -23,6 +29,46 @@ class MiseLockTransaction:
     JOURNAL = "transaction.json"
     NEW_LOCK = "new.lock"
     OLD_LOCK = "old.lock"
+    ARTIFACTS = (
+("bin/mise", 0o755),
+("bin/mise.cmd", 0o644),
+("mise.version", 0o644),
+)
+
+    @staticmethod
+    @contextmanager
+    def _serialized(project: Path) -> Iterator[None]:
+        """Serialize all publisher versions on one declared physical mutex."""
+        mutex = project / ".mise-lock-transaction.lock"
+        if mutex.is_symlink():
+            raise ValueError(f"Mise transaction mutex is a symlink: {mutex}")
+        flags = os.O_RDWR | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0)
+        descriptor = os.open(mutex, flags, 0o600)
+        try:
+            observed = os.fstat(descriptor)
+            if not stat.S_ISREG(observed.st_mode) or observed.st_nlink != 1:
+                raise ValueError(f"Mise transaction mutex is not physical: {mutex}")
+            if observed.st_size == 0:
+                os.write(descriptor, b"\0")
+                os.fsync(descriptor)
+            os.lseek(descriptor, 0, os.SEEK_SET)
+            if os.name == "nt":
+                import msvcrt
+
+                msvcrt.locking(descriptor, msvcrt.LK_LOCK, 1)
+            else:
+                import fcntl
+
+                fcntl.flock(descriptor, fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                if os.name == "nt":
+                    msvcrt.locking(descriptor, msvcrt.LK_UNLCK, 1)
+                else:
+                    fcntl.flock(descriptor, fcntl.LOCK_UN)
+        finally:
+            os.close(descriptor)
 
     @staticmethod
     def _physical_directory(path: Path) -> None:
@@ -96,6 +142,31 @@ class MiseLockTransaction:
         return result
 
     @classmethod
+    def _previous_sidecars(cls, content: bytes | None, project: Path) -> dict[str, str]:
+        """Read the owned graph from Git stage 2 during a lock merge conflict.
+
+        A generated lock with conflict markers is not a TOML declaration. Git's
+        unmerged index retains the exact prior lock; its sidecars must still
+        validate against the physical checkout before publication can replace
+        them. Ordinary malformed locks continue to fail at the TOML parser.
+        """
+        if content is None or b"<<<<<<< " not in content:
+            return cls._sidecars(content, project)
+        index = subprocess.run(
+            ["git", "-C", str(project), "ls-files", "-u", "--", "mise.lock"],
+            check=True,
+            capture_output=True,
+        ).stdout
+        if not any(line.split(b"\t", 1)[0].endswith(b" 2") for line in index.splitlines()):
+            raise ValueError("conflicted mise.lock has no Git stage-2 source")
+        prior = subprocess.run(
+            ["git", "-C", str(project), "show", ":2:mise.lock"],
+            check=True,
+            capture_output=True,
+        ).stdout
+        return cls._sidecars(prior, project)
+
+    @classmethod
     def _tree_digest(cls, root: Path) -> str:
         cls._physical_directory(root)
         checksum = hashlib.sha256()
@@ -112,6 +183,14 @@ class MiseLockTransaction:
 
     @staticmethod
     def _sync_directory(path: Path) -> None:
+        """Sync POSIX directory metadata; Windows relies on journal recovery.
+
+        Windows process-interruption recovery is covered by the persisted
+        journal and same-volume replacements. Python exposes no portable
+        directory fsync there, so this makes no power-loss durability claim.
+        """
+        if os.name == "nt":
+            return
         descriptor = os.open(path, os.O_RDONLY)
         try:
             os.fsync(descriptor)
@@ -175,6 +254,57 @@ class MiseLockTransaction:
         return payload
 
     @classmethod
+    def _artifact_refs(cls, root: Path) -> dict[str, str]:
+        return {
+            relative: cls._digest(cls._bytes(root / relative)) or ""
+            for relative, _mode in cls.ARTIFACTS
+        }
+
+    @classmethod
+    def _journal_artifacts(cls, journal: dict[str, str], name: str) -> dict[str, str]:
+        raw = journal.get(name)
+        if raw is None:
+            raise ValueError(f"Mise lock journal lacks {name}")
+        payload = json.loads(raw)
+        if not isinstance(payload, dict) or not all(
+            isinstance(key, str) and isinstance(value, str)
+            for key, value in payload.items()
+        ):
+            raise ValueError(f"Mise lock journal has invalid {name}")
+        return payload
+
+    @classmethod
+    def _recover_artifacts(cls, project: Path, stage: Path, journal: dict[str, str]) -> None:
+        old_refs = cls._journal_artifacts(journal, "old_artifacts")
+        new_refs = cls._journal_artifacts(journal, "new_artifacts")
+        declared = {relative for relative, _mode in cls.ARTIFACTS}
+        if set(old_refs) != declared or set(new_refs) != declared:
+            raise ValueError("Mise transaction artifact manifest is incomplete")
+        for relative, mode in cls.ARTIFACTS:
+            source = stage / "new-artifacts" / relative
+            expected = new_refs[relative]
+            if cls._digest(cls._bytes(source)) != expected:
+                raise ValueError(f"staged Mise artifact changed: {source}")
+            target = project / relative
+            current = cls._digest(cls._bytes(target))
+            if current == expected:
+                continue
+            if current != (old_refs[relative] or None):
+                raise ValueError(f"Mise artifact changed outside transaction: {target}")
+            pending = stage / "pending-artifacts" / relative
+            cls._ensure_parent(stage, pending)
+            shutil.copyfile(source, pending)
+            os.chmod(pending, mode)
+            descriptor = os.open(pending, os.O_RDONLY)
+            try:
+                os.fsync(descriptor)
+            finally:
+                os.close(descriptor)
+            cls._ensure_parent(project, target)
+            os.replace(pending, target)
+            cls._sync_directory(target.parent)
+
+    @classmethod
     def _require_roots(cls, project: Path, stage: Path) -> None:
         cls._physical_directory(project)
         cls._physical_directory(stage)
@@ -228,8 +358,7 @@ class MiseLockTransaction:
         cls._require_roots(project, stage)
         journal = cls._read_journal(stage)
         if journal is None:
-            cls._retire_stage(stage)
-            return
+            raise ValueError(f"uncommitted Mise stage has no recovery journal: {stage}")
         if journal.get("project") != str(project):
             raise ValueError(f"Mise lock journal belongs to another project: {stage}")
         old = cls._bytes(stage / cls.OLD_LOCK)
@@ -287,6 +416,8 @@ class MiseLockTransaction:
                 cls._sync_directory(retired.parent)
             elif not retired.exists():
                 raise ValueError(f"stale sidecar disappeared during recovery: {destination}")
+        if "new_artifacts" in journal:
+            cls._recover_artifacts(project, stage, journal)
         cls._retire_stage(stage)
 
     @classmethod
@@ -298,23 +429,43 @@ class MiseLockTransaction:
                 cls.recover(project, prior)
         for retired in sorted(project.parent.glob(f".{project.name}.mise-lock-cleanup.*")):
             cls._physical_directory(retired)
+            journal = cls._read_journal(retired)
+            if journal is None or journal.get("project") != str(project):
+                raise ValueError(f"unowned Mise cleanup directory: {retired}")
             shutil.rmtree(retired)
         old = cls._bytes(project / "mise.lock")
         new = cls._bytes(stage / "mise.lock")
         if new is None:
             raise ValueError(f"staged mise.lock is absent: {stage}")
-        old_refs = cls._sidecars(old, project)
+        old_refs = cls._previous_sidecars(old, project)
         new_refs = cls._sidecars(new, stage)
+        artifact_stage = stage / "artifacts"
+        new_artifacts: dict[str, str] = {}
+        old_artifacts: dict[str, str] = {}
+        if artifact_stage.exists() or artifact_stage.is_symlink():
+            cls._physical_directory(artifact_stage)
+            new_artifacts = cls._artifact_refs(artifact_stage)
+            if any(not value for value in new_artifacts.values()):
+                raise ValueError("staged Mise launcher/pin set is incomplete")
+            old_artifacts = cls._artifact_refs(project)
+            for relative, _mode in cls.ARTIFACTS:
+                destination = stage / "new-artifacts" / relative
+                cls._ensure_parent(stage, destination)
+                shutil.copyfile(artifact_stage / relative, destination)
         cls._sync_tree(stage)
         for relative in old_refs | new_refs:
             cls._reject_symlink_path(project, relative)
         for relative, expected in new_refs.items():
             destination = project / relative
             if destination.exists():
+                # A new declaration cannot claim an existing, unowned path:
+                # replacing it would discard data that the old lock never
+                # entrusted to this transaction, and rollback could not
+                # restore it from the old lock's sidecar manifest.
                 if relative not in old_refs:
                     raise ValueError(f"unowned Mise sidecar occupies target: {destination}")
                 actual = cls._tree_digest(destination)
-                if actual != expected and actual != old_refs.get(relative):
+                if actual != expected and actual != old_refs[relative]:
                     raise ValueError(f"Mise sidecar changed outside transaction: {destination}")
         if old is not None:
             with (stage / cls.OLD_LOCK).open("xb") as stream:
@@ -326,13 +477,17 @@ class MiseLockTransaction:
             stream.flush()
             os.fsync(stream.fileno())
         cls._sync_directory(stage)
-        cls._write_journal(stage, {
+        journal = {
             "project": str(project),
             "old": cls._digest(old) or "",
             "new": cls._digest(new) or "",
             "old_refs": json.dumps(old_refs, sort_keys=True),
             "new_refs": json.dumps(new_refs, sort_keys=True),
-        })
+        }
+        if new_artifacts:
+            journal["old_artifacts"] = json.dumps(old_artifacts, sort_keys=True)
+            journal["new_artifacts"] = json.dumps(new_artifacts, sort_keys=True)
+        cls._write_journal(stage, journal)
         for relative, expected in new_refs.items():
             destination = project / relative
             if destination.exists():
@@ -353,11 +508,15 @@ class MiseLockTransaction:
 
     @classmethod
     def main(cls, arguments: list[str]) -> int:
-        if len(arguments) != 3 or arguments[0] != "publish":
-            raise ValueError("usage: mise-lock-transaction.py publish PROJECT STAGE")
+        if len(arguments) != 3 or arguments[0] not in {"publish", "recover"}:
+            raise ValueError("usage: mise-lock-transaction.py (publish|recover) PROJECT STAGE")
         project = Path(arguments[1]).absolute()
         stage = Path(arguments[2]).absolute()
-        cls.publish(project, stage)
+        with cls._serialized(project):
+            if arguments[0] == "publish":
+                cls.publish(project, stage)
+            elif stage.exists() or stage.is_symlink():
+                cls.recover(project, stage)
         return 0
 
 

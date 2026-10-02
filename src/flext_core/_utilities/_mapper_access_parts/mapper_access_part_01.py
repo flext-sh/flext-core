@@ -14,12 +14,11 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from flext_core import c, e, m, p, r, t
-
-from ..._models.containers import FlextModelsContainers
-from ..._models.pydantic import FlextModelsPydantic
-from ...runtime import FlextRuntime
-from ..guards import FlextUtilitiesGuards
-from ..guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core._models.containers import FlextModelsContainers
+from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._utilities.guards import FlextUtilitiesGuards
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core.runtime import FlextRuntime
 
 
 class FlextUtilitiesMapperAccess:
@@ -32,6 +31,10 @@ class FlextUtilitiesMapperAccess:
         """Normalize protocol-accessible values.
 
         Return canonical runtime/container shapes.
+
+        Returns:
+            The resulting ``t.JsonPayload | t.JsonValue``.
+
         """
         if value is None:
             # Preserve nulls so the extraction contract decides fail/default policy.
@@ -65,7 +68,12 @@ class FlextUtilitiesMapperAccess:
         raw: t.JsonPayload | None,
         key_part: str,
     ) -> p.Result[t.JsonPayload]:
-        """Wrap a raw value, preserving null as an explicit failed contract."""
+        """Wrap a raw value, preserving null as an explicit failed contract.
+
+        Returns:
+            The resulting ``p.Result[t.JsonPayload]``.
+
+        """
         if raw is None:
             return r[t.JsonPayload].fail_op(
                 "resolve extracted value",
@@ -84,7 +92,12 @@ class FlextUtilitiesMapperAccess:
         | None,
         key_part: str,
     ) -> p.Result[t.JsonPayload]:
-        """Get a raw value from a mapping, model, or protocol object."""
+        """Get a raw value from a mapping, model, or protocol object.
+
+        Returns:
+            The resulting ``p.Result[t.JsonPayload]``.
+
+        """
         not_found_result: p.Result[t.JsonPayload] = r[t.JsonPayload].fail_op(
             "extract key",
             e.render_template(c.ERR_TEMPLATE_KEY_NOT_FOUND, key=key_part),

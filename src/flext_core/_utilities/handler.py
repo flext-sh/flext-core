@@ -32,7 +32,12 @@ class FlextUtilitiesHandler:
         handler_name: str,
         handler_mode: c.HandlerType,
     ) -> p.HandlerRuntimeState:
-        """Build runtime state with a fresh execution context."""
+        """Build runtime state with a fresh execution context.
+
+        Returns:
+            The resulting ``p.HandlerRuntimeState``.
+
+        """
         from flext_core import m
 
         return m.HandlerRuntimeState(
@@ -44,7 +49,12 @@ class FlextUtilitiesHandler:
 
     @staticmethod
     def start_execution(state: p.HandlerRuntimeState) -> p.HandlerRuntimeState:
-        """Stamp the current monotonic time on the active execution context."""
+        """Stamp the current monotonic time on the active execution context.
+
+        Returns:
+            The resulting ``p.HandlerRuntimeState``.
+
+        """
         execution_context = state.execution_context.model_copy(
             update={"started_at": time.time()},
         )
@@ -56,7 +66,12 @@ class FlextUtilitiesHandler:
         name: str,
         value: t.JsonPayload,
     ) -> p.Result[bool]:
-        """Record a metric value onto an execution context's payload."""
+        """Record a metric value onto an execution context's payload.
+
+        Returns:
+            The resulting ``p.Result[bool]``.
+
+        """
         normalized = FlextRuntime.normalize_to_container(value)
         ctx.metrics_state_data.root[name] = (
             normalized
@@ -70,7 +85,12 @@ class FlextUtilitiesHandler:
         state: p.HandlerRuntimeState,
         ctx: t.JsonMapping | p.ExecutionContext,
     ) -> p.Result[p.HandlerRuntimeState]:
-        """Validate a context and return state with an extended stack."""
+        """Validate a context and return state with an extended stack.
+
+        Returns:
+            The resulting ``p.Result[p.HandlerRuntimeState]``.
+
+        """
         if not isinstance(ctx, Mapping):
             pushed_context = ctx.model_copy()
         else:
@@ -94,7 +114,12 @@ class FlextUtilitiesHandler:
     def pop_context(
         state: p.HandlerRuntimeState,
     ) -> p.Result[t.Pair[p.HandlerRuntimeState, p.RootDict[t.JsonPayload]]]:
-        """Return state without the top context plus its validated identity."""
+        """Return state without the top context plus its validated identity.
+
+        Returns:
+            State without the top context plus its validated identity.
+
+        """
         from flext_core import m
 
         if not state.context_stack:

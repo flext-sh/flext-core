@@ -1,4 +1,8 @@
-"""Behavior contract for flext_core.loggings.FlextUtilitiesLogging — public API only."""
+"""Behavior contract for flext_core.loggings.FlextUtilitiesLogging — public API only.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -62,18 +66,26 @@ class TestsFlextLoggings:
 
     @pytest.fixture
     def logger(self) -> p.Logger:
+        """Provide ``logger``.
+
+        Returns:
+            The resulting ``p.Logger``.
+
+        """
         return u.create_module_logger("tests.flext_core.loggings")
 
     def test_create_module_logger_returns_usable_logger_instance(
         self,
         logger: p.Logger,
     ) -> None:
+        """Test create module logger returns usable logger instance."""
         assert logger is not None
 
     def test_bind_returns_logger_accepting_subsequent_log_calls(
         self,
         logger: p.Logger,
     ) -> None:
+        """Test bind returns logger accepting subsequent log calls."""
         bound = logger.bind(service_name="svc", correlation_id="cid")
         assert bound is not None
         result = self._assert_log_output(
@@ -86,6 +98,7 @@ class TestsFlextLoggings:
         self,
         logger: p.Logger,
     ) -> None:
+        """Test new returns fresh bound logger without prior context."""
         refreshed = logger.bind(initial="x").new(fresh="y")
         assert refreshed is not None
         result = self._assert_log_output(
@@ -95,15 +108,18 @@ class TestsFlextLoggings:
         tm.ok(result)
 
     def test_unbind_missing_key_fails_loud(self, logger: p.Logger) -> None:
+        """Test unbind missing key fails loud."""
         bound = logger.bind(a="1")
         with pytest.raises(KeyError):
             bound.unbind("missing")
 
     def test_unbind_without_safe_raises_on_missing_key(self, logger: p.Logger) -> None:
+        """Test unbind without safe raises on missing key."""
         with pytest.raises(KeyError):
             logger.unbind("missing")
 
     def test_unbind_with_safe_ignores_missing_key(self, logger: p.Logger) -> None:
+        """Test unbind with safe ignores missing key."""
         result = self._assert_log_output(
             lambda: logger.unbind("missing", safe=True).info("safe unbind ok"),
             contains="safe unbind ok",
@@ -111,6 +127,7 @@ class TestsFlextLoggings:
         tm.ok(result)
 
     def test_try_unbind_ignores_missing_key(self, logger: p.Logger) -> None:
+        """Test try unbind ignores missing key."""
         result = self._assert_log_output(
             lambda: logger.try_unbind("missing").info("try unbind ok"),
             contains="try unbind ok",
@@ -121,6 +138,7 @@ class TestsFlextLoggings:
         self,
         logger: p.Logger,
     ) -> None:
+        """Test build exception context captures exception metadata."""
         ctx = logger.build_exception_context(
             exception=ValueError("boom"),
             exc_info=False,
@@ -132,6 +150,7 @@ class TestsFlextLoggings:
         self,
         logger: p.Logger,
     ) -> None:
+        """Test build exception context without exception returns context dict."""
         ctx = logger.build_exception_context(
             exception=None,
             exc_info=False,
@@ -143,6 +162,8 @@ class TestsFlextLoggings:
         self,
         logger: p.Logger,
     ) -> None:
+        """Test performance tracker context manager completes without error."""
+
         def emit() -> p.Result[bool] | None:
             with u.PerformanceTracker(logger, "operation_under_test"):
                 nonlocal result
@@ -161,6 +182,7 @@ class TestsFlextLoggings:
         *,
         expect_output: bool,
     ) -> None:
+        """Test every log level returns success result with value true."""
         result = self._assert_log_output(
             lambda: getattr(logger, level)("test %s message", level),
             contains="test %s message",
@@ -177,6 +199,7 @@ class TestsFlextLoggings:
         *,
         expect_output: bool,
     ) -> None:
+        """Test every log level accepts structured kwargs and returns success."""
         result = self._assert_log_output(
             lambda: getattr(logger, level)(
                 "test message",
@@ -190,6 +213,7 @@ class TestsFlextLoggings:
         tm.that(result.value, eq=True)
 
     def test_log_method_accepts_level_as_first_argument(self, logger: p.Logger) -> None:
+        """Test log method accepts level as first argument."""
         for level, expect_output in LOG_LEVELS[:-1]:
             result = self._assert_log_output(
                 lambda level=level: logger.log(level, "test %s message", level),
@@ -200,6 +224,7 @@ class TestsFlextLoggings:
             tm.that(result.value, eq=True)
 
     def test_exception_log_captures_inside_except_block(self, logger: p.Logger) -> None:
+        """Test exception log captures inside except block."""
         message = "captured"
 
         def _fail() -> NoReturn:
@@ -219,6 +244,7 @@ class TestsFlextLoggings:
         self,
         logger: p.Logger,
     ) -> None:
+        """Test log source points to call site not logging internals."""
         marker = "source probe"
         stream = io.StringIO()
         with redirect_stdout(stream):

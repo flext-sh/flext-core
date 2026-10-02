@@ -1,4 +1,8 @@
-"""Behavioral tests for the container bootstrap registration spec."""
+"""Behavioral tests for the container bootstrap registration spec.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 

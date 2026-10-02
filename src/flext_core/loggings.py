@@ -11,14 +11,13 @@ import time
 import traceback
 from typing import TYPE_CHECKING, ClassVar, Self
 
+from flext_core._utilities.logging_context import FlextUtilitiesLoggingContext as ulc
 from flext_core.constants import c
 from flext_core.exceptions import e
 from flext_core.models import m
 from flext_core.protocols import p
 from flext_core.result import r
 from flext_core.typings import t
-
-from ._utilities.logging_context import FlextUtilitiesLoggingContext as ulc
 
 if TYPE_CHECKING:
     import types
@@ -50,7 +49,12 @@ class FlextUtilitiesLogging(ulc):
         _bound_logger: p.Logger | None = None,
         context: t.MappingKV[str, t.JsonPayload | None] | None = None,
     ) -> None:
-        """Initialize FlextUtilitiesLogging with name and optional context."""
+        """Initialize FlextUtilitiesLogging with name and optional context.
+
+        Raises:
+            ValueError: If logger name is required.
+
+        """
         super().__init__()
         if not name:
             msg = "logger name is required"
@@ -87,7 +91,12 @@ class FlextUtilitiesLogging(ulc):
         )
 
     def __call__(self) -> Self:
-        """Return self to support factory-style DI registration."""
+        """Return self to support factory-style DI registration.
+
+        Returns:
+            Self to support factory-style DI registration.
+
+        """
         return self
 
     @property
@@ -106,7 +115,15 @@ class FlextUtilitiesLogging(ulc):
 
     @classmethod
     def resolve_bound_logger(cls, name: str) -> p.Logger:
-        """Fetch the underlying bound structlog logger for internal use."""
+        """Fetch the underlying bound structlog logger for internal use.
+
+        Returns:
+            The resulting ``p.Logger``.
+
+        Raises:
+            ValueError: If logger name is required.
+
+        """
         cls.ensure_structlog_configured()
         if not name:
             msg = "logger name is required"
@@ -115,12 +132,22 @@ class FlextUtilitiesLogging(ulc):
         return logger
 
     def bind(self, **context: t.JsonPayload) -> Self:
-        """Bind additional context, returning new logger (original unchanged)."""
+        """Bind additional context, returning new logger (original unchanged).
+
+        Returns:
+            The resulting ``Self``.
+
+        """
         bound_logger = self.logger.bind(**self.to_container_context(context))
         return self.__class__(self.name, _bound_logger=bound_logger)
 
     def new(self, **context: t.JsonPayload) -> Self:
-        """Create new logger with context — implements BindableLogger protocol."""
+        """Create new logger with context — implements BindableLogger protocol.
+
+        Returns:
+            The resulting ``Self``.
+
+        """
         return self.bind(**context)
 
     def _exception_context_from_inputs(
@@ -156,7 +183,12 @@ class FlextUtilitiesLogging(ulc):
         return context_dict
 
     def exception(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
-        """Log exception with conditional stack trace (DEBUG only)."""
+        """Log exception with conditional stack trace (DEBUG only).
+
+        Returns:
+            The resulting ``t.LogResult``.
+
+        """
         message = msg
         filtered_args: tuple[t.JsonValue, ...] = tuple(
             FlextUtilitiesLogging._to_container_value(arg)
@@ -190,7 +222,12 @@ class FlextUtilitiesLogging(ulc):
         exc_info: bool,
         context: t.MappingKV[str, t.JsonPayload | Exception],
     ) -> t.JsonMapping:
-        """Build normalized structured exception context for logging."""
+        """Build normalized structured exception context for logging.
+
+        Returns:
+            The resulting ``t.JsonMapping``.
+
+        """
         result: t.JsonDict = {
             k: str(v)
             if isinstance(v, Exception)
@@ -205,18 +242,33 @@ class FlextUtilitiesLogging(ulc):
         return result
 
     def unbind(self, *keys: str, safe: bool = False) -> Self:
-        """Unbind keys from logger — implements BindableLogger protocol."""
+        """Unbind keys from logger — implements BindableLogger protocol.
+
+        Returns:
+            The resulting ``Self``.
+
+        """
         bound_logger = (
             self.logger.try_unbind(*keys) if safe else self.logger.unbind(*keys)
         )
         return self.__class__(self.name, _bound_logger=bound_logger)
 
     def try_unbind(self, *keys: str) -> Self:
-        """Unbind keys while ignoring missing values."""
+        """Unbind keys while ignoring missing values.
+
+        Returns:
+            The resulting ``Self``.
+
+        """
         return self.unbind(*keys, safe=True)
 
     def warning(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
-        """Log warning message."""
+        """Log warning message.
+
+        Returns:
+            The resulting ``t.LogResult``.
+
+        """
         return self._log_standard_level(c.LogLevel.WARNING, msg, *args, **kw)
 
     @staticmethod
@@ -249,7 +301,12 @@ class FlextUtilitiesLogging(ulc):
         *args: t.LogValue,
         **context: t.LogValue,
     ) -> t.LogResult:
-        """Consolidate all log level methods into one internal logging path."""
+        """Consolidate all log level methods into one internal logging path.
+
+        Returns:
+            The resulting ``t.LogResult``.
+
+        """
         try:
             level_str = FlextUtilitiesLogging._resolve_level_name(level)
             scalar_context = FlextUtilitiesLogging._resolve_log_context(args, context)
@@ -268,19 +325,39 @@ class FlextUtilitiesLogging(ulc):
         return self._log(level, msg, *args, **kw)
 
     def critical(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
-        """Log critical message."""
+        """Log critical message.
+
+        Returns:
+            The resulting ``t.LogResult``.
+
+        """
         return self._log_standard_level(c.LogLevel.CRITICAL, msg, *args, **kw)
 
     def debug(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
-        """Log debug message."""
+        """Log debug message.
+
+        Returns:
+            The resulting ``t.LogResult``.
+
+        """
         return self._log_standard_level(c.LogLevel.DEBUG, msg, *args, **kw)
 
     def error(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
-        """Log error message."""
+        """Log error message.
+
+        Returns:
+            The resulting ``t.LogResult``.
+
+        """
         return self._log_standard_level(c.LogLevel.ERROR, msg, *args, **kw)
 
     def info(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
-        """Log info message."""
+        """Log info message.
+
+        Returns:
+            The resulting ``t.LogResult``.
+
+        """
         return self._log_standard_level(c.LogLevel.INFO, msg, *args, **kw)
 
     def log(
@@ -290,7 +367,12 @@ class FlextUtilitiesLogging(ulc):
         *args: t.LogValue,
         **context: t.LogValue,
     ) -> t.LogResult:
-        """Log message with specified level."""
+        """Log message with specified level.
+
+        Returns:
+            The resulting ``t.LogResult``.
+
+        """
         level_enum: c.LogLevel = c.LogLevel(level.upper())
         converted_args: tuple[t.JsonValue, ...] = tuple(
             FlextUtilitiesLogging._to_container_value(arg) for arg in args
@@ -303,7 +385,12 @@ class FlextUtilitiesLogging(ulc):
         *args: t.LogValue,
         **kwargs: t.JsonPayload,
     ) -> t.LogResult:
-        """Log trace message."""
+        """Log trace message.
+
+        Returns:
+            The resulting ``t.LogResult``.
+
+        """
         try:
             try:
                 formatted_message = message % args if args else message
@@ -329,7 +416,12 @@ class FlextUtilitiesLogging(ulc):
             self._start_time: float = 0.0
 
         def __enter__(self) -> Self:
-            """Start tracking."""
+            """Start tracking.
+
+            Returns:
+                The resulting ``Self``.
+
+            """
             self._start_time = time.time()
             return self
 
@@ -366,7 +458,12 @@ class FlextUtilitiesLogging(ulc):
 
     @classmethod
     def fetch_logger(cls, name: str) -> p.Logger:
-        """Fetch the canonical public logger wrapper."""
+        """Fetch the canonical public logger wrapper.
+
+        Returns:
+            The resulting ``p.Logger``.
+
+        """
         return cls.create_module_logger(name)
 
     @classmethod
@@ -376,7 +473,12 @@ class FlextUtilitiesLogging(ulc):
         *,
         context: t.MappingKV[str, t.JsonPayload | None] | None = None,
     ) -> p.Logger:
-        """Create a logger instance for a module."""
+        """Create a logger instance for a module.
+
+        Returns:
+            The resulting ``p.Logger``.
+
+        """
         cls.ensure_structlog_configured()
         merged_context: t.MutableJsonMapping = {}
         if context is not None:

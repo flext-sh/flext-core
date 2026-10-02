@@ -1,4 +1,8 @@
-"""Behavior contract for public text helpers in real bootstrap workflows."""
+"""Behavior contract for public text helpers in real bootstrap workflows.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -13,6 +17,8 @@ from tests.utilities import u as test_u
 
 
 class TestsFlextUtilitiesText(test_u.Tests.Contract):
+    """Tests for ``FlextUtilitiesText``."""
+
     @pytest.mark.parametrize(
         ("value", "message"),
         [

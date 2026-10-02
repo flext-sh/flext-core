@@ -5,6 +5,9 @@ container's facade-level public behaviors: singleton identity, drop, clear,
 scope isolation, fluent apply, and snapshot. Every assertion targets the
 observable public surface (return values, ``r[T]`` outcomes, and public
 model state) rather than internal structures.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -23,6 +26,8 @@ if TYPE_CHECKING:
 
 
 class TestsFlextCoreContainer:
+    """Tests for ``FlextCoreContainer``."""
+
     def test_singleton_returns_same_instance(self) -> None:
         """Constructing the container twice yields the same shared instance."""
         first = FlextContainer()
@@ -88,6 +93,7 @@ class TestsFlextCoreContainer:
         self,
         clean_container: p.Container,
     ) -> None:
+        """Test logger requires explicit module name."""
         params = inspect.signature(type(clean_container).logger).parameters
         module_param = params["module_name"]
         tm.that(

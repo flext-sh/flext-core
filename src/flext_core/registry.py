@@ -115,7 +115,12 @@ class FlextRegistry(s[bool]):
             | None
         ),
     ) -> t.JsonPayload | None:
-        """Safe conversion using centralized utilities."""
+        """Safe conversion using centralized utilities.
+
+        Returns:
+            The resulting ``t.JsonPayload | None``.
+
+        """
         narrowed: t.JsonPayload | None = None
         if value is None:
             narrowed = None
@@ -135,7 +140,12 @@ class FlextRegistry(s[bool]):
     def _normalize_registration_impl(
         value: t.RegistrablePlugin,
     ) -> t.RegisterableService:
-        """Normalize registry payloads to the container bind contract."""
+        """Normalize registry payloads to the container bind contract.
+
+        Returns:
+            The resulting ``t.RegisterableService``.
+
+        """
         if callable(value):
 
             def normalized_callable(
@@ -149,7 +159,12 @@ class FlextRegistry(s[bool]):
         return FlextRegistry._narrow_value(value)
 
     def _get_handler_mode(self, value: t.JsonPayload) -> c.HandlerType:
-        """Safe conversion to HandlerType (falls back to COMMAND)."""
+        """Safe conversion to HandlerType (falls back to COMMAND).
+
+        Returns:
+            The resulting ``c.HandlerType``.
+
+        """
         text = str(value)
         if text in c.HandlerType.__members__:
             return c.HandlerType[text]
@@ -159,7 +174,12 @@ class FlextRegistry(s[bool]):
             return c.HandlerType.COMMAND
 
     def _get_status(self, value: t.JsonPayload) -> c.Status:
-        """Safe conversion to CommonStatus (falls back to ACTIVE)."""
+        """Safe conversion to CommonStatus (falls back to ACTIVE).
+
+        Returns:
+            The resulting ``c.Status``.
+
+        """
         text = str(value)
         if text in c.Status.__members__:
             return c.Status[text]

@@ -11,9 +11,10 @@ from typing import TYPE_CHECKING
 from flext_tests import tm
 
 from flext_core import FlextSettings
+from tests.integration.settings_integration_factories import (
+    TestsFlextFlextSettingsFactories,
+)
 from tests.utilities import u
-
-from .settings_integration_factories import TestsFlextFlextSettingsFactories
 
 if TYPE_CHECKING:
     from pathlib import Path

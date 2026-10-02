@@ -18,7 +18,7 @@ from typing import override
 
 from flext_tests import FlextTestsModels
 
-from ._models import TestsFlextModelsMixins
+from tests._models import TestsFlextModelsMixins
 
 
 class TestsFlextModels(FlextTestsModels):

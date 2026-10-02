@@ -1,4 +1,8 @@
-"""Behavior contract for flext_core collection utilities — public API only."""
+"""Behavior contract for flext_core collection utilities — public API only.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -69,6 +73,7 @@ class TestsFlextCoreUtilitiesCollection:
         self,
         tmp_path: Path,
     ) -> None:
+        """Test normalize domain event data flattens public payloads."""
         repository_root = tmp_path / "flext"
         repository_root.mkdir()
         config_payload = m.ConfigMap.model_validate({
@@ -110,6 +115,7 @@ class TestsFlextCoreUtilitiesCollection:
         mapper: Callable[[t.JsonValue], t.JsonValue],
         expected: t.JsonValue,
     ) -> None:
+        """Test map applies function to each element."""
         tm.that(u.map(items, mapper), eq=expected)
 
     # --- find ------------------------------------------------------------
@@ -130,6 +136,7 @@ class TestsFlextCoreUtilitiesCollection:
         expected: t.JsonValue,
         expect_found: bool,
     ) -> None:
+        """Test find returns matching element or failure."""
         result = u.find(items, predicate)
         if expect_found:
             tm.ok(result)
@@ -138,6 +145,7 @@ class TestsFlextCoreUtilitiesCollection:
             tm.fail(result)
 
     def test_find_returns_failure_when_mapping_has_no_matching_value(self) -> None:
+        """Test find returns failure when mapping has no matching value."""
         result = u.find(
             {"tenant": "acme", "mode": "full"},
             lambda value: value == "delta",
@@ -166,6 +174,7 @@ class TestsFlextCoreUtilitiesCollection:
         mapper: Callable[[t.JsonValue], t.JsonValue] | None,
         expected: t.JsonValue,
     ) -> None:
+        """Test filter keeps matching and optionally maps."""
         tm.that(u.filter(items, predicate, mapper=mapper), eq=expected)
 
     # --- count -----------------------------------------------------------
@@ -180,6 +189,7 @@ class TestsFlextCoreUtilitiesCollection:
         predicate: Callable[[t.JsonValue], bool] | None,
         expected: int,
     ) -> None:
+        """Test count returns total or matching."""
         tm.that(u.count(items, predicate), eq=expected)
 
     # --- process ---------------------------------------------------------
@@ -200,11 +210,13 @@ class TestsFlextCoreUtilitiesCollection:
         predicate: Callable[[t.JsonValue], bool] | None,
         expected: t.JsonList,
     ) -> None:
+        """Test process applies processor with optional predicate."""
         result = u.process(items, processor, predicate=predicate)
         tm.ok(result)
         tm.that(result.value, eq=expected)
 
     def test_process_first_failure_ends_run_carrying_its_exception(self) -> None:
+        """Test process first failure ends run carrying its exception."""
         visited: list[t.JsonValue] = []
         raised: list[ValueError] = []
 
@@ -232,6 +244,7 @@ class TestsFlextCoreUtilitiesCollection:
     # --- merge_mappings --------------------------------------------------
 
     def test_merge_mappings_deep_combines_nested_keys(self) -> None:
+        """Test merge mappings deep combines nested keys."""
         base: t.MappingKV[str, t.JsonValue] = {"a": 1, "b": {"x": 1}}
         other: t.MappingKV[str, t.JsonValue] = {"b": {"y": 2}, "c": 3}
         result = u.merge_mappings(base, other)
@@ -241,6 +254,7 @@ class TestsFlextCoreUtilitiesCollection:
         tm.that(result.value["b"], is_=dict)
 
     def test_merge_mappings_override_replaces_values(self) -> None:
+        """Test merge mappings override replaces values."""
         base: t.MappingKV[str, t.JsonValue] = {"a": 1, "b": {"x": 1}}
         other: t.MappingKV[str, t.JsonValue] = {"b": {"y": 2}, "c": 3}
         result = u.merge_mappings(base, other, strategy="override")

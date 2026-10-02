@@ -1,18 +1,26 @@
-"""Golden-file example for e public API."""
+"""Golden-file example for e public API.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from pathlib import Path
 from typing import override
 
+from examples.ex_07_flext_exceptions_helpers import Ex07FlextExceptionSubclasses
+from examples.models import m
 from flext_core import c, e, r
-
-from .ex_07_flext_exceptions_helpers import Ex07FlextExceptionSubclasses
-from .models import m
 
 
 def _raise_value_error() -> None:
-    """Raise the style example error."""
+    """Raise the style example error.
+
+    Raises:
+        ValueError: Always.
+
+    """
     raise ValueError(m.Examples.ErrorMessages.BOOM)
 
 

@@ -14,8 +14,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_core import c
-
-from .flexthandlers_part_02 import FlextHandlers as FlextHandlersPart02
+from flext_core._handlers_parts.flexthandlers_part_02 import (
+    FlextHandlers as FlextHandlersPart02,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable

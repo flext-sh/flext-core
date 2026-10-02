@@ -12,9 +12,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import c, p, r, t, u
-
-from .._utilities.handler import FlextUtilitiesHandler
-from .flexthandlers_part_03 import FlextHandlers as FlextHandlersPart03
+from flext_core._handlers_parts.flexthandlers_part_03 import (
+    FlextHandlers as FlextHandlersPart03,
+)
+from flext_core._utilities.handler import FlextUtilitiesHandler
 
 
 class FlextHandlers[MessageT_contra, ResultT](
@@ -42,7 +43,12 @@ class FlextHandlers[MessageT_contra, ResultT](
         raise NotImplementedError
 
     def pop_context(self) -> p.Result[p.RootDict[t.JsonPayload]]:
-        """Pop execution context from the local handler stack."""
+        """Pop execution context from the local handler stack.
+
+        Returns:
+            The resulting ``p.Result[p.RootDict[t.JsonPayload]]``.
+
+        """
         result = FlextUtilitiesHandler.pop_context(self._runtime_state)
         if result.failure:
             return r[p.RootDict[t.JsonPayload]].fail_op(
@@ -53,7 +59,12 @@ class FlextHandlers[MessageT_contra, ResultT](
         return r.ok(context)
 
     def push_context(self, ctx: t.JsonMapping | p.ExecutionContext) -> p.Result[bool]:
-        """Push execution context onto the local handler stack."""
+        """Push execution context onto the local handler stack.
+
+        Returns:
+            The resulting ``p.Result[bool]``.
+
+        """
         result = FlextUtilitiesHandler.push_context(self._runtime_state, ctx)
         if result.failure:
             return r[bool].fail_op("push handler context", result.error)
@@ -61,7 +72,12 @@ class FlextHandlers[MessageT_contra, ResultT](
         return r.ok(True)
 
     def record_metric(self, name: str, value: t.JsonPayload) -> p.Result[bool]:
-        """Record a metric value in the current handler state."""
+        """Record a metric value in the current handler state.
+
+        Returns:
+            The resulting ``p.Result[bool]``.
+
+        """
         return FlextUtilitiesHandler.record_metric(
             self._runtime_state.execution_context,
             name,

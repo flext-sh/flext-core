@@ -3,6 +3,9 @@
 Every assertion targets the public container contract (bind/factory/resource,
 has/names/resolve/drop/clear/scope + settings/context) and the ``r[T]`` outcome
 of fallible operations. No private attribute or internal-collaborator is touched.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -19,6 +22,8 @@ if TYPE_CHECKING:
 
 
 class TestsFlextContainerLifecycle:
+    """Tests for ``FlextContainerLifecycle``."""
+
     def test_clear_removes_every_registration(
         self,
         clean_container: p.Container,

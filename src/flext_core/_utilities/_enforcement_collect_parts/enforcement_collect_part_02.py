@@ -1,4 +1,8 @@
-"""Enforcement item-collection layer: project detection + per-rule iterators."""
+"""Enforcement item-collection layer: project detection + per-rule iterators.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -6,13 +10,13 @@ import inspect
 from collections.abc import Iterator
 from enum import EnumType
 
-from ..._constants.enforcement import FlextConstantsEnforcement as c
-from ..._protocols.base import FlextProtocolsBase as pb
-from ..._typings.base import FlextTypingBase as t
-from ..beartype_engine import FlextUtilitiesBeartypeEngine as ub
-from .enforcement_collect_part_01 import (
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._protocols.base import FlextProtocolsBase as pb
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._utilities._enforcement_collect_parts.enforcement_collect_part_01 import (
     FlextUtilitiesEnforcementCollect as FlextUtilitiesEnforcementCollectPart01,
 )
+from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as ub
 
 
 class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementCollectPart01):
@@ -51,6 +55,10 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementCollectPart01):
         Granularity lives here (the iterator), never in the visitor: every
         violating constant of the class surfaces in one pass instead of one
         per gate round.
+
+        Yields:
+            Each ``tuple[str, tuple[pb.AttributeProbe, ...]]``.
+
         """
         for name, value in vars(target).items():
             if name.startswith("_") or name != name.upper():
@@ -62,7 +70,12 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementCollectPart01):
         root: type,
         node: type,
     ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
-        """Yield every locally declared non-Enum class nested under ``node``."""
+        """Yield every locally declared non-Enum class nested under ``node``.
+
+        Yields:
+            Each ``tuple[str, tuple[pb.AttributeProbe, ...]]``.
+
+        """
         for value in vars(node).values():
             if (
                 isinstance(value, type)
@@ -81,7 +94,15 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementCollectPart01):
         tag: str,
         effective_layer: str = "",
     ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
-        """Per-tag dispatcher for namespace-category rule inputs."""
+        """Per-tag dispatcher for namespace-category rule inputs.
+
+        Yields:
+            Each ``tuple[str, tuple[pb.AttributeProbe, ...]]``.
+
+        Raises:
+            ValueError: If unknown namespace collection.
+
+        """
         if (
             ub.defined_in_function_scope(target)
             or target.__name__.startswith("_")

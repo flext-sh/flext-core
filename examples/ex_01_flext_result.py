@@ -1,15 +1,18 @@
-"""r (r) — exercises ALL public API methods with golden file validation."""
+"""r (r) — exercises ALL public API methods with golden file validation.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from pathlib import Path
 from typing import override
 
+from examples.ex_01_flext_result_helpers import Ex01ResultAdvancedSections
+from examples.models import m
+from examples.shared import ExamplesFlextShared
 from flext_core import r, t
-
-from .ex_01_flext_result_helpers import Ex01ResultAdvancedSections
-from .models import m
-from .shared import ExamplesFlextShared
 
 
 class Ex01r(Ex01ResultAdvancedSections):

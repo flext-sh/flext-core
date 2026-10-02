@@ -1,4 +1,8 @@
-"""Dispatcher example exercising the public routing APIs with real handlers."""
+"""Dispatcher example exercising the public routing APIs with real handlers.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -129,7 +133,12 @@ class Ex04DispatchDsl:
 
     @staticmethod
     def build_dispatcher() -> p.Dispatcher:
-        """Create a dispatcher populated with the example handlers."""
+        """Create a dispatcher populated with the example handlers.
+
+        Returns:
+            The resulting ``p.Dispatcher``.
+
+        """
         dispatcher = u.build_dispatcher()
         _ = dispatcher.register_handler(_CreateUserHandler())
         _ = dispatcher.register_handler(_GetUserHandler())
@@ -139,7 +148,12 @@ class Ex04DispatchDsl:
 
     @classmethod
     def run(cls) -> p.Result[str]:
-        """Dispatch a real ping command through the public dispatcher."""
+        """Dispatch a real ping command through the public dispatcher.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+
+        """
         dispatcher = cls.build_dispatcher()
         result = dispatcher.dispatch(m.Examples.Ping(value="dispatcher-example"))
         if result.failure:

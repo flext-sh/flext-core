@@ -1,4 +1,8 @@
-"""Behavior contract for public settings helpers in bootstrap workflows."""
+"""Behavior contract for public settings helpers in bootstrap workflows.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -19,13 +23,17 @@ if TYPE_CHECKING:
 
 
 class TestsFlextCoreUtilitiesSettings:
+    """Tests for ``FlextCoreUtilitiesSettings``."""
+
     _original_cwd: Path
 
     def setup_method(self) -> None:
+        """Provide ``setup_method``."""
         self._original_cwd = Path.cwd()
         FlextContainer.reset_for_testing()
 
     def teardown_method(self) -> None:
+        """Provide ``teardown_method``."""
         os.chdir(self._original_cwd)
         FlextContainer.reset_for_testing()
 
@@ -48,6 +56,7 @@ class TestsFlextCoreUtilitiesSettings:
         requested: c.LogLevel,
         expected: c.LogLevel,
     ) -> None:
+        """Test effective log level prioritises trace then debug then request."""
         resolved = u.resolve_effective_log_level(
             trace=trace,
             debug=debug,
@@ -60,6 +69,7 @@ class TestsFlextCoreUtilitiesSettings:
         self,
         tmp_path: Path,
     ) -> None:
+        """Test env override and process environment are observable."""
         env_file = tmp_path / c.ENV_FILE_DEFAULT
         env_file.write_text("FLEXT_APP_NAME=test-app\n", encoding="utf-8")
         probe_env_var = "FLEXT_TEST_BOOTSTRAP_MODE"
@@ -87,6 +97,7 @@ class TestsFlextCoreUtilitiesSettings:
         self,
         tmp_path: Path,
     ) -> None:
+        """Test env file resolves cwd default then override then fallback."""
         os.chdir(tmp_path)
         default_env_file = tmp_path / c.ENV_FILE_DEFAULT
         default_env_file.write_text("FLEXT_DEBUG=true\n", encoding="utf-8")
@@ -106,6 +117,7 @@ class TestsFlextCoreUtilitiesSettings:
         tm.that(fallback_resolved, eq=c.ENV_FILE_DEFAULT)
 
     def test_register_factory_reports_success_and_resolvable_service(self) -> None:
+        """Test register factory reports success and resolvable service."""
         container = FlextContainer()
         container.clear()
 
@@ -137,6 +149,7 @@ class TestsFlextCoreUtilitiesSettings:
         )
 
     def test_register_factory_surfaces_factory_failure_as_result(self) -> None:
+        """Test register factory surfaces factory failure as result."""
         container = FlextContainer()
         container.clear()
         error_message = "factory exploded"
