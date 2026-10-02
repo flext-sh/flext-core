@@ -10,6 +10,9 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
+from flext_core.lazy import build_lazy_import_map, install_lazy_exports
+
+
 from flext_core.__version__ import (
     __author__,
     __author_email__,
@@ -20,7 +23,6 @@ from flext_core.__version__ import (
     __version__,
     __version_info__,
 )
-from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core import services
