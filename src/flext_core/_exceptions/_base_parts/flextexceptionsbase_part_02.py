@@ -1,4 +1,8 @@
-"""Exception base state behavior."""
+"""Exception base state behavior.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -64,7 +68,12 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
         return self.message
 
     def matches_error_domain(self, domain: str) -> bool:
-        """Whether this error belongs to the provided routing domain."""
+        """Whether this error belongs to the provided routing domain.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
         return self.error_domain == domain
 
     def _initialize_base_state(
@@ -113,7 +122,12 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
 
     @override
     def __str__(self) -> str:
-        """Return string representation with error code if present."""
+        """Return string representation with error code if present.
+
+        Returns:
+            String representation with error code if present.
+
+        """
         if self.error_code:
             return f"[{self.error_code}] {self.message}"
         return self.message

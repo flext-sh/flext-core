@@ -61,6 +61,10 @@ class FlextHandlers[MessageT_contra, ResultT](
             Only sets the attribute if not already set - innermost decorator wins.
             When multiple @h.handler() decorators are stacked, the first (innermost)
             one to run takes precedence.
+
+            Returns:
+                The resulting ``Callable[PHandler, TResult]``.
+
             """
             if not hasattr(func, c.HANDLER_ATTR):
                 from flext_core import m

@@ -1,4 +1,8 @@
-"""Base public exception behavior tests."""
+"""Base public exception behavior tests.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -16,6 +20,8 @@ if TYPE_CHECKING:
 
 
 class TestsFlextCoreExceptionsBase:
+    """Tests for ``FlextCoreExceptionsBase``."""
+
     @pytest.mark.parametrize(
         "subclass",
         [
@@ -31,10 +37,13 @@ class TestsFlextCoreExceptionsBase:
         self,
         subclass: type[e.BaseError],
     ) -> None:
+        """Test typed exceptions are base error subclasses."""
         assert issubclass(subclass, e.BaseError)
         assert issubclass(subclass, Exception)
 
-    def test_base_error_sets_timestamp_and_formats_string(self) -> None:
+    @staticmethod
+    def test_base_error_sets_timestamp_and_formats_string() -> None:
+        """Test base error sets timestamp and formats string."""
         before = time.time()
         error = e.BaseError("Test message", error_code="TEST_ERROR")
         assert before <= error.timestamp <= time.time()
@@ -42,7 +51,9 @@ class TestsFlextCoreExceptionsBase:
         error.error_code = ""
         assert str(error) == "Test message"
 
-    def test_base_error_merges_metadata_context_and_extra_kwargs(self) -> None:
+    @staticmethod
+    def test_base_error_merges_metadata_context_and_extra_kwargs() -> None:
+        """Test base error merges metadata context and extra kwargs."""
         error = e.BaseError(
             "Test error",
             context={"scope": "service"},
@@ -54,7 +65,9 @@ class TestsFlextCoreExceptionsBase:
         assert attributes["scope"] == "service"
         assert attributes["new_field"] == "new_value"
 
-    def test_typed_exception_raises_and_is_caught_as_base_error(self) -> None:
+    @staticmethod
+    def test_typed_exception_raises_and_is_caught_as_base_error() -> None:
+        """Test typed exception raises and is caught as base error."""
         error = e.ValidationError("bad", field="email")
         with pytest.raises(e.BaseError) as excinfo:
             raise error
@@ -63,7 +76,9 @@ class TestsFlextCoreExceptionsBase:
         assert raised.field == "email"
         assert "bad" in str(raised)
 
-    def test_fail_operation_returns_structured_failure(self) -> None:
+    @staticmethod
+    def test_fail_operation_returns_structured_failure() -> None:
+        """Test fail operation returns structured failure."""
         result: p.Result[bool] = e.fail_operation(
             "register service",
             ValueError("boom"),
@@ -77,7 +92,9 @@ class TestsFlextCoreExceptionsBase:
         assert result.error_data["operation"] == "register service"
         assert result.error_data["reason"] == "boom"
 
-    def test_failure_result_short_circuits_map_and_rejects_unwrap(self) -> None:
+    @staticmethod
+    def test_failure_result_short_circuits_map_and_rejects_unwrap() -> None:
+        """Test failure result short circuits map and rejects unwrap."""
         result: p.Result[bool] = e.fail_operation(
             "register service",
             ValueError("boom"),
@@ -91,7 +108,9 @@ class TestsFlextCoreExceptionsBase:
             error=result.error,
         )
 
-    def test_fail_not_found_returns_structured_failure(self) -> None:
+    @staticmethod
+    def test_fail_not_found_returns_structured_failure() -> None:
+        """Test fail not found returns structured failure."""
         result: p.Result[bool] = e.fail_not_found("service", "command_bus")
         assert result.failure
         assert result.error is not None
@@ -101,7 +120,9 @@ class TestsFlextCoreExceptionsBase:
         assert result.error_data["resource_type"] == "service"
         assert result.error_data["resource_id"] == "command_bus"
 
-    def test_fail_type_mismatch_returns_structured_failure(self) -> None:
+    @staticmethod
+    def test_fail_type_mismatch_returns_structured_failure() -> None:
+        """Test fail type mismatch returns structured failure."""
         result: p.Result[bool] = e.fail_type_mismatch("Dispatcher", "str")
         assert result.failure
         assert result.error is not None
@@ -111,7 +132,9 @@ class TestsFlextCoreExceptionsBase:
         assert result.error_data["expected_type"] == "Dispatcher"
         assert result.error_data["actual_type"] == "str"
 
-    def test_fail_type_mismatch_accepts_service_lookup_params(self) -> None:
+    @staticmethod
+    def test_fail_type_mismatch_accepts_service_lookup_params() -> None:
+        """Test fail type mismatch accepts service lookup params."""
         result: p.Result[bool] = e.fail_type_mismatch(
             m.ServiceLookupParams(
                 service_name="connection",
@@ -138,6 +161,7 @@ class TestsFlextCoreExceptionsBase:
         value: str,
         cause: str,
     ) -> None:
+        """Test fail validation returns structured failure."""
         result: p.Result[bool] = e.fail_validation(
             m.ValidationErrorParams(field=field, value=value),
             error=cause,
@@ -151,7 +175,9 @@ class TestsFlextCoreExceptionsBase:
         assert result.error_data["value"] == value
         assert result.error_data["cause"] == cause
 
-    def test_declarative_error_supports_public_auto_correlation(self) -> None:
+    @staticmethod
+    def test_declarative_error_supports_public_auto_correlation() -> None:
+        """Test declarative error supports public auto correlation."""
         error = e.ValidationError(
             "Validation failed",
             field="email",

@@ -1,4 +1,8 @@
-"""System integration helper cases kept below the module LOC cap."""
+"""System integration helper cases kept below the module LOC cap.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -17,7 +21,8 @@ if TYPE_CHECKING:
 class TestsFlextFlextSystemWorkflowCases:
     """Exercise composed system workflow behavior."""
 
-    def _test_complex_integration(self) -> None:
+    @staticmethod
+    def _test_complex_integration() -> None:
         """Test complex integration scenarios."""
 
         def processar_dados_usuario(dados: t.StrMapping) -> p.Result[t.StrMapping]:
@@ -54,7 +59,8 @@ class TestsFlextFlextSystemWorkflowCases:
         tm.that(resultado_erro.error, none=False)
         tm.that(tm.not_none(resultado_erro.error), has="não pode estar vazio")
 
-    def _test_error_recovery(self) -> None:
+    @staticmethod
+    def _test_error_recovery() -> None:
         """Test error recovery scenarios."""
         resultado_com_erro: p.Result[str] = r[str].fail("erro_original")
         resultado_recuperado = resultado_com_erro.lash(

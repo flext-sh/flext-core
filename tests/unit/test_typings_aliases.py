@@ -7,6 +7,9 @@ Exercises the observable contract callers depend on:
 - the runtime type-check tuples (``PRIMITIVES_TYPES`` etc.) expose the exact
   membership documented for them and actually classify values via
   ``isinstance``.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -67,23 +70,28 @@ class TestsFlextCoreTypingsAliases:
         """flext_core must not expose shared TypeVar/ParamSpec helpers publicly."""
         tm.that(hasattr(flext_core, legacy_name), eq=False)
 
-    def test_primitives_types_membership(self) -> None:
+    @staticmethod
+    def test_primitives_types_membership() -> None:
         """PRIMITIVES_TYPES is exactly (str, int, float, bool)."""
         tm.that(c.PRIMITIVES_TYPES, eq=(str, int, float, bool))
 
-    def test_numeric_types_membership(self) -> None:
+    @staticmethod
+    def test_numeric_types_membership() -> None:
         """NUMERIC_TYPES is exactly (int, float)."""
         tm.that(c.NUMERIC_TYPES, eq=(int, float))
 
-    def test_scalar_types_membership(self) -> None:
+    @staticmethod
+    def test_scalar_types_membership() -> None:
         """SCALAR_TYPES is exactly (str, int, float, bool, datetime)."""
         tm.that(c.SCALAR_TYPES, eq=(str, int, float, bool, datetime))
 
-    def test_container_types_membership(self) -> None:
+    @staticmethod
+    def test_container_types_membership() -> None:
         """CONTAINER_TYPES extends the scalar set with Path."""
         tm.that(c.CONTAINER_TYPES, eq=(str, int, float, bool, datetime, Path))
 
-    def test_container_and_collection_types_include_collections(self) -> None:
+    @staticmethod
+    def test_container_and_collection_types_include_collections() -> None:
         """CONTAINER_AND_COLLECTION_TYPES adds list/dict/tuple to CONTAINER_TYPES."""
         tm.that(
             c.CONTAINER_AND_COLLECTION_TYPES,

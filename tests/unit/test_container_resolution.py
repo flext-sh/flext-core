@@ -1,4 +1,8 @@
-"""Container resolution and listing tests."""
+"""Container resolution and listing tests.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -33,12 +37,14 @@ class TestsFlextContainerResolution:
         result: p.Result[t.RegisterableService] = clean_container.resolve(scenario.name)
         u.Tests.assert_success(result, expected_value=scenario.service)
 
-    def test_get_nonexistent_service(self, clean_container: p.Container) -> None:
+    @staticmethod
+    def test_get_nonexistent_service(clean_container: p.Container) -> None:
         """Test getting non-existent service using fixtures."""
         result: p.Result[t.RegisterableService] = clean_container.resolve("nonexistent")
         u.Tests.assert_failure(result, expected_error="not found")
 
-    def test_get_factory_service(self, clean_container: p.Container) -> None:
+    @staticmethod
+    def test_get_factory_service(clean_container: p.Container) -> None:
         """Test retrieving service created by factory using fixtures."""
         factory_result = {"created": "by_factory"}
         factory = u.Tests.create_factory(factory_result)
@@ -48,7 +54,8 @@ class TestsFlextContainerResolution:
         )
         u.Tests.assert_success(result, expected_value=factory_result)
 
-    def test_get_factory_called_each_time(self, clean_container: p.Container) -> None:
+    @staticmethod
+    def test_get_factory_called_each_time(clean_container: p.Container) -> None:
         """Test that factory is called each time get() is invoked using fixtures."""
         factory, get_count = u.Tests.create_counting_factory("service_value")
         clean_container.factory("factory_service", factory)
@@ -99,13 +106,15 @@ class TestsFlextContainerResolution:
                 container.resolve(scenario.name, type_cls=scenario.expected_type),
             )
 
-    def test_get_typed_wrong_type(self, clean_container: p.Container) -> None:
+    @staticmethod
+    def test_get_typed_wrong_type(clean_container: p.Container) -> None:
         """Test typed retrieval with wrong type fails using fixtures."""
         clean_container.bind("string_service", "test_value")
         result = clean_container.resolve("string_service", type_cls=dict)
         _ = u.Tests.assert_failure(result)
 
-    def test_get_typed_nonexistent(self, clean_container: p.Container) -> None:
+    @staticmethod
+    def test_get_typed_nonexistent(clean_container: p.Container) -> None:
         """Test typed retrieval of non-existent service using fixtures."""
         result = clean_container.resolve("nonexistent", type_cls=dict)
         u.Tests.assert_failure(result, expected_error="not found")
@@ -133,7 +142,8 @@ class TestsFlextContainerResolution:
             msg=f"has_service must return {expected} for {service_name}",
         )
 
-    def test_has_service_factory(self, clean_container: p.Container) -> None:
+    @staticmethod
+    def test_has_service_factory(clean_container: p.Container) -> None:
         """Test has_service returns True for factories using fixtures."""
         container = clean_container
         factory = u.Tests.create_factory("value")
@@ -144,7 +154,8 @@ class TestsFlextContainerResolution:
             msg="Container must have factory_service after registration",
         )
 
-    def test_list_services_empty(self, clean_container: p.Container) -> None:
+    @staticmethod
+    def test_list_services_empty(clean_container: p.Container) -> None:
         """Test listing services when none registered using fixtures."""
         container = clean_container
         services = container.names()
@@ -160,7 +171,8 @@ class TestsFlextContainerResolution:
             msg="Empty container must have empty services list",
         )
 
-    def test_list_services_mixed(self, clean_container: p.Container) -> None:
+    @staticmethod
+    def test_list_services_mixed(clean_container: p.Container) -> None:
         """Test listing mix of registered services and factories using fixtures."""
         container = clean_container
         _ = container.bind("service1", "value1")

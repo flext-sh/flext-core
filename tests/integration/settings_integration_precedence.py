@@ -1,4 +1,8 @@
-"""Settings precedence integration case kept below module LOC cap."""
+"""Settings precedence integration case kept below module LOC cap.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -26,7 +30,8 @@ _FLEXT_ENV_KEYS = (
 class TestsFlextFlextSettingsPrecedenceCase(TestsFlextFlextSettingsFactories):
     """Assert Pydantic settings precedence across the current field surface."""
 
-    def test_pydantic_settings_precedence_order(self, temp_dir: Path) -> None:
+    @staticmethod
+    def test_pydantic_settings_precedence_order(temp_dir: Path) -> None:
         """Defaults < .env file < env var < explicit init for universal fields."""
         with u.Tests.env_vars_context({}, vars_to_clear=_FLEXT_ENV_KEYS):
             FlextSettings.reset_for_testing()

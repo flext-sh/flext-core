@@ -28,6 +28,10 @@ class FlextUtilitiesBeartypeConf:
         - "warn" -> violation_type=UserWarning (default)
         - "strict" -> violation_type=TypeError (raises on violation)
         - "off" -> returns conf with O0 strategy (no checking)
+
+        Returns:
+            The resulting ``BeartypeConf``.
+
         """
         mode = c.BEARTYPE_MODE
         if mode is c.EnforcementMode.OFF:

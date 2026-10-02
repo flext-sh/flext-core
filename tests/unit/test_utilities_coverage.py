@@ -120,7 +120,8 @@ class TestsFlextCoreUtilitiesCoverage:
         """to_str renders integral floats without decimals and keeps strings."""
         assert u.to_str(value) == expected
 
-    def test_to_str_uses_default_for_none(self) -> None:
+    @staticmethod
+    def test_to_str_uses_default_for_none() -> None:
         """to_str returns the supplied default when the value is None."""
         assert u.to_str(None, default="fallback") == "fallback"
 
@@ -148,7 +149,8 @@ class TestsFlextCoreUtilitiesCoverage:
         """to_str_list normalizes scalars and sequences into lists of strings."""
         assert u.to_str_list(value) == expected
 
-    def test_to_str_list_uses_default_for_none(self) -> None:
+    @staticmethod
+    def test_to_str_list_uses_default_for_none() -> None:
         """to_str_list returns the provided default when value is None."""
         assert u.to_str_list(None, default=["x"]) == ["x"]
 

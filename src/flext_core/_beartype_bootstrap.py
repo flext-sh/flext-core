@@ -1,4 +1,8 @@
-"""Package-local beartype.claw bootstrap for flext_core imports."""
+"""Package-local beartype.claw bootstrap for flext_core imports.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -18,7 +22,12 @@ class FlextCoreBeartypeBootstrap:
 
     @classmethod
     def _enforcement_constants(cls) -> type:
-        """Load enforcement constants lazily to avoid package-init cycles."""
+        """Load enforcement constants lazily to avoid package-init cycles.
+
+        Returns:
+            The resulting ``type``.
+
+        """
         module = import_module("flext_core._constants.enforcement")
         constants_cls: type = module.FlextConstantsEnforcement
         return constants_cls

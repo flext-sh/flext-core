@@ -58,13 +58,23 @@ class FlextModelsEntity:
 
         @override
         def __eq__(self, other: object) -> bool:
-            """Identity-based equality for entities."""
+            """Identity-based equality for entities.
+
+            Returns:
+                The resulting ``bool``.
+
+            """
             if not isinstance(other, m.EnforcedModel):
                 return NotImplemented
             return u.compare_entities_by_id(self, other)
 
         def __hash__(self) -> int:
-            """Identity-based hash for entities."""
+            """Identity-based hash for entities.
+
+            Returns:
+                The resulting ``int``.
+
+            """
             return u.hash_entity_by_id(self)
 
         @override

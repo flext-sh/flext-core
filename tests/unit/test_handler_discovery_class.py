@@ -3,6 +3,9 @@
 Exercises only the public contract of ``h.Discovery``:
 ``scan_class`` (discover + sort decorated methods) and ``has_handlers``
 (presence probe). No private attributes or internal collaborators are touched.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -23,6 +26,8 @@ class TestsFlextCoreHandlerDiscoveryClass:
 
     def test_scan_class_discovers_every_decorated_method(self) -> None:
         # Arrange
+        """Test scan class discovers every decorated method."""
+
         class CreateCommand(m.BaseModel):
             pass
 
@@ -48,7 +53,8 @@ class TestsFlextCoreHandlerDiscoveryClass:
                 _ = cmd
                 return r[str].ok("query")
 
-            def non_handler_method(self) -> str:
+            @staticmethod
+            def non_handler_method() -> str:
                 return "non_handler"
 
         # Act
@@ -62,6 +68,8 @@ class TestsFlextCoreHandlerDiscoveryClass:
 
     def test_scan_class_orders_handlers_by_priority_descending(self) -> None:
         # Arrange
+        """Test scan class orders handlers by priority descending."""
+
         class LowCommand(m.BaseModel):
             pass
 
@@ -99,6 +107,8 @@ class TestsFlextCoreHandlerDiscoveryClass:
 
     def test_scan_class_binds_config_command_and_priority(self) -> None:
         # Arrange
+        """Test scan class binds config command and priority."""
+
         class EventPublished(m.BaseModel):
             event_id: str
 
@@ -122,6 +132,8 @@ class TestsFlextCoreHandlerDiscoveryClass:
 
     def test_scan_class_uses_default_priority_when_unspecified(self) -> None:
         # Arrange
+        """Test scan class uses default priority when unspecified."""
+
         class PlainCommand(m.BaseModel):
             pass
 
@@ -140,8 +152,11 @@ class TestsFlextCoreHandlerDiscoveryClass:
 
     def test_scan_class_returns_empty_for_class_without_handlers(self) -> None:
         # Arrange
+        """Test scan class returns empty for class without handlers."""
+
         class ServiceWithoutHandlers:
-            def process(self) -> str:
+            @staticmethod
+            def process() -> str:
                 return "ok"
 
         # Act
@@ -158,6 +173,8 @@ class TestsFlextCoreHandlerDiscoveryClass:
         expected_present: bool,
     ) -> None:
         # Arrange
+        """Test has handlers reflects presence of decorated methods."""
+
         class Command(m.BaseModel):
             pass
 
@@ -168,7 +185,8 @@ class TestsFlextCoreHandlerDiscoveryClass:
                 return r[str].ok("ok")
 
         class ServiceWithoutHandler:
-            def process(self) -> str:
+            @staticmethod
+            def process() -> str:
                 return "ok"
 
         target = ServiceWithHandler if expected_present else ServiceWithoutHandler
@@ -181,6 +199,8 @@ class TestsFlextCoreHandlerDiscoveryClass:
 
     def test_scan_class_includes_inherited_handlers(self) -> None:
         # Arrange
+        """Test scan class includes inherited handlers."""
+
         class CreateCommand(m.BaseModel):
             pass
 
@@ -209,6 +229,8 @@ class TestsFlextCoreHandlerDiscoveryClass:
 
     def test_scan_class_is_idempotent(self) -> None:
         # Arrange
+        """Test scan class is idempotent."""
+
         class CommandA(m.BaseModel):
             pass
 

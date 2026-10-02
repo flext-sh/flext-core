@@ -4,6 +4,9 @@ Behavioral tests for the public ``FlextUtilitiesEnforcement.check`` contract
 exposed via ``u.check``. Every assertion targets the returned ``Report`` public
 surface (``.violations`` / ``.messages`` / ``.empty`` / ``in``) — never private
 helpers of the enforcement engine.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -23,7 +26,8 @@ class TestsFlextCoreEnforcementNamespacePart01:
 
     __test__ = True
 
-    def test_private_underscore_class_has_no_namespace_violation(self) -> None:
+    @staticmethod
+    def test_private_underscore_class_has_no_namespace_violation() -> None:
         """Underscore-prefixed classes are implementation details, not facades."""
 
         class _PrivateHelper:
@@ -36,7 +40,8 @@ class TestsFlextCoreEnforcementNamespacePart01:
         assert report.empty
         assert _MISSING_PREFIX not in report
 
-    def test_generic_bracket_specialization_has_no_namespace_violation(self) -> None:
+    @staticmethod
+    def test_generic_bracket_specialization_has_no_namespace_violation() -> None:
         """Synthetic ``Foo[int]``-style names are Pydantic/Generic artifacts."""
         fake = type("Foo[int]", (), {})
         fake.__module__ = "flext_core.x"
@@ -46,7 +51,8 @@ class TestsFlextCoreEnforcementNamespacePart01:
         assert report.empty
         assert _MISSING_PREFIX not in report
 
-    def test_inner_class_qualname_exempts_prefix_check(self) -> None:
+    @staticmethod
+    def test_inner_class_qualname_exempts_prefix_check() -> None:
         """Classes with ``.`` in qualname (nested) skip class_prefix."""
         fake = type("InnerNs", (), {})
         fake.__qualname__ = "Outer.InnerNs"  # signals nested position
@@ -56,7 +62,8 @@ class TestsFlextCoreEnforcementNamespacePart01:
 
         assert _MISSING_PREFIX not in report
 
-    def test_facade_root_name_exempts_prefix_check(self) -> None:
+    @staticmethod
+    def test_facade_root_name_exempts_prefix_check() -> None:
         """Classes named as facade roots (e.g. ``FlextModels``) skip prefix rule."""
         fake = type("FlextModels", (), {})
         fake.__module__ = "flext_core.x"
@@ -65,7 +72,8 @@ class TestsFlextCoreEnforcementNamespacePart01:
 
         assert _MISSING_PREFIX not in report
 
-    def test_flext_core_class_missing_prefix_is_flagged(self) -> None:
+    @staticmethod
+    def test_flext_core_class_missing_prefix_is_flagged() -> None:
         """flext_core is the src package mapped to the ``Flext`` prefix.
 
         A concrete, non-underscore top-level class in a ``flext_core.*`` module
@@ -89,7 +97,8 @@ class TestsFlextCoreEnforcementNamespacePart01:
         assert violation.qualname == "Widget"
         assert '"Flext"' in violation.message
 
-    def test_flext_core_class_with_prefix_is_clean(self) -> None:
+    @staticmethod
+    def test_flext_core_class_with_prefix_is_clean() -> None:
         """A properly ``Flext``-prefixed flext_core class raises no violation."""
         compliant = type("FlextWidget", (), {})
         compliant.__module__ = "flext_core.something"
@@ -124,7 +133,12 @@ class TestsFlextCoreEnforcementNamespacePart01:
 
     @staticmethod
     def _namespace_tree(qualname: str, children: NamespaceTree) -> type:
-        """Build a real nested class tree with module-level qualnames."""
+        """Build a real nested class tree with module-level qualnames.
+
+        Returns:
+            The resulting ``type``.
+
+        """
         body = {
             name: TestsFlextCoreEnforcementNamespacePart01._namespace_tree(
                 f"{qualname}.{name}",

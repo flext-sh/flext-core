@@ -4,6 +4,9 @@ Every test asserts observable public contract only: the ``r[T]`` outcome
 (``ok``/``fail``, ``.value``, ``.error``), combinator return values, side-effect
 ordering, and result identity. No private attributes, no internal collaborators,
 no patching of the unit under test.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -25,21 +28,24 @@ if TYPE_CHECKING:
 class TestsFlextResultTransforms:
     """Public-contract behavior of FlextResult transform combinators."""
 
-    def test_safe_wraps_successful_call_as_success(self) -> None:
+    @staticmethod
+    def test_safe_wraps_successful_call_as_success() -> None:
         """Safe returns a success carrying the wrapped function's return value."""
         result: p.Result[int] = r.safe(operator.floordiv)(10, 2)
 
         _ = u.Tests.assert_success(result)
         tm.that(result.value, eq=5)
 
-    def test_safe_captures_raised_exception_as_failure(self) -> None:
+    @staticmethod
+    def test_safe_captures_raised_exception_as_failure() -> None:
         """Safe converts a raised exception into a failure preserving its message."""
         result: p.Result[int] = r.safe(operator.floordiv)(10, 0)
 
         tm.fail(result)
         tm.that(result.error, eq="integer division or modulo by zero")
 
-    def test_map_error_rewrites_failure_message(self) -> None:
+    @staticmethod
+    def test_map_error_rewrites_failure_message() -> None:
         """map_error transforms the error of a failure and preserves its state."""
         result: p.Result[str] = r[str].fail("original error")
 
@@ -48,7 +54,8 @@ class TestsFlextResultTransforms:
         tm.fail(transformed)
         tm.that(transformed.error, eq="PREFIX: original error")
 
-    def test_map_error_leaves_success_untouched(self) -> None:
+    @staticmethod
+    def test_map_error_leaves_success_untouched() -> None:
         """map_error is a no-op on a success result."""
         success: p.Result[str] = r[str].ok("value")
 
@@ -57,7 +64,8 @@ class TestsFlextResultTransforms:
         tm.ok(unchanged)
         tm.that(unchanged.value, eq="value")
 
-    def test_recover_converts_failure_to_success(self) -> None:
+    @staticmethod
+    def test_recover_converts_failure_to_success() -> None:
         """Recover maps a failure's error into a success value."""
         failure: p.Result[int] = r[int].fail("missing")
 
@@ -66,7 +74,8 @@ class TestsFlextResultTransforms:
         _ = u.Tests.assert_success(recovered)
         tm.that(recovered.value, eq=7)
 
-    def test_recover_leaves_success_untouched(self) -> None:
+    @staticmethod
+    def test_recover_leaves_success_untouched() -> None:
         """Recover never fires on a success result."""
         success: p.Result[int] = r[int].ok(3)
 
@@ -75,7 +84,8 @@ class TestsFlextResultTransforms:
         _ = u.Tests.assert_success(unchanged)
         tm.that(unchanged.value, eq=3)
 
-    def test_tap_runs_side_effect_on_success_only(self) -> None:
+    @staticmethod
+    def test_tap_runs_side_effect_on_success_only() -> None:
         """Tap fires its callback for a success and returns the same result."""
         events: MutableSequence[str] = []
         success: p.Result[str] = r[str].ok("ready")
@@ -85,7 +95,8 @@ class TestsFlextResultTransforms:
         tm.that(tapped is success, eq=True)
         tm.that(tuple(events), eq=("ready",))
 
-    def test_tap_is_noop_on_failure(self) -> None:
+    @staticmethod
+    def test_tap_is_noop_on_failure() -> None:
         """Tap does not fire on a failure and returns the same result."""
         events: MutableSequence[str] = []
         failure: p.Result[str] = r[str].fail("broken")
@@ -95,7 +106,8 @@ class TestsFlextResultTransforms:
         tm.that(tapped is failure, eq=True)
         tm.that(tuple(events), eq=())
 
-    def test_tap_error_runs_side_effect_on_failure_only(self) -> None:
+    @staticmethod
+    def test_tap_error_runs_side_effect_on_failure_only() -> None:
         """tap_error fires its callback for a failure and returns the same result."""
         errors: MutableSequence[str] = []
         failure: p.Result[str] = r[str].fail("broken")
@@ -105,7 +117,8 @@ class TestsFlextResultTransforms:
         tm.that(tapped is failure, eq=True)
         tm.that(tuple(errors), eq=("broken",))
 
-    def test_tap_error_is_noop_on_success(self) -> None:
+    @staticmethod
+    def test_tap_error_is_noop_on_success() -> None:
         """tap_error does not fire on a success and returns the same result."""
         errors: MutableSequence[str] = []
         success: p.Result[str] = r[str].ok("ready")
@@ -137,7 +150,8 @@ class TestsFlextResultTransforms:
         else:
             tm.fail(filtered)
 
-    def test_filter_leaves_failure_unchanged(self) -> None:
+    @staticmethod
+    def test_filter_leaves_failure_unchanged() -> None:
         """Filter never runs its predicate on a failure and preserves the error."""
         result: p.Result[int] = r[int].fail("error")
 
@@ -146,28 +160,32 @@ class TestsFlextResultTransforms:
         tm.fail(filtered)
         tm.that(filtered.error, eq="error")
 
-    def test_map_transforms_success_value(self) -> None:
+    @staticmethod
+    def test_map_transforms_success_value() -> None:
         """Map applies the function to a success value."""
         result = r[int].ok(3).map(lambda x: x + 1)
 
         tm.ok(result)
         tm.that(result.value, eq=4)
 
-    def test_map_is_noop_on_failure(self) -> None:
+    @staticmethod
+    def test_map_is_noop_on_failure() -> None:
         """Map skips the function and preserves the error on a failure."""
         result = r[int].fail("boom").map(lambda x: x + 1)
 
         tm.fail(result)
         tm.that(result.error, eq="boom")
 
-    def test_flat_map_chains_fallible_success(self) -> None:
+    @staticmethod
+    def test_flat_map_chains_fallible_success() -> None:
         """flat_map chains a result-returning function on a success."""
         result = r[int].ok(3).flat_map(lambda x: r[int].ok(x * 2))
 
         tm.ok(result)
         tm.that(result.value, eq=6)
 
-    def test_flat_map_short_circuits_on_failure(self) -> None:
+    @staticmethod
+    def test_flat_map_short_circuits_on_failure() -> None:
         """flat_map does not run the continuation on a failure."""
         result = r[int].fail("stop").flat_map(lambda x: r[int].ok(x * 2))
 
@@ -187,7 +205,8 @@ class TestsFlextResultTransforms:
         """unwrap_or yields the success value, or the fallback on failure."""
         tm.that(result.unwrap_or(fallback), eq=expected)
 
-    def test_flow_through_chains_multiple_operations(self) -> None:
+    @staticmethod
+    def test_flow_through_chains_multiple_operations() -> None:
         """flow_through pipes a value through successive fallible steps."""
 
         def add_one(x: int) -> p.Result[int]:
@@ -201,7 +220,8 @@ class TestsFlextResultTransforms:
         tm.ok(final)
         tm.that(final.value, eq=12)
 
-    def test_flow_through_stops_on_first_failure(self) -> None:
+    @staticmethod
+    def test_flow_through_stops_on_first_failure() -> None:
         """flow_through short-circuits at the first failing step."""
 
         def add_one(x: int) -> p.Result[int]:
@@ -218,14 +238,16 @@ class TestsFlextResultTransforms:
         tm.fail(final)
         tm.that(final.error, eq="error")
 
-    def test_traverse_collects_all_mapped_successes(self) -> None:
+    @staticmethod
+    def test_traverse_collects_all_mapped_successes() -> None:
         """Traverse maps every item and gathers the values in order."""
         result = r.traverse([1, 2, 3], lambda x: r[int].ok(x * 2))
 
         _ = u.Tests.assert_success(result)
         tm.that(result.value, eq=[2, 4, 6])
 
-    def test_traverse_fails_fast_on_first_failure(self) -> None:
+    @staticmethod
+    def test_traverse_fails_fast_on_first_failure() -> None:
         """Traverse stops at the first item that maps to a failure."""
         result = r.traverse(
             [1, 2, 3],

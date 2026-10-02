@@ -1,4 +1,8 @@
-"""Service case construction helpers for flext-core tests."""
+"""Service case construction helpers for flext-core tests.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -34,7 +38,12 @@ class TestsFlextUtilitiesCaseServiceFactoriesMixin(
 
         @classmethod
         def _next_type(cls) -> c.Tests.ServiceType:
-            """Get next service type from rotation."""
+            """Get next service type from rotation.
+
+            Returns:
+                The resulting ``c.Tests.ServiceType``.
+
+            """
             service_type = cls._service_types[cls._type_index % len(cls._service_types)]
             cls._type_index += 1
             return service_type
@@ -50,7 +59,12 @@ class TestsFlextUtilitiesCaseServiceFactoriesMixin(
             extra_param: int = c.Tests.MIN_LENGTH_DEFAULT,
             description: str | None = None,
         ) -> m.Tests.ServiceTestCase:
-            """Build a m.Tests.ServiceTestCase instance."""
+            """Build a m.Tests.ServiceTestCase instance.
+
+            Returns:
+                The resulting ``m.Tests.ServiceTestCase``.
+
+            """
             actual_type = service_type if service_type is not None else cls._next_type()
             actual_input = input_value if input_value is not None else cls._next_word()
             actual_description = (
@@ -69,7 +83,12 @@ class TestsFlextUtilitiesCaseServiceFactoriesMixin(
 
         @classmethod
         def build_batch(cls, size: int) -> t.SequenceOf[m.Tests.ServiceTestCase]:
-            """Build multiple m.Tests.ServiceTestCase instances with auto-generated values."""
+            """Build multiple m.Tests.ServiceTestCase instances with auto-generated values.
+
+            Returns:
+                The resulting ``t.SequenceOf[m.Tests.ServiceTestCase]``.
+
+            """
             return [cls.build() for _ in range(size)]
 
         @classmethod

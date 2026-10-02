@@ -3,6 +3,9 @@
 Asserts the public contract of ``FlextUtilitiesBeartypeConf`` and the
 annotation-inspection predicates exposed on the ``u`` facade — return
 values only, never internal wiring.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -23,16 +26,19 @@ _FORBIDDEN: frozenset[str] = frozenset({"dict", "list", "set"})
 class TestsFlextCoreBeartypeEngineConfig:
     """Public contract of the beartype conf factory + engine predicates."""
 
-    def test_build_conf_returns_beartype_conf_instance(self) -> None:
+    @staticmethod
+    def test_build_conf_returns_beartype_conf_instance() -> None:
         """The factory yields a real ``BeartypeConf`` callers can pass to beartype."""
         conf = FlextUtilitiesBeartypeConf.build_beartype_conf()
         assert isinstance(conf, BeartypeConf)
 
-    def test_default_mode_is_off(self) -> None:
+    @staticmethod
+    def test_default_mode_is_off() -> None:
         """flext_core ships with enforcement disabled by default."""
         assert c.BEARTYPE_MODE is c.EnforcementMode.OFF
 
-    def test_disabled_mode_yields_no_op_strategy(self) -> None:
+    @staticmethod
+    def test_disabled_mode_yields_no_op_strategy() -> None:
         """With mode OFF the conf uses the O0 (no-check) strategy."""
         conf = FlextUtilitiesBeartypeConf.build_beartype_conf()
         assert conf.strategy is BeartypeStrategy.O0

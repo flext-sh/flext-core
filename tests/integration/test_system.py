@@ -36,7 +36,8 @@ class TestsFlextCoreSystem:
     # Railway-oriented programming: r[T] outcome contract                 #
     # ------------------------------------------------------------------ #
 
-    def test_ok_result_exposes_success_contract(self) -> None:
+    @staticmethod
+    def test_ok_result_exposes_success_contract() -> None:
         """A successful result is success, not failure, carries the value, no error."""
         result = r[str].ok("payload")
 
@@ -46,7 +47,8 @@ class TestsFlextCoreSystem:
         tm.that(result.unwrap(), eq="payload")
         tm.that(result.error, none=True)
 
-    def test_fail_result_exposes_failure_contract(self) -> None:
+    @staticmethod
+    def test_fail_result_exposes_failure_contract() -> None:
         """A failed result is failure, exposes the error, and carries the error code."""
         result: p.Result[str] = r[str].fail(
             "processing_failed",
@@ -58,7 +60,8 @@ class TestsFlextCoreSystem:
         tm.that(result.error, eq="processing_failed")
         tm.that(result.error_code, eq=c.ErrorCode.VALIDATION_ERROR)
 
-    def test_unwrap_or_returns_default_only_on_failure(self) -> None:
+    @staticmethod
+    def test_unwrap_or_returns_default_only_on_failure() -> None:
         """unwrap_or yields the value on success and the default on failure."""
         tm.that(r[str].ok("real").unwrap_or("default"), eq="real")
         tm.that(r[str].fail("boom").unwrap_or("default"), eq="default")
@@ -84,7 +87,8 @@ class TestsFlextCoreSystem:
         tm.that(result.success, eq=True)
         tm.that(result.value, eq=expected)
 
-    def test_map_is_skipped_on_failure(self) -> None:
+    @staticmethod
+    def test_map_is_skipped_on_failure() -> None:
         """Map does not run its function once the result is a failure."""
         result: p.Result[str] = r[str].fail("boom").map(lambda x: x.upper())
 
@@ -117,7 +121,8 @@ class TestsFlextCoreSystem:
         tm.that(result.success, eq=expect_success)
         tm.that(result.value if expect_success else result.error, eq=expected)
 
-    def test_lash_replaces_failure_with_success(self) -> None:
+    @staticmethod
+    def test_lash_replaces_failure_with_success() -> None:
         """Lash turns a failure into a successful fallback result."""
         recovered = (
             r[str]
@@ -128,7 +133,8 @@ class TestsFlextCoreSystem:
         tm.that(recovered.success, eq=True)
         tm.that(recovered.value, eq="valor_recuperado")
 
-    def test_flat_map_pipeline_propagates_first_failure(self) -> None:
+    @staticmethod
+    def test_flat_map_pipeline_propagates_first_failure() -> None:
         """A multi-stage flat_map pipeline stops at the first failing stage."""
 
         def stage_1(data: str) -> p.Result[str]:
@@ -161,7 +167,8 @@ class TestsFlextCoreSystem:
     # Constants facade contract                                           #
     # ------------------------------------------------------------------ #
 
-    def test_default_timeout_is_a_positive_number(self) -> None:
+    @staticmethod
+    def test_default_timeout_is_a_positive_number() -> None:
         """The default timeout constant is a positive numeric value."""
         tm.that(c.DEFAULT_TIMEOUT_SECONDS, is_=(int, float), gt=0)
 
@@ -206,8 +213,14 @@ class TestsFlextCoreSystem:
         tm.that(str(exc), has=message)
         tm.that(str(exc), has=f"[{code}]")
 
-    def test_family_exceptions_are_raisable_and_catchable_as_base(self) -> None:
-        """A specific family error is caught through its BaseError supertype."""
+    @staticmethod
+    def test_family_exceptions_are_raisable_and_catchable_as_base() -> None:
+        """A specific family error is caught through its BaseError supertype.
+
+        Raises:
+            ValidationError: If campo_invalido.
+
+        """
         message = "campo_invalido"
         with pytest.raises(e.BaseError) as caught:
             raise e.ValidationError(message)
@@ -219,7 +232,8 @@ class TestsFlextCoreSystem:
     # Public utilities contract                                           #
     # ------------------------------------------------------------------ #
 
-    def test_generate_returns_a_parseable_uuid_string(self) -> None:
+    @staticmethod
+    def test_generate_returns_a_parseable_uuid_string() -> None:
         """Generate returns a 36-char string that round-trips as a UUID."""
         generated = u.generate()
 
@@ -227,11 +241,13 @@ class TestsFlextCoreSystem:
         tm.that(len(generated), eq=_UUID_TEXT_LENGTH)
         tm.that(str(uuid.UUID(generated)), eq=generated)
 
-    def test_generate_produces_unique_values(self) -> None:
+    @staticmethod
+    def test_generate_produces_unique_values() -> None:
         """Successive generate calls produce distinct identifiers."""
         tm.that(u.generate(), ne=u.generate())
 
-    def test_iso_timestamp_is_a_non_empty_string(self) -> None:
+    @staticmethod
+    def test_iso_timestamp_is_a_non_empty_string() -> None:
         """generate_iso_timestamp returns a non-empty string."""
         timestamp = u.generate_iso_timestamp()
 
@@ -254,7 +270,8 @@ class TestsFlextCoreSystem:
     # FlextContainer dependency-injection contract                        #
     # ------------------------------------------------------------------ #
 
-    def test_bind_is_fluent_and_resolve_returns_bound_value(self) -> None:
+    @staticmethod
+    def test_bind_is_fluent_and_resolve_returns_bound_value() -> None:
         """Bind returns the container for chaining; resolve yields the value."""
         container = FlextContainer()
 
@@ -264,7 +281,8 @@ class TestsFlextCoreSystem:
         tm.that(resolved.success, eq=True)
         tm.that(resolved.value, eq="value")
 
-    def test_resolve_unknown_key_fails_with_error(self) -> None:
+    @staticmethod
+    def test_resolve_unknown_key_fails_with_error() -> None:
         """Resolving an unregistered key yields a failure carrying an error."""
         resolved = FlextContainer().resolve("missing_service")
 

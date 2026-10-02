@@ -3,6 +3,9 @@
 Exercises the wide pydantic-settings exports consumed through ``m`` exactly as
 fleet consumers do: observable override behavior only, never pydantic
 internals or identity introspection.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -31,11 +34,17 @@ class TestsFlextCorePydanticSettingsFacade:
             dotenv_settings: m.PydanticBaseSettingsSource,
             file_secret_settings: m.PydanticBaseSettingsSource,
         ) -> tuple[m.PydanticBaseSettingsSource, ...]:
-            """Init-only resolution proves the override is consulted."""
+            """Init-only resolution proves the override is consulted.
+
+            Returns:
+                The resulting ``tuple[m.PydanticBaseSettingsSource, ...]``.
+
+            """
             _ = (settings_cls, env_settings, dotenv_settings, file_secret_settings)
             return (init_settings,)
 
-    def test_base_settings_alias_provides_real_env_resolution(self) -> None:
+    @staticmethod
+    def test_base_settings_alias_provides_real_env_resolution() -> None:
         """The wide alias behaves as genuine pydantic-settings.
 
         Only the real settings base resolves constructor fields from the

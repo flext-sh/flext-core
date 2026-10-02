@@ -1,4 +1,8 @@
-"""Behavioral tests for the combined and stacked decorator surface."""
+"""Behavioral tests for the combined and stacked decorator surface.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -20,8 +24,11 @@ if TYPE_CHECKING:
 class TestsFlextCoreDecoratorsCombined(TestsFlextDecoratorsLegacy):
     """Assert observable behavior of ``d.combined`` and decorator stacking."""
 
-    def test_combined_without_railway_returns_raw_value(self) -> None:
+    @staticmethod
+    def test_combined_without_railway_returns_raw_value() -> None:
         # Arrange
+        """Test combined without railway returns raw value."""
+
         @d.combined(operation_name="test_op", track_perf=True)
         def simple_function() -> str:
             return "result"
@@ -32,8 +39,11 @@ class TestsFlextCoreDecoratorsCombined(TestsFlextDecoratorsLegacy):
         # Assert: non-railway composition is a transparent pass-through.
         assert outcome == "result"
 
-    def test_combined_with_railway_wraps_success_in_result(self) -> None:
+    @staticmethod
+    def test_combined_with_railway_wraps_success_in_result() -> None:
         # Arrange
+        """Test combined with railway wraps success in result."""
+
         @d.combined(operation_name="wrapped", railway_enabled=True)
         def operation() -> str:
             return "success"
@@ -45,8 +55,11 @@ class TestsFlextCoreDecoratorsCombined(TestsFlextDecoratorsLegacy):
         assert isinstance(outcome, r)
         assert u.Tests.assert_success(outcome, expected_value="success") == "success"
 
-    def test_combined_with_railway_captures_exception_as_failure(self) -> None:
+    @staticmethod
+    def test_combined_with_railway_captures_exception_as_failure() -> None:
         # Arrange
+        """Test combined with railway captures exception as failure."""
+
         @d.combined(
             operation_name="failing",
             railway_enabled=True,
@@ -66,8 +79,11 @@ class TestsFlextCoreDecoratorsCombined(TestsFlextDecoratorsLegacy):
         assert outcome.error is not None
         assert "boom" in outcome.error
 
-    def test_combined_preserves_wrapped_callable_name(self) -> None:
+    @staticmethod
+    def test_combined_preserves_wrapped_callable_name() -> None:
         # Arrange
+        """Test combined preserves wrapped callable name."""
+
         @d.combined(operation_name="named_op")
         def business_operation() -> str:
             return "ok"
@@ -75,8 +91,11 @@ class TestsFlextCoreDecoratorsCombined(TestsFlextDecoratorsLegacy):
         # Assert: functools.wraps identity is part of the public contract.
         assert business_operation.__name__ == "business_operation"
 
-    def test_railway_nests_a_preexisting_result(self) -> None:
+    @staticmethod
+    def test_railway_nests_a_preexisting_result() -> None:
         # Arrange
+        """Test railway nests a preexisting result."""
+
         @d.railway()
         def returns_result() -> p.Result[str]:
             return r[str].ok("already_wrapped")
@@ -91,6 +110,7 @@ class TestsFlextCoreDecoratorsCombined(TestsFlextDecoratorsLegacy):
 
     def test_retry_succeeds_after_transient_failure(self) -> None:
         # Arrange
+        """Test retry succeeds after transient failure."""
         service = self.ServiceWithLogger()
 
         @d.retry(max_attempts=2, delay_seconds=0.001)
@@ -104,8 +124,11 @@ class TestsFlextCoreDecoratorsCombined(TestsFlextDecoratorsLegacy):
         assert outcome == "success"
         assert service.attempts == 2
 
-    def test_retry_raises_flext_timeout_when_exhausted(self) -> None:
+    @staticmethod
+    def test_retry_raises_flext_timeout_when_exhausted() -> None:
         # Arrange
+        """Test retry raises flext timeout when exhausted."""
+
         @d.retry(max_attempts=2, delay_seconds=0.001)
         def always_failing() -> str:
             error_msg = "persistent failure"
@@ -116,8 +139,11 @@ class TestsFlextCoreDecoratorsCombined(TestsFlextDecoratorsLegacy):
             always_failing()
         assert exc_info.value.operation == "always_failing"
 
-    def test_stacking_log_operation_over_railway_returns_result(self) -> None:
+    @staticmethod
+    def test_stacking_log_operation_over_railway_returns_result() -> None:
         # Arrange
+        """Test stacking log operation over railway returns result."""
+
         @d.log_operation("stacked")
         @d.log_operation("stacked")
         @d.railway()
@@ -131,8 +157,10 @@ class TestsFlextCoreDecoratorsCombined(TestsFlextDecoratorsLegacy):
         assert isinstance(outcome, r)
         assert u.Tests.assert_success(outcome, expected_value="stacked_result")
 
-    def test_stacking_railway_over_retry_recovers_then_wraps(self) -> None:
+    @staticmethod
+    def test_stacking_railway_over_retry_recovers_then_wraps() -> None:
         # Arrange
+        """Test stacking railway over retry recovers then wraps."""
         attempts = 0
 
         @d.railway()
@@ -164,6 +192,8 @@ class TestsFlextCoreDecoratorsCombined(TestsFlextDecoratorsLegacy):
         should_raise: bool,
     ) -> None:
         # Arrange
+        """Test timeout enforces duration budget."""
+
         @d.timeout(timeout_seconds=timeout_seconds)
         def measured() -> str:
             time.sleep(0.02)
@@ -185,6 +215,8 @@ class TestsFlextCoreDecoratorsCombined(TestsFlextDecoratorsLegacy):
         b: int,
     ) -> None:
         # Arrange
+        """Test railway division always returns success result."""
+
         @d.railway(error_code="DIV")
         def divide(x: int, y: int) -> float:
             return x / y

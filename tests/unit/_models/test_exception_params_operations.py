@@ -4,6 +4,9 @@ Exercises only the public surface of the ``m.*ErrorParams`` models: field
 values, serialization, roundtrip, ``extra="forbid"`` / strict validation, the
 ``connection_target`` computed value, and inherited fields. No private
 attribute access, no patching, no collaborator spying.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -46,13 +49,15 @@ class TestsFlextCoreExceptionParamsOperations:
         tm.that(params.expected_type, eq=expected)
         tm.that(params.actual_type, eq=actual)
 
-    def test_operation_error_params_serialize_field_values(self) -> None:
+    @staticmethod
+    def test_operation_error_params_serialize_field_values() -> None:
         params = m.OperationErrorParams(operation="save_state", reason="disk_full")
         data = params.model_dump()
         tm.that(data["operation"], eq="save_state")
         tm.that(data["reason"], eq="disk_full")
 
-    def test_attribute_access_error_params_preserve_mapping_context(self) -> None:
+    @staticmethod
+    def test_attribute_access_error_params_preserve_mapping_context() -> None:
         params = m.AttributeAccessErrorParams(
             attribute_name="token",
             attribute_context={"owner": "session"},
@@ -95,7 +100,8 @@ class TestsFlextCoreExceptionParamsOperations:
         with pytest.raises(c.ValidationError):
             model_cls.model_validate(payload)
 
-    def test_assignment_revalidates_field_type(self) -> None:
+    @staticmethod
+    def test_assignment_revalidates_field_type() -> None:
         params = m.ValidationErrorParams(field="email")
         wrong_value: object = 123
         tm.rejects_assignment(params, "field", wrong_value, expected=c.ValidationError)

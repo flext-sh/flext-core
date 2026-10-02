@@ -1,4 +1,8 @@
-"""Service and validation case model helper namespace."""
+"""Service and validation case model helper namespace.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 

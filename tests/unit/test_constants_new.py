@@ -24,25 +24,29 @@ class TestsFlextConstantsNew:
     """Observable public-contract behavior over the c facade."""
 
     # ----------------------------------------------------------------- ranges
-    def test_port_range_invariant(self) -> None:
+    @staticmethod
+    def test_port_range_invariant() -> None:
         """MIN_PORT < MAX_PORT within valid TCP range."""
         tm.that(c.MIN_PORT, gt=0)
         tm.that(c.MAX_PORT, lte=65535)
         tm.that(c.MIN_PORT, lt=c.MAX_PORT)
 
-    def test_timeout_range_invariant(self) -> None:
+    @staticmethod
+    def test_timeout_range_invariant() -> None:
         """MIN <= DEFAULT <= MAX for timeout seconds."""
         tm.that(c.MIN_TIMEOUT_SECONDS, gt=0)
         tm.that(c.DEFAULT_TIMEOUT_SECONDS, gte=c.MIN_TIMEOUT_SECONDS)
         tm.that(c.MAX_TIMEOUT_SECONDS, gt=c.DEFAULT_TIMEOUT_SECONDS)
 
-    def test_page_size_range_invariant(self) -> None:
+    @staticmethod
+    def test_page_size_range_invariant() -> None:
         """MIN <= DEFAULT <= MAX for page sizes."""
         tm.that(c.MIN_PAGE_SIZE, gt=0)
         tm.that(c.DEFAULT_PAGE_SIZE, gte=c.MIN_PAGE_SIZE)
         tm.that(c.MAX_PAGE_SIZE, gte=c.DEFAULT_PAGE_SIZE)
 
-    def test_retry_range_invariant(self) -> None:
+    @staticmethod
+    def test_retry_range_invariant() -> None:
         """MIN_RETRIES <= DEFAULT_RETRIES <= MAX_RETRIES."""
         tm.that(c.MIN_RETRIES, lte=c.DEFAULT_RETRIES)
         tm.that(c.DEFAULT_RETRIES, lte=c.MAX_RETRIES)
@@ -90,12 +94,14 @@ class TestsFlextConstantsNew:
         for member in domain_enum:
             tm.that(domain_enum(member.value), eq=member)
 
-    def test_error_domain_string_conversion_returns_value(self) -> None:
+    @staticmethod
+    def test_error_domain_string_conversion_returns_value() -> None:
         """ErrorDomain.__str__ returns enum value for routing semantics."""
         tm.that(str(c.ErrorDomain.VALIDATION), eq=c.ErrorDomain.VALIDATION.value)
 
     # ----------------------------------------------------- parser token tables
-    def test_boolean_truthy_and_falsy_sets_are_disjoint(self) -> None:
+    @staticmethod
+    def test_boolean_truthy_and_falsy_sets_are_disjoint() -> None:
         """A token can never be simultaneously truthy and falsy."""
         truthy = set(c.PARSER_BOOLEAN_TRUTHY)
         falsy = set(c.PARSER_BOOLEAN_FALSY)
@@ -201,7 +207,8 @@ class TestsFlextConstantsNew:
         """LDAP DN validation rejects missing names, values, and components."""
         tm.that(bool(c.PATTERN_LDAP_DN_RE.fullmatch(distinguished_name)), eq=False)
 
-    def test_ldap_dn_pattern_rejects_adversarial_component_chain(self) -> None:
+    @staticmethod
+    def test_ldap_dn_pattern_rejects_adversarial_component_chain() -> None:
         """LDAP DN validation rejects the CodeQL adversarial shape."""
         adversarial = "A=+" + ",A=+ " * 256 + ",A="
         tm.that(bool(c.PATTERN_LDAP_DN_RE.fullmatch(adversarial)), eq=False)

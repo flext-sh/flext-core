@@ -30,7 +30,8 @@ _SOURCE_CASES: dict[str, m.BaseModel] = {
 class TestsFlextCoreEnforcementSources:
     """Behavior contract for the EnforcementSource variants."""
 
-    def test_every_source_kind_enum_value_has_a_source_model(self) -> None:
+    @staticmethod
+    def test_every_source_kind_enum_value_has_a_source_model() -> None:
         model_kinds = {source.model_dump()["kind"] for source in _SOURCE_CASES.values()}
         assert model_kinds == {kind.value for kind in c.EnforcementSourceKind}
 
@@ -44,7 +45,8 @@ class TestsFlextCoreEnforcementSources:
         assert dumped["kind"] == expected_kind
         assert type(source).model_validate(dumped) == source
 
-    def test_infra_rule_source_requires_at_least_one_rule_id(self) -> None:
+    @staticmethod
+    def test_infra_rule_source_requires_at_least_one_rule_id() -> None:
         with pytest.raises(c.ValidationError):
             m.EnforcementInfraRuleSource(rule_ids=())
 

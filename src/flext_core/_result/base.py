@@ -41,7 +41,13 @@ class FlextResultBase[T](BaseModel):
 
     @classmethod
     def reject_banned_result_parameterization(cls) -> None:
-        """Reject ``FlextResult[None]`` and ``FlextResult[object]`` specializations."""
+        """Reject ``FlextResult[None]`` and ``FlextResult[object]`` specializations.
+
+        Raises:
+            ValueError: If ``arg0 is None or arg0 is type(None)``; or if ``arg0 is
+                object``.
+
+        """
         meta = getattr(cls, "__pydantic_generic_metadata__", None)
         if not isinstance(meta, dict):
             return
@@ -56,7 +62,12 @@ class FlextResultBase[T](BaseModel):
 
     @staticmethod
     def reject_banned_success_payload(value: object) -> None:
-        """Reject ``None`` and bare ``object()`` as success payloads."""
+        """Reject ``None`` and bare ``object()`` as success payloads.
+
+        Raises:
+            ValueError: If ``value is None``; or if ``type(value) is object``.
+
+        """
         if value is None:
             raise ValueError(c.ERR_RESULT_SUCCESS_PAYLOAD_CANNOT_BE_NONE)
         if type(value) is object:

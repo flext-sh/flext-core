@@ -5,6 +5,9 @@ surfaced through the public discovery API (``h.Discovery``) so registries can
 auto-discover handlers, while the original callable is returned unchanged.
 These tests exercise that observable contract only, never the marker attribute
 the decorator uses internally.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -25,7 +28,11 @@ if TYPE_CHECKING:
 
 
 class TestsFlextHandlerDecoratorMetadata:
+    """Tests for ``FlextHandlerDecoratorMetadata``."""
+
     def test_decorated_method_exposes_handler_config(self) -> None:
+        """Test decorated method exposes handler config."""
+
         class CreateCommand:
             pass
 
@@ -40,8 +47,11 @@ class TestsFlextHandlerDecoratorMetadata:
         tm.that(config.priority, eq=10)
 
     def test_undecorated_method_has_no_handler_config(self) -> None:
+        """Test undecorated method has no handler config."""
+
         class Service:
-            def handle_user(self) -> p.Result[str]:
+            @staticmethod
+            def handle_user() -> p.Result[str]:
                 return r[str].ok("handled")
 
         tm.that(h.Discovery.has_handlers(Service), eq=False)
@@ -55,6 +65,8 @@ class TestsFlextHandlerDecoratorMetadata:
         priority: int,
         timeout: float | None,
     ) -> None:
+        """Test priority and timeout are recorded verbatim."""
+
         class CreateCommand:
             pass
 
@@ -69,6 +81,8 @@ class TestsFlextHandlerDecoratorMetadata:
         tm.that(config.model_dump()["timeout"], eq=timeout)
 
     def test_negative_priority_is_rejected(self) -> None:
+        """Test negative priority is rejected."""
+
         class CreateCommand:
             pass
 
@@ -85,6 +99,8 @@ class TestsFlextHandlerDecoratorMetadata:
             define_invalid_service()
 
     def test_defaults_apply_when_only_command_given(self) -> None:
+        """Test defaults apply when only command given."""
+
         class CreateCommand:
             pass
 
@@ -99,6 +115,8 @@ class TestsFlextHandlerDecoratorMetadata:
         tm.that(config.model_dump(), eq=declared.model_dump())
 
     def test_middleware_sequence_is_recorded(self) -> None:
+        """Test middleware sequence is recorded."""
+
         class CreateCommand:
             pass
 
@@ -114,6 +132,8 @@ class TestsFlextHandlerDecoratorMetadata:
         tm.that(config.model_dump()["middleware"], eq=middleware_types)
 
     def test_middleware_is_captured_by_value_not_reference(self) -> None:
+        """Test middleware is captured by value not reference."""
+
         class CreateCommand:
             pass
 
@@ -143,6 +163,8 @@ class TestsFlextHandlerDecoratorMetadata:
         tm.that(config.model_dump(), eq=declared.model_dump())
 
     def test_decorator_returns_same_callable(self) -> None:
+        """Test decorator returns same callable."""
+
         class CreateCommand:
             pass
 
@@ -155,6 +177,8 @@ class TestsFlextHandlerDecoratorMetadata:
         tm.that(decorated is original_handler, eq=True)
 
     def test_innermost_decorator_wins_when_stacked(self) -> None:
+        """Test innermost decorator wins when stacked."""
+
         class CreateCommand:
             pass
 

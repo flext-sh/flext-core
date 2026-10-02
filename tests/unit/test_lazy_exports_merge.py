@@ -6,6 +6,9 @@ All assertions target the OBSERVABLE PUBLIC surface of the lazy helpers:
   module globals (the caller-visible attribute-resolution contract).
 - ``lazy.build_map`` ordering and alias contract.
 - ``lazy.cache_stats`` public ``computed_field`` and ``lazy.reset`` invariant.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -30,7 +33,9 @@ if TYPE_CHECKING:
 class TestsFlextCoreLazyExportsMerge:
     """Behavior contract for merge/cache/normalize/build-map helpers."""
 
-    def test_merge_normalizes_child_relative_targets_to_absolute_paths(self) -> None:
+    @staticmethod
+    def test_merge_normalizes_child_relative_targets_to_absolute_paths() -> None:
+        """Test merge normalizes child relative targets to absolute paths."""
         child_package_name = "test_lazy_pkg_merge.child"
         alpha_module_name = f"{child_package_name}.alpha"
 
@@ -52,7 +57,9 @@ class TestsFlextCoreLazyExportsMerge:
             sys.modules.pop(child_package_name, None)
             sys.modules.pop(alpha_module_name, None)
 
-    def test_merge_normalizes_relative_child_package_paths_against_parent(self) -> None:
+    @staticmethod
+    def test_merge_normalizes_relative_child_package_paths_against_parent() -> None:
+        """Test merge normalizes relative child package paths against parent."""
         parent_package_name = "test_lazy_pkg_parent"
         child_package_name = f"{parent_package_name}.child"
         alpha_module_name = f"{child_package_name}.alpha"
@@ -79,7 +86,8 @@ class TestsFlextCoreLazyExportsMerge:
             sys.modules.pop(child_package_name, None)
             sys.modules.pop(alpha_module_name, None)
 
-    def test_merge_keeps_local_map_when_child_has_no_lazy_imports(self) -> None:
+    @staticmethod
+    def test_merge_keeps_local_map_when_child_has_no_lazy_imports() -> None:
         """Non-lazy child packages contribute no lazy entries."""
         parent_package_name = "test_lazy_pkg_without_child_map"
         child_package_name = f"{parent_package_name}.child"
@@ -96,9 +104,8 @@ class TestsFlextCoreLazyExportsMerge:
         finally:
             sys.modules.pop(child_package_name, None)
 
-    def test_merge_relative_child_path_without_module_name_raises_value_error(
-        self,
-    ) -> None:
+    @staticmethod
+    def test_merge_relative_child_path_without_module_name_raises_value_error() -> None:
         """A relative child path with no parent module is an invalid request."""
         with pytest.raises(ValueError, match="relative lazy-import paths"):
             merge_lazy_imports((".child",), {})
@@ -141,7 +148,8 @@ class TestsFlextCoreLazyExportsMerge:
         """Relative targets bind to the module; absolute targets pass through."""
         assert normalize_lazy_imports(module_path, raw) == expected
 
-    def test_installed_getattr_resolves_submodule_and_caches_it(self) -> None:
+    @staticmethod
+    def test_installed_getattr_resolves_submodule_and_caches_it() -> None:
         """The published ``__getattr__`` returns the live submodule object."""
         package_name = "test_lazy_pkg_state"
         module_name = f"{package_name}.module"
@@ -167,7 +175,8 @@ class TestsFlextCoreLazyExportsMerge:
             sys.modules.pop(package_name, None)
             sys.modules.pop(module_name, None)
 
-    def test_reset_clears_all_cache_stats_to_zero(self) -> None:
+    @staticmethod
+    def test_reset_clears_all_cache_stats_to_zero() -> None:
         """After a resolution + reset, every diagnostic counter returns to zero."""
         package_name = "test_lazy_pkg_reset"
         module_name = f"{package_name}.module"
@@ -201,12 +210,16 @@ class TestsFlextCoreLazyExportsMerge:
             sys.modules.pop(package_name, None)
             sys.modules.pop(module_name, None)
 
-    def test_build_map_returns_keys_in_alphabetic_order_by_default(self) -> None:
+    @staticmethod
+    def test_build_map_returns_keys_in_alphabetic_order_by_default() -> None:
+        """Test build map returns keys in alphabetic order by default."""
         mapping = lazy.build_map({"pkg.mod": ("zeta", "alpha")})
 
         assert list(mapping) == ["alpha", "zeta"]
 
-    def test_build_map_preserves_insertion_order_when_sort_keys_disabled(self) -> None:
+    @staticmethod
+    def test_build_map_preserves_insertion_order_when_sort_keys_disabled() -> None:
+        """Test build map preserves insertion order when sort keys disabled."""
         mapping = lazy.build_map(
             {"pkg.mod": ("zeta", "alpha")},
             alias_groups={"pkg.alias": (("beta", "Thing"),)},
@@ -216,7 +229,8 @@ class TestsFlextCoreLazyExportsMerge:
         assert list(mapping) == ["zeta", "alpha", "beta"]
         assert mapping["beta"] == ("pkg.alias", "Thing")
 
-    def test_build_map_merges_module_groups_and_alias_groups(self) -> None:
+    @staticmethod
+    def test_build_map_merges_module_groups_and_alias_groups() -> None:
         """Module groups map names to the module; alias groups map to (module, attr)."""
         mapping = lazy.build_map(
             {"pkg.mod": ("alpha",)},

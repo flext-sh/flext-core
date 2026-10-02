@@ -65,7 +65,12 @@ class TestsFlextContainerMemory:
         initial_memory = get_memory_usage()
 
         def make_factory(captured_i: int) -> Callable[[], str]:
-            """Create factory function that captures i in closure."""
+            """Create factory function that captures i in closure.
+
+            Returns:
+                The resulting ``Callable[[], str]``.
+
+            """
             return lambda: f"value_{captured_i}"
 
         for i in range(100):

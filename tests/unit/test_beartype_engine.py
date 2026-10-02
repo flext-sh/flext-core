@@ -6,6 +6,9 @@ that the split domain modules do not exercise: symbol-placement predicates
 classification (``attr_accept_public`` / ``attr_accept_utility`` /
 ``attr_accept_constants``). Every assertion targets a public return value; no
 private attribute or method of the engine is touched.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -21,7 +24,8 @@ from ._beartype_engine_support import TestsFlextBeartypeEngine
 class TestsFlextCoreBeartypeEngine(TestsFlextBeartypeEngine):
     """Contract of the engine's placement + attribute-acceptance predicates."""
 
-    def test_defined_inside_true_for_nested_class(self) -> None:
+    @staticmethod
+    def test_defined_inside_true_for_nested_class() -> None:
         """A class nested inside another is reported as defined inside it."""
 
         class Outer:
@@ -30,7 +34,8 @@ class TestsFlextCoreBeartypeEngine(TestsFlextBeartypeEngine):
 
         assert be.defined_inside(Outer.Inner, Outer.__qualname__) is True
 
-    def test_defined_inside_false_for_unrelated_class(self) -> None:
+    @staticmethod
+    def test_defined_inside_false_for_unrelated_class() -> None:
         """A class defined outside the owner qualname is not defined inside."""
 
         class Outer:
@@ -41,7 +46,8 @@ class TestsFlextCoreBeartypeEngine(TestsFlextBeartypeEngine):
 
         assert be.defined_inside(Other, Outer.__qualname__) is False
 
-    def test_defined_in_function_scope_true_for_local_class(self) -> None:
+    @staticmethod
+    def test_defined_in_function_scope_true_for_local_class() -> None:
         """A class declared in a function body carries a ``<locals>`` qualname."""
 
         class Local:
@@ -49,7 +55,8 @@ class TestsFlextCoreBeartypeEngine(TestsFlextBeartypeEngine):
 
         assert be.defined_in_function_scope(Local) is True
 
-    def test_defined_in_function_scope_false_for_module_class(self) -> None:
+    @staticmethod
+    def test_defined_in_function_scope_false_for_module_class() -> None:
         """A module-level class is not reported as function-scoped."""
         assert be.defined_in_function_scope(TestsFlextBeartypeEngine) is False
 
@@ -85,7 +92,8 @@ class TestsFlextCoreBeartypeEngine(TestsFlextBeartypeEngine):
         """Public names pass unless they are dunder-exempt utility methods."""
         assert be.attr_accept_utility(name) is expected
 
-    def test_attr_accept_constants_accepts_public_plain_value(self) -> None:
+    @staticmethod
+    def test_attr_accept_constants_accepts_public_plain_value() -> None:
         """A public, non-callable, non-skipped attribute is accepted."""
         value: p.AttributeProbe = 42
         assert be.attr_accept_constants("MAX_RETRIES", value) is True
@@ -99,7 +107,8 @@ class TestsFlextCoreBeartypeEngine(TestsFlextBeartypeEngine):
         value: p.AttributeProbe = 1
         assert be.attr_accept_constants(name, value) is False
 
-    def test_attr_accept_constants_rejects_type_value(self) -> None:
+    @staticmethod
+    def test_attr_accept_constants_rejects_type_value() -> None:
         """A nested type is not a constant attribute."""
 
         class Nested:
@@ -108,7 +117,8 @@ class TestsFlextCoreBeartypeEngine(TestsFlextBeartypeEngine):
         value: p.AttributeProbe = Nested
         assert be.attr_accept_constants("Nested", value) is False
 
-    def test_attr_accept_constants_rejects_descriptor_values(self) -> None:
+    @staticmethod
+    def test_attr_accept_constants_rejects_descriptor_values() -> None:
         """Descriptor values (staticmethod/classmethod/property) are not constants."""
 
         def _fn(_self: p.AttributeProbe) -> int:
@@ -125,7 +135,8 @@ class TestsFlextCoreBeartypeEngine(TestsFlextBeartypeEngine):
         assert be.attr_accept_constants("as_class", class_value) is False
         assert be.attr_accept_constants("as_property", property_value) is False
 
-    def test_attr_accept_constants_rejects_callable_value(self) -> None:
+    @staticmethod
+    def test_attr_accept_constants_rejects_callable_value() -> None:
         """A plain callable attribute is a method, not a constant."""
 
         def _handler() -> None:

@@ -1,4 +1,8 @@
-"""Example 00 models."""
+"""Example 00 models.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -22,7 +26,12 @@ class ExamplesFlextModelsEx00:
         )
 
         def activate(self) -> p.Result[bool]:
-            """Activate user once."""
+            """Activate user once.
+
+            Returns:
+                The resulting ``p.Result[bool]``.
+
+            """
             if self.status == c.Status.ACTIVE:
                 return r[bool].fail("Already active")
             self.status = c.Status.ACTIVE
@@ -37,7 +46,16 @@ class ExamplesFlextModelsEx00:
         @u.field_validator("name", "email", mode="before")
         @classmethod
         def validate_non_empty_text(cls, value: t.JsonPayload) -> str:
-            """Validate text input."""
+            """Validate text input.
+
+            Returns:
+                The resulting ``str``.
+
+            Raises:
+                TypeError: If ``not isinstance(value, str)``.
+                ValueError: If ``not normalized``.
+
+            """
             if not isinstance(value, str):
                 raise TypeError(_err.Examples.ErrorMessages.EXPECTED_TEXT_INPUT)
             normalized = value.strip()

@@ -7,6 +7,9 @@ public ``settings``/``logger`` accessors, the ``with_settings`` snapshot, the
 contract, and the public state of the ``ServiceUserData`` result model. No
 private attributes, internal collaborators, or implementation details are
 inspected.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -42,7 +45,9 @@ class TestsFlextService(FlextTestsCase):
 
     # --- execute(): the r[T] contract ------------------------------------
 
-    def test_execute_reports_success_and_typed_payload(self) -> None:
+    @staticmethod
+    def test_execute_reports_success_and_typed_payload() -> None:
+        """Test execute reports success and typed payload."""
         service = m.Tests.ServiceUserService()
 
         result = service.execute()
@@ -51,7 +56,9 @@ class TestsFlextService(FlextTestsCase):
         assert not result.failure
         assert result.unwrap() == m.Tests.ServiceUserData(user_id=1, name="test_user")
 
-    def test_execute_success_value_exposes_public_model_fields(self) -> None:
+    @staticmethod
+    def test_execute_success_value_exposes_public_model_fields() -> None:
+        """Test execute success value exposes public model fields."""
         result = m.Tests.ServiceUserService().execute()
 
         payload = result.value
@@ -60,6 +67,7 @@ class TestsFlextService(FlextTestsCase):
         assert payload.name == "test_user"
 
     def test_execute_failure_propagates_error_through_result(self) -> None:
+        """Test execute failure propagates error through result."""
         result = self._FailingService().execute()
 
         assert result.failure
@@ -67,12 +75,14 @@ class TestsFlextService(FlextTestsCase):
         assert result.error == "execute-boom"
 
     def test_execute_success_result_supports_combinators(self) -> None:
+        """Test execute success result supports combinators."""
         result = self._PureService().execute()
 
         assert result.map(lambda ok: ok and True).unwrap() is True
         assert result.flat_map(lambda ok: r[bool].ok(value=not ok)).unwrap() is False
 
     def test_execute_failure_result_short_circuits_combinators(self) -> None:
+        """Test execute failure result short circuits combinators."""
         result = self._FailingService().execute()
 
         assert result.map(operator.not_).failure
@@ -80,7 +90,12 @@ class TestsFlextService(FlextTestsCase):
 
     @staticmethod
     def _satisfies_service_protocol(candidate: p.Base) -> bool:
-        """Report structural conformance without a type-narrowed argument."""
+        """Report structural conformance without a type-narrowed argument.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
         return isinstance(candidate, p.Service)
 
     def test_real_service_satisfies_the_service_protocol(self) -> None:
@@ -105,6 +120,7 @@ class TestsFlextService(FlextTestsCase):
         user_id: int,
         name: str,
     ) -> None:
+        """Test service user data round trips public state."""
         data = m.Tests.ServiceUserData(user_id=user_id, name=name)
 
         assert data.model_dump() == {"user_id": user_id, "name": name}
@@ -113,6 +129,7 @@ class TestsFlextService(FlextTestsCase):
     # --- fetch_global(): shared-runtime singleton ------------------------
 
     def test_fetch_global_returns_the_shared_singleton(self) -> None:
+        """Test fetch global returns the shared singleton."""
         first = type(self.service).fetch_global()
         second = type(self.service).fetch_global()
 
@@ -121,13 +138,16 @@ class TestsFlextService(FlextTestsCase):
 
     # --- settings / logger public accessors ------------------------------
 
-    def test_settings_expose_tests_namespace(self) -> None:
+    @staticmethod
+    def test_settings_expose_tests_namespace() -> None:
+        """Test settings expose tests namespace."""
         settings = m.Tests.ServiceUserService().settings
 
         assert isinstance(settings, FlextTestsSettings)
         assert isinstance(settings.Tests, m.BaseModel)
 
     def test_fetch_settings_returns_typed_tests_settings(self) -> None:
+        """Test fetch settings returns typed tests settings."""
         with self._PureService.isolated_test_runtime():
             settings = self._PureService.fetch_settings()
 
@@ -135,6 +155,7 @@ class TestsFlextService(FlextTestsCase):
             assert isinstance(settings.Tests, m.BaseModel)
 
     def test_fetch_logger_matches_shared_service_logger(self) -> None:
+        """Test fetch logger matches shared service logger."""
         with self._PureService.isolated_test_runtime():
             assert (
                 self._PureService.fetch_logger()
@@ -144,6 +165,7 @@ class TestsFlextService(FlextTestsCase):
     # --- with_settings(): runtime snapshot -------------------------------
 
     def test_with_settings_applies_provided_snapshot(self) -> None:
+        """Test with settings applies provided snapshot."""
         settings = m.Tests.ServiceUserService().settings.clone(log_level="ERROR")
 
         service = self._PureService.with_settings(settings)
@@ -155,6 +177,7 @@ class TestsFlextService(FlextTestsCase):
     # --- isolated_test_runtime(): isolation invariant --------------------
 
     def test_isolated_runtime_scopes_settings_without_leaking(self) -> None:
+        """Test isolated runtime scopes settings without leaking."""
         baseline_level = self._PureService.fetch_settings().log_level
 
         with self._PureService.isolated_test_runtime(
@@ -170,7 +193,9 @@ class TestsFlextService(FlextTestsCase):
 
     # --- track(): context-manager metrics contract -----------------------
 
-    def test_track_yields_named_operation_metrics(self) -> None:
+    @staticmethod
+    def test_track_yields_named_operation_metrics() -> None:
+        """Test track yields named operation metrics."""
         service = m.Tests.ServiceUserService()
 
         with service.track("load_users") as metrics:

@@ -1,4 +1,8 @@
-"""Runtime enforcement engine MRO part."""
+"""Runtime enforcement engine MRO part.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -27,6 +31,13 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
         Inputs that do not match the project/layer pattern are a contract
         violation — the function raises ``ValueError`` with the offending
         class name.
+
+        Returns:
+            The resulting ``str``.
+
+        Raises:
+            ValueError: If class_name_to_module.
+
         """
         flext_prefix = "Flext"
         if not class_name.startswith(flext_prefix):

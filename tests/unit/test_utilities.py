@@ -2,6 +2,9 @@
 
 Every test asserts an observable contract of a public helper (return value for a
 given input) — never an internal collaborator, private attribute, or call spy.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -38,19 +41,25 @@ class TestsFlextCoreUtilities:
         *,
         expected: bool,
     ) -> None:
+        """Test matches type reports runtime type membership."""
         assert u.matches_type(value, type_name) is expected
 
     @pytest.mark.parametrize("kind", ["ulid", "uuid4", "uuid", "id", "hex", "short"])
     def test_generate_returns_non_empty_string(self, kind: str) -> None:
+        """Test generate returns non empty string."""
         generated = u.generate(kind)
         assert isinstance(generated, str)
         assert generated
 
-    def test_generate_produces_distinct_values_across_calls(self) -> None:
+    @staticmethod
+    def test_generate_produces_distinct_values_across_calls() -> None:
+        """Test generate produces distinct values across calls."""
         assert u.generate("uuid4") != u.generate("uuid4")
 
-    def test_generate_uuid4_is_a_valid_uuid(self) -> None:
+    @staticmethod
+    def test_generate_uuid4_is_a_valid_uuid() -> None:
         # Parsing through uuid.UUID proves the output honors the v4 format.
+        """Test generate uuid4 is a valid uuid."""
         parsed = uuid.UUID(u.generate("uuid4"))
         assert parsed.version == 4
 
@@ -72,6 +81,7 @@ class TestsFlextCoreUtilities:
         *,
         expected: bool,
     ) -> None:
+        """Test to bool follows truthiness."""
         assert u.to_bool(value) is expected
 
     @pytest.mark.parametrize(
@@ -83,6 +93,7 @@ class TestsFlextCoreUtilities:
         value: ConvValue,
         expected: int,
     ) -> None:
+        """Test to int parses or defaults to zero."""
         assert u.to_int(value) == expected
 
     @pytest.mark.parametrize(
@@ -94,6 +105,7 @@ class TestsFlextCoreUtilities:
         value: ConvValue,
         expected: float,
     ) -> None:
+        """Test to float parses or defaults to zero."""
         assert u.to_float(value) == expected
 
     @pytest.mark.parametrize(("value", "expected"), [(5, 5), (0, 0), (-1, 0)])
@@ -102,6 +114,7 @@ class TestsFlextCoreUtilities:
         value: int,
         expected: int,
     ) -> None:
+        """Test to positive int clamps negatives to zero."""
         assert u.to_positive_int(value) == expected
 
     @pytest.mark.parametrize(("value", "expected"), [(5, "5"), (None, "")])
@@ -110,6 +123,7 @@ class TestsFlextCoreUtilities:
         value: ConvValue,
         expected: str,
     ) -> None:
+        """Test to str stringifies with empty default."""
         assert u.to_str(value) == expected
 
     @pytest.mark.parametrize(("value", "expected"), [("x", "x"), (None, None)])
@@ -118,6 +132,7 @@ class TestsFlextCoreUtilities:
         value: str | None,
         expected: str | None,
     ) -> None:
+        """Test to optional str preserves none."""
         assert u.to_optional_str(value) == expected
 
     @pytest.mark.parametrize(
@@ -129,6 +144,7 @@ class TestsFlextCoreUtilities:
         value: str | list[str],
         expected: list[str],
     ) -> None:
+        """Test to str list wraps scalars and preserves lists."""
         assert u.to_str_list(value) == expected
 
     @pytest.mark.parametrize(
@@ -140,6 +156,7 @@ class TestsFlextCoreUtilities:
         value: str,
         expected: str,
     ) -> None:
+        """Test normalize alnum lowercases and drops non alnum."""
         assert u.normalize_alnum(value) == expected
 
     @pytest.mark.parametrize(
@@ -153,6 +170,7 @@ class TestsFlextCoreUtilities:
         *,
         expected: bool,
     ) -> None:
+        """Test deep eq compares mapping contents."""
         assert u.deep_eq(left, right) is expected
 
     @pytest.mark.parametrize(
@@ -166,6 +184,7 @@ class TestsFlextCoreUtilities:
         *,
         expected: bool,
     ) -> None:
+        """Test same type compares runtime types."""
         assert u.same_type(left, right) is expected
 
     @pytest.mark.parametrize(
@@ -177,4 +196,5 @@ class TestsFlextCoreUtilities:
         value: int | str | list[int],
         expected: str,
     ) -> None:
+        """Test type name reports runtime type name."""
         assert u.type_name(value) == expected

@@ -47,7 +47,8 @@ class TestsFlextCoreMigrationValidation:
         tm.that(result.value, eq=expected)
         tm.that(result.unwrap(), eq=expected)
 
-    def test_fail_result_carries_error_message(self) -> None:
+    @staticmethod
+    def test_fail_result_carries_error_message() -> None:
         """A failed result reports failure and preserves the error message."""
         result: p.Result[str] = r[str].fail("Invalid email format")
 
@@ -56,7 +57,8 @@ class TestsFlextCoreMigrationValidation:
         tm.that(result.error, none=False)
         tm.that(tm.not_none(result.error), has="Invalid email format")
 
-    def test_unwrap_raises_on_failure(self) -> None:
+    @staticmethod
+    def test_unwrap_raises_on_failure() -> None:
         """Unwrapping a failure raises instead of inventing a value."""
         result: p.Result[int] = r[int].fail("boom")
 
@@ -76,7 +78,8 @@ class TestsFlextCoreMigrationValidation:
         """unwrap_or yields the value on success and the default on failure."""
         tm.that(result.unwrap_or(default), eq=expected)
 
-    def test_map_transforms_success_and_skips_failure(self) -> None:
+    @staticmethod
+    def test_map_transforms_success_and_skips_failure() -> None:
         """Map applies to a success value but leaves a failure untouched."""
         mapped_ok = r[str].ok("test_value").map(str.upper)
         tm.that(mapped_ok.success, eq=True)
@@ -86,7 +89,8 @@ class TestsFlextCoreMigrationValidation:
         tm.that(mapped_fail.failure, eq=True)
         tm.that(mapped_fail.error, eq="orig")
 
-    def test_flat_map_chains_fallible_operations(self) -> None:
+    @staticmethod
+    def test_flat_map_chains_fallible_operations() -> None:
         """flat_map sequences dependent fallible steps and short-circuits."""
 
         def parse(raw: str) -> p.Result[int]:
@@ -103,7 +107,8 @@ class TestsFlextCoreMigrationValidation:
         tm.that(chained_fail.error, none=False)
         tm.that(tm.not_none(chained_fail.error), has="not a number")
 
-    def test_map_error_transforms_only_the_failure_channel(self) -> None:
+    @staticmethod
+    def test_map_error_transforms_only_the_failure_channel() -> None:
         """map_error rewrites a failure's error and leaves success alone."""
         rewritten: p.Result[str] = r[str].fail("bad").map_error(str.upper)
         tm.that(rewritten.failure, eq=True)
@@ -113,7 +118,8 @@ class TestsFlextCoreMigrationValidation:
         tm.that(untouched.success, eq=True)
         tm.that(untouched.value, eq="keep")
 
-    def test_recover_replaces_failure_with_fallback_value(self) -> None:
+    @staticmethod
+    def test_recover_replaces_failure_with_fallback_value() -> None:
         """Recover converts a failure into a success using the error."""
         recovered = r[str].fail("e").recover(lambda _err: "fallback")
         tm.that(recovered.success, eq=True)
@@ -122,12 +128,14 @@ class TestsFlextCoreMigrationValidation:
         preserved = r[str].ok("orig").recover(lambda _err: "fallback")
         tm.that(preserved.value, eq="orig")
 
-    def test_filter_demotes_success_that_fails_predicate(self) -> None:
+    @staticmethod
+    def test_filter_demotes_success_that_fails_predicate() -> None:
         """Filter keeps a passing value and rejects a failing one."""
         tm.that(r[int].ok(4).filter(lambda n: n > 0).success, eq=True)
         tm.that(r[int].ok(-1).filter(lambda n: n > 0).failure, eq=True)
 
-    def test_tap_and_tap_error_observe_without_changing_outcome(self) -> None:
+    @staticmethod
+    def test_tap_and_tap_error_observe_without_changing_outcome() -> None:
         """tap/tap_error run side effects on the matching channel only."""
         seen: list[int] = []
         errors: list[str] = []
@@ -146,11 +154,13 @@ class TestsFlextCoreMigrationValidation:
 
     # ------------------------------------------------------------ container
 
-    def test_container_is_process_singleton(self) -> None:
+    @staticmethod
+    def test_container_is_process_singleton() -> None:
         """FlextContainer() returns the same shared instance every call."""
         tm.that(FlextContainer() is FlextContainer(), eq=True)
 
-    def test_container_binds_and_resolves_registered_service(self) -> None:
+    @staticmethod
+    def test_container_binds_and_resolves_registered_service() -> None:
         """A bound service resolves to the same object via its public API."""
         container = FlextContainer()
 
@@ -166,7 +176,8 @@ class TestsFlextCoreMigrationValidation:
         tm.that(resolution.success, eq=True)
         tm.that(resolution.value.name, eq="test")
 
-    def test_container_resolve_missing_key_fails(self) -> None:
+    @staticmethod
+    def test_container_resolve_missing_key_fails() -> None:
         """Resolving an unregistered key yields a failure, not an exception."""
         resolution = FlextContainer().resolve("migration_absent_key", type_cls=int)
 
@@ -196,7 +207,8 @@ class TestsFlextCoreMigrationValidation:
             def execute(self, **_kwargs: t.Scalar) -> p.Result[bool]:
                 return r[bool].ok(True)
 
-            def create_user(self, username: str, email: str) -> p.Result[t.StrMapping]:
+            @staticmethod
+            def create_user(username: str, email: str) -> p.Result[t.StrMapping]:
                 if not username or not email:
                     return r[t.StrMapping].fail("Username and email required")
                 return r[t.StrMapping].ok({"username": username, "email": email})
@@ -215,7 +227,8 @@ class TestsFlextCoreMigrationValidation:
 
     # --------------------------------------------------------------- logger
 
-    def test_logger_emits_structured_message(self) -> None:
+    @staticmethod
+    def test_logger_emits_structured_message() -> None:
         """The logging DSL produces observable output for the given message."""
         logger = u.fetch_logger(__name__)
 
@@ -226,7 +239,8 @@ class TestsFlextCoreMigrationValidation:
 
     # --------------------------------------------------- stable API contract
 
-    def test_factory_helpers_produce_protocol_conformant_objects(self) -> None:
+    @staticmethod
+    def test_factory_helpers_produce_protocol_conformant_objects() -> None:
         """Public builders return objects satisfying their published protocols."""
         tm.that(u.build_dispatcher(), is_=p.Dispatcher)
         tm.that(u.build_registry(), is_=p.Registry)

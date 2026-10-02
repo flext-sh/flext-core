@@ -4,6 +4,9 @@ The public contract is a single query: ``u.check(cls)`` returns an
 ``m.Report`` whose ``violations`` are filtered by ``layer`` / ``severity`` /
 message fragment. These tests assert only that observable contract — never the
 collector internals, per-rule private helpers, or emit machinery.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -19,7 +22,8 @@ from ._enforcement_support import make_class, messages, synthetic_method
 class TestsFlextCoreEnforcement:
     """Public behavior of ``u.check`` and the ``m.Report`` it returns."""
 
-    def test_check_returns_report_with_violations_collection(self) -> None:
+    @staticmethod
+    def test_check_returns_report_with_violations_collection() -> None:
         """``u.check`` yields an ``m.Report`` exposing a ``violations`` list."""
         report: m.Report = u.check(int)
 
@@ -28,7 +32,8 @@ class TestsFlextCoreEnforcement:
         assert isinstance(report.violations, list)
         assert report.violations, "a builtin type must produce at least one finding"
 
-    def test_compliant_flext_class_produces_no_violations(self) -> None:
+    @staticmethod
+    def test_compliant_flext_class_produces_no_violations() -> None:
         """A correctly prefixed, empty facade class is fully compliant."""
         compliant = make_class("FlextCoreWidget", {})
 
@@ -46,7 +51,8 @@ class TestsFlextCoreEnforcement:
         ]
         assert prefix_findings
 
-    def test_private_underscore_class_exempt_from_namespace_layer(self) -> None:
+    @staticmethod
+    def test_private_underscore_class_exempt_from_namespace_layer() -> None:
         """Underscore-prefixed classes are implementation details, not facades."""
 
         class _PrivateHelper:
@@ -110,7 +116,8 @@ class TestsFlextCoreEnforcement:
         found = bool(messages(report, fragment="must inherit FlextSettings"))
         assert found is expect_finding
 
-    def test_every_violation_carries_public_metadata(self) -> None:
+    @staticmethod
+    def test_every_violation_carries_public_metadata() -> None:
         """Each finding exposes non-empty qualname, layer, severity and message."""
         report = u.check(int)
 
@@ -121,7 +128,8 @@ class TestsFlextCoreEnforcement:
             assert violation.severity
             assert violation.message
 
-    def test_check_is_idempotent_for_same_target(self) -> None:
+    @staticmethod
+    def test_check_is_idempotent_for_same_target() -> None:
         """Repeated checks of the same target yield identical findings."""
         first = [v.message for v in u.check(str).violations]
         second = [v.message for v in u.check(str).violations]
