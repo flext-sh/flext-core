@@ -27,7 +27,6 @@ from typing import ClassVar
 import pytest
 
 from flext_core import c, m
-from flext_core.exceptions import FlextMroViolation, FlextSmellViolation
 from flext_core.utilities import FlextUtilitiesEnforcement
 from tests.unit._enforcement_support import make_class
 from tests.utilities import u
@@ -114,7 +113,7 @@ class TestsFlextCoreEnforcementNamespacePart02:
         recorded = _run_layer_records(bad, "constants")
 
         assert recorded, "expected run_layer to emit at least one warning"
-        assert all(issubclass(rec.category, FlextMroViolation) for rec in recorded), (
+        assert all(issubclass(rec.category, c.FlextMroViolation) for rec in recorded), (
             "every emitted warning must be from the FLEXT violation family"
         )
         texts = [str(rec.message) for rec in recorded]
@@ -287,11 +286,11 @@ class TestsFlextCoreEnforcementNamespacePart02:
         report = _bad_constant_report()
         assert not report.empty
 
-        with pytest.warns(FlextMroViolation, match="ENFORCE-079") as recorded:
+        with pytest.warns(c.FlextMroViolation, match="ENFORCE-079") as recorded:
             FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.WARN)
 
         assert not any(
-            issubclass(record.category, FlextSmellViolation) for record in recorded
+            issubclass(record.category, c.FlextSmellViolation) for record in recorded
         )
 
     @staticmethod

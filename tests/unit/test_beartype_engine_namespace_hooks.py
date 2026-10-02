@@ -21,11 +21,11 @@ from flext_tests import tm
 
 from tests.protocols import p
 from tests.typings import t
-from tests.utilities import TestsFlextUtilities, u
+from tests.utilities import u
 
 
 class TestsFlextBeartypeEngineNamespaceHooks(
-    TestsFlextUtilities.TestsFlextBeartypeEngine,
+    u.TestsFlextBeartypeEngine,
 ):
     """DEPRECATED_SYNTAX predicate behavior via the public ``apply`` contract."""
 

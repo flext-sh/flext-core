@@ -178,6 +178,7 @@ class TestsFlextCoreContainerProperties:
 
     # -- property-based roundtrip ------------------------------------------
 
+    @staticmethod
     @given(
         name=st.text(
             min_size=1,
@@ -186,7 +187,6 @@ class TestsFlextCoreContainerProperties:
         ),
     )
     @settings(max_examples=50)
-    @staticmethod
     def test_register_get_roundtrip_property(name: str) -> None:
         """For any valid name, factory registration then resolution roundtrips."""
         container = FlextContainer.shared()

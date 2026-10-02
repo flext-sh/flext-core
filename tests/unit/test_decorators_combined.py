@@ -13,13 +13,13 @@ import pytest
 from flext_tests import d, e, r
 from hypothesis import given, settings, strategies as st
 
-from tests.utilities import TestsFlextUtilities, u
+from tests.utilities import u
 
 if TYPE_CHECKING:
     from tests.protocols import p
 
 
-class TestsFlextCoreDecoratorsCombined(TestsFlextUtilities.TestsFlextDecoratorsLegacy):
+class TestsFlextCoreDecoratorsCombined(u.TestsFlextDecoratorsLegacy):
     """Assert observable behavior of ``d.combined`` and decorator stacking."""
 
     @staticmethod
@@ -205,9 +205,9 @@ class TestsFlextCoreDecoratorsCombined(TestsFlextUtilities.TestsFlextDecoratorsL
         else:
             assert measured() == "done"
 
+    @staticmethod
     @given(a=st.integers(), b=st.integers(min_value=1, max_value=1000))
     @settings(max_examples=50)
-    @staticmethod
     def test_railway_division_always_returns_success_result(
         a: int,
         b: int,

@@ -20,11 +20,11 @@ import pytest
 from tests.constants import c
 from tests.models import m
 from tests.typings import t
-from tests.utilities import TestsFlextUtilities, u
+from tests.utilities import u
 
 
 class TestsFlextCoreHandlersValidationContext(
-    TestsFlextUtilities.TestsFlextFlextHandlers,
+    u.TestsFlextFlextHandlers,
 ):
     """Contract tests for the public handler validation/context behavior."""
 
@@ -32,12 +32,9 @@ class TestsFlextCoreHandlersValidationContext(
         ("handler_type", "handler_mode"),
         [
             (scenario.handler_type, scenario.handler_mode)
-            for scenario in TestsFlextUtilities.TestsFlextFlextHandlers.HANDLER_TYPES
+            for scenario in u.TestsFlextFlextHandlers.HANDLER_TYPES
         ],
-        ids=[
-            scenario.name
-            for scenario in TestsFlextUtilities.TestsFlextFlextHandlers.HANDLER_TYPES
-        ],
+        ids=[scenario.name for scenario in u.TestsFlextFlextHandlers.HANDLER_TYPES],
     )
     def test_validate_message_accepts_message_for_every_handler_type(
         self,
@@ -62,11 +59,8 @@ class TestsFlextCoreHandlersValidationContext(
 
     @pytest.mark.parametrize(
         ("type_name", "message"),
-        TestsFlextUtilities.TestsFlextFlextHandlers.VALIDATION_TYPES,
-        ids=[
-            item[0]
-            for item in TestsFlextUtilities.TestsFlextFlextHandlers.VALIDATION_TYPES
-        ],
+        u.TestsFlextFlextHandlers.VALIDATION_TYPES,
+        ids=[item[0] for item in u.TestsFlextFlextHandlers.VALIDATION_TYPES],
     )
     def test_validate_message_accepts_supported_payload_types(
         self,
@@ -240,14 +234,8 @@ class TestsFlextCoreHandlersValidationContext(
 
     @pytest.mark.parametrize(
         "handler_type",
-        [
-            scenario.handler_type
-            for scenario in TestsFlextUtilities.TestsFlextFlextHandlers.HANDLER_TYPES
-        ],
-        ids=[
-            scenario.name
-            for scenario in TestsFlextUtilities.TestsFlextFlextHandlers.HANDLER_TYPES
-        ],
+        [scenario.handler_type for scenario in u.TestsFlextFlextHandlers.HANDLER_TYPES],
+        ids=[scenario.name for scenario in u.TestsFlextFlextHandlers.HANDLER_TYPES],
     )
     def test_handler_properties_reflect_configuration(
         self,

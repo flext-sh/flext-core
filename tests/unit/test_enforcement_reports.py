@@ -17,7 +17,6 @@ from typing import Annotated
 
 import pytest
 
-from flext_core.exceptions import FlextMroViolation, FlextSmellViolation
 from flext_core.utilities import FlextUtilitiesEnforcement
 from tests.constants import c
 from tests.models import m
@@ -206,7 +205,7 @@ class TestsFlextCoreEnforcementReports:
             ],
         )
 
-        with pytest.warns(FlextMroViolation) as caught:
+        with pytest.warns(c.FlextMroViolation) as caught:
             FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.WARN)
 
         assert len(caught) == 2
@@ -239,7 +238,7 @@ class TestsFlextCoreEnforcementReports:
 
         assert str(excinfo.value) == expected
         assert len(recorded) == 1
-        assert recorded[0].category is FlextMroViolation
+        assert recorded[0].category is c.FlextMroViolation
         assert str(recorded[0].message) == expected
 
     @staticmethod
@@ -294,7 +293,7 @@ class TestsFlextCoreEnforcementReports:
             ],
         )
 
-        with pytest.warns(FlextMroViolation) as caught:
+        with pytest.warns(c.FlextMroViolation) as caught:
             FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.WARN)
 
         assert str(caught[0].message).endswith(expected_fix)
@@ -308,10 +307,10 @@ class TestsFlextCoreEnforcementReports:
             ],
         )
 
-        with pytest.warns(FlextSmellViolation) as caught:
+        with pytest.warns(c.FlextSmellViolation) as caught:
             FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.WARN)
 
-        assert caught[0].category is FlextSmellViolation
+        assert caught[0].category is c.FlextSmellViolation
 
     @staticmethod
     def test_emit_of_checked_report_carries_layer_tag_and_fix() -> None:
@@ -323,7 +322,7 @@ class TestsFlextCoreEnforcementReports:
         report = u.check(_WithAny)
         assert report.violations
 
-        with pytest.warns(FlextMroViolation) as caught:
+        with pytest.warns(c.FlextMroViolation) as caught:
             FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.WARN)
 
         texts = [str(entry.message) for entry in caught]
