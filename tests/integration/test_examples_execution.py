@@ -6,6 +6,9 @@ value against a committed golden file, and reports the outcome on stdout. These
 tests assert only that observable contract -- process exit status, the announced
 ``PASS`` marker, the reported check count, the absence of failure/traceback
 markers, and the golden-file artifacts -- never any harness internals.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -27,7 +30,12 @@ class TestsFlextExamplesExecution:
 
     @staticmethod
     def _repo_root() -> Path:
-        """Return the flext-core repository root that hosts ``examples/``."""
+        """Return the flext-core repository root that hosts ``examples/``.
+
+        Returns:
+            The flext-core repository root that hosts ``examples/``.
+
+        """
         return Path(__file__).resolve().parents[c.Tests.REPO_ROOT_PARENT_DEPTH]
 
     @pytest.mark.parametrize(

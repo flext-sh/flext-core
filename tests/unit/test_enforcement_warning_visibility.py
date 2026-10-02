@@ -38,8 +38,8 @@ class TestsFlextCoreEnforcementWarningVisibility:
     # remains deterministic and fits the config-owned regular-item budget.
 
     @pytest.mark.parametrize("category", [FlextMroViolation, FlextSmellViolation])
+    @staticmethod
     def test_enforcement_categories_are_userwarnings(
-        self,
         category: type[FlextMroViolation],
     ) -> None:
         # Arrange / Act / Assert: default warning filters surface UserWarning,
@@ -55,8 +55,8 @@ class TestsFlextCoreEnforcementWarningVisibility:
         assert issubclass(FlextSmellViolation, FlextMroViolation)
 
     @pytest.mark.parametrize("category", [FlextMroViolation, FlextSmellViolation])
+    @staticmethod
     def test_emitted_violation_is_observable_with_message(
-        self,
         category: type[FlextMroViolation],
     ) -> None:
         # Act: emit the violation the way the enforcement engine does.

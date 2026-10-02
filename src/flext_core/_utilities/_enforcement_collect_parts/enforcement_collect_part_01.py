@@ -1,4 +1,8 @@
-"""Enforcement item-collection layer: project detection + per-rule iterators."""
+"""Enforcement item-collection layer: project detection + per-rule iterators.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -7,14 +11,14 @@ from collections.abc import Callable, Iterator
 from enum import EnumType
 from pathlib import Path
 
-from ..._constants.enforcement import FlextConstantsEnforcement as c
-from ..._models.pydantic import FlextModelsPydantic as mp
-from ..._protocols.base import FlextProtocolsBase as pb
-from ..._typings.base import FlextTypingBase as t
-from ..._typings.pydantic import FlextTypesPydantic as tp
-from ..beartype_engine import FlextUtilitiesBeartypeEngine as ub
-from ..enforcement_emit import FlextUtilitiesEnforcementEmit
-from ..project_metadata import FlextUtilitiesProjectMetadata as upm
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._protocols.base import FlextProtocolsBase as pb
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.pydantic import FlextTypesPydantic as tp
+from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as ub
+from flext_core._utilities.enforcement_emit import FlextUtilitiesEnforcementEmit
+from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata as upm
 
 _ERR_ENFORCEMENT_NAMESPACE_METADATA = (
     "Cannot read project metadata for enforcement namespace resolution"
@@ -32,7 +36,12 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
 
     @staticmethod
     def _owning_project_root(target: type) -> Path | None:
-        """Return the pyproject root that physically owns the target source."""
+        """Return the pyproject root that physically owns the target source.
+
+        Returns:
+            The pyproject root that physically owns the target source.
+
+        """
         source_file = FlextUtilitiesEnforcementCollect._resolve_target_source_file(
             target,
         )
@@ -59,7 +68,15 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
 
     @staticmethod
     def _resolve_target_source_file(target: type) -> Path | None:
-        """Resolve target source file path with explicit error semantics."""
+        """Resolve target source file path with explicit error semantics.
+
+        Returns:
+            The resulting ``Path | None``.
+
+        Raises:
+            RuntimeError: If a ``(OSError, TypeError)`` is caught.
+
+        """
         try:
             src_file = inspect.getsourcefile(target)
         except (OSError, TypeError) as exc:
@@ -76,6 +93,13 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         contract: ``inspect.getsourcefile`` raises ``TypeError`` for built-ins
         and ``OSError`` when the source file cannot be read; both produce
         ``None`` here so the dispatcher cleanly skips the target.
+
+        Returns:
+            The package owned by the target's physical project root.
+
+        Raises:
+            RuntimeError: If a ``(OSError, ValueError)`` is caught.
+
         """
         try:
             project_root = FlextUtilitiesEnforcementCollect._owning_project_root(target)
@@ -96,7 +120,15 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
 
     @staticmethod
     def _project(target: type) -> t.StrPair | None:
-        """Return (derived_prefix, inner_namespace) or None if unknowable."""
+        """Return (derived_prefix, inner_namespace) or None if unknowable.
+
+        Returns:
+            (derived_prefix, inner_namespace) or None if unknowable.
+
+        Raises:
+            RuntimeError: If a ``(OSError, ValueError)`` is caught.
+
+        """
         top = (getattr(target, "__module__", "") or "").split(".", 1)[0]
         if not top:
             return None
@@ -132,6 +164,10 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
 
         A class the body only references (``REGEX_ERROR = re.error``) is not
         one of the target's declarations and is never audited as the project's.
+
+        Yields:
+            Each ``tuple[str, type]``.
+
         """
         for name, value in vars(target).items():
             if (

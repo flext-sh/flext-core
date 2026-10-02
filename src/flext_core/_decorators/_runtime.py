@@ -11,9 +11,8 @@ from functools import wraps
 from typing import TYPE_CHECKING
 
 from flext_core import c, m
-
-from .._exceptions.exception_types import FlextExceptionsTypes as et
-from ._combined import FlextDecoratorsCombined
+from flext_core._decorators._combined import FlextDecoratorsCombined
+from flext_core._exceptions.exception_types import FlextExceptionsTypes as et
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -29,7 +28,12 @@ class FlextDecorators(FlextDecoratorsCombined):
         singleton: bool = False,
         lazy: bool = True,
     ) -> Callable[[Callable[P, T]], Callable[P, T]]:
-        """Mark functions as factories for DI container discovery."""
+        """Mark functions as factories for DI container discovery.
+
+        Returns:
+            The resulting ``Callable[[Callable[P, T]], Callable[P, T]]``.
+
+        """
 
         def decorator(func: Callable[P, T]) -> Callable[P, T]:
             settings = m.FactoryDecoratorConfig(
@@ -48,7 +52,13 @@ class FlextDecorators(FlextDecoratorsCombined):
         timeout_seconds: float | None = None,
         error_code: str | None = None,
     ) -> Callable[[Callable[PCallback, TResult]], Callable[PCallback, TResult]]:
-        """Raise a FLEXT timeout error when an operation exceeds the duration."""
+        """Raise a FLEXT timeout error when an operation exceeds the duration.
+
+        Returns:
+            The resulting ``Callable[[Callable[PCallback, TResult]], Callable[PCallback,
+                TResult]]``.
+
+        """
         max_duration = (
             timeout_seconds
             if timeout_seconds is not None

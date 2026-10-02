@@ -1,12 +1,15 @@
-"""Advanced result example sections kept under the module LOC cap."""
+"""Advanced result example sections kept under the module LOC cap.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from collections.abc import MutableSequence, Sequence
 
+from examples.shared import ExamplesFlextShared
 from flext_core import p, r
-
-from .shared import ExamplesFlextShared
 
 
 class Ex01ResultAdvancedSections(ExamplesFlextShared):

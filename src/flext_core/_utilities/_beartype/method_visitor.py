@@ -1,12 +1,16 @@
-"""Method naming + static method enforcement via runtime introspection."""
+"""Method naming + static method enforcement via runtime introspection.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 import inspect
 import types as _types_mod
 
-from ..._models.enforcement import FlextModelsEnforcement as me
-from ..._typings.base import FlextTypingBase as t
+from flext_core._models.enforcement import FlextModelsEnforcement as me
+from flext_core._typings.base import FlextTypingBase as t
 
 _NO_VIOLATION: t.StrMapping | None = None
 _BARE_VIOLATION: t.StrMapping = {}
@@ -26,6 +30,10 @@ class FlextUtilitiesBeartypeMethodVisitor:
         Args shape varies: ``(target, name)`` for accessor checks (NAMESPACE
         category); ``(name, value)`` for utility-tier static-method checks
         (ATTR category).
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+
         """
         if len(args) != _BINARY_ARITY:
             return _NO_VIOLATION

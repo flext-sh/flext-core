@@ -19,9 +19,8 @@ from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
 from structlog.stdlib import add_log_level
 
 from flext_core import c, p, t
-
-from ..._models.pydantic import FlextModelsPydantic as mp
-from .logging_config_part_01 import (
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._utilities._logging_config_parts.logging_config_part_01 import (
     FlextUtilitiesLoggingConfig as FlextUtilitiesLoggingConfigPart01,
 )
 
@@ -36,7 +35,12 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
         method_name: str,
         event_dict: t.ScalarMapping,
     ) -> t.ScalarMapping:
-        """Filter context variables based on log level."""
+        """Filter context variables based on log level.
+
+        Returns:
+            The resulting ``t.ScalarMapping``.
+
+        """
         level_hierarchy = {
             "debug": 10,
             "info": 20,
@@ -79,6 +83,13 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
 
         Reading the threshold per event keeps it re-applicable after loggers
         were cached by ``cache_logger_on_first_use``.
+
+        Returns:
+            The resulting ``t.ScalarMapping``.
+
+        Raises:
+            DropEvent: If ``level < FlextUtilitiesLoggingConfigPart01.log_threshold()``.
+
         """
         _ = logger, method_name
         level = logging.getLevelNamesMapping()[str(event_dict["level"]).upper()]
@@ -105,7 +116,13 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
         bool,
         bool,
     ]:
-        """Extract structlog params from settings model or pass-through args."""
+        """Extract structlog params from settings model or pass-through args.
+
+        Returns:
+            The resulting ``tuple[int, bool, t.SequenceOf[Processor] | None,
+                t.LoggerWrapperFactory | None, t.LoggerFactory, bool, bool]``.
+
+        """
         async_logging = True
         if settings is not None:
             log_level = getattr(settings, "log_level", log_level)
@@ -143,7 +160,12 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
         console_renderer: bool,
         additional_processors: t.SequenceOf[Processor] | None,
     ) -> t.SequenceOf[Processor]:
-        """Assemble the structlog processor chain."""
+        """Assemble the structlog processor chain.
+
+        Returns:
+            The resulting ``t.SequenceOf[Processor]``.
+
+        """
         processors: t.MutableSequenceOf[Processor] = [
             structlog.contextvars.merge_contextvars,
             add_log_level,
@@ -167,7 +189,12 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
         logger_factory: t.LoggerFactory,
         async_logging: bool,
     ) -> t.LoggerFactory | None:
-        """Resolve the logger factory, enabling async output when requested."""
+        """Resolve the logger factory, enabling async output when requested.
+
+        Returns:
+            The resulting ``t.LoggerFactory | None``.
+
+        """
         if logger_factory is not None:
             return logger_factory
         if async_logging:
@@ -200,7 +227,12 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
         cls,
         factory_builder: typing.Callable[..., t.LoggerFactory],
     ) -> t.LoggerFactory:
-        """Build a structlog logger factory bound to the shared async writer."""
+        """Build a structlog logger factory bound to the shared async writer.
+
+        Returns:
+            The resulting ``t.LoggerFactory``.
+
+        """
         if cls._async_writer is None:
             cls._async_writer = cls._AsyncLogWriter(sys.stdout)
         return factory_builder(file=cls._async_writer)

@@ -226,8 +226,8 @@ class TestsFlextHandlerDiscoveryModule:
         ("returned", "expected"),
         [(42, 42), ("payload", "payload"), (None, None), ([1, 2], "[1, 2]")],
     )
+    @staticmethod
     def test_discovered_callable_coerces_result_to_scalar_or_none(
-        self,
         returned: t.JsonValue,
         expected: t.Scalar | None,
     ) -> None:

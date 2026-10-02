@@ -11,7 +11,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from .flexthandlers_part_01 import FlextHandlers as FlextHandlersPart01
+from flext_core._handlers_parts.flexthandlers_part_01 import (
+    FlextHandlers as FlextHandlersPart01,
+)
 
 
 class FlextHandlers[MessageT_contra, ResultT](

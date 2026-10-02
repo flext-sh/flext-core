@@ -1,4 +1,8 @@
-"""Example models for ex10."""
+"""Example models for ex10.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -28,7 +32,8 @@ class ExamplesFlextModelsEx10:
             m.Field(description="Marker indicating successful processing"),
         ] = "good"
 
-        def process(self) -> bool:
+        @staticmethod
+        def process() -> bool:
             return True
 
     class ProcessorBad(m.Value):
@@ -43,5 +48,6 @@ class ExamplesFlextModelsEx10:
             m.Field(description="Message type for protocol handler"),
         ] = m.Command
 
-        def handle(self, message: ExamplesFlextModelsEx10.Message) -> p.Result[str]:
+        @staticmethod
+        def handle(message: ExamplesFlextModelsEx10.Message) -> p.Result[str]:
             return r[str].ok(message.text)

@@ -11,14 +11,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from .. import c, t
-from .._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel as ugm
-from ._base import FlextRuntimeBase
+from flext_core import c, t
+from flext_core._runtime._base import FlextRuntimeBase
+from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel as ugm
 
 if TYPE_CHECKING:
     from flext_core import m
-
-    from .._typings.services import FlextTypesServices as ts
+    from flext_core._typings.services import FlextTypesServices as ts
 
 
 class FlextRuntimeMetadata(FlextRuntimeBase):

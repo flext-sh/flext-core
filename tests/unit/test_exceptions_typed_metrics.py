@@ -84,8 +84,8 @@ class TestsFlextCoreExceptionsTypedMetrics:
             ),
         ],
     )
+    @staticmethod
     def test_typed_exception_is_expected_type_and_raisable(
-        self,
         factory: Callable[[], e.BaseError],
         expected_type: type[e.BaseError],
     ) -> None:
@@ -119,8 +119,8 @@ class TestsFlextCoreExceptionsTypedMetrics:
             ),
         ],
     )
+    @staticmethod
     def test_error_code_maps_to_routing_domain(
-        self,
         factory: Callable[[], e.BaseError],
         expected_domain: str,
     ) -> None:
@@ -182,8 +182,8 @@ class TestsFlextCoreExceptionsTypedMetrics:
             ),
         ],
     )
+    @staticmethod
     def test_typed_exception_exposes_structured_fields(
-        self,
         factory: Callable[[], e.BaseError],
         attribute: str,
         expected_value: object,

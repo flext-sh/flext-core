@@ -6,12 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from ..._constants.enforcement import FlextConstantsEnforcement as c
-from ..._models.pydantic import FlextModelsPydantic as mp
-from ..beartype_engine import FlextUtilitiesBeartypeEngine as ub
-from .enforcement_part_02 import (
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._utilities._enforcement_parts.enforcement_part_02 import (
     FlextUtilitiesEnforcement as FlextUtilitiesEnforcementPart02,
 )
+from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as ub
 
 
 class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart02):

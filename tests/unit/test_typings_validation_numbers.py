@@ -4,6 +4,9 @@ Every assertion targets the observable public contract of the constrained
 type aliases exposed through ``t.*``: a ``m.TypeAdapter`` either returns the
 validated value unchanged (accept path) or raises ``c.ValidationError``
 (reject path). No implementation internals are inspected.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -27,7 +30,8 @@ class TestsFlextCoreTypingsValidationNumbers:
             ("value", "expected"),
             [("hello", "hello"), ("  hello  ", "hello"), ("\tspaced\n", "spaced")],
         )
-        def test_strips_surrounding_whitespace(self, value: str, expected: str) -> None:
+        @staticmethod
+        def test_strips_surrounding_whitespace(value: str, expected: str) -> None:
             """A non-blank value is returned with surrounding whitespace removed."""
             adapter: m.TypeAdapter[str] = u.type_adapter(t.StrippedStr)
 
@@ -36,7 +40,8 @@ class TestsFlextCoreTypingsValidationNumbers:
             tm.that(result, eq=expected)
 
         @pytest.mark.parametrize("value", ["", "   ", "\t\n"])
-        def test_rejects_blank_or_whitespace_only(self, value: str) -> None:
+        @staticmethod
+        def test_rejects_blank_or_whitespace_only(value: str) -> None:
             """An empty or whitespace-only value raises the public ValidationError."""
             adapter: m.TypeAdapter[str] = u.type_adapter(t.StrippedStr)
 
@@ -68,8 +73,8 @@ class TestsFlextCoreTypingsValidationNumbers:
             (t.HttpStatusCode, 599),
         ],
     )
+    @staticmethod
     def test_accepts_valid_value_returns_input_unchanged(
-        self,
         alias: type[str | int],
         value: str | int,
     ) -> None:
@@ -99,8 +104,8 @@ class TestsFlextCoreTypingsValidationNumbers:
             (t.HttpStatusCode, 600),
         ],
     )
+    @staticmethod
     def test_rejects_out_of_bound_value_raises_validation_error(
-        self,
         alias: type[str | int],
         value: str | int,
     ) -> None:
@@ -114,8 +119,8 @@ class TestsFlextCoreTypingsValidationNumbers:
         "alias",
         [t.PositiveInt, t.NonNegativeInt, t.PortNumber, t.HttpStatusCode],
     )
+    @staticmethod
     def test_validation_is_idempotent_for_accepted_values(
-        self,
         alias: type[int],
     ) -> None:
         """Re-validating an already-valid value yields the same result."""

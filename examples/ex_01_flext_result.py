@@ -1,15 +1,18 @@
-"""r (r) — exercises ALL public API methods with golden file validation."""
+"""r (r) — exercises ALL public API methods with golden file validation.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from pathlib import Path
 from typing import override
 
+from examples.ex_01_flext_result_helpers import Ex01ResultAdvancedSections
+from examples.models import m
+from examples.shared import ExamplesFlextShared
 from flext_core import r, t
-
-from .ex_01_flext_result_helpers import Ex01ResultAdvancedSections
-from .models import m
-from .shared import ExamplesFlextShared
 
 
 class Ex01r(Ex01ResultAdvancedSections):
@@ -141,9 +144,9 @@ class Ex01r(Ex01ResultAdvancedSections):
         self.audit_check("unwrap.success", success.unwrap())
         try:
             _ = failure.unwrap()
-            self.audit_check("unwrap.failure.raises", False)
+            self.audit_check("unwrap.failure.raises", value=False)
         except RuntimeError as exc:
-            self.audit_check("unwrap.failure.raises", True)
+            self.audit_check("unwrap.failure.raises", value=True)
             self.audit_check("unwrap.failure.type", type(exc).__name__)
         self.audit_check("unwrap_or.success", success.unwrap_or("default"))
         self.audit_check("unwrap_or.failure", failure.unwrap_or("default"))

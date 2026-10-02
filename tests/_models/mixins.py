@@ -1,14 +1,20 @@
+"""Mixins module.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ._mixins.container import TestsFlextModelsContainerMixin
-from ._mixins.core import TestsFlextModelsCoreMixin
-from ._mixins.domain import TestsFlextModelsDomainMixin
-from ._mixins.fixtures import TestsFlextModelsFixtureDictsMixin
-from ._mixins.guards_mapper import TestsFlextModelsGuardsMapperMixin
-from ._mixins.service_cases import TestsFlextModelsServiceCasesMixin
-from ._mixins.test_data import TestsFlextModelsTestDataMixin
+from tests._models._mixins.container import TestsFlextModelsContainerMixin
+from tests._models._mixins.core import TestsFlextModelsCoreMixin
+from tests._models._mixins.domain import TestsFlextModelsDomainMixin
+from tests._models._mixins.fixtures import TestsFlextModelsFixtureDictsMixin
+from tests._models._mixins.guards_mapper import TestsFlextModelsGuardsMapperMixin
+from tests._models._mixins.service_cases import TestsFlextModelsServiceCasesMixin
+from tests._models._mixins.test_data import TestsFlextModelsTestDataMixin
 
 if TYPE_CHECKING:
     from tests.typings import t

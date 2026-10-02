@@ -25,8 +25,8 @@ class TestsFlextCoreLazyRelativePackages:
             ("xml.dom", "..", "xml"),
         ],
     )
+    @staticmethod
     def test_string_targets_resolve_to_the_real_module(
-        self,
         package: str,
         relative: str,
         absolute: str,
@@ -63,8 +63,8 @@ class TestsFlextCoreLazyRelativePackages:
             ("xml.dom", ".."),
         ],
     )
+    @staticmethod
     def test_merge_loads_relative_child_packages(
-        self,
         package: str,
         relative: str,
     ) -> None:

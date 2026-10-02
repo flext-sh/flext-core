@@ -1,13 +1,17 @@
-"""Runtime enforcement predicate bindings, typed from the predicate package data."""
+"""Runtime enforcement predicate bindings, typed from the predicate package data.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from types import MappingProxyType
 
-from ..._constants.enforcement import FlextConstantsEnforcement as c
-from ..._models.enforcement import FlextModelsEnforcement as me
-from ..._models.pydantic import FlextModelsPydantic as mp
-from ..._typings.base import FlextTypingBase as t
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._models.enforcement import FlextModelsEnforcement as me
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._typings.base import FlextTypingBase as t
 
 PREDICATE_BINDINGS: t.MappingKV[
     str,

@@ -117,8 +117,8 @@ class TestsFlextCoreEnforcementNamespacePart01:
             ("FlextModelsMixins", True),
         ],
     )
+    @staticmethod
     def test_tests_module_requires_tests_prefix_composition(
-        self,
         class_name: str,
         *,
         flagged: bool,

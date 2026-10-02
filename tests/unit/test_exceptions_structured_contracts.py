@@ -18,9 +18,8 @@ from flext_tests import e, tm
 
 from tests.constants import c
 from tests.protocols import p
-
-from ._exceptions_failure_support import FAILURES, FailureFactory
-from ._exceptions_structured_support import STRUCTURED_ERRORS, ErrorFactory
+from tests.unit._exceptions_failure_support import FAILURES, FailureFactory
+from tests.unit._exceptions_structured_support import STRUCTURED_ERRORS, ErrorFactory
 
 
 class TestsFlextCoreExceptionsStructuredContracts:
@@ -30,8 +29,8 @@ class TestsFlextCoreExceptionsStructuredContracts:
         ("_name", "factory", "expected_domain", "expected_code", "expected_payload"),
         STRUCTURED_ERRORS,
     )
+    @staticmethod
     def test_structured_errors_expose_public_contract(
-        self,
         _name: str,
         factory: ErrorFactory,
         expected_domain: str,
@@ -58,8 +57,8 @@ class TestsFlextCoreExceptionsStructuredContracts:
         ("_name", "factory", "expected_domain", "expected_code", "_expected_payload"),
         STRUCTURED_ERRORS,
     )
+    @staticmethod
     def test_structured_errors_are_raisable_and_preserve_contract(
-        self,
         _name: str,
         factory: ErrorFactory,
         expected_domain: str,
@@ -136,8 +135,8 @@ class TestsFlextCoreExceptionsStructuredContracts:
         ("_name", "factory", "expected_fragment", "expected_code", "expected_data"),
         FAILURES,
     )
+    @staticmethod
     def test_failure_factories_return_public_result_contract(
-        self,
         _name: str,
         factory: FailureFactory,
         expected_fragment: str,
@@ -163,8 +162,8 @@ class TestsFlextCoreExceptionsStructuredContracts:
         ("_name", "factory", "_expected_fragment", "expected_code", "_expected_data"),
         FAILURES,
     )
+    @staticmethod
     def test_failure_results_honor_combinator_contract(
-        self,
         _name: str,
         factory: FailureFactory,
         _expected_fragment: str,

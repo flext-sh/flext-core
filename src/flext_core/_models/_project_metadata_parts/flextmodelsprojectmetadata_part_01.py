@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from ..pydantic import FlextModelsPydantic
+from flext_core._models.pydantic import FlextModelsPydantic
 
 
 class ProjectMetadataContract(FlextModelsPydantic.BaseModel):

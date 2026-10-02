@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Self, TypeIs, override
 
-from .._protocols.result import FlextProtocolsResult as prt
-from .base import FlextResultBase
+from flext_core._protocols.result import FlextProtocolsResult as prt
+from flext_core._result.base import FlextResultBase
 
 if TYPE_CHECKING:
     from types import TracebackType

@@ -32,13 +32,14 @@ import pytest
 from beartype import BeartypeConf, BeartypeStrategy
 
 import flext_core
-
-from ._beartype_engine_support import TestsFlextBeartypeEngine
+import tests.utilities
 
 _FLEXT_CORE_ROOT: Path = Path(__file__).resolve().parents[2]
 
 
-class TestsFlextCoreBeartypeEngineRuntime(TestsFlextBeartypeEngine):
+class TestsFlextCoreBeartypeEngineRuntime(
+    tests.utilities.TestsFlextUtilities.TestsFlextBeartypeEngine,
+):
     """Observable contract of flext_core's beartype.claw runtime activation."""
 
     @staticmethod

@@ -20,14 +20,13 @@ from typing import TYPE_CHECKING, ClassVar, cast
 import yaml
 
 from flext_core import r
+from flext_core._constants.config import FlextConstantsConfig as c
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore as g
+from flext_core._utilities.reliability import FlextUtilitiesReliability as rel
 
 if TYPE_CHECKING:
     from flext_core import p
-
-from .._constants.config import FlextConstantsConfig as c
-from .._typings.base import FlextTypingBase as t
-from .guards_type_core import FlextUtilitiesGuardsTypeCore as g
-from .reliability import FlextUtilitiesReliability as rel
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -48,7 +47,12 @@ class FlextUtilitiesConfig:
 
         @staticmethod
         def safe_load(stream: str) -> t.JsonValue:
-            """Parse a YAML string → validated JSON value."""
+            """Parse a YAML string → validated JSON value.
+
+            Returns:
+                The resulting ``t.JsonValue``.
+
+            """
             return cast("t.JsonValue", yaml.safe_load(stream))
 
         @staticmethod
@@ -60,7 +64,12 @@ class FlextUtilitiesConfig:
             allow_unicode: bool = True,
             default_flow_style: bool = False,
         ) -> str:
-            """Serialize a JSON value → YAML string."""
+            """Serialize a JSON value → YAML string.
+
+            Returns:
+                The resulting ``str``.
+
+            """
             return yaml.safe_dump(
                 data,
                 sort_keys=sort_keys,
@@ -71,13 +80,23 @@ class FlextUtilitiesConfig:
 
         @staticmethod
         def safe_load_file(path: Path) -> t.JsonValue:
-            """Load a YAML file → validated JSON value."""
+            """Load a YAML file → validated JSON value.
+
+            Returns:
+                The resulting ``t.JsonValue``.
+
+            """
             with path.open(encoding="utf-8") as fh:
                 return cast("t.JsonValue", yaml.safe_load(fh))
 
         @staticmethod
         def yaml_safe_load(path: Path) -> p.Result[t.JsonMapping]:
-            """Load a YAML file → ``r[JsonMapping]``."""
+            """Load a YAML file → ``r[JsonMapping]``.
+
+            Returns:
+                The resulting ``p.Result[t.JsonMapping]``.
+
+            """
             if not path.is_file():
                 return r[t.JsonMapping].fail(f"YAML file not found: {path}")
             try:
@@ -98,7 +117,12 @@ class FlextUtilitiesConfig:
             sort_keys: bool = False,
             indent: int = 2,
         ) -> p.Result[bool]:
-            """Write a payload as YAML file → ``r[bool]``."""
+            """Write a payload as YAML file → ``r[bool]``.
+
+            Returns:
+                The resulting ``p.Result[bool]``.
+
+            """
             try:
                 path.parent.mkdir(parents=True, exist_ok=True)
                 validated = FlextUtilitiesConfig.Yaml.safe_dump(
@@ -108,7 +132,7 @@ class FlextUtilitiesConfig:
                 )
                 with path.open("w", encoding="utf-8") as fh:
                     fh.write(validated)
-                return r[bool].ok(True)
+                return r[bool].ok(value=True)
             except OSError as exc:
                 return r[bool].fail(f"YAML write error: {exc}", exception=exc)
 
@@ -118,7 +142,12 @@ class FlextUtilitiesConfig:
 
     @staticmethod
     def _expand_one(match: re.Match[str], env: Mapping[str, str]) -> str:
-        """Resolve one ``${VAR}`` / ``${VAR:-default}`` match against ``env``."""
+        """Resolve one ``${VAR}`` / ``${VAR:-default}`` match against ``env``.
+
+        Returns:
+            The resulting ``str``.
+
+        """
         name = match.group("name")
         if name in env:
             return env[name]
@@ -127,7 +156,12 @@ class FlextUtilitiesConfig:
 
     @staticmethod
     def _expand_str(value: str, env: Mapping[str, str]) -> str:
-        """Expand innermost ``${...}`` repeatedly so nested defaults resolve."""
+        """Expand innermost ``${...}`` repeatedly so nested defaults resolve.
+
+        Returns:
+            The resulting ``str``.
+
+        """
         current = value
 
         def _expand_match(match: re.Match[str]) -> str:
@@ -146,6 +180,10 @@ class FlextUtilitiesConfig:
 
         Fail-closed: a missing file, parse error, or non-mapping top level is a
         failed ``r[T]``, never a raised exception escaping ``config_load``.
+
+        Returns:
+            The resulting ``p.Result[t.JsonMapping]``.
+
         """
         if not path.is_file():
             return r[t.JsonMapping].fail(f"{c.ERR_CONFIG_READ_FAILED}: {path}")
@@ -163,7 +201,12 @@ class FlextUtilitiesConfig:
 
     @staticmethod
     def config_merge(base: t.JsonMapping, override: t.JsonMapping) -> t.JsonDict:
-        """Deep-merge ``override`` onto ``base``, returning a new mapping."""
+        """Deep-merge ``override`` onto ``base``, returning a new mapping.
+
+        Returns:
+            The resulting ``t.JsonDict``.
+
+        """
         merged: dict[str, t.JsonValue] = dict(base)
         for key, value in override.items():
             current = merged.get(key)
@@ -183,6 +226,10 @@ class FlextUtilitiesConfig:
         Recurses through mappings and sequences; non-string leaves pass through
         unchanged. ``${VAR}`` resolves to ``env[VAR]`` or ``""`` when absent;
         ``${VAR:-default}`` resolves to ``env[VAR]`` or ``default`` when absent.
+
+        Returns:
+            The resulting ``t.JsonValue``.
+
         """
         if isinstance(value, str):
             return FlextUtilitiesConfig._expand_str(value, env)

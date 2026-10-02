@@ -15,8 +15,7 @@ import sys
 import types
 
 from flext_core import c
-
-from .logging_context_part_01 import (
+from flext_core._utilities._logging_context_parts.logging_context_part_01 import (
     FlextUtilitiesLoggingContext as FlextUtilitiesLoggingContextPart01,
 )
 
@@ -24,7 +23,12 @@ from .logging_context_part_01 import (
 class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingContextPart01):
     @staticmethod
     def _caller_source_path() -> str | None:
-        """Get source file path with line, class and method context."""
+        """Get source file path with line, class and method context.
+
+        Returns:
+            The resulting ``str | None``.
+
+        """
         caller_frame: types.FrameType | None
         try:
             caller_frame = FlextUtilitiesLoggingContext._calling_frame()
@@ -45,6 +49,10 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingContextPart01):
         Generic: skips any frame whose source file path matches one of
         ``c.LOGGING_INTERNAL_PATH_FRAGMENTS``. The first frame outside is the
         true caller regardless of how many internal wrappers are involved.
+
+        Returns:
+            The resulting ``types.FrameType | None``.
+
         """
         frame = inspect.currentframe()
         if frame is None:

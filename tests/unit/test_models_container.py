@@ -67,8 +67,8 @@ class TestsFlextCoreModelsContainer:
         ("key", "default", "expected"),
         [("a", None, 1), ("absent", None, None), ("absent", 99, 99)],
     )
+    @staticmethod
     def test_config_map_get_returns_value_or_default(
-        self,
         key: str,
         default: int | None,
         expected: int | None,
@@ -81,8 +81,8 @@ class TestsFlextCoreModelsContainer:
         ("key", "present"),
         [("a", True), ("b", True), ("missing", False)],
     )
+    @staticmethod
     def test_config_map_contains_reflects_membership(
-        self,
         key: str,
         *,
         present: bool,
@@ -97,8 +97,8 @@ class TestsFlextCoreModelsContainer:
         assert len(m.ConfigMap(root={"a": 1, "b": 2, "c": 3})) == 3
 
     @pytest.mark.parametrize(("root", "truthy"), [({}, False), ({"a": 1}, True)])
+    @staticmethod
     def test_config_map_bool_reflects_emptiness(
-        self,
         root: dict[str, t.JsonPayload],
         *,
         truthy: bool,
@@ -218,8 +218,8 @@ class TestsFlextCoreModelsContainer:
         assert len(m.ObjectList(root=["a", 1])) == 2
 
     @pytest.mark.parametrize(("root", "truthy"), [([], False), (["a"], True)])
+    @staticmethod
     def test_object_list_bool_reflects_emptiness(
-        self,
         root: list[t.JsonPayload],
         *,
         truthy: bool,

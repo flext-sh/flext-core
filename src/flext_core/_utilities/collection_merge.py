@@ -3,6 +3,9 @@
 Hosts the `merge_mappings` engine and per-strategy handlers so
 `collection.py` can keep just iterator + normalization logic and stay
 under the 200-LOC cap (logical LOC, AGENTS.md §3.1).
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -11,10 +14,9 @@ from collections.abc import Callable, Mapping
 from typing import ClassVar, TypeGuard
 
 from flext_core import p, r, t
-
-from .._constants.cqrs import FlextConstantsCqrs as _c_cqrs
-from .._runtime._metadata import FlextRuntimeMetadata
-from .guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core._constants.cqrs import FlextConstantsCqrs as _c_cqrs
+from flext_core._runtime._metadata import FlextRuntimeMetadata
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 
 
 class FlextUtilitiesCollectionMerge:
@@ -34,7 +36,12 @@ class FlextUtilitiesCollectionMerge:
         key: str,
         value: t.JsonValue,
     ) -> p.Result[bool]:
-        """Merge single key in deep merge strategy."""
+        """Merge single key in deep merge strategy.
+
+        Returns:
+            The resulting ``p.Result[bool]``.
+
+        """
         current_val = result.get(key)
         if FlextUtilitiesCollectionMerge._is_json_mapping(
             current_val,
@@ -43,16 +50,21 @@ class FlextUtilitiesCollectionMerge:
                 **current_val,
                 **value,
             })
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         result[key] = value
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     @staticmethod
     def _merge_replace(
         other: t.JsonMapping,
         base: t.JsonMapping,
     ) -> p.Result[t.JsonMapping]:
-        """Replace strategy: base values overwrite other."""
+        """Replace strategy: base values overwrite other.
+
+        Returns:
+            The resulting ``p.Result[t.JsonMapping]``.
+
+        """
         result: t.MutableJsonMapping = dict(other)
         result.update(base)
         return r[t.JsonMapping].ok(result)
@@ -62,7 +74,12 @@ class FlextUtilitiesCollectionMerge:
         other: t.JsonMapping,
         base: t.JsonMapping,
     ) -> p.Result[t.JsonMapping]:
-        """Filter-none strategy: skip None values from base."""
+        """Filter-none strategy: skip None values from base.
+
+        Returns:
+            The resulting ``p.Result[t.JsonMapping]``.
+
+        """
         result: t.MutableJsonMapping = dict(other)
         result.update({k: v for k, v in base.items() if v is not None})
         return r[t.JsonMapping].ok(result)
@@ -72,7 +89,12 @@ class FlextUtilitiesCollectionMerge:
         other: t.JsonMapping,
         base: t.JsonMapping,
     ) -> p.Result[t.JsonMapping]:
-        """Filter-empty strategy: skip empty values from base."""
+        """Filter-empty strategy: skip empty values from base.
+
+        Returns:
+            The resulting ``p.Result[t.JsonMapping]``.
+
+        """
         result: t.MutableJsonMapping = dict(other)
         result.update({
             k: v
@@ -86,7 +108,12 @@ class FlextUtilitiesCollectionMerge:
         other: t.JsonMapping,
         base: t.JsonMapping,
     ) -> p.Result[t.JsonMapping]:
-        """Append strategy: concatenate lists instead of replacing."""
+        """Append strategy: concatenate lists instead of replacing.
+
+        Returns:
+            The resulting ``p.Result[t.JsonMapping]``.
+
+        """
         result: t.MutableJsonMapping = dict(other)
         for key, value in base.items():
             current_val = result.get(key)
@@ -106,7 +133,12 @@ class FlextUtilitiesCollectionMerge:
         other: t.JsonMapping,
         base: t.JsonMapping,
     ) -> p.Result[t.JsonMapping]:
-        """Deep strategy: recursively merge nested dicts."""
+        """Deep strategy: recursively merge nested dicts.
+
+        Returns:
+            The resulting ``p.Result[t.JsonMapping]``.
+
+        """
         result: t.MutableJsonMapping = dict(other)
         for key, value in base.items():
             merge_result = FlextUtilitiesCollectionMerge._merge_deep_single_key(
@@ -137,7 +169,16 @@ class FlextUtilitiesCollectionMerge:
         *,
         strategy: str = _c_cqrs.MergeStrategy.DEEP,
     ) -> p.Result[t.JsonMapping]:
-        """Merge two dictionaries with configurable strategy."""
+        """Merge two dictionaries with configurable strategy.
+
+        Returns:
+            The resulting ``p.Result[t.JsonMapping]``.
+
+        Raises:
+            TypeError: If merge_mappings requires an iterable mapping for 'other', got
+                None.
+
+        """
         if other is None:
             msg = "merge_mappings requires an iterable mapping for 'other', got None"
             raise TypeError(msg)

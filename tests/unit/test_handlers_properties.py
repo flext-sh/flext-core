@@ -16,10 +16,9 @@ import pytest
 from flext_tests import h, r, tm
 from hypothesis import given, strategies as st
 
+import tests.utilities
 from tests.constants import c
 from tests.typings import t
-
-from ._handlers_support import TestsFlextFlextHandlers
 
 _TOKENS: st.SearchStrategy[str] = st.text(
     alphabet=st.characters(min_codepoint=33, max_codepoint=126),
@@ -27,25 +26,30 @@ _TOKENS: st.SearchStrategy[str] = st.text(
 )
 
 
-class TestsFlextCoreHandlersProperties(TestsFlextFlextHandlers):
+class TestsFlextCoreHandlersProperties(
+    tests.utilities.TestsFlextUtilities.TestsFlextFlextHandlers,
+):
     """Public-contract behavior of the callable handler factory."""
 
     @given(_TOKENS)
-    def test_explicit_name_is_exposed_verbatim(self, handler_name: str) -> None:
+    @staticmethod
+    def test_explicit_name_is_exposed_verbatim(handler_name: str) -> None:
         """Any non-empty explicit name is exposed by ``handler_name``."""
         handler = h.create_from_callable(str, handler_name=handler_name)
 
         tm.that(handler.handler_name, eq=handler_name)
 
     @given(_TOKENS)
-    def test_handle_wraps_plain_return_value_as_success(self, message: str) -> None:
+    @staticmethod
+    def test_handle_wraps_plain_return_value_as_success(message: str) -> None:
         """``handle`` wraps a callable's plain return in a success result."""
         handler = h.create_from_callable(str, handler_name="echo")
 
         tm.ok(handler.handle(message), eq=message)
 
     @given(_TOKENS)
-    def test_execute_runs_pipeline_and_returns_success(self, message: str) -> None:
+    @staticmethod
+    def test_execute_runs_pipeline_and_returns_success(message: str) -> None:
         """``execute`` drives the full pipeline to a success outcome."""
         handler = h.create_from_callable(str, handler_name="echo")
 
@@ -102,8 +106,8 @@ class TestsFlextCoreHandlersProperties(TestsFlextFlextHandlers):
             c.HandlerType.SAGA,
         ],
     )
+    @staticmethod
     def test_handler_type_is_reflected_in_mode(
-        self,
         handler_type: c.HandlerType,
     ) -> None:
         """The requested handler type becomes the handler's public mode."""

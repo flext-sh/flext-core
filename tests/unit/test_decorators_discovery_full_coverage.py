@@ -86,8 +86,8 @@ class TestsFlextDecoratorsDiscovery:
         ("singleton", "lazy"),
         [(False, True), (True, False), (True, True), (False, False)],
     )
+    @staticmethod
     def test_scan_module_preserves_config_metadata(
-        self,
         *,
         singleton: bool,
         lazy: bool,

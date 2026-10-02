@@ -38,8 +38,8 @@ class TestsFlextCoreRuntime:
             ("text", "text"),
         ],
     )
+    @staticmethod
     def test_normalize_to_metadata_converts_scalars_to_json_native(
-        self,
         value: t.JsonPayload,
         expected: t.JsonValue,
     ) -> None:
@@ -69,8 +69,8 @@ class TestsFlextCoreRuntime:
         ("value", "expected"),
         [(None, ""), (42, 42), ([1, 2], [1, 2])],
     )
+    @staticmethod
     def test_normalize_to_container_returns_runtime_data(
-        self,
         value: t.JsonPayload,
         expected: t.JsonValue,
     ) -> None:

@@ -1,4 +1,8 @@
-"""PEP 562 lazy export helpers."""
+"""PEP 562 lazy export helpers.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -6,13 +10,13 @@ import sys
 from types import ModuleType
 from typing import TYPE_CHECKING, cast
 
-from .._typings.lazy import FlextTypesLazy
-from .flextlazy_part_01 import (
+from flext_core._lazy_parts.flextlazy_part_01 import (
     FlextLazyPart01,
     LazyImportDict,
     LazyImportMap,
     MutableLazyImportMap,
 )
+from flext_core._typings.lazy import FlextTypesLazy
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -49,7 +53,12 @@ class FlextLazyAttribute[T]:
         instance: ModuleGlobalValue | None,
         owner: type | None = None,
     ) -> T:
-        """Resolve and cache the target symbol through the owning lazy container."""
+        """Resolve and cache the target symbol through the owning lazy container.
+
+        Returns:
+            The resulting ``T``.
+
+        """
         _ = instance, owner
         resolved: T = cast(
             "T",
@@ -79,6 +88,10 @@ class FlextLazy(FlextLazyPart01):
         where the assignment already carries the annotation
         (``Alpha: Beta = lazy_attribute(...)``); pass it where there is no
         annotation to bind, so the symbol type never degrades to unknown.
+
+        Returns:
+            A descriptor for class-namespace lazy attributes.
+
         """
         _ = resolved_type
         return FlextLazyAttribute[T](
@@ -96,7 +109,16 @@ class FlextLazy(FlextLazyPart01):
         module_globals: ModuleGlobals,
         module_name: str,
     ) -> ModuleGlobalValue:
-        """Resolve one lazy symbol and cache it."""
+        """Resolve one lazy symbol and cache it.
+
+        Returns:
+            The resulting ``ModuleGlobalValue``.
+
+        Raises:
+            AttributeError: If module.
+            ImportError: If lazy import of.
+
+        """
         lazy_imports = self._norm_map(module_name, lazy_imports)
         entry = lazy_imports.get(name)
         if entry is None:
@@ -143,7 +165,8 @@ class FlextLazy(FlextLazyPart01):
             module_globals[name] = value
         return value
 
-    def cleanup(self, module_name: str, lazy_imports: LazyImportMap) -> None:
+    @staticmethod
+    def cleanup(module_name: str, lazy_imports: LazyImportMap) -> None:
         """Remove eager child module attrs."""
         current = sys.modules.get(module_name)
         if current is None:
@@ -166,7 +189,12 @@ class FlextLazy(FlextLazyPart01):
         exclude_names: Sequence[str] = (),
         module_name: str | None = None,
     ) -> MutableLazyImportMap:
-        """Merge child lazy maps with local entries."""
+        """Merge child lazy maps with local entries.
+
+        Returns:
+            The resulting ``MutableLazyImportMap``.
+
+        """
         key = tuple(self._child_path(path, module_name) for path in child_module_paths)
         children: LazyImportDict | None = self.child_merge_cache.get(key)
         if children is None:
@@ -202,6 +230,10 @@ class FlextLazy(FlextLazyPart01):
         ``vars(module)``. Publishing here makes every install shape —
         module-level literal or inline call — satisfy that contract from
         the single owner.
+
+        Raises:
+            RuntimeError: If module.
+
         """
         pre_signature: tuple[int, int, int, int, bool] = (
             id(module_globals),

@@ -1,4 +1,8 @@
-"""Example models for ex11."""
+"""Example models for ex11.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -25,7 +29,8 @@ class ExamplesFlextModelsEx11:
             m.Field(description="Message type handled by this handler"),
         ] = m.Value
 
-        def handle(self, message: ExamplesFlextModelsEx11.Payload) -> p.Result[str]:
+        @staticmethod
+        def handle(message: ExamplesFlextModelsEx11.Payload) -> p.Result[str]:
             return r[str].ok(message.text)
 
     class ProcessorProtocolGood(m.Value):

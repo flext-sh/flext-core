@@ -1,4 +1,8 @@
-"""Path-based extract pipeline on top of ``FlextUtilitiesMapperAccess``."""
+"""Path-based extract pipeline on top of ``FlextUtilitiesMapperAccess``.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -7,11 +11,10 @@ from pathlib import Path
 from typing import Annotated
 
 from flext_core import c, m, p, r, t
-
-from ..._models.containers import FlextModelsContainers
-from ..._models.pydantic import FlextModelsPydantic
-from ...runtime import FlextRuntime
-from ..mapper_access import FlextUtilitiesMapperAccess
+from flext_core._models.containers import FlextModelsContainers
+from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._utilities.mapper_access import FlextUtilitiesMapperAccess
+from flext_core.runtime import FlextRuntime
 
 
 class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
@@ -40,7 +43,12 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
         default: t.JsonPayload | None,
         required: bool,
     ) -> p.Result[t.JsonPayload]:
-        """Return required failure, configured default, or missing-default failure."""
+        """Return required failure, configured default, or missing-default failure.
+
+        Returns:
+            Required failure, configured default, or missing-default failure.
+
+        """
         if not required and default is not None:
             return r[t.JsonPayload].ok(default)
         return r[t.JsonPayload].fail_op("extract path", msg)
@@ -52,7 +60,13 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
         default: t.JsonPayload | None,
         required: bool,
     ) -> tuple[t.JsonPayload | None, p.Result[t.JsonPayload] | None]:
-        """Resolve extractor step result into next value or early fallback result."""
+        """Resolve extractor step result into next value or early fallback result.
+
+        Returns:
+            The resulting ``tuple[t.JsonPayload | None, p.Result[t.JsonPayload] |
+                None]``.
+
+        """
         if result.failure:
             if not required and default is not None:
                 return None, r[t.JsonPayload].ok(default)
@@ -70,7 +84,13 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
         *,
         context: ExtractResolvePathPartContext,
     ) -> tuple[t.JsonPayload | None, p.Result[t.JsonPayload] | None]:
-        """Resolve one path segment and return its cursor or an early result."""
+        """Resolve one path segment and return its cursor or an early result.
+
+        Returns:
+            The resulting ``tuple[t.JsonPayload | None, p.Result[t.JsonPayload] |
+                None]``.
+
+        """
         if "[" in part and part.endswith("]"):
             bracket_pos = part.index("[")
             array_match = part[bracket_pos + 1 : -1]
@@ -114,7 +134,13 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
     def _extract_seed_current(
         data: p.AccessibleData,
     ) -> t.JsonPayload | t.JsonMapping | FlextModelsContainers.ConfigMap | None:
-        """Build the initial ``current`` cursor for path traversal."""
+        """Build the initial ``current`` cursor for path traversal.
+
+        Returns:
+            The resulting ``t.JsonPayload | t.JsonMapping |
+                FlextModelsContainers.ConfigMap | None``.
+
+        """
         seed_current: (
             t.JsonPayload | t.JsonMapping | FlextModelsContainers.ConfigMap | None
         ) = None

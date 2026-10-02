@@ -11,11 +11,13 @@ from typing import Annotated
 
 from pydantic import Field
 
-from .flextmodelsprojectmetadata_part_01 import (
+from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_01 import (
     ProjectMetadataContract,
     PyprojectIngressContract,
 )
-from .flextmodelsprojectmetadata_part_03 import ProjectMetadataAggregates
+from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_03 import (
+    ProjectMetadataAggregates,
+)
 
 
 class ProjectMetadataDocument(ProjectMetadataAggregates):

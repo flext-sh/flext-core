@@ -6,6 +6,9 @@ predicate kind: ``None`` means *no violation*, a mapping means *violation
 detected* (with its public payload). The engine inspects whole importable
 modules, so each case materializes a real package on disk and imports it inside
 an isolated subprocess before invoking ``apply``.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -18,12 +21,12 @@ from flext_tests import tm
 
 from tests.protocols import p
 from tests.typings import t
-from tests.utilities import u
-
-from ._beartype_engine_support import TestsFlextBeartypeEngine
+from tests.utilities import TestsFlextUtilities, u
 
 
-class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
+class TestsFlextBeartypeEngineNamespaceHooks(
+    TestsFlextUtilities.TestsFlextBeartypeEngine,
+):
     """DEPRECATED_SYNTAX predicate behavior via the public ``apply`` contract."""
 
     _REPO_ROOT: Path = Path(__file__).resolve().parents[2]
@@ -39,6 +42,10 @@ class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
 
         Returns the captured subprocess output; ``stdout`` holds ``repr`` of the
         value returned by ``apply`` for the DEPRECATED_SYNTAX predicate.
+
+        Returns:
+            The resulting ``p.Cli.CommandOutput``.
+
         """
         for relative_path, content in files.items():
             target_file = tmp_path / relative_path

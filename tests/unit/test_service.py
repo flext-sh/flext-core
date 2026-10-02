@@ -115,8 +115,8 @@ class TestsFlextService(FlextTestsCase):
         ("user_id", "name"),
         [(1, "test_user"), (2, "other"), (99, "édge-café")],
     )
+    @staticmethod
     def test_service_user_data_round_trips_public_state(
-        self,
         user_id: int,
         name: str,
     ) -> None:

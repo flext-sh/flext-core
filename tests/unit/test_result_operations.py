@@ -23,7 +23,8 @@ class TestsFlextResultOperations:
     # --- creation + terminal state --------------------------------------
 
     @pytest.mark.parametrize("value", ["success", "", "multi word value"])
-    def test_ok_reports_success_and_exposes_value(self, value: str) -> None:
+    @staticmethod
+    def test_ok_reports_success_and_exposes_value(value: str) -> None:
         """r.ok is success, carries the value, and has no error."""
         result: p.Result[str] = r[str].ok(value)
 
@@ -35,7 +36,8 @@ class TestsFlextResultOperations:
         tm.that(result.error, none=True)
 
     @pytest.mark.parametrize("message", ["boom", "error message", "not found"])
-    def test_fail_reports_failure_and_preserves_error(self, message: str) -> None:
+    @staticmethod
+    def test_fail_reports_failure_and_preserves_error(message: str) -> None:
         """r.fail is failure, preserves the error message, and has no value."""
         result: p.Result[str] = r[str].fail(message)
 
@@ -45,7 +47,8 @@ class TestsFlextResultOperations:
         tm.that(result.error, eq=message)
 
     @pytest.mark.parametrize("message", ["boom", "denied"])
-    def test_value_and_unwrap_raise_on_failure(self, message: str) -> None:
+    @staticmethod
+    def test_value_and_unwrap_raise_on_failure(message: str) -> None:
         """Accessing value or unwrap on a failure raises with the error message."""
         result: p.Result[str] = r[str].fail(message)
 
@@ -64,8 +67,8 @@ class TestsFlextResultOperations:
         ],
         ids=["success-keeps-value", "failure-yields-default"],
     )
+    @staticmethod
     def test_unwrap_or_returns_value_on_success_default_on_failure(
-        self,
         result: p.Result[str],
         default: str,
         expected: str,
@@ -175,8 +178,8 @@ class TestsFlextResultOperations:
         [(10, True), (3, False)],
         ids=["predicate-passes", "predicate-fails"],
     )
+    @staticmethod
     def test_filter_keeps_value_when_predicate_holds(
-        self,
         value: int,
         *,
         expected_success: bool,
@@ -197,8 +200,8 @@ class TestsFlextResultOperations:
         [(r[str].ok("value"), True), (r[str].fail("error"), False)],
         ids=["success-truthy", "failure-falsy"],
     )
+    @staticmethod
     def test_bool_reflects_success_state(
-        self,
         result: p.Result[str],
         *,
         expected: bool,

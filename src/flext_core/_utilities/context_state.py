@@ -13,11 +13,12 @@ from datetime import datetime
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import c, m, p, r, t
-
-from ..runtime import FlextRuntime
-from ._logging_context_parts.logging_context_part_01 import FlextUtilitiesLoggingContext
-from .guards_type_core import FlextUtilitiesGuardsTypeCore
-from .guards_type_model import FlextUtilitiesGuardsTypeModel
+from flext_core._utilities._logging_context_parts.logging_context_part_01 import (
+    FlextUtilitiesLoggingContext,
+)
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
+from flext_core.runtime import FlextRuntime
 
 if TYPE_CHECKING:
     import contextvars
@@ -34,7 +35,12 @@ class FlextUtilitiesContextState:
     def _narrow_contextvar_to_configuration_dict(
         ctx_value: m.ConfigMap | t.MappingKV[str, t.JsonPayload] | p.Model | None,
     ) -> t.JsonMapping:
-        """Return contextvar payload as a flat container mapping with safe default."""
+        """Return contextvar payload as a flat container mapping with safe default.
+
+        Returns:
+            Contextvar payload as a flat container mapping with safe default.
+
+        """
         try:
             normalized = FlextRuntime.normalize_model_input_mapping(ctx_value)
         except c.EXC_ATTR_KEY_TYPE_VALUE as exc:
@@ -51,14 +57,24 @@ class FlextUtilitiesContextState:
             return normalized
 
     def _scope_var(self, scope: str) -> contextvars.ContextVar[m.ConfigMap | None]:
-        """Get or create contextvar for scope."""
+        """Get or create contextvar for scope.
+
+        Returns:
+            The resulting ``contextvars.ContextVar[m.ConfigMap | None]``.
+
+        """
         state, scope_var = self.state.resolve_scope_var(scope)
         self.state = state
         resolved_scope_var: contextvars.ContextVar[m.ConfigMap | None] = scope_var
         return resolved_scope_var
 
     def _contextvar_data(self, scope: str) -> t.JsonMapping:
-        """Get all values from contextvar scope."""
+        """Get all values from contextvar scope.
+
+        Returns:
+            The resulting ``t.JsonMapping``.
+
+        """
         ctx_var = self._scope_var(scope)
         value = ctx_var.get()
         return dict(
@@ -68,7 +84,12 @@ class FlextUtilitiesContextState:
         )
 
     def _scope_payloads(self) -> t.MappingKV[str, t.JsonMapping]:
-        """Get all scope registrations."""
+        """Get all scope registrations.
+
+        Returns:
+            The resulting ``t.MappingKV[str, t.JsonMapping]``.
+
+        """
         if not self.state.active:
             empty_scopes: dict[str, t.JsonMapping] = {}
             return empty_scopes
@@ -121,7 +142,12 @@ class FlextUtilitiesContextState:
                 _ = hook(hook_data)
 
     def _metadata_map(self) -> t.MappingKV[str, t.JsonPayload]:
-        """Get all metadata from the context."""
+        """Get all metadata from the context.
+
+        Returns:
+            The resulting ``t.MappingKV[str, t.JsonPayload]``.
+
+        """
         data = self.state.metadata.model_dump()
         custom_fields_raw = data.pop("custom_fields", {})
         custom_fields_dict: dict[str, t.JsonPayload] = {}
@@ -151,7 +177,12 @@ class FlextUtilitiesContextState:
         return result
 
     def resolve_metadata(self, key: str) -> p.Result[t.JsonPayload]:
-        """Get metadata from the context."""
+        """Get metadata from the context.
+
+        Returns:
+            The resulting ``p.Result[t.JsonPayload]``.
+
+        """
         if key not in self.state.metadata.attributes:
             return r[t.JsonPayload].fail_op(
                 "resolve context metadata",

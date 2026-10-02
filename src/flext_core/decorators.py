@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from ._decorators._runtime import FlextDecorators
+from flext_core._decorators._runtime import FlextDecorators
 
 d = FlextDecorators
 

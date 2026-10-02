@@ -6,9 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from ..._constants.enforcement import FlextConstantsEnforcement as c
-from ..._constants.regex import FlextConstantsRegex as cre
-from .enforcement_part_03 import (
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._constants.regex import FlextConstantsRegex as cre
+from flext_core._utilities._enforcement_parts.enforcement_part_03 import (
     FlextUtilitiesEnforcement as FlextUtilitiesEnforcementPart03,
 )
 

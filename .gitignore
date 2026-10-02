@@ -6,6 +6,7 @@
 !.beads/identity.toml
 
 # mise native dependency graphs
+/.mise-lock-transaction.lock
 !/.mise/
 /.mise/*
 !/.mise/locks/
