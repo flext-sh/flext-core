@@ -74,15 +74,15 @@ class TestsFlextCorePublicApiContract:
 
     def test_root_lazy_helpers_publish_a_consumer_export(self) -> None:
         """Generated consumers can compose lazy exports from the foundation root."""
-        build_map = getattr(flext_core, "build_lazy_import_map")
-        install = getattr(flext_core, "install_lazy_exports")
+        build_map = flext_core.build_lazy_import_map
+        install = flext_core.install_lazy_exports
         assert {"build_lazy_import_map", "install_lazy_exports"} <= set(
-            flext_core.__all__
+            flext_core.__all__,
         )
         imports = build_map({"collections": ("Counter",)})
         namespace: t.ModuleGlobals = {"__name__": "flext_core_consumer"}
         install(
-            "flext_core_consumer", namespace, imports, public_exports=("Counter",)
+            "flext_core_consumer", namespace, imports, public_exports=("Counter",),
         )
         resolver = namespace["__getattr__"]
         assert callable(resolver)
