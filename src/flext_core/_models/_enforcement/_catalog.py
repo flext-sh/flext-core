@@ -11,22 +11,26 @@ from typing import Annotated
 from pydantic import Discriminator, Field, model_validator
 
 from flext_core import c
-from flext_core._models._enforcement._base import FlextModelsEnforcementModelBase
-from flext_core._models._enforcement._sources import FlextModelsEnforcementSources
-from flext_core._typings.base import FlextTypingBase as t
+
+from ..._typings.base import FlextTypingBase as t
+from ._base import EnforcementModelBase
+from ._sources import FlextModelsEnforcementSources
 
 type EnforcementRuleSource = (
-    FlextModelsEnforcementSources.EnforcementInfraRuleSource
+    FlextModelsEnforcementSources.EnforcementInfraDetectorSource
+    | FlextModelsEnforcementSources.EnforcementTestsValidatorSource
     | FlextModelsEnforcementSources.EnforcementRuntimeWarningSource
     | FlextModelsEnforcementSources.EnforcementBeartypeSource
     | FlextModelsEnforcementSources.EnforcementCodeSmellSource
+    | FlextModelsEnforcementSources.EnforcementRuffSource
+    | FlextModelsEnforcementSources.EnforcementSkillPointerSource
 )
 
 
 class FlextModelsEnforcementCatalog(FlextModelsEnforcementSources):
     """Rule-spec and catalog containers for enforcement."""
 
-    class EnforcementRuleSpec(FlextModelsEnforcementModelBase):
+    class EnforcementRuleSpec(EnforcementModelBase):
         """Single rule entry in the enforcement catalog."""
 
         id: Annotated[str, Field(pattern=c.PATTERN_ENFORCE_RULE_ID)]
@@ -35,9 +39,13 @@ class FlextModelsEnforcementCatalog(FlextModelsEnforcementSources):
         source: Annotated[EnforcementRuleSource, Discriminator("kind")]
         agents_md_anchor: str = ""
         skills: t.StrSequence = ()
+        enabled: bool = True
+        promote_to_error_when_strict: bool = True
+        notes: str = ""
+        fix_action: FlextModelsEnforcementSources.EnforcementFixAction | None = None
 
-    class EnforcementCatalog(FlextModelsEnforcementModelBase):
-        """Frozen catalog of all enforcement rules, validated from package data."""
+    class EnforcementCatalog(EnforcementModelBase):
+        """Frozen catalog of all enforcement rules."""
 
         version: int = 1
         rules: tuple[FlextModelsEnforcementCatalog.EnforcementRuleSpec, ...] = ()
@@ -53,31 +61,24 @@ class FlextModelsEnforcementCatalog(FlextModelsEnforcementSources):
             return self
 
         def by_id(
-            self,
-            rule_id: str,
+            self, rule_id: str
         ) -> FlextModelsEnforcementCatalog.EnforcementRuleSpec | None:
-            """Return the rule with ``rule_id`` or ``None`` if absent.
-
-            Returns:
-                The rule with ``rule_id`` or ``None`` if absent.
-
-            """
+            """Return the rule with ``rule_id`` or ``None`` if absent."""
             for rule in self.rules:
                 if rule.id == rule_id:
                     return rule
             return None
 
-        def by_kind(
+        def enabled_rules(
             self,
-            kind: c.EnforcementSourceKind,
         ) -> tuple[FlextModelsEnforcementCatalog.EnforcementRuleSpec, ...]:
-            """Filter rules by source kind.
+            """Return only the rules with ``enabled=True``."""
+            return tuple(rule for rule in self.rules if rule.enabled)
 
-            Returns:
-                The resulting ``tuple[FlextModelsEnforcementCatalog.EnforcementRuleSpec,
-                    ...]``.
-
-            """
+        def by_kind(
+            self, kind: c.EnforcementSourceKind
+        ) -> tuple[FlextModelsEnforcementCatalog.EnforcementRuleSpec, ...]:
+            """Filter rules by source kind."""
             return tuple(rule for rule in self.rules if rule.source.kind == kind.value)
 
 

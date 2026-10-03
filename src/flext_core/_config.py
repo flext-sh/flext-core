@@ -42,8 +42,8 @@ from yaml import MappingNode, SafeLoader
 from yaml.constructor import ConstructorError
 from yaml.resolver import BaseResolver
 
-from flext_core._constants.config import FlextConstantsConfig
-from flext_core._settings import app_env_prefix, platform_config_root
+from ._constants.config import FlextConstantsConfig
+from ._settings import app_env_prefix, platform_config_root
 
 if TYPE_CHECKING:
     from flext_core import t
@@ -54,20 +54,9 @@ class _UniqueKeySafeLoader(SafeLoader):
 
 
 def _construct_unique_mapping(
-    loader: SafeLoader,
-    node: MappingNode,
-    *,
-    deep: bool = False,
+    loader: SafeLoader, node: MappingNode, *, deep: bool = False
 ) -> dict[str, JsonValue]:
-    """Construct one JSON mapping and fail before a duplicate can overwrite.
-
-    Returns:
-        The resulting ``dict[str, JsonValue]``.
-
-    Raises:
-        ConstructorError: If while constructing a config mapping.
-
-    """
+    """Construct one JSON mapping and fail before a duplicate can overwrite."""
     values: dict[str, JsonValue] = {}
     for key_node, value_node in node.value:
         key = cast("JsonValue", loader.construct_object(key_node, deep=deep))
@@ -75,31 +64,24 @@ def _construct_unique_mapping(
             context = "while constructing a config mapping"
             problem = "config mapping keys must be strings"
             raise ConstructorError(
-                context,
-                node.start_mark,
-                problem,
-                key_node.start_mark,
+                context, node.start_mark, problem, key_node.start_mark
             )
         if key in values:
             context = "while constructing a config mapping"
             problem = f"duplicate config key: {key}"
             raise ConstructorError(
-                context,
-                node.start_mark,
-                problem,
-                key_node.start_mark,
+                context, node.start_mark, problem, key_node.start_mark
             )
         values[key] = cast("JsonValue", loader.construct_object(value_node, deep=deep))
     return values
 
 
 _UniqueKeySafeLoader.add_constructor(
-    BaseResolver.DEFAULT_MAPPING_TAG,
-    _construct_unique_mapping,
+    BaseResolver.DEFAULT_MAPPING_TAG, _construct_unique_mapping
 )
 
 
-class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
+class StrictYamlConfigSource(YamlConfigSettingsSource):
     """Pydantic settings source backed by the unique-key safe loader.
 
     Accepts an optional ``transform`` callable applied to the fully merged
@@ -129,12 +111,7 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
 
     @override
     def __call__(self) -> dict[str, JsonValue]:
-        """Return merged YAML data, applying the transform hook if set.
-
-        Returns:
-            Merged YAML data, applying the transform hook if set.
-
-        """
+        """Return merged YAML data, applying the transform hook if set."""
         data = super().__call__()
         if self._transform is not None:
             data = self._transform(data)
@@ -142,15 +119,7 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
 
     @override
     def _read_file(self, file_path: Path | Traversable) -> dict[str, JsonValue]:
-        """Parse one YAML config file exactly once with strict mapping keys.
-
-        Returns:
-            The resulting ``dict[str, JsonValue]``.
-
-        Raises:
-            TypeError: If config YAML root must be a mapping.
-
-        """
+        """Parse one YAML config file exactly once with strict mapping keys."""
         with file_path.open(encoding=self.yaml_file_encoding) as yaml_file:
             loader = _UniqueKeySafeLoader(yaml_file)
             try:
@@ -177,19 +146,18 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
         *replaces* the first list entirely. This override concatenates lists
         instead, enabling domain-split config files to each contribute rules
         to the same list.
-
-        Returns:
-            The resulting ``dict[str, JsonValue]``.
-
         """
+        from collections.abc import Sequence as _Sequence
+        from pathlib import Path as _Path
+
         if files is None:
             return {}
-        if isinstance(files, str) or not isinstance(files, Sequence):
+        if isinstance(files, str) or not isinstance(files, _Sequence):
             files = [files]
         merged: dict[str, JsonValue] = {}
         for file in files:
-            raw_path = Path(file) if isinstance(file, str) else file
-            if not isinstance(raw_path, Path):
+            raw_path = _Path(file) if isinstance(file, str) else file
+            if not isinstance(raw_path, _Path):
                 continue
             file_path = raw_path.expanduser()
             if not file_path.is_file():
@@ -203,23 +171,14 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
 
     @staticmethod
     def _deep_merge_lists(
-        base: dict[str, JsonValue],
-        updating: dict[str, JsonValue],
+        base: dict[str, JsonValue], updating: dict[str, JsonValue]
     ) -> dict[str, JsonValue]:
-        """Deep-merge two config dicts, concatenating list values.
-
-        Returns:
-            The resulting ``dict[str, JsonValue]``.
-
-        """
+        """Deep-merge two config dicts, concatenating list values."""
         result = dict(base)
         for key, value in updating.items():
             existing = result.get(key)
             if isinstance(existing, dict) and isinstance(value, dict):
-                result[key] = FlextStrictYamlConfigSource._deep_merge_lists(
-                    existing,
-                    value,
-                )
+                result[key] = StrictYamlConfigSource._deep_merge_lists(existing, value)
             elif isinstance(existing, list) and isinstance(value, list):
                 result[key] = [*existing, *value]
             else:
@@ -240,9 +199,7 @@ class FlextConfig(BaseSettings):
     CONFIG_FILENAMES: ClassVar[t.VariadicTuple[str]] = ()
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
-        frozen=True,
-        extra="allow",
-        env_prefix="FLEXT_CONFIG_",
+        frozen=True, extra="allow", env_prefix="FLEXT_CONFIG_"
     )
 
     _lock: ClassVar[RLock] = RLock()
@@ -256,10 +213,6 @@ class FlextConfig(BaseSettings):
         FLEXT distribution owns ``<import-package-with-dashes>`` without
         naming itself anywhere (``flext_core`` -> ``flext-core``,
         ``ai_hub`` -> ``ai-hub``).
-
-        Returns:
-            The namespace segment owned by the declaring package.
-
         """
         package = cls.__module__.split(".", 1)[0]
         return package.replace("_", "-")
@@ -281,10 +234,6 @@ class FlextConfig(BaseSettings):
         An operator may relocate the root entirely with
         ``<PACKAGE>_CONFIG_DIR``. Library code must never depend on the process
         CWD, so the legacy CWD-relative lookup is gone.
-
-        Returns:
-            The resulting ``Path``.
-
         """
         namespace = cls._package_namespace()
         override = os.environ.get(f"{app_env_prefix(namespace)}CONFIG_DIR")
@@ -306,21 +255,12 @@ class FlextConfig(BaseSettings):
         Lives under the platform config root scoped by the package namespace
         (``$XDG_CONFIG_HOME/<namespace>`` on Linux). Packaged defaults stay
         immutable; anything declared here overlays them.
-
-        Returns:
-            The operator's optional preference directory for this package.
-
         """
         return platform_config_root() / cls._package_namespace()
 
     @classmethod
     def _yaml_files_in(cls, directory: Path) -> list[Path]:
-        """Return every YAML file in one directory, sorted for deterministic merge.
-
-        Returns:
-            Every YAML file in one directory, sorted for deterministic merge.
-
-        """
+        """Return every YAML file in one directory, sorted for deterministic merge."""
         return sorted(directory.glob("*.yaml")) + sorted(directory.glob("*.yml"))
 
     @classmethod
@@ -329,15 +269,6 @@ class FlextConfig(BaseSettings):
 
         Later files win on key collision, so operator preferences override the
         packaged defaults while every undeclared key keeps shipping its default.
-
-        Returns:
-            The resulting ``list[Path]``.
-
-        Raises:
-            FileNotFoundError: If declared config directory does not exist; or if
-                ``missing``.
-            ValueError: If ``invalid``.
-
         """
         config_dir = cls._config_dir()
         user_files = cls._yaml_files_in(cls._user_config_dir())
@@ -371,10 +302,6 @@ class FlextConfig(BaseSettings):
         Default is identity (no transformation). Override to apply env
         expansion, section filtering, or any data reshaping without
         reimplementing ``settings_customise_sources`` or the YAML source.
-
-        Returns:
-            The resulting ``dict[str, JsonValue]``.
-
         """
         return data
 
@@ -388,21 +315,17 @@ class FlextConfig(BaseSettings):
         dotenv_settings: PydanticBaseSettingsSource,
         file_secret_settings: PydanticBaseSettingsSource,
     ) -> t.VariadicTuple[PydanticBaseSettingsSource]:
-        """Env + every ``config/*.yaml`` deep-merged; no dotenv/secret sources.
-
-        Returns:
-            The resulting ``t.VariadicTuple[PydanticBaseSettingsSource]``.
-
-        """
+        """Env + every ``config/*.yaml`` deep-merged; no dotenv/secret sources."""
         _ = (dotenv_settings, file_secret_settings)
         return (
             init_settings,
             env_settings,
             # NOTE (multi-agent): one canonical loader rejects duplicate keys
             # before settings construction; consumers never add local parsers.
-            FlextStrictYamlConfigSource(
+            StrictYamlConfigSource(
                 settings_cls,
                 yaml_file=cls._config_files(),
+                yaml_config_section=FlextConstantsConfig.YAML_CONFIG_SECTION,
                 deep_merge=True,
                 transform=cls._transform_loaded_yaml,
             ),
@@ -410,12 +333,7 @@ class FlextConfig(BaseSettings):
 
     @classmethod
     def fetch_global(cls) -> Self:
-        """Return the shared frozen singleton (lazy; built on first access).
-
-        Returns:
-            The shared frozen singleton (lazy; built on first access).
-
-        """
+        """Return the shared frozen singleton (lazy; built on first access)."""
         instance = cls.__dict__.get("_instance")
         if isinstance(instance, cls):
             return instance
