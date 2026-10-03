@@ -34,6 +34,8 @@ class TestsFlextUtilities(FlextTestsUtilities):
     """Utilities for flext-core tests."""
 
     class TestsFlextResultExceptionCarrying:
+        """Result exception-carrying test declarations."""
+
         class BrokenSized:
             """Sized t.JsonValue that raises on __len__."""
 
@@ -54,10 +56,13 @@ class TestsFlextUtilities(FlextTestsUtilities):
             age: Annotated[int, m.Field(description="User age")]
 
     class TestsFlextFlextHandlers:
+        """Handler test declarations."""
+
         class ConcreteTestHandler(h[t.JsonPayload, t.JsonPayload]):
             """Test handler for string messages."""
 
             def __init__(self, *, settings: m.Handler | None = None) -> None:
+                """Initialize with optional handler settings."""
                 super().__init__(settings=settings)
 
             @override
@@ -141,6 +146,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
             """Test handler for validation."""
 
             def __init__(self, *, settings: m.Handler | None = None) -> None:
+                """Initialize with optional handler settings."""
                 super().__init__(settings=settings)
 
             @override
@@ -159,6 +165,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
             """Test handler that fails."""
 
             def __init__(self, *, settings: m.Handler | None = None) -> None:
+                """Initialize with optional handler settings."""
                 super().__init__(settings=settings)
 
             @override
@@ -207,6 +214,8 @@ class TestsFlextUtilities(FlextTestsUtilities):
         ]
 
     class TestsFlextDecoratorsLegacy:
+        """Legacy decorator test declarations."""
+
         @unique
         class DecoratorOperationType(StrEnum):
             """Decorator operation types."""
@@ -255,6 +264,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
             """Service with logger for testing."""
 
             def __init__(self) -> None:
+                """Initialize the logger-backed service."""
                 self.logger = u.fetch_logger(__name__)
                 self.attempts = 0
 

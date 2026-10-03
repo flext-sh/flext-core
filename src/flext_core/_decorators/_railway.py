@@ -13,12 +13,11 @@ from typing import TYPE_CHECKING
 from flext_core import c, m, r
 from flext_core._decorators._logging import FlextDecoratorsLogging
 from flext_core._exceptions.exception_types import FlextExceptionsTypes as et
+from flext_core._protocols.loggings import FlextProtocolsLogging as pl
+from flext_core._protocols.result import FlextProtocolsResult as pr
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-    from flext_core._protocols.loggings import FlextProtocolsLogging as pl
-    from flext_core._protocols.result import FlextProtocolsResult as pr
 
 
 class FlextDecoratorsRailway(FlextDecoratorsLogging):
