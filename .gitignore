@@ -6,6 +6,7 @@
 !.beads/identity.toml
 
 # mise native dependency graphs
+/.mise-lock-transaction.lock
 !/.mise/
 /.mise/*
 !/.mise/locks/
@@ -286,6 +287,7 @@ legado/
 /bin/*
 !/bin/mise
 !/bin/mise.cmd
+!/bin/mise-lock-transaction.py
 .tools/
 __pycache__/
 base.mk
@@ -367,3 +369,4 @@ CLAUDE.local.md
 !.vscode/settings.json
 !config/
 !config/gitleaks-release.toml
+!bin/

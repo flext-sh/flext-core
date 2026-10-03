@@ -149,7 +149,7 @@ omit = [
 ]
 
 [tool.deptry]
-known_first_party = ["flext_core"]
+known_first_party = ["flext", "flext_core"]
 pep621_dev_dependency_groups = ["dev"]
 
 [tool.flext.docs]
@@ -334,30 +334,15 @@ include = ["src", "tests"]
 extraPaths = ["src", "."]
 pythonPlatform = "Linux"
 pythonVersion = "3.13"
-reportArgumentType = "none"
-reportAttributeAccessIssue = "none"
-reportCallIssue = "none"
 reportConstantRedefinition = "error"
 reportIncompatibleMethodOverride = "error"
-reportIncompatibleVariableOverride = "none"
 reportInconsistentConstructor = "error"
-reportInvalidTypeForm = "none"
 reportMissingImports = "error"
 reportMissingModuleSource = "error"
-reportMissingTypeStubs = "none"
-reportPrivateUsage = "warning"
-reportUnknownArgumentType = "none"
-reportUnknownLambdaType = "none"
-reportUnknownMemberType = "none"
-reportUnknownParameterType = "none"
-reportUnknownVariableType = "none"
+reportPrivateUsage = "error"
 reportUnnecessaryCast = "error"
-reportUnnecessaryComparison = "warning"
-reportUnnecessaryIsInstance = "warning"
-reportUnreachable = "none"
-reportUnsupportedDunderAll = "none"
-reportUntypedBaseClass = "none"
-reportUntypedFunctionDecorator = "none"
+reportUnnecessaryComparison = "error"
+reportUnnecessaryIsInstance = "error"
 reportUnusedClass = "error"
 reportUnusedFunction = "error"
 reportUnusedImport = "error"
@@ -382,7 +367,7 @@ addopts = [
   "--durations=10",
   "--timeout=10",
 ]
-flext_slow_timeout_seconds = "180"
+flext_slow_timeout_seconds = "30"
 asyncio_default_fixture_loop_scope = "function"
 filterwarnings = [
   "error",
@@ -429,7 +414,12 @@ quote-style = "double"
 skip-magic-trailing-comma = false
 
 [tool.ruff.lint]
-extend-safe-fixes = []
+extend-safe-fixes = ["camelcase-imported-as-lowercase", "relative-imports"]
+ignore = [
+  "camelcase-imported-as-lowercase",
+  "typing-only-standard-library-import",
+  "typing-only-third-party-import",
+]
 select = ["ALL"]
 unfixable = [
   "duplicate-value",
@@ -444,7 +434,7 @@ unfixable = [
 ]
 
 [tool.ruff.lint.flake8-copyright]
-notice-rgx = "(?i)copyright"
+notice-rgx = "Copyright \\(c\\) \\d{4} \\S[^\\n]*\\. All rights reserved\\."
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
@@ -467,33 +457,79 @@ msg = "Use cli.create_app_with_common_params / cli.register_command from flext_c
 [tool.ruff.lint.isort]
 combine-as-imports = true
 force-single-line = false
-known-first-party = ["flext_core"]
+known-first-party = ["flext", "flext_core"]
 split-on-trailing-comma = false
 
 [tool.ruff.lint.per-file-ignores]
 "**/__init__.py" = [
-  "any-type",
-  "builtin-import-shadowing",
-  "implicit-namespace-package",
-  "import-private-name",
-  "invalid-module-name",
   "non-empty-init-module",
   "runtime-import-in-type-checking-block",
-  "undefined-export",
-  "undefined-local-with-import-star",
-  "undefined-local-with-import-star-usage",
-  "undocumented-public-init",
+  "typing-only-first-party-import",
   "unused-import",
 ]
-"**/examples/**/*.py" = ["invalid-module-name", "shebang-not-executable"]
-"**/tests/**" = [
-  "assert",
-  "compare-to-empty-string",
+"scripts/**" = [
+  "any-type",
+  "avoidable-escaped-quote",
+  "banned-api",
+  "blank-line-after-function",
+  "boolean-default-value-positional-argument",
+  "boolean-type-hint-positional-argument",
+  "builtin-open",
+  "commented-out-code",
+  "error-instead-of-exception",
+  "f-string-in-exception",
+  "if-exp-instead-of-or-operator",
+  "import-private-name",
+  "invalid-module-name",
+  "literal-membership",
+  "logging-string-concat",
   "magic-value-comparison",
+  "manual-list-comprehension",
+  "manual-list-copy",
+  "missing-blank-line-after-summary",
+  "missing-maxsplit-arg",
+  "multi-line-summary-first-line",
+  "multiple-starts-ends-with",
+  "non-lowercase-variable-in-function",
+  "noqa-comments",
+  "os-path-abspath",
+  "os-path-dirname",
+  "os-path-exists",
+  "os-path-join",
+  "path-constructor-current-directory",
+  "print",
+  "raise-vanilla-args",
+  "raw-string-in-exception",
+  "read-whole-file",
+  "relative-imports",
+  "repeated-append",
+  "runtime-cast-value",
+  "shebang-not-executable",
+  "start-process-with-partial-path",
+  "subprocess-without-shell-equals-true",
+  "suspicious-subprocess-import",
   "undocumented-public-class",
   "undocumented-public-function",
+  "undocumented-public-init",
   "undocumented-public-method",
+  "unnecessary-multiline-docstring",
+  "unsorted-dunder-all",
+  "unspecified-encoding",
+  "unused-function-argument",
+  "unused-noqa",
+  "used-dummy-variable",
+  "verbose-raise",
+  "write-whole-file",
 ]
+"scripts/**/*.py" = [
+  "commented-out-code",
+  "line-too-long",
+  "typing-only-first-party-import",
+]
+"tests/**/*.py" = ["assert"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.tomlsort]
 all = true
@@ -515,6 +551,7 @@ whitelines = 1
 
 [tool.uv]
 link-mode = "copy"
+constraint-dependencies = ["mypy<2.4.0"]
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 
 [[tool.uv.exclude-dependencies]]

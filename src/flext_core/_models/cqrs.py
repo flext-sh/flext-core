@@ -60,7 +60,10 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
         command_id: Annotated[
             t.NonEmptyStr,
             Field(
-                description="Unique command identifier used for tracing and idempotency checks.",
+                description=(
+                    "Unique command identifier used for tracing"
+                    " and idempotency checks."
+                ),
                 title="Command Id",
                 examples=["cmd_01HZX7Q0P5N6M2"],
             ),
@@ -87,7 +90,10 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
         filters: Annotated[
             t.MappingKV[str, t.Scalar],
             Field(
-                description="Filter values that restrict which records are returned by the query.",
+                description=(
+                    "Filter values that restrict"
+                    " which records are returned by the query."
+                ),
                 title="Query Filters",
                 examples=[{"status": "active", "tenant": "acme"}],
             ),
@@ -95,7 +101,10 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
         pagination: Annotated[
             FlextModelsCqrsPart01.Pagination,
             Field(
-                description="Pagination settings controlling page number and page size for query results.",
+                description=(
+                    "Pagination settings controlling page number"
+                    " and page size for query results."
+                ),
                 title="Pagination",
                 examples=[{"page": 1, "size": 50}],
             ),
@@ -103,7 +112,10 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
         query_id: Annotated[
             t.NonEmptyStr,
             Field(
-                description="Unique query identifier used for tracing and cache correlation.",
+                description=(
+                    "Unique query identifier used for tracing"
+                    " and cache correlation."
+                ),
                 title="Query Id",
                 examples=["query_01HZX7Q0P5N6M2"],
             ),
@@ -161,13 +173,19 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
         command_timeout: Annotated[
             int,
             Field(
-                description="Command timeout from c (default). Models use Config values in initialization.",
+                description=(
+                    "Command timeout from c (default)."
+                    " Models use Config values in initialization."
+                ),
             ),
         ] = c.DEFAULT_MAX_COMMAND_RETRIES
         max_command_retries: Annotated[
             int,
             Field(
-                description="Maximum retry attempts from c (default). Models use Config values in initialization.",
+                description=(
+                    "Maximum retry attempts from c (default)."
+                    " Models use Config values in initialization."
+                ),
             ),
         ] = c.DEFAULT_MAX_COMMAND_RETRIES
         metadata: Annotated[
@@ -199,7 +217,10 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
         event_id: Annotated[
             t.NonEmptyStr,
             Field(
-                description="Unique event identifier used for deduplication and observability.",
+                description=(
+                    "Unique event identifier used for deduplication"
+                    " and observability."
+                ),
                 title="Event Id",
                 examples=["evt_01HZX7Q0P5N6M2"],
             ),

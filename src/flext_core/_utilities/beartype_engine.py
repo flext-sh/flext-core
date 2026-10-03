@@ -157,23 +157,57 @@ class FlextUtilitiesBeartypeEngine(
     _VISITORS: ClassVar[
         t.MappingKV[c.EnforcementPredicateKind, Callable[..., t.StrMapping | None]]
     ] = MappingProxyType({
-        c.EnforcementPredicateKind.FIELD_SHAPE: FlextUtilitiesBeartypeFieldVisitor.v_field_shape,
-        c.EnforcementPredicateKind.MODEL_CONFIG: FlextUtilitiesBeartypeFieldVisitor.v_model_config,
-        c.EnforcementPredicateKind.ATTR_SHAPE: FlextUtilitiesBeartypeAttrVisitor.v_attr_shape,
-        c.EnforcementPredicateKind.CLASSVAR_CONSTANT: FlextUtilitiesBeartypeAttrVisitor.v_classvar_constant,
-        c.EnforcementPredicateKind.METHOD_SHAPE: FlextUtilitiesBeartypeMethodVisitor.v_method_shape,
-        c.EnforcementPredicateKind.CLASS_PLACEMENT: FlextUtilitiesBeartypeClassVisitor.v_class_placement,
-        c.EnforcementPredicateKind.PROTOCOL_TREE: FlextUtilitiesBeartypeClassVisitor.v_protocol_tree,
-        c.EnforcementPredicateKind.MRO_SHAPE: FlextUtilitiesBeartypeClassVisitor.v_mro_shape,
-        c.EnforcementPredicateKind.LOOSE_SYMBOL: FlextUtilitiesBeartypeClassVisitor.v_loose_symbol,
-        c.EnforcementPredicateKind.IMPORT_BLACKLIST: FlextUtilitiesBeartypeImportVisitor.v_import_blacklist,
-        c.EnforcementPredicateKind.ALIAS_REBIND: FlextUtilitiesBeartypeImportVisitor.v_alias_rebind,
-        c.EnforcementPredicateKind.COMPATIBILITY_ALIAS: FlextUtilitiesBeartypeImportVisitor.v_compatibility_alias,
-        c.EnforcementPredicateKind.LIBRARY_IMPORT: FlextUtilitiesBeartypeImportVisitor.v_library_import,
-        c.EnforcementPredicateKind.LOC_CAP: FlextUtilitiesBeartypeModuleVisitor.v_loc_cap,
-        c.EnforcementPredicateKind.MODULE_ALIAS: FlextUtilitiesBeartypeModuleVisitor.v_module_alias,
-        c.EnforcementPredicateKind.DUPLICATE_SYMBOL: FlextUtilitiesBeartypeModuleVisitor.v_duplicate_symbol,
-        c.EnforcementPredicateKind.DEPRECATED_SYNTAX: FlextUtilitiesBeartypeDeprecatedVisitor.v_deprecated_syntax,
+        c.EnforcementPredicateKind.FIELD_SHAPE: (
+            FlextUtilitiesBeartypeFieldVisitor.v_field_shape
+        ),
+        c.EnforcementPredicateKind.MODEL_CONFIG: (
+            FlextUtilitiesBeartypeFieldVisitor.v_model_config
+        ),
+        c.EnforcementPredicateKind.ATTR_SHAPE: (
+            FlextUtilitiesBeartypeAttrVisitor.v_attr_shape
+        ),
+        c.EnforcementPredicateKind.CLASSVAR_CONSTANT: (
+            FlextUtilitiesBeartypeAttrVisitor.v_classvar_constant
+        ),
+        c.EnforcementPredicateKind.METHOD_SHAPE: (
+            FlextUtilitiesBeartypeMethodVisitor.v_method_shape
+        ),
+        c.EnforcementPredicateKind.CLASS_PLACEMENT: (
+            FlextUtilitiesBeartypeClassVisitor.v_class_placement
+        ),
+        c.EnforcementPredicateKind.PROTOCOL_TREE: (
+            FlextUtilitiesBeartypeClassVisitor.v_protocol_tree
+        ),
+        c.EnforcementPredicateKind.MRO_SHAPE: (
+            FlextUtilitiesBeartypeClassVisitor.v_mro_shape
+        ),
+        c.EnforcementPredicateKind.LOOSE_SYMBOL: (
+            FlextUtilitiesBeartypeClassVisitor.v_loose_symbol
+        ),
+        c.EnforcementPredicateKind.IMPORT_BLACKLIST: (
+            FlextUtilitiesBeartypeImportVisitor.v_import_blacklist
+        ),
+        c.EnforcementPredicateKind.ALIAS_REBIND: (
+            FlextUtilitiesBeartypeImportVisitor.v_alias_rebind
+        ),
+        c.EnforcementPredicateKind.COMPATIBILITY_ALIAS: (
+            FlextUtilitiesBeartypeImportVisitor.v_compatibility_alias
+        ),
+        c.EnforcementPredicateKind.LIBRARY_IMPORT: (
+            FlextUtilitiesBeartypeImportVisitor.v_library_import
+        ),
+        c.EnforcementPredicateKind.LOC_CAP: (
+            FlextUtilitiesBeartypeModuleVisitor.v_loc_cap
+        ),
+        c.EnforcementPredicateKind.MODULE_ALIAS: (
+            FlextUtilitiesBeartypeModuleVisitor.v_module_alias
+        ),
+        c.EnforcementPredicateKind.DUPLICATE_SYMBOL: (
+            FlextUtilitiesBeartypeModuleVisitor.v_duplicate_symbol
+        ),
+        c.EnforcementPredicateKind.DEPRECATED_SYNTAX: (
+            FlextUtilitiesBeartypeDeprecatedVisitor.v_deprecated_syntax
+        ),
     })
 
 
