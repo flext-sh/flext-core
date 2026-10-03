@@ -149,7 +149,7 @@ omit = [
 ]
 
 [tool.deptry]
-known_first_party = ["flext_core"]
+known_first_party = ["flext", "flext_core"]
 pep621_dev_dependency_groups = ["dev"]
 
 [tool.flext.docs]
@@ -457,7 +457,7 @@ msg = "Use cli.create_app_with_common_params / cli.register_command from flext_c
 [tool.ruff.lint.isort]
 combine-as-imports = true
 force-single-line = false
-known-first-party = ["flext_core"]
+known-first-party = ["flext", "flext_core"]
 split-on-trailing-comma = false
 
 [tool.ruff.lint.per-file-ignores]
