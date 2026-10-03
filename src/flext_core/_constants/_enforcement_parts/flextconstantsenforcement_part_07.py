@@ -34,9 +34,9 @@ from flext_core._constants._enforcement_data import (
 from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_04 import (
     FlextConstantsEnforcementRules,
 )
+from flext_core._typings.base import FlextTypingBase as t
 
-if TYPE_CHECKING:
-    from flext_core._typings.base import FlextTypingBase as t
+
 
 class FlextConstantsEnforcementSmellData:
     """Runtime rules, exemptions, smell thresholds and rule text from package data."""

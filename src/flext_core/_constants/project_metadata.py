@@ -6,16 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-<<<<<<< Updated upstream
 from typing import TYPE_CHECKING, ClassVar
-
-if TYPE_CHECKING:
-    from flext_core import t
-=======
-from typing import ClassVar
-
 from flext_core._typings.base import FlextTypingBase as t
->>>>>>> Stashed changes
+
 
 
 class FlextConstantsProjectMetadata:
