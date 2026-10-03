@@ -90,6 +90,27 @@ class FlextUtilitiesConfig:
                 return cast("t.JsonValue", yaml.safe_load(fh))
 
         @staticmethod
+        def unique_key_load(stream: str) -> t.JsonValue:
+            """Parse YAML rejecting duplicate mapping keys at every depth.
+
+            Why: duplicate config keys silently overwrite their predecessor at
+            plain ``safe_load`` time, so a config consumer that must treat a
+            duplicated key as an error (one owner per key) needs the parse-time
+            guard. The loader is the same one the settings sources use, so the
+            contract has exactly one implementation and this facade is its only
+            public door. It is a ``yaml.SafeLoader`` subclass — the safe
+            constructor set, no object-deserialization primitives — so the
+            arbitrary-constructor unsafe loader path stays out of this module.
+
+            Raises:
+                yaml.YAMLError: On malformed input or a duplicate mapping key.
+
+            """
+            from flext_core._config import _UniqueKeySafeLoader
+
+            return cast("t.JsonValue", yaml.load(stream, Loader=_UniqueKeySafeLoader))
+
+        @staticmethod
         def yaml_safe_load(path: Path) -> p.Result[t.JsonMapping]:
             """Load a YAML file → ``r[JsonMapping]``.
 

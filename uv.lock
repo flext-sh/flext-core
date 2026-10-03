@@ -1,5 +1,5 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = "==3.13.*"
 resolution-markers = [
     "sys_platform == 'linux'",
@@ -593,7 +593,7 @@ dev = [
 [[package]]
 name = "flext-infra"
 version = "0.12.0"
-source = { git = "https://github.com/flext-sh/flext-infra.git?rev=0.12.0-dev#c01967a0f43423232e6962c21eeb4945a6b3920e" }
+source = { git = "https://github.com/flext-sh/flext-infra.git?rev=0.12.0-dev#471a40e545887bfd1c6a00f9365f5ec04e29ac33" }
 dependencies = [
     { name = "annotated-types" },
     { name = "beartype" },
