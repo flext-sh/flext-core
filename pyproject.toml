@@ -551,6 +551,7 @@ whitelines = 1
 
 [tool.uv]
 link-mode = "copy"
+constraint-dependencies = ["mypy<2.4.0"]
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 
 [[tool.uv.exclude-dependencies]]
