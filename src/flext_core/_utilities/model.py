@@ -11,11 +11,13 @@ from __future__ import annotations
 from importlib import import_module
 from typing import overload
 
+from pydantic import TypeAdapter
+
 from flext_core import c, e, p, r, t
-from flext_core._models.base import FlextModelsBase as m
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._utilities.args import FlextUtilitiesArgs as ua
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic as upy
+
+from .._models.base import FlextModelsBase as m
+from .._models.pydantic import FlextModelsPydantic as mp
+from .args import FlextUtilitiesArgs as ua
 
 
 class FlextUtilitiesModel:
@@ -25,24 +27,16 @@ class FlextUtilitiesModel:
         """Options controlling Pydantic model_dump() serialization behavior."""
 
         by_alias: bool | None = mp.Field(
-            None,
-            description="Serialize using field aliases",
-            validate_default=True,
+            None, description="Serialize using field aliases", validate_default=True
         )
         exclude_none: bool | None = mp.Field(
-            None,
-            description="Exclude None-valued fields",
-            validate_default=True,
+            None, description="Exclude None-valued fields", validate_default=True
         )
         exclude_unset: bool | None = mp.Field(
-            None,
-            description="Exclude fields not explicitly set",
-            validate_default=True,
+            None, description="Exclude fields not explicitly set", validate_default=True
         )
         exclude_defaults: bool | None = mp.Field(
-            None,
-            description="Exclude fields matching defaults",
-            validate_default=True,
+            None, description="Exclude fields matching defaults", validate_default=True
         )
         include: set[str] | None = mp.Field(
             None,
@@ -76,48 +70,31 @@ class FlextUtilitiesModel:
 
         """
         opts = ua.resolve_options(
-            options,
-            kwargs,
-            FlextUtilitiesModel.ModelDumpOptions,
+            options, kwargs, FlextUtilitiesModel.ModelDumpOptions
         ).unwrap()
         opts_dict = opts.model_dump(exclude_none=True)
         dumped: t.JsonMapping = t.json_mapping_adapter().validate_python(
-            model.model_dump(mode="json", **opts_dict),
+            model.model_dump(mode="json", **opts_dict)
         )
         return dumped
 
     @staticmethod
     def _settings_base() -> t.SettingsClass:
-        """Resolve FlextSettings lazily to avoid runtime import cycles.
-
-        Returns:
-            The resulting ``t.SettingsClass``.
-
-        """
+        """Resolve FlextSettings lazily to avoid runtime import cycles."""
         settings_module = import_module("flext_core")
         settings_cls: t.SettingsClass = settings_module.FlextSettings
         return settings_cls
 
     @staticmethod
     def _container_type() -> p.ContainerType:
-        """Resolve FlextContainer lazily to avoid runtime import cycles.
-
-        Returns:
-            The resulting ``p.ContainerType``.
-
-        """
+        """Resolve FlextContainer lazily to avoid runtime import cycles."""
         container_module = import_module("flext_core")
         container_cls: p.ContainerType = container_module.FlextContainer
         return container_cls
 
     @staticmethod
     def _context_type() -> p.ContextType:
-        """Resolve FlextContext lazily to avoid runtime import cycles.
-
-        Returns:
-            The resulting ``p.ContextType``.
-
-        """
+        """Resolve FlextContext lazily to avoid runtime import cycles."""
         context_module = import_module("flext_core")
         context_cls: p.ContextType = context_module.FlextContext
         return context_cls
@@ -160,18 +137,9 @@ class FlextUtilitiesModel:
         from_json: bool = False,
         strict: bool | None = None,
     ) -> p.Result[TValue]:
-        """Validate one value through a model class or TypeAdapter.
-
-        Returns:
-            The resulting ``p.Result[TValue]``.
-
-        """
+        """Validate one value through a model class or TypeAdapter."""
         try:
-            adapter = (
-                target
-                if isinstance(target, upy.type_adapter)
-                else upy.type_adapter(target)
-            )
+            adapter = target if isinstance(target, TypeAdapter) else TypeAdapter(target)
             if from_json:
                 if not isinstance(data, c.STR_BINARY_TYPES):
                     return e.fail_validation(
