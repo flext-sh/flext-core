@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from flext_core._constants._enforcement_data import (
     ENFORCE_FLEXT_CORE_PATH_MARKERS,
