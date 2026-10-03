@@ -1,11 +1,15 @@
-"""Fixed project-metadata constants."""
+"""Fixed project-metadata constants.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
-    from flext_core import t
+    from flext_core import FlextTypes as t
 
 
 class FlextConstantsProjectMetadata:
