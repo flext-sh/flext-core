@@ -24,7 +24,7 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core import services
-    from flext_core._config import FlextConfig, StrictYamlConfigSource, config
+    from flext_core._config import FlextConfig, config
     from flext_core._settings import FlextSettings, settings
     from flext_core.api import FlextApi, core
     from flext_core.base import FlextBase
@@ -85,7 +85,6 @@ __all__: tuple[str, ...] = (
     "FlextUtilities",
     "FlextUtilitiesLogging",
     "FlextUtilitiesRuntimeViolationRegistry",
-    "StrictYamlConfigSource",
     "__author__",
     "__author_email__",
     "__description__",
@@ -118,7 +117,7 @@ __all__: tuple[str, ...] = (
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
-            "._config": ("FlextConfig", "StrictYamlConfigSource", "config"),
+            "._config": ("FlextConfig", "config"),
             "._settings": ("FlextSettings", "settings"),
             ".api": ("FlextApi", "core"),
             ".base": ("FlextBase",),

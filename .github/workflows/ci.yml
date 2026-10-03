@@ -191,8 +191,8 @@ jobs:
           candidate_status="$(git status --porcelain --untracked-files=all --ignore-submodules=none)"
           test -z "$candidate_status"
 
-      # Setup installs frozen from the committed uv.lock (`uv sync --locked`)
-      # and never rewrites it; the deps audit proves that locked graph.
+      # Setup installs the committed uv.lock and never rewrites it (only
+      # `make upg` does); the deps audit proves that locked graph.
       - name: deps check (blocking)
         run: CI=Y make audit
 
