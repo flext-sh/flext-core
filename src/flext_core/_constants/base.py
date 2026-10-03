@@ -15,6 +15,13 @@ class FlextConstantsBase:
     NAME: ClassVar[str] = "FLEXT"
     ZERO: ClassVar[int] = 0
 
+    # Published for the module-scope consolidation consumers (fleet-wide,
+    # 2026-10-03): the regenerated cli/context surfaces reference this tuple
+    # through the constants namespace for isinstance and type-annotation use.
+    PRIMITIVES_TYPES: ClassVar[
+        tuple[type[str], type[int], type[float], type[bool]]
+    ] = (str, int, float, bool)
+
     PERCENTAGE_MULTIPLIER: ClassVar[int] = 100
     MILLISECONDS_MULTIPLIER: ClassVar[int] = 1000
     MICROSECONDS_MULTIPLIER: ClassVar[int] = 1000000
