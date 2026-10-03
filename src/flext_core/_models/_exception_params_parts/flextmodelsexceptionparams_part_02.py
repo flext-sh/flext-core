@@ -27,7 +27,10 @@ class FlextModelsExceptionParams(FlextModelsExceptionParamsPart01):
             t.Numeric | None,
             mp.Field(
                 default=None,
-                description="Timeout duration in seconds that triggered this exception.",
+                description=(
+                    "Timeout duration in seconds"
+                    " that triggered this exception."
+                ),
                 title="Timeout Seconds",
                 examples=[30, 30.0],
             ),
@@ -54,7 +57,10 @@ class FlextModelsExceptionParams(FlextModelsExceptionParamsPart01):
         user_id: Annotated[
             str | None,
             mp.Field(
-                description="User identifier associated with the authentication attempt.",
+                description=(
+                    "User identifier associated"
+                    " with the authentication attempt."
+                ),
             ),
         ] = None
 
@@ -74,7 +80,10 @@ class FlextModelsExceptionParams(FlextModelsExceptionParamsPart01):
             str | None,
             mp.Field(
                 default=None,
-                description="Protected resource that triggered the authorization failure.",
+                description=(
+                    "Protected resource that triggered"
+                    " the authorization failure."
+                ),
                 title="Resource",
                 examples=["invoice:12345"],
             ),
@@ -83,7 +92,10 @@ class FlextModelsExceptionParams(FlextModelsExceptionParamsPart01):
             str | None,
             mp.Field(
                 default=None,
-                description="Missing permission required to complete the requested action.",
+                description=(
+                    "Missing permission required"
+                    " to complete the requested action."
+                ),
                 title="Permission",
                 examples=["write"],
             ),
@@ -112,7 +124,10 @@ class FlextModelsExceptionParams(FlextModelsExceptionParamsPart01):
             int | None,
             mp.Field(
                 default=None,
-                description="Maximum request count allowed within the configured window.",
+                description=(
+                    "Maximum request count allowed"
+                    " within the configured window."
+                ),
                 title="Limit",
                 examples=[100],
             ),
@@ -150,7 +165,10 @@ class FlextModelsExceptionParams(FlextModelsExceptionParamsPart01):
             int | None,
             mp.Field(
                 default=None,
-                description="Consecutive failure count at the moment the breaker opened.",
+                description=(
+                    "Consecutive failure count"
+                    " at the moment the breaker opened."
+                ),
             ),
         ] = None
         reset_timeout: Annotated[

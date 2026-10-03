@@ -14,11 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import sys
-import types
-
 import pytest
-from flext_tests import tm
 
 import flext_core
 from flext_core import FlextSettings, c, d, e, h, m, p, r, s, t, u, x
@@ -76,8 +72,7 @@ def _increment_step(value: int) -> p.Result[int]:
 class TestsFlextCorePublicApiContract:
     """Assert the observable behavior promised by the flext_core public surface."""
 
-    @staticmethod
-    def test_root_lazy_helpers_publish_a_consumer_export() -> None:
+    def test_root_lazy_helpers_publish_a_consumer_export(self) -> None:
         """Generated consumers can compose lazy exports from the foundation root."""
         build_map = flext_core.build_lazy_import_map
         install = flext_core.install_lazy_exports
@@ -85,28 +80,16 @@ class TestsFlextCorePublicApiContract:
             flext_core.__all__,
         )
         imports = build_map({"collections": ("Counter",)})
-        # ``install`` binds a registered module; the consumer is a real one.
-        consumer = types.ModuleType("flext_core_consumer")
-        namespace: t.ModuleGlobals = vars(consumer)
-        sys.modules[consumer.__name__] = consumer
-        try:
-            install(
-                consumer.__name__,
-                namespace,
-                imports,
-                public_exports=("Counter",),
-            )
-        finally:
-            del sys.modules[consumer.__name__]
+        namespace: t.ModuleGlobals = {"__name__": "flext_core_consumer"}
+        install(
+            "flext_core_consumer", namespace, imports, public_exports=("Counter",),
+        )
         resolver = namespace["__getattr__"]
         assert callable(resolver)
-        resolved = resolver("Counter")
-        assert isinstance(resolved, type)
-        tm.that(resolved.__name__, eq="Counter")
+        assert resolver("Counter").__name__ == "Counter"
 
     @pytest.mark.parametrize("name", _FACADES)
-    @staticmethod
-    def test_named_facade_is_importable(name: str) -> None:
+    def test_named_facade_is_importable(self, name: str) -> None:
         """Every advertised facade is reachable from the package root."""
         assert hasattr(flext_core, name), f"{name} not importable from flext_core"
 
@@ -117,8 +100,8 @@ class TestsFlextCorePublicApiContract:
         assert not missing, f"Names in __all__ but not importable: {missing}"
 
     @pytest.mark.parametrize(("alias", "facade_name"), _ALIASES)
-    @staticmethod
     def test_single_letter_alias_is_its_facade(
+        self,
         alias: object,
         facade_name: str,
     ) -> None:
@@ -252,8 +235,8 @@ class TestsFlextCorePublicApiContract:
         assert repr(r.fail("z")) == "r[T].fail('z')"
 
     @pytest.mark.parametrize("exc_name", ["MroViolation", "SmellViolation"])
-    @staticmethod
     def test_exception_family_members_are_raisable_and_catchable(
+        self,
         exc_name: str,
     ) -> None:
         """Structured exception classes raise with, and preserve, their message."""

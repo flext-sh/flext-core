@@ -44,7 +44,10 @@ class FlextModelsCollections:
             mp.Field(
                 default=None,
                 title="Greater Than",
-                description="Require value to be greater than this (sortable: numeric or string).",
+                description=(
+                    "Require value to be greater than this"
+                    " (sortable: numeric or string)."
+                ),
             ),
         ] = None
         gte: Annotated[
@@ -52,7 +55,10 @@ class FlextModelsCollections:
             mp.Field(
                 default=None,
                 title="Greater Than Or Equal",
-                description="Require value to be greater than or equal to this (sortable: numeric or string).",
+                description=(
+                    "Require value to be greater than or equal to this"
+                    " (sortable: numeric or string)."
+                ),
             ),
         ] = None
         lt: Annotated[
@@ -60,7 +66,10 @@ class FlextModelsCollections:
             mp.Field(
                 default=None,
                 title="Less Than",
-                description="Require value to be less than this (sortable: numeric or string).",
+                description=(
+                    "Require value to be less than this"
+                    " (sortable: numeric or string)."
+                ),
             ),
         ] = None
         lte: Annotated[
@@ -68,7 +77,10 @@ class FlextModelsCollections:
             mp.Field(
                 default=None,
                 title="Less Than Or Equal",
-                description="Require value to be less than or equal to this (sortable: numeric or string).",
+                description=(
+                    "Require value to be less than or equal to this"
+                    " (sortable: numeric or string)."
+                ),
             ),
         ] = None
         is_: Annotated[
@@ -116,7 +128,10 @@ class FlextModelsCollections:
             mp.Field(
                 default=None,
                 title="Empty Constraint",
-                description="When True, require empty value; when False, require non-empty.",
+                description=(
+                    "When True, require empty value;"
+                    " when False, require non-empty."
+                ),
             ),
         ] = None
         contains: Annotated[
