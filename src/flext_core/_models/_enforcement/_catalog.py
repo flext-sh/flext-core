@@ -13,7 +13,7 @@ from pydantic import Discriminator, Field, model_validator
 from flext_core import c
 
 from ..._typings.base import FlextTypingBase as t
-from ._base import EnforcementModelBase
+from ._base import FlextModelsEnforcementModelBase
 from ._sources import FlextModelsEnforcementSources
 
 type EnforcementRuleSource = (
@@ -30,7 +30,7 @@ type EnforcementRuleSource = (
 class FlextModelsEnforcementCatalog(FlextModelsEnforcementSources):
     """Rule-spec and catalog containers for enforcement."""
 
-    class EnforcementRuleSpec(EnforcementModelBase):
+    class EnforcementRuleSpec(FlextModelsEnforcementModelBase):
         """Single rule entry in the enforcement catalog."""
 
         id: Annotated[str, Field(pattern=c.PATTERN_ENFORCE_RULE_ID)]
@@ -44,7 +44,7 @@ class FlextModelsEnforcementCatalog(FlextModelsEnforcementSources):
         notes: str = ""
         fix_action: FlextModelsEnforcementSources.EnforcementFixAction | None = None
 
-    class EnforcementCatalog(EnforcementModelBase):
+    class EnforcementCatalog(FlextModelsEnforcementModelBase):
         """Frozen catalog of all enforcement rules."""
 
         version: int = 1
