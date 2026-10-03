@@ -11,7 +11,6 @@ supported-markers = [
 ]
 
 [manifest]
-constraints = [{ name = "structlog", specifier = "<26" }]
 excludes = [
     { package = { name = "flext-cli" }, dependencies = ["flext-core"] },
     { package = { name = "flext-infra" }, dependencies = ["flext-core"] },
@@ -372,15 +371,6 @@ wheels = [
 ]
 
 [[package]]
-name = "editables"
-version = "0.6"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/82/f8/02a4e9a0cb961b0feeb431ac96b231c157ecdcbbeacafe9e2fdb4b1dde39/editables-0.6.tar.gz", hash = "sha256:1163834902381c4613787951c5914800fdf155ae08848a373b8ea5006780977c", size = 16763, upload-time = "2026-04-14T10:39:04.677Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/cc/0e/d095533037fc9468f947b19f2da53f869804632b508808de41e86e801797/editables-0.6-py3-none-any.whl", hash = "sha256:d70e4698078a1d033e7786d9c64e5be070d058a67c21417024d38a58ac20aa43", size = 5438, upload-time = "2026-04-14T10:39:03.663Z" },
-]
-
-[[package]]
 name = "editorconfig"
 version = "0.17.1"
 source = { registry = "https://pypi.org/simple" }
@@ -457,7 +447,6 @@ dev = [
     { name = "actionlint-py" },
     { name = "bandit" },
     { name = "deptry" },
-    { name = "editables" },
     { name = "flext-tests" },
     { name = "hypothesis" },
     { name = "mkdocs" },
@@ -472,7 +461,6 @@ dev = [
     { name = "mkdocstrings" },
     { name = "mkdocstrings-python" },
     { name = "mypy" },
-    { name = "platformdirs" },
     { name = "pymdown-extensions" },
     { name = "pyrefly" },
     { name = "pyright" },
@@ -482,7 +470,6 @@ dev = [
     { name = "pytest-cov" },
     { name = "pytest-markdown-docs" },
     { name = "pytest-randomly" },
-    { name = "pytest-reportlog" },
     { name = "pytest-testmon" },
     { name = "pytest-timeout" },
     { name = "pytest-xdist" },
@@ -521,9 +508,9 @@ requires-dist = [
     { name = "dependency-injector", specifier = ">=4.49.1" },
     { name = "packaging", specifier = ">=26.3" },
     { name = "pydantic", specifier = ">=2.13.5" },
-    { name = "pydantic-settings", specifier = ">=2.14.2,<2.16" },
+    { name = "pydantic-settings", specifier = ">=2.15.0" },
     { name = "pyyaml", specifier = ">=6.0.3" },
-    { name = "structlog", specifier = ">=25.5.0,<27" },
+    { name = "structlog", specifier = ">=26.1.0" },
     { name = "typing-extensions", specifier = ">=4.16.0" },
 ]
 
@@ -533,7 +520,6 @@ dev = [
     { name = "actionlint-py", specifier = ">=1.7.12.24" },
     { name = "bandit", specifier = ">=1.9.4" },
     { name = "deptry" },
-    { name = "editables", specifier = ">=0.6" },
     { name = "flext-tests", git = "https://github.com/flext-sh/flext-tests.git?rev=0.12.0-dev" },
     { name = "hypothesis" },
     { name = "mkdocs" },
@@ -548,7 +534,6 @@ dev = [
     { name = "mkdocstrings", specifier = ">=1.0.6" },
     { name = "mkdocstrings-python", specifier = ">=2.0.8" },
     { name = "mypy", specifier = ">=2.3.1" },
-    { name = "platformdirs", specifier = ">=4.12.0" },
     { name = "pymdown-extensions" },
     { name = "pyrefly", specifier = ">=1.2.0" },
     { name = "pyright", specifier = ">=1.1.411" },
@@ -558,7 +543,6 @@ dev = [
     { name = "pytest-cov" },
     { name = "pytest-markdown-docs" },
     { name = "pytest-randomly", specifier = ">=4.1.0" },
-    { name = "pytest-reportlog" },
     { name = "pytest-testmon", specifier = ">=2.2.0" },
     { name = "pytest-timeout" },
     { name = "pytest-xdist" },
@@ -1880,11 +1864,11 @@ wheels = [
 
 [[package]]
 name = "structlog"
-version = "25.5.0"
+version = "26.1.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ef/52/9ba0f43b686e7f3ddfeaa78ac3af750292662284b3661e91ad5494f21dbc/structlog-25.5.0.tar.gz", hash = "sha256:098522a3bebed9153d4570c6d0288abf80a031dfdb2048d59a49e9dc2190fc98", size = 1460830, upload-time = "2025-10-27T08:28:23.028Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5e/89/b4a0bcfdf4f71a3dea31379f095929613d7e4528a0996bca6aa964cd0dca/structlog-26.1.0.tar.gz", hash = "sha256:f63a716cbd1b1291cf7661de7794b455acfa4c43c5bcf1630e6ad5ddc1adb3b7", size = 1459881, upload-time = "2026-06-06T07:33:39.348Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a8/45/a132b9074aa18e799b891b91ad72133c98d8042c70f6240e4c5f9dabee2f/structlog-25.5.0-py3-none-any.whl", hash = "sha256:a8453e9b9e636ec59bd9e79bbd4a72f025981b3ba0f5837aebf48f02f37a7f9f", size = 72510, upload-time = "2025-10-27T08:28:21.535Z" },
+    { url = "https://files.pythonhosted.org/packages/a9/18/489c97b834dfff9cf2fc2507cede4bcd4b11e67f84bc462acd1992496f86/structlog-26.1.0-py3-none-any.whl", hash = "sha256:e081a26d6c373e6d201eca24eede26d8ffab07f88f477822e679183428d3d91e", size = 73764, upload-time = "2026-06-06T07:33:38.046Z" },
 ]
 
 [[package]]

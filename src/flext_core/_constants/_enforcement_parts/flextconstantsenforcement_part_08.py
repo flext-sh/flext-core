@@ -3,10 +3,16 @@
 from __future__ import annotations
 
 from types import MappingProxyType
+<<<<<<< Updated upstream
 from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
     from ..._typings.base import FlextTypingBase as t
+=======
+from typing import ClassVar
+
+from flext_core._typings.base import FlextTypingBase as t
+>>>>>>> Stashed changes
 
 
 class FlextConstantsEnforcementFixActions:

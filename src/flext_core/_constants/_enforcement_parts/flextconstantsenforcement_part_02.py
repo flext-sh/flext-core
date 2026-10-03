@@ -18,7 +18,6 @@ if TYPE_CHECKING:
 
     from flext_core import t
 
-
 class FlextConstantsEnforcementRuntime:
     """Runtime modes, base exemptions, and collection contracts."""
 
