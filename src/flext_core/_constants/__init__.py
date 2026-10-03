@@ -10,7 +10,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core import build_lazy_import_map, install_lazy_exports
+from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._constants import (
@@ -35,6 +35,9 @@ if TYPE_CHECKING:
     )
     from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_07 import (
         FlextConstantsEnforcementSmellData,
+    )
+    from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_08 import (
+        FlextConstantsEnforcementFixActions,
     )
     from flext_core._constants._errors_parts.flextconstantserrors_part_01 import (
         FlextConstantsErrorsMessages,
@@ -81,6 +84,7 @@ __all__: tuple[str, ...] = (
     "FlextConstantsCqrs",
     "FlextConstantsEnforcement",
     "FlextConstantsEnforcementEnums",
+    "FlextConstantsEnforcementFixActions",
     "FlextConstantsEnforcementNamespace",
     "FlextConstantsEnforcementRules",
     "FlextConstantsEnforcementRuntime",
@@ -134,6 +138,9 @@ _LAZY_IMPORTS = MappingProxyType(
             ),
             "._enforcement_parts.flextconstantsenforcement_part_07": (
                 "FlextConstantsEnforcementSmellData",
+            ),
+            "._enforcement_parts.flextconstantsenforcement_part_08": (
+                "FlextConstantsEnforcementFixActions",
             ),
             "._errors_parts": ("_errors_parts",),
             "._errors_parts.flextconstantserrors_part_01": (

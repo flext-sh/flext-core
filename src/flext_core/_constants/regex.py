@@ -11,10 +11,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, ClassVar, Final
+from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
-    from .._typings.base import FlextTypingBase as t
+    from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextConstantsRegex:
