@@ -18,7 +18,6 @@ if TYPE_CHECKING:
 
     from flext_core._typings.base import FlextTypingBase as t
 
-
 class FlextConstantsEnforcementNamespace:
     """MRO namespace and violation-shape constants."""
 

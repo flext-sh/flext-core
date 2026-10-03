@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 from flext_core._constants._enforcement_data import (
     ENFORCE_FLEXT_CORE_PATH_MARKERS,
@@ -37,7 +37,6 @@ from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_04 
 
 if TYPE_CHECKING:
     from flext_core._typings.base import FlextTypingBase as t
-
 
 class FlextConstantsEnforcementSmellData:
     """Runtime rules, exemptions, smell thresholds and rule text from package data."""

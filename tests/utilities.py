@@ -247,6 +247,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
 
                 Returns:
                     The resulting ``str``.
+
                 """
                 return "test_value"
 
@@ -265,6 +266,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
 
                 Raises:
                     RuntimeError: If First attempt fails.
+
                 """
                 self.attempts += 1
                 if self.attempts == 1:
