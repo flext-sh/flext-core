@@ -31,10 +31,14 @@ if TYPE_CHECKING:
     from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_07 import (
         FlextConstantsEnforcementSmellData,
     )
+    from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_08 import (
+        FlextConstantsEnforcementFixActions,
+    )
 
 
 __all__: tuple[str, ...] = (
     "FlextConstantsEnforcementEnums",
+    "FlextConstantsEnforcementFixActions",
     "FlextConstantsEnforcementNamespace",
     "FlextConstantsEnforcementRules",
     "FlextConstantsEnforcementRuntime",
@@ -54,6 +58,9 @@ _LAZY_IMPORTS = MappingProxyType(
             ".flextconstantsenforcement_part_06": ("FlextConstantsEnforcementTargets",),
             ".flextconstantsenforcement_part_07": (
                 "FlextConstantsEnforcementSmellData",
+            ),
+            ".flextconstantsenforcement_part_08": (
+                "FlextConstantsEnforcementFixActions",
             ),
         }),
         alias_groups=MappingProxyType({}),
