@@ -440,7 +440,7 @@
       "severity": "HIGH",
       "source": {
         "kind": "beartype",
-        "predicate_kind": "deprecated_syntax"
+        "tag": "cast_outside_core"
       },
       "agents_md_anchor": "3-2-types-and-contracts",
       "skills": [
@@ -468,7 +468,7 @@
       "severity": "HIGH",
       "source": {
         "kind": "beartype",
-        "predicate_kind": "loose_symbol"
+        "tag": "settings_inheritance"
       },
       "agents_md_anchor": "2-6-settings-law",
       "skills": [
@@ -512,7 +512,7 @@
       "severity": "HIGH",
       "source": {
         "kind": "beartype",
-        "predicate_kind": "import_blacklist"
+        "tag": "no_pydantic_consumer_import"
       },
       "agents_md_anchor": "2-7-library-abstraction-boundaries",
       "skills": [
@@ -526,7 +526,7 @@
       "severity": "HIGH",
       "source": {
         "kind": "beartype",
-        "predicate_kind": "import_blacklist"
+        "tag": "no_concrete_namespace_import"
       },
       "agents_md_anchor": "4-import-law",
       "skills": [
@@ -540,7 +540,7 @@
       "severity": "HIGH",
       "source": {
         "kind": "beartype",
-        "predicate_kind": "mro_shape"
+        "tag": "facade_base_is_alias_or_peer"
       },
       "agents_md_anchor": "2-2-facades-namespaces-naming-patterns",
       "skills": [
@@ -554,7 +554,7 @@
       "severity": "MEDIUM",
       "source": {
         "kind": "beartype",
-        "predicate_kind": "mro_shape"
+        "tag": "no_redundant_inner_namespace"
       },
       "agents_md_anchor": "2-3-mro-inheritance-namespace-composition",
       "skills": [
@@ -567,7 +567,7 @@
       "severity": "HIGH",
       "source": {
         "kind": "beartype",
-        "predicate_kind": "mro_shape"
+        "tag": "alias_first_multi_parent"
       },
       "agents_md_anchor": "2-2-facades-namespaces-naming-patterns",
       "skills": [
@@ -580,7 +580,7 @@
       "severity": "MEDIUM",
       "source": {
         "kind": "beartype",
-        "predicate_kind": "alias_rebind"
+        "tag": "alias_rebound_at_module_end"
       },
       "agents_md_anchor": "4-import-law",
       "skills": [
@@ -594,7 +594,7 @@
       "severity": "HIGH",
       "source": {
         "kind": "beartype",
-        "predicate_kind": "alias_rebind"
+        "tag": "no_self_root_import_in_core_files"
       },
       "agents_md_anchor": "4-import-law",
       "skills": [
@@ -607,7 +607,7 @@
       "severity": "HIGH",
       "source": {
         "kind": "beartype",
-        "predicate_kind": "alias_rebind"
+        "tag": "sibling_models_type_checking"
       },
       "agents_md_anchor": "4-import-law",
       "skills": [
@@ -620,7 +620,7 @@
       "severity": "HIGH",
       "source": {
         "kind": "beartype",
-        "predicate_kind": "mro_shape"
+        "tag": "utilities_explicit_class_when_self_ref"
       },
       "agents_md_anchor": "2-3-mro-inheritance-namespace-composition",
       "skills": [
@@ -633,7 +633,7 @@
       "severity": "HIGH",
       "source": {
         "kind": "beartype",
-        "predicate_kind": "deprecated_syntax"
+        "tag": "no_core_tests_namespace"
       },
       "agents_md_anchor": "0-quick-reference-must-read",
       "skills": [
@@ -647,7 +647,7 @@
       "severity": "HIGH",
       "source": {
         "kind": "beartype",
-        "predicate_kind": "deprecated_syntax"
+        "tag": "no_wrapper_root_alias_import"
       },
       "agents_md_anchor": "0-quick-reference-must-read",
       "skills": [
@@ -662,7 +662,7 @@
       "severity": "HIGH",
       "source": {
         "kind": "beartype",
-        "predicate_kind": "compatibility_alias"
+        "tag": "compatibility_alias_import"
       },
       "agents_md_anchor": "4-import-law",
       "skills": [
@@ -676,7 +676,7 @@
       "severity": "MEDIUM",
       "source": {
         "kind": "beartype",
-        "predicate_kind": "module_alias"
+        "tag": "no_module_compat_alias"
       },
       "agents_md_anchor": "2-4-no-backwards-compat-aliases",
       "skills": [
@@ -689,7 +689,7 @@
       "severity": "HIGH",
       "source": {
         "kind": "beartype",
-        "predicate_kind": "loc_cap"
+        "tag": "one_class_per_module"
       },
       "agents_md_anchor": "3-1-supreme-law",
       "skills": [
@@ -702,7 +702,7 @@
       "severity": "HIGH",
       "source": {
         "kind": "beartype",
-        "predicate_kind": "import_blacklist"
+        "tag": "no_private_module_bypass"
       },
       "agents_md_anchor": "4-import-law",
       "skills": [
@@ -716,7 +716,7 @@
       "severity": "HIGH",
       "source": {
         "kind": "beartype",
-        "predicate_kind": "class_placement"
+        "tag": "forbid_deep_namespace"
       },
       "agents_md_anchor": "2-3-mro-inheritance-namespace-composition",
       "skills": [
@@ -729,7 +729,7 @@
       "severity": "HIGH",
       "source": {
         "kind": "beartype",
-        "predicate_kind": "library_import"
+        "tag": "library_abstraction"
       },
       "agents_md_anchor": "2-7-library-abstraction-boundaries",
       "skills": [
@@ -846,7 +846,7 @@
       "severity": "MEDIUM",
       "source": {
         "kind": "beartype",
-        "predicate_kind": "classvar_constant"
+        "tag": "classvar_constant_outside_constants"
       },
       "agents_md_anchor": "2-2-facades-namespaces-naming-patterns",
       "skills": [
