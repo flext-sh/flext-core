@@ -21,8 +21,13 @@ uses executable examples and text-only internals where appropriate.
 from examples.ex_04_flext_dispatcher import Ex04DispatchDsl
 
 result = Ex04DispatchDsl.run()
-assert result.success
-assert result.value == "pong:dispatcher-example"
+expected_value = "pong:dispatcher-example"
+if not result.success:
+    message = "Expected dispatcher success"
+    raise RuntimeError(message)
+if result.value != expected_value:
+    message = "Unexpected dispatcher value"
+    raise RuntimeError(message)
 ```
 
 ## Command Handling with r[T]
@@ -34,6 +39,12 @@ from flext_core import p, r
 
 
 def create_user(command: dict[str, str]) -> p.Result[dict[str, str]]:
+    """Create a user payload when the required email is present.
+
+    Returns:
+        The resulting ``p.Result[dict[str, str]]``.
+
+    """
     if "email" not in command:
         return r[dict[str, str]].fail("missing_email")
     return r[dict[str, str]].ok({"status": "created", "email": command["email"]})
@@ -42,8 +53,12 @@ def create_user(command: dict[str, str]) -> p.Result[dict[str, str]]:
 ok = create_user({"email": "user@example.com"})
 ko = create_user({})
 
-assert ok.success
-assert ko.failure
+if not ok.success:
+    message = "Expected created user success"
+    raise RuntimeError(message)
+if not ko.failure:
+    message = "Expected missing-email failure"
+    raise RuntimeError(message)
 ```
 
 ## Context and Metrics (Illustrative Internals)

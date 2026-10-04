@@ -46,13 +46,25 @@ class CreateUserService(s[str]):
     username: Annotated[str, m.Field(description="Username for the create flow.")] = ""
 
     def execute(self) -> p.Result[str]:
+        """Create the user and return its name.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+
+        """
         if not self.username:
             return r[str].fail("username_required")
         return r[str].ok(self.username)
 
 
-assert CreateUserService(username="alice").execute().value == "alice"
-assert CreateUserService().execute().failure
+created_service = CreateUserService(username="alice").execute()
+missing_service = CreateUserService().execute()
+if created_service.value != "alice":
+    message = "Unexpected created username"
+    raise RuntimeError(message)
+if not missing_service.failure:
+    message = "Expected missing username failure"
+    raise RuntimeError(message)
 ```
 
 Fields are ports or business parameters the root fills from `config` and `settings`. The
@@ -77,13 +89,27 @@ from flext_core import m, p, r, s, t
 class Clock(p.Base, Protocol):
     """Current time in seconds."""
 
-    def now(self) -> int: ...
+    def now(self) -> int:
+        """Read the current instant.
+
+        Returns:
+            The resulting ``int``.
+
+        """
+        ...
 
 
 class FixedClock:
     """Adapter that always returns the same instant."""
 
-    def now(self) -> int:
+    @staticmethod
+    def now() -> int:
+        """Return the fixed instant.
+
+        Returns:
+            The resulting ``int``.
+
+        """
         return 42
 
 
@@ -93,17 +119,30 @@ class StampService(s[int]):
     clock: t.Port[Clock] = m.Field(exclude=True, description="Clock the stamp reads.")
 
     def execute(self) -> p.Result[int]:
+        """Stamp the event with the clock reading.
+
+        Returns:
+            The resulting ``p.Result[int]``.
+
+        """
         return r[int].ok(self.clock.now())
 
 
-assert StampService(clock=FixedClock()).execute().value == 42
-assert "clock" not in StampService.model_json_schema()["properties"]
+expected_now = 42
+stamped = StampService(clock=FixedClock()).execute()
+if stamped.value != expected_now:
+    message = "Unexpected stamped instant"
+    raise RuntimeError(message)
+if "clock" in StampService.model_json_schema()["properties"]:
+    message = "Expected clock port to stay out of the schema"
+    raise RuntimeError(message)
 try:
     StampService.model_validate({"clock": "not a clock"})
 except m.ValidationError:
     pass
 else:
-    raise AssertionError
+    message = "Expected port validation rejection"
+    raise RuntimeError(message)
 ```
 
 - `t.Port[P]` is `Annotated[P, SkipJsonSchema()]`. Pydantic validates the value with
@@ -192,20 +231,42 @@ class GreetRequest(m.Value):
 class GreeterService(s[str]):
     """Greet people."""
 
-    def greet(self, request: GreetRequest) -> p.Result[str]:
-        """Greet a person by name."""
+    @staticmethod
+    def greet(request: GreetRequest) -> p.Result[str]:
+        """Greet a person by name.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+
+        """
         return r[str].ok(f"hello {request.name}")
 
-    def ping(self) -> p.Result[str]:
-        """Answer a liveness ping."""
+    @staticmethod
+    def ping() -> p.Result[str]:
+        """Answer a liveness ping.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+
+        """
         return r[str].ok("pong")
 
 
 operations = u.service_operations(GreeterService)
-assert [op.name for op in operations] == ["greet", "ping"]
-assert operations[0].request is GreetRequest
-assert operations[1].request is None
-assert operations[1].summary == "Answer a liveness ping."
+expected_names = ["greet", "ping"]
+if [op.name for op in operations] != expected_names:
+    message = "Unexpected discovered operation names"
+    raise RuntimeError(message)
+if operations[0].request is not GreetRequest:
+    message = "Unexpected greet request type"
+    raise RuntimeError(message)
+if operations[1].request is not None:
+    message = "Expected ping to declare no request model"
+    raise RuntimeError(message)
+expected_summary = "Answer a liveness ping."
+if operations[1].summary != expected_summary:
+    message = "Unexpected ping summary"
+    raise RuntimeError(message)
 ```
 
 - Every name `FlextService` exposes is excluded even when overridden (`execute`,
@@ -241,9 +302,12 @@ failure = r[int].fail("lookup failed", exception=KeyError("user-7"))
 try:
     failure.unwrap()
 except RuntimeError as exc:
-    assert isinstance(exc.__cause__, KeyError)
+    if not isinstance(exc.__cause__, KeyError):
+        message = "Expected preserved KeyError cause"
+        raise TypeError(message) from exc
 else:
-    raise AssertionError
+    message = "Expected unwrap to raise on failure"
+    raise RuntimeError(message)
 ```
 
 Never replace a failure with `None`, `""`, `{}`, a default, `ok(True)`, a skipped item
