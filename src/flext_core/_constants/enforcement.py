@@ -27,6 +27,9 @@ from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_06 
 from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_07 import (
     FlextConstantsEnforcementSmellData,
 )
+from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_08 import (
+    FlextConstantsEnforcementFixActions,
+)
 
 
 class FlextConstantsEnforcement(
@@ -36,6 +39,7 @@ class FlextConstantsEnforcement(
     FlextConstantsEnforcementRules,
     FlextConstantsEnforcementTargets,
     FlextConstantsEnforcementSmellData,
+    FlextConstantsEnforcementFixActions,
 ):
     """Constants governing Pydantic v2 enforcement behavior."""
 

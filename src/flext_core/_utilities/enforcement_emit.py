@@ -30,16 +30,35 @@ class FlextUtilitiesEnforcementEmit:
     def build_canonical_catalog(cls) -> me.EnforcementCatalog:
         """Return the enforcement catalog validated from its package data.
 
+        Each rule carries the fix action declared for its id.
+
         Returns:
             The enforcement catalog validated from its package data.
 
         """
         if cls._canonical_catalog is None:
-            cls._canonical_catalog = me.EnforcementCatalog.model_validate_json(
+            catalog = me.EnforcementCatalog.model_validate_json(
                 importlib.resources
                 .files(_enforcement_data)
                 .joinpath(c.ENFORCEMENT_CATALOG_RESOURCE)
                 .read_text(encoding="utf-8"),
+            )
+            fix_actions = c.ENFORCEMENT_FIX_ACTIONS
+            cls._canonical_catalog = catalog.model_copy(
+                update={
+                    "rules": tuple(
+                        rule.model_copy(
+                            update={
+                                "fix_action": me.EnforcementFixAction.model_validate(
+                                    fix_actions[rule.id],
+                                ),
+                            },
+                        )
+                        if rule.id in fix_actions
+                        else rule
+                        for rule in catalog.rules
+                    ),
+                },
             )
         return cls._canonical_catalog
 

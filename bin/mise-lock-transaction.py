@@ -31,10 +31,10 @@ class MiseLockTransaction:
     NEW_LOCK = "new.lock"
     OLD_LOCK = "old.lock"
     ARTIFACTS = (
-("bin/mise", 0o755),
-("bin/mise.cmd", 0o644),
-("mise.version", 0o644),
-)
+        ("bin/mise", 0o755),
+        ("bin/mise.cmd", 0o644),
+        ("mise.version", 0o644),
+    )
     MUTEX_TIMEOUT_SECONDS = 600.0
     LOCK = "mise.lock"
     NATIVE_GRAPHS = (("aube", "aube-lock.yaml"), ("uv", "uv.lock"))
