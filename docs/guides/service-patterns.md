@@ -214,7 +214,12 @@ A public instance method declared below `FlextService` is an operation. It takes
 or exactly one Pydantic request model, returns `p.Result[...]` and has a one-line
 docstring, which is its summary. `u.service_operations(Service)` discovers the
 operations of a service class and returns frozen `m.ServiceOperation` values (`name`,
-`summary`, `request`), sorted by name:
+`summary`, `request`), sorted by name.
+
+The example below discovers no-input operations with constructor-supplied data.
+Request-bearing discovery currently binds the request schema to a concrete model
+annotation; schema/carrier separation is not implemented. That boundary still needs
+owner alignment with the fleet typing rule, rather than a protocol or alias workaround.
 
 ```python
 from __future__ import annotations
@@ -222,26 +227,21 @@ from __future__ import annotations
 from flext_core import m, p, r, s, u
 
 
-class GreetRequest(m.Value):
-    """Greeting input."""
-
-    name: str = m.Field(description="Name to greet.")
-
-
 class GreeterService(s[str]):
     """Greet people."""
 
     greeting: str = m.Field(description="Greeting supplied by the composition root.")
+    name: str = m.Field(description="Name supplied by the composition root.")
     ping_response: str = m.Field(description="Liveness response supplied by the root.")
 
-    def greet(self, request: GreetRequest) -> p.Result[str]:
+    def greet(self) -> p.Result[str]:
         """Greet a person by name.
 
         Returns:
             The resulting ``p.Result[str]``.
 
         """
-        return r[str].ok(f"{self.greeting} {request.name}")
+        return r[str].ok(f"{self.greeting} {self.name}")
 
     def ping(self) -> p.Result[str]:
         """Answer a liveness ping.
@@ -258,21 +258,17 @@ expected_names = ["greet", "ping"]
 if [op.name for op in operations] != expected_names:
     message = "Unexpected discovered operation names"
     raise RuntimeError(message)
-if operations[0].request is not GreetRequest:
-    message = "Unexpected greet request type"
-    raise RuntimeError(message)
-if operations[1].request is not None:
-    message = "Expected ping to declare no request model"
+if any(op.request is not None for op in operations):
+    message = "Expected no-input operations to declare no request model"
     raise RuntimeError(message)
 expected_summary = "Answer a liveness ping."
 if operations[1].summary != expected_summary:
     message = "Unexpected ping summary"
     raise RuntimeError(message)
 
-greeter = GreeterService(greeting="hello", ping_response="pong")
-request = GreetRequest(name="Ada")
-greeted = greeter.greet(request)
-if not greeted.success or greeted.value != f"{greeter.greeting} {request.name}":
+greeter = GreeterService(greeting="hello", name="Ada", ping_response="pong")
+greeted = greeter.greet()
+if not greeted.success or greeted.value != f"{greeter.greeting} {greeter.name}":
     message = "Unexpected greeting result"
     raise RuntimeError(message)
 pinged = greeter.ping()
