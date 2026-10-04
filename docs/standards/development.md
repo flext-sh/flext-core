@@ -23,13 +23,25 @@ from flext_core import p, r
 
 
 def ensure_non_empty(value: str) -> p.Result[str]:
+    """Reject empty values with a failure result.
+
+    Returns:
+        The resulting ``p.Result[str]``.
+
+    """
     if not value:
         return r[str].fail("empty_value")
     return r[str].ok(value)
 
 
-assert ensure_non_empty("ok").success
-assert ensure_non_empty("").failure
+kept_value = ensure_non_empty("ok")
+rejected_value = ensure_non_empty("")
+if not kept_value.success:
+    message = "Expected non-empty value success"
+    raise RuntimeError(message)
+if not rejected_value.failure:
+    message = "Expected empty value failure"
+    raise RuntimeError(message)
 ```
 
 ## Example: Runtime wiring
@@ -42,5 +54,7 @@ settings = FlextSettings.fetch_global()
 _ = container.bind("settings", settings)
 
 resolved = container.resolve("settings")
-assert resolved.success
+if not resolved.success:
+    message = "Expected bound settings resolution success"
+    raise RuntimeError(message)
 ```

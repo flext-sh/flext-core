@@ -43,7 +43,9 @@ with redirect_stdout(stream):
         time.monotonic() < deadline and "application_started" not in stream.getvalue()
     ):
         time.sleep(0.01)
-    assert "application_started" in stream.getvalue()
+    if "application_started" not in stream.getvalue():
+        message = "Expected application_started log record"
+        raise RuntimeError(message)
 
 _ = FlextUtilitiesLogging.unbind_global_context("service", "environment")
 ```
@@ -71,7 +73,7 @@ from flext_core import FlextUtilitiesLogging
 
 scope = "request"
 _ = FlextUtilitiesLogging.bind_context(
-    scope=scope, request_id="req-123", user_id="u-42"
+    scope=scope, request_id="req-123", user_id="u-42",
 )
 
 stream = io.StringIO()
@@ -81,7 +83,9 @@ with redirect_stdout(stream):
     deadline = time.monotonic() + 0.25
     while time.monotonic() < deadline and "request_started" not in stream.getvalue():
         time.sleep(0.01)
-    assert "request_started" in stream.getvalue()
+    if "request_started" not in stream.getvalue():
+        message = "Expected request_started log record"
+        raise RuntimeError(message)
 
 _ = FlextUtilitiesLogging.clear_scope(scope)
 ```
@@ -100,7 +104,7 @@ from contextlib import redirect_stdout
 from flext_core import FlextUtilitiesLogging
 
 _ = FlextUtilitiesLogging.bind_global_context(
-    internal_state="cache-miss", debug_trace="trace-xyz"
+    internal_state="cache-miss", debug_trace="trace-xyz",
 )
 
 stream = io.StringIO()
@@ -111,7 +115,9 @@ with redirect_stdout(stream):
     deadline = time.monotonic() + 0.25
     while time.monotonic() < deadline and "info_message" not in stream.getvalue():
         time.sleep(0.01)
-    assert "info_message" in stream.getvalue()
+    if "info_message" not in stream.getvalue():
+        message = "Expected info_message log record"
+        raise RuntimeError(message)
 
 _ = FlextUtilitiesLogging.clear_global_context()
 ```
@@ -131,9 +137,15 @@ from flext_core import FlextUtilitiesLogging
 
 
 def handle_request(request_id: str, user_id: str) -> None:
+    """Log one request inside its correlation scope and clean up after.
+
+    Raises:
+        RuntimeError: When the expected log record never appears.
+
+    """
     scope = "request"
     _ = FlextUtilitiesLogging.bind_context(
-        scope=scope, request_id=request_id, user_id=user_id
+        scope=scope, request_id=request_id, user_id=user_id,
     )
     try:
         stream = io.StringIO()
@@ -146,7 +158,9 @@ def handle_request(request_id: str, user_id: str) -> None:
                 and "request_processing" not in stream.getvalue()
             ):
                 time.sleep(0.01)
-            assert "request_processing" in stream.getvalue()
+            if "request_processing" not in stream.getvalue():
+                message = "Expected request_processing log record"
+                raise RuntimeError(message)
     finally:
         _ = FlextUtilitiesLogging.clear_scope(scope)
 

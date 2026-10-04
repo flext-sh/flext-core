@@ -20,6 +20,11 @@
 from examples.ex_04_flext_dispatcher import Ex04DispatchDsl
 
 result = Ex04DispatchDsl.run()
-assert result.success
-assert result.value == "pong:dispatcher-example"
+expected_value = "pong:dispatcher-example"
+if not result.success:
+    message = "Expected dispatcher success"
+    raise RuntimeError(message)
+if result.value != expected_value:
+    message = "Unexpected dispatcher value"
+    raise RuntimeError(message)
 ```
