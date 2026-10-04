@@ -29,6 +29,7 @@ if TYPE_CHECKING:
     from flext_core.api import FlextApi, core
     from flext_core.base import FlextBase
     from flext_core.cli import FlextCli
+    from flext_core.config_sources import StrictYamlConfigSource
     from flext_core.constants import FlextConstants, FlextConstantsEnforcement, c
     from flext_core.container import FlextContainer
     from flext_core.context import FlextContext
@@ -85,6 +86,7 @@ __all__: tuple[str, ...] = (
     "FlextUtilities",
     "FlextUtilitiesLogging",
     "FlextUtilitiesRuntimeViolationRegistry",
+    "StrictYamlConfigSource",
     "__author__",
     "__author_email__",
     "__description__",
@@ -122,6 +124,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".api": ("FlextApi", "core"),
             ".base": ("FlextBase",),
             ".cli": ("FlextCli",),
+            ".config_sources": ("StrictYamlConfigSource",),
             ".constants": ("FlextConstants", "FlextConstantsEnforcement", "c"),
             ".container": ("FlextContainer",),
             ".context": ("FlextContext",),
