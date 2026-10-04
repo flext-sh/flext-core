@@ -108,7 +108,9 @@ class TestsFlextCorePydanticDeclarations:
     @staticmethod
     def test_secret_str_field_hides_value_and_round_trips() -> None:
         round_trip_value = "s3cret"
-        credentials = TestsFlextCorePydanticDeclarations._Credentials(token=round_trip_value)
+        credentials = TestsFlextCorePydanticDeclarations._Credentials(
+            token=round_trip_value,
+        )
 
         assert isinstance(credentials.token, t.SecretStr)
         assert credentials.token.get_secret_value() == "s3cret"
@@ -151,6 +153,16 @@ class TestsFlextCorePydanticDeclarations:
         )
 
         assert box.model_dump() == {"item": {"name": "flext", "detail": "advanced"}}
+
+    @staticmethod
+    def test_type_adapter_constructor_validates_python_values() -> None:
+        """The public facade constructor is pydantic's TypeAdapter."""
+        sample_value = 7
+        adapter: m.TypeAdapter[int] = u.TypeAdapter(int)
+        validated = adapter.validate_python(sample_value)
+
+        assert validated == sample_value
+        assert u.type_adapter is u.TypeAdapter
 
     @staticmethod
     def test_fail_fast_reports_only_the_first_list_error() -> None:
