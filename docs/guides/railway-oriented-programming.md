@@ -716,7 +716,20 @@ from flext_core import d, m, p
 class AttemptState(p.Base, Protocol):
     """Mutable attempt count consumed by the retry operation."""
 
-    count: int
+    @property
+    def count(self) -> int:
+        """Read the completed attempt count.
+
+        Returns:
+            The completed attempt count.
+
+        """
+        ...
+
+    @count.setter
+    def count(self, value: int) -> None:
+        """Write the completed attempt count."""
+        ...
 
 
 class RetryState(m.StrictModel):

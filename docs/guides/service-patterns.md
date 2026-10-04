@@ -286,8 +286,10 @@ if not pinged.success or pinged.value != greeter.ping_response:
 - Annotations are resolved without `eval`. The module declares
   `from __future__ import annotations`, so each annotation is a string that is parsed;
   its dotted name resolves the first part in the module namespace of the method and the
-  rest by attribute. A request model imported only under `TYPE_CHECKING` is unbound at
-  runtime and fails: import it at module runtime.
+  rest by attribute. In the current request-bearing path, a concrete schema imported
+  only under `TYPE_CHECKING` remains unbound and discovery fails. This describes the
+  existing schema/annotation coupling, not a recommended consumer signature; its
+  separation from the carrier protocol remains an owner defect.
 - A malformed operation raises `TypeError` naming the operation, the annotation, the
   module and the fix: an async or generic method, `*args`, `**kwargs`, keyword-only
   parameters or defaults, more than one request, a missing docstring, a request that is
