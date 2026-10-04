@@ -204,9 +204,7 @@ class FlextTypesTypeAdapters:
 
     @classmethod
     @cache
-    def structlog_processor_adapter(
-        cls,
-    ) -> tp.TypeAdapter[Callable[..., tp.JsonValue]]:
+    def structlog_processor_adapter(cls) -> tp.TypeAdapter[Callable[..., tp.JsonValue]]:
         return TypeAdapter(Callable[..., tp.JsonValue])
 
 

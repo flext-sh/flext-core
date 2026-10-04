@@ -12,11 +12,11 @@ from typing import TYPE_CHECKING, ClassVar
 from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_01 import (
     FlextConstantsEnforcementEnums,
 )
+from flext_core._typings.base import FlextTypingBase as t
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from flext_core import t
 
 
 class FlextConstantsEnforcementRuntime:

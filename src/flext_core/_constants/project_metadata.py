@@ -7,9 +7,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
+from flext_core._typings.base import FlextTypingBase as t
 
-if TYPE_CHECKING:
-    from flext_core import t
 
 
 class FlextConstantsProjectMetadata:
@@ -17,10 +16,10 @@ class FlextConstantsProjectMetadata:
 
     # NOTE (multi-agent, mro-wkii.17.23 / agent: uv_overlay_owner): immutable
     # pairs replace the model-less mapping while retaining the naming policy.
-    SPECIAL_NAME_OVERRIDES: ClassVar[t.StrPairTuple] = (
+    SPECIAL_NAME_OVERRIDES: Final[t.StrPairTuple] = (
         ("flext", "FlextRoot"),
         ("flext-core", "Flext"),
     )
-    PYPROJECT_FILENAME: ClassVar[str] = "pyproject.toml"
-    PROJECT_VERSION_PLACEHOLDER: ClassVar[str] = "0.0.0"
-    METADATA_SCHEMA_VERSION_DEFAULT: ClassVar[str] = "1.0.0"
+    PYPROJECT_FILENAME: Final[str] = "pyproject.toml"
+    PROJECT_VERSION_PLACEHOLDER: Final[str] = "0.0.0"
+    METADATA_SCHEMA_VERSION_DEFAULT: Final[str] = "1.0.0"

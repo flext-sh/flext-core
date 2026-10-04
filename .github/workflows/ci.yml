@@ -191,8 +191,8 @@ jobs:
           candidate_status="$(git status --porcelain --untracked-files=all --ignore-submodules=none)"
           test -z "$candidate_status"
 
-      # Setup installs frozen from the committed uv.lock (`uv sync --locked`)
-      # and never rewrites it; the deps audit proves that locked graph.
+      # Setup installs the committed uv.lock and never rewrites it (only
+      # `make upg` does); the deps audit proves that locked graph.
       - name: deps check (blocking)
         run: CI=Y make audit
 
@@ -200,9 +200,9 @@ jobs:
         # Why: explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
         run: CI=Y make check
         # Fast partition only, derived from the gate registry kind:
-        # lint security markdown duplication.
+        # lint security markdown duplication loc-cap runtime-census fresh-import index-declarations codemod layout direnv.
         # Type checkers and flext-infra validators block locally and at
-        # pre-push (CI=N runs pyrefly mypy pyright loc-cap runtime-census fresh-import index-declarations codemod layout direnv).
+        # pre-push (CI=N runs pyrefly mypy pyright).
 
       - name: test (blocking)
         # Why: explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
