@@ -214,7 +214,12 @@ A public instance method declared below `FlextService` is an operation. It takes
 or exactly one Pydantic request model, returns `p.Result[...]` and has a one-line
 docstring, which is its summary. `u.service_operations(Service)` discovers the
 operations of a service class and returns frozen `m.ServiceOperation` values (`name`,
-`summary`, `request`), sorted by name:
+`summary`, `request`), sorted by name.
+
+The example below discovers no-input operations with constructor-supplied data.
+Request-bearing discovery currently binds the request schema to a concrete model
+annotation; schema/carrier separation is not implemented. That boundary still needs
+owner alignment with the fleet typing rule, rather than a protocol or alias workaround.
 
 ```python
 from __future__ import annotations
@@ -222,34 +227,30 @@ from __future__ import annotations
 from flext_core import m, p, r, s, u
 
 
-class GreetRequest(m.Value):
-    """Greeting input."""
-
-    name: str = m.Field(description="Name to greet.")
-
-
 class GreeterService(s[str]):
     """Greet people."""
 
-    @staticmethod
-    def greet(request: GreetRequest) -> p.Result[str]:
+    greeting: str = m.Field(description="Greeting supplied by the composition root.")
+    name: str = m.Field(description="Name supplied by the composition root.")
+    ping_response: str = m.Field(description="Liveness response supplied by the root.")
+
+    def greet(self) -> p.Result[str]:
         """Greet a person by name.
 
         Returns:
             The resulting ``p.Result[str]``.
 
         """
-        return r[str].ok(f"hello {request.name}")
+        return r[str].ok(f"{self.greeting} {self.name}")
 
-    @staticmethod
-    def ping() -> p.Result[str]:
+    def ping(self) -> p.Result[str]:
         """Answer a liveness ping.
 
         Returns:
             The resulting ``p.Result[str]``.
 
         """
-        return r[str].ok("pong")
+        return r[str].ok(self.ping_response)
 
 
 operations = u.service_operations(GreeterService)
@@ -257,15 +258,22 @@ expected_names = ["greet", "ping"]
 if [op.name for op in operations] != expected_names:
     message = "Unexpected discovered operation names"
     raise RuntimeError(message)
-if operations[0].request is not GreetRequest:
-    message = "Unexpected greet request type"
-    raise RuntimeError(message)
-if operations[1].request is not None:
-    message = "Expected ping to declare no request model"
+if any(op.request is not None for op in operations):
+    message = "Expected no-input operations to declare no request model"
     raise RuntimeError(message)
 expected_summary = "Answer a liveness ping."
 if operations[1].summary != expected_summary:
     message = "Unexpected ping summary"
+    raise RuntimeError(message)
+
+greeter = GreeterService(greeting="hello", name="Ada", ping_response="pong")
+greeted = greeter.greet()
+if not greeted.success or greeted.value != f"{greeter.greeting} {greeter.name}":
+    message = "Unexpected greeting result"
+    raise RuntimeError(message)
+pinged = greeter.ping()
+if not pinged.success or pinged.value != greeter.ping_response:
+    message = "Unexpected liveness response"
     raise RuntimeError(message)
 ```
 
@@ -278,8 +286,10 @@ if operations[1].summary != expected_summary:
 - Annotations are resolved without `eval`. The module declares
   `from __future__ import annotations`, so each annotation is a string that is parsed;
   its dotted name resolves the first part in the module namespace of the method and the
-  rest by attribute. A request model imported only under `TYPE_CHECKING` is unbound at
-  runtime and fails: import it at module runtime.
+  rest by attribute. In the current request-bearing path, a concrete schema imported
+  only under `TYPE_CHECKING` remains unbound and discovery fails. This describes the
+  existing schema/annotation coupling, not a recommended consumer signature; its
+  separation from the carrier protocol remains an owner defect.
 - A malformed operation raises `TypeError` naming the operation, the annotation, the
   module and the fix: an async or generic method, `*args`, `**kwargs`, keyword-only
   parameters or defaults, more than one request, a missing docstring, a request that is

@@ -589,31 +589,53 @@ if passed.value != expected_items:
 
 from __future__ import annotations
 
-from flext_core import p, r
+from typing import Protocol
+
+from flext_core import m, p, r
 
 
-def create_connection() -> dict[str, int]:
+class ResourcePort(p.Base, Protocol):
+    """Read-only identifier consumed by the resource operation."""
+
+    @property
+    def identifier(self) -> int:
+        """Read the resource identifier.
+
+        Returns:
+            The resource identifier.
+
+        """
+        ...
+
+
+class Connection(m.Value):
+    """Validated resource identifier passed between the callbacks."""
+
+    identifier: int = m.Field(description="Identifier of the example connection.")
+
+
+def create_connection() -> ResourcePort:
     """Create the resource used by the operation callback.
 
     Returns:
-        The resulting ``dict[str, int]``.
+        The resulting ``ResourcePort``.
 
     """
     resource_identifier = 10
-    return {"id": resource_identifier}
+    return Connection(identifier=resource_identifier)
 
 
-def use_connection(conn: dict[str, int]) -> p.Result[int]:
+def use_connection(conn: ResourcePort) -> p.Result[int]:
     """Use the resource and return the extracted identifier as a result.
 
     Returns:
         The resulting ``p.Result[int]``.
 
     """
-    return r[int].ok(conn["id"])
+    return r[int].ok(conn.identifier)
 
 
-def close_connection(_conn: dict[str, int]) -> None:
+def close_connection(_conn: ResourcePort) -> None:
     """Close the resource used by the example."""
 
 
@@ -678,23 +700,52 @@ if fail_result.error_code != expected_error_code:
 When retries exhaust, `@d.retry` raises `e.FlextTimeoutError`; with outer `@d.railway`,
 the exception is converted back into `p.Result[T]`.
 
+This example verifies the result and attempt count. Log levels, destinations, and
+delivery timing remain the logging owner's configuration, not retry expectations.
+
 ```python
 """Combine retry and railway decorators."""
 
 from __future__ import annotations
 
-import io
-import time
-from contextlib import redirect_stdout
+from typing import Protocol
 
-from flext_core import d
+from flext_core import d, m, p
 
-attempts = {"count": 0}
+
+class AttemptState(p.Base, Protocol):
+    """Mutable attempt count consumed by the retry operation."""
+
+    @property
+    def count(self) -> int:
+        """Read the completed attempt count.
+
+        Returns:
+            The completed attempt count.
+
+        """
+        ...
+
+    @count.setter
+    def count(self, value: int) -> None:
+        """Write the completed attempt count."""
+        ...
+
+
+class RetryState(m.StrictModel):
+    """Validated attempt count supplied to the operation."""
+
+    count: int = m.Field(default=0, ge=0, description="Completed operation attempts.")
+
+
+expected_attempts = 3
+expected_value = 123
+attempts: AttemptState = RetryState()
 
 
 @d.railway(error_code="RETRY_EXAMPLE")
-@d.retry(max_attempts=3, delay_seconds=0.01, backoff_strategy="linear")
-def flaky_operation() -> int:
+@d.retry(max_attempts=expected_attempts, delay_seconds=0.01, backoff_strategy="linear")
+def flaky_operation(state: AttemptState, required_attempts: int, value: int) -> int:
     """Fail twice before returning a stable value.
 
     Returns:
@@ -704,33 +755,21 @@ def flaky_operation() -> int:
         RuntimeError: While the attempt count is still below the threshold.
 
     """
-    attempts["count"] += 1
-    required_attempts = 3
-    if attempts["count"] < required_attempts:
+    state.count += 1
+    if state.count < required_attempts:
         message = "transient_error"
         raise RuntimeError(message)
-    return 123
+    return value
 
 
-stream = io.StringIO()
-with redirect_stdout(stream):
-    result = flaky_operation()
-    deadline = time.monotonic() + 0.25
-    while time.monotonic() < deadline and "retry_attempt" not in stream.getvalue():
-        time.sleep(0.01)
-    if "retry_attempt" not in stream.getvalue():
-        message = "Expected retry_attempt log record"
-        raise RuntimeError(message)
-
-expected_value = 123
-expected_attempts = 3
+result = flaky_operation(attempts, expected_attempts, expected_value)
 if not result.success:
     message = "Expected retry success"
     raise RuntimeError(message)
 if result.value != expected_value:
     message = "Unexpected retry result value"
     raise RuntimeError(message)
-if attempts["count"] != expected_attempts:
+if attempts.count != expected_attempts:
     message = "Unexpected retry attempt count"
     raise RuntimeError(message)
 ```
