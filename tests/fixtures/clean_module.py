@@ -54,7 +54,8 @@ class TestsFlextCleanModels:
                 """Frozen value object."""
 
                 model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-                    frozen=True, extra="forbid"
+                    frozen=True,
+                    extra="forbid",
                 )
 
                 id: Annotated[str, u.Field(description="Opaque value identifier.")]
@@ -87,7 +88,8 @@ class TestsFlextCleanProtocols:
             class GoodProtocol(Protocol):
                 """Runtime-checkable protocol."""
 
-                def run(self) -> None:
+                @staticmethod
+                def run() -> None:
                     """Execute the clean protocol behavior."""
                     ...
 
@@ -95,6 +97,12 @@ class TestsFlextCleanProtocols:
 class TestsFlextCleanServiceBase:
     """Clean facade stub with no enforcement-triggering MRO requirements."""
 
-    def execute(self) -> p.Result[bool]:
-        """Return a stable success result for enforcement import tests."""
+    @staticmethod
+    def execute() -> p.Result[bool]:
+        """Return a stable success result for enforcement import tests.
+
+        Returns:
+            A stable success result for enforcement import tests.
+
+        """
         return r[bool].ok(True)

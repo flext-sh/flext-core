@@ -1,4 +1,8 @@
-"""Lifecycle service integration cases kept below module LOC cap."""
+"""Lifecycle service integration cases kept below module LOC cap.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -7,9 +11,8 @@ from typing import TYPE_CHECKING
 import pytest
 from flext_tests import tm
 
+from tests.integration.service_fixtures import TestsFlextFlextServiceFixtures
 from tests.utilities import u
-
-from .service_fixtures import TestsFlextFlextServiceFixtures
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -33,7 +36,9 @@ class TestsFlextFlextServiceLifecycleCases(TestsFlextFlextServiceFixtures):
         """Test lifecycle service initialization with settings."""
         lifecycle_service = self.LifecycleService()
         service_config = self._build_service_config(
-            name="test_service", version="1.0.0", temp_dir=str(temp_dir)
+            name="test_service",
+            version="1.0.0",
+            temp_dir=str(temp_dir),
         )
         result = lifecycle_service.initialize(service_config)
         _ = u.Tests.assert_success(result)
@@ -47,7 +52,9 @@ class TestsFlextFlextServiceLifecycleCases(TestsFlextFlextServiceFixtures):
         """Test lifecycle service health check."""
         lifecycle_service = self.LifecycleService()
         service_config = self._build_service_config(
-            name="test_service", version="1.0.0", temp_dir=str(temp_dir)
+            name="test_service",
+            version="1.0.0",
+            temp_dir=str(temp_dir),
         )
         health_before = lifecycle_service.health_check()
         _ = lifecycle_service.initialize(service_config)
@@ -60,7 +67,9 @@ class TestsFlextFlextServiceLifecycleCases(TestsFlextFlextServiceFixtures):
         """Test lifecycle service shutdown."""
         lifecycle_service = self.LifecycleService()
         service_config = self._build_service_config(
-            name="test_service", version="1.0.0", temp_dir=str(temp_dir)
+            name="test_service",
+            version="1.0.0",
+            temp_dir=str(temp_dir),
         )
         _ = lifecycle_service.initialize(service_config)
         result = lifecycle_service.shutdown()
@@ -74,7 +83,9 @@ class TestsFlextFlextServiceLifecycleCases(TestsFlextFlextServiceFixtures):
         """Test lifecycle service failure modes."""
         lifecycle_service = self.LifecycleService()
         service_config = self._build_service_config(
-            name="test_service", version="1.0.0", temp_dir=str(temp_dir)
+            name="test_service",
+            version="1.0.0",
+            temp_dir=str(temp_dir),
         )
         lifecycle_service.configure_failure_mode(fail_init=True)
         init_result = lifecycle_service.initialize(service_config)

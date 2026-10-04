@@ -11,13 +11,12 @@ from types import MappingProxyType
 from typing import Annotated, Self
 
 from flext_core import c, t
-
-from ...base import FlextModelsBase
-from ...containers import FlextModelsContainers
-from ...pydantic import FlextModelsPydantic as mp
-from .flextmodelscontextscope_part_01 import (
+from flext_core._models._context.__scope_parts.flextmodelscontextscope_part_01 import (
     FlextModelsContextScope as FlextModelsContextScopePart01,
 )
+from flext_core._models.base import FlextModelsBase
+from flext_core._models.containers import FlextModelsContainers
+from flext_core._models.pydantic import FlextModelsPydantic as mp
 
 
 class FlextModelsContextScope(FlextModelsContextScopePart01):
@@ -35,14 +34,15 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
             t.ContextHookMap,
             mp.Field(
                 default_factory=lambda: MappingProxyType(
-                    dict[str, t.SequenceOf[t.ContextHookCallable]]()
+                    dict[str, t.SequenceOf[t.ContextHookCallable]](),
                 ),
                 description="Lifecycle hooks keyed by event name",
             ),
         ] = mp.Field(
             default_factory=lambda: MappingProxyType[
-                str, t.SequenceOf[t.ContextHookCallable]
-            ]({})
+                str,
+                t.SequenceOf[t.ContextHookCallable],
+            ]({}),
         )
         statistics: Annotated[
             FlextModelsContextScopePart01.ContextStatistics,
@@ -54,7 +54,8 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
         active: Annotated[
             bool,
             mp.Field(
-                default=True, description="Whether the context accepts operations"
+                default=True,
+                description="Whether the context accepts operations",
             ),
         ] = True
         suspended: Annotated[
@@ -66,28 +67,36 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
         ] = False
         scope_vars: Annotated[
             t.MappingKV[
-                str, contextvars.ContextVar[FlextModelsContainers.ConfigMap | None]
+                str,
+                contextvars.ContextVar[FlextModelsContainers.ConfigMap | None],
             ],
             mp.Field(
                 default_factory=lambda: MappingProxyType(
                     dict[
                         str,
                         contextvars.ContextVar[FlextModelsContainers.ConfigMap | None],
-                    ]()
+                    ](),
                 ),
                 description="ContextVar registry keyed by scope name",
             ),
         ] = mp.Field(
             default_factory=lambda: MappingProxyType[
-                str, contextvars.ContextVar[FlextModelsContainers.ConfigMap | None]
-            ]({})
+                str,
+                contextvars.ContextVar[FlextModelsContainers.ConfigMap | None],
+            ]({}),
         )
 
         @classmethod
         def create_default(
-            cls, metadata: FlextModelsBase.Metadata | None = None
+            cls,
+            metadata: FlextModelsBase.Metadata | None = None,
         ) -> Self:
-            """Create default runtime state with canonical built-in scopes."""
+            """Create default runtime state with canonical built-in scopes.
+
+            Returns:
+                The resulting ``Self``.
+
+            """
             global_scope_var: contextvars.ContextVar[
                 FlextModelsContainers.ConfigMap | None
             ] = contextvars.ContextVar("flext_global_context", default=None)
@@ -112,11 +121,19 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
             )
 
         def resolve_scope_var(
-            self, scope: str
+            self,
+            scope: str,
         ) -> tuple[
-            Self, contextvars.ContextVar[FlextModelsContainers.ConfigMap | None]
+            Self,
+            contextvars.ContextVar[FlextModelsContainers.ConfigMap | None],
         ]:
-            """Resolve an existing scope var or create one immutably."""
+            """Resolve an existing scope var or create one immutably.
+
+            Returns:
+                The resulting ``tuple[Self,
+                    contextvars.ContextVar[FlextModelsContainers.ConfigMap | None]]``.
+
+            """
             existing = self.scope_vars.get(scope)
             if existing is not None:
                 return self, existing
@@ -124,16 +141,22 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
                 FlextModelsContainers.ConfigMap | None
             ] = contextvars.ContextVar(f"flext_{scope}_context", default=None)
             updated_scope_vars: dict[
-                str, contextvars.ContextVar[FlextModelsContainers.ConfigMap | None]
+                str,
+                contextvars.ContextVar[FlextModelsContainers.ConfigMap | None],
             ] = dict(self.scope_vars)
             updated_scope_vars[scope] = scope_var
             updated_state: Self = self.model_copy(
-                update={"scope_vars": updated_scope_vars}
+                update={"scope_vars": updated_scope_vars},
             )
             return updated_state, scope_var
 
         def with_operation_update(self, operation: str) -> Self:
-            """Increment canonical statistics for the given operation."""
+            """Increment canonical statistics for the given operation.
+
+            Returns:
+                The resulting ``Self``.
+
+            """
             counter_attr = f"{operation}s"
             statistics_updates: dict[str, t.JsonPayload] = {}
             current_statistics = self.statistics
@@ -157,10 +180,10 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
             if not statistics_updates:
                 return self
             updated_statistics = current_statistics.model_copy(
-                update=statistics_updates
+                update=statistics_updates,
             )
             updated_state: Self = self.model_copy(
-                update={"statistics": updated_statistics}
+                update={"statistics": updated_statistics},
             )
             return updated_state
 

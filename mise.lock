@@ -128,6 +128,47 @@ checksum = "sha256:d96fc8b7cf020c2d4c1dbbc2ccec5fd1cab05b51c491f02c8527a7fa6c50a
 url = "https://github.com/direnv/direnv/releases/download/v2.37.1/direnv.windows-amd64"
 url_api = "https://api.github.com/repos/direnv/direnv/releases/assets/274610569"
 
+[[tools."github:kucherenko/jscpd"]]
+version = "5.3.2"
+backend = "github:kucherenko/jscpd"
+specifiers = ["5.3.2"]
+
+[tools."github:kucherenko/jscpd"."platforms.linux-arm64"]
+checksum = "sha256:ddf336de86eb7e26632062a01e751417f6579b4422e9156aa3836fdab1d0265d"
+url = "https://github.com/kucherenko/jscpd/releases/download/v5.3.2/jscpd-linux-arm64-gnu.tar.gz"
+url_api = "https://api.github.com/repos/kucherenko/jscpd/releases/assets/583634217"
+provenance = "github-attestations"
+
+[tools."github:kucherenko/jscpd"."platforms.linux-x64"]
+checksum = "sha256:97259f222ea7f6d51a0f2faa98ed5889430233e0fb8d2c129f23d84aff4b93b2"
+url = "https://github.com/kucherenko/jscpd/releases/download/v5.3.2/jscpd-linux-x64-gnu.tar.gz"
+url_api = "https://api.github.com/repos/kucherenko/jscpd/releases/assets/583634214"
+provenance = "github-attestations"
+
+[tools."github:kucherenko/jscpd"."platforms.linux-x64-musl"]
+checksum = "sha256:bfae3e3cfc18040a044d2dada4c9d99761a9953d08c509c41a2eb5bfafef8309"
+url = "https://github.com/kucherenko/jscpd/releases/download/v5.3.2/jscpd-linux-x64-musl.tar.gz"
+url_api = "https://api.github.com/repos/kucherenko/jscpd/releases/assets/583634242"
+provenance = "github-attestations"
+
+[tools."github:kucherenko/jscpd"."platforms.macos-arm64"]
+checksum = "sha256:c629e1d2c7a6c41230a0f3bdd72d5ee69996013527a19eabbb5f0e845249dfbc"
+url = "https://github.com/kucherenko/jscpd/releases/download/v5.3.2/jscpd-darwin-arm64.tar.gz"
+url_api = "https://api.github.com/repos/kucherenko/jscpd/releases/assets/583634218"
+provenance = "github-attestations"
+
+[tools."github:kucherenko/jscpd"."platforms.macos-x64"]
+checksum = "sha256:435ae3f0c4d6256ac84199494c45c31fc04ba1165358151c2c1a1b036f1c523d"
+url = "https://github.com/kucherenko/jscpd/releases/download/v5.3.2/jscpd-darwin-x64.tar.gz"
+url_api = "https://api.github.com/repos/kucherenko/jscpd/releases/assets/583634215"
+provenance = "github-attestations"
+
+[tools."github:kucherenko/jscpd"."platforms.windows-x64"]
+checksum = "sha256:165778418ef43d754d42ec014bb56f609b167655449ad17ed00f9ed05cee2441"
+url = "https://github.com/kucherenko/jscpd/releases/download/v5.3.2/jscpd-windows-x64-msvc.tar.gz"
+url_api = "https://api.github.com/repos/kucherenko/jscpd/releases/assets/583634243"
+provenance = "github-attestations"
+
 [[tools."github:microsoft/waza"]]
 version = "0.38.7"
 backend = "github:microsoft/waza"
@@ -165,6 +206,47 @@ url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/520984885
 checksum = "sha256:451d05c510341019e71c8e94d2ff4ed9f809f8f198bcf5fc31ab31038c5076c9"
 url = "https://github.com/microsoft/waza/releases/download/v0.38.7/waza-windows-amd64.exe"
 url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/520984898"
+
+[[tools."github:qltysh/qlty"]]
+version = "0.645.0"
+backend = "github:qltysh/qlty"
+specifiers = ["0.645.0"]
+
+[tools."github:qltysh/qlty"."platforms.linux-arm64"]
+checksum = "sha256:5e283bfe1cbb376b66e03cc10628aa10f8cf55eb38ad29a40dab9835f1077346"
+url = "https://github.com/qltysh/qlty/releases/download/v0.645.0/qlty-aarch64-unknown-linux-gnu.tar.xz"
+url_api = "https://api.github.com/repos/qltysh/qlty/releases/assets/584509804"
+provenance = "github-attestations"
+
+[tools."github:qltysh/qlty"."platforms.linux-x64"]
+checksum = "sha256:cc32b1f9c8f6ea365ece19c7da437663d11eb878cd5b0964b47c684db47037f1"
+url = "https://github.com/qltysh/qlty/releases/download/v0.645.0/qlty-x86_64-unknown-linux-gnu.tar.xz"
+url_api = "https://api.github.com/repos/qltysh/qlty/releases/assets/584509845"
+provenance = "github-attestations"
+
+[tools."github:qltysh/qlty"."platforms.linux-x64-musl"]
+checksum = "sha256:bd099788012cd6517e5dee152d8c68d20410834f794af51c3a3f92075c4e559e"
+url = "https://github.com/qltysh/qlty/releases/download/v0.645.0/qlty-x86_64-unknown-linux-musl.tar.xz"
+url_api = "https://api.github.com/repos/qltysh/qlty/releases/assets/584509854"
+provenance = "github-attestations"
+
+[tools."github:qltysh/qlty"."platforms.macos-arm64"]
+checksum = "sha256:18c27cb6c8a4ca3cf45375236dd102e7dcbb433a67235ef9ed8b4a67e15f0800"
+url = "https://github.com/qltysh/qlty/releases/download/v0.645.0/qlty-aarch64-apple-darwin.tar.xz"
+url_api = "https://api.github.com/repos/qltysh/qlty/releases/assets/584509806"
+provenance = "github-attestations"
+
+[tools."github:qltysh/qlty"."platforms.macos-x64"]
+checksum = "sha256:fe4ce76901da04fbb7c851edee91ffe0fe12bfcd0820135f418b02ca08112170"
+url = "https://github.com/qltysh/qlty/releases/download/v0.645.0/qlty-x86_64-apple-darwin.tar.xz"
+url_api = "https://api.github.com/repos/qltysh/qlty/releases/assets/584509820"
+provenance = "github-attestations"
+
+[tools."github:qltysh/qlty"."platforms.windows-x64"]
+checksum = "sha256:192db61f71d03369505b6f441ba1a13c63b34477548a7ae3202b2af041a065cc"
+url = "https://github.com/qltysh/qlty/releases/download/v0.645.0/qlty-x86_64-pc-windows-msvc.zip"
+url_api = "https://api.github.com/repos/qltysh/qlty/releases/assets/584509836"
+provenance = "github-attestations"
 
 [[tools.gitleaks]]
 version = "8.30.1"
@@ -453,10 +535,10 @@ specifiers = ["latest"]
 allow_builds = '["@ast-grep/cli"]'
 
 [[tools."npm:prettier"]]
-version = "3.5.3"
-aube = { path = ".mise/locks/npm-prettier/3.5.3", digest = "sha256:6d0a982291c7b0df742d82eeb58af64bc255d35cfc9238567e0438e647363113" }
+version = "3.9.9"
+aube = { path = ".mise/locks/npm-prettier/3.9.9", digest = "sha256:815f6667505e41ac2d03ecbac86b79f1beb78d45783879428193c9adc80760a3" }
 backend = "npm:prettier"
-specifiers = ["3.5.3"]
+specifiers = ["3.9.9"]
 
 [[tools.python]]
 version = "3.13.15"

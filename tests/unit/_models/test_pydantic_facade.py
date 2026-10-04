@@ -4,6 +4,9 @@ Exercises the public models facade contract for constraint, discrimination,
 fail-fast, instance, coercion and serializer annotations. Every symbol is
 consumed through ``m`` exactly as fleet consumers do: observable validation
 and serialization behavior only, never pydantic internals.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -13,6 +16,8 @@ from typing import Annotated, Literal
 import pytest
 
 from tests.models import m
+from tests.typings import t
+from tests.utilities import u
 
 
 class TestsFlextCorePydanticDeclarations:
@@ -32,7 +37,12 @@ class TestsFlextCorePydanticDeclarations:
             self.y = y
 
         def magnitude_squared(self) -> int:
-            """Squared length of the vector."""
+            """Squared length of the vector.
+
+            Returns:
+                The resulting ``int``.
+
+            """
             return self.x * self.x + self.y * self.y
 
     class _Cat(m.BaseModel):
@@ -74,7 +84,8 @@ class TestsFlextCorePydanticDeclarations:
     class _Greeter:
         """Plain runtime class guarded by InstanceOf."""
 
-        def hello(self) -> str:
+        @staticmethod
+        def hello() -> str:
             return "hello"
 
     class _GreetingCard(m.BaseModel):
@@ -87,7 +98,27 @@ class TestsFlextCorePydanticDeclarations:
 
         code: Annotated[str, m.StringConstraints(min_length=3, pattern=r"^[a-z]+$")]
 
-    def test_string_constraints_accept_valid_and_reject_invalid_values(self) -> None:
+    class _Credentials(m.BaseModel):
+        """Model whose secret field is declared through the typings facade."""
+
+        model_config = m.ConfigDict(frozen=True)
+
+        token: t.SecretStr
+
+    @staticmethod
+    def test_secret_str_field_hides_value_and_round_trips() -> None:
+        round_trip_value = "s3cret"
+        credentials = TestsFlextCorePydanticDeclarations._Credentials(token=round_trip_value)
+
+        assert isinstance(credentials.token, t.SecretStr)
+        assert credentials.token.get_secret_value() == "s3cret"
+        assert "s3cret" not in repr(credentials)
+
+        with pytest.raises(m.ValidationError):
+            TestsFlextCorePydanticDeclarations._Credentials.model_validate({})
+
+    @staticmethod
+    def test_string_constraints_accept_valid_and_reject_invalid_values() -> None:
         assert TestsFlextCorePydanticDeclarations._Constrained(code="abc").code == "abc"
 
         with pytest.raises(m.ValidationError):
@@ -96,9 +127,10 @@ class TestsFlextCorePydanticDeclarations:
         with pytest.raises(m.ValidationError):
             TestsFlextCorePydanticDeclarations._Constrained(code="ABC")
 
-    def test_discriminator_resolves_union_member_from_tag(self) -> None:
+    @staticmethod
+    def test_discriminator_resolves_union_member_from_tag() -> None:
         pet = TestsFlextCorePydanticDeclarations._Pet.model_validate({
-            "animal": {"kind": "dog", "bark": "woof"}
+            "animal": {"kind": "dog", "bark": "woof"},
         })
 
         assert isinstance(pet.animal, TestsFlextCorePydanticDeclarations._Dog)
@@ -106,21 +138,24 @@ class TestsFlextCorePydanticDeclarations:
 
         with pytest.raises(m.ValidationError):
             TestsFlextCorePydanticDeclarations._Pet.model_validate({
-                "animal": {"kind": "cow", "moo": "moo"}
+                "animal": {"kind": "cow", "moo": "moo"},
             })
 
-    def test_serialize_as_any_keeps_subclass_fields_in_dump(self) -> None:
+    @staticmethod
+    def test_serialize_as_any_keeps_subclass_fields_in_dump() -> None:
         box = TestsFlextCorePydanticDeclarations._Box(
             item=TestsFlextCorePydanticDeclarations._DetailedItem(
-                name="flext", detail="advanced"
-            )
+                name="flext",
+                detail="advanced",
+            ),
         )
 
         assert box.model_dump() == {"item": {"name": "flext", "detail": "advanced"}}
 
-    def test_fail_fast_reports_only_the_first_list_error(self) -> None:
-        adapter: m.TypeAdapter[list[int]] = m.TypeAdapter(
-            Annotated[list[int], m.FailFast()]
+    @staticmethod
+    def test_fail_fast_reports_only_the_first_list_error() -> None:
+        adapter: m.TypeAdapter[list[int]] = u.type_adapter(
+            Annotated[list[int], m.FailFast()],
         )
 
         assert adapter.validate_python([1, 2]) == [1, 2]
@@ -130,7 +165,8 @@ class TestsFlextCorePydanticDeclarations:
 
         assert len(exc_info.value.errors()) == 1
 
-    def test_instance_of_accepts_instance_and_rejects_foreign_object(self) -> None:
+    @staticmethod
+    def test_instance_of_accepts_instance_and_rejects_foreign_object() -> None:
         greeter = TestsFlextCorePydanticDeclarations._Greeter()
         card = TestsFlextCorePydanticDeclarations._GreetingCard(payload=greeter)
 
@@ -139,18 +175,20 @@ class TestsFlextCorePydanticDeclarations:
         with pytest.raises(m.ValidationError):
             TestsFlextCorePydanticDeclarations._GreetingCard(payload=object())
 
-    def test_validate_as_builds_custom_type_from_native_model(self) -> None:
+    @staticmethod
+    def test_validate_as_builds_custom_type_from_native_model() -> None:
         adapter: m.TypeAdapter[TestsFlextCorePydanticDeclarations._Vector] = (
-            m.TypeAdapter(
+            u.type_adapter(
                 Annotated[
                     TestsFlextCorePydanticDeclarations._Vector,
                     m.ValidateAs(
                         TestsFlextCorePydanticDeclarations._VectorInput,
                         lambda validated: TestsFlextCorePydanticDeclarations._Vector(
-                            validated.x, validated.y
+                            validated.x,
+                            validated.y,
                         ),
                     ),
-                ]
+                ],
             )
         )
 

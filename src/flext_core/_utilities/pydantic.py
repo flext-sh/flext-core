@@ -15,6 +15,7 @@ from pydantic import (
     PlainSerializer,
     PlainValidator,
     SkipValidation,
+    TypeAdapter as PydanticTypeAdapter,
     WrapSerializer,
     WrapValidator,
     computed_field,
@@ -27,7 +28,7 @@ from pydantic import (
 )
 from pydantic_core import from_json, to_json, to_jsonable_python
 
-from .._models.pydantic import FlextModelsPydantic as mp
+from flext_core._models.pydantic import FlextModelsPydantic as mp
 
 
 class FlextUtilitiesPydantic:
@@ -50,11 +51,13 @@ class FlextUtilitiesPydantic:
     # Same unwrapped-class-attribute problem as Field/PrivateAttr above:
     # pyright binds the bare decorator through the facade and infers the
     # facade type for every decorated property (reportIndexIssue downstream).
+    # staticmethod also satisfies the Utilities layer method-shape census
+    # (public surface must be stateless static/class callables).
     computed_field = staticmethod(computed_field)
-    field_validator = field_validator
-    field_serializer = field_serializer
-    model_validator = model_validator
-    model_serializer = model_serializer
+    field_validator = staticmethod(field_validator)
+    field_serializer = staticmethod(field_serializer)
+    model_validator = staticmethod(model_validator)
+    model_serializer = staticmethod(model_serializer)
 
     AfterValidator = AfterValidator
     BeforeValidator = mp.BeforeValidator
@@ -63,12 +66,14 @@ class FlextUtilitiesPydantic:
     PlainSerializer = PlainSerializer
     WrapSerializer = WrapSerializer
 
-    ConfigDict = mp.ConfigDict
-    FieldSerializationInfo = mp.FieldSerializationInfo
-    TypeAdapter = mp.TypeAdapter
-    validate_call = validate_call
-    with_config = with_config
+    validate_call = staticmethod(validate_call)
+    with_config = staticmethod(with_config)
 
     from_json = from_json
     to_json = to_json
     to_jsonable_python = to_jsonable_python
+
+    # Adapter construction keeps pydantic's own constructor signature, which
+    # accepts every type form (classes, unions, ``Annotated`` and PEP 695
+    # aliases); ``m.TypeAdapter[T]`` is the matching annotation.
+    type_adapter = PydanticTypeAdapter

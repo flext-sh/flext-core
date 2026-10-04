@@ -11,6 +11,8 @@ from __future__ import annotations
 from importlib import import_module
 from typing import overload
 
+from pydantic import TypeAdapter
+
 from flext_core import c, e, p, r, t
 
 from .._models.base import FlextModelsBase as m
@@ -60,7 +62,8 @@ class FlextUtilitiesModel:
         Args:
             model: Pydantic model instance to serialize.
             options: Optional Pydantic model_dump arguments within the settings model.
-            **kwargs: Inline fallback serialization arguments mapped to ModelDumpOptions automatically.
+            **kwargs: Inline serialization options mapped to ModelDumpOptions;
+                invalid options fail loudly instead of silently falling back to defaults.
 
         Returns:
             Dictionary representation of the model.
@@ -68,7 +71,7 @@ class FlextUtilitiesModel:
         """
         opts = ua.resolve_options(
             options, kwargs, FlextUtilitiesModel.ModelDumpOptions
-        ).unwrap_or(FlextUtilitiesModel.ModelDumpOptions())
+        ).unwrap()
         opts_dict = opts.model_dump(exclude_none=True)
         dumped: t.JsonMapping = t.json_mapping_adapter().validate_python(
             model.model_dump(mode="json", **opts_dict)
@@ -136,9 +139,7 @@ class FlextUtilitiesModel:
     ) -> p.Result[TValue]:
         """Validate one value through a model class or TypeAdapter."""
         try:
-            adapter = (
-                target if isinstance(target, mp.TypeAdapter) else mp.TypeAdapter(target)
-            )
+            adapter = target if isinstance(target, TypeAdapter) else TypeAdapter(target)
             if from_json:
                 if not isinstance(data, c.STR_BINARY_TYPES):
                     return e.fail_validation(

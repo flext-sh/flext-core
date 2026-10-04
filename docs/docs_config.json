@@ -1,6 +1,6 @@
 {
   "audit": {
-    "placeholder_terms": [
+    "placeholder_patterns": [
       "TODO",
       "FIXME",
       "placeholder",

@@ -1,14 +1,20 @@
-"""Class placement, MRO, and protocol tree governance."""
+"""Class placement, MRO, and protocol tree governance.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from enum import EnumType
 
-from ...._constants.enforcement import FlextConstantsEnforcement as c
-from ...._models.enforcement import FlextModelsEnforcement as me
-from ...._typings.base import FlextTypingBase as t
-from ..helpers import FlextUtilitiesBeartypeHelpers as ubh
-from ..module_source import FlextUtilitiesBeartypeModuleSource
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._models.enforcement import FlextModelsEnforcement as me
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers as ubh
+from flext_core._utilities._beartype.module_source import (
+    FlextUtilitiesBeartypeModuleSource,
+)
 
 NO_VIOLATION: t.StrMapping | None = None
 BARE_VIOLATION: t.StrMapping = {}
@@ -20,9 +26,15 @@ class FlextUtilitiesBeartypeClassVisitor:
 
     @staticmethod
     def v_class_placement(
-        params: me.ClassPlacementParams, *args: type | str
+        params: me.ClassPlacementParams,
+        *args: type | str,
     ) -> t.StrMapping | None:
-        """CLASS_PLACEMENT — class-name / inner-class layer placement."""
+        """CLASS_PLACEMENT — class-name / inner-class layer placement.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+
+        """
         violation = NO_VIOLATION
         match args:
             case (value, layer) if (
@@ -54,7 +66,8 @@ class FlextUtilitiesBeartypeClassVisitor:
                     else NO_VIOLATION
                 )
             case (target, expected) if isinstance(target, type) and isinstance(
-                expected, str
+                expected,
+                str,
             ):
                 if params.check_nested:
                     parts = target.__qualname__.split(".")
@@ -79,9 +92,15 @@ class FlextUtilitiesBeartypeClassVisitor:
 
     @staticmethod
     def v_protocol_tree(
-        params: me.ProtocolTreeParams, value: type
+        params: me.ProtocolTreeParams,
+        value: type,
     ) -> t.StrMapping | None:
-        """PROTOCOL_TREE — inner-class kind + runtime_checkable governance."""
+        """PROTOCOL_TREE — inner-class kind + runtime_checkable governance.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+
+        """
         if params.require_inner_kind_protocol_or_namespace:
             if (
                 ubh.has_runtime_protocol_marker(value)

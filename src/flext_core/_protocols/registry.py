@@ -11,17 +11,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
-from flext_core import c
-
-from .base import FlextProtocolsBase
+from flext_core._constants.mixins import FlextConstantsMixins
+from flext_core._protocols.base import FlextProtocolsBase
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from flext_core import m, t
-
-    from .handler import FlextProtocolsHandler
-    from .result import FlextProtocolsResult
+    from flext_core._protocols.handler import FlextProtocolsHandler
+    from flext_core._protocols.result import FlextProtocolsResult
 
 
 class FlextProtocolsRegistry:
@@ -58,25 +56,30 @@ class FlextProtocolsRegistry:
         # --- handler registration ---
 
         def register(
-            self, name: str, service: t.RegistrablePlugin
+            self,
+            name: str,
+            service: t.RegistrablePlugin,
         ) -> FlextProtocolsResult.Result[bool]:
             """Register a service component."""
             ...
 
         def register_handler(
-            self, handler: t.DispatchableHandler
+            self,
+            handler: t.DispatchableHandler,
         ) -> FlextProtocolsResult.Result[m.RegistrationDetails]:
             """Register a handler instance or callable."""
             ...
 
         def register_handlers(
-            self, handlers: t.SequenceOf[t.DispatchableHandler]
+            self,
+            handlers: t.SequenceOf[t.DispatchableHandler],
         ) -> FlextProtocolsResult.Result[m.RegistrySummary]:
             """Register multiple handlers in batch."""
             ...
 
         def register_bindings(
-            self, bindings: t.MappingKV[t.RegistryBindingKey, t.DispatchableHandler]
+            self,
+            bindings: t.MappingKV[t.RegistryBindingKey, t.DispatchableHandler],
         ) -> FlextProtocolsResult.Result[m.RegistrySummary]:
             """Register message-to-handler bindings."""
             ...
@@ -91,7 +94,7 @@ class FlextProtocolsRegistry:
             *,
             validate: Callable[[t.RegistrablePlugin], FlextProtocolsResult.Result[bool]]
             | None = None,
-            scope: c.RegistrationScope = c.RegistrationScope.INSTANCE,
+            scope: FlextConstantsMixins.RegistrationScope = FlextConstantsMixins.RegistrationScope.INSTANCE,
         ) -> FlextProtocolsResult.Result[bool]:
             """Register a plugin with optional validation."""
             ...
@@ -101,7 +104,7 @@ class FlextProtocolsRegistry:
             category: str,
             name: str,
             *,
-            scope: c.RegistrationScope = c.RegistrationScope.INSTANCE,
+            scope: FlextConstantsMixins.RegistrationScope = FlextConstantsMixins.RegistrationScope.INSTANCE,
         ) -> FlextProtocolsResult.Result[bool]:
             """Unregister a plugin."""
             ...
@@ -111,7 +114,7 @@ class FlextProtocolsRegistry:
             category: str,
             name: str,
             *,
-            scope: c.RegistrationScope = c.RegistrationScope.INSTANCE,
+            scope: FlextConstantsMixins.RegistrationScope = FlextConstantsMixins.RegistrationScope.INSTANCE,
         ) -> FlextProtocolsResult.Result[t.JsonPayload | None]:
             """Get a registered plugin by category and name."""
             ...
@@ -120,7 +123,7 @@ class FlextProtocolsRegistry:
             self,
             category: str,
             *,
-            scope: c.RegistrationScope = c.RegistrationScope.INSTANCE,
+            scope: FlextConstantsMixins.RegistrationScope = FlextConstantsMixins.RegistrationScope.INSTANCE,
         ) -> FlextProtocolsResult.Result[t.StrSequence]:
             """List all plugins in a category."""
             ...

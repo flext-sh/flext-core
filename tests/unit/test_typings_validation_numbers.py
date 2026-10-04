@@ -4,6 +4,9 @@ Every assertion targets the observable public contract of the constrained
 type aliases exposed through ``t.*``: a ``m.TypeAdapter`` either returns the
 validated value unchanged (accept path) or raises ``c.ValidationError``
 (reject path). No implementation internals are inspected.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -14,6 +17,7 @@ from flext_tests import tm
 from tests.constants import c
 from tests.models import m
 from tests.typings import t
+from tests.utilities import u
 
 
 class TestsFlextCoreTypingsValidationNumbers:
@@ -26,18 +30,20 @@ class TestsFlextCoreTypingsValidationNumbers:
             ("value", "expected"),
             [("hello", "hello"), ("  hello  ", "hello"), ("\tspaced\n", "spaced")],
         )
-        def test_strips_surrounding_whitespace(self, value: str, expected: str) -> None:
+        @staticmethod
+        def test_strips_surrounding_whitespace(value: str, expected: str) -> None:
             """A non-blank value is returned with surrounding whitespace removed."""
-            adapter: m.TypeAdapter[str] = m.TypeAdapter(t.StrippedStr)
+            adapter: m.TypeAdapter[str] = u.type_adapter(t.StrippedStr)
 
             result = adapter.validate_python(value)
 
             tm.that(result, eq=expected)
 
         @pytest.mark.parametrize("value", ["", "   ", "\t\n"])
-        def test_rejects_blank_or_whitespace_only(self, value: str) -> None:
+        @staticmethod
+        def test_rejects_blank_or_whitespace_only(value: str) -> None:
             """An empty or whitespace-only value raises the public ValidationError."""
-            adapter: m.TypeAdapter[str] = m.TypeAdapter(t.StrippedStr)
+            adapter: m.TypeAdapter[str] = u.type_adapter(t.StrippedStr)
 
             with pytest.raises(c.ValidationError):
                 adapter.validate_python(value)
@@ -67,11 +73,13 @@ class TestsFlextCoreTypingsValidationNumbers:
             (t.HttpStatusCode, 599),
         ],
     )
+    @staticmethod
     def test_accepts_valid_value_returns_input_unchanged(
-        self, alias: type[str | int], value: str | int
+        alias: type[str | int],
+        value: str | int,
     ) -> None:
         """A value inside the constraint validates to itself unchanged."""
-        adapter: m.TypeAdapter[str | int] = m.TypeAdapter(alias)
+        adapter: m.TypeAdapter[str | int] = u.type_adapter(alias)
 
         result = adapter.validate_python(value)
 
@@ -96,23 +104,27 @@ class TestsFlextCoreTypingsValidationNumbers:
             (t.HttpStatusCode, 600),
         ],
     )
+    @staticmethod
     def test_rejects_out_of_bound_value_raises_validation_error(
-        self, alias: type[str | int], value: str | int
+        alias: type[str | int],
+        value: str | int,
     ) -> None:
         """A value outside the constraint raises the public ValidationError."""
-        adapter: m.TypeAdapter[str | int] = m.TypeAdapter(alias)
+        adapter: m.TypeAdapter[str | int] = u.type_adapter(alias)
 
         with pytest.raises(c.ValidationError):
             adapter.validate_python(value)
 
     @pytest.mark.parametrize(
-        "alias", [t.PositiveInt, t.NonNegativeInt, t.PortNumber, t.HttpStatusCode]
+        "alias",
+        [t.PositiveInt, t.NonNegativeInt, t.PortNumber, t.HttpStatusCode],
     )
+    @staticmethod
     def test_validation_is_idempotent_for_accepted_values(
-        self, alias: type[int]
+        alias: type[int],
     ) -> None:
         """Re-validating an already-valid value yields the same result."""
-        adapter: m.TypeAdapter[int] = m.TypeAdapter(alias)
+        adapter: m.TypeAdapter[int] = u.type_adapter(alias)
 
         once = adapter.validate_python(100)
         twice = adapter.validate_python(once)

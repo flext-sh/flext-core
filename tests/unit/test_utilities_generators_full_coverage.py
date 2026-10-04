@@ -1,4 +1,8 @@
-"""Behavior contract for public generator utilities in dispatch workflows."""
+"""Behavior contract for public generator utilities in dispatch workflows.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -11,9 +15,15 @@ from tests.models import m
 
 
 class TestsFlextCoreUtilitiesGenerators:
-    def test_public_generators_build_dispatch_audit_metadata(self) -> None:
+    """Tests for ``FlextCoreUtilitiesGenerators``."""
+
+    @staticmethod
+    def test_public_generators_build_dispatch_audit_metadata() -> None:
+        """Test public generators build dispatch audit metadata."""
         request = m.Tests.DispatchRequest(
-            command_name="sync-users", tenant="tenant-a", environment="prod"
+            command_name="sync-users",
+            tenant="tenant-a",
+            environment="prod",
         )
 
         audit = m.Tests.DispatchAudit(
@@ -30,7 +40,9 @@ class TestsFlextCoreUtilitiesGenerators:
             event_id=u.generate(
                 kind=c.HandlerType.EVENT,
                 options=u.GenerateOptions(
-                    separator="-", parts=(request.environment,), length=6
+                    separator="-",
+                    parts=(request.environment,),
+                    length=6,
                 ),
             ),
             replay_key=u.generate_prefixed_id("replay", length=6),
@@ -42,7 +54,8 @@ class TestsFlextCoreUtilitiesGenerators:
 
         correlation_prefix, correlation_suffix = audit.correlation_id.split("_", 1)
         command_body, command_suffix = audit.command_id.removeprefix("cmd-").rsplit(
-            "-", 1
+            "-",
+            1,
         )
         command_timestamp, command_metadata = command_body.split("-", 1)
         event_body, event_suffix = audit.event_id.removeprefix("evt-").rsplit("-", 1)
@@ -63,18 +76,25 @@ class TestsFlextCoreUtilitiesGenerators:
         assert datetime.fromisoformat(audit.emitted_at).tzinfo == UTC
         assert audit.generated_at.tzinfo == UTC
 
-    def test_public_generators_accept_prefix_override_for_custom_batches(self) -> None:
+    @staticmethod
+    def test_public_generators_accept_prefix_override_for_custom_batches() -> None:
+        """Test public generators accept prefix override for custom batches."""
         batch_id = u.generate(
             kind="aggregate",
             options=u.GenerateOptions(
-                prefix="agg", parts=("ldap", "delta"), separator="-", length=10
+                prefix="agg",
+                parts=("ldap", "delta"),
+                separator="-",
+                length=10,
             ),
         )
 
         assert batch_id.startswith("agg-ldap-delta-")
         assert len(batch_id.removeprefix("agg-ldap-delta-")) == 10
 
-    def test_public_generators_cover_query_and_external_provider_ids(self) -> None:
+    @staticmethod
+    def test_public_generators_cover_query_and_external_provider_ids() -> None:
+        """Test public generators cover query and external provider ids."""
         audit = m.Tests.QueryAudit(
             request_id=u.generate(),
             explicit_id=u.generate(kind="id"),
@@ -83,7 +103,8 @@ class TestsFlextCoreUtilitiesGenerators:
                 options=u.GenerateOptions(parts=("status",), length=7),
             ),
             query_id=u.generate(
-                kind=c.HandlerType.QUERY, options=u.GenerateOptions(length=5)
+                kind=c.HandlerType.QUERY,
+                options=u.GenerateOptions(length=5),
             ),
             event_channel_id=u.generate(
                 kind=c.HandlerType.EVENT,
@@ -111,20 +132,25 @@ class TestsFlextCoreUtilitiesGenerators:
         assert str(UUID(audit.manual_id)) == audit.manual_id
         assert len(audit.external_token) == 8
 
-    def test_public_generators_cover_orchestration_identifier_families(self) -> None:
+    @staticmethod
+    def test_public_generators_cover_orchestration_identifier_families() -> None:
+        """Test public generators cover orchestration identifier families."""
         audit = m.Tests.OrchestrationAudit(
             entity_id=u.generate(
-                kind="entity", options=u.GenerateOptions(parts=("customer",), length=6)
+                kind="entity",
+                options=u.GenerateOptions(parts=("customer",), length=6),
             ),
             batch_id=u.generate(
-                kind="batch", options=u.GenerateOptions(parts=("users",), length=7)
+                kind="batch",
+                options=u.GenerateOptions(parts=("users",), length=7),
             ),
             transaction_id=u.generate(
                 kind="transaction",
                 options=u.GenerateOptions(parts=("sync", 42), length=9),
             ),
             saga_id=u.generate(
-                kind="saga", options=u.GenerateOptions(parts=("ldap", "full"), length=5)
+                kind="saga",
+                options=u.GenerateOptions(parts=("ldap", "full"), length=5),
             ),
             timestamped_batch_id=u.generate(
                 kind="batch",
@@ -136,7 +162,7 @@ class TestsFlextCoreUtilitiesGenerators:
         entity_prefix, entity_name, entity_suffix = audit.entity_id.split("_")
         batch_prefix, batch_name, batch_suffix = audit.batch_id.split("_")
         transaction_body, transaction_suffix = audit.transaction_id.removeprefix(
-            "txn_"
+            "txn_",
         ).rsplit("_", 1)
         saga_body, saga_suffix = audit.saga_id.removeprefix("saga_").rsplit("_", 1)
         timestamped_prefix, timestamped_body = audit.timestamped_batch_id.split("_", 1)

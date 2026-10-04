@@ -1,5 +1,9 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Flext Core. Models package."""
+"""Flext Core. Models package.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -9,7 +13,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from . import (
+    from flext_core._models import (
         _base_parts,
         _container_parts,
         _context,
@@ -18,59 +22,65 @@ if TYPE_CHECKING:
         _exception_params_parts,
         _project_metadata_parts,
     )
-    from ._context.__scope_parts.flextmodelscontextscope_part_03 import (
+    from flext_core._models._context.__scope_parts.flextmodelscontextscope_part_03 import (
         FlextModelsContextScope,
     )
-    from ._context._data import FlextModelsContextData
-    from ._context._export import FlextModelsContextExport
-    from ._context._metadata import FlextModelsContextMetadata
-    from ._context._proxy_var import FlextModelsContextProxyVar
-    from ._context._tokens import FlextModelsContextTokens
-    from ._cqrs_parts.flextmodelscqrs_part_01 import CqrsPagination
-    from ._enforcement._base import EnforcementModelBase, FlextModelsEnforcementBase
-    from ._enforcement._catalog import FlextModelsEnforcementCatalog
-    from ._enforcement._inspection import FlextModelsEnforcementInspection
-    from ._enforcement._params import FlextModelsEnforcementParams
-    from ._enforcement._resolution import FlextModelsEnforcementResolution
-    from ._enforcement._sources import FlextModelsEnforcementSources
-    from ._project_metadata_parts.flextmodelsprojectmetadata_part_01 import (
-        ProjectMetadataContract,
-        PyprojectIngressContract,
+    from flext_core._models._context._data import FlextModelsContextData
+    from flext_core._models._context._export import FlextModelsContextExport
+    from flext_core._models._context._metadata import FlextModelsContextMetadata
+    from flext_core._models._context._proxy_var import FlextModelsContextProxyVar
+    from flext_core._models._context._tokens import FlextModelsContextTokens
+    from flext_core._models._enforcement._base import (
+        FlextModelsEnforcementBase,
+        FlextModelsEnforcementModelBase,
     )
-    from ._project_metadata_parts.flextmodelsprojectmetadata_part_02 import (
-        ProjectMetadataFields,
+    from flext_core._models._enforcement._catalog import FlextModelsEnforcementCatalog
+    from flext_core._models._enforcement._inspection import (
+        FlextModelsEnforcementInspection,
     )
-    from ._project_metadata_parts.flextmodelsprojectmetadata_part_03 import (
-        ProjectMetadataAggregates,
+    from flext_core._models._enforcement._params import FlextModelsEnforcementParams
+    from flext_core._models._enforcement._resolution import (
+        FlextModelsEnforcementResolution,
     )
-    from ._project_metadata_parts.flextmodelsprojectmetadata_part_04 import (
-        ProjectMetadataDocument,
+    from flext_core._models._enforcement._sources import FlextModelsEnforcementSources
+    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_01 import (
+        FlextModelsProjectMetadataContract,
     )
-    from .base import FlextModelsBase
-    from .builder import FlextModelsBuilder
-    from .collection_models import FlextModelsCollections
-    from .config import FlextModelsConfig
-    from .container import FlextModelsContainer
-    from .containers import FlextModelsContainers
-    from .context import FlextModelsContext
-    from .cqrs import FlextModelsCqrs
-    from .domain_event import FlextModelsDomainEvent
-    from .enforcement import FlextModelsEnforcement
-    from .entity import FlextModelsEntity
-    from .errors import FlextModelsErrors
-    from .exception_params import FlextModelsExceptionParams
-    from .handler import FlextModelsHandler
-    from .namespace import FlextModelsNamespace
-    from .project_metadata import FlextModelsProjectMetadata
-    from .pydantic import FlextModelsPydantic
-    from .registry import FlextModelsRegistry
-    from .service import FlextModelsService
-    from .settings import FlextModelsSettings
+    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_02 import (
+        FlextModelsProjectMetadataFields,
+    )
+    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_03 import (
+        FlextModelsProjectMetadataAggregates,
+    )
+    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_04 import (
+        FlextModelsProjectMetadataDocument,
+    )
+    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_05 import (
+        FlextModelsPyprojectIngressContract,
+    )
+    from flext_core._models.base import FlextModelsBase
+    from flext_core._models.builder import FlextModelsBuilder
+    from flext_core._models.collection_models import FlextModelsCollections
+    from flext_core._models.config import FlextModelsConfig
+    from flext_core._models.container import FlextModelsContainer
+    from flext_core._models.containers import FlextModelsContainers
+    from flext_core._models.context import FlextModelsContext
+    from flext_core._models.cqrs import FlextModelsCqrs
+    from flext_core._models.domain_event import FlextModelsDomainEvent
+    from flext_core._models.enforcement import FlextModelsEnforcement
+    from flext_core._models.entity import FlextModelsEntity
+    from flext_core._models.errors import FlextModelsErrors
+    from flext_core._models.exception_params import FlextModelsExceptionParams
+    from flext_core._models.handler import FlextModelsHandler
+    from flext_core._models.namespace import FlextModelsNamespace
+    from flext_core._models.project_metadata import FlextModelsProjectMetadata
+    from flext_core._models.pydantic import FlextModelsPydantic
+    from flext_core._models.registry import FlextModelsRegistry
+    from flext_core._models.service import FlextModelsService
+    from flext_core._models.settings import FlextModelsSettings
 
 
 __all__: tuple[str, ...] = (
-    "CqrsPagination",
-    "EnforcementModelBase",
     "FlextModelsBase",
     "FlextModelsBuilder",
     "FlextModelsCollections",
@@ -90,6 +100,7 @@ __all__: tuple[str, ...] = (
     "FlextModelsEnforcementBase",
     "FlextModelsEnforcementCatalog",
     "FlextModelsEnforcementInspection",
+    "FlextModelsEnforcementModelBase",
     "FlextModelsEnforcementParams",
     "FlextModelsEnforcementResolution",
     "FlextModelsEnforcementSources",
@@ -99,15 +110,15 @@ __all__: tuple[str, ...] = (
     "FlextModelsHandler",
     "FlextModelsNamespace",
     "FlextModelsProjectMetadata",
+    "FlextModelsProjectMetadataAggregates",
+    "FlextModelsProjectMetadataContract",
+    "FlextModelsProjectMetadataDocument",
+    "FlextModelsProjectMetadataFields",
     "FlextModelsPydantic",
+    "FlextModelsPyprojectIngressContract",
     "FlextModelsRegistry",
     "FlextModelsService",
     "FlextModelsSettings",
-    "ProjectMetadataAggregates",
-    "ProjectMetadataContract",
-    "ProjectMetadataDocument",
-    "ProjectMetadataFields",
-    "PyprojectIngressContract",
     "_base_parts",
     "_container_parts",
     "_context",
@@ -132,11 +143,10 @@ _LAZY_IMPORTS = MappingProxyType(
             "._context._proxy_var": ("FlextModelsContextProxyVar",),
             "._context._tokens": ("FlextModelsContextTokens",),
             "._cqrs_parts": ("_cqrs_parts",),
-            "._cqrs_parts.flextmodelscqrs_part_01": ("CqrsPagination",),
             "._enforcement": ("_enforcement",),
             "._enforcement._base": (
-                "EnforcementModelBase",
                 "FlextModelsEnforcementBase",
+                "FlextModelsEnforcementModelBase",
             ),
             "._enforcement._catalog": ("FlextModelsEnforcementCatalog",),
             "._enforcement._inspection": ("FlextModelsEnforcementInspection",),
@@ -146,17 +156,19 @@ _LAZY_IMPORTS = MappingProxyType(
             "._exception_params_parts": ("_exception_params_parts",),
             "._project_metadata_parts": ("_project_metadata_parts",),
             "._project_metadata_parts.flextmodelsprojectmetadata_part_01": (
-                "ProjectMetadataContract",
-                "PyprojectIngressContract",
+                "FlextModelsProjectMetadataContract",
             ),
             "._project_metadata_parts.flextmodelsprojectmetadata_part_02": (
-                "ProjectMetadataFields",
+                "FlextModelsProjectMetadataFields",
             ),
             "._project_metadata_parts.flextmodelsprojectmetadata_part_03": (
-                "ProjectMetadataAggregates",
+                "FlextModelsProjectMetadataAggregates",
             ),
             "._project_metadata_parts.flextmodelsprojectmetadata_part_04": (
-                "ProjectMetadataDocument",
+                "FlextModelsProjectMetadataDocument",
+            ),
+            "._project_metadata_parts.flextmodelsprojectmetadata_part_05": (
+                "FlextModelsPyprojectIngressContract",
             ),
             ".base": ("FlextModelsBase",),
             ".builder": ("FlextModelsBuilder",),
@@ -181,7 +193,7 @@ _LAZY_IMPORTS = MappingProxyType(
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
-    )
+    ),
 )
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

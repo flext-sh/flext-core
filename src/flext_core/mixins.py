@@ -1,4 +1,8 @@
-"""Reusable service mixins facade."""
+"""Reusable service mixins facade.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -41,13 +45,15 @@ class FlextMixins(m.ArbitraryTypesModel):
     )
 
     initial_context: t.Port[p.Context | None] = m.Field(
-        default=None, exclude=True, description="Initial context for the service scope."
+        default=None,
+        exclude=True,
+        description="Initial context for the service scope.",
     )
 
     _runtime: m.ServiceRuntime | None = u.PrivateAttr(default=None)
 
     _operation_stats: MutableMapping[str, m.ConfigMap] = u.PrivateAttr(
-        default_factory=dict[str, m.ConfigMap]
+        default_factory=dict[str, m.ConfigMap],
     )
 
     _logger_cache: ClassVar[MutableMapping[str, p.Logger]] = {}
@@ -82,7 +88,12 @@ class FlextMixins(m.ArbitraryTypesModel):
 
     @classmethod
     def _get_or_create_logger(cls) -> p.Logger:
-        """Get or create a DI-injected logger for this component class."""
+        """Get or create a DI-injected logger for this component class.
+
+        Returns:
+            The resulting ``p.Logger``.
+
+        """
         logger_name = f"{cls.__module__}.{cls.__name__}"
         with cls._cache_lock:
             if logger_name in cls._logger_cache:
@@ -94,11 +105,19 @@ class FlextMixins(m.ArbitraryTypesModel):
 
     @contextmanager
     def track(self, operation_name: str) -> Generator[Mapping[str, t.JsonPayload]]:
-        """Track operation performance with timing and automatic context cleanup."""
+        """Track operation performance with timing and automatic context cleanup.
+
+        Yields:
+            Each ``Mapping[str, t.JsonPayload]``.
+
+        Raises:
+            EXC_BROAD_RUNTIME: If a ``c.EXC_BROAD_RUNTIME`` is caught.
+
+        """
         stats: m.ConfigMap = self._operation_stats.get(
             operation_name,
             m.ConfigMap(
-                root={"operation_count": 0, "error_count": 0, "total_duration_ms": 0.0}
+                root={"operation_count": 0, "error_count": 0, "total_duration_ms": 0.0},
             ),
         )
         stats["operation_count"] = u.to_int(stats.get("operation_count", 0)) + 1
@@ -116,7 +135,8 @@ class FlextMixins(m.ArbitraryTypesModel):
                         stats["total_duration_ms"] = total_dur + dur_ms
                 except c.EXC_BROAD_RUNTIME as exc:
                     self.logger.debug(
-                        c.LOG_TRACKED_OPERATION_EXPECTED_EXCEPTION, exc_info=exc
+                        c.LOG_TRACKED_OPERATION_EXPECTED_EXCEPTION,
+                        exc_info=exc,
                     )
                     stats["error_count"] = u.to_int(stats.get("error_count", 0)) + 1
                     raise
@@ -126,7 +146,7 @@ class FlextMixins(m.ArbitraryTypesModel):
                     stats["success_rate"] = (op_count - err_count) / op_count
                     if op_count > 0:
                         total_dur_final = u.to_float(
-                            stats.get("total_duration_ms", 0.0)
+                            stats.get("total_duration_ms", 0.0),
                         )
                         stats["avg_duration_ms"] = total_dur_final / op_count
                     metrics_map["error_count"] = stats["error_count"]
@@ -139,7 +159,12 @@ class FlextMixins(m.ArbitraryTypesModel):
             self._context_type.apply_operation_name("")
 
     def _get_runtime(self) -> m.ServiceRuntime:
-        """Build this component's runtime once and reuse it."""
+        """Build this component's runtime once and reuse it.
+
+        Returns:
+            The resulting ``m.ServiceRuntime``.
+
+        """
         if self._runtime is None:
             self._runtime = u.build_service_runtime(self)
         return self._runtime

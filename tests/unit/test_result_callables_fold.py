@@ -4,6 +4,9 @@ Every test asserts observable public contract only: the r[T] outcome
 (success/failure, value, error) and the combinator return values. No private
 attribute access, no patching of the unit under test, no spying on internal
 collaborators.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -20,7 +23,10 @@ if TYPE_CHECKING:
 
 
 class TestsFlextCoreResultCallablesFold:
-    def test_recursive_json_result_satisfies_protocol(self) -> None:
+    """Tests for ``FlextCoreResultCallablesFold``."""
+
+    @staticmethod
+    def test_recursive_json_result_satisfies_protocol() -> None:
         """Recursive JSON results support the same public protocol as scalars."""
         payload: t.JsonValue = {"nested": ["value", None, {"count": 1}]}
         result: p.Result[t.JsonValue] = r[t.JsonValue].ok(payload)
@@ -31,19 +37,22 @@ class TestsFlextCoreResultCallablesFold:
         tm.that(result | "unused", eq=payload)
 
     @pytest.mark.parametrize("value", [True, False, 0, 1, "", "value"])
-    def test_ok_carries_value_as_success(self, *, value: bool | int | str) -> None:
+    @staticmethod
+    def test_ok_carries_value_as_success(*, value: bool | int | str) -> None:
         """ok() yields a success whose value is the wrapped payload."""
         result = r[bool | int | str].ok(value)
         tm.that(result.success, eq=True)
         tm.that(result.value, eq=value)
 
-    def test_fail_yields_failure_with_error(self) -> None:
+    @staticmethod
+    def test_fail_yields_failure_with_error() -> None:
         """fail() yields a failure carrying the given error message."""
         result: p.Result[int] = r[int].fail("boom")
         tm.that(result.success, eq=False)
         tm.that(result.error, eq="boom")
 
-    def test_flow_through_chains_all_functions_on_success(self) -> None:
+    @staticmethod
+    def test_flow_through_chains_all_functions_on_success() -> None:
         """flow_through threads the value through every function in order."""
 
         def add_one(x: int) -> p.Result[int]:
@@ -57,7 +66,8 @@ class TestsFlextCoreResultCallablesFold:
         value: int = tm.ok(final)
         tm.that(value, eq=12)
 
-    def test_flow_through_short_circuits_on_first_failure(self) -> None:
+    @staticmethod
+    def test_flow_through_short_circuits_on_first_failure() -> None:
         """flow_through stops at the first failure; later functions never run."""
         calls: list[str] = []
 
@@ -78,7 +88,8 @@ class TestsFlextCoreResultCallablesFold:
         tm.that(final.error, eq="stopped")
         tm.that(calls, eq=["add_one", "fail_op"])
 
-    def test_create_from_callable_wraps_return_value_as_success(self) -> None:
+    @staticmethod
+    def test_create_from_callable_wraps_return_value_as_success() -> None:
         """create_from_callable succeeds with the callable's return value."""
 
         def produce() -> str:
@@ -88,7 +99,8 @@ class TestsFlextCoreResultCallablesFold:
         value: str = tm.ok(result)
         tm.that(value, eq="success")
 
-    def test_create_from_callable_none_return_is_failure(self) -> None:
+    @staticmethod
+    def test_create_from_callable_none_return_is_failure() -> None:
         """create_from_callable fails when the callable returns None."""
 
         def produce() -> str | None:
@@ -98,7 +110,8 @@ class TestsFlextCoreResultCallablesFold:
         error = tm.fail(result)
         tm.that(error, has="Callable returned None")
 
-    def test_create_from_callable_captures_raised_exception(self) -> None:
+    @staticmethod
+    def test_create_from_callable_captures_raised_exception() -> None:
         """create_from_callable converts a raised exception into a failure."""
 
         def produce() -> str:
@@ -109,43 +122,52 @@ class TestsFlextCoreResultCallablesFold:
         error = tm.fail(result)
         tm.that(error, has="Callable failed")
 
-    def test_map_or_on_success_without_func_returns_value(self) -> None:
+    @staticmethod
+    def test_map_or_on_success_without_func_returns_value() -> None:
         """map_or returns the success value unchanged when no func is given."""
         result: p.Result[str] = r[str].ok("hello")
         tm.that(result.map_or("default"), eq="hello")
 
-    def test_map_or_on_failure_without_func_returns_default(self) -> None:
+    @staticmethod
+    def test_map_or_on_failure_without_func_returns_default() -> None:
         """map_or returns the default for a failure when no func is given."""
         result: p.Result[str] = r[str].fail("error")
         tm.that(result.map_or("default"), eq="default")
 
-    def test_map_or_on_success_with_func_applies_func(self) -> None:
+    @staticmethod
+    def test_map_or_on_success_with_func_applies_func() -> None:
         """map_or applies func to the success value."""
         result: p.Result[str] = r[str].ok("hello")
         tm.that(result.map_or(0, len), eq=5)
 
-    def test_map_or_on_failure_with_func_returns_default(self) -> None:
+    @staticmethod
+    def test_map_or_on_failure_with_func_returns_default() -> None:
         """map_or ignores func and returns the default for a failure."""
         result: p.Result[str] = r[str].fail("error")
         tm.that(result.map_or(0, len), eq=0)
 
-    def test_fold_applies_on_success_branch(self) -> None:
+    @staticmethod
+    def test_fold_applies_on_success_branch() -> None:
         """Fold runs the on_success branch for a success."""
         result: p.Result[str] = r[str].ok("hello")
         message = result.fold(
-            on_success=lambda v: f"Got: {v}", on_failure=lambda e: f"Error: {e}"
+            on_success=lambda v: f"Got: {v}",
+            on_failure=lambda e: f"Error: {e}",
         )
         tm.that(message, eq="Got: hello")
 
-    def test_fold_applies_on_failure_branch(self) -> None:
+    @staticmethod
+    def test_fold_applies_on_failure_branch() -> None:
         """Fold runs the on_failure branch for a failure."""
         result: p.Result[str] = r[str].fail("something broke")
         message = result.fold(
-            on_success=lambda v: f"Got: {v}", on_failure=lambda e: f"Error: {e}"
+            on_success=lambda v: f"Got: {v}",
+            on_failure=lambda e: f"Error: {e}",
         )
         tm.that(message, eq="Error: something broke")
 
-    def test_fold_can_return_a_type_other_than_the_input(self) -> None:
+    @staticmethod
+    def test_fold_can_return_a_type_other_than_the_input() -> None:
         """Fold may project the result into an unrelated return type."""
         result: p.Result[str] = r[str].ok("hello")
         response: t.JsonMapping = result.fold(

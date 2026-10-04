@@ -1,4 +1,8 @@
-"""Core public model helpers."""
+"""Core public model helpers.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -116,7 +120,8 @@ class TestsFlextModelsCorePublicMixin:
             return f"{self.raw_name}:{self.visits}"
 
         @u.field_serializer("visits")
-        def serialize_visits(self, value: int) -> str:
+        @staticmethod
+        def serialize_visits(value: int) -> str:
             return f"{value} visits"
 
 

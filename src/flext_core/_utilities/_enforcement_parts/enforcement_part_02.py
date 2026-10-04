@@ -1,4 +1,8 @@
-"""Runtime enforcement engine MRO part."""
+"""Runtime enforcement engine MRO part.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -6,19 +10,22 @@ from collections.abc import Iterator
 from enum import EnumType
 from typing import ClassVar
 
-from ..._constants.enforcement import FlextConstantsEnforcement as c
-from ..._models.enforcement import FlextModelsEnforcement as me
-from ..._models.pydantic import FlextModelsPydantic as mp
-from ..._protocols.base import FlextProtocolsBase as p
-from ..beartype_engine import FlextUtilitiesBeartypeEngine as ub
-from ..enforcement_collect import FlextUtilitiesEnforcementCollect
-from .enforcement_part_01 import PREDICATE_BINDINGS
+from pydantic_settings import BaseSettings
+
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._models.enforcement import FlextModelsEnforcement as me
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._protocols.base import FlextProtocolsBase as p
+from flext_core._utilities._enforcement_parts.enforcement_part_01 import (
+    PREDICATE_BINDINGS,
+)
+from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as ub
+from flext_core._utilities.enforcement_collect import FlextUtilitiesEnforcementCollect
 
 
 class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
     """Rule-driven runtime enforcement (static-only)."""
 
-    _canonical_catalog: ClassVar[me.EnforcementCatalog | None] = None
     _MODEL_CONSTRUCTION_CATEGORIES: ClassVar[frozenset[c.EnforcementCategory]] = (
         frozenset({c.EnforcementCategory.FIELD, c.EnforcementCategory.MODEL_CLASS})
     )
@@ -33,13 +40,14 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
     ) -> me.Report:
         """Apply a rule, separating proven deferrals from executed predicates.
 
-        Catalog rules without a runtime predicate binding (static-only or
-        beartype-driven entries keyed as ``ENFORCE-NNN``) are skipped gracefully.
+        Every runtime tag carries its category and its predicate binding in the
+        same data row, so a tag without a binding is a data defect and raises.
+
+        Returns:
+            The resulting ``me.Report``.
+
         """
-        binding = PREDICATE_BINDINGS.get(tag)
-        if binding is None:
-            return me.Report()
-        kind, params = binding
+        kind, params = PREDICATE_BINDINGS[tag]
         violations: list[me.Violation] = []
         deferred: list[me.DeferredInspection] = []
         for location, args in items:
@@ -54,33 +62,43 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
             if detail is not None:
                 violations.append(
                     FlextUtilitiesEnforcement._violation(
-                        tag, location, qualname, detail, category=category
-                    )
+                        tag,
+                        location,
+                        qualname,
+                        detail,
+                        category=category,
+                    ),
                 )
         return me.Report(violations=violations, deferred=deferred)
 
     @staticmethod
     def _items_for(
-        target: type, tag: str, category: c.EnforcementCategory, effective_layer: str
+        target: type,
+        tag: str,
+        category: c.EnforcementCategory,
+        effective_layer: str,
     ) -> Iterator[tuple[str, tuple[p.AttributeProbe, ...]]]:
         """Return category-specific (location, args) pairs for one rule tag.
 
         This is the single category→iterator dispatch — ``check()`` runs
         every row in ``c.ENFORCEMENT_RULES`` through here and pipes the
         result into :meth:`_apply_rule`.
+
+        Yields:
+            Each ``tuple[str, tuple[p.AttributeProbe, ...]]``.
+
         """
         # A class is a model by DECLARATION: the canonical FLEXT base or a
         # pydantic-settings base declared directly (which is exactly what the
         # settings-inheritance rule must see to report the bypass).
-        is_model = issubclass(target, mp.BaseModel) or issubclass(
-            target, mp.PydanticBaseSettings
-        )
+        is_model = issubclass(target, mp.BaseModel) or issubclass(target, BaseSettings)
         rule_layer = c.ENFORCEMENT_TAG_LAYER.get(tag, "")
         if "[" in target.__name__:
             return
 
         def walk(
-            node: type, path: str
+            node: type,
+            path: str,
         ) -> Iterator[tuple[str, tuple[p.AttributeProbe, ...]]]:
             iterator = (
                 FlextUtilitiesEnforcement._iter_effective
@@ -91,7 +109,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
                 nested = f"{path}.{name}"
                 yield nested, (value,)
                 if ub.has_runtime_protocol_marker(value) or ub.has_nested_namespace(
-                    value
+                    value,
                 ):
                     yield from walk(value, nested)
 
@@ -110,7 +128,9 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
                 items = FlextUtilitiesEnforcement._attr_items(target, effective_layer)
         elif category is c.EnforcementCategory.NAMESPACE:
             items = FlextUtilitiesEnforcement._namespace_items(
-                target, tag, effective_layer
+                target,
+                tag,
+                effective_layer,
             )
         elif (
             category is c.EnforcementCategory.PROTOCOL_TREE
@@ -133,6 +153,10 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         no per-category engine duplication; item iterators live in the
         ``_*_items`` / :meth:`_items_for` helpers and vary only by tag.
         Attr-rule recursion is handled via ``c.ENFORCEMENT_RECURSIVE_TAGS``.
+
+        Returns:
+            The resulting ``me.Report``.
+
         """
         violations: list[me.Violation] = []
         deferred: list[me.DeferredInspection] = []
@@ -143,10 +167,17 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
                 continue
             rule_layer = c.ENFORCEMENT_TAG_LAYER.get(tag, "")
             items = FlextUtilitiesEnforcement._items_for(
-                target, tag, category, effective_layer
+                target,
+                tag,
+                category,
+                effective_layer,
             )
             report = FlextUtilitiesEnforcement._apply_rule(
-                target, tag, qn, items, category
+                target,
+                tag,
+                qn,
+                items,
+                category,
             )
             violations.extend(report.violations)
             deferred.extend(report.deferred)
@@ -157,11 +188,13 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
             ):
                 for _name, inner in FlextUtilitiesEnforcement._iter_inner(target):
                     if isinstance(inner, EnumType) or not ub.defined_inside(
-                        inner, target.__qualname__
+                        inner,
+                        target.__qualname__,
                     ):
                         continue
                     nested = FlextUtilitiesEnforcement.check(
-                        inner, layer=effective_layer
+                        inner,
+                        layer=effective_layer,
                     )
                     violations.extend(nested.violations)
                     deferred.extend(nested.deferred)
@@ -169,14 +202,25 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
 
     @staticmethod
     def check(target: type, *, layer: str | None = None) -> me.Report:
-        """Query all applicable rules and return a typed report (no emission)."""
+        """Query all applicable rules and return a typed report (no emission).
+
+        Returns:
+            The resulting ``me.Report``.
+
+        """
         return FlextUtilitiesEnforcement._check(target, layer=layer)
 
     @staticmethod
     def check_model_construction(target: type[mp.BaseModel]) -> me.Report:
-        """Run only Pydantic construction rules for ``__pydantic_init_subclass__``."""
+        """Run only Pydantic construction rules for ``__pydantic_init_subclass__``.
+
+        Returns:
+            The resulting ``me.Report``.
+
+        """
         return FlextUtilitiesEnforcement._check(
-            target, categories=FlextUtilitiesEnforcement._MODEL_CONSTRUCTION_CATEGORIES
+            target,
+            categories=FlextUtilitiesEnforcement._MODEL_CONSTRUCTION_CATEGORIES,
         )
 
 

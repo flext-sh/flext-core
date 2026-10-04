@@ -22,9 +22,8 @@ from typing import TYPE_CHECKING
 from pydantic import BaseModel
 
 from flext_core import c, p, t
-
-from .._models.container import FlextModelsContainer
-from .._models.service import FlextModelsService
+from flext_core._models.container import FlextModelsContainer
+from flext_core._models.service import FlextModelsService
 
 if TYPE_CHECKING:
     from types import ModuleType
@@ -37,7 +36,8 @@ class FlextUtilitiesDiscovery:
 
     @staticmethod
     def _factory_config_for(
-        module: ModuleType, name: str
+        module: ModuleType,
+        name: str,
     ) -> FlextModelsContainer.FactoryDecoratorConfig | None:
         func = vars(module).get(name)
         if func is None or not callable(func):
@@ -51,7 +51,13 @@ class FlextUtilitiesDiscovery:
     def scan_module(
         module: ModuleType,
     ) -> t.SequenceOf[tuple[str, FlextModelsContainer.FactoryDecoratorConfig]]:
-        """Scan module for @factory()-decorated functions, sorted by name."""
+        """Scan module for @factory()-decorated functions, sorted by name.
+
+        Returns:
+            The resulting ``t.SequenceOf[tuple[str,
+                FlextModelsContainer.FactoryDecoratorConfig]]``.
+
+        """
         return sorted(
             [
                 (name, config)
@@ -78,6 +84,13 @@ class FlextUtilitiesDiscovery:
         are not operations. A malformed operation, a sibling-class name
         collision, or a service without operations raises ``TypeError`` naming
         the operation, annotation, module and fix. Results are cached per class.
+
+        Returns:
+            The typed operations of a service class, sorted by name.
+
+        Raises:
+            TypeError: If ``not operations``.
+
         """
         from flext_core import s  # s sits above u: bind it at call time
 
@@ -104,21 +117,31 @@ class FlextUtilitiesDiscovery:
             FlextUtilitiesDiscovery._operation(service_type, below, name, member)
             for name in sorted(names)
             if isinstance(
-                member := inspect.getattr_static(service_type, name), FunctionType
+                member := inspect.getattr_static(service_type, name),
+                FunctionType,
             )
         )
         if not operations:
             msg = c.ERR_SERVICE_NO_OPERATIONS.format(
-                service=service_type.__qualname__, module=service_type.__module__
+                service=service_type.__qualname__,
+                module=service_type.__module__,
             )
             raise TypeError(msg)
         return operations
 
     @staticmethod
     def _operation(
-        service_type: type, below: tuple[type, ...], name: str, func: FunctionType
+        service_type: type,
+        below: tuple[type, ...],
+        name: str,
+        func: FunctionType,
     ) -> FlextModelsService.ServiceOperation:
-        """Validate one operation's shape and build its typed description."""
+        """Validate one operation's shape and build its typed description.
+
+        Returns:
+            The resulting ``FlextModelsService.ServiceOperation``.
+
+        """
         where = (service_type, name, func.__module__)
         error = FlextUtilitiesDiscovery._error
         signature = inspect.signature(func)
@@ -162,7 +185,9 @@ class FlextUtilitiesDiscovery:
             if not (isinstance(request, type) and issubclass(request, BaseModel)):
                 raise error(where, annotation, c.ERR_SERVICE_OPERATION_REQUEST)
         return FlextModelsService.ServiceOperation(
-            name=name, summary=doc.strip().splitlines()[0], request=request
+            name=name,
+            summary=doc.strip().splitlines()[0],
+            request=request,
         )
 
     @staticmethod
@@ -180,6 +205,10 @@ class FlextUtilitiesDiscovery:
         dotted name resolves the first part in the function's module namespace
         (globals, then builtins, as Python resolves a module-level name) and the
         rest by attribute. ``subscript`` resolves the origin of ``X[...]``.
+
+        Returns:
+            The resulting ``t.TypeHintSpecifier``.
+
         """
         error = FlextUtilitiesDiscovery._error
         if not isinstance(annotation, str):
@@ -213,7 +242,12 @@ class FlextUtilitiesDiscovery:
         annotation: t.TypeHintSpecifier | inspect.Signature,
         defect: str,
     ) -> TypeError:
-        """Build the operation's ``TypeError`` naming annotation, module and fix."""
+        """Build the operation's ``TypeError`` naming annotation, module and fix.
+
+        Returns:
+            The resulting ``TypeError``.
+
+        """
         service_type, operation, module = where
         return TypeError(
             c.ERR_SERVICE_OPERATION.format(
@@ -222,7 +256,7 @@ class FlextUtilitiesDiscovery:
                 module=module,
                 annotation=annotation,
                 defect=defect,
-            )
+            ),
         )
 
 

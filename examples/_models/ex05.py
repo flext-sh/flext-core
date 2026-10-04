@@ -1,4 +1,8 @@
-"""Example 05 mixins models."""
+"""Example 05 mixins models.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -20,14 +24,15 @@ class ExamplesFlextModelsEx05:
     class UserModel(m.Value):
         name: str = u.Field(description="User display name")
         status: ExamplesFlextModelsEx05.StatusEnum = u.Field(
-            description="User account status"
+            description="User account status",
         )
         age: int = u.Field(description="User age in years")
 
         @u.field_validator("status", mode="before")
         @classmethod
         def normalize_status(
-            cls, value: str | ExamplesFlextModelsEx05.StatusEnum
+            cls,
+            value: str | ExamplesFlextModelsEx05.StatusEnum,
         ) -> ExamplesFlextModelsEx05.StatusEnum:
             if isinstance(value, ExamplesFlextModelsEx05.StatusEnum):
                 return value
@@ -43,7 +48,8 @@ class ExamplesFlextModelsEx05:
         )
 
     class GoodProcessor(m.Value):
-        def process(self) -> bool:
+        @staticmethod
+        def process() -> bool:
             return True
 
         @override

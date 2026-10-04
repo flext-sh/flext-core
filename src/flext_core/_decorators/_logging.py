@@ -11,14 +11,12 @@ from functools import wraps
 from typing import TYPE_CHECKING
 
 from flext_core import c, u
-
-from ._logging_payloads import FlextDecoratorsLoggingPayloads
+from flext_core._decorators._logging_payloads import FlextDecoratorsLoggingPayloads
+from flext_core._protocols.loggings import FlextProtocolsLogging as pl
+from flext_core._typings.base import FlextTypingBase as tb
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-    from .._protocols.loggings import FlextProtocolsLogging as pl
-    from .._typings.base import FlextTypingBase as tb
 
 
 class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
@@ -32,7 +30,13 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
         track_perf: bool = False,
         ensure_correlation: bool = True,
     ) -> Callable[[Callable[PCallback, TResult]], Callable[PCallback, TResult]]:
-        """Log operation execution with structured context."""
+        """Log operation execution with structured context.
+
+        Returns:
+            The resulting ``Callable[[Callable[PCallback, TResult]], Callable[PCallback,
+                TResult]]``.
+
+        """
 
         def decorator(
             func: Callable[PCallback, TResult],
@@ -46,14 +50,16 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
                 if args and cls._is_logger_carrier(args[0]):
                     logger_carrier = args[0]
                 logger = cls._resolve_logger(
-                    logger_carrier, func_module=func.__module__
+                    logger_carrier,
+                    func_module=func.__module__,
                 )
                 correlation_id = cls._resolve_correlation_id(
-                    ensure_correlation=ensure_correlation
+                    ensure_correlation=ensure_correlation,
                 )
                 cls._context_type.apply_operation_name(op_name)
                 binding_result = u.bind_context(
-                    c.ContextScope.OPERATION, operation=op_name
+                    c.ContextScope.OPERATION,
+                    operation=op_name,
                 )
                 if binding_result.failure:
                     binding_result.unwrap()
@@ -78,7 +84,12 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
 
     @classmethod
     def _resolve_correlation_id(cls, *, ensure_correlation: bool) -> str | None:
-        """Resolve or ensure the current correlation id."""
+        """Resolve or ensure the current correlation id.
+
+        Returns:
+            The resulting ``str | None``.
+
+        """
         if ensure_correlation:
             return cls._context_type.ensure_correlation_id()
         current_id = u.CORRELATION_ID.get()
@@ -97,11 +108,15 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
         track_perf: bool,
         start_time: float,
     ) -> TResult:
-        """Execute the wrapped callable and emit success/failure logs."""
+        """Execute the wrapped callable and emit success/failure logs.
+
+        Returns:
+            The resulting ``TResult``.
+
+        """
         try:
             logger.debug(
-                "%s_started",
-                op_name,
+                f"{op_name}_started",
                 **cls._start_log_payload(
                     func_name=func_name,
                     func_module=func_module,
@@ -127,8 +142,7 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
             raise
         else:
             logger.debug(
-                "%s_completed",
-                op_name,
+                f"{op_name}_completed",
                 **cls._success_log_payload(
                     func_name=func_name,
                     correlation_id=correlation_id,
@@ -142,7 +156,13 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
     def with_correlation[**PCallback, TResult](
         cls,
     ) -> Callable[[Callable[PCallback, TResult]], Callable[PCallback, TResult]]:
-        """Ensure a correlation ID exists during the wrapped operation."""
+        """Ensure a correlation ID exists during the wrapped operation.
+
+        Returns:
+            The resulting ``Callable[[Callable[PCallback, TResult]], Callable[PCallback,
+                TResult]]``.
+
+        """
 
         def decorator(
             func: Callable[PCallback, TResult],

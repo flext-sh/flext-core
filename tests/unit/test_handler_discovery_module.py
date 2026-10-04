@@ -4,6 +4,9 @@ These tests exercise only the observable contract of ``h.Discovery.scan_module``
 which module-level functions it discovers, the ordering guarantee, the metadata
 it surfaces, and the behavior of the callable it hands back. No private members
 of the unit under test are touched.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -30,13 +33,15 @@ class TestsFlextHandlerDiscoveryModule:
     class _DeleteCommand:
         """Second sample command payload for multi-handler modules."""
 
-    def test_scan_module_discovers_every_decorated_public_function(self) -> None:
+    @staticmethod
+    def test_scan_module_discovers_every_decorated_public_function() -> None:
         """All decorated public functions are discovered."""
         # Arrange
         module = types.ModuleType("decorated_module")
 
         @h.handler(
-            command=TestsFlextHandlerDiscoveryModule._CreateCommand, priority=100
+            command=TestsFlextHandlerDiscoveryModule._CreateCommand,
+            priority=100,
         )
         def handle_create(
             cmd: TestsFlextHandlerDiscoveryModule._CreateCommand,
@@ -63,7 +68,8 @@ class TestsFlextHandlerDiscoveryModule:
         tm.that(names, has="handle_create")
         tm.that(names, has="handle_delete")
 
-    def test_scan_module_omits_underscore_prefixed_functions(self) -> None:
+    @staticmethod
+    def test_scan_module_omits_underscore_prefixed_functions() -> None:
         """Private module functions are excluded from discovery."""
         # Arrange
         module = types.ModuleType("private_check_module")
@@ -93,7 +99,8 @@ class TestsFlextHandlerDiscoveryModule:
         tm.that("_private_handler" not in names, eq=True)
         tm.that(names, has="public_handler")
 
-    def test_scan_module_ignores_non_callable_and_undecorated_members(self) -> None:
+    @staticmethod
+    def test_scan_module_ignores_non_callable_and_undecorated_members() -> None:
         """Undecorated functions and non-callable values are ignored."""
         # Arrange
         module = types.ModuleType("mixed_members_module")
@@ -123,7 +130,8 @@ class TestsFlextHandlerDiscoveryModule:
         tm.that("plain" not in names, eq=True)
         tm.that("constant" not in names, eq=True)
 
-    def test_scan_module_orders_by_priority_descending(self) -> None:
+    @staticmethod
+    def test_scan_module_orders_by_priority_descending() -> None:
         """Discovered functions are ordered from highest to lowest priority."""
         # Arrange
         module = types.ModuleType("priority_order_module")
@@ -147,7 +155,8 @@ class TestsFlextHandlerDiscoveryModule:
         # Assert
         tm.that(ordered, eq=["high", "low"])
 
-    def test_scan_module_breaks_priority_ties_by_name(self) -> None:
+    @staticmethod
+    def test_scan_module_breaks_priority_ties_by_name() -> None:
         """Equal-priority functions use their names as a stable tie breaker."""
         # Arrange
         module = types.ModuleType("tie_break_module")
@@ -175,7 +184,8 @@ class TestsFlextHandlerDiscoveryModule:
         # Assert
         tm.that(ordered, eq=["alpha", "bravo"])
 
-    def test_scan_module_surfaces_decorator_metadata(self) -> None:
+    @staticmethod
+    def test_scan_module_surfaces_decorator_metadata() -> None:
         """Discovery preserves the handler's public decorator metadata."""
         # Arrange
         module = types.ModuleType("metadata_module")
@@ -194,11 +204,13 @@ class TestsFlextHandlerDiscoveryModule:
 
         # Assert
         tm.that(
-            config.command is TestsFlextHandlerDiscoveryModule._DeleteCommand, eq=True
+            config.command is TestsFlextHandlerDiscoveryModule._DeleteCommand,
+            eq=True,
         )
         tm.that(config.priority, eq=7)
 
-    def test_scan_module_returns_empty_for_module_without_handlers(self) -> None:
+    @staticmethod
+    def test_scan_module_returns_empty_for_module_without_handlers() -> None:
         """A module without decorated handlers yields an empty sequence."""
         # Arrange
         module = types.ModuleType("bare_module")
@@ -214,8 +226,10 @@ class TestsFlextHandlerDiscoveryModule:
         ("returned", "expected"),
         [(42, 42), ("payload", "payload"), (None, None), ([1, 2], "[1, 2]")],
     )
+    @staticmethod
     def test_discovered_callable_coerces_result_to_scalar_or_none(
-        self, returned: t.JsonValue, expected: t.Scalar | None
+        returned: t.JsonValue,
+        expected: t.Scalar | None,
     ) -> None:
         """The discovered callable exposes the documented scalar coercion."""
         # Arrange

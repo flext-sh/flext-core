@@ -4,6 +4,9 @@ Asserts the public contract only: which methods ``u.service_operations``
 reports as operations, the frozen ``m.ServiceOperation`` values it returns, and
 the ``TypeError`` it raises for every malformed shape. Discovery is lazy, so a
 malformed service class is created without error and fails only when asked.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -31,23 +34,38 @@ class TestsFlextCoreServiceOperations:
         """Service with one request operation and one input-less operation."""
 
         counter: t.Port[p.Tests.Counter] = m.Field(
-            exclude=True, description="Counter port, never an operation."
+            exclude=True,
+            description="Counter port, never an operation.",
         )
 
         @override
         def execute(self) -> p.Result[bool]:
-            """Execute is part of the kernel, never an operation."""
+            """Execute is part of the kernel, never an operation.
+
+            Returns:
+                The resulting ``p.Result[bool]``.
+
+            """
             return r[bool].ok(True)
 
         def dispatch(self, request: m.Tests.DispatchRequest) -> p.Result[str]:
             """Dispatch one command by name.
 
             The summary is the first docstring line only.
+
+            Returns:
+                The resulting ``p.Result[str]``.
+
             """
             return r[str].ok(request.command_name)
 
         def status(self) -> p.Result[bool]:
-            """Report readiness."""
+            """Report readiness.
+
+            Returns:
+                The resulting ``p.Result[bool]``.
+
+            """
             return r[bool].ok(True)
 
         @property
@@ -57,35 +75,65 @@ class TestsFlextCoreServiceOperations:
 
         @classmethod
         def build(cls) -> p.Result[bool]:
-            """A classmethod is not an operation."""
+            """A classmethod is not an operation.
+
+            Returns:
+                The resulting ``p.Result[bool]``.
+
+            """
             return r[bool].ok(True)
 
         @staticmethod
         def helper() -> p.Result[bool]:
-            """A staticmethod is not an operation."""
+            """A staticmethod is not an operation.
+
+            Returns:
+                The resulting ``p.Result[bool]``.
+
+            """
             return r[bool].ok(True)
 
         @m.model_validator(mode="after")
         def check_state(self) -> Self:
-            """A Pydantic validator is not an operation."""
+            """A Pydantic validator is not an operation.
+
+            Returns:
+                The resulting ``Self``.
+
+            """
             return self
 
         def _private(self) -> p.Result[bool]:
-            """A private method is not an operation."""
+            """A private method is not an operation.
+
+            Returns:
+                The resulting ``p.Result[bool]``.
+
+            """
             return r[bool].ok(True)
 
     class ReadSide(s[bool]):
         """Sibling declaring ``run``."""
 
         def run(self) -> p.Result[bool]:
-            """Run the read side."""
+            """Run the read side.
+
+            Returns:
+                The resulting ``p.Result[bool]``.
+
+            """
             return r[bool].ok(True)
 
     class WriteSide(s[bool]):
         """Sibling also declaring ``run``."""
 
         def run(self) -> p.Result[bool]:
-            """Run the write side."""
+            """Run the write side.
+
+            Returns:
+                The resulting ``p.Result[bool]``.
+
+            """
             return r[bool].ok(False)
 
     class CollidingService(ReadSide, WriteSide):
@@ -96,7 +144,12 @@ class TestsFlextCoreServiceOperations:
 
         @override
         def run(self) -> p.Result[bool]:
-            """Run the overriding side."""
+            """Run the overriding side.
+
+            Returns:
+                The resulting ``p.Result[bool]``.
+
+            """
             return r[bool].ok(False)
 
     class EmptyService(s[bool]):
@@ -105,74 +158,133 @@ class TestsFlextCoreServiceOperations:
     class AsyncService(s[bool]):
         """Operation declared async."""
 
-        async def fetch(self) -> p.Result[bool]:
-            """Fetch asynchronously."""
+        @staticmethod
+        async def fetch() -> p.Result[bool]:
+            """Fetch asynchronously.
+
+            Returns:
+                The resulting ``p.Result[bool]``.
+
+            """
             return r[bool].ok(True)
 
     class GenericService(s[bool]):
         """Operation declaring type parameters."""
 
         def echo[V: p.Base](self, request: V) -> p.Result[V]:
-            """Echo the request generically."""
+            """Echo the request generically.
+
+            Returns:
+                The resulting ``p.Result[V]``.
+
+            """
             return r[V].ok(request)
 
     class TwoRequestService(s[bool]):
         """Operation taking two requests."""
 
         def join(
-            self, left: m.Tests.DispatchRequest, right: m.Tests.DispatchRequest
+            self,
+            left: m.Tests.DispatchRequest,
+            right: m.Tests.DispatchRequest,
         ) -> p.Result[bool]:
-            """Join two requests."""
+            """Join two requests.
+
+            Returns:
+                The resulting ``p.Result[bool]``.
+
+            """
             return r[bool].ok(left == right)
 
     class KeywordOnlyService(s[bool]):
         """Operation with a keyword-only request."""
 
         def send(self, *, request: m.Tests.DispatchRequest) -> p.Result[bool]:
-            """Send a request."""
+            """Send a request.
+
+            Returns:
+                The resulting ``p.Result[bool]``.
+
+            """
             return r[bool].ok(bool(request))
 
     class DefaultRequestService(s[bool]):
         """Operation whose request has a default."""
 
         def send(
-            self, request: m.Tests.DispatchRequest | None = None
+            self,
+            request: m.Tests.DispatchRequest | None = None,
         ) -> p.Result[bool]:
-            """Send an optional request."""
+            """Send an optional request.
+
+            Returns:
+                The resulting ``p.Result[bool]``.
+
+            """
             return r[bool].ok(request is None)
 
     class UndocumentedService(s[bool]):
         """Operation without a docstring."""
 
         def status(self) -> p.Result[bool]:
+            """Provide ``status``.
+
+            Returns:
+                The resulting ``p.Result[bool]``.
+
+            """
             return r[bool].ok(True)
+
+        # The docstring above satisfies the docstring lint; the scenario under
+        # test is an operation that reaches discovery without one.
+        status.__doc__ = None
 
     class PlainReturnService(s[bool]):
         """Operation returning a plain value."""
 
         def status(self) -> bool:
-            """Report readiness."""
+            """Report readiness.
+
+            Returns:
+                The resulting ``bool``.
+
+            """
             return True
 
     class UnionRequestService(s[bool]):
         """Operation whose request annotation is not a dotted name."""
 
         def send(self, request: m.Tests.DispatchRequest | str) -> p.Result[bool]:
-            """Send a request."""
+            """Send a request.
+
+            Returns:
+                The resulting ``p.Result[bool]``.
+
+            """
             return r[bool].ok(bool(request))
 
     class ScalarRequestService(s[bool]):
         """Operation whose request is not a Pydantic model."""
 
         def lookup(self, request: str) -> p.Result[str]:
-            """Look up a name."""
+            """Look up a name.
+
+            Returns:
+                The resulting ``p.Result[str]``.
+
+            """
             return r[str].ok(request)
 
     class TypeCheckingOnlyService(s[bool]):
         """Operation whose request is imported only under TYPE_CHECKING."""
 
         def configure(self, request: FlextSettings) -> p.Result[bool]:
-            """Configure from settings."""
+            """Configure from settings.
+
+            Returns:
+                The resulting ``p.Result[bool]``.
+
+            """
             return r[bool].ok(bool(request))
 
     # --- Discovery -------------------------------------------------------
@@ -234,7 +346,10 @@ class TestsFlextCoreServiceOperations:
         ],
     )
     def test_malformed_operation_raises_with_operation_module_and_fix(
-        self, service_type: type[s[bool]], operation: str, defect: str
+        self,
+        service_type: type[s[bool]],
+        operation: str,
+        defect: str,
     ) -> None:
         """Each malformed shape names the operation, module and fix."""
         with pytest.raises(TypeError) as raised:
@@ -269,7 +384,7 @@ class TestsFlextCoreServiceOperations:
         owners = f"{self.ReadSide.__qualname__}, {self.WriteSide.__qualname__}"
         tm.that(
             str(raised.value).endswith(
-                c.ERR_SERVICE_OPERATION_COLLISION.format(owners=owners)
+                c.ERR_SERVICE_OPERATION_COLLISION.format(owners=owners),
             ),
             eq=True,
         )
@@ -282,6 +397,7 @@ class TestsFlextCoreServiceOperations:
         tm.that(
             str(raised.value),
             eq=c.ERR_SERVICE_NO_OPERATIONS.format(
-                service=self.EmptyService.__qualname__, module=__name__
+                service=self.EmptyService.__qualname__,
+                module=__name__,
             ),
         )

@@ -6,6 +6,9 @@ given a class defined in a test/example/script wrapper module, the engine
 returns a violation mapping when that module contains a forbidden facade alias
 import, and ``None`` otherwise. Assertions target the returned
 ``StrMapping | None`` contract, never the engine's internals.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -30,13 +33,21 @@ class TestsFlextCoreBeartypeEngineImportHooks:
 
     @staticmethod
     def _probe_class(
-        tmp_path: Path, *, package: str, under_tests: bool, body: str
+        tmp_path: Path,
+        *,
+        package: str,
+        under_tests: bool,
+        body: str,
     ) -> type:
         """Materialize ``<package>[/tests]/sample.py`` and import its ``Probe`` class.
 
         Returns the freshly imported ``Probe`` type bound to a real on-disk
         module, so the engine can introspect it exactly as it would in a live
         enforcement pass.
+
+        Returns:
+            The resulting ``type``.
+
         """
         root = tmp_path / package
         module_dir = root / "tests" if under_tests else root
@@ -55,8 +66,14 @@ class TestsFlextCoreBeartypeEngineImportHooks:
         probe: type = module.Probe
         return probe
 
-    def _apply(self, target: type) -> t.StrMapping | None:
-        """Invoke the public engine dispatch for the wrapper-alias-import shape."""
+    @staticmethod
+    def _apply(target: type) -> t.StrMapping | None:
+        """Invoke the public engine dispatch for the wrapper-alias-import shape.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+
+        """
         return be.apply(
             c.EnforcementPredicateKind.DEPRECATED_SYNTAX,
             me.DeprecatedSyntaxParams(ast_shape="no_wrapper_root_alias_import"),
@@ -64,7 +81,8 @@ class TestsFlextCoreBeartypeEngineImportHooks:
         )
 
     def test_detects_forbidden_facade_alias_import_in_wrapper_module(
-        self, tmp_path: Path
+        self,
+        tmp_path: Path,
     ) -> None:
         """A forbidden facade alias import in a tests module yields a violation."""
         probe = self._probe_class(
@@ -78,7 +96,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
 
                 class Probe:
                     value = c
-                """
+                """,
             ).strip()
             + "\n",
         )
@@ -91,7 +109,8 @@ class TestsFlextCoreBeartypeEngineImportHooks:
         assert violation["line"] == "1"
 
     def test_ignores_string_literal_that_merely_mentions_a_forbidden_import(
-        self, tmp_path: Path
+        self,
+        tmp_path: Path,
     ) -> None:
         """A string literal spelling the import is not an import; no violation."""
         probe = self._probe_class(
@@ -102,7 +121,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
                 f"""
                 class Probe:
                     value = "{_FORBIDDEN_IMPORT}"
-                """
+                """,
             ).strip()
             + "\n",
         )
@@ -110,7 +129,8 @@ class TestsFlextCoreBeartypeEngineImportHooks:
         assert self._apply(probe) is None
 
     def test_ignores_forbidden_import_outside_wrapper_module(
-        self, tmp_path: Path
+        self,
+        tmp_path: Path,
     ) -> None:
         """The predicate only scans test/example/script wrapper modules."""
         probe = self._probe_class(
@@ -124,7 +144,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
 
                 class Probe:
                     value = c
-                """
+                """,
             ).strip()
             + "\n",
         )
@@ -132,9 +152,10 @@ class TestsFlextCoreBeartypeEngineImportHooks:
         assert self._apply(probe) is None
 
     def test_unrelated_shape_reports_no_violation_for_clean_class(
-        self, tmp_path: Path
+        self,
+        tmp_path: Path,
     ) -> None:
-        """An unrelated ast_shape on a clean wrapper class returns no violation."""
+        """Another declared ast_shape on a clean wrapper class returns no violation."""
         probe = self._probe_class(
             tmp_path,
             package="cleanshapeprobe",
@@ -143,21 +164,22 @@ class TestsFlextCoreBeartypeEngineImportHooks:
                 """
                 class Probe:
                     value = 1
-                """
+                """,
             ).strip()
             + "\n",
         )
 
         result = be.apply(
             c.EnforcementPredicateKind.DEPRECATED_SYNTAX,
-            me.DeprecatedSyntaxParams(ast_shape="model_rebuild_call"),
+            me.DeprecatedSyntaxParams(ast_shape="no_core_tests_namespace"),
             probe,
         )
 
         assert result is None
 
     def test_detection_is_idempotent_across_repeated_applications(
-        self, tmp_path: Path
+        self,
+        tmp_path: Path,
     ) -> None:
         """Re-applying the predicate yields an equal result (stable contract)."""
         probe = self._probe_class(
@@ -171,7 +193,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
 
                 class Probe:
                     value = c
-                """
+                """,
             ).strip()
             + "\n",
         )
@@ -184,7 +206,9 @@ class TestsFlextCoreBeartypeEngineImportHooks:
 
     @pytest.mark.parametrize("attempts", [2, 3])
     def test_string_literal_case_stays_clean_under_repeat(
-        self, tmp_path: Path, attempts: int
+        self,
+        tmp_path: Path,
+        attempts: int,
     ) -> None:
         """The no-false-positive guarantee holds across repeated applications."""
         probe = self._probe_class(
@@ -195,7 +219,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
                 f"""
                 class Probe:
                     value = "{_FORBIDDEN_IMPORT}"
-                """
+                """,
             ).strip()
             + "\n",
         )

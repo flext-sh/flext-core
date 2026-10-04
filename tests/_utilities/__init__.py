@@ -1,35 +1,65 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Tests. Utilities package."""
+"""Tests. Utilities package.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import build_lazy_import_map, install_lazy_exports
+from flext_core import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from .case_factories import TestsFlextUtilitiesCaseFactoriesMixin, u
-    from .case_generators import TestsFlextUtilitiesCaseGeneratorsMixin
-    from .case_service_factories import TestsFlextUtilitiesCaseServiceFactoriesMixin
-    from .contracts import TestsFlextUtilitiesContractsMixin
-    from .dispatch import TestsFlextUtilitiesDispatchMixin
-    from .parser_reliability import TestsFlextUtilitiesParserReliabilityMixin
-    from .parser_scenarios import TestsFlextUtilitiesParserScenariosMixin
-    from .railway import TestsFlextUtilitiesRailwayMixin
-    from .railway_cases import TestsFlextUtilitiesRailwayCasesMixin
-    from .railway_pipelines import TestsFlextUtilitiesRailwayPipelinesMixin
-    from .railway_services import TestsFlextUtilitiesRailwayServicesMixin
-    from .reliability_scenarios import TestsFlextUtilitiesReliabilityScenariosMixin
-    from .service_factories import TestsFlextUtilitiesServiceFactoriesMixin
-    from .services import TestsFlextUtilitiesServicesMixin
-    from .user_factories import TestsFlextUtilitiesUserFactoriesMixin
-    from .validation_factories import TestsFlextUtilitiesValidationFactoriesMixin
-    from .validation_network import TestsFlextUtilitiesValidationNetworkScenarios
-    from .validation_numeric import TestsFlextUtilitiesValidationNumericScenarios
-    from .validation_pattern import TestsFlextUtilitiesValidationPatternScenarios
-    from .validation_string import TestsFlextUtilitiesValidationStringScenarios
-    from .validation_uri import TestsFlextUtilitiesValidationUriScenarios
+    from tests._utilities.case_factories import TestsFlextUtilitiesCaseFactoriesMixin, u
+    from tests._utilities.case_generators import TestsFlextUtilitiesCaseGeneratorsMixin
+    from tests._utilities.case_service_factories import (
+        TestsFlextUtilitiesCaseServiceFactoriesMixin,
+    )
+    from tests._utilities.contracts import TestsFlextUtilitiesContractsMixin
+    from tests._utilities.dispatch import TestsFlextUtilitiesDispatchMixin
+    from tests._utilities.parser_reliability import (
+        TestsFlextUtilitiesParserReliabilityMixin,
+    )
+    from tests._utilities.parser_scenarios import (
+        TestsFlextUtilitiesParserScenariosMixin,
+    )
+    from tests._utilities.railway import TestsFlextUtilitiesRailwayMixin
+    from tests._utilities.railway_cases import TestsFlextUtilitiesRailwayCasesMixin
+    from tests._utilities.railway_pipelines import (
+        TestsFlextUtilitiesRailwayPipelinesMixin,
+    )
+    from tests._utilities.railway_services import (
+        TestsFlextUtilitiesRailwayServicesMixin,
+    )
+    from tests._utilities.reliability_scenarios import (
+        TestsFlextUtilitiesReliabilityScenariosMixin,
+    )
+    from tests._utilities.service_factories import (
+        TestsFlextUtilitiesServiceFactoriesMixin,
+    )
+    from tests._utilities.services import TestsFlextUtilitiesServicesMixin
+    from tests._utilities.user_factories import TestsFlextUtilitiesUserFactoriesMixin
+    from tests._utilities.validation_factories import (
+        TestsFlextUtilitiesValidationFactoriesMixin,
+    )
+    from tests._utilities.validation_network import (
+        TestsFlextUtilitiesValidationNetworkScenarios,
+    )
+    from tests._utilities.validation_numeric import (
+        TestsFlextUtilitiesValidationNumericScenarios,
+    )
+    from tests._utilities.validation_pattern import (
+        TestsFlextUtilitiesValidationPatternScenarios,
+    )
+    from tests._utilities.validation_string import (
+        TestsFlextUtilitiesValidationStringScenarios,
+    )
+    from tests._utilities.validation_uri import (
+        TestsFlextUtilitiesValidationUriScenarios,
+    )
 
 
 __all__: tuple[str, ...] = (
@@ -86,7 +116,7 @@ _LAZY_IMPORTS = MappingProxyType(
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
-    )
+    ),
 )
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

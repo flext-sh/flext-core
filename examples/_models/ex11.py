@@ -1,4 +1,8 @@
-"""Example models for ex11."""
+"""Example models for ex11.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -15,15 +19,18 @@ class ExamplesFlextModelsEx11:
 
     class ServiceHandlerConfig(FlextSettings):
         enabled: Annotated[
-            bool, m.Field(description="Whether the service is enabled")
+            bool,
+            m.Field(description="Whether the service is enabled"),
         ] = True
 
     class ServiceHandlerLike(m.BaseModel):
         message_type: Annotated[
-            type[m.Value], m.Field(description="Message type handled by this handler")
+            type[m.Value],
+            m.Field(description="Message type handled by this handler"),
         ] = m.Value
 
-        def handle(self, message: ExamplesFlextModelsEx11.Payload) -> p.Result[str]:
+        @staticmethod
+        def handle(message: ExamplesFlextModelsEx11.Payload) -> p.Result[str]:
             return r[str].ok(message.text)
 
     class ProcessorProtocolGood(m.Value):

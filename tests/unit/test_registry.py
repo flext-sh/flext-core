@@ -1,4 +1,8 @@
-"""Behavioral contract tests for the public FlextRegistry runtime surface."""
+"""Behavioral contract tests for the public FlextRegistry runtime surface.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -18,12 +22,20 @@ if TYPE_CHECKING:
 class TestsFlextCoreRegistry:
     """Assert observable behavior of the registry public API."""
 
+    @staticmethod
     @pytest.fixture
-    def registry(self) -> p.Registry:
-        """Build a registry backed by an accepting dispatcher."""
+    def registry() -> p.Registry:
+        """Build a registry backed by an accepting dispatcher.
+
+        Returns:
+            The resulting ``p.Registry``.
+
+        """
         return u.build_registry(dispatcher=u.build_dispatcher())
 
-    def test_execute_succeeds_when_dispatcher_present(self) -> None:
+    @staticmethod
+    def test_execute_succeeds_when_dispatcher_present() -> None:
+        """Test execute succeeds when dispatcher present."""
         registry = u.build_registry(dispatcher=u.build_dispatcher())
 
         outcome = registry.execute()
@@ -31,20 +43,25 @@ class TestsFlextCoreRegistry:
         assert outcome.success
         assert outcome.value is True
 
+    @staticmethod
     def test_register_handler_returns_registration_details(
-        self, registry: p.Registry
+        registry: p.Registry,
     ) -> None:
+        """Test register handler returns registration details."""
         registration = registry.register_handler(u.Tests.Handler())
 
         assert registration.success
         details = registration.value
-        assert details.registration_id != ""
+        assert details.registration_id
         assert details.status == c.Status.ACTIVE
         assert details.handler_mode == c.HandlerType.COMMAND
 
+    @staticmethod
     def test_register_handler_propagates_dispatcher_failure(
-        self, registry: p.Registry
+        registry: p.Registry,
     ) -> None:
+        """Test register handler propagates dispatcher failure."""
+
         def unroutable(message: p.Routable) -> None:
             _ = message
 
@@ -53,9 +70,11 @@ class TestsFlextCoreRegistry:
         assert registration.failure
         assert c.ERR_HANDLER_ROUTE_DISCOVERY_REQUIRED in (registration.error or "")
 
+    @staticmethod
     def test_register_handlers_batch_reports_every_success(
-        self, registry: p.Registry
+        registry: p.Registry,
     ) -> None:
+        """Test register handlers batch reports every success."""
         batch = registry.register_handlers([u.Tests.Handler(), u.Tests.Handler()])
 
         assert batch.success
@@ -65,9 +84,11 @@ class TestsFlextCoreRegistry:
         assert len(summary.registered) == 2
         assert list(summary.errors) == []
 
+    @staticmethod
     def test_register_bindings_batch_reports_every_success(
-        self, registry: p.Registry
+        registry: p.Registry,
     ) -> None:
+        """Test register bindings batch reports every success."""
         batch = registry.register_bindings({
             str: u.Tests.Handler(),
             int: u.Tests.Handler(),
@@ -79,16 +100,20 @@ class TestsFlextCoreRegistry:
         assert len(summary.registered) == 2
         assert list(summary.errors) == []
 
-    def test_register_service_is_idempotent(self, registry: p.Registry) -> None:
+    @staticmethod
+    def test_register_service_is_idempotent(registry: p.Registry) -> None:
+        """Test register service is idempotent."""
         first = registry.register("service-name", "service-value")
         duplicate = registry.register("service-name", "service-value")
 
         assert first.success
         assert duplicate.success
 
+    @staticmethod
     def test_instance_plugin_roundtrips_then_unregisters(
-        self, registry: p.Registry
+        registry: p.Registry,
     ) -> None:
+        """Test instance plugin roundtrips then unregisters."""
         assert registry.register_plugin("validators", "local", "plugin").success
 
         assert registry.fetch_plugin("validators", "local").value == "plugin"
@@ -97,45 +122,67 @@ class TestsFlextCoreRegistry:
         assert registry.unregister_plugin("validators", "local").success
         assert registry.fetch_plugin("validators", "local").failure
 
-    def test_class_scope_plugin_is_visible_across_instances(self) -> None:
+    @staticmethod
+    def test_class_scope_plugin_is_visible_across_instances() -> None:
+        """Test class scope plugin is visible across instances."""
         writer = u.build_registry(dispatcher=u.build_dispatcher())
         reader = u.build_registry(dispatcher=u.build_dispatcher())
 
         registration = writer.register_plugin(
-            "validators", "shared", "plugin", scope=c.RegistrationScope.CLASS
+            "validators",
+            "shared",
+            "plugin",
+            scope=c.RegistrationScope.CLASS,
         )
         assert registration.success
 
         fetched = reader.fetch_plugin(
-            "validators", "shared", scope=c.RegistrationScope.CLASS
+            "validators",
+            "shared",
+            scope=c.RegistrationScope.CLASS,
         )
         assert fetched.value == "plugin"
 
         assert reader.unregister_plugin(
-            "validators", "shared", scope=c.RegistrationScope.CLASS
+            "validators",
+            "shared",
+            scope=c.RegistrationScope.CLASS,
         ).success
         assert writer.fetch_plugin(
-            "validators", "shared", scope=c.RegistrationScope.CLASS
+            "validators",
+            "shared",
+            scope=c.RegistrationScope.CLASS,
         ).failure
 
-    def test_register_plugin_rejects_empty_name(self, registry: p.Registry) -> None:
+    @staticmethod
+    def test_register_plugin_rejects_empty_name(registry: p.Registry) -> None:
+        """Test register plugin rejects empty name."""
         result = registry.register_plugin("validators", "", "plugin")
 
         assert result.failure
         assert result.error
 
-    def test_fetch_unknown_plugin_fails(self, registry: p.Registry) -> None:
+    @staticmethod
+    def test_fetch_unknown_plugin_fails(registry: p.Registry) -> None:
+        """Test fetch unknown plugin fails."""
         assert registry.fetch_plugin("validators", "absent").failure
 
-    def test_unregister_unknown_plugin_fails(self, registry: p.Registry) -> None:
+    @staticmethod
+    def test_unregister_unknown_plugin_fails(registry: p.Registry) -> None:
+        """Test unregister unknown plugin fails."""
         assert registry.unregister_plugin("validators", "absent").failure
 
     @pytest.mark.parametrize(
-        ("errors", "expected_success"), [((), True), (("boom",), False)]
+        ("errors", "expected_success"),
+        [((), True), (("boom",), False)],
     )
+    @staticmethod
     def test_summary_success_reflects_error_state(
-        self, errors: t.VariadicTuple[str], *, expected_success: bool
+        errors: t.VariadicTuple[str],
+        *,
+        expected_success: bool,
     ) -> None:
+        """Test summary success reflects error state."""
         detail = m.RegistrationDetails(
             registration_id="handler-a",
             handler_mode=c.HandlerType.COMMAND,

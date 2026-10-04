@@ -1,4 +1,8 @@
-"""Core state model helpers."""
+"""Core state model helpers.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -14,7 +18,8 @@ class TestsFlextModelsCoreStateMixin:
         """Test singleton class with Pydantic validation."""
 
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-            validate_assignment=True, extra="forbid"
+            validate_assignment=True,
+            extra="forbid",
         )
 
         _instance: ClassVar[
@@ -26,7 +31,12 @@ class TestsFlextModelsCoreStateMixin:
 
         @classmethod
         def fetch_global(cls) -> TestsFlextModelsCoreStateMixin.SingletonClassForTest:
-            """Get global singleton instance."""
+            """Get global singleton instance.
+
+            Returns:
+                The resulting ``TestsFlextModelsCoreStateMixin.SingletonClassForTest``.
+
+            """
             if cls._instance is None:
                 cls._instance = cls()
             return cls._instance

@@ -39,9 +39,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from ._constants.environment import FlextConstantsEnvironment
 from ._constants.settings import FlextConstantsSettings
 
-ENV_FILE_DEFAULT = FlextConstantsSettings.ENV_FILE_DEFAULT
-"""Default .env file name (SSOT: ``_constants/settings``)."""
-
 ENV_FILE_ENV_VAR = FlextConstantsSettings.ENV_FILE_ENV_VAR
 """Bootstrap env var that overrides the .env path (SSOT: ``_constants/settings``)."""
 
@@ -64,10 +61,10 @@ def _resolve_env_file(namespace: str | None = None) -> str:
         scoped = Path.cwd() / f".env.flext-{namespace}"
         if scoped.exists():
             return str(scoped.resolve())
-    default_path = Path.cwd() / ENV_FILE_DEFAULT
+    default_path = Path.cwd() / FlextConstantsSettings.ENV_FILE_DEFAULT
     if default_path.exists():
         return str(default_path.resolve())
-    return ENV_FILE_DEFAULT
+    return FlextConstantsSettings.ENV_FILE_DEFAULT
 
 
 def _platform_cache_root() -> Path:

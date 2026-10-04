@@ -30,39 +30,32 @@ from pydantic import (
     Discriminator,
     FailFast,
     Field,
-    FieldSerializationInfo,
-    FileUrl,
-    GetCoreSchemaHandler,
-    GetJsonSchemaHandler,
+    FieldSerializationInfo as PydanticFieldSerializationInfo,
     GetPydanticSchema,
-    InstanceOf,
+    InstanceOf as PydanticInstanceOf,
     JsonValue,
     PlainSerializer,
     PlainValidator,
     PrivateAttr as PydanticPrivateAttr,
     RootModel as PydanticRootModel,
-    SecretStr,
     SerializeAsAny,
     SkipValidation,
     StringConstraints,
     TypeAdapter as PydanticTypeAdapter,
     ValidateAs,
     ValidationError,
-    ValidationInfo,
     WrapSerializer,
     WrapValidator,
     computed_field,
     field_validator,
     model_validator,
 )
-from pydantic.fields import FieldInfo
-from pydantic_core import PydanticUndefined, PydanticUndefinedType, SchemaValidator
+from pydantic.fields import FieldInfo as PydanticFieldInfo
+from pydantic_core import PydanticUndefined, PydanticUndefinedType
 from pydantic_settings import (
-    BaseSettings as PydanticBaseSettings,
-    EnvSettingsSource,
-    PydanticBaseSettingsSource,
+    BaseSettings as _PydanticBaseSettings,
+    PydanticBaseSettingsSource as _PydanticBaseSettingsSource,
     SettingsConfigDict as _PydanticSettingsConfigDict,
-    YamlConfigSettingsSource,
 )
 
 type _FieldValue = JsonValue | Path
@@ -71,7 +64,7 @@ type _FieldKeywordValue[DefaultT] = (
     _FieldValue
     | _FieldSchemaExtra
     | PydanticUndefinedType
-    | FieldInfo
+    | PydanticFieldInfo
     | AliasChoices
     | AliasPath
     | Discriminator
@@ -86,7 +79,12 @@ def _field[DefaultT](
     default: DefaultT | PydanticUndefinedType | EllipsisType = PydanticUndefined,
     **kwargs: _FieldKeywordValue[DefaultT] | None,
 ) -> DefaultT:
-    """Typed FLEXT facade for ``pydantic.Field``."""
+    """Typed FLEXT facade for ``pydantic.Field``.
+
+    Returns:
+        The resulting ``DefaultT``.
+
+    """
     field_factory: Callable[..., DefaultT] = Field
     return field_factory(default, **kwargs)
 
@@ -97,7 +95,12 @@ def _private_attr[PrivateT](
     default_factory: Callable[..., PrivateT] | None = None,
     init: Literal[False] = False,
 ) -> PrivateT:
-    """Typed FLEXT facade for ``pydantic.PrivateAttr``."""
+    """Typed FLEXT facade for ``pydantic.PrivateAttr``.
+
+    Returns:
+        The resulting ``PrivateT``.
+
+    """
     private_attr_factory: Callable[..., PrivateT] = PydanticPrivateAttr
     return private_attr_factory(default, default_factory=default_factory, init=init)
 
@@ -120,13 +123,8 @@ class FlextModelsPydantic:
     class BaseModel(PydanticBaseModel):
         """Canonical BaseModel exported through the FLEXT models facade."""
 
-    # Plain re-export alias, deliberately NOT a subclass definition: the
-    # pydantic mypy plugin crashes (assertion in add_method, "All arguments
-    # must be fully typed") synthesizing __init__ for a BaseSettings
-    # subclass, which silently degrades every dependent facade to Any under
-    # the gate's JSON output. The alias binds the exact upstream class, so
-    # consumer MRO and runtime behavior are identical.
-    BaseSettings = PydanticBaseSettings
+    class BaseSettings(_PydanticBaseSettings):
+        """Canonical BaseSettings exported through the FLEXT models facade."""
 
     @dataclass_transform(
         kw_only_default=True,
@@ -135,9 +133,11 @@ class FlextModelsPydantic:
     class RootModel[RootValueT](PydanticRootModel[RootValueT]):
         """Canonical RootModel exported through the FLEXT models facade."""
 
-    # Pydantic field utilities
-    ConfigDict = _PydanticConfigDict
-    SettingsConfigDict = _PydanticSettingsConfigDict
+    class ConfigDict(_PydanticConfigDict, total=False):
+        """Canonical model configuration exported through the models facade."""
+
+    class SettingsConfigDict(_PydanticSettingsConfigDict, total=False):
+        """Canonical settings configuration exported through the models facade."""
 
     Field = staticmethod(_field)
     PrivateAttr = staticmethod(_private_attr)
@@ -160,19 +160,15 @@ class FlextModelsPydantic:
     # Annotation constraints and tagged-union discrimination
     Discriminator = Discriminator
     StringConstraints = StringConstraints
-    # Field alias declaration and the scalar/URL field types a declaration layer
-    # needs; all four were reachable only through a bare pydantic import before.
+    # Field alias declarations (runtime markers placed in ``Field`` arguments).
     AliasChoices = AliasChoices
     AliasPath = AliasPath
-    JsonValue = JsonValue
-    SecretStr = SecretStr
-    FileUrl = FileUrl
 
     # Annotation validators
     AfterValidator = AfterValidator
     BeforeValidator = BeforeValidator
     FailFast = FailFast
-    InstanceOf = InstanceOf
+    type InstanceOf[T] = PydanticInstanceOf[T]
     PlainValidator = PlainValidator
     ValidateAs = ValidateAs
     WrapValidator = WrapValidator
@@ -182,32 +178,19 @@ class FlextModelsPydantic:
     SerializeAsAny = SerializeAsAny
     WrapSerializer = WrapSerializer
 
-    # Validation and serialization context helpers
-    FieldInfo = FieldInfo
-    FieldSerializationInfo = FieldSerializationInfo
-    ValidationInfo = ValidationInfo
+    # Types of the pydantic final classes and protocols: annotation-only names.
+    # ``u.type_adapter`` constructs the adapter this type describes.
+    type FieldInfo = PydanticFieldInfo
+    type FieldSerializationInfo = PydanticFieldSerializationInfo
+    type TypeAdapter[T] = PydanticTypeAdapter[T]
 
-    type TypeAdapterType[T] = PydanticTypeAdapter[T]
-    TypeAdapter = PydanticTypeAdapter
-
-    # Schema and validator handlers
-    GetCoreSchemaHandler = GetCoreSchemaHandler
-    GetJsonSchemaHandler = GetJsonSchemaHandler
+    # Annotation marker that wraps a callable schema hook.
     GetPydanticSchema = GetPydanticSchema
 
     # Validation exception (re-exported so consumers avoid `import pydantic`)
     ValidationError = ValidationError
 
-    # Schema and JSON utilities (from pydantic_core)
-    SchemaValidator = SchemaValidator
-
-    # Settings sources (from pydantic_settings)
-    # NOTE (multi-agent, flext-3jjja): the Pydantic hook contract accepts this wide
-    # base; consumers overriding ``settings_customise_sources`` annotate
-    # ``settings_cls: type[PydanticBaseSettings]`` through the facade (Liskov-correct
-    # parameter widening). Removing or narrowing this alias re-forces forbidden
-    # direct ``pydantic_settings`` imports in every fleet consumer.
-    PydanticBaseSettings = PydanticBaseSettings
-    EnvSettingsSource = EnvSettingsSource
-    PydanticBaseSettingsSource = PydanticBaseSettingsSource
-    YamlConfigSettingsSource = YamlConfigSettingsSource
+    # Settings-source hook contract: ``settings_customise_sources`` overrides
+    # annotate the wide upstream base (Liskov-correct parameter widening).
+    type PydanticBaseSettings = _PydanticBaseSettings
+    type PydanticBaseSettingsSource = _PydanticBaseSettingsSource

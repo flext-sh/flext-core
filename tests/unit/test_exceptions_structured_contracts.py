@@ -4,6 +4,9 @@ Behavioral only: every assertion exercises the observable public surface of the
 ``FlextExceptions`` family and the ``r[T]`` failure contract exposed through the
 ``flext_tests`` facades. No private attributes, no monkeypatching, no spying on
 internal collaborators.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -15,9 +18,8 @@ from flext_tests import e, tm
 
 from tests.constants import c
 from tests.protocols import p
-
-from ._exceptions_failure_support import FAILURES, FailureFactory
-from ._exceptions_structured_support import STRUCTURED_ERRORS, ErrorFactory
+from tests.unit._exceptions_failure_support import FAILURES, FailureFactory
+from tests.unit._exceptions_structured_support import STRUCTURED_ERRORS, ErrorFactory
 
 
 class TestsFlextCoreExceptionsStructuredContracts:
@@ -27,8 +29,8 @@ class TestsFlextCoreExceptionsStructuredContracts:
         ("_name", "factory", "expected_domain", "expected_code", "expected_payload"),
         STRUCTURED_ERRORS,
     )
+    @staticmethod
     def test_structured_errors_expose_public_contract(
-        self,
         _name: str,
         factory: ErrorFactory,
         expected_domain: str,
@@ -36,6 +38,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
         expected_payload: dict[str, str | int | None],
     ) -> None:
         # Arrange / Act
+        """Test structured errors expose public contract."""
         error = factory()
 
         # Assert: structured protocol surface
@@ -54,8 +57,8 @@ class TestsFlextCoreExceptionsStructuredContracts:
         ("_name", "factory", "expected_domain", "expected_code", "_expected_payload"),
         STRUCTURED_ERRORS,
     )
+    @staticmethod
     def test_structured_errors_are_raisable_and_preserve_contract(
-        self,
         _name: str,
         factory: ErrorFactory,
         expected_domain: str,
@@ -64,6 +67,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
     ) -> None:
         # Act / Assert: the error is a real exception that callers can catch,
         # and its structured contract survives raise/except unchanged.
+        """Test structured errors are raisable and preserve contract."""
         with pytest.raises(e.BaseError) as caught:
             raise factory()
 
@@ -74,8 +78,10 @@ class TestsFlextCoreExceptionsStructuredContracts:
         assert error.message in str(error)
         assert error.error_message == error.message
 
-    def test_base_error_defaults_to_unknown_domain_protocol_surface(self) -> None:
+    @staticmethod
+    def test_base_error_defaults_to_unknown_domain_protocol_surface() -> None:
         # Arrange / Act
+        """Test base error defaults to unknown domain protocol surface."""
         error = e.BaseError("Base failure")
 
         # Assert
@@ -85,10 +91,14 @@ class TestsFlextCoreExceptionsStructuredContracts:
         assert error.error_message == "Base failure"
         assert error.matches_error_domain(c.ErrorDomain.UNKNOWN.value)
 
-    def test_specific_errors_are_catchable_as_base_error(self) -> None:
+    @staticmethod
+    def test_specific_errors_are_catchable_as_base_error() -> None:
         # Assert: the family shares a common catchable base contract.
+        """Test specific errors are catchable as base error."""
         not_found = e.NotFoundError(
-            "User missing", resource_type="User", resource_id="123"
+            "User missing",
+            resource_type="User",
+            resource_id="123",
         )
         with pytest.raises(e.BaseError) as caught:
             raise not_found
@@ -98,8 +108,10 @@ class TestsFlextCoreExceptionsStructuredContracts:
         assert error.error_code == c.ErrorCode.NOT_FOUND_ERROR
         assert error.error_domain == c.ErrorDomain.NOT_FOUND.value
 
-    def test_metadata_attributes_preserve_correlation_id(self) -> None:
+    @staticmethod
+    def test_metadata_attributes_preserve_correlation_id() -> None:
         # Arrange / Act
+        """Test metadata attributes preserve correlation id."""
         error = e.OperationError(
             "Insert failed",
             operation="insert_user",
@@ -123,8 +135,8 @@ class TestsFlextCoreExceptionsStructuredContracts:
         ("_name", "factory", "expected_fragment", "expected_code", "expected_data"),
         FAILURES,
     )
+    @staticmethod
     def test_failure_factories_return_public_result_contract(
-        self,
         _name: str,
         factory: FailureFactory,
         expected_fragment: str,
@@ -132,6 +144,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
         expected_data: dict[str, str | int | None],
     ) -> None:
         # Arrange / Act
+        """Test failure factories return public result contract."""
         result = factory()
         result_data = result.error_data or {}
 
@@ -149,8 +162,8 @@ class TestsFlextCoreExceptionsStructuredContracts:
         ("_name", "factory", "_expected_fragment", "expected_code", "_expected_data"),
         FAILURES,
     )
+    @staticmethod
     def test_failure_results_honor_combinator_contract(
-        self,
         _name: str,
         factory: FailureFactory,
         _expected_fragment: str,
@@ -158,6 +171,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
         _expected_data: dict[str, str | int | None],
     ) -> None:
         # Arrange
+        """Test failure results honor combinator contract."""
         result = factory()
 
         # Act / Assert: map short-circuits, preserving the failure and its code.
@@ -169,7 +183,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
         with pytest.raises(RuntimeError) as raised:
             result.unwrap()
         assert str(raised.value) == c.ERR_RESULT_CANNOT_UNWRAP.format(
-            error=result.error
+            error=result.error,
         )
 
         # recover converts a failure into a caller-defined success value.

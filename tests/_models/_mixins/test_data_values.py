@@ -1,4 +1,8 @@
-"""Static value test data helpers."""
+"""Static value test data helpers.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -28,13 +32,15 @@ class TestsFlextModelsTestDataValuesMixin:
             "test@example.com"
         )
         string_value: Annotated[
-            str, m.Field(description="Default test string value")
+            str,
+            m.Field(description="Default test string value"),
         ] = "test_value"
         input_data: Annotated[str, m.Field(description="Default test input data")] = (
             "test_input"
         )
         request_data: Annotated[
-            str, m.Field(description="Default test request data")
+            str,
+            m.Field(description="Default test request data"),
         ] = "test_request"
         result_data: Annotated[str, m.Field(description="Default test result data")] = (
             "test_result"

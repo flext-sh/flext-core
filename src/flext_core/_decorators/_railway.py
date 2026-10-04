@@ -11,15 +11,13 @@ from functools import wraps
 from typing import TYPE_CHECKING
 
 from flext_core import c, m, r
-
-from .._exceptions.exception_types import FlextExceptionsTypes as et
-from ._logging import FlextDecoratorsLogging
+from flext_core._decorators._logging import FlextDecoratorsLogging
+from flext_core._exceptions.exception_types import FlextExceptionsTypes as et
+from flext_core._protocols.loggings import FlextProtocolsLogging as pl
+from flext_core._protocols.result import FlextProtocolsResult as pr
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-    from .._protocols.loggings import FlextProtocolsLogging as pl
-    from .._protocols.result import FlextProtocolsResult as pr
 
 
 class FlextDecoratorsRailway(FlextDecoratorsLogging):
@@ -27,18 +25,27 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
 
     @classmethod
     def railway[**PCallback, TValue](
-        cls, error_code: str | None = None
+        cls,
+        error_code: str | None = None,
     ) -> Callable[
-        [Callable[PCallback, TValue]], Callable[PCallback, pr.Result[TValue]]
+        [Callable[PCallback, TValue]],
+        Callable[PCallback, pr.Result[TValue]],
     ]:
-        """Wrap a callable in the FLEXT railway result pattern."""
+        """Wrap a callable in the FLEXT railway result pattern.
+
+        Returns:
+            The resulting ``Callable[[Callable[PCallback, TValue]], Callable[PCallback,
+                pr.Result[TValue]]]``.
+
+        """
 
         def decorator(
             func: Callable[PCallback, TValue],
         ) -> Callable[PCallback, pr.Result[TValue]]:
             @wraps(func)
             def wrapper(
-                *args: PCallback.args, **kwargs: PCallback.kwargs
+                *args: PCallback.args,
+                **kwargs: PCallback.kwargs,
             ) -> pr.Result[TValue]:
                 try:
                     result = func(*args, **kwargs)
@@ -64,7 +71,13 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
         backoff_strategy: str | None = None,
         error_code: str | None = None,
     ) -> Callable[[Callable[PCallback, TResult]], Callable[PCallback, TResult]]:
-        """Retry failed operations using configured backoff."""
+        """Retry failed operations using configured backoff.
+
+        Returns:
+            The resulting ``Callable[[Callable[PCallback, TResult]], Callable[PCallback,
+                TResult]]``.
+
+        """
         attempts = max_attempts if max_attempts is not None else c.MAX_RETRY_ATTEMPTS
         delay = (
             delay_seconds
@@ -88,7 +101,8 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
                     if cls._is_logger_carrier(first_arg_raw):
                         logger_carrier = first_arg_raw
                 logger = cls._resolve_logger(
-                    logger_carrier, func_module=func.__module__
+                    logger_carrier,
+                    func_module=func.__module__,
                 )
                 retry_settings = m.RetryConfiguration.model_validate({
                     "max_retries": attempts,
@@ -141,7 +155,12 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
         *,
         retry_settings: m.RetryConfiguration,
     ) -> TResult | Exception:
-        """Execute retry loop with closure; return last exception on exhaustion."""
+        """Execute retry loop with closure; return last exception on exhaustion.
+
+        Returns:
+            The resulting ``TResult | Exception``.
+
+        """
         attempts = retry_settings.max_retries
         delay = retry_settings.initial_delay_seconds
         strategy = (

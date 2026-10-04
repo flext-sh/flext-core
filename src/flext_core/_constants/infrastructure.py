@@ -9,9 +9,9 @@ from __future__ import annotations
 from enum import StrEnum, unique
 from typing import ClassVar
 
-from .file import FlextConstantsFile
-from .mixins import FlextConstantsMixins
-from .timeout import FlextConstantsTimeout
+from flext_core._constants.file import FlextConstantsFile
+from flext_core._constants.mixins import FlextConstantsMixins
+from flext_core._constants.timeout import FlextConstantsTimeout
 
 
 class FlextConstantsInfrastructure:

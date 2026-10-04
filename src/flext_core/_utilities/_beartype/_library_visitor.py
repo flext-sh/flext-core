@@ -1,11 +1,20 @@
-"""Library abstraction owner enforcement visitor."""
+"""Library abstraction owner enforcement visitor.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from ..._models.enforcement import FlextModelsEnforcement as me
-from ..._typings.base import FlextTypingBase as t
-from .helpers import FlextUtilitiesBeartypeHelpers as _ubh
-from .module_source import FlextUtilitiesBeartypeModuleSource
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._models.enforcement import FlextModelsEnforcement as me
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._utilities._beartype.helpers import (
+    FlextUtilitiesBeartypeHelpers as _ubh,
+)
+from flext_core._utilities._beartype.module_source import (
+    FlextUtilitiesBeartypeModuleSource,
+)
 
 _NO_VIOLATION: t.StrMapping | None = None
 
@@ -15,7 +24,8 @@ class FlextUtilitiesBeartypeLibraryVisitor:
 
     @staticmethod
     def v_library_import(
-        params: me.LibraryImportParams, target: type
+        params: me.LibraryImportParams,
+        target: type,
     ) -> t.StrMapping | None:
         """LIBRARY_IMPORT — §2.7 library abstraction owner enforcement (Phase 3 hook).
 
@@ -24,20 +34,23 @@ class FlextUtilitiesBeartypeLibraryVisitor:
         the owner project's imports: bindings rooted in owner imports are
         facade provenance (legal), while direct imports, aliased imports,
         and dynamic ``__import__`` acquisitions stay violations.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+
         """
-        if not params.library_owners:
-            return _NO_VIOLATION
+        _ = params
+        owners = c.ENFORCEMENT_LIBRARY_OWNERS
         module = _ubh.runtime_module_for(target)
         if module is None:
             return _NO_VIOLATION
-        module_name = getattr(target, "__module__", "") or ""
-        package = module_name.split(".")[0].replace("_", "-")
+        package = target.__module__.split(".")[0].replace("_", "-")
         candidates = tuple(
-            (name, origin_root, params.library_owners[origin_root])
+            (name, origin_root, owners[origin_root])
             for name, value in vars(module).items()
             if (origin := _ubh.object_module_name_for(value)) is not None
-            and (origin_root := origin.split(".")[0]) in params.library_owners
-            and params.library_owners[origin_root] != package
+            and (origin_root := origin.split(".")[0]) in owners
+            and owners[origin_root] != package
         )
         if not candidates:
             return _NO_VIOLATION

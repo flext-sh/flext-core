@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
-from .base import FlextProtocolsBase as p
-from .result import FlextProtocolsResult as pr
+from flext_core._protocols.base import FlextProtocolsBase as p
+from flext_core._protocols.result import FlextProtocolsResult as pr
 
 if TYPE_CHECKING:
     from flext_core import t
@@ -106,7 +106,9 @@ class FlextProtocolsSettings:
 
         @classmethod
         def fetch_global(
-            cls, *, overrides: t.ScalarMapping | None = None
+            cls,
+            *,
+            overrides: t.ScalarMapping | None = None,
         ) -> FlextProtocolsSettings.Settings:
             """Return the global singleton settings instance."""
             ...

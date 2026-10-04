@@ -1,4 +1,8 @@
-"""Shared exception parameter model lists."""
+"""Shared exception parameter model lists.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 

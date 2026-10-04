@@ -1,15 +1,19 @@
-"""Runtime enforcement engine MRO part."""
+"""Runtime enforcement engine MRO part.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from ..._constants.enforcement import FlextConstantsEnforcement as c
-from ..._constants.regex import FlextConstantsRegex as cre
-from .enforcement_part_04 import (
-    FlextUtilitiesEnforcement as FlextUtilitiesEnforcementPart04,
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._constants.regex import FlextConstantsRegex as cre
+from flext_core._utilities._enforcement_parts.enforcement_part_03 import (
+    FlextUtilitiesEnforcement as FlextUtilitiesEnforcementPart03,
 )
 
 
-class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart04):
+class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
     @staticmethod
     def class_name_to_module(class_name: str) -> str:
         """Map a ``Flext<Project><Layer><Concern>`` class to its owning package.
@@ -24,21 +28,22 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart04):
         path on a facade-layer class) and correction (refactor verbs that
         emit the right ``from flext_<project> import <Class>`` line).
 
-        Minimal exceptions to the project-prefix convention live in
-        ``c.NAMESPACE_CLASS_TO_MODULE_OVERRIDES``. Inputs that match
-        neither the override table nor the project/layer pattern are
-        a contract violation — the function raises ``ValueError`` with
-        the offending class name.
+        Inputs that do not match the project/layer pattern are a contract
+        violation — the function raises ``ValueError`` with the offending
+        class name.
+
+        Returns:
+            The resulting ``str``.
+
+        Raises:
+            ValueError: If class_name_to_module.
+
         """
-        override = c.NAMESPACE_CLASS_TO_MODULE_OVERRIDES.get(class_name)
-        if override is not None:
-            return override
         flext_prefix = "Flext"
         if not class_name.startswith(flext_prefix):
             msg = (
                 f"class_name_to_module: {class_name!r} is not a "
-                f"Flext-prefixed facade class and has no override in "
-                f"c.NAMESPACE_CLASS_TO_MODULE_OVERRIDES"
+                f"Flext-prefixed facade class"
             )
             raise ValueError(msg)
         tail = class_name[len(flext_prefix) :]
@@ -51,8 +56,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart04):
         msg = (
             f"class_name_to_module: {class_name!r} contains no facade "
             f"layer suffix from c.NAMESPACE_LAYER_NAMES "
-            f"({tuple(c.NAMESPACE_LAYER_NAMES)}) and has no override "
-            f"in c.NAMESPACE_CLASS_TO_MODULE_OVERRIDES"
+            f"({tuple(c.NAMESPACE_LAYER_NAMES)})"
         )
         raise ValueError(msg)
 

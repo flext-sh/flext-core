@@ -1,4 +1,8 @@
-"""Settings integration factories kept outside the collected test module."""
+"""Settings integration factories kept outside the collected test module.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -20,23 +24,32 @@ class TestsFlextSettingsConfigTestCase(m.BaseModel):
 
     test_name: Annotated[str, m.Field(description="Configuration test case name")]
     config_data: Annotated[
-        t.JsonMapping, m.Field(description="Input configuration payload")
+        t.JsonMapping,
+        m.Field(description="Input configuration payload"),
     ]
     expected_values: Annotated[
-        t.JsonMapping, m.Field(description="Expected effective values")
+        t.JsonMapping,
+        m.Field(description="Expected effective values"),
     ] = m.Field(default_factory=dict)
     file_format: Annotated[str, m.Field(description="Configuration file format")] = (
         "json"
     )
     env_vars: Annotated[
-        t.StrMapping, m.Field(description="Environment variable overrides")
+        t.StrMapping,
+        m.Field(description="Environment variable overrides"),
     ] = m.Field(default_factory=dict)
     description: Annotated[
-        str, m.Field(description="Human-readable test description")
+        str,
+        m.Field(description="Human-readable test description"),
     ] = ""
 
     def create_temp_file(self, temp_dir: Path) -> Path:
-        """Create temporary settings file."""
+        """Create temporary settings file.
+
+        Returns:
+            The resulting ``Path``.
+
+        """
         file_path = temp_dir / f"test_config.{self.file_format}"
         if self.file_format == "json":
             u.Cli.json_write(file_path, self.config_data)
@@ -54,13 +67,16 @@ class TestsFlextSettingsThreadSafetyTest(m.BaseModel):
     model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
     thread_count: Annotated[
-        int, m.Field(description="Number of concurrent threads")
+        int,
+        m.Field(description="Number of concurrent threads"),
     ] = 5
     operations_per_thread: Annotated[
-        int, m.Field(description="Operations per thread")
+        int,
+        m.Field(description="Operations per thread"),
     ] = 10
     description: Annotated[
-        str, m.Field(description="Thread safety scenario description")
+        str,
+        m.Field(description="Thread safety scenario description"),
     ] = ""
 
 
@@ -69,7 +85,12 @@ class TestsFlextSettingsConfigTestFactories:
 
     @staticmethod
     def basic_config_cases() -> t.SequenceOf[TestsFlextSettingsConfigTestCase]:
-        """Generate basic configuration test cases."""
+        """Generate basic configuration test cases.
+
+        Returns:
+            The resulting ``t.SequenceOf[TestsFlextSettingsConfigTestCase]``.
+
+        """
         return [
             TestsFlextSettingsConfigTestCase(
                 test_name="basic_json",
@@ -97,7 +118,12 @@ class TestsFlextSettingsConfigTestFactories:
 
     @staticmethod
     def thread_safety_cases() -> t.SequenceOf[TestsFlextSettingsThreadSafetyTest]:
-        """Generate thread safety test cases."""
+        """Generate thread safety test cases.
+
+        Returns:
+            The resulting ``t.SequenceOf[TestsFlextSettingsThreadSafetyTest]``.
+
+        """
         return [
             TestsFlextSettingsThreadSafetyTest(
                 thread_count=3,

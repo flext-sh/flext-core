@@ -17,11 +17,11 @@ from typing import Annotated, override
 
 from pydantic import Field
 
-from .._typings.base import FlextTypingBase as t
-from .._utilities.domain import FlextUtilitiesDomain as u
-from .._utilities.generators import FlextUtilitiesGenerators
-from .base import FlextModelsBase as m
-from .domain_event import FlextModelsDomainEvent
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.domain_event import FlextModelsDomainEvent
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._utilities.domain import FlextUtilitiesDomain as u
+from flext_core._utilities.generators import FlextUtilitiesGenerators
 
 
 class FlextModelsEntity:
@@ -49,7 +49,7 @@ class FlextModelsEntity:
         """
 
         domain_events: Annotated[
-            MutableSequence[FlextModelsDomainEvent.Entry],
+            MutableSequence[FlextModelsDomainEvent.DomainEvent],
             Field(
                 default_factory=list,
                 description="List of uncommitted domain events for event sourcing",
@@ -58,13 +58,23 @@ class FlextModelsEntity:
 
         @override
         def __eq__(self, other: object) -> bool:
-            """Identity-based equality for entities."""
+            """Identity-based equality for entities.
+
+            Returns:
+                The resulting ``bool``.
+
+            """
             if not isinstance(other, m.EnforcedModel):
                 return NotImplemented
             return u.compare_entities_by_id(self, other)
 
         def __hash__(self) -> int:
-            """Identity-based hash for entities."""
+            """Identity-based hash for entities.
+
+            Returns:
+                The resulting ``int``.
+
+            """
             return u.hash_entity_by_id(self)
 
         @override

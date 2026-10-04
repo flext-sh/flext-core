@@ -14,15 +14,16 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast, override
 
 from flext_core import c, p, r, t
-
-from .flexthandlers_part_05 import FlextHandlers as FlextHandlersPart05
+from flext_core._handlers_parts.flexthandlers_part_05 import (
+    FlextHandlers as FlextHandlersPart05,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
 
 class FlextHandlers[MessageT_contra, ResultT](
-    FlextHandlersPart05[MessageT_contra, ResultT]
+    FlextHandlersPart05[MessageT_contra, ResultT],
 ):
     @staticmethod
     def create_from_callable(
@@ -68,7 +69,12 @@ class FlextHandlers[MessageT_contra, ResultT](
 
             @override
             def handle(self, message: t.Scalar) -> p.Result[t.Scalar]:
-                """Execute the wrapped callable."""
+                """Execute the wrapped callable.
+
+                Returns:
+                    The resulting ``p.Result[t.Scalar]``.
+
+                """
                 try:
                     result = self._handler_fn(message)
                     if isinstance(result, r):
@@ -82,7 +88,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             return CallableHandler(handler_fn=handler_callable, settings=handler_config)
         resolved_type = handler_type or c.HandlerType.COMMAND
         resolved_name: str = handler_name or str(
-            getattr(handler_callable, "__name__", "unknown_handler")
+            getattr(handler_callable, "__name__", "unknown_handler"),
         )
         from flext_core import m
 
@@ -95,7 +101,12 @@ class FlextHandlers[MessageT_contra, ResultT](
         return CallableHandler(handler_fn=handler_callable, settings=settings)
 
     def __call__(self, message: MessageT_contra) -> p.Result[ResultT]:
-        """Callable interface — auto-scopes correlation ID when _auto_context_scope=True."""
+        """Callable interface — auto-scopes correlation ID when _auto_context_scope=True.
+
+        Returns:
+            The resulting ``p.Result[ResultT]``.
+
+        """
         if not self._auto_context_scope:
             return self.handle(message)
         operation_name = f"{self.__class__.__qualname__}.handle"

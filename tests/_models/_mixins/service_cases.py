@@ -1,10 +1,18 @@
-"""Service and validation case model helper namespace."""
+"""Service and validation case model helper namespace.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from .service_case_core import TestsFlextModelsServiceCaseCoreMixin
-from .service_case_reliability import TestsFlextModelsServiceCaseReliabilityMixin
-from .service_case_validation import TestsFlextModelsServiceCaseValidationMixin
+from tests._models._mixins.service_case_core import TestsFlextModelsServiceCaseCoreMixin
+from tests._models._mixins.service_case_reliability import (
+    TestsFlextModelsServiceCaseReliabilityMixin,
+)
+from tests._models._mixins.service_case_validation import (
+    TestsFlextModelsServiceCaseValidationMixin,
+)
 
 
 class TestsFlextModelsServiceCasesMixin(

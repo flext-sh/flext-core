@@ -1,16 +1,24 @@
-"""Exception example sections kept below the module LOC cap."""
+"""Exception example sections kept below the module LOC cap.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
+from examples.models import m
+from examples.protocols import p
+from examples.shared import ExamplesFlextShared
 from flext_core import e
-
-from .models import m
-from .protocols import p
-from .shared import ExamplesFlextShared
 
 
 def _raise_attribute_access_error() -> None:
-    """Raise one AttributeAccessError example for handler exercise."""
+    """Raise one AttributeAccessError example for handler exercise.
+
+    Raises:
+        AttributeAccessError: Always.
+
+    """
     raise e.AttributeAccessError(
         m.Examples.ErrorMessages.BAD_ATTR,
         attribute_name="secret",
@@ -19,14 +27,26 @@ def _raise_attribute_access_error() -> None:
 
 
 def _raise_authentication_error() -> None:
-    """Raise one AuthenticationError example for handler exercise."""
+    """Raise one AuthenticationError example for handler exercise.
+
+    Raises:
+        AuthenticationError: Always.
+
+    """
     raise e.AuthenticationError(
-        m.Examples.ErrorMessages.AUTH_FAIL, auth_method="token", user_id="u-1"
+        m.Examples.ErrorMessages.AUTH_FAIL,
+        auth_method="token",
+        user_id="u-1",
     )
 
 
 def _raise_authorization_error() -> None:
-    """Raise one AuthorizationError example for handler exercise."""
+    """Raise one AuthorizationError example for handler exercise.
+
+    Raises:
+        AuthorizationError: Always.
+
+    """
     raise e.AuthorizationError(
         m.Examples.ErrorMessages.NOPE,
         user_id="u-2",
@@ -36,7 +56,12 @@ def _raise_authorization_error() -> None:
 
 
 def _raise_circuit_breaker_error() -> None:
-    """Raise one CircuitBreakerError example for handler exercise."""
+    """Raise one CircuitBreakerError example for handler exercise.
+
+    Raises:
+        CircuitBreakerError: Always.
+
+    """
     raise e.CircuitBreakerError(
         m.Examples.ErrorMessages.OPEN,
         service_name="billing",
@@ -46,14 +71,26 @@ def _raise_circuit_breaker_error() -> None:
 
 
 def _raise_configuration_error() -> None:
-    """Raise one ConfigurationError example for handler exercise."""
+    """Raise one ConfigurationError example for handler exercise.
+
+    Raises:
+        ConfigurationError: Always.
+
+    """
     raise e.ConfigurationError(
-        m.Examples.ErrorMessages.BAD_CFG, config_key="db.host", config_source="env"
+        m.Examples.ErrorMessages.BAD_CFG,
+        config_key="db.host",
+        config_source="env",
     )
 
 
 def _raise_conflict_error() -> None:
-    """Raise one ConflictError example for handler exercise."""
+    """Raise one ConflictError example for handler exercise.
+
+    Raises:
+        ConflictError: Always.
+
+    """
     raise e.ConflictError(
         m.Examples.ErrorMessages.CONFLICT,
         resource_type="User",
@@ -63,42 +100,83 @@ def _raise_conflict_error() -> None:
 
 
 def _raise_flext_connection_error() -> None:
-    """Raise one FlextConnectionError example for handler exercise."""
+    """Raise one FlextConnectionError example for handler exercise.
+
+    Raises:
+        FlextConnectionError: Always.
+
+    """
     raise e.FlextConnectionError(
-        m.Examples.ErrorMessages.DOWN, host="127.0.0.1", port=5432, timeout=3.5
+        m.Examples.ErrorMessages.DOWN,
+        host="127.0.0.1",
+        port=5432,
+        timeout=3.5,
     )
 
 
 def _raise_flext_timeout_error() -> None:
-    """Raise one FlextTimeoutError example for handler exercise."""
+    """Raise one FlextTimeoutError example for handler exercise.
+
+    Raises:
+        FlextTimeoutError: Always.
+
+    """
     raise e.FlextTimeoutError(
-        m.Examples.ErrorMessages.LATE, timeout_seconds=2.0, operation="sync"
+        m.Examples.ErrorMessages.LATE,
+        timeout_seconds=2.0,
+        operation="sync",
     )
 
 
 def _raise_flext_type_error() -> None:
-    """Raise one FlextTypeError example for handler exercise."""
+    """Raise one FlextTypeError example for handler exercise.
+
+    Raises:
+        FlextTypeError: Always.
+
+    """
     raise e.FlextTypeError(
-        m.Examples.ErrorMessages.WRONG_TYPE, expected_type=str, actual_type=int
+        m.Examples.ErrorMessages.WRONG_TYPE,
+        expected_type=str,
+        actual_type=int,
     )
 
 
 def _raise_not_found_error() -> None:
-    """Raise one NotFoundError example for handler exercise."""
+    """Raise one NotFoundError example for handler exercise.
+
+    Raises:
+        NotFoundError: Always.
+
+    """
     raise e.NotFoundError(
-        m.Examples.ErrorMessages.MISSING, resource_type="User", resource_id="404"
+        m.Examples.ErrorMessages.MISSING,
+        resource_type="User",
+        resource_id="404",
     )
 
 
 def _raise_operation_error() -> None:
-    """Raise one OperationError example for handler exercise."""
+    """Raise one OperationError example for handler exercise.
+
+    Raises:
+        OperationError: Always.
+
+    """
     raise e.OperationError(
-        m.Examples.ErrorMessages.FAILED_OP, operation="publish", reason="quota"
+        m.Examples.ErrorMessages.FAILED_OP,
+        operation="publish",
+        reason="quota",
     )
 
 
 def _raise_rate_limit_error() -> None:
-    """Raise one RateLimitError example for handler exercise."""
+    """Raise one RateLimitError example for handler exercise.
+
+    Raises:
+        RateLimitError: Always.
+
+    """
     raise e.RateLimitError(
         m.Examples.ErrorMessages.SLOW_DOWN,
         limit=100,
@@ -108,9 +186,16 @@ def _raise_rate_limit_error() -> None:
 
 
 def _raise_validation_error() -> None:
-    """Raise one ValidationError example for handler exercise."""
+    """Raise one ValidationError example for handler exercise.
+
+    Raises:
+        ValidationError: Always.
+
+    """
     raise e.ValidationError(
-        m.Examples.ErrorMessages.INVALID, field="email", value="bad"
+        m.Examples.ErrorMessages.INVALID,
+        field="email",
+        value="bad",
     )
 
 
@@ -125,7 +210,8 @@ class Ex07FlextExceptionSubclasses(ExamplesFlextShared):
             self.audit_check("ValidationError.field", exc.field or "")
             self.audit_check("ValidationError.value", str(exc.value or ""))
             converted: p.Result[bool] = e.fail_validation(
-                exc.field or "field", error=exc
+                exc.field or "field",
+                error=exc,
             )
             self.audit_check("ValidationError.fail_validation", str(converted.failure))
         try:
@@ -133,7 +219,8 @@ class Ex07FlextExceptionSubclasses(ExamplesFlextShared):
         except e.ConfigurationError as exc:
             self.audit_check("ConfigurationError.config_key", exc.config_key or "")
             self.audit_check(
-                "ConfigurationError.config_source", exc.config_source or ""
+                "ConfigurationError.config_source",
+                exc.config_source or "",
             )
         try:
             _raise_flext_connection_error()
@@ -179,10 +266,12 @@ class Ex07FlextExceptionSubclasses(ExamplesFlextShared):
         except e.CircuitBreakerError as exc:
             self.audit_check("CircuitBreakerError.service_name", exc.service_name or "")
             self.audit_check(
-                "CircuitBreakerError.failure_count", exc.failure_count or 0
+                "CircuitBreakerError.failure_count",
+                exc.failure_count or 0,
             )
             self.audit_check(
-                "CircuitBreakerError.reset_timeout", exc.reset_timeout or 0.0
+                "CircuitBreakerError.reset_timeout",
+                exc.reset_timeout or 0.0,
             )
         try:
             _raise_flext_type_error()
@@ -204,7 +293,8 @@ class Ex07FlextExceptionSubclasses(ExamplesFlextShared):
             _raise_attribute_access_error()
         except e.AttributeAccessError as exc:
             self.audit_check(
-                "AttributeAccessError.attribute_name", exc.attribute_name or ""
+                "AttributeAccessError.attribute_name",
+                exc.attribute_name or "",
             )
             self.audit_check(
                 "AttributeAccessError.attribute_context",

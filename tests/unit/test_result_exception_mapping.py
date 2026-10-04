@@ -6,6 +6,9 @@ Every test asserts the public contract of the result combinators
 outcome: the success/failure flag, the carried value, the carried error
 message, and the carried exception object. No private attribute is touched
 and no collaborator is mocked or patched.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -23,7 +26,12 @@ if TYPE_CHECKING:
 
 
 def _raiser(exc: Exception) -> Callable[[object], Never]:
-    """Return a one-argument callback that always raises ``exc``."""
+    """Return a one-argument callback that always raises ``exc``.
+
+    Returns:
+        A one-argument callback that always raises ``exc``.
+
+    """
 
     def _callback(_arg: object) -> Never:
         raise exc
@@ -70,7 +78,9 @@ def _tap_error_case(exc: Exception) -> p.Result[int]:
 class TestsFlextCoreResultExceptionMapping:
     """Contract tests for exception carrying across result combinators."""
 
-    def test_map_on_failure_preserves_carried_exception(self) -> None:
+    @staticmethod
+    def test_map_on_failure_preserves_carried_exception() -> None:
+        """Test map on failure preserves carried exception."""
         exc = ValueError("original error")
         result: p.Result[int] = r[int].fail("error", exception=exc)
 
@@ -79,7 +89,9 @@ class TestsFlextCoreResultExceptionMapping:
         tm.that(mapped.failure, eq=True)
         tm.that(mapped.exception is exc, eq=True)
 
-    def test_map_on_success_transforms_value_without_exception(self) -> None:
+    @staticmethod
+    def test_map_on_success_transforms_value_without_exception() -> None:
+        """Test map on success transforms value without exception."""
         result: p.Result[int] = r[int].ok(5)
 
         mapped: p.Result[int] = result.map(lambda value: value * 2)
@@ -88,51 +100,61 @@ class TestsFlextCoreResultExceptionMapping:
         tm.that(mapped.value, eq=10)
         tm.that(mapped.exception, none=True)
 
-    def test_map_chain_keeps_original_exception(self) -> None:
+    @staticmethod
+    def test_map_chain_keeps_original_exception() -> None:
+        """Test map chain keeps original exception."""
         exc = RuntimeError("chain error")
         result: p.Result[int] = r[int].fail("error", exception=exc)
 
         mapped: p.Result[int] = result.map(lambda value: value + 1).map(
-            lambda value: value * 2
+            lambda value: value * 2,
         )
 
         tm.that(mapped.failure, eq=True)
         tm.that(mapped.exception is exc, eq=True)
 
-    def test_flat_map_on_failure_preserves_carried_exception(self) -> None:
+    @staticmethod
+    def test_flat_map_on_failure_preserves_carried_exception() -> None:
+        """Test flat map on failure preserves carried exception."""
         exc = TypeError("type error")
         result: p.Result[int] = r[int].fail("error", exception=exc)
 
         flat_mapped: p.Result[str] = result.flat_map(
-            lambda value: r[str].ok(str(value))
+            lambda value: r[str].ok(str(value)),
         )
 
         tm.that(flat_mapped.failure, eq=True)
         tm.that(flat_mapped.exception is exc, eq=True)
 
-    def test_flat_map_on_success_binds_next_result(self) -> None:
+    @staticmethod
+    def test_flat_map_on_success_binds_next_result() -> None:
+        """Test flat map on success binds next result."""
         result: p.Result[int] = r[int].ok(5)
 
         flat_mapped: p.Result[str] = result.flat_map(
-            lambda value: r[str].ok(str(value))
+            lambda value: r[str].ok(str(value)),
         )
 
         tm.that(flat_mapped.success, eq=True)
         tm.that(flat_mapped.value, eq="5")
         tm.that(flat_mapped.exception, none=True)
 
-    def test_flat_map_chain_keeps_original_exception(self) -> None:
+    @staticmethod
+    def test_flat_map_chain_keeps_original_exception() -> None:
+        """Test flat map chain keeps original exception."""
         exc = KeyError("missing key")
         result: p.Result[int] = r[int].fail("error", exception=exc)
 
         flat_mapped: p.Result[str] = result.flat_map(
-            lambda value: r[int].ok(value + 1)
+            lambda value: r[int].ok(value + 1),
         ).flat_map(lambda value: r[str].ok(str(value)))
 
         tm.that(flat_mapped.failure, eq=True)
         tm.that(flat_mapped.exception is exc, eq=True)
 
-    def test_map_error_on_failure_transforms_message_keeping_exception(self) -> None:
+    @staticmethod
+    def test_map_error_on_failure_transforms_message_keeping_exception() -> None:
+        """Test map error on failure transforms message keeping exception."""
         exc = ValueError("original")
         result: p.Result[int] = r[int].fail("error", exception=exc)
 
@@ -142,7 +164,9 @@ class TestsFlextCoreResultExceptionMapping:
         tm.that(altered.exception is exc, eq=True)
         tm.that(altered.error is not None and "transformed" in altered.error, eq=True)
 
-    def test_map_error_on_success_is_identity(self) -> None:
+    @staticmethod
+    def test_map_error_on_success_is_identity() -> None:
+        """Test map error on success is identity."""
         result: p.Result[int] = r[int].ok(42)
 
         altered: p.Result[int] = result.map_error(lambda error: f"error: {error}")
@@ -151,7 +175,9 @@ class TestsFlextCoreResultExceptionMapping:
         tm.that(altered.value, eq=42)
         tm.that(altered.exception, none=True)
 
-    def test_lash_recovers_failure_into_success_value(self) -> None:
+    @staticmethod
+    def test_lash_recovers_failure_into_success_value() -> None:
+        """Test lash recovers failure into success value."""
         exc = RuntimeError("recovery needed")
         result: p.Result[int] = r[int].fail("error", exception=exc)
 
@@ -160,15 +186,18 @@ class TestsFlextCoreResultExceptionMapping:
         tm.that(recovered.success, eq=True)
         tm.that(recovered.value, eq=0)
 
-    def test_lash_recovery_failure_carries_new_exception(self) -> None:
+    @staticmethod
+    def test_lash_recovery_failure_carries_new_exception() -> None:
+        """Test lash recovery failure carries new exception."""
         original_exc = ValueError("original error")
         result: p.Result[int] = r[int].fail("error", exception=original_exc)
         recovery_exc = RuntimeError("recovery failed")
 
         recovered: p.Result[int] = result.lash(
             lambda error: r[int].fail(
-                f"recovery failed: {error}", exception=recovery_exc
-            )
+                f"recovery failed: {error}",
+                exception=recovery_exc,
+            ),
         )
 
         tm.that(recovered.failure, eq=True)
@@ -188,9 +217,11 @@ class TestsFlextCoreResultExceptionMapping:
             pytest.param(_tap_error_case, id="tap_error"),
         ],
     )
+    @staticmethod
     def test_callback_exception_becomes_carried_failure(
-        self, invoke: Callable[[Exception], p.Result[int]]
+        invoke: Callable[[Exception], p.Result[int]],
     ) -> None:
+        """Test callback exception becomes carried failure."""
         exc = RuntimeError("callback failed")
 
         result: p.Result[int] = invoke(exc)

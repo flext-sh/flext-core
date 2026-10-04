@@ -13,9 +13,8 @@ from datetime import datetime
 from typing import Annotated
 
 from flext_core import c, t
-
-from ..._utilities.pydantic import FlextUtilitiesPydantic
-from ..entity import FlextModelsEntity
+from flext_core._models.entity import FlextModelsEntity
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic
 
 
 class FlextModelsContextTokens:
@@ -44,7 +43,8 @@ class FlextModelsContextTokens:
         previous_value: Annotated[
             t.JsonPayload | datetime | None,
             FlextUtilitiesPydantic.Field(
-                default=None, description="Previous value before set operation"
+                default=None,
+                description="Previous value before set operation",
             ),
         ] = None
 
@@ -70,7 +70,8 @@ class FlextModelsContextTokens:
         old_value: Annotated[
             t.JsonPayload | None,
             FlextUtilitiesPydantic.Field(
-                default=None, description="Previous value before set operation"
+                default=None,
+                description="Previous value before set operation",
             ),
         ]
 

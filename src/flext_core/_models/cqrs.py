@@ -15,13 +15,19 @@ from typing import Annotated, ClassVar, Literal
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from flext_core import c, t
-
-from ._cqrs_parts.flextmodelscqrs_part_01 import CqrsPagination
-from .base import FlextModelsBase as m
+from flext_core._models._cqrs_parts.flextmodelscqrs_part_01 import (
+    FlextModelsCqrs as FlextModelsCqrsPart01,
+)
+from flext_core._models.base import FlextModelsBase as m
 
 
 def _u() -> type:
-    """Deferred facade access: cqrs is loaded by the m facade itself."""
+    """Deferred facade access: cqrs is loaded by the m facade itself.
+
+    Returns:
+        The resulting ``type``.
+
+    """
     from flext_core import u
 
     return u
@@ -32,7 +38,7 @@ def _u() -> type:
 # single facade module.
 
 
-class FlextModelsCqrs:
+class FlextModelsCqrs(FlextModelsCqrsPart01):
     """CQRS pattern container class.
 
     This class acts as a namespace container for CQRS patterns.
@@ -47,16 +53,21 @@ class FlextModelsCqrs:
         message_type: Annotated[
             Literal["command"],
             Field(
-                frozen=True, description="Message type discriminator (always 'command')"
+                frozen=True,
+                description="Message type discriminator (always 'command')",
             ),
         ] = "command"
         command_type: Annotated[
-            t.NonEmptyStr, Field(description="Command type identifier")
+            t.NonEmptyStr,
+            Field(description="Command type identifier"),
         ] = c.DEFAULT_COMMAND_TYPE
         command_id: Annotated[
             t.NonEmptyStr,
             Field(
-                description="Unique command identifier used for tracing and idempotency checks.",
+                description=(
+                    "Unique command identifier used for tracing"
+                    " and idempotency checks."
+                ),
                 title="Command Id",
                 examples=["cmd_01HZX7Q0P5N6M2"],
             ),
@@ -66,8 +77,6 @@ class FlextModelsCqrs:
             Field(description="Identity of the principal that issued this command."),
         ] = None
 
-    Pagination = CqrsPagination
-
     class Query(m.ArbitraryTypesModel):
         """Query model for CQRS query operations."""
 
@@ -75,7 +84,7 @@ class FlextModelsCqrs:
             json_schema_extra={
                 "title": "Query",
                 "description": "Query model for CQRS query operations",
-            }
+            },
         )
         tag: ClassVar[Literal["query"]] = "query"
         message_type: Annotated[
@@ -85,23 +94,32 @@ class FlextModelsCqrs:
         filters: Annotated[
             t.MappingKV[str, t.Scalar],
             Field(
-                description="Filter values that restrict which records are returned by the query.",
+                description=(
+                    "Filter values that restrict"
+                    " which records are returned by the query."
+                ),
                 title="Query Filters",
                 examples=[{"status": "active", "tenant": "acme"}],
             ),
         ] = Field(default_factory=lambda: MappingProxyType[str, t.Scalar]({}))
         pagination: Annotated[
-            CqrsPagination,
+            FlextModelsCqrsPart01.Pagination,
             Field(
-                description="Pagination settings controlling page number and page size for query results.",
+                description=(
+                    "Pagination settings controlling page number"
+                    " and page size for query results."
+                ),
                 title="Pagination",
                 examples=[{"page": 1, "size": 50}],
             ),
-        ] = Field(default_factory=CqrsPagination)
+        ] = Field(default_factory=FlextModelsCqrsPart01.Pagination)
         query_id: Annotated[
             t.NonEmptyStr,
             Field(
-                description="Unique query identifier used for tracing and cache correlation.",
+                description=(
+                    "Unique query identifier used for tracing"
+                    " and cache correlation."
+                ),
                 title="Query Id",
                 examples=["query_01HZX7Q0P5N6M2"],
             ),
@@ -114,12 +132,22 @@ class FlextModelsCqrs:
         @field_validator("pagination", mode="before")
         @classmethod
         def validate_pagination(
-            cls, v: BaseModel | t.MappingKV[str, t.Scalar] | None
+            cls,
+            v: BaseModel | t.MappingKV[str, t.Scalar] | None,
         ) -> BaseModel:
-            """Convert pagination to Pagination instance."""
-            # Allow subclasses to override Pagination via class attribute,
-            # fallback to the default CqrsPagination
-            pagination_cls: type[BaseModel] = getattr(cls, "Pagination", CqrsPagination)
+            """Convert pagination to Pagination instance.
+
+            Returns:
+                The resulting ``BaseModel``.
+
+            """
+            # A query subclass may declare its own nested Pagination model;
+            # otherwise the namespace Pagination model applies.
+            pagination_cls: type[BaseModel] = getattr(
+                cls,
+                "Pagination",
+                FlextModelsCqrsPart01.Pagination,
+            )
             normalized_input = _u().normalize_model_input_mapping(v)
             if normalized_input is None:
                 return pagination_cls()
@@ -135,13 +163,15 @@ class FlextModelsCqrs:
             json_schema_extra={
                 "title": "Handler",
                 "description": "CQRS handler configuration",
-            }
+            },
         )
         handler_id: Annotated[
-            t.NonEmptyStr, Field(description="Unique handler identifier")
+            t.NonEmptyStr,
+            Field(description="Unique handler identifier"),
         ]
         handler_name: Annotated[
-            t.NonEmptyStr, Field(description="Human-readable handler name")
+            t.NonEmptyStr,
+            Field(description="Human-readable handler name"),
         ]
         handler_type: Annotated[c.HandlerType, Field(description="Handler type")] = (
             c.HandlerType.COMMAND
@@ -152,17 +182,24 @@ class FlextModelsCqrs:
         command_timeout: Annotated[
             int,
             Field(
-                description="Command timeout from c (default). Models use Config values in initialization."
+                description=(
+                    "Command timeout from c (default)."
+                    " Models use Config values in initialization."
+                ),
             ),
         ] = c.DEFAULT_MAX_COMMAND_RETRIES
         max_command_retries: Annotated[
             int,
             Field(
-                description="Maximum retry attempts from c (default). Models use Config values in initialization."
+                description=(
+                    "Maximum retry attempts from c (default)."
+                    " Models use Config values in initialization."
+                ),
             ),
         ] = c.DEFAULT_MAX_COMMAND_RETRIES
         metadata: Annotated[
-            m.Metadata | None, Field(description="Handler metadata (Pydantic model)")
+            m.Metadata | None,
+            Field(description="Handler metadata (Pydantic model)"),
         ] = None
 
     class Event(m.ArbitraryTypesModel):
@@ -176,7 +213,8 @@ class FlextModelsCqrs:
         message_type: Annotated[
             Literal["event"],
             Field(
-                frozen=True, description="Message type discriminator (always 'event')"
+                frozen=True,
+                description="Message type discriminator (always 'event')",
             ),
         ] = "event"
         event_type: Annotated[t.NonEmptyStr, Field(description="Event type identifier")]
@@ -188,13 +226,17 @@ class FlextModelsCqrs:
         event_id: Annotated[
             t.NonEmptyStr,
             Field(
-                description="Unique event identifier used for deduplication and observability.",
+                description=(
+                    "Unique event identifier used for deduplication"
+                    " and observability."
+                ),
                 title="Event Id",
                 examples=["evt_01HZX7Q0P5N6M2"],
             ),
         ] = Field(default_factory=lambda: _u().generate_prefixed_id("evt"))
         data: Annotated[
-            t.MappingKV[str, t.Scalar], Field(description="Event payload data")
+            t.MappingKV[str, t.Scalar],
+            Field(description="Event payload data"),
         ] = Field(default_factory=lambda: MappingProxyType[str, t.Scalar]({}))
         metadata: Annotated[
             t.MappingKV[str, t.Scalar],

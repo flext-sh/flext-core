@@ -1,18 +1,22 @@
-"""Published FLEXT family-surface derivation from the lazy export contract."""
+"""Published FLEXT family-surface derivation from the lazy export contract.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 import functools
 import importlib
-import importlib.metadata
 from types import MappingProxyType
 from typing import TYPE_CHECKING, cast
 
-from .._constants.enforcement import FlextConstantsEnforcement as c
-from ..lazy import normalize_lazy_imports
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata
+from flext_core.lazy import normalize_lazy_imports
 
 if TYPE_CHECKING:
-    from .._typings.base import FlextTypingBase as t
+    from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextUtilitiesFamilySurface:
@@ -30,13 +34,24 @@ class FlextUtilitiesFamilySurface:
     @staticmethod
     @functools.lru_cache(maxsize=1)
     def _surface_snapshot() -> tuple[
-        tuple[str, frozenset[str], t.MappingKV[str, t.StrPair | str]], ...
+        tuple[str, frozenset[str], t.MappingKV[str, t.StrPair | str]],
+        ...,
     ]:
-        """Import every family root once and snapshot its published contract."""
+        """Import every family root once and snapshot its published contract.
+
+        Returns:
+            The resulting ``tuple[tuple[str, frozenset[str], t.MappingKV[str, t.StrPair
+                | str]], ...]``.
+
+        Raises:
+            RuntimeError: If family-surface derivation found no distribution publishing
+                the lazy export contract under prefix.
+
+        """
         snapshot: list[
             tuple[str, frozenset[str], t.MappingKV[str, t.StrPair | str]]
         ] = []
-        for dist in importlib.metadata.distributions():
+        for dist in FlextUtilitiesProjectMetadata.installed_distributions():
             raw_name = dist.metadata["Name"] or ""
             name = raw_name.lower().replace("-", "_")
             if not name.startswith(c.NAMESPACE_FAMILY_PREFIX):
@@ -68,6 +83,10 @@ class FlextUtilitiesFamilySurface:
         Derived from each root's ``__all__`` intersected with the
         declaration aliases derived from ``c.NAMESPACE_LAYER_NAMES`` —
         replacing the frozen per-member roster with per-package truth.
+
+        Returns:
+            The resulting ``t.MappingKV[str, t.VariadicTuple[str]]``.
+
         """
         declaration = tuple(name[0].lower() for name in c.NAMESPACE_LAYER_NAMES)
         owners = {
@@ -87,6 +106,13 @@ class FlextUtilitiesFamilySurface:
         Two aliases claiming one long name is a contract violation and
         fails. The derivation reads only the published contract, so every
         current and future member is covered without per-member tables.
+
+        Returns:
+            The resulting ``t.MappingKV[str, str]``.
+
+        Raises:
+            ValueError: If published family surface maps.
+
         """
         grouped = {}
         for _, _, entries in FlextUtilitiesFamilySurface._surface_snapshot():

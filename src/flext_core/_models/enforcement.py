@@ -6,13 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from .._typings.base import FlextTypingBase as t
-from ._enforcement._base import FlextModelsEnforcementBase
-from ._enforcement._catalog import FlextModelsEnforcementCatalog
-from ._enforcement._inspection import FlextModelsEnforcementInspection
-from ._enforcement._params import FlextModelsEnforcementParams
-from ._enforcement._sources import FlextModelsEnforcementSources
-from .pydantic import FlextModelsPydantic as mp
+from flext_core._models._enforcement._base import FlextModelsEnforcementBase
+from flext_core._models._enforcement._catalog import FlextModelsEnforcementCatalog
+from flext_core._models._enforcement._inspection import FlextModelsEnforcementInspection
+from flext_core._models._enforcement._params import FlextModelsEnforcementParams
+from flext_core._models._enforcement._sources import FlextModelsEnforcementSources
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextModelsEnforcement(

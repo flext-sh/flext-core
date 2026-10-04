@@ -1,4 +1,8 @@
-"""Example 14 handlers models."""
+"""Example 14 handlers models.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -12,7 +16,7 @@ class ExamplesFlextModelsEx14:
         """Create user command payload."""
 
         user_id: str = m.Field(
-            description="Unique identifier for the user being created."
+            description="Unique identifier for the user being created.",
         )
         name: str = m.Field(description="Full name of the user.")
         email: str = m.Field(description="Email address of the user.")
@@ -21,7 +25,7 @@ class ExamplesFlextModelsEx14:
         """Get user query payload."""
 
         user_id: str = m.Field(
-            description="Unique identifier for the user to retrieve."
+            description="Unique identifier for the user to retrieve.",
         )
 
     class UserDTO(m.Value):

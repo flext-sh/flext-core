@@ -3,25 +3,29 @@
 Pure data ingress and naming utilities. Result object creation is explicit and
 typed through ``p.Result`` contracts, using internal concrete helpers only for
 construction.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
 import re
+import sys
 import tomllib
 from functools import cache
+from importlib.metadata import Distribution, DistributionFinder
 from typing import TYPE_CHECKING, ClassVar
 
-from .._constants.file import FlextConstantsFile as cf
-from .._constants.mixins import FlextConstantsMixins as cmx
-from .._constants.project_metadata import FlextConstantsProjectMetadata as cpm
-from .._models.project_metadata import FlextModelsProjectMetadata as mpm
-from .._typings.base import FlextTypingBase as t
+from flext_core._constants.file import FlextConstantsFile as cf
+from flext_core._constants.mixins import FlextConstantsMixins as cmx
+from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cpm
+from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
+from flext_core._protocols.project_metadata import FlextProtocolsProjectMetadata as ppm
+from flext_core._typings.base import FlextTypingBase as t
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-    from .._protocols.project_metadata import FlextProtocolsProjectMetadata as ppm
 
 
 class FlextUtilitiesProjectMetadata(mpm):
@@ -30,13 +34,14 @@ class FlextUtilitiesProjectMetadata(mpm):
     _DISTRIBUTION_SEPARATOR_RE: ClassVar[t.RegexPattern] = re.compile(r"[-_.]+")
     _REQUIREMENT_NAME_RE: ClassVar[t.RegexPattern] = re.compile(
         r"^\s*(?P<name>[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?)"
-        r"(?=\s*(?:\[|@|[<>=!~;]|$))"
+        r"(?=\s*(?:\[|@|[<>=!~;]|$))",
     )
 
     @classmethod
     def _normalize_distribution_name(cls, distribution_name: str) -> str:
         return cls._DISTRIBUTION_SEPARATOR_RE.sub(
-            "-", distribution_name.strip().lower()
+            "-",
+            distribution_name.strip().lower(),
         )
 
     @staticmethod
@@ -48,17 +53,20 @@ class FlextUtilitiesProjectMetadata(mpm):
 
     @classmethod
     def build_project_metadata(
-        cls, root: Path, document: mpm.PyprojectDocument
+        cls,
+        root: Path,
+        document: mpm.PyprojectDocument,
     ) -> mpm.ProjectMetadata:
         project = document.project
         flext = document.tool.flext
         if project is None:
             package_name = flext.docs.package_name or cmx.IDENTIFIER_UNKNOWN
             class_stem = flext.project.class_stem_override or cls.derive_class_stem(
-                package_name
+                package_name,
             )
             resolved_project = mpm.Project(
-                name=package_name, version=cpm.PROJECT_VERSION_PLACEHOLDER
+                name=package_name,
+                version=cpm.PROJECT_VERSION_PLACEHOLDER,
             )
             return mpm.ProjectMetadata(
                 root=root,
@@ -92,9 +100,41 @@ class FlextUtilitiesProjectMetadata(mpm):
             part[:1].upper() + part[1:] for part in parts if part
         )
 
+    @staticmethod
+    def installed_distributions(
+        *,
+        name: str | None = None,
+        path: t.StrSequence | None = None,
+    ) -> t.VariadicTuple[Distribution]:
+        """Enumerate installed distributions over one snapshot of the finder chain.
+
+        ``importlib.metadata.distributions()`` walks the live ``sys.meta_path``
+        lazily: an import that inserts a finder ahead of ``PathFinder`` while
+        the scan runs (in the same loop or in a concurrent thread) makes it
+        yield every distribution twice. Each finder is queried once, from a
+        snapshot taken before the scan.
+
+        Returns:
+            The distributions every snapshotted finder reports, in finder order.
+
+        """
+        context = (
+            DistributionFinder.Context(name=name)
+            if path is None
+            else DistributionFinder.Context(name=name, path=list(path))
+        )
+        return tuple(
+            distribution
+            for finder in tuple(sys.meta_path)
+            if isinstance(finder, ppm.DistributionSource)
+            for distribution in finder.find_distributions(context)
+        )
+
     @classmethod
     def project_uses_distribution(
-        cls, metadata: ppm.ProjectMetadata, distribution_name: str
+        cls,
+        metadata: ppm.ProjectMetadata,
+        distribution_name: str,
     ) -> bool:
         target_name = cls._normalize_distribution_name(distribution_name)
         if not target_name:

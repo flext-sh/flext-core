@@ -63,7 +63,12 @@ class FlextConstantsErrorsMessages:
 
         @override
         def __str__(self) -> str:
-            """Return the domain value (not the enum name)."""
+            """Return the domain value (not the enum name).
+
+            Returns:
+                The domain value (not the enum name).
+
+            """
             return self.value
 
     ERR_HANDLER_MUST_BE_CALLABLE: ClassVar[str] = "Handler must be callable"

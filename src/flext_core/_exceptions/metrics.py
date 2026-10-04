@@ -28,12 +28,22 @@ class FlextExceptionsMetrics:
 
     @classmethod
     def resolve_metrics_snapshot(cls) -> m.ExceptionMetricsSnapshot:
-        """Get the typed public metrics snapshot."""
+        """Get the typed public metrics snapshot.
+
+        Returns:
+            The resulting ``m.ExceptionMetricsSnapshot``.
+
+        """
         return cls._metrics_state.snapshot()
 
     @classmethod
     def resolve_metrics(cls) -> t.JsonMapping:
-        """Get exception metrics and statistics."""
+        """Get exception metrics and statistics.
+
+        Returns:
+            The resulting ``t.JsonMapping``.
+
+        """
         return cls.resolve_metrics_snapshot().to_config_map()
 
 

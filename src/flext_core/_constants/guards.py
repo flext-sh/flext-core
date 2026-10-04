@@ -21,9 +21,10 @@ from datetime import datetime
 from pathlib import Path
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar, Final
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.services import FlextTypesServices as ts
 
-if TYPE_CHECKING:
-    from flext_core import t
+
 
 
 class FlextConstantsGuards:
@@ -71,7 +72,7 @@ class FlextConstantsGuards:
     )
     """Container leaves plus collection runtime types (SSOT; ``c.*``)."""
 
-    STRING_TYPE_PREDICATES: ClassVar[Mapping[str, Callable[[t.GuardInput], bool]]] = (
+    STRING_TYPE_PREDICATES: ClassVar[Mapping[str, Callable[[ts.GuardInput], bool]]] = (
         MappingProxyType({
             "str": lambda v: isinstance(v, str),
             "dict": lambda v: isinstance(v, dict),

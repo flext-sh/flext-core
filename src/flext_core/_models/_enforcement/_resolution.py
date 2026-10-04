@@ -1,27 +1,31 @@
-"""Typed outcomes of PEP 695 alias evaluation."""
+"""Typed outcomes of PEP 695 alias evaluation.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from typing import ClassVar, Literal
 
-from ..._protocols.base import FlextProtocolsBase as p
-from ..pydantic import FlextModelsPydantic as mp
-from ._base import EnforcementModelBase
+from flext_core._models._enforcement._base import FlextModelsEnforcementModelBase
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._protocols.base import FlextProtocolsBase as p
 
 
 class FlextModelsEnforcementResolution:
     """Value and source-proven deferral contracts available before consumers."""
 
-    class ResolvedAlias(EnforcementModelBase):
+    class ResolvedAlias(FlextModelsEnforcementModelBase):
         """A lazy alias evaluated successfully, retaining its runtime value."""
 
         model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            arbitrary_types_allowed=True
+            arbitrary_types_allowed=True,
         )
         status: Literal["resolved"] = "resolved"
         value: p.AttributeProbe
 
-    class DeferredAlias(EnforcementModelBase):
+    class DeferredAlias(FlextModelsEnforcementModelBase):
         """Source-proven imports prevent runtime evaluation of a declared alias."""
 
         status: Literal["deferred"] = "deferred"
