@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from flext_core._constants.base import FlextConstantsBase
 from flext_core._constants.config import FlextConstantsConfig
 from flext_core._constants.cqrs import FlextConstantsCqrs
@@ -27,9 +29,9 @@ from typing import TYPE_CHECKING
 from flext_core._constants.status import FlextConstantsStatus
 from flext_core._constants.timeout import FlextConstantsTimeout
 from flext_core._constants.validation import FlextConstantsValidation
+from flext_core._typings.base import FlextTypingBase as t
 
-if TYPE_CHECKING:
-    from flext_core import t
+
 
 class FlextConstants(
     FlextConstantsBase,

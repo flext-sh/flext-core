@@ -10,12 +10,11 @@ from typing import TYPE_CHECKING, Literal, overload
 
 from flext_core import m
 from flext_core._decorators._railway import FlextDecoratorsRailway
+from flext_core._protocols.result import FlextProtocolsResult as pr
+from flext_core._typings.base import FlextTypingBase as tb
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-    from flext_core._protocols.result import FlextProtocolsResult as pr
-    from flext_core._typings.base import FlextTypingBase as tb
 
 
 class FlextDecoratorsCombined(FlextDecoratorsRailway):

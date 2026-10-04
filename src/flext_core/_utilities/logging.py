@@ -452,7 +452,7 @@ class FlextUtilitiesLogging(ulc):
             # The FLEXT logger never %-interpolates positional args (it records
             # them as ``arg_<n>`` context), so the event text is composed here.
             emit = self.logger.info if success else self.logger.error
-            event = " ".join((self._operation_name, status))
+            event = f"{self._operation_name} {status}"
             _ = emit(event, **FlextUtilitiesLogging.to_container_context(context.root))
 
     @classmethod

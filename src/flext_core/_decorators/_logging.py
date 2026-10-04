@@ -12,12 +12,11 @@ from typing import TYPE_CHECKING
 
 from flext_core import c, u
 from flext_core._decorators._logging_payloads import FlextDecoratorsLoggingPayloads
+from flext_core._protocols.loggings import FlextProtocolsLogging as pl
+from flext_core._typings.base import FlextTypingBase as tb
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-    from flext_core._protocols.loggings import FlextProtocolsLogging as pl
-    from flext_core._typings.base import FlextTypingBase as tb
 
 
 class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
@@ -117,7 +116,7 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
         """
         try:
             logger.debug(
-                "_".join((op_name, "started")),
+                f"{op_name}_started",
                 **cls._start_log_payload(
                     func_name=func_name,
                     func_module=func_module,
@@ -143,7 +142,7 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
             raise
         else:
             logger.debug(
-                "_".join((op_name, "completed")),
+                f"{op_name}_completed",
                 **cls._success_log_payload(
                     func_name=func_name,
                     correlation_id=correlation_id,
