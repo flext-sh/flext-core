@@ -231,25 +231,26 @@ class GreetRequest(m.Value):
 class GreeterService(s[str]):
     """Greet people."""
 
-    @staticmethod
-    def greet(request: GreetRequest) -> p.Result[str]:
+    greeting: str = m.Field(description="Greeting supplied by the composition root.")
+    ping_response: str = m.Field(description="Liveness response supplied by the root.")
+
+    def greet(self, request: GreetRequest) -> p.Result[str]:
         """Greet a person by name.
 
         Returns:
             The resulting ``p.Result[str]``.
 
         """
-        return r[str].ok(f"hello {request.name}")
+        return r[str].ok(f"{self.greeting} {request.name}")
 
-    @staticmethod
-    def ping() -> p.Result[str]:
+    def ping(self) -> p.Result[str]:
         """Answer a liveness ping.
 
         Returns:
             The resulting ``p.Result[str]``.
 
         """
-        return r[str].ok("pong")
+        return r[str].ok(self.ping_response)
 
 
 operations = u.service_operations(GreeterService)
@@ -266,6 +267,17 @@ if operations[1].request is not None:
 expected_summary = "Answer a liveness ping."
 if operations[1].summary != expected_summary:
     message = "Unexpected ping summary"
+    raise RuntimeError(message)
+
+greeter = GreeterService(greeting="hello", ping_response="pong")
+request = GreetRequest(name="Ada")
+greeted = greeter.greet(request)
+if not greeted.success or greeted.value != f"{greeter.greeting} {request.name}":
+    message = "Unexpected greeting result"
+    raise RuntimeError(message)
+pinged = greeter.ping()
+if not pinged.success or pinged.value != greeter.ping_response:
+    message = "Unexpected liveness response"
     raise RuntimeError(message)
 ```
 
