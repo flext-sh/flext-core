@@ -589,7 +589,23 @@ if passed.value != expected_items:
 
 from __future__ import annotations
 
+from typing import Protocol
+
 from flext_core import m, p, r
+
+
+class ResourcePort(p.Base, Protocol):
+    """Read-only identifier consumed by the resource operation."""
+
+    @property
+    def identifier(self) -> int:
+        """Read the resource identifier.
+
+        Returns:
+            The resource identifier.
+
+        """
+        ...
 
 
 class Connection(m.Value):
@@ -598,18 +614,18 @@ class Connection(m.Value):
     identifier: int = m.Field(description="Identifier of the example connection.")
 
 
-def create_connection() -> Connection:
+def create_connection() -> ResourcePort:
     """Create the resource used by the operation callback.
 
     Returns:
-        The resulting ``Connection``.
+        The resulting ``ResourcePort``.
 
     """
     resource_identifier = 10
     return Connection(identifier=resource_identifier)
 
 
-def use_connection(conn: Connection) -> p.Result[int]:
+def use_connection(conn: ResourcePort) -> p.Result[int]:
     """Use the resource and return the extracted identifier as a result.
 
     Returns:
@@ -619,7 +635,7 @@ def use_connection(conn: Connection) -> p.Result[int]:
     return r[int].ok(conn.identifier)
 
 
-def close_connection(_conn: Connection) -> None:
+def close_connection(_conn: ResourcePort) -> None:
     """Close the resource used by the example."""
 
 
@@ -692,7 +708,15 @@ delivery timing remain the logging owner's configuration, not retry expectations
 
 from __future__ import annotations
 
-from flext_core import d, m
+from typing import Protocol
+
+from flext_core import d, m, p
+
+
+class AttemptState(p.Base, Protocol):
+    """Mutable attempt count consumed by the retry operation."""
+
+    count: int
 
 
 class RetryState(m.StrictModel):
@@ -703,12 +727,12 @@ class RetryState(m.StrictModel):
 
 expected_attempts = 3
 expected_value = 123
-attempts = RetryState()
+attempts: AttemptState = RetryState()
 
 
 @d.railway(error_code="RETRY_EXAMPLE")
 @d.retry(max_attempts=expected_attempts, delay_seconds=0.01, backoff_strategy="linear")
-def flaky_operation(state: RetryState, required_attempts: int, value: int) -> int:
+def flaky_operation(state: AttemptState, required_attempts: int, value: int) -> int:
     """Fail twice before returning a stable value.
 
     Returns:
