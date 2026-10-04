@@ -15,14 +15,17 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Annotated, ClassVar, Self
 
+from flext_core._models._base_parts.flextmodelsbase_part_02 import (
+    FlextModelsBase as FlextModelsBasePart02,
+)
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._runtime._metadata_validation import (
+    FlextRuntimeMetadataValidation as ur,
+)
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._utilities.generators import FlextUtilitiesGenerators as ug
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
 from flext_core.constants import c
-
-from ..._runtime._metadata_validation import FlextRuntimeMetadataValidation as ur
-from ..._typings.base import FlextTypingBase as t
-from ..._utilities.generators import FlextUtilitiesGenerators as ug
-from ..._utilities.pydantic import FlextUtilitiesPydantic as up
-from ..pydantic import FlextModelsPydantic as mp
-from .flextmodelsbase_part_02 import FlextModelsBase as FlextModelsBasePart02
 
 
 class FlextModelsBase(FlextModelsBasePart02):
@@ -33,25 +36,38 @@ class FlextModelsBase(FlextModelsBasePart02):
             datetime,
             mp.AfterValidator(ur.ensure_utc_datetime),
             mp.Field(
-                description="Creation timestamp (configured timezone)", frozen=True
+                description="Creation timestamp (configured timezone)", frozen=True,
             ),
         ] = mp.Field(default_factory=ug.now)
         updated_at: Annotated[
             datetime | None,
             mp.AfterValidator(ur.ensure_utc_datetime),
             mp.Field(
-                default=None, description="Last update timestamp (configured timezone)"
+                default=None, description="Last update timestamp (configured timezone)",
             ),
         ] = None
 
+        @staticmethod
         @up.field_serializer("created_at", "updated_at", when_used="json")
-        def serialize_timestamps(self, value: datetime | None) -> str | None:
-            """Serialize timestamps to ISO 8601 for JSON."""
+        def serialize_timestamps(value: datetime | None) -> str | None:
+            """Serialize timestamps to ISO 8601 for JSON.
+
+            Returns:
+                The resulting ``str | None``.
+            """
             return value.isoformat() if value else None
 
         @up.model_validator(mode="after")
         def validate_timestamp_consistency(self) -> Self:
-            """Validate timestamp consistency."""
+            """Validate timestamp consistency.
+
+            Returns:
+                The resulting ``Self``.
+
+            Raises:
+                ValueError: If ``self.updated_at is not None and self.updated_at <
+                    self.created_at``.
+            """
             if self.updated_at is not None and self.updated_at < self.created_at:
                 raise ValueError(c.ERR_MODEL_UPDATED_AT_BEFORE_CREATED_AT)
             return self
@@ -70,12 +86,19 @@ class FlextModelsBase(FlextModelsBasePart02):
 
         @up.model_validator(mode="after")
         def validate_version_consistency(self) -> Self:
-            """Ensure version consistency."""
+            """Ensure version consistency.
+
+            Returns:
+                The resulting ``Self``.
+
+            Raises:
+                ValueError: If ``self.version < c.DEFAULT_RETRY_DELAY_SECONDS``.
+            """
             if self.version < c.DEFAULT_RETRY_DELAY_SECONDS:
                 raise ValueError(
                     c.ERR_MODEL_VERSION_BELOW_MINIMUM.format(
-                        version=self.version, minimum=c.DEFAULT_RETRY_DELAY_SECONDS
-                    )
+                        version=self.version, minimum=c.DEFAULT_RETRY_DELAY_SECONDS,
+                    ),
                 )
             return self
 
@@ -107,7 +130,7 @@ class FlextModelsBase(FlextModelsBasePart02):
         ] = c.DEFAULT_MAX_DELAY_SECONDS
 
     class TimestampedModel(
-        FlextModelsBasePart02.ArbitraryTypesModel, TimestampableMixin
+        FlextModelsBasePart02.ArbitraryTypesModel, TimestampableMixin,
     ):
         """Model with timestamp fields."""
 

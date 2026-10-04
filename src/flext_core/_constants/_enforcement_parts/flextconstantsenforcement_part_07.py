@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 from flext_core._constants._enforcement_data import (
     ENFORCE_FLEXT_CORE_PATH_MARKERS,
@@ -35,7 +35,6 @@ from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_04 
     FlextConstantsEnforcementRules,
 )
 from flext_core._typings.base import FlextTypingBase as t
-
 
 
 class FlextConstantsEnforcementSmellData:

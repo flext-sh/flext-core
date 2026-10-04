@@ -105,6 +105,8 @@ class FlextUtilitiesConfig:
             Raises:
                 yaml.YAMLError: On malformed input or a duplicate mapping key.
 
+            Returns:
+                The resulting ``t.JsonValue``.
             """
             from flext_core._config import _UniqueKeySafeLoader
 

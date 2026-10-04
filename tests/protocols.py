@@ -96,7 +96,7 @@ class TestsFlextProtocols(FlextTestsProtocols):
             """Protocol for transform callable."""
 
             def __call__(
-                self, source: TestsFlextModelsMixins.BadMapping, **kwargs: t.StrMapping
+                self, source: TestsFlextModelsMixins.BadMapping, **kwargs: t.StrMapping,
             ) -> p.Result[t.JsonMapping]:
                 """Transform one mapping source into a result mapping."""
                 ...
