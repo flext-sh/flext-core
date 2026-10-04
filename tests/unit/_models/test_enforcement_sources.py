@@ -11,24 +11,28 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 import pytest
 
 from tests.constants import c
 from tests.models import m
 from tests.typings import t
 
-# One representative valid instance per surviving source variant, keyed by the
-# discriminator literal it must expose on the public ``kind`` field.
-_SOURCE_CASES: dict[str, m.BaseModel] = {
-    "flext_infra_rule": m.EnforcementInfraRuleSource(rule_ids=("ban-cast",)),
-    "runtime_warning": m.EnforcementRuntimeWarningSource(category="FlextMroWarning"),
-    "beartype": m.EnforcementBeartypeSource(tag="no_module_compat_alias"),
-    "code_smell": m.EnforcementCodeSmellSource(smell_tag="complex-method"),
-}
-
 
 class TestsFlextCoreEnforcementSources:
     """Behavior contract for surviving EnforcementSource variants."""
+
+    # One representative valid instance per surviving source variant, keyed by the
+    # discriminator literal it must expose on the public ``kind`` field.
+    _SOURCE_CASES: ClassVar[dict[str, m.BaseModel]] = {
+        "flext_infra_rule": m.EnforcementInfraRuleSource(rule_ids=("ban-cast",)),
+        "runtime_warning": m.EnforcementRuntimeWarningSource(
+            category="FlextMroWarning",
+        ),
+        "beartype": m.EnforcementBeartypeSource(tag="no_module_compat_alias"),
+        "code_smell": m.EnforcementCodeSmellSource(smell_tag="complex-method"),
+    }
 
     # --- EnforcementSourceKind enum contract ---
 
@@ -43,7 +47,8 @@ class TestsFlextCoreEnforcementSources:
         ],
     )
     def test_source_kind_member_exposes_expected_value(
-        member: c.EnforcementSourceKind, value: str,
+        member: c.EnforcementSourceKind,
+        value: str,
     ) -> None:
         assert member.value == value
 
@@ -63,15 +68,22 @@ class TestsFlextCoreEnforcementSources:
     # --- discriminator literals across every source model ---
 
     @staticmethod
-    @pytest.mark.parametrize(("expected_kind", "source"), list(_SOURCE_CASES.items()))
+    @pytest.mark.parametrize(
+        ("expected_kind", "source"),
+        list(_SOURCE_CASES.items()),
+    )
     def test_source_model_exposes_matching_discriminator_literal(
-        expected_kind: str, source: m.BaseModel,
+        expected_kind: str,
+        source: m.BaseModel,
     ) -> None:
         assert source.model_dump()["kind"] == expected_kind
 
     @staticmethod
     def test_every_source_kind_enum_value_has_a_source_model() -> None:
-        model_kinds = {source.model_dump()["kind"] for source in _SOURCE_CASES.values()}
+        model_kinds = {
+            source.model_dump()["kind"]
+            for source in TestsFlextCoreEnforcementSources._SOURCE_CASES.values()
+        }
         assert model_kinds == {kind.value for kind in c.EnforcementSourceKind}
 
     # --- field-level public contract ---
@@ -134,9 +146,13 @@ class TestsFlextCoreEnforcementSources:
     # --- model_dump round-trip (public serialization contract) ---
 
     @staticmethod
-    @pytest.mark.parametrize(("expected_kind", "source"), list(_SOURCE_CASES.items()))
+    @pytest.mark.parametrize(
+        ("expected_kind", "source"),
+        list(_SOURCE_CASES.items()),
+    )
     def test_source_model_dump_round_trips(
-        expected_kind: str, source: m.BaseModel,
+        expected_kind: str,
+        source: m.BaseModel,
     ) -> None:
         dumped = source.model_dump()
         assert dumped["kind"] == expected_kind
@@ -167,7 +183,9 @@ class TestsFlextCoreEnforcementSources:
         ],
     )
     def test_rule_spec_dispatches_source_by_discriminator(
-        kind: str, source_payload: t.JsonMapping, expected_type: type[m.BaseModel],
+        kind: str,
+        source_payload: t.JsonMapping,
+        expected_type: type[m.BaseModel],
     ) -> None:
         spec = m.EnforcementRuleSpec.model_validate({
             "id": "ENFORCE-001",
@@ -179,7 +197,10 @@ class TestsFlextCoreEnforcementSources:
         assert spec.source.kind == kind
 
     @staticmethod
-    @pytest.mark.parametrize("retired_kind", ["minimal_ast", "ruff", "skill_pointer"])
+    @pytest.mark.parametrize(
+        "retired_kind",
+        ["minimal_ast", "ruff", "skill_pointer"],
+    )
     def test_rule_spec_rejects_retired_source_discriminator(
         retired_kind: str,
     ) -> None:

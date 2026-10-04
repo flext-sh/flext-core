@@ -75,36 +75,6 @@ type _FieldKeywordValue[DefaultT] = (
 )
 
 
-def _field[DefaultT](
-    default: DefaultT | PydanticUndefinedType | EllipsisType = PydanticUndefined,
-    **kwargs: _FieldKeywordValue[DefaultT] | None,
-) -> DefaultT:
-    """Typed FLEXT facade for ``pydantic.Field``.
-
-    Returns:
-        The resulting ``DefaultT``.
-
-    """
-    field_factory: Callable[..., DefaultT] = Field
-    return field_factory(default, **kwargs)
-
-
-def _private_attr[PrivateT](
-    default: PrivateT | PydanticUndefinedType = PydanticUndefined,
-    *,
-    default_factory: Callable[..., PrivateT] | None = None,
-    init: Literal[False] = False,
-) -> PrivateT:
-    """Typed FLEXT facade for ``pydantic.PrivateAttr``.
-
-    Returns:
-        The resulting ``PrivateT``.
-
-    """
-    private_attr_factory: Callable[..., PrivateT] = PydanticPrivateAttr
-    return private_attr_factory(default, default_factory=default_factory, init=init)
-
-
 class FlextModelsPydantic:
     """Public base model classes from pydantic v2.
 
@@ -116,9 +86,44 @@ class FlextModelsPydantic:
         RootModel: Container model for single validated values/collections
     """
 
+    @staticmethod
+    def _field[DefaultT](
+        default: DefaultT | PydanticUndefinedType | EllipsisType = PydanticUndefined,
+        **kwargs: _FieldKeywordValue[DefaultT] | None,
+    ) -> DefaultT:
+        """Typed FLEXT facade for ``pydantic.Field``.
+
+        Returns:
+            The resulting ``DefaultT``.
+
+        """
+        field_factory: Callable[..., DefaultT] = Field
+        return field_factory(default, **kwargs)
+
+    @staticmethod
+    def _private_attr[PrivateT](
+        default: PrivateT | PydanticUndefinedType = PydanticUndefined,
+        *,
+        default_factory: Callable[..., PrivateT] | None = None,
+        init: Literal[False] = False,
+    ) -> PrivateT:
+        """Typed FLEXT facade for ``pydantic.PrivateAttr``.
+
+        Returns:
+            The resulting ``PrivateT``.
+
+        """
+        private_attr_factory: Callable[..., PrivateT] = PydanticPrivateAttr
+        return private_attr_factory(default, default_factory=default_factory, init=init)
+
     @dataclass_transform(
         kw_only_default=True,
-        field_specifiers=(_field, Field, PydanticPrivateAttr, _private_attr),
+        field_specifiers=(
+            _field,
+            Field,
+            PydanticPrivateAttr,
+            _private_attr,
+        ),
     )
     class BaseModel(PydanticBaseModel):
         """Canonical BaseModel exported through the FLEXT models facade."""
@@ -128,7 +133,12 @@ class FlextModelsPydantic:
 
     @dataclass_transform(
         kw_only_default=True,
-        field_specifiers=(_field, Field, PydanticPrivateAttr, _private_attr),
+        field_specifiers=(
+            _field,
+            Field,
+            PydanticPrivateAttr,
+            _private_attr,
+        ),
     )
     class RootModel[RootValueT](PydanticRootModel[RootValueT]):
         """Canonical RootModel exported through the FLEXT models facade."""
@@ -194,3 +204,6 @@ class FlextModelsPydantic:
     # annotate the wide upstream base (Liskov-correct parameter widening).
     type PydanticBaseSettings = _PydanticBaseSettings
     type PydanticBaseSettingsSource = _PydanticBaseSettingsSource
+
+
+__all__: list[str] = ["FlextModelsPydantic"]

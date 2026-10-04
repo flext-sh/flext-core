@@ -108,3 +108,30 @@ class TestsFlextCoreUtilitiesProjectMetadata:
         tm.that(dumped["project"]["name"], eq="flext-ldif")
         tm.that(dumped["project"]["version"], eq="1.0.0")
         tm.that(dumped["tool"]["flext"]["workspace"]["attached"], eq=True)
+
+    @staticmethod
+    def test_distribution_requirement_names_normalize_to_import_grammar(
+        tmp_path: Path,
+    ) -> None:
+        """Requirement names keep the import grammar: lowercase underscores.
+
+        Version specifiers, extras and environment markers never reach the
+        returned name; a malformed line is skipped, never guessed.
+        """
+        info = tmp_path / "probe_requirement_dist-1.0.dist-info"
+        info.mkdir()
+        (info / "METADATA").write_text(
+            "Metadata-Version: 2.1\n"
+            "Name: probe-requirement-dist\n"
+            "Version: 1.0\n"
+            "Requires-Dist: flext-cli>=0.12\n"
+            "Requires-Dist: Flext-Api[extra]~=1.0\n"
+            "Requires-Dist: pydantic>=2.11; python_version >= '3.13'\n"
+            "Requires-Dist: some_pkg==2.0\n"
+            "Requires-Dist: ??? malformed\n",
+        )
+        names = u.distribution_requirement_names(Distribution.at(info))
+        tm.that(
+            names,
+            eq=("flext_cli", "flext_api", "pydantic", "some_pkg"),
+        )

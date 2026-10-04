@@ -522,7 +522,7 @@
     },
     {
       "id": "ENFORCE-046",
-      "description": "Canonical facade files (constants/models/protocols/typings/utilities) must import only c/m/p/t/u aliases from parent — never bare FlextXxx concrete classes (unless Pattern-B peer). Violates AGENTS.md §4 (Import Law).",
+      "description": "Canonical facade files (constants/models/protocols/typings/utilities) must import only c/m/p/t/u aliases from parent — never bare FlextXxx concrete classes. Exempt when both classes are family facades: a Pattern-B peer, or a consumer facade whose package publishes the lazy export contract and requires a family member. Violates AGENTS.md §4 (Import Law).",
       "severity": "HIGH",
       "source": {
         "kind": "beartype",

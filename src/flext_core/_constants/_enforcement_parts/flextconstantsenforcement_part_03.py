@@ -18,7 +18,6 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
 
 
-
 class FlextConstantsEnforcementNamespace:
     """MRO namespace and violation-shape constants."""
 

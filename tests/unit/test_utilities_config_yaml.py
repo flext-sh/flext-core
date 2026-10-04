@@ -20,17 +20,20 @@ from flext_core import u
 class TestsFlextCoreUtilitiesYaml:
     """Prove the public YAML transport contract on the facade."""
 
-    def test_unique_key_load_parses_nested_documents(self) -> None:
+    @staticmethod
+    def test_unique_key_load_parses_nested_documents() -> None:
         """Test unique key load parses nested documents."""
         parsed = u.Yaml.unique_key_load("top:\n  inner: 1\n  other: two\n")
         tm.that(parsed, eq={"top": {"inner": 1, "other": "two"}})
 
-    def test_unique_key_load_rejects_duplicate_keys_at_depth(self) -> None:
+    @staticmethod
+    def test_unique_key_load_rejects_duplicate_keys_at_depth() -> None:
         """Test unique key load rejects duplicate keys at depth."""
         with pytest.raises(u.Yaml.YAMLError, match="duplicate config key"):
             u.Yaml.unique_key_load("top:\n  dup: 1\n  dup: 2\n")
 
-    def test_unique_key_load_rejects_malformed_input(self) -> None:
+    @staticmethod
+    def test_unique_key_load_rejects_malformed_input() -> None:
         """Test unique key load rejects malformed input."""
         with pytest.raises(u.Yaml.YAMLError):
             u.Yaml.unique_key_load("top: [unclosed\n")

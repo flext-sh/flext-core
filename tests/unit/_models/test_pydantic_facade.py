@@ -108,7 +108,9 @@ class TestsFlextCorePydanticDeclarations:
     @staticmethod
     def test_secret_str_field_hides_value_and_round_trips() -> None:
         round_trip_value = "s3cret"
-        credentials = TestsFlextCorePydanticDeclarations._Credentials(token=round_trip_value)
+        credentials = TestsFlextCorePydanticDeclarations._Credentials(
+            token=round_trip_value,
+        )
 
         assert isinstance(credentials.token, t.SecretStr)
         assert credentials.token.get_secret_value() == "s3cret"
