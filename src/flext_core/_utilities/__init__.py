@@ -88,7 +88,7 @@ if TYPE_CHECKING:
     from flext_core._utilities.context import FlextUtilitiesContext
     from flext_core._utilities.conversion import FlextUtilitiesConversion
     from flext_core._utilities.discovery import FlextUtilitiesDiscovery
-    from flext_core._utilities.dispatcher_execute import execute_dispatcher_handler
+    from flext_core._utilities.dispatcher_execute import FlextUtilitiesDispatcherExecute
     from flext_core._utilities.domain import FlextUtilitiesDomain
     from flext_core._utilities.enforcement import (
         PREDICATE_BINDINGS,
@@ -159,6 +159,7 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesContext",
     "FlextUtilitiesConversion",
     "FlextUtilitiesDiscovery",
+    "FlextUtilitiesDispatcherExecute",
     "FlextUtilitiesDomain",
     "FlextUtilitiesEnforcement",
     "FlextUtilitiesEnforcementCollect",
@@ -203,7 +204,6 @@ __all__: tuple[str, ...] = (
     "_mapper_extract_parts",
     "_parser_targets_parts",
     "alias_first_violation",
-    "execute_dispatcher_handler",
     "redundant_inner_violation",
     "self_ref_violation",
 )
@@ -262,7 +262,7 @@ _LAZY_IMPORTS = MappingProxyType(
             ".context": ("FlextUtilitiesContext",),
             ".conversion": ("FlextUtilitiesConversion",),
             ".discovery": ("FlextUtilitiesDiscovery",),
-            ".dispatcher_execute": ("execute_dispatcher_handler",),
+            ".dispatcher_execute": ("FlextUtilitiesDispatcherExecute",),
             ".domain": ("FlextUtilitiesDomain",),
             ".enforcement": ("FlextUtilitiesEnforcement", "PREDICATE_BINDINGS"),
             ".enforcement_collect": ("FlextUtilitiesEnforcementCollect",),

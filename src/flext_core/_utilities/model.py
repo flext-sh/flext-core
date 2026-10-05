@@ -26,16 +26,24 @@ class FlextUtilitiesModel:
         """Options controlling Pydantic model_dump() serialization behavior."""
 
         by_alias: bool | None = mp.Field(
-            None, description="Serialize using field aliases", validate_default=True,
+            None,
+            description="Serialize using field aliases",
+            validate_default=True,
         )
         exclude_none: bool | None = mp.Field(
-            None, description="Exclude None-valued fields", validate_default=True,
+            None,
+            description="Exclude None-valued fields",
+            validate_default=True,
         )
         exclude_unset: bool | None = mp.Field(
-            None, description="Exclude fields not explicitly set", validate_default=True,
+            None,
+            description="Exclude fields not explicitly set",
+            validate_default=True,
         )
         exclude_defaults: bool | None = mp.Field(
-            None, description="Exclude fields matching defaults", validate_default=True,
+            None,
+            description="Exclude fields matching defaults",
+            validate_default=True,
         )
         include: set[str] | None = mp.Field(
             None,
@@ -69,7 +77,9 @@ class FlextUtilitiesModel:
 
         """
         opts = ua.resolve_options(
-            options, kwargs, FlextUtilitiesModel.ModelDumpOptions,
+            options,
+            kwargs,
+            FlextUtilitiesModel.ModelDumpOptions,
         ).unwrap()
         opts_dict = opts.model_dump(exclude_none=True)
         dumped: t.JsonMapping = t.json_mapping_adapter().validate_python(

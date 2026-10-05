@@ -56,7 +56,9 @@ class FlextConfig(BaseSettings):
     CONFIG_FILENAMES: ClassVar[t.VariadicTuple[str]] = ()
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
-        frozen=True, extra="allow", env_prefix="FLEXT_CONFIG_",
+        frozen=True,
+        extra="allow",
+        env_prefix="FLEXT_CONFIG_",
     )
 
     _lock: ClassVar[RLock] = RLock()

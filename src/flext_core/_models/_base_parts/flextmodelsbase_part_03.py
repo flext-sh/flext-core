@@ -36,14 +36,16 @@ class FlextModelsBase(FlextModelsBasePart02):
             datetime,
             mp.AfterValidator(ur.ensure_utc_datetime),
             mp.Field(
-                description="Creation timestamp (configured timezone)", frozen=True,
+                description="Creation timestamp (configured timezone)",
+                frozen=True,
             ),
         ] = mp.Field(default_factory=ug.now)
         updated_at: Annotated[
             datetime | None,
             mp.AfterValidator(ur.ensure_utc_datetime),
             mp.Field(
-                default=None, description="Last update timestamp (configured timezone)",
+                default=None,
+                description="Last update timestamp (configured timezone)",
             ),
         ] = None
 
@@ -97,7 +99,8 @@ class FlextModelsBase(FlextModelsBasePart02):
             if self.version < c.DEFAULT_RETRY_DELAY_SECONDS:
                 raise ValueError(
                     c.ERR_MODEL_VERSION_BELOW_MINIMUM.format(
-                        version=self.version, minimum=c.DEFAULT_RETRY_DELAY_SECONDS,
+                        version=self.version,
+                        minimum=c.DEFAULT_RETRY_DELAY_SECONDS,
                     ),
                 )
             return self
@@ -130,7 +133,8 @@ class FlextModelsBase(FlextModelsBasePart02):
         ] = c.DEFAULT_MAX_DELAY_SECONDS
 
     class TimestampedModel(
-        FlextModelsBasePart02.ArbitraryTypesModel, TimestampableMixin,
+        FlextModelsBasePart02.ArbitraryTypesModel,
+        TimestampableMixin,
     ):
         """Model with timestamp fields."""
 

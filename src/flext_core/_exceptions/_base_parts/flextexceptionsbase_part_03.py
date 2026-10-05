@@ -1,7 +1,6 @@
 """Exception base facade implementation.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
-src/flext_core/_exceptions/_base_parts/flextexceptionsbase_part_03
 SPDX-License-Identifier: MIT
 """
 
@@ -98,13 +97,16 @@ class FlextExceptionsBase:
                     else None
                 )
                 correlation_id_raw = remaining_extra.pop(
-                    c.ContextKey.CORRELATION_ID, None,
+                    c.ContextKey.CORRELATION_ID,
+                    None,
                 )
                 correlation_id_str = FlextExceptionsHelpers.safe_optional_str(
                     correlation_id_raw,
                 )
                 param_values = FlextExceptionsHelpers.build_param_map(
-                    context, remaining_extra, keys=declared_param_keys,
+                    context,
+                    remaining_extra,
+                    keys=declared_param_keys,
                 )
                 for key, value in resolved_named.items():
                     if value is None:

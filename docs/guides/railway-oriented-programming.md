@@ -114,14 +114,24 @@ from flext_core import p, r
 
 
 def validate_email(email: str) -> p.Result[str]:
-    """Validate that an email contains the separator used in this example."""
+    """Validate that an email contains the separator used in this example.
+
+    Returns:
+        The resulting ``p.Result[str]``.
+
+    """
     if "@" not in email:
         return r[str].fail("invalid_email")
     return r[str].ok(email)
 
 
 def normalize_email(email: str) -> p.Result[str]:
-    """Normalize whitespace and casing for a validated email."""
+    """Normalize whitespace and casing for a validated email.
+
+    Returns:
+        The resulting ``p.Result[str]``.
+
+    """
     return r[str].ok(email.strip().lower())
 
 
@@ -282,7 +292,12 @@ from flext_core import p, r
 
 
 def fallback(_message: str) -> p.Result[int]:
-    """Convert an error message into a deterministic fallback result."""
+    """Convert an error message into a deterministic fallback result.
+
+    Returns:
+        The resulting ``p.Result[int]``.
+
+    """
     return r[int].ok(0)
 
 
@@ -310,7 +325,12 @@ from flext_core import e, p, r
 
 
 def fetch_profile_name(user_id: str) -> p.Result[str]:
-    """Return a structured not-found failure instead of a raw string."""
+    """Return a structured not-found failure instead of a raw string.
+
+    Returns:
+        The resulting ``p.Result[str]``.
+
+    """
     expected_user_id = "u-1"
     if user_id != expected_user_id:
         return e.fail_not_found("user", user_id)
@@ -318,7 +338,12 @@ def fetch_profile_name(user_id: str) -> p.Result[str]:
 
 
 def parse_age(raw_value: str) -> p.Result[int]:
-    """Normalize parser exceptions to a structured operation failure."""
+    """Normalize parser exceptions to a structured operation failure.
+
+    Returns:
+        The resulting ``p.Result[int]``.
+
+    """
     try:
         return r[int].ok(int(raw_value))
     except ValueError as exc:
@@ -404,14 +429,24 @@ from flext_core import e, p, r
 
 
 def display_name_or_guest(raw_name: str | None) -> str:
-    """Business absence stays local and becomes a plain default."""
+    """Business absence stays local and becomes a plain default.
+
+    Returns:
+        The resulting ``str``.
+
+    """
     if raw_name is None:
         return "guest"
     return raw_name.strip()
 
 
 def require_email(raw_email: str | None) -> p.Result[str]:
-    """Required input converts None into a structured validation failure."""
+    """Required input converts None into a structured validation failure.
+
+    Returns:
+        The resulting ``p.Result[str]``.
+
+    """
     if raw_email is None:
         return e.fail_validation("email", error="cannot be None")
     normalized = raw_email.strip().lower()
@@ -460,7 +495,12 @@ from flext_core import e
 
 
 def fetch_remote_profile() -> str:
-    """Convert an infrastructure exception into a typed timeout error."""
+    """Convert an infrastructure exception into a typed timeout error.
+
+    Raises:
+        e.FlextTimeoutError: When the wrapped operation does not complete.
+
+    """
     socket_message = "socket stalled"
     timeout_message = "Remote profile lookup timed out"
 
@@ -517,7 +557,12 @@ from flext_core import p, r
 
 
 def validate_item(item: str) -> p.Result[str]:
-    """Reject strings shorter than the configured minimum length."""
+    """Reject strings shorter than the configured minimum length.
+
+    Returns:
+        The resulting ``p.Result[str]``.
+
+    """
     minimum_length = 3
     if len(item) < minimum_length:
         return r[str].fail(f"too_short:{item}")
@@ -544,21 +589,53 @@ if passed.value != expected_items:
 
 from __future__ import annotations
 
-from flext_core import p, r
+from typing import Protocol
+
+from flext_core import m, p, r
 
 
-def create_connection() -> dict[str, int]:
-    """Create the resource used by the operation callback."""
+class ResourcePort(p.Base, Protocol):
+    """Read-only identifier consumed by the resource operation."""
+
+    @property
+    def identifier(self) -> int:
+        """Read the resource identifier.
+
+        Returns:
+            The resource identifier.
+
+        """
+        ...
+
+
+class Connection(m.Value):
+    """Validated resource identifier passed between the callbacks."""
+
+    identifier: int = m.Field(description="Identifier of the example connection.")
+
+
+def create_connection() -> ResourcePort:
+    """Create the resource used by the operation callback.
+
+    Returns:
+        The resulting ``ResourcePort``.
+
+    """
     resource_identifier = 10
-    return {"id": resource_identifier}
+    return Connection(identifier=resource_identifier)
 
 
-def use_connection(conn: dict[str, int]) -> p.Result[int]:
-    """Use the resource and return the extracted identifier as a result."""
-    return r[int].ok(conn["id"])
+def use_connection(conn: ResourcePort) -> p.Result[int]:
+    """Use the resource and return the extracted identifier as a result.
+
+    Returns:
+        The resulting ``p.Result[int]``.
+
+    """
+    return r[int].ok(conn.identifier)
 
 
-def close_connection(_conn: dict[str, int]) -> None:
+def close_connection(_conn: ResourcePort) -> None:
     """Close the resource used by the example."""
 
 
@@ -586,7 +663,15 @@ from flext_core import d
 
 @d.railway(error_code="PARSE_ERROR")
 def parse_positive_number(raw: str) -> int:
-    """Parse a strictly positive integer value."""
+    """Parse a strictly positive integer value.
+
+    Returns:
+        The resulting ``int``.
+
+    Raises:
+        ValueError: When the parsed value is not strictly positive.
+
+    """
     value = int(raw)
     minimum_positive_value = 0
     if value <= minimum_positive_value:
@@ -615,49 +700,76 @@ if fail_result.error_code != expected_error_code:
 When retries exhaust, `@d.retry` raises `e.FlextTimeoutError`; with outer `@d.railway`,
 the exception is converted back into `p.Result[T]`.
 
+This example verifies the result and attempt count. Log levels, destinations, and
+delivery timing remain the logging owner's configuration, not retry expectations.
+
 ```python
 """Combine retry and railway decorators."""
 
 from __future__ import annotations
 
-import io
-import time
-from contextlib import redirect_stdout
+from typing import Protocol
 
-from flext_core import d
+from flext_core import d, m, p
 
-attempts = {"count": 0}
+
+class AttemptState(p.Base, Protocol):
+    """Mutable attempt count consumed by the retry operation."""
+
+    @property
+    def count(self) -> int:
+        """Read the completed attempt count.
+
+        Returns:
+            The completed attempt count.
+
+        """
+        ...
+
+    @count.setter
+    def count(self, value: int) -> None:
+        """Write the completed attempt count."""
+        ...
+
+
+class RetryState(m.StrictModel):
+    """Validated attempt count supplied to the operation."""
+
+    count: int = m.Field(default=0, ge=0, description="Completed operation attempts.")
+
+
+expected_attempts = 3
+expected_value = 123
+attempts: AttemptState = RetryState()
 
 
 @d.railway(error_code="RETRY_EXAMPLE")
-@d.retry(max_attempts=3, delay_seconds=0.01, backoff_strategy="linear")
-def flaky_operation() -> int:
-    """Fail twice before returning a stable value."""
-    attempts["count"] += 1
-    required_attempts = 3
-    if attempts["count"] < required_attempts:
+@d.retry(max_attempts=expected_attempts, delay_seconds=0.01, backoff_strategy="linear")
+def flaky_operation(state: AttemptState, required_attempts: int, value: int) -> int:
+    """Fail twice before returning a stable value.
+
+    Returns:
+        The resulting ``int``.
+
+    Raises:
+        RuntimeError: While the attempt count is still below the threshold.
+
+    """
+    state.count += 1
+    if state.count < required_attempts:
         message = "transient_error"
         raise RuntimeError(message)
-    return 123
+    return value
 
 
-stream = io.StringIO()
-with redirect_stdout(stream):
-    result = flaky_operation()
-    deadline = time.monotonic() + 0.25
-    while time.monotonic() < deadline and "retry_attempt" not in stream.getvalue():
-        time.sleep(0.01)
-    assert "retry_attempt" in stream.getvalue()
-
-expected_value = 123
-expected_attempts = 3
+result = flaky_operation(attempts, expected_attempts, expected_value)
 if not result.success:
     message = "Expected retry success"
     raise RuntimeError(message)
 if result.value != expected_value:
     message = "Unexpected retry result value"
     raise RuntimeError(message)
-if attempts["count"] != expected_attempts:
+if attempts.count != expected_attempts:
     message = "Unexpected retry attempt count"
     raise RuntimeError(message)
 ```
