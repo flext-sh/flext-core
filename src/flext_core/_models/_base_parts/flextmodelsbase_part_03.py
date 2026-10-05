@@ -59,7 +59,7 @@ class FlextModelsBase(FlextModelsBasePart02):
             """
             return value.isoformat() if value else None
 
-        @up.model_validator(mode="after")
+        @mp.model_validator(mode="after")
         def validate_timestamp_consistency(self) -> Self:
             """Validate timestamp consistency.
 
@@ -86,7 +86,7 @@ class FlextModelsBase(FlextModelsBasePart02):
             ),
         ] = c.DEFAULT_RETRY_DELAY_SECONDS
 
-        @up.model_validator(mode="after")
+        @mp.model_validator(mode="after")
         def validate_version_consistency(self) -> Self:
             """Ensure version consistency.
 

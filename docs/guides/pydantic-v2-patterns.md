@@ -75,7 +75,7 @@ class PortModel(m.BaseModel):
 
     port: Annotated[int, m.Field(description="TCP port")]
 
-    @u.field_validator("port")
+    @m.field_validator("port")
     @classmethod
     def validate_port(cls, value: int) -> int:
         """Reject ports outside the library bounds.

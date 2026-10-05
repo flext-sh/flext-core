@@ -104,12 +104,12 @@ class TestsFlextModelsCorePublicMixin:
         visits: int = 0
         _events: list[str] = u.PrivateAttr(default_factory=list)
 
-        @u.field_validator("raw_name")
+        @m.field_validator("raw_name")
         @classmethod
         def normalize_name(cls, value: str) -> str:
             return value.strip().title()
 
-        @u.model_validator(mode="after")
+        @m.model_validator(mode="after")
         def record_validation(self) -> Self:
             self._events.append("validated")
             return self

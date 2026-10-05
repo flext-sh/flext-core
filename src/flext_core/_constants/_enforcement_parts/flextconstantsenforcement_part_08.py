@@ -23,8 +23,8 @@ class FlextConstantsEnforcementFixActions:
         "PrivateAttr": "u.PrivateAttr",
         "TypeAdapter": "m.TypeAdapter",
         "computed_field": "u.computed_field",
-        "field_validator": "u.field_validator",
-        "model_validator": "u.model_validator",
+        "field_validator": "m.field_validator",
+        "model_validator": "m.model_validator",
     }
 
     ENFORCEMENT_FIX_ACTIONS: Final[t.MappingKV[str, t.JsonMapping]] = MappingProxyType({

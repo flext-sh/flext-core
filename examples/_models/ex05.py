@@ -28,7 +28,7 @@ class ExamplesFlextModelsEx05:
         )
         age: int = u.Field(description="User age in years")
 
-        @u.field_validator("status", mode="before")
+        @m.field_validator("status", mode="before")
         @classmethod
         def normalize_status(
             cls,
