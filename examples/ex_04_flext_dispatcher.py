@@ -18,8 +18,8 @@ from flext_core import p, r, t
 class _CreateUserHandler:
     message_type = m.Examples.CreateUser
 
+    @staticmethod
     def handle(
-        self,
         message: p.Routable,
     ) -> t.JsonPayload | p.ResultView[t.JsonPayload] | None:
         if not isinstance(message, m.Examples.CreateUser):
@@ -30,8 +30,8 @@ class _CreateUserHandler:
 class _GetUserHandler:
     message_type = m.Examples.GetUser
 
+    @staticmethod
     def dispatch_message(
-        self,
         message: p.Routable,
         operation: str = "dispatch",
     ) -> t.JsonPayload | p.ResultView[t.JsonPayload] | None:
@@ -43,8 +43,8 @@ class _GetUserHandler:
 class _DeleteUserHandler:
     message_type = m.Examples.DeleteUser
 
+    @staticmethod
     def execute(
-        self,
         message: p.Routable,
     ) -> t.JsonPayload | p.ResultView[t.JsonPayload] | None:
         if not isinstance(message, m.Examples.DeleteUser):
@@ -53,11 +53,12 @@ class _DeleteUserHandler:
 
 
 class _AutoFallbackHandler:
-    def can_handle(self, message_type: type) -> bool:
+    @staticmethod
+    def can_handle(message_type: type) -> bool:
         return message_type is m.Examples.UnknownQuery
 
+    @staticmethod
     def handle(
-        self,
         message: p.Routable,
     ) -> t.JsonPayload | p.ResultView[t.JsonPayload] | None:
         if not isinstance(message, m.Examples.UnknownQuery):

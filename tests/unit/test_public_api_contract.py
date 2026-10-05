@@ -72,7 +72,8 @@ def _increment_step(value: int) -> p.Result[int]:
 class TestsFlextCorePublicApiContract:
     """Assert the observable behavior promised by the flext_core public surface."""
 
-    def test_root_lazy_helpers_publish_a_consumer_export(self) -> None:
+    @staticmethod
+    def test_root_lazy_helpers_publish_a_consumer_export() -> None:
         """Generated consumers can compose lazy exports from the foundation root."""
         build_map = flext_core.build_lazy_import_map
         install = flext_core.install_lazy_exports

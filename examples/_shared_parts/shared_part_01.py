@@ -41,7 +41,8 @@ class ExamplesFlextSharedBase(m.BaseModel):
         max_u64 = (1 << 64) - 1
         return raw / max_u64
 
-    def exercise(self) -> None:
+    @staticmethod
+    def exercise() -> None:
         """Override in subclasses to exercise the target class."""
         msg = m.Examples.ErrorMessages.EXERCISE_NOT_IMPLEMENTED
         raise NotImplementedError(msg)
@@ -105,7 +106,8 @@ class ExamplesFlextSharedBase(m.BaseModel):
             self._results.append("")
         self._results.append(f"[{name}]")
 
-    def ser(self, v: object | None) -> str:
+    @staticmethod
+    def ser(v: object | None) -> str:
         """Deterministic, human-readable serialisation for golden-file output.
 
         Returns:

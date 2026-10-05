@@ -15,12 +15,14 @@ from __future__ import annotations
 
 import pytest
 
+import tests.utilities
 from flext_core.utilities import FlextUtilitiesBeartypeEngine as be
 from tests.protocols import p
-from tests.unit._beartype_engine_support import TestsFlextBeartypeEngine
 
 
-class TestsFlextCoreBeartypeEngine(TestsFlextBeartypeEngine):
+class TestsFlextCoreBeartypeEngine(
+    tests.utilities.TestsFlextUtilities.TestsFlextBeartypeEngine,
+):
     """Contract of the engine's placement + attribute-acceptance predicates."""
 
     @staticmethod
@@ -57,7 +59,12 @@ class TestsFlextCoreBeartypeEngine(TestsFlextBeartypeEngine):
     @staticmethod
     def test_defined_in_function_scope_false_for_module_class() -> None:
         """A module-level class is not reported as function-scoped."""
-        assert be.defined_in_function_scope(TestsFlextBeartypeEngine) is False
+        assert (
+            be.defined_in_function_scope(
+                tests.utilities.TestsFlextUtilities.TestsFlextBeartypeEngine,
+            )
+            is False
+        )
 
     @pytest.mark.parametrize(
         ("name", "expected"),

@@ -31,7 +31,8 @@ if TYPE_CHECKING:
 class TestsFlextHandlerDecoratorEdges:
     """Public-contract behavior of the handler decorator and discovery."""
 
-    def test_scan_class_exposes_declared_command_and_priority(self) -> None:
+    @staticmethod
+    def test_scan_class_exposes_declared_command_and_priority() -> None:
         # Arrange
         """Test scan class exposes declared command and priority."""
 
@@ -54,7 +55,8 @@ class TestsFlextHandlerDecoratorEdges:
         assert config.command is CreateCommand
         assert config.priority == 10
 
-    def test_defaults_are_applied_when_priority_and_timeout_omitted(self) -> None:
+    @staticmethod
+    def test_defaults_are_applied_when_priority_and_timeout_omitted() -> None:
         # Arrange
         """Test defaults are applied when priority and timeout omitted."""
 
@@ -74,7 +76,8 @@ class TestsFlextHandlerDecoratorEdges:
         declared = m.DecoratorConfig(command=CreateCommand)
         assert config.model_dump() == declared.model_dump()
 
-    def test_none_timeout_is_preserved(self) -> None:
+    @staticmethod
+    def test_none_timeout_is_preserved() -> None:
         # Arrange
         """Test none timeout is preserved."""
 
@@ -113,7 +116,8 @@ class TestsFlextHandlerDecoratorEdges:
         # Assert
         assert config.model_dump()["timeout"] == timeout
 
-    def test_stacked_decorators_innermost_wins(self) -> None:
+    @staticmethod
+    def test_stacked_decorators_innermost_wins() -> None:
         # Arrange: the innermost decorator runs first and takes precedence.
         """Test stacked decorators innermost wins."""
 
@@ -137,7 +141,8 @@ class TestsFlextHandlerDecoratorEdges:
         assert config.command is DeleteCommand
         assert config.priority == 20
 
-    def test_scan_class_sorts_handlers_by_priority_descending(self) -> None:
+    @staticmethod
+    def test_scan_class_sorts_handlers_by_priority_descending() -> None:
         # Arrange
         """Test scan class sorts handlers by priority descending."""
 
@@ -177,7 +182,8 @@ class TestsFlextHandlerDecoratorEdges:
         ]
         assert [config.priority for _, config in handlers] == [9, 5, 1]
 
-    def test_has_handlers_reflects_presence_of_decorated_methods(self) -> None:
+    @staticmethod
+    def test_has_handlers_reflects_presence_of_decorated_methods() -> None:
         # Arrange
         """Test has handlers reflects presence of decorated methods."""
 
@@ -200,7 +206,8 @@ class TestsFlextHandlerDecoratorEdges:
         assert h.Discovery.has_handlers(Decorated) is True
         assert h.Discovery.has_handlers(Plain) is False
 
-    def test_scan_class_returns_empty_for_undecorated_class(self) -> None:
+    @staticmethod
+    def test_scan_class_returns_empty_for_undecorated_class() -> None:
         # Arrange
         """Test scan class returns empty for undecorated class."""
 
@@ -212,7 +219,8 @@ class TestsFlextHandlerDecoratorEdges:
         # Act / Assert
         assert h.Discovery.scan_class(Plain) == []
 
-    def test_decorated_method_stays_callable_and_returns_success(self) -> None:
+    @staticmethod
+    def test_decorated_method_stays_callable_and_returns_success() -> None:
         # Arrange: decoration must not alter the method's runtime behavior.
         """Test decorated method stays callable and returns success."""
 
@@ -231,7 +239,8 @@ class TestsFlextHandlerDecoratorEdges:
         assert result.success
         assert result.unwrap() == "created_alpha"
 
-    def test_service_integration_discovers_handler_via_scan_class(self) -> None:
+    @staticmethod
+    def test_service_integration_discovers_handler_via_scan_class() -> None:
         # Arrange: a real FlextService subclass with a decorated handler.
         """Test service integration discovers handler via scan class."""
 

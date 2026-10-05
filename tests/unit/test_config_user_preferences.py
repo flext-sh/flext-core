@@ -71,8 +71,8 @@ def isolate_import_state() -> Iterator[None]:
 class TestPackagedConfigWithUserPreferences:
     """Packaged defaults plus optional user overlay, keyed by package namespace."""
 
+    @staticmethod
     def test_packaged_defaults_load_without_a_source_checkout(
-        self,
         tmp_path: Path,
     ) -> None:
         """Given an installed package, When loaded, Then packaged YAML applies."""
@@ -90,7 +90,8 @@ class TestPackagedConfigWithUserPreferences:
             assert config.greeting == "packaged"
             assert config.level == 1
 
-    def test_user_preferences_override_only_declared_keys(self, tmp_path: Path) -> None:
+    @staticmethod
+    def test_user_preferences_override_only_declared_keys(tmp_path: Path) -> None:
         """Given a user YAML, When loaded, Then it wins and leaves the rest."""
         xdg = tmp_path / "xdg"
         with u.Tests.env_vars_context(env_vars={"XDG_CONFIG_HOME": str(xdg)}):
@@ -111,7 +112,8 @@ class TestPackagedConfigWithUserPreferences:
             assert config.greeting == "operator"
             assert config.level == 7
 
-    def test_absent_user_config_keeps_packaged_defaults(self, tmp_path: Path) -> None:
+    @staticmethod
+    def test_absent_user_config_keeps_packaged_defaults(tmp_path: Path) -> None:
         """Given no user directory, When loaded, Then defaults still apply."""
         with u.Tests.env_vars_context(
             env_vars={"XDG_CONFIG_HOME": str(tmp_path / "empty-xdg")},
@@ -127,7 +129,8 @@ class TestPackagedConfigWithUserPreferences:
             assert config.greeting == "packaged"
             assert config.level == 3
 
-    def test_namespaces_stay_isolated(self, tmp_path: Path) -> None:
+    @staticmethod
+    def test_namespaces_stay_isolated(tmp_path: Path) -> None:
         """Given two packages, When both load, Then neither reads the other."""
         xdg = tmp_path / "xdg"
         with u.Tests.env_vars_context(env_vars={"XDG_CONFIG_HOME": str(xdg)}):
@@ -144,8 +147,8 @@ class TestPackagedConfigWithUserPreferences:
             assert delta.SynthConfig.fetch_global().greeting == "delta"
             assert epsilon.SynthConfig.fetch_global().greeting == "packaged"
 
+    @staticmethod
     def test_explicit_config_dir_env_override_replaces_the_root(
-        self,
         tmp_path: Path,
     ) -> None:
         """Given ``<PKG>_CONFIG_DIR``, When loaded, Then that directory is used."""

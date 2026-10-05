@@ -165,7 +165,8 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         assert by_name[expected_name].priority == priority
         assert by_name[expected_name].command is Command
 
-    def test_has_handlers_reflects_presence_of_decorated_methods(self) -> None:
+    @staticmethod
+    def test_has_handlers_reflects_presence_of_decorated_methods() -> None:
         """Test has handlers reflects presence of decorated methods."""
 
         class Command(m.BaseModel):
@@ -185,7 +186,8 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         assert h.Discovery.has_handlers(WithoutHandlers) is False
         assert h.Discovery.has_handlers(WithHandler) is True
 
-    def test_scan_class_returns_empty_for_undecorated_class(self) -> None:
+    @staticmethod
+    def test_scan_class_returns_empty_for_undecorated_class() -> None:
         """Test scan class returns empty for undecorated class."""
 
         class Plain:

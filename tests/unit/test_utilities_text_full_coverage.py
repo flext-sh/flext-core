@@ -87,8 +87,8 @@ class TestsFlextUtilitiesText(test_u.Tests.Contract):
         normalized_key = core_u.normalize_alnum(cleaned)
         assert core_u.normalize_alnum(normalized_key) == normalized_key
 
+    @staticmethod
     def test_public_text_helpers_prepare_and_persist_app_manifest(
-        self,
         tmp_path: Path,
     ) -> None:
         """App bootstrap uses the public helpers to normalize and persist text."""

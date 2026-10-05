@@ -18,20 +18,18 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+import tests.utilities
 from flext_core import u
 from tests.typings import t
-from tests.unit._beartype_engine_support import (
-    AnyAlias,
-    CleanAlias,
-    NestedAnyAlias,
-    TestsFlextBeartypeEngine,
-)
+from tests.unit._beartype_engine_support import AnyAlias, CleanAlias, NestedAnyAlias
 
 if TYPE_CHECKING:
     from pathlib import PurePath as LazyResolvableType
 
 
-class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
+class TestsFlextBeartypeEngineAnnotations(
+    tests.utilities.TestsFlextUtilities.TestsFlextBeartypeEngine,
+):
     """Contract of the beartype annotation-inspection engine."""
 
     @pytest.mark.parametrize(

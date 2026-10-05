@@ -22,10 +22,12 @@ class ExamplesFlextModelsEx02:
             validate_default=True,
         )
 
-        def connect(self) -> p.Result[bool]:
+        @staticmethod
+        def connect() -> p.Result[bool]:
             return r[bool].ok(True)
 
-        def query(self, sql: str) -> p.Result[m.ConfigMap]:
+        @staticmethod
+        def query(sql: str) -> p.Result[m.ConfigMap]:
             if "INVALID" in sql:
                 return r[m.ConfigMap].fail("invalid query")
             return r[m.ConfigMap].ok(m.ConfigMap(root={"rows": 1}))
@@ -40,7 +42,8 @@ class ExamplesFlextModelsEx02:
             validate_default=True,
         )
 
-        def set(self, key: str, value: str) -> p.Result[bool]:
+        @staticmethod
+        def set(key: str, value: str) -> p.Result[bool]:
             if not key:
                 return r[bool].fail("missing key")
             if not value:
@@ -57,7 +60,8 @@ class ExamplesFlextModelsEx02:
             validate_default=True,
         )
 
-        def send(self, to: str, subject: str, body: str) -> p.Result[bool]:
+        @staticmethod
+        def send(to: str, subject: str, body: str) -> p.Result[bool]:
             if not to or not subject or (not body):
                 return r[bool].fail("invalid email payload")
             return r[bool].ok(True)

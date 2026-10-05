@@ -13,14 +13,13 @@ import pytest
 from flext_tests import d, e, r
 from hypothesis import given, settings, strategies as st
 
-from tests.unit._decorators_support import TestsFlextDecoratorsLegacy
-from tests.utilities import u
+from tests.utilities import TestsFlextUtilities, u
 
 if TYPE_CHECKING:
     from tests.protocols import p
 
 
-class TestsFlextCoreDecoratorsCombined(TestsFlextDecoratorsLegacy):
+class TestsFlextCoreDecoratorsCombined(TestsFlextUtilities.TestsFlextDecoratorsLegacy):
     """Assert observable behavior of ``d.combined`` and decorator stacking."""
 
     @staticmethod

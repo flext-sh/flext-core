@@ -233,8 +233,8 @@ class FlextContainer(p.Container):
             partial(m.ResourceRegistration, name=name, factory=impl),
         )
 
+    @staticmethod
     def _resolve_callable(
-        self,
         callable_obj: t.FactoryCallable,
         kind: str,
     ) -> p.Result[t.RegisterableService]:

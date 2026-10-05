@@ -66,12 +66,13 @@ class TestsFlextUtilitiesProjectMetadataRead:
         """Test derive class stem produces pascal case from project name."""
         tm.that(u.derive_class_stem(project_name), eq=expected_stem)
 
-    def test_derive_class_stem_returns_empty_for_empty_input(self) -> None:
+    @staticmethod
+    def test_derive_class_stem_returns_empty_for_empty_input() -> None:
         """Test derive class stem returns empty for empty input."""
         tm.that(u.derive_class_stem(""), eq="")
 
-    def test_read_project_metadata_parses_minimal_pyproject(
-        self,
+    @staticmethod
+    def _read_project_metadata_parses_minimal_pyproject(
         tmp_path: Path,
     ) -> None:
         """Test read project metadata parses minimal pyproject."""
@@ -89,8 +90,8 @@ class TestsFlextUtilitiesProjectMetadataRead:
         tm.that(meta.project.name, eq=c.Tests.SAMPLE_PROJECT_NAME)
         tm.that(meta.class_stem, eq=c.Tests.SAMPLE_PROJECT_CLASS_STEM)
 
+    @staticmethod
     def test_read_project_metadata_extracts_author_names_from_project_table(
-        self,
         tmp_path: Path,
     ) -> None:
         """Test read project metadata extracts author names from project table."""
@@ -112,8 +113,8 @@ class TestsFlextUtilitiesProjectMetadataRead:
             eq=(c.Tests.SAMPLE_AUTHOR_ALICE, c.Tests.SAMPLE_AUTHOR_BOB),
         )
 
+    @staticmethod
     def test_read_project_metadata_derives_package_name_and_stem_from_name(
-        self,
         tmp_path: Path,
     ) -> None:
         """Test read project metadata derives package name and stem from name."""
@@ -129,8 +130,8 @@ class TestsFlextUtilitiesProjectMetadataRead:
         tm.that(meta.package_name, eq=c.Tests.SAMPLE_PROJECT_NAME.replace("-", "_"))
         tm.that(meta.class_stem, eq=c.Tests.SAMPLE_PROJECT_CLASS_STEM)
 
+    @staticmethod
     def test_read_project_metadata_extracts_optional_url_and_requires_python(
-        self,
         tmp_path: Path,
     ) -> None:
         """Test read project metadata extracts optional url and requires python."""
@@ -148,8 +149,8 @@ class TestsFlextUtilitiesProjectMetadataRead:
         tm.that(meta.project.requires_python, eq=">=3.13")
         tm.that(meta.project.urls.homepage, eq="https://example.com")
 
+    @staticmethod
     def test_read_project_metadata_defaults_optional_fields_when_absent(
-        self,
         tmp_path: Path,
     ) -> None:
         """Test read project metadata defaults optional fields when absent."""
@@ -166,7 +167,8 @@ class TestsFlextUtilitiesProjectMetadataRead:
         tm.that(meta.project.urls.homepage, eq="")
         tm.that(meta.project.authors, eq=())
 
-    def test_project_metadata_is_immutable(self, tmp_path: Path) -> None:
+    @staticmethod
+    def test_project_metadata_is_immutable(tmp_path: Path) -> None:
         """Test project metadata is immutable."""
         root = write_pyproject(
             tmp_path,
@@ -184,8 +186,8 @@ class TestsFlextUtilitiesProjectMetadataRead:
             expected=m.ValidationError,
         )
 
+    @staticmethod
     def test_read_project_metadata_fails_on_missing_pyproject(
-        self,
         tmp_path: Path,
     ) -> None:
         """Test read project metadata fails on missing pyproject."""

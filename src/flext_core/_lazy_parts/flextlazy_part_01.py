@@ -98,8 +98,8 @@ class FlextLazyPart01(BaseModel):
             "install_cache": len(self.install_cache),
         }
 
+    @staticmethod
     def _norm_cache_key(
-        self,
         module_path: str,
         raw: LazyImportMap | None,
     ) -> tuple[str, int]:
@@ -129,7 +129,8 @@ class FlextLazyPart01(BaseModel):
         self.normalized_map_cache[cache_key] = (raw, out)
         return out
 
-    def _must_activate_core_beartype(self, module_path: str) -> bool:
+    @staticmethod
+    def _must_activate_core_beartype(module_path: str) -> bool:
         """Return whether importing a module should activate flext_core beartype.
 
         Returns:
@@ -239,8 +240,8 @@ class FlextLazyPart01(BaseModel):
         self.normalized_map_cache.clear()
         self.install_cache.clear()
 
+    @staticmethod
     def build_map(
-        self,
         module_groups: Mapping[str, Sequence[str]] | None = None,
         *,
         alias_groups: LazyImportAliasGroups | None = None,

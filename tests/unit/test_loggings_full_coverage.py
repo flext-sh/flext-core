@@ -74,8 +74,8 @@ class TestsFlextLoggings:
         """
         return u.create_module_logger("tests.flext_core.loggings")
 
+    @staticmethod
     def test_create_module_logger_returns_usable_logger_instance(
-        self,
         logger: p.Logger,
     ) -> None:
         """Test create module logger returns usable logger instance."""
@@ -107,13 +107,15 @@ class TestsFlextLoggings:
         )
         tm.ok(result)
 
-    def test_unbind_missing_key_fails_loud(self, logger: p.Logger) -> None:
+    @staticmethod
+    def test_unbind_missing_key_fails_loud(logger: p.Logger) -> None:
         """Test unbind missing key fails loud."""
         bound = logger.bind(a="1")
         with pytest.raises(KeyError):
             bound.unbind("missing")
 
-    def test_unbind_without_safe_raises_on_missing_key(self, logger: p.Logger) -> None:
+    @staticmethod
+    def test_unbind_without_safe_raises_on_missing_key(logger: p.Logger) -> None:
         """Test unbind without safe raises on missing key."""
         with pytest.raises(KeyError):
             logger.unbind("missing")
@@ -134,8 +136,8 @@ class TestsFlextLoggings:
         )
         tm.ok(result)
 
+    @staticmethod
     def test_build_exception_context_captures_exception_metadata(
-        self,
         logger: p.Logger,
     ) -> None:
         """Test build exception context captures exception metadata."""
@@ -146,8 +148,8 @@ class TestsFlextLoggings:
         )
         tm.that(ctx, is_=dict, has="exception_type")
 
+    @staticmethod
     def test_build_exception_context_without_exception_returns_context_dict(
-        self,
         logger: p.Logger,
     ) -> None:
         """Test build exception context without exception returns context dict."""
@@ -240,8 +242,8 @@ class TestsFlextLoggings:
             tm.ok(result)
             tm.that(result.value, eq=True)
 
+    @staticmethod
     def test_log_source_points_to_call_site_not_logging_internals(
-        self,
         logger: p.Logger,
     ) -> None:
         """Test log source points to call site not logging internals."""

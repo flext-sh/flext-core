@@ -11,7 +11,6 @@ from types import MappingProxyType
 
 from flext_core import build_lazy_import_map, install_lazy_exports
 
-
 __all__: tuple[str, ...] = ()
 
 _LAZY_IMPORTS = MappingProxyType(

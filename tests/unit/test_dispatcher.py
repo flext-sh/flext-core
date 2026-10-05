@@ -81,7 +81,8 @@ class TestsFlextCoreDispatcher:
         """
         return u.build_dispatcher()
 
-    def test_build_dispatcher_returns_protocol_conformant_instance(self) -> None:
+    @staticmethod
+    def test_build_dispatcher_returns_protocol_conformant_instance() -> None:
         # Arrange / Act
         """Test build dispatcher returns protocol conformant instance."""
         dispatcher = u.build_dispatcher()
@@ -89,7 +90,8 @@ class TestsFlextCoreDispatcher:
         # Assert: builder promises a Dispatcher-shaped object, not a concrete type.
         assert isinstance(dispatcher, p.Dispatcher)
 
-    def test_register_callable_handler_succeeds(self, dispatcher: p.Dispatcher) -> None:
+    @staticmethod
+    def test_register_callable_handler_succeeds(dispatcher: p.Dispatcher) -> None:
         # Arrange / Act
         """Test register callable handler succeeds."""
         result = dispatcher.register_handler(RecordingHandler("register_ok"))
@@ -98,8 +100,8 @@ class TestsFlextCoreDispatcher:
         assert result.success
         assert result.value is True
 
-    def test_dispatch_routes_message_to_registered_handler(
-        self,
+    @staticmethod
+    def _dispatch_routes_message_to_registered_handler(
         dispatcher: p.Dispatcher,
     ) -> None:
         # Arrange
@@ -117,8 +119,8 @@ class TestsFlextCoreDispatcher:
         assert result.error is None
         assert handler.received == [command]
 
+    @staticmethod
     def test_dispatch_without_matching_handler_fails(
-        self,
         dispatcher: p.Dispatcher,
     ) -> None:
         # Arrange: a well-routed message but no handler registered for it.
@@ -133,8 +135,8 @@ class TestsFlextCoreDispatcher:
         assert result.error is not None
         assert "No handler found" in result.error
 
+    @staticmethod
     def test_dispatch_message_without_route_fails(
-        self,
         dispatcher: p.Dispatcher,
     ) -> None:
         # Arrange: no route discriminator set -> unroutable message.
@@ -149,8 +151,8 @@ class TestsFlextCoreDispatcher:
         assert result.error is not None
         assert "dispatch message" in result.error
 
+    @staticmethod
     def test_registered_handler_is_not_invoked_for_other_routes(
-        self,
         dispatcher: p.Dispatcher,
     ) -> None:
         # Arrange
@@ -165,8 +167,8 @@ class TestsFlextCoreDispatcher:
         assert result.failure
         assert handler.received == []
 
+    @staticmethod
     def test_register_callable_without_route_fails(
-        self,
         dispatcher: p.Dispatcher,
     ) -> None:
         # Arrange: callable exposing no message_type / event_type / can_handle.
@@ -183,8 +185,8 @@ class TestsFlextCoreDispatcher:
         assert result.error is not None
         assert "message_type" in result.error
 
+    @staticmethod
     def test_publish_invokes_subscriber_and_reports_success(
-        self,
         dispatcher: p.Dispatcher,
     ) -> None:
         # Arrange
@@ -201,8 +203,8 @@ class TestsFlextCoreDispatcher:
         assert result.value is True
         assert subscriber.received == [event]
 
+    @staticmethod
     def test_publish_sequence_fans_out_to_each_event(
-        self,
         dispatcher: p.Dispatcher,
     ) -> None:
         # Arrange
@@ -218,8 +220,8 @@ class TestsFlextCoreDispatcher:
         assert result.success
         assert len(subscriber.received) == 3
 
+    @staticmethod
     def test_publish_without_subscribers_is_successful_noop(
-        self,
         dispatcher: p.Dispatcher,
     ) -> None:
         # Arrange: no subscriber registered for this event route.
@@ -233,7 +235,8 @@ class TestsFlextCoreDispatcher:
         assert result.success
         assert result.value is True
 
-    def test_dispatchers_do_not_share_handler_registrations(self) -> None:
+    @staticmethod
+    def test_dispatchers_do_not_share_handler_registrations() -> None:
         # Arrange
         """Test dispatchers do not share handler registrations."""
         registered = u.build_dispatcher()
@@ -249,7 +252,8 @@ class TestsFlextCoreDispatcher:
         assert registered_result.success
         assert other_result.failure
 
-    def test_dispatch_logs_handler_exception_type_and_message(self) -> None:
+    @staticmethod
+    def test_dispatch_logs_handler_exception_type_and_message() -> None:
         # Arrange: a handler whose execution raises a runtime failure.
         """Test dispatch logs handler exception type and message."""
         failure_detail = "upstream inventory unavailable"

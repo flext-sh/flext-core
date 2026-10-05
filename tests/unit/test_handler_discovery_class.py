@@ -24,7 +24,8 @@ if TYPE_CHECKING:
 class TestsFlextCoreHandlerDiscoveryClass:
     """Public-contract tests for handler auto-discovery on classes."""
 
-    def test_scan_class_discovers_every_decorated_method(self) -> None:
+    @staticmethod
+    def test_scan_class_discovers_every_decorated_method() -> None:
         # Arrange
         """Test scan class discovers every decorated method."""
 
@@ -66,7 +67,8 @@ class TestsFlextCoreHandlerDiscoveryClass:
         tm.that(discovered, eq={"handle_create", "handle_delete", "handle_query"})
         tm.that("non_handler_method" in discovered, eq=False)
 
-    def test_scan_class_orders_handlers_by_priority_descending(self) -> None:
+    @staticmethod
+    def test_scan_class_orders_handlers_by_priority_descending() -> None:
         # Arrange
         """Test scan class orders handlers by priority descending."""
 
@@ -105,7 +107,8 @@ class TestsFlextCoreHandlerDiscoveryClass:
         tm.that(ordered_names, eq=["handle_high", "handle_mid", "handle_low"])
         tm.that(ordered_priorities, eq=[100, 50, 10])
 
-    def test_scan_class_binds_config_command_and_priority(self) -> None:
+    @staticmethod
+    def test_scan_class_binds_config_command_and_priority() -> None:
         # Arrange
         """Test scan class binds config command and priority."""
 
@@ -130,7 +133,8 @@ class TestsFlextCoreHandlerDiscoveryClass:
         assert outcome.success is True
         assert outcome.unwrap() == "processed_e7"
 
-    def test_scan_class_uses_default_priority_when_unspecified(self) -> None:
+    @staticmethod
+    def test_scan_class_uses_default_priority_when_unspecified() -> None:
         # Arrange
         """Test scan class uses default priority when unspecified."""
 
@@ -150,7 +154,8 @@ class TestsFlextCoreHandlerDiscoveryClass:
         tm.that(settings.command is PlainCommand, eq=True)
         tm.that(settings.priority, eq=m.DecoratorConfig(command=PlainCommand).priority)
 
-    def test_scan_class_returns_empty_for_class_without_handlers(self) -> None:
+    @staticmethod
+    def test_scan_class_returns_empty_for_class_without_handlers() -> None:
         # Arrange
         """Test scan class returns empty for class without handlers."""
 
@@ -197,7 +202,8 @@ class TestsFlextCoreHandlerDiscoveryClass:
         # Assert
         tm.that(result, eq=expected_present)
 
-    def test_scan_class_includes_inherited_handlers(self) -> None:
+    @staticmethod
+    def test_scan_class_includes_inherited_handlers() -> None:
         # Arrange
         """Test scan class includes inherited handlers."""
 
@@ -227,7 +233,8 @@ class TestsFlextCoreHandlerDiscoveryClass:
         tm.that(names, eq=["handle_create", "handle_delete"])
         tm.that(h.Discovery.has_handlers(DerivedService), eq=True)
 
-    def test_scan_class_is_idempotent(self) -> None:
+    @staticmethod
+    def test_scan_class_is_idempotent() -> None:
         # Arrange
         """Test scan class is idempotent."""
 

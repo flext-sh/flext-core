@@ -30,7 +30,8 @@ if TYPE_CHECKING:
 class TestsFlextHandlerDecoratorMetadata:
     """Tests for ``FlextHandlerDecoratorMetadata``."""
 
-    def test_decorated_method_exposes_handler_config(self) -> None:
+    @staticmethod
+    def test_decorated_method_exposes_handler_config() -> None:
         """Test decorated method exposes handler config."""
 
         class CreateCommand:
@@ -46,7 +47,8 @@ class TestsFlextHandlerDecoratorMetadata:
         tm.that(config.command is CreateCommand, eq=True)
         tm.that(config.priority, eq=10)
 
-    def test_undecorated_method_has_no_handler_config(self) -> None:
+    @staticmethod
+    def test_undecorated_method_has_no_handler_config() -> None:
         """Test undecorated method has no handler config."""
 
         class Service:
@@ -80,7 +82,8 @@ class TestsFlextHandlerDecoratorMetadata:
         tm.that(config.priority, eq=priority)
         tm.that(config.model_dump()["timeout"], eq=timeout)
 
-    def test_negative_priority_is_rejected(self) -> None:
+    @staticmethod
+    def test_negative_priority_is_rejected() -> None:
         """Test negative priority is rejected."""
 
         class CreateCommand:
@@ -98,7 +101,8 @@ class TestsFlextHandlerDecoratorMetadata:
         with pytest.raises(c.ValidationError):
             define_invalid_service()
 
-    def test_defaults_apply_when_only_command_given(self) -> None:
+    @staticmethod
+    def test_defaults_apply_when_only_command_given() -> None:
         """Test defaults apply when only command given."""
 
         class CreateCommand:
@@ -114,7 +118,8 @@ class TestsFlextHandlerDecoratorMetadata:
         declared = m.DecoratorConfig(command=CreateCommand)
         tm.that(config.model_dump(), eq=declared.model_dump())
 
-    def test_middleware_sequence_is_recorded(self) -> None:
+    @staticmethod
+    def test_middleware_sequence_is_recorded() -> None:
         """Test middleware sequence is recorded."""
 
         class CreateCommand:
@@ -131,15 +136,16 @@ class TestsFlextHandlerDecoratorMetadata:
         _, config = h.Discovery.scan_class(Service)[0]
         tm.that(config.model_dump()["middleware"], eq=middleware_types)
 
-    def test_middleware_is_captured_by_value_not_reference(self) -> None:
+    @staticmethod
+    def test_middleware_is_captured_by_value_not_reference() -> None:
         """Test middleware is captured by value not reference."""
 
         class CreateCommand:
             pass
 
         class PassthroughMiddleware:
+            @staticmethod
             def process[TResult](
-                self,
                 command: p.Model,
                 next_handler: Callable[[p.Model], p.Result[TResult]],
             ) -> p.Result[TResult]:
@@ -176,7 +182,8 @@ class TestsFlextHandlerDecoratorMetadata:
         decorated = h.handler(command=CreateCommand)(original_handler)
         tm.that(decorated is original_handler, eq=True)
 
-    def test_innermost_decorator_wins_when_stacked(self) -> None:
+    @staticmethod
+    def test_innermost_decorator_wins_when_stacked() -> None:
         """Test innermost decorator wins when stacked."""
 
         class CreateCommand:

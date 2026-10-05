@@ -201,7 +201,8 @@ class FlextLazy(FlextLazyPart01):
             module_globals[name] = value
         return value
 
-    def cleanup(self, module_name: str, lazy_imports: LazyImportMap) -> None:
+    @staticmethod
+    def cleanup(module_name: str, lazy_imports: LazyImportMap) -> None:
         """Remove eager child module attrs."""
         current = sys.modules.get(module_name)
         if current is None:

@@ -136,7 +136,8 @@ def _capture_import_warnings(
 class TestsFlextEnforcementIntegration:
     """Import-time enforcement hook behaviour on clean and violating modules."""
 
-    def test_clean_module_import_emits_no_violation_warning(self) -> None:
+    @staticmethod
+    def test_clean_module_import_emits_no_violation_warning() -> None:
         # Arrange / Act: importing a fully rule-compliant module.
         """Test clean module import emits no violation warning."""
         messages = _capture_import_warnings(_CLEAN_MODULE)
@@ -167,8 +168,8 @@ class TestsFlextEnforcementIntegration:
         assert messages, "Importing the violating module emitted no warnings"
         return messages
 
-    def test_every_emitted_warning_is_the_public_category(
-        self,
+    @staticmethod
+    def _every_emitted_warning_is_the_public_category(
         violation_messages: t.StrSequence,
     ) -> None:
         # The public FlextMroViolation export is a genuine Warning subclass and
@@ -233,8 +234,8 @@ class TestsFlextEnforcementIntegration:
             f"No violation warning named {class_name!r}"
         )
 
+    @staticmethod
     def test_classvar_constant_detector_reports_every_constant_in_one_pass(
-        self,
         tmp_path: Path,
     ) -> None:
         # Arrange: one class holding TWO constants outside _constants. The

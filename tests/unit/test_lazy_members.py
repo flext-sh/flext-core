@@ -121,7 +121,8 @@ class TestsFlextCoreLazyMembers:
                 _ = Deferred.VALUE
             assert isinstance(caught.value.__cause__, AttributeError)
 
-    def test_member_must_bind_to_its_own_name(self) -> None:
+    @staticmethod
+    def test_member_must_bind_to_its_own_name() -> None:
         """A descriptor assigned under another name is a generator defect."""
         with pytest.raises(TypeError, match="is bound to attribute"):
 

@@ -20,7 +20,7 @@ import sys
 import tomllib
 from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
-from typing import Iterator
+from collections.abc import Generator
 
 
 class MiseLockTransaction:
@@ -37,7 +37,7 @@ class MiseLockTransaction:
 
     @staticmethod
     @contextmanager
-    def _serialized(project: Path) -> Iterator[None]:
+    def _serialized(project: Path) -> Generator[None]:
         """Serialize all publisher versions on one declared physical mutex."""
         mutex = project / ".mise-lock-transaction.lock"
         if mutex.is_symlink():

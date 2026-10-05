@@ -186,7 +186,8 @@ class TestsFlextCoreMigrationValidation:
 
     # -------------------------------------------------------------- service
 
-    def test_service_execute_returns_success(self) -> None:
+    @staticmethod
+    def test_service_execute_returns_success() -> None:
         """A concrete FlextService.execute honors the r[bool] void contract."""
 
         class NoopService(FlextService[bool]):
@@ -198,7 +199,8 @@ class TestsFlextCoreMigrationValidation:
         tm.that(outcome.success, eq=True)
         tm.that(outcome.error, none=True)
 
-    def test_service_method_returns_failure_on_invalid_input(self) -> None:
+    @staticmethod
+    def test_service_method_returns_failure_on_invalid_input() -> None:
         """Domain validation surfaces as an r failure, not a raised error."""
 
         class UserService(FlextService[bool]):

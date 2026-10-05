@@ -21,11 +21,12 @@ from flext_tests import tm
 
 from tests.protocols import p
 from tests.typings import t
-from tests.unit._beartype_engine_support import TestsFlextBeartypeEngine
-from tests.utilities import u
+from tests.utilities import TestsFlextUtilities, u
 
 
-class TestsFlextBeartypeEngineNamespaceHooks(TestsFlextBeartypeEngine):
+class TestsFlextBeartypeEngineNamespaceHooks(
+    TestsFlextUtilities.TestsFlextBeartypeEngine,
+):
     """DEPRECATED_SYNTAX predicate behavior via the public ``apply`` contract."""
 
     _REPO_ROOT: Path = Path(__file__).resolve().parents[2]

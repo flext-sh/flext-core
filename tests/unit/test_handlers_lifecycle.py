@@ -14,14 +14,13 @@ from flext_tests import h, r
 from tests.constants import c
 from tests.models import m
 from tests.typings import t
-from tests.unit._handlers_support import TestsFlextFlextHandlers
-from tests.utilities import u
+from tests.utilities import TestsFlextUtilities, u
 
 if TYPE_CHECKING:
     from tests.protocols import p
 
 
-class TestsFlextHandlersLifecycle(TestsFlextFlextHandlers):
+class TestsFlextHandlersLifecycle(TestsFlextUtilities.TestsFlextFlextHandlers):
     """Assert the public contract callers depend on, never internals."""
 
     def test_default_config_exposes_command_mode_and_given_name(self) -> None:
@@ -45,12 +44,12 @@ class TestsFlextHandlersLifecycle(TestsFlextFlextHandlers):
 
     @pytest.mark.parametrize(
         "scenario",
-        TestsFlextFlextHandlers.HANDLER_TYPES,
+        TestsFlextUtilities.TestsFlextFlextHandlers.HANDLER_TYPES,
         ids=lambda s: s.name,
     )
     def test_mode_reflects_configured_handler_mode(
         self,
-        scenario: TestsFlextFlextHandlers.HandlerTypeScenario,
+        scenario: TestsFlextUtilities.TestsFlextFlextHandlers.HandlerTypeScenario,
     ) -> None:
         """Test mode reflects configured handler mode."""
         settings = u.Tests.create_handler_config(
@@ -130,8 +129,11 @@ class TestsFlextHandlersLifecycle(TestsFlextFlextHandlers):
 
     @pytest.mark.parametrize(
         ("label", "message"),
-        TestsFlextFlextHandlers.VALIDATION_TYPES,
-        ids=[label for label, _ in TestsFlextFlextHandlers.VALIDATION_TYPES],
+        TestsFlextUtilities.TestsFlextFlextHandlers.VALIDATION_TYPES,
+        ids=[
+            label
+            for label, _ in TestsFlextUtilities.TestsFlextFlextHandlers.VALIDATION_TYPES
+        ],
     )
     def test_validation_accepts_every_non_null_payload_shape(
         self,
@@ -201,6 +203,6 @@ class TestsFlextHandlersLifecycle(TestsFlextFlextHandlers):
         self,
         handler_id: str,
         handler_name: str,
-    ) -> TestsFlextFlextHandlers.ConcreteTestHandler:
+    ) -> TestsFlextUtilities.TestsFlextFlextHandlers.ConcreteTestHandler:
         settings = u.Tests.create_handler_config(handler_id, handler_name)
         return self.ConcreteTestHandler(settings=settings)

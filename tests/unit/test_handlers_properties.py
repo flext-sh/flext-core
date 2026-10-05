@@ -16,9 +16,9 @@ import pytest
 from flext_tests import h, r, tm
 from hypothesis import given, strategies as st
 
+import tests.utilities
 from tests.constants import c
 from tests.typings import t
-from tests.unit._handlers_support import TestsFlextFlextHandlers
 
 _TOKENS: st.SearchStrategy[str] = st.text(
     alphabet=st.characters(min_codepoint=33, max_codepoint=126),
@@ -26,7 +26,9 @@ _TOKENS: st.SearchStrategy[str] = st.text(
 )
 
 
-class TestsFlextCoreHandlersProperties(TestsFlextFlextHandlers):
+class TestsFlextCoreHandlersProperties(
+    tests.utilities.TestsFlextUtilities.TestsFlextFlextHandlers,
+):
     """Public-contract behavior of the callable handler factory."""
 
     @given(_TOKENS)

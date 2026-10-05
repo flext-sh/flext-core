@@ -21,7 +21,8 @@ from flext_core._utilities.handler import FlextUtilitiesHandler
 class FlextHandlers[MessageT_contra, ResultT](
     FlextHandlersPart03[MessageT_contra, ResultT],
 ):
-    def handle(self, message: MessageT_contra) -> p.Result[ResultT]:
+    @staticmethod
+    def handle(message: MessageT_contra) -> p.Result[ResultT]:
         """Handle the message - abstract method to be implemented by subclasses.
 
         This is the core business logic method that must be implemented by all
@@ -84,7 +85,8 @@ class FlextHandlers[MessageT_contra, ResultT](
             value,
         )
 
-    def validate_message(self, data: MessageT_contra) -> p.Result[bool]:
+    @staticmethod
+    def validate_message(data: MessageT_contra) -> p.Result[bool]:
         """Validate input data using extensible validation pipeline.
 
         Base validation method that can be overridden by subclasses to implement

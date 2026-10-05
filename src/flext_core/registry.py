@@ -158,7 +158,8 @@ class FlextRegistry(s[bool]):
             return normalized_callable
         return FlextRegistry._narrow_value(value)
 
-    def _get_handler_mode(self, value: t.JsonPayload) -> c.HandlerType:
+    @staticmethod
+    def _get_handler_mode(value: t.JsonPayload) -> c.HandlerType:
         """Safe conversion to HandlerType (falls back to COMMAND).
 
         Returns:
@@ -173,7 +174,8 @@ class FlextRegistry(s[bool]):
         except ValueError:
             return c.HandlerType.COMMAND
 
-    def _get_status(self, value: t.JsonPayload) -> c.Status:
+    @staticmethod
+    def _get_status(value: t.JsonPayload) -> c.Status:
         """Safe conversion to CommonStatus (falls back to ACTIVE).
 
         Returns:
@@ -279,8 +281,8 @@ class FlextRegistry(s[bool]):
         self._remember_registered_key(key)
         summary.registered.append(registration)
 
+    @staticmethod
     def _finalize_summary(
-        self,
         summary: m.RegistrySummary,
     ) -> p.Result[m.RegistrySummary]:
         """Finalize summary based on error state.

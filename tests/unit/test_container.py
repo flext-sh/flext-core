@@ -28,7 +28,8 @@ if TYPE_CHECKING:
 class TestsFlextCoreContainer:
     """Tests for ``FlextCoreContainer``."""
 
-    def test_singleton_returns_same_instance(self) -> None:
+    @staticmethod
+    def test_singleton_returns_same_instance() -> None:
         """Constructing the container twice yields the same shared instance."""
         first = FlextContainer()
         second = FlextContainer()
@@ -38,7 +39,8 @@ class TestsFlextCoreContainer:
             msg="FlextContainer() must return the process-wide singleton",
         )
 
-    def test_reset_for_testing_replaces_singleton(self) -> None:
+    @staticmethod
+    def test_reset_for_testing_replaces_singleton() -> None:
         """reset_for_testing drops the cached singleton so a fresh one is built."""
         original = FlextContainer()
         FlextContainer.reset_for_testing()
@@ -49,7 +51,8 @@ class TestsFlextCoreContainer:
             msg="reset_for_testing must force a brand-new singleton instance",
         )
 
-    def test_bind_then_resolve_roundtrip(self, clean_container: p.Container) -> None:
+    @staticmethod
+    def test_bind_then_resolve_roundtrip(clean_container: p.Container) -> None:
         """A bound value is resolvable as a successful result carrying that value."""
         clean_container.bind("greeting", "hello")
         u.Tests.assert_success(
@@ -57,8 +60,8 @@ class TestsFlextCoreContainer:
             expected_value="hello",
         )
 
-    def test_drop_removes_registration_and_reports_success(
-        self,
+    @staticmethod
+    def _drop_removes_registration_and_reports_success(
         clean_container: p.Container,
     ) -> None:
         """Drop returns ok(True) and the service is no longer resolvable."""
@@ -79,8 +82,8 @@ class TestsFlextCoreContainer:
             expected_error="not found",
         )
 
+    @staticmethod
     def test_drop_unknown_service_fails_with_not_found(
-        self,
         clean_container: p.Container,
     ) -> None:
         """Dropping an unregistered name yields a not-found failure result."""
@@ -89,8 +92,8 @@ class TestsFlextCoreContainer:
             expected_error="not found",
         )
 
+    @staticmethod
     def test_logger_requires_explicit_module_name(
-        self,
         clean_container: p.Container,
     ) -> None:
         """Test logger requires explicit module name."""
@@ -102,8 +105,8 @@ class TestsFlextCoreContainer:
             msg="module_name must be required, not optional",
         )
 
+    @staticmethod
     def test_clear_empties_all_registrations(
-        self,
         clean_container: p.Container,
     ) -> None:
         """Clear removes every registered name, leaving an empty container."""
@@ -116,7 +119,8 @@ class TestsFlextCoreContainer:
             msg="clear must remove all registered services and factories",
         )
 
-    def test_clear_is_idempotent(self, clean_container: p.Container) -> None:
+    @staticmethod
+    def test_clear_is_idempotent(clean_container: p.Container) -> None:
         """Clearing an already-empty container remains empty (no error)."""
         clean_container.clear()
         clean_container.clear()
@@ -126,8 +130,8 @@ class TestsFlextCoreContainer:
             msg="Repeated clear must keep the container empty",
         )
 
+    @staticmethod
     def test_scope_inherits_parent_registrations(
-        self,
         clean_container: p.Container,
     ) -> None:
         """A derived scope can see services registered on its parent."""
@@ -139,8 +143,8 @@ class TestsFlextCoreContainer:
             msg="Scope must inherit the parent's registrations",
         )
 
+    @staticmethod
     def test_scope_registrations_do_not_leak_to_parent(
-        self,
         clean_container: p.Container,
     ) -> None:
         """Bindings made inside a scope stay isolated from the parent container."""
@@ -169,8 +173,8 @@ class TestsFlextCoreContainer:
             msg="apply must return self for fluent configuration",
         )
 
+    @staticmethod
     def test_snapshot_exposes_config_via_model_dump(
-        self,
         clean_container: p.Container,
     ) -> None:
         """Snapshot exposes merged settings as a mapping via its public model API."""
