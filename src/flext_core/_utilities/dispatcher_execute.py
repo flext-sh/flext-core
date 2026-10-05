@@ -103,10 +103,12 @@ class FlextUtilitiesDispatcherExecute:
         try:
             raw_candidate = resolved_handler(message)
             raw_output = FlextUtilitiesDispatcherExecute._normalize_dispatcher_output(
-                raw_candidate, dispatch_result,
+                raw_candidate,
+                dispatch_result,
             )
             return FlextUtilitiesDispatcherExecute._adapt_dispatcher_output(
-                raw_output, dispatch_result,
+                raw_output,
+                dispatch_result,
             )
         except (
             TypeError,
