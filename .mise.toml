@@ -22,34 +22,32 @@ lockfile_platforms = ["linux-x64", "linux-x64-musl", "linux-arm64", "macos-x64",
 [settings.python]
 compile = false
 [settings.npm]
-# Aube replays the locked dependency graph. Only the configured ast-grep
-# package is approved below to run its native binary-selection lifecycle.
-package_manager = "aube"
+# bun installs the npm CLIs with the --trust lifecycle approval the inline
+# tool below declares; the lock keeps the top-level pin only.
+package_manager = "bun"
 [tool_config]
 locked = true
 # End SECTION: settings
 
 # === SECTION: tools (managed) ===
-# Source: config:python_version, config:codegen.scaffold.project.dev native toolchain floors
-#         (kubectl_version, helm_version, kind_version, taplo_version, ast_grep_selector/ast_grep_version,
-#          gitleaks_version, scc_selector/scc_version, kubeconform_version, qlty_selector/qlty_version,
-#          node_version, jscpd_selector/jscpd_version,
-#          prettier_selector/prettier_version, waza_selector/waza_version/waza_version_prefix,
-#          go_version, make_version)
+# Source: config:python_version + config:codegen.toolchain.tools entries
+#         (name, selector, version, version_prefix, form; entry order is the
+#         projection order, form fixes the rendered shape)
 [tools]
 python = "3.13"
+# Native toolchain (single source: Infra.codegen.toolchain.tools in codegen.yaml).
 uv = "latest"
-# Native toolchain (single source: Infra.codegen.toolchain in codegen.yaml).
 kubectl = "latest"
 helm = "latest"
 kind = "latest"
 direnv = "latest"
 taplo = "latest"
-"npm:@ast-grep/cli" = { version = "latest", allow_builds = ["@ast-grep/cli"] }
+"npm:@ast-grep/cli" = { version = "latest", bun_args = "--trust" }
 gitleaks = "latest"
 "aqua:boyter/scc" = "latest"
 kubeconform = "latest"
 node = "latest"
+bun = "latest"
 "npm:prettier" = "3.9.9"
 go = "latest"
 make = "latest"

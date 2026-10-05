@@ -43,6 +43,10 @@ from flext_core._utilities.text import FlextUtilitiesText
 from flext_core.runtime import FlextRuntime
 
 
+from flext_core._utilities._logging_context_parts.logging_context_part_01 import (
+    FlextUtilitiesLoggingContext,
+)
+
 class FlextUtilities(
     FlextUtilitiesLogging,
     FlextRuntime,
@@ -73,6 +77,7 @@ class FlextUtilities(
     FlextUtilitiesRuntimeViolationRegistry,
     FlextUtilitiesText,
     FlextModelsNamespace,
+    FlextUtilitiesLoggingContext,
 ):
     """Unified facade for all FLEXT utility functionality.
 

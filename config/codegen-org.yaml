@@ -3,7 +3,10 @@ Infra:
     toolchain:
       # Consumer pins (config-as-data): `latest` re-resolves upstream and
       # drifts from mise.lock between upg runs — `mise install --locked` then
-      # fails on CI. These are exactly the versions mise.lock resolves.
-      qlty_version: "0.645.0"
-      jscpd_version: "5.3.2"
-      prettier_version: "3.9.9"
+      # fails on CI. These are exactly the versions mise.lock resolves;
+      # `make upg` advances them deliberately. The pins dict deep-merges per
+      # tool name over the tools table.
+      tool_version_pins:
+        qlty: "0.645.0"
+        jscpd: "5.3.2"
+        prettier: "3.9.9"
