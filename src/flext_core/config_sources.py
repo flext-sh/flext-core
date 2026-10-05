@@ -108,6 +108,19 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
             data = self._transform(data)
         return data
 
+    @staticmethod
+    def unique_key_load(stream: str) -> JsonValue:
+        """Parse safe YAML while rejecting duplicate mapping keys.
+
+        Returns:
+            The parsed JSON-compatible value.
+        """
+        loader = _UniqueKeySafeLoader(stream)
+        try:
+            return cast("JsonValue", loader.get_single_data())
+        finally:
+            loader.dispose()
+
     @override
     def _read_file(self, file_path: Path | Traversable) -> dict[str, JsonValue]:
         """Parse one YAML config file exactly once with strict mapping keys.
@@ -119,11 +132,7 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
             TypeError: If config YAML root must be a mapping.
         """
         with file_path.open(encoding=self.yaml_file_encoding) as yaml_file:
-            loader = _UniqueKeySafeLoader(yaml_file)
-            try:
-                loaded = cast("JsonValue", loader.get_single_data())
-            finally:
-                loader.dispose()
+            loaded = self.unique_key_load(yaml_file.read())
         if loaded is None:
             return {}
         if not isinstance(loaded, dict):
