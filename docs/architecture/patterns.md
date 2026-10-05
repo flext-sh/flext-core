@@ -22,18 +22,35 @@ from flext_core import p, r
 
 
 def validate_name(name: str) -> p.Result[str]:
+    """Reject empty names with a failure result.
+
+    Returns:
+        The resulting ``p.Result[str]``.
+
+    """
     if not name:
         return r[str].fail("name_required")
     return r[str].ok(name)
 
 
 def to_slug(name: str) -> p.Result[str]:
+    """Convert a name into its slug form.
+
+    Returns:
+        The resulting ``p.Result[str]``.
+
+    """
     return r[str].ok(name.strip().lower().replace(" ", "-"))
 
 
 slug = r[str].ok("Alice Doe").flat_map(validate_name).flat_map(to_slug)
-assert slug.success
-assert slug.value == "alice-doe"
+expected_slug = "alice-doe"
+if not slug.success:
+    message = "Expected slug pipeline success"
+    raise RuntimeError(message)
+if slug.value != expected_slug:
+    message = "Unexpected slug value"
+    raise RuntimeError(message)
 ```
 
 ## Container Pattern
@@ -45,8 +62,13 @@ container = FlextContainer()
 _ = container.bind("feature_flag", "enabled")
 
 flag = container.resolve("feature_flag")
-assert flag.success
-assert flag.value == "enabled"
+expected_flag = "enabled"
+if not flag.success:
+    message = "Expected bound value resolution success"
+    raise RuntimeError(message)
+if flag.value != expected_flag:
+    message = "Unexpected resolved flag value"
+    raise RuntimeError(message)
 ```
 
 ## Dispatcher Pattern (examples-backed)
@@ -55,6 +77,11 @@ assert flag.value == "enabled"
 from examples.ex_04_flext_dispatcher import Ex04DispatchDsl
 
 result = Ex04DispatchDsl.run()
-assert result.success
-assert result.value == "pong:dispatcher-example"
+expected_value = "pong:dispatcher-example"
+if not result.success:
+    message = "Expected dispatcher success"
+    raise RuntimeError(message)
+if result.value != expected_value:
+    message = "Unexpected dispatcher value"
+    raise RuntimeError(message)
 ```

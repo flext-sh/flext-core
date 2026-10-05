@@ -24,7 +24,6 @@ from flext_core._utilities.generators import FlextUtilitiesGenerators as ug
 from flext_core._utilities.guards_type_core import (
     FlextUtilitiesGuardsTypeCore as ug_type,
 )
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
 
 
 class FlextModelsContainer:
@@ -78,7 +77,7 @@ class FlextModelsContainer:
             """Type name of the registered service, derived from the service."""
             return ug_type.type_name(self.service)
 
-        @up.field_validator("service", mode="before")
+        @mp.field_validator("service", mode="before")
         @classmethod
         def validate_service(
             cls,

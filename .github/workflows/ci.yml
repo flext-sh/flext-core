@@ -199,10 +199,8 @@ jobs:
       - name: check (blocking)
         # Why: explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
         run: CI=Y make check
-        # Fast partition only, derived from the gate registry kind:
-        # lint security markdown duplication loc-cap runtime-census fresh-import index-declarations codemod layout direnv.
-        # Type checkers and flext-infra validators block locally and at
-        # pre-push (CI=N runs pyrefly mypy pyright).
+        # The CI partition, the complement of make.ci.local_check_gates:
+        # lint security markdown markdown-format markdown-code duplication pyrefly mypy pyright loc-cap runtime-census fresh-import index-declarations codemod layout direnv.
 
       - name: test (blocking)
         # Why: explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).

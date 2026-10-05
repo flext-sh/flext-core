@@ -59,14 +59,29 @@ from flext_core import p, r
 
 
 def safe_divide(a: float, b: float) -> p.Result[float]:
+    """Divide two floats, rejecting a zero divisor.
+
+    Returns:
+        The resulting ``p.Result[float]``.
+
+    """
     if b == 0:
         return r[float].fail("division_by_zero")
     return r[float].ok(a / b)
 
 
-assert safe_divide(10, 2).success
-assert isclose(safe_divide(10, 2).value, 5.0)
-assert safe_divide(10, 0).failure
+quotient_result = safe_divide(10, 2)
+zero_result = safe_divide(10, 0)
+expected_quotient = 5.0
+if not quotient_result.success:
+    message = "Expected division success"
+    raise RuntimeError(message)
+if not isclose(quotient_result.value, expected_quotient):
+    message = "Unexpected division quotient"
+    raise RuntimeError(message)
+if not zero_result.failure:
+    message = "Expected zero divisor failure"
+    raise RuntimeError(message)
 ```
 
 ## Settings
@@ -75,7 +90,10 @@ assert safe_divide(10, 0).failure
 from flext_core import FlextSettings
 
 settings = FlextSettings.fetch_global()
-assert isinstance(settings.model_dump(), dict)
+snapshot = settings.model_dump()
+if not isinstance(snapshot, dict):
+    message = "Expected dict settings snapshot"
+    raise TypeError(message)
 ```
 
 Subprojects extend `FlextSettings` with their own `env_prefix`:
@@ -85,6 +103,8 @@ from flext_core import FlextSettings, m
 
 
 class GreetingSettings(FlextSettings):
+    """Settings for the greeting demo with its own env prefix."""
+
     model_config = m.SettingsConfigDict(env_prefix="GREETING_", extra="forbid")
 ```
 
@@ -97,8 +117,13 @@ container = FlextContainer()
 container.bind("service", "ready")
 resolved: p.Result[str] = container.resolve("service", type_cls=str)
 
-assert resolved.success
-assert resolved.value == "ready"
+expected_service = "ready"
+if not resolved.success:
+    message = "Expected typed resolution success"
+    raise RuntimeError(message)
+if resolved.value != expected_service:
+    message = "Unexpected resolved service value"
+    raise RuntimeError(message)
 ```
 
 ## Logging
@@ -119,6 +144,8 @@ from flext_core import p, r, s
 
 
 class GreetingService(s[str]):
+    """Service greeting through its execute entry point."""
+
     @override
     def execute(self) -> p.Result[str]:
         return r[str].ok("Hello!")
@@ -126,8 +153,13 @@ class GreetingService(s[str]):
 
 runtime = GreetingService.fetch_global()
 result = runtime.execute()
-assert result.success
-assert result.value == "Hello!"
+expected_greeting = "Hello!"
+if not result.success:
+    message = "Expected service execution success"
+    raise RuntimeError(message)
+if result.value != expected_greeting:
+    message = "Unexpected service greeting"
+    raise RuntimeError(message)
 ```
 
 ## Good practices

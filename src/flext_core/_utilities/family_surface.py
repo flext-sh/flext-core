@@ -23,13 +23,39 @@ class FlextUtilitiesFamilySurface:
     """Derive the published FLEXT family surface at runtime.
 
     Membership grammar (declared, never enumerated): a distribution whose
-    normalized name starts with ``c.NAMESPACE_FAMILY_PREFIX`` is a family
-    member when its root package publishes the lazy export contract
-    (``__all__`` plus ``_LAZY_IMPORTS``). The prefix only narrows discovery;
-    the published contract is the structural proof, so every current and
-    future member is covered with zero per-member registration. The first
-    import failure escapes — broken installs are defects, never skips.
+    normalized name starts with ``c.NAMESPACE_FAMILY_PREFIX`` — or that
+    declares a requirement on one — is a family member when its root package
+    publishes the lazy export contract (``__all__`` plus ``_LAZY_IMPORTS``).
+    The prefix and the requirement edge only narrow discovery; the published
+    contract is the structural proof, so every current and future member is
+    covered with zero per-member registration. A consumer facade that
+    publishes the contract (a Pattern-A project composing the family through
+    facade classes) is discovered by its dependency edge, so its facade
+    classes count as family facades and subclassing a family facade there is
+    the sanctioned shape. The first import failure escapes — broken installs
+    are defects, never skips.
     """
+
+    @staticmethod
+    def distribution_in_family_discovery(
+        distribution_name: str,
+        requirement_names: t.StrSequence,
+    ) -> bool:
+        """Return True when a distribution is a family discovery candidate.
+
+        A candidate either carries the family prefix in its own normalized
+        name or declares a requirement on one; discovery is membership's
+        narrow gate, and the published lazy export contract remains the
+        structural proof a candidate must still pass.
+
+        Returns:
+            True when the distribution name or one requirement carries the
+            family prefix.
+        """
+        return distribution_name.startswith(c.NAMESPACE_FAMILY_PREFIX) or any(
+            requirement.startswith(c.NAMESPACE_FAMILY_PREFIX)
+            for requirement in requirement_names
+        )
 
     @staticmethod
     @functools.lru_cache(maxsize=1)
@@ -45,7 +71,7 @@ class FlextUtilitiesFamilySurface:
 
         Raises:
             RuntimeError: If family-surface derivation found no distribution publishing
-                the lazy export contract under prefix.
+                the lazy export contract (family prefix or dependency edge).
 
         """
         snapshot: list[
@@ -54,7 +80,10 @@ class FlextUtilitiesFamilySurface:
         for dist in FlextUtilitiesProjectMetadata.installed_distributions():
             raw_name = dist.metadata["Name"] or ""
             name = raw_name.lower().replace("-", "_")
-            if not name.startswith(c.NAMESPACE_FAMILY_PREFIX):
+            if not FlextUtilitiesFamilySurface.distribution_in_family_discovery(
+                name,
+                FlextUtilitiesProjectMetadata.distribution_requirement_names(dist),
+            ):
                 continue
             module = importlib.import_module(name)
             published = getattr(module, "__all__", None)
@@ -71,7 +100,7 @@ class FlextUtilitiesFamilySurface:
             msg = (
                 "family-surface derivation found no distribution publishing "
                 "the lazy export contract under prefix "
-                f"{c.NAMESPACE_FAMILY_PREFIX!r}"
+                f"{c.NAMESPACE_FAMILY_PREFIX!r} or a requirement edge to it"
             )
             raise RuntimeError(msg)
         return tuple(snapshot)

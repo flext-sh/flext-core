@@ -54,6 +54,15 @@ class FlextUtilitiesPydantic:
     # staticmethod also satisfies the Utilities layer method-shape census
     # (public surface must be stateless static/class callables).
     computed_field = staticmethod(computed_field)
+    # Validators have ONE typed owner: ``m.field_validator`` /
+    # ``m.model_validator`` (FlextModelsPydantic) carry pydantic's full
+    # overload surface for both checkers, and the ENFORCE map routes every
+    # consumer to those spellings. This utilities route keeps only the
+    # runtime re-export below because published family facades (flext-cli,
+    # flext-tests) inherit FlextUtilities and import-time-resolve
+    # ``u.field_validator`` / ``u.model_validator``; duplicating the typed
+    # overload stack here is rejected by the duplication gate, so new code
+    # must spell validators through ``m.*``.
     field_validator = staticmethod(field_validator)
     field_serializer = staticmethod(field_serializer)
     model_validator = staticmethod(model_validator)
@@ -75,5 +84,9 @@ class FlextUtilitiesPydantic:
 
     # Adapter construction keeps pydantic's own constructor signature, which
     # accepts every type form (classes, unions, ``Annotated`` and PEP 695
-    # aliases); ``m.TypeAdapter[T]`` is the matching annotation.
-    type_adapter = PydanticTypeAdapter
+    # aliases). ``m.TypeAdapter[T]`` is the annotation. ``TypeAdapter`` is the
+    # public constructor on this facade, the same class pydantic exports.
+    # ``type_adapter`` is that constructor under the function-shaped name
+    # already used by migrated callers.
+    TypeAdapter = PydanticTypeAdapter
+    type_adapter = TypeAdapter

@@ -20,9 +20,12 @@ class FlextConstantsBase:
     # Published for the module-scope consolidation consumers (fleet-wide,
     # 2026-10-03): the regenerated cli/context surfaces reference this tuple
     # through the constants namespace for isinstance and type-annotation use.
-    PRIMITIVES_TYPES: ClassVar[
-        tuple[type[str], type[int], type[float], type[bool]]
-    ] = (str, int, float, bool)
+    PRIMITIVES_TYPES: ClassVar[tuple[type[str], type[int], type[float], type[bool]]] = (
+        str,
+        int,
+        float,
+        bool,
+    )
 
     # Runtime type-guard tuples: every consumer reaches them through the
     # constants namespace (``c.*``); the typings family never redeclares them.

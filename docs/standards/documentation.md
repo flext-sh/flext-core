@@ -20,7 +20,10 @@
 from flext_core import FlextSettings
 
 settings = FlextSettings.fetch_global()
-assert isinstance(settings.model_dump(), dict)
+snapshot = settings.model_dump()
+if not isinstance(snapshot, dict):
+    message = "Expected dict settings snapshot"
+    raise TypeError(message)
 ```
 
 ## Examples-backed Reference

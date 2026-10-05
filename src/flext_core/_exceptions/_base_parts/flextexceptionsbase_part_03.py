@@ -1,25 +1,29 @@
-"""Exception base facade implementation."""
+"""Exception base facade implementation.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import c
-
-from ..._runtime._metadata_validation import (
+from flext_core._exceptions._base_parts.flextexceptionsbase_part_02 import (
+    FlextBaseErrorStateMixin,
+)
+from flext_core._exceptions.helpers import FlextExceptionsHelpers
+from flext_core._runtime._metadata_validation import (
     FlextRuntimeMetadataValidation as FlextRuntime,
 )
-from ..._typings.base import FlextTypingBase as tb
-from ..helpers import FlextExceptionsHelpers
-from .flextexceptionsbase_part_02 import FlextBaseErrorStateMixin
+from flext_core._typings.base import FlextTypingBase as tb
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
 
     from flext_core import m
-
-    from ..._protocols.result import FlextProtocolsResult as pr
-    from ..._typings.services import FlextTypesServices as ts
+    from flext_core._protocols.result import FlextProtocolsResult as pr
+    from flext_core._typings.services import FlextTypesServices as ts
 
 
 class FlextExceptionsBase:
@@ -61,7 +65,7 @@ class FlextExceptionsBase:
                 combined_extra: MutableMapping[str, ts.JsonPayload | None] = {}
                 try:
                     merged_kwargs_map = FlextRuntime.normalize_metadata_input_mapping(
-                        merged_kwargs
+                        merged_kwargs,
                     )
                 except c.EXC_PYDANTIC_TYPE_VALUE:
                     merged_kwargs_map = None
@@ -93,13 +97,16 @@ class FlextExceptionsBase:
                     else None
                 )
                 correlation_id_raw = remaining_extra.pop(
-                    c.ContextKey.CORRELATION_ID, None
+                    c.ContextKey.CORRELATION_ID,
+                    None,
                 )
                 correlation_id_str = FlextExceptionsHelpers.safe_optional_str(
-                    correlation_id_raw
+                    correlation_id_raw,
                 )
                 param_values = FlextExceptionsHelpers.build_param_map(
-                    context, remaining_extra, keys=declared_param_keys
+                    context,
+                    remaining_extra,
+                    keys=declared_param_keys,
                 )
                 for key, value in resolved_named.items():
                     if value is None:
