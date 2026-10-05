@@ -23,6 +23,7 @@ from flext_tests import x
 from flext_core import FlextContext
 from tests.constants import c
 from tests.protocols import p
+import flext_core._models.flext_context
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -159,6 +160,6 @@ class TestsFlextMixins:
     @staticmethod
     def test_correlation_id_round_trips_through_flext_context() -> None:
         """Test correlation id round trips through flext context."""
-        FlextContext.apply_correlation_id("trace-42")
+        flext_core._models.flext_context.FlextContext.apply_correlation_id("trace-42")
 
-        assert FlextContext.resolve_correlation_id() == "trace-42"
+        assert flext_core._models.flext_context.FlextContext.resolve_correlation_id() == "trace-42"

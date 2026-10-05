@@ -21,6 +21,8 @@ from pydantic_settings.sources import PathType
 from yaml import MappingNode, SafeLoader
 from yaml.constructor import ConstructorError
 from yaml.resolver import BaseResolver
+from collections.abc import Sequence as _Sequence
+from pathlib import Path as _Path
 
 
 class _UniqueKeySafeLoader(SafeLoader):
@@ -157,8 +159,6 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
         Returns:
             The resulting ``dict[str, JsonValue]``.
         """
-        from collections.abc import Sequence as _Sequence
-        from pathlib import Path as _Path
 
         if files is None:
             return {}

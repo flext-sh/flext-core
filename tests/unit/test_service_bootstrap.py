@@ -23,6 +23,7 @@ from tests.models import m
 from tests.protocols import p
 from tests.typings import t
 from tests.utilities import u
+import flext_core._models.flext_context
 
 
 class TestsFlextCoreServiceBootstrap:
@@ -98,7 +99,7 @@ class TestsFlextCoreServiceBootstrap:
 
     def test_context_seed_becomes_the_runtime_context(self) -> None:
         """An initial context seeded on the instance is the runtime context."""
-        context = FlextContext.create()
+        context = flext_core._models.flext_context.FlextContext.create()
 
         service = self.ConcreteTestService(initial_context=context)
 

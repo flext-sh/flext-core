@@ -25,7 +25,6 @@ from flext_core._constants.settings import FlextConstantsSettings
 from flext_core._constants.status import FlextConstantsStatus
 from flext_core._constants.timeout import FlextConstantsTimeout
 from flext_core._constants.validation import FlextConstantsValidation
-from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextConstants(
@@ -55,4 +54,4 @@ class FlextConstants(
 # mro-j47u: publish the canonical constants alias with no stray runtime surface.
 c = FlextConstants
 
-__all__: t.VariadicTuple[str] = ("FlextConstants", "FlextConstantsEnforcement", "c")
+__all__ = ("FlextConstants", "FlextConstantsEnforcement", "c")

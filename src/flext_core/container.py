@@ -31,6 +31,7 @@ from flext_core import (
     t,
     u,
 )
+import flext_core._models.flext_context
 
 # NOTE (multi-agent): mro-i6nq.12 — the concrete public facade remains the
 # runtime implementation; p.ContainerType is only its structural contract.
@@ -55,7 +56,7 @@ class FlextContainer(p.Container):
 
     _settings_type: ClassVar[p.SettingsType] = FlextSettings
 
-    _context_type: ClassVar[p.ContextType] = FlextContext
+    _context_type: ClassVar[p.ContextType] = flext_core._models.flext_context.FlextContext
 
     _context: p.Context
 
