@@ -37,3 +37,9 @@ class TestsFlextCoreUtilitiesYaml:
         """Test unique key load rejects malformed input."""
         with pytest.raises(u.Yaml.YAMLError):
             u.Yaml.unique_key_load("top: [unclosed\n")
+
+    @staticmethod
+    def test_unique_key_load_rejects_python_object_tags() -> None:
+        """Reject constructors outside the safe YAML protocol."""
+        with pytest.raises(u.Yaml.YAMLError):
+            u.Yaml.unique_key_load("!!python/object/apply:builtins.str [value]\n")

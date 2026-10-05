@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, ClassVar, cast
 
 import yaml
 
-from flext_core import r
+from flext_core import StrictYamlConfigSource, r
 from flext_core._constants.config import FlextConstantsConfig as c
 from flext_core._typings.base import FlextTypingBase as t
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore as g
@@ -108,9 +108,7 @@ class FlextUtilitiesConfig:
             Returns:
                 The resulting ``t.JsonValue``.
             """
-            from flext_core._config import _UniqueKeySafeLoader
-
-            return cast("t.JsonValue", yaml.load(stream, Loader=_UniqueKeySafeLoader))
+            return StrictYamlConfigSource.unique_key_load(stream)
 
         @staticmethod
         def yaml_safe_load(path: Path) -> p.Result[t.JsonMapping]:
