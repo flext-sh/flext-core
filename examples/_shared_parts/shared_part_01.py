@@ -1,4 +1,8 @@
-"""Shared deterministic harness base for flext-core examples."""
+"""Shared deterministic harness base for flext-core examples.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -43,27 +47,52 @@ class ExamplesFlextSharedBase(m.BaseModel):
         raise NotImplementedError(msg)
 
     def rand_bool(self) -> bool:
-        """Return a deterministic pseudo-random boolean."""
+        """Return a deterministic pseudo-random boolean.
+
+        Returns:
+            A deterministic pseudo-random boolean.
+
+        """
         return self._next_unit_float() >= self._BOOL_THRESHOLD
 
     def rand_dict(self, n: int = 3) -> m.ConfigMap:
-        """Return a ConfigMap with ``n`` random string keys to int values."""
+        """Return a ConfigMap with ``n`` random string keys to int values.
+
+        Returns:
+            A ConfigMap with ``n`` random string keys to int values.
+
+        """
         return m.ConfigMap(
-            root={self.rand_str(4): self.rand_int(0, 100) for _ in range(n)}
+            root={self.rand_str(4): self.rand_int(0, 100) for _ in range(n)},
         )
 
     def rand_float(self, lo: float = -1000.0, hi: float = 1000.0) -> float:
-        """Return a deterministic pseudo-random float rounded to 4 decimals."""
+        """Return a deterministic pseudo-random float rounded to 4 decimals.
+
+        Returns:
+            A deterministic pseudo-random float rounded to 4 decimals.
+
+        """
         span = hi - lo
         return round(lo + (self._next_unit_float() * span), 4)
 
     def rand_int(self, lo: int = -1000, hi: int = 1000) -> int:
-        """Return a deterministic pseudo-random integer in ``[lo, hi]``."""
+        """Return a deterministic pseudo-random integer in ``[lo, hi]``.
+
+        Returns:
+            A deterministic pseudo-random integer in ``[lo, hi]``.
+
+        """
         span = (hi - lo) + 1
         return lo + int(self._next_unit_float() * span)
 
     def rand_str(self, length: int = 8) -> str:
-        """Return a deterministic pseudo-random lowercase ASCII string."""
+        """Return a deterministic pseudo-random lowercase ASCII string.
+
+        Returns:
+            A deterministic pseudo-random lowercase ASCII string.
+
+        """
         alphabet = string.ascii_lowercase
         return "".join(
             alphabet[int(self._next_unit_float() * len(alphabet)) % len(alphabet)]
@@ -76,8 +105,14 @@ class ExamplesFlextSharedBase(m.BaseModel):
             self._results.append("")
         self._results.append(f"[{name}]")
 
-    def ser(self, v: object | None) -> str:
-        """Deterministic, human-readable serialisation for golden-file output."""
+    @staticmethod
+    def ser(v: object | None) -> str:
+        """Deterministic, human-readable serialisation for golden-file output.
+
+        Returns:
+            The resulting ``str``.
+
+        """
         if v is None:
             return "None"
         if isinstance(v, r):

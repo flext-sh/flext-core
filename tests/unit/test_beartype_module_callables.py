@@ -5,6 +5,9 @@ module-level ``LocalProxy`` objects, and the runtime-census gate walked them.
 A ``LocalProxy`` forwards every attribute, ``__class__`` included, and raises
 outside an application context, so the gate died with the proxy's own error
 and produced no findings report at all.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -25,7 +28,12 @@ _PROBE_MODULE = "probe_module_with_proxy"
 
 
 def _defined_here() -> int:
-    """Stand for a real function the module under test owns."""
+    """Stand for a real function the module under test owns.
+
+    Returns:
+        The resulting ``int``.
+
+    """
     return 1
 
 
@@ -44,19 +52,36 @@ class TestsFlextCoreBeartypeModuleCallables:
         def __class__(
             self,
         ) -> type[TestsFlextCoreBeartypeModuleCallables._ForwardingProxy]:
-            """Forward the type question to an object that is not there."""
+            """Forward the type question to an object that is not there.
+
+            Raises:
+                RuntimeError: Always.
+
+            """
             raise RuntimeError(_OUTSIDE_CONTEXT)
 
         @__class__.setter
         def __class__(self, value: type[p.AttributeProbe]) -> None:
-            """Forward the assignment too, so the override stays read-write."""
+            """Forward the assignment too, so the override stays read-write.
+
+            Raises:
+                RuntimeError: Always.
+
+            """
             raise RuntimeError(_OUTSIDE_CONTEXT)
 
-        def __getattr__(self, name: str) -> Never:
-            """Forward every attribute to an object that is not there."""
+        @staticmethod
+        def __getattr__(name: str) -> Never:
+            """Forward every attribute to an object that is not there.
+
+            Raises:
+                RuntimeError: Always.
+
+            """
             raise RuntimeError(_OUTSIDE_CONTEXT)
 
-    def test_proxy_is_skipped_and_the_real_function_is_yielded(self) -> None:
+    @staticmethod
+    def test_proxy_is_skipped_and_the_real_function_is_yielded() -> None:
         """The walk completes, ignoring the proxy and keeping the function.
 
         The walk keeps only functions the module itself defines, and answers
@@ -81,7 +106,8 @@ class TestsFlextCoreBeartypeModuleCallables:
 
         assert yielded == [_defined_here.__name__]
 
-    def test_the_proxy_really_would_raise_on_resolution(self) -> None:
+    @staticmethod
+    def test_the_proxy_really_would_raise_on_resolution() -> None:
         """The stand-in is faithful: resolving it raises, as the real one does.
 
         Without this, the case above could pass against a proxy that quietly

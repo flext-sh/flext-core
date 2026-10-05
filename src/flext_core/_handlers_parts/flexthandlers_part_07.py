@@ -1,12 +1,17 @@
-"""CQRS handler discovery helpers."""
+"""CQRS handler discovery helpers.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 from flext_core import c, t
-
-from .flexthandlers_part_06 import FlextHandlers as FlextHandlersPart06
+from flext_core._handlers_parts.flexthandlers_part_06 import (
+    FlextHandlers as FlextHandlersPart06,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable, MutableSequence
@@ -16,7 +21,7 @@ if TYPE_CHECKING:
 
 
 class FlextHandlers[MessageT_contra, ResultT](
-    FlextHandlersPart06[MessageT_contra, ResultT]
+    FlextHandlersPart06[MessageT_contra, ResultT],
 ):
     """Final CQRS handler facade with discovery utilities composed by MRO."""
 
@@ -125,7 +130,8 @@ class FlextHandlers[MessageT_contra, ResultT](
                 settings: p.DecoratorConfig = getattr(func, c.HANDLER_ATTR)
 
                 def narrowed_func(
-                    message: t.JsonPayload, function_name: str = name
+                    message: t.JsonPayload,
+                    function_name: str = name,
                 ) -> t.Scalar | None:
                     resolved_callable = getattr(module, function_name, None)
                     if not callable(resolved_callable):
@@ -133,7 +139,7 @@ class FlextHandlers[MessageT_contra, ResultT](
                     result = resolved_callable(message)
                     if result is None:
                         return None
-                    if isinstance(result, t.SCALAR_TYPES):
+                    if isinstance(result, c.SCALAR_TYPES):
                         return result
                     return str(result)
 

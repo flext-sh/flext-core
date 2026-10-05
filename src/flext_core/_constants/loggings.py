@@ -57,6 +57,7 @@ class FlextConstantsLogging:
     # Internal logging machinery path fragments — used to skip the logging stack
     LOGGING_INTERNAL_PATH_FRAGMENTS: ClassVar[frozenset[str]] = frozenset({
         "flext_core/loggings.py",
+        "flext_core/_utilities/logging.py",
         "flext_core/_utilities/logging_context.py",
         "flext_core/_utilities/_logging_context_parts/",
         "flext_core/_utilities/logging_config.py",
@@ -75,13 +76,13 @@ class FlextConstantsLogging:
 
     _TEMPLATE_REGISTERED: ClassVar[str] = "Registered {subject}"
     LOG_REGISTERED_AUTO_DISCOVERY_HANDLER: ClassVar[str] = _TEMPLATE_REGISTERED.format(
-        subject="auto-discovery handler"
+        subject="auto-discovery handler",
     )
     LOG_REGISTERED_EVENT_SUBSCRIBER: ClassVar[str] = _TEMPLATE_REGISTERED.format(
-        subject="event subscriber"
+        subject="event subscriber",
     )
     LOG_REGISTERED_HANDLER: ClassVar[str] = _TEMPLATE_REGISTERED.format(
-        subject="handler"
+        subject="handler",
     )
     LOG_HANDLER_EXECUTION_FAILED: ClassVar[str] = "Handler execution failed"
     LOG_HANDLER_PIPELINE_FAILURE: ClassVar[str] = "Critical handler pipeline failure"

@@ -10,13 +10,12 @@ from collections.abc import Callable, Mapping, Sequence
 from itertools import starmap
 from typing import TYPE_CHECKING
 
-from flext_core import m, r, t
+from flext_core import c, m, r, t
+from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._utilities.collection import FlextUtilitiesCollection
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core._utilities.mapper_extract import FlextUtilitiesMapperExtract
 from flext_core.runtime import FlextRuntime
-
-from .._models.pydantic import FlextModelsPydantic
-from .collection import FlextUtilitiesCollection
-from .guards_type_core import FlextUtilitiesGuardsTypeCore
-from .mapper_extract import FlextUtilitiesMapperExtract
 
 if TYPE_CHECKING:
     from flext_core import p
@@ -32,7 +31,12 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
         *,
         fn: Callable[[Sequence[t.Numeric]], t.Numeric] | None = None,
     ) -> t.Numeric:
-        """Aggregate numeric field values from objects using fn (default: sum)."""
+        """Aggregate numeric field values from objects using fn (default: sum).
+
+        Returns:
+            The resulting ``t.Numeric``.
+
+        """
         items_list: t.SequenceOf[T] = list(items)
         if callable(field):
             numeric_values: list[t.Numeric] = [field(item) for item in items_list]
@@ -46,16 +50,22 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
                     raw = item.get(field)
                 else:
                     continue
-                if isinstance(raw, t.NUMERIC_TYPES):
+                if isinstance(raw, c.NUMERIC_TYPES):
                     numeric_values.append(raw)
         agg_fn = fn if fn is not None else sum
         return agg_fn(numeric_values) if numeric_values else 0
 
     @staticmethod
     def _deep_eq_values(
-        val_a: t.JsonPayload | t.JsonValue, val_b: t.JsonPayload | t.JsonValue
+        val_a: t.JsonPayload | t.JsonValue,
+        val_b: t.JsonPayload | t.JsonValue,
     ) -> bool:
-        """Recursive deep equality for any two nested items."""
+        """Recursive deep equality for any two nested items.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
         if val_a is val_b:
             return True
         if val_a is None or val_b is None:
@@ -69,8 +79,9 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
         if isinstance(val_a, list) and isinstance(val_b, list):
             return len(val_a) == len(val_b) and all(
                 starmap(
-                    FlextUtilitiesMapper._deep_eq_values, zip(val_a, val_b, strict=True)
-                )
+                    FlextUtilitiesMapper._deep_eq_values,
+                    zip(val_a, val_b, strict=True),
+                ),
             )
         return val_a == val_b
 
@@ -79,7 +90,12 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
         a: t.MappingKV[str, t.JsonValue | t.JsonPayload],
         b: t.MappingKV[str, t.JsonValue | t.JsonPayload],
     ) -> bool:
-        """Recursive deep equality for nested dicts/lists/primitives."""
+        """Recursive deep equality for nested dicts/lists/primitives.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
         if a is b:
             return True
         if len(a) != len(b):
@@ -91,7 +107,12 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
 
     @staticmethod
     def prop(key: str) -> Callable[[t.ConfigModelInput], t.JsonPayload | t.JsonValue]:
-        """Return an accessor function that extracts the named property from an object."""
+        """Return an accessor function that extracts the named property from an object.
+
+        Returns:
+            An accessor function that extracts the named property from an object.
+
+        """
 
         def accessor(obj: t.ConfigModelInput) -> t.JsonPayload | t.JsonValue:
             result = FlextUtilitiesMapper._get_raw(obj, key)
@@ -110,7 +131,12 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
         filter_keys: set[str] | None = None,
         exclude_keys: set[str] | None = None,
     ) -> p.Result[t.JsonMapping]:
-        """Apply normalize/strip_none/strip_empty/map_keys/filter_keys/exclude_keys to a dict."""
+        """Apply normalize/strip_none/strip_empty/map_keys/filter_keys/exclude_keys to a dict.
+
+        Returns:
+            The resulting ``p.Result[t.JsonMapping]``.
+
+        """
         coerced: t.JsonMapping = (
             {k: FlextRuntime.normalize_to_metadata(v) for k, v in source.root.items()}
             if isinstance(source, m.ConfigMap)

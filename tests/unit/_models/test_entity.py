@@ -6,6 +6,9 @@ equality and hashing for entities, value-based semantics for value objects,
 mutable event buffer isolation, and public serialization via ``model_dump``.
 No private attributes, internal collaborators, or implementation details
 are inspected.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -101,10 +104,12 @@ class TestsFlextCoreEntity:
         assert "created_at" in dumped
         assert "domain_events" in dumped
 
-    def test_aggregate_root_is_an_entity(self) -> None:
+    @staticmethod
+    def test_aggregate_root_is_an_entity() -> None:
         assert issubclass(m.AggregateRoot, m.Entity)
 
-    def test_aggregate_root_uses_identity_equality(self) -> None:
+    @staticmethod
+    def test_aggregate_root_uses_identity_equality() -> None:
         root = m.AggregateRoot()
         twin = m.AggregateRoot(unique_id=root.unique_id)
 
@@ -116,7 +121,11 @@ class TestsFlextCoreEntity:
 
     @pytest.mark.parametrize(("x_a", "y_a", "x_b", "y_b"), [(1, 2, 9, 2), (1, 2, 1, 9)])
     def test_values_with_differing_fields_are_not_equal(
-        self, x_a: int, y_a: int, x_b: int, y_b: int
+        self,
+        x_a: int,
+        y_a: int,
+        x_b: int,
+        y_b: int,
     ) -> None:
         assert self._Coord(x=x_a, y=y_a) != self._Coord(x=x_b, y=y_b)
 

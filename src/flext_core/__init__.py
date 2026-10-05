@@ -1,56 +1,61 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Flext Core package."""
+"""Flext Core package.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
+from flext_core.__version__ import (
+    __author__,
+    __author_email__,
+    __description__,
+    __license__,
+    __title__,
+    __url__,
+    __version__,
+    __version_info__,
+)
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
-from .__version__ import (
-    __author__ as __author__,
-    __author_email__ as __author_email__,
-    __description__ as __description__,
-    __license__ as __license__,
-    __title__ as __title__,
-    __url__ as __url__,
-    __version__ as __version__,
-    __version_info__ as __version_info__,
-)
-
 if TYPE_CHECKING:
-    from . import services
-    from ._config import FlextConfig, config
-    from ._settings import FlextSettings, settings
-    from .api import FlextApi, core
-    from .base import FlextBase
-    from .cli import FlextCli
-    from .constants import (
-        FlextConstants,
-        FlextConstants as c,
-        FlextConstantsEnforcement,
+    from flext_core import services
+    from flext_core._config import FlextConfig, config
+    from flext_core._settings import FlextSettings, settings
+    from flext_core.api import FlextApi, core
+    from flext_core.base import FlextBase
+    from flext_core.cli import FlextCli
+    from flext_core.config_sources import StrictYamlConfigSource
+    from flext_core.constants import FlextConstants, FlextConstantsEnforcement, c
+    from flext_core.container import FlextContainer
+    from flext_core.context import FlextContext
+    from flext_core.decorators import FlextDecorators, d
+    from flext_core.dispatcher import FlextDispatcher
+    from flext_core.exceptions import FlextExceptions, e
+    from flext_core.handlers import FlextHandlers, h
+    from flext_core.lazy import (
+        FlextLazy,
+        FlextLazyMember,
+        lazy_member,
+        resolve_lazy_members,
     )
-    from .container import FlextContainer
-    from .context import FlextContext
-    from .decorators import FlextDecorators, d
-    from .dispatcher import FlextDispatcher
-    from .exceptions import FlextExceptions, FlextExceptions as e
-    from .handlers import FlextHandlers, h
-    from .lazy import FlextLazy, FlextLazyAttribute, lazy_attribute
-    from .loggings import FlextUtilitiesLogging
-    from .mixins import FlextMixins, FlextMixins as x
-    from .models import FlextModels, FlextModels as m
-    from .protocols import FlextProtocols, FlextProtocols as p
-    from .registry import FlextRegistry
-    from .result import FlextResult, FlextResult as r
-    from .runtime import FlextRuntime
-    from .service import FlextService, FlextService as s
-    from .typings import FlextTypes, FlextTypes as t
-    from .utilities import (
+    from flext_core.loggings import FlextUtilitiesLogging
+    from flext_core.mixins import FlextMixins, x
+    from flext_core.models import FlextModels, m
+    from flext_core.protocols import FlextProtocols, p
+    from flext_core.registry import FlextRegistry
+    from flext_core.result import FlextResult, r
+    from flext_core.runtime import FlextRuntime
+    from flext_core.service import FlextService, s
+    from flext_core.typings import FlextTypes, t
+    from flext_core.utilities import (
         FlextUtilities,
-        FlextUtilities as u,
         FlextUtilitiesRuntimeViolationRegistry,
+        u,
     )
 
 
@@ -68,7 +73,7 @@ __all__: tuple[str, ...] = (
     "FlextExceptions",
     "FlextHandlers",
     "FlextLazy",
-    "FlextLazyAttribute",
+    "FlextLazyMember",
     "FlextMixins",
     "FlextModels",
     "FlextProtocols",
@@ -81,6 +86,7 @@ __all__: tuple[str, ...] = (
     "FlextUtilities",
     "FlextUtilitiesLogging",
     "FlextUtilitiesRuntimeViolationRegistry",
+    "StrictYamlConfigSource",
     "__author__",
     "__author_email__",
     "__description__",
@@ -89,16 +95,19 @@ __all__: tuple[str, ...] = (
     "__url__",
     "__version__",
     "__version_info__",
+    "build_lazy_import_map",
     "c",
     "config",
     "core",
     "d",
     "e",
     "h",
-    "lazy_attribute",
+    "install_lazy_exports",
+    "lazy_member",
     "m",
     "p",
     "r",
+    "resolve_lazy_members",
     "s",
     "services",
     "settings",
@@ -107,41 +116,54 @@ __all__: tuple[str, ...] = (
     "x",
 )
 
-_LAZY_IMPORTS = MappingProxyType(
-    build_lazy_import_map(
-        MappingProxyType({
-            "._config": ("FlextConfig", "config"),
-            "._settings": ("FlextSettings", "settings"),
-            ".api": ("FlextApi", "core"),
-            ".base": ("FlextBase",),
-            ".cli": ("FlextCli",),
-            ".constants": ("FlextConstants", "FlextConstantsEnforcement", "c"),
-            ".container": ("FlextContainer",),
-            ".context": ("FlextContext",),
-            ".decorators": ("FlextDecorators", "d"),
-            ".dispatcher": ("FlextDispatcher",),
-            ".exceptions": ("FlextExceptions", "e"),
-            ".handlers": ("FlextHandlers", "h"),
-            ".lazy": ("FlextLazy", "FlextLazyAttribute", "lazy_attribute"),
-            ".loggings": ("FlextUtilitiesLogging",),
-            ".mixins": ("FlextMixins", "x"),
-            ".models": ("FlextModels", "m"),
-            ".protocols": ("FlextProtocols", "p"),
-            ".registry": ("FlextRegistry",),
-            ".result": ("FlextResult", "r"),
-            ".runtime": ("FlextRuntime",),
-            ".service": ("FlextService", "s"),
-            ".services": ("services",),
-            ".typings": ("FlextTypes", "t"),
-            ".utilities": (
-                "FlextUtilities",
-                "FlextUtilitiesRuntimeViolationRegistry",
-                "u",
-            ),
-        }),
-        alias_groups=MappingProxyType({}),
-        sort_keys=False,
-    )
+install_lazy_exports(
+    __name__,
+    globals(),
+    MappingProxyType({
+        "FlextApi": ".api",
+        "FlextBase": ".base",
+        "FlextCli": ".cli",
+        "FlextConfig": "._config",
+        "FlextConstants": ".constants",
+        "FlextConstantsEnforcement": ".constants",
+        "FlextContainer": ".container",
+        "FlextContext": ".context",
+        "FlextDecorators": ".decorators",
+        "FlextDispatcher": ".dispatcher",
+        "FlextExceptions": ".exceptions",
+        "FlextHandlers": ".handlers",
+        "FlextLazy": ".lazy",
+        "FlextLazyMember": ".lazy",
+        "FlextMixins": ".mixins",
+        "FlextModels": ".models",
+        "FlextProtocols": ".protocols",
+        "FlextRegistry": ".registry",
+        "FlextResult": ".result",
+        "FlextRuntime": ".runtime",
+        "FlextService": ".service",
+        "FlextSettings": "._settings",
+        "FlextTypes": ".typings",
+        "FlextUtilities": ".utilities",
+        "FlextUtilitiesLogging": ".loggings",
+        "FlextUtilitiesRuntimeViolationRegistry": ".utilities",
+        "StrictYamlConfigSource": ".config_sources",
+        "c": ".constants",
+        "config": "._config",
+        "core": ".api",
+        "d": ".decorators",
+        "e": ".exceptions",
+        "h": ".handlers",
+        "lazy_member": ".lazy",
+        "m": ".models",
+        "p": ".protocols",
+        "r": ".result",
+        "resolve_lazy_members": ".lazy",
+        "s": ".service",
+        "services": ".services",
+        "settings": "._settings",
+        "t": ".typings",
+        "u": ".utilities",
+        "x": ".mixins",
+    }),
+    public_exports=__all__,
 )
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

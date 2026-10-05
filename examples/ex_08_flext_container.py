@@ -1,4 +1,8 @@
-"""Golden-file example for FlextContainer public APIs."""
+"""Golden-file example for FlextContainer public APIs.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -6,11 +10,10 @@ from pathlib import Path
 from typing import override
 
 from examples.constants import c
+from examples.ex_08_container_lifecycle import Ex08ContainerLifecycle
 from examples.protocols import p
 from examples.utilities import u
 from flext_core import FlextContainer, r
-
-from .ex_08_container_lifecycle import Ex08ContainerLifecycle
 
 
 class Ex08FlextContainer(Ex08ContainerLifecycle):
@@ -37,19 +40,23 @@ class Ex08FlextContainer(Ex08ContainerLifecycle):
         max_factories = self.rand_int(1, 1000)
         with_service_result = container.bind(fluent_service_name, fluent_service_value)
         with_factory_result = container.factory(
-            fluent_factory_name, lambda: fluent_factory_value
+            fluent_factory_name,
+            lambda: fluent_factory_value,
         )
         with_resource_result = container.resource(
-            fluent_resource_name, lambda: fluent_resource_value
+            fluent_resource_name,
+            lambda: fluent_resource_value,
         )
         with_settings_result = container.apply({"max_factories": max_factories})
         self.audit_check("with_service.returns_self", with_service_result is container)
         self.audit_check("with_factory.returns_self", with_factory_result is container)
         self.audit_check(
-            "with_resource.returns_self", with_resource_result is container
+            "with_resource.returns_self",
+            with_resource_result is container,
         )
         self.audit_check(
-            "with_settings.returns_self", with_settings_result is container
+            "with_settings.returns_self",
+            with_settings_result is container,
         )
         configured_max_services = self.rand_int(1, 1000)
         configured_factory_caching = self.rand_bool()
@@ -103,7 +110,12 @@ class Ex08FlextContainer(Ex08ContainerLifecycle):
         )
 
     def _exercise_singleton_and_creation(self) -> p.ContainerLifecycle:
-        """Exercise fetch_global/create entrypoints and singleton semantics."""
+        """Exercise fetch_global/create entrypoints and singleton semantics.
+
+        Returns:
+            The resulting ``p.ContainerLifecycle``.
+
+        """
         self.section("singleton_and_creation")
         FlextContainer.reset_for_testing()
         root = FlextContainer.shared()
@@ -117,9 +129,10 @@ class Ex08FlextContainer(Ex08ContainerLifecycle):
         self.audit_check("create.true.same_instance", created_true is root)
         random_ok_val = self.rand_int(1, 1000)
         self.audit_check(
-            "result.ok.roundtrip", r[int].ok(random_ok_val).value == random_ok_val
+            "result.ok.roundtrip",
+            r[int].ok(random_ok_val).value == random_ok_val,
         )
-        self.audit_check("runtime.normalize.bool", u.normalize_to_container(True))
+        self.audit_check("runtime.normalize.bool", u.normalize_to_container(val=True))
         self.audit_check("constants.default_max_services", c.DEFAULT_SIZE)
         return root
 

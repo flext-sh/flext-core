@@ -1,4 +1,8 @@
-"""Per-target parsing helpers (direct/enum/model/primitive)."""
+"""Per-target parsing helpers (direct/enum/model/primitive).
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -6,11 +10,10 @@ from collections.abc import Mapping
 from enum import StrEnum
 
 from flext_core import c, p, r, t
-
-from ..._models.pydantic import FlextModelsPydantic
-from ..guards_type_model import FlextUtilitiesGuardsTypeModel
-from ..model import FlextUtilitiesModel
-from ..parser_coerce import FlextUtilitiesParserCoerce
+from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
+from flext_core._utilities.model import FlextUtilitiesModel
+from flext_core._utilities.parser_coerce import FlextUtilitiesParserCoerce
 
 
 class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
@@ -21,7 +24,12 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
         options: FlextUtilitiesParserCoerce.ParseOptions[T] | None,
         kwargs: t.MappingKV[str, t.JsonPayload],
     ) -> tuple[FlextUtilitiesParserCoerce.ParseOptions[T], str]:
-        """Resolve options + field-prefix string used by every ``_parse_try_*``."""
+        """Resolve options + field-prefix string used by every ``_parse_try_*``.
+
+        Returns:
+            The resulting ``tuple[FlextUtilitiesParserCoerce.ParseOptions[T], str]``.
+
+        """
         opts: FlextUtilitiesParserCoerce.ParseOptions[T]
         if options is not None:
             opts = options
@@ -36,11 +44,17 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
         options: FlextUtilitiesParserCoerce.ParseOptions[T] | None = None,
         **kwargs: t.JsonPayload,
     ) -> T:
-        """Try a direct type call."""
+        """Try a direct type call.
+
+        Returns:
+            The resulting ``T``.
+
+        """
         opts, fp = FlextUtilitiesParserTargets._resolve_opts(options, kwargs)
         if value is None:
             return FlextUtilitiesParserTargets._parse_with_default(
-                opts, c.ERR_PARSER_VALUE_IS_NONE.format(field_prefix=fp)
+                opts,
+                c.ERR_PARSER_VALUE_IS_NONE.format(field_prefix=fp),
             ).unwrap()
         if isinstance(value, target):
             return value
@@ -73,7 +87,17 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
         options: FlextUtilitiesParserCoerce.ParseOptions[T] | None = None,
         **kwargs: t.JsonPayload,
     ) -> T:
-        """Try enum parsing, raising ValueError if not enum or invalid."""
+        """Try enum parsing, raising ValueError if not enum or invalid.
+
+        Returns:
+            The resulting ``T``.
+
+        Raises:
+            TypeError: If ``not issubclass(target, StrEnum)``.
+            ValueError: Always; or if ``value is None``; or if ``not
+                opts.case_insensitive``.
+
+        """
         opts, fp = FlextUtilitiesParserTargets._resolve_opts(options, kwargs)
         if not issubclass(target, StrEnum):
             raise TypeError(c.ERR_PARSER_TARGET_NOT_STRENUM.format(field_prefix=fp))
@@ -88,7 +112,8 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
         options_text = [member.value for member in target]
         if not opts.case_insensitive:
             validation_result: p.Result[T] = FlextUtilitiesModel.validate_value(
-                target, value_str
+                target,
+                value_str,
             )
             if validation_result.success:
                 validated_enum: T = validation_result.value
@@ -99,7 +124,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
                     value=value_str,
                     target_name=target_name,
                     options=options_text,
-                )
+                ),
             )
         for member in target:
             member_val = getattr(member, "value", None)
@@ -107,7 +132,8 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
                 continue
             if str(member_val).lower() == value_str.lower():
                 validated_member: T = FlextUtilitiesModel.validate_value(
-                    target, str(member_val)
+                    target,
+                    str(member_val),
                 ).unwrap()
                 return validated_member
         raise ValueError(
@@ -116,7 +142,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
                 value=value_str,
                 target_name=target_name,
                 options=options_text,
-            )
+            ),
         )
 
     @staticmethod
@@ -127,24 +153,40 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
         options: FlextUtilitiesParserCoerce.ParseOptions[T] | None = None,
         **kwargs: t.JsonPayload,
     ) -> T:
-        """Try model parsing, raising ValueError if not model or invalid."""
+        """Try model parsing, raising ValueError if not model or invalid.
+
+        Returns:
+            The resulting ``T``.
+
+        Raises:
+            TypeError: If ``not FlextUtilitiesGuardsTypeModel.model_type(target)``; or
+                if ``not isinstance(value, Mapping) and (not isinstance(value,
+                FlextModelsPydantic.BaseModel))``.
+
+        """
         opts, fp = FlextUtilitiesParserTargets._resolve_opts(options, kwargs)
         if not FlextUtilitiesGuardsTypeModel.model_type(target):
             raise TypeError(c.ERR_PARSER_TARGET_NOT_BASEMODEL.format(field_prefix=fp))
         if value is None:
             return FlextUtilitiesParserTargets._parse_with_default(
-                opts, c.ERR_PARSER_VALUE_IS_NONE.format(field_prefix=fp)
+                opts,
+                c.ERR_PARSER_VALUE_IS_NONE.format(field_prefix=fp),
             ).unwrap()
         if not isinstance(value, Mapping) and not isinstance(
-            value, FlextModelsPydantic.BaseModel
+            value,
+            FlextModelsPydantic.BaseModel,
         ):
             raise TypeError(
                 c.ERR_PARSER_CANNOT_PARSE_SCALAR_TO_MODEL.format(
-                    field_prefix=fp, value=value, target_name=target.__name__
-                )
+                    field_prefix=fp,
+                    value=value,
+                    target_name=target.__name__,
+                ),
             )
         validation_result: p.Result[T] = FlextUtilitiesModel.validate_value(
-            target, value, strict=opts.strict
+            target,
+            value,
+            strict=opts.strict,
         )
         return validation_result.unwrap()
 

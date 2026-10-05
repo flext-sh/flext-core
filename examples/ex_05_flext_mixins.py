@@ -1,4 +1,8 @@
-"""Mixins example aligned to stable result usage."""
+"""Mixins example aligned to stable result usage.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -6,7 +10,12 @@ from flext_core import r
 
 
 def run() -> None:
-    """Execute a simple mixin-like success flow."""
+    """Execute a simple mixin-like success flow.
+
+    Raises:
+        RuntimeError: If mixins example failed.
+
+    """
     result = r[str].ok("mixins-example")
     if not result.success:
         msg = "mixins example failed"

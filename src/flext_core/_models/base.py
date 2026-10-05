@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from ._base_parts.flextmodelsbase_part_03 import (
+from flext_core._models._base_parts.flextmodelsbase_part_03 import (
     FlextModelsBase as FlextModelsBasePartFinal,
 )
 

@@ -8,13 +8,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
+from flext_core._protocols._context_parts.flextprotocolscontext_part_01 import (
+    FlextProtocolsContext as FlextProtocolsContextPart01,
+)
+
 if TYPE_CHECKING:
     from contextlib import AbstractContextManager
 
     from flext_core import m, p, t
-from .flextprotocolscontext_part_01 import (
-    FlextProtocolsContext as FlextProtocolsContextPart01,
-)
 
 
 class FlextProtocolsContext(FlextProtocolsContextPart01):
@@ -92,7 +93,8 @@ class FlextProtocolsContext(FlextProtocolsContextPart01):
 
         @staticmethod
         def register_service(
-            service_name: str, service: t.RegisterableService
+            service_name: str,
+            service: t.RegisterableService,
         ) -> p.Result[bool]:
             """Register a named service through the configured container."""
             ...
@@ -104,7 +106,8 @@ class FlextProtocolsContext(FlextProtocolsContextPart01):
 
         @staticmethod
         def new_correlation(
-            correlation_id: str | None = None, parent_id: str | None = None
+            correlation_id: str | None = None,
+            parent_id: str | None = None,
         ) -> AbstractContextManager[str]:
             """Create a scoped correlation-id context manager."""
             ...
@@ -121,7 +124,8 @@ class FlextProtocolsContext(FlextProtocolsContextPart01):
 
         @staticmethod
         def service_context(
-            service_name: str, version: str | None = None
+            service_name: str,
+            version: str | None = None,
         ) -> AbstractContextManager[None]:
             """Create a service-scoped context manager."""
             ...

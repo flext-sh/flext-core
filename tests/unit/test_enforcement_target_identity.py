@@ -1,4 +1,8 @@
-"""Public census rules distinguish config and facade ownership from class names."""
+"""Public census rules distinguish config and facade ownership from class names.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -12,18 +16,24 @@ from tests import m, u
 class TestsFlextCoreEnforcementTargetIdentity:
     """Exercise classification through the public enforcement report."""
 
+    @staticmethod
     @pytest.mark.parametrize("indirect", [False, True])
-    def test_config_lineage_is_not_settings(self, *, indirect: bool) -> None:
+    def test_config_lineage_is_not_settings(*, indirect: bool) -> None:
+        """Test config lineage is not settings."""
         parent = (
             type("FlextParentConfig", (FlextConfig,), {}) if indirect else FlextConfig
         )
         target = type(
-            "FlextWorkerConfig", (parent,), {"__module__": "flext_core.synthetic"}
+            "FlextWorkerConfig",
+            (parent,),
+            {"__module__": "flext_core.synthetic"},
         )
 
         assert not any(v.rule_id == "ENFORCE-042" for v in u.check(target).violations)
 
-    def test_settings_lineage_remains_valid(self) -> None:
+    @staticmethod
+    def test_settings_lineage_remains_valid() -> None:
+        """Test settings lineage remains valid."""
         target = type(
             "FlextWorkerSettings",
             (FlextSettings,),
@@ -32,26 +42,35 @@ class TestsFlextCoreEnforcementTargetIdentity:
 
         assert not any(v.rule_id == "ENFORCE-042" for v in u.check(target).violations)
 
+    @staticmethod
     @pytest.mark.parametrize("lookalike_config", [False, True])
     def test_raw_settings_and_config_name_impostor_remain_invalid(
-        self, *, lookalike_config: bool
+        *,
+        lookalike_config: bool,
     ) -> None:
+        """Test raw settings and config name impostor remain invalid."""
         parent = (
             type("FlextConfig", (m.BaseSettings,), {})
             if lookalike_config
             else m.BaseSettings
         )
         target = type(
-            "FlextWorkerSettings", (parent,), {"__module__": "flext_core.synthetic"}
+            "FlextWorkerSettings",
+            (parent,),
+            {"__module__": "flext_core.synthetic"},
         )
 
         assert any(v.rule_id == "ENFORCE-042" for v in u.check(target).violations)
 
+    @staticmethod
     @pytest.mark.parametrize("multiple_bases", [False, True])
     @pytest.mark.parametrize("facade_module", [False, True])
     def test_only_declared_facade_modules_require_alias_first(
-        self, *, multiple_bases: bool, facade_module: bool
+        *,
+        multiple_bases: bool,
+        facade_module: bool,
     ) -> None:
+        """Test only declared facade modules require alias first."""
         package = c.__module__.split(".", 1)[0]
         service_module = f"{package}.services.worker"
         parent = type(f"{c.__name__}Worker", (), {"__module__": service_module})
@@ -70,7 +89,9 @@ class TestsFlextCoreEnforcementTargetIdentity:
 
         assert bool(violations) is facade_module
 
-    def test_declared_facade_with_alias_first_remains_valid(self) -> None:
+    @staticmethod
+    def test_declared_facade_with_alias_first_remains_valid() -> None:
+        """Test declared facade with alias first remains valid."""
         target = type(c.__name__, (c,), {"__module__": c.__module__})
 
         assert not any(

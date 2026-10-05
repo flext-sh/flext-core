@@ -5,6 +5,9 @@ Every test asserts the public contract of ``r.safe`` and
 success/failure flag, the carried value, the carried error message, the
 carried error code, and the carried exception object. No private attribute,
 no source-text assertion, no mock, and no collaborator patching.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -14,16 +17,21 @@ from typing import TYPE_CHECKING
 import pytest
 from flext_tests import r, tm
 
-from ._result_exception_support import TestsFlextResultExceptionCarrying
+import tests.utilities
 
 if TYPE_CHECKING:
     from tests.protocols import p
 
 
-class TestsFlextCoreResultExceptionSafeCallable(TestsFlextResultExceptionCarrying):
+class TestsFlextCoreResultExceptionSafeCallable(
+    tests.utilities.TestsFlextUtilities.TestsFlextResultExceptionCarrying,
+):
     """Public-contract behavior of ``r.safe`` and ``r[T].create_from_callable``."""
 
-    def test_safe_carries_exception(self) -> None:
+    @staticmethod
+    def test_safe_carries_exception() -> None:
+        """Test safe carries exception."""
+
         @r.safe
         def divide(a: int, b: int) -> float:
             return a / b
@@ -37,7 +45,10 @@ class TestsFlextCoreResultExceptionSafeCallable(TestsFlextResultExceptionCarryin
         tm.that(result.exception, none=False)
         tm.that(result.exception, is_=ZeroDivisionError)
 
-    def test_safe_no_exception_on_success(self) -> None:
+    @staticmethod
+    def test_safe_no_exception_on_success() -> None:
+        """Test safe no exception on success."""
+
         @r.safe
         def add(a: int, b: int) -> int:
             return a + b
@@ -47,7 +58,10 @@ class TestsFlextCoreResultExceptionSafeCallable(TestsFlextResultExceptionCarryin
         tm.that(result.value, eq=8)
         tm.that(result.exception, none=True)
 
-    def test_safe_success_supports_map_combinator(self) -> None:
+    @staticmethod
+    def test_safe_success_supports_map_combinator() -> None:
+        """Test safe success supports map combinator."""
+
         @r.safe
         def divide(a: int, b: int) -> float:
             return a / b
@@ -59,7 +73,10 @@ class TestsFlextCoreResultExceptionSafeCallable(TestsFlextResultExceptionCarryin
         tm.that(mapped.success, eq=True)
         tm.that(mapped.value, eq=10.0)
 
-    def test_safe_success_supports_flat_map_combinator(self) -> None:
+    @staticmethod
+    def test_safe_success_supports_flat_map_combinator() -> None:
+        """Test safe success supports flat map combinator."""
+
         @r.safe
         def divide(a: int, b: int) -> float:
             return a / b
@@ -71,7 +88,10 @@ class TestsFlextCoreResultExceptionSafeCallable(TestsFlextResultExceptionCarryin
         tm.that(chained.success, eq=True)
         tm.that(chained.value, eq=6.0)
 
-    def test_safe_failure_short_circuits_map_and_keeps_exception(self) -> None:
+    @staticmethod
+    def test_safe_failure_short_circuits_map_and_keeps_exception() -> None:
+        """Test safe failure short circuits map and keeps exception."""
+
         @r.safe
         def divide(a: int, b: int) -> float:
             return a / b
@@ -83,7 +103,10 @@ class TestsFlextCoreResultExceptionSafeCallable(TestsFlextResultExceptionCarryin
         tm.that(mapped.failure, eq=True)
         tm.that(mapped.exception, is_=ZeroDivisionError)
 
-    def test_safe_failure_recovers_with_unwrap_or(self) -> None:
+    @staticmethod
+    def test_safe_failure_recovers_with_unwrap_or() -> None:
+        """Test safe failure recovers with unwrap or."""
+
         @r.safe
         def divide(a: int, b: int) -> float:
             return a / b
@@ -91,7 +114,10 @@ class TestsFlextCoreResultExceptionSafeCallable(TestsFlextResultExceptionCarryin
         tm.that(divide(10, 0).unwrap_or(-1.0), eq=-1.0)
         tm.that(divide(10, 2).unwrap_or(-1.0), eq=5.0)
 
-    def test_safe_failure_unwrap_raises_with_error_message(self) -> None:
+    @staticmethod
+    def test_safe_failure_unwrap_raises_with_error_message() -> None:
+        """Test safe failure unwrap raises with error message."""
+
         @r.safe
         def divide(a: int, b: int) -> float:
             return a / b
@@ -99,7 +125,10 @@ class TestsFlextCoreResultExceptionSafeCallable(TestsFlextResultExceptionCarryin
         with pytest.raises(RuntimeError, match="division by zero"):
             divide(10, 0).unwrap()
 
-    def test_safe_captures_value_error(self) -> None:
+    @staticmethod
+    def test_safe_captures_value_error() -> None:
+        """Test safe captures value error."""
+
         @r.safe
         def parse_int(value: str) -> int:
             if not value.isdigit():
@@ -113,6 +142,7 @@ class TestsFlextCoreResultExceptionSafeCallable(TestsFlextResultExceptionCarryin
         tm.that(result.exception, is_=ValueError)
 
     def test_safe_captures_type_error(self) -> None:
+        """Test safe captures type error."""
         safe_len = r.safe(len)
 
         result: p.Result[int] = safe_len(self.BrokenSized())
@@ -121,11 +151,16 @@ class TestsFlextCoreResultExceptionSafeCallable(TestsFlextResultExceptionCarryin
         tm.that(result.exception, is_=TypeError)
 
     @pytest.mark.parametrize(
-        "exception_type", [OSError, IndexError], ids=("os-error", "lookup-index-error")
+        "exception_type",
+        [OSError, IndexError],
+        ids=("os-error", "lookup-index-error"),
     )
+    @staticmethod
     def test_safe_captures_boundary_exceptions(
-        self, exception_type: type[Exception]
+        exception_type: type[Exception],
     ) -> None:
+        """Test safe captures boundary exceptions."""
+
         @r.safe
         def raise_boundary_error() -> int:
             msg = "boundary failure"
@@ -136,7 +171,10 @@ class TestsFlextCoreResultExceptionSafeCallable(TestsFlextResultExceptionCarryin
         tm.that(result.exception, none=False)
         tm.that(result.exception, is_=exception_type)
 
-    def test_create_from_callable_carries_exception(self) -> None:
+    @staticmethod
+    def test_create_from_callable_carries_exception() -> None:
+        """Test create from callable carries exception."""
+
         def risky_operation() -> int:
             msg = "operation failed"
             raise RuntimeError(msg)
@@ -144,12 +182,16 @@ class TestsFlextCoreResultExceptionSafeCallable(TestsFlextResultExceptionCarryin
         result: p.Result[int] = r[int].create_from_callable(risky_operation)
         tm.that(result.failure, eq=True)
         tm.that(
-            result.error is not None and "operation failed" in result.error, eq=True
+            result.error is not None and "operation failed" in result.error,
+            eq=True,
         )
         tm.that(result.exception, none=False)
         tm.that(result.exception, is_=RuntimeError)
 
-    def test_create_from_callable_success_no_exception(self) -> None:
+    @staticmethod
+    def test_create_from_callable_success_no_exception() -> None:
+        """Test create from callable success no exception."""
+
         def safe_operation() -> str:
             return "success"
 
@@ -158,7 +200,10 @@ class TestsFlextCoreResultExceptionSafeCallable(TestsFlextResultExceptionCarryin
         tm.that(result.value, eq="success")
         tm.that(result.exception, none=True)
 
-    def test_create_from_callable_none_return_is_failure(self) -> None:
+    @staticmethod
+    def test_create_from_callable_none_return_is_failure() -> None:
+        """Test create from callable none return is failure."""
+
         def empty_operation() -> str | None:
             return None
 
@@ -166,13 +211,17 @@ class TestsFlextCoreResultExceptionSafeCallable(TestsFlextResultExceptionCarryin
         tm.that(result.failure, eq=True)
         tm.that(result.exception, none=True)
 
-    def test_create_from_callable_with_error_code(self) -> None:
+    @staticmethod
+    def test_create_from_callable_with_error_code() -> None:
+        """Test create from callable with error code."""
+
         def failing_operation() -> int:
             msg = "invalid value"
             raise ValueError(msg)
 
         result: p.Result[int] = r[int].create_from_callable(
-            failing_operation, error_code="INVALID_VALUE"
+            failing_operation,
+            error_code="INVALID_VALUE",
         )
         tm.that(result.failure, eq=True)
         tm.that(result.error_code, eq="INVALID_VALUE")

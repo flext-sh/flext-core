@@ -1,4 +1,8 @@
-"""Path-based extract pipeline on top of ``FlextUtilitiesMapperAccess``."""
+"""Path-based extract pipeline on top of ``FlextUtilitiesMapperAccess``.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -6,12 +10,11 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Annotated
 
-from flext_core import m, p, r, t
-
-from ..._models.containers import FlextModelsContainers
-from ..._models.pydantic import FlextModelsPydantic
-from ...runtime import FlextRuntime
-from ..mapper_access import FlextUtilitiesMapperAccess
+from flext_core import c, m, p, r, t
+from flext_core._models.containers import FlextModelsContainers
+from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._utilities.mapper_access import FlextUtilitiesMapperAccess
+from flext_core.runtime import FlextRuntime
 
 
 class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
@@ -21,21 +24,31 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
         """Validated context envelope for one path-part extraction step."""
 
         path_context: Annotated[
-            str, m.Field(default="", description="Resolved parent path context")
+            str,
+            m.Field(default="", description="Resolved parent path context"),
         ]
         default: Annotated[
             t.JsonPayload | None,
             m.Field(default=None, description="Default fallback payload"),
         ]
         required: Annotated[
-            bool, m.Field(default=False, description="Whether missing values are fatal")
+            bool,
+            m.Field(default=False, description="Whether missing values are fatal"),
         ]
 
     @staticmethod
     def _extract_fail_or_default(
-        msg: str, *, default: t.JsonPayload | None, required: bool
+        msg: str,
+        *,
+        default: t.JsonPayload | None,
+        required: bool,
     ) -> p.Result[t.JsonPayload]:
-        """Return required failure, configured default, or missing-default failure."""
+        """Return required failure, configured default, or missing-default failure.
+
+        Returns:
+            Required failure, configured default, or missing-default failure.
+
+        """
         if not required and default is not None:
             return r[t.JsonPayload].ok(default)
         return r[t.JsonPayload].fail_op("extract path", msg)
@@ -47,7 +60,13 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
         default: t.JsonPayload | None,
         required: bool,
     ) -> tuple[t.JsonPayload | None, p.Result[t.JsonPayload] | None]:
-        """Resolve extractor step result into next value or early fallback result."""
+        """Resolve extractor step result into next value or early fallback result.
+
+        Returns:
+            The resulting ``tuple[t.JsonPayload | None, p.Result[t.JsonPayload] |
+                None]``.
+
+        """
         if result.failure:
             if not required and default is not None:
                 return None, r[t.JsonPayload].ok(default)
@@ -65,7 +84,13 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
         *,
         context: ExtractResolvePathPartContext,
     ) -> tuple[t.JsonPayload | None, p.Result[t.JsonPayload] | None]:
-        """Resolve one path segment and return its cursor or an early result."""
+        """Resolve one path segment and return its cursor or an early result.
+
+        Returns:
+            The resulting ``tuple[t.JsonPayload | None, p.Result[t.JsonPayload] |
+                None]``.
+
+        """
         if "[" in part and part.endswith("]"):
             bracket_pos = part.index("[")
             array_match = part[bracket_pos + 1 : -1]
@@ -75,7 +100,9 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
 
         get_result = FlextUtilitiesMapperExtract._extract_get_value(current, key_part)
         next_val, early_result = FlextUtilitiesMapperExtract._extract_resolve_result(
-            get_result, default=context.default, required=context.required
+            get_result,
+            default=context.default,
+            required=context.required,
         )
         if early_result is not None:
             return None, early_result
@@ -84,15 +111,18 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
             narrowed_for_index = (
                 next_val
                 if isinstance(next_val, Sequence)
-                and not isinstance(next_val, t.STR_BYTES_TYPES)
+                and not isinstance(next_val, c.STR_BYTES_TYPES)
                 else FlextRuntime.normalize_to_container(next_val)
             )
             index_result = FlextUtilitiesMapperExtract._extract_handle_array_index(
-                narrowed_for_index, array_match
+                narrowed_for_index,
+                array_match,
             )
             next_val, early_result = (
                 FlextUtilitiesMapperExtract._extract_resolve_result(
-                    index_result, default=context.default, required=context.required
+                    index_result,
+                    default=context.default,
+                    required=context.required,
                 )
             )
             if early_result is not None:
@@ -104,7 +134,13 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
     def _extract_seed_current(
         data: p.AccessibleData,
     ) -> t.JsonPayload | t.JsonMapping | FlextModelsContainers.ConfigMap | None:
-        """Build the initial ``current`` cursor for path traversal."""
+        """Build the initial ``current`` cursor for path traversal.
+
+        Returns:
+            The resulting ``t.JsonPayload | t.JsonMapping |
+                FlextModelsContainers.ConfigMap | None``.
+
+        """
         seed_current: (
             t.JsonPayload | t.JsonMapping | FlextModelsContainers.ConfigMap | None
         ) = None
@@ -115,7 +151,7 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
                 root={
                     k: FlextUtilitiesMapperExtract._normalize_accessible_value(v)
                     for k, v in data.items()
-                }
+                },
             )
         else:
             model_dump_attr = getattr(data, "model_dump", None)
@@ -123,7 +159,7 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
                 seed_current = m.ConfigMap.model_validate(model_dump_attr())
             elif isinstance(data, p.ValidatorSpec):
                 seed_current = str(data)
-            elif data is None or isinstance(data, (*t.SCALAR_TYPES, Path, list, tuple)):
+            elif data is None or isinstance(data, (*c.SCALAR_TYPES, Path, list, tuple)):
                 seed_current = data
         return seed_current
 

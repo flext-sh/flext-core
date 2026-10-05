@@ -95,7 +95,9 @@ class FlextProtocolsBase:
         """Protocol for mapping-like configuration payloads."""
 
         def get(
-            self, key: str, default: t.JsonPayload | None = None
+            self,
+            key: str,
+            default: t.JsonPayload | None = None,
         ) -> t.JsonPayload | None:
             """Fetch a configuration value by key."""
             ...

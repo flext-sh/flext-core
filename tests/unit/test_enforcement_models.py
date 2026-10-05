@@ -1,4 +1,8 @@
-"""Model and field enforcement tests."""
+"""Model and field enforcement tests.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -13,37 +17,53 @@ from flext_core.utilities import FlextUtilitiesEnforcement
 from tests.constants import c
 from tests.models import m
 from tests.typings import t
+from tests.unit._enforcement_support import messages
 from tests.utilities import u
-
-from ._enforcement_support import messages
 
 
 class TestsFlextEnforcementModels:
-    def test_any_field_detected(self) -> None:
+    """Tests for ``FlextEnforcementModels``."""
+
+    @staticmethod
+    def test_any_field_detected() -> None:
+        """Test any field detected."""
+
         class _M(m.ArbitraryTypesModel):
             data: Annotated[typing.Any, m.Field(description="d")] = None
 
         assert messages(u.check(_M), fragment="Any")
 
-    def test_typed_field_passes(self) -> None:
+    @staticmethod
+    def test_typed_field_passes() -> None:
+        """Test typed field passes."""
+
         class _M(m.ArbitraryTypesModel):
             name: Annotated[str, m.Field(description="d")] = "x"
 
         assert not messages(u.check(_M), fragment="Any")
 
-    def test_bare_dict_detected(self) -> None:
+    @staticmethod
+    def test_bare_dict_detected() -> None:
+        """Test bare dict detected."""
+
         class _M(m.ArbitraryTypesModel):
             data: dict[str, str] = m.Field(default_factory=dict, description="d")
 
         assert messages(u.check(_M), fragment="bare ")
 
-    def test_bare_list_detected(self) -> None:
+    @staticmethod
+    def test_bare_list_detected() -> None:
+        """Test bare list detected."""
+
         class _M(m.ArbitraryTypesModel):
             items: list[str] = m.Field(default_factory=list, description="d")
 
         assert messages(u.check(_M), fragment="bare ")
 
-    def test_mapping_passes(self) -> None:
+    @staticmethod
+    def test_mapping_passes() -> None:
+        """Test mapping passes."""
+
         class _M(m.ArbitraryTypesModel):
             data: Annotated[
                 t.StrMapping,
@@ -55,26 +75,37 @@ class TestsFlextEnforcementModels:
 
         assert not messages(u.check(_M), fragment="bare ")
 
-    def test_mutable_sequence_list_factory_passes(self) -> None:
+    @staticmethod
+    def test_mutable_sequence_list_factory_passes() -> None:
+        """Test mutable sequence list factory passes."""
+
         class _M(m.ArbitraryTypesModel):
             items: Annotated[
-                MutableSequence[str], m.Field(default_factory=list, description="d")
+                MutableSequence[str],
+                m.Field(default_factory=list, description="d"),
             ]
 
         assert not messages(u.check(_M), fragment="read-only field contract")
 
-    def test_mutable_mapping_forward_ref_dict_factory_passes(self) -> None:
+    @staticmethod
+    def test_mutable_mapping_forward_ref_dict_factory_passes() -> None:
+        """Test mutable mapping forward ref dict factory passes."""
+
         class _M(m.ArbitraryTypesModel):
             class Value(m.ContractModel):
                 name: Annotated[str, m.Field(description="Value name")] = "x"
 
             items: typing.MutableMapping[str, _M.Value] = m.Field(
-                default_factory=dict, description="Mutable mapping contract."
+                default_factory=dict,
+                description="Mutable mapping contract.",
             )
 
         assert not messages(u.check(_M), fragment="read-only field contract")
 
-    def test_mutable_json_mapping_alias_dict_factory_passes(self) -> None:
+    @staticmethod
+    def test_mutable_json_mapping_alias_dict_factory_passes() -> None:
+        """Test mutable json mapping alias dict factory passes."""
+
         class _M(m.ArbitraryTypesModel):
             items: Annotated[
                 t.MutableJsonMapping,
@@ -86,27 +117,39 @@ class TestsFlextEnforcementModels:
 
         assert not messages(u.check(_M), fragment="read-only field contract")
 
-    def test_sequence_list_factory_detected(self) -> None:
+    @staticmethod
+    def test_sequence_list_factory_detected() -> None:
+        """Test sequence list factory detected."""
+
         class _M(m.ArbitraryTypesModel):
             items: Annotated[
-                t.StrSequence, m.Field(default_factory=list, description="d")
+                t.StrSequence,
+                m.Field(default_factory=list, description="d"),
             ]
 
         assert messages(u.check(_M), fragment="read-only field contract")
 
-    def test_missing_description_detected(self) -> None:
+    @staticmethod
+    def test_missing_description_detected() -> None:
+        """Test missing description detected."""
+
         class _M(m.ArbitraryTypesModel):
             name: str = "test"
 
         assert messages(u.check(_M), fragment="missing description")
 
-    def test_description_present_passes(self) -> None:
+    @staticmethod
+    def test_description_present_passes() -> None:
+        """Test description present passes."""
+
         class _M(m.ArbitraryTypesModel):
             name: Annotated[str, m.Field(description="A name")] = "test"
 
         assert not messages(u.check(_M), fragment="missing description")
 
-    def test_v1_config_class_detected(self) -> None:
+    @staticmethod
+    def test_v1_config_class_detected() -> None:
+        """Test v1 config class detected."""
         with pytest.warns(DeprecationWarning, match="class-based"):
 
             class _M(m.ArbitraryTypesModel):
@@ -117,23 +160,32 @@ class TestsFlextEnforcementModels:
 
         assert messages(u.check(_M), fragment="Pydantic v1")
 
-    def test_flexible_internal_allows_ignore(self) -> None:
+    @staticmethod
+    def test_flexible_internal_allows_ignore() -> None:
+        """Test flexible internal allows ignore."""
+
         class _M(m.FlexibleInternalModel):
             name: Annotated[str, m.Field(description="d")] = "x"
 
         assert not messages(u.check(_M), fragment="extra")
 
-    def test_mode_default_is_warn(self) -> None:
+    @staticmethod
+    def test_mode_default_is_warn() -> None:
+        """Test mode default is warn."""
         assert c.ENFORCEMENT_MODE is c.EnforcementMode.WARN
 
-    def test_enforcement_rules_loaded(self) -> None:
-        assert len(c.ENFORCEMENT_RULES_TEXT) > 0
+    @staticmethod
+    def test_enforcement_rules_loaded() -> None:
+        """Test enforcement rules loaded."""
         assert len(c.ENFORCEMENT_TAG_CATEGORY) > 0
         assert all(
             cat in c.EnforcementCategory for cat in c.ENFORCEMENT_TAG_CATEGORY.values()
         )
+        # Every runtime rule row carries its own problem/fix text.
+        assert set(c.ENFORCEMENT_TAG_CATEGORY) <= set(c.ENFORCEMENT_RULES_TEXT)
 
-    def test_canonical_flext_core_class_satisfies_prefix_contract(self) -> None:
+    @staticmethod
+    def test_canonical_flext_core_class_satisfies_prefix_contract() -> None:
         """A correctly named ``flext_core`` class raises no class-prefix violation."""
         assert not messages(u.check(FlextUtilitiesEnforcement), fragment="class_prefix")
 
@@ -141,8 +193,11 @@ class TestsFlextEnforcementModels:
         ("module", "expect_prefix_violation"),
         [("flext_core.synthetic_module", True), ("fence", False)],
     )
+    @staticmethod
     def test_class_prefix_enforced_only_for_knowable_projects(
-        self, module: str, *, expect_prefix_violation: bool
+        module: str,
+        *,
+        expect_prefix_violation: bool,
     ) -> None:
         """``flext_core`` demands the ``Flext`` prefix; doc-fence modules stay silent.
 

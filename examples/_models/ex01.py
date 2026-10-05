@@ -1,4 +1,8 @@
-"""Example 01 models."""
+"""Example 01 models.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -23,10 +27,10 @@ class ExamplesFlextModelsEx01:
         """Result demo summary model."""
 
         demonstrations_completed: int = m.Field(
-            description="Count of completed demonstrations"
+            description="Count of completed demonstrations",
         )
         patterns_covered: t.VariadicTuple[str] = m.Field(
-            description="Tuple of covered pattern names"
+            description="Tuple of covered pattern names",
         )
         completed_at: str = m.Field(description="ISO 8601 completion timestamp")
 
@@ -34,7 +38,9 @@ class ExamplesFlextModelsEx01:
         """Result demo command model."""
 
         operation: str = m.Field(
-            "demonstration", description="Operation type", validate_default=True
+            "demonstration",
+            description="Operation type",
+            validate_default=True,
         )
 
     class ValidPersonPayload(m.Value):
@@ -48,5 +54,5 @@ class ExamplesFlextModelsEx01:
 
         name: str = m.Field(description="Person name")
         age: str = m.Field(
-            description="Invalid age (string instead of int) for testing"
+            description="Invalid age (string instead of int) for testing",
         )

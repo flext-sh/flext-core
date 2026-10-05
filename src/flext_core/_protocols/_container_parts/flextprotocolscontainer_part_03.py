@@ -8,14 +8,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, override, runtime_checkable
 
-if TYPE_CHECKING:
-    from flext_core import m
-
-    from ..context import FlextProtocolsContext
-    from ..settings import FlextProtocolsSettings
-from .flextprotocolscontainer_part_02 import (
+from flext_core._protocols._container_parts.flextprotocolscontainer_part_02 import (
     FlextProtocolsContainer as FlextProtocolsContainerPart02,
 )
+
+if TYPE_CHECKING:
+    from flext_core import m
+    from flext_core._protocols.context import FlextProtocolsContext
+    from flext_core._protocols.settings import FlextProtocolsSettings
 
 
 class FlextProtocolsContainer(FlextProtocolsContainerPart02):
@@ -24,7 +24,9 @@ class FlextProtocolsContainer(FlextProtocolsContainerPart02):
         """Extended container contract for bootstrap and lifecycle operations."""
 
         def initialize_registrations(
-            self, *, registration: m.ServiceRegistrationSpec | None = None
+            self,
+            *,
+            registration: m.ServiceRegistrationSpec | None = None,
         ) -> None:
             """Initialize explicit registrations and runtime-bound state."""
             ...
@@ -36,7 +38,7 @@ class FlextProtocolsContainer(FlextProtocolsContainerPart02):
 
     @runtime_checkable
     class ContainerType[
-        TContainer: FlextProtocolsContainerPart02.Container = FlextProtocolsContainerPart02.Container
+        TContainer: FlextProtocolsContainerPart02.Container = FlextProtocolsContainerPart02.Container,
     ](Protocol):
         """Protocol for concrete container classes exposing canonical factories."""
 

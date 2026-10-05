@@ -1,4 +1,8 @@
-"""Construction operations for FlextResult."""
+"""Construction operations for FlextResult.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -7,10 +11,9 @@ from typing import TYPE_CHECKING, Self, cast
 from pydantic import BaseModel, ValidationError
 
 from flext_core import c
-
-from .._protocols.result import FlextProtocolsResult as prt
-from .base import FlextResultBase
-from .behavior import FlextResultBehavior
+from flext_core._protocols.result import FlextProtocolsResult as prt
+from flext_core._result.base import FlextResultBase
+from flext_core._result.behavior import FlextResultBehavior
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -31,13 +34,22 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
 
         Empty failures (``fail(None)`` / ``fail("")``) are valid railway values;
         return ``""`` so combinators re-wrap instead of raising.
+
+        Returns:
+            The resulting ``str``.
+
         """
         error = source.error
         return error or ""
 
     @classmethod
     def ok[V](cls: type[Self], value: V) -> p.Result[V]:
-        """Create a successful result carrying ``value``."""
+        """Create a successful result carrying ``value``.
+
+        Returns:
+            The resulting ``p.Result[V]``.
+
+        """
         return ok_result(cls._factory(), value)
 
     @classmethod
@@ -54,7 +66,8 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
 
     @classmethod
     def _extract_exception_error_code(
-        cls, exception: BaseException | None
+        cls,
+        exception: BaseException | None,
     ) -> str | None:
         if exception is None:
             return None
@@ -63,9 +76,15 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
 
     @classmethod
     def _redacted_error_data_keys(
-        cls, exception: BaseException | None
+        cls,
+        exception: BaseException | None,
     ) -> frozenset[str]:
-        """Union of fleet-sensitive keys and the exception's excluded context keys."""
+        """Union of fleet-sensitive keys and the exception's excluded context keys.
+
+        Returns:
+            The resulting ``frozenset[str]``.
+
+        """
         excluded: set[str] = set(c.SENSITIVE_ERROR_DATA_KEYS)
         if exception is not None:
             class_excluded = getattr(type(exception), "excluded_context_keys", None)
@@ -75,7 +94,8 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
 
     @classmethod
     def _extract_exception_error_data(
-        cls, exception: BaseException | None
+        cls,
+        exception: BaseException | None,
     ) -> t.JsonDict | None:
         if exception is None:
             return None
@@ -102,12 +122,19 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
 
     @classmethod
     def from_result[V](cls: type[Self], source: p.Result[V]) -> p.Result[V]:
-        """Copy an abstract result into this concrete result family."""
+        """Copy an abstract result into this concrete result family.
+
+        Returns:
+            The resulting ``p.Result[V]``.
+
+        """
         return copy_result(cls._factory(), source)
 
     @classmethod
     def create_from_callable[V](
-        cls: type[Self], func: Callable[[], V | None], error_code: str | None = None
+        cls: type[Self],
+        func: Callable[[], V | None],
+        error_code: str | None = None,
     ) -> p.Result[V]:
         try:
             value = func()
@@ -119,14 +146,22 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
             return ok_result(cls._factory(), value)
         except c.EXC_BROAD_RUNTIME as exc:
             return cast(
-                "p.Result[V]", cls.fail(str(exc), error_code=error_code, exception=exc)
+                "p.Result[V]",
+                cls.fail(str(exc), error_code=error_code, exception=exc),
             )
 
     @classmethod
     def _filter_sensitive_error_data(
-        cls, payload: t.JsonDict | None, exception: BaseException | None = None
+        cls,
+        payload: t.JsonDict | None,
+        exception: BaseException | None = None,
     ) -> t.JsonDict | None:
-        """Drop sensitive keys from any error_data mapping before storage."""
+        """Drop sensitive keys from any error_data mapping before storage.
+
+        Returns:
+            The resulting ``t.JsonDict | None``.
+
+        """
         if payload is None:
             return None
         redacted_keys = cls._redacted_error_data_keys(exception)
@@ -150,7 +185,8 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
         # Why: redact caller-supplied AND auto-extracted error_data (security mro-8taj)
         if error_data is not None:
             resolved_error_data = cls._filter_sensitive_error_data(
-                cls.validate_error_data(error_data), exception
+                cls.validate_error_data(error_data),
+                exception,
             )
         else:
             resolved_error_data = cls._extract_exception_error_data(exception)
@@ -167,7 +203,9 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
 
     @classmethod
     def fail_op(
-        cls: type[Self], operation: str, exc: Exception | str | None = None
+        cls: type[Self],
+        operation: str,
+        exc: Exception | str | None = None,
     ) -> p.Result[T]:
         if isinstance(exc, Exception):
             return cls.fail(f"{operation} failed: {exc}", exception=exc)
@@ -178,7 +216,9 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
 
     @classmethod
     def from_validation[ModelT: BaseModel](
-        cls: type[Self], data: t.ModelInput, model: t.ModelClass[ModelT]
+        cls: type[Self],
+        data: t.ModelInput,
+        model: t.ModelClass[ModelT],
     ) -> p.Result[ModelT]:
         try:
             validated: ModelT = model.model_validate(data)
@@ -188,28 +228,50 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
 
     @staticmethod
     def successful_result(obj: object) -> bool:
-        """Check whether an object is a successful result instance."""
+        """Check whether an object is a successful result instance.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
         return isinstance(obj, FlextResultBase) and obj.success
 
     @staticmethod
     def failed_result(obj: object) -> bool:
-        """Check whether an object is a failed result instance."""
+        """Check whether an object is a failed result instance.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
         return isinstance(obj, FlextResultBase) and not obj.success
 
 
 def ok_result[V, InstanceT: prt.ResultFactoryMinimal](
-    cls: type[InstanceT], value: V
+    cls: type[InstanceT],
+    value: V,
 ) -> p.Result[V]:
-    """Build a successful result of the ``cls`` result family carrying ``value``."""
+    """Build a successful result of the ``cls`` result family carrying ``value``.
+
+    Returns:
+        The resulting ``p.Result[V]``.
+
+    """
     cls.reject_banned_result_parameterization()
     cls.reject_banned_success_payload(value)
     return cast("p.Result[V]", cls(value=value, success=True))
 
 
 def copy_result[V, InstanceT: prt.ResultFactoryMinimal](
-    cls: type[InstanceT], source: p.Result[V]
+    cls: type[InstanceT],
+    source: p.Result[V],
 ) -> p.Result[V]:
-    """Copy any abstract result into the ``cls`` result family."""
+    """Copy any abstract result into the ``cls`` result family.
+
+    Returns:
+        The resulting ``p.Result[V]``.
+
+    """
     if source.success:
         try:
             return ok_result(cls, source.value)

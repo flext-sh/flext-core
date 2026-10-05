@@ -1,4 +1,8 @@
-"""Shared fixtures for split decorator unit tests."""
+"""Shared fixtures for split decorator unit tests.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -58,7 +62,8 @@ class TestsFlextDecoratorsLegacy:
     class TestService:
         """Service for testing."""
 
-        def get_value(self) -> str:
+        @staticmethod
+        def get_value() -> str:
             return "test_value"
 
     class ServiceWithLogger:
@@ -111,10 +116,12 @@ class TestsFlextDecoratorsLegacy:
     ]
     RAILWAY_SCENARIOS: ClassVar[Sequence[DecoratorTestCase]] = [
         DecoratorTestCase(
-            name="railway_success", operation=DecoratorOperationType.RAILWAY_SUCCESS
+            name="railway_success",
+            operation=DecoratorOperationType.RAILWAY_SUCCESS,
         ),
         DecoratorTestCase(
-            name="railway_exception", operation=DecoratorOperationType.RAILWAY_EXCEPTION
+            name="railway_exception",
+            operation=DecoratorOperationType.RAILWAY_EXCEPTION,
         ),
     ]
     RETRY_SCENARIOS: ClassVar[Sequence[DecoratorTestCase]] = [
@@ -127,20 +134,24 @@ class TestsFlextDecoratorsLegacy:
             operation=DecoratorOperationType.RETRY_SUCCESS_AFTER_FAILURES,
         ),
         DecoratorTestCase(
-            name="retry_exhausted", operation=DecoratorOperationType.RETRY_EXHAUSTED
+            name="retry_exhausted",
+            operation=DecoratorOperationType.RETRY_EXHAUSTED,
         ),
     ]
     TIMEOUT_SCENARIOS: ClassVar[Sequence[DecoratorTestCase]] = [
         DecoratorTestCase(
-            name="timeout_success", operation=DecoratorOperationType.TIMEOUT_SUCCESS
+            name="timeout_success",
+            operation=DecoratorOperationType.TIMEOUT_SUCCESS,
         ),
         DecoratorTestCase(
-            name="timeout_exceeded", operation=DecoratorOperationType.TIMEOUT_EXCEEDED
+            name="timeout_exceeded",
+            operation=DecoratorOperationType.TIMEOUT_EXCEEDED,
         ),
     ]
     COMBINED_SCENARIOS: ClassVar[Sequence[DecoratorTestCase]] = [
         DecoratorTestCase(
-            name="combined_basic", operation=DecoratorOperationType.COMBINED_BASIC
+            name="combined_basic",
+            operation=DecoratorOperationType.COMBINED_BASIC,
         ),
         DecoratorTestCase(
             name="combined_with_railway",

@@ -4,6 +4,9 @@ Asserts the observable public contract only: a service's ``execute`` result, the
 options ``u.resolve_runtime_options`` returns for every supported source, the
 runtime a service builds, and the validation of ports and runtime seeds. No
 private attribute access, no collaborator spying, no internal patching.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -30,7 +33,7 @@ class TestsFlextCoreServiceBootstrap:
 
         @override
         def execute(self) -> p.Result[bool]:
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
 
     # --- Service execution contract ------------------------------------
 
@@ -49,13 +52,15 @@ class TestsFlextCoreServiceBootstrap:
 
     # --- resolve_runtime_options ---------------------------------------
 
-    def test_resolve_with_no_source_yields_empty_options(self) -> None:
+    @staticmethod
+    def test_resolve_with_no_source_yields_empty_options() -> None:
         """Missing bootstrap input resolves to options that inject nothing."""
         resolved = u.resolve_runtime_options()
 
         tm.that(dict(resolved), eq=dict(m.RuntimeBootstrapOptions()))
 
-    def test_resolve_returns_supplied_model_unchanged(self) -> None:
+    @staticmethod
+    def test_resolve_returns_supplied_model_unchanged() -> None:
         """A supplied options model is the resolved options."""
         options = m.RuntimeBootstrapOptions(settings_overrides={"app_name": "keep"})
 
@@ -63,7 +68,8 @@ class TestsFlextCoreServiceBootstrap:
 
         tm.that(resolved is options, eq=True)
 
-    def test_runtime_options_accepts_settings_class_contract(self) -> None:
+    @staticmethod
+    def test_runtime_options_accepts_settings_class_contract() -> None:
         """Settings class validation uses its method-only class protocol."""
         options = m.RuntimeBootstrapOptions(settings_type=FlextSettings)
 
@@ -102,7 +108,7 @@ class TestsFlextCoreServiceBootstrap:
         """A runtime settings seed that is not ``p.Settings`` fails validation."""
         with pytest.raises(m.ValidationError):
             self.ConcreteTestService.model_validate({
-                "runtime_settings": c.Tests.DEFAULT_ERROR_MESSAGE
+                "runtime_settings": c.Tests.DEFAULT_ERROR_MESSAGE,
             })
 
     def test_build_service_runtime_binds_the_container_collaborators(self) -> None:
@@ -117,18 +123,20 @@ class TestsFlextCoreServiceBootstrap:
 
     # --- Ports -----------------------------------------------------------
 
-    def test_port_accepts_a_conforming_adapter(self) -> None:
+    @staticmethod
+    def test_port_accepts_a_conforming_adapter() -> None:
         """A service executes through a real adapter of its port."""
         service = u.Tests.CountingService(counter=u.Tests.MemoryCounter())
 
         tm.that(service.execute().unwrap(), eq=1)
         tm.that(service.execute().unwrap(), eq=2)
 
-    def test_port_rejects_a_non_conforming_value_on_construction(self) -> None:
+    @staticmethod
+    def test_port_rejects_a_non_conforming_value_on_construction() -> None:
         """A value that does not satisfy the port protocol fails validation."""
         with pytest.raises(m.ValidationError):
             u.Tests.CountingService.model_validate({
-                "counter": c.Tests.DEFAULT_ERROR_MESSAGE
+                "counter": c.Tests.DEFAULT_ERROR_MESSAGE,
             })
 
     def test_port_rejects_a_non_conforming_value_on_assignment(self) -> None:
@@ -137,14 +145,15 @@ class TestsFlextCoreServiceBootstrap:
         port_name = next(
             iter(
                 u.Tests.CountingService.model_fields.keys()
-                - self.ConcreteTestService.model_fields.keys()
-            )
+                - self.ConcreteTestService.model_fields.keys(),
+            ),
         )
 
         with pytest.raises(m.ValidationError):
             setattr(service, port_name, c.Tests.DEFAULT_ERROR_MESSAGE)
 
-    def test_fetch_global_of_a_port_service_raises(self) -> None:
+    @staticmethod
+    def test_fetch_global_of_a_port_service_raises() -> None:
         """A service with a required port has no argument-free singleton."""
         with pytest.raises(m.ValidationError):
             u.Tests.CountingService.fetch_global()
@@ -161,15 +170,17 @@ class TestsFlextCoreServiceBootstrap:
             - set(self.ConcreteTestService.model_fields),
         )
 
-    def test_subscripted_port_type_is_rejected_at_class_creation(self) -> None:
+    @staticmethod
+    def test_subscripted_port_type_is_rejected_at_class_creation() -> None:
         """A port typed by a subscripted generic cannot be validated."""
         try:
 
             class SubscriptedPortService(
-                TestsFlextCoreServiceBootstrap.ConcreteTestService
+                TestsFlextCoreServiceBootstrap.ConcreteTestService,
             ):
                 result: t.Port[p.Result[int]] = m.Field(
-                    exclude=True, description="Subscripted generic port."
+                    exclude=True,
+                    description="Subscripted generic port.",
                 )
 
         except TypeError as raised:
@@ -183,18 +194,20 @@ class TestsFlextCoreServiceBootstrap:
             )
         else:
             pytest.fail(
-                f"{SubscriptedPortService.__name__} was unexpectedly constructed"
+                f"{SubscriptedPortService.__name__} was unexpectedly constructed",
             )
 
-    def test_concrete_port_type_is_rejected_at_class_creation(self) -> None:
+    @staticmethod
+    def test_concrete_port_type_is_rejected_at_class_creation() -> None:
         """A port typed by a concrete class is not a port."""
         try:
 
             class ConcretePortService(
-                TestsFlextCoreServiceBootstrap.ConcreteTestService
+                TestsFlextCoreServiceBootstrap.ConcreteTestService,
             ):
                 counter: t.Port[u.Tests.MemoryCounter] = m.Field(
-                    exclude=True, description="Concrete class port."
+                    exclude=True,
+                    description="Concrete class port.",
                 )
 
         except TypeError as raised:

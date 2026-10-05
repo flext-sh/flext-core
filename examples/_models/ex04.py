@@ -1,4 +1,8 @@
-"""Example 04 dispatcher models."""
+"""Example 04 dispatcher models.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -18,10 +22,12 @@ class ExamplesFlextModelsEx04:
             m.Field(description="Command type identifier for create user operation"),
         ] = "ex04_create_user"
         query_type: Annotated[
-            str, m.Field(description="Query type placeholder for create user operation")
+            str,
+            m.Field(description="Query type placeholder for create user operation"),
         ] = ""
         event_type: Annotated[
-            str, m.Field(description="Event type placeholder for create user operation")
+            str,
+            m.Field(description="Event type placeholder for create user operation"),
         ] = "ex04_create_user_event"
         username: Annotated[str, m.Field(description="Username for the user to create")]
 
@@ -29,14 +35,16 @@ class ExamplesFlextModelsEx04:
         """Query to get a user record by username in example 04."""
 
         command_type: Annotated[
-            str, m.Field(description="Command type placeholder for get user operation")
+            str,
+            m.Field(description="Command type placeholder for get user operation"),
         ] = ""
         query_type: Annotated[
             str | None,
             m.Field(description="Query type identifier for get user operation"),
         ] = "ex04_get_user"
         event_type: Annotated[
-            str, m.Field(description="Event type placeholder for get user operation")
+            str,
+            m.Field(description="Event type placeholder for get user operation"),
         ] = "ex04_get_user_event"
         username: Annotated[str, m.Field(description="Username to retrieve")]
 
@@ -48,10 +56,12 @@ class ExamplesFlextModelsEx04:
             m.Field(description="Command type identifier for delete user operation"),
         ] = "ex04_delete_user"
         query_type: Annotated[
-            str, m.Field(description="Query type placeholder for delete user operation")
+            str,
+            m.Field(description="Query type placeholder for delete user operation"),
         ] = ""
         event_type: Annotated[
-            str, m.Field(description="Event type placeholder for delete user operation")
+            str,
+            m.Field(description="Event type placeholder for delete user operation"),
         ] = "ex04_delete_user_event"
         username: Annotated[str, m.Field(description="Username of the user to delete")]
 
@@ -61,23 +71,24 @@ class ExamplesFlextModelsEx04:
         command_type: Annotated[
             t.NonEmptyStr,
             m.Field(
-                description="Command type identifier for deliberately failing delete operation"
+                description="Command type identifier for deliberately failing delete operation",
             ),
         ] = "ex04_failing_delete"
         query_type: Annotated[
             str,
             m.Field(
-                description="Query type placeholder for deliberately failing delete operation"
+                description="Query type placeholder for deliberately failing delete operation",
             ),
         ] = ""
         event_type: Annotated[
             str,
             m.Field(
-                description="Event type placeholder for deliberately failing delete operation"
+                description="Event type placeholder for deliberately failing delete operation",
             ),
         ] = "ex04_failing_delete_event"
         username: Annotated[
-            str, m.Field(description="Username for the failing delete operation")
+            str,
+            m.Field(description="Username for the failing delete operation"),
         ]
 
     class AutoCommand(m.Command):
@@ -86,13 +97,16 @@ class ExamplesFlextModelsEx04:
             m.Field(description="Command type identifier for auto command"),
         ] = "ex04_auto_command"
         query_type: Annotated[
-            str, m.Field(description="Query type placeholder for auto command")
+            str,
+            m.Field(description="Query type placeholder for auto command"),
         ] = ""
         event_type: Annotated[
-            str, m.Field(description="Event type placeholder for auto command")
+            str,
+            m.Field(description="Event type placeholder for auto command"),
         ] = "ex04_auto_command_event"
         payload: Annotated[
-            str, m.Field(description="Payload data for the auto command")
+            str,
+            m.Field(description="Payload data for the auto command"),
         ]
 
     class Ping(m.Command):
@@ -101,10 +115,12 @@ class ExamplesFlextModelsEx04:
             m.Field(description="Command type identifier for ping operation"),
         ] = "ex04_ping"
         query_type: Annotated[
-            str, m.Field(description="Query type placeholder for ping operation")
+            str,
+            m.Field(description="Query type placeholder for ping operation"),
         ] = ""
         event_type: Annotated[
-            str, m.Field(description="Event type placeholder for ping operation")
+            str,
+            m.Field(description="Event type placeholder for ping operation"),
         ] = "ex04_ping_event"
         value: Annotated[str, m.Field(description="Value data for the ping command")]
 
@@ -122,21 +138,26 @@ class ExamplesFlextModelsEx04:
             m.Field(description="Event type placeholder for unknown query operation"),
         ] = "ex04_unknown_query_event"
         payload: Annotated[
-            str, m.Field(description="Payload data for the unknown query")
+            str,
+            m.Field(description="Payload data for the unknown query"),
         ]
 
     class UserCreated(m.Event):
         command_type: Annotated[
-            str, m.Field(description="Command type placeholder for user created event")
+            str,
+            m.Field(description="Command type placeholder for user created event"),
         ] = ""
         query_type: Annotated[
-            str, m.Field(description="Query type placeholder for user created event")
+            str,
+            m.Field(description="Query type placeholder for user created event"),
         ] = ""
         username: Annotated[
-            str, m.Field(description="Username of the user that was created")
+            str,
+            m.Field(description="Username of the user that was created"),
         ]
         event_type: Annotated[
-            str, m.Field(description="Event type identifier for user creation")
+            str,
+            m.Field(description="Event type identifier for user creation"),
         ] = "user_created"
         aggregate_id: Annotated[str, m.Field(description="Aggregate ID for users")] = (
             "users"
@@ -148,16 +169,18 @@ class ExamplesFlextModelsEx04:
             m.Field(description="Command type placeholder for no subscribers event"),
         ] = ""
         query_type: Annotated[
-            str, m.Field(description="Query type placeholder for no subscribers event")
+            str,
+            m.Field(description="Query type placeholder for no subscribers event"),
         ] = ""
         marker: Annotated[
             str,
             m.Field(
-                description="Marker identifying the event as having no subscribers"
+                description="Marker identifying the event as having no subscribers",
             ),
         ]
         event_type: Annotated[
-            str, m.Field(description="Event type identifier for no subscribers event")
+            str,
+            m.Field(description="Event type identifier for no subscribers event"),
         ] = "no_subscribers"
         aggregate_id: Annotated[str, m.Field(description="Aggregate ID for events")] = (
             "events"

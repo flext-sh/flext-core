@@ -14,13 +14,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, override
 
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._utilities.enforcement import FlextUtilitiesEnforcement as ue
 from flext_core.constants import c
 
-from ..._utilities.enforcement import FlextUtilitiesEnforcement as ue
-from ..pydantic import FlextModelsPydantic as mp
-
 if TYPE_CHECKING:
-    from ..._typings.base import FlextTypingBase as t
+    from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextModelsBase:
@@ -39,7 +38,8 @@ class FlextModelsBase:
         """Shared preset for assignment validation with forbidden extra fields."""
 
         model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            validate_assignment=True, extra=c.EXTRA_CONFIG_FORBID
+            validate_assignment=True,
+            extra=c.EXTRA_CONFIG_FORBID,
         )
 
     class EnumManagedModel(ManagedModel):
@@ -56,7 +56,8 @@ class FlextModelsBase:
         """Shared preset for strict managed validation boundaries."""
 
         model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            strict=True, validate_default=True
+            strict=True,
+            validate_default=True,
         )
 
     class StrictModel(StrictManagedModel):
@@ -71,7 +72,7 @@ class FlextModelsBase:
         """Base model with arbitrary types support."""
 
         model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            arbitrary_types_allowed=True
+            arbitrary_types_allowed=True,
         )
 
     class StrictBoundaryModel(FrozenModel):

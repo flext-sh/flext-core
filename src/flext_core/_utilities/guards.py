@@ -13,13 +13,12 @@ from __future__ import annotations
 import operator
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_core import r, t
-
-from .._models.collection_models import FlextModelsCollections
-from .._protocols.result import FlextProtocolsResult as p
-from .guards_type_core import FlextUtilitiesGuardsTypeCore
-from .guards_type_model import FlextUtilitiesGuardsTypeModel
-from .guards_type_protocol import FlextUtilitiesGuardsTypeProtocol
+from flext_core import c, r, t
+from flext_core._models.collection_models import FlextModelsCollections
+from flext_core._protocols.result import FlextProtocolsResult as p
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
+from flext_core._utilities.guards_type_protocol import FlextUtilitiesGuardsTypeProtocol
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping, Sized
@@ -67,8 +66,13 @@ class FlextUtilitiesGuards(
 
     @staticmethod
     def _resolve_numeric(value: t.GuardInput) -> t.Numeric:
-        """Extract numeric value (raw for numbers, len for sized types)."""
-        if isinstance(value, t.NUMERIC_TYPES):
+        """Extract numeric value (raw for numbers, len for sized types).
+
+        Returns:
+            The resulting ``t.Numeric``.
+
+        """
+        if isinstance(value, c.NUMERIC_TYPES):
             return value
         if isinstance(value, (str, bytes, list, tuple, dict, set, frozenset)):
             sized_value: Sized = value
@@ -77,16 +81,27 @@ class FlextUtilitiesGuards(
 
     @staticmethod
     def _check_string_ops(
-        value: str, guard_spec: FlextModelsCollections.GuardCheckSpec
+        value: str,
+        guard_spec: FlextModelsCollections.GuardCheckSpec,
     ) -> bool:
-        """Check string-specific operations (starts, ends, contains)."""
+        """Check string-specific operations (starts, ends, contains).
+
+        Returns:
+            The resulting ``bool``.
+
+        """
         if guard_spec.starts is not None and not value.startswith(guard_spec.starts):
             return False
         return not (guard_spec.ends is not None and not value.endswith(guard_spec.ends))
 
     @staticmethod
     def _check_iterable_contains(value: t.GuardInput, contains: t.GuardInput) -> bool:
-        """Check if iterable value contains the target (strings handled upstream)."""
+        """Check if iterable value contains the target (strings handled upstream).
+
+        Returns:
+            The resulting ``bool``.
+
+        """
         if isinstance(value, str):
             return isinstance(contains, str) and contains in value
         if isinstance(value, bytes):
@@ -101,7 +116,12 @@ class FlextUtilitiesGuards(
         guard_spec: FlextModelsCollections.GuardCheckSpec,
         check_val: t.Numeric,
     ) -> bool:
-        """Apply equality/membership/numeric op dicts against guard_spec."""
+        """Apply equality/membership/numeric op dicts against guard_spec.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
         result = True
         for op_name, check_fn in FlextUtilitiesGuards._EQUALITY_OPS.items():
             spec_val = getattr(guard_spec, op_name, None)
@@ -112,7 +132,8 @@ class FlextUtilitiesGuards(
             for mem_op, mem_fn in FlextUtilitiesGuards._MEMBERSHIP_OPS.items():
                 mem_raw = getattr(guard_spec, mem_op, None)
                 if mem_raw is not None and not mem_fn(
-                    value, t.json_list_adapter().validate_python(mem_raw)
+                    value,
+                    t.json_list_adapter().validate_python(mem_raw),
                 ):
                     result = False
                     break
@@ -127,8 +148,9 @@ class FlextUtilitiesGuards(
                         result = False
                         break
                     continue
-                if isinstance(spec_val_num, t.NUMERIC_TYPES) and not num_fn(
-                    check_val, spec_val_num
+                if isinstance(spec_val_num, c.NUMERIC_TYPES) and not num_fn(
+                    check_val,
+                    spec_val_num,
                 ):
                     result = False
                     break
@@ -140,9 +162,10 @@ class FlextUtilitiesGuards(
                     pass
                 case contains_value:
                     result = FlextUtilitiesGuardsTypeCore.container(
-                        value
+                        value,
                     ) and FlextUtilitiesGuards._check_iterable_contains(
-                        value, contains_value
+                        value,
+                        contains_value,
                     )
         return result
 
@@ -157,7 +180,7 @@ class FlextUtilitiesGuards(
         )
         if criteria:
             criteria_spec = FlextModelsCollections.GuardCheckSpec.model_validate(
-                criteria
+                criteria,
             )
             criteria_update: dict[str, t.GuardInput | None] = {
                 field_name: getattr(criteria_spec, field_name)
@@ -166,7 +189,9 @@ class FlextUtilitiesGuards(
             guard_spec = guard_spec.model_copy(update=criteria_update)
         check_val = FlextUtilitiesGuards._resolve_numeric(value)
         return FlextUtilitiesGuards._check_special_constraints(
-            value, guard_spec, check_val
+            value,
+            guard_spec,
+            check_val,
         ) and FlextUtilitiesGuards._check_spec_ops(value, guard_spec, check_val)
 
     @staticmethod
@@ -175,7 +200,12 @@ class FlextUtilitiesGuards(
         guard_spec: FlextModelsCollections.GuardCheckSpec,
         check_val: t.Numeric,
     ) -> bool:
-        """Validate none/is_/not_/empty constraints independently of op checks."""
+        """Validate none/is_/not_/empty constraints independently of op checks.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
         if guard_spec.none is True and value is not None:
             return False
         if guard_spec.none is False and value is None:
@@ -190,7 +220,12 @@ class FlextUtilitiesGuards(
 
     @staticmethod
     def _to_container_or_str(value: t.JsonPayload) -> t.JsonValue:
-        """Normalize a value to Container: pass through if already, else str()."""
+        """Normalize a value to Container: pass through if already, else str().
+
+        Returns:
+            The resulting ``t.JsonValue``.
+
+        """
         return value if FlextUtilitiesGuards.container(value) else str(value)
 
     @staticmethod
@@ -198,7 +233,12 @@ class FlextUtilitiesGuards(
         value: t.JsonValue,
         validator: Callable[[t.JsonValue], bool] | type | t.VariadicTuple[type] | None,
     ) -> bool:
-        """Evaluate validator against value. Returns True if guard passes."""
+        """Evaluate validator against value. Returns True if guard passes.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
         if isinstance(validator, type):
             return isinstance(value, validator)
         if isinstance(validator, tuple):

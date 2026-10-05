@@ -1,10 +1,16 @@
+"""Guards type protocol string module.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ._guards_type_protocol_types import ProtocolGuardInput
+    from flext_core._utilities._guards_type_protocol_types import ProtocolGuardInput
 
 
 class FlextUtilitiesGuardsTypeProtocolStringMixin:
@@ -27,11 +33,13 @@ class FlextUtilitiesGuardsTypeProtocolStringMixin:
                 return isinstance(value, (list, tuple))
             case "sequence_not_str":
                 return isinstance(value, (list, tuple, range)) and not isinstance(
-                    value, str
+                    value,
+                    str,
                 )
             case "sequence_not_str_bytes":
                 return isinstance(value, (list, tuple, range)) and not isinstance(
-                    value, (str, bytes)
+                    value,
+                    (str, bytes),
                 )
             case "sized":
                 return hasattr(value, "__len__")

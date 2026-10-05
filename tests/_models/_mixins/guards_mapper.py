@@ -1,4 +1,8 @@
-"""Guard mapper and event model helpers."""
+"""Guard mapper and event model helpers.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -40,7 +44,12 @@ class TestsFlextModelsGuardsMapperMixin:
 
         @override
         def items(self) -> ItemsView[str, t.JsonValue]:
-            """Items method."""
+            """Items method.
+
+            Raises:
+                RuntimeError: If bad items.
+
+            """
             msg = "bad items"
             raise RuntimeError(msg)
 
@@ -52,7 +61,8 @@ class TestsFlextModelsGuardsMapperMixin:
         user_id: Annotated[str, m.Field(description="Identifier of the created user.")]
         user_name: Annotated[str, m.Field(description="Name assigned to the new user.")]
         timestamp: Annotated[
-            float, m.Field(description="POSIX timestamp when the event fired.")
+            float,
+            m.Field(description="POSIX timestamp when the event fired."),
         ]
 
 

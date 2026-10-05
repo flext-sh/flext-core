@@ -1,4 +1,8 @@
-"""Deprecated syntax detection via bytecode + module introspection."""
+"""Deprecated syntax detection via bytecode + module introspection.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -6,39 +10,35 @@ import inspect
 from pathlib import Path
 from typing import TypeAlias
 
-from ..._constants.enforcement import FlextConstantsEnforcement as c
-from ..._constants.regex import FlextConstantsRegex as cre
-from ..._models.enforcement import FlextModelsEnforcement as me
-from ..._typings.base import FlextTypingBase as t
-from .helpers import FlextUtilitiesBeartypeHelpers as _ubh
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._constants.regex import FlextConstantsRegex as cre
+from flext_core._models.enforcement import FlextModelsEnforcement as me
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._utilities._beartype.helpers import (
+    FlextUtilitiesBeartypeHelpers as _ubh,
+)
 
 _NO_VIOLATION: t.StrMapping | None = None
 _TYPING_TYPE_ALIAS = TypeAlias  # sentinel for ``X: TypeAlias = Y`` annotation match.
 
 
 class FlextUtilitiesBeartypeDeprecatedVisitor:
-    """DEPRECATED_SYNTAX + WRAPPER visitors via bytecode introspection."""
-
-    @staticmethod
-    def v_wrapper(_params: me.WrapperParams, target: type) -> t.StrMapping | None:
-        """Detect pass-through wrappers via bytecode (ENFORCE-043)."""
-        module = _ubh.runtime_module_for(target)
-        if module is None:
-            return _NO_VIOLATION
-        src_file = _ubh.module_filename_for(module) or ""
-        for fn in _ubh.iter_module_callables(module):
-            param_names = _ubh.function_param_names(fn)
-            if not param_names:
-                continue
-            if _ubh.is_pass_through_bytecode(fn, param_names):
-                return {"name": fn.__name__, "file": Path(src_file).name}
-        return _NO_VIOLATION
+    """DEPRECATED_SYNTAX visitor via runtime introspection."""
 
     @staticmethod
     def v_deprecated_syntax(
-        params: me.DeprecatedSyntaxParams, target: type
+        params: me.DeprecatedSyntaxParams,
+        target: type,
     ) -> t.StrMapping | None:
-        """DEPRECATED_SYNTAX — runtime introspection routed by ``params.ast_shape``."""
+        """DEPRECATED_SYNTAX — runtime introspection routed by ``params.ast_shape``.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+
+        Raises:
+            ValueError: If unknown deprecated-syntax shape.
+
+        """
         shape = params.ast_shape
         module = _ubh.runtime_module_for(target)
         if module is None:
@@ -52,7 +52,8 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                     has_type_alias = any(
                         annotation is _TYPING_TYPE_ALIAS
                         for annotation in inspect.get_annotations(
-                            module, eval_str=False
+                            module,
+                            eval_str=False,
                         ).values()
                     )
                 except (TypeError, NameError):
@@ -72,32 +73,11 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                         ),
                         _NO_VIOLATION,
                     )
-            case "model_rebuild_call":
-                attr = c.EnforceAstHookSymbol.MODEL_REBUILD_ATTR.value
-                violation = next(
-                    (
-                        {"file": file_name, "line": str(fn.__code__.co_firstlineno)}
-                        for fn in _ubh.iter_module_callables(module)
-                        if _ubh.has_attribute_call(fn, attr) is not None
-                    ),
-                    _NO_VIOLATION,
-                )
-            case "private_attr_probe":
-                probes = c.ENFORCE_PRIVATE_PROBE_BUILTINS
-                violation = next(
-                    (
-                        {"probe": builtin, "name": attr, "file": file_name}
-                        for fn in _ubh.iter_module_callables(module)
-                        if (hit := _ubh.has_private_attr_probe(fn, probes)) is not None
-                        for builtin, attr in (hit,)
-                    ),
-                    _NO_VIOLATION,
-                )
             case "no_core_tests_namespace":
                 wrapper_module = _ubh.runtime_wrapper_module_for(target)
                 if wrapper_module is not None:
                     wrapper_file_name = Path(
-                        _ubh.module_filename_for(wrapper_module) or ""
+                        _ubh.module_filename_for(wrapper_module) or "",
                     ).name
                     violation = next(
                         (
@@ -107,7 +87,7 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                                 "line": "<runtime>",
                             }
                             for alias_name in _ubh.runtime_alias_names(
-                                wrapper_module.__name__.split(".", 1)[0]
+                                wrapper_module.__name__.split(".", 1)[0],
                             )
                             if (
                                 alias_value := getattr(wrapper_module, alias_name, None)
@@ -122,24 +102,26 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                 wrapper_module = _ubh.runtime_wrapper_module_for(target)
                 if wrapper_module is not None:
                     wrapper_file_name = Path(
-                        _ubh.module_filename_for(wrapper_module) or ""
+                        _ubh.module_filename_for(wrapper_module) or "",
                     ).name
                     package_name = wrapper_module.__name__.split(".", 1)[0]
                     wrapper_submodules = _ubh.facade_module_names(package_name)
                     violation = _NO_VIOLATION
-                    try:
-                        source = Path(
-                            _ubh.module_filename_for(wrapper_module) or ""
-                        ).read_text(encoding="utf-8")
-                    except OSError:
-                        source = ""
+                    # A module without a source file has no text to scan; a
+                    # declared source that cannot be read raises.
+                    wrapper_file = _ubh.module_filename_for(wrapper_module)
+                    source = (
+                        Path(wrapper_file).read_text(encoding="utf-8")
+                        if wrapper_file is not None
+                        else ""
+                    )
                     if source:
                         violation = next(
                             (
                                 {
                                     "file": wrapper_file_name,
                                     "line": str(
-                                        source.count("\n", 0, match.start()) + 1
+                                        source.count("\n", 0, match.start()) + 1,
                                     ),
                                     "statement": (
                                         f"from {match.group(1)}.{match.group(2)} "
@@ -147,7 +129,7 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                                     ),
                                 }
                                 for match in cre.FORBIDDEN_FACADE_IMPORT_RE.finditer(
-                                    source
+                                    source,
                                 )
                                 for first_alias in (
                                     [
@@ -170,7 +152,9 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                                 for alias_name in _ubh.runtime_alias_names(package_name)
                                 if (
                                     alias_value := getattr(
-                                        wrapper_module, alias_name, None
+                                        wrapper_module,
+                                        alias_name,
+                                        None,
                                     )
                                 )
                                 is not None
@@ -185,5 +169,6 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                             _NO_VIOLATION,
                         )
             case _:
-                pass
+                msg = f"unknown deprecated-syntax shape {shape!r}"
+                raise ValueError(msg)
         return violation

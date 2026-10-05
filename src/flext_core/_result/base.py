@@ -12,11 +12,10 @@ from typing import TypeVar, cast
 from pydantic import BaseModel, PrivateAttr
 
 from flext_core import c
-
-from .._protocols.result import FlextProtocolsResult as prt
-from .._typings.base import FlextTypingBase as t
-from .._typings.pydantic import FlextTypesPydantic as tp
-from .._typings.services import FlextTypesServices as ts
+from flext_core._protocols.result import FlextProtocolsResult as prt
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.pydantic import FlextTypesPydantic as tp
+from flext_core._typings.services import FlextTypesServices as ts
 
 type JsonMapping = Mapping[str, tp.JsonValue]
 type JsonDict = dict[str, tp.JsonValue]
@@ -41,7 +40,13 @@ class FlextResultBase[T](BaseModel):
 
     @classmethod
     def reject_banned_result_parameterization(cls) -> None:
-        """Reject ``FlextResult[None]`` and ``FlextResult[object]`` specializations."""
+        """Reject ``FlextResult[None]`` and ``FlextResult[object]`` specializations.
+
+        Raises:
+            ValueError: If ``arg0 is None or arg0 is type(None)``; or if ``arg0 is
+                object``.
+
+        """
         meta = getattr(cls, "__pydantic_generic_metadata__", None)
         if not isinstance(meta, dict):
             return
@@ -56,7 +61,12 @@ class FlextResultBase[T](BaseModel):
 
     @staticmethod
     def reject_banned_success_payload(value: object) -> None:
-        """Reject ``None`` and bare ``object()`` as success payloads."""
+        """Reject ``None`` and bare ``object()`` as success payloads.
+
+        Raises:
+            ValueError: If ``value is None``; or if ``type(value) is object``.
+
+        """
         if value is None:
             raise ValueError(c.ERR_RESULT_SUCCESS_PAYLOAD_CANNOT_BE_NONE)
         if type(value) is object:
@@ -66,7 +76,7 @@ class FlextResultBase[T](BaseModel):
     def validate_error_data(
         error_data: t.JsonMapping | ts.ConfigModelInput | None,
     ) -> JsonDict | None:
-        from .._runtime._metadata import FlextRuntimeMetadata as FlextRuntime
+        from flext_core._runtime._metadata import FlextRuntimeMetadata as FlextRuntime
 
         normalized = FlextRuntime.normalize_model_input_mapping(error_data)
         if normalized is None:

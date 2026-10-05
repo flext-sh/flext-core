@@ -13,11 +13,10 @@ from __future__ import annotations
 from typing import Annotated
 
 from flext_core import t
-
-from .._utilities.collection import FlextUtilitiesCollection as u
-from .base import FlextModelsBase as m
-from .containers import FlextModelsContainers
-from .pydantic import FlextModelsPydantic as mp
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.containers import FlextModelsContainers
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._utilities.collection import FlextUtilitiesCollection as u
 
 
 class FlextModelsDomainEvent:
@@ -27,7 +26,7 @@ class FlextModelsDomainEvent:
     Split into its own module so Entity can import without forward references.
     """
 
-    class Entry(m.IdentifiableMixin, m.TimestampedModel):
+    class DomainEvent(m.IdentifiableMixin, m.TimestampedModel):
         """Base class for domain events."""
 
         message_type: str = mp.Field(
@@ -39,13 +38,13 @@ class FlextModelsDomainEvent:
         event_type: Annotated[
             t.NonEmptyStr,
             mp.Field(
-                description="Domain event type identifier for subscriber routing."
+                description="Domain event type identifier for subscriber routing.",
             ),
         ]
         aggregate_id: Annotated[
             t.NonEmptyStr,
             mp.Field(
-                description="Identifier of the aggregate root that produced this event."
+                description="Identifier of the aggregate root that produced this event.",
             ),
         ]
         data: Annotated[
@@ -56,8 +55,6 @@ class FlextModelsDomainEvent:
             description="Event data container",
             default_factory=lambda: FlextModelsContainers.ConfigMap(root={}),
         )
-
-    DomainEvent = Entry
 
 
 __all__: t.MutableSequenceOf[str] = ["FlextModelsDomainEvent"]

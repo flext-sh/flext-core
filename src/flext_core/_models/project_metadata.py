@@ -14,34 +14,34 @@ from typing import Annotated
 
 from pydantic import Field
 
-from ._project_metadata_parts.flextmodelsprojectmetadata_part_01 import (
-    PyprojectIngressContract,
+from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_03 import (
+    FlextModelsProjectMetadataAggregates,
 )
-from ._project_metadata_parts.flextmodelsprojectmetadata_part_03 import (
-    ProjectMetadataAggregates,
+from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_04 import (
+    FlextModelsProjectMetadataDocument,
 )
-from ._project_metadata_parts.flextmodelsprojectmetadata_part_04 import (
-    ProjectMetadataDocument,
+from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_05 import (
+    FlextModelsPyprojectIngressContract,
 )
 
 
-class FlextModelsProjectMetadata(ProjectMetadataDocument):
+class FlextModelsProjectMetadata(FlextModelsProjectMetadataDocument):
     """Public project metadata model facade."""
 
-    class PyprojectDocument(PyprojectIngressContract):
+    class PyprojectDocument(FlextModelsPyprojectIngressContract):
         """Complete validated project document ingress."""
 
         project: Annotated[
-            ProjectMetadataAggregates.Project | None,
+            FlextModelsProjectMetadataAggregates.Project | None,
             Field(default=None, description="Optional PEP 621 project table"),
         ] = None
         tool: Annotated[
-            ProjectMetadataDocument.PyprojectTool,
+            FlextModelsProjectMetadataDocument.PyprojectTool,
             Field(
-                default_factory=ProjectMetadataDocument.PyprojectTool,
+                default_factory=FlextModelsProjectMetadataDocument.PyprojectTool,
                 description="Owned tool tables",
             ),
-        ] = Field(default_factory=ProjectMetadataDocument.PyprojectTool)
+        ] = Field(default_factory=FlextModelsProjectMetadataDocument.PyprojectTool)
 
 
 __all__: list[str] = ["FlextModelsProjectMetadata"]

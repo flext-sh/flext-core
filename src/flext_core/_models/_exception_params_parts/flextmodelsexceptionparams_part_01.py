@@ -13,10 +13,9 @@ from __future__ import annotations
 from typing import Annotated, ClassVar
 
 from flext_core import c, t
-
-from ..._typings.pydantic import FlextTypesPydantic as tp
-from ..base import FlextModelsBase as m
-from ..pydantic import FlextModelsPydantic as mp
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._typings.pydantic import FlextTypesPydantic as tp
 
 
 class FlextModelsExceptionParams:
@@ -76,7 +75,7 @@ class FlextModelsExceptionParams:
         resource_id: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
             mp.Field(
-                description="Identifier of the resource associated with the failure."
+                description="Identifier of the resource associated with the failure.",
             ),
         ] = None
 
@@ -144,7 +143,8 @@ class FlextModelsExceptionParams:
         timeout: Annotated[
             t.Numeric | None,
             mp.Field(
-                default=None, description="Connection timeout threshold in seconds."
+                default=None,
+                description="Connection timeout threshold in seconds.",
             ),
         ] = None
 

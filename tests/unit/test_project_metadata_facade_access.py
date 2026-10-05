@@ -31,6 +31,7 @@ class TestsFlextFacadeFlatSsotAccess:
     this symbol by name and are out of edit scope.)
     """
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("project_name", "expected_stem"),
         [
@@ -41,20 +42,28 @@ class TestsFlextFacadeFlatSsotAccess:
         ],
     )
     def test_derive_class_stem_pascalizes_unlisted_names(
-        self, project_name: str, expected_stem: str
+        project_name: str,
+        expected_stem: str,
     ) -> None:
+        """Test derive class stem pascalizes unlisted names."""
         assert u.derive_class_stem(project_name) == expected_stem
 
+    @staticmethod
     @pytest.mark.parametrize(
-        ("project_name", "declared_stem"), c.SPECIAL_NAME_OVERRIDES
+        ("project_name", "declared_stem"),
+        c.SPECIAL_NAME_OVERRIDES,
     )
     def test_derive_class_stem_honours_declared_overrides_case_insensitively(
-        self, project_name: str, declared_stem: str
+        project_name: str,
+        declared_stem: str,
     ) -> None:
+        """Test derive class stem honours declared overrides case insensitively."""
         assert u.derive_class_stem(project_name) == declared_stem
         assert u.derive_class_stem(project_name.upper()) == declared_stem
 
-    def test_derive_class_stem_returns_empty_for_empty_name(self) -> None:
+    @staticmethod
+    def test_derive_class_stem_returns_empty_for_empty_name() -> None:
+        """Test derive class stem returns empty for empty name."""
         assert u.derive_class_stem("") == ""
 
     @staticmethod
@@ -70,8 +79,10 @@ class TestsFlextFacadeFlatSsotAccess:
         return m.ProjectMetadata.model_validate(payload)
 
     def test_project_metadata_exposes_declared_field_values(
-        self, tmp_path: Path
+        self,
+        tmp_path: Path,
     ) -> None:
+        """Test project metadata exposes declared field values."""
         metadata = self._metadata(tmp_path)
 
         assert metadata.package_name == "flext_ldif"
@@ -80,12 +91,15 @@ class TestsFlextFacadeFlatSsotAccess:
         assert metadata.project.version == "1.2.3"
 
     def test_project_metadata_is_immutable(self, tmp_path: Path) -> None:
+        """Test project metadata is immutable."""
         metadata = self._metadata(tmp_path)
 
         with pytest.raises(m.ValidationError):
             metadata.package_name = "other"
 
-    def test_project_metadata_rejects_unknown_field(self, tmp_path: Path) -> None:
+    @staticmethod
+    def test_project_metadata_rejects_unknown_field(tmp_path: Path) -> None:
+        """Test project metadata rejects unknown field."""
         with pytest.raises(m.ValidationError):
             m.ProjectMetadata.model_validate({
                 "root": tmp_path,
@@ -97,15 +111,19 @@ class TestsFlextFacadeFlatSsotAccess:
             })
 
     def test_project_metadata_model_dump_exposes_public_fields(
-        self, tmp_path: Path
+        self,
+        tmp_path: Path,
     ) -> None:
+        """Test project metadata model dump exposes public fields."""
         dumped = self._metadata(tmp_path).model_dump()
 
         assert dumped["package_name"] == "flext_ldif"
         assert dumped["class_stem"] == "FlextLdif"
         assert dumped["project"]["name"] == "flext-ldif"
 
-    def test_tool_flext_root_builds_default_subtables(self) -> None:
+    @staticmethod
+    def test_tool_flext_root_builds_default_subtables() -> None:
+        """Test tool flext root builds default subtables."""
         tool = m.ProjectToolFlext()
 
         assert tool.project is not None

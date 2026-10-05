@@ -3,6 +3,9 @@
 Exercises only the public contract of ``h.Discovery``:
 ``scan_class`` (discover + sort decorated methods) and ``has_handlers``
 (presence probe). No private attributes or internal collaborators are touched.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -21,8 +24,11 @@ if TYPE_CHECKING:
 class TestsFlextCoreHandlerDiscoveryClass:
     """Public-contract tests for handler auto-discovery on classes."""
 
-    def test_scan_class_discovers_every_decorated_method(self) -> None:
+    @staticmethod
+    def test_scan_class_discovers_every_decorated_method() -> None:
         # Arrange
+        """Test scan class discovers every decorated method."""
+
         class CreateCommand(m.BaseModel):
             pass
 
@@ -33,22 +39,26 @@ class TestsFlextCoreHandlerDiscoveryClass:
             pass
 
         class Service:
+            @staticmethod
             @h.handler(command=CreateCommand, priority=100)
-            def handle_create(self, cmd: CreateCommand) -> p.Result[str]:
+            def handle_create(cmd: CreateCommand) -> p.Result[str]:
                 _ = cmd
                 return r[str].ok("create")
 
+            @staticmethod
             @h.handler(command=DeleteCommand, priority=50)
-            def handle_delete(self, cmd: DeleteCommand) -> p.Result[str]:
+            def handle_delete(cmd: DeleteCommand) -> p.Result[str]:
                 _ = cmd
                 return r[str].ok("delete")
 
+            @staticmethod
             @h.handler(command=QueryCommand, priority=10)
-            def handle_query(self, cmd: QueryCommand) -> p.Result[str]:
+            def handle_query(cmd: QueryCommand) -> p.Result[str]:
                 _ = cmd
                 return r[str].ok("query")
 
-            def non_handler_method(self) -> str:
+            @staticmethod
+            def non_handler_method() -> str:
                 return "non_handler"
 
         # Act
@@ -60,8 +70,11 @@ class TestsFlextCoreHandlerDiscoveryClass:
         tm.that(discovered, eq={"handle_create", "handle_delete", "handle_query"})
         tm.that("non_handler_method" in discovered, eq=False)
 
-    def test_scan_class_orders_handlers_by_priority_descending(self) -> None:
+    @staticmethod
+    def test_scan_class_orders_handlers_by_priority_descending() -> None:
         # Arrange
+        """Test scan class orders handlers by priority descending."""
+
         class LowCommand(m.BaseModel):
             pass
 
@@ -72,18 +85,21 @@ class TestsFlextCoreHandlerDiscoveryClass:
             pass
 
         class Service:
+            @staticmethod
             @h.handler(command=LowCommand, priority=10)
-            def handle_low(self, cmd: LowCommand) -> p.Result[str]:
+            def handle_low(cmd: LowCommand) -> p.Result[str]:
                 _ = cmd
                 return r[str].ok("low")
 
+            @staticmethod
             @h.handler(command=HighCommand, priority=100)
-            def handle_high(self, cmd: HighCommand) -> p.Result[str]:
+            def handle_high(cmd: HighCommand) -> p.Result[str]:
                 _ = cmd
                 return r[str].ok("high")
 
+            @staticmethod
             @h.handler(command=MidCommand, priority=50)
-            def handle_mid(self, cmd: MidCommand) -> p.Result[str]:
+            def handle_mid(cmd: MidCommand) -> p.Result[str]:
                 _ = cmd
                 return r[str].ok("mid")
 
@@ -97,14 +113,18 @@ class TestsFlextCoreHandlerDiscoveryClass:
         tm.that(ordered_names, eq=["handle_high", "handle_mid", "handle_low"])
         tm.that(ordered_priorities, eq=[100, 50, 10])
 
-    def test_scan_class_binds_config_command_and_priority(self) -> None:
+    @staticmethod
+    def test_scan_class_binds_config_command_and_priority() -> None:
         # Arrange
+        """Test scan class binds config command and priority."""
+
         class EventPublished(m.BaseModel):
             event_id: str
 
         class OrderService:
+            @staticmethod
             @h.handler(command=EventPublished, priority=25)
-            def handle_event(self, event: EventPublished) -> p.Result[str]:
+            def handle_event(event: EventPublished) -> p.Result[str]:
                 return r[str].ok(f"processed_{event.event_id}")
 
         # Act
@@ -120,14 +140,18 @@ class TestsFlextCoreHandlerDiscoveryClass:
         assert outcome.success is True
         assert outcome.unwrap() == "processed_e7"
 
-    def test_scan_class_uses_default_priority_when_unspecified(self) -> None:
+    @staticmethod
+    def test_scan_class_uses_default_priority_when_unspecified() -> None:
         # Arrange
+        """Test scan class uses default priority when unspecified."""
+
         class PlainCommand(m.BaseModel):
             pass
 
         class Service:
+            @staticmethod
             @h.handler(command=PlainCommand)
-            def handle(self, cmd: PlainCommand) -> p.Result[str]:
+            def handle(cmd: PlainCommand) -> p.Result[str]:
                 _ = cmd
                 return r[str].ok("done")
 
@@ -138,10 +162,14 @@ class TestsFlextCoreHandlerDiscoveryClass:
         tm.that(settings.command is PlainCommand, eq=True)
         tm.that(settings.priority, eq=m.DecoratorConfig(command=PlainCommand).priority)
 
-    def test_scan_class_returns_empty_for_class_without_handlers(self) -> None:
+    @staticmethod
+    def test_scan_class_returns_empty_for_class_without_handlers() -> None:
         # Arrange
+        """Test scan class returns empty for class without handlers."""
+
         class ServiceWithoutHandlers:
-            def process(self) -> str:
+            @staticmethod
+            def process() -> str:
                 return "ok"
 
         # Act
@@ -152,21 +180,27 @@ class TestsFlextCoreHandlerDiscoveryClass:
         tm.that(bool(handlers), eq=False)
 
     @pytest.mark.parametrize("expected_present", [True, False])
+    @staticmethod
     def test_has_handlers_reflects_presence_of_decorated_methods(
-        self, *, expected_present: bool
+        *,
+        expected_present: bool,
     ) -> None:
         # Arrange
+        """Test has handlers reflects presence of decorated methods."""
+
         class Command(m.BaseModel):
             pass
 
         class ServiceWithHandler:
+            @staticmethod
             @h.handler(command=Command)
-            def handle(self, cmd: Command) -> p.Result[str]:
+            def handle(cmd: Command) -> p.Result[str]:
                 _ = cmd
                 return r[str].ok("ok")
 
         class ServiceWithoutHandler:
-            def process(self) -> str:
+            @staticmethod
+            def process() -> str:
                 return "ok"
 
         target = ServiceWithHandler if expected_present else ServiceWithoutHandler
@@ -177,8 +211,11 @@ class TestsFlextCoreHandlerDiscoveryClass:
         # Assert
         tm.that(result, eq=expected_present)
 
-    def test_scan_class_includes_inherited_handlers(self) -> None:
+    @staticmethod
+    def test_scan_class_includes_inherited_handlers() -> None:
         # Arrange
+        """Test scan class includes inherited handlers."""
+
         class CreateCommand(m.BaseModel):
             pass
 
@@ -186,14 +223,16 @@ class TestsFlextCoreHandlerDiscoveryClass:
             pass
 
         class BaseService:
+            @staticmethod
             @h.handler(command=CreateCommand, priority=10)
-            def handle_create(self, cmd: CreateCommand) -> p.Result[str]:
+            def handle_create(cmd: CreateCommand) -> p.Result[str]:
                 _ = cmd
                 return r[str].ok("created")
 
         class DerivedService(BaseService):
+            @staticmethod
             @h.handler(command=DeleteCommand, priority=5)
-            def handle_delete(self, cmd: DeleteCommand) -> p.Result[str]:
+            def handle_delete(cmd: DeleteCommand) -> p.Result[str]:
                 _ = cmd
                 return r[str].ok("deleted")
 
@@ -205,8 +244,11 @@ class TestsFlextCoreHandlerDiscoveryClass:
         tm.that(names, eq=["handle_create", "handle_delete"])
         tm.that(h.Discovery.has_handlers(DerivedService), eq=True)
 
-    def test_scan_class_is_idempotent(self) -> None:
+    @staticmethod
+    def test_scan_class_is_idempotent() -> None:
         # Arrange
+        """Test scan class is idempotent."""
+
         class CommandA(m.BaseModel):
             pass
 
@@ -214,13 +256,15 @@ class TestsFlextCoreHandlerDiscoveryClass:
             pass
 
         class Service:
+            @staticmethod
             @h.handler(command=CommandA, priority=2)
-            def handle_a(self, cmd: CommandA) -> p.Result[str]:
+            def handle_a(cmd: CommandA) -> p.Result[str]:
                 _ = cmd
                 return r[str].ok("a")
 
+            @staticmethod
             @h.handler(command=CommandB, priority=1)
-            def handle_b(self, cmd: CommandB) -> p.Result[str]:
+            def handle_b(cmd: CommandB) -> p.Result[str]:
                 _ = cmd
                 return r[str].ok("b")
 

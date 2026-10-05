@@ -18,6 +18,9 @@ public runtime override) and warn-mode claw activation is a deliberately
 disabled path (blocked upstream in beartype, per the src constant docstring).
 It is only reachable by importing a private module first to trigger a load-order
 side effect, which is exactly the implementation coupling these tests remove.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -29,18 +32,18 @@ import pytest
 from beartype import BeartypeConf, BeartypeStrategy
 
 import flext_core
-
-from ._beartype_engine_support import TestsFlextBeartypeEngine
+import tests.utilities
 
 _FLEXT_CORE_ROOT: Path = Path(__file__).resolve().parents[2]
 
 
-class TestsFlextCoreBeartypeEngineRuntime(TestsFlextBeartypeEngine):
+class TestsFlextCoreBeartypeEngineRuntime(
+    tests.utilities.TestsFlextUtilities.TestsFlextBeartypeEngine,
+):
     """Observable contract of flext_core's beartype.claw runtime activation."""
 
-    def test_build_beartype_conf_returns_non_checking_conf_for_shipped_mode(
-        self,
-    ) -> None:
+    @staticmethod
+    def test_build_beartype_conf_returns_non_checking_conf_for_shipped_mode() -> None:
         """The public factory reflects the shipped OFF beartype mode.
 
         The shipped ``BEARTYPE_MODE`` is ``off``; the documented contract of the
@@ -66,7 +69,9 @@ class TestsFlextCoreBeartypeEngineRuntime(TestsFlextBeartypeEngine):
         ],
     )
     def test_default_import_does_not_intercept_wrongly_typed_public_call(
-        self, arg_literal: str, expected_exc: str
+        self,
+        arg_literal: str,
+        expected_exc: str,
     ) -> None:
         """A default ``import flext_core`` adds no runtime type enforcement.
 
@@ -92,7 +97,7 @@ class TestsFlextCoreBeartypeEngineRuntime(TestsFlextBeartypeEngine):
                     except (AttributeError, ValueError) as exc:
                         print("runtime_exc", type(exc).__name__)
                     print("warning_count", len(caught))
-                """
+                """,
             ),
             cwd=_FLEXT_CORE_ROOT,
         )
@@ -132,7 +137,7 @@ class TestsFlextCoreBeartypeEngineRuntime(TestsFlextBeartypeEngine):
                 import flext_core
 
                 print("unexpected_success", hasattr(flext_core, "u"))
-                """
+                """,
             ),
             cwd=_FLEXT_CORE_ROOT,
         )

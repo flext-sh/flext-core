@@ -3,7 +3,7 @@
 <!-- TOC START -->
 
 - [Current Status](#current-status)
-- [Audit Check: map + flat_map](#audit-check-map-flat_map)
+- [Audit Check: map + flat\_map](#audit-check-map-flat_map)
 - [Audit Check: recover](#audit-check-recover)
 
 <!-- TOC END -->
@@ -26,14 +26,24 @@ expected_value = 6
 
 
 def ensure_even(value: int) -> p.Result[int]:
+    """Reject odd values, passing even ones through.
+
+    Returns:
+        The resulting ``p.Result[int]``.
+
+    """
     if value % even_divisor:
         return r[int].fail("not_even")
     return r[int].ok(value)
 
 
 result = r[int].ok(starting_value).map(lambda n: n + increment).flat_map(ensure_even)
-assert result.success
-assert result.value == expected_value
+if not result.success:
+    message = "Expected even pipeline success"
+    raise RuntimeError(message)
+if result.value != expected_value:
+    message = "Unexpected pipeline value"
+    raise RuntimeError(message)
 ```
 
 ## Audit Check: recover
@@ -42,6 +52,11 @@ assert result.value == expected_value
 from flext_core import r
 
 fallback = r[int].fail("missing").recover(lambda _err: 1)
-assert fallback.success
-assert fallback.value == 1
+expected_fallback = 1
+if not fallback.success:
+    message = "Expected recovery success"
+    raise RuntimeError(message)
+if fallback.value != expected_fallback:
+    message = "Unexpected recovery value"
+    raise RuntimeError(message)
 ```

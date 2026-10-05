@@ -49,13 +49,25 @@ from flext_core import p, r
 
 
 def validate_payload(payload: dict[str, str]) -> p.Result[dict[str, str]]:
+    """Require the email key before accepting a payload.
+
+    Returns:
+        The resulting ``p.Result[dict[str, str]]``.
+
+    """
     if "email" not in payload:
         return r[dict[str, str]].fail("missing_email")
     return r[dict[str, str]].ok(payload)
 
 
-assert validate_payload({"email": "a@b.com"}).success
-assert validate_payload({}).failure
+valid_payload = validate_payload({"email": "a@b.com"})
+empty_payload = validate_payload({})
+if not valid_payload.success:
+    message = "Expected complete payload success"
+    raise RuntimeError(message)
+if not empty_payload.failure:
+    message = "Expected incomplete payload failure"
+    raise RuntimeError(message)
 ```
 
 ### Prefer Current Settings API
@@ -66,7 +78,9 @@ from flext_core import FlextSettings
 settings = FlextSettings.fetch_global()
 data = settings.model_dump()
 
-assert isinstance(data, dict)
+if not isinstance(data, dict):
+    message = "Expected dict settings snapshot"
+    raise TypeError(message)
 ```
 
 ### Prefer Explicit Container Registration
@@ -78,8 +92,13 @@ container = FlextContainer()
 _ = container.bind("service", "ready")
 
 service = container.resolve("service")
-assert service.success
-assert service.value == "ready"
+expected_service = "ready"
+if not service.success:
+    message = "Expected bound service resolution success"
+    raise RuntimeError(message)
+if service.value != expected_service:
+    message = "Unexpected resolved service value"
+    raise RuntimeError(message)
 ```
 
 ### Reuse Maintainer Examples
@@ -95,6 +114,11 @@ stream = io.StringIO()
 with redirect_stdout(stream):
     Ex03FlextLogger().run()
 result = Ex04DispatchDsl.run()
-assert result.success
-assert result.value == "pong:dispatcher-example"
+expected_value = "pong:dispatcher-example"
+if not result.success:
+    message = "Expected dispatcher success"
+    raise RuntimeError(message)
+if result.value != expected_value:
+    message = "Unexpected dispatcher value"
+    raise RuntimeError(message)
 ```

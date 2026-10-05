@@ -1,13 +1,19 @@
-"""Evaluate aliases after classifying source-proven static-only dependencies."""
+"""Evaluate aliases after classifying source-proven static-only dependencies.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from types import ModuleType
 from typing import Annotated, TypeAliasType, get_args, get_origin
 
-from ..._models.enforcement import FlextModelsEnforcement as me
-from ..._protocols.base import FlextProtocolsBase as p
-from .module_source import FlextUtilitiesBeartypeModuleSource
+from flext_core._models.enforcement import FlextModelsEnforcement as me
+from flext_core._protocols.base import FlextProtocolsBase as p
+from flext_core._utilities._beartype.module_source import (
+    FlextUtilitiesBeartypeModuleSource,
+)
 
 
 class FlextUtilitiesBeartypeTypeAliases:
@@ -15,7 +21,9 @@ class FlextUtilitiesBeartypeTypeAliases:
 
     @staticmethod
     def resolve(
-        alias: TypeAliasType, *, owner: ModuleType | type | None = None
+        alias: TypeAliasType,
+        *,
+        owner: ModuleType | type | None = None,
     ) -> me.ResolvedAlias | me.DeferredAlias:
         if owner is not None:
             deferred = FlextUtilitiesBeartypeModuleSource.deferred(alias, owner=owner)
@@ -34,7 +42,12 @@ class FlextUtilitiesBeartypeTypeAliases:
         owner: ModuleType | type | None = None,
         seen: set[int] | None = None,
     ) -> tuple[me.DeferredAlias, ...]:
-        """Collect only aliases the requesting predicate actually evaluates."""
+        """Collect only aliases the requesting predicate actually evaluates.
+
+        Returns:
+            The resulting ``tuple[me.DeferredAlias, ...]``.
+
+        """
         visited = set() if seen is None else seen
         if id(hint) in visited:
             return ()
@@ -71,6 +84,9 @@ class FlextUtilitiesBeartypeTypeAliases:
             deferred
             for child in args
             for deferred in cls.deferred(
-                child, recursive=True, owner=owner, seen=visited
+                child,
+                recursive=True,
+                owner=owner,
+                seen=visited,
             )
         )

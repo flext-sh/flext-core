@@ -1,4 +1,8 @@
-"""Service base for flext-core tests."""
+"""Service base for flext-core tests.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -6,14 +10,14 @@ from typing import TYPE_CHECKING, override
 
 from flext_tests import FlextTestsServiceBase as _FlextTestsServiceBase
 
-from . import c
+from tests import c
 
 if TYPE_CHECKING:
-    from . import p
+    from tests import p
 
 
 class TestsFlextServiceBase[TDomainResult: p.Base = p.Base](
-    _FlextTestsServiceBase[TDomainResult]
+    _FlextTestsServiceBase[TDomainResult],
 ):
     """Project-local test service base with flext-core result typing."""
 
