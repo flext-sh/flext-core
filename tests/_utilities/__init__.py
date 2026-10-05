@@ -10,7 +10,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core import build_lazy_import_map, install_lazy_exports
+from flext_core import install_lazy_exports
 
 if TYPE_CHECKING:
     from tests._utilities.case_factories import TestsFlextUtilitiesCaseFactoriesMixin, u
@@ -87,36 +87,32 @@ __all__: tuple[str, ...] = (
     "u",
 )
 
-_LAZY_IMPORTS = MappingProxyType(
-    build_lazy_import_map(
-        MappingProxyType({
-            ".case_factories": ("TestsFlextUtilitiesCaseFactoriesMixin", "u"),
-            ".case_generators": ("TestsFlextUtilitiesCaseGeneratorsMixin",),
-            ".case_service_factories": (
-                "TestsFlextUtilitiesCaseServiceFactoriesMixin",
-            ),
-            ".contracts": ("TestsFlextUtilitiesContractsMixin",),
-            ".dispatch": ("TestsFlextUtilitiesDispatchMixin",),
-            ".parser_reliability": ("TestsFlextUtilitiesParserReliabilityMixin",),
-            ".parser_scenarios": ("TestsFlextUtilitiesParserScenariosMixin",),
-            ".railway": ("TestsFlextUtilitiesRailwayMixin",),
-            ".railway_cases": ("TestsFlextUtilitiesRailwayCasesMixin",),
-            ".railway_pipelines": ("TestsFlextUtilitiesRailwayPipelinesMixin",),
-            ".railway_services": ("TestsFlextUtilitiesRailwayServicesMixin",),
-            ".reliability_scenarios": ("TestsFlextUtilitiesReliabilityScenariosMixin",),
-            ".service_factories": ("TestsFlextUtilitiesServiceFactoriesMixin",),
-            ".services": ("TestsFlextUtilitiesServicesMixin",),
-            ".user_factories": ("TestsFlextUtilitiesUserFactoriesMixin",),
-            ".validation_factories": ("TestsFlextUtilitiesValidationFactoriesMixin",),
-            ".validation_network": ("TestsFlextUtilitiesValidationNetworkScenarios",),
-            ".validation_numeric": ("TestsFlextUtilitiesValidationNumericScenarios",),
-            ".validation_pattern": ("TestsFlextUtilitiesValidationPatternScenarios",),
-            ".validation_string": ("TestsFlextUtilitiesValidationStringScenarios",),
-            ".validation_uri": ("TestsFlextUtilitiesValidationUriScenarios",),
-        }),
-        alias_groups=MappingProxyType({}),
-        sort_keys=False,
-    ),
+install_lazy_exports(
+    __name__,
+    globals(),
+    MappingProxyType({
+        "TestsFlextUtilitiesCaseFactoriesMixin": ".case_factories",
+        "TestsFlextUtilitiesCaseGeneratorsMixin": ".case_generators",
+        "TestsFlextUtilitiesCaseServiceFactoriesMixin": ".case_service_factories",
+        "TestsFlextUtilitiesContractsMixin": ".contracts",
+        "TestsFlextUtilitiesDispatchMixin": ".dispatch",
+        "TestsFlextUtilitiesParserReliabilityMixin": ".parser_reliability",
+        "TestsFlextUtilitiesParserScenariosMixin": ".parser_scenarios",
+        "TestsFlextUtilitiesRailwayCasesMixin": ".railway_cases",
+        "TestsFlextUtilitiesRailwayMixin": ".railway",
+        "TestsFlextUtilitiesRailwayPipelinesMixin": ".railway_pipelines",
+        "TestsFlextUtilitiesRailwayServicesMixin": ".railway_services",
+        "TestsFlextUtilitiesReliabilityScenariosMixin": ".reliability_scenarios",
+        "TestsFlextUtilitiesServiceFactoriesMixin": ".service_factories",
+        "TestsFlextUtilitiesServicesMixin": ".services",
+        "TestsFlextUtilitiesUserFactoriesMixin": ".user_factories",
+        "TestsFlextUtilitiesValidationFactoriesMixin": ".validation_factories",
+        "TestsFlextUtilitiesValidationNetworkScenarios": ".validation_network",
+        "TestsFlextUtilitiesValidationNumericScenarios": ".validation_numeric",
+        "TestsFlextUtilitiesValidationPatternScenarios": ".validation_pattern",
+        "TestsFlextUtilitiesValidationStringScenarios": ".validation_string",
+        "TestsFlextUtilitiesValidationUriScenarios": ".validation_uri",
+        "u": ".case_factories",
+    }),
+    public_exports=__all__,
 )
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

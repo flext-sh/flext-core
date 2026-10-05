@@ -10,7 +10,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import build_lazy_import_map, install_lazy_exports
+from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_01 import (
@@ -46,26 +46,17 @@ __all__: tuple[str, ...] = (
     "FlextConstantsEnforcementTargets",
 )
 
-_LAZY_IMPORTS = MappingProxyType(
-    build_lazy_import_map(
-        MappingProxyType({
-            ".flextconstantsenforcement_part_01": ("FlextConstantsEnforcementEnums",),
-            ".flextconstantsenforcement_part_02": ("FlextConstantsEnforcementRuntime",),
-            ".flextconstantsenforcement_part_03": (
-                "FlextConstantsEnforcementNamespace",
-            ),
-            ".flextconstantsenforcement_part_04": ("FlextConstantsEnforcementRules",),
-            ".flextconstantsenforcement_part_06": ("FlextConstantsEnforcementTargets",),
-            ".flextconstantsenforcement_part_07": (
-                "FlextConstantsEnforcementSmellData",
-            ),
-            ".flextconstantsenforcement_part_08": (
-                "FlextConstantsEnforcementFixActions",
-            ),
-        }),
-        alias_groups=MappingProxyType({}),
-        sort_keys=False,
-    ),
+install_lazy_exports(
+    __name__,
+    globals(),
+    MappingProxyType({
+        "FlextConstantsEnforcementEnums": ".flextconstantsenforcement_part_01",
+        "FlextConstantsEnforcementFixActions": ".flextconstantsenforcement_part_08",
+        "FlextConstantsEnforcementNamespace": ".flextconstantsenforcement_part_03",
+        "FlextConstantsEnforcementRules": ".flextconstantsenforcement_part_04",
+        "FlextConstantsEnforcementRuntime": ".flextconstantsenforcement_part_02",
+        "FlextConstantsEnforcementSmellData": ".flextconstantsenforcement_part_07",
+        "FlextConstantsEnforcementTargets": ".flextconstantsenforcement_part_06",
+    }),
+    public_exports=__all__,
 )
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

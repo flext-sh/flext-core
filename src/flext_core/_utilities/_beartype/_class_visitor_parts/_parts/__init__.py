@@ -10,7 +10,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import build_lazy_import_map, install_lazy_exports
+from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._utilities._beartype._class_visitor_parts._parts.class_visitor_part_02_01 import (
@@ -28,18 +28,13 @@ __all__: tuple[str, ...] = (
     "self_ref_violation",
 )
 
-_LAZY_IMPORTS = MappingProxyType(
-    build_lazy_import_map(
-        MappingProxyType({
-            ".class_visitor_part_02_01": ("alias_first_violation",),
-            ".class_visitor_part_02_02": (
-                "redundant_inner_violation",
-                "self_ref_violation",
-            ),
-        }),
-        alias_groups=MappingProxyType({}),
-        sort_keys=False,
-    ),
+install_lazy_exports(
+    __name__,
+    globals(),
+    MappingProxyType({
+        "alias_first_violation": ".class_visitor_part_02_01",
+        "redundant_inner_violation": ".class_visitor_part_02_02",
+        "self_ref_violation": ".class_visitor_part_02_02",
+    }),
+    public_exports=__all__,
 )
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

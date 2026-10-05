@@ -170,7 +170,7 @@ url_api = "https://api.github.com/repos/kucherenko/jscpd/releases/assets/5836342
 provenance = "github-attestations"
 
 [[tools."github:microsoft/waza"]]
-version = "0.38.8"
+version = "0.38.7"
 backend = "github:microsoft/waza"
 specifiers = ["latest"]
 
@@ -178,34 +178,34 @@ specifiers = ["latest"]
 version_prefix = "v"
 
 [tools."github:microsoft/waza"."platforms.linux-arm64"]
-checksum = "sha256:2721267b59dbca682e754e0e4ad392473e7341dbdbd64578ef1bee9b52daa31b"
-url = "https://github.com/microsoft/waza/releases/download/v0.38.8/waza-linux-arm64"
-url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/599032509"
+checksum = "sha256:142ea836bbc8324154f52d3278cb7c9a9fa4e1be7480b44d3841309b56f7b039"
+url = "https://github.com/microsoft/waza/releases/download/v0.38.7/waza-linux-arm64"
+url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/520984886"
 
 [tools."github:microsoft/waza"."platforms.linux-x64"]
-checksum = "sha256:1bc9886cf2254e50cfab22bc1bcc7acd9715e69e0c2057c04079c95b8f68132e"
-url = "https://github.com/microsoft/waza/releases/download/v0.38.8/waza-linux-amd64"
-url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/599032506"
+checksum = "sha256:e227cd884173de796bc28c6cb1828498f250297e0e606a4e4504d14465ff879f"
+url = "https://github.com/microsoft/waza/releases/download/v0.38.7/waza-linux-amd64"
+url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/520984881"
 
 [tools."github:microsoft/waza"."platforms.linux-x64-musl"]
-checksum = "sha256:1bc9886cf2254e50cfab22bc1bcc7acd9715e69e0c2057c04079c95b8f68132e"
-url = "https://github.com/microsoft/waza/releases/download/v0.38.8/waza-linux-amd64"
-url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/599032506"
+checksum = "sha256:e227cd884173de796bc28c6cb1828498f250297e0e606a4e4504d14465ff879f"
+url = "https://github.com/microsoft/waza/releases/download/v0.38.7/waza-linux-amd64"
+url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/520984881"
 
 [tools."github:microsoft/waza"."platforms.macos-arm64"]
-checksum = "sha256:f4f36fbdfdd60b6d7c1bd555b25a6c6d33485e57fdf8e67c1c65a82400622601"
-url = "https://github.com/microsoft/waza/releases/download/v0.38.8/waza-darwin-arm64"
-url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/599032505"
+checksum = "sha256:82a4f44c7d95b13e54607ab0bb9da618bb134c51c94a64be73bedbf7bcd4e778"
+url = "https://github.com/microsoft/waza/releases/download/v0.38.7/waza-darwin-arm64"
+url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/520984880"
 
 [tools."github:microsoft/waza"."platforms.macos-x64"]
-checksum = "sha256:7533f4a025e7cbe7dc6adbb48acf04cc8778f21e57b9a9e716300264ff040920"
-url = "https://github.com/microsoft/waza/releases/download/v0.38.8/waza-darwin-amd64"
-url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/599032510"
+checksum = "sha256:e282ae6cc2f819125e8e5aaf2351caf8e066c74a853c7cdf1591cd4fb4657a1a"
+url = "https://github.com/microsoft/waza/releases/download/v0.38.7/waza-darwin-amd64"
+url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/520984885"
 
 [tools."github:microsoft/waza"."platforms.windows-x64"]
-checksum = "sha256:b52763feedf789025399a79269d001dd27ad54a2588442f831a1072be5b7ce4f"
-url = "https://github.com/microsoft/waza/releases/download/v0.38.8/waza-windows-amd64.exe"
-url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/599032529"
+checksum = "sha256:451d05c510341019e71c8e94d2ff4ed9f809f8f198bcf5fc31ab31038c5076c9"
+url = "https://github.com/microsoft/waza/releases/download/v0.38.7/waza-windows-amd64.exe"
+url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/520984898"
 
 [[tools."github:qltysh/qlty"]]
 version = "0.645.0"
@@ -529,10 +529,7 @@ url = "https://nodejs.org/dist/v26.10.0/node-v26.10.0-win-x64.zip"
 version = "0.45.3"
 aube = { path = ".mise/locks/npm-ast-grep-cli/0.45.3~7a027ead", digest = "sha256:e59172c3ac91ac960cc8cae85e3f4106f868ad3010777268d01e944064bad306" }
 backend = "npm:@ast-grep/cli"
-specifiers = [
-    "0.45.3",
-    "latest",
-]
+specifiers = ["latest"]
 
 [tools."npm:@ast-grep/cli".options]
 allow_builds = '["@ast-grep/cli"]'
@@ -608,42 +605,42 @@ url = "https://github.com/tamasfe/taplo/releases/download/0.10.0/taplo-windows-x
 url_api = "https://api.github.com/repos/tamasfe/taplo/releases/assets/257323062"
 
 [[tools.uv]]
-version = "0.12.20"
+version = "0.12.19"
 backend = "aqua:astral-sh/uv"
 specifiers = ["latest"]
 
 [tools.uv."platforms.linux-arm64"]
-checksum = "sha256:8a7aad7bc76a2fae5151566ff3e43eacce0b2a113d5e4de3e4afe3e58fa2441e"
-url = "https://github.com/astral-sh/uv/releases/download/0.12.20/uv-aarch64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/596657756"
+checksum = "sha256:0804e9b164c64b6914182d5920c08551958a095986f10a3731056df701126436"
+url = "https://github.com/astral-sh/uv/releases/download/0.12.19/uv-aarch64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/587158851"
 provenance = "github-attestations"
 
 [tools.uv."platforms.linux-x64"]
-checksum = "sha256:6590717592ace991ff83a63fef799e3ad9d33ecc8f96c5d6bdd732496e79337f"
-url = "https://github.com/astral-sh/uv/releases/download/0.12.20/uv-x86_64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/596657933"
+checksum = "sha256:23bf5552d220e0842b65c862097b2ebaeba0064b74eda5e565e77fd25969d8c8"
+url = "https://github.com/astral-sh/uv/releases/download/0.12.19/uv-x86_64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/587159011"
 provenance = "github-attestations"
 
 [tools.uv."platforms.linux-x64-musl"]
-checksum = "sha256:14114d66a094f1907af0fcbc863f34226bbb7f5e430e13dce6676ba40dcc6891"
-url = "https://github.com/astral-sh/uv/releases/download/0.12.20/uv-x86_64-unknown-linux-musl.tar.gz"
-url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/596657940"
+checksum = "sha256:db7278c9f57981338fddff1fb250e11964bc0a4fafcb9eed8303fdb117dc067b"
+url = "https://github.com/astral-sh/uv/releases/download/0.12.19/uv-x86_64-unknown-linux-musl.tar.gz"
+url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/587159021"
 provenance = "github-attestations"
 
 [tools.uv."platforms.macos-arm64"]
-checksum = "sha256:848fdeb602ff1a1baacd4f6c8b7bdc6cf1ad026a6d9cf59475fda17c179743ca"
-url = "https://github.com/astral-sh/uv/releases/download/0.12.20/uv-aarch64-apple-darwin.tar.gz"
-url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/596657737"
+checksum = "sha256:a9a8df1eedeb192f2e47e40e2faabfb387db4b850209118786d42f89dde3e0ba"
+url = "https://github.com/astral-sh/uv/releases/download/0.12.19/uv-aarch64-apple-darwin.tar.gz"
+url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/587158826"
 provenance = "github-attestations"
 
 [tools.uv."platforms.macos-x64"]
-checksum = "sha256:ac54283d211fd77cdc152b67606dbaf6406ff4ab03f3af4ae99468fa8e887141"
-url = "https://github.com/astral-sh/uv/releases/download/0.12.20/uv-x86_64-apple-darwin.tar.gz"
-url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/596657900"
+checksum = "sha256:cb5fa57bafe68fc0fb94b17f06bee0b0b9a7feb94ccbd110445afa0696e39273"
+url = "https://github.com/astral-sh/uv/releases/download/0.12.19/uv-x86_64-apple-darwin.tar.gz"
+url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/587158992"
 provenance = "github-attestations"
 
 [tools.uv."platforms.windows-x64"]
-checksum = "sha256:95f9bc30fbb3574d276e28ac4a6de932d25153645853d13da8c21eec3bc88d06"
-url = "https://github.com/astral-sh/uv/releases/download/0.12.20/uv-x86_64-pc-windows-msvc.zip"
-url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/596657920"
+checksum = "sha256:6dbb02d79e419522f1c500f0adb1cddcff0cda7d59b0d66ea7f5e3b4a1b2f5f0"
+url = "https://github.com/astral-sh/uv/releases/download/0.12.19/uv-x86_64-pc-windows-msvc.zip"
+url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/587159002"
 provenance = "github-attestations"
