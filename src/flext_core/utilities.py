@@ -11,6 +11,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core._models.namespace import FlextModelsNamespace
+from flext_core._utilities._logging_context_parts.logging_context_part_01 import (
+    FlextUtilitiesLoggingContext,
+)
 from flext_core._utilities.args import FlextUtilitiesArgs
 from flext_core._utilities.beartype_conf import FlextUtilitiesBeartypeConf
 from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine
@@ -42,10 +45,6 @@ from flext_core._utilities.settings import FlextUtilitiesSettings
 from flext_core._utilities.text import FlextUtilitiesText
 from flext_core.runtime import FlextRuntime
 
-
-from flext_core._utilities._logging_context_parts.logging_context_part_01 import (
-    FlextUtilitiesLoggingContext,
-)
 
 class FlextUtilities(
     FlextUtilitiesLogging,
