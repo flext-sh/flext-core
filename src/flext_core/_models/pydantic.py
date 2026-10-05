@@ -129,7 +129,12 @@ class FlextModelsPydantic:
 
     @dataclass_transform(
         kw_only_default=True,
-        field_specifiers=(_field, Field, PydanticPrivateAttr, _private_attr),
+        field_specifiers=(
+            _field,
+            Field,
+            PydanticPrivateAttr,
+            _private_attr,
+        ),
     )
     class BaseModel(PydanticBaseModel):
         """Canonical BaseModel exported through the FLEXT models facade."""
@@ -139,7 +144,12 @@ class FlextModelsPydantic:
 
     @dataclass_transform(
         kw_only_default=True,
-        field_specifiers=(_field, Field, PydanticPrivateAttr, _private_attr),
+        field_specifiers=(
+            _field,
+            Field,
+            PydanticPrivateAttr,
+            _private_attr,
+        ),
     )
     class RootModel[RootValueT](PydanticRootModel[RootValueT]):
         """Canonical RootModel exported through the FLEXT models facade."""
