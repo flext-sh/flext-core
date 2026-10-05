@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_core._lazy_parts.flextlazy_attribute import FlextLazyAttribute
 from flext_core._lazy_parts.flextlazy_part_02 import FlextLazy, FlextLazyMember
 
 lazy = FlextLazy()
@@ -25,6 +26,7 @@ install_lazy_exports = lazy.install
 
 __all__ = (
     "FlextLazy",
+    "FlextLazyAttribute",
     "FlextLazyMember",
     "build_lazy_import_map",
     "cleanup_submodule_namespace",
