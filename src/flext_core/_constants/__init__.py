@@ -10,7 +10,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import build_lazy_import_map, install_lazy_exports
+from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._constants import (
@@ -116,71 +116,67 @@ __all__: tuple[str, ...] = (
     "_errors_parts",
 )
 
-_LAZY_IMPORTS = MappingProxyType(
-    build_lazy_import_map(
-        MappingProxyType({
-            "._enforcement_data": ("_enforcement_data",),
-            "._enforcement_parts": ("_enforcement_parts",),
-            "._enforcement_parts.flextconstantsenforcement_part_01": (
-                "FlextConstantsEnforcementEnums",
-            ),
-            "._enforcement_parts.flextconstantsenforcement_part_02": (
-                "FlextConstantsEnforcementRuntime",
-            ),
-            "._enforcement_parts.flextconstantsenforcement_part_03": (
-                "FlextConstantsEnforcementNamespace",
-            ),
-            "._enforcement_parts.flextconstantsenforcement_part_04": (
-                "FlextConstantsEnforcementRules",
-            ),
-            "._enforcement_parts.flextconstantsenforcement_part_06": (
-                "FlextConstantsEnforcementTargets",
-            ),
-            "._enforcement_parts.flextconstantsenforcement_part_07": (
-                "FlextConstantsEnforcementSmellData",
-            ),
-            "._enforcement_parts.flextconstantsenforcement_part_08": (
-                "FlextConstantsEnforcementFixActions",
-            ),
-            "._errors_parts": ("_errors_parts",),
-            "._errors_parts.flextconstantserrors_part_01": (
-                "FlextConstantsErrorsMessages",
-            ),
-            "._errors_parts.flextconstantserrors_part_02": (
-                "FlextConstantsErrorsRuntimeExceptions",
-            ),
-            "._errors_parts.flextconstantserrors_part_03": (
-                "FlextConstantsErrorsValidationExceptions",
-            ),
-            "._errors_parts.flextconstantserrors_part_04": (
-                "FlextConstantsErrorsDomainParser",
-            ),
-            "._errors_parts.flextconstantserrors_part_05": (
-                "FlextConstantsErrorsRuntimeSettings",
-            ),
-            ".base": ("FlextConstantsBase",),
-            ".config": ("FlextConstantsConfig",),
-            ".cqrs": ("FlextConstantsCqrs",),
-            ".enforcement": ("FlextConstantsEnforcement", "FlextMroViolation"),
-            ".environment": ("FlextConstantsEnvironment",),
-            ".errors": ("FlextConstantsErrors",),
-            ".file": ("FlextConstantsFile",),
-            ".guards": ("FlextConstantsGuards",),
-            ".infrastructure": ("FlextConstantsInfrastructure",),
-            ".loggings": ("FlextConstantsLogging",),
-            ".mixins": ("FlextConstantsMixins",),
-            ".project_metadata": ("FlextConstantsProjectMetadata",),
-            ".pydantic": ("FlextConstantsPydantic",),
-            ".regex": ("FlextConstantsRegex",),
-            ".serialization": ("FlextConstantsSerialization",),
-            ".settings": ("FlextConstantsSettings",),
-            ".status": ("FlextConstantsStatus",),
-            ".timeout": ("FlextConstantsTimeout",),
-            ".validation": ("FlextConstantsValidation",),
-        }),
-        alias_groups=MappingProxyType({}),
-        sort_keys=False,
-    ),
+install_lazy_exports(
+    __name__,
+    globals(),
+    MappingProxyType({
+        "FlextConstantsBase": ".base",
+        "FlextConstantsConfig": ".config",
+        "FlextConstantsCqrs": ".cqrs",
+        "FlextConstantsEnforcement": ".enforcement",
+        "FlextConstantsEnforcementEnums": (
+            "._enforcement_parts.flextconstantsenforcement_part_01"
+        ),
+        "FlextConstantsEnforcementFixActions": (
+            "._enforcement_parts.flextconstantsenforcement_part_08"
+        ),
+        "FlextConstantsEnforcementNamespace": (
+            "._enforcement_parts.flextconstantsenforcement_part_03"
+        ),
+        "FlextConstantsEnforcementRules": (
+            "._enforcement_parts.flextconstantsenforcement_part_04"
+        ),
+        "FlextConstantsEnforcementRuntime": (
+            "._enforcement_parts.flextconstantsenforcement_part_02"
+        ),
+        "FlextConstantsEnforcementSmellData": (
+            "._enforcement_parts.flextconstantsenforcement_part_07"
+        ),
+        "FlextConstantsEnforcementTargets": (
+            "._enforcement_parts.flextconstantsenforcement_part_06"
+        ),
+        "FlextConstantsEnvironment": ".environment",
+        "FlextConstantsErrors": ".errors",
+        "FlextConstantsErrorsDomainParser": (
+            "._errors_parts.flextconstantserrors_part_04"
+        ),
+        "FlextConstantsErrorsMessages": "._errors_parts.flextconstantserrors_part_01",
+        "FlextConstantsErrorsRuntimeExceptions": (
+            "._errors_parts.flextconstantserrors_part_02"
+        ),
+        "FlextConstantsErrorsRuntimeSettings": (
+            "._errors_parts.flextconstantserrors_part_05"
+        ),
+        "FlextConstantsErrorsValidationExceptions": (
+            "._errors_parts.flextconstantserrors_part_03"
+        ),
+        "FlextConstantsFile": ".file",
+        "FlextConstantsGuards": ".guards",
+        "FlextConstantsInfrastructure": ".infrastructure",
+        "FlextConstantsLogging": ".loggings",
+        "FlextConstantsMixins": ".mixins",
+        "FlextConstantsProjectMetadata": ".project_metadata",
+        "FlextConstantsPydantic": ".pydantic",
+        "FlextConstantsRegex": ".regex",
+        "FlextConstantsSerialization": ".serialization",
+        "FlextConstantsSettings": ".settings",
+        "FlextConstantsStatus": ".status",
+        "FlextConstantsTimeout": ".timeout",
+        "FlextConstantsValidation": ".validation",
+        "FlextMroViolation": ".enforcement",
+        "_enforcement_data": "._enforcement_data",
+        "_enforcement_parts": "._enforcement_parts",
+        "_errors_parts": "._errors_parts",
+    }),
+    public_exports=__all__,
 )
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

@@ -10,7 +10,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core import build_lazy_import_map, install_lazy_exports
+from flext_core import install_lazy_exports
 
 if TYPE_CHECKING:
     from tests._models._mixins.container import TestsFlextModelsContainerMixin
@@ -64,32 +64,27 @@ __all__: tuple[str, ...] = (
     "TestsFlextModelsTestDataValuesMixin",
 )
 
-_LAZY_IMPORTS = MappingProxyType(
-    build_lazy_import_map(
-        MappingProxyType({
-            ".container": ("TestsFlextModelsContainerMixin",),
-            ".core": ("TestsFlextModelsCoreMixin",),
-            ".core_errors": ("TestsFlextModelsCoreErrorsMixin",),
-            ".core_public": ("TestsFlextModelsCorePublicMixin",),
-            ".core_state": ("TestsFlextModelsCoreStateMixin",),
-            ".domain": ("TestsFlextModelsDomainMixin",),
-            ".fixture_payloads": ("TestsFlextModelsFixturePayloadsMixin",),
-            ".fixture_suite": ("TestsFlextModelsFixtureSuiteMixin",),
-            ".fixtures": ("TestsFlextModelsFixtureDictsMixin",),
-            ".guards_mapper": ("TestsFlextModelsGuardsMapperMixin",),
-            ".service_case_core": ("TestsFlextModelsServiceCaseCoreMixin",),
-            ".service_case_reliability": (
-                "TestsFlextModelsServiceCaseReliabilityMixin",
-            ),
-            ".service_case_validation": ("TestsFlextModelsServiceCaseValidationMixin",),
-            ".service_cases": ("TestsFlextModelsServiceCasesMixin",),
-            ".test_data": ("TestsFlextModelsTestDataMixin",),
-            ".test_data_identity": ("TestsFlextModelsTestDataIdentityMixin",),
-            ".test_data_values": ("TestsFlextModelsTestDataValuesMixin",),
-        }),
-        alias_groups=MappingProxyType({}),
-        sort_keys=False,
-    ),
+install_lazy_exports(
+    __name__,
+    globals(),
+    MappingProxyType({
+        "TestsFlextModelsContainerMixin": ".container",
+        "TestsFlextModelsCoreErrorsMixin": ".core_errors",
+        "TestsFlextModelsCoreMixin": ".core",
+        "TestsFlextModelsCorePublicMixin": ".core_public",
+        "TestsFlextModelsCoreStateMixin": ".core_state",
+        "TestsFlextModelsDomainMixin": ".domain",
+        "TestsFlextModelsFixtureDictsMixin": ".fixtures",
+        "TestsFlextModelsFixturePayloadsMixin": ".fixture_payloads",
+        "TestsFlextModelsFixtureSuiteMixin": ".fixture_suite",
+        "TestsFlextModelsGuardsMapperMixin": ".guards_mapper",
+        "TestsFlextModelsServiceCaseCoreMixin": ".service_case_core",
+        "TestsFlextModelsServiceCaseReliabilityMixin": ".service_case_reliability",
+        "TestsFlextModelsServiceCaseValidationMixin": ".service_case_validation",
+        "TestsFlextModelsServiceCasesMixin": ".service_cases",
+        "TestsFlextModelsTestDataIdentityMixin": ".test_data_identity",
+        "TestsFlextModelsTestDataMixin": ".test_data",
+        "TestsFlextModelsTestDataValuesMixin": ".test_data_values",
+    }),
+    public_exports=__all__,
 )
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

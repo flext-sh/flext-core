@@ -10,7 +10,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import build_lazy_import_map, install_lazy_exports
+from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._utilities._beartype import _class_visitor_parts, _helpers_parts
@@ -77,34 +77,31 @@ __all__: tuple[str, ...] = (
     "self_ref_violation",
 )
 
-_LAZY_IMPORTS = MappingProxyType(
-    build_lazy_import_map(
-        MappingProxyType({
-            "._alias_visitor": ("FlextUtilitiesBeartypeAliasVisitor",),
-            "._class_visitor_parts": ("_class_visitor_parts",),
-            "._class_visitor_parts._parts.class_visitor_part_02_01": (
-                "alias_first_violation",
-            ),
-            "._class_visitor_parts._parts.class_visitor_part_02_02": (
-                "redundant_inner_violation",
-                "self_ref_violation",
-            ),
-            "._helpers_parts": ("_helpers_parts",),
-            "._library_visitor": ("FlextUtilitiesBeartypeLibraryVisitor",),
-            ".attr_visitor": ("FlextUtilitiesBeartypeAttrVisitor",),
-            ".class_visitor": ("FlextUtilitiesBeartypeClassVisitor",),
-            ".deprecated_visitor": ("FlextUtilitiesBeartypeDeprecatedVisitor",),
-            ".field_visitor": ("FlextUtilitiesBeartypeFieldVisitor",),
-            ".helpers": ("FlextUtilitiesBeartypeHelpers",),
-            ".import_visitor": ("FlextUtilitiesBeartypeImportVisitor",),
-            ".method_visitor": ("FlextUtilitiesBeartypeMethodVisitor",),
-            ".module_source": ("FlextUtilitiesBeartypeModuleSource",),
-            ".module_visitor": ("FlextUtilitiesBeartypeModuleVisitor",),
-            ".type_aliases": ("FlextUtilitiesBeartypeTypeAliases",),
-        }),
-        alias_groups=MappingProxyType({}),
-        sort_keys=False,
-    ),
+install_lazy_exports(
+    __name__,
+    globals(),
+    MappingProxyType({
+        "FlextUtilitiesBeartypeAliasVisitor": "._alias_visitor",
+        "FlextUtilitiesBeartypeAttrVisitor": ".attr_visitor",
+        "FlextUtilitiesBeartypeClassVisitor": ".class_visitor",
+        "FlextUtilitiesBeartypeDeprecatedVisitor": ".deprecated_visitor",
+        "FlextUtilitiesBeartypeFieldVisitor": ".field_visitor",
+        "FlextUtilitiesBeartypeHelpers": ".helpers",
+        "FlextUtilitiesBeartypeImportVisitor": ".import_visitor",
+        "FlextUtilitiesBeartypeLibraryVisitor": "._library_visitor",
+        "FlextUtilitiesBeartypeMethodVisitor": ".method_visitor",
+        "FlextUtilitiesBeartypeModuleSource": ".module_source",
+        "FlextUtilitiesBeartypeModuleVisitor": ".module_visitor",
+        "FlextUtilitiesBeartypeTypeAliases": ".type_aliases",
+        "_class_visitor_parts": "._class_visitor_parts",
+        "_helpers_parts": "._helpers_parts",
+        "alias_first_violation": (
+            "._class_visitor_parts._parts.class_visitor_part_02_01"
+        ),
+        "redundant_inner_violation": (
+            "._class_visitor_parts._parts.class_visitor_part_02_02"
+        ),
+        "self_ref_violation": "._class_visitor_parts._parts.class_visitor_part_02_02",
+    }),
+    public_exports=__all__,
 )
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

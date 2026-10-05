@@ -10,7 +10,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core import build_lazy_import_map, install_lazy_exports
+from flext_core import install_lazy_exports
 
 if TYPE_CHECKING:
     from examples import _models, _shared_parts
@@ -41,22 +41,25 @@ __all__: tuple[str, ...] = (
     "x",
 )
 
-_LAZY_IMPORTS = MappingProxyType(
-    build_lazy_import_map(
-        MappingProxyType({
-            "._models": ("_models",),
-            "._shared_parts": ("_shared_parts",),
-            ".constants": ("c",),
-            ".models": ("ExamplesFlextModels", "m"),
-            ".protocols": ("p",),
-            ".shared": ("ExamplesFlextShared",),
-            ".typings": ("t",),
-            ".utilities": ("u",),
-            "flext_core": ("d", "e", "h", "r", "s", "x"),
-        }),
-        alias_groups=MappingProxyType({}),
-        sort_keys=False,
-    ),
+install_lazy_exports(
+    __name__,
+    globals(),
+    MappingProxyType({
+        "ExamplesFlextModels": ".models",
+        "ExamplesFlextShared": ".shared",
+        "_models": "._models",
+        "_shared_parts": "._shared_parts",
+        "c": ".constants",
+        "d": "flext_core",
+        "e": "flext_core",
+        "h": "flext_core",
+        "m": ".models",
+        "p": ".protocols",
+        "r": "flext_core",
+        "s": "flext_core",
+        "t": ".typings",
+        "u": ".utilities",
+        "x": "flext_core",
+    }),
+    public_exports=__all__,
 )
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)
