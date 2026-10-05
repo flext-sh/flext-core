@@ -60,8 +60,9 @@
 .gc/
 /worktrees/
 
-# Machine-local MCP projection (runtime state, never source)
+# Machine-local MCP projection and hooks runtime state (never source)
 /.cursor/mcp.json
+/.cursor/hooks/state/
 
 # RESIDUE: never track backups or repo-local policy copies
 *.bak
