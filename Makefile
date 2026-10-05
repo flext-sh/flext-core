@@ -149,8 +149,8 @@ endif
 # === SECTION: verb dispatch (managed) ===
 # Source: config:make.verbs and the canonical gate vocabulary. A verb exists
 # only in the profiles it declares (make.verbs[].profiles).
-PUBLIC_VERBS := help setup upg build check smells test test-full test-file profile-test profile-test-report fmt fix fix-namespace fix-accessors audit status verify-clean docs clean bootstrap-candidate release-plan release-version release-tag release-build publication gen initialize mod mod-text mod-text-candidate mod-snapshots waza duplication sonarcloud-sync sonarcloud-issues
-BUILTIN_VERBS := help setup upg build check smells test test-full test-file profile-test profile-test-report fmt fix fix-namespace fix-accessors audit status verify-clean docs clean bootstrap-candidate release-plan release-version release-tag release-build publication gen initialize mod mod-text mod-text-candidate mod-snapshots waza duplication sonarcloud-sync sonarcloud-issues
+PUBLIC_VERBS := help setup upg build check smells test test-full test-file fmt fix fix-namespace fix-accessors audit status verify-clean docs clean bootstrap-candidate release-plan release-version release-tag release-build publication gen initialize mod mod-text mod-text-candidate mod-snapshots waza duplication sonarcloud-sync sonarcloud-issues
+BUILTIN_VERBS := help setup upg build check smells test test-full test-file fmt fix fix-namespace fix-accessors audit status verify-clean docs clean bootstrap-candidate release-plan release-version release-tag release-build publication gen initialize mod mod-text mod-text-candidate mod-snapshots waza duplication sonarcloud-sync sonarcloud-issues
 SCRIPT_VERBS :=
 
 CUSTOM_MAKEFILE := $(MAKEFILE_ROOT)/custom.mk
@@ -1007,13 +1007,8 @@ endef
 
 .PHONY: $(PUBLIC_VERBS) $(addprefix _builtin-,$(PUBLIC_VERBS))
 .PHONY: _builtin_gen_init _builtin_gen_all
+$(filter-out help clean upg,$(PUBLIC_VERBS)): _builtin_require_mise_pin
 
-# OPTIONS=Y (or HELP=Y) displays a built-in verb's contract without effects:
-# no prerequisite, hook or handler of that verb runs. A script verb keeps its
-# entry, and the promoted dispatcher renders its contract per WHAT.
-VERB_CONTRACT := $(filter 1 TRUE Y YES true y yes True Yes,$(OPTIONS) $(HELP))
-ifeq ($(VERB_CONTRACT),)
-$(filter-out help clean upg,$(BUILTIN_VERBS)): _builtin_require_mise_pin
 
 
 
@@ -1086,28 +1081,6 @@ test-file: _builtin_require_workspace
 _activated-test-file: _builtin_require_environment
 
 	$(call RUN_PUBLIC,test-file)
-
-
-
-
-profile-test: _builtin_require_workspace
-	+@direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-profile-test
-
-.PHONY: _activated-profile-test
-_activated-profile-test: _builtin_require_environment
-
-	$(call RUN_PUBLIC,profile-test)
-
-
-
-
-profile-test-report: _builtin_require_workspace
-	+@direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-profile-test-report
-
-.PHONY: _activated-profile-test-report
-_activated-profile-test-report: _builtin_require_environment
-
-	$(call RUN_PUBLIC,profile-test-report)
 
 
 
@@ -1402,155 +1375,6 @@ upg: TOOL_BOOTSTRAP_LIFECYCLE := _upg_lifecycle
 upg: TOOL_BOOTSTRAP_RESOLVE := 1
 upg: TOOL_BOOTSTRAP_LOCK := 1
 upg: _builtin_require_runtime_root _bootstrap_setup_tools
-else
-
-help:
-	@printf '  %-16s %s\n' 'help' 'Show the complete selector-free public interface.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make help to execute it.'
-
-setup:
-	@printf '  %-16s %s\n' 'setup' 'Provision the declared environment and hooks.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make setup to execute it.'
-
-upg:
-	@printf '  %-16s %s\n' 'upg' 'Resolve the newest declared releases, write the uv and mise locks, then prove the upgraded tree still converges and passes every active check gate.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make upg to execute it.'
-
-build:
-	@printf '  %-16s %s\n' 'build' 'Build the project distribution artifacts.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make build to execute it.'
-
-check:
-	@printf '  %-16s %s\n' 'check' 'Run the configured non-test gates except the dedicated smells audit.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make check to execute it.'
-
-smells:
-	@printf '  %-16s %s\n' 'smells' 'Run the strict code-smell audit as a dedicated gate.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make smells to execute it.'
-
-test:
-	@printf '  %-16s %s\n' 'test' 'Run incremental tests through the persistent testmon cache.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make test to execute it.'
-
-test-full:
-	@printf '  %-16s %s\n' 'test-full' 'Run incremental then all tests, including external and CI-excluded markers, through the same persistent testmon cache.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make test-full to execute it.'
-
-test-file:
-	@printf '  %-16s %s\n' 'test-file' 'Run one declared test file through the budgeted and slow phases with the same persistent testmon cache (FILE=<repository-relative path>).'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make test-file to execute it.'
-
-profile-test:
-	@printf '  %-16s %s\n' 'profile-test' 'Profile the canonical pytest entry and its collection children on the same persistent testmon database, without the outer bounded-gate wrapper.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make profile-test to execute it.'
-
-profile-test-report:
-	@printf '  %-16s %s\n' 'profile-test-report' 'Render the parent pytest profile and the aggregated child profiles from that run.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make profile-test-report to execute it.'
-
-fmt:
-	@printf '  %-16s %s\n' 'fmt' 'Apply ruff format --preview and every declared formatter gate. Ruff is the rule; change code, never ruff.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make fmt to execute it.'
-
-fix:
-	@printf '  %-16s %s\n' 'fix' 'Apply the safe fixes of ruff check --fix --preview plus every other configured safe correction; never deletes information. Ruff is the rule; change code, never ruff.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make fix to execute it.'
-
-fix-namespace:
-	@printf '  %-16s %s\n' 'fix-namespace' 'Apply the canonical namespace enforcer to the selected workspace.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make fix-namespace to execute it.'
-
-fix-accessors:
-	@printf '  %-16s %s\n' 'fix-accessors' 'Migrate forbidden accessor names and every resolved consumer.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make fix-accessors to execute it.'
-
-audit:
-	@printf '  %-16s %s\n' 'audit' 'Inspect ownership, dependency, and generated-state health.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make audit to execute it.'
-
-status:
-	@printf '  %-16s %s\n' 'status' 'Report the resolved runtime and repository state.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make status to execute it.'
-
-verify-clean:
-	@printf '  %-16s %s\n' 'verify-clean' 'Verify that managed artifacts and generated documentation match their sources and leave no unstaged change to a tracked file.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make verify-clean to execute it.'
-
-docs:
-	@printf '  %-16s %s\n' 'docs' 'Generate, fix, format, and check documentation.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make docs to execute it.'
-
-clean:
-	@printf '  %-16s %s\n' 'clean' 'Remove every declared disposable artifact.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make clean to execute it.'
-
-bootstrap-candidate:
-	@printf '  %-16s %s\n' 'bootstrap-candidate' 'Bootstrap declared candidate worktrees with this branch-matched generator.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make bootstrap-candidate to execute it.'
-
-release-plan:
-	@printf '  %-16s %s\n' 'release-plan' 'Resolve the release decision through the public protocol.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make release-plan to execute it.'
-
-release-version:
-	@printf '  %-16s %s\n' 'release-version' 'Materialize the planned version.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make release-version to execute it.'
-
-release-tag:
-	@printf '  %-16s %s\n' 'release-tag' 'Tag the verified release commit.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make release-tag to execute it.'
-
-release-build:
-	@printf '  %-16s %s\n' 'release-build' 'Build the release receipt and artifacts.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make release-build to execute it.'
-
-publication:
-	@printf '  %-16s %s\n' 'publication' 'Publish only receipt-attested release artifacts.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make publication to execute it.'
-
-gen:
-	@printf '  %-16s %s\n' 'gen' 'Regenerate every managed projection atomically.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make gen to execute it.'
-
-initialize:
-	@printf '  %-16s %s\n' 'initialize' 'Materialize the declared package initializer graph.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make initialize to execute it.'
-
-mod:
-	@printf '  %-16s %s\n' 'mod' 'Apply the declared structural codemods; committed rule-test snapshots are verified, never rewritten.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make mod to execute it.'
-
-mod-text:
-	@printf '  %-16s %s\n' 'mod-text' 'Apply the declared Sed text rules with exact receipts and guarded publication.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make mod-text to execute it.'
-
-mod-text-candidate:
-	@printf '  %-16s %s\n' 'mod-text-candidate' 'Apply declared Sed text rules to the configured candidate workspace.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make mod-text-candidate to execute it.'
-
-mod-snapshots:
-	@printf '  %-16s %s\n' 'mod-snapshots' 'Regenerate the owned ast-grep rule-test snapshots from their tests for a reviewed commit.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make mod-snapshots to execute it.'
-
-waza:
-	@printf '  %-16s %s\n' 'waza' 'Validate provider-neutral governance semantics with Waza.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make waza to execute it.'
-
-duplication:
-	@printf '  %-16s %s\n' 'duplication' 'Run the canonical jscpd duplicate-code gate.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make duplication to execute it.'
-
-sonarcloud-sync:
-	@printf '  %-16s %s\n' 'sonarcloud-sync' 'Write the SSOT SonarCloud issue exclusions to the server-side project settings (requires SONAR_TOKEN).'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make sonarcloud-sync to execute it.'
-
-sonarcloud-issues:
-	@printf '  %-16s %s\n' 'sonarcloud-issues' 'Read unresolved new-code SonarCloud issues on the published integration branch (requires SONAR_TOKEN).'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make sonarcloud-issues to execute it.'
-
-endif
-$(filter-out help clean upg,$(SCRIPT_VERBS)): _builtin_require_mise_pin
-
 
 # Only the runtime root resolves the Mise release. An attached member's pin and
 # launchers are projections of that root, published by the root's `make gen`.
@@ -1598,10 +1422,6 @@ _builtin-help:
 	@printf '  %-16s %s\n' 'test-full' 'Run incremental then all tests, including external and CI-excluded markers, through the same persistent testmon cache.';
 
 	@printf '  %-16s %s\n' 'test-file' 'Run one declared test file through the budgeted and slow phases with the same persistent testmon cache (FILE=<repository-relative path>).';
-
-	@printf '  %-16s %s\n' 'profile-test' 'Profile the canonical pytest entry and its collection children on the same persistent testmon database, without the outer bounded-gate wrapper.';
-
-	@printf '  %-16s %s\n' 'profile-test-report' 'Render the parent pytest profile and the aggregated child profiles from that run.';
 
 	@printf '  %-16s %s\n' 'fmt' 'Apply ruff format --preview and every declared formatter gate. Ruff is the rule; change code, never ruff.';
 
@@ -1678,10 +1498,6 @@ _builtin-help:
 # Why: runners expose umask 002 and `submodule update --init`
 # materializes tracked files as 0664; canonical Mise artifact gates demand
 # exact modes, so provisioning normalizes the umask before checkout.
-# An absent gitlink is cloned at depth 1, the same flag private submodule
-# init uses. Setup's contract is the recorded commit, and a full history
-# cannot finish inside submodule_timeout_seconds when the object database
-# is large.
 _builtin_setup_submodules:
 	@set -eu; \
 	umask 022; \
@@ -1724,7 +1540,7 @@ _builtin_setup_submodules:
 		GIT_TERMINAL_PROMPT=0 timeout --signal=TERM --kill-after=5s "120s" \
 			git -C "$$root" -c credential.helper= \
 			-c "credential.https://$${GH_HOST:-github.com}.helper=$$credential_helper" \
-			submodule update --init --depth 1 --jobs "$${FLEXT_SUBMODULE_JOBS:-8}" -- $$absent; \
+			submodule update --init --jobs "$${FLEXT_SUBMODULE_JOBS:-8}" -- $$absent; \
 	fi; \
 	validate_submodule() { \
 		superproject="$$1"; \
@@ -1973,15 +1789,15 @@ _builtin_build_artifacts:
 # An absent CI token runs every active default gate.
 _builtin_check_all: _builtin_require_environment
 	@set -eu; \
-		gates="lint,security,markdown,markdown-format,markdown-code,duplication,pyrefly,mypy,pyright,loc-cap,runtime-census,fresh-import,index-declarations,codemod,layout,direnv"; \
+		gates="lint,security,markdown,duplication,pyrefly,mypy,pyright,loc-cap,runtime-census,fresh-import,index-declarations,codemod,layout,direnv"; \
 		if [ "$(strip $(CI))" = "Y" ]; then \
-			gates="lint,security,markdown,markdown-format,markdown-code,duplication,pyrefly,mypy,pyright,loc-cap,runtime-census,fresh-import,index-declarations,codemod,layout,direnv"; \
-			printf 'INFO: CI=Y runs check gates: lint security markdown markdown-format markdown-code duplication pyrefly mypy pyright loc-cap runtime-census fresh-import index-declarations codemod layout direnv\n'; \
+			gates="lint,security,markdown,duplication,loc-cap,runtime-census,fresh-import,index-declarations,codemod,layout,direnv"; \
+			printf 'INFO: CI=Y runs check gates: lint security markdown duplication loc-cap runtime-census fresh-import index-declarations codemod layout direnv\n'; \
 		elif [ "$(strip $(CI))" = "N" ]; then \
-			gates=""; \
-			printf 'INFO: CI=N runs check gates: \n'; \
+			gates="pyrefly,mypy,pyright"; \
+			printf 'INFO: CI=N runs check gates: pyrefly mypy pyright\n'; \
 		else \
-			printf 'INFO: default context runs check gates: lint security markdown markdown-format markdown-code duplication pyrefly mypy pyright loc-cap runtime-census fresh-import index-declarations codemod layout direnv\n'; \
+			printf 'INFO: default context runs check gates: lint security markdown duplication pyrefly mypy pyright loc-cap runtime-census fresh-import index-declarations codemod layout direnv\n'; \
 		fi; \
 		if [ -z "$$gates" ]; then \
 			printf 'ERROR: no active check gates remain in the selected context\n' >&2; \
@@ -2105,8 +1921,8 @@ profile-gen-report: _builtin_require_environment
 # The stdlib-only adapter starts profiling before runner/model/pytest imports.
 # The parent sidecar binds the exact run;
 # reports never combine a parent profile with the mutable latest.txt pointer.
-# Public names come from make.verbs; these targets are the implementations.
-_builtin-profile-test: _builtin_require_environment
+.PHONY: profile-test
+profile-test: _builtin_require_environment
 	@mkdir -p "$(PROFILE_REPORTS_DIR)"
 	@set -eu; \
 database="$(FLEXT_PYTEST_TESTMON_DATABASE)"; \
@@ -2117,7 +1933,8 @@ mkdir -p "$$(dirname "$$database")"; \
 	TESTMON_DATAFILE="$$database" $(PROJECT_TOOL_EXEC) "$(RUNTIME_PYTHON)" -m flext_infra._pytest_entry profile \
 		"$(PROFILE_REPORTS_DIR)/pytest.pstats"
 
-_builtin-profile-test-report: _builtin_require_environment
+.PHONY: profile-test-report
+profile-test-report: _builtin_require_environment
 	@$(PROJECT_TOOL_EXEC) "$(RUNTIME_PYTHON)" -m flext_infra._cprofile_entry \
 		"$(PROFILE_REPORTS_DIR)/pytest.pstats" "$(PROFILE_REPORTS_DIR)/pytest.pstats.json"
 
