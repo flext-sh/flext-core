@@ -16,8 +16,8 @@ from flext_core._protocols.container import FlextProtocolsContainer as pc
 from flext_core._protocols.context import FlextProtocolsContext as pcx
 from flext_core._protocols.loggings import FlextProtocolsLogging as pl
 from flext_core._typings.services import FlextTypesServices as ts
-from flext_core.context import FlextContext
 from flext_core.loggings import FlextUtilitiesLogging
+import flext_core._models.flext_context
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -35,7 +35,7 @@ class FlextDecoratorsBase:
         KeyError,
     )
     _container_type: ClassVar[pc.ContainerType] = FlextContainer
-    _context_type: ClassVar[pcx.ContextType] = FlextContext
+    _context_type: ClassVar[pcx.ContextType] = flext_core._models.flext_context.FlextContext
 
     @classmethod
     def _is_logger_carrier(

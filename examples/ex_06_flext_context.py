@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextContext
+import flext_core._models.flext_context
 
 
 def run() -> None:
@@ -16,7 +17,7 @@ def run() -> None:
         RuntimeError: If context set failed; or if context get failed.
 
     """
-    ctx = FlextContext()
+    ctx = flext_core._models.flext_context.FlextContext()
     if not ctx.set("example", "context").success:
         msg = "context set failed"
         raise RuntimeError(msg)
