@@ -88,7 +88,7 @@ if TYPE_CHECKING:
     from flext_core._utilities.context import FlextUtilitiesContext
     from flext_core._utilities.conversion import FlextUtilitiesConversion
     from flext_core._utilities.discovery import FlextUtilitiesDiscovery
-    from flext_core._utilities.dispatcher_execute import execute_dispatcher_handler
+    from flext_core._utilities.dispatcher_execute import FlextUtilitiesDispatcherExecute
     from flext_core._utilities.domain import FlextUtilitiesDomain
     from flext_core._utilities.enforcement import (
         PREDICATE_BINDINGS,
@@ -159,6 +159,7 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesContext",
     "FlextUtilitiesConversion",
     "FlextUtilitiesDiscovery",
+    "FlextUtilitiesDispatcherExecute",
     "FlextUtilitiesDomain",
     "FlextUtilitiesEnforcement",
     "FlextUtilitiesEnforcementCollect",
@@ -203,7 +204,6 @@ __all__: tuple[str, ...] = (
     "_mapper_extract_parts",
     "_parser_targets_parts",
     "alias_first_violation",
-    "execute_dispatcher_handler",
     "redundant_inner_violation",
     "self_ref_violation",
 )
@@ -239,6 +239,7 @@ install_lazy_exports(
         "FlextUtilitiesContext": ".context",
         "FlextUtilitiesConversion": ".conversion",
         "FlextUtilitiesDiscovery": ".discovery",
+        "FlextUtilitiesDispatcherExecute": ".dispatcher_execute",
         "FlextUtilitiesDomain": ".domain",
         "FlextUtilitiesEnforcement": ".enforcement",
         "FlextUtilitiesEnforcementCollect": ".enforcement_collect",
@@ -285,7 +286,6 @@ install_lazy_exports(
         "alias_first_violation": (
             "._beartype._class_visitor_parts._parts.class_visitor_part_02_01"
         ),
-        "execute_dispatcher_handler": ".dispatcher_execute",
         "redundant_inner_violation": (
             "._beartype._class_visitor_parts._parts.class_visitor_part_02_02"
         ),

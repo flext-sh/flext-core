@@ -102,7 +102,9 @@ def greet_handler(model: GreetInput) -> t.JsonValue:
 
 
 command = FlextCliCli.model_command(
-    model_cls=GreetInput, handler=greet_handler, settings=settings,
+    model_cls=GreetInput,
+    handler=greet_handler,
+    settings=settings,
 )
 cli = FlextCliCli()
 app = cli.create_app_with_common_params(name="greeting", help_text="Greeting commands")
@@ -150,11 +152,15 @@ def test_greet_command() -> None:
     """
     cli = FlextCliCli()
     app = cli.create_app_with_common_params(
-        name="greeting", help_text="Greeting commands",
+        name="greeting",
+        help_text="Greeting commands",
     )
     command = cli.model_command(model_cls=GreetInput, handler=greet_handler)
     cli.register_command(
-        app, name="greet", help_text="Build a greeting", command=command,
+        app,
+        name="greet",
+        help_text="Build a greeting",
+        command=command,
     )
     invocation = cli.invoke_app(app, args=["greet", "--name", "Ada"])
     expected_greeting = "Hello, Ada!"

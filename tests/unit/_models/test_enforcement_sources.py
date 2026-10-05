@@ -43,7 +43,8 @@ class TestsFlextCoreEnforcementSources:
         ],
     )
     def test_source_kind_member_exposes_expected_value(
-        member: c.EnforcementSourceKind, value: str,
+        member: c.EnforcementSourceKind,
+        value: str,
     ) -> None:
         assert member.value == value
 
@@ -65,7 +66,8 @@ class TestsFlextCoreEnforcementSources:
     @staticmethod
     @pytest.mark.parametrize(("expected_kind", "source"), list(_SOURCE_CASES.items()))
     def test_source_model_exposes_matching_discriminator_literal(
-        expected_kind: str, source: m.BaseModel,
+        expected_kind: str,
+        source: m.BaseModel,
     ) -> None:
         assert source.model_dump()["kind"] == expected_kind
 
@@ -136,7 +138,8 @@ class TestsFlextCoreEnforcementSources:
     @staticmethod
     @pytest.mark.parametrize(("expected_kind", "source"), list(_SOURCE_CASES.items()))
     def test_source_model_dump_round_trips(
-        expected_kind: str, source: m.BaseModel,
+        expected_kind: str,
+        source: m.BaseModel,
     ) -> None:
         dumped = source.model_dump()
         assert dumped["kind"] == expected_kind
@@ -167,7 +170,9 @@ class TestsFlextCoreEnforcementSources:
         ],
     )
     def test_rule_spec_dispatches_source_by_discriminator(
-        kind: str, source_payload: t.JsonMapping, expected_type: type[m.BaseModel],
+        kind: str,
+        source_payload: t.JsonMapping,
+        expected_type: type[m.BaseModel],
     ) -> None:
         spec = m.EnforcementRuleSpec.model_validate({
             "id": "ENFORCE-001",

@@ -35,9 +35,9 @@ from pydantic_settings import (
     SettingsConfigDict,
 )
 
-from ._constants.config import FlextConstantsConfig
-from ._settings import app_env_prefix, platform_config_root
-from .config_sources import StrictYamlConfigSource
+from flext_core._constants.config import FlextConstantsConfig
+from flext_core._settings import app_env_prefix, platform_config_root
+from flext_core.config_sources import StrictYamlConfigSource
 
 if TYPE_CHECKING:
     from flext_core import t
@@ -56,7 +56,9 @@ class FlextConfig(BaseSettings):
     CONFIG_FILENAMES: ClassVar[t.VariadicTuple[str]] = ()
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
-        frozen=True, extra="allow", env_prefix="FLEXT_CONFIG_"
+        frozen=True,
+        extra="allow",
+        env_prefix="FLEXT_CONFIG_",
     )
 
     _lock: ClassVar[RLock] = RLock()
@@ -91,6 +93,9 @@ class FlextConfig(BaseSettings):
         An operator may relocate the root entirely with
         ``<PACKAGE>_CONFIG_DIR``. Library code must never depend on the process
         CWD, so the legacy CWD-relative lookup is gone.
+
+        Returns:
+            The resulting ``Path``.
         """
         namespace = cls._package_namespace()
         override = os.environ.get(f"{app_env_prefix(namespace)}CONFIG_DIR")
@@ -126,6 +131,14 @@ class FlextConfig(BaseSettings):
 
         Later files win on key collision, so operator preferences override the
         packaged defaults while every undeclared key keeps shipping its default.
+
+        Returns:
+            The resulting ``list[Path]``.
+
+        Raises:
+            FileNotFoundError: If declared config directory does not exist; or if
+                ``missing``.
+            ValueError: If ``invalid``.
         """
         config_dir = cls._config_dir()
         user_files = cls._yaml_files_in(cls._user_config_dir())
@@ -159,6 +172,9 @@ class FlextConfig(BaseSettings):
         Default is identity (no transformation). Override to apply env
         expansion, section filtering, or any data reshaping without
         reimplementing ``settings_customise_sources`` or the YAML source.
+
+        Returns:
+            The resulting ``dict[str, JsonValue]``.
         """
         return data
 
@@ -172,7 +188,11 @@ class FlextConfig(BaseSettings):
         dotenv_settings: PydanticBaseSettingsSource,
         file_secret_settings: PydanticBaseSettingsSource,
     ) -> t.VariadicTuple[PydanticBaseSettingsSource]:
-        """Env + every ``config/*.yaml`` deep-merged; no dotenv/secret sources."""
+        """Env + every ``config/*.yaml`` deep-merged; no dotenv/secret sources.
+
+        Returns:
+            The resulting ``t.VariadicTuple[PydanticBaseSettingsSource]``.
+        """
         _ = (dotenv_settings, file_secret_settings)
         return (
             init_settings,

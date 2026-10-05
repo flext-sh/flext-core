@@ -20,19 +20,6 @@ from flext_core._models._cqrs_parts.flextmodelscqrs_part_01 import (
 )
 from flext_core._models.base import FlextModelsBase as m
 
-
-def _u() -> type:
-    """Deferred facade access: cqrs is loaded by the m facade itself.
-
-    Returns:
-        The resulting ``type``.
-
-    """
-    from flext_core import u
-
-    return u
-
-
 # NOTE (multi-agent): mro-i6nq.12 — consolidated _cqrs_parts/part_01..02 (one
 # FlextModelsCqrs namespace class split across a numbered MRO chain) into this
 # single facade module.
@@ -45,6 +32,18 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
     All nested classes can be accessed via FlextModels.Cqrs.* (type aliases) or
     directly via FlextModelsCqrs.*
     """
+
+    @staticmethod
+    def _u() -> type:
+        """Deferred facade access: cqrs is loaded by the m facade itself.
+
+        Returns:
+            The resulting ``type``.
+
+        """
+        from flext_core import u
+
+        return u
 
     class Command(m.ArbitraryTypesModel):
         """Base class for CQRS commands with validation."""
@@ -65,13 +64,14 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
             t.NonEmptyStr,
             Field(
                 description=(
-                    "Unique command identifier used for tracing"
-                    " and idempotency checks."
+                    "Unique command identifier used for tracing and idempotency checks."
                 ),
                 title="Command Id",
                 examples=["cmd_01HZX7Q0P5N6M2"],
             ),
-        ] = Field(default_factory=lambda: _u().generate_prefixed_id("cmd"))
+        ] = Field(
+            default_factory=lambda: FlextModelsCqrs._u().generate_prefixed_id("cmd"),
+        )
         issuer_id: Annotated[
             t.NonEmptyStr | None,
             Field(description="Identity of the principal that issued this command."),
@@ -117,13 +117,14 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
             t.NonEmptyStr,
             Field(
                 description=(
-                    "Unique query identifier used for tracing"
-                    " and cache correlation."
+                    "Unique query identifier used for tracing and cache correlation."
                 ),
                 title="Query Id",
                 examples=["query_01HZX7Q0P5N6M2"],
             ),
-        ] = Field(default_factory=lambda: _u().generate_prefixed_id("query"))
+        ] = Field(
+            default_factory=lambda: FlextModelsCqrs._u().generate_prefixed_id("query"),
+        )
         query_type: Annotated[
             str | None,
             Field(description="Query type identifier for dispatcher routing."),
@@ -148,7 +149,7 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
                 "Pagination",
                 FlextModelsCqrsPart01.Pagination,
             )
-            normalized_input = _u().normalize_model_input_mapping(v)
+            normalized_input = FlextModelsCqrs._u().normalize_model_input_mapping(v)
             if normalized_input is None:
                 return pagination_cls()
             try:
@@ -227,13 +228,14 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
             t.NonEmptyStr,
             Field(
                 description=(
-                    "Unique event identifier used for deduplication"
-                    " and observability."
+                    "Unique event identifier used for deduplication and observability."
                 ),
                 title="Event Id",
                 examples=["evt_01HZX7Q0P5N6M2"],
             ),
-        ] = Field(default_factory=lambda: _u().generate_prefixed_id("evt"))
+        ] = Field(
+            default_factory=lambda: FlextModelsCqrs._u().generate_prefixed_id("evt"),
+        )
         data: Annotated[
             t.MappingKV[str, t.Scalar],
             Field(description="Event payload data"),
