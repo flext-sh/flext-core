@@ -36,6 +36,6 @@ class FlextConstantsSettings:
             str_strip_whitespace=True,
             arbitrary_types_allowed=False,
             extra="forbid",
-        )
+        ),
     )
     """Domain model configuration defaults (SSOT; consumed via ``c.*``)."""
