@@ -67,7 +67,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import c, m, u
+from flext_core import c, m
 
 
 class PortModel(m.BaseModel):
@@ -75,7 +75,7 @@ class PortModel(m.BaseModel):
 
     port: Annotated[int, m.Field(description="TCP port")]
 
-    @u.field_validator("port")
+    @m.field_validator("port")
     @classmethod
     def validate_port(cls, value: int) -> int:
         """Reject ports outside the library bounds.

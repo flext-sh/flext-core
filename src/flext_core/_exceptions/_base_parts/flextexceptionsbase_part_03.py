@@ -1,7 +1,6 @@
 """Exception base facade implementation.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
-src/flext_core/_exceptions/_base_parts/flextexceptionsbase_part_03
 SPDX-License-Identifier: MIT
 """
 
