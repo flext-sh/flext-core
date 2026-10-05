@@ -17,13 +17,16 @@ from flext_tests import tm
 from tests.constants import c
 from tests.models import m
 from tests.unit._models._exception_params_support import (
-    _ALL_PARAMS_IDS,
-    _ALL_PARAMS_MODELS,
+    TestsFlextModelsExceptionParamsSupport,
 )
 
 
 class TestsFlextCoreExceptionParamsOperations:
-    @pytest.mark.parametrize("model_cls", _ALL_PARAMS_MODELS, ids=_ALL_PARAMS_IDS)
+    @pytest.mark.parametrize(
+        "model_cls",
+        TestsFlextModelsExceptionParamsSupport._ALL_PARAMS_MODELS,
+        ids=TestsFlextModelsExceptionParamsSupport._ALL_PARAMS_IDS,
+    )
     @staticmethod
     def test_no_arg_construction_yields_all_none_fields(
         model_cls: type[m.ParamsModel],
@@ -32,7 +35,11 @@ class TestsFlextCoreExceptionParamsOperations:
         for value in instance.model_dump().values():
             tm.that(value, none=True)
 
-    @pytest.mark.parametrize("model_cls", _ALL_PARAMS_MODELS, ids=_ALL_PARAMS_IDS)
+    @pytest.mark.parametrize(
+        "model_cls",
+        TestsFlextModelsExceptionParamsSupport._ALL_PARAMS_MODELS,
+        ids=TestsFlextModelsExceptionParamsSupport._ALL_PARAMS_IDS,
+    )
     @staticmethod
     def test_unknown_field_is_rejected(model_cls: type[m.ParamsModel]) -> None:
         with pytest.raises(c.ValidationError):

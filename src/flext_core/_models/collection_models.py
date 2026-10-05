@@ -67,8 +67,7 @@ class FlextModelsCollections:
                 default=None,
                 title="Less Than",
                 description=(
-                    "Require value to be less than this"
-                    " (sortable: numeric or string)."
+                    "Require value to be less than this (sortable: numeric or string)."
                 ),
             ),
         ] = None
@@ -129,8 +128,7 @@ class FlextModelsCollections:
                 default=None,
                 title="Empty Constraint",
                 description=(
-                    "When True, require empty value;"
-                    " when False, require non-empty."
+                    "When True, require empty value; when False, require non-empty."
                 ),
             ),
         ] = None

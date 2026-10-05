@@ -72,7 +72,8 @@ def _increment_step(value: int) -> p.Result[int]:
 class TestsFlextCorePublicApiContract:
     """Assert the observable behavior promised by the flext_core public surface."""
 
-    def test_root_lazy_helpers_publish_a_consumer_export(self) -> None:
+    @staticmethod
+    def test_root_lazy_helpers_publish_a_consumer_export() -> None:
         """Generated consumers can compose lazy exports from the foundation root."""
         build_map = flext_core.build_lazy_import_map
         install = flext_core.install_lazy_exports
@@ -82,14 +83,18 @@ class TestsFlextCorePublicApiContract:
         imports = build_map({"collections": ("Counter",)})
         namespace: t.ModuleGlobals = {"__name__": "flext_core_consumer"}
         install(
-            "flext_core_consumer", namespace, imports, public_exports=("Counter",),
+            "flext_core_consumer",
+            namespace,
+            imports,
+            public_exports=("Counter",),
         )
         resolver = namespace["__getattr__"]
         assert callable(resolver)
         assert resolver("Counter").__name__ == "Counter"
 
+    @staticmethod
     @pytest.mark.parametrize("name", _FACADES)
-    def test_named_facade_is_importable(self, name: str) -> None:
+    def test_named_facade_is_importable(name: str) -> None:
         """Every advertised facade is reachable from the package root."""
         assert hasattr(flext_core, name), f"{name} not importable from flext_core"
 
@@ -99,9 +104,9 @@ class TestsFlextCorePublicApiContract:
         missing = [name for name in flext_core.__all__ if not hasattr(flext_core, name)]
         assert not missing, f"Names in __all__ but not importable: {missing}"
 
+    @staticmethod
     @pytest.mark.parametrize(("alias", "facade_name"), _ALIASES)
     def test_single_letter_alias_is_its_facade(
-        self,
         alias: object,
         facade_name: str,
     ) -> None:
@@ -234,9 +239,9 @@ class TestsFlextCorePublicApiContract:
         assert repr(r.ok(1)) == "r[T].ok(1)"
         assert repr(r.fail("z")) == "r[T].fail('z')"
 
+    @staticmethod
     @pytest.mark.parametrize("exc_name", ["MroViolation", "SmellViolation"])
     def test_exception_family_members_are_raisable_and_catchable(
-        self,
         exc_name: str,
     ) -> None:
         """Structured exception classes raise with, and preserve, their message."""

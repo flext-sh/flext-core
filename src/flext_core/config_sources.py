@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 from importlib.resources.abc import Traversable
 from pathlib import Path
-from typing import TYPE_CHECKING, cast, override
+from typing import cast, override
 
 from pydantic import JsonValue
 from pydantic_settings import BaseSettings, YamlConfigSettingsSource
@@ -22,17 +22,25 @@ from yaml import MappingNode, SafeLoader
 from yaml.constructor import ConstructorError
 from yaml.resolver import BaseResolver
 
-__all__ = ("StrictYamlConfigSource",)
-
 
 class _UniqueKeySafeLoader(SafeLoader):
     """Safe YAML loader that rejects duplicate mapping keys at every depth."""
 
 
 def _construct_unique_mapping(
-    loader: SafeLoader, node: MappingNode, *, deep: bool = False
+    loader: SafeLoader,
+    node: MappingNode,
+    *,
+    deep: bool = False,
 ) -> dict[str, JsonValue]:
-    """Construct one JSON mapping and fail before a duplicate can overwrite."""
+    """Construct one JSON mapping and fail before a duplicate can overwrite.
+
+    Returns:
+        The resulting ``dict[str, JsonValue]``.
+
+    Raises:
+        ConstructorError: If while constructing a config mapping.
+    """
     values: dict[str, JsonValue] = {}
     for key_node, value_node in node.value:
         key = cast("JsonValue", loader.construct_object(key_node, deep=deep))
@@ -40,20 +48,27 @@ def _construct_unique_mapping(
             context = "while constructing a config mapping"
             problem = "config mapping keys must be strings"
             raise ConstructorError(
-                context, node.start_mark, problem, key_node.start_mark
+                context,
+                node.start_mark,
+                problem,
+                key_node.start_mark,
             )
         if key in values:
             context = "while constructing a config mapping"
             problem = f"duplicate config key: {key}"
             raise ConstructorError(
-                context, node.start_mark, problem, key_node.start_mark
+                context,
+                node.start_mark,
+                problem,
+                key_node.start_mark,
             )
         values[key] = cast("JsonValue", loader.construct_object(value_node, deep=deep))
     return values
 
 
 _UniqueKeySafeLoader.add_constructor(
-    BaseResolver.DEFAULT_MAPPING_TAG, _construct_unique_mapping
+    BaseResolver.DEFAULT_MAPPING_TAG,
+    _construct_unique_mapping,
 )
 
 
@@ -95,7 +110,14 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
 
     @override
     def _read_file(self, file_path: Path | Traversable) -> dict[str, JsonValue]:
-        """Parse one YAML config file exactly once with strict mapping keys."""
+        """Parse one YAML config file exactly once with strict mapping keys.
+
+        Returns:
+            The resulting ``dict[str, JsonValue]``.
+
+        Raises:
+            TypeError: If config YAML root must be a mapping.
+        """
         with file_path.open(encoding=self.yaml_file_encoding) as yaml_file:
             loader = _UniqueKeySafeLoader(yaml_file)
             try:
@@ -122,6 +144,9 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
         *replaces* the first list entirely. This override concatenates lists
         instead, enabling domain-split config files to each contribute rules
         to the same list.
+
+        Returns:
+            The resulting ``dict[str, JsonValue]``.
         """
         from collections.abc import Sequence as _Sequence
         from pathlib import Path as _Path
@@ -147,9 +172,14 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
 
     @staticmethod
     def _deep_merge_lists(
-        base: dict[str, JsonValue], updating: dict[str, JsonValue]
+        base: dict[str, JsonValue],
+        updating: dict[str, JsonValue],
     ) -> dict[str, JsonValue]:
-        """Deep-merge two config dicts, concatenating list values."""
+        """Deep-merge two config dicts, concatenating list values.
+
+        Returns:
+            The resulting ``dict[str, JsonValue]``.
+        """
         result = dict(base)
         for key, value in updating.items():
             existing = result.get(key)
@@ -160,3 +190,6 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
             else:
                 result[key] = value
         return result
+
+
+__all__ = ("StrictYamlConfigSource",)

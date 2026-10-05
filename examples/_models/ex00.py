@@ -42,7 +42,7 @@ class ExamplesFlextModelsEx00:
         name: Annotated[str, u.Field(min_length=1, description="User display name")]
         email: Annotated[str, u.Field(min_length=1, description="User email address")]
 
-        @u.field_validator("name", "email", mode="before")
+        @m.field_validator("name", "email", mode="before")
         @classmethod
         def validate_non_empty_text(cls, value: t.JsonPayload) -> str:
             """Validate text input.

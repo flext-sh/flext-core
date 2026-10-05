@@ -131,6 +131,28 @@ class FlextUtilitiesProjectMetadata(mpm):
         )
 
     @classmethod
+    def distribution_requirement_names(
+        cls,
+        distribution: Distribution,
+    ) -> t.VariadicTuple[str]:
+        """Return the normalized underscore names of declared requirements.
+
+        Each ``Requires-Dist`` entry is parsed by the same requirement-name
+        grammar as ``project_uses_distribution``; version specifiers, markers
+        and extras never reach the returned name. The names keep the import
+        grammar (underscores), matching the family-surface discovery seed.
+
+        Returns:
+            The normalized underscore name of every parseable requirement.
+        """
+        names: list[str] = []
+        for requirement in distribution.requires or ():
+            match = cls._REQUIREMENT_NAME_RE.match(requirement)
+            if match is not None:
+                names.append(match.group("name").lower().replace("-", "_"))
+        return tuple(names)
+
+    @classmethod
     def project_uses_distribution(
         cls,
         metadata: ppm.ProjectMetadata,

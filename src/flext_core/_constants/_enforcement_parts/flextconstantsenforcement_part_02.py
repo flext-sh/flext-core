@@ -18,7 +18,6 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
 
 
-
 class FlextConstantsEnforcementRuntime:
     """Runtime modes, base exemptions, and collection contracts."""
 
