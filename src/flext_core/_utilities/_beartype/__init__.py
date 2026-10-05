@@ -1,34 +1,60 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Flext Core. Utilities. Beartype package."""
+"""Flext Core. Utilities. Beartype package.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import build_lazy_import_map, install_lazy_exports
+from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from . import _class_visitor_parts, _helpers_parts
-    from ._alias_visitor import FlextUtilitiesBeartypeAliasVisitor
-    from ._class_visitor_parts._parts.class_visitor_part_02_01 import (
+    from flext_core._utilities._beartype import _class_visitor_parts, _helpers_parts
+    from flext_core._utilities._beartype._alias_visitor import (
+        FlextUtilitiesBeartypeAliasVisitor,
+    )
+    from flext_core._utilities._beartype._class_visitor_parts._parts.class_visitor_part_02_01 import (
         alias_first_violation,
     )
-    from ._class_visitor_parts._parts.class_visitor_part_02_02 import (
+    from flext_core._utilities._beartype._class_visitor_parts._parts.class_visitor_part_02_02 import (
         redundant_inner_violation,
         self_ref_violation,
     )
-    from ._library_visitor import FlextUtilitiesBeartypeLibraryVisitor
-    from .attr_visitor import FlextUtilitiesBeartypeAttrVisitor
-    from .class_visitor import FlextUtilitiesBeartypeClassVisitor
-    from .deprecated_visitor import FlextUtilitiesBeartypeDeprecatedVisitor
-    from .field_visitor import FlextUtilitiesBeartypeFieldVisitor
-    from .helpers import FlextUtilitiesBeartypeHelpers
-    from .import_visitor import FlextUtilitiesBeartypeImportVisitor
-    from .method_visitor import FlextUtilitiesBeartypeMethodVisitor
-    from .module_source import FlextUtilitiesBeartypeModuleSource
-    from .module_visitor import FlextUtilitiesBeartypeModuleVisitor
-    from .type_aliases import FlextUtilitiesBeartypeTypeAliases
+    from flext_core._utilities._beartype._library_visitor import (
+        FlextUtilitiesBeartypeLibraryVisitor,
+    )
+    from flext_core._utilities._beartype.attr_visitor import (
+        FlextUtilitiesBeartypeAttrVisitor,
+    )
+    from flext_core._utilities._beartype.class_visitor import (
+        FlextUtilitiesBeartypeClassVisitor,
+    )
+    from flext_core._utilities._beartype.deprecated_visitor import (
+        FlextUtilitiesBeartypeDeprecatedVisitor,
+    )
+    from flext_core._utilities._beartype.field_visitor import (
+        FlextUtilitiesBeartypeFieldVisitor,
+    )
+    from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers
+    from flext_core._utilities._beartype.import_visitor import (
+        FlextUtilitiesBeartypeImportVisitor,
+    )
+    from flext_core._utilities._beartype.method_visitor import (
+        FlextUtilitiesBeartypeMethodVisitor,
+    )
+    from flext_core._utilities._beartype.module_source import (
+        FlextUtilitiesBeartypeModuleSource,
+    )
+    from flext_core._utilities._beartype.module_visitor import (
+        FlextUtilitiesBeartypeModuleVisitor,
+    )
+    from flext_core._utilities._beartype.type_aliases import (
+        FlextUtilitiesBeartypeTypeAliases,
+    )
 
 
 __all__: tuple[str, ...] = (
@@ -51,34 +77,31 @@ __all__: tuple[str, ...] = (
     "self_ref_violation",
 )
 
-_LAZY_IMPORTS = MappingProxyType(
-    build_lazy_import_map(
-        MappingProxyType({
-            "._alias_visitor": ("FlextUtilitiesBeartypeAliasVisitor",),
-            "._class_visitor_parts": ("_class_visitor_parts",),
-            "._class_visitor_parts._parts.class_visitor_part_02_01": (
-                "alias_first_violation",
-            ),
-            "._class_visitor_parts._parts.class_visitor_part_02_02": (
-                "redundant_inner_violation",
-                "self_ref_violation",
-            ),
-            "._helpers_parts": ("_helpers_parts",),
-            "._library_visitor": ("FlextUtilitiesBeartypeLibraryVisitor",),
-            ".attr_visitor": ("FlextUtilitiesBeartypeAttrVisitor",),
-            ".class_visitor": ("FlextUtilitiesBeartypeClassVisitor",),
-            ".deprecated_visitor": ("FlextUtilitiesBeartypeDeprecatedVisitor",),
-            ".field_visitor": ("FlextUtilitiesBeartypeFieldVisitor",),
-            ".helpers": ("FlextUtilitiesBeartypeHelpers",),
-            ".import_visitor": ("FlextUtilitiesBeartypeImportVisitor",),
-            ".method_visitor": ("FlextUtilitiesBeartypeMethodVisitor",),
-            ".module_source": ("FlextUtilitiesBeartypeModuleSource",),
-            ".module_visitor": ("FlextUtilitiesBeartypeModuleVisitor",),
-            ".type_aliases": ("FlextUtilitiesBeartypeTypeAliases",),
-        }),
-        alias_groups=MappingProxyType({}),
-        sort_keys=False,
-    )
+install_lazy_exports(
+    __name__,
+    globals(),
+    MappingProxyType({
+        "FlextUtilitiesBeartypeAliasVisitor": "._alias_visitor",
+        "FlextUtilitiesBeartypeAttrVisitor": ".attr_visitor",
+        "FlextUtilitiesBeartypeClassVisitor": ".class_visitor",
+        "FlextUtilitiesBeartypeDeprecatedVisitor": ".deprecated_visitor",
+        "FlextUtilitiesBeartypeFieldVisitor": ".field_visitor",
+        "FlextUtilitiesBeartypeHelpers": ".helpers",
+        "FlextUtilitiesBeartypeImportVisitor": ".import_visitor",
+        "FlextUtilitiesBeartypeLibraryVisitor": "._library_visitor",
+        "FlextUtilitiesBeartypeMethodVisitor": ".method_visitor",
+        "FlextUtilitiesBeartypeModuleSource": ".module_source",
+        "FlextUtilitiesBeartypeModuleVisitor": ".module_visitor",
+        "FlextUtilitiesBeartypeTypeAliases": ".type_aliases",
+        "_class_visitor_parts": "._class_visitor_parts",
+        "_helpers_parts": "._helpers_parts",
+        "alias_first_violation": (
+            "._class_visitor_parts._parts.class_visitor_part_02_01"
+        ),
+        "redundant_inner_violation": (
+            "._class_visitor_parts._parts.class_visitor_part_02_02"
+        ),
+        "self_ref_violation": "._class_visitor_parts._parts.class_visitor_part_02_02",
+    }),
+    public_exports=__all__,
 )
-
-install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

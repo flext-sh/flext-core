@@ -1,4 +1,8 @@
-"""Shared exception-carrying r fixtures."""
+"""Shared exception-carrying r fixtures.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -11,8 +15,14 @@ class TestsFlextResultExceptionCarrying:
     class BrokenSized:
         """Sized t.JsonValue that raises on __len__."""
 
-        def __len__(self) -> int:
-            """Raise TypeError on length call."""
+        @staticmethod
+        def __len__() -> int:
+            """Raise TypeError on length call.
+
+            Raises:
+                TypeError: If no length.
+
+            """
             msg = "no length"
             raise TypeError(msg)
 

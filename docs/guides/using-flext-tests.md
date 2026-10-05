@@ -64,14 +64,23 @@ above are not declared with `autouse=True`.
 ```python
 from __future__ import annotations
 
-from flext_core import FlextSettings
 from flext_tests import FlextTestsSettings
+
+from flext_core import FlextSettings
 
 
 def test_settings_isolation(settings: FlextTestsSettings) -> None:
+    """Prove the settings plugin isolates singletons per test.
+
+    Raises:
+        RuntimeError: When the fetched settings are not isolated.
+
+    """
     settings.debug = True
     # The settings plugin resets runtime singletons between test functions.
-    assert FlextSettings.fetch_global() is not settings
+    if FlextSettings.fetch_global() is settings:
+        message = "Expected isolated settings singleton"
+        raise RuntimeError(message)
 ```
 
 ## Resetting singletons manually
@@ -79,8 +88,9 @@ def test_settings_isolation(settings: FlextTestsSettings) -> None:
 When a fixture is not enough:
 
 ```python
-from flext_core import FlextContainer, FlextSettings
 from flext_tests import FlextTestsSettings
+
+from flext_core import FlextContainer, FlextSettings
 
 FlextSettings.reset_for_testing()
 FlextTestsSettings.reset_for_testing()
@@ -98,18 +108,37 @@ from flext_tests import p, r
 
 
 def safe_divide(a: float, b: float) -> p.Result[float]:
+    """Divide two floats, rejecting a zero divisor.
+
+    Returns:
+        The resulting ``p.Result[float]``.
+
+    """
     if b == 0:
         return r[float].fail("division_by_zero")
     return r[float].ok(a / b)
 
 
 def test_safe_divide() -> None:
+    """Check the success and failure branches of the divider.
+
+    Raises:
+        RuntimeError: When a division branch misbehaves.
+
+    """
     result = safe_divide(10, 2)
-    assert result.success
-    assert isclose(result.unwrap(), 5.0)
+    expected_quotient = 5.0
+    if not result.success:
+        message = "Expected division success"
+        raise RuntimeError(message)
+    if not isclose(result.unwrap(), expected_quotient):
+        message = "Unexpected division quotient"
+        raise RuntimeError(message)
 
     failure = safe_divide(10, 0)
-    assert failure.failure
+    if not failure.failure:
+        message = "Expected zero divisor failure"
+        raise RuntimeError(message)
 ```
 
 ## Good practices
@@ -131,8 +160,7 @@ not add a `WHAT` selector or duplicate the dispatcher in a test helper.
 
 Tests for this contract exercise the generated public commands and observable artifacts.
 They do not reproduce command metadata or assert private routing implementation. See
-ADR-004 for the
-canonical decision.
+ADR-004 for the canonical decision.
 
 ## Bad practices
 
@@ -148,11 +176,19 @@ from flext_core import FlextSettings
 
 
 def test_settings_override() -> None:
+    """Flip a setting and rely on the reset in the cleanup path.
+
+    Raises:
+        RuntimeError: When the override does not stick.
+
+    """
     FlextSettings.reset_for_testing()
     try:
         settings = FlextSettings.fetch_global()
         settings.debug = True
-        assert settings.debug
+        if settings.debug is not True:
+            message = "Expected debug override to stick"
+            raise RuntimeError(message)
     finally:
         FlextSettings.reset_for_testing()
 ```

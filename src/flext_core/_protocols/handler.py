@@ -12,15 +12,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, override, runtime_checkable
 
-from .base import FlextProtocolsBase as p
+from flext_core._protocols.base import FlextProtocolsBase as p
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from flext_core import c, t
-
-    from .container import FlextProtocolsContainer as pc
-    from .result import FlextProtocolsResult as pr
+    from flext_core._protocols.container import FlextProtocolsContainer as pc
+    from flext_core._protocols.result import FlextProtocolsResult as pr
 
 
 class FlextProtocolsHandler:
@@ -141,7 +140,9 @@ class FlextProtocolsHandler:
             ...
 
         def dispatch_message(
-            self, message: MessageT, operation: str = ...
+            self,
+            message: MessageT,
+            operation: str = ...,
         ) -> pr.Result[ResultT]:
             """Dispatch message through the full handler pipeline."""
             ...
@@ -159,7 +160,8 @@ class FlextProtocolsHandler:
         # --- context & metrics ---
 
         def push_context(
-            self, ctx: t.JsonMapping | FlextProtocolsHandler.ExecutionContext
+            self,
+            ctx: t.JsonMapping | FlextProtocolsHandler.ExecutionContext,
         ) -> pr.Result[bool]:
             """Push execution context onto the local handler stack."""
             ...
@@ -181,7 +183,9 @@ class FlextProtocolsHandler:
         """Protocol for routing a message through a dispatch path."""
 
         def dispatch_message(
-            self, message: p.Routable, operation: str = ...
+            self,
+            message: p.Routable,
+            operation: str = ...,
         ) -> pr.ResultView[t.JsonPayload] | t.JsonPayload | None: ...
 
     @runtime_checkable
@@ -189,7 +193,8 @@ class FlextProtocolsHandler:
         """Protocol for handle behaviors in CQRS message workflows."""
 
         def handle(
-            self, message: p.Routable
+            self,
+            message: p.Routable,
         ) -> pr.ResultView[t.JsonPayload] | t.JsonPayload | None: ...
 
     @runtime_checkable
@@ -197,7 +202,8 @@ class FlextProtocolsHandler:
         """Protocol to execute routed messages and return transformed results."""
 
         def execute(
-            self, message: p.Routable
+            self,
+            message: p.Routable,
         ) -> pr.ResultView[t.JsonPayload] | t.JsonPayload | None: ...
 
     @runtime_checkable
@@ -222,13 +228,17 @@ class FlextProtocolsHandler:
             ...
 
         def publish(
-            self, event: p.Routable | t.SequenceOf[p.Routable]
+            self,
+            event: p.Routable | t.SequenceOf[p.Routable],
         ) -> pr.Result[bool]:
             """Publish event(s) to all registered subscribers."""
             ...
 
         def register_handler(
-            self, handler: t.DispatchableHandler, *, is_event: bool = False
+            self,
+            handler: t.DispatchableHandler,
+            *,
+            is_event: bool = False,
         ) -> pr.Result[bool]:
             """Register a handler for message routing."""
             ...
@@ -249,7 +259,10 @@ class FlextProtocolsHandler:
             ...
 
         def register_handler(
-            self, handler: t.DispatchableHandler, *, is_event: bool = False
+            self,
+            handler: t.DispatchableHandler,
+            *,
+            is_event: bool = False,
         ) -> pr.Result[bool]:
             """Register a handler for command routing."""
             ...

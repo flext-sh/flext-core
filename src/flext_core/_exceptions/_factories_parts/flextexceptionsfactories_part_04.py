@@ -9,8 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_core import c, m, p
-
-from .flextexceptionsfactories_part_03 import (
+from flext_core._exceptions._factories_parts.flextexceptionsfactories_part_03 import (
     FlextExceptionsFactories as FlextExceptionsFactoriesPart03,
 )
 
@@ -34,13 +33,20 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart03):
 
             return e.fail_conflict("user", user_id, "already active")
 
+        Returns:
+            R[T].fail with a canonical conflict message.
+
         """
         options, error = FlextExceptionsFactories._resolve_options(options)
         params = m.ConflictErrorParams(
-            resource_type=resource_type, resource_id=resource_id, conflict_reason=reason
+            resource_type=resource_type,
+            resource_id=resource_id,
+            conflict_reason=reason,
         )
         msg = FlextExceptionsFactories._failure_message(
-            f"create {resource_type} {resource_id!r}", params=params, error=error
+            f"create {resource_type} {resource_id!r}",
+            params=params,
+            error=error,
         )
         return FlextExceptionsFactories._fail_result(
             msg,

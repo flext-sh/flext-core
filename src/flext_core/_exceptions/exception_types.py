@@ -11,8 +11,7 @@ from typing import ClassVar
 from pydantic import ValidationError as _PydanticValidationError
 
 from flext_core import c, m, t
-
-from .base import FlextExceptionsBase
+from flext_core._exceptions.base import FlextExceptionsBase
 
 
 class FlextExceptionsTypes(FlextExceptionsBase):
@@ -160,12 +159,22 @@ class FlextExceptionsTypes(FlextExceptionsBase):
 
         @staticmethod
         def _to_type_name(v: type | str | None) -> str | None:
-            """Convert type object or string to canonical qualified name."""
+            """Convert type object or string to canonical qualified name.
+
+            Returns:
+                The resulting ``str | None``.
+
+            """
             return v.__qualname__ if isinstance(v, type) else v
 
         @staticmethod
         def _from_type_name(v: type | str | None) -> type | None:
-            """Resolve type name string or type object to actual type."""
+            """Resolve type name string or type object to actual type.
+
+            Returns:
+                The resulting ``type | None``.
+
+            """
             if isinstance(v, type):
                 return v
             return (

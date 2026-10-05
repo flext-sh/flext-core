@@ -46,13 +46,25 @@ class CreateUserService(s[str]):
     username: Annotated[str, m.Field(description="Username for the create flow.")] = ""
 
     def execute(self) -> p.Result[str]:
+        """Create the user and return its name.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+
+        """
         if not self.username:
             return r[str].fail("username_required")
         return r[str].ok(self.username)
 
 
-assert CreateUserService(username="alice").execute().value == "alice"
-assert CreateUserService().execute().failure
+created_service = CreateUserService(username="alice").execute()
+missing_service = CreateUserService().execute()
+if created_service.value != "alice":
+    message = "Unexpected created username"
+    raise RuntimeError(message)
+if not missing_service.failure:
+    message = "Expected missing username failure"
+    raise RuntimeError(message)
 ```
 
 Fields are ports or business parameters the root fills from `config` and `settings`. The
@@ -77,13 +89,27 @@ from flext_core import m, p, r, s, t
 class Clock(p.Base, Protocol):
     """Current time in seconds."""
 
-    def now(self) -> int: ...
+    def now(self) -> int:
+        """Read the current instant.
+
+        Returns:
+            The resulting ``int``.
+
+        """
+        ...
 
 
 class FixedClock:
     """Adapter that always returns the same instant."""
 
-    def now(self) -> int:
+    @staticmethod
+    def now() -> int:
+        """Return the fixed instant.
+
+        Returns:
+            The resulting ``int``.
+
+        """
         return 42
 
 
@@ -93,17 +119,30 @@ class StampService(s[int]):
     clock: t.Port[Clock] = m.Field(exclude=True, description="Clock the stamp reads.")
 
     def execute(self) -> p.Result[int]:
+        """Stamp the event with the clock reading.
+
+        Returns:
+            The resulting ``p.Result[int]``.
+
+        """
         return r[int].ok(self.clock.now())
 
 
-assert StampService(clock=FixedClock()).execute().value == 42
-assert "clock" not in StampService.model_json_schema()["properties"]
+expected_now = 42
+stamped = StampService(clock=FixedClock()).execute()
+if stamped.value != expected_now:
+    message = "Unexpected stamped instant"
+    raise RuntimeError(message)
+if "clock" in StampService.model_json_schema()["properties"]:
+    message = "Expected clock port to stay out of the schema"
+    raise RuntimeError(message)
 try:
     StampService.model_validate({"clock": "not a clock"})
 except m.ValidationError:
     pass
 else:
-    raise AssertionError
+    message = "Expected port validation rejection"
+    raise RuntimeError(message)
 ```
 
 - `t.Port[P]` is `Annotated[P, SkipJsonSchema()]`. Pydantic validates the value with
@@ -175,7 +214,12 @@ A public instance method declared below `FlextService` is an operation. It takes
 or exactly one Pydantic request model, returns `p.Result[...]` and has a one-line
 docstring, which is its summary. `u.service_operations(Service)` discovers the
 operations of a service class and returns frozen `m.ServiceOperation` values (`name`,
-`summary`, `request`), sorted by name:
+`summary`, `request`), sorted by name.
+
+The example below discovers no-input operations with constructor-supplied data.
+Request-bearing discovery currently binds the request schema to a concrete model
+annotation; schema/carrier separation is not implemented. That boundary still needs
+owner alignment with the fleet typing rule, rather than a protocol or alias workaround.
 
 ```python
 from __future__ import annotations
@@ -183,29 +227,54 @@ from __future__ import annotations
 from flext_core import m, p, r, s, u
 
 
-class GreetRequest(m.Value):
-    """Greeting input."""
-
-    name: str = m.Field(description="Name to greet.")
-
-
 class GreeterService(s[str]):
     """Greet people."""
 
-    def greet(self, request: GreetRequest) -> p.Result[str]:
-        """Greet a person by name."""
-        return r[str].ok(f"hello {request.name}")
+    greeting: str = m.Field(description="Greeting supplied by the composition root.")
+    name: str = m.Field(description="Name supplied by the composition root.")
+    ping_response: str = m.Field(description="Liveness response supplied by the root.")
+
+    def greet(self) -> p.Result[str]:
+        """Greet a person by name.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+
+        """
+        return r[str].ok(f"{self.greeting} {self.name}")
 
     def ping(self) -> p.Result[str]:
-        """Answer a liveness ping."""
-        return r[str].ok("pong")
+        """Answer a liveness ping.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+
+        """
+        return r[str].ok(self.ping_response)
 
 
 operations = u.service_operations(GreeterService)
-assert [op.name for op in operations] == ["greet", "ping"]
-assert operations[0].request is GreetRequest
-assert operations[1].request is None
-assert operations[1].summary == "Answer a liveness ping."
+expected_names = ["greet", "ping"]
+if [op.name for op in operations] != expected_names:
+    message = "Unexpected discovered operation names"
+    raise RuntimeError(message)
+if any(op.request is not None for op in operations):
+    message = "Expected no-input operations to declare no request model"
+    raise RuntimeError(message)
+expected_summary = "Answer a liveness ping."
+if operations[1].summary != expected_summary:
+    message = "Unexpected ping summary"
+    raise RuntimeError(message)
+
+greeter = GreeterService(greeting="hello", name="Ada", ping_response="pong")
+greeted = greeter.greet()
+if not greeted.success or greeted.value != f"{greeter.greeting} {greeter.name}":
+    message = "Unexpected greeting result"
+    raise RuntimeError(message)
+pinged = greeter.ping()
+if not pinged.success or pinged.value != greeter.ping_response:
+    message = "Unexpected liveness response"
+    raise RuntimeError(message)
 ```
 
 - Every name `FlextService` exposes is excluded even when overridden (`execute`,
@@ -217,8 +286,10 @@ assert operations[1].summary == "Answer a liveness ping."
 - Annotations are resolved without `eval`. The module declares
   `from __future__ import annotations`, so each annotation is a string that is parsed;
   its dotted name resolves the first part in the module namespace of the method and the
-  rest by attribute. A request model imported only under `TYPE_CHECKING` is unbound at
-  runtime and fails: import it at module runtime.
+  rest by attribute. In the current request-bearing path, a concrete schema imported
+  only under `TYPE_CHECKING` remains unbound and discovery fails. This describes the
+  existing schema/annotation coupling, not a recommended consumer signature; its
+  separation from the carrier protocol remains an owner defect.
 - A malformed operation raises `TypeError` naming the operation, the annotation, the
   module and the fix: an async or generic method, `*args`, `**kwargs`, keyword-only
   parameters or defaults, more than one request, a missing docstring, a request that is
@@ -241,9 +312,12 @@ failure = r[int].fail("lookup failed", exception=KeyError("user-7"))
 try:
     failure.unwrap()
 except RuntimeError as exc:
-    assert isinstance(exc.__cause__, KeyError)
+    if not isinstance(exc.__cause__, KeyError):
+        message = "Expected preserved KeyError cause"
+        raise TypeError(message) from exc
 else:
-    raise AssertionError
+    message = "Expected unwrap to raise on failure"
+    raise RuntimeError(message)
 ```
 
 Never replace a failure with `None`, `""`, `{}`, a default, `ok(True)`, a skipped item

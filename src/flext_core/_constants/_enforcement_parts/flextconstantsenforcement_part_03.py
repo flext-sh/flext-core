@@ -1,16 +1,21 @@
-"""Namespace enforcement constants for FlextConstantsEnforcement."""
+"""Namespace enforcement constants for FlextConstantsEnforcement.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
 
-from .flextconstantsenforcement_part_01 import FlextConstantsEnforcementEnums
+from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_01 import (
+    FlextConstantsEnforcementEnums,
+)
+from flext_core._typings.base import FlextTypingBase as t
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
-
-    from ..._typings.base import FlextTypingBase as t
 
 
 class FlextConstantsEnforcementNamespace:
@@ -53,7 +58,7 @@ class FlextConstantsEnforcementNamespace:
 
     ENFORCEMENT_NAMESPACE_FACADE_ROOTS: ClassVar[frozenset[str]] = frozenset(
         {f"Flext{name}" for name in NAMESPACE_LAYER_NAMES}
-        | {"FlextModelsBase", "FlextModelsNamespace", "EnforcedModel"}
+        | {"FlextModelsBase", "FlextModelsNamespace", "EnforcedModel"},
     )
     """Root facade class names — skip namespace prefix check on these."""
 
@@ -61,39 +66,6 @@ class FlextConstantsEnforcementNamespace:
         (name, name.lower()) for name in NAMESPACE_LAYER_NAMES
     )
     """Class name suffix → layer name mapping for cross-layer detection."""
-
-    NAMESPACE_CLASS_TO_MODULE_OVERRIDES: ClassVar[Mapping[str, str]] = (
-        MappingProxyType({})
-    )
-    """Class-name → owning-package overrides for facade-layer classes that
-    do not follow the ``Flext<Project><Layer><Concern>`` convention.
-
-    Consumed by ``FlextUtilitiesEnforcement.class_name_to_module`` for both
-    detection (rules that flag a wrong import path) and correction (refactor
-    verbs that emit the right ``from <module> import <Class>`` line). Keep
-    this empty until a real exception is encountered — adding an entry is a
-    declaration that the workspace genuinely deviates from the convention,
-    and that deviation must be justified at the call site that needs it."""
-
-    ENFORCEMENT_LAYER_ALLOWS: ClassVar[Mapping[str, frozenset[str]]] = (
-        MappingProxyType({
-            "constants": frozenset({"StrEnum"}),
-            "models": frozenset(),
-            "protocols": frozenset({"Protocol"}),
-            "types": frozenset(),
-            "utilities": frozenset(),
-        })
-    )
-    """SSOT: per-layer inner-class kinds that cross-layer checks permit.
-
-    Every canonical facade layer MUST be enumerated here so the
-    ``v_class_placement`` visitor disambiguates the cross-layer branch
-    from the name-prefix branch via membership lookup. Empty frozensets
-    are deliberate — they declare *no* allowed exception for that layer.
-
-    ``check_cross_strenum`` / ``check_cross_protocol`` resolve their
-    ``layer_allows`` argument via ``"StrEnum" in ENFORCEMENT_LAYER_ALLOWS.get(layer, ())``.
-    """
 
     # --- Violation message shape (single parameterized template) ---
     #
@@ -104,18 +76,6 @@ class FlextConstantsEnforcementNamespace:
 
     ENFORCEMENT_MSG_VIOLATION: ClassVar[str] = "{location}: {problem}. {fix}"
     """Single message shape — location + problem + fix."""
-
-    ENFORCEMENT_VALUE_OBJECT_BASES: ClassVar[frozenset[str]] = frozenset({
-        "FrozenValueModel",
-        "ImmutableValueModel",
-    })
-    """Base-class names that require ``frozen=True`` configuration."""
-
-    ENFORCEMENT_INLINE_UNION_MAX: ClassVar[int] = 2
-    """Inline union arms allowed before centralization is required."""
-
-    ENFORCEMENT_NESTED_MRO_MIN_DEPTH: ClassVar[int] = 2
-    """Minimum qualname depth for a class to count as nested inside a container."""
 
     ENFORCEMENT_CANONICAL_ALIASES: ClassVar[frozenset[str]] = frozenset({
         "c",
@@ -169,7 +129,7 @@ class FlextConstantsEnforcementNamespace:
                     "flext_web",
                 ),
                 ("c", "m", "p", "t", "u"),
-            )
+            ),
         )
     )
     """SSOT: project package name → canonical aliases it re-exports locally.
@@ -177,31 +137,6 @@ class FlextConstantsEnforcementNamespace:
     Used by runtime census and flext-infra detectors to flag
     ``from flext_core import c`` inside a project that owns ``c`` locally.
     """
-
-    ENFORCEMENT_CLASSVAR_EXEMPT_NAMES: ClassVar[frozenset[str]] = frozenset({
-        "model_config",
-        "logger",
-        # Adapter-strategy contract fields: per-surface polymorphic contracts
-        # and factory registries owned by the service families that resolve
-        # them (deploy surfaces, governance projectors). They are typed
-        # behavior bindings, not namespace constants, and relocating them to
-        # _constants would invert the constants->services dependency.
-        "EMPTY",
-        "MERGES_EXISTING",
-        "ADAPTERS",
-        "PROJECTORS",
-        # Why: CLI command-service registry tuple; moving it to _constants would invert constants->services.
-        "COMMANDS",
-        # Why: FlextConfig's own filename hook — the base declares it and the
-        # loader reads it through `cls`, so a consumer override stays on the
-        # config class; relocating it to _constants breaks the framework read.
-        "CONFIG_FILENAMES",
-        # Why: FlextConfig's own YAML-section hook — same framework idiom as
-        # CONFIG_FILENAMES: the loader reads it through `cls` per subclass and
-        # FlextConfig must not import _constants (constants import it as base).
-        "YAML_CONFIG_SECTION",
-    })
-    """ClassVar attribute names that are framework idioms and stay in place."""
 
 
 __all__: list[str] = ["FlextConstantsEnforcementNamespace"]

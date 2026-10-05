@@ -11,38 +11,42 @@ from typing import Annotated
 
 from pydantic import Field
 
-from .flextmodelsprojectmetadata_part_01 import (
-    ProjectMetadataContract,
-    PyprojectIngressContract,
+from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_01 import (
+    FlextModelsProjectMetadataContract,
 )
-from .flextmodelsprojectmetadata_part_03 import ProjectMetadataAggregates
+from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_03 import (
+    FlextModelsProjectMetadataAggregates,
+)
+from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_05 import (
+    FlextModelsPyprojectIngressContract,
+)
 
 
-class ProjectMetadataDocument(ProjectMetadataAggregates):
+class FlextModelsProjectMetadataDocument(FlextModelsProjectMetadataAggregates):
     """Validated TOML document sub-tables and canonical domain aggregate."""
 
-    class PyprojectTool(PyprojectIngressContract):
+    class PyprojectTool(FlextModelsPyprojectIngressContract):
         """Owned subset of the top-level ``[tool]`` table."""
 
         flext: Annotated[
-            ProjectMetadataAggregates.ProjectToolFlext,
+            FlextModelsProjectMetadataAggregates.ProjectToolFlext,
             Field(
-                default_factory=ProjectMetadataAggregates.ProjectToolFlext,
+                default_factory=FlextModelsProjectMetadataAggregates.ProjectToolFlext,
                 description="Validated FLEXT project policy",
             ),
-        ] = Field(default_factory=ProjectMetadataAggregates.ProjectToolFlext)
+        ] = Field(default_factory=FlextModelsProjectMetadataAggregates.ProjectToolFlext)
 
-    class ProjectMetadata(ProjectMetadataContract):
+    class ProjectMetadata(FlextModelsProjectMetadataContract):
         """Canonical project metadata retaining exact validated source objects."""
 
         root: Annotated[Path, Field(description="Project root")]
         package_name: Annotated[str, Field(min_length=1, description="Import package")]
         class_stem: Annotated[str, Field(min_length=1, description="Class stem")]
         project: Annotated[
-            ProjectMetadataAggregates.Project,
+            FlextModelsProjectMetadataAggregates.Project,
             Field(description="Exact validated PEP 621 project object"),
         ]
         flext: Annotated[
-            ProjectMetadataAggregates.ProjectToolFlext,
+            FlextModelsProjectMetadataAggregates.ProjectToolFlext,
             Field(description="Exact validated tool.flext object"),
         ]

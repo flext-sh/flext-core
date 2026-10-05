@@ -1,4 +1,8 @@
-"""PEP 562 lazy export helpers."""
+"""PEP 562 lazy export helpers.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -19,7 +23,7 @@ from pydantic import (
     computed_field,
 )
 
-from .._typings.base import FlextTypingBase as t
+from flext_core._typings.base import FlextTypingBase as t
 
 if TYPE_CHECKING:
     from types import FrameType, ModuleType
@@ -46,42 +50,43 @@ class FlextLazyPart01(BaseModel):
     child_lazy_cache: dict[str, LazyImportDict] = Field(default_factory=dict)
 
     child_merge_cache: dict[t.VariadicTuple[str], LazyImportDict] = Field(
-        default_factory=dict
+        default_factory=dict,
     )
 
     # The entry keeps its source map alive: an ``id()`` key alone is reused once a
     # transient map is freed, and would serve another map's normalization.
     normalized_map_cache: dict[
-        tuple[str, int], tuple[LazyImportMap | None, LazyImportDict]
+        tuple[str, int],
+        tuple[LazyImportMap | None, LazyImportDict],
     ] = Field(default_factory=dict)
 
     install_cache: dict[str, tuple[int, int, int, int, bool]] = Field(
-        default_factory=dict
+        default_factory=dict,
     )
 
     _import_module: Callable[[str], ModuleType] = PrivateAttr(
-        default_factory=lambda: importlib.import_module
+        default_factory=lambda: importlib.import_module,
     )
 
     _map_adapter: TypeAdapter[LazyImportDict] = PrivateAttr(
-        default_factory=lambda: TypeAdapter(LazyImportDict)
+        default_factory=lambda: TypeAdapter(LazyImportDict),
     )
 
     _alias_adapter: TypeAdapter[StrPair] = PrivateAttr(
-        default_factory=lambda: TypeAdapter(StrPair)
+        default_factory=lambda: TypeAdapter(StrPair),
     )
 
     _activate_core_beartype: Callable[[], None] = PrivateAttr(
         default_factory=lambda: (
             importlib.import_module(
-                "flext_core._beartype_bootstrap"
+                "flext_core._beartype_bootstrap",
             ).FlextCoreBeartypeBootstrap.activate_package_beartype
-        )
+        ),
     )
 
     _activating_core_beartype: bool = PrivateAttr(default=False)
 
-    @computed_field(return_type=dict[str, int])
+    @computed_field
     @property
     def cache_stats(self) -> dict[str, int]:
         """Expose cache sizes for diagnostics/observability."""
@@ -93,8 +98,10 @@ class FlextLazyPart01(BaseModel):
             "install_cache": len(self.install_cache),
         }
 
+    @staticmethod
     def _norm_cache_key(
-        self, module_path: str, raw: LazyImportMap | None
+        module_path: str,
+        raw: LazyImportMap | None,
     ) -> tuple[str, int]:
         return (module_path, id(raw))
 
@@ -122,8 +129,14 @@ class FlextLazyPart01(BaseModel):
         self.normalized_map_cache[cache_key] = (raw, out)
         return out
 
-    def _must_activate_core_beartype(self, module_path: str) -> bool:
-        """Return whether importing a module should activate flext_core beartype."""
+    @staticmethod
+    def _must_activate_core_beartype(module_path: str) -> bool:
+        """Return whether importing a module should activate flext_core beartype.
+
+        Returns:
+            Whether importing a module should activate flext_core beartype.
+
+        """
         root_module = sys.modules.get("flext_core")
         root_ready = root_module is not None and "t" in vars(root_module)
         return (
@@ -133,9 +146,16 @@ class FlextLazyPart01(BaseModel):
         )
 
     def normalize_map(
-        self, module_path: str, raw: LazyImportMap | None
+        self,
+        module_path: str,
+        raw: LazyImportMap | None,
     ) -> LazyImportDict:
-        """Return normalized lazy-import entries for runtime metadata readers."""
+        """Return normalized lazy-import entries for runtime metadata readers.
+
+        Returns:
+            Normalized lazy-import entries for runtime metadata readers.
+
+        """
         return self._norm_map(module_path, raw)
 
     @staticmethod
@@ -147,6 +167,14 @@ class FlextLazyPart01(BaseModel):
         hand back is one this thread is importing (a circular import). That
         state is public runtime data: a ``<module>`` code frame on the current
         stack whose globals are the module namespace.
+
+        Returns:
+            Whether this thread is still executing ``module``'s body.
+
+        Raises:
+            RuntimeError: If flext_core lazy exports require interpreter stack frames
+                (inspect.currentframe() returned None; CPython is required).
+
         """
         frame: FrameType | None = inspect.currentframe()
         if frame is None:
@@ -212,14 +240,19 @@ class FlextLazyPart01(BaseModel):
         self.normalized_map_cache.clear()
         self.install_cache.clear()
 
+    @staticmethod
     def build_map(
-        self,
         module_groups: Mapping[str, Sequence[str]] | None = None,
         *,
         alias_groups: LazyImportAliasGroups | None = None,
         sort_keys: bool = True,
     ) -> LazyImportDict:
-        """Build one flat lazy-import map."""
+        """Build one flat lazy-import map.
+
+        Returns:
+            The resulting ``LazyImportDict``.
+
+        """
         out: LazyImportDict = {
             name: module
             for module, names in (module_groups or {}).items()

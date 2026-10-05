@@ -5,6 +5,9 @@ Every test asserts observable behavior of the public API — the typed
 ``FlextUtilitiesBeartypeEngine.has_nested_namespace`` — never internal
 detection mechanics. A caller depends on: which classes/fields the checker
 flags, the guidance carried on each violation, and which shapes are exempt.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -13,9 +16,8 @@ import pytest
 
 from flext_core.utilities import FlextUtilitiesBeartypeEngine
 from tests.models import m
+from tests.unit._enforcement_support import make_class, synthetic_method
 from tests.utilities import u
-
-from ._enforcement_support import make_class, synthetic_method
 
 _INHERITANCE_FRAGMENT = "must inherit FlextSettings"
 _ACCESSOR_FRAGMENT = "accessor method"
@@ -25,8 +27,10 @@ class TestsFlextCoreEnforcementAccessors:
     """Public enforcement behavior: what ``u.check`` reports to a caller."""
 
     @pytest.mark.parametrize("prefix", ["get_user", "set_config", "is_ready"])
-    def test_forbidden_accessor_prefix_is_flagged(self, prefix: str) -> None:
+    @staticmethod
+    def test_forbidden_accessor_prefix_is_flagged(prefix: str) -> None:
         # Arrange
+        """Test forbidden accessor prefix is flagged."""
         cls = make_class("FlextCoreAccessed", {prefix: synthetic_method})
 
         # Act
@@ -40,8 +44,10 @@ class TestsFlextCoreEnforcementAccessors:
         assert "fetch_" in message or "computed_field" in message
 
     @pytest.mark.parametrize("prefix", ["fetch_remote", "resolve_ref", "compute_total"])
-    def test_domain_verb_method_is_allowed(self, prefix: str) -> None:
+    @staticmethod
+    def test_domain_verb_method_is_allowed(prefix: str) -> None:
         # Arrange
+        """Test domain verb method is allowed."""
         cls = make_class("FlextCoreVerb", {prefix: synthetic_method})
 
         # Act
@@ -54,8 +60,10 @@ class TestsFlextCoreEnforcementAccessors:
         # Assert
         assert not messages, f"{prefix} is a domain verb and must not be flagged"
 
-    def test_accessor_violation_locates_the_owning_class(self) -> None:
+    @staticmethod
+    def test_accessor_violation_locates_the_owning_class() -> None:
         # Arrange
+        """Test accessor violation locates the owning class."""
         cls = make_class("FlextCoreAccessedGet", {"get_user": synthetic_method})
 
         # Act
@@ -67,8 +75,11 @@ class TestsFlextCoreEnforcementAccessors:
         assert accessor.qualname == "FlextCoreAccessedGet"
         assert accessor.message.startswith("FlextCoreAccessedGet.get_user")
 
-    def test_bare_collection_field_is_flagged(self) -> None:
+    @staticmethod
+    def test_bare_collection_field_is_flagged() -> None:
         # Arrange
+        """Test bare collection field is flagged."""
+
         class _M(m.ArbitraryTypesModel):
             items: list[str] = m.Field(default_factory=list, description="d")
 
@@ -78,8 +89,11 @@ class TestsFlextCoreEnforcementAccessors:
         # Assert
         assert any("bare list" in msg for msg in messages)
 
-    def test_missing_field_description_names_the_field(self) -> None:
+    @staticmethod
+    def test_missing_field_description_names_the_field() -> None:
         # Arrange
+        """Test missing field description names the field."""
+
         class _M(m.ArbitraryTypesModel):
             undoc: str = "x"
 
@@ -91,9 +105,11 @@ class TestsFlextCoreEnforcementAccessors:
             'Field "undoc"' in msg and "missing description" in msg for msg in messages
         )
 
-    def test_declared_settings_model_must_inherit_flext_settings(self) -> None:
+    @staticmethod
+    def test_declared_settings_model_must_inherit_flext_settings() -> None:
         # Arrange — a class that DECLARES itself a pydantic-settings model but
         # bypasses the FlextSettings owner.
+        """Test declared settings model must inherit flext settings."""
         cls = type("FlextWorkerSettings", (m.BaseSettings,), {})
         cls.__qualname__ = cls.__name__
         cls.__module__ = "flext_core.synthetic"
@@ -107,10 +123,12 @@ class TestsFlextCoreEnforcementAccessors:
         assert inheritance
         assert inheritance[0].rule_id == "ENFORCE-042"
 
-    def test_settings_named_plain_class_is_not_a_settings_target(self) -> None:
+    @staticmethod
+    def test_settings_named_plain_class_is_not_a_settings_target() -> None:
         # Arrange — a namespace holder whose name ends in "Settings" declares no
         # pydantic-settings base; the rule derives its target from the
         # declaration, never from the name.
+        """Test settings named plain class is not a settings target."""
         cls = make_class("FlextWorkerSettings", {})
 
         # Act
@@ -121,9 +139,12 @@ class TestsFlextCoreEnforcementAccessors:
         # Assert
         assert not inheritance
 
-    def test_nested_settings_class_is_exempt_from_inheritance_rule(self) -> None:
+    @staticmethod
+    def test_nested_settings_class_is_exempt_from_inheritance_rule() -> None:
         # Arrange — a real inner class inside a namespace container is metadata,
         # not a settings model, so it must not be forced to inherit FlextSettings.
+        """Test nested settings class is exempt from inheritance rule."""
+
         class FlextModelsSettings:
             class AutoSettings:
                 pass
@@ -139,8 +160,10 @@ class TestsFlextCoreEnforcementAccessors:
         # Assert
         assert not inheritance
 
-    def test_non_settings_class_is_not_flagged_for_inheritance(self) -> None:
+    @staticmethod
+    def test_non_settings_class_is_not_flagged_for_inheritance() -> None:
         # Arrange
+        """Test non settings class is not flagged for inheritance."""
         cls = make_class("FlextCoreService", {})
 
         # Act
@@ -151,8 +174,10 @@ class TestsFlextCoreEnforcementAccessors:
         # Assert
         assert not inheritance
 
-    def test_clean_class_yields_an_empty_report(self) -> None:
+    @staticmethod
+    def test_clean_class_yields_an_empty_report() -> None:
         # Arrange
+        """Test clean class yields an empty report."""
         cls = make_class("FlextCoreService", {"fetch_value": synthetic_method})
 
         # Act
@@ -164,8 +189,11 @@ class TestsFlextCoreEnforcementAccessors:
         assert not report
         assert list(report.messages) == []
 
-    def test_direct_nested_class_is_a_namespace(self) -> None:
+    @staticmethod
+    def test_direct_nested_class_is_a_namespace() -> None:
         # Arrange
+        """Test direct nested class is a namespace."""
+
         class _DirectHolder:
             class _SomeInner:
                 pass
@@ -176,8 +204,11 @@ class TestsFlextCoreEnforcementAccessors:
         # Act / Assert
         assert FlextUtilitiesBeartypeEngine.has_nested_namespace(_DirectHolder)
 
-    def test_inherited_nested_class_is_a_namespace(self) -> None:
+    @staticmethod
+    def test_inherited_nested_class_is_a_namespace() -> None:
         # Arrange
+        """Test inherited nested class is a namespace."""
+
         class _Parent:
             class Nested:
                 pass
@@ -188,8 +219,11 @@ class TestsFlextCoreEnforcementAccessors:
         # Act / Assert — inheritance still exposes the nested namespace.
         assert FlextUtilitiesBeartypeEngine.has_nested_namespace(_Empty)
 
-    def test_plain_class_is_not_a_namespace(self) -> None:
+    @staticmethod
+    def test_plain_class_is_not_a_namespace() -> None:
         # Arrange
+        """Test plain class is not a namespace."""
+
         class _Bare:
             x: int = 1
 

@@ -1,4 +1,8 @@
-"""Exception metadata normalization."""
+"""Exception metadata normalization.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -6,16 +10,15 @@ from collections.abc import Mapping, MutableMapping
 from typing import TYPE_CHECKING
 
 from flext_core import c, m
-
-from ..._protocols.result import FlextProtocolsResult as pr
-from ..._runtime._metadata_validation import (
+from flext_core._exceptions.helpers import FlextExceptionsHelpers
+from flext_core._protocols.result import FlextProtocolsResult as pr
+from flext_core._runtime._metadata_validation import (
     FlextRuntimeMetadataValidation as FlextRuntime,
 )
-from ..helpers import FlextExceptionsHelpers
 
 if TYPE_CHECKING:
-    from ..._typings.base import FlextTypingBase as tb
-    from ..._typings.services import FlextTypesServices as ts
+    from flext_core._typings.base import FlextTypingBase as tb
+    from flext_core._typings.services import FlextTypesServices as ts
 
 
 class FlextBaseErrorMetadataMixin:
@@ -24,14 +27,19 @@ class FlextBaseErrorMetadataMixin:
         metadata: pr.HasModelDump | tb.JsonValue | None,
         merged_kwargs: tb.MappingKV[str, ts.JsonPayload],
     ) -> m.Metadata:
-        """Normalize metadata from various input types to m.Metadata model."""
+        """Normalize metadata from various input types to m.Metadata model.
+
+        Returns:
+            The resulting ``m.Metadata``.
+
+        """
         if metadata is None:
             normalized_attrs = {
                 key: FlextRuntime.normalize_to_metadata(value)
                 for key, value in merged_kwargs.items()
             }
             resolved_metadata = m.Metadata.model_validate({
-                c.FIELD_ATTRIBUTES: normalized_attrs
+                c.FIELD_ATTRIBUTES: normalized_attrs,
             })
         else:
             metadata_model = FlextExceptionsHelpers.safe_metadata(metadata)
@@ -46,24 +54,25 @@ class FlextBaseErrorMetadataMixin:
                         continue
                     merged_attrs[key] = FlextRuntime.normalize_to_metadata(value)
                 resolved_metadata = m.Metadata.model_validate({
-                    c.FIELD_ATTRIBUTES: merged_attrs
+                    c.FIELD_ATTRIBUTES: merged_attrs,
                 })
             else:
                 metadata_dict: tb.MappingKV[str, ts.JsonPayload | None] | None = None
                 if isinstance(metadata, (Mapping, pr.HasModelDump)):
                     try:
                         metadata_dict = FlextRuntime.normalize_metadata_input_mapping(
-                            metadata
+                            metadata,
                         )
                     except c.EXC_PYDANTIC_TYPE_VALUE:
                         metadata_dict = None
                 resolved_metadata = (
                     FlextBaseErrorMetadataMixin._normalize_metadata_from_dict(
-                        metadata_dict, merged_kwargs
+                        metadata_dict,
+                        merged_kwargs,
                     )
                     if metadata_dict is not None
                     else m.Metadata.model_validate({
-                        c.FIELD_ATTRIBUTES: {"value": str(metadata)}
+                        c.FIELD_ATTRIBUTES: {"value": str(metadata)},
                     })
                 )
         return resolved_metadata
@@ -73,7 +82,12 @@ class FlextBaseErrorMetadataMixin:
         metadata_dict: tb.MappingKV[str, ts.JsonPayload | None],
         merged_kwargs: tb.MappingKV[str, ts.JsonPayload],
     ) -> m.Metadata:
-        """Normalize metadata from dict-like recursive containers."""
+        """Normalize metadata from dict-like recursive containers.
+
+        Returns:
+            The resulting ``m.Metadata``.
+
+        """
         merged_attrs: MutableMapping[str, tb.JsonValue | None] = {}
         for k, v in metadata_dict.items():
             if v is None:
@@ -89,7 +103,7 @@ class FlextBaseErrorMetadataMixin:
                 k: FlextRuntime.normalize_to_metadata(v)
                 for k, v in merged_attrs.items()
                 if v is not None
-            }
+            },
         })
 
 

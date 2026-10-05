@@ -20,14 +20,17 @@ from typing import Annotated, ClassVar, override
 
 from pydantic import ConfigDict
 
+from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cpm
+from flext_core._models._base_parts.flextmodelsbase_part_01 import (
+    FlextModelsBase as FlextModelsBasePart01,
+)
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._runtime._metadata_validation import (
+    FlextRuntimeMetadataValidation as ur,
+)
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._utilities.generators import FlextUtilitiesGenerators as ug
 from flext_core.constants import c
-
-from ..._constants.project_metadata import FlextConstantsProjectMetadata as cpm
-from ..._runtime._metadata_validation import FlextRuntimeMetadataValidation as ur
-from ..._typings.base import FlextTypingBase as t
-from ..._utilities.generators import FlextUtilitiesGenerators as ug
-from ..pydantic import FlextModelsPydantic as mp
-from .flextmodelsbase_part_01 import FlextModelsBase as FlextModelsBasePart01
 
 
 class FlextModelsBase(FlextModelsBasePart01):
@@ -140,7 +143,8 @@ class FlextModelsBase(FlextModelsBasePart01):
         """Shared preset for mutable mixins with assignment validation."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            validate_assignment=True, arbitrary_types_allowed=True
+            validate_assignment=True,
+            arbitrary_types_allowed=True,
         )
 
     class NormalizedMutableConfiguredMixin(MutableConfiguredMixin):
@@ -152,7 +156,8 @@ class FlextModelsBase(FlextModelsBasePart01):
         """Mixin for unique identifiers."""
 
         unique_id: Annotated[
-            t.NonEmptyStr, mp.Field(description="Unique identifier", frozen=False)
+            t.NonEmptyStr,
+            mp.Field(description="Unique identifier", frozen=False),
         ] = mp.Field(default_factory=lambda: str(uuid.uuid4()))
 
 

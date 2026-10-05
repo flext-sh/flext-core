@@ -1,11 +1,15 @@
-"""Golden-file example for the registry DSL public APIs."""
+"""Golden-file example for the registry DSL public APIs.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from pathlib import Path
 from typing import override
 
-from .ex_12_registry_plugins import Ex12RegistryPlugins
+from examples.ex_12_registry_plugins import Ex12RegistryPlugins
 
 
 class Ex12RegistryDsl(Ex12RegistryPlugins):
@@ -17,7 +21,8 @@ class Ex12RegistryDsl(Ex12RegistryPlugins):
         registry, dispatcher = self._exercise_create_and_service_methods()
         self._exercise_summary_and_mixins()
         handler_a, handler_b = self._exercise_registration_and_dispatch(
-            registry, dispatcher
+            registry,
+            dispatcher,
         )
         self._exercise_bindings_and_plugin_apis(registry, handler_a, handler_b)
         self._exercise_register_method_and_tracking(registry)

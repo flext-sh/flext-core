@@ -1,4 +1,8 @@
-"""Real module-bound aliases for runtime and static-only inspection contracts."""
+"""Real module-bound aliases for runtime and static-only inspection contracts.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -45,7 +49,12 @@ class TestsTypeAliasDeclarations:
 
     @staticmethod
     def unbound() -> TypeAliasType:
-        """A local alias has no module-bound declaration that proves deferral."""
+        """A local alias has no module-bound declaration that proves deferral.
+
+        Returns:
+            The resulting ``TypeAliasType``.
+
+        """
 
         class Host:
             type Local = DeferredPath | str

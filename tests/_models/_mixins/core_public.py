@@ -1,4 +1,8 @@
-"""Core public model helpers."""
+"""Core public model helpers.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -100,12 +104,12 @@ class TestsFlextModelsCorePublicMixin:
         visits: int = 0
         _events: list[str] = u.PrivateAttr(default_factory=list)
 
-        @u.field_validator("raw_name")
+        @m.field_validator("raw_name")
         @classmethod
         def normalize_name(cls, value: str) -> str:
             return value.strip().title()
 
-        @u.model_validator(mode="after")
+        @m.model_validator(mode="after")
         def record_validation(self) -> Self:
             self._events.append("validated")
             return self
@@ -116,7 +120,8 @@ class TestsFlextModelsCorePublicMixin:
             return f"{self.raw_name}:{self.visits}"
 
         @u.field_serializer("visits")
-        def serialize_visits(self, value: int) -> str:
+        @staticmethod
+        def serialize_visits(value: int) -> str:
             return f"{value} visits"
 
 

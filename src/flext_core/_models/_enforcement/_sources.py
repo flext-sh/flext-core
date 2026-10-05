@@ -6,64 +6,54 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import Field
 
-from ..._constants.enforcement import FlextConstantsEnforcement as ce
-from ..._typings.base import FlextTypingBase as t
-from ._base import EnforcementModelBase, FlextModelsEnforcementBase
+from flext_core._models._enforcement._base import (
+    FlextModelsEnforcementBase,
+    FlextModelsEnforcementModelBase,
+)
+from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextModelsEnforcementSources(FlextModelsEnforcementBase):
     """Source-discriminator models used by enforcement catalog rules."""
 
-    class EnforcementInfraDetectorSource(EnforcementModelBase):
-        """Rule backed by a ``FlextInfraNamespaceEnforcer`` detector field."""
+    class EnforcementInfraRuleSource(FlextModelsEnforcementModelBase):
+        """Rule applied by the flext-infra rule engine from its rule catalog.
 
-        kind: Literal["flext_infra_detector"] = "flext_infra_detector"
-        violation_field: str
-        match_missing: bool = False
+        ``rule_ids`` name rules declared in flext-infra ``config/rules``; the
+        engine reports typed findings keyed by those ids, and a named id the
+        engine does not declare is a defect, never an empty result.
+        """
 
-    class EnforcementTestsValidatorSource(EnforcementModelBase):
-        """Rule backed by a ``FlextTestsValidator`` classmethod."""
+        kind: Literal["flext_infra_rule"] = "flext_infra_rule"
+        rule_ids: Annotated[t.StrSequence, Field(min_length=1)]
 
-        kind: Literal["flext_tests_validator"] = "flext_tests_validator"
-        method: str
-        rule_ids: t.StrSequence = ()
-
-    class EnforcementRuntimeWarningSource(EnforcementModelBase):
+    class EnforcementRuntimeWarningSource(FlextModelsEnforcementModelBase):
         """Rule backed by a ``warnings`` category raised at runtime."""
 
         kind: Literal["runtime_warning"] = "runtime_warning"
         category: str
 
-    class EnforcementBeartypeSource(EnforcementModelBase):
-        """Rule dispatched through a beartype predicate binding."""
+    class EnforcementBeartypeSource(FlextModelsEnforcementModelBase):
+        """Rule dispatched through the runtime predicate bound to ``tag``.
+
+        ``tag`` is the rule's identity in the runtime engine; its predicate
+        kind is derived from the tag's binding, never stored beside it.
+        """
 
         kind: Literal["beartype"] = "beartype"
-        predicate_kind: ce.EnforcementPredicateKind
+        tag: Annotated[str, Field(min_length=1)]
 
-    class EnforcementRuffSource(EnforcementModelBase):
-        """Rule delegated to ruff."""
-
-        kind: Literal["ruff"] = "ruff"
-        rule_code: str
-
-    class EnforcementSkillPointerSource(EnforcementModelBase):
-        """Rule as narrative skill content only."""
-
-        kind: Literal["skill_pointer"] = "skill_pointer"
-        skill: str
-        anchor: str = ""
-
-    class EnforcementCodeSmellSource(EnforcementModelBase):
+    class EnforcementCodeSmellSource(FlextModelsEnforcementModelBase):
         """Rule backed by a code-smell predicate (qlty/ metrics)."""
 
         kind: Literal["code_smell"] = "code_smell"
         smell_tag: str
 
-    class EnforcementFixAction(EnforcementModelBase):
+    class EnforcementFixAction(FlextModelsEnforcementModelBase):
         """Actionable fix contract for an enforcement rule.
 
         Stored on ``EnforcementRuleSpec.fix_action`` and consumed by the

@@ -1,7 +1,11 @@
-"""Shared golden-file test harness for flext-core examples."""
+"""Shared golden-file test harness for flext-core examples.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from ._shared_parts.shared_part_02 import ExamplesFlextShared
+from examples._shared_parts.shared_part_02 import ExamplesFlextShared
 
 __all__: list[str] = ["ExamplesFlextShared"]

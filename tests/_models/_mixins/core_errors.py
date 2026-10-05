@@ -1,4 +1,8 @@
-"""Core error model helpers."""
+"""Core error model helpers.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -19,10 +23,12 @@ class TestsFlextModelsCoreErrorsMixin:
         """Simple model with name/value attributes for mapper tests."""
 
         name: Annotated[
-            str, m.Field(description="Attribute recursive container name")
+            str,
+            m.Field(description="Attribute recursive container name"),
         ] = "name"
         value: Annotated[
-            int, m.Field(description="Attribute recursive container value")
+            int,
+            m.Field(description="Attribute recursive container value"),
         ] = 1
 
     class BadMapping(UserDict[str, t.JsonValue]):

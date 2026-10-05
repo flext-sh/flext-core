@@ -13,16 +13,16 @@ from pathlib import Path
 from types import GenericAlias, ModuleType, UnionType
 from typing import TypeAliasType
 
-from .._protocols.base import FlextProtocolsBase as p
-from .._protocols.container import FlextProtocolsContainer as pc
-from .._protocols.context import FlextProtocolsContext as pcx
-from .._protocols.handler import FlextProtocolsHandler as ph
-from .._protocols.loggings import FlextProtocolsLogging as pl
-from .._protocols.registry import FlextProtocolsRegistry as pr
-from .._protocols.result import FlextProtocolsResult as prt
-from .._protocols.settings import FlextProtocolsSettings as ps
-from .base import FlextTypingBase as t
-from .pydantic import FlextTypesPydantic as tp
+from flext_core._protocols.base import FlextProtocolsBase as p
+from flext_core._protocols.container import FlextProtocolsContainer as pc
+from flext_core._protocols.context import FlextProtocolsContext as pcx
+from flext_core._protocols.handler import FlextProtocolsHandler as ph
+from flext_core._protocols.loggings import FlextProtocolsLogging as pl
+from flext_core._protocols.registry import FlextProtocolsRegistry as pr
+from flext_core._protocols.result import FlextProtocolsResult as prt
+from flext_core._protocols.settings import FlextProtocolsSettings as ps
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.pydantic import FlextTypesPydantic as tp
 
 
 class FlextTypesServices:
@@ -89,7 +89,8 @@ class FlextTypesServices:
     type ContextHookMap = t.MappingKV[str, t.SequenceOf[ContextHookCallable]]
 
     type HandlerCallable = Callable[
-        ..., tp.BaseModelType | prt.ResultView[ScalarOrModel]
+        ...,
+        tp.BaseModelType | prt.ResultView[ScalarOrModel],
     ]
     type DispatchableHandler = (
         tp.BaseModelType
@@ -103,17 +104,19 @@ class FlextTypesServices:
         ]
     )
     type ResolvedHandlerCallable = Callable[
-        ..., tp.BaseModelType | JsonPayload | prt.ResultView[JsonPayload] | None
+        ...,
+        tp.BaseModelType | JsonPayload | prt.ResultView[JsonPayload] | None,
     ]
     type RoutedHandlerCallable = Callable[
-        [p.Routable], JsonPayload | prt.ResultView[JsonPayload] | None
+        [p.Routable],
+        JsonPayload | prt.ResultView[JsonPayload] | None,
     ]
     type RegistrablePlugin = ScalarOrModel | Callable[..., ScalarOrModel]
     type LoggerFactory = Callable[..., pl.OutputLogger] | None
     type LoggerWrapperFactory = Callable[[], type[pl.Logger]]
 
     type SortableObjectType = str | int | float
-    type ValueAdapter[T] = tp.TypeAdapterType[T]
+    type ValueAdapter[T] = tp.TypeAdapter[T]
     type MessageTypeSpecifier = type | str | UnionType | GenericAlias | TypeAliasType
     type IncEx = AbstractSet[str] | t.MappingKV[str, AbstractSet[str] | bool]
 

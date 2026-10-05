@@ -15,8 +15,7 @@ import sys
 import types
 
 from flext_core import c
-
-from .logging_context_part_01 import (
+from flext_core._utilities._logging_context_parts.logging_context_part_01 import (
     FlextUtilitiesLoggingContext as FlextUtilitiesLoggingContextPart01,
 )
 
@@ -24,13 +23,19 @@ from .logging_context_part_01 import (
 class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingContextPart01):
     @staticmethod
     def _caller_source_path() -> str | None:
-        """Get source file path with line, class and method context."""
+        """Get source file path with line, class and method context.
+
+        Returns:
+            The resulting ``str | None``.
+
+        """
         caller_frame: types.FrameType | None
         try:
             caller_frame = FlextUtilitiesLoggingContext._calling_frame()
         except c.EXC_ATTR_RUNTIME_TYPE as exc:
             FlextUtilitiesLoggingContext._report_internal_logging_failure(
-                c.LoggingOperation.GET_CALLER_SOURCE, exc
+                c.LoggingOperation.GET_CALLER_SOURCE,
+                exc,
             )
             caller_frame = None
         if caller_frame is None:
@@ -44,6 +49,10 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingContextPart01):
         Generic: skips any frame whose source file path matches one of
         ``c.LOGGING_INTERNAL_PATH_FRAGMENTS``. The first frame outside is the
         true caller regardless of how many internal wrappers are involved.
+
+        Returns:
+            The resulting ``types.FrameType | None``.
+
         """
         frame = inspect.currentframe()
         if frame is None:
@@ -61,7 +70,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingContextPart01):
         """Report an internal logging failure; reporting itself must not raise."""
         try:
             FlextUtilitiesLoggingContext.structlog().fetch_logger(
-                c.LOGGER_NAME_FLEXT_CORE
+                c.LOGGER_NAME_FLEXT_CORE,
             ).warning(
                 c.LOG_INTERNAL_OPERATION_FAILED,
                 operation=operation,
@@ -71,7 +80,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingContextPart01):
             )
         except c.CONTEXT_EXCEPTIONS as report_exc:
             _ = sys.stderr.write(
-                f"flext-core logging: failed to report {operation}: {report_exc}\n"
+                f"flext-core logging: failed to report {operation}: {report_exc}\n",
             )
 
     @staticmethod
@@ -80,7 +89,8 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingContextPart01):
             return logging.root.getEffectiveLevel() <= logging.DEBUG
         except c.EXC_ATTR_RUNTIME_TYPE as exc:
             FlextUtilitiesLoggingContext._report_internal_logging_failure(
-                c.LoggingOperation.SHOULD_INCLUDE_STACK, exc
+                c.LoggingOperation.SHOULD_INCLUDE_STACK,
+                exc,
             )
             return True
 

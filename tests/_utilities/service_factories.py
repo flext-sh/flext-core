@@ -1,13 +1,20 @@
-"""Service factory helper namespace."""
+"""Service factory helper namespace.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from .user_factories import TestsFlextUtilitiesUserFactoriesMixin
-from .validation_factories import TestsFlextUtilitiesValidationFactoriesMixin
+from tests._utilities.user_factories import TestsFlextUtilitiesUserFactoriesMixin
+from tests._utilities.validation_factories import (
+    TestsFlextUtilitiesValidationFactoriesMixin,
+)
 
 
 class TestsFlextUtilitiesServiceFactoriesMixin(
-    TestsFlextUtilitiesValidationFactoriesMixin, TestsFlextUtilitiesUserFactoriesMixin
+    TestsFlextUtilitiesValidationFactoriesMixin,
+    TestsFlextUtilitiesUserFactoriesMixin,
 ):
     """Service factory helpers."""
 

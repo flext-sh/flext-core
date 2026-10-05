@@ -1,15 +1,22 @@
-"""MRO_SHAPE alias/peer-first analysis sidecar."""
+"""MRO_SHAPE alias/peer-first analysis sidecar.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 import sys
 
-from ....._constants.enforcement import FlextConstantsEnforcement as c
-from ....._models.enforcement import FlextModelsEnforcement as me
-from ....._typings.base import FlextTypingBase as t
-from ....project_metadata import FlextUtilitiesProjectMetadata as upm
-from ...helpers import FlextUtilitiesBeartypeHelpers as ubh
-from ..class_visitor_part_01 import BINARY_ARITY, NO_VIOLATION
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._models.enforcement import FlextModelsEnforcement as me
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_01 import (
+    BINARY_ARITY,
+    NO_VIOLATION,
+)
+from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers as ubh
+from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata as upm
 
 
 def _peer_first_allowed(
@@ -23,7 +30,12 @@ def _peer_first_allowed(
     tier_facade_prefixes: t.VariadicTuple[str],
     shared_peer_alias_base: set[type],
 ) -> bool:
-    """Return True when a facade may place a peer base first."""
+    """Return True when a facade may place a peer base first.
+
+    Returns:
+        True when a facade may place a peer base first.
+
+    """
     if not is_facade or is_core_root or base_count < BINARY_ARITY:
         return False
     if not first_name.startswith(tier_facade_prefixes):
@@ -43,7 +55,12 @@ def _requires_alias_first(
     valid_suffixes: t.VariadicTuple[str],
     allows_peer_first: bool,
 ) -> bool:
-    """Return True when a facade base must be an alias/alias-base first."""
+    """Return True when a facade base must be an alias/alias-base first.
+
+    Returns:
+        True when a facade base must be an alias/alias-base first.
+
+    """
     if not require_alias_first or not is_facade or is_core_root:
         return False
     if is_alias_or_alias_base_first:
@@ -54,9 +71,15 @@ def _requires_alias_first(
 
 
 def alias_first_violation(
-    target: type, params: me.MroShapeParams
+    target: type,
+    params: me.MroShapeParams,
 ) -> t.StrMapping | None:
-    """Compute the alias/peer-first violation for ``v_mro_shape``."""
+    """Compute the alias/peer-first violation for ``v_mro_shape``.
+
+    Returns:
+        The resulting ``t.StrMapping | None``.
+
+    """
     _, separator, _ = target.__qualname__.partition(".")
     is_module_level = not separator
     project_prefix, _ = target.__name__, ""

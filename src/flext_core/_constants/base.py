@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from datetime import datetime
+from pathlib import Path
 from typing import ClassVar
 
 
@@ -14,6 +16,39 @@ class FlextConstantsBase:
 
     NAME: ClassVar[str] = "FLEXT"
     ZERO: ClassVar[int] = 0
+
+    # Published for the module-scope consolidation consumers (fleet-wide,
+    # 2026-10-03): the regenerated cli/context surfaces reference this tuple
+    # through the constants namespace for isinstance and type-annotation use.
+    PRIMITIVES_TYPES: ClassVar[tuple[type[str], type[int], type[float], type[bool]]] = (
+        str,
+        int,
+        float,
+        bool,
+    )
+
+    # Runtime type-guard tuples: every consumer reaches them through the
+    # constants namespace (``c.*``); the typings family never redeclares them.
+    NUMERIC_TYPES: ClassVar[tuple[type[int], type[float]]] = (int, float)
+    SEQUENCE_PAIR_TYPES: ClassVar[tuple[type, ...]] = (list, tuple)
+    STR_BYTES_TYPES: ClassVar[tuple[type[str], type[bytes]]] = (str, bytes)
+    STR_BINARY_TYPES: ClassVar[tuple[type[str], type[bytes], type[bytearray]]] = (
+        str,
+        bytes,
+        bytearray,
+    )
+    SCALAR_TYPES: ClassVar[
+        tuple[type[str], type[int], type[float], type[bool], type[datetime]]
+    ] = (str, int, float, bool, datetime)
+    CONTAINER_TYPES: ClassVar[
+        tuple[type[str], type[int], type[float], type[bool], type[datetime], type[Path]]
+    ] = (str, int, float, bool, datetime, Path)
+    CONTAINER_AND_COLLECTION_TYPES: ClassVar[tuple[type, ...]] = (
+        *CONTAINER_TYPES,
+        list,
+        dict,
+        tuple,
+    )
 
     PERCENTAGE_MULTIPLIER: ClassVar[int] = 100
     MILLISECONDS_MULTIPLIER: ClassVar[int] = 1000

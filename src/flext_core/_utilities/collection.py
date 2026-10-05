@@ -14,15 +14,15 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, MutableSequence, Sequence
 
 from flext_core import c, p, r, t
-
-from .._models.containers import FlextModelsContainers
-from .._runtime._metadata import FlextRuntimeMetadata
-from .collection_iter import FlextUtilitiesCollectionIter
-from .collection_merge import FlextUtilitiesCollectionMerge
+from flext_core._models.containers import FlextModelsContainers
+from flext_core._runtime._metadata import FlextRuntimeMetadata
+from flext_core._utilities.collection_iter import FlextUtilitiesCollectionIter
+from flext_core._utilities.collection_merge import FlextUtilitiesCollectionMerge
 
 
 class FlextUtilitiesCollection(
-    FlextUtilitiesCollectionIter, FlextUtilitiesCollectionMerge
+    FlextUtilitiesCollectionIter,
+    FlextUtilitiesCollectionMerge,
 ):
     """Facade composing iter + merge utilities; small helpers live here."""
 
@@ -30,7 +30,12 @@ class FlextUtilitiesCollection(
     def normalize_domain_event_data(
         value: FlextModelsContainers.ConfigMap | t.JsonMapping | None,
     ) -> t.JsonMapping:
-        """Normalize domain event payloads into plain flat mappings."""
+        """Normalize domain event payloads into plain flat mappings.
+
+        Returns:
+            The resulting ``t.JsonMapping``.
+
+        """
         if value is None:
             empty_data: t.JsonMapping = {}
             return empty_data
@@ -46,9 +51,15 @@ class FlextUtilitiesCollection(
 
     @staticmethod
     def count[TItem](
-        items: t.SequenceOf[TItem], predicate: Callable[[TItem], bool] | None = None
+        items: t.SequenceOf[TItem],
+        predicate: Callable[[TItem], bool] | None = None,
     ) -> int:
-        """Count items, optionally matching predicate."""
+        """Count items, optionally matching predicate.
+
+        Returns:
+            The resulting ``int``.
+
+        """
         if predicate is None:
             return len(items)
         return sum(1 for item in items if predicate(item))
@@ -58,7 +69,12 @@ class FlextUtilitiesCollection(
         items: t.SequenceOf[TItem] | t.VariadicTuple[TItem] | t.MappingKV[str, TItem],
         predicate: Callable[[TItem], bool],
     ) -> p.Result[TItem]:
-        """Find first item matching predicate; returns r[T]."""
+        """Find first item matching predicate; returns r[T].
+
+        Returns:
+            The resulting ``p.Result[TItem]``.
+
+        """
         if isinstance(items, Mapping):
             for v in items.values():
                 if predicate(v):
@@ -82,6 +98,10 @@ class FlextUtilitiesCollection(
 
         The returned failure carries the processor's exception and error code
         so callers keep the originating cause.
+
+        Returns:
+            The resulting ``p.Result[Sequence[TMapped]]``.
+
         """
         results: MutableSequence[TMapped] = []
         for item in items:
@@ -89,12 +109,13 @@ class FlextUtilitiesCollection(
             if predicate is not None and (not predicate(item_typed)):
                 continue
             process_result = r[TMapped].create_from_callable(
-                lambda current_item=item_typed: processor(current_item)
+                lambda current_item=item_typed: processor(current_item),
             )
             if process_result.failure:
                 return r[Sequence[TMapped]].fail(
                     c.ERR_COLLECTION_PROCESSING_FAILED_FOR_ITEM.format(
-                        item=item, error=process_result.error
+                        item=item,
+                        error=process_result.error,
                     ),
                     error_code=process_result.error_code,
                     exception=process_result.exception,

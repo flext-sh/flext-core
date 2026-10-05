@@ -1,4 +1,8 @@
-"""Type and module introspection helpers — annotation inspection + bytecode analysis."""
+"""Type and module introspection helpers — annotation inspection + bytecode analysis.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -7,15 +11,15 @@ import inspect
 import types as _types_mod
 from typing import TYPE_CHECKING, Annotated, ClassVar, ForwardRef, get_args, get_origin
 
-from ...._constants.enforcement import FlextConstantsEnforcement as c
-from .helpers_part_01 import (
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._utilities._beartype._helpers_parts.helpers_part_01 import (
     FlextUtilitiesBeartypeHelpers as FlextUtilitiesBeartypeHelpersPart01,
 )
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from ...._typings.base import FlextTypingBase as t
+    from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart01):
@@ -77,6 +81,10 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart01):
         Misses are NOT cached: during ``__init_subclass__`` the class is not
         yet assigned to its module namespace, so a cached miss would poison
         every later post-import check for the same class.
+
+        Returns:
+            The resulting ``_types_mod.ModuleType | None``.
+
         """
         cached = FlextUtilitiesBeartypeHelpers._RUNTIME_MODULE_CACHE.get(target)
         if cached is not None:
@@ -127,6 +135,10 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart01):
         type without resolving anything: a proxy is not a function and never
         can be. ``FunctionType`` cannot be subclassed, so this accepts exactly
         what an ``isinstance`` test accepted.
+
+        Yields:
+            Each ``_types_mod.FunctionType``.
+
         """
         module_name = module.__name__
         for member in vars(module).values():
@@ -141,48 +153,9 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart01):
                 yield function
 
     @staticmethod
-    def function_param_names(fn: _types_mod.FunctionType) -> t.StrSequence:
-        code = getattr(fn, "__code__", None)
-        return (
-            tuple(name for name in code.co_varnames[: code.co_argcount])
-            if isinstance(code, _types_mod.CodeType)
-            else ()
-        )
-
-    @staticmethod
-    def is_pass_through_bytecode(
-        fn: _types_mod.FunctionType, param_names: t.StrSequence
-    ) -> bool:
-        instructions = [
-            ins
-            for ins in dis.get_instructions(fn)
-            if ins.opname not in {"RESUME", "CACHE", "PUSH_NULL", "COPY_FREE_VARS"}
-        ]
-        if not instructions or instructions[0].opname not in {
-            "LOAD_GLOBAL",
-            "LOAD_DEREF",
-            "LOAD_FAST",
-            "LOAD_NAME",
-        }:
-            return False
-        consumed = 1
-        for expected_arg in param_names:
-            if (
-                consumed >= len(instructions)
-                or instructions[consumed].opname != "LOAD_FAST"
-                or instructions[consumed].argval != expected_arg
-            ):
-                return False
-            consumed += 1
-        return (
-            consumed + 1 < len(instructions)
-            and instructions[consumed].opname in {"CALL", "CALL_FUNCTION"}
-            and instructions[consumed + 1].opname == "RETURN_VALUE"
-        )
-
-    @staticmethod
     def has_call_to_global(
-        fn: _types_mod.FunctionType, target_name: str
+        fn: _types_mod.FunctionType,
+        target_name: str,
     ) -> dis.Instruction | None:
         for ins in dis.get_instructions(fn):
             if ins.opname == "LOAD_GLOBAL" and ins.argval == target_name:

@@ -19,9 +19,8 @@ from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
 from structlog.stdlib import add_log_level
 
 from flext_core import c, p, t
-
-from ..._models.pydantic import FlextModelsPydantic as mp
-from .logging_config_part_01 import (
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._utilities._logging_config_parts.logging_config_part_01 import (
     FlextUtilitiesLoggingConfig as FlextUtilitiesLoggingConfigPart01,
 )
 
@@ -32,9 +31,16 @@ if typing.TYPE_CHECKING:
 class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
     @staticmethod
     def level_based_context_filter(
-        logger: p.Logger | None, method_name: str, event_dict: t.ScalarMapping
+        logger: p.Logger | None,
+        method_name: str,
+        event_dict: t.ScalarMapping,
     ) -> t.ScalarMapping:
-        """Filter context variables based on log level."""
+        """Filter context variables based on log level.
+
+        Returns:
+            The resulting ``t.ScalarMapping``.
+
+        """
         level_hierarchy = {
             "debug": 10,
             "info": 20,
@@ -68,6 +74,30 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
         return filtered_dict
 
     @staticmethod
+    def drop_below_threshold(
+        logger: p.Logger | None,
+        method_name: str,
+        event_dict: t.ScalarMapping,
+    ) -> t.ScalarMapping:
+        """Drop events under the active threshold, read at emit time.
+
+        Reading the threshold per event keeps it re-applicable after loggers
+        were cached by ``cache_logger_on_first_use``.
+
+        Returns:
+            The resulting ``t.ScalarMapping``.
+
+        Raises:
+            DropEvent: If ``level < FlextUtilitiesLoggingConfigPart01.log_threshold()``.
+
+        """
+        _ = logger, method_name
+        level = logging.getLevelNamesMapping()[str(event_dict["level"]).upper()]
+        if level < FlextUtilitiesLoggingConfigPart01.log_threshold():
+            raise structlog.DropEvent
+        return event_dict
+
+    @staticmethod
     def _resolve_structlog_params(
         settings: mp.BaseModel | None,
         *,
@@ -86,7 +116,13 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
         bool,
         bool,
     ]:
-        """Extract structlog params from settings model or pass-through args."""
+        """Extract structlog params from settings model or pass-through args.
+
+        Returns:
+            The resulting ``tuple[int, bool, t.SequenceOf[Processor] | None,
+                t.LoggerWrapperFactory | None, t.LoggerFactory, bool, bool]``.
+
+        """
         async_logging = True
         if settings is not None:
             log_level = getattr(settings, "log_level", log_level)
@@ -95,11 +131,15 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
             if cfg_processors:
                 additional_processors = cfg_processors
             wrapper_class_factory = getattr(
-                settings, "wrapper_class_factory", wrapper_class_factory
+                settings,
+                "wrapper_class_factory",
+                wrapper_class_factory,
             )
             logger_factory = getattr(settings, "logger_factory", logger_factory)
             cache_logger_on_first_use = getattr(
-                settings, "cache_logger_on_first_use", cache_logger_on_first_use
+                settings,
+                "cache_logger_on_first_use",
+                cache_logger_on_first_use,
             )
             async_logging = getattr(settings, "async_logging", True)
         level = log_level if log_level is not None else logging.INFO
@@ -120,10 +160,16 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
         console_renderer: bool,
         additional_processors: t.SequenceOf[Processor] | None,
     ) -> t.SequenceOf[Processor]:
-        """Assemble the structlog processor chain."""
+        """Assemble the structlog processor chain.
+
+        Returns:
+            The resulting ``t.SequenceOf[Processor]``.
+
+        """
         processors: t.MutableSequenceOf[Processor] = [
             structlog.contextvars.merge_contextvars,
             add_log_level,
+            cls.drop_below_threshold,
             cls.level_based_context_filter,
             TimeStamper(fmt="iso"),
             StackInfoRenderer(),
@@ -138,35 +184,55 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
 
     @classmethod
     def _resolve_logger_factory(
-        cls, *, logger_factory: t.LoggerFactory, async_logging: bool
+        cls,
+        *,
+        logger_factory: t.LoggerFactory,
+        async_logging: bool,
     ) -> t.LoggerFactory | None:
-        """Resolve the logger factory, enabling async output when requested."""
+        """Resolve the logger factory, enabling async output when requested.
+
+        Returns:
+            The resulting ``t.LoggerFactory | None``.
+
+        """
         if logger_factory is not None:
             return logger_factory
         if async_logging:
             print_logger_factory: object = getattr(
-                structlog, "PrintLoggerFactory", None
+                structlog,
+                "PrintLoggerFactory",
+                None,
             )
             if callable(print_logger_factory):
                 factory_builder = typing.cast(
-                    "typing.Callable[..., t.LoggerFactory]", print_logger_factory
+                    "typing.Callable[..., t.LoggerFactory]",
+                    print_logger_factory,
                 )
                 return cls._build_async_logger_factory(factory_builder)
             write_logger_factory: object = getattr(
-                structlog, "WriteLoggerFactory", None
+                structlog,
+                "WriteLoggerFactory",
+                None,
             )
             if callable(write_logger_factory):
                 factory_builder = typing.cast(
-                    "typing.Callable[..., t.LoggerFactory]", write_logger_factory
+                    "typing.Callable[..., t.LoggerFactory]",
+                    write_logger_factory,
                 )
                 return cls._build_async_logger_factory(factory_builder)
         return None
 
     @classmethod
     def _build_async_logger_factory(
-        cls, factory_builder: typing.Callable[..., t.LoggerFactory]
+        cls,
+        factory_builder: typing.Callable[..., t.LoggerFactory],
     ) -> t.LoggerFactory:
-        """Build a structlog logger factory bound to the shared async writer."""
+        """Build a structlog logger factory bound to the shared async writer.
+
+        Returns:
+            The resulting ``t.LoggerFactory``.
+
+        """
         if cls._async_writer is None:
             cls._async_writer = cls._AsyncLogWriter(sys.stdout)
         return factory_builder(file=cls._async_writer)

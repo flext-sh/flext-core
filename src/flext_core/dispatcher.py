@@ -1,4 +1,8 @@
-"""Message dispatch orchestration with reliability features."""
+"""Message dispatch orchestration with reliability features.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -31,7 +35,12 @@ class FlextDispatcher:
         self._event_subscribers = event_subscribers
 
     def dispatch(self, message: p.Routable) -> p.Result[t.JsonPayload]:
-        """Dispatch a CQRS message to its registered handler."""
+        """Dispatch a CQRS message to its registered handler.
+
+        Returns:
+            The resulting ``p.Result[t.JsonPayload]``.
+
+        """
         try:
             route_name = u.resolve_message_route(message)
         except c.EXC_TYPE_VALIDATION as exc:
@@ -48,17 +57,23 @@ class FlextDispatcher:
                     break
         if not handler_entry:
             return r[t.JsonPayload].fail_op(
-                "resolve message handler", f"No handler found for {route_name}"
+                "resolve message handler",
+                f"No handler found for {route_name}",
             )
         _, resolved_handler = handler_entry
         return self._execute_handler(resolved_handler, message, route_name)
 
     def publish(self, event: p.Routable | t.SequenceOf[p.Routable]) -> p.Result[bool]:
-        """Publish events to all registered subscribers."""
+        """Publish events to all registered subscribers.
+
+        Returns:
+            The resulting ``p.Result[bool]``.
+
+        """
         if isinstance(event, Sequence):
             for evt in event:
                 _ = self.publish(evt)
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         route_name = u.resolve_message_route(event)
         handlers = self._event_subscribers.get(route_name, [])
         evt_type = event.__class__
@@ -74,18 +89,26 @@ class FlextDispatcher:
             ):
                 handlers.append((auto_h, resolved_handler))
         if not handlers:
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
         for _, resolved_handler in handlers:
             _ = self._execute_handler(resolved_handler, event, route_name)
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     def register_handler(
-        self, handler: t.DispatchableHandler, *, is_event: bool = False
+        self,
+        handler: t.DispatchableHandler,
+        *,
+        is_event: bool = False,
     ) -> p.Result[bool]:
-        """Register a handler for a specific message type."""
+        """Register a handler for a specific message type.
+
+        Returns:
+            The resulting ``p.Result[bool]``.
+
+        """
         route_name: str | None = None
         accepted_message_types: tuple[t.TypeHintSpecifier, ...] = tuple(
-            u.compute_accepted_message_types(type(handler))
+            u.compute_accepted_message_types(type(handler)),
         )
         resolved_handler: t.RoutedHandlerCallable
         is_auto_discoverable = isinstance(handler, p.AutoDiscoverableHandler)
@@ -100,7 +123,8 @@ class FlextDispatcher:
                 resolved_handler = callable_handler
             case _:
                 return r[bool].fail_op(
-                    "register handler", c.ERR_HANDLER_MUST_BE_CALLABLE
+                    "register handler",
+                    c.ERR_HANDLER_MUST_BE_CALLABLE,
                 )
         handler_message_type = getattr(handler, "message_type", None)
         route_candidates: tuple[t.TypeHintSpecifier | str | None, ...] = (
@@ -129,11 +153,13 @@ class FlextDispatcher:
                     accepted_message_types,
                 ))
                 self.logger.info(
-                    c.LOG_REGISTERED_AUTO_DISCOVERY_HANDLER, handler=str(handler)
+                    c.LOG_REGISTERED_AUTO_DISCOVERY_HANDLER,
+                    handler=str(handler),
                 )
-                return r[bool].ok(True)
+                return r[bool].ok(value=True)
             return r[bool].fail_op(
-                "discover handler route", c.ERR_HANDLER_ROUTE_DISCOVERY_REQUIRED
+                "discover handler route",
+                c.ERR_HANDLER_ROUTE_DISCOVERY_REQUIRED,
             )
         if is_event:
             self._event_subscribers.setdefault(route_name, []).append((
@@ -144,7 +170,7 @@ class FlextDispatcher:
         else:
             self._handlers[route_name] = (handler, resolved_handler)
             self.logger.info(c.LOG_REGISTERED_HANDLER, route=route_name)
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     def _execute_handler(
         self,
@@ -152,17 +178,25 @@ class FlextDispatcher:
         message: p.Routable,
         route_name: str,
     ) -> p.Result[t.JsonPayload]:
-        """Execute ``resolved_handler(message)`` and adapt to ``r[JsonPayload]``."""
+        """Execute ``resolved_handler(message)`` and adapt to ``r[JsonPayload]``.
+
+        Returns:
+            The resulting ``p.Result[t.JsonPayload]``.
+
+        """
         dispatch_result = r[t.JsonPayload]
         try:
             raw_candidate = resolved_handler(message)
             raw_output = self._normalize_dispatcher_output(
-                raw_candidate, dispatch_result
+                raw_candidate,
+                dispatch_result,
             )
             return self._adapt_dispatcher_output(raw_output, dispatch_result)
         except c.EXC_BROAD_RUNTIME as exc:
             self.logger.exception(
-                c.LOG_HANDLER_EXECUTION_FAILED, exception=exc, route=route_name
+                c.LOG_HANDLER_EXECUTION_FAILED,
+                exception=exc,
+                route=route_name,
             )
             return dispatch_result.fail_op("execute resolved handler", exc)
 
@@ -171,7 +205,12 @@ class FlextDispatcher:
         raw_candidate: t.JsonPayload | p.ResultView[t.JsonPayload] | None,
         dispatch_result: type[r[t.JsonPayload]],
     ) -> t.JsonPayload | p.ResultView[t.JsonPayload] | None:
-        """Normalize raw handler output to Result or payload candidate."""
+        """Normalize raw handler output to Result or payload candidate.
+
+        Returns:
+            The resulting ``t.JsonPayload | p.ResultView[t.JsonPayload] | None``.
+
+        """
         if isinstance(raw_candidate, p.ResultView):
             return raw_candidate
         if raw_candidate is None:
@@ -188,11 +227,17 @@ class FlextDispatcher:
         raw_output: t.JsonPayload | p.ResultView[t.JsonPayload] | None,
         dispatch_result: type[r[t.JsonPayload]],
     ) -> p.Result[t.JsonPayload]:
-        """Adapt normalized output to the canonical ``r[t.JsonPayload]`` contract."""
+        """Adapt normalized output to the canonical ``r[t.JsonPayload]`` contract.
+
+        Returns:
+            The resulting ``p.Result[t.JsonPayload]``.
+
+        """
         result: p.Result[t.JsonPayload]
         if raw_output is None:
             result = dispatch_result.fail_op(
-                "validate handler return payload", c.ERR_HANDLER_RETURNED_NONE
+                "validate handler return payload",
+                c.ERR_HANDLER_RETURNED_NONE,
             )
         elif isinstance(raw_output, p.ResultView):
             if raw_output.failure:

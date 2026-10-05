@@ -68,7 +68,12 @@ class FlextService[TDomainResult = p.Base](x):
     @classmethod
     @override
     def __pydantic_on_complete__(cls) -> None:
-        """Reject a port whose type ``isinstance`` cannot validate."""
+        """Reject a port whose type ``isinstance`` cannot validate.
+
+        Raises:
+            TypeError: If ``member is not NoneType and (not is_protocol(member))``.
+
+        """
         super().__pydantic_on_complete__()
         for name, field in cls.model_fields.items():
             if get_origin(field.annotation) is not t.Port:
@@ -80,7 +85,9 @@ class FlextService[TDomainResult = p.Base](x):
             for member in members:
                 if member is not NoneType and not is_protocol(member):
                     msg = c.ERR_SERVICE_PORT_TYPE.format(
-                        service=cls.__name__, field=name, port_type=member
+                        service=cls.__name__,
+                        field=name,
+                        port_type=member,
                     )
                     raise TypeError(msg)
 
@@ -90,6 +97,10 @@ class FlextService[TDomainResult = p.Base](x):
 
         Mirrors `FlextSettings.fetch_global` so consumers have a single
         canonical accessor across services and settings (§3.5).
+
+        Returns:
+            The per-class shared singleton.
+
         """
         with cls._lock:
             if cls._instance is None:
@@ -109,6 +120,10 @@ class FlextService[TDomainResult = p.Base](x):
         Uses the structural `p.Settings.clone()` contract already consumed by the
         runtime bootstrap path so callers can inject a settings snapshot without
         coupling this service kernel to `FlextSettings`.
+
+        Returns:
+            An isolated service snapshot with one runtime settings clone.
+
         """
         return cls(runtime_settings=settings.clone())
 

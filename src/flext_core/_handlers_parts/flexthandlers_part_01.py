@@ -14,8 +14,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar, Unpack
 
 from flext_core import c, e, x
-
-from .._utilities.handler import FlextUtilitiesHandler
+from flext_core._utilities.handler import FlextUtilitiesHandler
 
 if TYPE_CHECKING:
     from pydantic import ConfigDict
@@ -46,9 +45,14 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         Args:
             settings: Optional handler configuration model
 
+        Raises:
+            ValidationError: If ``handler_type not in valid_handler_types``.
+
         """
         super().__init__(
-            settings_type=None, settings_overrides=None, initial_context=None
+            settings_type=None,
+            settings_overrides=None,
+            initial_context=None,
         )
         if settings is not None:
             self._config_model = settings
@@ -56,7 +60,8 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             from flext_core import m
 
             self._config_model = m.Handler(
-                handler_id=f"handler_{id(self)}", handler_name=self.__class__.__name__
+                handler_id=f"handler_{id(self)}",
+                handler_name=self.__class__.__name__,
             )
         handler_type = self._config_model.handler_mode
         valid_handler_types = {
@@ -101,7 +106,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         for klass in cls.mro():
             if klass is FlextHandlers:
                 msg = c.ERR_HANDLER_MISSING_HANDLE_IMPLEMENTATION.format(
-                    qualname=cls.__qualname__
+                    qualname=cls.__qualname__,
                 )
                 raise TypeError(msg)
             if c.MethodName.HANDLE in klass.__dict__:
@@ -129,14 +134,22 @@ class FlextHandlers[MessageT_contra, ResultT](x):
 
     @staticmethod
     def _handler_type_to_literal(handler_type: c.HandlerType | str) -> c.HandlerType:
-        """Coerce string or StrEnum to canonical HandlerType."""
+        """Coerce string or StrEnum to canonical HandlerType.
+
+        Returns:
+            The resulting ``c.HandlerType``.
+
+        Raises:
+            TypeError: Always.
+
+        """
         if isinstance(handler_type, c.HandlerType):
             return handler_type
         for member in c.HandlerType:
             if member.value == handler_type:
                 return member
         raise TypeError(
-            c.ERR_HANDLER_UNSUPPORTED_TYPE.format(handler_type=handler_type)
+            c.ERR_HANDLER_UNSUPPORTED_TYPE.format(handler_type=handler_type),
         )
 
 

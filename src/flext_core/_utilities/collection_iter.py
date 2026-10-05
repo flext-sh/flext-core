@@ -2,6 +2,9 @@
 
 Hosts the heavy `@overload` matrices for `filter` and `map` so the public
 collection facade stays under the 200-LOC cap (logical LOC, AGENTS.md §3.1).
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -9,7 +12,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import TYPE_CHECKING, overload
 
-from .collection_merge import FlextUtilitiesCollectionMerge
+from flext_core._utilities.collection_merge import FlextUtilitiesCollectionMerge
 
 if TYPE_CHECKING:
     from flext_core import t
@@ -86,7 +89,14 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
         | t.MappingKV[str, TItem]
         | t.MappingKV[str, TMapped]
     ):
-        """Unified filter function — preserves container type, optional mapper."""
+        """Unified filter function — preserves container type, optional mapper.
+
+        Returns:
+            The resulting ``t.SequenceOf[TItem] | t.SequenceOf[TMapped] |
+                t.VariadicTuple[TItem] | t.VariadicTuple[TMapped] | t.MappingKV[str,
+                TItem] | t.MappingKV[str, TMapped]``.
+
+        """
         filtered_output: (
             t.SequenceOf[TItem]
             | t.SequenceOf[TMapped]
@@ -129,31 +139,36 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
     @overload
     @staticmethod
     def map[TItem, TMapped](
-        items: t.SequenceOf[TItem], mapper: Callable[[TItem], TMapped]
+        items: t.SequenceOf[TItem],
+        mapper: Callable[[TItem], TMapped],
     ) -> t.SequenceOf[TMapped]: ...
 
     @overload
     @staticmethod
     def map[TItem, TMapped](
-        items: t.VariadicTuple[TItem], mapper: Callable[[TItem], TMapped]
+        items: t.VariadicTuple[TItem],
+        mapper: Callable[[TItem], TMapped],
     ) -> t.VariadicTuple[TMapped]: ...
 
     @overload
     @staticmethod
     def map[TItem, TMapped](
-        items: t.MappingKV[str, TItem], mapper: Callable[[TItem], TMapped]
+        items: t.MappingKV[str, TItem],
+        mapper: Callable[[TItem], TMapped],
     ) -> t.MappingKV[str, TMapped]: ...
 
     @overload
     @staticmethod
     def map[TItem, TMapped](
-        items: set[TItem], mapper: Callable[[TItem], TMapped]
+        items: set[TItem],
+        mapper: Callable[[TItem], TMapped],
     ) -> set[TMapped]: ...
 
     @overload
     @staticmethod
     def map[TItem, TMapped](
-        items: frozenset[TItem], mapper: Callable[[TItem], TMapped]
+        items: frozenset[TItem],
+        mapper: Callable[[TItem], TMapped],
     ) -> frozenset[TMapped]: ...
 
     @staticmethod
@@ -171,7 +186,13 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
         | set[TMapped]
         | frozenset[TMapped]
     ):
-        """Unified map function — preserves container type."""
+        """Unified map function — preserves container type.
+
+        Returns:
+            The resulting ``t.SequenceOf[TMapped] | t.VariadicTuple[TMapped] |
+                t.MappingKV[str, TMapped] | set[TMapped] | frozenset[TMapped]``.
+
+        """
         if isinstance(items, list):
             return [mapper(item) for item in items]
         if isinstance(items, tuple):

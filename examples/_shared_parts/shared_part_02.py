@@ -1,14 +1,17 @@
-"""Golden-file verification and shared models for flext-core examples."""
+"""Golden-file verification and shared models for flext-core examples.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 import sys
 from typing import cast
 
+from examples._shared_parts.shared_part_01 import ExamplesFlextSharedBase
 from examples.models import m
 from flext_core import p, r, t
-
-from .shared_part_01 import ExamplesFlextSharedBase
 
 
 class ExamplesFlextShared(ExamplesFlextSharedBase):
@@ -20,7 +23,12 @@ class ExamplesFlextShared(ExamplesFlextSharedBase):
         self._results.append(f"{label}{separator}{self.ser(value)}")
 
     def rand_person(self) -> ExamplesFlextShared.Person:
-        """Return a ``Person`` with random name and age."""
+        """Return a ``Person`` with random name and age.
+
+        Returns:
+            A ``Person`` with random name and age.
+
+        """
         return self.Person(name=self.rand_str(6), age=self.rand_int(1, 99))
 
     def run(self) -> None:
@@ -48,7 +56,7 @@ class ExamplesFlextShared(ExamplesFlextSharedBase):
                         kind=m.Examples.OutputKind.SUCCESS,
                         stem=self.caller_file.stem,
                         checks=checks,
-                    )
+                    ),
                 )
                 return
             actual_path = self.caller_file.with_suffix(".actual")
@@ -60,7 +68,7 @@ class ExamplesFlextShared(ExamplesFlextSharedBase):
                     stem=self.caller_file.stem,
                     expected_name=expected_path.name,
                     actual_name=actual_path.name,
-                )
+                ),
             )
             sys.exit(1)
         _ = expected_path.write_text(actual, encoding="utf-8")
@@ -72,7 +80,7 @@ class ExamplesFlextShared(ExamplesFlextSharedBase):
                 kind=m.Examples.OutputKind.GENERATED,
                 expected_name=expected_path.name,
                 checks=checks,
-            )
+            ),
         )
 
     class Person(m.Examples.Person):
@@ -83,7 +91,12 @@ class ExamplesFlextShared(ExamplesFlextSharedBase):
 
     @staticmethod
     def bind_probe(result_obj: p.Result[int], delta: int) -> int | str:
-        """Safely attempt adding ``delta`` to a successful result."""
+        """Safely attempt adding ``delta`` to a successful result.
+
+        Returns:
+            The resulting ``int | str``.
+
+        """
         try:
             return cast(
                 "int | str",
@@ -94,7 +107,12 @@ class ExamplesFlextShared(ExamplesFlextSharedBase):
 
     @staticmethod
     def bind_status(value: t.JsonValue) -> t.JsonValue:
-        """Return a summary ConfigMap when *value* is a ``r``."""
+        """Return a summary ConfigMap when *value* is a ``r``.
+
+        Returns:
+            A summary ConfigMap when *value* is a ``r``.
+
+        """
         return value
 
 

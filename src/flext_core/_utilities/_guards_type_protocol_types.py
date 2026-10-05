@@ -1,16 +1,21 @@
+"""Guards type protocol types module.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
 from __future__ import annotations
 
 from collections.abc import Callable
 
 from flext_core import t
-
-from .._protocols.container import FlextProtocolsContainer as pc
-from .._protocols.context import FlextProtocolsContext as pcx
-from .._protocols.handler import FlextProtocolsHandler as ph
-from .._protocols.loggings import FlextProtocolsLogging as pl
-from .._protocols.result import FlextProtocolsResult as pr
-from .._protocols.service import FlextProtocolsService as psrv
-from .._protocols.settings import FlextProtocolsSettings as ps
+from flext_core._protocols.container import FlextProtocolsContainer as pc
+from flext_core._protocols.context import FlextProtocolsContext as pcx
+from flext_core._protocols.handler import FlextProtocolsHandler as ph
+from flext_core._protocols.loggings import FlextProtocolsLogging as pl
+from flext_core._protocols.result import FlextProtocolsResult as pr
+from flext_core._protocols.service import FlextProtocolsService as psrv
+from flext_core._protocols.settings import FlextProtocolsSettings as ps
 
 type ProtocolGuardInput = (
     t.JsonPayload

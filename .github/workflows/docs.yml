@@ -42,7 +42,7 @@ jobs:
           submodules: false
           fetch-depth: 0
 
-      # Why (flext-gd3m1): a cold runner re-downloaded every locked Mise tool
+      # Why: a cold runner re-downloaded every locked Mise tool
       # (go included) on every Docs run, and a network blip failed setup. The
       # cache is content-addressed by the committed locks, so a warm cache is
       # always valid for the same lock and can never hide a finding; it only
@@ -60,7 +60,6 @@ jobs:
             .benchmarks
             .hypothesis
             ~/.cache/uv
-            ~/.cache/pyright
             ~/.local/share/mise
           key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
           restore-keys: |
@@ -85,7 +84,6 @@ jobs:
             .benchmarks
             .hypothesis
             ~/.cache/uv
-            ~/.cache/pyright
             ~/.local/share/mise
           key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
 
@@ -93,11 +91,14 @@ jobs:
       - name: Generation drift (blocking)
         run: |
           make gen
-          git status --short
-          test -z "$(git status --porcelain --untracked-files=all)"
+          make verify-clean
 
       - name: Docs lifecycle (blocking)
         run: make docs
+
+      # The preceding generation check cannot see changes made by make docs.
+      - name: Verify docs byte-identical repository
+        run: make verify-clean
 
       # Failure diagnostics execute only after the original Make step has
       # already propagated its exact status to Actions.
@@ -108,8 +109,7 @@ jobs:
           for report_root in .reports apps; do
             if [ -d "$report_root" ]; then
               find "$report_root" \
-                \( -path '*/audit-summary.json' -o -path '*/audit-report.md' \
-                   -o -path '*/validate-summary.json' -o -path '*/validate-report.md' \) \
+                \( -path '*/audit-summary.json' -o -path '*/audit-report.md' -o -path '*/validate-summary.json' -o -path '*/validate-report.md' \) \
                 -type f -exec sh -eu -c '
                   for report_file do
                     printf "::group::%s\n" "$report_file"
@@ -137,6 +137,9 @@ jobs:
             apps/*/.reports/**/validate-summary.json
             apps/*/.reports/**/validate-report.md
           if-no-files-found: error
+          # The allowlisted reports live under hidden .reports directories.
+          # upload-artifact excludes hidden paths unless this is explicit.
+          include-hidden-files: true
           retention-days: 7
 
   build:
@@ -156,7 +159,7 @@ jobs:
           submodules: false
           fetch-depth: 0
 
-      # Why (flext-gd3m1): same cold-download protection as the docs-quality job.
+      # Why: same cold-download protection as the docs-quality job.
       - name: Restore tool caches
         id: tool-cache
         uses: actions/cache/restore@v6
@@ -170,7 +173,6 @@ jobs:
             .benchmarks
             .hypothesis
             ~/.cache/uv
-            ~/.cache/pyright
             ~/.local/share/mise
           key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
           restore-keys: |
@@ -192,7 +194,6 @@ jobs:
             .benchmarks
             .hypothesis
             ~/.cache/uv
-            ~/.cache/pyright
             ~/.local/share/mise
           key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
 
@@ -201,9 +202,7 @@ jobs:
         run: make docs
 
       - name: Verify byte-identical repository
-        run: |
-          git diff --exit-code -- .
-          git diff --cached --exit-code -- .
+        run: make verify-clean
 
       # Pages configure/upload exist only to feed deploy on main. Running them on
       # every integration push fails closed when Pages is unset and is wasted
