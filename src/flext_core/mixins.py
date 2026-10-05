@@ -20,4 +20,8 @@ from flext_core._models.flext_mixins import FlextMixins
 if TYPE_CHECKING:
     from collections.abc import Generator, Mapping, MutableMapping
 
-__all__: t.StrSequence = ("FlextMixins",)
+# Inheritance base for FlextService/FlextHandlers (x namespace, consumed by
+# service.py, _handlers_parts and flext-tests support bases).
+x = FlextMixins
+
+__all__: t.StrSequence = ("FlextMixins", "x")

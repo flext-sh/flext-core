@@ -44,7 +44,7 @@ if TYPE_CHECKING:
         resolve_lazy_members,
     )
     from flext_core.loggings import FlextUtilitiesLogging
-    from flext_core.mixins import FlextMixins
+    from flext_core.mixins import FlextMixins, x
     from flext_core.models import FlextModels, m
     from flext_core.protocols import FlextProtocols, p
     from flext_core.registry import FlextRegistry
@@ -113,6 +113,7 @@ __all__: tuple[str, ...] = (
     "settings",
     "t",
     "u",
+    "x",
 )
 
 install_lazy_exports(
@@ -162,6 +163,7 @@ install_lazy_exports(
         "settings": "._settings",
         "t": ".typings",
         "u": ".utilities",
+        "x": ".mixins",
     }),
     public_exports=__all__,
 )
