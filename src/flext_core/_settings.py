@@ -36,8 +36,8 @@ from typing import Annotated, ClassVar, Self
 from pydantic import BaseModel, Field, computed_field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from ._constants.environment import FlextConstantsEnvironment
-from ._constants.settings import FlextConstantsSettings
+from flext_core._constants.environment import FlextConstantsEnvironment
+from flext_core._constants.settings import FlextConstantsSettings
 
 ENV_FILE_ENV_VAR = FlextConstantsSettings.ENV_FILE_ENV_VAR
 """Bootstrap env var that overrides the .env path (SSOT: ``_constants/settings``)."""
@@ -50,6 +50,9 @@ def _resolve_env_file(namespace: str | None = None) -> str:
 
     Module-level so it can seed ``model_config`` before the class body
     finishes evaluating.
+
+    Returns:
+        The resulting ``str``.
     """
     custom_env_file = os.environ.get(ENV_FILE_ENV_VAR)
     if custom_env_file:
@@ -151,7 +154,11 @@ def app_env_prefix(namespace: str) -> str:
 
 
 def _validate_app_namespace(namespace: str) -> str:
-    """Return one safe application namespace segment or fail validation."""
+    """Return one safe application namespace segment or fail validation.
+
+    Raises:
+        ValueError: If application namespace must be one non-empty path segment.
+    """
     candidate = namespace.strip()
     if not candidate or candidate in {".", ".."} or Path(candidate).name != candidate:
         msg = "application namespace must be one non-empty path segment"
@@ -164,6 +171,9 @@ def _namespace_dir_name(env_prefix: str) -> str:
 
     ``FLEXT_`` -> ``flext``; ``AI_HUB_`` -> ``ai-hub``. This
     is the default when no application identity was registered.
+
+    Returns:
+        The resulting ``str``.
     """
     return env_prefix.rstrip("_").lower().replace("_", "-")
 
@@ -192,6 +202,9 @@ class FlextSettings(BaseSettings):
 
         Settings-layer canonical owner; the former utility duplicate was
         removed (chain law: ``c`` consumes ``settings``, never the reverse).
+
+        Returns:
+            The resulting ``str``.
         """
         return _resolve_env_file(namespace)
 
@@ -199,10 +212,12 @@ class FlextSettings(BaseSettings):
     trace: Annotated[bool, Field(description="Enable trace mode")] = False
     log_level: str = Field(default="INFO", description="Log level")
     timezone: Annotated[
-        str, Field(description="IANA timezone for datetime operations")
+        str,
+        Field(description="IANA timezone for datetime operations"),
     ] = "UTC"
     async_logging: Annotated[
-        bool, Field(description="Enable asynchronous buffered logging")
+        bool,
+        Field(description="Enable asynchronous buffered logging"),
     ] = True
 
     _lock: ClassVar[threading.RLock] = threading.RLock()
@@ -217,7 +232,11 @@ class FlextSettings(BaseSettings):
         cls._instance = None
 
     def __new__(cls, **kwargs: object) -> Self:
-        """Singleton factory; unknown kwargs are ignored by consumer factories."""
+        """Singleton factory; unknown kwargs are ignored by consumer factories.
+
+        Raises:
+            TypeError: If Singleton instance is not of expected type.
+        """
         _ = kwargs
         if not cls._singleton_enabled:
             return super().__new__(cls)
@@ -281,13 +300,18 @@ class FlextSettings(BaseSettings):
 
     @classmethod
     def _merge_overrides(cls, current: Self, **overrides: object) -> dict[str, object]:
-        """Merge partial nested-model overrides onto the current state."""
+        """Merge partial nested-model overrides onto the current state.
+
+        Returns:
+            The resulting ``dict[str, object]``.
+        """
         cls._validate_overrides(**overrides)
         merged: dict[str, object] = {}
         for field_name, override_value in overrides.items():
             current_value = getattr(current, field_name, None)
             if isinstance(current_value, BaseModel) and isinstance(
-                override_value, Mapping
+                override_value,
+                Mapping,
             ):
                 computed = set(type(current_value).model_computed_fields)
                 merged_dict = {
@@ -300,7 +324,11 @@ class FlextSettings(BaseSettings):
         return merged
 
     def clone(self, **overrides: object) -> Self:
-        """Deep copy with optional field overrides + re-validation."""
+        """Deep copy with optional field overrides + re-validation.
+
+        Returns:
+            The resulting ``Self``.
+        """
         if not overrides:
             with self.__class__.singleton_disabled():
                 return self.model_copy(deep=True)
@@ -313,7 +341,11 @@ class FlextSettings(BaseSettings):
 
     @classmethod
     def update_global(cls, **overrides: object) -> Self:
-        """Replace the singleton via ``model_copy(update=…)`` + revalidate."""
+        """Replace the singleton via ``model_copy(update=…)`` + revalidate.
+
+        Returns:
+            The resulting ``Self``.
+        """
         if not overrides:
             return cls.fetch_global()
         current = cls.fetch_global()
@@ -327,7 +359,11 @@ class FlextSettings(BaseSettings):
 
     @classmethod
     def _validate_overrides(cls, **overrides: object) -> None:
-        """Reject override keys that are not declared model fields."""
+        """Reject override keys that are not declared model fields.
+
+        Raises:
+            ValueError: If Unknown settings override(s) for.
+        """
         unknown = sorted(set(overrides) - set(cls.model_fields))
         if unknown:
             msg = (
@@ -379,7 +415,7 @@ class FlextSettings(BaseSettings):
         mandatory).
         """
         registered = FlextSettings._app_namespace or os.environ.get(
-            "FLEXT_APP_NAMESPACE"
+            "FLEXT_APP_NAMESPACE",
         )
         return _validate_app_namespace(registered or cls._owner_namespace())
 
@@ -426,7 +462,11 @@ class FlextSettings(BaseSettings):
     @computed_field
     @property
     def runtime_dir(self) -> Path:
-        """Consuming application's ephemeral runtime directory."""
+        """Consuming application's ephemeral runtime directory.
+
+        Raises:
+            ValueError: If runtime_dir must be absolute.
+        """
         namespace = self._current_app_namespace()
         override = os.environ.get(f"{app_env_prefix(namespace)}RUNTIME_DIR")
         if override:
@@ -445,7 +485,14 @@ class FlextSettings(BaseSettings):
 
     @model_validator(mode="after")
     def _validate_settings(self) -> Self:
-        """Enforce the trace-requires-debug invariant."""
+        """Enforce the trace-requires-debug invariant.
+
+        Returns:
+            The resulting ``Self``.
+
+        Raises:
+            ValueError: If ``self.trace and (not self.debug)``.
+        """
         if self.trace and not self.debug:
             raise ValueError(_ERR_TRACE_REQUIRES_DEBUG)
         return self

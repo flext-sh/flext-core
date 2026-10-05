@@ -73,7 +73,9 @@ from flext_core import FlextUtilitiesLogging
 
 scope = "request"
 _ = FlextUtilitiesLogging.bind_context(
-    scope=scope, request_id="req-123", user_id="u-42",
+    scope=scope,
+    request_id="req-123",
+    user_id="u-42",
 )
 
 stream = io.StringIO()
@@ -104,7 +106,8 @@ from contextlib import redirect_stdout
 from flext_core import FlextUtilitiesLogging
 
 _ = FlextUtilitiesLogging.bind_global_context(
-    internal_state="cache-miss", debug_trace="trace-xyz",
+    internal_state="cache-miss",
+    debug_trace="trace-xyz",
 )
 
 stream = io.StringIO()
@@ -145,7 +148,9 @@ def handle_request(request_id: str, user_id: str) -> None:
     """
     scope = "request"
     _ = FlextUtilitiesLogging.bind_context(
-        scope=scope, request_id=request_id, user_id=user_id,
+        scope=scope,
+        request_id=request_id,
+        user_id=user_id,
     )
     try:
         stream = io.StringIO()

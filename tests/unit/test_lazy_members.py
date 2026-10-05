@@ -124,6 +124,7 @@ class TestsFlextCoreLazyMembers:
     @staticmethod
     def test_member_must_bind_to_its_own_name() -> None:
         """A descriptor assigned under another name is a generator defect."""
+
         def _install_renamed() -> None:
             class Deferred:
                 renamed = lazy_member("json", "JSONDecoder", "decode")
