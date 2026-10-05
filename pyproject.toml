@@ -22,7 +22,7 @@ dependencies = [
   "pydantic>=2.13.5",
   "pydantic-settings>=2.15.0",
   "pyyaml>=6.0.3",
-  "structlog>=25.5.0,<26",
+  "structlog>=26.1.0,<27",
   "typing-extensions>=4.16.0",
 ]
 description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
@@ -563,7 +563,7 @@ whitelines = 1
 
 [tool.uv]
 link-mode = "copy"
-constraint-dependencies = ["structlog<26"]
+constraint-dependencies = ["structlog>=26.1.0,<27"]
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 
 [[tool.uv.exclude-dependencies]]
