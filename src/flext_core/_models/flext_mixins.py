@@ -1,10 +1,17 @@
 from __future__ import annotations
 import threading
 from contextlib import contextmanager
-from typing import Annotated, ClassVar
+from typing import TYPE_CHECKING, Annotated, ClassVar
 from flext_core import FlextContainer, FlextContext, c, m, p, t, u
-from flext_core.mixins import Generator, Mapping, MutableMapping, x, __all__
 import flext_core._models.flext_context
+
+# NOTE (multi-agent): mro-i6nq.12 — Generator/Mapping/MutableMapping are
+# annotation-only under TYPE_CHECKING; the module owns its __all__: the mixins
+# facade re-exports from here, never the reverse.
+if TYPE_CHECKING:
+    from collections.abc import Generator, Mapping, MutableMapping
+
+__all__: t.StrSequence = ("FlextMixins",)
 
 
 class FlextMixins(m.ArbitraryTypesModel):

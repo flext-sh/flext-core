@@ -2,9 +2,16 @@ from __future__ import annotations
 import time
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from typing import Annotated, ClassVar, Self
+from typing import TYPE_CHECKING, Annotated, ClassVar, Self
 from flext_core import c, e, m, p, r, t, u
-from flext_core.context import Generator, __all__
+
+# NOTE (multi-agent): mro-i6nq.12 — Generator is annotation-only; importing it
+# under TYPE_CHECKING keeps the public runtime facade graph lazy. The module
+# owns its __all__: the context facade re-exports from here, never the reverse.
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+__all__: t.StrSequence = ("FlextContext",)
 
 
 class FlextContext(m.ManagedModel):

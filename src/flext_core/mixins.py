@@ -7,7 +7,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-import flext_core._models.flext_mixins
+
+from flext_core import t
+from flext_core._models.flext_mixins import FlextMixins
 
 # NOTE (multi-agent): mro-i6nq.12 — consolidated _mixins_parts/part_01+part_02 into
 # this single domain module and refactored the runtime-bootstrap tower
@@ -18,7 +20,8 @@ import flext_core._models.flext_mixins
 if TYPE_CHECKING:
     from collections.abc import Generator, Mapping, MutableMapping
 
+# Inheritance base for FlextService/FlextHandlers (x namespace, consumed by
+# service.py, _handlers_parts and flext-tests support bases).
+x = FlextMixins
 
-x = flext_core._models.flext_mixins.FlextMixins
-
-__all__: list[str] = ["FlextMixins", "x"]
+__all__: t.StrSequence = ("FlextMixins", "x")
