@@ -155,6 +155,16 @@ class TestsFlextCorePydanticDeclarations:
         assert box.model_dump() == {"item": {"name": "flext", "detail": "advanced"}}
 
     @staticmethod
+    def test_type_adapter_constructor_validates_python_values() -> None:
+        """The public facade constructor is pydantic's TypeAdapter."""
+        sample_value = 7
+        adapter: m.TypeAdapter[int] = u.TypeAdapter(int)
+        validated = adapter.validate_python(sample_value)
+
+        assert validated == sample_value
+        assert u.type_adapter is u.TypeAdapter
+
+    @staticmethod
     def test_fail_fast_reports_only_the_first_list_error() -> None:
         adapter: m.TypeAdapter[list[int]] = u.type_adapter(
             Annotated[list[int], m.FailFast()],

@@ -75,5 +75,9 @@ class FlextUtilitiesPydantic:
 
     # Adapter construction keeps pydantic's own constructor signature, which
     # accepts every type form (classes, unions, ``Annotated`` and PEP 695
-    # aliases); ``m.TypeAdapter[T]`` is the matching annotation.
-    type_adapter = PydanticTypeAdapter
+    # aliases). ``m.TypeAdapter[T]`` is the annotation. ``TypeAdapter`` is the
+    # public constructor on this facade, the same class pydantic exports.
+    # ``type_adapter`` is that constructor under the function-shaped name
+    # already used by migrated callers.
+    TypeAdapter = PydanticTypeAdapter
+    type_adapter = TypeAdapter
