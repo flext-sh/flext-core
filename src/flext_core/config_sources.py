@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence
 from importlib.resources.abc import Traversable
 from pathlib import Path
-from typing import cast, override
+from typing import TextIO, cast, override
 
 from pydantic import JsonValue
 from pydantic_settings import BaseSettings, YamlConfigSettingsSource
@@ -109,7 +109,7 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
         return data
 
     @staticmethod
-    def unique_key_load(stream: str) -> JsonValue:
+    def unique_key_load(stream: str | TextIO) -> JsonValue:
         """Parse safe YAML while rejecting duplicate mapping keys.
 
         Returns:
@@ -132,7 +132,7 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
             TypeError: If config YAML root must be a mapping.
         """
         with file_path.open(encoding=self.yaml_file_encoding) as yaml_file:
-            loaded = self.unique_key_load(yaml_file.read())
+            loaded = self.unique_key_load(yaml_file)
         if loaded is None:
             return {}
         if not isinstance(loaded, dict):
