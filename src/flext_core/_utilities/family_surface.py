@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import functools
 import importlib
+import importlib.metadata
 from types import MappingProxyType
 from typing import TYPE_CHECKING, cast
 
@@ -59,6 +60,31 @@ class FlextUtilitiesFamilySurface:
 
     @staticmethod
     @functools.lru_cache(maxsize=1)
+    def _module_names_by_distribution() -> t.MappingKV[str, str]:
+        """Map every installed distribution name to its importable root package.
+
+        A distribution's import name is the top-level package it ships, which
+        diverges from the normalized distribution name whenever the project
+        brands its distribution differently from the package inside it (e.g.
+        ``datacosmos-backup`` shipping ``dc_backup``). Importing the naive
+        normalized name crashes the whole family-surface derivation for such
+        consumers, so the importlib.metadata package-to-distribution index is
+        the authority and the normalized name is only the fallback.
+
+        Returns:
+            The resulting ``t.MappingKV[str, str]``.
+
+        """
+        module_names: dict[str, str] = {}
+        for module_name, distribution_names in (
+            importlib.metadata.packages_distributions().items()
+        ):
+            for distribution_name in distribution_names:
+                module_names.setdefault(distribution_name.lower(), module_name)
+        return MappingProxyType(module_names)
+
+    @staticmethod
+    @functools.lru_cache(maxsize=1)
     def _surface_snapshot() -> tuple[
         tuple[str, frozenset[str], t.MappingKV[str, t.StrPair | str]],
         ...,
@@ -77,6 +103,9 @@ class FlextUtilitiesFamilySurface:
         snapshot: list[
             tuple[str, frozenset[str], t.MappingKV[str, t.StrPair | str]]
         ] = []
+        module_by_distribution = (
+            FlextUtilitiesFamilySurface._module_names_by_distribution()
+        )
         for dist in FlextUtilitiesProjectMetadata.installed_distributions():
             raw_name = dist.metadata["Name"] or ""
             name = raw_name.lower().replace("-", "_")
@@ -85,7 +114,9 @@ class FlextUtilitiesFamilySurface:
                 FlextUtilitiesProjectMetadata.distribution_requirement_names(dist),
             ):
                 continue
-            module = importlib.import_module(name)
+            module = importlib.import_module(
+                module_by_distribution.get(raw_name.lower(), name),
+            )
             published = getattr(module, "__all__", None)
             raw_map = vars(module).get("_LAZY_IMPORTS")
             if published is None or raw_map is None:
