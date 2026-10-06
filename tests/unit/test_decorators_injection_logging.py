@@ -15,10 +15,10 @@ from __future__ import annotations
 import pytest
 from flext_tests import d
 
+import flext_core._models.flext_context
 from flext_core.container import FlextContainer
 from tests.models import m
 from tests.unit._decorators_support import capture_stdout
-import flext_core._models.flext_context
 
 
 class TestsFlextCoreDecoratorsInjectionLogging:
