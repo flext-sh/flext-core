@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from tests._models._mixins.container import TestsFlextModelsContainerMixin
 from tests._models._mixins.core import TestsFlextModelsCoreMixin
@@ -20,62 +20,69 @@ if TYPE_CHECKING:
     from tests.typings import t
 
 
-class TestsFlextModelsMixins(
-    TestsFlextModelsContainerMixin,
-    TestsFlextModelsCoreMixin,
-    TestsFlextModelsDomainMixin,
-    TestsFlextModelsFixtureDictsMixin,
-    TestsFlextModelsGuardsMapperMixin,
-    TestsFlextModelsServiceCasesMixin,
-    TestsFlextModelsTestDataMixin,
-):
-    """flext-core test models namespace."""
+class TestsFlextFlextModelsMixins:
+    """Canonical namespace owner."""
+
+    class TestsFlextModelsMixins(
+        TestsFlextModelsContainerMixin,
+        TestsFlextModelsCoreMixin,
+        TestsFlextModelsDomainMixin,
+        TestsFlextModelsFixtureDictsMixin,
+        TestsFlextModelsGuardsMapperMixin,
+        TestsFlextModelsServiceCasesMixin,
+        TestsFlextModelsTestDataMixin,
+    ):
+        """flext-core test models namespace."""
+
+    # Populate ContainerScenarios after class is fully defined to allow forward references
+    _svc_scenarios: ClassVar[t.SequenceOf[TestsFlextModelsMixins.ServiceScenario]] = [
+        TestsFlextModelsMixins.ServiceScenario(
+            name="test_service",
+            service="test_service_value",
+            description="Simple string service",
+        ),
+        TestsFlextModelsMixins.ServiceScenario(
+            name="service_instance",
+            service=42,
+            description="Integer service instance",
+        ),
+        TestsFlextModelsMixins.ServiceScenario(
+            name="string_service",
+            service="test_value",
+            description="String service",
+        ),
+    ]
+
+    _typed_scenarios: ClassVar[
+        t.SequenceOf[TestsFlextModelsMixins.TypedRetrievalScenario]
+    ] = [
+        TestsFlextModelsMixins.TypedRetrievalScenario(
+            name="dict_service",
+            service="test_dict_service",
+            expected_type=str,
+            should_pass=True,
+            description="String service",
+        ),
+        TestsFlextModelsMixins.TypedRetrievalScenario(
+            name="string_service",
+            service="test_string",
+            expected_type=str,
+            should_pass=True,
+            description="String service",
+        ),
+        TestsFlextModelsMixins.TypedRetrievalScenario(
+            name="list_service",
+            service=123,
+            expected_type=int,
+            should_pass=True,
+            description="Integer service for typed retrieval",
+        ),
+    ]
 
 
-# Populate ContainerScenarios after class is fully defined to allow forward references
-_svc_scenarios: t.SequenceOf[TestsFlextModelsMixins.ServiceScenario] = [
-    TestsFlextModelsMixins.ServiceScenario(
-        name="test_service",
-        service="test_service_value",
-        description="Simple string service",
-    ),
-    TestsFlextModelsMixins.ServiceScenario(
-        name="service_instance",
-        service=42,
-        description="Integer service instance",
-    ),
-    TestsFlextModelsMixins.ServiceScenario(
-        name="string_service",
-        service="test_value",
-        description="String service",
-    ),
-]
-TestsFlextModelsMixins.ContainerScenarios.SERVICE_SCENARIOS = _svc_scenarios
-_typed_scenarios: t.SequenceOf[TestsFlextModelsMixins.TypedRetrievalScenario] = [
-    TestsFlextModelsMixins.TypedRetrievalScenario(
-        name="dict_service",
-        service="test_dict_service",
-        expected_type=str,
-        should_pass=True,
-        description="String service",
-    ),
-    TestsFlextModelsMixins.TypedRetrievalScenario(
-        name="string_service",
-        service="test_string",
-        expected_type=str,
-        should_pass=True,
-        description="String service",
-    ),
-    TestsFlextModelsMixins.TypedRetrievalScenario(
-        name="list_service",
-        service=123,
-        expected_type=int,
-        should_pass=True,
-        description="Integer service for typed retrieval",
-    ),
-]
-TestsFlextModelsMixins.ContainerScenarios.TYPED_RETRIEVAL_SCENARIOS = _typed_scenarios
+TestsFlextFlextModelsMixins.TestsFlextModelsMixins.ContainerScenarios.SERVICE_SCENARIOS = TestsFlextFlextModelsMixins._svc_scenarios
+TestsFlextFlextModelsMixins.TestsFlextModelsMixins.ContainerScenarios.TYPED_RETRIEVAL_SCENARIOS = TestsFlextFlextModelsMixins._typed_scenarios
 
-m = TestsFlextModelsMixins
+m = TestsFlextFlextModelsMixins.TestsFlextModelsMixins
 
-__all__: list[str] = ["TestsFlextModelsMixins", "m"]
+__all__: list[str] = ["TestsFlextFlextModelsMixins", "m"]

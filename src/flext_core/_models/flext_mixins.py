@@ -1,3 +1,10 @@
+"""Flext mixins module.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+src/flext_core/_models/flext_mixins
+SPDX-License-Identifier: MIT
+"""
+
 from __future__ import annotations
 
 import threading
@@ -12,8 +19,6 @@ from flext_core import FlextContainer, c, m, p, t, u
 # facade re-exports from here, never the reverse.
 if TYPE_CHECKING:
     from collections.abc import Generator, Mapping, MutableMapping
-
-__all__: t.StrSequence = ("FlextMixins",)
 
 
 class FlextMixins(m.ArbitraryTypesModel):
@@ -165,3 +170,6 @@ class FlextMixins(m.ArbitraryTypesModel):
         if self._runtime is None:
             self._runtime = u.build_service_runtime(self)
         return self._runtime
+
+
+__all__: t.StrSequence = ("FlextMixins",)
