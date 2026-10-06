@@ -17,8 +17,6 @@ from tests._models._mixins.test_data import TestsFlextModelsTestDataMixin
 
 class TestsFlextModelsNamespace:
     """Canonical namespace owner."""
-class TestsFlextModelsNamespace:
-    """Canonical namespace owner."""
 
     class TestsFlextModelsMixins(
         TestsFlextModelsContainerMixin,
