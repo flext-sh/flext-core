@@ -15,10 +15,10 @@ from tests._models._mixins.service_cases import TestsFlextModelsServiceCasesMixi
 from tests._models._mixins.test_data import TestsFlextModelsTestDataMixin
 
 
-class TestsFlextFlextModelsMixins:
+class TestsFlextModelsNamespace:
     """Canonical namespace owner."""
 
-    class TestsFlextModelsNamespace:
+    class TestsFlextModelsMixins:
         """Canonical namespace owner."""
 
         class TestsFlextModelsMixins(
@@ -41,7 +41,7 @@ class TestsFlextFlextModelsMixins:
         module scope.
         """
         mixin = (
-            TestsFlextFlextModelsMixins.TestsFlextModelsNamespace.TestsFlextModelsMixins
+            TestsFlextModelsNamespace.TestsFlextModelsMixins
         )
         mixin.ContainerScenarios.SERVICE_SCENARIOS = [
             mixin.ServiceScenario(
@@ -91,6 +91,12 @@ class TestsFlextFlextModelsMixins:
     TestsFlextModelsMixins = TestsFlextModelsNamespace.TestsFlextModelsMixins
 
 
-TestsFlextFlextModelsMixins._populate_container_scenarios()
+_populate_container_scenarios()
 
-__all__: list[str] = ["TestsFlextFlextModelsMixins"]
+m = TestsFlextModelsNamespace.TestsFlextModelsMixins
+
+# Flat name restored (the consumers and the tests lazy map resolve it):
+# commit 0958021717 had accidentally double-prefixed the namespace owner.
+TestsFlextModelsMixins = TestsFlextModelsNamespace.TestsFlextModelsMixins
+
+__all__: list[str] = ["TestsFlextModelsNamespace", "TestsFlextModelsMixins", "m"]
