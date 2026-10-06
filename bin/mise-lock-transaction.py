@@ -45,15 +45,15 @@ class MiseLockTransaction:
         """Serialize all publisher versions on one declared physical mutex."""
         mutex = project / ".mise-lock-transaction.lock"
         if mutex.is_symlink():
-            msg = f"Mise transaction mutex is a symlink: {mutex}"
-            raise ValueError(msg)
+            message = f"Mise transaction mutex is a symlink: {mutex}"
+            raise ValueError(message)
         flags = os.O_RDWR | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0)
         descriptor = os.open(mutex, flags, 0o600)
         try:
             observed = os.fstat(descriptor)
             if not stat.S_ISREG(observed.st_mode) or observed.st_nlink != 1:
-                msg = f"Mise transaction mutex is not physical: {mutex}"
-                raise ValueError(msg)
+                message = f"Mise transaction mutex is not physical: {mutex}"
+                raise ValueError(message)
             if observed.st_size == 0:
                 os.write(descriptor, b"\0")
                 os.fsync(descriptor)
@@ -72,13 +72,11 @@ class MiseLockTransaction:
                         break
                     except OSError:
                         if time.monotonic() >= deadline:
-                            msg = (
+                            message = (
                                 "Mise transaction mutex is held elsewhere for over "
                                 f"{MiseLockTransaction.MUTEX_TIMEOUT_SECONDS:.0f}s: {mutex}"
                             )
-                            raise ValueError(
-                                msg,
-                            ) from None
+                            raise ValueError(message) from None
                         time.sleep(0.2)
             try:
                 yield
@@ -94,8 +92,8 @@ class MiseLockTransaction:
     def _physical_directory(path: Path) -> None:
         observed = path.lstat()
         if not stat.S_ISDIR(observed.st_mode):
-            msg = f"transaction directory is not physical: {path}"
-            raise ValueError(msg)
+            message = f"transaction directory is not physical: {path}"
+            raise ValueError(message)
 
     @staticmethod
     def _bytes(path: Path) -> bytes | None:
@@ -104,8 +102,8 @@ class MiseLockTransaction:
         except FileNotFoundError:
             return None
         if not stat.S_ISREG(observed.st_mode) or observed.st_nlink != 1:
-            msg = f"transaction file is not physical: {path}"
-            raise ValueError(msg)
+            message = f"transaction file is not physical: {path}"
+            raise ValueError(message)
         return path.read_bytes()
 
     @staticmethod
@@ -122,42 +120,36 @@ class MiseLockTransaction:
             or selector.parts[:2] != (".mise", "locks")
             or ".." in selector.parts
         ):
-            msg = f"unsafe {MiseLockTransaction.LOCK} sidecar: {relative}"
-            raise ValueError(msg)
+            message = f"unsafe {MiseLockTransaction.LOCK} sidecar: {relative}"
+            raise ValueError(message)
         return selector
 
     @classmethod
-    def _sidecar_digest(
-        cls,
-        graph: str,
-        filename: str,
-        annotation: object,
-        root: Path,
-    ) -> tuple[str, str]:
+    def _sidecar_digest(cls, graph: str, filename: str, annotation: object, root: Path) -> tuple[str, str]:
         """Authenticate one native-graph annotation against its physical sidecar."""
         if not isinstance(annotation, dict):
-            msg = f"{cls.LOCK} {graph} annotation is not a table"
-            raise ValueError(msg)
+            message = f"{cls.LOCK} {graph} annotation is not a table"
+            raise ValueError(message)
         relative = annotation.get("path")
         digest = annotation.get("digest")
         if not isinstance(relative, str) or not isinstance(digest, str):
-            msg = f"{cls.LOCK} {graph} annotation is incomplete"
-            raise ValueError(msg)
+            message = f"{cls.LOCK} {graph} annotation is incomplete"
+            raise ValueError(message)
         selector = cls._sidecar_selector(relative)
         if not digest.startswith("sha256:"):
-            msg = f"invalid {cls.LOCK} sidecar digest: {relative}"
-            raise ValueError(msg)
+            message = f"invalid {cls.LOCK} sidecar digest: {relative}"
+            raise ValueError(message)
         cls._reject_symlink_path(root, relative)
         sidecar = root.joinpath(*selector.parts)
         cls._physical_directory(sidecar)
         source = cls._bytes(sidecar / filename)
         if source is None:
-            msg = f"{cls.LOCK} sidecar is absent: {sidecar / filename}"
-            raise ValueError(msg)
+            message = f"{cls.LOCK} sidecar is absent: {sidecar / filename}"
+            raise ValueError(message)
         actual = hashlib.sha256(source.replace(b"\r\n", b"\n")).hexdigest()
         if actual != digest.removeprefix("sha256:"):
-            msg = f"{cls.LOCK} sidecar digest differs: {sidecar / filename}"
-            raise ValueError(msg)
+            message = f"{cls.LOCK} sidecar digest differs: {sidecar / filename}"
+            raise ValueError(message)
         return relative, cls._tree_digest(sidecar)
 
     @classmethod
@@ -167,22 +159,17 @@ class MiseLockTransaction:
         payload = tomllib.loads(content.decode("utf-8"))
         tools = payload.get("tools")
         if not isinstance(tools, dict):
-            msg = f"{cls.LOCK} has no tools table"
-            raise ValueError(msg)
+            message = f"{cls.LOCK} has no tools table"
+            raise ValueError(message)
         result: dict[str, str] = {}
         for entries in tools.values():
             for entry in entries if isinstance(entries, list) else (entries,):
                 if not isinstance(entry, dict):
-                    msg = f"{cls.LOCK} tool entry is not a table"
-                    raise ValueError(msg)
+                    message = f"{cls.LOCK} tool entry is not a table"
+                    raise ValueError(message)
                 for graph, filename in cls.NATIVE_GRAPHS:
                     if entry.get(graph) is not None:
-                        relative, tree = cls._sidecar_digest(
-                            graph,
-                            filename,
-                            entry[graph],
-                            root,
-                        )
+                        relative, tree = cls._sidecar_digest(graph, filename, entry[graph], root)
                         result[relative] = tree
         return result
 
@@ -202,11 +189,9 @@ class MiseLockTransaction:
             check=True,
             capture_output=True,
         ).stdout
-        if not any(
-            line.split(b"\t", 1)[0].endswith(b" 2") for line in index.splitlines()
-        ):
-            msg = f"conflicted {cls.LOCK} has no Git stage-2 source"
-            raise ValueError(msg)
+        if not any(line.split(b"\t", 1)[0].endswith(b" 2") for line in index.splitlines()):
+            message = f"conflicted {cls.LOCK} has no Git stage-2 source"
+            raise ValueError(message)
         prior = subprocess.run(
             ["git", "-C", str(project), "show", f":2:{cls.LOCK}"],
             check=True,
@@ -226,8 +211,8 @@ class MiseLockTransaction:
             elif stat.S_ISREG(observed.st_mode) and observed.st_nlink == 1:
                 checksum.update(b"F\0" + relative + b"\0" + path.read_bytes())
             else:
-                msg = f"nonphysical mise sidecar entry: {path}"
-                raise ValueError(msg)
+                message = f"nonphysical mise sidecar entry: {path}"
+                raise ValueError(message)
         return checksum.hexdigest()
 
     @staticmethod
@@ -261,8 +246,8 @@ class MiseLockTransaction:
                 finally:
                     os.close(descriptor)
             else:
-                msg = f"nonphysical Mise stage entry: {path}"
-                raise ValueError(msg)
+                message = f"nonphysical Mise stage entry: {path}"
+                raise ValueError(message)
         cls._sync_directory(root)
 
     @classmethod
@@ -285,23 +270,23 @@ class MiseLockTransaction:
             isinstance(key, str) and isinstance(value, str)
             for key, value in payload.items()
         ):
-            msg = f"invalid Mise lock transaction journal: {stage}"
-            raise ValueError(msg)
+            message = f"invalid Mise lock transaction journal: {stage}"
+            raise ValueError(message)
         return payload
 
     @staticmethod
     def _journal_refs(journal: dict[str, str], name: str) -> dict[str, str]:
         raw = journal.get(name)
         if raw is None:
-            msg = f"Mise lock journal lacks {name}"
-            raise ValueError(msg)
+            message = f"Mise lock journal lacks {name}"
+            raise ValueError(message)
         payload = json.loads(raw)
         if not isinstance(payload, dict) or not all(
             isinstance(key, str) and isinstance(value, str)
             for key, value in payload.items()
         ):
-            msg = f"Mise lock journal has invalid {name}"
-            raise ValueError(msg)
+            message = f"Mise lock journal has invalid {name}"
+            raise ValueError(message)
         for relative in payload:
             MiseLockTransaction._sidecar_selector(relative)
         return payload
@@ -317,43 +302,38 @@ class MiseLockTransaction:
     def _journal_artifacts(cls, journal: dict[str, str], name: str) -> dict[str, str]:
         raw = journal.get(name)
         if raw is None:
-            msg = f"Mise lock journal lacks {name}"
-            raise ValueError(msg)
+            message = f"Mise lock journal lacks {name}"
+            raise ValueError(message)
         payload = json.loads(raw)
         if not isinstance(payload, dict) or not all(
             isinstance(key, str) and isinstance(value, str)
             for key, value in payload.items()
         ):
-            msg = f"Mise lock journal has invalid {name}"
-            raise ValueError(msg)
+            message = f"Mise lock journal has invalid {name}"
+            raise ValueError(message)
         return payload
 
     @classmethod
-    def _recover_artifacts(
-        cls,
-        project: Path,
-        stage: Path,
-        journal: dict[str, str],
-    ) -> None:
+    def _recover_artifacts(cls, project: Path, stage: Path, journal: dict[str, str]) -> None:
         old_refs = cls._journal_artifacts(journal, "old_artifacts")
         new_refs = cls._journal_artifacts(journal, "new_artifacts")
         declared = {relative for relative, _mode in cls.ARTIFACTS}
         if set(old_refs) != declared or set(new_refs) != declared:
-            msg = "Mise transaction artifact manifest is incomplete"
-            raise ValueError(msg)
+            message = "Mise transaction artifact manifest is incomplete"
+            raise ValueError(message)
         for relative, mode in cls.ARTIFACTS:
             source = stage / "new-artifacts" / relative
             expected = new_refs[relative]
             if cls._digest(cls._bytes(source)) != expected:
-                msg = f"staged Mise artifact changed: {source}"
-                raise ValueError(msg)
+                message = f"staged Mise artifact changed: {source}"
+                raise ValueError(message)
             target = project / relative
             current = cls._digest(cls._bytes(target))
             if current == expected:
                 continue
             if current != (old_refs[relative] or None):
-                msg = f"Mise artifact changed outside transaction: {target}"
-                raise ValueError(msg)
+                message = f"Mise artifact changed outside transaction: {target}"
+                raise ValueError(message)
             pending = stage / "pending-artifacts" / relative
             cls._ensure_parent(stage, pending)
             shutil.copyfile(source, pending)
@@ -372,14 +352,14 @@ class MiseLockTransaction:
         cls._physical_directory(project)
         cls._physical_directory(stage)
         if stage.parent != project.parent or stage == project:
-            msg = "Mise lock stage must be a sibling of its destination"
-            raise ValueError(msg)
+            message = "Mise lock stage must be a sibling of its destination"
+            raise ValueError(message)
         if stage.stat().st_dev != project.stat().st_dev:
-            msg = "Mise lock stage is not on the destination filesystem"
-            raise ValueError(msg)
+            message = "Mise lock stage is not on the destination filesystem"
+            raise ValueError(message)
         if not stage.name.startswith(f".{project.name}.mise-lock-stage."):
-            msg = f"unexpected Mise lock transaction stage: {stage}"
-            raise ValueError(msg)
+            message = f"unexpected Mise lock transaction stage: {stage}"
+            raise ValueError(message)
 
     @staticmethod
     def _reject_symlink_path(project: Path, relative: str) -> None:
@@ -387,15 +367,15 @@ class MiseLockTransaction:
         for part in PurePosixPath(relative).parts:
             cursor /= part
             if cursor.is_symlink():
-                msg = f"Mise sidecar path contains a symlink: {cursor}"
-                raise ValueError(msg)
+                message = f"Mise sidecar path contains a symlink: {cursor}"
+                raise ValueError(message)
 
     @classmethod
     def _ensure_parent(cls, root: Path, target: Path) -> None:
         """Materialize physical parents and durably record each directory entry."""
         if not target.is_relative_to(root):
-            msg = f"Mise sidecar escapes transaction root: {target}"
-            raise ValueError(msg)
+            message = f"Mise sidecar escapes transaction root: {target}"
+            raise ValueError(message)
         missing: list[Path] = []
         cursor = target.parent
         while cursor != root:
@@ -415,8 +395,8 @@ class MiseLockTransaction:
             stage.name.replace(".mise-lock-stage.", ".mise-lock-cleanup.", 1),
         )
         if retired.exists() or retired.is_symlink():
-            msg = f"Mise cleanup target already exists: {retired}"
-            raise ValueError(msg)
+            message = f"Mise cleanup target already exists: {retired}"
+            raise ValueError(message)
         stage.rename(retired)
         cls._sync_directory(stage.parent)
         shutil.rmtree(retired)
@@ -446,21 +426,19 @@ class MiseLockTransaction:
         cls._require_roots(project, stage)
         journal = cls._read_journal(stage)
         if journal is None:
-            msg = f"uncommitted Mise stage has no recovery journal: {stage}"
-            raise ValueError(msg)
+            message = f"uncommitted Mise stage has no recovery journal: {stage}"
+            raise ValueError(message)
         if journal.get("project") != str(project):
-            msg = f"Mise lock journal belongs to another project: {stage}"
-            raise ValueError(msg)
+            message = f"Mise lock journal belongs to another project: {stage}"
+            raise ValueError(message)
         old = cls._bytes(stage / cls.OLD_LOCK)
         new = cls._bytes(stage / cls.NEW_LOCK)
         if new is None:
-            msg = f"Mise lock journal lost new lock: {stage}"
-            raise ValueError(msg)
-        if cls._digest(old) != (journal.get("old") or None) or cls._digest(
-            new,
-        ) != journal.get("new"):
-            msg = f"Mise lock journal digest changed: {stage}"
-            raise ValueError(msg)
+            message = f"Mise lock journal lost new lock: {stage}"
+            raise ValueError(message)
+        if cls._digest(old) != (journal.get("old") or None) or cls._digest(new) != journal.get("new"):
+            message = f"Mise lock journal digest changed: {stage}"
+            raise ValueError(message)
         old_refs = cls._journal_refs(journal, "old_refs")
         new_refs = cls._journal_refs(journal, "new_refs")
         for relative in old_refs | new_refs:
@@ -487,19 +465,16 @@ class MiseLockTransaction:
             cls._move(destination, stage / "abandoned-sidecars" / relative, stage)
         if backup.exists():
             if destination.exists() or cls._tree_digest(backup) != old_refs[relative]:
-                msg = f"old Mise sidecar changed during recovery: {backup}"
-                raise ValueError(msg)
+                message = f"old Mise sidecar changed during recovery: {backup}"
+                raise ValueError(message)
             cls._move(backup, destination, project)
         elif relative in old_refs:
-            if (
-                not destination.exists()
-                or cls._tree_digest(destination) != old_refs[relative]
-            ):
-                msg = f"old Mise sidecar missing during recovery: {destination}"
-                raise ValueError(msg)
+            if not destination.exists() or cls._tree_digest(destination) != old_refs[relative]:
+                message = f"old Mise sidecar missing during recovery: {destination}"
+                raise ValueError(message)
         elif destination.exists():
-            msg = f"unowned Mise sidecar changed during recovery: {destination}"
-            raise ValueError(msg)
+            message = f"unowned Mise sidecar changed during recovery: {destination}"
+            raise ValueError(message)
 
     @classmethod
     def _finish_sidecars(
@@ -513,8 +488,8 @@ class MiseLockTransaction:
         for relative, expected in new_refs.items():
             destination = project / relative
             if not destination.exists() or cls._tree_digest(destination) != expected:
-                msg = f"committed Mise sidecar differs: {destination}"
-                raise ValueError(msg)
+                message = f"committed Mise sidecar differs: {destination}"
+                raise ValueError(message)
         for relative, expected in old_refs.items():
             if relative in new_refs:
                 continue
@@ -522,12 +497,12 @@ class MiseLockTransaction:
             retired = stage / "retired-sidecars" / relative
             if destination.exists():
                 if cls._tree_digest(destination) != expected:
-                    msg = f"stale sidecar changed during recovery: {destination}"
-                    raise ValueError(msg)
+                    message = f"stale sidecar changed during recovery: {destination}"
+                    raise ValueError(message)
                 cls._move(destination, retired, stage)
             elif not retired.exists():
-                msg = f"stale sidecar disappeared during recovery: {destination}"
-                raise ValueError(msg)
+                message = f"stale sidecar disappeared during recovery: {destination}"
+                raise ValueError(message)
 
     @classmethod
     def recover(cls, project: Path, stage: Path) -> None:
@@ -550,32 +525,26 @@ class MiseLockTransaction:
             for relative, expected in new_refs.items():
                 cls._undo_sidecar(project, stage, relative, expected, old_refs)
         else:
-            msg = f"Mise lock changed outside transaction: {project / cls.LOCK}"
-            raise ValueError(msg)
+            message = f"Mise lock changed outside transaction: {project / cls.LOCK}"
+            raise ValueError(message)
         cls._retire_stage(stage)
 
     @classmethod
     def _recover_prior_stages(cls, project: Path, stage: Path) -> None:
         """Settle every earlier publication before this one starts."""
         for prior in sorted(project.parent.glob(f".{project.name}.mise-lock-stage.*")):
-            if prior != stage:
+            if prior != stage and cls._read_journal(prior) is not None:
                 cls.recover(project, prior)
-        for retired in sorted(
-            project.parent.glob(f".{project.name}.mise-lock-cleanup.*"),
-        ):
+        for retired in sorted(project.parent.glob(f".{project.name}.mise-lock-cleanup.*")):
             cls._physical_directory(retired)
             journal = cls._read_journal(retired)
             if journal is None or journal.get("project") != str(project):
-                msg = f"unowned Mise cleanup directory: {retired}"
-                raise ValueError(msg)
+                message = f"unowned Mise cleanup directory: {retired}"
+                raise ValueError(message)
             shutil.rmtree(retired)
 
     @classmethod
-    def _stage_artifacts(
-        cls,
-        project: Path,
-        stage: Path,
-    ) -> tuple[dict[str, str], dict[str, str]]:
+    def _stage_artifacts(cls, project: Path, stage: Path) -> tuple[dict[str, str], dict[str, str]]:
         """Copy the staged launcher/pin set into the journal-owned stage area."""
         artifact_stage = stage / "artifacts"
         if not (artifact_stage.exists() or artifact_stage.is_symlink()):
@@ -583,8 +552,8 @@ class MiseLockTransaction:
         cls._physical_directory(artifact_stage)
         new_artifacts = cls._artifact_refs(artifact_stage)
         if any(not value for value in new_artifacts.values()):
-            msg = "staged Mise launcher/pin set is incomplete"
-            raise ValueError(msg)
+            message = "staged Mise launcher/pin set is incomplete"
+            raise ValueError(message)
         old_artifacts = cls._artifact_refs(project)
         for relative, _mode in cls.ARTIFACTS:
             destination = stage / "new-artifacts" / relative
@@ -611,20 +580,15 @@ class MiseLockTransaction:
             # entrusted to this transaction, and rollback could not
             # restore it from the old lock's sidecar manifest.
             if relative not in old_refs:
-                msg = f"unowned Mise sidecar occupies target: {destination}"
-                raise ValueError(msg)
+                message = f"unowned Mise sidecar occupies target: {destination}"
+                raise ValueError(message)
             actual = cls._tree_digest(destination)
             if actual != expected and actual != old_refs[relative]:
-                msg = f"Mise sidecar changed outside transaction: {destination}"
-                raise ValueError(msg)
+                message = f"Mise sidecar changed outside transaction: {destination}"
+                raise ValueError(message)
 
     @classmethod
-    def _place_sidecars(
-        cls,
-        project: Path,
-        stage: Path,
-        new_refs: dict[str, str],
-    ) -> None:
+    def _place_sidecars(cls, project: Path, stage: Path, new_refs: dict[str, str]) -> None:
         """Move each staged sidecar into place, parking the one it replaces."""
         for relative, expected in new_refs.items():
             destination = project / relative
@@ -642,8 +606,8 @@ class MiseLockTransaction:
         old = cls._bytes(project / cls.LOCK)
         new = cls._bytes(stage / cls.LOCK)
         if new is None:
-            msg = f"staged {cls.LOCK} is absent: {stage}"
-            raise ValueError(msg)
+            message = f"staged {cls.LOCK} is absent: {stage}"
+            raise ValueError(message)
         old_refs = cls._previous_sidecars(old, project)
         new_refs = cls._sidecars(new, stage)
         old_artifacts, new_artifacts = cls._stage_artifacts(project, stage)
@@ -672,8 +636,8 @@ class MiseLockTransaction:
     @classmethod
     def main(cls, arguments: list[str]) -> int:
         if len(arguments) != 3 or arguments[0] not in {"publish", "recover"}:
-            msg = "usage: mise-lock-transaction.py (publish|recover) PROJECT STAGE"
-            raise ValueError(msg)
+            message = "usage: mise-lock-transaction.py (publish|recover) PROJECT STAGE"
+            raise ValueError(message)
         project = Path(arguments[1]).absolute()
         stage = Path(arguments[2]).absolute()
         with cls._serialized(project):

@@ -17,13 +17,10 @@ from flext_core._lazy_parts.flextlazy_part_01 import (
     LazyImportMap,
     MutableLazyImportMap,
 )
-from flext_core._typings.lazy import FlextTypesLazy
+from flext_core.typings import ModuleGlobals, ModuleGlobalValue
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-
-type ModuleGlobalValue = FlextTypesLazy.ModuleGlobalValue
-type ModuleGlobals = FlextTypesLazy.ModuleGlobals
 
 
 class FlextLazyMember:

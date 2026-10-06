@@ -1,3 +1,8 @@
+# @flext-generated: continuous
+# @flext-owner: flext-infra/config/codegen.yaml + flext-infra/src/flext_infra/templates/project/base/pyproject.toml.j2
+# @flext-adjust: MANAGED=conflict_sections + overwrite_project_keys. CUSTOM=preserve_project_keys and [tool.*] outside conflict_sections. Never edit this projection.
+# @flext-regenerate: make gen
+
 [build-system]
 build-backend = "hatchling.build"
 requires = ["hatchling"]
@@ -19,10 +24,10 @@ dependencies = [
   "beartype>=0.22.9",
   "dependency-injector>=4.49.1",
   "packaging>=26.3",
-  "pydantic>=2.13.5",
+  "pydantic>=2.13.5,<3",
   "pydantic-settings>=2.15.0",
   "pyyaml>=6.0.3",
-  "structlog>=26.1.0,<27",
+  "structlog>=26.1.0",
   "typing-extensions>=4.16.0",
 ]
 description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
@@ -64,6 +69,7 @@ dev = [
   "actionlint-py>=1.7.12.24",
   "bandit>=1.9.4",
   "deptry",
+  "editables>=0.6",
   "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev",
   "hypothesis",
   "mkdocs",
@@ -78,6 +84,7 @@ dev = [
   "mkdocstrings>=1.0.6",
   "mkdocstrings-python>=2.0.8",
   "mypy>=2.3.1",
+  "platformdirs>=4.12.0",
   "pymdown-extensions",
   "pyrefly>=1.2.0",
   "pyright>=1.1.411",
@@ -87,6 +94,7 @@ dev = [
   "pytest-cov",
   "pytest-markdown-docs",
   "pytest-randomly>=4.1.0",
+  "pytest-reportlog",
   "pytest-testmon>=2.2.0",
   "pytest-timeout",
   "pytest-xdist",
@@ -128,7 +136,6 @@ exclude_also = [
   "if TYPE_CHECKING:",
   "if typing.TYPE_CHECKING:",
 ]
-fail_under = 45
 precision = 2
 show_missing = true
 skip_covered = false
@@ -145,32 +152,30 @@ omit = [
 known_first_party = ["flext_core"]
 pep621_dev_dependency_groups = ["dev"]
 
+[tool.flext.docs]
+package_name = "flext_core"
+
+[tool.flext.namespace]
+scan_dirs = ["src"]
+
 [tool.hatch.metadata]
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/flext_core"]
+include = ["/src/flext_core/**"]
 
-[tool.hatch.build.targets.wheel.force-include]
-config = "flext_core/config"
+[tool.hatch.build.targets.wheel.sources]
+"src/flext_core" = "flext_core"
 
 [tool.hatch.build.targets.sdist]
-only-include = ["src/flext_core", "config"]
+include = ["/src/flext_core/**"]
 
 [tool.mypy]
-disable_error_code = [
-  "assignment",
-  "attr-defined",
-  "call-arg",
-  "misc",
-  "name-defined",
-  "prop-decorator",
-  "valid-type",
-]
-exclude = ""
 mypy_path = ["src"]
 plugins = ["pydantic.mypy"]
+disable_error_code = ["prop-decorator", "call-arg"]
 python_version = "3.13"
+allow_redefinition = true
 check_untyped_defs = true
 explicit_package_bases = true
 extra_checks = true
@@ -187,8 +192,8 @@ warn_unused_ignores = true
 follow_imports = "normal"
 
 [[tool.mypy.overrides]]
-module = ["dcdoc._utilities._charts._matplotlib_renderer._renders_spec"]
-disable_error_code = ["unreachable"]
+module = ["rope.*"]
+follow_untyped_imports = true
 
 [tool.pydantic-mypy]
 init_forbid_extra = true
@@ -212,7 +217,12 @@ project-excludes = [
   "typings/**",
   "vendor/**",
 ]
-project-includes = ["src/**/*.py*", "tests/**/*.py*"]
+project-includes = [
+  "examples/**/*.py*",
+  "scripts/**/*.py*",
+  "src/**/*.py*",
+  "tests/**/*.py*",
+]
 python-version = "3.13"
 search-path = ["src", "."]
 use-ignore-files = false
@@ -314,8 +324,6 @@ exclude = [
   "**/node_modules",
   "**/site-packages",
   "**/site-packages/**",
-  "**/tests/fixtures",
-  "**/tests/fixtures/**",
   "**/venv",
   "**/venv/**",
   ".git",
@@ -327,30 +335,16 @@ include = ["src", "tests"]
 extraPaths = ["src", "."]
 pythonPlatform = "Linux"
 pythonVersion = "3.13"
-reportArgumentType = "none"
-reportAttributeAccessIssue = "none"
-reportCallIssue = "none"
+reportCallIssue = "error"
 reportConstantRedefinition = "error"
 reportIncompatibleMethodOverride = "error"
-reportIncompatibleVariableOverride = "none"
 reportInconsistentConstructor = "error"
-reportInvalidTypeForm = "none"
 reportMissingImports = "error"
 reportMissingModuleSource = "error"
-reportMissingTypeStubs = "none"
-reportPrivateUsage = "warning"
-reportUnknownArgumentType = "none"
-reportUnknownLambdaType = "none"
-reportUnknownMemberType = "none"
-reportUnknownParameterType = "none"
-reportUnknownVariableType = "none"
+reportPrivateUsage = "error"
 reportUnnecessaryCast = "error"
-reportUnnecessaryComparison = "warning"
-reportUnnecessaryIsInstance = "warning"
-reportUnreachable = "none"
-reportUnsupportedDunderAll = "none"
-reportUntypedBaseClass = "none"
-reportUntypedFunctionDecorator = "none"
+reportUnnecessaryComparison = "error"
+reportUnnecessaryIsInstance = "error"
 reportUnusedClass = "error"
 reportUnusedFunction = "error"
 reportUnusedImport = "error"
@@ -360,37 +354,12 @@ typeCheckingMode = "strict"
 [[tool.pyright.executionEnvironments]]
 root = "src"
 extraPaths = ["src"]
-reportAssignmentType = "none"
-reportAttributeAccessIssue = "none"
-reportGeneralTypeIssues = "none"
-reportInvalidTypeForm = "none"
-reportPrivateImportUsage = "none"
 reportPrivateUsage = "error"
-reportReturnType = "none"
-reportUnknownArgumentType = "none"
-reportUnknownLambdaType = "none"
-reportUnknownMemberType = "none"
-reportUnknownParameterType = "none"
-reportUnknownVariableType = "none"
-reportUnusedImport = "none"
 
 [[tool.pyright.executionEnvironments]]
 root = "tests"
 extraPaths = [".", "src"]
-reportArgumentType = "none"
-reportAssignmentType = "none"
-reportAttributeAccessIssue = "none"
-reportGeneralTypeIssues = "none"
-reportInvalidTypeForm = "none"
-reportPrivateImportUsage = "none"
-reportPrivateUsage = "none"
-reportReturnType = "none"
-reportUnknownArgumentType = "none"
-reportUnknownLambdaType = "none"
-reportUnknownMemberType = "none"
-reportUnknownParameterType = "none"
-reportUnknownVariableType = "none"
-reportUnusedImport = "none"
+reportPrivateUsage = "error"
 
 [tool.pytest.ini_options]
 addopts = [
@@ -400,7 +369,7 @@ addopts = [
   "--durations=10",
   "--timeout=10",
 ]
-flext_slow_timeout_seconds = "60"
+flext_slow_timeout_seconds = "30"
 asyncio_default_fixture_loop_scope = "function"
 filterwarnings = [
   "error",
@@ -410,14 +379,19 @@ markers = [
   "smoke: public-interface smoke tests",
   "unit: unit tests",
   "integration: integration tests",
+  "functional: functional behavior tests",
   "performance: performance and benchmark tests",
   "slow: slow-running tests",
   "docker: tests requiring Docker",
+  "oracle: tests requiring the shared Oracle database",
   "remote: tests requiring remote/external network services",
   "e2e: end-to-end integration tests",
   "edge_cases: edge case tests",
   "stress: stress tests",
   "resilience: resilience tests",
+  "discovery: catalog and stream discovery tests",
+  "singer: Singer protocol contract tests",
+  "requires_engine: native check engine required by this test",
 ]
 minversion = "8.0"
 python_classes = ["Test*"]
@@ -425,32 +399,10 @@ python_files = ["*_test.py", "*_tests.py", "test_*.py"]
 testpaths = ["tests"]
 
 [tool.ruff]
-exclude = [
-  "**/.archive/**",
-  "**/__pyrefly_virtual__/**",
-  "**/aihub-hooks/**",
-  ".archive",
-  ".archive/**",
-  ".git",
-  ".github/hooks",
-  ".github/hooks/**",
-  ".mypy_cache",
-  ".pytest_cache",
-  ".ruff_cache",
-  ".venv",
-  "__pycache__",
-  "archive",
-  "backup",
-  "build",
-  "dist",
-  "htmlcov",
-  "temp-backup",
-  "typings",
-  "vendor",
-  "venv",
-]
+extend-exclude = []
 fix = false
 line-length = 88
+namespace-packages = ["tests", "examples", "scripts"]
 preview = true
 respect-gitignore = true
 show-fixes = true
@@ -462,43 +414,144 @@ docstring-code-format = true
 indent-style = "space"
 line-ending = "lf"
 quote-style = "double"
-skip-magic-trailing-comma = true
+skip-magic-trailing-comma = false
 
 [tool.ruff.lint]
-ignore = [
-  "ambiguous-unicode-character-comment",
-  "ambiguous-unicode-character-docstring",
-  "ambiguous-unicode-character-string",
-  "boolean-positional-value-in-call",
+extend-safe-fixes = [
   "camelcase-imported-as-lowercase",
-  "complex-structure",
-  "docstring-missing-exception",
-  "docstring-missing-returns",
-  "docstring-missing-yields",
-  "import-outside-top-level",
-  "incorrect-blank-line-before-class",
-  "line-too-long",
-  "logging-f-string",
-  "missing-copyright-notice",
-  "missing-trailing-comma",
-  "multi-line-summary-second-line",
-  "no-self-use",
-  "non-imperative-mood",
-  "pytest-fixture-autouse",
   "relative-imports",
-  "too-many-arguments",
-  "too-many-branches",
-  "too-many-locals",
-  "too-many-nested-blocks",
-  "too-many-positional-arguments",
-  "too-many-public-methods",
-  "too-many-return-statements",
-  "too-many-statements",
+  "typing-only-first-party-import",
+]
+ignore = [
+  "camelcase-imported-as-lowercase",
+  "implicit-namespace-package",
+  "missing-required-import",
+  "runtime-import-in-type-checking-block",
   "typing-only-first-party-import",
   "typing-only-standard-library-import",
   "typing-only-third-party-import",
 ]
 select = ["ALL"]
+unfixable = [
+  "duplicate-value",
+  "multi-value-repeated-key-literal",
+  "multi-value-repeated-key-variable",
+  "outdated-version-block",
+  "p-print",
+  "print",
+  "pytest-duplicate-parametrize-test-cases",
+  "redefined-while-unused",
+  "unused-variable",
+]
+
+[tool.ruff.lint.flake8-copyright]
+notice-rgx = "Copyright \\(c\\) \\d{4} \\S[^\\n]*\\. All rights reserved\\."
+
+[tool.ruff.lint.flake8-type-checking]
+runtime-evaluated-base-classes = [
+  "examples._models.ex10.Message",
+  "examples._models.handle.ExamplesFlextSharedHandle",
+  "examples._models.person.ExamplesFlextSharedPerson",
+  "examples._shared_parts.shared_part_01.ExamplesFlextSharedBase",
+  "examples.ex_01_flext_result_helpers.Ex01ResultAdvancedSections",
+  "examples.ex_02_flext_settings_helpers.Ex02FlextSettingsFieldChecks",
+  "examples.ex_07_flext_exceptions_helpers.Ex07FlextExceptionSubclasses",
+  "examples.ex_08_container_lifecycle.Ex08ContainerLifecycle",
+  "examples.ex_08_container_registration.Ex08ContainerRegistration",
+  "examples.ex_08_container_scoped.Ex08ContainerScoped",
+  "examples.ex_12_registry_flow.Ex12RegistryFlow",
+  "examples.ex_12_registry_plugins.Ex12RegistryPlugins",
+  "examples.models.m.BaseModel",
+  "examples.models.m.Examples.Handle",
+  "examples.models.m.Examples.Person",
+  "examples.shared.ExamplesFlextShared",
+  "flext_core.FlextModels.BaseModel",
+  "flext_core.FlextSettings",
+  "flext_core._handlers_parts.flexthandlers_part_01.FlextHandlers",
+  "flext_core._handlers_parts.flexthandlers_part_02.FlextHandlers",
+  "flext_core._handlers_parts.flexthandlers_part_03.FlextHandlers",
+  "flext_core._handlers_parts.flexthandlers_part_04.FlextHandlers",
+  "flext_core._handlers_parts.flexthandlers_part_05.FlextHandlers",
+  "flext_core._handlers_parts.flexthandlers_part_06.FlextHandlers",
+  "flext_core._lazy_parts.flextlazy_part_01.FlextLazyPart01",
+  "flext_core._models._base_parts.flextmodelsbase_part_01.ArbitraryTypesModel",
+  "flext_core._models._base_parts.flextmodelsbase_part_01.DynamicModel",
+  "flext_core._models._base_parts.flextmodelsbase_part_01.EnforcedModel",
+  "flext_core._models._base_parts.flextmodelsbase_part_01.EnumManagedModel",
+  "flext_core._models._base_parts.flextmodelsbase_part_01.FlexibleModel",
+  "flext_core._models._base_parts.flextmodelsbase_part_01.FlextModelsBase.StrictModel",
+  "flext_core._models._base_parts.flextmodelsbase_part_01.FrozenModel",
+  "flext_core._models._base_parts.flextmodelsbase_part_01.ManagedModel",
+  "flext_core._models._base_parts.flextmodelsbase_part_01.NormalizedModel",
+  "flext_core._models._base_parts.flextmodelsbase_part_01.StrictManagedModel",
+  "flext_core._models._base_parts.flextmodelsbase_part_01.StrictModel",
+  "flext_core._models._base_parts.flextmodelsbase_part_02.ContractModel",
+  "flext_core._models._base_parts.flextmodelsbase_part_02.FlextModelsBase.ArbitraryTypesModel",
+  "flext_core._models._base_parts.flextmodelsbase_part_02.StrictModel",
+  "flext_core._models._enforcement._base.FlextModelsEnforcementBase.Report",
+  "flext_core._models._enforcement._base.FlextModelsEnforcementModelBase",
+  "flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ExpectedActualTypeParams",
+  "flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ParamsModel",
+  "flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ResourceIdentityParams",
+  "flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_01.ParamsModel",
+  "flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_01.FlextModelsProjectMetadataContract",
+  "flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_05.FlextModelsPyprojectIngressContract",
+  "flext_core._models.base.FlextModelsBase.ArbitraryTypesModel",
+  "flext_core._models.base.FlextModelsBase.FlexibleInternalModel",
+  "flext_core._models.base.FlextModelsBase.FrozenModel",
+  "flext_core._models.base.FlextModelsBase.FrozenValueModel",
+  "flext_core._models.base.FlextModelsBase.ImmutableValueModel",
+  "flext_core._models.base.FlextModelsBase.RetryConfigurationMixin",
+  "flext_core._models.base.FlextModelsBase.StrictModel",
+  "flext_core._models.base.FlextModelsBase.TimestampedModel",
+  "flext_core._models.containers._MappingRootBase",
+  "flext_core._models.entity.Entity",
+  "flext_core._models.entity.FlextModelsEntity.Value",
+  "flext_core._models.pydantic.FlextModelsPydantic.BaseModel",
+  "flext_core._models.pydantic.FlextModelsPydantic.RootModel",
+  "flext_core._result.base.FlextResultBase",
+  "flext_core._result.behavior.FlextResultBehavior",
+  "flext_core._result.composition.FlextResultComposition",
+  "flext_core._result.construction.FlextResultConstruction",
+  "flext_core._result.result._FlextResult",
+  "flext_core._result.transforms.FlextResultTransforms",
+  "flext_core._result.unwrap.FlextResultUnwrap",
+  "flext_core.m.ArbitraryTypesModel",
+  "flext_core.m.BaseModel",
+  "flext_core.m.Command",
+  "flext_core.m.DomainEvent",
+  "flext_core.m.Entity",
+  "flext_core.m.Event",
+  "flext_core.m.FlexibleInternalModel",
+  "flext_core.m.ManagedModel",
+  "flext_core.m.Query",
+  "flext_core.m.Value",
+  "flext_core.s",
+  "flext_core.x",
+  "flext_tests.FlextTestsServiceBase",
+  "flext_tests.FlextTestsUtilities.Tests",
+  "flext_tests.h",
+  "flext_tests.x",
+  "pydantic.BaseModel",
+  "pydantic.RootModel",
+  "pydantic_settings.BaseSettings",
+  "tests._utilities.railway_services.TestsFlextUtilitiesRailwayServicesMixin.GetUserService",
+  "tests._utilities.services.ValidatingService",
+  "tests.base.s",
+  "tests.models.m.ArbitraryTypesModel",
+  "tests.models.m.BaseModel",
+  "tests.models.m.BaseSettings",
+  "tests.models.m.Entity",
+  "tests.models.m.FlexibleModel",
+  "tests.models.m.FrozenValueModel",
+  "tests.models.m.Value",
+  "tests.unit._models.test_pydantic_facade._Item",
+  "tests.unit.test_service_operations.ReadSide",
+  "tests.unit.test_service_operations.WriteSide",
+]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api.argparse]
 msg = "Use cli.register_result_command + Pydantic model from flext_cli."
@@ -508,6 +561,9 @@ msg = "Use flext_cli.cli application, registration, execution, and invocation me
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api.rich]
 msg = "Use cli.print / cli.display_message / cli.render_panel / cli.render_table."
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api.tabulate]
+msg = "Use cli.render_table from flext_cli."
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api.typer]
 msg = "Use cli.create_app_with_common_params / cli.register_command from flext_cli."
@@ -519,29 +575,84 @@ known-first-party = ["flext_core"]
 split-on-trailing-comma = false
 
 [tool.ruff.lint.per-file-ignores]
-"**/__init__.py" = [
+"**/__init__.py" = ["line-too-long", "non-empty-init-module", "unused-import"]
+"**/_config.py" = ["invalid-function-name"]
+"**/docx.py" = ["import-outside-top-level"]
+"**/file_test_helpers.py" = ["line-too-long"]
+"**/flextcliutilitiesfiletesthelpersmixin_part_03.py" = ["line-too-long"]
+"**/framework.py" = ["banned-api", "import-outside-top-level"]
+"**/pptx.py" = ["import-outside-top-level"]
+"**/test_public_contracts_cov.py" = ["line-too-long"]
+"**/tests/python/**" = [
+  "raise-vanilla-args",
+  "start-process-with-partial-path",
+  "subprocess-without-shell-equals-true",
+  "suspicious-subprocess-import",
+]
+"**/xlsx.py" = ["import-outside-top-level"]
+"scripts/**" = [
   "any-type",
-  "builtin-import-shadowing",
-  "implicit-namespace-package",
+  "avoidable-escaped-quote",
+  "banned-api",
+  "blank-line-after-function",
+  "boolean-default-value-positional-argument",
+  "boolean-type-hint-positional-argument",
+  "builtin-open",
+  "commented-out-code",
+  "error-instead-of-exception",
+  "f-string-in-exception",
+  "if-exp-instead-of-or-operator",
   "import-private-name",
   "invalid-module-name",
-  "non-empty-init-module",
-  "runtime-import-in-type-checking-block",
-  "undefined-export",
-  "undefined-local-with-import-star",
-  "undefined-local-with-import-star-usage",
-  "undocumented-public-init",
-  "unused-import",
-]
-"**/examples/**/*.py" = ["invalid-module-name", "shebang-not-executable"]
-"**/tests/**" = [
-  "assert",
-  "compare-to-empty-string",
+  "literal-membership",
+  "logging-string-concat",
   "magic-value-comparison",
+  "manual-list-comprehension",
+  "manual-list-copy",
+  "missing-blank-line-after-summary",
+  "missing-maxsplit-arg",
+  "multi-line-summary-first-line",
+  "multiple-starts-ends-with",
+  "non-lowercase-variable-in-function",
+  "noqa-comments",
+  "os-path-abspath",
+  "os-path-dirname",
+  "os-path-exists",
+  "os-path-join",
+  "path-constructor-current-directory",
+  "print",
+  "raise-vanilla-args",
+  "raw-string-in-exception",
+  "read-whole-file",
+  "relative-imports",
+  "repeated-append",
+  "runtime-cast-value",
+  "shebang-not-executable",
+  "start-process-with-partial-path",
+  "subprocess-without-shell-equals-true",
+  "suspicious-subprocess-import",
   "undocumented-public-class",
   "undocumented-public-function",
+  "undocumented-public-init",
   "undocumented-public-method",
+  "unnecessary-multiline-docstring",
+  "unsorted-dunder-all",
+  "unspecified-encoding",
+  "unused-function-argument",
+  "unused-noqa",
+  "used-dummy-variable",
+  "verbose-raise",
+  "write-whole-file",
 ]
+"scripts/**/*.py" = [
+  "commented-out-code",
+  "line-too-long",
+  "typing-only-first-party-import",
+]
+"tests/**/*.py" = ["assert"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.tomlsort]
 all = true
@@ -563,7 +674,7 @@ whitelines = 1
 
 [tool.uv]
 link-mode = "copy"
-constraint-dependencies = ["structlog>=26.1.0,<27"]
+constraint-dependencies = ["mypy<2.4.0"]
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 
 [[tool.uv.exclude-dependencies]]
@@ -600,112 +711,3 @@ ignore-property-decorators = true
 [tool.radon]
 cc_min = "B"
 mi_min = "B"
-
-[tool.flext.docs]
-project_class = "platform"
-
-
-[tool.flext.project.budget.boundary]
-time-seconds = 600
-memory-mb = 2048
-tokens = 1000000
-
-[tool.flext.project.budget.budget]
-time-seconds = 600
-memory-mb = 2048
-tokens = 1000000
-
-[tool.flext.project.budget.canonical-alias]
-time-seconds = 600
-memory-mb = 2048
-tokens = 1000000
-
-[tool.flext.project.budget.codemod]
-time-seconds = 600
-memory-mb = 2048
-tokens = 1000000
-
-[tool.flext.project.budget.deferred-self-reference]
-time-seconds = 600
-memory-mb = 2048
-tokens = 1000000
-
-[tool.flext.project.budget.direnv]
-time-seconds = 600
-memory-mb = 2048
-tokens = 1000000
-
-[tool.flext.project.budget.duplication]
-time-seconds = 600
-memory-mb = 2048
-tokens = 1000000
-
-[tool.flext.project.budget.format]
-time-seconds = 600
-memory-mb = 2048
-tokens = 1000000
-
-[tool.flext.project.budget.layout]
-time-seconds = 600
-memory-mb = 2048
-tokens = 1000000
-
-[tool.flext.project.budget.lint]
-time-seconds = 600
-memory-mb = 2048
-tokens = 1000000
-
-[tool.flext.project.budget.loc-cap]
-time-seconds = 600
-memory-mb = 2048
-tokens = 1000000
-
-[tool.flext.project.budget.markdown]
-time-seconds = 600
-memory-mb = 2048
-tokens = 1000000
-
-[tool.flext.project.budget.mypy]
-time-seconds = 600
-memory-mb = 2048
-tokens = 1000000
-
-[tool.flext.project.budget.namespace]
-time-seconds = 600
-memory-mb = 2048
-tokens = 1000000
-
-[tool.flext.project.budget.pyrefly]
-time-seconds = 600
-memory-mb = 2048
-tokens = 1000000
-
-[tool.flext.project.budget.pyright]
-time-seconds = 600
-memory-mb = 2048
-tokens = 1000000
-
-[tool.flext.project.budget.runtime-census]
-time-seconds = 600
-memory-mb = 2048
-tokens = 1000000
-
-[tool.flext.project.budget.security]
-time-seconds = 600
-memory-mb = 2048
-tokens = 1000000
-
-[tool.flext.project.budget.silent-failure]
-time-seconds = 600
-memory-mb = 2048
-tokens = 1000000
-
-[tool.flext.project.budget.smells]
-time-seconds = 600
-memory-mb = 2048
-tokens = 1000000
-
-[tool.flext.project.budget.tier-whitelist]
-time-seconds = 600
-memory-mb = 2048
-tokens = 1000000
