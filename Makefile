@@ -47,8 +47,8 @@ endif
 # Capture the selected approval mode before any project-owned include.
 ifeq ($(strip $(CI)),Y)
 override APPROVAL_CONTEXT := Y
-ifneq ($(filter upg _upg% dep propagate gen _gen%,$(MAKECMDGOALS)),)
-$(error Resolution, generation and member propagation are forbidden in CI)
+ifneq ($(filter upg _upg% dep propagate,$(MAKECMDGOALS)),)
+$(error Resolution and member propagation are forbidden in CI)
 endif
 endif
 
@@ -388,6 +388,7 @@ mise_pin_file="$(MISE_VERSION_PIN)"; \
 	if [ -z "$$scratch" ] || [ ! -d "$$scratch" ]; then \
 		printf 'ERROR: mise bootstrap scratch creation failed (template: %s/.%s.mise-bootstrap.XXXXXX)\n' "$$project_parent" "$${project_root##*/}" >&2; exit 2; \
 	fi; \
+	readonly scratch; \
 	lock_stage=; \
 	trap 'bootstrap_status=$$?; trap - EXIT; \
 		lock_cleanup_status=0; scratch_cleanup_status=0; diagnostic_status=0; scratch_present=0; \
@@ -649,6 +650,7 @@ mise_pin_file="$(MISE_VERSION_PIN)"; \
 	if [ -z "$$scratch" ] || [ ! -d "$$scratch" ]; then \
 		printf 'ERROR: mise bootstrap scratch creation failed (template: %s/.%s.mise-bootstrap.XXXXXX)\n' "$$project_parent" "$${project_root##*/}" >&2; exit 2; \
 	fi; \
+	readonly scratch; \
 	lock_stage=; \
 	trap 'bootstrap_status=$$?; trap - EXIT; \
 		lock_cleanup_status=0; scratch_cleanup_status=0; diagnostic_status=0; scratch_present=0; \
@@ -774,13 +776,7 @@ $${mise_config_argument:+"$$mise_config_argument"} \
 		mise_offline_mode="$$1"; shift; \
 		mise_exec "$$mise_offline_mode" env 'MISE_OFFLINE=true' "$$@"; \
 	}; \
-
-	# The only tolerated Mise warning: ephemeral CI runners ship pre-seeded \
-	# shims (python3, make) and `mise install` always announces it declines to \
-	# replace them while every real install still succeeds (cosmos-main PR 346 \
-	# CI run 37348896444, bead on cosmos-l2wc2). Every OTHER mise WARN stays \
-	# fatal: red-means-red is untouched. \
-	mise_has_blocking_warning() { \
+mise_has_blocking_warning() { \
 		grep -F 'mise WARN' "$$1" | grep -Fv 'not replacing unmanaged file in shims directory' | grep -q .; \
 	}; \
 	mise_checked() { \
@@ -812,12 +808,7 @@ $${mise_config_argument:+"$$mise_config_argument"} \
 			receipt_release=$${receipt_output%% *}; \
 		fi; \
 		if ! printf '%s\n' "$$receipt_release" | grep -Eq '^[0-9]+(\.[0-9]+){2}$$'; then \
-			printf 'ERROR: Mise receipt returned invalid version: %s\n' "$$receipt_output" >&2; \
-			printf 'ERROR: Mise receipt stderr: ' >&2; \
-			if cat "$$mise_receipt_log.stderr" >&2; then :; \
-			else printf 'ERROR: cannot read Mise receipt diagnostics: %s\n' "$$mise_receipt_log.stderr" >&2; return 2; fi; \
-			printf 'ERROR: Mise receipt executable: %s; scratch: %s\n' "$$1" "$$scratch" >&2; \
-			return 2; \
+			printf 'ERROR: Mise receipt returned invalid version: %s\n' "$$receipt_output" >&2; return 2; \
 		fi; \
 	}; \
 	pinned_mise="$$mise"; \

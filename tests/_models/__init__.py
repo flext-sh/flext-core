@@ -14,16 +14,26 @@ from flext_core import install_lazy_exports
 
 if TYPE_CHECKING:
     from tests._models import _mixins
-    from tests._models.mixins import TestsFlextModelsMixins, m
+    from tests._models.mixins import (
+        TestsFlextModelsMixins,
+        TestsFlextModelsNamespace,
+        m,
+    )
 
 
-__all__: tuple[str, ...] = ("TestsFlextModelsMixins", "_mixins", "m")
+__all__: tuple[str, ...] = (
+    "TestsFlextModelsMixins",
+    "TestsFlextModelsNamespace",
+    "_mixins",
+    "m",
+)
 
 install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
         "TestsFlextModelsMixins": ".mixins",
+        "TestsFlextModelsNamespace": ".mixins",
         "_mixins": "._mixins",
         "m": ".mixins",
     }),
