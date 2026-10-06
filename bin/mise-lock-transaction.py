@@ -128,7 +128,11 @@ class MiseLockTransaction:
 
     @classmethod
     def _sidecar_digest(
-        cls, graph: str, filename: str, annotation: object, root: Path
+        cls,
+        graph: str,
+        filename: str,
+        annotation: object,
+        root: Path,
     ) -> tuple[str, str]:
         """Authenticate one native-graph annotation against its physical sidecar."""
         if not isinstance(annotation, dict):
@@ -174,7 +178,10 @@ class MiseLockTransaction:
                 for graph, filename in cls.NATIVE_GRAPHS:
                     if entry.get(graph) is not None:
                         relative, tree = cls._sidecar_digest(
-                            graph, filename, entry[graph], root
+                            graph,
+                            filename,
+                            entry[graph],
+                            root,
                         )
                         result[relative] = tree
         return result
@@ -323,7 +330,10 @@ class MiseLockTransaction:
 
     @classmethod
     def _recover_artifacts(
-        cls, project: Path, stage: Path, journal: dict[str, str]
+        cls,
+        project: Path,
+        stage: Path,
+        journal: dict[str, str],
     ) -> None:
         old_refs = cls._journal_artifacts(journal, "old_artifacts")
         new_refs = cls._journal_artifacts(journal, "new_artifacts")
@@ -447,7 +457,7 @@ class MiseLockTransaction:
             msg = f"Mise lock journal lost new lock: {stage}"
             raise ValueError(msg)
         if cls._digest(old) != (journal.get("old") or None) or cls._digest(
-            new
+            new,
         ) != journal.get("new"):
             msg = f"Mise lock journal digest changed: {stage}"
             raise ValueError(msg)
@@ -551,7 +561,7 @@ class MiseLockTransaction:
             if prior != stage:
                 cls.recover(project, prior)
         for retired in sorted(
-            project.parent.glob(f".{project.name}.mise-lock-cleanup.*")
+            project.parent.glob(f".{project.name}.mise-lock-cleanup.*"),
         ):
             cls._physical_directory(retired)
             journal = cls._read_journal(retired)
@@ -562,7 +572,9 @@ class MiseLockTransaction:
 
     @classmethod
     def _stage_artifacts(
-        cls, project: Path, stage: Path
+        cls,
+        project: Path,
+        stage: Path,
     ) -> tuple[dict[str, str], dict[str, str]]:
         """Copy the staged launcher/pin set into the journal-owned stage area."""
         artifact_stage = stage / "artifacts"
@@ -608,7 +620,10 @@ class MiseLockTransaction:
 
     @classmethod
     def _place_sidecars(
-        cls, project: Path, stage: Path, new_refs: dict[str, str]
+        cls,
+        project: Path,
+        stage: Path,
+        new_refs: dict[str, str],
     ) -> None:
         """Move each staged sidecar into place, parking the one it replaces."""
         for relative, expected in new_refs.items():
