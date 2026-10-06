@@ -19,7 +19,7 @@ from flext_tests import FlextTestsProtocols
 
 if TYPE_CHECKING:
     from tests import t
-    from tests._models.mixins import TestsFlextModelsMixins
+    from tests._models.mixins import TestsFlextFlextModelsMixins
 
 
 class TestsFlextProtocols(FlextTestsProtocols):
@@ -51,7 +51,7 @@ class TestsFlextProtocols(FlextTestsProtocols):
 
             def __call__(
                 self,
-                item: TestsFlextModelsMixins.AttrObject,
+                item: TestsFlextFlextModelsMixins.TestsFlextModelsMixins.AttrObject,
                 field_name: str,
             ) -> t.JsonValue:
                 """Extract one named field value from an attribute object."""
@@ -63,8 +63,8 @@ class TestsFlextProtocols(FlextTestsProtocols):
 
             def __call__(
                 self,
-                data_or_items: TestsFlextModelsMixins.MaybeModel
-                | TestsFlextModelsMixins.PortModel
+                data_or_items: TestsFlextFlextModelsMixins.TestsFlextModelsMixins.MaybeModel
+                | TestsFlextFlextModelsMixins.TestsFlextModelsMixins.PortModel
                 | int,
                 key_or_index: int | str,
                 *,
@@ -97,7 +97,7 @@ class TestsFlextProtocols(FlextTestsProtocols):
 
             def __call__(
                 self,
-                source: TestsFlextModelsMixins.BadMapping,
+                source: TestsFlextFlextModelsMixins.TestsFlextModelsMixins.BadMapping,
                 **kwargs: t.StrMapping,
             ) -> p.Result[t.JsonMapping]:
                 """Transform one mapping source into a result mapping."""
@@ -109,7 +109,7 @@ class TestsFlextProtocols(FlextTestsProtocols):
 
             def __call__(
                 self,
-                source: TestsFlextModelsMixins.BadItems,
+                source: TestsFlextFlextModelsMixins.TestsFlextModelsMixins.BadItems,
                 key_map: t.StrMapping,
                 *,
                 keep_unmapped: bool = True,
