@@ -13,7 +13,7 @@ from flext_tests import h, r
 
 from tests.constants import c
 from tests.typings import t
-from tests.utilities import TestsFlextUtilities, u
+from tests.utilities import u
 
 
 class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):

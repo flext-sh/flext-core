@@ -13,7 +13,7 @@ import pytest
 from flext_tests import d, e, r
 from hypothesis import given, settings, strategies as st
 
-from tests.utilities import TestsFlextUtilities, u
+from tests.utilities import u
 
 if TYPE_CHECKING:
     from tests.protocols import p
