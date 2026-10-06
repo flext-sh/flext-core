@@ -41,17 +41,48 @@ class FlextUtilitiesBeartypeTypeAliases:
     ) -> tuple[FlextModelsEnforcement.DeferredAlias, ...]:
         """Collect only aliases the requesting predicate actually evaluates.
 
-        The walk is iterative: every pending node carries the flag set that the
-        recursive formulation passed to its recursive call, so ordering and
+        Returns:
+            The resulting ``tuple[me.DeferredAlias, ...]``.
+
+        """
+        return cls._deferred_scan(hint, (recursive, False, False), owner)
+
+    @classmethod
+    def deferred_annotated(
+        cls,
+        hint: FlextProtocolsBase.AttributeProbe,
+        *,
+        owner: ModuleType | type | None = None,
+    ) -> tuple[FlextModelsEnforcement.DeferredAlias, ...]:
+        """Collect deferred aliases unwrapping ``Annotated`` and its origins.
+
+        Returns:
+            The resulting ``tuple[me.DeferredAlias, ...]``.
+
+        """
+        return cls._deferred_scan(hint, (False, True, True), owner)
+
+    @classmethod
+    def _deferred_scan(
+        cls,
+        hint: FlextProtocolsBase.AttributeProbe,
+        scan: tuple[bool, bool, bool],
+        owner: ModuleType | type | None,
+    ) -> tuple[FlextModelsEnforcement.DeferredAlias, ...]:
+        """Walk the hint graph iteratively collecting deferred aliases.
+
+        ``scan`` carries ``(recursive, unwrap_annotated, inspect_origin)``: the
+        flag set the recursive formulation passed down, so ordering and
         semantics are preserved without growing the signature.
 
         Returns:
             The resulting ``tuple[me.DeferredAlias, ...]``.
 
         """
+        recursive, unwrap_annotated, inspect_origin = scan
         visited: set[int] = set()
         pending: list[tuple[FlextProtocolsBase.AttributeProbe, bool, bool, bool]] = [
-            (hint, recursive, False, False),
+            (hint, recursive, unwrap_annotated, inspect_origin),
         ]
         deferred_aliases: list[FlextModelsEnforcement.DeferredAlias] = []
         while pending:

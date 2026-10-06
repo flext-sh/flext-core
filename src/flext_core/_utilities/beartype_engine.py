@@ -149,10 +149,8 @@ class FlextUtilitiesBeartypeEngine(
             )
             is not None
         ):
-            return FlextUtilitiesBeartypeTypeAliases.deferred(
+            return FlextUtilitiesBeartypeTypeAliases.deferred_annotated(
                 info.annotation,
-                unwrap_annotated=True,
-                inspect_origin=True,
                 owner=owner,
             )
         if params.forbid_str_none_empty:

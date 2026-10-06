@@ -40,9 +40,7 @@ class TestsFlextModelsNamespace:
         wiring runs once at import instead of patching class attributes at
         module scope.
         """
-        mixin = (
-            TestsFlextModelsNamespace.TestsFlextModelsMixins.TestsFlextModelsMixins
-        )
+        mixin = TestsFlextModelsNamespace.TestsFlextModelsMixins.TestsFlextModelsMixins
         mixin.ContainerScenarios.SERVICE_SCENARIOS = [
             mixin.ServiceScenario(
                 name="test_service",
@@ -83,6 +81,7 @@ class TestsFlextModelsNamespace:
                 description="Integer service for typed retrieval",
             ),
         ]
+
 
 TestsFlextModelsNamespace._populate_container_scenarios()
 

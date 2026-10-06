@@ -13,13 +13,15 @@ from __future__ import annotations
 from typing import Annotated
 
 from flext_core import t
-from flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_01 import (
-    FlextModelsExceptionParams as FlextModelsExceptionParamsPart01,
+from flext_core._models._exception_params_parts import (
+    flextmodelsexceptionparams_part_01 as part_01,
 )
+
+FlextModelsExceptionParamsPart01 = part_01.FlextModelsExceptionParams
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 
 
-class FlextModelsExceptionParams(FlextModelsExceptionParamsPart01):
+class FlextModelsExceptionParams(part_01.FlextModelsExceptionParams):
     class TimeoutErrorParams(FlextModelsExceptionParamsPart01.ParamsModel):
         """Validated params for TimeoutError."""
 

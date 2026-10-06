@@ -52,14 +52,20 @@ class FlextUtilitiesGuardsTypeProtocolStringMixin:
             "sequence": lambda value: isinstance(value, (list, tuple, range)),
             "mapping": lambda value: isinstance(value, Mapping),
             "list_or_tuple": lambda value: isinstance(value, (list, tuple)),
-            "sequence_not_str": lambda value: isinstance(
-                value,
-                (list, tuple, range),
-            ) and not isinstance(value, str),
-            "sequence_not_str_bytes": lambda value: isinstance(
-                value,
-                (list, tuple, range),
-            ) and not isinstance(value, (str, bytes)),
+            "sequence_not_str": lambda value: (
+                isinstance(
+                    value,
+                    (list, tuple, range),
+                )
+                and not isinstance(value, str)
+            ),
+            "sequence_not_str_bytes": lambda value: (
+                isinstance(
+                    value,
+                    (list, tuple, range),
+                )
+                and not isinstance(value, (str, bytes))
+            ),
             "sized": _has_len,
             "callable": callable,
             "bytes": lambda value: isinstance(value, bytes),
@@ -67,15 +73,23 @@ class FlextUtilitiesGuardsTypeProtocolStringMixin:
             "float": lambda value: isinstance(value, float),
             "bool": lambda value: isinstance(value, bool),
             "none": _is_none,
-            "string_non_empty": lambda value: isinstance(value, str) and bool(
-                value.strip(),
+            "string_non_empty": lambda value: (
+                isinstance(value, str)
+                and bool(
+                    value.strip(),
+                )
             ),
-            "dict_non_empty": lambda value: isinstance(value, Mapping) and bool(
-                len(value),
+            "dict_non_empty": lambda value: (
+                isinstance(value, Mapping)
+                and bool(
+                    len(value),
+                )
             ),
-            "list_non_empty": lambda value: isinstance(value, Sequence)
-            and not isinstance(value, (str, bytes, bytearray))
-            and bool(len(value)),
+            "list_non_empty": lambda value: (
+                isinstance(value, Sequence)
+                and not isinstance(value, (str, bytes, bytearray))
+                and bool(len(value))
+            ),
         }
 
     @staticmethod

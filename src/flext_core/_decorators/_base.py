@@ -10,8 +10,8 @@ import warnings
 from functools import wraps
 from typing import TYPE_CHECKING, ClassVar, TypeIs
 
-from flext_core._models.flext_context import FlextContext
 from flext_core import FlextContainer, c, m
+from flext_core._models.flext_context import FlextContext
 from flext_core._protocols.base import FlextProtocolsBase
 from flext_core._protocols.container import FlextProtocolsContainer
 from flext_core._protocols.context import FlextProtocolsContext
@@ -40,9 +40,7 @@ class FlextDecoratorsBase:
         KeyError,
     )
     _container_type: ClassVar[FlextProtocolsContainer.ContainerType] = FlextContainer
-    _context_type: ClassVar[FlextProtocolsContext.ContextType] = (
-        FlextContext
-    )
+    _context_type: ClassVar[FlextProtocolsContext.ContextType] = FlextContext
 
     @classmethod
     def _is_logger_carrier(
