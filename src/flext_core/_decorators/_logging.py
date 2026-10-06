@@ -12,8 +12,8 @@ from typing import TYPE_CHECKING
 
 from flext_core import c, u
 from flext_core._decorators._logging_payloads import FlextDecoratorsLoggingPayloads
-from flext_core._protocols.loggings import FlextProtocolsLogging as pl
-from flext_core._typings.base import FlextTypingBase as tb
+from flext_core._protocols.loggings import FlextProtocolsLogging
+from flext_core._typings.base import FlextTypingBase
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -103,7 +103,7 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
         func_name: str,
         func_module: str,
         op_name: str,
-        logger: pl.Logger,
+        logger: FlextProtocolsLogging.Logger,
         correlation_id: str | None,
         track_perf: bool,
         start_time: float,
@@ -127,7 +127,7 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
             result = call()
         except cls._CAUGHT_EXCEPTIONS as exc:
             tracked_duration = time.perf_counter() - start_time if track_perf else 0.0
-            exc_kw: tb.MutableJsonMapping = {
+            exc_kw: FlextTypingBase.MutableJsonMapping = {
                 "function": func_name,
                 "success": False,
                 "error": str(exc),

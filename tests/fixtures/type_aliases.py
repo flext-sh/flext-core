@@ -23,10 +23,11 @@ class TestsTypeAliasDeclarations:
         type Nested = tuple[Deferred, ...]
 
     class OtherScope:
-        """An unrelated guarded import cannot prove another class's deferral."""
+        """An unrelated guarded declaration cannot prove another class's deferral.
 
-        if TYPE_CHECKING:
-            from pathlib import PurePath as Absent
+        The guarded ``PurePath as Absent`` import lives at module scope under
+        ``TYPE_CHECKING``; it never proves a deferral inside this class scope.
+        """
 
     class InvalidTypes:
         """A missing name without a guarded import retains its NameError."""

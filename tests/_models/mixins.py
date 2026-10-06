@@ -40,7 +40,9 @@ class TestsFlextModelsNamespace:
         wiring runs once at import instead of patching class attributes at
         module scope.
         """
-        mixin = TestsFlextModelsNamespace.TestsFlextModelsMixins
+        mixin = (
+            TestsFlextModelsNamespace.TestsFlextModelsMixins.TestsFlextModelsMixins
+        )
         mixin.ContainerScenarios.SERVICE_SCENARIOS = [
             mixin.ServiceScenario(
                 name="test_service",
@@ -82,17 +84,12 @@ class TestsFlextModelsNamespace:
             ),
         ]
 
-    m = TestsFlextModelsNamespace.TestsFlextModelsMixins
-
-    # Flat name restored (the consumers and the tests lazy map resolve it):
-    # commit 0958021717 had accidentally double-prefixed the namespace owner.
-    TestsFlextModelsMixins = TestsFlextModelsNamespace.TestsFlextModelsMixins
-
-
-populate_container_scenarios()
+TestsFlextModelsNamespace._populate_container_scenarios()
 
 m = TestsFlextModelsNamespace.TestsFlextModelsMixins
 
+# Flat name restored (the consumers and the tests lazy map resolve it):
+# commit 0958021717 had accidentally double-prefixed the namespace owner.
 TestsFlextModelsMixins = TestsFlextModelsNamespace.TestsFlextModelsMixins
 
 __all__: list[str] = ["TestsFlextModelsMixins", "TestsFlextModelsNamespace", "m"]

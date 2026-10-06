@@ -10,15 +10,13 @@ import inspect
 from pathlib import Path
 from typing import TypeAlias
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._constants.regex import FlextConstantsRegex as cre
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core._utilities._beartype.helpers import (
-    FlextUtilitiesBeartypeHelpers as _ubh,
-)
+from flext_core._constants.enforcement import FlextConstantsEnforcement
+from flext_core._constants.regex import FlextConstantsRegex
+from flext_core._models.enforcement import FlextModelsEnforcement
+from flext_core._typings.base import FlextTypingBase
+from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers
 
-_NO_VIOLATION: t.StrMapping | None = None
+_NO_VIOLATION: FlextTypingBase.StrMapping | None = None
 _TYPING_TYPE_ALIAS = TypeAlias  # sentinel for ``X: TypeAlias = Y`` annotation match.
 
 
@@ -27,9 +25,9 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
 
     @staticmethod
     def v_deprecated_syntax(
-        params: me.DeprecatedSyntaxParams,
+        params: FlextModelsEnforcement.DeprecatedSyntaxParams,
         target: type,
-    ) -> t.StrMapping | None:
+    ) -> FlextTypingBase.StrMapping | None:
         """DEPRECATED_SYNTAX — runtime introspection routed by ``params.ast_shape``.
 
         Returns:
@@ -40,10 +38,10 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
 
         """
         shape = params.ast_shape
-        module = _ubh.runtime_module_for(target)
+        module = FlextUtilitiesBeartypeHelpers.runtime_module_for(target)
         if module is None:
             return _NO_VIOLATION
-        src_file = _ubh.module_filename_for(module) or ""
+        src_file = FlextUtilitiesBeartypeHelpers.module_filename_for(module) or ""
         file_name = Path(src_file).name
         violation = _NO_VIOLATION
         match shape:
@@ -62,22 +60,36 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                     violation = {"file": file_name, "line": "?"}
             case "cast_outside_core":
                 if not any(
-                    marker in src_file for marker in c.ENFORCE_FLEXT_CORE_PATH_MARKERS
+                    marker in src_file
+                    for marker in FlextConstantsEnforcement.ENFORCE_FLEXT_CORE_PATH_MARKERS
                 ):
-                    cast_target = c.EnforceAstHookSymbol.CAST_CALL.value
+                    cast_target = (
+                        FlextConstantsEnforcement.EnforceAstHookSymbol.CAST_CALL.value
+                    )
                     violation = next(
                         (
                             {"file": file_name, "line": str(fn.__code__.co_firstlineno)}
-                            for fn in _ubh.iter_module_callables(module)
-                            if _ubh.has_call_to_global(fn, cast_target) is not None
+                            for fn in FlextUtilitiesBeartypeHelpers.iter_module_callables(
+                                module,
+                            )
+                            if FlextUtilitiesBeartypeHelpers.has_call_to_global(
+                                fn,
+                                cast_target,
+                            )
+                            is not None
                         ),
                         _NO_VIOLATION,
                     )
             case "no_core_tests_namespace":
-                wrapper_module = _ubh.runtime_wrapper_module_for(target)
+                wrapper_module = (
+                    FlextUtilitiesBeartypeHelpers.runtime_wrapper_module_for(target)
+                )
                 if wrapper_module is not None:
                     wrapper_file_name = Path(
-                        _ubh.module_filename_for(wrapper_module) or "",
+                        FlextUtilitiesBeartypeHelpers.module_filename_for(
+                            wrapper_module,
+                        )
+                        or "",
                     ).name
                     violation = next(
                         (
@@ -86,7 +98,7 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                                 "file": wrapper_file_name,
                                 "line": "<runtime>",
                             }
-                            for alias_name in _ubh.runtime_alias_names(
+                            for alias_name in FlextUtilitiesBeartypeHelpers.runtime_alias_names(
                                 wrapper_module.__name__.split(".", 1)[0],
                             )
                             if (
@@ -99,17 +111,26 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                         _NO_VIOLATION,
                     )
             case "no_wrapper_root_alias_import":
-                wrapper_module = _ubh.runtime_wrapper_module_for(target)
+                wrapper_module = (
+                    FlextUtilitiesBeartypeHelpers.runtime_wrapper_module_for(target)
+                )
                 if wrapper_module is not None:
                     wrapper_file_name = Path(
-                        _ubh.module_filename_for(wrapper_module) or "",
+                        FlextUtilitiesBeartypeHelpers.module_filename_for(
+                            wrapper_module,
+                        )
+                        or "",
                     ).name
                     package_name = wrapper_module.__name__.split(".", 1)[0]
-                    wrapper_submodules = _ubh.facade_module_names(package_name)
+                    wrapper_submodules = (
+                        FlextUtilitiesBeartypeHelpers.facade_module_names(package_name)
+                    )
                     violation = _NO_VIOLATION
                     # A module without a source file has no text to scan; a
                     # declared source that cannot be read raises.
-                    wrapper_file = _ubh.module_filename_for(wrapper_module)
+                    wrapper_file = FlextUtilitiesBeartypeHelpers.module_filename_for(
+                        wrapper_module,
+                    )
                     source = (
                         Path(wrapper_file).read_text(encoding="utf-8")
                         if wrapper_file is not None
@@ -128,7 +149,7 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                                         f"import {first_alias}"
                                     ),
                                 }
-                                for match in cre.FORBIDDEN_FACADE_IMPORT_RE.finditer(
+                                for match in FlextConstantsRegex.FORBIDDEN_FACADE_IMPORT_RE.finditer(
                                     source,
                                 )
                                 for first_alias in (
@@ -149,7 +170,9 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                                     "line": "<runtime>",
                                     "statement": f"from {origin} import {alias_name}",
                                 }
-                                for alias_name in _ubh.runtime_alias_names(package_name)
+                                for alias_name in FlextUtilitiesBeartypeHelpers.runtime_alias_names(
+                                    package_name,
+                                )
                                 if (
                                     alias_value := getattr(
                                         wrapper_module,
@@ -159,7 +182,10 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                                 )
                                 is not None
                                 and (
-                                    origin := _ubh.object_module_name_for(alias_value)
+                                    origin
+                                    := FlextUtilitiesBeartypeHelpers.object_module_name_for(
+                                        alias_value,
+                                    )
                                     or ""
                                 )
                                 for parent, _, child in (origin.partition("."),)

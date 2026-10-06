@@ -13,13 +13,11 @@ from typing import Annotated, TypeAliasType, Union, get_args, get_origin
 
 from pydantic.fields import FieldInfo
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core._utilities._beartype.helpers import (
-    FlextUtilitiesBeartypeHelpers as _ubh,
-)
+from flext_core._constants.enforcement import FlextConstantsEnforcement
+from flext_core._models.enforcement import FlextModelsEnforcement
+from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._typings.base import FlextTypingBase
+from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers
 
 
 class FlextUtilitiesBeartypeFieldVisitor:
@@ -59,7 +57,7 @@ class FlextUtilitiesBeartypeFieldVisitor:
         """
         declared = annotation
         if isinstance(declared, str):
-            unwrapped = _ubh.unwrap_annotated(declared)
+            unwrapped = FlextUtilitiesBeartypeHelpers.unwrap_annotated(declared)
             if not isinstance(unwrapped, str):
                 return 0
             try:
@@ -91,7 +89,7 @@ class FlextUtilitiesBeartypeFieldVisitor:
         model_type: type,
         name: str,
         info: FieldInfo,
-    ) -> t.StrMapping | None:
+    ) -> FlextTypingBase.StrMapping | None:
         # Cheap evidence first: class-wide annotation evaluation runs once per
         # field, so it is reached only when no description is declared plainly.
         if name.startswith("_") or info.description:
@@ -120,50 +118,52 @@ class FlextUtilitiesBeartypeFieldVisitor:
 
     @staticmethod
     def _field_violation(
-        params: me.FieldShapeParams,
+        params: FlextModelsEnforcement.FieldShapeParams,
         info: FieldInfo,
         *,
         declared_annotation: object | None = None,
-    ) -> t.StrMapping | None:
-        violation: t.StrMapping | None = None
-        if params.forbid_any and _ubh.contains_any_recursive(
+    ) -> FlextTypingBase.StrMapping | None:
+        violation: FlextTypingBase.StrMapping | None = None
+        if params.forbid_any and FlextUtilitiesBeartypeHelpers.contains_any_recursive(
             info.annotation,
             seen=set(),
         ):
             violation = {}
         elif params.forbid_bare_collection:
-            bad, origin = _ubh.has_forbidden_collection_origin(
+            bad, origin = FlextUtilitiesBeartypeHelpers.has_forbidden_collection_origin(
                 info.annotation,
-                c.ENFORCEMENT_FORBIDDEN_COLLECTION_ORIGINS,
+                FlextConstantsEnforcement.ENFORCEMENT_FORBIDDEN_COLLECTION_ORIGINS,
             )
             if bad:
                 replacement = next(
                     (
                         repl
-                        for key, repl in c.ENFORCEMENT_FORBIDDEN_COLLECTIONS.items()
+                        for key, repl in FlextConstantsEnforcement.ENFORCEMENT_FORBIDDEN_COLLECTIONS.items()
                         if key.__name__ == origin
                     ),
                     origin,
                 )
                 violation = {"kind": origin, "replacement": replacement}
         elif params.forbid_mutable_default:
-            mutable_kind = _ubh.mutable_kind(info.default)
+            mutable_kind = FlextUtilitiesBeartypeHelpers.mutable_kind(info.default)
             if mutable_kind is not None and info.default:
                 violation = {"kind": mutable_kind}
         elif (
             params.forbid_raw_default_factory
             and info.default_factory is not None
-            and not _ubh.allows_mutable_default_factory(
+            and not FlextUtilitiesBeartypeHelpers.allows_mutable_default_factory(
                 info.annotation,
                 info.default_factory,
             )
         ):
-            factory_kind = _ubh.mutable_default_factory_kind(info.default_factory)
+            factory_kind = FlextUtilitiesBeartypeHelpers.mutable_default_factory_kind(
+                info.default_factory,
+            )
             if factory_kind is not None:
                 violation = {"kind": factory_kind.__name__}
         elif (
             params.forbid_str_none_empty
-            and _ubh.matches_str_none_union(info.annotation)
+            and FlextUtilitiesBeartypeHelpers.matches_str_none_union(info.annotation)
             and isinstance(info.default, str)
             and not info.default
         ):
@@ -181,9 +181,9 @@ class FlextUtilitiesBeartypeFieldVisitor:
     @classmethod
     def v_field_shape(
         cls: type[FlextUtilitiesBeartypeFieldVisitor],
-        params: me.FieldShapeParams,
+        params: FlextModelsEnforcement.FieldShapeParams,
         *args: type | str | FieldInfo,
-    ) -> t.StrMapping | None:
+    ) -> FlextTypingBase.StrMapping | None:
         """FIELD_SHAPE — Pydantic field annotation governance via flags.
 
         Returns:
@@ -217,23 +217,26 @@ class FlextUtilitiesBeartypeFieldVisitor:
 
     @staticmethod
     def v_model_config(
-        params: me.ModelConfigParams,
+        params: FlextModelsEnforcement.ModelConfigParams,
         target: type,
-    ) -> t.StrMapping | None:
+    ) -> FlextTypingBase.StrMapping | None:
         """MODEL_CONFIG — Pydantic model_config governance via flags.
 
         Returns:
             The resulting ``t.StrMapping | None``.
 
         """
-        violation: t.StrMapping | None = None
+        violation: FlextTypingBase.StrMapping | None = None
         has_v1_config = params.forbid_v1_config and isinstance(
             target.__dict__.get("Config"),
             type,
         )
         if has_v1_config:
             violation = {}
-        elif issubclass(target, mp.BaseModel) and not _ubh.has_relaxed_extra_base(
+        elif issubclass(
+            target,
+            FlextModelsPydantic.BaseModel,
+        ) and not FlextUtilitiesBeartypeHelpers.has_relaxed_extra_base(
             target,
         ):
             extra = target.model_config.get("extra")
@@ -249,7 +252,8 @@ class FlextUtilitiesBeartypeFieldVisitor:
             elif (
                 params.require_frozen_for_value_objects
                 and any(
-                    b.__name__ in c.ENFORCEMENT_VALUE_OBJECT_BASES
+                    b.__name__
+                    in FlextConstantsEnforcement.ENFORCEMENT_VALUE_OBJECT_BASES
                     for b in target.__mro__
                 )
                 and not target.model_config.get("frozen", False)

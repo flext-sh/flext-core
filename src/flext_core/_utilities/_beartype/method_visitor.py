@@ -9,11 +9,11 @@ from __future__ import annotations
 import inspect
 import types as _types_mod
 
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._typings.base import FlextTypingBase as t
+from flext_core._models.enforcement import FlextModelsEnforcement
+from flext_core._typings.base import FlextTypingBase
 
-_NO_VIOLATION: t.StrMapping | None = None
-_BARE_VIOLATION: t.StrMapping = {}
+_NO_VIOLATION: FlextTypingBase.StrMapping | None = None
+_BARE_VIOLATION: FlextTypingBase.StrMapping = {}
 _BINARY_ARITY: int = 2
 
 
@@ -22,9 +22,9 @@ class FlextUtilitiesBeartypeMethodVisitor:
 
     @staticmethod
     def v_method_shape(
-        params: me.MethodShapeParams,
+        params: FlextModelsEnforcement.MethodShapeParams,
         *args: type | str | _types_mod.FunctionType,
-    ) -> t.StrMapping | None:
+    ) -> FlextTypingBase.StrMapping | None:
         """METHOD_SHAPE — accessor-prefix and staticmethod-required governance.
 
         Args shape varies: ``(target, name)`` for accessor checks (NAMESPACE

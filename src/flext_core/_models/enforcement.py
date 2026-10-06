@@ -11,8 +11,8 @@ from flext_core._models._enforcement._catalog import FlextModelsEnforcementCatal
 from flext_core._models._enforcement._inspection import FlextModelsEnforcementInspection
 from flext_core._models._enforcement._params import FlextModelsEnforcementParams
 from flext_core._models._enforcement._sources import FlextModelsEnforcementSources
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._typings.base import FlextTypingBase as t
+from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._typings.base import FlextTypingBase
 
 
 class FlextModelsEnforcement(
@@ -31,9 +31,11 @@ class FlextModelsEnforcement(
         additionally answers whether every requested runtime inspection ran.
         """
 
-        deferred: t.SequenceOf[FlextModelsEnforcementInspection.DeferredInspection] = ()
+        deferred: FlextTypingBase.SequenceOf[
+            FlextModelsEnforcementInspection.DeferredInspection
+        ] = ()
 
-        @mp.computed_field
+        @FlextModelsPydantic.computed_field
         @property
         def complete(self) -> bool:
             """Whether all requested alias values were available at runtime."""

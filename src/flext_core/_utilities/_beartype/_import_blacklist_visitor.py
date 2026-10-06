@@ -8,12 +8,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core._utilities._beartype.helpers import (
-    FlextUtilitiesBeartypeHelpers as _ubh,
-)
+from flext_core._constants.enforcement import FlextConstantsEnforcement
+from flext_core._models.enforcement import FlextModelsEnforcement
+from flext_core._typings.base import FlextTypingBase
+from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers
 
 _MIN_FAMILY_MODULE_PARTS = 2
 
@@ -23,25 +21,25 @@ class _ImportBlacklistVisitor:
 
     @staticmethod
     def v_import_blacklist(
-        params: me.ImportBlacklistParams,
+        params: FlextModelsEnforcement.ImportBlacklistParams,
         target: type,
-    ) -> t.StrMapping | None:
+    ) -> FlextTypingBase.StrMapping | None:
         """IMPORT_BLACKLIST — concrete-class / pydantic consumer-import discipline.
 
         Returns:
             The resulting ``t.StrMapping | None``.
 
         """
-        no_violation: t.StrMapping | None = None
-        module = _ubh.runtime_module_for(target)
+        no_violation: FlextTypingBase.StrMapping | None = None
+        module = FlextUtilitiesBeartypeHelpers.runtime_module_for(target)
         if module is None:
             return no_violation
-        src_file = _ubh.module_filename_for(module) or ""
+        src_file = FlextUtilitiesBeartypeHelpers.module_filename_for(module) or ""
         filename = Path(src_file).name
         module_name = module.__name__
         violation = no_violation
         if (
-            filename in c.ENFORCEMENT_CANONICAL_FILES
+            filename in FlextConstantsEnforcement.ENFORCEMENT_CANONICAL_FILES
             and not params.forbidden_symbols
             and not params.private_package_only
         ):
@@ -56,8 +54,13 @@ class _ImportBlacklistVisitor:
                     for name, value in vars(module).items()
                     if isinstance(value, type)
                     and name.startswith(tier_prefixes)
-                    and (origin := _ubh.object_module_name_for(value) or "").startswith(
-                        c.NAMESPACE_FAMILY_PREFIX,
+                    and (
+                        origin := FlextUtilitiesBeartypeHelpers.object_module_name_for(
+                            value,
+                        )
+                        or ""
+                    ).startswith(
+                        FlextConstantsEnforcement.NAMESPACE_FAMILY_PREFIX,
                     )
                     and origin != module_name
                     and not _ImportBlacklistVisitor._is_local_family_import(
@@ -66,8 +69,8 @@ class _ImportBlacklistVisitor:
                     )
                     and not (
                         value in target.__bases__
-                        and _ubh.family_facade(target)
-                        and _ubh.family_facade(value)
+                        and FlextUtilitiesBeartypeHelpers.family_facade(target)
+                        and FlextUtilitiesBeartypeHelpers.family_facade(value)
                     )
                 ),
                 no_violation,
@@ -75,9 +78,9 @@ class _ImportBlacklistVisitor:
         elif params.private_package_only:
             package = module_name.split(".")[0]
             subpath = module_name.split(".")[1:]
-            families = c.ENFORCEMENT_PRIVATE_FAMILY_PACKAGES
+            families = FlextConstantsEnforcement.ENFORCEMENT_PRIVATE_FAMILY_PACKAGES
             consumer_exempt = (
-                filename in c.ENFORCEMENT_CANONICAL_FILES
+                filename in FlextConstantsEnforcement.ENFORCEMENT_CANONICAL_FILES
                 or any(part.startswith("_") for part in subpath)
                 or len(subpath) <= 1
             )
@@ -88,7 +91,11 @@ class _ImportBlacklistVisitor:
                         for name, value in vars(module).items()
                         if _ImportBlacklistVisitor._is_private_family_import(
                             value,
-                            origin := _ubh.object_module_name_for(value) or "",
+                            origin
+                            := FlextUtilitiesBeartypeHelpers.object_module_name_for(
+                                value,
+                            )
+                            or "",
                             package,
                             families,
                             consumer_exempt=consumer_exempt,
@@ -110,7 +117,14 @@ class _ImportBlacklistVisitor:
                         {"import": name, "package": package}
                         for name, value in vars(module).items()
                         if name in forbidden
-                        and ((_ubh.object_module_name_for(value) or "").split(".")[0])
+                        and (
+                            (
+                                FlextUtilitiesBeartypeHelpers.object_module_name_for(
+                                    value,
+                                )
+                                or ""
+                            ).split(".")[0]
+                        )
                         in allowed_roots
                     ),
                     no_violation,
@@ -147,7 +161,8 @@ class _ImportBlacklistVisitor:
             return False
         return (
             origin_parts[0] == module_parts[0]
-            and origin_parts[1] in c.ENFORCEMENT_PRIVATE_FAMILY_PACKAGES
+            and origin_parts[1]
+            in FlextConstantsEnforcement.ENFORCEMENT_PRIVATE_FAMILY_PACKAGES
         )
 
     @staticmethod

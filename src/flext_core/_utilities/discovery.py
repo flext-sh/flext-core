@@ -92,9 +92,12 @@ class FlextUtilitiesDiscovery:
             TypeError: If ``not operations``.
 
         """
-        from flext_core import s  # s sits above u: bind it at call time
-
-        below = service_type.__mro__[: service_type.__mro__.index(s)]
+        service_facade = next(
+            klass
+            for klass in service_type.__mro__
+            if klass.__module__ == "flext_core.service"
+        )
+        below = service_type.__mro__[: service_type.__mro__.index(service_facade)]
         infos = service_type.__pydantic_decorators__
         decorated = {
             *infos.field_validators,
@@ -110,7 +113,7 @@ class FlextUtilitiesDiscovery:
                 for name in vars(owner)
                 if not name.startswith("_")
             }
-            - set(dir(s))
+            - set(dir(service_facade))
             - decorated
         )
         operations = tuple(

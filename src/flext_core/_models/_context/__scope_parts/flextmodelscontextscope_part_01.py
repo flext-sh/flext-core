@@ -12,7 +12,7 @@ from typing import Annotated
 from flext_core import c, t
 from flext_core._models._context._data import FlextModelsContextData
 from flext_core._models.base import FlextModelsBase
-from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._models.pydantic import FlextModelsPydantic
 
 
 class FlextModelsContextScope:
@@ -27,45 +27,47 @@ class FlextModelsContextScope:
 
         sets: Annotated[
             t.NonNegativeInt,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=c.DEFAULT_MAX_COMMAND_RETRIES,
                 description="Number of set operations",
             ),
         ] = c.DEFAULT_MAX_COMMAND_RETRIES
         gets: Annotated[
             t.NonNegativeInt,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=c.DEFAULT_MAX_COMMAND_RETRIES,
                 description="Number of get operations",
             ),
         ] = c.DEFAULT_MAX_COMMAND_RETRIES
         removes: Annotated[
             t.NonNegativeInt,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=c.DEFAULT_MAX_COMMAND_RETRIES,
                 description="Number of remove operations",
             ),
         ] = c.DEFAULT_MAX_COMMAND_RETRIES
         clears: Annotated[
             t.NonNegativeInt,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=c.DEFAULT_MAX_COMMAND_RETRIES,
                 description="Number of clear operations",
             ),
         ] = c.DEFAULT_MAX_COMMAND_RETRIES
         operations: Annotated[
             t.JsonMapping,
-            mp.BeforeValidator(
+            FlextModelsPydantic.BeforeValidator(
                 lambda v: (
                     FlextModelsContextData.normalize_to_mapping(v)
                     if v is not None
                     else {}
                 ),
             ),
-            mp.Field(
+            FlextModelsPydantic.Field(
                 description="Additional metric counters and timing values grouped by metric key.",
             ),
-        ] = mp.Field(default_factory=lambda: MappingProxyType[str, t.JsonValue]({}))
+        ] = FlextModelsPydantic.Field(
+            default_factory=lambda: MappingProxyType[str, t.JsonValue]({}),
+        )
 
 
 __all__: list[str] = ["FlextModelsContextScope"]

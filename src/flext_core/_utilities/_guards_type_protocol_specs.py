@@ -10,13 +10,13 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING, TypeIs
 
 from flext_core import c, t
-from flext_core._protocols.container import FlextProtocolsContainer as pc
-from flext_core._protocols.context import FlextProtocolsContext as pcx
-from flext_core._protocols.handler import FlextProtocolsHandler as ph
-from flext_core._protocols.loggings import FlextProtocolsLogging as pl
-from flext_core._protocols.result import FlextProtocolsResult as pr
-from flext_core._protocols.service import FlextProtocolsService as psrv
-from flext_core._protocols.settings import FlextProtocolsSettings as ps
+from flext_core._protocols.container import FlextProtocolsContainer
+from flext_core._protocols.context import FlextProtocolsContext
+from flext_core._protocols.handler import FlextProtocolsHandler
+from flext_core._protocols.loggings import FlextProtocolsLogging
+from flext_core._protocols.result import FlextProtocolsResult
+from flext_core._protocols.service import FlextProtocolsService
+from flext_core._protocols.settings import FlextProtocolsSettings
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -36,19 +36,22 @@ class FlextUtilitiesGuardsTypeProtocolSpecsMixin:
     ) -> t.MappingKV[str, Callable[[ProtocolGuardInput], bool]]:
         if cls._protocol_specs_cache is None:
             cls._protocol_specs_cache = MappingProxyType({
-                c.Directory.CONFIG.value: lambda v: isinstance(v, ps.Settings),
-                c.FIELD_CONTEXT: lambda v: isinstance(v, pcx.Context),
-                "container": lambda v: isinstance(v, pc.Container),
+                c.Directory.CONFIG.value: lambda v: isinstance(
+                    v,
+                    FlextProtocolsSettings.Settings,
+                ),
+                c.FIELD_CONTEXT: lambda v: isinstance(v, FlextProtocolsContext.Context),
+                "container": lambda v: isinstance(v, FlextProtocolsContainer.Container),
                 "command_bus": lambda v: (
                     hasattr(v, "dispatch")
                     and hasattr(v, "publish")
                     and hasattr(v, "register_handler")
                 ),
-                "handler": lambda v: isinstance(v, ph.Handler),
-                "logger": lambda v: isinstance(v, pl.Logger),
+                "handler": lambda v: isinstance(v, FlextProtocolsHandler.Handler),
+                "logger": lambda v: isinstance(v, FlextProtocolsLogging.Logger),
                 "result": cls.result_like,
-                "service": lambda v: isinstance(v, psrv.Service),
-                "middleware": lambda v: isinstance(v, ph.Middleware),
+                "service": lambda v: isinstance(v, FlextProtocolsService.Service),
+                "middleware": lambda v: isinstance(v, FlextProtocolsHandler.Middleware),
             })
         return cls._protocol_specs_cache
 
@@ -56,25 +59,25 @@ class FlextUtilitiesGuardsTypeProtocolSpecsMixin:
     def _get_protocol_type_map(cls) -> t.MappingKV[type, str]:
         if cls._protocol_type_map_cache is None:
             cls._protocol_type_map_cache = MappingProxyType({
-                ps.Settings: c.Directory.CONFIG.value,
-                pcx.Context: c.FIELD_CONTEXT,
-                pc.Container: "container",
-                ph.Dispatcher: "command_bus",
-                ph.Handler: "handler",
-                pl.Logger: "logger",
-                pr.Result: "result",
-                psrv.Service: "service",
-                ph.Middleware: "middleware",
+                FlextProtocolsSettings.Settings: c.Directory.CONFIG.value,
+                FlextProtocolsContext.Context: c.FIELD_CONTEXT,
+                FlextProtocolsContainer.Container: "container",
+                FlextProtocolsHandler.Dispatcher: "command_bus",
+                FlextProtocolsHandler.Handler: "handler",
+                FlextProtocolsLogging.Logger: "logger",
+                FlextProtocolsResult.Result: "result",
+                FlextProtocolsService.Service: "service",
+                FlextProtocolsHandler.Middleware: "middleware",
             })
         return cls._protocol_type_map_cache
 
     @staticmethod
-    def context(value: ProtocolGuardInput) -> TypeIs[pcx.Context]:
-        return isinstance(value, pcx.Context)
+    def context(value: ProtocolGuardInput) -> TypeIs[FlextProtocolsContext.Context]:
+        return isinstance(value, FlextProtocolsContext.Context)
 
     @staticmethod
     def result_like(value: ProtocolGuardInput) -> bool:
-        return isinstance(value, pr.Result)
+        return isinstance(value, FlextProtocolsResult.Result)
 
     @classmethod
     def _check_protocol(cls, value: ProtocolGuardInput, name: str) -> bool:

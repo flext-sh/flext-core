@@ -8,15 +8,15 @@ from __future__ import annotations
 
 import sys
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._typings.base import FlextTypingBase as t
+from flext_core._constants.enforcement import FlextConstantsEnforcement
+from flext_core._models.enforcement import FlextModelsEnforcement
+from flext_core._typings.base import FlextTypingBase
 from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_01 import (
     BINARY_ARITY,
     NO_VIOLATION,
 )
-from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers as ubh
-from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata as upm
+from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers
+from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata
 
 
 def _peer_first_allowed(
@@ -26,8 +26,8 @@ def _peer_first_allowed(
     base_count: int,
     first_name: str,
     unparametrized_name: str,
-    valid_suffixes: t.VariadicTuple[str],
-    tier_facade_prefixes: t.VariadicTuple[str],
+    valid_suffixes: FlextTypingBase.VariadicTuple[str],
+    tier_facade_prefixes: FlextTypingBase.VariadicTuple[str],
     shared_peer_alias_base: set[type],
 ) -> bool:
     """Return True when a facade may place a peer base first.
@@ -52,7 +52,7 @@ def _requires_alias_first(
     is_core_root: bool,
     is_alias_or_alias_base_first: bool,
     unparametrized_name: str,
-    valid_suffixes: t.VariadicTuple[str],
+    valid_suffixes: FlextTypingBase.VariadicTuple[str],
     allows_peer_first: bool,
 ) -> bool:
     """Return True when a facade base must be an alias/alias-base first.
@@ -72,8 +72,8 @@ def _requires_alias_first(
 
 def alias_first_violation(
     target: type,
-    params: me.MroShapeParams,
-) -> t.StrMapping | None:
+    params: FlextModelsEnforcement.MroShapeParams,
+) -> FlextTypingBase.StrMapping | None:
     """Compute the alias/peer-first violation for ``v_mro_shape``.
 
     Returns:
@@ -85,7 +85,7 @@ def alias_first_violation(
     project_prefix, _ = target.__name__, ""
     if target.__module__:
         package_name = target.__module__.split(".", 1)[0]
-        project_prefix = upm.derive_class_stem(package_name)
+        project_prefix = FlextUtilitiesProjectMetadata.derive_class_stem(package_name)
     tier_facade_prefixes = (project_prefix, f"Tests{project_prefix}")
     module_name = getattr(target, "__module__", "") or ""
     package_name = module_name.split(".", 1)[0]
@@ -93,7 +93,9 @@ def alias_first_violation(
     # a real class already loaded its package; a class whose package is not
     # loaded is synthetic and declares no facade.
     alias_rows = (
-        ubh.lazy_alias_suffixes(package_name) if package_name in sys.modules else ()
+        FlextUtilitiesBeartypeHelpers.lazy_alias_suffixes(package_name)
+        if package_name in sys.modules
+        else ()
     )
     # A project prefix also names ordinary services. Facade ordering applies
     # only inside the package's declared alias modules.
@@ -118,7 +120,7 @@ def alias_first_violation(
     # component, so adding a new private sub-package is automatic.
     module_parts = module_name.split(".")
     if len(module_parts) > 1 and (
-        module_parts[1] in c.ENFORCEMENT_PRIVATE_FAMILY_PACKAGES
+        module_parts[1] in FlextConstantsEnforcement.ENFORCEMENT_PRIVATE_FAMILY_PACKAGES
         or any(part.startswith("_") for part in module_parts[1:])
     ):
         return NO_VIOLATION

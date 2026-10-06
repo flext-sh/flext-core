@@ -10,13 +10,13 @@ import warnings
 from functools import wraps
 from typing import TYPE_CHECKING, ClassVar, TypeIs
 
-import flext_core._models.flext_context
+from flext_core._models.flext_context import FlextContext
 from flext_core import FlextContainer, c, m
-from flext_core._protocols.base import FlextProtocolsBase as pb
-from flext_core._protocols.container import FlextProtocolsContainer as pc
-from flext_core._protocols.context import FlextProtocolsContext as pcx
-from flext_core._protocols.loggings import FlextProtocolsLogging as pl
-from flext_core._typings.services import FlextTypesServices as ts
+from flext_core._protocols.base import FlextProtocolsBase
+from flext_core._protocols.container import FlextProtocolsContainer
+from flext_core._protocols.context import FlextProtocolsContext
+from flext_core._protocols.loggings import FlextProtocolsLogging
+from flext_core._typings.services import FlextTypesServices
 from flext_core.loggings import FlextUtilitiesLogging
 
 if TYPE_CHECKING:
@@ -26,7 +26,12 @@ if TYPE_CHECKING:
 class FlextDecoratorsBase:
     """Base helpers shared by concrete decorator namespaces."""
 
-    type _LoggerCarrier = pl.HasLogger | pl.Logger | ts.JsonPayload | m.BaseModel
+    type _LoggerCarrier = (
+        FlextProtocolsLogging.HasLogger
+        | FlextProtocolsLogging.Logger
+        | FlextTypesServices.JsonPayload
+        | m.BaseModel
+    )
     _CAUGHT_EXCEPTIONS: tuple[type[Exception], ...] = (
         AttributeError,
         TypeError,
@@ -34,15 +39,15 @@ class FlextDecoratorsBase:
         RuntimeError,
         KeyError,
     )
-    _container_type: ClassVar[pc.ContainerType] = FlextContainer
-    _context_type: ClassVar[pcx.ContextType] = (
-        flext_core._models.flext_context.FlextContext
+    _container_type: ClassVar[FlextProtocolsContainer.ContainerType] = FlextContainer
+    _context_type: ClassVar[FlextProtocolsContext.ContextType] = (
+        FlextContext
     )
 
     @classmethod
     def _is_logger_carrier(
         cls,
-        value: pb.AttributeProbe | None,
+        value: FlextProtocolsBase.AttributeProbe | None,
     ) -> TypeIs[_LoggerCarrier]:
         """Return whether value carries or can route logging context.
 
@@ -53,17 +58,22 @@ class FlextDecoratorsBase:
         _ = cls
         return isinstance(
             value,
-            (pl.Logger, pl.HasLogger, m.BaseModel, *c.CONTAINER_TYPES),
+            (
+                FlextProtocolsLogging.Logger,
+                FlextProtocolsLogging.HasLogger,
+                m.BaseModel,
+                *c.CONTAINER_TYPES,
+            ),
         )
 
     @classmethod
     def _resolve_logger(
         cls,
-        first_arg: pl.Logger | _LoggerCarrier | None = None,
+        first_arg: FlextProtocolsLogging.Logger | _LoggerCarrier | None = None,
         *,
-        func: ts.DispatchableHandler | None = None,
+        func: FlextTypesServices.DispatchableHandler | None = None,
         func_module: str | None = None,
-    ) -> pl.Logger:
+    ) -> FlextProtocolsLogging.Logger:
         """Resolve the logger associated with the decorated call.
 
         Returns:
@@ -71,16 +81,18 @@ class FlextDecoratorsBase:
 
         """
         _ = cls
-        if isinstance(first_arg, pl.Logger):
+        if isinstance(first_arg, FlextProtocolsLogging.Logger):
             return first_arg
-        if isinstance(first_arg, pl.HasLogger):
+        if isinstance(first_arg, FlextProtocolsLogging.HasLogger):
             return first_arg.logger
         module_name = (
             func_module
             if isinstance(func_module, str)
             else (func.__module__ if callable(func) else __name__)
         )
-        logger: pl.Logger = FlextUtilitiesLogging.fetch_logger(module_name)
+        logger: FlextProtocolsLogging.Logger = FlextUtilitiesLogging.fetch_logger(
+            module_name,
+        )
         return logger
 
     @staticmethod

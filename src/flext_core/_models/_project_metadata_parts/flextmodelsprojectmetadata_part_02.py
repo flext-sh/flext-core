@@ -11,14 +11,14 @@ from typing import Annotated, Self
 
 from pydantic import AliasChoices, Field, field_validator, model_validator
 
-from flext_core._constants.regex import FlextConstantsRegex as cr
+from flext_core._constants.regex import FlextConstantsRegex
 from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_01 import (
     FlextModelsProjectMetadataContract,
 )
 from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_05 import (
     FlextModelsPyprojectIngressContract,
 )
-from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.base import FlextTypingBase
 
 
 class FlextModelsProjectMetadataFields:
@@ -68,7 +68,7 @@ class FlextModelsProjectMetadataFields:
             Field(default=None, description="Explicit class stem override"),
         ] = None
         budget: Annotated[
-            t.JsonMapping | None,
+            FlextTypingBase.JsonMapping | None,
             Field(
                 default=None,
                 description=(
@@ -81,7 +81,7 @@ class FlextModelsProjectMetadataFields:
             ),
         ] = None
         duplication: Annotated[
-            t.JsonMapping | None,
+            FlextTypingBase.JsonMapping | None,
             Field(
                 default=None,
                 description=(
@@ -100,7 +100,7 @@ class FlextModelsProjectMetadataFields:
         id: Annotated[
             str,
             Field(
-                pattern=cr.PATTERN_IDENTIFIER_LOWERCASE,
+                pattern=FlextConstantsRegex.PATTERN_IDENTIFIER_LOWERCASE,
                 description="Stable project README section identifier",
             ),
         ]
@@ -162,7 +162,7 @@ class FlextModelsProjectMetadataFields:
             Field(default=None, description="Documentation site title override"),
         ] = None
         exclude_docs: Annotated[
-            t.StrTuple,
+            FlextTypingBase.StrTuple,
             Field(default=(), description="Documentation exclusion patterns"),
         ] = ()
         readme_sections: Annotated[
@@ -194,7 +194,7 @@ class FlextModelsProjectMetadataFields:
             Field(default=None, description="Explicit namespace-enforcement toggle"),
         ] = None
         scan_dirs: Annotated[
-            t.StrTuple,
+            FlextTypingBase.StrTuple,
             Field(default=(), description="Explicit namespace scan directories"),
         ] = ()
         include_dynamic_dirs: Annotated[

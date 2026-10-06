@@ -19,7 +19,7 @@ from collections.abc import Sequence
 from functools import partial
 from typing import TYPE_CHECKING, ClassVar, Self, TypeGuard, cast, overload, override
 
-import flext_core._models.flext_context
+from flext_core._models.flext_context import FlextContext
 from flext_core import FlextSettings, FlextUtilitiesLogging, c, e, m, p, r, t, u
 
 # NOTE (multi-agent): mro-i6nq.12 — the concrete public facade remains the
@@ -46,7 +46,7 @@ class FlextContainer(p.Container):
     _settings_type: ClassVar[p.SettingsType] = FlextSettings
 
     _context_type: ClassVar[p.ContextType] = (
-        flext_core._models.flext_context.FlextContext
+        FlextContext
     )
 
     _context: p.Context

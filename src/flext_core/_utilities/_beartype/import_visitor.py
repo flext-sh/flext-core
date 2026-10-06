@@ -10,8 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._typings.base import FlextTypingBase as t
+from flext_core._models.enforcement import FlextModelsEnforcement
+from flext_core._typings.base import FlextTypingBase
 from flext_core._utilities._beartype._alias_visitor import (
     FlextUtilitiesBeartypeAliasVisitor,
 )
@@ -28,9 +28,9 @@ class FlextUtilitiesBeartypeImportVisitor:
 
     @staticmethod
     def v_import_blacklist(
-        params: me.ImportBlacklistParams,
+        params: FlextModelsEnforcement.ImportBlacklistParams,
         target: type,
-    ) -> t.StrMapping | None:
+    ) -> FlextTypingBase.StrMapping | None:
         """IMPORT_BLACKLIST — concrete-class / pydantic consumer-import discipline.
 
         Returns:
@@ -41,9 +41,9 @@ class FlextUtilitiesBeartypeImportVisitor:
 
     @staticmethod
     def v_alias_rebind(
-        params: me.AliasRebindParams,
+        params: FlextModelsEnforcement.AliasRebindParams,
         target: type,
-    ) -> t.StrMapping | None:
+    ) -> FlextTypingBase.StrMapping | None:
         """ALIAS_REBIND.
 
         Returns:
@@ -54,9 +54,9 @@ class FlextUtilitiesBeartypeImportVisitor:
 
     @staticmethod
     def v_compatibility_alias(
-        params: me.CompatibilityAliasParams,
+        params: FlextModelsEnforcement.CompatibilityAliasParams,
         target: type,
-    ) -> t.StrMapping | None:
+    ) -> FlextTypingBase.StrMapping | None:
         """COMPATIBILITY_ALIAS.
 
         Returns:
@@ -67,9 +67,9 @@ class FlextUtilitiesBeartypeImportVisitor:
 
     @staticmethod
     def v_library_import(
-        params: me.LibraryImportParams,
+        params: FlextModelsEnforcement.LibraryImportParams,
         target: type,
-    ) -> t.StrMapping | None:
+    ) -> FlextTypingBase.StrMapping | None:
         """LIBRARY_IMPORT.
 
         Returns:

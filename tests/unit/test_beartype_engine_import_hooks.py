@@ -21,8 +21,8 @@ from pathlib import Path
 import pytest
 
 from flext_core import c
-from flext_core.models import FlextModelsEnforcement as me
-from flext_core.utilities import FlextUtilitiesBeartypeEngine as be
+from flext_core.models import FlextModelsEnforcement
+from flext_core.utilities import FlextUtilitiesBeartypeEngine
 from tests.typings import t
 
 _FORBIDDEN_IMPORT = "from tests.constants import c"
@@ -74,9 +74,11 @@ class TestsFlextCoreBeartypeEngineImportHooks:
             The resulting ``t.StrMapping | None``.
 
         """
-        return be.apply(
+        return FlextUtilitiesBeartypeEngine.apply(
             c.EnforcementPredicateKind.DEPRECATED_SYNTAX,
-            me.DeprecatedSyntaxParams(ast_shape="no_wrapper_root_alias_import"),
+            FlextModelsEnforcement.DeprecatedSyntaxParams(
+                ast_shape="no_wrapper_root_alias_import",
+            ),
             target,
         )
 
@@ -169,9 +171,11 @@ class TestsFlextCoreBeartypeEngineImportHooks:
             + "\n",
         )
 
-        result = be.apply(
+        result = FlextUtilitiesBeartypeEngine.apply(
             c.EnforcementPredicateKind.DEPRECATED_SYNTAX,
-            me.DeprecatedSyntaxParams(ast_shape="no_core_tests_namespace"),
+            FlextModelsEnforcement.DeprecatedSyntaxParams(
+                ast_shape="no_core_tests_namespace",
+            ),
             probe,
         )
 

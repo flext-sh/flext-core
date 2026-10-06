@@ -13,7 +13,7 @@ import pytest
 from flext_tests import tm
 
 from flext_core import FlextContainer, FlextSettings, m
-from tests import u as test_u
+from tests import u
 from tests.constants import c
 
 
@@ -52,7 +52,7 @@ class TestsFlextSettingsIntegration:
         global_settings = FlextSettings.fetch_global()
         container = FlextContainer()
         tm.that(container.settings is global_settings, eq=True)
-        resolved = test_u.Tests.assert_success(
+        resolved = u.Tests.assert_success(
             container.resolve(str(c.Directory.CONFIG)),
         )
         tm.that(resolved is global_settings, eq=True)
@@ -75,7 +75,7 @@ class TestsFlextSettingsIntegration:
     @staticmethod
     def test_environment_variables_override_settings() -> None:
         """FLEXT_-prefixed env vars populate the settings fields."""
-        with test_u.Tests.env_vars_context(
+        with u.Tests.env_vars_context(
             vars_to_clear=["FLEXT_LOG_LEVEL"],
             env_vars={"FLEXT_LOG_LEVEL": "ERROR"},
         ):

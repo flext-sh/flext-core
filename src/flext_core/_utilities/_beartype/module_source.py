@@ -15,7 +15,7 @@ from collections.abc import Iterator
 from types import ModuleType
 from typing import TypeAliasType, runtime_checkable
 
-from flext_core._models.enforcement import FlextModelsEnforcement as me
+from flext_core._models.enforcement import FlextModelsEnforcement
 
 
 class FlextUtilitiesBeartypeModuleSource:
@@ -311,7 +311,7 @@ class FlextUtilitiesBeartypeModuleSource:
         alias: TypeAliasType,
         *,
         owner: ModuleType | type,
-    ) -> me.DeferredAlias | None:
+    ) -> FlextModelsEnforcement.DeferredAlias | None:
         """Prove deferral from the explicitly supplied declaring owner.
 
         Returns:
@@ -374,7 +374,7 @@ class FlextUtilitiesBeartypeModuleSource:
         )
         if not missing or not missing <= guarded:
             return None
-        return me.DeferredAlias(
+        return FlextModelsEnforcement.DeferredAlias(
             module=module.__name__,
             qualname=f"{owner.__qualname__}.{alias.__name__}"
             if isinstance(owner, type)

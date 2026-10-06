@@ -13,17 +13,15 @@ from flext_core._exceptions._base_parts.flextexceptionsbase_part_02 import (
     FlextBaseErrorStateMixin,
 )
 from flext_core._exceptions.helpers import FlextExceptionsHelpers
-from flext_core._runtime._metadata_validation import (
-    FlextRuntimeMetadataValidation as FlextRuntime,
-)
-from flext_core._typings.base import FlextTypingBase as tb
+from flext_core._runtime._metadata_validation import FlextRuntimeMetadataValidation
+from flext_core._typings.base import FlextTypingBase
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
 
     from flext_core import m
-    from flext_core._protocols.result import FlextProtocolsResult as pr
-    from flext_core._typings.services import FlextTypesServices as ts
+    from flext_core._protocols.result import FlextProtocolsResult
+    from flext_core._typings.services import FlextTypesServices
 
 
 class FlextExceptionsBase:
@@ -32,7 +30,7 @@ class FlextExceptionsBase:
     class BaseError(FlextBaseErrorStateMixin, Exception):
         """Base exception with correlation metadata and error codes."""
 
-        params_cls: ClassVar[ts.ModelClass[m.BaseModel] | None] = None
+        params_cls: ClassVar[FlextTypesServices.ModelClass[m.BaseModel] | None] = None
         excluded_context_keys: ClassVar[set[str] | frozenset[str] | None] = None
         _default_error_code: ClassVar[str] = c.ErrorCode.UNKNOWN_ERROR
 
@@ -41,18 +39,26 @@ class FlextExceptionsBase:
             message: str,
             *,
             error_code: str = c.ErrorCode.UNKNOWN_ERROR,
-            context: tb.MappingKV[str, ts.JsonPayload | None]
-            | pr.HasModelDump
+            context: FlextTypingBase.MappingKV[
+                str,
+                FlextTypesServices.JsonPayload | None,
+            ]
+            | FlextProtocolsResult.HasModelDump
             | None = None,
-            metadata: pr.HasModelDump | tb.JsonValue | None = None,
+            metadata: FlextProtocolsResult.HasModelDump
+            | FlextTypingBase.JsonValue
+            | None = None,
             correlation_id: str | None = None,
             auto_correlation: bool = False,
             auto_log: bool = True,
-            merged_kwargs: tb.MappingKV[str, ts.JsonPayload | None]
-            | pr.HasModelDump
+            merged_kwargs: FlextTypingBase.MappingKV[
+                str,
+                FlextTypesServices.JsonPayload | None,
+            ]
+            | FlextProtocolsResult.HasModelDump
             | None = None,
             params: m.BaseModel | None = None,
-            **extra_kwargs: tb.JsonValue,
+            **extra_kwargs: FlextTypingBase.JsonValue,
         ) -> None:
             """Initialize base error with message and optional metadata."""
             declaredparams_cls = self.__class__.params_cls
@@ -62,37 +68,47 @@ class FlextExceptionsBase:
                     if error_code == c.ErrorCode.UNKNOWN_ERROR
                     else error_code
                 )
-                combined_extra: MutableMapping[str, ts.JsonPayload | None] = {}
+                combined_extra: MutableMapping[
+                    str,
+                    FlextTypesServices.JsonPayload | None,
+                ] = {}
                 try:
-                    merged_kwargs_map = FlextRuntime.normalize_metadata_input_mapping(
-                        merged_kwargs,
+                    merged_kwargs_map = (
+                        FlextRuntimeMetadataValidation.normalize_metadata_input_mapping(
+                            merged_kwargs,
+                        )
                     )
                 except c.EXC_PYDANTIC_TYPE_VALUE:
                     merged_kwargs_map = None
                 if merged_kwargs_map:
                     combined_extra.update({
-                        key: FlextRuntime.normalize_to_metadata(value)
+                        key: FlextRuntimeMetadataValidation.normalize_to_metadata(value)
                         for key, value in merged_kwargs_map.items()
                         if value is not None
                     })
                 combined_extra.update({
-                    key: FlextRuntime.normalize_to_metadata(value)
+                    key: FlextRuntimeMetadataValidation.normalize_to_metadata(value)
                     for key, value in extra_kwargs.items()
                 })
                 declared_param_keys = frozenset(declaredparams_cls.model_fields)
-                remaining_extra: tb.MutableJsonMapping = {}
+                remaining_extra: FlextTypingBase.MutableJsonMapping = {}
                 if combined_extra:
                     remaining_extra.update({
-                        key: FlextRuntime.normalize_to_metadata(value)
+                        key: FlextRuntimeMetadataValidation.normalize_to_metadata(value)
                         for key, value in combined_extra.items()
                         if value is not None
                     })
-                resolved_named: MutableMapping[str, ts.JsonPayload | None] = {}
+                resolved_named: MutableMapping[
+                    str,
+                    FlextTypesServices.JsonPayload | None,
+                ] = {}
                 for key in declared_param_keys:
                     resolved_named.setdefault(key, remaining_extra.pop(key, None))
                 preserved_metadata_raw = remaining_extra.pop(c.FIELD_METADATA, None)
                 preserved_metadata = (
-                    FlextRuntime.normalize_to_metadata(preserved_metadata_raw)
+                    FlextRuntimeMetadataValidation.normalize_to_metadata(
+                        preserved_metadata_raw,
+                    )
                     if preserved_metadata_raw is not None
                     else None
                 )
@@ -111,7 +127,9 @@ class FlextExceptionsBase:
                 for key, value in resolved_named.items():
                     if value is None:
                         continue
-                    normalized_value = FlextRuntime.normalize_to_metadata(value)
+                    normalized_value = (
+                        FlextRuntimeMetadataValidation.normalize_to_metadata(value)
+                    )
                     param_values[key] = (
                         normalized_value
                         if isinstance(normalized_value, c.SCALAR_TYPES)
@@ -131,7 +149,9 @@ class FlextExceptionsBase:
                 for key in declared_param_keys:
                     attr_val = getattr(resolved, key, None)
                     if attr_val is not None:
-                        ctx[key] = FlextRuntime.normalize_to_metadata(attr_val)
+                        ctx[key] = FlextRuntimeMetadataValidation.normalize_to_metadata(
+                            attr_val,
+                        )
                     field_info = resolved_fields.get(key)
                     if field_info is None:
                         continue

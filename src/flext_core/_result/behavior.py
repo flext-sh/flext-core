@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Self, TypeIs, override
 
-from flext_core._protocols.result import FlextProtocolsResult as prt
+from flext_core._protocols.result import FlextProtocolsResult
 from flext_core._result.base import FlextResultBase
 
 if TYPE_CHECKING:
@@ -28,7 +28,9 @@ _RESULT_FACTORY_CONTRACT: t.VariadicTuple[str] = (
 )
 
 
-def _is_result_factory(cls: type[object]) -> TypeIs[type[prt.ResultFactory]]:
+def _is_result_factory(
+    cls: type[object],
+) -> TypeIs[type[FlextProtocolsResult.ResultFactory]]:
     """Narrow a class to the result factory contract after member validation.
 
     Returns:
@@ -60,7 +62,7 @@ class FlextResultBehavior[T](FlextResultBase[T]):
         return self._exception
 
     @classmethod
-    def _factory(cls) -> type[prt.ResultFactory]:
+    def _factory(cls) -> type[FlextProtocolsResult.ResultFactory]:
         """Return the concrete MRO only after structural factory validation.
 
         Returns:

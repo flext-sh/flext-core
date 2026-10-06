@@ -11,7 +11,7 @@ import threading
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Annotated, ClassVar
 
-import flext_core._models.flext_context
+from flext_core._models.flext_context import FlextContext
 from flext_core import FlextContainer, c, m, p, t, u
 
 # NOTE (multi-agent): mro-i6nq.12 — Generator/Mapping/MutableMapping are
@@ -63,7 +63,7 @@ class FlextMixins(m.ArbitraryTypesModel):
     _container_type: ClassVar[p.ContainerType] = FlextContainer
 
     _context_type: ClassVar[p.ContextType] = (
-        flext_core._models.flext_context.FlextContext
+        FlextContext
     )
 
     _auto_context_scope: ClassVar[bool] = True

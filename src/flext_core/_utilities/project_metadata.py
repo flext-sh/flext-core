@@ -17,22 +17,24 @@ from functools import cache
 from importlib.metadata import Distribution, DistributionFinder
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_core._constants.file import FlextConstantsFile as cf
-from flext_core._constants.mixins import FlextConstantsMixins as cmx
-from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cpm
-from flext_core._models.project_metadata import FlextModelsProjectMetadata as mpm
-from flext_core._protocols.project_metadata import FlextProtocolsProjectMetadata as ppm
-from flext_core._typings.base import FlextTypingBase as t
+from flext_core._constants.file import FlextConstantsFile
+from flext_core._constants.mixins import FlextConstantsMixins
+from flext_core._constants.project_metadata import FlextConstantsProjectMetadata
+from flext_core._models.project_metadata import FlextModelsProjectMetadata
+from flext_core._protocols.project_metadata import FlextProtocolsProjectMetadata
+from flext_core._typings.base import FlextTypingBase
 
 if TYPE_CHECKING:
     from pathlib import Path
 
 
-class FlextUtilitiesProjectMetadata(mpm):
+class FlextUtilitiesProjectMetadata(FlextModelsProjectMetadata):
     """Project metadata ingress and canonical name derivation."""
 
-    _DISTRIBUTION_SEPARATOR_RE: ClassVar[t.RegexPattern] = re.compile(r"[-_.]+")
-    _REQUIREMENT_NAME_RE: ClassVar[t.RegexPattern] = re.compile(
+    _DISTRIBUTION_SEPARATOR_RE: ClassVar[FlextTypingBase.RegexPattern] = re.compile(
+        r"[-_.]+",
+    )
+    _REQUIREMENT_NAME_RE: ClassVar[FlextTypingBase.RegexPattern] = re.compile(
         r"^\s*(?P<name>[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?)"
         r"(?=\s*(?:\[|@|[<>=!~;]|$))",
     )
@@ -46,29 +48,35 @@ class FlextUtilitiesProjectMetadata(mpm):
 
     @staticmethod
     @cache
-    def read_project_document_cached(root: Path) -> mpm.PyprojectDocument:
-        pyproject = root / cf.PYPROJECT_FILENAME
+    def read_project_document_cached(
+        root: Path,
+    ) -> FlextModelsProjectMetadata.PyprojectDocument:
+        pyproject = root / FlextConstantsFile.PYPROJECT_FILENAME
         with pyproject.open("rb") as stream:
-            return mpm.PyprojectDocument.model_validate(tomllib.load(stream))
+            return FlextModelsProjectMetadata.PyprojectDocument.model_validate(
+                tomllib.load(stream),
+            )
 
     @classmethod
     def build_project_metadata(
         cls,
         root: Path,
-        document: mpm.PyprojectDocument,
-    ) -> mpm.ProjectMetadata:
+        document: FlextModelsProjectMetadata.PyprojectDocument,
+    ) -> FlextModelsProjectMetadata.ProjectMetadata:
         project = document.project
         flext = document.tool.flext
         if project is None:
-            package_name = flext.docs.package_name or cmx.IDENTIFIER_UNKNOWN
+            package_name = (
+                flext.docs.package_name or FlextConstantsMixins.IDENTIFIER_UNKNOWN
+            )
             class_stem = flext.project.class_stem_override or cls.derive_class_stem(
                 package_name,
             )
-            resolved_project = mpm.Project(
+            resolved_project = FlextModelsProjectMetadata.Project(
                 name=package_name,
-                version=cpm.PROJECT_VERSION_PLACEHOLDER,
+                version=FlextConstantsProjectMetadata.PROJECT_VERSION_PLACEHOLDER,
             )
-            return mpm.ProjectMetadata(
+            return FlextModelsProjectMetadata.ProjectMetadata(
                 root=root,
                 package_name=package_name,
                 class_stem=class_stem,
@@ -76,7 +84,7 @@ class FlextUtilitiesProjectMetadata(mpm):
                 flext=flext,
             )
         resolved_project = project
-        return mpm.ProjectMetadata(
+        return FlextModelsProjectMetadata.ProjectMetadata(
             root=root,
             package_name=flext.docs.package_name
             or resolved_project.name.replace("-", "_"),
@@ -92,7 +100,11 @@ class FlextUtilitiesProjectMetadata(mpm):
     def derive_class_stem(project_name: str) -> str:
         normalized = project_name.lower()
         override = next(
-            (value for name, value in cpm.SPECIAL_NAME_OVERRIDES if name == normalized),
+            (
+                value
+                for name, value in FlextConstantsProjectMetadata.SPECIAL_NAME_OVERRIDES
+                if name == normalized
+            ),
             None,
         )
         parts = normalized.replace("-", "_").split("_")
@@ -104,8 +116,8 @@ class FlextUtilitiesProjectMetadata(mpm):
     def installed_distributions(
         *,
         name: str | None = None,
-        path: t.StrSequence | None = None,
-    ) -> t.VariadicTuple[Distribution]:
+        path: FlextTypingBase.StrSequence | None = None,
+    ) -> FlextTypingBase.VariadicTuple[Distribution]:
         """Enumerate installed distributions over one snapshot of the finder chain.
 
         ``importlib.metadata.distributions()`` walks the live ``sys.meta_path``
@@ -126,7 +138,7 @@ class FlextUtilitiesProjectMetadata(mpm):
         return tuple(
             distribution
             for finder in tuple(sys.meta_path)
-            if isinstance(finder, ppm.DistributionSource)
+            if isinstance(finder, FlextProtocolsProjectMetadata.DistributionSource)
             for distribution in finder.find_distributions(context)
         )
 
@@ -134,7 +146,7 @@ class FlextUtilitiesProjectMetadata(mpm):
     def distribution_requirement_names(
         cls,
         distribution: Distribution,
-    ) -> t.VariadicTuple[str]:
+    ) -> FlextTypingBase.VariadicTuple[str]:
         """Return the normalized underscore names of declared requirements.
 
         Each ``Requires-Dist`` entry is parsed by the same requirement-name
@@ -155,7 +167,7 @@ class FlextUtilitiesProjectMetadata(mpm):
     @classmethod
     def project_uses_distribution(
         cls,
-        metadata: ppm.ProjectMetadata,
+        metadata: FlextProtocolsProjectMetadata.ProjectMetadata,
         distribution_name: str,
     ) -> bool:
         target_name = cls._normalize_distribution_name(distribution_name)

@@ -17,10 +17,10 @@ from typing import Annotated, override
 
 from pydantic import Field
 
-from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.base import FlextModelsBase
 from flext_core._models.domain_event import FlextModelsDomainEvent
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core._utilities.domain import FlextUtilitiesDomain as u
+from flext_core._typings.base import FlextTypingBase
+from flext_core._utilities.domain import FlextUtilitiesDomain
 from flext_core._utilities.generators import FlextUtilitiesGenerators
 
 
@@ -34,7 +34,12 @@ class FlextModelsEntity:
     the forward-reference cycle that Pydantic cannot resolve.
     """
 
-    class Entity(m.TimestampedModel, m.IdentifiableMixin, m.VersionableMixin, Hashable):
+    class Entity(
+        FlextModelsBase.TimestampedModel,
+        FlextModelsBase.IdentifiableMixin,
+        FlextModelsBase.VersionableMixin,
+        Hashable,
+    ):
         """Entity implementation - base class for domain entities with identity.
 
         Combines TimestampedModel, IdentifiableMixin, and VersionableMixin to provide:
@@ -64,9 +69,9 @@ class FlextModelsEntity:
                 The resulting ``bool``.
 
             """
-            if not isinstance(other, m.EnforcedModel):
+            if not isinstance(other, FlextModelsBase.EnforcedModel):
                 return NotImplemented
-            return u.compare_entities_by_id(self, other)
+            return FlextUtilitiesDomain.compare_entities_by_id(self, other)
 
         def __hash__(self) -> int:
             """Identity-based hash for entities.
@@ -75,15 +80,19 @@ class FlextModelsEntity:
                 The resulting ``int``.
 
             """
-            return u.hash_entity_by_id(self)
+            return FlextUtilitiesDomain.hash_entity_by_id(self)
 
         @override
-        def model_post_init(self, __context: t.ScalarMapping | None, /) -> None:
+        def model_post_init(
+            self,
+            __context: FlextTypingBase.ScalarMapping | None,
+            /,
+        ) -> None:
             """Post-initialization hook to set updated_at timestamp when absent."""
             if self.updated_at is None:
                 self.updated_at = FlextUtilitiesGenerators.generate_datetime_utc()
 
-    class Value(m.FrozenValueModel):
+    class Value(FlextModelsBase.FrozenValueModel):
         """Base class for value objects - immutable and compared by value."""
 
     class AggregateRoot(Entity):

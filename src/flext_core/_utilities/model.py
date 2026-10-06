@@ -14,43 +14,43 @@ from typing import overload
 from pydantic import TypeAdapter
 
 from flext_core import c, e, p, r, t
-from flext_core._models.base import FlextModelsBase as m
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._utilities.args import FlextUtilitiesArgs as ua
+from flext_core._models.base import FlextModelsBase
+from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._utilities.args import FlextUtilitiesArgs
 
 
 class FlextUtilitiesModel:
     """Utilities for Pydantic model initialization."""
 
-    class ModelDumpOptions(m.FlexibleInternalModel):
+    class ModelDumpOptions(FlextModelsBase.FlexibleInternalModel):
         """Options controlling Pydantic model_dump() serialization behavior."""
 
-        by_alias: bool | None = mp.Field(
+        by_alias: bool | None = FlextModelsPydantic.Field(
             None,
             description="Serialize using field aliases",
             validate_default=True,
         )
-        exclude_none: bool | None = mp.Field(
+        exclude_none: bool | None = FlextModelsPydantic.Field(
             None,
             description="Exclude None-valued fields",
             validate_default=True,
         )
-        exclude_unset: bool | None = mp.Field(
+        exclude_unset: bool | None = FlextModelsPydantic.Field(
             None,
             description="Exclude fields not explicitly set",
             validate_default=True,
         )
-        exclude_defaults: bool | None = mp.Field(
+        exclude_defaults: bool | None = FlextModelsPydantic.Field(
             None,
             description="Exclude fields matching defaults",
             validate_default=True,
         )
-        include: set[str] | None = mp.Field(
+        include: set[str] | None = FlextModelsPydantic.Field(
             None,
             description="Whitelist of field names to include",
             validate_default=True,
         )
-        exclude: set[str] | None = mp.Field(
+        exclude: set[str] | None = FlextModelsPydantic.Field(
             None,
             description="Blacklist of field names to exclude",
             validate_default=True,
@@ -58,7 +58,7 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def dump(
-        model: mp.BaseModel,
+        model: FlextModelsPydantic.BaseModel,
         options: FlextUtilitiesModel.ModelDumpOptions | None = None,
         **kwargs: t.JsonPayload,
     ) -> t.MappingKV[str, t.JsonPayload]:
@@ -76,7 +76,7 @@ class FlextUtilitiesModel:
             Dictionary representation of the model.
 
         """
-        opts = ua.resolve_options(
+        opts = FlextUtilitiesArgs.resolve_options(
             options,
             kwargs,
             FlextUtilitiesModel.ModelDumpOptions,

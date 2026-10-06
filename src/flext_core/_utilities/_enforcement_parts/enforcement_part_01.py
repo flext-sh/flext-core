@@ -8,19 +8,22 @@ from __future__ import annotations
 
 from types import MappingProxyType
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._typings.base import FlextTypingBase as t
+from flext_core._constants.enforcement import FlextConstantsEnforcement
+from flext_core._models.enforcement import FlextModelsEnforcement
+from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._typings.base import FlextTypingBase
 
-PREDICATE_BINDINGS: t.MappingKV[
+PREDICATE_BINDINGS: FlextTypingBase.MappingKV[
     str,
-    tuple[c.EnforcementPredicateKind, mp.BaseModel],
+    tuple[
+        FlextConstantsEnforcement.EnforcementPredicateKind,
+        FlextModelsPydantic.BaseModel,
+    ],
 ] = MappingProxyType({
     tag: (spec.predicate, spec.params)
     for tag, spec in (
-        (tag, me.EnforcementPredicateSpec.model_validate(raw))
-        for tag, raw in c.ENFORCEMENT_PREDICATE_SPECS.items()
+        (tag, FlextModelsEnforcement.EnforcementPredicateSpec.model_validate(raw))
+        for tag, raw in FlextConstantsEnforcement.ENFORCEMENT_PREDICATE_SPECS.items()
     )
 })
 """Runtime tag → (predicate kind, typed parameters); one data row per rule."""

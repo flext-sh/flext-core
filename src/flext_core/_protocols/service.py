@@ -20,8 +20,8 @@ from flext_core._protocols.context import FlextProtocolsContext
 from flext_core._protocols.loggings import FlextProtocolsLogging
 from flext_core._protocols.result import FlextProtocolsResult
 from flext_core._protocols.settings import FlextProtocolsSettings
-from flext_core._typings.base import FlextTypingBase as tb
-from flext_core._typings.services import FlextTypesServices as ts
+from flext_core._typings.base import FlextTypingBase
+from flext_core._typings.services import FlextTypesServices
 
 
 class FlextProtocolsService:
@@ -60,9 +60,9 @@ class FlextProtocolsService:
         surface so consumers depend on the abstraction instead of the concrete.
         """
 
-        settings_type: ts.SettingsClass | None
+        settings_type: FlextTypesServices.SettingsClass | None
         runtime_settings: FlextProtocolsSettings.Settings | None
-        settings_overrides: tb.ScalarMapping | None
+        settings_overrides: FlextTypingBase.ScalarMapping | None
         initial_context: FlextProtocolsContext.Context | None
 
         @property
@@ -88,7 +88,7 @@ class FlextProtocolsService:
         def track(
             self,
             operation_name: str,
-        ) -> AbstractContextManager[Mapping[str, ts.JsonPayload]]:
+        ) -> AbstractContextManager[Mapping[str, FlextTypesServices.JsonPayload]]:
             """Track operation performance with timing and context cleanup."""
             ...
 

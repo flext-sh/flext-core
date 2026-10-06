@@ -38,14 +38,16 @@ from typing import Annotated, ClassVar, ForwardRef, cast, get_args, get_origin
 
 import typing_extensions as _typing_extensions
 
-from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.base import FlextTypingBase
 
 
 class FlextUtilitiesBeartypeTypingExtPatch:
     """Idempotent beartype patches for ``typing_extensions`` PEP 695 aliases."""
 
-    type _TypeHintSpecifier = t.TypeHintSpecifier | _typing_extensions.TypeAliasType
-    type _HintPep695AliasValue = type | t.VariadicTuple[type]
+    type _TypeHintSpecifier = (
+        FlextTypingBase.TypeHintSpecifier | _typing_extensions.TypeAliasType
+    )
+    type _HintPep695AliasValue = type | FlextTypingBase.VariadicTuple[type]
     type _Pep695Getter = Callable[[_TypeHintSpecifier, str], _TypeHintSpecifier]
 
     _applied: ClassVar[bool] = False

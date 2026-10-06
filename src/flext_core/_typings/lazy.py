@@ -9,15 +9,22 @@ from __future__ import annotations
 from collections.abc import Callable, MutableMapping
 from types import ModuleType
 
-from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.base import FlextTypingBase
 
 type FlextLazyModuleGlobalValue = (
-    t.JsonValue
-    | t.LazyImportMap
-    | t.StrSequence
+    FlextTypingBase.JsonValue
+    | FlextTypingBase.LazyImportMap
+    | FlextTypingBase.StrSequence
     | ModuleType
     | type
-    | Callable[..., t.JsonValue | t.StrSequence | ModuleType | type | None]
+    | Callable[
+        ...,
+        FlextTypingBase.JsonValue
+        | FlextTypingBase.StrSequence
+        | ModuleType
+        | type
+        | None,
+    ]
     | None
 )
 

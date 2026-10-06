@@ -17,7 +17,7 @@ import pytest
 from flext_tests import tm
 
 from tests.integration.service_lifecycle_cases import (
-    TestsFlextFlextServiceLifecycleCases as _ServiceLifecycleCases,
+    TestsFlextFlextServiceLifecycleCases,
 )
 from tests.utilities import u
 
@@ -29,7 +29,7 @@ _FETCH_CALL_COUNT = 2
 
 @pytest.mark.integration
 @pytest.mark.usefixtures("clean_container")
-class TestsFlextCoreService(_ServiceLifecycleCases):
+class TestsFlextCoreService(TestsFlextFlextServiceLifecycleCases):
     """Behavioral contract of the user/notification/lifecycle services.
 
     Inherits the lifecycle behavioral cases and the service fixture accessors

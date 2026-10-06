@@ -19,193 +19,261 @@ from functools import cache
 
 from pydantic import ConfigDict, TypeAdapter
 
-from flext_core._typings.annotateds import FlextTypesAnnotateds as ta
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core._typings.core import FlextTypesCore as tc
-from flext_core._typings.pydantic import FlextTypesPydantic as tp
-from flext_core._typings.services import FlextTypesServices as ts
+from flext_core._typings.annotateds import FlextTypesAnnotateds
+from flext_core._typings.base import FlextTypingBase
+from flext_core._typings.core import FlextTypesCore
+from flext_core._typings.pydantic import FlextTypesPydantic
+from flext_core._typings.services import FlextTypesServices
 
 
 class FlextTypesTypeAdapters:
-    """Cached tp.TypeAdapter factories shared through the ``t`` facade."""
+    """Cached FlextTypesPydantic.TypeAdapter factories shared through the ``FlextTypingBase`` facade."""
 
     @classmethod
     @cache
-    def metadata_map_adapter(cls) -> tp.TypeAdapter[Mapping[str, tp.JsonValue]]:
-        return TypeAdapter(Mapping[str, tp.JsonValue])
+    def metadata_map_adapter(
+        cls,
+    ) -> FlextTypesPydantic.TypeAdapter[Mapping[str, FlextTypesPydantic.JsonValue]]:
+        return TypeAdapter(Mapping[str, FlextTypesPydantic.JsonValue])
 
     @classmethod
     @cache
-    def json_value_adapter(cls) -> tp.TypeAdapter[tp.JsonValue]:
-        return TypeAdapter(tp.JsonValue)
+    def json_value_adapter(
+        cls,
+    ) -> FlextTypesPydantic.TypeAdapter[FlextTypesPydantic.JsonValue]:
+        return TypeAdapter(FlextTypesPydantic.JsonValue)
 
     @classmethod
     @cache
-    def json_mapping_adapter(cls) -> tp.TypeAdapter[t.JsonMapping]:
-        return TypeAdapter(t.JsonMapping)
+    def json_mapping_adapter(
+        cls,
+    ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.JsonMapping]:
+        return TypeAdapter(FlextTypingBase.JsonMapping)
 
     @classmethod
     @cache
-    def strict_json_mapping_adapter(cls) -> tp.TypeAdapter[t.JsonMapping]:
-        return TypeAdapter(t.JsonMapping, config=ConfigDict(strict=True))
+    def strict_json_mapping_adapter(
+        cls,
+    ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.JsonMapping]:
+        return TypeAdapter(FlextTypingBase.JsonMapping, config=ConfigDict(strict=True))
 
     @classmethod
     @cache
-    def json_dict_adapter(cls) -> tp.TypeAdapter[t.JsonDict]:
-        return TypeAdapter(t.JsonDict)
+    def json_dict_adapter(
+        cls,
+    ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.JsonDict]:
+        return TypeAdapter(FlextTypingBase.JsonDict)
 
     @classmethod
     @cache
-    def json_dict_sequence_adapter(cls) -> tp.TypeAdapter[t.SequenceOf[t.JsonDict]]:
-        return TypeAdapter(t.SequenceOf[t.JsonDict])
+    def json_dict_sequence_adapter(
+        cls,
+    ) -> FlextTypesPydantic.TypeAdapter[
+        FlextTypingBase.SequenceOf[FlextTypingBase.JsonDict]
+    ]:
+        return TypeAdapter(FlextTypingBase.SequenceOf[FlextTypingBase.JsonDict])
 
     @classmethod
     @cache
     def json_mapping_sequence_adapter(
         cls,
-    ) -> tp.TypeAdapter[t.SequenceOf[t.JsonMapping]]:
-        return TypeAdapter(t.SequenceOf[t.JsonMapping])
+    ) -> FlextTypesPydantic.TypeAdapter[
+        FlextTypingBase.SequenceOf[FlextTypingBase.JsonMapping]
+    ]:
+        return TypeAdapter(FlextTypingBase.SequenceOf[FlextTypingBase.JsonMapping])
 
     @classmethod
     @cache
     def json_mapping_by_str_adapter(
         cls,
-    ) -> tp.TypeAdapter[t.MappingKV[str, t.JsonMapping]]:
-        return TypeAdapter(t.MappingKV[str, t.JsonMapping])
+    ) -> FlextTypesPydantic.TypeAdapter[
+        FlextTypingBase.MappingKV[str, FlextTypingBase.JsonMapping]
+    ]:
+        return TypeAdapter(FlextTypingBase.MappingKV[str, FlextTypingBase.JsonMapping])
 
     @classmethod
     @cache
-    def json_list_adapter(cls) -> tp.TypeAdapter[t.JsonList]:
-        return TypeAdapter(t.JsonList)
+    def json_list_adapter(
+        cls,
+    ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.JsonList]:
+        return TypeAdapter(FlextTypingBase.JsonList)
 
     @classmethod
     @cache
-    def strict_json_list_adapter(cls) -> tp.TypeAdapter[t.JsonList]:
-        return TypeAdapter(t.JsonList, config=ConfigDict(strict=True))
+    def strict_json_list_adapter(
+        cls,
+    ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.JsonList]:
+        return TypeAdapter(FlextTypingBase.JsonList, config=ConfigDict(strict=True))
 
     @classmethod
     @cache
-    def primitives_adapter(cls) -> tp.TypeAdapter[t.Primitives]:
-        return TypeAdapter(t.Primitives)
+    def primitives_adapter(
+        cls,
+    ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.Primitives]:
+        return TypeAdapter(FlextTypingBase.Primitives)
 
     @classmethod
     @cache
-    def container_set_adapter(cls) -> tp.TypeAdapter[set[tp.JsonValue]]:
-        return TypeAdapter(set[tp.JsonValue])
+    def container_set_adapter(
+        cls,
+    ) -> FlextTypesPydantic.TypeAdapter[set[FlextTypesPydantic.JsonValue]]:
+        return TypeAdapter(set[FlextTypesPydantic.JsonValue])
 
     @classmethod
     @cache
-    def string_set_adapter(cls) -> tp.TypeAdapter[set[str]]:
+    def string_set_adapter(cls) -> FlextTypesPydantic.TypeAdapter[set[str]]:
         return TypeAdapter(set[str])
 
     @classmethod
     @cache
-    def scalar_set_adapter(cls) -> tp.TypeAdapter[set[t.Scalar]]:
-        return TypeAdapter(set[t.Scalar])
+    def scalar_set_adapter(
+        cls,
+    ) -> FlextTypesPydantic.TypeAdapter[set[FlextTypingBase.Scalar]]:
+        return TypeAdapter(set[FlextTypingBase.Scalar])
 
     @classmethod
     @cache
     def sortable_dict_adapter(
         cls,
-    ) -> tp.TypeAdapter[Mapping[ts.SortableObjectType, tp.JsonValue | None]]:
-        return TypeAdapter(Mapping[ts.SortableObjectType, tp.JsonValue | None])
+    ) -> FlextTypesPydantic.TypeAdapter[
+        Mapping[
+            FlextTypesServices.SortableObjectType,
+            FlextTypesPydantic.JsonValue | None,
+        ]
+    ]:
+        return TypeAdapter(
+            Mapping[
+                FlextTypesServices.SortableObjectType,
+                FlextTypesPydantic.JsonValue | None,
+            ],
+        )
 
     @classmethod
     @cache
-    def bool_adapter(cls) -> tp.TypeAdapter[bool]:
+    def bool_adapter(cls) -> FlextTypesPydantic.TypeAdapter[bool]:
         return TypeAdapter(bool)
 
     @classmethod
     @cache
-    def int_adapter(cls) -> tp.TypeAdapter[tp.StrictInt]:
-        return TypeAdapter(tp.StrictInt)
+    def int_adapter(
+        cls,
+    ) -> FlextTypesPydantic.TypeAdapter[FlextTypesPydantic.StrictInt]:
+        return TypeAdapter(FlextTypesPydantic.StrictInt)
 
     @classmethod
     @cache
-    def scalar_adapter(cls) -> tp.TypeAdapter[t.Scalar]:
-        return TypeAdapter(t.Scalar)
+    def scalar_adapter(cls) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.Scalar]:
+        return TypeAdapter(FlextTypingBase.Scalar)
 
     @classmethod
     @cache
-    def scalar_mapping_adapter(cls) -> tp.TypeAdapter[t.ScalarMapping]:
-        return TypeAdapter(t.ScalarMapping)
+    def scalar_mapping_adapter(
+        cls,
+    ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.ScalarMapping]:
+        return TypeAdapter(FlextTypingBase.ScalarMapping)
 
     @classmethod
     @cache
-    def float_adapter(cls) -> tp.TypeAdapter[tp.StrictFloat]:
-        return TypeAdapter(tp.StrictFloat)
+    def float_adapter(
+        cls,
+    ) -> FlextTypesPydantic.TypeAdapter[FlextTypesPydantic.StrictFloat]:
+        return TypeAdapter(FlextTypesPydantic.StrictFloat)
 
     @classmethod
     @cache
-    def str_adapter(cls) -> tp.TypeAdapter[tp.StrictStr]:
-        return TypeAdapter(tp.StrictStr)
+    def str_adapter(
+        cls,
+    ) -> FlextTypesPydantic.TypeAdapter[FlextTypesPydantic.StrictStr]:
+        return TypeAdapter(FlextTypesPydantic.StrictStr)
 
     @classmethod
     @cache
-    def binary_content_adapter(cls) -> tp.TypeAdapter[tp.StrictBytes]:
-        return TypeAdapter(tp.StrictBytes)
+    def binary_content_adapter(
+        cls,
+    ) -> FlextTypesPydantic.TypeAdapter[FlextTypesPydantic.StrictBytes]:
+        return TypeAdapter(FlextTypesPydantic.StrictBytes)
 
     @classmethod
     @cache
-    def str_mapping_adapter(cls) -> tp.TypeAdapter[t.StrMapping]:
-        return TypeAdapter(t.StrMapping)
+    def str_mapping_adapter(
+        cls,
+    ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.StrMapping]:
+        return TypeAdapter(FlextTypingBase.StrMapping)
 
     @classmethod
     @cache
-    def header_mapping_adapter(cls) -> tp.TypeAdapter[t.HeaderMapping]:
-        return TypeAdapter(t.HeaderMapping)
+    def header_mapping_adapter(
+        cls,
+    ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.HeaderMapping]:
+        return TypeAdapter(FlextTypingBase.HeaderMapping)
 
     @classmethod
     @cache
-    def str_dict_adapter(cls) -> tp.TypeAdapter[t.StrDict]:
-        return TypeAdapter(t.StrDict)
+    def str_dict_adapter(
+        cls,
+    ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.StrDict]:
+        return TypeAdapter(FlextTypingBase.StrDict)
 
     @classmethod
     @cache
-    def int_dict_adapter(cls) -> tp.TypeAdapter[t.IntDict]:
-        return TypeAdapter(t.IntDict)
+    def int_dict_adapter(
+        cls,
+    ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.IntDict]:
+        return TypeAdapter(FlextTypingBase.IntDict)
 
     @classmethod
     @cache
-    def hostname_str_adapter(cls) -> tp.TypeAdapter[ta.HostnameStr]:
-        return TypeAdapter(ta.HostnameStr)
+    def hostname_str_adapter(
+        cls,
+    ) -> FlextTypesPydantic.TypeAdapter[FlextTypesAnnotateds.HostnameStr]:
+        return TypeAdapter(FlextTypesAnnotateds.HostnameStr)
 
     @classmethod
     @cache
-    def port_number_adapter(cls) -> tp.TypeAdapter[ta.PortNumber]:
-        return TypeAdapter(ta.PortNumber)
+    def port_number_adapter(
+        cls,
+    ) -> FlextTypesPydantic.TypeAdapter[FlextTypesAnnotateds.PortNumber]:
+        return TypeAdapter(FlextTypesAnnotateds.PortNumber)
 
     @classmethod
     @cache
-    def str_sequence_adapter(cls) -> tp.TypeAdapter[t.StrSequence]:
-        return TypeAdapter(t.StrSequence)
+    def str_sequence_adapter(
+        cls,
+    ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.StrSequence]:
+        return TypeAdapter(FlextTypingBase.StrSequence)
 
     @classmethod
     @cache
-    def strict_str_sequence_adapter(cls) -> tp.TypeAdapter[t.StrSequence]:
-        return TypeAdapter(t.StrSequence, config=ConfigDict(strict=True))
+    def strict_str_sequence_adapter(
+        cls,
+    ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.StrSequence]:
+        return TypeAdapter(FlextTypingBase.StrSequence, config=ConfigDict(strict=True))
 
     @classmethod
     @cache
-    def str_or_bytes_adapter(cls) -> tp.TypeAdapter[tc.TextOrBinaryContent]:
-        return TypeAdapter(tc.TextOrBinaryContent)
+    def str_or_bytes_adapter(
+        cls,
+    ) -> FlextTypesPydantic.TypeAdapter[FlextTypesCore.TextOrBinaryContent]:
+        return TypeAdapter(FlextTypesCore.TextOrBinaryContent)
 
     @classmethod
     @cache
-    def enum_type_adapter(cls) -> tp.TypeAdapter[type[StrEnum]]:
+    def enum_type_adapter(cls) -> FlextTypesPydantic.TypeAdapter[type[StrEnum]]:
         return TypeAdapter(type[StrEnum])
 
     @classmethod
     @cache
     def primitive_metadata_mapping_adapter(
         cls,
-    ) -> tp.TypeAdapter[Mapping[str, t.Primitives]]:
-        return TypeAdapter(Mapping[str, t.Primitives])
+    ) -> FlextTypesPydantic.TypeAdapter[Mapping[str, FlextTypingBase.Primitives]]:
+        return TypeAdapter(Mapping[str, FlextTypingBase.Primitives])
 
     @classmethod
     @cache
-    def structlog_processor_adapter(cls) -> tp.TypeAdapter[Callable[..., tp.JsonValue]]:
-        return TypeAdapter(Callable[..., tp.JsonValue])
+    def structlog_processor_adapter(
+        cls,
+    ) -> FlextTypesPydantic.TypeAdapter[Callable[..., FlextTypesPydantic.JsonValue]]:
+        return TypeAdapter(Callable[..., FlextTypesPydantic.JsonValue])
 
 
 __all__: list[str] = ["FlextTypesTypeAdapters"]

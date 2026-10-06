@@ -10,35 +10,35 @@ from collections.abc import MutableSequence
 from typing import Annotated
 
 from flext_core import t
-from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.base import FlextModelsBase
 from flext_core._models.entity import FlextModelsEntity
 from flext_core._models.handler import FlextModelsHandler
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._protocols.handler import FlextProtocolsHandler as p
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
+from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._protocols.handler import FlextProtocolsHandler
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic
 
 
 class FlextModelsRegistry:
     """Registry model namespace for handler registration aggregates."""
 
-    class RegistryState(m.ArbitraryTypesModel):
+    class RegistryState(FlextModelsBase.ArbitraryTypesModel):
         """Validated registry runtime state shared by public registry methods."""
 
         dispatcher: Annotated[
-            p.Dispatcher | None,
-            mp.Field(
+            FlextProtocolsHandler.Dispatcher | None,
+            FlextModelsPydantic.Field(
                 default=None,
                 description="Dispatcher used for handler registration and execution.",
             ),
         ] = None
         registered_keys: Annotated[
             frozenset[str],
-            mp.Field(
+            FlextModelsPydantic.Field(
                 description="Keys registered in the instance scope of the registry.",
             ),
-        ] = mp.Field(default_factory=frozenset)
+        ] = FlextModelsPydantic.Field(default_factory=frozenset)
 
-        @up.computed_field
+        @FlextUtilitiesPydantic.computed_field
         @property
         def configured(self) -> bool:
             """Whether a dispatcher has been materialized for the registry."""
@@ -49,32 +49,34 @@ class FlextModelsRegistry:
 
         registered: Annotated[
             MutableSequence[FlextModelsHandler.RegistrationDetails],
-            mp.Field(
+            FlextModelsPydantic.Field(
                 description="Successfully registered handlers with registration details.",
             ),
-        ] = mp.Field(default_factory=list[FlextModelsHandler.RegistrationDetails])
+        ] = FlextModelsPydantic.Field(
+            default_factory=list[FlextModelsHandler.RegistrationDetails],
+        )
         skipped: Annotated[
             t.StrSequence,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 description="Handler identifiers that were skipped (already registered)",
                 examples=[["CreateUserCommand", "UpdateUserCommand"]],
             ),
-        ] = mp.Field(default_factory=tuple)
+        ] = FlextModelsPydantic.Field(default_factory=tuple)
         errors: Annotated[
             MutableSequence[str],
-            mp.Field(
+            FlextModelsPydantic.Field(
                 description="Error messages for failed registrations",
                 examples=[["Handler validation failed", "Duplicate registration"]],
             ),
-        ] = mp.Field(default_factory=list[str])
+        ] = FlextModelsPydantic.Field(default_factory=list[str])
 
-        @up.computed_field
+        @FlextUtilitiesPydantic.computed_field
         @property
         def failure(self) -> bool:
             """Indicate whether the batch registration had errors."""
             return bool(self.errors)
 
-        @up.computed_field
+        @FlextUtilitiesPydantic.computed_field
         @property
         def success(self) -> bool:
             """Indicate whether the batch registration fully succeeded."""
