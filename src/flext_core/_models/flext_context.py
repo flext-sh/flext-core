@@ -1,10 +1,12 @@
 from __future__ import annotations
+
 import time
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from typing import Annotated, ClassVar, Self
+
 from flext_core import c, e, m, p, r, t, u
-from flext_core.context import Generator, __all__
+from flext_core.context import Generator
 
 
 class FlextContext(m.ManagedModel):

@@ -16,7 +16,6 @@ from collections.abc import Iterator
 import pytest
 from flext_tests import tm
 
-from flext_core import FlextContext
 import flext_core._models.flext_context
 
 
@@ -168,7 +167,10 @@ class TestsFlextCoreContext:
     @staticmethod
     def test_create_with_initial_values_seeds_the_context_scope() -> None:
         """Seed the scope from initial values passed to the factory."""
-        ctx = flext_core._models.flext_context.FlextContext.create(operation_id="op-1", user_id="user-1")
+        ctx = flext_core._models.flext_context.FlextContext.create(
+            operation_id="op-1",
+            user_id="user-1",
+        )
 
         tm.ok(ctx.get("operation_id"), eq="op-1")
         tm.ok(ctx.get("user_id"), eq="user-1")
@@ -188,7 +190,9 @@ class TestsFlextCoreContext:
     @staticmethod
     def test_resolve_metadata_missing_key_returns_failure() -> None:
         """Report the missing key when metadata resolution fails."""
-        result = flext_core._models.flext_context.FlextContext().resolve_metadata("absent")
+        result = flext_core._models.flext_context.FlextContext().resolve_metadata(
+            "absent",
+        )
         tm.fail(result, has="absent")
 
     # --- correlation-id contextvar facade --------------------------------
@@ -196,44 +200,73 @@ class TestsFlextCoreContext:
     @staticmethod
     def test_apply_and_resolve_correlation_id_roundtrip() -> None:
         """Round-trip an explicitly applied correlation identifier."""
-        flext_core._models.flext_context.FlextContext.apply_correlation_id("test-corr-123")
-        tm.that(flext_core._models.flext_context.FlextContext.resolve_correlation_id(), eq="test-corr-123")
+        flext_core._models.flext_context.FlextContext.apply_correlation_id(
+            "test-corr-123",
+        )
+        tm.that(
+            flext_core._models.flext_context.FlextContext.resolve_correlation_id(),
+            eq="test-corr-123",
+        )
 
     @staticmethod
     def test_clear_context_drops_correlation_id() -> None:
         """Drop the active correlation identifier when clearing context."""
-        flext_core._models.flext_context.FlextContext.apply_correlation_id("test-corr-123")
+        flext_core._models.flext_context.FlextContext.apply_correlation_id(
+            "test-corr-123",
+        )
         flext_core._models.flext_context.FlextContext.clear_context()
-        tm.that(flext_core._models.flext_context.FlextContext.resolve_correlation_id(), none=True)
+        tm.that(
+            flext_core._models.flext_context.FlextContext.resolve_correlation_id(),
+            none=True,
+        )
 
     @staticmethod
     def test_ensure_correlation_id_generates_when_absent() -> None:
         """Generate and apply a correlation identifier when none exists."""
         cid = flext_core._models.flext_context.FlextContext.ensure_correlation_id()
         tm.that(cid, is_=str, empty=False)
-        tm.that(flext_core._models.flext_context.FlextContext.resolve_correlation_id(), eq=cid)
+        tm.that(
+            flext_core._models.flext_context.FlextContext.resolve_correlation_id(),
+            eq=cid,
+        )
 
     @staticmethod
     def test_ensure_correlation_id_preserves_existing_value() -> None:
         """Preserve the active correlation identifier when ensuring it."""
-        flext_core._models.flext_context.FlextContext.apply_correlation_id("already-here")
-        tm.that(flext_core._models.flext_context.FlextContext.ensure_correlation_id(), eq="already-here")
+        flext_core._models.flext_context.FlextContext.apply_correlation_id(
+            "already-here",
+        )
+        tm.that(
+            flext_core._models.flext_context.FlextContext.ensure_correlation_id(),
+            eq="already-here",
+        )
 
     @staticmethod
     def test_new_correlation_scopes_and_restores_previous_id() -> None:
         """Scope a correlation identifier and restore the previous value."""
         flext_core._models.flext_context.FlextContext.apply_correlation_id("outer")
-        with flext_core._models.flext_context.FlextContext.new_correlation("inner") as active:
+        with flext_core._models.flext_context.FlextContext.new_correlation(
+            "inner",
+        ) as active:
             tm.that(active, eq="inner")
-            tm.that(flext_core._models.flext_context.FlextContext.resolve_correlation_id(), eq="inner")
-        tm.that(flext_core._models.flext_context.FlextContext.resolve_correlation_id(), eq="outer")
+            tm.that(
+                flext_core._models.flext_context.FlextContext.resolve_correlation_id(),
+                eq="inner",
+            )
+        tm.that(
+            flext_core._models.flext_context.FlextContext.resolve_correlation_id(),
+            eq="outer",
+        )
 
     @staticmethod
     def test_new_correlation_generates_id_when_none_supplied() -> None:
         """Generate a scoped identifier when none is supplied."""
         with flext_core._models.flext_context.FlextContext.new_correlation() as active:
             tm.that(active, is_=str, empty=False)
-            tm.that(flext_core._models.flext_context.FlextContext.resolve_correlation_id(), eq=active)
+            tm.that(
+                flext_core._models.flext_context.FlextContext.resolve_correlation_id(),
+                eq=active,
+            )
 
     # --- operation-name contextvar facade --------------------------------
 
@@ -241,31 +274,54 @@ class TestsFlextCoreContext:
     def test_apply_and_resolve_operation_name_roundtrip() -> None:
         """Round-trip an explicitly applied operation name."""
         flext_core._models.flext_context.FlextContext.apply_operation_name("sync-users")
-        tm.that(flext_core._models.flext_context.FlextContext.resolve_operation_name(), eq="sync-users")
+        tm.that(
+            flext_core._models.flext_context.FlextContext.resolve_operation_name(),
+            eq="sync-users",
+        )
 
     @staticmethod
     def test_resolve_operation_name_is_none_when_unset() -> None:
         """Return no operation name when the context is unset."""
-        tm.that(flext_core._models.flext_context.FlextContext.resolve_operation_name(), none=True)
+        tm.that(
+            flext_core._models.flext_context.FlextContext.resolve_operation_name(),
+            none=True,
+        )
 
     @staticmethod
     def test_timed_operation_yields_metadata_with_operation_name() -> None:
         """Scope the operation name while yielding timing metadata."""
-        with flext_core._models.flext_context.FlextContext.timed_operation("etl") as meta:
-            tm.that(flext_core._models.flext_context.FlextContext.resolve_operation_name(), eq="etl")
+        with flext_core._models.flext_context.FlextContext.timed_operation(
+            "etl",
+        ) as meta:
+            tm.that(
+                flext_core._models.flext_context.FlextContext.resolve_operation_name(),
+                eq="etl",
+            )
             tm.that(meta.root, empty=False)
-        tm.that(flext_core._models.flext_context.FlextContext.resolve_operation_name(), none=True)
+        tm.that(
+            flext_core._models.flext_context.FlextContext.resolve_operation_name(),
+            none=True,
+        )
 
     # --- service + full-context export -----------------------------------
 
     @staticmethod
     def test_service_context_scopes_service_name() -> None:
         """Scope service identity and remove it after context exit."""
-        with flext_core._models.flext_context.FlextContext.service_context("billing", version="1.2.0"):
-            exported = flext_core._models.flext_context.FlextContext.export_full_context()
+        with flext_core._models.flext_context.FlextContext.service_context(
+            "billing",
+            version="1.2.0",
+        ):
+            exported = (
+                flext_core._models.flext_context.FlextContext.export_full_context()
+            )
             tm.that(exported["service_name"], eq="billing")
             tm.that(exported["service_version"], eq="1.2.0")
-        tm.that("service_name" in flext_core._models.flext_context.FlextContext.export_full_context(), eq=False)
+        tm.that(
+            "service_name"
+            in flext_core._models.flext_context.FlextContext.export_full_context(),
+            eq=False,
+        )
 
     @staticmethod
     def test_export_full_context_includes_active_correlation_id() -> None:
@@ -279,4 +335,7 @@ class TestsFlextCoreContext:
         """Export an empty context after clearing all active state."""
         flext_core._models.flext_context.FlextContext.apply_correlation_id("corr-xyz")
         flext_core._models.flext_context.FlextContext.clear_context()
-        tm.that(flext_core._models.flext_context.FlextContext.export_full_context(), empty=True)
+        tm.that(
+            flext_core._models.flext_context.FlextContext.export_full_context(),
+            empty=True,
+        )

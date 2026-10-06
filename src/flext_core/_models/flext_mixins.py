@@ -1,10 +1,12 @@
 from __future__ import annotations
+
 import threading
 from contextlib import contextmanager
 from typing import Annotated, ClassVar
-from flext_core import FlextContainer, FlextContext, c, m, p, t, u
-from flext_core.mixins import Generator, Mapping, MutableMapping, x, __all__
+
 import flext_core._models.flext_context
+from flext_core import FlextContainer, c, m, p, t, u
+from flext_core.mixins import Generator, Mapping, MutableMapping
 
 
 class FlextMixins(m.ArbitraryTypesModel):
@@ -48,7 +50,9 @@ class FlextMixins(m.ArbitraryTypesModel):
 
     _container_type: ClassVar[p.ContainerType] = FlextContainer
 
-    _context_type: ClassVar[p.ContextType] = flext_core._models.flext_context.FlextContext
+    _context_type: ClassVar[p.ContextType] = (
+        flext_core._models.flext_context.FlextContext
+    )
 
     _auto_context_scope: ClassVar[bool] = True
 
