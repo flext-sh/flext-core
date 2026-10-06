@@ -48,6 +48,7 @@ from pydantic import (
     WrapSerializer,
     WrapValidator,
     computed_field,
+    field_serializer,
     field_validator,
     model_validator,
 )
@@ -70,6 +71,18 @@ type FieldValidatorCallable = (
     | classmethod[Any, Any, Any]
     | staticmethod[Any, Any]
     | partialmethod[Any]
+)
+# Contract for the class-member shapes ``field_serializer`` decorates: the
+# same function/descriptor shapes pydantic auto-wraps for serializers.
+type FieldSerializerCallable = (
+    Callable[..., Any]
+    | classmethod[Any, Any, Any]
+    | staticmethod[Any, Any]
+    | partialmethod[Any]
+)
+# Contract for the model-level callables ``model_validator`` decorates.
+type ModelValidatorCallable = (
+    Callable[..., Any] | classmethod[Any, Any, Any] | staticmethod[Any, Any]
 )
 type _FieldKeywordValue[DefaultT] = (
     _FieldValue
@@ -245,7 +258,110 @@ class FlextModelsPydantic:
     # (namespace chain violation). ``model_validator`` is the canonical
     # model-level counterpart of ``field_validator`` above, and its absence alone
     # forced bare pydantic imports across 32 downstream modules.
-    model_validator = model_validator
+    # ``field_serializer``/``model_validator`` mirror the ``field_validator``
+    # treatment: a plain-attr or ``staticmethod(...)`` re-export collapses
+    # pydantic's overload set (pyright resolves only the first overload —
+    # "Argument missing for parameter ``mode``" downstream), so the stacked
+    # ``@overload @staticmethod`` declarations carry the exact pydantic
+    # overload set for both checkers while runtime keeps pydantic's function.
+    if TYPE_CHECKING:
+
+        @overload
+        @staticmethod
+        def field_serializer[SerializerT: FieldSerializerCallable](
+            field: str,
+            /,
+            *fields: str,
+            mode: Literal["wrap"],
+            return_type: Any = ...,
+            when_used: Literal[
+                "always",
+                "unless-none",
+                "json",
+                "json-with-timestamps",
+            ] = ...,
+            check_fields: bool | None = ...,
+        ) -> Callable[[SerializerT], SerializerT]: ...
+
+        @overload
+        @staticmethod
+        def field_serializer[SerializerT: FieldSerializerCallable](
+            field: str,
+            /,
+            *fields: str,
+            mode: Literal["plain"] = ...,
+            return_type: Any = ...,
+            when_used: Literal[
+                "always",
+                "unless-none",
+                "json",
+                "json-with-timestamps",
+            ] = ...,
+            check_fields: bool | None = ...,
+        ) -> Callable[[SerializerT], SerializerT]: ...
+
+        @staticmethod
+        def field_serializer(
+            field: str,
+            /,
+            *fields: str,
+            mode: Literal["plain", "wrap"] = "plain",
+            return_type: Any = PydanticUndefined,
+            when_used: Literal[
+                "always",
+                "unless-none",
+                "json",
+                "json-with-timestamps",
+            ] = "always",
+            check_fields: bool | None = None,
+        ) -> Callable[[Any], Any]:
+            """Delegate to pydantic's ``field_serializer`` (type-checking only).
+
+            Returns:
+                The resulting pydantic decorator factory.
+
+            """
+            decorator_factory: Callable[..., Callable[[Any], Any]] = field_serializer
+            return decorator_factory(
+                field,
+                *fields,
+                mode=mode,
+                return_type=return_type,
+                when_used=when_used,
+                check_fields=check_fields,
+            )
+
+        @overload
+        @staticmethod
+        def model_validator[ValidatorT: ModelValidatorCallable](
+            *,
+            mode: Literal["wrap"],
+        ) -> Callable[[ValidatorT], ValidatorT]: ...
+
+        @overload
+        @staticmethod
+        def model_validator[ValidatorT: ModelValidatorCallable](
+            *,
+            mode: Literal["before", "after"],
+        ) -> Callable[[ValidatorT], ValidatorT]: ...
+
+        @staticmethod
+        def model_validator(
+            *,
+            mode: Literal["wrap", "before", "after"],
+        ) -> Callable[[Any], Any]:
+            """Delegate to pydantic's ``model_validator`` (type-checking only).
+
+            Returns:
+                The resulting pydantic decorator factory.
+
+            """
+            decorator_factory: Callable[..., Callable[[Any], Any]] = model_validator
+            return decorator_factory(mode=mode)
+
+    else:
+        field_serializer = field_serializer
+        model_validator = model_validator
 
     # Annotation constraints and tagged-union discrimination
     Discriminator = Discriminator
