@@ -33,7 +33,7 @@ class TestsFlextFlextModelsMixins:
             """flext-core test models namespace."""
 
     @staticmethod
-    def _populate_container_scenarios() -> None:
+    def populate_container_scenarios() -> None:
         """Attach the scenario tables to their canonical containers.
 
         The scenario values need the fully defined namespace classes, so the
