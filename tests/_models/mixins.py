@@ -34,43 +34,48 @@ class TestsFlextModelsNamespace:
     ):
         """flext-core test models namespace."""
 
-    # Populate ContainerScenarios after class is fully defined to allow forward references
-    _svc_scenarios: ClassVar[t.SequenceOf[TestsFlextModelsMixins.ServiceScenario]] = [
-        TestsFlextModelsMixins.ServiceScenario(
+
+def _populate_container_scenarios() -> None:
+    """Attach the scenario tables to their canonical containers.
+
+    The scenario values need the fully defined namespace classes, so the
+    wiring runs once at import instead of patching class attributes at
+    module scope.
+    """
+    mixin = TestsFlextModelsNamespace.TestsFlextModelsMixins
+    mixin.ContainerScenarios.SERVICE_SCENARIOS = [
+        mixin.ServiceScenario(
             name="test_service",
             service="test_service_value",
             description="Simple string service",
         ),
-        TestsFlextModelsMixins.ServiceScenario(
+        mixin.ServiceScenario(
             name="service_instance",
             service=42,
             description="Integer service instance",
         ),
-        TestsFlextModelsMixins.ServiceScenario(
+        mixin.ServiceScenario(
             name="string_service",
             service="test_value",
             description="String service",
         ),
     ]
-
-    _typed_scenarios: ClassVar[
-        t.SequenceOf[TestsFlextModelsMixins.TypedRetrievalScenario]
-    ] = [
-        TestsFlextModelsMixins.TypedRetrievalScenario(
+    mixin.ContainerScenarios.TYPED_RETRIEVAL_SCENARIOS = [
+        mixin.TypedRetrievalScenario(
             name="dict_service",
             service="test_dict_service",
             expected_type=str,
             should_pass=True,
             description="String service",
         ),
-        TestsFlextModelsMixins.TypedRetrievalScenario(
+        mixin.TypedRetrievalScenario(
             name="string_service",
             service="test_string",
             expected_type=str,
             should_pass=True,
             description="String service",
         ),
-        TestsFlextModelsMixins.TypedRetrievalScenario(
+        mixin.TypedRetrievalScenario(
             name="list_service",
             service=123,
             expected_type=int,
@@ -80,8 +85,7 @@ class TestsFlextModelsNamespace:
     ]
 
 
-TestsFlextModelsNamespace.TestsFlextModelsMixins.ContainerScenarios.SERVICE_SCENARIOS = TestsFlextModelsNamespace._svc_scenarios
-TestsFlextModelsNamespace.TestsFlextModelsMixins.ContainerScenarios.TYPED_RETRIEVAL_SCENARIOS = TestsFlextModelsNamespace._typed_scenarios
+_populate_container_scenarios()
 
 
 m = TestsFlextModelsNamespace.TestsFlextModelsMixins
