@@ -21,7 +21,7 @@ from flext_core._protocols.settings import FlextProtocolsSettings
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core._utilities._guards_type_protocol_types import ProtocolGuardInput
+    from flext_core.typings import ProtocolGuardInput
 
 
 class FlextUtilitiesGuardsTypeProtocolSpecsMixin:

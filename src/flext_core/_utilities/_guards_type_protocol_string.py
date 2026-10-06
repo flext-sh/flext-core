@@ -10,7 +10,7 @@ from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from flext_core._utilities._guards_type_protocol_types import ProtocolGuardInput
+    from flext_core.typings import ProtocolGuardInput
 
 
 def _has_len(value: ProtocolGuardInput) -> bool:
