@@ -116,10 +116,13 @@ class FlextTypesPydantic:
     # JSON and special types: generic type forms recognized by pydantic.
     type Json[T] = pydantic.Json[T]
     # JsonValue is also module-level so beartype can resolve forward references
-    # emitted from aliases that flow through this class namespace.
-    type JsonValue = (
-        bool | int | float | str | Mapping[str, JsonValue] | Sequence[JsonValue] | None
-    )
+    # emitted from aliases that flow through this class namespace. The class
+    # member republishes the module-level pydantic alias: a divergent
+    # redefinition here shadowed pydantic.JsonValue through every composed
+    # facade with mutually incompatible unrollings (abstract Mapping/Sequence
+    # here vs pydantic's concrete dict/list/tuple), so pydantic remains the
+    # single source of truth for the JSON type surface.
+    type JsonValue = pydantic.JsonValue
     type BaseModelType = pydantic.BaseModel
     # PEP 695 aliases, never bare class-scope assignments: a bare
     # ``BaseModel = pydantic.BaseModel`` is a variable to mypy, so it is not
