@@ -13,6 +13,7 @@ from flext_tests import h, r
 
 from tests.constants import c
 from tests.typings import t
+from tests.unit._handlers_support import TestsFlextFlextHandlers
 from tests.utilities import u
 
 if TYPE_CHECKING:

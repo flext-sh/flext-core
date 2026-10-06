@@ -77,6 +77,10 @@ def _platform_cache_root() -> Path:
     ``~/Library/Caches``; Windows uses ``%LOCALAPPDATA%`` (default
     ``~/AppData/Local``). Module-level + stdlib-only so it can seed a field
     default without importing the facades (layer-0 purity).
+
+    Returns:
+        The OS-native user cache root for scratch/work directories.
+
     """
     if sys.platform == "darwin":
         return Path.home() / "Library" / "Caches"
@@ -97,6 +101,10 @@ def _platform_data_root() -> Path:
     Linux/BSD honour ``XDG_DATA_HOME`` (default ``~/.local/share``); macOS uses
     ``~/Library/Application Support``; Windows uses ``%LOCALAPPDATA%`` (default
     ``~/AppData/Local``). Module-level + stdlib-only for layer-0 purity.
+
+    Returns:
+        The OS-native user data root for durable per-namespace data.
+
     """
     if sys.platform == "darwin":
         return Path.home() / "Library" / "Application Support"
@@ -117,6 +125,10 @@ def platform_config_root() -> Path:
     Linux/BSD honour ``XDG_CONFIG_HOME`` (default ``~/.config``); macOS uses
     ``~/Library/Application Support``; Windows uses ``%APPDATA%`` (default
     ``~/AppData/Roaming``). Module-level + stdlib-only for layer-0 purity.
+
+    Returns:
+        The OS-native user config root for per-namespace configuration.
+
     """
     if sys.platform == "darwin":
         return Path.home() / "Library" / "Application Support"
@@ -133,6 +145,10 @@ def _platform_state_root() -> Path:
     Linux/BSD honour ``XDG_STATE_HOME`` (default ``~/.local/state``); macOS uses
     ``~/Library/Application Support``; Windows uses ``%LOCALAPPDATA%`` (default
     ``~/AppData/Local``). Module-level + stdlib-only for layer-0 purity.
+
+    Returns:
+        The OS-native user state root for per-namespace state.
+
     """
     if sys.platform == "darwin":
         return Path.home() / "Library" / "Application Support"
@@ -148,7 +164,12 @@ def _platform_state_root() -> Path:
 
 
 def app_env_prefix(namespace: str) -> str:
-    """Return the environment prefix owned by one application namespace."""
+    """Return the environment prefix owned by one application namespace.
+
+    Returns:
+        The environment prefix owned by one application namespace.
+
+    """
     normalized = "".join(char if char.isalnum() else "_" for char in namespace)
     return f"{normalized.upper()}_"
 
@@ -252,7 +273,12 @@ class FlextSettings(BaseSettings):
 
     @classmethod
     def _initialized_instance(cls) -> Self | None:
-        """Return the cached singleton only after Pydantic finished init."""
+        """Return the cached singleton only after Pydantic finished init.
+
+        Returns:
+            The cached singleton only after Pydantic finished init.
+
+        """
         existing = cls._instance
         if isinstance(existing, cls) and hasattr(existing, "__pydantic_fields_set__"):
             return existing
@@ -280,6 +306,10 @@ class FlextSettings(BaseSettings):
 
         With ``overrides`` return an isolated clone; the singleton is not
         mutated (use ``update_global`` for that).
+
+        Returns:
+            The shared per-class singleton (lazy, thread-safe).
+
         """
         instance = cls._initialized_instance()
         if overrides:
@@ -398,6 +428,10 @@ class FlextSettings(BaseSettings):
         This is the default identity when no application registered one, so a
         standalone project (e.g. ``ai-hub``) transparently owns its own
         directories without being forced to call ``set_app_namespace``.
+
+        Returns:
+            The owning project's own namespace, derived from ``env_prefix``.
+
         """
         env_prefix = (
             cls.model_config.get("env_prefix") or FlextConstantsEnvironment.ENV_PREFIX
@@ -413,6 +447,10 @@ class FlextSettings(BaseSettings):
         ``FLEXT_APP_NAMESPACE`` environment override; otherwise the owning
         project's own namespace prevails as the default (registration is never
         mandatory).
+
+        Returns:
+            The effective namespace.
+
         """
         registered = FlextSettings._app_namespace or os.environ.get(
             "FLEXT_APP_NAMESPACE",
