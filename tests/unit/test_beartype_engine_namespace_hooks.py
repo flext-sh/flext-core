@@ -21,6 +21,7 @@ from flext_tests import tm
 
 from tests.protocols import p
 from tests.typings import t
+from tests.unit._beartype_engine_support import TestsFlextBeartypeEngine
 from tests.utilities import u
 
 

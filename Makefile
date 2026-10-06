@@ -313,6 +313,13 @@ caller_mise_github_token="$${MISE_GITHUB_TOKEN:-}"; \
 caller_mise_http_timeout="$${MISE_HTTP_TIMEOUT:-}"; \
 caller_flext_mypy_profile_output="$${FLEXT_MYPY_PROFILE_OUTPUT:-}"; \
 caller_mise_version="$${MISE_VERSION:-}"; \
+if [ -z "$$caller_github_token" ] && command -v gh >/dev/null 2>&1; then \
+		caller_github_token="$$(gh auth token)" \
+			|| { printf 'ERROR: the selected GitHub credential source failed: %s\n' 'gh auth token' >&2; exit 2; }; \
+		if [ -z "$$caller_github_token" ]; then \
+			printf 'ERROR: the selected GitHub credential source printed nothing: %s\n' 'gh auth token' >&2; exit 2; \
+		fi; \
+	fi; \
 mise_pin_file="$(MISE_VERSION_PIN)"; \
 	mise_pin=; \
 	if [ -f "$$mise_pin_file" ]; then \
@@ -575,6 +582,13 @@ caller_mise_github_token="$${MISE_GITHUB_TOKEN:-}"; \
 caller_mise_http_timeout="$${MISE_HTTP_TIMEOUT:-}"; \
 caller_flext_mypy_profile_output="$${FLEXT_MYPY_PROFILE_OUTPUT:-}"; \
 caller_mise_version="$${MISE_VERSION:-}"; \
+if [ -z "$$caller_github_token" ] && command -v gh >/dev/null 2>&1; then \
+		caller_github_token="$$(gh auth token)" \
+			|| { printf 'ERROR: the selected GitHub credential source failed: %s\n' 'gh auth token' >&2; exit 2; }; \
+		if [ -z "$$caller_github_token" ]; then \
+			printf 'ERROR: the selected GitHub credential source printed nothing: %s\n' 'gh auth token' >&2; exit 2; \
+		fi; \
+	fi; \
 mise_pin_file="$(MISE_VERSION_PIN)"; \
 	mise_pin=; \
 	if [ -f "$$mise_pin_file" ]; then \
@@ -2316,7 +2330,6 @@ _builtin_sonarcloud_sync_all: _builtin_require_environment
 # branch. This diagnostic never writes SonarCloud settings or issue state.
 _builtin_sonarcloud_issues_all: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) maintenance sonarcloud-issues --repository-root "$(PROJECT_ROOT)"
-
 
 _builtin_run_default: _builtin_require_environment
 	@$(UV_RUN) $(PROJECT_NAME) $(ARGS)
