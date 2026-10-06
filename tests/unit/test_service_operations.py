@@ -118,7 +118,8 @@ class TestsFlextCoreServiceOperations:
     class ReadSide(s[bool]):
         """Sibling declaring ``run``."""
 
-        def run(self) -> p.Result[bool]:
+        @staticmethod
+        def run() -> p.Result[bool]:
             """Run the read side.
 
             Returns:
