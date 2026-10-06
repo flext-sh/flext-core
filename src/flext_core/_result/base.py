@@ -6,23 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from typing import TypeVar, cast
+from typing import cast
 
 from pydantic import BaseModel, PrivateAttr
 
 from flext_core import c
-from flext_core._protocols.result import FlextProtocolsResult as prt
 from flext_core._typings.base import FlextTypingBase as t
-from flext_core._typings.pydantic import FlextTypesPydantic as tp
 from flext_core._typings.services import FlextTypesServices as ts
-
-type JsonMapping = Mapping[str, tp.JsonValue]
-type JsonDict = dict[str, tp.JsonValue]
-type ConfigModelInput = prt.HasModelDump | JsonMapping
-
-
-T = TypeVar("T")
+from flext_core.typings import ConfigModelInput, JsonDict, JsonMapping, T
 
 
 class FlextResultBase[T](BaseModel):
