@@ -50,7 +50,10 @@ class FlextModelsBase(FlextModelsBasePart01):
         created_at: Annotated[
             datetime,
             mp.Field(
-                description="Timestamp when the metadata record was first created (configured timezone).",
+                description=(
+                    "Timestamp when the metadata record was first created (configured "
+                    "timezone)."
+                ),
                 title="Created At",
                 examples=["2026-03-03T10:00:00+00:00"],
             ),
@@ -58,7 +61,10 @@ class FlextModelsBase(FlextModelsBasePart01):
         updated_at: Annotated[
             datetime,
             mp.Field(
-                description="Timestamp of the most recent metadata update (configured timezone).",
+                description=(
+                    "Timestamp of the most recent metadata update (configured "
+                    "timezone)."
+                ),
                 title="Updated At",
                 examples=["2026-03-03T10:05:00+00:00"],
             ),
@@ -67,7 +73,9 @@ class FlextModelsBase(FlextModelsBasePart01):
             str,
             mp.Field(
                 default=cpm.METADATA_SCHEMA_VERSION_DEFAULT,
-                description="Semantic version string representing the metadata schema revision.",
+                description=(
+                    "Semantic version string representing the metadata schema revision."
+                ),
                 title="Metadata Version",
                 examples=["1.0.0", "1.2.3"],
             ),
@@ -76,7 +84,9 @@ class FlextModelsBase(FlextModelsBasePart01):
             str | None,
             mp.Field(
                 default=None,
-                description="Identifier of the actor that originally created this metadata.",
+                description=(
+                    "Identifier of the actor that originally created this metadata."
+                ),
                 title="Created By",
                 examples=["system", "user-123"],
             ),
@@ -93,7 +103,9 @@ class FlextModelsBase(FlextModelsBasePart01):
         tags: Annotated[
             t.StrSequence,
             mp.Field(
-                description="Normalized labels used to classify and filter this metadata.",
+                description=(
+                    "Normalized labels used to classify and filter this metadata."
+                ),
                 title="Tags",
                 examples=[["billing", "critical"]],
             ),

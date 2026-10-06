@@ -50,7 +50,9 @@ class FlextModelsRegistry:
         registered: Annotated[
             MutableSequence[FlextModelsHandler.RegistrationDetails],
             FlextModelsPydantic.Field(
-                description="Successfully registered handlers with registration details.",
+                description=(
+                    "Successfully registered handlers with registration details."
+                ),
             ),
         ] = FlextModelsPydantic.Field(
             default_factory=list[FlextModelsHandler.RegistrationDetails],
@@ -58,7 +60,9 @@ class FlextModelsRegistry:
         skipped: Annotated[
             t.StrSequence,
             FlextModelsPydantic.Field(
-                description="Handler identifiers that were skipped (already registered)",
+                description=(
+                    "Handler identifiers that were skipped (already registered)"
+                ),
                 examples=[["CreateUserCommand", "UpdateUserCommand"]],
             ),
         ] = FlextModelsPydantic.Field(default_factory=tuple)

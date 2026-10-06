@@ -62,7 +62,9 @@ class FlextModelsService:
             FlextModelsPydantic.Field(
                 None,
                 exclude=True,
-                description="Pre-built settings instance used directly for the runtime.",
+                description=(
+                    "Pre-built settings instance used directly for the runtime."
+                ),
             )
         )
         settings_type: Annotated[
@@ -75,7 +77,9 @@ class FlextModelsService:
         )
         settings_overrides: t.ScalarMapping | None = FlextModelsPydantic.Field(
             None,
-            description="Key-value overrides applied on top of the loaded configuration.",
+            description=(
+                "Key-value overrides applied on top of the loaded configuration."
+            ),
         )
         context: FlextTypesPydantic.Port[p.Context | None] = FlextModelsPydantic.Field(
             None,

@@ -63,7 +63,10 @@ class FlextModelsContextScope:
                 ),
             ),
             FlextModelsPydantic.Field(
-                description="Additional metric counters and timing values grouped by metric key.",
+                description=(
+                    "Additional metric counters and timing values grouped by metric "
+                    "key."
+                ),
             ),
         ] = FlextModelsPydantic.Field(
             default_factory=lambda: MappingProxyType[str, t.JsonValue]({}),

@@ -71,19 +71,25 @@ class ExamplesFlextModelsEx04:
         command_type: Annotated[
             t.NonEmptyStr,
             m.Field(
-                description="Command type identifier for deliberately failing delete operation",
+                description=(
+                    "Command type identifier for deliberately failing delete operation"
+                ),
             ),
         ] = "ex04_failing_delete"
         query_type: Annotated[
             str,
             m.Field(
-                description="Query type placeholder for deliberately failing delete operation",
+                description=(
+                    "Query type placeholder for deliberately failing delete operation"
+                ),
             ),
         ] = ""
         event_type: Annotated[
             str,
             m.Field(
-                description="Event type placeholder for deliberately failing delete operation",
+                description=(
+                    "Event type placeholder for deliberately failing delete operation"
+                ),
             ),
         ] = "ex04_failing_delete_event"
         username: Annotated[

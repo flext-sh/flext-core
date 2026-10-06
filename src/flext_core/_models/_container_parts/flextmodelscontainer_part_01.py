@@ -48,7 +48,9 @@ class FlextModelsContainer:
         registration_time: Annotated[
             datetime,
             FlextModelsPydantic.Field(
-                description="Timestamp when service was registered (configured timezone)",
+                description=(
+                    "Timestamp when service was registered (configured timezone)"
+                ),
             ),
         ] = FlextModelsPydantic.Field(default_factory=FlextUtilitiesGenerators.now)
         metadata: Annotated[
@@ -108,7 +110,9 @@ class FlextModelsContainer:
         registration_time: Annotated[
             datetime,
             FlextModelsPydantic.Field(
-                description="Timestamp when factory was registered (configured timezone)",
+                description=(
+                    "Timestamp when factory was registered (configured timezone)"
+                ),
             ),
         ] = FlextModelsPydantic.Field(default_factory=FlextUtilitiesGenerators.now)
         metadata: Annotated[

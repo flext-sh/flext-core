@@ -30,7 +30,9 @@ class FlextModelsCqrs:
         model_config: ClassVar[ConfigDict] = ConfigDict(
             json_schema_extra={
                 "title": "Pagination",
-                "description": "Pagination model for query results with computed fields",
+                "description": (
+                    "Pagination model for query results with computed fields"
+                ),
             },
         )
         page: Annotated[
