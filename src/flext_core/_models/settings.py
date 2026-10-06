@@ -1,7 +1,8 @@
 """Settings patterns extracted from FlextModels.
 
 This module contains the FlextModelsSettings class with all settings-related patterns
-as nested classes. It should NOT be imported directly - use FlextModels.Settings instead.
+as nested classes. It should NOT be imported directly - use
+FlextModels.Settings instead.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

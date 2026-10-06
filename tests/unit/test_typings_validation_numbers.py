@@ -24,7 +24,10 @@ class TestsFlextCoreTypingsValidationNumbers:
     """Public validation behavior of constrained scalar typings."""
 
     class TestsFlextCoreTypingsStrippedStr:
-        """Public contract of t.StrippedStr: strip surrounding whitespace, reject blank."""
+        """Public contract of ``t.StrippedStr``.
+
+        Strips surrounding whitespace, rejects blank.
+        """
 
         @pytest.mark.parametrize(
             ("value", "expected"),

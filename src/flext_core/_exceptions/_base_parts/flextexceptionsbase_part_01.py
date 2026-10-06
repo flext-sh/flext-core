@@ -66,7 +66,8 @@ class FlextBaseErrorMetadataMixin:
                 ) = None
                 if isinstance(metadata, (Mapping, FlextProtocolsResult.HasModelDump)):
                     try:
-                        metadata_dict = FlextRuntimeMetadataValidation.normalize_metadata_input_mapping(
+                        validation = FlextRuntimeMetadataValidation
+                        metadata_dict = validation.normalize_metadata_input_mapping(
                             metadata,
                         )
                     except c.EXC_PYDANTIC_TYPE_VALUE:

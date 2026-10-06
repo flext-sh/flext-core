@@ -6,17 +6,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._models._project_metadata_parts import (
-    FlextModelsProjectMetadataContract,
-    FlextModelsPyprojectIngressContract,
-)
-
 from pathlib import PurePosixPath, PureWindowsPath
 from typing import Annotated, Self
 
 from pydantic import AliasChoices, Field, field_validator, model_validator
 
 from flext_core._constants.regex import FlextConstantsRegex
+from flext_core._models._project_metadata_parts import (
+    FlextModelsProjectMetadataContract,
+    FlextModelsPyprojectIngressContract,
+)
 from flext_core._typings.base import FlextTypingBase
 
 

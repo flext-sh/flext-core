@@ -46,10 +46,11 @@ class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
         """Test callable returning result is passed through."""
 
         def result_handler(message: t.Scalar) -> t.Scalar:
+            payload = message.decode() if isinstance(message, bytes) else message
             return (
                 r[t.Scalar]
                 .ok(
-                    f"result_{message.decode() if isinstance(message, bytes) else message}",
+                    f"result_{payload}",
                 )
                 .value
             )

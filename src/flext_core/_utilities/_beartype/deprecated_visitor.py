@@ -38,6 +38,9 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
 
         """
         shape = params.ast_shape
+        h = FlextUtilitiesBeartypeHelpers
+        cst = FlextConstantsEnforcement
+        crx = FlextConstantsRegex
         module = FlextUtilitiesBeartypeHelpers.runtime_module_for(target)
         if module is None:
             return _NO_VIOLATION
@@ -60,8 +63,7 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                     violation = {"file": file_name, "line": "?"}
             case "cast_outside_core":
                 if not any(
-                    marker in src_file
-                    for marker in FlextConstantsEnforcement.ENFORCE_FLEXT_CORE_PATH_MARKERS
+                    marker in src_file for marker in cst.ENFORCE_FLEXT_CORE_PATH_MARKERS
                 ):
                     cast_target = (
                         FlextConstantsEnforcement.EnforceAstHookSymbol.CAST_CALL.value
@@ -69,7 +71,7 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                     violation = next(
                         (
                             {"file": file_name, "line": str(fn.__code__.co_firstlineno)}
-                            for fn in FlextUtilitiesBeartypeHelpers.iter_module_callables(
+                            for fn in h.iter_module_callables(
                                 module,
                             )
                             if FlextUtilitiesBeartypeHelpers.has_call_to_global(
@@ -98,7 +100,7 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                                 "file": wrapper_file_name,
                                 "line": "<runtime>",
                             }
-                            for alias_name in FlextUtilitiesBeartypeHelpers.runtime_alias_names(
+                            for alias_name in h.runtime_alias_names(
                                 wrapper_module.__name__.split(".", 1)[0],
                             )
                             if (
@@ -149,7 +151,7 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                                         f"import {first_alias}"
                                     ),
                                 }
-                                for match in FlextConstantsRegex.FORBIDDEN_FACADE_IMPORT_RE.finditer(
+                                for match in crx.FORBIDDEN_FACADE_IMPORT_RE.finditer(
                                     source,
                                 )
                                 for first_alias in (
@@ -170,7 +172,7 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                                     "line": "<runtime>",
                                     "statement": f"from {origin} import {alias_name}",
                                 }
-                                for alias_name in FlextUtilitiesBeartypeHelpers.runtime_alias_names(
+                                for alias_name in h.runtime_alias_names(
                                     package_name,
                                 )
                                 if (
@@ -182,8 +184,7 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                                 )
                                 is not None
                                 and (
-                                    origin
-                                    := FlextUtilitiesBeartypeHelpers.object_module_name_for(
+                                    origin := h.object_module_name_for(
                                         alias_value,
                                     )
                                     or ""

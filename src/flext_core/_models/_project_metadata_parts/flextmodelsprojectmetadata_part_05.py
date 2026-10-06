@@ -6,12 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 from flext_core._models._project_metadata_parts import (
     FlextModelsProjectMetadataContract,
 )
-
-from typing import ClassVar
-
 from flext_core._models.pydantic import FlextModelsPydantic
 
 

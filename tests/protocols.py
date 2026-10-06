@@ -5,7 +5,8 @@ protocols. All generic test protocols come from flext_tests.
 
 Architecture:
 - TestsFlextProtocols (flext_tests) = Generic protocols for all FLEXT projects
-- TestsFlextProtocols (tests/) = flext-core-specific protocols extending TestsFlextProtocols
+- TestsFlextProtocols (tests/) = flext-core-specific protocols
+  extending TestsFlextProtocols
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

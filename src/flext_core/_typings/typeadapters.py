@@ -27,7 +27,10 @@ from flext_core._typings.services import FlextTypesServices
 
 
 class FlextTypesTypeAdapters:
-    """Cached FlextTypesPydantic.TypeAdapter factories shared through the ``FlextTypingBase`` facade."""
+    """Cached ``FlextTypesPydantic.TypeAdapter`` factories.
+
+    Shared through the ``FlextTypingBase`` facade.
+    """
 
     @classmethod
     @cache

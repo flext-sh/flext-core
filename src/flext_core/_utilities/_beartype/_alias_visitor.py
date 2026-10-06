@@ -44,10 +44,11 @@ class FlextUtilitiesBeartypeAliasVisitor:
                 filename in FlextConstantsEnforcement.ENFORCEMENT_CANONICAL_FILES
             ):
                 target_name = target.__name__
+                h = FlextUtilitiesBeartypeHelpers
                 alias_char: str | None = next(
                     (
                         alias_name
-                        for alias_name, _, suffix in FlextUtilitiesBeartypeHelpers.lazy_alias_suffixes(
+                        for alias_name, _, suffix in h.lazy_alias_suffixes(
                             package,
                         )
                         if suffix in target_name
@@ -70,7 +71,7 @@ class FlextUtilitiesBeartypeAliasVisitor:
                 violation = next(
                     (
                         {"package": package, "alias": alias_char}
-                        for alias_char in FlextUtilitiesBeartypeHelpers.runtime_alias_names(
+                        for alias_char in h.runtime_alias_names(
                             package,
                         )
                         if (alias_value := getattr(module, alias_char, None))

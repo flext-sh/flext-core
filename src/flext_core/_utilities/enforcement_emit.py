@@ -49,12 +49,13 @@ class FlextUtilitiesEnforcementEmit:
                 .read_text(encoding="utf-8"),
             )
             fix_actions = FlextConstantsEnforcement.ENFORCEMENT_FIX_ACTIONS
+            fix_action_type = FlextModelsEnforcement.EnforcementFixAction
             cls._canonical_catalog = catalog.model_copy(
                 update={
                     "rules": tuple(
                         rule.model_copy(
                             update={
-                                "fix_action": FlextModelsEnforcement.EnforcementFixAction.model_validate(
+                                "fix_action": fix_action_type.model_validate(
                                     fix_actions[rule.id],
                                 ),
                             },
@@ -179,11 +180,12 @@ class FlextUtilitiesEnforcementEmit:
                 f"\n{v.qualname} violates FLEXT {v.layer} {v.severity}:\n  - "
                 f"{v.message}\n\nFix: {fix_note}"
             )
+            rules_by_tag = FlextUtilitiesEnforcementEmit.rules_by_tag()
             category = (
                 FlextConstantsEnforcement.FlextSmellViolation
                 if any(
                     rule.id == v.rule_id
-                    for tag, rule in FlextUtilitiesEnforcementEmit.rules_by_tag().items()
+                    for tag, rule in rules_by_tag.items()
                     if tag in FlextConstantsEnforcement.ENFORCEMENT_SMELL_TAGS
                 )
                 else FlextMroViolation

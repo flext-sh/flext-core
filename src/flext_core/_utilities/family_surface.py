@@ -152,7 +152,8 @@ class FlextUtilitiesFamilySurface:
             msg = (
                 "family-surface derivation found no distribution publishing "
                 "the lazy export contract under prefix "
-                f"{FlextConstantsEnforcement.NAMESPACE_FAMILY_PREFIX!r} or a requirement edge to it"
+                f"{FlextConstantsEnforcement.NAMESPACE_FAMILY_PREFIX!r} or a "
+                "requirement edge to it"
             )
             raise RuntimeError(msg)
         return tuple(snapshot)

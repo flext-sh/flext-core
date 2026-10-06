@@ -115,7 +115,10 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         alias_renames: FlextTypingBase.StrMapping = Field(default_factory=dict)
 
     class LibraryImportParams(FlextModelsEnforcementModelBase):
-        """Parameters for LIBRARY_IMPORT predicate (owners: c.ENFORCEMENT_LIBRARY_OWNERS)."""
+        """Parameters for the LIBRARY_IMPORT predicate.
+
+        Owners: ``c.ENFORCEMENT_LIBRARY_OWNERS``.
+        """
 
         kind: Literal["library_import"] = "library_import"
 
@@ -154,7 +157,10 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
 
         kind: Literal["classvar_constant"] = "classvar_constant"
         detect_implicit_constants: bool = True
-        """Also flag UPPER_CASE attributes that look like constants but lack ClassVar."""
+        """Also flag UPPER_CASE attributes that look like constants.
+
+        Flagged when they lack ``ClassVar``.
+        """
 
     class ProtocolTreeParams(FlextModelsEnforcementModelBase):
         """Parameters for PROTOCOL_TREE predicate."""

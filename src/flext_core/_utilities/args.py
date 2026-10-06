@@ -28,10 +28,12 @@ class FlextUtilitiesArgs:
         Args:
             kwargs: Dictionary of arguments.
             model_cls: BaseModel subclass to populate.
-            allow_empty: If true, empty kwargs will validate empty model instances successfully.
+            allow_empty: If true, empty kwargs will validate empty model
+                instances successfully.
 
         Returns:
-            Result containing hydrated model, or detailed string of failed validation fields.
+            Result containing hydrated model, or detailed string of failed
+            validation fields.
 
         """
         if not kwargs and allow_empty:

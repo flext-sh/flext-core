@@ -10,16 +10,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import Annotated
+
+from pydantic import Field
+
 from flext_core._models._project_metadata_parts import (
     FlextModelsProjectMetadataAggregates,
     FlextModelsProjectMetadataDocument,
     FlextModelsPyprojectIngressContract,
 )
-
-from typing import Annotated
-
-from pydantic import Field
-
 
 
 class FlextModelsProjectMetadata(FlextModelsProjectMetadataDocument):

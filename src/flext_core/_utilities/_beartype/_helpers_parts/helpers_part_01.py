@@ -91,9 +91,10 @@ class FlextUtilitiesBeartypeHelpers:
             Local facade module names derived from generated lazy exports.
 
         """
+        h = FlextUtilitiesBeartypeHelpers
         return frozenset(
             module_path.rsplit(".", 1)[-1]
-            for _, module_path, suffix in FlextUtilitiesBeartypeHelpers.lazy_alias_suffixes(
+            for _, module_path, suffix in h.lazy_alias_suffixes(
                 package_name,
             )
             if module_path.split(".", 1)[0] == package_name
@@ -115,9 +116,10 @@ class FlextUtilitiesBeartypeHelpers:
         package_name = target.__module__.split(".", 1)[0]
         if package_name not in FlextUtilitiesFamilySurface.project_alias_owners():
             return False
+        h = FlextUtilitiesBeartypeHelpers
         return any(
             vars(sys.modules[module_path]).get(alias) is target
-            for alias, module_path, _ in FlextUtilitiesBeartypeHelpers.lazy_alias_suffixes(
+            for alias, module_path, _ in h.lazy_alias_suffixes(
                 package_name,
             )
             if module_path in sys.modules

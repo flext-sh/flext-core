@@ -82,7 +82,9 @@ class TestsFlextUtilitiesCaseServiceFactoriesMixin(
 
         @classmethod
         def build_batch(cls, size: int) -> t.SequenceOf[m.Tests.ServiceTestCase]:
-            """Build multiple m.Tests.ServiceTestCase instances with auto-generated values.
+            """Build multiple ``m.Tests.ServiceTestCase`` instances.
+
+            Values are auto-generated.
 
             Returns:
                 The resulting ``t.SequenceOf[m.Tests.ServiceTestCase]``.

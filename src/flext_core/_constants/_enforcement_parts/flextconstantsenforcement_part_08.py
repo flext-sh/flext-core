@@ -63,7 +63,9 @@ class FlextConstantsEnforcementFixActions:
                     {
                         "regex": r"\bprint\s*\(\s*(?P<args>[^)]*)\s*\)",
                         "replacement": r"u.fetch_logger(__name__).info(\g<args>)",
-                        "change_message": "Rewrote u.Cli.print() to u.fetch_logger(__name__).info()",
+                        "change_message": (
+                            "Rewrote u.Cli.print() to u.fetch_logger(__name__).info()"
+                        ),
                     },
                 ],
                 "required_alias": "u",
@@ -82,7 +84,10 @@ class FlextConstantsEnforcementFixActions:
                         "flags": ["MULTILINE"],
                     },
                     {
-                        "regex": r"^[ \t]*import\s+pdb\s*;\s*pdb\.set_trace\s*\(\s*\)\s*[;\n]",
+                        "regex": (
+                            r"^[ \t]*import\s+pdb\s*;\s*"
+                            r"pdb\.set_trace\s*\(\s*\)\s*[;\n]"
+                        ),
                         "replacement": "\n",
                         "change_message": "Removed debugger statement",
                         "flags": ["MULTILINE"],
@@ -161,7 +166,9 @@ class FlextConstantsEnforcementFixActions:
                     {
                         "regex": r"\btyping\s*\.\s*List\s*\[",
                         "replacement": "t.SequenceOf[",
-                        "change_message": "Rewrote typing.List[...] to t.SequenceOf[...]",
+                        "change_message": (
+                            "Rewrote typing.List[...] to t.SequenceOf[...]"
+                        ),
                     },
                 ],
                 "required_alias": "t",
@@ -187,12 +194,19 @@ class FlextConstantsEnforcementFixActions:
                     {
                         "regex": r"\bstructlog\s*\.\s*get_logger\s*\(\s*\)",
                         "replacement": "u.fetch_logger(__name__)",
-                        "change_message": "Rewrote structlog.get_logger() to u.fetch_logger(__name__)",
+                        "change_message": (
+                            "Rewrote structlog.get_logger() to u.fetch_logger(__name__)"
+                        ),
                     },
                     {
-                        "regex": r"\bstructlog\s*\.\s*get_logger\s*\(\s*['\"](?P<name>[^'\"]*)['\"]\s*\)",
+                        "regex": (
+                            r"\bstructlog\s*\.\s*get_logger\s*\("
+                            r"\s*['\"](?P<name>[^'\"]*)['\"]\s*\)"
+                        ),
                         "replacement": r'u.fetch_logger("\g<name>")',
-                        "change_message": "Rewrote structlog.get_logger(name) to u.fetch_logger(name)",
+                        "change_message": (
+                            "Rewrote structlog.get_logger(name) to u.fetch_logger(name)"
+                        ),
                     },
                 ],
                 "required_alias": "u",

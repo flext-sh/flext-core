@@ -135,10 +135,11 @@ class FlextUtilitiesBeartypeFieldVisitor:
                 FlextConstantsEnforcement.ENFORCEMENT_FORBIDDEN_COLLECTION_ORIGINS,
             )
             if bad:
+                cst = FlextConstantsEnforcement
                 replacement = next(
                     (
                         repl
-                        for key, repl in FlextConstantsEnforcement.ENFORCEMENT_FORBIDDEN_COLLECTIONS.items()
+                        for key, repl in cst.ENFORCEMENT_FORBIDDEN_COLLECTIONS.items()
                         if key.__name__ == origin
                     ),
                     origin,

@@ -89,7 +89,8 @@ class FlextExceptionsHelpers:
             except (PydanticValidationError, TypeError):
                 if isinstance(value, (Mapping, FlextProtocolsResult.HasModelDump)):
                     try:
-                        attrs_map = FlextRuntimeMetadataValidation.normalize_metadata_input_mapping(
+                        validation = FlextRuntimeMetadataValidation
+                        attrs_map = validation.normalize_metadata_input_mapping(
                             value,
                         )
                     except (

@@ -53,7 +53,7 @@ class FlextProtocolsService:
 
     @runtime_checkable
     class MixinsInfrastructure(Protocol):
-        """Structural protocol for the shared infrastructure provided by ``FlextMixins``.
+        """Structural protocol for shared ``FlextMixins`` infrastructure.
 
         ``FlextMixins`` (alias ``x``) is the base class for Service, Handler, and
         Registry. This protocol exposes its public runtime seeds and runtime-access
@@ -114,7 +114,7 @@ class FlextProtocolsService:
 
     @runtime_checkable
     class DispatchableService(Protocol):
-        """Structural protocol for dispatch-capable service objects in the DI container."""
+        """Structural protocol for dispatch-capable DI container services."""
 
         def dispatch(
             self,
