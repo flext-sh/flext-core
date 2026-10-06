@@ -1,4 +1,8 @@
-"""Example 04 settings models."""
+"""Example 04 settings models.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -9,7 +13,8 @@ class ExamplesSettings(FlextSettings):
     """Application settings model for settings examples."""
 
     api_timeout: float = u.Field(
-        default_factory=lambda: c.DEFAULT_TIMEOUT_SECONDS, gt=0
+        default_factory=lambda: c.DEFAULT_TIMEOUT_SECONDS,
+        gt=0,
     )
 
     service_name: str = u.Field(
@@ -17,5 +22,6 @@ class ExamplesSettings(FlextSettings):
         description="Service name for application",
     )
     feature_enabled: bool = u.Field(
-        default_factory=lambda: True, description="Feature enable flag"
+        default_factory=lambda: True,
+        description="Feature enable flag",
     )

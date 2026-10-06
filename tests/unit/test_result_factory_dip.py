@@ -3,6 +3,9 @@
 Pins ``from_result`` / ``from_failure``, runtime
 ``p.Result`` conformance, and ``flow_through`` normalization when a step returns
 a foreign result-like value.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -23,7 +26,8 @@ class _ForeignResult(m.ArbitraryTypesModel):
     error: str | None = m.Field(default=None, description="Failure message.")
     error_code: str | None = m.Field(default=None, description="Failure code.")
     error_data: t.JsonMapping | None = m.Field(
-        default=None, description="Failure metadata."
+        default=None,
+        description="Failure metadata.",
     )
     exception: Exception | None = m.Field(default=None, description="Failure cause.")
 
@@ -41,16 +45,23 @@ class _ForeignResult(m.ArbitraryTypesModel):
 class TestsFlextCoreResultFactoryDip:
     """Public factory and protocol contracts after the p.Result DIP refactor."""
 
-    def test_from_result_copies_success_payload(self) -> None:
+    @staticmethod
+    def test_from_result_copies_success_payload() -> None:
+        """Test from result copies success payload."""
         source: p.Result[str] = r[str].ok("payload")
         copied: p.Result[str] = r.from_result(source)
         tm.ok(copied, eq="payload")
         assert isinstance(copied, FlextResult)
 
-    def test_from_result_copies_failure_metadata(self) -> None:
+    @staticmethod
+    def test_from_result_copies_failure_metadata() -> None:
+        """Test from result copies failure metadata."""
         cause = ValueError("root")
         source: p.Result[str] = r[str].fail(
-            "broken", error_code="E_BROKEN", error_data={"k": "v"}, exception=cause
+            "broken",
+            error_code="E_BROKEN",
+            error_data={"k": "v"},
+            exception=cause,
         )
         copied: p.Result[str] = r.from_result(source)
         tm.fail(copied, has="broken")
@@ -58,10 +69,15 @@ class TestsFlextCoreResultFactoryDip:
         tm.that(copied.error_data, eq={"k": "v"})
         assert copied.exception is cause
 
-    def test_from_failure_rebuilds_failed_result(self) -> None:
+    @staticmethod
+    def test_from_failure_rebuilds_failed_result() -> None:
+        """Test from failure rebuilds failed result."""
         cause = RuntimeError("x")
         source: p.Result[int] = r[int].fail(
-            "nope", error_code="E_NOPE", error_data={"a": 1}, exception=cause
+            "nope",
+            error_code="E_NOPE",
+            error_data={"a": 1},
+            exception=cause,
         )
         rebuilt: p.Result[int] = r[int].from_failure(source)
         tm.fail(rebuilt, has="nope")
@@ -69,22 +85,30 @@ class TestsFlextCoreResultFactoryDip:
         tm.that(rebuilt.error_data, eq={"a": 1})
         assert rebuilt.exception is cause
 
-    def test_from_failure_rejects_successful_source(self) -> None:
+    @staticmethod
+    def test_from_failure_rejects_successful_source() -> None:
+        """Test from failure rejects successful source."""
         with pytest.raises(ValueError, match="successful result"):
             _ = r[int].from_failure(r[int].ok(1))
 
-    def test_from_result_preserves_success(self) -> None:
+    @staticmethod
+    def test_from_result_preserves_success() -> None:
+        """Test from result preserves success."""
         source: p.Result[int] = r[int].ok(9)
         copied: p.Result[int] = r.from_result(source)
         tm.ok(copied, eq=9)
 
-    def test_from_result_preserves_failure(self) -> None:
+    @staticmethod
+    def test_from_result_preserves_failure() -> None:
+        """Test from result preserves failure."""
         source: p.Result[int] = r[int].fail("copy-fail", error_code="E_COPY")
         copied: p.Result[int] = r.from_result(source)
         tm.fail(copied, has="copy-fail")
         tm.that(copied.error_code, eq="E_COPY")
 
-    def test_concrete_results_satisfy_result_protocol_at_runtime(self) -> None:
+    @staticmethod
+    def test_concrete_results_satisfy_result_protocol_at_runtime() -> None:
+        """Test concrete results satisfy result protocol at runtime."""
         ok_result: p.Result[str] = r[str].ok("value")
         fail_result: p.Result[str] = r[str].fail("boom")
         assert isinstance(ok_result, p.Result)
@@ -92,7 +116,10 @@ class TestsFlextCoreResultFactoryDip:
         assert isinstance(ok_result, p.SuccessCheckable)
         assert isinstance(fail_result, p.SuccessCheckable)
 
-    def test_flow_through_normalizes_foreign_success_onto_facade(self) -> None:
+    @staticmethod
+    def test_flow_through_normalizes_foreign_success_onto_facade() -> None:
+        """Test flow through normalizes foreign success onto facade."""
+
         def foreign_step(value: int) -> p.Result[int]:
             return cast("p.Result[int]", _ForeignResult(value=value + 1))
 
@@ -103,7 +130,10 @@ class TestsFlextCoreResultFactoryDip:
         tm.ok(final, eq=40)
         assert isinstance(final, FlextResult)
 
-    def test_flow_through_normalizes_foreign_failure_onto_facade(self) -> None:
+    @staticmethod
+    def test_flow_through_normalizes_foreign_failure_onto_facade() -> None:
+        """Test flow through normalizes foreign failure onto facade."""
+
         def foreign_fail(_value: int) -> p.Result[int]:
             return cast(
                 "p.Result[int]",
@@ -118,7 +148,9 @@ class TestsFlextCoreResultFactoryDip:
         tm.that(final.error_code, eq="E_FOREIGN")
         assert isinstance(final, FlextResult)
 
-    def test_empty_fail_combinators_stay_failed_results(self) -> None:
+    @staticmethod
+    def test_empty_fail_combinators_stay_failed_results() -> None:
+        """Test empty fail combinators stay failed results."""
         for empty in (None, ""):
             source: p.Result[int] = r[int].fail(empty)
             mapped: p.Result[int] = source.map(lambda value: value + 1)
@@ -134,9 +166,13 @@ class TestsFlextCoreResultFactoryDip:
             assert isinstance(flat, FlextResult)
             assert isinstance(copied, FlextResult)
 
-    def test_from_failure_rebuilds_foreign_failure_like(self) -> None:
+    @staticmethod
+    def test_from_failure_rebuilds_foreign_failure_like() -> None:
+        """Test from failure rebuilds foreign failure like."""
         foreign = _ForeignResult(
-            error="foreign-fail", error_code="E_FOREIGN", error_data={"k": 1}
+            error="foreign-fail",
+            error_code="E_FOREIGN",
+            error_data={"k": 1},
         )
         rebuilt: p.Result[int] = r[int].from_failure(foreign)
         tm.fail(rebuilt, has="foreign-fail")
@@ -144,10 +180,14 @@ class TestsFlextCoreResultFactoryDip:
         tm.that(rebuilt.error_data, eq={"k": 1})
         assert isinstance(rebuilt, FlextResult)
 
-    def test_from_result_preserves_exception_identity_on_flext_result(self) -> None:
+    @staticmethod
+    def test_from_result_preserves_exception_identity_on_flext_result() -> None:
+        """Test from result preserves exception identity on flext result."""
         cause = RuntimeError("root-cause")
         source: p.Result[int] = r[int].fail(
-            "copy-exc", error_code="E_EXC", exception=cause
+            "copy-exc",
+            error_code="E_EXC",
+            exception=cause,
         )
         copied: p.Result[int] = r.from_result(source)
         tm.fail(copied, has="copy-exc")
@@ -155,7 +195,9 @@ class TestsFlextCoreResultFactoryDip:
         assert copied.exception is cause
         assert isinstance(copied, FlextResult)
 
-    def test_fail_from_exception_redacts_sensitive_error_data_keys(self) -> None:
+    @staticmethod
+    def test_fail_from_exception_redacts_sensitive_error_data_keys() -> None:
+        """Test fail from exception redacts sensitive error data keys."""
         exc = e.OperationError(
             "denied",
             context={"password": "s3cret", "host": "db.example", "token": "t0k"},
@@ -169,7 +211,9 @@ class TestsFlextCoreResultFactoryDip:
         assert "s3cret" not in str(result.error_data)
         assert "t0k" not in str(result.error_data)
 
-    def test_fail_op_wraps_exception_and_stays_concrete_result(self) -> None:
+    @staticmethod
+    def test_fail_op_wraps_exception_and_stays_concrete_result() -> None:
+        """Test fail op wraps exception and stays concrete result."""
         cause = RuntimeError("db down")
         failed: p.Result[int] = r[int].fail_op("connect", cause)
         tm.fail(failed, has="connect failed")
@@ -179,13 +223,18 @@ class TestsFlextCoreResultFactoryDip:
         assert r.failed_result(failed)
         assert not r.successful_result(failed)
 
-    def test_fail_op_with_string_reason_has_no_exception(self) -> None:
+    @staticmethod
+    def test_fail_op_with_string_reason_has_no_exception() -> None:
+        """Test fail op with string reason has no exception."""
         failed: p.Result[str] = r[str].fail_op("parse", "bad token")
         tm.fail(failed, has="parse failed: bad token")
         tm.that(failed.exception, eq=None)
         assert isinstance(failed, FlextResult)
 
-    def test_from_validation_ok_and_fail_paths(self) -> None:
+    @staticmethod
+    def test_from_validation_ok_and_fail_paths() -> None:
+        """Test from validation ok and fail paths."""
+
         class _Sample(m.StrictModel):
             name: str
 
@@ -201,7 +250,9 @@ class TestsFlextCoreResultFactoryDip:
         assert isinstance(bad, FlextResult)
         assert r.failed_result(bad)
 
-    def test_fail_explicit_error_data_redacts_sensitive_keys(self) -> None:
+    @staticmethod
+    def test_fail_explicit_error_data_redacts_sensitive_keys() -> None:
+        """Test fail explicit error data redacts sensitive keys."""
         result: p.Result[int] = r[int].fail(
             "denied",
             error_data={"password": "s3cret", "host": "db.example", "token": "t0k"},
@@ -212,9 +263,9 @@ class TestsFlextCoreResultFactoryDip:
         assert "password" not in result.error_data
         assert "token" not in result.error_data
 
-    def test_fail_explicit_error_data_wins_but_still_redacts_with_exception(
-        self,
-    ) -> None:
+    @staticmethod
+    def test_fail_explicit_error_data_wins_but_still_redacts_with_exception() -> None:
+        """Test fail explicit error data wins but still redacts with exception."""
         exc = e.OperationError("x", context={"password": "v" + "0" * 8, "host": "h"})
         result: p.Result[int] = r[int].fail(
             "denied",

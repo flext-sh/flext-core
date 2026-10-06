@@ -13,10 +13,9 @@ from __future__ import annotations
 from typing import Annotated
 
 from flext_core import p, t
-
-from .._typings.pydantic import FlextTypesPydantic as tp
-from .base import FlextModelsBase as m
-from .pydantic import FlextModelsPydantic as mp
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._typings.pydantic import FlextTypesPydantic as tp
 
 
 class FlextModelsService:
@@ -97,7 +96,7 @@ class FlextModelsService:
         name: str = mp.Field(description="Method name that implements the operation.")
         summary: str = mp.Field(description="First docstring line of the operation.")
         request: t.ModelClass[t.BaseModelType] | None = mp.Field(
-            description="Pydantic request model, or None for an input-less operation."
+            description="Pydantic request model, or None for an input-less operation.",
         )
 
 

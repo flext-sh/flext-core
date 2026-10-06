@@ -18,14 +18,8 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_tests import FlextTestsProtocols
 
 if TYPE_CHECKING:
-    from . import t
-    from ._models.mixins import (
-        TestsFlextModelsMixins,
-        TestsFlextModelsMixins as _Mixins,
-    )
-
-    AttrObject = _Mixins.AttrObject
-    BadMapping = _Mixins.BadMapping
+    from tests import t
+    from tests._models.mixins import TestsFlextFlextModelsMixins
 
 
 class TestsFlextProtocols(FlextTestsProtocols):
@@ -55,7 +49,11 @@ class TestsFlextProtocols(FlextTestsProtocols):
         class ExtractFieldCallable(Protocol):
             """Protocol for _extract_field_value callable."""
 
-            def __call__(self, item: AttrObject, field_name: str) -> t.JsonValue:
+            def __call__(
+                self,
+                item: TestsFlextFlextModelsMixins.TestsFlextModelsMixins.AttrObject,
+                field_name: str,
+            ) -> t.JsonValue:
                 """Extract one named field value from an attribute object."""
                 ...
 
@@ -65,8 +63,8 @@ class TestsFlextProtocols(FlextTestsProtocols):
 
             def __call__(
                 self,
-                data_or_items: TestsFlextModelsMixins.MaybeModel
-                | TestsFlextModelsMixins.PortModel
+                data_or_items: TestsFlextFlextModelsMixins.TestsFlextModelsMixins.MaybeModel
+                | TestsFlextFlextModelsMixins.TestsFlextModelsMixins.PortModel
                 | int,
                 key_or_index: int | str,
                 *,
@@ -80,9 +78,15 @@ class TestsFlextProtocols(FlextTestsProtocols):
             """Protocol for _extract_transform_options callable."""
 
             def __call__(
-                self, transform_opts: t.MappingKV[str, t.MapperInput]
+                self,
+                transform_opts: t.MappingKV[str, t.MapperInput],
             ) -> tuple[
-                bool, bool, bool, t.StrMapping | None, set[str] | None, set[str] | None
+                bool,
+                bool,
+                bool,
+                t.StrMapping | None,
+                set[str] | None,
+                set[str] | None,
             ]:
                 """Extract normalized transform options from mapper input."""
                 ...
@@ -92,7 +96,9 @@ class TestsFlextProtocols(FlextTestsProtocols):
             """Protocol for transform callable."""
 
             def __call__(
-                self, source: BadMapping, **kwargs: t.StrMapping
+                self,
+                source: TestsFlextFlextModelsMixins.TestsFlextModelsMixins.BadMapping,
+                **kwargs: t.StrMapping,
             ) -> p.Result[t.JsonMapping]:
                 """Transform one mapping source into a result mapping."""
                 ...
@@ -103,7 +109,7 @@ class TestsFlextProtocols(FlextTestsProtocols):
 
             def __call__(
                 self,
-                source: TestsFlextModelsMixins.BadItems,
+                source: TestsFlextFlextModelsMixins.TestsFlextModelsMixins.BadItems,
                 key_map: t.StrMapping,
                 *,
                 keep_unmapped: bool = True,

@@ -1,4 +1,8 @@
-"""Source-backed discovery shared by runtime module and alias inspection."""
+"""Source-backed discovery shared by runtime module and alias inspection.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -11,7 +15,7 @@ from collections.abc import Iterator
 from types import ModuleType
 from typing import TypeAliasType, runtime_checkable
 
-from ..._models.enforcement import FlextModelsEnforcement as me
+from flext_core._models.enforcement import FlextModelsEnforcement as me
 
 
 class FlextUtilitiesBeartypeModuleSource:
@@ -19,7 +23,12 @@ class FlextUtilitiesBeartypeModuleSource:
 
     @staticmethod
     def parse(module: ModuleType) -> ast.Module:
-        """Read the defining source without normalizing inspection failures."""
+        """Read the defining source without normalizing inspection failures.
+
+        Returns:
+            The resulting ``ast.Module``.
+
+        """
         return ast.parse(inspect.getsource(module), filename=inspect.getfile(module))
 
     @staticmethod
@@ -29,6 +38,13 @@ class FlextUtilitiesBeartypeModuleSource:
         Each decorator name or dotted path is resolved in the defining module's
         namespace, so ``runtime_checkable``, ``typing.runtime_checkable`` and any
         import alias of it are recognized by identity.
+
+        Returns:
+            The resulting ``bool``.
+
+        Raises:
+            TypeError: If Class source does not open with its declaration.
+
         """
         source = textwrap.dedent(inspect.getsource(target))
         declaration = ast.parse(source, filename=inspect.getfile(target)).body[0]
@@ -77,7 +93,8 @@ class FlextUtilitiesBeartypeModuleSource:
         for child in ast.iter_child_nodes(node):
             yield child
             if not isinstance(
-                child, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)
+                child,
+                (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda),
             ):
                 yield from cls._scope_nodes(child)
 
@@ -101,7 +118,12 @@ class FlextUtilitiesBeartypeModuleSource:
 
     @staticmethod
     def export_names(tree: ast.Module) -> frozenset[str]:
-        """Collect names a module publishes through ``__all__`` assignments."""
+        """Collect names a module publishes through ``__all__`` assignments.
+
+        Returns:
+            The resulting ``frozenset[str]``.
+
+        """
         exported: set[str] = set()
         for node in tree.body:
             if isinstance(node, ast.Assign):
@@ -126,7 +148,12 @@ class FlextUtilitiesBeartypeModuleSource:
 
     @staticmethod
     def loads(tree: ast.Module, name: str) -> bool:
-        """Prove ``name`` is consumed anywhere in the tree (Load context)."""
+        """Prove ``name`` is consumed anywhere in the tree (Load context).
+
+        Returns:
+            The resulting ``bool``.
+
+        """
         return any(
             isinstance(node, ast.Name)
             and node.id == name
@@ -142,6 +169,10 @@ class FlextUtilitiesBeartypeModuleSource:
         annotations, calls) and absent from ``__all__`` is a dependency of
         the module, never a backwards-compat export. Unreadable source
         fails closed so the alias stays flagged.
+
+        Returns:
+            The resulting ``bool``.
+
         """
         if tree is None:
             return False
@@ -152,6 +183,10 @@ class FlextUtilitiesBeartypeModuleSource:
         """Absolute root packages an import statement binds through.
 
         Relative imports carry no provable absolute root and fail closed.
+
+        Returns:
+            The resulting ``frozenset[str]``.
+
         """
         if isinstance(node, ast.ImportFrom):
             if node.level or node.module is None:
@@ -168,6 +203,10 @@ class FlextUtilitiesBeartypeModuleSource:
         project's own root prove facade provenance. Calls (dynamic
         imports), relative imports, and unreadable source fail closed, so
         direct and dynamic acquisition of an owned library keeps violating.
+
+        Returns:
+            The resulting ``bool``.
+
         """
         if tree is None:
             return False
@@ -208,7 +247,8 @@ class FlextUtilitiesBeartypeModuleSource:
 
     @classmethod
     def _guarded_imports(
-        cls, scopes: tuple[ast.Module | ast.ClassDef, ...]
+        cls,
+        scopes: tuple[ast.Module | ast.ClassDef, ...],
     ) -> set[str]:
         nodes = tuple(node for scope in scopes for node in cls._scope_nodes(scope))
         flag_imports = {
@@ -267,9 +307,21 @@ class FlextUtilitiesBeartypeModuleSource:
 
     @classmethod
     def deferred(
-        cls, alias: TypeAliasType, *, owner: ModuleType | type
+        cls,
+        alias: TypeAliasType,
+        *,
+        owner: ModuleType | type,
     ) -> me.DeferredAlias | None:
-        """Prove deferral from the explicitly supplied declaring owner."""
+        """Prove deferral from the explicitly supplied declaring owner.
+
+        Returns:
+            The resulting ``me.DeferredAlias | None``.
+
+        Raises:
+            ValueError: If Ambiguous type alias declaration; or if Ambiguous type alias
+                binding.
+
+        """
         if vars(owner).get(alias.__name__) is not alias:
             return None
         module_name = alias.__module__
@@ -318,7 +370,7 @@ class FlextUtilitiesBeartypeModuleSource:
             and node.id not in available
         }
         guarded = cls._guarded_imports((cls.parse(module),)) | cls._guarded_imports(
-            scopes
+            scopes,
         )
         if not missing or not missing <= guarded:
             return None

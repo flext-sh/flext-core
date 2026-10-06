@@ -1,4 +1,8 @@
-"""Enforcement enum constants for FlextConstantsEnforcement."""
+"""Enforcement enum constants for FlextConstantsEnforcement.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -45,13 +49,10 @@ class FlextConstantsEnforcementEnums:
     class EnforcementSourceKind(StrEnum):
         """Addressable origin layer for a catalog rule."""
 
-        FLEXT_INFRA_DETECTOR = "flext_infra_detector"
-        FLEXT_TESTS_VALIDATOR = "flext_tests_validator"
+        FLEXT_INFRA_RULE = "flext_infra_rule"
         RUNTIME_WARNING = "runtime_warning"
         BEARTYPE = "beartype"
         CODE_SMELL = "code_smell"
-        RUFF = "ruff"
-        SKILL_POINTER = "skill_pointer"
 
     @unique
     class EnforcementPredicateKind(StrEnum):
@@ -65,7 +66,6 @@ class FlextConstantsEnforcementEnums:
         DEPRECATED_SYNTAX = "deprecated_syntax"
         DUPLICATE_SYMBOL = "duplicate_symbol"
         FIELD_SHAPE = "field_shape"
-        FOREIGN_CANONICAL_ALIAS_IMPORT = "foreign_canonical_alias_import"
         IMPORT_BLACKLIST = "import_blacklist"
         LIBRARY_IMPORT = "library_import"
         LOC_CAP = "loc_cap"
@@ -75,7 +75,6 @@ class FlextConstantsEnforcementEnums:
         MODULE_ALIAS = "module_alias"
         MRO_SHAPE = "mro_shape"
         PROTOCOL_TREE = "protocol_tree"
-        WRAPPER = "wrapper"
 
 
 __all__ = ["FlextConstantsEnforcementEnums"]

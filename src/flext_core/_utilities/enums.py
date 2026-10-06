@@ -25,7 +25,12 @@ class FlextUtilitiesEnum:
 
     @staticmethod
     def enum_values[E: StrEnum](enum_cls: type[E]) -> frozenset[str]:
-        """Return frozenset of values (cached for performance)."""
+        """Return frozenset of values (cached for performance).
+
+        Returns:
+            Frozenset of values (cached for performance).
+
+        """
         if enum_cls in FlextUtilitiesEnum._values_cache:
             return FlextUtilitiesEnum._values_cache[enum_cls]
         members_dict: t.MappingKV[str, E] = enum_cls.__members__

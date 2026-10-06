@@ -12,54 +12,49 @@
 # Setup installs frozen from that lock and never re-resolves.
 
 # === SECTION: settings (managed) ===
-# Source: config:codegen.toolchain.mise_lockfile / mise_locked / mise_lockfile_platforms
+# Source: config:codegen.toolchain.mise_lockfile / mise_locked / mise_lockfile_platforms /
+#         dependency_cooldown_days (one fleet supply-chain cooldown, operator 2026-10-01)
 [settings]
+minimum_release_age = "7d"
 lockfile = true
 locked = true
 lockfile_platforms = ["linux-x64", "linux-x64-musl", "linux-arm64", "macos-x64", "macos-arm64", "windows-x64"]
+[settings.python]
+compile = false
 [settings.npm]
-# Aube replays the locked dependency graph. Only the configured ast-grep
-# package is approved below to run its native binary-selection lifecycle.
-package_manager = "aube"
+# bun installs the npm CLIs with the --trust lifecycle approval the inline
+# tool below declares; the lock keeps the top-level pin only.
+package_manager = "bun"
 [tool_config]
 locked = true
 # End SECTION: settings
 
 # === SECTION: tools (managed) ===
-# Source: config:python_version, config:codegen.scaffold.project.dev native toolchain floors
-#         (kubectl_version, helm_version, kind_version, taplo_version, ast_grep_selector/ast_grep_version,
-#          gitleaks_version, scc_selector/scc_version, kubeconform_version, qlty_selector/qlty_version,
-#          node_version, jscpd_selector/jscpd_version/jscpd_asset_patterns,
-#          prettier_selector/prettier_version, waza_selector/waza_version/waza_version_prefix,
-#          go_version, make_version)
+# Source: config:python_version + config:codegen.toolchain.tools entries
+#         (name, selector, version, version_prefix, form; entry order is the
+#         projection order, form fixes the rendered shape)
 [tools]
 python = "3.13"
+# Native toolchain (single source: Infra.codegen.toolchain.tools in codegen.yaml).
 uv = "latest"
-# Native toolchain (single source: Infra.codegen.toolchain in codegen.yaml).
 kubectl = "latest"
 helm = "latest"
 kind = "latest"
 direnv = "latest"
 taplo = "latest"
-"npm:@ast-grep/cli" = { version = "latest", allow_builds = ["@ast-grep/cli"] }
+"npm:@ast-grep/cli" = { version = "latest", bun_args = "--trust" }
 gitleaks = "latest"
 "aqua:boyter/scc" = "latest"
 kubeconform = "latest"
 node = "latest"
-"npm:prettier" = "3.5.3"
+bun = "latest"
+"npm:prettier" = "3.9.9"
 go = "latest"
 make = "latest"
 [tools."github:qltysh/qlty"]
-version = "0.642.0"
+version = "0.645.0"
 [tools."github:kucherenko/jscpd"]
-version = "latest"
-[tools."github:kucherenko/jscpd".platforms]
-linux-x64 = { asset_pattern = "jscpd-linux-x64-gnu.tar.gz" }
-linux-x64-musl = { asset_pattern = "jscpd-linux-x64-musl.tar.gz" }
-linux-arm64 = { asset_pattern = "jscpd-linux-arm64-gnu.tar.gz" }
-macos-x64 = { asset_pattern = "jscpd-darwin-x64.tar.gz" }
-macos-arm64 = { asset_pattern = "jscpd-darwin-arm64.tar.gz" }
-windows-x64 = { asset_pattern = "jscpd-windows-x64-msvc.tar.gz" }
+version = "5.3.2"
 [tools."github:microsoft/waza"]
 version = "latest"
 version_prefix = "v"

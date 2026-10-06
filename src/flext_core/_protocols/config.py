@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from .result import FlextProtocolsResult as pr
+from flext_core._protocols.result import FlextProtocolsResult as pr
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -33,7 +33,9 @@ class FlextProtocolsConfig:
             ...
 
         def config_merge(
-            self, base: t.JsonMapping, override: t.JsonMapping
+            self,
+            base: t.JsonMapping,
+            override: t.JsonMapping,
         ) -> t.JsonMapping:
             """Deep-merge ``override`` onto ``base``, returning a new mapping."""
             ...

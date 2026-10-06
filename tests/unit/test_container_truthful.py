@@ -3,6 +3,9 @@
 Every registration passes one write path: empty, duplicate and reserved names
 raise ``e.ValidationError``; the reserved core services stay private to the
 container, including in scopes; factory auto-registration never skips.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -33,8 +36,10 @@ class TestsFlextCoreContainerTruthful:
         _ = FlextContainer.shared(auto_register_factories=True)
 
     @pytest.mark.parametrize("name", sorted(c.CONTAINER_RESERVED_NAMES))
+    @staticmethod
     def test_public_writes_reject_reserved_names(
-        self, name: str, clean_container: p.Container
+        name: str,
+        clean_container: p.Container,
     ) -> None:
         """bind, factory and resource refuse every core runtime name."""
         factory = u.Tests.create_factory("value")
@@ -48,8 +53,9 @@ class TestsFlextCoreContainerTruthful:
         tm.ok(clean_container.resolve(name))
         tm.that(clean_container.has(name), eq=False)
 
+    @staticmethod
     def test_duplicate_is_rejected_across_registration_kinds(
-        self, clean_container: p.Container
+        clean_container: p.Container,
     ) -> None:
         """A name bound as a service cannot be reused by a factory or resource."""
         factory = u.Tests.create_factory("other")
@@ -62,19 +68,22 @@ class TestsFlextCoreContainerTruthful:
 
         tm.ok(clean_container.resolve("shared_name"), eq="service")
 
-    def test_resource_empty_name_raises(self, clean_container: p.Container) -> None:
+    @staticmethod
+    def test_resource_empty_name_raises(clean_container: p.Container) -> None:
         """An empty resource name raises instead of being ignored."""
         with pytest.raises(e.ValidationError, match=c.ERR_CONTAINER_NAME_EMPTY):
             _ = clean_container.resource("", u.Tests.create_factory("value"))
 
+    @staticmethod
     def test_drop_of_reserved_name_fails_and_keeps_core_service(
-        self, clean_container: p.Container
+        clean_container: p.Container,
     ) -> None:
         """Core services are not public, so drop reports them as not found."""
         tm.fail(clean_container.drop(c.ServiceName.LOGGER), has="logger")
         tm.ok(clean_container.resolve(c.ServiceName.LOGGER))
 
-    def test_scope_keeps_logger_internal(self, clean_container: p.Container) -> None:
+    @staticmethod
+    def test_scope_keeps_logger_internal(clean_container: p.Container) -> None:
         """Regression: a scope re-registers LOGGER as internal, never public."""
         _ = clean_container.bind("public", "value")
 
@@ -88,11 +97,13 @@ class TestsFlextCoreContainerTruthful:
             tm.that(isinstance(logger, p.Logger), eq=True)
             with pytest.raises(e.ValidationError, match="reserved"):
                 _ = container.factory(
-                    c.ServiceName.LOGGER, u.Tests.create_factory("value")
+                    c.ServiceName.LOGGER,
+                    u.Tests.create_factory("value"),
                 )
 
+    @staticmethod
     def test_scope_binds_core_services_to_its_own_runtime(
-        self, clean_container: p.Container
+        clean_container: p.Container,
     ) -> None:
         """The scoped settings and context services are the scope's own."""
         scoped = clean_container.scope(subproject="unit")
@@ -101,21 +112,23 @@ class TestsFlextCoreContainerTruthful:
         tm.that(tm.ok(scoped.resolve(c.FIELD_CONTEXT)) is scoped.context, eq=True)
         tm.that(scoped.settings is clean_container.settings, eq=False)
 
+    @staticmethod
     def test_scope_spec_overrides_inherited_registration(
-        self, clean_container: p.Container
+        clean_container: p.Container,
     ) -> None:
         """A scope declaration replaces the inherited value of the same name."""
         _ = clean_container.bind("mode", "parent")
 
         scoped = clean_container.scope(
-            registration=m.ServiceRegistrationSpec(services={"mode": "scoped"})
+            registration=m.ServiceRegistrationSpec(services={"mode": "scoped"}),
         )
 
         tm.ok(scoped.resolve("mode"), eq="scoped")
         tm.ok(clean_container.resolve("mode"), eq="parent")
 
     def test_auto_registration_without_imported_caller_raises(
-        self, clean_container: p.Container
+        self,
+        clean_container: p.Container,
     ) -> None:
         """A caller module absent from ``sys.modules`` is never skipped."""
         caller = types.FunctionType(
@@ -129,7 +142,8 @@ class TestsFlextCoreContainerTruthful:
         tm.that(clean_container.names(), empty=True)
 
     def test_auto_registration_registers_caller_module_factories(
-        self, clean_container: p.Container
+        self,
+        clean_container: p.Container,
     ) -> None:
         """Every ``@d.factory()`` function of the calling module is registered."""
         module = types.ModuleType("tests_auto_registration_caller")
@@ -140,7 +154,8 @@ class TestsFlextCoreContainerTruthful:
 
         module.__dict__.update(build=build, FlextContainer=FlextContainer)
         caller = types.FunctionType(
-            self._shared_with_auto_registration.__code__, module.__dict__
+            self._shared_with_auto_registration.__code__,
+            module.__dict__,
         )
         sys.modules[module.__name__] = module
         try:

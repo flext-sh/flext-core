@@ -8,11 +8,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-if TYPE_CHECKING:
-    from flext_core import p, t
-from .flextprotocolscontext_part_02 import (
+from flext_core._protocols._context_parts.flextprotocolscontext_part_02 import (
     FlextProtocolsContext as FlextProtocolsContextPart02,
 )
+
+if TYPE_CHECKING:
+    from flext_core import p, t
 
 
 class FlextProtocolsContext(FlextProtocolsContextPart02):

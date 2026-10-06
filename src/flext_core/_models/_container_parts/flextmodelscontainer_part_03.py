@@ -15,13 +15,12 @@ from __future__ import annotations
 from typing import Annotated, ClassVar
 
 from flext_core import p, t
-
-from ..base import FlextModelsBase as m
-from ..containers import FlextModelsContainers
-from ..pydantic import FlextModelsPydantic as mp
-from .flextmodelscontainer_part_02 import (
+from flext_core._models._container_parts.flextmodelscontainer_part_02 import (
     FlextModelsContainer as FlextModelsContainerPart02,
 )
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.containers import FlextModelsContainers
+from flext_core._models.pydantic import FlextModelsPydantic as mp
 
 
 class FlextModelsContainer(FlextModelsContainerPart02):
@@ -33,7 +32,8 @@ class FlextModelsContainer(FlextModelsContainerPart02):
         """
 
         model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            strict=True, arbitrary_types_allowed=True
+            strict=True,
+            arbitrary_types_allowed=True,
         )
 
         settings: Annotated[
@@ -82,7 +82,8 @@ class FlextModelsContainer(FlextModelsContainerPart02):
         user_overrides: (
             FlextModelsContainers.ConfigMap
             | t.MappingKV[
-                str, FlextModelsContainers.ConfigMap | t.ScalarList | t.Scalar
+                str,
+                FlextModelsContainers.ConfigMap | t.ScalarList | t.Scalar,
             ]
             | None
         ) = mp.Field(

@@ -4,6 +4,9 @@
 attributes (``__version__``, ``__version_info__``, ``__title__`` …) recomputed
 per subclass through MRO from the installed package metadata. Tests assert the
 observable attribute contract and its parity with the module-level exports.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -21,19 +24,25 @@ from tests.constants import c
 class TestsFlextCoreVersion:
     """Behavior contract for FlextVersion public attributes and module exports."""
 
-    def test_version_attribute_is_semver_formatted_string(self) -> None:
+    @staticmethod
+    def test_version_attribute_is_semver_formatted_string() -> None:
         """The public version is a non-empty semantic or PEP 440 version string."""
         tm.that(
-            FlextVersion.__version__, is_=str, empty=False, match=c.PATTERN_SEMVER_RE
+            FlextVersion.__version__,
+            is_=str,
+            empty=False,
+            match=c.PATTERN_SEMVER_RE,
         )
 
-    def test_version_info_is_non_empty_tuple_starting_with_major(self) -> None:
+    @staticmethod
+    def test_version_info_is_non_empty_tuple_starting_with_major() -> None:
         """Version info exposes a non-empty tuple beginning with the major number."""
         tm.that(FlextVersion.__version_info__, is_=tuple, len=3)
         for part in FlextVersion.__version_info__:
             tm.that(part, is_=int, gt=-1)
 
-    def test_version_string_and_info_describe_the_same_version(self) -> None:
+    @staticmethod
+    def test_version_string_and_info_describe_the_same_version() -> None:
         """String and tuple representations identify the same published version."""
         release = ".".join(str(part) for part in FlextVersion.__version_info__)
         tm.that(FlextVersion.__version__.startswith(release), eq=True)
@@ -50,8 +59,10 @@ class TestsFlextCoreVersion:
             "4!1.2.3rc4.post5.dev6+local.7",
         ],
     )
+    @staticmethod
     def test_subclass_version_info_is_the_release_triple(
-        self, version: str, tmp_path: Path
+        version: str,
+        tmp_path: Path,
     ) -> None:
         """Every supported qualifier preserves the integer release triple."""
         distribution_path = tmp_path / "flext_version_contract.dist-info"
@@ -74,8 +85,10 @@ class TestsFlextCoreVersion:
         tm.that(VersionContract.__version_info__, eq=(1, 2, 3))
 
     @pytest.mark.parametrize("version", ["1.2", "1.2.3.4", "1.2.3garbage"])
+    @staticmethod
     def test_subclass_rejects_non_semantic_release_metadata(
-        self, version: str, tmp_path: Path
+        version: str,
+        tmp_path: Path,
     ) -> None:
         """Metadata without major, minor, and patch components fails loudly."""
         distribution_path = tmp_path / "flext_version_contract.dist-info"
@@ -98,7 +111,8 @@ class TestsFlextCoreVersion:
                 {"_metadata": package_metadata},
             )
 
-    def test_metadata_attributes_are_populated_strings(self) -> None:
+    @staticmethod
+    def test_metadata_attributes_are_populated_strings() -> None:
         """Package metadata fields are populated and use the canonical title."""
         for value in (
             FlextVersion.__title__,
@@ -111,7 +125,8 @@ class TestsFlextCoreVersion:
         tm.that(FlextVersion.__title__, eq=c.Tests.CORE_PACKAGE_NAME)
         tm.that(FlextVersion.__version__, match=c.PATTERN_SEMVER_RE)
 
-    def test_module_level_exports_match_class_accessors(self) -> None:
+    @staticmethod
+    def test_module_level_exports_match_class_accessors() -> None:
         """Module exports preserve exact parity with the metadata facade."""
         tm.that(__version__, eq=FlextVersion.__version__)
         tm.that(__version_info__, eq=FlextVersion.__version_info__)

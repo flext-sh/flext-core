@@ -1,4 +1,8 @@
-"""Behavior contract for the public Pydantic facade exposed via ``u.*``."""
+"""Behavior contract for the public Pydantic facade exposed via ``u.*``.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -16,6 +20,8 @@ def _input_reader() -> Callable[[str], str]:
 
 
 class TestsFlextUtilitiesPydantic:
+    """Tests for ``FlextUtilitiesPydantic``."""
+
     class _PrivateAttrContract(FlextModels.BaseModel):
         label: str
         _model_values: list[str] = FlextModels.PrivateAttr(default_factory=list)
@@ -59,9 +65,12 @@ class TestsFlextUtilitiesPydantic:
             ("alan", "Alan"),
         ],
     )
+    @staticmethod
     def test_field_validator_normalizes_aliased_name(
-        self, raw_name: str, expected_name: str
+        raw_name: str,
+        expected_name: str,
     ) -> None:
+        """Test field validator normalizes aliased name."""
         payload = m.Tests.PublicPayload.model_validate({
             "rawName": raw_name,
             "visits": "3",
@@ -69,7 +78,9 @@ class TestsFlextUtilitiesPydantic:
 
         assert payload.raw_name == expected_name
 
-    def test_serialization_applies_alias_serializer_and_computed_field(self) -> None:
+    @staticmethod
+    def test_serialization_applies_alias_serializer_and_computed_field() -> None:
+        """Test serialization applies alias serializer and computed field."""
         payload = m.Tests.PublicPayload.model_validate({
             "rawName": "  ada lovelace ",
             "visits": "3",
@@ -81,7 +92,9 @@ class TestsFlextUtilitiesPydantic:
         assert payload_dump["visits"] == "3 visits"
         assert payload_dump["label"] == "Ada Lovelace:3"
 
-    def test_public_facade_supports_json_roundtrip(self) -> None:
+    @staticmethod
+    def test_public_facade_supports_json_roundtrip() -> None:
+        """Test public facade supports json roundtrip."""
         payload = m.Tests.PublicPayload.model_validate({
             "rawName": "  ada lovelace ",
             "visits": "3",
@@ -94,7 +107,10 @@ class TestsFlextUtilitiesPydantic:
         assert payload_dict == payload_dump
         assert payload_jsonable == payload.model_dump(mode="json", by_alias=True)
 
-    def test_validate_call_rejects_invalid_argument_values(self) -> None:
+    @staticmethod
+    def test_validate_call_rejects_invalid_argument_values() -> None:
+        """Test validate call rejects invalid argument values."""
+
         @u.validate_call
         def double_positive(value: t.PositiveInt) -> int:
             doubled: int = value * 2
@@ -104,9 +120,11 @@ class TestsFlextUtilitiesPydantic:
         with pytest.raises(m.ValidationError):
             double_positive(-1)
 
-    def test_public_facade_resolves_runtime_bootstrap_options_from_json(self) -> None:
+    @staticmethod
+    def test_public_facade_resolves_runtime_bootstrap_options_from_json() -> None:
+        """Test public facade resolves runtime bootstrap options from json."""
         runtime_options = m.RuntimeBootstrapOptions.model_validate_json(
-            u.to_json({"settings_overrides": {"dry_run": True}})
+            u.to_json({"settings_overrides": {"dry_run": True}}),
         )
 
         @u.validate_call
@@ -121,10 +139,12 @@ class TestsFlextUtilitiesPydantic:
         assert resolved.settings is None
         assert resolved.context is None
         assert resolved.model_dump(mode="json") == {
-            "settings_overrides": {"dry_run": True}
+            "settings_overrides": {"dry_run": True},
         }
 
-    def test_private_attr_factories_preserve_pydantic_instance_semantics(self) -> None:
+    @staticmethod
+    def test_private_attr_factories_preserve_pydantic_instance_semantics() -> None:
+        """Test private attr factories preserve pydantic instance semantics."""
         first = TestsFlextUtilitiesPydantic._PrivateAttrContract(label="first")
         second = TestsFlextUtilitiesPydantic._PrivateAttrContract(label="second")
 

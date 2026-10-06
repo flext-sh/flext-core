@@ -17,7 +17,7 @@ import threading
 from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
-    from .._models.enforcement import FlextModelsEnforcement as _me
+    from flext_core._models.enforcement import FlextModelsEnforcement as _me
 
 
 class FlextUtilitiesRuntimeViolationRegistry:
@@ -38,6 +38,10 @@ class FlextUtilitiesRuntimeViolationRegistry:
 
         Idempotent: a second call returns an empty tuple until new appends
         arrive.
+
+        Returns:
+            Every buffered report and reset the buffer atomically.
+
         """
         with cls._violation_lock:
             drained = tuple(cls._violation_buffer)

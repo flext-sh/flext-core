@@ -8,14 +8,19 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from ._typings.base import FlextTypingBase
-from ._typings.config import FlextTypingConfig
-from ._typings.containers import FlextTypingContainers
-from ._typings.core import FlextTypesCore
-from ._typings.lazy import FlextTypesLazy
-from ._typings.project_metadata import FlextTypingProjectMetadata
-from ._typings.services import FlextTypesServices
-from ._typings.typeadapters import FlextTypesTypeAdapters
+from collections.abc import Mapping
+from typing import TypeVar
+
+from flext_core._protocols.result import FlextProtocolsResult as prt
+from flext_core._typings.base import FlextTypingBase
+from flext_core._typings.config import FlextTypingConfig
+from flext_core._typings.containers import FlextTypingContainers
+from flext_core._typings.core import FlextTypesCore
+from flext_core._typings.lazy import FlextTypesLazy
+from flext_core._typings.project_metadata import FlextTypingProjectMetadata
+from flext_core._typings.pydantic import FlextTypesPydantic as tp
+from flext_core._typings.services import FlextTypesServices
+from flext_core._typings.typeadapters import FlextTypesTypeAdapters
 
 
 class FlextTypes(
@@ -37,5 +42,14 @@ class FlextTypes(
 
 
 t = FlextTypes
+
+
+type JsonMapping = Mapping[str, tp.JsonValue]
+
+type JsonDict = dict[str, tp.JsonValue]
+
+type ConfigModelInput = prt.HasModelDump | JsonMapping
+
+T = TypeVar("T")
 
 __all__: list[str] = ["FlextTypes", "t"]

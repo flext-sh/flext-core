@@ -9,11 +9,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_core import c, m, p
-
-from ..template import FlextExceptionsTemplate
-from .flextexceptionsfactories_part_01 import (
+from flext_core._exceptions._factories_parts.flextexceptionsfactories_part_01 import (
     FlextExceptionsFactories as FlextExceptionsFactoriesPart01,
 )
+from flext_core._exceptions.template import FlextExceptionsTemplate
 
 if TYPE_CHECKING:
     from flext_core import r
@@ -41,6 +40,9 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart01):
                 )
             )
 
+        Returns:
+            R[T].fail with a canonical type-mismatch message.
+
         """
         params = (
             details
@@ -53,7 +55,9 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart01):
             else c.DEFAULT_EMPTY_STRING
         )
         msg = FlextExceptionsTemplate.render_template(
-            c.ERR_SERVICE_TYPE_MISMATCH, type_name=expected_type, params=params
+            c.ERR_SERVICE_TYPE_MISMATCH,
+            type_name=expected_type,
+            params=params,
         )
         return FlextExceptionsFactories._fail_result(
             msg,
@@ -78,6 +82,9 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart01):
             return e.fail_validation(
                 m.ValidationErrorParams(field="config_key", value=raw_value), error=exc
             )
+
+        Returns:
+            R[T].fail with a canonical validation-failed message.
 
         """
         params = (
@@ -124,13 +131,19 @@ class FlextExceptionsFactories(FlextExceptionsFactoriesPart01):
 
             return e.fail_config_error("database.url", "env")
 
+        Returns:
+            R[T].fail with a canonical configuration-error message.
+
         """
         options, error = FlextExceptionsFactories._resolve_options(options)
         params = m.ConfigurationErrorParams(
-            config_key=config_key, config_source=config_source
+            config_key=config_key,
+            config_source=config_source,
         )
         msg = FlextExceptionsFactories._failure_message(
-            f"read config key {config_key!r}", params=params, error=error
+            f"read config key {config_key!r}",
+            params=params,
+            error=error,
         )
         return FlextExceptionsFactories._fail_result(
             msg,

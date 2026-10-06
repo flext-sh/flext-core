@@ -7,11 +7,12 @@
 name: CI
 
 # === SECTION: triggers (managed) ===
-# Source: operator CI policy — integration push/PR = blocking CI only;
+# Source: CI policy — integration push/PR = blocking CI only;
 # main push/PR (non-draft) = blocking CI; draft and other branches = none;
 # workflow_call changes no direct-run behavior and declares the optional
 # cross-repo dependency-credential secret contract in workflow scope.
 "on":
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -58,71 +59,13 @@ jobs:
     timeout-minutes: 60
     env:
       CI: Y
-      GITHUB_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
           submodules: false
+          persist-credentials: false
           fetch-depth: 0
-      # Cross-repo private git dependencies: the workflow token is scoped to
-      # this repository only, so it cannot clone siblings that turn private.
-      # Every declared sibling is public today and resolves anonymously; the
-      # credential exists for the private-sibling scenario. When the org
-      # installs its cross-repo dependency GitHub App and exposes
-      # CI_DEPENDENCIES_APP_ID / CI_DEPENDENCIES_APP_PRIVATE_KEY, mint a
-      # short-lived installation token and scope it to github.com clones.
-      # Absent secrets make this step a recorded NOT EXECUTED while the
-      # repository has not declared the credential requirement; a repository
-      # that declares the CI_DEPENDENCIES_REQUIRED repo variable fails the
-      # job non-zero with a typed message and without exposing any secret
-      # value (cosmos-1yzig: absence normalized as success is a defect).
-      - name: Mint cross-repo dependency credential
-        env:
-          CI_DEPS_APP_ID: ${{ secrets.CI_DEPENDENCIES_APP_ID }}
-          CI_DEPS_APP_KEY: ${{ secrets.CI_DEPENDENCIES_APP_PRIVATE_KEY }}
-          CI_DEPS_REQUIRED: '0'
-        run: |
-          set -euo pipefail
-          if [ -z "$CI_DEPS_APP_ID" ] || [ -z "$CI_DEPS_APP_KEY" ]; then
-            case "$CI_DEPS_REQUIRED" in
-              1 | true | TRUE | True | yes | YES | Yes)
-                echo "ERROR[CI_CREDENTIAL_REQUIRED]: CI_DEPENDENCIES_APP_ID/CI_DEPENDENCIES_APP_PRIVATE_KEY are declared required by this repository and are absent or empty" >&2
-                exit 1
-                ;;
-              *)
-                echo "NOT EXECUTED: CI_DEPENDENCIES_* secrets absent, no cross-repo credential minted"
-                exit 0
-                ;;
-            esac
-          fi
-          identity_root="$RUNNER_TEMP/flext-cross-repo-deps"
-          install -d -m 700 "$identity_root"
-          key_path="$identity_root/app-key.pem"
-          printf '%s\n' "$CI_DEPS_APP_KEY" > "$key_path.new"
-          chmod 600 "$key_path.new"
-          mv "$key_path.new" "$key_path"
-          b64url() {
-            openssl base64 -A | tr '+/' '-_' | tr -d '='
-          }
-          now=$(date +%s)
-          header='{"alg":"RS256","typ":"JWT"}'
-          payload=$(printf '{"iat":%s,"exp":%s,"iss":"%s"}' "$((now - 60))" "$((now + 540))" "$CI_DEPS_APP_ID")
-          input="$(printf %s "$header" | b64url).$(printf %s "$payload" | b64url)"
-          signature=$(printf %s "$input" | openssl dgst -sha256 -sign "$key_path" | b64url)
-          jwt="$input.$signature"
-          # Credential mint without curl-pipe-to-shell (semgrep gha-curl-pipe-shell):
-          # responses land in a temp file and are parsed from disk, never piped.
-          response_file="$identity_root/github-api-response.json"
-          curl -sfS -X GET -H "Authorization: Bearer $jwt" -H "Accept: application/vnd.github+json" -o "$response_file" https://api.github.com/app/installations
-          installation_id=$(python3 -c 'import json, sys; entries = json.load(open(sys.argv[1])); assert len(entries) == 1, f"expected exactly one app installation, got {len(entries)}"; print(entries[0]["id"])' "$response_file")
-          curl -sfS -X POST -H "Authorization: Bearer $jwt" -H "Accept: application/vnd.github+json" -o "$response_file" "https://api.github.com/app/installations/$installation_id/access_tokens"
-          access_token=$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["token"])' "$response_file")
-          rm -f "$response_file"
-          echo "::add-mask::$access_token"
-          git config --global url."https://x-access-token:${access_token}@github.com/".insteadOf "https://github.com/"
-          rm -f "$key_path"
-
       # Why: GitHub runners expose umask 002, so git checkout materializes
       # group-writable modes (0664) for tracked files. Canonical Mise
       # artifacts demand exact modes (0o644) and the conform gate fails loud
@@ -131,11 +74,11 @@ jobs:
       - name: Normalize checkout modes
         run: chmod -R go-w .
 
-      # Why (flext-7jnr0): every fresh runner paid a cold full-dependency Mypy,
+      # Why: every fresh runner paid a cold full-dependency Mypy,
       # Pyrefly and Ruff analysis. The caches below are content-addressed by the
       # committed dependency locks, so a warm cache is always valid for the same
       # lock and can never hide a finding; it only removes the cold recompute.
-      # Why (flext-gd3m1): the same pair keeps the locked Mise tool storage, so
+      # Why: the same pair keeps the locked Mise tool storage, so
       # a cold runner never re-downloads the pinned tarballs, where a network
       # blip failed setup.
       - name: Restore tool caches
@@ -151,68 +94,91 @@ jobs:
             .benchmarks
             .hypothesis
             ~/.cache/uv
-            ~/.cache/pyright
             ~/.local/share/mise
           key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-3.13-tools-
-
-      # Why: Mypy's project-keyed analysis cache (make.mypy_cache) lives outside
-      # the checkout. A runner without it re-analyses the whole dependency
-      # closure, and a bounded run can die before it writes anything. Restore
-      # the newest cache of any earlier run: Mypy revalidates every entry by
-      # source hash, so a warm cache removes recompute and never hides a finding.
-      - name: Restore Mypy cache
-        uses: actions/cache/restore@v6
-        with:
-          path: ~/.cache/flext/infra/mypy
-          key: ${{ runner.os }}-3.13-mypy-${{ github.run_id }}-${{ github.run_attempt }}
-          restore-keys: |
-            ${{ runner.os }}-3.13-mypy-
 
       # make setup is the frozen installer. It bootstraps the committed Mise
       # release and installs the fleet toolchain from the committed
       # mise.lock and the dependencies frozen from the committed uv.lock,
       # publishes that environment through GITHUB_PATH, and prepares the
       # project runtime. CI never runs `make upg`: it never re-resolves.
-      - name: setup (blocking)
-        # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
-        run: CI=Y make setup
-      - name: gen fixed point (blocking)
-        # Why (docs-gen private sources): the docs generation resolves the
-        # governed workspaces' documentation state, which fetches private
-        # sibling repos — unauthenticated fetches fail with "docs generation
-        # source state is absent or unauthenticated". The job token
-        # authenticates those reads without changing the toolchain contract.
+      # Why: make test always selects through the persistent testmon database
+      # (make.testmon_cache), which lives outside the checkout under the
+      # declared project name. A runner without it starts from an empty history
+      # and selects the whole suite. Restore the newest database of any earlier
+      # run: testmon revalidates every recorded file by checksum, so a restored
+      # database never hides a changed dependency of a selected test.
+      - name: Resolve project testmon database
+        id: testmon_path
         run: |
-          CI=Y make gen
-          git status --short
-          test -z "$(git status --porcelain --untracked-files=all --ignore-submodules=none)"
+          set -eu
+          cache_home="${XDG_CACHE_HOME:-${HOME}/.cache}"
+          database="$(realpath -m "$cache_home/flext/infra/testmon/flext-core/.testmondata")"
+          case "$database" in /*) ;; *) exit 2 ;; esac
+          printf 'database=%s\n' "$database" >> "$GITHUB_OUTPUT"
+      - name: Restore testmon database
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ steps.testmon_path.outputs.database }}
+          key: ${{ runner.os }}-3.13-flext-testmon-flext-core-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml', 'config/**') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            ${{ runner.os }}-3.13-flext-testmon-flext-core-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml', 'config/**') }}-
 
-      # Setup installs frozen from the committed uv.lock (`uv sync --locked`)
-      # and never rewrites it; the deps audit proves that locked graph.
-      - name: deps check (blocking)
-        run: CI=Y make audit
 
-      - name: check (blocking)
-        # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
-        run: CI=Y make check
+      - name: Approval (blocking)
+        id: approval
+        # One owner for setup -> audit -> check -> test in both profiles.
+        run: CI=Y make pre-commit
 
-      # Both blocking steps derive from the same active default universe.
-      # CI=Y runs lint pyright silent-failure deferred-self-reference security markdown loc-cap boundary runtime-census tier-whitelist index-declarations codemod layout canonical-alias direnv duplication.
-      # CI=N runs pyrefly mypy.
-      # The partitions are disjoint and together execute every active gate.
-      - name: check complement (blocking)
-        run: CI=N make check
-
-      # Mutating gates and tests must validate the committed candidate.
-      # Repairs left in the runner checkout require a new commit and CI run.
-      - name: Candidate cleanliness (blocking)
+      - name: Dump reports on failure
+        if: ${{ failure() }}
         run: |
-          git status --short
-          test -z "$(git status --porcelain --untracked-files=all --ignore-submodules=none)"
+          set -eu
+          # Structured reports only — same allowlist as Upload reports (no raw
+          # pytest/tool logs: those may carry connection strings / env secrets).
+          for report_root in .reports apps; do
+            if [ -d "$report_root" ]; then
+              find "$report_root" \
+                \( -path '*/junit.xml' -o -path '*/coverage.xml' -o -path '*/coverage.json' \) \
+                -type f -exec sh -eu -c '
+                  for report_file do
+                    printf "::group::%s\n" "$report_file"
+                    tail -n 200 "$report_file"
+                    printf "::endgroup::\n"
+                  done
+                ' sh {} +
+            fi
+          done
+      - name: Upload reports on failure
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: flext-ci-reports-${{ github.run_id }}
+          # Structured reports only — omit raw pytest/tool logs that may carry
+          # connection strings or env-derived secrets from integration fixtures.
+          path: |
+            .reports/**/junit.xml
+            .reports/**/coverage.xml
+            .reports/**/coverage.json
+            .reports/check/**/*.sarif
+            .reports/check/**/*.md
+            .reports/tests/**/run-accounting.json
+            .reports/tests/**/cache-after.json
+          if-no-files-found: ignore
+          retention-days: 7
+      # Completed failing tests may save; cancelled/incomplete/corrupt runs cannot.
+      - name: Save testmon database
+        if: >-
+          ${{ always() && !cancelled() && github.event_name == 'push' && steps.approval.outputs.testmon_saveable == 'true' && steps.approval.outputs.testmon_database == steps.testmon_path.outputs.database && steps.approval.outputs.testmon_digest != '' && contains(fromJSON('["main", "0.12.0-dev", "develop"]'), github.ref_name) && startsWith(github.ref, 'refs/heads/') }}
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ steps.approval.outputs.testmon_database }}
+          key: ${{ runner.os }}-3.13-flext-testmon-flext-core-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml', 'config/**') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
-      # Why (flext-7jnr0): save on every outcome — including a failing gate — so
+
+      # Why: save on every outcome — including a failing gate — so
       # the next run starts warm. Only written when the restore missed.
       - name: Save tool caches
         if: ${{ always() && steps.tool-cache.outputs.cache-hit != 'true' }}
@@ -227,18 +193,8 @@ jobs:
             .benchmarks
             .hypothesis
             ~/.cache/uv
-            ~/.cache/pyright
             ~/.local/share/mise
           key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
-
-      # Why: save on every outcome, a failing or killed Mypy included, under a
-      # key unique to this run, so every run hands its analysis to the next.
-      - name: Save Mypy cache
-        if: ${{ always() }}
-        uses: actions/cache/save@v6
-        with:
-          path: ~/.cache/flext/infra/mypy
-          key: ${{ runner.os }}-3.13-mypy-${{ github.run_id }}-${{ github.run_attempt }}
 
   # End SECTION: ci job
 
@@ -256,71 +212,13 @@ jobs:
     timeout-minutes: 30
     env:
       CI: Y
-      GITHUB_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: false
-      # Cross-repo private git dependencies: the workflow token is scoped to
-      # this repository only, so it cannot clone siblings that turn private.
-      # Every declared sibling is public today and resolves anonymously; the
-      # credential exists for the private-sibling scenario. When the org
-      # installs its cross-repo dependency GitHub App and exposes
-      # CI_DEPENDENCIES_APP_ID / CI_DEPENDENCIES_APP_PRIVATE_KEY, mint a
-      # short-lived installation token and scope it to github.com clones.
-      # Absent secrets make this step a recorded NOT EXECUTED while the
-      # repository has not declared the credential requirement; a repository
-      # that declares the CI_DEPENDENCIES_REQUIRED repo variable fails the
-      # job non-zero with a typed message and without exposing any secret
-      # value (cosmos-1yzig: absence normalized as success is a defect).
-      - name: Mint cross-repo dependency credential
-        env:
-          CI_DEPS_APP_ID: ${{ secrets.CI_DEPENDENCIES_APP_ID }}
-          CI_DEPS_APP_KEY: ${{ secrets.CI_DEPENDENCIES_APP_PRIVATE_KEY }}
-          CI_DEPS_REQUIRED: '0'
-        run: |
-          set -euo pipefail
-          if [ -z "$CI_DEPS_APP_ID" ] || [ -z "$CI_DEPS_APP_KEY" ]; then
-            case "$CI_DEPS_REQUIRED" in
-              1 | true | TRUE | True | yes | YES | Yes)
-                echo "ERROR[CI_CREDENTIAL_REQUIRED]: CI_DEPENDENCIES_APP_ID/CI_DEPENDENCIES_APP_PRIVATE_KEY are declared required by this repository and are absent or empty" >&2
-                exit 1
-                ;;
-              *)
-                echo "NOT EXECUTED: CI_DEPENDENCIES_* secrets absent, no cross-repo credential minted"
-                exit 0
-                ;;
-            esac
-          fi
-          identity_root="$RUNNER_TEMP/flext-cross-repo-deps"
-          install -d -m 700 "$identity_root"
-          key_path="$identity_root/app-key.pem"
-          printf '%s\n' "$CI_DEPS_APP_KEY" > "$key_path.new"
-          chmod 600 "$key_path.new"
-          mv "$key_path.new" "$key_path"
-          b64url() {
-            openssl base64 -A | tr '+/' '-_' | tr -d '='
-          }
-          now=$(date +%s)
-          header='{"alg":"RS256","typ":"JWT"}'
-          payload=$(printf '{"iat":%s,"exp":%s,"iss":"%s"}' "$((now - 60))" "$((now + 540))" "$CI_DEPS_APP_ID")
-          input="$(printf %s "$header" | b64url).$(printf %s "$payload" | b64url)"
-          signature=$(printf %s "$input" | openssl dgst -sha256 -sign "$key_path" | b64url)
-          jwt="$input.$signature"
-          # Credential mint without curl-pipe-to-shell (semgrep gha-curl-pipe-shell):
-          # responses land in a temp file and are parsed from disk, never piped.
-          response_file="$identity_root/github-api-response.json"
-          curl -sfS -X GET -H "Authorization: Bearer $jwt" -H "Accept: application/vnd.github+json" -o "$response_file" https://api.github.com/app/installations
-          installation_id=$(python3 -c 'import json, sys; entries = json.load(open(sys.argv[1])); assert len(entries) == 1, f"expected exactly one app installation, got {len(entries)}"; print(entries[0]["id"])' "$response_file")
-          curl -sfS -X POST -H "Authorization: Bearer $jwt" -H "Accept: application/vnd.github+json" -o "$response_file" "https://api.github.com/app/installations/$installation_id/access_tokens"
-          access_token=$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["token"])' "$response_file")
-          rm -f "$response_file"
-          echo "::add-mask::$access_token"
-          git config --global url."https://x-access-token:${access_token}@github.com/".insteadOf "https://github.com/"
-          rm -f "$key_path"
-
+          persist-credentials: false
       - name: Boot
         run: CI=Y make setup
       - name: Release plan and guard
@@ -335,7 +233,7 @@ jobs:
     permissions:
       contents: read
     # Draft is the typed WIP state: no repository Action is selected until the
-    # operator promotes the same PR to Review with a non-WIP head.
+    # same PR is promoted to Review with a non-WIP head.
     if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
     steps:

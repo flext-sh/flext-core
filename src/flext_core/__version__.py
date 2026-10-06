@@ -30,7 +30,15 @@ class _FlextVersionMetadata:
 
     @staticmethod
     def _resolve_author(package_metadata: PackageMetadata) -> tuple[str, str]:
-        """Return the first normalized author identity from package metadata."""
+        """Return the first normalized author identity from package metadata.
+
+        Returns:
+            The first normalized author identity from package metadata.
+
+        Raises:
+            ValueError: If invalid Author-Email package metadata.
+
+        """
         raw_email = package_metadata.get("Author-Email", "")
         author_name, author_email = parseaddr(raw_email, strict=True)
         if raw_email and not author_email:
@@ -43,7 +51,15 @@ class _FlextVersionMetadata:
 
     @staticmethod
     def _resolve_homepage(package_metadata: PackageMetadata) -> str:
-        """Return the legacy Home-Page or labeled Homepage project URL."""
+        """Return the legacy Home-Page or labeled Homepage project URL.
+
+        Returns:
+            The legacy Home-Page or labeled Homepage project URL.
+
+        Raises:
+            ValueError: If invalid Homepage project URL metadata.
+
+        """
         if homepage := package_metadata.get("Home-Page", ""):
             return homepage
         for project_url in package_metadata.get_all("Project-URL") or ():
@@ -59,7 +75,15 @@ class _FlextVersionMetadata:
 
     @staticmethod
     def _resolve_version_info(version: str) -> tuple[int, int, int]:
-        """Return the exact three-component PEP 440 release tuple."""
+        """Return the exact three-component PEP 440 release tuple.
+
+        Returns:
+            The exact three-component PEP 440 release tuple.
+
+        Raises:
+            ValueError: If invalid three-part semantic version metadata.
+
+        """
         try:
             major, minor, patch = Version(version).release
         except ValueError as exc:
@@ -77,7 +101,8 @@ class _FlextVersionMetadata:
         cls.__description__ = package_metadata.get("Summary", "")
         cls.__author__, cls.__author_email__ = cls._resolve_author(package_metadata)
         cls.__license__ = package_metadata.get(
-            "License-Expression", ""
+            "License-Expression",
+            "",
         ) or package_metadata.get("License", "")
         cls.__url__ = cls._resolve_homepage(package_metadata)
 

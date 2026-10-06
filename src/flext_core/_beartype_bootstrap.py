@@ -1,4 +1,8 @@
-"""Package-local beartype.claw bootstrap for flext_core imports."""
+"""Package-local beartype.claw bootstrap for flext_core imports.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -7,7 +11,7 @@ from typing import ClassVar
 
 from beartype.claw import beartype_this_package
 
-from ._typings.base import FlextTypingBase as t
+from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextCoreBeartypeBootstrap:
@@ -18,7 +22,12 @@ class FlextCoreBeartypeBootstrap:
 
     @classmethod
     def _enforcement_constants(cls) -> type:
-        """Load enforcement constants lazily to avoid package-init cycles."""
+        """Load enforcement constants lazily to avoid package-init cycles.
+
+        Returns:
+            The resulting ``type``.
+
+        """
         module = import_module("flext_core._constants.enforcement")
         constants_cls: type = module.FlextConstantsEnforcement
         return constants_cls
@@ -41,11 +50,11 @@ class FlextCoreBeartypeBootstrap:
             # import path never loads beartype_engine, so this is the only site
             # that guarantees the patches are live for pydantic.JsonValue et al.
             import_module(
-                "flext_core._utilities.beartype_typingext_patch"
+                "flext_core._utilities.beartype_typingext_patch",
             ).FlextUtilitiesBeartypeTypingExtPatch.apply()
             conf_module = import_module("flext_core._utilities.beartype_conf")
             beartype_this_package(
-                conf=conf_module.FlextUtilitiesBeartypeConf.build_beartype_conf()
+                conf=conf_module.FlextUtilitiesBeartypeConf.build_beartype_conf(),
             )
             cls._activated = True
         finally:

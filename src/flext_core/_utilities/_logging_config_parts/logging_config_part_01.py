@@ -27,11 +27,35 @@ if TYPE_CHECKING:
 class FlextUtilitiesLoggingConfig:
     """Structlog configuration, async writer, and processor chain assembly."""
 
-    _structlog_configured: ClassVar[bool]
+    # Process-wide logging state: written only through ``_publish_logging_state``
+    # so a subclass (``u``, ``FlextUtilitiesLogging``) never shadows it.
+    _structlog_configured: ClassVar[bool] = False
+    _log_threshold: ClassVar[int]
+
+    @staticmethod
+    def log_threshold() -> int:
+        """Return the process-wide minimum level number that is emitted.
+
+        Returns:
+            The process-wide minimum level number that is emitted.
+
+        """
+        return FlextUtilitiesLoggingConfig._log_threshold
+
+    @staticmethod
+    def _publish_logging_state(*, configured: bool, threshold: int) -> None:
+        """Store the process-wide configuration flag and level threshold."""
+        FlextUtilitiesLoggingConfig._structlog_configured = configured
+        FlextUtilitiesLoggingConfig._log_threshold = threshold
 
     @staticmethod
     def structlog() -> types.ModuleType:
-        """Return the imported structlog module for owner-internal access."""
+        """Return the imported structlog module for owner-internal access.
+
+        Returns:
+            The imported structlog module for owner-internal access.
+
+        """
         # Local import keeps structlog unloaded until logging initializes
         # while binding the name this function returns.
         import structlog
@@ -49,17 +73,21 @@ class FlextUtilitiesLoggingConfig:
             self._stream_mode: str = str(getattr(stream, "mode", "w"))
             self._stream_name: str = str(getattr(stream, "name", "<async-log-writer>"))
             self._stream_encoding: str = str(
-                getattr(stream, "encoding", c.DEFAULT_ENCODING)
+                getattr(stream, "encoding", c.DEFAULT_ENCODING),
             )
             self._stream_errors: str | None = getattr(stream, "errors", None)
             self._stream_newlines: str | t.VariadicTuple[str] | None = getattr(
-                stream, "newlines", None
+                stream,
+                "newlines",
+                None,
             )
             self._writer_logger: p.Logger | None = None
             self.queue: queue.Queue[str | None] = queue.Queue(maxsize=c.MAX_ITEMS)
             self.stop_event = threading.Event()
             self.thread = threading.Thread(
-                target=self._worker, daemon=True, name="flext-async-log-writer"
+                target=self._worker,
+                daemon=True,
+                name="flext-async-log-writer",
             )
             self.thread.start()
             _ = atexit.register(self.shutdown)
@@ -79,7 +107,7 @@ class FlextUtilitiesLoggingConfig:
             if existing is not None:
                 return existing
             created: p.Logger = FlextUtilitiesLoggingConfig.structlog().get_logger(
-                __name__
+                __name__,
             )
             self._writer_logger = created
             return created
@@ -136,12 +164,18 @@ class FlextUtilitiesLoggingConfig:
 
         @override
         def write(self, s: str, /) -> int:
-            """Write message to queue (non-blocking)."""
+            """Write message to queue (non-blocking).
+
+            Returns:
+                The resulting ``int``.
+
+            """
             try:
                 self.queue.put(s, block=c.ASYNC_BLOCK_ON_FULL)
             except queue.Full as exc:
                 self._writer_log.warning(
-                    "Async log queue full; message dropped", exc_info=exc
+                    "Async log queue full; message dropped",
+                    exc_info=exc,
                 )
             return len(s)
 
@@ -165,7 +199,8 @@ class FlextUtilitiesLoggingConfig:
                     continue
                 except (OSError, ValueError, TypeError) as exc:
                     self._writer_log.warning(
-                        "Async log writer stream operation failed", exc_info=exc
+                        "Async log writer stream operation failed",
+                        exc_info=exc,
                     )
                     try:
                         _ = self._target_stream.write("Error in async log writer\n")

@@ -74,7 +74,9 @@ class FlextProtocolsContext:
         """Context export/serialization operations."""
 
         def export(
-            self, *, as_dict: bool = ...
+            self,
+            *,
+            as_dict: bool = ...,
         ) -> t.MappingKV[str, t.JsonPayload] | Self:
             """Export context state as a dict or the context instance itself."""
             ...
@@ -121,14 +123,16 @@ class FlextProtocolsContext:
 
         @staticmethod
         def register_service(
-            service_name: str, service: t.RegisterableService
+            service_name: str,
+            service: t.RegisterableService,
         ) -> p.Result[bool]:
             """Register a service through the configured container."""
             ...
 
         @staticmethod
         def service_context(
-            service_name: str, version: str | None = None
+            service_name: str,
+            version: str | None = None,
         ) -> AbstractContextManager[None]:
             """Create a service context scope manager."""
             ...

@@ -5,6 +5,9 @@ their return values for representative type hints. No private attribute or
 method of the engine is accessed; the engine is exercised exclusively through
 its public surface (``contains_any``, ``has_forbidden_collection_origin``,
 ``count_union_members``, ``matches_str_none_union``, ``alias_contains_any``).
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -15,21 +18,18 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+import tests.utilities
 from flext_core import u
 from tests.typings import t
-
-from ._beartype_engine_support import (
-    AnyAlias,
-    CleanAlias,
-    NestedAnyAlias,
-    TestsFlextBeartypeEngine,
-)
+from tests.unit._beartype_engine_support import AnyAlias, CleanAlias, NestedAnyAlias
 
 if TYPE_CHECKING:
     from pathlib import PurePath as LazyResolvableType
 
 
-class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
+class TestsFlextBeartypeEngineAnnotations(
+    tests.utilities.TestsFlextUtilities.TestsFlextBeartypeEngine,
+):
     """Contract of the beartype annotation-inspection engine."""
 
     @pytest.mark.parametrize(
@@ -49,8 +49,11 @@ class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
             (None, False),
         ],
     )
+    @staticmethod
     def test_contains_any_reports_presence_of_any(
-        self, hint: t.TypeHintSpecifier | None, *, expected: bool
+        hint: t.TypeHintSpecifier | None,
+        *,
+        expected: bool,
     ) -> None:
         """contains_any is True iff typing.Any appears at any nesting depth."""
         assert u.contains_any(hint) is expected
@@ -68,7 +71,9 @@ class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
         ],
     )
     def test_has_forbidden_collection_origin_names_offending_origin(
-        self, hint: t.TypeHintSpecifier | None, expected: tuple[bool, str]
+        self,
+        hint: t.TypeHintSpecifier | None,
+        expected: tuple[bool, str],
     ) -> None:
         """Bare mutable collection origins are flagged with their name."""
         assert u.has_forbidden_collection_origin(hint, self.FORBIDDEN) == expected
@@ -84,8 +89,11 @@ class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
             (None, 0),
         ],
     )
+    @staticmethod
     def test_count_union_members_excludes_none(
-        self, hint: t.TypeHintSpecifier | None, *, expected: int
+        hint: t.TypeHintSpecifier | None,
+        *,
+        expected: int,
     ) -> None:
         """count_union_members counts non-None members; 0 for non-unions."""
         assert u.count_union_members(hint) == expected
@@ -101,8 +109,11 @@ class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
             (None, False),
         ],
     )
+    @staticmethod
     def test_matches_str_none_union_requires_str_and_none(
-        self, hint: t.TypeHintSpecifier | None, *, expected: bool
+        hint: t.TypeHintSpecifier | None,
+        *,
+        expected: bool,
     ) -> None:
         """Union matches iff both str and None are members."""
         assert u.matches_str_none_union(hint) is expected
@@ -116,13 +127,17 @@ class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
             (None, False),
         ],
     )
+    @staticmethod
     def test_alias_contains_any_unwraps_alias_values(
-        self, alias_value: t.TypeHintSpecifier | None, *, expected: bool
+        alias_value: t.TypeHintSpecifier | None,
+        *,
+        expected: bool,
     ) -> None:
         """alias_contains_any detects Any inside a resolved type-alias value."""
         assert u.alias_contains_any(alias_value) is expected
 
-    def test_alias_inspection_uses_explicit_owner_for_static_only_names(self) -> None:
+    @staticmethod
+    def test_alias_inspection_uses_explicit_owner_for_static_only_names() -> None:
         """Explicit owner context proves a local static-only alias deferral."""
 
         class Host:

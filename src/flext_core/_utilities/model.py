@@ -11,11 +11,12 @@ from __future__ import annotations
 from importlib import import_module
 from typing import overload
 
-from flext_core import c, e, p, r, t
+from pydantic import TypeAdapter
 
-from .._models.base import FlextModelsBase as m
-from .._models.pydantic import FlextModelsPydantic as mp
-from .args import FlextUtilitiesArgs as ua
+from flext_core import c, e, p, r, t
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._utilities.args import FlextUtilitiesArgs as ua
 
 
 class FlextUtilitiesModel:
@@ -25,16 +26,24 @@ class FlextUtilitiesModel:
         """Options controlling Pydantic model_dump() serialization behavior."""
 
         by_alias: bool | None = mp.Field(
-            None, description="Serialize using field aliases", validate_default=True
+            None,
+            description="Serialize using field aliases",
+            validate_default=True,
         )
         exclude_none: bool | None = mp.Field(
-            None, description="Exclude None-valued fields", validate_default=True
+            None,
+            description="Exclude None-valued fields",
+            validate_default=True,
         )
         exclude_unset: bool | None = mp.Field(
-            None, description="Exclude fields not explicitly set", validate_default=True
+            None,
+            description="Exclude fields not explicitly set",
+            validate_default=True,
         )
         exclude_defaults: bool | None = mp.Field(
-            None, description="Exclude fields matching defaults", validate_default=True
+            None,
+            description="Exclude fields matching defaults",
+            validate_default=True,
         )
         include: set[str] | None = mp.Field(
             None,
@@ -60,38 +69,53 @@ class FlextUtilitiesModel:
         Args:
             model: Pydantic model instance to serialize.
             options: Optional Pydantic model_dump arguments within the settings model.
-            **kwargs: Inline fallback serialization arguments mapped to ModelDumpOptions automatically.
+            **kwargs: Inline serialization options mapped to ModelDumpOptions;
+                invalid options fail loudly instead of silently falling back to defaults.
 
         Returns:
             Dictionary representation of the model.
 
         """
         opts = ua.resolve_options(
-            options, kwargs, FlextUtilitiesModel.ModelDumpOptions
-        ).unwrap_or(FlextUtilitiesModel.ModelDumpOptions())
+            options,
+            kwargs,
+            FlextUtilitiesModel.ModelDumpOptions,
+        ).unwrap()
         opts_dict = opts.model_dump(exclude_none=True)
         dumped: t.JsonMapping = t.json_mapping_adapter().validate_python(
-            model.model_dump(mode="json", **opts_dict)
+            model.model_dump(mode="json", **opts_dict),
         )
         return dumped
 
     @staticmethod
     def _settings_base() -> t.SettingsClass:
-        """Resolve FlextSettings lazily to avoid runtime import cycles."""
+        """Resolve FlextSettings lazily to avoid runtime import cycles.
+
+        Returns:
+            The resulting ``t.SettingsClass``.
+        """
         settings_module = import_module("flext_core")
         settings_cls: t.SettingsClass = settings_module.FlextSettings
         return settings_cls
 
     @staticmethod
     def _container_type() -> p.ContainerType:
-        """Resolve FlextContainer lazily to avoid runtime import cycles."""
+        """Resolve FlextContainer lazily to avoid runtime import cycles.
+
+        Returns:
+            The resulting ``p.ContainerType``.
+        """
         container_module = import_module("flext_core")
         container_cls: p.ContainerType = container_module.FlextContainer
         return container_cls
 
     @staticmethod
     def _context_type() -> p.ContextType:
-        """Resolve FlextContext lazily to avoid runtime import cycles."""
+        """Resolve FlextContext lazily to avoid runtime import cycles.
+
+        Returns:
+            The resulting ``p.ContextType``.
+        """
         context_module = import_module("flext_core")
         context_cls: p.ContextType = context_module.FlextContext
         return context_cls
@@ -134,11 +158,13 @@ class FlextUtilitiesModel:
         from_json: bool = False,
         strict: bool | None = None,
     ) -> p.Result[TValue]:
-        """Validate one value through a model class or TypeAdapter."""
+        """Validate one value through a model class or TypeAdapter.
+
+        Returns:
+            The resulting ``p.Result[TValue]``.
+        """
         try:
-            adapter = (
-                target if isinstance(target, mp.TypeAdapter) else mp.TypeAdapter(target)
-            )
+            adapter = target if isinstance(target, TypeAdapter) else TypeAdapter(target)
             if from_json:
                 if not isinstance(data, c.STR_BINARY_TYPES):
                     return e.fail_validation(

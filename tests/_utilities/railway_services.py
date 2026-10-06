@@ -1,4 +1,8 @@
-"""Railway service helpers for flext-core tests."""
+"""Railway service helpers for flext-core tests.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -6,12 +10,11 @@ from typing import TYPE_CHECKING, Annotated, override
 
 from flext_tests import m as tm, r, u
 
+from tests._models.mixins import TestsFlextFlextModelsMixins
 from tests.base import s
 from tests.constants import c
 from tests.models import m
 from tests.typings import t
-
-from .._models.mixins import TestsFlextModelsMixins
 
 if TYPE_CHECKING:
     from tests.protocols import p
@@ -24,7 +27,8 @@ class TestsFlextUtilitiesRailwayServicesMixin:
         """Service to get user."""
 
         user_id: Annotated[
-            str, u.Field(description="Identifier of the user to fetch.")
+            str,
+            u.Field(description="Identifier of the user to fetch."),
         ] = ""
 
         @override
@@ -37,7 +41,7 @@ class TestsFlextUtilitiesRailwayServicesMixin:
                     unique_id=self.user_id,
                     name=f"{c.Tests.DEFAULT_USER_NAME_PREFIX}{self.user_id}",
                     email=f"user{self.user_id}{c.Tests.DEFAULT_EMAIL_DOMAIN}",
-                )
+                ),
             )
 
     class SendEmailService(s[m.Tests.EmailResponse]):
@@ -51,13 +55,13 @@ class TestsFlextUtilitiesRailwayServicesMixin:
             if "@" not in self.to:
                 return r[m.Tests.EmailResponse].fail(c.Tests.INVALID_EMAIL)
             return r[m.Tests.EmailResponse].ok(
-                m.Tests.EmailResponse(status="sent", message_id=f"msg-{self.to}")
+                m.Tests.EmailResponse(status="sent", message_id=f"msg-{self.to}"),
             )
 
     @staticmethod
     def value_lt_100(data: t.JsonMapping) -> bool:
-        target: TestsFlextModelsMixins.TargetModel = (
-            TestsFlextModelsMixins.TargetModel.model_validate(data)
+        target: TestsFlextFlextModelsMixins.TestsFlextModelsMixins.TargetModel = TestsFlextFlextModelsMixins.TestsFlextModelsMixins.TargetModel.model_validate(
+            data,
         )
         upper_bound = 100
         return target.value < upper_bound
@@ -70,7 +74,12 @@ class TestsFlextUtilitiesRailwayServicesMixin:
     def create_user_service(
         case: m.Tests.ServiceTestCase,
     ) -> TestsFlextUtilitiesRailwayServicesMixin.GetUserService:
-        """Create a user service from a documented service case."""
+        """Create a user service from a documented service case.
+
+        Returns:
+            The resulting ``TestsFlextUtilitiesRailwayServicesMixin.GetUserService``.
+
+        """
         return TestsFlextUtilitiesRailwayServicesMixin.make(
             TestsFlextUtilitiesRailwayServicesMixin.GetUserService,
             user_id=case.user_id or case.input_value or "",

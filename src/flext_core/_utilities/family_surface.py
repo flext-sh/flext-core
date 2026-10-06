@@ -1,45 +1,89 @@
-"""Published FLEXT family-surface derivation from the lazy export contract."""
+"""Published FLEXT family-surface derivation from the lazy export contract.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 import functools
 import importlib
-import importlib.metadata
 from types import MappingProxyType
 from typing import TYPE_CHECKING, cast
 
-from .._constants.enforcement import FlextConstantsEnforcement as c
-from ..lazy import normalize_lazy_imports
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata
+from flext_core.lazy import normalize_lazy_imports
 
 if TYPE_CHECKING:
-    from .._typings.base import FlextTypingBase as t
+    from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextUtilitiesFamilySurface:
     """Derive the published FLEXT family surface at runtime.
 
     Membership grammar (declared, never enumerated): a distribution whose
-    normalized name starts with ``c.NAMESPACE_FAMILY_PREFIX`` is a family
-    member when its root package publishes the lazy export contract
-    (``__all__`` plus ``_LAZY_IMPORTS``). The prefix only narrows discovery;
-    the published contract is the structural proof, so every current and
-    future member is covered with zero per-member registration. The first
-    import failure escapes — broken installs are defects, never skips.
+    normalized name starts with ``c.NAMESPACE_FAMILY_PREFIX`` — or that
+    declares a requirement on one — is a family member when its root package
+    publishes the lazy export contract (``__all__`` plus ``_LAZY_IMPORTS``).
+    The prefix and the requirement edge only narrow discovery; the published
+    contract is the structural proof, so every current and future member is
+    covered with zero per-member registration. A consumer facade that
+    publishes the contract (a Pattern-A project composing the family through
+    facade classes) is discovered by its dependency edge, so its facade
+    classes count as family facades and subclassing a family facade there is
+    the sanctioned shape. The first import failure escapes — broken installs
+    are defects, never skips.
     """
+
+    @staticmethod
+    def distribution_in_family_discovery(
+        distribution_name: str,
+        requirement_names: t.StrSequence,
+    ) -> bool:
+        """Return True when a distribution is a family discovery candidate.
+
+        A candidate either carries the family prefix in its own normalized
+        name or declares a requirement on one; discovery is membership's
+        narrow gate, and the published lazy export contract remains the
+        structural proof a candidate must still pass.
+
+        Returns:
+            True when the distribution name or one requirement carries the
+            family prefix.
+        """
+        return distribution_name.startswith(c.NAMESPACE_FAMILY_PREFIX) or any(
+            requirement.startswith(c.NAMESPACE_FAMILY_PREFIX)
+            for requirement in requirement_names
+        )
 
     @staticmethod
     @functools.lru_cache(maxsize=1)
     def _surface_snapshot() -> tuple[
-        tuple[str, frozenset[str], t.MappingKV[str, t.StrPair | str]], ...
+        tuple[str, frozenset[str], t.MappingKV[str, t.StrPair | str]],
+        ...,
     ]:
-        """Import every family root once and snapshot its published contract."""
+        """Import every family root once and snapshot its published contract.
+
+        Returns:
+            The resulting ``tuple[tuple[str, frozenset[str], t.MappingKV[str, t.StrPair
+                | str]], ...]``.
+
+        Raises:
+            RuntimeError: If family-surface derivation found no distribution publishing
+                the lazy export contract (family prefix or dependency edge).
+
+        """
         snapshot: list[
             tuple[str, frozenset[str], t.MappingKV[str, t.StrPair | str]]
         ] = []
-        for dist in importlib.metadata.distributions():
+        for dist in FlextUtilitiesProjectMetadata.installed_distributions():
             raw_name = dist.metadata["Name"] or ""
             name = raw_name.lower().replace("-", "_")
-            if not name.startswith(c.NAMESPACE_FAMILY_PREFIX):
+            if not FlextUtilitiesFamilySurface.distribution_in_family_discovery(
+                name,
+                FlextUtilitiesProjectMetadata.distribution_requirement_names(dist),
+            ):
                 continue
             module = importlib.import_module(name)
             published = getattr(module, "__all__", None)
@@ -56,7 +100,7 @@ class FlextUtilitiesFamilySurface:
             msg = (
                 "family-surface derivation found no distribution publishing "
                 "the lazy export contract under prefix "
-                f"{c.NAMESPACE_FAMILY_PREFIX!r}"
+                f"{c.NAMESPACE_FAMILY_PREFIX!r} or a requirement edge to it"
             )
             raise RuntimeError(msg)
         return tuple(snapshot)
@@ -68,6 +112,10 @@ class FlextUtilitiesFamilySurface:
         Derived from each root's ``__all__`` intersected with the
         declaration aliases derived from ``c.NAMESPACE_LAYER_NAMES`` —
         replacing the frozen per-member roster with per-package truth.
+
+        Returns:
+            The resulting ``t.MappingKV[str, t.VariadicTuple[str]]``.
+
         """
         declaration = tuple(name[0].lower() for name in c.NAMESPACE_LAYER_NAMES)
         owners = {
@@ -87,6 +135,13 @@ class FlextUtilitiesFamilySurface:
         Two aliases claiming one long name is a contract violation and
         fails. The derivation reads only the published contract, so every
         current and future member is covered without per-member tables.
+
+        Returns:
+            The resulting ``t.MappingKV[str, str]``.
+
+        Raises:
+            ValueError: If published family surface maps.
+
         """
         grouped = {}
         for _, _, entries in FlextUtilitiesFamilySurface._surface_snapshot():

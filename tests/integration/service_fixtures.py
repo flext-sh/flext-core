@@ -1,4 +1,8 @@
-"""Service integration fixtures kept outside the collected test module."""
+"""Service integration fixtures kept outside the collected test module.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -30,20 +34,30 @@ class TestsFlextUserQueryService(s[bool]):
     """Real user query service using ``s``."""
 
     _users: MutableMapping[str, TestsFlextUserServiceEntity] = u.PrivateAttr(
-        default_factory=dict[str, TestsFlextUserServiceEntity]
+        default_factory=dict[str, TestsFlextUserServiceEntity],
     )
     _should_fail: bool = u.PrivateAttr(default_factory=lambda: False)
     _call_count: int = u.PrivateAttr(default_factory=lambda: 0)
 
     @override
     def execute(self) -> p.Result[bool]:
-        """Return the service availability."""
+        """Return the service availability.
+
+        Returns:
+            The service availability.
+
+        """
         if self._should_fail:
             return r[bool].fail("User service unavailable")
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     def fetch_user(self, user_id: str) -> p.Result[TestsFlextUserServiceEntity]:
-        """Fetch user by ID."""
+        """Fetch user by ID.
+
+        Returns:
+            The resulting ``p.Result[TestsFlextUserServiceEntity]``.
+
+        """
         self._call_count += 1
         if self._should_fail:
             return r[TestsFlextUserServiceEntity].fail("User service unavailable")
@@ -80,13 +94,23 @@ class TestsFlextNotificationService(s[str]):
 
     @override
     def execute(self) -> p.Result[str]:
-        """Execute notification service."""
+        """Execute notification service.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+
+        """
         if self._should_fail:
             return r[str].fail("Notification service unavailable")
         return r[str].ok("sent")
 
     def send(self, email: str) -> p.Result[str]:
-        """Send notification."""
+        """Send notification.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+
+        """
         self._call_count += 1
         if self._should_fail:
             return r[str].fail("Notification service unavailable")
@@ -123,7 +147,7 @@ class TestsFlextLifecycleService(s[str]):
 
     _initialized: bool = u.PrivateAttr(default_factory=lambda: False)
     _service_config: TestsFlextServiceConfig | None = u.PrivateAttr(
-        default_factory=lambda: None
+        default_factory=lambda: None,
     )
     _shutdown_called: bool = u.PrivateAttr(default_factory=lambda: False)
     _should_fail_init: bool = u.PrivateAttr(default_factory=lambda: False)
@@ -131,13 +155,23 @@ class TestsFlextLifecycleService(s[str]):
 
     @override
     def execute(self) -> p.Result[str]:
-        """Execute lifecycle service."""
+        """Execute lifecycle service.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+
+        """
         if self._initialized:
             return r[str].ok("initialized")
         return r[str].ok("ready")
 
     def initialize(self, settings: TestsFlextServiceConfig) -> p.Result[str]:
-        """Initialize service with settings model."""
+        """Initialize service with settings model.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+
+        """
         if self._should_fail_init:
             return r[str].fail("Initialization failed")
         self._initialized = True
@@ -145,18 +179,31 @@ class TestsFlextLifecycleService(s[str]):
         return r[str].ok("initialized")
 
     def health_check(self) -> bool:
-        """Check service health."""
+        """Check service health.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
         return self._initialized and (not self._shutdown_called)
 
     def shutdown(self) -> p.Result[str]:
-        """Shutdown service."""
+        """Shutdown service.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+
+        """
         if self._should_fail_shutdown:
             return r[str].fail("Shutdown failed")
         self._shutdown_called = True
         return r[str].ok("shutdown")
 
     def configure_failure_mode(
-        self, *, fail_init: bool = False, fail_shutdown: bool = False
+        self,
+        *,
+        fail_init: bool = False,
+        fail_shutdown: bool = False,
     ) -> None:
         """Configure initialization and shutdown failure behavior."""
         self._should_fail_init = fail_init
@@ -197,6 +244,9 @@ class TestsFlextFlextServiceFixtures:
 
     @staticmethod
     def _build_service_config(
-        *, name: str, version: str, temp_dir: str
+        *,
+        name: str,
+        version: str,
+        temp_dir: str,
     ) -> TestsFlextServiceConfig:
         return TestsFlextServiceConfig(name=name, version=version, temp_dir=temp_dir)

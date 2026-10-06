@@ -10,10 +10,9 @@ from types import MappingProxyType
 from typing import Annotated
 
 from flext_core import c, t
-
-from ...base import FlextModelsBase
-from ...pydantic import FlextModelsPydantic as mp
-from .._data import FlextModelsContextData
+from flext_core._models._context._data import FlextModelsContextData
+from flext_core._models.base import FlextModelsBase
+from flext_core._models.pydantic import FlextModelsPydantic as mp
 
 
 class FlextModelsContextScope:
@@ -61,10 +60,10 @@ class FlextModelsContextScope:
                     FlextModelsContextData.normalize_to_mapping(v)
                     if v is not None
                     else {}
-                )
+                ),
             ),
             mp.Field(
-                description="Additional metric counters and timing values grouped by metric key."
+                description="Additional metric counters and timing values grouped by metric key.",
             ),
         ] = mp.Field(default_factory=lambda: MappingProxyType[str, t.JsonValue]({}))
 

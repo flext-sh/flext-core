@@ -1,13 +1,22 @@
-"""Context example aligned to current public context API."""
+"""Context example aligned to current public context API.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from flext_core import FlextContext
+import flext_core._models.flext_context
 
 
 def run() -> None:
-    """Set and read a value from context."""
-    ctx = FlextContext()
+    """Set and read a value from context.
+
+    Raises:
+        RuntimeError: If context set failed; or if context get failed.
+
+    """
+    ctx = flext_core._models.flext_context.FlextContext()
     if not ctx.set("example", "context").success:
         msg = "context set failed"
         raise RuntimeError(msg)

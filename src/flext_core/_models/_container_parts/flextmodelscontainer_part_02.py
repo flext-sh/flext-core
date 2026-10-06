@@ -16,15 +16,14 @@ from datetime import datetime
 from typing import Annotated
 
 from flext_core import c, t
-
-from ..._runtime._container import FlextRuntimeContainer as FlextRuntime
-from ..._utilities.generators import FlextUtilitiesGenerators as ug
-from ..base import FlextModelsBase as m
-from ..containers import FlextModelsContainers
-from ..pydantic import FlextModelsPydantic as mp
-from .flextmodelscontainer_part_01 import (
+from flext_core._models._container_parts.flextmodelscontainer_part_01 import (
     FlextModelsContainer as FlextModelsContainerPart01,
 )
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.containers import FlextModelsContainers
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._runtime._container import FlextRuntimeContainer as FlextRuntime
+from flext_core._utilities.generators import FlextUtilitiesGenerators as ug
 
 
 class FlextModelsContainer(FlextModelsContainerPart01):
@@ -36,29 +35,33 @@ class FlextModelsContainer(FlextModelsContainerPart01):
         """
 
         name: Annotated[
-            t.NonEmptyStr, mp.Field(..., description="Resource identifier/name")
+            t.NonEmptyStr,
+            mp.Field(..., description="Resource identifier/name"),
         ]
         factory: Annotated[
             t.ResourceCallable,
             mp.Field(
-                ..., description="Factory returning the lifecycle-managed resource"
+                ...,
+                description="Factory returning the lifecycle-managed resource",
             ),
         ]
         registration_time: Annotated[
             datetime,
             mp.Field(
-                description="Timestamp when resource was registered (configured timezone)"
+                description="Timestamp when resource was registered (configured timezone)",
             ),
         ] = mp.Field(default_factory=ug.now)
         metadata: Annotated[
             m.Metadata | FlextModelsContainers.ConfigMap | None,
             mp.BeforeValidator(
                 lambda value: FlextRuntime.validate_metadata_model_input(
-                    value, m.Metadata
-                )
+                    value,
+                    m.Metadata,
+                ),
             ),
             mp.Field(
-                None, description="Additional resource metadata (JSON-serializable)"
+                None,
+                description="Additional resource metadata (JSON-serializable)",
             ),
         ] = None
 
@@ -70,11 +73,18 @@ class FlextModelsContainer(FlextModelsContainerPart01):
         """
 
         enable_singleton: Annotated[
-            bool, mp.Field(True, description="Enable singleton pattern for factories")
+            bool,
+            mp.Field(
+                default=True,
+                description="Enable singleton pattern for factories",
+            ),
         ] = True
         enable_factory_caching: Annotated[
             bool,
-            mp.Field(True, description="Enable caching of factory-created instances"),
+            mp.Field(
+                default=True,
+                description="Enable caching of factory-created instances",
+            ),
         ] = True
         max_services: Annotated[
             t.PositiveInt,
@@ -95,18 +105,20 @@ class FlextModelsContainer(FlextModelsContainerPart01):
         enable_auto_registration: Annotated[
             bool,
             mp.Field(
-                False,
+                default=False,
                 description="Enable automatic service registration from decorators",
             ),
         ] = False
         enable_lifecycle_hooks: Annotated[
             bool,
             mp.Field(
-                True, description="Enable lifecycle hooks (on_register, on_get, etc.)"
+                default=True,
+                description="Enable lifecycle hooks (on_register, on_get, etc.)",
             ),
         ] = True
         lazy_loading: Annotated[
-            bool, mp.Field(True, description="Enable lazy loading of services")
+            bool,
+            mp.Field(default=True, description="Enable lazy loading of services"),
         ] = True
 
 

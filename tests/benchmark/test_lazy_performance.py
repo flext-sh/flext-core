@@ -1,4 +1,8 @@
-"""Performance benchmarks for lazy export installation and symbol resolution."""
+"""Performance benchmarks for lazy export installation and symbol resolution.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -26,7 +30,12 @@ class TestsFlextLazyPerformance:
 
         @staticmethod
         def new_virtual_module(module_name: str) -> ModuleType:
-            """Create an isolated module namespace for lazy-install timing."""
+            """Create an isolated module namespace for lazy-install timing.
+
+            Returns:
+                The resulting ``ModuleType``.
+
+            """
             module = ModuleType(module_name)
             module.__dict__.update({
                 "__name__": module_name,
@@ -47,7 +56,7 @@ class TestsFlextLazyPerformance:
                 module_name = f"flext_core_{index}"
                 virtual_module = (
                     TestsFlextLazyPerformance.LazyBenchmark.new_virtual_module(
-                        module_name
+                        module_name,
                     )
                 )
                 sys.modules[module_name] = virtual_module
@@ -66,11 +75,16 @@ class TestsFlextLazyPerformance:
 
         @staticmethod
         def run(*, reset_between_iterations: bool, iterations: int) -> float:
-            """Return elapsed seconds for repeated lazy-path execution."""
+            """Return elapsed seconds for repeated lazy-path execution.
+
+            Returns:
+                Elapsed seconds for repeated lazy-path execution.
+
+            """
             start = time.perf_counter()
             for _ in range(iterations):
                 TestsFlextLazyPerformance.LazyBenchmark.exercise_lazy_path(
-                    reset_between_iterations=reset_between_iterations
+                    reset_between_iterations=reset_between_iterations,
                 )
             return time.perf_counter() - start
 

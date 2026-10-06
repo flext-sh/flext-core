@@ -59,25 +59,38 @@ To replace a public registration, `drop` it first.
 from flext_core import FlextContainer, c, e
 
 container = FlextContainer.shared().scope()
-_ = container.bind("feature_flag", True)
+_ = container.bind("feature_flag", impl=True)
 
 try:
-    _ = container.bind("feature_flag", False)
+    _ = container.bind("feature_flag", impl=False)
 except e.ValidationError as exc:
-    assert "feature_flag" in str(exc)
+    if "feature_flag" not in str(exc):
+        message = "Unexpected duplicate registration error"
+        raise RuntimeError(message) from exc
 else:
-    raise AssertionError
+    message = "Expected duplicate registration rejection"
+    raise RuntimeError(message)
 
 try:
     _ = container.bind(c.ServiceName.LOGGER, "not a logger")
 except e.ValidationError as exc:
-    assert "reserved" in str(exc)
+    if "reserved" not in str(exc):
+        message = "Unexpected reserved name error"
+        raise RuntimeError(message) from exc
 else:
-    raise AssertionError
+    message = "Expected reserved name rejection"
+    raise RuntimeError(message)
 
-assert container.resolve("feature_flag").value is True
-assert container.resolve(c.ServiceName.LOGGER).success
-assert not container.has(c.ServiceName.LOGGER)
+first_flag = container.resolve("feature_flag")
+if first_flag.value is not True:
+    message = "Expected first binding to win"
+    raise RuntimeError(message)
+if not container.resolve(c.ServiceName.LOGGER).success:
+    message = "Expected reserved logger default to resolve"
+    raise RuntimeError(message)
+if container.has(c.ServiceName.LOGGER):
+    message = "Expected failed binding to leave no registration"
+    raise RuntimeError(message)
 ```
 
 ## Core Container Operations
@@ -92,10 +105,17 @@ _ = container.factory("module_logger", lambda: u.fetch_logger(__name__))
 
 app_name = container.resolve("app_name")
 logger = container.resolve("module_logger")
+expected_names = {"app_name", "module_logger"}
 
-assert app_name.value == "flext-core"
-assert logger.success
-assert set(container.names()) >= {"app_name", "module_logger"}
+if app_name.value != "flext-core":
+    message = "Unexpected bound app name"
+    raise RuntimeError(message)
+if not logger.success:
+    message = "Expected factory logger resolution success"
+    raise RuntimeError(message)
+if not set(container.names()) >= expected_names:
+    message = "Expected both registrations to be listed"
+    raise RuntimeError(message)
 ```
 
 A factory and a resource are invoked on every `resolve`; a callable that raises, or
@@ -120,10 +140,18 @@ scoped = root.scope(
     registration=m.ServiceRegistrationSpec(services={"tenant": "tenant_a"}),
 )
 
-assert scoped.resolve("tenant").value == "tenant_a"
-assert root.resolve("tenant").value == "default"
-assert scoped.resolve("settings").value is scoped.settings
-assert scoped.context.get("subproject").value == "tenant_a"
+if scoped.resolve("tenant").value != "tenant_a":
+    message = "Unexpected scoped tenant value"
+    raise RuntimeError(message)
+if root.resolve("tenant").value != "default":
+    message = "Unexpected root tenant value"
+    raise RuntimeError(message)
+if scoped.resolve("settings").value is not scoped.settings:
+    message = "Expected scoped settings identity"
+    raise RuntimeError(message)
+if scoped.context.get("subproject").value != "tenant_a":
+    message = "Unexpected subproject context value"
+    raise RuntimeError(message)
 ```
 
 ## Factory Auto-Registration

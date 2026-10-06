@@ -10,13 +10,12 @@ from collections.abc import MutableSequence
 from typing import Annotated
 
 from flext_core import t
-
-from .._protocols.handler import FlextProtocolsHandler as p
-from .._utilities.pydantic import FlextUtilitiesPydantic as up
-from .base import FlextModelsBase as m
-from .entity import FlextModelsEntity
-from .handler import FlextModelsHandler
-from .pydantic import FlextModelsPydantic as mp
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.entity import FlextModelsEntity
+from flext_core._models.handler import FlextModelsHandler
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._protocols.handler import FlextProtocolsHandler as p
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
 
 
 class FlextModelsRegistry:
@@ -35,7 +34,7 @@ class FlextModelsRegistry:
         registered_keys: Annotated[
             frozenset[str],
             mp.Field(
-                description="Keys registered in the instance scope of the registry."
+                description="Keys registered in the instance scope of the registry.",
             ),
         ] = mp.Field(default_factory=frozenset)
 
@@ -51,7 +50,7 @@ class FlextModelsRegistry:
         registered: Annotated[
             MutableSequence[FlextModelsHandler.RegistrationDetails],
             mp.Field(
-                description="Successfully registered handlers with registration details."
+                description="Successfully registered handlers with registration details.",
             ),
         ] = mp.Field(default_factory=list[FlextModelsHandler.RegistrationDetails])
         skipped: Annotated[

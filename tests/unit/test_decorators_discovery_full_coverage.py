@@ -4,6 +4,9 @@ Exercises the PUBLIC contract end-to-end: the ``d.factory`` decorator is the
 real producer of factory metadata and ``u.scan_module`` is its consumer. Tests
 assert only observable output (the returned ``(name, config)`` pairs and the
 public config model state), never how the metadata is stored on the function.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -20,12 +23,16 @@ from tests.utilities import u
 class TestsFlextDecoratorsDiscovery:
     """Behavior contract for u.scan_module — used by FlextContainer to register factories."""
 
-    def test_scan_module_with_no_factories_returns_empty_list(self) -> None:
+    @staticmethod
+    def test_scan_module_with_no_factories_returns_empty_list() -> None:
+        """Test scan module with no factories returns empty list."""
         mod = types.ModuleType("empty_mod")
 
         assert u.scan_module(mod) == []
 
-    def test_scan_module_ignores_undecorated_functions(self) -> None:
+    @staticmethod
+    def test_scan_module_ignores_undecorated_functions() -> None:
+        """Test scan module ignores undecorated functions."""
         mod = types.ModuleType("plain_mod")
 
         def plain() -> p.Result[int]:
@@ -35,14 +42,18 @@ class TestsFlextDecoratorsDiscovery:
 
         assert u.scan_module(mod) == []
 
-    def test_scan_module_ignores_non_callable_attributes(self) -> None:
+    @staticmethod
+    def test_scan_module_ignores_non_callable_attributes() -> None:
+        """Test scan module ignores non callable attributes."""
         mod = types.ModuleType("noncallable_mod")
         mod.__dict__["some_string"] = "not callable"
         mod.__dict__["some_number"] = 42
 
         assert u.scan_module(mod) == []
 
-    def test_scan_module_discovers_decorated_public_function(self) -> None:
+    @staticmethod
+    def test_scan_module_discovers_decorated_public_function() -> None:
+        """Test scan module discovers decorated public function."""
         mod = types.ModuleType("factory_mod")
 
         @d.factory("my_service")
@@ -58,7 +69,9 @@ class TestsFlextDecoratorsDiscovery:
         assert attr_name == "build_service"
         assert config.name == "my_service"
 
-    def test_scan_module_skips_private_names(self) -> None:
+    @staticmethod
+    def test_scan_module_skips_private_names() -> None:
+        """Test scan module skips private names."""
         mod = types.ModuleType("private_mod")
 
         @d.factory("hidden")
@@ -73,9 +86,13 @@ class TestsFlextDecoratorsDiscovery:
         ("singleton", "lazy"),
         [(False, True), (True, False), (True, True), (False, False)],
     )
+    @staticmethod
     def test_scan_module_preserves_config_metadata(
-        self, *, singleton: bool, lazy: bool
+        *,
+        singleton: bool,
+        lazy: bool,
     ) -> None:
+        """Test scan module preserves config metadata."""
         mod = types.ModuleType("metadata_mod")
 
         @d.factory("configured", singleton=singleton, lazy=lazy)
@@ -92,7 +109,9 @@ class TestsFlextDecoratorsDiscovery:
             "lazy": lazy,
         }
 
-    def test_scan_module_returns_results_sorted_by_attribute_name(self) -> None:
+    @staticmethod
+    def test_scan_module_returns_results_sorted_by_attribute_name() -> None:
+        """Test scan module returns results sorted by attribute name."""
         mod = types.ModuleType("multi_mod")
 
         @d.factory("z")
@@ -110,9 +129,9 @@ class TestsFlextDecoratorsDiscovery:
 
         assert [name for name, _ in result] == ["alpha", "zebra"]
 
-    def test_scan_module_returns_only_decorated_functions_from_mixed_module(
-        self,
-    ) -> None:
+    @staticmethod
+    def test_scan_module_returns_only_decorated_functions_from_mixed_module() -> None:
+        """Test scan module returns only decorated functions from mixed module."""
         mod = types.ModuleType("mixed_mod")
 
         @d.factory("kept")
@@ -130,7 +149,9 @@ class TestsFlextDecoratorsDiscovery:
 
         assert [name for name, _ in result] == ["decorated"]
 
-    def test_scan_module_is_idempotent(self) -> None:
+    @staticmethod
+    def test_scan_module_is_idempotent() -> None:
+        """Test scan module is idempotent."""
         mod = types.ModuleType("idempotent_mod")
 
         @d.factory("svc")
