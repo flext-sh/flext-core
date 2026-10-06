@@ -26,7 +26,6 @@ from flext_core._constants.status import FlextConstantsStatus
 from flext_core._constants.timeout import FlextConstantsTimeout
 from flext_core._constants.validation import FlextConstantsValidation
 
-
 class FlextConstants(
     FlextConstantsBase,
     FlextConstantsTimeout,
