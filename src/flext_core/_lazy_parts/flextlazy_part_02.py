@@ -19,8 +19,9 @@ from flext_core._lazy_parts.flextlazy_part_01 import (
 )
 
 if TYPE_CHECKING:
-    from flext_core.typings import ModuleGlobals, ModuleGlobalValue
     from collections.abc import Sequence
+
+    from flext_core.typings import ModuleGlobals, ModuleGlobalValue
 
 
 class FlextLazyMember:
