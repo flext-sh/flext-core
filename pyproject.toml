@@ -374,6 +374,7 @@ asyncio_default_fixture_loop_scope = "function"
 filterwarnings = [
   "error",
   "module::flext_core._constants.enforcement.FlextMroViolation",
+  "once::pytest.PytestAssertRewriteWarning",
 ]
 markers = [
   "smoke: public-interface smoke tests",
@@ -399,7 +400,13 @@ python_files = ["*_test.py", "*_tests.py", "test_*.py"]
 testpaths = ["tests"]
 
 [tool.ruff]
-extend-exclude = []
+extend-exclude = [
+  "**/.agents/aihub-hooks/**",
+  "**/.claude/aihub-hooks/**",
+  "**/.codex/aihub-hooks/**",
+  "**/.cursor/aihub-hooks/**",
+  "**/.gemini/aihub-hooks/**",
+]
 fix = false
 line-length = 88
 namespace-packages = ["tests", "examples", "scripts"]
