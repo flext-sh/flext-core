@@ -71,13 +71,13 @@ class FlextModelsExceptionParams:
         """Shared resource identity fields for resource-oriented errors."""
 
         resource_type: Annotated[
-            FlextModelsExceptionParams.OptStrictStr,
+            OptStrictStr,
             FlextModelsPydantic.Field(
                 description="Domain resource type associated with the failure.",
             ),
         ] = None
         resource_id: Annotated[
-            FlextModelsExceptionParams.OptStrictStr,
+            OptStrictStr,
             FlextModelsPydantic.Field(
                 description="Identifier of the resource associated with the failure.",
             ),
@@ -87,13 +87,13 @@ class FlextModelsExceptionParams:
         """Shared expected/actual runtime type fields."""
 
         expected_type: Annotated[
-            FlextModelsExceptionParams.OptStrictStr,
+            OptStrictStr,
             FlextModelsPydantic.Field(
                 description="Expected runtime type name for the failing value.",
             ),
         ] = None
         actual_type: Annotated[
-            FlextModelsExceptionParams.OptStrictStr,
+            OptStrictStr,
             FlextModelsPydantic.Field(
                 description="Actual runtime type name received at runtime.",
             ),
@@ -103,7 +103,7 @@ class FlextModelsExceptionParams:
         """Validated params for ValidationError."""
 
         field: Annotated[
-            FlextModelsExceptionParams.OptStrictStr,
+            OptStrictStr,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Name of the input field that failed validation.",
@@ -123,13 +123,13 @@ class FlextModelsExceptionParams:
         """Validated params for ConfigurationError."""
 
         config_key: Annotated[
-            FlextModelsExceptionParams.OptStrictStr,
+            OptStrictStr,
             FlextModelsPydantic.Field(
                 description="Settings key associated with the error.",
             ),
         ] = None
         config_source: Annotated[
-            FlextModelsExceptionParams.OptStrictStr,
+            OptStrictStr,
             FlextModelsPydantic.Field(
                 description="Settings source where the invalid value originated.",
             ),
