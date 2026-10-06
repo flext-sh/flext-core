@@ -15,7 +15,7 @@
 # Source: config:codegen.toolchain.mise_lockfile / mise_locked / mise_lockfile_platforms /
 #         dependency_cooldown_days (one fleet supply-chain cooldown, operator 2026-10-01)
 [settings]
-minimum_release_age = "7d"
+minimum_release_age = "10d"
 lockfile = true
 locked = true
 # Third-party releases in the manifest (jscpd, qlty) publish no SLSA

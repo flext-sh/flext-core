@@ -17,6 +17,8 @@ from tests._models._mixins.test_data import TestsFlextModelsTestDataMixin
 
 class TestsFlextModelsNamespace:
     """Canonical namespace owner."""
+class TestsFlextModelsNamespace:
+    """Canonical namespace owner."""
 
     class TestsFlextModelsMixins(
         TestsFlextModelsContainerMixin,
@@ -30,7 +32,7 @@ class TestsFlextModelsNamespace:
         """flext-core test models namespace."""
 
 
-def populate_container_scenarios() -> None:
+def _populate_container_scenarios() -> None:
     """Attach the scenario tables to their canonical containers.
 
     The scenario values need the fully defined namespace classes, so the
@@ -80,7 +82,7 @@ def populate_container_scenarios() -> None:
     ]
 
 
-populate_container_scenarios()
+_populate_container_scenarios()
 
 m = TestsFlextModelsNamespace.TestsFlextModelsMixins
 
@@ -88,4 +90,4 @@ m = TestsFlextModelsNamespace.TestsFlextModelsMixins
 # commit 0958021717 had accidentally double-prefixed the namespace owner.
 TestsFlextModelsMixins = TestsFlextModelsNamespace.TestsFlextModelsMixins
 
-__all__: list[str] = ["TestsFlextModelsNamespace", "TestsFlextModelsMixins", "m"]
+__all__: list[str] = ["TestsFlextModelsMixins", "TestsFlextModelsNamespace", "m"]
