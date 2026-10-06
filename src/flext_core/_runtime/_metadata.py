@@ -12,6 +12,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from flext_core import c, t
+from flext_core._models.containers import FlextModelsContainers
+from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._runtime._base import FlextRuntimeBase
 from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel as ugm
 
@@ -40,8 +42,6 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
             The resulting ``t.JsonValue``.
 
         """
-        from flext_core import m
-
         validated_value: t.JsonValue
         if value is None:
             validated_value = t.json_value_adapter().validate_python(None)
@@ -50,7 +50,7 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
             validated_value = t.json_value_adapter().validate_python(
                 value.model_dump(mode="json"),
             )
-        elif isinstance(value, m.BaseModel):
+        elif isinstance(value, FlextModelsPydantic.BaseModel):
             validated_value = t.json_value_adapter().validate_python(str(value))
         else:
             validated_value = t.json_value_adapter().validate_python(
@@ -103,11 +103,9 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
             The resulting ``t.JsonMapping | None``.
 
         """
-        from flext_core import m
-
         if value is None:
             return None
-        if isinstance(value, m.Dict):
+        if isinstance(value, FlextModelsContainers.Dict):
             return FlextRuntimeMetadata._normalize_dict_entries([
                 (key, item) for key, item in value.root.items()
             ])
@@ -135,10 +133,8 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
             The resulting ``t.JsonValue``.
 
         """
-        from flext_core import m
-
         normalized_value: t.JsonValue
-        if isinstance(val, (m.ConfigMap, m.Dict)):
+        if isinstance(val, (FlextModelsContainers.ConfigMap, FlextModelsContainers.Dict)):
             normalized_value = FlextRuntimeMetadata._normalize_dict_entries(
                 list(val.root.items()),
             )

@@ -14,6 +14,8 @@ from typing import TYPE_CHECKING, Literal, TypeGuard
 from pydantic import BaseModel
 
 from flext_core import c
+from flext_core._models.containers import FlextModelsContainers
+from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._protocols.context import FlextProtocolsContext as pcx
 from flext_core._protocols.handler import FlextProtocolsHandler as ph
 from flext_core._protocols.loggings import FlextProtocolsLogging as pl
@@ -62,8 +64,6 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
             TypeError: Always.
 
         """
-        from flext_core._models.pydantic import FlextModelsPydantic
-
         normalized_item: ts.JsonPayload
         match item:
             case datetime():
@@ -115,8 +115,6 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
             ValueError: Always.
 
         """
-        from flext_core._models.containers import FlextModelsContainers
-
         if isinstance(value, Mapping):
             return FlextModelsContainers.ConfigMap(
                 root={
@@ -181,8 +179,6 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
             The resulting ``ts.RuntimeData``.
 
         """
-        from flext_core._models.containers import FlextModelsContainers
-
         normalized_data: ts.RuntimeData
         if val is None:
             normalized_data = ""

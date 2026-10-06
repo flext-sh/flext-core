@@ -1,4 +1,7 @@
-"""Pytest bootstrap for flext-core local package resolution."""
+"""Pytest bootstrap for flext-core local package resolution.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+"""
 
 from __future__ import annotations
 
