@@ -577,6 +577,21 @@ split-on-trailing-comma = false
 [tool.ruff.lint.per-file-ignores]
 "**/__init__.py" = ["line-too-long", "non-empty-init-module", "unused-import"]
 "**/_config.py" = ["invalid-function-name"]
+"**/bin/**" = [
+  "docstring-missing-exception",
+  "docstring-missing-returns",
+  "import-outside-top-level",
+  "line-too-long",
+  "magic-value-comparison",
+  "missing-copyright-notice",
+  "print",
+  "start-process-with-partial-path",
+  "subprocess-without-shell-equals-true",
+  "suspicious-subprocess-import",
+  "type-check-without-type-error",
+  "undocumented-public-method",
+  "unused-class-method-argument",
+]
 "**/docx.py" = ["import-outside-top-level"]
 "**/file_test_helpers.py" = ["line-too-long"]
 "**/flextcliutilitiesfiletesthelpersmixin_part_03.py" = ["line-too-long"]

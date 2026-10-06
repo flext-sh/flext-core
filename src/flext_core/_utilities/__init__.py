@@ -71,7 +71,6 @@ if TYPE_CHECKING:
     from flext_core._utilities._guards_type_protocol_string import (
         FlextUtilitiesGuardsTypeProtocolStringMixin,
     )
-    from flext_core._utilities._guards_type_protocol_types import ProtocolGuardInput
     from flext_core._utilities.args import FlextUtilitiesArgs
     from flext_core._utilities.base import FlextUtilitiesBase
     from flext_core._utilities.beartype_conf import FlextUtilitiesBeartypeConf
@@ -193,7 +192,6 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesRuntimeViolationRegistry",
     "FlextUtilitiesSettings",
     "FlextUtilitiesText",
-    "ProtocolGuardInput",
     "_beartype",
     "_checker_parts",
     "_enforcement_collect_parts",
@@ -273,7 +271,6 @@ install_lazy_exports(
         "FlextUtilitiesRuntimeViolationRegistry": ".runtime_violation_registry",
         "FlextUtilitiesSettings": ".settings",
         "FlextUtilitiesText": ".text",
-        "ProtocolGuardInput": "._guards_type_protocol_types",
         "_beartype": "._beartype",
         "_checker_parts": "._checker_parts",
         "_enforcement_collect_parts": "._enforcement_collect_parts",
