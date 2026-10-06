@@ -114,9 +114,19 @@ class FlextUtilitiesFamilySurface:
                 FlextUtilitiesProjectMetadata.distribution_requirement_names(dist),
             ):
                 continue
-            module = importlib.import_module(
-                module_by_distribution.get(raw_name.lower(), name),
-            )
+            try:
+                module = importlib.import_module(
+                    module_by_distribution.get(raw_name.lower(), name),
+                )
+            except ImportError:
+                # The requirement edge only nominates the member; the published
+                # contract is the structural proof. A member whose root package
+                # cannot be imported under any derivable name (an editable
+                # install whose RECORD names no top-level package, for one)
+                # publishes nothing this snapshot can read — it is not a
+                # surface failure, and one such member must not crash the
+                # derivation every other consumer relies on.
+                continue
             published = getattr(module, "__all__", None)
             raw_map = vars(module).get("_LAZY_IMPORTS")
             if published is None or raw_map is None:
