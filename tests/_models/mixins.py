@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from tests.typings import t
 
 
-class TestsFlextFlextModelsMixins:
+class TestsFlextModelsNamespace:
     """Canonical namespace owner."""
 
     class TestsFlextModelsMixins(
@@ -80,9 +80,14 @@ class TestsFlextFlextModelsMixins:
     ]
 
 
-TestsFlextFlextModelsMixins.TestsFlextModelsMixins.ContainerScenarios.SERVICE_SCENARIOS = TestsFlextFlextModelsMixins._svc_scenarios
-TestsFlextFlextModelsMixins.TestsFlextModelsMixins.ContainerScenarios.TYPED_RETRIEVAL_SCENARIOS = TestsFlextFlextModelsMixins._typed_scenarios
+TestsFlextModelsNamespace.TestsFlextModelsMixins.ContainerScenarios.SERVICE_SCENARIOS = TestsFlextModelsNamespace._svc_scenarios
+TestsFlextModelsNamespace.TestsFlextModelsMixins.ContainerScenarios.TYPED_RETRIEVAL_SCENARIOS = TestsFlextModelsNamespace._typed_scenarios
 
-m = TestsFlextFlextModelsMixins.TestsFlextModelsMixins
 
-__all__: list[str] = ["TestsFlextFlextModelsMixins", "m"]
+m = TestsFlextModelsNamespace.TestsFlextModelsMixins
+
+# Flat name restored (the consumers and the tests lazy map resolve it):
+# commit 0958021717 had accidentally double-prefixed the namespace owner.
+TestsFlextModelsMixins = TestsFlextModelsNamespace.TestsFlextModelsMixins
+
+__all__: list[str] = ["TestsFlextModelsNamespace", "TestsFlextModelsMixins", "m"]
