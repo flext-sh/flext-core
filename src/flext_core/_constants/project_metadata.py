@@ -10,6 +10,7 @@ from typing import Final
 
 from flext_core._typings.base import FlextTypingBase as t
 
+
 class FlextConstantsProjectMetadata:
     """Fixed project-metadata constants exposed flat on `c.*`."""
 
