@@ -39,17 +39,35 @@ class Ex08ContainerRegistration(ExamplesFlextShared):
             return r[bool].fail_op("container write", exc)
         return r[bool].ok(value=True)
 
+    _registered_factory_name: str = u.PrivateAttr(default_factory=str)
+    _registered_resource_name: str = u.PrivateAttr(default_factory=str)
+    _registered_missing_name: str = u.PrivateAttr(default_factory=str)
+    _registered_bad_factory_name: str = u.PrivateAttr(default_factory=str)
+    _factory_calls: dict[str, int] = u.PrivateAttr(
+        default_factory=lambda: {"count": 0},
+    )
+    _resource_calls: dict[str, int] = u.PrivateAttr(
+        default_factory=lambda: {"count": 0},
+    )
+
     def _exercise_registration_and_resolution(self, container: p.Container) -> None:
         """Exercise register APIs plus get/get_typed/list/has checks."""
         self.section("registration_and_resolution")
-        service_name = f"svc.{self.rand_str(6)}"
-        service_value = self.rand_int(1, 1000)
-        self._registered_service_name = service_name
-        self._registered_service_value = service_value
-        factory_name = f"svc.{self.rand_str(6)}"
-        resource_name = f"svc.{self.rand_str(6)}"
-        missing_name = f"svc.{self.rand_str(6)}"
-        bad_factory_name = f"svc.{self.rand_str(6)}"
+        self._registered_service_name = f"svc.{self.rand_str(6)}"
+        self._registered_service_value = self.rand_int(1, 1000)
+        self._registered_factory_name = f"svc.{self.rand_str(6)}"
+        self._registered_resource_name = f"svc.{self.rand_str(6)}"
+        self._registered_missing_name = f"svc.{self.rand_str(6)}"
+        self._registered_bad_factory_name = f"svc.{self.rand_str(6)}"
+        self._register_service_entry(container)
+        self._register_factory_entry(container)
+        self._register_resource_entry(container)
+        self._resolve_and_list_entries(container)
+
+    def _register_service_entry(self, container: p.Container) -> None:
+        """Register the base service binding and its rejection paths."""
+        service_name = self._registered_service_name
+        service_value = self._registered_service_value
         register_ok = container.bind(service_name, service_value)
         self.audit_check("register.service.returns_self", register_ok is container)
         self.audit_check(
@@ -83,7 +101,12 @@ class Ex08ContainerRegistration(ExamplesFlextShared):
             "register.service.reserved_name_rejected",
             reserved.failure and c.ServiceName.LOGGER in (reserved.error or ""),
         )
-        factory_calls = {"count": 0}
+
+    def _register_factory_entry(self, container: p.Container) -> None:
+        """Register the counting factory and its duplicate/raising variants."""
+        factory_name = self._registered_factory_name
+        bad_factory_name = self._registered_bad_factory_name
+        factory_calls = self._factory_calls
 
         def _factory_counter() -> int:
             factory_calls["count"] += 1
@@ -112,7 +135,12 @@ class Ex08ContainerRegistration(ExamplesFlextShared):
             "register.factory.raising_factory_registers",
             register_factory_bad is container and container.has(bad_factory_name),
         )
-        resource_calls = {"count": 0}
+
+    def _register_resource_entry(self, container: p.Container) -> None:
+        """Register the counting resource and its cross-kind rejection."""
+        resource_name = self._registered_resource_name
+        service_name = self._registered_service_name
+        resource_calls = self._resource_calls
 
         def _resource_data() -> t.IntMapping:
             resource_calls["count"] += 1
@@ -130,26 +158,42 @@ class Ex08ContainerRegistration(ExamplesFlextShared):
             "register.resource.returns_self",
             register_resource_ok is container,
         )
+
+    def _resolve_and_list_entries(self, container: p.Container) -> None:
+        """Resolve registered entries, check typed access, and list names."""
+        service_name = self._registered_service_name
+        service_value = self._registered_service_value
+        factory_name = self._registered_factory_name
+        resource_name = self._registered_resource_name
         get_service = container.resolve(service_name)
         get_factory = container.resolve(factory_name)
         get_resource = container.resolve(resource_name)
-        get_missing = container.resolve(missing_name)
-        get_bad_factory = container.resolve(bad_factory_name)
+        get_missing = container.resolve(self._registered_missing_name)
+        get_bad_factory = container.resolve(self._registered_bad_factory_name)
         self.audit_check("get.service.success", get_service.success)
         self.audit_check(
             "get.service.value_matches",
             get_service.unwrap() == service_value,
         )
         self.audit_check("get.factory.success", get_factory.success)
-        self.audit_check("get.factory.invoked_per_resolve", factory_calls["count"])
+        self.audit_check(
+            "get.factory.invoked_per_resolve",
+            self._factory_calls["count"],
+        )
         self.audit_check("get.resource.success", get_resource.success)
-        self.audit_check("get.resource.invoked_per_resolve", resource_calls["count"])
+        self.audit_check(
+            "get.resource.invoked_per_resolve",
+            self._resource_calls["count"],
+        )
         self.audit_check("get.missing.failure", get_missing.failure)
         self.audit_check("get.bad_factory.failure", get_bad_factory.failure)
         get_typed_service = container.resolve(service_name, type_cls=int)
         get_typed_service_bad = container.resolve(service_name, type_cls=str)
         get_typed_factory = container.resolve(factory_name, type_cls=int)
-        get_typed_missing = container.resolve(missing_name, type_cls=int)
+        get_typed_missing = container.resolve(
+            self._registered_missing_name,
+            type_cls=int,
+        )
         self.audit_check("get_typed.service.success", get_typed_service.success)
         self.audit_check(
             "get_typed.service.value_matches",
@@ -169,7 +213,10 @@ class Ex08ContainerRegistration(ExamplesFlextShared):
         self.audit_check("has_service.service.true", container.has(service_name))
         self.audit_check("has_service.factory.true", container.has(factory_name))
         self.audit_check("has_service.resource.true", container.has(resource_name))
-        self.audit_check("has_service.missing.false", not container.has(missing_name))
+        self.audit_check(
+            "has_service.missing.false",
+            not container.has(self._registered_missing_name),
+        )
         service_list = list(container.names())
         self.audit_check("list_services.contains.service", service_name in service_list)
         self.audit_check("list_services.contains.factory", factory_name in service_list)
