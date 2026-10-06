@@ -60,7 +60,7 @@ class FlextLazyPart01(BaseModel):
         tuple[LazyImportMap | None, LazyImportDict],
     ] = Field(default_factory=dict)
 
-    install_cache: dict[str, tuple[int, int, int, int, bool]] = Field(
+    install_cache: dict[str, tuple[int, int, int, bool]] = Field(
         default_factory=dict,
     )
 
