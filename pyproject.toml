@@ -598,6 +598,16 @@ split-on-trailing-comma = false
 "**/framework.py" = ["banned-api", "import-outside-top-level"]
 "**/pptx.py" = ["import-outside-top-level"]
 "**/test_public_contracts_cov.py" = ["line-too-long"]
+"**/tests/**" = [
+  "boolean-positional-value-in-call",
+  "compare-to-empty-string",
+  "magic-value-comparison",
+  "mutable-class-default",
+  "no-self-use",
+  "private-member-access",
+  "pytest-fixture-autouse",
+  "too-many-public-methods",
+]
 "**/tests/python/**" = [
   "raise-vanilla-args",
   "start-process-with-partial-path",

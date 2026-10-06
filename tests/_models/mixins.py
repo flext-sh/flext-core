@@ -88,4 +88,4 @@ m = TestsFlextModelsNamespace.TestsFlextModelsMixins
 # commit 0958021717 had accidentally double-prefixed the namespace owner.
 TestsFlextModelsMixins = TestsFlextModelsNamespace.TestsFlextModelsMixins
 
-__all__: list[str] = ["TestsFlextModelsNamespace", "TestsFlextModelsMixins", "m"]
+__all__: list[str] = ["TestsFlextModelsMixins", "TestsFlextModelsNamespace", "m"]
