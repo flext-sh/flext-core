@@ -17,9 +17,9 @@ from flext_core._lazy_parts.flextlazy_part_01 import (
     LazyImportMap,
     MutableLazyImportMap,
 )
-from flext_core.typings import ModuleGlobals, ModuleGlobalValue
 
 if TYPE_CHECKING:
+    from flext_core.typings import ModuleGlobals, ModuleGlobalValue
     from collections.abc import Sequence
 
 
