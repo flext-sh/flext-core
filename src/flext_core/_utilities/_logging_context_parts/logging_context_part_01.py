@@ -14,7 +14,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_core import c, e, p, r, t
+from flext_core import c, p, r, t
 from flext_core._utilities.collection import FlextUtilitiesCollection
 from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
 from flext_core._utilities.logging_config import FlextUtilitiesLoggingConfig
@@ -55,6 +55,9 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             The resulting ``p.Result[bool]``.
 
         """
+
+        from flext_core import e
+
         try:
             cls._scoped_contexts[scope] = cls._merge_scoped_context(scope, context)
             cls.structlog().contextvars.bind_contextvars(**context)
@@ -70,6 +73,9 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             The resulting ``p.Result[bool]``.
 
         """
+
+        from flext_core import e
+
         try:
             normalized_context = cls.to_container_context(context)
             cls.structlog().contextvars.bind_contextvars(**normalized_context)
@@ -85,6 +91,9 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             The resulting ``p.Result[bool]``.
 
         """
+
+        from flext_core import e
+
         try:
             cls.structlog().contextvars.clear_contextvars()
             cls._scoped_contexts.clear()
@@ -101,6 +110,9 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             The resulting ``p.Result[bool]``.
 
         """
+
+        from flext_core import e
+
         try:
             if scope in cls._scoped_contexts:
                 keys = list(cls._scoped_contexts[scope].keys())
@@ -119,6 +131,9 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             The resulting ``p.Result[bool]``.
 
         """
+
+        from flext_core import e
+
         try:
             unbind_keys: t.StrSequence = list(keys)
             cls.structlog().contextvars.unbind_contextvars(*unbind_keys)

@@ -14,7 +14,7 @@ from typing import Annotated, ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
-from flext_core import c, t, u
+from flext_core import c, t
 from flext_core._models._cqrs_parts.flextmodelscqrs_part_01 import (
     FlextModelsCqrs as FlextModelsCqrsPart01,
 )
