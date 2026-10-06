@@ -10,9 +10,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Sequence, Sequence as _Sequence
 from importlib.resources.abc import Traversable
-from pathlib import Path
+from pathlib import Path, Path as _Path
 from typing import TextIO, cast, override
 
 from pydantic import JsonValue
@@ -21,8 +21,6 @@ from pydantic_settings.sources import PathType
 from yaml import MappingNode, SafeLoader
 from yaml.constructor import ConstructorError
 from yaml.resolver import BaseResolver
-from collections.abc import Sequence as _Sequence
-from pathlib import Path as _Path
 
 
 class _UniqueKeySafeLoader(SafeLoader):
@@ -159,7 +157,6 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
         Returns:
             The resulting ``dict[str, JsonValue]``.
         """
-
         if files is None:
             return {}
         if isinstance(files, str) or not isinstance(files, _Sequence):
