@@ -13,6 +13,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import Annotated
 
 import pydantic
@@ -116,7 +117,9 @@ class FlextTypesPydantic:
     type Json[T] = pydantic.Json[T]
     # JsonValue is also module-level so beartype can resolve forward references
     # emitted from aliases that flow through this class namespace.
-    type JsonValue = pydantic.JsonValue
+    type JsonValue = (
+        bool | int | float | str | Mapping[str, JsonValue] | Sequence[JsonValue] | None
+    )
     type BaseModelType = pydantic.BaseModel
     # PEP 695 aliases, never bare class-scope assignments: a bare
     # ``BaseModel = pydantic.BaseModel`` is a variable to mypy, so it is not

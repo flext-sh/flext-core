@@ -39,6 +39,7 @@ if TYPE_CHECKING:
     from flext_core.handlers import FlextHandlers, h
     from flext_core.lazy import (
         FlextLazy,
+        FlextLazyAttribute,
         FlextLazyMember,
         lazy_member,
         resolve_lazy_members,
@@ -73,6 +74,7 @@ __all__: tuple[str, ...] = (
     "FlextExceptions",
     "FlextHandlers",
     "FlextLazy",
+    "FlextLazyAttribute",
     "FlextLazyMember",
     "FlextMixins",
     "FlextModels",
@@ -133,6 +135,7 @@ install_lazy_exports(
         "FlextExceptions": ".exceptions",
         "FlextHandlers": ".handlers",
         "FlextLazy": ".lazy",
+        "FlextLazyAttribute": ".lazy",
         "FlextLazyMember": ".lazy",
         "FlextMixins": ".mixins",
         "FlextModels": ".models",

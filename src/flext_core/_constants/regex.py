@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from typing import ClassVar
+from typing import ClassVar, Final
 
 from flext_core._typings.base import FlextTypingBase as t
 
@@ -81,8 +81,7 @@ class FlextConstantsRegex:
     )
     CAMEL_TO_SNAKE_RE: ClassVar[t.RegexPattern] = re.compile(PATTERN_CAMEL_TO_SNAKE)
     FORBIDDEN_FACADE_IMPORT_RE: ClassVar[t.RegexPattern] = re.compile(
-        PATTERN_FORBIDDEN_FACADE_IMPORT,
-        flags=re.MULTILINE,
+        PATTERN_FORBIDDEN_FACADE_IMPORT, flags=re.MULTILINE,
     )
     PATTERN_EXAMPLE_RESULT_LINE_RE: ClassVar[t.RegexPattern] = re.compile(
         PATTERN_EXAMPLE_RESULT_LINE,
