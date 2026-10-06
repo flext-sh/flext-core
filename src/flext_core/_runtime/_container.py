@@ -26,7 +26,6 @@ from flext_core._typings.typeadapters import FlextTypesTypeAdapters as tta
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore as ugc
 
 if TYPE_CHECKING:
-    from flext_core._models.containers import FlextModelsContainers
     from flext_core._protocols.base import FlextProtocolsBase as pb
     from flext_core._typings.services import FlextTypesServices as ts
 

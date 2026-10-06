@@ -14,7 +14,7 @@ from typing import Annotated, ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
-from flext_core import c, t
+from flext_core import c, t, u
 from flext_core._models._cqrs_parts.flextmodelscqrs_part_01 import (
     FlextModelsCqrs as FlextModelsCqrsPart01,
 )
@@ -35,14 +35,12 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
 
     @staticmethod
     def _u() -> type:
-        """Deferred facade access: cqrs is loaded by the m facade itself.
+        """Facade access to utilities used by CQRS defaults and validators.
 
         Returns:
             The resulting ``type``.
 
         """
-        from flext_core import u
-
         return u
 
     class Command(m.ArbitraryTypesModel):
