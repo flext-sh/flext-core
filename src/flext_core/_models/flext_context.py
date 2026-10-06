@@ -1,8 +1,17 @@
+"""Flext context module.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+src/flext_core/_models/flext_context
+SPDX-License-Identifier: MIT
+"""
+
 from __future__ import annotations
+
 import time
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Annotated, ClassVar, Self
+
 from flext_core import c, e, m, p, r, t, u
 
 # NOTE (multi-agent): mro-i6nq.12 — Generator is annotation-only; importing it
@@ -10,8 +19,6 @@ from flext_core import c, e, m, p, r, t, u
 # owns its __all__: the context facade re-exports from here, never the reverse.
 if TYPE_CHECKING:
     from collections.abc import Generator
-
-__all__: t.StrSequence = ("FlextContext",)
 
 
 class FlextContext(m.ManagedModel):
@@ -405,3 +412,6 @@ class FlextContext(m.ManagedModel):
         _ = u.OPERATION_START_TIME.set(None)
         _ = u.OPERATION_METADATA.set(None)
         _ = u.REQUEST_TIMESTAMP.set(None)
+
+
+__all__: t.StrSequence = ("FlextContext",)

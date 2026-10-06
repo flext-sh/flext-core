@@ -16,14 +16,14 @@ from typing import override
 import pytest
 from flext_tests import r, tm
 
-from flext_core import FlextContext, FlextSettings
+import flext_core._models.flext_context
+from flext_core import FlextSettings
 from tests.base import s
 from tests.constants import c
 from tests.models import m
 from tests.protocols import p
 from tests.typings import t
 from tests.utilities import u
-import flext_core._models.flext_context
 
 
 class TestsFlextCoreServiceBootstrap:

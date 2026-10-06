@@ -20,10 +20,9 @@ from typing import TYPE_CHECKING
 import pytest
 from flext_tests import x
 
-from flext_core import FlextContext
+import flext_core._models.flext_context
 from tests.constants import c
 from tests.protocols import p
-import flext_core._models.flext_context
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -162,4 +161,7 @@ class TestsFlextMixins:
         """Test correlation id round trips through flext context."""
         flext_core._models.flext_context.FlextContext.apply_correlation_id("trace-42")
 
-        assert flext_core._models.flext_context.FlextContext.resolve_correlation_id() == "trace-42"
+        assert (
+            flext_core._models.flext_context.FlextContext.resolve_correlation_id()
+            == "trace-42"
+        )

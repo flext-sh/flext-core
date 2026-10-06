@@ -13,15 +13,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from flext_core import t
 from flext_core._models.flext_context import FlextContext
 
 # NOTE (multi-agent): mro-i6nq.12 — Generator is annotation-only; importing it
 # under TYPE_CHECKING keeps the public runtime facade graph lazy.
-if TYPE_CHECKING:
-    from collections.abc import Generator
 
 
 __all__: t.StrSequence = ("FlextContext",)
