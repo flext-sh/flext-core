@@ -20,8 +20,7 @@ import pytest
 from tests.constants import c
 from tests.models import m
 from tests.typings import t
-from tests.unit._handlers_support import TestsFlextFlextHandlers
-from tests.utilities import u
+from tests.utilities import TestsFlextUtilities, u
 
 
 class TestsFlextCoreHandlersValidationContext(

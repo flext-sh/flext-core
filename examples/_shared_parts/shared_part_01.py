@@ -41,7 +41,8 @@ class ExamplesFlextSharedBase(m.BaseModel):
         max_u64 = (1 << 64) - 1
         return raw / max_u64
 
-    def exercise(self) -> None:
+    @staticmethod
+    def exercise() -> None:
         """Override in subclasses to exercise the target class."""
         msg = m.Examples.ErrorMessages.EXERCISE_NOT_IMPLEMENTED
         raise NotImplementedError(msg)
