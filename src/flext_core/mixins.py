@@ -6,8 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from flext_core import t
 from flext_core._models.flext_mixins import FlextMixins
 
@@ -17,8 +15,6 @@ from flext_core._models.flext_mixins import FlextMixins
 # fields mirroring m.RuntimeBootstrapOptions; dead track/_init_service/
 # _register_in_container removed (zero callers).
 
-if TYPE_CHECKING:
-    from collections.abc import Generator, Mapping, MutableMapping
 
 # Inheritance base for FlextService/FlextHandlers (x namespace, consumed by
 # service.py, _handlers_parts and flext-tests support bases).
