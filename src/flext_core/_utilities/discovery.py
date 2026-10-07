@@ -16,6 +16,7 @@ import functools
 import inspect
 import operator
 from collections import ChainMap
+from collections.abc import Callable
 from types import FunctionType
 from typing import TYPE_CHECKING
 
@@ -146,6 +147,53 @@ class FlextUtilitiesDiscovery:
         error = FlextUtilitiesDiscovery._error
         signature = inspect.signature(func)
         owners = [owner for owner in below if name in vars(owner)]
+        FlextUtilitiesDiscovery._assert_operation_shape(
+            owners,
+            func,
+            error,
+            where,
+            signature,
+        )
+        doc = FlextUtilitiesDiscovery._assert_documented_result(
+            func,
+            error,
+            where,
+            signature,
+        )
+        annotations = inspect.get_annotations(func)
+        requests = tuple(signature.parameters.values())[1:]
+        returned = annotations["return"]
+        origin = FlextUtilitiesDiscovery._resolve(func, where, returned, subscript=True)
+        if origin is not p.Result:
+            raise error(where, returned, c.ERR_SERVICE_OPERATION_RESULT)
+        request = None
+        for param in requests:
+            if param.name not in annotations:
+                raise error(where, signature, c.ERR_SERVICE_OPERATION_REQUEST)
+            annotation = annotations[param.name]
+            request = FlextUtilitiesDiscovery._resolve(func, where, annotation)
+            if not (isinstance(request, type) and issubclass(request, BaseModel)):
+                raise error(where, annotation, c.ERR_SERVICE_OPERATION_REQUEST)
+        return FlextModelsService.ServiceOperation(
+            name=name,
+            summary=doc.strip().splitlines()[0],
+            request=request,
+        )
+
+    @staticmethod
+    def _assert_operation_shape(
+        owners: list[type],
+        func: FunctionType,
+        error: Callable[..., Exception],
+        where: tuple[type, str, str],
+        signature: inspect.Signature,
+    ) -> None:
+        """Reject colliding owners, async/generic callables, and bad arity.
+
+        Raises the discovery ``error`` builder's exception on the first defect;
+        the concrete type is the caller's error factory, not a fixed class.
+
+        """
         if any(not issubclass(owners[0], owner) for owner in owners[1:]):
             siblings = ", ".join(owner.__qualname__ for owner in owners)
             defect = c.ERR_SERVICE_OPERATION_COLLISION.format(owners=siblings)
@@ -166,29 +214,29 @@ class FlextUtilitiesDiscovery:
             )
         ):
             raise error(where, signature, c.ERR_SERVICE_OPERATION_SIGNATURE)
+
+    @staticmethod
+    def _assert_documented_result(
+        func: FunctionType,
+        error: Callable[..., Exception],
+        where: tuple[type, str, str],
+        signature: inspect.Signature,
+    ) -> str:
+        """Require a docstring and a declared return annotation.
+
+        Returns:
+            The resulting ``str``.
+
+        Raises the discovery ``error`` builder's exception on the first defect;
+        the concrete type is the caller's error factory, not a fixed class.
+
+        """
         doc = func.__doc__
         if doc is None or not doc.strip():
             raise error(where, signature, c.ERR_SERVICE_OPERATION_DOCSTRING)
-        annotations = inspect.get_annotations(func)
-        if "return" not in annotations:
+        if "return" not in inspect.get_annotations(func):
             raise error(where, signature, c.ERR_SERVICE_OPERATION_RESULT)
-        returned = annotations["return"]
-        origin = FlextUtilitiesDiscovery._resolve(func, where, returned, subscript=True)
-        if origin is not p.Result:
-            raise error(where, returned, c.ERR_SERVICE_OPERATION_RESULT)
-        request = None
-        for param in requests:
-            if param.name not in annotations:
-                raise error(where, signature, c.ERR_SERVICE_OPERATION_REQUEST)
-            annotation = annotations[param.name]
-            request = FlextUtilitiesDiscovery._resolve(func, where, annotation)
-            if not (isinstance(request, type) and issubclass(request, BaseModel)):
-                raise error(where, annotation, c.ERR_SERVICE_OPERATION_REQUEST)
-        return FlextModelsService.ServiceOperation(
-            name=name,
-            summary=doc.strip().splitlines()[0],
-            request=request,
-        )
+        return doc
 
     @staticmethod
     def _resolve(

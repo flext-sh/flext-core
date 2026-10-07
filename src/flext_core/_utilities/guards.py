@@ -122,52 +122,107 @@ class FlextUtilitiesGuards(
             The resulting ``bool``.
 
         """
-        result = True
-        for op_name, check_fn in FlextUtilitiesGuards._EQUALITY_OPS.items():
-            spec_val = getattr(guard_spec, op_name, None)
-            if spec_val is not None and not check_fn(value, spec_val):
-                result = False
-                break
+        result = FlextUtilitiesGuards._equality_ops_pass(value, guard_spec)
         if result:
-            for mem_op, mem_fn in FlextUtilitiesGuards._MEMBERSHIP_OPS.items():
-                mem_raw = getattr(guard_spec, mem_op, None)
-                if mem_raw is not None and not mem_fn(
-                    value,
-                    t.json_list_adapter().validate_python(mem_raw),
-                ):
-                    result = False
-                    break
+            result = FlextUtilitiesGuards._membership_ops_pass(value, guard_spec)
         if result:
-            for op_name, num_fn in FlextUtilitiesGuards._NUMERIC_OPS.items():
-                spec_val_num: float | str | None = getattr(guard_spec, op_name, None)
-                if spec_val_num is None:
-                    continue
-                if isinstance(spec_val_num, str) and isinstance(value, str):
-                    str_fn = FlextUtilitiesGuards._STRING_OPS[op_name]
-                    if not str_fn(value, spec_val_num):
-                        result = False
-                        break
-                    continue
-                if isinstance(spec_val_num, c.NUMERIC_TYPES) and not num_fn(
-                    check_val,
-                    spec_val_num,
-                ):
-                    result = False
-                    break
+            result = FlextUtilitiesGuards._numeric_ops_pass(
+                value,
+                guard_spec,
+                check_val,
+            )
         if result and isinstance(value, str):
             result = FlextUtilitiesGuards._check_string_ops(value, guard_spec)
         if result:
-            match guard_spec.contains:
-                case None:
-                    pass
-                case contains_value:
-                    result = FlextUtilitiesGuardsTypeCore.container(
-                        value,
-                    ) and FlextUtilitiesGuards._check_iterable_contains(
-                        value,
-                        contains_value,
-                    )
+            result = FlextUtilitiesGuards._contains_pass(value, guard_spec)
         return result
+
+    @staticmethod
+    def _equality_ops_pass(
+        value: t.GuardInput,
+        guard_spec: FlextModelsCollections.GuardCheckSpec,
+    ) -> bool:
+        """Apply the equality operator table; False on the first failure.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
+        for op_name, check_fn in FlextUtilitiesGuards._EQUALITY_OPS.items():
+            spec_val = getattr(guard_spec, op_name, None)
+            if spec_val is not None and not check_fn(value, spec_val):
+                return False
+        return True
+
+    @staticmethod
+    def _membership_ops_pass(
+        value: t.GuardInput,
+        guard_spec: FlextModelsCollections.GuardCheckSpec,
+    ) -> bool:
+        """Apply the membership operator table; False on the first failure.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
+        for mem_op, mem_fn in FlextUtilitiesGuards._MEMBERSHIP_OPS.items():
+            mem_raw = getattr(guard_spec, mem_op, None)
+            if mem_raw is not None and not mem_fn(
+                value,
+                t.json_list_adapter().validate_python(mem_raw),
+            ):
+                return False
+        return True
+
+    @staticmethod
+    def _numeric_ops_pass(
+        value: t.GuardInput,
+        guard_spec: FlextModelsCollections.GuardCheckSpec,
+        check_val: t.Numeric,
+    ) -> bool:
+        """Apply the numeric/string operator tables; False on the first failure.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
+        for op_name, num_fn in FlextUtilitiesGuards._NUMERIC_OPS.items():
+            spec_val_num: float | str | None = getattr(guard_spec, op_name, None)
+            if spec_val_num is None:
+                continue
+            if isinstance(spec_val_num, str) and isinstance(value, str):
+                str_fn = FlextUtilitiesGuards._STRING_OPS[op_name]
+                if not str_fn(value, spec_val_num):
+                    return False
+                continue
+            if isinstance(spec_val_num, c.NUMERIC_TYPES) and not num_fn(
+                check_val,
+                spec_val_num,
+            ):
+                return False
+        return True
+
+    @staticmethod
+    def _contains_pass(
+        value: t.GuardInput,
+        guard_spec: FlextModelsCollections.GuardCheckSpec,
+    ) -> bool:
+        """Apply the contains contract; a None contains spec always passes.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
+        match guard_spec.contains:
+            case None:
+                return True
+            case contains_value:
+                return FlextUtilitiesGuardsTypeCore.container(
+                    value,
+                ) and FlextUtilitiesGuards._check_iterable_contains(
+                    value,
+                    contains_value,
+                )
 
     @staticmethod
     def chk(

@@ -142,34 +142,19 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
             if isinstance(source, m.ConfigMap)
             else source
         )
-
-        def _is_not_none(value: t.JsonValue) -> bool:
-            return value is not None
-
-        def _is_not_empty(value: t.JsonValue) -> bool:
-            return not FlextUtilitiesGuardsTypeCore.empty_value(value)
-
-        def _pipeline() -> t.JsonDict:
-            step: t.JsonDict = dict(coerced)
-            if normalize:
-                normalized = FlextRuntime.normalize_to_metadata(step)
-                if FlextUtilitiesGuardsTypeCore.mapping(normalized):
-                    step = dict(normalized)
-            if map_keys:
-                step = {map_keys.get(k, k): v for k, v in step.items()}
-            if filter_keys:
-                step = {k: step[k] for k in filter_keys if k in step}
-            if exclude_keys:
-                step = {k: v for k, v in step.items() if k not in exclude_keys}
-            if strip_none:
-                step = dict(FlextUtilitiesCollection.filter(step, _is_not_none))
-            if strip_empty:
-                step = dict(FlextUtilitiesCollection.filter(step, _is_not_empty))
-            return step
-
         transform_result: p.Result[t.JsonMapping] = r[
             t.JsonMapping
-        ].create_from_callable(_pipeline)
+        ].create_from_callable(
+            lambda: FlextUtilitiesMapper._pipeline_steps(
+                coerced,
+                normalize=normalize,
+                strip_none=strip_none,
+                strip_empty=strip_empty,
+                map_keys=map_keys,
+                filter_keys=filter_keys,
+                exclude_keys=exclude_keys,
+            ),
+        )
         if transform_result.failure:
             failure_reason = (
                 transform_result.exception
@@ -178,6 +163,45 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
             )
             return r[t.JsonMapping].fail_op("transform", failure_reason)
         return transform_result
+
+    @staticmethod
+    def _pipeline_steps(  # ruff: ignore[too-many-arguments] -- private stepper mirroring the public transform option set one-to-one; the flags are forwarded verbatim from the API surface.
+        coerced: t.JsonMapping,
+        *,
+        normalize: bool,
+        strip_none: bool,
+        strip_empty: bool,
+        map_keys: t.StrMapping | None,
+        filter_keys: set[str] | None,
+        exclude_keys: set[str] | None,
+    ) -> t.JsonDict:
+        """Apply the transform pipeline steps to the coerced mapping.
+
+        Returns:
+            The resulting ``t.JsonDict``.
+
+        """
+        step: t.JsonDict = dict(coerced)
+        if normalize:
+            normalized = FlextRuntime.normalize_to_metadata(step)
+            if FlextUtilitiesGuardsTypeCore.mapping(normalized):
+                step = dict(normalized)
+        if map_keys:
+            step = {map_keys.get(k, k): v for k, v in step.items()}
+        if filter_keys:
+            step = {k: step[k] for k in filter_keys if k in step}
+        if exclude_keys:
+            step = {k: v for k, v in step.items() if k not in exclude_keys}
+        if strip_none:
+            step = dict(FlextUtilitiesCollection.filter(step, lambda v: v is not None))
+        if strip_empty:
+            step = dict(
+                FlextUtilitiesCollection.filter(
+                    step,
+                    lambda v: not FlextUtilitiesGuardsTypeCore.empty_value(v),
+                ),
+            )
+        return step
 
 
 __all__: list[str] = ["FlextUtilitiesMapper"]
