@@ -1,8 +1,10 @@
 """Strict YAML config sources for the Flext config/settings layer.
 
-Public home of ``StrictYamlConfigSource`` (ADR-018: root-facade exports of
+Public home of ``FlextStrictYamlConfigSource`` (ADR-018: root-facade exports of
 private root modules must follow the module suffix contract; a source class
 has no ``Config``/``Settings`` suffix, so it lives in a public owner module).
+The unique-key loader plumbing lives in the private
+``_config_sources_parts`` family.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -18,61 +20,11 @@ from typing import TextIO, cast, override
 from pydantic import JsonValue
 from pydantic_settings import BaseSettings, YamlConfigSettingsSource
 from pydantic_settings.sources import PathType
-from yaml import MappingNode, SafeLoader
-from yaml.constructor import ConstructorError
-from yaml.resolver import BaseResolver
+
+from flext_core._config_sources_parts.unique_key_loader import _UniqueKeySafeLoader
 
 
-class _UniqueKeySafeLoader(SafeLoader):
-    """Safe YAML loader that rejects duplicate mapping keys at every depth."""
-
-
-def _construct_unique_mapping(
-    loader: SafeLoader,
-    node: MappingNode,
-    *,
-    deep: bool = False,
-) -> dict[str, JsonValue]:
-    """Construct one JSON mapping and fail before a duplicate can overwrite.
-
-    Returns:
-        The resulting ``dict[str, JsonValue]``.
-
-    Raises:
-        ConstructorError: If while constructing a config mapping.
-    """
-    values: dict[str, JsonValue] = {}
-    for key_node, value_node in node.value:
-        key = cast("JsonValue", loader.construct_object(key_node, deep=deep))
-        if not isinstance(key, str):
-            context = "while constructing a config mapping"
-            problem = "config mapping keys must be strings"
-            raise ConstructorError(
-                context,
-                node.start_mark,
-                problem,
-                key_node.start_mark,
-            )
-        if key in values:
-            context = "while constructing a config mapping"
-            problem = f"duplicate config key: {key}"
-            raise ConstructorError(
-                context,
-                node.start_mark,
-                problem,
-                key_node.start_mark,
-            )
-        values[key] = cast("JsonValue", loader.construct_object(value_node, deep=deep))
-    return values
-
-
-_UniqueKeySafeLoader.add_constructor(
-    BaseResolver.DEFAULT_MAPPING_TAG,
-    _construct_unique_mapping,
-)
-
-
-class StrictYamlConfigSource(YamlConfigSettingsSource):
+class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
     """Pydantic settings source backed by the unique-key safe loader.
 
     Accepts an optional ``transform`` callable applied to the fully merged
@@ -183,6 +135,10 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
     ) -> dict[str, JsonValue]:
         """Deep-merge two config dicts, concatenating list values.
 
+        Args:
+            base: The accumulated mapping so far.
+            updating: The newly read mapping merged over ``base``.
+
         Returns:
             The resulting ``dict[str, JsonValue]``.
         """
@@ -190,7 +146,10 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
         for key, value in updating.items():
             existing = result.get(key)
             if isinstance(existing, dict) and isinstance(value, dict):
-                result[key] = StrictYamlConfigSource._deep_merge_lists(existing, value)
+                result[key] = FlextStrictYamlConfigSource._deep_merge_lists(
+                    existing,
+                    value,
+                )
             elif isinstance(existing, list) and isinstance(value, list):
                 result[key] = [*existing, *value]
             else:
@@ -198,4 +157,4 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
         return result
 
 
-__all__ = ("StrictYamlConfigSource",)
+__all__ = ("FlextStrictYamlConfigSource",)

@@ -6,10 +6,13 @@
 # Source: template (base/.mise.toml.j2)
 # Free: no
 # End SECTION: header
-# NOTE: mise carries the Python runtime and native tools from the config SSOT.
-# Python dependency declarations remain owned by pyproject.toml. Tools are declared
-# `latest`; only `make upg` resolves them and writes the committed mise.lock.
-# Setup installs frozen from that lock and never re-resolves.
+# NOTE: mise carries itself, the Python runtime and the native tools from the
+# config SSOT. The self-managed github:jdx/mise entry is the pinned release:
+# `mise install` provisions it from mise.lock and every later `mise` resolved
+# through the mise-managed shims runs exactly that release. Python dependency
+# declarations remain owned by pyproject.toml. Tools are declared `latest`;
+# only `make upg` resolves them and writes the committed mise.lock. Setup
+# installs frozen from that lock and never re-resolves.
 
 # === SECTION: settings (managed) ===
 # Source: config:codegen.toolchain.mise_lockfile / mise_locked / mise_lockfile_platforms /
@@ -37,11 +40,15 @@ locked = true
 # End SECTION: settings
 
 # === SECTION: tools (managed) ===
-# Source: config:python_version + config:codegen.toolchain.tools entries
+# Source: config:python_version + config:codegen.toolchain mise_selector /
+#         mise_version (the self-managed mise entry) + toolchain.tools entries
 #         (name, selector, version, version_prefix, form; entry order is the
 #         projection order, form fixes the rendered shape)
 [tools]
 python = "3.13"
+# mise self-management: the [tools] entry pins the release `mise install`
+# provisions from mise.lock; a host bootstrap mise only needs to read that lock.
+"github:jdx/mise" = "2026.10.3"
 # Native toolchain (single source: Infra.codegen.toolchain.tools in codegen.yaml).
 uv = "latest"
 kubectl = "latest"

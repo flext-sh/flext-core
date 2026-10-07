@@ -147,7 +147,9 @@ class _ImportBlacklistVisitor:
         module_name = getattr(module, "__name__", "")
         origin = _ubh.object_module_name_for(value) or ""
         owners = {
-            rel if rel.startswith(".") else f"{module_name}.{rel}"
+            rel
+            if rel.startswith(".")
+            else f"{module_name}.{rel}"
             if not rel.startswith(module_name)
             else rel
             for rel in values()

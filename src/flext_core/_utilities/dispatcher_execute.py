@@ -138,7 +138,11 @@ class FlextUtilitiesDispatcherExecute:
             LookupError,
             ArithmeticError,
         ) as exc:
-            logger.exception(c.LOG_HANDLER_EXECUTION_FAILED, route=route_name)
+            logger.exception(
+                c.LOG_HANDLER_EXECUTION_FAILED,
+                exception=exc,
+                route=route_name,
+            )
             return dispatch_result.fail_op("execute resolved handler", exc)
 
 

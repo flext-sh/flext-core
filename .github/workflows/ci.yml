@@ -59,11 +59,30 @@ jobs:
     timeout-minutes: 60
     env:
       CI: Y
+    # The member manifest is the uv workspace contract (bare sibling
+    # requirements + `workspace = true` sources): it only parses inside the
+    # workspace root. Standalone member CI therefore checks out the fleet
+    # superproject at its integration branch with submodules, overlays this
+    # repository's head onto the member directory, and runs every step from
+    # that member directory — the member Makefile resolves the superproject
+    # runtime and provisions the REAL workspace environment at the root.
+    defaults:
+      run:
+        working-directory: fleet/flext-core
     steps:
-      - name: Checkout
+      - name: Checkout fleet workspace
         uses: actions/checkout@v7
         with:
-          submodules: false
+          repository: flext-sh/flext
+          ref: 0.12.0-dev
+          submodules: recursive
+          path: fleet
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Overlay member head
+        uses: actions/checkout@v7
+        with:
+          path: fleet/flext-core
           persist-credentials: false
           fetch-depth: 0
       # Why: GitHub runners expose umask 002, so git checkout materializes
@@ -126,6 +145,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-3.13-flext-testmon-flext-core-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml', 'config/**') }}-
 
+      - name: Install mise
+        shell: bash
+        run: |
+          set -eu
+          curl -fsSL https://mise.run | sh
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+          echo "${HOME}/.local/share/mise/shims" >> "${GITHUB_PATH}"
 
       - name: Approval (blocking)
         id: approval
@@ -219,6 +245,14 @@ jobs:
           fetch-depth: 0
           submodules: false
           persist-credentials: false
+      - name: Install mise
+        shell: bash
+        run: |
+          set -eu
+          curl -fsSL https://mise.run | sh
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+          echo "${HOME}/.local/share/mise/shims" >> "${GITHUB_PATH}"
+
       - name: Boot
         run: CI=Y make setup
       - name: Release plan and guard

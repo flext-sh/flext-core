@@ -13,8 +13,9 @@ from typing import TYPE_CHECKING
 import pytest
 from flext_tests import tm
 
-from flext_core import FlextContainer, FlextSettings, u
+from flext_core import FlextContainer, FlextSettings
 from tests import c, m
+from tests.utilities import u
 
 if TYPE_CHECKING:
     from tests.typings import t
