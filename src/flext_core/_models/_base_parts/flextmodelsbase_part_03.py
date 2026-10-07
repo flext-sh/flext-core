@@ -50,15 +50,22 @@ class FlextModelsBase(FlextModelsBasePart02):
         ] = None
 
         # No ``staticmethod`` wrapper: pydantic 2.13 only registers serializers
-        # declared on plain class-body functions (the value parameter keeps its
-        # own name: pydantic 2.13 reads a ``self``-named plain serializer as a
-        # bound method and rejects the signature); wrapping the marked function in
-        # ``staticmethod`` silently drops it from ``__pydantic_decorators__`` and
-        # the default datetime serializer takes over (``Z`` instead of
-        # ``isoformat()``).
+        # declared on plain class-body functions, and a plain serializer binds
+        # the instance as ``self`` — the signature is ``(self, value)``. A
+        # one-parameter plain shape (whatever the parameter is named) is
+        # rejected at class creation ("Unrecognized field_serializer function
+        # signature"); wrapping the marked function in ``staticmethod``
+        # silently drops it from ``__pydantic_decorators__`` and the default
+        # datetime serializer takes over (``Z`` instead of ``isoformat()``).
         @up.field_serializer("created_at", "updated_at", when_used="json")
-        def serialize_timestamps(value: datetime | None) -> str | None:
+        def serialize_timestamps(
+            self,
+            value: datetime | None,
+        ) -> str | None:
             """Serialize timestamps to ISO 8601 for JSON.
+
+            Args:
+                value: The timestamp value pydantic hands the serializer.
 
             Returns:
                 The resulting ``str | None``.
