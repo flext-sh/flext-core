@@ -134,7 +134,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
             "bytes": bytes,
         }
 
-        def __init__(
+        def __init__(  # ruff: ignore[too-many-arguments] -- the keyword contract mirrors the public constructor; every argument is a distinct documented field.
             self,
             message: str,
             *,

@@ -96,7 +96,7 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
         return current_id if isinstance(current_id, str) else None
 
     @classmethod
-    def _execute_logged_call[TResult](
+    def _execute_logged_call[TResult](  # ruff: ignore[too-many-arguments] -- keyword-only logging-facets helper on the decorator hot path; a per-call carrier allocation would add overhead to every logged invocation.
         cls,
         call: Callable[[], TResult],
         *,

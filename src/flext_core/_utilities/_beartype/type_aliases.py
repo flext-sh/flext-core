@@ -32,7 +32,7 @@ class FlextUtilitiesBeartypeTypeAliases:
         return me.ResolvedAlias(value=alias.__value__)
 
     @classmethod
-    def deferred(
+    def deferred(  # ruff: ignore[too-many-arguments] -- public resolver surface mirroring the deferred-alias probe options; the keyword flags are the stable API.
         cls,
         hint: p.AttributeProbe,
         *,

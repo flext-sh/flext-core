@@ -19,7 +19,7 @@ from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelper
 from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata as upm
 
 
-def _peer_first_allowed(
+def _peer_first_allowed(  # ruff: ignore[too-many-arguments] -- keyword-only predicate over distinct classification facts; a carrier object would obscure the rule inputs it evaluates.
     *,
     is_facade: bool,
     is_core_root: bool,
@@ -45,7 +45,7 @@ def _peer_first_allowed(
     return bool(shared_peer_alias_base)
 
 
-def _requires_alias_first(
+def _requires_alias_first(  # ruff: ignore[too-many-arguments] -- keyword-only predicate over distinct classification facts; a carrier object would obscure the rule inputs it evaluates.
     *,
     require_alias_first: bool,
     is_facade: bool,

@@ -23,7 +23,7 @@ class _FlextResult[T](
 ):
     """Type-safe result with monadic railway-oriented operations."""
 
-    def __init__(
+    def __init__(  # ruff: ignore[too-many-arguments] -- the keyword contract mirrors the public constructor; every argument is a distinct documented field.
         self,
         error_code: str | None = None,
         error_data: JsonDict | None = None,

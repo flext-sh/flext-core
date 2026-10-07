@@ -74,7 +74,7 @@ class FlextResultBase[T](BaseModel):
             return None
         return dict(normalized)
 
-    def __init__(
+    def __init__(  # ruff: ignore[too-many-arguments] -- the keyword contract mirrors the public constructor; every argument is a distinct documented field.
         self,
         error_code: str | None = None,
         error_data: JsonMapping | ConfigModelInput | None = None,

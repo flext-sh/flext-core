@@ -48,7 +48,7 @@ class TestsFlextUtilitiesCaseServiceFactoriesMixin(
             return service_type
 
         @classmethod
-        def build(
+        def build(  # ruff: ignore[too-many-arguments] -- test-case builder whose keyword surface mirrors the m.Tests.ServiceTestCase fields it populates.
             cls,
             *,
             service_type: c.Tests.ServiceType | None = None,

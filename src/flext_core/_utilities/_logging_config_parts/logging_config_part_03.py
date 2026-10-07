@@ -27,8 +27,7 @@ if TYPE_CHECKING:
 
 class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart02):
     @classmethod
-    def configure_structlog(
-        cls,
+    def configure_structlog(  # ruff: ignore[too-many-arguments] -- public keyword-only configuration surface; the distinct arguments are the stable API contract and collapsing them into a carrier would break callers.        cls,
         *,
         settings: mp.BaseModel | None = None,
         log_level: int | None = None,

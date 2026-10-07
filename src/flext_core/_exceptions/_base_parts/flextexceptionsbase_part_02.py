@@ -77,7 +77,7 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
         """
         return self.error_domain == domain
 
-    def _initialize_base_state(
+    def _initialize_base_state(  # ruff: ignore[too-many-arguments] -- the keyword contract mirrors the public BaseError constructor; each argument is a distinct documented exception field.
         self,
         message: str,
         *,

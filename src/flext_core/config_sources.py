@@ -81,7 +81,7 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
     reinstantiating the source or overriding ``settings_customise_sources``.
     """
 
-    def __init__(
+    def __init__(  # ruff: ignore[too-many-arguments] -- mirrors the pydantic-settings YamlConfigSettingsSource contract and adds one transform hook; collapsing arguments would break the source-call sites.
         self,
         settings_cls: type[BaseSettings],
         yaml_file: PathType | None = None,
@@ -91,6 +91,7 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
         deep_merge: bool = False,
         transform: Callable[[dict[str, JsonValue]], dict[str, JsonValue]] | None = None,
     ) -> None:
+        """Bind the YAML files and the optional transform hook."""
         self._transform = transform
         super().__init__(
             settings_cls,
