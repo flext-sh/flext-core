@@ -19,10 +19,8 @@ from pydantic import (
     WrapSerializer,
     WrapValidator,
     computed_field,
-    field_serializer,
     field_validator,
     model_serializer,
-    model_validator,
     validate_call,
     with_config,
 )
@@ -64,8 +62,15 @@ class FlextUtilitiesPydantic:
     # overload stack here is rejected by the duplication gate, so new code
     # must spell validators through ``m.*``.
     field_validator = staticmethod(field_validator)
-    field_serializer = staticmethod(field_serializer)
-    model_validator = staticmethod(model_validator)
+    # Serializers and model validators resolve through the models-layer typed
+    # owners (``mp.*``), whose stacked ``@overload @staticmethod`` declarations
+    # carry pydantic's full overload set for both checkers — a
+    # ``staticmethod`` re-export of the raw pydantic function collapses the
+    # overloads to the first one (pyright: "Argument missing for parameter
+    # ``mode``" on every consumer call site). Runtime keeps the same function
+    # object, so behavior is unchanged.
+    field_serializer = mp.field_serializer
+    model_validator = mp.model_validator
     model_serializer = staticmethod(model_serializer)
 
     AfterValidator = AfterValidator

@@ -250,7 +250,6 @@ class FlextLazy(FlextLazyPart01):
         module_name: str,
         module_globals: ModuleGlobals,
         lazy_imports: LazyImportMap,
-        all_exports: Sequence[str] | None = None,
         *,
         publish_all: bool = True,
         public_exports: Sequence[str] | None = None,
@@ -269,10 +268,9 @@ class FlextLazy(FlextLazyPart01):
             RuntimeError: If module.
 
         """
-        pre_signature: tuple[int, int, int, int, bool] = (
+        pre_signature: tuple[int, int, int, bool] = (
             id(module_globals),
             id(lazy_imports),
-            0 if all_exports is None else id(all_exports),
             0 if public_exports is None else id(public_exports),
             publish_all,
         )
@@ -284,22 +282,21 @@ class FlextLazy(FlextLazyPart01):
             module_globals.pop(name, None)
         if public_exports is not None:
             names = tuple(dict.fromkeys(public_exports))
-        elif all_exports is None:
-            names = tuple(normalized)
         else:
-            names = tuple(dict.fromkeys((*normalized, *all_exports)))
+            names = tuple(normalized)
 
         module_globals["_LAZY_IMPORTS"] = normalized
 
         def _module_getattr(name: str) -> ModuleGlobalValue:
             return self.get(name, normalized, module_globals, module_name)
 
-        target = sys.modules.get(module_name)
-        if target is None:
-            msg = f"module {module_name!r} is not registered in sys.modules"
-            raise RuntimeError(msg)
         module_globals["__getattr__"] = _module_getattr
-        target.__getattr__ = _module_getattr
+        # Synthetic consumer namespaces (plain dicts that never enter
+        # sys.modules) install the dict-level ``__getattr__`` above; the
+        # module-object publication only applies to registered modules.
+        target = sys.modules.get(module_name)
+        if target is not None:
+            target.__getattr__ = _module_getattr
         module_globals["__dir__"] = lambda: list(names)
         if publish_all:
             module_globals["__all__"] = names

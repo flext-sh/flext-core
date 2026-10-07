@@ -41,6 +41,7 @@ class FlextUtilitiesBeartypeAliasVisitor:
         package = module_name.split(".")[0]
         variant = params.expected_form
         violation = _NO_VIOLATION
+        h = FlextUtilitiesBeartypeHelpers
         match variant:
             case "rebound_at_module_end" if filename in c.ENFORCEMENT_CANONICAL_FILES:
                 target_name = target.__name__
