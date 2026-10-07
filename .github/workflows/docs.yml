@@ -149,6 +149,10 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: read
+      # The build job runs Configure Pages on main, and the Pages REST
+      # endpoint rejects a token without Pages write even for reads
+      # ("Resource not accessible by integration").
+      pages: write
     # Why: same authenticated toolchain and docs-source resolution as docs-quality.
     env:
       GITHUB_TOKEN: ${{ github.token }}
