@@ -493,7 +493,7 @@ mise_exec() { \
 'MISE_GITHUB_OAUTH_OPEN_BROWSER=false' \
 'MISE_LOCKFILE=true' \
 'MISE_LOCKED=true' \
-'MISE_MINIMUM_RELEASE_AGE=7d' \
+'MISE_MINIMUM_RELEASE_AGE=10d' \
 'MISE_NPM_PACKAGE_MANAGER=bun' \
 $${mise_lockfile_platforms:+"MISE_LOCKFILE_PLATFORMS=$$mise_lockfile_platforms"} \
 "HOME=$$scratch/home" \
@@ -754,7 +754,7 @@ mise_exec() { \
 'MISE_GITHUB_OAUTH_OPEN_BROWSER=false' \
 'MISE_LOCKFILE=true' \
 'MISE_LOCKED=true' \
-'MISE_MINIMUM_RELEASE_AGE=7d' \
+'MISE_MINIMUM_RELEASE_AGE=10d' \
 'MISE_NPM_PACKAGE_MANAGER=bun' \
 $${mise_lockfile_platforms:+"MISE_LOCKFILE_PLATFORMS=$$mise_lockfile_platforms"} \
 "HOME=$$scratch/home" \
@@ -810,7 +810,7 @@ $${mise_config_argument:+"$$mise_config_argument"} \
 	}; \
 mise_has_blocking_warning() { \
 		case "$$1" in \
-			*converge.log) \
+			*converge.log|*pin-lock.log) \
 				grep -F 'mise WARN' "$$1" \
 					| grep -Fv 'not replacing unmanaged file in shims directory' \
 					| grep -Fv 'lock-time provenance verification failed' \
@@ -937,7 +937,8 @@ mise_has_blocking_warning() { \
 		fi; \
 		mise_trusted_config_paths="$$lock_stage"; \
 		if mise_checked "$$scratch/lock.log" mise_exec project "$$pinned_mise" -C "$$lock_stage" lock --bump; then \
-			:; \
+			python3 "$$project_root/bin/mise-lock-converge.py" pin "$$lock_stage" "$$project_root/mise.lock"; \
+			mise_checked "$$scratch/pin-lock.log" mise_exec project "$$pinned_mise" -C "$$lock_stage" lock; \
 		elif grep -q "refusing to replace locked version" "$$scratch/lock.log"; then \
 			printf 'INFO: kept the current mise.lock: the newest release was refused for missing platform assets; retry the bump when the release regains full platform coverage\n' >&2; \
 		else \
@@ -949,7 +950,7 @@ mise_has_blocking_warning() { \
 		# inside the stage (loud INFO per hold; the committed manifest never \
 		# changes, so the next upg retries the newest release), then the \
 		# install is retried against the held stage before publication. \
-		if mise_exec project "$$pinned_mise" -C "$$lock_stage" install --yes >"$$scratch/install.log" 2>&1; then :; \
+		if mise_exec project 'MISE_LOCKED=false' "$$pinned_mise" -C "$$lock_stage" install --yes >"$$scratch/install.log" 2>&1; then :; \
 		else install_status=$$?; cat "$$scratch/install.log" >&2; \
 			printf 'upg relock: staged install failed (exit %s); holding failing tools at their newest installable releases\n' "$$install_status" >&2; \
 			converge_python=$$(command -v python3 || true); \
@@ -957,7 +958,7 @@ mise_has_blocking_warning() { \
 				printf 'ERROR: converge needs a host python3 (stdlib only); provision one and retry\n' >&2; exit 2; \
 			fi; \
 			mise_checked "$$scratch/converge.log" "$$converge_python" "$$project_root/bin/mise-lock-converge.py" "$$mise_storage_root" "$$lock_stage" "$$runtime_release"; \
-			mise_checked "$$scratch/install-retry.log" mise_exec project "$$pinned_mise" -C "$$lock_stage" install --yes; \
+			mise_checked "$$scratch/install-retry.log" mise_exec project 'MISE_LOCKED=false' "$$pinned_mise" -C "$$lock_stage" install --yes; \
 		fi; \
 		mise_checked "$$scratch/staged-python.log" mise_offline project "$$pinned_mise" -C "$$lock_stage" which python; \
 		staged_python=$$(cat "$$scratch/staged-python.log"); \
@@ -983,7 +984,7 @@ mise_receipt launcher-version "$$lock_stage/artifacts/bin/mise"; \
 	else \
 		# Setup consumes the declared lock policy in one install. An invalid \
 		# lock stops here with its original cause; only make upg repairs it. \
-		mise_checked "$$scratch/install.log" mise_exec project "$$pinned_mise" -C "$$project_root" install --yes; \
+		mise_checked "$$scratch/install.log" mise_exec project 'MISE_LOCKED=false' "$$pinned_mise" -C "$$project_root" install --yes; \
 	fi; \
 	mise_checked_stdout "$$scratch/ast-grep-version.stdout" "$$scratch/ast-grep-version.stderr" mise_offline project "$$pinned_mise" -C "$$project_root" exec -- ast-grep --version; \
 	if [ -s "$$scratch/ast-grep-version.stderr" ]; then \
