@@ -135,7 +135,7 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
                     )
                     raise et.FlextTimeoutError(
                         timeout_message,
-                        error_code=effective_error_code,
+                        options=m.ExceptionInitOptions(error_code=effective_error_code),
                         operation=func.__name__,
                         attempts=attempts,
                         original_error=str(retry_result),

@@ -15,7 +15,9 @@ from typing import Annotated, ClassVar
 from flext_core import c, t
 from flext_core._models.base import FlextModelsBase as m
 from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._protocols.result import FlextProtocolsResult as pr
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
+from flext_core._typings.services import FlextTypesServices as ts
 
 
 class FlextModelsExceptionParams:
@@ -62,6 +64,59 @@ class FlextModelsExceptionParams:
             mp.Field(
                 default=None,
                 description="Optional override for the canonical failure error code.",
+            ),
+        ] = None
+
+    class ExceptionInitOptions(ParamsModel):
+        """Shared initialization options for BaseError construction."""
+
+        error_code: Annotated[
+            str,
+            mp.Field(
+                default=c.ErrorCode.UNKNOWN_ERROR,
+                description="Canonical error code carried by the exception.",
+            ),
+        ] = c.ErrorCode.UNKNOWN_ERROR
+        context: Annotated[
+            t.MappingKV[str, ts.JsonPayload | None] | pr.HasModelDump | None,
+            mp.Field(
+                default=None,
+                description="Structured context mapping or dumpable payload.",
+            ),
+        ] = None
+        metadata: Annotated[
+            pr.HasModelDump | tp.JsonValue | None,
+            mp.Field(
+                default=None,
+                description="Metadata payload or dumpable model for the exception.",
+            ),
+        ] = None
+        correlation_id: Annotated[
+            FlextModelsExceptionParams.OptStrictStr,
+            mp.Field(
+                default=None,
+                description="Explicit correlation identifier for the exception.",
+            ),
+        ] = None
+        auto_correlation: Annotated[
+            bool,
+            mp.Field(
+                default=False,
+                description="Generate a correlation identifier when none is given.",
+            ),
+        ] = False
+        auto_log: Annotated[
+            bool,
+            mp.Field(
+                default=True,
+                description="Log the exception automatically on construction.",
+            ),
+        ] = True
+        merged_kwargs: Annotated[
+            t.MappingKV[str, ts.JsonPayload | None] | pr.HasModelDump | None,
+            mp.Field(
+                default=None,
+                description="Pre-merged keyword payload forwarded by factories.",
             ),
         ] = None
 

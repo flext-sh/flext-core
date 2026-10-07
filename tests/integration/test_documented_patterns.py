@@ -17,6 +17,7 @@ from typing import NoReturn
 import pytest
 from flext_tests import d, e, r, tm
 
+from tests.models import m
 from tests.protocols import p
 
 _COMBINED_SUM = 6
@@ -237,10 +238,12 @@ class TestsFlextCoreDocumentedPatterns:
             except RuntimeError as exc:
                 raise e.FlextTimeoutError(
                     timeout_message,
+                    options=m.ExceptionInitOptions(
+                        auto_correlation=True,
+                        context={"service": "profile-api"},
+                    ),
                     operation="fetch profile",
                     timeout_seconds=2.0,
-                    auto_correlation=True,
-                    context={"service": "profile-api"},
                 ) from exc
 
         # Act / Assert

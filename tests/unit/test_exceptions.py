@@ -17,6 +17,7 @@ import pytest
 from flext_tests import e
 
 from tests.constants import c
+from tests.models import m
 
 if TYPE_CHECKING:
     from tests.protocols import p
@@ -105,7 +106,11 @@ class TestsFlextCoreExceptions:
     def test_auto_correlation_generates_public_correlation_id() -> None:
         # Act
         """Test auto correlation generates public correlation id."""
-        error = e.ValidationError("bad", field="email", auto_correlation=True)
+        error = e.ValidationError(
+            "bad",
+            field="email",
+            options=m.ExceptionInitOptions(auto_correlation=True),
+        )
         # Assert — correlation id is generated and exposed publicly.
         assert error.correlation_id is not None
         assert error.correlation_id.startswith("exc_")
