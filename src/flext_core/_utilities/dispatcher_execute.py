@@ -97,6 +97,29 @@ class FlextUtilitiesDispatcherExecute:
         )
 
     @staticmethod
+    def adapt_handler_output(
+        raw_candidate: t.JsonPayload
+        | p.ResultView[t.JsonPayload]
+        | p.Result[t.JsonPayload]
+        | None,
+        dispatch_result: type[r[t.JsonPayload]],
+    ) -> p.Result[t.JsonPayload]:
+        """Normalize one handler output candidate and adapt it to the result.
+
+        Returns:
+            The resulting ``p.Result[t.JsonPayload]``.
+
+        """
+        normalized = FlextUtilitiesDispatcherExecute._normalize_dispatcher_output(
+            raw_candidate,
+            dispatch_result,
+        )
+        return FlextUtilitiesDispatcherExecute._adapt_dispatcher_output(
+            normalized,
+            dispatch_result,
+        )
+
+    @staticmethod
     def execute_dispatcher_handler(
         *,
         resolved_handler: t.RoutedHandlerCallable,

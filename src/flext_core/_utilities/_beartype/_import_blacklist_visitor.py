@@ -22,11 +22,11 @@ class _ImportBlacklistVisitor:
     """IMPORT_BLACKLIST implementation extracted for LOC cap."""
 
     @staticmethod
-    def v_import_blacklist(
+    def implementation(
         params: me.ImportBlacklistParams,
         target: type,
     ) -> t.StrMapping | None:
-        """IMPORT_BLACKLIST — concrete-class / pydantic consumer-import discipline.
+        """Run the IMPORT_BLACKLIST checks behind the visitor facade.
 
         Returns:
             The resulting ``t.StrMapping | None``.
