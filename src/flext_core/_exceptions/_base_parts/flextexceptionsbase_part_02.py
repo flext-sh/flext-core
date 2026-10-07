@@ -14,15 +14,14 @@ from flext_core import c, m
 from flext_core._exceptions._base_parts.flextexceptionsbase_part_01 import (
     FlextBaseErrorMetadataMixin,
 )
-from flext_core._runtime._metadata_validation import (
-    FlextRuntimeMetadataValidation as FlextRuntime,
-)
+from flext_core._runtime._metadata_validation import FlextRuntimeMetadataValidation
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from flext_core._typings.base import FlextTypingBase as tb
-    from flext_core._typings.services import FlextTypesServices as ts
+    from flext_core._protocols import FlextProtocolsResult
+    from flext_core._typings.base import FlextTypingBase
+    from flext_core._typings.services import FlextTypesServices
 
 
 class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
@@ -32,7 +31,7 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
     metadata: m.Metadata
     timestamp: float
     auto_log: bool
-    args: tb.VariadicTuple[str]
+    args: FlextTypingBase.VariadicTuple[str]
 
     _error_domains: ClassVar[Mapping[str, c.ErrorDomain]] = {
         c.ErrorCode.VALIDATION_ERROR: c.ErrorDomain.VALIDATION,
@@ -76,25 +75,56 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
         """
         return self.error_domain == domain
 
-    def _initialize_base_state(
-        self,
-        message: str,
-        *,
-        error_code: str,
-        options: m.ExceptionInitOptions,
-        extra_kwargs: tb.MappingKV[str, ts.JsonPayload | None],
-    ) -> None:
-        """Initialize the shared base error state without subclass metaprogramming."""
+    def _init_error_identity(self, message: str, error_code: str) -> None:
+        """Initialize the identity fields of the shared base error state."""
         self.args = (message,)
         self.message = message
         self.error_code = error_code
-        final_kwargs_dict: tb.JsonDict = {}
-        for source_value in (options.merged_kwargs, options.context, extra_kwargs):
+
+    def _init_error_correlation(
+        self,
+        correlation_id: str | None,
+        *,
+        auto_correlation: bool,
+    ) -> None:
+        """Resolve and assign the correlation id of the shared base error state."""
+        self.correlation_id = (
+            f"exc_{uuid.uuid4().hex[:8]}"
+            if auto_correlation and (not correlation_id)
+            else correlation_id
+        )
+
+    @staticmethod
+    def _merge_error_channel_sources(
+        context: FlextTypingBase.MappingKV[str, FlextTypesServices.JsonPayload | None]
+        | FlextProtocolsResult.HasModelDump
+        | None,
+        merged_kwargs: FlextTypingBase.MappingKV[
+            str,
+            FlextTypesServices.JsonPayload | None,
+        ]
+        | FlextProtocolsResult.HasModelDump
+        | None,
+        extra_kwargs: FlextTypingBase.MappingKV[
+            str,
+            FlextTypesServices.JsonPayload | None,
+        ],
+    ) -> m.ConfigMap:
+        """Merge context, merged kwargs, and extra kwargs into one mapping.
+
+        Returns:
+            The resulting ``m.ConfigMap``.
+
+        """
+        final_kwargs_dict: FlextTypingBase.JsonDict = {}
+        for source_value in (merged_kwargs, context, extra_kwargs):
             if source_value is None:
                 continue
             try:
-                source_dict = FlextRuntime.normalize_metadata_input_mapping(
-                    source_value,
+                source_dict = (
+                    FlextRuntimeMetadataValidation.normalize_metadata_input_mapping(
+                        source_value,
+                    )
                 )
             except c.EXC_PYDANTIC_TYPE_VALUE:
                 continue
@@ -102,17 +132,20 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
                 continue
             for key, value in source_dict.items():
                 if value is not None:
-                    final_kwargs_dict[key] = FlextRuntime.normalize_to_metadata(value)
-        final_kwargs = m.ConfigMap.model_validate(final_kwargs_dict)
-        self.correlation_id = (
-            f"exc_{uuid.uuid4().hex[:8]}"
-            if options.auto_correlation and not options.correlation_id
-            else options.correlation_id
-        )
-        self.metadata = type(self).normalize_metadata(
-            options.metadata,
-            final_kwargs.root,
-        )
+                    final_kwargs_dict[key] = (
+                        FlextRuntimeMetadataValidation.normalize_to_metadata(value)
+                    )
+        return m.ConfigMap.model_validate(final_kwargs_dict)
+
+    def _init_error_channels(
+        self,
+        final_kwargs: m.ConfigMap,
+        metadata: FlextProtocolsResult.HasModelDump | FlextTypingBase.JsonValue | None,
+        *,
+        auto_log: bool,
+    ) -> None:
+        """Assign metadata, timestamp, and logging behavior of the error state."""
+        self.metadata = type(self).normalize_metadata(metadata, final_kwargs.root)
         self.timestamp = time.time()
         self.auto_log = options.auto_log
 

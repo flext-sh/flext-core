@@ -94,43 +94,45 @@ class FlextDispatcher:
             _ = self._execute_handler(resolved_handler, event, route_name)
         return r[bool].ok(value=True)
 
-    def register_handler(
-        self,
+    @staticmethod
+    def _resolve_handler_callable(
         handler: t.DispatchableHandler,
-        *,
-        is_event: bool = False,
-    ) -> p.Result[bool]:
-        """Register a handler for a specific message type.
+    ) -> t.RoutedHandlerCallable | None:
+        """Resolve the dispatch entrypoint callable for one handler.
 
         Returns:
-            The resulting ``p.Result[bool]``.
+            The resulting ``t.RoutedHandlerCallable | None``.
 
         """
-        route_name: str | None = None
-        accepted_message_types: tuple[t.TypeHintSpecifier, ...] = tuple(
-            u.compute_accepted_message_types(type(handler)),
-        )
-        resolved_handler: t.RoutedHandlerCallable
-        is_auto_discoverable = isinstance(handler, p.AutoDiscoverableHandler)
         match handler:
             case p.DispatchMessage():
-                resolved_handler = handler.dispatch_message
+                return handler.dispatch_message
             case p.Handle():
-                resolved_handler = handler.handle
+                return handler.handle
             case p.Execute():
-                resolved_handler = handler.execute
+                return handler.execute
             case callable_handler if callable(callable_handler):
-                resolved_handler = callable_handler
+                return callable_handler
             case _:
-                return r[bool].fail_op(
-                    "register handler",
-                    c.ERR_HANDLER_MUST_BE_CALLABLE,
-                )
+                return None
+
+    @staticmethod
+    def _resolve_handler_route(
+        handler: t.DispatchableHandler,
+        accepted_message_types: tuple[t.TypeHintSpecifier, ...],
+    ) -> str | None:
+        """Resolve the explicit or computed route name for one handler.
+
+        Returns:
+            The resulting ``str | None``.
+
+        """
         handler_message_type = getattr(handler, "message_type", None)
         route_candidates: tuple[t.TypeHintSpecifier | str | None, ...] = (
             handler_message_type,
             accepted_message_types[0] if accepted_message_types else None,
         )
+        route_name: str | None = None
         for candidate in route_candidates:
             match candidate:
                 case None:
@@ -145,6 +147,31 @@ class FlextDispatcher:
                 case _:
                     continue
             break
+        return route_name
+
+    def register_handler(
+        self,
+        handler: t.DispatchableHandler,
+        *,
+        is_event: bool = False,
+    ) -> p.Result[bool]:
+        """Register a handler for a specific message type.
+
+        Returns:
+            The resulting ``p.Result[bool]``.
+
+        """
+        accepted_message_types: tuple[t.TypeHintSpecifier, ...] = tuple(
+            u.compute_accepted_message_types(type(handler)),
+        )
+        resolved_handler = self._resolve_handler_callable(handler)
+        if resolved_handler is None:
+            return r[bool].fail_op(
+                "register handler",
+                c.ERR_HANDLER_MUST_BE_CALLABLE,
+            )
+        is_auto_discoverable = isinstance(handler, p.AutoDiscoverableHandler)
+        route_name = self._resolve_handler_route(handler, accepted_message_types)
         if route_name is None:
             if is_auto_discoverable:
                 self._auto_handlers.append((

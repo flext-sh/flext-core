@@ -13,7 +13,7 @@ from pydantic import BeforeValidator, Field
 
 from flext_core import t
 from flext_core._models._context._data import FlextModelsContextData
-from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.base import FlextModelsBase
 from flext_core._models.containers import FlextModelsContainers
 from flext_core._models.entity import FlextModelsEntity
 
@@ -35,7 +35,7 @@ class FlextModelsContextExport:
             ),
         ]
         metadata: Annotated[
-            m.Metadata | FlextModelsContainers.Dict | None,
+            FlextModelsBase.Metadata | FlextModelsContainers.Dict | None,
             BeforeValidator(FlextModelsContextData.normalize_metadata_before),
             Field(
                 default=None,

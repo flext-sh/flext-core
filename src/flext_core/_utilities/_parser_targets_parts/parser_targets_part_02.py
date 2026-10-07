@@ -9,10 +9,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_core import c, t
+from flext_core._utilities import FlextUtilitiesModel
 from flext_core._utilities._parser_targets_parts.parser_targets_part_01 import (
     FlextUtilitiesParserTargets as FlextUtilitiesParserTargetsPart01,
 )
-from flext_core._utilities.model import FlextUtilitiesModel
 
 if TYPE_CHECKING:
     from flext_core._utilities.parser_coerce import FlextUtilitiesParserCoerce

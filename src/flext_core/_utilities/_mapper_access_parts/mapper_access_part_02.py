@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 
 from flext_core import c, e, m, p, r, t
-from flext_core._models.containers import FlextModelsContainers
+from flext_core._models import FlextModelsContainers
 from flext_core._utilities._mapper_access_parts.mapper_access_part_01 import (
     FlextUtilitiesMapperAccess as FlextUtilitiesMapperAccessPart01,
 )

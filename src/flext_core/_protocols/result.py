@@ -13,8 +13,8 @@ if TYPE_CHECKING:
     from types import TracebackType
 
     from flext_core import m
-    from flext_core._typings.base import FlextTypingBase as t
-    from flext_core._typings.services import FlextTypesServices as ts
+    from flext_core._typings.base import FlextTypingBase
+    from flext_core._typings.services import FlextTypesServices
 
 
 ResultViewT_co = TypeVar("ResultViewT_co", covariant=True)
@@ -32,7 +32,7 @@ class FlextProtocolsResult:
         @property
         def error_code(self) -> str | None: ...
         @property
-        def error_data(self) -> t.JsonMapping | None: ...
+        def error_data(self) -> FlextTypingBase.JsonMapping | None: ...
         @property
         def success(self) -> bool: ...
         @property
@@ -49,7 +49,7 @@ class FlextProtocolsResult:
         @property
         def error_code(self) -> str | None: ...
         @property
-        def error_data(self) -> t.JsonMapping | None: ...
+        def error_data(self) -> FlextTypingBase.JsonMapping | None: ...
         @property
         def exception(self) -> BaseException | None: ...
         @property
@@ -58,15 +58,15 @@ class FlextProtocolsResult:
         def success(self) -> bool: ...
 
     @runtime_checkable
-    class Result[T](Protocol):
-        """Structural railway result contract; invariant payload."""
+    class ResultState[T](Protocol):
+        """Structural state surface of the railway result contract."""
 
         @property
         def error(self) -> str | None: ...
         @property
         def error_code(self) -> str | None: ...
         @property
-        def error_data(self) -> t.JsonMapping | None: ...
+        def error_data(self) -> FlextTypingBase.JsonMapping | None: ...
         @property
         def success(self) -> bool: ...
         @property
@@ -86,6 +86,10 @@ class FlextProtocolsResult:
         ) -> None: ...
 
         def __or__[D](self, default: D) -> T | D: ...
+
+    @runtime_checkable
+    class ResultOps[T](Protocol):
+        """Structural monadic-operation surface of the result contract."""
 
         def unwrap(self) -> T: ...
         def unwrap_or[D](self, default: D) -> T | D: ...
@@ -156,6 +160,10 @@ class FlextProtocolsResult:
         def __bool__(self) -> bool: ...
 
     @runtime_checkable
+    class Result[T](ResultState[T], ResultOps[T], Protocol):
+        """Structural railway result contract; invariant payload."""
+
+    @runtime_checkable
     class SuccessCheckable(Protocol):
         @property
         def success(self) -> bool: ...
@@ -183,7 +191,7 @@ class FlextProtocolsResult:
             self,
             *,
             mode: str = "python",
-        ) -> t.MappingKV[str, ts.JsonPayload | None]: ...
+        ) -> FlextTypingBase.MappingKV[str, FlextTypesServices.JsonPayload | None]: ...
 
     @runtime_checkable
     class ResultFactoryMinimal(Protocol):
@@ -211,7 +219,7 @@ class FlextProtocolsResult:
             error: str | None,
             *,
             error_code: str | None = None,
-            error_data: t.JsonMapping | None = None,
+            error_data: FlextTypingBase.JsonMapping | None = None,
             exception: BaseException | None = None,
         ) -> object: ...
 
@@ -242,7 +250,7 @@ class FlextProtocolsResult:
             error: str | None,
             *,
             error_code: str | None = None,
-            error_data: t.JsonMapping | None = None,
+            error_data: FlextTypingBase.JsonMapping | None = None,
             exception: BaseException | None = None,
         ) -> object: ...
 

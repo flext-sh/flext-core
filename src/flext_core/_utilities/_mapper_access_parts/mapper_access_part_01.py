@@ -14,10 +14,8 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from flext_core import c, e, m, p, r, t
-from flext_core._models.containers import FlextModelsContainers
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._utilities.guards import FlextUtilitiesGuards
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core._models import FlextModelsContainers, FlextModelsPydantic
+from flext_core._utilities import FlextUtilitiesGuards, FlextUtilitiesGuardsTypeCore
 from flext_core.runtime import FlextRuntime
 
 
@@ -50,6 +48,18 @@ class FlextUtilitiesMapperAccess:
             return str(value)
         if isinstance(value, (*c.SCALAR_TYPES, Path)):
             return value
+        return FlextUtilitiesMapperAccess._container_or_string(value)
+
+    @staticmethod
+    def _container_or_string(
+        value: t.JsonPayload | p.Model | p.HasModelDump | p.ValidatorSpec,
+    ) -> t.JsonPayload | t.JsonValue:
+        """Return container values as-is and everything else stringified.
+
+        Returns:
+            The resulting ``t.JsonPayload | t.JsonValue``.
+
+        """
         if isinstance(
             value,
             Mapping,

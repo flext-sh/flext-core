@@ -13,13 +13,13 @@ from enum import EnumType
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._protocols.base import FlextProtocolsBase as pb
 from flext_core._typings.base import FlextTypingBase as t
-from flext_core._utilities._enforcement_collect_parts.enforcement_collect_part_01 import (
-    FlextUtilitiesEnforcementCollect as FlextUtilitiesEnforcementCollectPart01,
+from flext_core._utilities._enforcement_collect_parts import (
+    enforcement_collect_part_01 as part_01,
 )
 from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as ub
 
 
-class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementCollectPart01):
+class FlextUtilitiesEnforcementCollect(part_01.FlextUtilitiesEnforcementCollect):
     @staticmethod
     def _ns_nested_mro(
         target: type,
@@ -58,6 +58,7 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementCollectPart01):
 
         Yields:
             Each ``tuple[str, tuple[pb.AttributeProbe, ...]]``.
+        from flext_core._protocols.base import FlextProtocolsBase as pb
 
         """
         for name, value in vars(target).items():
@@ -75,6 +76,8 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementCollectPart01):
         Yields:
             Each ``tuple[str, tuple[pb.AttributeProbe, ...]]``.
 
+        from flext_core._protocols.base import FlextProtocolsBase as pb
+        from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as ub
         """
         for value in vars(node).values():
             if (

@@ -15,9 +15,8 @@ from flext_core import t
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core._models.pydantic import FlextModelsPydantic as mp
-    from flext_core._protocols.base import FlextProtocolsBase as pb
-    from flext_core._protocols.result import FlextProtocolsResult as pr
+    from flext_core._models import FlextModelsPydantic
+    from flext_core._protocols import FlextProtocolsBase, FlextProtocolsResult
 
 
 class FlextUtilitiesGuardsTypeModel:
@@ -25,8 +24,12 @@ class FlextUtilitiesGuardsTypeModel:
 
     @staticmethod
     def has_model_dump(
-        value: t.GuardInput | pr.HasModelDump | pb.Model | t.JsonValue | None,
-    ) -> TypeIs[pr.HasModelDump]:
+        value: t.GuardInput
+        | FlextProtocolsResult.HasModelDump
+        | FlextProtocolsBase.Model
+        | t.JsonValue
+        | None,
+    ) -> TypeIs[FlextProtocolsResult.HasModelDump]:
         """Narrow value to objects exposing a callable ``model_dump``.
 
         Returns:
@@ -37,7 +40,9 @@ class FlextUtilitiesGuardsTypeModel:
         return callable(model_dump)
 
     @staticmethod
-    def model_type(value: t.TypeHintSpecifier) -> TypeIs[t.ModelClass[mp.BaseModel]]:
+    def model_type(
+        value: t.TypeHintSpecifier,
+    ) -> TypeIs[t.ModelClass[FlextModelsPydantic.BaseModel]]:
         """Narrow a runtime value to a canonical Pydantic model class.
 
         Returns:
@@ -60,8 +65,12 @@ class FlextUtilitiesGuardsTypeModel:
 
     @staticmethod
     def pydantic_model(
-        value: t.GuardInput | pb.Model | t.JsonValue | PydanticBaseModel | None,
-    ) -> TypeIs[mp.BaseModel]:
+        value: t.GuardInput
+        | FlextProtocolsBase.Model
+        | t.JsonValue
+        | PydanticBaseModel
+        | None,
+    ) -> TypeIs[FlextModelsPydantic.BaseModel]:
         """Narrow value to the canonical Pydantic model carrier.
 
         Accepts both ``FlextModelsPydantic.BaseModel`` and
@@ -72,6 +81,7 @@ class FlextUtilitiesGuardsTypeModel:
         Returns:
             The resulting ``TypeIs[mp.BaseModel]``.
 
+        from pydantic import BaseModel as PydanticBaseModel
         """
         return (
             isinstance(value, PydanticBaseModel)

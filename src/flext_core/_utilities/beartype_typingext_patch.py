@@ -38,14 +38,16 @@ from typing import Annotated, ClassVar, ForwardRef, cast, get_args, get_origin
 
 import typing_extensions as _typing_extensions
 
-from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.base import FlextTypingBase
 
 
 class FlextUtilitiesBeartypeTypingExtPatch:
     """Idempotent beartype patches for ``typing_extensions`` PEP 695 aliases."""
 
-    type _TypeHintSpecifier = t.TypeHintSpecifier | _typing_extensions.TypeAliasType
-    type _HintPep695AliasValue = type | t.VariadicTuple[type]
+    type _TypeHintSpecifier = (
+        FlextTypingBase.TypeHintSpecifier | _typing_extensions.TypeAliasType
+    )
+    type _HintPep695AliasValue = type | FlextTypingBase.VariadicTuple[type]
     type _Pep695Getter = Callable[[_TypeHintSpecifier, str], _TypeHintSpecifier]
 
     _applied: ClassVar[bool] = False
@@ -159,13 +161,29 @@ class FlextUtilitiesBeartypeTypingExtPatch:
             The resulting ``_TypeHintSpecifier``.
 
         """
-        tag = FlextUtilitiesBeartypeTypingExtPatch._tag_forward_refs
         if isinstance(hint, str):
             return ForwardRef(hint, module=module_name)
         if isinstance(hint, ForwardRef):
             if hint.__forward_module__:
                 return hint
             return ForwardRef(hint.__forward_arg__, module=module_name)
+        return FlextUtilitiesBeartypeTypingExtPatch._retag_generic_hint(
+            hint,
+            module_name,
+        )
+
+    @staticmethod
+    def _retag_generic_hint(
+        hint: _TypeHintSpecifier,
+        module_name: str,
+    ) -> _TypeHintSpecifier:
+        """Rebind forward refs inside a generic/annotated hint.
+
+        Returns:
+            The resulting ``_TypeHintSpecifier``.
+
+        """
+        tag = FlextUtilitiesBeartypeTypingExtPatch._tag_forward_refs
         origin = get_origin(hint)
         args = get_args(hint)
         if origin is None or not args:

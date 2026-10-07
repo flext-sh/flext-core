@@ -1062,6 +1062,14 @@ SETUP_ENVIRONMENT_RECIPE = set -eu; \
 	fi; \
 	$$credential_env $(UV) sync --project "$(UV_PROJECT)" --python "$$desired_python" $(UV_SYNC_FLAGS) --locked --link-mode "$(UV_LINK_MODE)"; \
 	if [ "$(strip $(CI))" != "Y" ]; then \
+	for member in $(WORKSPACE_SUBPROJECTS); do \
+		if [ -f "$(PROJECT_ROOT)/$$member/pyproject.toml" ]; then \
+			printf 'setup: editable workspace member %s\n' "$$member"; \
+			$(UV) pip install --python "$(RUNTIME_VENV)" --no-deps -e "$(PROJECT_ROOT)/$$member"; \
+		fi; \
+	done; \
+	fi; \
+	if [ "$(strip $(CI))" != "Y" ]; then \
 	XDG_DATA_HOME="$${SETUP_DIRENV_XDG_DATA_HOME:?missing persistent direnv data home}" \
 		"$${SETUP_DIRENV:?missing Mise-resolved direnv executable}" allow "$(PROJECT_ROOT)"; \
 	for member in $(WORKSPACE_SUBPROJECTS); do \

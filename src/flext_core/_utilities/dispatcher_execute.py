@@ -64,20 +64,36 @@ class FlextUtilitiesDispatcherExecute:
         if raw_candidate is None:
             return None
         if isinstance(raw_candidate, p.ResultView):
-            if raw_candidate.failure:
-                return dispatch_result.from_failure(raw_candidate)
-            success_value = raw_candidate.value
-            if u.container(success_value) or u.pydantic_model(success_value):
-                return dispatch_result.ok(success_value)
-            return dispatch_result.fail_op(
-                "normalize handler result view",
-                c.ERR_HANDLER_RETURNED_NON_CONTAINER_SUCCESS_RESULT,
+            return FlextUtilitiesDispatcherExecute._from_result_view(
+                raw_candidate,
+                dispatch_result,
             )
         if u.container(raw_candidate) or u.pydantic_model(raw_candidate):
             return raw_candidate
         return dispatch_result.fail_op(
             "validate handler return payload",
             c.ERR_HANDLER_RETURNED_NON_CONTAINER_VALUE,
+        )
+
+    @staticmethod
+    def _from_result_view(
+        view: p.ResultView[t.JsonPayload],
+        dispatch_result: type[r[t.JsonPayload]],
+    ) -> t.JsonPayload | p.Result[t.JsonPayload]:
+        """Adapt one ResultView outcome into the dispatcher result type.
+
+        Returns:
+            The resulting ``t.JsonPayload | p.Result[t.JsonPayload]``.
+
+        """
+        if view.failure:
+            return dispatch_result.from_failure(view)
+        success_value = view.value
+        if u.container(success_value) or u.pydantic_model(success_value):
+            return dispatch_result.ok(success_value)
+        return dispatch_result.fail_op(
+            "normalize handler result view",
+            c.ERR_HANDLER_RETURNED_NON_CONTAINER_SUCCESS_RESULT,
         )
 
     @staticmethod
@@ -88,7 +104,9 @@ class FlextUtilitiesDispatcherExecute:
         route_name: str,
         logger: p.Logger,
     ) -> p.Result[t.JsonPayload]:
-        """Execute ``resolved_handler(message)`` and adapt the outcome to ``r[JsonPayload]``.
+        """Execute ``resolved_handler(message)`` and adapt the outcome.
+
+        The adapted outcome type is ``r[JsonPayload]``.
 
         The handler may return either an ``r[T]`` instance (Result-like
         canonical) or a raw payload (container or Pydantic model). All other

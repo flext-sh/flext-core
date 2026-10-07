@@ -98,7 +98,7 @@ class FlextLazyMember:
             namespace = vars(klass)
             if self._member in namespace:
                 raw: ModuleGlobalValue = namespace[self._member]
-                type.__setattr__(host, self._member, raw)
+                setattr(host, self._member, raw)
                 return raw
         msg = f"{target!r} declares no member {self._member!r}"
         raise ImportError(msg, name=self._module)

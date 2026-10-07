@@ -21,6 +21,9 @@ from re import Pattern
 from types import EllipsisType
 from typing import TYPE_CHECKING, Any, Literal, dataclass_transform, overload
 
+if TYPE_CHECKING:
+    from flext_core._typings.base import FlextTypingBase
+
 from pydantic import (
     AfterValidator,
     AliasChoices,
@@ -277,7 +280,7 @@ class FlextModelsPydantic:
             /,
             *fields: str,
             mode: Literal["wrap"],
-            return_type: Any = ...,
+            return_type: FlextTypingBase.TypeHintSpecifier = ...,
             when_used: Literal[
                 "always",
                 "unless-none",
@@ -294,7 +297,7 @@ class FlextModelsPydantic:
             /,
             *fields: str,
             mode: Literal["plain"] = ...,
-            return_type: Any = ...,
+            return_type: FlextTypingBase.TypeHintSpecifier = ...,
             when_used: Literal[
                 "always",
                 "unless-none",

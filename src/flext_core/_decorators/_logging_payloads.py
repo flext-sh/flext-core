@@ -10,7 +10,7 @@ import time
 
 from flext_core import c
 from flext_core._decorators._base import FlextDecoratorsBase
-from flext_core._typings.base import FlextTypingBase as tb
+from flext_core._typings.base import FlextTypingBase
 
 
 class FlextDecoratorsLoggingPayloads(FlextDecoratorsBase):
@@ -22,14 +22,14 @@ class FlextDecoratorsLoggingPayloads(FlextDecoratorsBase):
         func_name: str,
         func_module: str,
         correlation_id: str | None,
-    ) -> tb.MutableJsonMapping:
+    ) -> FlextTypingBase.MutableJsonMapping:
         """Build structured operation-start log payload.
 
         Returns:
             The resulting ``tb.MutableJsonMapping``.
 
         """
-        payload: tb.MutableJsonMapping = {
+        payload: FlextTypingBase.MutableJsonMapping = {
             "function": func_name,
             "func_module": func_module,
         }
@@ -44,14 +44,17 @@ class FlextDecoratorsLoggingPayloads(FlextDecoratorsBase):
         correlation_id: str | None,
         track_perf: bool,
         start_time: float,
-    ) -> tb.MutableJsonMapping:
+    ) -> FlextTypingBase.MutableJsonMapping:
         """Build structured operation-success log payload.
 
         Returns:
             The resulting ``tb.MutableJsonMapping``.
 
         """
-        payload: tb.MutableJsonMapping = {"function": func_name, "success": True}
+        payload: FlextTypingBase.MutableJsonMapping = {
+            "function": func_name,
+            "success": True,
+        }
         if correlation_id is not None:
             payload[c.ContextKey.CORRELATION_ID] = correlation_id
         if track_perf:
