@@ -45,9 +45,7 @@ class FlextContainer(p.Container):  # ruff: ignore[too-many-public-methods] -- t
 
     _settings_type: ClassVar[p.SettingsType] = FlextSettings
 
-    _context_type: ClassVar[p.ContextType] = (
-        FlextContext
-    )
+    _context_type: ClassVar[p.ContextType] = FlextContext
 
     _context: p.Context
 

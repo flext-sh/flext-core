@@ -35,9 +35,7 @@ class FlextDecoratorsBase:
         KeyError,
     )
     _container_type: ClassVar[pc.ContainerType] = FlextContainer
-    _context_type: ClassVar[pcx.ContextType] = (
-        FlextContext
-    )
+    _context_type: ClassVar[pcx.ContextType] = FlextContext
 
     @classmethod
     def _is_logger_carrier(

@@ -62,9 +62,7 @@ class FlextMixins(m.ArbitraryTypesModel):
 
     _container_type: ClassVar[p.ContainerType] = FlextContainer
 
-    _context_type: ClassVar[p.ContextType] = (
-        FlextContext
-    )
+    _context_type: ClassVar[p.ContextType] = FlextContext
 
     _auto_context_scope: ClassVar[bool] = True
 

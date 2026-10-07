@@ -135,9 +135,7 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                 for alias_name in _ubh.runtime_alias_names(
                     wrapper_module.__name__.split(".", 1)[0],
                 )
-                if (
-                    alias_value := getattr(wrapper_module, alias_name, None)
-                )
+                if (alias_value := getattr(wrapper_module, alias_name, None))
                 is not None
                 and (core := getattr(alias_value, "Core", None)) is not None
                 and hasattr(core, "Tests")
@@ -186,11 +184,7 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                         source,
                     )
                     for first_alias in (
-                        [
-                            n.strip()
-                            for n in match.group(3).split(",")
-                            if n.strip()
-                        ][:1]
+                        [n.strip() for n in match.group(3).split(",") if n.strip()][:1]
                     )
                 ),
                 _NO_VIOLATION,
@@ -211,10 +205,7 @@ class FlextUtilitiesBeartypeDeprecatedVisitor:
                     )
                 )
                 is not None
-                and (
-                    origin := _ubh.object_module_name_for(alias_value)
-                    or ""
-                )
+                and (origin := _ubh.object_module_name_for(alias_value) or "")
                 for parent, _, child in (origin.partition("."),)
                 if parent in {"tests", "examples", "scripts"}
                 and child in wrapper_submodules

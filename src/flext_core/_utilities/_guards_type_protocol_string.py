@@ -20,10 +20,12 @@ _STRING_TYPE_PREDICATES: dict[str, Callable[[ProtocolGuardInput], bool]] = {
     "sequence": lambda value: isinstance(value, (list, tuple, range)),
     "mapping": lambda value: isinstance(value, Mapping),
     "list_or_tuple": lambda value: isinstance(value, (list, tuple)),
-    "sequence_not_str": lambda value: isinstance(value, (list, tuple, range))
-    and not isinstance(value, str),
-    "sequence_not_str_bytes": lambda value: isinstance(value, (list, tuple, range))
-    and not isinstance(value, (str, bytes)),
+    "sequence_not_str": lambda value: (
+        isinstance(value, (list, tuple, range)) and not isinstance(value, str)
+    ),
+    "sequence_not_str_bytes": lambda value: (
+        isinstance(value, (list, tuple, range)) and not isinstance(value, (str, bytes))
+    ),
     "sized": lambda value: hasattr(value, "__len__"),
     "callable": callable,
     "bytes": lambda value: isinstance(value, bytes),
@@ -33,9 +35,11 @@ _STRING_TYPE_PREDICATES: dict[str, Callable[[ProtocolGuardInput], bool]] = {
     "none": lambda value: value is None,
     "string_non_empty": lambda value: isinstance(value, str) and bool(value.strip()),
     "dict_non_empty": lambda value: isinstance(value, Mapping) and len(value) > 0,
-    "list_non_empty": lambda value: isinstance(value, Sequence)
-    and not isinstance(value, (str, bytes, bytearray))
-    and len(value) > 0,
+    "list_non_empty": lambda value: (
+        isinstance(value, Sequence)
+        and not isinstance(value, (str, bytes, bytearray))
+        and len(value) > 0
+    ),
 }
 
 
