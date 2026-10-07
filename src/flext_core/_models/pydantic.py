@@ -16,7 +16,6 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from functools import cached_property, partialmethod
-from functools import cached_property, partialmethod
 from pathlib import Path
 from re import Pattern
 from types import EllipsisType
@@ -91,9 +90,7 @@ type ModelValidatorCallable = (
 )
 # Contract for the class-member shapes ``computed_field`` decorates: the
 # property/cached_property descriptors pydantic rewraps for serialization.
-type ComputedFieldCallable = (
-    Callable[..., Any] | property | cached_property[Any, Any]
-)
+type ComputedFieldCallable = Callable[..., Any] | property | cached_property[Any, Any]
 # Contract for the model-level callables ``model_serializer`` decorates.
 type ModelSerializerCallable = (
     Callable[..., Any] | classmethod[Any, Any, Any] | staticmethod[Any, Any]
