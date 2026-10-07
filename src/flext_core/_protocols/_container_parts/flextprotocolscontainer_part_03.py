@@ -12,6 +12,8 @@ from flext_core._protocols._container_parts.flextprotocolscontainer_part_02 impo
     FlextProtocolsContainer as FlextProtocolsContainerPart02,
 )
 
+Container = FlextProtocolsContainerPart02.Container
+
 if TYPE_CHECKING:
     from flext_core import m
     from flext_core._protocols.context import FlextProtocolsContext
@@ -38,9 +40,7 @@ class FlextProtocolsContainer(FlextProtocolsContainerPart02):
 
     @runtime_checkable
     class ContainerType[
-        TContainer: FlextProtocolsContainerPart02.Container = (
-            FlextProtocolsContainerPart02.Container
-        ),
+        TContainer: Container = Container,
     ](Protocol):
         """Protocol for concrete container classes exposing canonical factories."""
 

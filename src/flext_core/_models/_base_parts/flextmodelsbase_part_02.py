@@ -20,7 +20,8 @@ from typing import Annotated, ClassVar, override
 
 from pydantic import ConfigDict
 
-from flext_core._constants.project_metadata import FlextConstantsProjectMetadata as cpm
+from flext_core import c
+from flext_core._constants import FlextConstantsProjectMetadata as cpm
 from flext_core._models._base_parts.flextmodelsbase_part_01 import (
     FlextModelsBase as FlextModelsBasePart01,
 )
@@ -29,8 +30,7 @@ from flext_core._runtime._metadata_validation import (
     FlextRuntimeMetadataValidation as ur,
 )
 from flext_core._typings.base import FlextTypingBase as t
-from flext_core._utilities.generators import FlextUtilitiesGenerators as ug
-from flext_core.constants import c
+from flext_core._utilities import FlextUtilitiesGenerators as ug
 
 
 class FlextModelsBase(FlextModelsBasePart01):

@@ -65,6 +65,8 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart01):
         Returns:
             The resulting ``p.Result[inspect.Signature]``.
 
+        from flext_core._protocols.result import FlextProtocolsResult as p
+        from flext_core._typings.services import FlextTypesServices as ts
         """
         try:
             return r[inspect.Signature].ok(inspect.signature(handle_method))
@@ -83,6 +85,8 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart01):
 
         Returns:
             The resulting ``tb.MappingKV[str, tb.TypeHintSpecifier | None]``.
+        from flext_core._typings.services import FlextTypesServices as ts
+        from flext_core._typings.base import FlextTypingBase as tb
 
         """
         hints: tb.MappingKV[str, tb.TypeHintSpecifier | None] = {}
@@ -106,6 +110,7 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart01):
 
         Returns:
             The resulting ``bool``.
+        from flext_core._typings.base import FlextTypingBase as tb
 
         """
         try:
@@ -133,6 +138,7 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart01):
 
         Returns:
             The resulting ``bool``.
+        from flext_core._typings.base import FlextTypingBase as tb
 
         """
         try:
@@ -159,6 +165,7 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart01):
 
         Returns:
             The resulting ``bool``.
+        from flext_core._typings.base import FlextTypingBase as tb
 
         """
         if hasattr(message_type, "__origin__"):

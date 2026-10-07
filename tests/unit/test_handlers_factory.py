@@ -46,11 +46,11 @@ class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
         """Test callable returning result is passed through."""
 
         def result_handler(message: t.Scalar) -> t.Scalar:
-            decoded = message.decode() if isinstance(message, bytes) else message
+            payload = message.decode() if isinstance(message, bytes) else message
             return (
                 r[t.Scalar]
                 .ok(
-                    f"result_{decoded}",
+                    f"result_{payload}",
                 )
                 .value
             )
@@ -131,8 +131,10 @@ class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
         config = u.Tests.create_handler_config(
             "cfg_id",
             "ConfiguredName",
-            handler_type=c.HandlerType.EVENT,
-            handler_mode=c.HandlerType.EVENT,
+            u.Tests.FlextTestsHandlerConfigParams(
+                handler_type=c.HandlerType.EVENT,
+                handler_mode=c.HandlerType.EVENT,
+            ),
         )
 
         # Act
@@ -207,8 +209,10 @@ class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
         settings = u.Tests.create_handler_config(
             "test_dispatch",
             "Test Dispatch",
-            handler_type=c.HandlerType.COMMAND,
-            handler_mode=c.HandlerType.COMMAND,
+            u.Tests.FlextTestsHandlerConfigParams(
+                handler_type=c.HandlerType.COMMAND,
+                handler_mode=c.HandlerType.COMMAND,
+            ),
         )
         handler = self.ConcreteTestHandler(settings=settings)
 
@@ -224,8 +228,10 @@ class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
         settings = u.Tests.create_handler_config(
             "test_dispatch",
             "Test Dispatch",
-            handler_type=c.HandlerType.COMMAND,
-            handler_mode=c.HandlerType.COMMAND,
+            u.Tests.FlextTestsHandlerConfigParams(
+                handler_type=c.HandlerType.COMMAND,
+                handler_mode=c.HandlerType.COMMAND,
+            ),
         )
         handler = self.ConcreteTestHandler(settings=settings)
 
@@ -251,8 +257,10 @@ class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
         settings = u.Tests.create_handler_config(
             "test_mode_property",
             "Test Mode Property",
-            handler_type=c.HandlerType.COMMAND,
-            handler_mode=c.HandlerType.COMMAND,
+            u.Tests.FlextTestsHandlerConfigParams(
+                handler_type=c.HandlerType.COMMAND,
+                handler_mode=c.HandlerType.COMMAND,
+            ),
         )
         handler = self.ConcreteTestHandler(settings=settings)
 

@@ -483,6 +483,8 @@ runtime-evaluated-base-classes = [
   "flext_core._handlers_parts.flexthandlers_part_05.FlextHandlers",
   "flext_core._handlers_parts.flexthandlers_part_06.FlextHandlers",
   "flext_core._lazy_parts.flextlazy_part_01.FlextLazyPart01",
+  "flext_core._models.FlextModelsBase.FlexibleInternalModel",
+  "flext_core._models.FlextModelsPydantic.BaseModel",
   "flext_core._models._base_parts.flextmodelsbase_part_01.ArbitraryTypesModel",
   "flext_core._models._base_parts.flextmodelsbase_part_01.DynamicModel",
   "flext_core._models._base_parts.flextmodelsbase_part_01.EnforcedModel",
@@ -499,10 +501,12 @@ runtime-evaluated-base-classes = [
   "flext_core._models._base_parts.flextmodelsbase_part_02.StrictModel",
   "flext_core._models._enforcement._base.FlextModelsEnforcementBase.Report",
   "flext_core._models._enforcement._base.FlextModelsEnforcementModelBase",
-  "flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ExpectedActualTypeParams",
-  "flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ParamsModel",
-  "flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ResourceIdentityParams",
   "flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_01.ParamsModel",
+  "flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_02.FlextModelsExceptionParamsPart01.ExpectedActualTypeParams",
+  "flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_02.FlextModelsExceptionParamsPart01.ParamsModel",
+  "flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_02.FlextModelsExceptionParamsPart01.ResourceIdentityParams",
+  "flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_03.FlextModelsExceptionParamsPart01.ExpectedActualTypeParams",
+  "flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_03.FlextModelsExceptionParamsPart01.ParamsModel",
   "flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_01.FlextModelsProjectMetadataContract",
   "flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_05.FlextModelsPyprojectIngressContract",
   "flext_core._models.base.FlextModelsBase.ArbitraryTypesModel",
@@ -750,3 +754,4 @@ ignore-property-decorators = true
 [tool.radon]
 cc_min = "B"
 mi_min = "B"
+

@@ -6,13 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
+from typing import cast, override
 
 from pydantic import BaseModel, PrivateAttr
 
 from flext_core import c
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core._typings.services import FlextTypesServices as ts
+from flext_core._runtime._metadata import FlextRuntimeMetadata
+from flext_core._typings.base import FlextTypingBase
+from flext_core._typings.services import FlextTypesServices
 from flext_core.typings import ConfigModelInput, JsonDict, JsonMapping, T
 
 
@@ -65,16 +66,17 @@ class FlextResultBase[T](BaseModel):
 
     @staticmethod
     def validate_error_data(
-        error_data: t.JsonMapping | ts.ConfigModelInput | None,
+        error_data: FlextTypingBase.JsonMapping
+        | FlextTypesServices.ConfigModelInput
+        | None,
     ) -> JsonDict | None:
-        from flext_core._runtime._metadata import FlextRuntimeMetadata as FlextRuntime  # ruff: ignore[import-outside-top-level] -- call-time binding breaks the package lazy-import cycle: a top-level import would recurse through the package __getattr__ while the aliased module is still loading.
-
-        normalized = FlextRuntime.normalize_model_input_mapping(error_data)
+        normalized = FlextRuntimeMetadata.normalize_model_input_mapping(error_data)
         if normalized is None:
             return None
         return dict(normalized)
 
-    def __init__(  # ruff: ignore[too-many-arguments] -- the keyword contract mirrors the public constructor; every argument is a distinct documented field.
+    @override
+    def __init__(
         self,
         error_code: str | None = None,
         error_data: JsonMapping | ConfigModelInput | None = None,

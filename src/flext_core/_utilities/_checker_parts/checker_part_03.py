@@ -107,6 +107,8 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart02):
 
         Returns:
             The resulting ``bool``.
+        from flext_core._typings.services import FlextTypesServices as ts
+        from flext_core._typings.base import FlextTypingBase as tb
 
         """
         if not accepted_types or message_type is None:
@@ -126,6 +128,7 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart02):
         Returns:
             The resulting ``tb.VariadicTuple[tb.TypeHintSpecifier]``.
 
+        from flext_core._typings.base import FlextTypingBase as tb
         """
         message_types: MutableSequence[tb.TypeHintSpecifier] = []
         generic_types = cls._extract_generic_message_types(handler_class)
@@ -166,8 +169,8 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart02):
                     ):
                         return default_val
         msg_type_error = (
-            f"Message {msg} does not provide a valid route "
-            "via command_type, query_type, or event_type"
+            f"Message {msg} does not provide a valid route via "
+            "command_type, query_type, or event_type"
         )
         raise TypeError(msg_type_error)
 

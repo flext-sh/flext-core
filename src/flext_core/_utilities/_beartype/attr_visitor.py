@@ -11,18 +11,16 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import ClassVar, get_origin
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core._typings.pydantic import FlextTypesPydantic as tp
-from flext_core._utilities._beartype.helpers import (
-    FlextUtilitiesBeartypeHelpers as _ubh,
-)
+from flext_core._constants import FlextConstantsEnforcement
+from flext_core._models import FlextModelsEnforcement
+from flext_core._typings.base import FlextTypingBase
+from flext_core._typings.pydantic import FlextTypesPydantic
+from flext_core._utilities import FlextUtilitiesBeartypeHelpers
 
-_NO_VIOLATION: t.StrMapping | None = None
-_BARE_VIOLATION: t.StrMapping = {}
+_NO_VIOLATION: FlextTypingBase.StrMapping | None = None
+_BARE_VIOLATION: FlextTypingBase.StrMapping = {}
 
-_CONSTANT_LITERAL_TYPES: t.VariadicTuple[type] = (
+_CONSTANT_LITERAL_TYPES: FlextTypingBase.VariadicTuple[type] = (
     int,
     float,
     str,
@@ -32,7 +30,7 @@ _CONSTANT_LITERAL_TYPES: t.VariadicTuple[type] = (
 )
 """Scalar literal types accepted as canonical constant values."""
 
-_CONSTANT_CONTAINER_TYPES: t.VariadicTuple[type] = (
+_CONSTANT_CONTAINER_TYPES: FlextTypingBase.VariadicTuple[type] = (
     frozenset,
     tuple,
     dict,
@@ -49,10 +47,10 @@ class FlextUtilitiesBeartypeAttrVisitor:
 
     @staticmethod
     def v_attr_shape(
-        params: me.AttrShapeParams,
+        params: FlextModelsEnforcement.AttrShapeParams,
         name: str,
-        value: tp.JsonValue,
-    ) -> t.StrMapping | None:
+        value: FlextTypesPydantic.JsonValue,
+    ) -> FlextTypingBase.StrMapping | None:
         """ATTR_SHAPE — class-attribute governance (constants / aliases / TypeAdapters).
 
         Returns:
@@ -60,13 +58,16 @@ class FlextUtilitiesBeartypeAttrVisitor:
 
         """
         if params.forbid_mutable_value:
-            mk = _ubh.mutable_kind(value)
+            mk = FlextUtilitiesBeartypeHelpers.mutable_kind(value)
             if mk is not None:
                 return {"kind": mk}
         if params.require_uppercase_name and name != name.upper():
             return _BARE_VIOLATION
-        if params.forbid_any_in_alias and _ubh.alias_contains_any(
-            _ubh.resolve_type_alias_value(value),
+        if (
+            params.forbid_any_in_alias
+            and FlextUtilitiesBeartypeHelpers.alias_contains_any(
+                FlextUtilitiesBeartypeHelpers.resolve_type_alias_value(value),
+            )
         ):
             return _BARE_VIOLATION
         if (
@@ -114,12 +115,14 @@ class FlextUtilitiesBeartypeAttrVisitor:
 
     @staticmethod
     def _is_implicit_constant(
-        params: me.ClassVarConstantParams,
+        params: FlextModelsEnforcement.ClassVarConstantParams,
         target: type,
         name: str,
         value: object,
     ) -> bool:
-        """Return True for UPPER_CASE attributes that look constant but lack ClassVar.
+        """Return True when an UPPER_CASE attribute lacks ``ClassVar``.
+
+        The attribute must also look like a constant.
 
         Returns:
             True when an UPPER_CASE attribute looks like a constant but lacks ClassVar.
@@ -133,11 +136,11 @@ class FlextUtilitiesBeartypeAttrVisitor:
 
     @staticmethod
     def v_classvar_constant(
-        params: me.ClassVarConstantParams,
+        params: FlextModelsEnforcement.ClassVarConstantParams,
         target: type,
         name: str,
         value: object,
-    ) -> t.StrMapping | None:
+    ) -> FlextTypingBase.StrMapping | None:
         """CLASSVAR_CONSTANT — flag one constant declared outside _constants.
 
         Granularity belongs to the iterator (one item per public attribute,
@@ -151,7 +154,7 @@ class FlextUtilitiesBeartypeAttrVisitor:
         module_name = getattr(target, "__module__", "") or ""
         if module_name.endswith("._constants") or "._constants." in module_name:
             return None
-        if name in c.ENFORCEMENT_CLASSVAR_EXEMPT_NAMES:
+        if name in FlextConstantsEnforcement.ENFORCEMENT_CLASSVAR_EXEMPT_NAMES:
             return None
         has_classvar = FlextUtilitiesBeartypeAttrVisitor._has_classvar_annotation(
             target,

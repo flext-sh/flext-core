@@ -8,10 +8,8 @@ from __future__ import annotations
 
 from flext_core._models.enforcement import FlextModelsEnforcement as me
 from flext_core._typings.base import FlextTypingBase as t
-from flext_core._utilities._beartype._class_visitor_parts._parts.class_visitor_part_02_01 import (  # ruff: ignore[line-too-long] -- the dotted module path is a single identifier chain; it cannot be wrapped without renaming the module
+from flext_core._utilities import (
     alias_first_violation,
-)
-from flext_core._utilities._beartype._class_visitor_parts._parts.class_visitor_part_02_02 import (  # ruff: ignore[line-too-long] -- the dotted module path is a single identifier chain; it cannot be wrapped without renaming the module
     redundant_inner_violation,
     self_ref_violation,
 )

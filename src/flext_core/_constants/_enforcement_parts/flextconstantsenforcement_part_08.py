@@ -23,7 +23,9 @@ class FlextConstantsEnforcementFixActions:
         "PrivateAttr": "u.PrivateAttr",
         "TypeAdapter": "m.TypeAdapter",
         "computed_field": "u.computed_field",
+        "field_serializer": "u.field_serializer",
         "field_validator": "m.field_validator",
+        "model_serializer": "u.model_serializer",
         "model_validator": "m.model_validator",
     }
 
@@ -85,8 +87,8 @@ class FlextConstantsEnforcementFixActions:
                     },
                     {
                         "regex": (
-                            r"^[ \t]*import\s+pdb\s*;"
-                            r"\s*pdb\.set_trace\s*\(\s*\)\s*[;\n]"
+                            r"^[ \t]*import\s+pdb\s*;\s*"
+                            r"pdb\.set_trace\s*\(\s*\)\s*[;\n]"
                         ),
                         "replacement": "\n",
                         "change_message": "Removed debugger statement",
@@ -200,8 +202,8 @@ class FlextConstantsEnforcementFixActions:
                     },
                     {
                         "regex": (
-                            r"\bstructlog\s*\.\s*get_logger\s*\(\s*"
-                            r"['\"](?P<name>[^'\"]*)['\"]\s*\)"
+                            r"\bstructlog\s*\.\s*get_logger\s*\("
+                            r"\s*['\"](?P<name>[^'\"]*)['\"]\s*\)"
                         ),
                         "replacement": r'u.fetch_logger("\g<name>")',
                         "change_message": (

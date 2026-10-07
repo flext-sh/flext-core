@@ -9,8 +9,8 @@ from __future__ import annotations
 from typing import ClassVar, Literal
 
 from flext_core._models._enforcement._base import FlextModelsEnforcementModelBase
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._protocols.base import FlextProtocolsBase as p
+from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._protocols import FlextProtocolsBase
 
 
 class FlextModelsEnforcementResolution:
@@ -19,11 +19,13 @@ class FlextModelsEnforcementResolution:
     class ResolvedAlias(FlextModelsEnforcementModelBase):
         """A lazy alias evaluated successfully, retaining its runtime value."""
 
-        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            arbitrary_types_allowed=True,
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(
+                arbitrary_types_allowed=True,
+            )
         )
         status: Literal["resolved"] = "resolved"
-        value: p.AttributeProbe
+        value: FlextProtocolsBase.AttributeProbe
 
     class DeferredAlias(FlextModelsEnforcementModelBase):
         """Source-proven imports prevent runtime evaluation of a declared alias."""

@@ -14,8 +14,8 @@ import operator
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import c, r, t
-from flext_core._models.collection_models import FlextModelsCollections
-from flext_core._protocols.result import FlextProtocolsResult as p
+from flext_core._models import FlextModelsCollections
+from flext_core._protocols import FlextProtocolsResult
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
 from flext_core._utilities.guards_type_protocol import FlextUtilitiesGuardsTypeProtocol
@@ -111,38 +111,11 @@ class FlextUtilitiesGuards(
         return False
 
     @staticmethod
-    def _check_spec_ops(
-        value: t.GuardInput,
-        guard_spec: FlextModelsCollections.GuardCheckSpec,
-        check_val: t.Numeric,
-    ) -> bool:
-        """Apply equality/membership/numeric op dicts against guard_spec.
-
-        Returns:
-            The resulting ``bool``.
-
-        """
-        result = FlextUtilitiesGuards._equality_ops_pass(value, guard_spec)
-        if result:
-            result = FlextUtilitiesGuards._membership_ops_pass(value, guard_spec)
-        if result:
-            result = FlextUtilitiesGuards._numeric_ops_pass(
-                value,
-                guard_spec,
-                check_val,
-            )
-        if result and isinstance(value, str):
-            result = FlextUtilitiesGuards._check_string_ops(value, guard_spec)
-        if result:
-            result = FlextUtilitiesGuards._contains_pass(value, guard_spec)
-        return result
-
-    @staticmethod
-    def _equality_ops_pass(
+    def _check_equality_ops(
         value: t.GuardInput,
         guard_spec: FlextModelsCollections.GuardCheckSpec,
     ) -> bool:
-        """Apply the equality operator table; False on the first failure.
+        """Apply the equality op dict against ``guard_spec``.
 
         Returns:
             The resulting ``bool``.
@@ -155,11 +128,11 @@ class FlextUtilitiesGuards(
         return True
 
     @staticmethod
-    def _membership_ops_pass(
+    def _check_membership_ops(
         value: t.GuardInput,
         guard_spec: FlextModelsCollections.GuardCheckSpec,
     ) -> bool:
-        """Apply the membership operator table; False on the first failure.
+        """Apply the membership op dict against ``guard_spec``.
 
         Returns:
             The resulting ``bool``.
@@ -175,12 +148,12 @@ class FlextUtilitiesGuards(
         return True
 
     @staticmethod
-    def _numeric_ops_pass(
+    def _check_numeric_ops(
         value: t.GuardInput,
         guard_spec: FlextModelsCollections.GuardCheckSpec,
         check_val: t.Numeric,
     ) -> bool:
-        """Apply the numeric/string operator tables; False on the first failure.
+        """Apply the numeric op dict against ``guard_spec``.
 
         Returns:
             The resulting ``bool``.
@@ -203,26 +176,49 @@ class FlextUtilitiesGuards(
         return True
 
     @staticmethod
-    def _contains_pass(
+    def _check_contains_op(
         value: t.GuardInput,
         guard_spec: FlextModelsCollections.GuardCheckSpec,
     ) -> bool:
-        """Apply the contains contract; a None contains spec always passes.
+        """Apply the ``contains`` constraint against ``guard_spec``.
 
         Returns:
             The resulting ``bool``.
 
         """
-        match guard_spec.contains:
-            case None:
-                return True
-            case contains_value:
-                return FlextUtilitiesGuardsTypeCore.container(
-                    value,
-                ) and FlextUtilitiesGuards._check_iterable_contains(
-                    value,
-                    contains_value,
-                )
+        if guard_spec.contains is None:
+            return True
+        return FlextUtilitiesGuardsTypeCore.container(
+            value,
+        ) and FlextUtilitiesGuards._check_iterable_contains(
+            value,
+            guard_spec.contains,
+        )
+
+    @staticmethod
+    def _check_spec_ops(
+        value: t.GuardInput,
+        guard_spec: FlextModelsCollections.GuardCheckSpec,
+        check_val: t.Numeric,
+    ) -> bool:
+        """Apply equality/membership/numeric op dicts against guard_spec.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
+        if not FlextUtilitiesGuards._check_equality_ops(value, guard_spec):
+            return False
+        if not FlextUtilitiesGuards._check_membership_ops(value, guard_spec):
+            return False
+        if not FlextUtilitiesGuards._check_numeric_ops(value, guard_spec, check_val):
+            return False
+        if isinstance(value, str) and not FlextUtilitiesGuards._check_string_ops(
+            value,
+            guard_spec,
+        ):
+            return False
+        return FlextUtilitiesGuards._check_contains_op(value, guard_spec)
 
     @staticmethod
     def chk(
@@ -315,7 +311,7 @@ class FlextUtilitiesGuards(
         *,
         default: t.Scalar | t.JsonList | t.JsonMapping | None = None,
         return_value: bool = False,
-    ) -> t.JsonValue | bool | p.Result[t.JsonValue]:
+    ) -> t.JsonValue | bool | FlextProtocolsResult.Result[t.JsonValue]:
         fail_msg = "Guard validation failed"
         try:
             validation_passed = FlextUtilitiesGuards._check_validator(value, validator)

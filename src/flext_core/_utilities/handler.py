@@ -17,7 +17,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from flext_core import c, p, r
+from flext_core import c, m, p, r
 from flext_core.runtime import FlextRuntime
 
 if TYPE_CHECKING:
@@ -38,8 +38,6 @@ class FlextUtilitiesHandler:
             The resulting ``p.HandlerRuntimeState``.
 
         """
-        from flext_core import m  # ruff: ignore[import-outside-top-level] -- call-time binding breaks the package lazy-import cycle: a top-level import would recurse through the package __getattr__ while the aliased module is still loading.
-
         return m.HandlerRuntimeState(
             execution_context=m.ExecutionContext(
                 handler_name=handler_name,
@@ -94,8 +92,6 @@ class FlextUtilitiesHandler:
         if not isinstance(ctx, Mapping):
             pushed_context = ctx.model_copy()
         else:
-            from flext_core import m  # ruff: ignore[import-outside-top-level] -- call-time binding breaks the package lazy-import cycle: a top-level import would recurse through the package __getattr__ while the aliased module is still loading.
-
             validated = r.from_validation(ctx, m.ExecutionContext)
             if validated.failure:
                 return r[p.HandlerRuntimeState].fail_op(
@@ -120,8 +116,6 @@ class FlextUtilitiesHandler:
             State without the top context plus its validated identity.
 
         """
-        from flext_core import m  # ruff: ignore[import-outside-top-level] -- call-time binding breaks the package lazy-import cycle: a top-level import would recurse through the package __getattr__ while the aliased module is still loading.
-
         if not state.context_stack:
             empty_context: p.RootDict[t.JsonPayload] = m.ConfigMap(root={})
             return r.ok((state, empty_context))

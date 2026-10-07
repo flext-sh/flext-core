@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
-from flext_core._protocols.base import FlextProtocolsBase as p
-from flext_core._protocols.result import FlextProtocolsResult as pr
+from flext_core._protocols.base import FlextProtocolsBase
+from flext_core._protocols.result import FlextProtocolsResult
 
 if TYPE_CHECKING:
     from flext_core import t
@@ -19,7 +19,7 @@ class FlextProtocolsSettings:
     """Protocols for configurable components and settings."""
 
     @runtime_checkable
-    class Configurable(p.Base, Protocol):
+    class Configurable(FlextProtocolsBase.Base, Protocol):
         """Protocol for component configuration."""
 
         def apply(self, settings: t.UserOverridesMapping | None = None) -> Self:
@@ -27,7 +27,11 @@ class FlextProtocolsSettings:
             ...
 
     @runtime_checkable
-    class Settings(pr.HasModelDump, p.Base, Protocol):
+    class Settings(
+        FlextProtocolsResult.HasModelDump,
+        FlextProtocolsBase.Base,
+        Protocol,
+    ):
         """Minimal Pydantic-2 settings contract and universal log level.
 
         Declares the operation surface (``fetch_global``, ``clone``,
@@ -46,7 +50,7 @@ class FlextProtocolsSettings:
 
         @classmethod
         def fetch_global(cls, *, overrides: t.ScalarMapping | None = None) -> Self:
-            """Return the global settings singleton, optionally with overrides."""
+            """Return the global singleton settings with overrides."""
             ...
 
         def model_copy(

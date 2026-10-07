@@ -21,31 +21,12 @@ if TYPE_CHECKING:
     from collections.abc import Generator
 
 
-class FlextContext(m.ManagedModel):  # ruff: ignore[too-many-public-methods] -- the public method set IS the contract: each method is a documented facade/protocol operation, and removing or merging any would break consumers.
-    """Scoped key-value context + correlation/service metadata facade.
+class FlextContextScopeOps:
+    """Instance-scope operations shared by the ``FlextContext`` model.
 
-    Scope store: `ctx.set(key, value)` / `ctx.get(key)` — instance-level.
-    Contextvar ops: `FlextContext.apply_correlation_id(x)` — class-level via u.*.
-    Container ops: `FlextContext.resolve_container()` — class-level.
+    Scope store operations: set/get/has/keys/values/items, metadata
+    helpers, and clone/merge/export transforms.
     """
-
-    model_config = m.ConfigDict(
-        extra="forbid",
-        validate_assignment=False,
-        arbitrary_types_allowed=True,
-    )
-
-    data: Annotated[
-        m.ConfigMap,
-        m.Field(description="Scoped key-value payload for this context instance."),
-    ] = m.Field(default_factory=lambda: m.ConfigMap(root={}))
-
-    metadata: Annotated[
-        m.Metadata,
-        m.Field(description="Correlation and service metadata snapshot."),
-    ] = m.Field(default_factory=m.Metadata)
-
-    _container_state: ClassVar[m.ContextContainerState] = m.ContextContainerState()
 
     def set(self, key: str, value: t.JsonPayload) -> p.Result[bool]:
         """Store a value in this context's scope.
@@ -174,6 +155,33 @@ class FlextContext(m.ManagedModel):  # ruff: ignore[too-many-public-methods] -- 
         if as_dict:
             return dict(self.data.root)
         return self
+
+
+class FlextContext(FlextContextScopeOps, m.ManagedModel):
+    """Scoped key-value context + correlation/service metadata facade.
+
+    Scope store: `ctx.set(key, value)` / `ctx.get(key)` — instance-level.
+    Contextvar ops: `FlextContext.apply_correlation_id(x)` — class-level via u.*.
+    Container ops: `FlextContext.resolve_container()` — class-level.
+    """
+
+    model_config = m.ConfigDict(
+        extra="forbid",
+        validate_assignment=False,
+        arbitrary_types_allowed=True,
+    )
+
+    data: Annotated[
+        m.ConfigMap,
+        m.Field(description="Scoped key-value payload for this context instance."),
+    ] = m.Field(default_factory=lambda: m.ConfigMap(root={}))
+
+    metadata: Annotated[
+        m.Metadata,
+        m.Field(description="Correlation and service metadata snapshot."),
+    ] = m.Field(default_factory=m.Metadata)
+
+    _container_state: ClassVar[m.ContextContainerState] = m.ContextContainerState()
 
     @classmethod
     def create(cls, **initial_data: t.JsonPayload) -> p.Context:

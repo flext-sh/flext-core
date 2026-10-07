@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Annotated, override
 
 from flext_tests import m as tm, r, u
 
-from tests._models.mixins import TestsFlextModelsNamespace as TestsFlextFlextModelsMixins
+from tests._models.mixins import TestsFlextModelsMixins
 from tests.base import s
 from tests.constants import c
 from tests.models import m
@@ -60,9 +60,10 @@ class TestsFlextUtilitiesRailwayServicesMixin:
 
     @staticmethod
     def value_lt_100(data: t.JsonMapping) -> bool:
-        target_model = TestsFlextFlextModelsMixins.TestsFlextModelsMixins.TargetModel
-        target: TestsFlextFlextModelsMixins.TestsFlextModelsMixins.TargetModel = (
-            target_model.model_validate(data)
+        target: TestsFlextModelsMixins.TestsFlextModelsMixins.TargetModel = (
+            TestsFlextModelsMixins.TestsFlextModelsMixins.TargetModel.model_validate(
+                data,
+            )
         )
         upper_bound = 100
         return target.value < upper_bound

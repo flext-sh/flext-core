@@ -11,6 +11,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._utilities.logging import FlextUtilitiesLogging
+from flext_core._utilities import FlextUtilitiesLogging
 
 __all__: list[str] = ["FlextUtilitiesLogging"]

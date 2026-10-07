@@ -12,12 +12,13 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from flext_core import c, t
+from flext_core._models import FlextModelsContainers, FlextModelsPydantic
 from flext_core._runtime._base import FlextRuntimeBase
-from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel as ugm
+from flext_core._utilities import FlextUtilitiesGuardsTypeModel
 
 if TYPE_CHECKING:
     from flext_core import m
-    from flext_core._typings.services import FlextTypesServices as ts
+    from flext_core._typings.services import FlextTypesServices
 
 
 class FlextRuntimeMetadata(FlextRuntimeBase):
@@ -25,7 +26,7 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
 
     @staticmethod
     def normalize_to_json_value(
-        value: ts.JsonPayload
+        value: FlextTypesServices.JsonPayload
         | t.Scalar
         | Path
         | m.ConfigMap
@@ -40,17 +41,15 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
             The resulting ``t.JsonValue``.
 
         """
-        from flext_core import m  # ruff: ignore[import-outside-top-level] -- call-time binding breaks the package lazy-import cycle: a top-level import would recurse through the package __getattr__ while the aliased module is still loading.
-
         validated_value: t.JsonValue
         if value is None:
             validated_value = t.json_value_adapter().validate_python(None)
 
-        elif ugm.has_model_dump(value):
+        elif FlextUtilitiesGuardsTypeModel.has_model_dump(value):
             validated_value = t.json_value_adapter().validate_python(
                 value.model_dump(mode="json"),
             )
-        elif isinstance(value, m.BaseModel):
+        elif isinstance(value, FlextModelsPydantic.BaseModel):
             validated_value = t.json_value_adapter().validate_python(str(value))
         else:
             validated_value = t.json_value_adapter().validate_python(
@@ -60,7 +59,7 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
 
     @staticmethod
     def normalize_to_json_mapping(
-        value: t.MappingKV[str, ts.JsonPayload | t.Scalar],
+        value: t.MappingKV[str, FlextTypesServices.JsonPayload | t.Scalar],
     ) -> t.JsonMapping:
         """Normalize a mapping to a validated ``JsonMapping``.
 
@@ -74,7 +73,7 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
 
     @staticmethod
     def _normalize_dict_entries(
-        items: t.SequenceOf[t.Pair[str, ts.JsonPayload]],
+        items: t.SequenceOf[t.Pair[str, FlextTypesServices.JsonPayload]],
     ) -> t.JsonDict:
         """Normalize key-value pairs for container dict construction.
 
@@ -93,8 +92,8 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
     def normalize_model_input_mapping(
         value: m.BaseModel
         | m.Dict
-        | ts.ConfigModelInput
-        | t.MappingKV[str, ts.JsonPayload]
+        | FlextTypesServices.ConfigModelInput
+        | t.MappingKV[str, FlextTypesServices.JsonPayload]
         | None,
     ) -> t.JsonMapping | None:
         """Normalize model-like input to a plain mapping.
@@ -103,11 +102,9 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
             The resulting ``t.JsonMapping | None``.
 
         """
-        from flext_core import m  # ruff: ignore[import-outside-top-level] -- call-time binding breaks the package lazy-import cycle: a top-level import would recurse through the package __getattr__ while the aliased module is still loading.
-
         if value is None:
             return None
-        if isinstance(value, m.Dict):
+        if isinstance(value, FlextModelsContainers.Dict):
             return FlextRuntimeMetadata._normalize_dict_entries([
                 (key, item) for key, item in value.root.items()
             ])
@@ -121,7 +118,7 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
 
     @staticmethod
     def normalize_to_metadata(
-        val: ts.JsonPayload
+        val: FlextTypesServices.JsonPayload
         | t.Scalar
         | Path
         | m.ConfigMap
@@ -135,10 +132,11 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
             The resulting ``t.JsonValue``.
 
         """
-        from flext_core import m  # ruff: ignore[import-outside-top-level] -- call-time binding breaks the package lazy-import cycle: a top-level import would recurse through the package __getattr__ while the aliased module is still loading.
-
         normalized_value: t.JsonValue
-        if isinstance(val, (m.ConfigMap, m.Dict)):
+        if isinstance(
+            val,
+            (FlextModelsContainers.ConfigMap, FlextModelsContainers.Dict),
+        ):
             normalized_value = FlextRuntimeMetadata._normalize_dict_entries(
                 list(val.root.items()),
             )
@@ -150,7 +148,7 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
             normalized_value = str(val)
         elif isinstance(val, c.PRIMITIVES_TYPES):
             normalized_value = val
-        elif ugm.has_model_dump(val):
+        elif FlextUtilitiesGuardsTypeModel.has_model_dump(val):
             normalized_value = FlextRuntimeMetadata.normalize_to_json_value(val)
         elif isinstance(val, Mapping):
             normalized_value = FlextRuntimeMetadata._normalize_dict_entries(

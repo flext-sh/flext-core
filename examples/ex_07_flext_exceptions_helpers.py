@@ -204,13 +204,12 @@ class Ex07FlextExceptionSubclasses(ExamplesFlextShared):
 
     def _exercise_specific_exceptions(self) -> None:
         self.section("subclasses")
-        self._exercise_validation_and_configuration()
-        self._exercise_infrastructure_errors()
-        self._exercise_security_and_state_errors()
-        self._exercise_resilience_and_operation_errors()
+        self._exercise_validation_and_config()
+        self._exercise_connection_and_access()
+        self._exercise_operation_and_attribute()
 
-    def _exercise_validation_and_configuration(self) -> None:
-        """Audit the validation and configuration exception fields."""
+    def _exercise_validation_and_config(self) -> None:
+        """Exercise one group of structured exception subclasses."""
         try:
             _raise_validation_error()
         except e.ValidationError as exc:
@@ -229,9 +228,6 @@ class Ex07FlextExceptionSubclasses(ExamplesFlextShared):
                 "ConfigurationError.config_source",
                 exc.config_source or "",
             )
-
-    def _exercise_infrastructure_errors(self) -> None:
-        """Audit the connection and timeout exception fields."""
         try:
             _raise_flext_connection_error()
         except e.FlextConnectionError as exc:
@@ -244,8 +240,8 @@ class Ex07FlextExceptionSubclasses(ExamplesFlextShared):
             self.audit_check("TimeoutError.timeout_seconds", exc.timeout_seconds or 0.0)
             self.audit_check("TimeoutError.operation", exc.operation or "")
 
-    def _exercise_security_and_state_errors(self) -> None:
-        """Audit the auth, lookup, conflict, and rate-limit exception fields."""
+    def _exercise_connection_and_access(self) -> None:
+        """Exercise one group of structured exception subclasses."""
         try:
             _raise_authentication_error()
         except e.AuthenticationError as exc:
@@ -268,15 +264,15 @@ class Ex07FlextExceptionSubclasses(ExamplesFlextShared):
             self.audit_check("ConflictError.resource_type", exc.resource_type or "")
             self.audit_check("ConflictError.resource_id", exc.resource_id or "")
             self.audit_check("ConflictError.conflict_reason", exc.conflict_reason or "")
+
+    def _exercise_operation_and_attribute(self) -> None:
+        """Exercise one group of structured exception subclasses."""
         try:
             _raise_rate_limit_error()
         except e.RateLimitError as exc:
             self.audit_check("RateLimitError.limit", exc.limit or 0)
             self.audit_check("RateLimitError.window_seconds", exc.window_seconds or 0)
             self.audit_check("RateLimitError.retry_after", exc.retry_after or 0.0)
-
-    def _exercise_resilience_and_operation_errors(self) -> None:
-        """Audit the breaker, typing, operation, and attribute exception fields."""
         try:
             _raise_circuit_breaker_error()
         except e.CircuitBreakerError as exc:

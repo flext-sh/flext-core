@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 
 from flext_core import c, m
 from flext_core._decorators._combined import FlextDecoratorsCombined
-from flext_core._exceptions.exception_types import FlextExceptionsTypes as et
+from flext_core._exceptions.exception_types import FlextExceptionsTypes
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -73,7 +73,7 @@ class FlextDecorators(FlextDecoratorsCombined):
                 start_time = time.perf_counter()
                 try:
                     result = func(*args, **kwargs)
-                except et.FlextTimeoutError:
+                except FlextExceptionsTypes.FlextTimeoutError:
                     raise
                 except cls._CAUGHT_EXCEPTIONS as exc:
                     duration = time.perf_counter() - start_time
@@ -83,9 +83,12 @@ class FlextDecorators(FlextDecoratorsCombined):
                             f"{max_duration}s (took {duration:.2f}s) and raised "
                             f"{exc.__class__.__name__}"
                         )
-                        raise et.FlextTimeoutError(
+                        raise FlextExceptionsTypes.FlextTimeoutError(
                             msg,
-                            error_code=error_code or c.ErrorCode.TIMEOUT_ERROR.value,
+                            options=m.ExceptionInitOptions(
+                                error_code=error_code
+                                or c.ErrorCode.TIMEOUT_ERROR.value,
+                            ),
                             timeout_seconds=max_duration,
                             operation=func.__name__,
                             duration_seconds=duration,
@@ -99,9 +102,12 @@ class FlextDecorators(FlextDecoratorsCombined):
                             f"Operation {func.__name__} exceeded timeout of "
                             f"{max_duration}s (took {duration:.2f}s)"
                         )
-                        raise et.FlextTimeoutError(
+                        raise FlextExceptionsTypes.FlextTimeoutError(
                             msg,
-                            error_code=error_code or c.ErrorCode.TIMEOUT_ERROR.value,
+                            options=m.ExceptionInitOptions(
+                                error_code=error_code
+                                or c.ErrorCode.TIMEOUT_ERROR.value,
+                            ),
                             timeout_seconds=max_duration,
                             operation=func.__name__,
                             duration_seconds=duration,

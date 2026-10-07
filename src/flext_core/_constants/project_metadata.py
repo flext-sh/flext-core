@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Final
 
-from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.base import FlextTypingBase
 
 
 class FlextConstantsProjectMetadata:
@@ -16,7 +16,7 @@ class FlextConstantsProjectMetadata:
 
     # NOTE (multi-agent, mro-wkii.17.23 / agent: uv_overlay_owner): immutable
     # pairs replace the model-less mapping while retaining the naming policy.
-    SPECIAL_NAME_OVERRIDES: Final[t.StrPairTuple] = (
+    SPECIAL_NAME_OVERRIDES: Final[FlextTypingBase.StrPairTuple] = (
         ("flext", "FlextRoot"),
         ("flext-core", "Flext"),
     )

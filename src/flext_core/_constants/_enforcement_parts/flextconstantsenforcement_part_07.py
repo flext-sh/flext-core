@@ -34,7 +34,7 @@ from flext_core._constants._enforcement_data import (
 from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_04 import (
     FlextConstantsEnforcementRules,
 )
-from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.base import FlextTypingBase
 
 
 class FlextConstantsEnforcementSmellData:
@@ -43,24 +43,33 @@ class FlextConstantsEnforcementSmellData:
     ENFORCEMENT_CATALOG_RESOURCE: ClassVar[str] = "catalog.json"
     """Package-data resource holding the enforcement rule catalog."""
 
-    ENFORCEMENT_SMELL_TAGS: ClassVar[t.VariadicTuple[str]] = ENFORCEMENT_SMELL_TAGS
-    SMELL_THRESHOLDS: ClassVar[t.IntMapping] = SMELL_THRESHOLDS
-    SMELL_RULES_TEXT: ClassVar[t.StrPairMapping] = SMELL_RULES_TEXT
-    ENFORCEMENT_RULES_TEXT: ClassVar[t.StrPairMapping] = ENFORCEMENT_RULES_TEXT
+    ENFORCEMENT_SMELL_TAGS: ClassVar[FlextTypingBase.VariadicTuple[str]] = (
+        ENFORCEMENT_SMELL_TAGS
+    )
+    SMELL_THRESHOLDS: ClassVar[FlextTypingBase.IntMapping] = SMELL_THRESHOLDS
+    SMELL_RULES_TEXT: ClassVar[FlextTypingBase.StrPairMapping] = SMELL_RULES_TEXT
+    ENFORCEMENT_RULES_TEXT: ClassVar[FlextTypingBase.StrPairMapping] = (
+        ENFORCEMENT_RULES_TEXT
+    )
     """Problem/fix text templates per runtime tag; consumed by the emitter."""
     ENFORCEMENT_TAG_CATEGORY: ClassVar[
-        t.MappingKV[str, FlextConstantsEnforcementRules.EnforcementCategory]
+        FlextTypingBase.MappingKV[
+            str,
+            FlextConstantsEnforcementRules.EnforcementCategory,
+        ]
     ] = ENFORCEMENT_TAG_CATEGORY
     """Runtime tag → category dispatching its item collection."""
-    ENFORCEMENT_TAG_LAYER: ClassVar[t.StrMapping] = ENFORCEMENT_TAG_LAYER
+    ENFORCEMENT_TAG_LAYER: ClassVar[FlextTypingBase.StrMapping] = ENFORCEMENT_TAG_LAYER
     """Runtime tag → facade layer for ATTR-category rules."""
-    ENFORCEMENT_TAG_COLLECT: ClassVar[t.StrMapping] = ENFORCEMENT_TAG_COLLECT
+    ENFORCEMENT_TAG_COLLECT: ClassVar[FlextTypingBase.StrMapping] = (
+        ENFORCEMENT_TAG_COLLECT
+    )
     """NAMESPACE tag → item collection strategy of the runtime engine."""
     ENFORCEMENT_RECURSIVE_TAGS: ClassVar[frozenset[str]] = ENFORCEMENT_RECURSIVE_TAGS
     """Tags whose scan recurses into inner namespace classes."""
-    ENFORCEMENT_PREDICATE_SPECS: ClassVar[t.MappingKV[str, t.JsonMapping]] = (
-        ENFORCEMENT_PREDICATE_SPECS
-    )
+    ENFORCEMENT_PREDICATE_SPECS: ClassVar[
+        FlextTypingBase.MappingKV[str, FlextTypingBase.JsonMapping]
+    ] = ENFORCEMENT_PREDICATE_SPECS
     """Runtime tag → raw predicate kind and parameters (typed by the engine)."""
 
     ENFORCEMENT_RELAXED_EXTRA_BASES: ClassVar[frozenset[str]] = (
@@ -79,9 +88,9 @@ class FlextConstantsEnforcementSmellData:
         ENFORCEMENT_UTILITIES_EXEMPT_METHODS
     )
     """Methods exempt from static/classmethod enforcement on utilities."""
-    ENFORCEMENT_LAYER_ALLOWS: ClassVar[t.MappingKV[str, frozenset[str]]] = (
-        ENFORCEMENT_LAYER_ALLOWS
-    )
+    ENFORCEMENT_LAYER_ALLOWS: ClassVar[
+        FlextTypingBase.MappingKV[str, frozenset[str]]
+    ] = ENFORCEMENT_LAYER_ALLOWS
     """Per-layer inner-class kinds the cross-layer checks permit."""
     ENFORCEMENT_VALUE_OBJECT_BASES: ClassVar[frozenset[str]] = (
         ENFORCEMENT_VALUE_OBJECT_BASES
@@ -101,9 +110,9 @@ class FlextConstantsEnforcementSmellData:
         ENFORCE_NON_WORKSPACE_PATH_MARKERS
     )
     """Filesystem path fragments identifying third-party source."""
-    ENFORCEMENT_ACCESSOR_RENAMES: ClassVar[t.MappingKV[str, t.StrPair]] = (
-        ENFORCEMENT_ACCESSOR_RENAMES
-    )
+    ENFORCEMENT_ACCESSOR_RENAMES: ClassVar[
+        FlextTypingBase.MappingKV[str, FlextTypingBase.StrPair]
+    ] = ENFORCEMENT_ACCESSOR_RENAMES
     """Legacy accessor name → (canonical replacement, reason)."""
     ENFORCEMENT_ACCESSOR_EXTERNAL_CONTRACTS: ClassVar[frozenset[str]] = (
         ENFORCEMENT_ACCESSOR_EXTERNAL_CONTRACTS

@@ -14,9 +14,7 @@ import pytest
 from flext_tests import tm
 
 from flext_core import FlextContainer, FlextSettings, u
-from tests import u as test_u
-from tests.constants import c
-from tests.models import m
+from tests import c, m, u as test_u
 
 if TYPE_CHECKING:
     from tests.typings import t

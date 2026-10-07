@@ -14,7 +14,7 @@ from flext_core._handlers_parts.flexthandlers_part_06 import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, MutableSequence
+    from collections.abc import Callable
     from types import ModuleType
 
     from flext_core import p
@@ -91,40 +91,6 @@ class FlextHandlers[MessageT_contra, ResultT](
 
             return sorted(handlers, key=_priority, reverse=True)
 
-        @staticmethod
-        def _scanned_handler_entry(
-            module: ModuleType,
-            name: str,
-        ) -> tuple[str, Callable[..., t.Scalar | None], p.DecoratorConfig] | None:
-            """Return one public attribute's handler entry, if it declares one.
-
-            Returns:
-                The resulting ``tuple[str, Callable[..., t.Scalar | None],
-                p.DecoratorConfig] | None``.
-
-            """
-            func = getattr(module, name, None)
-            if func is None or not callable(func) or not hasattr(func, c.HANDLER_ATTR):
-                return None
-            settings: p.DecoratorConfig = getattr(func, c.HANDLER_ATTR)
-
-            def narrowed_func(
-                message: t.JsonPayload,
-                function_name: str = name,
-            ) -> t.Scalar | None:
-                resolved_callable = getattr(module, function_name, None)
-                if not callable(resolved_callable):
-                    return None
-                result = resolved_callable(message)
-                if result is None:
-                    return None
-                if isinstance(result, c.SCALAR_TYPES):
-                    return result
-                return str(result)
-
-            setattr(narrowed_func, c.HANDLER_ATTR, settings)
-            return (name, narrowed_func, settings)
-
         @classmethod
         def scan_module(
             cls,
@@ -150,18 +116,12 @@ class FlextHandlers[MessageT_contra, ResultT](
                 ...     u.Cli.print(f"{func_name}: {settings.command.__name__}")
 
             """
-            handlers: MutableSequence[
-                tuple[str, Callable[..., t.Scalar | None], p.DecoratorConfig]
-            ] = []
-            for name in dir(module):
-                if name.startswith("_"):
-                    continue
-                entry = cls._scanned_handler_entry(
-                    module,
-                    name,
-                )
-                if entry is not None:
-                    handlers.append(entry)
+            handlers = [
+                _narrowed_entry(module, name)
+                for name in dir(module)
+                if not name.startswith("_")
+                and _is_decorated_handler(getattr(module, name, None))
+            ]
 
             def _priority_then_name(
                 entry: tuple[str, Callable[..., t.Scalar | None], p.DecoratorConfig],
@@ -169,6 +129,47 @@ class FlextHandlers[MessageT_contra, ResultT](
                 return (-entry[2].priority, entry[0])
 
             return sorted(handlers, key=_priority_then_name)
+
+
+def _is_decorated_handler(func: object) -> bool:
+    """Whether one module attribute is a callable @handler function.
+
+    Returns:
+        The resulting ``bool``.
+
+    """
+    return func is not None and callable(func) and hasattr(func, c.HANDLER_ATTR)
+
+
+def _narrowed_entry(
+    module: ModuleType,
+    name: str,
+) -> tuple[str, Callable[..., t.Scalar | None], p.DecoratorConfig]:
+    """Build one sorted-scan entry wrapping the function for scalar calls.
+
+    Returns:
+        The resulting ``(name, narrowed_func, settings)`` entry.
+
+    """
+    func = getattr(module, name)
+    settings: p.DecoratorConfig = getattr(func, c.HANDLER_ATTR)
+
+    def narrowed_func(
+        message: t.JsonPayload,
+        function_name: str = name,
+    ) -> t.Scalar | None:
+        resolved_callable = getattr(module, function_name, None)
+        if not callable(resolved_callable):
+            return None
+        result = resolved_callable(message)
+        if result is None:
+            return None
+        if isinstance(result, c.SCALAR_TYPES):
+            return result
+        return str(result)
+
+    setattr(narrowed_func, c.HANDLER_ATTR, settings)
+    return (name, narrowed_func, settings)
 
 
 __all__: list[str] = ["FlextHandlers"]

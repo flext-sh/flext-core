@@ -19,7 +19,7 @@ from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_
 from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_05 import (  # ruff: ignore[line-too-long] -- the dotted module path is a single identifier chain; it cannot be wrapped without renaming the module
     FlextModelsPyprojectIngressContract,
 )
-from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.base import FlextTypingBase
 
 
 class FlextModelsProjectMetadataAggregates(FlextModelsProjectMetadataFields):
@@ -47,15 +47,15 @@ class FlextModelsProjectMetadataAggregates(FlextModelsProjectMetadataFields):
             Field(default="", alias="requires-python", description="Python constraint"),
         ] = ""
         dependencies: Annotated[
-            t.StrTuple,
+            FlextTypingBase.StrTuple,
             Field(default=(), description="PEP 508 runtime dependency declarations"),
         ] = ()
         classifiers: Annotated[
-            t.StrTuple,
+            FlextTypingBase.StrTuple,
             Field(default=(), description="Trove classifiers"),
         ] = ()
         keywords: Annotated[
-            t.StrTuple,
+            FlextTypingBase.StrTuple,
             Field(default=(), description="Project search keywords"),
         ] = ()
 

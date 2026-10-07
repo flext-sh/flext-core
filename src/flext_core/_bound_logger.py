@@ -144,6 +144,18 @@ class FlextBoundLogger(ulc):
         """
         return self.bind(**context)
 
+    @staticmethod
+    def _should_include_stack_trace() -> bool:
+        """Whether stack traces should be included in exception logging.
+
+        Returns:
+            ``True`` — stack traces are included by default for all
+            exceptions routed through the structured logging facade.
+            Subclasses may override to suppress them selectively.
+
+        """
+        return True
+
     def _exception_context_from_inputs(
         self,
         resolved_exception: Exception | None,
@@ -223,9 +235,7 @@ class FlextBoundLogger(ulc):
 
         """
         result: t.JsonDict = {
-            k: str(v)
-            if isinstance(v, Exception)
-            else self._to_container_value(v)
+            k: str(v) if isinstance(v, Exception) else self._to_container_value(v)
             for k, v in context.items()
         }
         if exception is not None:

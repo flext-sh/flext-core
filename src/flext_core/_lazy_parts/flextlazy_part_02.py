@@ -98,11 +98,7 @@ class FlextLazyMember:
             namespace = vars(klass)
             if self._member in namespace:
                 raw: ModuleGlobalValue = namespace[self._member]
-                type.__setattr__(  # ruff: ignore[unnecessary-dunder-call] -- deliberate type-level assignment: bootstrap must install the member on the host module bypassing any metaclass attribute override.
-                    host,
-                    self._member,
-                    raw,
-                )
+                setattr(host, self._member, raw)
                 return raw
         msg = f"{target!r} declares no member {self._member!r}"
         raise ImportError(msg, name=self._module)

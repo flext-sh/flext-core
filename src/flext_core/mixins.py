@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import t
-from flext_core._models.flext_mixins import FlextMixins
+from flext_core._models import FlextMixins
 
 # NOTE (multi-agent): mro-i6nq.12 — consolidated _mixins_parts/part_01+part_02 into
 # this single domain module and refactored the runtime-bootstrap tower

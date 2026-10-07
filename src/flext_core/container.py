@@ -20,7 +20,7 @@ from functools import partial
 from typing import TYPE_CHECKING, ClassVar, Self, TypeGuard, cast, overload, override
 
 from flext_core import FlextSettings, FlextUtilitiesLogging, c, e, m, p, r, t, u
-from flext_core._models.flext_context import FlextContext
+from flext_core._models import FlextContext
 
 # NOTE (multi-agent): mro-i6nq.12 — the concrete public facade remains the
 # runtime implementation; p.ContainerType is only its structural contract.
@@ -29,7 +29,17 @@ if TYPE_CHECKING:
     from types import FrameType, ModuleType
 
 
-class FlextContainer(p.Container):  # ruff: ignore[too-many-public-methods] -- the public method set IS the contract: each method is a documented facade/protocol operation, and removing or merging any would break consumers.
+class FlextContainerTestingOps:
+    """Testing-only singleton reset operations for the shared container."""
+
+    @classmethod
+    def reset_for_testing(cls) -> None:
+        """Reset singleton instance for testing purposes."""
+        with cls._global_lock:
+            cls._global_instance = None
+
+
+class FlextContainer(FlextContainerTestingOps, p.Container):
     """Process-wide registry of services, factories and resources.
 
     One mapping holds every registration; the core runtime names
@@ -95,12 +105,6 @@ class FlextContainer(p.Container):  # ruff: ignore[too-many-public-methods] -- t
     def context(self) -> p.Context:
         """Execution context bound to this container."""
         return self._context
-
-    @classmethod
-    def reset_for_testing(cls) -> None:
-        """Reset singleton instance for testing purposes."""
-        with cls._global_lock:
-            cls._global_instance = None
 
     @override
     def logger(

@@ -64,7 +64,7 @@ class FlextUtilitiesDispatcherExecute:
         if raw_candidate is None:
             return None
         if isinstance(raw_candidate, p.ResultView):
-            return FlextUtilitiesDispatcherExecute._result_view_output(
+            return FlextUtilitiesDispatcherExecute._from_result_view(
                 raw_candidate,
                 dispatch_result,
             )
@@ -76,19 +76,19 @@ class FlextUtilitiesDispatcherExecute:
         )
 
     @staticmethod
-    def _result_view_output(
-        raw_candidate: p.ResultView[t.JsonPayload],
+    def _from_result_view(
+        view: p.ResultView[t.JsonPayload],
         dispatch_result: type[r[t.JsonPayload]],
-    ) -> p.Result[t.JsonPayload]:
-        """Adapt one result-view candidate into the canonical result type.
+    ) -> t.JsonPayload | p.Result[t.JsonPayload]:
+        """Adapt one ResultView outcome into the dispatcher result type.
 
         Returns:
-            The resulting ``p.Result[t.JsonPayload]``.
+            The resulting ``t.JsonPayload | p.Result[t.JsonPayload]``.
 
         """
-        if raw_candidate.failure:
-            return dispatch_result.from_failure(raw_candidate)
-        success_value = raw_candidate.value
+        if view.failure:
+            return dispatch_result.from_failure(view)
+        success_value = view.value
         if u.container(success_value) or u.pydantic_model(success_value):
             return dispatch_result.ok(success_value)
         return dispatch_result.fail_op(
@@ -118,49 +118,6 @@ class FlextUtilitiesDispatcherExecute:
             normalized,
             dispatch_result,
         )
-
-    @staticmethod
-    def execute_dispatcher_handler(
-        *,
-        resolved_handler: t.RoutedHandlerCallable,
-        message: p.Routable,
-        route_name: str,
-        logger: p.Logger,
-    ) -> p.Result[t.JsonPayload]:
-        """Execute ``resolved_handler(message)``; adapt outcome to ``r[JsonPayload]``.
-
-        The handler may return either an ``r[T]`` instance (Result-like
-        canonical) or a raw payload (container or Pydantic model). All other
-        shapes are rejected with the canonical fail-op messages from the
-        enforcement constants.
-
-        Returns:
-            The resulting ``p.Result[t.JsonPayload]``.
-
-        """
-        dispatch_result = r[t.JsonPayload]
-        try:
-            raw_candidate = resolved_handler(message)
-            raw_output = FlextUtilitiesDispatcherExecute._normalize_dispatcher_output(
-                raw_candidate,
-                dispatch_result,
-            )
-            return FlextUtilitiesDispatcherExecute._adapt_dispatcher_output(
-                raw_output,
-                dispatch_result,
-            )
-        except (
-            TypeError,
-            ValueError,
-            RuntimeError,
-            KeyError,
-            AttributeError,
-            OSError,
-            LookupError,
-            ArithmeticError,
-        ) as exc:
-            logger.exception(c.LOG_HANDLER_EXECUTION_FAILED, route=route_name)
-            return dispatch_result.fail_op("execute resolved handler", exc)
 
 
 __all__ = ["FlextUtilitiesDispatcherExecute"]

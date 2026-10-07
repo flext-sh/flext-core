@@ -45,7 +45,10 @@ class TestsFlextCoreExceptionsBase:
     def test_base_error_sets_timestamp_and_formats_string() -> None:
         """Test base error sets timestamp and formats string."""
         before = time.time()
-        error = e.BaseError("Test message", error_code="TEST_ERROR")
+        error = e.BaseError(
+            "Test message",
+            options=m.ExceptionInitOptions(error_code="TEST_ERROR"),
+        )
         assert before <= error.timestamp <= time.time()
         assert str(error) == "[TEST_ERROR] Test message"
         error.error_code = ""
@@ -56,8 +59,10 @@ class TestsFlextCoreExceptionsBase:
         """Test base error merges metadata context and extra kwargs."""
         error = e.BaseError(
             "Test error",
-            context={"scope": "service"},
-            metadata={"existing": "value"},
+            options=m.ExceptionInitOptions(
+                context={"scope": "service"},
+                metadata={"existing": "value"},
+            ),
             new_field="new_value",
         )
         attributes = error.metadata.attributes
@@ -181,7 +186,7 @@ class TestsFlextCoreExceptionsBase:
         error = e.ValidationError(
             "Validation failed",
             field="email",
-            auto_correlation=True,
+            options=m.ExceptionInitOptions(auto_correlation=True),
         )
         assert error.correlation_id is not None
         assert error.correlation_id.startswith("exc_")

@@ -95,6 +95,61 @@ class FlextDispatcher:
             _ = self._execute_handler(resolved_handler, event, route_name)
         return r[bool].ok(value=True)
 
+    @staticmethod
+    def _resolve_handler_callable(
+        handler: t.DispatchableHandler,
+    ) -> t.RoutedHandlerCallable | None:
+        """Resolve the dispatch entrypoint callable for one handler.
+
+        Returns:
+            The resulting ``t.RoutedHandlerCallable | None``.
+
+        """
+        match handler:
+            case p.DispatchMessage():
+                return handler.dispatch_message
+            case p.Handle():
+                return handler.handle
+            case p.Execute():
+                return handler.execute
+            case callable_handler if callable(callable_handler):
+                return callable_handler
+            case _:
+                return None
+
+    @staticmethod
+    def _resolve_handler_route(
+        handler: t.DispatchableHandler,
+        accepted_message_types: tuple[t.TypeHintSpecifier, ...],
+    ) -> str | None:
+        """Resolve the explicit or computed route name for one handler.
+
+        Returns:
+            The resulting ``str | None``.
+
+        """
+        handler_message_type = getattr(handler, "message_type", None)
+        route_candidates: tuple[t.TypeHintSpecifier | str | None, ...] = (
+            handler_message_type,
+            accepted_message_types[0] if accepted_message_types else None,
+        )
+        route_name: str | None = None
+        for candidate in route_candidates:
+            match candidate:
+                case None:
+                    continue
+                case str() as route_text:
+                    route_name = route_text
+                case type() as route_type:
+                    try:
+                        route_name = u.resolve_message_route(route_type)
+                    except c.EXC_TYPE_VALIDATION:
+                        continue
+                case _:
+                    continue
+            break
+        return route_name
+
     def register_handler(
         self,
         handler: t.DispatchableHandler,
@@ -110,18 +165,14 @@ class FlextDispatcher:
         accepted_message_types: tuple[t.TypeHintSpecifier, ...] = tuple(
             u.compute_accepted_message_types(type(handler)),
         )
-        resolved_callable = self._resolve_handler_callable(handler)
-        if resolved_callable.failure:
+        resolved_handler = self._resolve_handler_callable(handler)
+        if resolved_handler is None:
             return r[bool].fail_op(
                 "register handler",
                 c.ERR_HANDLER_MUST_BE_CALLABLE,
             )
-        resolved_handler: t.RoutedHandlerCallable = resolved_callable.value
         is_auto_discoverable = isinstance(handler, p.AutoDiscoverableHandler)
-        route_name = self._resolve_handler_route(
-            handler,
-            accepted_message_types,
-        )
+        route_name = self._resolve_handler_route(handler, accepted_message_types)
         if route_name is None:
             if is_auto_discoverable:
                 self._auto_handlers.append((
@@ -148,62 +199,6 @@ class FlextDispatcher:
             self._handlers[route_name] = (handler, resolved_handler)
             self.logger.info(c.LOG_REGISTERED_HANDLER, route=route_name)
         return r[bool].ok(value=True)
-
-    @staticmethod
-    def _resolve_handler_callable(
-        handler: t.DispatchableHandler,
-    ) -> p.Result[t.RoutedHandlerCallable]:
-        """Resolve the dispatch callable behind one dispatchable handler.
-
-        Returns:
-            The resulting ``p.Result[t.RoutedHandlerCallable]``.
-
-        """
-        match handler:
-            case p.DispatchMessage():
-                return r[t.RoutedHandlerCallable].ok(handler.dispatch_message)
-            case p.Handle():
-                return r[t.RoutedHandlerCallable].ok(handler.handle)
-            case p.Execute():
-                return r[t.RoutedHandlerCallable].ok(handler.execute)
-            case callable_handler if callable(callable_handler):
-                return r[t.RoutedHandlerCallable].ok(callable_handler)
-            case _:
-                return r[t.RoutedHandlerCallable].fail_op(
-                    "resolve handler callable",
-                    c.ERR_HANDLER_MUST_BE_CALLABLE,
-                )
-
-    @staticmethod
-    def _resolve_handler_route(
-        handler: t.DispatchableHandler,
-        accepted_message_types: tuple[t.TypeHintSpecifier, ...],
-    ) -> str | None:
-        """Resolve the route name from the handler's declared message types.
-
-        Returns:
-            The resulting ``str | None``.
-
-        """
-        handler_message_type = getattr(handler, "message_type", None)
-        route_candidates: tuple[t.TypeHintSpecifier | str | None, ...] = (
-            handler_message_type,
-            accepted_message_types[0] if accepted_message_types else None,
-        )
-        for candidate in route_candidates:
-            match candidate:
-                case None:
-                    continue
-                case str() as route_text:
-                    return route_text
-                case type() as route_type:
-                    try:
-                        return u.resolve_message_route(route_type)
-                    except c.EXC_TYPE_VALIDATION:
-                        continue
-                case _:
-                    continue
-        return None
 
     def _execute_handler(
         self,

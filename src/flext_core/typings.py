@@ -11,24 +11,23 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import TypeVar
 
-from flext_core._models._enforcement._sources import FlextModelsEnforcementSources
-from flext_core._protocols.container import FlextProtocolsContainer as pc
-from flext_core._protocols.context import FlextProtocolsContext as pcx
-from flext_core._protocols.handler import FlextProtocolsHandler as ph
-from flext_core._protocols.loggings import FlextProtocolsLogging as pl
-from flext_core._protocols.result import (
-    FlextProtocolsResult as pr,
-    FlextProtocolsResult as prt,
+from flext_core._models import FlextModelsEnforcementSources
+from flext_core._protocols import (
+    FlextProtocolsContainer,
+    FlextProtocolsContext,
+    FlextProtocolsHandler,
+    FlextProtocolsLogging,
+    FlextProtocolsResult,
+    FlextProtocolsService,
+    FlextProtocolsSettings,
 )
-from flext_core._protocols.service import FlextProtocolsService as psrv
-from flext_core._protocols.settings import FlextProtocolsSettings as ps
 from flext_core._typings.base import FlextTypingBase
 from flext_core._typings.config import FlextTypingConfig
 from flext_core._typings.containers import FlextTypingContainers
 from flext_core._typings.core import FlextTypesCore
 from flext_core._typings.lazy import FlextTypesLazy
 from flext_core._typings.project_metadata import FlextTypingProjectMetadata
-from flext_core._typings.pydantic import FlextTypesPydantic as tp
+from flext_core._typings.pydantic import FlextTypesPydantic
 from flext_core._typings.services import FlextTypesServices
 from flext_core._typings.typeadapters import FlextTypesTypeAdapters
 
@@ -54,11 +53,11 @@ class FlextTypes(
 t = FlextTypes
 
 
-type JsonMapping = Mapping[str, tp.JsonValue]
+type JsonMapping = Mapping[str, FlextTypesPydantic.JsonValue]
 
-type JsonDict = dict[str, tp.JsonValue]
+type JsonDict = dict[str, FlextTypesPydantic.JsonValue]
 
-type ConfigModelInput = prt.HasModelDump | JsonMapping
+type ConfigModelInput = FlextProtocolsResult.HasModelDump | JsonMapping
 
 T = TypeVar("T")
 
@@ -78,15 +77,15 @@ type ProtocolGuardInput = (
     t.JsonPayload
     | t.TypeHintSpecifier
     | Callable[..., t.JsonPayload]
-    | pc.Container
-    | pcx.Context
-    | ph.Dispatcher
-    | ph.Handle
-    | ph.Middleware
-    | pl.Logger
-    | pr.Result[t.JsonPayload]
-    | ps.Settings
-    | psrv.Service[t.JsonPayload]
+    | FlextProtocolsContainer.Container
+    | FlextProtocolsContext.Context
+    | FlextProtocolsHandler.Dispatcher
+    | FlextProtocolsHandler.Handle
+    | FlextProtocolsHandler.Middleware
+    | FlextProtocolsLogging.Logger
+    | FlextProtocolsResult.Result[t.JsonPayload]
+    | FlextProtocolsSettings.Settings
+    | FlextProtocolsService.Service[t.JsonPayload]
     | None
 )
 

@@ -13,13 +13,14 @@ from __future__ import annotations
 from typing import Annotated
 
 from flext_core import t
-from flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_01 import (  # ruff: ignore[line-too-long] -- the dotted module path is a single identifier chain; it cannot be wrapped without renaming the module
-    FlextModelsExceptionParams as FlextModelsExceptionParamsPart01,
-)
-from flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_02 import (  # ruff: ignore[line-too-long] -- the dotted module path is a single identifier chain; it cannot be wrapped without renaming the module
-    FlextModelsExceptionParams as FlextModelsExceptionParamsPart02,
+from flext_core._models._exception_params_parts import (
+    flextmodelsexceptionparams_part_01 as part_01,
+    flextmodelsexceptionparams_part_02 as part_02,
 )
 from flext_core._models.pydantic import FlextModelsPydantic as mp
+
+FlextModelsExceptionParamsPart01 = part_01.FlextModelsExceptionParams
+FlextModelsExceptionParamsPart02 = part_02.FlextModelsExceptionParams
 
 
 class FlextModelsExceptionParams(FlextModelsExceptionParamsPart02):

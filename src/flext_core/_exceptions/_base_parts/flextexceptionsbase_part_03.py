@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_core import c
+from flext_core import c, m
 from flext_core._exceptions._base_parts.flextexceptionsbase_part_02 import (
     FlextBaseErrorStateMixin,
 )
@@ -21,7 +21,6 @@ from flext_core._typings.base import FlextTypingBase as tb
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
 
-    from flext_core import m
     from flext_core._protocols.result import FlextProtocolsResult as pr
     from flext_core._typings.services import FlextTypesServices as ts
 
@@ -36,86 +35,99 @@ class FlextExceptionsBase:
         excluded_context_keys: ClassVar[set[str] | frozenset[str] | None] = None
         _default_error_code: ClassVar[str] = c.ErrorCode.UNKNOWN_ERROR
 
-        def __init__(  # ruff: ignore[too-many-arguments] -- the keyword contract mirrors the public BaseError constructor; every argument is a distinct documented exception field.
+        def __init__(
             self,
             message: str,
             *,
-            error_code: str = c.ErrorCode.UNKNOWN_ERROR,
-            context: tb.MappingKV[str, ts.JsonPayload | None]
-            | pr.HasModelDump
-            | None = None,
-            metadata: pr.HasModelDump | tb.JsonValue | None = None,
-            correlation_id: str | None = None,
-            auto_correlation: bool = False,
-            auto_log: bool = True,
-            merged_kwargs: tb.MappingKV[str, ts.JsonPayload | None]
-            | pr.HasModelDump
-            | None = None,
+            options: m.ExceptionInitOptions | None = None,
             params: m.BaseModel | None = None,
             **extra_kwargs: tb.JsonValue,
         ) -> None:
             """Initialize base error with message and optional metadata."""
+            opts = options
+            if opts is None:
+                # Keyword-form construction: the tested public contract accepts
+                # every ExceptionInitOptions field as a direct keyword (e.g.
+                # ``BaseError("m", error_code="E_BASE", auto_log=False)``).
+                # Extract exactly the option keys from the kwargs so they feed
+                # the typed options instead of falling into the generic extra
+                # bucket.
+                option_kwargs = {
+                    key: extra_kwargs.pop(key)
+                    for key in (
+                        "error_code",
+                        "context",
+                        "metadata",
+                        "correlation_id",
+                        "auto_correlation",
+                        "auto_log",
+                        "merged_kwargs",
+                    )
+                    if key in extra_kwargs
+                }
+                opts = m.ExceptionInitOptions.model_validate(option_kwargs)
             declaredparams_cls = self.__class__.params_cls
             if declaredparams_cls is None:
                 self._initialize_base_state(
                     message,
-                    error_code=error_code,
-                    context=context,
-                    metadata=metadata,
-                    correlation_id=correlation_id,
-                    auto_correlation=auto_correlation,
-                    auto_log=auto_log,
-                    merged_kwargs=merged_kwargs,
+                    error_code=opts.error_code,
+                    options=opts,
                     extra_kwargs=extra_kwargs,
                 )
                 return
-            resolved_error_code = (
-                self._default_error_code
-                if error_code == c.ErrorCode.UNKNOWN_ERROR
-                else error_code
+            resolved_error_code = self._resolve_declared_error_code(opts.error_code)
+            combined_extra = self._build_declared_extra(
+                opts.merged_kwargs,
+                extra_kwargs,
             )
-            combined_extra = self._combined_extra_map(merged_kwargs, extra_kwargs)
-            resolved, remaining_extra, correlation_id_str, preserved_metadata = (
-                self._resolve_declared_params(
-                    declaredparams_cls,
-                    combined_extra,
-                    context,
-                    params,
-                )
+            remaining_extra, preserved_metadata, declared_correlation_id = (
+                self._extract_declared_remaining(combined_extra)
             )
-            ctx = self._context_from_resolved(
+            resolved, ctx = self._resolve_declared_params(
                 declaredparams_cls,
-                resolved,
+                opts.context,
                 remaining_extra,
-                context,
+                params,
+            )
+            resolved_options = self._resolve_declared_options(
+                opts,
+                ctx,
+                preserved_metadata,
+                declared_correlation_id,
             )
             self._initialize_base_state(
                 message,
                 error_code=resolved_error_code,
-                context=ctx or None,
-                metadata=metadata if metadata is not None else preserved_metadata,
-                correlation_id=(
-                    correlation_id if correlation_id is not None else correlation_id_str
-                ),
-                auto_correlation=auto_correlation,
-                auto_log=auto_log,
-                merged_kwargs=None,
+                options=resolved_options,
                 extra_kwargs={},
             )
             for key in frozenset(declaredparams_cls.model_fields):
                 setattr(self, key, getattr(resolved, key))
 
+        def _resolve_declared_error_code(self, error_code: str) -> str:
+            """Resolve the effective error code for a declared-params error.
+
+            Returns:
+                The resulting ``str``.
+
+            """
+            return (
+                self._default_error_code
+                if error_code == c.ErrorCode.UNKNOWN_ERROR
+                else error_code
+            )
+
         @staticmethod
-        def _combined_extra_map(
+        def _build_declared_extra(
             merged_kwargs: tb.MappingKV[str, ts.JsonPayload | None]
             | pr.HasModelDump
             | None,
-            extra_kwargs: tb.MappingKV[str, ts.JsonPayload | None],
+            extra_kwargs: tb.MappingKV[str, tb.JsonValue],
         ) -> MutableMapping[str, ts.JsonPayload | None]:
-            """Merge the merged-kwargs and extra-kwargs maps into one mapping.
+            """Normalize merged and extra kwargs into the declared-extra mapping.
 
             Returns:
-                The resulting ``MutableMapping[str, ts.JsonPayload | None]``.
+                The resulting ``MutableMapping``.
 
             """
             combined_extra: MutableMapping[str, ts.JsonPayload | None] = {}
@@ -138,20 +150,15 @@ class FlextExceptionsBase:
             return combined_extra
 
         @staticmethod
-        def _resolve_declared_params(
-            declared_cls: ts.ModelClass[m.BaseModel],
+        def _extract_declared_remaining(
             combined_extra: MutableMapping[str, ts.JsonPayload | None],
-            context: tb.MappingKV[str, ts.JsonPayload | None] | pr.HasModelDump | None,
-            params: m.BaseModel | None,
-        ) -> tuple[m.BaseModel, tb.MutableJsonMapping, str | None, tb.JsonValue | None]:
-            """Resolve the declared params model plus the remaining extras.
+        ) -> tuple[tb.MutableJsonMapping, tb.JsonValue | None, str | None]:
+            """Split declared params from remaining extras in the combined mapping.
 
             Returns:
-                The resulting ``tuple[m.BaseModel, tb.MutableJsonMapping, str | None,
-                tb.JsonValue | None]``.
+                The resulting ``tuple``.
 
             """
-            declared_param_keys = frozenset(declared_cls.model_fields)
             remaining_extra: tb.MutableJsonMapping = {}
             if combined_extra:
                 remaining_extra.update({
@@ -159,9 +166,6 @@ class FlextExceptionsBase:
                     for key, value in combined_extra.items()
                     if value is not None
                 })
-            resolved_named: MutableMapping[str, ts.JsonPayload | None] = {}
-            for key in declared_param_keys:
-                resolved_named.setdefault(key, remaining_extra.pop(key, None))
             preserved_metadata_raw = remaining_extra.pop(c.FIELD_METADATA, None)
             preserved_metadata = (
                 FlextRuntime.normalize_to_metadata(preserved_metadata_raw)
@@ -175,6 +179,25 @@ class FlextExceptionsBase:
             correlation_id_str = FlextExceptionsHelpers.safe_optional_str(
                 correlation_id_raw,
             )
+            return remaining_extra, preserved_metadata, correlation_id_str
+
+        def _resolve_declared_params(
+            self,
+            declaredparams_cls: ts.ModelClass[m.BaseModel],
+            context: tb.MappingKV[str, ts.JsonPayload | None] | pr.HasModelDump | None,
+            remaining_extra: tb.MutableJsonMapping,
+            params: m.BaseModel | None,
+        ) -> tuple[m.BaseModel, tb.MutableJsonMapping]:
+            """Validate declared params and build the structured context mapping.
+
+            Returns:
+                The resulting ``tuple``.
+
+            """
+            declared_param_keys = frozenset(declaredparams_cls.model_fields)
+            resolved_named: MutableMapping[str, ts.JsonPayload | None] = {}
+            for key in declared_param_keys:
+                resolved_named.setdefault(key, remaining_extra.pop(key, None))
             param_values = FlextExceptionsHelpers.build_param_map(
                 context,
                 remaining_extra,
@@ -192,31 +215,15 @@ class FlextExceptionsBase:
             resolved = (
                 params
                 if params is not None
-                else declared_cls.model_validate(param_values)
+                else declaredparams_cls.model_validate(param_values)
             )
-            return resolved, remaining_extra, correlation_id_str, preserved_metadata
-
-        @classmethod
-        def _context_from_resolved(
-            cls,
-            declared_cls: ts.ModelClass[m.BaseModel],
-            resolved: m.BaseModel,
-            remaining_extra: tb.MutableJsonMapping,
-            context: tb.MappingKV[str, ts.JsonPayload | None] | pr.HasModelDump | None,
-        ) -> tb.JsonDict:
-            """Build the context map enriched from the resolved params fields.
-
-            Returns:
-                The resulting ``tb.JsonDict``.
-
-            """
             ctx = FlextExceptionsHelpers.build_context_map(
                 context,
                 remaining_extra,
-                excluded_keys=cls.excluded_context_keys,
+                excluded_keys=type(self).excluded_context_keys,
             )
-            resolved_fields = declared_cls.__pydantic_fields__
-            for key in frozenset(declared_cls.model_fields):
+            resolved_fields = declaredparams_cls.__pydantic_fields__
+            for key in declared_param_keys:
                 attr_val = getattr(resolved, key, None)
                 if attr_val is not None:
                     ctx[key] = FlextRuntime.normalize_to_metadata(attr_val)
@@ -226,7 +233,37 @@ class FlextExceptionsBase:
                 field_help = field_info.description or field_info.title
                 if isinstance(field_help, str) and field_help:
                     ctx[f"{key}_description"] = field_help
-            return ctx
+            return resolved, ctx
+
+        @staticmethod
+        def _resolve_declared_options(
+            options: m.ExceptionInitOptions,
+            ctx: tb.MutableJsonMapping,
+            preserved_metadata: tb.JsonValue | None,
+            declared_correlation_id: str | None,
+        ) -> m.ExceptionInitOptions:
+            """Fold declared-params resolutions back into the init options.
+
+            Returns:
+                The resulting ``m.ExceptionInitOptions``.
+
+            """
+            return options.model_copy(
+                update={
+                    "context": ctx or None,
+                    "metadata": (
+                        options.metadata
+                        if options.metadata is not None
+                        else preserved_metadata
+                    ),
+                    "correlation_id": (
+                        options.correlation_id
+                        if options.correlation_id is not None
+                        else declared_correlation_id
+                    ),
+                    "merged_kwargs": None,
+                },
+            )
 
 
 __all__: list[str] = ["FlextExceptionsBase"]

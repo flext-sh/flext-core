@@ -15,8 +15,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import c, e, p, r, t
-from flext_core._utilities.collection import FlextUtilitiesCollection
-from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
+from flext_core._utilities import (
+    FlextUtilitiesCollection,
+    FlextUtilitiesGuardsTypeModel,
+)
 from flext_core._utilities.logging_config import FlextUtilitiesLoggingConfig
 from flext_core.runtime import FlextRuntime
 

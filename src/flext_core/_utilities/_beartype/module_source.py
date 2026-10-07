@@ -15,7 +15,7 @@ from collections.abc import Iterator
 from types import ModuleType
 from typing import TypeAliasType, runtime_checkable
 
-from flext_core._models.enforcement import FlextModelsEnforcement as me
+from flext_core._models import FlextModelsEnforcement
 
 
 class FlextUtilitiesBeartypeModuleSource:
@@ -210,15 +210,24 @@ class FlextUtilitiesBeartypeModuleSource:
         """
         if tree is None:
             return False
-        return cls._resolves_to_owner_import(
-            cls._binding_map(tree),
-            name,
-            owner_root,
-        )
+        bindings = cls._module_bindings(tree)
+        seen: set[str] = set()
+        current: str | None = name
+        while current is not None and current not in seen:
+            seen.add(current)
+            node = bindings.get(current)
+            if node is None:
+                return False
+            if isinstance(node, (ast.Import, ast.ImportFrom)):
+                return cls._import_roots(node) == frozenset({owner_root})
+            if not isinstance(node, ast.Assign):
+                return False
+            current = cls._assign_root_name(node.value)
+        return False
 
     @classmethod
-    def _binding_map(cls, tree: ast.Module) -> dict[str, ast.stmt]:
-        """Map each module-level bound name to the statement that binds it.
+    def _module_bindings(cls, tree: ast.Module) -> dict[str, ast.stmt]:
+        """Index module-level import and assignment bindings by bound name.
 
         Returns:
             The resulting ``dict[str, ast.stmt]``.
@@ -238,41 +247,22 @@ class FlextUtilitiesBeartypeModuleSource:
                 bindings[bound_name] = node
         return bindings
 
-    @classmethod
-    def _resolves_to_owner_import(
-        cls,
-        bindings: dict[str, ast.stmt],
-        name: str,
-        owner_root: str,
-    ) -> bool:
-        """Walk the binding chain from ``name`` to an owner-rooted import.
+    @staticmethod
+    def _assign_root_name(value: ast.expr) -> str | None:
+        """Resolve the name rooted by one assignment value, if provable.
 
         Returns:
-            The resulting ``bool``.
+            The resulting ``str | None``.
 
         """
-        seen: set[str] = set()
-        current: str | None = name
-        while current is not None and current not in seen:
-            seen.add(current)
-            node = bindings.get(current)
-            if node is None:
-                return False
-            if isinstance(node, (ast.Import, ast.ImportFrom)):
-                return cls._import_roots(node) == frozenset({owner_root})
-            if not isinstance(node, ast.Assign):
-                return False
-            value = node.value
-            if isinstance(value, ast.Name):
-                current = value.id
-            elif isinstance(value, ast.Attribute):
-                root: ast.expr = value
-                while isinstance(root, ast.Attribute):
-                    root = root.value
-                current = root.id if isinstance(root, ast.Name) else None
-            else:
-                return False
-        return False
+        if isinstance(value, ast.Name):
+            return value.id
+        if isinstance(value, ast.Attribute):
+            root: ast.expr = value
+            while isinstance(root, ast.Attribute):
+                root = root.value
+            return root.id if isinstance(root, ast.Name) else None
+        return None
 
     @classmethod
     def _guarded_imports(
@@ -340,7 +330,7 @@ class FlextUtilitiesBeartypeModuleSource:
         alias: TypeAliasType,
         *,
         owner: ModuleType | type,
-    ) -> me.DeferredAlias | None:
+    ) -> FlextModelsEnforcement.DeferredAlias | None:
         """Prove deferral from the explicitly supplied declaring owner.
 
         Returns:
@@ -403,7 +393,7 @@ class FlextUtilitiesBeartypeModuleSource:
         )
         if not missing or not missing <= guarded:
             return None
-        return me.DeferredAlias(
+        return FlextModelsEnforcement.DeferredAlias(
             module=module.__name__,
             qualname=f"{owner.__qualname__}.{alias.__name__}"
             if isinstance(owner, type)

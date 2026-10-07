@@ -251,8 +251,8 @@ class TestsFlextCoreLazyExports:
             getattr_fn = module_globals["__getattr__"]
             assert callable(getattr_fn)
 
-            # Assert — resolves the attribute, and never required a probed
-            # child submodule
+            # Assert — resolves the attribute, and never required a
+            # probed child submodule
             assert getattr_fn("alias") == "resolved"
             assert "test_lazy_alias_pkg.alias" not in sys.modules
         finally:

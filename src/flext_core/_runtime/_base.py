@@ -10,21 +10,21 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import c
-from flext_core._typings.base import FlextTypingBase as tb
+from flext_core._typings.base import FlextTypingBase
 
 if TYPE_CHECKING:
-    from flext_core._protocols.loggings import FlextProtocolsLogging as pl
-    from flext_core._typings.services import FlextTypesServices as ts
+    from flext_core._protocols import FlextProtocolsLogging
+    from flext_core._typings.services import FlextTypesServices
 
 
 # mro-i6nq.8: Keep the runtime base free of unused provider passthroughs.
 class FlextRuntimeBase:
     """Foundational runtime helpers shared by higher runtime namespaces."""
 
-    Metadata: ClassVar[type[pl.Metadata] | None] = None
+    Metadata: ClassVar[type[FlextProtocolsLogging.Metadata] | None] = None
 
     @classmethod
-    def _require_metadata_model(cls) -> type[pl.Metadata]:
+    def _require_metadata_model(cls) -> type[FlextProtocolsLogging.Metadata]:
         """Return the bound metadata model class or raise a runtime contract error.
 
         Returns:
@@ -99,7 +99,7 @@ class FlextRuntimeBase:
         return "".join(ch for ch in text.lower() if ch.isalnum())
 
     @staticmethod
-    def to_scalar(item: ts.GuardInput | None) -> tb.Scalar:
+    def to_scalar(item: FlextTypesServices.GuardInput | None) -> FlextTypingBase.Scalar:
         """Coerce any runtime value to ``t.Scalar``.
 
         Returns:

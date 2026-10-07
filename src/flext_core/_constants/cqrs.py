@@ -20,7 +20,7 @@ class FlextConstantsCqrs:
     MAX_RETRIES: ClassVar[int] = 5
     DEFAULT_MAX_COMMAND_RETRIES: ClassVar[int] = 0
     # DEFAULT_PAGE_SIZE and MAX_PAGE_SIZE inherited from FlextConstantsBase
-    # via the FlextConstants MRO
+    # via FlextConstants MRO
     DEFAULT_MAX_VALIDATION_ERRORS: ClassVar[int] = 10
     DEFAULT_MINIMUM_THROUGHPUT: ClassVar[int] = 10
     DEFAULT_PARALLEL_EXECUTION: ClassVar[bool] = False

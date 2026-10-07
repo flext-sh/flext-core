@@ -18,15 +18,12 @@ from pydantic import (
     TypeAdapter as PydanticTypeAdapter,
     WrapSerializer,
     WrapValidator,
-    computed_field,
-    field_validator,
-    model_serializer,
     validate_call,
     with_config,
 )
 from pydantic_core import from_json, to_json, to_jsonable_python
 
-from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._models import FlextModelsPydantic as mp
 
 
 class FlextUtilitiesPydantic:
@@ -46,32 +43,24 @@ class FlextUtilitiesPydantic:
     PrivateAttr = staticmethod(mp.PrivateAttr)
     SkipValidation = SkipValidation
 
-    # Same unwrapped-class-attribute problem as Field/PrivateAttr above:
-    # pyright binds the bare decorator through the facade and infers the
-    # facade type for every decorated property (reportIndexIssue downstream).
-    # staticmethod also satisfies the Utilities layer method-shape census
-    # (public surface must be stateless static/class callables).
-    computed_field = staticmethod(computed_field)
-    # Validators have ONE typed owner: ``m.field_validator`` /
-    # ``m.model_validator`` (FlextModelsPydantic) carry pydantic's full
-    # overload surface for both checkers, and the ENFORCE map routes every
-    # consumer to those spellings. This utilities route keeps only the
-    # runtime re-export below because published family facades (flext-cli,
+    # Validators, computed fields, and serializers have ONE typed owner: the
+    # FlextModelsPydantic stacks (``m.*``) carry pydantic's full overload
+    # surface for both checkers, and the ENFORCE map routes every consumer to
+    # the canonical spellings. This utilities route keeps only the runtime
+    # re-export below because published family facades (flext-cli,
     # flext-tests) inherit FlextUtilities and import-time-resolve
-    # ``u.field_validator`` / ``u.model_validator``; duplicating the typed
-    # overload stack here is rejected by the duplication gate, so new code
-    # must spell validators through ``m.*``.
-    field_validator = staticmethod(field_validator)
-    # Serializers and model validators resolve through the models-layer typed
-    # owners (``mp.*``), whose stacked ``@overload @staticmethod`` declarations
-    # carry pydantic's full overload set for both checkers — a
-    # ``staticmethod`` re-export of the raw pydantic function collapses the
-    # overloads to the first one (pyright: "Argument missing for parameter
-    # ``mode``" on every consumer call site). Runtime keeps the same function
-    # object, so behavior is unchanged.
+    # ``u.field_validator`` / ``u.computed_field`` / ``u.field_serializer``;
+    # duplicating the typed overload stacks here is rejected by the
+    # duplication gate. A ``staticmethod(...)`` wrap of the raw pydantic
+    # function collapses the overloads to the first one (or to Unknown) —
+    # pyright: "Argument missing for parameter ``mode``" / untyped-decorator
+    # on every consumer call site — so every decorated surface aliases the
+    # models-layer typed owner; runtime keeps the same function object.
+    computed_field = mp.computed_field
+    field_validator = mp.field_validator
     field_serializer = mp.field_serializer
     model_validator = mp.model_validator
-    model_serializer = staticmethod(model_serializer)
+    model_serializer = mp.model_serializer
 
     AfterValidator = AfterValidator
     BeforeValidator = mp.BeforeValidator

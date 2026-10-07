@@ -9,11 +9,9 @@ from __future__ import annotations
 from types import ModuleType
 from typing import Annotated, TypeAliasType, get_args, get_origin
 
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._protocols.base import FlextProtocolsBase as p
-from flext_core._utilities._beartype.module_source import (
-    FlextUtilitiesBeartypeModuleSource,
-)
+from flext_core._models import FlextModelsEnforcement
+from flext_core._protocols import FlextProtocolsBase
+from flext_core._utilities import FlextUtilitiesBeartypeModuleSource
 
 
 class FlextUtilitiesBeartypeTypeAliases:
@@ -24,121 +22,90 @@ class FlextUtilitiesBeartypeTypeAliases:
         alias: TypeAliasType,
         *,
         owner: ModuleType | type | None = None,
-    ) -> me.ResolvedAlias | me.DeferredAlias:
+    ) -> FlextModelsEnforcement.ResolvedAlias | FlextModelsEnforcement.DeferredAlias:
         if owner is not None:
             deferred = FlextUtilitiesBeartypeModuleSource.deferred(alias, owner=owner)
             if deferred is not None:
                 return deferred
-        return me.ResolvedAlias(value=alias.__value__)
+        return FlextModelsEnforcement.ResolvedAlias(value=alias.__value__)
 
     @classmethod
-    def deferred(  # ruff: ignore[too-many-arguments] -- public resolver surface mirroring the deferred-alias probe options; the keyword flags are the stable API.
+    def deferred(
         cls,
-        hint: p.AttributeProbe,
+        hint: FlextProtocolsBase.AttributeProbe,
         *,
         recursive: bool = False,
-        unwrap_annotated: bool = False,
-        inspect_origin: bool = False,
         owner: ModuleType | type | None = None,
-        seen: set[int] | None = None,
-    ) -> tuple[me.DeferredAlias, ...]:
+    ) -> tuple[FlextModelsEnforcement.DeferredAlias, ...]:
         """Collect only aliases the requesting predicate actually evaluates.
 
         Returns:
             The resulting ``tuple[me.DeferredAlias, ...]``.
 
         """
-        visited = set() if seen is None else seen
-        if id(hint) in visited:
-            return ()
-        visited.add(id(hint))
-        if isinstance(hint, TypeAliasType):
-            return cls._deferred_alias_type(
-                hint,
-                recursive=recursive,
-                unwrap_annotated=unwrap_annotated,
-                inspect_origin=inspect_origin,
-                owner=owner,
-                visited=visited,
-            )
-        return cls._deferred_from_args(
-            hint,
-            recursive=recursive,
-            unwrap_annotated=unwrap_annotated,
-            inspect_origin=inspect_origin,
-            owner=owner,
-            visited=visited,
-        )
+        return cls._deferred_scan(hint, (recursive, False, False), owner)
 
     @classmethod
-    def _deferred_alias_type(  # ruff: ignore[too-many-arguments] -- private helper mirroring the public deferred() probe-option contract one-to-one so recursive call sites forward the same flags.
+    def deferred_annotated(
         cls,
-        hint: TypeAliasType,
+        hint: FlextProtocolsBase.AttributeProbe,
         *,
-        recursive: bool,
-        unwrap_annotated: bool,
-        inspect_origin: bool,
-        owner: ModuleType | type | None,
-        visited: set[int],
-    ) -> tuple[me.DeferredAlias, ...]:
-        """Collect the deferred aliases behind one resolvable type alias.
+        owner: ModuleType | type | None = None,
+    ) -> tuple[FlextModelsEnforcement.DeferredAlias, ...]:
+        """Collect deferred aliases unwrapping ``Annotated`` and its origins.
 
         Returns:
             The resulting ``tuple[me.DeferredAlias, ...]``.
 
         """
-        resolution = cls.resolve(hint, owner=owner)
-        if isinstance(resolution, me.DeferredAlias):
-            return (resolution,)
-        return cls.deferred(
-            resolution.value,
-            recursive=recursive,
-            unwrap_annotated=unwrap_annotated,
-            inspect_origin=inspect_origin,
-            owner=owner,
-            seen=visited,
-        )
+        return cls._deferred_scan(hint, (False, True, True), owner)
 
     @classmethod
-    def _deferred_from_args(  # ruff: ignore[too-many-arguments] -- private helper mirroring the public deferred() probe-option contract one-to-one so recursive call sites forward the same flags.
+    def _deferred_scan(
         cls,
-        hint: p.AttributeProbe,
-        *,
-        recursive: bool,
-        unwrap_annotated: bool,
-        inspect_origin: bool,
+        hint: FlextProtocolsBase.AttributeProbe,
+        scan: tuple[bool, bool, bool],
         owner: ModuleType | type | None,
-        visited: set[int],
-    ) -> tuple[me.DeferredAlias, ...]:
-        """Collect the deferred aliases behind one generic/annotated hint.
+    ) -> tuple[FlextModelsEnforcement.DeferredAlias, ...]:
+        """Walk the hint graph iteratively collecting deferred aliases.
+
+        ``scan`` carries ``(recursive, unwrap_annotated, inspect_origin)``: the
+        flag set the recursive formulation passed down, so ordering and
+        semantics are preserved without growing the signature.
 
         Returns:
             The resulting ``tuple[me.DeferredAlias, ...]``.
 
         """
-        origin = get_origin(hint)
-        if hint is type or origin is type:
-            return ()
-        args = get_args(hint)
-        if unwrap_annotated and origin is Annotated and args:
-            return cls.deferred(
-                args[0],
-                unwrap_annotated=True,
-                inspect_origin=inspect_origin,
-                owner=owner,
-                seen=visited,
-            )
-        if inspect_origin and isinstance(origin, TypeAliasType):
-            return cls.deferred(origin, owner=owner, seen=visited)
-        if not recursive:
-            return ()
-        return tuple(
-            deferred
-            for child in args
-            for deferred in cls.deferred(
-                child,
-                recursive=True,
-                owner=owner,
-                seen=visited,
-            )
-        )
+        recursive, unwrap_annotated, inspect_origin = scan
+        visited: set[int] = set()
+        pending: list[tuple[FlextProtocolsBase.AttributeProbe, bool, bool, bool]] = [
+            (hint, recursive, unwrap_annotated, inspect_origin),
+        ]
+        deferred_aliases: list[FlextModelsEnforcement.DeferredAlias] = []
+        while pending:
+            node, recurse, unwrap, inspect_o = pending.pop(0)
+            if id(node) in visited:
+                continue
+            visited.add(id(node))
+            if isinstance(node, TypeAliasType):
+                resolution = cls.resolve(node, owner=owner)
+                if isinstance(resolution, FlextModelsEnforcement.DeferredAlias):
+                    deferred_aliases.append(resolution)
+                    continue
+                pending.insert(0, (resolution.value, recurse, unwrap, inspect_o))
+                continue
+            origin = get_origin(node)
+            if node is type or origin is type:
+                continue
+            args = get_args(node)
+            if unwrap and origin is Annotated and args:
+                pending.insert(0, (args[0], False, True, inspect_o))
+                continue
+            if inspect_o and isinstance(origin, TypeAliasType):
+                pending.insert(0, (origin, False, False, False))
+                continue
+            if not recurse:
+                continue
+            pending[:0] = [(child, True, False, False) for child in args]
+        return tuple(deferred_aliases)

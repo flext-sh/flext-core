@@ -38,14 +38,16 @@ from typing import Annotated, ClassVar, ForwardRef, cast, get_args, get_origin
 
 import typing_extensions as _typing_extensions
 
-from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.base import FlextTypingBase
 
 
 class FlextUtilitiesBeartypeTypingExtPatch:
     """Idempotent beartype patches for ``typing_extensions`` PEP 695 aliases."""
 
-    type _TypeHintSpecifier = t.TypeHintSpecifier | _typing_extensions.TypeAliasType
-    type _HintPep695AliasValue = type | t.VariadicTuple[type]
+    type _TypeHintSpecifier = (
+        FlextTypingBase.TypeHintSpecifier | _typing_extensions.TypeAliasType
+    )
+    type _HintPep695AliasValue = type | FlextTypingBase.VariadicTuple[type]
     type _Pep695Getter = Callable[[_TypeHintSpecifier, str], _TypeHintSpecifier]
 
     _applied: ClassVar[bool] = False
@@ -148,9 +150,8 @@ class FlextUtilitiesBeartypeTypingExtPatch:
             if mod.__dict__.get("get_hint_pep695_unsubbed_alias") is original:
                 mod.__dict__["get_hint_pep695_unsubbed_alias"] = tagged
 
-    @classmethod
+    @staticmethod
     def _tag_forward_refs(
-        cls,
         hint: _TypeHintSpecifier,
         module_name: str,
     ) -> _TypeHintSpecifier:
@@ -163,17 +164,34 @@ class FlextUtilitiesBeartypeTypingExtPatch:
         if isinstance(hint, str):
             return ForwardRef(hint, module=module_name)
         if isinstance(hint, ForwardRef):
-            return cls._rebind_forward_ref(hint, module_name)
+            if hint.__forward_module__:
+                return hint
+            return ForwardRef(hint.__forward_arg__, module=module_name)
+        return FlextUtilitiesBeartypeTypingExtPatch._retag_generic_hint(
+            hint,
+            module_name,
+        )
+
+    @staticmethod
+    def _retag_generic_hint(
+        hint: _TypeHintSpecifier,
+        module_name: str,
+    ) -> _TypeHintSpecifier:
+        """Rebind forward refs inside a generic/annotated hint.
+
+        Returns:
+            The resulting ``_TypeHintSpecifier``.
+
+        """
+        tag = FlextUtilitiesBeartypeTypingExtPatch._tag_forward_refs
         origin = get_origin(hint)
         args = get_args(hint)
         if origin is None or not args:
             return hint
         if origin is Annotated:
-            new_args = (cls._tag_forward_refs(args[0], module_name), *args[1:])
+            new_args = (tag(args[0], module_name), *args[1:])
         else:
-            new_args = tuple(
-                cls._tag_forward_refs(child, module_name) for child in args
-            )
+            new_args = tuple(tag(child, module_name) for child in args)
         if new_args == args:
             return hint
         if len(new_args) == 1:
@@ -185,21 +203,6 @@ class FlextUtilitiesBeartypeTypingExtPatch:
             "FlextUtilitiesBeartypeTypingExtPatch._TypeHintSpecifier",
             origin[new_args],
         )
-
-    @staticmethod
-    def _rebind_forward_ref(
-        hint: ForwardRef,
-        module_name: str,
-    ) -> _TypeHintSpecifier:
-        """Rebind one ForwardRef whose module binding is missing.
-
-        Returns:
-            The resulting ``_TypeHintSpecifier``.
-
-        """
-        if hint.__forward_module__:
-            return hint
-        return ForwardRef(hint.__forward_arg__, module=module_name)
 
 
 # Apply immediately so any subsequent beartype.claw usage sees both fixes.

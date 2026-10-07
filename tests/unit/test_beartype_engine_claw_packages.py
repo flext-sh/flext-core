@@ -141,8 +141,7 @@ class TestsFlextCoreBeartypeEngineClawPackages(
             {
                 "aliases": """
                     type JsonLike = (
-                        dict[str, JsonLike]
-                        | list[JsonLike]
+                        dict[str, JsonLike] | list[JsonLike]
                         | str | int | float | bool | None
                     )
 

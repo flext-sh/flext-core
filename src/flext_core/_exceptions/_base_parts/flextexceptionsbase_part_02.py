@@ -21,7 +21,6 @@ from flext_core._runtime._metadata_validation import (
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from flext_core._protocols.result import FlextProtocolsResult as pr
     from flext_core._typings.base import FlextTypingBase as tb
     from flext_core._typings.services import FlextTypesServices as ts
 
@@ -77,19 +76,12 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
         """
         return self.error_domain == domain
 
-    def _initialize_base_state(  # ruff: ignore[too-many-arguments] -- the keyword contract mirrors the public BaseError constructor; each argument is a distinct documented exception field.
+    def _initialize_base_state(
         self,
         message: str,
         *,
         error_code: str,
-        context: tb.MappingKV[str, ts.JsonPayload | None] | pr.HasModelDump | None,
-        metadata: pr.HasModelDump | tb.JsonValue | None,
-        correlation_id: str | None,
-        auto_correlation: bool,
-        auto_log: bool,
-        merged_kwargs: tb.MappingKV[str, ts.JsonPayload | None]
-        | pr.HasModelDump
-        | None,
+        options: m.ExceptionInitOptions,
         extra_kwargs: tb.MappingKV[str, ts.JsonPayload | None],
     ) -> None:
         """Initialize the shared base error state without subclass metaprogramming."""
@@ -97,7 +89,7 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
         self.message = message
         self.error_code = error_code
         final_kwargs_dict: tb.JsonDict = {}
-        for source_value in (merged_kwargs, context, extra_kwargs):
+        for source_value in (options.merged_kwargs, options.context, extra_kwargs):
             if source_value is None:
                 continue
             try:
@@ -114,12 +106,15 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
         final_kwargs = m.ConfigMap.model_validate(final_kwargs_dict)
         self.correlation_id = (
             f"exc_{uuid.uuid4().hex[:8]}"
-            if auto_correlation and (not correlation_id)
-            else correlation_id
+            if options.auto_correlation and not options.correlation_id
+            else options.correlation_id
         )
-        self.metadata = type(self).normalize_metadata(metadata, final_kwargs.root)
+        self.metadata = type(self).normalize_metadata(
+            options.metadata,
+            final_kwargs.root,
+        )
         self.timestamp = time.time()
-        self.auto_log = auto_log
+        self.auto_log = options.auto_log
 
     @override
     def __str__(self) -> str:

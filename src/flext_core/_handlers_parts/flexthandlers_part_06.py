@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast, override
 
-from flext_core import c, p, r, t
+from flext_core import c, m, p, r, t
 from flext_core._handlers_parts.flexthandlers_part_05 import (
     FlextHandlers as FlextHandlersPart05,
 )
@@ -90,8 +90,6 @@ class FlextHandlers[MessageT_contra, ResultT](
         resolved_name: str = handler_name or str(
             getattr(handler_callable, "__name__", "unknown_handler"),
         )
-        from flext_core import m  # ruff: ignore[import-outside-top-level] -- call-time binding breaks the package lazy-import cycle: a top-level import would recurse through the package __getattr__ while the aliased module is still loading.
-
         settings = m.Handler(
             handler_id=f"callable_{id(handler_callable)}",
             handler_name=resolved_name,
@@ -101,7 +99,9 @@ class FlextHandlers[MessageT_contra, ResultT](
         return CallableHandler(handler_fn=handler_callable, settings=settings)
 
     def __call__(self, message: MessageT_contra) -> p.Result[ResultT]:
-        """Callable interface — auto-scopes correlation ID per _auto_context_scope.
+        """Callable interface that auto-scopes the correlation ID.
+
+        Scoping is active when ``_auto_context_scope=True``.
 
         Returns:
             The resulting ``p.Result[ResultT]``.

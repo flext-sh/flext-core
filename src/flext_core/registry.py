@@ -289,7 +289,7 @@ class FlextRegistry(s[bool]):
 
         Returns:
             r[m.RegistrySummary]: Success result with summary or failure
-            result with errors.
+                result with errors.
 
         """
         if summary.errors:

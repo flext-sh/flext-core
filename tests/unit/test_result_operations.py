@@ -73,7 +73,10 @@ class TestsFlextResultOperations:
         default: str,
         expected: str,
     ) -> None:
-        """unwrap_or and ``|`` both yield value on success, default on failure."""
+        """``unwrap_or`` and the ``|`` operator yield value on success.
+
+        Both yield the default on failure.
+        """
         tm.that(result.unwrap_or(default), eq=expected)
         tm.that((result | default), eq=expected)
 

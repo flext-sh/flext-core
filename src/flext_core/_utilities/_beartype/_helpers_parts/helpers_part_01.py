@@ -20,14 +20,14 @@ from typing import (
     is_protocol,
 )
 
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._utilities._beartype.type_aliases import (
+from flext_core._models import FlextModelsEnforcement
+from flext_core._utilities import (
     FlextUtilitiesBeartypeTypeAliases,
+    FlextUtilitiesFamilySurface,
 )
-from flext_core._utilities.family_surface import FlextUtilitiesFamilySurface
 
 if TYPE_CHECKING:
-    from flext_core._typings.base import FlextTypingBase as t
+    from flext_core._typings.base import FlextTypingBase
 
 
 class FlextUtilitiesBeartypeHelpers:
@@ -91,12 +91,12 @@ class FlextUtilitiesBeartypeHelpers:
             Local facade module names derived from generated lazy exports.
 
         """
-        suffixes = FlextUtilitiesBeartypeHelpers.lazy_alias_suffixes(
-            package_name,
-        )
+        h = FlextUtilitiesBeartypeHelpers
         return frozenset(
             module_path.rsplit(".", 1)[-1]
-            for _, module_path, suffix in suffixes
+            for _, module_path, suffix in h.lazy_alias_suffixes(
+                package_name,
+            )
             if module_path.split(".", 1)[0] == package_name
             and suffix in {"Constants", "Models", "Protocols", "Types", "Utilities"}
         )
@@ -116,12 +116,12 @@ class FlextUtilitiesBeartypeHelpers:
         package_name = target.__module__.split(".", 1)[0]
         if package_name not in FlextUtilitiesFamilySurface.project_alias_owners():
             return False
-        suffixes = FlextUtilitiesBeartypeHelpers.lazy_alias_suffixes(
-            package_name,
-        )
+        h = FlextUtilitiesBeartypeHelpers
         return any(
             vars(sys.modules[module_path]).get(alias) is target
-            for alias, module_path, _ in suffixes
+            for alias, module_path, _ in h.lazy_alias_suffixes(
+                package_name,
+            )
             if module_path in sys.modules
         )
 
@@ -130,7 +130,7 @@ class FlextUtilitiesBeartypeHelpers:
         alias: object,
         *,
         owner: ModuleType | type | None = None,
-    ) -> t.TypeHintSpecifier | None:
+    ) -> FlextTypingBase.TypeHintSpecifier | None:
         """Return a value, or None for non-aliases and proven static-only imports.
 
         An explicit declaring ``owner`` may prove that unavailable
@@ -144,16 +144,16 @@ class FlextUtilitiesBeartypeHelpers:
         if not isinstance(alias, TypeAliasType):
             return None
         resolution = FlextUtilitiesBeartypeTypeAliases.resolve(alias, owner=owner)
-        if isinstance(resolution, me.DeferredAlias):
+        if isinstance(resolution, FlextModelsEnforcement.DeferredAlias):
             return None
-        return cast("t.TypeHintSpecifier", resolution.value)
+        return cast("FlextTypingBase.TypeHintSpecifier", resolution.value)
 
     @staticmethod
     def unwrap_type_alias(
-        hint: t.TypeHintSpecifier | None,
+        hint: FlextTypingBase.TypeHintSpecifier | None,
         *,
         owner: ModuleType | type | None = None,
-    ) -> t.TypeHintSpecifier | None:
+    ) -> FlextTypingBase.TypeHintSpecifier | None:
         current = hint
         seen: set[int] = set()
         while isinstance(current, TypeAliasType):
@@ -172,7 +172,7 @@ class FlextUtilitiesBeartypeHelpers:
 
     @staticmethod
     def contains_any_recursive(
-        hint: t.TypeHintSpecifier | None,
+        hint: FlextTypingBase.TypeHintSpecifier | None,
         *,
         seen: set[int],
         owner: ModuleType | type | None = None,
@@ -196,7 +196,7 @@ class FlextUtilitiesBeartypeHelpers:
 
     @staticmethod
     def has_forbidden_collection_origin(
-        hint: t.TypeHintSpecifier | None,
+        hint: FlextTypingBase.TypeHintSpecifier | None,
         forbidden: frozenset[str],
     ) -> tuple[bool, str]:
         h = FlextUtilitiesBeartypeHelpers
