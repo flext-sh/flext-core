@@ -23,7 +23,9 @@ class FlextConstantsEnforcementFixActions:
         "PrivateAttr": "u.PrivateAttr",
         "TypeAdapter": "m.TypeAdapter",
         "computed_field": "u.computed_field",
+        "field_serializer": "u.field_serializer",
         "field_validator": "m.field_validator",
+        "model_serializer": "u.model_serializer",
         "model_validator": "m.model_validator",
     }
 

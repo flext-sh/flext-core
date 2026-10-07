@@ -86,7 +86,8 @@ class FlextDecorators(FlextDecoratorsCombined):
                         raise et.FlextTimeoutError(
                             msg,
                             options=m.ExceptionInitOptions(
-                                error_code=error_code or c.ErrorCode.TIMEOUT_ERROR.value,
+                                error_code=error_code
+                                or c.ErrorCode.TIMEOUT_ERROR.value,
                             ),
                             timeout_seconds=max_duration,
                             operation=func.__name__,
@@ -104,7 +105,8 @@ class FlextDecorators(FlextDecoratorsCombined):
                         raise et.FlextTimeoutError(
                             msg,
                             options=m.ExceptionInitOptions(
-                                error_code=error_code or c.ErrorCode.TIMEOUT_ERROR.value,
+                                error_code=error_code
+                                or c.ErrorCode.TIMEOUT_ERROR.value,
                             ),
                             timeout_seconds=max_duration,
                             operation=func.__name__,

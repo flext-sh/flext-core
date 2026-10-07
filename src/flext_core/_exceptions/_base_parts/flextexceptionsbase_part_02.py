@@ -21,7 +21,6 @@ from flext_core._runtime._metadata_validation import (
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from flext_core._protocols.result import FlextProtocolsResult as pr
     from flext_core._typings.base import FlextTypingBase as tb
     from flext_core._typings.services import FlextTypesServices as ts
 
@@ -110,7 +109,10 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
             if options.auto_correlation and not options.correlation_id
             else options.correlation_id
         )
-        self.metadata = type(self).normalize_metadata(options.metadata, final_kwargs.root)
+        self.metadata = type(self).normalize_metadata(
+            options.metadata,
+            final_kwargs.root,
+        )
         self.timestamp = time.time()
         self.auto_log = options.auto_log
 

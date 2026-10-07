@@ -165,9 +165,7 @@ class FlextExceptionsBase:
         def _resolve_declared_params(
             self,
             declaredparams_cls: ts.ModelClass[m.BaseModel],
-            context: tb.MappingKV[str, ts.JsonPayload | None]
-            | pr.HasModelDump
-            | None,
+            context: tb.MappingKV[str, ts.JsonPayload | None] | pr.HasModelDump | None,
             remaining_extra: tb.MutableJsonMapping,
             params: m.BaseModel | None,
         ) -> tuple[m.BaseModel, tb.MutableJsonMapping]:
