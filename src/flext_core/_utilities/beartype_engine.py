@@ -99,8 +99,9 @@ class FlextUtilitiesBeartypeEngine(
     def contains_any(hint: t.TypeHintSpecifier | None) -> bool:
         return FlextUtilitiesBeartypeHelpers.contains_any_recursive(hint, seen=set())
 
-    @staticmethod
+    @classmethod
     def deferred_aliases(
+        cls,
         params: mp.BaseModel,
         owner: type,
         *args: p.AttributeProbe,
@@ -112,13 +113,13 @@ class FlextUtilitiesBeartypeEngine(
 
         """
         if isinstance(params, me.AttrShapeParams):
-            return self._attr_shape_aliases(params, owner, args)
+            return cls._attr_shape_aliases(params, owner, args)
         if not isinstance(params, me.FieldShapeParams) or not args:
             return ()
         info = args[-1]
         if not isinstance(info, FieldInfo) or params.require_description:
             return ()
-        return self._field_shape_aliases(params, owner, info)
+        return cls._field_shape_aliases(params, owner, info)
 
     @staticmethod
     def _attr_shape_aliases(

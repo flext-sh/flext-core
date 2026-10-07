@@ -128,25 +128,31 @@ class FlextUtilitiesBeartypeFieldVisitor:
             )
         return None if has_annotated_description else {}
 
-    @staticmethod
+    @classmethod
     def _field_violation(
+        cls,
         params: me.FieldShapeParams,
         info: FieldInfo,
         *,
         declared_annotation: object | None = None,
     ) -> t.StrMapping | None:
-        visitor = FlextUtilitiesBeartypeFieldVisitor
-        violation = visitor._any_violation(params, info)
+        """Return the first matching field-shape violation, if any.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+
+        """
+        violation = cls._any_violation(params, info)
         if violation is None:
-            violation = visitor._collection_violation(params, info)
+            violation = cls._collection_violation(params, info)
         if violation is None:
-            violation = visitor._mutable_default_violation(params, info)
+            violation = cls._mutable_default_violation(params, info)
         if violation is None:
-            violation = visitor._default_factory_violation(params, info)
+            violation = cls._default_factory_violation(params, info)
         if violation is None:
-            violation = visitor._str_none_empty_violation(params, info)
+            violation = cls._str_none_empty_violation(params, info)
         if violation is None:
-            violation = visitor._inline_union_violation(params, declared_annotation)
+            violation = cls._inline_union_violation(params, declared_annotation)
         return violation
 
     @staticmethod
@@ -259,8 +265,9 @@ class FlextUtilitiesBeartypeFieldVisitor:
             return {}
         return None
 
-    @staticmethod
+    @classmethod
     def _inline_union_violation(
+        cls,
         params: me.FieldShapeParams,
         declared_annotation: object | None,
     ) -> t.StrMapping | None:
@@ -272,7 +279,7 @@ class FlextUtilitiesBeartypeFieldVisitor:
         """
         if not params.forbid_inline_union:
             return None
-        inline_union_arms = FlextUtilitiesBeartypeFieldVisitor._declared_union_members(
+        inline_union_arms = cls._declared_union_members(
             declared_annotation,
         )
         if inline_union_arms > params.max_union_arms:
