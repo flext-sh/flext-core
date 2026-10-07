@@ -57,9 +57,8 @@ class FlextProtocolsResult:
         @property
         def success(self) -> bool: ...
 
-    @runtime_checkable  # ruff: ignore[too-many-public-methods, unused-noqa] -- the public method set IS the contract: each method is a documented protocol operation, and removing or merging any would break consumers; unused-noqa is a false positive because PLR0904 anchors at the decorator line.
-
-    class Result[T](Protocol): the public method set IS the contract: each method is a documented facade/protocol operation, and removing or merging any would break consumers.
+    @runtime_checkable  # ruff: ignore[too-many-public-methods] -- the public method set IS the contract: each method is a documented protocol operation, and removing or merging any would break consumers.
+    class Result[T](Protocol):
         """Structural railway result contract; invariant payload."""
 
         @property
