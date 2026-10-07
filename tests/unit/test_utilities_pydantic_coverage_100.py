@@ -93,6 +93,24 @@ class TestsFlextUtilitiesPydantic:
         assert payload_dump["label"] == "Ada Lovelace:3"
 
     @staticmethod
+    def test_computed_field_kwargs_overload_renders_alias() -> None:
+        """Test the kwargs-only computed_field overload renders alias and value."""
+        payload = m.Tests.KwargsComputedPayload.model_validate({"raw": "ada"})
+
+        payload_dump = payload.model_dump(mode="json", by_alias=True)
+
+        assert payload_dump["upperLabel"] == "ADA"
+        assert payload.model_dump(mode="json")["label"] == "ADA"
+
+    @staticmethod
+    def test_plain_model_serializer_replaces_the_dump_shape() -> None:
+        """Test the bare plain model serializer replaces the dump shape."""
+        payload = m.Tests.PlainSerializedPayload.model_validate({"name": "ada"})
+
+        assert payload.model_dump() == "ada"
+        assert payload.model_dump(mode="json") == "ada"
+
+    @staticmethod
     def test_public_facade_supports_json_roundtrip() -> None:
         """Test public facade supports json roundtrip."""
         payload = m.Tests.PublicPayload.model_validate({
