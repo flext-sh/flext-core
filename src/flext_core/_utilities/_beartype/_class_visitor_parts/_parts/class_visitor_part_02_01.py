@@ -70,7 +70,7 @@ def _requires_alias_first(  # ruff: ignore[too-many-arguments] -- keyword-only p
     return not allows_peer_first
 
 
-def alias_first_violation(
+def alias_first_violation(  # ruff: ignore[too-many-locals] -- the MRO-ordering rule evaluates its named classification facts (package, facade, alias rows, base shapes, allowances) as local bindings by design; the shared predicates are already extracted, and carrier objects would obscure the rule constants.
     target: type,
     params: me.MroShapeParams,
 ) -> t.StrMapping | None:

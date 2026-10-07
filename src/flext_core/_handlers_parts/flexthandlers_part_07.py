@@ -92,7 +92,42 @@ class FlextHandlers[MessageT_contra, ResultT](
             return sorted(handlers, key=_priority, reverse=True)
 
         @staticmethod
+        def _scanned_handler_entry(
+            module: ModuleType,
+            name: str,
+        ) -> tuple[str, Callable[..., t.Scalar | None], p.DecoratorConfig] | None:
+            """Return one public attribute's handler entry, if it declares one.
+
+            Returns:
+                The resulting ``tuple[str, Callable[..., t.Scalar | None],
+                p.DecoratorConfig] | None``.
+
+            """
+            func = getattr(module, name, None)
+            if func is None or not callable(func) or not hasattr(func, c.HANDLER_ATTR):
+                return None
+            settings: p.DecoratorConfig = getattr(func, c.HANDLER_ATTR)
+
+            def narrowed_func(
+                message: t.JsonPayload,
+                function_name: str = name,
+            ) -> t.Scalar | None:
+                resolved_callable = getattr(module, function_name, None)
+                if not callable(resolved_callable):
+                    return None
+                result = resolved_callable(message)
+                if result is None:
+                    return None
+                if isinstance(result, c.SCALAR_TYPES):
+                    return result
+                return str(result)
+
+            setattr(narrowed_func, c.HANDLER_ATTR, settings)
+            return (name, narrowed_func, settings)
+
+        @classmethod
         def scan_module(
+            cls,
             module: ModuleType,
         ) -> t.SequenceOf[
             tuple[str, Callable[..., t.Scalar | None], p.DecoratorConfig]
@@ -121,31 +156,12 @@ class FlextHandlers[MessageT_contra, ResultT](
             for name in dir(module):
                 if name.startswith("_"):
                     continue
-                func = getattr(module, name, None)
-                if func is None:
-                    continue
-                if not callable(func):
-                    continue
-                if not hasattr(func, c.HANDLER_ATTR):
-                    continue
-                settings: p.DecoratorConfig = getattr(func, c.HANDLER_ATTR)
-
-                def narrowed_func(
-                    message: t.JsonPayload,
-                    function_name: str = name,
-                ) -> t.Scalar | None:
-                    resolved_callable = getattr(module, function_name, None)
-                    if not callable(resolved_callable):
-                        return None
-                    result = resolved_callable(message)
-                    if result is None:
-                        return None
-                    if isinstance(result, c.SCALAR_TYPES):
-                        return result
-                    return str(result)
-
-                setattr(narrowed_func, c.HANDLER_ATTR, settings)
-                handlers.append((name, narrowed_func, settings))
+                entry = cls._scanned_handler_entry(
+                    module,
+                    name,
+                )
+                if entry is not None:
+                    handlers.append(entry)
 
             def _priority_then_name(
                 entry: tuple[str, Callable[..., t.Scalar | None], p.DecoratorConfig],

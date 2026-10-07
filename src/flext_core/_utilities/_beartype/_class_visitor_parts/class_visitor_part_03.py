@@ -68,9 +68,6 @@ class FlextUtilitiesBeartypeClassVisitor(FlextUtilitiesBeartypeClassVisitorPart0
             and bool(allowed_prefixes)
             and any(target_name.startswith(prefix) for prefix in allowed_prefixes)
         )
-        has_expected_named_prefix = bool(
-            expected_prefix_text,
-        ) and target_name.startswith(expected_prefix_text)
         is_prefixed_target = all((
             has_expected_prefix,
             is_top_level,
@@ -79,7 +76,10 @@ class FlextUtilitiesBeartypeClassVisitor(FlextUtilitiesBeartypeClassVisitorPart0
         prefix_violation = (
             is_prefixed_target
             and not allowed_prefix_match
-            and not has_expected_named_prefix
+            and not (
+                bool(expected_prefix_text)
+                and target_name.startswith(expected_prefix_text)
+            )
         )
         return (
             {"name": target_name}
