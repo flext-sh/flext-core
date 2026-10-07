@@ -26,7 +26,7 @@ from flext_core._typings.pydantic import FlextTypesPydantic as tp
 from flext_core._typings.services import FlextTypesServices as ts
 
 
-class FlextTypesTypeAdapters:
+class FlextTypesTypeAdapters:  # ruff: ignore[too-many-public-methods] -- the public method set IS the contract: each method is a documented facade/protocol operation, and removing or merging any would break consumers.
     """Cached tp.TypeAdapter factories shared through the ``t`` facade."""
 
     @classmethod

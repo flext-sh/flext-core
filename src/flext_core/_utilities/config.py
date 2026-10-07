@@ -101,9 +101,8 @@ class FlextUtilitiesConfig:
             public door. It is a ``yaml.SafeLoader`` subclass — the safe
             constructor set, no object-deserialization primitives — so the
             arbitrary-constructor unsafe loader path stays out of this module.
-
-            Raises:
-                yaml.YAMLError: On malformed input or a duplicate mapping key.
+            Malformed input or a duplicate mapping key raises
+            ``yaml.YAMLError`` through the shared strict loader.
 
             Returns:
                 The resulting ``t.JsonValue``.

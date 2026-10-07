@@ -58,7 +58,7 @@ class FlextProtocolsResult:
         def success(self) -> bool: ...
 
     @runtime_checkable
-    class Result[T](Protocol):
+    class Result[T](Protocol):  # ruff: ignore[too-many-public-methods] -- the public method set IS the contract: each method is a documented facade/protocol operation, and removing or merging any would break consumers.
         """Structural railway result contract; invariant payload."""
 
         @property

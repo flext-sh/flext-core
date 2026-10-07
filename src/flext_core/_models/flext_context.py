@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator
 
 
-class FlextContext(m.ManagedModel):
+class FlextContext(m.ManagedModel):  # ruff: ignore[too-many-public-methods] -- the public method set IS the contract: each method is a documented facade/protocol operation, and removing or merging any would break consumers.
     """Scoped key-value context + correlation/service metadata facade.
 
     Scope store: `ctx.set(key, value)` / `ctx.get(key)` — instance-level.

@@ -112,7 +112,12 @@ class FlextExceptionsBase:
             | None,
             extra_kwargs: tb.MappingKV[str, ts.JsonPayload | None],
         ) -> MutableMapping[str, ts.JsonPayload | None]:
-            """Merge the merged-kwargs and extra-kwargs maps into one mapping."""
+            """Merge the merged-kwargs and extra-kwargs maps into one mapping.
+
+            Returns:
+                The resulting ``MutableMapping[str, ts.JsonPayload | None]``.
+
+            """
             combined_extra: MutableMapping[str, ts.JsonPayload | None] = {}
             try:
                 merged_kwargs_map = FlextRuntime.normalize_metadata_input_mapping(
@@ -139,7 +144,13 @@ class FlextExceptionsBase:
             context: tb.MappingKV[str, ts.JsonPayload | None] | pr.HasModelDump | None,
             params: m.BaseModel | None,
         ) -> tuple[m.BaseModel, tb.MutableJsonMapping, str | None, tb.JsonValue | None]:
-            """Resolve the declared params model plus the remaining extras."""
+            """Resolve the declared params model plus the remaining extras.
+
+            Returns:
+                The resulting ``tuple[m.BaseModel, tb.MutableJsonMapping, str | None,
+                tb.JsonValue | None]``.
+
+            """
             declared_param_keys = frozenset(declared_cls.model_fields)
             remaining_extra: tb.MutableJsonMapping = {}
             if combined_extra:
@@ -193,7 +204,12 @@ class FlextExceptionsBase:
             remaining_extra: tb.MutableJsonMapping,
             context: tb.MappingKV[str, ts.JsonPayload | None] | pr.HasModelDump | None,
         ) -> tb.JsonDict:
-            """Build the context map enriched from the resolved params fields."""
+            """Build the context map enriched from the resolved params fields.
+
+            Returns:
+                The resulting ``tb.JsonDict``.
+
+            """
             ctx = FlextExceptionsHelpers.build_context_map(
                 context,
                 remaining_extra,

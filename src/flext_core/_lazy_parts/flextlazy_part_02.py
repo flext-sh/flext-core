@@ -98,7 +98,11 @@ class FlextLazyMember:
             namespace = vars(klass)
             if self._member in namespace:
                 raw: ModuleGlobalValue = namespace[self._member]
-                type.__setattr__(host, self._member, raw)
+                type.__setattr__(  # ruff: ignore[unnecessary-dunder-call] -- deliberate type-level assignment: bootstrap must install the member on the host module bypassing any metaclass attribute override.
+                    host,
+                    self._member,
+                    raw,
+                )
                 return raw
         msg = f"{target!r} declares no member {self._member!r}"
         raise ImportError(msg, name=self._module)
@@ -263,9 +267,6 @@ class FlextLazy(FlextLazyPart01):
         ``vars(module)``. Publishing here makes every install shape —
         module-level literal or inline call — satisfy that contract from
         the single owner.
-
-        Raises:
-            RuntimeError: If module.
 
         """
         pre_signature: tuple[int, int, int, bool] = (

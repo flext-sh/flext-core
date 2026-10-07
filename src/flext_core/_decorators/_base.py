@@ -10,7 +10,7 @@ import warnings
 from functools import wraps
 from typing import TYPE_CHECKING, ClassVar, TypeIs
 
-import flext_core._models.flext_context
+from flext_core._models.flext_context import FlextContext
 from flext_core import FlextContainer, c, m
 from flext_core._protocols.base import FlextProtocolsBase as pb
 from flext_core._protocols.container import FlextProtocolsContainer as pc
@@ -36,7 +36,7 @@ class FlextDecoratorsBase:
     )
     _container_type: ClassVar[pc.ContainerType] = FlextContainer
     _context_type: ClassVar[pcx.ContextType] = (
-        flext_core._models.flext_context.FlextContext
+        FlextContext
     )
 
     @classmethod

@@ -146,9 +146,6 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart02):
         Raises:
             TypeError: If message does not provide a valid route.
 
-        Returns:
-            The resulting ``str``.
-
         """
         if isinstance(msg, str):
             return msg
