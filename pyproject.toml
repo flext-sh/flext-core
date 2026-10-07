@@ -62,13 +62,13 @@ Homepage = "https://github.com/flext-sh/flext-core"
 Repository = "https://github.com/flext-sh/flext-core"
 
 [dependency-groups]
-codegen = ["flext-infra"]
+codegen = ["flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev"]
 dev = [
   "actionlint-py>=1.7.12.24",
   "bandit>=1.9.4",
   "deptry",
   "editables>=0.6",
-  "flext-tests",
+  "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev",
   "hypothesis",
   "mkdocs",
   "mkdocs-autorefs",
@@ -746,11 +746,6 @@ dependencies = ["flext-core"]
 [tool.uv.exclude-dependencies.package]
 name = "flext-cli"
 
-[tool.uv.sources.flext-infra]
-workspace = true
-
-[tool.uv.sources.flext-tests]
-workspace = true
 [tool.bandit]
 severity = "MEDIUM"
 skips = ["B101"]
