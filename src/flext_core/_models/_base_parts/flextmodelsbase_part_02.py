@@ -74,8 +74,7 @@ class FlextModelsBase(FlextModelsBasePart01):
             mp.Field(
                 default=cpm.METADATA_SCHEMA_VERSION_DEFAULT,
                 description=(
-                    "Semantic version string representing the metadata schema "
-                    "revision."
+                    "Semantic version string representing the metadata schema revision."
                 ),
                 title="Metadata Version",
                 examples=["1.0.0", "1.2.3"],

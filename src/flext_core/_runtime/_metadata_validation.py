@@ -82,13 +82,9 @@ class FlextRuntimeMetadataValidation(FlextRuntimeMetadata):
                 raise ValueError(
                     c.ERR_RUNTIME_KEYS_WITH_UNDERSCORE_RESERVED.format(key=key),
                 )
-        validated_metadata: tb.JsonMapping = (
-            tta.metadata_map_adapter().validate_python({
-                key: item
-                for key, item in normalized_mapping.items()
-                if item is not None
-            })
-        )
+        validated_metadata: tb.JsonMapping = tta.metadata_map_adapter().validate_python({
+            key: item for key, item in normalized_mapping.items() if item is not None
+        })
         return validated_metadata
 
     @staticmethod

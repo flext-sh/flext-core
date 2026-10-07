@@ -60,10 +60,8 @@ class TestsFlextUtilitiesRailwayServicesMixin:
 
     @staticmethod
     def value_lt_100(data: t.JsonMapping) -> bool:
-        target: TestsFlextFlextModelsMixins.TestsFlextModelsMixins.TargetModel = (
-            TestsFlextFlextModelsMixins.TestsFlextModelsMixins.TargetModel.model_validate(
-                data,
-            )
+        target: TestsFlextFlextModelsMixins.TestsFlextModelsMixins.TargetModel = TestsFlextFlextModelsMixins.TestsFlextModelsMixins.TargetModel.model_validate(
+            data,
         )
         upper_bound = 100
         return target.value < upper_bound

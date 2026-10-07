@@ -64,8 +64,7 @@ class FlextConstantsEnforcementFixActions:
                         "regex": r"\bprint\s*\(\s*(?P<args>[^)]*)\s*\)",
                         "replacement": r"u.fetch_logger(__name__).info(\g<args>)",
                         "change_message": (
-                            "Rewrote u.Cli.print() "
-                            "to u.fetch_logger(__name__).info()"
+                            "Rewrote u.Cli.print() to u.fetch_logger(__name__).info()"
                         ),
                     },
                 ],
@@ -168,8 +167,7 @@ class FlextConstantsEnforcementFixActions:
                         "regex": r"\btyping\s*\.\s*List\s*\[",
                         "replacement": "t.SequenceOf[",
                         "change_message": (
-                            "Rewrote typing.List[...] "
-                            "to t.SequenceOf[...]"
+                            "Rewrote typing.List[...] to t.SequenceOf[...]"
                         ),
                     },
                 ],
@@ -197,8 +195,7 @@ class FlextConstantsEnforcementFixActions:
                         "regex": r"\bstructlog\s*\.\s*get_logger\s*\(\s*\)",
                         "replacement": "u.fetch_logger(__name__)",
                         "change_message": (
-                            "Rewrote structlog.get_logger() "
-                            "to u.fetch_logger(__name__)"
+                            "Rewrote structlog.get_logger() to u.fetch_logger(__name__)"
                         ),
                     },
                     {
@@ -208,8 +205,7 @@ class FlextConstantsEnforcementFixActions:
                         ),
                         "replacement": r'u.fetch_logger("\g<name>")',
                         "change_message": (
-                            "Rewrote structlog.get_logger(name) "
-                            "to u.fetch_logger(name)"
+                            "Rewrote structlog.get_logger(name) to u.fetch_logger(name)"
                         ),
                     },
                 ],

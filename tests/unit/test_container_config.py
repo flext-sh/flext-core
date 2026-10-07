@@ -56,8 +56,7 @@ class TestsFlextCoreContainerConfig:
                     key in settings_result.root,
                     eq=False,
                     msg=(
-                        f"Unknown settings key {key} "
-                        "must not leak into public settings"
+                        f"Unknown settings key {key} must not leak into public settings"
                     ),
                 )
         if not settings:
