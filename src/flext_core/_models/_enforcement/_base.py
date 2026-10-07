@@ -8,14 +8,16 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._typings.base import FlextTypingBase as t
+from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._typings.base import FlextTypingBase
 
 
-class FlextModelsEnforcementModelBase(mp.BaseModel):
+class FlextModelsEnforcementModelBase(FlextModelsPydantic.BaseModel):
     """Frozen, extra-forbid base for internal enforcement models."""
 
-    model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(frozen=True, extra="forbid")
+    model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+        FlextModelsPydantic.ConfigDict(frozen=True, extra="forbid")
+    )
 
 
 class FlextModelsEnforcementBase:
@@ -36,10 +38,12 @@ class FlextModelsEnforcementBase:
     class Report(FlextModelsEnforcementModelBase):
         """Aggregated violation report returned by a check or runner."""
 
-        violations: t.SequenceOf[FlextModelsEnforcementBase.Violation] = ()
+        violations: FlextTypingBase.SequenceOf[
+            FlextModelsEnforcementBase.Violation
+        ] = ()
 
         @property
-        def messages(self) -> t.StrSequence:
+        def messages(self) -> FlextTypingBase.StrSequence:
             """Plain messages for text emission."""
             return [violation.message for violation in self.violations]
 
@@ -75,7 +79,7 @@ class FlextModelsEnforcementBase:
             """
             return self.messages[index]
 
-        def __contains__(self, fragment: t.Scalar | None) -> bool:
+        def __contains__(self, fragment: FlextTypingBase.Scalar | None) -> bool:
             """Search message text with ``fragment in report``.
 
             Returns:

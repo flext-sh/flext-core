@@ -99,7 +99,10 @@ class TestsFlextContainerResolution:
             tm.that(
                 isinstance(resolved_service, scenario.expected_type),
                 eq=True,
-                msg=f"Typed result must be instance of {scenario.expected_type.__name__}",
+                msg=(
+                    f"Typed result must be instance of "
+                    f"{scenario.expected_type.__name__}"
+                ),
             )
         else:
             _ = u.Tests.assert_failure(

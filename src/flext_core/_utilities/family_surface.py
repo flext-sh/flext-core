@@ -12,12 +12,12 @@ import importlib.metadata
 from types import MappingProxyType
 from typing import TYPE_CHECKING, cast
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata
+from flext_core._constants import FlextConstantsEnforcement
+from flext_core._utilities import FlextUtilitiesProjectMetadata
 from flext_core.lazy import normalize_lazy_imports
 
 if TYPE_CHECKING:
-    from flext_core._typings.base import FlextTypingBase as t
+    from flext_core._typings.base import FlextTypingBase
 
 
 class FlextUtilitiesFamilySurface:
@@ -40,7 +40,7 @@ class FlextUtilitiesFamilySurface:
     @staticmethod
     def distribution_in_family_discovery(
         distribution_name: str,
-        requirement_names: t.StrSequence,
+        requirement_names: FlextTypingBase.StrSequence,
     ) -> bool:
         """Return True when a distribution is a family discovery candidate.
 
@@ -53,14 +53,16 @@ class FlextUtilitiesFamilySurface:
             True when the distribution name or one requirement carries the
             family prefix.
         """
-        return distribution_name.startswith(c.NAMESPACE_FAMILY_PREFIX) or any(
-            requirement.startswith(c.NAMESPACE_FAMILY_PREFIX)
+        return distribution_name.startswith(
+            FlextConstantsEnforcement.NAMESPACE_FAMILY_PREFIX,
+        ) or any(
+            requirement.startswith(FlextConstantsEnforcement.NAMESPACE_FAMILY_PREFIX)
             for requirement in requirement_names
         )
 
     @staticmethod
     @functools.lru_cache(maxsize=1)
-    def _module_names_by_distribution() -> t.MappingKV[str, str]:
+    def _module_names_by_distribution() -> FlextTypingBase.MappingKV[str, str]:
         """Map every installed distribution name to its importable root package.
 
         A distribution's import name is the top-level package it ships, which
@@ -76,9 +78,10 @@ class FlextUtilitiesFamilySurface:
 
         """
         module_names: dict[str, str] = {}
-        for module_name, distribution_names in (
-            importlib.metadata.packages_distributions().items()
-        ):
+        for (
+            module_name,
+            distribution_names,
+        ) in importlib.metadata.packages_distributions().items():
             for distribution_name in distribution_names:
                 module_names.setdefault(distribution_name.lower(), module_name)
         return MappingProxyType(module_names)
@@ -86,7 +89,11 @@ class FlextUtilitiesFamilySurface:
     @staticmethod
     @functools.lru_cache(maxsize=1)
     def _surface_snapshot() -> tuple[
-        tuple[str, frozenset[str], t.MappingKV[str, t.StrPair | str]],
+        tuple[
+            str,
+            frozenset[str],
+            FlextTypingBase.MappingKV[str, FlextTypingBase.StrPair | str],
+        ],
         ...,
     ]:
         """Import every family root once and snapshot its published contract.
@@ -101,7 +108,11 @@ class FlextUtilitiesFamilySurface:
 
         """
         snapshot: list[
-            tuple[str, frozenset[str], t.MappingKV[str, t.StrPair | str]]
+            tuple[
+                str,
+                frozenset[str],
+                FlextTypingBase.MappingKV[str, FlextTypingBase.StrPair | str],
+            ]
         ] = []
         module_by_distribution = (
             FlextUtilitiesFamilySurface._module_names_by_distribution()
@@ -137,17 +148,21 @@ class FlextUtilitiesFamilySurface:
                 frozenset(published),
                 MappingProxyType(dict(normalized)),
             ))
-        if len(snapshot) < c.FAMILY_SURFACE_MIN_PUBLISHED:
+        if len(snapshot) < FlextConstantsEnforcement.FAMILY_SURFACE_MIN_PUBLISHED:
             msg = (
                 "family-surface derivation found no distribution publishing "
                 "the lazy export contract under prefix "
-                f"{c.NAMESPACE_FAMILY_PREFIX!r} or a requirement edge to it"
+                f"{FlextConstantsEnforcement.NAMESPACE_FAMILY_PREFIX!r} or a "
+                "requirement edge to it"
             )
             raise RuntimeError(msg)
         return tuple(snapshot)
 
     @staticmethod
-    def project_alias_owners() -> t.MappingKV[str, t.VariadicTuple[str]]:
+    def project_alias_owners() -> FlextTypingBase.MappingKV[
+        str,
+        FlextTypingBase.VariadicTuple[str],
+    ]:
         """Map family package name to the declaration aliases it publishes.
 
         Derived from each root's ``__all__`` intersected with the
@@ -158,7 +173,9 @@ class FlextUtilitiesFamilySurface:
             The resulting ``t.MappingKV[str, t.VariadicTuple[str]]``.
 
         """
-        declaration = tuple(name[0].lower() for name in c.NAMESPACE_LAYER_NAMES)
+        declaration = tuple(
+            name[0].lower() for name in FlextConstantsEnforcement.NAMESPACE_LAYER_NAMES
+        )
         owners = {
             name: tuple(alias for alias in declaration if alias in published)
             for name, published, _ in (FlextUtilitiesFamilySurface._surface_snapshot())
@@ -166,7 +183,7 @@ class FlextUtilitiesFamilySurface:
         return MappingProxyType(owners)
 
     @staticmethod
-    def compatibility_alias_renames() -> t.MappingKV[str, str]:
+    def compatibility_alias_renames() -> FlextTypingBase.MappingKV[str, str]:
         """Map published long facade class name to its canonical alias.
 
         Derived by grouping each family root's normalized lazy map entries
@@ -191,17 +208,17 @@ class FlextUtilitiesFamilySurface:
                 kind = "aliases" if len(alias) == 1 else "names"
                 if module not in grouped:
                     grouped[module] = cast(
-                        "t.MutableMappingKV[str, list[str]]",
+                        "FlextTypingBase.MutableMappingKV[str, list[str]]",
                         {"aliases": [], "names": []},
                     )
                 bucket = grouped[module]
                 bucket[kind].append(alias)
-        renames: t.MutableMappingKV[str, str] = {}
+        renames: FlextTypingBase.MutableMappingKV[str, str] = {}
         for module, bucket in grouped.items():
             letters = [
                 alias
                 for alias in bucket["aliases"]
-                if alias in c.ENFORCEMENT_CANONICAL_ALIASES
+                if alias in FlextConstantsEnforcement.ENFORCEMENT_CANONICAL_ALIASES
             ]
             for long_name in bucket["names"]:
                 if not long_name.startswith("Flext"):
@@ -214,7 +231,7 @@ class FlextUtilitiesFamilySurface:
                             f"both {previous!r} and {alias!r} via {module!r}"
                         )
                         raise ValueError(msg)
-        return cast("t.StrMapping", MappingProxyType(renames))
+        return cast("FlextTypingBase.StrMapping", MappingProxyType(renames))
 
 
 __all__: list[str] = ["FlextUtilitiesFamilySurface"]

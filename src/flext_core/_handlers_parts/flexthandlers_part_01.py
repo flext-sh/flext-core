@@ -13,8 +13,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, Unpack
 
-from flext_core import c, e, x
-from flext_core._utilities.handler import FlextUtilitiesHandler
+from flext_core import c, e, m, x
+from flext_core._utilities import FlextUtilitiesHandler
 
 if TYPE_CHECKING:
     from pydantic import ConfigDict
@@ -57,8 +57,6 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         if settings is not None:
             self._config_model = settings
         else:
-            from flext_core import m
-
             self._config_model = m.Handler(
                 handler_id=f"handler_{id(self)}",
                 handler_name=self.__class__.__name__,

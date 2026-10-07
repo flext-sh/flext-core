@@ -35,7 +35,7 @@ from pydantic_settings import (
     SettingsConfigDict,
 )
 
-from flext_core._constants.config import FlextConstantsConfig
+from flext_core._constants import FlextConstantsConfig
 from flext_core._settings import app_env_prefix, platform_config_root
 from flext_core.config_sources import StrictYamlConfigSource
 

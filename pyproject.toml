@@ -374,6 +374,7 @@ asyncio_default_fixture_loop_scope = "function"
 filterwarnings = [
   "error",
   "module::flext_core._constants.enforcement.FlextMroViolation",
+  "once::pytest.PytestAssertRewriteWarning",
 ]
 markers = [
   "smoke: public-interface smoke tests",
@@ -399,7 +400,15 @@ python_files = ["*_test.py", "*_tests.py", "test_*.py"]
 testpaths = ["tests"]
 
 [tool.ruff]
-extend-exclude = []
+extend-exclude = [
+  "**/.archive/**",
+  "**/protos/**",
+  "**/.agents/aihub-hooks/**",
+  "**/.claude/aihub-hooks/**",
+  "**/.codex/aihub-hooks/**",
+  "**/.cursor/aihub-hooks/**",
+  "**/.gemini/aihub-hooks/**",
+]
 fix = false
 line-length = 88
 namespace-packages = ["tests", "examples", "scripts"]
@@ -474,6 +483,8 @@ runtime-evaluated-base-classes = [
   "flext_core._handlers_parts.flexthandlers_part_05.FlextHandlers",
   "flext_core._handlers_parts.flexthandlers_part_06.FlextHandlers",
   "flext_core._lazy_parts.flextlazy_part_01.FlextLazyPart01",
+  "flext_core._models.FlextModelsBase.FlexibleInternalModel",
+  "flext_core._models.FlextModelsPydantic.BaseModel",
   "flext_core._models._base_parts.flextmodelsbase_part_01.ArbitraryTypesModel",
   "flext_core._models._base_parts.flextmodelsbase_part_01.DynamicModel",
   "flext_core._models._base_parts.flextmodelsbase_part_01.EnforcedModel",
@@ -490,10 +501,12 @@ runtime-evaluated-base-classes = [
   "flext_core._models._base_parts.flextmodelsbase_part_02.StrictModel",
   "flext_core._models._enforcement._base.FlextModelsEnforcementBase.Report",
   "flext_core._models._enforcement._base.FlextModelsEnforcementModelBase",
-  "flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ExpectedActualTypeParams",
-  "flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ParamsModel",
-  "flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ResourceIdentityParams",
   "flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_01.ParamsModel",
+  "flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_02.FlextModelsExceptionParamsPart01.ExpectedActualTypeParams",
+  "flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_02.FlextModelsExceptionParamsPart01.ParamsModel",
+  "flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_02.FlextModelsExceptionParamsPart01.ResourceIdentityParams",
+  "flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_03.FlextModelsExceptionParamsPart01.ExpectedActualTypeParams",
+  "flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_03.FlextModelsExceptionParamsPart01.ParamsModel",
   "flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_01.FlextModelsProjectMetadataContract",
   "flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_05.FlextModelsPyprojectIngressContract",
   "flext_core._models.base.FlextModelsBase.ArbitraryTypesModel",

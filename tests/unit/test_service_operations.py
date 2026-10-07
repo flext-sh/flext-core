@@ -48,8 +48,7 @@ class TestsFlextCoreServiceOperations:
             """
             return r[bool].ok(True)
 
-        @staticmethod
-        def dispatch(request: m.Tests.DispatchRequest) -> p.Result[str]:
+        def dispatch(self, request: m.Tests.DispatchRequest) -> p.Result[str]:
             """Dispatch one command by name.
 
             The summary is the first docstring line only.
@@ -60,8 +59,7 @@ class TestsFlextCoreServiceOperations:
             """
             return r[str].ok(request.command_name)
 
-        @staticmethod
-        def status() -> p.Result[bool]:
+        def status(self) -> p.Result[bool]:
             """Report readiness.
 
             Returns:
@@ -130,8 +128,7 @@ class TestsFlextCoreServiceOperations:
     class WriteSide(s[bool]):
         """Sibling also declaring ``run``."""
 
-        @staticmethod
-        def run() -> p.Result[bool]:
+        def run(self) -> p.Result[bool]:
             """Run the write side.
 
             Returns:
@@ -162,8 +159,7 @@ class TestsFlextCoreServiceOperations:
     class AsyncService(s[bool]):
         """Operation declared async."""
 
-        @staticmethod
-        async def fetch() -> p.Result[bool]:
+        async def fetch(self) -> p.Result[bool]:
             """Fetch asynchronously.
 
             Returns:
@@ -175,8 +171,7 @@ class TestsFlextCoreServiceOperations:
     class GenericService(s[bool]):
         """Operation declaring type parameters."""
 
-        @staticmethod
-        def echo[V: p.Base](request: V) -> p.Result[V]:
+        def echo[V: p.Base](self, request: V) -> p.Result[V]:
             """Echo the request generically.
 
             Returns:
@@ -188,8 +183,8 @@ class TestsFlextCoreServiceOperations:
     class TwoRequestService(s[bool]):
         """Operation taking two requests."""
 
-        @staticmethod
         def join(
+            self,
             left: m.Tests.DispatchRequest,
             right: m.Tests.DispatchRequest,
         ) -> p.Result[bool]:
@@ -204,8 +199,7 @@ class TestsFlextCoreServiceOperations:
     class KeywordOnlyService(s[bool]):
         """Operation with a keyword-only request."""
 
-        @staticmethod
-        def send(*, request: m.Tests.DispatchRequest) -> p.Result[bool]:
+        def send(self, *, request: m.Tests.DispatchRequest) -> p.Result[bool]:
             """Send a request.
 
             Returns:
@@ -217,8 +211,8 @@ class TestsFlextCoreServiceOperations:
     class DefaultRequestService(s[bool]):
         """Operation whose request has a default."""
 
-        @staticmethod
         def send(
+            self,
             request: m.Tests.DispatchRequest | None = None,
         ) -> p.Result[bool]:
             """Send an optional request.
@@ -232,8 +226,7 @@ class TestsFlextCoreServiceOperations:
     class UndocumentedService(s[bool]):
         """Operation without a docstring."""
 
-        @staticmethod
-        def status() -> p.Result[bool]:
+        def status(self) -> p.Result[bool]:
             """Provide ``status``.
 
             Returns:
@@ -249,8 +242,7 @@ class TestsFlextCoreServiceOperations:
     class PlainReturnService(s[bool]):
         """Operation returning a plain value."""
 
-        @staticmethod
-        def status() -> bool:
+        def status(self) -> bool:
             """Report readiness.
 
             Returns:
@@ -262,8 +254,7 @@ class TestsFlextCoreServiceOperations:
     class UnionRequestService(s[bool]):
         """Operation whose request annotation is not a dotted name."""
 
-        @staticmethod
-        def send(request: m.Tests.DispatchRequest | str) -> p.Result[bool]:
+        def send(self, request: m.Tests.DispatchRequest | str) -> p.Result[bool]:
             """Send a request.
 
             Returns:
@@ -275,8 +266,7 @@ class TestsFlextCoreServiceOperations:
     class ScalarRequestService(s[bool]):
         """Operation whose request is not a Pydantic model."""
 
-        @staticmethod
-        def lookup(request: str) -> p.Result[str]:
+        def lookup(self, request: str) -> p.Result[str]:
             """Look up a name.
 
             Returns:
@@ -288,8 +278,7 @@ class TestsFlextCoreServiceOperations:
     class TypeCheckingOnlyService(s[bool]):
         """Operation whose request is imported only under TYPE_CHECKING."""
 
-        @staticmethod
-        def configure(request: FlextSettings) -> p.Result[bool]:
+        def configure(self, request: FlextSettings) -> p.Result[bool]:
             """Configure from settings.
 
             Returns:

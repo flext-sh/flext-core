@@ -28,8 +28,10 @@ class TestsFlextHandlersDispatch(u.TestsFlextFlextHandlers):
         return u.Tests.create_handler_config(
             handler_id,
             handler_id.replace("_", " ").title(),
-            handler_type=c.HandlerType.COMMAND,
-            handler_mode=c.HandlerType.COMMAND,
+            u.Tests.FlextTestsHandlerConfigParams(
+                handler_type=c.HandlerType.COMMAND,
+                handler_mode=c.HandlerType.COMMAND,
+            ),
         )
 
     def test_execute_returns_processed_payload_for_dict_message(self) -> None:

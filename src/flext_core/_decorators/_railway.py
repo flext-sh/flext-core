@@ -12,9 +12,8 @@ from typing import TYPE_CHECKING
 
 from flext_core import c, m, r
 from flext_core._decorators._logging import FlextDecoratorsLogging
-from flext_core._exceptions.exception_types import FlextExceptionsTypes as et
-from flext_core._protocols.loggings import FlextProtocolsLogging as pl
-from flext_core._protocols.result import FlextProtocolsResult as pr
+from flext_core._exceptions.exception_types import FlextExceptionsTypes
+from flext_core._protocols import FlextProtocolsLogging, FlextProtocolsResult
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -29,7 +28,7 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
         error_code: str | None = None,
     ) -> Callable[
         [Callable[PCallback, TValue]],
-        Callable[PCallback, pr.Result[TValue]],
+        Callable[PCallback, FlextProtocolsResult.Result[TValue]],
     ]:
         """Wrap a callable in the FLEXT railway result pattern.
 
@@ -41,12 +40,12 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
 
         def decorator(
             func: Callable[PCallback, TValue],
-        ) -> Callable[PCallback, pr.Result[TValue]]:
+        ) -> Callable[PCallback, FlextProtocolsResult.Result[TValue]]:
             @wraps(func)
             def wrapper(
                 *args: PCallback.args,
                 **kwargs: PCallback.kwargs,
-            ) -> pr.Result[TValue]:
+            ) -> FlextProtocolsResult.Result[TValue]:
                 try:
                     result = func(*args, **kwargs)
                     return r[TValue].ok(result)
@@ -133,7 +132,7 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
                     timeout_message = (
                         f"Operation {func.__name__} failed after {attempts} attempts"
                     )
-                    raise et.FlextTimeoutError(
+                    raise FlextExceptionsTypes.FlextTimeoutError(
                         timeout_message,
                         error_code=effective_error_code,
                         operation=func.__name__,
@@ -151,7 +150,7 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
         cls,
         call: Callable[[], TResult],
         func_name: str,
-        logger: pl.Logger,
+        logger: FlextProtocolsLogging.Logger,
         *,
         retry_settings: m.RetryConfiguration,
     ) -> TResult | Exception:

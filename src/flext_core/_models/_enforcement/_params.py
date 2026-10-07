@@ -10,12 +10,12 @@ from typing import Annotated, Literal
 
 from pydantic import Discriminator, Field
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as ce
+from flext_core._constants import FlextConstantsEnforcement
 from flext_core._models._enforcement._base import (
     FlextModelsEnforcementBase,
     FlextModelsEnforcementModelBase,
 )
-from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.base import FlextTypingBase
 
 type EnforcementPredicateParams = (
     FlextModelsEnforcementParams.FieldShapeParams
@@ -59,24 +59,24 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         kind: Literal["model_config"] = "model_config"
         forbid_v1_config: bool = False
         require_extra_forbid: bool = False
-        allowed_extra_values: t.StrSequence = ()
+        allowed_extra_values: FlextTypingBase.StrSequence = ()
         require_frozen_for_value_objects: bool = False
 
     class LooseSymbolParams(FlextModelsEnforcementModelBase):
         """Parameters for LOOSE_SYMBOL predicate."""
 
         kind: Literal["loose_symbol"] = "loose_symbol"
-        allowed_prefixes: t.StrSequence = ()
+        allowed_prefixes: FlextTypingBase.StrSequence = ()
         require_future_annotations: bool = False
-        required_canonical_files: t.StrSequence = ()
+        required_canonical_files: FlextTypingBase.StrSequence = ()
         require_settings_base: bool = False
 
     class ImportBlacklistParams(FlextModelsEnforcementModelBase):
         """Parameters for IMPORT_BLACKLIST predicate."""
 
         kind: Literal["import_blacklist"] = "import_blacklist"
-        forbidden_modules: t.StrSequence = ()
-        forbidden_symbols: t.StrSequence = ()
+        forbidden_modules: FlextTypingBase.StrSequence = ()
+        forbidden_symbols: FlextTypingBase.StrSequence = ()
         private_package_only: bool = False
         detect_cycles: bool = False
 
@@ -104,18 +104,21 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         """Parameters for ALIAS_REBIND predicate."""
 
         kind: Literal["alias_rebind"] = "alias_rebind"
-        canonical_files: t.StrSequence = ()
-        alias_names: t.StrSequence = ()
+        canonical_files: FlextTypingBase.StrSequence = ()
+        alias_names: FlextTypingBase.StrSequence = ()
         expected_form: str = ""
 
     class CompatibilityAliasParams(FlextModelsEnforcementModelBase):
         """Parameters for COMPATIBILITY_ALIAS predicate."""
 
         kind: Literal["compatibility_alias"] = "compatibility_alias"
-        alias_renames: t.StrMapping = Field(default_factory=dict)
+        alias_renames: FlextTypingBase.StrMapping = Field(default_factory=dict)
 
     class LibraryImportParams(FlextModelsEnforcementModelBase):
-        """Parameters for LIBRARY_IMPORT predicate (owners: c.ENFORCEMENT_LIBRARY_OWNERS)."""
+        """Parameters for the LIBRARY_IMPORT predicate.
+
+        Owners: ``c.ENFORCEMENT_LIBRARY_OWNERS``.
+        """
 
         kind: Literal["library_import"] = "library_import"
 
@@ -123,7 +126,7 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         """Parameters for DUPLICATE_SYMBOL predicate."""
 
         kind: Literal["duplicate_symbol"] = "duplicate_symbol"
-        hierarchy: t.StrSequence = ()
+        hierarchy: FlextTypingBase.StrSequence = ()
         symbol_kinds: frozenset[str] = frozenset()
 
     class DeprecatedSyntaxParams(FlextModelsEnforcementModelBase):
@@ -136,7 +139,7 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         """Parameters for METHOD_SHAPE predicate."""
 
         kind: Literal["method_shape"] = "method_shape"
-        forbidden_prefixes: t.StrMapping = Field(default_factory=dict)
+        forbidden_prefixes: FlextTypingBase.StrMapping = Field(default_factory=dict)
         """Forbidden name prefix → the replacement it suggests."""
         require_static_or_classmethod: bool = False
 
@@ -154,7 +157,10 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
 
         kind: Literal["classvar_constant"] = "classvar_constant"
         detect_implicit_constants: bool = True
-        """Also flag UPPER_CASE attributes that look like constants but lack ClassVar."""
+        """Also flag UPPER_CASE attributes that look like constants.
+
+        Flagged when they lack ``ClassVar``.
+        """
 
     class ProtocolTreeParams(FlextModelsEnforcementModelBase):
         """Parameters for PROTOCOL_TREE predicate."""
@@ -174,7 +180,7 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
     class EnforcementPredicateSpec(FlextModelsEnforcementModelBase):
         """One runtime rule binding validated from the predicate package data."""
 
-        predicate: ce.EnforcementPredicateKind
+        predicate: FlextConstantsEnforcement.EnforcementPredicateKind
         params: Annotated[EnforcementPredicateParams, Discriminator("kind")]
 
 

@@ -14,13 +14,13 @@ from typing import Annotated, ClassVar
 from pydantic import ConfigDict, Field, computed_field
 
 from flext_core import c, t
-from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.base import FlextModelsBase
 
 
 class FlextModelsCqrs:
     """First CQRS namespace part: the models the query contract references."""
 
-    class Pagination(m.FlexibleInternalModel):
+    class Pagination(FlextModelsBase.FlexibleInternalModel):
         """Pagination model for query results.
 
         Declared in the first part so the query annotations of the next part
@@ -30,7 +30,9 @@ class FlextModelsCqrs:
         model_config: ClassVar[ConfigDict] = ConfigDict(
             json_schema_extra={
                 "title": "Pagination",
-                "description": "Pagination model for query results with computed fields",
+                "description": (
+                    "Pagination model for query results with computed fields"
+                ),
             },
         )
         page: Annotated[

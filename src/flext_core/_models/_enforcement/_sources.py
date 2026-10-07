@@ -14,7 +14,7 @@ from flext_core._models._enforcement._base import (
     FlextModelsEnforcementBase,
     FlextModelsEnforcementModelBase,
 )
-from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.base import FlextTypingBase
 
 
 class FlextModelsEnforcementSources(FlextModelsEnforcementBase):
@@ -29,7 +29,7 @@ class FlextModelsEnforcementSources(FlextModelsEnforcementBase):
         """
 
         kind: Literal["flext_infra_rule"] = "flext_infra_rule"
-        rule_ids: Annotated[t.StrSequence, Field(min_length=1)]
+        rule_ids: Annotated[FlextTypingBase.StrSequence, Field(min_length=1)]
 
     class EnforcementRuntimeWarningSource(FlextModelsEnforcementModelBase):
         """Rule backed by a ``warnings`` category raised at runtime."""
@@ -62,7 +62,7 @@ class FlextModelsEnforcementSources(FlextModelsEnforcementBase):
 
         kind: Literal["transformer", "rope", "manual"]
         target: str
-        params: t.JsonMapping = Field(default_factory=dict)
+        params: FlextTypingBase.JsonMapping = Field(default_factory=dict)
         safe: bool = True
 
 

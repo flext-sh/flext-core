@@ -10,19 +10,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
 
 import structlog
 
-from flext_core import c, t
+from flext_core import c
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._runtime._base import FlextRuntimeBase
 from flext_core._utilities._logging_config_parts.logging_config_part_02 import (
     FlextUtilitiesLoggingConfig as FlextUtilitiesLoggingConfigPart02,
 )
-
-if TYPE_CHECKING:
-    from structlog.types import Processor
 
 
 class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart02):
@@ -31,14 +27,8 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart02):
         cls,
         *,
         settings: mp.BaseModel | None = None,
-        log_level: int | None = None,
-        console_renderer: bool = True,
-        additional_processors: t.SequenceOf[Processor] | None = None,
-        wrapper_class_factory: t.LoggerWrapperFactory | None = None,
-        logger_factory: t.LoggerFactory = None,
-        cache_logger_on_first_use: bool = True,
     ) -> None:
-        """Configure structlog once using FLEXT defaults."""
+        """Configure structlog once using FLEXT defaults over the settings model."""
         if cls._structlog_configured:
             return
         (
@@ -49,15 +39,7 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart02):
             logger_factory,
             cache_logger_on_first_use,
             async_logging,
-        ) = cls._resolve_structlog_params(
-            settings,
-            log_level=log_level,
-            console_renderer=console_renderer,
-            additional_processors=additional_processors,
-            wrapper_class_factory=wrapper_class_factory,
-            logger_factory=logger_factory,
-            cache_logger_on_first_use=cache_logger_on_first_use,
-        )
+        ) = cls._resolve_structlog_params(settings)
         threshold = cls.level_number(level)
         processors = cls._build_structlog_processors(
             console_renderer=console_renderer,

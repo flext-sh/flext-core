@@ -20,10 +20,12 @@ from typing import TYPE_CHECKING, ClassVar, cast
 import yaml
 
 from flext_core import StrictYamlConfigSource, r
-from flext_core._constants.config import FlextConstantsConfig as c
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore as g
-from flext_core._utilities.reliability import FlextUtilitiesReliability as rel
+from flext_core._constants import FlextConstantsConfig
+from flext_core._typings.base import FlextTypingBase
+from flext_core._utilities import (
+    FlextUtilitiesGuardsTypeCore,
+    FlextUtilitiesReliability,
+)
 
 if TYPE_CHECKING:
     from flext_core import p
@@ -46,18 +48,18 @@ class FlextUtilitiesConfig:
         YAMLError = yaml.YAMLError
 
         @staticmethod
-        def safe_load(stream: str) -> t.JsonValue:
+        def safe_load(stream: str) -> FlextTypingBase.JsonValue:
             """Parse a YAML string → validated JSON value.
 
             Returns:
                 The resulting ``t.JsonValue``.
 
             """
-            return cast("t.JsonValue", yaml.safe_load(stream))
+            return cast("FlextTypingBase.JsonValue", yaml.safe_load(stream))
 
         @staticmethod
         def safe_dump(
-            data: t.JsonValue | t.JsonMapping,
+            data: FlextTypingBase.JsonValue | FlextTypingBase.JsonMapping,
             *,
             sort_keys: bool = False,
             indent: int = 2,
@@ -79,7 +81,7 @@ class FlextUtilitiesConfig:
             )
 
         @staticmethod
-        def safe_load_file(path: Path) -> t.JsonValue:
+        def safe_load_file(path: Path) -> FlextTypingBase.JsonValue:
             """Load a YAML file → validated JSON value.
 
             Returns:
@@ -87,10 +89,10 @@ class FlextUtilitiesConfig:
 
             """
             with path.open(encoding="utf-8") as fh:
-                return cast("t.JsonValue", yaml.safe_load(fh))
+                return cast("FlextTypingBase.JsonValue", yaml.safe_load(fh))
 
         @staticmethod
-        def unique_key_load(stream: str) -> t.JsonValue:
+        def unique_key_load(stream: str) -> FlextTypingBase.JsonValue:
             """Parse YAML rejecting duplicate mapping keys at every depth.
 
             Why: duplicate config keys silently overwrite their predecessor at
@@ -102,16 +104,17 @@ class FlextUtilitiesConfig:
             constructor set, no object-deserialization primitives — so the
             arbitrary-constructor unsafe loader path stays out of this module.
 
-            Raises:
-                yaml.YAMLError: On malformed input or a duplicate mapping key.
-
             Returns:
                 The resulting ``t.JsonValue``.
+
+            Raises ``yaml.YAMLError`` on malformed input or a duplicate
+            mapping key (propagated from the canonical loader).
+
             """
             return StrictYamlConfigSource.unique_key_load(stream)
 
         @staticmethod
-        def yaml_safe_load(path: Path) -> p.Result[t.JsonMapping]:
+        def yaml_safe_load(path: Path) -> p.Result[FlextTypingBase.JsonMapping]:
             """Load a YAML file → ``r[JsonMapping]``.
 
             Returns:
@@ -119,21 +122,31 @@ class FlextUtilitiesConfig:
 
             """
             if not path.is_file():
-                return r[t.JsonMapping].fail(f"YAML file not found: {path}")
+                return r[FlextTypingBase.JsonMapping].fail(
+                    f"YAML file not found: {path}",
+                )
             try:
                 loaded = FlextUtilitiesConfig.Yaml.safe_load_file(path)
             except yaml.YAMLError as exc:
-                return r[t.JsonMapping].fail(f"YAML parse error: {exc}", exception=exc)
+                return r[FlextTypingBase.JsonMapping].fail(
+                    f"YAML parse error: {exc}",
+                    exception=exc,
+                )
             except OSError as exc:
-                return r[t.JsonMapping].fail(f"YAML read error: {exc}", exception=exc)
-            if not g.mapping(loaded):
-                return r[t.JsonMapping].fail(f"YAML top level is not a mapping: {path}")
-            return r[t.JsonMapping].ok(loaded)
+                return r[FlextTypingBase.JsonMapping].fail(
+                    f"YAML read error: {exc}",
+                    exception=exc,
+                )
+            if not FlextUtilitiesGuardsTypeCore.mapping(loaded):
+                return r[FlextTypingBase.JsonMapping].fail(
+                    f"YAML top level is not a mapping: {path}",
+                )
+            return r[FlextTypingBase.JsonMapping].ok(loaded)
 
         @staticmethod
         def yaml_dump(
             path: Path,
-            data: t.JsonMapping,
+            data: FlextTypingBase.JsonMapping,
             *,
             sort_keys: bool = False,
             indent: int = 2,
@@ -188,7 +201,7 @@ class FlextUtilitiesConfig:
         def _expand_match(match: re.Match[str]) -> str:
             return FlextUtilitiesConfig._expand_one(match, env)
 
-        for _ in range(c.CONFIG_EXPAND_MAX_PASSES):
+        for _ in range(FlextConstantsConfig.CONFIG_EXPAND_MAX_PASSES):
             expanded = FlextUtilitiesConfig._EXPAND_PATTERN.sub(_expand_match, current)
             if expanded == current:
                 return expanded
@@ -196,7 +209,7 @@ class FlextUtilitiesConfig:
         return current
 
     @staticmethod
-    def config_load(path: Path) -> p.Result[t.JsonMapping]:
+    def config_load(path: Path) -> p.Result[FlextTypingBase.JsonMapping]:
         """Load and parse a TOML config source into a validated mapping.
 
         Fail-closed: a missing file, parse error, or non-mapping top level is a
@@ -207,32 +220,43 @@ class FlextUtilitiesConfig:
 
         """
         if not path.is_file():
-            return r[t.JsonMapping].fail(f"{c.ERR_CONFIG_READ_FAILED}: {path}")
-        parsed = rel.try_(
-            lambda: tomllib.loads(path.read_text(encoding=c.CONFIG_DEFAULT_ENCODING)),
+            return r[FlextTypingBase.JsonMapping].fail(
+                f"{FlextConstantsConfig.ERR_CONFIG_READ_FAILED}: {path}",
+            )
+        parsed = FlextUtilitiesReliability.try_(
+            lambda: tomllib.loads(
+                path.read_text(encoding=FlextConstantsConfig.CONFIG_DEFAULT_ENCODING),
+            ),
             catch=(OSError, tomllib.TOMLDecodeError),
             op_name="config_load",
         )
         if parsed.failure:
-            return r[t.JsonMapping].from_failure(parsed)
+            return r[FlextTypingBase.JsonMapping].from_failure(parsed)
         payload = parsed.value
-        if not g.mapping(payload):
-            return r[t.JsonMapping].fail(f"{c.ERR_CONFIG_NOT_MAPPING}: {path}")
-        return r[t.JsonMapping].ok(payload)
+        if not FlextUtilitiesGuardsTypeCore.mapping(payload):
+            return r[FlextTypingBase.JsonMapping].fail(
+                f"{FlextConstantsConfig.ERR_CONFIG_NOT_MAPPING}: {path}",
+            )
+        return r[FlextTypingBase.JsonMapping].ok(payload)
 
     @staticmethod
-    def config_merge(base: t.JsonMapping, override: t.JsonMapping) -> t.JsonDict:
+    def config_merge(
+        base: FlextTypingBase.JsonMapping,
+        override: FlextTypingBase.JsonMapping,
+    ) -> FlextTypingBase.JsonDict:
         """Deep-merge ``override`` onto ``base``, returning a new mapping.
 
         Returns:
             The resulting ``t.JsonDict``.
 
         """
-        merged: dict[str, t.JsonValue] = dict(base)
+        merged: dict[str, FlextTypingBase.JsonValue] = dict(base)
         for key, value in override.items():
             current = merged.get(key)
-            if g.mapping(current) and g.mapping(value):
-                nested: t.JsonValue = dict(
+            if FlextUtilitiesGuardsTypeCore.mapping(
+                current,
+            ) and FlextUtilitiesGuardsTypeCore.mapping(value):
+                nested: FlextTypingBase.JsonValue = dict(
                     FlextUtilitiesConfig.config_merge(current, value),
                 )
                 merged[key] = nested
@@ -241,7 +265,10 @@ class FlextUtilitiesConfig:
         return merged
 
     @staticmethod
-    def config_env_override(value: t.JsonValue, env: Mapping[str, str]) -> t.JsonValue:
+    def config_env_override(
+        value: FlextTypingBase.JsonValue,
+        env: Mapping[str, str],
+    ) -> FlextTypingBase.JsonValue:
         """Expand ``${VAR}`` / ``${VAR:-default}`` placeholders in string leaves.
 
         Recurses through mappings and sequences; non-string leaves pass through
@@ -254,7 +281,7 @@ class FlextUtilitiesConfig:
         """
         if isinstance(value, str):
             return FlextUtilitiesConfig._expand_str(value, env)
-        if g.mapping(value):
+        if FlextUtilitiesGuardsTypeCore.mapping(value):
             return {
                 key: FlextUtilitiesConfig.config_env_override(item, env)
                 for key, item in value.items()
@@ -266,4 +293,4 @@ class FlextUtilitiesConfig:
         return value
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesConfig"]
+__all__: FlextTypingBase.MutableSequenceOf[str] = ["FlextUtilitiesConfig"]

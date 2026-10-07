@@ -15,7 +15,7 @@ from flext_core import c, p, r
 from flext_core._handlers_parts.flexthandlers_part_04 import (
     FlextHandlers as FlextHandlersPart04,
 )
-from flext_core._utilities.handler import FlextUtilitiesHandler
+from flext_core._utilities import FlextUtilitiesHandler
 
 
 class FlextHandlers[MessageT_contra, ResultT](
@@ -124,7 +124,8 @@ class FlextHandlers[MessageT_contra, ResultT](
             message: The message to execute handler for
 
         Returns:
-            r[ResultT]: Success with handler result or failure with validation/business error
+            r[ResultT]: Success with handler result or failure with
+                validation/business error
 
         Example:
             >>> handler = UserHandler()

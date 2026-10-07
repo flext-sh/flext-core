@@ -22,8 +22,8 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import ClassVar, Final
 
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core._typings.services import FlextTypesServices as ts
+from flext_core._typings.base import FlextTypingBase
+from flext_core._typings.services import FlextTypesServices
 
 
 class FlextConstantsGuards:
@@ -40,7 +40,7 @@ class FlextConstantsGuards:
     NUMERIC_TYPES: Final[tuple[type[int], type[float]]] = (int, float)
     """Numeric runtime types for isinstance checks (SSOT; ``c.*``)."""
 
-    SEQUENCE_PAIR_TYPES: Final[t.VariadicTuple[type]] = (list, tuple)
+    SEQUENCE_PAIR_TYPES: Final[FlextTypingBase.VariadicTuple[type]] = (list, tuple)
     """List and tuple runtime types for isinstance checks (SSOT; ``c.*``)."""
 
     STR_BYTES_TYPES: Final[tuple[type[str], type[bytes]]] = (str, bytes)
@@ -63,7 +63,7 @@ class FlextConstantsGuards:
     ] = (str, int, float, bool, datetime, Path)
     """Container leaf runtime types for isinstance checks (SSOT; ``c.*``)."""
 
-    CONTAINER_AND_COLLECTION_TYPES: Final[t.VariadicTuple[type]] = (
+    CONTAINER_AND_COLLECTION_TYPES: Final[FlextTypingBase.VariadicTuple[type]] = (
         *CONTAINER_TYPES,
         list,
         dict,
@@ -71,31 +71,31 @@ class FlextConstantsGuards:
     )
     """Container leaves plus collection runtime types (SSOT; ``c.*``)."""
 
-    STRING_TYPE_PREDICATES: ClassVar[Mapping[str, Callable[[ts.GuardInput], bool]]] = (
-        MappingProxyType({
-            "str": lambda v: isinstance(v, str),
-            "dict": lambda v: isinstance(v, dict),
-            "list": lambda v: isinstance(v, list),
-            "tuple": lambda v: isinstance(v, tuple),
-            "sequence": lambda v: isinstance(v, (list, tuple, range)),
-            "mapping": lambda v: isinstance(v, Mapping),
-            "list_or_tuple": lambda v: isinstance(v, (list, tuple)),
-            "sequence_not_str": lambda v: (
-                isinstance(v, (list, tuple, range)) and not isinstance(v, str)
-            ),
-            "sequence_not_str_bytes": lambda v: (
-                isinstance(v, (list, tuple, range)) and not isinstance(v, (str, bytes))
-            ),
-            "sized": lambda v: hasattr(v, "__len__"),
-            "callable": callable,
-            "bytes": lambda v: isinstance(v, bytes),
-            "int": lambda v: isinstance(v, int),
-            "float": lambda v: isinstance(v, float),
-            "bool": lambda v: isinstance(v, bool),
-            "none": lambda v: v is None,
-            "string_non_empty": lambda v: isinstance(v, str) and bool(v.strip()),
-        })
-    )
+    STRING_TYPE_PREDICATES: ClassVar[
+        Mapping[str, Callable[[FlextTypesServices.GuardInput], bool]]
+    ] = MappingProxyType({
+        "str": lambda v: isinstance(v, str),
+        "dict": lambda v: isinstance(v, dict),
+        "list": lambda v: isinstance(v, list),
+        "tuple": lambda v: isinstance(v, tuple),
+        "sequence": lambda v: isinstance(v, (list, tuple, range)),
+        "mapping": lambda v: isinstance(v, Mapping),
+        "list_or_tuple": lambda v: isinstance(v, (list, tuple)),
+        "sequence_not_str": lambda v: (
+            isinstance(v, (list, tuple, range)) and not isinstance(v, str)
+        ),
+        "sequence_not_str_bytes": lambda v: (
+            isinstance(v, (list, tuple, range)) and not isinstance(v, (str, bytes))
+        ),
+        "sized": lambda v: hasattr(v, "__len__"),
+        "callable": callable,
+        "bytes": lambda v: isinstance(v, bytes),
+        "int": lambda v: isinstance(v, int),
+        "float": lambda v: isinstance(v, float),
+        "bool": lambda v: isinstance(v, bool),
+        "none": lambda v: v is None,
+        "string_non_empty": lambda v: isinstance(v, str) and bool(v.strip()),
+    })
 
 
 __all__: MutableSequence[str] = ["FlextConstantsGuards"]

@@ -12,14 +12,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, override, runtime_checkable
 
-from flext_core._protocols.base import FlextProtocolsBase as p
+from flext_core._protocols.base import FlextProtocolsBase
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from flext_core import c, t
-    from flext_core._protocols.container import FlextProtocolsContainer as pc
-    from flext_core._protocols.result import FlextProtocolsResult as pr
+    from flext_core._protocols.container import FlextProtocolsContainer
+    from flext_core._protocols.result import FlextProtocolsResult
 
 
 class FlextProtocolsHandler:
@@ -27,7 +27,7 @@ class FlextProtocolsHandler:
 
     # FLEXT: annotations remain structural; concrete models are construction-only.
     @runtime_checkable
-    class HandlerConfig(p.Model, Protocol):
+    class HandlerConfig(FlextProtocolsBase.Model, Protocol):
         """Validated handler configuration consumed by the runtime pipeline."""
 
         @property
@@ -40,7 +40,7 @@ class FlextProtocolsHandler:
         def handler_mode(self) -> c.HandlerType: ...
 
     @runtime_checkable
-    class ExecutionContext(p.Model, Protocol):
+    class ExecutionContext(FlextProtocolsBase.Model, Protocol):
         """Field-level contract for active handler execution state."""
 
         @property
@@ -53,7 +53,9 @@ class FlextProtocolsHandler:
         def started_at(self) -> float | None: ...
 
         @property
-        def metrics_state_data(self) -> pc.MutableRootDict[t.JsonPayload]: ...
+        def metrics_state_data(
+            self,
+        ) -> FlextProtocolsContainer.MutableRootDict[t.JsonPayload]: ...
 
         @property
         def execution_time_ms(self) -> float: ...
@@ -62,13 +64,18 @@ class FlextProtocolsHandler:
         def model_copy(
             self,
             *,
-            update: t.MappingKV[str, t.JsonPayload | p.Model | t.SequenceOf[p.Model]]
+            update: t.MappingKV[
+                str,
+                t.JsonPayload
+                | FlextProtocolsBase.Model
+                | t.SequenceOf[FlextProtocolsBase.Model],
+            ]
             | None = None,
             deep: bool = False,
         ) -> FlextProtocolsHandler.ExecutionContext: ...
 
     @runtime_checkable
-    class HandlerRuntimeState(p.Model, Protocol):
+    class HandlerRuntimeState(FlextProtocolsBase.Model, Protocol):
         """Field-level contract for copy-on-write handler pipeline state."""
 
         @property
@@ -83,13 +90,18 @@ class FlextProtocolsHandler:
         def model_copy(
             self,
             *,
-            update: t.MappingKV[str, t.JsonPayload | p.Model | t.SequenceOf[p.Model]]
+            update: t.MappingKV[
+                str,
+                t.JsonPayload
+                | FlextProtocolsBase.Model
+                | t.SequenceOf[FlextProtocolsBase.Model],
+            ]
             | None = None,
             deep: bool = False,
         ) -> FlextProtocolsHandler.HandlerRuntimeState: ...
 
     @runtime_checkable
-    class DecoratorConfig(p.Model, Protocol):
+    class DecoratorConfig(FlextProtocolsBase.Model, Protocol):
         """Handler decorator metadata consumed by discovery."""
 
         @property
@@ -103,7 +115,7 @@ class FlextProtocolsHandler:
     # ------------------------------------------------------------------
 
     @runtime_checkable
-    class Handler[MessageT, ResultT](p.Base, Protocol):
+    class Handler[MessageT, ResultT](FlextProtocolsBase.Base, Protocol):
         """Typed message handler contract.
 
         Mirrors the public instance API of ``FlextHandlers[MessageT, ResultT]``
@@ -129,13 +141,13 @@ class FlextProtocolsHandler:
             """Check if handler can process the given message type."""
             ...
 
-        def handle(self, message: MessageT) -> pr.Result[ResultT]:
+        def handle(self, message: MessageT) -> FlextProtocolsResult.Result[ResultT]:
             """Core business logic — must be implemented by concrete handlers."""
             ...
 
         # --- pipeline ---
 
-        def execute(self, message: MessageT) -> pr.Result[ResultT]:
+        def execute(self, message: MessageT) -> FlextProtocolsResult.Result[ResultT]:
             """Execute handler with validation and error handling pipeline."""
             ...
 
@@ -143,17 +155,17 @@ class FlextProtocolsHandler:
             self,
             message: MessageT,
             operation: str = ...,
-        ) -> pr.Result[ResultT]:
+        ) -> FlextProtocolsResult.Result[ResultT]:
             """Dispatch message through the full handler pipeline."""
             ...
 
-        def validate_message(self, data: MessageT) -> pr.Result[bool]:
+        def validate_message(self, data: MessageT) -> FlextProtocolsResult.Result[bool]:
             """Validate input data before execution."""
             ...
 
         # --- callable ---
 
-        def __call__(self, message: MessageT) -> pr.Result[ResultT]:
+        def __call__(self, message: MessageT) -> FlextProtocolsResult.Result[ResultT]:
             """Callable interface for dispatcher integration."""
             ...
 
@@ -162,15 +174,23 @@ class FlextProtocolsHandler:
         def push_context(
             self,
             ctx: t.JsonMapping | FlextProtocolsHandler.ExecutionContext,
-        ) -> pr.Result[bool]:
+        ) -> FlextProtocolsResult.Result[bool]:
             """Push execution context onto the local handler stack."""
             ...
 
-        def pop_context(self) -> pr.Result[pc.RootDict[t.JsonPayload]]:
+        def pop_context(
+            self,
+        ) -> FlextProtocolsResult.Result[
+            FlextProtocolsContainer.RootDict[t.JsonPayload]
+        ]:
             """Pop execution context from the local handler stack."""
             ...
 
-        def record_metric(self, name: str, value: t.JsonPayload) -> pr.Result[bool]:
+        def record_metric(
+            self,
+            name: str,
+            value: t.JsonPayload,
+        ) -> FlextProtocolsResult.Result[bool]:
             """Record a metric value in the current handler state."""
             ...
 
@@ -184,9 +204,9 @@ class FlextProtocolsHandler:
 
         def dispatch_message(
             self,
-            message: p.Routable,
+            message: FlextProtocolsBase.Routable,
             operation: str = ...,
-        ) -> pr.ResultView[t.JsonPayload] | t.JsonPayload | None: ...
+        ) -> FlextProtocolsResult.ResultView[t.JsonPayload] | t.JsonPayload | None: ...
 
     @runtime_checkable
     class Handle(Protocol):
@@ -194,8 +214,8 @@ class FlextProtocolsHandler:
 
         def handle(
             self,
-            message: p.Routable,
-        ) -> pr.ResultView[t.JsonPayload] | t.JsonPayload | None: ...
+            message: FlextProtocolsBase.Routable,
+        ) -> FlextProtocolsResult.ResultView[t.JsonPayload] | t.JsonPayload | None: ...
 
     @runtime_checkable
     class Execute(Protocol):
@@ -203,8 +223,8 @@ class FlextProtocolsHandler:
 
         def execute(
             self,
-            message: p.Routable,
-        ) -> pr.ResultView[t.JsonPayload] | t.JsonPayload | None: ...
+            message: FlextProtocolsBase.Routable,
+        ) -> FlextProtocolsResult.ResultView[t.JsonPayload] | t.JsonPayload | None: ...
 
     @runtime_checkable
     class AutoDiscoverableHandler(Protocol):
@@ -217,20 +237,24 @@ class FlextProtocolsHandler:
     # ------------------------------------------------------------------
 
     @runtime_checkable
-    class Dispatcher(p.Base, Protocol):
+    class Dispatcher(FlextProtocolsBase.Base, Protocol):
         """Protocol for dispatching and publishing messages in CQRS systems.
 
         Mirrors the public surface of ``FlextDispatcher``.
         """
 
-        def dispatch(self, message: p.Routable) -> pr.Result[t.JsonPayload]:
+        def dispatch(
+            self,
+            message: FlextProtocolsBase.Routable,
+        ) -> FlextProtocolsResult.Result[t.JsonPayload]:
             """Route a CQRS message to a registered handler."""
             ...
 
         def publish(
             self,
-            event: p.Routable | t.SequenceOf[p.Routable],
-        ) -> pr.Result[bool]:
+            event: FlextProtocolsBase.Routable
+            | t.SequenceOf[FlextProtocolsBase.Routable],
+        ) -> FlextProtocolsResult.Result[bool]:
             """Publish event(s) to all registered subscribers."""
             ...
 
@@ -239,7 +263,7 @@ class FlextProtocolsHandler:
             handler: t.DispatchableHandler,
             *,
             is_event: bool = False,
-        ) -> pr.Result[bool]:
+        ) -> FlextProtocolsResult.Result[bool]:
             """Register a handler for message routing."""
             ...
 
@@ -254,7 +278,10 @@ class FlextProtocolsHandler:
         Unlike ``Dispatcher``, a command bus does NOT publish events.
         """
 
-        def dispatch(self, message: p.Routable) -> pr.Result[t.JsonPayload]:
+        def dispatch(
+            self,
+            message: FlextProtocolsBase.Routable,
+        ) -> FlextProtocolsResult.Result[t.JsonPayload]:
             """Dispatch a command to a registered handler."""
             ...
 
@@ -263,7 +290,7 @@ class FlextProtocolsHandler:
             handler: t.DispatchableHandler,
             *,
             is_event: bool = False,
-        ) -> pr.Result[bool]:
+        ) -> FlextProtocolsResult.Result[bool]:
             """Register a handler for command routing."""
             ...
 
@@ -272,14 +299,17 @@ class FlextProtocolsHandler:
     # ------------------------------------------------------------------
 
     @runtime_checkable
-    class Middleware(p.Base, Protocol):
+    class Middleware(FlextProtocolsBase.Base, Protocol):
         """Protocol for middleware layers in handler execution chains."""
 
         def process[TResult](
             self,
-            command: p.Model,
-            next_handler: Callable[[p.Model], pr.Result[TResult]],
-        ) -> pr.Result[TResult]: ...
+            command: FlextProtocolsBase.Model,
+            next_handler: Callable[
+                [FlextProtocolsBase.Model],
+                FlextProtocolsResult.Result[TResult],
+            ],
+        ) -> FlextProtocolsResult.Result[TResult]: ...
 
 
 __all__: list[str] = ["FlextProtocolsHandler"]

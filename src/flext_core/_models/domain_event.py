@@ -13,10 +13,10 @@ from __future__ import annotations
 from typing import Annotated
 
 from flext_core import t
-from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.base import FlextModelsBase
 from flext_core._models.containers import FlextModelsContainers
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._utilities.collection import FlextUtilitiesCollection as u
+from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._utilities import FlextUtilitiesCollection
 
 
 class FlextModelsDomainEvent:
@@ -26,10 +26,13 @@ class FlextModelsDomainEvent:
     Split into its own module so Entity can import without forward references.
     """
 
-    class DomainEvent(m.IdentifiableMixin, m.TimestampedModel):
+    class DomainEvent(
+        FlextModelsBase.IdentifiableMixin,
+        FlextModelsBase.TimestampedModel,
+    ):
         """Base class for domain events."""
 
-        message_type: str = mp.Field(
+        message_type: str = FlextModelsPydantic.Field(
             "event",
             frozen=True,
             description="Message type discriminator for union routing - always 'event'",
@@ -37,20 +40,24 @@ class FlextModelsDomainEvent:
         )
         event_type: Annotated[
             t.NonEmptyStr,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 description="Domain event type identifier for subscriber routing.",
             ),
         ]
         aggregate_id: Annotated[
             t.NonEmptyStr,
-            mp.Field(
-                description="Identifier of the aggregate root that produced this event.",
+            FlextModelsPydantic.Field(
+                description=(
+                    "Identifier of the aggregate root that produced this event."
+                ),
             ),
         ]
         data: Annotated[
             FlextModelsContainers.ConfigMap,
-            mp.BeforeValidator(u.normalize_domain_event_data),
-        ] = mp.Field(
+            FlextModelsPydantic.BeforeValidator(
+                FlextUtilitiesCollection.normalize_domain_event_data,
+            ),
+        ] = FlextModelsPydantic.Field(
             validate_default=True,
             description="Event data container",
             default_factory=lambda: FlextModelsContainers.ConfigMap(root={}),

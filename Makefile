@@ -898,12 +898,6 @@ mise_has_blocking_warning() { \
 	fi; \
 	caller_mise_version="$$runtime_release"; \
 	printf 'mise setup receipt=%s storage=%s\n' "$$runtime_release" "$$mise_storage_root"; \
-	project_parent=$${project_root%/*}; \
-	if [ -z "$$project_parent" ]; then project_parent=/; fi; \
-	scratch=$$(mktemp -d "$$project_parent/.$${project_root##*/}.mise-bootstrap.XXXXXX"); \
-	if [ -z "$$scratch" ] || [ ! -d "$$scratch" ]; then \
-		printf 'ERROR: mise bootstrap scratch creation failed (template: %s/.%s.mise-bootstrap.XXXXXX)\n' "$$project_parent" "$${project_root##*/}" >&2; exit 2; \
-	fi; \
 	# Only ``upg`` locks, once per manifest it provisions from. Lock every \
 	# configured tool in one pass so removed selectors cannot survive beside \
 	# their replacement in mise.lock. The relock half of ``upg`` (lock without \
@@ -1009,6 +1003,15 @@ mise_receipt launcher-version "$$lock_stage/artifacts/bin/mise"; \
 	if [ ! -x "$$direnv_executable" ]; then \
 		printf 'ERROR: Mise resolved a non-executable direnv path: %s\n' "$$direnv_executable" >&2; exit 2; \
 	fi; \
+	# The .envrc is a managed projection artifact: approve its hash so the \
+	# activation contract holds on fresh machines (a CI runner never runs an \
+	# interactive allow, and every downstream direnv activation — including \
+	# the check gate's — refuses a blocked .envrc). direnv re-blocks on any \
+	# later content change through its own hash check, so this approves only \
+	# the projected form, never arbitrary edits. \
+	if [ -f "$$project_root/.envrc" ]; then \
+		"$$direnv_executable" allow "$$project_root"; \
+	fi; \
 	mise_checked "$$scratch/python-path.log" mise_offline project "$$pinned_mise" -C "$$project_root" which python; \
 	python_executable=$$(cat "$$scratch/python-path.log"); \
 	# CI receives only the shim farm: a project bin/ on PATH would bind every \
@@ -1058,6 +1061,12 @@ fi; \
 # Provisioning is declared once and shared by every profile. A venv records the
 # exact base interpreter used to create it, so setup replaces it when Mise moves
 # the configured Python minor line to a newer patch.
+# Dev environments consume present members as LIVE editable installs (operator
+# law 2026-10-06: a commit never influences dev behavior — the worktree is the
+# behavior). The overlay replaces only each member distribution, --no-deps, so
+# every version position still comes from what make upg froze in uv.lock,
+# pyproject.toml and mise.toml; CI and standalone installs keep the frozen
+# git-pinned members untouched.
 SETUP_ENVIRONMENT_RECIPE = set -eu; \
 	trap 'if [ -n "$${FLEXT_SETUP_CREDENTIAL_STORE:-}" ]; then rm -f "$$FLEXT_SETUP_CREDENTIAL_STORE"; fi' EXIT; \
 	$(REQUIRE_WORKSPACE_ENVIRONMENT); \
@@ -1076,6 +1085,14 @@ SETUP_ENVIRONMENT_RECIPE = set -eu; \
 		env GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=credential.helper GIT_CONFIG_VALUE_0="store --file=$$FLEXT_SETUP_CREDENTIAL_STORE" $(UV) sync --project "$(UV_PROJECT)" $(UV_SYNC_FLAGS) --locked --link-mode "$(UV_LINK_MODE)"; \
 	else \
 		$(UV) sync --project "$(UV_PROJECT)" $(UV_SYNC_FLAGS) --locked --link-mode "$(UV_LINK_MODE)"; \
+	fi; \
+	if [ "$(strip $(CI))" != "Y" ]; then \
+	for member in $(WORKSPACE_SUBPROJECTS); do \
+		if [ -f "$(PROJECT_ROOT)/$$member/pyproject.toml" ]; then \
+			printf 'setup: editable workspace member %s\n' "$$member"; \
+			$(UV) pip install --python "$(RUNTIME_VENV)" --no-deps -e "$(PROJECT_ROOT)/$$member"; \
+		fi; \
+	done; \
 	fi; \
 	if [ "$(strip $(CI))" != "Y" ]; then \
 	XDG_DATA_HOME="$${SETUP_DIRENV_XDG_DATA_HOME:?missing persistent direnv data home}" \
@@ -1110,7 +1127,7 @@ _bootstrap_setup_tools: _builtin_require_workspace
 
 # Execute the interpreter provisioned by setup without discovering a project
 # workspace or creating a dependency-resolution file during a runtime command.
-override UV_RUN := env -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u PROJECT_ROOT PYTHONPATH="$(PROJECT_ROOT)/src" $(UV) run --no-project --python "$(RUNTIME_PYTHON)"
+override UV_RUN := env -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u PROJECT_ROOT PYTHONPATH="$(PROJECT_ROOT)/src" $(UV) run --directory "$(PROJECT_ROOT)" --no-project --python "$(RUNTIME_PYTHON)"
 # The checked-out flext-infra lane owns every lifecycle verb: a workspace
 # runs the generator it carries (the submodule src), so a broken published
 # dependency tip can never block the local recovery cycle. A checkout without
@@ -2564,7 +2581,7 @@ _builtin-bootstrap-candidate: _builtin_require_environment
 # independently when malformed Python prevents the Rope phases from loading.
 # The current directory defines scope; callers never address tools directly.
 _builtin_mod_apply: _builtin_require_environment
-	@$(PROJECT_FLEXT_INFRA) refactor mod --apply
+	@$(PROJECT_FLEXT_INFRA) refactor mod --repository-root "$(PROJECT_ROOT)" --apply
 
 _builtin_mod_text: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) refactor mod-text --apply
@@ -2579,8 +2596,14 @@ _builtin_mod_snapshots: _builtin_require_environment
 
 # Namespace and accessor migration are the same selector-free refactor surface
 # as `mod`: each public verb owns one fixed rewrite of every resolved consumer.
+# The workspace profile sweeps every namespace-enabled project of the topology
+# (the root repository and each declared member) in one process: the report
+# aggregates per project and one project's findings never stop the sweep. A
+# member profile enforces only itself.
+
 _builtin_fix_namespace: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) refactor namespace-enforce --repository-root "$(PROJECT_ROOT)" --projects . --apply
+
 
 _builtin_fix_accessors: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) refactor accessor-migrate --repository-root "$(PROJECT_ROOT)" --projects . --apply

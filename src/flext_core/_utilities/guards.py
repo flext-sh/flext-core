@@ -14,8 +14,8 @@ import operator
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import c, r, t
-from flext_core._models.collection_models import FlextModelsCollections
-from flext_core._protocols.result import FlextProtocolsResult as p
+from flext_core._models import FlextModelsCollections
+from flext_core._protocols import FlextProtocolsResult
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
 from flext_core._utilities.guards_type_protocol import FlextUtilitiesGuardsTypeProtocol
@@ -111,6 +111,91 @@ class FlextUtilitiesGuards(
         return False
 
     @staticmethod
+    def _check_equality_ops(
+        value: t.GuardInput,
+        guard_spec: FlextModelsCollections.GuardCheckSpec,
+    ) -> bool:
+        """Apply the equality op dict against ``guard_spec``.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
+        for op_name, check_fn in FlextUtilitiesGuards._EQUALITY_OPS.items():
+            spec_val = getattr(guard_spec, op_name, None)
+            if spec_val is not None and not check_fn(value, spec_val):
+                return False
+        return True
+
+    @staticmethod
+    def _check_membership_ops(
+        value: t.GuardInput,
+        guard_spec: FlextModelsCollections.GuardCheckSpec,
+    ) -> bool:
+        """Apply the membership op dict against ``guard_spec``.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
+        for mem_op, mem_fn in FlextUtilitiesGuards._MEMBERSHIP_OPS.items():
+            mem_raw = getattr(guard_spec, mem_op, None)
+            if mem_raw is not None and not mem_fn(
+                value,
+                t.json_list_adapter().validate_python(mem_raw),
+            ):
+                return False
+        return True
+
+    @staticmethod
+    def _check_numeric_ops(
+        value: t.GuardInput,
+        guard_spec: FlextModelsCollections.GuardCheckSpec,
+        check_val: t.Numeric,
+    ) -> bool:
+        """Apply the numeric op dict against ``guard_spec``.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
+        for op_name, num_fn in FlextUtilitiesGuards._NUMERIC_OPS.items():
+            spec_val_num: float | str | None = getattr(guard_spec, op_name, None)
+            if spec_val_num is None:
+                continue
+            if isinstance(spec_val_num, str) and isinstance(value, str):
+                str_fn = FlextUtilitiesGuards._STRING_OPS[op_name]
+                if not str_fn(value, spec_val_num):
+                    return False
+                continue
+            if isinstance(spec_val_num, c.NUMERIC_TYPES) and not num_fn(
+                check_val,
+                spec_val_num,
+            ):
+                return False
+        return True
+
+    @staticmethod
+    def _check_contains_op(
+        value: t.GuardInput,
+        guard_spec: FlextModelsCollections.GuardCheckSpec,
+    ) -> bool:
+        """Apply the ``contains`` constraint against ``guard_spec``.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
+        if guard_spec.contains is None:
+            return True
+        return FlextUtilitiesGuardsTypeCore.container(
+            value,
+        ) and FlextUtilitiesGuards._check_iterable_contains(
+            value,
+            guard_spec.contains,
+        )
+
+    @staticmethod
     def _check_spec_ops(
         value: t.GuardInput,
         guard_spec: FlextModelsCollections.GuardCheckSpec,
@@ -122,52 +207,18 @@ class FlextUtilitiesGuards(
             The resulting ``bool``.
 
         """
-        result = True
-        for op_name, check_fn in FlextUtilitiesGuards._EQUALITY_OPS.items():
-            spec_val = getattr(guard_spec, op_name, None)
-            if spec_val is not None and not check_fn(value, spec_val):
-                result = False
-                break
-        if result:
-            for mem_op, mem_fn in FlextUtilitiesGuards._MEMBERSHIP_OPS.items():
-                mem_raw = getattr(guard_spec, mem_op, None)
-                if mem_raw is not None and not mem_fn(
-                    value,
-                    t.json_list_adapter().validate_python(mem_raw),
-                ):
-                    result = False
-                    break
-        if result:
-            for op_name, num_fn in FlextUtilitiesGuards._NUMERIC_OPS.items():
-                spec_val_num: float | str | None = getattr(guard_spec, op_name, None)
-                if spec_val_num is None:
-                    continue
-                if isinstance(spec_val_num, str) and isinstance(value, str):
-                    str_fn = FlextUtilitiesGuards._STRING_OPS[op_name]
-                    if not str_fn(value, spec_val_num):
-                        result = False
-                        break
-                    continue
-                if isinstance(spec_val_num, c.NUMERIC_TYPES) and not num_fn(
-                    check_val,
-                    spec_val_num,
-                ):
-                    result = False
-                    break
-        if result and isinstance(value, str):
-            result = FlextUtilitiesGuards._check_string_ops(value, guard_spec)
-        if result:
-            match guard_spec.contains:
-                case None:
-                    pass
-                case contains_value:
-                    result = FlextUtilitiesGuardsTypeCore.container(
-                        value,
-                    ) and FlextUtilitiesGuards._check_iterable_contains(
-                        value,
-                        contains_value,
-                    )
-        return result
+        if not FlextUtilitiesGuards._check_equality_ops(value, guard_spec):
+            return False
+        if not FlextUtilitiesGuards._check_membership_ops(value, guard_spec):
+            return False
+        if not FlextUtilitiesGuards._check_numeric_ops(value, guard_spec, check_val):
+            return False
+        if isinstance(value, str) and not FlextUtilitiesGuards._check_string_ops(
+            value,
+            guard_spec,
+        ):
+            return False
+        return FlextUtilitiesGuards._check_contains_op(value, guard_spec)
 
     @staticmethod
     def chk(
@@ -260,7 +311,7 @@ class FlextUtilitiesGuards(
         *,
         default: t.Scalar | t.JsonList | t.JsonMapping | None = None,
         return_value: bool = False,
-    ) -> t.JsonValue | bool | p.Result[t.JsonValue]:
+    ) -> t.JsonValue | bool | FlextProtocolsResult.Result[t.JsonValue]:
         fail_msg = "Guard validation failed"
         try:
             validation_passed = FlextUtilitiesGuards._check_validator(value, validator)

@@ -14,7 +14,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, MutableSequence, Sequence
 
 from flext_core import c, p, r, t
-from flext_core._models.containers import FlextModelsContainers
+from flext_core._models import FlextModelsContainers
 from flext_core._runtime._metadata import FlextRuntimeMetadata
 from flext_core._utilities.collection_iter import FlextUtilitiesCollectionIter
 from flext_core._utilities.collection_merge import FlextUtilitiesCollectionMerge

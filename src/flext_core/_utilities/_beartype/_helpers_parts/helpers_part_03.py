@@ -21,7 +21,7 @@ from flext_core._utilities._beartype._helpers_parts.helpers_part_02 import (
 # flext_core facade while this module is still being initialized.
 
 if TYPE_CHECKING:
-    from flext_core._protocols.base import FlextProtocolsBase as p
+    from flext_core._protocols import FlextProtocolsBase as p
     from flext_core._typings.base import FlextTypingBase as t
 
 

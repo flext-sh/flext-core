@@ -13,8 +13,8 @@ from typing import Annotated
 from pydantic import field_validator
 
 from flext_core import c, t
-from flext_core._models.base import FlextModelsBase as m
-from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._models.base import FlextModelsBase
+from flext_core._models.pydantic import FlextModelsPydantic
 
 _EMPTY_SCALAR_MAPPING: t.MappingKV[str, t.Scalar] = MappingProxyType({})
 
@@ -54,7 +54,7 @@ class FlextModelsContextData:
             return _EMPTY_SCALAR_MAPPING
         if isinstance(v, Mapping):
             return FlextModelsContextData._coerce_scalar_mapping(v)
-        if isinstance(v, mp.BaseModel):
+        if isinstance(v, FlextModelsPydantic.BaseModel):
             return FlextModelsContextData._coerce_scalar_mapping(v.model_dump())
         msg = c.ERR_CONTEXT_CANNOT_NORMALIZE_TYPE_TO_MAPPING.format(
             type_name=type(v).__name__,
@@ -69,12 +69,12 @@ class FlextModelsContextData:
             The resulting ``t.JsonPayload | None``.
 
         """
-        if v is None or isinstance(v, m.Metadata):
+        if v is None or isinstance(v, FlextModelsBase.Metadata):
             return v
         if isinstance(v, dict):
             try:
-                return m.Metadata.model_validate({c.FIELD_ATTRIBUTES: v})
-            except mp.ValidationError:
+                return FlextModelsBase.Metadata.model_validate({c.FIELD_ATTRIBUTES: v})
+            except FlextModelsPydantic.ValidationError:
                 return v
         return v
 
@@ -85,7 +85,7 @@ class FlextModelsContextData:
         @classmethod
         def validate_dict_serializable(
             cls,
-            v: t.MappingKV[str, t.Scalar] | mp.BaseModel | None,
+            v: t.MappingKV[str, t.Scalar] | FlextModelsPydantic.BaseModel | None,
         ) -> t.MappingKV[str, t.Scalar]:
             """Validate that data values are JSON-serializable.
 
@@ -105,16 +105,21 @@ class FlextModelsContextData:
                 for k, val in v.model_dump().items()
             })
 
-    class ContextData(SerializableDataValidatorMixin, m.FlexibleInternalModel):
+    class ContextData(
+        SerializableDataValidatorMixin,
+        FlextModelsBase.FlexibleInternalModel,
+    ):
         """Lightweight container for initializing context state."""
 
         data: Annotated[
             t.MappingKV[str, t.Scalar],
-            mp.Field(description="Initial context data as key-value pairs"),
-        ] = mp.Field(default_factory=lambda: _EMPTY_SCALAR_MAPPING)
+            FlextModelsPydantic.Field(
+                description="Initial context data as key-value pairs",
+            ),
+        ] = FlextModelsPydantic.Field(default_factory=lambda: _EMPTY_SCALAR_MAPPING)
         metadata: Annotated[
-            m.Metadata | t.MappingKV[str, t.Scalar] | None,
-            mp.Field(
+            FlextModelsBase.Metadata | t.MappingKV[str, t.Scalar] | None,
+            FlextModelsPydantic.Field(
                 default=None,
                 description="Context metadata (creation info, source, etc.)",
             ),

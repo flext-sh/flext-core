@@ -6,20 +6,20 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._typings.base import FlextTypingBase as t
+from flext_core._models import FlextModelsEnforcement
+from flext_core._typings.base import FlextTypingBase
+from flext_core._utilities import FlextUtilitiesBeartypeHelpers
 from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_01 import (
     NO_VIOLATION,
 )
-from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers as ubh
 
 
 def redundant_inner_violation(
     target: type,
-    alias_violation: t.StrMapping | None,
+    alias_violation: FlextTypingBase.StrMapping | None,
     *,
     forbid_redundant_inner: bool,
-) -> t.StrMapping | None:
+) -> FlextTypingBase.StrMapping | None:
     """Compute the redundant-inner-namespace violation.
 
     Returns:
@@ -42,9 +42,9 @@ def redundant_inner_violation(
 
 def self_ref_violation(
     target: type,
-    violation: t.StrMapping | None,
-    params: me.MroShapeParams,
-) -> t.StrMapping | None:
+    violation: FlextTypingBase.StrMapping | None,
+    params: FlextModelsEnforcement.MroShapeParams,
+) -> FlextTypingBase.StrMapping | None:
     """Compute the utilities.py self-root import violation.
 
     Returns:
@@ -53,7 +53,7 @@ def self_ref_violation(
     """
     if violation is not None or not params.require_explicit_class_when_self_ref:
         return NO_VIOLATION
-    maybe_module = ubh.runtime_module_for(target)
+    maybe_module = FlextUtilitiesBeartypeHelpers.runtime_module_for(target)
     if maybe_module is None:
         return NO_VIOLATION
 
