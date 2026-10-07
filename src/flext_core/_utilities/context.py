@@ -14,8 +14,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import t
-from flext_core._constants.infrastructure import FlextConstantsInfrastructure
-from flext_core._models.context import FlextModelsContext
+from flext_core._constants import FlextConstantsInfrastructure
+from flext_core._models import FlextModelsContext
 
 if TYPE_CHECKING:
     from datetime import datetime

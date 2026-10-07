@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Literal, overload
 
 from flext_core import m
 from flext_core._decorators._railway import FlextDecoratorsRailway
-from flext_core._protocols.result import FlextProtocolsResult
+from flext_core._protocols import FlextProtocolsResult
 from flext_core._typings.base import FlextTypingBase
 
 if TYPE_CHECKING:

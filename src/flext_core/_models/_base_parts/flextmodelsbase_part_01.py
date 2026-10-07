@@ -14,9 +14,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, override
 
+from flext_core import c
 from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
-from flext_core.constants import c
+from flext_core._utilities import FlextUtilitiesEnforcement
 
 if TYPE_CHECKING:
     from flext_core._typings.base import FlextTypingBase

@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast, override
 
-from flext_core import c, p, r, t
+from flext_core import c, m, p, r, t
 from flext_core._handlers_parts.flexthandlers_part_05 import (
     FlextHandlers as FlextHandlersPart05,
 )
@@ -90,8 +90,6 @@ class FlextHandlers[MessageT_contra, ResultT](
         resolved_name: str = handler_name or str(
             getattr(handler_callable, "__name__", "unknown_handler"),
         )
-        from flext_core import m
-
         settings = m.Handler(
             handler_id=f"callable_{id(handler_callable)}",
             handler_name=resolved_name,

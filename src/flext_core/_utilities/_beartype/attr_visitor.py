@@ -11,11 +11,11 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import ClassVar, get_origin
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement
-from flext_core._models.enforcement import FlextModelsEnforcement
+from flext_core._constants import FlextConstantsEnforcement
+from flext_core._models import FlextModelsEnforcement
 from flext_core._typings.base import FlextTypingBase
 from flext_core._typings.pydantic import FlextTypesPydantic
-from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers
+from flext_core._utilities import FlextUtilitiesBeartypeHelpers
 
 _NO_VIOLATION: FlextTypingBase.StrMapping | None = None
 _BARE_VIOLATION: FlextTypingBase.StrMapping = {}

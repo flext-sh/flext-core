@@ -11,12 +11,12 @@ from typing import TYPE_CHECKING
 
 from pydantic import ValidationError as PydanticValidationError
 
-from flext_core._constants._errors_parts.flextconstantserrors_part_03 import (
+from flext_core._constants import (
     FlextConstantsErrorsValidationExceptions,
+    FlextConstantsMixins,
 )
-from flext_core._constants.mixins import FlextConstantsMixins
-from flext_core._models.base import FlextModelsBase
-from flext_core._protocols.result import FlextProtocolsResult
+from flext_core._models import FlextModelsBase
+from flext_core._protocols import FlextProtocolsResult
 from flext_core._runtime._metadata_validation import FlextRuntimeMetadataValidation
 
 if TYPE_CHECKING:

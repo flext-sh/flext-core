@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core import c
+from flext_core import c, m
 from flext_core._handlers_parts.flexthandlers_part_02 import (
     FlextHandlers as FlextHandlersPart02,
 )
@@ -68,8 +68,6 @@ class FlextHandlers[MessageT_contra, ResultT](
 
             """
             if not hasattr(func, c.HANDLER_ATTR):
-                from flext_core import m
-
                 settings = m.DecoratorConfig(
                     command=command,
                     priority=priority,

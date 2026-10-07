@@ -14,8 +14,8 @@ from flext_core._models.base import FlextModelsBase
 from flext_core._models.entity import FlextModelsEntity
 from flext_core._models.handler import FlextModelsHandler
 from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._protocols.handler import FlextProtocolsHandler
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic
+from flext_core._protocols import FlextProtocolsHandler
+from flext_core._utilities import FlextUtilitiesPydantic
 
 
 class FlextModelsRegistry:

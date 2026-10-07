@@ -81,21 +81,21 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
     reinstantiating the source or overriding ``settings_customise_sources``.
     """
 
+    @override
     def __init__(
         self,
         settings_cls: type[BaseSettings],
         yaml_file: PathType | None = None,
-        yaml_file_encoding: str | None = None,
         yaml_config_section: str | None = None,
         *,
         deep_merge: bool = False,
         transform: Callable[[dict[str, JsonValue]], dict[str, JsonValue]] | None = None,
     ) -> None:
+        """Initialize the YAML source with an optional deep merge and transform hook."""
         self._transform = transform
         super().__init__(
             settings_cls,
             yaml_file=yaml_file,
-            yaml_file_encoding=yaml_file_encoding,
             yaml_config_section=yaml_config_section,
             deep_merge=deep_merge,
         )

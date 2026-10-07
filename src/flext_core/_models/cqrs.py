@@ -19,10 +19,18 @@ from flext_core._models._cqrs_parts.flextmodelscqrs_part_01 import (
     FlextModelsCqrs as FlextModelsCqrsPart01,
 )
 from flext_core._models.base import FlextModelsBase as m
+from flext_core._runtime import FlextRuntimeMetadata
+from flext_core._utilities import FlextUtilitiesGenerators
 
 # NOTE (multi-agent): mro-i6nq.12 — consolidated _cqrs_parts/part_01..02 (one
 # FlextModelsCqrs namespace class split across a numbered MRO chain) into this
 # single facade module.
+# NOTE: the utilities facade (``flext_core.utilities``) is NOT importable from
+# here: ``flext_core._models.cqrs <-> flext_core.utilities`` is a true cycle
+# through the lazy ``e``/``m`` letter resolution (utilities facade -> logging
+# context part -> e -> exceptions -> m -> models.py -> this module). The two
+# consumed symbols are flattened to their concrete owners through the lazy
+# family inits, which resolve single leaf modules without touching the facade.
 
 
 class FlextModelsCqrs(FlextModelsCqrsPart01):
@@ -32,16 +40,6 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
     All nested classes can be accessed via FlextModels.Cqrs.* (type aliases) or
     directly via FlextModelsCqrs.*
     """
-
-    @staticmethod
-    def _u() -> type:
-        """Facade access to utilities used by CQRS defaults and validators.
-
-        Returns:
-            The resulting ``type``.
-
-        """
-        return u
 
     class Command(m.ArbitraryTypesModel):
         """Base class for CQRS commands with validation."""
@@ -68,7 +66,9 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
                 examples=["cmd_01HZX7Q0P5N6M2"],
             ),
         ] = Field(
-            default_factory=lambda: FlextModelsCqrs._u().generate_prefixed_id("cmd"),
+            default_factory=lambda: FlextUtilitiesGenerators.generate_prefixed_id(
+                "cmd",
+            ),
         )
         issuer_id: Annotated[
             t.NonEmptyStr | None,
@@ -121,7 +121,9 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
                 examples=["query_01HZX7Q0P5N6M2"],
             ),
         ] = Field(
-            default_factory=lambda: FlextModelsCqrs._u().generate_prefixed_id("query"),
+            default_factory=lambda: FlextUtilitiesGenerators.generate_prefixed_id(
+                "query",
+            ),
         )
         query_type: Annotated[
             str | None,
@@ -147,7 +149,7 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
                 "Pagination",
                 FlextModelsCqrsPart01.Pagination,
             )
-            normalized_input = FlextModelsCqrs._u().normalize_model_input_mapping(v)
+            normalized_input = FlextRuntimeMetadata.normalize_model_input_mapping(v)
             if normalized_input is None:
                 return pagination_cls()
             try:
@@ -232,7 +234,9 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
                 examples=["evt_01HZX7Q0P5N6M2"],
             ),
         ] = Field(
-            default_factory=lambda: FlextModelsCqrs._u().generate_prefixed_id("evt"),
+            default_factory=lambda: FlextUtilitiesGenerators.generate_prefixed_id(
+                "evt",
+            ),
         )
         data: Annotated[
             t.MappingKV[str, t.Scalar],

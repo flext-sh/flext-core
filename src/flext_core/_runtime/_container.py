@@ -14,19 +14,20 @@ from typing import TYPE_CHECKING, Literal, TypeGuard
 from pydantic import BaseModel
 
 from flext_core import c
-from flext_core._models.containers import FlextModelsContainers
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._protocols.context import FlextProtocolsContext
-from flext_core._protocols.handler import FlextProtocolsHandler
-from flext_core._protocols.loggings import FlextProtocolsLogging
-from flext_core._protocols.settings import FlextProtocolsSettings
+from flext_core._models import FlextModelsContainers, FlextModelsPydantic
+from flext_core._protocols import (
+    FlextProtocolsContext,
+    FlextProtocolsHandler,
+    FlextProtocolsLogging,
+    FlextProtocolsSettings,
+)
 from flext_core._runtime._metadata_validation import FlextRuntimeMetadataValidation
 from flext_core._typings.base import FlextTypingBase
 from flext_core._typings.typeadapters import FlextTypesTypeAdapters
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core._utilities import FlextUtilitiesGuardsTypeCore
 
 if TYPE_CHECKING:
-    from flext_core._protocols.base import FlextProtocolsBase
+    from flext_core._protocols import FlextProtocolsBase
     from flext_core._typings.services import FlextTypesServices
 
 

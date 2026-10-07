@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 from pydantic import BaseModel
 
 from flext_core import c
-from flext_core._protocols.result import FlextProtocolsResult
+from flext_core._protocols import FlextProtocolsResult
 from flext_core._runtime._metadata import FlextRuntimeMetadata
 from flext_core._typings.typeadapters import FlextTypesTypeAdapters
 

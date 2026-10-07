@@ -9,7 +9,7 @@ from __future__ import annotations
 import inspect
 import types as _types_mod
 
-from flext_core._models.enforcement import FlextModelsEnforcement
+from flext_core._models import FlextModelsEnforcement
 from flext_core._typings.base import FlextTypingBase
 
 _NO_VIOLATION: FlextTypingBase.StrMapping | None = None

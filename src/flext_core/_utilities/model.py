@@ -14,9 +14,8 @@ from typing import overload
 from pydantic import TypeAdapter
 
 from flext_core import c, e, p, r, t
-from flext_core._models.base import FlextModelsBase
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._utilities.args import FlextUtilitiesArgs
+from flext_core._models import FlextModelsBase, FlextModelsPydantic
+from flext_core._utilities import FlextUtilitiesArgs
 
 
 class FlextUtilitiesModel:

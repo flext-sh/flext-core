@@ -26,8 +26,8 @@ from flext_core._typings.pydantic import FlextTypesPydantic
 from flext_core._typings.services import FlextTypesServices
 
 
-class FlextTypesTypeAdapters:
-    """Cached ``FlextTypesPydantic.TypeAdapter`` factories.
+class FlextTypesTypeAdapterJson:
+    """JSON-shape cached TypeAdapter factories.
 
     Shared through the ``FlextTypingBase`` facade.
     """
@@ -150,6 +150,10 @@ class FlextTypesTypeAdapters:
                 FlextTypesPydantic.JsonValue | None,
             ],
         )
+
+
+class FlextTypesTypeAdapterScalars:
+    """Scalar and binary cached TypeAdapter factories."""
 
     @classmethod
     @cache
@@ -277,6 +281,16 @@ class FlextTypesTypeAdapters:
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[Callable[..., FlextTypesPydantic.JsonValue]]:
         return TypeAdapter(Callable[..., FlextTypesPydantic.JsonValue])
+
+
+class FlextTypesTypeAdapters(FlextTypesTypeAdapterJson, FlextTypesTypeAdapterScalars):
+    """Cached ``FlextTypesPydantic.TypeAdapter`` factories.
+
+    JSON-shape factories live in ``FlextTypesTypeAdapterJson`` and
+    scalar/binary factories in ``FlextTypesTypeAdapterScalars``; this
+    class composes both so the public ``FlextTypingBase`` surface stays
+    unchanged.
+    """
 
 
 __all__: list[str] = ["FlextTypesTypeAdapters"]

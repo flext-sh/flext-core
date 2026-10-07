@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from beartype import BeartypeConf, BeartypeStrategy
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement
+from flext_core._constants import FlextConstantsEnforcement
 
 
 class FlextUtilitiesBeartypeConf:

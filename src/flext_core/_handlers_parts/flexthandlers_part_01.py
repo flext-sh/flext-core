@@ -14,7 +14,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar, Unpack
 
 from flext_core import c, e, m, x
-from flext_core._utilities.handler import FlextUtilitiesHandler
+from flext_core._utilities import FlextUtilitiesHandler
 
 if TYPE_CHECKING:
     from pydantic import ConfigDict

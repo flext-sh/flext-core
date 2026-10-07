@@ -11,11 +11,13 @@ from functools import wraps
 from typing import TYPE_CHECKING, ClassVar, TypeIs
 
 from flext_core import FlextContainer, c, m
-from flext_core._models.flext_context import FlextContext
-from flext_core._protocols.base import FlextProtocolsBase
-from flext_core._protocols.container import FlextProtocolsContainer
-from flext_core._protocols.context import FlextProtocolsContext
-from flext_core._protocols.loggings import FlextProtocolsLogging
+from flext_core._models import FlextContext
+from flext_core._protocols import (
+    FlextProtocolsBase,
+    FlextProtocolsContainer,
+    FlextProtocolsContext,
+    FlextProtocolsLogging,
+)
 from flext_core._typings.services import FlextTypesServices
 from flext_core.loggings import FlextUtilitiesLogging
 

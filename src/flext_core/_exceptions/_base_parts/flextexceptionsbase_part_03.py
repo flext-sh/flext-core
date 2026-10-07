@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from collections.abc import MutableMapping
 
     from flext_core import m
-    from flext_core._protocols.result import FlextProtocolsResult
+    from flext_core._protocols import FlextProtocolsResult
     from flext_core._typings.services import FlextTypesServices
 
 

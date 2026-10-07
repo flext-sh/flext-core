@@ -9,8 +9,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import c, r, t
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._protocols.result import FlextProtocolsResult
+from flext_core._models import FlextModelsPydantic
+from flext_core._protocols import FlextProtocolsResult
 
 
 class FlextUtilitiesArgs:

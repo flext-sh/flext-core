@@ -22,8 +22,7 @@ from typing import TYPE_CHECKING
 from pydantic import BaseModel
 
 from flext_core import c, p, t
-from flext_core._models.container import FlextModelsContainer
-from flext_core._models.service import FlextModelsService
+from flext_core._models import FlextModelsContainer, FlextModelsService
 
 if TYPE_CHECKING:
     from types import ModuleType

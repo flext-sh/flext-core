@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
+from typing import cast, override
 
 from pydantic import BaseModel, PrivateAttr
 
@@ -75,6 +75,7 @@ class FlextResultBase[T](BaseModel):
             return None
         return dict(normalized)
 
+    @override
     def __init__(
         self,
         error_code: str | None = None,

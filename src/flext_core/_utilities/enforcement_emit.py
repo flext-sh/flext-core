@@ -11,12 +11,12 @@ import warnings
 from types import MappingProxyType
 from typing import ClassVar
 
-from flext_core._constants import _enforcement_data
-from flext_core._constants.enforcement import (
+from flext_core._constants import (
     FlextConstantsEnforcement,
     FlextMroViolation,
+    _enforcement_data,
 )
-from flext_core._models.enforcement import FlextModelsEnforcement
+from flext_core._models import FlextModelsEnforcement
 from flext_core._typings.base import FlextTypingBase
 
 

@@ -12,8 +12,8 @@ from typing import TYPE_CHECKING
 
 from flext_core import c, u
 from flext_core._decorators._logging_payloads import FlextDecoratorsLoggingPayloads
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._protocols.loggings import FlextProtocolsLogging
+from flext_core._models import FlextModelsPydantic
+from flext_core._protocols import FlextProtocolsLogging
 from flext_core._typings.base import FlextTypingBase
 
 if TYPE_CHECKING:

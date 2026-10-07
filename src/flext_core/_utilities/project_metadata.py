@@ -17,11 +17,13 @@ from functools import cache
 from importlib.metadata import Distribution, DistributionFinder
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_core._constants.file import FlextConstantsFile
-from flext_core._constants.mixins import FlextConstantsMixins
-from flext_core._constants.project_metadata import FlextConstantsProjectMetadata
-from flext_core._models.project_metadata import FlextModelsProjectMetadata
-from flext_core._protocols.project_metadata import FlextProtocolsProjectMetadata
+from flext_core._constants import (
+    FlextConstantsFile,
+    FlextConstantsMixins,
+    FlextConstantsProjectMetadata,
+)
+from flext_core._models import FlextModelsProjectMetadata
+from flext_core._protocols import FlextProtocolsProjectMetadata
 from flext_core._typings.base import FlextTypingBase
 
 if TYPE_CHECKING:

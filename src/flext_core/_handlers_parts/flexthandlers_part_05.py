@@ -15,7 +15,7 @@ from flext_core import c, p, r
 from flext_core._handlers_parts.flexthandlers_part_04 import (
     FlextHandlers as FlextHandlersPart04,
 )
-from flext_core._utilities.handler import FlextUtilitiesHandler
+from flext_core._utilities import FlextUtilitiesHandler
 
 
 class FlextHandlers[MessageT_contra, ResultT](

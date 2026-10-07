@@ -7,11 +7,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import c, e, p, r, t
-from flext_core._models.exception_params import FlextModelsExceptionParams
+from flext_core._models import FlextModelsExceptionParams
+from flext_core._utilities import FlextUtilitiesGuards
 from flext_core._utilities._mapper_extract_parts.mapper_extract_part_01 import (
     FlextUtilitiesMapperExtract as FlextUtilitiesMapperExtractPart01,
 )
-from flext_core._utilities.guards import FlextUtilitiesGuards
 
 
 class FlextUtilitiesMapperExtract(FlextUtilitiesMapperExtractPart01):

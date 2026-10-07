@@ -11,14 +11,16 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import TypeVar
 
-from flext_core._models._enforcement._sources import FlextModelsEnforcementSources
-from flext_core._protocols.container import FlextProtocolsContainer
-from flext_core._protocols.context import FlextProtocolsContext
-from flext_core._protocols.handler import FlextProtocolsHandler
-from flext_core._protocols.loggings import FlextProtocolsLogging
-from flext_core._protocols.result import FlextProtocolsResult
-from flext_core._protocols.service import FlextProtocolsService
-from flext_core._protocols.settings import FlextProtocolsSettings
+from flext_core._models import FlextModelsEnforcementSources
+from flext_core._protocols import (
+    FlextProtocolsContainer,
+    FlextProtocolsContext,
+    FlextProtocolsHandler,
+    FlextProtocolsLogging,
+    FlextProtocolsResult,
+    FlextProtocolsService,
+    FlextProtocolsSettings,
+)
 from flext_core._typings.base import FlextTypingBase
 from flext_core._typings.config import FlextTypingConfig
 from flext_core._typings.containers import FlextTypingContainers

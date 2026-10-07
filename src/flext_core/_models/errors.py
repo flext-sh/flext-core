@@ -12,7 +12,7 @@ from typing import Annotated, Self
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._typings.base import FlextTypingBase
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic
+from flext_core._utilities import FlextUtilitiesPydantic
 
 
 class FlextModelsErrors:

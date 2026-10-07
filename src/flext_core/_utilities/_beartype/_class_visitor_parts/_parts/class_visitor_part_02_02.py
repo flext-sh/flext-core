@@ -6,12 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._models.enforcement import FlextModelsEnforcement
+from flext_core._models import FlextModelsEnforcement
 from flext_core._typings.base import FlextTypingBase
+from flext_core._utilities import FlextUtilitiesBeartypeHelpers
 from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_01 import (
     NO_VIOLATION,
 )
-from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers
 
 
 def redundant_inner_violation(

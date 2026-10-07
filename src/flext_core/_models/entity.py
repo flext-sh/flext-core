@@ -20,8 +20,7 @@ from pydantic import Field
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.domain_event import FlextModelsDomainEvent
 from flext_core._typings.base import FlextTypingBase
-from flext_core._utilities.domain import FlextUtilitiesDomain
-from flext_core._utilities.generators import FlextUtilitiesGenerators
+from flext_core._utilities import FlextUtilitiesDomain, FlextUtilitiesGenerators
 
 
 class FlextModelsEntity:

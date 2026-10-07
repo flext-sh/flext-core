@@ -10,7 +10,7 @@ from typing import Annotated, Literal
 
 from pydantic import Discriminator, Field
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement
+from flext_core._constants import FlextConstantsEnforcement
 from flext_core._models._enforcement._base import (
     FlextModelsEnforcementBase,
     FlextModelsEnforcementModelBase,

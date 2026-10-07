@@ -12,10 +12,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from flext_core import c, t
-from flext_core._models.containers import FlextModelsContainers
-from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._models import FlextModelsContainers, FlextModelsPydantic
 from flext_core._runtime._base import FlextRuntimeBase
-from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
+from flext_core._utilities import FlextUtilitiesGuardsTypeModel
 
 if TYPE_CHECKING:
     from flext_core import m

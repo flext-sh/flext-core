@@ -19,7 +19,7 @@ from flext_core._runtime._metadata_validation import FlextRuntimeMetadataValidat
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from flext_core._protocols.result import FlextProtocolsResult
+    from flext_core._protocols import FlextProtocolsResult
     from flext_core._typings.base import FlextTypingBase
     from flext_core._typings.services import FlextTypesServices
 

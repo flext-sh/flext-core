@@ -20,11 +20,11 @@ from typing import (
     is_protocol,
 )
 
-from flext_core._models.enforcement import FlextModelsEnforcement
-from flext_core._utilities._beartype.type_aliases import (
+from flext_core._models import FlextModelsEnforcement
+from flext_core._utilities import (
     FlextUtilitiesBeartypeTypeAliases,
+    FlextUtilitiesFamilySurface,
 )
-from flext_core._utilities.family_surface import FlextUtilitiesFamilySurface
 
 if TYPE_CHECKING:
     from flext_core._typings.base import FlextTypingBase

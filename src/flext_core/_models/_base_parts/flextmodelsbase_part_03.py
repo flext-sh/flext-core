@@ -15,6 +15,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Annotated, ClassVar, Self
 
+from flext_core import c
 from flext_core._models._base_parts.flextmodelsbase_part_02 import (
     FlextModelsBase as FlextModelsBasePart02,
 )
@@ -25,7 +26,6 @@ from flext_core._runtime._metadata_validation import (
 from flext_core._typings.base import FlextTypingBase as t
 from flext_core._utilities.generators import FlextUtilitiesGenerators as ug
 from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
-from flext_core.constants import c
 
 
 class FlextModelsBase(FlextModelsBasePart02):
@@ -53,15 +53,20 @@ class FlextModelsBase(FlextModelsBasePart02):
         # declared on plain class-body functions; wrapping the marked function in
         # ``staticmethod`` silently drops it from ``__pydantic_decorators__`` and
         # the default datetime serializer takes over (``Z`` instead of
-        # ``isoformat()``).
+        # ``isoformat()``). Plain mode takes the two-parameter ``(self, value)``
+        # signature: pydantic 2.13's signature check rejects every other shape.
         @up.field_serializer("created_at", "updated_at", when_used="json")
-        def serialize_timestamps(self: datetime | None) -> str | None:
+        def serialize_timestamps(self, value: datetime | None) -> str | None:
             """Serialize timestamps to ISO 8601 for JSON.
+
+            Args:
+                value: The timestamp value pydantic hands the serializer.
 
             Returns:
                 The resulting ``str | None``.
+
             """
-            return self.isoformat() if self else None
+            return value.isoformat() if value else None
 
         @mp.model_validator(mode="after")
         def validate_timestamp_consistency(self) -> Self:

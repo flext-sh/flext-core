@@ -16,19 +16,19 @@ from typing import ClassVar, TypeAliasType, override
 
 from pydantic.fields import FieldInfo
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement
-from flext_core._models.enforcement import FlextModelsEnforcement
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._protocols.base import FlextProtocolsBase
+from flext_core._constants import FlextConstantsEnforcement
+from flext_core._models import FlextModelsEnforcement, FlextModelsPydantic
+from flext_core._protocols import FlextProtocolsBase
 from flext_core._typings.base import FlextTypingBase
+from flext_core._utilities import FlextUtilitiesBeartypeTypeAliases
+from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_03 import (
+    FlextUtilitiesBeartypeClassVisitor,
+)
 from flext_core._utilities._beartype._helpers_parts.helpers_part_03 import (
     FlextUtilitiesBeartypeHelpers,
 )
 from flext_core._utilities._beartype.attr_visitor import (
     FlextUtilitiesBeartypeAttrVisitor,
-)
-from flext_core._utilities._beartype.class_visitor import (
-    FlextUtilitiesBeartypeClassVisitor,
 )
 from flext_core._utilities._beartype.deprecated_visitor import (
     FlextUtilitiesBeartypeDeprecatedVisitor,
@@ -44,9 +44,6 @@ from flext_core._utilities._beartype.method_visitor import (
 )
 from flext_core._utilities._beartype.module_visitor import (
     FlextUtilitiesBeartypeModuleVisitor,
-)
-from flext_core._utilities._beartype.type_aliases import (
-    FlextUtilitiesBeartypeTypeAliases,
 )
 from flext_core._utilities.beartype_typingext_patch import (
     FlextUtilitiesBeartypeTypingExtPatch,
@@ -118,18 +115,54 @@ class FlextUtilitiesBeartypeEngine(
 
         """
         if isinstance(params, FlextModelsEnforcement.AttrShapeParams):
-            if params.forbid_any_in_alias:
-                match args:
-                    case (_, alias) if isinstance(alias, TypeAliasType):
-                        return FlextUtilitiesBeartypeTypeAliases.deferred(
-                            alias,
-                            recursive=True,
-                            owner=owner,
-                        )
-                    case _:
-                        return ()
+            return FlextUtilitiesBeartypeEngine._attr_shape_deferred(
+                params,
+                owner,
+                args,
+            )
+        return FlextUtilitiesBeartypeEngine._field_shape_deferred(
+            params,
+            owner,
+            args,
+        )
+
+    @staticmethod
+    def _attr_shape_deferred(
+        params: FlextModelsEnforcement.AttrShapeParams,
+        owner: type,
+        args: tuple[FlextProtocolsBase.AttributeProbe, ...],
+    ) -> tuple[FlextModelsEnforcement.DeferredAlias, ...]:
+        """Compute deferred aliases for attribute-shape params.
+
+        Returns:
+            The resulting ``tuple[me.DeferredAlias, ...]``.
+
+        """
+        if not params.forbid_any_in_alias:
             return ()
-        if not isinstance(params, FlextModelsEnforcement.FieldShapeParams) or not args:
+        match args:
+            case (_, alias) if isinstance(alias, TypeAliasType):
+                return FlextUtilitiesBeartypeTypeAliases.deferred(
+                    alias,
+                    recursive=True,
+                    owner=owner,
+                )
+            case _:
+                return ()
+
+    @staticmethod
+    def _field_shape_deferred(
+        params: FlextModelsEnforcement.FieldShapeParams,
+        owner: type,
+        args: tuple[FlextProtocolsBase.AttributeProbe, ...],
+    ) -> tuple[FlextModelsEnforcement.DeferredAlias, ...]:
+        """Compute deferred aliases for field-shape params.
+
+        Returns:
+            The resulting ``tuple[me.DeferredAlias, ...]``.
+
+        """
+        if not args:
             return ()
         info = args[-1]
         if not isinstance(info, FieldInfo) or params.require_description:
@@ -140,6 +173,20 @@ class FlextUtilitiesBeartypeEngine(
                 recursive=params.forbid_any,
                 owner=owner,
             )
+        return FlextUtilitiesBeartypeEngine._field_shape_tail(info, params, owner)
+
+    @staticmethod
+    def _field_shape_tail(
+        info: FieldInfo,
+        params: FlextModelsEnforcement.FieldShapeParams,
+        owner: type,
+    ) -> tuple[FlextModelsEnforcement.DeferredAlias, ...]:
+        """Compute deferred aliases for factory/string-shape field flags.
+
+        Returns:
+            The resulting ``tuple[me.DeferredAlias, ...]``.
+
+        """
         if params.forbid_mutable_default:
             return ()
         if (

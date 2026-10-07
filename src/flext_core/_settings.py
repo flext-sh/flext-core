@@ -36,8 +36,7 @@ from typing import Annotated, ClassVar, Self
 from pydantic import BaseModel, Field, computed_field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from flext_core._constants.environment import FlextConstantsEnvironment
-from flext_core._constants.settings import FlextConstantsSettings
+from flext_core._constants import FlextConstantsEnvironment, FlextConstantsSettings
 
 ENV_FILE_ENV_VAR = FlextConstantsSettings.ENV_FILE_ENV_VAR
 """Bootstrap env var that overrides the .env path (SSOT: ``_constants/settings``)."""

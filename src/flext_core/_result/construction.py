@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Self, cast
 from pydantic import BaseModel, ValidationError
 
 from flext_core import c
-from flext_core._protocols.result import FlextProtocolsResult
+from flext_core._protocols import FlextProtocolsResult
 from flext_core._result.base import FlextResultBase
 from flext_core._result.behavior import FlextResultBehavior
 

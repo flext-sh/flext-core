@@ -20,8 +20,7 @@ from flext_core._models.base import FlextModelsBase
 from flext_core._models.containers import FlextModelsContainers
 from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._runtime._container import FlextRuntimeContainer
-from flext_core._utilities.generators import FlextUtilitiesGenerators
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core._utilities import FlextUtilitiesGenerators, FlextUtilitiesGuardsTypeCore
 
 
 class FlextModelsContainer:

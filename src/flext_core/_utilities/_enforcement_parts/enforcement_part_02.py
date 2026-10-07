@@ -12,10 +12,9 @@ from typing import ClassVar
 
 from pydantic_settings import BaseSettings
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement
-from flext_core._models.enforcement import FlextModelsEnforcement
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._protocols.base import FlextProtocolsBase
+from flext_core._constants import FlextConstantsEnforcement
+from flext_core._models import FlextModelsEnforcement, FlextModelsPydantic
+from flext_core._protocols import FlextProtocolsBase
 from flext_core._utilities._enforcement_parts.enforcement_part_01 import (
     PREDICATE_BINDINGS,
 )
@@ -106,29 +105,32 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
             target,
             BaseSettings,
         )
-        rule_layer = FlextConstantsEnforcement.ENFORCEMENT_TAG_LAYER.get(tag, "")
         if "[" in target.__name__:
             return
+        yield from FlextUtilitiesEnforcement._category_items(
+            target,
+            tag,
+            category,
+            effective_layer,
+            is_model=is_model,
+        )
 
-        def walk(
-            node: type,
-            path: str,
-        ) -> Iterator[tuple[str, tuple[FlextProtocolsBase.AttributeProbe, ...]]]:
-            iterator = (
-                FlextUtilitiesEnforcement._iter_effective
-                if tag == "proto_inner_kind"
-                else FlextUtilitiesEnforcement._iter_inner
-            )
-            for name, value in iterator(node):
-                nested = f"{path}.{name}"
-                yield nested, (value,)
-                if FlextUtilitiesBeartypeEngine.has_runtime_protocol_marker(
-                    value,
-                ) or FlextUtilitiesBeartypeEngine.has_nested_namespace(
-                    value,
-                ):
-                    yield from walk(value, nested)
+    @classmethod
+    def _category_items(
+        cls,
+        target: type,
+        tag: str,
+        category: FlextConstantsEnforcement.EnforcementCategory,
+        effective_layer: str,
+        *,
+        is_model: bool,
+    ) -> Iterator[tuple[str, tuple[FlextProtocolsBase.AttributeProbe, ...]]]:
+        """Resolve one enforcement category to its item iterator.
 
+        Returns:
+            The resulting item iterator.
+
+        """
         items: Iterator[tuple[str, tuple[FlextProtocolsBase.AttributeProbe, ...]]] = (
             iter(())
         )
@@ -142,6 +144,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
             if is_model:
                 items = iter(((target.__qualname__, (target,)),))
         elif category is FlextConstantsEnforcement.EnforcementCategory.ATTR:
+            rule_layer = FlextConstantsEnforcement.ENFORCEMENT_TAG_LAYER.get(tag, "")
             if rule_layer.lower() == effective_layer:
                 items = FlextUtilitiesEnforcement._attr_items(target, effective_layer)
         elif category is FlextConstantsEnforcement.EnforcementCategory.NAMESPACE:
@@ -155,9 +158,36 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
             and effective_layer
             == FlextConstantsEnforcement.EnforcementLayer.PROTOCOLS.lower()
         ):
-            items = walk(target, target.__qualname__)
+            items = cls._walk_protocol_tree(target, tag, target.__qualname__)
+        return items
 
-        yield from items
+    @classmethod
+    def _walk_protocol_tree(
+        cls,
+        node: type,
+        tag: str,
+        path: str,
+    ) -> Iterator[tuple[str, tuple[FlextProtocolsBase.AttributeProbe, ...]]]:
+        """Walk one namespace value tree, yielding protocol/nested entries.
+
+        Yields:
+            Each ``tuple[str, tuple[p.AttributeProbe, ...]]``.
+
+        """
+        iterator = (
+            FlextUtilitiesEnforcement._iter_effective
+            if tag == "proto_inner_kind"
+            else FlextUtilitiesEnforcement._iter_inner
+        )
+        for name, value in iterator(node):
+            nested = f"{path}.{name}"
+            yield nested, (value,)
+            if FlextUtilitiesBeartypeEngine.has_runtime_protocol_marker(
+                value,
+            ) or FlextUtilitiesBeartypeEngine.has_nested_namespace(
+                value,
+            ):
+                yield from cls._walk_protocol_tree(value, tag, nested)
 
     @staticmethod
     def _check(

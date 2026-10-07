@@ -8,10 +8,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement
-from flext_core._models.enforcement import FlextModelsEnforcement
+from flext_core._constants import FlextConstantsEnforcement
+from flext_core._models import FlextModelsEnforcement
 from flext_core._typings.base import FlextTypingBase
-from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers
+from flext_core._utilities import FlextUtilitiesBeartypeHelpers
 
 _MIN_FAMILY_MODULE_PARTS = 2
 

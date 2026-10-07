@@ -12,9 +12,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement
+from flext_core._constants import FlextConstantsEnforcement
 from flext_core._typings.base import FlextTypingBase
-from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
+from flext_core._utilities import FlextUtilitiesEnforcement
 
 if TYPE_CHECKING:
     from flext_core._typings.pydantic import FlextTypesPydantic

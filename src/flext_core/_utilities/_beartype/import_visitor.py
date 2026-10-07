@@ -10,16 +10,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._models.enforcement import FlextModelsEnforcement
+from flext_core._models import FlextModelsEnforcement
 from flext_core._typings.base import FlextTypingBase
-from flext_core._utilities._beartype._alias_visitor import (
+from flext_core._utilities import (
     FlextUtilitiesBeartypeAliasVisitor,
+    FlextUtilitiesBeartypeLibraryVisitor,
 )
 from flext_core._utilities._beartype._import_blacklist_visitor import (
     _ImportBlacklistVisitor,
-)
-from flext_core._utilities._beartype._library_visitor import (
-    FlextUtilitiesBeartypeLibraryVisitor,
 )
 
 

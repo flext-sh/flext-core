@@ -19,7 +19,7 @@ from flext_core import c, p, t
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.containers import FlextModelsContainers
 from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic
+from flext_core._utilities import FlextUtilitiesPydantic
 
 
 class FlextModelsHandler:

@@ -10,13 +10,15 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING, TypeIs
 
 from flext_core import c, t
-from flext_core._protocols.container import FlextProtocolsContainer
-from flext_core._protocols.context import FlextProtocolsContext
-from flext_core._protocols.handler import FlextProtocolsHandler
-from flext_core._protocols.loggings import FlextProtocolsLogging
-from flext_core._protocols.result import FlextProtocolsResult
-from flext_core._protocols.service import FlextProtocolsService
-from flext_core._protocols.settings import FlextProtocolsSettings
+from flext_core._protocols import (
+    FlextProtocolsContainer,
+    FlextProtocolsContext,
+    FlextProtocolsHandler,
+    FlextProtocolsLogging,
+    FlextProtocolsResult,
+    FlextProtocolsService,
+    FlextProtocolsSettings,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable

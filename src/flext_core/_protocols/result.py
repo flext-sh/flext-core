@@ -58,8 +58,8 @@ class FlextProtocolsResult:
         def success(self) -> bool: ...
 
     @runtime_checkable
-    class Result[T](Protocol):
-        """Structural railway result contract; invariant payload."""
+    class ResultState[T](Protocol):
+        """Structural state surface of the railway result contract."""
 
         @property
         def error(self) -> str | None: ...
@@ -86,6 +86,10 @@ class FlextProtocolsResult:
         ) -> None: ...
 
         def __or__[D](self, default: D) -> T | D: ...
+
+    @runtime_checkable
+    class ResultOps[T](Protocol):
+        """Structural monadic-operation surface of the result contract."""
 
         def unwrap(self) -> T: ...
         def unwrap_or[D](self, default: D) -> T | D: ...
@@ -154,6 +158,10 @@ class FlextProtocolsResult:
         ) -> FlextProtocolsResult.Result[U]: ...
 
         def __bool__(self) -> bool: ...
+
+    @runtime_checkable
+    class Result[T](ResultState[T], ResultOps[T], Protocol):
+        """Structural railway result contract; invariant payload."""
 
     @runtime_checkable
     class SuccessCheckable(Protocol):

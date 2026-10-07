@@ -13,7 +13,7 @@ from flext_core import c
 from flext_core._typings.base import FlextTypingBase
 
 if TYPE_CHECKING:
-    from flext_core._protocols.loggings import FlextProtocolsLogging
+    from flext_core._protocols import FlextProtocolsLogging
     from flext_core._typings.services import FlextTypesServices
 
 

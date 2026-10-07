@@ -14,8 +14,8 @@ import operator
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import c, r, t
-from flext_core._models.collection_models import FlextModelsCollections
-from flext_core._protocols.result import FlextProtocolsResult
+from flext_core._models import FlextModelsCollections
+from flext_core._protocols import FlextProtocolsResult
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
 from flext_core._utilities.guards_type_protocol import FlextUtilitiesGuardsTypeProtocol

@@ -107,6 +107,8 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart02):
 
         Returns:
             The resulting ``bool``.
+        from flext_core._typings.services import FlextTypesServices as ts
+        from flext_core._typings.base import FlextTypingBase as tb
 
         """
         if not accepted_types or message_type is None:
@@ -126,6 +128,7 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart02):
         Returns:
             The resulting ``tb.VariadicTuple[tb.TypeHintSpecifier]``.
 
+        from flext_core._typings.base import FlextTypingBase as tb
         """
         message_types: MutableSequence[tb.TypeHintSpecifier] = []
         generic_types = cls._extract_generic_message_types(handler_class)
@@ -145,9 +148,6 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart02):
 
         Raises:
             TypeError: If message does not provide a valid route.
-
-        Returns:
-            The resulting ``str``.
 
         """
         if isinstance(msg, str):

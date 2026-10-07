@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import ClassVar, override
 
 from pydantic import ValidationError as _PydanticValidationError
 
@@ -134,6 +134,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
             "bytes": bytes,
         }
 
+        @override
         def __init__(
             self,
             message: str,

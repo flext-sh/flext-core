@@ -9,11 +9,9 @@ from __future__ import annotations
 from types import ModuleType
 from typing import Annotated, TypeAliasType, get_args, get_origin
 
-from flext_core._models.enforcement import FlextModelsEnforcement
-from flext_core._protocols.base import FlextProtocolsBase
-from flext_core._utilities._beartype.module_source import (
-    FlextUtilitiesBeartypeModuleSource,
-)
+from flext_core._models import FlextModelsEnforcement
+from flext_core._protocols import FlextProtocolsBase
+from flext_core._utilities import FlextUtilitiesBeartypeModuleSource
 
 
 class FlextUtilitiesBeartypeTypeAliases:

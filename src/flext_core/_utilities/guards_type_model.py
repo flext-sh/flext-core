@@ -15,9 +15,8 @@ from flext_core import t
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core._models.pydantic import FlextModelsPydantic
-    from flext_core._protocols.base import FlextProtocolsBase
-    from flext_core._protocols.result import FlextProtocolsResult
+    from flext_core._models import FlextModelsPydantic
+    from flext_core._protocols import FlextProtocolsBase, FlextProtocolsResult
 
 
 class FlextUtilitiesGuardsTypeModel:
@@ -82,6 +81,7 @@ class FlextUtilitiesGuardsTypeModel:
         Returns:
             The resulting ``TypeIs[mp.BaseModel]``.
 
+        from pydantic import BaseModel as PydanticBaseModel
         """
         return (
             isinstance(value, PydanticBaseModel)

@@ -12,8 +12,8 @@ import importlib.metadata
 from types import MappingProxyType
 from typing import TYPE_CHECKING, cast
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement
-from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata
+from flext_core._constants import FlextConstantsEnforcement
+from flext_core._utilities import FlextUtilitiesProjectMetadata
 from flext_core.lazy import normalize_lazy_imports
 
 if TYPE_CHECKING:
