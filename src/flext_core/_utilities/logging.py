@@ -153,17 +153,6 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
         """
         return self.bind(**context)
 
-    def _should_include_stack_trace(self) -> bool:
-        """Whether stack traces should be included in exception logging.
-
-        Returns:
-            ``True`` — stack traces are included by default for all
-            exceptions routed through the structured logging facade.
-            Subclasses may override to suppress them selectively.
-
-        """
-        return True
-
     def _exception_context_from_inputs(
         self,
         resolved_exception: Exception | None,

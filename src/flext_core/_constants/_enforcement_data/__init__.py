@@ -63,6 +63,7 @@ class _ExemptionData(BaseModel):
     infrastructure_bases: tuple[str, ...]
     constants_skip_attrs: tuple[str, ...]
     utilities_exempt_methods: tuple[str, ...]
+    utilities_stateful_adapters: dict[str, str]
     layer_allows: dict[str, tuple[str, ...]]
     value_object_bases: tuple[str, ...]
     nested_mro_min_depth: int
@@ -108,6 +109,9 @@ ENFORCEMENT_CONSTANTS_SKIP_ATTRS: frozenset[str] = frozenset(
 )
 ENFORCEMENT_UTILITIES_EXEMPT_METHODS: frozenset[str] = frozenset(
     _EXEMPTIONS.utilities_exempt_methods,
+)
+ENFORCEMENT_UTILITIES_STATEFUL_ADAPTERS: frozenset[str] = frozenset(
+    _EXEMPTIONS.utilities_stateful_adapters,
 )
 ENFORCEMENT_LAYER_ALLOWS: t.MappingKV[str, frozenset[str]] = MappingProxyType({
     layer: frozenset(kinds) for layer, kinds in _EXEMPTIONS.layer_allows.items()
@@ -178,6 +182,7 @@ __all__: list[str] = [
     "ENFORCEMENT_TAG_COLLECT",
     "ENFORCEMENT_TAG_LAYER",
     "ENFORCEMENT_UTILITIES_EXEMPT_METHODS",
+    "ENFORCEMENT_UTILITIES_STATEFUL_ADAPTERS",
     "ENFORCEMENT_VALUE_OBJECT_BASES",
     "ENFORCE_FLEXT_CORE_PATH_MARKERS",
     "ENFORCE_NON_WORKSPACE_PATH_MARKERS",

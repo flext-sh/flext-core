@@ -37,7 +37,7 @@ from pydantic_settings import (
 
 from flext_core._constants import FlextConstantsConfig
 from flext_core._settings import app_env_prefix, platform_config_root
-from flext_core.config_sources import StrictYamlConfigSource
+from flext_core.config_sources import FlextStrictYamlConfigSource
 
 if TYPE_CHECKING:
     from flext_core import t
@@ -199,7 +199,7 @@ class FlextConfig(BaseSettings):
             env_settings,
             # NOTE (multi-agent): one canonical loader rejects duplicate keys
             # before settings construction; consumers never add local parsers.
-            StrictYamlConfigSource(
+            FlextStrictYamlConfigSource(
                 settings_cls,
                 yaml_file=cls._config_files(),
                 yaml_config_section=FlextConstantsConfig.YAML_CONFIG_SECTION,

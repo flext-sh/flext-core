@@ -58,7 +58,6 @@ class FlextUtilitiesEnforcementCollect(part_01.FlextUtilitiesEnforcementCollect)
 
         Yields:
             Each ``tuple[str, tuple[pb.AttributeProbe, ...]]``.
-        from flext_core._protocols.base import FlextProtocolsBase as pb
 
         """
         for name, value in vars(target).items():

@@ -57,7 +57,8 @@ class FlextModelsBase(FlextModelsBasePart02):
         # from ``__pydantic_decorators__`` (the default datetime serializer
         # then takes over, emitting ``Z`` instead of ``isoformat()``).
         @up.field_serializer("created_at", "updated_at", when_used="json")
-        def serialize_timestamps(self, value: datetime | None) -> str | None:
+        @classmethod
+        def serialize_timestamps(cls, value: datetime | None) -> str | None:
             """Serialize timestamps to ISO 8601 for JSON.
 
             Returns:

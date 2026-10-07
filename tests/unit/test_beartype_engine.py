@@ -102,7 +102,13 @@ class TestsFlextCoreBeartypeEngine(
         expected: bool,
     ) -> None:
         """Public names pass unless they are dunder-exempt utility methods."""
-        assert FlextUtilitiesBeartypeEngine.attr_accept_utility(name) is expected
+        assert (
+            FlextUtilitiesBeartypeEngine.attr_accept_utility(
+                FlextUtilitiesBeartypeEngine,
+                name,
+            )
+            is expected
+        )
 
     @staticmethod
     def test_attr_accept_constants_accepts_public_plain_value() -> None:

@@ -10,6 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from pydantic import (
     AfterValidator,
     PlainSerializer,
@@ -51,16 +53,24 @@ class FlextUtilitiesPydantic:
     # flext-tests) inherit FlextUtilities and import-time-resolve
     # ``u.field_validator`` / ``u.computed_field`` / ``u.field_serializer``;
     # duplicating the typed overload stacks here is rejected by the
-    # duplication gate. A ``staticmethod(...)`` wrap of the raw pydantic
-    # function collapses the overloads to the first one (or to Unknown) —
-    # pyright: "Argument missing for parameter ``mode``" / untyped-decorator
-    # on every consumer call site — so every decorated surface aliases the
-    # models-layer typed owner; runtime keeps the same function object.
-    computed_field = mp.computed_field
-    field_validator = mp.field_validator
-    field_serializer = mp.field_serializer
-    model_validator = mp.model_validator
-    model_serializer = mp.model_serializer
+    # duplication gate. Checkers alias the typed owner directly so the
+    # overload set carries through the facade; runtime wraps the same
+    # function object in ``staticmethod`` so the Utilities layer stays
+    # stateless under the method-shape census (a bare function attribute
+    # would read as an instance method), while the class-level access still
+    # yields pydantic's own function.
+    if TYPE_CHECKING:
+        computed_field = mp.computed_field
+        field_validator = mp.field_validator
+        field_serializer = mp.field_serializer
+        model_validator = mp.model_validator
+        model_serializer = mp.model_serializer
+    else:
+        computed_field = staticmethod(mp.computed_field)
+        field_validator = staticmethod(mp.field_validator)
+        field_serializer = staticmethod(mp.field_serializer)
+        model_validator = staticmethod(mp.model_validator)
+        model_serializer = staticmethod(mp.model_serializer)
 
     AfterValidator = AfterValidator
     BeforeValidator = mp.BeforeValidator
