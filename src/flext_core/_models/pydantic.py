@@ -419,29 +419,20 @@ class FlextModelsPydantic:
             | Callable[[Mapping[str, Any]], None]
             | None = ...,
             repr: bool = ...,
-            return_type: Any = ...,
+            return_type: FlextTypingBase.TypeHintSpecifier = ...,
         ) -> Callable[[PropertyT], PropertyT]: ...
 
         @staticmethod
         def computed_field(
             func: ComputedFieldCallable | None = None,
             /,
-            *,
-            alias: str | None = None,
-            alias_priority: int | None = None,
-            exclude_if: Callable[[Any], bool] | None = None,
-            title: str | None = None,
-            field_title_generator: Callable[[Any, Any], str] | None = None,
-            description: str | None = None,
-            deprecated: str | bool | None = None,
-            examples: list[Any] | None = None,
-            json_schema_extra: Mapping[str, Any]
-            | Callable[[Mapping[str, Any]], None]
-            | None = None,
-            repr: bool = True,
-            return_type: Any = PydanticUndefined,
+            **options: object,
         ) -> Any:
             """Delegate to pydantic's ``computed_field`` (type-checking only).
+
+            The keyword surface is carried by the stacked overloads above; the
+            implementation forwards the options verbatim, so the mirror cannot
+            drift from pydantic's signature one keyword at a time.
 
             Returns:
                 The resulting pydantic decorator or decorated descriptor.
@@ -449,19 +440,7 @@ class FlextModelsPydantic:
             """
             decorator_factory: Callable[..., Any] = computed_field
             if func is None:
-                return decorator_factory(
-                    alias=alias,
-                    alias_priority=alias_priority,
-                    exclude_if=exclude_if,
-                    title=title,
-                    field_title_generator=field_title_generator,
-                    description=description,
-                    deprecated=deprecated,
-                    examples=examples,
-                    json_schema_extra=json_schema_extra,
-                    repr=repr,
-                    return_type=return_type,
-                )
+                return decorator_factory(**options)
             return decorator_factory(func)
 
         @overload
@@ -482,7 +461,7 @@ class FlextModelsPydantic:
                 "json",
                 "json-with-timestamps",
             ] = ...,
-            return_type: Any = ...,
+            return_type: FlextTypingBase.TypeHintSpecifier = ...,
         ) -> Callable[[SerializerT], SerializerT]: ...
 
         @overload
@@ -496,7 +475,7 @@ class FlextModelsPydantic:
                 "json",
                 "json-with-timestamps",
             ] = ...,
-            return_type: Any = ...,
+            return_type: FlextTypingBase.TypeHintSpecifier = ...,
         ) -> Callable[[SerializerT], SerializerT]: ...
 
         @staticmethod
