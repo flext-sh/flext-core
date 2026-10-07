@@ -65,9 +65,15 @@ class _ImportBlacklistVisitor:
                         module_name,
                     )
                     and not (
-                        value in target.__bases__
-                        and _ubh.family_facade(target)
-                        and _ubh.family_facade(value)
+                        (
+                            value in target.__bases__
+                            and _ubh.family_facade(target)
+                            and _ubh.family_facade(value)
+                        )
+                        or _ImportBlacklistVisitor._is_lazy_published_member(
+                            module,
+                            value,
+                        )
                     )
                 ),
                 no_violation,
@@ -116,6 +122,40 @@ class _ImportBlacklistVisitor:
                     no_violation,
                 )
         return violation
+
+    @staticmethod
+    def _is_lazy_published_member(module: object, value: type) -> bool:
+        """Return True when the module publishes the lazy export contract.
+
+        *value* must be one of its lazy-published family members. The catalog
+        exempts "a consumer facade whose package publishes the lazy export
+        contract and requires a family member": ``install_lazy_exports`` binds
+        family members into the consumer facade's namespace through
+        ``__getattr__``, so the census observes them in ``vars(module)``
+        (after first access) although the module never imports them eagerly.
+        The published ``_LAZY_IMPORTS`` map names every member's owning
+        module.
+
+        Returns:
+            True when *value* is a lazy-published family member of *module*.
+
+        """
+        lazy_imports = getattr(module, "_LAZY_IMPORTS", None)
+        values = getattr(lazy_imports, "values", None)
+        if values is None:
+            return False
+        module_name = getattr(module, "__name__", "")
+        origin = _ubh.object_module_name_for(value) or ""
+        owners = {
+            rel
+            if rel.startswith(".")
+            else f"{module_name}.{rel}"
+            if not rel.startswith(module_name)
+            else rel
+            for rel in values()
+            if isinstance(rel, str)
+        }
+        return origin in owners
 
     @staticmethod
     def _is_local_family_import(origin: str, module_name: str) -> bool:

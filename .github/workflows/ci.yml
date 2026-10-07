@@ -63,7 +63,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          submodules: false
+          # The workspace gates render member-derived surfaces (uv-workspace
+          # members, per-member docs sections) from DISK STATE: with the
+          # submodules absent, the generator's render diverges from any
+          # submodule-initialized commit and the conform drift gate can
+          # never pass (merge-admin 2026-10-07, root CI evidence). The CI
+          # checkout materializes the members so the render matches the
+          # canonical committed state.
+          submodules: recursive
           persist-credentials: false
           fetch-depth: 0
       # Why: GitHub runners expose umask 002, so git checkout materializes

@@ -233,7 +233,7 @@ endif
 
 endif
 endif
-DOCS_ACTIONS := generate fix fmt validate audit
+DOCS_ACTIONS := generate fix fmt build validate audit
  # End SECTION: verb dispatch
 
 # === SECTION: lint/type paths (managed) ===
@@ -334,19 +334,21 @@ set -eu; \
 	if [ -z "$$caller_xdg_data_home" ] && [ -n "$$caller_home" ]; then \
 		caller_xdg_data_home="$$caller_home/.local/share"; \
 	fi; \
+	caller_flext_setup_credential_store="$${FLEXT_SETUP_CREDENTIAL_STORE:-}"; \
 	caller_path="$$PATH"; \
 	mise_trusted_config_paths="$$project_root"; \
-mise_lockfile_platforms="linux-x64,linux-x64-musl,linux-arm64,macos-x64,macos-arm64,windows-x64"; \
-caller_comspec="$${COMSPEC:-}"; \
-caller_pathext="$${PATHEXT:-}"; \
-caller_systemroot="$${SYSTEMROOT:-}"; \
-caller_windir="$${WINDIR:-}"; \
-caller_github_token="$${GITHUB_TOKEN:-}"; \
-caller_gh_token="$${GH_TOKEN:-}"; \
-caller_mise_github_token="$${MISE_GITHUB_TOKEN:-}"; \
-caller_mise_http_timeout="$${MISE_HTTP_TIMEOUT:-}"; \
-caller_flext_mypy_profile_output="$${FLEXT_MYPY_PROFILE_OUTPUT:-}"; \
-caller_mise_version="$${MISE_VERSION:-}"; \
+		mise_lockfile_platforms="linux-x64,linux-x64-musl,linux-arm64,macos-x64,macos-arm64,windows-x64"; \
+		caller_comspec="$${COMSPEC:-}"; \
+		caller_pathext="$${PATHEXT:-}"; \
+		caller_systemroot="$${SYSTEMROOT:-}"; \
+		caller_windir="$${WINDIR:-}"; \
+		caller_github_token="$${GITHUB_TOKEN:-}"; \
+		caller_gh_token="$${GH_TOKEN:-}"; \
+		caller_mise_github_token="$${MISE_GITHUB_TOKEN:-}"; \
+		caller_mise_http_timeout="$${MISE_HTTP_TIMEOUT:-}"; \
+		caller_flext_mypy_profile_output="$${FLEXT_MYPY_PROFILE_OUTPUT:-}"; \
+		caller_flext_setup_credential_store="$${FLEXT_SETUP_CREDENTIAL_STORE:-}"; \
+		caller_mise_version="$${MISE_VERSION:-}"; \
 mise_pin_file="$(MISE_VERSION_PIN)"; \
 	mise_pin=; \
 	if [ -f "$$mise_pin_file" ]; then \
@@ -450,11 +452,11 @@ mise_pin_file="$(MISE_VERSION_PIN)"; \
 		exit "$$bootstrap_status"' EXIT; \
 	printf 'mise scratch: allocated path=%s\n' "$$scratch" >&2; \
 	mkdir -p "$$scratch/home" "$$scratch/home" "$$scratch/appdata" "$$scratch/appdata" "$$scratch/xdg-config" "$$scratch/xdg-data" "$$scratch/xdg-cache" "$$scratch/xdg-state" "$$scratch/config" "$$scratch/tmp" "$$scratch/." "$$scratch/system-config" "$$scratch/system-data" "$$scratch/system-installs" "$$scratch/system-shims" "$$scratch/tmp" "$$scratch/tmp" "$$scratch/tmp"; \
-: > "$$scratch/global-config.toml"; chmod 600 "$$scratch/global-config.toml"; \
-: > "$$scratch/system-config/config.toml"; chmod 600 "$$scratch/system-config/config.toml"; \
-: > "$$scratch/gitconfig"; chmod 600 "$$scratch/gitconfig"; \
-: > "$$scratch/netrc"; chmod 600 "$$scratch/netrc"; \
-mise_exec() { \
+		: > "$$scratch/global-config.toml"; chmod 600 "$$scratch/global-config.toml"; \
+		: > "$$scratch/system-config/config.toml"; chmod 600 "$$scratch/system-config/config.toml"; \
+		: > "$$scratch/gitconfig"; chmod 600 "$$scratch/gitconfig"; \
+		: > "$$scratch/netrc"; chmod 600 "$$scratch/netrc"; \
+		mise_exec() { \
 		mise_config_mode="$$1"; shift; \
 		case "$$mise_config_mode" in \
 			no-config) mise_config_argument='MISE_NO_CONFIG=1' ;; \
@@ -467,80 +469,86 @@ mise_exec() { \
 			if [ "$(OS)" = "Windows_NT" ]; then mise_runtime_path="$$mise_runtime_path.exe"; fi; \
 		fi; \
 		env -i \
-'GIT_CONFIG_NOSYSTEM=1' \
-'GIT_TERMINAL_PROMPT=0' \
-'LANG=C' \
-'LC_ALL=C' \
-'MISE_SAFE=1' \
-'MISE_PARANOID=true' \
-'MISE_NO_ENV=1' \
-'MISE_NO_HOOKS=1' \
-'MISE_AUTO_ENV=false' \
-'MISE_AUTO_INSTALL=false' \
-'MISE_EXEC_AUTO_INSTALL=false' \
-'MISE_TASK_RUN_AUTO_INSTALL=false' \
-'MISE_AUTO_UPDATE=false' \
-'MISE_HTTP_RETRIES=0' \
-'MISE_NETRC=false' \
-'MISE_NOT_FOUND_AUTO_INSTALL=false' \
-'MISE_NOT_FOUND_SYSTEM_FALLBACK=false' \
-'MISE_OVERRIDE_CONFIG_FILENAMES=.mise.toml' \
-'MISE_OVERRIDE_TOOL_VERSIONS_FILENAMES=none' \
-'MISE_GITHUB_GH_CLI_TOKENS=false' \
-'MISE_GITHUB_USE_GIT_CREDENTIALS=false' \
-'MISE_GITHUB_OAUTH_CLIENT_ID=' \
-'MISE_GITHUB_OAUTH_EXPORT_ENV=' \
-'MISE_GITHUB_OAUTH_OPEN_BROWSER=false' \
-'MISE_LOCKFILE=true' \
-'MISE_LOCKED=true' \
-'MISE_MINIMUM_RELEASE_AGE=10d' \
-'MISE_NPM_PACKAGE_MANAGER=bun' \
-$${mise_lockfile_platforms:+"MISE_LOCKFILE_PLATFORMS=$$mise_lockfile_platforms"} \
-"HOME=$$scratch/home" \
-"USERPROFILE=$$scratch/home" \
-"APPDATA=$$scratch/appdata" \
-"LOCALAPPDATA=$$scratch/appdata" \
-"XDG_CONFIG_HOME=$$scratch/xdg-config" \
-"XDG_DATA_HOME=$$scratch/xdg-data" \
-"XDG_CACHE_HOME=$$scratch/xdg-cache" \
-"XDG_STATE_HOME=$$scratch/xdg-state" \
-"NETRC=$$scratch/netrc" \
-"GIT_CONFIG_GLOBAL=$$scratch/gitconfig" \
-"MISE_NETRC_FILE=$$scratch/netrc" \
-"MISE_GLOBAL_CONFIG_FILE=$$scratch/global-config.toml" \
-"MISE_CONFIG_DIR=$$scratch/config" \
-"MISE_TMP_DIR=$$scratch/tmp" \
-"MISE_GLOBAL_CONFIG_ROOT=$$scratch/." \
-"MISE_SYSTEM_CONFIG_DIR=$$scratch/system-config" \
-"MISE_SYSTEM_CONFIG_FILE=$$scratch/system-config/config.toml" \
-"MISE_SYSTEM_DATA_DIR=$$scratch/system-data" \
-"MISE_SYSTEM_INSTALLS_DIR=$$scratch/system-installs" \
-"MISE_SYSTEM_SHIMS_DIR=$$scratch/system-shims" \
-"TMPDIR=$$scratch/tmp" \
-"TMP=$$scratch/tmp" \
-"TEMP=$$scratch/tmp" \
-"MISE_DATA_DIR=$$mise_storage_root" \
-"MISE_CACHE_DIR=$$mise_storage_root/cache" \
-"MISE_STATE_DIR=$$mise_storage_root/state" \
-"MISE_INSTALLS_DIR=$$mise_storage_root/installs" \
-"MISE_SHIMS_DIR=$$mise_storage_root/shims" \
-"UV_CACHE_DIR=$$mise_storage_root/uv-cache" \
-"GIT_CEILING_DIRECTORIES=$$project_parent" \
+				'GIT_CONFIG_NOSYSTEM=1' \
+				'GIT_TERMINAL_PROMPT=0' \
+				'LANG=C' \
+				'LC_ALL=C' \
+				'MISE_SAFE=1' \
+				'MISE_PARANOID=true' \
+				'MISE_NO_ENV=1' \
+				'MISE_NO_HOOKS=1' \
+				'MISE_AUTO_ENV=false' \
+				'MISE_AUTO_INSTALL=false' \
+				'MISE_EXEC_AUTO_INSTALL=false' \
+				'MISE_TASK_RUN_AUTO_INSTALL=false' \
+				'MISE_AUTO_UPDATE=false' \
+				'MISE_HTTP_RETRIES=0' \
+				'MISE_NETRC=false' \
+				'MISE_NOT_FOUND_AUTO_INSTALL=false' \
+				'MISE_NOT_FOUND_SYSTEM_FALLBACK=false' \
+				'MISE_OVERRIDE_CONFIG_FILENAMES=.mise.toml' \
+				'MISE_OVERRIDE_TOOL_VERSIONS_FILENAMES=none' \
+				'MISE_GITHUB_GH_CLI_TOKENS=false' \
+				'MISE_GITHUB_USE_GIT_CREDENTIALS=false' \
+				'MISE_GITHUB_OAUTH_CLIENT_ID=' \
+				'MISE_GITHUB_OAUTH_EXPORT_ENV=' \
+				'MISE_GITHUB_OAUTH_OPEN_BROWSER=false' \
+				'MISE_LOCKFILE=true' \
+				'MISE_LOCKED=true' \
+				'MISE_MINIMUM_RELEASE_AGE=10d' \
+				'MISE_NPM_PACKAGE_MANAGER=bun' \
+				$${mise_lockfile_platforms:+"MISE_LOCKFILE_PLATFORMS=$$mise_lockfile_platforms"} \
+				"HOME=$$scratch/home" \
+				"USERPROFILE=$$scratch/home" \
+				"APPDATA=$$scratch/appdata" \
+				"LOCALAPPDATA=$$scratch/appdata" \
+				"XDG_CONFIG_HOME=$$scratch/xdg-config" \
+				"XDG_DATA_HOME=$$scratch/xdg-data" \
+				"XDG_CACHE_HOME=$$scratch/xdg-cache" \
+				"XDG_STATE_HOME=$$scratch/xdg-state" \
+				"NETRC=$$scratch/netrc" \
+				"GIT_CONFIG_GLOBAL=$$scratch/gitconfig" \
+				"MISE_NETRC_FILE=$$scratch/netrc" \
+				"MISE_GLOBAL_CONFIG_FILE=$$scratch/global-config.toml" \
+				"MISE_CONFIG_DIR=$$scratch/config" \
+				"MISE_TMP_DIR=$$scratch/tmp" \
+				"MISE_GLOBAL_CONFIG_ROOT=$$scratch/." \
+				"MISE_SYSTEM_CONFIG_DIR=$$scratch/system-config" \
+				"MISE_SYSTEM_CONFIG_FILE=$$scratch/system-config/config.toml" \
+				"MISE_SYSTEM_DATA_DIR=$$scratch/system-data" \
+				"MISE_SYSTEM_INSTALLS_DIR=$$scratch/system-installs" \
+				"MISE_SYSTEM_SHIMS_DIR=$$scratch/system-shims" \
+				"TMPDIR=$$scratch/tmp" \
+				"TMP=$$scratch/tmp" \
+				"TEMP=$$scratch/tmp" \
+				"MISE_DATA_DIR=$$mise_storage_root" \
+				"MISE_CACHE_DIR=$$mise_storage_root/cache" \
+				"MISE_STATE_DIR=$$mise_storage_root/state" \
+				"MISE_INSTALLS_DIR=$$mise_storage_root/installs" \
+				"MISE_SHIMS_DIR=$$mise_storage_root/shims" \
+				"UV_CACHE_DIR=$$mise_storage_root/uv-cache" \
+				"GIT_CEILING_DIRECTORIES=$$project_parent" \
 			"MISE_CEILING_PATHS=$$project_parent" \
 			"MISE_TRUSTED_CONFIG_PATHS=$$mise_trusted_config_paths" \
-$${caller_path:+"PATH=$$caller_path"} \
-$${caller_comspec:+"COMSPEC=$$caller_comspec"} \
-$${caller_pathext:+"PATHEXT=$$caller_pathext"} \
-$${caller_systemroot:+"SYSTEMROOT=$$caller_systemroot"} \
-$${caller_windir:+"WINDIR=$$caller_windir"} \
-$${caller_github_token:+"GITHUB_TOKEN=$$caller_github_token"} \
-$${caller_gh_token:+"GH_TOKEN=$$caller_gh_token"} \
-$${caller_mise_github_token:+"MISE_GITHUB_TOKEN=$$caller_mise_github_token"} \
-$${caller_mise_http_timeout:+"MISE_HTTP_TIMEOUT=$$caller_mise_http_timeout"} \
-$${caller_flext_mypy_profile_output:+"FLEXT_MYPY_PROFILE_OUTPUT=$$caller_flext_mypy_profile_output"} \
-$${caller_mise_version:+"MISE_VERSION=$$caller_mise_version"} \
-$${mise_config_argument:+"$$mise_config_argument"} \
+				$${caller_path:+"PATH=$$caller_path"} \
+				$${caller_comspec:+"COMSPEC=$$caller_comspec"} \
+				$${caller_pathext:+"PATHEXT=$$caller_pathext"} \
+				$${caller_systemroot:+"SYSTEMROOT=$$caller_systemroot"} \
+				$${caller_windir:+"WINDIR=$$caller_windir"} \
+				$${caller_github_token:+"GITHUB_TOKEN=$$caller_github_token"} \
+				$${caller_gh_token:+"GH_TOKEN=$$caller_gh_token"} \
+				$${caller_mise_github_token:+"MISE_GITHUB_TOKEN=$$caller_mise_github_token"} \
+				$${caller_mise_http_timeout:+"MISE_HTTP_TIMEOUT=$$caller_mise_http_timeout"} \
+				$${caller_flext_mypy_profile_output:+"FLEXT_MYPY_PROFILE_OUTPUT=$$caller_flext_mypy_profile_output"} \
+				$${caller_flext_setup_credential_store:+"FLEXT_SETUP_CREDENTIAL_STORE=$$caller_flext_setup_credential_store"} \
+				$${caller_mise_version:+"MISE_VERSION=$$caller_mise_version"} \
+				$${mise_config_argument:+"$$mise_config_argument"} \
 			$${mise_runtime_path:+"MISE_INSTALL_PATH=$$mise_runtime_path"} \
+				$${caller_flext_setup_credential_store:+GIT_CONFIG_COUNT=2} \
+				$${caller_flext_setup_credential_store:+GIT_CONFIG_KEY_0=credential.https://github.com.helper} \
+				$${caller_flext_setup_credential_store:+GIT_CONFIG_VALUE_0="store --file=$$caller_flext_setup_credential_store"} \
+				$${caller_flext_setup_credential_store:+GIT_CONFIG_KEY_1=credential.https://github.com.username} \
+				$${caller_flext_setup_credential_store:+GIT_CONFIG_VALUE_1=x-access-token} \
 			"$$@"; \
 	}; \
 	mise_offline() { \
@@ -567,7 +575,11 @@ $${mise_config_argument:+"$$mise_config_argument"} \
 		tool_paths="$${tool_paths:+$$tool_paths:}$$tool_path"; \
 	done < "$$scratch/paths"; \
 	if [ -z "$$tool_paths" ]; then printf 'ERROR: Mise returned no installed tool paths; run make setup\n' >&2; exit 2; fi; \
-	PATH="$(RUNTIME_BIN):$$tool_paths:$$caller_path" "$$@"
+	if [ -n "$$caller_flext_setup_credential_store" ]; then \
+		GIT_CONFIG_COUNT=2 GIT_CONFIG_KEY_0=credential.https://github.com.helper GIT_CONFIG_VALUE_0="store --file=$$caller_flext_setup_credential_store" GIT_CONFIG_KEY_1=credential.https://github.com.username GIT_CONFIG_VALUE_1=x-access-token PATH="$(RUNTIME_BIN):$$tool_paths:$$caller_path" "$$@"; \
+	else \
+		PATH="$(RUNTIME_BIN):$$tool_paths:$$caller_path" "$$@"; \
+	fi
 endef
 override PROJECT_TOOL_EXEC = $(SHELL) -c '$(subst ','"'"',$(PROJECT_TOOL_RUNTIME))' --
 
@@ -595,19 +607,21 @@ _bootstrap_setup_tools:
 	if [ -z "$$caller_xdg_data_home" ] && [ -n "$$caller_home" ]; then \
 		caller_xdg_data_home="$$caller_home/.local/share"; \
 	fi; \
+	caller_flext_setup_credential_store="$${FLEXT_SETUP_CREDENTIAL_STORE:-}"; \
 	caller_path="$$PATH"; \
 	mise_trusted_config_paths="$$project_root"; \
-mise_lockfile_platforms="linux-x64,linux-x64-musl,linux-arm64,macos-x64,macos-arm64,windows-x64"; \
-caller_comspec="$${COMSPEC:-}"; \
-caller_pathext="$${PATHEXT:-}"; \
-caller_systemroot="$${SYSTEMROOT:-}"; \
-caller_windir="$${WINDIR:-}"; \
-caller_github_token="$${GITHUB_TOKEN:-}"; \
-caller_gh_token="$${GH_TOKEN:-}"; \
-caller_mise_github_token="$${MISE_GITHUB_TOKEN:-}"; \
-caller_mise_http_timeout="$${MISE_HTTP_TIMEOUT:-}"; \
-caller_flext_mypy_profile_output="$${FLEXT_MYPY_PROFILE_OUTPUT:-}"; \
-caller_mise_version="$${MISE_VERSION:-}"; \
+		mise_lockfile_platforms="linux-x64,linux-x64-musl,linux-arm64,macos-x64,macos-arm64,windows-x64"; \
+		caller_comspec="$${COMSPEC:-}"; \
+		caller_pathext="$${PATHEXT:-}"; \
+		caller_systemroot="$${SYSTEMROOT:-}"; \
+		caller_windir="$${WINDIR:-}"; \
+		caller_github_token="$${GITHUB_TOKEN:-}"; \
+		caller_gh_token="$${GH_TOKEN:-}"; \
+		caller_mise_github_token="$${MISE_GITHUB_TOKEN:-}"; \
+		caller_mise_http_timeout="$${MISE_HTTP_TIMEOUT:-}"; \
+		caller_flext_mypy_profile_output="$${FLEXT_MYPY_PROFILE_OUTPUT:-}"; \
+		caller_flext_setup_credential_store="$${FLEXT_SETUP_CREDENTIAL_STORE:-}"; \
+		caller_mise_version="$${MISE_VERSION:-}"; \
 mise_pin_file="$(MISE_VERSION_PIN)"; \
 	mise_pin=; \
 	if [ -f "$$mise_pin_file" ]; then \
@@ -711,11 +725,11 @@ mise_pin_file="$(MISE_VERSION_PIN)"; \
 		exit "$$bootstrap_status"' EXIT; \
 	printf 'mise scratch: allocated path=%s\n' "$$scratch" >&2; \
 	mkdir -p "$$scratch/home" "$$scratch/home" "$$scratch/appdata" "$$scratch/appdata" "$$scratch/xdg-config" "$$scratch/xdg-data" "$$scratch/xdg-cache" "$$scratch/xdg-state" "$$scratch/config" "$$scratch/tmp" "$$scratch/." "$$scratch/system-config" "$$scratch/system-data" "$$scratch/system-installs" "$$scratch/system-shims" "$$scratch/tmp" "$$scratch/tmp" "$$scratch/tmp"; \
-: > "$$scratch/global-config.toml"; chmod 600 "$$scratch/global-config.toml"; \
-: > "$$scratch/system-config/config.toml"; chmod 600 "$$scratch/system-config/config.toml"; \
-: > "$$scratch/gitconfig"; chmod 600 "$$scratch/gitconfig"; \
-: > "$$scratch/netrc"; chmod 600 "$$scratch/netrc"; \
-mise_exec() { \
+		: > "$$scratch/global-config.toml"; chmod 600 "$$scratch/global-config.toml"; \
+		: > "$$scratch/system-config/config.toml"; chmod 600 "$$scratch/system-config/config.toml"; \
+		: > "$$scratch/gitconfig"; chmod 600 "$$scratch/gitconfig"; \
+		: > "$$scratch/netrc"; chmod 600 "$$scratch/netrc"; \
+		mise_exec() { \
 		mise_config_mode="$$1"; shift; \
 		case "$$mise_config_mode" in \
 			no-config) mise_config_argument='MISE_NO_CONFIG=1' ;; \
@@ -728,80 +742,86 @@ mise_exec() { \
 			if [ "$(OS)" = "Windows_NT" ]; then mise_runtime_path="$$mise_runtime_path.exe"; fi; \
 		fi; \
 		env -i \
-'GIT_CONFIG_NOSYSTEM=1' \
-'GIT_TERMINAL_PROMPT=0' \
-'LANG=C' \
-'LC_ALL=C' \
-'MISE_SAFE=1' \
-'MISE_PARANOID=true' \
-'MISE_NO_ENV=1' \
-'MISE_NO_HOOKS=1' \
-'MISE_AUTO_ENV=false' \
-'MISE_AUTO_INSTALL=false' \
-'MISE_EXEC_AUTO_INSTALL=false' \
-'MISE_TASK_RUN_AUTO_INSTALL=false' \
-'MISE_AUTO_UPDATE=false' \
-'MISE_HTTP_RETRIES=0' \
-'MISE_NETRC=false' \
-'MISE_NOT_FOUND_AUTO_INSTALL=false' \
-'MISE_NOT_FOUND_SYSTEM_FALLBACK=false' \
-'MISE_OVERRIDE_CONFIG_FILENAMES=.mise.toml' \
-'MISE_OVERRIDE_TOOL_VERSIONS_FILENAMES=none' \
-'MISE_GITHUB_GH_CLI_TOKENS=false' \
-'MISE_GITHUB_USE_GIT_CREDENTIALS=false' \
-'MISE_GITHUB_OAUTH_CLIENT_ID=' \
-'MISE_GITHUB_OAUTH_EXPORT_ENV=' \
-'MISE_GITHUB_OAUTH_OPEN_BROWSER=false' \
-'MISE_LOCKFILE=true' \
-'MISE_LOCKED=true' \
-'MISE_MINIMUM_RELEASE_AGE=10d' \
-'MISE_NPM_PACKAGE_MANAGER=bun' \
-$${mise_lockfile_platforms:+"MISE_LOCKFILE_PLATFORMS=$$mise_lockfile_platforms"} \
-"HOME=$$scratch/home" \
-"USERPROFILE=$$scratch/home" \
-"APPDATA=$$scratch/appdata" \
-"LOCALAPPDATA=$$scratch/appdata" \
-"XDG_CONFIG_HOME=$$scratch/xdg-config" \
-"XDG_DATA_HOME=$$scratch/xdg-data" \
-"XDG_CACHE_HOME=$$scratch/xdg-cache" \
-"XDG_STATE_HOME=$$scratch/xdg-state" \
-"NETRC=$$scratch/netrc" \
-"GIT_CONFIG_GLOBAL=$$scratch/gitconfig" \
-"MISE_NETRC_FILE=$$scratch/netrc" \
-"MISE_GLOBAL_CONFIG_FILE=$$scratch/global-config.toml" \
-"MISE_CONFIG_DIR=$$scratch/config" \
-"MISE_TMP_DIR=$$scratch/tmp" \
-"MISE_GLOBAL_CONFIG_ROOT=$$scratch/." \
-"MISE_SYSTEM_CONFIG_DIR=$$scratch/system-config" \
-"MISE_SYSTEM_CONFIG_FILE=$$scratch/system-config/config.toml" \
-"MISE_SYSTEM_DATA_DIR=$$scratch/system-data" \
-"MISE_SYSTEM_INSTALLS_DIR=$$scratch/system-installs" \
-"MISE_SYSTEM_SHIMS_DIR=$$scratch/system-shims" \
-"TMPDIR=$$scratch/tmp" \
-"TMP=$$scratch/tmp" \
-"TEMP=$$scratch/tmp" \
-"MISE_DATA_DIR=$$mise_storage_root" \
-"MISE_CACHE_DIR=$$mise_storage_root/cache" \
-"MISE_STATE_DIR=$$mise_storage_root/state" \
-"MISE_INSTALLS_DIR=$$mise_storage_root/installs" \
-"MISE_SHIMS_DIR=$$mise_storage_root/shims" \
-"UV_CACHE_DIR=$$mise_storage_root/uv-cache" \
-"GIT_CEILING_DIRECTORIES=$$project_parent" \
+				'GIT_CONFIG_NOSYSTEM=1' \
+				'GIT_TERMINAL_PROMPT=0' \
+				'LANG=C' \
+				'LC_ALL=C' \
+				'MISE_SAFE=1' \
+				'MISE_PARANOID=true' \
+				'MISE_NO_ENV=1' \
+				'MISE_NO_HOOKS=1' \
+				'MISE_AUTO_ENV=false' \
+				'MISE_AUTO_INSTALL=false' \
+				'MISE_EXEC_AUTO_INSTALL=false' \
+				'MISE_TASK_RUN_AUTO_INSTALL=false' \
+				'MISE_AUTO_UPDATE=false' \
+				'MISE_HTTP_RETRIES=0' \
+				'MISE_NETRC=false' \
+				'MISE_NOT_FOUND_AUTO_INSTALL=false' \
+				'MISE_NOT_FOUND_SYSTEM_FALLBACK=false' \
+				'MISE_OVERRIDE_CONFIG_FILENAMES=.mise.toml' \
+				'MISE_OVERRIDE_TOOL_VERSIONS_FILENAMES=none' \
+				'MISE_GITHUB_GH_CLI_TOKENS=false' \
+				'MISE_GITHUB_USE_GIT_CREDENTIALS=false' \
+				'MISE_GITHUB_OAUTH_CLIENT_ID=' \
+				'MISE_GITHUB_OAUTH_EXPORT_ENV=' \
+				'MISE_GITHUB_OAUTH_OPEN_BROWSER=false' \
+				'MISE_LOCKFILE=true' \
+				'MISE_LOCKED=true' \
+				'MISE_MINIMUM_RELEASE_AGE=10d' \
+				'MISE_NPM_PACKAGE_MANAGER=bun' \
+				$${mise_lockfile_platforms:+"MISE_LOCKFILE_PLATFORMS=$$mise_lockfile_platforms"} \
+				"HOME=$$scratch/home" \
+				"USERPROFILE=$$scratch/home" \
+				"APPDATA=$$scratch/appdata" \
+				"LOCALAPPDATA=$$scratch/appdata" \
+				"XDG_CONFIG_HOME=$$scratch/xdg-config" \
+				"XDG_DATA_HOME=$$scratch/xdg-data" \
+				"XDG_CACHE_HOME=$$scratch/xdg-cache" \
+				"XDG_STATE_HOME=$$scratch/xdg-state" \
+				"NETRC=$$scratch/netrc" \
+				"GIT_CONFIG_GLOBAL=$$scratch/gitconfig" \
+				"MISE_NETRC_FILE=$$scratch/netrc" \
+				"MISE_GLOBAL_CONFIG_FILE=$$scratch/global-config.toml" \
+				"MISE_CONFIG_DIR=$$scratch/config" \
+				"MISE_TMP_DIR=$$scratch/tmp" \
+				"MISE_GLOBAL_CONFIG_ROOT=$$scratch/." \
+				"MISE_SYSTEM_CONFIG_DIR=$$scratch/system-config" \
+				"MISE_SYSTEM_CONFIG_FILE=$$scratch/system-config/config.toml" \
+				"MISE_SYSTEM_DATA_DIR=$$scratch/system-data" \
+				"MISE_SYSTEM_INSTALLS_DIR=$$scratch/system-installs" \
+				"MISE_SYSTEM_SHIMS_DIR=$$scratch/system-shims" \
+				"TMPDIR=$$scratch/tmp" \
+				"TMP=$$scratch/tmp" \
+				"TEMP=$$scratch/tmp" \
+				"MISE_DATA_DIR=$$mise_storage_root" \
+				"MISE_CACHE_DIR=$$mise_storage_root/cache" \
+				"MISE_STATE_DIR=$$mise_storage_root/state" \
+				"MISE_INSTALLS_DIR=$$mise_storage_root/installs" \
+				"MISE_SHIMS_DIR=$$mise_storage_root/shims" \
+				"UV_CACHE_DIR=$$mise_storage_root/uv-cache" \
+				"GIT_CEILING_DIRECTORIES=$$project_parent" \
 			"MISE_CEILING_PATHS=$$project_parent" \
 			"MISE_TRUSTED_CONFIG_PATHS=$$mise_trusted_config_paths" \
-$${caller_path:+"PATH=$$caller_path"} \
-$${caller_comspec:+"COMSPEC=$$caller_comspec"} \
-$${caller_pathext:+"PATHEXT=$$caller_pathext"} \
-$${caller_systemroot:+"SYSTEMROOT=$$caller_systemroot"} \
-$${caller_windir:+"WINDIR=$$caller_windir"} \
-$${caller_github_token:+"GITHUB_TOKEN=$$caller_github_token"} \
-$${caller_gh_token:+"GH_TOKEN=$$caller_gh_token"} \
-$${caller_mise_github_token:+"MISE_GITHUB_TOKEN=$$caller_mise_github_token"} \
-$${caller_mise_http_timeout:+"MISE_HTTP_TIMEOUT=$$caller_mise_http_timeout"} \
-$${caller_flext_mypy_profile_output:+"FLEXT_MYPY_PROFILE_OUTPUT=$$caller_flext_mypy_profile_output"} \
-$${caller_mise_version:+"MISE_VERSION=$$caller_mise_version"} \
-$${mise_config_argument:+"$$mise_config_argument"} \
+				$${caller_path:+"PATH=$$caller_path"} \
+				$${caller_comspec:+"COMSPEC=$$caller_comspec"} \
+				$${caller_pathext:+"PATHEXT=$$caller_pathext"} \
+				$${caller_systemroot:+"SYSTEMROOT=$$caller_systemroot"} \
+				$${caller_windir:+"WINDIR=$$caller_windir"} \
+				$${caller_github_token:+"GITHUB_TOKEN=$$caller_github_token"} \
+				$${caller_gh_token:+"GH_TOKEN=$$caller_gh_token"} \
+				$${caller_mise_github_token:+"MISE_GITHUB_TOKEN=$$caller_mise_github_token"} \
+				$${caller_mise_http_timeout:+"MISE_HTTP_TIMEOUT=$$caller_mise_http_timeout"} \
+				$${caller_flext_mypy_profile_output:+"FLEXT_MYPY_PROFILE_OUTPUT=$$caller_flext_mypy_profile_output"} \
+				$${caller_flext_setup_credential_store:+"FLEXT_SETUP_CREDENTIAL_STORE=$$caller_flext_setup_credential_store"} \
+				$${caller_mise_version:+"MISE_VERSION=$$caller_mise_version"} \
+				$${mise_config_argument:+"$$mise_config_argument"} \
 			$${mise_runtime_path:+"MISE_INSTALL_PATH=$$mise_runtime_path"} \
+				$${caller_flext_setup_credential_store:+GIT_CONFIG_COUNT=2} \
+				$${caller_flext_setup_credential_store:+GIT_CONFIG_KEY_0=credential.https://github.com.helper} \
+				$${caller_flext_setup_credential_store:+GIT_CONFIG_VALUE_0="store --file=$$caller_flext_setup_credential_store"} \
+				$${caller_flext_setup_credential_store:+GIT_CONFIG_KEY_1=credential.https://github.com.username} \
+				$${caller_flext_setup_credential_store:+GIT_CONFIG_VALUE_1=x-access-token} \
 			"$$@"; \
 	}; \
 	mise_offline() { \
@@ -809,25 +829,7 @@ $${mise_config_argument:+"$$mise_config_argument"} \
 		mise_exec "$$mise_offline_mode" env 'MISE_OFFLINE=true' "$$@"; \
 	}; \
 mise_has_blocking_warning() { \
-		case "$$1" in \
-			*converge.log|*pin-lock.log) \
-				grep -F 'mise WARN' "$$1" \
-					| grep -Fv 'not replacing unmanaged file in shims directory' \
-					| grep -Fv 'lock-time provenance verification failed' \
-					| grep -Fv 'hidden by minimum_release_age' \
-					| grep -Fiv 'failed to resolve tool version list for' \
-					| grep -Fiv 'is not in the lockfile' \
-					| grep -Ev 'failed to resolve [^:]+ for [^:]+: No such file or directory .*version .*, and [0-9]+ more platform' \
-					| grep -q .; \
-				;; \
-			*) \
-				grep -F 'mise WARN' "$$1" \
-					| grep -Fv 'not replacing unmanaged file in shims directory' \
-					| grep -Fv 'lock-time provenance verification failed' \
-					| grep -Ev 'failed to resolve [^:]+ for [^:]+: No such file or directory .*version .*, and [0-9]+ more platform' \
-					| grep -q .; \
-				;; \
-		esac; \
+		grep -F 'mise WARN' "$$1" | grep -Fv 'not replacing unmanaged file in shims directory' | grep -q .; \
 	}; \
 	mise_checked() { \
 		mise_log="$$1"; shift; \
@@ -877,14 +879,14 @@ mise_has_blocking_warning() { \
 	mise_receipt runtime-version "$$pinned_mise"; \
 	runtime_release="$$receipt_release"; \
 	if [ "$(TOOL_BOOTSTRAP_RESOLVE)" = "1" ]; then \
-		mise_checked_stdout "$$scratch/resolve.stdout" "$$scratch/resolve.stderr" mise_exec no-config env MISE_CACHE_DIR="$$scratch/resolve-cache" MISE_FETCH_REMOTE_VERSIONS_CACHE=0s MISE_MINIMUM_RELEASE_AGE=0s "$$pinned_mise" latest github:jdx/mise@2026.10.3; \
+		mise_checked_stdout "$$scratch/resolve.stdout" "$$scratch/resolve.stderr" mise_exec no-config env MISE_CACHE_DIR="$$scratch/resolve-cache" MISE_FETCH_REMOTE_VERSIONS_CACHE=0s MISE_MINIMUM_RELEASE_AGE=0s "$$pinned_mise" latest github:jdx/mise@2026.9.16; \
 		resolved_release=$$(cat "$$scratch/resolve.stdout"); \
 		if ! printf '%s\n' "$$resolved_release" | grep -Eq '^[0-9]+(\.[0-9]+){2}$$'; then \
-			MISE_MINIMUM_RELEASE_AGE=0s mise ls-remote github:jdx/mise@2026.10.3 >"$$scratch/lsremote.stdout" 2>"$$scratch/lsremote.stderr" || true; \
+			MISE_MINIMUM_RELEASE_AGE=0s mise ls-remote github:jdx/mise@2026.9.16 >"$$scratch/lsremote.stdout" 2>"$$scratch/lsremote.stderr" || true; \
 			resolved_release=$$(grep -E '^[0-9]+(\.[0-9]+){2}$$' "$$scratch/lsremote.stdout" | tail -1); \
 		fi; \
 		if ! printf '%s\n' "$$resolved_release" | grep -Eq '^[0-9]+(\.[0-9]+){2}$$'; then \
-			printf 'ERROR: mise latest github:jdx/mise@2026.10.3 returned an invalid release: %s\n' "$$resolved_release" >&2; exit 2; \
+			printf 'ERROR: mise latest github:jdx/mise@2026.9.16 returned an invalid release: %s\n' "$$resolved_release" >&2; exit 2; \
 		fi; \
 		caller_mise_version="$$resolved_release"; \
 		mise_receipt resolved-version "$$pinned_mise"; \
@@ -898,12 +900,6 @@ mise_has_blocking_warning() { \
 	fi; \
 	caller_mise_version="$$runtime_release"; \
 	printf 'mise setup receipt=%s storage=%s\n' "$$runtime_release" "$$mise_storage_root"; \
-	project_parent=$${project_root%/*}; \
-	if [ -z "$$project_parent" ]; then project_parent=/; fi; \
-	scratch=$$(mktemp -d "$$project_parent/.$${project_root##*/}.mise-bootstrap.XXXXXX"); \
-	if [ -z "$$scratch" ] || [ ! -d "$$scratch" ]; then \
-		printf 'ERROR: mise bootstrap scratch creation failed (template: %s/.%s.mise-bootstrap.XXXXXX)\n' "$$project_parent" "$${project_root##*/}" >&2; exit 2; \
-	fi; \
 	# Only ``upg`` locks, once per manifest it provisions from. Lock every \
 	# configured tool in one pass so removed selectors cannot survive beside \
 	# their replacement in mise.lock. The relock half of ``upg`` (lock without \
@@ -936,30 +932,8 @@ mise_has_blocking_warning() { \
 			if [ -d "$$project_root/.mise/locks" ]; then mkdir -p "$$lock_stage/.mise"; cp -R "$$project_root/.mise/locks" "$$lock_stage/.mise/locks"; fi; \
 		fi; \
 		mise_trusted_config_paths="$$lock_stage"; \
-		if mise_checked "$$scratch/lock.log" mise_exec project "$$pinned_mise" -C "$$lock_stage" lock --bump; then \
-			python3 "$$project_root/bin/mise-lock-converge.py" pin "$$lock_stage" "$$project_root/mise.lock"; \
-			mise_checked "$$scratch/pin-lock.log" mise_exec project "$$pinned_mise" -C "$$lock_stage" lock; \
-		elif grep -q "refusing to replace locked version" "$$scratch/lock.log"; then \
-			printf 'INFO: kept the current mise.lock: the newest release was refused for missing platform assets; retry the bump when the release regains full platform coverage\n' >&2; \
-		else \
-			cat "$$scratch/lock.log" >&2; \
-			exit 2; \
-		fi; \
-		# A broken upstream release fails the staged install. The generated \
-		# converge script holds every failing tool at its newest installable release \
-		# inside the stage (loud INFO per hold; the committed manifest never \
-		# changes, so the next upg retries the newest release), then the \
-		# install is retried against the held stage before publication. \
-		if mise_exec project 'MISE_LOCKED=false' "$$pinned_mise" -C "$$lock_stage" install --yes >"$$scratch/install.log" 2>&1; then :; \
-		else install_status=$$?; cat "$$scratch/install.log" >&2; \
-			printf 'upg relock: staged install failed (exit %s); holding failing tools at their newest installable releases\n' "$$install_status" >&2; \
-			converge_python=$$(command -v python3 || true); \
-			if [ -z "$$converge_python" ]; then \
-				printf 'ERROR: converge needs a host python3 (stdlib only); provision one and retry\n' >&2; exit 2; \
-			fi; \
-			mise_checked "$$scratch/converge.log" "$$converge_python" "$$project_root/bin/mise-lock-converge.py" "$$mise_storage_root" "$$lock_stage" "$$runtime_release"; \
-			mise_checked "$$scratch/install-retry.log" mise_exec project 'MISE_LOCKED=false' "$$pinned_mise" -C "$$lock_stage" install --yes; \
-		fi; \
+		mise_checked "$$scratch/lock.log" mise_exec project 'MISE_LOCKED=false' "$$pinned_mise" -C "$$lock_stage" lock --bump; \
+		mise_checked "$$scratch/install.log" mise_exec project "$$pinned_mise" -C "$$lock_stage" install --locked --yes; \
 		mise_checked "$$scratch/staged-python.log" mise_offline project "$$pinned_mise" -C "$$lock_stage" which python; \
 		staged_python=$$(cat "$$scratch/staged-python.log"); \
 		if [ ! -x "$$staged_python" ]; then printf 'ERROR: staged Mise Python is not executable: %s\n' "$$staged_python" >&2; exit 2; fi; \
@@ -970,9 +944,9 @@ mise_has_blocking_warning() { \
 			# Mise release beside a newer lockfile revision. \
 			mkdir -p "$$lock_stage/artifacts/bin"; \
 			mise_checked "$$scratch/install-script.log" mise_exec no-config "$$pinned_mise" generate install-script --version "$$runtime_release" --write "$$lock_stage/artifacts/bin/mise" --windows; \
-chmod 755 "$$lock_stage/artifacts/bin/mise"; \
-chmod 644 "$$lock_stage/artifacts/bin/mise.cmd"; \
-mise_receipt launcher-version "$$lock_stage/artifacts/bin/mise"; \
+				chmod 755 "$$lock_stage/artifacts/bin/mise"; \
+				chmod 644 "$$lock_stage/artifacts/bin/mise.cmd"; \
+				mise_receipt launcher-version "$$lock_stage/artifacts/bin/mise"; \
 			if [ "$$receipt_release" != "$$runtime_release" ]; then \
 				printf 'ERROR: staged Mise launcher runs %s, not %s\n' "$$receipt_release" "$$runtime_release" >&2; exit 2; \
 			fi; \
@@ -984,7 +958,7 @@ mise_receipt launcher-version "$$lock_stage/artifacts/bin/mise"; \
 	else \
 		# Setup consumes the declared lock policy in one install. An invalid \
 		# lock stops here with its original cause; only make upg repairs it. \
-		mise_checked "$$scratch/install.log" mise_exec project 'MISE_LOCKED=false' "$$pinned_mise" -C "$$project_root" install --yes; \
+		mise_checked "$$scratch/install.log" mise_exec project "$$pinned_mise" -C "$$project_root" install --locked --yes; \
 	fi; \
 	mise_checked_stdout "$$scratch/ast-grep-version.stdout" "$$scratch/ast-grep-version.stderr" mise_offline project "$$pinned_mise" -C "$$project_root" exec -- ast-grep --version; \
 	if [ -s "$$scratch/ast-grep-version.stderr" ]; then \
@@ -1009,6 +983,15 @@ mise_receipt launcher-version "$$lock_stage/artifacts/bin/mise"; \
 	if [ ! -x "$$direnv_executable" ]; then \
 		printf 'ERROR: Mise resolved a non-executable direnv path: %s\n' "$$direnv_executable" >&2; exit 2; \
 	fi; \
+	# The .envrc is a managed projection artifact: approve its hash so the \
+	# activation contract holds on fresh machines (a CI runner never runs an \
+	# interactive allow, and every downstream direnv activation — including \
+	# the check gate's — refuses a blocked .envrc). direnv re-blocks on any \
+	# later content change through its own hash check, so this approves only \
+	# the projected form, never arbitrary edits. \
+	if [ -f "$$project_root/.envrc" ]; then \
+		"$$direnv_executable" allow "$$project_root"; \
+	fi; \
 	mise_checked "$$scratch/python-path.log" mise_offline project "$$pinned_mise" -C "$$project_root" which python; \
 	python_executable=$$(cat "$$scratch/python-path.log"); \
 	# CI receives only the shim farm: a project bin/ on PATH would bind every \
@@ -1017,24 +1000,24 @@ mise_receipt launcher-version "$$lock_stage/artifacts/bin/mise"; \
 	# them, and Mise never replaces a shim bound to another binary, so CI rebuilds \
 	# the farm from the pinned release before publishing it. \
 	if [ -n "$${GITHUB_PATH:-}" ]; then \
-shim_farm="$$mise_storage_root/shims"; \
+			shim_farm="$$mise_storage_root/shims"; \
 		rm -rf "$$shim_farm"; \
 		mise_checked "$$scratch/reshim.log" mise_offline project "$$pinned_mise" -C "$$project_root" reshim; \
 		printf '%s\n' "$$shim_farm" >> "$$GITHUB_PATH"; \
-fi; \
+		fi; \
 	printf 'setup: entering lifecycle (submodules, environment, hooks) make=%s\n' "$(SELF_MAKE_EXECUTABLE)"; \
 	scratch_present=0; if [ -d "$$scratch" ]; then scratch_present=1; fi; \
 	printf 'mise scratch: before lifecycle path=%s present=%s\n' "$$scratch" "$$scratch_present" >&2; \
 	mise_runtime_path="$$mise_storage_root/bootstrap/mise-$${runtime_release}"; \
 	if [ "$(OS)" = "Windows_NT" ]; then mise_runtime_path="$$mise_runtime_path.exe"; fi; \
 	if env \
-"MISE_DATA_DIR=$$mise_storage_root" \
-"MISE_CACHE_DIR=$$mise_storage_root/cache" \
-"MISE_STATE_DIR=$$mise_storage_root/state" \
-"MISE_INSTALLS_DIR=$$mise_storage_root/installs" \
-"MISE_SHIMS_DIR=$$mise_storage_root/shims" \
-"UV_CACHE_DIR=$$mise_storage_root/uv-cache" \
-"GIT_CEILING_DIRECTORIES=$$project_parent" \
+			"MISE_DATA_DIR=$$mise_storage_root" \
+			"MISE_CACHE_DIR=$$mise_storage_root/cache" \
+			"MISE_STATE_DIR=$$mise_storage_root/state" \
+			"MISE_INSTALLS_DIR=$$mise_storage_root/installs" \
+			"MISE_SHIMS_DIR=$$mise_storage_root/shims" \
+			"UV_CACHE_DIR=$$mise_storage_root/uv-cache" \
+			"GIT_CEILING_DIRECTORIES=$$project_parent" \
 		"MISE_CEILING_PATHS=$$project_parent" \
 		"MISE_TRUSTED_CONFIG_PATHS=$$project_root" \
 		"MISE_VERSION=$$runtime_release" \
@@ -1058,25 +1041,26 @@ fi; \
 # Provisioning is declared once and shared by every profile. A venv records the
 # exact base interpreter used to create it, so setup replaces it when Mise moves
 # the configured Python minor line to a newer patch.
+# Dev environments consume present members as LIVE editable installs (operator
+# law 2026-10-06: a commit never influences dev behavior — the worktree is the
+# behavior). The overlay replaces only each member distribution, --no-deps, so
+# every version position still comes from what make upg froze in uv.lock,
+# pyproject.toml and mise.toml; CI and standalone installs keep the frozen
+# git-pinned members untouched.
 SETUP_ENVIRONMENT_RECIPE = set -eu; \
 	trap 'if [ -n "$${FLEXT_SETUP_CREDENTIAL_STORE:-}" ]; then rm -f "$$FLEXT_SETUP_CREDENTIAL_STORE"; fi' EXIT; \
 	$(REQUIRE_WORKSPACE_ENVIRONMENT); \
 	desired_python="$${SETUP_PYTHON:?missing Mise-resolved Python executable}"; \
-	if [ ! -x "$(RUNTIME_PYTHON)" ]; then \
-		$(UV) venv --python "$$desired_python" "$(RUNTIME_VENV)"; \
-	else \
-		installed_base=$$("$(RUNTIME_PYTHON)" -c 'from pathlib import Path; import sys; print(Path(sys.base_prefix).resolve())'); \
-		desired_base=$$("$$desired_python" -c 'from pathlib import Path; import sys; print(Path(sys.prefix).resolve())'); \
-		if [ "$$installed_base" != "$$desired_base" ]; then \
-			printf 'setup: replacing environment for Python %s\n' "$$desired_python"; \
-			$(UV) venv --clear --python "$$desired_python" "$(RUNTIME_VENV)"; \
-		fi; \
-	fi; \
+	credential_env=; \
 	if [ -n "$${FLEXT_SETUP_CREDENTIAL_STORE:-}" ]; then \
-		env GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=credential.helper GIT_CONFIG_VALUE_0="store --file=$$FLEXT_SETUP_CREDENTIAL_STORE" $(UV) sync --project "$(UV_PROJECT)" $(UV_SYNC_FLAGS) --locked --link-mode "$(UV_LINK_MODE)"; \
-	else \
-		$(UV) sync --project "$(UV_PROJECT)" $(UV_SYNC_FLAGS) --locked --link-mode "$(UV_LINK_MODE)"; \
+		credential_env="env GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=credential.helper GIT_CONFIG_VALUE_0=store --file=$$FLEXT_SETUP_CREDENTIAL_STORE"; \
 	fi; \
+	if ! $(UV) lock --check --project "$(UV_PROJECT)" >/dev/null 2>&1; then \
+		printf 'setup: uv.lock missing, stale, or corrupt; removing it and re-locking from manifests\n'; \
+		rm -f "$(UV_PROJECT)/uv.lock"; \
+		$(UV) lock --project "$(UV_PROJECT)"; \
+	fi; \
+	$$credential_env $(UV) sync --project "$(UV_PROJECT)" --python "$$desired_python" $(UV_SYNC_FLAGS) --locked --link-mode "$(UV_LINK_MODE)"; \
 	if [ "$(strip $(CI))" != "Y" ]; then \
 	XDG_DATA_HOME="$${SETUP_DIRENV_XDG_DATA_HOME:?missing persistent direnv data home}" \
 		"$${SETUP_DIRENV:?missing Mise-resolved direnv executable}" allow "$(PROJECT_ROOT)"; \
@@ -1110,7 +1094,7 @@ _bootstrap_setup_tools: _builtin_require_workspace
 
 # Execute the interpreter provisioned by setup without discovering a project
 # workspace or creating a dependency-resolution file during a runtime command.
-override UV_RUN := env -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u PROJECT_ROOT PYTHONPATH="$(PROJECT_ROOT)/src" $(UV) run --no-project --python "$(RUNTIME_PYTHON)"
+override UV_RUN := env -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u PROJECT_ROOT PYTHONPATH="$(PROJECT_ROOT)/src" $(UV) run --directory "$(PROJECT_ROOT)" --no-project --python "$(RUNTIME_PYTHON)"
 # The checked-out flext-infra lane owns every lifecycle verb: a workspace
 # runs the generator it carries (the submodule src), so a broken published
 # dependency tip can never block the local recovery cycle. A checkout without
@@ -1125,8 +1109,9 @@ endif
 override PROJECT_INFRA_RUN = if [ ! -x "$(FLEXT_INFRA_PYTHON)" ]; then printf 'ERROR: FLEXT_INFRA_PYTHON must name an executable managed Python\n' >&2; exit 2; fi; $(PROJECT_TOOL_EXEC) env -u PYTHONPATH -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u UV_PROJECT_ENVIRONMENT PYTHONPATH="$(PROJECT_INFRA_PYTHONPATH)" $(FLEXT_INFRA_PYTHON)
 override PROJECT_FLEXT_INFRA := $(PROJECT_INFRA_RUN) -m flext_infra
 # Scaffold dev tools live in the validated optional dev
-# Only `make upg` resolves and rewrites uv.lock. Setup always runs: it syncs
-# `--locked`; drift and the original install error fail without retry/resolution.
+# uv owns the lock. `make upg` alone advances versions; `make setup` restores
+# the DECLARED state: a missing, stale, or corrupt uv.lock is removed and
+# re-locked from the manifests before the frozen `--locked` sync.
 UV_SYNC_FLAGS := --all-extras --all-groups
 ifeq ($(strip $(CI)),Y)
 override UV_SYNC_FLAGS := --all-extras --all-groups --no-editable
@@ -1156,37 +1141,12 @@ endef
 
 
 
-# uv resolves the containing workspace and writes its single uv.lock. Invoking
-# it once per member re-resolves that same lock for every member.
-# uv truncates and rewrites uv.lock in place, so a run killed mid-write leaves
-# a partial lock. The lock therefore resolves in a scratch mirror
-# of the manifests uv itself reports (`uv workspace dir|list`), must pass
-# `uv lock --check` against that mirror (every declared member present), and
-# only then replaces the committed lock by one rename inside its directory. An
-# interrupted run never touches the committed lock. A full upgrade resolves
-# from declared manifests without prior lock preferences, including during
-# conflict repair; the final non-upgrade relock retains the resolved lock.
-# The second argument seeds the mirror with the committed lock: only that
-# retaining relock passes it, so a full upgrade never parses a prior lock.
-define _lock_project
-	@set -eu; \
-	workspace=$$($(UV) workspace dir --project "$(PROJECT_ROOT)"); \
-	stage=$$(mktemp -d); candidate="$$workspace/.uv.lock.$$$$"; \
-	trap 'find "$${stage}" -depth -delete; rm -f "$$candidate"' EXIT; \
-	trap 'exit 129' HUP; trap 'exit 130' INT; trap 'exit 143' TERM; \
-	$(UV) workspace list --paths --project "$$workspace" > "$${stage}/.members"; \
-	while IFS= read -r member; do \
-		relative=$${member#"$$workspace"}; \
-		mkdir -p "$${stage}/mirror$$relative"; \
-		cp "$$member/pyproject.toml" "$${stage}/mirror$$relative/pyproject.toml"; \
-	done < "$${stage}/.members"; \
-	$(if $(2),if [ -f "$$workspace/uv.lock" ]; then cp "$$workspace/uv.lock" "$${stage}/mirror/uv.lock"; fi;) \
-	$(UV) lock --project "$${stage}/mirror" $(1); \
-	$(UV) lock --check --project "$${stage}/mirror"; \
-	if [ -e "$$candidate" ]; then printf 'ERROR: lock staging path already exists: %s\n' "$$candidate" >&2; exit 2; fi; \
-	cp "$${stage}/mirror/uv.lock" "$$candidate"; \
-	mv -f "$$candidate" "$$workspace/uv.lock"
-endef
+# uv owns the lock. `make upg` is the only verb that advances versions
+# (`uv lock --upgrade --refresh`); `make setup` restores the DECLARED state:
+# a uv.lock that is missing, stale, or corrupt is removed and re-locked from
+# the manifests (run with the lock disabled), exactly as uv prescribes. The
+# committed lock is the journal: an interrupted write is recovered by the
+# same path (uv lock --check fails, uv lock re-derives).
 
 .PHONY: $(PUBLIC_VERBS) $(addprefix _builtin-,$(PUBLIC_VERBS))
 .PHONY: _builtin_gen_init _builtin_gen_all
@@ -2159,22 +2119,19 @@ endif
 # Setup PROVISIONS tooling only — mise, venv, dependencies.
 # It never generates, conforms, or mutates project code; `make gen` is the
 # single public conformance/generation surface.
-# Setup installs from the committed locks and never writes them; when a lock
-# drifts from its manifest it warns and installs without touching it, because
-# only `make upg` rewrites locks. The venv is created when
-# missing and is never cleared while present, because a concurrent lane may be
-# running against it.
+# Setup restores the declared state: a uv.lock missing, stale, or corrupt is
+# removed and re-locked from the manifests (never a version advance — that
+# belongs to `make upg` alone); uv then owns the venv: `uv sync --python`
+# creates or replaces it against the declared interpreter.
 # Governed gitlinks are provisioned in every context, GitHub Actions included:
 # the workspace projections (Makefile, pyproject, .gitignore, dependabot, docs)
 # derive from the member checkouts, so a member-less CI checkout would render a
 # different workspace and break the gen fixed point. Provisioned
 # members are read as libraries; no verb gates them from here.
 _builtin_setup_environment: $(if $(filter Y,$(CI)),,_builtin_setup_submodules)
+	@$(SETUP_ENVIRONMENT_RECIPE)
 ifeq ($(MAKE_PROFILE),workspace)
-	@$(SETUP_ENVIRONMENT_RECIPE)
 	@$(UV) pip check --python "$(RUNTIME_VENV)"
-else
-	@$(SETUP_ENVIRONMENT_RECIPE)
 endif
 # End SECTION: setup environment
 
@@ -2196,7 +2153,8 @@ _upg_lifecycle: _builtin_setup_submodules
 	case " $(CUSTOM_DECLARED_TARGETS) " in \
 		*" pre-upg "*) $(SELF_MAKE) pre-upg ;; \
 	esac
-	$(call _lock_project,--upgrade --refresh)
+	@$(UV) lock --project "$(PROJECT_ROOT)" --upgrade --refresh
+	@$(UV) lock --check --project "$(PROJECT_ROOT)"
 	@$(SELF_MAKE) _builtin_setup_environment
 	@$(PROJECT_FLEXT_INFRA) deps modernize --repository-root "$(PROJECT_ROOT)" \
 		--apply --rewrite-constraints --projects .
@@ -2229,7 +2187,7 @@ _upg_relock: _bootstrap_setup_tools
 # red tests or red CI.
 .PHONY: _upg_converge
 _upg_converge:
-	$(call _lock_project,,retain)
+	@$(UV) lock --project "$(PROJECT_ROOT)"
 	@$(SELF_MAKE) _builtin_setup_environment
 	@$(UV) lock --check --project "$(PROJECT_ROOT)"
 	@set -eu; \
@@ -2564,7 +2522,7 @@ _builtin-bootstrap-candidate: _builtin_require_environment
 # independently when malformed Python prevents the Rope phases from loading.
 # The current directory defines scope; callers never address tools directly.
 _builtin_mod_apply: _builtin_require_environment
-	@$(PROJECT_FLEXT_INFRA) refactor mod --apply
+	@$(PROJECT_FLEXT_INFRA) refactor mod --repository-root "$(PROJECT_ROOT)" --apply
 
 _builtin_mod_text: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) refactor mod-text --apply
@@ -2579,8 +2537,14 @@ _builtin_mod_snapshots: _builtin_require_environment
 
 # Namespace and accessor migration are the same selector-free refactor surface
 # as `mod`: each public verb owns one fixed rewrite of every resolved consumer.
+# The workspace profile sweeps every namespace-enabled project of the topology
+# (the root repository and each declared member) in one process: the report
+# aggregates per project and one project's findings never stop the sweep. A
+# member profile enforces only itself.
+
 _builtin_fix_namespace: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) refactor namespace-enforce --repository-root "$(PROJECT_ROOT)" --projects . --apply
+
 
 _builtin_fix_accessors: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) refactor accessor-migrate --repository-root "$(PROJECT_ROOT)" --projects . --apply

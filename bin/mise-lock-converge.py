@@ -1,4 +1,3 @@
-# Copyright 2026 FLEXT
 """Hold broken tool releases inside a ``make upg`` Mise lock stage.
 
 The ``upg`` lock stage already carries the bumped lock; a broken upstream
@@ -10,6 +9,9 @@ install and publishes. The committed manifest never changes, so the next
 
 It runs with a host Python before the project's virtual environment exists,
 so it intentionally uses only stdlib.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -110,6 +112,7 @@ class MiseLockConverge:
         "MISE_GITHUB_TOKEN",
         "MISE_HTTP_TIMEOUT",
         "FLEXT_MYPY_PROFILE_OUTPUT",
+        "FLEXT_SETUP_CREDENTIAL_STORE",
         "MISE_VERSION",
     )
     RUNTIME_INSTALL_RELATIVE_TEMPLATE = "bootstrap/mise-{release}"
@@ -173,27 +176,7 @@ class MiseLockConverge:
             sys.stderr.write(diagnostics)
             message = f"Mise exited {completed.returncode}: {' '.join(arguments)}\n{diagnostics.strip()}"
             raise ValueError(message)
-        # The minimum_release_age supply-chain policy emits a deterministic
-        # informational warning on every version listing (newer releases are
-        # hidden by the declared age window, by design). It is not a defect:
-        # treating it as blocking would make every converge fail forever.
-        # Cross-platform lock-time listing noise is equally deterministic:
-        # third-party releases (jscpd, qlty) publish no SLSA attestations and
-        # some python-build releases ship assets for only a subset of the
-        # six lockfile platforms, so their listings resolve on fewer targets.
-        expected_warnings = (
-            "hidden by minimum_release_age",
-            "lock-time provenance verification failed",
-            "failed to resolve",
-        )
-        warned = [line for line in diagnostics.splitlines() if "mise WARN" in line]
-        expected_folded = [expected.lower() for expected in expected_warnings]
-        unexpected = [
-            line
-            for line in warned
-            if not any(expected in line.lower() for expected in expected_folded)
-        ]
-        if unexpected:
+        if "mise WARN" in diagnostics:
             sys.stderr.write(diagnostics)
             message = f"Mise warned during {' '.join(arguments)}; converge stopped"
             raise ValueError(message)
@@ -383,6 +366,42 @@ class MiseLockConverge:
         finally:
             shutil.rmtree(scratch, ignore_errors=True)
 
+    @staticmethod
+    def _merge_committed_entries(
+        lock_path: Path,
+        committed_lock: Path | None,
+        present: set[str],
+        resolved: dict[str, str],
+    ) -> None:
+        """Merge committed tool blocks the fresh pass could not verify.
+
+        A tool whose fresh provenance verification failed (a throttled
+        attestation proxy) gets no stage-lock entries, which would make the
+        verified committed entries unresolvable; fix-forward merges the
+        committed blocks for exactly those tools back into the staged lock.
+        """
+        if committed_lock is None or not committed_lock.is_file():
+            return
+        lock = lock_path.read_text(encoding="utf-8")
+        for name, body in re.findall(
+            r"(\[\[tools\.(\S+?)\]\]\n.*?)(?=\n\[\[|\Z)",
+            committed_lock.read_text(encoding="utf-8"),
+            re.DOTALL,
+        ):
+            if name in present:
+                continue
+            lock = lock.rstrip("\n") + "\n\n" + name.rstrip("\n") + "\n"
+            lock_path.write_text(lock, encoding="utf-8")
+            present.add(name)
+            found = re.search(r'^version = "([^"]+)"', body, re.MULTILINE)
+            if found:
+                resolved[name.removeprefix("core:")] = found.group(1)
+            print(
+                f"INFO: merged committed {name} entries the fresh "
+                "pass could not verify",
+                file=sys.stderr,
+            )
+
     @classmethod
     def pin_stage_manifest(
         cls,
@@ -416,26 +435,7 @@ class MiseLockConverge:
             found = re.search(r'^version = "([^"]+)"', body, re.MULTILINE)
             if found:
                 resolved[name.removeprefix("core:")] = found.group(1)
-        if committed_lock is not None and committed_lock.is_file():
-            committed = committed_lock.read_text(encoding="utf-8")
-            for name, body in re.findall(
-                r"(\[\[tools\.(\S+?)\]\]\n.*?)(?=\n\[\[|\Z)",
-                committed,
-                re.DOTALL,
-            ):
-                entry_name = name
-                if entry_name not in present:
-                    lock = lock.rstrip("\n") + "\n\n" + name.rstrip("\n") + "\n"
-                    lock_path.write_text(lock, encoding="utf-8")
-                    present.add(entry_name)
-                    found = re.search(r'^version = "([^"]+)"', body, re.MULTILINE)
-                    if found:
-                        resolved[entry_name.removeprefix("core:")] = found.group(1)
-                    print(
-                        f"INFO: merged committed {entry_name} entries the fresh "
-                        "pass could not verify",
-                        file=sys.stderr,
-                    )
+        cls._merge_committed_entries(lock_path, committed_lock, present, resolved)
         manifest_path = cls.staged_manifest(stage)
         lines = manifest_path.read_text(encoding="utf-8").splitlines(
             keepends=True,
@@ -450,7 +450,8 @@ class MiseLockConverge:
             if in_tools and "=" in stripped:
                 tool = stripped.split("=", 1)[0].strip().strip('"')
                 if tool in resolved:
-                    lines[index] = f'{tool} = "{resolved[tool]}"\n'
+                    key = stripped.split("=", 1)[0].strip()
+                    lines[index] = f'{key} = "{resolved[tool]}"\n'
                     pinned += 1
         manifest_path.write_text("".join(lines), encoding="utf-8")
         print(
