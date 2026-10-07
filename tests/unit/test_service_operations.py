@@ -235,10 +235,6 @@ class TestsFlextCoreServiceOperations:
             """
             return r[bool].ok(True)
 
-        # The docstring above satisfies the docstring lint; the scenario under
-        # test is an operation that reaches discovery without one.
-        status.__doc__ = None
-
     class PlainReturnService(s[bool]):
         """Operation returning a plain value."""
 

@@ -141,7 +141,13 @@ class FlextModelsHandler:
             FlextModelsPydantic.Field(
                 description="Stack of nested execution contexts.",
             ),
-        ] = FlextModelsPydantic.Field(default_factory=list)
+            # Why the quoted forward reference: the module binding
+            # ``FlextModelsHandler`` does not exist while this class body executes,
+            # and class scopes do not chain for runtime name lookup; the string
+            # subscript keeps the factory a real callable while deferring the name.
+        ] = FlextModelsPydantic.Field(
+            default_factory=list["FlextModelsHandler.ExecutionContext"],
+        )
 
         @FlextModelsPydantic.computed_field
         @property

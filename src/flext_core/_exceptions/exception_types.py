@@ -141,19 +141,17 @@ class FlextExceptionsTypes(FlextExceptionsBase):
             *,
             expected_type: type | str | None = None,
             actual_type: type | str | None = None,
-            error_code: str = c.ErrorCode.TYPE_ERROR,
-            context: t.JsonMapping | None = None,
-            correlation_id: str | None = None,
+            options: m.ExceptionInitOptions | None = None,
+            **extra_kwargs: t.JsonValue,
         ) -> None:
             """Initialize type error with type information."""
             cls = FlextExceptionsTypes.FlextTypeError
             super().__init__(
                 message,
-                error_code=error_code,
+                options=options,
                 expected_type=cls._to_type_name(expected_type),
                 actual_type=cls._to_type_name(actual_type),
-                context=context,
-                correlation_id=correlation_id,
+                **extra_kwargs,
             )
             self.expected_type = cls._from_type_name(expected_type)
             self.actual_type = cls._from_type_name(actual_type)

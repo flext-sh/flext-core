@@ -14,33 +14,39 @@ from typing import Annotated, ClassVar
 
 from flext_core import c, t
 from flext_core._models.base import FlextModelsBase
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._typings.pydantic import FlextTypesPydantic
+from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._protocols.result import FlextProtocolsResult as pr
+from flext_core._typings.pydantic import FlextTypesPydantic as tp
+from flext_core._typings.services import FlextTypesServices as ts
 
 
 class FlextModelsExceptionParams:
     """Validated parameter models for the FLEXT exception hierarchy.
 
-    Field annotations spell their type expressions fully through the imported
-    typing facade (``FlextTypesPydantic.*`` / ``t.*``): nested class bodies
-    have no lexical access to the namespace-class scope, so class-scope field
-    aliases would be invisible to static analysis. Each per-field annotation
-    stacks an outer ``Annotated[..., Field(...)]`` — Pydantic v2 merges the
-    ``FieldInfo`` layers automatically (default+strict from the type
-    expression, description/title/examples from the outer Field).
+    Field-builder type aliases (``OptStrictStr`` / ``OptStrictInt`` /
+    ``OptNumeric``) live here as ``ClassVar`` to keep all model surface inside
+    the namespace class (per AGENTS.md §3.1: no loose module-level objects).
+    Each per-field annotation stacks an outer ``Annotated[..., Field(...)]``
+    over these aliases — Pydantic v2 merges the two ``FieldInfo`` layers
+    automatically (default+strict from the alias, description/title/examples
+    from the outer Field).
     """
+
+    type OptStrictStr = tp.StrictStr | None
+
+    type OptStrictInt = tp.StrictInt | None
+
+    type OptNumeric = t.Numeric | None
 
     class ParamsModel(FlextModelsBase.ArbitraryTypesModel):
         """Shared strict params model for exception helpers."""
 
-        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
-            FlextModelsPydantic.ConfigDict(
-                extra="forbid",
-                strict=True,
-                validate_assignment=True,
-                arbitrary_types_allowed=True,
-                use_enum_values=True,
-            )
+        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
+            extra="forbid",
+            strict=True,
+            validate_assignment=True,
+            arbitrary_types_allowed=True,
+            use_enum_values=True,
         )
 
     class ExceptionFactoryOptions(ParamsModel):
@@ -48,16 +54,69 @@ class FlextModelsExceptionParams:
 
         error: Annotated[
             Exception | str | None,
-            FlextModelsPydantic.Field(
+            mp.Field(
                 default=None,
                 description="Optional underlying error cause for this failure.",
             ),
         ] = None
         error_code: Annotated[
             c.ErrorCode | None,
-            FlextModelsPydantic.Field(
+            mp.Field(
                 default=None,
                 description="Optional override for the canonical failure error code.",
+            ),
+        ] = None
+
+    class ExceptionInitOptions(ParamsModel):
+        """Shared initialization options for BaseError construction."""
+
+        error_code: Annotated[
+            str,
+            mp.Field(
+                default=c.ErrorCode.UNKNOWN_ERROR,
+                description="Canonical error code carried by the exception.",
+            ),
+        ] = c.ErrorCode.UNKNOWN_ERROR
+        context: Annotated[
+            t.MappingKV[str, ts.JsonPayload | None] | pr.HasModelDump | None,
+            mp.Field(
+                default=None,
+                description="Structured context mapping or dumpable payload.",
+            ),
+        ] = None
+        metadata: Annotated[
+            pr.HasModelDump | tp.JsonValue | None,
+            mp.Field(
+                default=None,
+                description="Metadata payload or dumpable model for the exception.",
+            ),
+        ] = None
+        correlation_id: Annotated[
+            FlextModelsExceptionParams.OptStrictStr,
+            mp.Field(
+                default=None,
+                description="Explicit correlation identifier for the exception.",
+            ),
+        ] = None
+        auto_correlation: Annotated[
+            bool,
+            mp.Field(
+                default=False,
+                description="Generate a correlation identifier when none is given.",
+            ),
+        ] = False
+        auto_log: Annotated[
+            bool,
+            mp.Field(
+                default=True,
+                description="Log the exception automatically on construction.",
+            ),
+        ] = True
+        merged_kwargs: Annotated[
+            t.MappingKV[str, ts.JsonPayload | None] | pr.HasModelDump | None,
+            mp.Field(
+                default=None,
+                description="Pre-merged keyword payload forwarded by factories.",
             ),
         ] = None
 
@@ -65,14 +124,14 @@ class FlextModelsExceptionParams:
         """Shared resource identity fields for resource-oriented errors."""
 
         resource_type: Annotated[
-            FlextTypesPydantic.StrictStr | None,
-            FlextModelsPydantic.Field(
+            FlextModelsExceptionParams.OptStrictStr,
+            mp.Field(
                 description="Domain resource type associated with the failure.",
             ),
         ] = None
         resource_id: Annotated[
-            FlextTypesPydantic.StrictStr | None,
-            FlextModelsPydantic.Field(
+            FlextModelsExceptionParams.OptStrictStr,
+            mp.Field(
                 description="Identifier of the resource associated with the failure.",
             ),
         ] = None
@@ -81,14 +140,14 @@ class FlextModelsExceptionParams:
         """Shared expected/actual runtime type fields."""
 
         expected_type: Annotated[
-            FlextTypesPydantic.StrictStr | None,
-            FlextModelsPydantic.Field(
+            FlextModelsExceptionParams.OptStrictStr,
+            mp.Field(
                 description="Expected runtime type name for the failing value.",
             ),
         ] = None
         actual_type: Annotated[
-            FlextTypesPydantic.StrictStr | None,
-            FlextModelsPydantic.Field(
+            FlextModelsExceptionParams.OptStrictStr,
+            mp.Field(
                 description="Actual runtime type name received at runtime.",
             ),
         ] = None
@@ -97,8 +156,8 @@ class FlextModelsExceptionParams:
         """Validated params for ValidationError."""
 
         field: Annotated[
-            FlextTypesPydantic.StrictStr | None,
-            FlextModelsPydantic.Field(
+            FlextModelsExceptionParams.OptStrictStr,
+            mp.Field(
                 default=None,
                 description="Name of the input field that failed validation.",
                 title="Field",
@@ -107,7 +166,7 @@ class FlextModelsExceptionParams:
         ] = None
         value: Annotated[
             t.RuntimeData | None,
-            FlextModelsPydantic.Field(
+            mp.Field(
                 default=None,
                 description="Rejected input value that triggered the validation error.",
             ),
@@ -117,14 +176,14 @@ class FlextModelsExceptionParams:
         """Validated params for ConfigurationError."""
 
         config_key: Annotated[
-            FlextTypesPydantic.StrictStr | None,
-            FlextModelsPydantic.Field(
+            FlextModelsExceptionParams.OptStrictStr,
+            mp.Field(
                 description="Settings key associated with the error.",
             ),
         ] = None
         config_source: Annotated[
-            FlextTypesPydantic.StrictStr | None,
-            FlextModelsPydantic.Field(
+            FlextModelsExceptionParams.OptStrictStr,
+            mp.Field(
                 description="Settings source where the invalid value originated.",
             ),
         ] = None
@@ -134,7 +193,7 @@ class FlextModelsExceptionParams:
 
         host: Annotated[
             str | None,
-            FlextModelsPydantic.Field(
+            mp.Field(
                 default=None,
                 description=(
                     "Hostname or address used for the failed connection attempt."
@@ -143,14 +202,14 @@ class FlextModelsExceptionParams:
         ] = None
         port: Annotated[
             int | None,
-            FlextModelsPydantic.Field(
+            mp.Field(
                 default=None,
                 description="Network port used for the failed connection attempt.",
             ),
         ] = None
         timeout: Annotated[
             t.Numeric | None,
-            FlextModelsPydantic.Field(
+            mp.Field(
                 default=None,
                 description="Connection timeout threshold in seconds.",
             ),

@@ -124,16 +124,30 @@ class FlextModelsPydantic:
     @staticmethod
     def _field[DefaultT](
         default: DefaultT | PydanticUndefinedType | EllipsisType = PydanticUndefined,
+        *,
+        default_factory: Callable[[], DefaultT] | None = None,
         **kwargs: _FieldKeywordValue[DefaultT] | None,
     ) -> DefaultT:
         """Typed FLEXT facade for ``pydantic.Field``.
+
+        ``default_factory`` is declared explicitly (never absorbed by
+        ``**kwargs``): ``dataclass_transform`` synthesis reads only the
+        declared specifier parameters, so a kwargs-routed ``default_factory``
+        would leave every factory-defaulted field required in the synthesized
+        ``__init__``. ``None`` means absent and passes through unchanged.
+
+        Args:
+            default: Explicit default value or sentinel.
+            default_factory: Zero-argument callable producing the default.
+            **kwargs: Remaining ``Field`` keyword taxonomy, typed by
+                ``_FieldKeywordValue``.
 
         Returns:
             The resulting ``DefaultT``.
 
         """
         field_factory: Callable[..., DefaultT] = Field
-        return field_factory(default, **kwargs)
+        return field_factory(default, default_factory=default_factory, **kwargs)
 
     @staticmethod
     def _private_attr[PrivateT](

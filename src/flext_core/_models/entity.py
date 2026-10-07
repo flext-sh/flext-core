@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Hashable, MutableSequence
-from typing import Annotated, override
+from typing import override
 
 from pydantic import Field
 
@@ -52,13 +52,15 @@ class FlextModelsEntity:
         appends new entries during the entity lifecycle.
         """
 
-        domain_events: Annotated[
-            MutableSequence[FlextModelsDomainEvent.DomainEvent],
-            Field(
-                default_factory=list,
-                description="List of uncommitted domain events for event sourcing",
-            ),
-        ]
+        # Why assigned-value form, not ``Annotated`` metadata: pyright's
+        # ``dataclass_transform`` synthesis recognizes ``default_factory``
+        # default-ness only from the field specifier call assigned to the
+        # class variable; a specifier inside ``Annotated`` metadata synthesizes
+        # a REQUIRED ``__init__`` parameter (verified against plain pydantic).
+        domain_events: MutableSequence[FlextModelsDomainEvent.DomainEvent] = Field(
+            default_factory=list[FlextModelsDomainEvent.DomainEvent],
+            description="List of uncommitted domain events for event sourcing",
+        )
 
         @override
         def __eq__(self, other: object) -> bool:

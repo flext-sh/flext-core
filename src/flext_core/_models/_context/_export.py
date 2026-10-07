@@ -27,13 +27,15 @@ class FlextModelsContextExport:
     ):
         """Typed snapshot returned by export_snapshot."""
 
-        data: Annotated[
-            t.MappingKV[str, t.JsonPayload],
-            Field(
-                default_factory=lambda: MappingProxyType[str, t.JsonPayload]({}),
-                description="All context data from all scopes",
-            ),
-        ]
+        # Why assigned-value form for the specifier calls (not ``Annotated``
+        # metadata): pyright's ``dataclass_transform`` synthesis recognizes
+        # ``default_factory`` default-ness only from the specifier call
+        # assigned to the class variable; a specifier inside ``Annotated``
+        # metadata synthesizes a REQUIRED ``__init__`` parameter.
+        data: t.MappingKV[str, t.JsonPayload] = Field(
+            default_factory=lambda: MappingProxyType[str, t.JsonPayload]({}),
+            description="All context data from all scopes",
+        )
         metadata: Annotated[
             FlextModelsBase.Metadata | FlextModelsContainers.Dict | None,
             BeforeValidator(FlextModelsContextData.normalize_metadata_before),
@@ -51,11 +53,10 @@ class FlextModelsContextExport:
                     else {}
                 ),
             ),
-            Field(
-                default_factory=lambda: MappingProxyType[str, t.JsonValue]({}),
-                description="Usage statistics (operation counts, timing info)",
-            ),
-        ]
+        ] = Field(
+            default_factory=lambda: MappingProxyType[str, t.JsonValue]({}),
+            description="Usage statistics (operation counts, timing info)",
+        )
 
 
 __all__: t.MutableSequenceOf[str] = ["FlextModelsContextExport"]

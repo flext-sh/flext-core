@@ -16,7 +16,9 @@ import traceback
 from typing import TYPE_CHECKING, ClassVar, Self
 
 from flext_core import c, m, p, t
-from flext_core._utilities._logging_context_parts import FlextUtilitiesLoggingContext
+from flext_core._utilities._logging_context_parts.logging_context_part_02 import (
+    FlextUtilitiesLoggingContext,
+)
 from flext_core.exceptions import e
 from flext_core.result import r
 
@@ -150,6 +152,17 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
 
         """
         return self.bind(**context)
+
+    def _should_include_stack_trace(self) -> bool:
+        """Whether stack traces should be included in exception logging.
+
+        Returns:
+            ``True`` — stack traces are included by default for all
+            exceptions routed through the structured logging facade.
+            Subclasses may override to suppress them selectively.
+
+        """
+        return True
 
     def _exception_context_from_inputs(
         self,
