@@ -232,6 +232,7 @@ class FlextDispatcher:
             )
             return dispatch_result.fail_op("execute resolved handler", exc)
 
+
 # Why: the generated package facade exports a root module's explicit public
 # ABI; without this declaration FlextDispatcher vanished from flext_core.
 __all__: list[str] = ["FlextDispatcher"]
