@@ -13,8 +13,9 @@ from typing import TYPE_CHECKING
 import pytest
 from flext_tests import tm
 
-from flext_core import FlextContainer, FlextSettings, u
-from tests import c, m, u as test_u
+from flext_core import FlextContainer, FlextSettings
+from tests import c, m
+from tests.utilities import u
 
 if TYPE_CHECKING:
     from tests.typings import t
@@ -71,7 +72,7 @@ class TestsFlextCoreUtilitiesSettings:
         env_file = tmp_path / c.ENV_FILE_DEFAULT
         env_file.write_text("FLEXT_APP_NAME=test-app\n", encoding="utf-8")
         probe_env_var = "FLEXT_TEST_BOOTSTRAP_MODE"
-        with test_u.Tests.env_vars_context(
+        with u.Tests.env_vars_context(
             env_vars={c.ENV_FILE_ENV_VAR: str(env_file), probe_env_var: "integration"},
         ):
             snapshot = m.Tests.BootstrapSnapshot(
@@ -101,10 +102,10 @@ class TestsFlextCoreUtilitiesSettings:
         default_env_file.write_text("FLEXT_DEBUG=true\n", encoding="utf-8")
         missing_override = str(tmp_path / "missing.env")
 
-        with test_u.Tests.env_vars_context(vars_to_clear=[c.ENV_FILE_ENV_VAR]):
+        with u.Tests.env_vars_context(vars_to_clear=[c.ENV_FILE_ENV_VAR]):
             cwd_resolved = FlextSettings.resolve_env_file()
             default_env_file.unlink()
-            with test_u.Tests.env_vars_context(
+            with u.Tests.env_vars_context(
                 env_vars={c.ENV_FILE_ENV_VAR: missing_override},
             ):
                 override_resolved = FlextSettings.resolve_env_file()

@@ -11,15 +11,15 @@ from typing import Annotated
 
 from pydantic import Field
 
-from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_01 import (  # ruff: ignore[line-too-long] -- the dotted module path is a single identifier chain; it cannot be wrapped without renaming the module
-    FlextModelsProjectMetadataContract,
+from flext_core._models._project_metadata_parts import (
+    flextmodelsprojectmetadata_part_01 as part_01,
+    flextmodelsprojectmetadata_part_03 as part_03,
+    flextmodelsprojectmetadata_part_05 as part_05,
 )
-from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_03 import (  # ruff: ignore[line-too-long] -- the dotted module path is a single identifier chain; it cannot be wrapped without renaming the module
-    FlextModelsProjectMetadataAggregates,
-)
-from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_05 import (  # ruff: ignore[line-too-long] -- the dotted module path is a single identifier chain; it cannot be wrapped without renaming the module
-    FlextModelsPyprojectIngressContract,
-)
+
+FlextModelsProjectMetadataContract = part_01.FlextModelsProjectMetadataContract
+FlextModelsProjectMetadataAggregates = part_03.FlextModelsProjectMetadataAggregates
+FlextModelsPyprojectIngressContract = part_05.FlextModelsPyprojectIngressContract
 
 
 class FlextModelsProjectMetadataDocument(FlextModelsProjectMetadataAggregates):

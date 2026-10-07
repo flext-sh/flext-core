@@ -29,7 +29,7 @@ if TYPE_CHECKING:
     from flext_core.api import FlextApi, core
     from flext_core.base import FlextBase
     from flext_core.cli import FlextCli
-    from flext_core.config_sources import StrictYamlConfigSource
+    from flext_core.config_sources import FlextStrictYamlConfigSource
     from flext_core.constants import FlextConstants, FlextConstantsEnforcement, c
     from flext_core.container import FlextContainer
     from flext_core.context import FlextContext
@@ -84,11 +84,11 @@ __all__: tuple[str, ...] = (
     "FlextRuntime",
     "FlextService",
     "FlextSettings",
+    "FlextStrictYamlConfigSource",
     "FlextTypes",
     "FlextUtilities",
     "FlextUtilitiesLogging",
     "FlextUtilitiesRuntimeViolationRegistry",
-    "StrictYamlConfigSource",
     "__author__",
     "__author_email__",
     "__description__",
@@ -145,11 +145,11 @@ install_lazy_exports(
         "FlextRuntime": ".runtime",
         "FlextService": ".service",
         "FlextSettings": "._settings",
+        "FlextStrictYamlConfigSource": ".config_sources",
         "FlextTypes": ".typings",
         "FlextUtilities": ".utilities",
         "FlextUtilitiesLogging": ".loggings",
         "FlextUtilitiesRuntimeViolationRegistry": ".utilities",
-        "StrictYamlConfigSource": ".config_sources",
         "c": ".constants",
         "config": "._config",
         "core": ".api",

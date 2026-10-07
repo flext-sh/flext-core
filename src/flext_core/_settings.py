@@ -378,15 +378,15 @@ class FlextSettings(BaseSettings):
 
     @classmethod
     def apply_app_namespace(cls, namespace: str) -> None:
-        """Apply the outer application identity once for the current process."""
+        """Set the outer application identity once for the current process."""
         candidate = _validate_app_namespace(namespace)
         with FlextSettings._lock:
             if FlextSettings._app_namespace is None:
                 FlextSettings._app_namespace = candidate
 
     @classmethod
-    def reapply_app_namespace(cls) -> None:
-        """Re-apply the default owner namespace by clearing the override."""
+    def reset_app_namespace(cls) -> None:
+        """Clear the process application identity for isolated tests."""
         with FlextSettings._lock:
             FlextSettings._app_namespace = None
 

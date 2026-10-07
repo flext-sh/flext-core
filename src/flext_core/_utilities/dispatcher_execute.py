@@ -97,27 +97,53 @@ class FlextUtilitiesDispatcherExecute:
         )
 
     @staticmethod
-    def adapt_handler_output(
-        raw_candidate: t.JsonPayload
-        | p.ResultView[t.JsonPayload]
-        | p.Result[t.JsonPayload]
-        | None,
-        dispatch_result: type[r[t.JsonPayload]],
+    def execute_dispatcher_handler(
+        *,
+        resolved_handler: t.RoutedHandlerCallable,
+        message: p.Routable,
+        route_name: str,
+        logger: p.Logger,
     ) -> p.Result[t.JsonPayload]:
-        """Normalize one handler output candidate and adapt it to the result.
+        """Execute ``resolved_handler(message)`` and adapt the outcome.
+
+        The adapted outcome type is ``r[JsonPayload]``.
+
+        The handler may return either an ``r[T]`` instance (Result-like
+        canonical) or a raw payload (container or Pydantic model). All other
+        shapes are rejected with the canonical fail-op messages from the
+        enforcement constants.
 
         Returns:
             The resulting ``p.Result[t.JsonPayload]``.
 
         """
-        normalized = FlextUtilitiesDispatcherExecute._normalize_dispatcher_output(
-            raw_candidate,
-            dispatch_result,
-        )
-        return FlextUtilitiesDispatcherExecute._adapt_dispatcher_output(
-            normalized,
-            dispatch_result,
-        )
+        dispatch_result = r[t.JsonPayload]
+        try:
+            raw_candidate = resolved_handler(message)
+            raw_output = FlextUtilitiesDispatcherExecute._normalize_dispatcher_output(
+                raw_candidate,
+                dispatch_result,
+            )
+            return FlextUtilitiesDispatcherExecute._adapt_dispatcher_output(
+                raw_output,
+                dispatch_result,
+            )
+        except (
+            TypeError,
+            ValueError,
+            RuntimeError,
+            KeyError,
+            AttributeError,
+            OSError,
+            LookupError,
+            ArithmeticError,
+        ) as exc:
+            logger.exception(
+                c.LOG_HANDLER_EXECUTION_FAILED,
+                exception=exc,
+                route=route_name,
+            )
+            return dispatch_result.fail_op("execute resolved handler", exc)
 
 
 __all__ = ["FlextUtilitiesDispatcherExecute"]

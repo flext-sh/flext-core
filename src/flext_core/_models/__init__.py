@@ -29,6 +29,7 @@ if TYPE_CHECKING:
     from flext_core._models._context._export import FlextModelsContextExport
     from flext_core._models._context._metadata import FlextModelsContextMetadata
     from flext_core._models._context._proxy_var import FlextModelsContextProxyVar
+    from flext_core._models._context._scope_ops import FlextContextScopeOps
     from flext_core._models._context._tokens import FlextModelsContextTokens
     from flext_core._models._enforcement._base import (
         FlextModelsEnforcementBase,
@@ -43,16 +44,12 @@ if TYPE_CHECKING:
         FlextModelsEnforcementResolution,
     )
     from flext_core._models._enforcement._sources import FlextModelsEnforcementSources
-    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_01 import (
-        FlextModelsProjectMetadataContract,
-    )
-    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_02 import (
+    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_03 import (
         FlextModelsProjectMetadataFields,
     )
-    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_03 import (
-        FlextModelsProjectMetadataAggregates,
-    )
     from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_04 import (
+        FlextModelsProjectMetadataAggregates,
+        FlextModelsProjectMetadataContract,
         FlextModelsProjectMetadataDocument,
     )
     from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_05 import (
@@ -84,6 +81,7 @@ if TYPE_CHECKING:
 
 __all__: tuple[str, ...] = (
     "FlextContext",
+    "FlextContextScopeOps",
     "FlextMixins",
     "FlextModelsBase",
     "FlextModelsBuilder",
@@ -137,6 +135,7 @@ install_lazy_exports(
     globals(),
     MappingProxyType({
         "FlextContext": ".flext_context",
+        "FlextContextScopeOps": "._context._scope_ops",
         "FlextMixins": ".flext_mixins",
         "FlextModelsBase": ".base",
         "FlextModelsBuilder": ".builder",
@@ -170,16 +169,16 @@ install_lazy_exports(
         "FlextModelsNamespace": ".namespace",
         "FlextModelsProjectMetadata": ".project_metadata",
         "FlextModelsProjectMetadataAggregates": (
-            "._project_metadata_parts.flextmodelsprojectmetadata_part_03"
+            "._project_metadata_parts.flextmodelsprojectmetadata_part_04"
         ),
         "FlextModelsProjectMetadataContract": (
-            "._project_metadata_parts.flextmodelsprojectmetadata_part_01"
+            "._project_metadata_parts.flextmodelsprojectmetadata_part_04"
         ),
         "FlextModelsProjectMetadataDocument": (
             "._project_metadata_parts.flextmodelsprojectmetadata_part_04"
         ),
         "FlextModelsProjectMetadataFields": (
-            "._project_metadata_parts.flextmodelsprojectmetadata_part_02"
+            "._project_metadata_parts.flextmodelsprojectmetadata_part_03"
         ),
         "FlextModelsPydantic": ".pydantic",
         "FlextModelsPyprojectIngressContract": (

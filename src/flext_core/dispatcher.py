@@ -9,7 +9,9 @@ from __future__ import annotations
 from collections.abc import MutableSequence, Sequence
 
 from flext_core import c, p, r, t, u
-from flext_core._utilities.dispatcher_execute import FlextUtilitiesDispatcherExecute
+from flext_core._utilities.dispatcher_execute import (
+    FlextUtilitiesDispatcherExecute as dxe,
+)
 
 
 class FlextDispatcher:
@@ -212,20 +214,12 @@ class FlextDispatcher:
             The resulting ``p.Result[t.JsonPayload]``.
 
         """
-        dispatch_result = r[t.JsonPayload]
-        try:
-            raw_candidate = resolved_handler(message)
-            return FlextUtilitiesDispatcherExecute.adapt_handler_output(
-                raw_candidate,
-                dispatch_result,
-            )
-        except c.EXC_BROAD_RUNTIME as exc:
-            self.logger.exception(
-                c.LOG_HANDLER_EXECUTION_FAILED,
-                exception=exc,
-                route=route_name,
-            )
-            return dispatch_result.fail_op("execute resolved handler", exc)
+        return dxe.execute_dispatcher_handler(
+            resolved_handler=resolved_handler,
+            message=message,
+            route_name=route_name,
+            logger=self.logger,
+        )
 
 
 # Why: the generated package facade exports a root module's explicit public

@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, ClassVar, cast
 
 import yaml
 
-from flext_core import StrictYamlConfigSource, r
+from flext_core import FlextStrictYamlConfigSource, r
 from flext_core._constants import FlextConstantsConfig
 from flext_core._typings.base import FlextTypingBase
 from flext_core._utilities import (
@@ -111,7 +111,7 @@ class FlextUtilitiesConfig:
             mapping key (propagated from the canonical loader).
 
             """
-            return StrictYamlConfigSource.unique_key_load(stream)
+            return FlextStrictYamlConfigSource.unique_key_load(stream)
 
         @staticmethod
         def yaml_safe_load(path: Path) -> p.Result[FlextTypingBase.JsonMapping]:

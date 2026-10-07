@@ -177,6 +177,47 @@ checksum = "sha256:d96fc8b7cf020c2d4c1dbbc2ccec5fd1cab05b51c491f02c8527a7fa6c50a
 url = "https://github.com/direnv/direnv/releases/download/v2.37.1/direnv.windows-amd64"
 url_api = "https://api.github.com/repos/direnv/direnv/releases/assets/274610569"
 
+[[tools."github:jdx/mise"]]
+version = "2026.10.3"
+backend = "github:jdx/mise"
+specifiers = ["2026.10.3"]
+
+[tools."github:jdx/mise"."platforms.linux-arm64"]
+checksum = "sha256:538209b47a064aef24a968e88c4cee30f75fffc1c4e1d4c6313a99124b0e9433"
+url = "https://github.com/jdx/mise/releases/download/v2026.10.3/mise-v2026.10.3-linux-arm64.tar.zst"
+url_api = "https://api.github.com/repos/jdx/mise/releases/assets/612240146"
+provenance = "github-attestations"
+
+[tools."github:jdx/mise"."platforms.linux-x64"]
+checksum = "sha256:447fe12a8b50f53867aacdcc16bcb6e2cb38044839ef2b8041efcaec276aae6d"
+url = "https://github.com/jdx/mise/releases/download/v2026.10.3/mise-v2026.10.3-linux-x64.tar.zst"
+url_api = "https://api.github.com/repos/jdx/mise/releases/assets/612240683"
+provenance = "github-attestations"
+
+[tools."github:jdx/mise"."platforms.linux-x64-musl"]
+checksum = "sha256:3c88f2c81ad74535eb23e8df5d50ca830e86515b045333462b69525aa64285c8"
+url = "https://github.com/jdx/mise/releases/download/v2026.10.3/mise-v2026.10.3-linux-x64-musl.tar.zst"
+url_api = "https://api.github.com/repos/jdx/mise/releases/assets/612240571"
+provenance = "github-attestations"
+
+[tools."github:jdx/mise"."platforms.macos-arm64"]
+checksum = "sha256:87853e616ef2b6d601c20974a7f13fc9aa17458a6190e0c456fb85b745bb08e8"
+url = "https://github.com/jdx/mise/releases/download/v2026.10.3/mise-v2026.10.3-macos-arm64.tar.zst"
+url_api = "https://api.github.com/repos/jdx/mise/releases/assets/612240981"
+provenance = "github-attestations"
+
+[tools."github:jdx/mise"."platforms.macos-x64"]
+checksum = "sha256:b97c1ba194c8f1779a6f70efb01682aa30899e98c3f52c7a3c8e22a9457e1a0d"
+url = "https://github.com/jdx/mise/releases/download/v2026.10.3/mise-v2026.10.3-macos-x64.tar.zst"
+url_api = "https://api.github.com/repos/jdx/mise/releases/assets/612241094"
+provenance = "github-attestations"
+
+[tools."github:jdx/mise"."platforms.windows-x64"]
+checksum = "sha256:af5cad4d381c4e06e9c488af86ad3d3159474ffa7a18e061436a408f7262f23a"
+url = "https://github.com/jdx/mise/releases/download/v2026.10.3/mise-v2026.10.3-windows-x64.zip"
+url_api = "https://api.github.com/repos/jdx/mise/releases/assets/612241184"
+provenance = "github-attestations"
+
 [[tools."github:kucherenko/jscpd"]]
 version = "5.3.2"
 backend = "github:kucherenko/jscpd"
