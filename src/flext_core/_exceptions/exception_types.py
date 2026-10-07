@@ -145,6 +145,11 @@ class FlextExceptionsTypes(FlextExceptionsBase):
             **extra_kwargs: t.JsonValue,
         ) -> None:
             """Initialize type error with type information."""
+            # Why: the public keyword contract defaults this error family to
+            # ``TYPE_ERROR`` (a type mismatch IS a validation-domain defect);
+            # an explicit ``error_code`` keyword or ``options`` object wins.
+            if options is None:
+                extra_kwargs.setdefault("error_code", c.ErrorCode.TYPE_ERROR)
             cls = FlextExceptionsTypes.FlextTypeError
             super().__init__(
                 message,

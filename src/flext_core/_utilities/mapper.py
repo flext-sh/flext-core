@@ -13,9 +13,7 @@ from typing import TYPE_CHECKING, Annotated
 from flext_core import c, m, r, t
 from flext_core._models import FlextModelsPydantic
 from flext_core._utilities import FlextUtilitiesCollection, FlextUtilitiesGuardsTypeCore
-from flext_core._utilities._mapper_extract_parts.mapper_extract_part_01 import (
-    FlextUtilitiesMapperExtract,
-)
+from flext_core._utilities.mapper_extract import FlextUtilitiesMapperExtract
 from flext_core.runtime import FlextRuntime
 
 if TYPE_CHECKING:

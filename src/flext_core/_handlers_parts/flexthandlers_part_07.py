@@ -91,8 +91,9 @@ class FlextHandlers[MessageT_contra, ResultT](
 
             return sorted(handlers, key=_priority, reverse=True)
 
-        @staticmethod
+        @classmethod
         def scan_module(
+            cls,
             module: ModuleType,
         ) -> t.SequenceOf[
             tuple[str, Callable[..., t.Scalar | None], p.DecoratorConfig]
