@@ -98,7 +98,8 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
         return event_dict
 
     @staticmethod
-    def _resolve_structlog_params(  # ruff: ignore[too-many-arguments] -- internal resolver mirroring the public configure_structlog keyword contract one-to-one; grouping would decouple the two signatures.        settings: mp.BaseModel | None,
+    def _resolve_structlog_params(  # ruff: ignore[too-many-arguments] -- internal resolver mirroring the public configure_structlog keyword contract one-to-one; grouping would decouple the two signatures.
+        settings: mp.BaseModel | None,
         *,
         log_level: int | None,
         console_renderer: bool,

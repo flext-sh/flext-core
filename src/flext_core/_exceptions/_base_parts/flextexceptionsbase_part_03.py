@@ -95,9 +95,7 @@ class FlextExceptionsBase:
                 context=ctx or None,
                 metadata=metadata if metadata is not None else preserved_metadata,
                 correlation_id=(
-                    correlation_id
-                    if correlation_id is not None
-                    else correlation_id_str
+                    correlation_id if correlation_id is not None else correlation_id_str
                 ),
                 auto_correlation=auto_correlation,
                 auto_log=auto_log,
@@ -138,9 +136,7 @@ class FlextExceptionsBase:
         def _resolve_declared_params(
             declared_cls: ts.ModelClass[m.BaseModel],
             combined_extra: MutableMapping[str, ts.JsonPayload | None],
-            context: tb.MappingKV[str, ts.JsonPayload | None]
-            | pr.HasModelDump
-            | None,
+            context: tb.MappingKV[str, ts.JsonPayload | None] | pr.HasModelDump | None,
             params: m.BaseModel | None,
         ) -> tuple[m.BaseModel, tb.MutableJsonMapping, str | None, tb.JsonValue | None]:
             """Resolve the declared params model plus the remaining extras."""

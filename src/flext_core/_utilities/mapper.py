@@ -121,7 +121,8 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
         return accessor
 
     @staticmethod
-    def transform(  # ruff: ignore[too-many-arguments] -- public keyword-only configuration surface; the distinct arguments are the stable API contract and collapsing them into a carrier would break callers.        source: t.JsonMapping | m.ConfigMap,
+    def transform(  # ruff: ignore[too-many-arguments] -- public keyword-only configuration surface; the distinct arguments are the stable API contract and collapsing them into a carrier would break callers.
+        source: t.JsonMapping | m.ConfigMap,
         *,
         normalize: bool = False,
         strip_none: bool = False,
