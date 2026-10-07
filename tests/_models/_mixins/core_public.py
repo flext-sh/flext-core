@@ -124,5 +124,24 @@ class TestsFlextModelsCorePublicMixin:
         def serialize_visits(value: int) -> str:
             return f"{value} visits"
 
+    class KwargsComputedPayload(m.BaseModel):
+        """Computed field through the kwargs-only ``computed_field`` overload."""
+
+        raw: str
+
+        @m.computed_field(alias="upperLabel", description="Uppercase label")
+        @property
+        def label(self) -> str:
+            return self.raw.upper()
+
+    class PlainSerializedPayload(m.BaseModel):
+        """Model serialized through the bare plain model serializer."""
+
+        name: str
+
+        @u.model_serializer
+        def serialize(self) -> str:
+            return self.name
+
 
 __all__: list[str] = ["TestsFlextModelsCorePublicMixin"]
