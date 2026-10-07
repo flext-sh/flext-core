@@ -204,6 +204,12 @@ class Ex07FlextExceptionSubclasses(ExamplesFlextShared):
 
     def _exercise_specific_exceptions(self) -> None:
         self.section("subclasses")
+        self._exercise_validation_and_config()
+        self._exercise_connection_and_access()
+        self._exercise_operation_and_attribute()
+
+    def _exercise_validation_and_config(self) -> None:
+        """Exercise one group of structured exception subclasses."""
         try:
             _raise_validation_error()
         except e.ValidationError as exc:
@@ -233,6 +239,9 @@ class Ex07FlextExceptionSubclasses(ExamplesFlextShared):
         except e.FlextTimeoutError as exc:
             self.audit_check("TimeoutError.timeout_seconds", exc.timeout_seconds or 0.0)
             self.audit_check("TimeoutError.operation", exc.operation or "")
+
+    def _exercise_connection_and_access(self) -> None:
+        """Exercise one group of structured exception subclasses."""
         try:
             _raise_authentication_error()
         except e.AuthenticationError as exc:
@@ -255,6 +264,9 @@ class Ex07FlextExceptionSubclasses(ExamplesFlextShared):
             self.audit_check("ConflictError.resource_type", exc.resource_type or "")
             self.audit_check("ConflictError.resource_id", exc.resource_id or "")
             self.audit_check("ConflictError.conflict_reason", exc.conflict_reason or "")
+
+    def _exercise_operation_and_attribute(self) -> None:
+        """Exercise one group of structured exception subclasses."""
         try:
             _raise_rate_limit_error()
         except e.RateLimitError as exc:

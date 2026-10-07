@@ -11,7 +11,7 @@ from typing import ClassVar
 
 from beartype.claw import beartype_this_package
 
-from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.base import FlextTypingBase
 
 
 class FlextCoreBeartypeBootstrap:
@@ -61,4 +61,4 @@ class FlextCoreBeartypeBootstrap:
             cls._activating = False
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextCoreBeartypeBootstrap"]
+__all__: FlextTypingBase.MutableSequenceOf[str] = ["FlextCoreBeartypeBootstrap"]

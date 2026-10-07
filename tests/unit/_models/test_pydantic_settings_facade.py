@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import override
 
-from tests import u as test_u
+from tests import u
 from tests.models import m
 
 
@@ -57,11 +57,11 @@ class TestsFlextCorePydanticSettingsFacade:
 
             topic_prefix: str = "unset"
 
-        with test_u.Tests.env_vars_context(env_vars={"TOPIC_PREFIX": "from-env"}):
+        with u.Tests.env_vars_context(env_vars={"TOPIC_PREFIX": "from-env"}):
             assert _EnvSettings().topic_prefix == "from-env"
         assert _EnvSettings(topic_prefix="explicit").topic_prefix == "explicit"
 
     def test_settings_override_annotated_through_alias_is_consulted(self) -> None:
-        with test_u.Tests.env_vars_context(env_vars={"TOPIC": "from-env"}):
+        with u.Tests.env_vars_context(env_vars={"TOPIC": "from-env"}):
             assert self._TopicSettings().topic == "default"
             assert self._TopicSettings(topic="explicit").topic == "explicit"

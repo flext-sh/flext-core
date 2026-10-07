@@ -6,17 +6,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core._utilities._beartype.helpers import (
-    FlextUtilitiesBeartypeHelpers as _ubh,
-)
-from flext_core._utilities._beartype.module_source import (
+from flext_core._constants import FlextConstantsEnforcement
+from flext_core._models import FlextModelsEnforcement
+from flext_core._typings.base import FlextTypingBase
+from flext_core._utilities import (
+    FlextUtilitiesBeartypeHelpers,
     FlextUtilitiesBeartypeModuleSource,
 )
 
-_NO_VIOLATION: t.StrMapping | None = None
+_NO_VIOLATION: FlextTypingBase.StrMapping | None = None
 
 
 class FlextUtilitiesBeartypeLibraryVisitor:
@@ -24,9 +22,9 @@ class FlextUtilitiesBeartypeLibraryVisitor:
 
     @staticmethod
     def v_library_import(
-        params: me.LibraryImportParams,
+        params: FlextModelsEnforcement.LibraryImportParams,
         target: type,
-    ) -> t.StrMapping | None:
+    ) -> FlextTypingBase.StrMapping | None:
         """LIBRARY_IMPORT — §2.7 library abstraction owner enforcement (Phase 3 hook).
 
         A namespace member whose runtime origin is an owned library only
@@ -40,15 +38,16 @@ class FlextUtilitiesBeartypeLibraryVisitor:
 
         """
         _ = params
-        owners = c.ENFORCEMENT_LIBRARY_OWNERS
-        module = _ubh.runtime_module_for(target)
+        owners = FlextConstantsEnforcement.ENFORCEMENT_LIBRARY_OWNERS
+        module = FlextUtilitiesBeartypeHelpers.runtime_module_for(target)
         if module is None:
             return _NO_VIOLATION
         package = target.__module__.split(".")[0].replace("_", "-")
         candidates = tuple(
             (name, origin_root, owners[origin_root])
             for name, value in vars(module).items()
-            if (origin := _ubh.object_module_name_for(value)) is not None
+            if (origin := FlextUtilitiesBeartypeHelpers.object_module_name_for(value))
+            is not None
             and (origin_root := origin.split(".")[0]) in owners
             and owners[origin_root] != package
         )

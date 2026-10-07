@@ -23,7 +23,7 @@ from flext_core._models.base import FlextModelsBase as m
 from flext_core._models.containers import FlextModelsContainers
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 from flext_core._runtime._container import FlextRuntimeContainer as FlextRuntime
-from flext_core._utilities.generators import FlextUtilitiesGenerators as ug
+from flext_core._utilities import FlextUtilitiesGenerators as ug
 
 
 class FlextModelsContainer(FlextModelsContainerPart01):
@@ -48,7 +48,9 @@ class FlextModelsContainer(FlextModelsContainerPart01):
         registration_time: Annotated[
             datetime,
             mp.Field(
-                description="Timestamp when resource was registered (configured timezone)",
+                description=(
+                    "Timestamp when resource was registered (configured timezone)"
+                ),
             ),
         ] = mp.Field(default_factory=ug.now)
         metadata: Annotated[

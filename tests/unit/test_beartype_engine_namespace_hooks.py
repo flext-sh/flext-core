@@ -38,7 +38,9 @@ class TestsFlextBeartypeEngineNamespaceHooks(
         import_target: str,
         ast_shape: str,
     ) -> p.Cli.CommandOutput:
-        """Materialize ``files``, import ``Probe`` from ``import_target``, run ``apply``.
+        """Materialize ``files`` and import ``Probe``.
+
+        The probe is imported from ``import_target``, then ``apply`` runs.
 
         Returns the captured subprocess output; ``stdout`` holds ``repr`` of the
         value returned by ``apply`` for the DEPRECATED_SYNTAX predicate.
@@ -136,7 +138,10 @@ class TestsFlextBeartypeEngineNamespaceHooks(
         tm.that(result.stdout.strip(), eq="None", msg=f"{case_id}: {result.stdout}")
 
     def test_apply_raises_for_unrecognized_ast_shape(self, tmp_path: Path) -> None:
-        """An unknown ``ast_shape`` is a rule-data defect: apply raises, never passes."""
+        """An unknown ``ast_shape`` is a rule-data defect.
+
+        ``apply`` raises, it never passes.
+        """
         result = self._apply_deprecated_syntax(
             tmp_path,
             {

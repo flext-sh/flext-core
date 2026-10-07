@@ -8,16 +8,16 @@ from __future__ import annotations
 
 from enum import EnumType
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers as ubh
-from flext_core._utilities._beartype.module_source import (
+from flext_core._constants import FlextConstantsEnforcement
+from flext_core._models import FlextModelsEnforcement
+from flext_core._typings.base import FlextTypingBase
+from flext_core._utilities import (
+    FlextUtilitiesBeartypeHelpers,
     FlextUtilitiesBeartypeModuleSource,
 )
 
-NO_VIOLATION: t.StrMapping | None = None
-BARE_VIOLATION: t.StrMapping = {}
+NO_VIOLATION: FlextTypingBase.StrMapping | None = None
+BARE_VIOLATION: FlextTypingBase.StrMapping = {}
 BINARY_ARITY: int = 2
 
 
@@ -26,9 +26,9 @@ class FlextUtilitiesBeartypeClassVisitor:
 
     @staticmethod
     def v_class_placement(
-        params: me.ClassPlacementParams,
+        params: FlextModelsEnforcement.ClassPlacementParams,
         *args: type | str,
-    ) -> t.StrMapping | None:
+    ) -> FlextTypingBase.StrMapping | None:
         """CLASS_PLACEMENT — class-name / inner-class layer placement.
 
         Returns:
@@ -40,12 +40,20 @@ class FlextUtilitiesBeartypeClassVisitor:
             case (value, layer) if (
                 isinstance(value, type)
                 and isinstance(layer, str)
-                and layer in c.ENFORCEMENT_LAYER_ALLOWS
+                and layer in FlextConstantsEnforcement.ENFORCEMENT_LAYER_ALLOWS
             ):
-                allowed = c.ENFORCEMENT_LAYER_ALLOWS.get(layer, frozenset())
+                allowed = FlextConstantsEnforcement.ENFORCEMENT_LAYER_ALLOWS.get(
+                    layer,
+                    frozenset(),
+                )
                 forbidden_base_matches = (
                     ("StrEnum", isinstance(value, EnumType)),
-                    ("Protocol", ubh.has_runtime_protocol_marker(value)),
+                    (
+                        "Protocol",
+                        FlextUtilitiesBeartypeHelpers.has_runtime_protocol_marker(
+                            value,
+                        ),
+                    ),
                 )
                 if any(
                     base_name in params.forbidden_bases
@@ -72,7 +80,8 @@ class FlextUtilitiesBeartypeClassVisitor:
                 if params.check_nested:
                     parts = target.__qualname__.split(".")
                     has_wrong_nested_prefix = all((
-                        len(parts) >= c.ENFORCEMENT_NESTED_MRO_MIN_DEPTH,
+                        len(parts)
+                        >= FlextConstantsEnforcement.ENFORCEMENT_NESTED_MRO_MIN_DEPTH,
                         not parts[0].startswith(expected),
                     ))
                     violation = (
@@ -92,9 +101,9 @@ class FlextUtilitiesBeartypeClassVisitor:
 
     @staticmethod
     def v_protocol_tree(
-        params: me.ProtocolTreeParams,
+        params: FlextModelsEnforcement.ProtocolTreeParams,
         value: type,
-    ) -> t.StrMapping | None:
+    ) -> FlextTypingBase.StrMapping | None:
         """PROTOCOL_TREE — inner-class kind + runtime_checkable governance.
 
         Returns:
@@ -103,17 +112,17 @@ class FlextUtilitiesBeartypeClassVisitor:
         """
         if params.require_inner_kind_protocol_or_namespace:
             if (
-                ubh.has_runtime_protocol_marker(value)
-                or ubh.has_nested_namespace(value)
-                or ubh.has_abstract_contract(value)
-                or ubh.has_protocol_ancestor(value)
+                FlextUtilitiesBeartypeHelpers.has_runtime_protocol_marker(value)
+                or FlextUtilitiesBeartypeHelpers.has_nested_namespace(value)
+                or FlextUtilitiesBeartypeHelpers.has_abstract_contract(value)
+                or FlextUtilitiesBeartypeHelpers.has_protocol_ancestor(value)
             ):
                 pass
             else:
                 return BARE_VIOLATION
         if (
             params.require_runtime_checkable
-            and ubh.has_runtime_protocol_marker(value)
+            and FlextUtilitiesBeartypeHelpers.has_runtime_protocol_marker(value)
             and not FlextUtilitiesBeartypeModuleSource.declares_runtime_checkable(value)
         ):
             return BARE_VIOLATION

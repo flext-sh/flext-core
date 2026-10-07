@@ -12,11 +12,34 @@ from typing import TYPE_CHECKING
 
 from flext_core import c, u
 from flext_core._decorators._logging_payloads import FlextDecoratorsLoggingPayloads
-from flext_core._protocols.loggings import FlextProtocolsLogging as pl
-from flext_core._typings.base import FlextTypingBase as tb
+from flext_core._models import FlextModelsPydantic
+from flext_core._protocols import FlextProtocolsLogging
+from flext_core._typings.base import FlextTypingBase
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+
+class LoggedCallSpec(FlextModelsPydantic.BaseModel):
+    """Frozen parameters for one logged call execution.
+
+    Groups the logging-related arguments of
+    ``FlextDecoratorsLogging._execute_logged_call`` so the executor keeps a
+    narrow signature.
+    """
+
+    model_config = FlextModelsPydantic.ConfigDict(
+        frozen=True,
+        arbitrary_types_allowed=True,
+    )
+
+    func_name: str
+    func_module: str
+    op_name: str
+    logger: FlextProtocolsLogging.Logger
+    correlation_id: str | None
+    track_perf: bool
+    start_time: float
 
 
 class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
@@ -67,13 +90,15 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
                 try:
                     return cls._execute_logged_call(
                         lambda: func(*args, **kwargs),
-                        func_name=func.__name__,
-                        func_module=func.__module__,
-                        op_name=op_name,
-                        logger=logger,
-                        correlation_id=correlation_id,
-                        track_perf=track_perf,
-                        start_time=start_time,
+                        spec=LoggedCallSpec(
+                            func_name=func.__name__,
+                            func_module=func.__module__,
+                            op_name=op_name,
+                            logger=logger,
+                            correlation_id=correlation_id,
+                            track_perf=track_perf,
+                            start_time=start_time,
+                        ),
                     )
                 finally:
                     u.clear_scope(c.ContextScope.OPERATION).unwrap()
@@ -100,13 +125,7 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
         cls,
         call: Callable[[], TResult],
         *,
-        func_name: str,
-        func_module: str,
-        op_name: str,
-        logger: pl.Logger,
-        correlation_id: str | None,
-        track_perf: bool,
-        start_time: float,
+        spec: LoggedCallSpec,
     ) -> TResult:
         """Execute the wrapped callable and emit success/failure logs.
 
@@ -115,41 +134,43 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
 
         """
         try:
-            logger.debug(
+            spec.logger.debug(
                 "%s_started",
-                op_name,
+                spec.op_name,
                 **cls._start_log_payload(
-                    func_name=func_name,
-                    func_module=func_module,
-                    correlation_id=correlation_id,
+                    func_name=spec.func_name,
+                    func_module=spec.func_module,
+                    correlation_id=spec.correlation_id,
                 ),
             )
             result = call()
         except cls._CAUGHT_EXCEPTIONS as exc:
-            tracked_duration = time.perf_counter() - start_time if track_perf else 0.0
-            exc_kw: tb.MutableJsonMapping = {
-                "function": func_name,
+            tracked_duration = (
+                time.perf_counter() - spec.start_time if spec.track_perf else 0.0
+            )
+            exc_kw: FlextTypingBase.MutableJsonMapping = {
+                "function": spec.func_name,
                 "success": False,
                 "error": str(exc),
                 "error_type": exc.__class__.__name__,
-                "operation": op_name,
+                "operation": spec.op_name,
             }
-            if correlation_id is not None:
-                exc_kw[c.ContextKey.CORRELATION_ID] = correlation_id
-            if track_perf:
+            if spec.correlation_id is not None:
+                exc_kw[c.ContextKey.CORRELATION_ID] = spec.correlation_id
+            if spec.track_perf:
                 exc_kw["duration_ms"] = tracked_duration * c.MS_PER_SECOND
                 exc_kw[c.MetadataKey.DURATION_SECONDS] = tracked_duration
-            logger.exception(op_name, exception=exc, **exc_kw)
+            spec.logger.exception(spec.op_name, exception=exc, **exc_kw)
             raise
         else:
-            logger.debug(
+            spec.logger.debug(
                 "%s_completed",
-                op_name,
+                spec.op_name,
                 **cls._success_log_payload(
-                    func_name=func_name,
-                    correlation_id=correlation_id,
-                    track_perf=track_perf,
-                    start_time=start_time,
+                    func_name=spec.func_name,
+                    correlation_id=spec.correlation_id,
+                    track_perf=spec.track_perf,
+                    start_time=spec.start_time,
                 ),
             )
             return result

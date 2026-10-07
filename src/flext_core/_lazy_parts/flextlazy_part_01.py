@@ -23,7 +23,7 @@ from pydantic import (
     computed_field,
 )
 
-from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.base import FlextTypingBase
 
 if TYPE_CHECKING:
     from types import FrameType, ModuleType
@@ -49,7 +49,7 @@ class FlextLazyPart01(BaseModel):
 
     child_lazy_cache: dict[str, LazyImportDict] = Field(default_factory=dict)
 
-    child_merge_cache: dict[t.VariadicTuple[str], LazyImportDict] = Field(
+    child_merge_cache: dict[FlextTypingBase.VariadicTuple[str], LazyImportDict] = Field(
         default_factory=dict,
     )
 

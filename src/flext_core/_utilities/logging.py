@@ -15,13 +15,12 @@ import time
 import traceback
 from typing import TYPE_CHECKING, ClassVar, Self
 
-from flext_core._utilities.logging_context import FlextUtilitiesLoggingContext as ulc
-from flext_core.constants import c
+from flext_core import c, m, p, t
+from flext_core._utilities._logging_context_parts.logging_context_part_01 import (
+    FlextUtilitiesLoggingContext,
+)
 from flext_core.exceptions import e
-from flext_core.models import m
-from flext_core.protocols import p
 from flext_core.result import r
-from flext_core.typings import t
 
 if TYPE_CHECKING:
     import types
@@ -31,7 +30,7 @@ if TYPE_CHECKING:
 
 # NOTE (multi-agent): mro-i6nq.12 — consolidated _loggings_parts/part_01..05
 # into this single facade module.
-class FlextUtilitiesLogging(ulc):
+class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
     """Context-aware utility logger tuned for dispatcher-centric CQRS flows.
 
     Composed via MRO from:

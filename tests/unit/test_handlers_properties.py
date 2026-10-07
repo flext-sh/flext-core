@@ -71,10 +71,11 @@ class TestsFlextCoreHandlersProperties(
         """A callable already returning ``r[T]`` is not double-wrapped."""
 
         def result_handler(message: t.Scalar) -> t.Scalar:
+            payload = message.decode() if isinstance(message, bytes) else message
             return (
                 r[t.Scalar]
                 .ok(
-                    f"pre_{message.decode() if isinstance(message, bytes) else message}",
+                    f"pre_{payload}",
                 )
                 .value
             )

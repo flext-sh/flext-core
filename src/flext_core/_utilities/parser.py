@@ -14,8 +14,10 @@ from __future__ import annotations
 from enum import StrEnum
 
 from flext_core import c, p, r, t
-from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
-from flext_core._utilities.parser_targets import FlextUtilitiesParserTargets
+from flext_core._utilities import FlextUtilitiesGuardsTypeModel
+from flext_core._utilities._parser_targets_parts.parser_targets_part_01 import (
+    FlextUtilitiesParserTargets,
+)
 
 
 class FlextUtilitiesParser(FlextUtilitiesParserTargets):

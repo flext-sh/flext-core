@@ -10,63 +10,101 @@ from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from flext_core._utilities._guards_type_protocol_types import ProtocolGuardInput
+    from flext_core.typings import ProtocolGuardInput
+
+
+def _has_len(value: ProtocolGuardInput) -> bool:
+    """Return whether ``value`` exposes ``__len__``.
+
+    Returns:
+        The resulting ``bool``.
+
+    """
+    return hasattr(value, "__len__")
+
+
+def _is_none(value: ProtocolGuardInput) -> bool:
+    """Return whether ``value`` is ``None``.
+
+    Returns:
+        The resulting ``bool``.
+
+    """
+    return value is None
 
 
 class FlextUtilitiesGuardsTypeProtocolStringMixin:
+    """String-keyed runtime predicates shared by the protocol guards."""
+
+    @staticmethod
+    def _string_predicates() -> Mapping[str, object]:
+        """Return the canonical ``type_name`` → predicate registry.
+
+        Returns:
+            The resulting ``Mapping[str, object]``.
+
+        """
+        return {
+            "str": lambda value: isinstance(value, str),
+            "dict": lambda value: isinstance(value, dict),
+            "list": lambda value: isinstance(value, list),
+            "tuple": lambda value: isinstance(value, tuple),
+            "sequence": lambda value: isinstance(value, (list, tuple, range)),
+            "mapping": lambda value: isinstance(value, Mapping),
+            "list_or_tuple": lambda value: isinstance(value, (list, tuple)),
+            "sequence_not_str": lambda value: (
+                isinstance(
+                    value,
+                    (list, tuple, range),
+                )
+                and not isinstance(value, str)
+            ),
+            "sequence_not_str_bytes": lambda value: (
+                isinstance(
+                    value,
+                    (list, tuple, range),
+                )
+                and not isinstance(value, (str, bytes))
+            ),
+            "sized": _has_len,
+            "callable": callable,
+            "bytes": lambda value: isinstance(value, bytes),
+            "int": lambda value: isinstance(value, int),
+            "float": lambda value: isinstance(value, float),
+            "bool": lambda value: isinstance(value, bool),
+            "none": _is_none,
+            "string_non_empty": lambda value: (
+                isinstance(value, str)
+                and bool(
+                    value.strip(),
+                )
+            ),
+            "dict_non_empty": lambda value: (
+                isinstance(value, Mapping)
+                and bool(
+                    len(value),
+                )
+            ),
+            "list_non_empty": lambda value: (
+                isinstance(value, Sequence)
+                and not isinstance(value, (str, bytes, bytearray))
+                and bool(len(value))
+            ),
+        }
+
     @staticmethod
     def _run_string_type_check(type_name: str, value: ProtocolGuardInput) -> bool:
-        match type_name:
-            case "str":
-                return isinstance(value, str)
-            case "dict":
-                return isinstance(value, dict)
-            case "list":
-                return isinstance(value, list)
-            case "tuple":
-                return isinstance(value, tuple)
-            case "sequence":
-                return isinstance(value, (list, tuple, range))
-            case "mapping":
-                return isinstance(value, Mapping)
-            case "list_or_tuple":
-                return isinstance(value, (list, tuple))
-            case "sequence_not_str":
-                return isinstance(value, (list, tuple, range)) and not isinstance(
-                    value,
-                    str,
-                )
-            case "sequence_not_str_bytes":
-                return isinstance(value, (list, tuple, range)) and not isinstance(
-                    value,
-                    (str, bytes),
-                )
-            case "sized":
-                return hasattr(value, "__len__")
-            case "callable":
-                return callable(value)
-            case "bytes":
-                return isinstance(value, bytes)
-            case "int":
-                return isinstance(value, int)
-            case "float":
-                return isinstance(value, float)
-            case "bool":
-                return isinstance(value, bool)
-            case "none":
-                return value is None
-            case "string_non_empty":
-                return isinstance(value, str) and bool(value.strip())
-            case "dict_non_empty":
-                return isinstance(value, Mapping) and len(value) > 0
-            case "list_non_empty":
-                return (
-                    isinstance(value, Sequence)
-                    and not isinstance(value, (str, bytes, bytearray))
-                    and len(value) > 0
-                )
-            case _:
-                return False
+        """Evaluate the registry predicate registered under ``type_name``.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
+        predicates = FlextUtilitiesGuardsTypeProtocolStringMixin._string_predicates()
+        predicate = predicates.get(type_name)
+        if predicate is None:
+            return False
+        return bool(predicate(value))
 
 
 __all__: list[str] = ["FlextUtilitiesGuardsTypeProtocolStringMixin"]

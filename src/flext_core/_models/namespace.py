@@ -12,12 +12,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core._utilities.enforcement import FlextUtilitiesEnforcement as ue
+from flext_core._constants import FlextConstantsEnforcement
+from flext_core._typings.base import FlextTypingBase
+from flext_core._utilities import FlextUtilitiesEnforcement
 
 if TYPE_CHECKING:
-    from flext_core._typings.pydantic import FlextTypesPydantic as tp
+    from flext_core._typings.pydantic import FlextTypesPydantic
 
 
 class FlextModelsNamespace:
@@ -28,7 +28,7 @@ class FlextModelsNamespace:
     per-layer wrapper methods, no hardcoded dispatch.
     """
 
-    def __init_subclass__(cls, **kwargs: tp.JsonValue) -> None:
+    def __init_subclass__(cls, **kwargs: FlextTypesPydantic.JsonValue) -> None:
         """Enforce namespace governance on every facade subclass.
 
         Layer-independent rules (``class_prefix``, ``no_accessor_methods``,
@@ -39,10 +39,13 @@ class FlextModelsNamespace:
         """
         _ = kwargs
         super().__init_subclass__()
-        if c.ENFORCEMENT_NAMESPACE_MODE is c.EnforcementMode.OFF:
+        if (
+            FlextConstantsEnforcement.ENFORCEMENT_NAMESPACE_MODE
+            is FlextConstantsEnforcement.EnforcementMode.OFF
+        ):
             return
-        layer = ue.detect_layer(cls) or ""
-        ue.run_layer(cls, layer)
+        layer = FlextUtilitiesEnforcement.detect_layer(cls) or ""
+        FlextUtilitiesEnforcement.run_layer(cls, layer)
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextModelsNamespace"]
+__all__: FlextTypingBase.MutableSequenceOf[str] = ["FlextModelsNamespace"]

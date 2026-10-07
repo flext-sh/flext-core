@@ -33,7 +33,10 @@ LOG_LEVELS: tuple[tuple[str, bool], ...] = (
 
 
 class TestsFlextLoggings:
-    """Behavior contract for FlextUtilitiesLogging public API: create, bind, log, track, strict returns."""
+    """Behavior contract for the ``FlextUtilitiesLogging`` public API.
+
+    Covers create, bind, log, track, and strict returns.
+    """
 
     @classmethod
     def _assert_log_output[TResult: p.Result[bool] | None](

@@ -18,6 +18,8 @@ import threading
 import typing
 from typing import TYPE_CHECKING, ClassVar, override
 
+import structlog
+
 from flext_core import c, p, t
 
 if TYPE_CHECKING:
@@ -56,10 +58,6 @@ class FlextUtilitiesLoggingConfig:
             The imported structlog module for owner-internal access.
 
         """
-        # Local import keeps structlog unloaded until logging initializes
-        # while binding the name this function returns.
-        import structlog
-
         return structlog
 
     class _AsyncLogWriter(io.TextIOBase):

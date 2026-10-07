@@ -10,9 +10,8 @@ from collections.abc import Mapping
 from enum import StrEnum
 
 from flext_core import c, p, r, t
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
-from flext_core._utilities.model import FlextUtilitiesModel
+from flext_core._models import FlextModelsPydantic
+from flext_core._utilities import FlextUtilitiesGuardsTypeModel, FlextUtilitiesModel
 from flext_core._utilities.parser_coerce import FlextUtilitiesParserCoerce
 
 

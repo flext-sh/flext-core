@@ -10,15 +10,15 @@ import ast
 import inspect
 from pathlib import Path
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers
-from flext_core._utilities._beartype.module_source import (
+from flext_core._constants import FlextConstantsEnforcement
+from flext_core._models import FlextModelsEnforcement
+from flext_core._typings.base import FlextTypingBase
+from flext_core._utilities import (
+    FlextUtilitiesBeartypeHelpers,
     FlextUtilitiesBeartypeModuleSource,
 )
 
-_NO_VIOLATION: t.StrMapping | None = None
+_NO_VIOLATION: FlextTypingBase.StrMapping | None = None
 _MODULE_EXEMPT_FILES: frozenset[str] = frozenset({
     "__init__.py",
     "__main__.py",
@@ -64,7 +64,10 @@ class FlextUtilitiesBeartypeModuleVisitor:
     """LOC_CAP + MODULE_ALIAS + DUPLICATE_SYMBOL visitors."""
 
     @staticmethod
-    def v_loc_cap(params: me.LocCapParams, target: type) -> t.StrMapping | None:
+    def v_loc_cap(
+        params: FlextModelsEnforcement.LocCapParams,
+        target: type,
+    ) -> FlextTypingBase.StrMapping | None:
         """LOC_CAP — top-level class census (NS-000).
 
         The module-LOC ceiling used to live here too, but it counted source-text
@@ -110,9 +113,9 @@ class FlextUtilitiesBeartypeModuleVisitor:
 
     @staticmethod
     def v_module_alias(
-        params: me.AliasRebindParams,
+        params: FlextModelsEnforcement.AliasRebindParams,
         target: type,
-    ) -> t.StrMapping | None:
+    ) -> FlextTypingBase.StrMapping | None:
         """MODULE_ALIAS — module-level CapWords compat alias / nested-class hoist.
 
         Returns:
@@ -130,7 +133,7 @@ class FlextUtilitiesBeartypeModuleVisitor:
         if (
             not package.startswith("flext_")
             or filename.startswith("_")
-            or filename in c.ENFORCEMENT_CANONICAL_FILES
+            or filename in FlextConstantsEnforcement.ENFORCEMENT_CANONICAL_FILES
             or filename in _MODULE_EXEMPT_FILES
         ):
             return _NO_VIOLATION
@@ -159,9 +162,9 @@ class FlextUtilitiesBeartypeModuleVisitor:
 
     @staticmethod
     def v_duplicate_symbol(
-        _params: me.DuplicateSymbolParams,
+        _params: FlextModelsEnforcement.DuplicateSymbolParams,
         _target: type,
-    ) -> t.StrMapping | None:
+    ) -> FlextTypingBase.StrMapping | None:
         """DUPLICATE_SYMBOL — workspace cross-project SSOT (Phase 3 hook).
 
         Implementation lives in the workspace walker, not the per-class

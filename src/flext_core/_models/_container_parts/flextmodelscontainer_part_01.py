@@ -16,20 +16,17 @@ from datetime import datetime
 from typing import Annotated
 
 from flext_core import t
-from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.base import FlextModelsBase
 from flext_core._models.containers import FlextModelsContainers
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._runtime._container import FlextRuntimeContainer as FlextRuntime
-from flext_core._utilities.generators import FlextUtilitiesGenerators as ug
-from flext_core._utilities.guards_type_core import (
-    FlextUtilitiesGuardsTypeCore as ug_type,
-)
+from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._runtime._container import FlextRuntimeContainer
+from flext_core._utilities import FlextUtilitiesGenerators, FlextUtilitiesGuardsTypeCore
 
 
 class FlextModelsContainer:
     """Container models namespace for DI and service registry."""
 
-    class ServiceRegistration(m.ArbitraryTypesModel):
+    class ServiceRegistration(FlextModelsBase.ArbitraryTypesModel):
         """Model for service registry entries.
 
         Implements metadata for registered service instances in the DI container.
@@ -38,46 +35,48 @@ class FlextModelsContainer:
 
         name: Annotated[
             t.NonEmptyStr,
-            mp.Field(..., description="Service identifier/name"),
+            FlextModelsPydantic.Field(..., description="Service identifier/name"),
         ]
         service: Annotated[
             t.RegisterableService,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 ...,
                 description="Service instance (protocols, models, callables)",
             ),
         ]
         registration_time: Annotated[
             datetime,
-            mp.Field(
-                description="Timestamp when service was registered (configured timezone)",
-            ),
-        ] = mp.Field(default_factory=ug.now)
-        metadata: Annotated[
-            m.Metadata | FlextModelsContainers.ConfigMap | None,
-            mp.BeforeValidator(
-                lambda value: FlextRuntime.validate_metadata_model_input(
-                    value,
-                    m.Metadata,
+            FlextModelsPydantic.Field(
+                description=(
+                    "Timestamp when service was registered (configured timezone)"
                 ),
             ),
-            mp.Field(
+        ] = FlextModelsPydantic.Field(default_factory=FlextUtilitiesGenerators.now)
+        metadata: Annotated[
+            FlextModelsBase.Metadata | FlextModelsContainers.ConfigMap | None,
+            FlextModelsPydantic.BeforeValidator(
+                lambda value: FlextRuntimeContainer.validate_metadata_model_input(
+                    value,
+                    FlextModelsBase.Metadata,
+                ),
+            ),
+            FlextModelsPydantic.Field(
                 None,
                 description="Additional service metadata (JSON-serializable)",
             ),
         ] = None
         tags: Annotated[
             t.StrSequence,
-            mp.Field(description="Service tags for categorization"),
-        ] = mp.Field(default_factory=tuple)
+            FlextModelsPydantic.Field(description="Service tags for categorization"),
+        ] = FlextModelsPydantic.Field(default_factory=tuple)
 
-        @mp.computed_field
+        @FlextModelsPydantic.computed_field
         @property
         def service_type(self) -> str:
             """Type name of the registered service, derived from the service."""
-            return ug_type.type_name(self.service)
+            return FlextUtilitiesGuardsTypeCore.type_name(self.service)
 
-        @mp.field_validator("service", mode="before")
+        @FlextModelsPydantic.field_validator("service", mode="before")
         @classmethod
         def validate_service(
             cls,
@@ -87,9 +86,9 @@ class FlextModelsContainer:
             | FlextModelsContainers.ConfigMap
             | FlextModelsContainers.ObjectList
         ):
-            return FlextRuntime.normalize_registerable_service(value)
+            return FlextRuntimeContainer.normalize_registerable_service(value)
 
-    class FactoryRegistration(m.ArbitraryTypesModel):
+    class FactoryRegistration(FlextModelsBase.ArbitraryTypesModel):
         """Model for factory registry entries.
 
         Implements metadata for registered factory functions in the DI container.
@@ -98,30 +97,32 @@ class FlextModelsContainer:
 
         name: Annotated[
             t.NonEmptyStr,
-            mp.Field(..., description="Factory identifier/name"),
+            FlextModelsPydantic.Field(..., description="Factory identifier/name"),
         ]
         factory: Annotated[
             t.FactoryCallable,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 ...,
                 description="Factory function that creates service instances",
             ),
         ]
         registration_time: Annotated[
             datetime,
-            mp.Field(
-                description="Timestamp when factory was registered (configured timezone)",
-            ),
-        ] = mp.Field(default_factory=ug.now)
-        metadata: Annotated[
-            m.Metadata | FlextModelsContainers.ConfigMap | None,
-            mp.BeforeValidator(
-                lambda value: FlextRuntime.validate_metadata_model_input(
-                    value,
-                    m.Metadata,
+            FlextModelsPydantic.Field(
+                description=(
+                    "Timestamp when factory was registered (configured timezone)"
                 ),
             ),
-            mp.Field(
+        ] = FlextModelsPydantic.Field(default_factory=FlextUtilitiesGenerators.now)
+        metadata: Annotated[
+            FlextModelsBase.Metadata | FlextModelsContainers.ConfigMap | None,
+            FlextModelsPydantic.BeforeValidator(
+                lambda value: FlextRuntimeContainer.validate_metadata_model_input(
+                    value,
+                    FlextModelsBase.Metadata,
+                ),
+            ),
+            FlextModelsPydantic.Field(
                 None,
                 description="Additional factory metadata (JSON-serializable)",
             ),

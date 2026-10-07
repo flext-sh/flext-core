@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, ClassVar
 from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_01 import (
     FlextConstantsEnforcementEnums,
 )
-from flext_core._typings.base import FlextTypingBase as t
+from flext_core._typings.base import FlextTypingBase
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -47,7 +47,7 @@ class FlextConstantsEnforcementRuntime:
     ``.beads/artifacts/mro-31mj/fix-waves/L0-beartype``.
     """
 
-    BEARTYPE_CLAW_SKIP_PACKAGES: ClassVar[t.VariadicTuple[str]] = (
+    BEARTYPE_CLAW_SKIP_PACKAGES: ClassVar[FlextTypingBase.VariadicTuple[str]] = (
         "flext_core._models.context",
         "flext_core._typings",
         "flext_core._utilities.logging_config",
@@ -59,8 +59,8 @@ class FlextConstantsEnforcementRuntime:
     """Package paths skipped by the flext_core beartype bootstrap."""
 
     ENFORCEMENT_FORBIDDEN_COLLECTIONS: ClassVar[Mapping[type, str]] = MappingProxyType({
-        dict: "Mapping[K, V] or t.JsonMapping",
-        list: "Sequence[X] or t.JsonList",
+        dict: "Mapping[K, V] or FlextTypingBase.JsonMapping",
+        list: "Sequence[X] or FlextTypingBase.JsonList",
         set: "frozenset[X] or AbstractSet[X]",
     })
     """SSOT: forbidden mutable-collection types mapped to replacement hints.
@@ -75,8 +75,10 @@ class FlextConstantsEnforcementRuntime:
     )
     """Derived view: collection names used by annotation-origin checks."""
 
-    ENFORCEMENT_MUTABLE_RUNTIME_TYPES: ClassVar[t.VariadicTuple[type]] = tuple(
-        ENFORCEMENT_FORBIDDEN_COLLECTIONS,
+    ENFORCEMENT_MUTABLE_RUNTIME_TYPES: ClassVar[FlextTypingBase.VariadicTuple[type]] = (
+        tuple(
+            ENFORCEMENT_FORBIDDEN_COLLECTIONS,
+        )
     )
     """Derived view: concrete types used by ``isinstance`` checks."""
 

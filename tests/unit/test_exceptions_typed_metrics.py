@@ -201,8 +201,10 @@ class TestsFlextCoreExceptionsTypedMetrics:
         """Test base error exposes correlation and metadata."""
         err = e.BaseError(
             "boom",
-            correlation_id="corr-001",
-            metadata={"scope": "service"},
+            options=m.ExceptionInitOptions(
+                correlation_id="corr-001",
+                metadata={"scope": "service"},
+            ),
         )
 
         # Assert: correlation id + metadata attributes reachable publicly
@@ -218,11 +220,13 @@ class TestsFlextCoreExceptionsTypedMetrics:
             "Not found",
             resource_type="User",
             resource_id="123",
-            context={
-                "key1": "value1",
-                "correlation_id": "corr-001",
-                "metadata": "skip-me",
-            },
+            options=m.ExceptionInitOptions(
+                context={
+                    "key1": "value1",
+                    "correlation_id": "corr-001",
+                    "metadata": "skip-me",
+                },
+            ),
         )
 
         # Assert: caller-provided context survives; reserved keys are excluded
@@ -239,7 +243,7 @@ class TestsFlextCoreExceptionsTypedMetrics:
             "Type mismatch",
             expected_type="str",
             actual_type=int,
-            context={"source": "api"},
+            options=m.ExceptionInitOptions(context={"source": "api"}),
         )
 
         # Assert: both resolve to concrete types on the public attributes

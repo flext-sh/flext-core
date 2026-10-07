@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Self, cast
 from pydantic import BaseModel, ValidationError
 
 from flext_core import c
-from flext_core._protocols.result import FlextProtocolsResult as prt
+from flext_core._protocols import FlextProtocolsResult
 from flext_core._result.base import FlextResultBase
 from flext_core._result.behavior import FlextResultBehavior
 
@@ -247,7 +247,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
         return isinstance(obj, FlextResultBase) and not obj.success
 
 
-def ok_result[V, InstanceT: prt.ResultFactoryMinimal](
+def ok_result[V, InstanceT: FlextProtocolsResult.ResultFactoryMinimal](
     cls: type[InstanceT],
     value: V,
 ) -> p.Result[V]:
@@ -262,7 +262,7 @@ def ok_result[V, InstanceT: prt.ResultFactoryMinimal](
     return cast("p.Result[V]", cls(value=value, success=True))
 
 
-def copy_result[V, InstanceT: prt.ResultFactoryMinimal](
+def copy_result[V, InstanceT: FlextProtocolsResult.ResultFactoryMinimal](
     cls: type[InstanceT],
     source: p.Result[V],
 ) -> p.Result[V]:

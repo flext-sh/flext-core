@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core._protocols.result import FlextProtocolsResult as pr
+from flext_core._protocols.result import FlextProtocolsResult
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -28,7 +28,7 @@ class FlextProtocolsConfig:
     class ConfigLoader(Protocol):
         """Structural contract for loading a config source into a mapping."""
 
-        def config_load(self, path: Path) -> pr.Result[t.JsonMapping]:
+        def config_load(self, path: Path) -> FlextProtocolsResult.Result[t.JsonMapping]:
             """Load and parse a config source into a validated mapping."""
             ...
 

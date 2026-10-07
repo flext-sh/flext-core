@@ -13,9 +13,11 @@ from __future__ import annotations
 from typing import Annotated, ClassVar
 
 from flext_core import c, t
-from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.base import FlextModelsBase
 from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._protocols.result import FlextProtocolsResult as pr
 from flext_core._typings.pydantic import FlextTypesPydantic as tp
+from flext_core._typings.services import FlextTypesServices as ts
 
 
 class FlextModelsExceptionParams:
@@ -36,7 +38,7 @@ class FlextModelsExceptionParams:
 
     type OptNumeric = t.Numeric | None
 
-    class ParamsModel(m.ArbitraryTypesModel):
+    class ParamsModel(FlextModelsBase.ArbitraryTypesModel):
         """Shared strict params model for exception helpers."""
 
         model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
@@ -65,12 +67,67 @@ class FlextModelsExceptionParams:
             ),
         ] = None
 
+    class ExceptionInitOptions(ParamsModel):
+        """Shared initialization options for BaseError construction."""
+
+        error_code: Annotated[
+            str,
+            mp.Field(
+                default=c.ErrorCode.UNKNOWN_ERROR,
+                description="Canonical error code carried by the exception.",
+            ),
+        ] = c.ErrorCode.UNKNOWN_ERROR
+        context: Annotated[
+            t.MappingKV[str, ts.JsonPayload | None] | pr.HasModelDump | None,
+            mp.Field(
+                default=None,
+                description="Structured context mapping or dumpable payload.",
+            ),
+        ] = None
+        metadata: Annotated[
+            pr.HasModelDump | tp.JsonValue | None,
+            mp.Field(
+                default=None,
+                description="Metadata payload or dumpable model for the exception.",
+            ),
+        ] = None
+        correlation_id: Annotated[
+            FlextModelsExceptionParams.OptStrictStr,
+            mp.Field(
+                default=None,
+                description="Explicit correlation identifier for the exception.",
+            ),
+        ] = None
+        auto_correlation: Annotated[
+            bool,
+            mp.Field(
+                default=False,
+                description="Generate a correlation identifier when none is given.",
+            ),
+        ] = False
+        auto_log: Annotated[
+            bool,
+            mp.Field(
+                default=True,
+                description="Log the exception automatically on construction.",
+            ),
+        ] = True
+        merged_kwargs: Annotated[
+            t.MappingKV[str, ts.JsonPayload | None] | pr.HasModelDump | None,
+            mp.Field(
+                default=None,
+                description="Pre-merged keyword payload forwarded by factories.",
+            ),
+        ] = None
+
     class ResourceIdentityParams(ParamsModel):
         """Shared resource identity fields for resource-oriented errors."""
 
         resource_type: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            mp.Field(description="Domain resource type associated with the failure."),
+            mp.Field(
+                description="Domain resource type associated with the failure.",
+            ),
         ] = None
         resource_id: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
@@ -84,11 +141,15 @@ class FlextModelsExceptionParams:
 
         expected_type: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            mp.Field(description="Expected runtime type name for the failing value."),
+            mp.Field(
+                description="Expected runtime type name for the failing value.",
+            ),
         ] = None
         actual_type: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            mp.Field(description="Actual runtime type name received at runtime."),
+            mp.Field(
+                description="Actual runtime type name received at runtime.",
+            ),
         ] = None
 
     class ValidationErrorParams(ParamsModel):
@@ -116,11 +177,15 @@ class FlextModelsExceptionParams:
 
         config_key: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            mp.Field(description="Settings key associated with the error."),
+            mp.Field(
+                description="Settings key associated with the error.",
+            ),
         ] = None
         config_source: Annotated[
             FlextModelsExceptionParams.OptStrictStr,
-            mp.Field(description="Settings source where the invalid value originated."),
+            mp.Field(
+                description="Settings source where the invalid value originated.",
+            ),
         ] = None
 
     class ConnectionErrorParams(ParamsModel):
@@ -130,7 +195,9 @@ class FlextModelsExceptionParams:
             str | None,
             mp.Field(
                 default=None,
-                description="Hostname or address used for the failed connection attempt.",
+                description=(
+                    "Hostname or address used for the failed connection attempt."
+                ),
             ),
         ] = None
         port: Annotated[

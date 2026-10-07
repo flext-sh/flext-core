@@ -11,21 +11,19 @@ from typing import TYPE_CHECKING
 
 from flext_core import c, m
 from flext_core._exceptions.helpers import FlextExceptionsHelpers
-from flext_core._protocols.result import FlextProtocolsResult as pr
-from flext_core._runtime._metadata_validation import (
-    FlextRuntimeMetadataValidation as FlextRuntime,
-)
+from flext_core._protocols import FlextProtocolsResult
+from flext_core._runtime._metadata_validation import FlextRuntimeMetadataValidation
 
 if TYPE_CHECKING:
-    from flext_core._typings.base import FlextTypingBase as tb
-    from flext_core._typings.services import FlextTypesServices as ts
+    from flext_core._typings.base import FlextTypingBase
+    from flext_core._typings.services import FlextTypesServices
 
 
 class FlextBaseErrorMetadataMixin:
     @staticmethod
     def normalize_metadata(
-        metadata: pr.HasModelDump | tb.JsonValue | None,
-        merged_kwargs: tb.MappingKV[str, ts.JsonPayload],
+        metadata: FlextProtocolsResult.HasModelDump | FlextTypingBase.JsonValue | None,
+        merged_kwargs: FlextTypingBase.MappingKV[str, FlextTypesServices.JsonPayload],
     ) -> m.Metadata:
         """Normalize metadata from various input types to m.Metadata model.
 
@@ -35,7 +33,7 @@ class FlextBaseErrorMetadataMixin:
         """
         if metadata is None:
             normalized_attrs = {
-                key: FlextRuntime.normalize_to_metadata(value)
+                key: FlextRuntimeMetadataValidation.normalize_to_metadata(value)
                 for key, value in merged_kwargs.items()
             }
             resolved_metadata = m.Metadata.model_validate({
@@ -45,22 +43,31 @@ class FlextBaseErrorMetadataMixin:
             metadata_model = FlextExceptionsHelpers.safe_metadata(metadata)
             if metadata_model is not None:
                 merged_attrs = {
-                    key: FlextRuntime.normalize_to_metadata(value)
+                    key: FlextRuntimeMetadataValidation.normalize_to_metadata(value)
                     for key, value in metadata_model.attributes.items()
                     if value is not None
                 }
                 for key, value in merged_kwargs.items():
                     if value is None:
                         continue
-                    merged_attrs[key] = FlextRuntime.normalize_to_metadata(value)
+                    merged_attrs[key] = (
+                        FlextRuntimeMetadataValidation.normalize_to_metadata(value)
+                    )
                 resolved_metadata = m.Metadata.model_validate({
                     c.FIELD_ATTRIBUTES: merged_attrs,
                 })
             else:
-                metadata_dict: tb.MappingKV[str, ts.JsonPayload | None] | None = None
-                if isinstance(metadata, (Mapping, pr.HasModelDump)):
+                metadata_dict: (
+                    FlextTypingBase.MappingKV[
+                        str,
+                        FlextTypesServices.JsonPayload | None,
+                    ]
+                    | None
+                ) = None
+                if isinstance(metadata, (Mapping, FlextProtocolsResult.HasModelDump)):
                     try:
-                        metadata_dict = FlextRuntime.normalize_metadata_input_mapping(
+                        validation = FlextRuntimeMetadataValidation
+                        metadata_dict = validation.normalize_metadata_input_mapping(
                             metadata,
                         )
                     except c.EXC_PYDANTIC_TYPE_VALUE:
@@ -79,8 +86,11 @@ class FlextBaseErrorMetadataMixin:
 
     @staticmethod
     def _normalize_metadata_from_dict(
-        metadata_dict: tb.MappingKV[str, ts.JsonPayload | None],
-        merged_kwargs: tb.MappingKV[str, ts.JsonPayload],
+        metadata_dict: FlextTypingBase.MappingKV[
+            str,
+            FlextTypesServices.JsonPayload | None,
+        ],
+        merged_kwargs: FlextTypingBase.MappingKV[str, FlextTypesServices.JsonPayload],
     ) -> m.Metadata:
         """Normalize metadata from dict-like recursive containers.
 
@@ -88,19 +98,21 @@ class FlextBaseErrorMetadataMixin:
             The resulting ``m.Metadata``.
 
         """
-        merged_attrs: MutableMapping[str, tb.JsonValue | None] = {}
+        merged_attrs: MutableMapping[str, FlextTypingBase.JsonValue | None] = {}
         for k, v in metadata_dict.items():
             if v is None:
                 continue
-            merged_attrs[k] = FlextRuntime.normalize_to_metadata(v)
+            merged_attrs[k] = FlextRuntimeMetadataValidation.normalize_to_metadata(v)
         if merged_kwargs:
             for k, v in merged_kwargs.items():
                 if v is None:
                     continue
-                merged_attrs[k] = FlextRuntime.normalize_to_metadata(v)
+                merged_attrs[k] = FlextRuntimeMetadataValidation.normalize_to_metadata(
+                    v,
+                )
         return m.Metadata.model_validate({
             c.FIELD_ATTRIBUTES: {
-                k: FlextRuntime.normalize_to_metadata(v)
+                k: FlextRuntimeMetadataValidation.normalize_to_metadata(v)
                 for k, v in merged_attrs.items()
                 if v is not None
             },

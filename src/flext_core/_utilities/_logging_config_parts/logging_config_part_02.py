@@ -100,13 +100,6 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
     @staticmethod
     def _resolve_structlog_params(
         settings: mp.BaseModel | None,
-        *,
-        log_level: int | None,
-        console_renderer: bool,
-        additional_processors: t.SequenceOf[Processor] | None,
-        wrapper_class_factory: t.LoggerWrapperFactory | None,
-        logger_factory: t.LoggerFactory,
-        cache_logger_on_first_use: bool,
     ) -> tuple[
         int,
         bool,
@@ -116,13 +109,19 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
         bool,
         bool,
     ]:
-        """Extract structlog params from settings model or pass-through args.
+        """Extract structlog params from the settings model over FLEXT defaults.
 
         Returns:
             The resulting ``tuple[int, bool, t.SequenceOf[Processor] | None,
                 t.LoggerWrapperFactory | None, t.LoggerFactory, bool, bool]``.
 
         """
+        log_level: int | None = None
+        console_renderer = True
+        additional_processors: t.SequenceOf[Processor] | None = None
+        wrapper_class_factory: t.LoggerWrapperFactory | None = None
+        logger_factory: t.LoggerFactory = None
+        cache_logger_on_first_use = True
         async_logging = True
         if settings is not None:
             log_level = getattr(settings, "log_level", log_level)

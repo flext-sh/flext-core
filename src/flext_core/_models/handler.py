@@ -16,34 +16,36 @@ from collections.abc import MutableSequence
 from typing import Annotated, ClassVar
 
 from flext_core import c, p, t
-from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.base import FlextModelsBase
 from flext_core._models.containers import FlextModelsContainers
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
+from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._utilities import FlextUtilitiesPydantic
 
 
 class FlextModelsHandler:
     """Handler state namespace."""
 
-    class RegistrationDetails(m.ArbitraryTypesModel):
+    class RegistrationDetails(FlextModelsBase.ArbitraryTypesModel):
         """Registration details tracked by ``FlextRegistry``."""
 
-        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            json_schema_extra={
-                "title": "RegistrationDetails",
-                "description": "Handler registration tracking details",
-            },
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(
+                json_schema_extra={
+                    "title": "RegistrationDetails",
+                    "description": "Handler registration tracking details",
+                },
+            )
         )
         registration_id: Annotated[
             t.NonEmptyStr,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 description="Unique registration identifier",
                 examples=["reg-abc123", "handler-create-user-001"],
             ),
         ]
         handler_mode: Annotated[
             c.HandlerType,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=c.HandlerType.COMMAND,
                 description="Handler mode (command, query, or event)",
                 examples=["command", "query", "event"],
@@ -51,63 +53,72 @@ class FlextModelsHandler:
         ] = c.HandlerType.COMMAND
         timestamp: Annotated[
             str,
-            mp.Field(
-                description="ISO 8601 timestamp recording when the registration entry was created.",
+            FlextModelsPydantic.Field(
+                description=(
+                    "ISO 8601 timestamp recording when the registration entry was "
+                    "created."
+                ),
                 title="Registration Timestamp",
                 examples=["2025-01-01T00:00:00Z", "2025-10-12T15:30:00+00:00"],
                 pattern=c.PATTERN_ISO8601_TIMESTAMP,
             ),
-        ] = mp.Field(default_factory=lambda: c.DEFAULT_EMPTY_STRING)
+        ] = FlextModelsPydantic.Field(default_factory=lambda: c.DEFAULT_EMPTY_STRING)
         status: Annotated[
             c.Status,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=c.Status.RUNNING,
                 description="Current registration status",
                 examples=["running", "stopped", "failed"],
             ),
         ] = c.Status.RUNNING
 
-    class ExecutionContext(m.ArbitraryTypesModel):
+    class ExecutionContext(FlextModelsBase.ArbitraryTypesModel):
         """Handler execution state (identity + timing + metrics payload)."""
 
-        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            arbitrary_types_allowed=True,
-            validate_assignment=True,
-            json_schema_extra={
-                "title": "HandlerExecutionContext",
-                "description": "Handler execution context for tracking performance and state",
-            },
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(
+                arbitrary_types_allowed=True,
+                validate_assignment=True,
+                json_schema_extra={
+                    "title": "HandlerExecutionContext",
+                    "description": (
+                        "Handler execution context for tracking performance and state"
+                    ),
+                },
+            )
         )
         handler_name: Annotated[
             t.NonEmptyStr,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 description="Name of the handler being executed",
                 examples=["ProcessOrderCommand", "GetUserQuery", "OrderCreatedEvent"],
             ),
         ]
         handler_mode: Annotated[
             c.HandlerType,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 description="Mode of handler execution",
                 examples=["command", "query", "event"],
             ),
         ]
         started_at: Annotated[
             float | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description="Monotonic start timestamp used to compute execution time.",
             ),
         ] = None
         metrics_state_data: Annotated[
             FlextModelsContainers.Dict,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default_factory=lambda: FlextModelsContainers.Dict(root={}),
                 description="Mutable metrics payload for the active handler execution.",
             ),
-        ] = mp.Field(default_factory=lambda: FlextModelsContainers.Dict(root={}))
+        ] = FlextModelsPydantic.Field(
+            default_factory=lambda: FlextModelsContainers.Dict(root={}),
+        )
 
-        @up.computed_field
+        @FlextUtilitiesPydantic.computed_field
         @property
         def execution_time_ms(self) -> float:
             """Elapsed execution time in milliseconds (0 until started)."""
@@ -116,51 +127,65 @@ class FlextModelsHandler:
             elapsed: float = time.time() - self.started_at
             return round(elapsed * c.MS_PER_SECOND, 2)
 
-    class HandlerRuntimeState(m.ArbitraryTypesModel):
+    class HandlerRuntimeState(FlextModelsBase.ArbitraryTypesModel):
         """Aggregate runtime state for the active handler pipeline."""
 
         execution_context: Annotated[
             FlextModelsHandler.ExecutionContext,
-            mp.Field(description="Execution context for the active handler"),
+            FlextModelsPydantic.Field(
+                description="Execution context for the active handler",
+            ),
         ]
         context_stack: Annotated[
             MutableSequence[FlextModelsHandler.ExecutionContext],
-            mp.Field(description="Stack of nested execution contexts."),
-        ] = mp.Field(default_factory=list)
+            FlextModelsPydantic.Field(
+                description="Stack of nested execution contexts.",
+            ),
+            # Why the quoted forward reference: the module binding
+            # ``FlextModelsHandler`` does not exist while this class body executes,
+            # and class scopes do not chain for runtime name lookup; the string
+            # subscript keeps the factory a real callable while deferring the name.
+        ] = FlextModelsPydantic.Field(
+            default_factory=list["FlextModelsHandler.ExecutionContext"],
+        )
 
-        @mp.computed_field
+        @FlextModelsPydantic.computed_field
         @property
         def handler_name(self) -> str:
             """Active handler name taken from the execution context."""
             return self.execution_context.handler_name
 
-        @mp.computed_field
+        @FlextModelsPydantic.computed_field
         @property
         def handler_mode(self) -> c.HandlerType:
             """Active handler mode taken from the execution context."""
             return self.execution_context.handler_mode
 
-    class DecoratorConfig(m.ArbitraryTypesModel):
+    class DecoratorConfig(FlextModelsBase.ArbitraryTypesModel):
         """Configuration extracted from @FlextHandlers.handler() decorator."""
 
-        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            frozen=True,
-            arbitrary_types_allowed=True,
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(
+                frozen=True,
+                arbitrary_types_allowed=True,
+            )
         )
         command: Annotated[
             type,
-            mp.Field(description="Command type this handler processes"),
+            FlextModelsPydantic.Field(
+                description="Command type this handler processes",
+            ),
         ]
         priority: Annotated[
             t.NonNegativeInt,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=c.DEFAULT_MAX_COMMAND_RETRIES,
                 description="Handler priority (higher = processed first)",
             ),
         ] = c.DEFAULT_MAX_COMMAND_RETRIES
         timeout: Annotated[
             float | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=c.DEFAULT_TIMEOUT_SECONDS,
                 description="Handler execution timeout in seconds",
                 gt=0.0,
@@ -168,8 +193,10 @@ class FlextModelsHandler:
         ] = c.DEFAULT_TIMEOUT_SECONDS
         middleware: Annotated[
             t.SequenceOf[type[p.Middleware]],
-            mp.Field(description="Middleware types to apply to this handler"),
-            mp.PlainSerializer(
+            FlextModelsPydantic.Field(
+                description="Middleware types to apply to this handler",
+            ),
+            FlextModelsPydantic.PlainSerializer(
                 lambda value: [
                     f"{middleware_type.__module__}.{middleware_type.__qualname__}"
                     for middleware_type in value
@@ -177,23 +204,25 @@ class FlextModelsHandler:
                 return_type=list[str],
                 when_used="always",
             ),
-        ] = mp.Field(default_factory=tuple)
+        ] = FlextModelsPydantic.Field(default_factory=tuple)
 
-    class CombinedRailwayOptions(m.ImmutableValueModel):
+    class CombinedRailwayOptions(FlextModelsBase.ImmutableValueModel):
         """Railway configuration consumed by @d.combined()."""
 
         enabled: Annotated[
             bool,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=False,
                 description="Whether combined() applies railway wrapping.",
             ),
         ] = False
         error_code: Annotated[
             str | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
-                description="Error code passed to railway() when railway wrapping is enabled.",
+                description=(
+                    "Error code passed to railway() when railway wrapping is enabled."
+                ),
             ),
         ] = None
 
