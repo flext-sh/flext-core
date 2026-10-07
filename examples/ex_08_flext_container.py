@@ -31,21 +31,35 @@ class Ex08FlextContainer(Ex08ContainerLifecycle):
     def _exercise_fluent_and_settings(self, container: p.Container) -> None:
         """Exercise fluent registration and configuration APIs."""
         self.section("fluent_and_settings")
-        fluent_service_name = f"svc.{self.rand_str(6)}"
-        fluent_factory_name = f"svc.{self.rand_str(6)}"
-        fluent_resource_name = f"svc.{self.rand_str(6)}"
-        fluent_service_value = self.rand_str(10)
-        fluent_factory_value = self.rand_str(10)
-        fluent_resource_value = self.rand_str(10)
+        fluent = self._register_fluent_services(container)
+        self._exercise_settings_roundtrip(container)
+        self._verify_fluent_lookups(container, fluent)
+
+    def _register_fluent_services(
+        self,
+        container: p.Container,
+    ) -> tuple[tuple[str, str, str], tuple[str, str, str]]:
+        """Bind the fluent service, factory, and resource registrations.
+
+        Returns:
+            The resulting ``tuple[tuple[str, str, str], tuple[str, str, str]]``.
+
+        """
+        service_name = f"svc.{self.rand_str(6)}"
+        factory_name = f"svc.{self.rand_str(6)}"
+        resource_name = f"svc.{self.rand_str(6)}"
+        service_value = self.rand_str(10)
+        factory_value = self.rand_str(10)
+        resource_value = self.rand_str(10)
         max_factories = self.rand_int(1, 1000)
-        with_service_result = container.bind(fluent_service_name, fluent_service_value)
+        with_service_result = container.bind(service_name, service_value)
         with_factory_result = container.factory(
-            fluent_factory_name,
-            lambda: fluent_factory_value,
+            factory_name,
+            lambda: factory_value,
         )
         with_resource_result = container.resource(
-            fluent_resource_name,
-            lambda: fluent_resource_value,
+            resource_name,
+            lambda: resource_value,
         )
         with_settings_result = container.apply({"max_factories": max_factories})
         self.audit_check("with_service.returns_self", with_service_result is container)
@@ -58,6 +72,13 @@ class Ex08FlextContainer(Ex08ContainerLifecycle):
             "with_settings.returns_self",
             with_settings_result is container,
         )
+        return (
+            (service_name, factory_name, resource_name),
+            (service_value, factory_value, resource_value),
+        )
+
+    def _exercise_settings_roundtrip(self, container: p.Container) -> None:
+        """Apply configured settings and audit the container snapshot."""
         configured_max_services = self.rand_int(1, 1000)
         configured_factory_caching = self.rand_bool()
         container.apply({
@@ -81,32 +102,41 @@ class Ex08FlextContainer(Ex08ContainerLifecycle):
             "configure.resolve_settings.enable_factory_caching_matches",
             factory_cache_flag == configured_factory_caching,
         )
+
+    def _verify_fluent_lookups(
+        self,
+        container: p.Container,
+        fluent: tuple[tuple[str, str, str], tuple[str, str, str]],
+    ) -> None:
+        """Resolve each fluent registration and audit the stored values."""
+        service_name, factory_name, resource_name = fluent[0]
+        service_value, factory_value, resource_value = fluent[1]
         self.audit_check(
             "with_service.get.value_matches",
             (
-                container.resolve(fluent_service_name, type_cls=str).value
-                if container.resolve(fluent_service_name, type_cls=str).success
+                container.resolve(service_name, type_cls=str).value
+                if container.resolve(service_name, type_cls=str).success
                 else ""
             )
-            == fluent_service_value,
+            == service_value,
         )
         self.audit_check(
             "with_factory.get.value_matches",
             (
-                container.resolve(fluent_factory_name, type_cls=str).value
-                if container.resolve(fluent_factory_name, type_cls=str).success
+                container.resolve(factory_name, type_cls=str).value
+                if container.resolve(factory_name, type_cls=str).success
                 else ""
             )
-            == fluent_factory_value,
+            == factory_value,
         )
         self.audit_check(
             "with_resource.get.value_matches",
             (
-                container.resolve(fluent_resource_name, type_cls=str).value
-                if container.resolve(fluent_resource_name, type_cls=str).success
+                container.resolve(resource_name, type_cls=str).value
+                if container.resolve(resource_name, type_cls=str).success
                 else ""
             )
-            == fluent_resource_value,
+            == resource_value,
         )
 
     def _exercise_singleton_and_creation(self) -> p.ContainerLifecycle:

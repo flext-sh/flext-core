@@ -28,23 +28,26 @@ class Ex12RegistryPlugins(Ex12RegistryFlow):
         handler_b: ProtocolHandler,
     ) -> None:
         self.section("bindings_and_plugins")
+        self._audit_binding_registrations(registry, handler_a, handler_b)
+        plugin_ns, plugin_name_a, plugin_value_a = self._audit_plugin_registrations(
+            registry,
+        )
+        self._audit_plugin_fetch_and_unregister(
+            registry,
+            plugin_ns,
+            plugin_name_a,
+            plugin_value_a,
+        )
+        self._audit_class_scoped_plugins(registry)
+
+    def _audit_binding_registrations(
+        self,
+        registry: p.Registry,
+        handler_a: ProtocolHandler,
+        handler_b: ProtocolHandler,
+    ) -> None:
+        """Register type and name bindings and audit the batch outcome."""
         custom_binding_name = self.rand_str(8)
-        plugin_ns = f"svc.{self.rand_str(6)}"
-        plugin_name_a = self.rand_str(6)
-        plugin_value_a = self.rand_str(8)
-        plugin_name_b = self.rand_str(6)
-        plugin_value_b = self.rand_str(8)
-        plugin_bad_name = self.rand_str(6)
-        plugin_bad_value = self.rand_str(3)
-        plugin_missing_name = self.rand_str(6)
-        plugin_unreg_missing_name = self.rand_str(6)
-        class_ns = f"cls.{self.rand_str(6)}"
-        class_plugin_name = self.rand_str(6)
-        class_plugin_value = self.rand_str(8)
-        class_missing_name = self.rand_str(6)
-        class_unreg_missing_name = self.rand_str(6)
-        invalid_error = self.rand_str(7)
-        boom_message = self.rand_str(7)
         bindings_result = registry.register_bindings({
             m.Examples.CommandA: as_registry_handler(handler_a),
             custom_binding_name: as_registry_handler(handler_b),
@@ -54,6 +57,23 @@ class Ex12RegistryPlugins(Ex12RegistryFlow):
             "register_bindings.registered_len",
             len(bindings_result.value.registered) if bindings_result.success else -1,
         )
+
+    def _audit_plugin_registrations(self, registry: p.Registry) -> tuple[str, str, str]:
+        """Register instance-scoped plugins and audit each validation outcome.
+
+        Returns:
+            The resulting ``tuple[str, str, str]``.
+
+        """
+        plugin_ns = f"svc.{self.rand_str(6)}"
+        plugin_name_a = self.rand_str(6)
+        plugin_value_a = self.rand_str(8)
+        plugin_name_b = self.rand_str(6)
+        plugin_value_b = self.rand_str(8)
+        plugin_bad_name = self.rand_str(6)
+        plugin_bad_value = self.rand_str(3)
+        invalid_error = self.rand_str(7)
+        boom_message = self.rand_str(7)
         plugin_ok = registry.register_plugin(plugin_ns, plugin_name_a, plugin_value_a)
         plugin_dup = registry.register_plugin(plugin_ns, plugin_name_a, plugin_value_a)
         plugin_empty = registry.register_plugin(plugin_ns, "", plugin_value_a)
@@ -81,6 +101,18 @@ class Ex12RegistryPlugins(Ex12RegistryFlow):
         self.audit_check("register_plugin.validated", plugin_validated.success)
         self.audit_check("register_plugin.validate_fail", plugin_validate_fail.failure)
         self.audit_check("register_plugin.validate_exc", plugin_validate_exc.failure)
+        return (plugin_ns, plugin_name_a, plugin_value_a)
+
+    def _audit_plugin_fetch_and_unregister(
+        self,
+        registry: p.Registry,
+        plugin_ns: str,
+        plugin_name_a: str,
+        plugin_value_a: str,
+    ) -> None:
+        """Fetch, list, and unregister the instance-scoped plugins."""
+        plugin_missing_name = self.rand_str(6)
+        plugin_unreg_missing_name = self.rand_str(6)
         plugin_fetch_ok = registry.fetch_plugin(plugin_ns, plugin_name_a)
         plugin_fetch_missing = registry.fetch_plugin(plugin_ns, plugin_missing_name)
         plugin_list = registry.list_plugins(plugin_ns)
@@ -97,6 +129,14 @@ class Ex12RegistryPlugins(Ex12RegistryFlow):
         )
         self.audit_check("unregister_plugin.ok", plugin_unreg_ok.success)
         self.audit_check("unregister_plugin.missing", plugin_unreg_missing.failure)
+
+    def _audit_class_scoped_plugins(self, registry: p.Registry) -> None:
+        """Register, fetch, list, and unregister the class-scoped plugins."""
+        class_ns = f"cls.{self.rand_str(6)}"
+        class_plugin_name = self.rand_str(6)
+        class_plugin_value = self.rand_str(8)
+        class_missing_name = self.rand_str(6)
+        class_unreg_missing_name = self.rand_str(6)
         class_ok = registry.register_plugin(
             class_ns,
             class_plugin_name,
