@@ -87,7 +87,6 @@ if TYPE_CHECKING:
     from flext_core._utilities.context import FlextUtilitiesContext
     from flext_core._utilities.conversion import FlextUtilitiesConversion
     from flext_core._utilities.discovery import FlextUtilitiesDiscovery
-    from flext_core._utilities.dispatcher_execute import FlextUtilitiesDispatcherExecute
     from flext_core._utilities.domain import FlextUtilitiesDomain
     from flext_core._utilities.enforcement import (
         PREDICATE_BINDINGS,
@@ -158,7 +157,6 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesContext",
     "FlextUtilitiesConversion",
     "FlextUtilitiesDiscovery",
-    "FlextUtilitiesDispatcherExecute",
     "FlextUtilitiesDomain",
     "FlextUtilitiesEnforcement",
     "FlextUtilitiesEnforcementCollect",
@@ -237,7 +235,6 @@ install_lazy_exports(
         "FlextUtilitiesContext": ".context",
         "FlextUtilitiesConversion": ".conversion",
         "FlextUtilitiesDiscovery": ".discovery",
-        "FlextUtilitiesDispatcherExecute": ".dispatcher_execute",
         "FlextUtilitiesDomain": ".domain",
         "FlextUtilitiesEnforcement": ".enforcement",
         "FlextUtilitiesEnforcementCollect": ".enforcement_collect",

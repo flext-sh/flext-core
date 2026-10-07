@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._utilities._enforcement_collect_parts.enforcement_collect_part_02 import (
+from flext_core._utilities._enforcement_collect_parts import (
     FlextUtilitiesEnforcementCollect,
 )
 

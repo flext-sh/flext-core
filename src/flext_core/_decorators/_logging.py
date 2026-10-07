@@ -8,11 +8,12 @@ from __future__ import annotations
 
 import time
 from functools import wraps
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated
 
 from flext_core import c, u
 from flext_core._decorators._logging_payloads import FlextDecoratorsLoggingPayloads
 from flext_core._models import FlextModelsPydantic
+from flext_core._models.pydantic import Field
 from flext_core._protocols import FlextProtocolsLogging
 from flext_core._typings.base import FlextTypingBase
 
@@ -20,30 +21,42 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-class LoggedCallSpec(FlextModelsPydantic.BaseModel):
-    """Frozen parameters for one logged call execution.
-
-    Groups the logging-related arguments of
-    ``FlextDecoratorsLogging._execute_logged_call`` so the executor keeps a
-    narrow signature.
-    """
-
-    model_config = FlextModelsPydantic.ConfigDict(
-        frozen=True,
-        arbitrary_types_allowed=True,
-    )
-
-    func_name: str
-    func_module: str
-    op_name: str
-    logger: FlextProtocolsLogging.Logger
-    correlation_id: str | None
-    track_perf: bool
-    start_time: float
-
-
 class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
     """Decorators that bind operation logging and correlation context."""
+
+    class FlextLoggedCallSpec(FlextModelsPydantic.BaseModel):
+        """Frozen parameters for one logged call execution.
+
+        Groups the logging-related arguments of
+        ``FlextDecoratorsLogging._execute_logged_call`` so the executor keeps a
+        narrow signature.
+        """
+
+        model_config = FlextModelsPydantic.ConfigDict(
+            frozen=True,
+            arbitrary_types_allowed=True,
+            extra="forbid",
+        )
+
+        func_name: Annotated[str, Field(description="Wrapped callable name")]
+        func_module: Annotated[str, Field(description="Wrapped callable module")]
+        op_name: Annotated[str, Field(description="Declared operation name")]
+        logger: Annotated[
+            FlextProtocolsLogging.Logger,
+            Field(description="Structured logger bound to the call"),
+        ]
+        correlation_id: Annotated[
+            str | None,
+            Field(description="Correlation id ensured for the call scope"),
+        ]
+        track_perf: Annotated[
+            bool,
+            Field(description="Whether the call measures its duration"),
+        ]
+        start_time: Annotated[
+            float,
+            Field(description="Perf-counter start instant (0.0 when not tracking)"),
+        ]
 
     @classmethod
     def log_operation[**PCallback, TResult](
@@ -90,7 +103,7 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
                 try:
                     return cls._execute_logged_call(
                         lambda: func(*args, **kwargs),
-                        spec=LoggedCallSpec(
+                        spec=cls.FlextLoggedCallSpec(
                             func_name=func.__name__,
                             func_module=func.__module__,
                             op_name=op_name,
@@ -125,7 +138,7 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
         cls,
         call: Callable[[], TResult],
         *,
-        spec: LoggedCallSpec,
+        spec: FlextDecoratorsLogging.FlextLoggedCallSpec,
     ) -> TResult:
         """Execute the wrapped callable and emit success/failure logs.
 

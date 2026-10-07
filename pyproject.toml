@@ -590,6 +590,19 @@ split-on-trailing-comma = false
 [tool.ruff.lint.per-file-ignores]
 "**/__init__.py" = ["line-too-long", "non-empty-init-module", "unused-import"]
 "**/_config.py" = ["invalid-function-name"]
+# The pydantic facade mirrors pydantic's own declared decorator API 1:1; the
+# mirrored kwargs (repr, return_type, the twelve computed_field options) are
+# the contract itself and cannot be renamed or regrouped without breaking the
+# keyword delegation to the real pydantic surface.
+"**/_models/pydantic.py" = [
+  "any-type",
+  "builtin-argument-shadowing",
+  "too-many-arguments",
+]
+# The structured-logging facade keeps polymorphic default hooks (unused-self
+# instance methods subclasses override selectively); a staticmethod conversion
+# would change the override contract for every subclass.
+"**/_utilities/logging.py" = ["no-self-use"]
 "**/_utilities/credential.py" = [
   "subprocess-without-shell-equals-true",
   "suspicious-subprocess-import",

@@ -1,6 +1,6 @@
 """Strict YAML config sources for the Flext config/settings layer.
 
-Public home of ``StrictYamlConfigSource`` (ADR-018: root-facade exports of
+Public home of ``FlextStrictYamlConfigSource`` (ADR-018: root-facade exports of
 private root modules must follow the module suffix contract; a source class
 has no ``Config``/``Settings`` suffix, so it lives in a public owner module).
 
@@ -22,9 +22,7 @@ from yaml import MappingNode, SafeLoader
 from yaml.constructor import ConstructorError
 from yaml.resolver import BaseResolver
 
-
-class _UniqueKeySafeLoader(SafeLoader):
-    """Safe YAML loader that rejects duplicate mapping keys at every depth."""
+from flext_core._config_sources_parts.config_sources_part_01 import _UniqueKeySafeLoader
 
 
 def _construct_unique_mapping(
@@ -72,7 +70,7 @@ _UniqueKeySafeLoader.add_constructor(
 )
 
 
-class StrictYamlConfigSource(YamlConfigSettingsSource):
+class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
     """Pydantic settings source backed by the unique-key safe loader.
 
     Accepts an optional ``transform`` callable applied to the fully merged
@@ -190,7 +188,9 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
         for key, value in updating.items():
             existing = result.get(key)
             if isinstance(existing, dict) and isinstance(value, dict):
-                result[key] = StrictYamlConfigSource._deep_merge_lists(existing, value)
+                result[key] = (
+                    FlextStrictYamlConfigSource._deep_merge_lists(existing, value)
+                )
             elif isinstance(existing, list) and isinstance(value, list):
                 result[key] = [*existing, *value]
             else:
@@ -198,4 +198,4 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
         return result
 
 
-__all__ = ("StrictYamlConfigSource",)
+__all__ = ("FlextStrictYamlConfigSource",)
