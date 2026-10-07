@@ -36,8 +36,6 @@ class TestsFlextProtocols(FlextTestsProtocols):
     - All generic protocols come from TestsFlextProtocols
     """
 
-    TestsTestsMixins = TestsFlextFlextModelsMixins.TestsFlextModelsMixins
-
     class Tests(FlextTestsProtocols.Tests):
         """flext-core test protocols namespace."""
 
@@ -66,9 +64,11 @@ class TestsFlextProtocols(FlextTestsProtocols):
 
             def __call__(
                 self,
-                data_or_items: TestsTestsMixins.MaybeModel
-                | TestsTestsMixins.PortModel
-                | int,
+                data_or_items: (
+                    TestsFlextFlextModelsMixins.TestsFlextModelsMixins.MaybeModel
+                    | TestsFlextFlextModelsMixins.TestsFlextModelsMixins.PortModel
+                    | int
+                ),
                 key_or_index: int | str,
                 *,
                 default: str | None = None,
