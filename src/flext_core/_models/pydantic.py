@@ -273,7 +273,7 @@ class FlextModelsPydantic:
             /,
             *fields: str,
             mode: Literal["wrap"],
-            return_type: Any = ..., # ruff: ignore[any-type] -- mirrors pydantic's own field_serializer overload signature verbatim; Any is the upstream contract.
+            return_type: Any = ...,  # ruff: ignore[any-type] -- mirrors pydantic's own field_serializer overload signature verbatim; Any is the upstream contract.
             when_used: Literal[
                 "always",
                 "unless-none",
@@ -290,7 +290,7 @@ class FlextModelsPydantic:
             /,
             *fields: str,
             mode: Literal["plain"] = ...,
-            return_type: Any = ..., # ruff: ignore[any-type] -- mirrors pydantic's own field_serializer overload signature verbatim; Any is the upstream contract.
+            return_type: Any = ...,  # ruff: ignore[any-type] -- mirrors pydantic's own field_serializer overload signature verbatim; Any is the upstream contract.
             when_used: Literal[
                 "always",
                 "unless-none",

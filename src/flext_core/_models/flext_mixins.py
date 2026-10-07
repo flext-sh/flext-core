@@ -11,8 +11,8 @@ import threading
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Annotated, ClassVar
 
-from flext_core._models.flext_context import FlextContext
 from flext_core import FlextContainer, c, m, p, t, u
+from flext_core._models.flext_context import FlextContext
 
 # NOTE (multi-agent): mro-i6nq.12 — Generator/Mapping/MutableMapping are
 # annotation-only under TYPE_CHECKING; the module owns its __all__: the mixins

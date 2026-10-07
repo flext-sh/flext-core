@@ -19,8 +19,8 @@ from collections.abc import Sequence
 from functools import partial
 from typing import TYPE_CHECKING, ClassVar, Self, TypeGuard, cast, overload, override
 
-from flext_core._models.flext_context import FlextContext
 from flext_core import FlextSettings, FlextUtilitiesLogging, c, e, m, p, r, t, u
+from flext_core._models.flext_context import FlextContext
 
 # NOTE (multi-agent): mro-i6nq.12 — the concrete public facade remains the
 # runtime implementation; p.ContainerType is only its structural contract.

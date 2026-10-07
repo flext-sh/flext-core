@@ -10,8 +10,8 @@ import warnings
 from functools import wraps
 from typing import TYPE_CHECKING, ClassVar, TypeIs
 
-from flext_core._models.flext_context import FlextContext
 from flext_core import FlextContainer, c, m
+from flext_core._models.flext_context import FlextContext
 from flext_core._protocols.base import FlextProtocolsBase as pb
 from flext_core._protocols.container import FlextProtocolsContainer as pc
 from flext_core._protocols.context import FlextProtocolsContext as pcx
