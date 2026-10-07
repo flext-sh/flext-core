@@ -55,7 +55,10 @@ class MiseLockConverge:
         ("MISE_GITHUB_OAUTH_OPEN_BROWSER", "false"),
         ("MISE_LOCKFILE", "true"),
         ("MISE_LOCKED", "true"),
-        ("MISE_LOCKFILE_PLATFORMS", "linux-x64,linux-x64-musl,linux-arm64,macos-x64,macos-arm64,windows-x64"),
+        (
+            "MISE_LOCKFILE_PLATFORMS",
+            "linux-x64,linux-x64-musl,linux-arm64,macos-x64,macos-arm64,windows-x64",
+        ),
         ("MISE_MINIMUM_RELEASE_AGE", "10d"),
         ("MISE_NPM_PACKAGE_MANAGER", "bun"),
     )
@@ -139,7 +142,8 @@ class MiseLockConverge:
             (scratch / relative).write_bytes(b"")
         environment = dict(cls.FIXED_ENVIRONMENT)
         environment.update(
-            (name, str(scratch / relative)) for name, relative in cls.TRANSIENT_ENVIRONMENT
+            (name, str(scratch / relative))
+            for name, relative in cls.TRANSIENT_ENVIRONMENT
         )
         environment.update(
             (name, str(storage if relative == "." else storage / relative))
@@ -169,9 +173,7 @@ class MiseLockConverge:
         diagnostics = completed.stdout + completed.stderr
         if completed.returncode != 0:
             sys.stderr.write(diagnostics)
-            message = (
-                f"Mise exited {completed.returncode}: {' '.join(arguments)}\n{diagnostics.strip()}"
-            )
+            message = f"Mise exited {completed.returncode}: {' '.join(arguments)}\n{diagnostics.strip()}"
             raise ValueError(message)
         # The minimum_release_age supply-chain policy emits a deterministic
         # informational warning on every version listing (newer releases are
@@ -202,7 +204,11 @@ class MiseLockConverge:
         return completed.stdout.strip()
 
     @staticmethod
-    def _probe(runtime: Path, stage: Path, environment: dict[str, str]) -> tuple[bool, str]:
+    def _probe(
+        runtime: Path,
+        stage: Path,
+        environment: dict[str, str],
+    ) -> tuple[bool, str]:
         """Prove the staged lock installs without mutating tools."""
         completed = subprocess.run(
             [str(runtime), "-C", str(stage), "install", "--dry-run"],
@@ -361,7 +367,13 @@ class MiseLockConverge:
                         "not permitted — the lock needs an operator decision"
                     )
                     raise ValueError(message)
-                holds[selector] = cls._hold(runtime, stage, environment, selector, failed_version)
+                holds[selector] = cls._hold(
+                    runtime,
+                    stage,
+                    environment,
+                    selector,
+                    failed_version,
+                )
                 print(
                     f"hold: {selector} held at {holds[selector]}: release {failed_version}"
                     " failed install; the next upg retries the newest release",
@@ -472,9 +484,7 @@ class MiseLockConverge:
             if len(arguments) not in {2, 3}:
                 message = "usage: mise-lock-converge.py pin STAGE [COMMITTED_LOCK]"
                 raise ValueError(message)
-            committed = (
-                Path(arguments[2]).absolute() if len(arguments) == 3 else None
-            )
+            committed = Path(arguments[2]).absolute() if len(arguments) == 3 else None
             return cls.pin_stage_manifest(
                 Path(arguments[1]).absolute(),
                 committed,
@@ -482,7 +492,11 @@ class MiseLockConverge:
         if len(arguments) != 3:
             message = "usage: mise-lock-converge.py STORAGE STAGE RELEASE"
             raise ValueError(message)
-        cls.converge(Path(arguments[0]).absolute(), Path(arguments[1]).absolute(), arguments[2])
+        cls.converge(
+            Path(arguments[0]).absolute(),
+            Path(arguments[1]).absolute(),
+            arguments[2],
+        )
         return 0
 
 
