@@ -58,7 +58,7 @@ class FlextModelsEntity:
         # class variable; a specifier inside ``Annotated`` metadata synthesizes
         # a REQUIRED ``__init__`` parameter (verified against plain pydantic).
         domain_events: MutableSequence[FlextModelsDomainEvent.DomainEvent] = Field(
-            default_factory=list,
+            default_factory=list[FlextModelsDomainEvent.DomainEvent],
             description="List of uncommitted domain events for event sourcing",
         )
 

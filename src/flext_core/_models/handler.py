@@ -141,7 +141,9 @@ class FlextModelsHandler:
             FlextModelsPydantic.Field(
                 description="Stack of nested execution contexts.",
             ),
-        ] = FlextModelsPydantic.Field(default_factory=list)
+        ] = FlextModelsPydantic.Field(
+            default_factory=list[FlextModelsHandler.ExecutionContext],
+        )
 
         @FlextModelsPydantic.computed_field
         @property
