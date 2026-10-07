@@ -76,9 +76,10 @@ class FlextUtilitiesFamilySurface:
 
         """
         module_names: dict[str, str] = {}
-        for module_name, distribution_names in (
-            importlib.metadata.packages_distributions().items()
-        ):
+        for (
+            module_name,
+            distribution_names,
+        ) in importlib.metadata.packages_distributions().items():
             for distribution_name in distribution_names:
                 module_names.setdefault(distribution_name.lower(), module_name)
         return MappingProxyType(module_names)
