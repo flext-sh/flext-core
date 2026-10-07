@@ -57,7 +57,7 @@ class FlextModelsBase(FlextModelsBasePart02):
         # the default datetime serializer takes over (``Z`` instead of
         # ``isoformat()``).
         @up.field_serializer("created_at", "updated_at", when_used="json")
-        def serialize_timestamps(value: datetime | None) -> str | None:
+        def serialize_timestamps(self, value: datetime | None) -> str | None:
             """Serialize timestamps to ISO 8601 for JSON.
 
             Returns:
