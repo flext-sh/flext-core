@@ -50,6 +50,33 @@ class FlextUtilitiesBeartypeFieldVisitor:
         return (node,)
 
     @classmethod
+    def _declared_union_members_from_string(cls, declared: str) -> int:
+        """Count union arms in a string annotation via its parsed syntax tree.
+
+        Returns:
+            The resulting ``int``.
+
+        """
+        unwrapped = _ubh.unwrap_annotated(declared)
+        if not isinstance(unwrapped, str):
+            return 0
+        try:
+            expression = ast.parse(unwrapped, mode="eval").body
+        except SyntaxError:
+            expression = None
+        if expression is None:
+            return 0
+        members = cls._ast_union_members(expression)
+        if len(members) == 1:
+            return 0
+        return sum(
+            1
+            for member in members
+            if not (isinstance(member, ast.Name) and member.id == "None")
+            and not (isinstance(member, ast.Constant) and member.value is None)
+        )
+
+    @classmethod
     def _declared_union_members(cls, annotation: object | None) -> int:
         """Count union arms from declaration syntax without expanding aliases.
 
@@ -59,24 +86,7 @@ class FlextUtilitiesBeartypeFieldVisitor:
         """
         declared = annotation
         if isinstance(declared, str):
-            unwrapped = _ubh.unwrap_annotated(declared)
-            if not isinstance(unwrapped, str):
-                return 0
-            try:
-                expression = ast.parse(unwrapped, mode="eval").body
-            except SyntaxError:
-                expression = None
-            if expression is None:
-                return 0
-            members = cls._ast_union_members(expression)
-            if len(members) == 1:
-                return 0
-            return sum(
-                1
-                for member in members
-                if not (isinstance(member, ast.Name) and member.id == "None")
-                and not (isinstance(member, ast.Constant) and member.value is None)
-            )
+            return cls._declared_union_members_from_string(declared)
         if get_origin(declared) is Annotated:
             args = get_args(declared)
             declared = args[0] if args else declared
@@ -125,32 +135,97 @@ class FlextUtilitiesBeartypeFieldVisitor:
         *,
         declared_annotation: object | None = None,
     ) -> t.StrMapping | None:
-        violation: t.StrMapping | None = None
+        visitor = FlextUtilitiesBeartypeFieldVisitor
+        violation = visitor._any_violation(params, info)
+        if violation is None:
+            violation = visitor._collection_violation(params, info)
+        if violation is None:
+            violation = visitor._mutable_default_violation(params, info)
+        if violation is None:
+            violation = visitor._default_factory_violation(params, info)
+        if violation is None:
+            violation = visitor._str_none_empty_violation(params, info)
+        if violation is None:
+            violation = visitor._inline_union_violation(params, declared_annotation)
+        return violation
+
+    @staticmethod
+    def _any_violation(
+        params: me.FieldShapeParams,
+        info: FieldInfo,
+    ) -> t.StrMapping | None:
+        """Report the forbid-any violation when the flag and annotation match.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+
+        """
         if params.forbid_any and _ubh.contains_any_recursive(
             info.annotation,
             seen=set(),
         ):
-            violation = {}
-        elif params.forbid_bare_collection:
-            bad, origin = _ubh.has_forbidden_collection_origin(
-                info.annotation,
-                c.ENFORCEMENT_FORBIDDEN_COLLECTION_ORIGINS,
-            )
-            if bad:
-                replacement = next(
-                    (
-                        repl
-                        for key, repl in c.ENFORCEMENT_FORBIDDEN_COLLECTIONS.items()
-                        if key.__name__ == origin
-                    ),
-                    origin,
-                )
-                violation = {"kind": origin, "replacement": replacement}
-        elif params.forbid_mutable_default:
-            mutable_kind = _ubh.mutable_kind(info.default)
-            if mutable_kind is not None and info.default:
-                violation = {"kind": mutable_kind}
-        elif (
+            return {}
+        return None
+
+    @staticmethod
+    def _collection_violation(
+        params: me.FieldShapeParams,
+        info: FieldInfo,
+    ) -> t.StrMapping | None:
+        """Report the bare-collection violation with its replacement hint.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+
+        """
+        if not params.forbid_bare_collection:
+            return None
+        bad, origin = _ubh.has_forbidden_collection_origin(
+            info.annotation,
+            c.ENFORCEMENT_FORBIDDEN_COLLECTION_ORIGINS,
+        )
+        if not bad:
+            return None
+        replacement = next(
+            (
+                repl
+                for key, repl in c.ENFORCEMENT_FORBIDDEN_COLLECTIONS.items()
+                if key.__name__ == origin
+            ),
+            origin,
+        )
+        return {"kind": origin, "replacement": replacement}
+
+    @staticmethod
+    def _mutable_default_violation(
+        params: me.FieldShapeParams,
+        info: FieldInfo,
+    ) -> t.StrMapping | None:
+        """Report the mutable-default violation when the flag and default match.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+
+        """
+        if not params.forbid_mutable_default:
+            return None
+        mutable_kind = _ubh.mutable_kind(info.default)
+        if mutable_kind is not None and info.default:
+            return {"kind": mutable_kind}
+        return None
+
+    @staticmethod
+    def _default_factory_violation(
+        params: me.FieldShapeParams,
+        info: FieldInfo,
+    ) -> t.StrMapping | None:
+        """Report the raw default-factory violation when the shapes match.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+
+        """
+        if not (
             params.forbid_raw_default_factory
             and info.default_factory is not None
             and not _ubh.allows_mutable_default_factory(
@@ -158,25 +233,51 @@ class FlextUtilitiesBeartypeFieldVisitor:
                 info.default_factory,
             )
         ):
-            factory_kind = _ubh.mutable_default_factory_kind(info.default_factory)
-            if factory_kind is not None:
-                violation = {"kind": factory_kind.__name__}
-        elif (
+            return None
+        factory_kind = _ubh.mutable_default_factory_kind(info.default_factory)
+        if factory_kind is not None:
+            return {"kind": factory_kind.__name__}
+        return None
+
+    @staticmethod
+    def _str_none_empty_violation(
+        params: me.FieldShapeParams,
+        info: FieldInfo,
+    ) -> t.StrMapping | None:
+        """Report the str|None empty-default violation when the shapes match.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+
+        """
+        if (
             params.forbid_str_none_empty
             and _ubh.matches_str_none_union(info.annotation)
             and isinstance(info.default, str)
             and not info.default
         ):
-            violation = {}
-        elif params.forbid_inline_union:
-            inline_union_arms = (
-                FlextUtilitiesBeartypeFieldVisitor._declared_union_members(
-                    declared_annotation,
-                )
-            )
-            if inline_union_arms > params.max_union_arms:
-                violation = {"arms": str(inline_union_arms)}
-        return violation
+            return {}
+        return None
+
+    @staticmethod
+    def _inline_union_violation(
+        params: me.FieldShapeParams,
+        declared_annotation: object | None,
+    ) -> t.StrMapping | None:
+        """Report the declared-union arm-count violation when it exceeds the cap.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+
+        """
+        if not params.forbid_inline_union:
+            return None
+        inline_union_arms = FlextUtilitiesBeartypeFieldVisitor._declared_union_members(
+            declared_annotation,
+        )
+        if inline_union_arms > params.max_union_arms:
+            return {"arms": str(inline_union_arms)}
+        return None
 
     @classmethod
     def v_field_shape(

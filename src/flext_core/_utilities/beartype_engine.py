@@ -112,22 +112,50 @@ class FlextUtilitiesBeartypeEngine(
 
         """
         if isinstance(params, me.AttrShapeParams):
-            if params.forbid_any_in_alias:
-                match args:
-                    case (_, alias) if isinstance(alias, TypeAliasType):
-                        return FlextUtilitiesBeartypeTypeAliases.deferred(
-                            alias,
-                            recursive=True,
-                            owner=owner,
-                        )
-                    case _:
-                        return ()
-            return ()
+            return self._attr_shape_aliases(params, owner, args)
         if not isinstance(params, me.FieldShapeParams) or not args:
             return ()
         info = args[-1]
         if not isinstance(info, FieldInfo) or params.require_description:
             return ()
+        return self._field_shape_aliases(params, owner, info)
+
+    @staticmethod
+    def _attr_shape_aliases(
+        params: me.AttrShapeParams,
+        owner: type,
+        args: tuple[p.AttributeProbe, ...],
+    ) -> tuple[me.DeferredAlias, ...]:
+        """Collect the alias probes required by the attribute-shape params.
+
+        Returns:
+            The resulting ``tuple[me.DeferredAlias, ...]``.
+
+        """
+        if not params.forbid_any_in_alias:
+            return ()
+        match args:
+            case (_, alias) if isinstance(alias, TypeAliasType):
+                return FlextUtilitiesBeartypeTypeAliases.deferred(
+                    alias,
+                    recursive=True,
+                    owner=owner,
+                )
+            case _:
+                return ()
+
+    @staticmethod
+    def _field_shape_aliases(
+        params: me.FieldShapeParams,
+        owner: type,
+        info: FieldInfo,
+    ) -> tuple[me.DeferredAlias, ...]:
+        """Collect the alias probes required by the field-shape params.
+
+        Returns:
+            The resulting ``tuple[me.DeferredAlias, ...]``.
+
+        """
         if params.forbid_any or params.forbid_bare_collection:
             return FlextUtilitiesBeartypeTypeAliases.deferred(
                 info.annotation,
