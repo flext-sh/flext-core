@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from enum import EnumType
 from typing import ClassVar
 
@@ -92,7 +92,6 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         # pydantic-settings base declared directly (which is exactly what the
         # settings-inheritance rule must see to report the bypass).
         is_model = issubclass(target, mp.BaseModel) or issubclass(target, BaseSettings)
-        rule_layer = c.ENFORCEMENT_TAG_LAYER.get(tag, "")
         if "[" in target.__name__:
             return
 
@@ -113,18 +112,44 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
                 ):
                     yield from walk(value, nested)
 
+        yield from FlextUtilitiesEnforcement._category_items(
+            target,
+            tag,
+            category,
+            effective_layer,
+            is_model=is_model,
+            walk=walk,
+        )
+
+    @staticmethod
+    def _category_items(  # ruff: ignore[too-many-arguments] -- the category dispatch consumes the rule row's distinct coordinates (target, tag, category, layers, model flag, walker); keyword-only beyond the target keeps call sites explicit.
+        target: type,
+        tag: str,
+        category: c.EnforcementCategory,
+        effective_layer: str,
+        *,
+        is_model: bool,
+        walk: Callable[[type, str], Iterator[tuple[str, tuple[p.AttributeProbe, ...]]]],
+    ) -> Iterator[tuple[str, tuple[p.AttributeProbe, ...]]]:
+        """Yield the (location, args) items for one enforcement category.
+
+        Field collection is uniform across every model base: settings classes
+        subclass BaseModel, so the FIELD check matches ``is_model`` semantics
+        while handing ``_field_items`` exactly one ``type[BaseModel]``.
+
+        Yields:
+            Each ``tuple[str, tuple[p.AttributeProbe, ...]]``.
+
+        """
         items: Iterator[tuple[str, tuple[p.AttributeProbe, ...]]] = iter(())
         if category is c.EnforcementCategory.FIELD:
-            # Field collection is uniform across every model base: settings
-            # classes subclass BaseModel, so this check matches is_model while
-            # handing _field_items exactly one type[BaseModel].
             if issubclass(target, mp.BaseModel):
                 items = FlextUtilitiesEnforcement._field_items(target, tag)
         elif category is c.EnforcementCategory.MODEL_CLASS:
             if is_model:
                 items = iter(((target.__qualname__, (target,)),))
         elif category is c.EnforcementCategory.ATTR:
-            if rule_layer.lower() == effective_layer:
+            if c.ENFORCEMENT_TAG_LAYER.get(tag, "").lower() == effective_layer:
                 items = FlextUtilitiesEnforcement._attr_items(target, effective_layer)
         elif category is c.EnforcementCategory.NAMESPACE:
             items = FlextUtilitiesEnforcement._namespace_items(
@@ -137,7 +162,6 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
             and effective_layer == c.EnforcementLayer.PROTOCOLS.lower()
         ):
             items = walk(target, target.__qualname__)
-
         yield from items
 
     @staticmethod

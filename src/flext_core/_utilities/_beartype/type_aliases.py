@@ -53,17 +53,69 @@ class FlextUtilitiesBeartypeTypeAliases:
             return ()
         visited.add(id(hint))
         if isinstance(hint, TypeAliasType):
-            resolution = cls.resolve(hint, owner=owner)
-            if isinstance(resolution, me.DeferredAlias):
-                return (resolution,)
-            return cls.deferred(
-                resolution.value,
+            return cls._deferred_alias_type(
+                hint,
                 recursive=recursive,
                 unwrap_annotated=unwrap_annotated,
                 inspect_origin=inspect_origin,
                 owner=owner,
-                seen=visited,
+                visited=visited,
             )
+        return cls._deferred_from_args(
+            hint,
+            recursive=recursive,
+            unwrap_annotated=unwrap_annotated,
+            inspect_origin=inspect_origin,
+            owner=owner,
+            visited=visited,
+        )
+
+    @classmethod
+    def _deferred_alias_type(  # ruff: ignore[too-many-arguments] -- private helper mirroring the public deferred() probe-option contract one-to-one so recursive call sites forward the same flags.
+        cls,
+        hint: TypeAliasType,
+        *,
+        recursive: bool,
+        unwrap_annotated: bool,
+        inspect_origin: bool,
+        owner: ModuleType | type | None,
+        visited: set[int],
+    ) -> tuple[me.DeferredAlias, ...]:
+        """Collect the deferred aliases behind one resolvable type alias.
+
+        Returns:
+            The resulting ``tuple[me.DeferredAlias, ...]``.
+
+        """
+        resolution = cls.resolve(hint, owner=owner)
+        if isinstance(resolution, me.DeferredAlias):
+            return (resolution,)
+        return cls.deferred(
+            resolution.value,
+            recursive=recursive,
+            unwrap_annotated=unwrap_annotated,
+            inspect_origin=inspect_origin,
+            owner=owner,
+            seen=visited,
+        )
+
+    @classmethod
+    def _deferred_from_args(  # ruff: ignore[too-many-arguments] -- private helper mirroring the public deferred() probe-option contract one-to-one so recursive call sites forward the same flags.
+        cls,
+        hint: p.AttributeProbe,
+        *,
+        recursive: bool,
+        unwrap_annotated: bool,
+        inspect_origin: bool,
+        owner: ModuleType | type | None,
+        visited: set[int],
+    ) -> tuple[me.DeferredAlias, ...]:
+        """Collect the deferred aliases behind one generic/annotated hint.
+
+        Returns:
+            The resulting ``tuple[me.DeferredAlias, ...]``.
+
+        """
         origin = get_origin(hint)
         if hint is type or origin is type:
             return ()

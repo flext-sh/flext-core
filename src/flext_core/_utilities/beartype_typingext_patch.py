@@ -148,8 +148,9 @@ class FlextUtilitiesBeartypeTypingExtPatch:
             if mod.__dict__.get("get_hint_pep695_unsubbed_alias") is original:
                 mod.__dict__["get_hint_pep695_unsubbed_alias"] = tagged
 
-    @staticmethod
+    @classmethod
     def _tag_forward_refs(
+        cls,
         hint: _TypeHintSpecifier,
         module_name: str,
     ) -> _TypeHintSpecifier:
@@ -159,21 +160,20 @@ class FlextUtilitiesBeartypeTypingExtPatch:
             The resulting ``_TypeHintSpecifier``.
 
         """
-        tag = FlextUtilitiesBeartypeTypingExtPatch._tag_forward_refs
         if isinstance(hint, str):
             return ForwardRef(hint, module=module_name)
         if isinstance(hint, ForwardRef):
-            if hint.__forward_module__:
-                return hint
-            return ForwardRef(hint.__forward_arg__, module=module_name)
+            return cls._rebind_forward_ref(hint, module_name)
         origin = get_origin(hint)
         args = get_args(hint)
         if origin is None or not args:
             return hint
         if origin is Annotated:
-            new_args = (tag(args[0], module_name), *args[1:])
+            new_args = (cls._tag_forward_refs(args[0], module_name), *args[1:])
         else:
-            new_args = tuple(tag(child, module_name) for child in args)
+            new_args = tuple(
+                cls._tag_forward_refs(child, module_name) for child in args
+            )
         if new_args == args:
             return hint
         if len(new_args) == 1:
@@ -185,6 +185,21 @@ class FlextUtilitiesBeartypeTypingExtPatch:
             "FlextUtilitiesBeartypeTypingExtPatch._TypeHintSpecifier",
             origin[new_args],
         )
+
+    @staticmethod
+    def _rebind_forward_ref(
+        hint: ForwardRef,
+        module_name: str,
+    ) -> _TypeHintSpecifier:
+        """Rebind one ForwardRef whose module binding is missing.
+
+        Returns:
+            The resulting ``_TypeHintSpecifier``.
+
+        """
+        if hint.__forward_module__:
+            return hint
+        return ForwardRef(hint.__forward_arg__, module=module_name)
 
 
 # Apply immediately so any subsequent beartype.claw usage sees both fixes.

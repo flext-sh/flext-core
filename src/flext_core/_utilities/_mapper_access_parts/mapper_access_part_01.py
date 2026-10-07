@@ -46,6 +46,18 @@ class FlextUtilitiesMapperAccess:
             return FlextRuntime.normalize_to_container(
                 m.ConfigMap.model_validate(model_dump_attr()),
             )
+        return FlextUtilitiesMapperAccess._normalize_payload_value(value)
+
+    @staticmethod
+    def _normalize_payload_value(
+        value: t.JsonPayload | p.Model | p.HasModelDump | p.ValidatorSpec | None,
+    ) -> t.JsonPayload | t.JsonValue:
+        """Normalize the payload shapes that never expose ``model_dump``.
+
+        Returns:
+            The resulting ``t.JsonPayload | t.JsonValue``.
+
+        """
         if isinstance(value, p.ValidatorSpec):
             return str(value)
         if isinstance(value, (*c.SCALAR_TYPES, Path)):

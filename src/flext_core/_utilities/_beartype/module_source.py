@@ -210,6 +210,20 @@ class FlextUtilitiesBeartypeModuleSource:
         """
         if tree is None:
             return False
+        return cls._resolves_to_owner_import(
+            cls._binding_map(tree),
+            name,
+            owner_root,
+        )
+
+    @classmethod
+    def _binding_map(cls, tree: ast.Module) -> dict[str, ast.stmt]:
+        """Map each module-level bound name to the statement that binds it.
+
+        Returns:
+            The resulting ``dict[str, ast.stmt]``.
+
+        """
         bindings: dict[str, ast.stmt] = {}
         for node in tree.body:
             if isinstance(node, ast.Assign):
@@ -222,6 +236,21 @@ class FlextUtilitiesBeartypeModuleSource:
                 continue
             for bound_name in bound:
                 bindings[bound_name] = node
+        return bindings
+
+    @classmethod
+    def _resolves_to_owner_import(
+        cls,
+        bindings: dict[str, ast.stmt],
+        name: str,
+        owner_root: str,
+    ) -> bool:
+        """Walk the binding chain from ``name`` to an owner-rooted import.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
         seen: set[str] = set()
         current: str | None = name
         while current is not None and current not in seen:

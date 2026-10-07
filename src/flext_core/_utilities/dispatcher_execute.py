@@ -64,20 +64,36 @@ class FlextUtilitiesDispatcherExecute:
         if raw_candidate is None:
             return None
         if isinstance(raw_candidate, p.ResultView):
-            if raw_candidate.failure:
-                return dispatch_result.from_failure(raw_candidate)
-            success_value = raw_candidate.value
-            if u.container(success_value) or u.pydantic_model(success_value):
-                return dispatch_result.ok(success_value)
-            return dispatch_result.fail_op(
-                "normalize handler result view",
-                c.ERR_HANDLER_RETURNED_NON_CONTAINER_SUCCESS_RESULT,
+            return FlextUtilitiesDispatcherExecute._result_view_output(
+                raw_candidate,
+                dispatch_result,
             )
         if u.container(raw_candidate) or u.pydantic_model(raw_candidate):
             return raw_candidate
         return dispatch_result.fail_op(
             "validate handler return payload",
             c.ERR_HANDLER_RETURNED_NON_CONTAINER_VALUE,
+        )
+
+    @staticmethod
+    def _result_view_output(
+        raw_candidate: p.ResultView[t.JsonPayload],
+        dispatch_result: type[r[t.JsonPayload]],
+    ) -> p.Result[t.JsonPayload]:
+        """Adapt one result-view candidate into the canonical result type.
+
+        Returns:
+            The resulting ``p.Result[t.JsonPayload]``.
+
+        """
+        if raw_candidate.failure:
+            return dispatch_result.from_failure(raw_candidate)
+        success_value = raw_candidate.value
+        if u.container(success_value) or u.pydantic_model(success_value):
+            return dispatch_result.ok(success_value)
+        return dispatch_result.fail_op(
+            "normalize handler result view",
+            c.ERR_HANDLER_RETURNED_NON_CONTAINER_SUCCESS_RESULT,
         )
 
     @staticmethod
