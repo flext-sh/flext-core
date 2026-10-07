@@ -20,7 +20,7 @@ from flext_tests import FlextTestsProtocols
 
 if TYPE_CHECKING:
     from tests import t
-    from tests._models.mixins import TestsFlextFlextModelsMixins
+    from tests._models.mixins import TestsFlextModelsNamespace as TestsFlextFlextModelsMixins
 
 
 class TestsFlextProtocols(FlextTestsProtocols):
