@@ -146,11 +146,14 @@ class _ImportBlacklistVisitor:
             return False
         module_name = getattr(module, "__name__", "")
         origin = _ubh.object_module_name_for(value) or ""
-        return any(
-            isinstance(rel, str)
-            and origin in {f"{module_name}{rel}", f"{module_name}{rel}."}
+        owners = {
+            rel if rel.startswith(".") else f"{module_name}.{rel}"
+            if not rel.startswith(module_name)
+            else rel
             for rel in values()
-        )
+            if isinstance(rel, str)
+        }
+        return origin in owners
 
     @staticmethod
     def _is_local_family_import(origin: str, module_name: str) -> bool:
