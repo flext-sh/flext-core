@@ -755,7 +755,3 @@ ignore-property-decorators = true
 cc_min = "B"
 mi_min = "B"
 
-[tool.uv.sources]
-flext-cli = { workspace = true }
-flext-infra = { workspace = true }
-flext-tests = { workspace = true }
