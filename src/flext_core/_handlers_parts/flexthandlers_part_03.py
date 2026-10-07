@@ -68,7 +68,7 @@ class FlextHandlers[MessageT_contra, ResultT](
 
             """
             if not hasattr(func, c.HANDLER_ATTR):
-                from flext_core import m
+                from flext_core import m  # ruff: ignore[import-outside-top-level] -- call-time binding breaks the package lazy-import cycle: a top-level import would recurse through the package __getattr__ while the aliased module is still loading.
 
                 settings = m.DecoratorConfig(
                     command=command,

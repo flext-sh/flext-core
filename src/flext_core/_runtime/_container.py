@@ -62,7 +62,7 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
             TypeError: Always.
 
         """
-        from flext_core._models.pydantic import FlextModelsPydantic
+        from flext_core._models.pydantic import FlextModelsPydantic  # ruff: ignore[import-outside-top-level] -- call-time binding breaks the package lazy-import cycle: a top-level import would recurse through the package __getattr__ while the aliased module is still loading.
 
         normalized_item: ts.JsonPayload
         match item:
@@ -115,7 +115,7 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
             ValueError: Always.
 
         """
-        from flext_core._models.containers import FlextModelsContainers
+        from flext_core._models.containers import FlextModelsContainers  # ruff: ignore[import-outside-top-level] -- call-time binding breaks the package lazy-import cycle: a top-level import would recurse through the package __getattr__ while the aliased module is still loading.
 
         if isinstance(value, Mapping):
             return FlextModelsContainers.ConfigMap(
@@ -181,7 +181,7 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
             The resulting ``ts.RuntimeData``.
 
         """
-        from flext_core._models.containers import FlextModelsContainers
+        from flext_core._models.containers import FlextModelsContainers  # ruff: ignore[import-outside-top-level] -- call-time binding breaks the package lazy-import cycle: a top-level import would recurse through the package __getattr__ while the aliased module is still loading.
 
         normalized_data: ts.RuntimeData
         if val is None:

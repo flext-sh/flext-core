@@ -67,7 +67,7 @@ class FlextResultBase[T](BaseModel):
     def validate_error_data(
         error_data: t.JsonMapping | ts.ConfigModelInput | None,
     ) -> JsonDict | None:
-        from flext_core._runtime._metadata import FlextRuntimeMetadata as FlextRuntime
+        from flext_core._runtime._metadata import FlextRuntimeMetadata as FlextRuntime  # ruff: ignore[import-outside-top-level] -- call-time binding breaks the package lazy-import cycle: a top-level import would recurse through the package __getattr__ while the aliased module is still loading.
 
         normalized = FlextRuntime.normalize_model_input_mapping(error_data)
         if normalized is None:

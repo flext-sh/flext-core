@@ -40,7 +40,7 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
             The resulting ``t.JsonValue``.
 
         """
-        from flext_core import m
+        from flext_core import m  # ruff: ignore[import-outside-top-level] -- call-time binding breaks the package lazy-import cycle: a top-level import would recurse through the package __getattr__ while the aliased module is still loading.
 
         validated_value: t.JsonValue
         if value is None:
@@ -103,7 +103,7 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
             The resulting ``t.JsonMapping | None``.
 
         """
-        from flext_core import m
+        from flext_core import m  # ruff: ignore[import-outside-top-level] -- call-time binding breaks the package lazy-import cycle: a top-level import would recurse through the package __getattr__ while the aliased module is still loading.
 
         if value is None:
             return None
@@ -135,7 +135,7 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
             The resulting ``t.JsonValue``.
 
         """
-        from flext_core import m
+        from flext_core import m  # ruff: ignore[import-outside-top-level] -- call-time binding breaks the package lazy-import cycle: a top-level import would recurse through the package __getattr__ while the aliased module is still loading.
 
         normalized_value: t.JsonValue
         if isinstance(val, (m.ConfigMap, m.Dict)):

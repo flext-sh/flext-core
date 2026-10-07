@@ -58,7 +58,7 @@ class FlextUtilitiesLoggingConfig:
         """
         # Local import keeps structlog unloaded until logging initializes
         # while binding the name this function returns.
-        import structlog
+        import structlog  # ruff: ignore[import-outside-top-level] -- deliberate deferred load: structlog stays unloaded until logging initializes (see the comment above).
 
         return structlog
 

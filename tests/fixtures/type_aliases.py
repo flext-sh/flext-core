@@ -26,7 +26,7 @@ class TestsTypeAliasDeclarations:
         """An unrelated guarded import cannot prove another class's deferral."""
 
         if TYPE_CHECKING:
-            from pathlib import PurePath as Absent
+            from pathlib import PurePath as Absent  # ruff: ignore[import-outside-top-level] -- the TYPE_CHECKING-guarded import IS the fixture under test: it proves the deferral contract for absent names.
 
     class InvalidTypes:
         """A missing name without a guarded import retains its NameError."""

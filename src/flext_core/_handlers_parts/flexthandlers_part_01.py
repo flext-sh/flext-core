@@ -57,7 +57,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         if settings is not None:
             self._config_model = settings
         else:
-            from flext_core import m
+            from flext_core import m  # ruff: ignore[import-outside-top-level] -- call-time binding breaks the package lazy-import cycle: a top-level import would recurse through the package __getattr__ while the aliased module is still loading.
 
             self._config_model = m.Handler(
                 handler_id=f"handler_{id(self)}",

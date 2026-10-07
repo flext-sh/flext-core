@@ -92,7 +92,7 @@ class FlextUtilitiesDiscovery:
             TypeError: If ``not operations``.
 
         """
-        from flext_core import s  # s sits above u: bind it at call time
+        from flext_core import s  # s sits above u: bind it at call time  # ruff: ignore[import-outside-top-level] -- call-time binding breaks the package lazy-import cycle: a top-level import would recurse through the package __getattr__ while the aliased module is still loading.
 
         below = service_type.__mro__[: service_type.__mro__.index(s)]
         infos = service_type.__pydantic_decorators__

@@ -41,7 +41,7 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
             The resulting ``type``.
 
         """
-        from flext_core import u
+        from flext_core import u  # ruff: ignore[import-outside-top-level] -- call-time binding breaks the package lazy-import cycle: a top-level import would recurse through the package __getattr__ while the aliased module is still loading.
 
         return u
 

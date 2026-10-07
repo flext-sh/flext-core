@@ -90,7 +90,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         resolved_name: str = handler_name or str(
             getattr(handler_callable, "__name__", "unknown_handler"),
         )
-        from flext_core import m
+        from flext_core import m  # ruff: ignore[import-outside-top-level] -- call-time binding breaks the package lazy-import cycle: a top-level import would recurse through the package __getattr__ while the aliased module is still loading.
 
         settings = m.Handler(
             handler_id=f"callable_{id(handler_callable)}",

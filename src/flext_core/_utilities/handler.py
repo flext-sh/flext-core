@@ -38,7 +38,7 @@ class FlextUtilitiesHandler:
             The resulting ``p.HandlerRuntimeState``.
 
         """
-        from flext_core import m
+        from flext_core import m  # ruff: ignore[import-outside-top-level] -- call-time binding breaks the package lazy-import cycle: a top-level import would recurse through the package __getattr__ while the aliased module is still loading.
 
         return m.HandlerRuntimeState(
             execution_context=m.ExecutionContext(
@@ -94,7 +94,7 @@ class FlextUtilitiesHandler:
         if not isinstance(ctx, Mapping):
             pushed_context = ctx.model_copy()
         else:
-            from flext_core import m
+            from flext_core import m  # ruff: ignore[import-outside-top-level] -- call-time binding breaks the package lazy-import cycle: a top-level import would recurse through the package __getattr__ while the aliased module is still loading.
 
             validated = r.from_validation(ctx, m.ExecutionContext)
             if validated.failure:
@@ -120,7 +120,7 @@ class FlextUtilitiesHandler:
             State without the top context plus its validated identity.
 
         """
-        from flext_core import m
+        from flext_core import m  # ruff: ignore[import-outside-top-level] -- call-time binding breaks the package lazy-import cycle: a top-level import would recurse through the package __getattr__ while the aliased module is still loading.
 
         if not state.context_stack:
             empty_context: p.RootDict[t.JsonPayload] = m.ConfigMap(root={})
