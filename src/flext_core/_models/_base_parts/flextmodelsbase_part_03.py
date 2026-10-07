@@ -57,7 +57,9 @@ class FlextModelsBase(FlextModelsBasePart02):
         # silently drops it from ``__pydantic_decorators__`` and the default
         # datetime serializer takes over (``Z`` instead of ``isoformat()``).
         @up.field_serializer("created_at", "updated_at", when_used="json")
-        def serialize_timestamps(value: datetime | None) -> str | None:
+        def serialize_timestamps(
+            value: datetime | None,  # ruff: ignore[invalid-first-argument-name-for-method] -- pydantic 2.13.5's plain field_serializer contract requires the value-named parameter (see the block comment above); the self-named form is rejected at import time.
+        ) -> str | None:
             """Serialize timestamps to ISO 8601 for JSON.
 
             Returns:
