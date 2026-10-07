@@ -106,7 +106,8 @@ class FlextHandlers[MessageT_contra, ResultT](
                 module: Module to scan for handler decorators
 
             Returns:
-                List of tuples (function_name, function, DecoratorConfig) sorted by priority
+                List of tuples (function_name, function, DecoratorConfig)
+                sorted by priority
 
             Example:
                 >>> handlers = FlextHandlers.Discovery.scan_module(my_module)

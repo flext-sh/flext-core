@@ -1,4 +1,7 @@
-"""Behavioral tests for the runtime typing container models (m.Dict / m.ConfigMap / m.ObjectList) and scalar/tuple type contracts.
+"""Behavioral tests for the runtime typing container models.
+
+Covers m.Dict / m.ConfigMap / m.ObjectList and the scalar/tuple type
+contracts.
 
 These tests assert only OBSERVABLE PUBLIC BEHAVIOR: the mapping / sequence API,
 model_dump round-trips, validation error paths, and the runtime scalar/tuple

@@ -13,7 +13,7 @@ from enum import EnumType
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._protocols.base import FlextProtocolsBase as pb
 from flext_core._typings.base import FlextTypingBase as t
-from flext_core._utilities._enforcement_collect_parts.enforcement_collect_part_01 import (
+from flext_core._utilities._enforcement_collect_parts.enforcement_collect_part_01 import (  # ruff: ignore[line-too-long] -- the dotted module path is a single identifier chain; it cannot be wrapped without renaming the module
     FlextUtilitiesEnforcementCollect as FlextUtilitiesEnforcementCollectPart01,
 )
 from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as ub

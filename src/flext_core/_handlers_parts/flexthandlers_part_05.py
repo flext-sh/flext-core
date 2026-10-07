@@ -124,7 +124,8 @@ class FlextHandlers[MessageT_contra, ResultT](
             message: The message to execute handler for
 
         Returns:
-            r[ResultT]: Success with handler result or failure with validation/business error
+            r[ResultT]: Success with handler result or failure with a
+            validation/business error
 
         Example:
             >>> handler = UserHandler()

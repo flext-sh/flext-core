@@ -5,7 +5,8 @@ protocols. All generic test protocols come from flext_tests.
 
 Architecture:
 - TestsFlextProtocols (flext_tests) = Generic protocols for all FLEXT projects
-- TestsFlextProtocols (tests/) = flext-core-specific protocols extending TestsFlextProtocols
+- TestsFlextProtocols (tests/) = flext-core-specific protocols
+extending TestsFlextProtocols
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -35,6 +36,8 @@ class TestsFlextProtocols(FlextTestsProtocols):
     - All generic protocols come from TestsFlextProtocols
     """
 
+    TestsTestsMixins = TestsFlextFlextModelsMixins.TestsFlextModelsMixins
+
     class Tests(FlextTestsProtocols.Tests):
         """flext-core test protocols namespace."""
 
@@ -63,8 +66,8 @@ class TestsFlextProtocols(FlextTestsProtocols):
 
             def __call__(
                 self,
-                data_or_items: TestsFlextFlextModelsMixins.TestsFlextModelsMixins.MaybeModel
-                | TestsFlextFlextModelsMixins.TestsFlextModelsMixins.PortModel
+                data_or_items: TestsTestsMixins.MaybeModel
+                | TestsTestsMixins.PortModel
                 | int,
                 key_or_index: int | str,
                 *,

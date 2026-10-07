@@ -250,7 +250,7 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def generate_iso_timestamp() -> str:
-        """Generate ISO timestamp without microseconds (use generate_datetime_utc for precision).
+        """Generate an ISO timestamp without microseconds (see generate_datetime_utc).
 
         Returns:
             The resulting ``str``.
@@ -284,7 +284,7 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def now() -> datetime:
-        """Return the current timezone-aware datetime in the configured timezone (FlextSettings.timezone).
+        """Return the current timezone-aware datetime in the configured timezone.
 
         Returns:
             The current timezone-aware datetime in the configured timezone
@@ -295,7 +295,7 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def now_iso() -> str:
-        """Return the current ISO timestamp (no microseconds) in the configured timezone.
+        """Return the current ISO timestamp without microseconds in the timezone.
 
         Returns:
             The current ISO timestamp (no microseconds) in the configured timezone.

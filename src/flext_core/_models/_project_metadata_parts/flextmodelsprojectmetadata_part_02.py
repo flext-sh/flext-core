@@ -12,10 +12,10 @@ from typing import Annotated, Self
 from pydantic import AliasChoices, Field, field_validator, model_validator
 
 from flext_core._constants.regex import FlextConstantsRegex as cr
-from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_01 import (
+from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_01 import (  # ruff: ignore[line-too-long] -- the dotted module path is a single identifier chain; it cannot be wrapped without renaming the module
     FlextModelsProjectMetadataContract,
 )
-from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_05 import (
+from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_05 import (  # ruff: ignore[line-too-long] -- the dotted module path is a single identifier chain; it cannot be wrapped without renaming the module
     FlextModelsPyprojectIngressContract,
 )
 from flext_core._typings.base import FlextTypingBase as t

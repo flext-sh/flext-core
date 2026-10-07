@@ -93,7 +93,7 @@ class TestsFlextCoreSettings:
 
         @staticmethod
         def test_libraries_share_consuming_application_namespace() -> None:
-            """Imported library settings resolve through the outer application identity."""
+            """Library settings resolve through the outer application identity."""
             if sys.platform not in {"linux", "linux2"}:
                 pytest.skip("XDG directories are Linux-specific")
             with test_u.Tests.env_vars_context(
@@ -138,7 +138,7 @@ class TestsFlextCoreSettings:
 
         @staticmethod
         def test_application_namespace_is_first_wins() -> None:
-            """A later library bootstrap cannot replace the outer application identity."""
+            """A later bootstrap cannot replace the outer application identity."""
             FlextSettings.apply_app_namespace("flext-tap-oracle")
             FlextSettings.apply_app_namespace("flext-cli")
             assert FlextSettings.fetch_global().work_dir.name == "flext-tap-oracle"
@@ -171,7 +171,7 @@ class TestsFlextCoreSettings:
 
         @staticmethod
         def test_computed_directories_serialize_with_current_application() -> None:
-            """Pydantic serialization exposes directories for the current application."""
+            """Pydantic serialization exposes the current application directories."""
             settings = FlextSettings.fetch_global()
             FlextSettings.apply_app_namespace("flext-tap-oracle")
             dumped = settings.model_dump()

@@ -168,7 +168,10 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart02):
                         and default_val != "PydanticUndefined"
                     ):
                         return default_val
-        msg_type_error = f"Message {msg} does not provide a valid route via command_type, query_type, or event_type"
+        msg_type_error = (
+            f"Message {msg} does not provide a valid route "
+            "via command_type, query_type, or event_type"
+        )
         raise TypeError(msg_type_error)
 
 

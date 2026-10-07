@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_03 import (
+from flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_03 import (  # ruff: ignore[line-too-long] -- the dotted module path is a single identifier chain; it cannot be wrapped without renaming the module
     FlextModelsExceptionParams as FlextModelsExceptionParamsPartFinal,
 )
 

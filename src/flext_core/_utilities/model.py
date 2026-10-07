@@ -70,7 +70,8 @@ class FlextUtilitiesModel:
             model: Pydantic model instance to serialize.
             options: Optional Pydantic model_dump arguments within the settings model.
             **kwargs: Inline serialization options mapped to ModelDumpOptions;
-                invalid options fail loudly instead of silently falling back to defaults.
+                invalid options fail loudly instead of silently falling back
+                to defaults.
 
         Returns:
             Dictionary representation of the model.

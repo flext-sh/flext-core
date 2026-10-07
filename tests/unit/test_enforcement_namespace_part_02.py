@@ -230,7 +230,7 @@ class TestsFlextCoreEnforcementNamespacePart02:
         body: dict[str, object],
         module: str | None,
     ) -> None:
-        """Constants inside ``_constants``, framework idioms, and lowercase names pass."""
+        """Constants inside _constants, framework idioms, and lowercase names pass."""
         good = _synthetic("FlextSyntheticExempt", body, module=module)
 
         report = u.check(good)

@@ -33,7 +33,7 @@ class FlextConstantsSerialization:
 
     @unique
     class DecodeErrorHandler(StrEnum):
-        """Python bytes.decode error-handler identifiers (SSOT for ``errors=`` param)."""
+        """Python bytes.decode error-handler identifiers (SSOT for errors param)."""
 
         REPLACE = "replace"
         IGNORE = "ignore"

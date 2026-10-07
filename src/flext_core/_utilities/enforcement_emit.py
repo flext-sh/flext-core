@@ -161,11 +161,12 @@ class FlextUtilitiesEnforcementEmit:
                 f"\n{v.qualname} violates FLEXT {v.layer} {v.severity}:\n  - "
                 f"{v.message}\n\nFix: {fix_note}"
             )
+            rules = FlextUtilitiesEnforcementEmit.rules_by_tag()
             category = (
                 c.FlextSmellViolation
                 if any(
                     rule.id == v.rule_id
-                    for tag, rule in FlextUtilitiesEnforcementEmit.rules_by_tag().items()
+                    for tag, rule in rules.items()
                     if tag in c.ENFORCEMENT_SMELL_TAGS
                 )
                 else FlextMroViolation

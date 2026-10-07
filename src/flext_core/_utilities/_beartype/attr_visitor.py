@@ -119,7 +119,7 @@ class FlextUtilitiesBeartypeAttrVisitor:
         name: str,
         value: object,
     ) -> bool:
-        """Return True when an UPPER_CASE attribute looks like a constant but lacks ClassVar.
+        """Return True for UPPER_CASE attributes that look constant but lack ClassVar.
 
         Returns:
             True when an UPPER_CASE attribute looks like a constant but lacks ClassVar.

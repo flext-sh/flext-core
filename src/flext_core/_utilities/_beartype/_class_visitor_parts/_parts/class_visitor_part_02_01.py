@@ -102,11 +102,10 @@ def alias_first_violation(
         target.__name__.startswith(tier_facade_prefixes),
         any(module_name == module_path for _, module_path, _ in alias_rows),
     ))
-    is_core_root = module_name.startswith("flext_core.") and not module_name.startswith((
-        "flext_core.tests",
-        "flext_core.examples",
-        "flext_core.scripts",
-    ))
+    non_core_roots = ("flext_core.tests", "flext_core.examples", "flext_core.scripts")
+    is_core_root = module_name.startswith("flext_core.") and not module_name.startswith(
+        non_core_roots,
+    )
 
     # Private family classes (e.g. FlextApiConstantsApi in _constants/api.py)
     # are composed by their parent facade through MRO (R1, R3).  The

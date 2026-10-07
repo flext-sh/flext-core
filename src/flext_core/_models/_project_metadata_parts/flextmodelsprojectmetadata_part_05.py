@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_01 import (
+from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_01 import (  # ruff: ignore[line-too-long] -- the dotted module path is a single identifier chain; it cannot be wrapped without renaming the module
     FlextModelsProjectMetadataContract,
 )
 from flext_core._models.pydantic import FlextModelsPydantic

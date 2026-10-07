@@ -67,7 +67,7 @@ def _upper(value: str) -> str:
 
 
 class TestsFlextCoreUtilitiesCollection:
-    """Behavior contract for u.map / u.find / u.filter / u.count / u.process / u.merge_mappings."""
+    """Behavior contract for u.map/find/filter/count/process/merge_mappings."""
 
     @staticmethod
     def test_normalize_domain_event_data_flattens_public_payloads(

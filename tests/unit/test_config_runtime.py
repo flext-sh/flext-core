@@ -26,7 +26,7 @@ class TestsFlextCoreConfigSettingsCanonical:
 
     @staticmethod
     def test_config_is_preinstantiated_frozen_singleton() -> None:
-        """S1: ``config`` is a ready-to-use frozen FlextConfig instance; mutation raises."""
+        """S1: config is a frozen, ready-to-use FlextConfig; mutation raises."""
         assert isinstance(config, FlextConfig)
         tm.rejects_assignment(config, "anything", "mutated", expected=m.ValidationError)
 

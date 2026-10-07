@@ -1,7 +1,8 @@
 """Settings patterns extracted from FlextModels.
 
 This module contains the FlextModelsSettings class with all settings-related patterns
-as nested classes. It should NOT be imported directly - use FlextModels.Settings instead.
+as nested classes. It should NOT be imported directly — use
+FlextModels.Settings instead.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -54,7 +55,9 @@ class FlextModelsSettings:
             bool,
             mp.Field(
                 default=True,
-                description="Whether to use exponential backoff between retry attempts.",
+                description=(
+                    "Whether to use exponential backoff between retry attempts."
+                ),
             ),
         ] = True
         backoff_multiplier: Annotated[

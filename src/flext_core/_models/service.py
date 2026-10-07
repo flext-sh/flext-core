@@ -72,7 +72,9 @@ class FlextModelsService:
         )
         settings_overrides: t.ScalarMapping | None = mp.Field(
             None,
-            description="Key-value overrides applied on top of the loaded configuration.",
+            description=(
+                "Key-value overrides applied on top of the loaded configuration."
+            ),
         )
         context: tp.Port[p.Context | None] = mp.Field(
             None,

@@ -29,7 +29,7 @@ class TestsFlextCoreSettingsValidationAlias:
     """Public override-helper behavior for settings carrying validation_alias fields."""
 
     class _AliasFieldSettings(FlextSettings):
-        """Minimal subclass: one field declared only via validation_alias (no populate_by_name)."""
+        """Minimal subclass: one field declared only via validation_alias."""
 
         model_config = m.SettingsConfigDict(extra="forbid", populate_by_name=False)
 

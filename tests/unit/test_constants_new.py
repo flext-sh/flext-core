@@ -126,7 +126,7 @@ class TestsFlextConstantsNew:
         raw_app_id: str,
         normalized: str,
     ) -> None:
-        """Shared flat test cases must produce identifiers accepted by core regex rules."""
+        """Shared flat cases must produce identifiers accepted by core regex rules."""
         _ = raw_app_id
         tm.that(bool(c.PATTERN_IDENTIFIER_LOWERCASE_RE.fullmatch(normalized)), eq=True)
 

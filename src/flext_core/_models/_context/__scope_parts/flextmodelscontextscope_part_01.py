@@ -63,7 +63,10 @@ class FlextModelsContextScope:
                 ),
             ),
             mp.Field(
-                description="Additional metric counters and timing values grouped by metric key.",
+                description=(
+                    "Additional metric counters and timing values grouped by metric "
+                    "key."
+                ),
             ),
         ] = mp.Field(default_factory=lambda: MappingProxyType[str, t.JsonValue]({}))
 

@@ -94,7 +94,9 @@ class FlextProtocolsRegistry:
             *,
             validate: Callable[[t.RegistrablePlugin], FlextProtocolsResult.Result[bool]]
             | None = None,
-            scope: FlextConstantsMixins.RegistrationScope = FlextConstantsMixins.RegistrationScope.INSTANCE,
+            scope: FlextConstantsMixins.RegistrationScope = (
+                FlextConstantsMixins.RegistrationScope.INSTANCE
+            ),
         ) -> FlextProtocolsResult.Result[bool]:
             """Register a plugin with optional validation."""
             ...
@@ -104,7 +106,9 @@ class FlextProtocolsRegistry:
             category: str,
             name: str,
             *,
-            scope: FlextConstantsMixins.RegistrationScope = FlextConstantsMixins.RegistrationScope.INSTANCE,
+            scope: FlextConstantsMixins.RegistrationScope = (
+                FlextConstantsMixins.RegistrationScope.INSTANCE
+            ),
         ) -> FlextProtocolsResult.Result[bool]:
             """Unregister a plugin."""
             ...
@@ -114,7 +118,9 @@ class FlextProtocolsRegistry:
             category: str,
             name: str,
             *,
-            scope: FlextConstantsMixins.RegistrationScope = FlextConstantsMixins.RegistrationScope.INSTANCE,
+            scope: FlextConstantsMixins.RegistrationScope = (
+                FlextConstantsMixins.RegistrationScope.INSTANCE
+            ),
         ) -> FlextProtocolsResult.Result[t.JsonPayload | None]:
             """Get a registered plugin by category and name."""
             ...
@@ -123,7 +129,9 @@ class FlextProtocolsRegistry:
             self,
             category: str,
             *,
-            scope: FlextConstantsMixins.RegistrationScope = FlextConstantsMixins.RegistrationScope.INSTANCE,
+            scope: FlextConstantsMixins.RegistrationScope = (
+                FlextConstantsMixins.RegistrationScope.INSTANCE
+            ),
         ) -> FlextProtocolsResult.Result[t.StrSequence]:
             """List all plugins in a category."""
             ...

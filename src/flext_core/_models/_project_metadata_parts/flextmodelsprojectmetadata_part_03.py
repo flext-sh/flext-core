@@ -10,13 +10,13 @@ from typing import Annotated
 
 from pydantic import Field
 
-from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_01 import (
+from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_01 import (  # ruff: ignore[line-too-long] -- the dotted module path is a single identifier chain; it cannot be wrapped without renaming the module
     FlextModelsProjectMetadataContract,
 )
-from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_02 import (
+from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_02 import (  # ruff: ignore[line-too-long] -- the dotted module path is a single identifier chain; it cannot be wrapped without renaming the module
     FlextModelsProjectMetadataFields,
 )
-from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_05 import (
+from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_05 import (  # ruff: ignore[line-too-long] -- the dotted module path is a single identifier chain; it cannot be wrapped without renaming the module
     FlextModelsPyprojectIngressContract,
 )
 from flext_core._typings.base import FlextTypingBase as t

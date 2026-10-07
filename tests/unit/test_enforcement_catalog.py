@@ -16,7 +16,7 @@ from tests.utilities import u
 
 
 class TestsFlextEnforcementCatalog:
-    """Behavior contract for u.build_canonical_catalog() shape, coverage, and construction."""
+    """Contract for u.build_canonical_catalog() shape, coverage, and construction."""
 
     @staticmethod
     def test_catalog_contains_at_least_one_rule() -> None:

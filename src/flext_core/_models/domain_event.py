@@ -44,7 +44,9 @@ class FlextModelsDomainEvent:
         aggregate_id: Annotated[
             t.NonEmptyStr,
             mp.Field(
-                description="Identifier of the aggregate root that produced this event.",
+                description=(
+                    "Identifier of the aggregate root that produced this event."
+                ),
             ),
         ]
         data: Annotated[

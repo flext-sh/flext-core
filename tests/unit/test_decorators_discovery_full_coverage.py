@@ -21,7 +21,7 @@ from tests.utilities import u
 
 
 class TestsFlextDecoratorsDiscovery:
-    """Behavior contract for u.scan_module — used by FlextContainer to register factories."""
+    """Behavior contract for u.scan_module — used by FlextContainer registration."""
 
     @staticmethod
     def test_scan_module_with_no_factories_returns_empty_list() -> None:

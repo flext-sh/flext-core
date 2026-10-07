@@ -55,7 +55,10 @@ class TestsFlextCoreContainerConfig:
                 tm.that(
                     key in settings_result.root,
                     eq=False,
-                    msg=f"Unknown settings key {key} must not leak into public settings",
+                    msg=(
+                        f"Unknown settings key {key} "
+                        "must not leak into public settings"
+                    ),
                 )
         if not settings:
             tm.that(

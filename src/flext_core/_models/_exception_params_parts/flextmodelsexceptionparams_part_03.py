@@ -13,10 +13,10 @@ from __future__ import annotations
 from typing import Annotated
 
 from flext_core import t
-from flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_01 import (
+from flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_01 import (  # ruff: ignore[line-too-long] -- the dotted module path is a single identifier chain; it cannot be wrapped without renaming the module
     FlextModelsExceptionParams as FlextModelsExceptionParamsPart01,
 )
-from flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_02 import (
+from flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_02 import (  # ruff: ignore[line-too-long] -- the dotted module path is a single identifier chain; it cannot be wrapped without renaming the module
     FlextModelsExceptionParams as FlextModelsExceptionParamsPart02,
 )
 from flext_core._models.pydantic import FlextModelsPydantic as mp
@@ -97,7 +97,9 @@ class FlextModelsExceptionParams(FlextModelsExceptionParamsPart02):
             t.RuntimeData | None,
             mp.Field(
                 default=None,
-                description="Context payload describing the state during access failure.",
+                description=(
+                    "Context payload describing the state during access failure."
+                ),
                 title="Attribute Context",
                 examples=[{"owner": "session"}],
             ),

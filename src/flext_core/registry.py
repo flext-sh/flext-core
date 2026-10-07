@@ -288,7 +288,8 @@ class FlextRegistry(s[bool]):
         """Finalize summary based on error state.
 
         Returns:
-            r[m.RegistrySummary]: Success result with summary or failure result with errors.
+            r[m.RegistrySummary]: Success result with summary or failure
+            result with errors.
 
         """
         if summary.errors:
