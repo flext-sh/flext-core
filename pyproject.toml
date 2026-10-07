@@ -62,15 +62,13 @@ Homepage = "https://github.com/flext-sh/flext-core"
 Repository = "https://github.com/flext-sh/flext-core"
 
 [dependency-groups]
-codegen = [
-  "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
-]
+codegen = ["flext-infra"]
 dev = [
   "actionlint-py>=1.7.12.24",
   "bandit>=1.9.4",
   "deptry",
   "editables>=0.6",
-  "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev",
+  "flext-tests",
   "hypothesis",
   "mkdocs",
   "mkdocs-autorefs",
@@ -474,7 +472,9 @@ runtime-evaluated-base-classes = [
   "examples.models.m.Examples.Handle",
   "examples.models.m.Examples.Person",
   "examples.shared.ExamplesFlextShared",
+  "flext_core.FlextConfig",
   "flext_core.FlextModels.BaseModel",
+  "flext_core.FlextService",
   "flext_core.FlextSettings",
   "flext_core._handlers_parts.flexthandlers_part_01.FlextHandlers",
   "flext_core._handlers_parts.flexthandlers_part_02.FlextHandlers",
@@ -502,11 +502,6 @@ runtime-evaluated-base-classes = [
   "flext_core._models._enforcement._base.FlextModelsEnforcementBase.Report",
   "flext_core._models._enforcement._base.FlextModelsEnforcementModelBase",
   "flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_01.ParamsModel",
-  "flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_02.FlextModelsExceptionParamsPart01.ExpectedActualTypeParams",
-  "flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_02.FlextModelsExceptionParamsPart01.ParamsModel",
-  "flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_02.FlextModelsExceptionParamsPart01.ResourceIdentityParams",
-  "flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_03.FlextModelsExceptionParamsPart01.ExpectedActualTypeParams",
-  "flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_03.FlextModelsExceptionParamsPart01.ParamsModel",
   "flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_01.FlextModelsProjectMetadataContract",
   "flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_05.FlextModelsPyprojectIngressContract",
   "flext_core._models.base.FlextModelsBase.ArbitraryTypesModel",
@@ -538,6 +533,7 @@ runtime-evaluated-base-classes = [
   "flext_core.m.FlexibleInternalModel",
   "flext_core.m.ManagedModel",
   "flext_core.m.Query",
+  "flext_core.m.StrictModel",
   "flext_core.m.Value",
   "flext_core.s",
   "flext_core.x",
@@ -554,13 +550,20 @@ runtime-evaluated-base-classes = [
   "tests.models.m.ArbitraryTypesModel",
   "tests.models.m.BaseModel",
   "tests.models.m.BaseSettings",
+  "tests.models.m.Command",
+  "tests.models.m.ContractModel",
   "tests.models.m.Entity",
+  "tests.models.m.FlexibleInternalModel",
   "tests.models.m.FlexibleModel",
   "tests.models.m.FrozenValueModel",
+  "tests.models.m.Pagination",
+  "tests.models.m.Query",
   "tests.models.m.Value",
   "tests.unit._models.test_pydantic_facade._Item",
+  "tests.unit.test_config_runtime.ParentConfig",
   "tests.unit.test_service_operations.ReadSide",
   "tests.unit.test_service_operations.WriteSide",
+  "tests.utilities.u.TestsFlextFlextHandlers.ConcreteTestHandler",
 ]
 
 [tool.ruff.lint.flake8-tidy-imports]
@@ -609,6 +612,10 @@ split-on-trailing-comma = false
   "undocumented-public-method",
   "unused-class-method-argument",
 ]
+"**/bootstrap.py" = [
+  "subprocess-without-shell-equals-true",
+  "suspicious-subprocess-import",
+]
 "**/docx.py" = ["import-outside-top-level"]
 "**/file_test_helpers.py" = ["line-too-long"]
 "**/flextcliutilitiesfiletesthelpersmixin_part_03.py" = ["line-too-long"]
@@ -618,6 +625,7 @@ split-on-trailing-comma = false
 "**/tests/**" = [
   "boolean-positional-value-in-call",
   "compare-to-empty-string",
+  "import-private-name",
   "magic-value-comparison",
   "mutable-class-default",
   "no-self-use",
@@ -737,6 +745,12 @@ dependencies = ["flext-core"]
 
 [tool.uv.exclude-dependencies.package]
 name = "flext-cli"
+
+[tool.uv.sources.flext-infra]
+workspace = true
+
+[tool.uv.sources.flext-tests]
+workspace = true
 [tool.bandit]
 severity = "MEDIUM"
 skips = ["B101"]

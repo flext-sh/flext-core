@@ -93,10 +93,14 @@ class FlextUtilitiesBeartypeEngine(
         return not name.startswith("_")
 
     @staticmethod
-    def attr_accept_utility(name: str) -> bool:
-        return (
-            name not in FlextConstantsEnforcement.ENFORCEMENT_UTILITIES_EXEMPT_METHODS
-        ) and not name.startswith("_")
+    def attr_accept_utility(target: type, name: str) -> bool:
+        if name.startswith("_"):
+            return False
+        if name in FlextConstantsEnforcement.ENFORCEMENT_UTILITIES_EXEMPT_METHODS:
+            return False
+        return target.__name__ not in (
+            FlextConstantsEnforcement.ENFORCEMENT_UTILITIES_STATEFUL_ADAPTERS
+        )
 
     @staticmethod
     def contains_any(hint: FlextTypingBase.TypeHintSpecifier | None) -> bool:

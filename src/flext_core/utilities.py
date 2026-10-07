@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_core import runtime
 from flext_core._models import FlextModelsNamespace
 from flext_core._utilities import (
     FlextUtilitiesArgs,
@@ -41,12 +42,11 @@ from flext_core._utilities import (
     FlextUtilitiesSettings,
     FlextUtilitiesText,
 )
-from flext_core.runtime import FlextRuntime
 
 
 class FlextUtilities(
     FlextUtilitiesLogging,
-    FlextRuntime,
+    runtime.FlextRuntime,
     FlextUtilitiesArgs,
     FlextUtilitiesBeartypeConf,
     FlextUtilitiesBeartypeEngine,
