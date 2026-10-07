@@ -44,7 +44,28 @@ class FlextExceptionsBase:
             **extra_kwargs: tb.JsonValue,
         ) -> None:
             """Initialize base error with message and optional metadata."""
-            opts = options if options is not None else m.ExceptionInitOptions()
+            opts = options
+            if opts is None:
+                # Keyword-form construction: the tested public contract accepts
+                # every ExceptionInitOptions field as a direct keyword (e.g.
+                # ``BaseError("m", error_code="E_BASE", auto_log=False)``).
+                # Extract exactly the option keys from the kwargs so they feed
+                # the typed options instead of falling into the generic extra
+                # bucket.
+                option_kwargs = {
+                    key: extra_kwargs.pop(key)
+                    for key in (
+                        "error_code",
+                        "context",
+                        "metadata",
+                        "correlation_id",
+                        "auto_correlation",
+                        "auto_log",
+                        "merged_kwargs",
+                    )
+                    if key in extra_kwargs
+                }
+                opts = m.ExceptionInitOptions.model_validate(option_kwargs)
             declaredparams_cls = self.__class__.params_cls
             if declaredparams_cls is None:
                 self._initialize_base_state(
