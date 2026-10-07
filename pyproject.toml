@@ -728,24 +728,6 @@ link-mode = "copy"
 constraint-dependencies = ["mypy<2.4.0"]
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 
-[[tool.uv.exclude-dependencies]]
-dependencies = ["flext-core"]
-
-[tool.uv.exclude-dependencies.package]
-name = "flext-infra"
-
-[[tool.uv.exclude-dependencies]]
-dependencies = ["flext-core"]
-
-[tool.uv.exclude-dependencies.package]
-name = "flext-tests"
-
-[[tool.uv.exclude-dependencies]]
-dependencies = ["flext-core"]
-
-[tool.uv.exclude-dependencies.package]
-name = "flext-cli"
-
 [tool.bandit]
 severity = "MEDIUM"
 skips = ["B101"]
@@ -763,4 +745,3 @@ ignore-property-decorators = true
 [tool.radon]
 cc_min = "B"
 mi_min = "B"
-
