@@ -181,8 +181,6 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart01):
         message_type: ts.MessageTypeSpecifier,
     ) -> bool:
         """Evaluate compatibility between expected and actual message types.
-        from flext_core._typings.services import FlextTypesServices as ts
-        from flext_core._typings.base import FlextTypingBase as tb.
 
         Returns:
             The resulting ``bool``.

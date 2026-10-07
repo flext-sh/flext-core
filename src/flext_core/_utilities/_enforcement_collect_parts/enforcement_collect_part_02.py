@@ -76,8 +76,6 @@ class FlextUtilitiesEnforcementCollect(part_01.FlextUtilitiesEnforcementCollect)
         Yields:
             Each ``tuple[str, tuple[pb.AttributeProbe, ...]]``.
 
-        from flext_core._protocols.base import FlextProtocolsBase as pb
-        from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as ub
         """
         for value in vars(node).values():
             if (

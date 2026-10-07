@@ -264,9 +264,6 @@ class FlextLazy(FlextLazyPart01):
         module-level literal or inline call — satisfy that contract from
         the single owner.
 
-        Raises:
-            RuntimeError: If module.
-
         """
         pre_signature: tuple[int, int, int, bool] = (
             id(module_globals),
