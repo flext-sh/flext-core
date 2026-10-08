@@ -153,7 +153,8 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
         """
         return self.bind(**context)
 
-    def _should_include_stack_trace(self) -> bool:
+    @staticmethod
+    def _should_include_stack_trace() -> bool:
         """Whether stack traces should be included in exception logging.
 
         Returns:

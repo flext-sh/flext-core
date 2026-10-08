@@ -10,16 +10,18 @@ from typing import Annotated
 
 from pydantic import Field
 
-from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_01 import (
-    FlextModelsProjectMetadataContract,
-)
-from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_02 import (
-    FlextModelsProjectMetadataFields,
-)
-from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_05 import (
-    FlextModelsPyprojectIngressContract,
+from flext_core._models._project_metadata_parts import (
+    flextmodelsprojectmetadata_part_01 as _01,
+    flextmodelsprojectmetadata_part_02 as _02,
+    flextmodelsprojectmetadata_part_05 as _05,
 )
 from flext_core._typings.base import FlextTypingBase
+
+FlextModelsProjectMetadataContract = _01.FlextModelsProjectMetadataContract
+
+FlextModelsProjectMetadataFields = _02.FlextModelsProjectMetadataFields
+
+FlextModelsPyprojectIngressContract = _05.FlextModelsPyprojectIngressContract
 
 
 class FlextModelsProjectMetadataAggregates(FlextModelsProjectMetadataFields):

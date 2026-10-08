@@ -23,8 +23,6 @@ from flext_core._protocols import (
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core.typings import t.ProtocolGuardInput
-
 
 class FlextUtilitiesGuardsTypeProtocolSpecsMixin:
     _protocol_specs_cache: (
