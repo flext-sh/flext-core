@@ -141,4 +141,3 @@ class FlextTypingBase(FlextTypesPydantic, FlextTypesAnnotateds):
         type[object] | str | UnionType | GenericAlias | TypeAliasType | ForwardRef
     )
     type TypeFormSpecifier = TypeHintSpecifier | TypeForm[object]
-    type DynamicTypeHint = str | UnionType | TypeAliasType | ForwardRef
