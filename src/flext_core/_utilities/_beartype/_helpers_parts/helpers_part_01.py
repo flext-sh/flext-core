@@ -130,7 +130,7 @@ class FlextUtilitiesBeartypeHelpers:
         alias: object,
         *,
         owner: ModuleType | type | None = None,
-    ) -> FlextTypingBase.TypeHintSpecifier | None:
+    ) -> FlextTypingBase.TypeFormSpecifier | None:
         """Return a value, or None for non-aliases and proven static-only imports.
 
         An explicit declaring ``owner`` may prove that unavailable
@@ -146,14 +146,14 @@ class FlextUtilitiesBeartypeHelpers:
         resolution = FlextUtilitiesBeartypeTypeAliases.resolve(alias, owner=owner)
         if isinstance(resolution, FlextModelsEnforcement.DeferredAlias):
             return None
-        return cast("FlextTypingBase.TypeHintSpecifier", resolution.value)
+        return cast("FlextTypingBase.TypeFormSpecifier", resolution.value)
 
     @staticmethod
     def unwrap_type_alias(
-        hint: FlextTypingBase.TypeHintSpecifier | None,
+        hint: FlextTypingBase.TypeFormSpecifier | None,
         *,
         owner: ModuleType | type | None = None,
-    ) -> FlextTypingBase.TypeHintSpecifier | None:
+    ) -> FlextTypingBase.TypeFormSpecifier | None:
         current = hint
         seen: set[int] = set()
         while isinstance(current, TypeAliasType):
@@ -172,7 +172,7 @@ class FlextUtilitiesBeartypeHelpers:
 
     @staticmethod
     def contains_any_recursive(
-        hint: FlextTypingBase.TypeHintSpecifier | None,
+        hint: FlextTypingBase.TypeFormSpecifier | None,
         *,
         seen: set[int],
         owner: ModuleType | type | None = None,
@@ -196,7 +196,7 @@ class FlextUtilitiesBeartypeHelpers:
 
     @staticmethod
     def has_forbidden_collection_origin(
-        hint: FlextTypingBase.TypeHintSpecifier | None,
+        hint: FlextTypingBase.TypeFormSpecifier | None,
         forbidden: frozenset[str],
     ) -> tuple[bool, str]:
         h = FlextUtilitiesBeartypeHelpers

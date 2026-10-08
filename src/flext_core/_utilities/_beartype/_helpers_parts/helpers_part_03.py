@@ -51,7 +51,7 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart02):
         return sum(1 for a in get_args(h2) if a is not type(None))
 
     @staticmethod
-    def matches_str_none_union(hint: t.TypeHintSpecifier | None) -> bool:
+    def matches_str_none_union(hint: t.TypeFormSpecifier | None) -> bool:
         h = FlextUtilitiesBeartypeHelpers
         h2 = h.unwrap_type_alias(hint)
         if h2 is None or get_origin(h2) not in {UnionType, Union}:
@@ -60,7 +60,7 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart02):
 
     @staticmethod
     def alias_contains_any(
-        alias_value: t.TypeHintSpecifier | None,
+        alias_value: t.TypeFormSpecifier | None,
         *,
         owner: _types_mod.ModuleType | type | None = None,
     ) -> bool:
@@ -85,7 +85,7 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart02):
 
     @staticmethod
     def allows_mutable_default_factory(
-        hint: t.TypeHintSpecifier | None,
+        hint: t.TypeFormSpecifier | None,
         factory: type | Callable[..., p.AttributeProbe] | None,
     ) -> bool:
         h = FlextUtilitiesBeartypeHelpers
