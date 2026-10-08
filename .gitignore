@@ -323,7 +323,6 @@ _tmp_*/
 build/
 dist/
 node_modules/
-protos/
 site/
 target/
 .pyrefly_cache/
