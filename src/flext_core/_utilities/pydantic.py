@@ -54,11 +54,12 @@ class FlextUtilitiesPydantic:
     if TYPE_CHECKING:
         field_validator = mp.field_validator
         field_serializer = mp.field_serializer
+        model_validator = mp.model_validator
     else:
         field_validator = staticmethod(mp.field_validator)
         field_serializer = staticmethod(mp.field_serializer)
+        model_validator = staticmethod(mp.model_validator)
 
-    model_validator = staticmethod(mp.model_validator)
     computed_field = staticmethod(mp.computed_field)
     model_serializer = staticmethod(model_serializer)
 
