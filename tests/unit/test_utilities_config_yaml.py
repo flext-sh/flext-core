@@ -35,7 +35,10 @@ class TestsFlextCoreUtilitiesYaml:
     @staticmethod
     def test_unique_key_load_rejects_non_string_keys() -> None:
         """Configuration ingress requires string keys before model validation."""
-        with pytest.raises(u.Yaml.YAMLError, match="config mapping keys must be strings"):
+        with pytest.raises(
+            u.Yaml.YAMLError,
+            match="config mapping keys must be strings",
+        ):
             u.Yaml.unique_key_load("top:\n  1: value\n")
 
     @staticmethod
