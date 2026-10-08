@@ -10,10 +10,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, IO, Sequence, Sequence as _Sequence
+from collections.abc import Callable, Sequence, Sequence as _Sequence
 from importlib.resources.abc import Traversable
 from pathlib import Path, Path as _Path
-from typing import cast, override
+from typing import IO, cast, override
 
 from pydantic import JsonValue
 from pydantic_settings import BaseSettings, YamlConfigSettingsSource
