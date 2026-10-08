@@ -435,6 +435,7 @@ ignore = [
   "camelcase-imported-as-lowercase",
   "implicit-namespace-package",
   "missing-required-import",
+  "missing-trailing-comma",
   "runtime-import-in-type-checking-block",
   "typing-only-first-party-import",
   "typing-only-standard-library-import",
