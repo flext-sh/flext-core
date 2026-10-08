@@ -130,7 +130,8 @@ class FlextModelsExceptionParams:
             str | None,
             mp.Field(
                 default=None,
-                description="Hostname or address used for the failed connection attempt.",
+                description="Hostname or address used for the failed"
+                " connection attempt.",
             ),
         ] = None
         port: Annotated[

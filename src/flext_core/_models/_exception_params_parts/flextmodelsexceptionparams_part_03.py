@@ -99,7 +99,8 @@ class FlextModelsExceptionParams(FlextModelsExceptionParamsPart02):
             t.RuntimeData | None,
             mp.Field(
                 default=None,
-                description="Context payload describing the state during access failure.",
+                description="Context payload describing the state"
+                " during access failure.",
                 title="Attribute Context",
                 examples=[{"owner": "session"}],
             ),
