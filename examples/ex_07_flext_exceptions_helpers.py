@@ -6,8 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from examples.models import m
-from examples.protocols import p
+from examples import m, p
 from examples.shared import ExamplesFlextShared
 from flext_core import e
 

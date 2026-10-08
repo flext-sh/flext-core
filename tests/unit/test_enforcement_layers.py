@@ -24,7 +24,7 @@ from typing import (
 import pytest
 
 from flext_core import m, t
-from tests.utilities import u
+from tests import u
 
 
 class TestsFlextCoreEnforcementLayers:

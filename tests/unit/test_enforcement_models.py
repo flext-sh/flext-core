@@ -14,11 +14,8 @@ from typing import Annotated
 import pytest
 
 from flext_core.utilities import FlextUtilitiesEnforcement
-from tests.constants import c
-from tests.models import m
-from tests.typings import t
+from tests import c, m, t, u
 from tests.unit._enforcement_support import messages
-from tests.utilities import u
 
 
 class TestsFlextEnforcementModels:

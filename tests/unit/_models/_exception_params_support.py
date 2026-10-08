@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from tests.models import m
+from tests import m
 
 
 class TestsFlextModelsExceptionParamsSupport:

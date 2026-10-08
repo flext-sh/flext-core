@@ -8,13 +8,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Annotated, ClassVar
 
-from tests.models import m
-from tests.utilities import u
+from tests import m, u
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from tests.typings import t
+    from tests import t
 
 
 class TestsFlextSettingsConfigTestCase(m.BaseModel):

@@ -12,8 +12,7 @@ from __future__ import annotations
 
 from typing import override
 
-from tests import u
-from tests.models import m
+from tests import m, u
 
 
 class TestsFlextCorePydanticSettingsFacade:

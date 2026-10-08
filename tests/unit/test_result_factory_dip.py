@@ -16,7 +16,7 @@ import pytest
 from flext_tests import r, tm
 
 from flext_core import FlextResult, e, m, t
-from tests.protocols import p
+from tests import p
 
 
 class _ForeignResult(m.ArbitraryTypesModel):

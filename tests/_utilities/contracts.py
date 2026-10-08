@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 from flext_tests import tm, u
 
-from tests.constants import c
+from tests import c
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

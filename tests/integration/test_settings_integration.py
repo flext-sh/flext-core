@@ -13,8 +13,7 @@ import pytest
 from flext_tests import tm
 
 from flext_core import FlextContainer, FlextSettings, m
-from tests import u
-from tests.constants import c
+from tests import c, u
 
 
 class TestsFlextSettingsIntegration:

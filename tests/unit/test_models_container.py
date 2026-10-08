@@ -14,8 +14,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests.models import m
-from tests.typings import t
+from tests import m, t
 
 
 class TestsFlextCoreModelsContainer:

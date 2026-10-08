@@ -14,7 +14,7 @@ from __future__ import annotations
 import pytest
 
 from flext_core import m, t
-from tests.utilities import u
+from tests import u
 
 
 class TestsFlextCoreGuards:

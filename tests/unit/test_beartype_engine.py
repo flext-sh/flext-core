@@ -17,7 +17,7 @@ import pytest
 
 import tests.utilities
 from flext_core.utilities import FlextUtilitiesBeartypeEngine
-from tests.protocols import p
+from tests import p
 
 
 class TestsFlextCoreBeartypeEngine(

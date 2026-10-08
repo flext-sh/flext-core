@@ -16,12 +16,8 @@ from typing import TYPE_CHECKING, Self, override
 import pytest
 from flext_tests import r, tm
 
+from tests import c, m, p, t, u
 from tests.base import s
-from tests.constants import c
-from tests.models import m
-from tests.protocols import p
-from tests.typings import t
-from tests.utilities import u
 
 if TYPE_CHECKING:
     from flext_core import FlextSettings

@@ -15,9 +15,8 @@ from __future__ import annotations
 import pytest
 
 from flext_core.utilities import FlextUtilitiesBeartypeEngine
-from tests.models import m
+from tests import m, u
 from tests.unit._enforcement_support import make_class, synthetic_method
-from tests.utilities import u
 
 _INHERITANCE_FRAGMENT = "must inherit FlextSettings"
 _ACCESSOR_FRAGMENT = "accessor method"

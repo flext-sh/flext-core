@@ -16,11 +16,10 @@ import pytest
 from flext_tests import r, tm
 
 import tests.utilities
-from tests.constants import c
+from tests import c
 
 if TYPE_CHECKING:
-    from tests.protocols import p
-    from tests.typings import t
+    from tests import p, t
 
 
 class TestsFlextCoreResultExceptionTraverseValidation(

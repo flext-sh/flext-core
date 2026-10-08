@@ -17,7 +17,7 @@ import pytest
 
 from flext_core import t
 from flext_core.utilities import FlextUtilitiesMapper
-from tests.utilities import u
+from tests import u
 
 
 class TestsFlextCoreMapper:

@@ -18,7 +18,7 @@ import pytest
 from flext_tests import tm
 
 from flext_core import c, t
-from tests.models import m
+from tests import m
 
 
 class TestsFlextCoreCqrs:

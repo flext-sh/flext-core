@@ -8,15 +8,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from examples.constants import c
+from examples import c, m, u
 from examples.ex_12_registry_flow import Ex12RegistryFlow
 from examples.ex_12_registry_support import ProtocolHandler, as_registry_handler
-from examples.models import m
-from examples.utilities import u
 from flext_core import r
 
 if TYPE_CHECKING:
-    from examples.protocols import p
+    from examples import p
 
 
 class Ex12RegistryPlugins(Ex12RegistryFlow):

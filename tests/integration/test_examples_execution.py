@@ -20,7 +20,7 @@ from pathlib import Path
 import pytest
 from flext_tests import m, tm, u
 
-from tests.constants import c
+from tests import c
 
 _CHECK_COUNT_RE = re.compile(r"\((\d+) checks\)")
 

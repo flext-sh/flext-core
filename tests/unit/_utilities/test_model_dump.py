@@ -13,7 +13,7 @@ from __future__ import annotations
 import pytest
 
 from flext_core import m
-from tests.utilities import u
+from tests import u
 
 
 class TestsFlextCoreModelDump:

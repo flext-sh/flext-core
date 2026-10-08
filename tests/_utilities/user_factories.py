@@ -16,7 +16,7 @@ from tests._utilities.railway_services import TestsFlextUtilitiesRailwayServices
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from tests.typings import t
+    from tests import t
 
 
 class TestsFlextUtilitiesUserFactoriesMixin(TestsFlextUtilitiesRailwayServicesMixin):

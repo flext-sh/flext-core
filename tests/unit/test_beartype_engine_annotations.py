@@ -20,7 +20,7 @@ import pytest
 
 import tests.utilities
 from flext_core import u
-from tests.typings import t
+from tests import t
 from tests.unit._beartype_engine_support import AnyAlias, CleanAlias, NestedAnyAlias
 
 if TYPE_CHECKING:

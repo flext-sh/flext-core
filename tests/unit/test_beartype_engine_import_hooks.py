@@ -23,7 +23,7 @@ import pytest
 from flext_core import c
 from flext_core.models import FlextModelsEnforcement
 from flext_core.utilities import FlextUtilitiesBeartypeEngine
-from tests.typings import t
+from tests import t
 
 _FORBIDDEN_IMPORT = "from tests.constants import c"
 
@@ -93,7 +93,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
             under_tests=True,
             body=textwrap.dedent(
                 """
-                from tests.constants import c
+                from tests import c
 
 
                 class Probe:
@@ -141,7 +141,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
             under_tests=False,
             body=textwrap.dedent(
                 """
-                from tests.constants import c
+                from tests import c
 
 
                 class Probe:
@@ -192,7 +192,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
             under_tests=True,
             body=textwrap.dedent(
                 """
-                from tests.constants import c
+                from tests import c
 
 
                 class Probe:

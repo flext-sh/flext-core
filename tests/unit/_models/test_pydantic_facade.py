@@ -15,9 +15,7 @@ from typing import Annotated, Literal
 
 import pytest
 
-from tests.models import m
-from tests.typings import t
-from tests.utilities import u
+from tests import m, t, u
 
 
 class TestsFlextCorePydanticDeclarations:

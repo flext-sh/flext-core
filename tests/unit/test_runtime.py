@@ -14,10 +14,10 @@ import pytest
 
 import flext_core
 from flext_core.runtime import FlextRuntime
-from tests.models import m
+from tests import m
 
 if TYPE_CHECKING:
-    from tests.typings import t
+    from tests import t
 
 
 class TestsFlextCoreRuntime:

@@ -16,10 +16,10 @@ from typing import TYPE_CHECKING
 import pytest
 from flext_tests import r, tm
 
-from tests.typings import t
+from tests import t
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextCoreResultCallablesFold:

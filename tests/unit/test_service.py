@@ -21,9 +21,8 @@ from typing import override
 import pytest
 from flext_tests import FlextTestsCase, FlextTestsSettings, r
 
+from tests import m, p
 from tests.base import s
-from tests.models import m
-from tests.protocols import p
 
 
 class TestsFlextService(FlextTestsCase):

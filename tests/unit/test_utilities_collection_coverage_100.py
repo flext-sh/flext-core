@@ -13,13 +13,12 @@ import pytest
 from flext_tests import tm
 
 from flext_core import u
-from tests.constants import c
-from tests.models import m
+from tests import c, m
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests.typings import t
+    from tests import t
 
 
 def _double(value: int) -> int:

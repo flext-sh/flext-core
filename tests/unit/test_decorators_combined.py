@@ -13,10 +13,10 @@ import pytest
 from flext_tests import d, e, r
 from hypothesis import given, settings, strategies as st
 
-from tests.utilities import u
+from tests import u
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextCoreDecoratorsCombined(u.TestsFlextDecoratorsLegacy):

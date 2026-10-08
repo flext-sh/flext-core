@@ -17,10 +17,7 @@ from typing import Annotated, ClassVar
 
 import pytest
 
-from tests.constants import c
-from tests.models import m
-from tests.typings import t
-from tests.utilities import u
+from tests import c, m, t, u
 
 
 class TestsFlextCoreHandlersValidationContext(

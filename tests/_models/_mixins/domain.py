@@ -13,7 +13,7 @@ from flext_core import m
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests.typings import t
+    from tests import t
 
 
 class TestsFlextModelsDomainMixin:

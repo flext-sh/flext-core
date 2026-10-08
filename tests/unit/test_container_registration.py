@@ -12,14 +12,10 @@ import pytest
 from flext_tests import tm
 
 from flext_core.container import FlextContainer
-from tests import e
-from tests.constants import c
-from tests.models import m
-from tests.protocols import p
-from tests.utilities import u
+from tests import c, e, m, p, u
 
 if TYPE_CHECKING:
-    from tests.typings import t
+    from tests import t
 
 
 class TestsFlextCoreContainerRegistration:
