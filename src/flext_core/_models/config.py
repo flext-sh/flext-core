@@ -12,8 +12,6 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
-from structlog.types import Processor
-
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._typings.base import FlextTypingBase
@@ -49,7 +47,7 @@ class FlextModelsConfig:
             ),
         ] = True
         additional_processors: Annotated[
-            FlextTypingBase.SequenceOf[Processor] | None,
+            FlextTypingBase.SequenceOf[FlextTypesServices.LoggerProcessor] | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Extra structlog processors appended to the chain.",

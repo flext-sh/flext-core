@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Mapping
 from enum import StrEnum
 from functools import cache
 
@@ -16,6 +16,7 @@ from flext_core._typings.annotateds import FlextTypesAnnotateds
 from flext_core._typings.base import FlextTypingBase
 from flext_core._typings.core import FlextTypesCore
 from flext_core._typings.pydantic import FlextTypesPydantic
+from flext_core._typings.services import FlextTypesServices
 
 
 class FlextTypesTypeAdapterScalars:
@@ -145,8 +146,8 @@ class FlextTypesTypeAdapterScalars:
     @cache
     def structlog_processor_adapter(
         cls,
-    ) -> FlextTypesPydantic.TypeAdapter[Callable[..., FlextTypesPydantic.JsonValue]]:
-        return TypeAdapter(Callable[..., FlextTypesPydantic.JsonValue])
+    ) -> FlextTypesPydantic.TypeAdapter[FlextTypesServices.LoggerProcessor]:
+        return TypeAdapter(FlextTypesServices.LoggerProcessor)
 
 
 __all__: list[str] = ["FlextTypesTypeAdapterScalars"]
