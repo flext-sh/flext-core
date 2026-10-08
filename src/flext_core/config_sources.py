@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Callable, IO, Sequence, Sequence as _Sequence
 from importlib.resources.abc import Traversable
 from pathlib import Path, Path as _Path
-from typing import TextIO, cast, override
+from typing import cast, override
 
 from pydantic import JsonValue
 from pydantic_settings import BaseSettings, YamlConfigSettingsSource
@@ -109,7 +109,7 @@ class StrictYamlConfigSource(YamlConfigSettingsSource):
         return data
 
     @staticmethod
-    def unique_key_load(stream: str | TextIO) -> JsonValue:
+    def unique_key_load(stream: str | IO[str]) -> JsonValue:
         """Parse safe YAML while rejecting duplicate mapping keys.
 
         Returns:

@@ -8,17 +8,19 @@ from __future__ import annotations
 
 from flext_core._models.enforcement import FlextModelsEnforcement as me
 from flext_core._typings.base import FlextTypingBase as t
-from flext_core._utilities._beartype._class_visitor_parts._parts.class_visitor_part_02_01 import (
-    alias_first_violation,
-)
-from flext_core._utilities._beartype._class_visitor_parts._parts.class_visitor_part_02_02 import (
-    redundant_inner_violation,
-    self_ref_violation,
+from flext_core._utilities._beartype._class_visitor_parts._parts import (
+    class_visitor_part_02_01 as _cv0201,
+    class_visitor_part_02_02 as _cv0202,
 )
 from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_01 import (
     NO_VIOLATION,
     FlextUtilitiesBeartypeClassVisitor as FlextUtilitiesBeartypeClassVisitorPart01,
 )
+
+alias_first_violation = _cv0201.alias_first_violation
+
+redundant_inner_violation = _cv0202.redundant_inner_violation
+self_ref_violation = _cv0202.self_ref_violation
 
 
 class FlextUtilitiesBeartypeClassVisitor(FlextUtilitiesBeartypeClassVisitorPart01):

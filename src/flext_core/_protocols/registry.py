@@ -21,6 +21,9 @@ if TYPE_CHECKING:
     from flext_core._protocols.handler import FlextProtocolsHandler
     from flext_core._protocols.result import FlextProtocolsResult
 
+_RegistrationScope = FlextConstantsMixins.RegistrationScope
+_REGISTRATION_SCOPE_INSTANCE = _RegistrationScope.INSTANCE
+
 
 class FlextProtocolsRegistry:
     """Protocols for handler registration and plugin management."""
@@ -94,7 +97,7 @@ class FlextProtocolsRegistry:
             *,
             validate: Callable[[t.RegistrablePlugin], FlextProtocolsResult.Result[bool]]
             | None = None,
-            scope: FlextConstantsMixins.RegistrationScope = FlextConstantsMixins.RegistrationScope.INSTANCE,
+            scope: _RegistrationScope = _REGISTRATION_SCOPE_INSTANCE,
         ) -> FlextProtocolsResult.Result[bool]:
             """Register a plugin with optional validation."""
             ...
@@ -104,7 +107,7 @@ class FlextProtocolsRegistry:
             category: str,
             name: str,
             *,
-            scope: FlextConstantsMixins.RegistrationScope = FlextConstantsMixins.RegistrationScope.INSTANCE,
+            scope: _RegistrationScope = _REGISTRATION_SCOPE_INSTANCE,
         ) -> FlextProtocolsResult.Result[bool]:
             """Unregister a plugin."""
             ...
@@ -114,7 +117,7 @@ class FlextProtocolsRegistry:
             category: str,
             name: str,
             *,
-            scope: FlextConstantsMixins.RegistrationScope = FlextConstantsMixins.RegistrationScope.INSTANCE,
+            scope: _RegistrationScope = _REGISTRATION_SCOPE_INSTANCE,
         ) -> FlextProtocolsResult.Result[t.JsonPayload | None]:
             """Get a registered plugin by category and name."""
             ...
@@ -123,7 +126,7 @@ class FlextProtocolsRegistry:
             self,
             category: str,
             *,
-            scope: FlextConstantsMixins.RegistrationScope = FlextConstantsMixins.RegistrationScope.INSTANCE,
+            scope: _RegistrationScope = _REGISTRATION_SCOPE_INSTANCE,
         ) -> FlextProtocolsResult.Result[t.StrSequence]:
             """List all plugins in a category."""
             ...

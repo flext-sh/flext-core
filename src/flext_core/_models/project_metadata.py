@@ -14,15 +14,17 @@ from typing import Annotated
 
 from pydantic import Field
 
-from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_03 import (
-    FlextModelsProjectMetadataAggregates,
+from flext_core._models._project_metadata_parts import (
+    flextmodelsprojectmetadata_part_03 as _03,
+    flextmodelsprojectmetadata_part_04 as _04,
+    flextmodelsprojectmetadata_part_05 as _05,
 )
-from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_04 import (
-    FlextModelsProjectMetadataDocument,
-)
-from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_05 import (
-    FlextModelsPyprojectIngressContract,
-)
+
+FlextModelsProjectMetadataAggregates = _03.FlextModelsProjectMetadataAggregates
+
+FlextModelsProjectMetadataDocument = _04.FlextModelsProjectMetadataDocument
+
+FlextModelsPyprojectIngressContract = _05.FlextModelsPyprojectIngressContract
 
 
 class FlextModelsProjectMetadata(FlextModelsProjectMetadataDocument):

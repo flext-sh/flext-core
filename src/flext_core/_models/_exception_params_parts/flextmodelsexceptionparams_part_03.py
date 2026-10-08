@@ -13,13 +13,15 @@ from __future__ import annotations
 from typing import Annotated
 
 from flext_core import t
-from flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_01 import (
-    FlextModelsExceptionParams as FlextModelsExceptionParamsPart01,
-)
-from flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_02 import (
-    FlextModelsExceptionParams as FlextModelsExceptionParamsPart02,
+from flext_core._models._exception_params_parts import (
+    flextmodelsexceptionparams_part_01 as _part01,
+    flextmodelsexceptionparams_part_02 as _part02,
 )
 from flext_core._models.pydantic import FlextModelsPydantic as mp
+
+FlextModelsExceptionParamsPart01 = _part01.FlextModelsExceptionParams
+
+FlextModelsExceptionParamsPart02 = _part02.FlextModelsExceptionParams
 
 
 class FlextModelsExceptionParams(FlextModelsExceptionParamsPart02):
