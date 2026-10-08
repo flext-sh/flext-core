@@ -41,31 +41,36 @@ class FlextModelsCollections:
         strip_none: Annotated[
             bool,
             FlextModelsPydantic.Field(
-                default=False, description="Drop entries whose value is None.",
+                default=False,
+                description="Drop entries whose value is None.",
             ),
         ] = False
         strip_empty: Annotated[
             bool,
             FlextModelsPydantic.Field(
-                default=False, description="Drop entries whose value is empty.",
+                default=False,
+                description="Drop entries whose value is empty.",
             ),
         ] = False
         map_keys: Annotated[
             FlextTypingBase.StrMapping | None,
             FlextModelsPydantic.Field(
-                default=None, description="Optional rename map applied to keys.",
+                default=None,
+                description="Optional rename map applied to keys.",
             ),
         ] = None
         filter_keys: Annotated[
             set[str] | None,
             FlextModelsPydantic.Field(
-                default=None, description="Keep only these keys when provided.",
+                default=None,
+                description="Keep only these keys when provided.",
             ),
         ] = None
         exclude_keys: Annotated[
             set[str] | None,
             FlextModelsPydantic.Field(
-                default=None, description="Drop these keys when provided.",
+                default=None,
+                description="Drop these keys when provided.",
             ),
         ] = None
 
