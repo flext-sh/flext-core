@@ -138,7 +138,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         def __init__(
             self,
             message: str,
-            *,
+            *format_args: t.JsonPayload,
             expected_type: type | str | None = None,
             actual_type: type | str | None = None,
             options: m.ExceptionInitOptions | None = None,
@@ -154,6 +154,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
             cls = FlextExceptionsTypes.FlextTypeError
             super().__init__(
                 message,
+                *format_args,
                 options=options,
                 params=params,
                 expected_type=cls._to_type_name(expected_type),
