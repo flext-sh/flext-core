@@ -18,9 +18,9 @@ from flext_core._models._project_metadata_parts import (
 )
 from flext_core._typings.base import FlextTypingBase
 
-FlextModelsProjectMetadataContract = _01.FlextModelsProjectMetadataContract
+FlextModelsProjectMetadataContract = part_01.FlextModelsProjectMetadataContract
 
-FlextModelsPyprojectIngressContract = _05.FlextModelsPyprojectIngressContract
+FlextModelsPyprojectIngressContract = part_05.FlextModelsPyprojectIngressContract
 
 
 class FlextModelsProjectMetadataFields:

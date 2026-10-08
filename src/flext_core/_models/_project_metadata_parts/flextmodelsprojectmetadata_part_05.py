@@ -13,7 +13,7 @@ from flext_core._models._project_metadata_parts import (
 )
 from flext_core._models.pydantic import FlextModelsPydantic
 
-FlextModelsProjectMetadataContract = _01.FlextModelsProjectMetadataContract
+FlextModelsProjectMetadataContract = part_01.FlextModelsProjectMetadataContract
 
 
 class FlextModelsPyprojectIngressContract(part_01.FlextModelsProjectMetadataContract):
