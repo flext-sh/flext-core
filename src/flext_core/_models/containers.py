@@ -38,7 +38,8 @@ class FlextModelsContainers:
             FlextTypesServices.ValidatorCallable,
             mp.Field(
                 title="Validator Callable",
-                description="Callable that validates or transforms one scalar/model input value.",
+                description="Callable that validates or transforms one"
+                " scalar/model input value.",
                 examples=["identity_validator"],
             ),
         ]

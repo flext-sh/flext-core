@@ -54,7 +54,8 @@ class FlextModelsSettings:
             bool,
             mp.Field(
                 default=True,
-                description="Whether to use exponential backoff between retry attempts.",
+                description="Whether to use exponential backoff between"
+                " retry attempts.",
             ),
         ] = True
         backoff_multiplier: Annotated[

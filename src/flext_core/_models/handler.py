@@ -52,7 +52,8 @@ class FlextModelsHandler:
         timestamp: Annotated[
             str,
             mp.Field(
-                description="ISO 8601 timestamp recording when the registration entry was created.",
+                description="ISO 8601 timestamp recording when the"
+                " registration entry was created.",
                 title="Registration Timestamp",
                 examples=["2025-01-01T00:00:00Z", "2025-10-12T15:30:00+00:00"],
                 pattern=c.PATTERN_ISO8601_TIMESTAMP,
@@ -75,7 +76,8 @@ class FlextModelsHandler:
             validate_assignment=True,
             json_schema_extra={
                 "title": "HandlerExecutionContext",
-                "description": "Handler execution context for tracking performance and state",
+                "description":
+                "Handler execution context for tracking performance and state",
             },
         )
         handler_name: Annotated[
@@ -193,7 +195,8 @@ class FlextModelsHandler:
             str | None,
             mp.Field(
                 default=None,
-                description="Error code passed to railway() when railway wrapping is enabled.",
+                description="Error code passed to railway() when railway"
+                " wrapping is enabled.",
             ),
         ] = None
 
