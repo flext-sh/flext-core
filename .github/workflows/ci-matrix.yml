@@ -96,7 +96,49 @@ jobs:
         shell: bash
         run: |
           set -eu
-          curl -fsSL https://mise.run | sh
+          case "${RUNNER_OS}-${RUNNER_ARCH}" in
+            Linux-X64) mise_platform=linux-x64 ;;
+            Linux-ARM64) mise_platform=linux-arm64 ;;
+            macOS-X64) mise_platform=macos-x64 ;;
+            macOS-ARM64) mise_platform=macos-arm64 ;;
+            Windows-X64) mise_platform=windows-x64 ;;
+            *) echo "ERROR: no mise.lock platform for ${RUNNER_OS}-${RUNNER_ARCH}" >&2; exit 2 ;;
+          esac
+          mise_field() {
+            awk -v section="[tools.\"github:jdx/mise\".\"platforms.${mise_platform}\"]" -v key="$1" '
+              $0 == section { inside = 1; next }
+              inside && substr($0, 1, 1) == "[" { exit }
+              inside && $1 == key { gsub(/"/, "", $3); print $3; exit }
+            ' mise.lock
+          }
+          mise_url="$(mise_field url)"
+          mise_checksum="$(mise_field checksum)"
+          case "${mise_url}" in
+            https://github.com/jdx/mise/releases/download/*) ;;
+            *) echo "ERROR: mise.lock has no GitHub release URL for ${mise_platform}: '${mise_url}'" >&2; exit 2 ;;
+          esac
+          case "${mise_checksum}" in
+            sha256:*) mise_sha256="${mise_checksum#sha256:}" ;;
+            *) echo "ERROR: mise.lock has no sha256 for ${mise_platform}: '${mise_checksum}'" >&2; exit 2 ;;
+          esac
+          mise_stage="${RUNNER_TEMP}/mise-install"
+          mkdir -p "${mise_stage}" "${HOME}/.local/bin"
+          mise_archive="${mise_stage}/${mise_url##*/}"
+          curl --proto '=https' --tlsv1.2 -fsSL -o "${mise_archive}" "${mise_url}"
+          if command -v sha256sum >/dev/null 2>&1; then
+            echo "${mise_sha256}  ${mise_archive}" | sha256sum -c -
+          else
+            echo "${mise_sha256}  ${mise_archive}" | shasum -a 256 -c -
+          fi
+          case "${mise_archive}" in
+            *.zip) unzip -q "${mise_archive}" -d "${mise_stage}" ;;
+            *) tar -xf "${mise_archive}" -C "${mise_stage}" ;;
+          esac
+          if [ "${RUNNER_OS}" = "Windows" ]; then
+            cp "${mise_stage}/mise/bin/mise.exe" "${HOME}/.local/bin/mise.exe"
+          else
+            install -m 0755 "${mise_stage}/mise/bin/mise" "${HOME}/.local/bin/mise"
+          fi
           echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
           echo "${HOME}/.local/share/mise/shims" >> "${GITHUB_PATH}"
           mise_pin="$(awk 'index($0, "[[tools.\"github:jdx/mise\"]]") == 1 { inside = 1; next } inside && substr($0, 1, 1) == "[" { exit } inside && $1 == "version" { gsub(/[",]/, "", $3); print $3; exit }' mise.lock)"
@@ -138,7 +180,49 @@ jobs:
         shell: bash
         run: |
           set -eu
-          curl -fsSL https://mise.run | sh
+          case "${RUNNER_OS}-${RUNNER_ARCH}" in
+            Linux-X64) mise_platform=linux-x64 ;;
+            Linux-ARM64) mise_platform=linux-arm64 ;;
+            macOS-X64) mise_platform=macos-x64 ;;
+            macOS-ARM64) mise_platform=macos-arm64 ;;
+            Windows-X64) mise_platform=windows-x64 ;;
+            *) echo "ERROR: no mise.lock platform for ${RUNNER_OS}-${RUNNER_ARCH}" >&2; exit 2 ;;
+          esac
+          mise_field() {
+            awk -v section="[tools.\"github:jdx/mise\".\"platforms.${mise_platform}\"]" -v key="$1" '
+              $0 == section { inside = 1; next }
+              inside && substr($0, 1, 1) == "[" { exit }
+              inside && $1 == key { gsub(/"/, "", $3); print $3; exit }
+            ' mise.lock
+          }
+          mise_url="$(mise_field url)"
+          mise_checksum="$(mise_field checksum)"
+          case "${mise_url}" in
+            https://github.com/jdx/mise/releases/download/*) ;;
+            *) echo "ERROR: mise.lock has no GitHub release URL for ${mise_platform}: '${mise_url}'" >&2; exit 2 ;;
+          esac
+          case "${mise_checksum}" in
+            sha256:*) mise_sha256="${mise_checksum#sha256:}" ;;
+            *) echo "ERROR: mise.lock has no sha256 for ${mise_platform}: '${mise_checksum}'" >&2; exit 2 ;;
+          esac
+          mise_stage="${RUNNER_TEMP}/mise-install"
+          mkdir -p "${mise_stage}" "${HOME}/.local/bin"
+          mise_archive="${mise_stage}/${mise_url##*/}"
+          curl --proto '=https' --tlsv1.2 -fsSL -o "${mise_archive}" "${mise_url}"
+          if command -v sha256sum >/dev/null 2>&1; then
+            echo "${mise_sha256}  ${mise_archive}" | sha256sum -c -
+          else
+            echo "${mise_sha256}  ${mise_archive}" | shasum -a 256 -c -
+          fi
+          case "${mise_archive}" in
+            *.zip) unzip -q "${mise_archive}" -d "${mise_stage}" ;;
+            *) tar -xf "${mise_archive}" -C "${mise_stage}" ;;
+          esac
+          if [ "${RUNNER_OS}" = "Windows" ]; then
+            cp "${mise_stage}/mise/bin/mise.exe" "${HOME}/.local/bin/mise.exe"
+          else
+            install -m 0755 "${mise_stage}/mise/bin/mise" "${HOME}/.local/bin/mise"
+          fi
           echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
           echo "${HOME}/.local/share/mise/shims" >> "${GITHUB_PATH}"
           mise_pin="$(awk 'index($0, "[[tools.\"github:jdx/mise\"]]") == 1 { inside = 1; next } inside && substr($0, 1, 1) == "[" { exit } inside && $1 == "version" { gsub(/[",]/, "", $3); print $3; exit }' mise.lock)"
