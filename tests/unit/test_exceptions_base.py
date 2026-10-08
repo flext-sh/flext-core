@@ -98,6 +98,17 @@ class TestsFlextCoreExceptionsBase:
         assert result.error_data["reason"] == "boom"
 
     @staticmethod
+    def test_fail_operation_message_carries_the_exception_notes() -> None:
+        """Notes attached to the cause (PEP 678) reach the failure message."""
+        cause = ValueError("Aborted with 1 warnings in strict mode!")
+        cause.add_note("WARNING: Doc file 'a.md' contains a link to 'b.md'")
+        result: p.Result[bool] = e.fail_operation("build docs", cause)
+        assert result.failure
+        assert result.error is not None
+        assert "Aborted with 1 warnings in strict mode!" in result.error
+        assert "WARNING: Doc file 'a.md' contains a link to 'b.md'" in result.error
+
+    @staticmethod
     def test_failure_result_short_circuits_map_and_rejects_unwrap() -> None:
         """Test failure result short circuits map and rejects unwrap."""
         result: p.Result[bool] = e.fail_operation(
