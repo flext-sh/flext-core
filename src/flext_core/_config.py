@@ -35,9 +35,9 @@ from pydantic_settings import (
     SettingsConfigDict,
 )
 
+from flext_core import FlextStrictYamlConfigSource
 from flext_core._constants import FlextConstantsConfig
 from flext_core._settings import app_env_prefix, platform_config_root
-from flext_core.config_sources import FlextStrictYamlConfigSource
 
 if TYPE_CHECKING:
     from flext_core import t
@@ -62,7 +62,7 @@ class FlextConfig(BaseSettings):
     )
 
     _lock: ClassVar[RLock] = RLock()
-    _instance: ClassVar[FlextConfig | None] = None
+    _instance: ClassVar[Self | None] = None
 
     @classmethod
     def _package_namespace(cls) -> str:

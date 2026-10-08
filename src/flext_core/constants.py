@@ -53,7 +53,6 @@ class FlextConstants(
     """SSOT facade: all constants flat on c.* via MRO composition."""
 
 
-# mro-j47u: publish the canonical constants alias with no stray runtime surface.
 c = FlextConstants
 
 __all__ = ("FlextConstants", "FlextConstantsEnforcement", "c")

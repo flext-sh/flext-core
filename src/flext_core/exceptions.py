@@ -12,12 +12,14 @@ from __future__ import annotations
 from typing import ClassVar
 
 from flext_core._constants import FlextConstantsEnforcement, FlextMroViolation
-from flext_core._exceptions.base import FlextExceptionsBase
-from flext_core._exceptions.exception_types import FlextExceptionsTypes
-from flext_core._exceptions.factories import FlextExceptionsFactories
-from flext_core._exceptions.helpers import FlextExceptionsHelpers
-from flext_core._exceptions.metrics import FlextExceptionsMetrics
-from flext_core._exceptions.template import FlextExceptionsTemplate
+from flext_core._exceptions import (
+    FlextExceptionsBase,
+    FlextExceptionsFactories,
+    FlextExceptionsHelpers,
+    FlextExceptionsMetrics,
+    FlextExceptionsTemplate,
+    FlextExceptionsTypes,
+)
 
 
 class FlextExceptions(
@@ -42,4 +44,4 @@ class FlextExceptions(
 
 e = FlextExceptions
 
-__all__: list[str] = ["FlextExceptions", "e"]
+__all__: list[str] = ["FlextExceptions", "FlextMroViolation", "e"]

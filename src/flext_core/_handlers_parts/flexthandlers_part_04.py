@@ -21,8 +21,7 @@ from flext_core._utilities import FlextUtilitiesHandler
 class FlextHandlers[MessageT_contra, ResultT](
     FlextHandlersPart03[MessageT_contra, ResultT],
 ):
-    @staticmethod
-    def handle(message: MessageT_contra) -> p.Result[ResultT]:
+    def handle(self, message: MessageT_contra) -> p.Result[ResultT]:
         """Handle the message - abstract method to be implemented by subclasses.
 
         This is the core business logic method that must be implemented by all
@@ -40,7 +39,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             be handled separately in the validate() method and executed via execute().
 
         """
-        _ = message
+        _ = self, message
         raise NotImplementedError
 
     def pop_context(self) -> p.Result[p.RootDict[t.JsonPayload]]:
@@ -85,8 +84,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             value,
         )
 
-    @staticmethod
-    def validate_message(data: MessageT_contra) -> p.Result[bool]:
+    def validate_message(self, data: MessageT_contra) -> p.Result[bool]:
         """Validate input data using extensible validation pipeline.
 
         Base validation method that can be overridden by subclasses to implement
@@ -113,6 +111,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         this base implementation doesn't use instance state.
 
         """
+        _ = self
         if data is None:
             return r[bool].fail_op(
                 "validate handler message",

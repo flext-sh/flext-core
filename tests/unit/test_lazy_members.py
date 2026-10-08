@@ -67,9 +67,15 @@ class TestsFlextCoreLazyMembers:
             tm.that(module in sys.modules, eq=False)
             tm.that(Namespace.VALUE, eq=7)
             tm.that(module in sys.modules, eq=True)
-            tm.that(Namespace.who(), eq="Namespace")
-            tm.that(Namespace.twice(4), eq=8)
-            tm.that(Namespace.Nested.__qualname__, eq="Mixin.Nested")
+            who = Namespace.who
+            twice = Namespace.twice
+            nested = Namespace.Nested
+            assert callable(who)
+            assert callable(twice)
+            assert isinstance(nested, type)
+            tm.that(who(), eq="Namespace")
+            tm.that(twice(4), eq=8)
+            tm.that(nested.__qualname__, eq="Mixin.Nested")
             tm.that(isinstance(vars(Deferred)["VALUE"], FlextLazyMember), eq=False)
             tm.that(isinstance(vars(Deferred)["who"], classmethod), eq=True)
 

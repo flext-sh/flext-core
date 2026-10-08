@@ -93,7 +93,7 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
                 op_name = (
                     operation_name if operation_name is not None else func.__name__
                 )
-                logger_carrier: cls._LoggerCarrier | None = None
+                logger_carrier: FlextDecoratorsLogging._LoggerCarrier | None = None
                 if args and cls._is_logger_carrier(args[0]):
                     logger_carrier = args[0]
                 logger = cls._resolve_logger(

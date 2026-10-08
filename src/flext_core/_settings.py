@@ -221,7 +221,7 @@ class FlextSettings(BaseSettings):
 
     _lock: ClassVar[threading.RLock] = threading.RLock()
     _singleton_enabled: ClassVar[bool] = True
-    _instance: ClassVar[FlextSettings | None] = None
+    _instance: ClassVar[Self | None] = None
     _app_namespace: ClassVar[str | None] = None
 
     def __init_subclass__(cls, **kwargs: object) -> None:

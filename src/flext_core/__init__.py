@@ -35,7 +35,7 @@ if TYPE_CHECKING:
     from flext_core.context import FlextContext
     from flext_core.decorators import FlextDecorators, d
     from flext_core.dispatcher import FlextDispatcher
-    from flext_core.exceptions import FlextExceptions, e
+    from flext_core.exceptions import FlextExceptions, FlextMroViolation, e
     from flext_core.handlers import FlextHandlers, h
     from flext_core.lazy import (
         FlextLazy,
@@ -78,6 +78,7 @@ __all__: tuple[str, ...] = (
     "FlextLazyMember",
     "FlextMixins",
     "FlextModels",
+    "FlextMroViolation",
     "FlextProtocols",
     "FlextRegistry",
     "FlextResult",
@@ -139,6 +140,7 @@ install_lazy_exports(
         "FlextLazyMember": ".lazy",
         "FlextMixins": ".mixins",
         "FlextModels": ".models",
+        "FlextMroViolation": ".exceptions",
         "FlextProtocols": ".protocols",
         "FlextRegistry": ".registry",
         "FlextResult": ".result",

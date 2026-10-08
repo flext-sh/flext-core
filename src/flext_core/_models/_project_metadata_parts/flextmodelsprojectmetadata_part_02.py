@@ -18,6 +18,10 @@ from flext_core._models._project_metadata_parts import (
 )
 from flext_core._typings.base import FlextTypingBase
 
+FlextModelsProjectMetadataContract = part_01.FlextModelsProjectMetadataContract
+
+FlextModelsPyprojectIngressContract = part_05.FlextModelsPyprojectIngressContract
+
 
 class FlextModelsProjectMetadataFields:
     """Leaf field contracts shared by the aggregate model layers."""

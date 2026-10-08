@@ -11,7 +11,6 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import TypeVar
 
-from flext_core._models import FlextModelsEnforcementSources
 from flext_core._protocols import (
     FlextProtocolsContainer,
     FlextProtocolsContext,
@@ -65,13 +64,6 @@ T = TypeVar("T")
 type ModuleGlobalValue = FlextTypesLazy.ModuleGlobalValue
 
 type ModuleGlobals = FlextTypesLazy.ModuleGlobals
-
-type EnforcementRuleSource = (
-    FlextModelsEnforcementSources.EnforcementInfraRuleSource
-    | FlextModelsEnforcementSources.EnforcementRuntimeWarningSource
-    | FlextModelsEnforcementSources.EnforcementBeartypeSource
-    | FlextModelsEnforcementSources.EnforcementCodeSmellSource
-)
 
 type ProtocolGuardInput = (
     t.JsonPayload

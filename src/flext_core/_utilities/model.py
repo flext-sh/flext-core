@@ -164,7 +164,9 @@ class FlextUtilitiesModel:
             The resulting ``p.Result[TValue]``.
         """
         try:
-            adapter = target if isinstance(target, TypeAdapter) else TypeAdapter(target)
+            adapter: t.ValueAdapter[TValue] = (
+                target if isinstance(target, TypeAdapter) else TypeAdapter(target)
+            )
             if from_json:
                 if not isinstance(data, c.STR_BINARY_TYPES):
                     return e.fail_validation(

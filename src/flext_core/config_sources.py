@@ -3,8 +3,8 @@
 Public home of ``FlextStrictYamlConfigSource`` (ADR-018: root-facade exports of
 private root modules must follow the module suffix contract; a source class
 has no ``Config``/``Settings`` suffix, so it lives in a public owner module).
-The unique-key loader plumbing lives in the private
-``_config_sources_parts`` family.
+The strict loader is an implementation detail of this foundational source,
+so configuration ingress does not depend on generated private-package exports.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -15,13 +15,14 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence, Sequence as _Sequence
 from importlib.resources.abc import Traversable
 from pathlib import Path, Path as _Path
-from typing import TextIO, cast, override
+from typing import IO, cast, override
 
 from pydantic import JsonValue
 from pydantic_settings import BaseSettings, YamlConfigSettingsSource
 from pydantic_settings.sources import PathType
-
-from flext_core._config_sources_parts.unique_key_loader import _UniqueKeySafeLoader
+from yaml import MappingNode, SafeLoader
+from yaml.constructor import ConstructorError
+from yaml.resolver import BaseResolver
 
 
 class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
@@ -32,6 +33,54 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
     use this to apply env-expansion, filtering, or section reshaping without
     reinstantiating the source or overriding ``settings_customise_sources``.
     """
+
+    class UniqueKeyLoader(SafeLoader):
+        """Safe YAML loader rejecting duplicate and non-string mapping keys."""
+
+        @staticmethod
+        def construct_unique_mapping(
+            loader: SafeLoader,
+            node: MappingNode,
+            *,
+            deep: bool = False,
+        ) -> dict[str, JsonValue]:
+            """Construct one mapping without silently replacing a declared key.
+
+            Returns:
+                The parsed JSON-compatible mapping.
+
+            Raises:
+                ConstructorError: If a key is not a string or is duplicated.
+            """
+            values: dict[str, JsonValue] = {}
+            for key_node, value_node in node.value:
+                key = cast("JsonValue", loader.construct_object(key_node, deep=deep))
+                if not isinstance(key, str):
+                    msg = "while constructing a config mapping"
+                    raise ConstructorError(
+                        msg,
+                        node.start_mark,
+                        "config mapping keys must be strings",
+                        key_node.start_mark,
+                    )
+                if key in values:
+                    msg = "while constructing a config mapping"
+                    raise ConstructorError(
+                        msg,
+                        node.start_mark,
+                        f"duplicate config key: {key}",
+                        key_node.start_mark,
+                    )
+                values[key] = cast(
+                    "JsonValue",
+                    loader.construct_object(value_node, deep=deep),
+                )
+            return values
+
+    UniqueKeyLoader.add_constructor(
+        BaseResolver.DEFAULT_MAPPING_TAG,
+        UniqueKeyLoader.construct_unique_mapping,
+    )
 
     @override
     def __init__(
@@ -61,13 +110,13 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
         return data
 
     @staticmethod
-    def unique_key_load(stream: str | TextIO) -> JsonValue:
+    def unique_key_load(stream: str | IO[str]) -> JsonValue:
         """Parse safe YAML while rejecting duplicate mapping keys.
 
         Returns:
             The parsed JSON-compatible value.
         """
-        loader = _UniqueKeySafeLoader(stream)
+        loader = FlextStrictYamlConfigSource.UniqueKeyLoader(stream)
         try:
             return cast("JsonValue", loader.get_single_data())
         finally:

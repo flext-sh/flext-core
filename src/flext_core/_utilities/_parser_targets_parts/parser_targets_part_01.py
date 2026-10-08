@@ -70,13 +70,17 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
                 ),
             )
 
-        parsed_direct: T = (
-            FlextUtilitiesModel
-            .validate_value(target, value)
-            .fold(_on_failure, r[T].ok)
-            .unwrap()
+        def _on_success(parsed: T) -> p.Result[T]:
+            return r[T].ok(parsed)
+
+        parsed_direct: p.Result[T] = FlextUtilitiesModel.validate_value(
+            target,
+            value,
+        ).fold(
+            _on_failure,
+            _on_success,
         )
-        return parsed_direct
+        return parsed_direct.unwrap()
 
     @staticmethod
     @r.safe

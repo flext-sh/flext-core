@@ -63,14 +63,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          # The workspace gates render member-derived surfaces (uv-workspace
-          # members, per-member docs sections) from DISK STATE: with the
-          # submodules absent, the generator's render diverges from any
-          # submodule-initialized commit and the conform drift gate can
-          # never pass (merge-admin 2026-10-07, root CI evidence). The CI
-          # checkout materializes the members so the render matches the
-          # canonical committed state.
-          submodules: recursive
+          submodules: false
           persist-credentials: false
           fetch-depth: 0
       # Why: GitHub runners expose umask 002, so git checkout materializes
@@ -88,6 +81,10 @@ jobs:
       # Why: the same pair keeps the locked Mise tool storage, so
       # a cold runner never re-downloads the pinned tarballs, where a network
       # blip failed setup.
+      # Why: the cache keeps Mise's installs and downloads but never its shims.
+      # A restored shim points at the Mise binary of an earlier run, which Mise
+      # treats as unmanaged ("not replacing unmanaged file in shims directory",
+      # one warning per tool); Mise regenerates the shims from mise.lock.
       - name: Restore tool caches
         id: tool-cache
         uses: actions/cache/restore@v6
@@ -102,6 +99,7 @@ jobs:
             .hypothesis
             ~/.cache/uv
             ~/.local/share/mise
+            !~/.local/share/mise/shims
           key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-3.13-tools-
@@ -133,6 +131,16 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-3.13-flext-testmon-flext-core-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml', 'config/**') }}-
 
+      - name: Install the mise release pinned by mise.lock
+        shell: bash
+        run: |
+          set -eu
+          curl -fsSL https://mise.run | sh
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+          echo "${HOME}/.local/share/mise/shims" >> "${GITHUB_PATH}"
+          mise_pin="$(awk 'index($0, "[[tools.\"github:jdx/mise\"]]") == 1 { inside = 1; next } inside && substr($0, 1, 1) == "[" { exit } inside && $1 == "version" { gsub(/[",]/, "", $3); print $3; exit }' mise.lock)"
+          "${HOME}/.local/bin/mise" install "github:jdx/mise@${mise_pin}"
+          "${HOME}/.local/bin/mise" use --global "github:jdx/mise@${mise_pin}"
 
       - name: Approval (blocking)
         id: approval
@@ -201,6 +209,7 @@ jobs:
             .hypothesis
             ~/.cache/uv
             ~/.local/share/mise
+            !~/.local/share/mise/shims
           key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
 
   # End SECTION: ci job
@@ -226,6 +235,17 @@ jobs:
           fetch-depth: 0
           submodules: false
           persist-credentials: false
+      - name: Install the mise release pinned by mise.lock
+        shell: bash
+        run: |
+          set -eu
+          curl -fsSL https://mise.run | sh
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+          echo "${HOME}/.local/share/mise/shims" >> "${GITHUB_PATH}"
+          mise_pin="$(awk 'index($0, "[[tools.\"github:jdx/mise\"]]") == 1 { inside = 1; next } inside && substr($0, 1, 1) == "[" { exit } inside && $1 == "version" { gsub(/[",]/, "", $3); print $3; exit }' mise.lock)"
+          "${HOME}/.local/bin/mise" install "github:jdx/mise@${mise_pin}"
+          "${HOME}/.local/bin/mise" use --global "github:jdx/mise@${mise_pin}"
+
       - name: Boot
         run: CI=Y make setup
       - name: Release plan and guard

@@ -14,15 +14,12 @@ from __future__ import annotations
 
 import inspect
 import sys
-import threading
 from collections.abc import Sequence
 from functools import partial
 from typing import TYPE_CHECKING, ClassVar, Self, TypeGuard, cast, overload, override
 
 from flext_core import FlextSettings, FlextUtilitiesLogging, c, e, m, p, r, t, u
-from flext_core._container_parts.flextcontainertestingops_part_01 import (
-    FlextContainerTestingOps,
-)
+from flext_core._container_parts import FlextContainerTestingOps
 from flext_core._models import FlextContext
 
 # NOTE (multi-agent): mro-i6nq.12 — the concrete public facade remains the
@@ -41,10 +38,6 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
     ``scope`` inherit the public registrations and bind their own core
     services to their own settings and context.
     """
-
-    _global_instance: Self | None = None
-
-    _global_lock: threading.RLock = threading.RLock()
 
     _settings_type: ClassVar[p.SettingsType] = FlextSettings
 

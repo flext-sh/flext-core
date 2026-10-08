@@ -13,6 +13,8 @@ from flext_core._models._project_metadata_parts import (
 )
 from flext_core._models.pydantic import FlextModelsPydantic
 
+FlextModelsProjectMetadataContract = part_01.FlextModelsProjectMetadataContract
+
 
 class FlextModelsPyprojectIngressContract(part_01.FlextModelsProjectMetadataContract):
     """Frozen declaration base for standards-owned TOML tables."""

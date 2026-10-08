@@ -55,15 +55,20 @@ class Ex12RegistryPlugins(Ex12RegistryFlow):
             "class_missing_name": self.rand_str(6),
             "class_unreg_missing_name": self.rand_str(6),
         }
-        self._exercise_instance_plugins(registry)
+        self._exercise_instance_plugins(registry, handler_a, handler_b)
         self._exercise_class_plugins(registry)
 
-    def _exercise_instance_plugins(self, registry: p.Registry) -> None:
+    def _exercise_instance_plugins(
+        self,
+        registry: p.Registry,
+        handler_a: ProtocolHandler,
+        handler_b: ProtocolHandler,
+    ) -> None:
         """Register, fetch, and unregister namespace-scoped instance plugins."""
         q = self._plugin_inputs
         bindings_result = registry.register_bindings({
-            m.Examples.CommandA: as_registry_handler(self._handler_a),
-            q["custom_binding_name"]: as_registry_handler(self._handler_b),
+            m.Examples.CommandA: as_registry_handler(handler_a),
+            q["custom_binding_name"]: as_registry_handler(handler_b),
         })
         self.audit_check("register_bindings.success", bindings_result.success)
         self.audit_check(

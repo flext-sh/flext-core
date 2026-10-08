@@ -124,11 +124,13 @@ class FlextUtilitiesBeartypeEngine(
                 owner,
                 args,
             )
-        return FlextUtilitiesBeartypeEngine._field_shape_deferred(
-            params,
-            owner,
-            args,
-        )
+        if isinstance(params, FlextModelsEnforcement.FieldShapeParams):
+            return FlextUtilitiesBeartypeEngine._field_shape_deferred(
+                params,
+                owner,
+                args,
+            )
+        return ()
 
     @staticmethod
     def _attr_shape_deferred(

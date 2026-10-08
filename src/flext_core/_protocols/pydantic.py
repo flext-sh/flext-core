@@ -10,6 +10,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import Protocol, overload
+
 import pydantic
 
 
@@ -24,3 +27,30 @@ class FlextProtocolsPydantic:
     type ModelWrapValidatorHandler[T] = pydantic.ModelWrapValidatorHandler[T]
     type ValidationInfo = pydantic.ValidationInfo
     type ValidatorFunctionWrapHandler = pydantic.ValidatorFunctionWrapHandler
+
+    class FunctionDecorator(Protocol):
+        """Decorator preserving each function's parameter and return types."""
+
+        def __call__[**ParametersT, ReturnT](
+            self,
+            func: Callable[ParametersT, ReturnT],
+            /,
+        ) -> Callable[ParametersT, ReturnT]: ...
+
+    class ValidateCall(Protocol):
+        """Pydantic's bare call validator and keyword-only decorator factory."""
+
+        @overload
+        def __call__[**ParametersT, ReturnT](
+            self,
+            func: Callable[ParametersT, ReturnT],
+            /,
+        ) -> Callable[ParametersT, ReturnT]: ...
+
+        @overload
+        def __call__(
+            self,
+            *,
+            config: pydantic.ConfigDict | None = None,
+            validate_return: bool = False,
+        ) -> FlextProtocolsPydantic.FunctionDecorator: ...

@@ -9,12 +9,15 @@ from __future__ import annotations
 import inspect
 from collections.abc import Callable
 from pathlib import Path
-from typing import TypeAlias
+from typing import TYPE_CHECKING, TypeAlias
 
 from flext_core._constants import FlextConstantsEnforcement, FlextConstantsRegex
 from flext_core._models import FlextModelsEnforcement
 from flext_core._typings.base import FlextTypingBase
 from flext_core._utilities import FlextUtilitiesBeartypeHelpers
+
+if TYPE_CHECKING:
+    from types import ModuleType
 
 _NO_VIOLATION: FlextTypingBase.StrMapping | None = None
 _TYPING_TYPE_ALIAS = TypeAlias  # sentinel for ``X: TypeAlias = Y`` annotation match.
@@ -35,7 +38,10 @@ def _wrapper_file_name(target: type) -> str | None:
     ).name
 
 
-def _v_type_alias(module: object, file_name: str) -> FlextTypingBase.StrMapping | None:
+def _v_type_alias(
+    module: ModuleType,
+    file_name: str,
+) -> FlextTypingBase.StrMapping | None:
     """Detect ``X: TypeAlias = Y`` declarations on the module.
 
     Returns:
@@ -55,7 +61,7 @@ def _v_type_alias(module: object, file_name: str) -> FlextTypingBase.StrMapping 
 
 
 def _v_cast_outside_core(
-    module: object,
+    module: ModuleType,
     src_file: str,
     file_name: str,
 ) -> FlextTypingBase.StrMapping | None:
@@ -114,7 +120,7 @@ def _v_no_core_tests_namespace(
 
 
 def _v_wrapper_import_regex(
-    wrapper_module: object,
+    wrapper_module: ModuleType | None,
     wrapper_file_name: str,
 ) -> FlextTypingBase.StrMapping | None:
     """Scan wrapper source text for forbidden facade-import statements.
@@ -125,7 +131,11 @@ def _v_wrapper_import_regex(
     """
     # A module without a source file has no text to scan; a
     # declared source that cannot be read raises.
-    wrapper_file = FlextUtilitiesBeartypeHelpers.module_filename_for(wrapper_module)
+    wrapper_file = (
+        FlextUtilitiesBeartypeHelpers.module_filename_for(wrapper_module)
+        if wrapper_module is not None
+        else None
+    )
     source = (
         Path(wrapper_file).read_text(encoding="utf-8")
         if wrapper_file is not None

@@ -142,6 +142,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
             expected_type: type | str | None = None,
             actual_type: type | str | None = None,
             options: m.ExceptionInitOptions | None = None,
+            params: m.BaseModel | None = None,
             **extra_kwargs: t.JsonValue,
         ) -> None:
             """Initialize type error with type information."""
@@ -154,6 +155,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
             super().__init__(
                 message,
                 options=options,
+                params=params,
                 expected_type=cls._to_type_name(expected_type),
                 actual_type=cls._to_type_name(actual_type),
                 **extra_kwargs,

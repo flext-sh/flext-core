@@ -213,7 +213,7 @@ class FlextLazy(FlextLazyPart01):
         # module-object publication only applies to registered modules.
         target = sys.modules.get(module_name)
         if target is not None:
-            target.__getattr__ = _module_getattr
+            vars(target)["__getattr__"] = _module_getattr
         module_globals["__dir__"] = lambda: list(names)
         if publish_all:
             module_globals["__all__"] = names

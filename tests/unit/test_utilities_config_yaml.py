@@ -33,6 +33,21 @@ class TestsFlextCoreUtilitiesYaml:
             u.Yaml.unique_key_load("top:\n  dup: 1\n  dup: 2\n")
 
     @staticmethod
+    def test_unique_key_load_rejects_non_string_keys() -> None:
+        """Configuration ingress requires string keys before model validation."""
+        with pytest.raises(
+            u.Yaml.YAMLError,
+            match="config mapping keys must be strings",
+        ):
+            u.Yaml.unique_key_load("top:\n  1: value\n")
+
+    @staticmethod
+    def test_unique_key_load_rejects_recursive_aliases() -> None:
+        """Retain rejection of YAML graphs outside the JSON tree contract."""
+        with pytest.raises(u.Yaml.YAMLError):
+            u.Yaml.unique_key_load("top: &entry\n  reference: *entry\n")
+
+    @staticmethod
     def test_unique_key_load_rejects_malformed_input() -> None:
         """Test unique key load rejects malformed input."""
         with pytest.raises(u.Yaml.YAMLError):
