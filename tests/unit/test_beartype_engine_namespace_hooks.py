@@ -19,7 +19,8 @@ from pathlib import Path
 import pytest
 from flext_tests import tm
 
-from tests import p, t, u
+from tests import p, t
+from tests.utilities import u
 
 
 class TestsFlextBeartypeEngineNamespaceHooks(

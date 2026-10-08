@@ -11,7 +11,8 @@ from typing import cast
 import pytest
 from flext_tests import h, r
 
-from tests import c, t, u
+from tests import c, t
+from tests.utilities import u
 
 
 class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):

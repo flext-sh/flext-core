@@ -11,7 +11,8 @@ from typing import TYPE_CHECKING, override
 import pytest
 from flext_tests import h, r
 
-from tests import c, m, t, u
+from tests import c, m, t
+from tests.utilities import u
 
 if TYPE_CHECKING:
     from tests import p

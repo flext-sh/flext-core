@@ -18,8 +18,9 @@ from flext_tests import r, tm
 
 import flext_core._models.flext_context
 from flext_core import FlextSettings
-from tests import c, m, p, t, u
+from tests import c, m, p, t
 from tests.base import s
+from tests.utilities import u
 
 
 class TestsFlextCoreServiceBootstrap:
