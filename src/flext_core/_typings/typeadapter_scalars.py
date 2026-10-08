@@ -16,7 +16,6 @@ from flext_core._typings.annotateds import FlextTypesAnnotateds
 from flext_core._typings.base import FlextTypingBase
 from flext_core._typings.core import FlextTypesCore
 from flext_core._typings.pydantic import FlextTypesPydantic
-from flext_core._typings.services import FlextTypesServices
 
 
 class FlextTypesTypeAdapterScalars:
@@ -141,13 +140,6 @@ class FlextTypesTypeAdapterScalars:
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[Mapping[str, FlextTypingBase.Primitives]]:
         return TypeAdapter(Mapping[str, FlextTypingBase.Primitives])
-
-    @classmethod
-    @cache
-    def structlog_processor_adapter(
-        cls,
-    ) -> FlextTypesPydantic.TypeAdapter[FlextTypesServices.LoggerProcessor]:
-        return TypeAdapter(FlextTypesServices.LoggerProcessor)
 
 
 __all__: list[str] = ["FlextTypesTypeAdapterScalars"]
