@@ -47,6 +47,10 @@ jobs:
       # cache is content-addressed by the committed locks, so a warm cache is
       # always valid for the same lock and can never hide a finding; it only
       # removes the cold download of the pinned tarballs.
+      # Why: the cache keeps Mise's installs and downloads but never its shims.
+      # A restored shim points at the Mise binary of an earlier run, which Mise
+      # treats as unmanaged ("not replacing unmanaged file in shims directory",
+      # one warning per tool); Mise regenerates the shims from mise.lock.
       - name: Restore tool caches
         id: tool-cache
         uses: actions/cache/restore@v6
@@ -61,17 +65,21 @@ jobs:
             .hypothesis
             ~/.cache/uv
             ~/.local/share/mise
+            !~/.local/share/mise/shims
           key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-3.13-tools-
 
-      - name: Install mise
+      - name: Install the mise release pinned by mise.lock
         shell: bash
         run: |
           set -eu
           curl -fsSL https://mise.run | sh
           echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
           echo "${HOME}/.local/share/mise/shims" >> "${GITHUB_PATH}"
+          mise_pin="$(awk 'index($0, "[[tools.\"github:jdx/mise\"]]") == 1 { inside = 1; next } inside && substr($0, 1, 1) == "[" { exit } inside && $1 == "version" { gsub(/[",]/, "", $3); print $3; exit }' mise.lock)"
+          "${HOME}/.local/bin/mise" install "github:jdx/mise@${mise_pin}"
+          "${HOME}/.local/bin/mise" use --global "github:jdx/mise@${mise_pin}"
 
       - name: Sync workspace toolchain
         run: make setup
@@ -92,6 +100,7 @@ jobs:
             .hypothesis
             ~/.cache/uv
             ~/.local/share/mise
+            !~/.local/share/mise/shims
           key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
 
 
@@ -171,6 +180,10 @@ jobs:
           fetch-depth: 0
 
       # Why: same cold-download protection as the docs-quality job.
+      # Why: the cache keeps Mise's installs and downloads but never its shims.
+      # A restored shim points at the Mise binary of an earlier run, which Mise
+      # treats as unmanaged ("not replacing unmanaged file in shims directory",
+      # one warning per tool); Mise regenerates the shims from mise.lock.
       - name: Restore tool caches
         id: tool-cache
         uses: actions/cache/restore@v6
@@ -185,17 +198,21 @@ jobs:
             .hypothesis
             ~/.cache/uv
             ~/.local/share/mise
+            !~/.local/share/mise/shims
           key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-3.13-tools-
 
-      - name: Install mise
+      - name: Install the mise release pinned by mise.lock
         shell: bash
         run: |
           set -eu
           curl -fsSL https://mise.run | sh
           echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
           echo "${HOME}/.local/share/mise/shims" >> "${GITHUB_PATH}"
+          mise_pin="$(awk 'index($0, "[[tools.\"github:jdx/mise\"]]") == 1 { inside = 1; next } inside && substr($0, 1, 1) == "[" { exit } inside && $1 == "version" { gsub(/[",]/, "", $3); print $3; exit }' mise.lock)"
+          "${HOME}/.local/bin/mise" install "github:jdx/mise@${mise_pin}"
+          "${HOME}/.local/bin/mise" use --global "github:jdx/mise@${mise_pin}"
 
       - name: Sync workspace toolchain
         run: make setup
@@ -213,6 +230,7 @@ jobs:
             .hypothesis
             ~/.cache/uv
             ~/.local/share/mise
+            !~/.local/share/mise/shims
           key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
 
 
