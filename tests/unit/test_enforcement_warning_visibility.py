@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING, cast
 import pytest
 
 from tests.constants import c
+from tests.models import m
 from tests.utilities import u
 
 if TYPE_CHECKING:
@@ -136,7 +137,7 @@ class TestsFlextCoreEnforcementWarningVisibility:
                 "no:cacheprovider",
             ],
             cwd=tmp_path,
-            options=u.Cli.ProcessOptions(env={"PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1"}),
+            options=m.Cli.ProcessOptions(env={"PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1"}),
         )
 
         # Assert: the warning survives to the caller's output.
