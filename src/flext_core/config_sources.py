@@ -19,7 +19,8 @@ from typing import IO, cast, override
 
 from pydantic import JsonValue
 from pydantic_settings import BaseSettings, YamlConfigSettingsSource
-from pydantic_settings.sources import PathType
+from pydantic_settings.sources import ConfigFileSourceType, PathType
+from pydantic_settings.sources.utils import InitState
 from yaml import MappingNode, SafeLoader
 from yaml.constructor import ConstructorError
 from yaml.resolver import BaseResolver
@@ -86,10 +87,12 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
     def __init__(
         self,
         settings_cls: type[BaseSettings],
-        yaml_file: PathType | None = None,
+        yaml_file: ConfigFileSourceType | None = None,
+        yaml_file_encoding: str | None = None,
         yaml_config_section: str | None = None,
-        *,
         deep_merge: bool = False,
+        _init_state: InitState | None = None,
+        *,
         transform: Callable[[dict[str, JsonValue]], dict[str, JsonValue]] | None = None,
     ) -> None:
         """Initialize the YAML source with an optional deep merge and transform hook."""
@@ -97,8 +100,10 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
         super().__init__(
             settings_cls,
             yaml_file=yaml_file,
+            yaml_file_encoding=yaml_file_encoding,
             yaml_config_section=yaml_config_section,
             deep_merge=deep_merge,
+            _init_state=_init_state,
         )
 
     @override
