@@ -47,7 +47,7 @@ from pydantic import (
     StringConstraints,
     TypeAdapter as PydanticTypeAdapter,
     ValidateAs,
-    ValidationError,
+    ValidationError as PydanticValidationError,
     WrapSerializer,
     WrapValidator,
     computed_field,
@@ -548,7 +548,7 @@ class FlextModelsPydantic:
     GetPydanticSchema = GetPydanticSchema
 
     # Validation exception (re-exported so consumers avoid `import pydantic`)
-    ValidationError = ValidationError
+    ValidationError = PydanticValidationError
 
     # Settings-source hook contract: ``settings_customise_sources`` overrides
     # annotate the wide upstream base (Liskov-correct parameter widening).
