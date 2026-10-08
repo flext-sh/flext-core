@@ -277,7 +277,7 @@ RUNTIME_LINKED_WORKTREE := Y
 endif
 endif
 ifeq ($(RUNTIME_LINKED_WORKTREE),Y)
-override RUNTIME_VENV := $(abspath $(RUNTIME_ROOT)/../.flext-venvs/$(notdir $(RUNTIME_ROOT)))
+override RUNTIME_VENV := $(abspath $(RUNTIME_ROOT)/../.venv
 else
 override RUNTIME_VENV := $(RUNTIME_ROOT)/.venv
 endif
