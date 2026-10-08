@@ -51,26 +51,20 @@ class FlextUtilitiesPydantic:
     # the canonical spellings. This utilities route keeps only the runtime
     # re-export below because published family facades (flext-cli,
     # flext-tests) inherit FlextUtilities and import-time-resolve
-    # ``u.field_validator`` / ``u.computed_field`` / ``u.field_serializer``;
-    # duplicating the typed overload stacks here is rejected by the
-    # duplication gate. Checkers alias the typed owner directly so the
-    # overload set carries through the facade; runtime wraps the same
-    # function object in ``staticmethod`` so the Utilities layer stays
-    # stateless under the method-shape census (a bare function attribute
-    # would read as an instance method), while the class-level access still
-    # yields pydantic's own function.
-    if TYPE_CHECKING:
-        computed_field = mp.computed_field
-        field_validator = mp.field_validator
-        field_serializer = mp.field_serializer
-        model_validator = mp.model_validator
-        model_serializer = mp.model_serializer
-    else:
-        computed_field = staticmethod(mp.computed_field)
-        field_validator = staticmethod(mp.field_validator)
-        field_serializer = staticmethod(mp.field_serializer)
-        model_validator = staticmethod(mp.model_validator)
-        model_serializer = staticmethod(mp.model_serializer)
+    # ``u.field_validator`` / ``u.model_validator``; duplicating the typed
+    # overload stack here is rejected by the duplication gate, so new code
+    # must spell validators through ``m.*``.
+    field_validator = staticmethod(field_validator)
+    # Serializers and model validators resolve through the models-layer typed
+    # owners (``mp.*``). The ``staticmethod`` wrapper satisfies the
+    # Utilities-layer method-shape census with an identical runtime function
+    # object; the known cost is checker-side: pyright collapses pydantic's
+    # stacked ``@overload`` surface to the first arm ("Argument missing for
+    # parameter ``mode``" at call sites). Type-checker fidelity is
+    # informative here; the census is a gate, so the wrap wins.
+    field_serializer = staticmethod(mp.field_serializer)
+    model_validator = staticmethod(mp.model_validator)
+    model_serializer = staticmethod(model_serializer)
 
     AfterValidator = AfterValidator
     BeforeValidator = mp.BeforeValidator
