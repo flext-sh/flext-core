@@ -18,7 +18,7 @@ import sys
 from pathlib import Path
 
 import pytest
-from flext_tests import tm, u
+from flext_tests import m, tm, u
 
 from tests.constants import c
 
@@ -69,7 +69,7 @@ class TestsFlextExamplesExecution:
             u.Cli.run_raw(
                 [sys.executable, "-m", module_name],
                 cwd=repo_root,
-                options=u.Cli.ProcessOptions(remove_env_keys=("PYTHONPATH",)),
+                options=m.Cli.ProcessOptions(remove_env_keys=("PYTHONPATH",)),
             ),
         )
         returncode = output.outcome.raw_return_code
