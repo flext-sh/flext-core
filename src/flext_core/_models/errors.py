@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from types import MappingProxyType
-from typing import Annotated, Self
+from typing import Annotated, ClassVar, Self
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.pydantic import FlextModelsPydantic
@@ -18,7 +18,80 @@ from flext_core._utilities import FlextUtilitiesPydantic
 class FlextModelsErrors:
     """Canonical Pydantic models for structured errors and error metrics."""
 
-    class ExceptionMetricsSnapshot(FlextModelsBase.StrictModel):
+    class ResultFailureSpec(m.ArbitraryTypesModel):
+        """Failure-side payload spec for Result construction.
+
+        Bundles the failure constructor knobs so ``r[T].fail`` builds a result
+        through a single typed payload while the success path stays
+        allocation-free.
+        """
+
+        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
+            extra="forbid",
+            strict=True,
+            validate_assignment=True,
+            arbitrary_types_allowed=True,
+        )
+
+        error: Annotated[
+            str | None,
+            mp.Field(default=None, description="Human-readable failure message."),
+        ] = None
+        error_code: Annotated[
+            str | None,
+            mp.Field(default=None, description="Canonical failure error code."),
+        ] = None
+        error_data: Annotated[
+            t.JsonMapping | t.ConfigModelInput | None,
+            mp.Field(
+                default=None,
+                description="Structured error payload attached to the failure.",
+            ),
+        ] = None
+        exception: Annotated[
+            BaseException | None,
+            mp.Field(
+                default=None,
+                description="Underlying exception captured by the failure.",
+            ),
+        ] = None
+
+    class LoggedCallSpec(m.ArbitraryTypesModel):
+        """Static call context for decorator-driven logging execution."""
+
+        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
+            extra="forbid",
+            strict=True,
+            validate_assignment=True,
+            arbitrary_types_allowed=True,
+        )
+
+        func_name: Annotated[
+            str,
+            mp.Field(description="Wrapped function name."),
+        ] = ""
+        func_module: Annotated[
+            str,
+            mp.Field(description="Wrapped function module qualified name."),
+        ] = ""
+        op_name: Annotated[
+            str,
+            mp.Field(description="Logical operation name used in log events."),
+        ] = ""
+        correlation_id: Annotated[
+            str | None,
+            mp.Field(default=None, description="Active correlation identifier."),
+        ] = None
+        track_perf: Annotated[
+            bool,
+            mp.Field(default=False, description="Track and log the call duration."),
+        ] = False
+        start_time: Annotated[
+            float,
+            mp.Field(default=0.0, description="Monotonic start time of the call."),
+        ] = 0.0
+
+    class ExceptionMetricsSnapshot(m.StrictModel):
         """Validated public snapshot for exception metric exports."""
 
         total_exceptions: Annotated[

@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, ClassVar
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.pydantic import FlextModelsPydantic
@@ -20,7 +20,44 @@ from flext_core._typings.base import FlextTypingBase
 class FlextModelsCollections:
     """Collection models namespace (Pydantic v2 only)."""
 
-    class GuardCheckSpec(FlextModelsBase.ArbitraryTypesModel):
+    class TransformSpec(m.ArbitraryTypesModel):
+        """Knob spec for the mapper normalization pipeline stages."""
+
+        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+            arbitrary_types_allowed=True,
+        )
+
+        normalize: Annotated[
+            bool,
+            mp.Field(
+                default=False,
+                description="Normalize the mapping values before the pipeline.",
+            ),
+        ] = False
+        strip_none: Annotated[
+            bool,
+            mp.Field(default=False, description="Drop entries whose value is None."),
+        ] = False
+        strip_empty: Annotated[
+            bool,
+            mp.Field(default=False, description="Drop entries whose value is empty."),
+        ] = False
+        map_keys: Annotated[
+            t.StrMapping | None,
+            mp.Field(default=None, description="Optional rename map applied to keys."),
+        ] = None
+        filter_keys: Annotated[
+            set[str] | None,
+            mp.Field(default=None, description="Keep only these keys when provided."),
+        ] = None
+        exclude_keys: Annotated[
+            set[str] | None,
+            mp.Field(default=None, description="Drop these keys when provided."),
+        ] = None
+
+    class GuardCheckSpec(m.ArbitraryTypesModel):
         """Specification for guard conditions used in collection filters."""
 
         eq: Annotated[
