@@ -61,10 +61,14 @@ class FlextExceptionsFactories:
                 params=params,
             )
             return message
+        # An exception's notes (PEP 678) are part of its cause: a strict MkDocs
+        # build, for one, attaches the warnings that aborted it as notes, and
+        # rendering str(error) alone would drop exactly that evidence.
+        notes = getattr(error, "__notes__", ()) if isinstance(error, Exception) else ()
         message_with_error: str = FlextExceptionsTemplate.render_template(
             c.ERR_TEMPLATE_FAILED_WITH_ERROR,
             operation=operation,
-            error=str(error),
+            error="\n".join((str(error), *notes)),
             params=params,
         )
         return message_with_error
