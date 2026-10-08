@@ -208,7 +208,7 @@
     "**/.forgejo/workflows/*.yaml"
   ],
   "[markdown]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.defaultFormatter": "rvben.rumdl",
     "editor.formatOnSave": false
   }
 }

@@ -520,7 +520,7 @@ requires-dist = [
     { name = "beartype", specifier = ">=0.22.9" },
     { name = "dependency-injector", specifier = ">=4.49.1" },
     { name = "packaging", specifier = ">=26.3" },
-    { name = "pydantic", specifier = ">=2.13.5,<3" },
+    { name = "pydantic", specifier = ">=2.14.0,<3" },
     { name = "pydantic-settings", specifier = ">=2.15.0" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "structlog", specifier = ">=26.1.0" },
@@ -593,7 +593,7 @@ dev = [
 [[package]]
 name = "flext-infra"
 version = "0.12.0"
-source = { git = "https://github.com/flext-sh/flext-infra.git?rev=0.12.0-dev#5583a103a1047c8be68b9484a2791f3b76ee9efe" }
+source = { git = "https://github.com/flext-sh/flext-infra.git?rev=0.12.0-dev#9040e85c8fdfcf67152ab6d3ee181c0621652856" }
 dependencies = [
     { name = "annotated-types" },
     { name = "beartype" },
@@ -619,7 +619,7 @@ dependencies = [
 [[package]]
 name = "flext-tests"
 version = "0.12.0"
-source = { git = "https://github.com/flext-sh/flext-tests.git?rev=0.12.0-dev#09f8a0f9097a1d487e043b5047cc193fed515501" }
+source = { git = "https://github.com/flext-sh/flext-tests.git?rev=0.12.0-dev#600948e17f16e16dcd802a73335123440e6ecfb2" }
 dependencies = [
     { name = "annotated-types" },
     { name = "beartype" },
