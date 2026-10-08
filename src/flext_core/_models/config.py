@@ -22,47 +22,61 @@ from flext_core._models.pydantic import FlextModelsPydantic
 class FlextModelsConfig:
     """Container for declarative config record models (ADR-005)."""
 
-    class StructlogOptions(m.ArbitraryTypesModel):
+    class StructlogOptions(FlextModelsBase.ArbitraryTypesModel):
         """Knob options for the structlog runtime configuration."""
 
-        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            extra="forbid",
-            validate_assignment=True,
-            arbitrary_types_allowed=True,
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(
+                extra="forbid",
+                validate_assignment=True,
+                arbitrary_types_allowed=True,
+            )
         )
 
         log_level: Annotated[
             int | None,
-            mp.Field(default=None, description="Effective structlog level number."),
+            FlextModelsPydantic.Field(
+                default=None,
+                description="Effective structlog level number.",
+            ),
         ] = None
         console_renderer: Annotated[
             bool,
-            mp.Field(default=True, description="Use the console renderer."),
+            FlextModelsPydantic.Field(
+                default=True,
+                description="Use the console renderer.",
+            ),
         ] = True
         additional_processors: Annotated[
             t.SequenceOf[Processor] | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description="Extra structlog processors appended to the chain.",
             ),
         ] = None
         wrapper_class_factory: Annotated[
             t.LoggerWrapperFactory | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description="Factory building the bound-logger wrapper class.",
             ),
         ] = None
         logger_factory: Annotated[
             t.LoggerFactory | None,
-            mp.Field(default=None, description="Factory building the logger."),
+            FlextModelsPydantic.Field(
+                default=None,
+                description="Factory building the logger.",
+            ),
         ] = None
         cache_logger_on_first_use: Annotated[
             bool,
-            mp.Field(default=True, description="Cache the logger on first use."),
+            FlextModelsPydantic.Field(
+                default=True,
+                description="Cache the logger on first use.",
+            ),
         ] = True
 
-    class ConfigDocument(m.FrozenModel):
+    class ConfigDocument(FlextModelsBase.FrozenModel):
         """A loaded, parsed config document with optional schema/source refs."""
 
         model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
