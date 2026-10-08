@@ -14,9 +14,10 @@ from typing import Annotated, ClassVar
 
 from structlog.types import Processor
 
-from flext_core import t
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._typings.base import FlextTypingBase
+from flext_core._typings.services import FlextTypesServices
 
 
 class FlextModelsConfig:
@@ -48,21 +49,21 @@ class FlextModelsConfig:
             ),
         ] = True
         additional_processors: Annotated[
-            t.SequenceOf[Processor] | None,
+            FlextTypingBase.SequenceOf[Processor] | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Extra structlog processors appended to the chain.",
             ),
         ] = None
         wrapper_class_factory: Annotated[
-            t.LoggerWrapperFactory | None,
+            FlextTypesServices.LoggerWrapperFactory | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Factory building the bound-logger wrapper class.",
             ),
         ] = None
         logger_factory: Annotated[
-            t.LoggerFactory | None,
+            FlextTypesServices.LoggerFactory | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Factory building the logger.",
@@ -87,7 +88,7 @@ class FlextModelsConfig:
         )
 
         data: Annotated[
-            t.JsonMapping,
+            FlextTypingBase.JsonMapping,
             FlextModelsPydantic.Field(
                 description="Parsed config mapping (execution parametrization).",
             ),
