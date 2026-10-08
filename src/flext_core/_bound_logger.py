@@ -12,14 +12,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import traceback
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING, Self, override
 
+from flext_core import c, e, p, t
 from flext_core._utilities.logging_context import FlextUtilitiesLoggingContext as ulc
-from flext_core.constants import c
-from flext_core.exceptions import e
-from flext_core.protocols import p
 from flext_core.result import r
-from flext_core.typings import t
 
 if TYPE_CHECKING:
     from structlog.typing import Context
@@ -145,6 +142,7 @@ class FlextBoundLogger(ulc):
         return self.bind(**context)
 
     @staticmethod
+    @override
     def _should_include_stack_trace() -> bool:
         """Whether stack traces should be included in exception logging.
 
@@ -407,3 +405,4 @@ class FlextBoundLogger(ulc):
             return r[bool].ok(value=True)
         except c.EXC_BROAD_RUNTIME as exc:
             self._report_internal_logging_failure("trace", exc)
+            return e.fail_operation("trace logging", exc)

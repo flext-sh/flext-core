@@ -68,11 +68,11 @@ class FlextUtilitiesGuardsTypeProtocolStringMixin:
     """String-keyed runtime predicates shared by the protocol guards."""
 
     @staticmethod
-    def _string_predicates() -> Mapping[str, object]:
+    def _string_predicates() -> Mapping[str, Callable[[ProtocolGuardInput], bool]]:
         """Return the canonical ``type_name`` → predicate registry.
 
         Returns:
-            The resulting ``Mapping[str, object]``.
+            The resulting ``Mapping[str, Callable[[ProtocolGuardInput], bool]]``.
 
         """
         return {
@@ -135,7 +135,7 @@ class FlextUtilitiesGuardsTypeProtocolStringMixin:
         predicate = predicates.get(type_name)
         if predicate is None:
             return False
-        return bool(predicate(value))
+        return predicate(value)
 
 
 __all__: list[str] = ["FlextUtilitiesGuardsTypeProtocolStringMixin"]

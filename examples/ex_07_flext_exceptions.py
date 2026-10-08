@@ -46,12 +46,14 @@ class Ex07FlextExceptions(Ex07FlextExceptionSubclasses):
         self.section("base_error")
         base = e.BaseError(
             "base boom",
-            error_code="E_BASE",
-            context=m.ConfigMap(root={"scope": "demo"}),
-            metadata=m.Metadata(attributes={"channel": "example"}),
-            correlation_id="corr-base-1",
-            auto_correlation=False,
-            auto_log=False,
+            options=m.ExceptionInitOptions(
+                error_code="E_BASE",
+                context=m.ConfigMap(root={"scope": "demo"}),
+                metadata=m.Metadata(attributes={"channel": "example"}),
+                correlation_id="corr-base-1",
+                auto_correlation=False,
+                auto_log=False,
+            ),
             operation="create",
         )
         self.audit_check("base.class", type(base).__name__)

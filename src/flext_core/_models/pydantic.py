@@ -90,7 +90,7 @@ type ModelValidatorCallable = (
 )
 # Contract for the class-member shapes ``computed_field`` decorates: the
 # property/cached_property descriptors pydantic rewraps for serialization.
-type ComputedFieldCallable = Callable[..., Any] | property | cached_property[Any, Any]
+type ComputedFieldCallable = Callable[..., Any] | property | cached_property[Any]
 # Contract for the model-level callables ``model_serializer`` decorates.
 type ModelSerializerCallable = (
     Callable[..., Any] | classmethod[Any, Any, Any] | staticmethod[Any, Any]
@@ -294,7 +294,8 @@ class FlextModelsPydantic:
             /,
             *fields: str,
             mode: Literal["wrap"],
-            return_type: FlextTypingBase.TypeHintSpecifier = ...,
+            return_type: FlextTypingBase.TypeHintSpecifier
+            | PydanticUndefinedType = ...,
             when_used: Literal[
                 "always",
                 "unless-none",
@@ -311,7 +312,8 @@ class FlextModelsPydantic:
             /,
             *fields: str,
             mode: Literal["plain"] = ...,
-            return_type: FlextTypingBase.TypeHintSpecifier = ...,
+            return_type: FlextTypingBase.TypeHintSpecifier
+            | PydanticUndefinedType = ...,
             when_used: Literal[
                 "always",
                 "unless-none",
@@ -327,7 +329,8 @@ class FlextModelsPydantic:
             /,
             *fields: str,
             mode: Literal["plain", "wrap"] = "plain",
-            return_type: Any = PydanticUndefined,
+            return_type: FlextTypingBase.TypeHintSpecifier
+            | PydanticUndefinedType = PydanticUndefined,
             when_used: Literal[
                 "always",
                 "unless-none",
@@ -461,7 +464,8 @@ class FlextModelsPydantic:
                 "json",
                 "json-with-timestamps",
             ] = ...,
-            return_type: FlextTypingBase.TypeHintSpecifier = ...,
+            return_type: FlextTypingBase.TypeHintSpecifier
+            | PydanticUndefinedType = ...,
         ) -> Callable[[SerializerT], SerializerT]: ...
 
         @overload
@@ -475,7 +479,8 @@ class FlextModelsPydantic:
                 "json",
                 "json-with-timestamps",
             ] = ...,
-            return_type: FlextTypingBase.TypeHintSpecifier = ...,
+            return_type: FlextTypingBase.TypeHintSpecifier
+            | PydanticUndefinedType = ...,
         ) -> Callable[[SerializerT], SerializerT]: ...
 
         @staticmethod
@@ -490,7 +495,8 @@ class FlextModelsPydantic:
                 "json",
                 "json-with-timestamps",
             ] = "always",
-            return_type: Any = PydanticUndefined,
+            return_type: FlextTypingBase.TypeHintSpecifier
+            | PydanticUndefinedType = PydanticUndefined,
         ) -> Any:
             """Delegate to pydantic's ``model_serializer`` (type-checking only).
 

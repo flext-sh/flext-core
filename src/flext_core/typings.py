@@ -21,15 +21,17 @@ from flext_core._protocols import (
     FlextProtocolsService,
     FlextProtocolsSettings,
 )
-from flext_core._typings.base import FlextTypingBase
-from flext_core._typings.config import FlextTypingConfig
-from flext_core._typings.containers import FlextTypingContainers
-from flext_core._typings.core import FlextTypesCore
-from flext_core._typings.lazy import FlextTypesLazy
-from flext_core._typings.project_metadata import FlextTypingProjectMetadata
-from flext_core._typings.pydantic import FlextTypesPydantic
-from flext_core._typings.services import FlextTypesServices
-from flext_core._typings.typeadapters import FlextTypesTypeAdapters
+from flext_core._typings import (
+    FlextTypesCore,
+    FlextTypesLazy,
+    FlextTypesPydantic,
+    FlextTypesServices,
+    FlextTypesTypeAdapters,
+    FlextTypingBase,
+    FlextTypingConfig,
+    FlextTypingContainers,
+    FlextTypingProjectMetadata,
+)
 
 
 class FlextTypes(

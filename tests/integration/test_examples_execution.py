@@ -69,7 +69,7 @@ class TestsFlextExamplesExecution:
             u.Cli.run_raw(
                 [sys.executable, "-m", module_name],
                 cwd=repo_root,
-                remove_env_keys=("PYTHONPATH",),
+                options=u.Cli.ProcessOptions(remove_env_keys=("PYTHONPATH",)),
             ),
         )
         returncode = output.outcome.raw_return_code

@@ -14,12 +14,9 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING, ClassVar, Self
 
+from flext_core import c, m, p, t
 from flext_core._bound_logger import FlextBoundLogger
 from flext_core._utilities.logging_context import FlextUtilitiesLoggingContext
-from flext_core.constants import c
-from flext_core.models import m
-from flext_core.protocols import p
-from flext_core.typings import t
 
 if TYPE_CHECKING:
     import types

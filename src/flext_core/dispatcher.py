@@ -9,9 +9,7 @@ from __future__ import annotations
 from collections.abc import MutableSequence, Sequence
 
 from flext_core import c, p, r, t, u
-from flext_core._utilities.dispatcher_execute import (
-    FlextUtilitiesDispatcherExecute as dxe,
-)
+from flext_core._utilities import FlextUtilitiesDispatcherExecute as dxe
 
 
 class FlextDispatcher:

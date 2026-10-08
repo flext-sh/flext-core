@@ -21,7 +21,7 @@ from pydantic import JsonValue
 from pydantic_settings import BaseSettings, YamlConfigSettingsSource
 from pydantic_settings.sources import PathType
 
-from flext_core._config_sources_parts.unique_key_loader import _UniqueKeySafeLoader
+from flext_core._config_sources_parts import _UniqueKeySafeLoader
 
 
 class FlextStrictYamlConfigSource(YamlConfigSettingsSource):

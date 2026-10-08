@@ -13,7 +13,6 @@ from examples.models import m
 from examples.shared import ExamplesFlextShared
 from examples.utilities import u
 from flext_core import p, r, t
-from flext_core.dispatcher import FlextDispatcher
 
 
 class _CreateUserHandler:
@@ -176,7 +175,7 @@ class _Ex04DispatchGolden(ExamplesFlextShared):
         self._exercise_error_cases(dispatcher)
         self._exercise_event_publishing(dispatcher)
 
-    def _exercise_register_and_dispatch(self, dispatcher: FlextDispatcher) -> None:
+    def _exercise_register_and_dispatch(self, dispatcher: p.Dispatcher) -> None:
         """Exercise one phase of the dispatcher example."""
         self.section("register_and_dispatch")
         self.audit_check(
@@ -212,7 +211,7 @@ class _Ex04DispatchGolden(ExamplesFlextShared):
         self.audit_check("dispatch(callable).is_success", pinged.success)
         self.audit_check("dispatch(callable).value", pinged.unwrap_or(""))
 
-    def _exercise_auto_discovery(self, dispatcher: FlextDispatcher) -> None:
+    def _exercise_auto_discovery(self, dispatcher: p.Dispatcher) -> None:
         """Exercise one phase of the dispatcher example."""
         self.section("auto_discovery")
         auto_discovery_registration = dispatcher.register_handler(
@@ -226,7 +225,7 @@ class _Ex04DispatchGolden(ExamplesFlextShared):
         self.audit_check("dispatch(auto_discovery).is_success", auto_discovery.success)
         self.audit_check("dispatch(auto_discovery).value", auto_discovery.unwrap_or(""))
 
-    def _exercise_error_cases(self, dispatcher: FlextDispatcher) -> None:
+    def _exercise_error_cases(self, dispatcher: p.Dispatcher) -> None:
         """Exercise one phase of the dispatcher example."""
         self.section("error_cases")
         no_route_registration = dispatcher.register_handler(_no_route_handler)
@@ -251,7 +250,7 @@ class _Ex04DispatchGolden(ExamplesFlextShared):
             failing_dispatch.failure,
         )
 
-    def _exercise_event_publishing(self, dispatcher: FlextDispatcher) -> None:
+    def _exercise_event_publishing(self, dispatcher: p.Dispatcher) -> None:
         """Exercise one phase of the dispatcher example."""
         self.section("event_publishing")
         subscriber = _EventSubscriber()

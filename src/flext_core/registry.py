@@ -13,8 +13,6 @@ import inspect
 import sys
 from typing import TYPE_CHECKING, ClassVar, Self, cast, override
 
-# NOTE (multi-agent): mro-i6nq.12 — consolidated _registry_parts/part_01..04 (one
-# FlextRegistry class split across a numbered MRO chain) into this single facade module.
 from flext_core import c, e, h, m, p, r, s, t, u
 
 if TYPE_CHECKING:

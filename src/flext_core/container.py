@@ -20,9 +20,7 @@ from functools import partial
 from typing import TYPE_CHECKING, ClassVar, Self, TypeGuard, cast, overload, override
 
 from flext_core import FlextSettings, FlextUtilitiesLogging, c, e, m, p, r, t, u
-from flext_core._container_parts.flextcontainertestingops_part_01 import (
-    FlextContainerTestingOps,
-)
+from flext_core._container_parts import FlextContainerTestingOps
 from flext_core._models import FlextContext
 
 # NOTE (multi-agent): mro-i6nq.12 — the concrete public facade remains the

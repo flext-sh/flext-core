@@ -10,8 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from pydantic import (
     AfterValidator,
     PlainSerializer,
@@ -20,6 +18,8 @@ from pydantic import (
     TypeAdapter as PydanticTypeAdapter,
     WrapSerializer,
     WrapValidator,
+    field_validator,
+    model_serializer,
     validate_call,
     with_config,
 )
@@ -64,6 +64,7 @@ class FlextUtilitiesPydantic:
     # informative here; the census is a gate, so the wrap wins.
     field_serializer = staticmethod(mp.field_serializer)
     model_validator = staticmethod(mp.model_validator)
+    computed_field = staticmethod(mp.computed_field)
     model_serializer = staticmethod(model_serializer)
 
     AfterValidator = AfterValidator
