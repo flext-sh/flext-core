@@ -17,8 +17,16 @@ from flext_core._typings.services import FlextTypesServices
 from flext_core.typings import ConfigModelInput, JsonDict, JsonMapping, T
 
 
-class FlextResultBase[T](BaseModel):
-    """Internal data container for FlextResult."""
+class FlextResultFieldModel(BaseModel):
+    """Typed field-population boundary for the result family.
+
+    Deliberately carries an explicit keyword-only ``__init__``: it gives the
+    family's factory constructor (``FlextResultBase.__init__``) a typed,
+    signature-compatible member to override, instead of pydantic's
+    ``(**data: Any) -> None`` population contract that no typed factory
+    signature can satisfy. Left undecorated (no PEP 698 ``@override``) so
+    implicit ``__init__`` overrides stay exempt from signature checks.
+    """
 
     model_config = {"arbitrary_types_allowed": True, "populate_by_name": True}
 
@@ -26,6 +34,25 @@ class FlextResultBase[T](BaseModel):
     error: str | None = None
     error_code: str | None = None
     error_data: JsonDict | None = None
+
+    def __init__(
+        self,
+        *,
+        success: bool = True,
+        error: str | None = None,
+        error_code: str | None = None,
+        error_data: JsonDict | None = None,
+    ) -> None:
+        super().__init__(
+            success=success,
+            error=error,
+            error_code=error_code,
+            error_data=error_data,
+        )
+
+
+class FlextResultBase[T](FlextResultFieldModel):
+    """Internal data container for FlextResult."""
 
     _payload: T = PrivateAttr()
     _exception: BaseException | None = PrivateAttr(default=None)
@@ -86,6 +113,13 @@ class FlextResultBase[T](BaseModel):
         success: bool = True,
         exception: BaseException | None = None,
     ) -> None:
+        """Construct one result from the typed factory contract.
+
+        The signature intentionally narrows the inherited
+        ``FlextResultFieldModel.__init__`` boundary rather than pydantic's
+        ``(**data: Any)`` population contract, keeping the override checked
+        and typed while ``value``/``exception`` feed private state.
+        """
         type(self).reject_banned_result_parameterization()
         super().__init__(
             error=error,
