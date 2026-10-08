@@ -36,7 +36,7 @@ target/**
 .gemini/**
 .beads/**
 docs/knowledge-index.md
-docs/architecture/communities/README.md
+docs/architecture/communities/index.md
 docs/architecture/crg-reports/**
 docs/api-reference/generated/**
 docs/architecture/standardization-phase1-drift-report.md

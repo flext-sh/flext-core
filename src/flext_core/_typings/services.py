@@ -146,6 +146,7 @@ class FlextTypesServices:
     type RegistrablePlugin = ScalarOrModel | Callable[..., ScalarOrModel]
     type LoggerFactory = Callable[..., FlextProtocolsLogging.OutputLogger] | None
     type LoggerWrapperFactory = Callable[[], type[FlextProtocolsLogging.Logger]]
+    type LoggerProcessor = Callable[..., FlextTypesPydantic.JsonValue]
 
     type SortableObjectType = str | int | float
     type ValueAdapter[T] = FlextTypesPydantic.TypeAdapter[T]
