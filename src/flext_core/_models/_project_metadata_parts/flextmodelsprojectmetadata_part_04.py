@@ -12,16 +12,14 @@ from typing import Annotated
 from pydantic import Field
 
 from flext_core._models._project_metadata_parts import (
-    flextmodelsprojectmetadata_part_01 as _01,
-    flextmodelsprojectmetadata_part_03 as _03,
-    flextmodelsprojectmetadata_part_05 as _05,
+    flextmodelsprojectmetadata_part_01 as part_01,
+    flextmodelsprojectmetadata_part_03 as part_03,
+    flextmodelsprojectmetadata_part_05 as part_05,
 )
 
-FlextModelsProjectMetadataContract = _01.FlextModelsProjectMetadataContract
-
-FlextModelsProjectMetadataAggregates = _03.FlextModelsProjectMetadataAggregates
-
-FlextModelsPyprojectIngressContract = _05.FlextModelsPyprojectIngressContract
+FlextModelsProjectMetadataContract = part_01.FlextModelsProjectMetadataContract
+FlextModelsProjectMetadataAggregates = part_03.FlextModelsProjectMetadataAggregates
+FlextModelsPyprojectIngressContract = part_05.FlextModelsPyprojectIngressContract
 
 
 class FlextModelsProjectMetadataDocument(FlextModelsProjectMetadataAggregates):

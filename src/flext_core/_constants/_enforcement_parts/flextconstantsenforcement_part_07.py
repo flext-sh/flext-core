@@ -27,6 +27,7 @@ from flext_core._constants._enforcement_data import (
     ENFORCEMENT_TAG_COLLECT,
     ENFORCEMENT_TAG_LAYER,
     ENFORCEMENT_UTILITIES_EXEMPT_METHODS,
+    ENFORCEMENT_UTILITIES_STATEFUL_ADAPTERS,
     ENFORCEMENT_VALUE_OBJECT_BASES,
     SMELL_RULES_TEXT,
     SMELL_THRESHOLDS,
@@ -88,6 +89,11 @@ class FlextConstantsEnforcementSmellData:
         ENFORCEMENT_UTILITIES_EXEMPT_METHODS
     )
     """Methods exempt from static/classmethod enforcement on utilities."""
+    ENFORCEMENT_UTILITIES_STATEFUL_ADAPTERS: ClassVar[frozenset[str]] = (
+        ENFORCEMENT_UTILITIES_STATEFUL_ADAPTERS
+    )
+    """Utilities classes whose protocol-adapter state is their contract
+    (reasons in the package data); the static-shape rule skips them."""
     ENFORCEMENT_LAYER_ALLOWS: ClassVar[
         FlextTypingBase.MappingKV[str, frozenset[str]]
     ] = ENFORCEMENT_LAYER_ALLOWS

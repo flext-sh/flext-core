@@ -226,13 +226,7 @@ class TestsFlextCoreServiceOperations:
     class UndocumentedService(s[bool]):
         """Operation without a docstring."""
 
-        def status(self) -> p.Result[bool]:
-            """Provide ``status``.
-
-            Returns:
-                The resulting ``p.Result[bool]``.
-
-            """
+        def status(self) -> p.Result[bool]:  # ruff: ignore[undocumented-public-method] -- the scenario under test is discovery WITHOUT a docstring
             return r[bool].ok(True)
 
     class PlainReturnService(s[bool]):

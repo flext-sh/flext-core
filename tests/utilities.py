@@ -177,7 +177,14 @@ class TestsFlextUtilities(FlextTestsUtilities):
         class HandlerTypeScenario(m.Value):
             """Scenario for handler types."""
 
-            model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+            # Why use_enum_values=False: the fields contract the ``c.HandlerType``
+            # members themselves (consumers feed them into typed params models
+            # that validate ``is_instance_of``); the carrier must not downcast
+            # them to plain strings the way the shared ``m.Value`` default does.
+            model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+                frozen=True,
+                use_enum_values=False,
+            )
             name: Annotated[str, m.Field(description="Handler type scenario name")]
             handler_type: Annotated[c.HandlerType, m.Field(description="Type")]
             handler_mode: Annotated[c.HandlerType, m.Field(description="Mode")]

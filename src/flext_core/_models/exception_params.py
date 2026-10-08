@@ -17,7 +17,7 @@ from flext_core._models._exception_params_parts import (
 FlextModelsExceptionParamsPartFinal = part_03.FlextModelsExceptionParams
 
 
-class FlextModelsExceptionParams(FlextModelsExceptionParamsPartFinal):
+class FlextModelsExceptionParams(part_03.FlextModelsExceptionParams):
     """Public facade for FlextModelsExceptionParams."""
 
 

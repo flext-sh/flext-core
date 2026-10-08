@@ -9,14 +9,14 @@ from __future__ import annotations
 from typing import ClassVar
 
 from flext_core._models._project_metadata_parts import (
-    flextmodelsprojectmetadata_part_01 as _01,
+    flextmodelsprojectmetadata_part_01 as part_01,
 )
 from flext_core._models.pydantic import FlextModelsPydantic
 
 FlextModelsProjectMetadataContract = _01.FlextModelsProjectMetadataContract
 
 
-class FlextModelsPyprojectIngressContract(FlextModelsProjectMetadataContract):
+class FlextModelsPyprojectIngressContract(part_01.FlextModelsProjectMetadataContract):
     """Frozen declaration base for standards-owned TOML tables."""
 
     model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (

@@ -18,4 +18,3 @@ updates:
     labels: [dependencies, python]
     cooldown:
       default-days: 10
-      exclude: ["flext-infra", "flext-tests"]

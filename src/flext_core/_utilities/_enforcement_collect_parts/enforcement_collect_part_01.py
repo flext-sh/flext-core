@@ -233,7 +233,10 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
             yield f'Field "{name}"', args
 
     @staticmethod
-    def _attr_filter(layer: str) -> Callable[[str, FlextTypesPydantic.JsonValue], bool]:
+    def _attr_filter(
+        target: type,
+        layer: str,
+    ) -> Callable[[str, FlextTypesPydantic.JsonValue], bool]:
         if layer == FlextConstantsEnforcement.EnforcementLayer.CONSTANTS.lower():
             accept: Callable[[str, FlextTypesPydantic.JsonValue], bool] = (
                 FlextUtilitiesBeartypeEngine.attr_accept_constants
@@ -242,7 +245,10 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         if layer == FlextConstantsEnforcement.EnforcementLayer.UTILITIES.lower():
 
             def accept_utility(name: str, _value: FlextTypesPydantic.JsonValue) -> bool:
-                allowed: bool = FlextUtilitiesBeartypeEngine.attr_accept_utility(name)
+                allowed: bool = FlextUtilitiesBeartypeEngine.attr_accept_utility(
+                    target,
+                    name,
+                )
                 return allowed
 
             return accept_utility
@@ -258,7 +264,7 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         target: type,
         layer: str,
     ) -> Iterator[tuple[str, tuple[FlextProtocolsBase.AttributeProbe, ...]]]:
-        accept = FlextUtilitiesEnforcementCollect._attr_filter(layer)
+        accept = FlextUtilitiesEnforcementCollect._attr_filter(target, layer)
         qn = target.__qualname__
         for name, value in vars(target).items():
             if accept(name, value):
