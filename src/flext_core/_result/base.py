@@ -8,47 +8,14 @@ from __future__ import annotations
 
 from typing import cast, override
 
-from pydantic import BaseModel, PrivateAttr
+from pydantic import PrivateAttr
 
 from flext_core import c
+from flext_core._result.fields import FlextResultFieldModel
 from flext_core._runtime._metadata import FlextRuntimeMetadata
 from flext_core._typings.base import FlextTypingBase
 from flext_core._typings.services import FlextTypesServices
-from flext_core.typings import ConfigModelInput, JsonDict, JsonMapping, T
-
-
-class FlextResultFieldModel(BaseModel):
-    """Typed field-population boundary for the result family.
-
-    Deliberately carries an explicit keyword-only ``__init__``: it gives the
-    family's factory constructor (``FlextResultBase.__init__``) a typed,
-    signature-compatible member to override, instead of pydantic's
-    ``(**data: Any) -> None`` population contract that no typed factory
-    signature can satisfy. Left undecorated (no PEP 698 ``@override``) so
-    implicit ``__init__`` overrides stay exempt from signature checks.
-    """
-
-    model_config = {"arbitrary_types_allowed": True, "populate_by_name": True}
-
-    success: bool = True
-    error: str | None = None
-    error_code: str | None = None
-    error_data: JsonDict | None = None
-
-    def __init__(
-        self,
-        *,
-        success: bool = True,
-        error: str | None = None,
-        error_code: str | None = None,
-        error_data: JsonDict | None = None,
-    ) -> None:
-        super().__init__(
-            success=success,
-            error=error,
-            error_code=error_code,
-            error_data=error_data,
-        )
+from flext_core.typings import ConfigModelInput, JsonDict, JsonMapping
 
 
 class FlextResultBase[T](FlextResultFieldModel):
