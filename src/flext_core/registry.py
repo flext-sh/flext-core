@@ -32,7 +32,7 @@ class FlextRegistry(s[bool]):
     for actual handler registration and execution.
     """
 
-    _state: m.RegistryState = u.PrivateAttr(default_factory=m.RegistryState)
+    _state: m.RegistryState = m.PrivateAttr(default_factory=m.RegistryState)
 
     _class_plugin_storage: ClassVar[MutableMapping[str, t.RegistrablePlugin]] = {}
 

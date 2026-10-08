@@ -7,11 +7,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from importlib import import_module
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from beartype.claw import beartype_this_package
 
 from flext_core._typings.base import FlextTypingBase
+
+if TYPE_CHECKING:
+    from flext_core._constants.enforcement import FlextConstantsEnforcement
 
 
 class FlextCoreBeartypeBootstrap:
@@ -21,15 +24,17 @@ class FlextCoreBeartypeBootstrap:
     _activating: ClassVar[bool] = False
 
     @classmethod
-    def _enforcement_constants(cls) -> type:
+    def _enforcement_constants(cls) -> type[FlextConstantsEnforcement]:
         """Load enforcement constants lazily to avoid package-init cycles.
 
         Returns:
-            The resulting ``type``.
+            The lazily imported enforcement constants class.
 
         """
         module = import_module("flext_core._constants.enforcement")
-        constants_cls: type = module.FlextConstantsEnforcement
+        constants_cls: type[FlextConstantsEnforcement] = (
+            module.FlextConstantsEnforcement
+        )
         return constants_cls
 
     @classmethod

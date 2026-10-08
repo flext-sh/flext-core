@@ -62,7 +62,7 @@ class FlextConfig(BaseSettings):
     )
 
     _lock: ClassVar[RLock] = RLock()
-    _instance: ClassVar[FlextConfig | None] = None
+    _instance: ClassVar[Self | None] = None
 
     @classmethod
     def _package_namespace(cls) -> str:

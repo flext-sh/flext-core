@@ -70,8 +70,7 @@ class TestsFlextCoreBeartypeModuleCallables:
             """
             raise RuntimeError(_OUTSIDE_CONTEXT)
 
-        @staticmethod
-        def __getattr__(name: str) -> Never:
+        def __getattr__(self, name: str) -> Never:
             """Forward every attribute to an object that is not there.
 
             Raises:

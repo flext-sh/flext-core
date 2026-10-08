@@ -10,6 +10,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from flext_core import p
+
 from pydantic import (
     AfterValidator,
     PlainSerializer,
@@ -18,7 +23,6 @@ from pydantic import (
     TypeAdapter as PydanticTypeAdapter,
     WrapSerializer,
     WrapValidator,
-    field_validator,
     model_serializer,
     validate_call,
     with_config,
@@ -45,24 +49,15 @@ class FlextUtilitiesPydantic:
     PrivateAttr = staticmethod(mp.PrivateAttr)
     SkipValidation = SkipValidation
 
-    # Validators, computed fields, and serializers have ONE typed owner: the
-    # FlextModelsPydantic stacks (``m.*``) carry pydantic's full overload
-    # surface for both checkers, and the ENFORCE map routes every consumer to
-    # the canonical spellings. This utilities route keeps only the runtime
-    # re-export below because published family facades (flext-cli,
-    # flext-tests) inherit FlextUtilities and import-time-resolve
-    # ``u.field_validator`` / ``u.model_validator``; duplicating the typed
-    # overload stack here is rejected by the duplication gate, so new code
-    # must spell validators through ``m.*``.
-    field_validator = staticmethod(field_validator)
-    # Serializers and model validators resolve through the models-layer typed
-    # owners (``mp.*``). The ``staticmethod`` wrapper satisfies the
-    # Utilities-layer method-shape census with an identical runtime function
-    # object; the known cost is checker-side: pyright collapses pydantic's
-    # stacked ``@overload`` surface to the first arm ("Argument missing for
-    # parameter ``mode``" at call sites). Type-checker fidelity is
-    # informative here; the census is a gate, so the wrap wins.
-    field_serializer = staticmethod(mp.field_serializer)
+    # Keep the models-layer overload set intact; staticmethod's generic
+    # constructor infers only its first arm. Runtime still uses the same factory.
+    if TYPE_CHECKING:
+        field_validator = mp.field_validator
+        field_serializer = mp.field_serializer
+    else:
+        field_validator = staticmethod(mp.field_validator)
+        field_serializer = staticmethod(mp.field_serializer)
+
     model_validator = staticmethod(mp.model_validator)
     computed_field = staticmethod(mp.computed_field)
     model_serializer = staticmethod(model_serializer)
@@ -74,10 +69,13 @@ class FlextUtilitiesPydantic:
     PlainSerializer = PlainSerializer
     WrapSerializer = WrapSerializer
 
-    validate_call = staticmethod(validate_call)
+    if TYPE_CHECKING:
+        validate_call: p.ValidateCall = validate_call
+    else:
+        validate_call = staticmethod(validate_call)
     with_config = staticmethod(with_config)
 
-    from_json = from_json
+    from_json = staticmethod(from_json)
     to_json = to_json
     to_jsonable_python = to_jsonable_python
 

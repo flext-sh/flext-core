@@ -11,6 +11,7 @@ from typing import Annotated, TypeAliasType, get_args, get_origin
 
 from flext_core._models import FlextModelsEnforcement
 from flext_core._protocols import FlextProtocolsBase
+from flext_core._typings.base import FlextTypingBase
 from flext_core._utilities import FlextUtilitiesBeartypeModuleSource
 
 
@@ -32,7 +33,9 @@ class FlextUtilitiesBeartypeTypeAliases:
     @classmethod
     def deferred(
         cls,
-        hint: FlextProtocolsBase.AttributeProbe,
+        hint: FlextTypingBase.TypeHintSpecifier
+        | FlextProtocolsBase.AttributeProbe
+        | None,
         *,
         recursive: bool = False,
         owner: ModuleType | type | None = None,
@@ -48,7 +51,9 @@ class FlextUtilitiesBeartypeTypeAliases:
     @classmethod
     def deferred_annotated(
         cls,
-        hint: FlextProtocolsBase.AttributeProbe,
+        hint: FlextTypingBase.TypeHintSpecifier
+        | FlextProtocolsBase.AttributeProbe
+        | None,
         *,
         owner: ModuleType | type | None = None,
     ) -> tuple[FlextModelsEnforcement.DeferredAlias, ...]:
@@ -63,7 +68,9 @@ class FlextUtilitiesBeartypeTypeAliases:
     @classmethod
     def _deferred_scan(
         cls,
-        hint: FlextProtocolsBase.AttributeProbe,
+        hint: FlextTypingBase.TypeHintSpecifier
+        | FlextProtocolsBase.AttributeProbe
+        | None,
         scan: tuple[bool, bool, bool],
         owner: ModuleType | type | None,
     ) -> tuple[FlextModelsEnforcement.DeferredAlias, ...]:
@@ -79,7 +86,16 @@ class FlextUtilitiesBeartypeTypeAliases:
         """
         recursive, unwrap_annotated, inspect_origin = scan
         visited: set[int] = set()
-        pending: list[tuple[FlextProtocolsBase.AttributeProbe, bool, bool, bool]] = [
+        pending: list[
+            tuple[
+                FlextTypingBase.TypeHintSpecifier
+                | FlextProtocolsBase.AttributeProbe
+                | None,
+                bool,
+                bool,
+                bool,
+            ]
+        ] = [
             (hint, recursive, unwrap_annotated, inspect_origin),
         ]
         deferred_aliases: list[FlextModelsEnforcement.DeferredAlias] = []

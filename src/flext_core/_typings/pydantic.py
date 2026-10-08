@@ -13,6 +13,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Annotated
 
 import pydantic
@@ -130,6 +131,7 @@ class FlextTypesPydantic:
     type TypeAdapter[T] = pydantic.TypeAdapter[T]
     type ImportString[T] = pydantic.ImportString[T]
     type InstanceOf[T] = pydantic.InstanceOf[T]
+    type InstanceOfSequence[T] = pydantic.InstanceOf[Sequence[T]]
     type Secret[T] = pydantic.Secret[T]
     type SecretBytes = pydantic.SecretBytes
 

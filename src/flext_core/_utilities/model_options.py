@@ -42,7 +42,11 @@ class FlextUtilitiesModelOptions(FlextUtilitiesModel):
                 return m.RuntimeBootstrapOptions()
             case m.RuntimeBootstrapOptions():
                 return source
-            case p.MixinsInfrastructure():
+            case _:
+                is_infrastructure = isinstance(source, p.MixinsInfrastructure)
+                if not is_infrastructure:
+                    msg = f"unknown runtime bootstrap source: {source!r}"
+                    raise TypeError(msg)
                 declared = (
                     m.RuntimeBootstrapOptions.model_validate(
                         source.runtime_bootstrap_options(),
@@ -61,9 +65,6 @@ class FlextUtilitiesModelOptions(FlextUtilitiesModel):
                     **dict(declared),
                     **{name: value for name, value in seeds if value is not None},
                 })
-            case _:
-                msg = f"unknown runtime bootstrap source: {source!r}"
-                raise TypeError(msg)
 
 
 __all__: list[str] = ["FlextUtilitiesModelOptions"]

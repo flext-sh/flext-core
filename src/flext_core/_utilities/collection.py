@@ -108,9 +108,11 @@ class FlextUtilitiesCollection(
             item_typed: TItem = item
             if predicate is not None and (not predicate(item_typed)):
                 continue
-            process_result = r[TMapped].create_from_callable(
-                lambda current_item=item_typed: processor(current_item),
-            )
+
+            def process_item(current_item: TItem = item_typed) -> TMapped:
+                return processor(current_item)
+
+            process_result = r[TMapped].create_from_callable(process_item)
             if process_result.failure:
                 return r[Sequence[TMapped]].fail(
                     c.ERR_COLLECTION_PROCESSING_FAILED_FOR_ITEM.format(

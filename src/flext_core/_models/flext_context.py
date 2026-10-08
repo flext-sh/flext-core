@@ -10,7 +10,7 @@ from __future__ import annotations
 import time
 from contextlib import contextmanager
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Annotated, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import c, e, m, p, r, t, u
 from flext_core._models._context._scope_ops import FlextContextScopeOps
@@ -35,16 +35,6 @@ class FlextContext(FlextContextScopeOps, m.ManagedModel):
         validate_assignment=False,
         arbitrary_types_allowed=True,
     )
-
-    data: Annotated[
-        m.ConfigMap,
-        m.Field(description="Scoped key-value payload for this context instance."),
-    ] = m.Field(default_factory=lambda: m.ConfigMap(root={}))
-
-    metadata: Annotated[
-        m.Metadata,
-        m.Field(description="Correlation and service metadata snapshot."),
-    ] = m.Field(default_factory=m.Metadata)
 
     _container_state: ClassVar[m.ContextContainerState] = m.ContextContainerState()
 

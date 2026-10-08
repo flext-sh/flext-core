@@ -6,17 +6,27 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Self
+from typing import Annotated, Self
 
-from flext_core import p, r, t, u
+from flext_core import m, p, r, t, u
 
 
-class FlextContextScopeOps:
+class FlextContextScopeOps(m.ManagedModel):
     """Instance-scope operations shared by the ``FlextContext`` model.
 
     Scope store operations: set/get/has/keys/values/items, metadata
     helpers, and clone/merge/export transforms.
     """
+
+    data: Annotated[
+        m.ConfigMap,
+        m.Field(description="Scoped key-value payload for this context instance."),
+    ] = m.Field(default_factory=lambda: m.ConfigMap(root={}))
+
+    metadata: Annotated[
+        m.Metadata,
+        m.Field(description="Correlation and service metadata snapshot."),
+    ] = m.Field(default_factory=m.Metadata)
 
     def set(self, key: str, value: t.JsonPayload) -> p.Result[bool]:
         """Store a value in this context's scope.

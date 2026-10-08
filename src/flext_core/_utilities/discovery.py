@@ -254,7 +254,7 @@ class FlextUtilitiesDiscovery:
         annotation: t.TypeHintSpecifier,
         *,
         subscript: bool = False,
-    ) -> t.TypeHintSpecifier:
+    ) -> type:
         """Resolve an annotation to its object without ``eval``.
 
         The module declares ``from __future__ import annotations`` (fleet law),
@@ -264,7 +264,7 @@ class FlextUtilitiesDiscovery:
         rest by attribute. ``subscript`` resolves the origin of ``X[...]``.
 
         Returns:
-            The resulting ``t.TypeHintSpecifier``.
+            The resolved class consumed by request and result validation.
 
         """
         error = FlextUtilitiesDiscovery._error
@@ -281,7 +281,11 @@ class FlextUtilitiesDiscovery:
             node = node.value
         if not isinstance(node, ast.Name):
             raise error(where, annotation, c.ERR_SERVICE_OPERATION_NAME)
-        namespace = ChainMap(func.__globals__, func.__builtins__)
+        # FunctionType owns this runtime descriptor, absent from its typing stub.
+        namespace = ChainMap(
+            func.__globals__,
+            operator.attrgetter("__builtins__")(func),
+        )
         if node.id not in namespace:
             raise error(where, annotation, c.ERR_SERVICE_OPERATION_UNBOUND)
         resolved = namespace[node.id]
@@ -291,6 +295,13 @@ class FlextUtilitiesDiscovery:
             except AttributeError as exc:
                 defect = c.ERR_SERVICE_OPERATION_UNBOUND
                 raise error(where, annotation, defect) from exc
+        if not isinstance(resolved, type):
+            defect = (
+                c.ERR_SERVICE_OPERATION_RESULT
+                if subscript
+                else c.ERR_SERVICE_OPERATION_REQUEST
+            )
+            raise error(where, annotation, defect)
         return resolved
 
     @staticmethod

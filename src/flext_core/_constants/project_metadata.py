@@ -20,6 +20,5 @@ class FlextConstantsProjectMetadata:
         ("flext", "FlextRoot"),
         ("flext-core", "Flext"),
     )
-    PYPROJECT_FILENAME: Final[str] = "pyproject.toml"
     PROJECT_VERSION_PLACEHOLDER: Final[str] = "0.0.0"
     METADATA_SCHEMA_VERSION_DEFAULT: Final[str] = "1.0.0"
