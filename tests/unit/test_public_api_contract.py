@@ -90,7 +90,9 @@ class TestsFlextCorePublicApiContract:
         )
         resolver = namespace["__getattr__"]
         assert callable(resolver)
-        assert resolver("Counter").__name__ == "Counter"
+        counter = resolver("Counter")
+        assert isinstance(counter, type)
+        assert counter.__name__ == "Counter"
 
     @staticmethod
     @pytest.mark.parametrize("name", _FACADES)

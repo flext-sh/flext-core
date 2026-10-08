@@ -30,12 +30,12 @@ class TestsFlextCoreSettings:
         @staticmethod
         def setup_method() -> None:
             """Provide ``setup_method``."""
-            FlextSettings.reapply_app_namespace()
+            FlextSettings.reset_app_namespace()
 
         @staticmethod
         def teardown_method() -> None:
             """Provide ``teardown_method``."""
-            FlextSettings.reapply_app_namespace()
+            FlextSettings.reset_app_namespace()
 
         @staticmethod
         def test_base_default_derives_flext_namespace() -> None:
@@ -118,7 +118,7 @@ class TestsFlextCoreSettings:
 
                 cli_settings = _CliSettings.fetch_global()
                 meltano_settings = _MeltanoSettings.fetch_global()
-                FlextSettings.apply_app_namespace("flext-tap-oracle")
+                FlextSettings.set_app_namespace("flext-tap-oracle")
 
                 expected = (
                     Path("/xdg/cache/flext-tap-oracle"),
@@ -139,8 +139,8 @@ class TestsFlextCoreSettings:
         @staticmethod
         def test_application_namespace_is_first_wins() -> None:
             """A later library bootstrap cannot replace the outer identity."""
-            FlextSettings.apply_app_namespace("flext-tap-oracle")
-            FlextSettings.apply_app_namespace("flext-cli")
+            FlextSettings.set_app_namespace("flext-tap-oracle")
+            FlextSettings.set_app_namespace("flext-cli")
             assert FlextSettings.fetch_global().work_dir.name == "flext-tap-oracle"
 
         @staticmethod
@@ -173,7 +173,7 @@ class TestsFlextCoreSettings:
         def test_computed_directories_serialize_with_current_application() -> None:
             """Pydantic serialization exposes current application dirs."""
             settings = FlextSettings.fetch_global()
-            FlextSettings.apply_app_namespace("flext-tap-oracle")
+            FlextSettings.set_app_namespace("flext-tap-oracle")
             dumped = settings.model_dump()
             assert Path(str(dumped["cache_dir"])).name == "flext-tap-oracle"
             assert Path(str(dumped["config_dir"])).name == "flext-tap-oracle"
@@ -206,7 +206,7 @@ class TestsFlextCoreSettings:
             with u.Tests.env_vars_context(
                 env_vars={"FLEXT_TAP_ORACLE_WORK_DIR": str(override)},
             ):
-                FlextSettings.apply_app_namespace("flext-tap-oracle")
+                FlextSettings.set_app_namespace("flext-tap-oracle")
                 assert FlextSettings.fetch_global().work_dir == override
 
         @staticmethod
@@ -217,7 +217,7 @@ class TestsFlextCoreSettings:
                 env_vars={"FLEXT_WORK_DIR": str(work_dir)},
                 vars_to_clear=("XDG_RUNTIME_DIR",),
             ):
-                FlextSettings.apply_app_namespace("flext")
+                FlextSettings.set_app_namespace("flext")
                 FlextSettings.reset_for_testing()
                 assert FlextSettings.fetch_global().runtime_dir == work_dir / "run"
             FlextSettings.reset_for_testing()
@@ -232,7 +232,7 @@ class TestsFlextCoreSettings:
                     "FLEXT_RUNTIME_DIR": str(runtime_dir),
                 },
             ):
-                FlextSettings.apply_app_namespace("flext")
+                FlextSettings.set_app_namespace("flext")
                 FlextSettings.reset_for_testing()
                 assert FlextSettings.fetch_global().runtime_dir == runtime_dir
             FlextSettings.reset_for_testing()
@@ -243,7 +243,7 @@ class TestsFlextCoreSettings:
             with u.Tests.env_vars_context(
                 env_vars={"FLEXT_TAP_ORACLE_STATE_DIR": "relative-state"},
             ):
-                FlextSettings.apply_app_namespace("flext-tap-oracle")
+                FlextSettings.set_app_namespace("flext-tap-oracle")
                 with pytest.raises(ValueError, match="must be absolute"):
                     _ = FlextSettings.fetch_global().state_dir
 
