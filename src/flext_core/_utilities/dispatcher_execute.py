@@ -88,7 +88,10 @@ class FlextUtilitiesDispatcherExecute:
         route_name: str,
         logger: p.Logger,
     ) -> p.Result[t.JsonPayload]:
-        """Execute ``resolved_handler(message)`` and adapt the outcome to ``r[JsonPayload]``.
+        """Execute the resolved handler and adapt its outcome.
+
+        Calls ``resolved_handler(message)`` and adapts the result to
+        ``r[JsonPayload]``.
 
         The handler may return either an ``r[T]`` instance (Result-like
         canonical) or a raw payload (container or Pydantic model). All other

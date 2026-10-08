@@ -131,7 +131,9 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
         filter_keys: set[str] | None = None,
         exclude_keys: set[str] | None = None,
     ) -> p.Result[t.JsonMapping]:
-        """Apply normalize/strip_none/strip_empty/map_keys/filter_keys/exclude_keys to a dict.
+        """Apply normalize/strip_none/strip_empty/map_keys/
+
+        filter_keys/exclude_keys to a dict.
 
         Returns:
             The resulting ``p.Result[t.JsonMapping]``.

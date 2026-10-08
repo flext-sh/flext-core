@@ -44,7 +44,10 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingContextPart01):
 
     @staticmethod
     def _calling_frame() -> types.FrameType | None:
-        """Walk the stack backward and return the first frame outside the logging machinery.
+        """Return the first frame outside the logging machinery.
+
+        Walks the stack backward to find the first caller frame that is
+        not part of the logging machinery.
 
         Generic: skips any frame whose source file path matches one of
         ``c.LOGGING_INTERNAL_PATH_FRAGMENTS``. The first frame outside is the

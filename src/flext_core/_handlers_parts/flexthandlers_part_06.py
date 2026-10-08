@@ -101,7 +101,9 @@ class FlextHandlers[MessageT_contra, ResultT](
         return CallableHandler(handler_fn=handler_callable, settings=settings)
 
     def __call__(self, message: MessageT_contra) -> p.Result[ResultT]:
-        """Callable interface — auto-scopes correlation ID when _auto_context_scope=True.
+        """Callable interface for the scoped handler wrapper.
+
+        Auto-scopes the correlation ID when ``_auto_context_scope=True``.
 
         Returns:
             The resulting ``p.Result[ResultT]``.

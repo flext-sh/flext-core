@@ -114,7 +114,10 @@ class FlextProtocolsService:
 
     @runtime_checkable
     class DispatchableService(Protocol):
-        """Structural protocol for dispatch-capable service objects in the DI container."""
+        """Structural protocol for dispatch-capable service objects.
+
+        Dispatch-capable objects live in the DI container.
+        """
 
         def dispatch(
             self,

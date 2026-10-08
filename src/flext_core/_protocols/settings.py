@@ -46,7 +46,10 @@ class FlextProtocolsSettings:
 
         @classmethod
         def fetch_global(cls, *, overrides: t.ScalarMapping | None = None) -> Self:
-            """Return the global singleton settings instance, optionally with overrides."""
+            """Return the global singleton settings instance.
+
+            Optionally applies the given overrides.
+            """
             ...
 
         def model_copy(

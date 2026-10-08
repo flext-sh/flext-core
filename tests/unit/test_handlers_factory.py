@@ -130,8 +130,10 @@ class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
         config = u.Tests.create_handler_config(
             "cfg_id",
             "ConfiguredName",
-            handler_type=c.HandlerType.EVENT,
-            handler_mode=c.HandlerType.EVENT,
+            options=u.Tests.FlextTestsHandlerConfigParams(
+                handler_type=c.HandlerType.EVENT,
+                handler_mode=c.HandlerType.EVENT,
+            ),
         )
 
         # Act
@@ -206,8 +208,10 @@ class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
         settings = u.Tests.create_handler_config(
             "test_dispatch",
             "Test Dispatch",
-            handler_type=c.HandlerType.COMMAND,
-            handler_mode=c.HandlerType.COMMAND,
+            options=u.Tests.FlextTestsHandlerConfigParams(
+                handler_type=c.HandlerType.COMMAND,
+                handler_mode=c.HandlerType.COMMAND,
+            ),
         )
         handler = self.ConcreteTestHandler(settings=settings)
 
@@ -223,8 +227,10 @@ class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
         settings = u.Tests.create_handler_config(
             "test_dispatch",
             "Test Dispatch",
-            handler_type=c.HandlerType.COMMAND,
-            handler_mode=c.HandlerType.COMMAND,
+            options=u.Tests.FlextTestsHandlerConfigParams(
+                handler_type=c.HandlerType.COMMAND,
+                handler_mode=c.HandlerType.COMMAND,
+            ),
         )
         handler = self.ConcreteTestHandler(settings=settings)
 
@@ -250,8 +256,10 @@ class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
         settings = u.Tests.create_handler_config(
             "test_mode_property",
             "Test Mode Property",
-            handler_type=c.HandlerType.COMMAND,
-            handler_mode=c.HandlerType.COMMAND,
+            options=u.Tests.FlextTestsHandlerConfigParams(
+                handler_type=c.HandlerType.COMMAND,
+                handler_mode=c.HandlerType.COMMAND,
+            ),
         )
         handler = self.ConcreteTestHandler(settings=settings)
 

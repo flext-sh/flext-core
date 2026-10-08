@@ -35,8 +35,10 @@ class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
         settings = u.Tests.create_handler_config(
             "h_query",
             "Query Handler",
-            handler_type=c.HandlerType.QUERY,
-            handler_mode=c.HandlerType.QUERY,
+            options=u.Tests.FlextTestsHandlerConfigParams(
+                handler_type=c.HandlerType.QUERY,
+                handler_mode=c.HandlerType.QUERY,
+            ),
         )
         handler = self.ConcreteTestHandler(settings=settings)
         assert handler.mode == c.HandlerType.QUERY
@@ -55,8 +57,10 @@ class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
         settings = u.Tests.create_handler_config(
             f"h_{scenario.name}",
             f"{scenario.name.title()} Handler",
-            handler_type=scenario.handler_type,
-            handler_mode=scenario.handler_mode,
+            options=u.Tests.FlextTestsHandlerConfigParams(
+                handler_type=scenario.handler_type,
+                handler_mode=scenario.handler_mode,
+            ),
         )
         handler = self.ConcreteTestHandler(settings=settings)
         assert handler.mode == scenario.handler_mode
@@ -146,7 +150,9 @@ class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
         settings = u.Tests.create_handler_config(
             "h_meta",
             "Metadata Handler",
-            metadata=m.Metadata(attributes={"priority": 1}),
+            options=u.Tests.FlextTestsHandlerConfigParams(
+                metadata=m.Metadata(attributes={"priority": 1}),
+            ),
         )
         handler = self.ConcreteTestHandler(settings=settings)
         result = handler.execute("payload")
@@ -157,7 +163,7 @@ class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
         settings = u.Tests.create_handler_config(
             "h_timeout",
             "Timeout Handler",
-            command_timeout=60,
+            options=u.Tests.FlextTestsHandlerConfigParams(command_timeout=60),
         )
         handler = self.ConcreteTestHandler(settings=settings)
         result = handler.execute("payload")
@@ -168,7 +174,7 @@ class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
         settings = u.Tests.create_handler_config(
             "h_retry",
             "Retry Handler",
-            max_command_retries=3,
+            options=u.Tests.FlextTestsHandlerConfigParams(max_command_retries=3),
         )
         handler = self.ConcreteTestHandler(settings=settings)
         result = handler.execute("payload")
