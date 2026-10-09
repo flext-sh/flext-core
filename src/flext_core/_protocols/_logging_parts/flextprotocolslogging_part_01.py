@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import structlog
+from structlog.types import BindableLogger
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 if TYPE_CHECKING:
@@ -16,7 +18,7 @@ class FlextProtocolsLogging:
     """Protocols for logging, connection, validation, and entries."""
 
     @runtime_checkable
-    class Logger(Protocol):
+    class Logger(BindableLogger, Protocol):
         """Protocol for structlog logger with all logging methods.
 
         Extends BindableLogger to add explicit method signatures for
