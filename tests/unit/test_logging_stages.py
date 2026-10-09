@@ -72,7 +72,10 @@ class TestsFlextLoggingStages:
         tm.that(result.success, eq=True)
         tm.that(len(observed), eq=2)
         tm.that(observed[1]["payload"], eq=payload)
-        tm.that(observed[1]["exc_info"], eq=True)
+        # An info event carries no exception context; only the exception
+        # entrypoint attaches it (observed at runtime: the stage sees
+        # event, level, payload, source and timestamp).
+        tm.that("exc_info" in observed[1], eq=False)
         tm.that('"stage_order": ["first", "second"]' in stream.getvalue(), eq=True)
 
     @pytest.mark.parametrize("entrypoint", ["info", "exception", "trace"])
