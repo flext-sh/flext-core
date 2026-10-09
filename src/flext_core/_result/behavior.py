@@ -17,8 +17,7 @@ if TYPE_CHECKING:
     from flext_core import t
 
 _RESULT_FACTORY_CONTRACT: t.VariadicTuple[str] = (
-    "reject_banned_result_parameterization",
-    "reject_banned_success_payload",
+    "create_success",
     "require_error",
     "fail",
     "from_result",
