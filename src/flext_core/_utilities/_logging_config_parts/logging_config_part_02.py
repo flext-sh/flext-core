@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import logging
 import sys
+from typing import TextIO, cast
 
 import structlog
 from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
@@ -172,7 +173,9 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
             return None
         if cls._async_writer is None:
             cls._async_writer = cls._AsyncLogWriter(sys.stdout)
-        return structlog.PrintLoggerFactory(file=cls._async_writer)
+        return structlog.PrintLoggerFactory(
+            file=cast("TextIO", cls._async_writer),
+        )
 
 
 __all__: list[str] = ["FlextUtilitiesLoggingConfig"]

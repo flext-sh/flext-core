@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
+from structlog.types import BindableLogger
+
 if TYPE_CHECKING:
     from flext_core import t
 
@@ -16,7 +18,7 @@ class FlextProtocolsLogging:
     """Protocols for logging, connection, validation, and entries."""
 
     @runtime_checkable
-    class Logger(Protocol):
+    class Logger(BindableLogger, Protocol):
         """Protocol for structlog logger with all logging methods.
 
         Extends BindableLogger to add explicit method signatures for
