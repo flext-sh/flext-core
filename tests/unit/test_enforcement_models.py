@@ -65,10 +65,9 @@ class TestsFlextEnforcementModels:
             data: Annotated[
                 t.StrMapping,
                 m.Field(
-                    default_factory=lambda: MappingProxyType[str, str]({}),
                     description="d",
                 ),
-            ]
+            ] = m.Field(default_factory=lambda: MappingProxyType[str, str]({}))
 
         assert not messages(u.check(_M), fragment="bare ")
 
@@ -77,10 +76,9 @@ class TestsFlextEnforcementModels:
         """Test mutable sequence list factory passes."""
 
         class _M(m.ArbitraryTypesModel):
-            items: Annotated[
-                MutableSequence[str],
-                m.Field(default_factory=list, description="d"),
-            ]
+            items: Annotated[MutableSequence[str], m.Field(description="d")] = m.Field(
+                default_factory=list
+            )
 
         assert not messages(u.check(_M), fragment="read-only field contract")
 
@@ -107,10 +105,9 @@ class TestsFlextEnforcementModels:
             items: Annotated[
                 t.MutableJsonMapping,
                 m.Field(
-                    default_factory=lambda: MappingProxyType[str, t.JsonValue]({}),
                     description="Mutable JSON mapping contract.",
                 ),
-            ]
+            ] = m.Field(default_factory=dict)
 
         assert not messages(u.check(_M), fragment="read-only field contract")
 
@@ -119,10 +116,9 @@ class TestsFlextEnforcementModels:
         """Test sequence list factory detected."""
 
         class _M(m.ArbitraryTypesModel):
-            items: Annotated[
-                t.StrSequence,
-                m.Field(default_factory=list, description="d"),
-            ]
+            items: Annotated[t.StrSequence, m.Field(description="d")] = m.Field(
+                default_factory=list
+            )
 
         assert messages(u.check(_M), fragment="read-only field contract")
 
