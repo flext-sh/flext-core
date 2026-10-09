@@ -83,6 +83,7 @@ dev = [
   "mkdocs-section-index>=0.3.12",
   "mkdocstrings>=1.0.6",
   "mkdocstrings-python>=2.0.8",
+  "msgpack-types",
   "mypy>=2.3.1",
   "platformdirs>=4.12.0",
   "pymdown-extensions",
@@ -106,6 +107,7 @@ dev = [
   "types-defusedxml>=0.7.0.20260504",
   "types-docker>=7.2.0.20260827",
   "types-flask>=1.1.6",
+  "types-grpcio",
   "types-jsonschema>=4.26.0.20260518",
   "types-ldap3>=2.9.13.20260827",
   "types-openpyxl>=3.1.5.20260827",
@@ -471,9 +473,9 @@ runtime-evaluated-base-classes = [
   "examples.ex_08_container_scoped.Ex08ContainerScoped",
   "examples.ex_12_registry_flow.Ex12RegistryFlow",
   "examples.ex_12_registry_plugins.Ex12RegistryPlugins",
-  "examples.models.m.BaseModel",
-  "examples.models.m.Examples.Handle",
-  "examples.models.m.Examples.Person",
+  "examples.m.BaseModel",
+  "examples.m.Examples.Handle",
+  "examples.m.Examples.Person",
   "examples.shared.ExamplesFlextShared",
   "flext_core.FlextModels.BaseModel",
   "flext_core.FlextSettings",
@@ -557,13 +559,13 @@ runtime-evaluated-base-classes = [
   "tests._utilities.railway_services.TestsFlextUtilitiesRailwayServicesMixin.GetUserService",
   "tests._utilities.services.ValidatingService",
   "tests.base.s",
-  "tests.models.m.ArbitraryTypesModel",
-  "tests.models.m.BaseModel",
-  "tests.models.m.BaseSettings",
-  "tests.models.m.Entity",
-  "tests.models.m.FlexibleModel",
-  "tests.models.m.FrozenValueModel",
-  "tests.models.m.Value",
+  "tests.m.ArbitraryTypesModel",
+  "tests.m.BaseModel",
+  "tests.m.BaseSettings",
+  "tests.m.Entity",
+  "tests.m.FlexibleModel",
+  "tests.m.FrozenValueModel",
+  "tests.m.Value",
   "tests.unit._models.test_pydantic_facade._Item",
   "tests.unit.test_service_operations.ReadSide",
   "tests.unit.test_service_operations.WriteSide",
@@ -594,12 +596,12 @@ known-first-party = ["flext_core"]
 split-on-trailing-comma = false
 
 [tool.ruff.lint.per-file-ignores]
-"**/__init__.py" = ["line-too-long", "non-empty-init-module", "unused-import"]
-"**/_config.py" = ["invalid-function-name"]
-"**/_utilities/credential.py" = [
+"**/.agents/skills/webapp-testing/scripts/with_server.py" = [
   "subprocess-without-shell-equals-true",
   "suspicious-subprocess-import",
 ]
+"**/__init__.py" = ["line-too-long", "non-empty-init-module", "unused-import"]
+"**/_config.py" = ["invalid-function-name"]
 "**/bin/**" = [
   "docstring-missing-exception",
   "docstring-missing-returns",
@@ -608,16 +610,9 @@ split-on-trailing-comma = false
   "magic-value-comparison",
   "missing-copyright-notice",
   "print",
-  "start-process-with-partial-path",
-  "subprocess-without-shell-equals-true",
-  "suspicious-subprocess-import",
   "type-check-without-type-error",
   "undocumented-public-method",
   "unused-class-method-argument",
-]
-"**/bootstrap.py" = [
-  "subprocess-without-shell-equals-true",
-  "suspicious-subprocess-import",
 ]
 "**/docx.py" = ["import-outside-top-level"]
 "**/file_test_helpers.py" = ["line-too-long"]
@@ -641,12 +636,7 @@ split-on-trailing-comma = false
   "pytest-fixture-autouse",
   "too-many-public-methods",
 ]
-"**/tests/python/**" = [
-  "raise-vanilla-args",
-  "start-process-with-partial-path",
-  "subprocess-without-shell-equals-true",
-  "suspicious-subprocess-import",
-]
+"**/tests/python/**" = ["raise-vanilla-args"]
 "**/xlsx.py" = ["import-outside-top-level"]
 "scripts/**" = [
   "any-type",
@@ -686,9 +676,6 @@ split-on-trailing-comma = false
   "repeated-append",
   "runtime-cast-value",
   "shebang-not-executable",
-  "start-process-with-partial-path",
-  "subprocess-without-shell-equals-true",
-  "suspicious-subprocess-import",
   "undocumented-public-class",
   "undocumented-public-function",
   "undocumented-public-init",
@@ -706,6 +693,14 @@ split-on-trailing-comma = false
   "commented-out-code",
   "line-too-long",
   "typing-only-first-party-import",
+]
+"src/flext_cli/_utilities/processes.py" = [
+  "subprocess-without-shell-equals-true",
+  "suspicious-subprocess-import",
+]
+"src/flext_cli/_utilities/runtime.py" = [
+  "subprocess-without-shell-equals-true",
+  "suspicious-subprocess-import",
 ]
 "tests/**/*.py" = ["assert"]
 "tests/test_snapshot_drill.py" = ["import-private-name"]
