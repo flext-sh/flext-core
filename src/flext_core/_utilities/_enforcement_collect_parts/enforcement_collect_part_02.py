@@ -38,7 +38,15 @@ class FlextUtilitiesEnforcementCollect(part_01.FlextUtilitiesEnforcementCollect)
         target: type,
         qn: str,
     ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
+        # A method name is judged at the class that introduces it. An override
+        # keeps the contract its base declares: a FLEXT base is judged at its
+        # own declaration, and a foreign base's name (rope's
+        # Project.get_source_folders, pydantic's get_field_value) is that
+        # library's contract, which no rename can change.
+        inherited = {name for base in target.__mro__[1:] for name in vars(base)}
         for name, value in vars(target).items():
+            if name in inherited:
+                continue
             if inspect.isfunction(value) or isinstance(
                 value,
                 (classmethod, staticmethod),

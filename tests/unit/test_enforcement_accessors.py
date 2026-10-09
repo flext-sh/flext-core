@@ -12,6 +12,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import string
+
 import pytest
 
 from flext_core.utilities import FlextUtilitiesBeartypeEngine
@@ -73,6 +75,48 @@ class TestsFlextCoreEnforcementAccessors:
         # Assert — public location fields point back at the target.
         assert accessor.qualname == "FlextCoreAccessedGet"
         assert accessor.message.startswith("FlextCoreAccessedGet.get_user")
+
+    @staticmethod
+    def test_override_of_a_foreign_contract_keeps_its_name() -> None:
+        # Arrange — stdlib string.Formatter declares get_value; a subclass
+        # overriding it cannot rename a name the library calls.
+        """Test override of a foreign contract keeps its name."""
+        cls = type(
+            "FlextCoreFormatter",
+            (string.Formatter,),
+            {"get_value": synthetic_method},
+        )
+        cls.__qualname__ = cls.__name__
+        cls.__module__ = "flext_core.synthetic"
+
+        # Act
+        accessor = [
+            v for v in u.check(cls).violations if _ACCESSOR_FRAGMENT in v.message
+        ]
+
+        # Assert
+        assert not accessor, "an override of a foreign contract is not an accessor"
+
+    @staticmethod
+    def test_accessor_is_judged_once_at_the_introducing_class() -> None:
+        # Arrange — the base introduces get_user; the subclass overrides it.
+        """Test accessor is judged once at the introducing class."""
+        base = make_class("FlextCoreAccessedBase", {"get_user": synthetic_method})
+        child = type("FlextCoreAccessedChild", (base,), {"get_user": synthetic_method})
+        child.__qualname__ = child.__name__
+        child.__module__ = "flext_core.synthetic"
+
+        # Act
+        on_base = [
+            v for v in u.check(base).violations if _ACCESSOR_FRAGMENT in v.message
+        ]
+        on_child = [
+            v for v in u.check(child).violations if _ACCESSOR_FRAGMENT in v.message
+        ]
+
+        # Assert — reported where the name is introduced, never re-reported.
+        assert on_base
+        assert not on_child
 
     @staticmethod
     def test_bare_collection_field_is_flagged() -> None:
