@@ -124,21 +124,16 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
         """Validated option envelope for the ``transform`` value pipeline."""
 
         normalize: Annotated[
-            bool,
-            m.Field(default=False, description="Normalize values to metadata form"),
-        ]
-        strip_none: Annotated[
-            bool,
-            m.Field(default=False, description="Strip ``None`` values"),
-        ]
-        strip_empty: Annotated[
-            bool,
-            m.Field(default=False, description="Strip empty values"),
-        ]
+            bool, m.Field(description="Normalize values to metadata form")
+        ] = False
+        strip_none: Annotated[bool, m.Field(description="Strip ``None`` values")] = (
+            False
+        )
+        strip_empty: Annotated[bool, m.Field(description="Strip empty values")] = False
         map_keys: Annotated[
             t.StrMapping | None,
-            m.Field(default=None, description="Optional old-key to new-key mapping"),
-        ]
+            m.Field(description="Optional old-key to new-key mapping"),
+        ] = None
 
     @staticmethod
     def agg[T](

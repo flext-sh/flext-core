@@ -23,17 +23,14 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
         """Validated context envelope for one path-part extraction step."""
 
         path_context: Annotated[
-            str,
-            m.Field(default="", description="Resolved parent path context"),
-        ]
+            str, m.Field(description="Resolved parent path context")
+        ] = ""
         default: Annotated[
-            t.JsonPayload | None,
-            m.Field(default=None, description="Default fallback payload"),
-        ]
+            t.JsonPayload | None, m.Field(description="Default fallback payload")
+        ] = None
         required: Annotated[
-            bool,
-            m.Field(default=False, description="Whether missing values are fatal"),
-        ]
+            bool, m.Field(description="Whether missing values are fatal")
+        ] = False
 
     @staticmethod
     def _extract_fail_or_default(
