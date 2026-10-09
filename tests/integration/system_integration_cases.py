@@ -1,4 +1,8 @@
-"""System integration helper cases kept below the module LOC cap."""
+"""System integration helper cases kept below the module LOC cap.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -6,24 +10,24 @@ from typing import TYPE_CHECKING
 
 from flext_tests import r, tm
 
-from tests.constants import c
-from tests.typings import t
-from tests.utilities import u
+from tests import c, t, u
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextFlextSystemWorkflowCases:
     """Exercise composed system workflow behavior."""
 
-    def _test_complex_integration(self) -> None:
+    @staticmethod
+    def _test_complex_integration() -> None:
         """Test complex integration scenarios."""
 
         def processar_dados_usuario(dados: t.StrMapping) -> p.Result[t.StrMapping]:
             if not dados:
                 return r[t.StrMapping].fail(
-                    "Dados não fornecidos", error_code=c.ErrorCode.VALIDATION_ERROR
+                    "Dados não fornecidos",
+                    error_code=c.ErrorCode.VALIDATION_ERROR,
                 )
             dados_processados: t.MutableStrMapping = {}
             for key, value in dados.items():
@@ -53,11 +57,12 @@ class TestsFlextFlextSystemWorkflowCases:
         tm.that(resultado_erro.error, none=False)
         tm.that(tm.not_none(resultado_erro.error), has="não pode estar vazio")
 
-    def _test_error_recovery(self) -> None:
+    @staticmethod
+    def _test_error_recovery() -> None:
         """Test error recovery scenarios."""
         resultado_com_erro: p.Result[str] = r[str].fail("erro_original")
         resultado_recuperado = resultado_com_erro.lash(
-            lambda _error: r[str].ok("valor_recuperado")
+            lambda _error: r[str].ok("valor_recuperado"),
         )
         tm.that(resultado_recuperado.success, eq=True)
         tm.that(resultado_recuperado.value, eq="valor_recuperado")

@@ -1,14 +1,33 @@
-"""Type and module introspection helpers — annotation inspection + bytecode analysis."""
+"""Type and module introspection helpers — annotation inspection + bytecode analysis.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 import functools
 import importlib
 import sys
-from typing import TYPE_CHECKING, Any, TypeAliasType, get_args, get_origin
+from types import ModuleType
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    TypeAliasType,
+    cast,
+    get_args,
+    get_origin,
+    is_protocol,
+)
+
+from flext_core._models import FlextModelsEnforcement
+from flext_core._utilities import (
+    FlextUtilitiesBeartypeTypeAliases,
+    FlextUtilitiesFamilySurface,
+)
 
 if TYPE_CHECKING:
-    from ...._typings.base import FlextTypingBase as t
+    from flext_core._typings.base import FlextTypingBase
 
 
 class FlextUtilitiesBeartypeHelpers:
@@ -24,19 +43,20 @@ class FlextUtilitiesBeartypeHelpers:
     @staticmethod
     @functools.cache
     def lazy_alias_suffixes(package_name: str) -> tuple[tuple[str, str, str], ...]:
-        """Return ``(alias, module_path, suffix)`` rows from package ``_LAZY_IMPORTS``."""
+        """Read package lazy exports; import failures retain their original cause.
+
+        Returns:
+            The resulting ``tuple[tuple[str, str, str], ...]``.
+
+        """
         package = sys.modules.get(package_name)
         if package is None:
-            try:
-                package = importlib.import_module(package_name)
-            except (ImportError, ModuleNotFoundError):
-                return ()
-        if not hasattr(package, "_LAZY_IMPORTS"):
+            package = importlib.import_module(package_name)
+        published = vars(package).get("_LAZY_IMPORTS")
+        if published is None:
             return ()
         lazy_module = importlib.import_module("flext_core.lazy")
-        lazy_imports = lazy_module.normalize_lazy_imports(
-            package.__name__, package.__dict__["_LAZY_IMPORTS"]
-        )
+        lazy_imports = lazy_module.normalize_lazy_imports(package.__name__, published)
         return tuple(
             (
                 alias,
@@ -50,30 +70,90 @@ class FlextUtilitiesBeartypeHelpers:
 
     @staticmethod
     def runtime_alias_names(package_name: str) -> frozenset[str]:
-        """Return runtime alias names derived from generated lazy exports."""
+        """Return runtime alias names derived from generated lazy exports.
+
+        Returns:
+            Runtime alias names derived from generated lazy exports.
+
+        """
         return frozenset(
             alias
             for alias, _, _ in FlextUtilitiesBeartypeHelpers.lazy_alias_suffixes(
-                package_name
+                package_name,
             )
         )
 
     @staticmethod
     def facade_module_names(package_name: str) -> frozenset[str]:
-        """Return local facade module names derived from generated lazy exports."""
+        """Return local facade module names derived from generated lazy exports.
+
+        Returns:
+            Local facade module names derived from generated lazy exports.
+
+        """
+        h = FlextUtilitiesBeartypeHelpers
         return frozenset(
             module_path.rsplit(".", 1)[-1]
-            for _, module_path, suffix in FlextUtilitiesBeartypeHelpers.lazy_alias_suffixes(
-                package_name
+            for _, module_path, suffix in h.lazy_alias_suffixes(
+                package_name,
             )
             if module_path.split(".", 1)[0] == package_name
             and suffix in {"Constants", "Models", "Protocols", "Types", "Utilities"}
         )
 
     @staticmethod
+    def family_facade(target: type) -> bool:
+        """Return True when a family package publishes ``target`` as a letter facade.
+
+        Both facts come from their owners: the generated ``_LAZY_IMPORTS``
+        binds each one-letter alias to its class, and the family surface
+        names the packages that publish that contract.
+
+        Returns:
+            True when a family package publishes ``target`` as a letter facade.
+
+        """
+        package_name = target.__module__.split(".", 1)[0]
+        if package_name not in FlextUtilitiesFamilySurface.project_alias_owners():
+            return False
+        h = FlextUtilitiesBeartypeHelpers
+        return any(
+            vars(sys.modules[module_path]).get(alias) is target
+            for alias, module_path, _ in h.lazy_alias_suffixes(
+                package_name,
+            )
+            if module_path in sys.modules
+        )
+
+    @staticmethod
+    def resolve_type_alias_value(
+        alias: object,
+        *,
+        owner: ModuleType | type | None = None,
+    ) -> FlextTypingBase.TypeFormSpecifier | None:
+        """Return a value, or None for non-aliases and proven static-only imports.
+
+        An explicit declaring ``owner`` may prove that unavailable
+        ``TYPE_CHECKING`` imports make evaluation static-only. Without that
+        context, alias evaluation retains its original exception and traceback.
+
+        Returns:
+            A value, or None for non-aliases and proven static-only imports.
+
+        """
+        if not isinstance(alias, TypeAliasType):
+            return None
+        resolution = FlextUtilitiesBeartypeTypeAliases.resolve(alias, owner=owner)
+        if isinstance(resolution, FlextModelsEnforcement.DeferredAlias):
+            return None
+        return cast("FlextTypingBase.TypeFormSpecifier", resolution.value)
+
+    @staticmethod
     def unwrap_type_alias(
-        hint: t.TypeHintSpecifier | None,
-    ) -> t.TypeHintSpecifier | None:
+        hint: FlextTypingBase.TypeFormSpecifier | None,
+        *,
+        owner: ModuleType | type | None = None,
+    ) -> FlextTypingBase.TypeFormSpecifier | None:
         current = hint
         seen: set[int] = set()
         while isinstance(current, TypeAliasType):
@@ -81,15 +161,24 @@ class FlextUtilitiesBeartypeHelpers:
             if current_id in seen:
                 return current
             seen.add(current_id)
-            current = current.__value__
+            resolved = FlextUtilitiesBeartypeHelpers.resolve_type_alias_value(
+                current,
+                owner=owner,
+            )
+            if resolved is None:
+                return current
+            current = resolved
         return current
 
     @staticmethod
     def contains_any_recursive(
-        hint: t.TypeHintSpecifier | None, *, seen: set[int]
+        hint: FlextTypingBase.TypeFormSpecifier | None,
+        *,
+        seen: set[int],
+        owner: ModuleType | type | None = None,
     ) -> bool:
         h = FlextUtilitiesBeartypeHelpers
-        hint = h.unwrap_type_alias(hint)
+        hint = h.unwrap_type_alias(hint, owner=owner)
         if hint is None:
             return False
         hint_id = id(hint)
@@ -101,12 +190,14 @@ class FlextUtilitiesBeartypeHelpers:
         if hint is type or get_origin(hint) is type:
             return False
         return any(
-            h.contains_any_recursive(child, seen=seen) for child in get_args(hint)
+            h.contains_any_recursive(child, seen=seen, owner=owner)
+            for child in get_args(hint)
         )
 
     @staticmethod
     def has_forbidden_collection_origin(
-        hint: t.TypeHintSpecifier | None, forbidden: frozenset[str]
+        hint: FlextTypingBase.TypeFormSpecifier | None,
+        forbidden: frozenset[str],
     ) -> tuple[bool, str]:
         h = FlextUtilitiesBeartypeHelpers
         hint = h.unwrap_type_alias(hint)
@@ -120,7 +211,7 @@ class FlextUtilitiesBeartypeHelpers:
 
     @staticmethod
     def has_runtime_protocol_marker(value: type) -> bool:
-        return bool(getattr(value, "_is_protocol", False))
+        return is_protocol(value)
 
     @staticmethod
     def has_abstract_contract(value: type) -> bool:
@@ -145,8 +236,12 @@ class FlextUtilitiesBeartypeHelpers:
         Concrete Protocol implementations (e.g. ``FlextWebTransport`` inheriting
         from ``TransportPlugin``) are valid inner classes of protocol trees;
         the ``proto_inner_kind`` rule (ENFORCE-083) must not flag them.
+
+        Returns:
+            True when any base in the MRO is a runtime Protocol.
+
         """
-        return any(getattr(base, "_is_protocol", False) for base in value.__mro__[1:])
+        return any(is_protocol(base) for base in value.__mro__[1:])
 
 
 __all__: list[str] = ["FlextUtilitiesBeartypeHelpers"]

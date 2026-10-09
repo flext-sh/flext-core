@@ -1,15 +1,15 @@
 # AUTO-GENERATED — DO NOT EDIT MANUALLY
-site_name: flext-core Documentation
-site_description: Generated documentation for flext-core
+site_name: flext-core
+site_description: Workspace documentation generated from code and curated root docs
 site_url: https://github.com/flext-sh/flext-core/blob/main/README.md
-repo_name: flext-sh/flext
+repo_name: flext-sh/flext-core
 repo_url: https://github.com/flext-sh/flext-core
-edit_uri: edit/main/flext-core/
 docs_dir: docs
 site_dir: .reports/docs/site
 
 exclude_docs: |
   /README.md
+  /API/**
 
 theme:
   name: material
@@ -86,11 +86,8 @@ markdown_extensions:
   - pymdownx.tasklist:
       custom_checkbox: true
 
-nav:
-  - Home: index.md
-  - Guides: guides/README.md
-  - API Reference: api-reference/README.md
-
+# MkDocs discovers the complete documentation tree, including maintained pages.
+# A fixed three-page nav silently omitted guides, standards, and decisions.
 not_in_nav: |
   api-reference/generated/**
 validation:

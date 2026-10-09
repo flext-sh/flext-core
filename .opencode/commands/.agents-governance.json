@@ -3,9 +3,7 @@
   "destination": ".opencode/commands",
   "managed": {
     "add-language-rules.md": {
-      "activation": [
-        "route:project"
-      ],
+      "activation": ["route:project"],
       "adapter_version": 1,
       "destination": "add-language-rules.md",
       "origin": "agents:commands:opencode",
@@ -15,9 +13,7 @@
       "source_type": "command"
     },
     "database-migration.md": {
-      "activation": [
-        "route:project"
-      ],
+      "activation": ["route:project"],
       "adapter_version": 1,
       "destination": "database-migration.md",
       "origin": "agents:commands:opencode",
@@ -27,9 +23,7 @@
       "source_type": "command"
     },
     "feature-development.md": {
-      "activation": [
-        "route:project"
-      ],
+      "activation": ["route:project"],
       "adapter_version": 1,
       "destination": "feature-development.md",
       "origin": "agents:commands:opencode",
@@ -39,9 +33,7 @@
       "source_type": "command"
     },
     "ralph-loop.md": {
-      "activation": [
-        "route:project"
-      ],
+      "activation": ["route:project"],
       "adapter_version": 1,
       "destination": "ralph-loop.md",
       "origin": "agents:commands:opencode",
@@ -51,9 +43,7 @@
       "source_type": "command"
     },
     "synthesize-governance.md": {
-      "activation": [
-        "route:project"
-      ],
+      "activation": ["route:project"],
       "adapter_version": 1,
       "destination": "synthesize-governance.md",
       "origin": "agents:commands:opencode",
@@ -65,15 +55,11 @@
   },
   "owner": "agents-governance",
   "project": ".",
-  "providers": [
-    "opencode"
-  ],
+  "providers": ["opencode"],
   "selection": {
     "agents": [],
     "opt_ins": [],
-    "selected_tags": [
-      "flext"
-    ]
+    "selected_tags": ["flext"]
   },
   "surface": "commands",
   "version": 5

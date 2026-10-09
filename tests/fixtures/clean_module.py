@@ -13,10 +13,7 @@ from typing import Annotated, ClassVar, Final, Protocol, runtime_checkable
 
 from flext_tests import r
 
-from tests.models import m
-from tests.protocols import p
-from tests.typings import t
-from tests.utilities import u
+from tests import m, p, t, u
 
 
 class TestsFlextCleanModels:
@@ -31,7 +28,7 @@ class TestsFlextCleanModels:
             class GoodEntity(m.ArbitraryTypesModel):
                 """Well-formed entity."""
 
-                model_config: ClassVar[t.ConfigDict] = m.ConfigDict(extra="forbid")
+                model_config: ClassVar[m.ConfigDict] = m.ConfigDict(extra="forbid")
 
                 name: Annotated[str, u.Field(description="Entity display name.")] = ""
                 tags: Annotated[
@@ -53,8 +50,9 @@ class TestsFlextCleanModels:
             class GoodFrozenValue(m.FrozenValueModel):
                 """Frozen value object."""
 
-                model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
-                    frozen=True, extra="forbid"
+                model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+                    frozen=True,
+                    extra="forbid",
                 )
 
                 id: Annotated[str, u.Field(description="Opaque value identifier.")]
@@ -87,7 +85,8 @@ class TestsFlextCleanProtocols:
             class GoodProtocol(Protocol):
                 """Runtime-checkable protocol."""
 
-                def run(self) -> None:
+                @staticmethod
+                def run() -> None:
                     """Execute the clean protocol behavior."""
                     ...
 
@@ -95,6 +94,12 @@ class TestsFlextCleanProtocols:
 class TestsFlextCleanServiceBase:
     """Clean facade stub with no enforcement-triggering MRO requirements."""
 
-    def execute(self) -> p.Result[bool]:
-        """Return a stable success result for enforcement import tests."""
+    @staticmethod
+    def execute() -> p.Result[bool]:
+        """Return a stable success result for enforcement import tests.
+
+        Returns:
+            A stable success result for enforcement import tests.
+
+        """
         return r[bool].ok(True)

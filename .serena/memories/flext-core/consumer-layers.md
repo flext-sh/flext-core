@@ -6,7 +6,7 @@
 | --------------- | --------------------------------------------------- |
 | **Platform**    | cli, meltano, api, web, auth, grpc, plugin, quality |
 | **Infra**       | infra, tests, observability                         |
-| **Integration** | tap-*, target-*, dbt-* (inherit via platform)       |
+| **Integration** | tap-_, target-_, dbt-\* (inherit via platform)      |
 
 ## Layer Mapping
 

@@ -1,10 +1,45 @@
-"""Shared behavior contract for FlextResult."""
+"""Shared behavior contract for FlextResult.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from typing import Self, overload, override
+from typing import TYPE_CHECKING, Self, TypeIs, override
 
-from .base import FlextResultBase
+from flext_core._protocols import FlextProtocolsResult
+from flext_core._result.base import FlextResultBase
+
+if TYPE_CHECKING:
+    from types import TracebackType
+
+    from flext_core import t
+
+_RESULT_FACTORY_CONTRACT: t.VariadicTuple[str] = (
+    "reject_banned_result_parameterization",
+    "reject_banned_success_payload",
+    "require_error",
+    "fail",
+    "from_result",
+    "from_validation",
+    "failed_result",
+    "successful_result",
+)
+
+
+def _is_result_factory(
+    cls: type[object],
+) -> TypeIs[type[FlextProtocolsResult.ResultFactory]]:
+    """Narrow a class to the result factory contract after member validation.
+
+    Returns:
+        The resulting ``TypeIs[type[prt.ResultFactory]]``.
+
+    """
+    return all(
+        callable(getattr(cls, member, None)) for member in _RESULT_FACTORY_CONTRACT
+    )
 
 
 class FlextResultBehavior[T](FlextResultBase[T]):
@@ -19,12 +54,29 @@ class FlextResultBehavior[T](FlextResultBase[T]):
         if not self.success:
             error_msg = self.error or ""
             msg = f"Cannot access value of failed result: {error_msg}"
-            raise RuntimeError(msg)
+            raise RuntimeError(msg) from self._exception
         return self._payload
 
     @property
     def exception(self) -> BaseException | None:
         return self._exception
+
+    @classmethod
+    def _factory(cls) -> type[FlextProtocolsResult.ResultFactory]:
+        """Return the concrete MRO only after structural factory validation.
+
+        Returns:
+            The concrete MRO only after structural factory validation.
+
+        Raises:
+            TypeError: If ``not _is_result_factory(factory_cls)``.
+
+        """
+        factory_cls: type[object] = cls
+        if not _is_result_factory(factory_cls):
+            msg = f"{cls.__name__} does not implement the result factory contract"
+            raise TypeError(msg)
+        return factory_cls
 
     def __enter__(self) -> Self:
         return self
@@ -33,15 +85,11 @@ class FlextResultBehavior[T](FlextResultBase[T]):
         self,
         _exc_type: type[BaseException] | None,
         _exc_val: BaseException | None,
-        _exc_tb: object,
+        _exc_tb: TracebackType | None,
     ) -> None:
         pass
 
-    @overload
-    def __or__(self, default: T) -> T: ...
-    @overload
-    def __or__[D](self, default: D) -> T | D: ...
-    def __or__[D](self, default: T | D) -> T | D:
+    def __or__[D](self, default: D) -> T | D:
         if self.success:
             return self._payload
         return default

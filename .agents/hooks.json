@@ -2,7 +2,7 @@
   "aihub-governance": {
     "PreInvocation": [
       {
-        "command": "python3 /home/marlonsc/flext/flext-core/.agents/aihub-hooks/antigravity-preinvocation.py",
+        "command": "python3 ~/flext/flext-core/.agents/aihub-hooks/antigravity-preinvocation.py",
         "timeout": 10,
         "type": "command"
       }

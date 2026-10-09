@@ -8,7 +8,6 @@ Exercises the OBSERVABLE public behavior consumers depend on:
   ``extra="forbid"``, nested ``project`` PEP 621 data and derived
   ``package_name`` / ``class_stem`` fields.
 - ``m.ProjectToolFlext`` public sub-table defaults.
-- ``c.PYPROJECT_FILENAME`` public constant value.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -20,9 +19,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.constants import c
-from tests.models import m
-from tests.utilities import u
+from tests import c, m, u
 
 
 class TestsFlextFacadeFlatSsotAccess:
@@ -32,27 +29,39 @@ class TestsFlextFacadeFlatSsotAccess:
     this symbol by name and are out of edit scope.)
     """
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("project_name", "expected_stem"),
         [
-            ("flext-core", "Flext"),
-            ("flext", "FlextRoot"),
-            ("FLEXT-CORE", "Flext"),
-            ("flext-ldif", "FlextLdif"),
-            ("flext-api-client", "FlextApiClient"),
+            ("acme-widget", "AcmeWidget"),
+            ("acme-api-client", "AcmeApiClient"),
             ("a-b-c", "ABC"),
             ("--leading--", "Leading"),
         ],
     )
-    def test_derive_class_stem_applies_overrides_then_pascalizes(
-        self, project_name: str, expected_stem: str
+    def test_derive_class_stem_pascalizes_unlisted_names(
+        project_name: str,
+        expected_stem: str,
     ) -> None:
+        """Test derive class stem pascalizes unlisted names."""
         assert u.derive_class_stem(project_name) == expected_stem
 
-    def test_derive_class_stem_is_case_insensitive_for_overrides(self) -> None:
-        assert u.derive_class_stem("Flext-Core") == u.derive_class_stem("flext-core")
+    @staticmethod
+    @pytest.mark.parametrize(
+        ("project_name", "declared_stem"),
+        c.SPECIAL_NAME_OVERRIDES,
+    )
+    def test_derive_class_stem_honours_declared_overrides_case_insensitively(
+        project_name: str,
+        declared_stem: str,
+    ) -> None:
+        """Test derive class stem honours declared overrides case insensitively."""
+        assert u.derive_class_stem(project_name) == declared_stem
+        assert u.derive_class_stem(project_name.upper()) == declared_stem
 
-    def test_derive_class_stem_returns_empty_for_empty_name(self) -> None:
+    @staticmethod
+    def test_derive_class_stem_returns_empty_for_empty_name() -> None:
+        """Test derive class stem returns empty for empty name."""
         assert u.derive_class_stem("") == ""
 
     @staticmethod
@@ -68,8 +77,10 @@ class TestsFlextFacadeFlatSsotAccess:
         return m.ProjectMetadata.model_validate(payload)
 
     def test_project_metadata_exposes_declared_field_values(
-        self, tmp_path: Path
+        self,
+        tmp_path: Path,
     ) -> None:
+        """Test project metadata exposes declared field values."""
         metadata = self._metadata(tmp_path)
 
         assert metadata.package_name == "flext_ldif"
@@ -78,12 +89,15 @@ class TestsFlextFacadeFlatSsotAccess:
         assert metadata.project.version == "1.2.3"
 
     def test_project_metadata_is_immutable(self, tmp_path: Path) -> None:
+        """Test project metadata is immutable."""
         metadata = self._metadata(tmp_path)
 
         with pytest.raises(m.ValidationError):
             metadata.package_name = "other"
 
-    def test_project_metadata_rejects_unknown_field(self, tmp_path: Path) -> None:
+    @staticmethod
+    def test_project_metadata_rejects_unknown_field(tmp_path: Path) -> None:
+        """Test project metadata rejects unknown field."""
         with pytest.raises(m.ValidationError):
             m.ProjectMetadata.model_validate({
                 "root": tmp_path,
@@ -95,20 +109,21 @@ class TestsFlextFacadeFlatSsotAccess:
             })
 
     def test_project_metadata_model_dump_exposes_public_fields(
-        self, tmp_path: Path
+        self,
+        tmp_path: Path,
     ) -> None:
+        """Test project metadata model dump exposes public fields."""
         dumped = self._metadata(tmp_path).model_dump()
 
         assert dumped["package_name"] == "flext_ldif"
         assert dumped["class_stem"] == "FlextLdif"
         assert dumped["project"]["name"] == "flext-ldif"
 
-    def test_tool_flext_root_builds_default_subtables(self) -> None:
+    @staticmethod
+    def test_tool_flext_root_builds_default_subtables() -> None:
+        """Test tool flext root builds default subtables."""
         tool = m.ProjectToolFlext()
 
         assert tool.project is not None
         assert tool.docs is not None
         assert tool.workspace is not None
-
-    def test_pyproject_filename_constant(self) -> None:
-        assert c.PYPROJECT_FILENAME == "pyproject.toml"

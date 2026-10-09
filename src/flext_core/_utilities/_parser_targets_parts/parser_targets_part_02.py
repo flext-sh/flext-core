@@ -1,19 +1,24 @@
-"""Per-target parsing helpers (direct/enum/model/primitive)."""
+"""Per-target parsing helpers (direct/enum/model/primitive).
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from contextlib import suppress
 from typing import TYPE_CHECKING
 
 from flext_core import c, t
-
-from ..model import FlextUtilitiesModel
-from .parser_targets_part_01 import (
+from flext_core._utilities import FlextUtilitiesModel
+from flext_core._utilities._parser_targets_parts.parser_targets_part_01 import (
     FlextUtilitiesParserTargets as FlextUtilitiesParserTargetsPart01,
 )
 
 if TYPE_CHECKING:
-    from ..parser_coerce import FlextUtilitiesParserCoerce
+    from collections.abc import Callable, Mapping
+
+    from flext_core import p
+    from flext_core._utilities.parser_coerce import FlextUtilitiesParserCoerce
 
 
 class FlextUtilitiesParserTargets(FlextUtilitiesParserTargetsPart01):
@@ -24,20 +29,30 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserTargetsPart01):
         options: FlextUtilitiesParserCoerce.ParseOptions[T] | None = None,
         **kwargs: t.JsonPayload,
     ) -> T | None:
-        """Fall back to primitive type parsing."""
+        """Fall back to primitive type parsing.
+
+        Returns:
+            The resulting ``T | None``.
+
+        """
         opts, fp = FlextUtilitiesParserTargets._resolve_opts(options, kwargs)
         if value is None:
             return FlextUtilitiesParserTargets._parse_with_default(
-                opts, c.ERR_PARSER_VALUE_IS_NONE.format(field_prefix=fp)
+                opts,
+                c.ERR_PARSER_VALUE_IS_NONE.format(field_prefix=fp),
             ).unwrap()
         if target is str:
             coerced_value = value if isinstance(value, str) else str(value)
             validated_str: T = FlextUtilitiesModel.validate_value(
-                target, coerced_value
+                target,
+                coerced_value,
             ).unwrap()
             return validated_str
         cls = FlextUtilitiesParserTargets
-        coerce_map = {
+        coerce_map: Mapping[
+            type[T | int | float | bool],
+            Callable[[t.JsonPayload], p.Result[int] | p.Result[float] | p.Result[bool]],
+        ] = {
             int: cls._coerce_to_int,
             float: cls._coerce_to_float,
             bool: cls._coerce_to_bool,
@@ -45,10 +60,12 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserTargetsPart01):
         coerce_fn = coerce_map.get(target)
         if coerce_fn is not None:
             coerced_val = None
-            with suppress(TypeError, ValueError):
+            try:
                 result = coerce_fn(value)
                 if not result.failure:
                     coerced_val = result.value
+            except (TypeError, ValueError):
+                coerced_val = None
             return (
                 FlextUtilitiesModel.validate_value(target, coerced_val).unwrap()
                 if coerced_val is not None
@@ -56,7 +73,8 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserTargetsPart01):
             )
         if target in {int, float, str, bool}:
             validated_primitive: T | None = FlextUtilitiesModel.validate_value(
-                target, value
+                target,
+                value,
             ).map_or(None)
             return validated_primitive
         return None

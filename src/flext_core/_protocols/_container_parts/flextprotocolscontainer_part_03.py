@@ -8,14 +8,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, override, runtime_checkable
 
-if TYPE_CHECKING:
-    from flext_core import FlextModels as m
-
-    from ..context import FlextProtocolsContext
-    from ..settings import FlextProtocolsSettings
-from .flextprotocolscontainer_part_02 import (
+from flext_core._protocols._container_parts.flextprotocolscontainer_part_02 import (
     FlextProtocolsContainer as FlextProtocolsContainerPart02,
 )
+
+Container = FlextProtocolsContainerPart02.Container
+
+if TYPE_CHECKING:
+    from flext_core import m
+    from flext_core._protocols.context import FlextProtocolsContext
+    from flext_core._protocols.settings import FlextProtocolsSettings
 
 
 class FlextProtocolsContainer(FlextProtocolsContainerPart02):
@@ -23,12 +25,10 @@ class FlextProtocolsContainer(FlextProtocolsContainerPart02):
     class ContainerLifecycle(FlextProtocolsContainerPart02.Container, Protocol):
         """Extended container contract for bootstrap and lifecycle operations."""
 
-        def initialize_di_components(self) -> None:
-            """Initialize DI bridge and backing containers."""
-            ...
-
         def initialize_registrations(
-            self, *, registration: m.ServiceRegistrationSpec | None = None
+            self,
+            *,
+            registration: m.ServiceRegistrationSpec | None = None,
         ) -> None:
             """Initialize explicit registrations and runtime-bound state."""
             ...
@@ -38,17 +38,9 @@ class FlextProtocolsContainer(FlextProtocolsContainerPart02):
             """Register the canonical core service set into the container."""
             ...
 
-        def register_existing_providers(self) -> None:
-            """Hydrate dependency providers from current registrations."""
-            ...
-
-        def sync_config_to_di(self) -> None:
-            """Synchronize validated configuration into DI providers."""
-            ...
-
     @runtime_checkable
     class ContainerType[
-        TContainer: FlextProtocolsContainerPart02.Container = FlextProtocolsContainerPart02.Container
+        TContainer: Container = Container,
     ](Protocol):
         """Protocol for concrete container classes exposing canonical factories."""
 

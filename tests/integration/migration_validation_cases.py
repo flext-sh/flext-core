@@ -1,4 +1,8 @@
-"""Additional migration validation cases kept outside the collected test module."""
+"""Additional migration validation cases kept outside the collected test module.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -10,17 +14,21 @@ from typing import TYPE_CHECKING
 from flext_tests import r, tm
 
 from flext_core import FlextContainer
-from tests.typings import t
-from tests.utilities import u
+from tests import t, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests.protocols import p
+    from tests import p
 
 
 def capture_stdout[T](emit: Callable[[], T], *, contains: str) -> T:
-    """Capture stdout until the expected observable message is emitted."""
+    """Capture stdout until the expected observable message is emitted.
+
+    Returns:
+        The resulting ``T``.
+
+    """
     stream = io.StringIO()
     with redirect_stdout(stream):
         result = emit()
@@ -34,7 +42,8 @@ def capture_stdout[T](emit: Callable[[], T], *, contains: str) -> T:
 class TestsFlextFlextMigrationApplicationCase:
     """Exercise the public application composition contract."""
 
-    def test_application_functionality_works(self) -> None:
+    @staticmethod
+    def test_application_functionality_works() -> None:
         """Verify application functionality works correctly."""
 
         class ApplicationExample:
@@ -46,7 +55,12 @@ class TestsFlextFlextMigrationApplicationCase:
                 self.container = FlextContainer()
 
             def process_data(self, data: t.StrMapping) -> p.Result[t.JsonMapping]:
-                """Typical data processing method."""
+                """Typical data processing method.
+
+                Returns:
+                    The resulting ``p.Result[t.JsonMapping]``.
+
+                """
                 if not data:
                     return r[t.JsonMapping].fail("Data required")
                 self.logger.info("Processing data", size=len(data))
@@ -55,7 +69,8 @@ class TestsFlextFlextMigrationApplicationCase:
 
         app = ApplicationExample()
         result = capture_stdout(
-            lambda: app.process_data({"key": "value"}), contains="Processing data"
+            lambda: app.process_data({"key": "value"}),
+            contains="Processing data",
         )
         tm.that(result.success, eq=True)
         tm.that(result.value["processed"], eq=True)

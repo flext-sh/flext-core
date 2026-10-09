@@ -13,15 +13,11 @@ from __future__ import annotations
 
 from enum import StrEnum
 
-from flext_core import (
-    FlextConstants as c,
-    FlextProtocols as p,
-    FlextResult as r,
-    FlextTypes as t,
+from flext_core import c, p, r, t
+from flext_core._utilities import (
+    FlextUtilitiesGuardsTypeModel,
+    FlextUtilitiesParserTargets,
 )
-
-from .guards_type_model import FlextUtilitiesGuardsTypeModel
-from .parser_targets import FlextUtilitiesParserTargets
 
 
 class FlextUtilitiesParser(FlextUtilitiesParserTargets):
@@ -35,7 +31,12 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
         options: FlextUtilitiesParserTargets.ParseOptions[T] | None = None,
         **kwargs: t.JsonPayload,
     ) -> T:
-        """Universal type parser supporting enums, models, and primitives."""
+        """Universal type parser supporting enums, models, and primitives.
+
+        Returns:
+            The resulting ``T``.
+
+        """
         opts, fp = FlextUtilitiesParser._resolve_opts(options, kwargs)
         return FlextUtilitiesParser._dispatch(value, target, opts, fp, kwargs)
 
@@ -47,12 +48,18 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
         fp: str,
         kwargs: dict[str, t.JsonPayload],
     ) -> T:
-        """Dispatch parsing with pre-resolved options for stable type inference."""
+        """Dispatch parsing with pre-resolved options for stable type inference.
+
+        Returns:
+            The resulting ``T``.
+
+        """
         resolved_value: T
         if value is None:
             default_result_initial: p.Result[T] = (
                 FlextUtilitiesParser._parse_with_default(
-                    opts, c.ERR_PARSER_VALUE_IS_NONE.format(field_prefix=fp)
+                    opts,
+                    c.ERR_PARSER_VALUE_IS_NONE.format(field_prefix=fp),
                 )
             )
             resolved_value = default_result_initial.unwrap()
@@ -62,29 +69,39 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
             match target:
                 case tgt if issubclass(tgt, StrEnum):
                     enum_result: p.Result[T] = FlextUtilitiesParser._parse_try_enum(
-                        value, target, options=None, **kwargs
+                        value,
+                        target,
+                        options=None,
+                        **kwargs,
                     )
                     resolved_value = (
                         FlextUtilitiesParser._parse_with_default(
-                            opts, r.require_error(enum_result)
+                            opts,
+                            r.require_error(enum_result),
                         ).unwrap()
                         if enum_result.failure
                         else enum_result.value
                     )
                 case tgt if FlextUtilitiesGuardsTypeModel.model_type(tgt):
                     model_result: p.Result[T] = FlextUtilitiesParser._parse_try_model(
-                        value, target, options=None, **kwargs
+                        value,
+                        target,
+                        options=None,
+                        **kwargs,
                     )
                     resolved_value = (
                         FlextUtilitiesParser._parse_with_default(
-                            opts, r.require_error(model_result)
+                            opts,
+                            r.require_error(model_result),
                         ).unwrap()
                         if model_result.failure
                         else model_result.value
                     )
                 case tgt if tgt in {int, float, str, bool}:
                     prim: T | None = FlextUtilitiesParser._parse_try_primitive(
-                        value, target, options=None
+                        value,
+                        target,
+                        options=None,
                     )
                     resolved_value = (
                         prim
@@ -100,7 +117,10 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
                     )
                 case _:
                     resolved_value = FlextUtilitiesParser._parse_try_direct(
-                        value, target, options=None, **kwargs
+                        value,
+                        target,
+                        options=None,
+                        **kwargs,
                     )
         return resolved_value
 

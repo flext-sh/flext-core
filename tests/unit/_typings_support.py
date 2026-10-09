@@ -1,11 +1,15 @@
-"""Shared typing facade test constants."""
+"""Shared typing facade test constants.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from tests.typings import t
+    from tests import t
 
 TYPE_ALIAS_NAMES: t.VariadicTuple[str] = (
     "Primitives",

@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from ._context_parts.flextprotocolscontext_part_03 import (
+from flext_core._protocols._context_parts.flextprotocolscontext_part_03 import (
     FlextProtocolsContext as FlextProtocolsContextPartFinal,
 )
 

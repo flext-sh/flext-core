@@ -8,28 +8,26 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, Self, overload, override, runtime_checkable
 
-from ..base import FlextProtocolsBase
-from ..settings import FlextProtocolsSettings
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
-    from types import ModuleType
-
-    from flext_core import FlextModels as m, FlextTypes as t
-
-    from ..context import FlextProtocolsContext
-    from ..handler import FlextProtocolsHandler
-    from ..logging import FlextProtocolsLogging
-    from ..result import FlextProtocolsResult
-from .flextprotocolscontainer_part_01 import (
+from flext_core._protocols._container_parts.flextprotocolscontainer_part_01 import (
     FlextProtocolsContainer as FlextProtocolsContainerPart01,
 )
+from flext_core._protocols.base import FlextProtocolsBase
+from flext_core._protocols.settings import FlextProtocolsSettings
+
+if TYPE_CHECKING:
+    from flext_core import m, t
+    from flext_core._protocols.context import FlextProtocolsContext
+    from flext_core._protocols.handler import FlextProtocolsHandler
+    from flext_core._protocols.loggings import FlextProtocolsLogging
+    from flext_core._protocols.result import FlextProtocolsResult
 
 
 class FlextProtocolsContainer(FlextProtocolsContainerPart01):
     @runtime_checkable
     class Container(
-        FlextProtocolsSettings.Configurable, FlextProtocolsBase.Base, Protocol
+        FlextProtocolsSettings.Configurable,
+        FlextProtocolsBase.Base,
+        Protocol,
     ):
         """Dependency injection container protocol.
 
@@ -47,11 +45,6 @@ class FlextProtocolsContainer(FlextProtocolsContainerPart01):
             """Execution context bound to the container."""
             ...
 
-        @property
-        def provide(self) -> Callable[[str], t.RegisterableService]:
-            """The dependency-injector Provide helper scoped to the bridge."""
-            ...
-
         def clear(self) -> None:
             """Clear all services and factories."""
             ...
@@ -67,12 +60,18 @@ class FlextProtocolsContainer(FlextProtocolsContainerPart01):
 
         @overload
         def resolve[T: t.RegisterableService](
-            self, name: str, *, type_cls: type[T]
+            self,
+            name: str,
+            *,
+            type_cls: type[T],
         ) -> FlextProtocolsResult.Result[T]: ...
 
         @overload
         def resolve(
-            self, name: str, *, type_cls: None = None
+            self,
+            name: str,
+            *,
+            type_cls: None = None,
         ) -> FlextProtocolsResult.Result[t.RegisterableService]: ...
 
         def snapshot(self) -> m.ConfigMap:
@@ -127,16 +126,6 @@ class FlextProtocolsContainer(FlextProtocolsContainerPart01):
             registration: m.ServiceRegistrationSpec | None = None,
         ) -> Self:
             """Create an isolated container scope with optional overrides."""
-            ...
-
-        def wire(
-            self,
-            *,
-            modules: t.SequenceOf[ModuleType] | None = None,
-            packages: t.StrSequence | None = None,
-            classes: t.SequenceOf[type] | None = None,
-        ) -> None:
-            """Wire modules/packages to the DI bridge for @inject/Provide usage."""
             ...
 
 

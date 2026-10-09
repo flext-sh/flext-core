@@ -1,14 +1,21 @@
-"""Characterization tests for container bootstrap registration parsing."""
+"""Behavioral tests for the container bootstrap registration spec.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from typing import cast
+from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import tm
 
-from flext_core import u
-from tests.models import m
+from flext_core.container import FlextContainer
+from tests import c, e, m
+
+if TYPE_CHECKING:
+    from tests import p
 
 
 def _factory() -> str:
@@ -16,67 +23,66 @@ def _factory() -> str:
 
 
 class TestsServiceRegistrationSpecOwner:
-    """Behavioral ownership contract for bootstrap registration normalization."""
+    """The spec validates its declarations; the container registers them."""
 
-    def test_utility_normalizes_raw_registration_mappings(self) -> None:
-        """The canonical utility converts every raw registration mapping."""
-        registration = u.normalize_service_registration_spec(
-            m.ServiceRegistrationSpec.model_construct(
+    @staticmethod
+    def test_spec_rejects_non_mapping_services() -> None:
+        """A service collection that is not a mapping fails validation."""
+        with pytest.raises(c.ValidationError):
+            _ = m.ServiceRegistrationSpec.model_validate({"services": ["invalid"]})
+
+    @staticmethod
+    def test_spec_rejects_non_callable_factory() -> None:
+        """A factory declaration that is not callable fails validation."""
+        with pytest.raises(c.ValidationError):
+            _ = m.ServiceRegistrationSpec.model_validate({
+                "factories": {"factory": "not-callable"},
+            })
+
+    @staticmethod
+    def test_container_registers_the_declared_raw_values(
+        clean_container: p.Container,
+    ) -> None:
+        """Services, factories and resources declared by a spec all resolve."""
+        container = FlextContainer(
+            registration=m.ServiceRegistrationSpec(
                 services={"service": "value"},
                 factories={"factory": _factory},
                 resources={"resource": _factory},
-            )
+            ),
         )
 
-        tm.that(registration.services is not None, eq=True)
-        services = registration.services or {}
+        tm.that(container is clean_container, eq=True)
+        tm.that(sorted(container.names()), eq=["factory", "resource", "service"])
+        tm.ok(container.resolve("service"), eq="value")
+        tm.ok(container.resolve("factory"), eq="factory-value")
+        tm.ok(container.resolve("resource"), eq="factory-value")
 
-        service_record = cast("m.ServiceRegistration", services["service"])
-        assert isinstance(service_record, m.ServiceRegistration)
-        tm.that(service_record.name, eq="service")
-        tm.that(service_record.service, eq="value")
-        tm.that(service_record.service_type, eq="str")
-        tm.that(registration.factories is not None, eq=True)
-        factories = registration.factories or {}
-        factory_record = cast("m.FactoryRegistration", factories["factory"])
-        assert isinstance(factory_record, m.FactoryRegistration)
-        tm.that(factory_record.name, eq="factory")
-        tm.that(factory_record.factory is _factory, eq=True)
-        tm.that(registration.resources is not None, eq=True)
-        resources = registration.resources or {}
-        resource_record = cast("m.ResourceRegistration", resources["resource"])
-        assert isinstance(resource_record, m.ResourceRegistration)
-        tm.that(resource_record.name, eq="resource")
-        tm.that(resource_record.factory is _factory, eq=True)
+    @staticmethod
+    def test_spec_rejects_a_prebuilt_record_as_a_factory() -> None:
+        """A spec declares raw values only; a registration record is not one."""
+        record = m.FactoryRegistration(name="factory", factory=_factory)
 
-    def test_utility_preserves_non_mapping_services_error(self) -> None:
-        """Malformed service collections retain the characterized error contract."""
-        registration = m.ServiceRegistrationSpec.model_construct(services=["invalid"])
+        with pytest.raises(c.ValidationError):
+            _ = m.ServiceRegistrationSpec.model_validate({
+                "factories": {"factory": record},
+            })
 
-        with pytest.raises(AttributeError, match="has no attribute 'items'"):
-            _ = u.normalize_service_registration_spec(registration)
+    @staticmethod
+    def test_container_rejects_spec_redeclaring_a_registered_name(
+        clean_container: p.Container,
+    ) -> None:
+        """Applying a spec to a container that holds its names raises."""
+        spec = m.ServiceRegistrationSpec(services={"service": "value"})
+        _ = clean_container.bind("service", "first")
 
-    def test_utility_preserves_prebuilt_registration_records(self) -> None:
-        """Already-normalized registrations retain their object identity."""
-        service = m.ServiceRegistration(
-            name="service", service="value", service_type="str"
-        )
-        factory = m.FactoryRegistration(name="factory", factory=_factory)
-        resource = m.ResourceRegistration(name="resource", factory=_factory)
+        with pytest.raises(e.ValidationError, match="service"):
+            _ = FlextContainer(registration=spec)
 
-        registration = u.normalize_service_registration_spec(
-            m.ServiceRegistrationSpec(
-                services={"service": service},
-                factories={"factory": factory},
-                resources={"resource": resource},
-            )
-        )
+        tm.ok(clean_container.resolve("service"), eq="first")
 
-        tm.that((registration.services or {})["service"] is service, eq=True)
-        tm.that((registration.factories or {})["factory"] is factory, eq=True)
-        tm.that((registration.resources or {})["resource"] is resource, eq=True)
-
-    def test_model_declares_no_registration_behavior(self) -> None:
+    @staticmethod
+    def test_model_declares_no_registration_behavior() -> None:
         """The Pydantic model exposes only declarative schema members."""
         behavior_names = {
             "validate_services",

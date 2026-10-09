@@ -6,23 +6,24 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from enum import StrEnum, unique
 from typing import ClassVar
 
-from ..._typings.base import FlextTypingBase as t
-from ..pydantic import FlextModelsPydantic as mp
+from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._typings.base import FlextTypingBase
 
 
-class EnforcementModelBase(mp.BaseModel):
+class FlextModelsEnforcementModelBase(FlextModelsPydantic.BaseModel):
     """Frozen, extra-forbid base for internal enforcement models."""
 
-    model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(frozen=True, extra="forbid")
+    model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+        FlextModelsPydantic.ConfigDict(frozen=True, extra="forbid")
+    )
 
 
 class FlextModelsEnforcementBase:
     """Foundational enforcement models shared by catalog and predicates."""
 
-    class Violation(EnforcementModelBase):
+    class Violation(FlextModelsEnforcementModelBase):
         """Single enforcement violation located at qualname."""
 
         qualname: str
@@ -34,13 +35,15 @@ class FlextModelsEnforcementBase:
         file_path: str = ""
         line_number: int = 0
 
-    class Report(EnforcementModelBase):
+    class Report(FlextModelsEnforcementModelBase):
         """Aggregated violation report returned by a check or runner."""
 
-        violations: t.SequenceOf[FlextModelsEnforcementBase.Violation] = ()
+        violations: FlextTypingBase.SequenceOf[
+            FlextModelsEnforcementBase.Violation
+        ] = ()
 
         @property
-        def messages(self) -> t.StrSequence:
+        def messages(self) -> FlextTypingBase.StrSequence:
             """Plain messages for text emission."""
             return [violation.message for violation in self.violations]
 
@@ -50,43 +53,42 @@ class FlextModelsEnforcementBase:
             return not self.violations
 
         def __len__(self) -> int:
-            """Expose violation count for ``len(report)``."""
+            """Expose violation count for ``len(report)``.
+
+            Returns:
+                The resulting ``int``.
+
+            """
             return len(self.violations)
 
         def __bool__(self) -> bool:
-            """Truthy when violations exist."""
+            """Truthy when violations exist.
+
+            Returns:
+                The resulting ``bool``.
+
+            """
             return bool(self.violations)
 
         def __getitem__(self, index: int) -> str:
-            """Return the nth message for ``report[i]`` access."""
+            """Return the nth message for ``report[i]`` access.
+
+            Returns:
+                The nth message for ``report[i]`` access.
+
+            """
             return self.messages[index]
 
-        def __contains__(self, fragment: t.Scalar | None) -> bool:
-            """Search message text with ``fragment in report``."""
+        def __contains__(self, fragment: FlextTypingBase.Scalar | None) -> bool:
+            """Search message text with ``fragment in report``.
+
+            Returns:
+                The resulting ``bool``.
+
+            """
             if not isinstance(fragment, str):
                 return False
             return any(fragment in message for message in self.messages)
 
-    @unique
-    class EnforcementRuleSeverity(StrEnum):
-        """Severity scale for catalog rules."""
 
-        CRITICAL = "CRITICAL"
-        HIGH = "HIGH"
-        MEDIUM = "MEDIUM"
-        LOW = "LOW"
-
-    @unique
-    class EnforcementSourceKind(StrEnum):
-        """Addressable origin layer for a catalog rule."""
-
-        FLEXT_INFRA_DETECTOR = "flext_infra_detector"
-        FLEXT_TESTS_VALIDATOR = "flext_tests_validator"
-        RUNTIME_WARNING = "runtime_warning"
-        BEARTYPE = "beartype"
-        CODE_SMELL = "code_smell"
-        RUFF = "ruff"
-        SKILL_POINTER = "skill_pointer"
-
-
-__all__: list[str] = ["EnforcementModelBase", "FlextModelsEnforcementBase"]
+__all__: list[str] = ["FlextModelsEnforcementBase", "FlextModelsEnforcementModelBase"]

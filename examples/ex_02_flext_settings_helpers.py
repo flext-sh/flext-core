@@ -1,10 +1,13 @@
-"""Settings example field checks kept below the module LOC cap."""
+"""Settings example field checks kept below the module LOC cap.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
+from examples.shared import ExamplesFlextShared
 from flext_core import FlextSettings
-
-from .shared import ExamplesFlextShared
 
 
 class Ex02FlextSettingsFieldChecks(ExamplesFlextShared):
@@ -28,5 +31,6 @@ class Ex02FlextSettingsFieldChecks(ExamplesFlextShared):
         self.audit_check("field.async_logging", settings.async_logging)
         validated = FlextSettings.model_validate(settings.model_dump())
         self.audit_check(
-            "validate_configuration.indirect_via_model_validate", validated.log_level
+            "validate_configuration.indirect_via_model_validate",
+            validated.log_level,
         )

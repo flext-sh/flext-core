@@ -2,28 +2,28 @@
   "hooks": {
     "preCompact": [
       {
-        "bash": "python3 /home/marlonsc/flext/flext-core/.github/hooks/aihub-hooks/copilot-precompact.py",
+        "bash": "python3 ~/flext/flext-core/.github/hooks/aihub-hooks/copilot-precompact.py",
         "timeoutSec": 10,
         "type": "command"
       }
     ],
     "sessionStart": [
       {
-        "bash": "python3 /home/marlonsc/flext/flext-core/.github/hooks/aihub-hooks/copilot-sessionstart.py",
+        "bash": "python3 ~/flext/flext-core/.github/hooks/aihub-hooks/copilot-sessionstart.py",
         "timeoutSec": 10,
         "type": "command"
       }
     ],
     "subagentStart": [
       {
-        "bash": "python3 /home/marlonsc/flext/flext-core/.github/hooks/aihub-hooks/copilot-subagentstart.py",
+        "bash": "python3 ~/flext/flext-core/.github/hooks/aihub-hooks/copilot-subagentstart.py",
         "timeoutSec": 10,
         "type": "command"
       }
     ],
     "userPromptSubmitted": [
       {
-        "bash": "python3 /home/marlonsc/flext/flext-core/.github/hooks/aihub-hooks/copilot-userpromptsubmitted.py",
+        "bash": "python3 ~/flext/flext-core/.github/hooks/aihub-hooks/copilot-userpromptsubmitted.py",
         "timeoutSec": 10,
         "type": "command"
       }

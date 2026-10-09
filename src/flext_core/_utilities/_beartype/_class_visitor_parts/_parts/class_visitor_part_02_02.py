@@ -1,17 +1,31 @@
-"""MRO_SHAPE redundant-inner + self-ref analysis sidecar."""
+"""MRO_SHAPE redundant-inner + self-ref analysis sidecar.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from ....._models.enforcement import FlextModelsEnforcement as me
-from ....._typings.base import FlextTypingBase as t
-from ...helpers import FlextUtilitiesBeartypeHelpers as ubh
-from ..class_visitor_part_01 import NO_VIOLATION
+from flext_core._models import FlextModelsEnforcement
+from flext_core._typings.base import FlextTypingBase
+from flext_core._utilities import FlextUtilitiesBeartypeHelpers
+from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_01 import (
+    NO_VIOLATION,
+)
 
 
 def redundant_inner_violation(
-    target: type, alias_violation: t.StrMapping | None, *, forbid_redundant_inner: bool
-) -> t.StrMapping | None:
-    """Compute the redundant-inner-namespace violation."""
+    target: type,
+    alias_violation: FlextTypingBase.StrMapping | None,
+    *,
+    forbid_redundant_inner: bool,
+) -> FlextTypingBase.StrMapping | None:
+    """Compute the redundant-inner-namespace violation.
+
+    Returns:
+        The resulting ``t.StrMapping | None``.
+
+    """
     outer_name, separator, _ = target.__qualname__.partition(".")
     has_only_dunder_attrs = all(
         key.startswith("__") and key.endswith("__") for key in vars(target)
@@ -27,12 +41,19 @@ def redundant_inner_violation(
 
 
 def self_ref_violation(
-    target: type, violation: t.StrMapping | None, params: me.MroShapeParams
-) -> t.StrMapping | None:
-    """Compute the utilities.py self-root import violation."""
+    target: type,
+    violation: FlextTypingBase.StrMapping | None,
+    params: FlextModelsEnforcement.MroShapeParams,
+) -> FlextTypingBase.StrMapping | None:
+    """Compute the utilities.py self-root import violation.
+
+    Returns:
+        The resulting ``t.StrMapping | None``.
+
+    """
     if violation is not None or not params.require_explicit_class_when_self_ref:
         return NO_VIOLATION
-    maybe_module = ubh.runtime_module_for(target)
+    maybe_module = FlextUtilitiesBeartypeHelpers.runtime_module_for(target)
     if maybe_module is None:
         return NO_VIOLATION
 

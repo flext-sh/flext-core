@@ -1,14 +1,18 @@
-"""PEP 562 lazy export helpers."""
+"""PEP 562 lazy export helpers.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 import sys
 from types import ModuleType
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
-from .._typings.lazy import FlextTypesLazy
-from .flextlazy_part_01 import (
-    FlextLazy as FlextLazyPart01,
+from flext_core._lazy_parts.flextlazy_member import FlextLazyMember
+from flext_core._lazy_parts.flextlazy_part_01 import (
+    FlextLazyPart01,
     LazyImportDict,
     LazyImportMap,
     MutableLazyImportMap,
@@ -17,73 +21,40 @@ from .flextlazy_part_01 import (
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-type ModuleGlobalValue = FlextTypesLazy.ModuleGlobalValue
-type ModuleGlobals = FlextTypesLazy.ModuleGlobals
-
-
-class FlextLazyAttribute[T]:
-    """Descriptor that resolves a class attribute through ``FlextLazy``.
-
-    Generic in the resolved symbol so a class-namespace lazy attribute keeps its
-    declared static type instead of widening to the untyped module-global union.
-    """
-
-    __slots__ = ("_lazy", "_lazy_imports", "_module_globals", "_module_name", "_name")
-
-    def __init__(
-        self,
-        lazy: FlextLazy,
-        name: str,
-        lazy_imports: LazyImportMap,
-        module_globals: ModuleGlobals,
-        module_name: str,
-    ) -> None:
-        self._lazy = lazy
-        self._name = name
-        self._lazy_imports = lazy_imports
-        self._module_globals = module_globals
-        self._module_name = module_name
-
-    def __get__(
-        self, instance: ModuleGlobalValue | None, owner: type | None = None
-    ) -> T:
-        """Resolve and cache the target symbol through the owning lazy container."""
-        _ = instance, owner
-        resolved: T = cast(
-            "T",
-            self._lazy.get(
-                self._name, self._lazy_imports, self._module_globals, self._module_name
-            ),
-        )
-        return resolved
+    from flext_core.typings import ModuleGlobals, ModuleGlobalValue
 
 
 class FlextLazy(FlextLazyPart01):
     @staticmethod
-    def _module_is_initializing(module: ModuleType) -> bool:
-        """Return whether Python is still executing a module body."""
-        return bool(getattr(getattr(module, "__spec__", None), "_initializing", False))
+    def member(module: str, owner: str, member: str) -> FlextLazyMember:
+        """Return a descriptor deferring ``owner.member`` from ``module``.
 
-    def attribute[T](
-        self,
-        name: str,
-        lazy_imports: LazyImportMap,
-        module_globals: ModuleGlobals,
-        module_name: str,
-        *,
-        resolved_type: type[T] | None = None,
-    ) -> FlextLazyAttribute[T]:
-        """Return a descriptor for class-namespace lazy attributes.
+        Returns:
+            A descriptor deferring ``owner.member`` from ``module``.
 
-        ``resolved_type`` binds the descriptor's symbol type explicitly. Omit it
-        where the assignment already carries the annotation
-        (``Alpha: Beta = lazy_attribute(...)``); pass it where there is no
-        annotation to bind, so the symbol type never degrades to unknown.
         """
-        _ = resolved_type
-        return FlextLazyAttribute[T](
-            self, name, lazy_imports, module_globals, module_name
+        return FlextLazyMember(module, owner, member)
+
+    @staticmethod
+    def resolve_members(target: type) -> tuple[str, ...]:
+        """Resolve every lazy member along ``target``'s MRO; return their names.
+
+        Check gates and tests call this so a broken deferred target fails
+        exactly as an eager import would.
+
+        Returns:
+            The names of the members that were still deferred, in MRO order.
+
+        """
+        pending = tuple(
+            (name, value)
+            for klass in target.__mro__
+            for name, value in tuple(vars(klass).items())
+            if isinstance(value, FlextLazyMember)
         )
+        for _, member in pending:
+            member.resolve()
+        return tuple(name for name, _ in pending)
 
     def get(
         self,
@@ -92,7 +63,16 @@ class FlextLazy(FlextLazyPart01):
         module_globals: ModuleGlobals,
         module_name: str,
     ) -> ModuleGlobalValue:
-        """Resolve one lazy symbol and cache it."""
+        """Resolve one lazy symbol and cache it.
+
+        Returns:
+            The resulting ``ModuleGlobalValue``.
+
+        Raises:
+            AttributeError: If module.
+            ImportError: If lazy import of.
+
+        """
         lazy_imports = self._norm_map(module_name, lazy_imports)
         entry = lazy_imports.get(name)
         if entry is None:
@@ -105,7 +85,16 @@ class FlextLazy(FlextLazyPart01):
             else self._alias_adapter.validate_python(entry)
         )
 
-        mod = self._load(module_path)
+        try:
+            mod = self._load(module_path)
+        except AttributeError as exc:
+            # CPython's from-import swallows an AttributeError escaping a module
+            # __getattr__ together with its cause; a target module that fails
+            # to execute is a defect, never a missing name, so it fails loud.
+            msg = (
+                f"lazy import of {module_path!r} for {name!r} in {module_name!r} failed"
+            )
+            raise ImportError(msg, name=module_path) from exc
         if not attr:
             if not self._module_is_initializing(mod):
                 module_globals[name] = mod
@@ -113,19 +102,25 @@ class FlextLazy(FlextLazyPart01):
 
         try:
             value: ModuleGlobalValue = getattr(mod, attr)
-        except AttributeError:
+        except AttributeError as exc:
             if isinstance(entry, str) and module_path.rsplit(".", 1)[-1] == name:
                 if not self._module_is_initializing(mod):
                     module_globals[name] = mod
                 return mod
-            msg = f"module {module_path!r} has no attribute {attr!r}"
-            raise AttributeError(msg) from None
+            reason = (
+                "is still initializing (circular lazy import) and lacks"
+                if self._module_is_initializing(mod)
+                else "has no attribute"
+            )
+            msg = f"module {module_path!r} {reason} {attr!r}"
+            raise AttributeError(msg) from exc
 
         if not self._module_is_initializing(mod):
             module_globals[name] = value
         return value
 
-    def cleanup(self, module_name: str, lazy_imports: LazyImportMap) -> None:
+    @staticmethod
+    def cleanup(module_name: str, lazy_imports: LazyImportMap) -> None:
         """Remove eager child module attrs."""
         current = sys.modules.get(module_name)
         if current is None:
@@ -148,7 +143,12 @@ class FlextLazy(FlextLazyPart01):
         exclude_names: Sequence[str] = (),
         module_name: str | None = None,
     ) -> MutableLazyImportMap:
-        """Merge child lazy maps with local entries."""
+        """Merge child lazy maps with local entries.
+
+        Returns:
+            The resulting ``MutableLazyImportMap``.
+
+        """
         key = tuple(self._child_path(path, module_name) for path in child_module_paths)
         children: LazyImportDict | None = self.child_merge_cache.get(key)
         if children is None:
@@ -170,7 +170,6 @@ class FlextLazy(FlextLazyPart01):
         module_name: str,
         module_globals: ModuleGlobals,
         lazy_imports: LazyImportMap,
-        all_exports: Sequence[str] | None = None,
         *,
         publish_all: bool = True,
         public_exports: Sequence[str] | None = None,
@@ -184,11 +183,11 @@ class FlextLazy(FlextLazyPart01):
         ``vars(module)``. Publishing here makes every install shape —
         module-level literal or inline call — satisfy that contract from
         the single owner.
+
         """
-        pre_signature: tuple[int, int, int, int, bool] = (
+        pre_signature: tuple[int, int, int, bool] = (
             id(module_globals),
             id(lazy_imports),
-            0 if all_exports is None else id(all_exports),
             0 if public_exports is None else id(public_exports),
             publish_all,
         )
@@ -200,22 +199,21 @@ class FlextLazy(FlextLazyPart01):
             module_globals.pop(name, None)
         if public_exports is not None:
             names = tuple(dict.fromkeys(public_exports))
-        elif all_exports is None:
-            names = tuple(normalized)
         else:
-            names = tuple(dict.fromkeys((*normalized, *all_exports)))
+            names = tuple(normalized)
 
         module_globals["_LAZY_IMPORTS"] = normalized
 
         def _module_getattr(name: str) -> ModuleGlobalValue:
             return self.get(name, normalized, module_globals, module_name)
 
-        target = sys.modules.get(module_name)
-        if target is None:
-            msg = f"module {module_name!r} is not registered in sys.modules"
-            raise RuntimeError(msg)
         module_globals["__getattr__"] = _module_getattr
-        target.__getattr__ = _module_getattr
+        # Synthetic consumer namespaces (plain dicts that never enter
+        # sys.modules) install the dict-level ``__getattr__`` above; the
+        # module-object publication only applies to registered modules.
+        target = sys.modules.get(module_name)
+        if target is not None:
+            vars(target)["__getattr__"] = _module_getattr
         module_globals["__dir__"] = lambda: list(names)
         if publish_all:
             module_globals["__all__"] = names
@@ -224,4 +222,4 @@ class FlextLazy(FlextLazyPart01):
         self.install_cache[module_name] = pre_signature
 
 
-__all__: list[str] = ["FlextLazy", "FlextLazyAttribute"]
+__all__: list[str] = ["FlextLazy", "FlextLazyMember"]

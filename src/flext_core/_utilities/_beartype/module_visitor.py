@@ -1,4 +1,8 @@
-"""Module-level introspection — LOC ceiling, class census, alias shims."""
+"""Module-level introspection — LOC ceiling, class census, alias shims.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -6,12 +10,15 @@ import ast
 import inspect
 from pathlib import Path
 
-from ..._constants.enforcement import FlextConstantsEnforcement as c
-from ..._models.enforcement import FlextModelsEnforcement as me
-from ..._typings.base import FlextTypingBase as t
-from .helpers import FlextUtilitiesBeartypeHelpers
+from flext_core._constants import FlextConstantsEnforcement
+from flext_core._models import FlextModelsEnforcement
+from flext_core._typings.base import FlextTypingBase
+from flext_core._utilities import (
+    FlextUtilitiesBeartypeHelpers,
+    FlextUtilitiesBeartypeModuleSource,
+)
 
-_NO_VIOLATION: t.StrMapping | None = None
+_NO_VIOLATION: FlextTypingBase.StrMapping | None = None
 _MODULE_EXEMPT_FILES: frozenset[str] = frozenset({
     "__init__.py",
     "__main__.py",
@@ -26,12 +33,21 @@ def _is_synthetic_parametrized_type(value: object) -> bool:
     into the defining module's namespace (e.g. ``FlextInfraServiceBase[bool]``).
     These are not source-level declarations and must not count toward module
     class caps or backwards-compat alias rules.
+
+    Returns:
+        True for synthetic ``Foo[int]`` specializations.
+
     """
     return isinstance(value, type) and "[" in getattr(value, "__qualname__", "")
 
 
 def _is_module_alias_candidate(name: str, value: object) -> bool:
-    """Return True when a module-level symbol looks like a compat alias."""
+    """Return True when a module-level symbol looks like a compat alias.
+
+    Returns:
+        True when a module-level symbol looks like a compat alias.
+
+    """
     if not isinstance(value, type):
         return False
     if _is_synthetic_parametrized_type(value):
@@ -48,13 +64,20 @@ class FlextUtilitiesBeartypeModuleVisitor:
     """LOC_CAP + MODULE_ALIAS + DUPLICATE_SYMBOL visitors."""
 
     @staticmethod
-    def v_loc_cap(params: me.LocCapParams, target: type) -> t.StrMapping | None:
+    def v_loc_cap(
+        params: FlextModelsEnforcement.LocCapParams,
+        target: type,
+    ) -> FlextTypingBase.StrMapping | None:
         """LOC_CAP — top-level class census (NS-000).
 
         The module-LOC ceiling used to live here too, but it counted source-text
         lines, which is a static measure flext-infra's tokei gate already owns —
         and the census re-ran it once per class, reporting one module up to eight
         times. Only the class census remains (operator 2026-08-07).
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+
         """
         module = FlextUtilitiesBeartypeHelpers.runtime_module_for(target)
         if module is None:
@@ -67,13 +90,8 @@ class FlextUtilitiesBeartypeModuleVisitor:
         if not package.startswith("flext_") or filename.startswith("_"):
             return _NO_VIOLATION
         try:
-            source_lines, _start = inspect.getsourcelines(module)
-        except (OSError, TypeError):
-            return _NO_VIOLATION
-        source = "".join(source_lines)
-        try:
-            tree = ast.parse(source, filename=src_file)
-        except SyntaxError:
+            tree = FlextUtilitiesBeartypeModuleSource.parse(module)
+        except (OSError, TypeError, SyntaxError):
             return _NO_VIOLATION
         top_level_class_count = sum(
             1
@@ -95,9 +113,15 @@ class FlextUtilitiesBeartypeModuleVisitor:
 
     @staticmethod
     def v_module_alias(
-        params: me.AliasRebindParams, target: type
-    ) -> t.StrMapping | None:
-        """MODULE_ALIAS — module-level CapWords compat alias / nested-class hoist."""
+        params: FlextModelsEnforcement.AliasRebindParams,
+        target: type,
+    ) -> FlextTypingBase.StrMapping | None:
+        """MODULE_ALIAS — module-level CapWords compat alias / nested-class hoist.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+
+        """
         if params.expected_form != "no_module_compat_alias":
             return _NO_VIOLATION
         module = FlextUtilitiesBeartypeHelpers.runtime_module_for(target)
@@ -109,27 +133,46 @@ class FlextUtilitiesBeartypeModuleVisitor:
         if (
             not package.startswith("flext_")
             or filename.startswith("_")
-            or filename in c.ENFORCEMENT_CANONICAL_FILES
+            or filename in FlextConstantsEnforcement.ENFORCEMENT_CANONICAL_FILES
             or filename in _MODULE_EXEMPT_FILES
         ):
             return _NO_VIOLATION
+        candidates = tuple(
+            (name, value)
+            for name, value in vars(module).items()
+            if _is_module_alias_candidate(name, value)
+        )
+        if not candidates:
+            return _NO_VIOLATION
+        try:
+            tree = FlextUtilitiesBeartypeModuleSource.parse(module)
+        except (OSError, TypeError, SyntaxError):
+            tree = None
         return next(
             (
                 {"alias": name, "target": value.__name__, "file": filename}
-                for name, value in vars(module).items()
-                if _is_module_alias_candidate(name, value)
+                for name, value in candidates
+                if not FlextUtilitiesBeartypeModuleSource.internal_dependency(
+                    tree,
+                    name,
+                )
             ),
             _NO_VIOLATION,
         )
 
     @staticmethod
     def v_duplicate_symbol(
-        _params: me.DuplicateSymbolParams, _target: type
-    ) -> t.StrMapping | None:
+        _params: FlextModelsEnforcement.DuplicateSymbolParams,
+        _target: type,
+    ) -> FlextTypingBase.StrMapping | None:
         """DUPLICATE_SYMBOL — workspace cross-project SSOT (Phase 3 hook).
 
         Implementation lives in the workspace walker, not the per-class
         runtime hook — needs the cross-project symbol index that only the
         walker can build. Returns None at runtime.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+
         """
         return _NO_VIOLATION

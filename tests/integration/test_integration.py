@@ -7,23 +7,23 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 from flext_tests import r, tm
 
 from flext_core import FlextContainer
 from flext_core.__version__ import __version__
-from tests.protocols import p
-from tests.utilities import u
+from tests import e, p, u
 
 if TYPE_CHECKING:
-    from tests.typings import t
+    from tests import t
 
 pytestmark = [pytest.mark.integration]
 
 _DOUBLED_RESULT = 42
-_UNWRAP_VALUE = 7
+_UNWRAP_VALUE: Final[int] = 7
+_UNWRAP_DEFAULT: Final[int] = 0
 _UUID_DASH_COUNT = 4
 _UUID_TEXT_LENGTH = 36
 
@@ -37,8 +37,10 @@ class TestsFlextCoreIntegration:
     model state. No private attributes, internals, or collaborator spying.
     """
 
+    @staticmethod
     def test_result_and_container_compose_on_public_surface(
-        self, clean_container: p.Container, sample_data: t.JsonMapping
+        clean_container: p.Container,
+        sample_data: t.JsonMapping,
     ) -> None:
         """Bound value round-trips through container.resolve as a success r[T]."""
         # Arrange
@@ -53,7 +55,8 @@ class TestsFlextCoreIntegration:
         tm.that(resolved.success, eq=True)
         tm.that(resolved.value, eq=test_value)
 
-    def test_freshly_constructed_container_satisfies_container_protocol(self) -> None:
+    @staticmethod
+    def test_freshly_constructed_container_satisfies_container_protocol() -> None:
         """A default FlextContainer honors the public Container protocol."""
         # Act
         container = FlextContainer()
@@ -61,7 +64,8 @@ class TestsFlextCoreIntegration:
         # Assert
         tm.that(container, is_=p.Container)
 
-    def test_result_ok_exposes_wrapped_value_as_success(self) -> None:
+    @staticmethod
+    def test_result_ok_exposes_wrapped_value_as_success() -> None:
         """r.ok wraps a value and reports success with that value."""
         # Arrange / Act
         result = r[str].ok("payload")
@@ -70,7 +74,8 @@ class TestsFlextCoreIntegration:
         tm.that(result.success, eq=True)
         tm.that(u.Tests.assert_success(result), eq="payload")
 
-    def test_result_map_transforms_only_success_value(self) -> None:
+    @staticmethod
+    def test_result_map_transforms_only_success_value() -> None:
         """Mapping applies the function to the success value, preserving success."""
         # Arrange
         result = r[int].ok(21)
@@ -82,7 +87,8 @@ class TestsFlextCoreIntegration:
         tm.that(mapped.success, eq=True)
         tm.that(mapped.value, eq=_DOUBLED_RESULT)
 
-    def test_result_flat_map_chains_fallible_operations(self) -> None:
+    @staticmethod
+    def test_result_flat_map_chains_fallible_operations() -> None:
         """Chaining sequences a second r-returning step on success via flat_map."""
         # Arrange
         result = r[str].ok("id-1")
@@ -94,7 +100,8 @@ class TestsFlextCoreIntegration:
         tm.that(chained.success, eq=True)
         tm.that(chained.value, eq="resolved_id-1")
 
-    def test_result_fail_short_circuits_map_and_flat_map(self) -> None:
+    @staticmethod
+    def test_result_fail_short_circuits_map_and_flat_map() -> None:
         """A failed r propagates its error through map/flat_map untouched."""
         # Arrange
         failure: p.Result[int] = r[int].fail("boom")
@@ -106,16 +113,18 @@ class TestsFlextCoreIntegration:
         tm.that(mapped.success, eq=False)
         tm.that(mapped.error, eq="boom")
 
-    def test_result_unwrap_or_returns_default_on_failure(self) -> None:
+    @staticmethod
+    def test_result_unwrap_or_returns_default_on_failure() -> None:
         """Unwrapping yields the value on success and the default on failure."""
         # Assert - success keeps its value, failure falls back to the default
-        tm.that(r[int].ok(_UNWRAP_VALUE).unwrap_or(0), eq=_UNWRAP_VALUE)
-        tm.that(r[int].fail("missing").unwrap_or(0), eq=0)
+        success_result = r[int].ok(_UNWRAP_VALUE)
+        tm.that(success_result.unwrap(), eq=_UNWRAP_VALUE)
+        failure_result = r[int].fail("missing")
+        tm.that(failure_result.unwrap_or(_UNWRAP_DEFAULT), eq=_UNWRAP_DEFAULT)
 
+    @staticmethod
     def test_container_factory_resolves_computed_value(
-        self,
         clean_container: p.Container,
-        mock_external_service: u.Tests.FunctionalExternalService,
     ) -> None:
         """A registered factory resolves to the value produced by its callable."""
         # Arrange
@@ -123,7 +132,7 @@ class TestsFlextCoreIntegration:
         expected = f"processed_{input_data}"
 
         def create_result() -> str:
-            processed: p.Result[str] = mock_external_service.process(input_data)
+            processed: p.Result[str] = r[str].ok(f"processed_{input_data}")
             if not processed.success:
                 raise AssertionError(processed.error)
             value: str = processed.value
@@ -138,8 +147,9 @@ class TestsFlextCoreIntegration:
         tm.that(resolved.success, eq=True)
         tm.that(resolved.value, eq=expected)
 
+    @staticmethod
     def test_container_resolve_unknown_name_fails_with_error(
-        self, clean_container: p.Container
+        clean_container: p.Container,
     ) -> None:
         """Resolving an unregistered name yields a failure carrying the name."""
         # Act
@@ -150,22 +160,25 @@ class TestsFlextCoreIntegration:
         tm.that(resolved.error, none=False)
         tm.that(tm.not_none(resolved.error), has="does_not_exist")
 
-    def test_container_bind_is_idempotent_for_existing_name(
-        self, clean_container: p.Container
+    @staticmethod
+    def test_container_bind_rejects_existing_name(
+        clean_container: p.Container,
     ) -> None:
-        """Re-binding an existing name preserves the first value (no overwrite)."""
+        """Re-binding an existing name raises and preserves the first value."""
         # Arrange
         _ = clean_container.bind("svc", "first")
 
         # Act
-        _ = clean_container.bind("svc", "second")
+        with pytest.raises(e.ValidationError, match="svc"):
+            _ = clean_container.bind("svc", "second")
         resolved = clean_container.resolve("svc")
 
         # Assert
         tm.that(resolved.success, eq=True)
         tm.that(resolved.value, eq="first")
 
-    def test_generate_produces_unique_uuid_shaped_identifiers(self) -> None:
+    @staticmethod
+    def test_generate_produces_unique_uuid_shaped_identifiers() -> None:
         """u.generate returns distinct 36-char, 4-dash UUID strings."""
         # Act
         first = u.generate()
@@ -178,7 +191,8 @@ class TestsFlextCoreIntegration:
             tm.that(identifier.count("-"), eq=_UUID_DASH_COUNT)
         tm.that(first, ne=second)
 
-    def test_generated_identifier_round_trips_through_result(self) -> None:
+    @staticmethod
+    def test_generated_identifier_round_trips_through_result() -> None:
         """A generated identifier is preserved verbatim when wrapped in r.ok."""
         # Arrange
         entity_id = u.generate()
@@ -189,7 +203,8 @@ class TestsFlextCoreIntegration:
         # Assert
         tm.that(u.Tests.assert_success(result, expected_value=entity_id), eq=entity_id)
 
-    def test_version_metadata_is_dotted_nonempty_string(self) -> None:
+    @staticmethod
+    def test_version_metadata_is_dotted_nonempty_string() -> None:
         """The exported package version is a non-empty dotted string."""
         # Assert
         tm.that(__version__, empty=False, has=".")

@@ -11,41 +11,50 @@ from __future__ import annotations
 
 import inspect
 import logging
-from contextlib import suppress
-from typing import TYPE_CHECKING
+import sys
+import types
 
-from flext_core import FlextConstants as c
-
-from .logging_context_part_01 import (
+from flext_core import c
+from flext_core._utilities._logging_context_parts.logging_context_part_01 import (
     FlextUtilitiesLoggingContext as FlextUtilitiesLoggingContextPart01,
 )
-
-if TYPE_CHECKING:
-    import types
 
 
 class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingContextPart01):
     @staticmethod
     def _caller_source_path() -> str | None:
-        """Get source file path with line, class and method context."""
+        """Get source file path with line, class and method context.
+
+        Returns:
+            The resulting ``str | None``.
+
+        """
+        caller_frame: types.FrameType | None
         try:
             caller_frame = FlextUtilitiesLoggingContext._calling_frame()
-            if caller_frame is None:
-                return None
-            return FlextUtilitiesLoggingContext._format_caller_source_path(caller_frame)
         except c.EXC_ATTR_RUNTIME_TYPE as exc:
             FlextUtilitiesLoggingContext._report_internal_logging_failure(
-                c.LoggingOperation.GET_CALLER_SOURCE, exc
+                c.LoggingOperation.GET_CALLER_SOURCE,
+                exc,
             )
+            caller_frame = None
+        if caller_frame is None:
             return None
+        return FlextUtilitiesLoggingContext._format_caller_source_path(caller_frame)
 
     @staticmethod
     def _calling_frame() -> types.FrameType | None:
-        """Walk the stack backward and return the first frame outside the logging machinery.
+        """Walk the stack backward to the first non-logging caller.
+
+        Returns the first frame outside the logging machinery.
 
         Generic: skips any frame whose source file path matches one of
         ``c.LOGGING_INTERNAL_PATH_FRAGMENTS``. The first frame outside is the
         true caller regardless of how many internal wrappers are involved.
+
+        Returns:
+            The resulting ``types.FrameType | None``.
+
         """
         frame = inspect.currentframe()
         if frame is None:
@@ -60,15 +69,20 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingContextPart01):
 
     @staticmethod
     def _report_internal_logging_failure(operation: str, exc: Exception) -> None:
-        with suppress(*c.CONTEXT_EXCEPTIONS):
+        """Report an internal logging failure; reporting itself must not raise."""
+        try:
             FlextUtilitiesLoggingContext.structlog().fetch_logger(
-                c.LOGGER_NAME_FLEXT_CORE
+                c.LOGGER_NAME_FLEXT_CORE,
             ).warning(
                 c.LOG_INTERNAL_OPERATION_FAILED,
                 operation=operation,
                 error=exc,
                 exception_type=exc.__class__.__name__,
                 exception_message=str(exc),
+            )
+        except c.CONTEXT_EXCEPTIONS as report_exc:
+            _ = sys.stderr.write(
+                f"flext-core logging: failed to report {operation}: {report_exc}\n",
             )
 
     @staticmethod
@@ -77,7 +91,8 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingContextPart01):
             return logging.root.getEffectiveLevel() <= logging.DEBUG
         except c.EXC_ATTR_RUNTIME_TYPE as exc:
             FlextUtilitiesLoggingContext._report_internal_logging_failure(
-                c.LoggingOperation.SHOULD_INCLUDE_STACK, exc
+                c.LoggingOperation.SHOULD_INCLUDE_STACK,
+                exc,
             )
             return True
 

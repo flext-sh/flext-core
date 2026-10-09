@@ -4,11 +4,14 @@
 
 ## 5 Core Pillars
 
-1. **Railway-Oriented Programming**: `r[T, E]` for error handling (no exceptions in business code)
-2. **Dependency Injection**: `FlextContainer` singleton with scoped lifetimes & factory registration
+1. **Railway-Oriented Programming**: `r[T, E]` for error handling (no exceptions in
+   business code)
+2. **Dependency Injection**: `FlextContainer` singleton with scoped lifetimes & factory
+   registration
 3. **CQRS Dispatching**: `FlextDispatcher` routes typed commands/queries to handlers
 4. **Settings & Config**: `FlextSettings` hierarchy via MRO; env prefix `FLEXT_*`
-5. **Structured Logging**: `FlextLogger` wraps structlog; context propagated via `FlextContext`
+5. **Structured Logging**: `FlextLogger` wraps structlog; context propagated via
+   `FlextContext`
 
 ## Alias System (10 Main)
 
@@ -27,7 +30,7 @@
 
 ## Dependency Flow
 
-**Inward only**: L3(App) → L2(Domain) → L1(Foundation) → L0(Contracts)
-Bridge pattern: External infra accessed ONLY via flext-core facades.
+**Inward only**: L3(App) → L2(Domain) → L1(Foundation) → L0(Contracts) Bridge pattern:
+External infra accessed ONLY via flext-core facades.
 
 **Last Updated**: 2026-04-14

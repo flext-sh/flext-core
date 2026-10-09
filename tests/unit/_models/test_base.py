@@ -4,6 +4,9 @@ Exercises the public contract of ``m.BaseModel`` (plain Pydantic base) and
 ``m.Value`` (immutable, compared-by-value DDD value object) through their
 public API only: construction, validation, serialization, equality, hashing
 and immutability. No private attributes or internals are touched.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -12,55 +15,55 @@ from typing import Annotated
 
 import pytest
 from flext_tests import tm
-from pydantic import ValidationError
 
-from tests.models import m
-
-
-class Sample(m.BaseModel):
-    """Plain base model with a required field and a defaulted field."""
-
-    name: str
-    count: int = 3
-
-
-class SampleValue(m.Value):
-    """Value object with two descriptive fields for equality/hash tests."""
-
-    amount: Annotated[int, m.Field(description="Numeric amount of the value object.")]
-    label: Annotated[str, m.Field(description="Human-readable label of the value.")]
+from tests import m
 
 
 class TestsFlextCoreBase:
     """Behavioral contract for the base model and value-object surfaces."""
 
+    class Sample(m.BaseModel):
+        """Plain base model with a required field and a defaulted field."""
+
+        name: str
+        count: int = 3
+
+    class SampleValue(m.Value):
+        """Value object with two descriptive fields for equality/hash tests."""
+
+        amount: Annotated[
+            int,
+            m.Field(description="Numeric amount of the value object."),
+        ]
+        label: Annotated[str, m.Field(description="Human-readable label of the value.")]
+
     def test_base_model_dump_returns_declared_field_values(self) -> None:
-        model = Sample(name="alpha", count=7)
+        model = self.Sample(name="alpha", count=7)
 
         dumped = model.model_dump()
 
         assert dumped == {"name": "alpha", "count": 7}
 
     def test_base_model_applies_declared_default(self) -> None:
-        model = Sample(name="beta")
+        model = self.Sample(name="beta")
 
         assert model.count == 3
 
     def test_base_model_round_trips_through_json(self) -> None:
-        original = Sample(name="gamma", count=11)
+        original = self.Sample(name="gamma", count=11)
 
-        restored = Sample.model_validate_json(original.model_dump_json())
+        restored = self.Sample.model_validate_json(original.model_dump_json())
 
         assert restored == original
 
     def test_base_model_validate_from_mapping(self) -> None:
-        model = Sample.model_validate({"name": "delta", "count": 2})
+        model = self.Sample.model_validate({"name": "delta", "count": 2})
 
         assert model.name == "delta"
         assert model.count == 2
 
     def test_base_model_exposes_declared_fields(self) -> None:
-        assert set(Sample.model_fields) == {"name", "count"}
+        assert set(self.Sample.model_fields) == {"name", "count"}
 
     @pytest.mark.parametrize(
         "payload",
@@ -71,29 +74,32 @@ class TestsFlextCoreBase:
         ],
     )
     def test_base_model_rejects_invalid_payloads(
-        self, payload: dict[str, object]
+        self,
+        payload: dict[str, object],
     ) -> None:
-        with pytest.raises(ValidationError):
-            Sample.model_validate(payload)
+        with pytest.raises(m.ValidationError):
+            self.Sample.model_validate(payload)
 
     def test_value_objects_are_equal_when_all_fields_match(self) -> None:
-        left = SampleValue(amount=5, label="usd")
-        right = SampleValue(amount=5, label="usd")
+        left = self.SampleValue(amount=5, label="usd")
+        right = self.SampleValue(amount=5, label="usd")
 
         assert left == right
 
     @pytest.mark.parametrize(("amount", "label"), [(6, "usd"), (5, "eur")])
     def test_value_objects_differ_when_any_field_differs(
-        self, amount: int, label: str
+        self,
+        amount: int,
+        label: str,
     ) -> None:
-        base = SampleValue(amount=5, label="usd")
+        base = self.SampleValue(amount=5, label="usd")
 
-        assert base != SampleValue(amount=amount, label=label)
+        assert base != self.SampleValue(amount=amount, label=label)
 
     def test_equal_value_objects_share_hash_and_distinct_values_do_not(self) -> None:
-        first = SampleValue(amount=9, label="gbp")
-        second = SampleValue(amount=9, label="gbp")
-        distinct = SampleValue(amount=10, label="gbp")
+        first = self.SampleValue(amount=9, label="gbp")
+        second = self.SampleValue(amount=9, label="gbp")
+        distinct = self.SampleValue(amount=10, label="gbp")
 
         assert first == second
         assert first != distinct
@@ -101,19 +107,20 @@ class TestsFlextCoreBase:
         assert len({hash(first), hash(second), hash(distinct)}) == 2
 
     def test_value_object_is_not_equal_to_foreign_type(self) -> None:
-        value = SampleValue(amount=1, label="jpy")
+        value = self.SampleValue(amount=1, label="jpy")
 
         assert value != object()
         assert value != "jpy"
 
     def test_value_object_is_immutable(self) -> None:
-        value = SampleValue(amount=2, label="chf")
+        value = self.SampleValue(amount=2, label="chf")
 
-        tm.rejects_assignment(value, "amount", 3, expected=ValidationError)
+        tm.rejects_assignment(value, "amount", 3, expected=m.ValidationError)
 
     @pytest.mark.parametrize("amount", ["1", 1.5])
     def test_value_object_strictly_validates_field_types(
-        self, amount: str | float
+        self,
+        amount: str | float,
     ) -> None:
-        with pytest.raises(ValidationError):
-            SampleValue.model_validate({"amount": amount, "label": "strict"})
+        with pytest.raises(m.ValidationError):
+            self.SampleValue.model_validate({"amount": amount, "label": "strict"})

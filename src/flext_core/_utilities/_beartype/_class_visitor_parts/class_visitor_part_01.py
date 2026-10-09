@@ -1,16 +1,23 @@
-"""Class placement, MRO, and protocol tree governance."""
+"""Class placement, MRO, and protocol tree governance.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from enum import EnumType
 
-from ...._constants.enforcement import FlextConstantsEnforcement as c
-from ...._models.enforcement import FlextModelsEnforcement as me
-from ...._typings.base import FlextTypingBase as t
-from ..helpers import FlextUtilitiesBeartypeHelpers as ubh
+from flext_core._constants import FlextConstantsEnforcement
+from flext_core._models import FlextModelsEnforcement
+from flext_core._typings.base import FlextTypingBase
+from flext_core._utilities import (
+    FlextUtilitiesBeartypeHelpers,
+    FlextUtilitiesBeartypeModuleSource,
+)
 
-NO_VIOLATION: t.StrMapping | None = None
-BARE_VIOLATION: t.StrMapping = {}
+NO_VIOLATION: FlextTypingBase.StrMapping | None = None
+BARE_VIOLATION: FlextTypingBase.StrMapping = {}
 BINARY_ARITY: int = 2
 
 
@@ -19,20 +26,34 @@ class FlextUtilitiesBeartypeClassVisitor:
 
     @staticmethod
     def v_class_placement(
-        params: me.ClassPlacementParams, *args: type | str
-    ) -> t.StrMapping | None:
-        """CLASS_PLACEMENT — class-name / inner-class layer placement."""
+        params: FlextModelsEnforcement.ClassPlacementParams,
+        *args: type | str,
+    ) -> FlextTypingBase.StrMapping | None:
+        """CLASS_PLACEMENT — class-name / inner-class layer placement.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+
+        """
         violation = NO_VIOLATION
         match args:
             case (value, layer) if (
                 isinstance(value, type)
                 and isinstance(layer, str)
-                and layer in c.ENFORCEMENT_LAYER_ALLOWS
+                and layer in FlextConstantsEnforcement.ENFORCEMENT_LAYER_ALLOWS
             ):
-                allowed = c.ENFORCEMENT_LAYER_ALLOWS.get(layer, frozenset())
+                allowed = FlextConstantsEnforcement.ENFORCEMENT_LAYER_ALLOWS.get(
+                    layer,
+                    frozenset(),
+                )
                 forbidden_base_matches = (
                     ("StrEnum", isinstance(value, EnumType)),
-                    ("Protocol", ubh.has_runtime_protocol_marker(value)),
+                    (
+                        "Protocol",
+                        FlextUtilitiesBeartypeHelpers.has_runtime_protocol_marker(
+                            value,
+                        ),
+                    ),
                 )
                 if any(
                     base_name in params.forbidden_bases
@@ -41,22 +62,26 @@ class FlextUtilitiesBeartypeClassVisitor:
                     for base_name, is_match in forbidden_base_matches
                 ):
                     violation = BARE_VIOLATION
-            case (target,) if (
-                isinstance(target, type)
+            case (root, nested) if (
+                isinstance(root, type)
+                and isinstance(nested, type)
                 and params.max_nested_class_depth
-                and "[" not in target.__name__
             ):
-                deep = FlextUtilitiesBeartypeClassVisitor._deep_nested(
-                    target, params.max_nested_class_depth
+                depth = nested.__qualname__.count(".") - root.__qualname__.count(".")
+                violation = (
+                    {"qn": nested.__qualname__}
+                    if depth > params.max_nested_class_depth
+                    else NO_VIOLATION
                 )
-                violation = {"qn": deep} if deep else NO_VIOLATION
             case (target, expected) if isinstance(target, type) and isinstance(
-                expected, str
+                expected,
+                str,
             ):
                 if params.check_nested:
                     parts = target.__qualname__.split(".")
                     has_wrong_nested_prefix = all((
-                        len(parts) >= c.ENFORCEMENT_NESTED_MRO_MIN_DEPTH,
+                        len(parts)
+                        >= FlextConstantsEnforcement.ENFORCEMENT_NESTED_MRO_MIN_DEPTH,
                         not parts[0].startswith(expected),
                     ))
                     violation = (
@@ -75,43 +100,30 @@ class FlextUtilitiesBeartypeClassVisitor:
         return violation
 
     @staticmethod
-    def _deep_nested(node: type, budget: int) -> str | None:
-        """Return qualname of first locally-defined non-Enum class past ``budget``."""
-        for value in vars(node).values():
-            if not (
-                isinstance(value, type)
-                and not isinstance(value, EnumType)
-                and getattr(value, "__qualname__", "").startswith(
-                    f"{node.__qualname__}."
-                )
-            ):
-                continue
-            if budget == 0:
-                return value.__qualname__
-            found = FlextUtilitiesBeartypeClassVisitor._deep_nested(value, budget - 1)
-            if found:
-                return found
-        return None
-
-    @staticmethod
     def v_protocol_tree(
-        params: me.ProtocolTreeParams, value: type
-    ) -> t.StrMapping | None:
-        """PROTOCOL_TREE — inner-class kind + runtime_checkable governance."""
+        params: FlextModelsEnforcement.ProtocolTreeParams,
+        value: type,
+    ) -> FlextTypingBase.StrMapping | None:
+        """PROTOCOL_TREE — inner-class kind + runtime_checkable governance.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+
+        """
         if params.require_inner_kind_protocol_or_namespace:
             if (
-                ubh.has_runtime_protocol_marker(value)
-                or ubh.has_nested_namespace(value)
-                or ubh.has_abstract_contract(value)
-                or ubh.has_protocol_ancestor(value)
+                FlextUtilitiesBeartypeHelpers.has_runtime_protocol_marker(value)
+                or FlextUtilitiesBeartypeHelpers.has_nested_namespace(value)
+                or FlextUtilitiesBeartypeHelpers.has_abstract_contract(value)
+                or FlextUtilitiesBeartypeHelpers.has_protocol_ancestor(value)
             ):
                 pass
             else:
                 return BARE_VIOLATION
         if (
             params.require_runtime_checkable
-            and ubh.has_runtime_protocol_marker(value)
-            and not getattr(value, "_is_runtime_protocol", False)
+            and FlextUtilitiesBeartypeHelpers.has_runtime_protocol_marker(value)
+            and not FlextUtilitiesBeartypeModuleSource.declares_runtime_checkable(value)
         ):
             return BARE_VIOLATION
         return NO_VIOLATION

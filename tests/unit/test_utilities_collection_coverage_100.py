@@ -1,4 +1,8 @@
-"""Behavior contract for flext_core collection utilities — public API only."""
+"""Behavior contract for flext_core collection utilities — public API only.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -9,12 +13,12 @@ import pytest
 from flext_tests import tm
 
 from flext_core import u
-from tests.models import m
+from tests import c, m
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests.typings import t
+    from tests import t
 
 
 def _double(value: int) -> int:
@@ -62,11 +66,17 @@ def _upper(value: str) -> str:
 
 
 class TestsFlextCoreUtilitiesCollection:
-    """Behavior contract for u.map / u.find / u.filter / u.count / u.process / u.merge_mappings."""
+    """Behavior contract for the collection utilities.
 
+    Covers ``u.map``, ``u.find``, ``u.filter``, ``u.count``, ``u.process``,
+    and ``u.merge_mappings``.
+    """
+
+    @staticmethod
     def test_normalize_domain_event_data_flattens_public_payloads(
-        self, tmp_path: Path
+        tmp_path: Path,
     ) -> None:
+        """Test normalize domain event data flattens public payloads."""
         repository_root = tmp_path / "flext"
         repository_root.mkdir()
         config_payload = m.ConfigMap.model_validate({
@@ -102,12 +112,13 @@ class TestsFlextCoreUtilitiesCollection:
             ({"a": 1, "b": 2}, _times_ten, {"a": 10, "b": 20}),
         ],
     )
+    @staticmethod
     def test_map_applies_function_to_each_element(
-        self,
         items: t.JsonList | tuple[t.JsonValue, ...] | t.JsonMapping,
         mapper: Callable[[t.JsonValue], t.JsonValue],
         expected: t.JsonValue,
     ) -> None:
+        """Test map applies function to each element."""
         tm.that(u.map(items, mapper), eq=expected)
 
     # --- find ------------------------------------------------------------
@@ -120,14 +131,15 @@ class TestsFlextCoreUtilitiesCollection:
             ([1, 3, 5], _equals_two, None, False),
         ],
     )
+    @staticmethod
     def test_find_returns_matching_element_or_failure(
-        self,
         *,
         items: t.JsonList | tuple[t.JsonValue, ...] | t.JsonMapping,
         predicate: Callable[[t.JsonValue], bool],
         expected: t.JsonValue,
         expect_found: bool,
     ) -> None:
+        """Test find returns matching element or failure."""
         result = u.find(items, predicate)
         if expect_found:
             tm.ok(result)
@@ -135,9 +147,12 @@ class TestsFlextCoreUtilitiesCollection:
         else:
             tm.fail(result)
 
-    def test_find_returns_failure_when_mapping_has_no_matching_value(self) -> None:
+    @staticmethod
+    def test_find_returns_failure_when_mapping_has_no_matching_value() -> None:
+        """Test find returns failure when mapping has no matching value."""
         result = u.find(
-            {"tenant": "acme", "mode": "full"}, lambda value: value == "delta"
+            {"tenant": "acme", "mode": "full"},
+            lambda value: value == "delta",
         )
 
         tm.fail(result)
@@ -156,13 +171,14 @@ class TestsFlextCoreUtilitiesCollection:
             ([2, 4, 6], _is_even, None, [2, 4, 6]),
         ],
     )
+    @staticmethod
     def test_filter_keeps_matching_and_optionally_maps(
-        self,
         items: t.JsonList | tuple[t.JsonValue, ...] | t.JsonMapping,
         predicate: Callable[[t.JsonValue], bool],
         mapper: Callable[[t.JsonValue], t.JsonValue] | None,
         expected: t.JsonValue,
     ) -> None:
+        """Test filter keeps matching and optionally maps."""
         tm.that(u.filter(items, predicate, mapper=mapper), eq=expected)
 
     # --- count -----------------------------------------------------------
@@ -171,12 +187,13 @@ class TestsFlextCoreUtilitiesCollection:
         ("items", "predicate", "expected"),
         [([1, 2, 3, 4], None, 4), ([1, 2, 3, 4], _is_even, 2)],
     )
+    @staticmethod
     def test_count_returns_total_or_matching(
-        self,
         items: t.JsonList,
         predicate: Callable[[t.JsonValue], bool] | None,
         expected: int,
     ) -> None:
+        """Test count returns total or matching."""
         tm.that(u.count(items, predicate), eq=expected)
 
     # --- process ---------------------------------------------------------
@@ -190,35 +207,50 @@ class TestsFlextCoreUtilitiesCollection:
             ([], _double, None, []),
         ],
     )
+    @staticmethod
     def test_process_applies_processor_with_optional_predicate(
-        self,
         items: t.JsonList,
         processor: Callable[[t.JsonValue], t.JsonValue],
         predicate: Callable[[t.JsonValue], bool] | None,
         expected: t.JsonList,
     ) -> None:
-        result = u.process(items, processor, on_error="collect", predicate=predicate)
+        """Test process applies processor with optional predicate."""
+        result = u.process(items, processor, predicate=predicate)
         tm.ok(result)
         tm.that(result.value, eq=expected)
 
-    def test_process_supports_skip_and_fail_error_modes(self) -> None:
+    @staticmethod
+    def test_process_first_failure_ends_run_carrying_its_exception() -> None:
+        """Test process first failure ends run carrying its exception."""
+        visited: list[t.JsonValue] = []
+        raised: list[ValueError] = []
+
         def project_identifier(value: t.JsonValue) -> str:
-            if value == 2:
-                error_message = "cannot process item"
-                raise ValueError(error_message)
+            visited.append(value)
+            if value in {2, 3}:
+                error = ValueError(f"cannot process item {value}")
+                raised.append(error)
+                raise error
             return f"item:{value}"
 
-        skipped = u.process([1, 2, 3], project_identifier, on_error="skip")
-        failed = u.process([1, 2, 3], project_identifier, on_error="fail")
+        failed = u.process([1, 2, 3], project_identifier)
 
-        tm.ok(skipped)
-        tm.that(skipped.value, eq=["item:1", "item:3"])
         tm.fail(failed)
-        tm.that(failed.error, eq="Processing failed for item: 2")
+        tm.that(visited, eq=[1, 2])
+        tm.that(failed.exception is raised[0], eq=True)
+        tm.that(
+            failed.error,
+            eq=c.ERR_COLLECTION_PROCESSING_FAILED_FOR_ITEM.format(
+                item=2,
+                error=str(raised[0]),
+            ),
+        )
 
     # --- merge_mappings --------------------------------------------------
 
-    def test_merge_mappings_deep_combines_nested_keys(self) -> None:
+    @staticmethod
+    def test_merge_mappings_deep_combines_nested_keys() -> None:
+        """Test merge mappings deep combines nested keys."""
         base: t.MappingKV[str, t.JsonValue] = {"a": 1, "b": {"x": 1}}
         other: t.MappingKV[str, t.JsonValue] = {"b": {"y": 2}, "c": 3}
         result = u.merge_mappings(base, other)
@@ -227,7 +259,9 @@ class TestsFlextCoreUtilitiesCollection:
         tm.that(result.value["c"], eq=3)
         tm.that(result.value["b"], is_=dict)
 
-    def test_merge_mappings_override_replaces_values(self) -> None:
+    @staticmethod
+    def test_merge_mappings_override_replaces_values() -> None:
+        """Test merge mappings override replaces values."""
         base: t.MappingKV[str, t.JsonValue] = {"a": 1, "b": {"x": 1}}
         other: t.MappingKV[str, t.JsonValue] = {"b": {"y": 2}, "c": 3}
         result = u.merge_mappings(base, other, strategy="override")
@@ -235,6 +269,3 @@ class TestsFlextCoreUtilitiesCollection:
         tm.that(result.value["a"], eq=1)
         tm.that(result.value["c"], eq=3)
         tm.that(result.value["b"], is_=dict)
-
-
-__all__: list[str] = ["TestsFlextCoreUtilitiesCollection"]

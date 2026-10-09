@@ -3,6 +3,9 @@
 Every assertion targets the public container contract (bind/factory/resource,
 has/names/resolve/drop/clear/scope + settings/context) and the ``r[T]`` outcome
 of fallible operations. No private attribute or internal-collaborator is touched.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -11,16 +14,18 @@ from typing import TYPE_CHECKING
 
 from flext_tests import tm
 
-from tests.models import m
-from tests.utilities import u
+from tests import m, u
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextContainerLifecycle:
+    """Tests for ``FlextContainerLifecycle``."""
+
+    @staticmethod
     def test_clear_removes_every_registration(
-        self, clean_container: p.Container
+        clean_container: p.Container,
     ) -> None:
         """After clear the container exposes no user registrations."""
         container = clean_container
@@ -43,11 +48,13 @@ class TestsFlextContainerLifecycle:
                 msg=f"has({name}) must be False after clear",
             )
             _ = tm.fail(
-                container.resolve(name), msg=f"resolve({name}) must fail after clear"
+                container.resolve(name),
+                msg=f"resolve({name}) must fail after clear",
             )
 
+    @staticmethod
     def test_clear_on_empty_container_is_noop(
-        self, clean_container: p.Container
+        clean_container: p.Container,
     ) -> None:
         """Clearing an already-empty container leaves it empty (no error)."""
         container = clean_container
@@ -60,7 +67,8 @@ class TestsFlextContainerLifecycle:
             msg="Empty container must stay empty after clear",
         )
 
-    def test_clear_is_idempotent(self, clean_container: p.Container) -> None:
+    @staticmethod
+    def test_clear_is_idempotent(clean_container: p.Container) -> None:
         """Clearing twice yields the same empty observable state."""
         container = clean_container
         _ = container.bind("svc", "v")
@@ -73,8 +81,9 @@ class TestsFlextContainerLifecycle:
         tm.that(first, eq=second, msg="Repeated clear must be idempotent")
         tm.that(second, empty=True, msg="Container must remain empty")
 
+    @staticmethod
     def test_bind_returns_container_for_fluent_chaining(
-        self, clean_container: p.Container
+        clean_container: p.Container,
     ) -> None:
         """Bind returns the same container so registrations can be chained."""
         container = clean_container
@@ -88,13 +97,14 @@ class TestsFlextContainerLifecycle:
             msg="Chained bind must register the service",
         )
 
+    @staticmethod
     def test_registered_services_resolve_to_their_bound_values(
-        self, clean_container: p.Container
+        clean_container: p.Container,
     ) -> None:
         """Resolve returns the exact value/instance that was registered."""
         container = clean_container
         _ = container.bind("cache", "redis")
-        _ = container.factory("logger", u.Tests.create_factory("logger-instance"))
+        _ = container.factory("audit_log", u.Tests.create_factory("audit-instance"))
 
         tm.ok(
             container.resolve("cache", type_cls=str),
@@ -102,14 +112,15 @@ class TestsFlextContainerLifecycle:
             msg="Bound value must resolve unchanged",
         )
         tm.ok(
-            container.resolve("logger", type_cls=str),
-            eq="logger-instance",
+            container.resolve("audit_log", type_cls=str),
+            eq="audit-instance",
             msg="Factory product must resolve to the produced value",
         )
         tm.that(len(container.names()), eq=2, msg="Both registrations must be counted")
 
+    @staticmethod
     def test_factory_that_raises_surfaces_a_failure_result(
-        self, clean_container: p.Container
+        clean_container: p.Container,
     ) -> None:
         """A raising factory yields a failing r[T] carrying the error text."""
         container = clean_container
@@ -126,7 +137,8 @@ class TestsFlextContainerLifecycle:
             msg="Factory exception must surface as a failure result",
         )
 
-    def test_resolve_unknown_service_fails(self, clean_container: p.Container) -> None:
+    @staticmethod
+    def test_resolve_unknown_service_fails(clean_container: p.Container) -> None:
         """Resolving a name that was never registered fails."""
         container = clean_container
 
@@ -135,8 +147,9 @@ class TestsFlextContainerLifecycle:
             msg="Unknown service must not resolve to a value",
         )
 
+    @staticmethod
     def test_drop_removes_a_registered_service(
-        self, clean_container: p.Container
+        clean_container: p.Container,
     ) -> None:
         """Drop succeeds for a known name and the service disappears."""
         container = clean_container
@@ -153,7 +166,8 @@ class TestsFlextContainerLifecycle:
             msg="Dropped service must no longer be present",
         )
 
-    def test_drop_unknown_service_fails(self, clean_container: p.Container) -> None:
+    @staticmethod
+    def test_drop_unknown_service_fails(clean_container: p.Container) -> None:
         """Drop reports a failure when the name was never registered."""
         container = clean_container
 
@@ -162,8 +176,9 @@ class TestsFlextContainerLifecycle:
             msg="Dropping an unknown service must fail",
         )
 
+    @staticmethod
     def test_scope_creates_isolated_child_without_polluting_parent(
-        self, clean_container: p.Container
+        clean_container: p.Container,
     ) -> None:
         """A scoped container sees its own service and derives its settings.
 
@@ -171,8 +186,8 @@ class TestsFlextContainerLifecycle:
         """
         scoped = clean_container.scope(
             subproject="unit",
-            registration=u.normalize_service_registration_spec(
-                m.ServiceRegistrationSpec(services={"scoped_service": "scoped-value"})
+            registration=m.ServiceRegistrationSpec(
+                services={"scoped_service": "scoped-value"},
             ),
         )
 
@@ -196,7 +211,9 @@ class TestsFlextContainerLifecycle:
         scoped_settings = scoped.settings.model_dump()
         base_settings = clean_container.settings.model_dump()
         tm.ok(
-            ctx_result, eq="unit", msg="Scoped context must carry the subproject value"
+            ctx_result,
+            eq="unit",
+            msg="Scoped context must carry the subproject value",
         )
         tm.that(
             scoped_settings["log_level"],

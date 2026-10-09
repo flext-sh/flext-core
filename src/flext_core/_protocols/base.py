@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable, MutableSequence
     from types import TracebackType
 
-    from flext_core import m, p, t
+    from flext_core import m, t
 
 
 class FlextProtocolsBase:
@@ -91,19 +91,13 @@ class FlextProtocolsBase:
         """Query type identifier."""
 
     @runtime_checkable
-    class Executable(Base, Protocol):
-        """Protocol for objects that can be executed and report service info."""
-
-        def execute(self) -> p.Result[t.JsonPayload]: ...
-
-        def service_info(self) -> t.JsonMapping: ...
-
-    @runtime_checkable
     class ConfigObject(Protocol):
         """Protocol for mapping-like configuration payloads."""
 
         def get(
-            self, key: str, default: t.JsonPayload | None = None
+            self,
+            key: str,
+            default: t.JsonPayload | None = None,
         ) -> t.JsonPayload | None:
             """Fetch a configuration value by key."""
             ...

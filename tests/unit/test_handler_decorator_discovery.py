@@ -5,27 +5,33 @@ decorated with ``h.handler`` is found by ``h.Discovery`` and, when invoked, stil
 produces the correct ``r[T]`` outcome. Tests read only the public surface — the
 returned ``(name, ...)`` tuples, the public ``DecoratorConfig`` fields, and the
 ``r[T]`` result of calling the discovered handler — never how metadata is stored.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
 import types
-from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import pytest
 from flext_tests import h, r
 
+from tests import m
+
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextCoreHandlerDecoratorDiscovery:
     """Public contract: decorate -> discover -> invoke preserves the r[T] outcome."""
 
-    def test_discovered_module_handler_invokes_with_success_outcome(self) -> None:
-        @dataclass
-        class CreateCommand:
+    @staticmethod
+    def test_discovered_module_handler_invokes_with_success_outcome() -> None:
+        """Test discovered module handler invokes with success outcome."""
+
+        class CreateCommand(m.BaseModel):
             name: str
 
         module = types.ModuleType("success_module")
@@ -37,16 +43,18 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         module.__dict__["handle_create"] = handle_create
 
         ((name, _, config),) = h.Discovery.scan_module(module)
-        outcome = handle_create(CreateCommand("alice"))
+        outcome = handle_create(CreateCommand(name="alice"))
 
         assert name == "handle_create"
         assert config.command is CreateCommand
         assert outcome.success is True
         assert outcome.unwrap() == "created_alice"
 
-    def test_discovered_module_handler_preserves_failure_outcome(self) -> None:
-        @dataclass
-        class DeleteCommand:
+    @staticmethod
+    def test_discovered_module_handler_preserves_failure_outcome() -> None:
+        """Test discovered module handler preserves failure outcome."""
+
+        class DeleteCommand(m.BaseModel):
             user_id: str
 
         module = types.ModuleType("failure_module")
@@ -58,13 +66,15 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         module.__dict__["handle_delete"] = handle_delete
 
         ((name, _, _),) = h.Discovery.scan_module(module)
-        outcome = handle_delete(DeleteCommand("u42"))
+        outcome = handle_delete(DeleteCommand(user_id="u42"))
 
         assert name == "handle_delete"
         assert outcome.failure is True
         assert outcome.error == "missing_u42"
 
-    def test_scan_module_returns_empty_when_no_handlers_decorated(self) -> None:
+    @staticmethod
+    def test_scan_module_returns_empty_when_no_handlers_decorated() -> None:
+        """Test scan module returns empty when no handlers decorated."""
         module = types.ModuleType("plain_module")
 
         def plain(value: int) -> p.Result[int]:
@@ -75,8 +85,11 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
 
         assert h.Discovery.scan_module(module) == []
 
-    def test_scan_module_excludes_private_functions(self) -> None:
-        class Command:
+    @staticmethod
+    def test_scan_module_excludes_private_functions() -> None:
+        """Test scan module excludes private functions."""
+
+        class Command(m.BaseModel):
             pass
 
         module = types.ModuleType("privacy_module")
@@ -98,11 +111,14 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
 
         assert names == ["public_handler"]
 
+    @staticmethod
     @pytest.mark.parametrize("priority", [0, 25, 100])
     def test_scan_module_reports_decorated_priority_and_command(
-        self, priority: int
+        priority: int,
     ) -> None:
-        class Command:
+        """Test scan module reports decorated priority and command."""
+
+        class Command(m.BaseModel):
             pass
 
         module = types.ModuleType("config_module")
@@ -119,23 +135,30 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         assert config.command is Command
         assert config.priority == priority
 
+    @staticmethod
     @pytest.mark.parametrize(
-        ("priority", "expected_name"), [(10, "handle_low"), (90, "handle_high")]
+        ("priority", "expected_name"),
+        [(10, "handle_low"), (90, "handle_high")],
     )
     def test_scan_class_reports_command_and_priority(
-        self, priority: int, expected_name: str
+        priority: int,
+        expected_name: str,
     ) -> None:
-        class Command:
+        """Test scan class reports command and priority."""
+
+        class Command(m.BaseModel):
             pass
 
         class Service:
+            @staticmethod
             @h.handler(command=Command, priority=10)
-            def handle_low(self, cmd: Command) -> p.Result[str]:
+            def handle_low(cmd: Command) -> p.Result[str]:
                 _ = cmd
                 return r[str].ok("low")
 
+            @staticmethod
             @h.handler(command=Command, priority=90)
-            def handle_high(self, cmd: Command) -> p.Result[str]:
+            def handle_high(cmd: Command) -> p.Result[str]:
                 _ = cmd
                 return r[str].ok("high")
 
@@ -144,19 +167,35 @@ class TestsFlextCoreHandlerDecoratorDiscovery:
         assert by_name[expected_name].priority == priority
         assert by_name[expected_name].command is Command
 
-    def test_has_handlers_reflects_presence_of_decorated_methods(self) -> None:
-        class Command:
+    @staticmethod
+    def test_has_handlers_reflects_presence_of_decorated_methods() -> None:
+        """Test has handlers reflects presence of decorated methods."""
+
+        class Command(m.BaseModel):
             pass
 
         class WithoutHandlers:
-            def process(self) -> str:
+            @staticmethod
+            def process() -> str:
                 return "ok"
 
         class WithHandler:
+            @staticmethod
             @h.handler(command=Command)
-            def handle(self, cmd: Command) -> p.Result[str]:
+            def handle(cmd: Command) -> p.Result[str]:
                 _ = cmd
                 return r[str].ok("done")
 
         assert h.Discovery.has_handlers(WithoutHandlers) is False
         assert h.Discovery.has_handlers(WithHandler) is True
+
+    @staticmethod
+    def test_scan_class_returns_empty_for_undecorated_class() -> None:
+        """Test scan class returns empty for undecorated class."""
+
+        class Plain:
+            @staticmethod
+            def handle() -> p.Result[str]:
+                return r[str].ok("ok")
+
+        assert h.Discovery.scan_class(Plain) == []

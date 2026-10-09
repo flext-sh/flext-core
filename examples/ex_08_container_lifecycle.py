@@ -1,57 +1,57 @@
-"""Container lifecycle example section."""
+"""Container lifecycle example section.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from examples.models import m
-from examples.protocols import p
+from examples import m, p
+from examples.ex_08_container_scoped import Ex08ContainerScoped
 from flext_core import FlextContainer
-
-from .ex_08_container_scoped import Ex08ContainerScoped
 
 
 class Ex08ContainerLifecycle(Ex08ContainerScoped):
     """Lifecycle and cleanup checks for the container example."""
 
     def _exercise_internal_and_cleanup(
-        self, container: p.ContainerLifecycle, root: p.ContainerLifecycle
+        self,
+        container: p.ContainerLifecycle,
+        root: p.ContainerLifecycle,
     ) -> None:
         """Exercise lifecycle helpers and cleanup APIs."""
         self.section("internal_and_cleanup")
-        container.initialize_di_components()
-        self.audit_check(
-            "initialize_di_components.bridge_exists", hasattr(container, "_di_bridge")
-        )
-        self.audit_check(
-            "initialize_di_components.container_exists",
-            hasattr(container, "_di_container"),
-        )
         container.initialize_registrations(
             registration=m.ServiceRegistrationSpec(
-                settings=root.settings.clone(), context=root.context
-            )
+                settings=root.settings.clone(),
+                context=root.context,
+            ),
         )
         self.audit_check(
-            "initialize_registrations.list_services_empty", len(container.names())
-        )
-        container.sync_config_to_di()
-        container.register_existing_providers()
-        container.register_core_services()
-        self.audit_check(
-            "sync_settings_to_di.service_settings_present", container.has("settings")
+            "initialize_registrations.list_services_empty",
+            len(container.names()),
         )
         self.audit_check(
-            "register_core_services.logger_present", container.has("logger")
+            "core_services.settings_internal",
+            not container.has("settings") and container.resolve("settings").success,
         )
         self.audit_check(
-            "register_core_services.command_bus_present", container.has("command_bus")
+            "core_services.logger_internal",
+            not container.has("logger") and container.resolve("logger").success,
+        )
+        self.audit_check(
+            "core_services.command_bus_internal",
+            not container.has("command_bus") and container.dispatcher().success,
         )
         logger_default = container.logger(f"examples.{self.rand_str(6)}")
         logger_custom = container.logger(f"examples.{self.rand_str(6)}")
         self.audit_check(
-            "create_module_logger.explicit.type", type(logger_default).__name__
+            "create_module_logger.explicit.type",
+            type(logger_default).__name__,
         )
         self.audit_check(
-            "create_module_logger.explicit_custom.type", type(logger_custom).__name__
+            "create_module_logger.explicit_custom.type",
+            type(logger_custom).__name__,
         )
         removable_name = f"svc.{self.rand_str(6)}"
         missing_remove_name = f"svc.{self.rand_str(6)}"
@@ -66,7 +66,8 @@ class Ex08ContainerLifecycle(Ex08ContainerScoped):
         FlextContainer.reset_for_testing()
         after_reset = FlextContainer.shared()
         self.audit_check(
-            "reset_singleton.new_instance", before_reset is not after_reset
+            "reset_singleton.new_instance",
+            before_reset is not after_reset,
         )
         self.audit_check(
             "reset_singleton.fetch_global.same_after_reset",

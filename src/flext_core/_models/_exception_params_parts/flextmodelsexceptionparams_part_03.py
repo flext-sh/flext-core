@@ -12,15 +12,15 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import FlextTypes as t
+from flext_core import t
+from flext_core._models._exception_params_parts import (
+    flextmodelsexceptionparams_part_01 as part_01,
+    flextmodelsexceptionparams_part_02 as part_02,
+)
+from flext_core._models.pydantic import FlextModelsPydantic as mp
 
-from ..pydantic import FlextModelsPydantic as mp
-from .flextmodelsexceptionparams_part_01 import (
-    FlextModelsExceptionParams as FlextModelsExceptionParamsPart01,
-)
-from .flextmodelsexceptionparams_part_02 import (
-    FlextModelsExceptionParams as FlextModelsExceptionParamsPart02,
-)
+FlextModelsExceptionParamsPart01 = part_01.FlextModelsExceptionParams
+FlextModelsExceptionParamsPart02 = part_02.FlextModelsExceptionParams
 
 
 class FlextModelsExceptionParams(FlextModelsExceptionParamsPart02):
@@ -37,7 +37,7 @@ class FlextModelsExceptionParams(FlextModelsExceptionParamsPart02):
         ] = None
 
     class ServiceLookupParams(
-        FlextModelsExceptionParamsPart01.ExpectedActualTypeParams
+        FlextModelsExceptionParamsPart01.ExpectedActualTypeParams,
     ):
         """Validated params for service lookup and narrowing failures."""
 
@@ -98,7 +98,9 @@ class FlextModelsExceptionParams(FlextModelsExceptionParamsPart02):
             t.RuntimeData | None,
             mp.Field(
                 default=None,
-                description="Context payload describing the state during access failure.",
+                description=(
+                    "Context payload describing the state during access failure."
+                ),
                 title="Attribute Context",
                 examples=[{"owner": "session"}],
             ),

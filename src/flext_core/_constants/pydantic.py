@@ -1,6 +1,7 @@
-"""Pydantic v2 constants, exceptions and configuration exported via FlextConstants.
+"""Pydantic v2 constants and exceptions exported via FlextConstants.
 
-Including: ConfigDict, SettingsConfigDict, ValidationError, sentinels, deprecations.
+Including: ValidationError, sentinels, deprecations. Model configuration types
+live on the models facade (``m.ConfigDict``, ``m.SettingsConfigDict``).
 
 Architecture: Abstraction boundary - constants layer
 
@@ -12,7 +13,6 @@ from __future__ import annotations
 
 from pydantic import (
     VERSION,
-    ConfigDict,
     PydanticDeprecatedSince20,
     PydanticDeprecatedSince26,
     PydanticDeprecatedSince29,
@@ -46,14 +46,11 @@ from pydantic_core import (
 
 
 class FlextConstantsPydantic:
-    """Configuration, exceptions and constants: ConfigDict, ValidationError, sentinels.
+    """Exceptions and constants: ValidationError, warnings, sentinels.
 
     **NEVER import pydantic directly outside flext-core/src/.**
     Use c.* instead.
     """
-
-    # Configuration type
-    ConfigDict = ConfigDict
 
     # Exceptions (pydantic v2)
     ValidationError = ValidationError
@@ -89,7 +86,7 @@ class FlextConstantsPydantic:
 
     # pydantic_core sentinels and special values
     MISSING = MISSING
-    PydanticUndefined = PydanticUndefined
+    PYDANTIC_UNDEFINED = PydanticUndefined
     PydanticUndefinedType = PydanticUndefinedType
     PydanticUseDefault = PydanticUseDefault
     PydanticOmit = PydanticOmit

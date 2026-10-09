@@ -13,12 +13,10 @@ if TYPE_CHECKING:
     from types import TracebackType
 
     from flext_core import m
+    from flext_core._typings.base import FlextTypingBase
+    from flext_core._typings.services import FlextTypesServices
 
-    from .._typings.base import FlextTypingBase as t
-    from .._typings.services import FlextTypesServices as ts
 
-
-ResultT = TypeVar("ResultT")
 ResultViewT_co = TypeVar("ResultViewT_co", covariant=True)
 
 
@@ -34,7 +32,7 @@ class FlextProtocolsResult:
         @property
         def error_code(self) -> str | None: ...
         @property
-        def error_data(self) -> t.JsonMapping | None: ...
+        def error_data(self) -> FlextTypingBase.JsonMapping | None: ...
         @property
         def success(self) -> bool: ...
         @property
@@ -51,7 +49,7 @@ class FlextProtocolsResult:
         @property
         def error_code(self) -> str | None: ...
         @property
-        def error_data(self) -> t.JsonMapping | None: ...
+        def error_data(self) -> FlextTypingBase.JsonMapping | None: ...
         @property
         def exception(self) -> BaseException | None: ...
         @property
@@ -60,15 +58,15 @@ class FlextProtocolsResult:
         def success(self) -> bool: ...
 
     @runtime_checkable
-    class Result(Protocol[ResultT]):
-        """Structural railway result contract; invariant payload."""
+    class ResultState[T](Protocol):
+        """Structural state surface of the railway result contract."""
 
         @property
         def error(self) -> str | None: ...
         @property
         def error_code(self) -> str | None: ...
         @property
-        def error_data(self) -> t.JsonMapping | None: ...
+        def error_data(self) -> FlextTypingBase.JsonMapping | None: ...
         @property
         def success(self) -> bool: ...
         @property
@@ -76,7 +74,7 @@ class FlextProtocolsResult:
         @property
         def failure(self) -> bool: ...
         @property
-        def value(self) -> ResultT: ...
+        def value(self) -> T: ...
 
         def __enter__(self) -> Self: ...
 
@@ -87,67 +85,83 @@ class FlextProtocolsResult:
             _exc_tb: TracebackType | None,
         ) -> None: ...
 
-        def __or__[D](self, default: D) -> ResultT | D: ...
+        def __or__[D](self, default: D) -> T | D: ...
 
-        def unwrap(self) -> ResultT: ...
-        def unwrap_or[D](self, default: D) -> ResultT | D: ...
-        def unwrap_or_else[D](self, func: Callable[[], D]) -> ResultT | D: ...
+    @runtime_checkable
+    class ResultOps[T](Protocol):
+        """Structural monadic-operation surface of the result contract."""
+
+        def unwrap(self) -> T: ...
+        def unwrap_or[D](self, default: D) -> T | D: ...
+        def unwrap_or_else[D](self, func: Callable[[], D]) -> T | D: ...
 
         def flat_map[U](
-            self, func: Callable[[ResultT], FlextProtocolsResult.Result[U]]
+            self,
+            func: Callable[[T], FlextProtocolsResult.Result[U]],
         ) -> FlextProtocolsResult.Result[U]: ...
 
         def fold[U](
-            self, on_failure: Callable[[str], U], on_success: Callable[[ResultT], U]
+            self,
+            on_failure: Callable[[str], U],
+            on_success: Callable[[T], U],
         ) -> U: ...
 
         def lash[U](
-            self, func: Callable[[str], FlextProtocolsResult.Result[U]]
-        ) -> FlextProtocolsResult.Result[ResultT | U]: ...
+            self,
+            func: Callable[[str], FlextProtocolsResult.Result[U]],
+        ) -> FlextProtocolsResult.Result[T | U]: ...
 
-        def map[U](
-            self, func: Callable[[ResultT], U]
-        ) -> FlextProtocolsResult.Result[U]: ...
+        def map[U](self, func: Callable[[T], U]) -> FlextProtocolsResult.Result[U]: ...
 
         def flow_through(
-            self, *funcs: Callable[[ResultT], FlextProtocolsResult.Result[ResultT]]
-        ) -> FlextProtocolsResult.Result[ResultT]: ...
+            self,
+            *funcs: Callable[[T], FlextProtocolsResult.Result[T]],
+        ) -> FlextProtocolsResult.Result[T]: ...
 
         def map_error(
-            self, func: Callable[[str], str]
-        ) -> FlextProtocolsResult.Result[ResultT]: ...
+            self,
+            func: Callable[[str], str],
+        ) -> FlextProtocolsResult.Result[T]: ...
 
         @overload
-        def map_or(self, default: None, func: None = None) -> ResultT | None: ...
+        def map_or(self, default: None, func: None = None) -> T | None: ...
         @overload
-        def map_or[U](self, default: U, func: None = None) -> ResultT | U: ...
+        def map_or[U](self, default: U, func: None = None) -> T | U: ...
         @overload
-        def map_or[U](self, default: U, func: Callable[[ResultT], U]) -> U: ...
+        def map_or[U](self, default: U, func: Callable[[T], U]) -> U: ...
         def map_or[U](
-            self, default: U, func: Callable[[ResultT], U] | None = None
-        ) -> U | ResultT: ...
+            self,
+            default: U,
+            func: Callable[[T], U] | None = None,
+        ) -> U | T: ...
 
-        def tap(
-            self, func: Callable[[ResultT], None]
-        ) -> FlextProtocolsResult.Result[ResultT]: ...
+        def tap(self, func: Callable[[T], None]) -> FlextProtocolsResult.Result[T]: ...
 
         def tap_error(
-            self, func: Callable[[str], None]
-        ) -> FlextProtocolsResult.Result[ResultT]: ...
+            self,
+            func: Callable[[str], None],
+        ) -> FlextProtocolsResult.Result[T]: ...
 
         def filter(
-            self, predicate: Callable[[ResultT], bool]
-        ) -> FlextProtocolsResult.Result[ResultT]: ...
+            self,
+            predicate: Callable[[T], bool],
+        ) -> FlextProtocolsResult.Result[T]: ...
 
         def recover[U](
-            self, func: Callable[[str], U]
-        ) -> FlextProtocolsResult.Result[ResultT | U]: ...
+            self,
+            func: Callable[[str], U],
+        ) -> FlextProtocolsResult.Result[T | U]: ...
 
         def to_model[U: m.BaseModel](
-            self, model: type[U]
+            self,
+            model: type[U],
         ) -> FlextProtocolsResult.Result[U]: ...
 
         def __bool__(self) -> bool: ...
+
+    @runtime_checkable
+    class Result[T](ResultState[T], ResultOps[T], Protocol):
+        """Structural railway result contract; invariant payload."""
 
     @runtime_checkable
     class SuccessCheckable(Protocol):
@@ -174,11 +188,21 @@ class FlextProtocolsResult:
     @runtime_checkable
     class HasModelDump(Protocol):
         def model_dump(
-            self, *, mode: str = "python"
-        ) -> t.MappingKV[str, ts.JsonPayload | None]: ...
+            self,
+            *,
+            mode: str = "python",
+        ) -> FlextTypingBase.MappingKV[str, FlextTypesServices.JsonPayload | None]: ...
 
-    class ResultFactory(Protocol):
-        """Structural factory contract for the concrete result family."""
+    @runtime_checkable
+    class ResultFactoryMinimal(Protocol):
+        """Minimal factory contract satisfied by result mixin classes.
+
+        This is a subset of ``ResultFactory`` containing only the methods
+        required by ``copy_result`` and ``ok_result``. Mixin classes
+        (``FlextResultTransforms``, ``FlextResultComposition``,
+        ``FlextResultConstruction``) structurally satisfy this via
+        inheritance from ``FlextResultConstruction``.
+        """
 
         @classmethod
         def reject_banned_result_parameterization(cls) -> None: ...
@@ -195,9 +219,52 @@ class FlextProtocolsResult:
             error: str | None,
             *,
             error_code: str | None = None,
-            error_data: t.JsonMapping | None = None,
+            error_data: FlextTypingBase.JsonMapping | None = None,
             exception: BaseException | None = None,
         ) -> object: ...
+
+        @classmethod
+        def ok(cls, value: object) -> object: ...
+
+        def __init__(self, *, value: object, success: bool) -> None: ...
+
+    @runtime_checkable
+    class ResultFactory(Protocol):
+        """Structural factory contract for the concrete result family."""
+
+        @classmethod
+        def reject_banned_result_parameterization(cls) -> None: ...
+
+        @staticmethod
+        def reject_banned_success_payload(value: object) -> None: ...
+
+        @classmethod
+        def require_error(cls, source: FlextProtocolsResult.FailureLike) -> str: ...
+
+        @classmethod
+        def ok(cls, value: object) -> object: ...
+
+        @classmethod
+        def fail(
+            cls,
+            error: str | None,
+            *,
+            error_code: str | None = None,
+            error_data: FlextTypingBase.JsonMapping | None = None,
+            exception: BaseException | None = None,
+        ) -> object: ...
+
+        @classmethod
+        def from_result[V](cls, source: FlextProtocolsResult.Result[V]) -> object: ...
+
+        @classmethod
+        def from_validation(cls, data: object, model: type[object]) -> object: ...
+
+        @classmethod
+        def failed_result(cls, result: object) -> bool: ...
+
+        @classmethod
+        def successful_result(cls, result: object) -> bool: ...
 
         def __init__(self, *, value: object, success: bool) -> None: ...
 

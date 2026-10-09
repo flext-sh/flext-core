@@ -9,9 +9,8 @@ from __future__ import annotations
 from importlib import import_module
 from typing import TYPE_CHECKING, TypeVar
 
-from flext_core import FlextConstants as c, FlextProtocols as p, m
-
-from ..template import FlextExceptionsTemplate
+from flext_core import c, m, p
+from flext_core._exceptions.template import FlextExceptionsTemplate
 
 TExceptionParams = TypeVar("TExceptionParams", bound=m.BaseModel)
 
@@ -29,7 +28,12 @@ class FlextExceptionsFactories:
     def _result_type[TValue](
         result_type: type[r[TValue]] | None = None,
     ) -> type[r[TValue]]:
-        """Resolve FlextResult lazily to avoid runtime import cycles."""
+        """Resolve FlextResult lazily to avoid runtime import cycles.
+
+        Returns:
+            The resulting ``type[r[TValue]]``.
+
+        """
         if result_type is not None:
             return result_type
         result_module = import_module("flext_core")
@@ -43,17 +47,28 @@ class FlextExceptionsFactories:
         params: m.BaseModel | None = None,
         error: Exception | str | None = None,
     ) -> str:
-        """Render the canonical failure message with or without an error cause."""
+        """Render the canonical failure message with or without an error cause.
+
+        Returns:
+            The resulting ``str``.
+
+        """
         if error is None:
             template_without_error = c.ERR_TEMPLATE_FAILED_WITH_ERROR.split(": ", 1)[0]
             message: str = FlextExceptionsTemplate.render_template(
-                template_without_error, operation=operation, params=params
+                template_without_error,
+                operation=operation,
+                params=params,
             )
             return message
+        # An exception's notes (PEP 678) are part of its cause: a strict MkDocs
+        # build, for one, attaches the warnings that aborted it as notes, and
+        # rendering str(error) alone would drop exactly that evidence.
+        notes = getattr(error, "__notes__", ()) if isinstance(error, Exception) else ()
         message_with_error: str = FlextExceptionsTemplate.render_template(
             c.ERR_TEMPLATE_FAILED_WITH_ERROR,
             operation=operation,
-            error=str(error),
+            error="\n".join((str(error), *notes)),
             params=params,
         )
         return message_with_error
@@ -76,7 +91,7 @@ class FlextExceptionsFactories:
         if params is None:
             return params_type.model_validate(update)
         return params.model_copy(
-            update={key: value for key, value in update.items() if value is not None}
+            update={key: value for key, value in update.items() if value is not None},
         )
 
     @staticmethod
@@ -93,7 +108,8 @@ class FlextExceptionsFactories:
             message,
             error_code=options.error_code or default_error_code,
             error_data=FlextExceptionsTemplate.result_error_data(
-                params, cause=str(error) if error is not None else None
+                params,
+                cause=str(error) if error is not None else None,
             ),
             exception=error if isinstance(error, BaseException) else None,
         )
@@ -112,12 +128,18 @@ class FlextExceptionsFactories:
 
             return e.fail_operation("resolve factory service", exc)
 
+        Returns:
+            R[T].fail with a canonical operation-error message.
+
         """
         params = m.OperationErrorParams(
-            operation=operation, reason=str(exc) if exc is not None else None
+            operation=operation,
+            reason=str(exc) if exc is not None else None,
         )
         msg = FlextExceptionsFactories._failure_message(
-            operation, params=params, error=exc
+            operation,
+            params=params,
+            error=exc,
         )
         return FlextExceptionsFactories._fail_result(
             msg,
@@ -141,9 +163,13 @@ class FlextExceptionsFactories:
 
             return e.fail_not_found("service", name)
 
+        Returns:
+            R[T].fail with a canonical not-found message.
+
         """
         params = m.NotFoundErrorParams(
-            resource_type=resource_type, resource_id=resource_id
+            resource_type=resource_type,
+            resource_id=resource_id,
         )
         msg = FlextExceptionsTemplate.render_template(
             c.ERR_SERVICE_NOT_FOUND,

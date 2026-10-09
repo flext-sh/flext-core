@@ -19,36 +19,44 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Annotated
 
-from .._typings.services import FlextTypesServices
-from .pydantic import FlextModelsPydantic as mp
+from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._typings.services import FlextTypesServices
 
 if TYPE_CHECKING:
     from collections.abc import ItemsView, KeysView, ValuesView
 
-    from .._typings.base import FlextTypingBase as t
+    from flext_core._typings.base import FlextTypingBase
 
 
 class FlextModelsContainers:
     """Pydantic RootModel container namespace."""
 
-    class ValidatorCallable(mp.RootModel[FlextTypesServices.ValidatorCallable]):
+    class ValidatorCallable(
+        FlextModelsPydantic.RootModel[FlextTypesServices.ValidatorCallable],
+    ):
         """Callable validator container rooted in a scalar-or-model transform."""
 
         root: Annotated[
             FlextTypesServices.ValidatorCallable,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 title="Validator Callable",
-                description="Callable that validates or transforms one scalar/model input value.",
+                description=(
+                    "Callable that validates or transforms one scalar/model input "
+                    "value."
+                ),
                 examples=["identity_validator"],
             ),
         ]
 
         def __call__(
-            self, value: FlextTypesServices.ScalarOrModel
+            self,
+            value: FlextTypesServices.ScalarOrModel,
         ) -> FlextTypesServices.ScalarOrModel:
             return self.root(value)
 
-    class _MappingRootBase(mp.RootModel[dict[str, FlextTypesServices.JsonPayload]]):
+    class _MappingRootBase(
+        FlextModelsPydantic.RootModel[dict[str, FlextTypesServices.JsonPayload]],
+    ):
         """MRO base providing the explicit mapping API for dict-rooted RootModels.
 
         Both ``Dict`` and ``ConfigMap`` differ only in the ``root`` field
@@ -85,12 +93,15 @@ class FlextModelsContainers:
             return self.root.items()
 
         def get(
-            self, key: str, default: FlextTypesServices.JsonPayload | None = None
+            self,
+            key: str,
+            default: FlextTypesServices.JsonPayload | None = None,
         ) -> FlextTypesServices.JsonPayload | None:
             return self.root.get(key, default)
 
         def update(
-            self, other: t.MappingKV[str, FlextTypesServices.JsonPayload]
+            self,
+            other: FlextTypingBase.MappingKV[str, FlextTypesServices.JsonPayload],
         ) -> None:
             self.root.update(other)
 
@@ -98,7 +109,9 @@ class FlextModelsContainers:
             self.root.clear()
 
         def pop(
-            self, key: str, *args: FlextTypesServices.JsonPayload
+            self,
+            key: str,
+            *args: FlextTypesServices.JsonPayload,
         ) -> FlextTypesServices.JsonPayload:
             return self.root.pop(key, *args)
 
@@ -106,7 +119,9 @@ class FlextModelsContainers:
             return self.root.popitem()
 
         def setdefault(
-            self, key: str, default: FlextTypesServices.JsonPayload
+            self,
+            key: str,
+            default: FlextTypesServices.JsonPayload,
         ) -> FlextTypesServices.JsonPayload:
             return self.root.setdefault(key, default)
 
@@ -115,7 +130,9 @@ class FlextModelsContainers:
 
         root: Annotated[
             dict[str, FlextTypesServices.JsonPayload],
-            mp.Field(description="Validated runtime key-value mapping."),
+            FlextModelsPydantic.Field(
+                description="Validated runtime key-value mapping.",
+            ),
         ]
 
     class ConfigMap(_MappingRootBase):
@@ -123,10 +140,14 @@ class FlextModelsContainers:
 
         root: Annotated[
             dict[str, FlextTypesServices.JsonPayload],
-            mp.Field(description="Validated runtime configuration mapping."),
+            FlextModelsPydantic.Field(
+                description="Validated runtime configuration mapping.",
+            ),
         ]
 
-    class ObjectList(mp.RootModel[list[FlextTypesServices.JsonPayload]]):
+    class ObjectList(
+        FlextModelsPydantic.RootModel[list[FlextTypesServices.JsonPayload]],
+    ):
         """Runtime list container rooted in validated values.
 
         Consumers iterate via ``.root`` for the validated list.
@@ -134,7 +155,7 @@ class FlextModelsContainers:
 
         root: Annotated[
             list[FlextTypesServices.JsonPayload],
-            mp.Field(description="Validated runtime sequence."),
+            FlextModelsPydantic.Field(description="Validated runtime sequence."),
         ]
 
         def __len__(self) -> int:

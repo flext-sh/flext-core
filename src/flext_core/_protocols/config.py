@@ -13,12 +13,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from .result import FlextProtocolsResult as pr
+from flext_core._protocols.result import FlextProtocolsResult
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from flext_core import FlextTypes as t
+    from flext_core import t
 
 
 class FlextProtocolsConfig:
@@ -28,12 +28,14 @@ class FlextProtocolsConfig:
     class ConfigLoader(Protocol):
         """Structural contract for loading a config source into a mapping."""
 
-        def config_load(self, path: Path) -> pr.Result[t.JsonMapping]:
+        def config_load(self, path: Path) -> FlextProtocolsResult.Result[t.JsonMapping]:
             """Load and parse a config source into a validated mapping."""
             ...
 
         def config_merge(
-            self, base: t.JsonMapping, override: t.JsonMapping
+            self,
+            base: t.JsonMapping,
+            override: t.JsonMapping,
         ) -> t.JsonMapping:
             """Deep-merge ``override`` onto ``base``, returning a new mapping."""
             ...

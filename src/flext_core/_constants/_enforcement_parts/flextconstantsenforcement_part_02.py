@@ -1,11 +1,18 @@
-"""Runtime enforcement constants for FlextConstantsEnforcement."""
+"""Runtime enforcement constants for FlextConstantsEnforcement.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, ClassVar
 
-from .flextconstantsenforcement_part_01 import FlextConstantsEnforcementEnums
+from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_01 import (
+    FlextConstantsEnforcementEnums,
+)
+from flext_core._typings.base import FlextTypingBase
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -14,12 +21,12 @@ if TYPE_CHECKING:
 class FlextConstantsEnforcementRuntime:
     """Runtime modes, base exemptions, and collection contracts."""
 
-    ENFORCEMENT_MODE: Final[FlextConstantsEnforcementEnums.EnforcementMode] = (
+    ENFORCEMENT_MODE: ClassVar[FlextConstantsEnforcementEnums.EnforcementMode] = (
         FlextConstantsEnforcementEnums.EnforcementMode.WARN
     )
     """Controls behavior: strict (TypeError), warn (UserWarning), off."""
 
-    BEARTYPE_MODE: Final[FlextConstantsEnforcementEnums.EnforcementMode] = (
+    BEARTYPE_MODE: ClassVar[FlextConstantsEnforcementEnums.EnforcementMode] = (
         FlextConstantsEnforcementEnums.EnforcementMode.OFF
     )
     """Controls flext_core beartype.claw bootstrap: strict, warn, or off.
@@ -40,7 +47,7 @@ class FlextConstantsEnforcementRuntime:
     ``.beads/artifacts/mro-31mj/fix-waves/L0-beartype``.
     """
 
-    BEARTYPE_CLAW_SKIP_PACKAGES: Final[tuple[str, ...]] = (
+    BEARTYPE_CLAW_SKIP_PACKAGES: ClassVar[FlextTypingBase.VariadicTuple[str]] = (
         "flext_core._models.context",
         "flext_core._typings",
         "flext_core._utilities.logging_config",
@@ -51,44 +58,9 @@ class FlextConstantsEnforcementRuntime:
     )
     """Package paths skipped by the flext_core beartype bootstrap."""
 
-    ENFORCEMENT_RELAXED_EXTRA_BASES: Final[frozenset[str]] = frozenset({
-        "DynamicModel",
-        "FlexibleModel",
-        "FlexibleInternalModel",
-        "FrozenDynamicModel",
-    })
-    """Base model names allowed to have relaxed extra= policies."""
-
-    ENFORCEMENT_INFRASTRUCTURE_BASES: Final[frozenset[str]] = frozenset({
-        "ArbitraryTypesModel",
-        "ContractModel",
-        "EnumManagedModel",
-        "FlexibleInternalModel",
-        "FlexibleModel",
-        "FrozenValueModel",
-        "IdentifiableMixin",
-        "ImmutableValueModel",
-        "InvalidOutcome",
-        "ManagedModel",
-        "Metadata",
-        "MutableConfiguredMixin",
-        "NormalizedModel",
-        "NormalizedMutableConfiguredMixin",
-        "RetryConfigurationMixin",
-        "StrictBoundaryModel",
-        "StrictManagedModel",
-        "TaggedModel",
-        "TimestampableMixin",
-        "TimestampedModel",
-        "ValidOutcome",
-        "VersionableMixin",
-        "WarningOutcome",
-    })
-    """FLEXT infrastructure base class names exempt from enforcement checks."""
-
-    ENFORCEMENT_FORBIDDEN_COLLECTIONS: Final[Mapping[type, str]] = MappingProxyType({
-        dict: "Mapping[K, V] or t.JsonMapping",
-        list: "Sequence[X] or t.JsonList",
+    ENFORCEMENT_FORBIDDEN_COLLECTIONS: ClassVar[Mapping[type, str]] = MappingProxyType({
+        dict: "Mapping[K, V] or FlextTypingBase.JsonMapping",
+        list: "Sequence[X] or FlextTypingBase.JsonList",
         set: "frozenset[X] or AbstractSet[X]",
     })
     """SSOT: forbidden mutable-collection types mapped to replacement hints.
@@ -98,47 +70,17 @@ class FlextConstantsEnforcementRuntime:
     derived from this single mapping — do not maintain parallel lists.
     """
 
-    ENFORCEMENT_FORBIDDEN_COLLECTION_ORIGINS: Final[frozenset[str]] = frozenset(
+    ENFORCEMENT_FORBIDDEN_COLLECTION_ORIGINS: ClassVar[frozenset[str]] = frozenset(
         kind.__name__ for kind in ENFORCEMENT_FORBIDDEN_COLLECTIONS
     )
     """Derived view: collection names used by annotation-origin checks."""
 
-    ENFORCEMENT_MUTABLE_RUNTIME_TYPES: Final[tuple[type, ...]] = tuple(
-        ENFORCEMENT_FORBIDDEN_COLLECTIONS
+    ENFORCEMENT_MUTABLE_RUNTIME_TYPES: ClassVar[FlextTypingBase.VariadicTuple[type]] = (
+        tuple(
+            ENFORCEMENT_FORBIDDEN_COLLECTIONS,
+        )
     )
     """Derived view: concrete types used by ``isinstance`` checks."""
-
-    # --- Per-layer metadata (single SSOT mappings keyed by EnforcementLayer) ---
-
-    ENFORCEMENT_CONSTANTS_SKIP_ATTRS: Final[frozenset[str]] = frozenset({
-        "__abstractmethods__",
-        "__class_getitem__",
-        "__dict__",
-        "__doc__",
-        "__init_subclass__",
-        "__module__",
-        "__orig_bases__",
-        "__pydantic_complete__",
-        "__qualname__",
-        "__subclasshook__",
-        "__weakref__",
-        # Pydantic v2 class-level contract attributes — NOT constants,
-        # they are framework metadata owned by the BaseModel machinery.
-        "model_computed_fields",
-        "model_config",
-        "model_extra",
-        "model_fields",
-        "model_post_init",
-    })
-    """Class-level attributes to skip during constants enforcement."""
-
-    ENFORCEMENT_UTILITIES_EXEMPT_METHODS: Final[frozenset[str]] = frozenset({
-        "__class_getitem__",
-        "__init__",
-        "__init_subclass__",
-        "__new__",
-    })
-    """Methods exempt from static/classmethod enforcement on utilities."""
 
 
 __all__: list[str] = ["FlextConstantsEnforcementRuntime"]

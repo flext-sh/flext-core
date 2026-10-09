@@ -1,74 +1,56 @@
-"""Alias rebind / compatibility / foreign-canonical alias visitors."""
+"""Alias rebind and compatibility alias visitors.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from ..._constants.enforcement import FlextConstantsEnforcement as c
-from ..._models.enforcement import FlextModelsEnforcement as me
-from ..._typings.base import FlextTypingBase as t
-from .helpers import FlextUtilitiesBeartypeHelpers as _ubh
+from flext_core._constants import FlextConstantsEnforcement
+from flext_core._models import FlextModelsEnforcement
+from flext_core._typings.base import FlextTypingBase
+from flext_core._utilities import FlextUtilitiesBeartypeHelpers
 
-_NO_VIOLATION: t.StrMapping | None = None
+_NO_VIOLATION: FlextTypingBase.StrMapping | None = None
 
 
 class FlextUtilitiesBeartypeAliasVisitor:
-    """ALIAS_REBIND / COMPATIBILITY_ALIAS / FOREIGN_CANONICAL_ALIAS_IMPORT visitors."""
-
-    @staticmethod
-    def v_foreign_canonical_alias_import(
-        params: me.ForeignCanonicalAliasImportParams, target: type
-    ) -> t.StrMapping | None:
-        """FOREIGN_CANONICAL_ALIAS_IMPORT — alias owned locally must not be imported from upstream.
-
-        Flags ``from flext_core import c`` (etc.) inside a project that re-exports
-        the same canonical alias locally. The local facade is the only legal source
-        for c/m/p/t/u when the project owns that slot.
-        """
-        if not params.project_alias_owners:
-            return _NO_VIOLATION
-        module = _ubh.runtime_module_for(target)
-        if module is None:
-            return _NO_VIOLATION
-        module_name = module.__name__
-        package = module_name.split(".")[0]
-        if package not in params.project_alias_owners:
-            return _NO_VIOLATION
-        local_aliases = frozenset(params.project_alias_owners[package])
-        for name, value in vars(module).items():
-            if name not in local_aliases:
-                continue
-            origin = _ubh.object_module_name_for(value)
-            if origin is None:
-                continue
-            origin_package = origin.split(".")[0]
-            if origin_package == package:
-                continue
-            if origin_package.startswith("flext_"):
-                return {"alias": name, "origin": origin_package, "local": package}
-        return _NO_VIOLATION
+    """ALIAS_REBIND / COMPATIBILITY_ALIAS visitors."""
 
     @staticmethod
     def v_alias_rebind(
-        params: me.AliasRebindParams, target: type
-    ) -> t.StrMapping | None:
-        """ALIAS_REBIND — canonical alias rebind / sibling-import discipline."""
-        module = _ubh.runtime_module_for(target)
+        params: FlextModelsEnforcement.AliasRebindParams,
+        target: type,
+    ) -> FlextTypingBase.StrMapping | None:
+        """ALIAS_REBIND — canonical alias rebind / sibling-import discipline.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+
+        """
+        module = FlextUtilitiesBeartypeHelpers.runtime_module_for(target)
         if module is None:
             return _NO_VIOLATION
-        src_file = _ubh.module_filename_for(module) or ""
+        src_file = FlextUtilitiesBeartypeHelpers.module_filename_for(module) or ""
         filename = Path(src_file).name
         module_name = module.__name__
         package = module_name.split(".")[0]
         variant = params.expected_form
         violation = _NO_VIOLATION
+        h = FlextUtilitiesBeartypeHelpers
         match variant:
-            case "rebound_at_module_end" if filename in c.ENFORCEMENT_CANONICAL_FILES:
+            case "rebound_at_module_end" if (
+                filename in FlextConstantsEnforcement.ENFORCEMENT_CANONICAL_FILES
+            ):
                 target_name = target.__name__
                 alias_char: str | None = next(
                     (
                         alias_name
-                        for alias_name, _, suffix in _ubh.lazy_alias_suffixes(package)
+                        for alias_name, _, suffix in h.lazy_alias_suffixes(
+                            package,
+                        )
                         if suffix in target_name
                     ),
                     None,
@@ -80,18 +62,27 @@ class FlextUtilitiesBeartypeAliasVisitor:
                         "rebind_form": f"{alias_char} = {target_name}",
                     }
             case "no_self_root_import_in_core_files" if (
-                filename in c.ENFORCEMENT_CANONICAL_FILES
+                filename in FlextConstantsEnforcement.ENFORCEMENT_CANONICAL_FILES
             ):
                 canonical_stems = frozenset(
-                    name.removesuffix(".py") for name in c.ENFORCEMENT_CANONICAL_FILES
+                    name.removesuffix(".py")
+                    for name in FlextConstantsEnforcement.ENFORCEMENT_CANONICAL_FILES
                 )
                 violation = next(
                     (
                         {"package": package, "alias": alias_char}
-                        for alias_char in _ubh.runtime_alias_names(package)
+                        for alias_char in h.runtime_alias_names(
+                            package,
+                        )
                         if (alias_value := getattr(module, alias_char, None))
                         is not None
-                        and (origin := _ubh.object_module_name_for(alias_value) or "")
+                        and (
+                            origin
+                            := FlextUtilitiesBeartypeHelpers.object_module_name_for(
+                                alias_value,
+                            )
+                            or ""
+                        )
                         and origin.split(".", 1)[0] == package
                         and origin != module_name
                         and origin
@@ -108,24 +99,30 @@ class FlextUtilitiesBeartypeAliasVisitor:
 
     @staticmethod
     def v_compatibility_alias(
-        params: me.CompatibilityAliasParams, target: type
-    ) -> t.StrMapping | None:
-        """COMPATIBILITY_ALIAS — long facade class name must use canonical alias."""
+        params: FlextModelsEnforcement.CompatibilityAliasParams,
+        target: type,
+    ) -> FlextTypingBase.StrMapping | None:
+        """COMPATIBILITY_ALIAS — long facade class name must use canonical alias.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+
+        """
         if not params.alias_renames:
             return _NO_VIOLATION
-        module = _ubh.runtime_module_for(target)
+        module = FlextUtilitiesBeartypeHelpers.runtime_module_for(target)
         if module is None:
             return _NO_VIOLATION
-        src_file = _ubh.module_filename_for(module) or ""
+        src_file = FlextUtilitiesBeartypeHelpers.module_filename_for(module) or ""
         filename = Path(src_file).name
-        if filename in c.ENFORCEMENT_CANONICAL_FILES:
+        if filename in FlextConstantsEnforcement.ENFORCEMENT_CANONICAL_FILES:
             return _NO_VIOLATION
         alias_renames = dict(params.alias_renames)
         for name, value in vars(module).items():
             alias = alias_renames.get(name)
             if alias is None:
                 continue
-            origin = _ubh.object_module_name_for(value)
+            origin = FlextUtilitiesBeartypeHelpers.object_module_name_for(value)
             if origin is None:
                 continue
             origin_package = origin.split(".")[0]

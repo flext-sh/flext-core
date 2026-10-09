@@ -1,11 +1,15 @@
-"""Type aliases for flext."""
+"""Type aliases for flext.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from flext_cli import t
+from flext_core import FlextTypes
 
 
-class ScriptsFlextTypes(t):
+class ScriptsFlextTypes(FlextTypes):
     """Type aliases for flext."""
 
 

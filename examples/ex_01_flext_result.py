@@ -1,15 +1,18 @@
-"""r (r) — exercises ALL public API methods with golden file validation."""
+"""r (r) — exercises ALL public API methods with golden file validation.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from pathlib import Path
 from typing import override
 
+from examples import m
+from examples.ex_01_flext_result_helpers import Ex01ResultAdvancedSections
+from examples.shared import ExamplesFlextShared
 from flext_core import r, t
-
-from .ex_01_flext_result_helpers import Ex01ResultAdvancedSections
-from .models import m
-from .shared import ExamplesFlextShared
 
 
 class Ex01r(Ex01ResultAdvancedSections):
@@ -27,7 +30,8 @@ class Ex01r(Ex01ResultAdvancedSections):
         self.audit_check("value.success", ok_value.value)
         self.audit_check("value.failure.unwrap_or", fail_value.unwrap_or(123))
         self.audit_check(
-            "map.success", ok_value.map(lambda value: value + 1).unwrap_or(-1)
+            "map.success",
+            ok_value.map(lambda value: value + 1).unwrap_or(-1),
         )
         self.audit_check("map.failure", fail_value.map(lambda value: value + 1).failure)
         self.audit_check(
@@ -35,7 +39,8 @@ class Ex01r(Ex01ResultAdvancedSections):
             ok_value.flat_map(lambda value: r[int].ok(value * 2)).unwrap_or(-1),
         )
         self.audit_check(
-            "map_error.failure", fail_value.map_error(lambda err: f"mapped:{err}").error
+            "map_error.failure",
+            fail_value.map_error(lambda err: f"mapped:{err}").error,
         )
         self.audit_check(
             "lash.failure",
@@ -45,10 +50,12 @@ class Ex01r(Ex01ResultAdvancedSections):
         invalid_data: t.JsonMapping = {"name": "Ada", "age": "bad"}
         person_model = ExamplesFlextShared.Person
         from_validation_ok = r[ExamplesFlextShared.Person].from_validation(
-            valid_data, person_model
+            valid_data,
+            person_model,
         )
         from_validation_fail = r[ExamplesFlextShared.Person].from_validation(
-            invalid_data, person_model
+            invalid_data,
+            person_model,
         )
         self.audit_check("from_validation.success", from_validation_ok.success)
         self.audit_check("from_validation.failure", from_validation_fail.failure)
@@ -91,7 +98,7 @@ class Ex01r(Ex01ResultAdvancedSections):
 
         safe_ok = parse_int("42")
         safe_fail = parse_int("x")
-        self.audit_check("safe.success.unwrap_or", safe_ok.unwrap_or(0))
+        self.audit_check("safe.success.unwrap_or", safe_ok.value)
         self.audit_check("safe.failure.error", safe_fail.error)
 
         def func_fail() -> str | None:
@@ -105,7 +112,8 @@ class Ex01r(Ex01ResultAdvancedSections):
         callable_fail = r[str].create_from_callable(func_fail, error_code="E_CALL")
         callable_none = r[str].create_from_callable(func_none, error_code="E_NONE")
         self.audit_check(
-            "create_from_callable.success", callable_ok.unwrap_or("fallback")
+            "create_from_callable.success",
+            callable_ok.unwrap_or("fallback"),
         )
         self.audit_check("create_from_callable.failure.code", callable_fail.error_code)
         self.audit_check("create_from_callable.none.error", callable_none.error)
@@ -136,9 +144,9 @@ class Ex01r(Ex01ResultAdvancedSections):
         self.audit_check("unwrap.success", success.unwrap())
         try:
             _ = failure.unwrap()
-            self.audit_check("unwrap.failure.raises", False)
+            self.audit_check("unwrap.failure.raises", value=False)
         except RuntimeError as exc:
-            self.audit_check("unwrap.failure.raises", True)
+            self.audit_check("unwrap.failure.raises", value=True)
             self.audit_check("unwrap.failure.type", type(exc).__name__)
         self.audit_check("unwrap_or.success", success.unwrap_or("default"))
         self.audit_check("unwrap_or.failure", failure.unwrap_or("default"))

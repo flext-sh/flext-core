@@ -1,11 +1,15 @@
-"""Protocol definitions for flext."""
+"""Protocol definitions for flext.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from flext_cli import p
+from flext_core import FlextProtocols
 
 
-class ScriptsFlextProtocols(p):
+class ScriptsFlextProtocols(FlextProtocols):
     """Protocol definitions for flext."""
 
 

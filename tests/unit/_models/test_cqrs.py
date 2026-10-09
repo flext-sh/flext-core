@@ -5,6 +5,9 @@ Exercises the public surface of ``m.Command``, ``m.Query`` and
 default state, pagination coercion and computed fields, immutability and
 validation error paths). Every assertion targets observable behaviour a
 caller depends on - never private attributes or implementation internals.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -15,7 +18,7 @@ import pytest
 from flext_tests import tm
 
 from flext_core import c, t
-from tests.models import m
+from tests import m
 
 
 class TestsFlextCoreCqrs:
@@ -24,30 +27,37 @@ class TestsFlextCoreCqrs:
     # ------------------------------------------------------------------ #
     # Command
     # ------------------------------------------------------------------ #
-    def test_command_message_type_discriminator_is_command(self) -> None:
+    @staticmethod
+    def test_command_message_type_discriminator_is_command() -> None:
         # Act
         command = m.Command()
 
         # Assert
         assert command.message_type == "command"
 
-    def test_command_message_type_is_immutable(self) -> None:
+    @staticmethod
+    def test_command_message_type_is_immutable() -> None:
         # Arrange
         command = m.Command()
 
         # Act / Assert
         tm.rejects_assignment(
-            command, "message_type", "query", expected=c.ValidationError
+            command,
+            "message_type",
+            "query",
+            expected=c.ValidationError,
         )
 
-    def test_command_generates_prefixed_identifier_by_default(self) -> None:
+    @staticmethod
+    def test_command_generates_prefixed_identifier_by_default() -> None:
         # Act
         command = m.Command()
 
         # Assert
         assert command.command_id.startswith("cmd_")
 
-    def test_command_identifiers_are_unique_per_instance(self) -> None:
+    @staticmethod
+    def test_command_identifiers_are_unique_per_instance() -> None:
         # Act
         first = m.Command()
         second = m.Command()
@@ -55,25 +65,29 @@ class TestsFlextCoreCqrs:
         # Assert
         assert first.command_id != second.command_id
 
-    def test_command_accepts_explicit_identifier(self) -> None:
+    @staticmethod
+    def test_command_accepts_explicit_identifier() -> None:
         # Act
         command = m.Command(command_id="cmd-supplied")
 
         # Assert
         assert command.command_id == "cmd-supplied"
 
-    def test_command_issuer_id_defaults_to_none(self) -> None:
+    @staticmethod
+    def test_command_issuer_id_defaults_to_none() -> None:
         # Act / Assert
         assert m.Command().issuer_id is None
 
-    def test_command_retains_supplied_issuer_id(self) -> None:
+    @staticmethod
+    def test_command_retains_supplied_issuer_id() -> None:
         # Act
         command = m.Command(issuer_id="principal-42")
 
         # Assert
         assert command.issuer_id == "principal-42"
 
-    def test_command_dump_exposes_public_fields_only(self) -> None:
+    @staticmethod
+    def test_command_dump_exposes_public_fields_only() -> None:
         # Act
         dumped = m.Command(command_id="cmd-1").model_dump()
 
@@ -85,7 +99,8 @@ class TestsFlextCoreCqrs:
             "issuer_id": None,
         }
 
-    def test_command_subclass_extends_fields_and_inherits_contract(self) -> None:
+    @staticmethod
+    def test_command_subclass_extends_fields_and_inherits_contract() -> None:
         # Arrange
         class CreateItem(m.Command):
             name: Annotated[t.NonEmptyStr, m.Field(description="Item display name")]
@@ -101,46 +116,57 @@ class TestsFlextCoreCqrs:
     # ------------------------------------------------------------------ #
     # Query
     # ------------------------------------------------------------------ #
-    def test_query_message_type_discriminator_is_query(self) -> None:
+    @staticmethod
+    def test_query_message_type_discriminator_is_query() -> None:
         # Act / Assert
         assert m.Query().message_type == "query"
 
-    def test_query_message_type_is_immutable(self) -> None:
+    @staticmethod
+    def test_query_message_type_is_immutable() -> None:
         # Arrange
         query = m.Query()
 
         # Act / Assert
         tm.rejects_assignment(
-            query, "message_type", "command", expected=c.ValidationError
+            query,
+            "message_type",
+            "command",
+            expected=c.ValidationError,
         )
 
-    def test_query_generates_prefixed_identifier_by_default(self) -> None:
+    @staticmethod
+    def test_query_generates_prefixed_identifier_by_default() -> None:
         # Act / Assert
         assert m.Query().query_id.startswith("query_")
 
-    def test_query_filters_default_to_empty(self) -> None:
+    @staticmethod
+    def test_query_filters_default_to_empty() -> None:
         # Act / Assert
         assert dict(m.Query().filters) == {}
 
-    def test_query_retains_supplied_filters(self) -> None:
+    @staticmethod
+    def test_query_retains_supplied_filters() -> None:
         # Act
         query = m.Query(filters={"status": "active", "tenant": "acme"})
 
         # Assert
         assert dict(query.filters) == {"status": "active", "tenant": "acme"}
 
-    def test_query_query_type_defaults_to_none(self) -> None:
+    @staticmethod
+    def test_query_query_type_defaults_to_none() -> None:
         # Act / Assert
         assert m.Query().query_type is None
 
-    def test_query_provides_default_pagination(self) -> None:
+    @staticmethod
+    def test_query_provides_default_pagination() -> None:
         # Act
         query = m.Query()
 
         # Assert
         assert query.pagination.page == 1
 
-    def test_query_coerces_pagination_mapping_into_model(self) -> None:
+    @staticmethod
+    def test_query_coerces_pagination_mapping_into_model() -> None:
         # Act
         query = m.Query(pagination={"page": 2, "size": 5})
 
@@ -150,10 +176,12 @@ class TestsFlextCoreCqrs:
         assert query.pagination.offset == 5
 
     @pytest.mark.parametrize(
-        "invalid_pagination", [{"page": 0, "size": -5}, {"size": 10_000}, {"page": -1}]
+        "invalid_pagination",
+        [{"page": 0, "size": -5}, {"size": 10_000}, {"page": -1}],
     )
+    @staticmethod
     def test_query_falls_back_to_default_pagination_on_invalid_input(
-        self, invalid_pagination: t.MappingKV[str, t.Scalar]
+        invalid_pagination: t.MappingKV[str, t.Scalar],
     ) -> None:
         # Act
         query = m.Query(pagination=invalid_pagination)
@@ -162,7 +190,8 @@ class TestsFlextCoreCqrs:
         assert query.pagination.page == 1
         assert query.pagination.size == 10
 
-    def test_query_subclass_extends_fields_and_inherits_contract(self) -> None:
+    @staticmethod
+    def test_query_subclass_extends_fields_and_inherits_contract() -> None:
         # Arrange
         class GetItem(m.Query):
             item_id: Annotated[t.NonEmptyStr, m.Field(description="Target item id")]
@@ -178,7 +207,8 @@ class TestsFlextCoreCqrs:
     # ------------------------------------------------------------------ #
     # Pagination
     # ------------------------------------------------------------------ #
-    def test_pagination_defaults_to_first_page(self) -> None:
+    @staticmethod
+    def test_pagination_defaults_to_first_page() -> None:
         # Act
         pagination = m.Pagination()
 
@@ -186,7 +216,8 @@ class TestsFlextCoreCqrs:
         assert pagination.page == 1
         assert pagination.offset == 0
 
-    def test_pagination_limit_mirrors_size(self) -> None:
+    @staticmethod
+    def test_pagination_limit_mirrors_size() -> None:
         # Act
         pagination = m.Pagination(size=25)
 
@@ -197,8 +228,11 @@ class TestsFlextCoreCqrs:
         ("page", "size", "expected_offset"),
         [(1, 10, 0), (2, 10, 10), (3, 20, 40), (5, 50, 200)],
     )
+    @staticmethod
     def test_pagination_offset_is_derived_from_page_and_size(
-        self, page: int, size: int, expected_offset: int
+        page: int,
+        size: int,
+        expected_offset: int,
     ) -> None:
         # Act
         pagination = m.Pagination(page=page, size=size)
@@ -210,8 +244,9 @@ class TestsFlextCoreCqrs:
         "invalid_kwargs",
         [{"size": c.MAX_PAGE_SIZE + 1}, {"page": 0}, {"page": -3}, {"size": 0}],
     )
+    @staticmethod
     def test_pagination_rejects_out_of_range_values(
-        self, invalid_kwargs: t.MappingKV[str, int]
+        invalid_kwargs: t.MappingKV[str, int],
     ) -> None:
         # Act / Assert
         with pytest.raises(c.ValidationError):

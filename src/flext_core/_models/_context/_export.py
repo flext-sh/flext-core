@@ -12,30 +12,32 @@ from typing import Annotated
 from pydantic import BeforeValidator, Field
 
 from flext_core import t
-
-from ..base import FlextModelsBase as m
-from ..containers import FlextModelsContainers
-from ..entity import FlextModelsEntity
-from ._data import FlextModelsContextData
+from flext_core._models._context._data import FlextModelsContextData
+from flext_core._models.base import FlextModelsBase
+from flext_core._models.containers import FlextModelsContainers
+from flext_core._models.entity import FlextModelsEntity
 
 
 class FlextModelsContextExport:
     """Namespace for context export models."""
 
     class ContextExport(
-        FlextModelsContextData.SerializableDataValidatorMixin, FlextModelsEntity.Value
+        FlextModelsContextData.SerializableDataValidatorMixin,
+        FlextModelsEntity.Value,
     ):
         """Typed snapshot returned by export_snapshot."""
 
-        data: Annotated[
-            t.MappingKV[str, t.JsonPayload],
-            Field(
-                default_factory=lambda: MappingProxyType[str, t.JsonPayload]({}),
-                description="All context data from all scopes",
-            ),
-        ]
+        # Why assigned-value form for the specifier calls (not ``Annotated``
+        # metadata): pyright's ``dataclass_transform`` synthesis recognizes
+        # ``default_factory`` default-ness only from the specifier call
+        # assigned to the class variable; a specifier inside ``Annotated``
+        # metadata synthesizes a REQUIRED ``__init__`` parameter.
+        data: t.MappingKV[str, t.JsonPayload] = Field(
+            default_factory=lambda: MappingProxyType[str, t.JsonPayload]({}),
+            description="All context data from all scopes",
+        )
         metadata: Annotated[
-            m.Metadata | FlextModelsContainers.Dict | None,
+            FlextModelsBase.Metadata | FlextModelsContainers.Dict | None,
             BeforeValidator(FlextModelsContextData.normalize_metadata_before),
             Field(
                 default=None,
@@ -49,13 +51,12 @@ class FlextModelsContextExport:
                     FlextModelsContextData.normalize_to_mapping(v)
                     if v is not None
                     else {}
-                )
+                ),
             ),
-            Field(
-                default_factory=lambda: MappingProxyType[str, t.JsonValue]({}),
-                description="Usage statistics (operation counts, timing info)",
-            ),
-        ]
+        ] = Field(
+            default_factory=lambda: MappingProxyType[str, t.JsonValue]({}),
+            description="Usage statistics (operation counts, timing info)",
+        )
 
 
 __all__: t.MutableSequenceOf[str] = ["FlextModelsContextExport"]

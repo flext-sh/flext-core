@@ -2,23 +2,12 @@
 repos:
   - repo: local
     hooks:
-    # Why: each make verb is its own pre-commit/pre-push hook so the operator
-    # sees per-step status (Passed/Failed) natively via the pre-commit runner.
-    # Every step states the CI token instead of inheriting it. A git hook runs
-    # with the invoking environment, so a caller that already exported
-    # CI=Y would otherwise reach the pre-push steps and
-    # revoke exactly the gates a push must not skip (9b604d43: lint, format,
-    # pyrefly; flext-v4p5: pytest). Declaring the token closes that carrier.
-    # pre-commit is the fast mutation pass and runs the CI gate set
-    # (CI=Y). pre-push is the local blocking gate and runs
-    # the full set with CI=N. Context never changes the
-    # declared operation or narrows its complete gate composition.
-    # Every hook step owns a shell because Git exports repository-local state,
-    # including GIT_INDEX_FILE during pre-commit. A member hook that delegates
-    # setup to its repository root must clear those variables first or the root
-    # reads the member's temporary index and reports governed gitlinks missing.
-    # MAKEFLAGS/APPLY are cleared in the same prefix so inherited write intent
-    # cannot leak into an independently declared hook step.
-    # Stage gates (operator law 2026-08-24): each stage renders only when its
-    # config gate (make.pre_commit / make.pre_push) is enabled. Disabled by
-    # default; re-enable case by case in config/codegen.yaml.
+    # Mandatory approval has one owner, shared with native CI.
+      - id: flext-pre-commit
+        name: make pre-commit
+        language: system
+        entry: >-
+          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); CI=Y make pre-commit'
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]

@@ -1,7 +1,5 @@
 """Type aliases and generics for the FLEXT ecosystem - Thin MRO Facade.
 
-from flext_core import FlextTypes as Types
-
 Zero internal imports - depends only on stdlib, pydantic, pydantic-settings.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -10,14 +8,27 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from ._typings.base import FlextTypingBase
-from ._typings.config import FlextTypingConfig
-from ._typings.containers import FlextTypingContainers
-from ._typings.core import FlextTypesCore
-from ._typings.lazy import FlextTypesLazy
-from ._typings.project_metadata import FlextTypingProjectMetadata
-from ._typings.services import FlextTypesServices
-from ._typings.typeadapters import FlextTypesTypeAdapters
+from collections.abc import Callable, Mapping
+from typing import TypeVar
+
+from flext_core._protocols import (
+    FlextProtocolsContainer,
+    FlextProtocolsContext,
+    FlextProtocolsHandler,
+    FlextProtocolsLogging,
+    FlextProtocolsResult,
+    FlextProtocolsService,
+    FlextProtocolsSettings,
+)
+from flext_core._typings.base import FlextTypingBase
+from flext_core._typings.config import FlextTypingConfig
+from flext_core._typings.containers import FlextTypingContainers
+from flext_core._typings.core import FlextTypesCore
+from flext_core._typings.lazy import FlextTypesLazy
+from flext_core._typings.project_metadata import FlextTypingProjectMetadata
+from flext_core._typings.pydantic import FlextTypesPydantic
+from flext_core._typings.services import FlextTypesServices
+from flext_core._typings.typeadapters import FlextTypesTypeAdapters
 
 
 class FlextTypes(
@@ -39,5 +50,35 @@ class FlextTypes(
 
 
 t = FlextTypes
+
+
+type JsonMapping = Mapping[str, FlextTypesPydantic.JsonValue]
+
+type JsonDict = dict[str, FlextTypesPydantic.JsonValue]
+
+type ConfigModelInput = FlextProtocolsResult.HasModelDump | JsonMapping
+
+T = TypeVar("T")
+
+
+type ModuleGlobalValue = FlextTypesLazy.ModuleGlobalValue
+
+type ModuleGlobals = FlextTypesLazy.ModuleGlobals
+
+type ProtocolGuardInput = (
+    t.JsonPayload
+    | t.TypeHintSpecifier
+    | Callable[..., t.JsonPayload]
+    | FlextProtocolsContainer.Container
+    | FlextProtocolsContext.Context
+    | FlextProtocolsHandler.Dispatcher
+    | FlextProtocolsHandler.Handle
+    | FlextProtocolsHandler.Middleware
+    | FlextProtocolsLogging.Logger
+    | FlextProtocolsResult.Result[t.JsonPayload]
+    | FlextProtocolsSettings.Settings
+    | FlextProtocolsService.Service[t.JsonPayload]
+    | None
+)
 
 __all__: list[str] = ["FlextTypes", "t"]

@@ -7,24 +7,24 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum, unique
-from typing import Final
+from typing import ClassVar
 
 
 class FlextConstantsMixins:
     """SSOT for mixin/handler decorator support constants."""
 
-    FIELD_ID: Final[str] = "unique_id"
-    FIELD_STATUS: Final[str] = "status"
-    FIELD_METADATA: Final[str] = "metadata"
-    FIELD_ATTRIBUTES: Final[str] = "attributes"
-    FIELD_CONTEXT: Final[str] = "context"
-    FIELD_HANDLER_MODE: Final[str] = "handler_mode"
+    FIELD_ID: ClassVar[str] = "unique_id"
+    FIELD_STATUS: ClassVar[str] = "status"
+    FIELD_METADATA: ClassVar[str] = "metadata"
+    FIELD_ATTRIBUTES: ClassVar[str] = "attributes"
+    FIELD_CONTEXT: ClassVar[str] = "context"
+    FIELD_HANDLER_MODE: ClassVar[str] = "handler_mode"
 
-    IDENTIFIER_UNKNOWN: Final[str] = "unknown"
-    DEFAULT_MAX_WORKERS: Final[int] = 4
+    IDENTIFIER_UNKNOWN: ClassVar[str] = "unknown"
+    DEFAULT_MAX_WORKERS: ClassVar[int] = 4
 
-    HANDLER_ATTR: Final[str] = "_flext_handler_config_"
-    FACTORY_ATTR: Final[str] = "_flext_factory_config_"
+    HANDLER_ATTR: ClassVar[str] = "_flext_handler_config_"
+    FACTORY_ATTR: ClassVar[str] = "_flext_factory_config_"
 
     @unique
     class RegistrationScope(StrEnum):

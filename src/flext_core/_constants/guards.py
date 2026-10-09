@@ -18,40 +18,39 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableSequence
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Final
+from typing import ClassVar
 
-if TYPE_CHECKING:
-    from flext_core import t
+from flext_core._typings.services import FlextTypesServices
 
 
 class FlextConstantsGuards:
     """Static type-predicate registry for u.matches_type dispatch."""
 
-    STRING_TYPE_PREDICATES: Final[Mapping[str, Callable[[t.GuardInput], bool]]] = (
-        MappingProxyType({
-            "str": lambda v: isinstance(v, str),
-            "dict": lambda v: isinstance(v, dict),
-            "list": lambda v: isinstance(v, list),
-            "tuple": lambda v: isinstance(v, tuple),
-            "sequence": lambda v: isinstance(v, (list, tuple, range)),
-            "mapping": lambda v: isinstance(v, Mapping),
-            "list_or_tuple": lambda v: isinstance(v, (list, tuple)),
-            "sequence_not_str": lambda v: (
-                isinstance(v, (list, tuple, range)) and not isinstance(v, str)
-            ),
-            "sequence_not_str_bytes": lambda v: (
-                isinstance(v, (list, tuple, range)) and not isinstance(v, (str, bytes))
-            ),
-            "sized": lambda v: hasattr(v, "__len__"),
-            "callable": callable,
-            "bytes": lambda v: isinstance(v, bytes),
-            "int": lambda v: isinstance(v, int),
-            "float": lambda v: isinstance(v, float),
-            "bool": lambda v: isinstance(v, bool),
-            "none": lambda v: v is None,
-            "string_non_empty": lambda v: isinstance(v, str) and bool(v.strip()),
-        })
-    )
+    STRING_TYPE_PREDICATES: ClassVar[
+        Mapping[str, Callable[[FlextTypesServices.GuardInput], bool]]
+    ] = MappingProxyType({
+        "str": lambda v: isinstance(v, str),
+        "dict": lambda v: isinstance(v, dict),
+        "list": lambda v: isinstance(v, list),
+        "tuple": lambda v: isinstance(v, tuple),
+        "sequence": lambda v: isinstance(v, (list, tuple, range)),
+        "mapping": lambda v: isinstance(v, Mapping),
+        "list_or_tuple": lambda v: isinstance(v, (list, tuple)),
+        "sequence_not_str": lambda v: (
+            isinstance(v, (list, tuple, range)) and not isinstance(v, str)
+        ),
+        "sequence_not_str_bytes": lambda v: (
+            isinstance(v, (list, tuple, range)) and not isinstance(v, (str, bytes))
+        ),
+        "sized": lambda v: hasattr(v, "__len__"),
+        "callable": callable,
+        "bytes": lambda v: isinstance(v, bytes),
+        "int": lambda v: isinstance(v, int),
+        "float": lambda v: isinstance(v, float),
+        "bool": lambda v: isinstance(v, bool),
+        "none": lambda v: v is None,
+        "string_non_empty": lambda v: isinstance(v, str) and bool(v.strip()),
+    })
 
 
 __all__: MutableSequence[str] = ["FlextConstantsGuards"]

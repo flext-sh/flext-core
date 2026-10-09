@@ -3,9 +3,7 @@
   "destination": ".cursor/rules",
   "managed": {
     "architecture--engineering-core.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "architecture--engineering-core.mdc",
       "origin": "agents:rules:cursor",
@@ -15,9 +13,7 @@
       "source_type": "rule"
     },
     "architecture--generalized-abstraction.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "architecture--generalized-abstraction.mdc",
       "origin": "agents:rules:cursor",
@@ -27,9 +23,7 @@
       "source_type": "rule"
     },
     "architecture--governance-artifact-composition.mdc": {
-      "activation": [
-        "route:project"
-      ],
+      "activation": ["route:project"],
       "adapter_version": 1,
       "destination": "architecture--governance-artifact-composition.mdc",
       "origin": "agents:rules:cursor",
@@ -39,9 +33,7 @@
       "source_type": "rule"
     },
     "communication--caveman.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "communication--caveman.mdc",
       "origin": "agents:rules:cursor",
@@ -51,9 +43,7 @@
       "source_type": "rule"
     },
     "coordination--fix-forward-collaboration.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "coordination--fix-forward-collaboration.mdc",
       "origin": "agents:rules:cursor",
@@ -63,9 +53,7 @@
       "source_type": "rule"
     },
     "coordination--multiagent-edit-breadcrumb.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "coordination--multiagent-edit-breadcrumb.mdc",
       "origin": "agents:rules:cursor",
@@ -75,9 +63,7 @@
       "source_type": "rule"
     },
     "coordination--operator-precedence.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "coordination--operator-precedence.mdc",
       "origin": "agents:rules:cursor",
@@ -87,9 +73,7 @@
       "source_type": "rule"
     },
     "coordination--plan-topic-monopoly.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "coordination--plan-topic-monopoly.mdc",
       "origin": "agents:rules:cursor",
@@ -99,9 +83,7 @@
       "source_type": "rule"
     },
     "coordination--session-governance.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "coordination--session-governance.mdc",
       "origin": "agents:rules:cursor",
@@ -111,9 +93,7 @@
       "source_type": "rule"
     },
     "coordination--shared-venv-guard.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "coordination--shared-venv-guard.mdc",
       "origin": "agents:rules:cursor",
@@ -123,9 +103,7 @@
       "source_type": "rule"
     },
     "ethics--professional-integrity.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "ethics--professional-integrity.mdc",
       "origin": "agents:rules:cursor",
@@ -135,9 +113,7 @@
       "source_type": "rule"
     },
     "git--destructive-git-guard.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "git--destructive-git-guard.mdc",
       "origin": "agents:rules:cursor",
@@ -147,9 +123,7 @@
       "source_type": "rule"
     },
     "python--config-settings-ssot.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "python--config-settings-ssot.mdc",
       "origin": "agents:rules:cursor",
@@ -159,9 +133,7 @@
       "source_type": "rule"
     },
     "python--no-hidden-errors.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "python--no-hidden-errors.mdc",
       "origin": "agents:rules:cursor",
@@ -171,9 +143,7 @@
       "source_type": "rule"
     },
     "python.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "python.mdc",
       "origin": "agents:rules:cursor",
@@ -183,9 +153,7 @@
       "source_type": "rule"
     },
     "runtime--atomic-effects.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "runtime--atomic-effects.mdc",
       "origin": "agents:rules:cursor",
@@ -195,9 +163,7 @@
       "source_type": "rule"
     },
     "runtime--causal-subprocess.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "runtime--causal-subprocess.mdc",
       "origin": "agents:rules:cursor",
@@ -207,9 +173,7 @@
       "source_type": "rule"
     },
     "runtime--fail-loud.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "runtime--fail-loud.mdc",
       "origin": "agents:rules:cursor",
@@ -219,9 +183,7 @@
       "source_type": "rule"
     },
     "runtime--no-fallback.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "runtime--no-fallback.mdc",
       "origin": "agents:rules:cursor",
@@ -231,9 +193,7 @@
       "source_type": "rule"
     },
     "runtime--no-keyring.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "runtime--no-keyring.mdc",
       "origin": "agents:rules:cursor",
@@ -243,9 +203,7 @@
       "source_type": "rule"
     },
     "runtime--preflight-before-effects.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "runtime--preflight-before-effects.mdc",
       "origin": "agents:rules:cursor",
@@ -255,9 +213,7 @@
       "source_type": "rule"
     },
     "runtime--required-environment.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "runtime--required-environment.mdc",
       "origin": "agents:rules:cursor",
@@ -267,9 +223,7 @@
       "source_type": "rule"
     },
     "runtime--strict-execution.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "runtime--strict-execution.mdc",
       "origin": "agents:rules:cursor",
@@ -279,9 +233,7 @@
       "source_type": "rule"
     },
     "runtime--zero-residue.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "runtime--zero-residue.mdc",
       "origin": "agents:rules:cursor",
@@ -291,9 +243,7 @@
       "source_type": "rule"
     },
     "rust.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "rust.mdc",
       "origin": "agents:rules:cursor",
@@ -303,9 +253,7 @@
       "source_type": "rule"
     },
     "security--prompt-defense.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "security--prompt-defense.mdc",
       "origin": "agents:rules:cursor",
@@ -315,9 +263,7 @@
       "source_type": "rule"
     },
     "security--scanner-closure.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "security--scanner-closure.mdc",
       "origin": "agents:rules:cursor",
@@ -327,9 +273,7 @@
       "source_type": "rule"
     },
     "security--supply-chain.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "security--supply-chain.mdc",
       "origin": "agents:rules:cursor",
@@ -339,9 +283,7 @@
       "source_type": "rule"
     },
     "shell--bash-guard-chaining-precision.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "shell--bash-guard-chaining-precision.mdc",
       "origin": "agents:rules:cursor",
@@ -351,9 +293,7 @@
       "source_type": "rule"
     },
     "storage.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "storage.mdc",
       "origin": "agents:rules:cursor",
@@ -363,9 +303,7 @@
       "source_type": "rule"
     },
     "testing--observable-runtime.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "testing--observable-runtime.mdc",
       "origin": "agents:rules:cursor",
@@ -375,9 +313,7 @@
       "source_type": "rule"
     },
     "typescript.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "typescript.mdc",
       "origin": "agents:rules:cursor",
@@ -387,9 +323,7 @@
       "source_type": "rule"
     },
     "workflow--canonical-commands.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "workflow--canonical-commands.mdc",
       "origin": "agents:rules:cursor",
@@ -399,9 +333,7 @@
       "source_type": "rule"
     },
     "workflow--generators-not-projections.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "workflow--generators-not-projections.mdc",
       "origin": "agents:rules:cursor",
@@ -411,9 +343,7 @@
       "source_type": "rule"
     },
     "workflow--living-documentation.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "workflow--living-documentation.mdc",
       "origin": "agents:rules:cursor",
@@ -423,9 +353,7 @@
       "source_type": "rule"
     },
     "workflow--runtime-is-reality.mdc": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "workflow--runtime-is-reality.mdc",
       "origin": "agents:rules:cursor",
@@ -437,15 +365,11 @@
   },
   "owner": "agents-governance",
   "project": ".",
-  "providers": [
-    "cursor"
-  ],
+  "providers": ["cursor"],
   "selection": {
     "agents": [],
     "opt_ins": [],
-    "selected_tags": [
-      "flext"
-    ]
+    "selected_tags": ["flext"]
   },
   "surface": "rules",
   "version": 5

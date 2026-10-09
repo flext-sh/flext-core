@@ -8,31 +8,31 @@
 
 ## Existing system analysis
 
-Describe the current runtime path, its owner, and the integration boundary this
-change uses.
+Describe the current runtime path, its owner, and the integration boundary this change
+uses.
 
 ### Code inspection evidence
 
-| Path or symbol | Reason inspected | Finding |
-|---|---|---|
-| {path or symbol} | {question} | {evidence} |
+| Path or symbol   | Reason inspected | Finding    |
+| ---------------- | ---------------- | ---------- |
+| {path or symbol} | {question}       | {evidence} |
 
 ### Implementation path map
 
-| Concern | Existing path | New path | Change |
-|---|---|---|---|
+| Concern   | Existing path           | New path        | Change                   |
+| --------- | ----------------------- | --------------- | ------------------------ |
 | {concern} | {current owner or none} | {planned owner} | {migration or extension} |
 
 ## Change impact map
 
 ```yaml
-change_target: {component or feature}
+change_target: { component or feature }
 direct_impact:
-  - {file, symbol, or contract}
+  - { file, symbol, or contract }
 indirect_impact:
-  - {data, timing, or consumer effect}
+  - { data, timing, or consumer effect }
 no_ripple_effect:
-  - {explicitly unaffected area}
+  - { explicitly unaffected area }
 ```
 
 ## Delivery approach
@@ -43,8 +43,8 @@ no_ripple_effect:
 
 ### Technical dependencies
 
-| Dependency | Required before | Constraint |
-|---|---|---|
+| Dependency                         | Required before  | Constraint        |
+| ---------------------------------- | ---------------- | ----------------- |
 | {component, contract, or decision} | {dependent step} | {ordering reason} |
 
 ## Architecture
@@ -66,44 +66,44 @@ flowchart LR
 
 ## Interface change matrix
 
-| Existing | New | Conversion required | Compatibility method |
-|---|---|---|---|
-| {operation} | {operation} | {yes or no} | {complete cutover; no parallel path} |
+| Existing    | New         | Conversion required | Compatibility method                 |
+| ----------- | ----------- | ------------------- | ------------------------------------ |
+| {operation} | {operation} | {yes or no}         | {complete cutover; no parallel path} |
 
 ## Contracts and representation
 
-| Contract | Owner | Input | Output | Validation |
-|---|---|---|---|---|
+| Contract   | Owner   | Input  | Output | Validation      |
+| ---------- | ------- | ------ | ------ | --------------- |
 | {contract} | {owner} | {type} | {type} | {boundary rule} |
 
 ### Data representation decision
 
-{Explain why the selected representation owns the data and which alternatives
-were rejected.}
+{Explain why the selected representation owns the data and which alternatives were
+rejected.}
 
 ### Field propagation
 
-| Field | Source | Boundaries crossed | Consumer | Transformation |
-|---|---|---|---|---|
-| {field} | {owner} | {boundary list} | {consumer} | {rule or none} |
+| Field   | Source  | Boundaries crossed | Consumer   | Transformation |
+| ------- | ------- | ------------------ | ---------- | -------------- |
+| {field} | {owner} | {boundary list}    | {consumer} | {rule or none} |
 
 ## Integration points
 
-| Integration | Direction | Contract | Failure owner |
-|---|---|---|---|
-| {system} | {inbound or outbound} | {contract} | {owner} |
+| Integration | Direction             | Contract   | Failure owner |
+| ----------- | --------------------- | ---------- | ------------- |
+| {system}    | {inbound or outbound} | {contract} | {owner}       |
 
 ## Applicable standards
 
-| Standard | Classification | Required behavior |
-|---|---|---|
+| Standard                   | Classification         | Required behavior           |
+| -------------------------- | ---------------------- | --------------------------- |
 | {rule, ADR, or convention} | {explicit or implicit} | {constraint on this design} |
 
 ## Acceptance criteria
 
-| ID | Verifiable condition | Pass threshold | Evidence surface |
-|---|---|---|---|
-| DC-001 | {condition} | {binary or numeric threshold} | {runtime or gate} |
+| ID     | Verifiable condition | Pass threshold                | Evidence surface  |
+| ------ | -------------------- | ----------------------------- | ----------------- |
+| DC-001 | {condition}          | {binary or numeric threshold} | {runtime or gate} |
 
 ## Verification strategy
 

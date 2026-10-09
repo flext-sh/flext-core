@@ -8,96 +8,141 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Self, override
 
-from .._constants.errors import FlextConstantsErrors as ce
-from .._typings.base import FlextTypingBase as tb
-from .base import FlextModelsBase as m
+from flext_core._constants import FlextConstantsErrors
+from flext_core._models.base import FlextModelsBase
+from flext_core._typings.base import FlextTypingBase
 
 if TYPE_CHECKING:
-    from .._typings.services import FlextTypesServices as ts
+    from flext_core._typings.services import FlextTypesServices
 
 
 class FlextModelsBuilder:
-    """Builder namespace for immutable ContractModel-backed DSLs."""
+    """Builder namespace for immutable ContractModel-backed DSLs.
 
-    class Builder:
-        """Canonical builder DSL namespace exposed as ``m.Builder`` via MRO."""
+    Exposed flat on ``m`` via MRO (``m.Base``/``m.Identity``) after the
+    namespace-holder flattening (operator decision 2026-09-24).
+    """
 
-        class Base[StateT: m.ContractModel, ProductT]:
-            """Canonical builder that evolves immutable state and delegates build()."""
+    class Base[StateT: FlextModelsBase.ContractModel, ProductT]:
+        """Canonical builder that evolves immutable state and delegates build()."""
 
-            state: StateT
+        state: StateT
 
-            def __init__(self, *, state: StateT) -> None:
-                self.state = state
+        def __init__(self, *, state: StateT) -> None:
+            self.state = state
 
-            def _replace(self, state: StateT) -> Self:
-                """Replace current immutable state and preserve fluent chaining."""
-                self.state = state
-                return self
+        def _replace(self, state: StateT) -> Self:
+            """Replace current immutable state and preserve fluent chaining.
 
-            def _set(
-                self,
-                **updates: ts.JsonPayload
-                | tb.SequenceOf[ts.JsonPayload]
-                | tb.SequenceOf[m.ContractModel],
-            ) -> Self:
-                """Apply one immutable ``model_copy(update=...)`` transition."""
-                return self._replace(self.state.model_copy(update=updates))
+            Returns:
+                The resulting ``Self``.
 
-            def _path(self, field_name: str, *parts: str) -> Self:
-                """Set one tuple path field using immutable state updates."""
-                return self._set(**{field_name: tuple(parts)})
+            """
+            self.state = state
+            return self
 
-            def _append(self, field_name: str, value: tb.JsonValue) -> Self:
-                """Append one value to a sequence field while preserving immutability."""
-                current_values: tb.VariadicTuple[tb.JsonValue] = tuple(
-                    getattr(self.state, field_name)
+        def _set(
+            self,
+            **updates: FlextTypesServices.JsonPayload
+            | FlextTypingBase.SequenceOf[FlextTypesServices.JsonPayload]
+            | FlextTypingBase.SequenceOf[FlextModelsBase.ContractModel],
+        ) -> Self:
+            """Apply one immutable ``model_copy(update=...)`` transition.
+
+            Returns:
+                The resulting ``Self``.
+
+            """
+            return self._replace(self.state.model_copy(update=updates))
+
+        def _path(self, field_name: str, *parts: str) -> Self:
+            """Set one tuple path field using immutable state updates.
+
+            Returns:
+                The resulting ``Self``.
+
+            """
+            return self._set(**{field_name: tuple(parts)})
+
+        def _append(self, field_name: str, value: FlextTypingBase.JsonValue) -> Self:
+            """Append one value to a sequence field while preserving immutability.
+
+            Returns:
+                The resulting ``Self``.
+
+            """
+            current_values: FlextTypingBase.VariadicTuple[FlextTypingBase.JsonValue] = (
+                tuple(
+                    getattr(self.state, field_name),
                 )
-                return self._set(**{field_name: (*current_values, value)})
+            )
+            return self._set(**{field_name: (*current_values, value)})
 
-            @staticmethod
-            def _model[ModelT: m.ContractModel](
-                model_type: type[ModelT],
-                /,
-                **data: ts.JsonPayload | tb.SequenceOf[ts.JsonPayload],
-            ) -> ModelT:
-                """Build one ContractModel payload for DSL composition."""
-                model: ModelT = model_type.model_validate(data)
-                return model
+        @staticmethod
+        def _model[ModelT: FlextModelsBase.ContractModel](
+            model_type: type[ModelT],
+            /,
+            **data: FlextTypesServices.JsonPayload
+            | FlextTypingBase.SequenceOf[FlextTypesServices.JsonPayload],
+        ) -> ModelT:
+            """Build one ContractModel payload for DSL composition.
 
-            def _append_model[ModelT: m.ContractModel](
-                self,
-                field_name: str,
-                model_type: type[ModelT],
-                /,
-                **data: ts.JsonPayload | tb.SequenceOf[ts.JsonPayload],
-            ) -> Self:
-                """Build and append one ContractModel item to a sequence field."""
-                model_item = self._model(model_type, **data)
-                current_values: tb.VariadicTuple[m.ContractModel] = tuple(
-                    getattr(self.state, field_name)
-                )
-                updated: tb.SequenceOf[m.ContractModel] = (*current_values, model_item)
-                return self._set(**{field_name: updated})
+            Returns:
+                The resulting ``ModelT``.
 
-            def _build_product(self, state: StateT) -> ProductT:
-                """Build one product from state. Subclasses must implement it."""
-                msg = (
-                    f"{ce.ERR_BUILDER_BUILD_PRODUCT_NOT_IMPLEMENTED}: "
-                    f"{type(state).__name__}"
-                )
-                raise NotImplementedError(msg)
+            """
+            model: ModelT = model_type.model_validate(data)
+            return model
 
-            def build(self) -> ProductT:
-                """Build the final product from the current state."""
-                return self._build_product(self.state)
+        def _append_model[ModelT: FlextModelsBase.ContractModel](
+            self,
+            field_name: str,
+            model_type: type[ModelT],
+            /,
+            **data: FlextTypesServices.JsonPayload
+            | FlextTypingBase.SequenceOf[FlextTypesServices.JsonPayload],
+        ) -> Self:
+            """Build and append one ContractModel item to a sequence field.
 
-        class Identity[StateT: m.ContractModel](Base[StateT, StateT]):
-            """Canonical builder for DSLs whose final product is the state model."""
+            Returns:
+                The resulting ``Self``.
 
-            @override
-            def _build_product(self, state: StateT) -> StateT:
-                return state
+            """
+            model_item = self._model(model_type, **data)
+            current_values: FlextTypingBase.VariadicTuple[
+                FlextModelsBase.ContractModel
+            ] = tuple(
+                getattr(self.state, field_name),
+            )
+            updated: FlextTypingBase.SequenceOf[FlextModelsBase.ContractModel] = (
+                *current_values,
+                model_item,
+            )
+            return self._set(**{field_name: updated})
+
+        def _build_product(self, state: StateT) -> ProductT:
+            """Build one product from state. Subclasses must implement it."""
+            msg = (
+                f"{FlextConstantsErrors.ERR_BUILDER_BUILD_PRODUCT_NOT_IMPLEMENTED}: "
+                f"{type(state).__name__}"
+            )
+            raise NotImplementedError(msg)
+
+        def build(self) -> ProductT:
+            """Build the final product from the current state.
+
+            Returns:
+                The resulting ``ProductT``.
+
+            """
+            return self._build_product(self.state)
+
+    class Identity[StateT: FlextModelsBase.ContractModel](Base[StateT, StateT]):
+        """Canonical builder for DSLs whose final product is the state model."""
+
+        @override
+        def _build_product(self, state: StateT) -> StateT:
+            return state
 
 
-__all__: tb.MutableSequenceOf[str] = ["FlextModelsBuilder"]
+__all__: FlextTypingBase.MutableSequenceOf[str] = ["FlextModelsBuilder"]

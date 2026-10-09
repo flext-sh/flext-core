@@ -16,21 +16,23 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_tests import m
+from flext_tests import FlextTestsModels
 
-from ._models import TestsFlextModelsMixins
+from tests._models import TestsFlextModelsMixins
 
 
-class TestsFlextModels(m):
+class TestsFlextModels(FlextTestsModels):
     """Models for flext-core tests - uses composition with TestsFlextModels.
 
-    Architecture: Uses composition (not inheritance) with TestsFlextModels and TestsFlextModels
+    Architecture: Uses composition (not inheritance) with TestsFlextModels
+    and TestsFlextModels
     for flext-core-specific model definitions.
 
     Access patterns:
     - TestsFlextModels.Tests.* = flext_tests test models (via inheritance)
     - TestsFlextModels.Tests.* = flext-core-specific test models
-    - TestsFlextModels.Entity, .Value, etc. = TestsFlextModels domain models (via inheritance)
+    - TestsFlextModels.Entity, .Value, etc. = TestsFlextModels domain models
+      (via inheritance)
 
     Rules:
     - flext-core-specific models go in Core namespace
@@ -38,7 +40,10 @@ class TestsFlextModels(m):
     """
 
     @override
-    class Tests(m.Tests, TestsFlextModelsMixins):
+    class Tests(
+        FlextTestsModels.Tests,
+        TestsFlextModelsMixins.TestsFlextModelsMixins,
+    ):
         """flext-core test models namespace."""
 
 

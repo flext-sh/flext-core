@@ -1,16 +1,18 @@
-"""Support objects for the registry DSL example."""
+"""Support objects for the registry DSL example.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from examples.models import m
-from examples.typings import t
-from examples.utilities import u
+from examples import m, t, u
 from flext_core import h, r
 
 if TYPE_CHECKING:
-    from examples.protocols import p
+    from examples import p
 
 
 class ProtocolHandler:
@@ -24,11 +26,21 @@ class ProtocolHandler:
         self.message_type = message_type
 
     def can_handle(self, message_type: type[m.Command]) -> bool:
-        """Return whether this handler supports the message type."""
+        """Return whether this handler supports the message type.
+
+        Returns:
+            Whether this handler supports the message type.
+
+        """
         return message_type is self.message_type
 
     def handle(self, message: p.Routable) -> p.Result[t.Scalar]:
-        """Handle a command and return a scalar result."""
+        """Handle a command and return a scalar result.
+
+        Returns:
+            The resulting ``p.Result[t.Scalar]``.
+
+        """
         value = ""
         if isinstance(message, m.Examples.CommandA):
             value = message.value
@@ -37,12 +49,22 @@ class ProtocolHandler:
         return r[t.Scalar].ok(f"{self._label}:{value}")
 
     def __call__(self, message: p.Routable) -> p.Result[t.Scalar]:
-        """Callable adapter for registry handler protocols expecting callables."""
+        """Callable adapter for registry handler protocols expecting callables.
+
+        Returns:
+            The resulting ``p.Result[t.Scalar]``.
+
+        """
         return self.handle(message)
 
 
 def as_registry_handler(handler: ProtocolHandler) -> t.DispatchableHandler:
-    """Adapt protocol handlers to the registry callable contract."""
+    """Adapt protocol handlers to the registry callable contract.
+
+    Returns:
+        The resulting ``t.DispatchableHandler``.
+
+    """
 
     class _RegistryHandlerCallable:
         handler_id: str
@@ -61,5 +83,10 @@ def as_registry_handler(handler: ProtocolHandler) -> t.DispatchableHandler:
 
 @h.handler(m.Examples.CommandA, priority=3)
 def discovered_handler(message: m.Command) -> m.Command:
-    """Return the discovered command unchanged for registry dispatch."""
+    """Return the discovered command unchanged for registry dispatch.
+
+    Returns:
+        The discovered command unchanged for registry dispatch.
+
+    """
     return message

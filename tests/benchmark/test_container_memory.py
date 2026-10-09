@@ -41,17 +41,8 @@ class TestsFlextContainerMemory:
     """Memory usage benchmarks for container operations."""
 
     @pytest.mark.benchmark
-    def test_container_singleton_memory(self) -> None:
-        """Benchmark memory usage of container singleton."""
-        gc.collect()
-        initial_memory = get_memory_usage()
-        FlextContainer.shared()
-        gc.collect()
-        after_creation = get_memory_usage()
-        _ = after_creation - initial_memory
-
-    @pytest.mark.benchmark
-    def test_memory_with_services(self) -> None:
+    @staticmethod
+    def test_memory_with_services() -> None:
         """Benchmark memory usage with registered services."""
         container = FlextContainer.shared()
         gc.collect()
@@ -60,40 +51,44 @@ class TestsFlextContainerMemory:
             _ = container.bind(f"service_{i}", f"value_{i}")
         gc.collect()
         after_registration = get_memory_usage()
-        _ = after_registration - initial_memory
+        permitted_growth_bytes = 5_000_000
+        tm.that(
+            after_registration - initial_memory,
+            lt=permitted_growth_bytes,
+            msg="Registering 100 services must stay within the memory budget",
+        )
 
     @pytest.mark.benchmark
-    def test_memory_with_factories(self) -> None:
+    @staticmethod
+    def test_memory_with_factories() -> None:
         """Benchmark memory usage with registered factories."""
         container = FlextContainer.shared()
         gc.collect()
         initial_memory = get_memory_usage()
 
         def make_factory(captured_i: int) -> Callable[[], str]:
-            """Create factory function that captures i in closure."""
+            """Create factory function that captures i in closure.
+
+            Returns:
+                The resulting ``Callable[[], str]``.
+
+            """
             return lambda: f"value_{captured_i}"
 
         for i in range(100):
             _ = container.factory(f"factory_{i}", make_factory(i))
         gc.collect()
         after_registration = get_memory_usage()
-        _ = after_registration - initial_memory
+        permitted_growth_bytes = 5_000_000
+        tm.that(
+            after_registration - initial_memory,
+            lt=permitted_growth_bytes,
+            msg="Registering 100 factories must stay within the memory budget",
+        )
 
     @pytest.mark.benchmark
-    def test_memory_after_clear_all(self) -> None:
-        """Benchmark memory usage after clear_all()."""
-        container = FlextContainer.shared()
-        for i in range(100):
-            _ = container.bind(f"service_{i}", f"value_{i}")
-        gc.collect()
-        before_clear = get_memory_usage()
-        container.clear()
-        gc.collect()
-        after_clear = get_memory_usage()
-        _ = before_clear - after_clear
-
-    @pytest.mark.benchmark
-    def test_memory_leak_detection(self) -> None:
+    @staticmethod
+    def test_memory_leak_detection() -> None:
         """Detect potential memory leaks in resource lifecycle."""
         gc.collect()
         initial_memory = get_memory_usage()

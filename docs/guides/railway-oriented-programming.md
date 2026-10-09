@@ -1,38 +1,40 @@
 # Railway-Oriented Programming with r[T]
 
 <!-- TOC START -->
+
 - [Overview](#overview)
 - [Creating Results](#creating-results)
 - [Reading State Safely](#reading-state-safely)
-- [flat_map Composition](#flatmap-composition)
-- [map, map_error, and recover](#map-maperror-and-recover)
-- [map_or for Defaulted Reads](#mapor-for-defaulted-reads)
+- [flat_map Composition](#flat_map-composition)
+- [map, map_error, and recover](#map-map_error-and-recover)
+- [map_or for Defaulted Reads](#map_or-for-defaulted-reads)
 - [Factory Helpers](#factory-helpers)
-- [unwrap_or and unwrap_or_else](#unwrapor-and-unwraporelse)
+- [unwrap_or and unwrap_or_else](#unwrap_or-and-unwrap_or_else)
 - [lash for Failure Branching](#lash-for-failure-branching)
 - [FlextExceptions at Result Boundaries](#flextexceptions-at-result-boundaries)
 - [Typed Exceptions with Metadata](#typed-exceptions-with-metadata)
 - [None Handling Techniques](#none-handling-techniques)
 - [Exception Propagation with Context](#exception-propagation-with-context)
-- [traverse and with_resource](#traverse-and-withresource)
+- [traverse and with_resource](#traverse-and-with_resource)
 - [Decorator Integration](#decorator-integration)
   - [@d.railway](#drailway)
   - [@d.retry + @d.railway](#dretry-drailway)
   - [@d.combined](#dcombined)
 - [Organizing Error Handling](#organizing-error-handling)
 - [Best Practices](#best-practices)
+
 <!-- TOC END -->
 
 ## Overview
 
-`r[T]` is FLEXT's result container for explicit success and failure flows, while
-`e` exposes the structured `FlextExceptions` DSL used both for raised typed
-exceptions and for `fail_*` helpers that already return `p.Result[T]`.
+`r[T]` is FLEXT's result container for explicit success and failure flows, while `e`
+exposes the structured `FlextExceptions` DSL used both for raised typed exceptions and
+for `fail_*` helpers that already return `p.Result[T]`.
 
 - Success path: `r[T].ok(value)`
 - Failure path: `r[T].fail(message, error_code=..., error_data=...)`
-- Structured result failures: `e.fail_operation(...)`,
-  `e.fail_not_found(...)`, `e.fail_validation(...)`
+- Structured result failures: `e.fail_operation(...)`, `e.fail_not_found(...)`,
+  `e.fail_validation(...)`
 - Typed raised exceptions: `e.ValidationError(...)`, `e.FlextTimeoutError(...)`,
   `e.NotFoundError(...)`
 
@@ -44,9 +46,8 @@ Canonical implementations and live examples:
 - [`examples/ex_01_flext_result.py`](https://github.com/flext-sh/flext-core/blob/0.12.0-dev/examples/ex_01_flext_result.py)
 - [`tests/unit/test_exceptions.py`](https://github.com/flext-sh/flext-core/blob/0.12.0-dev/tests/unit/test_exceptions.py)
 
-The goal is predictable composition without exception-driven control flow in
-the core path, while still allowing typed exception propagation at the outer
-boundaries.
+The goal is predictable composition without exception-driven control flow in the core
+path, while still allowing typed exception propagation at the outer boundaries.
 
 All snippets below are standalone and executable.
 
@@ -113,14 +114,24 @@ from flext_core import p, r
 
 
 def validate_email(email: str) -> p.Result[str]:
-    """Validate that an email contains the separator used in this example."""
+    """Validate that an email contains the separator used in this example.
+
+    Returns:
+        The resulting ``p.Result[str]``.
+
+    """
     if "@" not in email:
         return r[str].fail("invalid_email")
     return r[str].ok(email)
 
 
 def normalize_email(email: str) -> p.Result[str]:
-    """Normalize whitespace and casing for a validated email."""
+    """Normalize whitespace and casing for a validated email.
+
+    Returns:
+        The resulting ``p.Result[str]``.
+
+    """
     return r[str].ok(email.strip().lower())
 
 
@@ -167,15 +178,14 @@ if recovered.value != expected_guest:
     raise RuntimeError(message)
 ```
 
-Prefer `map` for pure value transformations and `map_error` when the failure
-text needs to be normalized for the next boundary. `recover` converts a
-failure into a success value; if the fallback itself is another
-result-producing step, prefer `lash` instead.
+Prefer `map` for pure value transformations and `map_error` when the failure text needs
+to be normalized for the next boundary. `recover` converts a failure into a success
+value; if the fallback itself is another result-producing step, prefer `lash` instead.
 
 ## map_or for Defaulted Reads
 
-`map_or` is the compact form used in many runtime call sites when a result must
-be reduced to a plain value with a default.
+`map_or` is the compact form used in many runtime call sites when a result must be
+reduced to a plain value with a default.
 
 ```python
 """Reduce a result into a plain value with a default."""
@@ -205,8 +215,8 @@ if length_value != expected_length_value:
 ## Factory Helpers
 
 Use the result factory helpers when the boundary behavior is already known:
-`create_from_callable` for exception-to-result adaptation and
-`from_validation` for model parsing.
+`create_from_callable` for exception-to-result adaptation and `from_validation` for
+model parsing.
 
 ```python
 """Convert a callable and model validation into results."""
@@ -238,9 +248,8 @@ if not invalid.failure:
     raise RuntimeError(message)
 ```
 
-For ad-hoc local failures there is also `r[T].fail_op(...)`, but for
-structured cross-boundary failures prefer the canonical `e.fail_*` helpers
-shown below.
+For ad-hoc local failures there is also `r[T].fail_op(...)`, but for structured
+cross-boundary failures prefer the canonical `e.fail_*` helpers shown below.
 
 ## unwrap_or and unwrap_or_else
 
@@ -283,7 +292,12 @@ from flext_core import p, r
 
 
 def fallback(_message: str) -> p.Result[int]:
-    """Convert an error message into a deterministic fallback result."""
+    """Convert an error message into a deterministic fallback result.
+
+    Returns:
+        The resulting ``p.Result[int]``.
+
+    """
     return r[int].ok(0)
 
 
@@ -299,8 +313,8 @@ if result.value != expected_value:
 
 ## FlextExceptions at Result Boundaries
 
-Use `e.fail_*` when the function already returns `p.Result[T]` but the failure
-should carry canonical `error_code` and `error_data`.
+Use `e.fail_*` when the function already returns `p.Result[T]` but the failure should
+carry canonical `error_code` and `error_data`.
 
 ```python
 """Use e.fail_* helpers at result-returning boundaries."""
@@ -311,7 +325,12 @@ from flext_core import e, p, r
 
 
 def fetch_profile_name(user_id: str) -> p.Result[str]:
-    """Return a structured not-found failure instead of a raw string."""
+    """Return a structured not-found failure instead of a raw string.
+
+    Returns:
+        The resulting ``p.Result[str]``.
+
+    """
     expected_user_id = "u-1"
     if user_id != expected_user_id:
         return e.fail_not_found("user", user_id)
@@ -319,7 +338,12 @@ def fetch_profile_name(user_id: str) -> p.Result[str]:
 
 
 def parse_age(raw_value: str) -> p.Result[int]:
-    """Normalize parser exceptions to a structured operation failure."""
+    """Normalize parser exceptions to a structured operation failure.
+
+    Returns:
+        The resulting ``p.Result[int]``.
+
+    """
     try:
         return r[int].ok(int(raw_value))
     except ValueError as exc:
@@ -393,9 +417,8 @@ if scope != "profile-service":
 
 ## None Handling Techniques
 
-`None` should stay explicit. Keep optional business absence local, but convert
-required `None` inputs into structured validation failures as early as
-possible.
+`None` should stay explicit. Keep optional business absence local, but convert required
+`None` inputs into structured validation failures as early as possible.
 
 ```python
 """Keep None semantics explicit."""
@@ -406,14 +429,24 @@ from flext_core import e, p, r
 
 
 def display_name_or_guest(raw_name: str | None) -> str:
-    """Business absence stays local and becomes a plain default."""
+    """Business absence stays local and becomes a plain default.
+
+    Returns:
+        The resulting ``str``.
+
+    """
     if raw_name is None:
         return "guest"
     return raw_name.strip()
 
 
 def require_email(raw_email: str | None) -> p.Result[str]:
-    """Required input converts None into a structured validation failure."""
+    """Required input converts None into a structured validation failure.
+
+    Returns:
+        The resulting ``p.Result[str]``.
+
+    """
     if raw_email is None:
         return e.fail_validation("email", error="cannot be None")
     normalized = raw_email.strip().lower()
@@ -462,11 +495,20 @@ from flext_core import e
 
 
 def fetch_remote_profile() -> str:
-    """Convert an infrastructure exception into a typed timeout error."""
+    """Convert an infrastructure exception into a typed timeout error.
+
+    Raises:
+        e.FlextTimeoutError: When the wrapped operation does not complete.
+
+    """
     socket_message = "socket stalled"
     timeout_message = "Remote profile lookup timed out"
-    try:
+
+    def _raise_socket_error() -> None:
         raise RuntimeError(socket_message)
+
+    try:
+        _raise_socket_error()
     except RuntimeError as exc:
         raise e.FlextTimeoutError(
             timeout_message,
@@ -501,9 +543,8 @@ if captured.correlation_id is None:
     raise RuntimeError(message)
 ```
 
-This is the same shape used by retry-style boundaries: translate the foreign
-exception once, enrich it with operation metadata, and preserve the original
-cause for debugging.
+This is the same shape used by retry-style boundaries: translate the foreign exception
+once, enrich it with operation metadata, and preserve the original cause for debugging.
 
 ## traverse and with_resource
 
@@ -516,7 +557,12 @@ from flext_core import p, r
 
 
 def validate_item(item: str) -> p.Result[str]:
-    """Reject strings shorter than the configured minimum length."""
+    """Reject strings shorter than the configured minimum length.
+
+    Returns:
+        The resulting ``p.Result[str]``.
+
+    """
     minimum_length = 3
     if len(item) < minimum_length:
         return r[str].fail(f"too_short:{item}")
@@ -543,21 +589,53 @@ if passed.value != expected_items:
 
 from __future__ import annotations
 
-from flext_core import p, r
+from typing import Protocol
+
+from flext_core import m, p, r
 
 
-def create_connection() -> dict[str, int]:
-    """Create the resource used by the operation callback."""
+class ResourcePort(p.Base, Protocol):
+    """Read-only identifier consumed by the resource operation."""
+
+    @property
+    def identifier(self) -> int:
+        """Read the resource identifier.
+
+        Returns:
+            The resource identifier.
+
+        """
+        ...
+
+
+class Connection(m.Value):
+    """Validated resource identifier passed between the callbacks."""
+
+    identifier: int = m.Field(description="Identifier of the example connection.")
+
+
+def create_connection() -> ResourcePort:
+    """Create the resource used by the operation callback.
+
+    Returns:
+        The resulting ``ResourcePort``.
+
+    """
     resource_identifier = 10
-    return {"id": resource_identifier}
+    return Connection(identifier=resource_identifier)
 
 
-def use_connection(conn: dict[str, int]) -> p.Result[int]:
-    """Use the resource and return the extracted identifier as a result."""
-    return r[int].ok(conn["id"])
+def use_connection(conn: ResourcePort) -> p.Result[int]:
+    """Use the resource and return the extracted identifier as a result.
+
+    Returns:
+        The resulting ``p.Result[int]``.
+
+    """
+    return r[int].ok(conn.identifier)
 
 
-def close_connection(_conn: dict[str, int]) -> None:
+def close_connection(_conn: ResourcePort) -> None:
     """Close the resource used by the example."""
 
 
@@ -585,7 +663,15 @@ from flext_core import d
 
 @d.railway(error_code="PARSE_ERROR")
 def parse_positive_number(raw: str) -> int:
-    """Parse a strictly positive integer value."""
+    """Parse a strictly positive integer value.
+
+    Returns:
+        The resulting ``int``.
+
+    Raises:
+        ValueError: When the parsed value is not strictly positive.
+
+    """
     value = int(raw)
     minimum_positive_value = 0
     if value <= minimum_positive_value:
@@ -611,60 +697,87 @@ if fail_result.error_code != expected_error_code:
 
 ### @d.retry + @d.railway
 
-When retries exhaust, `@d.retry` raises `e.FlextTimeoutError`; with outer
-`@d.railway`, the exception is converted back into `p.Result[T]`.
+When retries exhaust, `@d.retry` raises `e.FlextTimeoutError`; with outer `@d.railway`,
+the exception is converted back into `p.Result[T]`.
+
+This example verifies the result and attempt count. Log levels, destinations, and
+delivery timing remain the logging owner's configuration, not retry expectations.
 
 ```python
 """Combine retry and railway decorators."""
 
 from __future__ import annotations
 
-import io
-import time
-from contextlib import redirect_stdout
+from typing import Protocol
 
-from flext_core import d
+from flext_core import d, m, p
 
-attempts = {"count": 0}
+
+class AttemptState(p.Base, Protocol):
+    """Mutable attempt count consumed by the retry operation."""
+
+    @property
+    def count(self) -> int:
+        """Read the completed attempt count.
+
+        Returns:
+            The completed attempt count.
+
+        """
+        ...
+
+    @count.setter
+    def count(self, value: int) -> None:
+        """Write the completed attempt count."""
+        ...
+
+
+class RetryState(m.StrictModel):
+    """Validated attempt count supplied to the operation."""
+
+    count: int = m.Field(default=0, ge=0, description="Completed operation attempts.")
+
+
+expected_attempts = 3
+expected_value = 123
+attempts: AttemptState = RetryState()
 
 
 @d.railway(error_code="RETRY_EXAMPLE")
-@d.retry(max_attempts=3, delay_seconds=0.01, backoff_strategy="linear")
-def flaky_operation() -> int:
-    """Fail twice before returning a stable value."""
-    attempts["count"] += 1
-    required_attempts = 3
-    if attempts["count"] < required_attempts:
+@d.retry(max_attempts=expected_attempts, delay_seconds=0.01, backoff_strategy="linear")
+def flaky_operation(state: AttemptState, required_attempts: int, value: int) -> int:
+    """Fail twice before returning a stable value.
+
+    Returns:
+        The resulting ``int``.
+
+    Raises:
+        RuntimeError: While the attempt count is still below the threshold.
+
+    """
+    state.count += 1
+    if state.count < required_attempts:
         message = "transient_error"
         raise RuntimeError(message)
-    return 123
+    return value
 
 
-stream = io.StringIO()
-with redirect_stdout(stream):
-    result = flaky_operation()
-    deadline = time.monotonic() + 0.25
-    while time.monotonic() < deadline and "retry_attempt" not in stream.getvalue():
-        time.sleep(0.01)
-    assert "retry_attempt" in stream.getvalue()
-
-expected_value = 123
-expected_attempts = 3
+result = flaky_operation(attempts, expected_attempts, expected_value)
 if not result.success:
     message = "Expected retry success"
     raise RuntimeError(message)
 if result.value != expected_value:
     message = "Unexpected retry result value"
     raise RuntimeError(message)
-if attempts["count"] != expected_attempts:
+if attempts.count != expected_attempts:
     message = "Unexpected retry attempt count"
     raise RuntimeError(message)
 ```
 
 ### @d.combined
 
-`@d.combined` supports operation logging, optional DI injection, and optional
-railway wrapping.
+`@d.combined` supports operation logging, optional DI injection, and optional railway
+wrapping.
 
 ```python
 """Use the combined decorator with railway wrapping enabled."""
@@ -693,30 +806,30 @@ if result.value != expected_total:
 
 ## Organizing Error Handling
 
-- Adapter and boundary functions should catch foreign exceptions once and
-  convert them with `e.fail_*` or raise a typed `e.*Error`.
+- Adapter and boundary functions should catch foreign exceptions once and convert them
+  with `e.fail_*` or raise a typed `e.*Error`.
 - Orchestration functions should mostly stay in `p.Result[T]` and compose with
   `flat_map`, `map`, `map_error`, `recover`, and `lash`.
-- Normalize required `None` inputs at the first boundary that understands the
-  business meaning, typically with `e.fail_validation(...)`.
-- Preserve cause chains with `raise ... from exc` whenever you translate from a
-  foreign exception to `e.*Error`.
-- Collapse `p.Result[T]` into plain values only at the output edge with
-  `map_or`, `unwrap_or`, or `unwrap_or_else`.
+- Normalize required `None` inputs at the first boundary that understands the business
+  meaning, typically with `e.fail_validation(...)`.
+- Preserve cause chains with `raise ... from exc` whenever you translate from a foreign
+  exception to `e.*Error`.
+- Collapse `p.Result[T]` into plain values only at the output edge with `map_or`,
+  `unwrap_or`, or `unwrap_or_else`.
 
 ## Best Practices
 
 - Return `p.Result[T]` from fallible operations in the core flow.
 - Use `e.fail_*` for structured failures in result-returning boundaries.
-- Raise typed `e.*Error` at imperative or transport boundaries and preserve the
-  cause with `raise ... from exc`.
-- Treat `None` as business semantics, not as a generic failure marker. Convert
-  required `None` inputs early.
-- Use `flat_map` for steps that already return results and `lash` when the
-  recovery branch also returns a result.
+- Raise typed `e.*Error` at imperative or transport boundaries and preserve the cause
+  with `raise ... from exc`.
+- Treat `None` as business semantics, not as a generic failure marker. Convert required
+  `None` inputs early.
+- Use `flat_map` for steps that already return results and `lash` when the recovery
+  branch also returns a result.
 - Use `map` only for pure value transformations.
 - Use `map_error` and `recover` for explicit error strategy.
-- Use `map_or` and `unwrap_or` only when the caller must collapse a result into
-  a plain value.
-- Include `error_code`, `error_data`, metadata, and correlation when a failure
-  crosses a boundary.
+- Use `map_or` and `unwrap_or` only when the caller must collapse a result into a plain
+  value.
+- Include `error_code`, `error_data`, metadata, and correlation when a failure crosses a
+  boundary.

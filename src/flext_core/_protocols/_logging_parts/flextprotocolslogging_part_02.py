@@ -8,17 +8,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
-from ..base import FlextProtocolsBase
+from flext_core._protocols._logging_parts.flextprotocolslogging_part_01 import (
+    FlextProtocolsLogging as FlextProtocolsLoggingPart01,
+)
+from flext_core._protocols.base import FlextProtocolsBase
 
 if TYPE_CHECKING:
     from datetime import datetime
 
-    from flext_core import FlextTypes as t
-
-    from ..result import FlextProtocolsResult
-from .flextprotocolslogging_part_01 import (
-    FlextProtocolsLogging as FlextProtocolsLoggingPart01,
-)
+    from flext_core import t
+    from flext_core._protocols.result import FlextProtocolsResult
 
 
 class FlextProtocolsLogging(FlextProtocolsLoggingPart01):
@@ -107,7 +106,8 @@ class FlextProtocolsLogging(FlextProtocolsLoggingPart01):
             ...
 
         def __and__(
-            self, other: FlextProtocolsLogging.ValidatorSpec
+            self,
+            other: FlextProtocolsLogging.ValidatorSpec,
         ) -> FlextProtocolsLogging.ValidatorSpec:
             """Compose with AND - both validators must pass."""
             ...
@@ -117,7 +117,8 @@ class FlextProtocolsLogging(FlextProtocolsLoggingPart01):
             ...
 
         def __or__(
-            self, other: FlextProtocolsLogging.ValidatorSpec
+            self,
+            other: FlextProtocolsLogging.ValidatorSpec,
         ) -> FlextProtocolsLogging.ValidatorSpec:
             """Compose with OR - at least one validator must pass."""
             ...

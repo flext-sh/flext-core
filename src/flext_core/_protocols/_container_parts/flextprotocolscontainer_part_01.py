@@ -8,12 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from ..base import FlextProtocolsBase
-
 if TYPE_CHECKING:
-    from types import ModuleType
-
-    from flext_core import FlextTypes as t
+    from flext_core import t
 
 
 class FlextProtocolsContainer:
@@ -36,57 +32,6 @@ class FlextProtocolsContainer:
 
         @property
         def root(self) -> t.MutableMappingKV[str, RootValueT]: ...
-
-    @runtime_checkable
-    class ProviderLike[T_co](Protocol):
-        """DI-free abstraction for dependency injection providers.
-
-        Provides a framework-independent contract for dependency injection
-        providers. Real providers in ``FlextRuntime.DependencyIntegration``
-        implement this Protocol structurally.
-
-        Usage::
-
-            provider: p.ProviderLike[MyService]
-            service = provider()  # Returns MyService instance
-
-        This Protocol avoids coupling the ``_protocols`` layer to
-        ``dependency_injector``, keeping the architecture boundary clean.
-        """
-
-        def __call__(self) -> T_co:
-            """Resolve and return the provided dependency."""
-            ...
-
-    @runtime_checkable
-    class ContainerCreationOptions(FlextProtocolsBase.Base, Protocol):
-        """Structural contract for DI container bootstrap options."""
-
-        @property
-        def settings(
-            self,
-        ) -> FlextProtocolsContainer.RootDict[t.JsonPayload] | None: ...
-
-        @property
-        def services(self) -> t.MappingKV[str, t.RegisterableService] | None: ...
-
-        @property
-        def factories(self) -> t.MappingKV[str, t.FactoryCallable] | None: ...
-
-        @property
-        def resources(self) -> t.MappingKV[str, t.ResourceCallable] | None: ...
-
-        @property
-        def wire_modules(self) -> t.SequenceOf[ModuleType] | None: ...
-
-        @property
-        def wire_packages(self) -> t.StrSequence | None: ...
-
-        @property
-        def wire_classes(self) -> t.SequenceOf[type] | None: ...
-
-        @property
-        def factory_cache(self) -> bool: ...
 
 
 __all__: list[str] = ["FlextProtocolsContainer"]

@@ -1,16 +1,17 @@
-"""Golden-file example for FlextContainer public APIs."""
+"""Golden-file example for FlextContainer public APIs.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from pathlib import Path
 from typing import override
 
-from examples.constants import c
-from examples.protocols import p
-from examples.utilities import u
+from examples import c, p, u
+from examples.ex_08_container_lifecycle import Ex08ContainerLifecycle
 from flext_core import FlextContainer, r
-
-from .ex_08_container_lifecycle import Ex08ContainerLifecycle
 
 
 class Ex08FlextContainer(Ex08ContainerLifecycle):
@@ -22,35 +23,72 @@ class Ex08FlextContainer(Ex08ContainerLifecycle):
         root = self._exercise_singleton_and_creation()
         self._exercise_registration_and_resolution(root)
         self._exercise_fluent_and_settings(root)
-        scoped_full = self._exercise_wiring_and_scoped(root)
+        scoped_full = self._exercise_scoped(root)
         self._exercise_internal_and_cleanup(scoped_full, root)
 
     def _exercise_fluent_and_settings(self, container: p.Container) -> None:
         """Exercise fluent registration and configuration APIs."""
         self.section("fluent_and_settings")
-        fluent_service_name = f"svc.{self.rand_str(6)}"
-        fluent_factory_name = f"svc.{self.rand_str(6)}"
-        fluent_resource_name = f"svc.{self.rand_str(6)}"
-        fluent_service_value = self.rand_str(10)
-        fluent_factory_value = self.rand_str(10)
-        fluent_resource_value = self.rand_str(10)
+        fluent = {
+            "service_name": f"svc.{self.rand_str(6)}",
+            "factory_name": f"svc.{self.rand_str(6)}",
+            "resource_name": f"svc.{self.rand_str(6)}",
+            "service_value": self.rand_str(10),
+            "factory_value": self.rand_str(10),
+            "resource_value": self.rand_str(10),
+        }
+        self._register_fluent_entries(container, fluent)
+        self._verify_fluent_settings(container, fluent)
+
+    def _register_fluent_entries(
+        self,
+        container: p.Container,
+        fluent: dict[str, str],
+    ) -> None:
+        """Register fluent service/factory/resource entries.
+
+        Args:
+            container: Container to register into.
+            fluent: Named fluent registration inputs.
+
+        """
         max_factories = self.rand_int(1, 1000)
-        with_service_result = container.bind(fluent_service_name, fluent_service_value)
+        with_service_result = container.bind(
+            fluent["service_name"],
+            fluent["service_value"],
+        )
         with_factory_result = container.factory(
-            fluent_factory_name, lambda: fluent_factory_value
+            fluent["factory_name"],
+            lambda: fluent["factory_value"],
         )
         with_resource_result = container.resource(
-            fluent_resource_name, lambda: fluent_resource_value
+            fluent["resource_name"],
+            lambda: fluent["resource_value"],
         )
         with_settings_result = container.apply({"max_factories": max_factories})
         self.audit_check("with_service.returns_self", with_service_result is container)
         self.audit_check("with_factory.returns_self", with_factory_result is container)
         self.audit_check(
-            "with_resource.returns_self", with_resource_result is container
+            "with_resource.returns_self",
+            with_resource_result is container,
         )
         self.audit_check(
-            "with_settings.returns_self", with_settings_result is container
+            "with_settings.returns_self",
+            with_settings_result is container,
         )
+
+    def _verify_fluent_settings(
+        self,
+        container: p.Container,
+        fluent: dict[str, str],
+    ) -> None:
+        """Verify applied settings and registered values resolve.
+
+        Args:
+            container: Container to verify against.
+            fluent: Named fluent registration inputs.
+
+        """
         configured_max_services = self.rand_int(1, 1000)
         configured_factory_caching = self.rand_bool()
         container.apply({
@@ -77,33 +115,38 @@ class Ex08FlextContainer(Ex08ContainerLifecycle):
         self.audit_check(
             "with_service.get.value_matches",
             (
-                container.resolve(fluent_service_name, type_cls=str).value
-                if container.resolve(fluent_service_name, type_cls=str).success
+                container.resolve(fluent["service_name"], type_cls=str).value
+                if container.resolve(fluent["service_name"], type_cls=str).success
                 else ""
             )
-            == fluent_service_value,
+            == fluent["service_value"],
         )
         self.audit_check(
             "with_factory.get.value_matches",
             (
-                container.resolve(fluent_factory_name, type_cls=str).value
-                if container.resolve(fluent_factory_name, type_cls=str).success
+                container.resolve(fluent["factory_name"], type_cls=str).value
+                if container.resolve(fluent["factory_name"], type_cls=str).success
                 else ""
             )
-            == fluent_factory_value,
+            == fluent["factory_value"],
         )
         self.audit_check(
             "with_resource.get.value_matches",
             (
-                container.resolve(fluent_resource_name, type_cls=str).value
-                if container.resolve(fluent_resource_name, type_cls=str).success
+                container.resolve(fluent["resource_name"], type_cls=str).value
+                if container.resolve(fluent["resource_name"], type_cls=str).success
                 else ""
             )
-            == fluent_resource_value,
+            == fluent["resource_value"],
         )
 
     def _exercise_singleton_and_creation(self) -> p.ContainerLifecycle:
-        """Exercise fetch_global/create entrypoints and singleton semantics."""
+        """Exercise fetch_global/create entrypoints and singleton semantics.
+
+        Returns:
+            The resulting ``p.ContainerLifecycle``.
+
+        """
         self.section("singleton_and_creation")
         FlextContainer.reset_for_testing()
         root = FlextContainer.shared()
@@ -117,9 +160,10 @@ class Ex08FlextContainer(Ex08ContainerLifecycle):
         self.audit_check("create.true.same_instance", created_true is root)
         random_ok_val = self.rand_int(1, 1000)
         self.audit_check(
-            "result.ok.roundtrip", r[int].ok(random_ok_val).value == random_ok_val
+            "result.ok.roundtrip",
+            r[int].ok(random_ok_val).value == random_ok_val,
         )
-        self.audit_check("runtime.normalize.bool", u.normalize_to_container(True))
+        self.audit_check("runtime.normalize.bool", u.normalize_to_container(val=True))
         self.audit_check("constants.default_max_services", c.DEFAULT_SIZE)
         return root
 

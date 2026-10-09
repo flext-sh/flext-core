@@ -7,13 +7,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum, unique
-from typing import Final
+from typing import ClassVar
 
 
 class FlextConstantsValidation:
     """SSOT for validation thresholds, error codes, and parser tokens."""
 
-    LEVEL_PREFIX_PARTS_COUNT: Final[int] = 4
+    LEVEL_PREFIX_PARTS_COUNT: ClassVar[int] = 4
 
     @unique
     class ErrorCode(StrEnum):
@@ -103,21 +103,21 @@ class FlextConstantsValidation:
         NO = "no"
         OFF = "off"
 
-    FAILURE_LEVEL_DEFAULT: Final[FailureLevel] = FailureLevel.PERMISSIVE
-    PARSER_BOOLEAN_TRUTHY: Final[frozenset[str]] = frozenset({
+    FAILURE_LEVEL_DEFAULT: ClassVar[FailureLevel] = FailureLevel.PERMISSIVE
+    PARSER_BOOLEAN_TRUTHY: ClassVar[frozenset[str]] = frozenset({
         ParserBooleanToken.TRUE.value,
         ParserBooleanToken.ONE.value,
         ParserBooleanToken.YES.value,
         ParserBooleanToken.ON.value,
     })
-    PARSER_BOOLEAN_FALSY: Final[frozenset[str]] = frozenset({
+    PARSER_BOOLEAN_FALSY: ClassVar[frozenset[str]] = frozenset({
         ParserBooleanToken.FALSE.value,
         ParserBooleanToken.ZERO.value,
         ParserBooleanToken.NO.value,
         ParserBooleanToken.OFF.value,
     })
 
-    STRING_METHOD_MAP: Final[frozenset[str]] = frozenset({
+    STRING_METHOD_MAP: ClassVar[frozenset[str]] = frozenset({
         "str",
         "dict",
         "list",

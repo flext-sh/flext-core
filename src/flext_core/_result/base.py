@@ -6,42 +6,33 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from typing import TypeVar, cast
+from typing import cast, override
 
-from pydantic import BaseModel, PrivateAttr
+from pydantic import PrivateAttr
 
 from flext_core import c
-
-from .._protocols.result import FlextProtocolsResult as prt
-from .._typings.base import FlextTypingBase as t
-from .._typings.pydantic import FlextTypesPydantic as tp
-from .._typings.services import FlextTypesServices as ts
-
-type JsonMapping = Mapping[str, tp.JsonValue]
-type JsonDict = dict[str, tp.JsonValue]
-type ConfigModelInput = prt.HasModelDump | JsonMapping
+from flext_core._result.fields import FlextResultFieldModel
+from flext_core._runtime._metadata import FlextRuntimeMetadata
+from flext_core._typings.base import FlextTypingBase
+from flext_core._typings.services import FlextTypesServices
+from flext_core.typings import ConfigModelInput, JsonDict, JsonMapping
 
 
-T = TypeVar("T")
-
-
-class FlextResultBase[T](BaseModel):
+class FlextResultBase[T](FlextResultFieldModel):
     """Internal data container for FlextResult."""
-
-    model_config = {"arbitrary_types_allowed": True, "populate_by_name": True}
-
-    success: bool = True
-    error: str | None = None
-    error_code: str | None = None
-    error_data: JsonDict | None = None
 
     _payload: T = PrivateAttr()
     _exception: BaseException | None = PrivateAttr(default=None)
 
     @classmethod
     def reject_banned_result_parameterization(cls) -> None:
-        """Reject ``FlextResult[None]`` and ``FlextResult[object]`` specializations."""
+        """Reject ``FlextResult[None]`` and ``FlextResult[object]`` specializations.
+
+        Raises:
+            ValueError: If ``arg0 is None or arg0 is type(None)``; or if ``arg0 is
+                object``.
+
+        """
         meta = getattr(cls, "__pydantic_generic_metadata__", None)
         if not isinstance(meta, dict):
             return
@@ -56,7 +47,12 @@ class FlextResultBase[T](BaseModel):
 
     @staticmethod
     def reject_banned_success_payload(value: object) -> None:
-        """Reject ``None`` and bare ``object()`` as success payloads."""
+        """Reject ``None`` and bare ``object()`` as success payloads.
+
+        Raises:
+            ValueError: If ``value is None``; or if ``type(value) is object``.
+
+        """
         if value is None:
             raise ValueError(c.ERR_RESULT_SUCCESS_PAYLOAD_CANNOT_BE_NONE)
         if type(value) is object:
@@ -64,15 +60,16 @@ class FlextResultBase[T](BaseModel):
 
     @staticmethod
     def validate_error_data(
-        error_data: t.JsonMapping | ts.ConfigModelInput | None,
+        error_data: FlextTypingBase.JsonMapping
+        | FlextTypesServices.ConfigModelInput
+        | None,
     ) -> JsonDict | None:
-        from .._runtime._metadata import FlextRuntimeMetadata as FlextRuntime
-
-        normalized = FlextRuntime.normalize_model_input_mapping(error_data)
+        normalized = FlextRuntimeMetadata.normalize_model_input_mapping(error_data)
         if normalized is None:
             return None
         return dict(normalized)
 
+    @override
     def __init__(
         self,
         error_code: str | None = None,
@@ -83,6 +80,13 @@ class FlextResultBase[T](BaseModel):
         success: bool = True,
         exception: BaseException | None = None,
     ) -> None:
+        """Construct one result from the typed factory contract.
+
+        The signature intentionally narrows the inherited
+        ``FlextResultFieldModel.__init__`` boundary rather than pydantic's
+        ``(**data: Any)`` population contract, keeping the override checked
+        and typed while ``value``/``exception`` feed private state.
+        """
         type(self).reject_banned_result_parameterization()
         super().__init__(
             error=error,

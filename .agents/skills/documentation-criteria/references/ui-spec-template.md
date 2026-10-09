@@ -6,9 +6,9 @@
 
 ## Screens
 
-| Screen | Purpose | Entry condition | Exit condition |
-|---|---|---|---|
-| {screen} | {purpose} | {condition} | {condition} |
+| Screen   | Purpose   | Entry condition | Exit condition |
+| -------- | --------- | --------------- | -------------- |
+| {screen} | {purpose} | {condition}     | {condition}    |
 
 ## Screen transitions
 
@@ -29,41 +29,40 @@ flowchart TD
 
 ## Component reuse map
 
-| Need | Existing component | Decision | Reason |
-|---|---|---|---|
+| Need   | Existing component  | Decision                | Reason   |
+| ------ | ------------------- | ----------------------- | -------- |
 | {need} | {component or none} | {reuse, extend, or new} | {reason} |
 
 ## Design tokens
 
-| Concern | Existing token | Decision | Constraint |
-|---|---|---|---|
+| Concern                           | Existing token  | Decision             | Constraint        |
+| --------------------------------- | --------------- | -------------------- | ----------------- |
 | {color, spacing, type, or motion} | {token or none} | {reuse or introduce} | {measurable rule} |
 
 ## State and display matrix
 
-| Component | Default | Loading | Empty | Error | Partial |
-|---|---|---|---|---|---|
+| Component   | Default   | Loading   | Empty     | Error     | Partial   |
+| ----------- | --------- | --------- | --------- | --------- | --------- |
 | {component} | {display} | {display} | {display} | {display} | {display} |
 
 ## Interactions
 
-Write behavior in EARS form: When {trigger}, the product shall {observable
-response}.
+Write behavior in EARS form: When {trigger}, the product shall {observable response}.
 
-| ID | Trigger | Response | PRD criterion |
-|---|---|---|---|
-| UI-001 | {trigger} | {response} | AC-001 |
+| ID     | Trigger   | Response   | PRD criterion |
+| ------ | --------- | ---------- | ------------- |
+| UI-001 | {trigger} | {response} | AC-001        |
 
 ## Acceptance traceability
 
-| PRD criterion | Screen | Component | State | UI criterion |
-|---|---|---|---|---|
-| AC-001 | {screen} | {component} | {state} | UI-001 |
+| PRD criterion | Screen   | Component   | State   | UI criterion |
+| ------------- | -------- | ----------- | ------- | ------------ |
+| AC-001        | {screen} | {component} | {state} | UI-001       |
 
 ## Visual acceptance
 
-| State | Golden condition | Layout constraint |
-|---|---|---|
+| State   | Golden condition        | Layout constraint       |
+| ------- | ----------------------- | ----------------------- |
 | {state} | {observable appearance} | {measurable constraint} |
 
 ## Accessibility
@@ -76,5 +75,5 @@ response}.
 
 ## Prototype assets
 
-Store supporting prototypes through the project's declared attachment owner.
-Assets are examples; this specification and the design document remain authoritative.
+Store supporting prototypes through the project's declared attachment owner. Assets are
+examples; this specification and the design document remain authoritative.

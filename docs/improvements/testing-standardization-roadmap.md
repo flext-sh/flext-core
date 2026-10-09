@@ -1,28 +1,33 @@
 # Roadmap objetivo de padronização de testes (restante do projeto)
 
 <!-- TOC START -->
+
 - [Contexto consolidado (flext)](#contexto-consolidado-flext)
 - [Escopo desta fase](#escopo-desta-fase)
-- [Entregáveis obrigatórios (curto prazo)](#entregveis-obrigatrios-curto-prazo)
-- [Plano de execução em 4 PRs (objetivo e incremental)](#plano-de-execuo-em-4-prs-objetivo-e-incremental)
+- [Entregáveis obrigatórios (curto prazo)](#entregaveis-obrigatorios-curto-prazo)
+- [Plano de execução em 4 PRs (objetivo e incremental)](#plano-de-execucao-em-4-prs-objetivo-e-incremental)
 - [Regras de design (enxutas)](#regras-de-design-enxutas)
   - [DRY](#dry)
   - [SOLID](#solid)
   - [YAGNI](#yagni)
-- [Métricas objetivas de sucesso](#mtricas-objetivas-de-sucesso)
-- [Validação padrão por PR](#validao-padro-por-pr)
-- [Riscos e contenção](#riscos-e-conteno)
-- [Próxima ação imediata](#prxima-ao-imediata)
+- [Métricas objetivas de sucesso](#metricas-objetivas-de-sucesso)
+- [Validação padrão por PR](#validacao-padrao-por-pr)
+- [Riscos e contenção](#riscos-e-contencao)
+- [Próxima ação imediata](#proxima-acao-imediata)
+
 <!-- TOC END -->
 
-**Meta única**: reduzir duplicação e aumentar confiabilidade dos testes sem overengineering, com entregas pequenas e verificáveis.
+**Meta única**: reduzir duplicação e aumentar confiabilidade dos testes sem
+overengineering, com entregas pequenas e verificáveis.
 
 ## Contexto consolidado (flext)
 
-- O `AGENTS.md` do repositório `flext-sh/flext` define política de **ponteiro único**: regras canônicas ficam em
-  `CLAUDE.md` (sem duplicar governança em múltiplos arquivos).
-- O `CLAUDE.md` reforça: **DRY/SOLID obrigatório**, proibição de duplicação, sem atalhos e com validação factual.
-- Este plano segue esse mesmo modelo: poucas regras, execução objetiva, evidência por comando.
+- O `AGENTS.md` do repositório `flext-sh/flext` define política de **ponteiro único**:
+  regras canônicas ficam em `CLAUDE.md` (sem duplicar governança em múltiplos arquivos).
+- O `CLAUDE.md` reforça: **DRY/SOLID obrigatório**, proibição de duplicação, sem atalhos
+  e com validação factual.
+- Este plano segue esse mesmo modelo: poucas regras, execução objetiva, evidência por
+  comando.
 
 ## Escopo desta fase
 
@@ -74,7 +79,8 @@
 Rodar sempre (escopo mínimo):
 
 ```bash
-PYTHONPATH=src pytest -q tests/unit/test_utilities.py tests/unit/test_coverage_utilities.py tests/unit/test_utilities_text_full_coverage.py
+PYTHONPATH=src pytest -q tests/unit/test_utilities.py \
+  tests/unit/test_coverage_utilities.py tests/unit/test_utilities_text_full_coverage.py
 ```
 
 Quando houver novos contratos, incluir também:
@@ -94,4 +100,5 @@ python -m py_compile tests/unit/contracts/*.py
 
 ## Próxima ação imediata
 
-Executar **PR-1 (cache_contract)** com foco exclusivo em deduplicação real e evidência de ganho no diff.
+Executar **PR-1 (cache_contract)** com foco exclusivo em deduplicação real e evidência
+de ganho no diff.

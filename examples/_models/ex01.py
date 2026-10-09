@@ -1,13 +1,17 @@
-"""Example 01 models."""
+"""Example 01 models.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core import m, u
+from flext_core import m
 
 if TYPE_CHECKING:
-    from examples.typings import t
+    from examples import t
 
 
 class ExamplesFlextModelsEx01:
@@ -16,37 +20,39 @@ class ExamplesFlextModelsEx01:
     class User(m.Entity):
         """Result demo user model."""
 
-        name: str = u.Field(description="User display name")
-        email: str = u.Field(description="User email address")
+        name: str = m.Field(description="User display name")
+        email: str = m.Field(description="User email address")
 
     class DemonstrationResult(m.Value):
         """Result demo summary model."""
 
-        demonstrations_completed: int = u.Field(
-            description="Count of completed demonstrations"
+        demonstrations_completed: int = m.Field(
+            description="Count of completed demonstrations",
         )
-        patterns_covered: t.VariadicTuple[str] = u.Field(
-            description="Tuple of covered pattern names"
+        patterns_covered: t.VariadicTuple[str] = m.Field(
+            description="Tuple of covered pattern names",
         )
-        completed_at: str = u.Field(description="ISO 8601 completion timestamp")
+        completed_at: str = m.Field(description="ISO 8601 completion timestamp")
 
     class RunDemonstrationCommand(m.Command):
         """Result demo command model."""
 
-        operation: str = u.Field(
-            "demonstration", description="Operation type", validate_default=True
+        operation: str = m.Field(
+            "demonstration",
+            description="Operation type",
+            validate_default=True,
         )
 
     class ValidPersonPayload(m.Value):
         """Valid person payload model for demo validation."""
 
-        name: str = u.Field(description="Person name")
-        age: int = u.Field(description="Person age in years")
+        name: str = m.Field(description="Person name")
+        age: int = m.Field(description="Person age in years")
 
     class InvalidPersonPayload(m.Value):
         """Invalid person payload model (for failure path tests)."""
 
-        name: str = u.Field(description="Person name")
-        age: str = u.Field(
-            description="Invalid age (string instead of int) for testing"
+        name: str = m.Field(description="Person name")
+        age: str = m.Field(
+            description="Invalid age (string instead of int) for testing",
         )

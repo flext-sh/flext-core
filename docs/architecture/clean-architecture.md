@@ -1,12 +1,14 @@
 # Clean Architecture
 
 <!-- TOC START -->
+
 - [Layer Hierarchy](#layer-hierarchy)
 - [Dependency Rules](#dependency-rules)
 - [Layer Responsibilities](#layer-responsibilities)
 - [Next Steps](#next-steps)
 - [See Also](#see-also)
 - [Verification Commands](#verification-commands)
+
 <!-- TOC END -->
 
 **Status**: Current | **Version**: 0.12.0-dev | **Date**: 2026-04-14
@@ -17,11 +19,11 @@ Canonical references:
 - `./cqrs.md`
 - `../../README.md`
 
-FLEXT-Core keeps CQRS orchestration, domain modeling, and infrastructure
-aligned through unidirectional dependencies. Each layer maps directly to
-modules in `src/flext_core` and remains intentionally small so contracts stay
-explicit. See the Architecture Overview for the visual layout; this guide
-describes the dependency rules and per-layer responsibilities.
+FLEXT-Core keeps CQRS orchestration, domain modeling, and infrastructure aligned through
+unidirectional dependencies. Each layer maps directly to modules in `src/flext_core` and
+remains intentionally small so contracts stay explicit. See the Architecture Overview
+for the visual layout; this guide describes the dependency rules and per-layer
+responsibilities.
 
 ## Layer Hierarchy
 
@@ -31,11 +33,11 @@ describes the dependency rules and per-layer responsibilities.
 │  (orchestration & middleware)       │  _dispatcher/reliability.py, _dispatcher/timeout.py
 ├─────────────────────────────────────┤
 │  L2: Domain & Infrastructure        │  models.py, models/*, mixins.py, service.py
-│  (DDD, DI, settings, context)         │  utilities.py, _utilities/*, settings.py, context.py,
+│  (DDD, DI, settings, context)         │  utilities.py, _utilities/*, _settings.py, context.py,
 │                                     │  loggings.py, container.py
 ├─────────────────────────────────────┤
 │  L1: Foundation & Bridge            │  result.py, exceptions.py, registry.py
-│  (railway result, error surface)    │  runtime.py (structlog/dependency-injector bridge)
+│  (railway result, error surface)    │  runtime.py (runtime normalization and validation)
 ├─────────────────────────────────────┤
 │  L0: Pure Contracts                 │  constants.py, typings.py, protocols.py
 │  (immutable constants & protocols)  │
@@ -47,8 +49,8 @@ describes the dependency rules and per-layer responsibilities.
 - **Inward only:** higher layers import lower ones, never the inverse.
 - **Bridge isolation:** `runtime.py` pulls external libraries but does not import
   dispatcher or domain modules.
-- **Foundation purity:** `constants.py`, `typings.py`, and `protocols.py` avoid
-  internal imports so they remain safe for all layers.
+- **Foundation purity:** `constants.py`, `typings.py`, and `protocols.py` avoid internal
+  imports so they remain safe for all layers.
 
 ```text
 # ✅ Correct: application layer depends on domain + foundation
@@ -62,44 +64,42 @@ from flext_core import FlextDispatcher  # not allowed inside result.py
 
 - **L0 – Contracts**
 
-  - `constants.py` keeps error codes, retry defaults, cache TTLs, and logging
-    keys immutable.
-  - `typings.py` defines structured aliases for dispatcher callbacks, cached
-    payloads, and configuration schemas.
-  - `protocols.py` exposes runtime-checkable interfaces used by container,
-    dispatcher, and context implementations.
+  - `constants.py` keeps error codes, retry defaults, cache TTLs, and logging keys
+    immutable.
+  - `typings.py` defines structured aliases for dispatcher callbacks, cached payloads,
+    and configuration schemas.
+  - `protocols.py` exposes runtime-checkable interfaces used by container, dispatcher,
+    and context implementations.
 
 - **L1 – Foundation & Bridge**
 
-  - `result.py` delivers the railway-oriented `r` that propagates
-    errors without raising.
-  - `exceptions.py` centralizes typed exceptions surfaced by dispatcher
-    orchestration.
+  - `result.py` delivers the railway-oriented `r` that propagates errors without
+    raising.
+  - `exceptions.py` centralizes typed exceptions surfaced by dispatcher orchestration.
   - `registry.py` shares low-level registration helpers reused by dispatcher and
     container flows.
-  - `runtime.py` bridges structlog and dependency-injector while deliberately
+  - `runtime.py` normalizes runtime payloads and validates metadata while deliberately
     avoiding imports from L2/L3 to prevent cycles.
 
 - **L2 – Domain & Infrastructure**
 
-  - Domain modules (`models.py`, `models/`, `mixins.py`, `service.py`) wrap
-    Pydantic v2 for aggregates, events, validators, and cross-cutting mixins
-    (timestamps, versioning, soft deletes).
-  - Infrastructure modules carry operational concerns: `settings.py` (settings),
-    `context.py` (contextvars propagation), `loggings.py` (structured logging
-    defaults), `_utilities/` and `utilities.py` (pagination, validators, cache
-    helpers, reliability utilities), and `container.py` (DI singleton plus
-    scoped containers).
+  - Domain modules (`models.py`, `models/`, `mixins.py`, `service.py`) wrap Pydantic v2
+    for aggregates, events, validators, and cross-cutting mixins (timestamps,
+    versioning, soft deletes).
+    - Infrastructure modules carry operational concerns: `_settings.py`
+      (`FlextSettings`), `context.py` (contextvars propagation), `loggings.py`
+      (`FlextUtilitiesLogging`), `_utilities/` and `utilities.py` (pagination,
+      validators, cache helpers, reliability utilities), and `container.py` (DI
+      singleton plus scoped containers).
 
 - **L3 – Application / Orchestration**
 
-  - `dispatcher.py` coordinates middleware, rate limiting, circuit breaking,
-    retries, timeouts, and handler invocation.
-  - `_dispatcher/reliability.py` and `_dispatcher/timeout.py` encapsulate
-    resilience policies.
-  - `handlers.py`, `decorators.py`, and the application `registry.py` expose the
-    handler surface, middleware hooks, and registration helpers consumed by
-    services.
+  - `dispatcher.py` coordinates middleware, rate limiting, circuit breaking, retries,
+    timeouts, and handler invocation.
+  - `_dispatcher/reliability.py` and `_dispatcher/timeout.py` encapsulate resilience
+    policies.
+  - `handlers.py`, `decorators.py`, and the application `registry.py` expose the handler
+    surface, middleware hooks, and registration helpers consumed by services.
 
 Keeping documentation, examples, and code aligned with these boundaries prevents
 circular dependencies and keeps FLEXT-Core safe for reuse across services.
@@ -127,10 +127,10 @@ circular dependencies and keeps FLEXT-Core safe for reuse across services.
 Run from `flext-core/`:
 
 ```bash
-make lint
-make type-check
-make test-fast
+make check
+make test
 ```
 
 ```text
+
 ```

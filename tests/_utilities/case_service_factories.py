@@ -1,22 +1,24 @@
-"""Service case construction helpers for flext-core tests."""
+"""Service case construction helpers for flext-core tests.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, override
 
-from tests.constants import c
-from tests.models import m
-
-from .service_factories import TestsFlextUtilitiesServiceFactoriesMixin
+from tests import c, m
+from tests._utilities.service_factories import TestsFlextUtilitiesServiceFactoriesMixin
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from tests.typings import t
+    from tests import t
 
 
 class TestsFlextUtilitiesCaseServiceFactoriesMixin(
-    TestsFlextUtilitiesServiceFactoriesMixin
+    TestsFlextUtilitiesServiceFactoriesMixin,
 ):
     """Service case construction helpers."""
 
@@ -34,7 +36,12 @@ class TestsFlextUtilitiesCaseServiceFactoriesMixin(
 
         @classmethod
         def _next_type(cls) -> c.Tests.ServiceType:
-            """Get next service type from rotation."""
+            """Get next service type from rotation.
+
+            Returns:
+                The resulting ``c.Tests.ServiceType``.
+
+            """
             service_type = cls._service_types[cls._type_index % len(cls._service_types)]
             cls._type_index += 1
             return service_type
@@ -48,16 +55,16 @@ class TestsFlextUtilitiesCaseServiceFactoriesMixin(
             expected_success: bool = True,
             expected_error: str | None = None,
             extra_param: int = c.Tests.MIN_LENGTH_DEFAULT,
-            description: str | None = None,
         ) -> m.Tests.ServiceTestCase:
-            """Build a m.Tests.ServiceTestCase instance."""
+            """Build a m.Tests.ServiceTestCase instance.
+
+            Returns:
+                The resulting ``m.Tests.ServiceTestCase``.
+
+            """
             actual_type = service_type if service_type is not None else cls._next_type()
             actual_input = input_value if input_value is not None else cls._next_word()
-            actual_description = (
-                description
-                if description is not None
-                else f"Test case for {actual_type} with {actual_input}"
-            )
+            actual_description = f"Test case for {actual_type} with {actual_input}"
             return m.Tests.ServiceTestCase(
                 service_type=actual_type,
                 input_value=actual_input,
@@ -69,7 +76,14 @@ class TestsFlextUtilitiesCaseServiceFactoriesMixin(
 
         @classmethod
         def build_batch(cls, size: int) -> t.SequenceOf[m.Tests.ServiceTestCase]:
-            """Build multiple m.Tests.ServiceTestCase instances with auto-generated values."""
+            """Build multiple ``m.Tests.ServiceTestCase`` instances.
+
+            Values are auto-generated.
+
+            Returns:
+                The resulting ``t.SequenceOf[m.Tests.ServiceTestCase]``.
+
+            """
             return [cls.build() for _ in range(size)]
 
         @classmethod
@@ -78,41 +92,6 @@ class TestsFlextUtilitiesCaseServiceFactoriesMixin(
             """Reset factory state."""
             cls._type_index = 0
             super().reset()
-
-    class ServiceFactoryRegistry:
-        """Registry for service factories using pattern matching."""
-
-        @classmethod
-        def create_service(
-            cls, case: m.Tests.ServiceTestCase
-        ) -> (
-            TestsFlextUtilitiesCaseServiceFactoriesMixin.GetUserService
-            | TestsFlextUtilitiesCaseServiceFactoriesMixin.ValidatingService
-            | TestsFlextUtilitiesCaseServiceFactoriesMixin.FailingService
-        ):
-            """Create appropriate service based on case type using pattern matching."""
-            service: (
-                TestsFlextUtilitiesCaseServiceFactoriesMixin.GetUserService
-                | TestsFlextUtilitiesCaseServiceFactoriesMixin.ValidatingService
-                | TestsFlextUtilitiesCaseServiceFactoriesMixin.FailingService
-            )
-            match case.service_type:
-                case c.Tests.SERVICE_TEST_TYPE_GET_USER:
-                    service = TestsFlextUtilitiesCaseServiceFactoriesMixin.GetUserServiceFactory.build(
-                        user_id=case.input_value
-                    )
-                case c.Tests.SERVICE_TEST_TYPE_VALIDATE:
-                    service = TestsFlextUtilitiesCaseServiceFactoriesMixin.ValidatingServiceFactory.build(
-                        value_input=case.input_value, min_length=case.extra_param
-                    )
-                case c.Tests.SERVICE_TEST_TYPE_FAIL:
-                    service = TestsFlextUtilitiesCaseServiceFactoriesMixin.FailingServiceFactory.build(
-                        error_message=case.input_value or c.Tests.DEFAULT_ERROR_MESSAGE
-                    )
-                case _:
-                    msg = f"Unsupported service type: {case.service_type}"
-                    raise ValueError(msg)
-            return service
 
 
 __all__: list[str] = ["TestsFlextUtilitiesCaseServiceFactoriesMixin"]

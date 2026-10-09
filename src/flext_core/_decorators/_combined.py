@@ -9,14 +9,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Literal, overload
 
 from flext_core import m
-
-from ._railway import FlextDecoratorsRailway
+from flext_core._decorators._railway import FlextDecoratorsRailway
+from flext_core._protocols import FlextProtocolsResult
+from flext_core._typings.base import FlextTypingBase
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-    from .._protocols.result import FlextProtocolsResult as pr
-    from .._typings.base import FlextTypingBase as tb
 
 
 class FlextDecoratorsCombined(FlextDecoratorsRailway):
@@ -27,7 +25,7 @@ class FlextDecoratorsCombined(FlextDecoratorsRailway):
     def combined[**PCallback, TResult](
         cls,
         *,
-        inject_deps: tb.StrMapping | None = None,
+        inject_deps: FlextTypingBase.StrMapping | None = None,
         operation_name: str | None = None,
         track_perf: bool = True,
         railway_enabled: Literal[False] = False,
@@ -39,29 +37,37 @@ class FlextDecoratorsCombined(FlextDecoratorsRailway):
     def combined[**PCallback, TResult](
         cls,
         *,
-        inject_deps: tb.StrMapping | None = None,
+        inject_deps: FlextTypingBase.StrMapping | None = None,
         operation_name: str | None = None,
         track_perf: bool = True,
         railway_enabled: Literal[True],
         railway_error_code: str | None = None,
     ) -> Callable[
-        [Callable[PCallback, TResult]], Callable[PCallback, pr.Result[TResult]]
+        [Callable[PCallback, TResult]],
+        Callable[PCallback, FlextProtocolsResult.Result[TResult]],
     ]: ...
 
     @classmethod
     def combined[**PCallback, TResult](
         cls,
         *,
-        inject_deps: tb.StrMapping | None = None,
+        inject_deps: FlextTypingBase.StrMapping | None = None,
         operation_name: str | None = None,
         track_perf: bool = True,
         railway_enabled: bool = False,
         railway_error_code: str | None = None,
     ) -> Callable[
         [Callable[PCallback, TResult]],
-        Callable[PCallback, TResult] | Callable[PCallback, pr.Result[TResult]],
+        Callable[PCallback, TResult]
+        | Callable[PCallback, FlextProtocolsResult.Result[TResult]],
     ]:
-        """Apply injection, operation logging, and optional railway wrapping."""
+        """Apply injection, operation logging, and optional railway wrapping.
+
+        Returns:
+            The resulting ``Callable[[Callable[PCallback, TResult]], Callable[PCallback,
+                TResult] | Callable[PCallback, pr.Result[TResult]]]``.
+
+        """
         railway = m.CombinedRailwayOptions.model_validate({
             "enabled": railway_enabled,
             "error_code": railway_error_code,
@@ -70,15 +76,16 @@ class FlextDecoratorsCombined(FlextDecoratorsRailway):
 
             def railway_decorator(
                 func: Callable[PCallback, TResult],
-            ) -> Callable[PCallback, pr.Result[TResult]]:
+            ) -> Callable[PCallback, FlextProtocolsResult.Result[TResult]]:
                 result = cls.railway(error_code=railway.error_code)(func)
                 if inject_deps:
                     result = cls.inject(**inject_deps)(result)
                 operation_logger: Callable[
-                    [Callable[PCallback, pr.Result[TResult]]],
-                    Callable[PCallback, pr.Result[TResult]],
+                    [Callable[PCallback, FlextProtocolsResult.Result[TResult]]],
+                    Callable[PCallback, FlextProtocolsResult.Result[TResult]],
                 ] = cls.log_operation(
-                    operation_name=operation_name, track_perf=track_perf
+                    operation_name=operation_name,
+                    track_perf=track_perf,
                 )
                 return operation_logger(result)
 
@@ -91,7 +98,8 @@ class FlextDecoratorsCombined(FlextDecoratorsRailway):
             if inject_deps:
                 result = cls.inject(**inject_deps)(result)
             operation_logger: Callable[
-                [Callable[PCallback, TResult]], Callable[PCallback, TResult]
+                [Callable[PCallback, TResult]],
+                Callable[PCallback, TResult],
             ] = cls.log_operation(operation_name=operation_name, track_perf=track_perf)
             return operation_logger(result)
 

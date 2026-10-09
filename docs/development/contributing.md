@@ -1,6 +1,7 @@
 # Contributing to FLEXT-Core
 
 <!-- TOC START -->
+
 - [Code of Conduct](#code-of-conduct)
 - [Canonical Rules](#canonical-rules)
 - [Quick Start](#quick-start)
@@ -9,10 +10,6 @@
 - [How to Contribute](#how-to-contribute)
   - [1. Reporting Issues](#1-reporting-issues)
   - [2. Suggesting Features](#2-suggesting-features)
-- [Problem Statement](#problem-statement)
-- [Proposed Solution](#proposed-solution)
-- [Use Cases](#use-cases)
-- [Alternatives Considered](#alternatives-considered)
   - [3. Submitting Pull Requests](#3-submitting-pull-requests)
 - [Development Workflow](#development-workflow)
   - [Quality Assurance Pipeline](#quality-assurance-pipeline)
@@ -32,27 +29,30 @@
 - [Getting Help](#getting-help)
   - [Resources](#resources)
   - [Support Levels](#support-levels)
+
 <!-- TOC END -->
 
-Thank you for your interest in contributing to FLEXT-Core! This guide provides comprehensive instructions for
-contributing to the project.
+Thank you for your interest in contributing to FLEXT-Core! This guide provides
+comprehensive instructions for contributing to the project.
 
 ## Code of Conduct
 
-We are committed to providing a welcoming and inclusive environment. Please be respectful and constructive in all interactions.
+We are committed to providing a welcoming and inclusive environment. Please be
+respectful and constructive in all interactions.
 
 ## Canonical Rules
 
 - Root project governance lives in `AGENTS.md` at the workspace root.
-- For `flext-core` changes, follow `rules-flext-core`, `flext-import-rules`, and `flext-strict-typing`.
-- Keep examples and snippets aligned with Python 3.13 typing style (`X | None`, `Sequence[T]`, `Mapping[K, V]`).
+- For `flext-core` changes, follow `rules-flext-core`, `flext-import-rules`, and
+  `flext-strict-typing`.
+- Keep examples and snippets aligned with Python 3.13 typing style (`X | None`,
+  `Sequence[T]`, `Mapping[K, V]`).
 
 ## Quick Start
 
 ### Prerequisites
 
 - **Python**: 3.13+ (required)
-- **Poetry**: Latest version (recommended)
 - **Git**: For source checkout
 - **Make**: For development commands
 
@@ -66,8 +66,8 @@ cd flext-core
 # Setup development environment
 make setup
 
-# Verify installation
-python -c "from flext_core import r; u.Cli.print('✅ FLEXT-Core ready')"
+    # Verify installation
+    from flext_core import r; print('✅ FLEXT-Core ready')
 ```
 
 ## How to Contribute
@@ -134,7 +134,7 @@ python -c "from flext_core import r; u.Cli.print('✅ FLEXT-Core ready')"
 1. **Make changes**: Implement your feature or fix
 1. **Write tests**: Add comprehensive tests
 1. **Update docs**: Update documentation if needed
-1. **Run checks**: `make val` (lint + type-check + tests)
+   1. **Run checks**: `make check` (lint + type-check + tests)
 1. **Submit PR**: Create pull request with clear description
 
 ## Development Workflow
@@ -143,18 +143,16 @@ python -c "from flext_core import r; u.Cli.print('✅ FLEXT-Core ready')"
 
 ```bash
 # Complete validation (required before PR)
-make val
+make check
 
 # Individual checks
-make check CHECK_GATES=lint       # Ruff linting (ZERO tolerance)
-make check CHECK_GATES=mypy,pyright  # Type checking (strict)
-make test                # Full test suite with coverage
-make check CHECK_GATES=security   # Bandit security scan
+make check # Ruff linting + type checking (strict)
+make test  # Full test suite with coverage
 
 # Quick validation during development
-make check               # All read-only gates
-make fmt WHAT=apply       # Auto-format code
-make fix WHAT=apply       # Auto-fix findings (markdown, smells)
+make check # All read-only gates
+make fmt   # Auto-format code
+make fix   # Auto-fix findings (markdown, smells)
 ```
 
 ### Testing
@@ -171,22 +169,18 @@ make fix WHAT=apply       # Auto-fix findings (markdown, smells)
 # All tests with coverage
 make test
 
-# Specific test types
-make test-unit         # Unit tests only
-make test-integration  # Integration tests only
-
 # Specific modules
 pytest tests/unit/test_result.py -v
-pytest tests/unit/test_container.py::TestFlextContainer::test_singleton -v
+pytest tests/unit/test_container.py -v
 ```
 
 **Test Markers:**
 
 ```bash
 # Run by marker
-pytest -m unit              # Unit tests only
-pytest -m integration       # Integration tests only
-pytest -m "not slow"        # Exclude slow tests
+pytest -m unit        # Unit tests only
+pytest -m integration # Integration tests only
+pytest -m "not slow"  # Exclude slow tests
 
 # With coverage
 pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=term-missing
@@ -197,9 +191,8 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
 **Mandatory Requirements:**
 
 - **Zero Ruff violations** - Code quality enforced
-- **Zero MyPy errors** - Type safety guaranteed
-- **Zero PyRight errors** - Enhanced type checking
-- **PEP 8 compliance** - 79 character line length
+- **Zero MyPy/PyRight errors** - Type safety guaranteed
+- **PEP 8 compliance** - 88 character line length
 - **Python 3.13+** - Modern syntax and features
 
 **Best Practices:**
@@ -207,7 +200,7 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
 - Use `r[T]` for all operations that can fail
 - Register services with `FlextContainer()`
 - Follow DDD patterns with `FlextModels.Entity/Value/AggregateRoot`
-- Use `FlextLogger` with context propagation
+- Use `FlextUtilitiesLogging` with context propagation
 - Write tests using `flext_tests` infrastructure (no mocks)
 - Keep functions small and focused (single responsibility)
 
@@ -222,17 +215,17 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
    python --version
 
    # Reinstall dependencies
-   make install
+   make setup
    ```
 
 1. **Type Errors**
 
    ```bash
    # Run type checker
-   make type-check
+   make check
 
    # Check specific files
-   mypy src/flext_core/your_module.py
+   make check
    ```
 
 1. **Test Failures**
@@ -299,14 +292,26 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
 
 ```text
 src/flext_core/
-├── __init__.py # Public API exports
-├── result.py # Railway pattern implementation
-├── container.py # Dependency injection
-├── models.py # DDD base classes
-├── service.py # Domain service base
-├── bus.py # Message bus
-├── settings.py # Configuration management
-├── loggings.py # Structured logging
+├── __init__.py       # Public API exports (auto-generated)
+├── result.py         # Railway result type (r)
+├── container.py      # Dependency injection
+├── models.py         # DDD base classes (m)
+├── service.py        # Domain service base (s)
+├── constants.py      # Constants facade (c)
+├── typings.py        # Type aliases (t)
+├── protocols.py      # Runtime protocols (p)
+├── _settings.py      # Settings management
+├── _config.py        # Config management
+├── loggings.py       # Structured logging
+├── runtime.py        # Runtime normalization and validation
+├── registry.py       # Shared registration helpers
+├── context.py        # Contextvars metadata propagation
+├── dispatcher.py     # CQRS dispatch
+├── handlers.py       # Handler pipeline
+├── decorators.py     # Decorators (d)
+├── exceptions.py     # Exception hierarchy (e)
+├── mixins.py         # Mixins (x)
+├── utilities.py      # Utilities facade (u)
 └── ... (other modules)
 ```
 
@@ -394,8 +399,10 @@ Contributors who make significant improvements may be:
 - **Documentation**: Complete documentation
 - **Examples**: Working code examples
 - **Tests**: Usage patterns and best practices
-- **[Issues](https://github.com/flext-sh/flext-core/issues)**: Report bugs or ask questions
-- **[Discussions](https://github.com/flext-sh/flext-core/discussions)**: Community discussions
+- **[Issues](https://github.com/flext-sh/flext-core/issues)**: Report bugs or ask
+  questions
+- **[Discussions](https://github.com/flext-sh/flext-core/discussions)**: Community
+  discussions
 
 ### Support Levels
 
@@ -412,8 +419,9 @@ Contributors who make significant improvements may be:
 - Custom feature development
 - Training and consulting
 
-______________________________________________________________________
+---
 
-Thank you for contributing to FLEXT-Core! Your contributions help make this a better framework for the entire ecosystem.
+Thank you for contributing to FLEXT-Core! Your contributions help make this a better
+framework for the entire ecosystem.
 
 **Happy coding!** 🚀

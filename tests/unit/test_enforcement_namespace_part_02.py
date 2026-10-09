@@ -13,6 +13,9 @@ surface only:
 
 No test inspects private attributes, patches internals, or asserts on
 implementation-only shapes (``__qualname__`` internals, exact warning counts).
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -24,18 +27,21 @@ from typing import ClassVar
 import pytest
 
 from flext_core import c, m
-from flext_core.exceptions import FlextMroViolation, FlextSmellViolation
 from flext_core.utilities import FlextUtilitiesEnforcement
-from tests.utilities import u
-
-from ._enforcement_support import make_class
+from tests import u
+from tests.unit._enforcement_support import make_class
 
 type WarningRecords = list[warnings.WarningMessage]
 type ClassFactory = Callable[[], type]
 
 
 def _synthetic(name: str, body: dict[str, object], module: str | None = None) -> type:
-    """Build a synthetic class, optionally overriding its owning module."""
+    """Build a synthetic class, optionally overriding its owning module.
+
+    Returns:
+        The resulting ``type``.
+
+    """
     cls = make_class(name, body)
     if module is not None:
         cls.__module__ = module
@@ -43,7 +49,12 @@ def _synthetic(name: str, body: dict[str, object], module: str | None = None) ->
 
 
 def _local_constants_class() -> type:
-    """Return a genuinely function-local class (has ``<locals>`` qualname)."""
+    """Return a genuinely function-local class (has ``<locals>`` qualname).
+
+    Returns:
+        A genuinely function-local class (has ``<locals>`` qualname).
+
+    """
 
     class FlextLocalConstants:
         ITEMS: ClassVar[list[str]] = ["a"]  # violating shape, but function-local
@@ -52,7 +63,12 @@ def _local_constants_class() -> type:
 
 
 def _run_layer_records(target: type, layer: str) -> WarningRecords:
-    """Drive ``run_layer`` and return the warnings it emits (public behavior)."""
+    """Drive ``run_layer`` and return the warnings it emits (public behavior).
+
+    Returns:
+        The resulting ``WarningRecords``.
+
+    """
     with warnings.catch_warnings(record=True) as recorded:
         warnings.simplefilter("always")
         FlextUtilitiesEnforcement.run_layer(target, layer)
@@ -60,7 +76,12 @@ def _run_layer_records(target: type, layer: str) -> WarningRecords:
 
 
 def _bad_constant_report() -> m.Report:
-    """Build a non-empty constants report for mode-dispatch tests."""
+    """Build a non-empty constants report for mode-dispatch tests.
+
+    Returns:
+        The resulting ``m.Report``.
+
+    """
     report: m.Report = u.check(
         make_class("FlextSyntheticCli", {"GROUPS": frozenset({"foo"})}),
         layer="constants",
@@ -69,13 +90,16 @@ def _bad_constant_report() -> m.Report:
 
 
 class TestsFlextCoreEnforcementNamespacePart02:
+    """Tests for ``FlextCoreEnforcementNamespacePart02``."""
+
     __test__ = True
 
     # ------------------------------------------------------------------ #
     # run_layer — emitted warnings are the observable contract           #
     # ------------------------------------------------------------------ #
 
-    def test_run_layer_warns_on_mutable_constant_with_smell_category(self) -> None:
+    @staticmethod
+    def test_run_layer_warns_on_mutable_constant_with_smell_category() -> None:
         """A constants class with a mutable ``list`` field is flagged.
 
         The caller observes ``FlextMroViolation``-family warnings whose messages
@@ -89,7 +113,7 @@ class TestsFlextCoreEnforcementNamespacePart02:
         recorded = _run_layer_records(bad, "constants")
 
         assert recorded, "expected run_layer to emit at least one warning"
-        assert all(issubclass(rec.category, FlextMroViolation) for rec in recorded), (
+        assert all(issubclass(rec.category, c.FlextMroViolation) for rec in recorded), (
             "every emitted warning must be from the FLEXT violation family"
         )
         texts = [str(rec.message) for rec in recorded]
@@ -111,8 +135,10 @@ class TestsFlextCoreEnforcementNamespacePart02:
             ("clean_class", lambda: make_class("FlextSyntheticCleanConstants", {})),
         ],
     )
+    @staticmethod
     def test_run_layer_stays_silent_for_exempt_or_clean_classes(
-        self, case: str, factory: ClassFactory
+        case: str,
+        factory: ClassFactory,
     ) -> None:
         """Function-local, tests-qualified, and clean classes emit no warnings."""
         target = factory()
@@ -138,8 +164,10 @@ class TestsFlextCoreEnforcementNamespacePart02:
             ("implicit_constant", {"GROUPS": frozenset({"foo"})}),
         ],
     )
+    @staticmethod
     def test_check_flags_constant_declared_outside_constants(
-        self, name: str, body: dict[str, object]
+        name: str,
+        body: dict[str, object],
     ) -> None:
         """UPPER_CASE constants outside ``_constants`` yield an ENFORCE-079 violation.
 
@@ -196,10 +224,16 @@ class TestsFlextCoreEnforcementNamespacePart02:
             ),
         ],
     )
+    @staticmethod
     def test_check_exempts_permitted_constant_shapes(
-        self, case: str, body: dict[str, object], module: str | None
+        case: str,
+        body: dict[str, object],
+        module: str | None,
     ) -> None:
-        """Constants inside ``_constants``, framework idioms, and lowercase names pass."""
+        """Constants inside ``_constants`` pass validation.
+
+        Framework idioms and lowercase names also pass.
+        """
         good = _synthetic("FlextSyntheticExempt", body, module=module)
 
         report = u.check(good)
@@ -208,7 +242,8 @@ class TestsFlextCoreEnforcementNamespacePart02:
             f"{case} must not raise ENFORCE-079"
         )
 
-    def test_check_clean_class_reports_no_violations(self) -> None:
+    @staticmethod
+    def test_check_clean_class_reports_no_violations() -> None:
         """A structurally clean class produces an empty report."""
         clean = make_class("FlextSyntheticCleanConstants", {})
 
@@ -221,7 +256,8 @@ class TestsFlextCoreEnforcementNamespacePart02:
     # emit — mode dispatch is the observable contract                    #
     # ------------------------------------------------------------------ #
 
-    def test_emit_raises_type_error_in_strict_mode(self) -> None:
+    @staticmethod
+    def test_emit_raises_type_error_in_strict_mode() -> None:
         """STRICT mode turns a violation report into a raised ``TypeError``."""
         report = _bad_constant_report()
         assert not report.empty
@@ -231,7 +267,8 @@ class TestsFlextCoreEnforcementNamespacePart02:
             with pytest.raises(TypeError, match="ENFORCE-079"):
                 FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.STRICT)
 
-    def test_emit_stays_silent_in_off_mode(self) -> None:
+    @staticmethod
+    def test_emit_stays_silent_in_off_mode() -> None:
         """OFF mode neither warns nor raises for a non-empty report."""
         report = _bad_constant_report()
         assert not report.empty
@@ -242,15 +279,25 @@ class TestsFlextCoreEnforcementNamespacePart02:
 
         assert recorded == []
 
-    def test_emit_warns_in_warn_mode(self) -> None:
-        """WARN mode surfaces the violation as a ``FlextSmellViolation`` warning."""
+    @staticmethod
+    def test_emit_warns_in_warn_mode() -> None:
+        """WARN mode surfaces the namespace rule as a ``FlextMroViolation``.
+
+        ENFORCE-079 is a constants-discipline rule, not a smell: its catalog tag
+        is not a smell tag, so it never warns as ``FlextSmellViolation``.
+        """
         report = _bad_constant_report()
         assert not report.empty
 
-        with pytest.warns(FlextSmellViolation, match="ENFORCE-079"):
+        with pytest.warns(c.FlextMroViolation, match="ENFORCE-079") as recorded:
             FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.WARN)
 
-    def test_emit_is_a_noop_for_empty_report(self) -> None:
+        assert not any(
+            issubclass(record.category, c.FlextSmellViolation) for record in recorded
+        )
+
+    @staticmethod
+    def test_emit_is_a_noop_for_empty_report() -> None:
         """An empty report never warns or raises regardless of mode."""
         empty_report = u.check(make_class("FlextSyntheticCleanConstants", {}))
         assert empty_report.empty

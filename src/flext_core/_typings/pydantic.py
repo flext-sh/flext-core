@@ -13,8 +13,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+from typing import Annotated
+
 import pydantic
 import pydantic_core
+from pydantic import json_schema as pydantic_json_schema
 from pydantic_core import core_schema
 
 type JsonValue = pydantic.JsonValue
@@ -32,6 +36,10 @@ class FlextTypesPydantic:
     type StrictStr = pydantic.StrictStr
     type EmailStr = pydantic.EmailStr
     type NameEmail = pydantic.NameEmail
+
+    # Validation exception for annotation positions; the runtime class stays
+    # on the m/c facades for except/isinstance (TypeAliasType is not catchable).
+    type ValidationError = pydantic.ValidationError
 
     # Numeric constraints (callables — remain attributes)
     conint = pydantic.conint
@@ -109,27 +117,30 @@ class FlextTypesPydantic:
     type EncodedStr = pydantic.EncodedStr
     type EncodedBytes = pydantic.EncodedBytes
 
-    # JSON and special types
-    # pydantic.Json / ImportString / InstanceOf / Secret are generic
-    # runtime markers recognized by pydantic and the mypy plugin.
-    Json = pydantic.Json
+    # JSON and special types: generic type forms recognized by pydantic.
+    type Json[T] = pydantic.Json[T]
     # JsonValue is also module-level so beartype can resolve forward references
-    # emitted from aliases that flow through this class namespace.
+    # emitted from aliases that flow through this class namespace. The class
+    # member republishes the module-level pydantic alias: a divergent
+    # redefinition here shadowed pydantic.JsonValue through every composed
+    # facade with mutually incompatible unrollings (abstract Mapping/Sequence
+    # here vs pydantic's concrete dict/list/tuple), so pydantic remains the
+    # single source of truth for the JSON type surface.
     type JsonValue = pydantic.JsonValue
     type BaseModelType = pydantic.BaseModel
-    # NOTE (multi-agent): PEP 695 alias (not a bare class-scope assignment).
-    # A bare ``BaseModel = pydantic.BaseModel`` makes mypy treat the facade
-    # attribute as an instance variable, which breaks isinstance narrowing
-    # for every union containing ``t.BaseModel`` (mypy [unreachable]).
+    # PEP 695 aliases, never bare class-scope assignments: a bare
+    # ``BaseModel = pydantic.BaseModel`` is a variable to mypy, so it is not
+    # valid as a type and breaks isinstance narrowing (mypy [unreachable]).
     type BaseModel = pydantic.BaseModel
-    type TypeAdapterType[T] = pydantic.TypeAdapter[T]
-    TypeAdapter = pydantic.TypeAdapter
-    ConfigDict = pydantic.ConfigDict
-    ImportString = pydantic.ImportString
-    InstanceOf = pydantic.InstanceOf
-    Secret = pydantic.Secret
-    SecretStr = pydantic.SecretStr
+    type TypeAdapter[T] = pydantic.TypeAdapter[T]
+    type ImportString[T] = pydantic.ImportString[T]
+    type InstanceOf[T] = pydantic.InstanceOf[T]
+    type InstanceOfSequence[T] = pydantic.InstanceOf[Sequence[T]]
+    type Secret[T] = pydantic.Secret[T]
     type SecretBytes = pydantic.SecretBytes
+
+    class SecretStr(pydantic.SecretStr):
+        """Secret string type, constructible and usable in annotations."""
 
     # IP types
     type IPvAnyAddress = pydantic.IPvAnyAddress
@@ -139,10 +150,12 @@ class FlextTypesPydantic:
     # Constraint helper types (runtime markers / classes)
     StringConstraints = pydantic.StringConstraints
     UrlConstraints = pydantic.UrlConstraints
-    ErrorDetails = pydantic_core.ErrorDetails
-    ErrorType = core_schema.ErrorType
-    ErrorTypeInfo = pydantic_core.ErrorTypeInfo
-    InitErrorDetails = pydantic_core.InitErrorDetails
+
+    # Validation error payload types
+    type ErrorDetails = pydantic_core.ErrorDetails
+    type ErrorType = core_schema.ErrorType
+    type ErrorTypeInfo = pydantic_core.ErrorTypeInfo
+    type InitErrorDetails = pydantic_core.InitErrorDetails
 
     # Annotation and alias helper types (runtime markers / classes)
     AliasGenerator = pydantic.AliasGenerator
@@ -152,9 +165,17 @@ class FlextTypesPydantic:
     Tag = pydantic.Tag
     ValidateAs = pydantic.ValidateAs
     WithJsonSchema = pydantic.WithJsonSchema
+    SkipJsonSchema = pydantic_json_schema.SkipJsonSchema
     SerializeAsAny = pydantic.SerializeAsAny
     SkipValidation = pydantic.SkipValidation
     AllowInfNan = pydantic.AllowInfNan
     Strict = pydantic.Strict
     FailFast = pydantic.FailFast
     OnErrorOmit = pydantic.OnErrorOmit
+
+    # Dependency port: a field typed by a ``@runtime_checkable`` Protocol from
+    # ``p``. Pydantic validates the value with ``isinstance`` on construction and
+    # on assignment, and the port never enters the JSON Schema. Declare the field
+    # with ``m.Field(exclude=True, description=...)``: field-level metadata cannot
+    # live inside a type alias.
+    type Port[P] = Annotated[P, pydantic_json_schema.SkipJsonSchema()]

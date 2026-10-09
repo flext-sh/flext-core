@@ -17,11 +17,7 @@ from __future__ import annotations
 
 from typing import Annotated, override
 
-from examples.constants import c
-from examples.models import m
-from examples.protocols import p
-from examples.typings import t
-from examples.utilities import u
+from examples import c, m, p, t, u
 from flext_core import d, r, s
 
 
@@ -29,7 +25,8 @@ class ExamplesFlextDatabaseService(s[m.ConfigMap]):
     """Example service showing settings log-once pattern."""
 
     db_config: Annotated[
-        m.ConfigMap, m.Field(description="Database connection settings.")
+        m.ConfigMap,
+        m.Field(description="Database connection settings."),
     ]
 
     @d.log_operation("database_query")
@@ -42,7 +39,9 @@ class ExamplesFlextDatabaseService(s[m.ConfigMap]):
 
         """
         self.logger.info(
-            "Executing database query", operation_type="select", table="users"
+            "Executing database query",
+            operation_type="select",
+            table="users",
         )
         results = m.ConfigMap(root={"users": [{"id": 1, "name": "Alice"}]})
         return r[m.ConfigMap].ok(results)
@@ -69,7 +68,8 @@ class ExamplesFlextMigrationService(s[m.ConfigMap]):
     input_dir: Annotated[str, m.Field(description="Source migration directory.")]
     output_dir: Annotated[str, m.Field(description="Target migration directory.")]
     sync: Annotated[
-        bool, m.Field(description="Whether to perform synchronous migration.")
+        bool,
+        m.Field(description="Whether to perform synchronous migration."),
     ]
 
     @override
@@ -88,7 +88,7 @@ class ExamplesFlextMigrationService(s[m.ConfigMap]):
                 "sync": self.sync,
                 "batch_size": 100,
                 "max_workers": 4,
-            }
+            },
         )
         normalized_settings = {
             key: u.normalize_to_metadata(value) for key, value in settings.root.items()
@@ -105,7 +105,9 @@ class ExamplesFlextMigrationService(s[m.ConfigMap]):
 
         """
         self.logger.info(
-            "Starting migration process", total_entries=1000, batch_count=10
+            "Starting migration process",
+            total_entries=1000,
+            batch_count=10,
         )
         self.logger.info("Processing batch 1 of 10")
         self.logger.info("Processing batch 2 of 10")
@@ -115,23 +117,27 @@ class ExamplesFlextMigrationService(s[m.ConfigMap]):
 def main() -> None:
     """Demonstrate settings log-once pattern."""
     db_config = m.ConfigMap(
-        root={"host": c.LOCALHOST, "port": 5432, "database": "mydb", "pool_size": 10}
+        root={"host": c.LOCALHOST, "port": 5432, "database": "mydb", "pool_size": 10},
     )
-    db_service = ExamplesFlextDatabaseService.model_construct(db_config=db_config)
+    db_service = ExamplesFlextDatabaseService.model_validate({"db_config": db_config})
     db_service.logger.info("Example started", example="database_service")
     result = db_service.execute()
     if result.success:
         db_service.logger.info(
-            "Database query successful", result=u.normalize_to_metadata(result.value)
+            "Database query successful",
+            result=u.normalize_to_metadata(result.value),
         )
     migration_service = ExamplesFlextMigrationService(
-        input_dir="/data/input", output_dir="/data/output", sync=True
+        input_dir="/data/input",
+        output_dir="/data/output",
+        sync=True,
     )
     migration_service.logger.info("Example started", example="migration_service")
     result = migration_service.execute()
     if result.success:
         migration_service.logger.info(
-            "Migration successful", result=u.normalize_to_metadata(result.value)
+            "Migration successful",
+            result=u.normalize_to_metadata(result.value),
         )
     observations = (
         "Configuration is logged once when the service is initialized",
@@ -141,7 +147,9 @@ def main() -> None:
     )
     for position, observation in enumerate(observations, start=1):
         migration_service.logger.info(
-            "Key observation", position=position, observation=observation
+            "Key observation",
+            position=position,
+            observation=observation,
         )
 
 

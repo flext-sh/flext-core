@@ -1,20 +1,22 @@
 <!-- AUTO-GENERATED FILE — regenerate through `make gen` from the workspace root. -->
-<!-- Source of truth: `docs/guides/getting-started.md`; adjust that source, never this projection. -->
+<!-- Source of truth: `<workspace-root>/docs/guides/getting-started.md`; adjust that workspace source, never this member projection. -->
 
 # flext-core - Getting Started
 
 > Project profile: `flext-core`
 
 <!-- TOC START -->
+
 - [Prepare the workspace](#prepare-the-workspace)
 - [Make a bounded change](#make-a-bounded-change)
 - [Command boundaries](#command-boundaries)
 - [Documentation ownership](#documentation-ownership)
 - [Next steps](#next-steps)
+
 <!-- TOC END -->
 
-Work from the FLEXT workspace root. The root `AGENTS.md`, branch-matched
-`flext-law`, nearest package scope, and active Bead define the current contract.
+Work from the FLEXT workspace root. The root `AGENTS.md`, branch-matched `flext-law`,
+nearest package scope, and active Bead define the current contract.
 
 ## Prepare the workspace
 
@@ -30,8 +32,8 @@ parallel command surface.
 
 ## Make a bounded change
 
-1. Read config, settings, the generator, public facades, consumers, tests, and
-   docs before mutation.
+1. Read config, settings, the generator, public facades, consumers, tests, and docs
+   before mutation.
 2. Use the canonical semantic refactoring owner for consumer rewiring.
 3. Remove superseded code and prove zero residue in the same slice.
 4. Regenerate managed surfaces and run the complete native gates.
@@ -45,7 +47,7 @@ make fix
 make fmt
 make check
 make test
-make conform
+make gen
 ```
 
 The final generation pass proves the fixed point. Test execution remains inside
@@ -53,10 +55,9 @@ The final generation pass proves the fixed point. Test execution remains inside
 
 ## Command boundaries
 
-Do not invoke underlying generators, linters, type checkers, or test runners.
-Do not add project, file, pattern, phase, fix, or changed-only selectors. A
-missing workflow is repaired at the root Make owner and then rerun through its
-declared verb.
+Do not invoke underlying generators, linters, type checkers, or test runners. Do not add
+project, file, pattern, phase, fix, or changed-only selectors. A missing workflow is
+repaired at the root Make owner and then rerun through its declared verb.
 
 ## Documentation ownership
 

@@ -1,50 +1,57 @@
 # Roadmap Objetivo de Modernização (Python 3.13, OO/MRO, Pydantic v2)
 
 <!-- TOC START -->
+
 - [Escopo](#escopo)
 - [Resultado esperado (DoD do programa)](#resultado-esperado-dod-do-programa)
-- [Princípios de execução](#princpios-de-execuo)
+- [Princípios de execução](#principios-de-execucao)
 - [Backlog objetivo por trilha](#backlog-objetivo-por-trilha)
 - [Trilha A — Tipagem e hierarquia OO/MRO](#trilha-a-tipagem-e-hierarquia-oomro)
-  - [Entregáveis](#entregveis)
-  - [Critérios de aceite](#critrios-de-aceite)
-- [Trilha B — Pydantic v2 avançado](#trilha-b-pydantic-v2-avanado)
-  - [Entregáveis](#entregveis)
-  - [Critérios de aceite](#critrios-de-aceite)
-- [Trilha C — Simplificação estrutural (SOLID + YAGNI)](#trilha-c-simplificao-estrutural-solid-yagni)
-  - [Entregáveis](#entregveis)
-  - [Critérios de aceite](#critrios-de-aceite)
-- [Plano de execução por ondas (foco em risco)](#plano-de-execuo-por-ondas-foco-em-risco)
+  - [Entregáveis](#entregaveis)
+  - [Critérios de aceite](#criterios-de-aceite)
+- [Trilha B — Pydantic v2 avançado](#trilha-b-pydantic-v2-avancado)
+  - [Entregáveis](#entregaveis_1)
+  - [Critérios de aceite](#criterios-de-aceite_1)
+- [Trilha C — Simplificação estrutural (SOLID + YAGNI)](#trilha-c-simplificacao-estrutural-solid-yagni)
+  - [Entregáveis](#entregaveis_2)
+  - [Critérios de aceite](#criterios-de-aceite_2)
+- [Plano de execução por ondas (foco em risco)](#plano-de-execucao-por-ondas-foco-em-risco)
   - [Onda 1 — Baixo risco](#onda-1-baixo-risco)
-  - [Onda 2 — Médio risco](#onda-2-mdio-risco)
+  - [Onda 2 — Médio risco](#onda-2-medio-risco)
   - [Onda 3 — Alto impacto](#onda-3-alto-impacto)
-- [Métricas objetivas de acompanhamento](#mtricas-objetivas-de-acompanhamento)
+- [Métricas objetivas de acompanhamento](#metricas-objetivas-de-acompanhamento)
 - [Checklist de fechamento](#checklist-de-fechamento)
 - [Nota de contexto](#nota-de-contexto)
+
 <!-- TOC END -->
 
 ## Escopo
 
-Padronizar o restante do código para reduzir duplicação e lógica ad-hoc, sem compromisso de retrocompatibilidade,
-alinhando com a arquitetura em camadas (L0–L3), CQRS e DI já documentadas no projeto.
+Padronizar o restante do código para reduzir duplicação e lógica ad-hoc, sem compromisso
+de retrocompatibilidade, alinhando com a arquitetura em camadas (L0–L3), CQRS e DI já
+documentadas no projeto.
 
 ## Resultado esperado (DoD do programa)
 
-1. **Checks de tipo/hierarquia** centralizados em uma API interna única (sem novos usos diretos de `__mro__`).
-1. **Validação Pydantic v2** consolidada (adapters reutilizáveis + menos validators duplicados).
-1. **Módulos críticos com menor complexidade** (`runtime`, `checker`, `handlers`, `container`, `models/*`).
+1. **Checks de tipo/hierarquia** centralizados em uma API interna única (sem novos usos
+   diretos de `__mro__`).
+1. **Validação Pydantic v2** consolidada (adapters reutilizáveis + menos validators
+   duplicados).
+1. **Módulos críticos com menor complexidade** (`runtime`, `checker`, `handlers`,
+   `container`, `models/*`).
 1. **Testes de regressão** cobrindo casos de compatibilidade e serialização.
 
-______________________________________________________________________
+---
 
 ## Princípios de execução
 
 - **YAGNI:** remover fallback e abstração não exercitados por testes.
 - **DRY:** uma única implementação para cada regra de compatibilidade.
 - **SOLID:** separar extração de tipo, decisão de compatibilidade e tratamento de erro.
-- **Arquitetura atual:** preservar fronteiras L0–L3 (contratos → runtime bridge → domínio/infra → orquestração).
+- **Arquitetura atual:** preservar fronteiras L0–L3 (contratos → runtime bridge →
+  domínio/infra → orquestração).
 
-______________________________________________________________________
+---
 
 ## Backlog objetivo por trilha
 
@@ -61,7 +68,8 @@ ______________________________________________________________________
   - [ ] `_utilities/checker.py`
   - [ ] `handlers.py`
   - [ ] `container.py`
-- [ ] Proibir novos checks manuais por `__mro__` (exceto introspecção explícita documentada).
+- [ ] Proibir novos checks manuais por `__mro__` (exceto introspecção explícita
+      documentada).
 
 ### Critérios de aceite
 
@@ -69,7 +77,7 @@ ______________________________________________________________________
 - [ ] Zero uso novo de `__mro__` nos arquivos migrados.
 - [ ] Testes unitários dedicados para classe, instância, `origin`, `Union` e coleções.
 
-______________________________________________________________________
+---
 
 ## Trilha B — Pydantic v2 avançado
 
@@ -80,8 +88,10 @@ ______________________________________________________________________
   - [ ] metadata
   - [ ] tags
   - [ ] payload/settings map
-- [ ] Unificar validators redundantes em `models/container.py`, `models/settings.py`, `models/cqrs.py`.
-- [ ] Introduzir `Annotated[...]` com constraints nativas para remover validação manual onde aplicável.
+- [ ] Unificar validators redundantes em `models/container.py`, `models/settings.py`,
+      `models/cqrs.py`.
+- [ ] Introduzir `Annotated[...]` com constraints nativas para remover validação manual
+      onde aplicável.
 
 ### Critérios de aceite
 
@@ -89,7 +99,7 @@ ______________________________________________________________________
 - [ ] Redução de validators duplicados com cobertura equivalente.
 - [ ] Sem mudança de comportamento observável nos testes existentes.
 
-______________________________________________________________________
+---
 
 ## Trilha C — Simplificação estrutural (SOLID + YAGNI)
 
@@ -107,7 +117,7 @@ ______________________________________________________________________
 - [ ] Menor complexidade ciclomática nos módulos críticos.
 - [ ] Cada política com testes diretos (não apenas integração por fluxo final).
 
-______________________________________________________________________
+---
 
 ## Plano de execução por ondas (foco em risco)
 
@@ -126,7 +136,7 @@ ______________________________________________________________________
 - [ ] Refactor de `models/*` para reduzir validators redundantes.
 - [ ] Limpeza de fallbacks/YAGNI e endurecimento de contratos.
 
-______________________________________________________________________
+---
 
 ## Métricas objetivas de acompanhamento
 
@@ -136,7 +146,7 @@ ______________________________________________________________________
 - Branch coverage nos módulos críticos.
 - Complexidade ciclomática de `runtime`, `checker`, `handlers`.
 
-______________________________________________________________________
+---
 
 ## Checklist de fechamento
 
@@ -147,5 +157,6 @@ ______________________________________________________________________
 
 ## Nota de contexto
 
-Para incorporar padrões de `flext-sh/flext`, é necessário acesso local ao repositório (arquivos `AGENTS.md`/docs de
-arquitetura). Neste ambiente atual, somente `flext-core` está disponível.
+Para incorporar padrões de `flext-sh/flext`, é necessário acesso local ao repositório
+(arquivos `AGENTS.md`/docs de arquitetura). Neste ambiente atual, somente `flext-core`
+está disponível.

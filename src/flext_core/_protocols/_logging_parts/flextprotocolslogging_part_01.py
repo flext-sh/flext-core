@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 if TYPE_CHECKING:
-    from flext_core import FlextTypes as t
+    from flext_core import t
 
 
 class FlextProtocolsLogging:
@@ -56,7 +56,10 @@ class FlextProtocolsLogging:
             ...
 
         def critical(
-            self, msg: str, *args: t.LogValue, **kw: t.LogValue
+            self,
+            msg: str,
+            *args: t.LogValue,
+            **kw: t.LogValue,
         ) -> t.LogResult:
             """Log critical message."""
             ...
@@ -70,7 +73,10 @@ class FlextProtocolsLogging:
             ...
 
         def exception(
-            self, msg: str, *args: t.LogValue, **kw: t.LogValue
+            self,
+            msg: str,
+            *args: t.LogValue,
+            **kw: t.LogValue,
         ) -> t.LogResult:
             """Log exception with traceback."""
             ...
@@ -80,13 +86,20 @@ class FlextProtocolsLogging:
             ...
 
         def log(
-            self, level: str, message: str, *args: t.LogValue, **kw: t.LogValue
+            self,
+            level: str,
+            message: str,
+            *args: t.LogValue,
+            **kw: t.LogValue,
         ) -> t.LogResult:
             """Log a message at an arbitrary level."""
             ...
 
         def trace(
-            self, message: str, *args: t.LogValue, **kwargs: t.JsonPayload
+            self,
+            message: str,
+            *args: t.LogValue,
+            **kwargs: t.JsonPayload,
         ) -> t.LogResult:
             """Log a trace/debug-level diagnostic message."""
             ...

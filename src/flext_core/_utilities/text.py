@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flext_core import FlextConstants as c, FlextTypes as t
+from flext_core import c, t
 
 
 class FlextUtilitiesText:
@@ -57,7 +57,9 @@ class FlextUtilitiesText:
 
     @staticmethod
     def write_file(
-        path: str | Path, content: str, encoding: str = c.DEFAULT_ENCODING
+        path: str | Path,
+        content: str,
+        encoding: str = c.DEFAULT_ENCODING,
     ) -> None:
         """Write text content to a file path using explicit encoding."""
         Path(path).write_text(content, encoding=encoding)

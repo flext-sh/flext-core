@@ -10,26 +10,30 @@ import warnings
 from functools import wraps
 from typing import TYPE_CHECKING, ClassVar, TypeIs
 
-from flext_core import FlextContainer, m
-from flext_core.context import FlextContext
+from flext_core import FlextContainer, c, m
+from flext_core._models import FlextContext
+from flext_core._protocols import (
+    FlextProtocolsBase,
+    FlextProtocolsContainer,
+    FlextProtocolsContext,
+    FlextProtocolsLogging,
+)
+from flext_core._typings.services import FlextTypesServices
 from flext_core.loggings import FlextUtilitiesLogging
-
-from .._protocols.logging import FlextProtocolsLogging as pl
-from .._typings.base import FlextTypingBase as tb
-from .._typings.services import FlextTypesServices as ts
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-    from .._protocols.base import FlextProtocolsBase as pb
-    from .._protocols.container import FlextProtocolsContainer as pc
-    from .._protocols.context import FlextProtocolsContext as pcx
 
 
 class FlextDecoratorsBase:
     """Base helpers shared by concrete decorator namespaces."""
 
-    type _LoggerCarrier = pl.HasLogger | pl.Logger | ts.JsonPayload | m.BaseModel
+    type _LoggerCarrier = (
+        FlextProtocolsLogging.HasLogger
+        | FlextProtocolsLogging.Logger
+        | FlextTypesServices.JsonPayload
+        | m.BaseModel
+    )
     _CAUGHT_EXCEPTIONS: tuple[type[Exception], ...] = (
         AttributeError,
         TypeError,
@@ -37,46 +41,71 @@ class FlextDecoratorsBase:
         RuntimeError,
         KeyError,
     )
-    _container_type: ClassVar[pc.ContainerType] = FlextContainer
-    _context_type: ClassVar[pcx.ContextType] = FlextContext
+    _container_type: ClassVar[FlextProtocolsContainer.ContainerType] = FlextContainer
+    _context_type: ClassVar[FlextProtocolsContext.ContextType] = FlextContext
 
     @classmethod
     def _is_logger_carrier(
-        cls, value: pb.AttributeProbe | None
+        cls,
+        value: FlextProtocolsBase.AttributeProbe | None,
     ) -> TypeIs[_LoggerCarrier]:
-        """Return whether value carries or can route logging context."""
+        """Return whether value carries or can route logging context.
+
+        Returns:
+            Whether value carries or can route logging context.
+
+        """
         _ = cls
         return isinstance(
-            value, (pl.Logger, pl.HasLogger, m.BaseModel, *tb.CONTAINER_TYPES)
+            value,
+            (
+                FlextProtocolsLogging.Logger,
+                FlextProtocolsLogging.HasLogger,
+                m.BaseModel,
+                *c.CONTAINER_TYPES,
+            ),
         )
 
     @classmethod
     def _resolve_logger(
         cls,
-        first_arg: pl.Logger | _LoggerCarrier | None = None,
+        first_arg: FlextProtocolsLogging.Logger | _LoggerCarrier | None = None,
         *,
-        func: ts.DispatchableHandler | None = None,
+        func: FlextTypesServices.DispatchableHandler | None = None,
         func_module: str | None = None,
-    ) -> pl.Logger:
-        """Resolve the logger associated with the decorated call."""
+    ) -> FlextProtocolsLogging.Logger:
+        """Resolve the logger associated with the decorated call.
+
+        Returns:
+            The resulting ``pl.Logger``.
+
+        """
         _ = cls
-        if isinstance(first_arg, pl.Logger):
+        if isinstance(first_arg, FlextProtocolsLogging.Logger):
             return first_arg
-        if isinstance(first_arg, pl.HasLogger):
+        if isinstance(first_arg, FlextProtocolsLogging.HasLogger):
             return first_arg.logger
         module_name = (
             func_module
             if isinstance(func_module, str)
             else (func.__module__ if callable(func) else __name__)
         )
-        logger: pl.Logger = FlextUtilitiesLogging.fetch_logger(module_name)
+        logger: FlextProtocolsLogging.Logger = FlextUtilitiesLogging.fetch_logger(
+            module_name,
+        )
         return logger
 
     @staticmethod
     def deprecated[**PCallback, TResult](
         reason: str,
     ) -> Callable[[Callable[PCallback, TResult]], Callable[PCallback, TResult]]:
-        """Mark callable as deprecated and emit ``DeprecationWarning`` on use."""
+        """Mark callable as deprecated and emit ``DeprecationWarning`` on use.
+
+        Returns:
+            The resulting ``Callable[[Callable[PCallback, TResult]], Callable[PCallback,
+                TResult]]``.
+
+        """
 
         def decorator(
             func: Callable[PCallback, TResult],
@@ -96,9 +125,16 @@ class FlextDecoratorsBase:
 
     @classmethod
     def inject[**PCallback, TResult](
-        cls, **dependencies: str
+        cls,
+        **dependencies: str,
     ) -> Callable[[Callable[PCallback, TResult]], Callable[PCallback, TResult]]:
-        """Inject dependencies from the configured FLEXT container."""
+        """Inject dependencies from the configured FLEXT container.
+
+        Returns:
+            The resulting ``Callable[[Callable[PCallback, TResult]], Callable[PCallback,
+                TResult]]``.
+
+        """
 
         def decorator(
             func: Callable[PCallback, TResult],

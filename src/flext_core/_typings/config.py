@@ -10,16 +10,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from .base import FlextTypingBase as t
+from flext_core._typings.base import FlextTypingBase
 
 
 class FlextTypingConfig:
     """Type aliases for declarative config loading and env override."""
 
-    type ConfigValue = t.JsonValue
-    type ConfigMapping = t.MappingKV[str, t.JsonValue]
-    type ConfigDict = dict[str, t.JsonValue]
-    type ConfigOverrideMapping = t.MappingKV[str, str]
+    type ConfigValue = FlextTypingBase.JsonValue
+    type ConfigMapping = FlextTypingBase.MappingKV[str, FlextTypingBase.JsonValue]
+    type ConfigOverrideMapping = FlextTypingBase.MappingKV[str, str]
 
 
 __all__: list[str] = ["FlextTypingConfig"]

@@ -6,54 +6,64 @@
 # Source: template (base/.mise.toml.j2)
 # Free: no
 # End SECTION: header
-# NOTE: mise carries the Python runtime and native tools from the config SSOT.
-# Python dependencies remain owned by uv.lock. Mise resolves every tool to the
-# newest published release at setup time: the fleet runs unlocked and current.
-# Never run `mise lock`. Never commit mise.lock.
+# NOTE: mise carries itself, the Python runtime and the native tools from the
+# config SSOT. The self-managed github:jdx/mise entry is the pinned release:
+# `mise install` provisions it from mise.lock and every later `mise` resolved
+# through the mise-managed shims runs exactly that release. Python dependency
+# declarations remain owned by pyproject.toml. Tools are declared `latest`;
+# only `make upg` resolves them and writes the committed mise.lock. Setup
+# installs frozen from that lock and never re-resolves.
 
 # === SECTION: settings (managed) ===
-# Source: config:codegen.toolchain.mise_lockfile / mise_locked
+# Source: config:codegen.toolchain.mise_lockfile / mise_locked / mise_lockfile_platforms /
+#         dependency_cooldown_days (one fleet supply-chain cooldown, operator 2026-10-01)
 [settings]
-lockfile = false
-locked = false
+minimum_release_age = "10d"
+lockfile = true
+locked = true
+# Third-party releases in the manifest (jscpd, qlty) publish no SLSA
+# attestations, so strict lock-time provenance verification can never pass
+# for them. API outages degrade to best-effort instead of failing the lock;
+# release checksums still enforce integrity, and verification resumes
+# automatically wherever attestations exist.
+provenance_api_failures_fatal = false
+locked_verify_provenance = false
+lockfile_platforms = ["linux-x64", "linux-x64-musl", "linux-arm64", "macos-x64", "macos-arm64", "windows-x64"]
+[settings.python]
+compile = false
 [tool_config]
-locked = false
+locked = true
 # End SECTION: settings
 
 # === SECTION: tools (managed) ===
-# Source: config:python_version, config:codegen.scaffold.project.dev native toolchain floors
-#         (kubectl_version, helm_version, kind_version, taplo_version, ast_grep_version,
-#          gitleaks_version, scc_selector/scc_version, kubeconform_version, qlty_selector/qlty_version,
-#          node_version, jscpd_selector/jscpd_version, waza_selector/waza_version,
-#          beads (selector/track/version/prerelease/branch), gascity (selector/track/version/prerelease/branch))
+# Source: config:python_version + config:codegen.toolchain mise_selector /
+#         mise_version (the self-managed mise entry) + toolchain.tools entries
+#         (name, selector, version, version_prefix, form; entry order is the
+#         projection order, form fixes the rendered shape)
 [tools]
 python = "3.13"
+# mise self-management: the [tools] entry pins the release `mise install`
+# provisions from mise.lock; a host bootstrap mise only needs to read that lock.
+"github:jdx/mise" = "2026.10.3"
+# Native toolchain (single source: Infra.codegen.toolchain.tools in codegen.yaml).
 uv = "latest"
-# Native toolchain (single source: Infra.codegen.toolchain in codegen.yaml).
 kubectl = "latest"
 helm = "latest"
 kind = "latest"
 direnv = "latest"
 taplo = "latest"
-ast-grep = "latest"
+"aqua:ast-grep/ast-grep" = "latest"
 gitleaks = "latest"
 "aqua:boyter/scc" = "latest"
 kubeconform = "latest"
 node = "latest"
-"npm:jscpd" = "latest"
-"github:microsoft/waza" = "latest"
 go = "latest"
+make = "latest"
 [tools."github:qltysh/qlty"]
+version = "0.645.0"
+[tools."github:kucherenko/jscpd"]
+version = "5.3.2"
+[tools."github:microsoft/waza"]
 version = "latest"
-github_attestations = false
-
-[tools."github:marlon-costa-dc/beads"]
-version = "latest"
-prerelease = true
-github_attestations = false
-
-[tools."github:marlon-costa-dc/gascity"]
-version = "latest"
-prerelease = true
-github_attestations = false
+version_prefix = "v"
 # End SECTION: tools

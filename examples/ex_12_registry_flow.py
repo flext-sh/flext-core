@@ -1,24 +1,24 @@
-"""Registry creation, dispatch, and summary example sections."""
+"""Registry creation, dispatch, and summary example sections.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from examples.constants import c
-from examples.models import m
-from examples.shared import ExamplesFlextShared
-from examples.utilities import u
-from flext_core import h, r
-
-from .ex_12_registry_support import (
+from examples import c, m, u
+from examples.ex_12_registry_support import (
     ProtocolHandler,
     as_registry_handler,
     discovered_handler,
 )
+from examples.shared import ExamplesFlextShared
+from flext_core import h, r
 
 if TYPE_CHECKING:
-    from examples.protocols import p
-    from examples.typings import t
+    from examples import p, t
 
 
 class Ex12RegistryFlow(ExamplesFlextShared):
@@ -36,22 +36,42 @@ class Ex12RegistryFlow(ExamplesFlextShared):
         self.audit_check(
             "decorated_handler.type",
             type(
-                discovered_handler(m.Examples.CommandA(value=discovered_value))
+                discovered_handler(m.Examples.CommandA(value=discovered_value)),
             ).__name__,
         )
         self.audit_check("execute.success", registry.execute().success)
         return (registry, dispatcher)
 
     def _exercise_registration_and_dispatch(
-        self, registry: p.Registry, dispatcher: p.Dispatcher
+        self,
+        registry: p.Registry,
+        dispatcher: p.Dispatcher,
     ) -> t.Pair[ProtocolHandler, ProtocolHandler]:
+        """Register flow handlers and dispatch commands through them.
+
+        Returns:
+            The resulting ``t.Pair[ProtocolHandler, ProtocolHandler]``.
+
+        """
         self.section("registration_and_dispatch")
+        handlers, labels = self._register_flow_handlers(registry)
+        self._dispatch_flow_commands(dispatcher, labels)
+        return handlers
+
+    def _register_flow_handlers(
+        self,
+        registry: p.Registry,
+    ) -> t.Pair[t.Pair[ProtocolHandler, ProtocolHandler], t.Pair[str, str]]:
+        """Register handler_a/handler_b and the callable-mode handler.
+
+        Returns:
+            The resulting ``t.Pair``.
+
+        """
         label_a = self.rand_str(3)
         label_b = self.rand_str(3)
         callable_prefix = self.rand_str(3)
         callable_name = self.rand_str(10)
-        cmd_a_value = self.rand_str(6)
-        cmd_b_value = self.rand_int(1, 100)
         handler_a = ProtocolHandler(label_a, m.Examples.CommandA)
         handler_b = ProtocolHandler(label_b, m.Examples.CommandB)
         handler_mode = h.create_from_callable(
@@ -73,7 +93,8 @@ class Ex12RegistryFlow(ExamplesFlextShared):
         self.audit_check("register_handler.mode.success", reg_mode.success)
         handler_mode_probe = handler_mode.handle(callable_prefix)
         self.audit_check(
-            "create_from_callable.handle_success", handler_mode_probe.success
+            "create_from_callable.handle_success",
+            handler_mode_probe.success,
         )
         batch = registry.register_handlers([
             as_registry_handler(handler_a),
@@ -89,35 +110,41 @@ class Ex12RegistryFlow(ExamplesFlextShared):
             "register_handlers.errors_len",
             len(batch.value.errors) if batch.success else -1,
         )
+        return (handler_a, handler_b), (label_a, label_b)
+
+    def _dispatch_flow_commands(
+        self,
+        dispatcher: p.Dispatcher,
+        labels: t.Pair[str, str],
+    ) -> None:
+        """Dispatch CommandA/CommandB through the registered handlers."""
+        label_a, label_b = labels
+        cmd_a_value = self.rand_str(6)
+        cmd_b_value = self.rand_int(1, 100)
         cmd_a = m.Examples.CommandA(value=cmd_a_value)
         dispatch_a = dispatcher.dispatch(cmd_a)
         self.audit_check("dispatch.a.success", dispatch_a.success)
         self.audit_check(
-            "dispatch.a.value", dispatch_a.value == f"{label_a}:{cmd_a_value}"
+            "dispatch.a.value",
+            dispatch_a.value == f"{label_a}:{cmd_a_value}",
         )
         cmd_b = m.Examples.CommandB(amount=cmd_b_value)
         dispatch_b = dispatcher.dispatch(cmd_b)
         self.audit_check("dispatch.b.success", dispatch_b.success)
         self.audit_check(
-            "dispatch.b.value", dispatch_b.value == f"{label_b}:{cmd_b_value}"
+            "dispatch.b.value",
+            dispatch_b.value == f"{label_b}:{cmd_b_value}",
         )
-        return (handler_a, handler_b)
 
     def _exercise_summary_and_mixins(self) -> None:
+        """Exercise summary models, result mixins, and utility generators."""
         self.section("summary_and_mixins")
+        self._summary_model_checks()
+        self._mixin_and_utility_checks()
+
+    def _summary_model_checks(self) -> None:
+        """Check success/failure attribute shapes of registry summaries."""
         summary_error = self.rand_str(5)
-        ok_value = self.rand_str(6)
-        fail_message = self.rand_str(7)
-        fail_code = self.rand_str(5)
-        ensured_raw = self.rand_int(1, 200)
-        ensured_existing = self.rand_int(1, 200)
-        map_key_a = self.rand_str(3)
-        map_key_b = self.rand_str(3)
-        map_val_a = self.rand_int(1, 9)
-        map_val_b = self.rand_str(3)
-        handler_name = self.rand_str(6)
-        handler_id = self.rand_str(8)
-        prefix = f"reg.{self.rand_str(4)}"
         summary_ok = m.RegistrySummary()
         summary_fail = m.RegistrySummary(errors=[summary_error])
         ok_success_attr = summary_ok.success
@@ -140,17 +167,33 @@ class Ex12RegistryFlow(ExamplesFlextShared):
         self.audit_check("summary.ok.failure", summary_ok_failure)
         self.audit_check("summary.fail.success", summary_fail_success)
         self.audit_check("summary.fail.failure", summary_fail_failure)
+
+    def _mixin_and_utility_checks(self) -> None:
+        """Check result mixins, dict conversion, and id generators."""
+        ok_value = self.rand_str(6)
+        fail_message = self.rand_str(7)
+        fail_code = self.rand_str(5)
+        ensured_raw = self.rand_int(1, 200)
+        ensured_existing = self.rand_int(1, 200)
+        map_key_a = self.rand_str(3)
+        map_key_b = self.rand_str(3)
+        map_val_a = self.rand_int(1, 9)
+        map_val_b = self.rand_str(3)
+        handler_name = self.rand_str(6)
+        handler_id = self.rand_str(8)
+        prefix = f"reg.{self.rand_str(4)}"
         ok_result = r[str].ok(ok_value)
         fail_result = r[str].fail(fail_message, error_code=fail_code)
-        self.audit_check("mixin.ok.unwrap_or", ok_result.unwrap_or("") == ok_value)
+        self.audit_check("mixin.ok.unwrap_or", ok_result.value == ok_value)
         self.audit_check("mixin.fail.error", fail_result.error == fail_message)
         self.audit_check("mixin.fail.error_code", fail_result.error_code == fail_code)
         self.audit_check(
-            "ensure_result.raw", r[int].ok(ensured_raw).unwrap_or(0) == ensured_raw
+            "ensure_result.raw",
+            r[int].ok(ensured_raw).value == ensured_raw,
         )
         self.audit_check(
             "ensure_result.existing",
-            r[int].ok(ensured_existing).unwrap_or(0) == ensured_existing,
+            r[int].ok(ensured_existing).value == ensured_existing,
         )
         self.audit_check("to_dict.none", m.ConfigMap(root={}))
         self.audit_check(
@@ -167,5 +210,6 @@ class Ex12RegistryFlow(ExamplesFlextShared):
             u.generate_prefixed_id(prefix, 6).startswith(f"{prefix}_"),
         )
         self.audit_check(
-            "generate_datetime_utc.type", type(u.generate_datetime_utc()).__name__
+            "generate_datetime_utc.type",
+            type(u.generate_datetime_utc()).__name__,
         )

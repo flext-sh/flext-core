@@ -3,9 +3,7 @@
   "destination": ".claude/rules",
   "managed": {
     "architecture--engineering-core.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "architecture--engineering-core.md",
       "origin": "agents:rules:claude",
@@ -15,9 +13,7 @@
       "source_type": "rule"
     },
     "architecture--generalized-abstraction.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "architecture--generalized-abstraction.md",
       "origin": "agents:rules:claude",
@@ -27,9 +23,7 @@
       "source_type": "rule"
     },
     "architecture--governance-artifact-composition.md": {
-      "activation": [
-        "route:project"
-      ],
+      "activation": ["route:project"],
       "adapter_version": 1,
       "destination": "architecture--governance-artifact-composition.md",
       "origin": "agents:rules:claude",
@@ -39,9 +33,7 @@
       "source_type": "rule"
     },
     "communication--caveman.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "communication--caveman.md",
       "origin": "agents:rules:claude",
@@ -51,9 +43,7 @@
       "source_type": "rule"
     },
     "coordination--fix-forward-collaboration.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "coordination--fix-forward-collaboration.md",
       "origin": "agents:rules:claude",
@@ -63,9 +53,7 @@
       "source_type": "rule"
     },
     "coordination--multiagent-edit-breadcrumb.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "coordination--multiagent-edit-breadcrumb.md",
       "origin": "agents:rules:claude",
@@ -75,9 +63,7 @@
       "source_type": "rule"
     },
     "coordination--operator-precedence.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "coordination--operator-precedence.md",
       "origin": "agents:rules:claude",
@@ -87,9 +73,7 @@
       "source_type": "rule"
     },
     "coordination--plan-topic-monopoly.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "coordination--plan-topic-monopoly.md",
       "origin": "agents:rules:claude",
@@ -99,9 +83,7 @@
       "source_type": "rule"
     },
     "coordination--session-governance.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "coordination--session-governance.md",
       "origin": "agents:rules:claude",
@@ -111,9 +93,7 @@
       "source_type": "rule"
     },
     "coordination--shared-venv-guard.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "coordination--shared-venv-guard.md",
       "origin": "agents:rules:claude",
@@ -123,9 +103,7 @@
       "source_type": "rule"
     },
     "ethics--professional-integrity.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "ethics--professional-integrity.md",
       "origin": "agents:rules:claude",
@@ -135,9 +113,7 @@
       "source_type": "rule"
     },
     "git--destructive-git-guard.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "git--destructive-git-guard.md",
       "origin": "agents:rules:claude",
@@ -147,9 +123,7 @@
       "source_type": "rule"
     },
     "python--config-settings-ssot.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "python--config-settings-ssot.md",
       "origin": "agents:rules:claude",
@@ -159,9 +133,7 @@
       "source_type": "rule"
     },
     "python--no-hidden-errors.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "python--no-hidden-errors.md",
       "origin": "agents:rules:claude",
@@ -171,9 +143,7 @@
       "source_type": "rule"
     },
     "python.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "python.md",
       "origin": "agents:rules:claude",
@@ -183,9 +153,7 @@
       "source_type": "rule"
     },
     "runtime--atomic-effects.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "runtime--atomic-effects.md",
       "origin": "agents:rules:claude",
@@ -195,9 +163,7 @@
       "source_type": "rule"
     },
     "runtime--causal-subprocess.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "runtime--causal-subprocess.md",
       "origin": "agents:rules:claude",
@@ -207,9 +173,7 @@
       "source_type": "rule"
     },
     "runtime--fail-loud.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "runtime--fail-loud.md",
       "origin": "agents:rules:claude",
@@ -219,9 +183,7 @@
       "source_type": "rule"
     },
     "runtime--no-fallback.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "runtime--no-fallback.md",
       "origin": "agents:rules:claude",
@@ -231,9 +193,7 @@
       "source_type": "rule"
     },
     "runtime--no-keyring.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "runtime--no-keyring.md",
       "origin": "agents:rules:claude",
@@ -243,9 +203,7 @@
       "source_type": "rule"
     },
     "runtime--preflight-before-effects.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "runtime--preflight-before-effects.md",
       "origin": "agents:rules:claude",
@@ -255,9 +213,7 @@
       "source_type": "rule"
     },
     "runtime--required-environment.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "runtime--required-environment.md",
       "origin": "agents:rules:claude",
@@ -267,9 +223,7 @@
       "source_type": "rule"
     },
     "runtime--strict-execution.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "runtime--strict-execution.md",
       "origin": "agents:rules:claude",
@@ -279,9 +233,7 @@
       "source_type": "rule"
     },
     "runtime--zero-residue.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "runtime--zero-residue.md",
       "origin": "agents:rules:claude",
@@ -291,9 +243,7 @@
       "source_type": "rule"
     },
     "rust.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "rust.md",
       "origin": "agents:rules:claude",
@@ -303,9 +253,7 @@
       "source_type": "rule"
     },
     "security--prompt-defense.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "security--prompt-defense.md",
       "origin": "agents:rules:claude",
@@ -315,9 +263,7 @@
       "source_type": "rule"
     },
     "security--scanner-closure.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "security--scanner-closure.md",
       "origin": "agents:rules:claude",
@@ -327,9 +273,7 @@
       "source_type": "rule"
     },
     "security--supply-chain.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "security--supply-chain.md",
       "origin": "agents:rules:claude",
@@ -339,9 +283,7 @@
       "source_type": "rule"
     },
     "shell--bash-guard-chaining-precision.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "shell--bash-guard-chaining-precision.md",
       "origin": "agents:rules:claude",
@@ -351,9 +293,7 @@
       "source_type": "rule"
     },
     "storage.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "storage.md",
       "origin": "agents:rules:claude",
@@ -363,9 +303,7 @@
       "source_type": "rule"
     },
     "testing--observable-runtime.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "testing--observable-runtime.md",
       "origin": "agents:rules:claude",
@@ -375,9 +313,7 @@
       "source_type": "rule"
     },
     "typescript.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "typescript.md",
       "origin": "agents:rules:claude",
@@ -387,9 +323,7 @@
       "source_type": "rule"
     },
     "workflow--canonical-commands.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "workflow--canonical-commands.md",
       "origin": "agents:rules:claude",
@@ -399,9 +333,7 @@
       "source_type": "rule"
     },
     "workflow--generators-not-projections.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "workflow--generators-not-projections.md",
       "origin": "agents:rules:claude",
@@ -411,9 +343,7 @@
       "source_type": "rule"
     },
     "workflow--living-documentation.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "workflow--living-documentation.md",
       "origin": "agents:rules:claude",
@@ -423,9 +353,7 @@
       "source_type": "rule"
     },
     "workflow--runtime-is-reality.md": {
-      "activation": [
-        "route:both"
-      ],
+      "activation": ["route:both"],
       "adapter_version": 1,
       "destination": "workflow--runtime-is-reality.md",
       "origin": "agents:rules:claude",
@@ -437,15 +365,11 @@
   },
   "owner": "agents-governance",
   "project": ".",
-  "providers": [
-    "claude"
-  ],
+  "providers": ["claude"],
   "selection": {
     "agents": [],
     "opt_ins": [],
-    "selected_tags": [
-      "flext"
-    ]
+    "selected_tags": ["flext"]
   },
   "surface": "rules",
   "version": 5

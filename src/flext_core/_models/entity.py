@@ -13,15 +13,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Hashable, MutableSequence
-from typing import Annotated, override
+from typing import override
 
 from pydantic import Field
 
-from .._typings.base import FlextTypingBase as t
-from .._utilities.domain import FlextUtilitiesDomain as u
-from .._utilities.generators import FlextUtilitiesGenerators
-from .base import FlextModelsBase as m
-from .domain_event import FlextModelsDomainEvent
+from flext_core._models.base import FlextModelsBase
+from flext_core._models.domain_event import FlextModelsDomainEvent
+from flext_core._typings.base import FlextTypingBase
+from flext_core._utilities import FlextUtilitiesDomain, FlextUtilitiesGenerators
 
 
 class FlextModelsEntity:
@@ -34,7 +33,12 @@ class FlextModelsEntity:
     the forward-reference cycle that Pydantic cannot resolve.
     """
 
-    class Entity(m.TimestampedModel, m.IdentifiableMixin, m.VersionableMixin, Hashable):
+    class Entity(
+        FlextModelsBase.TimestampedModel,
+        FlextModelsBase.IdentifiableMixin,
+        FlextModelsBase.VersionableMixin,
+        Hashable,
+    ):
         """Entity implementation - base class for domain entities with identity.
 
         Combines TimestampedModel, IdentifiableMixin, and VersionableMixin to provide:
@@ -48,32 +52,48 @@ class FlextModelsEntity:
         appends new entries during the entity lifecycle.
         """
 
-        domain_events: Annotated[
-            MutableSequence[FlextModelsDomainEvent.Entry],
-            Field(
-                default_factory=list,
-                description="List of uncommitted domain events for event sourcing",
-            ),
-        ]
+        # Why assigned-value form, not ``Annotated`` metadata: pyright's
+        # ``dataclass_transform`` synthesis recognizes ``default_factory``
+        # default-ness only from the field specifier call assigned to the
+        # class variable; a specifier inside ``Annotated`` metadata synthesizes
+        # a REQUIRED ``__init__`` parameter (verified against plain pydantic).
+        domain_events: MutableSequence[FlextModelsDomainEvent.DomainEvent] = Field(
+            default_factory=list[FlextModelsDomainEvent.DomainEvent],
+            description="List of uncommitted domain events for event sourcing",
+        )
 
         @override
         def __eq__(self, other: object) -> bool:
-            """Identity-based equality for entities."""
-            if not isinstance(other, m.EnforcedModel):
+            """Identity-based equality for entities.
+
+            Returns:
+                The resulting ``bool``.
+
+            """
+            if not isinstance(other, FlextModelsBase.EnforcedModel):
                 return NotImplemented
-            return u.compare_entities_by_id(self, other)
+            return FlextUtilitiesDomain.compare_entities_by_id(self, other)
 
         def __hash__(self) -> int:
-            """Identity-based hash for entities."""
-            return u.hash_entity_by_id(self)
+            """Identity-based hash for entities.
+
+            Returns:
+                The resulting ``int``.
+
+            """
+            return FlextUtilitiesDomain.hash_entity_by_id(self)
 
         @override
-        def model_post_init(self, __context: t.ScalarMapping | None, /) -> None:
+        def model_post_init(
+            self,
+            __context: FlextTypingBase.ScalarMapping | None,
+            /,
+        ) -> None:
             """Post-initialization hook to set updated_at timestamp when absent."""
             if self.updated_at is None:
                 self.updated_at = FlextUtilitiesGenerators.generate_datetime_utc()
 
-    class Value(m.FrozenValueModel):
+    class Value(FlextModelsBase.FrozenValueModel):
         """Base class for value objects - immutable and compared by value."""
 
     class AggregateRoot(Entity):

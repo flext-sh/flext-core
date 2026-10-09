@@ -1,10 +1,12 @@
 # Pydantic v2 Audit (Current)
 
 <!-- TOC START -->
+
 - [Summary](#summary)
-- [Check: model_dump usage](#check-modeldump-usage)
+- [Check: model_dump usage](#check-model_dump-usage)
 - [Check: ConfigDict usage](#check-configdict-usage)
 - [Check: examples-backed settings flow](#check-examples-backed-settings-flow)
+
 <!-- TOC END -->
 
 ## Summary
@@ -20,12 +22,17 @@ from flext_core import m
 
 
 class AuditModel(m.BaseModel):
+    """Model with one audited integer field."""
+
     value: int
 
 
 model = AuditModel(value=1)
 data = model.model_dump()
-assert data["value"] == 1
+expected_value = 1
+if data["value"] != expected_value:
+    message = "Unexpected dumped field value"
+    raise RuntimeError(message)
 ```
 
 ## Check: ConfigDict usage
@@ -37,11 +44,16 @@ from flext_core import m
 
 
 class AuditSettings(m.BaseModel):
+    """Settings model ignoring extra keys."""
+
     model_config = m.ConfigDict(extra="ignore")
     debug: bool = False
 
 
-assert AuditSettings(debug=True).debug is True
+override_settings = AuditSettings(debug=True)
+if override_settings.debug is not True:
+    message = "Expected debug field override"
+    raise RuntimeError(message)
 ```
 
 ## Check: examples-backed settings flow

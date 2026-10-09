@@ -1,14 +1,16 @@
-"""Service example exercising the public ``s`` contract and runtime accessors."""
+"""Service example exercising the public ``s`` contract and runtime accessors.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from pathlib import Path
 from typing import Annotated, override
 
-from examples.models import m
+from examples import m, t, u
 from examples.shared import ExamplesFlextShared
-from examples.typings import t
-from examples.utilities import u
 from flext_core import p, r, s
 
 
@@ -20,7 +22,7 @@ class _EchoService(s[str]):
     rule_error: Annotated[
         str,
         u.Field(
-            description="Optional validation error returned by the example service"
+            description="Optional validation error returned by the example service",
         ),
     ] = ""
 
@@ -49,7 +51,12 @@ class ExampleService:
 
     @classmethod
     def run(cls) -> p.Result[str]:
-        """Execute the public example service and return its result."""
+        """Execute the public example service and return its result.
+
+        Returns:
+            The resulting ``p.Result[str]``.
+
+        """
         service = _EchoService(payload=m.Examples.Payload(text="ok"))
         return service.execute()
 
@@ -72,7 +79,8 @@ class _ExampleServiceGolden(ExamplesFlextShared):
         service_runtime = u.build_service_runtime(service)
         self.audit_check("execute.unwrap", execute_result.unwrap_or(""))
         self.audit_check(
-            "execute.unwrap.matches", execute_result.unwrap_or("") == "echo:ok"
+            "execute.unwrap.matches",
+            execute_result.unwrap_or("") == "echo:ok",
         )
         self.audit_check("runtime.type", type(service_runtime).__name__)
         self.audit_check("context.type", type(service.context).__name__)
@@ -84,19 +92,24 @@ class _ExampleServiceGolden(ExamplesFlextShared):
         )
         self.audit_check("valid.default", service.valid())
         self.audit_check(
-            "validate_business_rules.override.success", failed_validation.success
+            "validate_business_rules.override.success",
+            failed_validation.success,
         )
         self.audit_check(
-            "validate_business_rules.override.error", failed_validation.error
+            "validate_business_rules.override.error",
+            failed_validation.error,
         )
         self.audit_check("valid.override", validation_failure.valid())
 
         self.section("runtime_creation_and_serialization")
         runtime_default = u.build_service_runtime(service)
-        runtime_with_override = u.build_service_runtime(service, subproject="examples")
+        runtime_with_override = u.build_service_runtime(
+            m.RuntimeBootstrapOptions(context=runtime_default.context),
+        )
         info = service.service_info()
         self.audit_check(
-            "create_runtime.default.context", type(runtime_default.context).__name__
+            "create_runtime.default.context",
+            type(runtime_default.context).__name__,
         )
         self.audit_check(
             "create_runtime.full.container",

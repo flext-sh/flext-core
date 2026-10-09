@@ -29,3 +29,6 @@ class TestsFlextConstantsFixtures:
     SAMPLE_AUTHOR_ALICE: ClassVar[str] = "Alice Example"
     SAMPLE_AUTHOR_BOB: ClassVar[str] = "Bob Example"
     SAMPLE_PROJECT_NAME_MIGRATION: ClassVar[str] = "demo-migration-tool"
+
+
+__all__: list[str] = ["TestsFlextConstantsFixtures"]

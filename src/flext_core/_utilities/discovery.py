@@ -1,7 +1,9 @@
-"""Factory discovery implementation for auto-registration.
+"""Factory and service-operation discovery.
 
-This module provides factory discovery functionality that can be used by
-container and decorators without creating circular dependencies.
+Factory discovery serves container and decorator auto-registration without
+circular dependencies. Service-operation discovery (ADR-019) reads the typed
+operations of a service class lazily, when a CLI or tool asks for them, and
+never at class creation.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,24 +11,32 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import ast
+import functools
+import inspect
 import operator
+from collections import ChainMap
+from types import FunctionType
 from typing import TYPE_CHECKING
 
-from flext_core import FlextConstants as c, FlextTypes as t
+from pydantic import BaseModel
 
-from .._models.container import FlextModelsContainer
+from flext_core import c, p, t
+from flext_core._models import FlextModelsContainer, FlextModelsService
 
 if TYPE_CHECKING:
-    from collections.abc import MutableSequence
     from types import ModuleType
+
+    from flext_core.service import FlextService
 
 
 class FlextUtilitiesDiscovery:
-    """Auto-discovery for @factory() decorated functions in modules."""
+    """Auto-discovery of @factory() functions and typed service operations."""
 
     @staticmethod
     def _factory_config_for(
-        module: ModuleType, name: str
+        module: ModuleType,
+        name: str,
     ) -> FlextModelsContainer.FactoryDecoratorConfig | None:
         func = vars(module).get(name)
         if func is None or not callable(func):
@@ -40,7 +50,13 @@ class FlextUtilitiesDiscovery:
     def scan_module(
         module: ModuleType,
     ) -> t.SequenceOf[tuple[str, FlextModelsContainer.FactoryDecoratorConfig]]:
-        """Scan module for @factory()-decorated functions, sorted by name."""
+        """Scan module for @factory()-decorated functions, sorted by name.
+
+        Returns:
+            The resulting ``t.SequenceOf[tuple[str,
+                FlextModelsContainer.FactoryDecoratorConfig]]``.
+
+        """
         return sorted(
             [
                 (name, config)
@@ -55,37 +71,261 @@ class FlextUtilitiesDiscovery:
         )
 
     @staticmethod
-    def resolve_wire_targets(
-        wire_modules: t.SequenceOf[ModuleType | str] | None,
-        wire_packages: t.StrSequence | None,
-        wire_classes: t.SequenceOf[type] | None,
-    ) -> tuple[
-        t.SequenceOf[ModuleType] | None, t.StrSequence | None, t.SequenceOf[type] | None
-    ]:
-        """Separate mixed wire_modules into actual modules vs package name strings."""
-        resolved_modules: t.SequenceOf[ModuleType] | None = None
-        resolved_packages: t.StrSequence | None = None
-        resolved_classes: t.SequenceOf[type] | None = wire_classes
+    @functools.cache
+    def service_operations(
+        service_type: type[FlextService[p.Base]],
+    ) -> tuple[FlextModelsService.ServiceOperation, ...]:
+        """Return the typed operations of a service class, sorted by name.
 
-        if wire_modules is not None:
-            modules_list: MutableSequence[ModuleType] = []
-            packages_list: MutableSequence[str] = []
-            for item in wire_modules:
-                match item:
-                    case str():
-                        packages_list.append(item)
-                    case _:
-                        modules_list.append(item)
-            resolved_modules = modules_list
-            if packages_list:
-                resolved_packages = packages_list
+        An operation is a plain public function declared in a class of the MRO
+        below ``FlextService``; every name ``FlextService`` exposes, Pydantic
+        validators and serializers, properties, classmethods and staticmethods
+        are not operations. A malformed operation, a sibling-class name
+        collision, or a service without operations raises ``TypeError`` naming
+        the operation, annotation, module and fix. Results are cached per class.
 
-        if wire_packages is not None:
-            current = list(resolved_packages or [])
-            current.extend(wire_packages)
-            resolved_packages = current
+        Returns:
+            The typed operations of a service class, sorted by name.
 
-        return resolved_modules, resolved_packages, resolved_classes
+        Raises:
+            TypeError: If ``not operations``.
+
+        """
+        service_facade = next(
+            klass
+            for klass in service_type.__mro__
+            if klass.__module__ == "flext_core.service"
+        )
+        below = service_type.__mro__[: service_type.__mro__.index(service_facade)]
+        infos = service_type.__pydantic_decorators__
+        decorated = {
+            *infos.field_validators,
+            *infos.model_validators,
+            *infos.field_serializers,
+            *infos.model_serializers,
+            *infos.computed_fields,
+        }
+        names = (
+            {
+                name
+                for owner in below
+                for name in vars(owner)
+                if not name.startswith("_")
+            }
+            - set(dir(service_facade))
+            - decorated
+        )
+        operations = tuple(
+            FlextUtilitiesDiscovery._operation(service_type, below, name, member)
+            for name in sorted(names)
+            if isinstance(
+                member := inspect.getattr_static(service_type, name),
+                FunctionType,
+            )
+        )
+        if not operations:
+            msg = c.ERR_SERVICE_NO_OPERATIONS.format(
+                service=service_type.__qualname__,
+                module=service_type.__module__,
+            )
+            raise TypeError(msg)
+        return operations
+
+    @staticmethod
+    def _operation(
+        service_type: type,
+        below: tuple[type, ...],
+        name: str,
+        func: FunctionType,
+    ) -> FlextModelsService.ServiceOperation:
+        """Validate one operation's shape and build its typed description.
+
+        Returns:
+            The resulting ``FlextModelsService.ServiceOperation``.
+
+        """
+        where = (service_type, name, func.__module__)
+        signature = inspect.signature(func)
+        FlextUtilitiesDiscovery._validate_operation_shape(func, below, where, signature)
+        doc = FlextUtilitiesDiscovery._require_operation_docstring(
+            func,
+            where,
+            signature,
+        )
+        request = FlextUtilitiesDiscovery._resolve_operation_request(
+            func,
+            where,
+            signature,
+        )
+        return FlextModelsService.ServiceOperation(
+            name=name,
+            summary=doc.strip().splitlines()[0],
+            request=request,
+        )
+
+    @staticmethod
+    def _validate_operation_shape(
+        func: FunctionType,
+        below: tuple[type, ...],
+        where: tuple[type, str, str],
+        signature: inspect.Signature,
+    ) -> None:
+        """Raise on shape defects: collisions, async, generics, signatures."""
+        error = FlextUtilitiesDiscovery._error
+        owners = [owner for owner in below if func.__name__ in vars(owner)]
+        if any(not issubclass(owners[0], owner) for owner in owners[1:]):
+            siblings = ", ".join(owner.__qualname__ for owner in owners)
+            defect = c.ERR_SERVICE_OPERATION_COLLISION.format(owners=siblings)
+            raise error(where, signature, defect)
+        if inspect.iscoroutinefunction(func) or inspect.isasyncgenfunction(func):
+            raise error(where, signature, c.ERR_SERVICE_OPERATION_ASYNC)
+        if func.__type_params__:
+            raise error(where, signature, c.ERR_SERVICE_OPERATION_GENERIC)
+        params = tuple(signature.parameters.values())
+        requests = params[1:]
+        if (
+            not params
+            or len(requests) > 1
+            or any(
+                param.kind is not param.POSITIONAL_OR_KEYWORD
+                or param.default is not param.empty
+                for param in params
+            )
+        ):
+            raise error(where, signature, c.ERR_SERVICE_OPERATION_SIGNATURE)
+
+    @staticmethod
+    def _require_operation_docstring(
+        func: FunctionType,
+        where: tuple[type, str, str],
+        signature: inspect.Signature,
+    ) -> str:
+        """Return the operation docstring, raising when missing or blank.
+
+        Returns:
+            The resulting ``str``.
+
+        """
+        error = FlextUtilitiesDiscovery._error
+        doc = func.__doc__
+        if doc is None or not doc.strip():
+            raise error(
+                where,
+                signature,
+                c.ERR_SERVICE_OPERATION_DOCSTRING,
+            )
+        return doc
+
+    @staticmethod
+    def _resolve_operation_request(
+        func: FunctionType,
+        where: tuple[type, str, str],
+        signature: inspect.Signature,
+    ) -> type | None:
+        """Resolve and validate the request model and return annotation.
+
+        Returns:
+            The resulting ``type | None``.
+
+        """
+        error = FlextUtilitiesDiscovery._error
+        annotations = inspect.get_annotations(func)
+        if "return" not in annotations:
+            raise error(where, signature, c.ERR_SERVICE_OPERATION_RESULT)
+        returned = annotations["return"]
+        origin = FlextUtilitiesDiscovery._resolve(func, where, returned, subscript=True)
+        if origin is not p.Result:
+            raise error(where, returned, c.ERR_SERVICE_OPERATION_RESULT)
+        request = None
+        params = tuple(signature.parameters.values())[1:]
+        for param in params:
+            if param.name not in annotations:
+                raise error(where, signature, c.ERR_SERVICE_OPERATION_REQUEST)
+            annotation = annotations[param.name]
+            request = FlextUtilitiesDiscovery._resolve(func, where, annotation)
+            if not (isinstance(request, type) and issubclass(request, BaseModel)):
+                raise error(where, annotation, c.ERR_SERVICE_OPERATION_REQUEST)
+        return request
+
+    @staticmethod
+    def _resolve(
+        func: FunctionType,
+        where: tuple[type, str, str],
+        annotation: t.TypeHintSpecifier,
+        *,
+        subscript: bool = False,
+    ) -> type:
+        """Resolve an annotation to its object without ``eval``.
+
+        The module declares ``from __future__ import annotations`` (fleet law),
+        so every annotation is a string: it is parsed, never evaluated. Its
+        dotted name resolves the first part in the function's module namespace
+        (globals, then builtins, as Python resolves a module-level name) and the
+        rest by attribute. ``subscript`` resolves the origin of ``X[...]``.
+
+        Returns:
+            The resolved class consumed by request and result validation.
+
+        """
+        error = FlextUtilitiesDiscovery._error
+        if not isinstance(annotation, str):
+            raise error(where, annotation, c.ERR_SERVICE_OPERATION_EVALUATED)
+        node = ast.parse(annotation, mode="eval").body
+        if subscript:
+            if not isinstance(node, ast.Subscript):
+                raise error(where, annotation, c.ERR_SERVICE_OPERATION_RESULT)
+            node = node.value
+        parts: list[str] = []
+        while isinstance(node, ast.Attribute):
+            parts.insert(0, node.attr)
+            node = node.value
+        if not isinstance(node, ast.Name):
+            raise error(where, annotation, c.ERR_SERVICE_OPERATION_NAME)
+        # FunctionType owns this runtime descriptor, absent from its typing stub.
+        namespace = ChainMap(
+            func.__globals__,
+            operator.attrgetter("__builtins__")(func),
+        )
+        if node.id not in namespace:
+            raise error(where, annotation, c.ERR_SERVICE_OPERATION_UNBOUND)
+        resolved = namespace[node.id]
+        for part in parts:
+            try:
+                resolved = getattr(resolved, part)
+            except AttributeError as exc:
+                defect = c.ERR_SERVICE_OPERATION_UNBOUND
+                raise error(where, annotation, defect) from exc
+        if not isinstance(resolved, type):
+            defect = (
+                c.ERR_SERVICE_OPERATION_RESULT
+                if subscript
+                else c.ERR_SERVICE_OPERATION_REQUEST
+            )
+            raise error(where, annotation, defect)
+        return resolved
+
+    @staticmethod
+    def _error(
+        where: tuple[type, str, str],
+        annotation: t.TypeHintSpecifier | inspect.Signature,
+        defect: str,
+    ) -> TypeError:
+        """Build the operation's ``TypeError`` naming annotation, module and fix.
+
+        Returns:
+            The resulting ``TypeError``.
+
+        """
+        service_type, operation, module = where
+        return TypeError(
+            c.ERR_SERVICE_OPERATION.format(
+                service=service_type.__qualname__,
+                operation=operation,
+                module=module,
+                annotation=annotation,
+                defect=defect,
+            ),
+        )
 
 
 __all__: list[str] = ["FlextUtilitiesDiscovery"]

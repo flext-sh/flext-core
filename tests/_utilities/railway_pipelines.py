@@ -1,18 +1,17 @@
-"""Railway pipeline helpers for flext-core tests."""
+"""Railway pipeline helpers for flext-core tests.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import cast
 
 from flext_tests import e, m as tm, r
 
-from tests.constants import c
-from tests.models import m
-
-from .railway_services import TestsFlextUtilitiesRailwayServicesMixin
-
-if TYPE_CHECKING:
-    from tests.protocols import p
+from tests import c, m, p
+from tests._utilities.railway_services import TestsFlextUtilitiesRailwayServicesMixin
 
 
 class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayServicesMixin):
@@ -21,11 +20,19 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
     @staticmethod
     def execute_v1_pipeline(
         case: m.Tests.RailwayTestCase,
-    ) -> p.Result[str | tm.Tests.User | m.Tests.EmailResponse]:
-        """Execute the documented V1 railway pipeline."""
+    ) -> p.ResultView[str | tm.Tests.User | m.Tests.EmailResponse]:
+        """Execute the documented V1 railway pipeline.
+
+        Returns:
+            The resulting ``p.ResultView[str | tm.Tests.User | m.Tests.EmailResponse]``.
+
+        """
         if not case.user_ids:
-            return r[str | tm.Tests.User | m.Tests.EmailResponse].fail(
-                c.Tests.NO_USER_IDS_PROVIDED
+            return cast(
+                "p.ResultView[str | tm.Tests.User | m.Tests.EmailResponse]",
+                r[str | tm.Tests.User | m.Tests.EmailResponse].fail(
+                    c.Tests.NO_USER_IDS_PROVIDED,
+                ),
             )
         user_result: p.Result[tm.Tests.User] = (
             TestsFlextUtilitiesRailwayPipelinesMixin.make(
@@ -34,37 +41,61 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
             ).execute()
         )
         result: p.Result[str | tm.Tests.User | m.Tests.EmailResponse] = user_result.map(
-            lambda user: user
+            lambda user: user,
         )
         for operation in case.operations:
             if operation == "get_email":
-                result = result.map(
-                    lambda user: (
-                        user.email if isinstance(user, tm.Tests.User) else str(user)
-                    )
-                )
+
+                def _get_email(
+                    user: str | tm.Tests.User | m.Tests.EmailResponse,
+                ) -> str:
+                    return user.email if isinstance(user, tm.Tests.User) else str(user)
+
+                result = result.map(_get_email)
             elif operation == "send_email":
-                email_result: p.Result[m.Tests.EmailResponse] = result.flat_map(
-                    lambda email: TestsFlextUtilitiesRailwayPipelinesMixin.make(
+
+                def _send(
+                    email: str | tm.Tests.User | m.Tests.EmailResponse,
+                ) -> p.Result[m.Tests.EmailResponse]:
+                    to = email if isinstance(email, str) else str(email)
+                    return TestsFlextUtilitiesRailwayPipelinesMixin.make(
                         TestsFlextUtilitiesRailwayPipelinesMixin.SendEmailService,
-                        to=str(email),
+                        to=to,
                         subject="Test",
                     ).execute()
-                )
-                result = email_result.map(lambda response: response)
+
+                email_result: p.Result[m.Tests.EmailResponse] = result.flat_map(_send)
+
+                def _identity(response: m.Tests.EmailResponse) -> m.Tests.EmailResponse:
+                    return response
+
+                result = email_result.map(_identity)
             elif operation == "get_status":
-                result = result.map(
-                    lambda response: (
+
+                def _get_status(
+                    response: str | tm.Tests.User | m.Tests.EmailResponse,
+                ) -> str:
+                    return (
                         response.status
                         if isinstance(response, m.Tests.EmailResponse)
                         else str(response)
                     )
-                )
-        return result
+
+                result = result.map(_get_status)
+        return cast("p.ResultView[str | tm.Tests.User | m.Tests.EmailResponse]", result)
 
     @staticmethod
     def execute_v2_pipeline(case: m.Tests.RailwayTestCase) -> tm.Tests.User | str:
-        """Execute the documented V2 railway pipeline."""
+        """Execute the documented V2 railway pipeline.
+
+        Returns:
+            The resulting ``tm.Tests.User | str``.
+
+        Raises:
+            BaseError: If ``not case.user_ids``; or if ``raw_user_result.failure``; or
+                if ``raw_response_result.failure``.
+
+        """
         if not case.user_ids:
             msg = c.Tests.NO_USER_IDS_PROVIDED
             raise e.BaseError(msg)
@@ -75,11 +106,7 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
         if raw_user_result.failure:
             msg = raw_user_result.error or c.Tests.USER_NOT_FOUND
             raise e.BaseError(msg)
-        raw_user = raw_user_result.unwrap_or(None)
-        if not isinstance(raw_user, tm.Tests.User):
-            msg = c.Tests.USER_NOT_FOUND
-            raise e.BaseError(msg)
-        user: tm.Tests.User | str = raw_user
+        user: tm.Tests.User | str = raw_user_result.value
         for operation in case.operations:
             if operation == "get_email":
                 user = user.email if isinstance(user, tm.Tests.User) else user
@@ -93,11 +120,9 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
                 if raw_response_result.failure:
                     msg = raw_response_result.error or c.Tests.INVALID_EMAIL
                     raise e.BaseError(msg)
-                raw_response = raw_response_result.unwrap_or(None)
-                if not isinstance(raw_response, m.Tests.EmailResponse):
-                    msg = c.Tests.INVALID_EMAIL
-                    raise e.BaseError(msg)
-                response_obj: m.Tests.EmailResponse = raw_response
+                # The service's result payload is EmailResponse by contract;
+                # pyright proves the isinstance guard redundant here.
+                response_obj: m.Tests.EmailResponse = raw_response_result.value
                 user = response_obj.status
         return user
 

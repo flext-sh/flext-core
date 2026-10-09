@@ -1,11 +1,16 @@
-"""Fix-action constants for catalog-driven enforcement automation."""
+"""Fix-action constants for catalog-driven enforcement automation.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
-    from ..._typings.base import FlextTypingBase as t
+    from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextConstantsEnforcementFixActions:
@@ -18,11 +23,13 @@ class FlextConstantsEnforcementFixActions:
         "PrivateAttr": "u.PrivateAttr",
         "TypeAdapter": "m.TypeAdapter",
         "computed_field": "u.computed_field",
-        "field_validator": "u.field_validator",
-        "model_validator": "u.model_validator",
+        "field_serializer": "u.field_serializer",
+        "field_validator": "m.field_validator",
+        "model_serializer": "u.model_serializer",
+        "model_validator": "m.model_validator",
     }
 
-    ENFORCEMENT_FIX_ACTIONS: Final[t.MappingKV[str, t.JsonMapping]] = {
+    ENFORCEMENT_FIX_ACTIONS: Final[t.MappingKV[str, t.JsonMapping]] = MappingProxyType({
         "ENFORCE-008": {
             "kind": "transformer",
             "target": "future_import",
@@ -45,8 +52,8 @@ class FlextConstantsEnforcementFixActions:
                         "replacement": r"\g<indent>except Exception:\g<trail>",
                         "change_message": "Rewrote bare except to except Exception",
                         "flags": ["MULTILINE"],
-                    }
-                ]
+                    },
+                ],
             },
             "safe": True,
         },
@@ -58,8 +65,10 @@ class FlextConstantsEnforcementFixActions:
                     {
                         "regex": r"\bprint\s*\(\s*(?P<args>[^)]*)\s*\)",
                         "replacement": r"u.fetch_logger(__name__).info(\g<args>)",
-                        "change_message": "Rewrote u.Cli.print() to u.fetch_logger(__name__).info()",
-                    }
+                        "change_message": (
+                            "Rewrote u.Cli.print() to u.fetch_logger(__name__).info()"
+                        ),
+                    },
                 ],
                 "required_alias": "u",
             },
@@ -77,12 +86,15 @@ class FlextConstantsEnforcementFixActions:
                         "flags": ["MULTILINE"],
                     },
                     {
-                        "regex": r"^[ \t]*import\s+pdb\s*;\s*pdb\.set_trace\s*\(\s*\)\s*[;\n]",
+                        "regex": (
+                            r"^[ \t]*import\s+pdb\s*;\s*"
+                            r"pdb\.set_trace\s*\(\s*\)\s*[;\n]"
+                        ),
                         "replacement": "\n",
                         "change_message": "Removed debugger statement",
                         "flags": ["MULTILINE"],
                     },
-                ]
+                ],
             },
             "safe": True,
         },
@@ -142,7 +154,7 @@ class FlextConstantsEnforcementFixActions:
                         "regex": r"\bList\s*\[",
                         "replacement": "t.SequenceOf[",
                         "change_message": "Rewrote List[...] to t.SequenceOf[...]",
-                    }
+                    },
                 ],
                 "required_alias": "t",
             },
@@ -156,8 +168,10 @@ class FlextConstantsEnforcementFixActions:
                     {
                         "regex": r"\btyping\s*\.\s*List\s*\[",
                         "replacement": "t.SequenceOf[",
-                        "change_message": "Rewrote typing.List[...] to t.SequenceOf[...]",
-                    }
+                        "change_message": (
+                            "Rewrote typing.List[...] to t.SequenceOf[...]"
+                        ),
+                    },
                 ],
                 "required_alias": "t",
             },
@@ -182,12 +196,19 @@ class FlextConstantsEnforcementFixActions:
                     {
                         "regex": r"\bstructlog\s*\.\s*get_logger\s*\(\s*\)",
                         "replacement": "u.fetch_logger(__name__)",
-                        "change_message": "Rewrote structlog.get_logger() to u.fetch_logger(__name__)",
+                        "change_message": (
+                            "Rewrote structlog.get_logger() to u.fetch_logger(__name__)"
+                        ),
                     },
                     {
-                        "regex": r"\bstructlog\s*\.\s*get_logger\s*\(\s*['\"](?P<name>[^'\"]*)['\"]\s*\)",
+                        "regex": (
+                            r"\bstructlog\s*\.\s*get_logger\s*\("
+                            r"\s*['\"](?P<name>[^'\"]*)['\"]\s*\)"
+                        ),
                         "replacement": r'u.fetch_logger("\g<name>")',
-                        "change_message": "Rewrote structlog.get_logger(name) to u.fetch_logger(name)",
+                        "change_message": (
+                            "Rewrote structlog.get_logger(name) to u.fetch_logger(name)"
+                        ),
                     },
                 ],
                 "required_alias": "u",
@@ -237,10 +258,10 @@ class FlextConstantsEnforcementFixActions:
             "safe": True,
         },
         "ENFORCE-074": {
-            "kind": "gate",
-            "target": "smells",
-            "params": {"smell_tag": "smell_boolean_logic"},
-            "safe": True,
+            "kind": "manual",
+            "target": "simplify_boolean_logic",
+            "params": {},
+            "safe": False,
         },
         "ENFORCE-079": {
             "kind": "rope",
@@ -267,15 +288,15 @@ class FlextConstantsEnforcementFixActions:
             "safe": True,
         },
         "ENFORCE-083": {
-            "kind": "gate",
-            "target": "smells",
-            "params": {"smell_tag": "type_ignore"},
+            "kind": "manual",
+            "target": "remove_bypass",
+            "params": {},
             "safe": True,
         },
         "ENFORCE-084": {
-            "kind": "gate",
-            "target": "smells",
-            "params": {"smell_tag": "noqa"},
+            "kind": "manual",
+            "target": "remove_bypass",
+            "params": {},
             "safe": True,
         },
         "ENFORCE-090": {
@@ -380,12 +401,6 @@ class FlextConstantsEnforcementFixActions:
             "params": {},
             "safe": False,
         },
-        "ENFORCE-013": {
-            "kind": "manual",
-            "target": "fix_parse_failure",
-            "params": {},
-            "safe": False,
-        },
         "ENFORCE-014": {
             "kind": "manual",
             "target": "create_facade_files",
@@ -425,30 +440,6 @@ class FlextConstantsEnforcementFixActions:
         "ENFORCE-022": {
             "kind": "manual",
             "target": "fix_runtime_mro_violation",
-            "params": {},
-            "safe": False,
-        },
-        "ENFORCE-023": {
-            "kind": "manual",
-            "target": "remove_dynamic_any",
-            "params": {},
-            "safe": False,
-        },
-        "ENFORCE-024": {
-            "kind": "manual",
-            "target": "add_suppression_justification",
-            "params": {},
-            "safe": False,
-        },
-        "ENFORCE-025": {
-            "kind": "manual",
-            "target": "convert_relative_import",
-            "params": {},
-            "safe": False,
-        },
-        "ENFORCE-040": {
-            "kind": "manual",
-            "target": "add_suppression_justification",
             "params": {},
             "safe": False,
         },
@@ -566,7 +557,7 @@ class FlextConstantsEnforcementFixActions:
             "params": {},
             "safe": False,
         },
-    }
+    })
 
 
 __all__: list[str] = ["FlextConstantsEnforcementFixActions"]

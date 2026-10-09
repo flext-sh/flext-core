@@ -1,4 +1,8 @@
-"""Settings precedence integration case kept below module LOC cap."""
+"""Settings precedence integration case kept below module LOC cap.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -7,9 +11,10 @@ from typing import TYPE_CHECKING
 from flext_tests import tm
 
 from flext_core import FlextSettings
-from tests.utilities import u
-
-from .settings_integration_factories import TestsFlextFlextSettingsFactories
+from tests import u
+from tests.integration.settings_integration_factories import (
+    TestsFlextFlextSettingsFactories,
+)
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -26,7 +31,8 @@ _FLEXT_ENV_KEYS = (
 class TestsFlextFlextSettingsPrecedenceCase(TestsFlextFlextSettingsFactories):
     """Assert Pydantic settings precedence across the current field surface."""
 
-    def test_pydantic_settings_precedence_order(self, temp_dir: Path) -> None:
+    @staticmethod
+    def test_pydantic_settings_precedence_order(temp_dir: Path) -> None:
         """Defaults < .env file < env var < explicit init for universal fields."""
         with u.Tests.env_vars_context({}, vars_to_clear=_FLEXT_ENV_KEYS):
             FlextSettings.reset_for_testing()
@@ -59,7 +65,10 @@ class TestsFlextFlextSettingsPrecedenceCase(TestsFlextFlextSettingsFactories):
 
             FlextSettings.reset_for_testing()
             explicit = FlextSettings(
-                log_level="ERROR", debug=True, trace=False, timezone="America/Sao_Paulo"
+                log_level="ERROR",
+                debug=True,
+                trace=False,
+                timezone="America/Sao_Paulo",
             )
             tm.that(explicit.log_level, eq="ERROR")
             tm.that(explicit.debug, eq=True)

@@ -1,9 +1,15 @@
-"""Parser and reliability helper namespace."""
+"""Parser and reliability helper namespace.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from .parser_scenarios import TestsFlextUtilitiesParserScenariosMixin
-from .reliability_scenarios import TestsFlextUtilitiesReliabilityScenariosMixin
+from tests._utilities.parser_scenarios import TestsFlextUtilitiesParserScenariosMixin
+from tests._utilities.reliability_scenarios import (
+    TestsFlextUtilitiesReliabilityScenariosMixin,
+)
 
 
 class TestsFlextUtilitiesParserReliabilityMixin(

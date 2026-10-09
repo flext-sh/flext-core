@@ -1,4 +1,8 @@
-"""Behavioral tests for the r[T] public contract (creation + combinators)."""
+"""Behavioral tests for the r[T] public contract (creation + combinators).
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -10,7 +14,7 @@ from flext_tests import r, tm
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextResultOperations:
@@ -19,7 +23,8 @@ class TestsFlextResultOperations:
     # --- creation + terminal state --------------------------------------
 
     @pytest.mark.parametrize("value", ["success", "", "multi word value"])
-    def test_ok_reports_success_and_exposes_value(self, value: str) -> None:
+    @staticmethod
+    def test_ok_reports_success_and_exposes_value(value: str) -> None:
         """r.ok is success, carries the value, and has no error."""
         result: p.Result[str] = r[str].ok(value)
 
@@ -31,7 +36,8 @@ class TestsFlextResultOperations:
         tm.that(result.error, none=True)
 
     @pytest.mark.parametrize("message", ["boom", "error message", "not found"])
-    def test_fail_reports_failure_and_preserves_error(self, message: str) -> None:
+    @staticmethod
+    def test_fail_reports_failure_and_preserves_error(message: str) -> None:
         """r.fail is failure, preserves the error message, and has no value."""
         result: p.Result[str] = r[str].fail(message)
 
@@ -41,7 +47,8 @@ class TestsFlextResultOperations:
         tm.that(result.error, eq=message)
 
     @pytest.mark.parametrize("message", ["boom", "denied"])
-    def test_value_and_unwrap_raise_on_failure(self, message: str) -> None:
+    @staticmethod
+    def test_value_and_unwrap_raise_on_failure(message: str) -> None:
         """Accessing value or unwrap on a failure raises with the error message."""
         result: p.Result[str] = r[str].fail(message)
 
@@ -60,16 +67,23 @@ class TestsFlextResultOperations:
         ],
         ids=["success-keeps-value", "failure-yields-default"],
     )
+    @staticmethod
     def test_unwrap_or_returns_value_on_success_default_on_failure(
-        self, result: p.Result[str], default: str, expected: str
+        result: p.Result[str],
+        default: str,
+        expected: str,
     ) -> None:
-        """unwrap_or and the | operator both yield value on success, default on failure."""
+        """``unwrap_or`` and the ``|`` operator yield value on success.
+
+        Both yield the default on failure.
+        """
         tm.that(result.unwrap_or(default), eq=expected)
         tm.that((result | default), eq=expected)
 
     # --- map -------------------------------------------------------------
 
-    def test_map_transforms_the_success_value(self) -> None:
+    @staticmethod
+    def test_map_transforms_the_success_value() -> None:
         """Map applies the function to a success payload."""
         result: p.Result[int] = r[int].ok(5)
 
@@ -78,7 +92,8 @@ class TestsFlextResultOperations:
         tm.that(mapped.success, eq=True)
         tm.that(mapped.unwrap(), eq=10)
 
-    def test_map_is_a_no_op_on_failure_and_preserves_error(self) -> None:
+    @staticmethod
+    def test_map_is_a_no_op_on_failure_and_preserves_error() -> None:
         """Map does not run the function on a failure; the error passes through."""
         result: p.Result[int] = r[int].fail("boom")
 
@@ -89,7 +104,8 @@ class TestsFlextResultOperations:
 
     # --- flat_map --------------------------------------------------------
 
-    def test_flat_map_chains_a_dependent_success(self) -> None:
+    @staticmethod
+    def test_flat_map_chains_a_dependent_success() -> None:
         """flat_map threads the value into a further fallible step."""
         result: p.Result[int] = r[int].ok(5)
 
@@ -97,7 +113,8 @@ class TestsFlextResultOperations:
 
         tm.that(chained.unwrap(), eq="value_5")
 
-    def test_flat_map_short_circuits_on_failure(self) -> None:
+    @staticmethod
+    def test_flat_map_short_circuits_on_failure() -> None:
         """flat_map skips the continuation when the source is a failure."""
         result: p.Result[int] = r[int].fail("boom")
 
@@ -106,7 +123,8 @@ class TestsFlextResultOperations:
         tm.that(chained.failure, eq=True)
         tm.that(chained.error, eq="boom")
 
-    def test_flat_map_propagates_a_failing_continuation(self) -> None:
+    @staticmethod
+    def test_flat_map_propagates_a_failing_continuation() -> None:
         """flat_map surfaces the error produced by the continuation."""
         result: p.Result[int] = r[int].ok(5)
 
@@ -117,7 +135,8 @@ class TestsFlextResultOperations:
 
     # --- map_error -------------------------------------------------------
 
-    def test_map_error_rewrites_only_the_failure_message(self) -> None:
+    @staticmethod
+    def test_map_error_rewrites_only_the_failure_message() -> None:
         """map_error transforms the error text of a failure."""
         result: p.Result[str] = r[str].fail("original")
 
@@ -126,7 +145,8 @@ class TestsFlextResultOperations:
         tm.that(remapped.failure, eq=True)
         tm.that(remapped.error, eq="alt_original")
 
-    def test_map_error_leaves_a_success_untouched(self) -> None:
+    @staticmethod
+    def test_map_error_leaves_a_success_untouched() -> None:
         """map_error is a no-op on a success value."""
         result: p.Result[str] = r[str].ok("value")
 
@@ -136,7 +156,8 @@ class TestsFlextResultOperations:
 
     # --- lash (recover-with-result) -------------------------------------
 
-    def test_lash_recovers_a_failure_into_a_success(self) -> None:
+    @staticmethod
+    def test_lash_recovers_a_failure_into_a_success() -> None:
         """Lash replaces a failure with a recovery result."""
         result: p.Result[str] = r[str].fail("error")
 
@@ -144,7 +165,8 @@ class TestsFlextResultOperations:
 
         tm.that(recovered.unwrap(), eq="recovered_error")
 
-    def test_lash_passes_a_success_through_unchanged(self) -> None:
+    @staticmethod
+    def test_lash_passes_a_success_through_unchanged() -> None:
         """Lash does not invoke the handler on a success."""
         result: p.Result[str] = r[str].ok("value")
 
@@ -159,8 +181,11 @@ class TestsFlextResultOperations:
         [(10, True), (3, False)],
         ids=["predicate-passes", "predicate-fails"],
     )
+    @staticmethod
     def test_filter_keeps_value_when_predicate_holds(
-        self, value: int, *, expected_success: bool
+        value: int,
+        *,
+        expected_success: bool,
     ) -> None:
         """Filter keeps a success only when the predicate is satisfied."""
         result: p.Result[int] = r[int].ok(value)
@@ -178,8 +203,11 @@ class TestsFlextResultOperations:
         [(r[str].ok("value"), True), (r[str].fail("error"), False)],
         ids=["success-truthy", "failure-falsy"],
     )
+    @staticmethod
     def test_bool_reflects_success_state(
-        self, result: p.Result[str], *, expected: bool
+        result: p.Result[str],
+        *,
+        expected: bool,
     ) -> None:
         """bool(result) is True for success and False for failure."""
         assert bool(result) is expected
@@ -187,7 +215,8 @@ class TestsFlextResultOperations:
 
     # --- railway composition --------------------------------------------
 
-    def test_railway_composition_threads_successes_end_to_end(self) -> None:
+    @staticmethod
+    def test_railway_composition_threads_successes_end_to_end() -> None:
         """A chain of map steps composes without breaking the success track."""
         composed: p.Result[str] = (
             r[int].ok(5).map(lambda v: v * 2).map(lambda v: f"result_{v}")
@@ -196,7 +225,8 @@ class TestsFlextResultOperations:
         tm.that(composed.success, eq=True)
         tm.that(composed.unwrap(), eq="result_10")
 
-    def test_railway_composition_short_circuits_at_first_failure(self) -> None:
+    @staticmethod
+    def test_railway_composition_short_circuits_at_first_failure() -> None:
         """A failure mid-chain halts every downstream step and keeps its error."""
         steps: list[Callable[[int], int]] = [lambda v: v + 1, lambda v: v * 10]
         result: p.Result[int] = r[int].fail("early")

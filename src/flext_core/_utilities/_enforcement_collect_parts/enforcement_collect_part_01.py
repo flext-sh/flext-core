@@ -1,4 +1,8 @@
-"""Enforcement item-collection layer: project detection + per-rule iterators."""
+"""Enforcement item-collection layer: project detection + per-rule iterators.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -7,14 +11,16 @@ from collections.abc import Callable, Iterator
 from enum import EnumType
 from pathlib import Path
 
-from ..._constants.enforcement import FlextConstantsEnforcement as c
-from ..._models.pydantic import FlextModelsPydantic as mp
-from ..._protocols.base import FlextProtocolsBase as pb
-from ..._typings.base import FlextTypingBase as t
-from ..._typings.pydantic import FlextTypesPydantic as tp
-from ..beartype_engine import FlextUtilitiesBeartypeEngine as ub
-from ..enforcement_emit import FlextUtilitiesEnforcementEmit
-from ..project_metadata import FlextUtilitiesProjectMetadata as upm
+from flext_core._constants import FlextConstantsEnforcement
+from flext_core._models import FlextModelsPydantic
+from flext_core._protocols import FlextProtocolsBase
+from flext_core._typings.base import FlextTypingBase
+from flext_core._typings.pydantic import FlextTypesPydantic
+from flext_core._utilities import (
+    FlextUtilitiesBeartypeEngine,
+    FlextUtilitiesProjectMetadata,
+)
+from flext_core._utilities.enforcement_emit import FlextUtilitiesEnforcementEmit
 
 _ERR_ENFORCEMENT_NAMESPACE_METADATA = (
     "Cannot read project metadata for enforcement namespace resolution"
@@ -32,9 +38,14 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
 
     @staticmethod
     def _owning_project_root(target: type) -> Path | None:
-        """Return the pyproject root that physically owns the target source."""
+        """Return the pyproject root that physically owns the target source.
+
+        Returns:
+            The pyproject root that physically owns the target source.
+
+        """
         source_file = FlextUtilitiesEnforcementCollect._resolve_target_source_file(
-            target
+            target,
         )
         if source_file is None:
             return None
@@ -50,7 +61,7 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
             except ValueError:
                 continue
             if relative.is_relative_to(Path("src") / top) or relative.is_relative_to(
-                top
+                top,
             ):
                 # mro-j47u (codex): never attribute .venv/site-packages classes
                 # to the consuming project's pyproject and namespace prefix.
@@ -59,7 +70,15 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
 
     @staticmethod
     def _resolve_target_source_file(target: type) -> Path | None:
-        """Resolve target source file path with explicit error semantics."""
+        """Resolve target source file path with explicit error semantics.
+
+        Returns:
+            The resulting ``Path | None``.
+
+        Raises:
+            RuntimeError: If a ``(OSError, TypeError)`` is caught.
+
+        """
         try:
             src_file = inspect.getsourcefile(target)
         except (OSError, TypeError) as exc:
@@ -76,27 +95,47 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         contract: ``inspect.getsourcefile`` raises ``TypeError`` for built-ins
         and ``OSError`` when the source file cannot be read; both produce
         ``None`` here so the dispatcher cleanly skips the target.
+
+        Returns:
+            The package owned by the target's physical project root.
+
+        Raises:
+            RuntimeError: If a ``(OSError, ValueError)`` is caught.
+
         """
         try:
             project_root = FlextUtilitiesEnforcementCollect._owning_project_root(target)
         except RuntimeError:
-            return None
+            project_root = None
         if project_root is None:
             return None
         top = (getattr(target, "__module__", "") or "").split(".", 1)[0]
         if (project_root / "src" / top).is_dir() or (project_root / top).is_dir():
             return top
         try:
-            document = upm.read_project_document_cached(project_root)
+            document = FlextUtilitiesProjectMetadata.read_project_document_cached(
+                project_root,
+            )
         except (OSError, ValueError) as exc:
             raise RuntimeError(_ERR_ENFORCEMENT_NAMESPACE_METADATA) from exc
         if document.project is None:
             return None
-        return upm.build_project_metadata(project_root, document).package_name
+        return FlextUtilitiesProjectMetadata.build_project_metadata(
+            project_root,
+            document,
+        ).package_name
 
     @staticmethod
-    def _project(target: type) -> t.StrPair | None:
-        """Return (derived_prefix, inner_namespace) or None if unknowable."""
+    def _project(target: type) -> FlextTypingBase.StrPair | None:
+        """Return (derived_prefix, inner_namespace) or None if unknowable.
+
+        Returns:
+            (derived_prefix, inner_namespace) or None if unknowable.
+
+        Raises:
+            RuntimeError: If a ``(OSError, ValueError)`` is caught.
+
+        """
         top = (getattr(target, "__module__", "") or "").split(".", 1)[0]
         if not top:
             return None
@@ -111,25 +150,53 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
             project_root = FlextUtilitiesEnforcementCollect._owning_project_root(target)
             if project_root is not None:
                 try:
-                    document = upm.read_project_document_cached(project_root)
+                    document = (
+                        FlextUtilitiesProjectMetadata.read_project_document_cached(
+                            project_root,
+                        )
+                    )
                 except (OSError, ValueError) as exc:
                     raise RuntimeError(_ERR_ENFORCEMENT_CLASS_STEM_METADATA) from exc
-                metadata = upm.build_project_metadata(project_root, document)
+                metadata = FlextUtilitiesProjectMetadata.build_project_metadata(
+                    project_root,
+                    document,
+                )
                 class_stem_override = metadata.flext.project.class_stem_override
         canonical_project_name = src.replace("_", "-")
         head, _, tail = canonical_project_name.partition("-")
-        namespace = upm.derive_class_stem(tail or head)
-        project_prefix = class_stem_override or upm.derive_class_stem(
-            canonical_project_name
+        namespace = FlextUtilitiesProjectMetadata.derive_class_stem(tail or head)
+        project_prefix = (
+            class_stem_override
+            or FlextUtilitiesProjectMetadata.derive_class_stem(
+                canonical_project_name,
+            )
         )
         if top in {"tests", "examples", "scripts"} and top != (src or ""):
-            return upm.derive_class_stem(top) + project_prefix, namespace
+            return FlextUtilitiesProjectMetadata.derive_class_stem(
+                top,
+            ) + project_prefix, namespace
         return project_prefix, namespace
 
     @staticmethod
     def _iter_inner(target: type) -> Iterator[tuple[str, type]]:
+        """Yield the public classes declared inside ``target``.
+
+        A class the body only references (``REGEX_ERROR = re.error``) is not
+        one of the target's declarations and is never audited as the project's.
+
+        Yields:
+            Each ``tuple[str, type]``.
+
+        """
         for name, value in vars(target).items():
-            if isinstance(value, type) and not name.startswith("_"):
+            if (
+                isinstance(value, type)
+                and not name.startswith("_")
+                and FlextUtilitiesBeartypeEngine.defined_inside(
+                    value,
+                    target.__qualname__,
+                )
+            ):
                 yield name, value
 
     @staticmethod
@@ -149,13 +216,16 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
 
     @staticmethod
     def _field_items(
-        model_type: type[mp.BaseModel], tag: str
-    ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
+        # ``model_fields`` resolves through ``BaseModel``; settings classes
+        # subclass it, so the bare model base is the canonical collector type.
+        model_type: type[FlextModelsPydantic.BaseModel],
+        tag: str,
+    ) -> Iterator[tuple[str, tuple[FlextProtocolsBase.AttributeProbe, ...]]]:
         own_ann = set(vars(model_type).get("__annotations__", {}))
         for name, info in model_type.model_fields.items():
             if name not in own_ann:
                 continue
-            args: tuple[pb.AttributeProbe, ...] = (
+            args: tuple[FlextProtocolsBase.AttributeProbe, ...] = (
                 (model_type, name, info)
                 if tag in {"missing_description", "no_inline_union"}
                 else (info,)
@@ -163,29 +233,38 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
             yield f'Field "{name}"', args
 
     @staticmethod
-    def _attr_filter(layer: str) -> Callable[[str, tp.JsonValue], bool]:
-        if layer == c.EnforcementLayer.CONSTANTS.lower():
-            accept: Callable[[str, tp.JsonValue], bool] = ub.attr_accept_constants
+    def _attr_filter(
+        target: type,
+        layer: str,
+    ) -> Callable[[str, FlextTypesPydantic.JsonValue], bool]:
+        if layer == FlextConstantsEnforcement.EnforcementLayer.CONSTANTS.lower():
+            accept: Callable[[str, FlextTypesPydantic.JsonValue], bool] = (
+                FlextUtilitiesBeartypeEngine.attr_accept_constants
+            )
             return accept
-        if layer == c.EnforcementLayer.UTILITIES.lower():
+        if layer == FlextConstantsEnforcement.EnforcementLayer.UTILITIES.lower():
 
-            def accept_utility(name: str, _value: tp.JsonValue) -> bool:
-                allowed: bool = ub.attr_accept_utility(name)
+            def accept_utility(name: str, _value: FlextTypesPydantic.JsonValue) -> bool:
+                allowed: bool = FlextUtilitiesBeartypeEngine.attr_accept_utility(
+                    target,
+                    name,
+                )
                 return allowed
 
             return accept_utility
 
-        def accept_public(name: str, _value: tp.JsonValue) -> bool:
-            allowed: bool = ub.attr_accept_public(name)
+        def accept_public(name: str, _value: FlextTypesPydantic.JsonValue) -> bool:
+            allowed: bool = FlextUtilitiesBeartypeEngine.attr_accept_public(name)
             return allowed
 
         return accept_public
 
     @staticmethod
     def _attr_items(
-        target: type, layer: str
-    ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
-        accept = FlextUtilitiesEnforcementCollect._attr_filter(layer)
+        target: type,
+        layer: str,
+    ) -> Iterator[tuple[str, tuple[FlextProtocolsBase.AttributeProbe, ...]]]:
+        accept = FlextUtilitiesEnforcementCollect._attr_filter(target, layer)
         qn = target.__qualname__
         for name, value in vars(target).items():
             if accept(name, value):
@@ -193,10 +272,13 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
 
     @staticmethod
     def _ns_class_prefix(
-        target: type, qn: str, project: t.StrPair
-    ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
+        target: type,
+        qn: str,
+        project: FlextTypingBase.StrPair,
+    ) -> Iterator[tuple[str, tuple[FlextProtocolsBase.AttributeProbe, ...]]]:
         skip_roots = (
-            c.ENFORCEMENT_NAMESPACE_FACADE_ROOTS | c.ENFORCEMENT_INFRASTRUCTURE_BASES
+            FlextConstantsEnforcement.ENFORCEMENT_NAMESPACE_FACADE_ROOTS
+            | FlextConstantsEnforcement.ENFORCEMENT_INFRASTRUCTURE_BASES
         )
         if "." in qn or target.__name__ in skip_roots:
             return
@@ -204,8 +286,10 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
 
     @staticmethod
     def _ns_cross(
-        target: type, qn: str, effective_layer: str
-    ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
+        target: type,
+        qn: str,
+        effective_layer: str,
+    ) -> Iterator[tuple[str, tuple[FlextProtocolsBase.AttributeProbe, ...]]]:
         layer = (
             effective_layer
             or FlextUtilitiesEnforcementCollect.detect_layer(target)
@@ -213,11 +297,10 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         )
 
         def walk(
-            node: type, path: str
-        ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
+            node: type,
+            path: str,
+        ) -> Iterator[tuple[str, tuple[FlextProtocolsBase.AttributeProbe, ...]]]:
             for name, value in FlextUtilitiesEnforcementCollect._iter_inner(node):
-                if not ub.defined_inside(value, node.__qualname__):
-                    continue
                 full = f"{path}.{name}"
                 yield full, (value, layer)
                 if not isinstance(value, EnumType):

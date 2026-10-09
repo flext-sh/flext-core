@@ -14,15 +14,13 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
-from flext_core import FlextProtocols as p, FlextTypes as t
-
-from ..._typings.pydantic import FlextTypesPydantic as tp
-from ..base import FlextModelsBase as m
-from ..containers import FlextModelsContainers
-from ..pydantic import FlextModelsPydantic as mp
-from .flextmodelscontainer_part_02 import (
+from flext_core import p, t
+from flext_core._models._container_parts.flextmodelscontainer_part_02 import (
     FlextModelsContainer as FlextModelsContainerPart02,
 )
+from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.containers import FlextModelsContainers
+from flext_core._models.pydantic import FlextModelsPydantic as mp
 
 
 class FlextModelsContainer(FlextModelsContainerPart02):
@@ -34,12 +32,12 @@ class FlextModelsContainer(FlextModelsContainerPart02):
         """
 
         model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            strict=True, arbitrary_types_allowed=True
+            strict=True,
+            arbitrary_types_allowed=True,
         )
 
         settings: Annotated[
             p.Settings | None,
-            tp.SkipValidation,
             mp.Field(
                 None,
                 title="Config",
@@ -48,7 +46,6 @@ class FlextModelsContainer(FlextModelsContainerPart02):
         ] = None
         context: Annotated[
             p.Context | None,
-            tp.SkipValidation,
             mp.Field(
                 None,
                 title="Context",
@@ -56,11 +53,7 @@ class FlextModelsContainer(FlextModelsContainerPart02):
             ),
         ] = None
         services: Annotated[
-            t.MappingKV[
-                str, FlextModelsContainer.ServiceRegistration | t.RegisterableService
-            ]
-            | None,
-            tp.SkipValidation,
+            t.MappingKV[str, t.RegisterableService] | None,
             mp.Field(
                 None,
                 title="Services",
@@ -69,11 +62,7 @@ class FlextModelsContainer(FlextModelsContainerPart02):
             ),
         ] = None
         factories: Annotated[
-            t.MappingKV[
-                str, FlextModelsContainer.FactoryRegistration | t.FactoryCallable
-            ]
-            | None,
-            tp.SkipValidation,
+            t.MappingKV[str, t.FactoryCallable] | None,
             mp.Field(
                 None,
                 title="Factories",
@@ -82,11 +71,7 @@ class FlextModelsContainer(FlextModelsContainerPart02):
             ),
         ] = None
         resources: Annotated[
-            t.MappingKV[
-                str, FlextModelsContainer.ResourceRegistration | t.ResourceCallable
-            ]
-            | None,
-            tp.SkipValidation,
+            t.MappingKV[str, t.ResourceCallable] | None,
             mp.Field(
                 None,
                 title="Resources",
@@ -97,7 +82,8 @@ class FlextModelsContainer(FlextModelsContainerPart02):
         user_overrides: (
             FlextModelsContainers.ConfigMap
             | t.MappingKV[
-                str, FlextModelsContainers.ConfigMap | t.ScalarList | t.Scalar
+                str,
+                FlextModelsContainers.ConfigMap | t.ScalarList | t.Scalar,
             ]
             | None
         ) = mp.Field(

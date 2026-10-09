@@ -6,6 +6,9 @@ Every test asserts observable public behavior of the ``FlextHandlers`` surface
 ``mode`` properties) through its ``r[T]`` results and public model state. No
 private attributes, internal collaborators, or implementation structures are
 inspected.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -14,34 +17,37 @@ from typing import Annotated, ClassVar
 
 import pytest
 
-from tests.constants import c
-from tests.models import m
-from tests.typings import t
+from tests import c, m, t
 from tests.utilities import u
 
-from ._handlers_support import TestsFlextFlextHandlers
 
-
-class TestsFlextCoreHandlersValidationContext(TestsFlextFlextHandlers):
+class TestsFlextCoreHandlersValidationContext(
+    u.TestsFlextFlextHandlers,
+):
     """Contract tests for the public handler validation/context behavior."""
 
     @pytest.mark.parametrize(
         ("handler_type", "handler_mode"),
         [
             (scenario.handler_type, scenario.handler_mode)
-            for scenario in TestsFlextFlextHandlers.HANDLER_TYPES
+            for scenario in u.TestsFlextFlextHandlers.HANDLER_TYPES
         ],
-        ids=[scenario.name for scenario in TestsFlextFlextHandlers.HANDLER_TYPES],
+        ids=[scenario.name for scenario in u.TestsFlextFlextHandlers.HANDLER_TYPES],
     )
     def test_validate_message_accepts_message_for_every_handler_type(
-        self, handler_type: c.HandlerType, handler_mode: c.HandlerType
+        self,
+        handler_type: c.HandlerType,
+        handler_mode: c.HandlerType,
     ) -> None:
         # Arrange
+        """Test validate message accepts message for every handler type."""
         settings = u.Tests.create_handler_config(
             f"validate_generic_{handler_type}",
             f"Validate Generic {handler_type.title()}",
-            handler_type=handler_type,
-            handler_mode=handler_mode,
+            u.Tests.FlextTestsHandlerConfigParams(
+                handler_type=handler_type,
+                handler_mode=handler_mode,
+            ),
         )
         handler = self.ConcreteTestHandler(settings=settings)
 
@@ -53,15 +59,19 @@ class TestsFlextCoreHandlersValidationContext(TestsFlextFlextHandlers):
 
     @pytest.mark.parametrize(
         ("type_name", "message"),
-        TestsFlextFlextHandlers.VALIDATION_TYPES,
-        ids=[item[0] for item in TestsFlextFlextHandlers.VALIDATION_TYPES],
+        u.TestsFlextFlextHandlers.VALIDATION_TYPES,
+        ids=[item[0] for item in u.TestsFlextFlextHandlers.VALIDATION_TYPES],
     )
     def test_validate_message_accepts_supported_payload_types(
-        self, type_name: str, message: t.JsonValue
+        self,
+        type_name: str,
+        message: t.JsonValue,
     ) -> None:
         # Arrange
+        """Test validate message accepts supported payload types."""
         settings = u.Tests.create_handler_config(
-            f"payload_{type_name}", f"Payload {type_name.title()}"
+            f"payload_{type_name}",
+            f"Payload {type_name.title()}",
         )
         handler = self.ValidationTestHandler(settings=settings)
 
@@ -73,6 +83,7 @@ class TestsFlextCoreHandlersValidationContext(TestsFlextFlextHandlers):
 
     def test_validate_message_rejects_none_with_specific_error(self) -> None:
         # Arrange
+        """Test validate message rejects none with specific error."""
         settings = u.Tests.create_handler_config("reject_none", "Reject None")
         handler = self.ConcreteTestHandler(settings=settings)
 
@@ -85,9 +96,11 @@ class TestsFlextCoreHandlersValidationContext(TestsFlextFlextHandlers):
 
     @pytest.mark.parametrize("falsy_message", ["", None], ids=["empty_string", "none"])
     def test_validation_handler_rejects_falsy_message(
-        self, falsy_message: t.JsonValue
+        self,
+        falsy_message: t.JsonValue,
     ) -> None:
         # Arrange
+        """Test validation handler rejects falsy message."""
         settings = u.Tests.create_handler_config("reject_falsy", "Reject Falsy")
         handler = self.ValidationTestHandler(settings=settings)
 
@@ -99,6 +112,8 @@ class TestsFlextCoreHandlersValidationContext(TestsFlextFlextHandlers):
 
     def test_validate_message_accepts_pydantic_model_message(self) -> None:
         # Arrange
+        """Test validate message accepts pydantic model message."""
+
         class PydanticMessage(m.Value):
             value: str
 
@@ -113,6 +128,8 @@ class TestsFlextCoreHandlersValidationContext(TestsFlextFlextHandlers):
 
     def test_validate_message_accepts_multi_field_model_message(self) -> None:
         # Arrange
+        """Test validate message accepts multi field model message."""
+
         class MultiFieldMessage(m.Value):
             value: Annotated[str, m.Field(description="Message value")]
             number: Annotated[int, m.Field(description="Message number")]
@@ -128,8 +145,10 @@ class TestsFlextCoreHandlersValidationContext(TestsFlextFlextHandlers):
 
     def test_validate_message_accepts_frozen_model_message(self) -> None:
         # Arrange
+        """Test validate message accepts frozen model message."""
+
         class FrozenMessage(m.Value):
-            model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
+            model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
             value: str
             number: int
 
@@ -144,6 +163,7 @@ class TestsFlextCoreHandlersValidationContext(TestsFlextFlextHandlers):
 
     def test_record_metric_succeeds(self) -> None:
         # Arrange
+        """Test record metric succeeds."""
         settings = u.Tests.create_handler_config("record_metric", "Record Metric")
         handler = self.ConcreteTestHandler(settings=settings)
 
@@ -155,6 +175,7 @@ class TestsFlextCoreHandlersValidationContext(TestsFlextFlextHandlers):
 
     def test_push_context_succeeds(self) -> None:
         # Arrange
+        """Test push context succeeds."""
         settings = u.Tests.create_handler_config("push_context", "Push Context")
         handler = self.ConcreteTestHandler(settings=settings)
         context: t.JsonMapping = t.json_mapping_adapter().validate_python({
@@ -170,13 +191,14 @@ class TestsFlextCoreHandlersValidationContext(TestsFlextFlextHandlers):
 
     def test_pop_context_after_push_returns_config_map(self) -> None:
         # Arrange
+        """Test pop context after push returns config map."""
         settings = u.Tests.create_handler_config("pop_context", "Pop Context")
         handler = self.ConcreteTestHandler(settings=settings)
         _ = u.Tests.assert_success(
             handler.push_context({
                 "handler_name": "pop_context",
                 "handler_mode": "command",
-            })
+            }),
         )
 
         # Act
@@ -188,6 +210,7 @@ class TestsFlextCoreHandlersValidationContext(TestsFlextFlextHandlers):
 
     def test_pop_context_on_empty_stack_returns_empty_config_map(self) -> None:
         # Arrange
+        """Test pop context on empty stack returns empty config map."""
         settings = u.Tests.create_handler_config("pop_empty", "Pop Empty")
         handler = self.ConcreteTestHandler(settings=settings)
 
@@ -201,6 +224,7 @@ class TestsFlextCoreHandlersValidationContext(TestsFlextFlextHandlers):
 
     def test_can_handle_accepts_arbitrary_type_for_flexible_handler(self) -> None:
         # Arrange
+        """Test can handle accepts arbitrary type for flexible handler."""
         settings = u.Tests.create_handler_config("can_handle", "Can Handle")
         handler = self.ConcreteTestHandler(settings=settings)
 
@@ -210,18 +234,22 @@ class TestsFlextCoreHandlersValidationContext(TestsFlextFlextHandlers):
 
     @pytest.mark.parametrize(
         "handler_type",
-        [scenario.handler_type for scenario in TestsFlextFlextHandlers.HANDLER_TYPES],
-        ids=[scenario.name for scenario in TestsFlextFlextHandlers.HANDLER_TYPES],
+        [scenario.handler_type for scenario in u.TestsFlextFlextHandlers.HANDLER_TYPES],
+        ids=[scenario.name for scenario in u.TestsFlextFlextHandlers.HANDLER_TYPES],
     )
     def test_handler_properties_reflect_configuration(
-        self, handler_type: c.HandlerType
+        self,
+        handler_type: c.HandlerType,
     ) -> None:
         # Arrange
+        """Test handler properties reflect configuration."""
         settings = u.Tests.create_handler_config(
             f"props_{handler_type}",
             f"Props {handler_type.title()}",
-            handler_type=handler_type,
-            handler_mode=handler_type,
+            u.Tests.FlextTestsHandlerConfigParams(
+                handler_type=handler_type,
+                handler_mode=handler_type,
+            ),
         )
         handler = self.ConcreteTestHandler(settings=settings)
 
@@ -231,6 +259,7 @@ class TestsFlextCoreHandlersValidationContext(TestsFlextFlextHandlers):
 
     def test_execute_validates_then_produces_processed_result(self) -> None:
         # Arrange
+        """Test execute validates then produces processed result."""
         settings = u.Tests.create_handler_config("execute", "Execute")
         handler = self.ConcreteTestHandler(settings=settings)
 
@@ -242,6 +271,7 @@ class TestsFlextCoreHandlersValidationContext(TestsFlextFlextHandlers):
 
     def test_dispatch_message_runs_full_pipeline_for_matching_mode(self) -> None:
         # Arrange
+        """Test dispatch message runs full pipeline for matching mode."""
         settings = u.Tests.create_handler_config("dispatch", "Dispatch")
         handler = self.ConcreteTestHandler(settings=settings)
 
@@ -253,11 +283,14 @@ class TestsFlextCoreHandlersValidationContext(TestsFlextFlextHandlers):
 
     def test_dispatch_message_rejects_incompatible_pipeline_mode(self) -> None:
         # Arrange
+        """Test dispatch message rejects incompatible pipeline mode."""
         settings = u.Tests.create_handler_config(
             "dispatch_query",
             "Dispatch Query",
-            handler_type=c.HandlerType.QUERY,
-            handler_mode=c.HandlerType.QUERY,
+            u.Tests.FlextTestsHandlerConfigParams(
+                handler_type=c.HandlerType.QUERY,
+                handler_mode=c.HandlerType.QUERY,
+            ),
         )
         handler = self.ConcreteTestHandler(settings=settings)
 

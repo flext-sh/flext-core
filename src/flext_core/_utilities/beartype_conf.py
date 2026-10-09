@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from beartype import BeartypeConf, BeartypeStrategy
 
-from .._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._constants import FlextConstantsEnforcement
 
 
 class FlextUtilitiesBeartypeConf:
@@ -28,12 +28,18 @@ class FlextUtilitiesBeartypeConf:
         - "warn" -> violation_type=UserWarning (default)
         - "strict" -> violation_type=TypeError (raises on violation)
         - "off" -> returns conf with O0 strategy (no checking)
+
+        Returns:
+            The resulting ``BeartypeConf``.
+
         """
-        mode = c.BEARTYPE_MODE
-        if mode is c.EnforcementMode.OFF:
+        mode = FlextConstantsEnforcement.BEARTYPE_MODE
+        if mode is FlextConstantsEnforcement.EnforcementMode.OFF:
             return BeartypeConf(strategy=BeartypeStrategy.O0)
         return BeartypeConf(
-            violation_type=UserWarning if mode is c.EnforcementMode.WARN else TypeError,
+            violation_type=UserWarning
+            if mode is FlextConstantsEnforcement.EnforcementMode.WARN
+            else TypeError,
             strategy=BeartypeStrategy.O1,
-            claw_skip_package_names=c.BEARTYPE_CLAW_SKIP_PACKAGES,
+            claw_skip_package_names=FlextConstantsEnforcement.BEARTYPE_CLAW_SKIP_PACKAGES,
         )

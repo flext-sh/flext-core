@@ -14,16 +14,18 @@ import pytest
 
 import flext_core
 from flext_core.runtime import FlextRuntime
-from tests.models import m
+from tests import m
 
 if TYPE_CHECKING:
-    from tests.typings import t
+    from tests import t
 
 
 class TestsFlextCoreRuntime:
     """Assert the observable behavior callers depend on from ``FlextRuntime``."""
 
-    def test_facade_exposes_stable_public_identity(self) -> None:
+    @staticmethod
+    def test_facade_exposes_stable_public_identity() -> None:
+        """Test facade exposes stable public identity."""
         assert flext_core.FlextRuntime is FlextRuntime
 
     @pytest.mark.parametrize(
@@ -36,54 +38,76 @@ class TestsFlextCoreRuntime:
             ("text", "text"),
         ],
     )
+    @staticmethod
     def test_normalize_to_metadata_converts_scalars_to_json_native(
-        self, value: t.JsonPayload, expected: t.JsonValue
+        value: t.JsonPayload,
+        expected: t.JsonValue,
     ) -> None:
+        """Test normalize to metadata converts scalars to json native."""
         assert FlextRuntime.normalize_to_metadata(value) == expected
 
-    def test_normalize_to_metadata_flattens_sequence_members(self) -> None:
+    @staticmethod
+    def test_normalize_to_metadata_flattens_sequence_members() -> None:
+        """Test normalize to metadata flattens sequence members."""
         normalized = FlextRuntime.normalize_to_metadata([1, Path("/x"), None])
 
         assert normalized == [1, "/x", None]
 
-    def test_normalize_to_json_value_keeps_none_as_json_null(self) -> None:
+    @staticmethod
+    def test_normalize_to_json_value_keeps_none_as_json_null() -> None:
         """``None`` is a JsonValue in its own right, never coerced to a string."""
         assert FlextRuntime.normalize_to_json_value(None) is None
 
-    def test_normalize_to_json_mapping_normalizes_each_value(self) -> None:
+    @staticmethod
+    def test_normalize_to_json_mapping_normalizes_each_value() -> None:
+        """Test normalize to json mapping normalizes each value."""
         normalized = FlextRuntime.normalize_to_json_mapping({"a": 1, "b": Path("/z")})
 
         assert normalized == {"a": 1, "b": "/z"}
 
     @pytest.mark.parametrize(
-        ("value", "expected"), [(None, ""), (42, 42), ([1, 2], [1, 2])]
+        ("value", "expected"),
+        [(None, ""), (42, 42), ([1, 2], [1, 2])],
     )
+    @staticmethod
     def test_normalize_to_container_returns_runtime_data(
-        self, value: t.JsonPayload, expected: t.JsonValue
+        value: t.JsonPayload,
+        expected: t.JsonValue,
     ) -> None:
+        """Test normalize to container returns runtime data."""
         assert FlextRuntime.normalize_to_container(value) == expected
 
-    def test_normalize_to_container_unwraps_config_map_model(self) -> None:
+    @staticmethod
+    def test_normalize_to_container_unwraps_config_map_model() -> None:
+        """Test normalize to container unwraps config map model."""
         normalized = FlextRuntime.normalize_to_container(m.ConfigMap(root={"k": 1}))
 
         assert normalized == {"k": 1}
 
-    def test_normalize_model_input_mapping_preserves_nested_mapping(self) -> None:
+    @staticmethod
+    def test_normalize_model_input_mapping_preserves_nested_mapping() -> None:
+        """Test normalize model input mapping preserves nested mapping."""
         assert FlextRuntime.normalize_model_input_mapping({"x": {"y": 1}}) == {
-            "x": {"y": 1}
+            "x": {"y": 1},
         }
 
-    def test_normalize_model_input_mapping_accepts_root_model(self) -> None:
+    @staticmethod
+    def test_normalize_model_input_mapping_accepts_root_model() -> None:
+        """Test normalize model input mapping accepts root model."""
         normalized = FlextRuntime.normalize_model_input_mapping(
-            m.Dict(root={"a": 1, "b": {"c": 2}})
+            m.Dict(root={"a": 1, "b": {"c": 2}}),
         )
 
         assert normalized == {"a": 1, "b": {"c": 2}}
 
-    def test_normalize_model_input_mapping_returns_none_for_none(self) -> None:
+    @staticmethod
+    def test_normalize_model_input_mapping_returns_none_for_none() -> None:
+        """Test normalize model input mapping returns none for none."""
         assert FlextRuntime.normalize_model_input_mapping(None) is None
 
-    def test_normalize_metadata_input_mapping_preserves_explicit_none(self) -> None:
+    @staticmethod
+    def test_normalize_metadata_input_mapping_preserves_explicit_none() -> None:
+        """Test normalize metadata input mapping preserves explicit none."""
         normalized = FlextRuntime.normalize_metadata_input_mapping({
             "alpha": None,
             "beta": 2,
@@ -91,99 +115,85 @@ class TestsFlextCoreRuntime:
 
         assert normalized == {"alpha": None, "beta": 2}
 
-    def test_normalize_metadata_input_mapping_reads_model_dump_carrier(self) -> None:
+    @staticmethod
+    def test_normalize_metadata_input_mapping_reads_model_dump_carrier() -> None:
+        """Test normalize metadata input mapping reads model dump carrier."""
         normalized = FlextRuntime.normalize_metadata_input_mapping(
-            m.Dict(root={"a": 1, "b": None})
+            m.Dict(root={"a": 1, "b": None}),
         )
 
         assert normalized == {"a": 1, "b": None}
 
-    def test_normalize_metadata_input_mapping_returns_none_for_none(self) -> None:
+    @staticmethod
+    def test_normalize_metadata_input_mapping_returns_none_for_none() -> None:
+        """Test normalize metadata input mapping returns none for none."""
         assert FlextRuntime.normalize_metadata_input_mapping(None) is None
 
-    def test_normalize_metadata_input_mapping_rejects_non_dict_like_input(self) -> None:
+    @staticmethod
+    def test_normalize_metadata_input_mapping_rejects_non_dict_like_input() -> None:
+        """Test normalize metadata input mapping rejects non dict like input."""
         with pytest.raises(TypeError, match="dict-like"):
             FlextRuntime.normalize_metadata_input_mapping("not-a-mapping")
 
-    def test_validate_metadata_attributes_drops_none_values(self) -> None:
+    @staticmethod
+    def test_validate_metadata_attributes_drops_none_values() -> None:
+        """Test validate metadata attributes drops none values."""
         assert FlextRuntime.validate_metadata_attributes({"a": 1, "b": None}) == {
-            "a": 1
+            "a": 1,
         }
 
-    def test_validate_metadata_attributes_rejects_reserved_underscore_keys(
-        self,
-    ) -> None:
+    @staticmethod
+    def test_validate_metadata_attributes_rejects_reserved_underscore_keys() -> None:
+        """Test validate metadata attributes rejects reserved underscore keys."""
         with pytest.raises(ValueError, match="_x"):
             FlextRuntime.validate_metadata_attributes({"_x": 1})
 
-    def test_validate_metadata_model_input_binds_attributes_into_model(self) -> None:
+    @staticmethod
+    def test_validate_metadata_model_input_binds_attributes_into_model() -> None:
+        """Test validate metadata model input binds attributes into model."""
         model = FlextRuntime.validate_metadata_model_input({"a": 1}, m.Metadata)
 
         assert isinstance(model, m.Metadata)
         assert model.attributes == {"a": 1}
 
-    def test_validate_metadata_model_input_returns_existing_model_unchanged(
-        self,
-    ) -> None:
+    @staticmethod
+    def test_validate_metadata_model_input_returns_existing_model_unchanged() -> None:
+        """Test validate metadata model input returns existing model unchanged."""
         existing = FlextRuntime.validate_metadata_model_input({"a": 1}, m.Metadata)
 
         assert (
             FlextRuntime.validate_metadata_model_input(existing, m.Metadata) is existing
         )
 
-    def test_validate_metadata_model_input_yields_empty_attributes_for_none(
-        self,
-    ) -> None:
+    @staticmethod
+    def test_validate_metadata_model_input_yields_empty_attributes_for_none() -> None:
+        """Test validate metadata model input yields empty attributes for none."""
         model = FlextRuntime.validate_metadata_model_input(None, m.Metadata)
 
         assert model.attributes == {}
 
-    def test_validate_callable_input_returns_the_callable(self) -> None:
+    @staticmethod
+    def test_validate_callable_input_returns_the_callable() -> None:
+        """Test validate callable input returns the callable."""
+
         def factory() -> int:
             return 1
 
         assert FlextRuntime.validate_callable_input(factory, "factory") is factory
 
-    def test_validate_callable_input_rejects_non_callable(self) -> None:
+    @staticmethod
+    def test_validate_callable_input_rejects_non_callable() -> None:
+        """Test validate callable input rejects non callable."""
         with pytest.raises(TypeError, match="must be callable"):
             FlextRuntime.validate_callable_input(5, "factory")
 
-    def test_normalize_registerable_service_passes_scalars_through(self) -> None:
+    @staticmethod
+    def test_normalize_registerable_service_passes_scalars_through() -> None:
+        """Test normalize registerable service passes scalars through."""
         assert FlextRuntime.normalize_registerable_service("hi") == "hi"
 
-    def test_normalize_registerable_service_rejects_unregisterable_value(self) -> None:
+    @staticmethod
+    def test_normalize_registerable_service_rejects_unregisterable_value() -> None:
+        """Test normalize registerable service rejects unregisterable value."""
         with pytest.raises(ValueError, match="RegisterableService"):
             FlextRuntime.normalize_registerable_service(bytearray(b"unsupported"))
-
-    def test_create_container_exposes_registered_object_provider(self) -> None:
-        container = FlextRuntime.DependencyIntegration.create_container(
-            services={"alpha": "beta"}
-        )
-
-        assert container.alpha() == "beta"
-
-    def test_register_factory_with_cache_yields_singleton_instances(self) -> None:
-        container = FlextRuntime.DependencyIntegration.create_container()
-        _ = FlextRuntime.DependencyIntegration.register_factory(
-            container, "svc", object, cache=True
-        )
-
-        assert container.svc() is container.svc()
-
-    def test_register_factory_without_cache_yields_distinct_instances(self) -> None:
-        container = FlextRuntime.DependencyIntegration.create_container()
-        _ = FlextRuntime.DependencyIntegration.register_factory(
-            container, "svc", object, cache=False
-        )
-
-        assert container.svc() is not container.svc()
-
-    def test_register_object_rejects_duplicate_provider_name(self) -> None:
-        container = FlextRuntime.DependencyIntegration.create_container(
-            services={"alpha": "beta"}
-        )
-
-        with pytest.raises(ValueError, match="already registered"):
-            _ = FlextRuntime.DependencyIntegration.register_object(
-                container, "alpha", "other"
-            )

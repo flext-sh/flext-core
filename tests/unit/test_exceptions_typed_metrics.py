@@ -5,6 +5,9 @@ typed exception construction, structured fields, error-code / routing-domain
 derivation, exception raising, correlation metadata, and the public metrics
 snapshot API. No private attributes, internal collaborators, or patched
 internals are exercised.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -14,14 +17,15 @@ from typing import TYPE_CHECKING
 import pytest
 from flext_tests import e
 
-from tests.constants import c
-from tests.models import m
+from tests import c, m
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
 
 class TestsFlextCoreExceptionsTypedMetrics:
+    """Tests for ``FlextCoreExceptionsTypedMetrics``."""
+
     @pytest.mark.parametrize(
         ("factory", "expected_type"),
         [
@@ -35,7 +39,9 @@ class TestsFlextCoreExceptionsTypedMetrics:
             ),
             (
                 lambda: e.FlextConnectionError(
-                    "Test message", host=c.LOCALHOST, port=8080
+                    "Test message",
+                    host=c.LOCALHOST,
+                    port=8080,
                 ),
                 e.FlextConnectionError,
             ),
@@ -45,19 +51,25 @@ class TestsFlextCoreExceptionsTypedMetrics:
             ),
             (
                 lambda: e.AuthenticationError(
-                    "Test message", auth_method="password", user_id="u-1"
+                    "Test message",
+                    auth_method="password",
+                    user_id="u-1",
                 ),
                 e.AuthenticationError,
             ),
             (
                 lambda: e.AuthorizationError(
-                    "Test message", user_id="u-1", permission="read"
+                    "Test message",
+                    user_id="u-1",
+                    permission="read",
                 ),
                 e.AuthorizationError,
             ),
             (
                 lambda: e.NotFoundError(
-                    "Test message", resource_type="User", resource_id="123"
+                    "Test message",
+                    resource_type="User",
+                    resource_id="123",
                 ),
                 e.NotFoundError,
             ),
@@ -71,10 +83,13 @@ class TestsFlextCoreExceptionsTypedMetrics:
             ),
         ],
     )
+    @staticmethod
     def test_typed_exception_is_expected_type_and_raisable(
-        self, factory: Callable[[], e.BaseError], expected_type: type[e.BaseError]
+        factory: Callable[[], e.BaseError],
+        expected_type: type[e.BaseError],
     ) -> None:
         # Arrange / Act
+        """Test typed exception is expected type and raisable."""
         error = factory()
 
         # Assert: public identity + message contract, and it behaves as an exception
@@ -103,10 +118,13 @@ class TestsFlextCoreExceptionsTypedMetrics:
             ),
         ],
     )
+    @staticmethod
     def test_error_code_maps_to_routing_domain(
-        self, factory: Callable[[], e.BaseError], expected_domain: str
+        factory: Callable[[], e.BaseError],
+        expected_domain: str,
     ) -> None:
         # Arrange / Act
+        """Test error code maps to routing domain."""
         error = factory()
 
         # Assert: routing domain derived from the structured error code
@@ -114,8 +132,10 @@ class TestsFlextCoreExceptionsTypedMetrics:
         assert error.matches_error_domain(expected_domain) is True
         assert error.matches_error_domain("nonexistent-domain") is False
 
-    def test_string_representation_prefixes_error_code(self) -> None:
+    @staticmethod
+    def test_string_representation_prefixes_error_code() -> None:
         # Arrange
+        """Test string representation prefixes error code."""
         error = e.ValidationError("Bad email", field="email")
 
         # Act / Assert: caller-visible str() carries the structured code
@@ -161,19 +181,29 @@ class TestsFlextCoreExceptionsTypedMetrics:
             ),
         ],
     )
+    @staticmethod
     def test_typed_exception_exposes_structured_fields(
-        self, factory: Callable[[], e.BaseError], attribute: str, expected_value: object
+        factory: Callable[[], e.BaseError],
+        attribute: str,
+        expected_value: object,
     ) -> None:
         # Arrange / Act
+        """Test typed exception exposes structured fields."""
         error = factory()
 
         # Assert: structured field is readable through the public attribute
         assert getattr(error, attribute) == expected_value
 
-    def test_base_error_exposes_correlation_and_metadata(self) -> None:
+    @staticmethod
+    def test_base_error_exposes_correlation_and_metadata() -> None:
         # Arrange / Act
+        """Test base error exposes correlation and metadata."""
         err = e.BaseError(
-            "boom", correlation_id="corr-001", metadata={"scope": "service"}
+            "boom",
+            options=m.ExceptionInitOptions(
+                correlation_id="corr-001",
+                metadata={"scope": "service"},
+            ),
         )
 
         # Assert: correlation id + metadata attributes reachable publicly
@@ -181,17 +211,21 @@ class TestsFlextCoreExceptionsTypedMetrics:
         assert err.error_message == "boom"
         assert err.metadata.attributes.get("scope") == "service"
 
-    def test_not_found_error_excludes_internal_context_keys_from_metadata(self) -> None:
+    @staticmethod
+    def test_not_found_error_excludes_internal_context_keys_from_metadata() -> None:
         # Arrange / Act
+        """Test not found error excludes internal context keys from metadata."""
         error = e.NotFoundError(
             "Not found",
             resource_type="User",
             resource_id="123",
-            context={
-                "key1": "value1",
-                "correlation_id": "corr-001",
-                "metadata": "skip-me",
-            },
+            options=m.ExceptionInitOptions(
+                context={
+                    "key1": "value1",
+                    "correlation_id": "corr-001",
+                    "metadata": "skip-me",
+                },
+            ),
         )
 
         # Assert: caller-provided context survives; reserved keys are excluded
@@ -200,13 +234,15 @@ class TestsFlextCoreExceptionsTypedMetrics:
         assert "correlation_id" not in attributes
         assert "metadata" not in attributes
 
-    def test_type_error_normalizes_expected_and_actual_type(self) -> None:
+    @staticmethod
+    def test_type_error_normalizes_expected_and_actual_type() -> None:
         # Arrange / Act: mixed str + type inputs
+        """Test type error normalizes expected and actual type."""
         error = e.FlextTypeError(
             "Type mismatch",
             expected_type="str",
             actual_type=int,
-            context={"source": "api"},
+            options=m.ExceptionInitOptions(context={"source": "api"}),
         )
 
         # Assert: both resolve to concrete types on the public attributes
@@ -217,8 +253,10 @@ class TestsFlextCoreExceptionsTypedMetrics:
         assert attributes["expected_type"] == "str"
         assert attributes["actual_type"] == "int"
 
-    def test_metrics_snapshot_counts_recorded_exceptions(self) -> None:
+    @staticmethod
+    def test_metrics_snapshot_counts_recorded_exceptions() -> None:
         # Arrange
+        """Test metrics snapshot counts recorded exceptions."""
         e.clear_metrics()
 
         # Act
@@ -243,8 +281,10 @@ class TestsFlextCoreExceptionsTypedMetrics:
         # Cleanup so the shared counter does not leak into other tests
         e.clear_metrics()
 
-    def test_clear_metrics_resets_snapshot_and_is_idempotent(self) -> None:
+    @staticmethod
+    def test_clear_metrics_resets_snapshot_and_is_idempotent() -> None:
         # Arrange
+        """Test clear metrics resets snapshot and is idempotent."""
         e.clear_metrics()
         e.record_exception(e.ValidationError)
 

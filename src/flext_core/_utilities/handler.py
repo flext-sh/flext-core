@@ -17,11 +17,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from flext_core import c, r
+from flext_core import c, m, p, r
 from flext_core.runtime import FlextRuntime
 
 if TYPE_CHECKING:
-    from flext_core import p, t
+    from flext_core import t
 
 
 class FlextUtilitiesHandler:
@@ -29,78 +29,105 @@ class FlextUtilitiesHandler:
 
     @staticmethod
     def create_runtime_state(
-        handler_name: str, handler_mode: c.HandlerType
+        handler_name: str,
+        handler_mode: c.HandlerType,
     ) -> p.HandlerRuntimeState:
-        """Build runtime state with a fresh execution context."""
-        from flext_core import m
+        """Build runtime state with a fresh execution context.
 
+        Returns:
+            The resulting ``p.HandlerRuntimeState``.
+
+        """
         return m.HandlerRuntimeState(
             execution_context=m.ExecutionContext(
-                handler_name=handler_name, handler_mode=handler_mode
-            )
+                handler_name=handler_name,
+                handler_mode=handler_mode,
+            ),
         )
 
     @staticmethod
     def start_execution(state: p.HandlerRuntimeState) -> p.HandlerRuntimeState:
-        """Stamp the current monotonic time on the active execution context."""
+        """Stamp the current monotonic time on the active execution context.
+
+        Returns:
+            The resulting ``p.HandlerRuntimeState``.
+
+        """
         execution_context = state.execution_context.model_copy(
-            update={"started_at": time.time()}
+            update={"started_at": time.time()},
         )
         return state.model_copy(update={"execution_context": execution_context})
 
     @staticmethod
     def record_metric(
-        ctx: p.ExecutionContext, name: str, value: t.JsonPayload
+        ctx: p.ExecutionContext,
+        name: str,
+        value: t.JsonPayload,
     ) -> p.Result[bool]:
-        """Record a metric value onto an execution context's payload."""
+        """Record a metric value onto an execution context's payload.
+
+        Returns:
+            The resulting ``p.Result[bool]``.
+
+        """
         normalized = FlextRuntime.normalize_to_container(value)
         ctx.metrics_state_data.root[name] = (
             normalized
             if isinstance(normalized, (str, int, float, bool, datetime, Path))
             else str(normalized)
         )
-        return r.ok(True)
+        return r.ok(value=True)
 
     @staticmethod
     def push_context(
-        state: p.HandlerRuntimeState, ctx: t.JsonMapping | p.ExecutionContext
+        state: p.HandlerRuntimeState,
+        ctx: t.JsonMapping | p.ExecutionContext,
     ) -> p.Result[p.HandlerRuntimeState]:
-        """Validate a context and return state with an extended stack."""
+        """Validate a context and return state with an extended stack.
+
+        Returns:
+            The resulting ``p.Result[p.HandlerRuntimeState]``.
+
+        """
         if not isinstance(ctx, Mapping):
             pushed_context = ctx.model_copy()
         else:
-            from flext_core import m
-
             validated = r.from_validation(ctx, m.ExecutionContext)
             if validated.failure:
-                return r.fail_op("push handler context", validated.error)
+                return r[p.HandlerRuntimeState].fail_op(
+                    "push handler context",
+                    validated.error,
+                )
             execution_context: p.ExecutionContext = validated.unwrap()
             pushed_context = execution_context
         return r.ok(
             state.model_copy(
-                update={"context_stack": (*state.context_stack, pushed_context)}
-            )
+                update={"context_stack": (*state.context_stack, pushed_context)},
+            ),
         )
 
     @staticmethod
     def pop_context(
         state: p.HandlerRuntimeState,
     ) -> p.Result[t.Pair[p.HandlerRuntimeState, p.RootDict[t.JsonPayload]]]:
-        """Return state without the top context plus its validated identity."""
-        from flext_core import m
+        """Return state without the top context plus its validated identity.
 
+        Returns:
+            State without the top context plus its validated identity.
+
+        """
         if not state.context_stack:
             empty_context: p.RootDict[t.JsonPayload] = m.ConfigMap(root={})
             return r.ok((state, empty_context))
         popped = state.context_stack[-1]
         next_state = state.model_copy(
-            update={"context_stack": state.context_stack[:-1]}
+            update={"context_stack": state.context_stack[:-1]},
         )
         popped_context: p.RootDict[t.JsonPayload] = m.ConfigMap(
             root={
                 "handler_name": popped.handler_name,
                 c.FIELD_HANDLER_MODE: popped.handler_mode,
-            }
+            },
         )
         return r.ok((next_state, popped_context))
 

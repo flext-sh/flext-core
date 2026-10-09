@@ -1,4 +1,8 @@
-"""Exception base state behavior."""
+"""Exception base state behavior.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -7,18 +11,18 @@ import uuid
 from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_core import c, m
-
-from ..._runtime._metadata_validation import (
+from flext_core._exceptions._base_parts.flextexceptionsbase_part_01 import (
+    FlextBaseErrorMetadataMixin,
+)
+from flext_core._runtime._metadata_validation import (
     FlextRuntimeMetadataValidation as FlextRuntime,
 )
-from .flextexceptionsbase_part_01 import FlextBaseErrorMetadataMixin
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from ..._protocols.result import FlextProtocolsResult as pr
-    from ..._typings.base import FlextTypingBase as tb
-    from ..._typings.services import FlextTypesServices as ts
+    from flext_core._typings.base import FlextTypingBase as tb
+    from flext_core._typings.services import FlextTypesServices as ts
 
 
 class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
@@ -28,7 +32,7 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
     metadata: m.Metadata
     timestamp: float
     auto_log: bool
-    args: tuple[str, ...]
+    args: tb.VariadicTuple[str]
 
     _error_domains: ClassVar[Mapping[str, c.ErrorDomain]] = {
         c.ErrorCode.VALIDATION_ERROR: c.ErrorDomain.VALIDATION,
@@ -64,7 +68,12 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
         return self.message
 
     def matches_error_domain(self, domain: str) -> bool:
-        """Whether this error belongs to the provided routing domain."""
+        """Whether this error belongs to the provided routing domain.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
         return self.error_domain == domain
 
     def _initialize_base_state(
@@ -72,14 +81,7 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
         message: str,
         *,
         error_code: str,
-        context: tb.MappingKV[str, ts.JsonPayload | None] | pr.HasModelDump | None,
-        metadata: pr.HasModelDump | tb.JsonValue | None,
-        correlation_id: str | None,
-        auto_correlation: bool,
-        auto_log: bool,
-        merged_kwargs: tb.MappingKV[str, ts.JsonPayload | None]
-        | pr.HasModelDump
-        | None,
+        options: m.ExceptionInitOptions,
         extra_kwargs: tb.MappingKV[str, ts.JsonPayload | None],
     ) -> None:
         """Initialize the shared base error state without subclass metaprogramming."""
@@ -87,12 +89,12 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
         self.message = message
         self.error_code = error_code
         final_kwargs_dict: tb.JsonDict = {}
-        for source_value in (merged_kwargs, context, extra_kwargs):
+        for source_value in (options.merged_kwargs, options.context, extra_kwargs):
             if source_value is None:
                 continue
             try:
                 source_dict = FlextRuntime.normalize_metadata_input_mapping(
-                    source_value
+                    source_value,
                 )
             except c.EXC_PYDANTIC_TYPE_VALUE:
                 continue
@@ -104,16 +106,24 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
         final_kwargs = m.ConfigMap.model_validate(final_kwargs_dict)
         self.correlation_id = (
             f"exc_{uuid.uuid4().hex[:8]}"
-            if auto_correlation and (not correlation_id)
-            else correlation_id
+            if options.auto_correlation and not options.correlation_id
+            else options.correlation_id
         )
-        self.metadata = type(self).normalize_metadata(metadata, final_kwargs.root)
+        self.metadata = type(self).normalize_metadata(
+            options.metadata,
+            final_kwargs.root,
+        )
         self.timestamp = time.time()
-        self.auto_log = auto_log
+        self.auto_log = options.auto_log
 
     @override
     def __str__(self) -> str:
-        """Return string representation with error code if present."""
+        """Return string representation with error code if present.
+
+        Returns:
+            String representation with error code if present.
+
+        """
         if self.error_code:
             return f"[{self.error_code}] {self.message}"
         return self.message

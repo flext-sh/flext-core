@@ -3,9 +3,7 @@
   "destination": ".github/agents",
   "managed": {
     "python-reviewer.agent.md": {
-      "activation": [
-        "marker:pyproject.toml"
-      ],
+      "activation": ["marker:pyproject.toml"],
       "adapter_version": 1,
       "destination": "python-reviewer.agent.md",
       "origin": "agents:agents:copilot",
@@ -17,15 +15,11 @@
   },
   "owner": "agents-governance",
   "project": ".",
-  "providers": [
-    "copilot"
-  ],
+  "providers": ["copilot"],
   "selection": {
     "agents": [],
     "opt_ins": [],
-    "selected_tags": [
-      "flext"
-    ]
+    "selected_tags": ["flext"]
   },
   "surface": "agents",
   "version": 5

@@ -4,6 +4,9 @@ Exercises the public models facade contract for constraint, discrimination,
 fail-fast, instance, coercion and serializer annotations. Every symbol is
 consumed through ``m`` exactly as fleet consumers do: observable validation
 and serialization behavior only, never pydantic internals.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -12,114 +15,157 @@ from typing import Annotated, Literal
 
 import pytest
 
-from tests.models import m
-
-
-class _VectorInput(m.BaseModel):
-    """Natively validated input shape for the ValidateAs hook."""
-
-    x: int
-    y: int
-
-
-class _Vector:
-    """Custom type populated from a natively validated model."""
-
-    def __init__(self, x: int, y: int) -> None:
-        self.x = x
-        self.y = y
-
-    def magnitude_squared(self) -> int:
-        """Squared length of the vector."""
-        return self.x * self.x + self.y * self.y
-
-
-class _Cat(m.BaseModel):
-    """Discriminated union member for the cat tag."""
-
-    kind: Literal["cat"]
-    meow: str
-
-
-class _Dog(m.BaseModel):
-    """Discriminated union member for the dog tag."""
-
-    kind: Literal["dog"]
-    bark: str
-
-
-class _Pet(m.BaseModel):
-    """Field resolved to a union member through the discriminator tag."""
-
-    animal: Annotated[_Cat | _Dog, m.Discriminator("kind")]
-
-
-class _Item(m.BaseModel):
-    """Base item serialized through a base-typed field."""
-
-    name: str
-
-
-class _DetailedItem(_Item):
-    """Subclass field preserved at serialization time via SerializeAsAny."""
-
-    detail: str
-
-
-class _Box(m.BaseModel):
-    """Container whose base-typed field serializes runtime subclasses."""
-
-    item: Annotated[_Item, m.SerializeAsAny()]
-
-
-class _Greeter:
-    """Plain runtime class guarded by InstanceOf."""
-
-    def hello(self) -> str:
-        return "hello"
-
-
-class _GreetingCard(m.BaseModel):
-    """Model whose payload must be a Greeter instance."""
-
-    payload: m.InstanceOf[_Greeter]
-
-
-class _Constrained(m.BaseModel):
-    """Model field constrained through StringConstraints."""
-
-    code: Annotated[str, m.StringConstraints(min_length=3, pattern=r"^[a-z]+$")]
+from tests import m, t, u
 
 
 class TestsFlextCorePydanticDeclarations:
     """Behavioral contract for the advanced pydantic facade exports."""
 
-    def test_string_constraints_accept_valid_and_reject_invalid_values(self) -> None:
-        assert _Constrained(code="abc").code == "abc"
+    class _VectorInput(m.BaseModel):
+        """Natively validated input shape for the ValidateAs hook."""
+
+        x: int
+        y: int
+
+    class _Vector:
+        """Custom type populated from a natively validated model."""
+
+        def __init__(self, x: int, y: int) -> None:
+            self.x = x
+            self.y = y
+
+        def magnitude_squared(self) -> int:
+            """Squared length of the vector.
+
+            Returns:
+                The resulting ``int``.
+
+            """
+            return self.x * self.x + self.y * self.y
+
+    class _Cat(m.BaseModel):
+        """Discriminated union member for the cat tag."""
+
+        kind: Literal["cat"]
+        meow: str
+
+    class _Dog(m.BaseModel):
+        """Discriminated union member for the dog tag."""
+
+        kind: Literal["dog"]
+        bark: str
+
+    class _Pet(m.BaseModel):
+        """Field resolved to a union member through the discriminator tag."""
+
+        animal: Annotated[
+            TestsFlextCorePydanticDeclarations._Cat
+            | TestsFlextCorePydanticDeclarations._Dog,
+            m.Discriminator("kind"),
+        ]
+
+    class _Item(m.BaseModel):
+        """Base item serialized through a base-typed field."""
+
+        name: str
+
+    class _DetailedItem(_Item):
+        """Subclass field preserved at serialization time via SerializeAsAny."""
+
+        detail: str
+
+    class _Box(m.BaseModel):
+        """Container whose base-typed field serializes runtime subclasses."""
+
+        item: Annotated[TestsFlextCorePydanticDeclarations._Item, m.SerializeAsAny()]
+
+    class _Greeter:
+        """Plain runtime class guarded by InstanceOf."""
+
+        @staticmethod
+        def hello() -> str:
+            return "hello"
+
+    class _GreetingCard(m.BaseModel):
+        """Model whose payload must be a Greeter instance."""
+
+        payload: m.InstanceOf[TestsFlextCorePydanticDeclarations._Greeter]
+
+    class _Constrained(m.BaseModel):
+        """Model field constrained through StringConstraints."""
+
+        code: Annotated[str, m.StringConstraints(min_length=3, pattern=r"^[a-z]+$")]
+
+    class _Credentials(m.BaseModel):
+        """Model whose secret field is declared through the typings facade."""
+
+        model_config = m.ConfigDict(frozen=True)
+
+        token: t.SecretStr
+
+    @staticmethod
+    def test_secret_str_field_hides_value_and_round_trips() -> None:
+        round_trip_value = "s3cret"
+        credentials = TestsFlextCorePydanticDeclarations._Credentials(
+            token=round_trip_value,
+        )
+
+        assert isinstance(credentials.token, t.SecretStr)
+        assert credentials.token.get_secret_value() == "s3cret"
+        assert "s3cret" not in repr(credentials)
 
         with pytest.raises(m.ValidationError):
-            _Constrained(code="ab")
+            TestsFlextCorePydanticDeclarations._Credentials.model_validate({})
+
+    @staticmethod
+    def test_string_constraints_accept_valid_and_reject_invalid_values() -> None:
+        assert TestsFlextCorePydanticDeclarations._Constrained(code="abc").code == "abc"
 
         with pytest.raises(m.ValidationError):
-            _Constrained(code="ABC")
+            TestsFlextCorePydanticDeclarations._Constrained(code="ab")
 
-    def test_discriminator_resolves_union_member_from_tag(self) -> None:
-        pet = _Pet.model_validate({"animal": {"kind": "dog", "bark": "woof"}})
+        with pytest.raises(m.ValidationError):
+            TestsFlextCorePydanticDeclarations._Constrained(code="ABC")
 
-        assert isinstance(pet.animal, _Dog)
+    @staticmethod
+    def test_discriminator_resolves_union_member_from_tag() -> None:
+        pet = TestsFlextCorePydanticDeclarations._Pet.model_validate({
+            "animal": {"kind": "dog", "bark": "woof"},
+        })
+
+        assert isinstance(pet.animal, TestsFlextCorePydanticDeclarations._Dog)
         assert pet.animal.bark == "woof"
 
         with pytest.raises(m.ValidationError):
-            _Pet.model_validate({"animal": {"kind": "cow", "moo": "moo"}})
+            TestsFlextCorePydanticDeclarations._Pet.model_validate({
+                "animal": {"kind": "cow", "moo": "moo"},
+            })
 
-    def test_serialize_as_any_keeps_subclass_fields_in_dump(self) -> None:
-        box = _Box(item=_DetailedItem(name="flext", detail="advanced"))
+    @staticmethod
+    def test_serialize_as_any_keeps_subclass_fields_in_dump() -> None:
+        box = TestsFlextCorePydanticDeclarations._Box(
+            item=TestsFlextCorePydanticDeclarations._DetailedItem(
+                name="flext",
+                detail="advanced",
+            ),
+        )
 
         assert box.model_dump() == {"item": {"name": "flext", "detail": "advanced"}}
 
-    def test_fail_fast_reports_only_the_first_list_error(self) -> None:
-        adapter: m.TypeAdapter[list[int]] = m.TypeAdapter(
-            Annotated[list[int], m.FailFast()]
+    @staticmethod
+    def test_type_adapter_constructor_validates_python_values() -> None:
+        """The public facade constructor is pydantic's TypeAdapter."""
+        sample_value = 7
+        adapter: m.TypeAdapter[int] = u.TypeAdapter(int)
+        validated = adapter.validate_python(sample_value)
+
+        assert validated == sample_value
+        assert u.type_adapter is u.TypeAdapter
+
+    @staticmethod
+    def test_fail_fast_reports_only_the_first_list_error() -> None:
+        adapter: m.TypeAdapter[list[int]] = u.type_adapter(
+            Annotated[list[int], m.FailFast()],
         )
 
         assert adapter.validate_python([1, 2]) == [1, 2]
@@ -129,28 +175,36 @@ class TestsFlextCorePydanticDeclarations:
 
         assert len(exc_info.value.errors()) == 1
 
-    def test_instance_of_accepts_instance_and_rejects_foreign_object(self) -> None:
-        greeter = _Greeter()
-        card = _GreetingCard(payload=greeter)
+    @staticmethod
+    def test_instance_of_accepts_instance_and_rejects_foreign_object() -> None:
+        greeter = TestsFlextCorePydanticDeclarations._Greeter()
+        card = TestsFlextCorePydanticDeclarations._GreetingCard(payload=greeter)
 
         assert card.payload is greeter
 
         with pytest.raises(m.ValidationError):
-            _GreetingCard(payload=object())
+            TestsFlextCorePydanticDeclarations._GreetingCard(payload=object())
 
-    def test_validate_as_builds_custom_type_from_native_model(self) -> None:
-        adapter: m.TypeAdapter[_Vector] = m.TypeAdapter(
-            Annotated[
-                _Vector,
-                m.ValidateAs(
-                    _VectorInput, lambda validated: _Vector(validated.x, validated.y)
-                ),
-            ]
+    @staticmethod
+    def test_validate_as_builds_custom_type_from_native_model() -> None:
+        adapter: m.TypeAdapter[TestsFlextCorePydanticDeclarations._Vector] = (
+            u.type_adapter(
+                Annotated[
+                    TestsFlextCorePydanticDeclarations._Vector,
+                    m.ValidateAs(
+                        TestsFlextCorePydanticDeclarations._VectorInput,
+                        lambda validated: TestsFlextCorePydanticDeclarations._Vector(
+                            validated.x,
+                            validated.y,
+                        ),
+                    ),
+                ],
+            )
         )
 
         vector = adapter.validate_python({"x": 1, "y": 2})
 
-        assert isinstance(vector, _Vector)
+        assert isinstance(vector, TestsFlextCorePydanticDeclarations._Vector)
         assert (vector.x, vector.y) == (1, 2)
 
         with pytest.raises(m.ValidationError):

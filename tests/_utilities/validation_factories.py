@@ -1,66 +1,50 @@
-"""Validation and failing service factory helpers for flext-core tests."""
+"""Validation and failing service factory helpers for flext-core tests.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, override
 
-from tests.constants import c
-
-from .services import TestsFlextUtilitiesServicesMixin
-from .user_factories import TestsFlextUtilitiesUserFactoriesMixin
+from tests import c
+from tests._utilities.services import TestsFlextUtilitiesServicesMixin
+from tests._utilities.user_factories import TestsFlextUtilitiesUserFactoriesMixin
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
 
 class TestsFlextUtilitiesValidationFactoriesMixin(
-    TestsFlextUtilitiesServicesMixin, TestsFlextUtilitiesUserFactoriesMixin
+    TestsFlextUtilitiesServicesMixin,
+    TestsFlextUtilitiesUserFactoriesMixin,
 ):
     """Validation and failing service factory helpers."""
-
-    class _FailingFactoryBase[T]:
-        """Shared constructor contract for failing-service factories."""
-
-        @classmethod
-        def build(cls, *, error_message: str = c.Tests.DEFAULT_ERROR_MESSAGE) -> T:
-            """Build a failing-service instance; subclasses provide the type."""
-            raise NotImplementedError
-
-        @classmethod
-        def build_batch(cls, size: int) -> list[T]:
-            """Build multiple failing-service instances."""
-            return [cls.build() for _ in range(size)]
-
-    class FailingServiceFactory(
-        _FailingFactoryBase[TestsFlextUtilitiesServicesMixin.FailingService]
-    ):
-        """Factory for FailingService."""
-
-        @classmethod
-        @override
-        def build(
-            cls, *, error_message: str = c.Tests.DEFAULT_ERROR_MESSAGE
-        ) -> TestsFlextUtilitiesValidationFactoriesMixin.FailingService:
-            """Build a FailingService instance."""
-            return TestsFlextUtilitiesValidationFactoriesMixin.FailingService(
-                error_message=error_message
-            )
 
     class GetUserServiceAutoFactory(
         TestsFlextUtilitiesUserFactoriesMixin.GetUserFactoryBase[
             TestsFlextUtilitiesServicesMixin.GetUserServiceAuto
-        ]
+        ],
     ):
         """Factory for GetUserServiceAuto."""
 
         @classmethod
         @override
         def build(
-            cls, *, user_id: str | None = None
+            cls,
+            *,
+            user_id: str | None = None,
         ) -> TestsFlextUtilitiesValidationFactoriesMixin.GetUserServiceAuto:
-            """Build a GetUserServiceAuto instance."""
+            """Build a GetUserServiceAuto instance.
+
+            Returns:
+                The resulting
+                    ``TestsFlextUtilitiesValidationFactoriesMixin.GetUserServiceAuto``.
+
+            """
             return TestsFlextUtilitiesValidationFactoriesMixin.GetUserServiceAuto(
-                user_id=cls._resolve_user_id(user_id)
+                user_id=cls._resolve_user_id(user_id),
             )
 
     class WordRotation:
@@ -71,7 +55,12 @@ class TestsFlextUtilitiesValidationFactoriesMixin(
 
         @classmethod
         def _next_word(cls) -> str:
-            """Get next word from rotation."""
+            """Get next word from rotation.
+
+            Returns:
+                The resulting ``str``.
+
+            """
             word = cls._words[cls._word_index % len(cls._words)]
             cls._word_index += 1
             return word
@@ -96,58 +85,71 @@ class TestsFlextUtilitiesValidationFactoriesMixin(
             value_input: str | None = None,
             min_length: int = c.Tests.MIN_LENGTH_DEFAULT,
         ) -> T:
-            """Build one validating-service instance."""
+            """Build one validating-service instance.
+
+            Returns:
+                The resulting ``T``.
+
+            """
             actual_value = value_input if value_input is not None else cls._next_word()
             return cls._make_instance(actual_value, min_length)
 
         @classmethod
         def build_batch(cls, size: int) -> list[T]:
-            """Build multiple validating-service instances."""
+            """Build multiple validating-service instances.
+
+            Returns:
+                The resulting ``list[T]``.
+
+            """
             return [cls.build() for _ in range(size)]
 
     class ValidatingServiceAutoFactory(
-        _ValidatingFactoryBase[TestsFlextUtilitiesServicesMixin.ValidatingServiceAuto]
+        _ValidatingFactoryBase[TestsFlextUtilitiesServicesMixin.ValidatingServiceAuto],
     ):
         """Factory for ValidatingServiceAuto."""
 
         @classmethod
         @override
         def _make_instance(
-            cls, value_input: str, min_length: int
+            cls,
+            value_input: str,
+            min_length: int,
         ) -> TestsFlextUtilitiesValidationFactoriesMixin.ValidatingServiceAuto:
-            """Construct a ValidatingServiceAuto instance."""
+            """Construct a ValidatingServiceAuto instance.
+
+            Returns:
+                The resulting
+                    ``TestsFlextUtilitiesValidationFactoriesMixin.ValidatingServiceAuto``.
+
+            """
             return TestsFlextUtilitiesValidationFactoriesMixin.ValidatingServiceAuto(
-                value_input=value_input, min_length=min_length
+                value_input=value_input,
+                min_length=min_length,
             )
 
     class ValidatingServiceFactory(
-        _ValidatingFactoryBase[TestsFlextUtilitiesServicesMixin.ValidatingService]
+        _ValidatingFactoryBase[TestsFlextUtilitiesServicesMixin.ValidatingService],
     ):
         """Factory for ``ValidatingService``."""
 
         @classmethod
         @override
         def _make_instance(
-            cls, value_input: str, min_length: int
+            cls,
+            value_input: str,
+            min_length: int,
         ) -> TestsFlextUtilitiesValidationFactoriesMixin.ValidatingService:
-            """Construct a ValidatingService instance."""
+            """Construct a ValidatingService instance.
+
+            Returns:
+                The resulting
+                    ``TestsFlextUtilitiesValidationFactoriesMixin.ValidatingService``.
+
+            """
             return TestsFlextUtilitiesValidationFactoriesMixin.ValidatingService(
-                value_input=value_input, min_length=min_length
-            )
-
-    class FailingServiceAutoFactory(
-        _FailingFactoryBase[TestsFlextUtilitiesServicesMixin.FailingServiceAuto]
-    ):
-        """Factory for FailingServiceAuto."""
-
-        @classmethod
-        @override
-        def build(
-            cls, *, error_message: str = c.Tests.DEFAULT_ERROR_MESSAGE
-        ) -> TestsFlextUtilitiesValidationFactoriesMixin.FailingServiceAuto:
-            """Build a FailingServiceAuto instance."""
-            return TestsFlextUtilitiesValidationFactoriesMixin.FailingServiceAuto(
-                error_message=error_message
+                value_input=value_input,
+                min_length=min_length,
             )
 
 

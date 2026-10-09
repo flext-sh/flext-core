@@ -1,10 +1,14 @@
-"""Numeric validation scenarios."""
+"""Numeric validation scenarios.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from tests.models import m
+from tests import m
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

@@ -1,4 +1,8 @@
-"""Structured exception contract fixtures."""
+"""Structured exception contract fixtures.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -7,10 +11,10 @@ from typing import TYPE_CHECKING
 
 from flext_tests import e
 
-from tests.constants import c
+from tests import c
 
 if TYPE_CHECKING:
-    from tests.typings import t
+    from tests import t
 
 type ErrorFactory = Callable[[], e.BaseError]
 
@@ -27,7 +31,9 @@ STRUCTURED_ERRORS: t.SequenceOf[
     (
         "configuration",
         lambda: e.ConfigurationError(
-            "Missing key", config_key="API_KEY", config_source="environment"
+            "Missing key",
+            config_key="API_KEY",
+            config_source="environment",
         ),
         c.ErrorDomain.INTERNAL.value,
         c.ErrorCode.CONFIGURATION_ERROR,
@@ -36,7 +42,10 @@ STRUCTURED_ERRORS: t.SequenceOf[
     (
         "connection",
         lambda: e.FlextConnectionError(
-            "Connect failed", host="db.internal", port=5432, timeout=5
+            "Connect failed",
+            host="db.internal",
+            port=5432,
+            timeout=5,
         ),
         c.ErrorDomain.NETWORK.value,
         c.ErrorCode.CONNECTION_ERROR,
@@ -45,7 +54,9 @@ STRUCTURED_ERRORS: t.SequenceOf[
     (
         "timeout",
         lambda: e.FlextTimeoutError(
-            "Timed out", timeout_seconds=30, operation="dispatch"
+            "Timed out",
+            timeout_seconds=30,
+            operation="dispatch",
         ),
         c.ErrorDomain.TIMEOUT.value,
         c.ErrorCode.TIMEOUT_ERROR,
@@ -54,7 +65,9 @@ STRUCTURED_ERRORS: t.SequenceOf[
     (
         "authentication",
         lambda: e.AuthenticationError(
-            "Auth failed", auth_method="token", user_id="u-1"
+            "Auth failed",
+            auth_method="token",
+            user_id="u-1",
         ),
         c.ErrorDomain.AUTH.value,
         c.ErrorCode.AUTHENTICATION_ERROR,
@@ -63,7 +76,10 @@ STRUCTURED_ERRORS: t.SequenceOf[
     (
         "authorization",
         lambda: e.AuthorizationError(
-            "Denied", user_id="u-1", resource="admin.panel", permission="write"
+            "Denied",
+            user_id="u-1",
+            resource="admin.panel",
+            permission="write",
         ),
         c.ErrorDomain.AUTH.value,
         c.ErrorCode.AUTHORIZATION_ERROR,
@@ -72,7 +88,9 @@ STRUCTURED_ERRORS: t.SequenceOf[
     (
         "not_found",
         lambda: e.NotFoundError(
-            "User missing", resource_type="User", resource_id="123"
+            "User missing",
+            resource_type="User",
+            resource_id="123",
         ),
         c.ErrorDomain.NOT_FOUND.value,
         c.ErrorCode.NOT_FOUND_ERROR,
@@ -93,7 +111,10 @@ STRUCTURED_ERRORS: t.SequenceOf[
     (
         "circuit_breaker",
         lambda: e.CircuitBreakerError(
-            "Circuit open", service_name="payments", failure_count=5, reset_timeout=60
+            "Circuit open",
+            service_name="payments",
+            failure_count=5,
+            reset_timeout=60,
         ),
         c.ErrorDomain.NETWORK.value,
         c.ErrorCode.EXTERNAL_SERVICE_ERROR,

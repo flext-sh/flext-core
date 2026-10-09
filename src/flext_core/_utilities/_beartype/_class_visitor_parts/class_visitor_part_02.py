@@ -1,15 +1,19 @@
-"""Class placement, MRO, and protocol tree governance."""
+"""Class placement, MRO, and protocol tree governance.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from ...._models.enforcement import FlextModelsEnforcement as me
-from ...._typings.base import FlextTypingBase as t
-from ._parts.class_visitor_part_02_01 import alias_first_violation
-from ._parts.class_visitor_part_02_02 import (
+from flext_core._models.enforcement import FlextModelsEnforcement as me
+from flext_core._typings.base import FlextTypingBase as t
+from flext_core._utilities import (
+    alias_first_violation,
     redundant_inner_violation,
     self_ref_violation,
 )
-from .class_visitor_part_01 import (
+from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_01 import (
     NO_VIOLATION,
     FlextUtilitiesBeartypeClassVisitor as FlextUtilitiesBeartypeClassVisitorPart01,
 )
@@ -18,7 +22,12 @@ from .class_visitor_part_01 import (
 class FlextUtilitiesBeartypeClassVisitor(FlextUtilitiesBeartypeClassVisitorPart01):
     @staticmethod
     def v_mro_shape(params: me.MroShapeParams, target: type) -> t.StrMapping | None:
-        """MRO_SHAPE — facade base ordering and inner-namespace redundancy."""
+        """MRO_SHAPE — facade base ordering and inner-namespace redundancy.
+
+        Returns:
+            The resulting ``t.StrMapping | None``.
+
+        """
         if not target.__bases__:
             return NO_VIOLATION
 

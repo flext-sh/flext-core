@@ -1,13 +1,17 @@
-"""Railway case helpers for flext-core tests."""
+"""Railway case helpers for flext-core tests.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from tests.constants import c
+from tests import c
 
 if TYPE_CHECKING:
-    from tests.typings import t
+    from tests import t
 
 
 class TestsFlextUtilitiesRailwayCasesMixin:

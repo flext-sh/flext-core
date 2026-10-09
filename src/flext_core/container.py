@@ -1,8 +1,10 @@
-"""Dependency injection container for the dispatcher-first CQRS stack.
+"""Truthful dependency container for the dispatcher-first CQRS stack.
 
-This module wraps dependency_injector behind a result-bearing API so handlers
-and decorators can register/resolve dependencies without importing the
-underlying infrastructure. Configuration stays isolated from dispatcher code.
+The container is the registry of the core runtime. It keeps one bookkeeping of
+named services, factories and resources, and every registration passes through
+one private write path: an empty, duplicate or reserved name raises
+``e.ValidationError`` instead of being ignored. Resolution surfaces ``r``
+(Result) so lookup failures stay explicit.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -12,24 +14,13 @@ from __future__ import annotations
 
 import inspect
 import sys
-import threading
 from collections.abc import Sequence
+from functools import partial
 from typing import TYPE_CHECKING, ClassVar, Self, TypeGuard, cast, overload, override
 
-from dependency_injector import containers as di_containers
-
-from flext_core import (
-    FlextContext,
-    FlextSettings,
-    FlextUtilitiesLogging,
-    c,
-    e,
-    m,
-    p,
-    r,
-    t,
-    u,
-)
+from flext_core import FlextSettings, FlextUtilitiesLogging, c, e, m, p, r, t, u
+from flext_core._container_parts import FlextContainerTestingOps
+from flext_core._models import FlextContext
 
 # NOTE (multi-agent): mro-i6nq.12 — the concrete public facade remains the
 # runtime implementation; p.ContainerType is only its structural contract.
@@ -38,19 +29,15 @@ if TYPE_CHECKING:
     from types import FrameType, ModuleType
 
 
-class FlextContainer(p.Container):
-    """Singleton DI container wrapping dependency_injector with result-bearing API.
+class FlextContainer(FlextContainerTestingOps, p.Container):
+    """Process-wide registry of services, factories and resources.
 
-    Services and factories remain local to the container, keeping dispatcher and
-    domain code free from infrastructure imports. All operations surface
-    ``r`` (Result) so failures are explicit. Thread-safe initialization
-    guarantees one global instance for runtime usage while allowing scoped
-    containers in tests.
+    One mapping holds every registration; the core runtime names
+    (``c.CONTAINER_RESERVED_NAMES``) are written only by the container itself
+    and stay out of ``has``/``names``/``drop``. Scoped containers built with
+    ``scope`` inherit the public registrations and bind their own core
+    services to their own settings and context.
     """
-
-    _global_instance: Self | None = None
-
-    _global_lock: threading.RLock = threading.RLock()
 
     _settings_type: ClassVar[p.SettingsType] = FlextSettings
 
@@ -62,21 +49,12 @@ class FlextContainer(p.Container):
 
     _user_overrides: m.ConfigMap
 
-    _di_bridge: di_containers.DeclarativeContainer
+    _initialized: bool = False
 
-    _di_services: di_containers.DynamicContainer
-
-    _di_resources: di_containers.DynamicContainer
-
-    _di_container: di_containers.DynamicContainer
-
-    _services: MutableMapping[str, m.ServiceRegistration]
-
-    _factories: MutableMapping[str, m.FactoryRegistration]
-
-    _resources: MutableMapping[str, m.ResourceRegistration]
-
-    _internal_registrations: set[str]
+    _registrations: MutableMapping[
+        str,
+        m.ServiceRegistration | m.FactoryRegistration | m.ResourceRegistration,
+    ]
 
     _global_config: m.ContainerConfig
 
@@ -90,6 +68,18 @@ class FlextContainer(p.Container):
                     cls._global_instance = instance
         return cls._global_instance
 
+    def __init__(
+        self,
+        *,
+        registration: m.ServiceRegistrationSpec | None = None,
+    ) -> None:
+        """Initialize the singleton once; later calls apply the explicit spec."""
+        if not self._initialized:
+            self.initialize_registrations(registration=registration)
+        elif registration is not None:
+            self._apply_explicit_bootstrap(registration)
+            self._write_spec(registration)
+
     @property
     @override
     def settings(self) -> p.Settings:
@@ -102,19 +92,6 @@ class FlextContainer(p.Container):
         """Execution context bound to this container."""
         return self._context
 
-    @property
-    @override
-    def provide(self) -> Callable[[str], t.RegisterableService]:
-        """Dependency-injector Provide helper scoped to the bridge."""
-        provider: Callable[[str], t.RegisterableService] = self._di_bridge.provide
-        return provider
-
-    @classmethod
-    def reset_for_testing(cls) -> None:
-        """Reset singleton instance for testing purposes."""
-        with cls._global_lock:
-            cls._global_instance = None
-
     @override
     def logger(
         self,
@@ -124,291 +101,303 @@ class FlextContainer(p.Container):
         service_version: str | None = None,
         correlation_id: str | None = None,
     ) -> p.Logger:
-        """Create a module logger for the specified runtime scope."""
+        """Create a module logger for the specified runtime scope.
+
+        Returns:
+            The resulting ``p.Logger``.
+
+        """
         _ = service_name, service_version, correlation_id
         logger: p.Logger = FlextUtilitiesLogging.fetch_logger(module_name)
         return logger
 
     @staticmethod
     def _matches_service_type[T: t.RegisterableService](
-        value: t.RegisterableService, expected: type[T]
+        value: t.RegisterableService,
+        expected: type[T],
     ) -> TypeGuard[T]:
-        """Narrow a resolved service through its structural runtime type."""
+        """Narrow a resolved service through its structural runtime type.
+
+        Returns:
+            The resulting ``TypeGuard[T]``.
+
+        """
         return isinstance(value, expected)
 
-    def _resolve_callable[T: t.RegisterableService](
-        self, callable_obj: t.FactoryCallable, kind: str, type_cls: type[T] | None
-    ) -> p.Result[T] | p.Result[t.RegisterableService]:
-        """Invoke a factory/resource callable and narrow to ``type_cls`` if given."""
+    def _write(
+        self,
+        name: str,
+        build: Callable[
+            [],
+            m.ServiceRegistration | m.FactoryRegistration | m.ResourceRegistration,
+        ],
+        *,
+        internal: bool = False,
+    ) -> Self:
+        """Apply the registration rules and store one validated record.
+
+        This is the only path that mutates the registrations. Public writes
+        reject empty, reserved and duplicate names; the container's own core
+        writes (``internal``) may only target reserved names.
+
+        Returns:
+            The resulting ``Self``.
+
+        Raises:
+            ValidationError: If ``not name``; or if ``reserved != internal``; or if
+                ``not internal and name in self._registrations``; or if a ``ValueError``
+                is caught.
+
+        """
+        if not name:
+            raise e.ValidationError(c.ERR_CONTAINER_NAME_EMPTY)
+        reserved = name in c.CONTAINER_RESERVED_NAMES
+        if reserved != internal:
+            raise e.ValidationError(c.ERR_CONTAINER_NAME_RESERVED.format(name=name))
+        if not internal and name in self._registrations:
+            raise e.ValidationError(c.ERR_CONTAINER_NAME_DUPLICATE.format(name=name))
+        try:
+            record = build()
+        except ValueError as exc:
+            raise e.ValidationError(
+                c.ERR_CONTAINER_REGISTRATION_FAILED.format(name=name, reason=exc),
+            ) from exc
+        self._registrations[name] = record
+        return self
+
+    def _write_spec(self, spec: m.ServiceRegistrationSpec) -> None:
+        """Write every service, factory and resource declared by a spec."""
+        for name, service in (spec.services or {}).items():
+            _ = self.bind(name, service)
+        for name, factory in (spec.factories or {}).items():
+            _ = self.factory(name, factory)
+        for name, resource in (spec.resources or {}).items():
+            _ = self.resource(name, resource)
+
+    @override
+    def bind(self, name: str, impl: t.RegisterableService) -> Self:
+        """Bind a concrete service instance or value.
+
+        Returns:
+            The resulting ``Self``.
+
+        """
+        return self._write(
+            name,
+            partial(m.ServiceRegistration, name=name, service=impl),
+        )
+
+    @override
+    def factory(self, name: str, impl: t.FactoryCallable) -> Self:
+        """Bind a factory callable invoked on every resolve.
+
+        Returns:
+            The resulting ``Self``.
+
+        """
+        return self._write(
+            name,
+            partial(m.FactoryRegistration, name=name, factory=impl),
+        )
+
+    @override
+    def resource(self, name: str, impl: t.ResourceCallable) -> Self:
+        """Bind a resource factory invoked on every resolve.
+
+        Returns:
+            The resulting ``Self``.
+
+        """
+        return self._write(
+            name,
+            partial(m.ResourceRegistration, name=name, factory=impl),
+        )
+
+    @staticmethod
+    def _resolve_callable(
+        callable_obj: t.FactoryCallable,
+        kind: str,
+    ) -> p.Result[t.RegisterableService]:
+        """Invoke a factory/resource callable and validate what it produced.
+
+        Returns:
+            The resulting ``p.Result[t.RegisterableService]``.
+
+        """
         try:
             resolved = callable_obj()
+            _ = u.normalize_registerable_service(resolved)
         except c.EXC_BROAD_RUNTIME as exc:
             return r[t.RegisterableService].from_result(
-                e.fail_operation(f"resolve {kind}", exc)
-            )
-        if type_cls is not None:
-            if self._matches_service_type(resolved, type_cls):
-                return r[T].ok(resolved)
-            return r[T].from_result(
-                e.fail_type_mismatch(type_cls.__name__, type(resolved).__name__)
+                e.fail_operation(
+                    f"resolve {kind}",
+                    exc,
+                    result_type=r[t.RegisterableService],
+                ),
             )
         return r[t.RegisterableService].ok(resolved)
 
     @overload
     def resolve[T: t.RegisterableService](
-        self, name: str, *, type_cls: type[T]
+        self,
+        name: str,
+        *,
+        type_cls: type[T],
     ) -> p.Result[T]: ...
 
     @overload
     def resolve(
-        self, name: str, *, type_cls: None = None
+        self,
+        name: str,
+        *,
+        type_cls: None = None,
     ) -> p.Result[t.RegisterableService]: ...
 
     @override
     def resolve[T: t.RegisterableService](
-        self, name: str, *, type_cls: type[T] | None = None
+        self,
+        name: str,
+        *,
+        type_cls: type[T] | None = None,
     ) -> p.Result[T] | p.Result[t.RegisterableService]:
-        """Resolve a registered service or factory by name."""
-        service_registration = self._services.get(name)
-        callable_registration = next(
-            (
-                (kind, registration.factory)
-                for kind, registrations in (
-                    ("factory", self._factories),
-                    ("resource", self._resources),
+        """Resolve a registered service, factory or resource by name.
+
+        Returns:
+            The resulting ``p.Result[T] | p.Result[t.RegisterableService]``.
+
+        """
+        match self._registrations.get(name):
+            case None:
+                return r[t.RegisterableService].from_result(
+                    e.fail_not_found("service", name),
                 )
-                if (registration := registrations.get(name)) is not None
+            case m.ServiceRegistration() as record:
+                result = r[t.RegisterableService].ok(record.service)
+            case m.FactoryRegistration() as record:
+                result = self._resolve_callable(record.factory, "factory")
+            case record:
+                result = self._resolve_callable(record.factory, "resource")
+        if type_cls is None or result.failure:
+            return result
+        if self._matches_service_type(result.value, type_cls):
+            return r[T].ok(result.value)
+        return r[T].from_result(
+            e.fail_type_mismatch(
+                type_cls.__name__,
+                type(result.value).__name__,
+                result_type=r[T],
             ),
-            None,
         )
-        if service_registration is not None:
-            service = service_registration.service
-            if type_cls is None:
-                result: p.Result[T] | p.Result[t.RegisterableService] = r[
-                    t.RegisterableService
-                ].ok(service)
-            elif isinstance(service, type_cls):
-                result = r[T].ok(service)
-            else:
-                result = r[T].from_result(
-                    e.fail_type_mismatch(type_cls.__name__, type(service).__name__)
-                )
-        elif callable_registration is not None:
-            kind, callable_obj = callable_registration
-            result = self._resolve_callable(callable_obj, kind, type_cls)
-        else:
-            result = r[t.RegisterableService].from_result(
-                e.fail_not_found("service", name)
-            )
-        return result
 
     @override
     def snapshot(self) -> m.ConfigMap:
-        """Return the merged settings exposed by this container."""
+        """Return the merged settings exposed by this container.
+
+        Returns:
+            The merged settings exposed by this container.
+
+        """
         config_dict = self._global_config.model_dump()
         return m.ConfigMap(
-            root={k: u.normalize_to_container(v) for k, v in config_dict.items()}
+            root={k: u.normalize_to_container(v) for k, v in config_dict.items()},
         )
 
     @override
     def has(self, name: str) -> bool:
-        """Return whether a public service, factory, or resource is registered."""
-        return (
-            (name in self._services and name not in self._internal_registrations)
-            or (name in self._factories and name not in self._internal_registrations)
-            or (name in self._resources and name not in self._internal_registrations)
-        )
+        """Return whether a public service, factory, or resource is registered.
 
-    def initialize_di_components(self) -> None:
-        """Initialize DI components (bridge, services, resources, container)."""
-        self._di_bridge, self._di_services, self._di_resources = (
-            u.DependencyIntegration.create_layered_bridge()
-        )
-        self._di_container = di_containers.DynamicContainer()
-        config_provider = self._di_bridge.settings
-        if not hasattr(config_provider, "override"):
-            error_msg = "Bridge settings provider missing"
-            raise TypeError(error_msg)
-        self._di_container.settings = config_provider
+        Returns:
+            Whether a public service, factory, or resource is registered.
+
+        """
+        return name in self._registrations and name not in c.CONTAINER_RESERVED_NAMES
+
+    @override
+    def names(self) -> t.StrSequence:
+        """List the public services, factories, and resources.
+
+        Returns:
+            The resulting ``t.StrSequence``.
+
+        """
+        return [name for name in self._registrations if self.has(name)]
 
     def initialize_registrations(
-        self, *, registration: m.ServiceRegistrationSpec | None = None
+        self,
+        *,
+        registration: m.ServiceRegistrationSpec | None = None,
     ) -> None:
-        """Initialize service registrations and configuration."""
+        """Reset the registrations from a spec and register the core services."""
         spec = registration or m.ServiceRegistrationSpec()
-        self._services = dict(u.normalize_service_registrations(spec.services) or {})
-        self._factories = dict(u.normalize_factory_registrations(spec.factories) or {})
-        self._resources = dict(u.normalize_resource_registrations(spec.resources) or {})
-        self._internal_registrations = {
-            name
-            for name in self._services
-            if name
-            in {
-                str(c.Directory.CONFIG),
-                str(c.ServiceName.LOGGER),
-                c.FIELD_CONTEXT,
-                str(c.ServiceName.COMMAND_BUS),
-            }
-        }
+        self._registrations = {}
         self._global_config = spec.container_config or m.ContainerConfig()
-        user_overrides_input = spec.user_overrides
-        if isinstance(user_overrides_input, m.ConfigMap):
-            self._user_overrides = user_overrides_input
-        elif user_overrides_input:
-            self._user_overrides = m.ConfigMap(
+        overrides = spec.user_overrides
+        self._user_overrides = (
+            overrides
+            if isinstance(overrides, m.ConfigMap)
+            else m.ConfigMap(
                 root={
                     k: list(v)
                     if isinstance(v, Sequence) and not isinstance(v, str | bytes)
                     else v
-                    for k, v in user_overrides_input.items()
-                }
+                    for k, v in (overrides or {}).items()
+                },
             )
-        else:
-            self._user_overrides = m.ConfigMap(root={})
+        )
         self._config = (
             spec.settings.clone()
             if spec.settings is not None
             else self._settings_type.fetch_global()
         )
-        context = spec.context
-        self._context = context if context is not None else self._context_type.create()
-
-    @override
-    def names(self) -> t.StrSequence:
-        """List explicitly registered services, factories, and resources."""
-        return [
-            name
-            for name in (
-                list(self._services.keys())
-                + list(self._factories.keys())
-                + list(self._resources.keys())
-            )
-            if name not in self._internal_registrations
-        ]
-
-    @override
-    def bind(self, name: str, impl: t.RegisterableService) -> Self:
-        """Bind a concrete service instance or value."""
-        if not name or self.has(name):
-            return self
-        self._internal_registrations.discard(name)
-        try:
-            self._update_registered_object_service(name, impl)
-        except c.EXC_ATTR_RUNTIME_TYPE:
-            del self._services[name]
-        return self
-
-    @override
-    def factory(self, name: str, impl: t.FactoryCallable) -> Self:
-        """Bind a factory callable."""
-        if not name:
-            return self
-        if self.has(name):
-            return self
-        self._internal_registrations.discard(name)
-        for di_ns in (self._di_services, self._di_resources):
-            if hasattr(di_ns, name):
-                delattr(di_ns, name)
-
-        def normalized_factory() -> t.RegisterableService:
-            raw = impl()
-            try:
-                _ = u.normalize_registerable_service(raw)
-            except ValueError as exc:
-                raise ValueError(
-                    c.ERR_CONTAINER_FACTORY_INVALID_REGISTERABLE.format(name=name)
-                ) from exc
-            return raw
-
-        self._factories[name] = m.FactoryRegistration(
-            name=name, factory=normalized_factory
+        self._context = (
+            spec.context if spec.context is not None else self._context_type.create()
         )
-        try:
-            u.DependencyIntegration.register_factory(
-                self._di_services,
-                name,
-                normalized_factory,
-                cache=self._global_config.enable_factory_caching,
-            )
-            setattr(self._di_bridge, name, getattr(self._di_services, name))
-        except c.EXC_ATTR_RUNTIME_TYPE:
-            del self._factories[name]
-        return self
-
-    @override
-    def resource(self, name: str, impl: t.ResourceCallable) -> Self:
-        """Bind a lifecycle-managed resource factory."""
-        if not name:
-            return self
-        if self.has(name):
-            return self
-        self._internal_registrations.discard(name)
-        for di_ns in (self._di_services, self._di_resources):
-            if hasattr(di_ns, name):
-                delattr(di_ns, name)
-        self._resources[name] = m.ResourceRegistration(name=name, factory=impl)
-        try:
-            u.DependencyIntegration.register_resource(self._di_resources, name, impl)
-            setattr(self._di_bridge, name, getattr(self._di_resources, name))
-        except c.EXC_ATTR_RUNTIME_TYPE:
-            del self._resources[name]
-        return self
-
-    def _update_registered_object_service(
-        self, name: str, service: t.RegisterableService
-    ) -> None:
-        """Replace or insert an object-backed service across local and DI state."""
-        self._services[name] = m.ServiceRegistration(
-            name=name, service=service, service_type=u.type_name(service)
-        )
-        for di_ns in (self._di_services, self._di_resources):
-            if hasattr(di_ns, name):
-                delattr(di_ns, name)
-        u.DependencyIntegration.register_object(self._di_services, name, service)
-        setattr(self._di_bridge, name, getattr(self._di_services, name))
-
-    def register_existing_providers(self) -> None:
-        """Hydrate the dynamic container with current registrations."""
-        cache = self._global_config.enable_factory_caching
-        for name, reg in self._services.items():
-            if not (
-                hasattr(self._di_services, name) or hasattr(self._di_container, name)
-            ):
-                u.DependencyIntegration.register_object(
-                    self._di_services, name, reg.service
-                )
-        for name, reg in self._factories.items():
-            if not (
-                hasattr(self._di_services, name) or hasattr(self._di_container, name)
-            ):
-                u.DependencyIntegration.register_factory(
-                    self._di_services, name, reg.factory, cache=cache
-                )
-        for name, reg in self._resources.items():
-            if not (
-                hasattr(self._di_resources, name) or hasattr(self._di_container, name)
-            ):
-                u.DependencyIntegration.register_resource(
-                    self._di_resources, name, reg.factory
-                )
+        self._write_spec(spec)
+        self.register_core_services()
+        self._initialized = True
 
     @override
     def register_core_services(self) -> None:
-        """Auto-register core services for easy DI access."""
-        if str(c.Directory.CONFIG) not in self._internal_registrations:
-            self.bind(c.Directory.CONFIG, self._config)
-            self._internal_registrations.add(str(c.Directory.CONFIG))
-        if str(c.ServiceName.LOGGER) not in self._internal_registrations:
-            self.factory(
-                c.ServiceName.LOGGER, lambda: u.fetch_logger(c.LOGGER_NAME_FLEXT_CORE)
-            )
-            self._internal_registrations.add(str(c.ServiceName.LOGGER))
-        if c.FIELD_CONTEXT not in self._internal_registrations:
-            self.bind(c.FIELD_CONTEXT, self._context)
-            self._internal_registrations.add(c.FIELD_CONTEXT)
-        if str(c.ServiceName.COMMAND_BUS) not in self._internal_registrations:
-            self.bind(c.ServiceName.COMMAND_BUS, u.build_dispatcher())
-            self._internal_registrations.add(str(c.ServiceName.COMMAND_BUS))
+        """Register the reserved core services that are not registered yet."""
+        core: tuple[
+            tuple[str, Callable[[], m.ServiceRegistration | m.FactoryRegistration]],
+            ...,
+        ] = (
+            (
+                c.Directory.CONFIG,
+                partial(
+                    m.ServiceRegistration,
+                    name=c.Directory.CONFIG,
+                    service=self._config,
+                ),
+            ),
+            (
+                c.ServiceName.LOGGER,
+                partial(
+                    m.FactoryRegistration,
+                    name=c.ServiceName.LOGGER,
+                    factory=partial(u.fetch_logger, c.LOGGER_NAME_FLEXT_CORE),
+                ),
+            ),
+            (
+                c.FIELD_CONTEXT,
+                partial(
+                    m.ServiceRegistration,
+                    name=c.FIELD_CONTEXT,
+                    service=self._context,
+                ),
+            ),
+            (
+                c.ServiceName.COMMAND_BUS,
+                lambda: m.ServiceRegistration(
+                    name=c.ServiceName.COMMAND_BUS,
+                    service=u.build_dispatcher(),
+                ),
+            ),
+        )
+        for name, build in core:
+            if name not in self._registrations:
+                _ = self._write(name, build, internal=True)
 
     @override
     def scope(
@@ -417,128 +406,97 @@ class FlextContainer(p.Container):
         subproject: str | None = None,
         registration: m.ServiceRegistrationSpec | None = None,
     ) -> Self:
-        """Create an isolated container scope with optional overrides."""
-        scope_registration = registration or m.ServiceRegistrationSpec()
-        settings_source = (
-            scope_registration.settings
-            if scope_registration.settings is not None
-            else self._config
-        )
-        base_config: p.Settings = settings_source.clone()
-        scoped_context = (
-            self.context.clone()
-            if scope_registration.context is None
-            else scope_registration.context
-        )
+        """Create an isolated scope inheriting the public registrations.
+
+        Registrations declared by ``registration`` override inherited names;
+        the scope binds its own core services to its own settings and context.
+
+        Returns:
+            The resulting ``Self``.
+
+        """
+        spec = registration or m.ServiceRegistrationSpec()
+        settings_source = spec.settings if spec.settings is not None else self._config
+        scoped_context = self.context.clone() if spec.context is None else spec.context
         if subproject:
             _ = scoped_context.set("subproject", subproject)
-        cloned_services = {
-            name: reg.model_copy(deep=False) for name, reg in self._services.items()
-        }
-        cloned_factories = {
-            name: reg.model_copy(deep=False) for name, reg in self._factories.items()
-        }
-        cloned_resources = {
-            name: reg.model_copy(deep=False) for name, reg in self._resources.items()
-        }
-        cloned_services.update(
-            u.normalize_service_registrations(scope_registration.services) or {}
-        )
-        cloned_factories.update(
-            u.normalize_factory_registrations(scope_registration.factories) or {}
-        )
-        cloned_resources.update(
-            u.normalize_resource_registrations(scope_registration.resources) or {}
-        )
+        inherited = {name: self._registrations[name] for name in self.names()}
         scoped = u.create_instance(self.__class__)
-        scoped.initialize_di_components()
         scoped.initialize_registrations(
-            registration=u.normalize_service_registration_spec(
-                m.ServiceRegistrationSpec(
-                    settings=base_config,
-                    context=scoped_context,
-                    services=cloned_services,
-                    factories=cloned_factories,
-                    resources=cloned_resources,
-                    user_overrides=self._user_overrides.model_copy(),
-                    container_config=self._global_config.model_copy(deep=True),
-                )
-            )
+            registration=m.ServiceRegistrationSpec(
+                settings=settings_source.clone(),
+                context=scoped_context,
+                services={
+                    **{
+                        name: record.service
+                        for name, record in inherited.items()
+                        if isinstance(record, m.ServiceRegistration)
+                    },
+                    **(spec.services or {}),
+                },
+                factories={
+                    **{
+                        name: record.factory
+                        for name, record in inherited.items()
+                        if isinstance(record, m.FactoryRegistration)
+                    },
+                    **(spec.factories or {}),
+                },
+                resources={
+                    **{
+                        name: record.factory
+                        for name, record in inherited.items()
+                        if isinstance(record, m.ResourceRegistration)
+                    },
+                    **(spec.resources or {}),
+                },
+                user_overrides=self._user_overrides.model_copy(),
+                container_config=self._global_config.model_copy(deep=True),
+            ),
         )
-        scoped.sync_config_to_di()
-        scoped.register_existing_providers()
-        scoped.register_core_services()
         return scoped
-
-    def sync_config_to_di(self) -> None:
-        """Synchronize FlextSettings to DI providers.Configuration."""
-        config_dict = self._global_config.model_dump()
-        config_map = m.ConfigMap(
-            root={k: u.normalize_to_container(v) for k, v in config_dict.items()}
-        )
-        _ = u.DependencyIntegration.bind_configuration(self._di_container, config_map)
 
     @override
     def drop(self, name: str) -> p.Result[bool]:
-        """Remove a service or factory registration by name."""
-        removed = False
-        if name in self._services:
-            del self._services[name]
-            removed = True
-        if name in self._factories:
-            del self._factories[name]
-            removed = True
-        if name in self._resources:
-            del self._resources[name]
-            removed = True
-        for di_ns in (self._di_services, self._di_resources):
-            if hasattr(di_ns, name):
-                delattr(di_ns, name)
-        if removed:
-            return r[bool].ok(True)
-        return r[bool].from_result(e.fail_not_found("service", name))
+        """Remove a public service, factory, or resource registration by name.
 
-    @override
-    def wire(
-        self,
-        *,
-        modules: t.SequenceOf[ModuleType] | None = None,
-        packages: t.StrSequence | None = None,
-        classes: t.SequenceOf[type] | None = None,
-    ) -> None:
-        """Wire modules/packages to the DI bridge for @inject/Provide usage."""
-        u.DependencyIntegration.wire(
-            self._di_container, modules=modules, packages=packages, classes=classes
-        )
+        Returns:
+            The resulting ``p.Result[bool]``.
+
+        """
+        if not self.has(name):
+            return r[bool].from_result(
+                e.fail_not_found("service", name, result_type=r[bool]),
+            )
+        del self._registrations[name]
+        return r[bool].ok(value=True)
 
     @override
     def dispatcher(self) -> p.Result[p.Dispatcher]:
-        """Resolve the canonical dispatcher / command bus."""
+        """Resolve the canonical dispatcher / command bus.
+
+        Returns:
+            The resulting ``p.Result[p.Dispatcher]``.
+
+        """
         result = self.resolve(c.ServiceName.COMMAND_BUS)
         if result.failure:
             return r[p.Dispatcher].from_result(
-                e.fail_not_found("dispatcher", c.ServiceName.COMMAND_BUS)
+                e.fail_not_found(
+                    "dispatcher",
+                    c.ServiceName.COMMAND_BUS,
+                    result_type=r[p.Dispatcher],
+                ),
             )
         if isinstance(result.value, p.Dispatcher):
             return r[p.Dispatcher].ok(result.value)
         return r[p.Dispatcher].from_result(
-            e.fail_type_mismatch("dispatcher", u.type_name(result.value))
+            e.fail_type_mismatch(
+                "dispatcher",
+                u.type_name(result.value),
+                result_type=r[p.Dispatcher],
+            ),
         )
-
-    def __init__(
-        self, *, registration: m.ServiceRegistrationSpec | None = None
-    ) -> None:
-        """Initialize the singleton container (idempotent)."""
-        if hasattr(self, "_di_container"):
-            init_registration = registration or m.ServiceRegistrationSpec()
-            self._apply_explicit_bootstrap(init_registration)
-            self.register_core_services()
-            return
-        self.initialize_di_components()
-        self.initialize_registrations(registration=registration)
-        self.sync_config_to_di()
-        self.register_existing_providers()
-        self.register_core_services()
 
     @classmethod
     def shared(
@@ -548,92 +506,110 @@ class FlextContainer(p.Container):
         context: p.Context | None = None,
         auto_register_factories: bool = False,
     ) -> Self:
-        """Return the canonical shared container instance."""
+        """Return the canonical shared container instance.
+
+        ``auto_register_factories`` registers every ``@d.factory()`` function
+        of the calling module; a caller that cannot be resolved to an imported
+        module raises ``e.ValidationError``.
+
+        Returns:
+            The canonical shared container instance.
+
+        """
         instance = cls()
         if settings is not None or context is not None:
             instance._apply_explicit_bootstrap(
-                m.ServiceRegistrationSpec(settings=settings, context=context)
+                m.ServiceRegistrationSpec(settings=settings, context=context),
             )
         if auto_register_factories:
-            frame = inspect.currentframe()
-            caller_module = FlextContainer._resolve_caller_module(frame)
-            if caller_module is not None:
-                FlextContainer._auto_register_module_factories(instance, caller_module)
+            caller_module = cls._resolve_caller_module(inspect.currentframe())
+            cls._auto_register_module_factories(instance, caller_module)
         return instance
 
     @staticmethod
-    def _resolve_caller_module(frame: FrameType | None) -> ModuleType | None:
-        """Resolve the module that called the factory via frame introspection."""
-        if not frame or not frame.f_back:
-            return None
-        module_name = str(frame.f_back.f_globals.get("__name__", "__main__"))
-        return sys.modules.get(module_name)
+    def _resolve_caller_module(frame: FrameType | None) -> ModuleType:
+        """Resolve the imported module that called ``shared`` or raise.
+
+        Returns:
+            The resulting ``ModuleType``.
+
+        Raises:
+            ValidationError: If ``module is None``.
+
+        """
+        caller = frame.f_back if frame is not None else None
+        module_name = caller.f_globals.get("__name__") if caller is not None else None
+        module = sys.modules.get(module_name) if isinstance(module_name, str) else None
+        if module is None:
+            raise e.ValidationError(c.ERR_CONTAINER_CALLER_UNRESOLVED)
+        return module
 
     @staticmethod
     def _auto_register_module_factories(
-        instance: p.Container, caller_module: ModuleType
+        instance: p.Container,
+        caller_module: ModuleType,
     ) -> None:
-        """Scan module for @d.factory() functions and register them."""
-        factories = u.scan_module(caller_module)
+        """Register every ``@d.factory()`` function of a module.
+
+        Each discovered function passes the validated factory record, so a
+        non-callable, duplicate or reserved factory raises ``e.ValidationError``.
+        """
         module_symbols = vars(caller_module)
-        for factory_name, factory_config in factories:
-            factory_func = module_symbols.get(factory_name)
-            if factory_func is None or not callable(factory_func):
-                continue
-            impl: t.FactoryCallable = cast("t.FactoryCallable", factory_func)
+        for factory_name, factory_config in u.scan_module(caller_module):
+            impl = cast("t.FactoryCallable", module_symbols[factory_name])
             _ = instance.factory(factory_config.name, impl)
 
     def _apply_explicit_bootstrap(
-        self, registration: m.ServiceRegistrationSpec
+        self,
+        registration: m.ServiceRegistrationSpec,
     ) -> None:
-        """Apply explicit bootstrap overrides to an existing singleton instance."""
+        """Rebind the core settings and context of an existing container."""
         if registration.settings is not None:
             self._config = registration.settings
-            self._update_registered_object_service(
-                c.Directory.CONFIG, registration.settings
+            _ = self._write(
+                c.Directory.CONFIG,
+                partial(
+                    m.ServiceRegistration,
+                    name=c.Directory.CONFIG,
+                    service=self._config,
+                ),
+                internal=True,
             )
-            self.sync_config_to_di()
         if registration.context is not None:
             self._context = registration.context
-            self._update_registered_object_service(
-                c.FIELD_CONTEXT, registration.context
+            _ = self._write(
+                c.FIELD_CONTEXT,
+                partial(
+                    m.ServiceRegistration,
+                    name=c.FIELD_CONTEXT,
+                    service=self._context,
+                ),
+                internal=True,
             )
 
     @override
     def clear(self) -> None:
-        """Clear all service and factory registrations."""
-        names_to_clear = {
-            *self._services.keys(),
-            *self._factories.keys(),
-            *self._resources.keys(),
-            str(c.Directory.CONFIG),
-            str(c.ServiceName.LOGGER),
-            c.FIELD_CONTEXT,
-            str(c.ServiceName.COMMAND_BUS),
-        }
-        for name in names_to_clear:
-            for di_ns in (self._di_services, self._di_resources):
-                if hasattr(di_ns, name):
-                    delattr(di_ns, name)
-        self._services.clear()
-        self._factories.clear()
-        self._resources.clear()
-        self._internal_registrations.clear()
+        """Clear every registration and re-register the core services."""
+        self._registrations.clear()
         self._config = self._settings_type.fetch_global()
         self.register_core_services()
 
     @override
     def apply(self, settings: t.UserOverridesMapping | None = None) -> Self:
-        """Apply user-provided overrides to container configuration."""
+        """Apply user-provided overrides to container configuration.
+
+        Returns:
+            The resulting ``Self``.
+
+        """
         if settings is None:
             return self
         merged = self._user_overrides.model_copy()
         merged.update({k: u.normalize_to_container(v) for k, v in settings.items()})
         self._user_overrides = merged
-        self._global_config = self._global_config.model_copy(
-            update=dict(merged), deep=True
+        self._global_config = m.ContainerConfig.model_validate(
+            self._global_config.model_dump() | dict(merged),
         )
-        self.sync_config_to_di()
         return self
 
 

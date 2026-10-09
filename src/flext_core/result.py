@@ -1,107 +1,20 @@
-"""Type-safe result type for operations."""
+"""Type-safe result type for operations.
+
+The composed private base lives in the ``_result`` family package
+(one top-level class per module, NS-000); this namespace module publishes
+the public concrete facade and the canonical ``r`` letter alias.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
-
-from ._protocols.result import FlextProtocolsResult as prt
-from ._result.base import JsonDict
-from ._result.behavior import FlextResultBehavior
-from ._result.composition import FlextResultComposition
-from ._result.construction import FlextResultConstruction, copy_result, ok_result
-from ._result.transforms import FlextResultTransforms
-from ._result.unwrap import FlextResultUnwrap
+from flext_core._result.result import _FlextResult
 
 
-class _FlextResult[T](
-    FlextResultUnwrap[T],
-    FlextResultComposition[T],
-    FlextResultTransforms[T],
-    FlextResultConstruction[T],
-    FlextResultBehavior[T],
-):
-    """Type-safe result with monadic railway-oriented operations."""
-
-    def __init__(
-        self,
-        error_code: str | None = None,
-        error_data: JsonDict | None = None,
-        *,
-        value: T | None = None,
-        error: str | None = None,
-        success: bool = True,
-        exception: BaseException | None = None,
-    ) -> None:
-        """Initialize a result with value, error, or exception state."""
-        super().__init__(
-            error_code=error_code,
-            error_data=error_data,
-            value=value,
-            error=error,
-            success=success,
-            exception=exception,
-        )
-
-
-if TYPE_CHECKING:
-    from typing import override
-
-    from flext_core import p, t
-
-    class FlextResult[T](_FlextResult[T]):
-        """Type-safe result with monadic railway-oriented operations."""
-
-        @classmethod
-        def ok[V](cls, value: V) -> FlextResult[V]:
-            """Create a successful result carrying ``value``."""
-            ...
-
-        @classmethod
-        @override
-        def fail(
-            cls,
-            error: str | None,
-            *,
-            error_code: str | None = None,
-            error_data: t.JsonMapping | t.ConfigModelInput | None = None,
-            exception: BaseException | None = None,
-        ) -> FlextResult[T]:
-            """Create a failed result with the given error payload."""
-            ...
-
-        @classmethod
-        @override
-        def fail_op(
-            cls, operation: str, exc: Exception | str | None = None
-        ) -> FlextResult[T]:
-            """Create a failed result for a named operation."""
-            ...
-
-        @classmethod
-        @override
-        def from_failure(cls, source: p.FailureLike) -> FlextResult[T]:
-            """Rebuild this concrete facade from any failed result-like."""
-            ...
-
-        @classmethod
-        def from_result[V](cls, source: p.Result[V]) -> FlextResult[V]:
-            """Copy an abstract result into this concrete facade."""
-            ...
-
-else:
-
-    class FlextResult[T](_FlextResult[T]):
-        """Type-safe result with monadic railway-oriented operations."""
-
-        @classmethod
-        def ok[V](cls, value: V) -> FlextResult[V]:
-            """Create a successful result carrying ``value``."""
-            return cast("FlextResult[V]", ok_result(cls, value))
-
-        @classmethod
-        def from_result[V](cls, source: prt.Result[V]) -> FlextResult[V]:
-            """Copy an abstract result into this concrete facade."""
-            return cast("FlextResult[V]", copy_result(cls, source))
+class FlextResult[T](_FlextResult[T]):
+    """Public concrete result facade; runtime and typing share one MRO."""
 
 
 r = FlextResult

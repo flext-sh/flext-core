@@ -10,25 +10,26 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from flext_core import p
+
 from pydantic import (
     AfterValidator,
     PlainSerializer,
     PlainValidator,
     SkipValidation,
+    TypeAdapter as PydanticTypeAdapter,
     WrapSerializer,
     WrapValidator,
-    computed_field,
-    create_model,
-    field_serializer,
-    field_validator,
     model_serializer,
-    model_validator,
     validate_call,
     with_config,
 )
 from pydantic_core import from_json, to_json, to_jsonable_python
 
-from .._models.pydantic import FlextModelsPydantic as mp
+from flext_core._models import FlextModelsPydantic as mp
 
 
 class FlextUtilitiesPydantic:
@@ -48,14 +49,19 @@ class FlextUtilitiesPydantic:
     PrivateAttr = staticmethod(mp.PrivateAttr)
     SkipValidation = SkipValidation
 
-    # Same unwrapped-class-attribute problem as Field/PrivateAttr above:
-    # pyright binds the bare decorator through the facade and infers the
-    # facade type for every decorated property (reportIndexIssue downstream).
-    computed_field = staticmethod(computed_field)
-    field_validator = field_validator
-    field_serializer = field_serializer
-    model_validator = model_validator
-    model_serializer = model_serializer
+    # Keep the models-layer overload set intact; staticmethod's generic
+    # constructor infers only its first arm. Runtime still uses the same factory.
+    if TYPE_CHECKING:
+        field_validator = mp.field_validator
+        field_serializer = mp.field_serializer
+        model_validator = mp.model_validator
+    else:
+        field_validator = staticmethod(mp.field_validator)
+        field_serializer = staticmethod(mp.field_serializer)
+        model_validator = staticmethod(mp.model_validator)
+
+    computed_field = staticmethod(mp.computed_field)
+    model_serializer = staticmethod(model_serializer)
 
     AfterValidator = AfterValidator
     BeforeValidator = mp.BeforeValidator
@@ -64,13 +70,21 @@ class FlextUtilitiesPydantic:
     PlainSerializer = PlainSerializer
     WrapSerializer = WrapSerializer
 
-    ConfigDict = mp.ConfigDict
-    FieldSerializationInfo = mp.FieldSerializationInfo
-    TypeAdapter = mp.TypeAdapter
-    create_model = create_model
-    validate_call = validate_call
-    with_config = with_config
+    if TYPE_CHECKING:
+        validate_call: p.ValidateCall = validate_call
+    else:
+        validate_call = staticmethod(validate_call)
+    with_config = staticmethod(with_config)
 
-    from_json = from_json
+    from_json = staticmethod(from_json)
     to_json = to_json
     to_jsonable_python = to_jsonable_python
+
+    # Adapter construction keeps pydantic's own constructor signature, which
+    # accepts every type form (classes, unions, ``Annotated`` and PEP 695
+    # aliases). ``m.TypeAdapter[T]`` is the annotation. ``TypeAdapter`` is the
+    # public constructor on this facade, the same class pydantic exports.
+    # ``type_adapter`` is that constructor under the function-shaped name
+    # already used by migrated callers.
+    TypeAdapter = PydanticTypeAdapter
+    type_adapter = TypeAdapter

@@ -13,12 +13,10 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-from flext_core import FlextRuntime, c, e, m, p, r, t
-
-from ..._models.containers import FlextModelsContainers
-from ..._models.pydantic import FlextModelsPydantic
-from ..guards import FlextUtilitiesGuards
-from ..guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core import c, e, m, p, r, t
+from flext_core._models import FlextModelsContainers, FlextModelsPydantic
+from flext_core._utilities import FlextUtilitiesGuards, FlextUtilitiesGuardsTypeCore
+from flext_core.runtime import FlextRuntime
 
 
 class FlextUtilitiesMapperAccess:
@@ -31,6 +29,10 @@ class FlextUtilitiesMapperAccess:
         """Normalize protocol-accessible values.
 
         Return canonical runtime/container shapes.
+
+        Returns:
+            The resulting ``t.JsonPayload | t.JsonValue``.
+
         """
         if value is None:
             # Preserve nulls so the extraction contract decides fail/default policy.
@@ -40,14 +42,39 @@ class FlextUtilitiesMapperAccess:
         model_dump_attr = getattr(value, "model_dump", None)
         if callable(model_dump_attr):
             return FlextRuntime.normalize_to_container(
-                m.ConfigMap.model_validate(model_dump_attr())
+                m.ConfigMap.model_validate(model_dump_attr()),
             )
+        return FlextUtilitiesMapperAccess._normalize_payload_value(value)
+
+    @staticmethod
+    def _normalize_payload_value(
+        value: t.JsonPayload | p.Model | p.HasModelDump | p.ValidatorSpec | None,
+    ) -> t.JsonPayload | t.JsonValue:
+        """Normalize the payload shapes that never expose ``model_dump``.
+
+        Returns:
+            The resulting ``t.JsonPayload | t.JsonValue``.
+
+        """
         if isinstance(value, p.ValidatorSpec):
             return str(value)
-        if isinstance(value, (*t.SCALAR_TYPES, Path)):
+        if isinstance(value, (*c.SCALAR_TYPES, Path)):
             return value
+        return FlextUtilitiesMapperAccess._container_or_string(value)
+
+    @staticmethod
+    def _container_or_string(
+        value: t.JsonPayload | p.Model | p.HasModelDump | p.ValidatorSpec,
+    ) -> t.JsonPayload | t.JsonValue:
+        """Return container values as-is and everything else stringified.
+
+        Returns:
+            The resulting ``t.JsonPayload | t.JsonValue``.
+
+        """
         if isinstance(
-            value, Mapping
+            value,
+            Mapping,
         ) and FlextUtilitiesGuardsTypeCore.all_container_mapping_values(value):
             return value
         if (
@@ -60,16 +87,22 @@ class FlextUtilitiesMapperAccess:
 
     @staticmethod
     def _resolve_raw_value(
-        raw: t.JsonPayload | None, key_part: str
+        raw: t.JsonPayload | None,
+        key_part: str,
     ) -> p.Result[t.JsonPayload]:
-        """Wrap a raw value, preserving null as an explicit failed contract."""
+        """Wrap a raw value, preserving null as an explicit failed contract.
+
+        Returns:
+            The resulting ``p.Result[t.JsonPayload]``.
+
+        """
         if raw is None:
             return r[t.JsonPayload].fail_op(
                 "resolve extracted value",
                 e.render_template(c.ERR_TEMPLATE_PATH_IS_NONE, path=key_part),
             )
         return r[t.JsonPayload].ok(
-            raw if FlextUtilitiesGuards.container(raw) else str(raw)
+            raw if FlextUtilitiesGuards.container(raw) else str(raw),
         )
 
     @staticmethod
@@ -81,9 +114,15 @@ class FlextUtilitiesMapperAccess:
         | None,
         key_part: str,
     ) -> p.Result[t.JsonPayload]:
-        """Get a raw value from a mapping, model, or protocol object."""
+        """Get a raw value from a mapping, model, or protocol object.
+
+        Returns:
+            The resulting ``p.Result[t.JsonPayload]``.
+
+        """
         not_found_result: p.Result[t.JsonPayload] = r[t.JsonPayload].fail_op(
-            "extract key", e.render_template(c.ERR_TEMPLATE_KEY_NOT_FOUND, key=key_part)
+            "extract key",
+            e.render_template(c.ERR_TEMPLATE_KEY_NOT_FOUND, key=key_part),
         )
         result: p.Result[t.JsonPayload]
         mapping_obj: t.MappingKV[str, t.JsonValue | t.JsonPayload] | None = None
@@ -94,7 +133,8 @@ class FlextUtilitiesMapperAccess:
         if mapping_obj is not None:
             result = (
                 FlextUtilitiesMapperAccess._resolve_raw_value(
-                    mapping_obj[key_part], key_part
+                    mapping_obj[key_part],
+                    key_part,
                 )
                 if key_part in mapping_obj
                 else r[t.JsonPayload].fail_op(
@@ -105,7 +145,8 @@ class FlextUtilitiesMapperAccess:
             )
         elif hasattr(current, key_part):
             result = FlextUtilitiesMapperAccess._resolve_raw_value(
-                getattr(current, key_part), key_part
+                getattr(current, key_part),
+                key_part,
             )
         else:
             result = not_found_result

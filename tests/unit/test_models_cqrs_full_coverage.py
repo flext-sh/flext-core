@@ -4,15 +4,16 @@ These tests exercise only the observable public surface of the CQRS models
 (``Pagination``, ``Query``, ``Command``, ``Event``, ``Handler`` and the
 ``FlextMessage`` discriminated union) through the ``m`` / ``c`` facades. No
 private attributes, internal collaborators, or module internals are touched.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
 import pytest
-from pydantic import ValidationError
 
-from tests.constants import c
-from tests.models import m
+from tests import c, m, u
 
 
 class TestsFlextCoreModelsCqrs:
@@ -21,45 +22,61 @@ class TestsFlextCoreModelsCqrs:
     # ------------------------------------------------------------------ #
     # Pagination                                                         #
     # ------------------------------------------------------------------ #
-    def test_pagination_applies_documented_defaults(self) -> None:
+    @staticmethod
+    def test_pagination_applies_documented_defaults() -> None:
+        """Test pagination applies documented defaults."""
         page = m.Pagination()
 
         assert page.page == c.DEFAULT_RETRY_DELAY_SECONDS
         assert page.size == c.DEFAULT_PAGE_SIZE
 
+    @staticmethod
     @pytest.mark.parametrize(("page", "size"), [(1, 10), (3, 11), (2, 50), (10, 100)])
-    def test_pagination_limit_equals_size(self, page: int, size: int) -> None:
+    def test_pagination_limit_equals_size(page: int, size: int) -> None:
+        """Test pagination limit equals size."""
         assert m.Pagination(page=page, size=size).limit == size
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("page", "size", "expected_offset"),
         [(1, 10, 0), (2, 10, 10), (3, 11, 22), (5, 20, 80)],
     )
     def test_pagination_offset_is_derived_from_page_and_size(
-        self, page: int, size: int, expected_offset: int
+        page: int,
+        size: int,
+        expected_offset: int,
     ) -> None:
+        """Test pagination offset is derived from page and size."""
         assert m.Pagination(page=page, size=size).offset == expected_offset
 
-    def test_pagination_exposes_computed_fields_in_dump(self) -> None:
+    @staticmethod
+    def test_pagination_exposes_computed_fields_in_dump() -> None:
+        """Test pagination exposes computed fields in dump."""
         dumped = m.Pagination(page=2, size=20).model_dump()
 
         assert dumped["limit"] == 20
         assert dumped["offset"] == 20
 
+    @staticmethod
     @pytest.mark.parametrize("size", [c.MAX_PAGE_SIZE + 1, 5000])
-    def test_pagination_rejects_size_above_maximum(self, size: int) -> None:
-        with pytest.raises(ValidationError):
+    def test_pagination_rejects_size_above_maximum(size: int) -> None:
+        """Test pagination rejects size above maximum."""
+        with pytest.raises(m.ValidationError):
             m.Pagination(size=size)
 
+    @staticmethod
     @pytest.mark.parametrize(("page", "size"), [(0, 10), (1, 0), (-1, 10)])
-    def test_pagination_rejects_non_positive_bounds(self, page: int, size: int) -> None:
-        with pytest.raises(ValidationError):
+    def test_pagination_rejects_non_positive_bounds(page: int, size: int) -> None:
+        """Test pagination rejects non positive bounds."""
+        with pytest.raises(m.ValidationError):
             m.Pagination(page=page, size=size)
 
     # ------------------------------------------------------------------ #
     # Query pagination coercion                                          #
     # ------------------------------------------------------------------ #
-    def test_query_defaults_to_a_pagination_instance(self) -> None:
+    @staticmethod
+    def test_query_defaults_to_a_pagination_instance() -> None:
+        """Test query defaults to a pagination instance."""
         query = m.Query()
 
         assert isinstance(query.pagination, m.Pagination)
@@ -67,7 +84,9 @@ class TestsFlextCoreModelsCqrs:
         assert query.pagination.size == c.DEFAULT_PAGE_SIZE
         assert query.message_type == "query"
 
-    def test_query_coerces_pagination_mapping_including_stringified_ints(self) -> None:
+    @staticmethod
+    def test_query_coerces_pagination_mapping_including_stringified_ints() -> None:
+        """Test query coerces pagination mapping including stringified ints."""
         query = m.Query.model_validate({
             "pagination": {"page": "4", "size": "20"},
             "filters": {},
@@ -77,13 +96,17 @@ class TestsFlextCoreModelsCqrs:
         assert query.pagination.page == 4
         assert query.pagination.size == 20
 
-    def test_query_uses_default_pagination_when_none_supplied(self) -> None:
+    @staticmethod
+    def test_query_uses_default_pagination_when_none_supplied() -> None:
+        """Test query uses default pagination when none supplied."""
         query = m.Query.model_validate({"pagination": None, "filters": {}})
 
         assert isinstance(query.pagination, m.Pagination)
         assert query.pagination.page == c.DEFAULT_RETRY_DELAY_SECONDS
 
-    def test_query_falls_back_to_default_pagination_on_invalid_input(self) -> None:
+    @staticmethod
+    def test_query_falls_back_to_default_pagination_on_invalid_input() -> None:
+        """Test query falls back to default pagination on invalid input."""
         query = m.Query.model_validate({
             "pagination": {"size": c.MAX_PAGE_SIZE + 1},
             "filters": {},
@@ -93,7 +116,10 @@ class TestsFlextCoreModelsCqrs:
         # valid default Pagination rather than propagating the error.
         assert query.pagination.size == c.DEFAULT_PAGE_SIZE
 
-    def test_query_subclass_pagination_override_is_honored(self) -> None:
+    @staticmethod
+    def test_query_subclass_pagination_override_is_honored() -> None:
+        """Test query subclass pagination override is honored."""
+
         class CustomQuery(m.Query):
             class Pagination(m.Pagination):
                 pass
@@ -110,20 +136,28 @@ class TestsFlextCoreModelsCqrs:
     # ------------------------------------------------------------------ #
     # Command / Event identity                                           #
     # ------------------------------------------------------------------ #
-    def test_command_has_default_type_and_generated_id(self) -> None:
+    @staticmethod
+    def test_command_has_default_type_and_generated_id() -> None:
+        """Test command has default type and generated id."""
         command = m.Command()
 
         assert command.message_type == "command"
         assert command.command_type == c.DEFAULT_COMMAND_TYPE
         assert command.command_id.startswith("cmd_")
 
-    def test_command_generates_unique_ids(self) -> None:
+    @staticmethod
+    def test_command_generates_unique_ids() -> None:
+        """Test command generates unique ids."""
         assert m.Command().command_id != m.Command().command_id
 
-    def test_command_accepts_explicit_type(self) -> None:
+    @staticmethod
+    def test_command_accepts_explicit_type() -> None:
+        """Test command accepts explicit type."""
         assert m.Command(command_type="run").command_type == "run"
 
-    def test_event_has_event_type_and_generated_id(self) -> None:
+    @staticmethod
+    def test_event_has_event_type_and_generated_id() -> None:
+        """Test event has event type and generated id."""
         event = m.Event(event_type="created", aggregate_id="agg-1")
 
         assert event.message_type == "event"
@@ -133,9 +167,13 @@ class TestsFlextCoreModelsCqrs:
     # ------------------------------------------------------------------ #
     # Handler                                                            #
     # ------------------------------------------------------------------ #
-    def test_handler_stores_identity_and_defaults_mode_to_command(self) -> None:
+    @staticmethod
+    def test_handler_stores_identity_and_defaults_mode_to_command() -> None:
+        """Test handler stores identity and defaults mode to command."""
         handler = m.Handler(
-            handler_type=c.HandlerType.QUERY, handler_id="h-1", handler_name="handler"
+            handler_type=c.HandlerType.QUERY,
+            handler_id="h-1",
+            handler_name="handler",
         )
 
         assert handler.handler_id == "h-1"
@@ -143,26 +181,33 @@ class TestsFlextCoreModelsCqrs:
         assert handler.handler_type == c.HandlerType.QUERY
         assert handler.handler_mode == c.HandlerType.COMMAND
 
+    @staticmethod
     @pytest.mark.parametrize(
         "handler_type",
         [c.HandlerType.COMMAND, c.HandlerType.QUERY, c.HandlerType.EVENT],
     )
     def test_handler_accepts_each_handler_type(
-        self, handler_type: c.HandlerType
+        handler_type: c.HandlerType,
     ) -> None:
+        """Test handler accepts each handler type."""
         handler = m.Handler(handler_type=handler_type, handler_id="h", handler_name="n")
 
         assert handler.handler_type == handler_type
 
-    def test_handler_rejects_empty_identity(self) -> None:
-        with pytest.raises(ValidationError):
+    @staticmethod
+    def test_handler_rejects_empty_identity() -> None:
+        """Test handler rejects empty identity."""
+        with pytest.raises(m.ValidationError):
             m.Handler(
-                handler_type=c.HandlerType.COMMAND, handler_id="", handler_name=""
+                handler_type=c.HandlerType.COMMAND,
+                handler_id="",
+                handler_name="",
             )
 
     # ------------------------------------------------------------------ #
     # FlextMessage discriminated union                                   #
     # ------------------------------------------------------------------ #
+    @staticmethod
     @pytest.mark.parametrize(
         ("payload", "expected_cls"),
         [
@@ -179,9 +224,11 @@ class TestsFlextCoreModelsCqrs:
         ],
     )
     def test_flext_message_union_discriminates_on_message_type(
-        self, payload: dict[str, str | dict[str, str]], expected_cls: type
+        payload: dict[str, str | dict[str, str]],
+        expected_cls: type,
     ) -> None:
-        adapter = m.TypeAdapter(m.FlextMessage.__value__)
+        """Test flext message union discriminates on message type."""
+        adapter = u.type_adapter(m.FlextMessage.__value__)
 
         parsed = adapter.validate_python(payload)
 

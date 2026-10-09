@@ -1,4 +1,8 @@
-"""Container configuration tests."""
+"""Container configuration tests.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -9,21 +13,24 @@ from flext_tests import tm
 
 from flext_core import FlextSettings
 from flext_core.container import FlextContainer
-from tests.models import m
+from tests import m
 
 if TYPE_CHECKING:
-    from tests.protocols import p
-    from tests.typings import t
+    from tests import p, t
 
 
 class TestsFlextCoreContainerConfig:
     """Exercise the public container configuration contract."""
 
     @pytest.mark.parametrize(
-        "settings", m.Tests.ContainerScenarios.CONFIG_SCENARIOS, ids=str
+        "settings",
+        m.Tests.ContainerScenarios.CONFIG_SCENARIOS,
+        ids=str,
     )
+    @staticmethod
     def test_configure_container(
-        self, settings: t.ScalarMapping, clean_container: p.Container
+        settings: t.ScalarMapping,
+        clean_container: p.Container,
     ) -> None:
         """Test container configuration."""
         container = clean_container
@@ -47,7 +54,9 @@ class TestsFlextCoreContainerConfig:
                 tm.that(
                     key in settings_result.root,
                     eq=False,
-                    msg=f"Unknown settings key {key} must not leak into public settings",
+                    msg=(
+                        f"Unknown settings key {key} must not leak into public settings"
+                    ),
                 )
         if not settings:
             tm.that(
@@ -56,7 +65,8 @@ class TestsFlextCoreContainerConfig:
                 msg="Empty configure() input must preserve existing settings",
             )
 
-    def test_with_config_fluent(self, clean_container: p.Container) -> None:
+    @staticmethod
+    def test_with_config_fluent(clean_container: p.Container) -> None:
         """Test fluent interface for configuration."""
         container = clean_container
         settings: t.ScalarMapping = {"max_services": 32}
@@ -84,7 +94,8 @@ class TestsFlextCoreContainerConfig:
             msg="configure() must expose applied public settings values",
         )
 
-    def test_get_settings(self) -> None:
+    @staticmethod
+    def test_get_settings() -> None:
         """Test retrieving current settings."""
         container = FlextContainer()
         settings = container.snapshot()
@@ -105,8 +116,9 @@ class TestsFlextCoreContainerConfig:
             msg="Config must contain max_services",
         )
 
+    @staticmethod
     def test_apply_none_is_noop_returning_self(
-        self, clean_container: p.Container
+        clean_container: p.Container,
     ) -> None:
         """apply(None) must be a no-op that preserves settings and returns self."""
         container = clean_container
@@ -123,7 +135,8 @@ class TestsFlextCoreContainerConfig:
             msg="apply(None) must leave existing settings unchanged",
         )
 
-    def test_apply_is_idempotent(self, clean_container: p.Container) -> None:
+    @staticmethod
+    def test_apply_is_idempotent(clean_container: p.Container) -> None:
         """Applying the same overrides twice must yield identical public settings."""
         container = clean_container
         settings: t.ScalarMapping = {"max_services": 16, "enable_singleton": True}
@@ -140,7 +153,8 @@ class TestsFlextCoreContainerConfig:
             msg="Idempotent apply must retain the applied value",
         )
 
-    def test_config_property(self) -> None:
+    @staticmethod
+    def test_config_property() -> None:
         """Test accessing settings via property."""
         container = FlextContainer()
         settings = container.settings

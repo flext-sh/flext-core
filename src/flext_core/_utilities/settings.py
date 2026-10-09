@@ -19,7 +19,7 @@ import os
 # under TYPE_CHECKING raises NameError at import (test_beartype_engine_claw_packages).
 # Do NOT "optimize" this into a TYPE_CHECKING block. Same precedent: model_options.py,
 # model_runtime.py. Contact owner of bead ai-hub-mkzg before touching this line.
-from flext_core import FlextProtocols as p, FlextTypes as t, r
+from flext_core import p, r, t
 
 
 class FlextUtilitiesSettings:
@@ -31,20 +31,32 @@ class FlextUtilitiesSettings:
     """
 
     @staticmethod
-    def resolve_process_environment() -> dict[str, str]:
-        """Resolve the inherited process environment as a plain string mapping."""
+    def resolve_process_environment() -> t.StrMapping:
+        """Resolve the inherited process environment as a plain string mapping.
+
+        Returns:
+            The resulting ``t.StrMapping``.
+
+        """
         return dict(os.environ)
 
     @staticmethod
     def register_factory(
-        container: p.Container, name: str, factory: t.FactoryCallable
+        container: p.Container,
+        name: str,
+        factory: t.FactoryCallable,
     ) -> p.Result[bool]:
-        """Register factory in DI container, verifying resolution succeeds."""
+        """Register factory in DI container, verifying resolution succeeds.
+
+        Returns:
+            The resulting ``p.Result[bool]``.
+
+        """
         _ = container.factory(name, factory)
         resolved = container.resolve(name)
         if resolved.failure:
             return r[bool].from_failure(resolved)
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
 
 __all__: t.MutableSequenceOf[str] = ["FlextUtilitiesSettings"]

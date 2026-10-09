@@ -271,7 +271,7 @@ help: ## Show commands
 
 	$(Q)printf "  %-14s %s\n" "check" "Run lint gates (CHECK_GATES= to select)"
 
-	$(Q)printf "  %-14s %s\n" "fix-enforcement" "Auto-fix enforcement violations (APPLY=1, PROJECTS=..., RULES=...)"
+	$(Q)printf "  %-14s %s\n" "fix-enforcement" "Auto-fix enforcement violations (PROJECTS=..., RULES=..., what=...)"
 
 	$(Q)printf "  %-14s %s\n" "scan" "Run all security checks"
 
@@ -331,8 +331,6 @@ help: ## Show commands
 	$(Q)echo "  DOCS_PHASE=all|generate|fix|audit|build|validate"
 
 	$(Q)echo "  FIX=1                       Auto-fix supported gates"
-
-	$(Q)echo "  APPLY=1                     Apply enforcement fixes (default dry-run)"
 
 	$(Q)echo "  PROJECTS=p1,p2              Scope fix-enforcement to projects"
 
@@ -466,14 +464,13 @@ _check_impl:
 	$(PROJECT_INFRA_CHECK) run --repository "$(REPOSITORY_ROOT)" --gates "$$gates" --reports-dir "$(CURDIR)/.reports/check" --projects "$$project_key" $(if $(filter 1,$(FIX)),$(if $(filter 1,$(CHECK_ONLY)),,--fix),) $(if $(filter 1,$(CHECK_ONLY)),--check-only,) $(if $(RUFF_ARGS),--ruff-args "$(RUFF_ARGS)",) $(if $(PYRIGHT_ARGS),--pyright-args "$(PYRIGHT_ARGS)",); \
 	exit $$?
 
-fix-enforcement: ## Auto-fix enforcement-catalog violations (APPLY=1 to apply, PROJECTS=..., RULES=...)
+fix-enforcement: ## Auto-fix enforcement-catalog violations (PROJECTS=..., RULES=..., what=...)
 	$(call _run_verb_hooks,pre,fix-enforcement,$(WHAT))
 	$(call _run_verb_body,fix-enforcement,_fix_enforcement_impl)
 	$(call _run_verb_hooks,post,fix-enforcement,$(WHAT))
 
 _fix_enforcement_impl:
-	$(Q)apply_flag=""; \
-	if [ "$(APPLY)" = "1" ]; then apply_flag="--apply"; fi; \
+	$(Q)apply_flag="--apply"; \
 	projects_arg=""; \
 	if [ -n "$(PROJECTS)" ]; then projects_arg="--projects $(PROJECTS)"; fi; \
 	rules_arg=""; \

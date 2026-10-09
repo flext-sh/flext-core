@@ -6,18 +6,20 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from ._protocols.base import FlextProtocolsBase
-from ._protocols.config import FlextProtocolsConfig
-from ._protocols.container import FlextProtocolsContainer
-from ._protocols.context import FlextProtocolsContext
-from ._protocols.handler import FlextProtocolsHandler
-from ._protocols.logging import FlextProtocolsLogging
-from ._protocols.project_metadata import FlextProtocolsProjectMetadata
-from ._protocols.pydantic import FlextProtocolsPydantic
-from ._protocols.registry import FlextProtocolsRegistry
-from ._protocols.result import FlextProtocolsResult
-from ._protocols.service import FlextProtocolsService
-from ._protocols.settings import FlextProtocolsSettings
+from flext_core._protocols import (
+    FlextProtocolsBase,
+    FlextProtocolsConfig,
+    FlextProtocolsContainer,
+    FlextProtocolsContext,
+    FlextProtocolsHandler,
+    FlextProtocolsLogging,
+    FlextProtocolsProjectMetadata,
+    FlextProtocolsPydantic,
+    FlextProtocolsRegistry,
+    FlextProtocolsResult,
+    FlextProtocolsService,
+    FlextProtocolsSettings,
+)
 
 
 class FlextProtocols(
@@ -38,6 +40,5 @@ class FlextProtocols(
 
 
 p = FlextProtocols
-
 
 __all__: list[str] = ["FlextProtocols", "p"]

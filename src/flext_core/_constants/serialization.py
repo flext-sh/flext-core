@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum, unique
-from typing import Final
+from typing import ClassVar
 
 
 class FlextConstantsSerialization:
@@ -33,7 +33,10 @@ class FlextConstantsSerialization:
 
     @unique
     class DecodeErrorHandler(StrEnum):
-        """Python bytes.decode error-handler identifiers (SSOT for ``errors=`` param)."""
+        """Python bytes.decode error-handler identifiers.
+
+        SSOT for the ``errors=`` parameter.
+        """
 
         REPLACE = "replace"
         IGNORE = "ignore"
@@ -41,5 +44,5 @@ class FlextConstantsSerialization:
         BACKSLASHREPLACE = "backslashreplace"
         XMLCHARREFREPLACE = "xmlcharrefreplace"
 
-    DEFAULT_ENCODING: Final[str] = "utf-8"
-    DEFAULT_DECODE_ERROR_HANDLER: Final[str] = DecodeErrorHandler.REPLACE
+    DEFAULT_ENCODING: ClassVar[str] = "utf-8"
+    DEFAULT_DECODE_ERROR_HANDLER: ClassVar[str] = DecodeErrorHandler.REPLACE

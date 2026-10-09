@@ -15,24 +15,25 @@ RUN pacman -Syu --noconfirm --needed \
     && useradd --create-home --shell /bin/bash runner
 # End SECTION: base packages
 
-# === SECTION: managed tool bootstrap (managed) ===
-# Source: generated bin/mise + .mise.toml
-# The canonical make setup verb below owns the official newest-Mise bootstrap
-# and every latest tool installation as the same unprivileged runtime user.
-# The setup RUN receives Mise's credential only through a BuildKit secret.
-# Never persist build credentials in ARG, ENV, layers, or image configuration.
-ENV HOME=/home/runner \
-    XDG_DATA_HOME=/home/runner/.local/share \
-    XDG_CACHE_HOME=/home/runner/.cache \
-    XDG_STATE_HOME=/home/runner/.local/state \
-    MISE_DATA_DIR=/home/runner/.local/share/mise
+# === SECTION: native mise bootstrap (managed) ===
+# Source: template (clean-machine native mise provisioning)
+# mise self-manages: the host installer only provides one mise binary, and
+# `make setup` provisions the pinned github:jdx/mise release plus every tool
+# from the committed mise.lock as the same unprivileged runtime user.
+ARG RUNNER_USER=runner
+ENV HOME=/home/${RUNNER_USER}
+ENV XDG_DATA_HOME=${HOME}/.local/share \
+    XDG_CACHE_HOME=${HOME}/.cache \
+    XDG_STATE_HOME=${HOME}/.local/state
+RUN curl -fsSL https://mise.run | sh
+ENV PATH="${XDG_DATA_HOME}/mise/shims:${HOME}/.local/bin:${PATH}"
 WORKDIR /workspace
 RUN --mount=type=bind,source=.,target=/source,ro \
     cp -R /source/. /workspace/ \
     && chown -R runner:runner /workspace
+COPY --from=git --chown=runner:runner . /workspace/.git/
 USER runner
-ENV PATH="/home/runner/.local/share/mise/shims:${PATH}"
-# End SECTION: managed tool bootstrap
+# End SECTION: native mise bootstrap
 
 # === SECTION: bootstrap proof (managed) ===
 # Source: template (clean-machine bootstrap through the canonical verb)
@@ -42,8 +43,10 @@ ENV PATH="/home/runner/.local/share/mise/shims:${PATH}"
 # revision wrapped this in `set +e` and soft-passed whenever the output
 # mentioned uv.lock/flext-core, which turned the proof into a bypass -- a
 # broken bootstrap still produced a green image.
+# The setup RUN receives GitHub's credential only through a BuildKit secret.
+# Never persist build credentials in ARG, ENV, layers, or image configuration.
 ENV CI=Y
-RUN --mount=type=secret,id=github_token,env=MISE_GITHUB_TOKEN,required=true \
+RUN --mount=type=secret,id=github_token,env=GITHUB_TOKEN,required=true \
     make setup
 # End SECTION: bootstrap proof
 

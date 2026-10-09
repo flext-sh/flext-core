@@ -11,19 +11,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from flext_core import c, r, u
-
-from .._utilities.handler import FlextUtilitiesHandler
-from .flexthandlers_part_03 import FlextHandlers as FlextHandlersPart03
-
-if TYPE_CHECKING:
-    from flext_core import p, t
+from flext_core import c, p, r, t, u
+from flext_core._handlers_parts.flexthandlers_part_03 import (
+    FlextHandlers as FlextHandlersPart03,
+)
+from flext_core._utilities import FlextUtilitiesHandler
 
 
 class FlextHandlers[MessageT_contra, ResultT](
-    FlextHandlersPart03[MessageT_contra, ResultT]
+    FlextHandlersPart03[MessageT_contra, ResultT],
 ):
     def handle(self, message: MessageT_contra) -> p.Result[ResultT]:
         """Handle the message - abstract method to be implemented by subclasses.
@@ -43,29 +39,49 @@ class FlextHandlers[MessageT_contra, ResultT](
             be handled separately in the validate() method and executed via execute().
 
         """
-        _ = message
+        _ = self, message
         raise NotImplementedError
 
     def pop_context(self) -> p.Result[p.RootDict[t.JsonPayload]]:
-        """Pop execution context from the local handler stack."""
+        """Pop execution context from the local handler stack.
+
+        Returns:
+            The resulting ``p.Result[p.RootDict[t.JsonPayload]]``.
+
+        """
         result = FlextUtilitiesHandler.pop_context(self._runtime_state)
         if result.failure:
-            return r.fail_op("pop handler context", result.error)
+            return r[p.RootDict[t.JsonPayload]].fail_op(
+                "pop handler context",
+                result.error,
+            )
         self._runtime_state, context = result.unwrap()
         return r.ok(context)
 
     def push_context(self, ctx: t.JsonMapping | p.ExecutionContext) -> p.Result[bool]:
-        """Push execution context onto the local handler stack."""
+        """Push execution context onto the local handler stack.
+
+        Returns:
+            The resulting ``p.Result[bool]``.
+
+        """
         result = FlextUtilitiesHandler.push_context(self._runtime_state, ctx)
         if result.failure:
-            return r.fail_op("push handler context", result.error)
+            return r[bool].fail_op("push handler context", result.error)
         self._runtime_state = result.unwrap()
-        return r.ok(True)
+        return r.ok(value=True)
 
     def record_metric(self, name: str, value: t.JsonPayload) -> p.Result[bool]:
-        """Record a metric value in the current handler state."""
+        """Record a metric value in the current handler state.
+
+        Returns:
+            The resulting ``p.Result[bool]``.
+
+        """
         return FlextUtilitiesHandler.record_metric(
-            self._runtime_state.execution_context, name, value
+            self._runtime_state.execution_context,
+            name,
+            value,
         )
 
     def validate_message(self, data: MessageT_contra) -> p.Result[bool]:
@@ -95,14 +111,19 @@ class FlextHandlers[MessageT_contra, ResultT](
         this base implementation doesn't use instance state.
 
         """
+        _ = self
         if data is None:
             return r[bool].fail_op(
-                "validate handler message", c.ERR_MESSAGE_CANNOT_BE_NONE
+                "validate handler message",
+                c.ERR_MESSAGE_CANNOT_BE_NONE,
             )
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     def _record_execution_metrics(
-        self, *, success: bool, error: str | None = None
+        self,
+        *,
+        success: bool,
+        error: str | None = None,
     ) -> None:
         """Record execution metrics (helper to reduce locals in _run_pipeline)."""
         exec_time = u.to_float(self._runtime_state.execution_context.execution_time_ms)

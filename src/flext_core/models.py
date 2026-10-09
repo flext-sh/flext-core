@@ -12,27 +12,28 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from ._models.base import FlextModelsBase
-from ._models.builder import FlextModelsBuilder
-from ._models.collections import FlextModelsCollections
-from ._models.config import FlextModelsConfig
-from ._models.container import FlextModelsContainer
-from ._models.containers import FlextModelsContainers
-from ._models.context import FlextModelsContext
-from ._models.cqrs import FlextModelsCqrs
-from ._models.dispatcher import FlextModelsDispatcher
-from ._models.domain_event import FlextModelsDomainEvent
-from ._models.enforcement import FlextModelsEnforcement
-from ._models.entity import FlextModelsEntity
-from ._models.errors import FlextModelsErrors
-from ._models.exception_params import FlextModelsExceptionParams
-from ._models.handler import FlextModelsHandler
-from ._models.namespace import FlextModelsNamespace
-from ._models.project_metadata import FlextModelsProjectMetadata
-from ._models.pydantic import FlextModelsPydantic
-from ._models.registry import FlextModelsRegistry
-from ._models.service import FlextModelsService
-from ._models.settings import FlextModelsSettings
+from flext_core._models import (
+    FlextModelsBase,
+    FlextModelsBuilder,
+    FlextModelsCollections,
+    FlextModelsConfig,
+    FlextModelsContainer,
+    FlextModelsContainers,
+    FlextModelsContext,
+    FlextModelsCqrs,
+    FlextModelsDomainEvent,
+    FlextModelsEnforcement,
+    FlextModelsEntity,
+    FlextModelsErrors,
+    FlextModelsExceptionParams,
+    FlextModelsHandler,
+    FlextModelsNamespace,
+    FlextModelsProjectMetadata,
+    FlextModelsPydantic,
+    FlextModelsRegistry,
+    FlextModelsService,
+    FlextModelsSettings,
+)
 
 
 class FlextModels(
@@ -44,7 +45,6 @@ class FlextModels(
     FlextModelsContainer,
     FlextModelsContext,
     FlextModelsCqrs,
-    FlextModelsDispatcher,
     FlextModelsDomainEvent,
     FlextModelsEnforcement,
     FlextModelsEntity,

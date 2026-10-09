@@ -33,8 +33,8 @@ flowchart LR
 
 ## Schedule and ownership
 
-| Phase | Owner | Estimate | Start condition | Exit condition |
-|---|---|---|---|---|
+| Phase   | Owner          | Estimate   | Start condition         | Exit condition      |
+| ------- | -------------- | ---------- | ----------------------- | ------------------- |
 | Phase 1 | {name or role} | {duration} | {prerequisite evidence} | {measurable result} |
 | Phase 2 | {name or role} | {duration} | {prerequisite evidence} | {measurable result} |
 
@@ -68,13 +68,13 @@ flowchart LR
 
 ## Test skeletons
 
-| Level | Planned path | Behavior covered |
-|---|---|---|
-| Integration | `{path}` | {observable interaction} |
-| End to end | `{path}` | {user or system workflow} |
+| Level       | Planned path | Behavior covered          |
+| ----------- | ------------ | ------------------------- |
+| Integration | `{path}`     | {observable interaction}  |
+| End to end  | `{path}`     | {user or system workflow} |
 
 ## Progress record
 
-| Date | Phase | Evidence | Decision or blocker |
-|---|---|---|---|
-| {YYYY-MM-DD} | {phase} | {command and result} | {state} |
+| Date         | Phase   | Evidence             | Decision or blocker |
+| ------------ | ------- | -------------------- | ------------------- |
+| {YYYY-MM-DD} | {phase} | {command and result} | {state}             |

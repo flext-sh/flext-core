@@ -10,9 +10,8 @@ from datetime import datetime
 
 import structlog.contextvars
 
-from flext_core import FlextTypes as t
-
-from ._tokens import FlextModelsContextTokens
+from flext_core import t
+from flext_core._models._context._tokens import FlextModelsContextTokens
 
 
 class FlextModelsContextProxyVar:
@@ -22,7 +21,8 @@ class FlextModelsContextProxyVar:
         """ContextVar-like proxy using structlog as backend (single source of truth).
 
         Delegates ALL operations to structlog's contextvar storage ensuring
-        FlextContext.Variables and FlextUtilitiesLogging use THE SAME underlying storage.
+        FlextContext.Variables and FlextUtilitiesLogging use THE SAME
+        underlying storage.
 
         """
 
@@ -38,11 +38,16 @@ class FlextModelsContextProxyVar:
                 structlog.contextvars.unbind_contextvars(token.key)
             else:
                 _ = structlog.contextvars.bind_contextvars(**{
-                    token.key: token.previous_value
+                    token.key: token.previous_value,
                 })
 
         def get(self) -> t.JsonPayload | datetime | None:
-            """Get current value from structlog context."""
+            """Get current value from structlog context.
+
+            Returns:
+                The resulting ``t.JsonPayload | datetime | None``.
+
+            """
             contextvars_data = structlog.contextvars.get_contextvars()
             structlog_context: t.MappingKV[str, t.JsonPayload | datetime] = (
                 contextvars_data
@@ -55,7 +60,12 @@ class FlextModelsContextProxyVar:
             return value
 
         def set(self, value: T | None) -> FlextModelsContextTokens.StructlogProxyToken:
-            """Set value in structlog context."""
+            """Set value in structlog context.
+
+            Returns:
+                The resulting ``FlextModelsContextTokens.StructlogProxyToken``.
+
+            """
             current_value = self.get()
             if value is not None:
                 _ = structlog.contextvars.bind_contextvars(**{self._key: value})
@@ -63,7 +73,8 @@ class FlextModelsContextProxyVar:
                 structlog.contextvars.unbind_contextvars(self._key)
             prev_value: t.JsonPayload | datetime | None = current_value
             return FlextModelsContextTokens.StructlogProxyToken(
-                key=self._key, previous_value=prev_value
+                key=self._key,
+                previous_value=prev_value,
             )
 
 

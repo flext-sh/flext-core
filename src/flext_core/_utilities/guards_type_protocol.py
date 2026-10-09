@@ -9,13 +9,16 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_core import c, t
-
-from .._models.pydantic import FlextModelsPydantic as mp
-from ._guards_type_protocol_specs import FlextUtilitiesGuardsTypeProtocolSpecsMixin
-from ._guards_type_protocol_string import FlextUtilitiesGuardsTypeProtocolStringMixin
+from flext_core._models import FlextModelsPydantic
+from flext_core._utilities._guards_type_protocol_specs import (
+    FlextUtilitiesGuardsTypeProtocolSpecsMixin,
+)
+from flext_core._utilities._guards_type_protocol_string import (
+    FlextUtilitiesGuardsTypeProtocolStringMixin,
+)
 
 if TYPE_CHECKING:
-    from ._guards_type_protocol_types import ProtocolGuardInput
+    from flext_core.typings import ProtocolGuardInput
 
 
 class FlextUtilitiesGuardsTypeProtocol(
@@ -34,25 +37,35 @@ class FlextUtilitiesGuardsTypeProtocol(
         value: ProtocolGuardInput,
         type_spec: str
         | type
-        | tuple[type, ...]
+        | t.VariadicTuple[type]
         | t.Scalar,  # Scalar arm handles invalid spec at runtime
     ) -> bool:
-        """Check if value matches a type spec (string name, type, or tuple of types)."""
+        """Check if value matches a type spec (string name, type, or tuple of types).
+
+        Returns:
+            The resulting ``bool``.
+
+        """
         matched = False
         if isinstance(type_spec, str):
             type_name = type_spec.lower()
             protocol_specs = FlextUtilitiesGuardsTypeProtocol._get_protocol_specs()
             if type_name in protocol_specs:
                 matched = FlextUtilitiesGuardsTypeProtocol._check_protocol(
-                    value, type_name
+                    value,
+                    type_name,
                 )
             elif type_name in c.STRING_METHOD_MAP:
                 matched = not (
                     type_name
                     in {"string_non_empty", "dict_non_empty", "list_non_empty"}
-                    and isinstance(value, (mp.BaseModel, mp.RootModel))
+                    and isinstance(
+                        value,
+                        (FlextModelsPydantic.BaseModel, FlextModelsPydantic.RootModel),
+                    )
                 ) and FlextUtilitiesGuardsTypeProtocol._run_string_type_check(
-                    type_name, value
+                    type_name,
+                    value,
                 )
         elif isinstance(type_spec, tuple):
             matched = isinstance(value, type_spec)
@@ -62,7 +75,8 @@ class FlextUtilitiesGuardsTypeProtocol(
             )
             if protocol_name is not None:
                 matched = FlextUtilitiesGuardsTypeProtocol._check_protocol(
-                    value, protocol_name
+                    value,
+                    protocol_name,
                 )
             else:
                 runtime_type = getattr(type_spec, "__origin__", None) or type_spec

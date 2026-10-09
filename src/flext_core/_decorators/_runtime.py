@@ -11,26 +11,35 @@ from functools import wraps
 from typing import TYPE_CHECKING
 
 from flext_core import c, m
-
-from .._exceptions.types import FlextExceptionsTypes as et
-from ._combined import FlextDecoratorsCombined
+from flext_core._decorators._combined import FlextDecoratorsCombined
+from flext_core._exceptions.exception_types import FlextExceptionsTypes
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-class FlextDecoratorsRuntime(FlextDecoratorsCombined):
+class FlextDecorators(FlextDecoratorsCombined):
     """Decorators for runtime factory metadata and timeout enforcement."""
 
     @staticmethod
     def factory[**P, T](
-        name: str, *, singleton: bool = False, lazy: bool = True
+        name: str,
+        *,
+        singleton: bool = False,
+        lazy: bool = True,
     ) -> Callable[[Callable[P, T]], Callable[P, T]]:
-        """Mark functions as factories for DI container discovery."""
+        """Mark functions as factories for DI container discovery.
+
+        Returns:
+            The resulting ``Callable[[Callable[P, T]], Callable[P, T]]``.
+
+        """
 
         def decorator(func: Callable[P, T]) -> Callable[P, T]:
             settings = m.FactoryDecoratorConfig(
-                name=name, singleton=singleton, lazy=lazy
+                name=name,
+                singleton=singleton,
+                lazy=lazy,
             )
             setattr(func, c.FACTORY_ATTR, settings)
             return func
@@ -39,9 +48,17 @@ class FlextDecoratorsRuntime(FlextDecoratorsCombined):
 
     @classmethod
     def timeout[**PCallback, TResult](
-        cls, timeout_seconds: float | None = None, error_code: str | None = None
+        cls,
+        timeout_seconds: float | None = None,
+        error_code: str | None = None,
     ) -> Callable[[Callable[PCallback, TResult]], Callable[PCallback, TResult]]:
-        """Raise a FLEXT timeout error when an operation exceeds the duration."""
+        """Raise a FLEXT timeout error when an operation exceeds the duration.
+
+        Returns:
+            The resulting ``Callable[[Callable[PCallback, TResult]], Callable[PCallback,
+                TResult]]``.
+
+        """
         max_duration = (
             timeout_seconds
             if timeout_seconds is not None
@@ -56,7 +73,7 @@ class FlextDecoratorsRuntime(FlextDecoratorsCombined):
                 start_time = time.perf_counter()
                 try:
                     result = func(*args, **kwargs)
-                except et.FlextTimeoutError:
+                except FlextExceptionsTypes.FlextTimeoutError:
                     raise
                 except cls._CAUGHT_EXCEPTIONS as exc:
                     duration = time.perf_counter() - start_time
@@ -66,9 +83,12 @@ class FlextDecoratorsRuntime(FlextDecoratorsCombined):
                             f"{max_duration}s (took {duration:.2f}s) and raised "
                             f"{exc.__class__.__name__}"
                         )
-                        raise et.FlextTimeoutError(
+                        raise FlextExceptionsTypes.FlextTimeoutError(
                             msg,
-                            error_code=error_code or c.ErrorCode.TIMEOUT_ERROR.value,
+                            options=m.ExceptionInitOptions(
+                                error_code=error_code
+                                or c.ErrorCode.TIMEOUT_ERROR.value,
+                            ),
                             timeout_seconds=max_duration,
                             operation=func.__name__,
                             duration_seconds=duration,
@@ -82,9 +102,12 @@ class FlextDecoratorsRuntime(FlextDecoratorsCombined):
                             f"Operation {func.__name__} exceeded timeout of "
                             f"{max_duration}s (took {duration:.2f}s)"
                         )
-                        raise et.FlextTimeoutError(
+                        raise FlextExceptionsTypes.FlextTimeoutError(
                             msg,
-                            error_code=error_code or "OPERATION_TIMEOUT",
+                            options=m.ExceptionInitOptions(
+                                error_code=error_code
+                                or c.ErrorCode.TIMEOUT_ERROR.value,
+                            ),
                             timeout_seconds=max_duration,
                             operation=func.__name__,
                             duration_seconds=duration,
@@ -97,4 +120,4 @@ class FlextDecoratorsRuntime(FlextDecoratorsCombined):
         return decorator
 
 
-__all__: list[str] = ["FlextDecoratorsRuntime"]
+__all__: list[str] = ["FlextDecorators"]

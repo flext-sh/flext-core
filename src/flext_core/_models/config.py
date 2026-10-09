@@ -12,33 +12,95 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
-from flext_core import FlextTypes as t
-
-from .base import FlextModelsBase as m
-from .pydantic import FlextModelsPydantic as mp
+from flext_core._models.base import FlextModelsBase
+from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._typings.base import FlextTypingBase
+from flext_core._typings.services import FlextTypesServices
 
 
 class FlextModelsConfig:
     """Container for declarative config record models (ADR-005)."""
 
-    class ConfigDocument(m.FrozenModel):
+    class StructlogOptions(FlextModelsBase.ArbitraryTypesModel):
+        """Knob options for the structlog runtime configuration."""
+
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(
+                extra="forbid",
+                validate_assignment=True,
+                arbitrary_types_allowed=True,
+            )
+        )
+
+        log_level: Annotated[
+            int | None,
+            FlextModelsPydantic.Field(
+                default=None,
+                description="Effective structlog level number.",
+            ),
+        ] = None
+        console_renderer: Annotated[
+            bool,
+            FlextModelsPydantic.Field(
+                default=True,
+                description="Use the console renderer.",
+            ),
+        ] = True
+        additional_processors: Annotated[
+            FlextTypingBase.SequenceOf[FlextTypesServices.LoggerProcessor] | None,
+            FlextModelsPydantic.Field(
+                default=None,
+                description="Extra structlog processors appended to the chain.",
+            ),
+        ] = None
+        wrapper_class_factory: Annotated[
+            FlextTypesServices.LoggerWrapperFactory | None,
+            FlextModelsPydantic.Field(
+                default=None,
+                description="Factory building the bound-logger wrapper class.",
+            ),
+        ] = None
+        logger_factory: Annotated[
+            FlextTypesServices.LoggerFactory | None,
+            FlextModelsPydantic.Field(
+                default=None,
+                description="Factory building the logger.",
+            ),
+        ] = None
+        cache_logger_on_first_use: Annotated[
+            bool,
+            FlextModelsPydantic.Field(
+                default=True,
+                description="Cache the logger on first use.",
+            ),
+        ] = True
+
+    class ConfigDocument(FlextModelsBase.FrozenModel):
         """A loaded, parsed config document with optional schema/source refs."""
 
-        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(
-            frozen=True, arbitrary_types_allowed=True
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(
+                frozen=True,
+                arbitrary_types_allowed=True,
+            )
         )
 
         data: Annotated[
-            t.JsonMapping,
-            mp.Field(description="Parsed config mapping (execution parametrization)."),
+            FlextTypingBase.JsonMapping,
+            FlextModelsPydantic.Field(
+                description="Parsed config mapping (execution parametrization).",
+            ),
         ]
         source_path: Annotated[
             str | None,
-            mp.Field(default=None, description="Absolute path of the config source."),
+            FlextModelsPydantic.Field(
+                default=None,
+                description="Absolute path of the config source.",
+            ),
         ] = None
         schema_ref: Annotated[
             str | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description="Path of the JSON Schema validating this document.",
             ),

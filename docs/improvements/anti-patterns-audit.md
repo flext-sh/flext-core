@@ -1,9 +1,11 @@
 # Anti-Patterns Audit (Current)
 
 <!-- TOC START -->
+
 - [Scope](#scope)
 - [Result pattern sanity](#result-pattern-sanity)
 - [examples-backed sanity](#examples-backed-sanity)
+
 <!-- TOC END -->
 
 ## Scope
@@ -19,13 +21,25 @@ from flext_core import p, r
 
 
 def normalize(value: str) -> p.Result[str]:
+    """Strip whitespace, rejecting empty input.
+
+    Returns:
+        The resulting ``p.Result[str]``.
+
+    """
     if not value:
         return r[str].fail("empty")
     return r[str].ok(value.strip())
 
 
-assert normalize(" x ").success
-assert normalize("").failure
+stripped_value = normalize(" x ")
+empty_value = normalize("")
+if not stripped_value.success:
+    message = "Expected whitespace-only pad success"
+    raise RuntimeError(message)
+if not empty_value.failure:
+    message = "Expected empty input failure"
+    raise RuntimeError(message)
 ```
 
 ## examples-backed sanity

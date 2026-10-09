@@ -4,6 +4,9 @@ Exercises only the public surface: ``record_exception`` / ``clear_metrics`` /
 ``resolve_metrics_snapshot`` / ``resolve_metrics`` and the observable state of
 the returned ``ExceptionMetricsSnapshot`` model. No private attributes, no
 patched internals.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -13,7 +16,7 @@ from collections.abc import Iterator, Sequence
 import pytest
 from flext_tests import e
 
-from tests.models import m
+from tests import m
 
 
 class TestsFlextCoreExceptionsPublicMetrics:
@@ -21,33 +24,40 @@ class TestsFlextCoreExceptionsPublicMetrics:
 
     pytestmark = pytest.mark.usefixtures("_isolated_metrics")
 
+    @staticmethod
     @pytest.fixture
-    def _isolated_metrics(self) -> Iterator[None]:
+    def _isolated_metrics() -> Iterator[None]:
         """Guarantee each test observes a clean, isolated metrics state."""
         e.clear_metrics()
         yield
         e.clear_metrics()
 
-    def test_snapshot_is_the_public_model_type(self) -> None:
+    @staticmethod
+    def test_snapshot_is_the_public_model_type() -> None:
         # Act
+        """Test snapshot is the public model type."""
         snapshot = e.resolve_metrics_snapshot()
 
         # Assert
         assert isinstance(snapshot, m.ExceptionMetricsSnapshot)
 
-    def test_cleared_state_reports_no_exceptions(self) -> None:
+    @staticmethod
+    def test_cleared_state_reports_no_exceptions() -> None:
         # Act
+        """Test cleared state reports no exceptions."""
         snapshot = e.resolve_metrics_snapshot()
 
         # Assert
         assert snapshot.total_exceptions == 0
         assert snapshot.unique_exception_types == 0
-        assert snapshot.exception_counts_summary == ""
+        assert not snapshot.exception_counts_summary
         assert snapshot.has_exceptions is False
         assert dict(snapshot.exception_counts) == {}
 
-    def test_recording_one_exception_makes_metrics_non_empty(self) -> None:
+    @staticmethod
+    def test_recording_one_exception_makes_metrics_non_empty() -> None:
         # Act
+        """Test recording one exception makes metrics non empty."""
         e.record_exception(e.ValidationError)
         snapshot = e.resolve_metrics_snapshot()
 
@@ -76,13 +86,14 @@ class TestsFlextCoreExceptionsPublicMetrics:
             ),
         ],
     )
+    @staticmethod
     def test_totals_and_unique_counts_track_recorded_exceptions(
-        self,
         recorded: Sequence[type[BaseException]],
         expected_total: int,
         expected_unique: int,
     ) -> None:
         # Act
+        """Test totals and unique counts track recorded exceptions."""
         for exception_type in recorded:
             e.record_exception(exception_type)
         snapshot = e.resolve_metrics_snapshot()
@@ -91,8 +102,10 @@ class TestsFlextCoreExceptionsPublicMetrics:
         assert snapshot.total_exceptions == expected_total
         assert snapshot.unique_exception_types == expected_unique
 
-    def test_per_type_counts_are_keyed_by_qualified_name(self) -> None:
+    @staticmethod
+    def test_per_type_counts_are_keyed_by_qualified_name() -> None:
         # Arrange
+        """Test per type counts are keyed by qualified name."""
         for exception_type in (
             e.ValidationError,
             e.ValidationError,
@@ -109,8 +122,10 @@ class TestsFlextCoreExceptionsPublicMetrics:
         assert snapshot.exception_counts[e.ValidationError.__qualname__] == 2
         assert snapshot.exception_counts[e.FlextTimeoutError.__qualname__] == 3
 
-    def test_summary_reports_name_and_count_for_each_type(self) -> None:
+    @staticmethod
+    def test_summary_reports_name_and_count_for_each_type() -> None:
         # Arrange
+        """Test summary reports name and count for each type."""
         e.record_exception(e.ValidationError)
         e.record_exception(e.ValidationError)
         e.record_exception(e.FlextTimeoutError)
@@ -122,8 +137,10 @@ class TestsFlextCoreExceptionsPublicMetrics:
         assert "ValidationError:2" in summary
         assert "TimeoutError:1" in summary
 
-    def test_clear_metrics_resets_all_public_totals(self) -> None:
+    @staticmethod
+    def test_clear_metrics_resets_all_public_totals() -> None:
         # Arrange
+        """Test clear metrics resets all public totals."""
         e.record_exception(e.ValidationError)
         e.record_exception(e.FlextTimeoutError)
 
@@ -134,11 +151,13 @@ class TestsFlextCoreExceptionsPublicMetrics:
         # Assert
         assert snapshot.total_exceptions == 0
         assert snapshot.unique_exception_types == 0
-        assert snapshot.exception_counts_summary == ""
+        assert not snapshot.exception_counts_summary
         assert snapshot.has_exceptions is False
 
-    def test_clear_metrics_is_idempotent(self) -> None:
+    @staticmethod
+    def test_clear_metrics_is_idempotent() -> None:
         # Arrange
+        """Test clear metrics is idempotent."""
         e.record_exception(e.ValidationError)
 
         # Act
@@ -149,8 +168,10 @@ class TestsFlextCoreExceptionsPublicMetrics:
         # Assert
         assert snapshot.total_exceptions == 0
 
-    def test_snapshot_is_a_stable_value_independent_of_later_recording(self) -> None:
+    @staticmethod
+    def test_snapshot_is_a_stable_value_independent_of_later_recording() -> None:
         # Arrange
+        """Test snapshot is a stable value independent of later recording."""
         e.record_exception(e.ValidationError)
         first = e.resolve_metrics_snapshot()
 
@@ -162,8 +183,10 @@ class TestsFlextCoreExceptionsPublicMetrics:
         assert first.total_exceptions == 1
         assert second.total_exceptions == 2
 
-    def test_resolve_metrics_exposes_flat_config_contract(self) -> None:
+    @staticmethod
+    def test_resolve_metrics_exposes_flat_config_contract() -> None:
         # Arrange
+        """Test resolve metrics exposes flat config contract."""
         e.record_exception(e.ValidationError)
         e.record_exception(e.ValidationError)
         e.record_exception(e.FlextTimeoutError)

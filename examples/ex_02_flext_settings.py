@@ -1,4 +1,8 @@
-"""FlextSettings — exercises ALL public API methods with golden file validation."""
+"""FlextSettings — exercises ALL public API methods with golden file validation.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -6,9 +10,8 @@ import os
 from pathlib import Path
 from typing import override
 
-from flext_core import FlextSettings, c, m
-
-from .ex_02_flext_settings_helpers import Ex02FlextSettingsFieldChecks
+from examples.ex_02_flext_settings_helpers import Ex02FlextSettingsFieldChecks
+from flext_core import FlextSettings, c
 
 
 class Ex02FlextSettings(Ex02FlextSettingsFieldChecks):
@@ -36,7 +39,12 @@ class Ex02FlextSettings(Ex02FlextSettingsFieldChecks):
 
     @staticmethod
     def _strip_flext_env() -> dict[str, str]:
-        """Remove ``FLEXT_``-prefixed vars so field defaults are deterministic."""
+        """Remove ``FLEXT_``-prefixed vars so field defaults are deterministic.
+
+        Returns:
+            The resulting ``dict[str, str]``.
+
+        """
         saved = {k: v for k, v in os.environ.items() if k.startswith("FLEXT_")}
         for key in saved:
             os.environ.pop(key, None)
@@ -50,7 +58,12 @@ class Ex02FlextSettings(Ex02FlextSettingsFieldChecks):
 
     @staticmethod
     def _set_env(key: str, value: str | None) -> str | None:
-        """Set an env var, returning its previous value."""
+        """Set an env var, returning its previous value.
+
+        Returns:
+            The resulting ``str | None``.
+
+        """
         previous = os.environ.get(key)
         if value is None:
             os.environ.pop(key, None)
@@ -106,32 +119,26 @@ class Ex02FlextSettings(Ex02FlextSettingsFieldChecks):
         self.audit_check("fetch_global.override.timezone", via_fetch.timezone)
 
     def _exercise_resolve_env_file_and_auto_settings(self) -> None:
-        """Exercise ``resolve_env_file`` and ``AutoSettings``."""
+        """Exercise environment file resolution and typed settings access."""
         self.section("resolve_env_file_and_auto_settings")
         FlextSettings.reset_for_testing()
         env_path = Path(__file__).with_name("flext_settings_example.env")
         env_path.write_text("FLEXT_LOG_LEVEL=WARNING\n", encoding="utf-8")
-        previous = self._set_env(FlextSettings.ENV_FILE_ENV_VAR, str(env_path))
+        previous = self._set_env(c.ENV_FILE_ENV_VAR, str(env_path))
         try:
             resolved = FlextSettings.resolve_env_file()
             self.audit_check(
-                "resolve_env_file.matches_requested", resolved == str(env_path)
+                "resolve_env_file.matches_requested",
+                resolved == str(env_path),
             )
-            auto = m.AutoSettings(
-                settings_class=self._TestConfig,
-                env_prefix=c.ENV_PREFIX,
-                env_file=resolved,
-            )
-            created = auto.create_settings()
+            created = self._TestConfig.fetch_global()
+            self.audit_check("Settings.fetch_global.type", type(created).__name__)
             self.audit_check(
-                "AutoSettings.create_settings.type", type(created).__name__
-            )
-            self.audit_check(
-                "AutoSettings.create_settings.service_name",
+                "Settings.fetch_global.service_name",
                 created.model_dump().get("service_name"),
             )
         finally:
-            self._restore_env(FlextSettings.ENV_FILE_ENV_VAR, previous)
+            self._restore_env(c.ENV_FILE_ENV_VAR, previous)
             if env_path.exists():
                 env_path.unlink()
 

@@ -3,19 +3,23 @@
 These tests assert only the OBSERVABLE public behavior of the conversion
 utilities: given an input, what value comes back. No private attributes, no
 internal collaborators, no implementation spying.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
 import pytest
 
-from tests.utilities import u
+from tests import u
 
 
 class TestsFlextCoreUtilitiesDomain:
     """Public-contract behavior of the value-conversion utilities."""
 
     # ----------------------------------------------------------------- join
+    @staticmethod
     @pytest.mark.parametrize(
         ("values", "separator", "case", "expected"),
         [
@@ -30,14 +34,21 @@ class TestsFlextCoreUtilitiesDomain:
         ],
     )
     def test_join_produces_expected_string(
-        self, values: list[str], separator: str, case: str | None, expected: str
+        values: list[str],
+        separator: str,
+        case: str | None,
+        expected: str,
     ) -> None:
+        """Test join produces expected string."""
         assert u.join(values, separator=separator, case=case) == expected
 
-    def test_join_empty_sequence_is_empty_string(self) -> None:
+    @staticmethod
+    def test_join_empty_sequence_is_empty_string() -> None:
+        """Test join empty sequence is empty string."""
         assert u.join([]) == ""
 
     # ------------------------------------------------------------ normalize
+    @staticmethod
     @pytest.mark.parametrize(
         ("value", "case", "expected"),
         [
@@ -51,27 +62,39 @@ class TestsFlextCoreUtilitiesDomain:
         ],
     )
     def test_normalize_returns_expected_string(
-        self, *, value: str | float | bool, case: str | None, expected: str
+        *,
+        value: str | float | bool,
+        case: str | None,
+        expected: str,
     ) -> None:
+        """Test normalize returns expected string."""
         assert u.normalize(value, case=case) == expected
 
     # --------------------------------------------------------------- to_str
+    @staticmethod
     @pytest.mark.parametrize(
         ("value", "expected"),
         [("hello", "hello"), (42, "42"), (42.0, "42"), (9.876, "9.88"), (None, "")],
     )
     def test_to_str_converts_value(
-        self, value: str | float | None, expected: str
+        value: str | float | None,
+        expected: str,
     ) -> None:
+        """Test to str converts value."""
         assert u.to_str(value) == expected
 
-    def test_to_str_none_uses_default(self) -> None:
+    @staticmethod
+    def test_to_str_none_uses_default() -> None:
+        """Test to str none uses default."""
         assert u.to_str(None, default="fallback") == "fallback"
 
-    def test_to_str_present_value_ignores_default(self) -> None:
+    @staticmethod
+    def test_to_str_present_value_ignores_default() -> None:
+        """Test to str present value ignores default."""
         assert u.to_str("real", default="fallback") == "real"
 
     # ---------------------------------------------------------- to_str_list
+    @staticmethod
     @pytest.mark.parametrize(
         ("value", "expected"),
         [
@@ -82,14 +105,19 @@ class TestsFlextCoreUtilitiesDomain:
         ],
     )
     def test_to_str_list_converts_value(
-        self, value: str | list[str] | list[int] | None, expected: list[str]
+        value: str | list[str] | list[int] | None,
+        expected: list[str],
     ) -> None:
+        """Test to str list converts value."""
         assert u.to_str_list(value) == expected
 
-    def test_to_str_list_none_uses_default(self) -> None:
+    @staticmethod
+    def test_to_str_list_none_uses_default() -> None:
+        """Test to str list none uses default."""
         assert u.to_str_list(None, default=["x"]) == ["x"]
 
     # --------------------------------------------------------------- to_int
+    @staticmethod
     @pytest.mark.parametrize(
         ("value", "expected"),
         [
@@ -104,27 +132,39 @@ class TestsFlextCoreUtilitiesDomain:
         ],
     )
     def test_to_int_converts_value(
-        self, *, value: float | str | bool | None, expected: int
+        *,
+        value: float | str | bool | None,
+        expected: int,
     ) -> None:
+        """Test to int converts value."""
         assert u.to_int(value) == expected
 
-    def test_to_int_invalid_uses_default(self) -> None:
+    @staticmethod
+    def test_to_int_invalid_uses_default() -> None:
+        """Test to int invalid uses default."""
         assert u.to_int("nope", default=99) == 99
 
     # ------------------------------------------------------------- to_float
+    @staticmethod
     @pytest.mark.parametrize(
         ("value", "expected"),
         [(5, 5.0), (5.5, 5.5), ("2.5", 2.5), ("bad", 0.0), (None, 0.0), (True, 0.0)],
     )
     def test_to_float_converts_value(
-        self, *, value: float | str | bool | None, expected: float
+        *,
+        value: float | str | bool | None,
+        expected: float,
     ) -> None:
+        """Test to float converts value."""
         assert u.to_float(value) == expected
 
-    def test_to_float_invalid_uses_default(self) -> None:
+    @staticmethod
+    def test_to_float_invalid_uses_default() -> None:
+        """Test to float invalid uses default."""
         assert u.to_float("bad", default=1.5) == pytest.approx(1.5)
 
     # -------------------------------------------------------------- to_bool
+    @staticmethod
     @pytest.mark.parametrize(
         ("value", "expected"),
         [
@@ -138,14 +178,20 @@ class TestsFlextCoreUtilitiesDomain:
         ],
     )
     def test_to_bool_converts_value(
-        self, *, value: bool | int | str | None, expected: bool
+        *,
+        value: bool | int | str | None,
+        expected: bool,
     ) -> None:
+        """Test to bool converts value."""
         assert u.to_bool(value) is expected
 
-    def test_to_bool_none_uses_default(self) -> None:
+    @staticmethod
+    def test_to_bool_none_uses_default() -> None:
+        """Test to bool none uses default."""
         assert u.to_bool(None, default=True) is True
 
     # ------------------------------------------------------ to_positive_int
+    @staticmethod
     @pytest.mark.parametrize(
         ("value", "expected"),
         [
@@ -162,19 +208,27 @@ class TestsFlextCoreUtilitiesDomain:
         ],
     )
     def test_to_positive_int_rejects_non_positive(
-        self, *, value: float | str | bool | None, expected: int
+        *,
+        value: float | str | bool | None,
+        expected: int,
     ) -> None:
+        """Test to positive int rejects non positive."""
         assert u.to_positive_int(value) == expected
 
-    def test_to_positive_int_non_positive_uses_default(self) -> None:
+    @staticmethod
+    def test_to_positive_int_non_positive_uses_default() -> None:
+        """Test to positive int non positive uses default."""
         assert u.to_positive_int(-1, default=10) == 10
 
     # ------------------------------------------------------ to_optional_str
+    @staticmethod
     @pytest.mark.parametrize(
         ("value", "expected"),
         [("value", "value"), ("", None), (None, None), (123, None)],
     )
     def test_to_optional_str_returns_non_empty_string_only(
-        self, value: str | int | None, expected: str | None
+        value: str | int | None,
+        expected: str | None,
     ) -> None:
+        """Test to optional str returns non empty string only."""
         assert u.to_optional_str(value) == expected

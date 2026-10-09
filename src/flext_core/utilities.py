@@ -10,43 +10,43 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core.loggings import FlextUtilitiesLogging
-from flext_core.runtime import FlextRuntime
-
-from ._models.namespace import FlextModelsNamespace
-from ._utilities.args import FlextUtilitiesArgs
-from ._utilities.beartype_conf import FlextUtilitiesBeartypeConf
-from ._utilities.beartype_engine import FlextUtilitiesBeartypeEngine
-from ._utilities.checker import FlextUtilitiesChecker
-from ._utilities.collection import FlextUtilitiesCollection
-from ._utilities.config import FlextUtilitiesConfig
-from ._utilities.console import FlextUtilitiesConsole
-from ._utilities.context import FlextUtilitiesContext
-from ._utilities.conversion import FlextUtilitiesConversion
-from ._utilities.discovery import FlextUtilitiesDiscovery
-from ._utilities.domain import FlextUtilitiesDomain
-from ._utilities.enforcement import FlextUtilitiesEnforcement
-from ._utilities.enum import FlextUtilitiesEnum
-from ._utilities.family_surface import FlextUtilitiesFamilySurface
-from ._utilities.files import FlextUtilitiesFiles
-from ._utilities.generators import FlextUtilitiesGenerators
-from ._utilities.guards import FlextUtilitiesGuards
-from ._utilities.mapper import FlextUtilitiesMapper
-from ._utilities.model_runtime import FlextUtilitiesModelRuntime
-from ._utilities.parser import FlextUtilitiesParser
-from ._utilities.project_metadata import FlextUtilitiesProjectMetadata
-from ._utilities.pydantic import FlextUtilitiesPydantic
-from ._utilities.reliability import FlextUtilitiesReliability
-from ._utilities.runtime_violation_registry import (
+from flext_core import runtime
+from flext_core._models import FlextModelsNamespace
+from flext_core._utilities import (
+    FlextUtilitiesArgs,
+    FlextUtilitiesBeartypeConf,
+    FlextUtilitiesBeartypeEngine,
+    FlextUtilitiesChecker,
+    FlextUtilitiesCollection,
+    FlextUtilitiesConfig,
+    FlextUtilitiesConsole,
+    FlextUtilitiesContext,
+    FlextUtilitiesConversion,
+    FlextUtilitiesDiscovery,
+    FlextUtilitiesDomain,
+    FlextUtilitiesEnforcement,
+    FlextUtilitiesEnum,
+    FlextUtilitiesFamilySurface,
+    FlextUtilitiesFiles,
+    FlextUtilitiesGenerators,
+    FlextUtilitiesGuards,
+    FlextUtilitiesLogging,
+    FlextUtilitiesLoggingContext,
+    FlextUtilitiesMapper,
+    FlextUtilitiesModelRuntime,
+    FlextUtilitiesParser,
+    FlextUtilitiesProjectMetadata,
+    FlextUtilitiesPydantic,
+    FlextUtilitiesReliability,
     FlextUtilitiesRuntimeViolationRegistry,
+    FlextUtilitiesSettings,
+    FlextUtilitiesText,
 )
-from ._utilities.settings import FlextUtilitiesSettings
-from ._utilities.text import FlextUtilitiesText
 
 
 class FlextUtilities(
     FlextUtilitiesLogging,
-    FlextRuntime,
+    runtime.FlextRuntime,
     FlextUtilitiesArgs,
     FlextUtilitiesBeartypeConf,
     FlextUtilitiesBeartypeEngine,
@@ -74,6 +74,7 @@ class FlextUtilities(
     FlextUtilitiesRuntimeViolationRegistry,
     FlextUtilitiesText,
     FlextModelsNamespace,
+    FlextUtilitiesLoggingContext,
 ):
     """Unified facade for all FLEXT utility functionality.
 

@@ -1,56 +1,31 @@
-"""Type and module introspection helpers — annotation inspection + bytecode analysis."""
+"""Type and module introspection helpers — annotation inspection + bytecode analysis.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-import dis
 import inspect
 import types as _types_mod
 from collections.abc import Callable, MutableMapping, MutableSequence, MutableSet
 from types import UnionType
 from typing import TYPE_CHECKING, TypeAliasType, Union, get_args, get_origin
 
-# Import directly from base modules to avoid a circular load through the public
-# flext_core facade while this module is still being initialized.
-from ...._constants.enforcement import FlextConstantsEnforcement as c
-from .helpers_part_02 import (
+from flext_core._constants.enforcement import FlextConstantsEnforcement as c
+from flext_core._utilities._beartype._helpers_parts.helpers_part_02 import (
     FlextUtilitiesBeartypeHelpers as FlextUtilitiesBeartypeHelpersPart02,
 )
 
+# Import directly from base modules to avoid a circular load through the public
+# flext_core facade while this module is still being initialized.
+
 if TYPE_CHECKING:
-    from ...._protocols.base import FlextProtocolsBase as p
-    from ...._typings.base import FlextTypingBase as t
+    from flext_core._protocols import FlextProtocolsBase as p
+    from flext_core._typings.base import FlextTypingBase as t
 
 
 class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart02):
-    @staticmethod
-    def has_attribute_call(
-        fn: _types_mod.FunctionType, attr_name: str
-    ) -> dis.Instruction | None:
-        for ins in dis.get_instructions(fn):
-            if ins.opname == "LOAD_ATTR" and ins.argval == attr_name:
-                return ins
-        return None
-
-    @staticmethod
-    def has_private_attr_probe(
-        fn: _types_mod.FunctionType, builtins_set: frozenset[str]
-    ) -> t.StrPair | None:
-        last_builtin: str | None = None
-        for ins in dis.get_instructions(fn):
-            if ins.opname == "LOAD_GLOBAL" and ins.argval in builtins_set:
-                last_builtin = ins.argval
-            elif ins.opname == "LOAD_CONST" and last_builtin is not None:
-                value = ins.argval
-                if (
-                    isinstance(value, str)
-                    and value.startswith("_")
-                    and not value.startswith("__")
-                ):
-                    return last_builtin, value
-            elif ins.opname in {"CALL", "CALL_FUNCTION"}:
-                last_builtin = None
-        return None
-
     @staticmethod
     def module_filename_for(module: _types_mod.ModuleType) -> str | None:
         filename = getattr(module, "__file__", None)
@@ -76,7 +51,7 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart02):
         return sum(1 for a in get_args(h2) if a is not type(None))
 
     @staticmethod
-    def matches_str_none_union(hint: t.TypeHintSpecifier | None) -> bool:
+    def matches_str_none_union(hint: t.TypeFormSpecifier | None) -> bool:
         h = FlextUtilitiesBeartypeHelpers
         h2 = h.unwrap_type_alias(hint)
         if h2 is None or get_origin(h2) not in {UnionType, Union}:
@@ -84,12 +59,13 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart02):
         return str in (a := get_args(h2)) and type(None) in a
 
     @staticmethod
-    def alias_contains_any(alias_value: t.TypeHintSpecifier | None) -> bool:
+    def alias_contains_any(
+        alias_value: t.TypeFormSpecifier | None,
+        *,
+        owner: _types_mod.ModuleType | type | None = None,
+    ) -> bool:
         h = FlextUtilitiesBeartypeHelpers
-        try:
-            return h.contains_any_recursive(alias_value, seen=set())
-        except (TypeError, AttributeError, RuntimeError, RecursionError):
-            return "Any" in str(alias_value)
+        return h.contains_any_recursive(alias_value, seen=set(), owner=owner)
 
     @staticmethod
     def mutable_kind(value: p.AttributeProbe) -> str | None:
@@ -109,7 +85,7 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart02):
 
     @staticmethod
     def allows_mutable_default_factory(
-        hint: t.TypeHintSpecifier | None,
+        hint: t.TypeFormSpecifier | None,
         factory: type | Callable[..., p.AttributeProbe] | None,
     ) -> bool:
         h = FlextUtilitiesBeartypeHelpers
@@ -140,7 +116,10 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart02):
             )
         org = get_origin(norm)
         if isinstance(org, TypeAliasType):
-            org = get_origin(org.__value__) or org.__value__
+            resolved = h.resolve_type_alias_value(org)
+            if resolved is None:
+                return False
+            org = get_origin(resolved) or resolved
         tgt = org or norm
         return tgt is exp
 

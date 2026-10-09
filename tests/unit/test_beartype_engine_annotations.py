@@ -5,27 +5,31 @@ their return values for representative type hints. No private attribute or
 method of the engine is accessed; the engine is exercised exclusively through
 its public surface (``contains_any``, ``has_forbidden_collection_origin``,
 ``count_union_members``, ``matches_str_none_union``, ``alias_contains_any``).
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
 import typing
 from collections.abc import Mapping
+from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_core.utilities import FlextUtilitiesBeartypeEngine as be
-from tests.typings import t
+import tests.utilities
+from flext_core import u
+from tests import t
+from tests.unit._beartype_engine_support import AnyAlias, CleanAlias, NestedAnyAlias
 
-from ._beartype_engine_support import (
-    AnyAlias,
-    CleanAlias,
-    NestedAnyAlias,
-    TestsFlextBeartypeEngine,
-)
+if TYPE_CHECKING:
+    from pathlib import PurePath as LazyResolvableType
 
 
-class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
+class TestsFlextBeartypeEngineAnnotations(
+    tests.utilities.TestsFlextUtilities.TestsFlextBeartypeEngine,
+):
     """Contract of the beartype annotation-inspection engine."""
 
     @pytest.mark.parametrize(
@@ -45,11 +49,14 @@ class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
             (None, False),
         ],
     )
+    @staticmethod
     def test_contains_any_reports_presence_of_any(
-        self, hint: t.TypeHintSpecifier | None, *, expected: bool
+        hint: t.TypeHintSpecifier | None,
+        *,
+        expected: bool,
     ) -> None:
         """contains_any is True iff typing.Any appears at any nesting depth."""
-        assert be.contains_any(hint) is expected
+        assert u.contains_any(hint) is expected
 
     @pytest.mark.parametrize(
         ("hint", "expected"),
@@ -64,10 +71,12 @@ class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
         ],
     )
     def test_has_forbidden_collection_origin_names_offending_origin(
-        self, hint: t.TypeHintSpecifier | None, expected: tuple[bool, str]
+        self,
+        hint: t.TypeHintSpecifier | None,
+        expected: tuple[bool, str],
     ) -> None:
         """Bare mutable collection origins are flagged with their name."""
-        assert be.has_forbidden_collection_origin(hint, self.FORBIDDEN) == expected
+        assert u.has_forbidden_collection_origin(hint, self.FORBIDDEN) == expected
 
     @pytest.mark.parametrize(
         ("hint", "expected"),
@@ -80,11 +89,14 @@ class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
             (None, 0),
         ],
     )
+    @staticmethod
     def test_count_union_members_excludes_none(
-        self, hint: t.TypeHintSpecifier | None, *, expected: int
+        hint: t.TypeHintSpecifier | None,
+        *,
+        expected: int,
     ) -> None:
         """count_union_members counts non-None members; 0 for non-unions."""
-        assert be.count_union_members(hint) == expected
+        assert u.count_union_members(hint) == expected
 
     @pytest.mark.parametrize(
         ("hint", "expected"),
@@ -97,11 +109,14 @@ class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
             (None, False),
         ],
     )
+    @staticmethod
     def test_matches_str_none_union_requires_str_and_none(
-        self, hint: t.TypeHintSpecifier | None, *, expected: bool
+        hint: t.TypeHintSpecifier | None,
+        *,
+        expected: bool,
     ) -> None:
         """Union matches iff both str and None are members."""
-        assert be.matches_str_none_union(hint) is expected
+        assert u.matches_str_none_union(hint) is expected
 
     @pytest.mark.parametrize(
         ("alias_value", "expected"),
@@ -112,8 +127,21 @@ class TestsFlextBeartypeEngineAnnotations(TestsFlextBeartypeEngine):
             (None, False),
         ],
     )
+    @staticmethod
     def test_alias_contains_any_unwraps_alias_values(
-        self, alias_value: t.TypeHintSpecifier | None, *, expected: bool
+        alias_value: t.TypeHintSpecifier | None,
+        *,
+        expected: bool,
     ) -> None:
         """alias_contains_any detects Any inside a resolved type-alias value."""
-        assert be.alias_contains_any(alias_value) is expected
+        assert u.alias_contains_any(alias_value) is expected
+
+    @staticmethod
+    def test_alias_inspection_uses_explicit_owner_for_static_only_names() -> None:
+        """Explicit owner context proves a local static-only alias deferral."""
+
+        class Host:
+            type LazyAlias = LazyResolvableType | str
+
+        assert u.resolve_type_alias_value(Host.LazyAlias, owner=Host) is None
+        assert u.alias_contains_any(Host.LazyAlias, owner=Host) is False

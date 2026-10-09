@@ -20,9 +20,7 @@ from typing import TYPE_CHECKING, Annotated, ClassVar
 import pytest
 from flext_tests import tm
 
-from tests.models import m
-from tests.typings import t
-from tests.utilities import u
+from tests import m, u
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -50,17 +48,20 @@ class TestsFlextCoreEnumUtilities:
     class ParseScenario(m.BaseModel):
         """Declarative parse case for the public ``u.parse`` contract."""
 
-        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
         name: Annotated[str, m.Field(description="Parse scenario name")]
         value: Annotated[str | StrEnum, m.Field(description="Input value to parse")]
         expected_success: Annotated[
-            bool, m.Field(description="Whether parse should succeed")
+            bool,
+            m.Field(description="Whether parse should succeed"),
         ]
         expected_status: Annotated[
-            StrEnum | None, m.Field(description="Expected parsed enum member")
+            StrEnum | None,
+            m.Field(description="Expected parsed enum member"),
         ] = None
         expected_error: Annotated[
-            str | None, m.Field(description="Expected error message fragment")
+            str | None,
+            m.Field(description="Expected error message fragment"),
         ] = None
 
     PARSE: ClassVar[Sequence[ParseScenario]] = [

@@ -4,26 +4,24 @@ The public contract is a single query: ``u.check(cls)`` returns an
 ``m.Report`` whose ``violations`` are filtered by ``layer`` / ``severity`` /
 message fragment. These tests assert only that observable contract — never the
 collector internals, per-rule private helpers, or emit machinery.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
-from tests.utilities import u
-
-from ._enforcement_support import make_class, messages, synthetic_method
-
-if TYPE_CHECKING:
-    from flext_core import m
+from tests import m, u
+from tests.unit._enforcement_support import make_class, messages, synthetic_method
 
 
 class TestsFlextCoreEnforcement:
     """Public behavior of ``u.check`` and the ``m.Report`` it returns."""
 
-    def test_check_returns_report_with_violations_collection(self) -> None:
+    @staticmethod
+    def test_check_returns_report_with_violations_collection() -> None:
         """``u.check`` yields an ``m.Report`` exposing a ``violations`` list."""
         report: m.Report = u.check(int)
 
@@ -32,14 +30,16 @@ class TestsFlextCoreEnforcement:
         assert isinstance(report.violations, list)
         assert report.violations, "a builtin type must produce at least one finding"
 
-    def test_compliant_flext_class_produces_no_violations(self) -> None:
+    @staticmethod
+    def test_compliant_flext_class_produces_no_violations() -> None:
         """A correctly prefixed, empty facade class is fully compliant."""
         compliant = make_class("FlextCoreWidget", {})
 
         assert u.check(compliant).violations == []
 
     @pytest.mark.parametrize("builtin", [int, str, dict])
-    def test_builtin_class_flagged_missing_project_prefix(self, builtin: type) -> None:
+    @staticmethod
+    def test_builtin_class_flagged_missing_project_prefix(builtin: type) -> None:
         """Types without a project prefix raise a Namespace class-prefix finding."""
         report = u.check(builtin)
 
@@ -50,7 +50,8 @@ class TestsFlextCoreEnforcement:
         ]
         assert prefix_findings
 
-    def test_private_underscore_class_exempt_from_namespace_layer(self) -> None:
+    @staticmethod
+    def test_private_underscore_class_exempt_from_namespace_layer() -> None:
         """Underscore-prefixed classes are implementation details, not facades."""
 
         class _PrivateHelper:
@@ -66,8 +67,10 @@ class TestsFlextCoreEnforcement:
             ("FlextCoreAccessedIs", "is_ready"),
         ],
     )
+    @staticmethod
     def test_accessor_prefix_method_is_flagged(
-        self, class_name: str, member: str
+        class_name: str,
+        member: str,
     ) -> None:
         """``get_``/``set_``/``is_`` methods violate the accessor contract."""
         cls = make_class(class_name, {member: synthetic_method})
@@ -76,7 +79,8 @@ class TestsFlextCoreEnforcement:
         assert messages(report, fragment=f'accessor method "{member}"')
 
     @pytest.mark.parametrize("member", ["fetch_remote", "build_widget"])
-    def test_non_accessor_prefix_method_allowed(self, member: str) -> None:
+    @staticmethod
+    def test_non_accessor_prefix_method_allowed(member: str) -> None:
         """Verb-prefixed methods that are not accessors raise no accessor finding."""
         cls = make_class("FlextCoreAccessedOk", {member: synthetic_method})
 
@@ -84,20 +88,36 @@ class TestsFlextCoreEnforcement:
         assert not messages(report, fragment="accessor method")
 
     @pytest.mark.parametrize(
-        ("class_name", "expect_finding"),
-        [("FlextWorkerSettings", True), ("FlextCoreService", False)],
+        ("class_name", "declares_settings_base", "expect_finding"),
+        [
+            ("FlextWorkerSettings", True, True),
+            ("FlextWorkerSettings", False, False),
+            ("FlextCoreService", False, False),
+        ],
     )
-    def test_settings_named_class_requires_inheritance(
-        self, class_name: str, *, expect_finding: bool
+    @staticmethod
+    def test_declared_settings_model_requires_flext_settings(
+        class_name: str,
+        *,
+        declares_settings_base: bool,
+        expect_finding: bool,
     ) -> None:
-        """Only ``*Settings`` classes must inherit ``FlextSettings``."""
-        cls = make_class(class_name, {})
+        """Route a declared pydantic-settings base through ``FlextSettings``.
+
+        A class that DECLARES such a base must use it; a name ending in
+        ``Settings`` alone proves nothing.
+        """
+        bases = (m.BaseSettings,) if declares_settings_base else ()
+        cls = type(class_name, bases, {})
+        cls.__qualname__ = class_name
+        cls.__module__ = "flext_core.synthetic"
 
         report = u.check(cls)
         found = bool(messages(report, fragment="must inherit FlextSettings"))
         assert found is expect_finding
 
-    def test_every_violation_carries_public_metadata(self) -> None:
+    @staticmethod
+    def test_every_violation_carries_public_metadata() -> None:
         """Each finding exposes non-empty qualname, layer, severity and message."""
         report = u.check(int)
 
@@ -108,7 +128,8 @@ class TestsFlextCoreEnforcement:
             assert violation.severity
             assert violation.message
 
-    def test_check_is_idempotent_for_same_target(self) -> None:
+    @staticmethod
+    def test_check_is_idempotent_for_same_target() -> None:
         """Repeated checks of the same target yield identical findings."""
         first = [v.message for v in u.check(str).violations]
         second = [v.message for v in u.check(str).violations]

@@ -1,9 +1,33 @@
 # Plano objetivo de eficiência: Python 3.13 (MRO), Protocols e Pydantic v2
 
+<!-- TOC START -->
+
+- [Objetivo](#objetivo)
+- [Diagnóstico aprofundado (estado atual no código)](#diagnostico-aprofundado-estado-atual-no-codigo)
+  - [A) Dispatcher usa Protocol runtime-checkable no hot path](#a-dispatcher-usa-protocol-runtime-checkable-no-hot-path)
+  - [B) Introspecção de protocolo com varredura de mro() sem cache](#b-introspeccao-de-protocolo-com-varredura-de-mro-sem-cache)
+  - [C) TypeAdapter(...) criado dentro de validação (repetição evitável)](#c-typeadapter-criado-dentro-de-validacao-repeticao-evitavel)
+  - [D) Campos Pydantic com default=\[\] (coleções mutáveis)](#d-campos-pydantic-com-default-colecoes-mutaveis)
+  - [E) Validations and coercions simplifiable with current Pydantic v2 practices](#e-validations-and-coercions-simplifiable-with-current-pydantic-v2-practices)
+- [O que precisa ser feito (objetivo, por ordem)](#o-que-precisa-ser-feito-objetivo-por-ordem)
+- [P0 — aplicar imediatamente (alto impacto / baixo risco)](#p0-aplicar-imediatamente-alto-impacto-baixo-risco)
+- [P1 — estrutural (médio risco, alto retorno)](#p1-estrutural-medio-risco-alto-retorno)
+- [P2 — governança e hardening contínuo](#p2-governanca-e-hardening-continuo)
+- [Recomendações Pydantic v2 (atualizadas) para aplicar aqui](#recomendacoes-pydantic-v2-atualizadas-para-aplicar-aqui)
+- [Plano de execução em PRs pequenos (recomendado)](#plano-de-execucao-em-prs-pequenos-recomendado)
+  - [PR 1 (rápido) ✅ concluído](#pr-1-rapido-concluido)
+  - [PR 2 (segurança + consistência)](#pr-2-seguranca-consistencia)
+  - [PR 3 (estrutura)](#pr-3-estrutura)
+  - [PR 4 (controle de regressão)](#pr-4-controle-de-regressao)
+- [Métricas esperadas](#metricas-esperadas)
+- [Definição objetiva de “pronto”](#definicao-objetiva-de-pronto)
+
+<!-- TOC END -->
+
 ## Objetivo
 
-Definir **ações objetivas, priorizadas e mensuráveis** para reduzir custo de runtime no `flext-core`, mantendo tipagem
-forte e segurança de contrato.
+Definir **ações objetivas, priorizadas e mensuráveis** para reduzir custo de runtime no
+`flext-core`, mantendo tipagem forte e segurança de contrato.
 
 ---
 
@@ -15,34 +39,42 @@ forte e segurança de contrato.
   - `isinstance(handler, DispatchMessageProtocol)`
   - `isinstance(handler, HandleProtocol)`
   - `isinstance(handler, ExecuteProtocol)`
-- Esses `Protocol` são `@runtime_checkable`, então cada `isinstance` é estrutural e mais caro que despacho por função pré-resolvida.
+- Esses `Protocol` são `@runtime_checkable`, então cada `isinstance` é estrutural e mais
+  caro que despacho por função pré-resolvida.
 
 **Efeito prático**: custo repetido por mensagem no caminho crítico.
 
 ### B) Introspecção de protocolo com varredura de `mro()` sem cache
 
-- Em `src/flext_core/protocols.py`, `_ProtocolIntrospection.validate_protocol_compliance()` percorre `target_cls.mro()`
-  e anotações para cada validação.
-- Em carga de módulos/classes, esse padrão escala mal quando há muitas subclasses/protocolos.
+- Em `src/flext_core/protocols.py`,
+  `_ProtocolIntrospection.validate_protocol_compliance()` percorre `target_cls.mro()` e
+  anotações para cada validação.
+- Em carga de módulos/classes, esse padrão escala mal quando há muitas
+  subclasses/protocolos.
 
 **Efeito prático**: piora de cold-start/import e custo de bootstrap.
 
 ### C) `TypeAdapter(...)` criado dentro de validação (repetição evitável)
 
-- Em `src/flext_core/_models/cqrs.py`, `validate_pagination()` cria `TypeAdapter(...)` a cada chamada.
-- Em `src/flext_core/_models/settings.py`, `BatchProcessingConfig.validate_batch()` também instancia adapter no fluxo.
+- Em `src/flext_core/_models/cqrs.py`, `validate_pagination()` cria `TypeAdapter(...)` a
+  cada chamada.
+- Em `src/flext_core/_models/settings.py`, `BatchProcessingConfig.validate_batch()`
+  também instancia adapter no fluxo.
 
 **Efeito prático**: custo extra de construção de schema/adaptador em caminho frequente.
 
 ### D) Campos Pydantic com `default=[]` (coleções mutáveis)
 
-- Há `Field(default=[])` em múltiplos modelos (`entity.py`, `service.py`, `generic.py`, `containers.py`, `settings.py`).
+- Há `Field(default=[])` em múltiplos modelos (`entity.py`, `service.py`, `generic.py`,
+  `containers.py`, `settings.py`).
 
-**Efeito prático**: além de risco semântico, aumenta chance de comportamentos inesperados e debugging mais caro.
+**Efeito prático**: além de risco semântico, aumenta chance de comportamentos
+inesperados e debugging mais caro.
 
-### E) Validações e coerções que podem ser simplificadas com práticas atuais do Pydantic v2
+### E) Validations and coercions simplifiable with current Pydantic v2 practices
 
-- Já existe uso correto de `ConfigDict`, `field_validator`, `model_validator` e adapters em parte da base.
+- Já existe uso correto de `ConfigDict`, `field_validator`, `model_validator` e adapters
+  em parte da base.
 - Falta padronização para:
   - adapters cacheados por classe/módulo;
   - defaults mutáveis com `default_factory`;
@@ -54,18 +86,24 @@ forte e segurança de contrato.
 
 ## P0 — aplicar imediatamente (alto impacto / baixo risco)
 
-1. **Trocar runtime protocol dispatch por função pré-compilada no registro**
-   - Arquivo: `src/flext_core/dispatcher.py`.
-   - Ação: no `register_handler()`, resolver uma vez o executor (`dispatch_message` / `handle` / `execute` / callable) e
-     armazenar callable final.
-   - Resultado esperado: `_execute_handler()` deixa de fazer cadeia de `isinstance(...Protocol)` por mensagem.
+1. **Trocar runtime protocol dispatch por função pré-compilada no registro** ✅
+   concluído - Arquivo: `src/flext_core/dispatcher.py`.
+
+   - Estado: o registro de handler já resolve uma vez o executor (`dispatch_message` /
+     `handle` / `execute` / callable) via `match handler` e armazena o callable final em
+     `self._handlers`. O `_execute_handler()` chama o callable previamente resolvido sem
+     cadeia de `isinstance(...Protocol)` por mensagem.
+   - Resultado esperado: `_execute_handler()` deixa de fazer cadeia de
+     `isinstance(...Protocol)` por mensagem.
    - Critério de aceite: benchmark de dispatch com ganho de throughput e redução de p95.
 
 2. **Cachear `TypeAdapter` em `ClassVar`/módulo nos validadores quentes**
+
    - Arquivos iniciais:
      - `src/flext_core/_models/cqrs.py` (`validate_pagination`)
      - `src/flext_core/_models/settings.py` (`validate_batch`)
-   - Ação: mover adapters para constantes de classe/módulo (`ClassVar[TypeAdapter[...]]`).
+   - Ação: mover adapters para constantes de classe/módulo
+     (`ClassVar[TypeAdapter[...]]`).
    - Critério de aceite: zero criação dinâmica de adapter nesses métodos.
 
 3. **Eliminar `Field(default=[])` em modelos Pydantic**
@@ -76,11 +114,13 @@ forte e segurança de contrato.
      - `src/flext_core/_models/containers.py`
      - `src/flext_core/_models/settings.py`
    - Ação: substituir por `Field(default_factory=list)`.
-   - Critério de aceite: `rg "default=\[\]" src/flext_core/_models` sem ocorrências em modelos.
+   - Critério de aceite: `rg "default=\[\]" src/flext_core/_models` sem ocorrências em
+     modelos.
 
 ## P1 — estrutural (médio risco, alto retorno)
 
-4. **Adicionar cache de conformidade de protocolo em `_ProtocolIntrospection`**
+1. **Adicionar cache de conformidade de protocolo em `_ProtocolIntrospection`**
+
    - Arquivo: `src/flext_core/protocols.py`.
    - Ação:
      - cache para membros exigidos por protocolo;
@@ -88,20 +128,21 @@ forte e segurança de contrato.
    - Observação: invalidar cache quando subclasses dinâmicas forem registradas.
    - Critério de aceite: redução mensurável de tempo em testes de bootstrap/import.
 
-5. **Tornar validação profunda por metaclass configurável por ambiente**
+2. **Tornar validação profunda por metaclass configurável por ambiente**
    - Arquivo: `src/flext_core/protocols.py` (metaclass `ProtocolModelMeta`).
    - Ação: modo estrito em CI/dev; modo leve em produção.
    - Critério de aceite: cold-start melhor em produção sem perda de segurança em CI.
 
 ## P2 — governança e hardening contínuo
 
-6. **Definir guideline oficial de Pydantic v2 para o projeto**
+1. **Definir guideline oficial de Pydantic v2 para o projeto**
+
    - Documento interno com regras obrigatórias:
      - `default_factory` para coleções mutáveis;
      - `TypeAdapter` cacheado fora de loops/validators quentes;
      - validação estrita apenas na fronteira de entrada.
 
-7. **Criar microbenchmarks e budget no CI**
+2. **Criar microbenchmarks e budget no CI**
    - Cenários mínimos:
      - dispatch com/sem resolução pré-compilada;
      - validação com adapter inline vs cacheado;
@@ -114,21 +155,23 @@ forte e segurança de contrato.
 
 1. **Adapters reutilizáveis**: construir `TypeAdapter` uma vez e reutilizar.
 2. **Coleções com `default_factory`**: evitar `default=[]` / `default={}`.
-3. **Validação na borda**: usar validação mais estrita em input externo; evitar revalidar internamente sem necessidade.
-4. **Evitar trabalho duplicado**: se o objeto já é `BaseModel` válido do tipo esperado, evitar roundtrip de
-   validação/dump sem ganho funcional.
-5. **Erros de validação agregados de forma estável**: padronizar construção de mensagens para manter custo previsível e
-   facilitar profiling.
+3. **Validação na borda**: usar validação mais estrita em input externo; evitar
+   revalidar internamente sem necessidade.
+4. **Evitar trabalho duplicado**: se o objeto já é `BaseModel` válido do tipo esperado,
+   evitar roundtrip de validação/dump sem ganho funcional.
+5. **Erros de validação agregados de forma estável**: padronizar construção de mensagens
+   para manter custo previsível e facilitar profiling.
 
 ---
 
 ## Plano de execução em PRs pequenos (recomendado)
 
-### PR 1 (rápido)
+### PR 1 (rápido) ✅ concluído
 
-- `dispatcher.py`: resolver executor no `register_handler` e armazenar callable.
-- `_models/cqrs.py`: cache do adapter de paginação.
-- `_models/settings.py`: cache do adapter de batch.
+- `dispatcher.py`: executor já resolvido no `register_handler` e armazenado como
+  callable — implementado.
+- `_models/cqrs.py`: cache do adapter de paginação — pendente.
+- `_models/settings.py`: cache do adapter de batch — pendente.
 
 ### PR 2 (segurança + consistência)
 

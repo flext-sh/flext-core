@@ -1,9 +1,15 @@
-"""Facade for FlextUtilitiesEnforcementCollect."""
+"""Facade for FlextUtilitiesEnforcementCollect.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
-from ._enforcement_collect_parts.enforcement_collect_part_02 import (
-    FlextUtilitiesEnforcementCollect,
+from flext_core._utilities._enforcement_collect_parts import (
+    enforcement_collect_part_02 as part_02,
 )
+
+FlextUtilitiesEnforcementCollect = part_02.FlextUtilitiesEnforcementCollect
 
 __all__: list[str] = ["FlextUtilitiesEnforcementCollect"]

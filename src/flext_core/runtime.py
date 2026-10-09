@@ -6,11 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from ._runtime import FlextRuntimeContainer, FlextRuntimeDependencyIntegration
+from flext_core._runtime import FlextRuntimeContainer
 
 
-class FlextRuntime(FlextRuntimeContainer, FlextRuntimeDependencyIntegration):
-    """Expose runtime normalization, DI, and validation helpers."""
+class FlextRuntime(FlextRuntimeContainer):
+    """Expose runtime normalization and validation helpers."""
 
 
 __all__: list[str] = ["FlextRuntime"]

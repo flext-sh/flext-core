@@ -17,27 +17,31 @@ import threading
 from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
-    from .._models.enforcement import FlextModelsEnforcement as _me
+    from flext_core._models import FlextModelsEnforcement
 
 
 class FlextUtilitiesRuntimeViolationRegistry:
     """Thread-safe process-local buffer of ``m.Report`` instances."""
 
-    _violation_buffer: ClassVar[list[_me.Report]] = []
+    _violation_buffer: ClassVar[list[FlextModelsEnforcement.Report]] = []
     _violation_lock: ClassVar[threading.Lock] = threading.Lock()
 
     @classmethod
-    def append_violation_report(cls, report: _me.Report) -> None:
+    def append_violation_report(cls, report: FlextModelsEnforcement.Report) -> None:
         """Buffer ``report`` for later drainage by the dispatcher."""
         with cls._violation_lock:
             cls._violation_buffer.append(report)
 
     @classmethod
-    def drain_violation_reports(cls) -> tuple[_me.Report, ...]:
+    def drain_violation_reports(cls) -> tuple[FlextModelsEnforcement.Report, ...]:
         """Return every buffered report and reset the buffer atomically.
 
         Idempotent: a second call returns an empty tuple until new appends
         arrive.
+
+        Returns:
+            Every buffered report and reset the buffer atomically.
+
         """
         with cls._violation_lock:
             drained = tuple(cls._violation_buffer)
