@@ -19,11 +19,8 @@ import pytest
 from flext_tests import tm
 
 from flext_core import r
-from tests.constants import c
-from tests.models import m
-from tests.protocols import p
+from tests import c, m, p, u
 from tests.unit._project_metadata_support import write_pyproject
-from tests.utilities import u
 
 
 def _read(root: Path) -> p.ResultView[m.ProjectMetadata]:

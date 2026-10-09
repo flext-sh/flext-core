@@ -13,10 +13,7 @@ from typing import Annotated, ClassVar, Final, Protocol, runtime_checkable
 
 from flext_tests import r
 
-from tests.models import m
-from tests.protocols import p
-from tests.typings import t
-from tests.utilities import u
+from tests import m, p, t, u
 
 
 class TestsFlextCleanModels:

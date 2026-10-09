@@ -9,7 +9,7 @@ from __future__ import annotations
 from functools import wraps
 from typing import TYPE_CHECKING
 
-from examples.protocols import p
+from examples import p
 from flext_core import r, u
 
 if TYPE_CHECKING:

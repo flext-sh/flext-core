@@ -13,6 +13,8 @@ from pathlib import Path
 from types import GenericAlias, UnionType
 from typing import ForwardRef, TypeAliasType
 
+from typing_extensions import TypeForm
+
 from flext_core._typings.annotateds import FlextTypesAnnotateds
 from flext_core._typings.pydantic import FlextTypesPydantic
 
@@ -138,4 +140,4 @@ class FlextTypingBase(FlextTypesPydantic, FlextTypesAnnotateds):
     type TypeHintSpecifier = (
         type[object] | str | UnionType | GenericAlias | TypeAliasType | ForwardRef
     )
-    type DynamicTypeHint = str | UnionType | TypeAliasType | ForwardRef
+    type TypeFormSpecifier = TypeHintSpecifier | TypeForm[object]

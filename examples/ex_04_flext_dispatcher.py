@@ -9,10 +9,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
-from examples.models import m
+from examples import m, p, t, u
 from examples.shared import ExamplesFlextShared
-from examples.utilities import u
-from flext_core import p, r, t
+from flext_core import r
 
 
 class _CreateUserHandler:

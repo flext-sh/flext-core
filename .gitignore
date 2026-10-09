@@ -67,6 +67,11 @@
 *.bak
 config/build-constraints.txt
 
+# RESIDUE: never track backups or repo-local policy copies
+*.bak
+config/build-constraints.txt
+*aihub-prior*
+
 # Aider AI data
 .aider/
 .aider.conf.yml

@@ -10,13 +10,11 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tests.constants import c
-from tests.models import m
+from tests import c, m
 from tests.utilities import u
 
 if TYPE_CHECKING:
-    from tests.protocols import p
-    from tests.typings import t
+    from tests import p, t
 
 
 class TestsFlextCoreRegistry:

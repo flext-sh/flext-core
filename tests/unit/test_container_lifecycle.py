@@ -14,11 +14,10 @@ from typing import TYPE_CHECKING
 
 from flext_tests import tm
 
-from tests.models import m
-from tests.utilities import u
+from tests import m, u
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextContainerLifecycle:

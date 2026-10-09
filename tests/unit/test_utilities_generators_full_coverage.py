@@ -10,8 +10,7 @@ from datetime import UTC, datetime
 from uuid import UUID
 
 from flext_core import u
-from tests.constants import c
-from tests.models import m
+from tests import c, m
 
 
 class TestsFlextCoreUtilitiesGenerators:

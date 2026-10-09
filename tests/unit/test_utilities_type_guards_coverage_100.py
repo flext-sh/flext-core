@@ -13,10 +13,10 @@ from typing import TYPE_CHECKING, cast
 from flext_tests import tm
 
 from flext_core import u
-from tests.models import m
+from tests import m
 
 if TYPE_CHECKING:
-    from tests.typings import t
+    from tests import t
 
 
 class TestsFlextCoreUtilitiesTypeGuards:

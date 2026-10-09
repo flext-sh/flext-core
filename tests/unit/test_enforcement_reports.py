@@ -18,9 +18,7 @@ from typing import Annotated
 import pytest
 
 from flext_core.utilities import FlextUtilitiesEnforcement
-from tests.constants import c
-from tests.models import m
-from tests.utilities import u
+from tests import c, m, u
 
 
 def _hard_violation(

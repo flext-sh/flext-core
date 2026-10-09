@@ -16,8 +16,7 @@ import operator
 import pytest
 from flext_tests import e, tm
 
-from tests.constants import c
-from tests.protocols import p
+from tests import c, p
 from tests.unit._exceptions_failure_support import FAILURES, FailureFactory
 from tests.unit._exceptions_structured_support import STRUCTURED_ERRORS, ErrorFactory
 

@@ -38,26 +38,34 @@ class FlextExceptionsBase:
         def __init__(
             self,
             message: str,
-            *,
+            *format_args: ts.JsonPayload,
             options: m.ExceptionInitOptions | None = None,
             params: m.BaseModel | None = None,
+            metadata: pr.HasModelDump | tb.JsonValue | None = None,
             **extra_kwargs: tb.JsonValue,
         ) -> None:
-            """Initialize base error with message and optional metadata."""
+            """Initialize base error with message and optional metadata.
+
+            Positional arguments after ``message`` are %-format values applied
+            to the message template (the standard logging convention).
+            ``metadata`` is the typed channel for structured error metadata:
+            it accepts a dumpable model (e.g. a domain ``ErrorMetadata``) or a
+            JSON payload, mirroring ``ExceptionInitOptions.metadata``.
+            """
+            resolved_message = message % format_args if format_args else message
             opts = options
             if opts is None:
                 # Keyword-form construction: the tested public contract accepts
-                # every ExceptionInitOptions field as a direct keyword (e.g.
+                # the ExceptionInitOptions fields as direct keywords (e.g.
                 # ``BaseError("m", error_code="E_BASE", auto_log=False)``).
-                # Extract exactly the option keys from the kwargs so they feed
-                # the typed options instead of falling into the generic extra
-                # bucket.
-                option_kwargs = {
+                # Extract exactly the remaining option keys from the kwargs so
+                # they feed the typed options instead of falling into the
+                # generic extra bucket; ``metadata`` is a named parameter.
+                option_kwargs: dict[str, pr.HasModelDump | tb.JsonValue | None] = {
                     key: extra_kwargs.pop(key)
                     for key in (
                         "error_code",
                         "context",
-                        "metadata",
                         "correlation_id",
                         "auto_correlation",
                         "auto_log",
@@ -65,11 +73,15 @@ class FlextExceptionsBase:
                     )
                     if key in extra_kwargs
                 }
+                if metadata is not None:
+                    option_kwargs["metadata"] = metadata
                 opts = m.ExceptionInitOptions.model_validate(option_kwargs)
+            elif metadata is not None:
+                opts = opts.model_copy(update={"metadata": metadata})
             declaredparams_cls = self.__class__.params_cls
             if declaredparams_cls is None:
                 self._initialize_base_state(
-                    message,
+                    resolved_message,
                     error_code=opts.error_code,
                     options=opts,
                     extra_kwargs=extra_kwargs,
@@ -96,7 +108,7 @@ class FlextExceptionsBase:
                 declared_correlation_id,
             )
             self._initialize_base_state(
-                message,
+                resolved_message,
                 error_code=resolved_error_code,
                 options=resolved_options,
                 extra_kwargs={},

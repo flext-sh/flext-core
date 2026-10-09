@@ -27,7 +27,7 @@ from examples._models.person import ExamplesFlextSharedPerson
 from flext_core import FlextModels
 
 if TYPE_CHECKING:
-    from examples.typings import t
+    from examples import t
 
 
 class ExamplesFlextModels(FlextModels):

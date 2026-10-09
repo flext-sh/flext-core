@@ -28,8 +28,8 @@ import pytest
 
 from flext_core import c, m
 from flext_core.utilities import FlextUtilitiesEnforcement
+from tests import u
 from tests.unit._enforcement_support import make_class
-from tests.utilities import u
 
 type WarningRecords = list[warnings.WarningMessage]
 type ClassFactory = Callable[[], type]

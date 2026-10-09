@@ -16,7 +16,7 @@ from typing import Annotated
 import pytest
 from flext_tests import tm
 
-from tests.models import m
+from tests import m
 
 
 class TestsFlextCoreBase:

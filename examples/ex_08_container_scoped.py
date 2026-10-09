@@ -6,9 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from examples import m, p
 from examples.ex_08_container_registration import Ex08ContainerRegistration
-from examples.models import m
-from examples.protocols import p
 from flext_core import FlextSettings
 
 

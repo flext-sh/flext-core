@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import typing
 
-from tests.typings import t
+from tests import t
 
 type AnyAlias = str | typing.Any
 type CleanAlias = str | int

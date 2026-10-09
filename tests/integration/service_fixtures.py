@@ -10,15 +10,13 @@ from typing import TYPE_CHECKING, Annotated, ClassVar, override
 
 from flext_tests import r
 
+from tests import m, u
 from tests.base import s
-from tests.models import m
-from tests.utilities import u
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping, MutableSequence
 
-    from tests.protocols import p
-    from tests.typings import t
+    from tests import p, t
 
 
 class TestsFlextUserServiceEntity(m.BaseModel):

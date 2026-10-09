@@ -33,7 +33,7 @@ class FlextUtilitiesBeartypeTypeAliases:
     @classmethod
     def deferred(
         cls,
-        hint: FlextTypingBase.TypeHintSpecifier
+        hint: FlextTypingBase.TypeFormSpecifier
         | FlextProtocolsBase.AttributeProbe
         | None,
         *,
@@ -51,7 +51,7 @@ class FlextUtilitiesBeartypeTypeAliases:
     @classmethod
     def deferred_annotated(
         cls,
-        hint: FlextTypingBase.TypeHintSpecifier
+        hint: FlextTypingBase.TypeFormSpecifier
         | FlextProtocolsBase.AttributeProbe
         | None,
         *,
@@ -68,7 +68,7 @@ class FlextUtilitiesBeartypeTypeAliases:
     @classmethod
     def _deferred_scan(
         cls,
-        hint: FlextTypingBase.TypeHintSpecifier
+        hint: FlextTypingBase.TypeFormSpecifier
         | FlextProtocolsBase.AttributeProbe
         | None,
         scan: tuple[bool, bool, bool],
@@ -88,7 +88,7 @@ class FlextUtilitiesBeartypeTypeAliases:
         visited: set[int] = set()
         pending: list[
             tuple[
-                FlextTypingBase.TypeHintSpecifier
+                FlextTypingBase.TypeFormSpecifier
                 | FlextProtocolsBase.AttributeProbe
                 | None,
                 bool,

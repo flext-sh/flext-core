@@ -6,12 +6,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar, override
+from typing import TYPE_CHECKING, ClassVar, override
 
 from pydantic import ValidationError as _PydanticValidationError
 
 from flext_core import c, m, t
 from flext_core._exceptions.base import FlextExceptionsBase
+
+if TYPE_CHECKING:
+    from flext_core._protocols.result import FlextProtocolsResult
 
 
 class FlextExceptionsTypes(FlextExceptionsBase):
@@ -138,11 +141,12 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         def __init__(
             self,
             message: str,
-            *,
+            *format_args: t.JsonPayload,
             expected_type: type | str | None = None,
             actual_type: type | str | None = None,
             options: m.ExceptionInitOptions | None = None,
             params: m.BaseModel | None = None,
+            metadata: FlextProtocolsResult.HasModelDump | t.JsonValue | None = None,
             **extra_kwargs: t.JsonValue,
         ) -> None:
             """Initialize type error with type information."""
@@ -154,8 +158,10 @@ class FlextExceptionsTypes(FlextExceptionsBase):
             cls = FlextExceptionsTypes.FlextTypeError
             super().__init__(
                 message,
+                *format_args,
                 options=options,
                 params=params,
+                metadata=metadata,
                 expected_type=cls._to_type_name(expected_type),
                 actual_type=cls._to_type_name(actual_type),
                 **extra_kwargs,

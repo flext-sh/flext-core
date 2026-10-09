@@ -11,13 +11,11 @@ from typing import TYPE_CHECKING, override
 import pytest
 from flext_tests import h, r
 
-from tests.constants import c
-from tests.typings import t
+from tests import c, t
 from tests.utilities import u
 
 if TYPE_CHECKING:
-    from tests.models import m
-    from tests.protocols import p
+    from tests import m, p
 
 
 class TestsFlextHandlersDispatch(u.TestsFlextFlextHandlers):

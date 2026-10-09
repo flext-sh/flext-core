@@ -14,13 +14,12 @@ from typing import TYPE_CHECKING, NoReturn
 import pytest
 from flext_tests import tm
 
-from tests.protocols import p
-from tests.utilities import u
+from tests import p, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests.typings import t
+    from tests import t
 
 LOG_LEVELS: tuple[tuple[str, bool], ...] = (
     ("debug", False),

@@ -37,6 +37,10 @@ class FlextTypesPydantic:
     type EmailStr = pydantic.EmailStr
     type NameEmail = pydantic.NameEmail
 
+    # Validation exception for annotation positions; the runtime class stays
+    # on the m/c facades for except/isinstance (TypeAliasType is not catchable).
+    type ValidationError = pydantic.ValidationError
+
     # Numeric constraints (callables — remain attributes)
     conint = pydantic.conint
     confloat = pydantic.confloat
