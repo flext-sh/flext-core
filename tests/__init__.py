@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 from flext_core import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_tests import api, td, tf, tk, tm, u
+    from flext_tests import api, td, tf, tk, tm
 
     from flext_core import d, e, h, r, x
     from tests import benchmark, fixtures, integration, unit
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from tests.models import TestsFlextModels, m
     from tests.protocols import TestsFlextProtocols, p
     from tests.typings import TestsFlextTypes, t
-    from tests.utilities import TestsFlextUtilities
+    from tests.utilities import TestsFlextUtilities, u
 
 
 __all__: tuple[str, ...] = (
@@ -81,7 +81,7 @@ install_lazy_exports(
         "tf": "flext_tests",
         "tk": "flext_tests",
         "tm": "flext_tests",
-        "u": "flext_tests",
+        "u": ".utilities",
         "unit": ".unit",
         "x": "flext_core",
     }),
