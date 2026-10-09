@@ -8,12 +8,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from tests.models import m
+from tests import m
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from tests.typings import t
+    from tests import t
 
 
 class TestsFlextUtilitiesReliabilityScenariosMixin:

@@ -15,7 +15,7 @@ from collections.abc import Mapping
 
 import pytest
 
-from tests.utilities import u
+from tests import u
 
 _MISSING_PREFIX = "class name missing project prefix"
 type NamespaceTree = Mapping[str, NamespaceTree]

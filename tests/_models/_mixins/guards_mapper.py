@@ -10,7 +10,7 @@ from collections import UserDict
 from typing import TYPE_CHECKING, Annotated, override
 
 from flext_core import m
-from tests.typings import t
+from tests import t
 
 if TYPE_CHECKING:
     from collections.abc import ItemsView

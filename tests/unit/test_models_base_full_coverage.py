@@ -17,8 +17,7 @@ from typing import Annotated
 import pytest
 from flext_tests import tm
 
-from tests.constants import c
-from tests.models import m
+from tests import c, m
 
 
 class TestsFlextCoreModelsBaseFullCoverage:

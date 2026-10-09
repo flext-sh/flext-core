@@ -140,19 +140,9 @@ class FlextUtilitiesModel:
         strict: bool | None = None,
     ) -> p.Result[TValue]: ...
 
-    @overload
-    @staticmethod
-    def validate_value(
-        target: t.DynamicTypeHint,
-        data: t.JsonPayload,
-        *,
-        from_json: bool = False,
-        strict: bool | None = None,
-    ) -> p.Result[t.JsonValue]: ...
-
     @staticmethod
     def validate_value[TValue](
-        target: t.ValueAdapter[TValue] | t.TypeHintSpecifier,
+        target: t.ValueAdapter[TValue] | type[TValue],
         data: t.JsonPayload,
         *,
         from_json: bool = False,

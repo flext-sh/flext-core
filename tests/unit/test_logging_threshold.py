@@ -15,13 +15,12 @@ import pytest
 import structlog
 from flext_tests import tm
 
-from tests.constants import c
-from tests.utilities import u
+from tests import c, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
 
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextCoreLoggingThreshold:

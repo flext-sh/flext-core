@@ -17,8 +17,7 @@ from typing import NoReturn
 import pytest
 from flext_tests import d, e, r, tm
 
-from tests.models import m
-from tests.protocols import p
+from tests import m, p
 
 _COMBINED_SUM = 6
 _FLAT_MAP_VALUE = 20

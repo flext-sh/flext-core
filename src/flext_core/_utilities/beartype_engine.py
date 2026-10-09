@@ -216,7 +216,7 @@ class FlextUtilitiesBeartypeEngine(
     @override
     @staticmethod
     def has_forbidden_collection_origin(
-        hint: FlextTypingBase.TypeHintSpecifier | None,
+        hint: FlextTypingBase.TypeFormSpecifier | None,
         forbidden: frozenset[str],
     ) -> tuple[bool, str]:
         return FlextUtilitiesBeartypeHelpers.has_forbidden_collection_origin(

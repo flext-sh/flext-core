@@ -25,8 +25,8 @@ if TYPE_CHECKING:
 class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart01):
     @staticmethod
     def unwrap_annotated(
-        hint: t.TypeHintSpecifier | None,
-    ) -> t.TypeHintSpecifier | None:
+        hint: t.TypeFormSpecifier | None,
+    ) -> t.TypeFormSpecifier | None:
         h = FlextUtilitiesBeartypeHelpers
         current = hint
         while current is not None:

@@ -15,6 +15,7 @@ from typing import Annotated, ClassVar, override
 
 from flext_tests import FlextTestsUtilities, h, r
 
+from tests import c, m, p, t
 from tests._utilities.case_factories import TestsFlextUtilitiesCaseFactoriesMixin
 from tests._utilities.contracts import TestsFlextUtilitiesContractsMixin
 from tests._utilities.dispatch import TestsFlextUtilitiesDispatchMixin
@@ -24,10 +25,6 @@ from tests._utilities.parser_reliability import (
 from tests._utilities.railway import TestsFlextUtilitiesRailwayMixin
 from tests._utilities.service_factories import TestsFlextUtilitiesServiceFactoriesMixin
 from tests._utilities.services import TestsFlextUtilitiesServicesMixin
-from tests.constants import c
-from tests.models import m
-from tests.protocols import p
-from tests.typings import t
 
 
 class TestsFlextUtilities(FlextTestsUtilities):

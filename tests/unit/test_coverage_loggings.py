@@ -14,13 +14,12 @@ from typing import TYPE_CHECKING, NoReturn
 import pytest
 from flext_tests import tm
 
-from tests.utilities import u
+from tests import u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests.protocols import p
-    from tests.typings import t
+    from tests import p, t
 
 
 class TestsFlextCoverageLoggings:

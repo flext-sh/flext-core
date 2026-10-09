@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from flext_core import m
 
 if TYPE_CHECKING:
-    from examples.typings import t
+    from examples import t
 
 
 class ExamplesFlextModelsEx01:

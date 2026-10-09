@@ -12,12 +12,10 @@ import pytest
 from flext_tests import tm
 
 from flext_core.container import FlextContainer
-from tests import e
-from tests.constants import c
-from tests.models import m
+from tests import c, e, m
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 
 def _factory() -> str:

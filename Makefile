@@ -277,7 +277,7 @@ RUNTIME_LINKED_WORKTREE := Y
 endif
 endif
 ifeq ($(RUNTIME_LINKED_WORKTREE),Y)
-override RUNTIME_VENV := $(abspath $(RUNTIME_ROOT)/../.flext-venvs/$(notdir $(RUNTIME_ROOT)))
+override RUNTIME_VENV := $(abspath $(RUNTIME_ROOT)/../.venv
 else
 override RUNTIME_VENV := $(RUNTIME_ROOT)/.venv
 endif
@@ -335,7 +335,7 @@ _bootstrap_setup_tools:
 	if [ "$(TOOL_BOOTSTRAP_RESOLVE)" = "1" ]; then \
 		mise -C "$(PROJECT_ROOT)" lock --bump; \
 	fi; \
-	mise -C "$(PROJECT_ROOT)" install --yes; \
+	mise -C "$(PROJECT_ROOT)" install --yes "python" "github:jdx/mise" "uv" "kubectl" "helm" "kind" "direnv" "taplo" "aqua:ast-grep/ast-grep" "gitleaks" "aqua:boyter/scc" "kubeconform" "node" "go" "make" "github:qltysh/qlty" "github:kucherenko/jscpd" "github:microsoft/waza"; \
 	mise_pin="$$( awk 'index($$0, "[[tools.\"github:jdx/mise\"]]") == 1 { inside = 1; next } inside && substr($$0, 1, 1) == "[" { exit } inside && $$1 == "version" { gsub(/[",]/, "", $$3); print $$3; exit }' "$(PROJECT_ROOT)/mise.lock" )"; \
 	if [ -z "$$mise_pin" ]; then \
 		printf 'ERROR: mise.lock pins no github:jdx/mise release; run make upg\n' >&2; \
@@ -1064,7 +1064,11 @@ _setup_lifecycle:
 	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _setup_activated,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _setup_activated)
 
 .PHONY: _setup_activated
+# The reality proof runs before post-setup: every declared tool must be the
+# mise.lock release, self-contained in its install root, reporting the locked
+# version (codegen mise-proof). The first defect fails setup; no fallback.
 _setup_activated:
+	@$(PROJECT_FLEXT_INFRA) codegen mise-proof --repository-root "$(PROJECT_ROOT)"
 	@set -eu; \
 	case "$(strip $(CI)): $(CUSTOM_DECLARED_TARGETS) " in \
 		Y:*) ;; \
@@ -1461,7 +1465,7 @@ _upg_lifecycle: _builtin_setup_submodules
 	@$(UV) lock --check --project "$(PROJECT_ROOT)"
 	@$(SELF_MAKE) _builtin_setup_environment
 	@mise -C "$(PROJECT_ROOT)" lock --bump
-	@mise -C "$(PROJECT_ROOT)" install --yes
+	@mise -C "$(PROJECT_ROOT)" install --yes "python" "github:jdx/mise" "uv" "kubectl" "helm" "kind" "direnv" "taplo" "aqua:ast-grep/ast-grep" "gitleaks" "aqua:boyter/scc" "kubeconform" "node" "go" "make" "github:qltysh/qlty" "github:kucherenko/jscpd" "github:microsoft/waza"
 	@$(SELF_MAKE) _builtin_require_mise
 	$(call RUN_PUBLIC_ACTIVATE,gen)
 	@set -eu; \

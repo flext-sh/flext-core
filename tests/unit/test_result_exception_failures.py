@@ -16,12 +16,10 @@ from typing import TYPE_CHECKING, Annotated
 import pytest
 from flext_tests import r, tm
 
-from tests.constants import c
-from tests.models import m
-from tests.typings import t
+from tests import c, m, t
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextCoreResultExceptionFailures:

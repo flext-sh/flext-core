@@ -16,8 +16,7 @@ import types
 import pytest
 from flext_tests import d, r
 
-from tests.protocols import p
-from tests.utilities import u
+from tests import p, u
 
 
 class TestsFlextDecoratorsDiscovery:

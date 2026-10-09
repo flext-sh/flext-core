@@ -10,11 +10,9 @@ from typing import Annotated, ClassVar, override
 
 from flext_tests import r, u
 
+from tests import c, p, t
 from tests._utilities.railway_services import TestsFlextUtilitiesRailwayServicesMixin
 from tests.base import s
-from tests.constants import c
-from tests.protocols import p
-from tests.typings import t
 
 
 class TestsFlextUtilitiesServicesMixin:

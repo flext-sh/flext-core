@@ -11,8 +11,8 @@ from typing import TYPE_CHECKING
 import pytest
 from flext_tests import tm
 
+from tests import u
 from tests.integration.service_fixtures import TestsFlextFlextServiceFixtures
-from tests.utilities import u
 
 if TYPE_CHECKING:
     from pathlib import Path

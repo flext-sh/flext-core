@@ -10,12 +10,10 @@ from typing import TYPE_CHECKING
 
 from flext_tests import r, tm
 
-from tests.constants import c
-from tests.typings import t
-from tests.utilities import u
+from tests import c, t, u
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextFlextSystemWorkflowCases:

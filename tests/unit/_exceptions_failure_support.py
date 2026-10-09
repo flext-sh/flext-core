@@ -11,12 +11,10 @@ from typing import TYPE_CHECKING
 
 from flext_tests import e
 
-from tests.constants import c
-from tests.models import m
-from tests.protocols import p
+from tests import c, m, p
 
 if TYPE_CHECKING:
-    from tests.typings import t
+    from tests import t
 
 type FailureFactory = Callable[[], p.Result[bool]]
 

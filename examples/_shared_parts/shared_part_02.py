@@ -9,8 +9,8 @@ from __future__ import annotations
 import sys
 from typing import cast
 
+from examples import m
 from examples._shared_parts.shared_part_01 import ExamplesFlextSharedBase
-from examples.models import m
 from flext_core import p, r, t
 
 

@@ -21,7 +21,7 @@ import pytest
 from flext_tests import tm
 
 from flext_core import u
-from tests.models import m
+from tests import m
 
 
 class TestsFlextCoreUtilitiesProjectMetadata:

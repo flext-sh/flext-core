@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from typing import Never
 
-    from tests.protocols import p
+    from tests import p
 
 
 def _raiser(exc: Exception) -> Callable[[object], Never]:

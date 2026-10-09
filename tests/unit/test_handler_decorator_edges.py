@@ -21,11 +21,11 @@ from typing import TYPE_CHECKING, override
 import pytest
 from flext_tests import h, r
 
+from tests import m
 from tests.base import s
-from tests.models import m
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextHandlerDecoratorEdges:

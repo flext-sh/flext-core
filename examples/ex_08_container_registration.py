@@ -8,11 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from examples.constants import c
-from examples.protocols import p
+from examples import c, p, t, u
 from examples.shared import ExamplesFlextShared
-from examples.typings import t
-from examples.utilities import u
 from flext_core import e, r
 
 if TYPE_CHECKING:

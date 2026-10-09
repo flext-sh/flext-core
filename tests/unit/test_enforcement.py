@@ -13,9 +13,8 @@ from __future__ import annotations
 
 import pytest
 
-from tests.models import m
+from tests import m, u
 from tests.unit._enforcement_support import make_class, messages, synthetic_method
-from tests.utilities import u
 
 
 class TestsFlextCoreEnforcement:

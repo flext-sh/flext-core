@@ -20,7 +20,7 @@ from flext_tests import r, tm
 import tests.utilities
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextCoreResultExceptionSafeCallable(

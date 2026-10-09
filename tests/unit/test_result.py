@@ -11,7 +11,7 @@ from typing import cast
 import pytest
 from flext_tests import r, tm
 
-from tests.protocols import p
+from tests import p
 
 
 class TestsFlextCoreResult:
