@@ -9,7 +9,6 @@ from __future__ import annotations
 from collections.abc import Mapping
 from enum import StrEnum
 from functools import cache
-
 from typing import Annotated
 
 from pydantic import ConfigDict, TypeAdapter
@@ -123,7 +122,9 @@ class FlextTypesTypeAdapterScalars:
     def strict_str_sequence_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.StrSequence]:
-        return TypeAdapter(Annotated[FlextTypingBase.StrSequence, None], config=ConfigDict(strict=True))
+        return TypeAdapter(
+            Annotated[FlextTypingBase.StrSequence, None], config=ConfigDict(strict=True)
+        )
 
     @classmethod
     @cache
