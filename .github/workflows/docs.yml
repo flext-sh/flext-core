@@ -120,8 +120,18 @@ jobs:
           echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
           echo "${HOME}/.local/share/mise/shims" >> "${GITHUB_PATH}"
           mise_pin="$(awk 'index($0, "[[tools.\"github:jdx/mise\"]]") == 1 { inside = 1; next } inside && substr($0, 1, 1) == "[" { exit } inside && $1 == "version" { gsub(/[",]/, "", $3); print $3; exit }' mise.lock)"
-          "${HOME}/.local/bin/mise" install "github:jdx/mise@${mise_pin}"
-          "${HOME}/.local/bin/mise" use --global "github:jdx/mise@${mise_pin}"
+          if [ -z "${mise_pin}" ]; then
+            printf 'ERROR: mise.lock pins no github:jdx/mise release; commit a relocked mise.lock\n' >&2
+            exit 2
+          fi
+          "${HOME}/.local/bin/mise" install --locked github:jdx/mise
+          mise_path="$("${HOME}/.local/bin/mise" which mise)"
+          mise_receipt="$("${mise_path}" --version | cut -d ' ' -f1)"
+          if [ "${mise_receipt}" != "${mise_pin}" ]; then
+            printf 'ERROR: provisioned Mise %s differs from mise.lock pin %s; run make setup\n' "${mise_receipt}" "${mise_pin}" >&2
+            exit 2
+          fi
+          echo "${mise_path%/*}" >> "${GITHUB_PATH}"
 
       - name: Sync workspace toolchain
         run: make setup
@@ -295,8 +305,18 @@ jobs:
           echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
           echo "${HOME}/.local/share/mise/shims" >> "${GITHUB_PATH}"
           mise_pin="$(awk 'index($0, "[[tools.\"github:jdx/mise\"]]") == 1 { inside = 1; next } inside && substr($0, 1, 1) == "[" { exit } inside && $1 == "version" { gsub(/[",]/, "", $3); print $3; exit }' mise.lock)"
-          "${HOME}/.local/bin/mise" install "github:jdx/mise@${mise_pin}"
-          "${HOME}/.local/bin/mise" use --global "github:jdx/mise@${mise_pin}"
+          if [ -z "${mise_pin}" ]; then
+            printf 'ERROR: mise.lock pins no github:jdx/mise release; commit a relocked mise.lock\n' >&2
+            exit 2
+          fi
+          "${HOME}/.local/bin/mise" install --locked github:jdx/mise
+          mise_path="$("${HOME}/.local/bin/mise" which mise)"
+          mise_receipt="$("${mise_path}" --version | cut -d ' ' -f1)"
+          if [ "${mise_receipt}" != "${mise_pin}" ]; then
+            printf 'ERROR: provisioned Mise %s differs from mise.lock pin %s; run make setup\n' "${mise_receipt}" "${mise_pin}" >&2
+            exit 2
+          fi
+          echo "${mise_path%/*}" >> "${GITHUB_PATH}"
 
       - name: Sync workspace toolchain
         run: make setup

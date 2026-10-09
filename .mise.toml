@@ -58,7 +58,6 @@ gitleaks = "latest"
 kubeconform = "latest"
 node = "latest"
 go = "latest"
-make = "latest"
 [tools."github:qltysh/qlty"]
 version = "0.645.0"
 [tools."github:kucherenko/jscpd"]
