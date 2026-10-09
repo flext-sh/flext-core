@@ -63,7 +63,6 @@ class FlextUtilitiesLoggingConfig:
     class _AsyncLogWriter(io.TextIOBase):
         """Background log writer using a queue and a separate thread."""
 
-
         def __init__(self, stream: typing.TextIO) -> None:
             super().__init__()
             self.stream = stream
