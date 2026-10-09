@@ -1235,7 +1235,7 @@ _setup_lifecycle:
 # mise.lock release, self-contained in its install root, reporting the locked
 # version (codegen mise-proof). The first defect fails setup; no fallback.
 _setup_activated:
-	@$(PROJECT_FLEXT_INFRA) codegen mise-proof --repository-root "$(PROJECT_ROOT)" --uv-executable "$$(mise which uv)"
+	@$(PROJECT_FLEXT_INFRA) codegen mise-proof --repository-root "$(PROJECT_ROOT)" --uv-executable "$$(command -v $(UV))"
 	@set -eu; \
 	case "$(strip $(CI)): $(CUSTOM_DECLARED_TARGETS) " in \
 		Y:*) ;; \
