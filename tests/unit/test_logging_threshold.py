@@ -20,7 +20,7 @@ from tests import c, u
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
 
-    from tests import p
+    from tests import p, t
 
 
 class TestsFlextCoreLoggingThreshold:
