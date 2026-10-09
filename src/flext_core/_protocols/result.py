@@ -205,12 +205,6 @@ class FlextProtocolsResult:
         """
 
         @classmethod
-        def reject_banned_result_parameterization(cls) -> None: ...
-
-        @staticmethod
-        def reject_banned_success_payload(value: object) -> None: ...
-
-        @classmethod
         def require_error(cls, source: FlextProtocolsResult.FailureLike) -> str: ...
 
         @classmethod
@@ -226,17 +220,12 @@ class FlextProtocolsResult:
         @classmethod
         def ok(cls, value: object) -> object: ...
 
-        def __init__(self, *, value: object, success: bool) -> None: ...
+        @classmethod
+        def create_success[V](cls, value: V) -> FlextProtocolsResult.Result[V]: ...
 
     @runtime_checkable
     class ResultFactory(Protocol):
         """Structural factory contract for the concrete result family."""
-
-        @classmethod
-        def reject_banned_result_parameterization(cls) -> None: ...
-
-        @staticmethod
-        def reject_banned_success_payload(value: object) -> None: ...
 
         @classmethod
         def require_error(cls, source: FlextProtocolsResult.FailureLike) -> str: ...
@@ -266,7 +255,8 @@ class FlextProtocolsResult:
         @classmethod
         def successful_result(cls, result: object) -> bool: ...
 
-        def __init__(self, *, value: object, success: bool) -> None: ...
+        @classmethod
+        def create_success[V](cls, value: V) -> FlextProtocolsResult.Result[V]: ...
 
 
 __all__: list[str] = ["FlextProtocolsResult"]

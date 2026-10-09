@@ -25,7 +25,8 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
     """Factory methods for the concrete result facade.
 
     Contracts are typed as ``p.Result`` (abstract). Instances are built only via
-    ``cls(...)`` — never by importing the public ``FlextResult`` facade.
+    ``create_success``/``create_failure`` — never by importing the public
+    ``FlextResult`` facade.
     """
 
     @staticmethod
@@ -179,7 +180,6 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
         error_data: t.JsonMapping | t.ConfigModelInput | None = None,
         exception: BaseException | None = None,
     ) -> p.Result[T]:
-        cls.reject_banned_result_parameterization()
         error_msg = error if error is not None else ""
         resolved_error_code = error_code or cls._extract_exception_error_code(exception)
         # Why: redact caller-supplied AND auto-extracted error_data (security mro-8taj)
@@ -192,12 +192,11 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
             resolved_error_data = cls._extract_exception_error_data(exception)
         return cast(
             "p.Result[T]",
-            cls(
-                error_code=resolved_error_code,
-                error_data=cls.validate_error_data(resolved_error_data),
-                error=error_msg,
-                success=False,
-                exception=exception,
+            cls.create_failure(
+                error_msg,
+                resolved_error_code,
+                resolved_error_data,
+                exception,
             ),
         )
 
@@ -257,9 +256,7 @@ def ok_result[V, InstanceT: FlextProtocolsResult.ResultFactoryMinimal](
         The resulting ``p.Result[V]``.
 
     """
-    cls.reject_banned_result_parameterization()
-    cls.reject_banned_success_payload(value)
-    return cast("p.Result[V]", cls(value=value, success=True))
+    return cls.create_success(value)
 
 
 def copy_result[V, InstanceT: FlextProtocolsResult.ResultFactoryMinimal](
