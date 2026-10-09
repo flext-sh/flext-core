@@ -98,7 +98,7 @@ class TestsFlextCoreLoggingThreshold:
     ) -> None:
         """Test debug and trace resolve through the runtime owner."""
         u.apply_log_level(log_level=c.LogLevel.ERROR, debug=debug, trace=trace)
-        event = {"level": event_level, "event": "probe"}
+        event: t.LoggingEvent = {"level": event_level, "event": "probe"}
 
         if dropped:
             with pytest.raises(structlog.DropEvent):

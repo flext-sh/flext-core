@@ -42,8 +42,8 @@ class _EchoService(s[str]):
 
     def validate_business_rules(self) -> p.Result[bool]:
         if self.rule_error:
-            return r[bool](error=self.rule_error, success=False)
-        return r[bool](value=True, success=True)
+            return r[bool].fail(self.rule_error)
+        return r[bool].ok(value=True)
 
 
 class ExampleService:
