@@ -14,6 +14,9 @@ from typing import Annotated, ClassVar
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._protocols._logging_parts.flextprotocolslogging_part_01 import (
+    FlextProtocolsLogging,
+)
 from flext_core._typings.base import FlextTypingBase
 from flext_core._typings.services import FlextTypesServices
 
@@ -46,13 +49,12 @@ class FlextModelsConfig:
                 description="Use the console renderer.",
             ),
         ] = True
-        additional_processors: Annotated[
-            FlextTypingBase.SequenceOf[FlextTypesServices.LoggerProcessor] | None,
+        processing_stages: Annotated[
+            FlextTypingBase.SequenceOf[FlextProtocolsLogging.LoggingStage],
             FlextModelsPydantic.Field(
-                default=None,
-                description="Extra structlog processors appended to the chain.",
+                description="Ordered typed event stages executed before rendering.",
             ),
-        ] = None
+        ] = ()
         wrapper_class_factory: Annotated[
             FlextTypesServices.LoggerWrapperFactory | None,
             FlextModelsPydantic.Field(
@@ -72,6 +74,14 @@ class FlextModelsConfig:
             FlextModelsPydantic.Field(
                 default=True,
                 description="Cache the logger on first use.",
+            ),
+        ] = True
+        async_logging: Annotated[
+            bool,
+            FlextModelsPydantic.Field(
+                description=(
+                    "Write rendered log events through the asynchronous writer."
+                ),
             ),
         ] = True
 

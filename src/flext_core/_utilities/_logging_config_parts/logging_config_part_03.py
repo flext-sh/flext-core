@@ -13,8 +13,7 @@ import logging
 
 import structlog
 
-from flext_core import c
-from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core import c, p
 from flext_core._runtime._base import FlextRuntimeBase
 from flext_core._utilities._logging_config_parts.logging_config_part_02 import (
     FlextUtilitiesLoggingConfig as FlextUtilitiesLoggingConfigPart02,
@@ -26,15 +25,19 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart02):
     def configure_structlog(
         cls,
         *,
-        settings: mp.BaseModel | None = None,
+        settings: p.StructlogOptions | None = None,
     ) -> None:
-        """Configure structlog once using FLEXT defaults over the settings model."""
-        if cls._structlog_configured:
+        """Initialize defaults once or apply explicitly supplied typed options.
+
+        Explicit configuration applies to subsequently constructed loggers.
+        Already cached bound loggers retain their processor chain.
+        """
+        if cls._structlog_configured and settings is None:
             return
         (
             level,
             console_renderer,
-            additional_processors,
+            processing_stages,
             wrapper_class_factory,
             logger_factory,
             cache_logger_on_first_use,
@@ -43,7 +46,7 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart02):
         threshold = cls.level_number(level)
         processors = cls._build_structlog_processors(
             console_renderer=console_renderer,
-            additional_processors=additional_processors,
+            processing_stages=processing_stages,
         )
         # The threshold is enforced by ``drop_below_threshold`` at emit time,
         # so the bound logger itself must not filter statically.
@@ -56,14 +59,12 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart02):
             logger_factory=logger_factory,
             async_logging=async_logging,
         )
-        configure_fn = getattr(structlog, "configure", None)
-        if configure_fn is not None and callable(configure_fn):
-            _ = configure_fn(
-                processors=processors,
-                wrapper_class=wrapper_arg,
-                logger_factory=factory_to_use if callable(factory_to_use) else None,
-                cache_logger_on_first_use=cache_logger_on_first_use,
-            )
+        structlog.configure(
+            processors=processors,
+            wrapper_class=wrapper_arg,
+            logger_factory=factory_to_use,
+            cache_logger_on_first_use=cache_logger_on_first_use,
+        )
         cls._publish_logging_state(configured=True, threshold=threshold)
 
     @classmethod

@@ -10,7 +10,7 @@ from collections.abc import Callable, MutableMapping, Set as AbstractSet
 from datetime import date, time, tzinfo
 from enum import Enum
 from pathlib import Path
-from types import GenericAlias, ModuleType, UnionType
+from types import GenericAlias, ModuleType, TracebackType, UnionType
 from typing import TypeAliasType
 
 from flext_core._protocols import (
@@ -69,6 +69,21 @@ class FlextTypesServices:
     type ModelClass[T: FlextTypesPydantic.BaseModelType] = type[T]
     type LogArgument = JsonPayload | FlextProtocolsBase.Model
     type LogValue = LogArgument | Exception
+    type LoggingExceptionInfo = tuple[
+        type[BaseException], BaseException, TracebackType | None
+    ]
+    type LoggingEventValue = (
+        LogValue
+        | BaseException
+        | type[BaseException]
+        | TracebackType
+        | LoggingExceptionInfo
+    )
+    type LoggingEvent = MutableMapping[str, LoggingEventValue]
+    type LoggingProcessor = Callable[
+        [FlextProtocolsLogging.OutputLogger, str, LoggingEvent],
+        LoggingEvent | str | bytes,
+    ]
     type LogResult = FlextProtocolsResult.Result[bool]
     type MetadataMapping = FlextTypingBase.MappingKV[str, JsonPayload]
     type MutableMetadataMapping = MutableMapping[str, JsonPayload]
@@ -146,7 +161,6 @@ class FlextTypesServices:
     type RegistrablePlugin = ScalarOrModel | Callable[..., ScalarOrModel]
     type LoggerFactory = Callable[..., FlextProtocolsLogging.OutputLogger] | None
     type LoggerWrapperFactory = Callable[[], type[FlextProtocolsLogging.Logger]]
-    type LoggerProcessor = Callable[..., FlextTypesPydantic.JsonValue]
 
     type SortableObjectType = str | int | float
     type ValueAdapter[T] = FlextTypesPydantic.TypeAdapter[T]
