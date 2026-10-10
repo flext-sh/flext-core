@@ -29,7 +29,7 @@ class TestsFlextCoreUtilitiesGenerators:
             correlation_id=u.generate("correlation"),
             command_id=u.generate(
                 kind=c.HandlerType.COMMAND,
-                options=u.GenerateOptions(
+                options=m.GenerateOptions(
                     include_timestamp=True,
                     separator="-",
                     parts=(request.command_name, request.tenant),
@@ -38,7 +38,7 @@ class TestsFlextCoreUtilitiesGenerators:
             ),
             event_id=u.generate(
                 kind=c.HandlerType.EVENT,
-                options=u.GenerateOptions(
+                options=m.GenerateOptions(
                     separator="-",
                     parts=(request.environment,),
                     length=6,
@@ -80,7 +80,7 @@ class TestsFlextCoreUtilitiesGenerators:
         """Test public generators accept prefix override for custom batches."""
         batch_id = u.generate(
             kind="aggregate",
-            options=u.GenerateOptions(
+            options=m.GenerateOptions(
                 prefix="agg",
                 parts=("ldap", "delta"),
                 separator="-",
@@ -99,17 +99,17 @@ class TestsFlextCoreUtilitiesGenerators:
             explicit_id=u.generate(kind="id"),
             lookup_id=u.generate(
                 kind=c.HandlerType.QUERY,
-                options=u.GenerateOptions(parts=("status",), length=7),
+                options=m.GenerateOptions(parts=("status",), length=7),
             ),
             query_id=u.generate(
                 kind=c.HandlerType.QUERY,
-                options=u.GenerateOptions(length=5),
+                options=m.GenerateOptions(length=5),
             ),
             event_channel_id=u.generate(
                 kind=c.HandlerType.EVENT,
-                options=u.GenerateOptions(separator="-", length=6),
+                options=m.GenerateOptions(separator="-", length=6),
             ),
-            ulid_token=u.generate("ulid", options=u.GenerateOptions(length=12)),
+            ulid_token=u.generate("ulid", options=m.GenerateOptions(length=12)),
             manual_id=u.generate_id(),
             external_token=u.generate_prefixed_id("", length=8),
         )
@@ -137,23 +137,23 @@ class TestsFlextCoreUtilitiesGenerators:
         audit = m.Tests.OrchestrationAudit(
             entity_id=u.generate(
                 kind="entity",
-                options=u.GenerateOptions(parts=("customer",), length=6),
+                options=m.GenerateOptions(parts=("customer",), length=6),
             ),
             batch_id=u.generate(
                 kind="batch",
-                options=u.GenerateOptions(parts=("users",), length=7),
+                options=m.GenerateOptions(parts=("users",), length=7),
             ),
             transaction_id=u.generate(
                 kind="transaction",
-                options=u.GenerateOptions(parts=("sync", 42), length=9),
+                options=m.GenerateOptions(parts=("sync", 42), length=9),
             ),
             saga_id=u.generate(
                 kind="saga",
-                options=u.GenerateOptions(parts=("ldap", "full"), length=5),
+                options=m.GenerateOptions(parts=("ldap", "full"), length=5),
             ),
             timestamped_batch_id=u.generate(
                 kind="batch",
-                options=u.GenerateOptions(include_timestamp=True, length=4),
+                options=m.GenerateOptions(include_timestamp=True, length=4),
             ),
             explicit_uuid=u.generate(kind="uuid"),
         )

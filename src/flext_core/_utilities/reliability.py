@@ -12,12 +12,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING, Annotated
-
-from pydantic import Field
+from typing import TYPE_CHECKING
 
 from flext_core import c, p, r, t
-from flext_core._models import FlextModelsBase
+from flext_core._models.config import FlextModelsConfig
 from flext_core._utilities import FlextUtilitiesArgs
 
 if TYPE_CHECKING:
@@ -28,18 +26,6 @@ type _HandledExceptions = tuple[type[Exception], ...]
 
 class FlextUtilitiesReliability:
     """Reliability patterns for resilient, dispatcher-safe operations."""
-
-    class RetryOptions(FlextModelsBase.FlexibleInternalModel):
-        """Configuration options for retry logic."""
-
-        max_attempts: Annotated[
-            int | None,
-            Field(ge=1, description="Maximum number of retry attempts"),
-        ] = None
-        delay_seconds: Annotated[
-            float | None,
-            Field(ge=0, description="Initial delay between retries in seconds"),
-        ] = None
 
     _RETRYABLE_EXCEPTIONS: _HandledExceptions = (
         AttributeError,
@@ -115,7 +101,7 @@ class FlextUtilitiesReliability:
     @staticmethod
     def retry[TResult](
         operation: Callable[[], p.Result[TResult]],
-        options: FlextUtilitiesReliability.RetryOptions | None = None,
+        options: FlextModelsConfig.RetryOptions | None = None,
         **kwargs: t.JsonPayload,
     ) -> p.Result[TResult]:
         """Execute an operation with retry logic using railway patterns.
@@ -134,7 +120,7 @@ class FlextUtilitiesReliability:
         opts_res = FlextUtilitiesArgs.resolve_options(
             options,
             kwargs,
-            FlextUtilitiesReliability.RetryOptions,
+            FlextModelsConfig.RetryOptions,
         )
         if opts_res.failure:
             # Preserve the validated options failure metadata for every consumer.

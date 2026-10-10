@@ -10,7 +10,7 @@ from tests import m
 
 
 class TestsFlextModelsExceptionParamsSupport:
-    """Canonical namespace owner."""
+    """Shared exception parameter model lists."""
 
     _ALL_PARAMS_MODELS = [
         m.ValidationErrorParams,

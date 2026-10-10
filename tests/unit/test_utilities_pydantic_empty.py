@@ -105,6 +105,7 @@ class TestsFlextUtilitiesPydanticEmpty:
 
         tm.that(defaults.model_copy(deep=True), eq=defaults)
 
+    @staticmethod
     @pytest.mark.parametrize(
         "factory",
         [
@@ -113,7 +114,6 @@ class TestsFlextUtilitiesPydanticEmpty:
             pytest.param(u.empty(TypeForm(_Item)), id="model"),
         ],
     )
-    @staticmethod
     def test_non_collection_contract_fails_loud(
         factory: Callable[[], int | str | TestsFlextUtilitiesPydanticEmpty._Item],
     ) -> None:

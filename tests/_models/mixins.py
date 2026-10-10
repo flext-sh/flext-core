@@ -16,10 +16,10 @@ from tests._models._mixins.test_data import TestsFlextModelsTestDataMixin
 
 
 class TestsFlextModelsNamespace:
-    """Canonical namespace owner."""
+    """Namespace of the flext-core test model mixins."""
 
     class TestsFlextModelsMixins:
-        """Canonical namespace owner."""
+        """Composition of the flext-core test model mixins."""
 
         class TestsFlextModelsMixins(
             TestsFlextModelsContainerMixin,
