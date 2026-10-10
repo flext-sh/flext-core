@@ -71,11 +71,9 @@ class FlextUtilitiesConversion:
         if isinstance(value, str):
             return value
         try:
-            float_value = (
-                FlextUtilitiesBase.type_adapter(TypeForm(t.StrictFloat)).validate_python(
-                    value
-                )
-            )
+            float_value = FlextUtilitiesBase.type_adapter(
+                TypeForm(t.StrictFloat)
+            ).validate_python(value)
         except FlextModelsPydantic.ValidationError:
             return str(value)
         else:
@@ -103,9 +101,7 @@ class FlextUtilitiesConversion:
         try:
             list_value = FlextUtilitiesBase.type_adapter(
                 TypeForm(t.JsonList), config=ConfigDict(strict=True)
-            ).validate_python(
-                value
-            )
+            ).validate_python(value)
             return [str(item) for item in list_value]
         except FlextModelsPydantic.ValidationError:
             return [str(value)]

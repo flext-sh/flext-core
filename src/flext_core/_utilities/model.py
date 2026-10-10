@@ -53,10 +53,10 @@ class FlextUtilitiesModel:
             FlextModelsConfig.ModelDumpOptions,
         ).unwrap()
         opts_dict = opts.model_dump(exclude_none=True)
-        dumped: t.JsonMapping = (
-            FlextUtilitiesBase.type_adapter(TypeForm(t.JsonMapping)).validate_python(
-                model.model_dump(mode="json", **opts_dict),
-            )
+        dumped: t.JsonMapping = FlextUtilitiesBase.type_adapter(
+            TypeForm(t.JsonMapping)
+        ).validate_python(
+            model.model_dump(mode="json", **opts_dict),
         )
         return dumped
 
@@ -128,7 +128,9 @@ class FlextUtilitiesModel:
         """
         try:
             adapter: t.ValueAdapter[TValue] = (
-                target if isinstance(target, TypeAdapter) else FlextUtilitiesBase.type_adapter(target)
+                target
+                if isinstance(target, TypeAdapter)
+                else FlextUtilitiesBase.type_adapter(target)
             )
             if from_json:
                 if not isinstance(data, c.STR_BINARY_TYPES):

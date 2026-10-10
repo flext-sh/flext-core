@@ -110,7 +110,9 @@ class FlextContextScopeOps(m.ManagedModel):
         updated_attributes[key] = value
         self.metadata = self.metadata.model_copy(
             update={
-                "attributes": FlextUtilitiesBase.type_adapter(TypeForm(t.JsonMapping)).validate_python(
+                "attributes": FlextUtilitiesBase.type_adapter(
+                    TypeForm(t.JsonMapping)
+                ).validate_python(
                     updated_attributes,
                 ),
             },

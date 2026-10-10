@@ -81,16 +81,14 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
             case tuple():
                 normalized_item = FlextRuntimeContainer.normalize_to_metadata(item)
             case dict():
-                normalized_item = (
-                    FlextUtilitiesBase.type_adapter(TypeForm(FlextTypingBase.JsonDict)).validate_python(
-                        item
-                    )
-                )
+                normalized_item = FlextUtilitiesBase.type_adapter(
+                    TypeForm(FlextTypingBase.JsonDict)
+                ).validate_python(item)
             case list():
                 normalized_item = list(
-                    FlextUtilitiesBase.type_adapter(TypeForm(FlextTypingBase.JsonList)).validate_python(
-                        item
-                    ),
+                    FlextUtilitiesBase.type_adapter(
+                        TypeForm(FlextTypingBase.JsonList)
+                    ).validate_python(item),
                 )
             case (
                 bool()
@@ -205,7 +203,9 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
             )
         elif isinstance(val, FlextModelsContainers.ObjectList):
             normalized_data = list(
-                FlextUtilitiesBase.type_adapter(TypeForm(FlextTypingBase.JsonList)).validate_python([
+                FlextUtilitiesBase.type_adapter(
+                    TypeForm(FlextTypingBase.JsonList)
+                ).validate_python([
                     FlextRuntimeContainer.normalize_to_json_value(v) for v in val.root
                 ]),
             )
@@ -221,7 +221,9 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
             )
         elif isinstance(val, Sequence) and not isinstance(val, c.STR_BYTES_TYPES):
             normalized_data = list(
-                FlextUtilitiesBase.type_adapter(TypeForm(FlextTypingBase.JsonList)).validate_python([
+                FlextUtilitiesBase.type_adapter(
+                    TypeForm(FlextTypingBase.JsonList)
+                ).validate_python([
                     FlextRuntimeContainer.normalize_to_json_value(item_raw)
                     for item_raw in val
                 ]),

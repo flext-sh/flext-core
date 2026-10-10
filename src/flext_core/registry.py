@@ -133,11 +133,7 @@ class FlextRegistry(s[bool]):
             narrowed = str(value)
         else:
             normalized = u.normalize_to_metadata(value)
-            narrowed = (
-                u.type_adapter(TypeForm(t.JsonValue)).validate_python(
-                    normalized
-                )
-            )
+            narrowed = u.type_adapter(TypeForm(t.JsonValue)).validate_python(normalized)
         return narrowed
 
     @staticmethod

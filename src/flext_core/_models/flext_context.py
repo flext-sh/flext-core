@@ -213,12 +213,12 @@ class FlextContext(FlextContextScopeOps, m.ManagedModel):
         """
         start_time = u.generate_datetime_utc()
         start_perf = time.perf_counter()
-        payload = (
-            FlextUtilitiesBase.type_adapter(TypeForm(t.JsonMapping)).validate_python({
-                str(c.MetadataKey.START_TIME): start_time.isoformat(),
-                str(c.ContextKey.OPERATION_NAME): operation_name or "",
-            })
-        )
+        payload = FlextUtilitiesBase.type_adapter(
+            TypeForm(t.JsonMapping)
+        ).validate_python({
+            str(c.MetadataKey.START_TIME): start_time.isoformat(),
+            str(c.ContextKey.OPERATION_NAME): operation_name or "",
+        })
         op_meta = m.ConfigMap.model_validate(payload)
         start_token = u.OPERATION_START_TIME.set(start_time)
         meta_token = u.OPERATION_METADATA.set(payload)
