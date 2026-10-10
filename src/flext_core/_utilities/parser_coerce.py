@@ -1,8 +1,9 @@
-"""Parser coercion primitives + ParseOptions.
+"""Parser coercion primitives.
 
 Pure value-to-primitive coercion (bool/int/float/str + case normalization)
-and the ``ParseOptions`` model. Consumed by the per-target ``_parse_try_*``
-helpers in :mod:`parser_targets` and :mod:`parser` via MRO composition.
+driven by the ``m.ParseOptions`` model. Consumed by the per-target
+``_parse_try_*`` helpers in :mod:`parser_targets` and :mod:`parser` via MRO
+composition.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -13,43 +14,15 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_core import c, m, r
+from flext_core import c, r
 
 if TYPE_CHECKING:
     from flext_core import p, t
+    from flext_core._models.config import FlextModelsConfig
 
 
 class FlextUtilitiesParserCoerce:
     """Primitive coercion + string normalization + default fallback."""
-
-    class ParseOptions[T](m.FlexibleInternalModel):
-        """Options controlling parsing behavior for string-to-type conversion."""
-
-        strict: bool | None = m.Field(
-            None,
-            validate_default=True,
-            description="Reject coercions; fail on type mismatch",
-        )
-        case_insensitive: bool | None = m.Field(
-            None,
-            validate_default=True,
-            description="Normalize case before parsing",
-        )
-        default: T | None = m.Field(
-            None,
-            validate_default=True,
-            description="Fallback value when parsing fails",
-        )
-        default_factory: Callable[[], T] | None = m.Field(
-            None,
-            validate_default=True,
-            description="Factory producing fallback value",
-        )
-        field_name: str | None = m.Field(
-            None,
-            validate_default=True,
-            description="Source field name for error context",
-        )
 
     _CASE_OPS: ClassVar[t.MutableMappingKV[str, Callable[[str], str]]] = {
         c.ParserCase.LOWER.value: str.lower,
@@ -131,7 +104,7 @@ class FlextUtilitiesParserCoerce:
 
     @staticmethod
     def _parse_with_default[T](
-        options: FlextUtilitiesParserCoerce.ParseOptions[T],
+        options: FlextModelsConfig.ParseOptions[T],
         error_msg: str,
     ) -> p.Result[T]:
         """Return default or error for parse failures.

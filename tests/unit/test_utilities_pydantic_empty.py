@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableSet, Set
+from collections.abc import Callable, MutableSet, Set as AbstractSet
 from types import ModuleType
 
 import pytest
@@ -45,16 +45,16 @@ class TestsFlextUtilitiesPydanticEmpty:
             ),
             description="Mutable sequence of a forward-referenced model.",
         )
-        frozen_tags: Set[str] = u.Field(
-            default_factory=u.empty(TypeForm(Set[str])),
+        frozen_tags: AbstractSet[str] = u.Field(
+            default_factory=u.empty(TypeForm(AbstractSet[str])),
             description="Read-only set contract.",
         )
         mutable_tags: MutableSet[str] = u.Field(
             default_factory=u.empty(TypeForm(MutableSet[str])),
             description="Mutable set contract.",
         )
-        modules: dict[str, ModuleType] = u.Field(
-            default_factory=u.empty(TypeForm(dict[str, ModuleType])),
+        modules: t.MutableMappingKV[str, ModuleType] = u.Field(
+            default_factory=u.empty(TypeForm(t.MutableMappingKV[str, ModuleType])),
             description="Mapping of an arbitrary, JSON-unrepresentable element.",
         )
 
@@ -80,7 +80,7 @@ class TestsFlextUtilitiesPydanticEmpty:
             default_value = getattr(defaults, name)
             reference_value = getattr(revalidated, name)
             tm.that(default_value, eq=reference_value)
-            tm.that(type(default_value), eq=type(reference_value))
+            tm.that(type(default_value) is type(reference_value), eq=True)
 
     @staticmethod
     def test_mutable_defaults_are_fresh_per_instance() -> None:
@@ -95,7 +95,7 @@ class TestsFlextUtilitiesPydanticEmpty:
 
         tm.that(second.mutable_json_mapping, eq={})
         tm.that(second.items, eq=[])
-        tm.that(second.mutable_tags, eq=set())
+        tm.that(second.mutable_tags, eq=set[str]())
         tm.that(second.modules, eq={})
 
     @staticmethod
@@ -105,11 +105,18 @@ class TestsFlextUtilitiesPydanticEmpty:
 
         tm.that(defaults.model_copy(deep=True), eq=defaults)
 
-    @pytest.mark.parametrize("contract", [int, str, _Item])
     @staticmethod
-    def test_non_collection_contract_fails_loud(contract: type) -> None:
+    @pytest.mark.parametrize(
+        "factory",
+        [
+            pytest.param(u.empty(TypeForm(int)), id="scalar"),
+            pytest.param(u.empty(TypeForm(str)), id="text"),
+            pytest.param(u.empty(TypeForm(_Item)), id="model"),
+        ],
+    )
+    def test_non_collection_contract_fails_loud(
+        factory: Callable[[], int | str | TestsFlextUtilitiesPydanticEmpty._Item],
+    ) -> None:
         """A contract with no empty collection value raises ``TypeError``."""
-        factory = u.empty(TypeForm(contract))
-
         with pytest.raises(TypeError, match="requires a collection contract"):
             factory()

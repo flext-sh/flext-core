@@ -1,7 +1,7 @@
 """Behavioral tests for FlextUtilitiesReliability public contract.
 
 Exercises the observable public surface of ``flext_core.FlextUtilitiesReliability``:
-``retry``, ``try_``, ``guard_result`` and the ``RetryOptions`` model. Every
+``retry``, ``try_``, ``guard_result`` and the ``m.RetryOptions`` model. Every
 assertion targets return values, ``r[T]`` outcomes, raised exceptions and public
 model state -- never private attributes or internal collaborators.
 
@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Final
 import pytest
 from flext_tests import r
 
-from tests import u
+from tests import m, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -174,7 +174,7 @@ class TestsFlextCoreUtilitiesReliability:
             fail_before=2,
             success_value=self.SUCCESS_VALUE,
         )
-        options = u.RetryOptions(max_attempts=3, delay_seconds=0.0)
+        options = m.RetryOptions(max_attempts=3, delay_seconds=0.0)
 
         result: p.Result[int] = u.retry(op, options)
 
@@ -253,7 +253,7 @@ class TestsFlextCoreUtilitiesReliability:
     @staticmethod
     def test_retry_options_defaults_are_none() -> None:
         """Test retry options defaults are none."""
-        options = u.RetryOptions()
+        options = m.RetryOptions()
 
         assert options.max_attempts is None
         assert options.delay_seconds is None
@@ -261,6 +261,6 @@ class TestsFlextCoreUtilitiesReliability:
     @staticmethod
     def test_retry_options_round_trips_through_model_dump() -> None:
         """Test retry options round trips through model dump."""
-        options = u.RetryOptions(max_attempts=5, delay_seconds=0.5)
+        options = m.RetryOptions(max_attempts=5, delay_seconds=0.5)
 
         assert options.model_dump() == {"max_attempts": 5, "delay_seconds": 0.5}

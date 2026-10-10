@@ -186,8 +186,19 @@ class FlextUtilitiesBeartypeEngine(
             The resulting ``tuple[me.DeferredAlias, ...]``.
 
         """
-        if params.forbid_mutable_default or params.forbid_raw_default_factory:
+        if params.forbid_mutable_default:
             return ()
+        if (
+            params.forbid_raw_default_factory
+            and FlextUtilitiesBeartypeHelpers.mutable_default_factory_kind(
+                info.default_factory,
+            )
+            is not None
+        ):
+            return FlextUtilitiesBeartypeTypeAliases.deferred_annotated(
+                info.annotation,
+                owner=owner,
+            )
         if params.forbid_str_none_empty:
             return FlextUtilitiesBeartypeTypeAliases.deferred(
                 info.annotation,

@@ -17,9 +17,8 @@ from datetime import UTC, datetime, tzinfo
 from importlib import import_module
 from zoneinfo import ZoneInfo
 
-from pydantic import BaseModel, ConfigDict, Field
-
 from flext_core import c, t
+from flext_core._models.options import FlextModelsOptions
 
 
 # NOTE (multi-agent): mro-i6nq.12 — consolidated _generators_parts/part_01..02 (one
@@ -30,29 +29,6 @@ class FlextUtilitiesGenerators:
 
     Centralizes random, prefixed, and timestamp-based identifier generation.
     """
-
-    class GenerateOptions(BaseModel):
-        """Typed options envelope for public ID generation."""
-
-        model_config = ConfigDict(extra="forbid")
-
-        prefix: str | None = Field(default=None, description="Custom ID prefix")
-        parts: t.VariadicTuple[t.JsonValue] | None = Field(
-            default=None,
-            description="Optional parts inserted between prefix and random suffix",
-        )
-        length: int | None = Field(
-            default=None,
-            description="Optional random suffix length override",
-        )
-        include_timestamp: bool = Field(
-            default=False,
-            description="Whether to prepend a UTC timestamp to parts",
-        )
-        separator: str = Field(
-            default="_",
-            description="Separator used for custom formatted IDs",
-        )
 
     @staticmethod
     def _determine_prefix(
@@ -154,7 +130,7 @@ class FlextUtilitiesGenerators:
     def generate(
         kind: str | None = None,
         *,
-        options: GenerateOptions | None = None,
+        options: FlextModelsOptions.GenerateOptions | None = None,
     ) -> str:
         """Generate ID by kind or custom prefix (the ONLY public ID generation method).
 
@@ -162,7 +138,7 @@ class FlextUtilitiesGenerators:
             The resulting ``str``.
 
         """
-        resolved_options = options or FlextUtilitiesGenerators.GenerateOptions()
+        resolved_options = options or FlextModelsOptions.GenerateOptions()
         _prefix_resolved, actual_prefix = FlextUtilitiesGenerators._determine_prefix(
             kind,
             resolved_options.prefix,

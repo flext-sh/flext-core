@@ -84,15 +84,5 @@ class FlextConstantsEnforcementRuntime:
     )
     """Derived view: concrete types used by ``isinstance`` checks."""
 
-    ENFORCEMENT_RAW_COLLECTION_FACTORIES: ClassVar[
-        FlextTypingBase.VariadicTuple[type]
-    ] = (*ENFORCEMENT_MUTABLE_RUNTIME_TYPES, tuple, frozenset)
-    """Derived view: raw collection constructors a field default must not be.
-
-    A collection field's empty default is ``u.empty(TypeForm(<annotation>))``,
-    which yields what pydantic validates an empty input into; a raw
-    constructor, bare or specialized, diverges from that value.
-    """
-
 
 __all__: list[str] = ["FlextConstantsEnforcementRuntime"]

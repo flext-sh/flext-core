@@ -65,7 +65,9 @@ class FlextModelsEnforcementSources(FlextModelsEnforcementBase):
         kind: Literal["transformer", "rope", "manual"]
         target: str
         params: FlextTypingBase.JsonMapping = Field(
-            default_factory=FlextModelsPydantic.empty(TypeForm(FlextTypingBase.JsonMapping)),
+            default_factory=FlextModelsPydantic.empty(
+                TypeForm(FlextTypingBase.JsonMapping)
+            ),
         )
         safe: bool = True
 
