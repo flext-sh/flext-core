@@ -21,7 +21,7 @@ classifiers = [
 ]
 dependencies = [
   "annotated-types>=0.8.0",
-  "beartype>=0.22.9",
+  "beartype>=0.23.0",
   "dependency-injector>=4.49.1",
   "packaging>=26.3",
   "pydantic>=2.14.0,<3",
@@ -552,6 +552,7 @@ runtime-evaluated-base-classes = [
   "flext_tests.FlextTestsServiceBase",
   "flext_tests.FlextTestsUtilities.Tests",
   "flext_tests.h",
+  "flext_tests.m.BaseModel",
   "flext_tests.x",
   "pydantic.BaseModel",
   "pydantic.RootModel",
