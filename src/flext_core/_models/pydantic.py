@@ -19,7 +19,14 @@ from functools import cached_property, partialmethod
 from pathlib import Path
 from re import Pattern
 from types import EllipsisType
-from typing import TYPE_CHECKING, Any, Literal, dataclass_transform, overload
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Literal,
+    dataclass_transform,
+    overload,
+    override,
+)
 
 if TYPE_CHECKING:
     from flext_core._typings.base import FlextTypingBase
@@ -57,12 +64,16 @@ from pydantic import (
     model_validator,
 )
 from pydantic.fields import FieldInfo as PydanticFieldInfo
+from pydantic.json_schema import GenerateJsonSchema
 from pydantic_core import PydanticUndefined, PydanticUndefinedType
 from pydantic_settings import (
     BaseSettings as _PydanticBaseSettings,
     PydanticBaseSettingsSource as _PydanticBaseSettingsSource,
     SettingsConfigDict as _PydanticSettingsConfigDict,
 )
+from typing_extensions import TypeForm
+
+from flext_core._constants import FlextConstantsPydantic
 
 type _FieldValue = JsonValue | Path
 type _FieldSchemaExtra = Mapping[str, _FieldValue | Sequence[_FieldValue]]
@@ -165,6 +176,104 @@ class FlextModelsPydantic:
         private_attr_factory: Callable[..., PrivateT] = PydanticPrivateAttr
         return private_attr_factory(default, default_factory=default_factory, init=init)
 
+    class CollectionShapeJsonSchema(GenerateJsonSchema):
+        """JSON schema generator that reads only a contract's top-level shape.
+
+        An empty collection never validates an element, so element schemas
+        that JSON schema cannot represent (arbitrary types such as
+        ``ModuleType``) are irrelevant to its shape and render as ``{}``.
+        """
+
+        @override
+        def handle_invalid_for_json_schema(
+            self,
+            schema: FlextTypingBase.CoreSchemaOrField,
+            error_info: str,
+        ) -> FlextTypingBase.JsonSchemaValue:
+            """Render an element schema JSON cannot represent as unconstrained.
+
+            Returns:
+                An unconstrained JSON schema.
+
+            """
+            del schema, error_info
+            return {}
+
+    class EmptyDefault[ContractT]:
+        """Default factory of a collection contract's canonical empty value.
+
+        Built by ``u.empty``. The value is what pydantic validates an empty
+        JSON document into for the contract, so a field default is exactly the
+        value the same contract yields from a real empty input: it serializes,
+        round-trips through JSON unchanged, and every call returns a fresh
+        instance. The adapter is built on the first call, keeping model class
+        creation free of schema work. A contract that is not a collection
+        fails loud with ``TypeError``.
+        """
+
+        __slots__ = ("_adapter", "_seed", "contract")
+
+        def __init__(self, contract: TypeForm[ContractT]) -> None:
+            """Bind the collection contract whose empty value this yields."""
+            self.contract: TypeForm[ContractT] = contract
+            self._adapter: PydanticTypeAdapter[ContractT] | None = None
+            self._seed: bytes = b""
+
+        def __call__(self) -> ContractT:
+            """Return a fresh canonical empty value of the contract.
+
+            Returns:
+                The contract's empty value as pydantic validates it.
+
+            Raises:
+                TypeError: The contract is not a collection.
+
+            """
+            adapter = self._adapter
+            if adapter is None:
+                contract = self.contract
+                adapter = PydanticTypeAdapter(
+                    contract,
+                    config=_PydanticConfigDict(arbitrary_types_allowed=True),
+                )
+                schema = adapter.json_schema(
+                    schema_generator=FlextModelsPydantic.CollectionShapeJsonSchema,
+                )
+                shape = schema.get(FlextConstantsPydantic.JSON_SCHEMA_TYPE_KEY)
+                seed = (
+                    FlextConstantsPydantic.EMPTY_COLLECTION_JSON_SEEDS.get(shape)
+                    if isinstance(shape, str)
+                    and FlextConstantsPydantic.JSON_SCHEMA_PROPERTIES_KEY not in schema
+                    else None
+                )
+                if seed is None:
+                    msg = (
+                        f"empty default requires a collection contract; "
+                        f"{contract!r} has JSON schema {schema!r}"
+                    )
+                    raise TypeError(msg)
+                self._seed = seed
+                self._adapter = adapter
+            return adapter.validate_json(self._seed)
+
+    @staticmethod
+    def _empty[ContractT](contract: TypeForm[ContractT]) -> Callable[[], ContractT]:
+        """Return the default factory of ``contract``'s canonical empty value.
+
+        Use as ``u.Field(default_factory=u.empty(TypeForm(<annotation>)))``:
+        the contract is the field's own annotation, so the default's static
+        type and runtime value both derive from it. The explicit PEP 747
+        ``TypeForm(...)`` conversion is what lets every type checker read a
+        class-scoped alias such as ``t.JsonMapping`` as a type expression; a
+        bare ``dict``/``list``/``set`` factory leaves its type parameters
+        Unknown even under a declared annotation.
+
+        Returns:
+            A zero-argument factory of the contract's empty value.
+
+        """
+        return FlextModelsPydantic.EmptyDefault(contract)
+
     @dataclass_transform(
         kw_only_default=True,
         field_specifiers=(
@@ -200,6 +309,7 @@ class FlextModelsPydantic:
 
     Field = staticmethod(_field)
     PrivateAttr = staticmethod(_private_attr)
+    empty = staticmethod(_empty)
     SkipValidation = SkipValidation
     # ``field_validator`` must re-export pydantic's real overload surface. A
     # plain-attr re-export resolves in mypy but pyright binds it as a method

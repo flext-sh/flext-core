@@ -157,6 +157,17 @@ class FlextTypesPydantic:
     type ErrorTypeInfo = pydantic_core.ErrorTypeInfo
     type InitErrorDetails = pydantic_core.InitErrorDetails
 
+    # JSON schema generation hook types (``GenerateJsonSchema`` overrides):
+    # the schema node a hook receives and the JSON schema it returns.
+    type CoreSchemaOrField = (
+        core_schema.CoreSchema
+        | core_schema.ModelField
+        | core_schema.DataclassField
+        | core_schema.TypedDictField
+        | core_schema.ComputedField
+    )
+    type JsonSchemaValue = pydantic_json_schema.JsonSchemaValue
+
     # Annotation and alias helper types (runtime markers / classes)
     AliasGenerator = pydantic.AliasGenerator
     AliasChoices = pydantic.AliasChoices
