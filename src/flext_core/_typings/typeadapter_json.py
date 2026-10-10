@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from functools import cache
-from typing import Annotated
 
 from pydantic import ConfigDict, TypeAdapter
+from typing_extensions import TypeForm
 
 from flext_core._typings.base import FlextTypingBase
 from flext_core._typings.pydantic import FlextTypesPydantic
@@ -35,14 +35,14 @@ class FlextTypesTypeAdapterJson:
     def json_value_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypesPydantic.JsonValue]:
-        return TypeAdapter(FlextTypesPydantic.JsonValue)
+        return TypeAdapter(TypeForm(FlextTypesPydantic.JsonValue))
 
     @classmethod
     @cache
     def json_mapping_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.JsonMapping]:
-        return TypeAdapter(Annotated[FlextTypingBase.JsonMapping, None])
+        return TypeAdapter(TypeForm(FlextTypingBase.JsonMapping))
 
     @classmethod
     @cache
@@ -50,7 +50,7 @@ class FlextTypesTypeAdapterJson:
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.JsonMapping]:
         return TypeAdapter(
-            Annotated[FlextTypingBase.JsonMapping, None], config=ConfigDict(strict=True)
+            TypeForm(FlextTypingBase.JsonMapping), config=ConfigDict(strict=True)
         )
 
     @classmethod
@@ -58,7 +58,7 @@ class FlextTypesTypeAdapterJson:
     def json_dict_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.JsonDict]:
-        return TypeAdapter(Annotated[FlextTypingBase.JsonDict, None])
+        return TypeAdapter(TypeForm(FlextTypingBase.JsonDict))
 
     @classmethod
     @cache
@@ -68,7 +68,7 @@ class FlextTypesTypeAdapterJson:
         FlextTypingBase.SequenceOf[FlextTypingBase.JsonDict]
     ]:
         return TypeAdapter(
-            Annotated[FlextTypingBase.SequenceOf[FlextTypingBase.JsonDict], None]
+            TypeForm(FlextTypingBase.SequenceOf[FlextTypingBase.JsonDict])
         )
 
     @classmethod
@@ -79,7 +79,7 @@ class FlextTypesTypeAdapterJson:
         FlextTypingBase.SequenceOf[FlextTypingBase.JsonMapping]
     ]:
         return TypeAdapter(
-            Annotated[FlextTypingBase.SequenceOf[FlextTypingBase.JsonMapping], None]
+            TypeForm(FlextTypingBase.SequenceOf[FlextTypingBase.JsonMapping])
         )
 
     @classmethod
@@ -90,7 +90,7 @@ class FlextTypesTypeAdapterJson:
         FlextTypingBase.MappingKV[str, FlextTypingBase.JsonMapping]
     ]:
         return TypeAdapter(
-            Annotated[FlextTypingBase.MappingKV[str, FlextTypingBase.JsonMapping], None]
+            TypeForm(FlextTypingBase.MappingKV[str, FlextTypingBase.JsonMapping])
         )
 
     @classmethod
@@ -98,7 +98,7 @@ class FlextTypesTypeAdapterJson:
     def json_list_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.JsonList]:
-        return TypeAdapter(Annotated[FlextTypingBase.JsonList, None])
+        return TypeAdapter(TypeForm(FlextTypingBase.JsonList))
 
     @classmethod
     @cache
@@ -106,7 +106,7 @@ class FlextTypesTypeAdapterJson:
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.JsonList]:
         return TypeAdapter(
-            Annotated[FlextTypingBase.JsonList, None], config=ConfigDict(strict=True)
+            TypeForm(FlextTypingBase.JsonList), config=ConfigDict(strict=True)
         )
 
     @classmethod
@@ -114,7 +114,7 @@ class FlextTypesTypeAdapterJson:
     def primitives_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.Primitives]:
-        return TypeAdapter(Annotated[FlextTypingBase.Primitives, None])
+        return TypeAdapter(TypeForm(FlextTypingBase.Primitives))
 
     @classmethod
     @cache

@@ -220,4 +220,5 @@ class FlextModelsConfig:
             ),
         ] = None
 
+
 __all__: list[str] = ["FlextModelsConfig"]
