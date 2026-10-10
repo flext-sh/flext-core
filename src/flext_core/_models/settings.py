@@ -13,6 +13,7 @@ from __future__ import annotations
 from typing import Annotated, ClassVar, Self
 
 from pydantic import AliasChoices, ConfigDict, model_validator
+from typing_extensions import TypeForm
 
 from flext_core import c, t
 from flext_core._models.base import FlextModelsBase
@@ -73,14 +74,20 @@ class FlextModelsSettings:
         retry_on_exceptions: Annotated[
             t.SequenceOf[type[BaseException]],
             FlextModelsPydantic.Field(description="Exception types to retry on"),
-        ] = FlextModelsPydantic.Field(default_factory=tuple)
+        ] = FlextModelsPydantic.Field(
+            default_factory=FlextModelsPydantic.empty(
+                TypeForm(t.SequenceOf[type[BaseException]]),
+            ),
+        )
         retry_on_status_codes: Annotated[
             t.SequenceOf[int],
             FlextModelsPydantic.Field(
                 max_length=c.HTTP_STATUS_MIN,
                 description="HTTP status codes to retry on",
             ),
-        ] = FlextModelsPydantic.Field(default_factory=tuple)
+        ] = FlextModelsPydantic.Field(
+            default_factory=FlextModelsPydantic.empty(TypeForm(t.SequenceOf[int])),
+        )
 
         @model_validator(mode="after")
         def validate_delay_consistency(self) -> Self:

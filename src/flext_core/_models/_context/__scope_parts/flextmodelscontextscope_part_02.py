@@ -7,8 +7,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextvars
-from types import MappingProxyType
 from typing import Annotated, Self
+
+from typing_extensions import TypeForm
 
 from flext_core import c, t
 from flext_core._models._context.__scope_parts.flextmodelscontextscope_part_01 import (
@@ -32,18 +33,8 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
         ] = mp.Field(default_factory=FlextModelsBase.Metadata)
         hooks: Annotated[
             t.ContextHookMap,
-            mp.Field(
-                default_factory=lambda: MappingProxyType(
-                    dict[str, t.SequenceOf[t.ContextHookCallable]](),
-                ),
-                description="Lifecycle hooks keyed by event name",
-            ),
-        ] = mp.Field(
-            default_factory=lambda: MappingProxyType[
-                str,
-                t.SequenceOf[t.ContextHookCallable],
-            ]({}),
-        )
+            mp.Field(description="Lifecycle hooks keyed by event name"),
+        ] = mp.Field(default_factory=mp.empty(TypeForm(t.ContextHookMap)))
         statistics: Annotated[
             FlextModelsContextScopePart01.ContextStatistics,
             mp.Field(
@@ -70,20 +61,16 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
                 str,
                 contextvars.ContextVar[FlextModelsContainers.ConfigMap | None],
             ],
-            mp.Field(
-                default_factory=lambda: MappingProxyType(
-                    dict[
+            mp.Field(description="ContextVar registry keyed by scope name"),
+        ] = mp.Field(
+            default_factory=mp.empty(
+                TypeForm(
+                    t.MappingKV[
                         str,
                         contextvars.ContextVar[FlextModelsContainers.ConfigMap | None],
-                    ](),
+                    ],
                 ),
-                description="ContextVar registry keyed by scope name",
             ),
-        ] = mp.Field(
-            default_factory=lambda: MappingProxyType[
-                str,
-                contextvars.ContextVar[FlextModelsContainers.ConfigMap | None],
-            ]({}),
         )
 
         @classmethod

@@ -49,6 +49,13 @@ class TestsFlextBadBareCollection(m.ArbitraryTypesModel):
     items: list[str] = u.Field(default_factory=list, description="Bare list.")
 
 
+class TestsFlextBadRawCollectionDefault(m.ArbitraryTypesModel):
+    items: Annotated[
+        MutableSequence[str],
+        u.Field(description="Raw collection constructor default."),
+    ] = u.Field(default_factory=list)
+
+
 class TestsFlextBadMutableDefault(m.ArbitraryTypesModel):
     items: Annotated[
         MutableSequence[str],
@@ -184,6 +191,10 @@ class TestsFlextEnforcementIntegration:
             ("Any is FORBIDDEN", "no_any"),
             ("bare list", "no_bare_collection"),
             ("mutable default list", "no_mutable_default"),
+            (
+                "is not the canonical empty default",
+                "no_raw_collections_field_default",
+            ),
             ("missing description", "missing_description"),
             ("complex inline union with 5 arms", "no_inline_union"),
             ("must be frozen=True", "value_not_frozen"),
@@ -213,6 +224,7 @@ class TestsFlextEnforcementIntegration:
         [
             "TestsFlextBadAnyField",
             "TestsFlextBadBareCollection",
+            "TestsFlextBadRawCollectionDefault",
             "TestsFlextBadMutableDefault",
             "TestsFlextBadMissingDesc",
             "TestsFlextBadInlineUnion",

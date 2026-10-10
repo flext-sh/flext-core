@@ -15,6 +15,8 @@ import time
 from collections.abc import MutableSequence
 from typing import Annotated, ClassVar
 
+from typing_extensions import TypeForm
+
 from flext_core import c, p, t
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.containers import FlextModelsContainers
@@ -143,10 +145,12 @@ class FlextModelsHandler:
             ),
             # Why the quoted forward reference: the module binding
             # ``FlextModelsHandler`` does not exist while this class body executes,
-            # and class scopes do not chain for runtime name lookup; the string
-            # subscript keeps the factory a real callable while deferring the name.
+            # and class scopes do not chain for runtime name lookup. The empty
+            # default resolves only the container, never the deferred element.
         ] = FlextModelsPydantic.Field(
-            default_factory=list["FlextModelsHandler.ExecutionContext"],
+            default_factory=FlextModelsPydantic.empty(
+                TypeForm(MutableSequence["FlextModelsHandler.ExecutionContext"]),
+            ),
         )
 
         @FlextModelsPydantic.computed_field
@@ -204,7 +208,11 @@ class FlextModelsHandler:
                 return_type=list[str],
                 when_used="always",
             ),
-        ] = FlextModelsPydantic.Field(default_factory=tuple)
+        ] = FlextModelsPydantic.Field(
+            default_factory=FlextModelsPydantic.empty(
+                TypeForm(t.SequenceOf[type[p.Middleware]]),
+            ),
+        )
 
     class CombinedRailwayOptions(FlextModelsBase.ImmutableValueModel):
         """Railway configuration consumed by @d.combined()."""

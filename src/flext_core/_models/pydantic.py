@@ -21,11 +21,15 @@ from re import Pattern
 from types import EllipsisType
 from typing import (
     TYPE_CHECKING,
+    Annotated,
     Any,
     Literal,
+    TypeAliasType,
+    cast,
     dataclass_transform,
+    get_args,
+    get_origin,
     overload,
-    override,
 )
 
 if TYPE_CHECKING:
@@ -64,7 +68,6 @@ from pydantic import (
     model_validator,
 )
 from pydantic.fields import FieldInfo as PydanticFieldInfo
-from pydantic.json_schema import GenerateJsonSchema
 from pydantic_core import PydanticUndefined, PydanticUndefinedType
 from pydantic_settings import (
     BaseSettings as _PydanticBaseSettings,
@@ -176,39 +179,19 @@ class FlextModelsPydantic:
         private_attr_factory: Callable[..., PrivateT] = PydanticPrivateAttr
         return private_attr_factory(default, default_factory=default_factory, init=init)
 
-    class CollectionShapeJsonSchema(GenerateJsonSchema):
-        """JSON schema generator that reads only a contract's top-level shape.
-
-        An empty collection never validates an element, so element schemas
-        that JSON schema cannot represent (arbitrary types such as
-        ``ModuleType``) are irrelevant to its shape and render as ``{}``.
-        """
-
-        @override
-        def handle_invalid_for_json_schema(
-            self,
-            schema: FlextTypingBase.CoreSchemaOrField,
-            error_info: str,
-        ) -> FlextTypingBase.JsonSchemaValue:
-            """Render an element schema JSON cannot represent as unconstrained.
-
-            Returns:
-                An unconstrained JSON schema.
-
-            """
-            del schema, error_info
-            return {}
-
     class EmptyDefault[ContractT]:
         """Default factory of a collection contract's canonical empty value.
 
         Built by ``u.empty``. The value is what pydantic validates an empty
-        JSON document into for the contract, so a field default is exactly the
-        value the same contract yields from a real empty input: it serializes,
-        round-trips through JSON unchanged, and every call returns a fresh
-        instance. The adapter is built on the first call, keeping model class
-        creation free of schema work. A contract that is not a collection
-        fails loud with ``TypeError``.
+        JSON document into for the contract's container, so a field default
+        is exactly the value the same contract yields from a real empty input:
+        it serializes, round-trips through JSON unchanged, and every call
+        returns a fresh instance. An empty collection never validates an
+        element, so only the container matters: element types, forward
+        references and arbitrary types are never resolved. The adapter is
+        built on the first call, keeping model class creation free of schema
+        work. A contract that is not a collection fails loud with
+        ``TypeError``.
         """
 
         __slots__ = ("_adapter", "_seed", "contract")
@@ -218,6 +201,37 @@ class FlextModelsPydantic:
             self.contract: TypeForm[ContractT] = contract
             self._adapter: PydanticTypeAdapter[ContractT] | None = None
             self._seed: bytes = b""
+
+        @staticmethod
+        def container(contract: FlextTypingBase.TypeFormSpecifier) -> type:
+            """Resolve a contract to its container class.
+
+            ``Annotated`` metadata and PEP 695 aliases, plain or subscripted,
+            are unwrapped until the outermost generic origin or class remains.
+
+            Returns:
+                The container class of ``contract``.
+
+            Raises:
+                TypeError: The contract does not resolve to a class.
+
+            """
+            current = contract
+            while True:
+                origin = get_origin(current)
+                if origin is Annotated:
+                    current = get_args(current)[0]
+                elif isinstance(current, TypeAliasType):
+                    current = current.__value__
+                elif isinstance(origin, TypeAliasType):
+                    current = origin.__value__
+                else:
+                    break
+            resolved = origin or current
+            if not isinstance(resolved, type):
+                msg = f"empty default requires a collection contract; got {contract!r}"
+                raise TypeError(msg)
+            return resolved
 
         def __call__(self) -> ContractT:
             """Return a fresh canonical empty value of the contract.
@@ -231,14 +245,15 @@ class FlextModelsPydantic:
             """
             adapter = self._adapter
             if adapter is None:
-                contract = self.contract
-                adapter = PydanticTypeAdapter(
-                    contract,
-                    config=_PydanticConfigDict(arbitrary_types_allowed=True),
+                container = FlextModelsPydantic.EmptyDefault.container(self.contract)
+                # The container's empty value is the contract's empty value:
+                # no element is ever validated, so the adapter is typed at
+                # this single binding to the contract it stands for.
+                adapter = cast(
+                    "PydanticTypeAdapter[ContractT]",
+                    PydanticTypeAdapter(container),
                 )
-                schema = adapter.json_schema(
-                    schema_generator=FlextModelsPydantic.CollectionShapeJsonSchema,
-                )
+                schema = adapter.json_schema()
                 shape = schema.get(FlextConstantsPydantic.JSON_SCHEMA_TYPE_KEY)
                 seed = (
                     FlextConstantsPydantic.EMPTY_COLLECTION_JSON_SEEDS.get(shape)
@@ -249,7 +264,7 @@ class FlextModelsPydantic:
                 if seed is None:
                     msg = (
                         f"empty default requires a collection contract; "
-                        f"{contract!r} has JSON schema {schema!r}"
+                        f"{self.contract!r} has JSON schema {schema!r}"
                     )
                     raise TypeError(msg)
                 self._seed = seed

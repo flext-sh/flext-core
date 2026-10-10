@@ -9,6 +9,8 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import Annotated
 
+from typing_extensions import TypeForm
+
 from flext_core import t
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.entity import FlextModelsEntity
@@ -36,7 +38,9 @@ class FlextModelsRegistry:
             FlextModelsPydantic.Field(
                 description="Keys registered in the instance scope of the registry.",
             ),
-        ] = FlextModelsPydantic.Field(default_factory=frozenset)
+        ] = FlextModelsPydantic.Field(
+            default_factory=FlextModelsPydantic.empty(TypeForm(frozenset[str])),
+        )
 
         @FlextUtilitiesPydantic.computed_field
         @property
@@ -55,7 +59,9 @@ class FlextModelsRegistry:
                 ),
             ),
         ] = FlextModelsPydantic.Field(
-            default_factory=list[FlextModelsHandler.RegistrationDetails],
+            default_factory=FlextModelsPydantic.empty(
+                TypeForm(MutableSequence[FlextModelsHandler.RegistrationDetails]),
+            ),
         )
         skipped: Annotated[
             t.StrSequence,
@@ -65,14 +71,18 @@ class FlextModelsRegistry:
                 ),
                 examples=[["CreateUserCommand", "UpdateUserCommand"]],
             ),
-        ] = FlextModelsPydantic.Field(default_factory=tuple)
+        ] = FlextModelsPydantic.Field(
+            default_factory=FlextModelsPydantic.empty(TypeForm(t.StrSequence)),
+        )
         errors: Annotated[
             MutableSequence[str],
             FlextModelsPydantic.Field(
                 description="Error messages for failed registrations",
                 examples=[["Handler validation failed", "Duplicate registration"]],
             ),
-        ] = FlextModelsPydantic.Field(default_factory=list[str])
+        ] = FlextModelsPydantic.Field(
+            default_factory=FlextModelsPydantic.empty(TypeForm(MutableSequence[str])),
+        )
 
         @FlextUtilitiesPydantic.computed_field
         @property

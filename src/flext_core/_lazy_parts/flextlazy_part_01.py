@@ -11,6 +11,7 @@ import inspect
 import sys
 from collections.abc import Callable, Mapping, Sequence
 from importlib.util import resolve_name
+from types import ModuleType
 from typing import TYPE_CHECKING
 
 from pydantic import (
@@ -26,7 +27,7 @@ from pydantic import (
 from flext_core._typings.base import FlextTypingBase
 
 if TYPE_CHECKING:
-    from types import FrameType, ModuleType
+    from types import FrameType
 
 type StrPair = tuple[str, str]
 type LazyImportEntry = str | StrPair
@@ -45,12 +46,19 @@ class FlextLazyPart01(BaseModel):
         "relative lazy-import paths require a parent module name"
     )
 
-    module_cache: dict[str, ModuleType] = Field(default_factory=dict)
+    # This bootstrap layer sits below the models facade (``u.empty``), so each
+    # cache defaults through its own specialized ``dict``: typed for every
+    # checker, and the same empty ``dict`` pydantic validates for the contract.
+    module_cache: dict[str, ModuleType] = Field(
+        default_factory=dict[str, ModuleType],
+    )
 
-    child_lazy_cache: dict[str, LazyImportDict] = Field(default_factory=dict)
+    child_lazy_cache: dict[str, LazyImportDict] = Field(
+        default_factory=dict[str, LazyImportDict],
+    )
 
     child_merge_cache: dict[FlextTypingBase.VariadicTuple[str], LazyImportDict] = Field(
-        default_factory=dict,
+        default_factory=dict[FlextTypingBase.VariadicTuple[str], LazyImportDict],
     )
 
     # The entry keeps its source map alive: an ``id()`` key alone is reused once a
@@ -58,10 +66,15 @@ class FlextLazyPart01(BaseModel):
     normalized_map_cache: dict[
         tuple[str, int],
         tuple[LazyImportMap | None, LazyImportDict],
-    ] = Field(default_factory=dict)
+    ] = Field(
+        default_factory=dict[
+            tuple[str, int],
+            tuple[LazyImportMap | None, LazyImportDict],
+        ],
+    )
 
     install_cache: dict[str, tuple[int, int, int, bool]] = Field(
-        default_factory=dict,
+        default_factory=dict[str, tuple[int, int, int, bool]],
     )
 
     _import_module: Callable[[str], ModuleType] = PrivateAttr(

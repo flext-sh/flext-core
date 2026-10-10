@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from typing_extensions import TypeForm
+
 from examples import c, m, u
 from examples.ex_12_registry_flow import Ex12RegistryFlow
 from examples.ex_12_registry_support import ProtocolHandler, as_registry_handler
@@ -22,7 +24,9 @@ class Ex12RegistryPlugins(Ex12RegistryFlow):
 
     _handler_a: ProtocolHandler | None = u.PrivateAttr(default=None)
     _handler_b: ProtocolHandler | None = u.PrivateAttr(default=None)
-    _plugin_inputs: dict[str, str] = u.PrivateAttr(default_factory=dict)
+    _plugin_inputs: dict[str, str] = u.PrivateAttr(
+        default_factory=u.empty(TypeForm(dict[str, str])),
+    )
 
     def _exercise_bindings_and_plugin_apis(
         self,

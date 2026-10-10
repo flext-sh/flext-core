@@ -15,6 +15,7 @@ from __future__ import annotations
 import string
 
 import pytest
+from typing_extensions import TypeForm
 
 from flext_core.utilities import FlextUtilitiesBeartypeEngine
 from tests import m, u
@@ -124,7 +125,10 @@ class TestsFlextCoreEnforcementAccessors:
         """Test bare collection field is flagged."""
 
         class _M(m.ArbitraryTypesModel):
-            items: list[str] = m.Field(default_factory=list, description="d")
+            items: list[str] = m.Field(
+                default_factory=u.empty(TypeForm(list[str])),
+                description="d",
+            )
 
         # Act
         messages = [v.message for v in u.check(_M).violations]

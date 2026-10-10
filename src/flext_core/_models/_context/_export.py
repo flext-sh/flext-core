@@ -6,16 +6,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from types import MappingProxyType
 from typing import Annotated
 
 from pydantic import BeforeValidator, Field
+from typing_extensions import TypeForm
 
 from flext_core import t
 from flext_core._models._context._data import FlextModelsContextData
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.containers import FlextModelsContainers
 from flext_core._models.entity import FlextModelsEntity
+from flext_core._models.pydantic import FlextModelsPydantic
 
 
 class FlextModelsContextExport:
@@ -33,7 +34,9 @@ class FlextModelsContextExport:
         # assigned to the class variable; a specifier inside ``Annotated``
         # metadata synthesizes a REQUIRED ``__init__`` parameter.
         data: t.MappingKV[str, t.JsonPayload] = Field(
-            default_factory=lambda: MappingProxyType[str, t.JsonPayload]({}),
+            default_factory=FlextModelsPydantic.empty(
+                TypeForm(t.MappingKV[str, t.JsonPayload]),
+            ),
             description="All context data from all scopes",
         )
         metadata: Annotated[
@@ -54,7 +57,7 @@ class FlextModelsContextExport:
                 ),
             ),
         ] = Field(
-            default_factory=lambda: MappingProxyType[str, t.JsonValue]({}),
+            default_factory=FlextModelsPydantic.empty(TypeForm(t.JsonMapping)),
             description="Usage statistics (operation counts, timing info)",
         )
 

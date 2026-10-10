@@ -8,7 +8,9 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
-from flext_core import m
+from typing_extensions import TypeForm
+
+from flext_core import m, u
 from tests import t
 
 
@@ -61,7 +63,7 @@ class TestsFlextModelsServiceCaseValidationMixin:
         metadata: Annotated[
             t.JsonMapping,
             m.Field(description="Additional operation metadata"),
-        ] = m.Field(default_factory=dict)
+        ] = m.Field(default_factory=u.empty(TypeForm(t.JsonMapping)))
 
     class Conversion(m.BaseModel):
         """Generic conversion progress model used by tests utilities."""
@@ -69,22 +71,22 @@ class TestsFlextModelsServiceCaseValidationMixin:
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         converted: Annotated[t.JsonList, m.Field(description="Converted records")] = (
-            m.Field(default_factory=list)
+            m.Field(default_factory=u.empty(TypeForm(t.JsonList)))
         )
         errors: Annotated[t.StrSequence, m.Field(description="Conversion errors")] = (
-            m.Field(default_factory=tuple)
+            m.Field(default_factory=u.empty(TypeForm(t.StrSequence)))
         )
         warnings: Annotated[
             t.StrSequence,
             m.Field(description="Conversion warnings"),
-        ] = m.Field(default_factory=tuple)
+        ] = m.Field(default_factory=u.empty(TypeForm(t.StrSequence)))
         skipped: Annotated[t.JsonList, m.Field(description="Skipped records")] = (
-            m.Field(default_factory=list)
+            m.Field(default_factory=u.empty(TypeForm(t.JsonList)))
         )
         metadata: Annotated[
             t.JsonMapping,
             m.Field(description="Additional conversion metadata"),
-        ] = m.Field(default_factory=dict)
+        ] = m.Field(default_factory=u.empty(TypeForm(t.JsonMapping)))
 
     class ParserScenario(m.BaseModel):
         """Single scenario for parser testing."""
