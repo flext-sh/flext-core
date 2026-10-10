@@ -45,13 +45,6 @@ from flext_core._utilities._beartype.method_visitor import (
 from flext_core._utilities._beartype.module_visitor import (
     FlextUtilitiesBeartypeModuleVisitor,
 )
-from flext_core._utilities.beartype_typingext_patch import (
-    FlextUtilitiesBeartypeTypingExtPatch,
-)
-
-# Side-effect: monkey-patch beartype cave so typing_extensions.TypeAliasType
-# (used by pydantic.JsonValue et al.) is accepted as a PEP-695 alias.
-FlextUtilitiesBeartypeTypingExtPatch.apply()
 
 
 class FlextUtilitiesBeartypeEngine(

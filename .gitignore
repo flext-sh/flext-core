@@ -338,11 +338,7 @@ CLAUDE.local.md
 # Tracked managed artifacts
 !.github/ci-template/
 !.github/ci-template/ci.yml
-!.github/copilot-instructions.md
 !.github/dependabot.yml
-!.github/prompts/
-!.github/prompts/flext-aggressive-scale-refactor.prompt.md
-!.github/prompts/flext-strict-jsonvalue-session-continuation.prompt.md
 !.github/scripts/
 !.github/scripts/check-beads-policy.sh
 !.github/scripts/check-cqrs-compliance.sh
