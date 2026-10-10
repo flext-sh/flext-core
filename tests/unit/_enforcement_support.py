@@ -13,20 +13,23 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from flext_core import m
+    from flext_core import m, p, t
 
 
 def messages(report: m.Report, *, fragment: str) -> list[str]:
     return [v.message for v in report.violations if fragment in v.message]
 
 
-def synthetic_method(_self: object) -> None:
+def synthetic_method(_self: p.AttributeProbe) -> None:
     """Typed method body for synthetic classes built by :func:`make_class`."""
     return
 
 
-def make_class(name: str, body: dict[str, object]) -> type:
-    cls = type(name, (), body)
+def make_class(
+    name: str,
+    body: t.MutableMappingKV[str, p.AttributeProbe],
+) -> type:
+    cls = type(name, (), dict(body))
     cls.__qualname__ = name  # strip test-method qualname prefix
     cls.__module__ = "flext_core.synthetic"
     return cls

@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from pathlib import PurePath as DeferredPath
 
 
-class TestsTypeAliasDeclarations:
+class TestsFlextTypeAliasDeclarations:
     """Importable declarations keep runtime identities tied to their source."""
 
     class LegalTypes:
@@ -46,7 +46,7 @@ class TestsTypeAliasDeclarations:
     class InvalidAttributeTypes:
         """AttributeError remains a causal failure of the alias evaluator."""
 
-        type Invalid = TestsTypeAliasDeclarations.MissingAttribute.Value
+        type Invalid = TestsFlextTypeAliasDeclarations.MissingAttribute.Value
 
     @staticmethod
     def unbound() -> TypeAliasType:

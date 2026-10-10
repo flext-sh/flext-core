@@ -14,10 +14,14 @@ from typing import Annotated, ClassVar
 
 from flext_core import c, t
 from flext_core._models.base import FlextModelsBase
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._protocols.result import FlextProtocolsResult as pr
-from flext_core._typings.pydantic import FlextTypesPydantic as tp
-from flext_core._typings.services import FlextTypesServices as ts
+from flext_core._models.pydantic import FlextModelsPydantic
+mp = FlextModelsPydantic
+from flext_core._protocols.result import FlextProtocolsResult
+pr = FlextProtocolsResult
+from flext_core._typings.pydantic import FlextTypesPydantic
+tp = FlextTypesPydantic
+from flext_core._typings.services import FlextTypesServices
+ts = FlextTypesServices
 
 
 class FlextModelsExceptionParams:

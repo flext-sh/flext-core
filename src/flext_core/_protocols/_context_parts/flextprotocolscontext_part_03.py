@@ -8,15 +8,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core._protocols._context_parts.flextprotocolscontext_part_02 import (
-    FlextProtocolsContext as FlextProtocolsContextPart02,
-)
+from flext_core._protocols._context_parts import flextprotocolscontext_part_02
 
 if TYPE_CHECKING:
     from flext_core import p, t
 
 
-class FlextProtocolsContext(FlextProtocolsContextPart02):
+class FlextProtocolsContext(flextprotocolscontext_part_02.FlextProtocolsContext):
     @runtime_checkable
     class RuntimeBootstrapOptions(Protocol):
         """Runtime bootstrap options a service base declares for its runtime."""

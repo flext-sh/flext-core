@@ -162,7 +162,7 @@ class TestsFlextCoreResultExceptionTraverseValidation(
     def test_from_validation_success_returns_populated_model() -> None:
         # Arrange
         """Test from validation success returns populated model."""
-        valid: dict[str, t.JsonPayload] = {"name": "Alice", "age": 30}
+        valid: t.MappingKV[str, t.JsonPayload] = {"name": "Alice", "age": 30}
 
         # Act
         result = r[

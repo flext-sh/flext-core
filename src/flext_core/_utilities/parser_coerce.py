@@ -14,7 +14,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_core import c, r
+from flext_core import c
+from flext_core.result import FlextResult
 
 if TYPE_CHECKING:
     from flext_core import p, t
@@ -60,11 +61,13 @@ class FlextUtilitiesParserCoerce:
                 case="lower",
             )
             if normalized_val in c.PARSER_BOOLEAN_TRUTHY:
-                return r[bool].ok(value=True)
+                return FlextResult[bool].ok(value=True)
             if normalized_val in c.PARSER_BOOLEAN_FALSY:
-                return r[bool].ok(value=False)
-            return r[bool].fail(c.ERR_PARSER_COERCE_BOOL_FAILED.format(value=value))
-        return r[bool].ok(bool(value))
+                return FlextResult[bool].ok(value=False)
+            return FlextResult[bool].fail(
+                c.ERR_PARSER_COERCE_BOOL_FAILED.format(value=value)
+            )
+        return FlextResult[bool].ok(bool(value))
 
     @staticmethod
     def _coerce_to_float(value: t.JsonPayload) -> p.Result[float]:
@@ -75,11 +78,11 @@ class FlextUtilitiesParserCoerce:
 
         """
         if isinstance(value, (str, int)):
-            return r[float].create_from_callable(
+            return FlextResult[float].create_from_callable(
                 lambda: float(value),
                 error_code="FLOAT_COERCE_ERROR",
             )
-        return r[float].fail(
+        return FlextResult[float].fail(
             c.ERR_PARSER_COERCE_FLOAT_FAILED.format(type_name=value.__class__.__name__),
             error_code="FLOAT_COERCE_TYPE_ERROR",
         )
@@ -93,11 +96,11 @@ class FlextUtilitiesParserCoerce:
 
         """
         if isinstance(value, (str, float)):
-            return r[int].create_from_callable(
+            return FlextResult[int].create_from_callable(
                 lambda: int(float(value)),
                 error_code="INT_COERCE_ERROR",
             )
-        return r[int].fail(
+        return FlextResult[int].fail(
             c.ERR_PARSER_COERCE_INT_FAILED.format(type_name=value.__class__.__name__),
             error_code="INT_COERCE_TYPE_ERROR",
         )
@@ -114,10 +117,10 @@ class FlextUtilitiesParserCoerce:
 
         """
         if options.default is not None:
-            return r[T].ok(options.default)
+            return FlextResult[T].ok(options.default)
         if options.default_factory is not None:
-            return r[T].ok(options.default_factory())
-        return r[T].fail(error_msg)
+            return FlextResult[T].ok(options.default_factory())
+        return FlextResult[T].fail(error_msg)
 
     @staticmethod
     def norm_str(

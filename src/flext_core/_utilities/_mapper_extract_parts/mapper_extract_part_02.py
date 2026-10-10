@@ -6,12 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import c, e, p, r, t
+from flext_core import c, p, t
 from flext_core._models import FlextModelsExceptionParams
 from flext_core._utilities import FlextUtilitiesGuards
 from flext_core._utilities._mapper_extract_parts.mapper_extract_part_01 import (
     FlextUtilitiesMapperExtract as FlextUtilitiesMapperExtractPart01,
 )
+from flext_core.exceptions import FlextExceptions
+from flext_core.result import FlextResult
 
 
 class FlextUtilitiesMapperExtract(FlextUtilitiesMapperExtractPart01):
@@ -29,7 +31,7 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperExtractPart01):
         for i, part in enumerate(parts):
             if current is None:
                 return FlextUtilitiesMapperExtract._extract_fail_or_default(
-                    e.render_template(
+                    FlextExceptions.render_template(
                         c.ERR_TEMPLATE_PATH_IS_NONE,
                         path=separator.join(parts[:i]),
                     ),
@@ -55,8 +57,8 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperExtractPart01):
                 default=default,
                 required=required,
             )
-        return r[t.JsonPayload].ok(
-            current if FlextUtilitiesGuards.container(current) else str(current),
+        return FlextResult[t.JsonPayload].ok(
+            current if FlextUtilitiesGuards.container_value(current) else str(current),
         )
 
     @staticmethod
@@ -83,9 +85,9 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperExtractPart01):
                 separator=separator,
             )
         except (AttributeError, TypeError, ValueError, KeyError, IndexError) as exc:
-            return r[t.JsonPayload].fail_op(
+            return FlextResult[t.JsonPayload].fail_op(
                 "extract path",
-                e.render_template(
+                FlextExceptions.render_template(
                     c.ERR_TEMPLATE_EXTRACT_FAILED,
                     operation="extract",
                     error=str(exc),

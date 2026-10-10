@@ -7,14 +7,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core._config import FlextConfig
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._typings.base import FlextTypingBase as t
+from flext_core._constants.enforcement import FlextConstantsEnforcement
+from flext_core._models.enforcement import FlextModelsEnforcement
+me = FlextModelsEnforcement
+from flext_core._typings.base import FlextTypingBase
 from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_01 import (
     NO_VIOLATION,
 )
-from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_02 import (
-    FlextUtilitiesBeartypeClassVisitor as FlextUtilitiesBeartypeClassVisitorPart02,
+from flext_core._utilities._beartype._class_visitor_parts import (
+    class_visitor_part_02,
 )
 
 
@@ -42,19 +43,19 @@ def _arg_context(
 def _loose_symbol_payload(
     params: me.LooseSymbolParams,
     context: tuple[type, bool, str],
-) -> t.StrMapping | None:
+) -> FlextTypingBase.StrMapping | None:
     """Compute the LOOSE_SYMBOL violation payload for one parsed target.
 
     Returns:
-        The resulting ``t.StrMapping | None``.
+        The resulting ``FlextTypingBase.StrMapping | None``.
 
     """
     target, has_expected_prefix, expected_prefix_text = context
     target_name = target.__name__
     is_top_level = "." not in target.__qualname__
-    allowed_prefixes: t.StrSequence = tuple(params.allowed_prefixes)
+    allowed_prefixes: FlextTypingBase.StrSequence = tuple(params.allowed_prefixes)
     skip_roots = (
-        c.ENFORCEMENT_NAMESPACE_FACADE_ROOTS | c.ENFORCEMENT_INFRASTRUCTURE_BASES
+        FlextConstantsEnforcement.ENFORCEMENT_NAMESPACE_FACADE_ROOTS | FlextConstantsEnforcement.ENFORCEMENT_INFRASTRUCTURE_BASES
     )
     # A settings class is one that DECLARES itself a pydantic-settings model
     # (``BaseSettings`` in its MRO), never one whose name ends in "Settings":
@@ -98,16 +99,16 @@ def _loose_symbol_payload(
     )
 
 
-class FlextUtilitiesBeartypeClassVisitor(FlextUtilitiesBeartypeClassVisitorPart02):
+class FlextUtilitiesBeartypeClassVisitor(class_visitor_part_02.FlextUtilitiesBeartypeClassVisitor):
     @staticmethod
     def v_loose_symbol(
         params: me.LooseSymbolParams,
         *args: type | str,
-    ) -> t.StrMapping | None:
+    ) -> FlextTypingBase.StrMapping | None:
         """LOOSE_SYMBOL — top-level class/function naming + settings inheritance.
 
         Returns:
-            The resulting ``t.StrMapping | None``.
+            The resulting ``FlextTypingBase.StrMapping | None``.
 
         from flext_core._models.enforcement import FlextModelsEnforcement as me
         from flext_core._typings.base import FlextTypingBase as t

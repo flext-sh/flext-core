@@ -10,6 +10,7 @@ from pathlib import Path
 
 from flext_core._constants import FlextConstantsEnforcement
 from flext_core._models import FlextModelsEnforcement
+from flext_core._protocols.base import FlextProtocolsBase
 from flext_core._typings.base import FlextTypingBase
 from flext_core._utilities import FlextUtilitiesBeartypeHelpers
 
@@ -18,6 +19,36 @@ _NO_VIOLATION: FlextTypingBase.StrMapping | None = None
 
 class FlextUtilitiesBeartypeAliasVisitor:
     """ALIAS_REBIND / COMPATIBILITY_ALIAS visitors."""
+
+    @staticmethod
+    def _self_root_alias_import(
+        module: FlextProtocolsBase.AttributeProbe,
+        alias_char: str,
+        package: str,
+        module_name: str,
+    ) -> bool:
+        """Return True when one canonical alias rebinds a self-root family import.
+
+        Returns:
+            True when the alias binds a same-package family member from outside
+            the canonical root files.
+
+        """
+        alias_value = getattr(module, alias_char, None)
+        if alias_value is None:
+            return False
+        origin = FlextUtilitiesBeartypeHelpers.object_module_name_for(alias_value) or ""
+        if not origin:
+            return False
+        canonical_stems = frozenset(
+            name.removesuffix(".py")
+            for name in FlextConstantsEnforcement.ENFORCEMENT_CANONICAL_FILES
+        )
+        return (
+            origin.split(".", 1)[0] == package
+            and origin != module_name
+            and origin not in {f"{package}.{stem}" for stem in canonical_stems}
+        )
 
     @staticmethod
     def v_alias_rebind(
@@ -64,29 +95,18 @@ class FlextUtilitiesBeartypeAliasVisitor:
             case "no_self_root_import_in_core_files" if (
                 filename in FlextConstantsEnforcement.ENFORCEMENT_CANONICAL_FILES
             ):
-                canonical_stems = frozenset(
-                    name.removesuffix(".py")
-                    for name in FlextConstantsEnforcement.ENFORCEMENT_CANONICAL_FILES
-                )
                 violation = next(
                     (
                         {"package": package, "alias": alias_char}
                         for alias_char in h.runtime_alias_names(
                             package,
                         )
-                        if (alias_value := getattr(module, alias_char, None))
-                        is not None
-                        and (
-                            origin
-                            := FlextUtilitiesBeartypeHelpers.object_module_name_for(
-                                alias_value,
-                            )
-                            or ""
+                        if FlextUtilitiesBeartypeAliasVisitor._self_root_alias_import(
+                            module,
+                            alias_char,
+                            package,
+                            module_name,
                         )
-                        and origin.split(".", 1)[0] == package
-                        and origin != module_name
-                        and origin
-                        not in {f"{package}.{stem}" for stem in canonical_stems}
                     ),
                     _NO_VIOLATION,
                 )

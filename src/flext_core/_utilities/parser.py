@@ -13,19 +13,20 @@ from __future__ import annotations
 
 from enum import StrEnum
 
-from flext_core import c, p, r, t
+from flext_core import c, p, t
 from flext_core._models.config import FlextModelsConfig
 from flext_core._utilities import (
     FlextUtilitiesGuardsTypeModel,
     FlextUtilitiesParserTargets,
 )
+from flext_core.result import FlextResult
 
 
 class FlextUtilitiesParser(FlextUtilitiesParserTargets):
     """Universal type parser dispatch — strings, enums, models, primitives."""
 
     @staticmethod
-    @r.safe
+    @FlextResult.safe
     def parse[T](
         value: t.JsonPayload,
         target: type[T],
@@ -78,7 +79,7 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
                     resolved_value = (
                         FlextUtilitiesParser._parse_with_default(
                             opts,
-                            r.require_error(enum_result),
+                            FlextResult.require_error(enum_result),
                         ).unwrap()
                         if enum_result.failure
                         else enum_result.value
@@ -93,7 +94,7 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
                     resolved_value = (
                         FlextUtilitiesParser._parse_with_default(
                             opts,
-                            r.require_error(model_result),
+                            FlextResult.require_error(model_result),
                         ).unwrap()
                         if model_result.failure
                         else model_result.value

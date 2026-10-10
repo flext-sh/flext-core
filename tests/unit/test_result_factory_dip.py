@@ -19,29 +19,6 @@ from flext_core import FlextResult, e, m, t
 from tests import p
 
 
-class _ForeignResult(m.ArbitraryTypesModel):
-    """Foreign result-like shape returned by a ``flow_through`` step."""
-
-    value: int | None = m.Field(default=None, description="Success payload.")
-    error: str | None = m.Field(default=None, description="Failure message.")
-    error_code: str | None = m.Field(default=None, description="Failure code.")
-    error_data: t.JsonMapping | None = m.Field(
-        default=None,
-        description="Failure metadata.",
-    )
-    exception: Exception | None = m.Field(default=None, description="Failure cause.")
-
-    @property
-    def success(self) -> bool:
-        """Success iff no failure message is carried."""
-        return self.error is None
-
-    @property
-    def failure(self) -> bool:
-        """Failure iff a failure message is carried."""
-        return self.error is not None
-
-
 class TestsFlextCoreResultFactoryDip:
     """Public factory and protocol contracts after the p.Result DIP refactor."""
 
@@ -277,3 +254,27 @@ class TestsFlextCoreResultFactoryDip:
         tm.that(result.error_data.get("host"), eq="kept")
         assert "password" not in result.error_data
         assert "api_key" not in result.error_data
+
+
+class _ForeignResult(m.ArbitraryTypesModel):
+    """Foreign result-like shape returned by a ``flow_through`` step."""
+
+    value: int | None = m.Field(default=None, description="Success payload.")
+    error: str | None = m.Field(default=None, description="Failure message.")
+    error_code: str | None = m.Field(default=None, description="Failure code.")
+    error_data: t.JsonMapping | None = m.Field(
+        default=None,
+        description="Failure metadata.",
+    )
+    exception: Exception | None = m.Field(default=None, description="Failure cause.")
+
+
+    @property
+    def success(self) -> bool:
+        """Success iff no failure message is carried."""
+        return self.error is None
+
+    @property
+    def failure(self) -> bool:
+        """Failure iff a failure message is carried."""
+        return self.error is not None

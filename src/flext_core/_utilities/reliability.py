@@ -14,9 +14,10 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING
 
-from flext_core import c, p, r, t
+from flext_core import c, p, t
 from flext_core._models.config import FlextModelsConfig
 from flext_core._utilities import FlextUtilitiesArgs
+from flext_core.result import FlextResult
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -61,9 +62,9 @@ class FlextUtilitiesReliability:
         else:
             handled = catch
         try:
-            return r[TResult].ok(operation())
+            return FlextResult[TResult].ok(operation())
         except handled as exc:
-            return r[TResult].fail_op(op_name, exc)
+            return FlextResult[TResult].fail_op(op_name, exc)
 
     @staticmethod
     def guard_result[TResult](
@@ -96,7 +97,7 @@ class FlextUtilitiesReliability:
         try:
             return operation()
         except handled as exc:
-            return r[TResult].fail_op(op_name, exc)
+            return FlextResult[TResult].fail_op(op_name, exc)
 
     @staticmethod
     def retry[TResult](
@@ -124,7 +125,7 @@ class FlextUtilitiesReliability:
         )
         if opts_res.failure:
             # Preserve the validated options failure metadata for every consumer.
-            return r[TResult].from_failure(opts_res)
+            return FlextResult[TResult].from_failure(opts_res)
         opts = opts_res.value
         max_att = (
             opts.max_attempts if opts.max_attempts is not None else c.MAX_RETRY_ATTEMPTS
@@ -139,7 +140,7 @@ class FlextUtilitiesReliability:
             try:
                 result = operation()
             except FlextUtilitiesReliability._RETRYABLE_EXCEPTIONS as exc:
-                result = r[TResult].fail_op("execute retry operation", exc)
+                result = FlextResult[TResult].fail_op("execute retry operation", exc)
             if result.success:
                 return result
             last_failure = result
@@ -151,9 +152,11 @@ class FlextUtilitiesReliability:
                 if current_delay > 0:
                     time.sleep(current_delay)
         if last_failure is None:
-            return r[TResult].fail(c.ERR_RUNTIME_RETRY_LOOP_ENDED_WITHOUT_RESULT)
+            return FlextResult[TResult].fail(
+                c.ERR_RUNTIME_RETRY_LOOP_ENDED_WITHOUT_RESULT
+            )
         return (
-            r[TResult]
+            FlextResult[TResult]
             .from_failure(last_failure)
             .map_error(
                 lambda error: f"Operation failed after {max_att} attempts: {error}",

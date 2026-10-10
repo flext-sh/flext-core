@@ -10,10 +10,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._result.result import _FlextResult
+from flext_core._result.result import FlextResultComposed
 
 
-class FlextResult[T](_FlextResult[T]):
+class FlextResult[T](FlextResultComposed[T]):
     """Public concrete result facade; runtime and typing share one MRO."""
 
 

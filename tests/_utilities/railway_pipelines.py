@@ -17,12 +17,20 @@ type _V1Payload = str | tm.Tests.User | m.Tests.EmailResponse
 
 
 def _v1_email_view(value: _V1Payload) -> str:
-    """Project one V1 pipeline payload onto its email view."""
+    """Project one V1 pipeline payload onto its email view.
+
+    Returns:
+        The resulting ``str``.
+    """
     return value.email if isinstance(value, tm.Tests.User) else str(value)
 
 
 def _v1_send_email(value: _V1Payload) -> p.Result[m.Tests.EmailResponse]:
-    """Send one V1 pipeline email for the current payload."""
+    """Send one V1 pipeline email for the current payload.
+
+    Returns:
+        The resulting ``p.Result[m.Tests.EmailResponse]``.
+    """
     to = value if isinstance(value, str) else str(value)
     return TestsFlextUtilitiesRailwayPipelinesMixin.make(
         TestsFlextUtilitiesRailwayPipelinesMixin.SendEmailService,
@@ -39,7 +47,11 @@ def _v1_identity_response(
 
 
 def _v1_status_view(value: _V1Payload) -> str:
-    """Project one V1 pipeline payload onto its status view."""
+    """Project one V1 pipeline payload onto its status view.
+
+    Returns:
+        The resulting ``str``.
+    """
     return value.status if isinstance(value, m.Tests.EmailResponse) else str(value)
 
 

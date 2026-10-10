@@ -17,7 +17,7 @@ from typing import Annotated
 import pytest
 from flext_tests import tm
 
-from tests import c, m
+from tests import c, m, t
 
 
 class TestsFlextCoreModelsBaseFullCoverage:
@@ -61,7 +61,9 @@ class TestsFlextCoreModelsBaseFullCoverage:
 
     @staticmethod
     @pytest.mark.parametrize("bad_value", [123, "text", 4.5, ["a", "b"]])
-    def test_metadata_attributes_non_mapping_rejected(bad_value: object) -> None:
+    def test_metadata_attributes_non_mapping_rejected(
+        bad_value: t.Scalar | list[str],
+    ) -> None:
         """Test metadata attributes non mapping rejected."""
         with pytest.raises(TypeError, match="attributes must be dict-like"):
             m.Metadata.model_validate({"attributes": bad_value})
@@ -80,7 +82,7 @@ class TestsFlextCoreModelsBaseFullCoverage:
         model = m.Metadata()
         assert model.created_at.tzinfo == UTC
         assert model.version == "1.0.0"
-        assert model.tags == ()
+        assert model.tags == []
         assert model.created_by is None
         assert model.attributes == {}
 

@@ -20,20 +20,20 @@ from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_01 
     NO_VIOLATION,
 )
 
-type AliasRows = tuple[tuple[str, str, str], ...]
-type AliasContext = tuple[
+type _AliasRows = tuple[tuple[str, str, str], ...]
+type _AliasContext = tuple[
     str,
     str,
-    AliasRows,
+    _AliasRows,
     tuple[str, ...],
     tuple[str, ...],
     bool,
 ]
-type FacadeScope = tuple[bool, bool, bool]
-type BaseAnalysis = tuple[int, str, str, bool, bool]
+type _FacadeScope = tuple[bool, bool, bool]
+type _BaseAnalysis = tuple[int, str, str, bool, bool]
 
 
-def _alias_context(target: type) -> AliasContext | None:
+def _alias_context(target: type) -> _AliasContext | None:
     """Resolve the module/package alias context, or ``None`` when exempt.
 
     Private family classes (e.g. FlextApiConstantsApi in _constants/api.py)
@@ -46,7 +46,7 @@ def _alias_context(target: type) -> AliasContext | None:
     component, so adding a new private sub-package is automatic.
 
     Returns:
-        The resulting ``AliasContext | None``.
+        The resulting ``_AliasContext | None``.
 
     """
     _, separator, _ = target.__qualname__.partition(".")
@@ -60,7 +60,7 @@ def _alias_context(target: type) -> AliasContext | None:
     # A facade lives in its package's alias modules, and the import that created
     # a real class already loaded its package; a class whose package is not
     # loaded is synthetic and declares no facade.
-    alias_rows: AliasRows = (
+    alias_rows: _AliasRows = (
         FlextUtilitiesBeartypeHelpers.lazy_alias_suffixes(package_name)
         if package_name in sys.modules
         else ()
@@ -86,12 +86,12 @@ def _alias_context(target: type) -> AliasContext | None:
 def _facade_scope(
     target: type,
     params: FlextModelsEnforcement.MroShapeParams,
-    ctx: AliasContext,
-) -> FacadeScope:
+    ctx: _AliasContext,
+) -> _FacadeScope:
     """Resolve the (require_alias_first, is_facade, is_core_root) scope.
 
     Returns:
-        The resulting ``FacadeScope``.
+        The resulting ``_FacadeScope``.
 
     """
     module_name, _, alias_rows, _, tier_facade_prefixes, is_module_level = ctx
@@ -139,7 +139,7 @@ def _peer_first_allowed(
 
 def _requires_alias_first(
     *,
-    scope: FacadeScope,
+    scope: _FacadeScope,
     names: tuple[str, str],
     suffixes: tuple[tuple[str, ...], tuple[str, ...]],
     is_alias_or_alias_base_first: bool,
@@ -211,11 +211,11 @@ def _is_service_alias_base_first(
     ))
 
 
-def _base_analysis(target: type, ctx: AliasContext, scope: FacadeScope) -> BaseAnalysis:
+def _base_analysis(target: type, ctx: _AliasContext, scope: _FacadeScope) -> _BaseAnalysis:
     """Analyze the target bases for alias/peer ordering.
 
     Returns:
-        The resulting ``BaseAnalysis`` of ``(base_count, first_name,
+        The resulting ``_BaseAnalysis`` of ``(base_count, first_name,
         unparametrized_name, is_alias_or_alias_base_first,
         allows_peer_first)``.
 
@@ -265,9 +265,9 @@ def _base_analysis(target: type, ctx: AliasContext, scope: FacadeScope) -> BaseA
 
 
 def _violation_payload(
-    scope: FacadeScope,
-    ctx: AliasContext,
-    analysis: BaseAnalysis,
+    scope: _FacadeScope,
+    ctx: _AliasContext,
+    analysis: _BaseAnalysis,
 ) -> FlextTypingBase.StrMapping | None:
     """Select the alias-first violation payload for the analyzed bases.
 

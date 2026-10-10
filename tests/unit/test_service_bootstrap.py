@@ -16,8 +16,8 @@ from typing import override
 import pytest
 from flext_tests import r, tm
 
-import flext_core._models.flext_context
 from flext_core import FlextSettings
+from flext_core.context import FlextContext
 from tests import c, m, p, t
 from tests.base import s
 from tests.utilities import u
@@ -96,7 +96,7 @@ class TestsFlextCoreServiceBootstrap:
 
     def test_context_seed_becomes_the_runtime_context(self) -> None:
         """An initial context seeded on the instance is the runtime context."""
-        context = flext_core._models.flext_context.FlextContext.create()
+        context = FlextContext.create()
 
         service = self.ConcreteTestService(initial_context=context)
 

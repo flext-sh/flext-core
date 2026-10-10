@@ -13,6 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import c, p, r, t, u
+from flext_core.result import FlextResult
 
 
 class FlextUtilitiesDispatcherExecute:
@@ -34,7 +35,7 @@ class FlextUtilitiesDispatcherExecute:
                 result = dispatch_result.from_failure(raw_output)
             else:
                 output_value = raw_output.value
-                if u.container(output_value):
+                if u.container_value(output_value):
                     payload: t.JsonPayload = output_value
                     result = dispatch_result.ok(payload)
                 elif u.pydantic_model(output_value):
@@ -45,7 +46,7 @@ class FlextUtilitiesDispatcherExecute:
                         "validate handler success payload",
                         c.ERR_HANDLER_RETURNED_NON_CONTAINER_SUCCESS_RESULT,
                     )
-        elif u.container(raw_output) or u.pydantic_model(raw_output):
+        elif u.container_value(raw_output) or u.pydantic_model(raw_output):
             result = dispatch_result.ok(raw_output)
         else:
             result = dispatch_result.fail_op(
@@ -59,7 +60,7 @@ class FlextUtilitiesDispatcherExecute:
         raw_candidate: t.JsonPayload | p.ResultView[t.JsonPayload] | None,
         dispatch_result: type[r[t.JsonPayload]],
     ) -> t.JsonPayload | p.Result[t.JsonPayload] | None:
-        if isinstance(raw_candidate, r):
+        if isinstance(raw_candidate, FlextResult):
             return raw_candidate
         if raw_candidate is None:
             return None
@@ -68,7 +69,7 @@ class FlextUtilitiesDispatcherExecute:
                 raw_candidate,
                 dispatch_result,
             )
-        if u.container(raw_candidate) or u.pydantic_model(raw_candidate):
+        if u.container_value(raw_candidate) or u.pydantic_model(raw_candidate):
             return raw_candidate
         return dispatch_result.fail_op(
             "validate handler return payload",
@@ -89,7 +90,7 @@ class FlextUtilitiesDispatcherExecute:
         if view.failure:
             return dispatch_result.from_failure(view)
         success_value = view.value
-        if u.container(success_value) or u.pydantic_model(success_value):
+        if u.container_value(success_value) or u.pydantic_model(success_value):
             return dispatch_result.ok(success_value)
         return dispatch_result.fail_op(
             "normalize handler result view",
@@ -117,7 +118,7 @@ class FlextUtilitiesDispatcherExecute:
             The resulting ``p.Result[t.JsonPayload]``.
 
         """
-        dispatch_result = r[t.JsonPayload]
+        dispatch_result = FlextResult[t.JsonPayload]
         try:
             raw_candidate = resolved_handler(message)
             raw_output = FlextUtilitiesDispatcherExecute._normalize_dispatcher_output(

@@ -143,7 +143,7 @@ class TestsFlextCoreGuards:
     def test_container_accepts_scalars_and_nested_json(
         value: t.JsonValue,
     ) -> None:
-        assert u.container(value) is True
+        assert u.container_value(value) is True
 
     @pytest.mark.parametrize(
         "value",
@@ -153,11 +153,11 @@ class TestsFlextCoreGuards:
     def test_container_rejects_none_and_non_json_members(
         value: t.JsonValue | None,
     ) -> None:
-        assert u.container(value) is False
+        assert u.container_value(value) is False
 
     @staticmethod
     def test_all_container_mapping_values_accepts_json_values() -> None:
-        mapping: dict[str, t.JsonValue] = {"a": 1, "b": [2, 3], "c": {"d": "e"}}
+        mapping: t.JsonDict = {"a": 1, "b": [2, 3], "c": {"d": "e"}}
         assert u.all_container_mapping_values(mapping) is True
 
     # ------------------------------------------------------------------

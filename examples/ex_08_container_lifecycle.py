@@ -7,11 +7,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from examples import m, p
-from examples.ex_08_container_scoped import Ex08ContainerScoped
+from examples.ex_08_container_scoped import ExamplesFlextContainerScoped
 from flext_core import FlextContainer
 
 
-class Ex08ContainerLifecycle(Ex08ContainerScoped):
+class ExamplesFlextContainerLifecycle(ExamplesFlextContainerScoped):
     """Lifecycle and cleanup checks for the container example."""
 
     def _exercise_internal_and_cleanup(

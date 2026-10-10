@@ -49,7 +49,7 @@ class TestsFlextCoreTypingsNew:
 
     @pytest.mark.parametrize(("valid", "invalid"), [(7, "7"), (0, 1.5)])
     @staticmethod
-    def test_int_adapter_is_strict(valid: int, invalid: object) -> None:
+    def test_int_adapter_is_strict(valid: int, invalid: t.Scalar) -> None:
         """int_adapter accepts real ints and rejects coercible non-ints."""
         tm.that(t.int_adapter().validate_python(valid), eq=valid)
         with pytest.raises(c.ValidationError):
@@ -57,7 +57,7 @@ class TestsFlextCoreTypingsNew:
 
     @pytest.mark.parametrize("bad", [5, b"bytes"])
     @staticmethod
-    def test_str_adapter_rejects_non_str(bad: object) -> None:
+    def test_str_adapter_rejects_non_str(bad: t.Scalar) -> None:
         """str_adapter is strict: non-string inputs are rejected."""
         tm.that(t.str_adapter().validate_python("hi"), eq="hi")
         with pytest.raises(c.ValidationError):

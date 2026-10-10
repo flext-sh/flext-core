@@ -10,8 +10,8 @@ from typing import TYPE_CHECKING
 
 from flext_tests import tm
 
-from flext_core import FlextSettings
-from tests import u
+from flext_core._settings import FlextSettings
+from tests.utilities import u
 from tests.integration.settings_integration_factories import (
     TestsFlextFlextSettingsFactories,
 )

@@ -130,16 +130,43 @@ class FlextModelsProjectMetadataFields:
             rendered = str(value)
             path = PurePosixPath(rendered)
             windows_path = PureWindowsPath(rendered)
-            if (
-                not rendered
-                or "\\\\" in rendered
-                or path.is_absolute()
-                or bool(windows_path.drive)
-                or any(part in {"", ".", ".."} for part in rendered.split("/"))
-            ):
+            if cls._has_windows_include_artifacts(
+                rendered,
+                windows_path,
+            ) or cls._has_unsafe_include_segments(rendered, path):
                 msg = "README include path must be a portable repository-relative path"
                 raise ValueError(msg)
             return path
+
+        @staticmethod
+        def _has_windows_include_artifacts(
+            rendered: str,
+            windows_path: PureWindowsPath,
+        ) -> bool:
+            """Return True when the include path carries Windows-only artifacts.
+
+            Returns:
+                The resulting ``bool``.
+
+            """
+            return "\\\\" in rendered or bool(windows_path.drive)
+
+        @staticmethod
+        def _has_unsafe_include_segments(
+            rendered: str,
+            path: PurePosixPath,
+        ) -> bool:
+            """Return True when the include path is absolute or has unsafe segments.
+
+            Returns:
+                The resulting ``bool``.
+
+            """
+            return (
+                not rendered
+                or path.is_absolute()
+                or any(part in {"", ".", ".."} for part in rendered.split("/"))
+            )
 
         @model_validator(mode="after")
         def _validate_content_source(self) -> Self:

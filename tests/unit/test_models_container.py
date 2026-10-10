@@ -98,12 +98,12 @@ class TestsFlextCoreModelsContainer:
     @pytest.mark.parametrize(("root", "truthy"), [({}, False), ({"a": 1}, True)])
     @staticmethod
     def test_config_map_bool_reflects_emptiness(
-        root: dict[str, t.JsonPayload],
+        root: t.UserOverridesMapping,
         *,
         truthy: bool,
     ) -> None:
         """Test config map bool reflects emptiness."""
-        assert bool(m.ConfigMap(root=root)) is truthy
+        assert bool(m.ConfigMap(root=dict(root))) is truthy
 
     @staticmethod
     def test_config_map_keys_values_items_expose_contents() -> None:
@@ -191,8 +191,8 @@ class TestsFlextCoreModelsContainer:
     @staticmethod
     def test_config_map_model_dump_returns_plain_mapping() -> None:
         """Test config map model dump returns plain mapping."""
-        payload: dict[str, t.JsonPayload] = {"a": 1, "b": "two"}
-        assert m.ConfigMap(root=payload).model_dump() == payload
+        payload: t.UserOverridesMapping = {"a": 1, "b": "two"}
+        assert m.ConfigMap(root=dict(payload)).model_dump() == payload
 
     @staticmethod
     def test_config_map_round_trips_through_model_dump() -> None:

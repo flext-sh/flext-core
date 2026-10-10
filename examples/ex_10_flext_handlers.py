@@ -20,7 +20,7 @@ def run() -> p.Result[str]:
     return r[str].ok("handler-example")
 
 
-class Ex10FlextHandlers:
+class ExamplesFlextHandlers:
     """Compatibility wrapper expected by examples package exports."""
 
     @staticmethod

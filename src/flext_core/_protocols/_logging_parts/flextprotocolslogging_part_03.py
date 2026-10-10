@@ -8,9 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core._protocols._logging_parts.flextprotocolslogging_part_02 import (
-    FlextProtocolsLogging as FlextProtocolsLoggingPart02,
-)
+from flext_core._protocols._logging_parts import flextprotocolslogging_part_02
 from flext_core._protocols.base import FlextProtocolsBase
 from flext_core._protocols.result import FlextProtocolsResult
 
@@ -18,7 +16,7 @@ if TYPE_CHECKING:
     from flext_core import t
 
 
-class FlextProtocolsLogging(FlextProtocolsLoggingPart02):
+class FlextProtocolsLogging(flextprotocolslogging_part_02.FlextProtocolsLogging):
     @runtime_checkable
     class TextStream(Protocol):
         """Protocol for text-based output streams (stdout, stderr, file handles)."""

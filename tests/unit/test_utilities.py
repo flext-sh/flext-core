@@ -15,8 +15,8 @@ import pytest
 
 from tests import u
 
-type MatchValue = str | int | bool | list[int] | dict[str, int]
-type ConvValue = str | float | int | bool | None
+type _MatchValue = str | int | bool | list[int] | dict[str, int]
+type _ConvValue = str | float | int | bool | None
 
 
 class TestsFlextCoreUtilities:
@@ -36,7 +36,7 @@ class TestsFlextCoreUtilities:
         ],
     )
     def test_matches_type_reports_runtime_type_membership(
-        value: MatchValue,
+        value: _MatchValue,
         type_name: str,
         *,
         expected: bool,
@@ -78,7 +78,7 @@ class TestsFlextCoreUtilities:
         ],
     )
     def test_to_bool_follows_truthiness(
-        value: ConvValue,
+        value: _ConvValue,
         *,
         expected: bool,
     ) -> None:
@@ -91,7 +91,7 @@ class TestsFlextCoreUtilities:
         [("5", 5), (3.9, 3), ("x", 0), ("", 0), (None, 0)],
     )
     def test_to_int_parses_or_defaults_to_zero(
-        value: ConvValue,
+        value: _ConvValue,
         expected: int,
     ) -> None:
         """Test to int parses or defaults to zero."""
@@ -103,7 +103,7 @@ class TestsFlextCoreUtilities:
         [("1.5", 1.5), ("2", 2.0), ("x", 0.0)],
     )
     def test_to_float_parses_or_defaults_to_zero(
-        value: ConvValue,
+        value: _ConvValue,
         expected: float,
     ) -> None:
         """Test to float parses or defaults to zero."""
@@ -121,7 +121,7 @@ class TestsFlextCoreUtilities:
     @staticmethod
     @pytest.mark.parametrize(("value", "expected"), [(5, "5"), (None, "")])
     def test_to_str_stringifies_with_empty_default(
-        value: ConvValue,
+        value: _ConvValue,
         expected: str,
     ) -> None:
         """Test to str stringifies with empty default."""

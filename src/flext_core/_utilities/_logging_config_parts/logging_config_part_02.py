@@ -20,12 +20,12 @@ from structlog.stdlib import add_log_level
 
 from flext_core import c, p, t
 from flext_core._models.config import FlextModelsConfig
-from flext_core._utilities._logging_config_parts.logging_config_part_01 import (
-    FlextUtilitiesLoggingConfig as FlextUtilitiesLoggingConfigPart01,
+from flext_core._utilities._logging_config_parts import (
+    logging_config_part_01,
 )
 
 
-class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
+class FlextUtilitiesLoggingConfig(logging_config_part_01.FlextUtilitiesLoggingConfig):
     @staticmethod
     def level_based_context_filter(
         logger: p.OutputLogger | None,
@@ -85,12 +85,12 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
             The resulting typed event mapping.
 
         Raises:
-            DropEvent: If ``level < FlextUtilitiesLoggingConfigPart01.log_threshold()``.
+            DropEvent: If ``level < logging_config_part_01.FlextUtilitiesLoggingConfig.log_threshold()``.
 
         """
         _ = logger, method_name
         level = logging.getLevelNamesMapping()[str(event_dict["level"]).upper()]
-        if level < FlextUtilitiesLoggingConfigPart01.log_threshold():
+        if level < logging_config_part_01.FlextUtilitiesLoggingConfig.log_threshold():
             raise structlog.DropEvent
         return event_dict
 

@@ -19,7 +19,8 @@ from typing import TYPE_CHECKING, ClassVar, cast
 
 import yaml
 
-from flext_core import FlextStrictYamlConfigSource, r
+from flext_core.config_sources import FlextStrictYamlConfigSource
+from flext_core.result import r
 from flext_core._constants import FlextConstantsConfig
 from flext_core._typings.base import FlextTypingBase
 from flext_core._utilities import (
@@ -250,7 +251,7 @@ class FlextUtilitiesConfig:
             The resulting ``t.JsonDict``.
 
         """
-        merged: dict[str, FlextTypingBase.JsonValue] = dict(base)
+        merged: FlextTypingBase.MutableJsonMapping = dict(base)
         for key, value in override.items():
             current = merged.get(key)
             if FlextUtilitiesGuardsTypeCore.mapping(

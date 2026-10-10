@@ -29,12 +29,14 @@ from flext_core._typings.base import FlextTypingBase
 if TYPE_CHECKING:
     from types import FrameType
 
-type StrPair = tuple[str, str]
-type LazyImportEntry = str | StrPair
-type LazyImportMap = Mapping[str, LazyImportEntry]
-type LazyImportDict = dict[str, LazyImportEntry]
-type MutableLazyImportMap = dict[str, LazyImportEntry]
-type LazyImportAliasGroups = Mapping[str, Sequence[StrPair]]
+# Canonical lazy-import aliases are declared once on the typings owner
+# (``FlextTypingBase``); this module re-binds them for its runtime consumers.
+StrPair = FlextTypingBase.StrPair
+LazyImportEntry = FlextTypingBase.LazyImportEntry
+LazyImportMap = FlextTypingBase.LazyImportMap
+LazyImportDict = FlextTypingBase.LazyImportDict
+MutableLazyImportMap = FlextTypingBase.MutableLazyImportMap
+LazyImportAliasGroups = FlextTypingBase.LazyImportAliasGroups
 
 
 class FlextLazyPart01(BaseModel):

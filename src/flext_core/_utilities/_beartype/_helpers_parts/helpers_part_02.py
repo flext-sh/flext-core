@@ -11,22 +11,21 @@ import inspect
 import types as _types_mod
 from typing import TYPE_CHECKING, Annotated, ClassVar, ForwardRef, get_args, get_origin
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._utilities._beartype._helpers_parts.helpers_part_01 import (
-    FlextUtilitiesBeartypeHelpers as FlextUtilitiesBeartypeHelpersPart01,
-)
+from flext_core._constants.enforcement import FlextConstantsEnforcement
+from flext_core._typings.base import FlextTypingBase
+from flext_core._utilities._beartype._helpers_parts import helpers_part_01
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from flext_core._typings.base import FlextTypingBase as t
+    from flext_core._typings.base import FlextTypingBase
 
 
-class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart01):
+class FlextUtilitiesBeartypeHelpers(helpers_part_01.FlextUtilitiesBeartypeHelpers):
     @staticmethod
     def unwrap_annotated(
-        hint: t.TypeFormSpecifier | None,
-    ) -> t.TypeFormSpecifier | None:
+        hint: FlextTypingBase.TypeFormSpecifier | None,
+    ) -> FlextTypingBase.TypeFormSpecifier | None:
         h = FlextUtilitiesBeartypeHelpers
         current = hint
         while current is not None:
@@ -72,7 +71,7 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart01):
                 return annotation_text[:index].strip()
         return annotation_text.strip()
 
-    _RUNTIME_MODULE_CACHE: ClassVar[dict[type, _types_mod.ModuleType]] = {}
+    _RUNTIME_MODULE_CACHE: ClassVar[t.MutableMappingKV[type, _types_mod.ModuleType]] = {}
 
     @staticmethod
     def _runtime_module_candidate(target: type) -> _types_mod.ModuleType | None:
@@ -87,13 +86,15 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart01):
             return None
         src_file = getattr(module, "__file__", None)
         if not isinstance(src_file, str) or any(
-            marker in src_file for marker in c.ENFORCE_NON_WORKSPACE_PATH_MARKERS
+            marker in src_file for marker in FlextConstantsEnforcement.ENFORCE_NON_WORKSPACE_PATH_MARKERS
         ):
             return None
         return module
 
-    @staticmethod
-    def runtime_module_for(target: type) -> _types_mod.ModuleType | None:
+    @classmethod
+    def runtime_module_for(
+        cls, target: type,
+    ) -> _types_mod.ModuleType | None:
         """Resolve the defining module once the class is bound to it.
 
         Misses are NOT cached: during ``__init_subclass__`` the class is not
@@ -104,13 +105,12 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart01):
             The resulting ``_types_mod.ModuleType | None``.
 
         """
-        h = FlextUtilitiesBeartypeHelpers
-        cached = h._RUNTIME_MODULE_CACHE.get(target)
+        cached = cls._RUNTIME_MODULE_CACHE.get(target)
         if cached is not None or "." in target.__qualname__:
             return cached
-        module = h._runtime_module_candidate(target)
+        module = cls._runtime_module_candidate(target)
         if module is not None:
-            h._RUNTIME_MODULE_CACHE[target] = module
+            cls._RUNTIME_MODULE_CACHE[target] = module
         return module
 
     @staticmethod

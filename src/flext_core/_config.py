@@ -35,11 +35,12 @@ from pydantic_settings import (
     SettingsConfigDict,
 )
 
-from flext_core import FlextStrictYamlConfigSource
+from flext_core.config_sources import FlextStrictYamlConfigSource
 from flext_core._constants import FlextConstantsConfig
 from flext_core._settings import app_env_prefix, platform_config_root
 
 if TYPE_CHECKING:
+    from flext_core._typings.base import FlextTypingBase
     from flext_core import t
 
 
@@ -166,7 +167,10 @@ class FlextConfig(BaseSettings):
         return cls._yaml_files_in(config_dir) + user_files
 
     @classmethod
-    def _transform_loaded_yaml(cls, data: dict[str, JsonValue]) -> dict[str, JsonValue]:
+    def _transform_loaded_yaml(
+        cls,
+        data: FlextTypingBase.JsonDict,
+    ) -> FlextTypingBase.JsonDict:
         """Hook for subclasses to transform merged YAML before validation.
 
         Default is identity (no transformation). Override to apply env

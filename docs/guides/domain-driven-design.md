@@ -92,12 +92,12 @@ import io
 from contextlib import redirect_stdout
 
 from examples.ex_11_flext_service import ExampleService
-from examples.ex_12_flext_registry import Ex12RegistryDsl
+from examples.ex_12_flext_registry import ExamplesFlextRegistryDsl
 
 ExampleService.run()
 stream = io.StringIO()
 with redirect_stdout(stream):
-    Ex12RegistryDsl("docs/guides/domain-driven-design.md").exercise()
+    ExamplesFlextRegistryDsl("docs/guides/domain-driven-design.md").exercise()
 ```
 
 ## DDD Checklist

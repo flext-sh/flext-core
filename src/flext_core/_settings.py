@@ -34,7 +34,11 @@ from pathlib import Path
 from typing import Annotated, ClassVar, Self
 
 from pydantic import BaseModel, Field, computed_field, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import (
+    BaseSettings,
+    PydanticBaseSettingsSource,
+    SettingsConfigDict,
+)
 
 from flext_core._constants import FlextConstantsEnvironment, FlextConstantsSettings
 
@@ -530,4 +534,8 @@ class FlextSettings(BaseSettings):
 settings: FlextSettings = FlextSettings.fetch_global()
 """Pre-instantiated root settings singleton — ``from flext_core import settings``."""
 
-__all__: list[str] = ["FlextSettings", "settings"]
+__all__: list[str] = [
+    "FlextSettings",
+    "PydanticBaseSettingsSource",
+    "settings",
+]

@@ -17,14 +17,14 @@ if TYPE_CHECKING:
     from flext_core._typings.services import FlextTypesServices
 
 
-ResultViewT_co = TypeVar("ResultViewT_co", covariant=True)
+_ResultViewT_co = TypeVar("_ResultViewT_co", covariant=True)
 
 
 class FlextProtocolsResult:
     """Single structural result contract used across FLEXT."""
 
     @runtime_checkable
-    class ResultView(Protocol[ResultViewT_co]):
+    class ResultView(Protocol[_ResultViewT_co]):
         """Covariant read-only result state observed by assertions and reporting."""
 
         @property
@@ -40,7 +40,7 @@ class FlextProtocolsResult:
         @property
         def failure(self) -> bool: ...
         @property
-        def value(self) -> ResultViewT_co: ...
+        def value(self) -> _ResultViewT_co: ...
 
     @runtime_checkable
     class FailureLike(Protocol):

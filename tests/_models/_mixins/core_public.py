@@ -94,7 +94,7 @@ class TestsFlextModelsCorePublicMixin:
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         env_file: str
-        process_environment: dict[str, str]
+        process_environment: t.StrDict
         log_level: str
 
     class PublicPayload(m.BaseModel):

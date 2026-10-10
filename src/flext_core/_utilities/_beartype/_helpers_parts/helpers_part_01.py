@@ -21,6 +21,7 @@ from typing import (
 )
 
 from flext_core._models import FlextModelsEnforcement
+from flext_core._protocols.base import FlextProtocolsBase
 from flext_core._utilities import (
     FlextUtilitiesBeartypeTypeAliases,
     FlextUtilitiesFamilySurface,
@@ -127,7 +128,7 @@ class FlextUtilitiesBeartypeHelpers:
 
     @staticmethod
     def resolve_type_alias_value(
-        alias: object,
+        alias: FlextProtocolsBase.AttributeProbe,
         *,
         owner: ModuleType | type | None = None,
     ) -> FlextTypingBase.TypeFormSpecifier | None:

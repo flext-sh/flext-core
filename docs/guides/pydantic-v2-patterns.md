@@ -106,9 +106,9 @@ if valid.port != expected_port:
 import io
 from contextlib import redirect_stdout
 
-from examples.ex_02_flext_settings import Ex02FlextSettings
+from examples.ex_02_flext_settings import ExamplesFlextSettingsUsage
 
 stream = io.StringIO()
 with redirect_stdout(stream):
-    Ex02FlextSettings("docs/guides/pydantic-v2-patterns.md").exercise()
+    ExamplesFlextSettingsUsage("docs/guides/pydantic-v2-patterns.md").exercise()
 ```

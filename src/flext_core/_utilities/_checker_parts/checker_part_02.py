@@ -13,13 +13,14 @@ from __future__ import annotations
 import inspect
 from typing import TYPE_CHECKING, get_origin, get_type_hints
 
-from flext_core import c, r
+from flext_core import c
 from flext_core._protocols.result import FlextProtocolsResult as p
 from flext_core._typings.base import FlextTypingBase as tb
 from flext_core._typings.services import FlextTypesServices as ts
 from flext_core._utilities._checker_parts.checker_part_01 import (
     FlextUtilitiesChecker as FlextUtilitiesCheckerPart01,
 )
+from flext_core.result import FlextResult
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -42,16 +43,18 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart01):
         if param_name in type_hints:
             hint = type_hints[param_name]
             if hint is None:
-                return r[tb.TypeHintSpecifier].fail(c.ERR_CHECKER_TYPE_HINT_NONE)
-            return r[tb.TypeHintSpecifier].ok(
+                return FlextResult[tb.TypeHintSpecifier].fail(
+                    c.ERR_CHECKER_TYPE_HINT_NONE
+                )
+            return FlextResult[tb.TypeHintSpecifier].ok(
                 hint if isinstance(hint, (str, type)) else str(hint),
             )
         annotation = parameter.annotation
         if annotation is inspect.Signature.empty:
-            return r[tb.TypeHintSpecifier].fail(
+            return FlextResult[tb.TypeHintSpecifier].fail(
                 c.ERR_CHECKER_NO_ANNOTATION_OR_TYPE_HINT,
             )
-        return r[tb.TypeHintSpecifier].ok(
+        return FlextResult[tb.TypeHintSpecifier].ok(
             annotation if isinstance(annotation, (str, type)) else str(annotation),
         )
 
@@ -69,9 +72,9 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart01):
         from flext_core._typings.services import FlextTypesServices as ts
         """
         try:
-            return r[inspect.Signature].ok(inspect.signature(handle_method))
+            return FlextResult[inspect.Signature].ok(inspect.signature(handle_method))
         except c.EXC_TYPE_VALIDATION:
-            return r[inspect.Signature].fail(
+            return FlextResult[inspect.Signature].fail(
                 c.ERR_CHECKER_INVALID_HANDLE_METHOD_SIGNATURE,
             )
 

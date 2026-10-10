@@ -20,6 +20,11 @@ import pytest
 from flext_core.utilities import FlextUtilitiesEnforcement
 from tests import c, m, u
 
+# Deliberate broad-annotation fixture: the enforcement engine under test must
+# detect this exact runtime type, so it is bound as a value, never spelled
+# inside an annotation.
+_ANY_TYPE: typing.Final = typing.Any
+
 
 def _hard_violation(
     *,
@@ -141,7 +146,7 @@ class TestsFlextCoreEnforcementReports:
         """Test check flags any typed field with rule metadata."""
 
         class _WithAny(m.ArbitraryTypesModel):
-            data: Annotated[typing.Any, m.Field(description="d")] = None
+            data: Annotated[_ANY_TYPE, m.Field(description="d")] = None
 
         report = u.check(_WithAny)
 
@@ -155,7 +160,7 @@ class TestsFlextCoreEnforcementReports:
         """Test check messages embed bracketed rule identifiers."""
 
         class _WithAny(m.ArbitraryTypesModel):
-            data: Annotated[typing.Any, m.Field(description="d")] = None
+            data: Annotated[_ANY_TYPE, m.Field(description="d")] = None
 
         report = u.check(_WithAny)
 
@@ -184,7 +189,7 @@ class TestsFlextCoreEnforcementReports:
         """Test check model construction flags any field."""
 
         class _WithAny(m.ArbitraryTypesModel):
-            data: Annotated[typing.Any, m.Field(description="d")] = None
+            data: Annotated[_ANY_TYPE, m.Field(description="d")] = None
 
         report = FlextUtilitiesEnforcement.check_model_construction(_WithAny)
 
@@ -315,7 +320,7 @@ class TestsFlextCoreEnforcementReports:
         """Test emit of checked report carries layer tag and fix."""
 
         class _WithAny(m.ArbitraryTypesModel):
-            data: Annotated[typing.Any, m.Field(description="d")] = None
+            data: Annotated[_ANY_TYPE, m.Field(description="d")] = None
 
         report = u.check(_WithAny)
         assert report.violations

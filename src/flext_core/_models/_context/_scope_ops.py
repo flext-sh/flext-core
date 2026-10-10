@@ -8,7 +8,8 @@ from __future__ import annotations
 
 from typing import Annotated, Self
 
-from flext_core import m, p, r, t, u
+from flext_core import m, p, t, u
+from flext_core.result import FlextResult
 
 
 class FlextContextScopeOps(m.ManagedModel):
@@ -36,7 +37,7 @@ class FlextContextScopeOps(m.ManagedModel):
 
         """
         self.data.update({key: value})
-        return r[bool].ok(value=True)
+        return FlextResult[bool].ok(value=True)
 
     def get(self, key: str) -> p.Result[t.JsonPayload]:
         """Retrieve a value from this context's scope.
@@ -46,11 +47,11 @@ class FlextContextScopeOps(m.ManagedModel):
 
         """
         if key not in self.data.root:
-            return r[t.JsonPayload].fail(f"Key '{key}' not found in context")
+            return FlextResult[t.JsonPayload].fail(f"Key '{key}' not found in context")
         value = self.data.root[key]
         if value is None:
-            return r[t.JsonPayload].fail(f"Key '{key}' has no value")
-        return r[t.JsonPayload].ok(value)
+            return FlextResult[t.JsonPayload].fail(f"Key '{key}' has no value")
+        return FlextResult[t.JsonPayload].ok(value)
 
     def has(self, key: str) -> bool:
         """Check if a key exists in this context's scope.
@@ -96,9 +97,9 @@ class FlextContextScopeOps(m.ManagedModel):
 
         """
         if key not in self.metadata.attributes:
-            return r[t.JsonPayload].fail(f"Metadata key '{key}' not found")
+            return FlextResult[t.JsonPayload].fail(f"Metadata key '{key}' not found")
         raw_value: t.JsonValue = self.metadata.attributes[key]
-        return r[t.JsonPayload].ok(u.normalize_to_container(raw_value))
+        return FlextResult[t.JsonPayload].ok(u.normalize_to_container(raw_value))
 
     def apply_metadata(self, key: str, value: t.JsonValue) -> None:
         """Set a metadata value by key."""

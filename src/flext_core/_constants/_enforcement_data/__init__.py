@@ -24,6 +24,7 @@ from pydantic import BaseModel, JsonValue
 from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_04 import (
     FlextConstantsEnforcementRules,
 )
+from flext_core._typings.base import FlextTypingBase
 
 if TYPE_CHECKING:
     from flext_core._typings.base import FlextTypingBase as t
@@ -40,7 +41,7 @@ class _SmellThresholds(BaseModel):
 class _SmellData(BaseModel):
     thresholds: _SmellThresholds
     tags: tuple[str, ...]
-    rules_text: dict[str, tuple[str, str]]
+    rules_text: FlextTypingBase.StrPairMapping
 
 
 class _PredicateRule(BaseModel):
@@ -51,27 +52,27 @@ class _PredicateRule(BaseModel):
     problem: str
     fix: str
     predicate: str
-    params: dict[str, JsonValue]
+    params: FlextTypingBase.JsonDict
 
 
 class _PredicateData(BaseModel):
-    predicates: dict[str, _PredicateRule]
+    predicates: FlextTypingBase.MappingKV[str, _PredicateRule]
 
 
 class _ExemptionData(BaseModel):
-    relaxed_extra_bases: dict[str, str]
+    relaxed_extra_bases: FlextTypingBase.StrMapping
     infrastructure_bases: tuple[str, ...]
     constants_skip_attrs: tuple[str, ...]
     utilities_exempt_methods: tuple[str, ...]
-    utilities_stateful_adapters: dict[str, str]
-    layer_allows: dict[str, tuple[str, ...]]
+    utilities_stateful_adapters: FlextTypingBase.StrMapping
+    layer_allows: FlextTypingBase.StrSequenceMapping
     value_object_bases: tuple[str, ...]
     nested_mro_min_depth: int
-    classvar_exempt_names: dict[str, str]
+    classvar_exempt_names: FlextTypingBase.StrMapping
     core_path_markers: tuple[str, ...]
     non_workspace_path_markers: tuple[str, ...]
-    accessor_renames: dict[str, tuple[str, str]]
-    accessor_external_contracts: dict[str, str]
+    accessor_renames: FlextTypingBase.StrPairMapping
+    accessor_external_contracts: FlextTypingBase.StrMapping
 
 
 def _resource_text(name: str) -> str:
@@ -90,7 +91,7 @@ def _resource_text(name: str) -> str:
 
 
 _SMELL_DATA: _SmellData = _SmellData.model_validate_json(_resource_text("smells.json"))
-_PREDICATES: dict[str, _PredicateRule] = _PredicateData.model_validate_json(
+_PREDICATES: FlextTypingBase.MappingKV[str, _PredicateRule] = _PredicateData.model_validate_json(
     _resource_text("predicates.json"),
 ).predicates
 

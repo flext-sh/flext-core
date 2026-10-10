@@ -18,7 +18,7 @@ from flext_core._utilities._beartype.helpers import (
 _MIN_FAMILY_MODULE_PARTS = 2
 
 
-class _ImportBlacklistVisitor:
+class FlextUtilitiesBeartypeImportBlacklistVisitor:
     """IMPORT_BLACKLIST implementation extracted for LOC cap."""
 
     @staticmethod
@@ -55,25 +55,16 @@ class _ImportBlacklistVisitor:
                     {"file": filename, "import": name}
                     for name, value in vars(module).items()
                     if isinstance(value, type)
-                    and name.startswith(tier_prefixes)
-                    and (origin := _ubh.object_module_name_for(value) or "").startswith(
-                        c.NAMESPACE_FAMILY_PREFIX,
+                    and FlextUtilitiesBeartypeImportBlacklistVisitor._cross_family_tier_member(
+                        name,
+                        value,
+                        module_name=module_name,
+                        tier_prefixes=tier_prefixes,
                     )
-                    and origin != module_name
-                    and not _ImportBlacklistVisitor._is_local_family_import(
-                        origin,
-                        module_name,
-                    )
-                    and not (
-                        (
-                            value in target.__bases__
-                            and _ubh.family_facade(target)
-                            and _ubh.family_facade(value)
-                        )
-                        or _ImportBlacklistVisitor._is_lazy_published_member(
-                            module,
-                            value,
-                        )
+                    and not FlextUtilitiesBeartypeImportBlacklistVisitor._family_base_exempt(
+                        value,
+                        target,
+                        module,
                     )
                 ),
                 no_violation,
@@ -81,7 +72,6 @@ class _ImportBlacklistVisitor:
         elif params.private_package_only:
             package = module_name.split(".")[0]
             subpath = module_name.split(".")[1:]
-            families = c.ENFORCEMENT_PRIVATE_FAMILY_PACKAGES
             consumer_exempt = (
                 filename in c.ENFORCEMENT_CANONICAL_FILES
                 or any(part.startswith("_") for part in subpath)
@@ -92,11 +82,10 @@ class _ImportBlacklistVisitor:
                     (
                         {"import": name, "origin": origin, "file": filename}
                         for name, value in vars(module).items()
-                        if _ImportBlacklistVisitor._is_private_family_import(
+                        if FlextUtilitiesBeartypeImportBlacklistVisitor._is_private_family_import(
                             value,
                             origin := _ubh.object_module_name_for(value) or "",
                             package,
-                            families,
                             consumer_exempt=consumer_exempt,
                         )
                     ),
@@ -122,6 +111,51 @@ class _ImportBlacklistVisitor:
                     no_violation,
                 )
         return violation
+
+    @staticmethod
+    def _cross_family_tier_member(
+        name: str,
+        value: type,
+        *,
+        module_name: str,
+        tier_prefixes: tuple[str, ...],
+    ) -> str | None:
+        """Return the member's family origin when it crosses family packages.
+
+        Returns:
+            The resulting ``str | None``.
+
+        """
+        origin = _ubh.object_module_name_for(value) or ""
+        if (
+            name.startswith(tier_prefixes)
+            and origin.startswith(c.NAMESPACE_FAMILY_PREFIX)
+            and origin != module_name
+            and not FlextUtilitiesBeartypeImportBlacklistVisitor._is_local_family_import(
+                origin,
+                module_name,
+            )
+        ):
+            return origin
+        return None
+
+    @staticmethod
+    def _family_base_exempt(value: type, target: type, module: object) -> bool:
+        """Return True when the tier import is an exempt family base or lazy member.
+
+        Returns:
+            True when the tier import is exempt from IMPORT_BLACKLIST.
+
+        """
+        family_base = (
+            value in target.__bases__
+            and _ubh.family_facade(target)
+            and _ubh.family_facade(value)
+        )
+        return family_base or FlextUtilitiesBeartypeImportBlacklistVisitor._is_lazy_published_member(
+            module,
+            value,
+        )
 
     @staticmethod
     def _is_lazy_published_member(module: object, value: type) -> bool:
@@ -195,7 +229,6 @@ class _ImportBlacklistVisitor:
         value: object,
         origin: str,
         package: str,
-        families: frozenset[str],
         *,
         consumer_exempt: bool,
     ) -> bool:
@@ -205,6 +238,7 @@ class _ImportBlacklistVisitor:
             True when a module re-exports a private-family flext symbol.
 
         """
+        families = c.ENFORCEMENT_PRIVATE_FAMILY_PACKAGES
         if not isinstance(value, type):
             return False
         if not origin.startswith("flext_"):
@@ -214,4 +248,4 @@ class _ImportBlacklistVisitor:
         return not origin.startswith(f"{package}.") or not consumer_exempt
 
 
-__all__: list[str] = ["_ImportBlacklistVisitor"]
+__all__: list[str] = ["FlextUtilitiesBeartypeImportBlacklistVisitor"]

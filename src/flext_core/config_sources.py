@@ -25,6 +25,8 @@ from yaml import MappingNode, SafeLoader
 from yaml.constructor import ConstructorError
 from yaml.resolver import BaseResolver
 
+from flext_core._typings.base import FlextTypingBase
+
 
 class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
     """Pydantic settings source backed by the unique-key safe loader.
@@ -44,7 +46,7 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
             node: MappingNode,
             *,
             deep: bool = False,
-        ) -> dict[str, JsonValue]:
+        ) -> FlextTypingBase.JsonDict:
             """Construct one mapping without silently replacing a declared key.
 
             Returns:
@@ -53,7 +55,7 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
             Raises:
                 ConstructorError: If a key is not a string or is duplicated.
             """
-            values: dict[str, JsonValue] = {}
+            values: FlextTypingBase.JsonDict = {}
             for key_node, value_node in node.value:
                 key = cast("JsonValue", loader.construct_object(key_node, deep=deep))
                 if not isinstance(key, str):
@@ -93,7 +95,7 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
         deep_merge: bool = False,
         _init_state: InitState | None = None,
         *,
-        transform: Callable[[dict[str, JsonValue]], dict[str, JsonValue]] | None = None,
+        transform: Callable[[FlextTypingBase.JsonDict], FlextTypingBase.JsonDict] | None = None,
     ) -> None:
         """Initialize the YAML source with an optional deep merge and transform hook."""
         self._transform = transform
@@ -107,7 +109,7 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
         )
 
     @override
-    def __call__(self) -> dict[str, JsonValue]:
+    def __call__(self) -> FlextTypingBase.JsonDict:
         """Return merged YAML data, applying the transform hook if set."""
         data = super().__call__()
         if self._transform is not None:
@@ -128,11 +130,11 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
             loader.dispose()
 
     @override
-    def _read_file(self, file_path: Path | Traversable) -> dict[str, JsonValue]:
+    def _read_file(self, file_path: Path | Traversable) -> FlextTypingBase.JsonDict:
         """Parse one YAML config file exactly once with strict mapping keys.
 
         Returns:
-            The resulting ``dict[str, JsonValue]``.
+            The resulting ``FlextTypingBase.JsonDict``.
 
         Raises:
             TypeError: If config YAML root must be a mapping.
@@ -151,7 +153,7 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
         self,
         files: PathType | Traversable | Sequence[PathType | Traversable] | None,
         deep_merge: bool = False,
-    ) -> dict[str, JsonValue]:
+    ) -> FlextTypingBase.JsonDict:
         """Read multiple YAML files with list-aware deep merge.
 
         The upstream ``deep_update`` only recurses into dicts; when two files
@@ -161,13 +163,13 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
         to the same list.
 
         Returns:
-            The resulting ``dict[str, JsonValue]``.
+            The resulting ``FlextTypingBase.JsonDict``.
         """
         if files is None:
             return {}
         if isinstance(files, str) or not isinstance(files, _Sequence):
             files = [files]
-        merged: dict[str, JsonValue] = {}
+        merged: FlextTypingBase.JsonDict = {}
         for file in files:
             raw_path = _Path(file) if isinstance(file, str) else file
             if not isinstance(raw_path, _Path):
@@ -175,7 +177,7 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
             file_path = raw_path.expanduser()
             if not file_path.is_file():
                 continue
-            updating: dict[str, JsonValue] = dict(self._read_file(file_path))
+            updating: FlextTypingBase.JsonDict = dict(self._read_file(file_path))
             if deep_merge:
                 merged = self._deep_merge_lists(merged, updating)
             else:
@@ -184,9 +186,9 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
 
     @staticmethod
     def _deep_merge_lists(
-        base: dict[str, JsonValue],
-        updating: dict[str, JsonValue],
-    ) -> dict[str, JsonValue]:
+        base: FlextTypingBase.JsonDict,
+        updating: FlextTypingBase.JsonDict,
+    ) -> FlextTypingBase.JsonDict:
         """Deep-merge two config dicts, concatenating list values.
 
         Args:
@@ -194,7 +196,7 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
             updating: The newly read mapping merged over ``base``.
 
         Returns:
-            The resulting ``dict[str, JsonValue]``.
+            The resulting ``FlextTypingBase.JsonDict``.
         """
         result = dict(base)
         for key, value in updating.items():

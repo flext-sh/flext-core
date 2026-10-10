@@ -16,9 +16,9 @@ import operator
 import pytest
 from flext_tests import e, tm
 
-from tests import c, p
-from tests.unit._exceptions_failure_support import FAILURES, FailureFactory
-from tests.unit._exceptions_structured_support import STRUCTURED_ERRORS, ErrorFactory
+from tests import c, p, t
+from tests.unit._exceptions_failure_support import FAILURES, _FailureFactory
+from tests.unit._exceptions_structured_support import STRUCTURED_ERRORS, _ErrorFactory
 
 
 class TestsFlextCoreExceptionsStructuredContracts:
@@ -31,10 +31,10 @@ class TestsFlextCoreExceptionsStructuredContracts:
     @staticmethod
     def test_structured_errors_expose_public_contract(
         _name: str,
-        factory: ErrorFactory,
+        factory: _ErrorFactory,
         expected_domain: str,
         expected_code: str,
-        expected_payload: dict[str, str | int | None],
+        expected_payload: t.MappingKV[str, str | int | None],
     ) -> None:
         # Arrange / Act
         """Test structured errors expose public contract."""
@@ -59,10 +59,10 @@ class TestsFlextCoreExceptionsStructuredContracts:
     @staticmethod
     def test_structured_errors_are_raisable_and_preserve_contract(
         _name: str,
-        factory: ErrorFactory,
+        factory: _ErrorFactory,
         expected_domain: str,
         expected_code: str,
-        _expected_payload: dict[str, str | int | None],
+        _expected_payload: t.MappingKV[str, str | int | None],
     ) -> None:
         # Act / Assert: the error is a real exception that callers can catch,
         # and its structured contract survives raise/except unchanged.
@@ -137,10 +137,10 @@ class TestsFlextCoreExceptionsStructuredContracts:
     @staticmethod
     def test_failure_factories_return_public_result_contract(
         _name: str,
-        factory: FailureFactory,
+        factory: _FailureFactory,
         expected_fragment: str,
         expected_code: str,
-        expected_data: dict[str, str | int | None],
+        expected_data: t.MappingKV[str, str | int | None],
     ) -> None:
         # Arrange / Act
         """Test failure factories return public result contract."""
@@ -164,10 +164,10 @@ class TestsFlextCoreExceptionsStructuredContracts:
     @staticmethod
     def test_failure_results_honor_combinator_contract(
         _name: str,
-        factory: FailureFactory,
+        factory: _FailureFactory,
         _expected_fragment: str,
         expected_code: str,
-        _expected_data: dict[str, str | int | None],
+        _expected_data: t.MappingKV[str, str | int | None],
     ) -> None:
         # Arrange
         """Test failure results honor combinator contract."""

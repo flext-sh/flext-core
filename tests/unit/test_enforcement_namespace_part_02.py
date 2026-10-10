@@ -28,14 +28,18 @@ import pytest
 
 from flext_core import c, m
 from flext_core.utilities import FlextUtilitiesEnforcement
-from tests import u
+from tests import p, t, u
 from tests.unit._enforcement_support import make_class
 
-type WarningRecords = list[warnings.WarningMessage]
-type ClassFactory = Callable[[], type]
+type _WarningRecords = list[warnings.WarningMessage]
+type _ClassFactory = Callable[[], type]
 
 
-def _synthetic(name: str, body: dict[str, object], module: str | None = None) -> type:
+def _synthetic(
+    name: str,
+    body: t.MutableMappingKV[str, p.AttributeProbe],
+    module: str | None = None,
+) -> type:
     """Build a synthetic class, optionally overriding its owning module.
 
     Returns:
@@ -62,11 +66,11 @@ def _local_constants_class() -> type:
     return FlextLocalConstants
 
 
-def _run_layer_records(target: type, layer: str) -> WarningRecords:
+def _run_layer_records(target: type, layer: str) -> _WarningRecords:
     """Drive ``run_layer`` and return the warnings it emits (public behavior).
 
     Returns:
-        The resulting ``WarningRecords``.
+        The resulting ``_WarningRecords``.
 
     """
     with warnings.catch_warnings(record=True) as recorded:
@@ -138,7 +142,7 @@ class TestsFlextCoreEnforcementNamespacePart02:
     @staticmethod
     def test_run_layer_stays_silent_for_exempt_or_clean_classes(
         case: str,
-        factory: ClassFactory,
+        factory: _ClassFactory,
     ) -> None:
         """Function-local, tests-qualified, and clean classes emit no warnings."""
         target = factory()
@@ -167,7 +171,7 @@ class TestsFlextCoreEnforcementNamespacePart02:
     @staticmethod
     def test_check_flags_constant_declared_outside_constants(
         name: str,
-        body: dict[str, object],
+        body: t.MutableMappingKV[str, p.AttributeProbe],
     ) -> None:
         """UPPER_CASE constants outside ``_constants`` yield an ENFORCE-079 violation.
 
@@ -227,7 +231,7 @@ class TestsFlextCoreEnforcementNamespacePart02:
     @staticmethod
     def test_check_exempts_permitted_constant_shapes(
         case: str,
-        body: dict[str, object],
+        body: t.MutableMappingKV[str, p.AttributeProbe],
         module: str | None,
     ) -> None:
         """Constants inside ``_constants`` pass validation.

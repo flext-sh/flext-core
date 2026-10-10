@@ -10,11 +10,11 @@ from pathlib import Path
 from typing import override
 
 from examples import c, p, u
-from examples.ex_08_container_lifecycle import Ex08ContainerLifecycle
-from flext_core import FlextContainer, r
+from examples.ex_08_container_lifecycle import ExamplesFlextContainerLifecycle
+from flext_core import FlextContainer, r, t
 
 
-class Ex08FlextContainer(Ex08ContainerLifecycle):
+class ExamplesFlextContainer(ExamplesFlextContainerLifecycle):
     """Exercise FlextContainer public APIs."""
 
     @override
@@ -43,7 +43,7 @@ class Ex08FlextContainer(Ex08ContainerLifecycle):
     def _register_fluent_entries(
         self,
         container: p.Container,
-        fluent: dict[str, str],
+        fluent: t.StrMapping,
     ) -> None:
         """Register fluent service/factory/resource entries.
 
@@ -80,7 +80,7 @@ class Ex08FlextContainer(Ex08ContainerLifecycle):
     def _verify_fluent_settings(
         self,
         container: p.Container,
-        fluent: dict[str, str],
+        fluent: t.StrMapping,
     ) -> None:
         """Verify applied settings and registered values resolve.
 
@@ -169,4 +169,4 @@ class Ex08FlextContainer(Ex08ContainerLifecycle):
 
 
 if __name__ == "__main__":
-    Ex08FlextContainer(caller_file=Path(__file__)).run()
+    ExamplesFlextContainer(caller_file=Path(__file__)).run()

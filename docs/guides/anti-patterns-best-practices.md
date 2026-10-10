@@ -107,12 +107,12 @@ if service.value != expected_service:
 import io
 from contextlib import redirect_stdout
 
-from examples.ex_03_flext_logger import Ex03FlextLogger
+from examples.ex_03_flext_logger import ExamplesFlextLogger
 from examples.ex_04_flext_dispatcher import Ex04DispatchDsl
 
 stream = io.StringIO()
 with redirect_stdout(stream):
-    Ex03FlextLogger().run()
+    ExamplesFlextLogger().run()
 result = Ex04DispatchDsl.run()
 expected_value = "pong:dispatcher-example"
 if not result.success:

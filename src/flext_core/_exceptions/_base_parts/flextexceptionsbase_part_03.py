@@ -193,6 +193,55 @@ class FlextExceptionsBase:
             )
             return remaining_extra, preserved_metadata, correlation_id_str
 
+        @staticmethod
+        def _resolve_named_param_values(
+            context: tb.MappingKV[str, ts.JsonPayload | None] | pr.HasModelDump | None,
+            remaining_extra: tb.MutableJsonMapping,
+            declared_param_keys: frozenset[str],
+            resolved_named: MutableMapping[str, ts.JsonPayload | None],
+        ) -> tb.JsonDict:
+            """Fold resolved named params into the declared param-value map.
+
+            Returns:
+                The resulting ``tb.JsonDict``.
+
+            """
+            param_values = FlextExceptionsHelpers.build_param_map(
+                context,
+                remaining_extra,
+                keys=declared_param_keys,
+            )
+            for key, value in resolved_named.items():
+                if value is None:
+                    continue
+                normalized_value = FlextRuntime.normalize_to_metadata(value)
+                param_values[key] = (
+                    normalized_value
+                    if isinstance(normalized_value, c.SCALAR_TYPES)
+                    else str(normalized_value)
+                )
+            return param_values
+
+        @staticmethod
+        def _attach_declared_field_context(
+            ctx: tb.MutableJsonMapping,
+            declaredparams_cls: ts.ModelClass[m.BaseModel],
+            resolved: m.BaseModel,
+            declared_param_keys: frozenset[str],
+        ) -> None:
+            """Attach declared field values and help text to the context map."""
+            resolved_fields = declaredparams_cls.__pydantic_fields__
+            for key in declared_param_keys:
+                attr_val = getattr(resolved, key, None)
+                if attr_val is not None:
+                    ctx[key] = FlextRuntime.normalize_to_metadata(attr_val)
+                field_info = resolved_fields.get(key)
+                if field_info is None:
+                    continue
+                field_help = field_info.description or field_info.title
+                if isinstance(field_help, str) and field_help:
+                    ctx[f"{key}_description"] = field_help
+
         def _resolve_declared_params(
             self,
             declaredparams_cls: ts.ModelClass[m.BaseModel],
@@ -210,20 +259,12 @@ class FlextExceptionsBase:
             resolved_named: MutableMapping[str, ts.JsonPayload | None] = {}
             for key in declared_param_keys:
                 resolved_named.setdefault(key, remaining_extra.pop(key, None))
-            param_values = FlextExceptionsHelpers.build_param_map(
+            param_values = self._resolve_named_param_values(
                 context,
                 remaining_extra,
-                keys=declared_param_keys,
+                declared_param_keys,
+                resolved_named,
             )
-            for key, value in resolved_named.items():
-                if value is None:
-                    continue
-                normalized_value = FlextRuntime.normalize_to_metadata(value)
-                param_values[key] = (
-                    normalized_value
-                    if isinstance(normalized_value, c.SCALAR_TYPES)
-                    else str(normalized_value)
-                )
             resolved = (
                 params
                 if params is not None
@@ -234,17 +275,12 @@ class FlextExceptionsBase:
                 remaining_extra,
                 excluded_keys=type(self).excluded_context_keys,
             )
-            resolved_fields = declaredparams_cls.__pydantic_fields__
-            for key in declared_param_keys:
-                attr_val = getattr(resolved, key, None)
-                if attr_val is not None:
-                    ctx[key] = FlextRuntime.normalize_to_metadata(attr_val)
-                field_info = resolved_fields.get(key)
-                if field_info is None:
-                    continue
-                field_help = field_info.description or field_info.title
-                if isinstance(field_help, str) and field_help:
-                    ctx[f"{key}_description"] = field_help
+            self._attach_declared_field_context(
+                ctx,
+                declaredparams_cls,
+                resolved,
+                declared_param_keys,
+            )
             return resolved, ctx
 
         @staticmethod

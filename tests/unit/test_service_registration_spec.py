@@ -22,7 +22,7 @@ def _factory() -> str:
     return "factory-value"
 
 
-class TestsServiceRegistrationSpecOwner:
+class TestsFlextServiceRegistrationSpecOwner:
     """The spec validates its declarations; the container registers them."""
 
     @staticmethod

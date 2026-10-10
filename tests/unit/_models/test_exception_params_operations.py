@@ -23,8 +23,8 @@ from tests.unit._models._exception_params_support import (
 class TestsFlextCoreExceptionParamsOperations:
     @pytest.mark.parametrize(
         "model_cls",
-        TestsFlextModelsExceptionParamsSupport._ALL_PARAMS_MODELS,
-        ids=TestsFlextModelsExceptionParamsSupport._ALL_PARAMS_IDS,
+        TestsFlextModelsExceptionParamsSupport.ALL_PARAMS_MODELS,
+        ids=TestsFlextModelsExceptionParamsSupport.ALL_PARAMS_IDS,
     )
     @staticmethod
     def test_no_arg_construction_yields_all_none_fields(
@@ -36,8 +36,8 @@ class TestsFlextCoreExceptionParamsOperations:
 
     @pytest.mark.parametrize(
         "model_cls",
-        TestsFlextModelsExceptionParamsSupport._ALL_PARAMS_MODELS,
-        ids=TestsFlextModelsExceptionParamsSupport._ALL_PARAMS_IDS,
+        TestsFlextModelsExceptionParamsSupport.ALL_PARAMS_MODELS,
+        ids=TestsFlextModelsExceptionParamsSupport.ALL_PARAMS_IDS,
     )
     @staticmethod
     def test_unknown_field_is_rejected(model_cls: type[m.ParamsModel]) -> None:

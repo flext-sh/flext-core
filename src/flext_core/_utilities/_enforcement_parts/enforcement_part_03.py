@@ -6,15 +6,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._utilities._enforcement_parts.enforcement_part_02 import (
-    FlextUtilitiesEnforcement as FlextUtilitiesEnforcementPart02,
-)
-from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as ub
+from flext_core._constants.enforcement import FlextConstantsEnforcement
+from flext_core._models.pydantic import FlextModelsPydantic
+mp = FlextModelsPydantic
+from flext_core._utilities._enforcement_parts import enforcement_part_02
+from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine
+ub = FlextUtilitiesBeartypeEngine
 
 
-class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart02):
+class FlextUtilitiesEnforcement(enforcement_part_02.FlextUtilitiesEnforcement):
     @staticmethod
     def _is_exempt(target: type) -> bool:
         """Return True if the target is exempt from enforcement.
@@ -46,7 +46,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart02):
         are ephemeral fixtures — validated on demand via ``check()`` but
         never emitted during class construction.
         """
-        if c.ENFORCEMENT_MODE is c.EnforcementMode.OFF:
+        if FlextConstantsEnforcement.ENFORCEMENT_MODE is FlextConstantsEnforcement.EnforcementMode.OFF:
             return
         if ub.defined_in_function_scope(model_type):
             return
@@ -61,14 +61,14 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart02):
 
         Function-local classes skip emission for the same reason as ``run``.
         """
-        if c.ENFORCEMENT_NAMESPACE_MODE is c.EnforcementMode.OFF:
+        if FlextConstantsEnforcement.ENFORCEMENT_NAMESPACE_MODE is FlextConstantsEnforcement.EnforcementMode.OFF:
             return
         if ub.defined_in_function_scope(target):
             return
         if FlextUtilitiesEnforcement._is_exempt(target):
             return
         report = FlextUtilitiesEnforcement.check(target, layer=layer)
-        FlextUtilitiesEnforcement.emit(report, mode=c.ENFORCEMENT_NAMESPACE_MODE)
+        FlextUtilitiesEnforcement.emit(report, mode=FlextConstantsEnforcement.ENFORCEMENT_NAMESPACE_MODE)
 
 
 __all__: list[str] = ["FlextUtilitiesEnforcement"]
