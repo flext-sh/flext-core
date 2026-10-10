@@ -19,7 +19,8 @@ if TYPE_CHECKING:
 class FlextProtocolsContainer(flextprotocolscontainer_part_02.FlextProtocolsContainer):
     @runtime_checkable
     class ContainerLifecycle(
-        flextprotocolscontainer_part_02.FlextProtocolsContainer.Container, Protocol
+        flextprotocolscontainer_part_02.FlextProtocolsContainer.Container,
+        Protocol,
     ):
         """Extended container contract for bootstrap and lifecycle operations."""
 
@@ -38,10 +39,10 @@ class FlextProtocolsContainer(flextprotocolscontainer_part_02.FlextProtocolsCont
 
     @runtime_checkable
     class ContainerType[
-        TContainer: flextprotocolscontainer_part_02.FlextProtocolsContainer.Container = (
-            flextprotocolscontainer_part_02
-            .FlextProtocolsContainer
-            .Container
+        TContainer: (
+            flextprotocolscontainer_part_02.FlextProtocolsContainer.Container
+        ) = (
+            flextprotocolscontainer_part_02.FlextProtocolsContainer.Container
         ),
     ](Protocol):
         """Protocol for concrete container classes exposing canonical factories."""

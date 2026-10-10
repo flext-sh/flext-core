@@ -25,7 +25,7 @@ class FlextUtilitiesBeartypeTypeAliases:
         owner: ModuleType | type | None = None,
     ) -> FlextModelsEnforcement.ResolvedAlias | FlextModelsEnforcement.DeferredAlias:
         if owner is not None:
-            deferred = FlextUtilitiesBeartypeModuleSource.deferred(alias, owner=owner)
+            deferred = FlextUtilitiesBeartypeModuleSource.deferred_alias(alias, owner=owner)
             if deferred is not None:
                 return deferred
         return FlextModelsEnforcement.ResolvedAlias(value=alias.__value__)

@@ -54,7 +54,7 @@ class FlextUtilitiesBeartypeLibraryVisitor:
         if not candidates:
             return _NO_VIOLATION
         try:
-            tree = FlextUtilitiesBeartypeModuleSource.parse(module)
+            tree = FlextUtilitiesBeartypeModuleSource.parse_module(module)
         except (OSError, TypeError, SyntaxError):
             tree = None
         for name, origin_root, owner in candidates:

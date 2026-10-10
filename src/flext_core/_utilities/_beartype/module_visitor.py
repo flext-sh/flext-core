@@ -106,7 +106,7 @@ class FlextUtilitiesBeartypeModuleVisitor:
             return _NO_VIOLATION
         module, filename = context
         try:
-            tree = FlextUtilitiesBeartypeModuleSource.parse(module)
+            tree = FlextUtilitiesBeartypeModuleSource.parse_module(module)
         except (OSError, TypeError, SyntaxError):
             return _NO_VIOLATION
         top_level_class_count = sum(
@@ -161,7 +161,7 @@ class FlextUtilitiesBeartypeModuleVisitor:
         if not candidates:
             return _NO_VIOLATION
         try:
-            tree = FlextUtilitiesBeartypeModuleSource.parse(module)
+            tree = FlextUtilitiesBeartypeModuleSource.parse_module(module)
         except (OSError, TypeError, SyntaxError):
             tree = None
         return next(
