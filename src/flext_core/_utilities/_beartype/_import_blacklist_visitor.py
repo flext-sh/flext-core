@@ -62,7 +62,7 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
                         module_name=module_name,
                         tier_prefixes=tier_prefixes,
                     )
-                    and not FlextUtilitiesBeartypeImportBlacklistVisitor._family_base_exempt(
+                    and not owner._family_base_exempt(
                         value,
                         target,
                         module,
@@ -71,6 +71,7 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
                 no_violation,
             )
         elif params.private_package_only:
+            owner = FlextUtilitiesBeartypeImportBlacklistVisitor
             package = module_name.split(".")[0]
             subpath = module_name.split(".")[1:]
             consumer_exempt = (

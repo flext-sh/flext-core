@@ -39,7 +39,9 @@ class FlextProtocolsContainer(flextprotocolscontainer_part_02.FlextProtocolsCont
     @runtime_checkable
     class ContainerType[
         TContainer: flextprotocolscontainer_part_02.FlextProtocolsContainer.Container = (
-            flextprotocolscontainer_part_02.FlextProtocolsContainer.Container
+            flextprotocolscontainer_part_02
+            .FlextProtocolsContainer
+            .Container
         ),
     ](Protocol):
         """Protocol for concrete container classes exposing canonical factories."""
