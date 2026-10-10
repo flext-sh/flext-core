@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Self, cast
 
 from pydantic import BaseModel, ValidationError
 
-from flext_core import c
+from flext_core import c, p
 from flext_core._protocols import FlextProtocolsResult
 from flext_core._result.base import FlextResultBase
 from flext_core._result.behavior import FlextResultBehavior
@@ -226,7 +226,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
             return cast("p.Result[ModelT]", cls.fail(str(exc), exception=exc))
 
     @staticmethod
-    def successful_result(obj: object) -> bool:
+    def successful_result(obj: p.AttributeProbe) -> bool:
         """Check whether an object is a successful result instance.
 
         Returns:
@@ -236,7 +236,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
         return isinstance(obj, FlextResultBase) and obj.success
 
     @staticmethod
-    def failed_result(obj: object) -> bool:
+    def failed_result(obj: p.AttributeProbe) -> bool:
         """Check whether an object is a failed result instance.
 
         Returns:

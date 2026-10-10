@@ -30,13 +30,13 @@ composition model.
 Use the canonical container example as the reference path.
 
 ```python
-from examples.ex_08_flext_container import Ex08FlextContainer
+from examples.ex_08_flext_container import ExamplesFlextContainer
 
-demo = Ex08FlextContainer("docs/guides/dependency-injection-advanced.md")
+demo = ExamplesFlextContainer("docs/guides/dependency-injection-advanced.md")
 demo.exercise()
 ```
 
-The `Ex08FlextContainer` flow exercises binding, factories, resources, the registration
+The `ExamplesFlextContainer` flow exercises binding, factories, resources, the registration
 rules, resolution, and scoped containers.
 
 ## Registration Rules

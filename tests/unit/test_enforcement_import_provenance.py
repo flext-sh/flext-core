@@ -16,7 +16,7 @@ from flext_tests import tm
 from flext_core import u
 
 
-class TestsEnforcementImportProvenance:
+class TestsFlextEnforcementImportProvenance:
     """Exercise real imported consumer modules through the public query."""
 
     @pytest.mark.parametrize(

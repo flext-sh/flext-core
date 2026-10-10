@@ -22,7 +22,7 @@ import pytest
 from flext_tests import tm
 
 import flext_core
-from tests import c, t
+from tests import c, p, t
 from tests.unit._typings_support import FLAT_ALIAS_NAMES, PUBLIC_ALIAS_NAMES
 
 LEGACY_GENERIC_NAMES: t.VariadicTuple[str] = (
@@ -113,7 +113,7 @@ class TestsFlextCoreTypingsAliases:
     )
     @staticmethod
     def test_type_check_tuples_classify_values(
-        value: object,
+        value: p.AttributeProbe,
         *,
         is_primitive: bool,
         is_numeric: bool,
@@ -140,7 +140,7 @@ class TestsFlextCoreTypingsAliases:
     )
     @staticmethod
     def test_container_and_collection_tuple_accepts_every_container_value(
-        value: object,
+        value: p.AttributeProbe,
     ) -> None:
         """Every documented container/collection value is recognised by the tuple."""
         tm.that(isinstance(value, c.CONTAINER_AND_COLLECTION_TYPES), eq=True)

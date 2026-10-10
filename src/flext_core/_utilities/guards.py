@@ -13,12 +13,13 @@ from __future__ import annotations
 import operator
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_core import c, r, t
+from flext_core import c, t
 from flext_core._models import FlextModelsCollections
 from flext_core._protocols import FlextProtocolsResult
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
 from flext_core._utilities.guards_type_protocol import FlextUtilitiesGuardsTypeProtocol
+from flext_core.result import FlextResult
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping, Sized
@@ -188,7 +189,7 @@ class FlextUtilitiesGuards(
         """
         if guard_spec.contains is None:
             return True
-        return FlextUtilitiesGuardsTypeCore.container(
+        return FlextUtilitiesGuardsTypeCore.container_value(
             value,
         ) and FlextUtilitiesGuards._check_iterable_contains(
             value,
@@ -290,7 +291,7 @@ class FlextUtilitiesGuards(
             The resulting ``t.JsonValue``.
 
         """
-        return value if FlextUtilitiesGuards.container(value) else str(value)
+        return value if FlextUtilitiesGuards.container_value(value) else str(value)
 
     @staticmethod
     def _check_validator(
@@ -339,7 +340,9 @@ class FlextUtilitiesGuards(
             )
         match default:
             case None:
-                return r[t.JsonValue].fail(fail_msg) if return_value else False
+                return (
+                    FlextResult[t.JsonValue].fail(fail_msg) if return_value else False
+                )
             case default_value:
                 return FlextUtilitiesGuards._to_container_or_str(default_value)
 

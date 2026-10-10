@@ -9,10 +9,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
-from examples.ex_12_registry_plugins import Ex12RegistryPlugins
+from examples.ex_12_registry_plugins import ExamplesFlextRegistryPlugins
 
 
-class Ex12RegistryDsl(Ex12RegistryPlugins):
+class ExamplesFlextRegistryDsl(ExamplesFlextRegistryPlugins):
     """Exercise the canonical registry DSL public API."""
 
     @override
@@ -29,4 +29,4 @@ class Ex12RegistryDsl(Ex12RegistryPlugins):
 
 
 if __name__ == "__main__":
-    Ex12RegistryDsl(caller_file=Path(__file__)).run()
+    ExamplesFlextRegistryDsl(caller_file=Path(__file__)).run()

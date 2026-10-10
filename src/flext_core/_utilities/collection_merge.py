@@ -13,10 +13,11 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import ClassVar, TypeGuard
 
-from flext_core import p, r, t
+from flext_core import p, t
 from flext_core._constants import FlextConstantsCqrs
 from flext_core._runtime._metadata import FlextRuntimeMetadata
 from flext_core._utilities import FlextUtilitiesGuardsTypeCore
+from flext_core.result import FlextResult
 
 
 class FlextUtilitiesCollectionMerge:
@@ -50,9 +51,9 @@ class FlextUtilitiesCollectionMerge:
                 **current_val,
                 **value,
             })
-            return r[bool].ok(value=True)
+            return FlextResult[bool].ok(value=True)
         result[key] = value
-        return r[bool].ok(value=True)
+        return FlextResult[bool].ok(value=True)
 
     @staticmethod
     def _merge_replace(
@@ -67,7 +68,7 @@ class FlextUtilitiesCollectionMerge:
         """
         result: t.MutableJsonMapping = dict(other)
         result.update(base)
-        return r[t.JsonMapping].ok(result)
+        return FlextResult[t.JsonMapping].ok(result)
 
     @staticmethod
     def _merge_filter_none(
@@ -82,7 +83,7 @@ class FlextUtilitiesCollectionMerge:
         """
         result: t.MutableJsonMapping = dict(other)
         result.update({k: v for k, v in base.items() if v is not None})
-        return r[t.JsonMapping].ok(result)
+        return FlextResult[t.JsonMapping].ok(result)
 
     @staticmethod
     def _merge_filter_empty(
@@ -101,7 +102,7 @@ class FlextUtilitiesCollectionMerge:
             for k, v in base.items()
             if not FlextUtilitiesGuardsTypeCore.empty_value(v)
         })
-        return r[t.JsonMapping].ok(result)
+        return FlextResult[t.JsonMapping].ok(result)
 
     @staticmethod
     def _merge_append(
@@ -126,7 +127,7 @@ class FlextUtilitiesCollectionMerge:
                 ])
                 continue
             result[key] = value
-        return r[t.JsonMapping].ok(result)
+        return FlextResult[t.JsonMapping].ok(result)
 
     @staticmethod
     def _merge_deep(
@@ -147,8 +148,8 @@ class FlextUtilitiesCollectionMerge:
                 value,
             )
             if merge_result.failure:
-                return r[t.JsonMapping].from_failure(merge_result)
-        return r[t.JsonMapping].ok(result)
+                return FlextResult[t.JsonMapping].from_failure(merge_result)
+        return FlextResult[t.JsonMapping].ok(result)
 
     _MergeHandler = Callable[[t.JsonMapping, t.JsonMapping], "p.Result[t.JsonMapping]"]
 
@@ -184,7 +185,9 @@ class FlextUtilitiesCollectionMerge:
             raise TypeError(msg)
         handler = FlextUtilitiesCollectionMerge._MERGE_STRATEGIES.get(strategy)
         if handler is None:
-            return r[t.JsonMapping].fail(f"Unknown merge strategy: {strategy}")
+            return FlextResult[t.JsonMapping].fail(
+                f"Unknown merge strategy: {strategy}"
+            )
         return handler(other, base)
 
 

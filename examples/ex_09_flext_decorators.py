@@ -16,16 +16,16 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-def _log_result[T](fn: Callable[..., T]) -> Callable[..., T]:
+def _log_result[**P, T](fn: Callable[P, T]) -> Callable[P, T]:
     """Decorator that logs each call, then passes the result through.
 
     Returns:
-        The resulting ``Callable[..., T]``.
+        The resulting ``Callable[P, T]``.
 
     """
 
     @wraps(fn)
-    def _wrapper(*args: object, **kwargs: object) -> T:
+    def _wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
         _ = u.fetch_logger(fn.__name__).info(f"calling {fn.__name__}")
         return fn(*args, **kwargs)
 

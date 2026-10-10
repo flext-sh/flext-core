@@ -9,11 +9,12 @@ from __future__ import annotations
 from collections.abc import Mapping
 from enum import StrEnum
 
-from flext_core import c, p, r, t
+from flext_core import c, p, t
 from flext_core._models import FlextModelsPydantic
 from flext_core._models.config import FlextModelsConfig
 from flext_core._utilities import FlextUtilitiesGuardsTypeModel, FlextUtilitiesModel
 from flext_core._utilities.parser_coerce import FlextUtilitiesParserCoerce
+from flext_core.result import FlextResult
 
 
 class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
@@ -72,7 +73,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
             )
 
         def _on_success(parsed: T) -> p.Result[T]:
-            return r[T].ok(parsed)
+            return FlextResult[T].ok(parsed)
 
         parsed_direct: p.Result[T] = FlextUtilitiesModel.validate_value(
             target,
@@ -84,7 +85,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
         return parsed_direct.unwrap()
 
     @staticmethod
-    @r.safe
+    @FlextResult.safe
     def _parse_try_enum[T](
         value: t.JsonPayload,
         target: type[T],
@@ -150,7 +151,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
         )
 
     @staticmethod
-    @r.safe
+    @FlextResult.safe
     def _parse_try_model[T](
         value: t.JsonPayload,
         target: type[T],

@@ -10,6 +10,7 @@ from collections.abc import Callable, Mapping, Sequence
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from flext_core._typings.base import FlextTypingBase as t
     from flext_core.typings import ProtocolGuardInput
 
 
@@ -33,7 +34,7 @@ def _is_none(value: ProtocolGuardInput) -> bool:
     return value is None
 
 
-_STRING_TYPE_PREDICATES: dict[str, Callable[[ProtocolGuardInput], bool]] = {
+_STRING_TYPE_PREDICATES: t.MappingKV[str, Callable[[ProtocolGuardInput], bool]] = {
     "str": lambda value: isinstance(value, str),
     "dict": lambda value: isinstance(value, dict),
     "list": lambda value: isinstance(value, list),

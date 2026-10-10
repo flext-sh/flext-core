@@ -12,8 +12,10 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_core import c, e, m, p, r, t, u
+from flext_core import c, m, p, t, u
 from flext_core._models._context._scope_ops import FlextContextScopeOps
+from flext_core.exceptions import FlextExceptions
+from flext_core.result import FlextResult
 
 # NOTE (multi-agent): mro-i6nq.12 — Generator is annotation-only; importing it
 # under TYPE_CHECKING keeps the public runtime facade graph lazy. The module
@@ -98,9 +100,9 @@ class FlextContext(FlextContextScopeOps, m.ManagedModel):
         container = FlextContext.resolve_container()
         try:
             _ = container.bind(service_name, service)
-        except e.ValidationError as exc:
-            return r[bool].fail_op("register service", exc)
-        return r[bool].ok(value=True)
+        except FlextExceptions.ValidationError as exc:
+            return FlextResult[bool].fail_op("register service", exc)
+        return FlextResult[bool].ok(value=True)
 
     @staticmethod
     def resolve_correlation_id() -> str | None:

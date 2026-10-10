@@ -22,7 +22,7 @@ from flext_core.container import FlextContainer
 from tests import u
 
 if TYPE_CHECKING:
-    from tests import p
+    from tests import p, t
 
 
 class TestsFlextCoreContainer:
@@ -163,7 +163,7 @@ class TestsFlextCoreContainer:
     )
     @staticmethod
     def test_apply_returns_self_for_fluent_chaining(
-        overrides: dict[str, str] | None,
+        overrides: t.UserOverridesMapping | None,
         clean_container: p.Container,
     ) -> None:
         """Apply returns the same container so callers can chain fluently."""

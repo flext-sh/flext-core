@@ -12,7 +12,7 @@ from examples.shared import ExamplesFlextShared
 from flext_core import p, r
 
 
-class Ex01ResultAdvancedSections(ExamplesFlextShared):
+class ExamplesFlextResultAdvancedSections(ExamplesFlextShared):
     """Advanced ``r`` sections shared by the executable example."""
 
     def collections_and_resource(self) -> None:

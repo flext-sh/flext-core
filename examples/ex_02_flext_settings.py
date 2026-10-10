@@ -10,11 +10,11 @@ import os
 from pathlib import Path
 from typing import override
 
-from examples.ex_02_flext_settings_helpers import Ex02FlextSettingsFieldChecks
-from flext_core import FlextSettings, c
+from examples.ex_02_flext_settings_helpers import ExamplesFlextSettingsFieldChecks
+from flext_core import FlextSettings, c, t
 
 
-class Ex02FlextSettings(Ex02FlextSettingsFieldChecks):
+class ExamplesFlextSettingsUsage(ExamplesFlextSettingsFieldChecks):
     """Golden-file tests for ``FlextSettings`` public API."""
 
     class _TestConfig(FlextSettings):
@@ -38,7 +38,7 @@ class Ex02FlextSettings(Ex02FlextSettingsFieldChecks):
         self._TestConfig.reset_for_testing()
 
     @staticmethod
-    def _strip_flext_env() -> dict[str, str]:
+    def _strip_flext_env() -> t.StrMapping:
         """Remove ``FLEXT_``-prefixed vars so field defaults are deterministic.
 
         Returns:
@@ -51,7 +51,7 @@ class Ex02FlextSettings(Ex02FlextSettingsFieldChecks):
         return saved
 
     @staticmethod
-    def _restore_flext_env(saved: dict[str, str]) -> None:
+    def _restore_flext_env(saved: t.StrMapping) -> None:
         """Restore previously stripped ``FLEXT_`` env vars."""
         for key, value in saved.items():
             os.environ[key] = value
@@ -144,4 +144,4 @@ class Ex02FlextSettings(Ex02FlextSettingsFieldChecks):
 
 
 if __name__ == "__main__":
-    Ex02FlextSettings(caller_file=Path(__file__)).run()
+    ExamplesFlextSettingsUsage(caller_file=Path(__file__)).run()

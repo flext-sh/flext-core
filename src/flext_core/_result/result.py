@@ -13,7 +13,7 @@ from flext_core._result.transforms import FlextResultTransforms
 from flext_core._result.unwrap import FlextResultUnwrap
 
 
-class _FlextResult[T](
+class FlextResultComposed[T](
     FlextResultUnwrap[T],
     FlextResultComposition[T],
     FlextResultTransforms[T],
@@ -23,4 +23,4 @@ class _FlextResult[T](
     """Type-safe result with monadic railway-oriented operations."""
 
 
-__all__: list[str] = ["_FlextResult"]
+__all__: list[str] = ["FlextResultComposed"]

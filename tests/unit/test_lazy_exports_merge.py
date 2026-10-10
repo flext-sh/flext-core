@@ -142,8 +142,8 @@ class TestsFlextCoreLazyExportsMerge:
     @staticmethod
     def test_normalize_map_resolves_relative_and_preserves_absolute(
         module_path: str,
-        raw: dict[str, str | tuple[str, str]],
-        expected: dict[str, str | tuple[str, str]],
+        raw: t.LazyImportMap,
+        expected: t.LazyImportDict,
     ) -> None:
         """Relative targets bind to the module; absolute targets pass through."""
         assert normalize_lazy_imports(module_path, raw) == expected

@@ -17,7 +17,7 @@ from flext_core._utilities import (
     FlextUtilitiesBeartypeLibraryVisitor,
 )
 from flext_core._utilities._beartype._import_blacklist_visitor import (
-    _ImportBlacklistVisitor,
+    FlextUtilitiesBeartypeImportBlacklistVisitor,
 )
 
 
@@ -35,7 +35,7 @@ class FlextUtilitiesBeartypeImportVisitor:
             The resulting ``t.StrMapping | None``.
 
         """
-        return _ImportBlacklistVisitor.implementation(params, target)
+        return FlextUtilitiesBeartypeImportBlacklistVisitor.implementation(params, target)
 
     @staticmethod
     def v_alias_rebind(

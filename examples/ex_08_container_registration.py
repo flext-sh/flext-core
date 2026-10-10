@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-class Ex08ContainerRegistration(ExamplesFlextShared):
+class ExamplesFlextContainerRegistration(ExamplesFlextShared):
     """Registration and resolution checks for the container example."""
 
     _registered_service_name: str = u.PrivateAttr(default_factory=str)
@@ -40,10 +40,10 @@ class Ex08ContainerRegistration(ExamplesFlextShared):
     _registered_resource_name: str = u.PrivateAttr(default_factory=str)
     _registered_missing_name: str = u.PrivateAttr(default_factory=str)
     _registered_bad_factory_name: str = u.PrivateAttr(default_factory=str)
-    _factory_calls: dict[str, int] = u.PrivateAttr(
+    _factory_calls: t.IntDict = u.PrivateAttr(
         default_factory=lambda: {"count": 0},
     )
-    _resource_calls: dict[str, int] = u.PrivateAttr(
+    _resource_calls: t.IntDict = u.PrivateAttr(
         default_factory=lambda: {"count": 0},
     )
 

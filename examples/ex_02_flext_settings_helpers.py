@@ -10,7 +10,7 @@ from examples.shared import ExamplesFlextShared
 from flext_core import FlextSettings
 
 
-class Ex02FlextSettingsFieldChecks(ExamplesFlextShared):
+class ExamplesFlextSettingsFieldChecks(ExamplesFlextShared):
     """Field and validation checks for the settings example."""
 
     def _exercise_settings_fields_and_validation(self) -> None:

@@ -18,7 +18,7 @@ import pytest
 from tests import u
 
 _MISSING_PREFIX = "class name missing project prefix"
-type NamespaceTree = Mapping[str, NamespaceTree]
+type _NamespaceTree = Mapping[str, _NamespaceTree]
 
 
 class TestsFlextCoreEnforcementNamespacePart01:
@@ -132,7 +132,7 @@ class TestsFlextCoreEnforcementNamespacePart01:
         assert (_MISSING_PREFIX in report) is flagged
 
     @staticmethod
-    def _namespace_tree(qualname: str, children: NamespaceTree) -> type:
+    def _namespace_tree(qualname: str, children: _NamespaceTree) -> type:
         """Build a real nested class tree with module-level qualnames.
 
         Returns:

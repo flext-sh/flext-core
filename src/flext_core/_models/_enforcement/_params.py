@@ -19,7 +19,7 @@ from flext_core._models._enforcement._base import (
 from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._typings.base import FlextTypingBase
 
-type EnforcementPredicateParams = (
+type _EnforcementPredicateParams = (
     FlextModelsEnforcementParams.FieldShapeParams
     | FlextModelsEnforcementParams.ModelConfigParams
     | FlextModelsEnforcementParams.LooseSymbolParams
@@ -191,7 +191,7 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         """One runtime rule binding validated from the predicate package data."""
 
         predicate: FlextConstantsEnforcement.EnforcementPredicateKind
-        params: Annotated[EnforcementPredicateParams, Discriminator("kind")]
+        params: Annotated[_EnforcementPredicateParams, Discriminator("kind")]
 
 
 __all__: list[str] = ["FlextModelsEnforcementParams"]

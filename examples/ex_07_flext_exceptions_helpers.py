@@ -198,7 +198,7 @@ def _raise_validation_error() -> None:
     )
 
 
-class Ex07FlextExceptionSubclasses(ExamplesFlextShared):
+class ExamplesFlextExceptionSubclasses(ExamplesFlextShared):
     """Exercise structured exception subclasses."""
 
     def _exercise_specific_exceptions(self) -> None:

@@ -61,7 +61,7 @@ class TestsFlextConstantsOther:
         "t",
         "u",
     )
-    LAZY_BENCHMARK_EXTRA_INSTALL_MAPS: ClassVar[tuple[dict[str, str], ...]] = (
+    LAZY_BENCHMARK_EXTRA_INSTALL_MAPS: ClassVar[tuple[t.StrDict, ...]] = (
         {
             "_types": ".typings:FlextTypes",
             "_models": ".models:FlextModels",

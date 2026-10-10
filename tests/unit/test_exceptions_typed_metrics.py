@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING
 import pytest
 from flext_tests import e
 
-from tests import c, m
+from tests import c, m, t
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -185,7 +185,7 @@ class TestsFlextCoreExceptionsTypedMetrics:
     def test_typed_exception_exposes_structured_fields(
         factory: Callable[[], e.BaseError],
         attribute: str,
-        expected_value: object,
+        expected_value: t.Scalar,
     ) -> None:
         # Arrange / Act
         """Test typed exception exposes structured fields."""

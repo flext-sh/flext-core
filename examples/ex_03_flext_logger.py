@@ -25,7 +25,7 @@ def _raise_value_error(message: str) -> None:
     raise ValueError(message)
 
 
-class Ex03FlextLogger(ExamplesFlextShared):
+class ExamplesFlextLogger(ExamplesFlextShared):
     """Exercise FlextUtilitiesLogging public APIs against the golden file."""
 
     def __init__(self) -> None:
@@ -57,7 +57,7 @@ class Ex03FlextLogger(ExamplesFlextShared):
         try:
             _raise_value_error(message)
         except ValueError as exc:
-            return Ex03FlextLogger._ok(logger.exception(label, exception=exc))
+            return ExamplesFlextLogger._ok(logger.exception(label, exception=exc))
         msg = f"expected ValueError({message!r}) was not raised"
         raise AssertionError(msg)
 
@@ -221,4 +221,4 @@ class Ex03FlextLogger(ExamplesFlextShared):
 
 
 if __name__ == "__main__":
-    Ex03FlextLogger().run()
+    ExamplesFlextLogger().run()

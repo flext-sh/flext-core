@@ -16,7 +16,7 @@ from typing import ClassVar
 from typing_extensions import TypeForm
 
 from examples import m
-from flext_core import r, u
+from flext_core import r, u, p
 
 
 class ExamplesFlextSharedBase(m.BaseModel):
@@ -109,7 +109,7 @@ class ExamplesFlextSharedBase(m.BaseModel):
         self._results.append(f"[{name}]")
 
     @staticmethod
-    def ser(v: object | None) -> str:
+    def ser(v: p.AttributeProbe | None) -> str:
         """Deterministic, human-readable serialisation for golden-file output.
 
         Returns:

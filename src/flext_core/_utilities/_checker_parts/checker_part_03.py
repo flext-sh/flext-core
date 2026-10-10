@@ -15,7 +15,7 @@ from typing import get_args, get_origin
 
 from pydantic import BaseModel
 
-from flext_core import c, r
+from flext_core import c
 from flext_core._protocols.base import FlextProtocolsBase as pb
 from flext_core._protocols.result import FlextProtocolsResult as p
 from flext_core._typings.base import FlextTypingBase as tb
@@ -23,6 +23,7 @@ from flext_core._typings.services import FlextTypesServices as ts
 from flext_core._utilities._checker_parts.checker_part_02 import (
     FlextUtilitiesChecker as FlextUtilitiesCheckerPart02,
 )
+from flext_core.result import FlextResult
 
 
 class FlextUtilitiesChecker(FlextUtilitiesCheckerPart02):
@@ -76,26 +77,30 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart02):
 
         """
         if not hasattr(handler_class, c.MethodName.HANDLE):
-            return r[tb.TypeHintSpecifier].fail(c.ERR_CHECKER_HANDLER_NO_HANDLE_METHOD)
+            return FlextResult[tb.TypeHintSpecifier].fail(
+                c.ERR_CHECKER_HANDLER_NO_HANDLE_METHOD
+            )
         handle_method_raw: ts.GuardInput | None = getattr(
             handler_class,
             c.MethodName.HANDLE,
             None,
         )
         if not cls._is_module_export_callable(handle_method_raw):
-            return r[tb.TypeHintSpecifier].fail(
+            return FlextResult[tb.TypeHintSpecifier].fail(
                 c.ERR_CHECKER_HANDLER_HANDLE_NOT_CALLABLE,
             )
         signature_result = cls._get_method_signature(handle_method_raw)
         if signature_result.failure:
-            return r[tb.TypeHintSpecifier].from_failure(signature_result)
+            return FlextResult[tb.TypeHintSpecifier].from_failure(signature_result)
         signature = signature_result.unwrap()
         type_hints = cls._get_type_hints_safe(handle_method_raw, handler_class)
         for name, parameter in signature.parameters.items():
             if name == c.FRAME_SELF_KEY:
                 continue
             return cls._extract_message_type_from_parameter(parameter, type_hints, name)
-        return r[tb.TypeHintSpecifier].fail(c.ERR_CHECKER_NO_MESSAGE_PARAMETER)
+        return FlextResult[tb.TypeHintSpecifier].fail(
+            c.ERR_CHECKER_NO_MESSAGE_PARAMETER
+        )
 
     @classmethod
     def can_handle_message_type(

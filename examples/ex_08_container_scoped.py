@@ -7,11 +7,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from examples import m, p
-from examples.ex_08_container_registration import Ex08ContainerRegistration
+from examples.ex_08_container_registration import ExamplesFlextContainerRegistration
 from flext_core import FlextSettings
 
 
-class Ex08ContainerScoped(Ex08ContainerRegistration):
+class ExamplesFlextContainerScoped(ExamplesFlextContainerRegistration):
     """Scoped container checks for the container example."""
 
     def _exercise_scoped(self, container: p.ContainerLifecycle) -> p.ContainerLifecycle:

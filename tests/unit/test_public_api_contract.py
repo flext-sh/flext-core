@@ -44,7 +44,7 @@ _FACADES: t.VariadicTuple[str] = (
 )
 
 # alias -> facade name published by the package's public contract
-_ALIASES: tuple[tuple[object, str], ...] = (
+_ALIASES: tuple[tuple[type, str], ...] = (
     (r, "FlextResult"),
     (u, "FlextUtilities"),
     (m, "FlextModels"),
@@ -109,7 +109,7 @@ class TestsFlextCorePublicApiContract:
     @staticmethod
     @pytest.mark.parametrize(("alias", "facade_name"), _ALIASES)
     def test_single_letter_alias_is_its_facade(
-        alias: object,
+        alias: type,
         facade_name: str,
     ) -> None:
         """Each single-letter alias is the exact same object as its named facade."""

@@ -22,7 +22,7 @@ def run() -> None:
         raise RuntimeError(msg)
 
 
-class Ex05FlextMixins:
+class ExamplesFlextMixins:
     """Compatibility wrapper expected by examples package exports."""
 
     @staticmethod

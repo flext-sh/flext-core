@@ -10,6 +10,6 @@ import typing
 
 from tests import t
 
-type AnyAlias = str | typing.Any
-type CleanAlias = str | int
-type NestedAnyAlias = t.MappingKV[str, typing.Any]
+type _AnyAlias = str | typing.Any
+type _CleanAlias = str | int
+type _NestedAnyAlias = t.MappingKV[str, typing.Any]

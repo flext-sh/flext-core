@@ -16,10 +16,10 @@ from tests import c
 if TYPE_CHECKING:
     from tests import t
 
-type ErrorFactory = Callable[[], e.BaseError]
+type _ErrorFactory = Callable[[], e.BaseError]
 
 STRUCTURED_ERRORS: t.SequenceOf[
-    tuple[str, ErrorFactory, str, str, dict[str, str | int | None]]
+    tuple[str, _ErrorFactory, str, str, t.MappingKV[str, str | int | None]]
 ] = [
     (
         "validation",

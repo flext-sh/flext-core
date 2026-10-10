@@ -9,15 +9,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_core import c, m, p
-from flext_core._exceptions._factories_parts.flextexceptionsfactories_part_02 import (
-    FlextExceptionsFactories as FlextExceptionsFactoriesPart02,
-)
+from flext_core._exceptions._factories_parts import flextexceptionsfactories_part_02
 
 if TYPE_CHECKING:
     from flext_core import r
 
 
-class FlextExceptionsFactories(FlextExceptionsFactoriesPart02):
+class FlextExceptionsFactories(flextexceptionsfactories_part_02.FlextExceptionsFactories):
     @staticmethod
     def fail_connection[TResult](
         host: str,

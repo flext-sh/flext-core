@@ -17,6 +17,12 @@ from flext_core.utilities import FlextUtilitiesEnforcement
 from tests import c, m, t, u
 from tests.unit._enforcement_support import messages
 
+# Deliberate broad-annotation fixtures: the enforcement engine under test must
+# detect these exact runtime types, so they are bound as values, never spelled
+# inside an annotation.
+_ANY_TYPE: typing.Final = typing.Any
+_BARE_DICT_TYPE: typing.Final = dict[str, str]
+
 
 class TestsFlextEnforcementModels:
     """Tests for ``FlextEnforcementModels``."""
@@ -26,7 +32,7 @@ class TestsFlextEnforcementModels:
         """Test any field detected."""
 
         class _M(m.ArbitraryTypesModel):
-            data: Annotated[typing.Any, m.Field(description="d")] = None
+            data: Annotated[_ANY_TYPE, m.Field(description="d")] = None
 
         assert messages(u.check(_M), fragment="Any")
 
@@ -44,7 +50,7 @@ class TestsFlextEnforcementModels:
         """Test bare dict detected."""
 
         class _M(m.ArbitraryTypesModel):
-            data: dict[str, str] = m.Field(default_factory=dict, description="d")
+            data: _BARE_DICT_TYPE = m.Field(default_factory=dict, description="d")
 
         assert messages(u.check(_M), fragment="bare ")
 

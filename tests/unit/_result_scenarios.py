@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 @unique
-class ResultOperationType(StrEnum):
+class TestsFlextResultOperationType(StrEnum):
     """Result operation test scenario types."""
 
     CREATION_SUCCESS = "creation_success"
@@ -39,7 +39,7 @@ class ResultScenario(m.BaseModel):
     model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
     name: Annotated[str, m.Field(description="Result scenario name")]
     operation_type: Annotated[
-        ResultOperationType,
+        TestsFlextResultOperationType,
         m.Field(description="Result operation type"),
     ]
     value: Annotated[
@@ -59,68 +59,68 @@ class ResultScenario(m.BaseModel):
 STRING_SCENARIOS: Sequence[ResultScenario] = [
     ResultScenario(
         name="creation_success_string",
-        operation_type=ResultOperationType.CREATION_SUCCESS,
+        operation_type=TestsFlextResultOperationType.CREATION_SUCCESS,
         value="success",
     ),
     ResultScenario(
         name="creation_failure_message",
-        operation_type=ResultOperationType.CREATION_FAILURE,
+        operation_type=TestsFlextResultOperationType.CREATION_FAILURE,
         value="error message",
         is_success_expected=False,
     ),
     ResultScenario(
         name="unwrap_or_success",
-        operation_type=ResultOperationType.UNWRAP_OR,
+        operation_type=TestsFlextResultOperationType.UNWRAP_OR,
         value="value",
     ),
     ResultScenario(
         name="unwrap_or_failure",
-        operation_type=ResultOperationType.UNWRAP_OR,
+        operation_type=TestsFlextResultOperationType.UNWRAP_OR,
         value="error",
         is_success_expected=False,
     ),
     ResultScenario(
         name="map_failure",
-        operation_type=ResultOperationType.MAP,
+        operation_type=TestsFlextResultOperationType.MAP,
         value="error",
         is_success_expected=False,
     ),
     ResultScenario(
         name="flat_map_failure",
-        operation_type=ResultOperationType.FLAT_MAP,
+        operation_type=TestsFlextResultOperationType.FLAT_MAP,
         value="error",
         is_success_expected=False,
     ),
     ResultScenario(
         name="alt_success",
-        operation_type=ResultOperationType.ALT,
+        operation_type=TestsFlextResultOperationType.ALT,
         value="success",
     ),
     ResultScenario(
         name="alt_failure",
-        operation_type=ResultOperationType.ALT,
+        operation_type=TestsFlextResultOperationType.ALT,
         value="original_error",
         is_success_expected=False,
     ),
     ResultScenario(
         name="lash_success",
-        operation_type=ResultOperationType.LASH,
+        operation_type=TestsFlextResultOperationType.LASH,
         value="success",
     ),
     ResultScenario(
         name="lash_failure",
-        operation_type=ResultOperationType.LASH,
+        operation_type=TestsFlextResultOperationType.LASH,
         value="error",
         is_success_expected=False,
     ),
     ResultScenario(
         name="or_operator_success",
-        operation_type=ResultOperationType.OR_OPERATOR,
+        operation_type=TestsFlextResultOperationType.OR_OPERATOR,
         value="value",
     ),
     ResultScenario(
         name="or_operator_failure",
-        operation_type=ResultOperationType.OR_OPERATOR,
+        operation_type=TestsFlextResultOperationType.OR_OPERATOR,
         value="error",
         is_success_expected=False,
     ),
@@ -128,41 +128,45 @@ STRING_SCENARIOS: Sequence[ResultScenario] = [
 INT_SCENARIOS: Sequence[ResultScenario] = [
     ResultScenario(
         name="unwrap_success",
-        operation_type=ResultOperationType.UNWRAP,
+        operation_type=TestsFlextResultOperationType.UNWRAP,
         value=42,
     ),
-    ResultScenario(name="map_success", operation_type=ResultOperationType.MAP, value=5),
+    ResultScenario(
+        name="map_success",
+        operation_type=TestsFlextResultOperationType.MAP,
+        value=5,
+    ),
     ResultScenario(
         name="flat_map_success",
-        operation_type=ResultOperationType.FLAT_MAP,
+        operation_type=TestsFlextResultOperationType.FLAT_MAP,
         value=5,
     ),
     ResultScenario(
         name="filter_passes",
-        operation_type=ResultOperationType.FILTER,
+        operation_type=TestsFlextResultOperationType.FILTER,
         value=10,
     ),
     ResultScenario(
         name="filter_fails",
-        operation_type=ResultOperationType.FILTER,
+        operation_type=TestsFlextResultOperationType.FILTER,
         value=3,
         is_success_expected=False,
     ),
     ResultScenario(
         name="railway_composition",
-        operation_type=ResultOperationType.RAILWAY_COMPOSITION,
+        operation_type=TestsFlextResultOperationType.RAILWAY_COMPOSITION,
         value=5,
     ),
 ]
 BOOL_SCENARIOS: Sequence[ResultScenario] = [
     ResultScenario(
         name="bool_conversion_success",
-        operation_type=ResultOperationType.BOOL_CONVERSION,
+        operation_type=TestsFlextResultOperationType.BOOL_CONVERSION,
         value=True,
     ),
     ResultScenario(
         name="bool_conversion_failure",
-        operation_type=ResultOperationType.BOOL_CONVERSION,
+        operation_type=TestsFlextResultOperationType.BOOL_CONVERSION,
         value=False,
     ),
 ]

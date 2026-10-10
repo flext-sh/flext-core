@@ -19,9 +19,7 @@ import pytest
 from flext_tests import e, r, tm
 
 from flext_core import FlextContainer, p
-from tests import c, u
-
-_UUID_TEXT_LENGTH = 36
+from tests import c, t, u
 
 
 class TestsFlextCoreSystem:
@@ -229,11 +227,10 @@ class TestsFlextCoreSystem:
 
     @staticmethod
     def test_generate_returns_a_parseable_uuid_string() -> None:
-        """Generate returns a 36-char string that round-trips as a UUID."""
+        """Generate returns a canonical string that round-trips as a UUID."""
         generated = u.generate()
 
         tm.that(generated, is_=str)
-        tm.that(len(generated), eq=_UUID_TEXT_LENGTH)
         tm.that(str(uuid.UUID(generated)), eq=generated)
 
     @staticmethod
@@ -289,13 +286,13 @@ class TestsFlextCoreSystem:
     # ------------------------------------------------------------------ #
 
     @staticmethod
-    def _process_user_data(data: dict[str, str]) -> p.Result[dict[str, str]]:
+    def _process_user_data(data: t.StrMapping) -> p.Result[t.StrMapping]:
         if not data:
             return r[dict[str, str]].fail(
                 "Dados não fornecidos",
                 error_code=c.ErrorCode.VALIDATION_ERROR,
             )
-        processed: dict[str, str] = {}
+        processed: t.MutableStrMapping = {}
         for key, value in data.items():
             if not u.string_non_empty(value):
                 return r[dict[str, str]].fail(

@@ -130,23 +130,52 @@ class TestsFlextHandlerDiscoveryModule:
         tm.that("constant" not in names, eq=True)
 
     @staticmethod
+    def _priority_module(
+        module_name: str,
+        handlers: tuple[tuple[str, int, str], ...],
+    ) -> types.ModuleType:
+        """Build one synthetic module holding priority-decorated handlers.
+
+        Args:
+            module_name: Synthetic module name.
+            handlers: ``(attribute_name, priority, payload)`` triples.
+
+        Returns:
+            The resulting ``types.ModuleType``.
+
+        """
+        module = types.ModuleType(module_name)
+
+        def build(
+            attr_name: str,
+            priority: int,
+            payload: str,
+        ) -> tuple[str, Callable[..., object]]:
+            @h.handler(
+                command=TestsFlextHandlerDiscoveryModule._CreateCommand,
+                priority=priority,
+            )
+            def handler(
+                cmd: TestsFlextHandlerDiscoveryModule._CreateCommand,
+            ) -> p.Result[str]:
+                _ = cmd
+                return r[str].ok(payload)
+
+            return attr_name, handler
+
+        for attr_name, priority, payload in handlers:
+            name, handler = build(attr_name, priority, payload)
+            module.__dict__[name] = handler
+        return module
+
+    @staticmethod
     def test_scan_module_orders_by_priority_descending() -> None:
         """Discovered functions are ordered from highest to lowest priority."""
         # Arrange
-        module = types.ModuleType("priority_order_module")
-
-        @h.handler(command=TestsFlextHandlerDiscoveryModule._CreateCommand, priority=10)
-        def low(cmd: TestsFlextHandlerDiscoveryModule._CreateCommand) -> p.Result[str]:
-            _ = cmd
-            return r[str].ok("low")
-
-        @h.handler(command=TestsFlextHandlerDiscoveryModule._CreateCommand, priority=90)
-        def high(cmd: TestsFlextHandlerDiscoveryModule._CreateCommand) -> p.Result[str]:
-            _ = cmd
-            return r[str].ok("high")
-
-        module.__dict__["low"] = low
-        module.__dict__["high"] = high
+        module = TestsFlextHandlerDiscoveryModule._priority_module(
+            "priority_order_module",
+            (("low", 10, "low"), ("high", 90, "high")),
+        )
 
         # Act
         ordered = [name for name, _, _ in h.Discovery.scan_module(module)]
@@ -158,24 +187,10 @@ class TestsFlextHandlerDiscoveryModule:
     def test_scan_module_breaks_priority_ties_by_name() -> None:
         """Equal-priority functions use their names as a stable tie breaker."""
         # Arrange
-        module = types.ModuleType("tie_break_module")
-
-        @h.handler(command=TestsFlextHandlerDiscoveryModule._CreateCommand, priority=5)
-        def bravo(
-            cmd: TestsFlextHandlerDiscoveryModule._CreateCommand,
-        ) -> p.Result[str]:
-            _ = cmd
-            return r[str].ok("b")
-
-        @h.handler(command=TestsFlextHandlerDiscoveryModule._CreateCommand, priority=5)
-        def alpha(
-            cmd: TestsFlextHandlerDiscoveryModule._CreateCommand,
-        ) -> p.Result[str]:
-            _ = cmd
-            return r[str].ok("a")
-
-        module.__dict__["bravo"] = bravo
-        module.__dict__["alpha"] = alpha
+        module = TestsFlextHandlerDiscoveryModule._priority_module(
+            "tie_break_module",
+            (("bravo", 5, "b"), ("alpha", 5, "a")),
+        )
 
         # Act
         ordered = [name for name, _, _ in h.Discovery.scan_module(module)]

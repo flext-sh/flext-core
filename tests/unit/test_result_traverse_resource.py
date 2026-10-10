@@ -201,8 +201,8 @@ class TestsFlextResultTraverseResource:
     @staticmethod
     def test_error_data_property() -> None:
         """Test error_data property."""
-        error_payload: dict[str, t.JsonPayload] = {"key": "value"}
-        error_data = m.ConfigMap(root=error_payload)
+        error_payload: t.UserOverridesMapping = {"key": "value"}
+        error_data = m.ConfigMap(root=dict(error_payload))
         result: p.Result[str] = r[str].fail("error", error_data=error_data)
         tm.that(result.error_data, eq=error_payload)
         success = r[str].ok("test")

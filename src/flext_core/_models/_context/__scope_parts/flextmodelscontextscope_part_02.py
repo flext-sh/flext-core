@@ -12,15 +12,14 @@ from typing import Annotated, Self
 from typing_extensions import TypeForm
 
 from flext_core import c, t
-from flext_core._models._context.__scope_parts.flextmodelscontextscope_part_01 import (
-    FlextModelsContextScope as FlextModelsContextScopePart01,
-)
+from flext_core._models._context.__scope_parts import flextmodelscontextscope_part_01
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.containers import FlextModelsContainers
-from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._models.pydantic import FlextModelsPydantic
+mp = FlextModelsPydantic
 
 
-class FlextModelsContextScope(FlextModelsContextScopePart01):
+class FlextModelsContextScope(flextmodelscontextscope_part_01.FlextModelsContextScope):
     class ContextRuntimeState(FlextModelsBase.ArbitraryTypesModel):
         """Centralized mutable runtime state for `FlextContext`."""
 
@@ -36,12 +35,12 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
             mp.Field(description="Lifecycle hooks keyed by event name"),
         ] = mp.Field(default_factory=mp.empty(TypeForm(t.ContextHookMap)))
         statistics: Annotated[
-            FlextModelsContextScopePart01.ContextStatistics,
+            flextmodelscontextscope_part_01.FlextModelsContextScope.ContextStatistics,
             mp.Field(
-                default_factory=FlextModelsContextScopePart01.ContextStatistics,
+                default_factory=flextmodelscontextscope_part_01.FlextModelsContextScope.ContextStatistics,
                 description="Operation counters for this context instance",
             ),
-        ] = mp.Field(default_factory=FlextModelsContextScopePart01.ContextStatistics)
+        ] = mp.Field(default_factory=flextmodelscontextscope_part_01.FlextModelsContextScope.ContextStatistics)
         active: Annotated[
             bool,
             mp.Field(
@@ -127,7 +126,7 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
             scope_var: contextvars.ContextVar[
                 FlextModelsContainers.ConfigMap | None
             ] = contextvars.ContextVar(f"flext_{scope}_context", default=None)
-            updated_scope_vars: dict[
+            updated_scope_vars: t.MutableMappingKV[
                 str,
                 contextvars.ContextVar[FlextModelsContainers.ConfigMap | None],
             ] = dict(self.scope_vars)
@@ -145,13 +144,13 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
 
             """
             counter_attr = f"{operation}s"
-            statistics_updates: dict[str, t.JsonPayload] = {}
+            statistics_updates: t.MutableMappingKV[str, t.JsonPayload] = {}
             current_statistics = self.statistics
             if counter_attr in type(current_statistics).model_fields:
                 current_counter = getattr(current_statistics, counter_attr)
                 if isinstance(current_counter, int):
                     statistics_updates[counter_attr] = current_counter + 1
-            operations: dict[str, t.Scalar] = {
+            operations: t.MappingKV[str, t.Scalar] = {
                 key: value
                 for key, value in current_statistics.operations.items()
                 if isinstance(value, c.PRIMITIVES_TYPES)

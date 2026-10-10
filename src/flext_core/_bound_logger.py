@@ -8,15 +8,16 @@ the Utilities-layer method-shape census holds.
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
-
 from __future__ import annotations
 
 import traceback
 from typing import TYPE_CHECKING, Self, override
 
 from flext_core import c, p, t
-from flext_core._utilities.logging_context import FlextUtilitiesLoggingContext as ulc
+from flext_core._utilities.logging_context import FlextUtilitiesLoggingContext
 from flext_core.result import r
+
+ulc = FlextUtilitiesLoggingContext
 
 if TYPE_CHECKING:
     from structlog.typing import Context
@@ -283,7 +284,7 @@ class FlextBoundLogger(ulc):
         args: t.SequenceOf[t.LogValue],
         context: t.MappingKV[str, t.LogValue],
     ) -> t.JsonMapping:
-        resolved_context: dict[str, t.LogValue] = dict(context)
+        resolved_context: t.MutableMappingKV[str, t.LogValue] = dict(context)
         if "source" not in resolved_context and (
             source_path := FlextBoundLogger._caller_source_path()
         ):

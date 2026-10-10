@@ -10,10 +10,11 @@ from collections.abc import Callable, Mapping, Sequence
 from itertools import starmap
 from typing import TYPE_CHECKING, Annotated
 
-from flext_core import c, m, r, t
+from flext_core import c, m, t
 from flext_core._models import FlextModelsPydantic
 from flext_core._utilities import FlextUtilitiesCollection, FlextUtilitiesGuardsTypeCore
 from flext_core._utilities.mapper_extract import FlextUtilitiesMapperExtract
+from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 
 if TYPE_CHECKING:
@@ -27,7 +28,9 @@ def _transform_result(pipeline: Callable[[], t.JsonDict]) -> p.Result[t.JsonMapp
         The resulting ``p.Result[t.JsonMapping]``.
 
     """
-    transform_result: p.Result[t.JsonMapping] = r[t.JsonMapping].create_from_callable(
+    transform_result: p.Result[t.JsonMapping] = FlextResult[
+        t.JsonMapping
+    ].create_from_callable(
         pipeline,
     )
     if transform_result.failure:
@@ -36,7 +39,7 @@ def _transform_result(pipeline: Callable[[], t.JsonDict]) -> p.Result[t.JsonMapp
             if isinstance(transform_result.exception, Exception)
             else transform_result.error
         )
-        return r[t.JsonMapping].fail_op("transform", failure_reason)
+        return FlextResult[t.JsonMapping].fail_op("transform", failure_reason)
     return transform_result
 
 

@@ -62,7 +62,7 @@ class FlextUtilitiesGuardsTypeCore:
 
         """
         for sequence_item in value:
-            if not FlextUtilitiesGuardsTypeCore.container(sequence_item):
+            if not FlextUtilitiesGuardsTypeCore.container_value(sequence_item):
                 return False
         return True
 
@@ -77,7 +77,7 @@ class FlextUtilitiesGuardsTypeCore:
 
         """
         for mapped_value in value.values():
-            if not FlextUtilitiesGuardsTypeCore.container(mapped_value):
+            if not FlextUtilitiesGuardsTypeCore.container_value(mapped_value):
                 return False
         return True
 
@@ -108,7 +108,7 @@ class FlextUtilitiesGuardsTypeCore:
         return False
 
     @staticmethod
-    def container(
+    def container_value(
         value: t.GuardInput | t.JsonPayload | t.JsonValue | PydanticBaseModel | None,
     ) -> TypeIs[t.JsonValue]:
         """Check if value is a valid container (recursive validation).

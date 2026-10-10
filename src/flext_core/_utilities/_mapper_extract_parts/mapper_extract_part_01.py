@@ -10,9 +10,10 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Annotated
 
-from flext_core import c, m, p, r, t
+from flext_core import c, m, p, t
 from flext_core._models import FlextModelsContainers, FlextModelsPydantic
 from flext_core._utilities.mapper_access import FlextUtilitiesMapperAccess
+from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 
 
@@ -46,8 +47,8 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
 
         """
         if not required and default is not None:
-            return r[t.JsonPayload].ok(default)
-        return r[t.JsonPayload].fail_op("extract path", msg)
+            return FlextResult[t.JsonPayload].ok(default)
+        return FlextResult[t.JsonPayload].fail_op("extract path", msg)
 
     @staticmethod
     def _extract_resolve_result(
@@ -65,8 +66,8 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
         """
         if result.failure:
             if not required and default is not None:
-                return None, r[t.JsonPayload].ok(default)
-            return None, r[t.JsonPayload].from_failure(result)
+                return None, FlextResult[t.JsonPayload].ok(default)
+            return None, FlextResult[t.JsonPayload].from_failure(result)
         return result.unwrap(), None
 
     @staticmethod

@@ -12,38 +12,36 @@ from collections.abc import Callable, MutableMapping, MutableSequence, MutableSe
 from types import UnionType
 from typing import TYPE_CHECKING, TypeAliasType, Union, get_args, get_origin
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._utilities._beartype._helpers_parts.helpers_part_02 import (
-    FlextUtilitiesBeartypeHelpers as FlextUtilitiesBeartypeHelpersPart02,
-)
+from flext_core._constants.enforcement import FlextConstantsEnforcement
+from flext_core._utilities._beartype._helpers_parts import helpers_part_02
 
 # Import directly from base modules to avoid a circular load through the public
 # flext_core facade while this module is still being initialized.
 
 if TYPE_CHECKING:
-    from flext_core._protocols import FlextProtocolsBase as p
-    from flext_core._typings.base import FlextTypingBase as t
+    from flext_core._protocols import FlextProtocolsBase
+    from flext_core._typings.base import FlextTypingBase
 
 
-class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart02):
+class FlextUtilitiesBeartypeHelpers(helpers_part_02.FlextUtilitiesBeartypeHelpers):
     @staticmethod
     def module_filename_for(module: _types_mod.ModuleType) -> str | None:
         filename = getattr(module, "__file__", None)
         return filename if isinstance(filename, str) else None
 
     @staticmethod
-    def object_module_for(obj: p.AttributeProbe) -> _types_mod.ModuleType | None:
+    def object_module_for(obj: FlextProtocolsBase.AttributeProbe) -> _types_mod.ModuleType | None:
         module = inspect.getmodule(obj)
         return module if isinstance(module, _types_mod.ModuleType) else None
 
     @staticmethod
-    def object_module_name_for(obj: p.AttributeProbe) -> str | None:
+    def object_module_name_for(obj: FlextProtocolsBase.AttributeProbe) -> str | None:
         module = inspect.getmodule(obj)
         name = getattr(module, "__name__", None)
         return name if isinstance(name, str) else None
 
     @staticmethod
-    def count_union_members(hint: t.TypeHintSpecifier | None) -> int:
+    def count_union_members(hint: FlextTypingBase.TypeHintSpecifier | None) -> int:
         h = FlextUtilitiesBeartypeHelpers
         h2 = h.unwrap_type_alias(hint)
         if h2 is None or get_origin(h2) not in {UnionType, Union}:
@@ -51,7 +49,7 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart02):
         return sum(1 for a in get_args(h2) if a is not type(None))
 
     @staticmethod
-    def matches_str_none_union(hint: t.TypeFormSpecifier | None) -> bool:
+    def matches_str_none_union(hint: FlextTypingBase.TypeFormSpecifier | None) -> bool:
         h = FlextUtilitiesBeartypeHelpers
         h2 = h.unwrap_type_alias(hint)
         if h2 is None or get_origin(h2) not in {UnionType, Union}:
@@ -60,7 +58,7 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart02):
 
     @staticmethod
     def alias_contains_any(
-        alias_value: t.TypeFormSpecifier | None,
+        alias_value: FlextTypingBase.TypeFormSpecifier | None,
         *,
         owner: _types_mod.ModuleType | type | None = None,
     ) -> bool:
@@ -68,25 +66,25 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart02):
         return h.contains_any_recursive(alias_value, seen=set(), owner=owner)
 
     @staticmethod
-    def mutable_kind(value: p.AttributeProbe) -> str | None:
-        for kind in c.ENFORCEMENT_MUTABLE_RUNTIME_TYPES:
+    def mutable_kind(value: FlextProtocolsBase.AttributeProbe) -> str | None:
+        for kind in FlextConstantsEnforcement.ENFORCEMENT_MUTABLE_RUNTIME_TYPES:
             if isinstance(value, kind):
                 return kind.__name__
         return None
 
     @staticmethod
     def mutable_default_factory_kind(
-        factory: type | Callable[..., p.AttributeProbe] | None,
+        factory: type | Callable[..., FlextProtocolsBase.AttributeProbe] | None,
     ) -> type | None:
-        for kind in c.ENFORCEMENT_MUTABLE_RUNTIME_TYPES:
+        for kind in FlextConstantsEnforcement.ENFORCEMENT_MUTABLE_RUNTIME_TYPES:
             if factory is kind or get_origin(factory) is kind:
                 return kind
         return None
 
     @staticmethod
     def allows_mutable_default_factory(
-        hint: t.TypeFormSpecifier | None,
-        factory: type | Callable[..., p.AttributeProbe] | None,
+        hint: FlextTypingBase.TypeFormSpecifier | None,
+        factory: type | Callable[..., FlextProtocolsBase.AttributeProbe] | None,
     ) -> bool:
         h = FlextUtilitiesBeartypeHelpers
         mk = h.mutable_default_factory_kind(factory)
@@ -115,8 +113,8 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart02):
                     f"collections.abc.{en}[",
                     f"collections.abc.{en}Of[",
                     f"collections.abc.{en}KV[",
-                    f"t.{en}Of[",
-                    f"t.{en}KV[",
+                    f"FlextTypingBase.{en}Of[",
+                    f"FlextTypingBase.{en}KV[",
                 ))
             )
         org = get_origin(norm)
@@ -131,7 +129,7 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart02):
     @staticmethod
     def has_relaxed_extra_base(target: type) -> bool:
         return any(
-            b.__name__ in c.ENFORCEMENT_RELAXED_EXTRA_BASES for b in target.__mro__
+            b.__name__ in FlextConstantsEnforcement.ENFORCEMENT_RELAXED_EXTRA_BASES for b in target.__mro__
         )
 
 

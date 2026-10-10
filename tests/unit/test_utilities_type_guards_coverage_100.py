@@ -41,7 +41,7 @@ class TestsFlextCoreUtilitiesTypeGuards:
         normalized_retry_window = u.normalize_to_metadata(None)
         normalized_modes = u.normalize_to_metadata({"delta", "full"})
 
-        metadata: dict[str, t.JsonValue] = {
+        metadata: t.JsonDict = {
             "payload": normalized_payload,
             "repository_root": normalized_repository_root,
             "retry_window": normalized_retry_window,
@@ -79,7 +79,7 @@ class TestsFlextCoreUtilitiesTypeGuards:
     @staticmethod
     def test_public_guard_returns_normalized_values_defaults_and_failures() -> None:
         """Test public guard returns normalized values defaults and failures."""
-        payload: dict[str, t.JsonValue] = {
+        payload: t.JsonDict = {
             "command_name": "sync-users",
             "attempt_count": 2,
         }

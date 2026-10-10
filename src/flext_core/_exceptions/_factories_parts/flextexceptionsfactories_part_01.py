@@ -6,13 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from importlib import import_module
 from typing import TYPE_CHECKING, TypeVar
 
 from flext_core import c, m, p
 from flext_core._exceptions.template import FlextExceptionsTemplate
+from flext_core.result import FlextResult
 
-TExceptionParams = TypeVar("TExceptionParams", bound=m.BaseModel)
+_TExceptionParams = TypeVar("_TExceptionParams", bound=m.BaseModel)
 
 if TYPE_CHECKING:
     from flext_core import r
@@ -28,7 +28,7 @@ class FlextExceptionsFactories:
     def _result_type[TValue](
         result_type: type[r[TValue]] | None = None,
     ) -> type[r[TValue]]:
-        """Resolve FlextResult lazily to avoid runtime import cycles.
+        """Return the caller-supplied result type or the canonical default.
 
         Returns:
             The resulting ``type[r[TValue]]``.
@@ -36,8 +36,7 @@ class FlextExceptionsFactories:
         """
         if result_type is not None:
             return result_type
-        result_module = import_module("flext_core")
-        result_cls: type[r[TValue]] = result_module.FlextResult
+        result_cls: type[r[TValue]] = FlextResult
         return result_cls
 
     @staticmethod
@@ -84,10 +83,10 @@ class FlextExceptionsFactories:
 
     @staticmethod
     def _normalize_params(
-        params: TExceptionParams | None,
-        params_type: type[TExceptionParams],
+        params: _TExceptionParams | None,
+        params_type: type[_TExceptionParams],
         update: dict[str, object | None],
-    ) -> TExceptionParams:
+    ) -> _TExceptionParams:
         if params is None:
             return params_type.model_validate(update)
         return params.model_copy(

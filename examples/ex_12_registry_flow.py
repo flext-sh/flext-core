@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from examples import p, t
 
 
-class Ex12RegistryFlow(ExamplesFlextShared):
+class ExamplesFlextRegistryFlow(ExamplesFlextShared):
     """Registry flow checks for the executable example."""
 
     def _exercise_create_and_service_methods(self) -> t.Pair[p.Registry, p.Dispatcher]:

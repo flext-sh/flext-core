@@ -16,10 +16,10 @@ from tests import c, m, p
 if TYPE_CHECKING:
     from tests import t
 
-type FailureFactory = Callable[[], p.Result[bool]]
+type _FailureFactory = Callable[[], p.Result[bool]]
 
 FAILURES: t.SequenceOf[
-    tuple[str, FailureFactory, str, str, dict[str, str | int | None]]
+    tuple[str, _FailureFactory, str, str, t.MappingKV[str, str | int | None]]
 ] = [
     (
         "config",

@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from tests import p
 
 
-def _raiser(exc: Exception) -> Callable[[object], Never]:
+def _raiser(exc: Exception) -> Callable[[int | str], Never]:
     """Return a one-argument callback that always raises ``exc``.
 
     Returns:
@@ -33,7 +33,7 @@ def _raiser(exc: Exception) -> Callable[[object], Never]:
 
     """
 
-    def _callback(_arg: object) -> Never:
+    def _callback(_arg: int | str) -> Never:
         raise exc
 
     return _callback

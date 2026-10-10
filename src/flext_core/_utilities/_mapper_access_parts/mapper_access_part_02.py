@@ -12,11 +12,13 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-from flext_core import c, e, m, p, r, t
+from flext_core import c, m, p, t
 from flext_core._models import FlextModelsContainers
 from flext_core._utilities._mapper_access_parts.mapper_access_part_01 import (
     FlextUtilitiesMapperAccess as FlextUtilitiesMapperAccessPart01,
 )
+from flext_core.exceptions import FlextExceptions
+from flext_core.result import FlextResult
 
 
 class FlextUtilitiesMapperAccess(FlextUtilitiesMapperAccessPart01):
@@ -42,7 +44,7 @@ class FlextUtilitiesMapperAccess(FlextUtilitiesMapperAccessPart01):
         ):
             sequence = current
         else:
-            return r[t.JsonPayload | None].fail_op(
+            return FlextResult[t.JsonPayload | None].fail_op(
                 "extract array index",
                 c.ERR_MAPPER_NOT_A_SEQUENCE,
             )
@@ -57,16 +59,20 @@ class FlextUtilitiesMapperAccess(FlextUtilitiesMapperAccessPart01):
         try:
             idx = int(array_match)
         except ValueError:
-            return r[int].fail_op(
+            return FlextResult[int].fail_op(
                 "extract array index",
-                e.render_template(c.ERR_TEMPLATE_INVALID_INDEX, index=array_match),
+                FlextExceptions.render_template(
+                    c.ERR_TEMPLATE_INVALID_INDEX, index=array_match
+                ),
             )
         resolved_idx = sequence_size + idx if idx < 0 else idx
         if 0 <= resolved_idx < sequence_size:
-            return r[int].ok(resolved_idx)
-        return r[int].fail_op(
+            return FlextResult[int].ok(resolved_idx)
+        return FlextResult[int].fail_op(
             "extract array index",
-            e.render_template(c.ERR_TEMPLATE_INDEX_OUT_OF_RANGE, index=idx),
+            FlextExceptions.render_template(
+                c.ERR_TEMPLATE_INDEX_OUT_OF_RANGE, index=idx
+            ),
         )
 
     @staticmethod

@@ -10,12 +10,11 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import u as core_u
-from tests import c, m
-from tests.utilities import u as test_u
+from flext_core import u
+from tests import c, m, utilities
 
 
-class TestsFlextUtilitiesText(test_u.Tests.Contract):
+class TestsFlextUtilitiesText(utilities.u.Tests.Contract):
     """Tests for ``FlextUtilitiesText``."""
 
     @pytest.mark.parametrize(
@@ -33,7 +32,7 @@ class TestsFlextUtilitiesText(test_u.Tests.Contract):
     ) -> None:
         """Bootstrap inputs must fail fast when text is absent or blank."""
         with pytest.raises(ValueError, match=message):
-            core_u.safe_string(value)
+            u.safe_string(value)
 
     @pytest.mark.parametrize(
         ("raw", "expected_id", "expected_key"),
@@ -55,10 +54,10 @@ class TestsFlextUtilitiesText(test_u.Tests.Contract):
         expected_key: str,
     ) -> None:
         """format_app_id and normalize_alnum expose a deterministic contract."""
-        cleaned = core_u.safe_string(raw)
+        cleaned = u.safe_string(raw)
 
-        app_id = core_u.format_app_id(cleaned)
-        normalized_key = core_u.normalize_alnum(cleaned)
+        app_id = u.format_app_id(cleaned)
+        normalized_key = u.normalize_alnum(cleaned)
 
         assert app_id == expected_id
         assert app_id == app_id.lower()
@@ -78,14 +77,14 @@ class TestsFlextUtilitiesText(test_u.Tests.Contract):
     @staticmethod
     def test_public_text_helpers_are_idempotent(value: str) -> None:
         """Re-applying the helpers to their own output is a fixed point."""
-        cleaned = core_u.safe_string(value)
-        assert core_u.safe_string(cleaned) == cleaned
+        cleaned = u.safe_string(value)
+        assert u.safe_string(cleaned) == cleaned
 
-        app_id = core_u.format_app_id(cleaned)
-        assert core_u.format_app_id(app_id) == app_id
+        app_id = u.format_app_id(cleaned)
+        assert u.format_app_id(app_id) == app_id
 
-        normalized_key = core_u.normalize_alnum(cleaned)
-        assert core_u.normalize_alnum(normalized_key) == normalized_key
+        normalized_key = u.normalize_alnum(cleaned)
+        assert u.normalize_alnum(normalized_key) == normalized_key
 
     @staticmethod
     def test_public_text_helpers_prepare_and_persist_app_manifest(
@@ -93,9 +92,9 @@ class TestsFlextUtilitiesText(test_u.Tests.Contract):
     ) -> None:
         """App bootstrap uses the public helpers to normalize and persist text."""
         raw_name = "  Fleet Sync_App v2  "
-        cleaned_name = core_u.safe_string(raw_name)
-        app_id = core_u.format_app_id(cleaned_name)
-        normalized_key = core_u.normalize_alnum(cleaned_name)
+        cleaned_name = u.safe_string(raw_name)
+        app_id = u.format_app_id(cleaned_name)
+        normalized_key = u.normalize_alnum(cleaned_name)
         manifest_path = tmp_path / "app.env"
         manifest_content = "\n".join([
             f"APP_NAME={cleaned_name}",
@@ -103,7 +102,7 @@ class TestsFlextUtilitiesText(test_u.Tests.Contract):
             f"APP_KEY={normalized_key}",
         ])
 
-        core_u.write_file(manifest_path, manifest_content)
+        u.write_file(manifest_path, manifest_content)
 
         snapshot = m.Tests.ManifestSnapshot(
             app_id=app_id,

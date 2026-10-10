@@ -11,6 +11,8 @@ from typing import Final
 
 from pydantic import ConfigDict
 
+from flext_core._protocols.base import FlextProtocolsBase
+
 
 class FlextConstantsSettings:
     """SSOT for runtime settings."""
@@ -27,7 +29,7 @@ class FlextConstantsSettings:
     SERIALIZATION_ISO8601: Final = "iso8601"
     SERIALIZATION_BASE64: Final = "base64"
 
-    DOMAIN_MODEL_CONFIG: Final[MappingProxyType[str, object]] = MappingProxyType(
+    DOMAIN_MODEL_CONFIG: Final[MappingProxyType[str, FlextProtocolsBase.AttributeProbe]] = MappingProxyType(
         ConfigDict(
             use_enum_values=True,
             validate_assignment=True,

@@ -92,7 +92,32 @@ class FlextModelsContainer:
         ):
             return FlextRuntimeContainer.normalize_registerable_service(value)
 
-    class FactoryRegistration(FlextModelsBase.ArbitraryTypesModel):
+    class RegistrationEnvelope(FlextModelsBase.ArbitraryTypesModel):
+        """Shared registration envelope for container registry entries."""
+
+        registration_time: Annotated[
+            datetime,
+            FlextModelsPydantic.Field(
+                description=(
+                    "Timestamp when registered (configured timezone)"
+                ),
+            ),
+        ] = FlextModelsPydantic.Field(default_factory=FlextUtilitiesGenerators.now)
+        metadata: Annotated[
+            FlextModelsBase.Metadata | FlextModelsContainers.ConfigMap | None,
+            FlextModelsPydantic.BeforeValidator(
+                lambda value: FlextRuntimeContainer.validate_metadata_model_input(
+                    value,
+                    FlextModelsBase.Metadata,
+                ),
+            ),
+            FlextModelsPydantic.Field(
+                None,
+                description="Additional registration metadata (JSON-serializable)",
+            ),
+        ] = None
+
+    class FactoryRegistration(RegistrationEnvelope):
         """Model for factory registry entries.
 
         Implements metadata for registered factory functions in the DI container.
@@ -110,27 +135,6 @@ class FlextModelsContainer:
                 description="Factory function that creates service instances",
             ),
         ]
-        registration_time: Annotated[
-            datetime,
-            FlextModelsPydantic.Field(
-                description=(
-                    "Timestamp when factory was registered (configured timezone)"
-                ),
-            ),
-        ] = FlextModelsPydantic.Field(default_factory=FlextUtilitiesGenerators.now)
-        metadata: Annotated[
-            FlextModelsBase.Metadata | FlextModelsContainers.ConfigMap | None,
-            FlextModelsPydantic.BeforeValidator(
-                lambda value: FlextRuntimeContainer.validate_metadata_model_input(
-                    value,
-                    FlextModelsBase.Metadata,
-                ),
-            ),
-            FlextModelsPydantic.Field(
-                None,
-                description="Additional factory metadata (JSON-serializable)",
-            ),
-        ] = None
 
 
 __all__: list[str] = ["FlextModelsContainer"]

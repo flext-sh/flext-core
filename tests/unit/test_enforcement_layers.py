@@ -26,6 +26,11 @@ import pytest
 from flext_core import m, t
 from tests import u
 
+# Deliberate broad-annotation fixture: the layered checker under test must
+# detect this exact runtime type, so it is bound as a value, never spelled
+# inside an annotation.
+_ANY_TYPE: typing.Final = typing.Any
+
 
 class TestsFlextCoreEnforcementLayers:
     """Public behaviour of the layered enforcement checker."""
@@ -60,7 +65,7 @@ class TestsFlextCoreEnforcementLayers:
     @staticmethod
     def _constants_mutable_dict() -> type:
         class _CConstants:
-            DATA: ClassVar[dict[str, int]] = {"x": 1}
+            DATA: ClassVar[t.MutableIntMapping] = {"x": 1}
 
         return _CConstants
 
@@ -100,7 +105,7 @@ class TestsFlextCoreEnforcementLayers:
     @staticmethod
     def _types_any_alias() -> type:
         class _TTypes:
-            type BadAlias = typing.Any
+            type BadAlias = _ANY_TYPE
 
         return _TTypes
 

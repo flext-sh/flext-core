@@ -9,6 +9,7 @@ from __future__ import annotations
 import ast
 import inspect
 from pathlib import Path
+from types import ModuleType
 
 from flext_core._constants import FlextConstantsEnforcement
 from flext_core._models import FlextModelsEnforcement
@@ -64,6 +65,27 @@ class FlextUtilitiesBeartypeModuleVisitor:
     """LOC_CAP + MODULE_ALIAS + DUPLICATE_SYMBOL visitors."""
 
     @staticmethod
+    def _loc_cap_module(
+        params: FlextModelsEnforcement.LocCapParams,
+        target: type,
+    ) -> tuple[ModuleType, str] | None:
+        """Return the defining module and file name when LOC_CAP applies.
+
+        Returns:
+            The resulting ``tuple[ModuleType, str] | None``.
+
+        """
+        module = FlextUtilitiesBeartypeHelpers.runtime_module_for(target)
+        if module is None or not params.max_top_level_classes:
+            return None
+        src_file = inspect.getsourcefile(module) or ""
+        filename = Path(src_file).name
+        package = module.__name__.split(".")[0]
+        if not package.startswith("flext_") or filename.startswith("_"):
+            return None
+        return module, filename
+
+    @staticmethod
     def v_loc_cap(
         params: FlextModelsEnforcement.LocCapParams,
         target: type,
@@ -79,16 +101,10 @@ class FlextUtilitiesBeartypeModuleVisitor:
             The resulting ``t.StrMapping | None``.
 
         """
-        module = FlextUtilitiesBeartypeHelpers.runtime_module_for(target)
-        if module is None:
+        context = FlextUtilitiesBeartypeModuleVisitor._loc_cap_module(params, target)
+        if context is None:
             return _NO_VIOLATION
-        src_file = inspect.getsourcefile(module) or ""
-        filename = Path(src_file).name
-        if not params.max_top_level_classes:
-            return _NO_VIOLATION
-        package = module.__name__.split(".")[0]
-        if not package.startswith("flext_") or filename.startswith("_"):
-            return _NO_VIOLATION
+        module, filename = context
         try:
             tree = FlextUtilitiesBeartypeModuleSource.parse(module)
         except (OSError, TypeError, SyntaxError):

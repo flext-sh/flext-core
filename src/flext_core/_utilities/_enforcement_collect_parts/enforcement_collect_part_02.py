@@ -10,13 +10,16 @@ import inspect
 from collections.abc import Iterator
 from enum import EnumType
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._protocols.base import FlextProtocolsBase as pb
-from flext_core._typings.base import FlextTypingBase as t
+from flext_core._constants.enforcement import FlextConstantsEnforcement
+from flext_core._protocols.base import FlextProtocolsBase
+pb = FlextProtocolsBase
+from flext_core._typings.base import FlextTypingBase
 from flext_core._utilities._enforcement_collect_parts import (
-    enforcement_collect_part_01 as part_01,
+    enforcement_collect_part_01,
 )
-from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as ub
+part_01 = enforcement_collect_part_01
+from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine
+ub = FlextUtilitiesBeartypeEngine
 
 
 class FlextUtilitiesEnforcementCollect(part_01.FlextUtilitiesEnforcementCollect):
@@ -24,7 +27,7 @@ class FlextUtilitiesEnforcementCollect(part_01.FlextUtilitiesEnforcementCollect)
     def _ns_nested_mro(
         target: type,
         qn: str,
-        project: t.StrPair,
+        project: FlextTypingBase.StrPair,
     ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
         top = (getattr(target, "__module__", "") or "").split(".", 1)[0]
         if top and top == FlextUtilitiesEnforcementCollect._discover_src_package(
@@ -124,7 +127,7 @@ class FlextUtilitiesEnforcementCollect(part_01.FlextUtilitiesEnforcementCollect)
         cls = FlextUtilitiesEnforcementCollect
         # The collection strategy is rule data; an unknown strategy is a data
         # defect and raises instead of collecting nothing.
-        collect = c.ENFORCEMENT_TAG_COLLECT[tag]
+        collect = FlextConstantsEnforcement.ENFORCEMENT_TAG_COLLECT[tag]
         match collect:
             case "target":
                 yield qn, (target,)

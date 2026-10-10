@@ -79,6 +79,59 @@ class FlextUtilitiesDomain:
         return result
 
     @staticmethod
+    def _iterable_members_equal(
+        obj_a: t.JsonPayload | FlextProtocolsResult.HasModelDump,
+        obj_b: t.JsonPayload | FlextProtocolsResult.HasModelDump,
+    ) -> bool | None:
+        """Compare two iterable payloads member-wise.
+
+        Returns:
+            The comparison outcome, or ``None`` when neither payload is a
+            plain iterable.
+
+        """
+        obj_a_iterable = hasattr(obj_a, "__iter__") and not hasattr(
+            obj_a,
+            "model_dump",
+        )
+        obj_b_iterable = hasattr(obj_b, "__iter__") and not hasattr(
+            obj_b,
+            "model_dump",
+        )
+        if not (obj_a_iterable or obj_b_iterable):
+            return None
+        if isinstance(obj_a, Mapping) and isinstance(obj_b, Mapping):
+            return dict(obj_a.items()) == dict(obj_b.items())
+        if isinstance(obj_a, Sequence) and isinstance(obj_b, Sequence):
+            return tuple(obj_a) == tuple(obj_b)
+        return False
+
+    @staticmethod
+    def _plain_objects_equal(
+        obj_a: t.JsonPayload | FlextProtocolsResult.HasModelDump,
+        obj_b: t.JsonPayload | FlextProtocolsResult.HasModelDump,
+    ) -> bool:
+        """Compare plain objects by ``__dict__``, falling back to ``repr``.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
+        try:
+            dict_a = vars(obj_a)
+        except c.EXC_ATTR_TYPE:
+            dict_a = None
+        try:
+            dict_b = vars(obj_b)
+        except c.EXC_ATTR_TYPE:
+            dict_b = None
+        return (
+            dict_a == dict_b
+            if dict_a is not None and dict_b is not None
+            else repr(obj_a) == repr(obj_b)
+        )
+
+    @staticmethod
     def compare_value_objects_by_value(
         obj_a: t.JsonPayload | FlextProtocolsResult.HasModelDump,
         obj_b: t.JsonPayload | FlextProtocolsResult.HasModelDump,
@@ -94,45 +147,26 @@ class FlextUtilitiesDomain:
         result: bool
         if isinstance(obj_a, c.SCALAR_TYPES):
             result = obj_a == obj_b if isinstance(obj_b, c.SCALAR_TYPES) else False
-        elif FlextUtilitiesGuards.scalar(obj_b):
-            result = False
         else:
-            obj_a_iterable = hasattr(obj_a, "__iter__") and not hasattr(
-                obj_a,
-                "model_dump",
-            )
-            obj_b_iterable = hasattr(obj_b, "__iter__") and not hasattr(
-                obj_b,
-                "model_dump",
-            )
-            if obj_a_iterable or obj_b_iterable:
-                if isinstance(obj_a, Mapping) and isinstance(obj_b, Mapping):
-                    result = dict(obj_a.items()) == dict(obj_b.items())
-                elif isinstance(obj_a, Sequence) and isinstance(obj_b, Sequence):
-                    result = tuple(obj_a) == tuple(obj_b)
-                else:
-                    result = False
-            elif not FlextUtilitiesDomain.same_type(obj_b, obj_a):
-                result = False
-            elif isinstance(obj_a, FlextModelsBase.EnforcedModel) and isinstance(
-                obj_b,
-                FlextModelsBase.EnforcedModel,
-            ):
-                result = obj_a.model_dump() == obj_b.model_dump()
-            else:
-                try:
-                    dict_a = vars(obj_a)
-                except c.EXC_ATTR_TYPE:
-                    dict_a = None
-                try:
-                    dict_b = vars(obj_b)
-                except c.EXC_ATTR_TYPE:
-                    dict_b = None
-                result = (
-                    dict_a == dict_b
-                    if dict_a is not None and dict_b is not None
-                    else repr(obj_a) == repr(obj_b)
+            result = False
+            if not FlextUtilitiesGuards.scalar(obj_b):
+                iterable_result = FlextUtilitiesDomain._iterable_members_equal(
+                    obj_a,
+                    obj_b,
                 )
+                if iterable_result is not None:
+                    result = iterable_result
+                elif FlextUtilitiesDomain.same_type(obj_b, obj_a):
+                    if isinstance(obj_a, FlextModelsBase.EnforcedModel) and isinstance(
+                        obj_b,
+                        FlextModelsBase.EnforcedModel,
+                    ):
+                        result = obj_a.model_dump() == obj_b.model_dump()
+                    else:
+                        result = FlextUtilitiesDomain._plain_objects_equal(
+                            obj_a,
+                            obj_b,
+                        )
         return result
 
     @staticmethod

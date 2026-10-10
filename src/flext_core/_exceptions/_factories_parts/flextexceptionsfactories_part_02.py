@@ -9,16 +9,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_core import c, m, p
-from flext_core._exceptions._factories_parts.flextexceptionsfactories_part_01 import (
-    FlextExceptionsFactories as FlextExceptionsFactoriesPart01,
-)
+from flext_core._exceptions._factories_parts import flextexceptionsfactories_part_01
 from flext_core._exceptions.template import FlextExceptionsTemplate
 
 if TYPE_CHECKING:
     from flext_core import r
 
 
-class FlextExceptionsFactories(FlextExceptionsFactoriesPart01):
+class FlextExceptionsFactories(flextexceptionsfactories_part_01.FlextExceptionsFactories):
     @staticmethod
     def fail_type_mismatch[TResult](
         details: m.ServiceLookupParams | str,

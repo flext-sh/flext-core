@@ -13,6 +13,7 @@ from typing import ClassVar, get_origin
 
 from flext_core._constants import FlextConstantsEnforcement
 from flext_core._models import FlextModelsEnforcement
+from flext_core._protocols.base import FlextProtocolsBase
 from flext_core._typings.base import FlextTypingBase
 from flext_core._typings.pydantic import FlextTypesPydantic
 from flext_core._utilities import FlextUtilitiesBeartypeHelpers
@@ -79,7 +80,7 @@ class FlextUtilitiesBeartypeAttrVisitor:
         return _NO_VIOLATION
 
     @staticmethod
-    def _is_constant_value(value: object) -> bool:
+    def _is_constant_value(value: FlextProtocolsBase.AttributeProbe) -> bool:
         """Return True when a class attribute value looks like a constant.
 
         Returns:
@@ -98,7 +99,7 @@ class FlextUtilitiesBeartypeAttrVisitor:
             True when ``name`` is annotated as ClassVar on ``target``.
 
         """
-        annotations_map: dict[str, object]
+        annotations_map: t.MutableMappingKV[str, FlextProtocolsBase.AttributeProbe]
         try:
             annotations_map = inspect.get_annotations(target, eval_str=True)
         except (NameError, AttributeError, TypeError):
@@ -118,7 +119,7 @@ class FlextUtilitiesBeartypeAttrVisitor:
         params: FlextModelsEnforcement.ClassVarConstantParams,
         target: type,
         name: str,
-        value: object,
+        value: FlextProtocolsBase.AttributeProbe,
     ) -> bool:
         """Return True when an UPPER_CASE attribute lacks ``ClassVar``.
 
@@ -139,7 +140,7 @@ class FlextUtilitiesBeartypeAttrVisitor:
         params: FlextModelsEnforcement.ClassVarConstantParams,
         target: type,
         name: str,
-        value: object,
+        value: FlextProtocolsBase.AttributeProbe,
     ) -> FlextTypingBase.StrMapping | None:
         """CLASSVAR_CONSTANT — flag one constant declared outside _constants.
 

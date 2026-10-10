@@ -89,7 +89,7 @@ class FlextTypesServices:
     type MutableMetadataMapping = MutableMapping[str, JsonPayload]
     type RuntimeData = FlextTypesPydantic.JsonValue | FlextTypesPydantic.BaseModelType
     type BootstrapInput = FlextTypesPydantic.BaseModelType | FlextTypingBase.JsonMapping
-    type ServiceClass = type[object]
+    type ServiceClass = type
     type ServiceValue = (
         JsonPayload
         | FlextTypesPydantic.BaseModelType

@@ -23,7 +23,7 @@ class TestsFlextCoreEnforcementSources:
 
     # One representative valid instance per surviving source variant, keyed by the
     # discriminator literal it must expose on the public ``kind`` field.
-    _SOURCE_CASES: ClassVar[dict[str, m.BaseModel]] = {
+    _SOURCE_CASES: ClassVar[t.MappingKV[str, m.BaseModel]] = {
         "flext_infra_rule": m.EnforcementInfraRuleSource(rule_ids=("ban-cast",)),
         "runtime_warning": m.EnforcementRuntimeWarningSource(
             category="FlextMroWarning",

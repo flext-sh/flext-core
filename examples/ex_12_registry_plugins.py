@@ -11,20 +11,20 @@ from typing import TYPE_CHECKING
 from typing_extensions import TypeForm
 
 from examples import c, m, u
-from examples.ex_12_registry_flow import Ex12RegistryFlow
+from examples.ex_12_registry_flow import ExamplesFlextRegistryFlow
 from examples.ex_12_registry_support import ProtocolHandler, as_registry_handler
-from flext_core import r
+from flext_core import r, t
 
 if TYPE_CHECKING:
     from examples import p
 
 
-class Ex12RegistryPlugins(Ex12RegistryFlow):
+class ExamplesFlextRegistryPlugins(ExamplesFlextRegistryFlow):
     """Plugin and service registration checks for the registry example."""
 
     _handler_a: ProtocolHandler | None = u.PrivateAttr(default=None)
     _handler_b: ProtocolHandler | None = u.PrivateAttr(default=None)
-    _plugin_inputs: dict[str, str] = u.PrivateAttr(
+    _plugin_inputs: t.StrDict = u.PrivateAttr(
         default_factory=u.empty(TypeForm(dict[str, str])),
     )
 

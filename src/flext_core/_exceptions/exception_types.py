@@ -125,7 +125,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         expected_type: type | None = None
         actual_type: type | None = None
 
-        TYPE_MAP: ClassVar[dict[str, type]] = {
+        TYPE_MAP: ClassVar[t.MappingKV[str, type]] = {
             "str": str,
             "int": int,
             "float": float,

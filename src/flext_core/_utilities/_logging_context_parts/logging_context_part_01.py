@@ -14,12 +14,14 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_core import c, e, p, r, t
+from flext_core import c, p, t
 from flext_core._utilities import (
     FlextUtilitiesCollection,
     FlextUtilitiesGuardsTypeModel,
 )
 from flext_core._utilities.logging_config import FlextUtilitiesLoggingConfig
+from flext_core.exceptions import FlextExceptions
+from flext_core.result import FlextResult
 from flext_core.runtime import FlextRuntime
 
 if TYPE_CHECKING:
@@ -60,9 +62,11 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
         try:
             cls._scoped_contexts[scope] = cls._merge_scoped_context(scope, context)
             cls.structlog().contextvars.bind_contextvars(**context)
-            return r[bool].ok(value=True)
+            return FlextResult[bool].ok(value=True)
         except c.CONTEXT_EXCEPTIONS as exc:
-            return e.fail_operation(f"{c.LoggingOperation.BIND_CONTEXT} '{scope}'", exc)
+            return FlextExceptions.fail_operation(
+                f"{c.LoggingOperation.BIND_CONTEXT} '{scope}'", exc
+            )
 
     @classmethod
     def bind_global_context(cls, **context: t.JsonPayload) -> p.Result[bool]:
@@ -75,9 +79,9 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
         try:
             normalized_context = cls.to_container_context(context)
             cls.structlog().contextvars.bind_contextvars(**normalized_context)
-            return r[bool].ok(value=True)
+            return FlextResult[bool].ok(value=True)
         except c.CONTEXT_EXCEPTIONS as exc:
-            return e.fail_operation(c.LoggingOperation.BIND_GLOBAL, exc)
+            return FlextExceptions.fail_operation(c.LoggingOperation.BIND_GLOBAL, exc)
 
     @classmethod
     def clear_global_context(cls) -> p.Result[bool]:
@@ -91,9 +95,9 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             cls.structlog().contextvars.clear_contextvars()
             cls._scoped_contexts.clear()
             cls._level_contexts.clear()
-            return r[bool].ok(value=True)
+            return FlextResult[bool].ok(value=True)
         except c.CONTEXT_EXCEPTIONS as exc:
-            return e.fail_operation(c.LoggingOperation.CLEAR_GLOBAL, exc)
+            return FlextExceptions.fail_operation(c.LoggingOperation.CLEAR_GLOBAL, exc)
 
     @classmethod
     def clear_scope(cls, scope: str) -> p.Result[bool]:
@@ -109,9 +113,11 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
                 if keys:
                     cls.structlog().contextvars.unbind_contextvars(*keys)
                 cls._scoped_contexts[scope].clear()
-            return r[bool].ok(value=True)
+            return FlextResult[bool].ok(value=True)
         except c.CONTEXT_EXCEPTIONS as exc:
-            return e.fail_operation(f"{c.LoggingOperation.CLEAR_SCOPE} '{scope}'", exc)
+            return FlextExceptions.fail_operation(
+                f"{c.LoggingOperation.CLEAR_SCOPE} '{scope}'", exc
+            )
 
     @classmethod
     def unbind_global_context(cls, *keys: str) -> p.Result[bool]:
@@ -124,9 +130,9 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
         try:
             unbind_keys: t.StrSequence = list(keys)
             cls.structlog().contextvars.unbind_contextvars(*unbind_keys)
-            return r[bool].ok(value=True)
+            return FlextResult[bool].ok(value=True)
         except c.CONTEXT_EXCEPTIONS as exc:
-            return e.fail_operation(c.LoggingOperation.UNBIND_GLOBAL, exc)
+            return FlextExceptions.fail_operation(c.LoggingOperation.UNBIND_GLOBAL, exc)
 
     @staticmethod
     def _to_container_value(

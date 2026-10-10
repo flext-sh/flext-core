@@ -127,7 +127,7 @@ class TestsFlextModelsServiceCaseValidationMixin:
             m.Field(description="Public value passed to u.parse()"),
         ]
         target: Annotated[
-            type[object],
+            type,
             m.Field(description="Public target type passed to u.parse()"),
         ]
         options: Annotated[

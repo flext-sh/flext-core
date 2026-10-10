@@ -14,9 +14,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_core import c, m
-from flext_core._handlers_parts.flexthandlers_part_02 import (
-    FlextHandlers as FlextHandlersPart02,
-)
+from flext_core._handlers_parts import flexthandlers_part_02
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -25,7 +23,7 @@ if TYPE_CHECKING:
 
 
 class FlextHandlers[MessageT_contra, ResultT](
-    FlextHandlersPart02[MessageT_contra, ResultT],
+    flexthandlers_part_02.FlextHandlers[MessageT_contra, ResultT],
 ):
     @staticmethod
     def handler[**PHandler, TResult](
