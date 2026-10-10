@@ -6,16 +6,38 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import ast
 import warnings
 
 import pytest
 
 from flext_core import c, m, u
+from tests.fixtures import type_aliases
 from tests.fixtures.type_aliases import TestsFlextTypeAliasDeclarations
 
 
 class TestsFlextTypeAliasResolution:
     """Tests for ``TypeAliasResolution``."""
+
+    @staticmethod
+    def test_source_inspection_keeps_parser_and_alias_contracts_distinct() -> None:
+        """Source inspection and universal parsing coexist on the public facade."""
+        parsed = u.parse("42", int)
+        assert parsed.success
+        assert parsed.value == 42
+        tree = u.parse_module(type_aliases)
+        assert isinstance(tree, ast.Module)
+        assert any(
+            isinstance(node, ast.ClassDef)
+            and node.name == TestsFlextTypeAliasDeclarations.__name__
+            for node in tree.body
+        )
+        owner = TestsFlextTypeAliasDeclarations.LegalTypes
+        deferred = u.deferred_alias(owner.Deferred, owner=owner)
+        assert deferred is not None
+        assert deferred.unavailable_imports == ("DeferredPath",)
+        assert u.deferred_alias(owner.Resolved, owner=owner) is None
+        assert u.deferred(owner.Deferred, owner=owner) == (deferred,)
 
     @staticmethod
     def test_resolved_alias_keeps_its_runtime_value() -> None:
