@@ -445,18 +445,14 @@ _bootstrap_setup_tools:
 	"$$mise_bootstrap_bin" -C "$(PROJECT_ROOT)" exec -- env "PATH=$$(dirname "$$mise_bootstrap_bin"):$${MISE_SHIMS_DIR}:$${PATH}" "CI=$(CI)" $(SELF_MAKE) $(TOOL_BOOTSTRAP_LIFECYCLE)
 # The local structural guard runs before any credential or lock owner.
 _bootstrap_setup_tools: _builtin_require_workspace
-_bootstrap_setup_tools: _builtin_require_upg_lock_owner
 _bootstrap_setup_tools: _builtin_require_network_auth
 
-# `upg` writes the lock of the runtime it resolves in. An attached member
-# resolves inside its workspace runtime, where `uv lock` rewrites the
-# workspace lock and never the member's own, so it stops before any effect.
-# The target-specific TOOL_BOOTSTRAP_RESOLVE reaches this prerequisite only
-# through `upg`; `setup` passes.
+# UV, not Git attachment or runtime environment selection, owns lock discovery.
 .PHONY: _builtin_require_upg_lock_owner
 _builtin_require_upg_lock_owner:
-	@if [ "$(TOOL_BOOTSTRAP_RESOLVE)" = "1" ] && [ "$(PROJECT_ROOT)" != "$(RUNTIME_ROOT)" ]; then \
-		printf 'ERROR[upg] %s is attached to the workspace %s: `uv lock` here rewrites %s/uv.lock, never %s/uv.lock.\n  Right way: an attached member never resolves its own locks.\n  How: run `make upg` in a linked worktree of this member outside %s (a standalone checkout owns its locks), or `make upg` in %s for the workspace lock.\n' "$(PROJECT_ROOT)" "$(RUNTIME_ROOT)" "$(RUNTIME_ROOT)" "$(PROJECT_ROOT)" "$(RUNTIME_ROOT)" "$(RUNTIME_ROOT)" >&2; \
+	@set -eu; owner="$$($(UV) workspace dir --project "$(PROJECT_ROOT)")"; \
+	if [ "$$owner" != "$(PROJECT_ROOT)" ]; then \
+		printf 'ERROR[upg] UV lock owner is %s, not %s; regenerate the independent-project topology before upgrading.\n' "$$owner" "$(PROJECT_ROOT)" >&2; \
 		exit 2; \
 	fi
 
@@ -474,15 +470,16 @@ _builtin_require_network_auth:
 		fi; \
 	fi
 
-# Every repository evaluates only itself, locally exactly as in CI: a workspace
-# root consumes its members as installed libraries and never fans a verb out
-# across them; each member runs its own lifecycle in its own repository.
+# Every repository evaluates only itself: a workspace root consumes its members
+# as installed libraries and each member runs its own lifecycle in its own
+# repository. Locally, the mutating verbs fmt/fix/mod then carry that same
+# member-own verb to every governed member (fleet_fanout); CI never fans out.
 # Provisioning is declared once and shared by every profile. Dev environments
 # consume present members as LIVE editable installs natively (operator law
 # 2026-10-06: a commit never influences dev behavior — the worktree is the
-# behavior): [tool.uv.workspace] makes every declared member a workspace
-# member and `uv sync --all-packages` provisions them as editables; CI's
-# --no-editable keeps the frozen builds.
+# behavior): the root dev group requests every declared package, member group
+# and extra; root path sources select local editables, while CI's --no-editable
+# keeps the frozen builds. Each project still owns its physical lock.
 SETUP_ENVIRONMENT_RECIPE = set -eu; \
 	trap 'if [ -n "$${FLEXT_SETUP_CREDENTIAL_STORE:-}" ]; then rm -f "$$FLEXT_SETUP_CREDENTIAL_STORE"; fi' EXIT; \
 	$(REQUIRE_WORKSPACE_ENVIRONMENT); \
@@ -554,9 +551,9 @@ override PROJECT_FLEXT_INFRA := $(PROJECT_INFRA_RUN) -m flext_infra
 # installs the project and its declared groups from the manifests into the
 # environment, never reading or writing uv.lock. `make audit` holds the
 # verdict (law 14) and `make upg` cures it.
-UV_SYNC_FLAGS := --all-extras --all-groups --all-packages
+UV_SYNC_FLAGS := --all-extras --all-groups
 ifeq ($(strip $(CI)),Y)
-override UV_SYNC_FLAGS := --all-extras --all-groups --all-packages --no-editable
+override UV_SYNC_FLAGS := --all-extras --all-groups --no-editable
 endif
 
 ifeq ($(GEN_INIT_ONLY),)
@@ -1137,7 +1134,7 @@ test:
 	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make test to execute it.'
 
 test-full:
-	@printf '  %-16s %s\n' 'test-full' 'Run incremental then all tests, including external and CI-excluded markers, through the same persistent testmon cache.'
+	@printf '  %-16s %s\n' 'test-full' 'Run every test once, including slow, external and CI-excluded markers, locally only, without testmon and without any time limit.'
 	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make test-full to execute it.'
 
 test-file:
@@ -1311,7 +1308,7 @@ _builtin-help:
 
 	@printf '  %-16s %s\n' 'test' 'Run incremental tests through the persistent testmon cache.';
 
-	@printf '  %-16s %s\n' 'test-full' 'Run incremental then all tests, including external and CI-excluded markers, through the same persistent testmon cache.';
+	@printf '  %-16s %s\n' 'test-full' 'Run every test once, including slow, external and CI-excluded markers, locally only, without testmon and without any time limit.';
 
 	@printf '  %-16s %s\n' 'test-file' 'Run one declared test file incremental then complete, slow items included, with the same persistent testmon cache (FILE=<repository-relative path>).';
 
@@ -1402,7 +1399,9 @@ _builtin-help:
 # An absent gitlink is cloned at depth 1, the same flag private submodule
 # init uses. Setup's contract is the recorded commit, and a full history
 # cannot finish inside submodule_timeout_seconds when the object database
-# is large.
+# is large. Absent gitlinks clone submodule_jobs at a time; the deadline is
+# one submodule_timeout_seconds per wave of concurrent clones, so a fresh
+# checkout of the whole fleet gets the same per-clone budget as one member.
 # Derive the physical index from its Git directory: --git-path resolves
 # a final symlink and cannot prove that the index entry itself is absent.
 _builtin_setup_submodules:
@@ -1498,10 +1497,12 @@ _builtin_setup_submodules:
 	done; \
 	if [ -n "$$absent" ]; then \
 		credential_helper='!f() { if [ "$$1" = get ]; then printf "username=x-access-token\npassword=%s\n" "$$GITHUB_TOKEN"; fi; }; f'; \
-		GIT_TERMINAL_PROMPT=0 timeout --signal=TERM --kill-after=5s "120s" \
+		absent_count=$$(printf '%s\n' $$absent | wc -l); \
+		clone_waves=$$(( (absent_count + 8 - 1) / 8 )); \
+		GIT_TERMINAL_PROMPT=0 timeout --signal=TERM --kill-after=5s "$$(( clone_waves * 120 ))s" \
 			git -C "$$root" -c credential.helper= \
 			-c "credential.https://$${GH_HOST:-github.com}.helper=$$credential_helper" \
-			submodule update --init --checkout --depth 1 --jobs "$${FLEXT_SUBMODULE_JOBS:-8}" -- $$absent; \
+			submodule update --init --checkout --depth 1 --jobs "8" -- $$absent; \
 	fi; \
 	validate_submodule() { \
 		superproject="$$1"; \
@@ -1652,6 +1653,7 @@ _builtin_setup_environment: $(if $(filter Y,$(CI)),,_builtin_setup_submodules)
 # defect and fails loud.
 .PHONY: _upg_lifecycle _upg_converge
 _upg_lifecycle: _builtin_setup_submodules
+	@$(SELF_MAKE) _builtin_require_upg_lock_owner
 	@set -eu; \
 	case " $(CUSTOM_DECLARED_TARGETS) " in \
 		*" pre-upg "*) $(SELF_MAKE) pre-upg ;; \
@@ -1689,6 +1691,9 @@ _upg_converge:
 	@$(PROJECT_FLEXT_INFRA) codegen conform --root "$(PROJECT_ROOT)" --mode check
 	@$(PROJECT_FLEXT_INFRA) deps verify-locks --repository-root "$(PROJECT_ROOT)"
 	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _upg_activated,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _upg_activated)
+	+@if [ "$(PROJECT_ROOT)" != "$(RUNTIME_ROOT)" ]; then \
+		"$(SELF_MAKE_EXECUTABLE)" --no-print-directory -C "$(RUNTIME_ROOT)" -f "$(RUNTIME_ROOT)/Makefile" upg UPG_HANDOFF=; \
+	fi
 
 .PHONY: _upg_activated
 _upg_activated:
@@ -1762,8 +1767,7 @@ mkdir -p "$$scratch/tmp"; \
 scratch_tmp="$$(cd "$$scratch/tmp" && pwd -P)"; \
 TMPDIR="$$scratch_tmp"; TMP="$$scratch_tmp"; TEMP="$$scratch_tmp"; \
 export TMPDIR TMP TEMP; \
-TESTMON_DATAFILE="$$database" $(PYTEST_BOUNDED) $(UV_RUN) python -m flext_infra._pytest_entry full; \
-TESTMON_DATAFILE="$$database" $(PYTEST_BOUNDED) $(UV_RUN) python -m flext_infra._pytest_entry full-slow
+TESTMON_DATAFILE="$$database" $(UV_RUN) python -m flext_infra._pytest_entry full
 
 _builtin_test_file_all: _builtin_require_environment
 	@if [ -z "$(strip $(FILE))" ]; then printf 'ERROR: test-file requires FILE=<repository-relative test file path>\n' >&2; exit 2; fi; \
@@ -1792,10 +1796,6 @@ TESTMON_DATAFILE="$$database" $(PYTEST_BOUNDED) $(UV_RUN) python -m flext_infra.
 export FLEXT_FILE_GATE_FILE := $(value FILE)
 _builtin_file_gate_all: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) check run --repository-root "$(PROJECT_ROOT)" --gates "lint,format,pyrefly,mypy,pyright,codemod" --file "$$FLEXT_FILE_GATE_FILE"
-
-_builtin_tests_all: _builtin_require_environment
-	+@$(SELF_MAKE) test
-	@$(PYTEST_BOUNDED) $(UV_RUN) python -m flext_infra._pytest_entry full
 
 # fmt is format-only (single-pass verb law): ruff formats Python, the
 # fmt_gates formatters run once through the checker's apply mode, and every
@@ -1882,7 +1882,13 @@ profile-gen-report: _builtin_require_environment
 # Public names come from make.verbs; these targets are the implementations.
 _builtin-profile-test: _builtin_require_environment
 	@mkdir -p "$(PROFILE_REPORTS_DIR)"
-	@set -eu; \
+	@if [ -n "$(strip $(FILE))" ]; then \
+		if [ -z "$(strip $(FILE))" ]; then printf 'ERROR: profile-test requires FILE=<repository-relative test file path>\n' >&2; exit 2; fi; \
+case "$(FILE)" in /*|*..*) printf 'ERROR: FILE must stay a repository-relative path: %s\n' "$(FILE)" >&2; exit 2 ;; esac; \
+if [ ! -f "$(PROJECT_ROOT)/$(FILE)" ]; then printf 'ERROR: FILE is not an existing repository file: %s\n' "$(FILE)" >&2; exit 2; fi; \
+export FLEXT_PYTEST_TARGET_FILE="$(FILE)"; \
+	else unset FLEXT_PYTEST_TARGET_FILE; fi; \
+	set -eu; \
 database="$(FLEXT_PYTEST_TESTMON_DATABASE)"; \
 case "$$database" in /*) ;; *) printf 'ERROR: persistent testmon database requires XDG_CACHE_HOME or HOME\n' >&2; exit 2 ;; esac; \
 case "$$database" in "$(PROJECT_ROOT)"/*) printf 'ERROR: persistent testmon database must be outside the checkout: %s\n' "$$database" >&2; exit 2 ;; esac; \

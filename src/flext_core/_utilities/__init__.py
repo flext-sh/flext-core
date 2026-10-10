@@ -34,8 +34,25 @@ if TYPE_CHECKING:
         redundant_inner_violation,
         self_ref_violation,
     )
+    from flext_core._utilities._beartype._field_union_scan import declared_union_members
+    from flext_core._utilities._beartype._import_blacklist_visitor import (
+        FlextUtilitiesBeartypeImportBlacklistVisitor,
+    )
     from flext_core._utilities._beartype._library_visitor import (
         FlextUtilitiesBeartypeLibraryVisitor,
+    )
+    from flext_core._utilities._beartype._module_source_deferred import (
+        deferred_alias,
+        guarded_imports,
+    )
+    from flext_core._utilities._beartype._module_source_provenance import owner_derived
+    from flext_core._utilities._beartype._module_source_scan import (
+        bound_names,
+        declarations,
+        export_names,
+        loads,
+        parse_module,
+        scope_nodes,
     )
     from flext_core._utilities._beartype.attr_visitor import (
         FlextUtilitiesBeartypeAttrVisitor,
@@ -125,6 +142,10 @@ if TYPE_CHECKING:
     )
     from flext_core._utilities.settings import FlextUtilitiesSettings
     from flext_core._utilities.text import FlextUtilitiesText
+    from flext_core._utilities.typeadapter_json import FlextUtilitiesTypingAdapterJson
+    from flext_core._utilities.typeadapter_scalars import (
+        FlextUtilitiesTypingAdapterScalars,
+    )
 
 
 __all__: tuple[str, ...] = (
@@ -139,6 +160,7 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesBeartypeEngine",
     "FlextUtilitiesBeartypeFieldVisitor",
     "FlextUtilitiesBeartypeHelpers",
+    "FlextUtilitiesBeartypeImportBlacklistVisitor",
     "FlextUtilitiesBeartypeImportVisitor",
     "FlextUtilitiesBeartypeLibraryVisitor",
     "FlextUtilitiesBeartypeMethodVisitor",
@@ -188,6 +210,8 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesRuntimeViolationRegistry",
     "FlextUtilitiesSettings",
     "FlextUtilitiesText",
+    "FlextUtilitiesTypingAdapterJson",
+    "FlextUtilitiesTypingAdapterScalars",
     "_beartype",
     "_checker_parts",
     "_enforcement_collect_parts",
@@ -198,7 +222,17 @@ __all__: tuple[str, ...] = (
     "_mapper_extract_parts",
     "_parser_targets_parts",
     "alias_first_violation",
+    "bound_names",
+    "declarations",
+    "declared_union_members",
+    "deferred_alias",
+    "export_names",
+    "guarded_imports",
+    "loads",
+    "owner_derived",
+    "parse_module",
     "redundant_inner_violation",
+    "scope_nodes",
     "self_ref_violation",
 )
 
@@ -217,6 +251,9 @@ install_lazy_exports(
         "FlextUtilitiesBeartypeEngine": ".beartype_engine",
         "FlextUtilitiesBeartypeFieldVisitor": "._beartype.field_visitor",
         "FlextUtilitiesBeartypeHelpers": "._beartype.helpers",
+        "FlextUtilitiesBeartypeImportBlacklistVisitor": (
+            "._beartype._import_blacklist_visitor"
+        ),
         "FlextUtilitiesBeartypeImportVisitor": "._beartype.import_visitor",
         "FlextUtilitiesBeartypeLibraryVisitor": "._beartype._library_visitor",
         "FlextUtilitiesBeartypeMethodVisitor": "._beartype.method_visitor",
@@ -266,6 +303,8 @@ install_lazy_exports(
         "FlextUtilitiesRuntimeViolationRegistry": ".runtime_violation_registry",
         "FlextUtilitiesSettings": ".settings",
         "FlextUtilitiesText": ".text",
+        "FlextUtilitiesTypingAdapterJson": ".typeadapter_json",
+        "FlextUtilitiesTypingAdapterScalars": ".typeadapter_scalars",
         "_beartype": "._beartype",
         "_checker_parts": "._checker_parts",
         "_enforcement_collect_parts": "._enforcement_collect_parts",
@@ -278,9 +317,19 @@ install_lazy_exports(
         "alias_first_violation": (
             "._beartype._class_visitor_parts._parts.class_visitor_part_02_01"
         ),
+        "bound_names": "._beartype._module_source_scan",
+        "declarations": "._beartype._module_source_scan",
+        "declared_union_members": "._beartype._field_union_scan",
+        "deferred_alias": "._beartype._module_source_deferred",
+        "export_names": "._beartype._module_source_scan",
+        "guarded_imports": "._beartype._module_source_deferred",
+        "loads": "._beartype._module_source_scan",
+        "owner_derived": "._beartype._module_source_provenance",
+        "parse_module": "._beartype._module_source_scan",
         "redundant_inner_violation": (
             "._beartype._class_visitor_parts._parts.class_visitor_part_02_02"
         ),
+        "scope_nodes": "._beartype._module_source_scan",
         "self_ref_violation": (
             "._beartype._class_visitor_parts._parts.class_visitor_part_02_02"
         ),

@@ -16,7 +16,7 @@ from typing import ClassVar
 from typing_extensions import TypeForm
 
 from examples import m
-from flext_core import r, u, p
+from flext_core import p, r, u
 
 
 class ExamplesFlextSharedBase(m.BaseModel):

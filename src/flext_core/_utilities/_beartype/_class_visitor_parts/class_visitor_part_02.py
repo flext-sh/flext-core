@@ -7,24 +7,27 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core._models.enforcement import FlextModelsEnforcement
-me = FlextModelsEnforcement
 from flext_core._typings.base import FlextTypingBase
 from flext_core._utilities import (
     alias_first_violation,
     redundant_inner_violation,
     self_ref_violation,
 )
-from flext_core._utilities._beartype._class_visitor_parts import (
-    class_visitor_part_01,
-)
+from flext_core._utilities._beartype._class_visitor_parts import class_visitor_part_01
 from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_01 import (
     NO_VIOLATION,
 )
 
+me = FlextModelsEnforcement
 
-class FlextUtilitiesBeartypeClassVisitor(class_visitor_part_01.FlextUtilitiesBeartypeClassVisitor):
+
+class FlextUtilitiesBeartypeClassVisitor(
+    class_visitor_part_01.FlextUtilitiesBeartypeClassVisitor
+):
     @staticmethod
-    def v_mro_shape(params: me.MroShapeParams, target: type) -> FlextTypingBase.StrMapping | None:
+    def v_mro_shape(
+        params: me.MroShapeParams, target: type
+    ) -> FlextTypingBase.StrMapping | None:
         """MRO_SHAPE — facade base ordering and inner-namespace redundancy.
 
         Returns:

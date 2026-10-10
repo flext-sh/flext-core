@@ -18,20 +18,22 @@ from typing import Annotated, ClassVar, Self
 from flext_core import c
 from flext_core._models._base_parts import flextmodelsbase_part_02
 from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._runtime._metadata_validation import (
-    FlextRuntimeMetadataValidation,
-)
+from flext_core._runtime._metadata_validation import FlextRuntimeMetadataValidation
 from flext_core._typings.base import FlextTypingBase
 from flext_core._utilities.generators import FlextUtilitiesGenerators
 
 
 class FlextModelsBase(flextmodelsbase_part_02.FlextModelsBase):
-    class TimestampableMixin(flextmodelsbase_part_02.FlextModelsBase.MutableConfiguredMixin):
+    class TimestampableMixin(
+        flextmodelsbase_part_02.FlextModelsBase.MutableConfiguredMixin
+    ):
         """Mixin for timestamps with Pydantic v2 validation and serialization."""
 
         created_at: Annotated[
             datetime,
-            FlextModelsPydantic.AfterValidator(FlextRuntimeMetadataValidation.ensure_utc_datetime),
+            FlextModelsPydantic.AfterValidator(
+                FlextRuntimeMetadataValidation.ensure_utc_datetime
+            ),
             FlextModelsPydantic.Field(
                 description="Creation timestamp (configured timezone)",
                 frozen=True,
@@ -39,7 +41,9 @@ class FlextModelsBase(flextmodelsbase_part_02.FlextModelsBase):
         ] = FlextModelsPydantic.Field(default_factory=FlextUtilitiesGenerators.now)
         updated_at: Annotated[
             datetime | None,
-            FlextModelsPydantic.AfterValidator(FlextRuntimeMetadataValidation.ensure_utc_datetime),
+            FlextModelsPydantic.AfterValidator(
+                FlextRuntimeMetadataValidation.ensure_utc_datetime
+            ),
             FlextModelsPydantic.Field(
                 default=None,
                 description="Last update timestamp (configured timezone)",
@@ -55,7 +59,9 @@ class FlextModelsBase(flextmodelsbase_part_02.FlextModelsBase):
         # rejected by ``inspect_field_serializer``, and the self-less
         # ``(value)`` shape fails the fleet method-naming rule. The
         # classmethod keeps the value mapping pure (no instance state).
-        @FlextModelsPydantic.field_serializer("created_at", "updated_at", when_used="json")
+        @FlextModelsPydantic.field_serializer(
+            "created_at", "updated_at", when_used="json"
+        )
         @classmethod
         def serialize_timestamps(cls, value: datetime | None) -> str | None:
             """Serialize timestamps to ISO 8601 for JSON.
@@ -80,7 +86,9 @@ class FlextModelsBase(flextmodelsbase_part_02.FlextModelsBase):
                 raise ValueError(c.ERR_MODEL_UPDATED_AT_BEFORE_CREATED_AT)
             return self
 
-    class VersionableMixin(flextmodelsbase_part_02.FlextModelsBase.MutableConfiguredMixin):
+    class VersionableMixin(
+        flextmodelsbase_part_02.FlextModelsBase.MutableConfiguredMixin
+    ):
         """Mixin for versioning with optimistic locking."""
 
         version: Annotated[
@@ -114,7 +122,9 @@ class FlextModelsBase(flextmodelsbase_part_02.FlextModelsBase):
     class RetryConfigurationMixin(FlextModelsPydantic.BaseModel):
         """Mixin for shared retry configuration properties."""
 
-        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = FlextModelsPydantic.ConfigDict(populate_by_name=True)
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(populate_by_name=True)
+        )
         max_retries: Annotated[
             FlextTypingBase.NonNegativeInt,
             FlextModelsPydantic.Field(

@@ -312,14 +312,11 @@ class TestsFlextCoreContext:
             "billing",
             version="1.2.0",
         ):
-            exported = (
-                FlextContext.export_full_context()
-            )
+            exported = FlextContext.export_full_context()
             tm.that(exported["service_name"], eq="billing")
             tm.that(exported["service_version"], eq="1.2.0")
         tm.that(
-            "service_name"
-            in FlextContext.export_full_context(),
+            "service_name" in FlextContext.export_full_context(),
             eq=False,
         )
 

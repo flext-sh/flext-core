@@ -12,13 +12,14 @@ from enum import EnumType
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement
 from flext_core._protocols.base import FlextProtocolsBase
-pb = FlextProtocolsBase
 from flext_core._typings.base import FlextTypingBase
-from flext_core._utilities._enforcement_collect_parts import (
-    enforcement_collect_part_01,
-)
-part_01 = enforcement_collect_part_01
+from flext_core._utilities._enforcement_collect_parts import enforcement_collect_part_01
 from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine
+
+pb = FlextProtocolsBase
+
+part_01 = enforcement_collect_part_01
+
 ub = FlextUtilitiesBeartypeEngine
 
 

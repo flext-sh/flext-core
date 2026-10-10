@@ -15,7 +15,9 @@ if TYPE_CHECKING:
     from flext_core import r
 
 
-class FlextExceptionsFactories(flextexceptionsfactories_part_03.FlextExceptionsFactories):
+class FlextExceptionsFactories(
+    flextexceptionsfactories_part_03.FlextExceptionsFactories
+):
     @staticmethod
     def fail_conflict[TResult](
         resource_type: str,

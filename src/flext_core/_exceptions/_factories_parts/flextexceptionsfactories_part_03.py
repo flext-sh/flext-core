@@ -15,7 +15,9 @@ if TYPE_CHECKING:
     from flext_core import r
 
 
-class FlextExceptionsFactories(flextexceptionsfactories_part_02.FlextExceptionsFactories):
+class FlextExceptionsFactories(
+    flextexceptionsfactories_part_02.FlextExceptionsFactories
+):
     @staticmethod
     def fail_connection[TResult](
         host: str,

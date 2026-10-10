@@ -95,7 +95,8 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
         deep_merge: bool = False,
         _init_state: InitState | None = None,
         *,
-        transform: Callable[[FlextTypingBase.JsonDict], FlextTypingBase.JsonDict] | None = None,
+        transform: Callable[[FlextTypingBase.JsonDict], FlextTypingBase.JsonDict]
+        | None = None,
     ) -> None:
         """Initialize the YAML source with an optional deep merge and transform hook."""
         self._transform = transform

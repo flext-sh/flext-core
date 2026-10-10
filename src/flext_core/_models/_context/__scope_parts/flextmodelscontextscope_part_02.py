@@ -16,6 +16,8 @@ from flext_core._models._context.__scope_parts import flextmodelscontextscope_pa
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.containers import FlextModelsContainers
 from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._utilities.base import FlextUtilitiesBase
+
 mp = FlextModelsPydantic
 
 
@@ -40,7 +42,9 @@ class FlextModelsContextScope(flextmodelscontextscope_part_01.FlextModelsContext
                 default_factory=flextmodelscontextscope_part_01.FlextModelsContextScope.ContextStatistics,
                 description="Operation counters for this context instance",
             ),
-        ] = mp.Field(default_factory=flextmodelscontextscope_part_01.FlextModelsContextScope.ContextStatistics)
+        ] = mp.Field(
+            default_factory=flextmodelscontextscope_part_01.FlextModelsContextScope.ContextStatistics
+        )
         active: Annotated[
             bool,
             mp.Field(
@@ -157,12 +161,12 @@ class FlextModelsContextScope(flextmodelscontextscope_part_01.FlextModelsContext
             }
             current_operation_value = operations.get(operation)
             if isinstance(current_operation_value, int):
-                statistics_updates["operations"] = (
-                    t.json_mapping_adapter().validate_python({
-                        **operations,
-                        operation: current_operation_value + 1,
-                    })
-                )
+                statistics_updates["operations"] = FlextUtilitiesBase.type_adapter(
+                    TypeForm(t.JsonMapping)
+                ).validate_python({
+                    **operations,
+                    operation: current_operation_value + 1,
+                })
             if not statistics_updates:
                 return self
             updated_statistics = current_statistics.model_copy(

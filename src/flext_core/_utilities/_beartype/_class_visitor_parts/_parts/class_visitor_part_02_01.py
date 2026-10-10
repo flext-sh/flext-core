@@ -211,7 +211,9 @@ def _is_service_alias_base_first(
     ))
 
 
-def _base_analysis(target: type, ctx: _AliasContext, scope: _FacadeScope) -> _BaseAnalysis:
+def _base_analysis(
+    target: type, ctx: _AliasContext, scope: _FacadeScope
+) -> _BaseAnalysis:
     """Analyze the target bases for alias/peer ordering.
 
     Returns:

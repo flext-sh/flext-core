@@ -18,7 +18,7 @@ from flext_core._result.behavior import FlextResultBehavior
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core import p, t
+    from flext_core import t
 
 
 class FlextResultConstruction[T](FlextResultBehavior[T]):

@@ -8,9 +8,11 @@ from __future__ import annotations
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement
 from flext_core._models.pydantic import FlextModelsPydantic
-mp = FlextModelsPydantic
 from flext_core._utilities._enforcement_parts import enforcement_part_02
 from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine
+
+mp = FlextModelsPydantic
+
 ub = FlextUtilitiesBeartypeEngine
 
 
@@ -46,7 +48,10 @@ class FlextUtilitiesEnforcement(enforcement_part_02.FlextUtilitiesEnforcement):
         are ephemeral fixtures — validated on demand via ``check()`` but
         never emitted during class construction.
         """
-        if FlextConstantsEnforcement.ENFORCEMENT_MODE is FlextConstantsEnforcement.EnforcementMode.OFF:
+        if (
+            FlextConstantsEnforcement.ENFORCEMENT_MODE
+            is FlextConstantsEnforcement.EnforcementMode.OFF
+        ):
             return
         if ub.defined_in_function_scope(model_type):
             return
@@ -61,14 +66,19 @@ class FlextUtilitiesEnforcement(enforcement_part_02.FlextUtilitiesEnforcement):
 
         Function-local classes skip emission for the same reason as ``run``.
         """
-        if FlextConstantsEnforcement.ENFORCEMENT_NAMESPACE_MODE is FlextConstantsEnforcement.EnforcementMode.OFF:
+        if (
+            FlextConstantsEnforcement.ENFORCEMENT_NAMESPACE_MODE
+            is FlextConstantsEnforcement.EnforcementMode.OFF
+        ):
             return
         if ub.defined_in_function_scope(target):
             return
         if FlextUtilitiesEnforcement._is_exempt(target):
             return
         report = FlextUtilitiesEnforcement.check(target, layer=layer)
-        FlextUtilitiesEnforcement.emit(report, mode=FlextConstantsEnforcement.ENFORCEMENT_NAMESPACE_MODE)
+        FlextUtilitiesEnforcement.emit(
+            report, mode=FlextConstantsEnforcement.ENFORCEMENT_NAMESPACE_MODE
+        )
 
 
 __all__: list[str] = ["FlextUtilitiesEnforcement"]
