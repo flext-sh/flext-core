@@ -98,6 +98,26 @@ class TestsFlextEnforcementModels:
         assert not messages(u.check(_M), fragment="read-only field contract")
 
     @staticmethod
+    def test_mutable_mapping_kv_forward_ref_dict_factory_passes() -> None:
+        """Test mutable mapping KV alias forward ref dict factory passes.
+
+        A ``t.MutableMappingKV`` annotation behind a forward reference (e.g. a
+        self-referential model class) must still be recognised as a mutable
+        mapping contract, not flagged as a raw ``dict`` default.
+        """
+
+        class _M(m.ArbitraryTypesModel):
+            class Value(m.ContractModel):
+                name: Annotated[str, m.Field(description="Value name")] = "x"
+
+            items: t.MutableMappingKV[str, _M.Value] = m.Field(
+                default_factory=dict,
+                description="Mutable mapping KV contract.",
+            )
+
+        assert not messages(u.check(_M), fragment="read-only field contract")
+
+    @staticmethod
     def test_mutable_json_mapping_alias_dict_factory_passes() -> None:
         """Test mutable json mapping alias dict factory passes."""
 

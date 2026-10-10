@@ -627,6 +627,7 @@ split-on-trailing-comma = false
 "**/test_public_contracts_cov.py" = ["line-too-long"]
 "**/tests/**" = [
   "boolean-positional-value-in-call",
+  "boolean-type-hint-positional-argument",
   "compare-to-empty-string",
   "import-private-name",
   "magic-value-comparison",
