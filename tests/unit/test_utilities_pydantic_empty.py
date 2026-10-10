@@ -53,8 +53,8 @@ class TestsFlextUtilitiesPydanticEmpty:
             default_factory=u.empty(TypeForm(MutableSet[str])),
             description="Mutable set contract.",
         )
-        modules: dict[str, ModuleType] = u.Field(
-            default_factory=u.empty(TypeForm(dict[str, ModuleType])),
+        modules: t.MutableMappingKV[str, ModuleType] = u.Field(
+            default_factory=u.empty(TypeForm(t.MutableMappingKV[str, ModuleType])),
             description="Mapping of an arbitrary, JSON-unrepresentable element.",
         )
 
@@ -95,7 +95,7 @@ class TestsFlextUtilitiesPydanticEmpty:
 
         tm.that(second.mutable_json_mapping, eq={})
         tm.that(second.items, eq=[])
-        tm.that(second.mutable_tags, eq=set())
+        tm.that(second.mutable_tags, eq=set[str]())
         tm.that(second.modules, eq={})
 
     @staticmethod
