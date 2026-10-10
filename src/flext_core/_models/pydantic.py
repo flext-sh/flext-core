@@ -38,26 +38,26 @@ from pydantic import (
     AfterValidator,
     AliasChoices,
     AliasPath,
-    BaseModel,
+    BaseModel as PydanticBaseModel,
     BeforeValidator,
     ConfigDict,
     Discriminator,
     FailFast,
     Field,
-    FieldSerializationInfo,
+    FieldSerializationInfo as PydanticFieldSerializationInfo,
     GetPydanticSchema,
-    InstanceOf,
+    InstanceOf as PydanticInstanceOf,
     JsonValue,
     PlainSerializer,
     PlainValidator,
-    PrivateAttr,
-    RootModel,
+    PrivateAttr as PydanticPrivateAttr,
+    RootModel as PydanticRootModel,
     SerializeAsAny,
     SkipValidation,
     StringConstraints,
-    TypeAdapter,
+    TypeAdapter as PydanticTypeAdapter,
     ValidateAs,
-    ValidationError,
+    ValidationError as PydanticValidationError,
     WrapSerializer,
     WrapValidator,
     computed_field,
@@ -66,10 +66,10 @@ from pydantic import (
     model_serializer,
     model_validator,
 )
-from pydantic.fields import FieldInfo
+from pydantic.fields import FieldInfo as PydanticFieldInfo
 from pydantic_core import PydanticUndefined, PydanticUndefinedType
 from pydantic_settings import (
-    BaseSettings,
+    BaseSettings as PydanticBaseSettings,
     PydanticBaseSettingsSource,
     SettingsConfigDict,
 )
@@ -80,17 +80,7 @@ from flext_core._protocols import FlextProtocolsBase
 
 # Module-level alias bindings: the pydantic owner classes keep their published
 # names for the facade mirrors below while the imports stay unaliased.
-PydanticBaseModel = BaseModel
 _PydanticConfigDict = ConfigDict
-PydanticFieldSerializationInfo = FieldSerializationInfo
-PydanticInstanceOf = InstanceOf
-PydanticPrivateAttr = PrivateAttr
-PydanticRootModel = RootModel
-PydanticTypeAdapter = TypeAdapter
-PydanticValidationError = ValidationError
-PydanticFieldInfo = FieldInfo
-_PydanticBaseSettings = BaseSettings
-_PydanticBaseSettingsSource = PydanticBaseSettingsSource
 _PydanticSettingsConfigDict = SettingsConfigDict
 
 type _FieldValue = JsonValue | Path
@@ -326,7 +316,7 @@ class FlextModelsPydantic:
     class BaseModel(PydanticBaseModel):
         """Canonical BaseModel exported through the FLEXT models facade."""
 
-    class BaseSettings(_PydanticBaseSettings):
+    class BaseSettings(PydanticBaseSettings):
         """Canonical BaseSettings exported through the FLEXT models facade."""
 
     @dataclass_transform(
@@ -724,8 +714,8 @@ class FlextModelsPydantic:
 
     # Settings-source hook contract: ``settings_customise_sources`` overrides
     # annotate the wide upstream base (Liskov-correct parameter widening).
-    type PydanticBaseSettings = _PydanticBaseSettings
-    type PydanticBaseSettingsSource = _PydanticBaseSettingsSource
+    type PydanticBaseSettings = PydanticBaseSettings
+    type PydanticBaseSettingsSource = PydanticBaseSettingsSource
 
 
 __all__: list[str] = ["FlextModelsPydantic"]
