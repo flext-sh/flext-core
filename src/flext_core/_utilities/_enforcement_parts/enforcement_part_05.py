@@ -19,7 +19,8 @@ class FlextUtilitiesEnforcement(enforcement_part_04.FlextUtilitiesEnforcement):
         """Map a ``Flext<Project><Layer><Concern>`` class to its owning package.
 
         SSOT for the convention: facade-layer classes (one of
-        ``FlextConstantsEnforcement.NAMESPACE_LAYER_NAMES``) are re-exported from the project's
+        ``FlextConstantsEnforcement.NAMESPACE_LAYER_NAMES``) are re-exported from
+        the project's
         top-level package, so ``FlextCliUtilitiesAuth`` is imported from
         ``flext_cli`` — never from the synthetic ``flext_cli_utilities_auth``
         path produced by a naïve CamelCase-to-snake_case conversion.

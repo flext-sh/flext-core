@@ -83,7 +83,8 @@ class FlextUtilitiesLoggingConfig(logging_config_part_01.FlextUtilitiesLoggingCo
             The resulting typed event mapping.
 
         Raises:
-            DropEvent: If ``level < logging_config_part_01.FlextUtilitiesLoggingConfig.log_threshold()``.
+            DropEvent: If the level is below the configured log threshold
+                (``logging_config_part_01.FlextUtilitiesLoggingConfig.log_threshold()``).
 
         """
         _ = logger, method_name

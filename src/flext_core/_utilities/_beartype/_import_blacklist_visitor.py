@@ -45,6 +45,7 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
             and not params.forbidden_symbols
             and not params.private_package_only
         ):
+            owner = FlextUtilitiesBeartypeImportBlacklistVisitor
             tier_prefixes = tuple(
                 value.__name__
                 for value in vars(module).values()
@@ -55,7 +56,7 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
                     {"file": filename, "import": name}
                     for name, value in vars(module).items()
                     if isinstance(value, type)
-                    and FlextUtilitiesBeartypeImportBlacklistVisitor._cross_family_tier_member(
+                    and owner._cross_family_tier_member(
                         name,
                         value,
                         module_name=module_name,
@@ -82,7 +83,7 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
                     (
                         {"import": name, "origin": origin, "file": filename}
                         for name, value in vars(module).items()
-                        if FlextUtilitiesBeartypeImportBlacklistVisitor._is_private_family_import(
+                        if owner._is_private_family_import(
                             value,
                             origin := _ubh.object_module_name_for(value) or "",
                             package,
@@ -131,7 +132,7 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
             name.startswith(tier_prefixes)
             and origin.startswith(c.NAMESPACE_FAMILY_PREFIX)
             and origin != module_name
-            and not FlextUtilitiesBeartypeImportBlacklistVisitor._is_local_family_import(
+            and not owner._is_local_family_import(
                 origin,
                 module_name,
             )

@@ -255,9 +255,6 @@ class FlextUtilitiesFamilySurface:
         Returns:
             The resulting ``t.MappingKV[str, str]``.
 
-        Raises:
-            ValueError: If published family surface maps.
-
         """
         renames: FlextTypingBase.MutableMappingKV[str, str] = {}
         for (
