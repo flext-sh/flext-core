@@ -41,11 +41,16 @@ class TestsFlextCoreBeartypeEngineClawPackages(
     _REPO_ROOT: Path = Path(__file__).resolve().parents[2]
 
     @staticmethod
-    def _write_claw_package(root: Path, name: str, modules: t.StrMapping) -> None:
+    def _write_claw_package(
+        root: Path,
+        name: str,
+        modules: t.StrMapping,
+        init_source: str = _CLAW_INIT,
+    ) -> None:
         """Create a claw-bootstrapped package with the given submodule sources."""
         package_dir = root / name
         package_dir.mkdir()
-        (package_dir / "__init__.py").write_text(_CLAW_INIT, encoding="utf-8")
+        (package_dir / "__init__.py").write_text(init_source, encoding="utf-8")
         for module_name, source in modules.items():
             (package_dir / f"{module_name}.py").write_text(
                 textwrap.dedent(source).strip() + "\n",
@@ -167,6 +172,89 @@ class TestsFlextCoreBeartypeEngineClawPackages(
         # Assert: import succeeds and the aliased runtime value is intact.
         assert result.outcome.raw_return_code == 0, result.stderr
         assert "aliasprobe_value x" in result.stdout
+
+    def test_checking_claw_enforces_typing_extensions_aliases(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """A checking claw enforces ``typing_extensions`` PEP 695 aliases natively.
+
+        Dependency contract that replaced flext-core's beartype patch: Pydantic
+        builds ``JsonValue`` through ``typing_extensions.TypeAliasType`` with
+        recursive string references, and beartype itself recognises such
+        aliases and resolves their references. Under a checking conf a
+        conforming value passes and a non-conforming one raises, exactly like a
+        plain ``int`` parameter.
+        """
+        # Arrange
+        self._write_claw_package(
+            tmp_path,
+            "teprobe",
+            {
+                "calls": """
+                    import typing_extensions
+                    from pydantic import JsonValue
+
+                    Count = typing_extensions.TypeAliasType("Count", int)
+
+
+                    def take_int(value: int) -> int:
+                        return 1
+
+
+                    def take_count(value: Count) -> int:
+                        return 1
+
+
+                    def take_json(value: JsonValue) -> int:
+                        return 1
+                """,
+            },
+            init_source=textwrap.dedent(
+                """
+                from beartype import BeartypeConf
+                from beartype.claw import beartype_this_package
+
+                beartype_this_package(conf=BeartypeConf(violation_type=TypeError))
+                """,
+            ).lstrip(),
+        )
+
+        # Act
+        result = self._run_python(
+            textwrap.dedent(
+                f"""
+                import sys
+
+                sys.path.insert(0, {str(tmp_path)!r})
+                import teprobe.calls as calls
+
+                calls.take_count(1)
+                calls.take_json({{"ok": [1, "x", None]}})
+                print("conforming_ok")
+                for call, value in (
+                    (calls.take_int, "not-an-int"),
+                    (calls.take_count, "not-an-int"),
+                    (calls.take_json, object()),
+                ):
+                    try:
+                        call(value)
+                    except TypeError as exc:
+                        print("violation", call.__name__, type(exc).__name__)
+                    else:
+                        print("accepted", call.__name__)
+                """,
+            ),
+            cwd=self._REPO_ROOT,
+        )
+
+        # Assert: conforming calls pass and both aliases reject a wrong value.
+        assert result.outcome.raw_return_code == 0, result.stderr
+        assert "conforming_ok" in result.stdout
+        assert "accepted" not in result.stdout, result.stdout
+        assert "violation take_int" in result.stdout
+        assert "violation take_count" in result.stdout
+        assert "violation take_json" in result.stdout
 
     def test_claw_config_imports_flext_core_without_error(self) -> None:
         """The factory conf lets beartype_package instrument flext_core itself."""
