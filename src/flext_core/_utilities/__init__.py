@@ -75,9 +75,6 @@ if TYPE_CHECKING:
     from flext_core._utilities.base import FlextUtilitiesBase
     from flext_core._utilities.beartype_conf import FlextUtilitiesBeartypeConf
     from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine
-    from flext_core._utilities.beartype_typingext_patch import (
-        FlextUtilitiesBeartypeTypingExtPatch,
-    )
     from flext_core._utilities.checker import FlextUtilitiesChecker
     from flext_core._utilities.collection import FlextUtilitiesCollection
     from flext_core._utilities.collection_iter import FlextUtilitiesCollectionIter
@@ -148,7 +145,6 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesBeartypeModuleSource",
     "FlextUtilitiesBeartypeModuleVisitor",
     "FlextUtilitiesBeartypeTypeAliases",
-    "FlextUtilitiesBeartypeTypingExtPatch",
     "FlextUtilitiesChecker",
     "FlextUtilitiesCollection",
     "FlextUtilitiesCollectionIter",
@@ -227,7 +223,6 @@ install_lazy_exports(
         "FlextUtilitiesBeartypeModuleSource": "._beartype.module_source",
         "FlextUtilitiesBeartypeModuleVisitor": "._beartype.module_visitor",
         "FlextUtilitiesBeartypeTypeAliases": "._beartype.type_aliases",
-        "FlextUtilitiesBeartypeTypingExtPatch": ".beartype_typingext_patch",
         "FlextUtilitiesChecker": ".checker",
         "FlextUtilitiesCollection": ".collection",
         "FlextUtilitiesCollectionIter": ".collection_iter",

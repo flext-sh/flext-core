@@ -708,6 +708,9 @@ split-on-trailing-comma = false
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
+[tool.ruff.lint.pylint]
+allow-dunder-method-names = ["__base__", "__bases__"]
+
 [tool.tomlsort]
 all = true
 in_place = true

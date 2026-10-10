@@ -2,7 +2,8 @@
 repos:
   - repo: local
     hooks:
-    # Mandatory approval has one owner, shared with native CI.
+    # pre-commit: the fast external gates only (make pre-commit); pre-push:
+    # every pre_push workflow row. CI runs the ci workflow rows itself.
       - id: flext-pre-commit
         name: make pre-commit
         language: system
@@ -11,3 +12,32 @@ repos:
         pass_filenames: false
         always_run: true
         stages: [pre-commit]
+
+
+      - id: flext-pre-push-check
+        name: make check
+        language: system
+        entry: >-
+          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); unset MAKEFLAGS ; unset CI; make check'
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
+      - id: flext-pre-push-test
+        name: make test
+        language: system
+        entry: >-
+          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); unset MAKEFLAGS ; CI=N make test'
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
+      - id: flext-pre-push-verify-clean
+        name: make verify-clean
+        language: system
+        entry: >-
+          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); unset MAKEFLAGS ; CI=N make verify-clean'
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
