@@ -8,9 +8,9 @@ from __future__ import annotations
 
 import inspect
 import types as _types_mod
-from collections.abc import Callable
+from collections.abc import Callable, MutableMapping, MutableSequence, MutableSet
 from types import UnionType
-from typing import TYPE_CHECKING, Union, get_args, get_origin
+from typing import TYPE_CHECKING, TypeAliasType, Union, get_args, get_origin
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement as c
 from flext_core._utilities._beartype._helpers_parts.helpers_part_02 import (
@@ -75,19 +75,53 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart02):
         return None
 
     @staticmethod
-    def raw_collection_factory_kind(
+    def mutable_default_factory_kind(
         factory: type | Callable[..., p.AttributeProbe] | None,
     ) -> type | None:
-        """Return the raw collection constructor ``factory`` is, if any.
-
-        Returns:
-            The bare or specialized collection constructor, else ``None``.
-
-        """
-        for kind in c.ENFORCEMENT_RAW_COLLECTION_FACTORIES:
+        for kind in c.ENFORCEMENT_MUTABLE_RUNTIME_TYPES:
             if factory is kind or get_origin(factory) is kind:
                 return kind
         return None
+
+    @staticmethod
+    def allows_mutable_default_factory(
+        hint: t.TypeFormSpecifier | None,
+        factory: type | Callable[..., p.AttributeProbe] | None,
+    ) -> bool:
+        h = FlextUtilitiesBeartypeHelpers
+        mk = h.mutable_default_factory_kind(factory)
+        if mk is list:
+            exp = MutableSequence
+        elif mk is dict:
+            exp = MutableMapping
+        elif mk is set:
+            exp = MutableSet
+        else:
+            return False
+        norm = h.unwrap_annotated(hint)
+        if norm is None:
+            return False
+        if isinstance(norm, str):
+            en = exp.__name__
+            return bool(en) and (
+                norm == en
+                or norm.startswith((
+                    f"{en}[",
+                    f"{en}Of[",
+                    f"typing.{en}[",
+                    f"typing.{en}Of[",
+                    f"collections.abc.{en}[",
+                    f"t.{en}Of[",
+                ))
+            )
+        org = get_origin(norm)
+        if isinstance(org, TypeAliasType):
+            resolved = h.resolve_type_alias_value(org)
+            if resolved is None:
+                return False
+            org = get_origin(resolved) or resolved
+        tgt = org or norm
+        return tgt is exp
 
     @staticmethod
     def has_relaxed_extra_base(target: type) -> bool:

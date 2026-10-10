@@ -221,21 +221,25 @@ class FlextUtilitiesBeartypeFieldVisitor:
     ) -> FlextTypingBase.StrMapping | None:
         """Check the forbid_raw_default_factory flag against the factory.
 
-        A collection field's empty default is ``u.empty`` of the field's own
-        contract; a raw collection constructor, bare or specialized, is a
-        violation. The contract's agreement with the annotation is proven
-        statically by the type checkers, so this check never reads it.
-
         Returns:
             The resulting ``t.StrMapping | None``.
 
         """
-        if not params.forbid_raw_default_factory:
+        if not (
+            params.forbid_raw_default_factory
+            and info.default_factory is not None
+            and not FlextUtilitiesBeartypeHelpers.allows_mutable_default_factory(
+                info.annotation,
+                info.default_factory,
+            )
+        ):
             return None
-        kind = FlextUtilitiesBeartypeHelpers.raw_collection_factory_kind(
+        factory_kind = FlextUtilitiesBeartypeHelpers.mutable_default_factory_kind(
             info.default_factory,
         )
-        return None if kind is None else {"kind": kind.__name__}
+        if factory_kind is not None:
+            return {"kind": factory_kind.__name__}
+        return None
 
     @staticmethod
     def _check_str_none_empty(

@@ -115,7 +115,9 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
 
         kind: Literal["compatibility_alias"] = "compatibility_alias"
         alias_renames: FlextTypingBase.StrMapping = Field(
-            default_factory=FlextModelsPydantic.empty(TypeForm(FlextTypingBase.StrMapping)),
+            default_factory=FlextModelsPydantic.empty(
+                TypeForm(FlextTypingBase.StrMapping)
+            ),
         )
 
     class LibraryImportParams(FlextModelsEnforcementModelBase):
@@ -144,7 +146,9 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
 
         kind: Literal["method_shape"] = "method_shape"
         forbidden_prefixes: FlextTypingBase.StrMapping = Field(
-            default_factory=FlextModelsPydantic.empty(TypeForm(FlextTypingBase.StrMapping)),
+            default_factory=FlextModelsPydantic.empty(
+                TypeForm(FlextTypingBase.StrMapping)
+            ),
         )
         """Forbidden name prefix → the replacement it suggests."""
         require_static_or_classmethod: bool = False

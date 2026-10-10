@@ -29,7 +29,9 @@ class TestsFlextModelsGuardsMapperMixin:
         """Model with port/nested for mapper take/extract tests."""
 
         port: int = 0
-        nested: t.JsonMapping = m.Field(default_factory=u.empty(TypeForm(t.JsonMapping)))
+        nested: t.JsonMapping = m.Field(
+            default_factory=u.empty(TypeForm(t.JsonMapping))
+        )
 
     class MaybeModel(m.BaseModel):
         """Model with optional field for take tests."""

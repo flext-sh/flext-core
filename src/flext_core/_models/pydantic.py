@@ -203,7 +203,7 @@ class FlextModelsPydantic:
             self._seed: bytes = b""
 
         @staticmethod
-        def container(contract: FlextTypingBase.TypeFormSpecifier) -> type:
+        def collection_origin(contract: FlextTypingBase.TypeFormSpecifier) -> type:
             """Resolve a contract to its container class.
 
             ``Annotated`` metadata and PEP 695 aliases, plain or subscripted,
@@ -245,13 +245,15 @@ class FlextModelsPydantic:
             """
             adapter = self._adapter
             if adapter is None:
-                container = FlextModelsPydantic.EmptyDefault.container(self.contract)
-                # The container's empty value is the contract's empty value:
-                # no element is ever validated, so the adapter is typed at
-                # this single binding to the contract it stands for.
+                origin = FlextModelsPydantic.EmptyDefault.collection_origin(
+                    self.contract,
+                )
+                # The origin's empty value is the contract's empty value: no
+                # element is ever validated, so the adapter is typed at this
+                # single binding to the contract it stands for.
                 adapter = cast(
                     "PydanticTypeAdapter[ContractT]",
-                    PydanticTypeAdapter(container),
+                    PydanticTypeAdapter(origin),
                 )
                 schema = adapter.json_schema()
                 shape = schema.get(FlextConstantsPydantic.JSON_SCHEMA_TYPE_KEY)

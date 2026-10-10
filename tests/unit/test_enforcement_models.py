@@ -8,17 +8,14 @@ from __future__ import annotations
 
 import typing
 from collections.abc import MutableSequence
-from types import GenericAlias
+from types import MappingProxyType
 from typing import Annotated
 
 import pytest
-from typing_extensions import TypeForm
 
 from flext_core.utilities import FlextUtilitiesEnforcement
 from tests import c, m, t, u
 from tests.unit._enforcement_support import messages
-
-_RAW_DEFAULT_FRAGMENT = "is not the canonical empty default"
 
 
 class TestsFlextEnforcementModels:
@@ -47,10 +44,7 @@ class TestsFlextEnforcementModels:
         """Test bare dict detected."""
 
         class _M(m.ArbitraryTypesModel):
-            data: dict[str, str] = m.Field(
-                default_factory=u.empty(TypeForm(dict[str, str])),
-                description="d",
-            )
+            data: dict[str, str] = m.Field(default_factory=dict, description="d")
 
         assert messages(u.check(_M), fragment="bare ")
 
@@ -59,10 +53,7 @@ class TestsFlextEnforcementModels:
         """Test bare list detected."""
 
         class _M(m.ArbitraryTypesModel):
-            items: list[str] = m.Field(
-                default_factory=u.empty(TypeForm(list[str])),
-                description="d",
-            )
+            items: list[str] = m.Field(default_factory=list, description="d")
 
         assert messages(u.check(_M), fragment="bare ")
 
@@ -76,54 +67,39 @@ class TestsFlextEnforcementModels:
                 m.Field(
                     description="d",
                 ),
-            ] = m.Field(default_factory=u.empty(TypeForm(t.StrMapping)))
+            ] = m.Field(default_factory=lambda: MappingProxyType[str, str]({}))
 
         assert not messages(u.check(_M), fragment="bare ")
 
-    @pytest.mark.parametrize("raw", c.ENFORCEMENT_RAW_COLLECTION_FACTORIES)
     @staticmethod
-    def test_raw_collection_constructor_default_detected(raw: type) -> None:
-        """A raw collection constructor default is reported on any contract."""
+    def test_mutable_sequence_list_factory_passes() -> None:
+        """Test mutable sequence list factory passes."""
 
         class _M(m.ArbitraryTypesModel):
             items: Annotated[MutableSequence[str], m.Field(description="d")] = m.Field(
-                default_factory=raw,
+                default_factory=list
             )
 
-        assert messages(u.check(_M), fragment=_RAW_DEFAULT_FRAGMENT)
-
-    @pytest.mark.parametrize("raw", c.ENFORCEMENT_RAW_COLLECTION_FACTORIES)
-    @staticmethod
-    def test_specialized_collection_constructor_default_detected(raw: type) -> None:
-        """A specialized collection constructor is still a raw constructor."""
-
-        class _M(m.ArbitraryTypesModel):
-            items: Annotated[MutableSequence[str], m.Field(description="d")] = m.Field(
-                default_factory=GenericAlias(raw, (str,)),
-            )
-
-        assert messages(u.check(_M), fragment=_RAW_DEFAULT_FRAGMENT)
+        assert not messages(u.check(_M), fragment="read-only field contract")
 
     @staticmethod
-    def test_canonical_empty_default_passes_forward_ref_contract() -> None:
-        """``u.empty`` of a forward-referenced contract is not reported."""
+    def test_mutable_mapping_forward_ref_dict_factory_passes() -> None:
+        """Test mutable mapping forward ref dict factory passes."""
 
         class _M(m.ArbitraryTypesModel):
             class Value(m.ContractModel):
                 name: Annotated[str, m.Field(description="Value name")] = "x"
 
             items: typing.MutableMapping[str, _M.Value] = m.Field(
-                default_factory=u.empty(
-                    TypeForm(typing.MutableMapping[str, "_M.Value"]),
-                ),
+                default_factory=dict,
                 description="Mutable mapping contract.",
             )
 
-        assert not messages(u.check(_M), fragment=_RAW_DEFAULT_FRAGMENT)
+        assert not messages(u.check(_M), fragment="read-only field contract")
 
     @staticmethod
-    def test_canonical_empty_default_passes_alias_contract() -> None:
-        """``u.empty`` of a class-scoped ``t`` alias contract is not reported."""
+    def test_mutable_json_mapping_alias_dict_factory_passes() -> None:
+        """Test mutable json mapping alias dict factory passes."""
 
         class _M(m.ArbitraryTypesModel):
             items: Annotated[
@@ -131,9 +107,20 @@ class TestsFlextEnforcementModels:
                 m.Field(
                     description="Mutable JSON mapping contract.",
                 ),
-            ] = m.Field(default_factory=u.empty(TypeForm(t.MutableJsonMapping)))
+            ] = m.Field(default_factory=dict)
 
-        assert not messages(u.check(_M), fragment=_RAW_DEFAULT_FRAGMENT)
+        assert not messages(u.check(_M), fragment="read-only field contract")
+
+    @staticmethod
+    def test_sequence_list_factory_detected() -> None:
+        """Test sequence list factory detected."""
+
+        class _M(m.ArbitraryTypesModel):
+            items: Annotated[t.StrSequence, m.Field(description="d")] = m.Field(
+                default_factory=list
+            )
+
+        assert messages(u.check(_M), fragment="read-only field contract")
 
     @staticmethod
     def test_missing_description_detected() -> None:

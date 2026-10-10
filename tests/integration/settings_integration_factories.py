@@ -8,9 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Annotated, ClassVar
 
+from flext_tests import m, t, u
 from typing_extensions import TypeForm
-
-from tests import m, t, u
 
 if TYPE_CHECKING:
     from pathlib import Path
