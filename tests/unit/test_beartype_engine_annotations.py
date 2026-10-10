@@ -21,7 +21,7 @@ import pytest
 import tests.utilities
 from flext_core import u
 from tests import t
-from tests.unit._beartype_engine_support import _AnyAlias, _CleanAlias, _NestedAnyAlias
+from tests.unit._beartype_engine_support import AnyAlias, CleanAlias, NestedAnyAlias
 
 if TYPE_CHECKING:
     from pathlib import PurePath as LazyResolvableType
@@ -121,9 +121,9 @@ class TestsFlextBeartypeEngineAnnotations(
     @pytest.mark.parametrize(
         ("alias_value", "expected"),
         [
-            (_AnyAlias.__value__, True),
-            (_NestedAnyAlias.__value__, True),
-            (_CleanAlias.__value__, False),
+            (AnyAlias.__value__, True),
+            (NestedAnyAlias.__value__, True),
+            (CleanAlias.__value__, False),
             (None, False),
         ],
     )

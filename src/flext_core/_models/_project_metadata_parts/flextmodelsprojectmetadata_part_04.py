@@ -18,11 +18,14 @@ from flext_core._models._project_metadata_parts import (
 )
 
 
-
-class FlextModelsProjectMetadataDocument(flextmodelsprojectmetadata_part_03.FlextModelsProjectMetadataAggregates):
+class FlextModelsProjectMetadataDocument(
+    flextmodelsprojectmetadata_part_03.FlextModelsProjectMetadataAggregates
+):
     """Validated TOML document sub-tables and canonical domain aggregate."""
 
-    class PyprojectTool(flextmodelsprojectmetadata_part_05.FlextModelsPyprojectIngressContract):
+    class PyprojectTool(
+        flextmodelsprojectmetadata_part_05.FlextModelsPyprojectIngressContract
+    ):
         """Owned subset of the top-level ``[tool]`` table."""
 
         flext: Annotated[
@@ -31,9 +34,13 @@ class FlextModelsProjectMetadataDocument(flextmodelsprojectmetadata_part_03.Flex
                 default_factory=flextmodelsprojectmetadata_part_03.FlextModelsProjectMetadataAggregates.ProjectToolFlext,
                 description="Validated FLEXT project policy",
             ),
-        ] = Field(default_factory=flextmodelsprojectmetadata_part_03.FlextModelsProjectMetadataAggregates.ProjectToolFlext)
+        ] = Field(
+            default_factory=flextmodelsprojectmetadata_part_03.FlextModelsProjectMetadataAggregates.ProjectToolFlext
+        )
 
-    class ProjectMetadata(flextmodelsprojectmetadata_part_01.FlextModelsProjectMetadataContract):
+    class ProjectMetadata(
+        flextmodelsprojectmetadata_part_01.FlextModelsProjectMetadataContract
+    ):
         """Canonical project metadata retaining exact validated source objects."""
 
         root: Annotated[Path, Field(description="Project root")]

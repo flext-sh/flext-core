@@ -54,7 +54,9 @@ class FlextModelsContainers:
             return self.root(value)
 
     class _MappingRootBase(
-        FlextModelsPydantic.RootModel[FlextTypingBase.MutableMappingKV[str, FlextTypesServices.JsonPayload]],
+        FlextModelsPydantic.RootModel[
+            FlextTypingBase.MutableMappingKV[str, FlextTypesServices.JsonPayload]
+        ],
     ):
         """MRO base providing the explicit mapping API for dict-rooted RootModels.
 

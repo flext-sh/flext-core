@@ -16,6 +16,7 @@ from flext_core._models._context.__scope_parts import flextmodelscontextscope_pa
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.containers import FlextModelsContainers
 from flext_core._models.pydantic import FlextModelsPydantic
+
 mp = FlextModelsPydantic
 
 
@@ -40,7 +41,9 @@ class FlextModelsContextScope(flextmodelscontextscope_part_01.FlextModelsContext
                 default_factory=flextmodelscontextscope_part_01.FlextModelsContextScope.ContextStatistics,
                 description="Operation counters for this context instance",
             ),
-        ] = mp.Field(default_factory=flextmodelscontextscope_part_01.FlextModelsContextScope.ContextStatistics)
+        ] = mp.Field(
+            default_factory=flextmodelscontextscope_part_01.FlextModelsContextScope.ContextStatistics
+        )
         active: Annotated[
             bool,
             mp.Field(

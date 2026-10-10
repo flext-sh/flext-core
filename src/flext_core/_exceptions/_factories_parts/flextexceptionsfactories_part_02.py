@@ -16,7 +16,9 @@ if TYPE_CHECKING:
     from flext_core import r
 
 
-class FlextExceptionsFactories(flextexceptionsfactories_part_01.FlextExceptionsFactories):
+class FlextExceptionsFactories(
+    flextexceptionsfactories_part_01.FlextExceptionsFactories
+):
     @staticmethod
     def fail_type_mismatch[TResult](
         details: m.ServiceLookupParams | str,

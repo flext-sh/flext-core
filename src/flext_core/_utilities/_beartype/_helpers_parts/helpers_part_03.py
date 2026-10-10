@@ -30,7 +30,9 @@ class FlextUtilitiesBeartypeHelpers(helpers_part_02.FlextUtilitiesBeartypeHelper
         return filename if isinstance(filename, str) else None
 
     @staticmethod
-    def object_module_for(obj: FlextProtocolsBase.AttributeProbe) -> _types_mod.ModuleType | None:
+    def object_module_for(
+        obj: FlextProtocolsBase.AttributeProbe,
+    ) -> _types_mod.ModuleType | None:
         module = inspect.getmodule(obj)
         return module if isinstance(module, _types_mod.ModuleType) else None
 
@@ -129,7 +131,8 @@ class FlextUtilitiesBeartypeHelpers(helpers_part_02.FlextUtilitiesBeartypeHelper
     @staticmethod
     def has_relaxed_extra_base(target: type) -> bool:
         return any(
-            b.__name__ in FlextConstantsEnforcement.ENFORCEMENT_RELAXED_EXTRA_BASES for b in target.__mro__
+            b.__name__ in FlextConstantsEnforcement.ENFORCEMENT_RELAXED_EXTRA_BASES
+            for b in target.__mro__
         )
 
 

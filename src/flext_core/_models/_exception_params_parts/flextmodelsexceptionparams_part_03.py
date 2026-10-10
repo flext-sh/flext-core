@@ -20,9 +20,12 @@ from flext_core._models._exception_params_parts import (
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 
 
-
-class FlextModelsExceptionParams(flextmodelsexceptionparams_part_02.FlextModelsExceptionParams):
-    class OperationErrorParams(flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ParamsModel):
+class FlextModelsExceptionParams(
+    flextmodelsexceptionparams_part_02.FlextModelsExceptionParams
+):
+    class OperationErrorParams(
+        flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ParamsModel
+    ):
         """Validated params for OperationError."""
 
         operation: Annotated[
@@ -49,7 +52,9 @@ class FlextModelsExceptionParams(flextmodelsexceptionparams_part_02.FlextModelsE
             ),
         ] = None
 
-    class RegistryPluginParams(flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ParamsModel):
+    class RegistryPluginParams(
+        flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ParamsModel
+    ):
         """Validated params for registry plugin registration lifecycle."""
 
         category: Annotated[
@@ -80,7 +85,9 @@ class FlextModelsExceptionParams(flextmodelsexceptionparams_part_02.FlextModelsE
             ),
         ] = None
 
-    class AttributeAccessErrorParams(flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ParamsModel):
+    class AttributeAccessErrorParams(
+        flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ParamsModel
+    ):
         """Validated params for AttributeAccessError."""
 
         attribute_name: Annotated[

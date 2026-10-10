@@ -75,7 +75,7 @@ class ExamplesFlextModelsEx04:
     class GetUser(_QueryEnvelope):
         """Query to get a user record by username in example 04."""
 
-        query_type: str = "ex04_get_user"
+        query_type: str | None = "ex04_get_user"
         event_type: str = "ex04_get_user_event"
         username: Annotated[str, m.Field(description="Username to retrieve")]
 
@@ -116,7 +116,7 @@ class ExamplesFlextModelsEx04:
     class UnknownQuery(_QueryEnvelope):
         """Query that has no registered handler in example 04."""
 
-        query_type: str = "ex04_unknown_query"
+        query_type: str | None = "ex04_unknown_query"
         event_type: str = "ex04_unknown_query_event"
         payload: Annotated[
             str,

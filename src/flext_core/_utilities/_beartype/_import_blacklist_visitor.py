@@ -152,9 +152,12 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
             and _ubh.family_facade(target)
             and _ubh.family_facade(value)
         )
-        return family_base or FlextUtilitiesBeartypeImportBlacklistVisitor._is_lazy_published_member(
-            module,
-            value,
+        return (
+            family_base
+            or FlextUtilitiesBeartypeImportBlacklistVisitor._is_lazy_published_member(
+                module,
+                value,
+            )
         )
 
     @staticmethod

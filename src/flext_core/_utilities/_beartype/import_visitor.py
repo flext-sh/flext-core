@@ -35,7 +35,9 @@ class FlextUtilitiesBeartypeImportVisitor:
             The resulting ``t.StrMapping | None``.
 
         """
-        return FlextUtilitiesBeartypeImportBlacklistVisitor.implementation(params, target)
+        return FlextUtilitiesBeartypeImportBlacklistVisitor.implementation(
+            params, target
+        )
 
     @staticmethod
     def v_alias_rebind(

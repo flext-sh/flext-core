@@ -20,9 +20,7 @@ from structlog.stdlib import add_log_level
 
 from flext_core import c, p, t
 from flext_core._models.config import FlextModelsConfig
-from flext_core._utilities._logging_config_parts import (
-    logging_config_part_01,
-)
+from flext_core._utilities._logging_config_parts import logging_config_part_01
 
 
 class FlextUtilitiesLoggingConfig(logging_config_part_01.FlextUtilitiesLoggingConfig):

@@ -98,9 +98,7 @@ class FlextModelsContainer:
         registration_time: Annotated[
             datetime,
             FlextModelsPydantic.Field(
-                description=(
-                    "Timestamp when registered (configured timezone)"
-                ),
+                description=("Timestamp when registered (configured timezone)"),
             ),
         ] = FlextModelsPydantic.Field(default_factory=FlextUtilitiesGenerators.now)
         metadata: Annotated[

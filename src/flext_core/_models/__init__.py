@@ -44,12 +44,14 @@ if TYPE_CHECKING:
         FlextModelsEnforcementResolution,
     )
     from flext_core._models._enforcement._sources import FlextModelsEnforcementSources
-    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_03 import (
+    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_02 import (
+        FlextModelsProjectMetadataContract,
         FlextModelsProjectMetadataFields,
     )
-    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_04 import (
+    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_03 import (
         FlextModelsProjectMetadataAggregates,
-        FlextModelsProjectMetadataContract,
+    )
+    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_04 import (
         FlextModelsProjectMetadataDocument,
     )
     from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_05 import (
@@ -172,16 +174,16 @@ install_lazy_exports(
         "FlextModelsOptions": ".options",
         "FlextModelsProjectMetadata": ".project_metadata",
         "FlextModelsProjectMetadataAggregates": (
-            "._project_metadata_parts.flextmodelsprojectmetadata_part_04"
+            "._project_metadata_parts.flextmodelsprojectmetadata_part_03"
         ),
         "FlextModelsProjectMetadataContract": (
-            "._project_metadata_parts.flextmodelsprojectmetadata_part_04"
+            "._project_metadata_parts.flextmodelsprojectmetadata_part_02"
         ),
         "FlextModelsProjectMetadataDocument": (
             "._project_metadata_parts.flextmodelsprojectmetadata_part_04"
         ),
         "FlextModelsProjectMetadataFields": (
-            "._project_metadata_parts.flextmodelsprojectmetadata_part_03"
+            "._project_metadata_parts.flextmodelsprojectmetadata_part_02"
         ),
         "FlextModelsPydantic": ".pydantic",
         "FlextModelsPyprojectIngressContract": (

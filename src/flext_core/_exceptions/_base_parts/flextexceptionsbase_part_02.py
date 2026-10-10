@@ -14,9 +14,7 @@ from flext_core import c, m
 from flext_core._exceptions._base_parts.flextexceptionsbase_part_01 import (
     FlextBaseErrorMetadataMixin,
 )
-from flext_core._runtime._metadata_validation import (
-    FlextRuntimeMetadataValidation,
-)
+from flext_core._runtime._metadata_validation import FlextRuntimeMetadataValidation
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -82,7 +80,9 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
         *,
         error_code: str,
         options: m.ExceptionInitOptions,
-        extra_kwargs: FlextTypingBase.MappingKV[str, FlextTypesServices.JsonPayload | None],
+        extra_kwargs: FlextTypingBase.MappingKV[
+            str, FlextTypesServices.JsonPayload | None
+        ],
     ) -> None:
         """Initialize the shared base error state without subclass metaprogramming."""
         self.args = (message,)
@@ -93,8 +93,10 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
             if source_value is None:
                 continue
             try:
-                source_dict = FlextRuntimeMetadataValidation.normalize_metadata_input_mapping(
-                    source_value,
+                source_dict = (
+                    FlextRuntimeMetadataValidation.normalize_metadata_input_mapping(
+                        source_value,
+                    )
                 )
             except c.EXC_PYDANTIC_TYPE_VALUE:
                 continue
@@ -102,7 +104,9 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
                 continue
             for key, value in source_dict.items():
                 if value is not None:
-                    final_kwargs_dict[key] = FlextRuntimeMetadataValidation.normalize_to_metadata(value)
+                    final_kwargs_dict[key] = (
+                        FlextRuntimeMetadataValidation.normalize_to_metadata(value)
+                    )
         final_kwargs = m.ConfigMap.model_validate(final_kwargs_dict)
         self.correlation_id = (
             f"exc_{uuid.uuid4().hex[:8]}"

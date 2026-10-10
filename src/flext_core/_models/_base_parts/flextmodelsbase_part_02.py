@@ -24,9 +24,7 @@ from flext_core import c
 from flext_core._constants import FlextConstantsProjectMetadata
 from flext_core._models._base_parts import flextmodelsbase_part_01
 from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._runtime._metadata_validation import (
-    FlextRuntimeMetadataValidation,
-)
+from flext_core._runtime._metadata_validation import FlextRuntimeMetadataValidation
 from flext_core._typings.base import FlextTypingBase
 from flext_core._utilities import FlextUtilitiesGenerators
 
@@ -107,19 +105,31 @@ class FlextModelsBase(flextmodelsbase_part_01.FlextModelsBase):
                 title="Tags",
                 examples=[["billing", "critical"]],
             ),
-        ] = FlextModelsPydantic.Field(default_factory=FlextModelsPydantic.empty(TypeForm(FlextTypingBase.StrSequence)))
+        ] = FlextModelsPydantic.Field(
+            default_factory=FlextModelsPydantic.empty(
+                TypeForm(FlextTypingBase.StrSequence)
+            )
+        )
         attributes: Annotated[
             FlextTypingBase.JsonMapping,
-            FlextModelsPydantic.BeforeValidator(FlextRuntimeMetadataValidation.validate_metadata_attributes),
+            FlextModelsPydantic.BeforeValidator(
+                FlextRuntimeMetadataValidation.validate_metadata_attributes
+            ),
             FlextModelsPydantic.Field(
                 description="Arbitrary metadata attributes stored as key-value pairs.",
                 title="Attributes",
                 examples=[{"source": "api", "priority": "high"}],
             ),
-        ] = FlextModelsPydantic.Field(default_factory=FlextModelsPydantic.empty(TypeForm(FlextTypingBase.JsonMapping)))
+        ] = FlextModelsPydantic.Field(
+            default_factory=FlextModelsPydantic.empty(
+                TypeForm(FlextTypingBase.JsonMapping)
+            )
+        )
         metadata_value: Annotated[
             FlextTypingBase.Scalar | None,
-            FlextModelsPydantic.Field(default=None, description="Scalar metadata value."),
+            FlextModelsPydantic.Field(
+                default=None, description="Scalar metadata value."
+            ),
         ] = None
 
     class ContractModel(StrictModel):

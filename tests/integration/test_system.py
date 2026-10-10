@@ -288,19 +288,19 @@ class TestsFlextCoreSystem:
     @staticmethod
     def _process_user_data(data: t.StrMapping) -> p.Result[t.StrMapping]:
         if not data:
-            return r[dict[str, str]].fail(
-                "Dados não fornecidos",
+            return r[t.StrMapping].fail(
+                "No data supplied",
                 error_code=c.ErrorCode.VALIDATION_ERROR,
             )
         processed: t.MutableStrMapping = {}
         for key, value in data.items():
             if not u.string_non_empty(value):
-                return r[dict[str, str]].fail(
-                    f"Campo '{key}' não pode estar vazio",
+                return r[t.StrMapping].fail(
+                    f"Field '{key}' must not be empty",
                     error_code=c.ErrorCode.VALIDATION_ERROR,
                 )
-            processed[key] = f"processado_{value}"
-        return r[dict[str, str]].ok(processed)
+            processed[key] = f"processed_{value}"
+        return r[t.StrMapping].ok(processed)
 
     def test_workflow_transforms_every_field_on_success(self) -> None:
         """A valid record yields a success whose fields are all transformed."""

@@ -160,7 +160,4 @@ class TestsFlextMixins:
         """Test correlation id round trips through flext context."""
         FlextContext.apply_correlation_id("trace-42")
 
-        assert (
-            FlextContext.resolve_correlation_id()
-            == "trace-42"
-        )
+        assert FlextContext.resolve_correlation_id() == "trace-42"

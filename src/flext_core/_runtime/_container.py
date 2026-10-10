@@ -23,7 +23,7 @@ from flext_core._protocols import (
 )
 from flext_core._runtime._metadata_validation import FlextRuntimeMetadataValidation
 from flext_core._typings.base import FlextTypingBase
-from flext_core._typings.typeadapters import FlextTypesTypeAdapters
+from flext_core._utilities.typeadapter_json import FlextUtilitiesTypingAdapterJson
 from flext_core._utilities import FlextUtilitiesGuardsTypeCore
 
 if TYPE_CHECKING:
@@ -81,11 +81,11 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
                 normalized_item = FlextRuntimeContainer.normalize_to_metadata(item)
             case dict():
                 normalized_item = (
-                    FlextTypesTypeAdapters.json_dict_adapter().validate_python(item)
+                    FlextUtilitiesTypingAdapterJson.json_dict_adapter().validate_python(item)
                 )
             case list():
                 normalized_item = list(
-                    FlextTypesTypeAdapters.json_list_adapter().validate_python(item),
+                    FlextUtilitiesTypingAdapterJson.json_list_adapter().validate_python(item),
                 )
             case (
                 bool()
@@ -200,7 +200,7 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
             )
         elif isinstance(val, FlextModelsContainers.ObjectList):
             normalized_data = list(
-                FlextTypesTypeAdapters.json_list_adapter().validate_python([
+                FlextUtilitiesTypingAdapterJson.json_list_adapter().validate_python([
                     FlextRuntimeContainer.normalize_to_json_value(v) for v in val.root
                 ]),
             )
@@ -216,7 +216,7 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
             )
         elif isinstance(val, Sequence) and not isinstance(val, c.STR_BYTES_TYPES):
             normalized_data = list(
-                FlextTypesTypeAdapters.json_list_adapter().validate_python([
+                FlextUtilitiesTypingAdapterJson.json_list_adapter().validate_python([
                     FlextRuntimeContainer.normalize_to_json_value(item_raw)
                     for item_raw in val
                 ]),

@@ -8,8 +8,9 @@ from __future__ import annotations
 
 from flext_core._constants.enforcement import FlextConstantsEnforcement
 from flext_core._constants.regex import FlextConstantsRegex
-cre = FlextConstantsRegex
 from flext_core._utilities._enforcement_parts import enforcement_part_04
+
+cre = FlextConstantsRegex
 
 
 class FlextUtilitiesEnforcement(enforcement_part_04.FlextUtilitiesEnforcement):

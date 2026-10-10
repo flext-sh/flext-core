@@ -8,9 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, override, runtime_checkable
 
-from flext_core._protocols._container_parts import (
-    flextprotocolscontainer_part_02,
-)
+from flext_core._protocols._container_parts import flextprotocolscontainer_part_02
 
 if TYPE_CHECKING:
     from flext_core import m
@@ -20,7 +18,9 @@ if TYPE_CHECKING:
 
 class FlextProtocolsContainer(flextprotocolscontainer_part_02.FlextProtocolsContainer):
     @runtime_checkable
-    class ContainerLifecycle(flextprotocolscontainer_part_02.FlextProtocolsContainer.Container, Protocol):
+    class ContainerLifecycle(
+        flextprotocolscontainer_part_02.FlextProtocolsContainer.Container, Protocol
+    ):
         """Extended container contract for bootstrap and lifecycle operations."""
 
         def initialize_registrations(

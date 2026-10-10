@@ -19,9 +19,12 @@ from flext_core._models._exception_params_parts import (
 from flext_core._models.pydantic import FlextModelsPydantic as mp
 
 
-
-class FlextModelsExceptionParams(flextmodelsexceptionparams_part_01.FlextModelsExceptionParams):
-    class TimeoutErrorParams(flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ParamsModel):
+class FlextModelsExceptionParams(
+    flextmodelsexceptionparams_part_01.FlextModelsExceptionParams
+):
+    class TimeoutErrorParams(
+        flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ParamsModel
+    ):
         """Validated params for TimeoutError."""
 
         timeout_seconds: Annotated[
@@ -45,7 +48,9 @@ class FlextModelsExceptionParams(flextmodelsexceptionparams_part_01.FlextModelsE
             ),
         ] = None
 
-    class AuthenticationErrorParams(flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ParamsModel):
+    class AuthenticationErrorParams(
+        flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ParamsModel
+    ):
         """Validated params for AuthenticationError."""
 
         auth_method: Annotated[
@@ -63,7 +68,9 @@ class FlextModelsExceptionParams(flextmodelsexceptionparams_part_01.FlextModelsE
             ),
         ] = None
 
-    class AuthorizationErrorParams(flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ParamsModel):
+    class AuthorizationErrorParams(
+        flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ParamsModel
+    ):
         """Validated params for AuthorizationError."""
 
         user_id: Annotated[
@@ -98,10 +105,14 @@ class FlextModelsExceptionParams(flextmodelsexceptionparams_part_01.FlextModelsE
             ),
         ] = None
 
-    class NotFoundErrorParams(flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ResourceIdentityParams):
+    class NotFoundErrorParams(
+        flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ResourceIdentityParams
+    ):
         """Validated params for NotFoundError."""
 
-    class ConflictErrorParams(flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ResourceIdentityParams):
+    class ConflictErrorParams(
+        flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ResourceIdentityParams
+    ):
         """Validated params for ConflictError."""
 
         conflict_reason: Annotated[
@@ -114,7 +125,9 @@ class FlextModelsExceptionParams(flextmodelsexceptionparams_part_01.FlextModelsE
             ),
         ] = None
 
-    class RateLimitErrorParams(flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ParamsModel):
+    class RateLimitErrorParams(
+        flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ParamsModel
+    ):
         """Validated params for RateLimitError."""
 
         limit: Annotated[
@@ -147,7 +160,9 @@ class FlextModelsExceptionParams(flextmodelsexceptionparams_part_01.FlextModelsE
             ),
         ] = None
 
-    class CircuitBreakerErrorParams(flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ParamsModel):
+    class CircuitBreakerErrorParams(
+        flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ParamsModel
+    ):
         """Validated params for CircuitBreakerError."""
 
         service_name: Annotated[
@@ -174,7 +189,9 @@ class FlextModelsExceptionParams(flextmodelsexceptionparams_part_01.FlextModelsE
             ),
         ] = None
 
-    class TypeErrorParams(flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ExpectedActualTypeParams):
+    class TypeErrorParams(
+        flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ExpectedActualTypeParams
+    ):
         """Validated params for TypeError."""
 
 

@@ -30,9 +30,14 @@ from pydantic import (
 from pydantic_core import from_json, to_json, to_jsonable_python
 
 from flext_core._models import FlextModelsPydantic as mp
+from flext_core._utilities.typeadapter_json import FlextUtilitiesTypingAdapterJson
+from flext_core._utilities.typeadapter_scalars import FlextUtilitiesTypingAdapterScalars
 
 
-class FlextUtilitiesPydantic:
+class FlextUtilitiesPydantic(
+    FlextUtilitiesTypingAdapterJson,
+    FlextUtilitiesTypingAdapterScalars,
+):
     """Runtime utilities: field helpers, validators, type adapters, JSON handlers.
 
     **NEVER import pydantic directly outside flext-core/src/.**
