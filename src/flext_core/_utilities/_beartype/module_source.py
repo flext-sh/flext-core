@@ -27,7 +27,7 @@ class FlextUtilitiesBeartypeModuleSource:
     """Prove a lazy alias's source declaration and unavailable guarded imports."""
 
     @staticmethod
-    def parse(module: ModuleType) -> ast.Module:
+    def parse_module(module: ModuleType) -> ast.Module:
         """Read the defining source without normalizing inspection failures.
 
         Returns:
@@ -110,7 +110,7 @@ class FlextUtilitiesBeartypeModuleSource:
         return owner_derived(tree, name, owner_root)
 
     @classmethod
-    def deferred(
+    def deferred_alias(
         cls,
         alias: TypeAliasType,
         *,

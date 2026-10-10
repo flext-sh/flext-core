@@ -129,11 +129,12 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
 
         """
         origin = _ubh.object_module_name_for(value) or ""
+        local_family = FlextUtilitiesBeartypeImportBlacklistVisitor
         if (
             name.startswith(tier_prefixes)
             and origin.startswith(c.NAMESPACE_FAMILY_PREFIX)
             and origin != module_name
-            and not owner._is_local_family_import(
+            and not local_family._is_local_family_import(
                 origin,
                 module_name,
             )
