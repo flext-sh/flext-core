@@ -3,8 +3,8 @@
 Encapsulates the success/failure pipeline that runs a resolved
 ``t.RoutedHandlerCallable`` against a routable message and adapts the
 return value (``r[T]`` or raw payload) to the dispatcher's canonical
-``r[t.JsonPayload]`` contract. Owned exclusively by ``FlextDispatcher``;
-not part of any public surface.
+``r[t.JsonPayload]`` contract. Exposed through the utility facade and consumed
+by ``FlextDispatcher``.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -12,8 +12,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import c, p, r, t, u
-from flext_core.result import FlextResult
+from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
+from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
+from flext_core.constants import c
+from flext_core.protocols import p
+from flext_core.result import FlextResult, r
+from flext_core.typings import t
 
 
 class FlextUtilitiesDispatcherExecute:
@@ -35,10 +39,10 @@ class FlextUtilitiesDispatcherExecute:
                 result = dispatch_result.from_failure(raw_output)
             else:
                 output_value = raw_output.value
-                if u.container_value(output_value):
+                if FlextUtilitiesGuardsTypeCore.container_value(output_value):
                     payload: t.JsonPayload = output_value
                     result = dispatch_result.ok(payload)
-                elif u.pydantic_model(output_value):
+                elif FlextUtilitiesGuardsTypeModel.pydantic_model(output_value):
                     model_payload: t.JsonPayload = output_value
                     result = dispatch_result.ok(model_payload)
                 else:
@@ -46,7 +50,9 @@ class FlextUtilitiesDispatcherExecute:
                         "validate handler success payload",
                         c.ERR_HANDLER_RETURNED_NON_CONTAINER_SUCCESS_RESULT,
                     )
-        elif u.container_value(raw_output) or u.pydantic_model(raw_output):
+        elif FlextUtilitiesGuardsTypeCore.container_value(
+            raw_output
+        ) or FlextUtilitiesGuardsTypeModel.pydantic_model(raw_output):
             result = dispatch_result.ok(raw_output)
         else:
             result = dispatch_result.fail_op(
@@ -69,7 +75,9 @@ class FlextUtilitiesDispatcherExecute:
                 raw_candidate,
                 dispatch_result,
             )
-        if u.container_value(raw_candidate) or u.pydantic_model(raw_candidate):
+        if FlextUtilitiesGuardsTypeCore.container_value(
+            raw_candidate
+        ) or FlextUtilitiesGuardsTypeModel.pydantic_model(raw_candidate):
             return raw_candidate
         return dispatch_result.fail_op(
             "validate handler return payload",
@@ -90,7 +98,9 @@ class FlextUtilitiesDispatcherExecute:
         if view.failure:
             return dispatch_result.from_failure(view)
         success_value = view.value
-        if u.container_value(success_value) or u.pydantic_model(success_value):
+        if FlextUtilitiesGuardsTypeCore.container_value(
+            success_value
+        ) or FlextUtilitiesGuardsTypeModel.pydantic_model(success_value):
             return dispatch_result.ok(success_value)
         return dispatch_result.fail_op(
             "normalize handler result view",

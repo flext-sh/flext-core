@@ -29,7 +29,9 @@ class FlextConstantsSettings:
     SERIALIZATION_ISO8601: Final = "iso8601"
     SERIALIZATION_BASE64: Final = "base64"
 
-    DOMAIN_MODEL_CONFIG: Final[MappingProxyType[str, FlextProtocolsBase.AttributeProbe]] = MappingProxyType(
+    DOMAIN_MODEL_CONFIG: Final[
+        MappingProxyType[str, FlextProtocolsBase.AttributeProbe]
+    ] = MappingProxyType(
         ConfigDict(
             use_enum_values=True,
             validate_assignment=True,

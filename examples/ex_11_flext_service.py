@@ -16,6 +16,7 @@ from flext_core import p, r, s
 
 class ExamplesFlextEchoService(s[str]):
     """Define ``ExamplesFlextEchoService``."""
+
     payload: Annotated[
         m.Examples.Payload,
         u.Field(description="Payload processed by the example service"),

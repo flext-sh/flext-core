@@ -288,27 +288,27 @@ class TestsFlextCoreSystem:
     @staticmethod
     def _process_user_data(data: t.StrMapping) -> p.Result[t.StrMapping]:
         if not data:
-            return r[dict[str, str]].fail(
-                "Dados não fornecidos",
+            return r[t.StrMapping].fail(
+                "No data supplied",
                 error_code=c.ErrorCode.VALIDATION_ERROR,
             )
         processed: t.MutableStrMapping = {}
         for key, value in data.items():
             if not u.string_non_empty(value):
-                return r[dict[str, str]].fail(
-                    f"Campo '{key}' não pode estar vazio",
+                return r[t.StrMapping].fail(
+                    f"Field '{key}' must not be empty",
                     error_code=c.ErrorCode.VALIDATION_ERROR,
                 )
-            processed[key] = f"processado_{value}"
-        return r[dict[str, str]].ok(processed)
+            processed[key] = f"processed_{value}"
+        return r[t.StrMapping].ok(processed)
 
     def test_workflow_transforms_every_field_on_success(self) -> None:
         """A valid record yields a success whose fields are all transformed."""
         result = self._process_user_data({"nome": "João", "email": "joao@exemplo.com"})
 
         tm.that(result.success, eq=True)
-        tm.that(result.value["nome"], eq="processado_João")
-        tm.that(result.value["email"], eq="processado_joao@exemplo.com")
+        tm.that(result.value["nome"], eq="processed_João")
+        tm.that(result.value["email"], eq="processed_joao@exemplo.com")
 
     def test_workflow_fails_with_field_error_on_empty_value(self) -> None:
         """An empty field aborts the workflow with a descriptive validation error."""
@@ -316,5 +316,5 @@ class TestsFlextCoreSystem:
 
         tm.that(result.success, eq=False)
         tm.that(result.error, none=False)
-        tm.that(tm.not_none(result.error), has="não pode estar vazio")
+        tm.that(tm.not_none(result.error), has="must not be empty")
         tm.that(result.error_code, eq=c.ErrorCode.VALIDATION_ERROR)

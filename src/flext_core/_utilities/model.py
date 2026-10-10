@@ -12,11 +12,13 @@ from importlib import import_module
 from typing import overload
 
 from pydantic import TypeAdapter
+from typing_extensions import TypeForm
 
 from flext_core import c, p, t
 from flext_core._models import FlextModelsPydantic
 from flext_core._models.config import FlextModelsConfig
 from flext_core._utilities import FlextUtilitiesArgs
+from flext_core._utilities.base import FlextUtilitiesBase
 from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
 
@@ -51,7 +53,9 @@ class FlextUtilitiesModel:
             FlextModelsConfig.ModelDumpOptions,
         ).unwrap()
         opts_dict = opts.model_dump(exclude_none=True)
-        dumped: t.JsonMapping = t.json_mapping_adapter().validate_python(
+        dumped: t.JsonMapping = FlextUtilitiesBase.type_adapter(
+            TypeForm(t.JsonMapping)
+        ).validate_python(
             model.model_dump(mode="json", **opts_dict),
         )
         return dumped
@@ -124,7 +128,9 @@ class FlextUtilitiesModel:
         """
         try:
             adapter: t.ValueAdapter[TValue] = (
-                target if isinstance(target, TypeAdapter) else TypeAdapter(target)
+                target
+                if isinstance(target, TypeAdapter)
+                else FlextUtilitiesBase.type_adapter(target)
             )
             if from_json:
                 if not isinstance(data, c.STR_BINARY_TYPES):

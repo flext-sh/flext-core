@@ -99,7 +99,9 @@ class FlextUtilitiesBeartypeAttrVisitor:
             True when ``name`` is annotated as ClassVar on ``target``.
 
         """
-        annotations_map: t.MutableMappingKV[str, FlextProtocolsBase.AttributeProbe]
+        annotations_map: FlextTypingBase.MutableMappingKV[
+            str, FlextProtocolsBase.AttributeProbe
+        ]
         try:
             annotations_map = inspect.get_annotations(target, eval_str=True)
         except (NameError, AttributeError, TypeError):

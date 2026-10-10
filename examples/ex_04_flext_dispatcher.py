@@ -16,6 +16,7 @@ from flext_core import r
 
 class ExamplesFlextCreateUserHandler:
     """Define ``ExamplesFlextCreateUserHandler``."""
+
     message_type = m.Examples.CreateUser
 
     @staticmethod

@@ -18,8 +18,6 @@ from flext_core._utilities._beartype._helpers_parts import helpers_part_01
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from flext_core._typings.base import FlextTypingBase
-
 
 class FlextUtilitiesBeartypeHelpers(helpers_part_01.FlextUtilitiesBeartypeHelpers):
     @staticmethod
@@ -71,7 +69,9 @@ class FlextUtilitiesBeartypeHelpers(helpers_part_01.FlextUtilitiesBeartypeHelper
                 return annotation_text[:index].strip()
         return annotation_text.strip()
 
-    _RUNTIME_MODULE_CACHE: ClassVar[t.MutableMappingKV[type, _types_mod.ModuleType]] = {}
+    _RUNTIME_MODULE_CACHE: ClassVar[
+        FlextTypingBase.MutableMappingKV[type, _types_mod.ModuleType]
+    ] = {}
 
     @staticmethod
     def _runtime_module_candidate(target: type) -> _types_mod.ModuleType | None:
@@ -86,14 +86,16 @@ class FlextUtilitiesBeartypeHelpers(helpers_part_01.FlextUtilitiesBeartypeHelper
             return None
         src_file = getattr(module, "__file__", None)
         if not isinstance(src_file, str) or any(
-            marker in src_file for marker in FlextConstantsEnforcement.ENFORCE_NON_WORKSPACE_PATH_MARKERS
+            marker in src_file
+            for marker in FlextConstantsEnforcement.ENFORCE_NON_WORKSPACE_PATH_MARKERS
         ):
             return None
         return module
 
     @classmethod
     def runtime_module_for(
-        cls, target: type,
+        cls,
+        target: type,
     ) -> _types_mod.ModuleType | None:
         """Resolve the defining module once the class is bound to it.
 

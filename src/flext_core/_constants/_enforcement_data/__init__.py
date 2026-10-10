@@ -91,9 +91,11 @@ def _resource_text(name: str) -> str:
 
 
 _SMELL_DATA: _SmellData = _SmellData.model_validate_json(_resource_text("smells.json"))
-_PREDICATES: FlextTypingBase.MappingKV[str, _PredicateRule] = _PredicateData.model_validate_json(
-    _resource_text("predicates.json"),
-).predicates
+_PREDICATES: FlextTypingBase.MappingKV[str, _PredicateRule] = (
+    _PredicateData.model_validate_json(
+        _resource_text("predicates.json"),
+    ).predicates
+)
 
 _EXEMPTIONS: _ExemptionData = _ExemptionData.model_validate_json(
     _resource_text("exemptions.json"),

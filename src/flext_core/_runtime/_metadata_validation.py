@@ -10,14 +10,15 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
+from typing_extensions import TypeForm
 
 from flext_core import c
 from flext_core._protocols import FlextProtocolsResult
 from flext_core._runtime._metadata import FlextRuntimeMetadata
-from flext_core._typings.typeadapters import FlextTypesTypeAdapters
+from flext_core._typings.base import FlextTypingBase
+from flext_core._utilities.base import FlextUtilitiesBase
 
 if TYPE_CHECKING:
-    from flext_core._typings.base import FlextTypingBase
     from flext_core._typings.services import FlextTypesServices
 
 
@@ -54,7 +55,9 @@ class FlextRuntimeMetadataValidation(FlextRuntimeMetadata):
         return {
             key: None
             if item is None
-            else FlextTypesTypeAdapters.json_value_adapter().validate_python(item)
+            else FlextUtilitiesBase.type_adapter(
+                TypeForm(FlextTypingBase.JsonValue)
+            ).validate_python(item)
             for key, item in dumped.items()
         }
 
@@ -85,7 +88,9 @@ class FlextRuntimeMetadataValidation(FlextRuntimeMetadata):
                     c.ERR_RUNTIME_KEYS_WITH_UNDERSCORE_RESERVED.format(key=key),
                 )
         validated_metadata: FlextTypingBase.JsonMapping = (
-            FlextTypesTypeAdapters.metadata_map_adapter().validate_python({
+            FlextUtilitiesBase.type_adapter(
+                Mapping[str, FlextTypingBase.JsonValue]
+            ).validate_python({
                 key: item
                 for key, item in normalized_mapping.items()
                 if item is not None

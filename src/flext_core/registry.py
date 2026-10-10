@@ -13,6 +13,8 @@ import inspect
 import sys
 from typing import TYPE_CHECKING, ClassVar, Self, cast, override
 
+from typing_extensions import TypeForm
+
 from flext_core import c, e, h, m, p, r, s, t, u
 
 if TYPE_CHECKING:
@@ -131,7 +133,7 @@ class FlextRegistry(s[bool]):
             narrowed = str(value)
         else:
             normalized = u.normalize_to_metadata(value)
-            narrowed = t.json_value_adapter().validate_python(normalized)
+            narrowed = u.type_adapter(TypeForm(t.JsonValue)).validate_python(normalized)
         return narrowed
 
     @staticmethod

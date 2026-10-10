@@ -183,10 +183,9 @@ class FlextUtilitiesFamilySurface:
         return MappingProxyType(owners)
 
     @staticmethod
-    def _grouped_surface_entries(
-        ) -> FlextTypingBase.MappingKV[
-            str, FlextTypingBase.MutableMappingKV[str, list[str]]
-        ]:
+    def _grouped_surface_entries() -> FlextTypingBase.MappingKV[
+        str, FlextTypingBase.MutableMappingKV[str, list[str]]
+    ]:
         """Group each family root's lazy-map entries by owner module and kind.
 
         Returns:
@@ -255,9 +254,6 @@ class FlextUtilitiesFamilySurface:
 
         Returns:
             The resulting ``t.MappingKV[str, str]``.
-
-        Raises:
-            ValueError: If published family surface maps.
 
         """
         renames: FlextTypingBase.MutableMappingKV[str, str] = {}

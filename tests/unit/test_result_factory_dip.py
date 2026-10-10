@@ -268,7 +268,6 @@ class _ForeignResult(m.ArbitraryTypesModel):
     )
     exception: Exception | None = m.Field(default=None, description="Failure cause.")
 
-
     @property
     def success(self) -> bool:
         """Success iff no failure message is carried."""

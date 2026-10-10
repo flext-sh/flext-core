@@ -12,8 +12,11 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, ClassVar
 
+from typing_extensions import TypeForm
+
 from flext_core import c, m, p, t, u
 from flext_core._models._context._scope_ops import FlextContextScopeOps
+from flext_core._utilities.base import FlextUtilitiesBase
 from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
 
@@ -210,7 +213,9 @@ class FlextContext(FlextContextScopeOps, m.ManagedModel):
         """
         start_time = u.generate_datetime_utc()
         start_perf = time.perf_counter()
-        payload = t.json_mapping_adapter().validate_python({
+        payload = FlextUtilitiesBase.type_adapter(
+            TypeForm(t.JsonMapping)
+        ).validate_python({
             str(c.MetadataKey.START_TIME): start_time.isoformat(),
             str(c.ContextKey.OPERATION_NAME): operation_name or "",
         })

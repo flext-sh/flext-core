@@ -371,8 +371,7 @@ class FlextModelsPydantic:
             *fields: str,
             mode: Literal["wrap"],
             check_fields: bool | None = ...,
-            json_schema_input_type: FlextTypingBase.TypeHintSpecifier
-            | None = ...,
+            json_schema_input_type: FlextTypingBase.TypeHintSpecifier | None = ...,
         ) -> Callable[[ValidatorT], ValidatorT]: ...
 
         @overload
@@ -383,8 +382,7 @@ class FlextModelsPydantic:
             *fields: str,
             mode: Literal["before", "plain"],
             check_fields: bool | None = ...,
-            json_schema_input_type: FlextTypingBase.TypeHintSpecifier
-            | None = ...,
+            json_schema_input_type: FlextTypingBase.TypeHintSpecifier | None = ...,
         ) -> Callable[[ValidatorT], ValidatorT]: ...
 
         @overload
@@ -575,7 +573,8 @@ class FlextModelsPydantic:
             *,
             alias: str | None = ...,
             alias_priority: int | None = ...,
-            exclude_if: Callable[[FlextProtocolsBase.AttributeProbe], bool] | None = ...,
+            exclude_if: Callable[[FlextProtocolsBase.AttributeProbe], bool]
+            | None = ...,
             title: str | None = ...,
             field_title_generator: Callable[
                 [FlextProtocolsBase.AttributeProbe, FlextProtocolsBase.AttributeProbe],

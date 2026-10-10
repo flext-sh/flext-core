@@ -13,9 +13,12 @@ from __future__ import annotations
 import operator
 from typing import TYPE_CHECKING, ClassVar
 
+from typing_extensions import TypeForm
+
 from flext_core import c, t
 from flext_core._models import FlextModelsCollections
 from flext_core._protocols import FlextProtocolsResult
+from flext_core._utilities.base import FlextUtilitiesBase
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
 from flext_core._utilities.guards_type_protocol import FlextUtilitiesGuardsTypeProtocol
@@ -143,7 +146,9 @@ class FlextUtilitiesGuards(
             mem_raw = getattr(guard_spec, mem_op, None)
             if mem_raw is not None and not mem_fn(
                 value,
-                t.json_list_adapter().validate_python(mem_raw),
+                FlextUtilitiesBase.type_adapter(TypeForm(t.JsonList)).validate_python(
+                    mem_raw
+                ),
             ):
                 return False
         return True

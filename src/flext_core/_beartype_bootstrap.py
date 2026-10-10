@@ -24,17 +24,19 @@ class FlextCoreBeartypeBootstrap:
     _activating: ClassVar[bool] = False
 
     @classmethod
-    def _enforcement_constants(cls) -> type[FlextConstantsEnforcement]:
+    def _enforcement_constants(cls) -> FlextConstantsEnforcement:
         """Load enforcement constants lazily to avoid package-init cycles.
+
+        The constants module is imported directly (never through the package
+        facade) so this module can be imported during ``flext_core.__init__``
+        before the ``c`` alias is bound.
 
         Returns:
             The lazily imported enforcement constants class.
 
         """
         module = import_module("flext_core._constants.enforcement")
-        constants_cls: type[FlextConstantsEnforcement] = (
-            module.FlextConstantsEnforcement
-        )
+        constants_cls: FlextConstantsEnforcement = module.FlextConstantsEnforcement
         return constants_cls
 
     @classmethod

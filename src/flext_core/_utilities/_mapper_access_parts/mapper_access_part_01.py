@@ -82,7 +82,9 @@ class FlextUtilitiesMapperAccess:
         if (
             isinstance(value, Sequence)
             and not isinstance(value, (str, bytes, bytearray))
-            and all(FlextUtilitiesGuardsTypeCore.container_value(item) for item in value)
+            and all(
+                FlextUtilitiesGuardsTypeCore.container_value(item) for item in value
+            )
         ):
             return value
         return str(value)

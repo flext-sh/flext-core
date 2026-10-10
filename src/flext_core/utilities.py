@@ -42,6 +42,20 @@ from flext_core._utilities import (
     FlextUtilitiesSettings,
     FlextUtilitiesText,
 )
+from flext_core._utilities._beartype._import_blacklist_visitor import (
+    FlextUtilitiesBeartypeImportBlacklistVisitor,
+)
+from flext_core._utilities._beartype.module_source import (
+    FlextUtilitiesBeartypeModuleSource,
+)
+from flext_core._utilities._beartype.type_aliases import (
+    FlextUtilitiesBeartypeTypeAliases,
+)
+from flext_core._utilities.dispatcher_execute import FlextUtilitiesDispatcherExecute
+from flext_core._utilities.enforcement_emit import FlextUtilitiesEnforcementEmit
+from flext_core._utilities.handler import FlextUtilitiesHandler
+from flext_core._utilities.typeadapter_json import FlextUtilitiesTypingAdapterJson
+from flext_core._utilities.typeadapter_scalars import FlextUtilitiesTypingAdapterScalars
 
 
 class FlextUtilities(
@@ -73,8 +87,16 @@ class FlextUtilities(
     FlextUtilitiesReliability,
     FlextUtilitiesRuntimeViolationRegistry,
     FlextUtilitiesText,
+    FlextUtilitiesTypingAdapterJson,
+    FlextUtilitiesTypingAdapterScalars,
     FlextModelsNamespace,
     FlextUtilitiesLoggingContext,
+    FlextUtilitiesHandler,
+    FlextUtilitiesBeartypeModuleSource,
+    FlextUtilitiesBeartypeTypeAliases,
+    FlextUtilitiesEnforcementEmit,
+    FlextUtilitiesDispatcherExecute,
+    FlextUtilitiesBeartypeImportBlacklistVisitor,
 ):
     """Unified facade for all FLEXT utility functionality.
 

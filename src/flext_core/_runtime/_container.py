@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Literal, TypeGuard
 
 from pydantic import BaseModel
+from typing_extensions import TypeForm
 
 from flext_core import c
 from flext_core._models import FlextModelsContainers, FlextModelsPydantic
@@ -23,8 +24,8 @@ from flext_core._protocols import (
 )
 from flext_core._runtime._metadata_validation import FlextRuntimeMetadataValidation
 from flext_core._typings.base import FlextTypingBase
-from flext_core._typings.typeadapters import FlextTypesTypeAdapters
 from flext_core._utilities import FlextUtilitiesGuardsTypeCore
+from flext_core._utilities.base import FlextUtilitiesBase
 
 if TYPE_CHECKING:
     from flext_core._protocols import FlextProtocolsBase
@@ -80,12 +81,14 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
             case tuple():
                 normalized_item = FlextRuntimeContainer.normalize_to_metadata(item)
             case dict():
-                normalized_item = (
-                    FlextTypesTypeAdapters.json_dict_adapter().validate_python(item)
-                )
+                normalized_item = FlextUtilitiesBase.type_adapter(
+                    TypeForm(FlextTypingBase.JsonDict)
+                ).validate_python(item)
             case list():
                 normalized_item = list(
-                    FlextTypesTypeAdapters.json_list_adapter().validate_python(item),
+                    FlextUtilitiesBase.type_adapter(
+                        TypeForm(FlextTypingBase.JsonList)
+                    ).validate_python(item),
                 )
             case (
                 bool()
@@ -200,7 +203,9 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
             )
         elif isinstance(val, FlextModelsContainers.ObjectList):
             normalized_data = list(
-                FlextTypesTypeAdapters.json_list_adapter().validate_python([
+                FlextUtilitiesBase.type_adapter(
+                    TypeForm(FlextTypingBase.JsonList)
+                ).validate_python([
                     FlextRuntimeContainer.normalize_to_json_value(v) for v in val.root
                 ]),
             )
@@ -216,7 +221,9 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
             )
         elif isinstance(val, Sequence) and not isinstance(val, c.STR_BYTES_TYPES):
             normalized_data = list(
-                FlextTypesTypeAdapters.json_list_adapter().validate_python([
+                FlextUtilitiesBase.type_adapter(
+                    TypeForm(FlextTypingBase.JsonList)
+                ).validate_python([
                     FlextRuntimeContainer.normalize_to_json_value(item_raw)
                     for item_raw in val
                 ]),

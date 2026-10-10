@@ -11,10 +11,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from typing_extensions import TypeForm
+
 from flext_core import c, t
 from flext_core._models import FlextModelsContainers, FlextModelsPydantic
 from flext_core._runtime._base import FlextRuntimeBase
 from flext_core._utilities import FlextUtilitiesGuardsTypeModel
+from flext_core._utilities.base import FlextUtilitiesBase
 
 if TYPE_CHECKING:
     from flext_core import m
@@ -43,16 +46,24 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
         """
         validated_value: t.JsonValue
         if value is None:
-            validated_value = t.json_value_adapter().validate_python(None)
+            validated_value = FlextUtilitiesBase.type_adapter(
+                TypeForm(t.JsonValue)
+            ).validate_python(None)
 
         elif FlextUtilitiesGuardsTypeModel.has_model_dump(value):
-            validated_value = t.json_value_adapter().validate_python(
+            validated_value = FlextUtilitiesBase.type_adapter(
+                TypeForm(t.JsonValue)
+            ).validate_python(
                 value.model_dump(mode="json"),
             )
         elif isinstance(value, FlextModelsPydantic.BaseModel):
-            validated_value = t.json_value_adapter().validate_python(str(value))
+            validated_value = FlextUtilitiesBase.type_adapter(
+                TypeForm(t.JsonValue)
+            ).validate_python(str(value))
         else:
-            validated_value = t.json_value_adapter().validate_python(
+            validated_value = FlextUtilitiesBase.type_adapter(
+                TypeForm(t.JsonValue)
+            ).validate_python(
                 FlextRuntimeMetadata.normalize_to_metadata(value),
             )
         return validated_value
@@ -82,7 +93,7 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
 
         """
         return dict(
-            t.json_mapping_adapter().validate_python({
+            FlextUtilitiesBase.type_adapter(TypeForm(t.JsonMapping)).validate_python({
                 key: FlextRuntimeMetadata.normalize_to_json_value(item)
                 for key, item in items
             }),
@@ -113,7 +124,9 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
                 (key, item) for key, item in value.items()
             ])
         return dict(
-            t.json_mapping_adapter().validate_python(value.model_dump(mode="json")),
+            FlextUtilitiesBase.type_adapter(TypeForm(t.JsonMapping)).validate_python(
+                value.model_dump(mode="json")
+            ),
         )
 
     @staticmethod
@@ -158,7 +171,7 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
             isinstance(val, Sequence) and not isinstance(val, (str, bytes, bytearray))
         ):
             normalized_value = list(
-                t.json_list_adapter().validate_python([
+                FlextUtilitiesBase.type_adapter(TypeForm(t.JsonList)).validate_python([
                     FlextRuntimeMetadata.normalize_to_json_value(item) for item in val
                 ]),
             )
