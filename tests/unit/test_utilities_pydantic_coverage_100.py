@@ -144,6 +144,22 @@ class TestsFlextUtilitiesPydantic:
             double_positive(-1)
 
     @staticmethod
+    def test_validate_call_factory_preserves_config_and_return_validation() -> None:
+        """The keyword-only overload configures arguments and validates returns."""
+
+        @u.validate_call(
+            config=m.ConfigDict(str_strip_whitespace=True),
+            validate_return=True,
+        )
+        def positive_length(value: str) -> t.PositiveInt:
+            return len(value)
+
+        length: int = positive_length(value="  value  ")
+        assert length == len("value")
+        with pytest.raises(m.ValidationError):
+            positive_length(value="  ")
+
+    @staticmethod
     def test_public_facade_resolves_runtime_bootstrap_options_from_json() -> None:
         """Test public facade resolves runtime bootstrap options from json."""
         runtime_options = m.RuntimeBootstrapOptions.model_validate_json(

@@ -93,9 +93,9 @@ class FlextLazyPart01(BaseModel):
 
     _activate_core_beartype: Callable[[], None] = PrivateAttr(
         default_factory=lambda: (
-            lambda: importlib.import_module(
+            importlib.import_module(
                 "flext_core._beartype_bootstrap",
-            ).FlextCoreBeartypeBootstrap.activate_package_beartype()
+            ).FlextCoreBeartypeBootstrap.activate_package_beartype
         ),
     )
 

@@ -14,11 +14,14 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
+from typing_extensions import TypeForm
+
 from flext_core import c, p, t
 from flext_core._utilities import (
     FlextUtilitiesCollection,
     FlextUtilitiesGuardsTypeModel,
 )
+from flext_core._utilities.base import FlextUtilitiesBase
 from flext_core._utilities.logging_config import FlextUtilitiesLoggingConfig
 from flext_core.exceptions import FlextExceptions
 from flext_core.result import FlextResult
@@ -147,11 +150,15 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
         if isinstance(value, Exception):
             return str(value)
         if FlextUtilitiesGuardsTypeModel.has_model_dump(value):
-            dumped_value: t.JsonValue = t.json_value_adapter().validate_python(
+            dumped_value: t.JsonValue = FlextUtilitiesBase.type_adapter(
+                TypeForm(t.JsonValue)
+            ).validate_python(
                 value.model_dump(mode="json"),
             )
             return dumped_value
-        normalized_value: t.JsonValue = t.json_value_adapter().validate_python(
+        normalized_value: t.JsonValue = FlextUtilitiesBase.type_adapter(
+            TypeForm(t.JsonValue)
+        ).validate_python(
             FlextRuntime.normalize_to_json_value(value),
         )
         return normalized_value
@@ -176,7 +183,9 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
         cls,
         context: t.MappingKV[str, t.LogValue | t.JsonValue | t.JsonPayload | None],
     ) -> t.JsonMapping:
-        validated: t.JsonMapping = t.json_mapping_adapter().validate_python({
+        validated: t.JsonMapping = FlextUtilitiesBase.type_adapter(
+            TypeForm(t.JsonMapping)
+        ).validate_python({
             key: cls._to_container_value(value) for key, value in context.items()
         })
         return validated

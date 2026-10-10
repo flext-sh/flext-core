@@ -7,12 +7,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from importlib import import_module
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from beartype.claw import beartype_this_package
 
-from flext_core import c
 from flext_core._typings.base import FlextTypingBase
+
+if TYPE_CHECKING:
+    from flext_core._constants.enforcement import FlextConstantsEnforcement
 
 
 class FlextCoreBeartypeBootstrap:
@@ -22,13 +24,33 @@ class FlextCoreBeartypeBootstrap:
     _activating: ClassVar[bool] = False
 
     @classmethod
+    def _enforcement_constants(cls) -> FlextConstantsEnforcement:
+        """Load enforcement constants lazily to avoid package-init cycles.
+
+        The constants module is imported directly (never through the package
+        facade) so this module can be imported during ``flext_core.__init__``
+        before the ``c`` alias is bound.
+
+        Returns:
+            The lazily imported enforcement constants class.
+
+        """
+        module = import_module("flext_core._constants.enforcement")
+        constants_cls: FlextConstantsEnforcement = module.FlextConstantsEnforcement
+        return constants_cls
+
+    @classmethod
     def activate_package_beartype(cls) -> None:
         """Install beartype.claw for flext_core exactly once."""
         if cls._activated or cls._activating:
             return
         cls._activating = True
         try:
-            if c.BEARTYPE_MODE is c.EnforcementMode.OFF:
+            enforcement_constants = cls._enforcement_constants()
+            if (
+                enforcement_constants.BEARTYPE_MODE
+                is enforcement_constants.EnforcementMode.OFF
+            ):
                 return
             conf_module = import_module("flext_core._utilities.beartype_conf")
             beartype_this_package(

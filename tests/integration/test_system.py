@@ -307,8 +307,8 @@ class TestsFlextCoreSystem:
         result = self._process_user_data({"nome": "João", "email": "joao@exemplo.com"})
 
         tm.that(result.success, eq=True)
-        tm.that(result.value["nome"], eq="processado_João")
-        tm.that(result.value["email"], eq="processado_joao@exemplo.com")
+        tm.that(result.value["nome"], eq="processed_João")
+        tm.that(result.value["email"], eq="processed_joao@exemplo.com")
 
     def test_workflow_fails_with_field_error_on_empty_value(self) -> None:
         """An empty field aborts the workflow with a descriptive validation error."""
@@ -316,5 +316,5 @@ class TestsFlextCoreSystem:
 
         tm.that(result.success, eq=False)
         tm.that(result.error, none=False)
-        tm.that(tm.not_none(result.error), has="não pode estar vazio")
+        tm.that(tm.not_none(result.error), has="must not be empty")
         tm.that(result.error_code, eq=c.ErrorCode.VALIDATION_ERROR)

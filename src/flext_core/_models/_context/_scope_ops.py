@@ -8,7 +8,10 @@ from __future__ import annotations
 
 from typing import Annotated, Self
 
+from typing_extensions import TypeForm
+
 from flext_core import m, p, t, u
+from flext_core._utilities.base import FlextUtilitiesBase
 from flext_core.result import FlextResult
 
 
@@ -107,7 +110,7 @@ class FlextContextScopeOps(m.ManagedModel):
         updated_attributes[key] = value
         self.metadata = self.metadata.model_copy(
             update={
-                "attributes": t.json_mapping_adapter().validate_python(
+                "attributes": FlextUtilitiesBase.type_adapter(TypeForm(t.JsonMapping)).validate_python(
                     updated_attributes,
                 ),
             },

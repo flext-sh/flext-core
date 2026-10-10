@@ -178,7 +178,7 @@ class TestsFlextCoreHandlersValidationContext(
         """Test push context succeeds."""
         settings = u.Tests.create_handler_config("push_context", "Push Context")
         handler = self.ConcreteTestHandler(settings=settings)
-        context: t.JsonMapping = t.json_mapping_adapter().validate_python({
+        context: t.JsonMapping = u.json_mapping_adapter().validate_python({
             "handler_name": "push_context",
             "handler_mode": "command",
         })

@@ -142,6 +142,10 @@ if TYPE_CHECKING:
     )
     from flext_core._utilities.settings import FlextUtilitiesSettings
     from flext_core._utilities.text import FlextUtilitiesText
+    from flext_core._utilities.typeadapter_json import FlextUtilitiesTypingAdapterJson
+    from flext_core._utilities.typeadapter_scalars import (
+        FlextUtilitiesTypingAdapterScalars,
+    )
 
 
 __all__: tuple[str, ...] = (
@@ -206,6 +210,8 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesRuntimeViolationRegistry",
     "FlextUtilitiesSettings",
     "FlextUtilitiesText",
+    "FlextUtilitiesTypingAdapterJson",
+    "FlextUtilitiesTypingAdapterScalars",
     "_beartype",
     "_checker_parts",
     "_enforcement_collect_parts",
@@ -297,6 +303,8 @@ install_lazy_exports(
         "FlextUtilitiesRuntimeViolationRegistry": ".runtime_violation_registry",
         "FlextUtilitiesSettings": ".settings",
         "FlextUtilitiesText": ".text",
+        "FlextUtilitiesTypingAdapterJson": ".typeadapter_json",
+        "FlextUtilitiesTypingAdapterScalars": ".typeadapter_scalars",
         "_beartype": "._beartype",
         "_checker_parts": "._checker_parts",
         "_enforcement_collect_parts": "._enforcement_collect_parts",
