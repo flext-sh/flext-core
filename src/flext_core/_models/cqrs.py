@@ -9,16 +9,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from types import MappingProxyType
 from typing import Annotated, ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
+from typing_extensions import TypeForm
 
 from flext_core import c, t
 from flext_core._models._cqrs_parts.flextmodelscqrs_part_01 import (
     FlextModelsCqrs as FlextModelsCqrsPart01,
 )
 from flext_core._models.base import FlextModelsBase as m
+from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._runtime import FlextRuntimeMetadata
 from flext_core._utilities import FlextUtilitiesGenerators
 
@@ -99,7 +100,11 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
                 title="Query Filters",
                 examples=[{"status": "active", "tenant": "acme"}],
             ),
-        ] = Field(default_factory=lambda: MappingProxyType[str, t.Scalar]({}))
+        ] = Field(
+            default_factory=FlextModelsPydantic.empty(
+                TypeForm(t.MappingKV[str, t.Scalar]),
+            ),
+        )
         pagination: Annotated[
             FlextModelsCqrsPart01.Pagination,
             Field(
@@ -241,11 +246,19 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
         data: Annotated[
             t.MappingKV[str, t.Scalar],
             Field(description="Event payload data"),
-        ] = Field(default_factory=lambda: MappingProxyType[str, t.Scalar]({}))
+        ] = Field(
+            default_factory=FlextModelsPydantic.empty(
+                TypeForm(t.MappingKV[str, t.Scalar]),
+            ),
+        )
         metadata: Annotated[
             t.MappingKV[str, t.Scalar],
             Field(description="Event metadata (timestamps, correlation IDs, etc.)"),
-        ] = Field(default_factory=lambda: MappingProxyType[str, t.Scalar]({}))
+        ] = Field(
+            default_factory=FlextModelsPydantic.empty(
+                TypeForm(t.MappingKV[str, t.Scalar]),
+            ),
+        )
 
     type FlextMessage = t.MessageUnion[Command, Query, Event]
 

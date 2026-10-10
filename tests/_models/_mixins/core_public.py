@@ -9,6 +9,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import ClassVar, Self
 
+from typing_extensions import TypeForm
+
 from flext_core import m, u
 from tests import t
 
@@ -102,7 +104,7 @@ class TestsFlextModelsCorePublicMixin:
 
         raw_name: str = u.Field(alias="rawName")
         visits: int = 0
-        _events: list[str] = u.PrivateAttr(default_factory=list)
+        _events: list[str] = u.PrivateAttr(default_factory=u.empty(TypeForm(list[str])))
 
         @m.field_validator("raw_name")
         @classmethod

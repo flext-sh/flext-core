@@ -8,17 +8,21 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
+from collections.abc import MutableMapping
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Annotated, ClassVar
+
+from typing_extensions import TypeForm
 
 from flext_core import FlextContainer, c, m, p, t, u
 from flext_core._models.flext_context import FlextContext
 
-# NOTE (multi-agent): mro-i6nq.12 — Generator/Mapping/MutableMapping are
-# annotation-only under TYPE_CHECKING; the module owns its __all__: the mixins
-# facade re-exports from here, never the reverse.
+# NOTE (multi-agent): mro-i6nq.12 — Generator/Mapping are annotation-only under
+# TYPE_CHECKING; MutableMapping is a runtime contract of the ``u.empty`` default.
+# The module owns its __all__: the mixins facade re-exports from here, never the
+# reverse.
 if TYPE_CHECKING:
-    from collections.abc import Generator, Mapping, MutableMapping
+    from collections.abc import Generator, Mapping
 
 
 class FlextMixins(m.ArbitraryTypesModel):
@@ -53,7 +57,7 @@ class FlextMixins(m.ArbitraryTypesModel):
     _runtime: m.ServiceRuntime | None = u.PrivateAttr(default=None)
 
     _operation_stats: MutableMapping[str, m.ConfigMap] = u.PrivateAttr(
-        default_factory=dict[str, m.ConfigMap],
+        default_factory=u.empty(TypeForm(MutableMapping[str, m.ConfigMap])),
     )
 
     _logger_cache: ClassVar[MutableMapping[str, p.Logger]] = {}

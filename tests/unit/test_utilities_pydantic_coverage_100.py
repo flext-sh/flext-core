@@ -10,6 +10,7 @@ from collections.abc import Callable
 from operator import itemgetter
 
 import pytest
+from typing_extensions import TypeForm
 
 from flext_core import FlextModels, u
 from tests import m, t
@@ -24,8 +25,12 @@ class TestsFlextUtilitiesPydantic:
 
     class _PrivateAttrContract(FlextModels.BaseModel):
         label: str
-        _model_values: list[str] = FlextModels.PrivateAttr(default_factory=list[str])
-        _utility_values: list[str] = u.PrivateAttr(default_factory=list[str])
+        _model_values: list[str] = FlextModels.PrivateAttr(
+            default_factory=FlextModels.empty(TypeForm(list[str])),
+        )
+        _utility_values: list[str] = u.PrivateAttr(
+            default_factory=u.empty(TypeForm(list[str])),
+        )
         _label_copy: str = FlextModels.PrivateAttr(default_factory=itemgetter("label"))
         _reader: Callable[[str], str] = u.PrivateAttr(default_factory=_input_reader)
 

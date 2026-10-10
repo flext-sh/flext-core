@@ -15,6 +15,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Annotated
 
+from typing_extensions import TypeForm
+
 from flext_core import t
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.containers import FlextModelsContainers
@@ -68,7 +70,9 @@ class FlextModelsContainer:
         tags: Annotated[
             t.StrSequence,
             FlextModelsPydantic.Field(description="Service tags for categorization"),
-        ] = FlextModelsPydantic.Field(default_factory=tuple)
+        ] = FlextModelsPydantic.Field(
+            default_factory=FlextModelsPydantic.empty(TypeForm(t.StrSequence)),
+        )
 
         @FlextModelsPydantic.computed_field
         @property

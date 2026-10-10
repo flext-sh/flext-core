@@ -19,7 +19,18 @@ from functools import cached_property, partialmethod
 from pathlib import Path
 from re import Pattern
 from types import EllipsisType
-from typing import TYPE_CHECKING, Any, Literal, dataclass_transform, overload
+from typing import (
+    TYPE_CHECKING,
+    Annotated,
+    Any,
+    Literal,
+    TypeAliasType,
+    cast,
+    dataclass_transform,
+    get_args,
+    get_origin,
+    overload,
+)
 
 if TYPE_CHECKING:
     from flext_core._typings.base import FlextTypingBase
@@ -63,6 +74,9 @@ from pydantic_settings import (
     PydanticBaseSettingsSource as _PydanticBaseSettingsSource,
     SettingsConfigDict as _PydanticSettingsConfigDict,
 )
+from typing_extensions import TypeForm
+
+from flext_core._constants import FlextConstantsPydantic
 
 type _FieldValue = JsonValue | Path
 type _FieldSchemaExtra = Mapping[str, _FieldValue | Sequence[_FieldValue]]
@@ -165,6 +179,116 @@ class FlextModelsPydantic:
         private_attr_factory: Callable[..., PrivateT] = PydanticPrivateAttr
         return private_attr_factory(default, default_factory=default_factory, init=init)
 
+    class EmptyDefault[ContractT]:
+        """Default factory of a collection contract's canonical empty value.
+
+        Built by ``u.empty``. The value is what pydantic validates an empty
+        JSON document into for the contract's container, so a field default
+        is exactly the value the same contract yields from a real empty input:
+        it serializes, round-trips through JSON unchanged, and every call
+        returns a fresh instance. An empty collection never validates an
+        element, so only the container matters: element types, forward
+        references and arbitrary types are never resolved. The adapter is
+        built on the first call, keeping model class creation free of schema
+        work. A contract that is not a collection fails loud with
+        ``TypeError``.
+        """
+
+        __slots__ = ("_adapter", "_seed", "contract")
+
+        def __init__(self, contract: TypeForm[ContractT]) -> None:
+            """Bind the collection contract whose empty value this yields."""
+            self.contract: TypeForm[ContractT] = contract
+            self._adapter: PydanticTypeAdapter[ContractT] | None = None
+            self._seed: bytes = b""
+
+        @staticmethod
+        def container(contract: FlextTypingBase.TypeFormSpecifier) -> type:
+            """Resolve a contract to its container class.
+
+            ``Annotated`` metadata and PEP 695 aliases, plain or subscripted,
+            are unwrapped until the outermost generic origin or class remains.
+
+            Returns:
+                The container class of ``contract``.
+
+            Raises:
+                TypeError: The contract does not resolve to a class.
+
+            """
+            current = contract
+            while True:
+                origin = get_origin(current)
+                if origin is Annotated:
+                    current = get_args(current)[0]
+                elif isinstance(current, TypeAliasType):
+                    current = current.__value__
+                elif isinstance(origin, TypeAliasType):
+                    current = origin.__value__
+                else:
+                    break
+            resolved = origin or current
+            if not isinstance(resolved, type):
+                msg = f"empty default requires a collection contract; got {contract!r}"
+                raise TypeError(msg)
+            return resolved
+
+        def __call__(self) -> ContractT:
+            """Return a fresh canonical empty value of the contract.
+
+            Returns:
+                The contract's empty value as pydantic validates it.
+
+            Raises:
+                TypeError: The contract is not a collection.
+
+            """
+            adapter = self._adapter
+            if adapter is None:
+                container = FlextModelsPydantic.EmptyDefault.container(self.contract)
+                # The container's empty value is the contract's empty value:
+                # no element is ever validated, so the adapter is typed at
+                # this single binding to the contract it stands for.
+                adapter = cast(
+                    "PydanticTypeAdapter[ContractT]",
+                    PydanticTypeAdapter(container),
+                )
+                schema = adapter.json_schema()
+                shape = schema.get(FlextConstantsPydantic.JSON_SCHEMA_TYPE_KEY)
+                seed = (
+                    FlextConstantsPydantic.EMPTY_COLLECTION_JSON_SEEDS.get(shape)
+                    if isinstance(shape, str)
+                    and FlextConstantsPydantic.JSON_SCHEMA_PROPERTIES_KEY not in schema
+                    else None
+                )
+                if seed is None:
+                    msg = (
+                        f"empty default requires a collection contract; "
+                        f"{self.contract!r} has JSON schema {schema!r}"
+                    )
+                    raise TypeError(msg)
+                self._seed = seed
+                self._adapter = adapter
+            return adapter.validate_json(self._seed)
+
+    @staticmethod
+    def _empty[ContractT](contract: TypeForm[ContractT]) -> Callable[[], ContractT]:
+        """Return the default factory of ``contract``'s canonical empty value.
+
+        Use as ``u.Field(default_factory=u.empty(TypeForm(<annotation>)))``:
+        the contract is the field's own annotation, so the default's static
+        type and runtime value both derive from it. The explicit PEP 747
+        ``TypeForm(...)`` conversion is what lets every type checker read a
+        class-scoped alias such as ``t.JsonMapping`` as a type expression; a
+        bare ``dict``/``list``/``set`` factory leaves its type parameters
+        Unknown even under a declared annotation.
+
+        Returns:
+            A zero-argument factory of the contract's empty value.
+
+        """
+        return FlextModelsPydantic.EmptyDefault(contract)
+
     @dataclass_transform(
         kw_only_default=True,
         field_specifiers=(
@@ -200,6 +324,7 @@ class FlextModelsPydantic:
 
     Field = staticmethod(_field)
     PrivateAttr = staticmethod(_private_attr)
+    empty = staticmethod(_empty)
     SkipValidation = SkipValidation
     # ``field_validator`` must re-export pydantic's real overload surface. A
     # plain-attr re-export resolves in mypy but pyright binds it as a method
