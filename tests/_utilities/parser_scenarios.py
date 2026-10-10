@@ -8,8 +8,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_tests import u
-
 from tests import c, m
 
 if TYPE_CHECKING:
@@ -58,7 +56,7 @@ class TestsFlextUtilitiesParserScenariosMixin:
             name="none-uses-default",
             input_value=None,
             target=int,
-            options=u.ParseOptions(default=7),
+            options=m.ParseOptions(default=7),
             should_succeed=True,
             expected_value=7,
             description="Public parse returns default when value is None",
@@ -67,7 +65,7 @@ class TestsFlextUtilitiesParserScenariosMixin:
             name="invalid-uses-default-factory",
             input_value="x",
             target=int,
-            options=u.ParseOptions(default_factory=lambda: 9),
+            options=m.ParseOptions(default_factory=lambda: 9),
             should_succeed=True,
             expected_value=9,
             description="Public parse returns default_factory output on failure",
@@ -84,7 +82,7 @@ class TestsFlextUtilitiesParserScenariosMixin:
             name="enum-case-insensitive",
             input_value="INACTIVE",
             target=c.Tests.STATUS_ENUM,
-            options=u.ParseOptions(case_insensitive=True),
+            options=m.ParseOptions(case_insensitive=True),
             should_succeed=True,
             expected_value=c.Tests.STATUS_INACTIVE,
             description="Public parse resolves StrEnum values case-insensitively",
@@ -122,7 +120,7 @@ class TestsFlextUtilitiesParserScenariosMixin:
             name="invalid-bool-field-context",
             input_value="maybe",
             target=bool,
-            options=u.ParseOptions(field_name="flag"),
+            options=m.ParseOptions(field_name="flag"),
             should_succeed=False,
             error_contains="flag",
             description="Public parse includes field context on bool failure",

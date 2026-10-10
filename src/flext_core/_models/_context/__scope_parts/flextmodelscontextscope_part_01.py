@@ -6,8 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from types import MappingProxyType
 from typing import Annotated
+
+from typing_extensions import TypeForm
 
 from flext_core import c, t
 from flext_core._models._context._data import FlextModelsContextData
@@ -69,7 +70,7 @@ class FlextModelsContextScope:
                 ),
             ),
         ] = FlextModelsPydantic.Field(
-            default_factory=lambda: MappingProxyType[str, t.JsonValue]({}),
+            default_factory=FlextModelsPydantic.empty(TypeForm(t.JsonMapping)),
         )
 
 

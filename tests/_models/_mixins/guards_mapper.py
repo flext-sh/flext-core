@@ -9,7 +9,9 @@ from __future__ import annotations
 from collections import UserDict
 from typing import TYPE_CHECKING, Annotated, override
 
-from flext_core import m
+from typing_extensions import TypeForm
+
+from flext_core import m, u
 from tests import t
 
 if TYPE_CHECKING:
@@ -27,7 +29,9 @@ class TestsFlextModelsGuardsMapperMixin:
         """Model with port/nested for mapper take/extract tests."""
 
         port: int = 0
-        nested: t.JsonMapping = m.Field(default_factory=dict)
+        nested: t.JsonMapping = m.Field(
+            default_factory=u.empty(TypeForm(t.JsonMapping))
+        )
 
     class MaybeModel(m.BaseModel):
         """Model with optional field for take tests."""

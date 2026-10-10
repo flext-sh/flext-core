@@ -47,6 +47,9 @@ class FlextUtilitiesPydantic:
     # ``FlextUtilities`` (bogus reportAssignmentType). ``mp.Field`` already does this.
     Field = staticmethod(mp.Field)
     PrivateAttr = staticmethod(mp.PrivateAttr)
+    # Canonical empty-collection default:
+    # ``u.Field(default_factory=u.empty(TypeForm(<field annotation>)))``.
+    empty = staticmethod(mp.empty)
     SkipValidation = SkipValidation
 
     # Keep the models-layer overload set intact; staticmethod's generic

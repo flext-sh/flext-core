@@ -15,10 +15,10 @@ from __future__ import annotations
 import uuid
 from collections.abc import Hashable
 from datetime import datetime
-from types import MappingProxyType
 from typing import Annotated, ClassVar, override
 
 from pydantic import ConfigDict
+from typing_extensions import TypeForm
 
 from flext_core import c
 from flext_core._constants import FlextConstantsProjectMetadata as cpm
@@ -109,7 +109,7 @@ class FlextModelsBase(FlextModelsBasePart01):
                 title="Tags",
                 examples=[["billing", "critical"]],
             ),
-        ] = mp.Field(default_factory=tuple)
+        ] = mp.Field(default_factory=mp.empty(TypeForm(t.StrSequence)))
         attributes: Annotated[
             t.JsonMapping,
             mp.BeforeValidator(ur.validate_metadata_attributes),
@@ -118,7 +118,7 @@ class FlextModelsBase(FlextModelsBasePart01):
                 title="Attributes",
                 examples=[{"source": "api", "priority": "high"}],
             ),
-        ] = mp.Field(default_factory=lambda: MappingProxyType[str, t.JsonValue]({}))
+        ] = mp.Field(default_factory=mp.empty(TypeForm(t.JsonMapping)))
         metadata_value: Annotated[
             t.Scalar | None,
             mp.Field(default=None, description="Scalar metadata value."),

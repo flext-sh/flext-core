@@ -16,7 +16,7 @@ from flext_core import c, p, r, t, u
 
 
 class FlextUtilitiesDispatcherExecute:
-    """Canonical namespace owner."""
+    """Handler execution helper extracted from FlextDispatcher."""
 
     @staticmethod
     def _adapt_dispatcher_output(

@@ -6,8 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from types import MappingProxyType
 from typing import Annotated, ClassVar, Self
+
+from typing_extensions import TypeForm
 
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.pydantic import FlextModelsPydantic
@@ -130,7 +131,9 @@ class FlextModelsErrors:
                 description="Per-exception occurrence totals keyed by type name.",
             ),
         ] = FlextModelsPydantic.Field(
-            default_factory=lambda: MappingProxyType[str, int]({}),
+            default_factory=FlextModelsPydantic.empty(
+                TypeForm(FlextTypingBase.IntMapping),
+            ),
         )
         exception_counts_summary: Annotated[
             str,
@@ -176,7 +179,9 @@ class FlextModelsErrors:
                 description="Recorded counts keyed by exception type name.",
             ),
         ] = FlextModelsPydantic.Field(
-            default_factory=lambda: MappingProxyType[str, int]({}),
+            default_factory=FlextModelsPydantic.empty(
+                TypeForm(FlextTypingBase.IntMapping),
+            ),
         )
 
         @FlextUtilitiesPydantic.computed_field
@@ -220,10 +225,7 @@ class FlextModelsErrors:
                 A cleared metrics state.
 
             """
-            cleared: Self = self.model_copy(
-                update={"exception_counts": MappingProxyType({})},
-            )
-            return cleared
+            return type(self)()
 
         def snapshot(self) -> FlextModelsErrors.ExceptionMetricsSnapshot:
             """Build the validated public metrics snapshot.

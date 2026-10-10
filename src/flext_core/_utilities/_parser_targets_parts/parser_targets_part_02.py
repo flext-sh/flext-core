@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
 
     from flext_core import p
-    from flext_core._utilities.parser_coerce import FlextUtilitiesParserCoerce
+    from flext_core._models.config import FlextModelsConfig
 
 
 class FlextUtilitiesParserTargets(FlextUtilitiesParserTargetsPart01):
@@ -26,7 +26,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserTargetsPart01):
     def _parse_try_primitive[T](
         value: t.JsonPayload,
         target: type[T],
-        options: FlextUtilitiesParserCoerce.ParseOptions[T] | None = None,
+        options: FlextModelsConfig.ParseOptions[T] | None = None,
         **kwargs: t.JsonPayload,
     ) -> T | None:
         """Fall back to primitive type parsing.

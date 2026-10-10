@@ -72,6 +72,7 @@ if TYPE_CHECKING:
     from flext_core._models.flext_mixins import FlextMixins
     from flext_core._models.handler import FlextModelsHandler
     from flext_core._models.namespace import FlextModelsNamespace
+    from flext_core._models.options import FlextModelsOptions
     from flext_core._models.project_metadata import FlextModelsProjectMetadata
     from flext_core._models.pydantic import FlextModelsPydantic
     from flext_core._models.registry import FlextModelsRegistry
@@ -111,6 +112,7 @@ __all__: tuple[str, ...] = (
     "FlextModelsExceptionParams",
     "FlextModelsHandler",
     "FlextModelsNamespace",
+    "FlextModelsOptions",
     "FlextModelsProjectMetadata",
     "FlextModelsProjectMetadataAggregates",
     "FlextModelsProjectMetadataContract",
@@ -167,6 +169,7 @@ install_lazy_exports(
         "FlextModelsExceptionParams": ".exception_params",
         "FlextModelsHandler": ".handler",
         "FlextModelsNamespace": ".namespace",
+        "FlextModelsOptions": ".options",
         "FlextModelsProjectMetadata": ".project_metadata",
         "FlextModelsProjectMetadataAggregates": (
             "._project_metadata_parts.flextmodelsprojectmetadata_part_04"

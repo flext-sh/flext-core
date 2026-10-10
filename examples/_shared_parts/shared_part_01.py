@@ -8,15 +8,15 @@ from __future__ import annotations
 
 import hashlib
 import string
+from collections.abc import MutableSequence
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
+
+from typing_extensions import TypeForm
 
 from examples import m
 from flext_core import r, u
-
-if TYPE_CHECKING:
-    from collections.abc import MutableSequence
 
 
 class ExamplesFlextSharedBase(m.BaseModel):
@@ -26,7 +26,9 @@ class ExamplesFlextSharedBase(m.BaseModel):
     _BOOL_THRESHOLD: ClassVar[float] = 0.5
 
     caller_file: Path
-    _results: MutableSequence[str] = u.PrivateAttr(default_factory=list)
+    _results: MutableSequence[str] = u.PrivateAttr(
+        default_factory=u.empty(TypeForm(MutableSequence[str])),
+    )
     _counter: int = u.PrivateAttr(default_factory=lambda: 0)
 
     def __init__(self, caller_file: str | Path) -> None:

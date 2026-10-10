@@ -9,11 +9,13 @@ from __future__ import annotations
 from typing import Annotated, Literal
 
 from pydantic import Field
+from typing_extensions import TypeForm
 
 from flext_core._models._enforcement._base import (
     FlextModelsEnforcementBase,
     FlextModelsEnforcementModelBase,
 )
+from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._typings.base import FlextTypingBase
 
 
@@ -62,7 +64,11 @@ class FlextModelsEnforcementSources(FlextModelsEnforcementBase):
 
         kind: Literal["transformer", "rope", "manual"]
         target: str
-        params: FlextTypingBase.JsonMapping = Field(default_factory=dict)
+        params: FlextTypingBase.JsonMapping = Field(
+            default_factory=FlextModelsPydantic.empty(
+                TypeForm(FlextTypingBase.JsonMapping)
+            ),
+        )
         safe: bool = True
 
 

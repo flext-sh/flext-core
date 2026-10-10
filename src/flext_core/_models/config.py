@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Annotated, ClassVar
 
 from flext_core._models.base import FlextModelsBase
@@ -116,5 +117,107 @@ class FlextModelsConfig:
             ),
         ] = None
 
+    class ModelDumpOptions(FlextModelsBase.FlexibleInternalModel):
+        """Options controlling Pydantic model_dump() serialization behavior."""
+
+        by_alias: Annotated[
+            bool | None,
+            FlextModelsPydantic.Field(
+                description="Serialize using field aliases",
+                validate_default=True,
+            ),
+        ] = None
+        exclude_none: Annotated[
+            bool | None,
+            FlextModelsPydantic.Field(
+                description="Exclude None-valued fields",
+                validate_default=True,
+            ),
+        ] = None
+        exclude_unset: Annotated[
+            bool | None,
+            FlextModelsPydantic.Field(
+                description="Exclude fields not explicitly set",
+                validate_default=True,
+            ),
+        ] = None
+        exclude_defaults: Annotated[
+            bool | None,
+            FlextModelsPydantic.Field(
+                description="Exclude fields matching defaults",
+                validate_default=True,
+            ),
+        ] = None
+        include: Annotated[
+            set[str] | None,
+            FlextModelsPydantic.Field(
+                description="Whitelist of field names to include",
+                validate_default=True,
+            ),
+        ] = None
+        exclude: Annotated[
+            set[str] | None,
+            FlextModelsPydantic.Field(
+                description="Blacklist of field names to exclude",
+                validate_default=True,
+            ),
+        ] = None
+
+    class ParseOptions[T](FlextModelsBase.FlexibleInternalModel):
+        """Options controlling parsing behavior for string-to-type conversion."""
+
+        strict: Annotated[
+            bool | None,
+            FlextModelsPydantic.Field(
+                validate_default=True,
+                description="Reject coercions; fail on type mismatch",
+            ),
+        ] = None
+        case_insensitive: Annotated[
+            bool | None,
+            FlextModelsPydantic.Field(
+                validate_default=True,
+                description="Normalize case before parsing",
+            ),
+        ] = None
+        default: Annotated[
+            T | None,
+            FlextModelsPydantic.Field(
+                validate_default=True,
+                description="Fallback value when parsing fails",
+            ),
+        ] = None
+        default_factory: Annotated[
+            Callable[[], T] | None,
+            FlextModelsPydantic.Field(
+                validate_default=True,
+                description="Factory producing fallback value",
+            ),
+        ] = None
+        field_name: Annotated[
+            str | None,
+            FlextModelsPydantic.Field(
+                validate_default=True,
+                description="Source field name for error context",
+            ),
+        ] = None
+
+    class RetryOptions(FlextModelsBase.FlexibleInternalModel):
+        """Configuration options for retry logic."""
+
+        max_attempts: Annotated[
+            int | None,
+            FlextModelsPydantic.Field(
+                ge=1,
+                description="Maximum number of retry attempts",
+            ),
+        ] = None
+        delay_seconds: Annotated[
+            float | None,
+            FlextModelsPydantic.Field(
+                ge=0,
+                description="Initial delay between retries in seconds",
+            ),
+        ] = None
 
 __all__: list[str] = ["FlextModelsConfig"]

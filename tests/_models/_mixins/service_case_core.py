@@ -9,12 +9,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Annotated, ClassVar, override
 
 from flext_tests import r
+from typing_extensions import TypeForm
 
-from flext_core import m
+from flext_core import m, u
+from tests import t
 from tests.base import s
 
 if TYPE_CHECKING:
-    from tests import p, t
+    from tests import p
 
 
 class TestsFlextModelsServiceCaseCoreMixin:
@@ -86,7 +88,7 @@ class TestsFlextModelsServiceCaseCoreMixin:
         operations: Annotated[
             t.StrSequence,
             m.Field(description="Pipeline operations to execute"),
-        ] = m.Field(default_factory=tuple)
+        ] = m.Field(default_factory=u.empty(TypeForm(t.StrSequence)))
         expected_pipeline_length: Annotated[
             int,
             m.Field(description="Expected number of pipeline stages"),

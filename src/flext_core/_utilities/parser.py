@@ -14,6 +14,7 @@ from __future__ import annotations
 from enum import StrEnum
 
 from flext_core import c, p, r, t
+from flext_core._models.config import FlextModelsConfig
 from flext_core._utilities import (
     FlextUtilitiesGuardsTypeModel,
     FlextUtilitiesParserTargets,
@@ -28,7 +29,7 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
     def parse[T](
         value: t.JsonPayload,
         target: type[T],
-        options: FlextUtilitiesParserTargets.ParseOptions[T] | None = None,
+        options: FlextModelsConfig.ParseOptions[T] | None = None,
         **kwargs: t.JsonPayload,
     ) -> T:
         """Universal type parser supporting enums, models, and primitives.
@@ -44,7 +45,7 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
     def _dispatch[T](
         value: t.JsonPayload,
         target: type[T],
-        opts: FlextUtilitiesParserTargets.ParseOptions[T],
+        opts: FlextModelsConfig.ParseOptions[T],
         fp: str,
         kwargs: dict[str, t.JsonPayload],
     ) -> T:

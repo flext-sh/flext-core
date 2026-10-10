@@ -9,12 +9,14 @@ from __future__ import annotations
 from typing import Annotated, Literal
 
 from pydantic import Discriminator, Field
+from typing_extensions import TypeForm
 
 from flext_core._constants import FlextConstantsEnforcement
 from flext_core._models._enforcement._base import (
     FlextModelsEnforcementBase,
     FlextModelsEnforcementModelBase,
 )
+from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._typings.base import FlextTypingBase
 
 type EnforcementPredicateParams = (
@@ -112,7 +114,11 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         """Parameters for COMPATIBILITY_ALIAS predicate."""
 
         kind: Literal["compatibility_alias"] = "compatibility_alias"
-        alias_renames: FlextTypingBase.StrMapping = Field(default_factory=dict)
+        alias_renames: FlextTypingBase.StrMapping = Field(
+            default_factory=FlextModelsPydantic.empty(
+                TypeForm(FlextTypingBase.StrMapping)
+            ),
+        )
 
     class LibraryImportParams(FlextModelsEnforcementModelBase):
         """Parameters for the LIBRARY_IMPORT predicate.
@@ -139,7 +145,11 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         """Parameters for METHOD_SHAPE predicate."""
 
         kind: Literal["method_shape"] = "method_shape"
-        forbidden_prefixes: FlextTypingBase.StrMapping = Field(default_factory=dict)
+        forbidden_prefixes: FlextTypingBase.StrMapping = Field(
+            default_factory=FlextModelsPydantic.empty(
+                TypeForm(FlextTypingBase.StrMapping)
+            ),
+        )
         """Forbidden name prefix → the replacement it suggests."""
         require_static_or_classmethod: bool = False
 

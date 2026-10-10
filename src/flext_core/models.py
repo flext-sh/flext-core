@@ -28,6 +28,7 @@ from flext_core._models import (
     FlextModelsExceptionParams,
     FlextModelsHandler,
     FlextModelsNamespace,
+    FlextModelsOptions,
     FlextModelsProjectMetadata,
     FlextModelsPydantic,
     FlextModelsRegistry,
@@ -56,6 +57,7 @@ class FlextModels(
     FlextModelsSettings,
     FlextModelsExceptionParams,
     FlextModelsNamespace,
+    FlextModelsOptions,
     FlextModelsPydantic,
 ):
     """Facade that groups DDD building blocks for CQRS-ready domains.

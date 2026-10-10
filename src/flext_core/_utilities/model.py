@@ -14,51 +14,18 @@ from typing import overload
 from pydantic import TypeAdapter
 
 from flext_core import c, e, p, r, t
-from flext_core._models import FlextModelsBase, FlextModelsPydantic
+from flext_core._models import FlextModelsPydantic
+from flext_core._models.config import FlextModelsConfig
 from flext_core._utilities import FlextUtilitiesArgs
 
 
 class FlextUtilitiesModel:
     """Utilities for Pydantic model initialization."""
 
-    class ModelDumpOptions(FlextModelsBase.FlexibleInternalModel):
-        """Options controlling Pydantic model_dump() serialization behavior."""
-
-        by_alias: bool | None = FlextModelsPydantic.Field(
-            None,
-            description="Serialize using field aliases",
-            validate_default=True,
-        )
-        exclude_none: bool | None = FlextModelsPydantic.Field(
-            None,
-            description="Exclude None-valued fields",
-            validate_default=True,
-        )
-        exclude_unset: bool | None = FlextModelsPydantic.Field(
-            None,
-            description="Exclude fields not explicitly set",
-            validate_default=True,
-        )
-        exclude_defaults: bool | None = FlextModelsPydantic.Field(
-            None,
-            description="Exclude fields matching defaults",
-            validate_default=True,
-        )
-        include: set[str] | None = FlextModelsPydantic.Field(
-            None,
-            description="Whitelist of field names to include",
-            validate_default=True,
-        )
-        exclude: set[str] | None = FlextModelsPydantic.Field(
-            None,
-            description="Blacklist of field names to exclude",
-            validate_default=True,
-        )
-
     @staticmethod
     def dump(
         model: FlextModelsPydantic.BaseModel,
-        options: FlextUtilitiesModel.ModelDumpOptions | None = None,
+        options: FlextModelsConfig.ModelDumpOptions | None = None,
         **kwargs: t.JsonPayload,
     ) -> t.MappingKV[str, t.JsonPayload]:
         """Unified Pydantic serialization with options.
@@ -79,7 +46,7 @@ class FlextUtilitiesModel:
         opts = FlextUtilitiesArgs.resolve_options(
             options,
             kwargs,
-            FlextUtilitiesModel.ModelDumpOptions,
+            FlextModelsConfig.ModelDumpOptions,
         ).unwrap()
         opts_dict = opts.model_dump(exclude_none=True)
         dumped: t.JsonMapping = t.json_mapping_adapter().validate_python(
