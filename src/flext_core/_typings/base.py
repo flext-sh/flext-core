@@ -51,7 +51,9 @@ class FlextTypingBase(FlextTypesPydantic, FlextTypesAnnotateds):
     type SecretValue = FlextTypesPydantic.SecretStr | FlextTypesPydantic.SecretBytes
     type SettingsValue = FlextTypesPydantic.JsonValue | SecretValue | Path
 
-    type JsonValue = FlextTypesPydantic.JsonValue
+    # JsonValue is inherited from FlextTypesPydantic (the SSOT republished from
+    # pydantic): a class-local redefinition here is an incompatible
+    # variable override of the parent alias.
     type JsonMapping = MappingKV[str, FlextTypesPydantic.JsonValue]
     type JsonDict = dict[str, FlextTypesPydantic.JsonValue]
     type JsonValueList = list[FlextTypesPydantic.JsonValue]

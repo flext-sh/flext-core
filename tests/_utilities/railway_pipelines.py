@@ -13,6 +13,35 @@ from flext_tests import e, m as tm, r
 from tests import c, m, p
 from tests._utilities.railway_services import TestsFlextUtilitiesRailwayServicesMixin
 
+type _V1Payload = str | tm.Tests.User | m.Tests.EmailResponse
+
+
+def _v1_email_view(value: _V1Payload) -> str:
+    """Project one V1 pipeline payload onto its email view."""
+    return value.email if isinstance(value, tm.Tests.User) else str(value)
+
+
+def _v1_send_email(value: _V1Payload) -> p.Result[m.Tests.EmailResponse]:
+    """Send one V1 pipeline email for the current payload."""
+    to = value if isinstance(value, str) else str(value)
+    return TestsFlextUtilitiesRailwayPipelinesMixin.make(
+        TestsFlextUtilitiesRailwayPipelinesMixin.SendEmailService,
+        to=to,
+        subject="Test",
+    ).execute()
+
+
+def _v1_identity_response(
+    response: m.Tests.EmailResponse,
+) -> m.Tests.EmailResponse:
+    """Return one V1 pipeline email response unchanged."""
+    return response
+
+
+def _v1_status_view(value: _V1Payload) -> str:
+    """Project one V1 pipeline payload onto its status view."""
+    return value.status if isinstance(value, m.Tests.EmailResponse) else str(value)
+
 
 class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayServicesMixin):
     """Railway pipeline helpers."""
@@ -45,43 +74,11 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
         )
         for operation in case.operations:
             if operation == "get_email":
-
-                def _get_email(
-                    user: str | tm.Tests.User | m.Tests.EmailResponse,
-                ) -> str:
-                    return user.email if isinstance(user, tm.Tests.User) else str(user)
-
-                result = result.map(_get_email)
+                result = result.map(_v1_email_view)
             elif operation == "send_email":
-
-                def _send(
-                    email: str | tm.Tests.User | m.Tests.EmailResponse,
-                ) -> p.Result[m.Tests.EmailResponse]:
-                    to = email if isinstance(email, str) else str(email)
-                    return TestsFlextUtilitiesRailwayPipelinesMixin.make(
-                        TestsFlextUtilitiesRailwayPipelinesMixin.SendEmailService,
-                        to=to,
-                        subject="Test",
-                    ).execute()
-
-                email_result: p.Result[m.Tests.EmailResponse] = result.flat_map(_send)
-
-                def _identity(response: m.Tests.EmailResponse) -> m.Tests.EmailResponse:
-                    return response
-
-                result = email_result.map(_identity)
+                result = result.flat_map(_v1_send_email).map(_v1_identity_response)
             elif operation == "get_status":
-
-                def _get_status(
-                    response: str | tm.Tests.User | m.Tests.EmailResponse,
-                ) -> str:
-                    return (
-                        response.status
-                        if isinstance(response, m.Tests.EmailResponse)
-                        else str(response)
-                    )
-
-                result = result.map(_get_status)
+                result = result.map(_v1_status_view)
         return cast("p.ResultView[str | tm.Tests.User | m.Tests.EmailResponse]", result)
 
     @staticmethod

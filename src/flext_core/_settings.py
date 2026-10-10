@@ -69,25 +69,54 @@ def _resolve_env_file(namespace: str | None = None) -> str:
     return FlextConstantsSettings.ENV_FILE_DEFAULT
 
 
+def _platform_root(
+    apple_leaf: str,
+    windows_env_var: str,
+    windows_default: Path,
+    xdg_env_var: str,
+    xdg_default: Path,
+) -> Path:
+    """Return the OS-native user directory root for one platform convention.
+
+    Linux/BSD honour the XDG environment variable (falling back to the XDG
+    default under ``Path.home()``); macOS uses ``~/Library/<apple_leaf>``;
+    Windows uses the Windows environment variable (falling back to the
+    Windows default under ``Path.home()``). Module-level + stdlib-only so it
+    can seed field defaults without importing the facades (layer-0 purity).
+
+    Returns:
+        The resulting ``Path``.
+    """
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / apple_leaf
+    if sys.platform == "win32":
+        windows_override = os.environ.get(windows_env_var)
+        return (
+            Path(windows_override)
+            if windows_override
+            else Path.home() / windows_default
+        )
+    xdg_override = os.environ.get(xdg_env_var)
+    return Path(xdg_override) if xdg_override else Path.home() / xdg_default
+
+
 def _platform_cache_root() -> Path:
     """Return the OS-native user cache root for scratch/work directories.
 
     Linux/BSD honour ``XDG_CACHE_HOME`` (default ``~/.cache``); macOS uses
     ``~/Library/Caches``; Windows uses ``%LOCALAPPDATA%`` (default
-    ``~/AppData/Local``). Module-level + stdlib-only so it can seed a field
-    default without importing the facades (layer-0 purity).
+    ``~/AppData/Local``).
+
+    Returns:
+        The resulting ``Path``.
     """
-    if sys.platform == "darwin":
-        return Path.home() / "Library" / "Caches"
-    if sys.platform == "win32":
-        local_app_data = os.environ.get("LOCALAPPDATA")
-        return (
-            Path(local_app_data)
-            if local_app_data
-            else Path.home() / "AppData" / "Local"
-        )
-    xdg_cache_home = os.environ.get("XDG_CACHE_HOME")
-    return Path(xdg_cache_home) if xdg_cache_home else Path.home() / ".cache"
+    return _platform_root(
+        "Caches",
+        "LOCALAPPDATA",
+        Path("AppData") / "Local",
+        "XDG_CACHE_HOME",
+        Path(".cache"),
+    )
 
 
 def _platform_data_root() -> Path:
@@ -95,19 +124,18 @@ def _platform_data_root() -> Path:
 
     Linux/BSD honour ``XDG_DATA_HOME`` (default ``~/.local/share``); macOS uses
     ``~/Library/Application Support``; Windows uses ``%LOCALAPPDATA%`` (default
-    ``~/AppData/Local``). Module-level + stdlib-only for layer-0 purity.
+    ``~/AppData/Local``).
+
+    Returns:
+        The resulting ``Path``.
     """
-    if sys.platform == "darwin":
-        return Path.home() / "Library" / "Application Support"
-    if sys.platform == "win32":
-        local_app_data = os.environ.get("LOCALAPPDATA")
-        return (
-            Path(local_app_data)
-            if local_app_data
-            else Path.home() / "AppData" / "Local"
-        )
-    xdg_data_home = os.environ.get("XDG_DATA_HOME")
-    return Path(xdg_data_home) if xdg_data_home else Path.home() / ".local" / "share"
+    return _platform_root(
+        "Application Support",
+        "LOCALAPPDATA",
+        Path("AppData") / "Local",
+        "XDG_DATA_HOME",
+        Path(".local") / "share",
+    )
 
 
 def platform_config_root() -> Path:
@@ -115,15 +143,18 @@ def platform_config_root() -> Path:
 
     Linux/BSD honour ``XDG_CONFIG_HOME`` (default ``~/.config``); macOS uses
     ``~/Library/Application Support``; Windows uses ``%APPDATA%`` (default
-    ``~/AppData/Roaming``). Module-level + stdlib-only for layer-0 purity.
+    ``~/AppData/Roaming``).
+
+    Returns:
+        The resulting ``Path``.
     """
-    if sys.platform == "darwin":
-        return Path.home() / "Library" / "Application Support"
-    if sys.platform == "win32":
-        app_data = os.environ.get("APPDATA")
-        return Path(app_data) if app_data else Path.home() / "AppData" / "Roaming"
-    xdg_config_home = os.environ.get("XDG_CONFIG_HOME")
-    return Path(xdg_config_home) if xdg_config_home else Path.home() / ".config"
+    return _platform_root(
+        "Application Support",
+        "APPDATA",
+        Path("AppData") / "Roaming",
+        "XDG_CONFIG_HOME",
+        Path(".config"),
+    )
 
 
 def _platform_state_root() -> Path:
@@ -131,19 +162,18 @@ def _platform_state_root() -> Path:
 
     Linux/BSD honour ``XDG_STATE_HOME`` (default ``~/.local/state``); macOS uses
     ``~/Library/Application Support``; Windows uses ``%LOCALAPPDATA%`` (default
-    ``~/AppData/Local``). Module-level + stdlib-only for layer-0 purity.
+    ``~/AppData/Local``).
+
+    Returns:
+        The resulting ``Path``.
     """
-    if sys.platform == "darwin":
-        return Path.home() / "Library" / "Application Support"
-    if sys.platform == "win32":
-        local_app_data = os.environ.get("LOCALAPPDATA")
-        return (
-            Path(local_app_data)
-            if local_app_data
-            else Path.home() / "AppData" / "Local"
-        )
-    xdg_state_home = os.environ.get("XDG_STATE_HOME")
-    return Path(xdg_state_home) if xdg_state_home else Path.home() / ".local" / "state"
+    return _platform_root(
+        "Application Support",
+        "LOCALAPPDATA",
+        Path("AppData") / "Local",
+        "XDG_STATE_HOME",
+        Path(".local") / "state",
+    )
 
 
 def app_env_prefix(namespace: str) -> str:

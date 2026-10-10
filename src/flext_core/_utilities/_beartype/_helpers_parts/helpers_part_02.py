@@ -75,6 +75,24 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart01):
     _RUNTIME_MODULE_CACHE: ClassVar[dict[type, _types_mod.ModuleType]] = {}
 
     @staticmethod
+    def _runtime_module_candidate(target: type) -> _types_mod.ModuleType | None:
+        """Return the defining module of a top-level class if it is workspace-owned.
+
+        Returns:
+            The resulting ``_types_mod.ModuleType | None``.
+
+        """
+        module = inspect.getmodule(target)
+        if module is None or getattr(module, target.__name__, None) is not target:
+            return None
+        src_file = getattr(module, "__file__", None)
+        if not isinstance(src_file, str) or any(
+            marker in src_file for marker in c.ENFORCE_NON_WORKSPACE_PATH_MARKERS
+        ):
+            return None
+        return module
+
+    @staticmethod
     def runtime_module_for(target: type) -> _types_mod.ModuleType | None:
         """Resolve the defining module once the class is bound to it.
 
@@ -86,20 +104,13 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart01):
             The resulting ``_types_mod.ModuleType | None``.
 
         """
-        cached = FlextUtilitiesBeartypeHelpers._RUNTIME_MODULE_CACHE.get(target)
-        if cached is not None:
+        h = FlextUtilitiesBeartypeHelpers
+        cached = h._RUNTIME_MODULE_CACHE.get(target)
+        if cached is not None or "." in target.__qualname__:
             return cached
-        if "." in target.__qualname__:
-            return None
-        module = inspect.getmodule(target)
-        if module is None or getattr(module, target.__name__, None) is not target:
-            return None
-        src_file = getattr(module, "__file__", None)
-        if not isinstance(src_file, str):
-            return None
-        if any(m in src_file for m in c.ENFORCE_NON_WORKSPACE_PATH_MARKERS):
-            return None
-        FlextUtilitiesBeartypeHelpers._RUNTIME_MODULE_CACHE[target] = module
+        module = h._runtime_module_candidate(target)
+        if module is not None:
+            h._RUNTIME_MODULE_CACHE[target] = module
         return module
 
     @staticmethod

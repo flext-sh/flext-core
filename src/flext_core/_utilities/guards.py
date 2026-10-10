@@ -246,12 +246,11 @@ class FlextUtilitiesGuards(
         ) and FlextUtilitiesGuards._check_spec_ops(value, guard_spec, check_val)
 
     @staticmethod
-    def _check_special_constraints(
+    def _check_none_type_constraints(
         value: t.GuardInput,
         guard_spec: FlextModelsCollections.GuardCheckSpec,
-        check_val: t.Numeric,
     ) -> bool:
-        """Validate none/is_/not_/empty constraints independently of op checks.
+        """Validate none/is_/not_ constraints independently of emptiness checks.
 
         Returns:
             The resulting ``bool``.
@@ -263,7 +262,21 @@ class FlextUtilitiesGuards(
             return False
         if guard_spec.is_ is not None and not isinstance(value, guard_spec.is_):
             return False
-        if guard_spec.not_ is not None and isinstance(value, guard_spec.not_):
+        return not (guard_spec.not_ is not None and isinstance(value, guard_spec.not_))
+
+    @staticmethod
+    def _check_special_constraints(
+        value: t.GuardInput,
+        guard_spec: FlextModelsCollections.GuardCheckSpec,
+        check_val: t.Numeric,
+    ) -> bool:
+        """Validate none/is_/not_/empty constraints independently of op checks.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
+        if not FlextUtilitiesGuards._check_none_type_constraints(value, guard_spec):
             return False
         if guard_spec.empty is True and check_val != 0:
             return False

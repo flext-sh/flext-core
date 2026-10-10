@@ -108,10 +108,15 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart02):
                 or norm.startswith((
                     f"{en}[",
                     f"{en}Of[",
+                    f"{en}KV[",
                     f"typing.{en}[",
                     f"typing.{en}Of[",
+                    f"typing.{en}KV[",
                     f"collections.abc.{en}[",
+                    f"collections.abc.{en}Of[",
+                    f"collections.abc.{en}KV[",
                     f"t.{en}Of[",
+                    f"t.{en}KV[",
                 ))
             )
         org = get_origin(norm)

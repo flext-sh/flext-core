@@ -9,9 +9,9 @@ from __future__ import annotations
 from collections.abc import Mapping
 from enum import StrEnum
 from functools import cache
-from typing import Annotated
 
 from pydantic import ConfigDict, TypeAdapter
+from typing_extensions import TypeForm
 
 from flext_core._typings.annotateds import FlextTypesAnnotateds
 from flext_core._typings.base import FlextTypingBase
@@ -32,89 +32,89 @@ class FlextTypesTypeAdapterScalars:
     def int_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypesPydantic.StrictInt]:
-        return TypeAdapter(FlextTypesPydantic.StrictInt)
+        return TypeAdapter(TypeForm(FlextTypesPydantic.StrictInt))
 
     @classmethod
     @cache
     def scalar_adapter(cls) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.Scalar]:
-        return TypeAdapter(Annotated[FlextTypingBase.Scalar, None])
+        return TypeAdapter(TypeForm(FlextTypingBase.Scalar))
 
     @classmethod
     @cache
     def scalar_mapping_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.ScalarMapping]:
-        return TypeAdapter(Annotated[FlextTypingBase.ScalarMapping, None])
+        return TypeAdapter(TypeForm(FlextTypingBase.ScalarMapping))
 
     @classmethod
     @cache
     def float_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypesPydantic.StrictFloat]:
-        return TypeAdapter(FlextTypesPydantic.StrictFloat)
+        return TypeAdapter(TypeForm(FlextTypesPydantic.StrictFloat))
 
     @classmethod
     @cache
     def str_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypesPydantic.StrictStr]:
-        return TypeAdapter(FlextTypesPydantic.StrictStr)
+        return TypeAdapter(TypeForm(FlextTypesPydantic.StrictStr))
 
     @classmethod
     @cache
     def binary_content_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypesPydantic.StrictBytes]:
-        return TypeAdapter(FlextTypesPydantic.StrictBytes)
+        return TypeAdapter(TypeForm(FlextTypesPydantic.StrictBytes))
 
     @classmethod
     @cache
     def str_mapping_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.StrMapping]:
-        return TypeAdapter(Annotated[FlextTypingBase.StrMapping, None])
+        return TypeAdapter(TypeForm(FlextTypingBase.StrMapping))
 
     @classmethod
     @cache
     def header_mapping_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.HeaderMapping]:
-        return TypeAdapter(Annotated[FlextTypingBase.HeaderMapping, None])
+        return TypeAdapter(TypeForm(FlextTypingBase.HeaderMapping))
 
     @classmethod
     @cache
     def str_dict_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.StrDict]:
-        return TypeAdapter(Annotated[FlextTypingBase.StrDict, None])
+        return TypeAdapter(TypeForm(FlextTypingBase.StrDict))
 
     @classmethod
     @cache
     def int_dict_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.IntDict]:
-        return TypeAdapter(Annotated[FlextTypingBase.IntDict, None])
+        return TypeAdapter(TypeForm(FlextTypingBase.IntDict))
 
     @classmethod
     @cache
     def hostname_str_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypesAnnotateds.HostnameStr]:
-        return TypeAdapter(Annotated[FlextTypesAnnotateds.HostnameStr, None])
+        return TypeAdapter(TypeForm(FlextTypesAnnotateds.HostnameStr))
 
     @classmethod
     @cache
     def port_number_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypesAnnotateds.PortNumber]:
-        return TypeAdapter(Annotated[FlextTypesAnnotateds.PortNumber, None])
+        return TypeAdapter(TypeForm(FlextTypesAnnotateds.PortNumber))
 
     @classmethod
     @cache
     def str_sequence_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.StrSequence]:
-        return TypeAdapter(Annotated[FlextTypingBase.StrSequence, None])
+        return TypeAdapter(TypeForm(FlextTypingBase.StrSequence))
 
     @classmethod
     @cache
@@ -122,7 +122,7 @@ class FlextTypesTypeAdapterScalars:
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.StrSequence]:
         return TypeAdapter(
-            Annotated[FlextTypingBase.StrSequence, None], config=ConfigDict(strict=True)
+            TypeForm(FlextTypingBase.StrSequence), config=ConfigDict(strict=True)
         )
 
     @classmethod
@@ -130,7 +130,7 @@ class FlextTypesTypeAdapterScalars:
     def str_or_bytes_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypesCore.TextOrBinaryContent]:
-        return TypeAdapter(Annotated[FlextTypesCore.TextOrBinaryContent, None])
+        return TypeAdapter(TypeForm(FlextTypesCore.TextOrBinaryContent))
 
     @classmethod
     @cache
