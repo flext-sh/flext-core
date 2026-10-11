@@ -15,9 +15,10 @@ from typing_extensions import TypeForm
 from flext_core._typings.base import FlextTypingBase
 from flext_core._typings.pydantic import FlextTypesPydantic
 from flext_core._typings.services import FlextTypesServices
+from flext_core._utilities.base import FlextUtilitiesBase
 
 
-class FlextUtilitiesTypingAdapterJson:
+class FlextUtilitiesTypingAdapterJson(FlextUtilitiesBase):
     """JSON-shape cached TypeAdapter factories.
 
     Shared through the ``FlextUtilities`` facade.
@@ -50,7 +51,7 @@ class FlextUtilitiesTypingAdapterJson:
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.JsonMapping]:
         return cls.type_adapter(
-            TypeForm(TypeForm(FlextTypingBase.JsonMapping)),
+            TypeForm(FlextTypingBase.JsonMapping),
             config=ConfigDict(strict=True),
         )
 
@@ -69,7 +70,7 @@ class FlextUtilitiesTypingAdapterJson:
         FlextTypingBase.SequenceOf[FlextTypingBase.JsonDict]
     ]:
         return cls.type_adapter(
-            TypeForm(TypeForm(FlextTypingBase.SequenceOf[FlextTypingBase.JsonDict]))
+            TypeForm(FlextTypingBase.SequenceOf[FlextTypingBase.JsonDict])
         )
 
     @classmethod
@@ -80,7 +81,7 @@ class FlextUtilitiesTypingAdapterJson:
         FlextTypingBase.SequenceOf[FlextTypingBase.JsonMapping]
     ]:
         return cls.type_adapter(
-            TypeForm(TypeForm(FlextTypingBase.SequenceOf[FlextTypingBase.JsonMapping]))
+            TypeForm(FlextTypingBase.SequenceOf[FlextTypingBase.JsonMapping])
         )
 
     @classmethod
@@ -91,9 +92,7 @@ class FlextUtilitiesTypingAdapterJson:
         FlextTypingBase.MappingKV[str, FlextTypingBase.JsonMapping]
     ]:
         return cls.type_adapter(
-            TypeForm(
-                TypeForm(FlextTypingBase.MappingKV[str, FlextTypingBase.JsonMapping])
-            )
+            TypeForm(FlextTypingBase.MappingKV[str, FlextTypingBase.JsonMapping])
         )
 
     @classmethod
@@ -109,7 +108,7 @@ class FlextUtilitiesTypingAdapterJson:
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.JsonList]:
         return cls.type_adapter(
-            TypeForm(TypeForm(FlextTypingBase.JsonList)), config=ConfigDict(strict=True)
+            TypeForm(FlextTypingBase.JsonList), config=ConfigDict(strict=True)
         )
 
     @classmethod

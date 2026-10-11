@@ -11,12 +11,8 @@ from types import ModuleType
 from typing import TYPE_CHECKING
 
 from flext_core._lazy_parts.flextlazy_member import FlextLazyMember
-from flext_core._lazy_parts.flextlazy_part_01 import (
-    FlextLazyPart01,
-    LazyImportDict,
-    LazyImportMap,
-    MutableLazyImportMap,
-)
+from flext_core._lazy_parts.flextlazy_part_01 import FlextLazyPart01
+from flext_core._typings.base import FlextTypingBase
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -59,7 +55,7 @@ class FlextLazy(FlextLazyPart01):
     def get(
         self,
         name: str,
-        lazy_imports: LazyImportMap,
+        lazy_imports: FlextTypingBase.LazyImportMap,
         module_globals: ModuleGlobals,
         module_name: str,
     ) -> ModuleGlobalValue:
@@ -79,11 +75,7 @@ class FlextLazy(FlextLazyPart01):
             msg = f"module {module_name!r} has no attribute {name!r}"
             raise AttributeError(msg)
 
-        module_path, attr = (
-            (entry, name)
-            if isinstance(entry, str)
-            else self._alias_adapter.validate_python(entry)
-        )
+        module_path, attr = (entry, name) if isinstance(entry, str) else entry
 
         try:
             mod = self._load(module_path)
@@ -120,7 +112,10 @@ class FlextLazy(FlextLazyPart01):
         return value
 
     @staticmethod
-    def cleanup(module_name: str, lazy_imports: LazyImportMap) -> None:
+    def cleanup(
+        module_name: str,
+        lazy_imports: FlextTypingBase.LazyImportMap,
+    ) -> None:
         """Remove eager child module attrs."""
         current = sys.modules.get(module_name)
         if current is None:
@@ -138,11 +133,11 @@ class FlextLazy(FlextLazyPart01):
     def merge(
         self,
         child_module_paths: Sequence[str],
-        local_lazy_imports: LazyImportMap,
+        local_lazy_imports: FlextTypingBase.LazyImportMap,
         *,
         exclude_names: Sequence[str] = (),
         module_name: str | None = None,
-    ) -> MutableLazyImportMap:
+    ) -> FlextTypingBase.MutableLazyImportMap:
         """Merge child lazy maps with local entries.
 
         Returns:
@@ -150,7 +145,9 @@ class FlextLazy(FlextLazyPart01):
 
         """
         key = tuple(self._child_path(path, module_name) for path in child_module_paths)
-        children: LazyImportDict | None = self.child_merge_cache.get(key)
+        children: FlextTypingBase.LazyImportDict | None = self.child_merge_cache.get(
+            key
+        )
         if children is None:
             children = {}
             for path in key:
@@ -169,7 +166,7 @@ class FlextLazy(FlextLazyPart01):
         self,
         module_name: str,
         module_globals: ModuleGlobals,
-        lazy_imports: LazyImportMap,
+        lazy_imports: FlextTypingBase.LazyImportMap,
         *,
         publish_all: bool = True,
         public_exports: Sequence[str] | None = None,

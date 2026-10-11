@@ -19,7 +19,7 @@ from pydantic import (
     ConfigDict,
     Field,
     PrivateAttr,
-    TypeAdapter,
+    RootModel,
     ValidationError,
     computed_field,
 )
@@ -28,15 +28,6 @@ from flext_core._typings.base import FlextTypingBase
 
 if TYPE_CHECKING:
     from types import FrameType
-
-# Canonical lazy-import aliases are declared once on the typings owner
-# (``FlextTypingBase``); this module re-binds them for its runtime consumers.
-StrPair = FlextTypingBase.StrPair
-LazyImportEntry = FlextTypingBase.LazyImportEntry
-LazyImportMap = FlextTypingBase.LazyImportMap
-LazyImportDict = FlextTypingBase.LazyImportDict
-MutableLazyImportMap = FlextTypingBase.MutableLazyImportMap
-LazyImportAliasGroups = FlextTypingBase.LazyImportAliasGroups
 
 
 class FlextLazyPart01(BaseModel):
@@ -51,59 +42,51 @@ class FlextLazyPart01(BaseModel):
     # This bootstrap layer sits below the models facade (``u.empty``), so each
     # cache defaults through its own specialized ``dict``: typed for every
     # checker, and the same empty ``dict`` pydantic validates for the contract.
-    module_cache: dict[str, ModuleType] = Field(
+    module_cache: FlextTypingBase.MutableMappingKV[str, ModuleType] = Field(
         default_factory=dict[str, ModuleType],
     )
 
-    child_lazy_cache: dict[str, LazyImportDict] = Field(
-        default_factory=dict[str, LazyImportDict],
+    child_lazy_cache: FlextTypingBase.MutableMappingKV[
+        str, FlextTypingBase.LazyImportDict
+    ] = Field(
+        default_factory=dict[str, FlextTypingBase.LazyImportDict],
     )
 
-    child_merge_cache: dict[FlextTypingBase.VariadicTuple[str], LazyImportDict] = Field(
-        default_factory=dict[FlextTypingBase.VariadicTuple[str], LazyImportDict],
+    child_merge_cache: FlextTypingBase.MutableMappingKV[
+        FlextTypingBase.VariadicTuple[str], FlextTypingBase.LazyImportDict
+    ] = Field(
+        default_factory=dict[
+            FlextTypingBase.VariadicTuple[str], FlextTypingBase.LazyImportDict
+        ],
     )
 
     # The entry keeps its source map alive: an ``id()`` key alone is reused once a
     # transient map is freed, and would serve another map's normalization.
-    normalized_map_cache: dict[
+    normalized_map_cache: FlextTypingBase.MutableMappingKV[
         tuple[str, int],
-        tuple[LazyImportMap | None, LazyImportDict],
+        tuple[FlextTypingBase.LazyImportMap | None, FlextTypingBase.LazyImportDict],
     ] = Field(
         default_factory=dict[
             tuple[str, int],
-            tuple[LazyImportMap | None, LazyImportDict],
+            tuple[FlextTypingBase.LazyImportMap | None, FlextTypingBase.LazyImportDict],
         ],
     )
 
-    install_cache: dict[str, tuple[int, int, int, bool]] = Field(
-        default_factory=dict[str, tuple[int, int, int, bool]],
+    install_cache: FlextTypingBase.MutableMappingKV[str, tuple[int, int, int, bool]] = (
+        Field(
+            default_factory=dict[str, tuple[int, int, int, bool]],
+        )
     )
 
     _import_module: Callable[[str], ModuleType] = PrivateAttr(
         default_factory=lambda: importlib.import_module,
     )
 
-    _map_adapter: TypeAdapter[LazyImportDict] = PrivateAttr(
-        default_factory=lambda: TypeAdapter(LazyImportDict),
-    )
-
-    _alias_adapter: TypeAdapter[StrPair] = PrivateAttr(
-        default_factory=lambda: TypeAdapter(StrPair),
-    )
-
-    _activate_core_beartype: Callable[[], None] = PrivateAttr(
-        default_factory=lambda: (
-            importlib.import_module(
-                "flext_core._beartype_bootstrap",
-            ).FlextCoreBeartypeBootstrap.activate_package_beartype
-        ),
-    )
-
     _activating_core_beartype: bool = PrivateAttr(default=False)
 
     @computed_field
     @property
-    def cache_stats(self) -> dict[str, int]:
+    def cache_stats(self) -> FlextTypingBase.IntMapping:
         """Expose cache sizes for diagnostics/observability."""
         return {
             "module_cache": len(self.module_cache),
@@ -116,28 +99,34 @@ class FlextLazyPart01(BaseModel):
     @staticmethod
     def _norm_cache_key(
         module_path: str,
-        raw: LazyImportMap | None,
+        raw: FlextTypingBase.LazyImportMap | None,
     ) -> tuple[str, int]:
         return (module_path, id(raw))
 
-    def _norm_map(self, module_path: str, raw: LazyImportMap | None) -> LazyImportDict:
+    def _norm_map(
+        self,
+        module_path: str,
+        raw: FlextTypingBase.LazyImportMap | None,
+    ) -> FlextTypingBase.LazyImportDict:
         cache_key = self._norm_cache_key(module_path, raw)
         cached = self.normalized_map_cache.get(cache_key)
         if cached is not None and cached[0] is raw:
             return cached[1]
 
         try:
-            validated = self._map_adapter.validate_python(raw)
+            validated = (
+                RootModel[FlextTypingBase.LazyImportDict].model_validate(raw).root
+            )
         except ValidationError as exc:
             msg = f"module {module_path!r} has no valid _LAZY_IMPORTS mapping"
             raise TypeError(msg) from exc
 
-        out: LazyImportDict = {}
+        out: FlextTypingBase.LazyImportDict = {}
         for name, entry in validated.items():
             if isinstance(entry, str):
                 out[name] = self._child_path(entry, module_path)
                 continue
-            target, attr = self._alias_adapter.validate_python(entry)
+            target, attr = entry
             resolved = self._child_path(target, module_path)
             out[name] = (resolved, attr)
 
@@ -163,8 +152,8 @@ class FlextLazyPart01(BaseModel):
     def normalize_map(
         self,
         module_path: str,
-        raw: LazyImportMap | None,
-    ) -> LazyImportDict:
+        raw: FlextTypingBase.LazyImportMap | None,
+    ) -> FlextTypingBase.LazyImportDict:
         """Return normalized lazy-import entries for runtime metadata readers.
 
         Returns:
@@ -226,14 +215,19 @@ class FlextLazyPart01(BaseModel):
             self.module_cache[module_path] = mod
         return mod
 
-    def _child_map(self, module_path: str) -> LazyImportDict:
+    def _activate_core_beartype(self) -> None:
+        """Resolve the bootstrap only after the root installs its public bindings."""
+        bootstrap = self._import_module("flext_core._beartype_bootstrap")
+        bootstrap.FlextCoreBeartypeBootstrap.activate_package_beartype()
+
+    def _child_map(self, module_path: str) -> FlextTypingBase.LazyImportDict:
         cached = self.child_lazy_cache.get(module_path)
         if cached is not None:
             return cached
         child = self._load(module_path)
         raw_lazy_imports = vars(child).get("_LAZY_IMPORTS")
         if raw_lazy_imports is None:
-            normalized: LazyImportDict = {}
+            normalized: FlextTypingBase.LazyImportDict = {}
             self.child_lazy_cache[module_path] = normalized
             return normalized
         normalized = self._norm_map(child.__name__, raw_lazy_imports)
@@ -259,16 +253,16 @@ class FlextLazyPart01(BaseModel):
     def build_map(
         module_groups: Mapping[str, Sequence[str]] | None = None,
         *,
-        alias_groups: LazyImportAliasGroups | None = None,
+        alias_groups: FlextTypingBase.LazyImportAliasGroups | None = None,
         sort_keys: bool = True,
-    ) -> LazyImportDict:
+    ) -> FlextTypingBase.LazyImportDict:
         """Build one flat lazy-import map.
 
         Returns:
             The resulting ``LazyImportDict``.
 
         """
-        out: LazyImportDict = {
+        out: FlextTypingBase.LazyImportDict = {
             name: module
             for module, names in (module_groups or {}).items()
             for name in names
@@ -279,12 +273,4 @@ class FlextLazyPart01(BaseModel):
         return {name: out[name] for name in sorted(out)} if sort_keys else out
 
 
-__all__: list[str] = [
-    "FlextLazyPart01",
-    "LazyImportAliasGroups",
-    "LazyImportDict",
-    "LazyImportEntry",
-    "LazyImportMap",
-    "MutableLazyImportMap",
-    "StrPair",
-]
+__all__: list[str] = ["FlextLazyPart01"]

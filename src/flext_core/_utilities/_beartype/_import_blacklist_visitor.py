@@ -45,7 +45,6 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
             and not params.forbidden_symbols
             and not params.private_package_only
         ):
-            owner = FlextUtilitiesBeartypeImportBlacklistVisitor
             tier_prefixes = tuple(
                 value.__name__
                 for value in vars(module).values()
@@ -56,13 +55,13 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
                     {"file": filename, "import": name}
                     for name, value in vars(module).items()
                     if isinstance(value, type)
-                    and owner._cross_family_tier_member(
+                    and FlextUtilitiesBeartypeImportBlacklistVisitor._cross_family_tier_member(
                         name,
                         value,
                         module_name=module_name,
                         tier_prefixes=tier_prefixes,
                     )
-                    and not owner._family_base_exempt(
+                    and not FlextUtilitiesBeartypeImportBlacklistVisitor._family_base_exempt(
                         value,
                         target,
                         module,
@@ -71,7 +70,6 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
                 no_violation,
             )
         elif params.private_package_only:
-            owner = FlextUtilitiesBeartypeImportBlacklistVisitor
             package = module_name.split(".")[0]
             subpath = module_name.split(".")[1:]
             consumer_exempt = (
@@ -84,7 +82,7 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
                     (
                         {"import": name, "origin": origin, "file": filename}
                         for name, value in vars(module).items()
-                        if owner._is_private_family_import(
+                        if FlextUtilitiesBeartypeImportBlacklistVisitor._is_private_family_import(
                             value,
                             origin := _ubh.object_module_name_for(value) or "",
                             package,
@@ -129,12 +127,11 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
 
         """
         origin = _ubh.object_module_name_for(value) or ""
-        local_family = FlextUtilitiesBeartypeImportBlacklistVisitor
         if (
             name.startswith(tier_prefixes)
             and origin.startswith(c.NAMESPACE_FAMILY_PREFIX)
             and origin != module_name
-            and not local_family._is_local_family_import(
+            and not FlextUtilitiesBeartypeImportBlacklistVisitor._is_local_family_import(
                 origin,
                 module_name,
             )

@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar, override
 
-from flext_tests import r, u
+from flext_tests import r
 
-from tests import c, p, t
+from tests import c, m, p, t
 from tests._utilities.railway_services import TestsFlextUtilitiesRailwayServicesMixin
 from tests.base import s
 
@@ -39,7 +39,7 @@ class TestsFlextUtilitiesServicesMixin:
     class CountingService(s[int]):
         """Service whose only collaborator is the ``p.Tests.Counter`` port."""
 
-        counter: t.Port[p.Tests.Counter] = u.Field(
+        counter: t.Port[p.Tests.Counter] = m.Field(
             exclude=True,
             description="Counter port the service advances.",
         )
@@ -59,11 +59,11 @@ class TestsFlextUtilitiesServicesMixin:
 
         value_input: Annotated[
             str,
-            u.Field(description="String input validated by business rules."),
+            m.Field(description="String input validated by business rules."),
         ]
         min_length: Annotated[
             int,
-            u.Field(description="Minimum accepted input length."),
+            m.Field(description="Minimum accepted input length."),
         ] = c.Tests.MIN_LENGTH_DEFAULT
 
         @override

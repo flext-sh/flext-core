@@ -224,12 +224,6 @@ class FlextUtilitiesBeartypeFieldVisitor:
             The resulting ``t.StrMapping | None``.
 
         """
-        if not (
-            isinstance(model_type, type)
-            and isinstance(name, str)
-            and isinstance(info, FieldInfo)
-        ):
-            return None
         if params.require_description:
             return cls._field_description_violation(model_type, name, info)
         declared_annotation = vars(model_type).get("__annotations__", {}).get(name)

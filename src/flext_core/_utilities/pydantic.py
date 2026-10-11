@@ -26,13 +26,11 @@ from pydantic import (
 from pydantic_core import from_json, to_json, to_jsonable_python
 
 from flext_core._models import FlextModelsPydantic
-from flext_core._utilities.base import FlextUtilitiesBase
 from flext_core._utilities.typeadapter_json import FlextUtilitiesTypingAdapterJson
 from flext_core._utilities.typeadapter_scalars import FlextUtilitiesTypingAdapterScalars
 
 
 class FlextUtilitiesPydantic(
-    FlextUtilitiesBase,
     FlextUtilitiesTypingAdapterJson,
     FlextUtilitiesTypingAdapterScalars,
 ):

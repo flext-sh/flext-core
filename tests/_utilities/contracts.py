@@ -8,7 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from tests import c, tm, u
+from flext_core import u
+from tests import c, tm
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
