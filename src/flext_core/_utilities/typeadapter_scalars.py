@@ -10,7 +10,7 @@ from collections.abc import Mapping
 from enum import StrEnum
 from functools import cache
 
-from pydantic import ConfigDict, TypeAdapter as PydanticTypeAdapter
+from pydantic import ConfigDict, TypeAdapter
 from typing_extensions import TypeForm
 
 from flext_core._typings.annotateds import FlextTypesAnnotateds
@@ -22,7 +22,7 @@ from flext_core._typings.pydantic import FlextTypesPydantic
 class FlextUtilitiesTypingAdapterScalars:
     """Scalar and binary cached TypeAdapter factories."""
 
-    type_adapter = PydanticTypeAdapter
+    type_adapter = TypeAdapter
 
     @classmethod
     @cache
