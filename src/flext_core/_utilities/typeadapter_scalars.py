@@ -10,15 +10,13 @@ from collections.abc import Mapping
 from enum import StrEnum
 from functools import cache
 
-from pydantic import ConfigDict
-from pydantic import TypeAdapter as PydanticTypeAdapter
+from pydantic import ConfigDict, TypeAdapter as PydanticTypeAdapter
 from typing_extensions import TypeForm
 
 from flext_core._typings.annotateds import FlextTypesAnnotateds
 from flext_core._typings.base import FlextTypingBase
 from flext_core._typings.core import FlextTypesCore
 from flext_core._typings.pydantic import FlextTypesPydantic
-
 
 
 class FlextUtilitiesTypingAdapterScalars:
@@ -125,8 +123,9 @@ class FlextUtilitiesTypingAdapterScalars:
     def strict_str_sequence_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.StrSequence]:
-        return cls.type_adapter(TypeForm(
-            TypeForm(FlextTypingBase.StrSequence)), config=ConfigDict(strict=True)
+        return cls.type_adapter(
+            TypeForm(TypeForm(FlextTypingBase.StrSequence)),
+            config=ConfigDict(strict=True),
         )
 
     @classmethod

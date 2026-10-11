@@ -68,11 +68,7 @@ from pydantic import (
 )
 from pydantic.fields import FieldInfo as PydanticFieldInfo
 from pydantic_core import PydanticUndefined, PydanticUndefinedType
-from pydantic_settings import (
-    BaseSettings as PydanticBaseSettings,
-    PydanticBaseSettingsSource,
-    SettingsConfigDict,
-)
+from pydantic_settings import BaseSettings as PydanticBaseSettings, SettingsConfigDict
 from typing_extensions import TypeForm
 
 from flext_core._constants import FlextConstantsPydantic
