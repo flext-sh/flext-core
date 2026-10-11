@@ -14,10 +14,10 @@ from typing import TYPE_CHECKING
 
 import pytest
 import structlog
-from flext_tests import tm
 from pydantic import ValidationError
 
 from flext_core import m, p, t, u
+from tests import tm
 
 if TYPE_CHECKING:
     from collections.abc import Generator

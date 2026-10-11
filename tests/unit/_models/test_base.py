@@ -14,9 +14,8 @@ from __future__ import annotations
 from typing import Annotated
 
 import pytest
-from flext_tests import tm
 
-from tests import m, t
+from tests import m, t, tm
 
 
 class TestsFlextCoreBase:

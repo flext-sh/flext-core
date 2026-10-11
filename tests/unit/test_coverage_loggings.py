@@ -12,9 +12,8 @@ from contextlib import redirect_stdout
 from typing import TYPE_CHECKING, NoReturn
 
 import pytest
-from flext_tests import tm
 
-from tests import u
+from tests import tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable

@@ -10,10 +10,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
-from flext_tests import tm
-
 from flext_core import u
-from tests import m
+from tests import m, tm
 
 if TYPE_CHECKING:
     from tests import t

@@ -17,9 +17,8 @@ import textwrap
 from pathlib import Path
 
 import pytest
-from flext_tests import tm
 
-from tests import p, t
+from tests import p, t, tm
 from tests.utilities import u
 
 

@@ -14,10 +14,9 @@ from collections.abc import Callable, MutableSet, Set as AbstractSet
 from types import ModuleType
 
 import pytest
-from flext_tests import tm
 from typing_extensions import TypeForm
 
-from tests import m, t, u
+from tests import m, t, tm, u
 
 
 class TestsFlextUtilitiesPydanticEmpty:

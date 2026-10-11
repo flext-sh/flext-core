@@ -10,9 +10,8 @@ import math
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
-from tests import c, m
+from tests import c, m, tm
 
 if TYPE_CHECKING:
     from tests import t

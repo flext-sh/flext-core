@@ -13,9 +13,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 import structlog
-from flext_tests import tm
 
-from tests import c, u
+from tests import c, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator

@@ -13,10 +13,9 @@ from __future__ import annotations
 from enum import StrEnum
 
 import pytest
-from flext_tests import tm
 
 from flext_core import u
-from tests import c, t
+from tests import c, t, tm
 
 
 class TestsFlextCoreTypingsNew:
