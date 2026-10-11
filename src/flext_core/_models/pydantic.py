@@ -34,30 +34,31 @@ from typing import (
 if TYPE_CHECKING:
     from flext_core._typings.base import FlextTypingBase
 
+import pydantic
 from pydantic import (
     AfterValidator,
     AliasChoices,
     AliasPath,
-    BaseModel as PydanticBaseModel,
+    BaseModel,
     BeforeValidator,
     ConfigDict,
     Discriminator,
     FailFast,
     Field,
-    FieldSerializationInfo as PydanticFieldSerializationInfo,
+    FieldSerializationInfo,
     GetPydanticSchema,
-    InstanceOf as PydanticInstanceOf,
+    InstanceOf,
     JsonValue,
     PlainSerializer,
     PlainValidator,
-    PrivateAttr as PydanticPrivateAttr,
-    RootModel as PydanticRootModel,
+    PrivateAttr,
+    RootModel,
     SerializeAsAny,
     SkipValidation,
     StringConstraints,
-    TypeAdapter as PydanticTypeAdapter,
+    TypeAdapter,
     ValidateAs,
-    ValidationError as PydanticValidationError,
+    ValidationError,
     WrapSerializer,
     WrapValidator,
     computed_field,
@@ -66,9 +67,9 @@ from pydantic import (
     model_serializer,
     model_validator,
 )
-from pydantic.fields import FieldInfo as PydanticFieldInfo
+from pydantic.fields import FieldInfo
 from pydantic_core import PydanticUndefined, PydanticUndefinedType
-from pydantic_settings import BaseSettings as PydanticBaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing_extensions import TypeForm
 
 from flext_core._constants import FlextConstantsPydantic
@@ -122,7 +123,7 @@ type _FieldKeywordValue[DefaultT] = (
     _FieldValue
     | _FieldSchemaExtra
     | PydanticUndefinedType
-    | PydanticFieldInfo
+    | pydantic.FieldInfo
     | AliasChoices
     | AliasPath
     | Discriminator
@@ -185,7 +186,7 @@ class FlextModelsPydantic:
             The resulting ``PrivateT``.
 
         """
-        private_attr_factory: Callable[..., PrivateT] = PydanticPrivateAttr
+        private_attr_factory: Callable[..., PrivateT] = pydantic.PrivateAttr
         return private_attr_factory(default, default_factory=default_factory, init=init)
 
     class EmptyDefault[ContractT]:
@@ -208,7 +209,7 @@ class FlextModelsPydantic:
         def __init__(self, contract: TypeForm[ContractT]) -> None:
             """Bind the collection contract whose empty value this yields."""
             self.contract: TypeForm[ContractT] = contract
-            self._adapter: PydanticTypeAdapter[ContractT] | None = None
+            self._adapter: pydantic.TypeAdapter[ContractT] | None = None
             self._seed: bytes = b""
 
         @staticmethod
@@ -261,8 +262,8 @@ class FlextModelsPydantic:
                 # element is ever validated, so the adapter is typed at this
                 # single binding to the contract it stands for.
                 adapter = cast(
-                    "PydanticTypeAdapter[ContractT]",
-                    PydanticTypeAdapter(origin),
+                    "pydantic.TypeAdapter[ContractT]",
+                    pydantic.TypeAdapter(origin),
                 )
                 schema = adapter.json_schema()
                 shape = schema.get(FlextConstantsPydantic.JSON_SCHEMA_TYPE_KEY)
@@ -305,14 +306,14 @@ class FlextModelsPydantic:
         field_specifiers=(
             _field,
             Field,
-            PydanticPrivateAttr,
+            pydantic.PrivateAttr,
             _private_attr,
         ),
     )
-    class BaseModel(PydanticBaseModel):
+    class BaseModel(pydantic.BaseModel):
         """Canonical BaseModel exported through the FLEXT models facade."""
 
-    class BaseSettings(PydanticBaseSettings):
+    class BaseSettings(BaseSettings):
         """Canonical BaseSettings exported through the FLEXT models facade."""
 
     @dataclass_transform(
@@ -320,11 +321,11 @@ class FlextModelsPydantic:
         field_specifiers=(
             _field,
             Field,
-            PydanticPrivateAttr,
+            pydantic.PrivateAttr,
             _private_attr,
         ),
     )
-    class RootModel[RootValueT](PydanticRootModel[RootValueT]):
+    class RootModel[RootValueT](pydantic.RootModel[RootValueT]):
         """Canonical RootModel exported through the FLEXT models facade."""
 
     class ConfigDict(_PydanticConfigDict, total=False):
@@ -686,7 +687,7 @@ class FlextModelsPydantic:
     AfterValidator = AfterValidator
     BeforeValidator = BeforeValidator
     FailFast = FailFast
-    type InstanceOf[T] = PydanticInstanceOf[T]
+    type InstanceOf[T] = pydantic.InstanceOf[T]
     PlainValidator = PlainValidator
     ValidateAs = ValidateAs
     WrapValidator = WrapValidator
@@ -698,19 +699,19 @@ class FlextModelsPydantic:
 
     # Types of the pydantic final classes and protocols: annotation-only names.
     # ``u.type_adapter`` constructs the adapter this type describes.
-    type FieldInfo = PydanticFieldInfo
-    type FieldSerializationInfo = PydanticFieldSerializationInfo
-    type TypeAdapter[T] = PydanticTypeAdapter[T]
+    type FieldInfo = pydantic.FieldInfo
+    type FieldSerializationInfo = pydantic.FieldSerializationInfo
+    type TypeAdapter[T] = pydantic.TypeAdapter[T]
 
     # Annotation marker that wraps a callable schema hook.
     GetPydanticSchema = GetPydanticSchema
 
     # Validation exception (re-exported so consumers avoid `import pydantic`)
-    ValidationError = PydanticValidationError
+    ValidationError = pydantic.ValidationError
 
     # Settings-source hook contract: ``settings_customise_sources`` overrides
     # annotate the wide upstream base (Liskov-correct parameter widening).
-    type PydanticBaseSettings = PydanticBaseSettings
+    type PydanticBaseSettings = BaseSettings
     type PydanticBaseSettingsSource = PydanticBaseSettingsSource
 
 
