@@ -21,8 +21,9 @@ _MIN_FAMILY_MODULE_PARTS = 2
 class FlextUtilitiesBeartypeImportBlacklistVisitor:
     """IMPORT_BLACKLIST implementation extracted for LOC cap."""
 
-    @staticmethod
+    @classmethod
     def implementation(
+        cls,
         params: me.ImportBlacklistParams,
         target: type,
     ) -> t.StrMapping | None:
@@ -55,13 +56,13 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
                     {"file": filename, "import": name}
                     for name, value in vars(module).items()
                     if isinstance(value, type)
-                    and FlextUtilitiesBeartypeImportBlacklistVisitor._cross_family_tier_member(
+                    and cls._cross_family_tier_member(
                         name,
                         value,
                         module_name=module_name,
                         tier_prefixes=tier_prefixes,
                     )
-                    and not FlextUtilitiesBeartypeImportBlacklistVisitor._family_base_exempt(
+                    and not cls._family_base_exempt(
                         value,
                         target,
                         module,
@@ -82,7 +83,7 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
                     (
                         {"import": name, "origin": origin, "file": filename}
                         for name, value in vars(module).items()
-                        if FlextUtilitiesBeartypeImportBlacklistVisitor._is_private_family_import(
+                        if cls._is_private_family_import(
                             value,
                             origin := _ubh.object_module_name_for(value) or "",
                             package,
@@ -112,8 +113,9 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
                 )
         return violation
 
-    @staticmethod
+    @classmethod
     def _cross_family_tier_member(
+        cls,
         name: str,
         value: type,
         *,
@@ -131,7 +133,7 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
             name.startswith(tier_prefixes)
             and origin.startswith(c.NAMESPACE_FAMILY_PREFIX)
             and origin != module_name
-            and not FlextUtilitiesBeartypeImportBlacklistVisitor._is_local_family_import(
+            and not cls._is_local_family_import(
                 origin,
                 module_name,
             )
