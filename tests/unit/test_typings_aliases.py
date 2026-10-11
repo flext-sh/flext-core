@@ -19,10 +19,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
-from flext_tests import tm
 
 import flext_core
-from tests import c, p, t
+from tests import c, p, t, tm
 from tests.unit._typings_support import FLAT_ALIAS_NAMES, PUBLIC_ALIAS_NAMES
 
 LEGACY_GENERIC_NAMES: t.VariadicTuple[str] = (

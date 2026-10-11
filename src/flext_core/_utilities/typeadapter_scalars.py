@@ -11,20 +11,17 @@ from enum import StrEnum
 from functools import cache
 
 from pydantic import ConfigDict
-from pydantic import TypeAdapter as PydanticTypeAdapter
 from typing_extensions import TypeForm
 
 from flext_core._typings.annotateds import FlextTypesAnnotateds
 from flext_core._typings.base import FlextTypingBase
 from flext_core._typings.core import FlextTypesCore
 from flext_core._typings.pydantic import FlextTypesPydantic
+from flext_core._utilities.base import FlextUtilitiesBase
 
 
-
-class FlextUtilitiesTypingAdapterScalars:
+class FlextUtilitiesTypingAdapterScalars(FlextUtilitiesBase):
     """Scalar and binary cached TypeAdapter factories."""
-
-    type_adapter = PydanticTypeAdapter
 
     @classmethod
     @cache
@@ -125,8 +122,9 @@ class FlextUtilitiesTypingAdapterScalars:
     def strict_str_sequence_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.StrSequence]:
-        return cls.type_adapter(TypeForm(
-            TypeForm(FlextTypingBase.StrSequence)), config=ConfigDict(strict=True)
+        return cls.type_adapter(
+            TypeForm(FlextTypingBase.StrSequence),
+            config=ConfigDict(strict=True),
         )
 
     @classmethod
@@ -139,7 +137,7 @@ class FlextUtilitiesTypingAdapterScalars:
     @classmethod
     @cache
     def enum_type_adapter(cls) -> FlextTypesPydantic.TypeAdapter[type[StrEnum]]:
-        return cls.type_adapter(TypeForm(type[StrEnum]))
+        return cls.type_adapter(type[StrEnum])
 
     @classmethod
     @cache

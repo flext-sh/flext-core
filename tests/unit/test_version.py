@@ -15,10 +15,9 @@ from importlib.metadata import PackageMetadata, PathDistribution
 from pathlib import Path
 
 import pytest
-from flext_tests import tm
 
 from flext_core.__version__ import FlextVersion, __version__, __version_info__
-from tests import c
+from tests import c, tm
 
 
 class TestsFlextCoreVersion:

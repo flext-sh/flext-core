@@ -15,9 +15,8 @@ from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 import pytest
-from flext_tests import tm
 
-from tests import c, m, t
+from tests import c, m, t, tm
 
 
 class TestsFlextCoreModelsBaseFullCoverage:

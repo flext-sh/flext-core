@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import importlib
+import shutil
 import sys
 from collections.abc import Iterator
 from pathlib import Path
@@ -90,6 +91,37 @@ class TestsFlextCoreLazyExports:
         assert package.t is package.FlextTypes
         assert package.u is package.FlextUtilities
         assert {"FlextConstants", "FlextUtilities", "u"} <= set(package.__all__)
+
+    @staticmethod
+    def test_fresh_root_supports_bootstrap_public_facade_dependency(
+        tmp_path: Path,
+    ) -> None:
+        """Fresh public imports survive a facade-dependent bootstrap cutover."""
+        source = Path(__file__).resolve().parents[2] / "src" / "flext_core"
+        candidate = tmp_path / "flext_core"
+        shutil.copytree(source, candidate, ignore=shutil.ignore_patterns("__pycache__"))
+        bootstrap = candidate / "_beartype_bootstrap.py"
+        bootstrap.write_text(
+            bootstrap.read_text(encoding="utf-8") + "\nfrom flext_core import c\n",
+            encoding="utf-8",
+        )
+        script = (
+            "import sys\n"
+            f"sys.path.insert(0, {str(tmp_path)!r})\n"
+            "import flext_core\n"
+            f"assert flext_core.__file__ == {str(candidate / '__init__.py')!r}\n"
+            "from flext_core import c, t, m, u\n"
+            "assert c is flext_core.FlextConstants\n"
+            "assert t is flext_core.FlextTypes\n"
+            "assert m is flext_core.FlextModels\n"
+            "assert u is flext_core.FlextUtilities\n"
+            "from flext_cli import FlextCli\n"
+            "assert FlextCli\n"
+        )
+        result = u.Cli.run_raw([sys.executable, "-c", script], cwd=tmp_path)
+        assert result.success, result.error
+        assert result.value.outcome.raw_return_code == 0, result.value.stderr
+        assert result.value.stderr == ""
 
     @staticmethod
     def test_model_facade_does_not_import_web_runtime() -> None:

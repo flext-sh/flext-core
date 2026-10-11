@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from pydantic import (
     AfterValidator,
@@ -19,20 +19,19 @@ from pydantic import (
     SkipValidation,
     WrapSerializer,
     WrapValidator,
-    model_serializer,
     validate_call,
     with_config,
 )
 from pydantic_core import from_json, to_json, to_jsonable_python
 
 from flext_core._models import FlextModelsPydantic
-from flext_core._utilities.base import FlextUtilitiesBase
+from flext_core._protocols.pydantic import FlextProtocolsPydantic
 from flext_core._utilities.typeadapter_json import FlextUtilitiesTypingAdapterJson
 from flext_core._utilities.typeadapter_scalars import FlextUtilitiesTypingAdapterScalars
 
 
 class FlextUtilitiesPydantic(
-    FlextUtilitiesBase,
+    FlextModelsPydantic,
     FlextUtilitiesTypingAdapterJson,
     FlextUtilitiesTypingAdapterScalars,
 ):
@@ -61,15 +60,10 @@ class FlextUtilitiesPydantic(
     # constructor infers only its first arm. Runtime still uses the same factory.
     if TYPE_CHECKING:
         field_validator = FlextModelsPydantic.field_validator
-        field_serializer = FlextModelsPydantic.field_serializer
         model_validator = FlextModelsPydantic.model_validator
     else:
         field_validator = staticmethod(FlextModelsPydantic.field_validator)
-        field_serializer = staticmethod(FlextModelsPydantic.field_serializer)
         model_validator = staticmethod(FlextModelsPydantic.model_validator)
-
-    computed_field = staticmethod(FlextModelsPydantic.computed_field)
-    model_serializer = staticmethod(model_serializer)
 
     AfterValidator = AfterValidator
     BeforeValidator = FlextModelsPydantic.BeforeValidator
@@ -78,10 +72,7 @@ class FlextUtilitiesPydantic(
     PlainSerializer = PlainSerializer
     WrapSerializer = WrapSerializer
 
-    if TYPE_CHECKING:
-        validate_call = validate_call
-    else:
-        validate_call = staticmethod(validate_call)
+    validate_call: ClassVar[FlextProtocolsPydantic.ValidateCall] = validate_call
     with_config = staticmethod(with_config)
 
     from_json = staticmethod(from_json)

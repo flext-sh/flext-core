@@ -18,10 +18,9 @@ from types import ModuleType
 from typing import override
 
 import pytest
-from flext_tests import tm
 
 from flext_core import u
-from tests import m
+from tests import m, tm
 
 
 class TestsFlextCoreUtilitiesProjectMetadata:

@@ -16,10 +16,9 @@ from pathlib import Path
 from typing import cast
 
 import pytest
-from flext_tests import tm
 
 from flext_core import r
-from tests import c, m, p, u
+from tests import c, m, p, tm, u
 from tests.unit._project_metadata_support import write_pyproject
 
 

@@ -63,8 +63,6 @@ class TestsFlextExamplesExecution:
         script_path = repo_root / c.Tests.EXAMPLES_DIR / script_name
         actual_path = script_path.with_suffix(".actual")
         expected_path = script_path.with_suffix(".expected")
-        actual_path.unlink(missing_ok=True)
-
         output = tm.ok(
             u.Cli.run_raw(
                 [sys.executable, "-m", module_name],
@@ -75,10 +73,12 @@ class TestsFlextExamplesExecution:
         returncode = output.outcome.raw_return_code
         stdout, stderr = output.stdout, output.stderr
 
-        tm.that(returncode, eq=0)
+        tm.that(returncode, eq=0, msg=stdout + stderr)
         tm.that(stdout, has=f"PASS: {example_name}")
         tm.that(stdout, lacks="FAIL")
         tm.that(stderr, lacks="Traceback")
+        tm.that(stderr, lacks="FlextMroViolation")
+        assert re.search(r"\b\w*Warning:", stderr) is None, stderr
 
         check_match = tm.not_none(_CHECK_COUNT_RE.search(stdout))
         tm.that(int(check_match.group(1)), gt=0)

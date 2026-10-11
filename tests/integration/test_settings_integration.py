@@ -10,10 +10,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_tests import tm
 
 from flext_core import FlextContainer, FlextSettings, m
-from tests import c, u
+from tests import c, tm, u
 
 
 class TestsFlextSettingsIntegration:

@@ -68,29 +68,47 @@ class ExamplesFlextModelsEx04:
     class CreateUser(_CommandEnvelope):
         """Command to create a new user in example 04."""
 
-        command_type: str = "ex04_create_user"
-        event_type: str = "ex04_create_user_event"
+        command_type: t.NonEmptyStr = m.Field(
+            default="ex04_create_user", description="Create-user command identifier"
+        )
+        event_type: str = m.Field(
+            default="ex04_create_user_event", description="Create-user event identifier"
+        )
         username: Annotated[str, m.Field(description="Username for the user to create")]
 
     class GetUser(_QueryEnvelope):
         """Query to get a user record by username in example 04."""
 
-        query_type: str | None = "ex04_get_user"
-        event_type: str = "ex04_get_user_event"
+        query_type: str | None = m.Field(
+            default="ex04_get_user", description="Get-user query identifier"
+        )
+        event_type: str = m.Field(
+            default="ex04_get_user_event", description="Get-user event identifier"
+        )
         username: Annotated[str, m.Field(description="Username to retrieve")]
 
     class DeleteUser(_CommandEnvelope):
         """Command to delete a user in example 04."""
 
-        command_type: str = "ex04_delete_user"
-        event_type: str = "ex04_delete_user_event"
+        command_type: t.NonEmptyStr = m.Field(
+            default="ex04_delete_user", description="Delete-user command identifier"
+        )
+        event_type: str = m.Field(
+            default="ex04_delete_user_event", description="Delete-user event identifier"
+        )
         username: Annotated[str, m.Field(description="Username of the user to delete")]
 
     class FailingDelete(_CommandEnvelope):
         """Command deliberately fails to demonstrate error handling in example 04."""
 
-        command_type: str = "ex04_failing_delete"
-        event_type: str = "ex04_failing_delete_event"
+        command_type: t.NonEmptyStr = m.Field(
+            default="ex04_failing_delete",
+            description="Failing-delete command identifier",
+        )
+        event_type: str = m.Field(
+            default="ex04_failing_delete_event",
+            description="Failing-delete event identifier",
+        )
         username: Annotated[
             str,
             m.Field(description="Username for the failing delete operation"),
@@ -99,8 +117,14 @@ class ExamplesFlextModelsEx04:
     class AutoCommand(_CommandEnvelope):
         """Command carrying an arbitrary payload for auto-discovery in example 04."""
 
-        command_type: str = "ex04_auto_command"
-        event_type: str = "ex04_auto_command_event"
+        command_type: t.NonEmptyStr = m.Field(
+            default="ex04_auto_command",
+            description="Auto-discovered command identifier",
+        )
+        event_type: str = m.Field(
+            default="ex04_auto_command_event",
+            description="Auto-discovered event identifier",
+        )
         payload: Annotated[
             str,
             m.Field(description="Payload data for the auto command"),
@@ -109,15 +133,24 @@ class ExamplesFlextModelsEx04:
     class Ping(_CommandEnvelope):
         """Command carrying a value for the ping operation in example 04."""
 
-        command_type: str = "ex04_ping"
-        event_type: str = "ex04_ping_event"
+        command_type: t.NonEmptyStr = m.Field(
+            default="ex04_ping", description="Ping command identifier"
+        )
+        event_type: str = m.Field(
+            default="ex04_ping_event", description="Ping event identifier"
+        )
         value: Annotated[str, m.Field(description="Value data for the ping command")]
 
     class UnknownQuery(_QueryEnvelope):
         """Query that has no registered handler in example 04."""
 
-        query_type: str | None = "ex04_unknown_query"
-        event_type: str = "ex04_unknown_query_event"
+        query_type: str | None = m.Field(
+            default="ex04_unknown_query", description="Unregistered query identifier"
+        )
+        event_type: str = m.Field(
+            default="ex04_unknown_query_event",
+            description="Unregistered-query event identifier",
+        )
         payload: Annotated[
             str,
             m.Field(description="Payload data for the unknown query"),
@@ -126,8 +159,12 @@ class ExamplesFlextModelsEx04:
     class UserCreated(_EventEnvelope):
         """Event emitted after a user was created in example 04."""
 
-        event_type: str = "user_created"
-        aggregate_id: str = "users"
+        event_type: str = m.Field(
+            default="user_created", description="User-created event identifier"
+        )
+        aggregate_id: str = m.Field(
+            default="users", description="User aggregate identifier"
+        )
         username: Annotated[
             str,
             m.Field(description="Username of the user that was created"),
@@ -136,7 +173,9 @@ class ExamplesFlextModelsEx04:
     class NoSubscriberEvent(_EventEnvelope):
         """Event emitted with no registered subscribers in example 04."""
 
-        event_type: str = "no_subscribers"
+        event_type: str = m.Field(
+            default="no_subscribers", description="Unsubscribed event identifier"
+        )
         marker: Annotated[
             str,
             m.Field(

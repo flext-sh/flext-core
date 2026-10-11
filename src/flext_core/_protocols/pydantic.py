@@ -15,6 +15,8 @@ from typing import Protocol, overload, runtime_checkable
 
 import pydantic
 
+from flext_core._protocols.base import FlextProtocolsBase
+
 
 class FlextProtocolsPydantic:
     """Structural contracts exported from pydantic.
@@ -32,22 +34,15 @@ class FlextProtocolsPydantic:
     class FunctionDecorator(Protocol):
         """Decorator preserving each function's parameter and return types."""
 
-        def __call__[**ParametersT, ReturnT](
+        def __call__[CallT: Callable[..., FlextProtocolsBase.AttributeProbe]](
             self,
-            func: Callable[ParametersT, ReturnT],
+            func: CallT,
             /,
-        ) -> Callable[ParametersT, ReturnT]: ...
+        ) -> CallT: ...
 
     @runtime_checkable
     class ValidateCall(Protocol):
         """Pydantic's bare call validator and keyword-only decorator factory."""
-
-        @overload
-        def __call__[**ParametersT, ReturnT](
-            self,
-            func: Callable[ParametersT, ReturnT],
-            /,
-        ) -> Callable[ParametersT, ReturnT]: ...
 
         @overload
         def __call__(
@@ -56,3 +51,10 @@ class FlextProtocolsPydantic:
             config: pydantic.ConfigDict | None = None,
             validate_return: bool = False,
         ) -> FlextProtocolsPydantic.FunctionDecorator: ...
+
+        @overload
+        def __call__[CallT: Callable[..., FlextProtocolsBase.AttributeProbe]](
+            self,
+            func: CallT,
+            /,
+        ) -> CallT: ...

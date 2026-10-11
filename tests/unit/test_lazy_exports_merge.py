@@ -25,13 +25,53 @@ from flext_core.lazy import (
     merge_lazy_imports,
     normalize_lazy_imports,
 )
+from tests import u
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from flext_core import t
 
 
 class TestsFlextCoreLazyExportsMerge:
     """Behavior contract for merge/cache/normalize/build-map helpers."""
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        ("raw_literal", "accepted"),
+        [
+            ("{'Alpha': 'pkg.alpha'}", True),
+            ("{'Alpha': ('pkg.alpha', 'Alpha')}", True),
+            ("{'Alpha': ['pkg.alpha', 'Alpha']}", True),
+            ("None", False),
+            ("{'Alpha': ('pkg.alpha',)}", False),
+            ("{'Alpha': ('pkg.alpha', 'Alpha', 'extra')}", False),
+            ("{'Alpha': 123}", False),
+            ("{123: 'pkg.alpha'}", False),
+        ],
+    )
+    def test_fresh_normalizer_validates_the_public_lazy_entry_shape(
+        tmp_path: Path,
+        raw_literal: str,
+        accepted: bool,
+    ) -> None:
+        """The entry contract accepts strings/pairs and rejects malformed maps."""
+        script = (
+            "from flext_core.lazy import normalize_lazy_imports\n"
+            "try:\n"
+            f"    normalized = normalize_lazy_imports('pkg', {raw_literal})\n"
+            "except TypeError as exc:\n"
+            "    assert exc.__cause__ is not None\n"
+            "    print('rejected')\n"
+            "else:\n"
+            "    assert normalized['Alpha'] in ('pkg.alpha', ('pkg.alpha', 'Alpha'))\n"
+            "    print('accepted')\n"
+        )
+        result = u.Cli.run_raw([sys.executable, "-c", script], cwd=tmp_path)
+        assert result.success, result.error
+        assert result.value.outcome.raw_return_code == 0, result.value.stderr
+        assert result.value.stdout.strip() == ("accepted" if accepted else "rejected")
+        assert result.value.stderr == ""
 
     @staticmethod
     def test_merge_normalizes_child_relative_targets_to_absolute_paths() -> None:

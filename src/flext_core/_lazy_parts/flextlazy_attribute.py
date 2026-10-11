@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from flext_core._lazy_parts.flextlazy_part_01 import LazyImportMap
+from flext_core._typings.base import FlextTypingBase
 
 if TYPE_CHECKING:
     from flext_core._lazy_parts.flextlazy_part_02 import FlextLazy
@@ -28,7 +28,7 @@ class FlextLazyAttribute[T]:
         self,
         lazy: FlextLazy,
         name: str,
-        lazy_imports: LazyImportMap,
+        lazy_imports: FlextTypingBase.LazyImportMap,
         module_globals: ModuleGlobals,
         module_name: str,
     ) -> None:

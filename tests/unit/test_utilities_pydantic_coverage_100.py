@@ -10,6 +10,7 @@ from collections.abc import Callable
 from operator import itemgetter
 
 import pytest
+from flext_tests import tm
 from typing_extensions import TypeForm
 
 from flext_core import FlextModels, u
@@ -112,8 +113,8 @@ class TestsFlextUtilitiesPydantic:
         """Test the bare plain model serializer replaces the dump shape."""
         payload = m.Tests.PlainSerializedPayload.model_validate({"name": "ada"})
 
-        assert payload.model_dump() == "ada"
-        assert payload.model_dump(mode="json") == "ada"
+        tm.that(payload.model_dump(), eq=payload.name)
+        tm.that(payload.model_dump(mode="json"), eq=payload.name)
 
     @staticmethod
     def test_public_facade_supports_json_roundtrip() -> None:
@@ -151,13 +152,13 @@ class TestsFlextUtilitiesPydantic:
             config=m.ConfigDict(str_strip_whitespace=True),
             validate_return=True,
         )
-        def positive_length(value: str) -> t.PositiveInt:
-            return len(value)
+        def positive_checksum(value: str) -> t.PositiveInt:
+            return sum(ord(character) for character in value)
 
-        length: int = positive_length(value="  value  ")
-        assert length == len("value")
+        checksum: int = positive_checksum(value="  value  ")
+        assert checksum == sum(ord(character) for character in "value")
         with pytest.raises(m.ValidationError):
-            positive_length(value="  ")
+            positive_checksum(value="  ")
 
     @staticmethod
     def test_public_facade_resolves_runtime_bootstrap_options_from_json() -> None:
@@ -166,13 +167,7 @@ class TestsFlextUtilitiesPydantic:
             u.to_json({"settings_overrides": {"dry_run": True}}),
         )
 
-        @u.validate_call
-        def resolve_options(
-            options: m.RuntimeBootstrapOptions,
-        ) -> m.RuntimeBootstrapOptions:
-            return u.resolve_runtime_options(options)
-
-        resolved = resolve_options(runtime_options)
+        resolved = u.resolve_runtime_options(runtime_options)
 
         assert resolved.settings_overrides == {"dry_run": True}
         assert resolved.settings is None

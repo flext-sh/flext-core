@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Annotated, override
 
-from flext_tests import m as tm, r, u
+from flext_tests import m as tm, r
 
 from tests import c, m, t
 from tests._models.mixins import TestsFlextModelsMixins
@@ -26,7 +26,7 @@ class TestsFlextUtilitiesRailwayServicesMixin:
 
         user_id: Annotated[
             str,
-            u.Field(description="Identifier of the user to fetch."),
+            m.Field(description="Identifier of the user to fetch."),
         ] = ""
 
         @override
@@ -45,8 +45,8 @@ class TestsFlextUtilitiesRailwayServicesMixin:
     class SendEmailService(s[m.Tests.EmailResponse]):
         """Service to send email."""
 
-        to: Annotated[str, u.Field(description="Destination email address.")] = ""
-        subject: Annotated[str, u.Field(description="Email subject line.")] = ""
+        to: Annotated[str, m.Field(description="Destination email address.")] = ""
+        subject: Annotated[str, m.Field(description="Email subject line.")] = ""
 
         @override
         def execute(self) -> p.Result[m.Tests.EmailResponse]:

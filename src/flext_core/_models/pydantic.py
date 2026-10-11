@@ -15,13 +15,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from functools import cached_property, partialmethod
+from functools import partialmethod
 from pathlib import Path
 from re import Pattern
 from types import EllipsisType
 from typing import (
     TYPE_CHECKING,
     Annotated,
+    ClassVar,
     Literal,
     TypeAliasType,
     cast,
@@ -34,49 +35,37 @@ from typing import (
 if TYPE_CHECKING:
     from flext_core._typings.base import FlextTypingBase
 
+import pydantic
+import pydantic.fields
+import pydantic_settings
 from pydantic import (
     AfterValidator,
     AliasChoices,
     AliasPath,
-    BaseModel as PydanticBaseModel,
     BeforeValidator,
     ConfigDict,
     Discriminator,
     FailFast,
     Field,
-    FieldSerializationInfo as PydanticFieldSerializationInfo,
     GetPydanticSchema,
-    InstanceOf as PydanticInstanceOf,
     JsonValue,
     PlainSerializer,
     PlainValidator,
-    PrivateAttr as PydanticPrivateAttr,
-    RootModel as PydanticRootModel,
     SerializeAsAny,
     SkipValidation,
     StringConstraints,
-    TypeAdapter as PydanticTypeAdapter,
     ValidateAs,
-    ValidationError as PydanticValidationError,
     WrapSerializer,
     WrapValidator,
-    computed_field,
-    field_serializer,
     field_validator,
-    model_serializer,
     model_validator,
 )
-from pydantic.fields import FieldInfo as PydanticFieldInfo
 from pydantic_core import PydanticUndefined, PydanticUndefinedType
-from pydantic_settings import (
-    BaseSettings as PydanticBaseSettings,
-    PydanticBaseSettingsSource,
-    SettingsConfigDict,
-)
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing_extensions import TypeForm
 
 from flext_core._constants import FlextConstantsPydantic
-from flext_core._protocols import FlextProtocolsBase
+from flext_core._protocols.base import FlextProtocolsBase
 
 # Module-level alias bindings: the pydantic owner classes keep their published
 # names for the facade mirrors below while the imports stay unaliased.
@@ -95,38 +84,11 @@ type _FieldValidatorCallable = (
     | staticmethod[..., FlextProtocolsBase.AttributeProbe]
     | partialmethod[Callable[..., FlextProtocolsBase.AttributeProbe]]
 )
-# Contract for the class-member shapes ``field_serializer`` decorates: the
-# same function/descriptor shapes pydantic auto-wraps for serializers.
-type _FieldSerializerCallable = (
-    Callable[..., FlextProtocolsBase.AttributeProbe]
-    | classmethod[type, ..., FlextProtocolsBase.AttributeProbe]
-    | staticmethod[..., FlextProtocolsBase.AttributeProbe]
-    | partialmethod[Callable[..., FlextProtocolsBase.AttributeProbe]]
-)
-# Contract for the model-level callables ``model_validator`` decorates.
-type ModelValidatorCallable = (
-    Callable[..., FlextProtocolsBase.AttributeProbe]
-    | classmethod[type, ..., FlextProtocolsBase.AttributeProbe]
-    | staticmethod[..., FlextProtocolsBase.AttributeProbe]
-)
-# Contract for the class-member shapes ``computed_field`` decorates: the
-# property/cached_property descriptors pydantic rewraps for serialization.
-type ComputedFieldCallable = (
-    Callable[..., FlextProtocolsBase.AttributeProbe]
-    | property
-    | cached_property[FlextProtocolsBase.AttributeProbe]
-)
-# Contract for the model-level callables ``model_serializer`` decorates.
-type ModelSerializerCallable = (
-    Callable[..., FlextProtocolsBase.AttributeProbe]
-    | classmethod[type, ..., FlextProtocolsBase.AttributeProbe]
-    | staticmethod[..., FlextProtocolsBase.AttributeProbe]
-)
 type _FieldKeywordValue[DefaultT] = (
     _FieldValue
     | _FieldSchemaExtra
     | PydanticUndefinedType
-    | PydanticFieldInfo
+    | pydantic.fields.FieldInfo
     | AliasChoices
     | AliasPath
     | Discriminator
@@ -189,7 +151,7 @@ class FlextModelsPydantic:
             The resulting ``PrivateT``.
 
         """
-        private_attr_factory: Callable[..., PrivateT] = PydanticPrivateAttr
+        private_attr_factory: Callable[..., PrivateT] = pydantic.PrivateAttr
         return private_attr_factory(default, default_factory=default_factory, init=init)
 
     class EmptyDefault[ContractT]:
@@ -212,7 +174,7 @@ class FlextModelsPydantic:
         def __init__(self, contract: TypeForm[ContractT]) -> None:
             """Bind the collection contract whose empty value this yields."""
             self.contract: TypeForm[ContractT] = contract
-            self._adapter: PydanticTypeAdapter[ContractT] | None = None
+            self._adapter: pydantic.TypeAdapter[ContractT] | None = None
             self._seed: bytes = b""
 
         @staticmethod
@@ -265,8 +227,8 @@ class FlextModelsPydantic:
                 # element is ever validated, so the adapter is typed at this
                 # single binding to the contract it stands for.
                 adapter = cast(
-                    "PydanticTypeAdapter[ContractT]",
-                    PydanticTypeAdapter(origin),
+                    "pydantic.TypeAdapter[ContractT]",
+                    pydantic.TypeAdapter(origin),
                 )
                 schema = adapter.json_schema()
                 shape = schema.get(FlextConstantsPydantic.JSON_SCHEMA_TYPE_KEY)
@@ -309,14 +271,14 @@ class FlextModelsPydantic:
         field_specifiers=(
             _field,
             Field,
-            PydanticPrivateAttr,
+            pydantic.PrivateAttr,
             _private_attr,
         ),
     )
-    class BaseModel(PydanticBaseModel):
+    class BaseModel(pydantic.BaseModel):
         """Canonical BaseModel exported through the FLEXT models facade."""
 
-    class BaseSettings(PydanticBaseSettings):
+    class BaseSettings(BaseSettings):
         """Canonical BaseSettings exported through the FLEXT models facade."""
 
     @dataclass_transform(
@@ -324,11 +286,11 @@ class FlextModelsPydantic:
         field_specifiers=(
             _field,
             Field,
-            PydanticPrivateAttr,
+            pydantic.PrivateAttr,
             _private_attr,
         ),
     )
-    class RootModel[RootValueT](PydanticRootModel[RootValueT]):
+    class RootModel[RootValueT](pydantic.RootModel[RootValueT]):
         """Canonical RootModel exported through the FLEXT models facade."""
 
     class ConfigDict(_PydanticConfigDict, total=False):
@@ -337,8 +299,8 @@ class FlextModelsPydantic:
     class SettingsConfigDict(_PydanticSettingsConfigDict, total=False):
         """Canonical settings configuration exported through the models facade."""
 
-    Field = staticmethod(_field)
-    PrivateAttr = staticmethod(_private_attr)
+    Field = _field
+    PrivateAttr = _private_attr
     empty = staticmethod(_empty)
     SkipValidation = SkipValidation
     # ``field_validator`` must re-export pydantic's real overload surface. A
@@ -361,7 +323,9 @@ class FlextModelsPydantic:
             *fields: str,
             mode: Literal["wrap"],
             check_fields: bool | None = ...,
-            json_schema_input_type: FlextTypingBase.TypeHintSpecifier | None = ...,
+            json_schema_input_type: FlextTypingBase.TypeHintSpecifier
+            | PydanticUndefinedType
+            | None = ...,
         ) -> Callable[[ValidatorT], ValidatorT]: ...
 
         @overload
@@ -372,7 +336,9 @@ class FlextModelsPydantic:
             *fields: str,
             mode: Literal["before", "plain"],
             check_fields: bool | None = ...,
-            json_schema_input_type: FlextTypingBase.TypeHintSpecifier | None = ...,
+            json_schema_input_type: FlextTypingBase.TypeHintSpecifier
+            | PydanticUndefinedType
+            | None = ...,
         ) -> Callable[[ValidatorT], ValidatorT]: ...
 
         @overload
@@ -386,7 +352,7 @@ class FlextModelsPydantic:
         ) -> Callable[[ValidatorT], ValidatorT]: ...
 
         @staticmethod
-        def field_validator(
+        def field_validator[ValidatorT: _FieldValidatorCallable](
             field: str,
             /,
             *fields: str,
@@ -395,7 +361,7 @@ class FlextModelsPydantic:
             json_schema_input_type: FlextTypingBase.TypeHintSpecifier
             | PydanticUndefinedType
             | None = PydanticUndefined,
-        ) -> Callable[..., Callable[..., FlextProtocolsBase.AttributeProbe]]:
+        ) -> Callable[[ValidatorT], ValidatorT]:
             """Delegate to pydantic's ``field_validator`` (type-checking only).
 
             Returns:
@@ -404,7 +370,7 @@ class FlextModelsPydantic:
             """
             decorator_factory: Callable[
                 ...,
-                Callable[..., FlextProtocolsBase.AttributeProbe],
+                Callable[[ValidatorT], ValidatorT],
             ] = field_validator
             return decorator_factory(
                 field,
@@ -424,260 +390,17 @@ class FlextModelsPydantic:
     # (namespace chain violation). ``model_validator`` is the canonical
     # model-level counterpart of ``field_validator`` above, and its absence alone
     # forced bare pydantic imports across 32 downstream modules.
-    # ``field_serializer``/``model_validator`` mirror the ``field_validator``
-    # treatment: a plain-attr or ``staticmethod(...)`` re-export collapses
-    # pydantic's overload set (pyright resolves only the first overload —
-    # "Argument missing for parameter ``mode``" downstream), so the stacked
-    # ``@overload @staticmethod`` declarations carry the exact pydantic
-    # overload set for both checkers while runtime keeps pydantic's function.
-    if TYPE_CHECKING:
-
-        @overload
-        @staticmethod
-        def field_serializer[SerializerT: _FieldSerializerCallable](
-            field: str,
-            /,
-            *fields: str,
-            mode: Literal["wrap"],
-            return_type: FlextTypingBase.TypeHintSpecifier
-            | PydanticUndefinedType = ...,
-            when_used: Literal[
-                "always",
-                "unless-none",
-                "json",
-                "json-with-timestamps",
-            ] = ...,
-            check_fields: bool | None = ...,
-        ) -> Callable[[SerializerT], SerializerT]: ...
-
-        @overload
-        @staticmethod
-        def field_serializer[SerializerT: _FieldSerializerCallable](
-            field: str,
-            /,
-            *fields: str,
-            mode: Literal["plain"] = ...,
-            return_type: FlextTypingBase.TypeHintSpecifier
-            | PydanticUndefinedType = ...,
-            when_used: Literal[
-                "always",
-                "unless-none",
-                "json",
-                "json-with-timestamps",
-            ] = ...,
-            check_fields: bool | None = ...,
-        ) -> Callable[[SerializerT], SerializerT]: ...
-
-        @staticmethod
-        def field_serializer(
-            field: str,
-            /,
-            *fields: str,
-            mode: Literal["plain", "wrap"] = "plain",
-            return_type: FlextTypingBase.TypeHintSpecifier
-            | PydanticUndefinedType = PydanticUndefined,
-            when_used: Literal[
-                "always",
-                "unless-none",
-                "json",
-                "json-with-timestamps",
-            ] = "always",
-            check_fields: bool | None = None,
-        ) -> Callable[..., Callable[..., FlextProtocolsBase.AttributeProbe]]:
-            """Delegate to pydantic's ``field_serializer`` (type-checking only).
-
-            Returns:
-                The resulting pydantic decorator factory.
-
-            """
-            decorator_factory: Callable[
-                ...,
-                Callable[..., FlextProtocolsBase.AttributeProbe],
-            ] = field_serializer
-            return decorator_factory(
-                field,
-                *fields,
-                mode=mode,
-                return_type=return_type,
-                when_used=when_used,
-                check_fields=check_fields,
-            )
-
-        @overload
-        @staticmethod
-        def model_validator[ValidatorT: ModelValidatorCallable](
-            *,
-            mode: Literal["wrap"],
-        ) -> Callable[[ValidatorT], ValidatorT]: ...
-
-        @overload
-        @staticmethod
-        def model_validator[ValidatorT: ModelValidatorCallable](
-            *,
-            mode: Literal["before", "after"],
-        ) -> Callable[[ValidatorT], ValidatorT]: ...
-
-        @staticmethod
-        def model_validator(
-            *,
-            mode: Literal["wrap", "before", "after"],
-        ) -> Callable[..., Callable[..., FlextProtocolsBase.AttributeProbe]]:
-            """Delegate to pydantic's ``model_validator`` (type-checking only).
-
-            Returns:
-                The resulting pydantic decorator factory.
-
-            """
-            decorator_factory: Callable[
-                ...,
-                Callable[..., FlextProtocolsBase.AttributeProbe],
-            ] = model_validator
-            return decorator_factory(mode=mode)
-
-    else:
-        field_serializer = field_serializer
-        model_validator = model_validator
-
-    # ``computed_field``/``model_serializer`` complete the typed owner surface
-    # with the same treatment: a plain-attr re-export lets pyright bind the
-    # facade class as the first positional argument (``computed_field`` takes
-    # ``func`` positionally), and the ``staticmethod(...)`` wrap erased the
-    # overload set entirely — pyrefly/pyright read the decorator as Unknown and
-    # every decorated property degraded (flext-1wjg1.16/flext-8ag3t fleet
-    # defect; pydantic 2.13 ships kwargs-only + exclusion overloads the wrap
-    # never exposed). The stacked ``@overload @staticmethod`` declarations
-    # mirror pydantic's exact overload set for both checkers while runtime
-    # keeps pydantic's own function object.
-    if TYPE_CHECKING:
-
-        @overload
-        @staticmethod
-        def computed_field[PropertyT: ComputedFieldCallable](
-            func: PropertyT,
-            /,
-        ) -> PropertyT: ...
-
-        @overload
-        @staticmethod
-        def computed_field[PropertyT: ComputedFieldCallable](
-            *,
-            alias: str | None = ...,
-            alias_priority: int | None = ...,
-            exclude_if: Callable[[FlextProtocolsBase.AttributeProbe], bool]
-            | None = ...,
-            title: str | None = ...,
-            field_title_generator: Callable[
-                [FlextProtocolsBase.AttributeProbe, FlextProtocolsBase.AttributeProbe],
-                str,
-            ]
-            | None = ...,
-            description: str | None = ...,
-            deprecated: str | bool | None = ...,
-            examples: FlextTypingBase.JsonValueList | None = ...,
-            json_schema_extra: FlextTypingBase.JsonMapping
-            | Callable[[FlextTypingBase.JsonMapping], None]
-            | None = ...,
-            repr: bool = ...,
-            return_type: FlextTypingBase.TypeHintSpecifier = ...,
-        ) -> Callable[[PropertyT], PropertyT]: ...
-
-        @staticmethod
-        def computed_field(
-            func: ComputedFieldCallable | None = None,
-            /,
-            **options: FlextProtocolsBase.AttributeProbe,
-        ) -> FlextProtocolsBase.AttributeProbe:
-            """Delegate to pydantic's ``computed_field`` (type-checking only).
-
-            The keyword surface is carried by the stacked overloads above; the
-            implementation forwards the options verbatim, so the mirror cannot
-            drift from pydantic's signature one keyword at a time.
-
-            Returns:
-                The resulting pydantic decorator or decorated descriptor.
-
-            """
-            decorator_factory: Callable[
-                ...,
-                FlextProtocolsBase.AttributeProbe,
-            ] = computed_field
-            if func is None:
-                return decorator_factory(**options)
-            return decorator_factory(func)
-
-        @overload
-        @staticmethod
-        def model_serializer[SerializerT: ModelSerializerCallable](
-            f: SerializerT,
-            /,
-        ) -> SerializerT: ...
-
-        @overload
-        @staticmethod
-        def model_serializer[SerializerT: ModelSerializerCallable](
-            *,
-            mode: Literal["wrap"],
-            when_used: Literal[
-                "always",
-                "unless-none",
-                "json",
-                "json-with-timestamps",
-            ] = ...,
-            return_type: FlextTypingBase.TypeHintSpecifier
-            | PydanticUndefinedType = ...,
-        ) -> Callable[[SerializerT], SerializerT]: ...
-
-        @overload
-        @staticmethod
-        def model_serializer[SerializerT: ModelSerializerCallable](
-            *,
-            mode: Literal["plain"] = ...,
-            when_used: Literal[
-                "always",
-                "unless-none",
-                "json",
-                "json-with-timestamps",
-            ] = ...,
-            return_type: FlextTypingBase.TypeHintSpecifier
-            | PydanticUndefinedType = ...,
-        ) -> Callable[[SerializerT], SerializerT]: ...
-
-        @staticmethod
-        def model_serializer(
-            f: ModelSerializerCallable | None = None,
-            /,
-            *,
-            mode: Literal["plain", "wrap"] = "plain",
-            when_used: Literal[
-                "always",
-                "unless-none",
-                "json",
-                "json-with-timestamps",
-            ] = "always",
-            return_type: FlextTypingBase.TypeHintSpecifier
-            | PydanticUndefinedType = PydanticUndefined,
-        ) -> FlextProtocolsBase.AttributeProbe:
-            """Delegate to pydantic's ``model_serializer`` (type-checking only).
-
-            Returns:
-                The resulting pydantic decorator or decorated callable.
-
-            """
-            decorator_factory: Callable[
-                ...,
-                FlextProtocolsBase.AttributeProbe,
-            ] = model_serializer
-            if f is None:
-                return decorator_factory(
-                    mode=mode,
-                    when_used=when_used,
-                    return_type=return_type,
-                )
-            return decorator_factory(f)
-
-    else:
-        computed_field = computed_field
-        model_serializer = model_serializer
+    # Re-export native decorators with their complete upstream overload sets.
+    model_validator = model_validator
+    field_serializer: ClassVar[FlextProtocolsBase.FieldSerializerFactory] = (
+        pydantic.field_serializer
+    )
+    model_serializer: ClassVar[FlextProtocolsBase.ModelSerializerFactory] = (
+        pydantic.model_serializer
+    )
+    computed_field: ClassVar[FlextProtocolsBase.ComputedFieldFactory] = (
+        pydantic.computed_field
+    )
 
     # Annotation constraints and tagged-union discrimination
     Discriminator = Discriminator
@@ -690,7 +413,7 @@ class FlextModelsPydantic:
     AfterValidator = AfterValidator
     BeforeValidator = BeforeValidator
     FailFast = FailFast
-    type InstanceOf[T] = PydanticInstanceOf[T]
+    type InstanceOf[T] = pydantic.InstanceOf[T]
     PlainValidator = PlainValidator
     ValidateAs = ValidateAs
     WrapValidator = WrapValidator
@@ -702,20 +425,20 @@ class FlextModelsPydantic:
 
     # Types of the pydantic final classes and protocols: annotation-only names.
     # ``u.type_adapter`` constructs the adapter this type describes.
-    type FieldInfo = PydanticFieldInfo
-    type FieldSerializationInfo = PydanticFieldSerializationInfo
-    type TypeAdapter[T] = PydanticTypeAdapter[T]
+    type FieldInfo = pydantic.fields.FieldInfo
+    type FieldSerializationInfo = pydantic.FieldSerializationInfo
+    type TypeAdapter[T] = pydantic.TypeAdapter[T]
 
     # Annotation marker that wraps a callable schema hook.
     GetPydanticSchema = GetPydanticSchema
 
     # Validation exception (re-exported so consumers avoid `import pydantic`)
-    ValidationError = PydanticValidationError
+    ValidationError = pydantic.ValidationError
 
     # Settings-source hook contract: ``settings_customise_sources`` overrides
     # annotate the wide upstream base (Liskov-correct parameter widening).
-    type PydanticBaseSettings = PydanticBaseSettings
-    type PydanticBaseSettingsSource = PydanticBaseSettingsSource
+    type PydanticBaseSettings = pydantic_settings.BaseSettings
+    type PydanticBaseSettingsSource = pydantic_settings.PydanticBaseSettingsSource
 
 
 __all__: list[str] = ["FlextModelsPydantic"]

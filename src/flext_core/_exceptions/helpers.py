@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
-from pydantic import ValidationError as PydanticValidationError
+from pydantic import ValidationError
 
 from flext_core._constants import (
     FlextConstantsErrorsValidationExceptions,
@@ -86,7 +86,7 @@ class FlextExceptionsHelpers:
                     value,
                     from_attributes=True,
                 )
-            except (PydanticValidationError, TypeError):
+            except (ValidationError, TypeError):
                 if isinstance(value, (Mapping, FlextProtocolsResult.HasModelDump)):
                     try:
                         validation = FlextRuntimeMetadataValidation

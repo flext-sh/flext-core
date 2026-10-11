@@ -28,6 +28,7 @@ from flext_core._typings.lazy import FlextTypesLazy
 from flext_core._typings.project_metadata import FlextTypingProjectMetadata
 from flext_core._typings.pydantic import FlextTypesPydantic
 from flext_core._typings.services import FlextTypesServices
+from flext_core._typings.typeadapters import FlextTypesTypeAdapters
 
 
 class FlextTypes(
@@ -37,6 +38,7 @@ class FlextTypes(
     FlextTypesCore,
     FlextTypesLazy,
     FlextTypesServices,
+    FlextTypesTypeAdapters,
     FlextTypingProjectMetadata,
 ):
     """Type system foundation for FLEXT ecosystem.

@@ -15,10 +15,9 @@ from __future__ import annotations
 from typing import Annotated
 
 import pytest
-from flext_tests import tm
 
 from flext_core import c, t
-from tests import m
+from tests import m, tm
 
 
 class TestsFlextCoreCqrs:

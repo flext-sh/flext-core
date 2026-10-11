@@ -9,11 +9,10 @@ from __future__ import annotations
 from collections.abc import Iterator
 
 import pytest
-from flext_tests import tm
 from hypothesis import assume, given, settings, strategies as st
 
 from flext_core.container import FlextContainer
-from tests import c, e
+from tests import c, e, tm
 
 
 class TestsFlextCoreContainerProperties:

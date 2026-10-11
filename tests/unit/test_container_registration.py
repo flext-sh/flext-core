@@ -9,10 +9,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
 from flext_core.container import FlextContainer
-from tests import c, e, m, p, u
+from tests import c, e, m, p, tm, u
 
 if TYPE_CHECKING:
     from tests import t
