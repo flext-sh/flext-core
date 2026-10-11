@@ -28,6 +28,7 @@ from pathlib import Path
 from threading import RLock
 from typing import TYPE_CHECKING, ClassVar, Self, override
 
+from pydantic import ValidationError
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
@@ -221,7 +222,14 @@ class FlextConfig(BaseSettings):
             instance = cls.__dict__.get("_instance")
             if isinstance(instance, cls):
                 return instance
-            created = cls()
+            try:
+                created = cls()
+            except ValidationError as error:
+                sources = ", ".join(str(path) for path in cls._config_files())
+                error.add_note(
+                    f"Configuration owner: {inspect.getfile(cls)}; sources: {sources}"
+                )
+                raise
             cls._instance = created
             return created
 
