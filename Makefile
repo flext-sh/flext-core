@@ -1785,7 +1785,6 @@ _builtin_test_file_all: _builtin_require_environment
 	case "$(FILE)" in /*|*..*) printf 'ERROR: FILE must stay a repository-relative path: %s\n' "$(FILE)" >&2; exit 2 ;; esac; \
 	if [ ! -f "$(PROJECT_ROOT)/$(FILE)" ]; then printf 'ERROR: FILE is not an existing repository file: %s\n' "$(FILE)" >&2; exit 2; fi; \
 	export FLEXT_PYTEST_TARGET_FILE="$(FILE)"; \
-	
 	set -eu; \
 	database="$(FLEXT_PYTEST_TESTMON_DATABASE)"; \
 	case "$$database" in /*) ;; *) printf 'ERROR: persistent testmon database requires XDG_CACHE_HOME or HOME\n' >&2; exit 2 ;; esac; \
