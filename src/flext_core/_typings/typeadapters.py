@@ -14,7 +14,10 @@ from flext_core._utilities.typeadapter_json import FlextUtilitiesTypingAdapterJs
 from flext_core._utilities.typeadapter_scalars import FlextUtilitiesTypingAdapterScalars
 
 
-class FlextTypesTypeAdapters(FlextUtilitiesTypingAdapterJson, FlextUtilitiesTypingAdapterScalars):
+class FlextTypesTypeAdapters(
+    FlextUtilitiesTypingAdapterJson,
+    FlextUtilitiesTypingAdapterScalars,
+):
     """Cached ``FlextTypesPydantic.TypeAdapter`` factories.
 
     JSON-shape factories live in ``FlextUtilitiesTypingAdapterJson`` and
