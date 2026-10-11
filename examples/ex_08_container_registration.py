@@ -8,19 +8,32 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from examples import c, p, t, u
+from examples import c, p, t
 from examples.shared import ExamplesFlextShared
 from flext_core import e, r
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from pathlib import Path
 
 
 class ExamplesFlextContainerRegistration(ExamplesFlextShared):
     """Registration and resolution checks for the container example."""
 
-    _registered_service_name: str = u.PrivateAttr(default_factory=str)
-    _registered_service_value: int = u.PrivateAttr(default_factory=int)
+    _registered_service_name: str
+    _registered_service_value: int
+
+    def __init__(self, caller_file: str | Path) -> None:
+        """Create independent registration state for this example invocation."""
+        super().__init__(caller_file)
+        self._registered_service_name = ""
+        self._registered_service_value = 0
+        self._registered_factory_name = ""
+        self._registered_resource_name = ""
+        self._registered_missing_name = ""
+        self._registered_bad_factory_name = ""
+        self._factory_calls = {"count": 0}
+        self._resource_calls = {"count": 0}
 
     @staticmethod
     def _write_outcome(write: Callable[[], p.Container]) -> p.Result[bool]:
@@ -36,16 +49,12 @@ class ExamplesFlextContainerRegistration(ExamplesFlextShared):
             return r[bool].fail_op("container write", exc)
         return r[bool].ok(value=True)
 
-    _registered_factory_name: str = u.PrivateAttr(default_factory=str)
-    _registered_resource_name: str = u.PrivateAttr(default_factory=str)
-    _registered_missing_name: str = u.PrivateAttr(default_factory=str)
-    _registered_bad_factory_name: str = u.PrivateAttr(default_factory=str)
-    _factory_calls: t.IntDict = u.PrivateAttr(
-        default_factory=lambda: {"count": 0},
-    )
-    _resource_calls: t.IntDict = u.PrivateAttr(
-        default_factory=lambda: {"count": 0},
-    )
+    _registered_factory_name: str
+    _registered_resource_name: str
+    _registered_missing_name: str
+    _registered_bad_factory_name: str
+    _factory_calls: t.IntDict
+    _resource_calls: t.IntDict
 
     def _exercise_registration_and_resolution(self, container: p.Container) -> None:
         """Exercise register APIs plus get/get_typed/list/has checks."""

@@ -21,7 +21,6 @@ from flext_core._utilities import (
 
 if TYPE_CHECKING:
     from flext_core import m
-    from flext_core._typings import FlextTypesServices
 
 
 class FlextRuntimeMetadata(FlextRuntimeBase):
@@ -29,7 +28,7 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
 
     @staticmethod
     def normalize_to_json_value(
-        value: FlextTypesServices.JsonPayload
+        value: t.JsonPayload
         | t.Scalar
         | Path
         | m.ConfigMap
@@ -63,7 +62,7 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
 
     @staticmethod
     def normalize_to_json_mapping(
-        value: t.MappingKV[str, FlextTypesServices.JsonPayload | t.Scalar],
+        value: t.MappingKV[str, t.JsonPayload | t.Scalar],
     ) -> t.JsonMapping:
         """Normalize a mapping to a validated ``JsonMapping``.
 
@@ -77,7 +76,7 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
 
     @staticmethod
     def _normalize_dict_entries(
-        items: t.SequenceOf[t.Pair[str, FlextTypesServices.JsonPayload]],
+        items: t.SequenceOf[t.Pair[str, t.JsonPayload]],
     ) -> t.JsonDict:
         """Normalize key-value pairs for container dict construction.
 
@@ -98,8 +97,8 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
     def normalize_model_input_mapping(
         value: m.BaseModel
         | m.Dict
-        | FlextTypesServices.ConfigModelInput
-        | t.MappingKV[str, FlextTypesServices.JsonPayload]
+        | t.ConfigModelInput
+        | t.MappingKV[str, t.JsonPayload]
         | None,
     ) -> t.JsonMapping | None:
         """Normalize model-like input to a plain mapping.
@@ -126,7 +125,7 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
 
     @staticmethod
     def normalize_to_metadata(
-        val: FlextTypesServices.JsonPayload
+        val: t.JsonPayload
         | t.Scalar
         | Path
         | m.ConfigMap

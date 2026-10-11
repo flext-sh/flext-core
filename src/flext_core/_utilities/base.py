@@ -18,8 +18,7 @@ class FlextUtilitiesBase:
     """
 
     # Runtime/model bootstrap consumers cannot depend on the composed facade.
-    TypeAdapter = PydanticTypeAdapter
-    type_adapter = TypeAdapter
+    type_adapter = PydanticTypeAdapter
 
 
 __all__: list[str] = ["FlextUtilitiesBase"]

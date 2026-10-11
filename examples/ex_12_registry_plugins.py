@@ -8,25 +8,30 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from typing_extensions import TypeForm
-
-from examples import c, m, u
+from examples import c, m
 from examples.ex_12_registry_flow import ExamplesFlextRegistryFlow
 from examples.ex_12_registry_support import ProtocolHandler, as_registry_handler
 from flext_core import r, t
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from examples import p
 
 
 class ExamplesFlextRegistryPlugins(ExamplesFlextRegistryFlow):
     """Plugin and service registration checks for the registry example."""
 
-    _handler_a: ProtocolHandler | None = u.PrivateAttr(default=None)
-    _handler_b: ProtocolHandler | None = u.PrivateAttr(default=None)
-    _plugin_inputs: t.StrDict = u.PrivateAttr(
-        default_factory=u.empty(TypeForm(dict[str, str])),
-    )
+    _handler_a: ProtocolHandler | None
+    _handler_b: ProtocolHandler | None
+    _plugin_inputs: t.StrDict
+
+    def __init__(self, caller_file: str | Path) -> None:
+        """Create independent plugin state for this example invocation."""
+        super().__init__(caller_file)
+        self._handler_a = None
+        self._handler_b = None
+        self._plugin_inputs = {}
 
     def _exercise_bindings_and_plugin_apis(
         self,

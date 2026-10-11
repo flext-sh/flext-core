@@ -14,7 +14,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Annotated
 
 import pydantic
 import pydantic_core
@@ -32,6 +31,7 @@ class FlextTypesPydantic:
     """
 
     # String constraints
+    type ComputedFieldInfo = pydantic.fields.ComputedFieldInfo
     constr = pydantic.constr
     type StrictStr = pydantic.StrictStr
     type EmailStr = pydantic.EmailStr
@@ -178,4 +178,4 @@ class FlextTypesPydantic:
     # on assignment, and the port never enters the JSON Schema. Declare the field
     # with ``m.Field(exclude=True, description=...)``: field-level metadata cannot
     # live inside a type alias.
-    type Port[P] = Annotated[P, pydantic_json_schema.SkipJsonSchema()]
+    type Port[P] = pydantic_json_schema.SkipJsonSchema[P]

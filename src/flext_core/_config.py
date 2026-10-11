@@ -35,13 +35,12 @@ from pydantic_settings import (
     SettingsConfigDict,
 )
 
-from flext_core._constants import FlextConstantsConfig
+from flext_core._constants.config import FlextConstantsConfig
 from flext_core._settings import app_env_prefix, platform_config_root
 from flext_core.config_sources import FlextStrictYamlConfigSource
 
 if TYPE_CHECKING:
     from flext_core import t
-    from flext_core._typings.base import FlextTypingBase
 
 
 class FlextConfig(BaseSettings):
@@ -169,8 +168,8 @@ class FlextConfig(BaseSettings):
     @classmethod
     def _transform_loaded_yaml(
         cls,
-        data: FlextTypingBase.JsonDict,
-    ) -> FlextTypingBase.JsonDict:
+        data: t.JsonDict,
+    ) -> t.JsonDict:
         """Hook for subclasses to transform merged YAML before validation.
 
         Default is identity (no transformation). Override to apply env
@@ -214,7 +213,14 @@ class FlextConfig(BaseSettings):
 
     @classmethod
     def fetch_global(cls) -> Self:
-        """Return the shared frozen singleton (lazy; built on first access)."""
+        """Return the shared frozen singleton (lazy; built on first access).
+
+        Returns:
+            The shared frozen singleton instance of the config.
+
+        Raises:
+            ValidationError: If the configuration is invalid.
+        """
         instance = cls.__dict__.get("_instance")
         if isinstance(instance, cls):
             return instance

@@ -118,12 +118,11 @@ class FlextUtilitiesBeartypeModuleSource:
     ) -> FlextModelsEnforcement.DeferredAlias | None:
         """Prove deferral from the explicitly supplied declaring owner.
 
+        Ambiguous declarations or bindings propagate the resolver's ValueError
+        unchanged.
+
         Returns:
             The resulting ``me.DeferredAlias | None``.
-
-        Raises:
-            ValueError: If Ambiguous type alias declaration; or if Ambiguous type alias
-                binding.
 
         """
         return deferred_alias(alias, owner=owner)

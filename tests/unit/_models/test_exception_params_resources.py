@@ -154,7 +154,7 @@ class TestsFlextModelsExceptionParamsResources:
     def test_rate_limit_error_params_strict_rejects_string_limit() -> None:
         """strict=True: a numeric string is not coerced into an int limit."""
         with pytest.raises(c.ValidationError):
-            m.RateLimitErrorParams(limit="100")
+            m.RateLimitErrorParams.model_validate({"limit": "100"})
 
     @staticmethod
     def test_rate_limit_error_params_validate_assignment_rejects_bad_value() -> None:

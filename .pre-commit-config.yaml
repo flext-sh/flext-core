@@ -2,7 +2,7 @@
 repos:
   - repo: local
     hooks:
-    # pre-commit: the fast external gates only (make pre-commit); pre-push:
+    # pre-commit: the CI checks and incremental tests (make pre-commit); pre-push:
     # every pre_push workflow row. CI runs the ci workflow rows itself.
       - id: flext-pre-commit
         name: make pre-commit

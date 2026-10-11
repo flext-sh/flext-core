@@ -59,6 +59,7 @@ jobs:
     timeout-minutes: 60
     env:
       CI: Y
+      GITHUB_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -270,15 +271,16 @@ jobs:
             .reports/check/**/*.md
             .reports/tests/**/run-accounting.json
             .reports/tests/**/cache-after.json
-          if-no-files-found: ignore
+          include-hidden-files: true
+          if-no-files-found: error
           retention-days: 7
       # Completed failing tests may save; cancelled/incomplete/corrupt runs cannot.
       - name: Save testmon database
         if: >-
-          ${{ always() && !cancelled() && github.event_name == 'push' && steps.approval.outputs.testmon_saveable == 'true' && steps.approval.outputs.testmon_database == steps.testmon_path.outputs.database && steps.approval.outputs.testmon_digest != '' && contains(fromJSON('["main", "0.12.0-dev", "develop"]'), github.ref_name) && startsWith(github.ref, 'refs/heads/') }}
+          ${{ always() && !cancelled() && github.event_name == 'push' && steps.approval-test.outputs.testmon_saveable == 'true' && steps.approval-test.outputs.testmon_database == steps.testmon_path.outputs.database && steps.approval-test.outputs.testmon_digest != '' && contains(fromJSON('["main", "0.12.0-dev", "develop"]'), github.ref_name) && startsWith(github.ref, 'refs/heads/') }}
         uses: actions/cache/save@v6
         with:
-          path: ${{ steps.approval.outputs.testmon_database }}
+          path: ${{ steps.approval-test.outputs.testmon_database }}
           key: ${{ runner.os }}-3.13-flext-testmon-flext-core-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml', 'config/**') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
 
@@ -317,6 +319,7 @@ jobs:
     timeout-minutes: 30
     env:
       CI: Y
+      GITHUB_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7

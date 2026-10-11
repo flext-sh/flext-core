@@ -8,7 +8,6 @@
   "ruff.format.preview": true,
   "ruff.importStrategy": "fromEnvironment",
   "ruff.lint.preview": true,
-  "ruff.nativeServer": true,
   "shellcheck.useWorkspaceRootAsCwd": true,
   "python-envs.workspaceSearchPaths": [
     "./.venv",

@@ -22,6 +22,7 @@ from types import EllipsisType
 from typing import (
     TYPE_CHECKING,
     Annotated,
+    ClassVar,
     Literal,
     TypeAliasType,
     cast,
@@ -56,10 +57,7 @@ from pydantic import (
     ValidateAs,
     WrapSerializer,
     WrapValidator,
-    computed_field,
-    field_serializer,
     field_validator,
-    model_serializer,
     model_validator,
 )
 from pydantic_core import PydanticUndefined, PydanticUndefinedType
@@ -393,10 +391,16 @@ class FlextModelsPydantic:
     # model-level counterpart of ``field_validator`` above, and its absence alone
     # forced bare pydantic imports across 32 downstream modules.
     # Re-export native decorators with their complete upstream overload sets.
-    field_serializer = field_serializer
     model_validator = model_validator
-    computed_field = staticmethod(computed_field)
-    model_serializer = model_serializer
+    field_serializer: ClassVar[FlextProtocolsBase.FieldSerializerFactory] = (
+        pydantic.field_serializer
+    )
+    model_serializer: ClassVar[FlextProtocolsBase.ModelSerializerFactory] = (
+        pydantic.model_serializer
+    )
+    computed_field: ClassVar[FlextProtocolsBase.ComputedFieldFactory] = (
+        pydantic.computed_field
+    )
 
     # Annotation constraints and tagged-union discrimination
     Discriminator = Discriminator
@@ -433,7 +437,7 @@ class FlextModelsPydantic:
 
     # Settings-source hook contract: ``settings_customise_sources`` overrides
     # annotate the wide upstream base (Liskov-correct parameter widening).
-    type PydanticBaseSettings = BaseSettings
+    type PydanticBaseSettings = pydantic_settings.BaseSettings
     type PydanticBaseSettingsSource = pydantic_settings.PydanticBaseSettingsSource
 
 
