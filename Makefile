@@ -1740,65 +1740,71 @@ _builtin_check_all: _builtin_require_environment
 
 _builtin_test_all: _builtin_require_environment
 	@set -eu; \
-database="$(FLEXT_PYTEST_TESTMON_DATABASE)"; \
-case "$$database" in /*) ;; *) printf 'ERROR: persistent testmon database requires XDG_CACHE_HOME or HOME\n' >&2; exit 2 ;; esac; \
-case "$$database" in "$(PROJECT_ROOT)"/*) printf 'ERROR: persistent testmon database must be outside the checkout: %s\n' "$$database" >&2; exit 2 ;; esac; \
-case "$$database" in "$${TMPDIR:-/tmp}"/*|/tmp/*) printf 'ERROR: persistent testmon database must not live under the temporary directory: %s\n' "$$database" >&2; exit 2 ;; esac; \
-mkdir -p "$$(dirname "$$database")"; \
-scratch_root="$(FLEXT_PYTEST_SCRATCH_ROOT)"; \
-case "$$scratch_root" in /*) ;; *) printf 'ERROR: pytest scratch root requires HOME: %s\n' "$$scratch_root" >&2; exit 2 ;; esac; \
-mkdir -p "$$scratch_root"; \
-scratch="$$(mktemp -d "$$scratch_root/pytest.XXXXXX")"; \
-trap 'find "$$scratch" -depth -delete' EXIT; \
-mkdir -p "$$scratch/tmp"; \
-scratch_tmp="$$(cd "$$scratch/tmp" && pwd -P)"; \
-TMPDIR="$$scratch_tmp"; TMP="$$scratch_tmp"; TEMP="$$scratch_tmp"; \
-export TMPDIR TMP TEMP; \
-TESTMON_DATAFILE="$$database" $(PYTEST_BOUNDED) $(call UV_RUN,$(PROJECT_INFRA_PYTHONPATH)) python -m flext_infra._pytest_entry
+	database="$(FLEXT_PYTEST_TESTMON_DATABASE)"; \
+	case "$$database" in /*) ;; *) printf 'ERROR: persistent testmon database requires XDG_CACHE_HOME or HOME\n' >&2; exit 2 ;; esac; \
+	case "$$database" in "$(PROJECT_ROOT)"/*) printf 'ERROR: persistent testmon database must be outside the checkout: %s\n' "$$database" >&2; exit 2 ;; esac; \
+	case "$$database" in "$${TMPDIR:-/tmp}"/*|/tmp/*) printf 'ERROR: persistent testmon database must not live under the temporary directory: %s\n' "$$database" >&2; exit 2 ;; esac; \
+	mkdir -p "$$(dirname "$$database")"; \
+	scratch_root="$(FLEXT_PYTEST_SCRATCH_ROOT)"; \
+	case "$$scratch_root" in /*) ;; *) printf 'ERROR: pytest scratch root requires HOME: %s\n' "$$scratch_root" >&2; exit 2 ;; esac; \
+	mkdir -p "$$scratch_root"; \
+	scratch="$$(mktemp -d "$$scratch_root/pytest.XXXXXX")"; \
+	trap 'find "$$scratch" -depth -delete' EXIT; \
+	mkdir -p "$$scratch/tmp"; \
+	scratch_tmp="$$(cd "$$scratch/tmp" && pwd -P)"; \
+	TMPDIR="$$scratch_tmp"; TMP="$$scratch_tmp"; TEMP="$$scratch_tmp"; \
+	export TMPDIR TMP TEMP; \
+	TESTMON_DATAFILE="$$database" $(PYTEST_BOUNDED) $(call UV_RUN,$(PROJECT_INFRA_PYTHONPATH)) python -m flext_infra._pytest_entry
 
 _builtin_test_full_all: _builtin_require_environment
-	@set -eu; \
-database="$(FLEXT_PYTEST_TESTMON_DATABASE)"; \
-case "$$database" in /*) ;; *) printf 'ERROR: persistent testmon database requires XDG_CACHE_HOME or HOME\n' >&2; exit 2 ;; esac; \
-case "$$database" in "$(PROJECT_ROOT)"/*) printf 'ERROR: persistent testmon database must be outside the checkout: %s\n' "$$database" >&2; exit 2 ;; esac; \
-case "$$database" in "$${TMPDIR:-/tmp}"/*|/tmp/*) printf 'ERROR: persistent testmon database must not live under the temporary directory: %s\n' "$$database" >&2; exit 2 ;; esac; \
-mkdir -p "$$(dirname "$$database")"; \
-scratch_root="$(FLEXT_PYTEST_SCRATCH_ROOT)"; \
-case "$$scratch_root" in /*) ;; *) printf 'ERROR: pytest scratch root requires HOME: %s\n' "$$scratch_root" >&2; exit 2 ;; esac; \
-mkdir -p "$$scratch_root"; \
-scratch="$$(mktemp -d "$$scratch_root/pytest.XXXXXX")"; \
-trap 'find "$$scratch" -depth -delete' EXIT; \
-mkdir -p "$$scratch/tmp"; \
-scratch_tmp="$$(cd "$$scratch/tmp" && pwd -P)"; \
-TMPDIR="$$scratch_tmp"; TMP="$$scratch_tmp"; TEMP="$$scratch_tmp"; \
-export TMPDIR TMP TEMP; \
-TESTMON_DATAFILE="$$database" $(call UV_RUN,$(PROJECT_INFRA_PYTHONPATH)) python -m flext_infra._pytest_entry full; \
-TESTMON_DATAFILE="$$database" $(call UV_RUN,$(PROJECT_INFRA_PYTHONPATH)) python -m flext_infra._pytest_entry full-slow
+	@if [ -n "$(strip $(FILE))" ]; then \
+	if [ -z "$(strip $(FILE))" ]; then printf 'ERROR: test-full requires FILE=<repository-relative test file path>\n' >&2; exit 2; fi; \
+	case "$(FILE)" in /*|*..*) printf 'ERROR: FILE must stay a repository-relative path: %s\n' "$(FILE)" >&2; exit 2 ;; esac; \
+	if [ ! -f "$(PROJECT_ROOT)/$(FILE)" ]; then printf 'ERROR: FILE is not an existing repository file: %s\n' "$(FILE)" >&2; exit 2; fi; \
+	export FLEXT_PYTEST_TARGET_FILE="$(FILE)"; \
+	fi; \
+	set -eu; \
+	database="$(FLEXT_PYTEST_TESTMON_DATABASE)"; \
+	case "$$database" in /*) ;; *) printf 'ERROR: persistent testmon database requires XDG_CACHE_HOME or HOME\n' >&2; exit 2 ;; esac; \
+	case "$$database" in "$(PROJECT_ROOT)"/*) printf 'ERROR: persistent testmon database must be outside the checkout: %s\n' "$$database" >&2; exit 2 ;; esac; \
+	case "$$database" in "$${TMPDIR:-/tmp}"/*|/tmp/*) printf 'ERROR: persistent testmon database must not live under the temporary directory: %s\n' "$$database" >&2; exit 2 ;; esac; \
+	mkdir -p "$$(dirname "$$database")"; \
+	scratch_root="$(FLEXT_PYTEST_SCRATCH_ROOT)"; \
+	case "$$scratch_root" in /*) ;; *) printf 'ERROR: pytest scratch root requires HOME: %s\n' "$$scratch_root" >&2; exit 2 ;; esac; \
+	mkdir -p "$$scratch_root"; \
+	scratch="$$(mktemp -d "$$scratch_root/pytest.XXXXXX")"; \
+	trap 'find "$$scratch" -depth -delete' EXIT; \
+	mkdir -p "$$scratch/tmp"; \
+	scratch_tmp="$$(cd "$$scratch/tmp" && pwd -P)"; \
+	TMPDIR="$$scratch_tmp"; TMP="$$scratch_tmp"; TEMP="$$scratch_tmp"; \
+	export TMPDIR TMP TEMP; \
+	TESTMON_DATAFILE="$$database" $(call UV_RUN,$(PROJECT_INFRA_PYTHONPATH)) python -m flext_infra._pytest_entry full
 
 _builtin_test_file_all: _builtin_require_environment
 	@if [ -z "$(strip $(FILE))" ]; then printf 'ERROR: test-file requires FILE=<repository-relative test file path>\n' >&2; exit 2; fi; \
-case "$(FILE)" in /*|*..*) printf 'ERROR: FILE must stay a repository-relative path: %s\n' "$(FILE)" >&2; exit 2 ;; esac; \
-if [ ! -f "$(PROJECT_ROOT)/$(FILE)" ]; then printf 'ERROR: FILE is not an existing repository file: %s\n' "$(FILE)" >&2; exit 2; fi; \
-export FLEXT_PYTEST_TARGET_FILE="$(FILE)"; \
-set -eu; \
-database="$(FLEXT_PYTEST_TESTMON_DATABASE)"; \
-case "$$database" in /*) ;; *) printf 'ERROR: persistent testmon database requires XDG_CACHE_HOME or HOME\n' >&2; exit 2 ;; esac; \
-case "$$database" in "$(PROJECT_ROOT)"/*) printf 'ERROR: persistent testmon database must be outside the checkout: %s\n' "$$database" >&2; exit 2 ;; esac; \
-case "$$database" in "$${TMPDIR:-/tmp}"/*|/tmp/*) printf 'ERROR: persistent testmon database must not live under the temporary directory: %s\n' "$$database" >&2; exit 2 ;; esac; \
-mkdir -p "$$(dirname "$$database")"; \
-scratch_root="$(FLEXT_PYTEST_SCRATCH_ROOT)"; \
-case "$$scratch_root" in /*) ;; *) printf 'ERROR: pytest scratch root requires HOME: %s\n' "$$scratch_root" >&2; exit 2 ;; esac; \
-mkdir -p "$$scratch_root"; \
-scratch="$$(mktemp -d "$$scratch_root/pytest.XXXXXX")"; \
-trap 'find "$$scratch" -depth -delete' EXIT; \
-mkdir -p "$$scratch/tmp"; \
-scratch_tmp="$$(cd "$$scratch/tmp" && pwd -P)"; \
-TMPDIR="$$scratch_tmp"; TMP="$$scratch_tmp"; TEMP="$$scratch_tmp"; \
-export TMPDIR TMP TEMP; \
-file_executed=0; \
-if TESTMON_DATAFILE="$$database" $(PYTEST_BOUNDED) $(call UV_RUN,$(PROJECT_INFRA_PYTHONPATH)) python -m flext_infra._pytest_entry file; then file_executed=1; else phase_status=$$?; case "$$phase_status" in 5) printf 'INFO: test-file file NOT EXECUTED: no requested tests in phase\n' ;; *) exit "$$phase_status" ;; esac; fi; \
-if TESTMON_DATAFILE="$$database" $(PYTEST_BOUNDED) $(call UV_RUN,$(PROJECT_INFRA_PYTHONPATH)) python -m flext_infra._pytest_entry file-slow; then file_executed=1; else phase_status=$$?; case "$$phase_status" in 5) printf 'INFO: test-file file-slow NOT EXECUTED: no requested tests in phase\n' ;; *) exit "$$phase_status" ;; esac; fi; \
-if [ "$$file_executed" -eq 0 ]; then printf 'ERROR: test-file executed zero requested tests\n' >&2; exit 5; fi
+	case "$(FILE)" in /*|*..*) printf 'ERROR: FILE must stay a repository-relative path: %s\n' "$(FILE)" >&2; exit 2 ;; esac; \
+	if [ ! -f "$(PROJECT_ROOT)/$(FILE)" ]; then printf 'ERROR: FILE is not an existing repository file: %s\n' "$(FILE)" >&2; exit 2; fi; \
+	export FLEXT_PYTEST_TARGET_FILE="$(FILE)"; \
+	
+	set -eu; \
+	database="$(FLEXT_PYTEST_TESTMON_DATABASE)"; \
+	case "$$database" in /*) ;; *) printf 'ERROR: persistent testmon database requires XDG_CACHE_HOME or HOME\n' >&2; exit 2 ;; esac; \
+	case "$$database" in "$(PROJECT_ROOT)"/*) printf 'ERROR: persistent testmon database must be outside the checkout: %s\n' "$$database" >&2; exit 2 ;; esac; \
+	case "$$database" in "$${TMPDIR:-/tmp}"/*|/tmp/*) printf 'ERROR: persistent testmon database must not live under the temporary directory: %s\n' "$$database" >&2; exit 2 ;; esac; \
+	mkdir -p "$$(dirname "$$database")"; \
+	scratch_root="$(FLEXT_PYTEST_SCRATCH_ROOT)"; \
+	case "$$scratch_root" in /*) ;; *) printf 'ERROR: pytest scratch root requires HOME: %s\n' "$$scratch_root" >&2; exit 2 ;; esac; \
+	mkdir -p "$$scratch_root"; \
+	scratch="$$(mktemp -d "$$scratch_root/pytest.XXXXXX")"; \
+	trap 'find "$$scratch" -depth -delete' EXIT; \
+	mkdir -p "$$scratch/tmp"; \
+	scratch_tmp="$$(cd "$$scratch/tmp" && pwd -P)"; \
+	TMPDIR="$$scratch_tmp"; TMP="$$scratch_tmp"; TEMP="$$scratch_tmp"; \
+	export TMPDIR TMP TEMP; \
+	file_executed=0; \
+	if TESTMON_DATAFILE="$$database" $(PYTEST_BOUNDED) $(call UV_RUN,$(PROJECT_INFRA_PYTHONPATH)) python -m flext_infra._pytest_entry file; then file_executed=1; else phase_status=$$?; case "$$phase_status" in 5) printf 'INFO: test-file file NOT EXECUTED: no requested tests in phase\n' ;; *) exit "$$phase_status" ;; esac; fi; \
+	if TESTMON_DATAFILE="$$database" $(PYTEST_BOUNDED) $(call UV_RUN,$(PROJECT_INFRA_PYTHONPATH)) python -m flext_infra._pytest_entry file-slow; then file_executed=1; else phase_status=$$?; case "$$phase_status" in 5) printf 'INFO: test-file file-slow NOT EXECUTED: no requested tests in phase\n' ;; *) exit "$$phase_status" ;; esac; fi; \
+	if [ "$$file_executed" -eq 0 ]; then printf 'ERROR: test-file executed zero requested tests\n' >&2; exit 5; fi
 
 # Literal-file selection and verdicts belong to the existing canonical checker.
 # Export the raw Make value instead of interpolating operator input into shell code.
@@ -1837,8 +1843,7 @@ _builtin_run_default: _builtin_require_environment
 .PHONY: profile-census
 profile-census: _builtin_require_environment
 	@mkdir -p "$(PROFILE_REPORTS_DIR)"
-	@$(RUNTIME_PYTHON) -c \
-		'import cProfile, sys; from flext_infra.cli import main; profile = cProfile.Profile(); status = profile.runcall(main, sys.argv[2:]); profile.dump_stats(sys.argv[1]); raise SystemExit(status)' \
+	@$(PROJECT_INFRA_RUN) -m flext_infra._profile_entry \
 		"$(PROFILE_REPORTS_DIR)/runtime-census.pstats" check run \
 		--repository-root "$(PROJECT_ROOT)" --gates runtime-census
 
@@ -1878,6 +1883,18 @@ profile-gen-report: _builtin_require_environment
 	@$(RUNTIME_PYTHON) -c \
 		'import pstats, sys; stats = pstats.Stats(sys.argv[1]); stats.sort_stats("cumtime").print_stats(50); stats.sort_stats("tottime").print_callers(15)' \
 		"$(PROFILE_REPORTS_DIR)/conform.pstats"
+
+# Measure the same mutating codemod lifecycle, retaining profiles on failure.
+.PHONY: profile-mod profile-mod-report
+profile-mod: _builtin_require_environment
+	@mkdir -p "$(PROFILE_REPORTS_DIR)"
+	@$(PROJECT_INFRA_RUN) -m flext_infra._profile_entry \
+		"$(PROFILE_REPORTS_DIR)/mod.pstats" refactor mod \
+		--repository-root "$(PROJECT_ROOT)" --apply
+
+profile-mod-report: _builtin_require_environment
+	@$(PROJECT_INFRA_RUN) -m flext_infra._cprofile_entry \
+		"$(PROFILE_REPORTS_DIR)/mod.pstats"
 
 # Profile the cold canonical pytest execution through its thin entrypoint
 # for startup diagnosis: the same persistent testmon database
