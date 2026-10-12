@@ -46,6 +46,3 @@ class ExamplesFlextModelsErrors:
             """Canonical string tokens used to trigger demo/test behaviour."""
 
             EXPLODE = "explode"
-
-
-m = ExamplesFlextModelsErrors

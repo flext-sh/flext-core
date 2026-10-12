@@ -16,25 +16,13 @@ if TYPE_CHECKING:
     from flext_core._utilities._beartype._class_visitor_parts._parts.class_visitor_part_02_01 import (
         alias_first_violation,
     )
-    from flext_core._utilities._beartype._class_visitor_parts._parts.class_visitor_part_02_02 import (
-        redundant_inner_violation,
-        self_ref_violation,
-    )
 
 
-__all__: tuple[str, ...] = (
-    "alias_first_violation",
-    "redundant_inner_violation",
-    "self_ref_violation",
-)
+__all__: tuple[str, ...] = ("alias_first_violation",)
 
 install_lazy_exports(
     __name__,
     globals(),
-    MappingProxyType({
-        "alias_first_violation": ".class_visitor_part_02_01",
-        "redundant_inner_violation": ".class_visitor_part_02_02",
-        "self_ref_violation": ".class_visitor_part_02_02",
-    }),
+    MappingProxyType({"alias_first_violation": ".class_visitor_part_02_01"}),
     public_exports=__all__,
 )

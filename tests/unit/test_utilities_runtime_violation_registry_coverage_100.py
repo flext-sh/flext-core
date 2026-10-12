@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core.utilities import FlextUtilitiesRuntimeViolationRegistry
+from flext_core import FlextUtilitiesRuntimeViolationRegistry
 from tests import m
 
 

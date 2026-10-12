@@ -15,15 +15,12 @@ from typing import get_args, get_origin
 
 from pydantic import BaseModel
 
-from flext_core import c
-from flext_core._protocols.base import FlextProtocolsBase as pb
-from flext_core._protocols.result import FlextProtocolsResult as p
-from flext_core._typings.base import FlextTypingBase as tb
-from flext_core._typings.services import FlextTypesServices as ts
+from flext_core import FlextResult, c, p
+from flext_core._protocols import FlextProtocolsBase as pb
+from flext_core._typings import FlextTypesServices as ts, FlextTypingBase as tb
 from flext_core._utilities._checker_parts.checker_part_02 import (
     FlextUtilitiesChecker as FlextUtilitiesCheckerPart02,
 )
-from flext_core.result import FlextResult
 
 
 class FlextUtilitiesChecker(FlextUtilitiesCheckerPart02):

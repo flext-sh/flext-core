@@ -6,10 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._constants import FlextConstantsEnforcement
+from flext_core import c
 from flext_core._models import FlextModelsEnforcement
-from flext_core._typings.base import FlextTypingBase
-from flext_core._utilities import (
+from flext_core._typings import FlextTypingBase
+from flext_core._utilities._beartype import (
     FlextUtilitiesBeartypeHelpers,
     FlextUtilitiesBeartypeModuleSource,
 )
@@ -38,7 +38,7 @@ class FlextUtilitiesBeartypeLibraryVisitor:
 
         """
         _ = params
-        owners = FlextConstantsEnforcement.ENFORCEMENT_LIBRARY_OWNERS
+        owners = c.ENFORCEMENT_LIBRARY_OWNERS
         module = FlextUtilitiesBeartypeHelpers.runtime_module_for(target)
         if module is None:
             return _NO_VIOLATION

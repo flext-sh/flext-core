@@ -15,9 +15,8 @@ import operator
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import r, tm
 
-from tests import u
+from tests import r, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import MutableSequence

@@ -13,6 +13,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import typing
 from collections.abc import MutableSequence
 
 from flext_tests import FlextTestsTypes
@@ -29,6 +30,10 @@ class TestsFlextTypes(FlextTestsTypes):
     - Only flext-core-specific types allowed (not generic for other projects)
     - All generic types come from TestsFlextTypes
     """
+
+    type AnyAlias = str | typing.Any
+    type CleanAlias = str | int
+    type NestedAnyAlias = FlextTestsTypes.MappingKV[str, typing.Any]
 
     class Core:
         """Flext-core-specific type definitions for testing.

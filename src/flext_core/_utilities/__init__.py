@@ -30,10 +30,6 @@ if TYPE_CHECKING:
     from flext_core._utilities._beartype._class_visitor_parts._parts.class_visitor_part_02_01 import (
         alias_first_violation,
     )
-    from flext_core._utilities._beartype._class_visitor_parts._parts.class_visitor_part_02_02 import (
-        redundant_inner_violation,
-        self_ref_violation,
-    )
     from flext_core._utilities._beartype._field_union_scan import declared_union_members
     from flext_core._utilities._beartype._import_blacklist_visitor import (
         FlextUtilitiesBeartypeImportBlacklistVisitor,
@@ -231,9 +227,7 @@ __all__: tuple[str, ...] = (
     "loads",
     "owner_derived",
     "parse_module",
-    "redundant_inner_violation",
     "scope_nodes",
-    "self_ref_violation",
 )
 
 install_lazy_exports(
@@ -326,13 +320,7 @@ install_lazy_exports(
         "loads": "._beartype._module_source_scan",
         "owner_derived": "._beartype._module_source_provenance",
         "parse_module": "._beartype._module_source_scan",
-        "redundant_inner_violation": (
-            "._beartype._class_visitor_parts._parts.class_visitor_part_02_02"
-        ),
         "scope_nodes": "._beartype._module_source_scan",
-        "self_ref_violation": (
-            "._beartype._class_visitor_parts._parts.class_visitor_part_02_02"
-        ),
     }),
     public_exports=__all__,
 )

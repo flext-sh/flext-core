@@ -135,3 +135,6 @@ class FlextConstantsErrorsRuntimeSettings:
         "Namespace '{namespace}' settings instance {instance_class} is not instance "
         "of {expected_type}"
     )
+
+
+__all__: tuple[str, ...] = ("FlextConstantsErrorsRuntimeSettings",)

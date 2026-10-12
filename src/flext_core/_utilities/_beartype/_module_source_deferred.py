@@ -15,7 +15,7 @@ from types import ModuleType
 from typing import TypeAliasType
 
 from flext_core._models import FlextModelsEnforcement
-from flext_core._utilities._beartype._module_source_scan import (
+from flext_core._utilities._beartype import (
     bound_names,
     declarations,
     parse_module,

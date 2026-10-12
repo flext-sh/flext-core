@@ -10,8 +10,9 @@ import os
 from pathlib import Path
 from typing import override
 
+from examples import c, t
 from examples.ex_02_flext_settings_helpers import ExamplesFlextSettingsFieldChecks
-from flext_core import FlextSettings, c, t
+from flext_core import FlextSettings
 
 
 class ExamplesFlextSettingsUsage(ExamplesFlextSettingsFieldChecks):

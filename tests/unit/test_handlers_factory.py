@@ -9,10 +9,8 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
-from flext_tests import h, r
 
-from tests import c, t
-from tests.utilities import u
+from tests import c, h, r, t, u
 
 
 class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):

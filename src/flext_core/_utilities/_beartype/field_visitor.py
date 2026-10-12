@@ -11,11 +11,13 @@ from typing import Annotated, get_args, get_origin
 
 from pydantic.fields import FieldInfo
 
-from flext_core._constants import FlextConstantsEnforcement
+from flext_core import c
 from flext_core._models import FlextModelsEnforcement, FlextModelsPydantic
-from flext_core._typings.base import FlextTypingBase
-from flext_core._utilities import FlextUtilitiesBeartypeHelpers
-from flext_core._utilities._beartype._field_union_scan import declared_union_members
+from flext_core._typings import FlextTypingBase
+from flext_core._utilities._beartype import (
+    FlextUtilitiesBeartypeHelpers,
+    declared_union_members,
+)
 
 
 class FlextUtilitiesBeartypeFieldVisitor:
@@ -115,11 +117,11 @@ class FlextUtilitiesBeartypeFieldVisitor:
             return None
         bad, origin = FlextUtilitiesBeartypeHelpers.has_forbidden_collection_origin(
             info.annotation,
-            FlextConstantsEnforcement.ENFORCEMENT_FORBIDDEN_COLLECTION_ORIGINS,
+            c.ENFORCEMENT_FORBIDDEN_COLLECTION_ORIGINS,
         )
         if not bad:
             return None
-        forbidden = FlextConstantsEnforcement.ENFORCEMENT_FORBIDDEN_COLLECTIONS
+        forbidden = c.ENFORCEMENT_FORBIDDEN_COLLECTIONS
         replacement = next(
             (repl for key, repl in forbidden.items() if key.__name__ == origin),
             origin,
@@ -293,11 +295,13 @@ class FlextUtilitiesBeartypeFieldVisitor:
             elif (
                 params.require_frozen_for_value_objects
                 and any(
-                    b.__name__
-                    in FlextConstantsEnforcement.ENFORCEMENT_VALUE_OBJECT_BASES
+                    b.__name__ in c.ENFORCEMENT_VALUE_OBJECT_BASES
                     for b in target.__mro__
                 )
                 and not target.model_config.get("frozen", False)
             ):
                 violation = {}
         return violation
+
+
+__all__: tuple[str, ...] = ("FlextUtilitiesBeartypeFieldVisitor",)

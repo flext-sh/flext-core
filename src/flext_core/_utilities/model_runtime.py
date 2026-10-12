@@ -9,7 +9,7 @@ from __future__ import annotations
 from importlib import import_module
 
 from flext_core import m, p
-from flext_core._utilities.model_options import FlextUtilitiesModelOptions
+from flext_core._utilities import FlextUtilitiesModelOptions
 
 
 class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):

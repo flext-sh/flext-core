@@ -6,10 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._utilities._enforcement_parts.enforcement_part_01 import (
+from flext_core._utilities._enforcement_parts import (
     PREDICATE_BINDINGS,
-)
-from flext_core._utilities._enforcement_parts.enforcement_part_05 import (
     FlextUtilitiesEnforcement,
 )
 

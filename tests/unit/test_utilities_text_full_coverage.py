@@ -10,8 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import u
-from tests import c, m, utilities
+from tests import c, m, u, utilities
 
 
 class TestsFlextUtilitiesText(utilities.u.Tests.Contract):

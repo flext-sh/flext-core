@@ -13,8 +13,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import u
-from tests import tm
+from tests import tm, u
 
 
 class TestsFlextCoreUtilitiesYaml:

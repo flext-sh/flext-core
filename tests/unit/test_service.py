@@ -19,10 +19,9 @@ from collections.abc import Mapping
 from typing import override
 
 import pytest
-from flext_tests import FlextTestsCase, FlextTestsSettings, r
+from flext_tests import FlextTestsCase, FlextTestsSettings
 
-from tests import m, p
-from tests.base import s
+from tests import m, p, r, s
 
 
 class TestsFlextService(FlextTestsCase):

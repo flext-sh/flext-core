@@ -11,10 +11,10 @@ from functools import wraps
 from typing import TYPE_CHECKING, Annotated
 
 from flext_core import c, u
-from flext_core._decorators._logging_payloads import FlextDecoratorsLoggingPayloads
+from flext_core._decorators import FlextDecoratorsLoggingPayloads
 from flext_core._models import FlextModelsPydantic
 from flext_core._protocols import FlextProtocolsLogging
-from flext_core._typings.base import FlextTypingBase
+from flext_core._typings import FlextTypingBase
 
 if TYPE_CHECKING:
     from collections.abc import Callable

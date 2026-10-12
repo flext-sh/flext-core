@@ -16,7 +16,15 @@ if TYPE_CHECKING:
     from flext_tests import api, td, tf, tk, tm
 
     from flext_core import d, e, h, r, x
-    from tests import benchmark, fixtures, integration, unit
+    from tests import (
+        _constants,
+        _models,
+        _utilities,
+        benchmark,
+        fixtures,
+        integration,
+        unit,
+    )
     from tests.base import TestsFlextServiceBase, s
     from tests.constants import TestsFlextConstants, c
     from tests.models import TestsFlextModels, m
@@ -32,6 +40,9 @@ __all__: tuple[str, ...] = (
     "TestsFlextServiceBase",
     "TestsFlextTypes",
     "TestsFlextUtilities",
+    "_constants",
+    "_models",
+    "_utilities",
     "api",
     "benchmark",
     "c",
@@ -64,6 +75,9 @@ install_lazy_exports(
         "TestsFlextServiceBase": ".base",
         "TestsFlextTypes": ".typings",
         "TestsFlextUtilities": ".utilities",
+        "_constants": "._constants",
+        "_models": "._models",
+        "_utilities": "._utilities",
         "api": "flext_tests",
         "benchmark": ".benchmark",
         "c": ".constants",

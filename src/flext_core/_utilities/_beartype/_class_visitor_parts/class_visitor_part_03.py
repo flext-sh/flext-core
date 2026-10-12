@@ -6,10 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._config import FlextConfig
-from flext_core._constants.enforcement import FlextConstantsEnforcement
-from flext_core._models.enforcement import FlextModelsEnforcement
-from flext_core._typings.base import FlextTypingBase
+from flext_core import FlextConfig, c
+from flext_core._models import FlextModelsEnforcement
+from flext_core._typings import FlextTypingBase
 from flext_core._utilities._beartype._class_visitor_parts import class_visitor_part_02
 from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_01 import (
     NO_VIOLATION,
@@ -54,8 +53,7 @@ def _loose_symbol_payload(
     is_top_level = "." not in target.__qualname__
     allowed_prefixes: FlextTypingBase.StrSequence = tuple(params.allowed_prefixes)
     skip_roots = (
-        FlextConstantsEnforcement.ENFORCEMENT_NAMESPACE_FACADE_ROOTS
-        | FlextConstantsEnforcement.ENFORCEMENT_INFRASTRUCTURE_BASES
+        c.ENFORCEMENT_NAMESPACE_FACADE_ROOTS | c.ENFORCEMENT_INFRASTRUCTURE_BASES
     )
     # A settings class is one that DECLARES itself a pydantic-settings model
     # (``BaseSettings`` in its MRO), never one whose name ends in "Settings":

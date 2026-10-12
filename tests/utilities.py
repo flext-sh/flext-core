@@ -13,18 +13,50 @@ from enum import StrEnum, unique
 from pathlib import Path
 from typing import Annotated, ClassVar, override
 
-from flext_tests import FlextTestsUtilities, h, r
+from flext_tests import FlextTestsUtilities
 
-from tests import c, m, p, t
-from tests._utilities.case_factories import TestsFlextUtilitiesCaseFactoriesMixin
-from tests._utilities.contracts import TestsFlextUtilitiesContractsMixin
-from tests._utilities.dispatch import TestsFlextUtilitiesDispatchMixin
-from tests._utilities.parser_reliability import (
+from tests import c, h, m, p, r, t
+from tests._utilities import (
+    TestsFlextUtilitiesCaseFactoriesMixin,
+    TestsFlextUtilitiesContractsMixin,
+    TestsFlextUtilitiesDispatchMixin,
     TestsFlextUtilitiesParserReliabilityMixin,
+    TestsFlextUtilitiesRailwayMixin,
+    TestsFlextUtilitiesServiceFactoriesMixin,
+    TestsFlextUtilitiesServicesMixin,
 )
-from tests._utilities.railway import TestsFlextUtilitiesRailwayMixin
-from tests._utilities.service_factories import TestsFlextUtilitiesServiceFactoriesMixin
-from tests._utilities.services import TestsFlextUtilitiesServicesMixin
+from tests._utilities.case_generators import TestsFlextUtilitiesCaseGeneratorsMixin
+from tests._utilities.case_service_factories import (
+    TestsFlextUtilitiesCaseServiceFactoriesMixin,
+)
+from tests._utilities.parser_scenarios import TestsFlextUtilitiesParserScenariosMixin
+from tests._utilities.railway_cases import TestsFlextUtilitiesRailwayCasesMixin
+from tests._utilities.railway_pipelines import TestsFlextUtilitiesRailwayPipelinesMixin
+from tests._utilities.railway_services import TestsFlextUtilitiesRailwayServicesMixin
+from tests._utilities.reliability_scenarios import (
+    TestsFlextUtilitiesReliabilityScenariosMixin,
+)
+from tests._utilities.user_factories import TestsFlextUtilitiesUserFactoriesMixin
+from tests._utilities.validation_factories import (
+    TestsFlextUtilitiesValidationFactoriesMixin,
+)
+from tests._utilities.validation_network import (
+    TestsFlextUtilitiesValidationNetworkScenarios,
+)
+from tests._utilities.validation_numeric import (
+    TestsFlextUtilitiesValidationNumericScenarios,
+)
+from tests._utilities.validation_pattern import (
+    TestsFlextUtilitiesValidationPatternScenarios,
+)
+from tests._utilities.validation_string import (
+    TestsFlextUtilitiesValidationStringScenarios,
+)
+from tests._utilities.validation_uri import TestsFlextUtilitiesValidationUriScenarios
+from tests._utilities.beartype_engine import TestsFlextBeartypeEngine
+from tests._utilities.decorators import TestsFlextDecoratorsLegacy
+from tests._utilities.handlers import TestsFlextFlextHandlers
+from tests._utilities.result_exception_carrying import TestsFlextResultExceptionCarrying
 
 
 class TestsFlextUtilities(FlextTestsUtilities):
@@ -395,14 +427,32 @@ class TestsFlextUtilities(FlextTestsUtilities):
             )
 
     class Tests(
+        TestsFlextResultExceptionCarrying,
+        TestsFlextFlextHandlers,
+        TestsFlextDecoratorsLegacy,
+        TestsFlextBeartypeEngine,
         TestsFlextUtilitiesCaseFactoriesMixin,
+        TestsFlextUtilitiesCaseGeneratorsMixin,
+        TestsFlextUtilitiesCaseServiceFactoriesMixin,
         TestsFlextUtilitiesContractsMixin,
         TestsFlextUtilitiesParserReliabilityMixin,
         TestsFlextUtilitiesServiceFactoriesMixin,
+        TestsFlextUtilitiesValidationFactoriesMixin,
         TestsFlextUtilitiesServicesMixin,
+        TestsFlextUtilitiesUserFactoriesMixin,
+        TestsFlextUtilitiesParserScenariosMixin,
+        TestsFlextUtilitiesReliabilityScenariosMixin,
         TestsFlextUtilitiesRailwayMixin,
+        TestsFlextUtilitiesRailwayPipelinesMixin,
+        TestsFlextUtilitiesRailwayServicesMixin,
+        TestsFlextUtilitiesRailwayCasesMixin,
         TestsFlextUtilitiesDispatchMixin,
         FlextTestsUtilities.Tests,
+        TestsFlextUtilitiesValidationNetworkScenarios,
+        TestsFlextUtilitiesValidationNumericScenarios,
+        TestsFlextUtilitiesValidationPatternScenarios,
+        TestsFlextUtilitiesValidationStringScenarios,
+        TestsFlextUtilitiesValidationUriScenarios,
     ):
         """flext-core test utilities namespace."""
 

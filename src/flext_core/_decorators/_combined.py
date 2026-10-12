@@ -9,9 +9,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Literal, overload
 
 from flext_core import m
-from flext_core._decorators._railway import FlextDecoratorsRailway
+from flext_core._decorators import FlextDecoratorsRailway
 from flext_core._protocols import FlextProtocolsResult
-from flext_core._typings.base import FlextTypingBase
+from flext_core._typings import FlextTypingBase
 
 if TYPE_CHECKING:
     from collections.abc import Callable

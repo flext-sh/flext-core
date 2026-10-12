@@ -19,6 +19,7 @@ from typing import override
 from flext_tests import FlextTestsModels
 
 from tests._models import TestsFlextModelsMixins
+from tests._models.mixins import TestsFlextModelsNamespace
 
 
 class TestsFlextModels(FlextTestsModels):
@@ -43,6 +44,7 @@ class TestsFlextModels(FlextTestsModels):
     class Tests(
         FlextTestsModels.Tests,
         TestsFlextModelsMixins.TestsFlextModelsMixins,
+        TestsFlextModelsNamespace,
     ):
         """flext-core test models namespace."""
 

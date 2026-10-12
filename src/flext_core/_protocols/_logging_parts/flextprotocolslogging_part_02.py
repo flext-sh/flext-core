@@ -8,14 +8,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
+from flext_core._protocols import FlextProtocolsBase
 from flext_core._protocols._logging_parts import flextprotocolslogging_part_01
-from flext_core._protocols.base import FlextProtocolsBase
 
 if TYPE_CHECKING:
     from datetime import datetime
 
     from flext_core import t
-    from flext_core._protocols.result import FlextProtocolsResult
+    from flext_core._protocols import FlextProtocolsResult
 
 
 class FlextProtocolsLogging(flextprotocolslogging_part_01.FlextProtocolsLogging):

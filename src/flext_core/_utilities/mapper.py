@@ -8,135 +8,131 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from itertools import starmap
-from typing import TYPE_CHECKING, Annotated
+from typing import TYPE_CHECKING
 
-from flext_core import c, m, t
+from flext_core import FlextResult, FlextRuntime, c, m, t
 from flext_core._models import FlextModelsPydantic
-from flext_core._utilities import FlextUtilitiesCollection, FlextUtilitiesGuardsTypeCore
-from flext_core._utilities.mapper_extract import FlextUtilitiesMapperExtract
-from flext_core.result import FlextResult
-from flext_core.runtime import FlextRuntime
+from flext_core._utilities import (
+    FlextUtilitiesCollection,
+    FlextUtilitiesGuardsTypeCore,
+    FlextUtilitiesMapperExtract,
+)
 
 if TYPE_CHECKING:
     from flext_core import p
 
 
-def _transform_result(pipeline: Callable[[], t.JsonDict]) -> p.Result[t.JsonMapping]:
-    """Run one transform pipeline, mapping failures to ``r``.
-
-    Returns:
-        The resulting ``p.Result[t.JsonMapping]``.
-
-    """
-    transform_result: p.Result[t.JsonMapping] = FlextResult[
-        t.JsonMapping
-    ].create_from_callable(
-        pipeline,
-    )
-    if transform_result.failure:
-        failure_reason = (
-            transform_result.exception
-            if isinstance(transform_result.exception, Exception)
-            else transform_result.error
-        )
-        return FlextResult[t.JsonMapping].fail_op("transform", failure_reason)
-    return transform_result
-
-
-def _normalize_step(step: t.JsonDict, *, normalize: bool) -> t.JsonDict:
-    """Optionally normalize a step mapping to metadata form.
-
-    Returns:
-        The resulting ``t.JsonDict``.
-
-    """
-    if not normalize:
-        return step
-    normalized = FlextRuntime.normalize_to_metadata(step)
-    if FlextUtilitiesGuardsTypeCore.mapping(normalized):
-        return dict(normalized)
-    return step
-
-
-def _remap_step(
-    step: t.JsonDict,
-    map_keys: t.StrMapping | None,
-    filter_keys: set[str] | None,
-    exclude_keys: set[str] | None,
-) -> t.JsonDict:
-    """Apply key mapping, filtering, and exclusion to a step mapping.
-
-    Returns:
-        The resulting ``t.JsonDict``.
-
-    """
-    result = step
-    if map_keys:
-        result = {map_keys.get(k, k): v for k, v in result.items()}
-    if filter_keys:
-        result = {k: result[k] for k in filter_keys if k in result}
-    if exclude_keys:
-        result = {k: v for k, v in result.items() if k not in exclude_keys}
-    return result
-
-
-def _strip_step(
-    step: t.JsonDict,
-    *,
-    strip_none: bool,
-    strip_empty: bool,
-) -> t.JsonDict:
-    """Optionally strip None values and empty values from a step mapping.
-
-    Returns:
-        The resulting ``t.JsonDict``.
-
-    """
-    result = step
-    if strip_none:
-        result = dict(FlextUtilitiesCollection.filter(result, _is_not_none))
-    if strip_empty:
-        return dict(FlextUtilitiesCollection.filter(result, _is_not_empty))
-    return result
-
-
-def _is_not_none(value: t.JsonValue) -> bool:
-    """Whether a value is not None.
-
-    Returns:
-        The resulting ``bool``.
-
-    """
-    return value is not None
-
-
-def _is_not_empty(value: t.JsonValue) -> bool:
-    """Whether a value is not an empty scalar or container.
-
-    Returns:
-        The resulting ``bool``.
-
-    """
-    return not FlextUtilitiesGuardsTypeCore.empty_value(value)
-
-
 class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
     """Data structure mapping, extraction, and transformation utilities."""
 
-    class TransformOptions(m.Value):
-        """Validated option envelope for the ``transform`` value pipeline."""
+    @staticmethod
+    def _transform_result(
+        pipeline: Callable[[], t.JsonDict],
+    ) -> p.Result[t.JsonMapping]:
+        """Run one transform pipeline, mapping failures to ``r``.
 
-        normalize: Annotated[
-            bool, m.Field(description="Normalize values to metadata form")
-        ] = False
-        strip_none: Annotated[bool, m.Field(description="Strip ``None`` values")] = (
-            False
+        Returns:
+            The resulting ``p.Result[t.JsonMapping]``.
+
+        """
+        transform_result: p.Result[t.JsonMapping] = FlextResult[
+            t.JsonMapping
+        ].create_from_callable(
+            pipeline,
         )
-        strip_empty: Annotated[bool, m.Field(description="Strip empty values")] = False
-        map_keys: Annotated[
-            t.StrMapping | None,
-            m.Field(description="Optional old-key to new-key mapping"),
-        ] = None
+        if transform_result.failure:
+            failure_reason = (
+                transform_result.exception
+                if isinstance(transform_result.exception, Exception)
+                else transform_result.error
+            )
+            return FlextResult[t.JsonMapping].fail_op("transform", failure_reason)
+        return transform_result
+
+    @staticmethod
+    def _normalize_step(step: t.JsonDict, *, normalize: bool) -> t.JsonDict:
+        """Optionally normalize a step mapping to metadata form.
+
+        Returns:
+            The resulting ``t.JsonDict``.
+
+        """
+        if not normalize:
+            return step
+        normalized = FlextRuntime.normalize_to_metadata(step)
+        if FlextUtilitiesGuardsTypeCore.mapping(normalized):
+            return dict(normalized)
+        return step
+
+    @staticmethod
+    def _remap_step(
+        step: t.JsonDict,
+        map_keys: t.StrMapping | None,
+        filter_keys: set[str] | None,
+        exclude_keys: set[str] | None,
+    ) -> t.JsonDict:
+        """Apply key mapping, filtering, and exclusion to a step mapping.
+
+        Returns:
+            The resulting ``t.JsonDict``.
+
+        """
+        result = step
+        if map_keys:
+            result = {map_keys.get(k, k): v for k, v in result.items()}
+        if filter_keys:
+            result = {k: result[k] for k in filter_keys if k in result}
+        if exclude_keys:
+            result = {k: v for k, v in result.items() if k not in exclude_keys}
+        return result
+
+    @staticmethod
+    def _strip_step(
+        step: t.JsonDict,
+        *,
+        strip_none: bool,
+        strip_empty: bool,
+    ) -> t.JsonDict:
+        """Optionally strip None values and empty values from a step mapping.
+
+        Returns:
+            The resulting ``t.JsonDict``.
+
+        """
+        result = step
+        if strip_none:
+            result = dict(
+                FlextUtilitiesCollection.filter(
+                    result, FlextUtilitiesMapper._is_not_none
+                )
+            )
+        if strip_empty:
+            return dict(
+                FlextUtilitiesCollection.filter(
+                    result, FlextUtilitiesMapper._is_not_empty
+                )
+            )
+        return result
+
+    @staticmethod
+    def _is_not_none(value: t.JsonValue) -> bool:
+        """Whether a value is not None.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
+        return value is not None
+
+    @staticmethod
+    def _is_not_empty(value: t.JsonValue) -> bool:
+        """Whether a value is not an empty scalar or container.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
+        return not FlextUtilitiesGuardsTypeCore.empty_value(value)
 
     @staticmethod
     def agg[T](
@@ -238,7 +234,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
     def transform(
         source: t.JsonMapping | m.ConfigMap,
         *,
-        options: FlextUtilitiesMapper.TransformOptions | None = None,
+        options: m.TransformOptions | None = None,
         filter_keys: set[str] | None = None,
         exclude_keys: set[str] | None = None,
     ) -> p.Result[t.JsonMapping]:
@@ -252,11 +248,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
             The resulting ``p.Result[t.JsonMapping]``.
 
         """
-        resolved = (
-            options
-            if options is not None
-            else (FlextUtilitiesMapper.TransformOptions())
-        )
+        resolved = options if options is not None else (m.TransformOptions())
         coerced: t.JsonMapping = (
             {k: FlextRuntime.normalize_to_metadata(v) for k, v in source.root.items()}
             if isinstance(source, m.ConfigMap)
@@ -264,15 +256,19 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
         )
 
         def _pipeline() -> t.JsonDict:
-            normalized = _normalize_step(dict(coerced), normalize=resolved.normalize)
-            step = _remap_step(normalized, resolved.map_keys, filter_keys, exclude_keys)
-            return _strip_step(
+            normalized = FlextUtilitiesMapper._normalize_step(
+                dict(coerced), normalize=resolved.normalize
+            )
+            step = FlextUtilitiesMapper._remap_step(
+                normalized, resolved.map_keys, filter_keys, exclude_keys
+            )
+            return FlextUtilitiesMapper._strip_step(
                 step,
                 strip_none=resolved.strip_none,
                 strip_empty=resolved.strip_empty,
             )
 
-        return _transform_result(_pipeline)
+        return FlextUtilitiesMapper._transform_result(_pipeline)
 
 
 __all__: list[str] = ["FlextUtilitiesMapper"]

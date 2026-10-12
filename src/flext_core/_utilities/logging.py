@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, ClassVar, Self
 
 from flext_core import c, m, p, t
 from flext_core._bound_logger import FlextBoundLogger
-from flext_core._utilities.logging_context import FlextUtilitiesLoggingContext
+from flext_core._utilities import FlextUtilitiesLoggingContext
 
 if TYPE_CHECKING:
     import types
@@ -118,3 +118,6 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
         # would return a facade instance instead of a logger.
         logger: p.Logger = FlextBoundLogger(name, context=merged_context)
         return logger
+
+
+__all__: tuple[str, ...] = ("FlextUtilitiesLogging",)

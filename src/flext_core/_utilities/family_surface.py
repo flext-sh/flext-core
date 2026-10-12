@@ -12,12 +12,11 @@ import importlib.metadata
 from types import MappingProxyType
 from typing import TYPE_CHECKING, cast
 
-from flext_core._constants import FlextConstantsEnforcement
+from flext_core import c, normalize_lazy_imports
 from flext_core._utilities import FlextUtilitiesProjectMetadata
-from flext_core.lazy import normalize_lazy_imports
 
 if TYPE_CHECKING:
-    from flext_core._typings.base import FlextTypingBase
+    from flext_core._typings import FlextTypingBase
 
 
 class FlextUtilitiesFamilySurface:
@@ -54,9 +53,9 @@ class FlextUtilitiesFamilySurface:
             family prefix.
         """
         return distribution_name.startswith(
-            FlextConstantsEnforcement.NAMESPACE_FAMILY_PREFIX,
+            c.NAMESPACE_FAMILY_PREFIX,
         ) or any(
-            requirement.startswith(FlextConstantsEnforcement.NAMESPACE_FAMILY_PREFIX)
+            requirement.startswith(c.NAMESPACE_FAMILY_PREFIX)
             for requirement in requirement_names
         )
 
@@ -148,11 +147,11 @@ class FlextUtilitiesFamilySurface:
                 frozenset(published),
                 MappingProxyType(dict(normalized)),
             ))
-        if len(snapshot) < FlextConstantsEnforcement.FAMILY_SURFACE_MIN_PUBLISHED:
+        if len(snapshot) < c.FAMILY_SURFACE_MIN_PUBLISHED:
             msg = (
                 "family-surface derivation found no distribution publishing "
                 "the lazy export contract under prefix "
-                f"{FlextConstantsEnforcement.NAMESPACE_FAMILY_PREFIX!r} or a "
+                f"{c.NAMESPACE_FAMILY_PREFIX!r} or a "
                 "requirement edge to it"
             )
             raise RuntimeError(msg)
@@ -173,9 +172,7 @@ class FlextUtilitiesFamilySurface:
             The resulting ``t.MappingKV[str, t.VariadicTuple[str]]``.
 
         """
-        declaration = tuple(
-            name[0].lower() for name in FlextConstantsEnforcement.NAMESPACE_LAYER_NAMES
-        )
+        declaration = tuple(name[0].lower() for name in c.NAMESPACE_LAYER_NAMES)
         owners = {
             name: tuple(alias for alias in declaration if alias in published)
             for name, published, _ in (FlextUtilitiesFamilySurface._surface_snapshot())
@@ -217,7 +214,7 @@ class FlextUtilitiesFamilySurface:
         return [
             alias
             for alias in bucket["aliases"]
-            if alias in FlextConstantsEnforcement.ENFORCEMENT_CANONICAL_ALIASES
+            if alias in c.ENFORCEMENT_CANONICAL_ALIASES
         ]
 
     @staticmethod

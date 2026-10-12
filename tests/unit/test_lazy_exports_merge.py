@@ -30,7 +30,7 @@ from tests import u
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from flext_core import t
+    from tests import t
 
 
 class TestsFlextCoreLazyExportsMerge:

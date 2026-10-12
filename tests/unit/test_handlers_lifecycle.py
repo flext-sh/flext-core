@@ -9,10 +9,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, override
 
 import pytest
-from flext_tests import h, r
 
-from tests import c, m, t
-from tests.utilities import u
+from tests import c, h, m, r, t, u
 
 if TYPE_CHECKING:
     from tests import p

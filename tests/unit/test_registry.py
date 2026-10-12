@@ -10,8 +10,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tests import c, m
-from tests.utilities import u
+from tests import c, m, u
 
 if TYPE_CHECKING:
     from tests import p, t

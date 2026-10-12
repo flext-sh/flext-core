@@ -11,7 +11,8 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_core._constants import FlextConstantsEnforcement, FlextMroViolation
+from flext_core import c
+from flext_core._constants import FlextMroViolation
 from flext_core._exceptions import (
     FlextExceptionsBase,
     FlextExceptionsFactories,
@@ -37,9 +38,7 @@ class FlextExceptions(
     """
 
     MroViolation: ClassVar[type[FlextMroViolation]] = FlextMroViolation
-    SmellViolation: ClassVar[type[FlextConstantsEnforcement.FlextSmellViolation]] = (
-        FlextConstantsEnforcement.FlextSmellViolation
-    )
+    SmellViolation: ClassVar[type[c.FlextSmellViolation]] = c.FlextSmellViolation
 
 
 e = FlextExceptions

@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
-    from flext_core._typings.base import FlextTypingBase
+    from flext_core._typings import FlextTypingBase
 
 
 class FlextConstantsProjectMetadata:
@@ -23,3 +23,6 @@ class FlextConstantsProjectMetadata:
     )
     PROJECT_VERSION_PLACEHOLDER: Final[str] = "0.0.0"
     METADATA_SCHEMA_VERSION_DEFAULT: Final[str] = "1.0.0"
+
+
+__all__: tuple[str, ...] = ("FlextConstantsProjectMetadata",)

@@ -9,9 +9,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import r, tm
 
-from tests import m, u
+from tests import m, r, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import MutableSequence

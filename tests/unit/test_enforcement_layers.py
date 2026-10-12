@@ -23,8 +23,7 @@ from typing import (
 
 import pytest
 
-from flext_core import m, t
-from tests import u
+from tests import m, t, u
 
 # Deliberate broad-annotation fixture: the layered checker under test must
 # detect this exact runtime type, so it is bound as a value, never spelled

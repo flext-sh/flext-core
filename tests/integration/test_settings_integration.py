@@ -11,8 +11,8 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import FlextContainer, FlextSettings, m
-from tests import c, tm, u
+from flext_core import FlextContainer, FlextSettings
+from tests import c, m, tm, u
 
 
 class TestsFlextSettingsIntegration:

@@ -46,3 +46,6 @@ class FlextConstantsSerialization:
 
     DEFAULT_ENCODING: ClassVar[str] = "utf-8"
     DEFAULT_DECODE_ERROR_HANDLER: ClassVar[str] = DecodeErrorHandler.REPLACE
+
+
+__all__: tuple[str, ...] = ("FlextConstantsSerialization",)

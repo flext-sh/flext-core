@@ -16,16 +16,13 @@ from typing import TYPE_CHECKING, ClassVar
 
 from typing_extensions import TypeForm
 
-from flext_core import c, p, t
+from flext_core import FlextExceptions, FlextResult, FlextRuntime, c, p, t
 from flext_core._utilities import (
+    FlextUtilitiesBase,
     FlextUtilitiesCollection,
     FlextUtilitiesGuardsTypeModel,
+    FlextUtilitiesLoggingConfig,
 )
-from flext_core._utilities.base import FlextUtilitiesBase
-from flext_core._utilities.logging_config import FlextUtilitiesLoggingConfig
-from flext_core.exceptions import FlextExceptions
-from flext_core.result import FlextResult
-from flext_core.runtime import FlextRuntime
 
 if TYPE_CHECKING:
     import types

@@ -11,7 +11,7 @@ import warnings
 
 import pytest
 
-from flext_core import c, m, u
+from tests import c, m, u
 from tests.fixtures import type_aliases
 from tests.fixtures.type_aliases import TestsFlextTypeAliasDeclarations
 

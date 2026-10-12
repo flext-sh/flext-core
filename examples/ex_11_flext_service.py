@@ -9,9 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Annotated, override
 
-from examples import m, t, u
-from examples.shared import ExamplesFlextShared
-from flext_core import p, r, s
+from examples import ExamplesFlextShared, m, p, r, s, t, u
 
 
 class ExamplesFlextEchoService(s[str]):

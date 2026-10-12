@@ -20,7 +20,7 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports, lazy
 from tests import u
 
 if TYPE_CHECKING:
-    from flext_core import t
+    from tests import t
 
 
 class TestsFlextCoreLazyExports:
@@ -93,6 +93,36 @@ class TestsFlextCoreLazyExports:
         assert {"FlextConstants", "FlextUtilities", "u"} <= set(package.__all__)
 
     @staticmethod
+    def test_cold_loader_does_not_execute_generated_child_initializer(
+        tmp_path: Path,
+    ) -> None:
+        """The bootstrap loader works before child projections are recoverable."""
+        source = Path(__file__).resolve().parents[2] / "src" / "flext_core"
+        candidate = tmp_path / "flext_core"
+        shutil.copytree(source, candidate, ignore=shutil.ignore_patterns("__pycache__"))
+        child = candidate / "_lazy_parts"
+        child.mkdir(exist_ok=True)
+        (child / "__init__.py").write_text(
+            "raise RuntimeError('generated child initializer is not ready')\n",
+            encoding="utf-8",
+        )
+        script = (
+            "import sys\n"
+            f"sys.path.insert(0, {str(tmp_path)!r})\n"
+            "from flext_core.lazy import install_lazy_exports\n"
+            "namespace = {}\n"
+            "install_lazy_exports('bootstrap_probe', namespace, {}, "
+            "public_exports=())\n"
+            "assert namespace['__all__'] == ()\n"
+            "assert namespace['__dir__']() == []\n"
+            "assert 'flext_core._lazy_parts' not in sys.modules\n"
+        )
+        result = u.Cli.run_raw([sys.executable, "-c", script], cwd=tmp_path)
+        assert result.success, result.error
+        assert result.value.outcome.raw_return_code == 0, result.value.stderr
+        assert result.value.stderr == ""
+
+    @staticmethod
     def test_fresh_root_supports_bootstrap_public_facade_dependency(
         tmp_path: Path,
     ) -> None:
@@ -119,6 +149,48 @@ class TestsFlextCoreLazyExports:
             "assert FlextCli\n"
         )
         result = u.Cli.run_raw([sys.executable, "-c", script], cwd=tmp_path)
+        assert result.success, result.error
+        assert result.value.outcome.raw_return_code == 0, result.value.stderr
+        assert result.value.stderr == ""
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        "first_import",
+        [
+            "from flext_core import t, p, m",
+            "from flext_cli import t, p, m",
+            "from flext_infra import t, p, m",
+        ],
+    )
+    def test_cold_public_declarations_resolve_from_live_sources(
+        first_import: str,
+    ) -> None:
+        """Public consumers resolve declarations without warming constants first."""
+        workspace = Path(__file__).resolve().parents[3]
+        script = (
+            f"{first_import}\n"
+            "from pathlib import Path\n"
+            "from typing import get_args\n"
+            "import flext_core, flext_cli, flext_infra\n"
+            "from flext_core import FlextSettings, c, m, p, t\n"
+            f"workspace = Path({str(workspace)!r})\n"
+            "for package in (flext_core, flext_cli, flext_infra):\n"
+            "    source = workspace / package.__name__.replace('_', '-') / 'src'\n"
+            "    assert Path(package.__file__).resolve().is_relative_to(source)\n"
+            "    assert issubclass(package.t, t)\n"
+            "    assert issubclass(package.p, p)\n"
+            "    assert issubclass(package.m, m)\n"
+            "assert get_args(t.SettingsClass.__value__) == (p.SettingsType,)\n"
+            "for operation in ('register_plugin', 'unregister_plugin', "
+            "'fetch_plugin', 'list_plugins'):\n"
+            "    method = getattr(p.Registry, operation)\n"
+            "    assert method.__kwdefaults__['scope'] is "
+            "c.RegistrationScope.INSTANCE\n"
+            "options = m.RuntimeBootstrapOptions(settings_type=FlextSettings)\n"
+            "assert options.settings_type is FlextSettings\n"
+            "assert options.model_dump() == {'settings_overrides': None}\n"
+        )
+        result = u.Cli.run_raw([sys.executable, "-c", script], cwd=workspace)
         assert result.success, result.error
         assert result.value.outcome.raw_return_code == 0, result.value.stderr
         assert result.value.stderr == ""

@@ -10,7 +10,7 @@ import ast
 from types import UnionType
 from typing import Annotated, TypeAliasType, Union, get_args, get_origin
 
-from flext_core._utilities import FlextUtilitiesBeartypeHelpers
+from flext_core._utilities._beartype import FlextUtilitiesBeartypeHelpers
 
 
 def ast_union_members(node: ast.expr) -> tuple[ast.expr, ...]:

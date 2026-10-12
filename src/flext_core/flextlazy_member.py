@@ -27,6 +27,7 @@ class FlextLazyMember:
     __slots__ = ("_host", "_member", "_module", "_owner")
 
     def __init__(self, module: str, owner: str, member: str) -> None:
+        """Record the mixin member to resolve when the descriptor is accessed."""
         self._module = module
         self._owner = owner
         self._member = member

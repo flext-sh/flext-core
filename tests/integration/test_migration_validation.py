@@ -14,10 +14,9 @@ from __future__ import annotations
 from typing import override
 
 import pytest
-from flext_tests import r, tm
 
 from flext_core import FlextContainer, FlextService
-from tests import m, p, t, u
+from tests import m, p, r, t, tm, u
 from tests.integration.migration_validation_cases import capture_stdout
 
 _EXPECTED_DOUBLED_VALUE = 42

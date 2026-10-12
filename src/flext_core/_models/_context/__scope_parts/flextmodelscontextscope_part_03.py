@@ -9,9 +9,8 @@ from __future__ import annotations
 from typing import Annotated
 
 from flext_core import p
+from flext_core._models import FlextModelsBase, FlextModelsPydantic
 from flext_core._models._context.__scope_parts import flextmodelscontextscope_part_02
-from flext_core._models.base import FlextModelsBase
-from flext_core._models.pydantic import FlextModelsPydantic
 
 mp = FlextModelsPydantic
 

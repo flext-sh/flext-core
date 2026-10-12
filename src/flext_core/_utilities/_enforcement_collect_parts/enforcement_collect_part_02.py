@@ -10,11 +10,11 @@ import inspect
 from collections.abc import Iterator
 from enum import EnumType
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement
-from flext_core._protocols.base import FlextProtocolsBase
-from flext_core._typings.base import FlextTypingBase
+from flext_core import c
+from flext_core._protocols import FlextProtocolsBase
+from flext_core._typings import FlextTypingBase
+from flext_core._utilities import FlextUtilitiesBeartypeEngine
 from flext_core._utilities._enforcement_collect_parts import enforcement_collect_part_01
-from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine
 
 pb = FlextProtocolsBase
 
@@ -128,7 +128,7 @@ class FlextUtilitiesEnforcementCollect(part_01.FlextUtilitiesEnforcementCollect)
         cls = FlextUtilitiesEnforcementCollect
         # The collection strategy is rule data; an unknown strategy is a data
         # defect and raises instead of collecting nothing.
-        collect = FlextConstantsEnforcement.ENFORCEMENT_TAG_COLLECT[tag]
+        collect = c.ENFORCEMENT_TAG_COLLECT[tag]
         match collect:
             case "target":
                 yield qn, (target,)

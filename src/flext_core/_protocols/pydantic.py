@@ -15,7 +15,7 @@ from typing import Protocol, overload, runtime_checkable
 
 import pydantic
 
-from flext_core._protocols.base import FlextProtocolsBase
+from flext_core._protocols import FlextProtocolsBase
 
 
 class FlextProtocolsPydantic:
@@ -58,3 +58,6 @@ class FlextProtocolsPydantic:
             func: CallT,
             /,
         ) -> CallT: ...
+
+
+__all__: tuple[str, ...] = ("FlextProtocolsPydantic",)

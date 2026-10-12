@@ -15,9 +15,8 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 from typing_extensions import TypeForm
 
 from flext_core import c, t
+from flext_core._models import FlextModelsBase, FlextModelsPydantic
 from flext_core._models._cqrs_parts import flextmodelscqrs_part_01
-from flext_core._models.base import FlextModelsBase
-from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._runtime import FlextRuntimeMetadata
 from flext_core._utilities import FlextUtilitiesGenerators
 

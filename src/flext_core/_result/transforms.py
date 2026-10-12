@@ -11,11 +11,7 @@ from typing import TYPE_CHECKING, Self, cast, overload
 from pydantic import BaseModel
 
 from flext_core import c
-from flext_core._result.construction import (
-    FlextResultConstruction,
-    copy_result,
-    ok_result,
-)
+from flext_core._result import FlextResultConstruction, copy_result, ok_result
 
 if TYPE_CHECKING:
     from collections.abc import Callable

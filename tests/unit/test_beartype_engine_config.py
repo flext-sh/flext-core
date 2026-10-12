@@ -15,7 +15,6 @@ from beartype import BeartypeConf, BeartypeStrategy
 
 from flext_core.utilities import FlextUtilitiesBeartypeConf
 from tests import c, t, u
-from tests.unit._beartype_engine_support import AnyAlias, CleanAlias, NestedAnyAlias
 
 _FORBIDDEN: frozenset[str] = frozenset({"dict", "list", "set"})
 
@@ -61,7 +60,7 @@ class TestsFlextCoreBeartypeEngineConfig:
 
     @pytest.mark.parametrize(
         ("alias", "expected"),
-        [(AnyAlias, True), (NestedAnyAlias, True), (CleanAlias, False)],
+        [(t.AnyAlias, True), (t.NestedAnyAlias, True), (t.CleanAlias, False)],
     )
     @staticmethod
     def test_alias_contains_any_unwraps_type_alias(

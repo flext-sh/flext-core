@@ -6,11 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from tests._models._mixins.service_case_core import TestsFlextModelsServiceCaseCoreMixin
-from tests._models._mixins.service_case_reliability import (
+from tests._models._mixins import (
+    TestsFlextModelsServiceCaseCoreMixin,
     TestsFlextModelsServiceCaseReliabilityMixin,
-)
-from tests._models._mixins.service_case_validation import (
     TestsFlextModelsServiceCaseValidationMixin,
 )
 

@@ -9,9 +9,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from flext_tests import e
-
-from tests import c
+from tests import c, e
 
 if TYPE_CHECKING:
     from tests import t

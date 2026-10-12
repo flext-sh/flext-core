@@ -13,8 +13,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import ClassVar
 
-from examples import m
-from flext_core import p, r
+from examples import m, p, r
 
 
 class ExamplesFlextSharedBase:

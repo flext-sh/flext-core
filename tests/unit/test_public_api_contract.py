@@ -17,8 +17,8 @@ from __future__ import annotations
 import pytest
 
 import flext_core
-from flext_core import FlextSettings, c, d, e, h, m, p, r, s, t, u, x
-from flext_core.exceptions import FlextMroViolation
+from flext_core import FlextMroViolation, FlextSettings
+from tests import e, p, r, t
 
 # Public facade names a caller can import from ``flext_core``.
 _FACADES: t.VariadicTuple[str] = (
@@ -44,18 +44,18 @@ _FACADES: t.VariadicTuple[str] = (
 )
 
 # alias -> facade name published by the package's public contract
-_ALIASES: tuple[tuple[type, str], ...] = (
-    (r, "FlextResult"),
-    (u, "FlextUtilities"),
-    (m, "FlextModels"),
-    (c, "FlextConstants"),
-    (p, "FlextProtocols"),
-    (t, "FlextTypes"),
-    (s, "FlextService"),
-    (e, "FlextExceptions"),
-    (d, "FlextDecorators"),
-    (h, "FlextHandlers"),
-    (x, "FlextMixins"),
+_ALIASES: t.StrPairTuple = (
+    ("r", "FlextResult"),
+    ("u", "FlextUtilities"),
+    ("m", "FlextModels"),
+    ("c", "FlextConstants"),
+    ("p", "FlextProtocols"),
+    ("t", "FlextTypes"),
+    ("s", "FlextService"),
+    ("e", "FlextExceptions"),
+    ("d", "FlextDecorators"),
+    ("h", "FlextHandlers"),
+    ("x", "FlextMixins"),
 )
 
 
@@ -109,14 +109,14 @@ class TestsFlextCorePublicApiContract:
     @staticmethod
     @pytest.mark.parametrize(("alias", "facade_name"), _ALIASES)
     def test_single_letter_alias_is_its_facade(
-        alias: type,
+        alias: str,
         facade_name: str,
     ) -> None:
         """Each single-letter alias is the exact same object as its named facade."""
         # Arrange / Act
         facade = getattr(flext_core, facade_name)
         # Assert
-        assert alias is facade
+        assert getattr(flext_core, alias) is facade
 
     @staticmethod
     def test_ok_result_reports_success_and_yields_value() -> None:

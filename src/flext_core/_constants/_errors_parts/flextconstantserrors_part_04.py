@@ -147,3 +147,6 @@ class FlextConstantsErrorsDomainParser:
     ERR_CONFIG_FACTORY_REGISTRATION_FAILED_FOR_NAME: ClassVar[str] = (
         "Factory registration failed for {name}: {error}"
     )
+
+
+__all__: tuple[str, ...] = ("FlextConstantsErrorsDomainParser",)

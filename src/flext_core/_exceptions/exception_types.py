@@ -11,10 +11,10 @@ from typing import TYPE_CHECKING, ClassVar, override
 from pydantic import ValidationError as _PydanticValidationError
 
 from flext_core import c, m, t
-from flext_core._exceptions.base import FlextExceptionsBase
+from flext_core._exceptions import FlextExceptionsBase
 
 if TYPE_CHECKING:
-    from flext_core._protocols.result import FlextProtocolsResult
+    from flext_core._protocols import FlextProtocolsResult
 
 
 class FlextExceptionsTypes(FlextExceptionsBase):

@@ -11,13 +11,13 @@ from typing import Annotated, Literal
 from pydantic import Discriminator, Field
 from typing_extensions import TypeForm
 
-from flext_core._constants import FlextConstantsEnforcement
-from flext_core._models._enforcement._base import (
+from flext_core import c
+from flext_core._models import FlextModelsPydantic
+from flext_core._models._enforcement import (
     FlextModelsEnforcementBase,
     FlextModelsEnforcementModelBase,
 )
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._typings.base import FlextTypingBase
+from flext_core._typings import FlextTypingBase
 
 type _EnforcementPredicateParams = (
     FlextModelsEnforcementParams.FieldShapeParams
@@ -190,7 +190,7 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
     class EnforcementPredicateSpec(FlextModelsEnforcementModelBase):
         """One runtime rule binding validated from the predicate package data."""
 
-        predicate: FlextConstantsEnforcement.EnforcementPredicateKind
+        predicate: c.EnforcementPredicateKind
         params: Annotated[_EnforcementPredicateParams, Discriminator("kind")]
 
 

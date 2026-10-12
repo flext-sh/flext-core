@@ -8,10 +8,10 @@ from __future__ import annotations
 
 from enum import EnumType
 
-from flext_core._constants import FlextConstantsEnforcement
+from flext_core import c
 from flext_core._models import FlextModelsEnforcement
-from flext_core._typings.base import FlextTypingBase
-from flext_core._utilities import (
+from flext_core._typings import FlextTypingBase
+from flext_core._utilities._beartype import (
     FlextUtilitiesBeartypeHelpers,
     FlextUtilitiesBeartypeModuleSource,
 )
@@ -40,9 +40,9 @@ class FlextUtilitiesBeartypeClassVisitor:
             case (value, layer) if (
                 isinstance(value, type)
                 and isinstance(layer, str)
-                and layer in FlextConstantsEnforcement.ENFORCEMENT_LAYER_ALLOWS
+                and layer in c.ENFORCEMENT_LAYER_ALLOWS
             ):
-                allowed = FlextConstantsEnforcement.ENFORCEMENT_LAYER_ALLOWS.get(
+                allowed = c.ENFORCEMENT_LAYER_ALLOWS.get(
                     layer,
                     frozenset(),
                 )
@@ -80,8 +80,7 @@ class FlextUtilitiesBeartypeClassVisitor:
                 if params.check_nested:
                     parts = target.__qualname__.split(".")
                     has_wrong_nested_prefix = all((
-                        len(parts)
-                        >= FlextConstantsEnforcement.ENFORCEMENT_NESTED_MRO_MIN_DEPTH,
+                        len(parts) >= c.ENFORCEMENT_NESTED_MRO_MIN_DEPTH,
                         not parts[0].startswith(expected),
                     ))
                     violation = (

@@ -32,3 +32,6 @@ class FlextConstantsEnvironment:
     ``FlextSettings.ENV_FILE_*``. ``DEFAULT_APP_NAME``/``DEFAULT_TIMEZONE``
     were deleted: zero consumers (YAGNI).
     """
+
+
+__all__: tuple[str, ...] = ("FlextConstantsEnvironment",)

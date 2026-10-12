@@ -14,11 +14,9 @@ from typing import TYPE_CHECKING, ClassVar
 
 from typing_extensions import TypeForm
 
-from flext_core import c, m, p, t, u
-from flext_core._models._context._scope_ops import FlextContextScopeOps
-from flext_core._utilities.base import FlextUtilitiesBase
-from flext_core.exceptions import FlextExceptions
-from flext_core.result import FlextResult
+from flext_core import FlextExceptions, FlextResult, c, m, p, t, u
+from flext_core._models._context import FlextContextScopeOps
+from flext_core._utilities import FlextUtilitiesBase
 
 # NOTE (multi-agent): mro-i6nq.12 — Generator is annotation-only; importing it
 # under TYPE_CHECKING keeps the public runtime facade graph lazy. The module

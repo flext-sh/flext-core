@@ -8,9 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeVar
 
-from flext_core import c, m, p
-from flext_core._exceptions.template import FlextExceptionsTemplate
-from flext_core.result import FlextResult
+from flext_core import FlextResult, c, m, p
+from flext_core._exceptions import FlextExceptionsTemplate
 
 _TExceptionParams = TypeVar("_TExceptionParams", bound=m.BaseModel)
 

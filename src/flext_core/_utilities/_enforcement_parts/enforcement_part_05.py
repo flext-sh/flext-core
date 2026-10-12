@@ -6,11 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement
-from flext_core._constants.regex import FlextConstantsRegex
+from flext_core import c
 from flext_core._utilities._enforcement_parts import enforcement_part_04
 
-cre = FlextConstantsRegex
+cre = c
 
 
 class FlextUtilitiesEnforcement(enforcement_part_04.FlextUtilitiesEnforcement):
@@ -48,7 +47,7 @@ class FlextUtilitiesEnforcement(enforcement_part_04.FlextUtilitiesEnforcement):
             )
             raise ValueError(msg)
         tail = class_name[len(flext_prefix) :]
-        for layer in FlextConstantsEnforcement.NAMESPACE_LAYER_NAMES:
+        for layer in c.NAMESPACE_LAYER_NAMES:
             idx = tail.find(layer)
             if idx > 0:
                 project = tail[:idx]
@@ -57,7 +56,7 @@ class FlextUtilitiesEnforcement(enforcement_part_04.FlextUtilitiesEnforcement):
         msg = (
             f"class_name_to_module: {class_name!r} contains no facade "
             f"layer suffix from FlextConstantsEnforcement.NAMESPACE_LAYER_NAMES "
-            f"({tuple(FlextConstantsEnforcement.NAMESPACE_LAYER_NAMES)})"
+            f"({tuple(c.NAMESPACE_LAYER_NAMES)})"
         )
         raise ValueError(msg)
 

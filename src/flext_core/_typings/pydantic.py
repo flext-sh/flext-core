@@ -179,3 +179,6 @@ class FlextTypesPydantic:
     # with ``m.Field(exclude=True, description=...)``: field-level metadata cannot
     # live inside a type alias.
     type Port[P] = pydantic_json_schema.SkipJsonSchema[P]
+
+
+__all__: list[str] = ["FlextTypesPydantic"]

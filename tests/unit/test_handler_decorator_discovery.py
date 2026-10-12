@@ -16,9 +16,8 @@ import types
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import h, r
 
-from tests import m
+from tests import h, m, r
 
 if TYPE_CHECKING:
     from tests import p

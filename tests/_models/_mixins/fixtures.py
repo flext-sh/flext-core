@@ -6,8 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from tests._models._mixins.fixture_payloads import TestsFlextModelsFixturePayloadsMixin
-from tests._models._mixins.fixture_suite import TestsFlextModelsFixtureSuiteMixin
+from tests._models._mixins import (
+    TestsFlextModelsFixturePayloadsMixin,
+    TestsFlextModelsFixtureSuiteMixin,
+)
 
 
 class TestsFlextModelsFixtureDictsMixin(

@@ -48,6 +48,8 @@ class ExamplesFlextModels(FlextModels):
         ExamplesFlextModelsEx12,
         ExamplesFlextModelsEx14,
         ExamplesFlextModelsOutput.Examples,
+        ExamplesFlextSharedHandle,
+        ExamplesFlextSharedPerson,
     ):
         """Canonical namespace for all example domain models.
 

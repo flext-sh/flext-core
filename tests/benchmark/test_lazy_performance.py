@@ -14,13 +14,8 @@ from types import ModuleType
 import pytest
 
 import flext_core
-from flext_core import t
 from flext_core.lazy import install_lazy_exports, lazy
 from tests import c, tm
-
-# Canonical lazy-import aliases live on the typings owner (FlextTypingBase).
-type LazyImportEntry = t.LazyImportEntry
-type LazyImportMap = t.LazyImportMap
 
 
 class TestsFlextLazyPerformance:

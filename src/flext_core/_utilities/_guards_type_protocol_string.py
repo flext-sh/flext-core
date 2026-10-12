@@ -7,66 +7,70 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
-    from flext_core._typings.base import FlextTypingBase as t
+    from flext_core import t
     from flext_core.typings import ProtocolGuardInput
-
-
-def _has_len(value: ProtocolGuardInput) -> bool:
-    """Return whether ``value`` exposes ``__len__``.
-
-    Returns:
-        The resulting ``bool``.
-
-    """
-    return hasattr(value, "__len__")
-
-
-def _is_none(value: ProtocolGuardInput) -> bool:
-    """Return whether ``value`` is ``None``.
-
-    Returns:
-        The resulting ``bool``.
-
-    """
-    return value is None
-
-
-_STRING_TYPE_PREDICATES: t.MappingKV[str, Callable[[ProtocolGuardInput], bool]] = {
-    "str": lambda value: isinstance(value, str),
-    "dict": lambda value: isinstance(value, dict),
-    "list": lambda value: isinstance(value, list),
-    "tuple": lambda value: isinstance(value, tuple),
-    "sequence": lambda value: isinstance(value, (list, tuple, range)),
-    "mapping": lambda value: isinstance(value, Mapping),
-    "list_or_tuple": lambda value: isinstance(value, (list, tuple)),
-    "sequence_not_str": lambda value: (
-        isinstance(value, (list, tuple, range)) and not isinstance(value, str)
-    ),
-    "sequence_not_str_bytes": lambda value: (
-        isinstance(value, (list, tuple, range)) and not isinstance(value, (str, bytes))
-    ),
-    "sized": lambda value: hasattr(value, "__len__"),
-    "callable": callable,
-    "bytes": lambda value: isinstance(value, bytes),
-    "int": lambda value: isinstance(value, int),
-    "float": lambda value: isinstance(value, float),
-    "bool": lambda value: isinstance(value, bool),
-    "none": lambda value: value is None,
-    "string_non_empty": lambda value: isinstance(value, str) and bool(value.strip()),
-    "dict_non_empty": lambda value: isinstance(value, Mapping) and len(value) > 0,
-    "list_non_empty": lambda value: (
-        isinstance(value, Sequence)
-        and not isinstance(value, (str, bytes, bytearray))
-        and len(value) > 0
-    ),
-}
 
 
 class FlextUtilitiesGuardsTypeProtocolStringMixin:
     """String-keyed runtime predicates shared by the protocol guards."""
+
+    @staticmethod
+    def _has_len(value: ProtocolGuardInput) -> bool:
+        """Return whether ``value`` exposes ``__len__``.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
+        return hasattr(value, "__len__")
+
+    @staticmethod
+    def _is_none(value: ProtocolGuardInput) -> bool:
+        """Return whether ``value`` is ``None``.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
+        return value is None
+
+    _STRING_TYPE_PREDICATES: ClassVar[
+        t.MappingKV[str, Callable[[ProtocolGuardInput], bool]]
+    ] = {
+        "str": lambda value: isinstance(value, str),
+        "dict": lambda value: isinstance(value, dict),
+        "list": lambda value: isinstance(value, list),
+        "tuple": lambda value: isinstance(value, tuple),
+        "sequence": lambda value: isinstance(value, (list, tuple, range)),
+        "mapping": lambda value: isinstance(value, Mapping),
+        "list_or_tuple": lambda value: isinstance(value, (list, tuple)),
+        "sequence_not_str": lambda value: (
+            isinstance(value, (list, tuple, range)) and not isinstance(value, str)
+        ),
+        "sequence_not_str_bytes": lambda value: (
+            isinstance(value, (list, tuple, range))
+            and not isinstance(value, (str, bytes))
+        ),
+        "sized": lambda value: hasattr(value, "__len__"),
+        "callable": callable,
+        "bytes": lambda value: isinstance(value, bytes),
+        "int": lambda value: isinstance(value, int),
+        "float": lambda value: isinstance(value, float),
+        "bool": lambda value: isinstance(value, bool),
+        "none": lambda value: value is None,
+        "string_non_empty": lambda value: (
+            isinstance(value, str) and bool(value.strip())
+        ),
+        "dict_non_empty": lambda value: isinstance(value, Mapping) and len(value) > 0,
+        "list_non_empty": lambda value: (
+            isinstance(value, Sequence)
+            and not isinstance(value, (str, bytes, bytearray))
+            and len(value) > 0
+        ),
+    }
 
     @staticmethod
     def _string_predicates() -> Mapping[str, Callable[[ProtocolGuardInput], bool]]:
@@ -98,13 +102,13 @@ class FlextUtilitiesGuardsTypeProtocolStringMixin:
                 )
                 and not isinstance(value, (str, bytes))
             ),
-            "sized": _has_len,
+            "sized": FlextUtilitiesGuardsTypeProtocolStringMixin._has_len,
             "callable": callable,
             "bytes": lambda value: isinstance(value, bytes),
             "int": lambda value: isinstance(value, int),
             "float": lambda value: isinstance(value, float),
             "bool": lambda value: isinstance(value, bool),
-            "none": _is_none,
+            "none": FlextUtilitiesGuardsTypeProtocolStringMixin._is_none,
             "string_non_empty": lambda value: (
                 isinstance(value, str)
                 and bool(

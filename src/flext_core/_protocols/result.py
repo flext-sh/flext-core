@@ -13,8 +13,7 @@ if TYPE_CHECKING:
     from types import TracebackType
 
     from flext_core import m
-    from flext_core._typings.base import FlextTypingBase
-    from flext_core._typings.services import FlextTypesServices
+    from flext_core._typings import FlextTypesServices, FlextTypingBase
 
 
 _ResultViewT_co = TypeVar("_ResultViewT_co", covariant=True)

@@ -17,11 +17,11 @@ from __future__ import annotations
 import math
 from datetime import UTC, datetime
 
+import flext_tests
 import pytest
-from flext_tests import m as ftm, tm
 from typing_extensions import TypeForm
 
-from tests import c, m, t, u
+from tests import c, m, t, tm, u
 
 
 class TestsFlextCoreTypingsContainers:
@@ -131,7 +131,7 @@ class TestsFlextCoreTypingsContainers:
     @staticmethod
     def test_dict_rejects_non_mapping_root() -> None:
         """Constructing m.Dict from a non-mapping value fails validation."""
-        with pytest.raises(ftm.ValidationError):
+        with pytest.raises(flext_tests.m.ValidationError):
             m.Dict.model_validate(["not", "a", "mapping"])
 
     # ---- m.ConfigMap: shares the mapping contract --------------------------
@@ -185,7 +185,7 @@ class TestsFlextCoreTypingsContainers:
     @staticmethod
     def test_object_list_rejects_non_sequence_root() -> None:
         """Constructing m.ObjectList from a mapping fails validation."""
-        with pytest.raises(ftm.ValidationError):
+        with pytest.raises(flext_tests.m.ValidationError):
             m.ObjectList.model_validate({"not": "a list"})
 
     # ---- c.SCALAR_TYPES: runtime scalar contract ---------------------------
@@ -215,35 +215,37 @@ class TestsFlextCoreTypingsContainers:
     @staticmethod
     def test_pair_alias_enforces_two_element_arity() -> None:
         """t.Pair validates a 2-tuple and rejects other arities."""
-        adapter: ftm.TypeAdapter[t.Pair[int, str]] = u.type_adapter(
+        adapter: flext_tests.m.TypeAdapter[t.Pair[int, str]] = u.type_adapter(
             TypeForm(t.Pair[int, str])
         )
         tm.that(adapter.validate_python((1, "x")), eq=(1, "x"))
-        with pytest.raises(ftm.ValidationError):
+        with pytest.raises(flext_tests.m.ValidationError):
             adapter.validate_python((1, "x", "extra"))
 
     @staticmethod
     def test_triple_alias_enforces_three_element_arity() -> None:
         """t.Triple validates a 3-tuple and rejects shorter tuples."""
-        adapter: ftm.TypeAdapter[t.Triple[int, str, bool]] = u.type_adapter(
+        adapter: flext_tests.m.TypeAdapter[t.Triple[int, str, bool]] = u.type_adapter(
             TypeForm(t.Triple[int, str, bool]),
         )
         tm.that(adapter.validate_python((1, "x", True)), eq=(1, "x", True))
-        with pytest.raises(ftm.ValidationError):
+        with pytest.raises(flext_tests.m.ValidationError):
             adapter.validate_python((1, "x"))
 
     @staticmethod
     def test_int_pair_alias_validates_two_ints() -> None:
         """t.IntPair coerces and validates a pair of ints, rejecting wrong arity."""
-        adapter: ftm.TypeAdapter[t.IntPair] = u.type_adapter(TypeForm(t.IntPair))
+        adapter: flext_tests.m.TypeAdapter[t.IntPair] = u.type_adapter(
+            TypeForm(t.IntPair)
+        )
         tm.that(adapter.validate_python((1, 2)), eq=(1, 2))
-        with pytest.raises(ftm.ValidationError):
+        with pytest.raises(flext_tests.m.ValidationError):
             adapter.validate_python((1, 2, 3))
 
     @staticmethod
     def test_variadic_tuple_alias_accepts_any_length() -> None:
         """t.VariadicTuple validates homogeneous tuples of arbitrary length."""
-        adapter: ftm.TypeAdapter[t.VariadicTuple[int]] = u.type_adapter(
+        adapter: flext_tests.m.TypeAdapter[t.VariadicTuple[int]] = u.type_adapter(
             TypeForm(t.VariadicTuple[int]),
         )
         tm.that(adapter.validate_python(()), eq=())

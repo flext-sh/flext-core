@@ -32,12 +32,10 @@ from flext_core._constants._enforcement_data import (
     SMELL_RULES_TEXT,
     SMELL_THRESHOLDS,
 )
-from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_04 import (
-    FlextConstantsEnforcementRules,
-)
+from flext_core._constants._enforcement_parts import FlextConstantsEnforcementRules
 
 if TYPE_CHECKING:
-    from flext_core._typings.base import FlextTypingBase
+    from flext_core._typings import FlextTypingBase
 
 
 class FlextConstantsEnforcementSmellData:

@@ -8,21 +8,153 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from operator import itemgetter
+from typing import Annotated
 
 import pytest
-from flext_tests import tm
 from typing_extensions import TypeForm
 
-from flext_core import FlextModels, u
-from tests import m, t
+from flext_core import FlextModels, FlextUtilities
+from tests import m, p, t, tm, u
 
 
 def _input_reader() -> Callable[[str], str]:
     return input
 
 
+def _validated_label(values: t.MappingKV[str, p.AttributeProbe]) -> str:
+    """Derive a field default from Pydantic's already validated input.
+
+    Returns:
+        The validated label passed to the field factory.
+    """
+    return str(values["label"])
+
+
 class TestsFlextUtilitiesPydantic:
     """Tests for ``FlextUtilitiesPydantic``."""
+
+    class _FieldFactoryContract(m.BaseModel):
+        """Required fields and typed factories through both public facades."""
+
+        model_config = m.ConfigDict(str_strip_whitespace=True)
+
+        label: str = u.Field(min_length=1)
+        echo: str = m.Field(default_factory=_validated_label)
+        model_values: t.MutableStrMapping = m.Field(
+            default_factory=m.empty(TypeForm(t.MutableStrMapping)),
+        )
+        utility_values: t.MutableStrMapping = u.Field(
+            default_factory=u.empty(TypeForm(t.MutableStrMapping)),
+        )
+
+    @staticmethod
+    def test_field_factories_receive_validated_data_and_keep_required_fields() -> None:
+        """Factories see validated fields and allocate independent defaults."""
+        first = TestsFlextUtilitiesPydantic._FieldFactoryContract(label="  first  ")
+        second = TestsFlextUtilitiesPydantic._FieldFactoryContract(label="second")
+        echo: str = first.echo
+        assert echo == first.label == "first"
+        assert second.echo == second.label
+
+        first.model_values["record"] = "model"
+        first.utility_values["record"] = "utility"
+        assert second.model_values == {}
+        assert second.utility_values == {}
+        assert (
+            TestsFlextUtilitiesPydantic._FieldFactoryContract.model_validate_json(
+                first.model_dump_json(),
+            )
+            == first
+        )
+        with pytest.raises(m.ValidationError):
+            TestsFlextUtilitiesPydantic._FieldFactoryContract.model_validate({})
+
+    class _AnnotatedFactoryContract(m.BaseModel):
+        """Assignment metadata preserves annotation-owned default factories."""
+
+        model_values: Annotated[
+            t.MutableStrMapping,
+            m.Field(default_factory=m.empty(TypeForm(t.MutableStrMapping))),
+        ] = m.Field(description="Model collection with an annotation-owned factory.")
+        utility_values: Annotated[
+            t.MutableStrMapping,
+            u.Field(default_factory=u.empty(TypeForm(t.MutableStrMapping))),
+        ] = u.Field(description="Utility collection with an annotation-owned factory.")
+
+    @staticmethod
+    def test_assignment_metadata_preserves_annotated_factories() -> None:
+        """Omitted factories survive composition, isolation and JSON round-trips."""
+        first = TestsFlextUtilitiesPydantic._AnnotatedFactoryContract.model_validate({})
+        second = (
+            TestsFlextUtilitiesPydantic._AnnotatedFactoryContract.model_validate({})
+        )
+        assert first.model_values == first.utility_values == {}
+        first.model_values["model"] = "first"
+        first.utility_values["utility"] = "first"
+        assert second.model_values == second.utility_values == {}
+        assert (
+            TestsFlextUtilitiesPydantic._AnnotatedFactoryContract.model_validate_json(
+                first.model_dump_json(),
+            )
+            == first
+        )
+
+    class _ClearedAnnotatedFactoryContract(m.BaseModel):
+        """Explicit None clears the earlier factory through both facades."""
+
+        model_values: Annotated[
+            t.MutableStrMapping,
+            m.Field(default_factory=m.empty(TypeForm(t.MutableStrMapping))),
+        ] = m.Field(default_factory=None)
+        utility_values: Annotated[
+            t.MutableStrMapping,
+            u.Field(default_factory=u.empty(TypeForm(t.MutableStrMapping))),
+        ] = u.Field(default_factory=None)
+
+    @pytest.mark.parametrize("missing_name", ["model_values", "utility_values"])
+    @staticmethod
+    def test_explicit_none_clears_annotated_factories(missing_name: str) -> None:
+        """Cleared factories require supplied values instead of inventing defaults."""
+        partial: t.JsonDict = {"model_values": {}, "utility_values": {}}
+        del partial[missing_name]
+        with pytest.raises(m.ValidationError):
+            TestsFlextUtilitiesPydantic._ClearedAnnotatedFactoryContract.model_validate(
+                partial,
+            )
+        values: t.JsonDict = {
+            "model_values": {"model": "supplied"},
+            "utility_values": {"utility": "supplied"},
+        }
+        payload = (
+            TestsFlextUtilitiesPydantic._ClearedAnnotatedFactoryContract.model_validate(
+                values,
+            )
+        )
+        assert payload.model_values == {"model": "supplied"}
+        assert payload.utility_values == {"utility": "supplied"}
+
+    class _AliasFactoryContract(FlextModels.BaseModel):
+        """Literal aliases and factories participate in constructor synthesis."""
+
+        model_label: str = FlextModels.Field(alias="modelLabel")
+        utility_label: str = FlextUtilities.Field(alias="utilityLabel")
+        model_value: str = FlextModels.Field(default_factory=str)
+        utility_value: str = FlextUtilities.Field(default_factory=str)
+
+    @staticmethod
+    def test_alias_named_constructor_preserves_factory_defaults() -> None:
+        """Alias-keyed payloads construct models without factory-defaulted args."""
+        values: t.MutableStrMapping = {"modelLabel": "model", "utilityLabel": "utility"}
+        payload = TestsFlextUtilitiesPydantic._AliasFactoryContract(**values)
+        assert payload.model_label == "model"
+        assert payload.utility_label == "utility"
+        assert payload.model_value == payload.utility_value == ""
+        assert (
+            TestsFlextUtilitiesPydantic._AliasFactoryContract.model_validate_json(
+                payload.model_dump_json(by_alias=True),
+            )
+            == payload
+        )
 
     class _PrivateAttrContract(FlextModels.BaseModel):
         label: str

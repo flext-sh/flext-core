@@ -15,7 +15,7 @@ from collections.abc import Iterator
 
 import pytest
 
-from flext_core.context import FlextContext
+from flext_core import FlextContext
 from tests import tm
 
 

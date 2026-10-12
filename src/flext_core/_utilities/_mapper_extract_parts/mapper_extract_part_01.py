@@ -8,30 +8,14 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Annotated
 
-from flext_core import c, m, p, t
+from flext_core import FlextResult, FlextRuntime, c, m, p, t
 from flext_core._models import FlextModelsContainers, FlextModelsPydantic
-from flext_core._utilities.mapper_access import FlextUtilitiesMapperAccess
-from flext_core.result import FlextResult
-from flext_core.runtime import FlextRuntime
+from flext_core._utilities import FlextUtilitiesMapperAccess
 
 
 class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
     """Path-based ``extract`` method and its helpers."""
-
-    class ExtractResolvePathPartContext(m.Value):
-        """Validated context envelope for one path-part extraction step."""
-
-        path_context: Annotated[
-            str, m.Field(description="Resolved parent path context")
-        ] = ""
-        default: Annotated[
-            t.JsonPayload | None, m.Field(description="Default fallback payload")
-        ] = None
-        required: Annotated[
-            bool, m.Field(description="Whether missing values are fatal")
-        ] = False
 
     @staticmethod
     def _extract_fail_or_default(
@@ -79,7 +63,7 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
         | None,
         part: str,
         *,
-        context: ExtractResolvePathPartContext,
+        context: m.ExtractResolvePathPartContext,
     ) -> tuple[t.JsonPayload | None, p.Result[t.JsonPayload] | None]:
         """Resolve one path segment and return its cursor or an early result.
 

@@ -12,8 +12,7 @@ from flext_core._protocols._container_parts import flextprotocolscontainer_part_
 
 if TYPE_CHECKING:
     from flext_core import m
-    from flext_core._protocols.context import FlextProtocolsContext
-    from flext_core._protocols.settings import FlextProtocolsSettings
+    from flext_core._protocols import FlextProtocolsContext, FlextProtocolsSettings
 
 
 class FlextProtocolsContainer(flextprotocolscontainer_part_02.FlextProtocolsContainer):

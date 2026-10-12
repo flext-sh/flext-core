@@ -10,8 +10,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._utilities.typeadapter_json import FlextUtilitiesTypingAdapterJson
-from flext_core._utilities.typeadapter_scalars import FlextUtilitiesTypingAdapterScalars
+from flext_core._utilities import (
+    FlextUtilitiesTypingAdapterJson,
+    FlextUtilitiesTypingAdapterScalars,
+)
 
 
 class FlextTypesTypeAdapters(

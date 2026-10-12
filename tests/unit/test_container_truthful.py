@@ -15,10 +15,9 @@ import types
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import d, tm
 
-from flext_core.container import FlextContainer
-from tests import c, e, m, p, u
+from flext_core import FlextContainer
+from tests import c, d, e, m, p, tm, u
 
 if TYPE_CHECKING:
     from tests import t

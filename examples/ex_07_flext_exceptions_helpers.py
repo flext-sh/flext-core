@@ -6,9 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from examples import m, p
-from examples.shared import ExamplesFlextShared
-from flext_core import e
+from examples import ExamplesFlextShared, e, m, p
 
 
 def _raise_attribute_access_error() -> None:

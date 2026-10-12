@@ -8,10 +8,10 @@ from __future__ import annotations
 
 from typing import ClassVar
 
+from flext_core._models import FlextModelsPydantic
 from flext_core._models._project_metadata_parts import (
     flextmodelsprojectmetadata_part_01,
 )
-from flext_core._models.pydantic import FlextModelsPydantic
 
 
 class FlextModelsPyprojectIngressContract(

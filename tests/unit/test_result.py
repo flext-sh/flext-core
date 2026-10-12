@@ -9,9 +9,8 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
-from flext_tests import r, tm
 
-from tests import p
+from tests import p, r, tm
 
 
 class TestsFlextCoreResult:

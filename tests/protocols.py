@@ -20,7 +20,7 @@ from flext_tests import FlextTestsProtocols
 
 if TYPE_CHECKING:
     from tests import t
-    from tests._models.mixins import TestsFlextModelsMixins
+    from tests._models import TestsFlextModelsMixins
 
 
 class TestsFlextProtocols(FlextTestsProtocols):
@@ -40,11 +40,21 @@ class TestsFlextProtocols(FlextTestsProtocols):
         """flext-core test protocols namespace."""
 
         @runtime_checkable
+        class GoodProtocol(FlextTestsProtocols.Base, Protocol):
+            """Runtime-checkable port used by the clean enforcement fixture."""
+
+            @staticmethod
+            def run() -> None:
+                """Execute the clean protocol behavior."""
+                ...
+
+        @runtime_checkable
         class Counter(FlextTestsProtocols.Base, Protocol):
             """Dependency port of the service contract tests: a monotonic counter."""
 
             def next_value(self) -> int:
                 """Advance the counter and return its new value."""
+                ...
 
         @runtime_checkable
         class ExtractFieldCallable(Protocol):

@@ -10,12 +10,12 @@ from __future__ import annotations
 import threading
 from collections.abc import MutableMapping
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Annotated, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from typing_extensions import TypeForm
 
 from flext_core import FlextContainer, c, m, p, t, u
-from flext_core._models.flext_context import FlextContext
+from flext_core._models import FlextContext
 
 # NOTE (multi-agent): mro-i6nq.12 — Generator/Mapping are annotation-only under
 # TYPE_CHECKING; MutableMapping is a runtime contract of the ``u.empty`` default.
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 class FlextMixins(m.ArbitraryTypesModel):
     """Composable behaviors for dispatcher-driven services and handlers."""
 
-    settings_type: Annotated[t.SettingsClass | None, t.SkipJsonSchema()] = m.Field(
+    settings_type: t.SkipJsonSchema[t.SettingsClass | None] = m.Field(
         default=None,
         validate_default=True,
         exclude=True,
@@ -41,7 +41,7 @@ class FlextMixins(m.ArbitraryTypesModel):
         description="Pre-built settings instance used directly for the runtime.",
     )
 
-    settings_overrides: Annotated[t.ScalarMapping | None, t.SkipJsonSchema()] = m.Field(
+    settings_overrides: t.SkipJsonSchema[t.ScalarMapping | None] = m.Field(
         default=None,
         validate_default=True,
         exclude=True,

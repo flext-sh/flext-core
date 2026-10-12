@@ -6,9 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from tests._utilities.railway_cases import TestsFlextUtilitiesRailwayCasesMixin
-from tests._utilities.railway_pipelines import TestsFlextUtilitiesRailwayPipelinesMixin
-from tests._utilities.railway_services import TestsFlextUtilitiesRailwayServicesMixin
+from tests._utilities import (
+    TestsFlextUtilitiesRailwayCasesMixin,
+    TestsFlextUtilitiesRailwayPipelinesMixin,
+    TestsFlextUtilitiesRailwayServicesMixin,
+)
 
 
 class TestsFlextUtilitiesRailwayMixin(

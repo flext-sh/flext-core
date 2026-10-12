@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_core.container import FlextContainer
+from flext_core import FlextContainer
 from tests import tm, u
 
 if TYPE_CHECKING:

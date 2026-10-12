@@ -14,9 +14,8 @@ from __future__ import annotations
 import operator
 
 import pytest
-from flext_tests import e, tm
 
-from tests import c, p, t
+from tests import c, e, p, t, tm
 from tests.unit._exceptions_failure_support import FAILURES, _FailureFactory
 from tests.unit._exceptions_structured_support import STRUCTURED_ERRORS, _ErrorFactory
 

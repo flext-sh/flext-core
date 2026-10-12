@@ -14,10 +14,9 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING
 
-from flext_core import c, p, t
-from flext_core._models.config import FlextModelsConfig
+from flext_core import FlextResult, c, p, t
+from flext_core._models import FlextModelsConfig
 from flext_core._utilities import FlextUtilitiesArgs
-from flext_core.result import FlextResult
 
 if TYPE_CHECKING:
     from collections.abc import Callable

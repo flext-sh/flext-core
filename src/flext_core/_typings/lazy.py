@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Callable, MutableMapping
 from types import ModuleType
 
-from flext_core._typings.base import FlextTypingBase
+from flext_core._typings import FlextTypingBase
 
 type FlextLazyModuleGlobalValue = (
     FlextTypingBase.JsonValue

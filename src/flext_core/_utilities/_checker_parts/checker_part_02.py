@@ -13,14 +13,11 @@ from __future__ import annotations
 import inspect
 from typing import TYPE_CHECKING, get_origin, get_type_hints
 
-from flext_core import c
-from flext_core._protocols.result import FlextProtocolsResult as p
-from flext_core._typings.base import FlextTypingBase as tb
-from flext_core._typings.services import FlextTypesServices as ts
+from flext_core import FlextResult, c, p
+from flext_core._typings import FlextTypesServices as ts, FlextTypingBase as tb
 from flext_core._utilities._checker_parts.checker_part_01 import (
     FlextUtilitiesChecker as FlextUtilitiesCheckerPart01,
 )
-from flext_core.result import FlextResult
 
 if TYPE_CHECKING:
     from collections.abc import Callable

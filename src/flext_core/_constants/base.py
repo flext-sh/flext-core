@@ -82,3 +82,6 @@ class FlextConstantsBase:
     MAX_ITEMS: ClassVar[int] = 10000
     DEFAULT_EMPTY_STRING: ClassVar[str] = ""
     DEFAULT_METADATA_SCHEMA_VERSION: ClassVar[str] = "1.0.0"
+
+
+__all__: tuple[str, ...] = ("FlextConstantsBase",)

@@ -11,7 +11,7 @@ from collections.abc import Iterator
 import pytest
 from hypothesis import assume, given, settings, strategies as st
 
-from flext_core.container import FlextContainer
+from flext_core import FlextContainer
 from tests import c, e, tm
 
 

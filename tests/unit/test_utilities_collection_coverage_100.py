@@ -11,8 +11,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_core import u
-from tests import c, m, tm
+from tests import c, m, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable

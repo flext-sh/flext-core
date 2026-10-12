@@ -16,10 +16,9 @@ from __future__ import annotations
 import uuid
 
 import pytest
-from flext_tests import e, r, tm
 
-from flext_core import FlextContainer, p
-from tests import c, t, u
+from flext_core import FlextContainer
+from tests import c, e, p, r, t, tm, u
 
 
 class TestsFlextCoreSystem:

@@ -42,3 +42,6 @@ class FlextConstantsMixins:
         EXECUTE = "execute"
         PROCESS_COMMAND = "process_command"
         VALIDATE = "validate"
+
+
+__all__: tuple[str, ...] = ("FlextConstantsMixins",)

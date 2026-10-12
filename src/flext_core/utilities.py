@@ -14,48 +14,55 @@ from flext_core import runtime
 from flext_core._models import FlextModelsNamespace
 from flext_core._utilities import (
     FlextUtilitiesArgs,
+    FlextUtilitiesBase,
     FlextUtilitiesBeartypeConf,
     FlextUtilitiesBeartypeEngine,
     FlextUtilitiesChecker,
     FlextUtilitiesCollection,
+    FlextUtilitiesCollectionIter,
+    FlextUtilitiesCollectionMerge,
     FlextUtilitiesConfig,
     FlextUtilitiesConsole,
     FlextUtilitiesContext,
     FlextUtilitiesConversion,
     FlextUtilitiesDiscovery,
+    FlextUtilitiesDispatcherExecute,
     FlextUtilitiesDomain,
     FlextUtilitiesEnforcement,
+    FlextUtilitiesEnforcementEmit,
     FlextUtilitiesEnum,
     FlextUtilitiesFamilySurface,
     FlextUtilitiesFiles,
     FlextUtilitiesGenerators,
     FlextUtilitiesGuards,
+    FlextUtilitiesGuardsTypeCore,
+    FlextUtilitiesGuardsTypeModel,
+    FlextUtilitiesGuardsTypeProtocol,
+    FlextUtilitiesGuardsTypeProtocolSpecsMixin,
+    FlextUtilitiesGuardsTypeProtocolStringMixin,
+    FlextUtilitiesHandler,
     FlextUtilitiesLogging,
     FlextUtilitiesLoggingContext,
     FlextUtilitiesMapper,
+    FlextUtilitiesModel,
+    FlextUtilitiesModelOptions,
     FlextUtilitiesModelRuntime,
     FlextUtilitiesParser,
+    FlextUtilitiesParserCoerce,
     FlextUtilitiesProjectMetadata,
     FlextUtilitiesPydantic,
     FlextUtilitiesReliability,
     FlextUtilitiesRuntimeViolationRegistry,
     FlextUtilitiesSettings,
     FlextUtilitiesText,
+    FlextUtilitiesTypingAdapterJson,
+    FlextUtilitiesTypingAdapterScalars,
 )
-from flext_core._utilities._beartype._import_blacklist_visitor import (
+from flext_core._utilities._beartype import (
     FlextUtilitiesBeartypeImportBlacklistVisitor,
-)
-from flext_core._utilities._beartype.module_source import (
     FlextUtilitiesBeartypeModuleSource,
-)
-from flext_core._utilities._beartype.type_aliases import (
     FlextUtilitiesBeartypeTypeAliases,
 )
-from flext_core._utilities.dispatcher_execute import FlextUtilitiesDispatcherExecute
-from flext_core._utilities.enforcement_emit import FlextUtilitiesEnforcementEmit
-from flext_core._utilities.handler import FlextUtilitiesHandler
-from flext_core._utilities.typeadapter_json import FlextUtilitiesTypingAdapterJson
-from flext_core._utilities.typeadapter_scalars import FlextUtilitiesTypingAdapterScalars
 
 
 class FlextUtilities(
@@ -66,6 +73,8 @@ class FlextUtilities(
     FlextUtilitiesBeartypeEngine,
     FlextUtilitiesChecker,
     FlextUtilitiesCollection,
+    FlextUtilitiesCollectionIter,
+    FlextUtilitiesCollectionMerge,
     FlextUtilitiesConsole,
     FlextUtilitiesConfig,
     FlextUtilitiesSettings,
@@ -79,9 +88,17 @@ class FlextUtilities(
     FlextUtilitiesFiles,
     FlextUtilitiesGenerators,
     FlextUtilitiesGuards,
+    FlextUtilitiesGuardsTypeCore,
+    FlextUtilitiesGuardsTypeModel,
+    FlextUtilitiesGuardsTypeProtocol,
+    FlextUtilitiesGuardsTypeProtocolStringMixin,
+    FlextUtilitiesGuardsTypeProtocolSpecsMixin,
     FlextUtilitiesMapper,
     FlextUtilitiesModelRuntime,
+    FlextUtilitiesModelOptions,
+    FlextUtilitiesModel,
     FlextUtilitiesParser,
+    FlextUtilitiesParserCoerce,
     FlextUtilitiesProjectMetadata,
     FlextUtilitiesPydantic,
     FlextUtilitiesReliability,
@@ -89,6 +106,7 @@ class FlextUtilities(
     FlextUtilitiesText,
     FlextUtilitiesTypingAdapterJson,
     FlextUtilitiesTypingAdapterScalars,
+    FlextUtilitiesBase,
     FlextModelsNamespace,
     FlextUtilitiesLoggingContext,
     FlextUtilitiesHandler,
@@ -109,4 +127,13 @@ class FlextUtilities(
 
 u = FlextUtilities
 
-__all__: list[str] = ["FlextUtilities", "FlextUtilitiesRuntimeViolationRegistry", "u"]
+__all__: list[str] = [
+    "FlextUtilities",
+    "FlextUtilitiesBeartypeConf",
+    "FlextUtilitiesBeartypeEngine",
+    "FlextUtilitiesEnforcement",
+    "FlextUtilitiesFamilySurface",
+    "FlextUtilitiesMapper",
+    "FlextUtilitiesRuntimeViolationRegistry",
+    "u",
+]

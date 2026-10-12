@@ -8,10 +8,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from examples import c, m
+from examples import c, m, r, t
 from examples.ex_12_registry_flow import ExamplesFlextRegistryFlow
 from examples.ex_12_registry_support import ProtocolHandler, as_registry_handler
-from flext_core import r, t
 
 if TYPE_CHECKING:
     from pathlib import Path

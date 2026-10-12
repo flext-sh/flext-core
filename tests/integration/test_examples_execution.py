@@ -18,9 +18,8 @@ import sys
 from pathlib import Path
 
 import pytest
-from flext_tests import m, tm, u
 
-from tests import c
+from tests import c, m, tm, u
 
 _CHECK_COUNT_RE = re.compile(r"\((\d+) checks\)")
 

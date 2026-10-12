@@ -32,8 +32,10 @@ from typing import (
     overload,
 )
 
+from flext_core import c
+
 if TYPE_CHECKING:
-    from flext_core._typings.base import FlextTypingBase
+    from flext_core._typings import FlextTypingBase
 
 import pydantic
 import pydantic.fields
@@ -61,16 +63,16 @@ from pydantic import (
     model_validator,
 )
 from pydantic_core import PydanticUndefined, PydanticUndefinedType
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import (
+    BaseSettings as _PydanticBaseSettings,
+    SettingsConfigDict as _PydanticSettingsConfigDict,
+)
 from typing_extensions import TypeForm
 
-from flext_core._constants import FlextConstantsPydantic
-from flext_core._protocols.base import FlextProtocolsBase
+from flext_core._protocols import FlextProtocolsBase
 
-# Module-level alias bindings: the pydantic owner classes keep their published
-# names for the facade mirrors below while the imports stay unaliased.
+# Preserve the imported config type before declaring its facade mirror.
 _PydanticConfigDict = ConfigDict
-_PydanticSettingsConfigDict = SettingsConfigDict
 
 type _FieldValue = JsonValue | Path
 type _FieldSchemaExtra = Mapping[str, _FieldValue | Sequence[_FieldValue]]
@@ -114,29 +116,32 @@ class FlextModelsPydantic:
     def _field[DefaultT](
         default: DefaultT | PydanticUndefinedType | EllipsisType = PydanticUndefined,
         *,
-        default_factory: Callable[[], DefaultT] | None = None,
+        default_factory: Callable[[], DefaultT]
+        | Callable[
+            [FlextTypingBase.MappingKV[str, FlextProtocolsBase.AttributeProbe]],
+            DefaultT,
+        ]
+        | PydanticUndefinedType
+        | None = PydanticUndefined,
+        alias: str | PydanticUndefinedType | None = PydanticUndefined,
         **kwargs: _FieldKeywordValue[DefaultT] | None,
     ) -> DefaultT:
-        """Typed FLEXT facade for ``pydantic.Field``.
+        """Delegate field metadata with native omission and explicit clearing.
 
-        ``default_factory`` is declared explicitly (never absorbed by
-        ``**kwargs``): ``dataclass_transform`` synthesis reads only the
-        declared specifier parameters, so a kwargs-routed ``default_factory``
-        would leave every factory-defaulted field required in the synthesized
-        ``__init__``. ``None`` means absent and passes through unchanged.
-
-        Args:
-            default: Explicit default value or sentinel.
-            default_factory: Zero-argument callable producing the default.
-            **kwargs: Remaining ``Field`` keyword taxonomy, typed by
-                ``_FieldKeywordValue``.
+        Explicit specifier parameters expose factories and constructor aliases
+        to ``dataclass_transform`` without interpreting metadata a second time.
 
         Returns:
             The resulting ``DefaultT``.
 
         """
         field_factory: Callable[..., DefaultT] = Field
-        return field_factory(default, default_factory=default_factory, **kwargs)
+        return field_factory(
+            default,
+            default_factory=default_factory,
+            alias=alias,
+            **kwargs,
+        )
 
     @staticmethod
     def _private_attr[PrivateT](
@@ -231,11 +236,11 @@ class FlextModelsPydantic:
                     pydantic.TypeAdapter(origin),
                 )
                 schema = adapter.json_schema()
-                shape = schema.get(FlextConstantsPydantic.JSON_SCHEMA_TYPE_KEY)
+                shape = schema.get(c.JSON_SCHEMA_TYPE_KEY)
                 seed = (
-                    FlextConstantsPydantic.EMPTY_COLLECTION_JSON_SEEDS.get(shape)
+                    c.EMPTY_COLLECTION_JSON_SEEDS.get(shape)
                     if isinstance(shape, str)
-                    and FlextConstantsPydantic.JSON_SCHEMA_PROPERTIES_KEY not in schema
+                    and c.JSON_SCHEMA_PROPERTIES_KEY not in schema
                     else None
                 )
                 if seed is None:
@@ -266,11 +271,15 @@ class FlextModelsPydantic:
         """
         return FlextModelsPydantic.EmptyDefault(contract)
 
+    Field = _field
+    PrivateAttr = _private_attr
+    empty = _empty
+
     @dataclass_transform(
         kw_only_default=True,
         field_specifiers=(
             _field,
-            Field,
+            pydantic.Field,
             pydantic.PrivateAttr,
             _private_attr,
         ),
@@ -278,14 +287,14 @@ class FlextModelsPydantic:
     class BaseModel(pydantic.BaseModel):
         """Canonical BaseModel exported through the FLEXT models facade."""
 
-    class BaseSettings(BaseSettings):
+    class BaseSettings(_PydanticBaseSettings):
         """Canonical BaseSettings exported through the FLEXT models facade."""
 
     @dataclass_transform(
         kw_only_default=True,
         field_specifiers=(
             _field,
-            Field,
+            pydantic.Field,
             pydantic.PrivateAttr,
             _private_attr,
         ),
@@ -299,9 +308,6 @@ class FlextModelsPydantic:
     class SettingsConfigDict(_PydanticSettingsConfigDict, total=False):
         """Canonical settings configuration exported through the models facade."""
 
-    Field = _field
-    PrivateAttr = _private_attr
-    empty = staticmethod(_empty)
     SkipValidation = SkipValidation
     # ``field_validator`` must re-export pydantic's real overload surface. A
     # plain-attr re-export resolves in mypy but pyright binds it as a method

@@ -9,9 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
-from examples import m, p, t, u
-from examples.shared import ExamplesFlextShared
-from flext_core import r
+from examples import ExamplesFlextShared, m, p, r, t, u
 
 
 class ExamplesFlextCreateUserHandler:

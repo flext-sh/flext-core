@@ -8,9 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from examples import c, p, t
-from examples.shared import ExamplesFlextShared
-from flext_core import e, r
+from examples import ExamplesFlextShared, c, e, p, r, t
 
 if TYPE_CHECKING:
     from collections.abc import Callable

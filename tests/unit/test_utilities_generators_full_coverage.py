@@ -9,8 +9,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from uuid import UUID
 
-from flext_core import u
-from tests import c, m
+from tests import c, m, u
 
 
 class TestsFlextCoreUtilitiesGenerators:

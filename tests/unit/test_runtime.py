@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 import flext_core
-from flext_core.runtime import FlextRuntime
+from flext_core import FlextRuntime
 from tests import m
 
 if TYPE_CHECKING:
