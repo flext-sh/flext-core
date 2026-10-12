@@ -20,19 +20,23 @@ class ExamplesFlextModelsEx01:
     class User(m.Entity):
         """Result demo user model."""
 
-        name: str = m.Field(description="User display name")
-        email: str = m.Field(description="User email address")
+        name: str = m.Field(default=..., description="User display name")
+        email: str = m.Field(default=..., description="User email address")
 
     class DemonstrationResult(m.Value):
         """Result demo summary model."""
 
         demonstrations_completed: int = m.Field(
+            default=...,
             description="Count of completed demonstrations",
         )
         patterns_covered: t.VariadicTuple[str] = m.Field(
+            default=...,
             description="Tuple of covered pattern names",
         )
-        completed_at: str = m.Field(description="ISO 8601 completion timestamp")
+        completed_at: str = m.Field(
+            default=..., description="ISO 8601 completion timestamp"
+        )
 
     class RunDemonstrationCommand(m.Command):
         """Result demo command model."""
@@ -46,13 +50,14 @@ class ExamplesFlextModelsEx01:
     class ValidPersonPayload(m.Value):
         """Valid person payload model for demo validation."""
 
-        name: str = m.Field(description="Person name")
-        age: int = m.Field(description="Person age in years")
+        name: str = m.Field(default=..., description="Person name")
+        age: int = m.Field(default=..., description="Person age in years")
 
     class InvalidPersonPayload(m.Value):
         """Invalid person payload model (for failure path tests)."""
 
-        name: str = m.Field(description="Person name")
+        name: str = m.Field(default=..., description="Person name")
         age: str = m.Field(
+            default=...,
             description="Invalid age (string instead of int) for testing",
         )

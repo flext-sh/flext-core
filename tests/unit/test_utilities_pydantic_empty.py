@@ -27,32 +27,39 @@ class TestsFlextUtilitiesPydanticEmpty:
 
     class _Defaults(m.ArbitraryTypesModel):
         json_mapping: t.JsonMapping = u.Field(
+            default=...,
             default_factory=u.empty(TypeForm(t.JsonMapping)),
             description="Read-only JSON mapping contract.",
         )
         mutable_json_mapping: t.MutableJsonMapping = u.Field(
+            default=...,
             default_factory=u.empty(TypeForm(t.MutableJsonMapping)),
             description="Mutable JSON mapping contract.",
         )
         str_sequence: t.StrSequence = u.Field(
+            default=...,
             default_factory=u.empty(TypeForm(t.StrSequence)),
             description="Read-only string sequence contract.",
         )
         items: t.MutableSequenceOf[TestsFlextUtilitiesPydanticEmpty._Item] = u.Field(
+            default=...,
             default_factory=u.empty(
                 TypeForm(t.MutableSequenceOf["TestsFlextUtilitiesPydanticEmpty._Item"]),
             ),
             description="Mutable sequence of a forward-referenced model.",
         )
         frozen_tags: AbstractSet[str] = u.Field(
+            default=...,
             default_factory=u.empty(TypeForm(AbstractSet[str])),
             description="Read-only set contract.",
         )
         mutable_tags: MutableSet[str] = u.Field(
+            default=...,
             default_factory=u.empty(TypeForm(MutableSet[str])),
             description="Mutable set contract.",
         )
         modules: t.MutableMappingKV[str, ModuleType] = u.Field(
+            default=...,
             default_factory=u.empty(TypeForm(t.MutableMappingKV[str, ModuleType])),
             description="Mapping of an arbitrary, JSON-unrepresentable element.",
         )

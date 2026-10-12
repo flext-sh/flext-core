@@ -15,31 +15,27 @@ from typing import Annotated, ClassVar, override
 
 from flext_tests import FlextTestsUtilities
 
-import tests._utilities.beartype_engine
-import tests._utilities.decorators
-import tests._utilities.handlers
-import tests._utilities.result_exception_carrying
 from tests import c, h, m, p, r, t
-from tests._utilities import (
-    TestsFlextUtilitiesCaseFactoriesMixin,
-    TestsFlextUtilitiesContractsMixin,
-    TestsFlextUtilitiesDispatchMixin,
-    TestsFlextUtilitiesParserReliabilityMixin,
-    TestsFlextUtilitiesRailwayMixin,
-    TestsFlextUtilitiesServiceFactoriesMixin,
-    TestsFlextUtilitiesServicesMixin,
-)
+from tests._utilities.case_factories import TestsFlextUtilitiesCaseFactoriesMixin
 from tests._utilities.case_generators import TestsFlextUtilitiesCaseGeneratorsMixin
 from tests._utilities.case_service_factories import (
     TestsFlextUtilitiesCaseServiceFactoriesMixin,
 )
+from tests._utilities.contracts import TestsFlextUtilitiesContractsMixin
+from tests._utilities.dispatch import TestsFlextUtilitiesDispatchMixin
+from tests._utilities.parser_reliability import (
+    TestsFlextUtilitiesParserReliabilityMixin,
+)
 from tests._utilities.parser_scenarios import TestsFlextUtilitiesParserScenariosMixin
+from tests._utilities.railway import TestsFlextUtilitiesRailwayMixin
 from tests._utilities.railway_cases import TestsFlextUtilitiesRailwayCasesMixin
 from tests._utilities.railway_pipelines import TestsFlextUtilitiesRailwayPipelinesMixin
 from tests._utilities.railway_services import TestsFlextUtilitiesRailwayServicesMixin
 from tests._utilities.reliability_scenarios import (
     TestsFlextUtilitiesReliabilityScenariosMixin,
 )
+from tests._utilities.service_factories import TestsFlextUtilitiesServiceFactoriesMixin
+from tests._utilities.services import TestsFlextUtilitiesServicesMixin
 from tests._utilities.user_factories import TestsFlextUtilitiesUserFactoriesMixin
 from tests._utilities.validation_factories import (
     TestsFlextUtilitiesValidationFactoriesMixin,
@@ -427,10 +423,10 @@ class TestsFlextUtilities(FlextTestsUtilities):
             )
 
     class Tests(
-        tests._utilities.result_exception_carrying.TestsFlextResultExceptionCarrying,
-        tests._utilities.handlers.TestsFlextFlextHandlers,
-        tests._utilities.decorators.TestsFlextDecoratorsLegacy,
-        tests._utilities.beartype_engine.TestsFlextBeartypeEngine,
+        TestsFlextBeartypeEngine,
+        TestsFlextDecoratorsLegacy,
+        TestsFlextFlextHandlers,
+        TestsFlextResultExceptionCarrying,
         TestsFlextUtilitiesCaseFactoriesMixin,
         TestsFlextUtilitiesCaseGeneratorsMixin,
         TestsFlextUtilitiesCaseServiceFactoriesMixin,

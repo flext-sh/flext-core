@@ -22,11 +22,12 @@ class ExamplesFlextModelsEx05:
         INACTIVE = "inactive"
 
     class UserModel(m.Value):
-        name: str = u.Field(description="User display name")
+        name: str = u.Field(default=..., description="User display name")
         status: ExamplesFlextModelsEx05.StatusEnum = u.Field(
+            default=...,
             description="User account status",
         )
-        age: int = u.Field(description="User age in years")
+        age: int = u.Field(default=..., description="User age in years")
 
         @m.field_validator("status", mode="before")
         @classmethod

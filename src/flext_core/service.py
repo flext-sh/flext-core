@@ -57,7 +57,7 @@ class FlextService[TDomainResult = p.Base](x):
     )
 
     _lock: ClassVar[threading.RLock] = threading.RLock()
-    _instance: ClassVar[Self | None] = None
+    _instance: ClassVar["FlextService[object] | None"] = None
 
     def __init_subclass__(cls, **kwargs: Unpack[m.ConfigDict]) -> None:
         """Inject a per-class singleton slot for every concrete subclass."""
