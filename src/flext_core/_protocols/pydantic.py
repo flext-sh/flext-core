@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from types import EllipsisType
-from typing import Literal, Never, Protocol, overload, runtime_checkable
+from typing import Literal, Protocol, overload, runtime_checkable
 
 import pydantic
 from pydantic_core import PydanticUndefinedType
@@ -67,15 +67,12 @@ class FlextProtocolsPydantic:
 
         Declares the polymorphic call contract ``pydantic.Field`` exposes so a
         checker resolves each ``m.Field(...)`` call site without a first-class
-        reference to the overloaded native function. A supplied default binds
-        the field's type; an omitted default yields the bottom type, which any
-        declared field type accepts.
+        reference to the overloaded native function.
         """
 
-        @overload
         def __call__[DefaultT](
             self,
-            default: DefaultT,
+            default: DefaultT | PydanticUndefinedType | EllipsisType = ...,
             *,
             default_factory: Callable[[], DefaultT]
             | Callable[[Mapping[str, FlextProtocolsBase.AttributeProbe]], DefaultT]
@@ -85,46 +82,17 @@ class FlextProtocolsPydantic:
             **kwargs: FlextProtocolsBase.AttributeProbe,
         ) -> DefaultT: ...
 
-        @overload
-        def __call__(
-            self,
-            default: PydanticUndefinedType | EllipsisType = ...,
-            *,
-            default_factory: Callable[[], FlextProtocolsBase.AttributeProbe]
-            | Callable[
-                [Mapping[str, FlextProtocolsBase.AttributeProbe]],
-                FlextProtocolsBase.AttributeProbe,
-            ]
-            | PydanticUndefinedType
-            | None = ...,
-            alias: str | PydanticUndefinedType | None = ...,
-            **kwargs: FlextProtocolsBase.AttributeProbe,
-        ) -> Any: ...
-
     @runtime_checkable
     class PrivateAttrFactory(Protocol):
         """Receiver-free native private attribute metadata factory."""
 
-        @overload
         def __call__[PrivateT](
             self,
-            default: PrivateT,
-            /,
+            default: PrivateT | PydanticUndefinedType = ...,
             *,
             default_factory: Callable[..., PrivateT] | None = ...,
             init: Literal[False] = ...,
         ) -> PrivateT: ...
-
-        @overload
-        def __call__(
-            self,
-            default: PydanticUndefinedType = ...,
-            /,
-            *,
-            default_factory: Callable[..., FlextProtocolsBase.AttributeProbe]
-            | None = ...,
-            init: Literal[False] = ...,
-        ) -> Any: ...
 
 
 __all__: tuple[str, ...] = ("FlextProtocolsPydantic",)

@@ -11,7 +11,7 @@ from collections.abc import Iterable, Mapping, MutableMapping, MutableSequence, 
 from datetime import datetime
 from pathlib import Path
 from types import GenericAlias, UnionType
-from typing import ForwardRef, TypeAliasType
+from typing import Any, ForwardRef, TypeAliasType
 
 from typing_extensions import TypeForm
 
@@ -28,6 +28,12 @@ class FlextTypingBase(flexttypingbase_part_01.FlextTypingBase):
     type MutableSequenceOf[ItemT] = MutableSequence[ItemT]
     type RegexPattern = re.Pattern[str]
     type RegexMatch = re.Match[str]
+
+    # Unconstrained value contract for a native SDK boundary whose return type
+    # is contextually the surrounding annotation (the pydantic field factory
+    # when no default is supplied). Owned here because the broad-annotation
+    # rule exempts this declaration owner; consumers reuse this single alias.
+    type UnconstrainedValue = Any
 
     type Numeric = (
         flexttypingbase_part_01.FlextTypingBase.StrictInt

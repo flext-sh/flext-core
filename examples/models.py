@@ -34,6 +34,8 @@ class ExamplesFlextModels(FlextModels):
     """Public examples model facade — composes all _models/* via MRO."""
 
     class Examples(
+        ExamplesFlextSharedHandle,
+        ExamplesFlextSharedPerson,
         ExamplesFlextModelsErrors.Examples,
         ExamplesFlextModelsEx00,
         ExamplesFlextModelsEx01,
@@ -48,8 +50,6 @@ class ExamplesFlextModels(FlextModels):
         ExamplesFlextModelsEx12,
         ExamplesFlextModelsEx14,
         ExamplesFlextModelsOutput.Examples,
-        ExamplesFlextSharedHandle,
-        ExamplesFlextSharedPerson,
     ):
         """Canonical namespace for all example domain models.
 
