@@ -13,12 +13,9 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-from flext_core import c, m, p, t
+from flext_core import FlextExceptions, FlextResult, FlextRuntime, c, m, p, t
 from flext_core._models import FlextModelsContainers, FlextModelsPydantic
 from flext_core._utilities import FlextUtilitiesGuards, FlextUtilitiesGuardsTypeCore
-from flext_core.exceptions import FlextExceptions
-from flext_core.result import FlextResult
-from flext_core.runtime import FlextRuntime
 
 
 class FlextUtilitiesMapperAccess:

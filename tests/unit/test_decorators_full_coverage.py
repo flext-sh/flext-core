@@ -12,10 +12,9 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import d, e, r, tm
 
 from flext_core import FlextContainer
-from tests import m
+from tests import d, e, m, r, tm
 
 if TYPE_CHECKING:
     from tests import p

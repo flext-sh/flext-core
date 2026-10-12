@@ -8,11 +8,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Annotated, override
 
-from flext_tests import m as tm, r
+from flext_tests import r
 
-from tests import c, m, t
-from tests._models.mixins import TestsFlextModelsMixins
-from tests.base import s
+from tests import c, m, s, t
+from tests._models import TestsFlextModelsMixins
 
 if TYPE_CHECKING:
     from tests import p
@@ -21,7 +20,7 @@ if TYPE_CHECKING:
 class TestsFlextUtilitiesRailwayServicesMixin:
     """Railway service helpers."""
 
-    class GetUserService(s[tm.Tests.User]):
+    class GetUserService(s[m.Tests.User]):
         """Service to get user."""
 
         user_id: Annotated[
@@ -30,11 +29,11 @@ class TestsFlextUtilitiesRailwayServicesMixin:
         ] = ""
 
         @override
-        def execute(self) -> p.Result[tm.Tests.User]:
+        def execute(self) -> p.Result[m.Tests.User]:
             if self.user_id in c.Tests.USER_IDS_INVALID:
-                return r[tm.Tests.User].fail(c.Tests.USER_NOT_FOUND)
-            return r[tm.Tests.User].ok(
-                tm.Tests.User(
+                return r[m.Tests.User].fail(c.Tests.USER_NOT_FOUND)
+            return r[m.Tests.User].ok(
+                m.Tests.User(
                     id=self.user_id,
                     unique_id=self.user_id,
                     name=f"{c.Tests.DEFAULT_USER_NAME_PREFIX}{self.user_id}",

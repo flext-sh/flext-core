@@ -13,10 +13,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import r, tm
 
 import tests.utilities
-from tests import c
+from tests import c, r, tm
 
 if TYPE_CHECKING:
     from tests import p, t

@@ -8,12 +8,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Self, override
 
-from flext_core._constants import FlextConstantsErrors
-from flext_core._models.base import FlextModelsBase
-from flext_core._typings.base import FlextTypingBase
+from flext_core import c
+from flext_core._models import FlextModelsBase
+from flext_core._typings import FlextTypingBase
 
 if TYPE_CHECKING:
-    from flext_core._typings.services import FlextTypesServices
+    from flext_core._typings import FlextTypesServices
 
 
 class FlextModelsBuilder:
@@ -123,8 +123,7 @@ class FlextModelsBuilder:
         def _build_product(self, state: StateT) -> ProductT:
             """Build one product from state. Subclasses must implement it."""
             msg = (
-                f"{FlextConstantsErrors.ERR_BUILDER_BUILD_PRODUCT_NOT_IMPLEMENTED}: "
-                f"{type(state).__name__}"
+                f"{c.ERR_BUILDER_BUILD_PRODUCT_NOT_IMPLEMENTED}: {type(state).__name__}"
             )
             raise NotImplementedError(msg)
 

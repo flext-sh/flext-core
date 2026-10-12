@@ -12,12 +12,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core._constants import FlextConstantsEnforcement
-from flext_core._typings.base import FlextTypingBase
+from flext_core import c
+from flext_core._typings import FlextTypingBase
 from flext_core._utilities import FlextUtilitiesEnforcement
 
 if TYPE_CHECKING:
-    from flext_core._typings.pydantic import FlextTypesPydantic
+    from flext_core._typings import FlextTypesPydantic
 
 
 class FlextModelsNamespace:
@@ -39,10 +39,7 @@ class FlextModelsNamespace:
         """
         _ = kwargs
         super().__init_subclass__()
-        if (
-            FlextConstantsEnforcement.ENFORCEMENT_NAMESPACE_MODE
-            is FlextConstantsEnforcement.EnforcementMode.OFF
-        ):
+        if c.ENFORCEMENT_NAMESPACE_MODE is c.EnforcementMode.OFF:
             return
         layer = FlextUtilitiesEnforcement.detect_layer(cls) or ""
         FlextUtilitiesEnforcement.run_layer(cls, layer)

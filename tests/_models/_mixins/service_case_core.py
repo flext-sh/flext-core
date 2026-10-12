@@ -12,8 +12,7 @@ from flext_tests import r
 from typing_extensions import TypeForm
 
 from flext_core import m, u
-from tests import t
-from tests.base import s
+from tests import s, t
 
 if TYPE_CHECKING:
     from tests import p

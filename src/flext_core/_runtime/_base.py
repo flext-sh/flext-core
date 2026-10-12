@@ -10,11 +10,11 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import c
-from flext_core._typings.base import FlextTypingBase
+from flext_core._typings import FlextTypingBase
 
 if TYPE_CHECKING:
     from flext_core._protocols import FlextProtocolsLogging
-    from flext_core._typings.services import FlextTypesServices
+    from flext_core._typings import FlextTypesServices
 
 
 # mro-i6nq.8: Keep the runtime base free of unused provider passthroughs.

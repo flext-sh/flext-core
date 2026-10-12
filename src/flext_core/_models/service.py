@@ -10,12 +10,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated
-
 from flext_core import p, t
-from flext_core._models.base import FlextModelsBase
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._typings.pydantic import FlextTypesPydantic
+from flext_core._models import FlextModelsBase, FlextModelsPydantic
+from flext_core._typings import FlextTypesPydantic
 
 
 class FlextModelsService:
@@ -60,35 +57,34 @@ class FlextModelsService:
 
         settings: FlextTypesPydantic.Port[p.Settings | None] = (
             FlextModelsPydantic.Field(
-                None,
+                default=None,
                 exclude=True,
                 description=(
                     "Pre-built settings instance used directly for the runtime."
                 ),
             )
         )
-        settings_type: Annotated[
-            t.SettingsClass | None,
-            FlextTypesPydantic.SkipJsonSchema(),
-        ] = FlextModelsPydantic.Field(
-            None,
-            exclude=True,
-            description="FlextSettings class used to load runtime settings.",
+        settings_type: FlextTypesPydantic.SkipJsonSchema[t.SettingsClass | None] = (
+            FlextModelsPydantic.Field(
+                default=None,
+                exclude=True,
+                description="FlextSettings class used to load runtime settings.",
+            )
         )
         settings_overrides: t.ScalarMapping | None = FlextModelsPydantic.Field(
-            None,
+            default=None,
             description=(
                 "Key-value overrides applied on top of the loaded configuration."
             ),
         )
         context: FlextTypesPydantic.Port[p.Context | None] = FlextModelsPydantic.Field(
-            None,
+            default=None,
             exclude=True,
             description="Pre-built execution context to inject into the runtime.",
         )
         dispatcher: FlextTypesPydantic.Port[p.Dispatcher | None] = (
             FlextModelsPydantic.Field(
-                None,
+                default=None,
                 exclude=True,
                 description="Pre-built dispatcher injected into the runtime.",
             )

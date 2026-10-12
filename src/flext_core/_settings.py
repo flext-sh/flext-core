@@ -40,7 +40,8 @@ from pydantic_settings import (
     SettingsConfigDict,
 )
 
-from flext_core._constants import FlextConstantsEnvironment, FlextConstantsSettings
+from flext_core._constants import FlextConstantsEnvironment
+from flext_core._constants.settings import FlextConstantsSettings
 
 ENV_FILE_ENV_VAR = FlextConstantsSettings.ENV_FILE_ENV_VAR
 """Bootstrap env var that overrides the .env path (SSOT: ``_constants/settings``)."""

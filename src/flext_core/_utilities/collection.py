@@ -13,12 +13,13 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableSequence, Sequence
 
-from flext_core import c, p, t
+from flext_core import FlextResult, c, p, t
 from flext_core._models import FlextModelsContainers
-from flext_core._runtime._metadata import FlextRuntimeMetadata
-from flext_core._utilities.collection_iter import FlextUtilitiesCollectionIter
-from flext_core._utilities.collection_merge import FlextUtilitiesCollectionMerge
-from flext_core.result import FlextResult
+from flext_core._runtime import FlextRuntimeMetadata
+from flext_core._utilities import (
+    FlextUtilitiesCollectionIter,
+    FlextUtilitiesCollectionMerge,
+)
 
 
 class FlextUtilitiesCollection(

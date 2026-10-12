@@ -8,13 +8,11 @@ from __future__ import annotations
 
 import sys
 
-from flext_core._constants import FlextConstantsEnforcement
+from flext_core import c
 from flext_core._models import FlextModelsEnforcement
-from flext_core._typings.base import FlextTypingBase
-from flext_core._utilities import (
-    FlextUtilitiesBeartypeHelpers,
-    FlextUtilitiesProjectMetadata,
-)
+from flext_core._typings import FlextTypingBase
+from flext_core._utilities import FlextUtilitiesProjectMetadata
+from flext_core._utilities._beartype import FlextUtilitiesBeartypeHelpers
 from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_01 import (
     BINARY_ARITY,
     NO_VIOLATION,
@@ -69,7 +67,7 @@ def _alias_context(target: type) -> _AliasContext | None:
     valid_suffixes = suffixes + tuple(f"{suffix}Base" for suffix in suffixes)
     module_parts = module_name.split(".")
     if len(module_parts) > 1 and (
-        module_parts[1] in FlextConstantsEnforcement.ENFORCEMENT_PRIVATE_FAMILY_PACKAGES
+        module_parts[1] in c.ENFORCEMENT_PRIVATE_FAMILY_PACKAGES
         or any(part.startswith("_") for part in module_parts[1:])
     ):
         return None

@@ -18,10 +18,10 @@ from tests import c, m, t, u
 from tests.unit._enforcement_support import messages
 
 # Deliberate broad-annotation fixtures: the enforcement engine under test must
-# detect these exact runtime types, so they are bound as values, never spelled
-# inside an annotation.
-_ANY_TYPE: typing.Final = typing.Any
-_BARE_DICT_TYPE: typing.Final = dict[str, str]
+# detect these exact runtime types, so they are exposed as type aliases usable
+# inside annotations.
+type _ANY_TYPE = typing.Any
+type _BARE_DICT_TYPE = dict[str, str]
 
 
 class TestsFlextEnforcementModels:

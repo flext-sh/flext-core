@@ -6,8 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from tests._utilities.user_factories import TestsFlextUtilitiesUserFactoriesMixin
-from tests._utilities.validation_factories import (
+from tests._utilities import (
+    TestsFlextUtilitiesUserFactoriesMixin,
     TestsFlextUtilitiesValidationFactoriesMixin,
 )
 

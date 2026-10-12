@@ -23,8 +23,7 @@ from flext_core._protocols import (
     FlextProtocolsResult,
     FlextProtocolsSettings,
 )
-from flext_core._typings.base import FlextTypingBase
-from flext_core._typings.pydantic import FlextTypesPydantic
+from flext_core._typings import FlextTypesPydantic, FlextTypingBase
 
 
 class FlextTypesServices:
@@ -198,8 +197,8 @@ class FlextTypesServices:
         [FlextTypesPydantic.JsonValue],
         FlextTypesPydantic.JsonValue,
     ]
-    MapperInput = MapperCallable | FlextTypesPydantic.JsonValue
-    StrictValue = (
+    type MapperInput = MapperCallable | FlextTypesPydantic.JsonValue
+    type StrictValue = (
         FlextTypingBase.Scalar
         | ConfigurationMapping
         | FlextTypingBase.JsonList
@@ -246,3 +245,6 @@ class FlextTypesServices:
         | tzinfo
         | UnionType
     )
+
+
+__all__: list[str] = ["FlextTypesServices"]

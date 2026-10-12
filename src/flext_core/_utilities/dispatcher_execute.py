@@ -12,12 +12,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
-from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
-from flext_core.constants import c
-from flext_core.protocols import p
-from flext_core.result import FlextResult, r
-from flext_core.typings import t
+from typing import TYPE_CHECKING
+
+from flext_core import FlextResult, c, p, t
+from flext_core._utilities import (
+    FlextUtilitiesGuardsTypeCore,
+    FlextUtilitiesGuardsTypeModel,
+)
+
+if TYPE_CHECKING:
+    from flext_core import r
 
 
 class FlextUtilitiesDispatcherExecute:

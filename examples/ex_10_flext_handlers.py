@@ -6,8 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from examples import p
-from flext_core import r
+from examples import p, r
 
 
 def run() -> p.Result[str]:

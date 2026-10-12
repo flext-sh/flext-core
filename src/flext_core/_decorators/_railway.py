@@ -11,8 +11,8 @@ from functools import wraps
 from typing import TYPE_CHECKING
 
 from flext_core import c, m, r
-from flext_core._decorators._logging import FlextDecoratorsLogging
-from flext_core._exceptions.exception_types import FlextExceptionsTypes
+from flext_core._decorators import FlextDecoratorsLogging
+from flext_core._exceptions import FlextExceptionsTypes
 from flext_core._protocols import FlextProtocolsLogging, FlextProtocolsResult
 
 if TYPE_CHECKING:

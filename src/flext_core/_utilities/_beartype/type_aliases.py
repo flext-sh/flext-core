@@ -11,8 +11,8 @@ from typing import Annotated, TypeAliasType, get_args, get_origin
 
 from flext_core._models import FlextModelsEnforcement
 from flext_core._protocols import FlextProtocolsBase
-from flext_core._typings.base import FlextTypingBase
-from flext_core._utilities import FlextUtilitiesBeartypeModuleSource
+from flext_core._typings import FlextTypingBase
+from flext_core._utilities._beartype import FlextUtilitiesBeartypeModuleSource
 
 
 class FlextUtilitiesBeartypeTypeAliases:
@@ -160,3 +160,6 @@ class FlextUtilitiesBeartypeTypeAliases:
                 deferred_aliases.append(resolution)
             pending[:0] = successors
         return tuple(deferred_aliases)
+
+
+__all__: tuple[str, ...] = ("FlextUtilitiesBeartypeTypeAliases",)

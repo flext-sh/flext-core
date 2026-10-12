@@ -12,8 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import u
-from tests import tm
+from tests import tm, u
 
 
 class TestsFlextEnforcementImportProvenance:

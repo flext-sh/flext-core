@@ -1,4 +1,4 @@
-"""Core type aliases and container typing conventions for Flext.
+"""Canonical base declarations and type-family MRO for Flext.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,15 +11,14 @@ from collections.abc import Iterable, Mapping, MutableMapping, MutableSequence, 
 from datetime import datetime
 from pathlib import Path
 from types import GenericAlias, UnionType
-from typing import ForwardRef, TypeAliasType
+from typing import Any, ForwardRef, TypeAliasType
 
 from typing_extensions import TypeForm
 
-from flext_core._typings.annotateds import FlextTypesAnnotateds
-from flext_core._typings.pydantic import FlextTypesPydantic
+from flext_core._typings._base_parts import flexttypingbase_part_01
 
 
-class FlextTypingBase(FlextTypesPydantic, FlextTypesAnnotateds):
+class FlextTypingBase(flexttypingbase_part_01.FlextTypingBase):
     """Base type alias namespace for Flext core type-safe contracts."""
 
     type MappingKV[KeyT, ValueT] = Mapping[KeyT, ValueT]
@@ -30,13 +29,26 @@ class FlextTypingBase(FlextTypesPydantic, FlextTypesAnnotateds):
     type RegexPattern = re.Pattern[str]
     type RegexMatch = re.Match[str]
 
-    type Numeric = FlextTypesPydantic.StrictInt | FlextTypesPydantic.StrictFloat
+    # Unconstrained value contract for a native SDK boundary whose return type
+    # is contextually the surrounding annotation (the pydantic field factory
+    # when no default is supplied). Owned here because the broad-annotation
+    # rule exempts this declaration owner; consumers reuse this single alias.
+    type UnconstrainedValue = Any
 
-    type Primitives = (
-        FlextTypesPydantic.StrictStr | Numeric | FlextTypesPydantic.StrictBool
+    type Numeric = (
+        flexttypingbase_part_01.FlextTypingBase.StrictInt
+        | flexttypingbase_part_01.FlextTypingBase.StrictFloat
     )
 
-    type Scalar = Primitives | FlextTypesPydantic.StrictBytes | datetime
+    type Primitives = (
+        flexttypingbase_part_01.FlextTypingBase.StrictStr
+        | Numeric
+        | flexttypingbase_part_01.FlextTypingBase.StrictBool
+    )
+
+    type Scalar = (
+        Primitives | flexttypingbase_part_01.FlextTypingBase.StrictBytes | datetime
+    )
     type ScalarMapping = MappingKV[str, Scalar]
     type ScalarList = SequenceOf[Scalar]
     type MutableScalarMapping = MutableMapping[str, Scalar]
@@ -48,25 +60,46 @@ class FlextTypingBase(FlextTypesPydantic, FlextTypesAnnotateds):
     type OptionalStrMapping = MappingKV[str, str | None]
     type MutableOptionalStrMapping = MutableMapping[str, str | None]
 
-    type SecretValue = FlextTypesPydantic.SecretStr | FlextTypesPydantic.SecretBytes
-    type SettingsValue = FlextTypesPydantic.JsonValue | SecretValue | Path
+    type SecretValue = (
+        flexttypingbase_part_01.FlextTypingBase.SecretStr
+        | flexttypingbase_part_01.FlextTypingBase.SecretBytes
+    )
+    type SettingsValue = (
+        flexttypingbase_part_01.FlextTypingBase.JsonValue | SecretValue | Path
+    )
 
     # JsonValue is inherited from FlextTypesPydantic (the SSOT republished from
     # pydantic): a class-local redefinition here is an incompatible
     # variable override of the parent alias.
-    type JsonMapping = MappingKV[str, FlextTypesPydantic.JsonValue]
-    type JsonDict = dict[str, FlextTypesPydantic.JsonValue]
-    type JsonValueList = list[FlextTypesPydantic.JsonValue]
-    type JsonList = SequenceOf[FlextTypesPydantic.JsonValue]
-    type MutableJsonMapping = MutableMapping[str, FlextTypesPydantic.JsonValue]
-    type MutableJsonList = MutableSequenceOf[FlextTypesPydantic.JsonValue]
-    type FlatContainerList = SequenceOf[FlextTypesPydantic.JsonValue]
-    type MutableFlatContainerList = MutableSequenceOf[FlextTypesPydantic.JsonValue]
-    type FlatContainerMapping = MappingKV[str, FlextTypesPydantic.JsonValue]
-    type FlatContainer = FlatContainerMapping | SequenceOf[FlextTypesPydantic.JsonValue]
-    type MutableFlatContainerMapping = MutableMapping[str, FlextTypesPydantic.JsonValue]
+    type JsonMapping = MappingKV[str, flexttypingbase_part_01.FlextTypingBase.JsonValue]
+    type JsonDict = dict[str, flexttypingbase_part_01.FlextTypingBase.JsonValue]
+    type JsonValueList = list[flexttypingbase_part_01.FlextTypingBase.JsonValue]
+    type JsonList = SequenceOf[flexttypingbase_part_01.FlextTypingBase.JsonValue]
+    type MutableJsonMapping = MutableMapping[
+        str, flexttypingbase_part_01.FlextTypingBase.JsonValue
+    ]
+    type MutableJsonList = MutableSequenceOf[
+        flexttypingbase_part_01.FlextTypingBase.JsonValue
+    ]
+    type FlatContainerList = SequenceOf[
+        flexttypingbase_part_01.FlextTypingBase.JsonValue
+    ]
+    type MutableFlatContainerList = MutableSequenceOf[
+        flexttypingbase_part_01.FlextTypingBase.JsonValue
+    ]
+    type FlatContainerMapping = MappingKV[
+        str, flexttypingbase_part_01.FlextTypingBase.JsonValue
+    ]
+    type FlatContainer = (
+        FlatContainerMapping
+        | SequenceOf[flexttypingbase_part_01.FlextTypingBase.JsonValue]
+    )
+    type MutableFlatContainerMapping = MutableMapping[
+        str, flexttypingbase_part_01.FlextTypingBase.JsonValue
+    ]
     type MutableFlatContainer = (
-        MutableFlatContainerMapping | MutableSequenceOf[FlextTypesPydantic.JsonValue]
+        MutableFlatContainerMapping
+        | MutableSequenceOf[flexttypingbase_part_01.FlextTypingBase.JsonValue]
     )
     # Canonical consumer aliases (flat; no recursion — tp.JsonValue carries depth)
     type MutableOptionalFeatureFlagMapping = MutableMapping[str, str | bool | None]
@@ -143,3 +176,6 @@ class FlextTypingBase(FlextTypesPydantic, FlextTypesAnnotateds):
         type[object] | str | UnionType | GenericAlias | TypeAliasType | ForwardRef
     )
     type TypeFormSpecifier = TypeHintSpecifier | TypeForm[object]
+
+
+__all__: list[str] = ["FlextTypingBase"]

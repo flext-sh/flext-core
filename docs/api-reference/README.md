@@ -28,7 +28,7 @@ This section is generated from public exports and real docstrings.
 ## Surface Summary
 
 - Primary facades: `FlextApi`, `FlextBase`, `FlextCli`, `FlextConfig`, `FlextConstants`,
-  `FlextConstantsEnforcement` (+23 more)
-- Generated module pages: `22`
+  `FlextConstantsEnforcement` (+31 more)
+- Generated module pages: `26`
 
 Back to [project docs](../index.md).

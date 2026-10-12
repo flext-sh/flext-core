@@ -15,7 +15,8 @@ import types
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import h, r, tm
+
+from tests import h, r, tm
 
 if TYPE_CHECKING:
     from collections.abc import Callable

@@ -22,14 +22,13 @@ from flext_core._protocols import (
     FlextProtocolsLogging,
     FlextProtocolsSettings,
 )
-from flext_core._runtime._metadata_validation import FlextRuntimeMetadataValidation
-from flext_core._typings.base import FlextTypingBase
-from flext_core._utilities import FlextUtilitiesGuardsTypeCore
-from flext_core._utilities.base import FlextUtilitiesBase
+from flext_core._runtime import FlextRuntimeMetadataValidation
+from flext_core._typings import FlextTypingBase
+from flext_core._utilities import FlextUtilitiesBase, FlextUtilitiesGuardsTypeCore
 
 if TYPE_CHECKING:
     from flext_core._protocols import FlextProtocolsBase
-    from flext_core._typings.services import FlextTypesServices
+    from flext_core._typings import FlextTypesServices
 
 
 class FlextRuntimeContainer(FlextRuntimeMetadataValidation):

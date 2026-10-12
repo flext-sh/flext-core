@@ -26,9 +26,8 @@ from typing import ClassVar
 
 import pytest
 
-from flext_core import c, m
 from flext_core.utilities import FlextUtilitiesEnforcement
-from tests import p, t, u
+from tests import c, m, p, t, u
 from tests.unit._enforcement_support import make_class
 
 type _WarningRecords = list[warnings.WarningMessage]

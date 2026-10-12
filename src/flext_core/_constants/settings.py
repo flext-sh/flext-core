@@ -43,3 +43,6 @@ class FlextConstantsSettings:
         ),
     )
     """Domain model configuration defaults (SSOT; consumed via ``c.*``)."""
+
+
+__all__: tuple[str, ...] = ("FlextConstantsSettings",)

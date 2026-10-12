@@ -6,14 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import c, p, t
+from flext_core import FlextExceptions, FlextResult, c, m, p, t
 from flext_core._models import FlextModelsExceptionParams
 from flext_core._utilities import FlextUtilitiesGuards
 from flext_core._utilities._mapper_extract_parts.mapper_extract_part_01 import (
     FlextUtilitiesMapperExtract as FlextUtilitiesMapperExtractPart01,
 )
-from flext_core.exceptions import FlextExceptions
-from flext_core.result import FlextResult
 
 
 class FlextUtilitiesMapperExtract(FlextUtilitiesMapperExtractPart01):
@@ -42,7 +40,7 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperExtractPart01):
                 FlextUtilitiesMapperExtract._extract_resolve_path_part(
                     current,
                     part,
-                    context=FlextUtilitiesMapperExtract.ExtractResolvePathPartContext.model_validate({
+                    context=m.ExtractResolvePathPartContext.model_validate({
                         "path_context": separator.join(parts[:i]),
                         "default": default,
                         "required": required,

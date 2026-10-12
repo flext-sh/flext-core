@@ -19,8 +19,7 @@ from typing import override
 
 import pytest
 
-from flext_core import u
-from tests import m, tm
+from tests import m, tm, u
 
 
 class TestsFlextCoreUtilitiesProjectMetadata:

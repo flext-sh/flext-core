@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
 
     from flext_core import p
-    from flext_core._models.config import FlextModelsConfig
+    from flext_core._models import FlextModelsConfig
 
 
 class FlextUtilitiesParserTargets(FlextUtilitiesParserTargetsPart01):

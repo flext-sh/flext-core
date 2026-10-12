@@ -9,10 +9,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
-from examples import m
+from examples import ExamplesFlextShared, m, r, t
 from examples.ex_01_flext_result_helpers import ExamplesFlextResultAdvancedSections
-from examples.shared import ExamplesFlextShared
-from flext_core import r, t
 
 
 class ExamplesFlextResult(ExamplesFlextResultAdvancedSections):

@@ -21,11 +21,10 @@ from pydantic import ConfigDict
 from typing_extensions import TypeForm
 
 from flext_core import c
-from flext_core._constants import FlextConstantsProjectMetadata
+from flext_core._models import FlextModelsPydantic
 from flext_core._models._base_parts import flextmodelsbase_part_01
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._runtime._metadata_validation import FlextRuntimeMetadataValidation
-from flext_core._typings.base import FlextTypingBase
+from flext_core._runtime import FlextRuntimeMetadataValidation
+from flext_core._typings import FlextTypingBase
 from flext_core._utilities import FlextUtilitiesGenerators
 
 
@@ -68,14 +67,14 @@ class FlextModelsBase(flextmodelsbase_part_01.FlextModelsBase):
         version: Annotated[
             str,
             FlextModelsPydantic.Field(
-                default=FlextConstantsProjectMetadata.METADATA_SCHEMA_VERSION_DEFAULT,
+                default=c.METADATA_SCHEMA_VERSION_DEFAULT,
                 description=(
                     "Semantic version string representing the metadata schema revision."
                 ),
                 title="Metadata Version",
                 examples=["1.0.0", "1.2.3"],
             ),
-        ] = FlextConstantsProjectMetadata.METADATA_SCHEMA_VERSION_DEFAULT
+        ] = c.METADATA_SCHEMA_VERSION_DEFAULT
         created_by: Annotated[
             str | None,
             FlextModelsPydantic.Field(

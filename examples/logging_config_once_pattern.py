@@ -17,8 +17,7 @@ from __future__ import annotations
 
 from typing import Annotated, override
 
-from examples import c, m, p, t, u
-from flext_core import d, r, s
+from examples import c, d, m, p, r, s, t, u
 
 
 class ExamplesFlextDatabaseService(s[m.ConfigMap]):

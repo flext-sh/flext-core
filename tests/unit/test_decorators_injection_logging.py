@@ -13,11 +13,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_tests import d
 
-from flext_core.container import FlextContainer
-from flext_core.context import FlextContext
-from tests import m
+from flext_core import FlextContainer, FlextContext
+from tests import d, m
 from tests.unit._decorators_support import capture_stdout
 
 

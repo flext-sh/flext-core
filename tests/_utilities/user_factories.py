@@ -9,9 +9,8 @@ from __future__ import annotations
 from itertools import count
 from typing import TYPE_CHECKING, ClassVar, override
 
-from flext_tests import m as tm
-
-from tests._utilities.railway_services import TestsFlextUtilitiesRailwayServicesMixin
+from tests import m
+from tests._utilities import TestsFlextUtilitiesRailwayServicesMixin
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -55,11 +54,11 @@ class TestsFlextUtilitiesUserFactoriesMixin(TestsFlextUtilitiesRailwayServicesMi
             name: str | None = None,
             email: str | None = None,
             is_active: bool = True,
-        ) -> tm.Tests.User:
-            """Build a `tm.Tests.User` instance with optional overrides.
+        ) -> m.Tests.User:
+            """Build a `m.Tests.User` instance with optional overrides.
 
             Returns:
-                The resulting ``tm.Tests.User``.
+                The resulting ``m.Tests.User``.
 
             """
             n = next(cls._counter)
@@ -68,7 +67,7 @@ class TestsFlextUtilitiesUserFactoriesMixin(TestsFlextUtilitiesRailwayServicesMi
             actual_email = (
                 email if email is not None else f"{actual_user_id}@example.com"
             )
-            return tm.Tests.User(
+            return m.Tests.User(
                 id=actual_user_id,
                 unique_id=actual_user_id,
                 name=actual_name,
@@ -77,11 +76,11 @@ class TestsFlextUtilitiesUserFactoriesMixin(TestsFlextUtilitiesRailwayServicesMi
             )
 
         @classmethod
-        def build_batch(cls, size: int) -> t.SequenceOf[tm.Tests.User]:
+        def build_batch(cls, size: int) -> t.SequenceOf[m.Tests.User]:
             """Build multiple `tm.Tests.User` instances with auto-generated values.
 
             Returns:
-                The resulting ``t.SequenceOf[tm.Tests.User]``.
+                The resulting ``t.SequenceOf[m.Tests.User]``.
 
             """
             return [cls.build() for _ in range(size)]

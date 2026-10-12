@@ -10,12 +10,12 @@ from __future__ import annotations
 import threading
 from collections.abc import MutableMapping
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Annotated, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from typing_extensions import TypeForm
 
 from flext_core import FlextContainer, c, m, p, t, u
-from flext_core._models.flext_context import FlextContext
+from flext_core._models import FlextContext
 
 # NOTE (multi-agent): mro-i6nq.12 — Generator/Mapping are annotation-only under
 # TYPE_CHECKING; MutableMapping is a runtime contract of the ``u.empty`` default.
@@ -28,33 +28,33 @@ if TYPE_CHECKING:
 class FlextMixins(m.ArbitraryTypesModel):
     """Composable behaviors for dispatcher-driven services and handlers."""
 
-    settings_type: Annotated[t.SettingsClass | None, t.SkipJsonSchema()] = m.Field(
-        default=None,
+    settings_type: t.SkipJsonSchema[t.SettingsClass | None] = m.Field(
+        None,
         validate_default=True,
         exclude=True,
         description="FlextSettings class used to initialize the service runtime.",
     )
 
     runtime_settings: t.Port[p.Settings | None] = m.Field(
-        default=None,
+        None,
         exclude=True,
         description="Pre-built settings instance used directly for the runtime.",
     )
 
-    settings_overrides: Annotated[t.ScalarMapping | None, t.SkipJsonSchema()] = m.Field(
-        default=None,
+    settings_overrides: t.SkipJsonSchema[t.ScalarMapping | None] = m.Field(
+        None,
         validate_default=True,
         exclude=True,
         description="Settings overrides applied at instantiation.",
     )
 
     initial_context: t.Port[p.Context | None] = m.Field(
-        default=None,
+        None,
         exclude=True,
         description="Initial context for the service scope.",
     )
 
-    _runtime: m.ServiceRuntime | None = u.PrivateAttr(default=None)
+    _runtime: m.ServiceRuntime | None = u.PrivateAttr(None)
 
     _operation_stats: MutableMapping[str, m.ConfigMap] = u.PrivateAttr(
         default_factory=u.empty(TypeForm(MutableMapping[str, m.ConfigMap])),

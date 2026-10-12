@@ -14,9 +14,8 @@ from __future__ import annotations
 import traceback
 from typing import TYPE_CHECKING, Self, override
 
-from flext_core import c, p, t
-from flext_core._utilities.logging_context import FlextUtilitiesLoggingContext
-from flext_core.result import r
+from flext_core import c, p, r, t
+from flext_core._utilities import FlextUtilitiesLoggingContext
 
 ulc = FlextUtilitiesLoggingContext
 

@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_core import c
-from flext_core._result.composition import FlextResultComposition
+from flext_core._result import FlextResultComposition
 
 if TYPE_CHECKING:
     from collections.abc import Callable

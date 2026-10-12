@@ -12,8 +12,7 @@ from pydantic import BaseModel, ValidationError
 
 from flext_core import c, p
 from flext_core._protocols import FlextProtocolsResult
-from flext_core._result.base import FlextResultBase
-from flext_core._result.behavior import FlextResultBehavior
+from flext_core._result import FlextResultBase, FlextResultBehavior
 
 if TYPE_CHECKING:
     from collections.abc import Callable

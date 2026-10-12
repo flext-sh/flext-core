@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import MutableSequence, Sequence
 
 from flext_core import c, p, r, t, u
-from flext_core._utilities import FlextUtilitiesDispatcherExecute as dxe
+from flext_core._utilities import FlextUtilitiesDispatcherExecute
 
 
 class FlextDispatcher:
@@ -212,7 +212,7 @@ class FlextDispatcher:
             The resulting ``p.Result[t.JsonPayload]``.
 
         """
-        return dxe.execute_dispatcher_handler(
+        return FlextUtilitiesDispatcherExecute.execute_dispatcher_handler(
             resolved_handler=resolved_handler,
             message=message,
             route_name=route_name,

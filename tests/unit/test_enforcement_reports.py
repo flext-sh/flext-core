@@ -21,9 +21,9 @@ from flext_core.utilities import FlextUtilitiesEnforcement
 from tests import c, m, u
 
 # Deliberate broad-annotation fixture: the enforcement engine under test must
-# detect this exact runtime type, so it is bound as a value, never spelled
+# detect this exact runtime type, so it is exposed as a type alias usable
 # inside an annotation.
-_ANY_TYPE: typing.Final = typing.Any
+type _ANY_TYPE = typing.Any
 
 
 def _hard_violation(
@@ -117,8 +117,9 @@ class TestsFlextCoreEnforcementReports:
         violation = _hard_violation()
 
         # Pydantic's frozen ValidationError subclasses ValueError.
+        field_name = "qualname"
         with pytest.raises(m.ValidationError):
-            violation.qualname = "other"
+            setattr(violation, field_name, "other")
 
     @staticmethod
     def test_violation_model_dump_exposes_public_fields() -> None:

@@ -14,9 +14,8 @@ from __future__ import annotations
 import types
 
 import pytest
-from flext_tests import d, r
 
-from tests import p, u
+from tests import d, p, r, u
 
 
 class TestsFlextDecoratorsDiscovery:

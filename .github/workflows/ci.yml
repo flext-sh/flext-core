@@ -118,19 +118,34 @@ jobs:
       # database never hides a changed dependency of a selected test.
       - name: Resolve project testmon database
         id: testmon_path
+        env:
+          CACHE_BRANCH: ${{ github.head_ref || github.ref_name }}
+          CACHE_SEED_BRANCH: ${{ github.base_ref || github.event.repository.default_branch }}
+          CACHE_WRITE_ALLOWED: ${{ (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/')) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) }}
+          CACHE_INPUTS: ${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml', 'config/**') }}
+          CACHE_PLATFORM: ${{ runner.os }}-${{ runner.arch }}
+          CACHE_GENERATION: ${{ github.run_id }}-${{ github.run_attempt }}
         run: |
           set -eu
           cache_home="${XDG_CACHE_HOME:-${HOME}/.cache}"
           database="$(realpath -m "$cache_home/flext/infra/testmon/flext-core/.testmondata")"
           case "$database" in /*) ;; *) exit 2 ;; esac
           printf 'database=%s\n' "$database" >> "$GITHUB_OUTPUT"
+          branch_digest="$(printf '%s' "$CACHE_BRANCH" | sha256sum)"
+          seed_digest="$(printf '%s' "$CACHE_SEED_BRANCH" | sha256sum)"
+          namespace="$CACHE_PLATFORM-3.13-flext-testmon-flext-core-${branch_digest%% *}-"
+          seed_namespace="$CACHE_PLATFORM-3.13-flext-testmon-flext-core-${seed_digest%% *}-"
+          printf 'namespace=%s\nseed_namespace=%s\nsave_allowed=%s\n' "$namespace" "$seed_namespace" "$CACHE_WRITE_ALLOWED" >> "$GITHUB_OUTPUT"
+          printf 'key=%s%s-%s\n' "$namespace" "$CACHE_INPUTS" "$CACHE_GENERATION" >> "$GITHUB_OUTPUT"
       - name: Restore testmon database
         uses: actions/cache/restore@v6
         with:
           path: ${{ steps.testmon_path.outputs.database }}
-          key: ${{ runner.os }}-3.13-flext-testmon-flext-core-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml', 'config/**') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: ${{ steps.testmon_path.outputs.key }}
           restore-keys: |
-            ${{ runner.os }}-3.13-flext-testmon-flext-core-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml', 'config/**') }}-
+            ${{ steps.testmon_path.outputs.namespace }}${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml', 'config/**') }}-
+            ${{ steps.testmon_path.outputs.namespace }}
+            ${{ steps.testmon_path.outputs.seed_namespace }}
 
       - name: Install the mise release pinned by mise.lock
         shell: bash
@@ -277,11 +292,11 @@ jobs:
       # Completed failing tests may save; cancelled/incomplete/corrupt runs cannot.
       - name: Save testmon database
         if: >-
-          ${{ always() && !cancelled() && github.event_name == 'push' && steps.approval-test.outputs.testmon_saveable == 'true' && steps.approval-test.outputs.testmon_database == steps.testmon_path.outputs.database && steps.approval-test.outputs.testmon_digest != '' && contains(fromJSON('["main", "0.12.0-dev", "develop"]'), github.ref_name) && startsWith(github.ref, 'refs/heads/') }}
+          ${{ always() && !cancelled() && steps.testmon_path.outputs.save_allowed == 'true' && steps.approval-test.outputs.testmon_saveable == 'true' && steps.approval-test.outputs.testmon_database == steps.testmon_path.outputs.database && steps.approval-test.outputs.testmon_digest != '' }}
         uses: actions/cache/save@v6
         with:
           path: ${{ steps.approval-test.outputs.testmon_database }}
-          key: ${{ runner.os }}-3.13-flext-testmon-flext-core-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml', 'config/**') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: ${{ steps.testmon_path.outputs.key }}
 
 
       # Why: save on every outcome — including a failing gate — so

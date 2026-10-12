@@ -16,8 +16,7 @@ import pytest
 import structlog
 from pydantic import ValidationError
 
-from flext_core import m, p, t, u
-from tests import tm
+from tests import m, p, t, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Generator

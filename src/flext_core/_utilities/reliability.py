@@ -14,10 +14,9 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING
 
-from flext_core import c, p, t
-from flext_core._models.config import FlextModelsConfig
+from flext_core import FlextResult, c, p, t
+from flext_core._models import FlextModelsConfig
 from flext_core._utilities import FlextUtilitiesArgs
-from flext_core.result import FlextResult
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -38,6 +37,22 @@ class FlextUtilitiesReliability:
     )
 
     @staticmethod
+    def _resolve_handled(
+        catch: type[Exception] | _HandledExceptions | None,
+    ) -> _HandledExceptions:
+        """Resolve the handled-exception tuple from the ``catch`` specification.
+
+        Returns:
+            The resolved ``_HandledExceptions`` tuple.
+
+        """
+        if catch is None:
+            return FlextUtilitiesReliability._RETRYABLE_EXCEPTIONS
+        if isinstance(catch, type):
+            return (catch,)
+        return catch
+
+    @staticmethod
     def try_[TResult](
         operation: Callable[[], TResult],
         catch: type[Exception] | _HandledExceptions | None = None,
@@ -55,12 +70,7 @@ class FlextUtilitiesReliability:
             The resulting ``p.Result[TResult]``.
 
         """
-        if catch is None:
-            handled = FlextUtilitiesReliability._RETRYABLE_EXCEPTIONS
-        elif isinstance(catch, type):
-            handled = (catch,)
-        else:
-            handled = catch
+        handled = FlextUtilitiesReliability._resolve_handled(catch)
         try:
             return FlextResult[TResult].ok(operation())
         except handled as exc:
@@ -88,12 +98,7 @@ class FlextUtilitiesReliability:
             The resulting ``p.Result[TResult]``.
 
         """
-        if catch is None:
-            handled = FlextUtilitiesReliability._RETRYABLE_EXCEPTIONS
-        elif isinstance(catch, type):
-            handled = (catch,)
-        else:
-            handled = catch
+        handled = FlextUtilitiesReliability._resolve_handled(catch)
         try:
             return operation()
         except handled as exc:

@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._result.result import FlextResultComposed
+from flext_core._result import FlextResultComposed
 
 
 class FlextResult[T](FlextResultComposed[T]):

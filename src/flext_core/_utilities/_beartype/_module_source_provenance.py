@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import ast
 
-from flext_core._utilities._beartype._module_source_scan import bound_names
+from flext_core._utilities._beartype import bound_names
 
 
 def import_roots(node: ast.Import | ast.ImportFrom) -> frozenset[str]:

@@ -13,11 +13,9 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import ClassVar, TypeGuard
 
-from flext_core import p, t
-from flext_core._constants import FlextConstantsCqrs
-from flext_core._runtime._metadata import FlextRuntimeMetadata
+from flext_core import FlextResult, c, p, t
+from flext_core._runtime import FlextRuntimeMetadata
 from flext_core._utilities import FlextUtilitiesGuardsTypeCore
-from flext_core.result import FlextResult
 
 
 class FlextUtilitiesCollectionMerge:
@@ -154,13 +152,13 @@ class FlextUtilitiesCollectionMerge:
     _MergeHandler = Callable[[t.JsonMapping, t.JsonMapping], "p.Result[t.JsonMapping]"]
 
     _MERGE_STRATEGIES: ClassVar[Mapping[str, _MergeHandler]] = {
-        FlextConstantsCqrs.MergeStrategy.REPLACE: _merge_replace,
-        FlextConstantsCqrs.MergeStrategy.OVERRIDE: _merge_replace,
-        FlextConstantsCqrs.MergeStrategy.FILTER_NONE: _merge_filter_none,
-        FlextConstantsCqrs.MergeStrategy.FILTER_EMPTY: _merge_filter_empty,
-        FlextConstantsCqrs.MergeStrategy.FILTER_BOTH: _merge_filter_empty,
-        FlextConstantsCqrs.MergeStrategy.APPEND: _merge_append,
-        FlextConstantsCqrs.MergeStrategy.DEEP: _merge_deep,
+        c.MergeStrategy.REPLACE: _merge_replace,
+        c.MergeStrategy.OVERRIDE: _merge_replace,
+        c.MergeStrategy.FILTER_NONE: _merge_filter_none,
+        c.MergeStrategy.FILTER_EMPTY: _merge_filter_empty,
+        c.MergeStrategy.FILTER_BOTH: _merge_filter_empty,
+        c.MergeStrategy.APPEND: _merge_append,
+        c.MergeStrategy.DEEP: _merge_deep,
     }
 
     @staticmethod
@@ -168,7 +166,7 @@ class FlextUtilitiesCollectionMerge:
         other: t.JsonMapping | None,
         base: t.JsonMapping,
         *,
-        strategy: str = FlextConstantsCqrs.MergeStrategy.DEEP,
+        strategy: str = c.MergeStrategy.DEEP,
     ) -> p.Result[t.JsonMapping]:
         """Merge two dictionaries with configurable strategy.
 

@@ -14,8 +14,8 @@ from pydantic import ConfigDict
 from typing_extensions import TypeForm
 
 from flext_core import c, t
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._utilities.base import FlextUtilitiesBase
+from flext_core._models import FlextModelsPydantic
+from flext_core._utilities import FlextUtilitiesBase
 
 
 class FlextUtilitiesConversion:

@@ -108,3 +108,6 @@ class FlextConstantsPydantic:
         "object": b"{}",
         "array": b"[]",
     })
+
+
+__all__: tuple[str, ...] = ("FlextConstantsPydantic",)

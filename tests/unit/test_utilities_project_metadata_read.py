@@ -17,8 +17,7 @@ from typing import cast
 
 import pytest
 
-from flext_core import r
-from tests import c, m, p, tm, u
+from tests import c, m, p, r, tm, u
 from tests.unit._project_metadata_support import write_pyproject
 
 

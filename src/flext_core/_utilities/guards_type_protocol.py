@@ -10,10 +10,8 @@ from typing import TYPE_CHECKING
 
 from flext_core import c, t
 from flext_core._models import FlextModelsPydantic
-from flext_core._utilities._guards_type_protocol_specs import (
+from flext_core._utilities import (
     FlextUtilitiesGuardsTypeProtocolSpecsMixin,
-)
-from flext_core._utilities._guards_type_protocol_string import (
     FlextUtilitiesGuardsTypeProtocolStringMixin,
 )
 

@@ -10,15 +10,14 @@ from collections.abc import Mapping, MutableMapping
 from typing import TYPE_CHECKING
 
 from flext_core import c, m
-from flext_core._exceptions.helpers import FlextExceptionsHelpers
+from flext_core._exceptions import FlextExceptionsHelpers
 from flext_core._protocols import FlextProtocolsResult
-from flext_core._runtime._metadata_validation import FlextRuntimeMetadataValidation
+from flext_core._runtime import FlextRuntimeMetadataValidation
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from flext_core._typings.base import FlextTypingBase
-    from flext_core._typings.services import FlextTypesServices
+    from flext_core._typings import FlextTypesServices, FlextTypingBase
 
 
 class FlextBaseErrorMetadataMixin:

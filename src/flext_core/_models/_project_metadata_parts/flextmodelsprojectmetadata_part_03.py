@@ -15,7 +15,7 @@ from flext_core._models._project_metadata_parts import (
     flextmodelsprojectmetadata_part_02,
     flextmodelsprojectmetadata_part_05,
 )
-from flext_core._typings.base import FlextTypingBase
+from flext_core._typings import FlextTypingBase
 
 
 class FlextModelsProjectMetadataAggregates(

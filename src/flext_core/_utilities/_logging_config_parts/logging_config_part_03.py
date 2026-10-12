@@ -14,7 +14,7 @@ import logging
 import structlog
 
 from flext_core import c, p
-from flext_core._runtime._base import FlextRuntimeBase
+from flext_core._runtime import FlextRuntimeBase
 from flext_core._utilities._logging_config_parts import logging_config_part_02
 
 

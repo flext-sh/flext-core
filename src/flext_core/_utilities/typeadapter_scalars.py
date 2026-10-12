@@ -13,11 +13,13 @@ from functools import cache
 from pydantic import ConfigDict
 from typing_extensions import TypeForm
 
-from flext_core._typings.annotateds import FlextTypesAnnotateds
-from flext_core._typings.base import FlextTypingBase
-from flext_core._typings.core import FlextTypesCore
-from flext_core._typings.pydantic import FlextTypesPydantic
-from flext_core._utilities.base import FlextUtilitiesBase
+from flext_core._typings import (
+    FlextTypesAnnotateds,
+    FlextTypesCore,
+    FlextTypesPydantic,
+    FlextTypingBase,
+)
+from flext_core._utilities import FlextUtilitiesBase
 
 
 class FlextUtilitiesTypingAdapterScalars(FlextUtilitiesBase):

@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from flext_core.container import FlextContainer
+from flext_core import FlextContainer
 from tests import c, e, m, tm
 
 if TYPE_CHECKING:

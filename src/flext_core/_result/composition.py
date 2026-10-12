@@ -11,8 +11,7 @@ from typing import TYPE_CHECKING, Self, cast
 from pydantic import ValidationError
 
 from flext_core import c
-from flext_core._result.construction import copy_result, ok_result
-from flext_core._result.transforms import FlextResultTransforms
+from flext_core._result import FlextResultTransforms, copy_result, ok_result
 
 if TYPE_CHECKING:
     from collections.abc import Callable, MutableSequence, Sequence

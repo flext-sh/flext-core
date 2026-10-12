@@ -11,8 +11,8 @@ from functools import wraps
 from typing import TYPE_CHECKING
 
 from flext_core import c, m
-from flext_core._decorators._combined import FlextDecoratorsCombined
-from flext_core._exceptions.exception_types import FlextExceptionsTypes
+from flext_core._decorators import FlextDecoratorsCombined
+from flext_core._exceptions import FlextExceptionsTypes
 
 if TYPE_CHECKING:
     from collections.abc import Callable

@@ -11,8 +11,8 @@ import inspect
 import types as _types_mod
 from typing import TYPE_CHECKING, Annotated, ClassVar, ForwardRef, get_args, get_origin
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement
-from flext_core._typings.base import FlextTypingBase
+from flext_core import c
+from flext_core._typings import FlextTypingBase
 from flext_core._utilities._beartype._helpers_parts import helpers_part_01
 
 if TYPE_CHECKING:
@@ -86,8 +86,7 @@ class FlextUtilitiesBeartypeHelpers(helpers_part_01.FlextUtilitiesBeartypeHelper
             return None
         src_file = getattr(module, "__file__", None)
         if not isinstance(src_file, str) or any(
-            marker in src_file
-            for marker in FlextConstantsEnforcement.ENFORCE_NON_WORKSPACE_PATH_MARKERS
+            marker in src_file for marker in c.ENFORCE_NON_WORKSPACE_PATH_MARKERS
         ):
             return None
         return module

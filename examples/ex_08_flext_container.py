@@ -9,9 +9,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
-from examples import c, p, u
+from examples import c, p, r, t, u
 from examples.ex_08_container_lifecycle import ExamplesFlextContainerLifecycle
-from flext_core import FlextContainer, r, t
+from flext_core import FlextContainer
 
 
 class ExamplesFlextContainer(ExamplesFlextContainerLifecycle):

@@ -9,20 +9,16 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import c, m
-from flext_core._exceptions._base_parts.flextexceptionsbase_part_02 import (
-    FlextBaseErrorStateMixin,
-)
-from flext_core._exceptions.helpers import FlextExceptionsHelpers
-from flext_core._runtime._metadata_validation import (
-    FlextRuntimeMetadataValidation as FlextRuntime,
-)
-from flext_core._typings.base import FlextTypingBase as tb
+from flext_core._exceptions import FlextExceptionsHelpers
+from flext_core._exceptions._base_parts import FlextBaseErrorStateMixin
+from flext_core._runtime import FlextRuntimeMetadataValidation as FlextRuntime
+from flext_core._typings import FlextTypingBase as tb
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
 
-    from flext_core._protocols.result import FlextProtocolsResult as pr
-    from flext_core._typings.services import FlextTypesServices as ts
+    from flext_core._protocols import FlextProtocolsResult as pr
+    from flext_core._typings import FlextTypesServices as ts
 
 
 class FlextExceptionsBase:

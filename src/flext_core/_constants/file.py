@@ -27,3 +27,6 @@ class FlextConstantsFile:
     PYPROJECT_FILENAME: ClassVar[str] = "pyproject.toml"
     GIT_DIR_NAME: ClassVar[str] = ".git"
     POETRY_LOCK_FILENAME: ClassVar[str] = "poetry.lock"
+
+
+__all__: tuple[str, ...] = ("FlextConstantsFile",)

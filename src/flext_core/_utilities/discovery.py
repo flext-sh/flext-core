@@ -27,7 +27,7 @@ from flext_core._models import FlextModelsContainer, FlextModelsService
 if TYPE_CHECKING:
     from types import ModuleType
 
-    from flext_core.service import FlextService
+    from flext_core import FlextService
 
 
 class FlextUtilitiesDiscovery:

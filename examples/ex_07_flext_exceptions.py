@@ -9,9 +9,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
-from examples import m
+from examples import c, e, m, r
 from examples.ex_07_flext_exceptions_helpers import ExamplesFlextExceptionSubclasses
-from flext_core import c, e, r
 
 
 def _raise_value_error() -> None:

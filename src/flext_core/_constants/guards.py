@@ -21,7 +21,7 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
-    from flext_core._typings.services import FlextTypesServices
+    from flext_core._typings import FlextTypesServices
 
 
 class FlextConstantsGuards:

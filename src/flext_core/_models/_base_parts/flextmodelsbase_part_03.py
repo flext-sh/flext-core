@@ -16,11 +16,11 @@ from datetime import datetime
 from typing import Annotated, ClassVar, Self
 
 from flext_core import c
+from flext_core._models import FlextModelsPydantic
 from flext_core._models._base_parts import flextmodelsbase_part_02
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._runtime._metadata_validation import FlextRuntimeMetadataValidation
-from flext_core._typings.base import FlextTypingBase
-from flext_core._utilities.generators import FlextUtilitiesGenerators
+from flext_core._runtime import FlextRuntimeMetadataValidation
+from flext_core._typings import FlextTypingBase
+from flext_core._utilities import FlextUtilitiesGenerators
 
 
 class FlextModelsBase(flextmodelsbase_part_02.FlextModelsBase):

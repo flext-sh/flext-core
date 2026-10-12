@@ -15,14 +15,15 @@ from typing import TYPE_CHECKING, ClassVar
 
 from typing_extensions import TypeForm
 
-from flext_core import c, t
+from flext_core import FlextResult, c, t
 from flext_core._models import FlextModelsCollections
 from flext_core._protocols import FlextProtocolsResult
-from flext_core._utilities.base import FlextUtilitiesBase
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
-from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
-from flext_core._utilities.guards_type_protocol import FlextUtilitiesGuardsTypeProtocol
-from flext_core.result import FlextResult
+from flext_core._utilities import (
+    FlextUtilitiesBase,
+    FlextUtilitiesGuardsTypeCore,
+    FlextUtilitiesGuardsTypeModel,
+    FlextUtilitiesGuardsTypeProtocol,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping, Sized

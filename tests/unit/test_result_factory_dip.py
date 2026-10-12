@@ -13,10 +13,9 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
-from flext_tests import r, tm
 
-from flext_core import FlextResult, e, m, t
-from tests import p
+from flext_core import FlextResult
+from tests import e, m, p, r, t, tm
 
 
 class TestsFlextCoreResultFactoryDip:

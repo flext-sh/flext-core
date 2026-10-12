@@ -9,11 +9,9 @@ from __future__ import annotations
 from collections.abc import MutableMapping, MutableSequence
 from typing import TYPE_CHECKING, Annotated, ClassVar, override
 
-from flext_tests import r
 from typing_extensions import TypeForm
 
-from tests import m, u
-from tests.base import s
+from tests import m, r, s, u
 
 if TYPE_CHECKING:
     from tests import p, t

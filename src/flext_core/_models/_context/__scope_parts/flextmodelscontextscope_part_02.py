@@ -12,11 +12,13 @@ from typing import Annotated, Self
 from typing_extensions import TypeForm
 
 from flext_core import c, t
+from flext_core._models import (
+    FlextModelsBase,
+    FlextModelsContainers,
+    FlextModelsPydantic,
+)
 from flext_core._models._context.__scope_parts import flextmodelscontextscope_part_01
-from flext_core._models.base import FlextModelsBase
-from flext_core._models.containers import FlextModelsContainers
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._utilities.base import FlextUtilitiesBase
+from flext_core._utilities import FlextUtilitiesBase
 
 mp = FlextModelsPydantic
 

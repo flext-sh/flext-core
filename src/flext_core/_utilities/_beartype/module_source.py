@@ -14,11 +14,11 @@ from types import ModuleType
 from typing import TypeAliasType, runtime_checkable
 
 from flext_core._models import FlextModelsEnforcement
-from flext_core._utilities._beartype._module_source_deferred import deferred_alias
-from flext_core._utilities._beartype._module_source_provenance import owner_derived
-from flext_core._utilities._beartype._module_source_scan import (
+from flext_core._utilities._beartype import (
+    deferred_alias,
     export_names,
     loads,
+    owner_derived,
     parse_module,
 )
 

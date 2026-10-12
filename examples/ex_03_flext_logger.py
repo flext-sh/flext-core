@@ -11,8 +11,7 @@ from contextlib import redirect_stdout
 from pathlib import Path
 from typing import override
 
-from examples import p, u
-from examples.shared import ExamplesFlextShared
+from examples import ExamplesFlextShared, p, u
 
 
 def _raise_value_error(message: str) -> None:

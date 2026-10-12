@@ -9,6 +9,7 @@ from __future__ import annotations
 import io
 import time
 from contextlib import redirect_stdout
+from functools import partial
 from typing import TYPE_CHECKING, NoReturn
 
 import pytest
@@ -141,7 +142,8 @@ class TestsFlextCoverageLoggings:
             _fail()
         except OSError as exc:
             result = self.assert_captured_log_success(
-                lambda exc=exc: logger.exception(
+                partial(
+                    logger.exception,
                     "io operation failed",
                     exception=exc,
                     operation="file_read",

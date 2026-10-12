@@ -11,10 +11,10 @@ import inspect
 from pathlib import Path
 from types import ModuleType
 
-from flext_core._constants import FlextConstantsEnforcement
+from flext_core import c
 from flext_core._models import FlextModelsEnforcement
-from flext_core._typings.base import FlextTypingBase
-from flext_core._utilities import (
+from flext_core._typings import FlextTypingBase
+from flext_core._utilities._beartype import (
     FlextUtilitiesBeartypeHelpers,
     FlextUtilitiesBeartypeModuleSource,
 )
@@ -149,7 +149,7 @@ class FlextUtilitiesBeartypeModuleVisitor:
         if (
             not package.startswith("flext_")
             or filename.startswith("_")
-            or filename in FlextConstantsEnforcement.ENFORCEMENT_CANONICAL_FILES
+            or filename in c.ENFORCEMENT_CANONICAL_FILES
             or filename in _MODULE_EXEMPT_FILES
         ):
             return _NO_VIOLATION
@@ -192,3 +192,6 @@ class FlextUtilitiesBeartypeModuleVisitor:
 
         """
         return _NO_VIOLATION
+
+
+__all__: tuple[str, ...] = ("FlextUtilitiesBeartypeModuleVisitor",)

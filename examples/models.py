@@ -34,6 +34,8 @@ class ExamplesFlextModels(FlextModels):
     """Public examples model facade — composes all _models/* via MRO."""
 
     class Examples(
+        ExamplesFlextSharedHandle,
+        ExamplesFlextSharedPerson,
         ExamplesFlextModelsErrors.Examples,
         ExamplesFlextModelsEx00,
         ExamplesFlextModelsEx01,

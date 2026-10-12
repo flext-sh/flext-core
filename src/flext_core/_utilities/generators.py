@@ -18,7 +18,7 @@ from importlib import import_module
 from zoneinfo import ZoneInfo
 
 from flext_core import c, t
-from flext_core._models.options import FlextModelsOptions
+from flext_core._models import FlextModelsOptions
 
 
 # NOTE (multi-agent): mro-i6nq.12 — consolidated _generators_parts/part_01..02 (one

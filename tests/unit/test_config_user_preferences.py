@@ -24,7 +24,8 @@ from pathlib import Path
 from types import ModuleType
 
 import pytest
-from flext_tests import u
+
+from tests import u
 
 _SUBCLASS_SOURCE = '''
 from __future__ import annotations

@@ -11,10 +11,10 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, TypeAlias
 
-from flext_core._constants import FlextConstantsEnforcement, FlextConstantsRegex
+from flext_core import c
 from flext_core._models import FlextModelsEnforcement
-from flext_core._typings.base import FlextTypingBase
-from flext_core._utilities import FlextUtilitiesBeartypeHelpers
+from flext_core._typings import FlextTypingBase
+from flext_core._utilities._beartype import FlextUtilitiesBeartypeHelpers
 
 if TYPE_CHECKING:
     from types import ModuleType
@@ -71,12 +71,9 @@ def _v_cast_outside_core(
         The resulting ``t.StrMapping | None``.
 
     """
-    if any(
-        marker in src_file
-        for marker in FlextConstantsEnforcement.ENFORCE_FLEXT_CORE_PATH_MARKERS
-    ):
+    if any(marker in src_file for marker in c.ENFORCE_FLEXT_CORE_PATH_MARKERS):
         return _NO_VIOLATION
-    cast_target = FlextConstantsEnforcement.EnforceAstHookSymbol.CAST_CALL.value
+    cast_target = c.EnforceAstHookSymbol.CAST_CALL.value
     return next(
         (
             {"file": file_name, "line": str(fn.__code__.co_firstlineno)}
@@ -152,7 +149,7 @@ def _v_wrapper_import_regex(
                     f"from {match.group(1)}.{match.group(2)} import {first_alias}"
                 ),
             }
-            for match in FlextConstantsRegex.FORBIDDEN_FACADE_IMPORT_RE.finditer(
+            for match in c.FORBIDDEN_FACADE_IMPORT_RE.finditer(
                 source,
             )
             for first_alias in (

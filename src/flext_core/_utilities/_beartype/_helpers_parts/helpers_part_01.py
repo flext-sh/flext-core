@@ -21,14 +21,12 @@ from typing import (
 )
 
 from flext_core._models import FlextModelsEnforcement
-from flext_core._protocols.base import FlextProtocolsBase
-from flext_core._utilities import (
-    FlextUtilitiesBeartypeTypeAliases,
-    FlextUtilitiesFamilySurface,
-)
+from flext_core._protocols import FlextProtocolsBase
+from flext_core._utilities import FlextUtilitiesFamilySurface
+from flext_core._utilities._beartype import FlextUtilitiesBeartypeTypeAliases
 
 if TYPE_CHECKING:
-    from flext_core._typings.base import FlextTypingBase
+    from flext_core._typings import FlextTypingBase
 
 
 class FlextUtilitiesBeartypeHelpers:

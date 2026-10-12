@@ -44,16 +44,6 @@ if TYPE_CHECKING:
         FlextModelsEnforcementResolution,
     )
     from flext_core._models._enforcement._sources import FlextModelsEnforcementSources
-    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_02 import (
-        FlextModelsProjectMetadataContract,
-        FlextModelsProjectMetadataFields,
-    )
-    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_03 import (
-        FlextModelsProjectMetadataAggregates,
-    )
-    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_04 import (
-        FlextModelsProjectMetadataDocument,
-    )
     from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_05 import (
         FlextModelsPyprojectIngressContract,
     )
@@ -116,10 +106,6 @@ __all__: tuple[str, ...] = (
     "FlextModelsNamespace",
     "FlextModelsOptions",
     "FlextModelsProjectMetadata",
-    "FlextModelsProjectMetadataAggregates",
-    "FlextModelsProjectMetadataContract",
-    "FlextModelsProjectMetadataDocument",
-    "FlextModelsProjectMetadataFields",
     "FlextModelsPydantic",
     "FlextModelsPyprojectIngressContract",
     "FlextModelsRegistry",
@@ -173,18 +159,6 @@ install_lazy_exports(
         "FlextModelsNamespace": ".namespace",
         "FlextModelsOptions": ".options",
         "FlextModelsProjectMetadata": ".project_metadata",
-        "FlextModelsProjectMetadataAggregates": (
-            "._project_metadata_parts.flextmodelsprojectmetadata_part_03"
-        ),
-        "FlextModelsProjectMetadataContract": (
-            "._project_metadata_parts.flextmodelsprojectmetadata_part_02"
-        ),
-        "FlextModelsProjectMetadataDocument": (
-            "._project_metadata_parts.flextmodelsprojectmetadata_part_04"
-        ),
-        "FlextModelsProjectMetadataFields": (
-            "._project_metadata_parts.flextmodelsprojectmetadata_part_02"
-        ),
         "FlextModelsPydantic": ".pydantic",
         "FlextModelsPyprojectIngressContract": (
             "._project_metadata_parts.flextmodelsprojectmetadata_part_05"

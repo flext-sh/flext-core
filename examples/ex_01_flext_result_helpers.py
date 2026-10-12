@@ -8,8 +8,7 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence, Sequence
 
-from examples.shared import ExamplesFlextShared
-from flext_core import p, r
+from examples import ExamplesFlextShared, p, r
 
 
 class ExamplesFlextResultAdvancedSections(ExamplesFlextShared):

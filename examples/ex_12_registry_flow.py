@@ -8,14 +8,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from examples import c, m, u
+from examples import ExamplesFlextShared, c, h, m, r, u
 from examples.ex_12_registry_support import (
     ProtocolHandler,
     as_registry_handler,
     discovered_handler,
 )
-from examples.shared import ExamplesFlextShared
-from flext_core import h, r
 
 if TYPE_CHECKING:
     from examples import p, t

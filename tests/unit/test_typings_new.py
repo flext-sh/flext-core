@@ -14,8 +14,7 @@ from enum import StrEnum
 
 import pytest
 
-from flext_core import u
-from tests import c, t, tm
+from tests import c, t, tm, u
 
 
 class TestsFlextCoreTypingsNew:

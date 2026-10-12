@@ -95,8 +95,9 @@ class TestsFlextFacadeFlatSsotAccess:
         """Test project metadata is immutable."""
         metadata = self._metadata(tmp_path)
 
+        field_name = "package_name"
         with pytest.raises(m.ValidationError):
-            metadata.package_name = "other"
+            setattr(metadata, field_name, "other")
 
     @staticmethod
     def test_project_metadata_rejects_unknown_field(tmp_path: Path) -> None:

@@ -9,12 +9,13 @@ from __future__ import annotations
 from collections.abc import Mapping
 from enum import StrEnum
 
-from flext_core import c, p, t
-from flext_core._models import FlextModelsPydantic
-from flext_core._models.config import FlextModelsConfig
-from flext_core._utilities import FlextUtilitiesGuardsTypeModel, FlextUtilitiesModel
-from flext_core._utilities.parser_coerce import FlextUtilitiesParserCoerce
-from flext_core.result import FlextResult
+from flext_core import FlextResult, c, p, t
+from flext_core._models import FlextModelsConfig, FlextModelsPydantic
+from flext_core._utilities import (
+    FlextUtilitiesGuardsTypeModel,
+    FlextUtilitiesModel,
+    FlextUtilitiesParserCoerce,
+)
 
 
 class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):

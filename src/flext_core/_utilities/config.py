@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, ClassVar, cast
 
 import yaml
 
-from flext_core._constants import FlextConstantsConfig
+from flext_core import c
 from flext_core._typings.base import FlextTypingBase
 from flext_core._utilities import (
     FlextUtilitiesGuardsTypeCore,
@@ -202,7 +202,7 @@ class FlextUtilitiesConfig:
         def _expand_match(match: re.Match[str]) -> str:
             return FlextUtilitiesConfig._expand_one(match, env)
 
-        for _ in range(FlextConstantsConfig.CONFIG_EXPAND_MAX_PASSES):
+        for _ in range(c.CONFIG_EXPAND_MAX_PASSES):
             expanded = FlextUtilitiesConfig._EXPAND_PATTERN.sub(_expand_match, current)
             if expanded == current:
                 return expanded
@@ -222,11 +222,11 @@ class FlextUtilitiesConfig:
         """
         if not path.is_file():
             return r[FlextTypingBase.JsonMapping].fail(
-                f"{FlextConstantsConfig.ERR_CONFIG_READ_FAILED}: {path}",
+                f"{c.ERR_CONFIG_READ_FAILED}: {path}",
             )
         parsed = FlextUtilitiesReliability.try_(
             lambda: tomllib.loads(
-                path.read_text(encoding=FlextConstantsConfig.CONFIG_DEFAULT_ENCODING),
+                path.read_text(encoding=c.CONFIG_DEFAULT_ENCODING),
             ),
             catch=(OSError, tomllib.TOMLDecodeError),
             op_name="config_load",
@@ -236,7 +236,7 @@ class FlextUtilitiesConfig:
         payload = parsed.value
         if not FlextUtilitiesGuardsTypeCore.mapping(payload):
             return r[FlextTypingBase.JsonMapping].fail(
-                f"{FlextConstantsConfig.ERR_CONFIG_NOT_MAPPING}: {path}",
+                f"{c.ERR_CONFIG_NOT_MAPPING}: {path}",
             )
         return r[FlextTypingBase.JsonMapping].ok(payload)
 

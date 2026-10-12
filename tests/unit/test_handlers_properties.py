@@ -13,11 +13,10 @@ from __future__ import annotations
 from typing import cast
 
 import pytest
-from flext_tests import h, r, tm
 from hypothesis import given, strategies as st
 
 import tests.utilities
-from tests import c, t
+from tests import c, h, r, t, tm
 
 _TOKENS: st.SearchStrategy[str] = st.text(
     alphabet=st.characters(min_codepoint=33, max_codepoint=126),

@@ -18,9 +18,8 @@ from contextlib import redirect_stdout
 from typing import override
 
 import pytest
-from flext_tests import r
 
-from tests import m, p, t, u
+from tests import m, p, r, t, u
 
 
 class TestsFlextCoreDispatcher:

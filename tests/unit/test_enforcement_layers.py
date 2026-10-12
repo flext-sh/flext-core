@@ -23,13 +23,22 @@ from typing import (
 
 import pytest
 
-from flext_core import m, t
-from tests import u
+from tests import m, t, u
 
 # Deliberate broad-annotation fixture: the layered checker under test must
-# detect this exact runtime type, so it is bound as a value, never spelled
+# detect this exact runtime type, so it is exposed as a type alias usable
 # inside an annotation.
-_ANY_TYPE: typing.Final = typing.Any
+type _ANY_TYPE = typing.Any
+
+
+def _non_runtime_decorator(cls: type) -> type:
+    """Apply a decorator other than ``@runtime_checkable`` to a Protocol.
+
+    Returns:
+        The undecorated class, matching a mis-decorated Protocol.
+
+    """
+    return cls
 
 
 class TestsFlextCoreEnforcementLayers:
@@ -175,7 +184,7 @@ class TestsFlextCoreEnforcementLayers:
     @staticmethod
     def _protocols_other_decorator() -> type:
         class _PProtocols:
-            @typing.final
+            @_non_runtime_decorator
             class InnerProto(Protocol):
                 @staticmethod
                 def do() -> None:

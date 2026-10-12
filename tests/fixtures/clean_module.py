@@ -8,12 +8,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, ClassVar, Final, Protocol, runtime_checkable
+from typing import Annotated, ClassVar, Final
 
-from flext_tests import r
 from typing_extensions import TypeForm
 
-from tests import m, p, t, u
+from tests import m, p, r, t, u
 
 
 class TestsFlextCleanModels:
@@ -75,17 +74,8 @@ class TestsFlextCleanProtocols:
     class Core:
         """Core protocols namespace."""
 
-        class Tests:
+        class Tests(p.Tests):
             """Clean protocol declarations used by enforcement probes."""
-
-            @runtime_checkable
-            class GoodProtocol(Protocol):
-                """Runtime-checkable protocol."""
-
-                @staticmethod
-                def run() -> None:
-                    """Execute the clean protocol behavior."""
-                    ...
 
 
 class TestsFlextCleanServiceBase:

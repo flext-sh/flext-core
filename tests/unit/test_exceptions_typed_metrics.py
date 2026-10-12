@@ -15,9 +15,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import e
 
-from tests import c, m, t
+from tests import c, e, m, t
 
 if TYPE_CHECKING:
     from collections.abc import Callable

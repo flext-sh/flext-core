@@ -10,9 +10,8 @@ from typing import Annotated, Self
 
 from typing_extensions import TypeForm
 
-from flext_core import m, p, t, u
-from flext_core._utilities.base import FlextUtilitiesBase
-from flext_core.result import FlextResult
+from flext_core import FlextResult, m, p, t, u
+from flext_core._utilities import FlextUtilitiesBase
 
 
 class FlextContextScopeOps(m.ManagedModel):

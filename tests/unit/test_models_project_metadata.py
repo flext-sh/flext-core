@@ -110,8 +110,9 @@ class TestsFlextModelsProjectMetadata:
         """Test project metadata is frozen against mutation."""
         metadata = self._metadata(tmp_path)
 
+        field_name = "package_name"
         with pytest.raises(c.ValidationError):
-            metadata.package_name = "other"
+            setattr(metadata, field_name, "other")
 
     @staticmethod
     def test_project_metadata_rejects_unknown_fields(tmp_path: Path) -> None:

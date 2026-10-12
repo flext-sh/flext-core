@@ -33,3 +33,6 @@ class FlextConstantsConfig:
     ERR_CONFIG_READ_FAILED: ClassVar[str] = "config: cannot read source"
     ERR_CONFIG_PARSE_FAILED: ClassVar[str] = "config: cannot parse source"
     ERR_CONFIG_NOT_MAPPING: ClassVar[str] = "config: expected a mapping object"
+
+
+__all__: tuple[str, ...] = ("FlextConstantsConfig",)

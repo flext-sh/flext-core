@@ -11,6 +11,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 
 from tests import c, m, u
@@ -233,4 +235,5 @@ class TestsFlextCoreModelsCqrs:
         parsed = adapter.validate_python(payload)
 
         assert isinstance(parsed, expected_cls)
-        assert parsed.message_type == payload["message_type"]
+        message = cast("m.Command | m.Query | m.Event", parsed)
+        assert message.message_type == payload["message_type"]

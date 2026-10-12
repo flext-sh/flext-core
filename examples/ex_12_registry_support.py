@@ -8,8 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from examples import m, t, u
-from flext_core import h, r
+from examples import h, m, r, t, u
 
 if TYPE_CHECKING:
     from examples import p
