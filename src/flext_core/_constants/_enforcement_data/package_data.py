@@ -24,6 +24,12 @@ from typing import ClassVar
 
 from pydantic import BaseModel
 
+from flext_core._constants._enforcement_data.flextpredicaterule import (
+    FlextPredicateRule,
+)
+from flext_core._constants._enforcement_data.flextsmellthresholds import (
+    FlextSmellThresholds,
+)
 from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_04 import (
     FlextConstantsEnforcementRules,
 )
@@ -35,38 +41,17 @@ class FlextConstantsEnforcementData(BaseModel):
 
     _DATA_PACKAGE: ClassVar[str] = "flext_core._constants._enforcement_data"
 
-    class SmellThresholds(BaseModel):
-        """Complexity thresholds for the smell audit."""
-
-        params: int
-        returns: int
-        nesting: int
-        fn_cx: int
-        file_cx: int
-
     class SmellData(BaseModel):
         """Smell thresholds, tags and rule text."""
 
-        thresholds: "SmellThresholds"
+        thresholds: FlextSmellThresholds
         tags: tuple[str, ...]
         rules_text: FlextTypingBase.StrPairMapping
-
-    class PredicateRule(BaseModel):
-        """One runtime enforcement predicate keyed by tag."""
-
-        category: FlextConstantsEnforcementRules.EnforcementCategory
-        collect: str = ""
-        recursive: bool = False
-        layer: str = ""
-        problem: str
-        fix: str
-        predicate: str
-        params: FlextTypingBase.JsonDict
 
     class PredicateData(BaseModel):
         """Runtime predicates keyed by tag."""
 
-        predicates: FlextTypingBase.MappingKV[str, "PredicateRule"]
+        predicates: FlextTypingBase.MappingKV[str, FlextPredicateRule]
 
     class ExemptionData(BaseModel):
         """Exemption, allowance and rename tables consulted by runtime rules."""
@@ -91,7 +76,7 @@ class FlextConstantsEnforcementData(BaseModel):
         .joinpath("smells.json")
         .read_text(encoding="utf-8"),
     )
-    PREDICATES: ClassVar[FlextTypingBase.MappingKV[str, PredicateRule]] = (
+    PREDICATES: ClassVar[FlextTypingBase.MappingKV[str, FlextPredicateRule]] = (
         MappingProxyType(
             dict(
                 PredicateData.model_validate_json(

@@ -11,13 +11,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from types import EllipsisType
-from typing import Literal, Protocol, overload, runtime_checkable
+from typing import TYPE_CHECKING, Literal, Protocol, overload, runtime_checkable
 
 import pydantic
 from pydantic_core import PydanticUndefinedType
 
 from flext_core._protocols import FlextProtocolsBase
+
+if TYPE_CHECKING:
+    from flext_core._typings import FlextTypingBase
 
 
 class FlextProtocolsPydantic:
@@ -70,9 +72,10 @@ class FlextProtocolsPydantic:
         reference to the overloaded native function.
         """
 
+        @overload
         def __call__[DefaultT](
             self,
-            default: DefaultT | PydanticUndefinedType | EllipsisType = ...,
+            default: DefaultT,
             *,
             default_factory: Callable[[], DefaultT]
             | Callable[[Mapping[str, FlextProtocolsBase.AttributeProbe]], DefaultT]
@@ -82,17 +85,38 @@ class FlextProtocolsPydantic:
             **kwargs: FlextProtocolsBase.AttributeProbe,
         ) -> DefaultT: ...
 
+        @overload
+        def __call__(
+            self,
+            *,
+            default_factory: Callable[..., FlextProtocolsBase.AttributeProbe]
+            | PydanticUndefinedType
+            | None = ...,
+            alias: str | PydanticUndefinedType | None = ...,
+            **kwargs: FlextProtocolsBase.AttributeProbe,
+        ) -> FlextTypingBase.UnconstrainedValue: ...
+
     @runtime_checkable
     class PrivateAttrFactory(Protocol):
         """Receiver-free native private attribute metadata factory."""
 
+        @overload
         def __call__[PrivateT](
             self,
-            default: PrivateT | PydanticUndefinedType = ...,
+            default: PrivateT,
             *,
             default_factory: Callable[..., PrivateT] | None = ...,
             init: Literal[False] = ...,
         ) -> PrivateT: ...
+
+        @overload
+        def __call__(
+            self,
+            *,
+            default_factory: Callable[..., FlextProtocolsBase.AttributeProbe]
+            | None = ...,
+            init: Literal[False] = ...,
+        ) -> FlextTypingBase.UnconstrainedValue: ...
 
 
 __all__: tuple[str, ...] = ("FlextProtocolsPydantic",)

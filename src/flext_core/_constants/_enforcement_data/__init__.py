@@ -13,16 +13,30 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
+    from flext_core._constants._enforcement_data.flextpredicaterule import (
+        FlextPredicateRule,
+    )
+    from flext_core._constants._enforcement_data.flextsmellthresholds import (
+        FlextSmellThresholds,
+    )
     from flext_core._constants._enforcement_data.package_data import (
         FlextConstantsEnforcementData,
     )
 
 
-__all__: tuple[str, ...] = ("FlextConstantsEnforcementData",)
+__all__: tuple[str, ...] = (
+    "FlextConstantsEnforcementData",
+    "FlextPredicateRule",
+    "FlextSmellThresholds",
+)
 
 install_lazy_exports(
     __name__,
     globals(),
-    MappingProxyType({"FlextConstantsEnforcementData": ".package_data"}),
+    MappingProxyType({
+        "FlextConstantsEnforcementData": ".package_data",
+        "FlextPredicateRule": ".flextpredicaterule",
+        "FlextSmellThresholds": ".flextsmellthresholds",
+    }),
     public_exports=__all__,
 )
