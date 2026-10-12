@@ -13,7 +13,6 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from tests._models import _mixins
     from tests._models.mixins import (
         TestsFlextModelsMixins,
         TestsFlextModelsNamespace,
@@ -21,12 +20,7 @@ if TYPE_CHECKING:
     )
 
 
-__all__: tuple[str, ...] = (
-    "TestsFlextModelsMixins",
-    "TestsFlextModelsNamespace",
-    "_mixins",
-    "m",
-)
+__all__: tuple[str, ...] = ("TestsFlextModelsMixins", "TestsFlextModelsNamespace", "m")
 
 install_lazy_exports(
     __name__,
@@ -34,7 +28,6 @@ install_lazy_exports(
     MappingProxyType({
         "TestsFlextModelsMixins": ".mixins",
         "TestsFlextModelsNamespace": ".mixins",
-        "_mixins": "._mixins",
         "m": ".mixins",
     }),
     public_exports=__all__,

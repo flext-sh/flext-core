@@ -96,8 +96,8 @@ class ExamplesFlextModelsEx04:
             default="ex04_create_user_event", description="Create-user event identifier"
         )
         username: Annotated[
-            str, m.Field(default=..., description="Username for the user to create")
-        ]
+            str, m.Field(description="Username for the user to create")
+        ] = ...
 
     class GetUser(_QueryEnvelope):
         """Query to get a user record by username in example 04."""
@@ -108,9 +108,7 @@ class ExamplesFlextModelsEx04:
         event_type: str = m.Field(
             default="ex04_get_user_event", description="Get-user event identifier"
         )
-        username: Annotated[
-            str, m.Field(default=..., description="Username to retrieve")
-        ]
+        username: Annotated[str, m.Field(description="Username to retrieve")] = ...
 
     class DeleteUser(_CommandEnvelope):
         """Command to delete a user in example 04."""
@@ -122,8 +120,8 @@ class ExamplesFlextModelsEx04:
             default="ex04_delete_user_event", description="Delete-user event identifier"
         )
         username: Annotated[
-            str, m.Field(default=..., description="Username of the user to delete")
-        ]
+            str, m.Field(description="Username of the user to delete")
+        ] = ...
 
     class FailingDelete(_CommandEnvelope):
         """Command deliberately fails to demonstrate error handling in example 04."""
@@ -137,11 +135,8 @@ class ExamplesFlextModelsEx04:
             description="Failing-delete event identifier",
         )
         username: Annotated[
-            str,
-            m.Field(
-                default=..., description="Username for the failing delete operation"
-            ),
-        ]
+            str, m.Field(description="Username for the failing delete operation")
+        ] = ...
 
     class AutoCommand(_CommandEnvelope):
         """Command carrying an arbitrary payload for auto-discovery in example 04."""
@@ -155,9 +150,8 @@ class ExamplesFlextModelsEx04:
             description="Auto-discovered event identifier",
         )
         payload: Annotated[
-            str,
-            m.Field(default=..., description="Payload data for the auto command"),
-        ]
+            str, m.Field(description="Payload data for the auto command")
+        ] = ...
 
     class Ping(_CommandEnvelope):
         """Command carrying a value for the ping operation in example 04."""
@@ -169,8 +163,8 @@ class ExamplesFlextModelsEx04:
             default="ex04_ping_event", description="Ping event identifier"
         )
         value: Annotated[
-            str, m.Field(default=..., description="Value data for the ping command")
-        ]
+            str, m.Field(description="Value data for the ping command")
+        ] = ...
 
     class UnknownQuery(_QueryEnvelope):
         """Query that has no registered handler in example 04."""
@@ -183,9 +177,8 @@ class ExamplesFlextModelsEx04:
             description="Unregistered-query event identifier",
         )
         payload: Annotated[
-            str,
-            m.Field(default=..., description="Payload data for the unknown query"),
-        ]
+            str, m.Field(description="Payload data for the unknown query")
+        ] = ...
 
     class UserCreated(_EventEnvelope):
         """Event emitted after a user was created in example 04."""
@@ -197,9 +190,8 @@ class ExamplesFlextModelsEx04:
             default="users", description="User aggregate identifier"
         )
         username: Annotated[
-            str,
-            m.Field(default=..., description="Username of the user that was created"),
-        ]
+            str, m.Field(description="Username of the user that was created")
+        ] = ...
 
     class NoSubscriberEvent(_EventEnvelope):
         """Event emitted with no registered subscribers in example 04."""
@@ -210,7 +202,6 @@ class ExamplesFlextModelsEx04:
         marker: Annotated[
             str,
             m.Field(
-                default=...,
                 description="Marker identifying the event as having no subscribers",
             ),
-        ]
+        ] = ...

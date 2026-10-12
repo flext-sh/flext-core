@@ -16,15 +16,6 @@ if TYPE_CHECKING:
     from flext_tests import api, td, tf, tk, tm
 
     from flext_core import d, e, h, r, x
-    from tests import (
-        _constants,
-        _models,
-        _utilities,
-        benchmark,
-        fixtures,
-        integration,
-        unit,
-    )
     from tests.base import TestsFlextServiceBase, s
     from tests.constants import TestsFlextConstants, c
     from tests.models import TestsFlextModels, m
@@ -40,15 +31,10 @@ __all__: tuple[str, ...] = (
     "TestsFlextServiceBase",
     "TestsFlextTypes",
     "TestsFlextUtilities",
-    "_constants",
-    "_models",
-    "_utilities",
     "api",
-    "benchmark",
     "c",
     "d",
     "e",
-    "fixtures",
     "h",
     "m",
     "p",
@@ -73,17 +59,11 @@ install_lazy_exports(
         "TestsFlextServiceBase": ".base",
         "TestsFlextTypes": ".typings",
         "TestsFlextUtilities": ".utilities",
-        "_constants": "._constants",
-        "_models": "._models",
-        "_utilities": "._utilities",
         "api": "flext_tests",
-        "benchmark": ".benchmark",
         "c": ".constants",
         "d": "flext_core",
         "e": "flext_core",
-        "fixtures": ".fixtures",
         "h": "flext_core",
-        "integration": ".integration",
         "m": ".models",
         "p": ".protocols",
         "r": "flext_core",
@@ -94,7 +74,6 @@ install_lazy_exports(
         "tk": "flext_tests",
         "tm": "flext_tests",
         "u": ".utilities",
-        "unit": ".unit",
         "x": "flext_core",
     }),
     public_exports=__all__,

@@ -13,7 +13,6 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from examples import _models, _shared_parts
     from examples.constants import c
     from examples.models import ExamplesFlextModels, m
     from examples.protocols import p
@@ -26,8 +25,6 @@ if TYPE_CHECKING:
 __all__: tuple[str, ...] = (
     "ExamplesFlextModels",
     "ExamplesFlextShared",
-    "_models",
-    "_shared_parts",
     "c",
     "d",
     "e",
@@ -47,8 +44,6 @@ install_lazy_exports(
     MappingProxyType({
         "ExamplesFlextModels": ".models",
         "ExamplesFlextShared": ".shared",
-        "_models": "._models",
-        "_shared_parts": "._shared_parts",
         "c": ".constants",
         "d": "flext_core",
         "e": "flext_core",
