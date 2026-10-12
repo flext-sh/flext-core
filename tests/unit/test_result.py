@@ -227,7 +227,7 @@ class TestsFlextCoreResult:
         with pytest.raises(ValueError, match="parameterized with None"):
             # Why: r[None] raises before the value is inspected; cast keeps
             # the call statically None-typed while proving the runtime guard.
-            r[None].ok(cast("None", val=True))
+            r[None].ok(cast("None", True))
         with pytest.raises(ValueError, match="parameterized with object"):
             r[object].ok({"k": "v"})
         with pytest.raises(ValueError, match="parameterized with None"):

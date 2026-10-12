@@ -48,7 +48,6 @@ from pydantic import (
     ConfigDict,
     Discriminator,
     FailFast,
-    Field,
     GetPydanticSchema,
     JsonValue,
     PlainSerializer,
@@ -135,7 +134,7 @@ class FlextModelsPydantic:
             The resulting ``DefaultT``.
 
         """
-        field_factory: Callable[..., DefaultT] = Field
+        field_factory: Callable[..., DefaultT] = pydantic.Field
         return field_factory(
             default,
             default_factory=default_factory,
@@ -158,6 +157,16 @@ class FlextModelsPydantic:
         """
         private_attr_factory: Callable[..., PrivateT] = pydantic.PrivateAttr
         return private_attr_factory(default, default_factory=default_factory, init=init)
+
+    # Static type sees the real pydantic factories so every consumer's
+    # ``m.Field``/``m.PrivateAttr`` call resolves to a concrete type; runtime
+    # binds the FLEXT facade wrappers that preserve pydantic's behavior.
+    if TYPE_CHECKING:
+        Field = pydantic.Field
+        PrivateAttr = pydantic.PrivateAttr
+    else:
+        Field = _field
+        PrivateAttr = _private_attr
 
     class EmptyDefault[ContractT]:
         """Default factory of a collection contract's canonical empty value.
@@ -270,9 +279,6 @@ class FlextModelsPydantic:
 
         """
         return FlextModelsPydantic.EmptyDefault(contract)
-
-    Field = _field
-    PrivateAttr = _private_attr
 
     @dataclass_transform(
         kw_only_default=True,

@@ -140,12 +140,16 @@ class TestsFlextCoverageLoggings:
         try:
             _fail()
         except OSError as exc:
-            result = self.assert_captured_log_success(
-                lambda exc=exc: logger.exception(
+
+            def emit() -> p.Result[bool]:
+                return logger.exception(
                     "io operation failed",
                     exception=exc,
                     operation="file_read",
-                ),
+                )
+
+            result = self.assert_captured_log_success(
+                emit,
                 contains="io operation failed",
                 expected_tokens=("file_read",),
             )

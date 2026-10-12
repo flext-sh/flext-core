@@ -167,6 +167,7 @@ class TestsFlextLoggings:
         logger: p.Logger,
     ) -> None:
         """Test performance tracker context manager completes without error."""
+        result = 0
 
         def emit() -> p.Result[bool] | None:
             with u.PerformanceTracker(logger, "operation_under_test"):
@@ -174,7 +175,6 @@ class TestsFlextLoggings:
                 result = 1 + 1
             return None
 
-        result = 0
         _ = self._assert_log_output(emit, contains="operation_under_test success")
         tm.that(result, eq=2)
 
@@ -219,8 +219,12 @@ class TestsFlextLoggings:
     def test_log_method_accepts_level_as_first_argument(self, logger: p.Logger) -> None:
         """Test log method accepts level as first argument."""
         for level, expect_output in LOG_LEVELS[:-1]:
+
+            def emit(level: str = level) -> p.Result[bool]:
+                return logger.log(level, "test %s message", level)
+
             result = self._assert_log_output(
-                lambda level=level: logger.log(level, "test %s message", level),
+                emit,
                 contains="test %s message",
                 expect_output=expect_output,
             )

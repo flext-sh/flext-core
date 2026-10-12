@@ -423,10 +423,6 @@ class TestsFlextUtilities(FlextTestsUtilities):
             )
 
     class Tests(
-        TestsFlextBeartypeEngine,
-        TestsFlextDecoratorsLegacy,
-        TestsFlextFlextHandlers,
-        TestsFlextResultExceptionCarrying,
         TestsFlextUtilitiesCaseFactoriesMixin,
         TestsFlextUtilitiesCaseGeneratorsMixin,
         TestsFlextUtilitiesCaseServiceFactoriesMixin,
@@ -449,6 +445,10 @@ class TestsFlextUtilities(FlextTestsUtilities):
         TestsFlextUtilitiesValidationPatternScenarios,
         TestsFlextUtilitiesValidationStringScenarios,
         TestsFlextUtilitiesValidationUriScenarios,
+        TestsFlextBeartypeEngine,
+        TestsFlextDecoratorsLegacy,
+        TestsFlextFlextHandlers,
+        TestsFlextResultExceptionCarrying,
     ):
         """flext-core test utilities namespace."""
 

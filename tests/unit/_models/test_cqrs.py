@@ -167,7 +167,7 @@ class TestsFlextCoreCqrs:
     @staticmethod
     def test_query_coerces_pagination_mapping_into_model() -> None:
         # Act
-        query = m.Query(pagination={"page": 2, "size": 5})
+        query = m.Query.model_validate({"pagination": {"page": 2, "size": 5}})
 
         # Assert
         assert query.pagination.page == 2
@@ -183,7 +183,7 @@ class TestsFlextCoreCqrs:
         invalid_pagination: t.MappingKV[str, t.Scalar],
     ) -> None:
         # Act
-        query = m.Query(pagination=invalid_pagination)
+        query = m.Query.model_validate({"pagination": invalid_pagination})
 
         # Assert
         assert query.pagination.page == 1

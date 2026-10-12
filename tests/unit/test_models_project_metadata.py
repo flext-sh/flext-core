@@ -111,7 +111,7 @@ class TestsFlextModelsProjectMetadata:
         metadata = self._metadata(tmp_path)
 
         with pytest.raises(c.ValidationError):
-            metadata.package_name = "other"
+            setattr(metadata, "package_name", "other")
 
     @staticmethod
     def test_project_metadata_rejects_unknown_fields(tmp_path: Path) -> None:

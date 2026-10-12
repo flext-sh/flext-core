@@ -96,7 +96,7 @@ class TestsFlextFacadeFlatSsotAccess:
         metadata = self._metadata(tmp_path)
 
         with pytest.raises(m.ValidationError):
-            metadata.package_name = "other"
+            setattr(metadata, "package_name", "other")
 
     @staticmethod
     def test_project_metadata_rejects_unknown_field(tmp_path: Path) -> None:

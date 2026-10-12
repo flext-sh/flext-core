@@ -38,7 +38,16 @@ from __future__ import annotations
 
 import threading
 from types import NoneType, UnionType
-from typing import Any, ClassVar, Self, Unpack, get_args, get_origin, is_protocol, override
+from typing import (
+    Any,
+    ClassVar,
+    Self,
+    Unpack,
+    get_args,
+    get_origin,
+    is_protocol,
+    override,
+)
 
 from flext_core import c, m, p, t, x
 

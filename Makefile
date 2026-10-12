@@ -477,19 +477,7 @@ SETUP_ENVIRONMENT_RECIPE = set -eu; \
 		mise -C "$(PROJECT_ROOT)/$$member" config ls --json; \
 	done; \
 	$$credential_env $(UV) sync --project "$(UV_PROJECT)" --python "$$desired_python" $(UV_SYNC_FLAGS) --frozen --link-mode "$(UV_LINK_MODE)"; \
-	if [ "$(strip $(CI))" != "Y" ]; then \
-		set -- --editable "$(PROJECT_ROOT)"; \
-		for member in; do \
-			if [ ! -f "$(PROJECT_ROOT)/$$member/pyproject.toml" ]; then \
-				printf 'ERROR[setup] declared member metadata is missing: %s\n' "$(PROJECT_ROOT)/$$member/pyproject.toml" >&2; exit 2; \
-			fi; \
-			set -- "$$@" --editable "$(PROJECT_ROOT)/$$member"; \
-		done; \
-		if [ "$$\#" -gt 0 ]; then \
-			$(UV) pip install --python "$(RUNTIME_PYTHON)" --no-deps --link-mode "$(UV_LINK_MODE)" "$$@"; \
-		fi; \
-		$(UV) pip check --python "$(RUNTIME_PYTHON)"; \
-	fi; \
+	$(UV) pip check --python "$(RUNTIME_PYTHON)"; \
 	$(PROJECT_FLEXT_INFRA) workspace verify-environment --repository-root "$(RUNTIME_ROOT)"; \
 	$(PROJECT_FLEXT_INFRA) codegen mise-artifacts --repository-root "$(PROJECT_ROOT)" --config-only; \
 	for member in $(WORKSPACE_SUBPROJECTS); do \
@@ -1847,7 +1835,6 @@ _upg_converge:
 	@$(UV) lock --project "$(PROJECT_ROOT)"
 	@$(UV) lock --check --project "$(PROJECT_ROOT)"
 	@$(SELF_MAKE) _builtin_setup_environment
-	@mise -C "$(PROJECT_ROOT)" lock --bump
 	@mise -C "$(PROJECT_ROOT)" install --locked --yes "python" "github:jdx/mise" "uv" "direnv" "taplo" "aqua:ast-grep/ast-grep" "gitleaks" "aqua:boyter/scc" "node" "github:qltysh/qlty" "github:kucherenko/jscpd" "github:microsoft/waza"
 	@$(SELF_MAKE) _builtin_require_mise
 	$(call RUN_PUBLIC_ACTIVATE,gen)
