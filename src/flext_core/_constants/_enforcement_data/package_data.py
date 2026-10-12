@@ -24,16 +24,12 @@ from typing import ClassVar
 
 from pydantic import BaseModel
 
-from flext_core._constants._enforcement_data.flextpredicaterule import (
+from flext_core._constants._enforcement_data import (
     FlextPredicateRule,
-)
-from flext_core._constants._enforcement_data.flextsmellthresholds import (
     FlextSmellThresholds,
 )
-from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_04 import (
-    FlextConstantsEnforcementRules,
-)
-from flext_core._typings.base import FlextTypingBase
+from flext_core._constants._enforcement_parts import FlextConstantsEnforcementRules
+from flext_core._typings import FlextTypingBase
 
 
 class FlextConstantsEnforcementData(BaseModel):
