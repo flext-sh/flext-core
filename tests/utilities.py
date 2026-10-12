@@ -15,6 +15,10 @@ from typing import Annotated, ClassVar, override
 
 from flext_tests import FlextTestsUtilities
 
+import tests._utilities.beartype_engine
+import tests._utilities.decorators
+import tests._utilities.handlers
+import tests._utilities.result_exception_carrying
 from tests import c, h, m, p, r, t
 from tests._utilities import (
     TestsFlextUtilitiesCaseFactoriesMixin,
@@ -53,10 +57,6 @@ from tests._utilities.validation_string import (
     TestsFlextUtilitiesValidationStringScenarios,
 )
 from tests._utilities.validation_uri import TestsFlextUtilitiesValidationUriScenarios
-from tests._utilities.beartype_engine import TestsFlextBeartypeEngine
-from tests._utilities.decorators import TestsFlextDecoratorsLegacy
-from tests._utilities.handlers import TestsFlextFlextHandlers
-from tests._utilities.result_exception_carrying import TestsFlextResultExceptionCarrying
 
 
 class TestsFlextUtilities(FlextTestsUtilities):
@@ -427,10 +427,10 @@ class TestsFlextUtilities(FlextTestsUtilities):
             )
 
     class Tests(
-        TestsFlextResultExceptionCarrying,
-        TestsFlextFlextHandlers,
-        TestsFlextDecoratorsLegacy,
-        TestsFlextBeartypeEngine,
+        tests._utilities.result_exception_carrying.TestsFlextResultExceptionCarrying,
+        tests._utilities.handlers.TestsFlextFlextHandlers,
+        tests._utilities.decorators.TestsFlextDecoratorsLegacy,
+        tests._utilities.beartype_engine.TestsFlextBeartypeEngine,
         TestsFlextUtilitiesCaseFactoriesMixin,
         TestsFlextUtilitiesCaseGeneratorsMixin,
         TestsFlextUtilitiesCaseServiceFactoriesMixin,
