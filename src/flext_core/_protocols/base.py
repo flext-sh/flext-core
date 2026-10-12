@@ -31,6 +31,7 @@ if TYPE_CHECKING:
 class FlextProtocolsBase:
     """Hierarchical protocol namespace organized by Interface Segregation Principle."""
 
+    @runtime_checkable
     class FieldSerializerFactory(Protocol):
         """Native Pydantic field serializer overloads, including callback bounds."""
 
@@ -58,6 +59,7 @@ class FlextProtocolsBase:
             check_fields: bool | None = ...,
         ) -> Callable[[SerializerT], SerializerT]: ...
 
+    @runtime_checkable
     class ModelSerializerFactory(Protocol):
         """Native Pydantic bare, plain and wrap model serializer overloads."""
 
@@ -84,6 +86,7 @@ class FlextProtocolsBase:
             return_type: TypeForm[ReturnT] = ...,
         ) -> Callable[[SerializerT], SerializerT]: ...
 
+    @runtime_checkable
     class ComputedFieldFactory(Protocol):
         """Native Pydantic computed-field overloads and keyword contracts."""
 

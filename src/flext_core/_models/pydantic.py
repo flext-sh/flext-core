@@ -112,6 +112,7 @@ class FlextModelsPydantic:
         RootModel: Container model for single validated values/collections
     """
 
+    @staticmethod
     def _field[DefaultT](
         default: DefaultT | PydanticUndefinedType | EllipsisType = PydanticUndefined,
         *,
@@ -142,6 +143,7 @@ class FlextModelsPydantic:
             **kwargs,
         )
 
+    @staticmethod
     def _private_attr[PrivateT](
         default: PrivateT | PydanticUndefinedType = PydanticUndefined,
         *,
@@ -269,8 +271,8 @@ class FlextModelsPydantic:
         """
         return FlextModelsPydantic.EmptyDefault(contract)
 
-    Field = staticmethod(_field)
-    PrivateAttr = staticmethod(_private_attr)
+    Field = _field
+    PrivateAttr = _private_attr
 
     @dataclass_transform(
         kw_only_default=True,

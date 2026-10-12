@@ -360,7 +360,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
                 operation=DecoratorOperationType.RAILWAY_EXCEPTION,
             ),
         ]
-        RETRY_SCENARIOS: ClassVar[Sequence[DecoratorTestCase]] = [
+        DECORATOR_RETRY_SCENARIOS: ClassVar[Sequence[DecoratorTestCase]] = [
             DecoratorTestCase(
                 name="retry_success_first_attempt",
                 operation=DecoratorOperationType.RETRY_SUCCESS_FIRST,
