@@ -117,8 +117,9 @@ class TestsFlextCoreEnforcementReports:
         violation = _hard_violation()
 
         # Pydantic's frozen ValidationError subclasses ValueError.
+        field_name = "qualname"
         with pytest.raises(m.ValidationError):
-            setattr(violation, "qualname", "other")
+            setattr(violation, field_name, "other")
 
     @staticmethod
     def test_violation_model_dump_exposes_public_fields() -> None:

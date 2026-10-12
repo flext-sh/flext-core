@@ -54,7 +54,7 @@ class FlextMixins(m.ArbitraryTypesModel):
         description="Initial context for the service scope.",
     )
 
-    _runtime: m.ServiceRuntime | None = u.PrivateAttr(default=None)
+    _runtime: m.ServiceRuntime | None = u.PrivateAttr(None)
 
     _operation_stats: MutableMapping[str, m.ConfigMap] = u.PrivateAttr(
         default_factory=u.empty(TypeForm(MutableMapping[str, m.ConfigMap])),

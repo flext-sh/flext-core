@@ -14,11 +14,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable
 from functools import partialmethod
-from pathlib import Path
-from re import Pattern
-from types import EllipsisType
 from typing import (
     TYPE_CHECKING,
     Annotated,
@@ -49,7 +46,6 @@ from pydantic import (
     Discriminator,
     FailFast,
     GetPydanticSchema,
-    JsonValue,
     PlainSerializer,
     PlainValidator,
     SerializeAsAny,
@@ -68,13 +64,11 @@ from pydantic_settings import (
 )
 from typing_extensions import TypeForm
 
-from flext_core._protocols import FlextProtocolsBase
+from flext_core._protocols import FlextProtocolsBase, FlextProtocolsPydantic
 
 # Preserve the imported config type before declaring its facade mirror.
 _PydanticConfigDict = ConfigDict
 
-type _FieldValue = JsonValue | Path
-type _FieldSchemaExtra = Mapping[str, _FieldValue | Sequence[_FieldValue]]
 # Contract for the class-member shapes ``field_validator`` decorates: the
 # function shapes and the ``classmethod``/``staticmethod``/``partialmethod``
 # descriptors pydantic auto-wraps. Mirrors pydantic's validator-callable union
@@ -84,19 +78,6 @@ type _FieldValidatorCallable = (
     | classmethod[type, ..., FlextProtocolsBase.AttributeProbe]
     | staticmethod[..., FlextProtocolsBase.AttributeProbe]
     | partialmethod[Callable[..., FlextProtocolsBase.AttributeProbe]]
-)
-type _FieldKeywordValue[DefaultT] = (
-    _FieldValue
-    | _FieldSchemaExtra
-    | PydanticUndefinedType
-    | pydantic.fields.FieldInfo
-    | AliasChoices
-    | AliasPath
-    | Discriminator
-    | Pattern[str]
-    | Callable[..., DefaultT]
-    | Callable[..., _FieldValue | None]
-    | type[DefaultT]
 )
 
 
@@ -111,62 +92,14 @@ class FlextModelsPydantic:
         RootModel: Container model for single validated values/collections
     """
 
-    @staticmethod
-    def _field[DefaultT](
-        default: DefaultT | PydanticUndefinedType | EllipsisType = PydanticUndefined,
-        *,
-        default_factory: Callable[[], DefaultT]
-        | Callable[
-            [FlextTypingBase.MappingKV[str, FlextProtocolsBase.AttributeProbe]],
-            DefaultT,
-        ]
-        | PydanticUndefinedType
-        | None = PydanticUndefined,
-        alias: str | PydanticUndefinedType | None = PydanticUndefined,
-        **kwargs: _FieldKeywordValue[DefaultT] | None,
-    ) -> DefaultT:
-        """Delegate field metadata with native omission and explicit clearing.
-
-        Explicit specifier parameters expose factories and constructor aliases
-        to ``dataclass_transform`` without interpreting metadata a second time.
-
-        Returns:
-            The resulting ``DefaultT``.
-
-        """
-        field_factory: Callable[..., DefaultT] = pydantic.Field
-        return field_factory(
-            default,
-            default_factory=default_factory,
-            alias=alias,
-            **kwargs,
-        )
-
-    @staticmethod
-    def _private_attr[PrivateT](
-        default: PrivateT | PydanticUndefinedType = PydanticUndefined,
-        *,
-        default_factory: Callable[..., PrivateT] | None = None,
-        init: Literal[False] = False,
-    ) -> PrivateT:
-        """Typed FLEXT facade for ``pydantic.PrivateAttr``.
-
-        Returns:
-            The resulting ``PrivateT``.
-
-        """
-        private_attr_factory: Callable[..., PrivateT] = pydantic.PrivateAttr
-        return private_attr_factory(default, default_factory=default_factory, init=init)
-
-    # Static type sees the real pydantic factories so every consumer's
-    # ``m.Field``/``m.PrivateAttr`` call resolves to a concrete type; runtime
-    # binds the FLEXT facade wrappers that preserve pydantic's behavior.
+    # Static type resolves the polymorphic factory contract (protocols layer);
+    # runtime binds the native pydantic functions byte-for-byte.
     if TYPE_CHECKING:
-        Field = pydantic.Field
-        PrivateAttr = pydantic.PrivateAttr
+        Field: ClassVar[FlextProtocolsPydantic.FieldFactory]
+        PrivateAttr: ClassVar[FlextProtocolsPydantic.PrivateAttrFactory]
     else:
-        Field = _field
-        PrivateAttr = _private_attr
+        Field = staticmethod(pydantic.Field)
+        PrivateAttr = staticmethod(pydantic.PrivateAttr)
 
     class EmptyDefault[ContractT]:
         """Default factory of a collection contract's canonical empty value.
@@ -283,10 +216,8 @@ class FlextModelsPydantic:
     @dataclass_transform(
         kw_only_default=True,
         field_specifiers=(
-            _field,
             pydantic.Field,
             pydantic.PrivateAttr,
-            _private_attr,
         ),
     )
     class BaseModel(pydantic.BaseModel):
@@ -298,10 +229,8 @@ class FlextModelsPydantic:
     @dataclass_transform(
         kw_only_default=True,
         field_specifiers=(
-            _field,
             pydantic.Field,
             pydantic.PrivateAttr,
-            _private_attr,
         ),
     )
     class RootModel[RootValueT](pydantic.RootModel[RootValueT]):
