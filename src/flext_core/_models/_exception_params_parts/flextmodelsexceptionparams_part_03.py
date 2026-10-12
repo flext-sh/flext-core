@@ -13,7 +13,7 @@ from __future__ import annotations
 from typing import Annotated
 
 from flext_core import t
-from flext_core._models import FlextModelsPydantic as mp
+from flext_core._models import FlextModelsPydantic
 from flext_core._models._exception_params_parts import (
     flextmodelsexceptionparams_part_01,
     flextmodelsexceptionparams_part_02,
@@ -30,11 +30,15 @@ class FlextModelsExceptionParams(
 
         operation: Annotated[
             str | None,
-            mp.Field(description="Operation name associated with the failure."),
+            FlextModelsPydantic.Field(
+                description="Operation name associated with the failure."
+            ),
         ] = None
         reason: Annotated[
             str | None,
-            mp.Field(description="Short reason explaining the operation failure."),
+            FlextModelsPydantic.Field(
+                description="Short reason explaining the operation failure."
+            ),
         ] = None
 
     class ServiceLookupParams(
@@ -44,7 +48,7 @@ class FlextModelsExceptionParams(
 
         service_name: Annotated[
             str | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description="Service identifier requested from the container/registry.",
                 title="Service Name",
@@ -59,7 +63,7 @@ class FlextModelsExceptionParams(
 
         category: Annotated[
             str | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description="Registry category for plugin registration.",
                 title="Category",
@@ -68,7 +72,7 @@ class FlextModelsExceptionParams(
         ] = None
         name: Annotated[
             str | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description="Plugin name within a category.",
                 title="Plugin Name",
@@ -77,7 +81,7 @@ class FlextModelsExceptionParams(
         ] = None
         scope: Annotated[
             str | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description="Registration scope used by registry operations.",
                 title="Scope",
@@ -92,7 +96,7 @@ class FlextModelsExceptionParams(
 
         attribute_name: Annotated[
             str | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description="Attribute name that could not be accessed safely.",
                 title="Attribute Name",
@@ -101,7 +105,7 @@ class FlextModelsExceptionParams(
         ] = None
         attribute_context: Annotated[
             t.RuntimeData | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description=(
                     "Context payload describing the state during access failure."

@@ -14,75 +14,55 @@ from importlib.util import resolve_name
 from types import ModuleType
 from typing import TYPE_CHECKING
 
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-    PrivateAttr,
-    RootModel,
-    ValidationError,
-    computed_field,
-)
-
 if TYPE_CHECKING:
     from types import FrameType
 
 
-class FlextLazyPart01(BaseModel):
-    """Canonical lazy API as a container with runtime reuse caches."""
+class FlextLazyPart01:
+    """Canonical lazy API as a container with runtime reuse caches.
 
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    This bootstrap loader sits below the generated typing and model packages it
+    installs, so it cannot import their facade: it is a behavior container, not
+    a validated data contract, and stays a plain class exactly like its
+    ``FlextLazyMember``/``FlextLazyAttribute`` siblings.
+    """
+
+    __slots__ = (
+        "_activating_core_beartype",
+        "_import_module",
+        "child_lazy_cache",
+        "child_merge_cache",
+        "install_cache",
+        "module_cache",
+        "normalized_map_cache",
+    )
 
     err_relative_path_requires_module: str = (
         "relative lazy-import paths require a parent module name"
     )
 
-    # The loader precedes the generated typing and model packages it installs.
-    # Its runtime contracts therefore use their exact native shapes.
-    # This bootstrap layer sits below the models facade (``u.empty``), so each
-    # cache defaults through its own specialized ``dict``: typed for every
-    # checker, and the same empty ``dict`` pydantic validates for the contract.
-    module_cache: dict[str, ModuleType] = Field(
-        default_factory=dict[str, ModuleType],
-    )
-
-    child_lazy_cache: dict[str, dict[str, str | tuple[str, str]]] = Field(
-        default_factory=dict[str, dict[str, str | tuple[str, str]]],
-    )
-
-    child_merge_cache: dict[tuple[str, ...], dict[str, str | tuple[str, str]]] = Field(
-        default_factory=dict[tuple[str, ...], dict[str, str | tuple[str, str]]],
-    )
-
-    # The entry keeps its source map alive: an ``id()`` key alone is reused once a
-    # transient map is freed, and would serve another map's normalization.
-    normalized_map_cache: dict[
-        tuple[str, int],
-        tuple[
-            Mapping[str, str | tuple[str, str]] | None,
+    def __init__(self) -> None:
+        """Initialize the empty reuse caches and the default module importer."""
+        self.module_cache: dict[str, ModuleType] = {}
+        self.child_lazy_cache: dict[str, dict[str, str | tuple[str, str]]] = {}
+        self.child_merge_cache: dict[
+            tuple[str, ...],
             dict[str, str | tuple[str, str]],
-        ],
-    ] = Field(
-        default_factory=dict[
+        ] = {}
+        # The entry keeps its source map alive: an ``id()`` key alone is reused
+        # once a transient map is freed, and would serve another map's
+        # normalization.
+        self.normalized_map_cache: dict[
             tuple[str, int],
             tuple[
                 Mapping[str, str | tuple[str, str]] | None,
                 dict[str, str | tuple[str, str]],
             ],
-        ],
-    )
+        ] = {}
+        self.install_cache: dict[str, tuple[int, int, int, bool]] = {}
+        self._import_module: Callable[[str], ModuleType] = importlib.import_module
+        self._activating_core_beartype = False
 
-    install_cache: dict[str, tuple[int, int, int, bool]] = Field(
-        default_factory=dict[str, tuple[int, int, int, bool]],
-    )
-
-    _import_module: Callable[[str], ModuleType] = PrivateAttr(
-        default_factory=lambda: importlib.import_module,
-    )
-
-    _activating_core_beartype: bool = PrivateAttr(default=False)
-
-    @computed_field
     @property
     def cache_stats(self) -> Mapping[str, int]:
         """Expose cache sizes for diagnostics/observability."""
@@ -111,16 +91,8 @@ class FlextLazyPart01(BaseModel):
         if cached is not None and cached[0] is raw:
             return cached[1]
 
-        try:
-            validated = (
-                RootModel[dict[str, str | tuple[str, str]]].model_validate(raw).root
-            )
-        except ValidationError as exc:
-            msg = f"module {module_path!r} has no valid _LAZY_IMPORTS mapping"
-            raise TypeError(msg) from exc
-
         out: dict[str, str | tuple[str, str]] = {}
-        for name, entry in validated.items():
+        for name, entry in self._validated_map(module_path, raw).items():
             if isinstance(entry, str):
                 out[name] = self._child_path(entry, module_path)
                 continue
@@ -130,6 +102,40 @@ class FlextLazyPart01(BaseModel):
 
         self.normalized_map_cache[cache_key] = (raw, out)
         return out
+
+    @staticmethod
+    def _validated_map(
+        module_path: str,
+        raw: Mapping[str, str | tuple[str, str]] | None,
+    ) -> dict[str, str | tuple[str, str]]:
+        """Validate one raw ``_LAZY_IMPORTS`` mapping into its exact contract.
+
+        Returns:
+            The mapping whose names and entries match the declared shape.
+
+        Raises:
+            TypeError: If the mapping or one of its entries is not valid.
+
+        """
+        msg = f"module {module_path!r} has no valid _LAZY_IMPORTS mapping"
+        if not isinstance(raw, Mapping):
+            raise TypeError(msg)
+        validated: dict[str, str | tuple[str, str]] = {}
+        for name, entry in raw.items():
+            if not isinstance(name, str):
+                raise TypeError(msg)
+            if isinstance(entry, str):
+                validated[name] = entry
+                continue
+            if (
+                isinstance(entry, (tuple, list))
+                and len(entry) == 2
+                and all(isinstance(part, str) for part in entry)
+            ):
+                validated[name] = (entry[0], entry[1])
+                continue
+            raise TypeError(msg)
+        return validated
 
     @staticmethod
     def _must_activate_core_beartype(module_path: str) -> bool:

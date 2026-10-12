@@ -13,7 +13,7 @@ from __future__ import annotations
 from typing import Annotated
 
 from flext_core import t
-from flext_core._models import FlextModelsPydantic as mp
+from flext_core._models import FlextModelsPydantic
 from flext_core._models._exception_params_parts import (
     flextmodelsexceptionparams_part_01,
 )
@@ -29,7 +29,7 @@ class FlextModelsExceptionParams(
 
         timeout_seconds: Annotated[
             t.Numeric | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description=(
                     "Timeout duration in seconds that triggered this exception."
@@ -40,7 +40,7 @@ class FlextModelsExceptionParams(
         ] = None
         operation: Annotated[
             str | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description="Operation name that exceeded the configured timeout.",
                 title="Operation",
@@ -55,13 +55,13 @@ class FlextModelsExceptionParams(
 
         auth_method: Annotated[
             str | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 description="Authentication method used when the failure occurred.",
             ),
         ] = None
         user_id: Annotated[
             str | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 description=(
                     "User identifier associated with the authentication attempt."
                 ),
@@ -75,7 +75,7 @@ class FlextModelsExceptionParams(
 
         user_id: Annotated[
             str | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description="User identifier denied access to a protected resource.",
                 title="User ID",
@@ -84,7 +84,7 @@ class FlextModelsExceptionParams(
         ] = None
         resource: Annotated[
             str | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description=(
                     "Protected resource that triggered the authorization failure."
@@ -95,7 +95,7 @@ class FlextModelsExceptionParams(
         ] = None
         permission: Annotated[
             str | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description=(
                     "Missing permission required to complete the requested action."
@@ -117,7 +117,7 @@ class FlextModelsExceptionParams(
 
         conflict_reason: Annotated[
             str | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description="Human-readable explanation for why the conflict occurred.",
                 title="Conflict Reason",
@@ -132,7 +132,7 @@ class FlextModelsExceptionParams(
 
         limit: Annotated[
             int | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description=(
                     "Maximum request count allowed within the configured window."
@@ -143,7 +143,7 @@ class FlextModelsExceptionParams(
         ] = None
         window_seconds: Annotated[
             int | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description="Duration, in seconds, of the rate-limit window.",
                 title="Window Seconds",
@@ -152,7 +152,7 @@ class FlextModelsExceptionParams(
         ] = None
         retry_after: Annotated[
             t.Numeric | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description="Time in seconds clients should wait before retrying.",
                 title="Retry After",
@@ -167,14 +167,14 @@ class FlextModelsExceptionParams(
 
         service_name: Annotated[
             str | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description="External service monitored by the circuit breaker.",
             ),
         ] = None
         failure_count: Annotated[
             int | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description=(
                     "Consecutive failure count at the moment the breaker opened."
@@ -183,7 +183,7 @@ class FlextModelsExceptionParams(
         ] = None
         reset_timeout: Annotated[
             t.Numeric | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description="Seconds before allowing a circuit breaker reset attempt.",
             ),

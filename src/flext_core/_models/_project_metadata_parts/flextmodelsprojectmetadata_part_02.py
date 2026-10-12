@@ -13,20 +13,26 @@ from pydantic import AliasChoices, Field, field_validator, model_validator
 
 from flext_core import c
 from flext_core._models._project_metadata_parts import (
-    flextmodelsprojectmetadata_part_01 as part_01,
-    flextmodelsprojectmetadata_part_05 as part_05,
+    flextmodelsprojectmetadata_part_01,
+    flextmodelsprojectmetadata_part_05,
 )
 from flext_core._typings import FlextTypingBase
 
-FlextModelsProjectMetadataContract = part_01.FlextModelsProjectMetadataContract
+FlextModelsProjectMetadataContract = (
+    flextmodelsprojectmetadata_part_01.FlextModelsProjectMetadataContract
+)
 
-FlextModelsPyprojectIngressContract = part_05.FlextModelsPyprojectIngressContract
+FlextModelsPyprojectIngressContract = (
+    flextmodelsprojectmetadata_part_05.FlextModelsPyprojectIngressContract
+)
 
 
 class FlextModelsProjectMetadataFields:
     """Leaf field contracts shared by the aggregate model layers."""
 
-    class ProjectAuthor(part_05.FlextModelsPyprojectIngressContract):
+    class ProjectAuthor(
+        flextmodelsprojectmetadata_part_05.FlextModelsPyprojectIngressContract
+    ):
         """One PEP 621 project author."""
 
         name: Annotated[str, Field(default="", description="Author display name")] = ""
@@ -34,7 +40,9 @@ class FlextModelsProjectMetadataFields:
             ""
         )
 
-    class ProjectUrls(part_05.FlextModelsPyprojectIngressContract):
+    class ProjectUrls(
+        flextmodelsprojectmetadata_part_05.FlextModelsPyprojectIngressContract
+    ):
         """Canonical project URL fields from the PEP 621 URL table."""
 
         homepage: Annotated[
@@ -62,7 +70,9 @@ class FlextModelsProjectMetadataFields:
             ),
         ] = ""
 
-    class ProjectToolFlextProject(part_01.FlextModelsProjectMetadataContract):
+    class ProjectToolFlextProject(
+        flextmodelsprojectmetadata_part_01.FlextModelsProjectMetadataContract
+    ):
         """``[tool.flext.project]`` contract."""
 
         class_stem_override: Annotated[
@@ -96,7 +106,9 @@ class FlextModelsProjectMetadataFields:
             ),
         ] = None
 
-    class ProjectToolFlextReadmeSection(part_01.FlextModelsProjectMetadataContract):
+    class ProjectToolFlextReadmeSection(
+        flextmodelsprojectmetadata_part_01.FlextModelsProjectMetadataContract
+    ):
         """One ordered project README section declaration."""
 
         id: Annotated[
@@ -175,7 +187,9 @@ class FlextModelsProjectMetadataFields:
                 raise ValueError(msg)
             return self
 
-    class ProjectToolFlextDocs(part_01.FlextModelsProjectMetadataContract):
+    class ProjectToolFlextDocs(
+        flextmodelsprojectmetadata_part_01.FlextModelsProjectMetadataContract
+    ):
         """``[tool.flext.docs]`` contract."""
 
         package_name: Annotated[
@@ -207,7 +221,9 @@ class FlextModelsProjectMetadataFields:
                 raise ValueError(msg)
             return self
 
-    class ProjectToolFlextWorkspace(part_01.FlextModelsProjectMetadataContract):
+    class ProjectToolFlextWorkspace(
+        flextmodelsprojectmetadata_part_01.FlextModelsProjectMetadataContract
+    ):
         """``[tool.flext.workspace]`` contract."""
 
         attached: Annotated[
@@ -215,7 +231,9 @@ class FlextModelsProjectMetadataFields:
             Field(default=False, description="Attach project to its parent workspace"),
         ] = False
 
-    class ProjectToolFlextNamespace(part_01.FlextModelsProjectMetadataContract):
+    class ProjectToolFlextNamespace(
+        flextmodelsprojectmetadata_part_01.FlextModelsProjectMetadataContract
+    ):
         """``[tool.flext.namespace]`` contract."""
 
         enabled: Annotated[
