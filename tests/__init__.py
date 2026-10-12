@@ -50,7 +50,6 @@ __all__: tuple[str, ...] = (
     "e",
     "fixtures",
     "h",
-    "integration",
     "m",
     "p",
     "r",
@@ -61,7 +60,6 @@ __all__: tuple[str, ...] = (
     "tk",
     "tm",
     "u",
-    "unit",
     "x",
 )
 
