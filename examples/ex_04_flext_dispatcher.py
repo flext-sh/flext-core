@@ -70,8 +70,9 @@ class _AutoFallbackHandler:
         return r[str].ok("auto:fallback")
 
 
-class _EventSubscriber:
+class _UserCreatedSubscriber:
     message_type = m.Examples.UserCreated
+    _prefix: str = ""
 
     def __init__(self) -> None:
         self.events: list[str] = []
@@ -82,24 +83,16 @@ class _EventSubscriber:
     ) -> t.JsonPayload | p.ResultView[t.JsonPayload] | None:
         if not isinstance(message, m.Examples.UserCreated):
             return r[bool].fail("unexpected_message")
-        self.events.append(message.username)
+        self.events.append(f"{self._prefix}{message.username}")
         return r[bool].ok(value=True)
 
 
-class _AuditSubscriber:
-    message_type = m.Examples.UserCreated
+class _EventSubscriber(_UserCreatedSubscriber):
+    pass
 
-    def __init__(self) -> None:
-        self.events: list[str] = []
 
-    def handle(
-        self,
-        message: p.Routable,
-    ) -> t.JsonPayload | p.ResultView[t.JsonPayload] | None:
-        if not isinstance(message, m.Examples.UserCreated):
-            return r[bool].fail("unexpected_message")
-        self.events.append(f"audit:{message.username}")
-        return r[bool].ok(value=True)
+class _AuditSubscriber(_UserCreatedSubscriber):
+    _prefix = "audit:"
 
 
 class _PingHandler:

@@ -10,7 +10,7 @@ from typing import cast
 
 import pytest
 
-from tests import c, h, r, t, u
+from tests import c, h, m, r, t, u
 
 
 class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
@@ -200,10 +200,15 @@ class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
         # Assert
         u.Tests.assert_failure(result, expected_error=c.Tests.UNEXPECTED_MESSAGE_TYPE)
 
-    def test_dispatch_message_runs_pipeline_to_success(self) -> None:
-        # Arrange
-        """Test dispatch message runs pipeline to success."""
-        settings = u.Tests.create_handler_config(
+    @staticmethod
+    def _dispatch_settings() -> m.Handler:
+        """Build the command-dispatch handler configuration for dispatch tests.
+
+        Returns:
+            The configured ``m.Handler`` settings.
+
+        """
+        return u.Tests.create_handler_config(
             "test_dispatch",
             "Test Dispatch",
             u.Tests.FlextTestsHandlerConfigParams(
@@ -211,7 +216,11 @@ class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
                 handler_mode=c.HandlerType.COMMAND,
             ),
         )
-        handler = self.ConcreteTestHandler(settings=settings)
+
+    def test_dispatch_message_runs_pipeline_to_success(self) -> None:
+        # Arrange
+        """Test dispatch message runs pipeline to success."""
+        handler = self.ConcreteTestHandler(settings=self._dispatch_settings())
 
         # Act
         result = handler.dispatch_message("payload")
@@ -222,15 +231,7 @@ class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
     def test_dispatch_message_rejects_incompatible_operation(self) -> None:
         # Arrange
         """Test dispatch message rejects incompatible operation."""
-        settings = u.Tests.create_handler_config(
-            "test_dispatch",
-            "Test Dispatch",
-            u.Tests.FlextTestsHandlerConfigParams(
-                handler_type=c.HandlerType.COMMAND,
-                handler_mode=c.HandlerType.COMMAND,
-            ),
-        )
-        handler = self.ConcreteTestHandler(settings=settings)
+        handler = self.ConcreteTestHandler(settings=self._dispatch_settings())
 
         # Act
         result = handler.dispatch_message("payload", operation=c.HandlerMode.QUERY)

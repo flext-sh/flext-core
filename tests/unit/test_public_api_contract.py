@@ -178,8 +178,8 @@ class TestsFlextCorePublicApiContract:
     def test_map_transforms_success_and_passes_failure_through() -> None:
         """``map`` applies to a success value and short-circuits on failure."""
         # Arrange / Act
-        mapped = r.ok(3).map(lambda v: v * 2)
-        passthrough = r.fail("boom").map(lambda v: v * 2)
+        mapped: p.Result[int] = r.ok(3).map(lambda v: v * 2)
+        passthrough: p.Result[int] = r.fail("boom").map(lambda v: v * 2)
         # Assert
         assert mapped.value == 6
         assert passthrough.failure is True
@@ -189,7 +189,7 @@ class TestsFlextCorePublicApiContract:
     def test_map_is_chainable_and_composes() -> None:
         """Chained ``map`` calls compose left-to-right over a success value."""
         # Arrange / Act
-        result = r.ok(2).map(lambda v: v + 1).map(lambda v: v * 10)
+        result: p.Result[int] = r.ok(2).map(lambda v: v + 1).map(lambda v: v * 10)
         # Assert
         assert result.unwrap() == 30
 
@@ -208,7 +208,7 @@ class TestsFlextCorePublicApiContract:
     def test_recover_converts_failure_into_success() -> None:
         """``recover`` maps a failure's error into a recovered success value."""
         # Arrange / Act
-        recovered = r.fail("boom").recover(lambda _err: 7)
+        recovered: p.Result[int] = r.fail("boom").recover(lambda _err: 7)
         # Assert
         assert recovered.value == 7
 
@@ -218,7 +218,7 @@ class TestsFlextCorePublicApiContract:
         # Arrange
         seen: list[int] = []
         # Act
-        result = r.ok(9).tap(seen.append)
+        result: p.Result[int] = r.ok(9).tap(seen.append)
         # Assert
         assert seen == [9]
         assert result.value == 9
@@ -238,8 +238,8 @@ class TestsFlextCorePublicApiContract:
     def test_result_repr_reflects_success_and_failure_state() -> None:
         """``repr`` distinguishes ok and fail results for debuggability."""
         # Arrange / Act / Assert
-        assert repr(r.ok(1)) == "r[T].ok(1)"
-        assert repr(r.fail("z")) == "r[T].fail('z')"
+        assert repr(r[int].ok(1)) == "r[T].ok(1)"
+        assert repr(r[int].fail("z")) == "r[T].fail('z')"
 
     @staticmethod
     @pytest.mark.parametrize("exc_name", ["MroViolation", "SmellViolation"])

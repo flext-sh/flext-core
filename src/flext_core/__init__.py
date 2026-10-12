@@ -26,7 +26,6 @@ if TYPE_CHECKING:
         _runtime,
         _typings,
         _utilities,
-        services,
     )
     from flext_core.__version__ import (
         FlextVersion,
@@ -163,7 +162,6 @@ __all__: tuple[str, ...] = (
     "r",
     "resolve_lazy_members",
     "s",
-    "services",
     "settings",
     "t",
     "u",
@@ -249,7 +247,6 @@ install_lazy_exports(
         "r": ".result",
         "resolve_lazy_members": ".lazy",
         "s": ".service",
-        "services": ".services",
         "settings": "._settings",
         "t": ".typings",
         "u": ".utilities",

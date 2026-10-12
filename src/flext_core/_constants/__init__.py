@@ -18,6 +18,9 @@ if TYPE_CHECKING:
         _enforcement_parts,
         _errors_parts,
     )
+    from flext_core._constants._enforcement_data.package_data import (
+        FlextConstantsEnforcementData,
+    )
     from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_01 import (
         FlextConstantsEnforcementEnums,
     )
@@ -83,6 +86,7 @@ __all__: tuple[str, ...] = (
     "FlextConstantsConfig",
     "FlextConstantsCqrs",
     "FlextConstantsEnforcement",
+    "FlextConstantsEnforcementData",
     "FlextConstantsEnforcementEnums",
     "FlextConstantsEnforcementFixActions",
     "FlextConstantsEnforcementNamespace",
@@ -124,6 +128,7 @@ install_lazy_exports(
         "FlextConstantsConfig": ".config",
         "FlextConstantsCqrs": ".cqrs",
         "FlextConstantsEnforcement": ".enforcement",
+        "FlextConstantsEnforcementData": "._enforcement_data.package_data",
         "FlextConstantsEnforcementEnums": (
             "._enforcement_parts.flextconstantsenforcement_part_01"
         ),

@@ -24,7 +24,7 @@
 - Public symbol exports: `FlextApi`, `FlextBase`, `FlextCli`, `FlextConfig`,
   `FlextConstants`, `FlextConstantsEnforcement`, `FlextContainer`, `FlextContext`,
   `FlextCoreBeartypeBootstrap`, `FlextDecorators` (+39 more)
-- Exported module shortcuts: `lazy`, `services`
+- Exported module shortcuts: `lazy`
 - Generated module pages: `26`
 
 ## Next Pages

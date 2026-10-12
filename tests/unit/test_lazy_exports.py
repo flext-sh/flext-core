@@ -23,6 +23,29 @@ if TYPE_CHECKING:
     from tests import t
 
 
+def _install_alpha(
+    registered_alpha_module: tuple[str, type],
+    *,
+    publish_all: bool = True,
+) -> t.ModuleGlobals:
+    """Install the registered alpha lazy export and return package globals.
+
+    Returns:
+        The package module globals after installation.
+
+    """
+    module_name, _ = registered_alpha_module
+    package_name = module_name.rpartition(".")[0]
+    module_globals: t.ModuleGlobals = vars(sys.modules[package_name])
+    install_lazy_exports(
+        package_name,
+        module_globals,
+        {"Alpha": (module_name, "Alpha")},
+        publish_all=publish_all,
+    )
+    return module_globals
+
+
 class TestsFlextCoreLazyExports:
     """Behavioral contract: what the lazy export surface promises callers."""
 
@@ -218,17 +241,7 @@ class TestsFlextCoreLazyExports:
     ) -> None:
         # Arrange
         """Test install without publish all omits dunder all."""
-        module_name, _ = registered_alpha_module
-        package_name = module_name.rpartition(".")[0]
-        module_globals: t.ModuleGlobals = vars(sys.modules[package_name])
-
-        # Act
-        install_lazy_exports(
-            package_name,
-            module_globals,
-            {"Alpha": (module_name, "Alpha")},
-            publish_all=False,
-        )
+        module_globals = _install_alpha(registered_alpha_module, publish_all=False)
 
         # Assert — no __all__ published, but __dir__ still lists the public name
         assert "__all__" not in module_globals
@@ -242,16 +255,7 @@ class TestsFlextCoreLazyExports:
     ) -> None:
         # Arrange
         """Test install with publish all publishes dunder all."""
-        module_name, _ = registered_alpha_module
-        package_name = module_name.rpartition(".")[0]
-        module_globals: t.ModuleGlobals = vars(sys.modules[package_name])
-
-        # Act
-        install_lazy_exports(
-            package_name,
-            module_globals,
-            {"Alpha": (module_name, "Alpha")},
-        )
+        module_globals = _install_alpha(registered_alpha_module)
 
         # Assert
         assert module_globals["__all__"] == ("Alpha",)
