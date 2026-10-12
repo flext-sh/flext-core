@@ -14,9 +14,10 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import c, t
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
 from flext_core._models._container_parts import flextmodelscontainer_part_01
+from flext_core.constants import c
+from flext_core.typings import t
 
 
 class FlextModelsContainer(flextmodelscontainer_part_01.FlextModelsContainer):
