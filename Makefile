@@ -534,9 +534,12 @@ override UV_SYNC_FLAGS := $(UV_SYNC_FLAGS) --no-editable
 endif
 
 ifeq ($(GEN_INIT_ONLY),)
-ifneq ($(strip $(CI)),Y)
+# Why (fleet-automation 2026-10-12): the custom surface loads in every
+# non-bootstrap context, CI included — RUN_PUBLIC_POST fires post-<verb>
+# hooks whenever the declared-targets list names them, so a CI-excluded
+# include made every member with a post hook fail with "no rule for
+# post-<verb>" exactly when the pipeline ran the activation half.
 -include custom.mk
-endif
 endif
 ifeq ($(APPROVAL_CONTEXT),Y)
 override CI := Y
@@ -1489,8 +1492,8 @@ _builtin-help:
 
 # === SECTION: submodule setup (managed) ===
 # Source: template (submodule_setup_recipe.j2)
-# Computed: workspace uses MANAGED_GITLINKS from config; standalone discovers
-#           submodules with flext-managed=true from .gitmodules at runtime.
+# Computed: every checkout discovers governed paths from its own .gitmodules.
+#           An absent management flag participates; an explicit false does not.
 # Rule: setup PROVISIONS an absent or proven unfinished initial clone and
 #       VERIFIES an established checkout. An initial clone has no physical index,
 #       no worktree content, and only its clone reflog entry. Established work
@@ -1519,33 +1522,36 @@ _builtin_setup_submodules:
 	umask 022; \
 	root="$(PROJECT_ROOT)"; \
 	if [ ! -f "$$root/.gitmodules" ]; then exit 0; fi; \
-	profile="$(MAKE_PROFILE)"; \
-	if [ "$$profile" = "workspace" ]; then \
-		managed="$(MANAGED_GITLINKS)"; \
+	managed=""; \
+	keys=""; \
+	if keys=$$(git -C "$$root" config -f .gitmodules --name-only --get-regexp '^submodule\..*\.path$$'); then \
+		keys_status=0; \
 	else \
-		managed=""; \
-		keys=""; \
-		if keys=$$(git -C "$$root" config -f .gitmodules --name-only --get-regexp '^submodule\..*\.flext-managed$$'); then \
-			keys_status=0; \
-		else \
-			keys_status=$$?; \
-		fi; \
-		if [ "$$keys_status" -ne 0 ] && [ "$$keys_status" -ne 1 ]; then \
-			printf 'ERROR: cannot enumerate governed gitlinks\n' >&2; \
-			exit "$$keys_status"; \
-		fi; \
-		for key in $$keys; do \
-			value=$$(git -C "$$root" config -f .gitmodules --get "$$key"); \
-			if [ "$$value" = "true" ]; then \
-				section=$${key%.flext-managed}; \
-				path=$$(git -C "$$root" config -f .gitmodules --get --default "" "$$section.path"); \
-				if [ -n "$$path" ]; then \
-					managed="$$managed $$path"; \
-				fi; \
-			fi; \
-		done; \
+		keys_status=$$?; \
 	fi; \
-	managed=$$(printf '%s' "$$managed" | tr ' ' '\n' | sort -u | tr '\n' ' '); \
+	if [ "$$keys_status" -ne 0 ] && [ "$$keys_status" -ne 1 ]; then \
+		printf 'ERROR: cannot enumerate governed gitlinks\n' >&2; \
+		exit "$$keys_status"; \
+	fi; \
+	for key in $$keys; do \
+		section=$${key%.path}; \
+		value=$$(git -C "$$root" config -f .gitmodules --type=bool --get --default true "$$section.flext-managed"); \
+		case "$$value" in \
+			true) ;; \
+			false) continue ;; \
+			*) printf 'ERROR: Git returned an invalid management boolean for %s\n' "$$section" >&2; exit 2 ;; \
+		esac; \
+		path=$$(git -C "$$root" config -f .gitmodules --get "$$key"); \
+		case "$$path" in \
+			""|/*|..|../*|*/../*|*/..|*[[:space:]]*) \
+				printf 'ERROR: governed gitlink path is not a safe relative Make path: %s\n' "$$path" >&2; \
+				exit 2 ;; \
+		esac; \
+		case " $$managed " in \
+			*" $$path "*) printf 'ERROR: governed gitlink path is duplicated: %s\n' "$$path" >&2; exit 2 ;; \
+		esac; \
+		managed="$$managed $$path"; \
+	done; \
 	if [ -z "$$managed" ]; then exit 0; fi; \
 	if [ "$${GIT_INDEX_FILE+x}" = x ]; then \
 		printf 'ERROR: submodule setup cannot authenticate a relocated Git index\n' >&2; \
@@ -2007,8 +2013,7 @@ profile-mypy-report: _builtin_require_environment
 .PHONY: profile-gen
 profile-gen: _builtin_require_environment
 	@mkdir -p "$(PROFILE_REPORTS_DIR)"
-	@$(RUNTIME_PYTHON) -c \
-		'import cProfile, signal, sys; signal.signal(signal.SIGTERM, lambda signum, frame: sys.exit(128 + signum)); profile = cProfile.Profile(); exec("try:\n with profile:\n  from flext_infra.cli import main\n  status = main(sys.argv[2:])\nfinally:\n profile.dump_stats(sys.argv[1])"); raise SystemExit(status)' \
+	@$(PROJECT_INFRA_RUN) -m flext_infra._profile_entry \
 		"$(PROFILE_REPORTS_DIR)/conform.pstats" codegen conform \
 		--root "$(PROJECT_ROOT)" --scope all --mode check
 
