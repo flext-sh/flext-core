@@ -17,7 +17,7 @@ from importlib.resources.abc import Traversable
 from pathlib import Path, Path as _Path
 from typing import IO, Protocol, cast, override
 
-from pydantic import JsonValue
+from pydantic import JsonValue, TypeAdapter
 from pydantic_settings import BaseSettings, YamlConfigSettingsSource
 from pydantic_settings.sources import ConfigFileSourceType, PathType
 from pydantic_settings.sources.utils import InitState
@@ -128,14 +128,18 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
 
     @staticmethod
     def unique_key_load(stream: str | IO[str]) -> JsonValue:
-        """Parse safe YAML while rejecting duplicate mapping keys.
+        """Parse safe YAML with unique keys and validate the JSON value boundary.
 
         Returns:
             The parsed JSON-compatible value.
         """
         loader = FlextStrictYamlConfigSource.UniqueKeyLoader(stream)
         try:
-            return cast("JsonValue", loader.get_single_data())
+            # Validate after YAML finishes constructing aliases and nested values.
+            return TypeAdapter(JsonValue).validate_python(
+                loader.get_single_data(),
+                strict=True,
+            )
         finally:
             loader.dispose()
 

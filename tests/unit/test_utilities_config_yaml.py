@@ -17,7 +17,7 @@ import pytest
 from typing_extensions import TypeForm
 
 from flext_core import FlextConfig, FlextStrictYamlConfigSource
-from tests import t, tm, u
+from tests import m, t, tm, u
 
 
 class TestsFlextCoreUtilitiesYaml:
@@ -56,6 +56,27 @@ class TestsFlextCoreUtilitiesYaml:
         """Test unique key load parses nested documents."""
         parsed = u.Yaml.unique_key_load("top:\n  inner: 1\n  other: two\n")
         tm.that(parsed, eq={"top": {"inner": 1, "other": "two"}})
+
+    @staticmethod
+    def test_unique_key_load_preserves_completed_alias_values() -> None:
+        """Validation sees fully constructed YAML aliases, not placeholder lists."""
+        parsed = u.Yaml.unique_key_load("first: &values [one, two]\nsecond: *values\n")
+        tm.that(parsed, eq={"first": ["one", "two"], "second": ["one", "two"]})
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        "document",
+        [
+            "value: !!timestamp 2026-01-01\n",
+            "value: !!binary aGVsbG8=\n",
+            "value: !!set {one: null}\n",
+        ],
+        ids=["timestamp", "binary", "set"],
+    )
+    def test_unique_key_load_rejects_non_json_yaml_values(document: str) -> None:
+        """Safe YAML's non-JSON constructors cannot escape the typed boundary."""
+        with pytest.raises(m.ValidationError):
+            u.Yaml.unique_key_load(document)
 
     @staticmethod
     def test_unique_key_load_rejects_duplicate_keys_at_depth() -> None:
