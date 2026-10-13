@@ -134,25 +134,32 @@ class TestsFlextMixins:
 
     @staticmethod
     def test_contract_model_composition_preserves_validation() -> None:
-        """A service/options diamond retains both runtime ports and strict data."""
+        """A service composes immutable options without inheriting their model."""
 
         class Options(m.ContractModel):
             label: str
 
-        class ComposedService(x, Options):
-            pass
+        class ComposedService(x):
+            options: Options = m.Field(
+                description="Validated immutable service options",
+            )
 
         label = "  census-options  "
-        service = ComposedService(label=label)
+        service = ComposedService(options=Options(label=label))
         expected = (
             label.strip() if Options.model_config.get("str_strip_whitespace") else label
         )
-        assert service.label == expected
-        assert service.model_dump()["label"] == expected
+        assert service.options.label == expected
+        assert service.model_dump()["options"] == service.options.model_dump()
         assert isinstance(service.settings, p.Settings)
         with pytest.raises(c.ValidationError):
-            ComposedService.model_validate({"label": []})
-        tm.rejects_assignment(service, "label", "changed", expected=c.ValidationError)
+            ComposedService.model_validate({"options": {"label": []}})
+        tm.rejects_assignment(
+            service.options,
+            "label",
+            "changed",
+            expected=c.ValidationError,
+        )
 
     def test_settings_overrides_setter_round_trips(self) -> None:
         """Test settings overrides setter round trips."""
