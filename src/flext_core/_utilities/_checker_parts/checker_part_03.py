@@ -132,8 +132,6 @@ class FlextUtilitiesChecker(checker_part_02.FlextUtilitiesChecker):
 
         Returns:
             The resulting ``bool``.
-        from flext_core._typings.services import FlextTypesServices as ts
-        from flext_core._typings.base import FlextTypingBase as tb
 
         """
         if not accepted_types or message_type is None:
@@ -153,7 +151,6 @@ class FlextUtilitiesChecker(checker_part_02.FlextUtilitiesChecker):
         Returns:
             The resulting tuple of type-hint specifiers.
 
-        from flext_core._typings.base import FlextTypingBase as tb
         """
         message_types: MutableSequence[FlextTypingBase.TypeHintSpecifier] = []
         generic_types = cls._extract_generic_message_types(handler_class)
