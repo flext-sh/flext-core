@@ -180,13 +180,13 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
                 continue
             updating: FlextTypingBase.JsonDict = dict(self._read_file(file_path))
             if deep_merge:
-                merged = self._deep_merge_lists(merged, updating)
+                merged = self.merge_values(merged, updating)
             else:
                 merged.update(updating)
         return merged
 
     @staticmethod
-    def _deep_merge_lists(
+    def merge_values(
         base: FlextTypingBase.JsonDict,
         updating: FlextTypingBase.JsonDict,
     ) -> FlextTypingBase.JsonDict:
@@ -203,7 +203,7 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
         for key, value in updating.items():
             existing = result.get(key)
             if isinstance(existing, dict) and isinstance(value, dict):
-                result[key] = FlextStrictYamlConfigSource._deep_merge_lists(
+                result[key] = FlextStrictYamlConfigSource.merge_values(
                     existing,
                     value,
                 )

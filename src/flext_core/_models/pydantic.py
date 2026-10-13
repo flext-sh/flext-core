@@ -29,7 +29,7 @@ from typing import (
     overload,
 )
 
-from flext_core import c
+from flext_core.constants import c
 
 if TYPE_CHECKING:
     from flext_core._typings import FlextTypingBase

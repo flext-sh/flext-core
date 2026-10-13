@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import ast
 
+from flext_core import t
 from flext_core._utilities._beartype import bound_names
 
 
@@ -58,14 +59,14 @@ def owner_derived(tree: ast.Module | None, name: str, owner_root: str) -> bool:
     return False
 
 
-def module_bindings(tree: ast.Module) -> dict[str, ast.stmt]:
+def module_bindings(tree: ast.Module) -> t.MutableMappingKV[str, ast.stmt]:
     """Index module-level import and assignment bindings by bound name.
 
     Returns:
         The resulting ``dict[str, ast.stmt]``.
 
     """
-    bindings: dict[str, ast.stmt] = {}
+    bindings: t.MutableMappingKV[str, ast.stmt] = {}
     for node in tree.body:
         if isinstance(node, ast.Assign):
             bound = tuple(

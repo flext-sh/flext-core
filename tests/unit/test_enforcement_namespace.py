@@ -31,6 +31,8 @@ from tests.unit._enforcement_support import make_class
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from tests import t
+
 _PREFIX_FRAGMENT = "class name missing project prefix"
 
 
@@ -311,7 +313,7 @@ class_stem_override = "XmlAPI"
                     "model_config": {"title": "x"},
                     "logger": None,
                     "__annotations__": {
-                        "model_config": "ClassVar[dict[str, str]]",
+                        "model_config": "ClassVar[t.StrDict]",
                         "logger": "ClassVar[object | None]",
                     },
                 },
@@ -348,7 +350,7 @@ class_stem_override = "XmlAPI"
     @staticmethod
     def test_constant_placement_governs_enforce_079(
         name: str,
-        body: dict[str, object],
+        body: t.MutableMappingKV[str, t.UnconstrainedValue],
         module_override: str | None,
         *,
         expect_enforce_079: bool,

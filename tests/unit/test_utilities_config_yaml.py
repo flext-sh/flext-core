@@ -11,13 +11,44 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
-from tests import tm, u
+from flext_core import FlextConfig, FlextStrictYamlConfigSource
+from tests import t, tm, u
 
 
 class TestsFlextCoreUtilitiesYaml:
     """Prove the public YAML transport contract on the facade."""
+
+    @staticmethod
+    def test_public_merge_matches_ordered_yaml_source(tmp_path: Path) -> None:
+        """In-memory consumers use the same mapping/list semantics as file sources."""
+        documents = (
+            "payload:\n  mode: first\n  entries: [first]\n  nested:\n    first: 1\n",
+            "payload:\n  mode: second\n  entries: [second]\n  nested:\n    second: 2\n",
+        )
+        paths = tuple(
+            tmp_path / f"layer-{index}.yaml" for index in range(len(documents))
+        )
+        for path, document in zip(paths, documents, strict=True):
+            path.write_text(document, encoding="utf-8")
+        baseline = u.type_adapter(t.JsonDict).validate_python(
+            u.Yaml.unique_key_load(documents[0]),
+        )
+        override = u.type_adapter(t.JsonDict).validate_python(
+            u.Yaml.unique_key_load(documents[1]),
+        )
+        merged = FlextStrictYamlConfigSource.merge_values(baseline, override)
+        loaded = FlextStrictYamlConfigSource(
+            FlextConfig,
+            yaml_file=paths,
+            deep_merge=True,
+        )()
+        tm.that(merged, eq=loaded)
+        tm.that(baseline, eq=u.Yaml.unique_key_load(documents[0]))
+        tm.that(override, eq=u.Yaml.unique_key_load(documents[1]))
 
     @staticmethod
     def test_unique_key_load_parses_nested_documents() -> None:

@@ -363,3 +363,6 @@ CLAUDE.local.md
 !.vscode/settings.json
 !config/
 !config/gitleaks-release.toml
+
+# RUNTIME: local projections (derived)
+/.vscode/settings.json

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeVar
 
-from flext_core import FlextResult, c, m, p
+from flext_core import FlextResult, c, m, p, t
 from flext_core._exceptions import FlextExceptionsTemplate
 
 _TExceptionParams = TypeVar("_TExceptionParams", bound=m.BaseModel)
@@ -84,7 +84,7 @@ class FlextExceptionsFactories:
     def _normalize_params(
         params: _TExceptionParams | None,
         params_type: type[_TExceptionParams],
-        update: dict[str, object | None],
+        update: t.MappingKV[str, t.UnconstrainedValue | None],
     ) -> _TExceptionParams:
         if params is None:
             return params_type.model_validate(update)

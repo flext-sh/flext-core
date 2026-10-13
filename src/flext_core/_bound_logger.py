@@ -17,13 +17,11 @@ from typing import TYPE_CHECKING, Self, override
 from flext_core import c, p, r, t
 from flext_core._utilities import FlextUtilitiesLoggingContext
 
-ulc = FlextUtilitiesLoggingContext
-
 if TYPE_CHECKING:
     from structlog.typing import Context
 
 
-class FlextBoundLogger(ulc):
+class FlextBoundLogger(FlextUtilitiesLoggingContext):
     """Context-aware bound logger instance handed out by the logging facade.
 
     Composed via MRO from ``FlextUtilitiesLoggingContext`` (context binding,

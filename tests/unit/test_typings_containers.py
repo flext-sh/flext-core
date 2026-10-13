@@ -124,7 +124,7 @@ class TestsFlextCoreTypingsContainers:
     @staticmethod
     def test_dict_model_dump_returns_underlying_mapping() -> None:
         """model_dump round-trips the validated mapping as a plain dict."""
-        payload: dict[str, t.JsonPayload] = {"a": 1, "b": "two"}
+        payload: t.MutableMappingKV[str, t.JsonPayload] = {"a": 1, "b": "two"}
         d = m.Dict(root=payload)
         tm.that(d.model_dump(), eq=payload)
 
@@ -152,7 +152,10 @@ class TestsFlextCoreTypingsContainers:
     @staticmethod
     def test_configmap_model_dump_round_trips() -> None:
         """m.ConfigMap serializes back to the original settings mapping."""
-        payload: dict[str, t.JsonPayload] = {"timeout": 30, "debug": False}
+        payload: t.MutableMappingKV[str, t.JsonPayload] = {
+            "timeout": 30,
+            "debug": False,
+        }
         tm.that(m.ConfigMap(root=payload).model_dump(), eq=payload)
 
     # ---- m.ObjectList: sequence contract -----------------------------------
@@ -205,7 +208,7 @@ class TestsFlextCoreTypingsContainers:
     @pytest.mark.parametrize("nonscalar", [["list"], {"dict": 1}, ("tuple",)])
     @staticmethod
     def test_scalar_types_rejects_containers(
-        nonscalar: list[str] | dict[str, int] | tuple[str],
+        nonscalar: list[str] | t.MappingKV[str, int] | tuple[str],
     ) -> None:
         """Container values are not members of the scalar runtime contract."""
         tm.that(isinstance(nonscalar, c.SCALAR_TYPES), eq=False)

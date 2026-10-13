@@ -48,16 +48,16 @@ from __future__ import annotations
 from flext_core import p, r
 
 
-def validate_payload(payload: dict[str, str]) -> p.Result[dict[str, str]]:
+def validate_payload(payload: t.StrDict) -> p.Result[t.StrDict]:
     """Require the email key before accepting a payload.
 
     Returns:
-        The resulting ``p.Result[dict[str, str]]``.
+        The resulting ``p.Result[t.StrDict]``.
 
     """
     if "email" not in payload:
-        return r[dict[str, str]].fail("missing_email")
-    return r[dict[str, str]].ok(payload)
+        return r[t.StrDict].fail("missing_email")
+    return r[t.StrDict].ok(payload)
 
 
 valid_payload = validate_payload({"email": "a@b.com"})

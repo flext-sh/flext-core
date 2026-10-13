@@ -22,12 +22,6 @@ from flext_core._utilities._beartype import (
     FlextUtilitiesBeartypeModuleSource,
     FlextUtilitiesBeartypeTypeAliases,
 )
-from flext_core._utilities._guards_type_protocol_specs import (
-    FlextUtilitiesGuardsTypeProtocolSpecsMixin,
-)
-from flext_core._utilities._guards_type_protocol_string import (
-    FlextUtilitiesGuardsTypeProtocolStringMixin,
-)
 from flext_core._utilities.args import FlextUtilitiesArgs
 from flext_core._utilities.base import FlextUtilitiesBase
 from flext_core._utilities.beartype_conf import FlextUtilitiesBeartypeConf
@@ -51,6 +45,12 @@ from flext_core._utilities.guards import FlextUtilitiesGuards
 from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
 from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
 from flext_core._utilities.guards_type_protocol import FlextUtilitiesGuardsTypeProtocol
+from flext_core._utilities._guards_type_protocol_specs import (
+    FlextUtilitiesGuardsTypeProtocolSpecsMixin,
+)
+from flext_core._utilities._guards_type_protocol_string import (
+    FlextUtilitiesGuardsTypeProtocolStringMixin,
+)
 from flext_core._utilities.handler import FlextUtilitiesHandler
 from flext_core._utilities.logging import FlextUtilitiesLogging
 from flext_core._utilities.mapper import FlextUtilitiesMapper

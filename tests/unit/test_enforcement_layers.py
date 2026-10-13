@@ -28,7 +28,7 @@ from tests import m, t, u
 # Deliberate broad-annotation fixture: the layered checker under test must
 # detect this exact runtime type, so it is exposed as a type alias usable
 # inside an annotation.
-type _ANY_TYPE = typing.Any
+type _ANY_TYPE = t.UnconstrainedValue
 
 
 def _non_runtime_decorator(cls: type) -> type:

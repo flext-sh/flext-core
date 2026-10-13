@@ -47,7 +47,7 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
         target: type[T],
         opts: FlextModelsConfig.ParseOptions[T],
         fp: str,
-        kwargs: dict[str, t.JsonPayload],
+        kwargs: t.MappingKV[str, t.JsonPayload],
     ) -> T:
         """Dispatch parsing with pre-resolved options for stable type inference.
 

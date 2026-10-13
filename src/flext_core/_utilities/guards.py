@@ -240,7 +240,7 @@ class FlextUtilitiesGuards(
             criteria_spec = FlextModelsCollections.GuardCheckSpec.model_validate(
                 criteria,
             )
-            criteria_update: dict[str, t.GuardInput | None] = {
+            criteria_update: t.MutableMappingKV[str, t.GuardInput | None] = {
                 field_name: getattr(criteria_spec, field_name)
                 for field_name in criteria_spec.model_fields_set
             }

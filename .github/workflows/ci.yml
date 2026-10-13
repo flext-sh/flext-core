@@ -256,7 +256,7 @@ jobs:
         if: ${{ failure() }}
         run: |
           set -eu
-          # Structured reports only — same allowlist as Upload reports (no raw
+          # Structured reports only — a subset of Upload reports (no raw
           # pytest/tool logs: those may carry connection strings / env secrets).
           for report_root in .reports apps; do
             if [ -d "$report_root" ]; then
@@ -271,8 +271,8 @@ jobs:
                 ' sh {} +
             fi
           done
-      - name: Upload reports on failure
-        if: ${{ failure() }}
+      - name: Upload execution reports
+        if: ${{ always() }}
         uses: actions/upload-artifact@v7
         with:
           name: flext-ci-reports-${{ github.run_id }}
@@ -284,8 +284,27 @@ jobs:
             .reports/**/coverage.json
             .reports/check/**/*.sarif
             .reports/check/**/*.md
+            .reports/gates/**/original-receipt.json
+            .reports/gates/**/check/**/*.sarif
+            .reports/gates/**/check/**/*.md
+            .reports/codegen-plan.json
+            .reports/codegen-publication.json
+            .reports/codegen-publication/**/*.json
+            .reports/setup-operations/*.json
+            .reports/tests/**/suite-outcome.json
+            .reports/tests/**/selection-outcome.json
+            .reports/tests/**/inventory-outcome.json
+            .reports/tests/**/run-context.json
+            .reports/tests/**/selection-plan.json
+            .reports/tests/**/testmon-selection.json
+            .reports/tests/**/testmon-inventory.json
             .reports/tests/**/run-accounting.json
+            .reports/tests/**/diagnostics.json
+            .reports/tests/**/original-receipt.json
+            .reports/tests/**/cache-before.json
             .reports/tests/**/cache-after.json
+            .reports/tests/**/cache-policy.json
+            .reports/tests/**/markdown-reconciliation.json
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 7

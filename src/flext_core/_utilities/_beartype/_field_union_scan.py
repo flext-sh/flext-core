@@ -10,6 +10,7 @@ import ast
 from types import UnionType
 from typing import Annotated, TypeAliasType, Union, get_args, get_origin
 
+from flext_core import t
 from flext_core._utilities._beartype import FlextUtilitiesBeartypeHelpers
 
 
@@ -57,7 +58,7 @@ def string_union_members(declared: str) -> int:
     )
 
 
-def declared_union_members(annotation: object | None) -> int:
+def declared_union_members(annotation: t.UnconstrainedValue | None) -> int:
     """Count union arms from declaration syntax without expanding aliases.
 
     Returns:

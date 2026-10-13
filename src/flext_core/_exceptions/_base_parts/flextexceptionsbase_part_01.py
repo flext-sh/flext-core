@@ -28,7 +28,7 @@ class FlextBaseErrorMetadataMixin:
                 str, FlextTypesServices.JsonPayload | FlextTypingBase.JsonValue | None
             ]
         ],
-    ) -> dict[str, FlextTypingBase.JsonValue | None]:
+    ) -> FlextTypingBase.MutableMappingKV[str, FlextTypingBase.JsonValue | None]:
         """Normalize every entry, keeping ``None`` values as declared.
 
         Returns:
@@ -47,7 +47,7 @@ class FlextBaseErrorMetadataMixin:
                 str, FlextTypesServices.JsonPayload | FlextTypingBase.JsonValue | None
             ]
         ],
-    ) -> dict[str, FlextTypingBase.JsonValue | None]:
+    ) -> FlextTypingBase.MutableMappingKV[str, FlextTypingBase.JsonValue | None]:
         """Normalize only the entries that carry a value, skipping ``None``.
 
         Returns:

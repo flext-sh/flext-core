@@ -9,8 +9,8 @@ from __future__ import annotations
 from pathlib import Path
 
 from flext_core import c, t
-from flext_core._models import FlextModelsEnforcement as me
-from flext_core._utilities._beartype import FlextUtilitiesBeartypeHelpers as _ubh
+from flext_core._models import FlextModelsEnforcement
+from flext_core._utilities._beartype import FlextUtilitiesBeartypeHelpers
 
 _MIN_FAMILY_MODULE_PARTS = 2
 
@@ -21,7 +21,7 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
     @classmethod
     def implementation(
         cls,
-        params: me.ImportBlacklistParams,
+        params: FlextModelsEnforcement.ImportBlacklistParams,
         target: type,
     ) -> t.StrMapping | None:
         """Run the IMPORT_BLACKLIST checks behind the visitor facade.
@@ -31,10 +31,10 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
 
         """
         no_violation: t.StrMapping | None = None
-        module = _ubh.runtime_module_for(target)
+        module = FlextUtilitiesBeartypeHelpers.runtime_module_for(target)
         if module is None:
             return no_violation
-        src_file = _ubh.module_filename_for(module) or ""
+        src_file = FlextUtilitiesBeartypeHelpers.module_filename_for(module) or ""
         filename = Path(src_file).name
         module_name = module.__name__
         violation = no_violation
@@ -82,7 +82,11 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
                         for name, value in vars(module).items()
                         if cls._is_private_family_import(
                             value,
-                            origin := _ubh.object_module_name_for(value) or "",
+                            origin
+                            := FlextUtilitiesBeartypeHelpers.object_module_name_for(
+                                value
+                            )
+                            or "",
                             package,
                             consumer_exempt=consumer_exempt,
                         )
@@ -103,7 +107,14 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
                         {"import": name, "package": package}
                         for name, value in vars(module).items()
                         if name in forbidden
-                        and ((_ubh.object_module_name_for(value) or "").split(".")[0])
+                        and (
+                            (
+                                FlextUtilitiesBeartypeHelpers.object_module_name_for(
+                                    value
+                                )
+                                or ""
+                            ).split(".")[0]
+                        )
                         in allowed_roots
                     ),
                     no_violation,
@@ -125,7 +136,7 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
             The resulting ``str | None``.
 
         """
-        origin = _ubh.object_module_name_for(value) or ""
+        origin = FlextUtilitiesBeartypeHelpers.object_module_name_for(value) or ""
         if (
             name.startswith(tier_prefixes)
             and origin.startswith(c.NAMESPACE_FAMILY_PREFIX)
@@ -139,7 +150,9 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
         return None
 
     @staticmethod
-    def _family_base_exempt(value: type, target: type, module: object) -> bool:
+    def _family_base_exempt(
+        value: type, target: type, module: t.UnconstrainedValue
+    ) -> bool:
         """Return True when the tier import is an exempt family base or lazy member.
 
         Returns:
@@ -148,8 +161,8 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
         """
         family_base = (
             value in target.__bases__
-            and _ubh.family_facade(target)
-            and _ubh.family_facade(value)
+            and FlextUtilitiesBeartypeHelpers.family_facade(target)
+            and FlextUtilitiesBeartypeHelpers.family_facade(value)
         )
         return (
             family_base
@@ -160,7 +173,7 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
         )
 
     @staticmethod
-    def _is_lazy_published_member(module: object, value: type) -> bool:
+    def _is_lazy_published_member(module: t.UnconstrainedValue, value: type) -> bool:
         """Return True when the module publishes the lazy export contract.
 
         *value* must be one of its lazy-published family members. The catalog
@@ -181,7 +194,7 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
         if values is None:
             return False
         module_name = getattr(module, "__name__", "")
-        origin = _ubh.object_module_name_for(value) or ""
+        origin = FlextUtilitiesBeartypeHelpers.object_module_name_for(value) or ""
         owners = {
             rel
             if rel.startswith(".")
@@ -228,7 +241,7 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
 
     @staticmethod
     def _is_private_family_import(
-        value: object,
+        value: t.UnconstrainedValue,
         origin: str,
         package: str,
         *,

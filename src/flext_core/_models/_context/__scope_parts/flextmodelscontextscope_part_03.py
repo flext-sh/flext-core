@@ -12,8 +12,6 @@ from flext_core import p
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
 from flext_core._models._context.__scope_parts import flextmodelscontextscope_part_02
 
-mp = FlextModelsPydantic
-
 
 class FlextModelsContextScope(flextmodelscontextscope_part_02.FlextModelsContextScope):
     class ContextContainerState(FlextModelsBase.ArbitraryTypesModel):
@@ -21,13 +19,13 @@ class FlextModelsContextScope(flextmodelscontextscope_part_02.FlextModelsContext
 
         container: Annotated[
             p.Container | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description="Container configured for service namespace resolution",
             ),
         ] = None
 
-        @mp.computed_field
+        @FlextModelsPydantic.computed_field
         def configured(self) -> bool:
             """Whether a container is configured for service access.
 
