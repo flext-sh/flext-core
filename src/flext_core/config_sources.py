@@ -69,7 +69,7 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
             values: FlextTypingBase.JsonDict = {}
             typed_loader = cast("FlextStrictYamlConfigSource._Loader", loader)
             for key_node, value_node in node.value:
-                key = typed_loader.construct_object(key_node, deep)
+                key = typed_loader.construct_object(key_node, deep=deep)
                 if not isinstance(key, str):
                     msg = "while constructing a config mapping"
                     raise ConstructorError(
@@ -86,7 +86,7 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
                         f"duplicate config key: {key}",
                         key_node.start_mark,
                     )
-                values[key] = typed_loader.construct_object(value_node, deep)
+                values[key] = typed_loader.construct_object(value_node, deep=deep)
             return values
 
     UniqueKeyLoader.add_constructor(

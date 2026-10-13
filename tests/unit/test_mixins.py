@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from flext_core import FlextContext
-from tests import c, p, x
+from tests import c, m, p, tm, x
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -131,6 +131,28 @@ class TestsFlextMixins:
         service = self._service()
 
         assert service.initial_context is None
+
+    @staticmethod
+    def test_contract_model_composition_preserves_validation() -> None:
+        """A service/options diamond retains both runtime ports and strict data."""
+
+        class Options(m.ContractModel):
+            label: str
+
+        class ComposedService(x, Options):
+            pass
+
+        label = "  census-options  "
+        service = ComposedService(label=label)
+        expected = (
+            label.strip() if Options.model_config.get("str_strip_whitespace") else label
+        )
+        assert service.label == expected
+        assert service.model_dump()["label"] == expected
+        assert isinstance(service.settings, p.Settings)
+        with pytest.raises(c.ValidationError):
+            ComposedService.model_validate({"label": []})
+        tm.rejects_assignment(service, "label", "changed", expected=c.ValidationError)
 
     def test_settings_overrides_setter_round_trips(self) -> None:
         """Test settings overrides setter round trips."""
