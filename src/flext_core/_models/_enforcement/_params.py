@@ -127,6 +127,8 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         """
 
         kind: Literal["library_import"] = "library_import"
+        modules: FlextTypingBase.StrSequence = ()
+        """Owned library roots selected by the rule; empty selects all owners."""
 
     class DuplicateSymbolParams(FlextModelsEnforcementModelBase):
         """Parameters for DUPLICATE_SYMBOL predicate."""

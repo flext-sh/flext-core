@@ -32,13 +32,21 @@ class FlextUtilitiesBeartypeLibraryVisitor:
         the owner project's imports: bindings rooted in owner imports are
         facade provenance (legal), while direct imports, aliased imports,
         and dynamic ``__import__`` acquisitions stay violations.
+        Rule-selected roots use the same owner/provenance boundary, regardless
+        of whether the declaring module is public or private.
 
         Returns:
             The resulting ``t.StrMapping | None``.
 
+        Raises:
+            ValueError: If a selected library has no canonical owner.
+
         """
-        _ = params
         owners = c.ENFORCEMENT_LIBRARY_OWNERS
+        unknown = set(params.modules).difference(owners)
+        if unknown:
+            msg = f"Selected libraries have no canonical owner: {sorted(unknown)}"
+            raise ValueError(msg)
         module = FlextUtilitiesBeartypeHelpers.runtime_module_for(target)
         if module is None:
             return _NO_VIOLATION
@@ -49,6 +57,7 @@ class FlextUtilitiesBeartypeLibraryVisitor:
             if (origin := FlextUtilitiesBeartypeHelpers.object_module_name_for(value))
             is not None
             and (origin_root := origin.split(".")[0]) in owners
+            and (not params.modules or origin_root in params.modules)
             and owners[origin_root] != package
         )
         if not candidates:
