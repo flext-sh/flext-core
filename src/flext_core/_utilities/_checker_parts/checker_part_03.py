@@ -62,12 +62,7 @@ class FlextUtilitiesChecker(checker_part_02.FlextUtilitiesChecker):
             if not isinstance(metadata_raw, Mapping):
                 continue
             metadata = cast(
-                FlextTypingBase.MappingKV[
-                    str,
-                    FlextTypingBase.TypeHintSpecifier
-                    | FlextTypingBase.VariadicTuple[FlextTypingBase.TypeHintSpecifier]
-                    | None,
-                ],
+                "FlextTypingBase.MappingKV[str, FlextTypingBase.TypeHintSpecifier | FlextTypingBase.VariadicTuple[FlextTypingBase.TypeHintSpecifier] | None]",
                 metadata_raw,
             )
             origin = metadata.get("origin")
