@@ -26,9 +26,9 @@ import inspect
 import os
 from pathlib import Path
 from threading import RLock
-from typing import TYPE_CHECKING, ClassVar, Self, override
+from typing import ClassVar, Self, override
 
-from pydantic import ValidationError
+from pydantic import JsonValue, ValidationError
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
@@ -38,9 +38,6 @@ from pydantic_settings import (
 from flext_core._constants.config import FlextConstantsConfig
 from flext_core._settings import app_env_prefix, platform_config_root
 from flext_core.config_sources import FlextStrictYamlConfigSource
-
-if TYPE_CHECKING:
-    from flext_core import t
 
 
 class FlextConfig(BaseSettings):
@@ -53,7 +50,7 @@ class FlextConfig(BaseSettings):
 
     # NOTE (multi-agent): exact-file consumers declare their YAML surface here;
     # the empty default preserves deterministic directory auto-discovery.
-    CONFIG_FILENAMES: ClassVar[t.VariadicTuple[str]] = ()
+    CONFIG_FILENAMES: ClassVar[tuple[str, ...]] = ()
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         frozen=True,
@@ -168,8 +165,8 @@ class FlextConfig(BaseSettings):
     @classmethod
     def _transform_loaded_yaml(
         cls,
-        data: t.JsonDict,
-    ) -> t.JsonDict:
+        data: dict[str, JsonValue],
+    ) -> dict[str, JsonValue]:
         """Hook for subclasses to transform merged YAML before validation.
 
         Default is identity (no transformation). Override to apply env
@@ -190,11 +187,11 @@ class FlextConfig(BaseSettings):
         env_settings: PydanticBaseSettingsSource,
         dotenv_settings: PydanticBaseSettingsSource,
         file_secret_settings: PydanticBaseSettingsSource,
-    ) -> t.VariadicTuple[PydanticBaseSettingsSource]:
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
         """Env + every ``config/*.yaml`` deep-merged; no dotenv/secret sources.
 
         Returns:
-            The resulting ``t.VariadicTuple[PydanticBaseSettingsSource]``.
+            The resulting ``tuple[PydanticBaseSettingsSource, ...]``.
         """
         _ = (dotenv_settings, file_secret_settings)
         return (

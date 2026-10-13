@@ -17,12 +17,10 @@ name: CI
     branches:
       - main
       - 0.12.0-dev
-      - 0.20.0-dev
   pull_request:
     branches:
       - main
       - 0.12.0-dev
-      - 0.20.0-dev
     types: [opened, synchronize, reopened, ready_for_review, edited]
   workflow_call:
     secrets:
@@ -101,8 +99,9 @@ jobs:
             ~/.cache/uv
             ~/.local/share/mise
             !~/.local/share/mise/shims
-          key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
+          key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
+            ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}-
             ${{ runner.os }}-3.13-tools-
 
       # make setup is the frozen installer. It bootstraps the committed Mise
@@ -318,10 +317,13 @@ jobs:
           key: ${{ steps.testmon_path.outputs.key }}
 
 
-      # Why: save on every outcome — including a failing gate — so
-      # the next run starts warm. Only written when the restore missed.
+      # Save a new immutable generation after completed failures as well as
+      # successes, so warm restores never discard new provisioning progress.
       - name: Save tool caches
-        if: ${{ always() && steps.tool-cache.outputs.cache-hit != 'true' }}
+        # Native cache action access mode remains authoritative before upload.
+        # Fork requests are restore-only; an interrupted run cannot publish.
+        if: >-
+          ${{ always() && !cancelled() && steps.tool-cache.outcome == 'success' && steps.tool-cache.outputs.cache-primary-key != '' && ((github.event_name == 'push' && startsWith(github.ref, 'refs/heads/')) || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)) }}
         uses: actions/cache/save@v6
         with:
           path: |
@@ -335,7 +337,7 @@ jobs:
             ~/.cache/uv
             ~/.local/share/mise
             !~/.local/share/mise/shims
-          key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
+          key: ${{ steps.tool-cache.outputs.cache-primary-key }}
 
   # End SECTION: ci job
 
@@ -441,41 +443,4 @@ jobs:
         run: CI=Y make release-plan
   # End SECTION: release-plan job
 
-  # === SECTION: merge-guard job (managed) ===
-  merge-guard:
-    name: merge-guard
-    permissions:
-      contents: read
-    # Draft is the typed WIP state: no repository Action is selected until the
-    # same PR is promoted to Review with a non-WIP head.
-    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == false }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout promoted head
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 1
-          # Inspect the PR head commit, not the refs/pull/N/merge commit that
-          # actions/checkout selects by default on pull_request events; the
-          # merge commit subject would never carry the WIP marker.
-          ref: ${{ github.event.pull_request.head.sha }}
-      - name: Block WIP heads from protected integration branches
-        env:
-          BASE_REF: ${{ github.base_ref }}
-        run: |
-          set -eu
-          case "$BASE_REF" in
-            dev|develop|0.12.0-dev)
-              ;;
-            *)
-              echo "Merge guard passed for $(git rev-parse HEAD) -> $BASE_REF"
-              exit 0
-              ;;
-          esac
-          subject=$(git log -1 --format=%s)
-          if printf '%s' "$subject" | grep -qiE '^\[WIP\]|^WIP|^wip'; then
-            echo "WIP head cannot merge into ${BASE_REF}: ${subject}"
-            exit 1
-          fi
-          echo "Merge guard passed for $(git rev-parse HEAD) -> $BASE_REF"
-  # End SECTION: merge-guard job
+

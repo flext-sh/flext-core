@@ -372,25 +372,13 @@
     "no_pydantic_consumer_import": {
       "category": "namespace",
       "collect": "target",
-      "problem": "bare pydantic import FORBIDDEN (R2)",
+      "problem": "bare {lib} import in consumer {package} bypasses owning project {owner} (R2)",
       "fix": "Use u.Field(), m.BaseModel, m.ConfigDict, m.TypeAdapter (type), u.type_adapter() (construction), u.model_validator, u.field_validator, u.computed_field, u.PrivateAttr from parent facade.",
-      "predicate": "import_blacklist",
+      "predicate": "library_import",
       "params": {
-        "kind": "import_blacklist",
-        "forbidden_modules": [
+        "kind": "library_import",
+        "modules": [
           "pydantic"
-        ],
-        "forbidden_symbols": [
-          "BaseModel",
-          "Field",
-          "ConfigDict",
-          "TypeAdapter",
-          "field_validator",
-          "model_validator",
-          "computed_field",
-          "PrivateAttr",
-          "AfterValidator",
-          "BeforeValidator"
         ]
       }
     },
