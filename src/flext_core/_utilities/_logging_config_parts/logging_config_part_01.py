@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, ClassVar, override
 
 import structlog
 
-from flext_core import c, p, t
+from flext_core import c, t
 
 if TYPE_CHECKING:
     import types
@@ -79,7 +79,7 @@ class FlextUtilitiesLoggingConfig:
                 "newlines",
                 None,
             )
-            self._writer_logger: p.Logger | None = None
+            self._failure: BaseException | None = None
             self.queue: queue.Queue[str | None] = queue.Queue(maxsize=c.MAX_ITEMS)
             self.stop_event = threading.Event()
             self.thread = threading.Thread(
@@ -97,18 +97,6 @@ class FlextUtilitiesLoggingConfig:
             if self._use_live_stderr:
                 return sys.stderr
             return self.stream
-
-        @property
-        def _writer_log(self) -> p.Logger:
-            """Logger for async log writer."""
-            existing = self._writer_logger
-            if existing is not None:
-                return existing
-            created: p.Logger = FlextUtilitiesLoggingConfig.structlog().get_logger(
-                __name__,
-            )
-            self._writer_logger = created
-            return created
 
         @property
         def mode(self) -> str:
@@ -135,29 +123,23 @@ class FlextUtilitiesLoggingConfig:
 
         @override
         def flush(self) -> None:
-            """Flush stream (best effort)."""
-            flush_fn = getattr(self._target_stream, "flush", None)
-            if flush_fn is None or not callable(flush_fn):
-                return
-            try:
-                flush_fn()
-            except (OSError, ValueError, TypeError, AttributeError) as exc:
-                self._writer_log.warning("Async log writer flush failed", exc_info=exc)
+            """Flush the target and propagate its original stream failure."""
+            if self._failure is not None:
+                raise self._failure
+            self._target_stream.flush()
 
         def shutdown(self) -> None:
             """Stop worker thread and flush remaining messages."""
             if self.stop_event.is_set():
+                if self._failure is not None:
+                    raise self._failure
                 return
             self.stop_event.set()
-            try:
-                self.queue.put_nowait(None)
-            except queue.Full as exc:
-                self._writer_log.warning(
-                    "Async log queue full during shutdown; sentinel dropped",
-                    exc_info=exc,
-                )
             if self.thread.is_alive():
                 self.thread.join(timeout=c.LOG_SHUTDOWN_JOIN_SECONDS)
+            if self.thread.is_alive():
+                msg = "Async log writer did not finish before its shutdown deadline"
+                raise TimeoutError(msg)
             self.flush()
 
         @override
@@ -168,13 +150,9 @@ class FlextUtilitiesLoggingConfig:
                 The resulting ``int``.
 
             """
-            try:
-                self.queue.put(s, block=c.ASYNC_BLOCK_ON_FULL)
-            except queue.Full as exc:
-                self._writer_log.warning(
-                    "Async log queue full; message dropped",
-                    exc_info=exc,
-                )
+            if self._failure is not None:
+                raise self._failure
+            self.queue.put(s, block=c.ASYNC_BLOCK_ON_FULL)
             return len(s)
 
         def _write_queued_message(self, msg: str) -> None:
@@ -195,18 +173,10 @@ class FlextUtilitiesLoggingConfig:
                     if self.stop_event.is_set():
                         break
                     continue
-                except (OSError, ValueError, TypeError) as exc:
-                    self._writer_log.warning(
-                        "Async log writer stream operation failed",
-                        exc_info=exc,
-                    )
-                    try:
-                        _ = self._target_stream.write("Error in async log writer\n")
-                    except (OSError, ValueError, TypeError) as write_exc:
-                        self._writer_log.warning(
-                            "Failed to write async writer error notice",
-                            exc_info=write_exc,
-                        )
+                except BaseException as exc:
+                    self._failure = exc
+                    self.stop_event.set()
+                    raise
 
     _async_writer: ClassVar[_AsyncLogWriter | None] = None
 
