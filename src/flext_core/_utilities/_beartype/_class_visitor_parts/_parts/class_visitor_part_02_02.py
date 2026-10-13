@@ -67,7 +67,10 @@ def self_ref_violation(
     src_file = str(getattr(module, "__file__", "") or "")
     normalized_values: list[FunctionType] = []
     members = cast("dict[str, ModuleGlobalValue]", vars(target))
-    for value in members.values():
+    # Snapshot the values: reading a member can execute a lazy facade whose
+    # module import binds more class attributes, mutating this very mapping
+    # mid-iteration (RuntimeError: dictionary changed size during iteration).
+    for value in tuple(members.values()):
         function = getattr(value, "__func__", value)
         if type(function) is FunctionType:
             normalized_values.append(function)
