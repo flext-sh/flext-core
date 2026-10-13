@@ -201,8 +201,8 @@ endif
 # === SECTION: verb dispatch (managed) ===
 # Source: config:make.verbs and the canonical gate vocabulary. A verb exists
 # only in the profiles it declares (make.verbs[].profiles).
-PUBLIC_VERBS := help setup pre-commit upg build examples check census census-constants smells test test-full test-file file-gate profile-test profile-test-report profile-mod profile-mod-report fmt fix fix-namespace fix-accessors audit status verify-clean docs clean bootstrap-candidate release-plan release-version release-tag release-build publication gen gen-footprint initialize mod mod-rules mod-text mod-text-candidate mod-snapshots waza duplication sonarcloud-sync sonarcloud-issues
-BUILTIN_VERBS := help setup pre-commit upg build examples check census census-constants smells test test-full test-file file-gate profile-test profile-test-report profile-mod profile-mod-report fmt fix fix-namespace fix-accessors audit status verify-clean docs clean bootstrap-candidate release-plan release-version release-tag release-build publication gen gen-footprint initialize mod mod-rules mod-text mod-text-candidate mod-snapshots waza duplication sonarcloud-sync sonarcloud-issues
+PUBLIC_VERBS := help setup pre-commit upg build examples check census census-constants smells test test-full test-file file-gate profile-test profile-test-report profile-mod profile-mod-report profile-mod-rules profile-mod-rules-report fmt fix fix-namespace fix-accessors audit status verify-clean docs clean bootstrap-candidate release-plan release-version release-tag release-build publication gen gen-footprint initialize mod mod-rules mod-text mod-text-candidate mod-snapshots waza duplication sonarcloud-sync sonarcloud-issues
+BUILTIN_VERBS := help setup pre-commit upg build examples check census census-constants smells test test-full test-file file-gate profile-test profile-test-report profile-mod profile-mod-report profile-mod-rules profile-mod-rules-report fmt fix fix-namespace fix-accessors audit status verify-clean docs clean bootstrap-candidate release-plan release-version release-tag release-build publication gen gen-footprint initialize mod mod-rules mod-text mod-text-candidate mod-snapshots waza duplication sonarcloud-sync sonarcloud-issues
 SCRIPT_VERBS :=
 
 CUSTOM_MAKEFILE := $(MAKEFILE_ROOT)/custom.mk
@@ -809,6 +809,34 @@ _activated-profile-mod-report: _builtin_require_environment
 
 
 
+profile-mod-rules: _builtin_require_workspace
+
+	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-profile-mod-rules,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-profile-mod-rules)
+
+.PHONY: _activated-profile-mod-rules
+
+_activated-profile-mod-rules: _builtin_require_environment
+
+
+	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-mod-rules,$(call RUN_PUBLIC,profile-mod-rules))
+
+
+
+
+profile-mod-rules-report: _builtin_require_workspace
+
+	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-profile-mod-rules-report,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-profile-mod-rules-report)
+
+.PHONY: _activated-profile-mod-rules-report
+
+_activated-profile-mod-rules-report: _builtin_require_environment
+
+
+	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-mod-rules-report,$(call RUN_PUBLIC,profile-mod-rules-report))
+
+
+
+
 fmt: _builtin_require_workspace
 
 	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-fmt,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-fmt)
@@ -1270,6 +1298,14 @@ profile-mod-report:
 	@printf '  %-16s %s\n' 'profile-mod-report' 'Render the canonical codemod profile from the last profiling invocation.'
 	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make profile-mod-report to execute it.'
 
+profile-mod-rules:
+	@printf '  %-16s %s\n' 'profile-mod-rules' 'Profile the complete read-only rule diagnostic and retain its native failure outcome.'
+	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make profile-mod-rules to execute it.'
+
+profile-mod-rules-report:
+	@printf '  %-16s %s\n' 'profile-mod-rules-report' 'Render the profile of the complete read-only rule diagnostic.'
+	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make profile-mod-rules-report to execute it.'
+
 fmt:
 	@printf '  %-16s %s\n' 'fmt' 'Apply ruff format --preview and every declared formatter gate. Ruff is the rule; change code, never ruff.'
 	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make fmt to execute it.'
@@ -1448,6 +1484,10 @@ _builtin-help:
 	@printf '  %-16s %s\n' 'profile-mod' 'Profile the canonical mutating codemod lifecycle and retain the profile on failure.';
 
 	@printf '  %-16s %s\n' 'profile-mod-report' 'Render the canonical codemod profile from the last profiling invocation.';
+
+	@printf '  %-16s %s\n' 'profile-mod-rules' 'Profile the complete read-only rule diagnostic and retain its native failure outcome.';
+
+	@printf '  %-16s %s\n' 'profile-mod-rules-report' 'Render the profile of the complete read-only rule diagnostic.';
 
 	@printf '  %-16s %s\n' 'fmt' 'Apply ruff format --preview and every declared formatter gate. Ruff is the rule; change code, never ruff.';
 
@@ -2082,8 +2122,21 @@ _builtin-profile-mod: _builtin_require_environment
 		--repository-root "$(PROJECT_ROOT)" --apply
 
 _builtin-profile-mod-report: _builtin_require_environment
-	@$(PROJECT_INFRA_RUN) -m flext_infra._cprofile_entry \
+	@cd "$(PROJECT_ROOT)" || exit $$?; \
+		$(PROJECT_INFRA_RUN) -m flext_infra._cprofile_entry \
 		"$(PROFILE_REPORTS_DIR)/mod.pstats"
+
+# Measure the same read-only diagnostic used by the public mod-rules verb.
+_builtin-profile-mod-rules: _builtin_require_environment
+	@mkdir -p "$(PROFILE_REPORTS_DIR)"
+	@$(PROJECT_INFRA_RUN) -m flext_infra._profile_entry \
+		"$(PROFILE_REPORTS_DIR)/mod-rules.pstats" refactor ast \
+		--repository-root "$(PROJECT_ROOT)"
+
+_builtin-profile-mod-rules-report: _builtin_require_environment
+	@cd "$(PROJECT_ROOT)" || exit $$?; \
+		$(PROJECT_INFRA_RUN) -m flext_infra._cprofile_entry \
+		"$(PROFILE_REPORTS_DIR)/mod-rules.pstats"
 
 # Profile the cold canonical pytest execution through its thin entrypoint
 # for startup diagnosis: the same persistent testmon database
