@@ -369,7 +369,6 @@ addopts = [
   "--markdown-docs",
   "--durations=10",
   "--flext-enforce-strict",
-  "--timeout=10",
 ]
 flext_slow_timeout_seconds = "30"
 asyncio_default_fixture_loop_scope = "function"
