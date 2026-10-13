@@ -1,8 +1,4 @@
-"""Structlog configuration, async writer, and processor chain assembly.
-
-Extracted from FlextUtilitiesLogging as an MRO mixin to keep the facade under
-the 200-line cap (AGENTS.md §3.1). Dedicated to the async writer subsystem:
-queue-based background writer, thread lifecycle, and stream adapter.
+"""Structlog configuration and asynchronous stream lifecycle.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -80,7 +76,7 @@ class FlextUtilitiesLoggingConfig:
                 None,
             )
             self._failure: BaseException | None = None
-            self.queue: queue.Queue[str | None] = queue.Queue(maxsize=c.MAX_ITEMS)
+            self.queue: queue.Queue[str] = queue.Queue(maxsize=c.MAX_ITEMS)
             self.stop_event = threading.Event()
             self.thread = threading.Thread(
                 target=self._worker,
@@ -152,6 +148,9 @@ class FlextUtilitiesLoggingConfig:
             """
             if self._failure is not None:
                 raise self._failure
+            if self.stop_event.is_set():
+                msg = "Async log writer is shut down"
+                raise ValueError(msg)
             self.queue.put(s, block=c.ASYNC_BLOCK_ON_FULL)
             return len(s)
 
@@ -166,13 +165,12 @@ class FlextUtilitiesLoggingConfig:
             while True:
                 try:
                     msg = self.queue.get(timeout=c.LOG_WORKER_POLL_SECONDS)
-                    if msg is None:
-                        break
-                    self._write_queued_message(msg)
                 except queue.Empty:
                     if self.stop_event.is_set():
                         break
                     continue
+                try:
+                    self._write_queued_message(msg)
                 except BaseException as exc:
                     self._failure = exc
                     self.stop_event.set()

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import io
 import logging
+import sys
 import traceback
 from typing import TYPE_CHECKING
 
@@ -24,6 +25,22 @@ if TYPE_CHECKING:
 
 class TestsFlextLoggingStages:
     """Observable contracts of typed event stages and terminal rendering."""
+
+    @staticmethod
+    def test_closed_async_stream_preserves_native_failure() -> None:
+        """A failed sink terminates without logging back into its own writer."""
+        consumer = (
+            "import sys, structlog\n"
+            "from flext_core import m, u\n"
+            "u.configure_structlog(settings=m.StructlogOptions(async_logging=True))\n"
+            "sys.stdout.close()\n"
+            "structlog.get_logger().info('closed stream')\n"
+        )
+        executed = tm.ok(u.Cli.run_raw((sys.executable, "-c", consumer)))
+        tm.that(u.Cli.process_succeeded(executed.outcome), eq=False)
+        tm.that(executed.outcome.timed_out, eq=False)
+        tm.that(executed.outcome.forwarded_signal, eq=None)
+        tm.that(executed.stderr, has="ValueError: I/O operation on closed file.")
 
     @pytest.fixture(autouse=True)
     def restore_logging_options(self) -> Generator[None]:
