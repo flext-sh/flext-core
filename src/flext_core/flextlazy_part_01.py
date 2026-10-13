@@ -14,6 +14,8 @@ from importlib.util import resolve_name
 from types import ModuleType
 from typing import TYPE_CHECKING
 
+from pydantic import RootModel, ValidationError
+
 if TYPE_CHECKING:
     from types import FrameType
 
@@ -42,10 +44,6 @@ class FlextLazyPart01:
     err_relative_path_requires_module: str = (
         "relative lazy-import paths require a parent module name"
     )
-
-    # The lazy map's alias entry is a two-element ``(target, attr)`` pair. This
-    # bootstrap precedes the ``c`` SSOT it installs, so the arity lives here.
-    _ENTRY_ARITY: int = 2
 
     def __init__(self) -> None:
         """Initialize the empty reuse caches and the default module importer."""
@@ -99,8 +97,20 @@ class FlextLazyPart01:
         if cached is not None and cached[0] is raw:
             return cached[1]
 
+        # The entry shape is validated with pydantic's typed containers. This
+        # bootstrap precedes the models facade it installs, so it binds only
+        # ``RootModel``/``ValidationError`` here (never a model base that would
+        # cross the facade boundary) and lets the native validator parse once.
+        try:
+            validated = (
+                RootModel[dict[str, str | tuple[str, str]]].model_validate(raw).root
+            )
+        except ValidationError as exc:
+            msg = f"module {module_path!r} has no valid _LAZY_IMPORTS mapping"
+            raise TypeError(msg) from exc
+
         out: t.MutableMappingKV[str, str | tuple[str, str]] = {}
-        for name, entry in self._validated_map(module_path, raw).items():
+        for name, entry in validated.items():
             if isinstance(entry, str):
                 out[name] = self._child_path(entry, module_path)
                 continue
@@ -110,40 +120,6 @@ class FlextLazyPart01:
 
         self.normalized_map_cache[cache_key] = (raw, out)
         return out
-
-    @staticmethod
-    def _validated_map(
-        module_path: str,
-        raw: Mapping[str, str | tuple[str, str]] | None,
-    ) -> t.MutableMappingKV[str, str | tuple[str, str]]:
-        """Validate one raw ``_LAZY_IMPORTS`` mapping into its exact contract.
-
-        Returns:
-            The mapping whose names and entries match the declared shape.
-
-        Raises:
-            TypeError: If the mapping or one of its entries is not valid.
-
-        """
-        msg = f"module {module_path!r} has no valid _LAZY_IMPORTS mapping"
-        if not isinstance(raw, Mapping):
-            raise TypeError(msg)
-        validated: t.MutableMappingKV[str, str | tuple[str, str]] = {}
-        for name, entry in raw.items():
-            if not isinstance(name, str):
-                raise TypeError(msg)
-            if isinstance(entry, str):
-                validated[name] = entry
-                continue
-            if (
-                isinstance(entry, (tuple, list))
-                and len(entry) == FlextLazyPart01._ENTRY_ARITY
-                and all(isinstance(part, str) for part in entry)
-            ):
-                validated[name] = (entry[0], entry[1])
-                continue
-            raise TypeError(msg)
-        return validated
 
     @staticmethod
     def _must_activate_core_beartype(module_path: str) -> bool:

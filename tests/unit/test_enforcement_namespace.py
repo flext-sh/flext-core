@@ -313,7 +313,7 @@ class_stem_override = "XmlAPI"
                     "model_config": {"title": "x"},
                     "logger": None,
                     "__annotations__": {
-                        "model_config": "ClassVar[dict[str, str]]",
+                        "model_config": "ClassVar[t.StrDict]",
                         "logger": "ClassVar[object | None]",
                     },
                 },
