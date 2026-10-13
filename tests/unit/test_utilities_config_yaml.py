@@ -85,6 +85,40 @@ class TestsFlextCoreUtilitiesYaml:
             u.Yaml.unique_key_load("top:\n  dup: 1\n  dup: 2\n")
 
     @staticmethod
+    def test_unique_key_load_flattens_merge_keys_with_explicit_override() -> None:
+        """Merge keys flatten to defaults; one explicit pair overrides a merged one."""
+        document = (
+            "base: &base\n"
+            "  host: relay\n"
+            "  port: 8080\n"
+            "served:\n"
+            "  <<: *base\n"
+            "  port: 9090\n"
+        )
+        parsed = u.Yaml.unique_key_load(document)
+        tm.that(
+            parsed,
+            eq={
+                "base": {"host": "relay", "port": 8080},
+                "served": {"host": "relay", "port": 9090},
+            },
+        )
+
+    @staticmethod
+    def test_unique_key_load_rejects_duplicate_explicit_key_beside_merge() -> None:
+        """Flattening a merge never forgives a duplicated explicit key."""
+        document = (
+            "base: &base\n"
+            "  host: relay\n"
+            "served:\n"
+            "  <<: *base\n"
+            "  host: relay\n"
+            "  host: mirror\n"
+        )
+        with pytest.raises(u.Yaml.YAMLError, match="duplicate config key"):
+            u.Yaml.unique_key_load(document)
+
+    @staticmethod
     def test_unique_key_load_rejects_non_string_keys() -> None:
         """Configuration ingress requires string keys before model validation."""
         with pytest.raises(
