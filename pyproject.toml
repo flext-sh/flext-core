@@ -369,7 +369,6 @@ addopts = [
   "--markdown-docs",
   "--durations=10",
   "--flext-enforce-strict",
-  "--timeout=10",
 ]
 flext_slow_timeout_seconds = "30"
 asyncio_default_fixture_loop_scope = "function"
@@ -690,6 +689,9 @@ constraint-dependencies = ["mypy<2.4.0"]
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 link-mode = "copy"
 override-dependencies = ["flext-core"]
+
+[tool.uv.sources.flext-core]
+workspace = true
 
 [tool.bandit]
 severity = "MEDIUM"
