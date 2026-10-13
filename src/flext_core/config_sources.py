@@ -60,15 +60,21 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
         ) -> dict[str, JsonValue]:
             """Construct one mapping without silently replacing a declared key.
 
+            Merge keys flatten first (SafeLoader semantics): anchored pairs
+            enter as defaults, an explicit pair may override one, and a
+            duplicated explicit key stays a loud parse error.
+
             Returns:
                 The parsed JSON-compatible mapping.
 
             Raises:
                 ConstructorError: If a key is not a string or is duplicated.
             """
-            values: dict[str, JsonValue] = {}
             typed_loader = cast("FlextStrictYamlConfigSource._Loader", loader)
-            for key_node, value_node in node.value:
+            declared: set[str] = set()
+            for key_node, _value_node in node.value:
+                if key_node.tag == "tag:yaml.org,2002:merge":
+                    continue
                 key = typed_loader.construct_object(key_node, deep=deep)
                 if not isinstance(key, str):
                     msg = "while constructing a config mapping"
@@ -78,12 +84,25 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
                         "config mapping keys must be strings",
                         key_node.start_mark,
                     )
-                if key in values:
+                if key in declared:
                     msg = "while constructing a config mapping"
                     raise ConstructorError(
                         msg,
                         node.start_mark,
                         f"duplicate config key: {key}",
+                        key_node.start_mark,
+                    )
+                declared.add(key)
+            loader.flatten_mapping(node)
+            values: dict[str, JsonValue] = {}
+            for key_node, value_node in node.value:
+                key = typed_loader.construct_object(key_node, deep=deep)
+                if not isinstance(key, str):
+                    msg = "while constructing a config mapping"
+                    raise ConstructorError(
+                        msg,
+                        node.start_mark,
+                        "config mapping keys must be strings",
                         key_node.start_mark,
                     )
                 values[key] = typed_loader.construct_object(value_node, deep=deep)
