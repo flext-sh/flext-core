@@ -44,6 +44,7 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
         def construct_object(
             self,
             node: Node,
+            *,
             deep: bool = False,
         ) -> JsonValue: ...
 
