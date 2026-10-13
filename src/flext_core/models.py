@@ -12,9 +12,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._models.settings import (
-    FlextModelsSettings,
-)
 from flext_core._models.base import FlextModelsBase
 from flext_core._models.builder import FlextModelsBuilder
 from flext_core._models.collection_models import FlextModelsCollections
@@ -35,6 +32,7 @@ from flext_core._models.project_metadata import FlextModelsProjectMetadata
 from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._models.registry import FlextModelsRegistry
 from flext_core._models.service import FlextModelsService
+from flext_core._models.settings import FlextModelsSettings
 
 
 class FlextModels(

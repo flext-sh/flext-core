@@ -14,10 +14,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast, override
 
 from flext_core import c, m, p, r, t
-from flext_core._handlers_parts import (
-    flexthandlers_part_01,
-    flexthandlers_part_05,
-)
+from flext_core._handlers_parts import flexthandlers_part_01, flexthandlers_part_05
 
 if TYPE_CHECKING:
     from collections.abc import Callable
