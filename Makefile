@@ -188,7 +188,9 @@ export FLEXT_PYTEST_TARGET_RAW := tests
 # or member, uses the workspace runtime. A member resolves the Git superproject
 # that checks it out as a submodule; a checkout without one (a standalone clone,
 # a linked worktree) owns its runtime.
-ifneq ($(GEN_INIT_ONLY),)
+ifneq ($(filter Y,$(CI)),)
+override REPOSITORY_ROOT := $(MAKEFILE_ROOT)
+else ifneq ($(GEN_INIT_ONLY),)
 override REPOSITORY_ROOT := $(MAKEFILE_ROOT)
 else
 override REPOSITORY_ROOT := $(shell cd "$(MAKEFILE_ROOT)" && if root=$$(git rev-parse --show-superproject-working-tree); then if [ -n "$$root" ]; then cd "$$root" && pwd -P; else pwd -P; fi; else status=$$?; if [ "$$status" -ne 1 ]; then exit "$$status"; fi; pwd -P; fi)
@@ -490,7 +492,10 @@ _builtin_require_upg_lock_owner:
 # 2026-10-06: a commit never influences dev behavior — the worktree is the
 # behavior): the root dev group requests every declared package, member group
 # and extra; local setup binds declared members to their live editable sources,
-# while CI's --no-editable keeps the frozen builds. Each project owns its lock.
+# while CI's --no-editable keeps the frozen builds. Attached projects inherit
+# this root's locks. Local source binding follows the complete frozen install.
+LOCAL_EDITABLE_FLAGS :=
+
 SETUP_ENVIRONMENT_RECIPE = set -eu; \
 	trap 'if [ -n "$${FLEXT_SETUP_CREDENTIAL_STORE:-}" ]; then rm -f "$$FLEXT_SETUP_CREDENTIAL_STORE"; fi' EXIT; \
 	$(REQUIRE_WORKSPACE_ENVIRONMENT); \
@@ -507,11 +512,11 @@ SETUP_ENVIRONMENT_RECIPE = set -eu; \
 		printf 'ERROR[setup] uv.lock is missing: %s/uv.lock\n  Right way: only `make upg` writes uv.lock; setup installs the committed lock and never creates one.\n  How: run `make upg` in %s, then commit uv.lock.\n' "$(UV_PROJECT)" "$(PROJECT_ROOT)" >&2; \
 		exit 2; \
 	fi; \
-	mise -C "$(PROJECT_ROOT)" config ls --json; \
-	for member in $(WORKSPACE_SUBPROJECTS); do \
-		mise -C "$(PROJECT_ROOT)/$$member" config ls --json; \
-	done; \
+	mise -C "$(RUNTIME_ROOT)" config ls --json; \
 	$$credential_env $(UV) sync --project "$(UV_PROJECT)" --python "$$desired_python" $(UV_SYNC_FLAGS) --frozen --link-mode "$(UV_LINK_MODE)"; \
+	if [ -n '$(LOCAL_EDITABLE_FLAGS)' ]; then \
+		$$credential_env $(UV) pip install --python "$(RUNTIME_PYTHON)" --no-deps $(LOCAL_EDITABLE_FLAGS); \
+	fi; \
 	$(UV) pip check --python "$(RUNTIME_PYTHON)"; \
 	$(PROJECT_FLEXT_INFRA) workspace verify-environment --repository-root "$(RUNTIME_ROOT)"; \
 	setup_scope="self"; \
@@ -549,7 +554,7 @@ override UV_RUN = env -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u PROJECT_ROOT P
 FLEXT_INFRA_SUBMODULE_SRC := $(RUNTIME_ROOT)/flext-infra/src
 ifeq ($(strip $(CI)),Y)
 # Only this candidate's own sources are visible; dependencies stay installed.
-override PROJECT_INFRA_PYTHONPATH := $(MAKEFILE_ROOT)/src
+override PROJECT_INFRA_PYTHONPATH :=
 else
 override PROJECT_INFRA_PYTHONPATH := $(if $(wildcard $(FLEXT_INFRA_SUBMODULE_SRC)/flext_infra/.),$(FLEXT_INFRA_SUBMODULE_SRC),$(MAKEFILE_ROOT)/src)
 endif
@@ -1257,7 +1262,12 @@ _activated-sonarcloud-issues: _builtin_require_environment
 # `setup` keeps its own recipe (it must not require the environment it is about
 # to build), but it still runs the pre-/post-setup lifecycle hooks so a project
 # declaring them in the custom handler surface is actually honoured.
+ifeq ($(PROJECT_ROOT),$(RUNTIME_ROOT))
 setup: _bootstrap_setup_tools
+else
+setup: _builtin_require_workspace
+	+@"$(SELF_MAKE_EXECUTABLE)" --no-print-directory -C "$(RUNTIME_ROOT)" -f "$(RUNTIME_ROOT)/Makefile" setup
+endif
 
 _builtin-pre-commit: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) check run --repository-root "$(PROJECT_ROOT)" --gates "lint,format,security,markdown,markdown-format,markdown-code,duplication,pyrefly,conflict-markers,loc-cap,runtime-census,fresh-import,index-declarations,layout"
@@ -1270,9 +1280,14 @@ _builtin-pre-commit: _builtin_require_environment
 # then installs from the fresh lock. The lifecycle verifies native UV ownership
 # before resolving its physical uv.lock; attachment selects the environment,
 # not the lock. A converged attached member then aligns its containing root once.
+ifeq ($(PROJECT_ROOT),$(RUNTIME_ROOT))
 upg: TOOL_BOOTSTRAP_LIFECYCLE := _upg_lifecycle
 upg: TOOL_BOOTSTRAP_RESOLVE := 1
 upg: _bootstrap_setup_tools
+else
+upg: _builtin_require_workspace
+	+@"$(SELF_MAKE_EXECUTABLE)" --no-print-directory -C "$(RUNTIME_ROOT)" -f "$(RUNTIME_ROOT)/Makefile" upg
+endif
 else
 
 help:
@@ -1958,9 +1973,6 @@ _upg_lifecycle: _builtin_setup_submodules
 		*" pre-upg "*) $(SELF_MAKE) pre-upg ;; \
 	esac
 	@$(UV) lock --project "$(PROJECT_ROOT)" --upgrade --refresh
-	@if [ "$(PROJECT_ROOT)" != "$(RUNTIME_ROOT)" ]; then \
-		$(UV) lock --project "$(RUNTIME_ROOT)" --upgrade --refresh; \
-	fi
 	@$(SELF_MAKE) _builtin_setup_environment
 	@$(PROJECT_FLEXT_INFRA) codegen conform --root "$(PROJECT_ROOT)" --what mise-config --scope self --mode apply
 	@mise -C "$(PROJECT_ROOT)" lock --bump
@@ -1984,38 +1996,15 @@ _upg_lifecycle: _builtin_setup_submodules
 _upg_converge:
 	@$(UV) lock --project "$(PROJECT_ROOT)"
 	@$(UV) lock --check --project "$(PROJECT_ROOT)"
-	@set -eu; if [ "$(PROJECT_ROOT)" != "$(RUNTIME_ROOT)" ]; then \
-		$(UV) lock --project "$(RUNTIME_ROOT)"; \
-		$(UV) lock --check --project "$(RUNTIME_ROOT)"; \
-	fi
 	@$(SELF_MAKE) _builtin_setup_environment
 	@mise -C "$(PROJECT_ROOT)" install --locked --yes "python" "github:jdx/mise" "uv" "direnv" "taplo" "aqua:ast-grep/ast-grep" "gitleaks" "aqua:boyter/scc" "node" "github:qltysh/qlty" "github:kucherenko/jscpd" "github:microsoft/waza"
 	@$(SELF_MAKE) _builtin_require_mise
 	$(call RUN_PUBLIC_ACTIVATE,gen)
 	@$(SELF_MAKE) gen
-	@$(SELF_MAKE) _upg_reconcile_locks
 	@$(SELF_MAKE) _builtin_setup_environment
 	@$(PROJECT_FLEXT_INFRA) codegen conform --root "$(PROJECT_ROOT)" --mode check
 	@$(PROJECT_FLEXT_INFRA) deps verify-locks --repository-root "$(PROJECT_ROOT)"
-	+@if [ "$(PROJECT_ROOT)" != "$(RUNTIME_ROOT)" ]; then \
-		"$(SELF_MAKE_EXECUTABLE)" --no-print-directory -C "$(RUNTIME_ROOT)" -f "$(RUNTIME_ROOT)/Makefile" upg UPG_HANDOFF=; \
-	fi
 	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _upg_activated,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _upg_activated)
-
-.PHONY: _upg_reconcile_locks
-_upg_reconcile_locks:
-	@set -eu; \
-	for project in "$(PROJECT_ROOT)" $(if $(filter workspace,$(MAKE_PROFILE)),$(foreach member,$(WORKSPACE_SUBPROJECTS),"$(PROJECT_ROOT)/$(member)")); do \
-		owner="$$($(UV) workspace dir --project "$$project")"; \
-		if [ "$$owner" != "$$project" ]; then \
-			printf 'ERROR[upg] UV lock owner is %s, not %s; regenerate the independent-project topology before upgrading.\n' "$$owner" "$$project" >&2; \
-			exit 2; \
-		fi; \
-		printf 'upg: reconciling independent lock %s\n' "$$project"; \
-		$(UV) lock --project "$$project"; \
-		$(UV) lock --check --project "$$project"; \
-		printf 'upg: native lock satisfied %s\n' "$$project"; \
-	done
 
 .PHONY: _upg_activated
 _upg_activated:

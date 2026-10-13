@@ -690,6 +690,9 @@ environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 link-mode = "copy"
 override-dependencies = ["flext-core"]
 
+[tool.uv.sources.flext-core]
+workspace = true
+
 [tool.bandit]
 severity = "MEDIUM"
 skips = ["B101"]
