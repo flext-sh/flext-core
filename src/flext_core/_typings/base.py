@@ -22,9 +22,11 @@ class FlextTypingBase(flexttypingbase_part_01.FlextTypingBase):
     """Base type alias namespace for Flext core type-safe contracts."""
 
     type MappingKV[KeyT, ValueT] = Mapping[KeyT, ValueT]
+    type DictKV[KeyT, ValueT] = dict[KeyT, ValueT]
     type MutableMappingKV[KeyT, ValueT] = MutableMapping[KeyT, ValueT]
     type IterableOf[ItemT] = Iterable[ItemT]
     type SequenceOf[ItemT] = Sequence[ItemT]
+    type ListOf[ItemT] = list[ItemT]
     type MutableSequenceOf[ItemT] = MutableSequence[ItemT]
     type RegexPattern = re.Pattern[str]
     type RegexMatch = re.Match[str]
