@@ -31,21 +31,18 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
         """
         return cast("p.Result[T]", self)
 
-    def _fail_with_metadata[U](self) -> p.Result[U]:
-        """Rebuild this failure as ``p.Result[U]`` preserving error metadata.
+    def _fail_with_metadata(self) -> p.Result[T]:
+        """Rebuild this failure as ``p.Result[T]`` preserving error metadata.
 
         Returns:
-            The resulting ``p.Result[U]``.
+            The resulting ``p.Result[T]``.
 
         """
-        return cast(
-            "p.Result[U]",
-            self.__class__.fail(
-                self.require_error(self._as_result()),
-                error_code=self.error_code,
-                error_data=self.error_data,
-                exception=self._exception,
-            ),
+        return self.__class__.fail(
+            self.require_error(self._as_result()),
+            error_code=self.error_code,
+            error_data=self.error_data,
+            exception=self._exception,
         )
 
     def filter(self: Self, predicate: Callable[[T], bool]) -> p.Result[T]:
@@ -60,7 +57,7 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
 
     def flat_map[U](self: Self, func: Callable[[T], p.Result[U]]) -> p.Result[U]:
         if self.failure:
-            return self._fail_with_metadata()
+            return cast("p.Result[U]", self._fail_with_metadata())
         try:
             return copy_result(self._factory(), func(self._payload))
         except c.EXC_BROAD_RUNTIME as exc:
@@ -111,7 +108,7 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
                 return ok_result(self._factory(), func(self._payload))
             except c.EXC_BROAD_RUNTIME as exc:
                 return cast("p.Result[U]", self.__class__.fail(str(exc), exception=exc))
-        return self._fail_with_metadata()
+        return cast("p.Result[U]", self._fail_with_metadata())
 
     def map_error(self: Self, func: Callable[[str], str]) -> p.Result[T]:
         if self.failure:
@@ -169,7 +166,7 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
 
     def to_model[U: BaseModel](self: Self, model: type[U]) -> p.Result[U]:
         if self.failure:
-            return self._fail_with_metadata()
+            return cast("p.Result[U]", self._fail_with_metadata())
         try:
             return ok_result(self._factory(), model.model_validate(self._payload))
         except c.EXC_ATTR_RUNTIME_VALIDATION as exc:

@@ -15,7 +15,7 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence, Sequence as _Sequence
 from importlib.resources.abc import Traversable
 from pathlib import Path, Path as _Path
-from typing import IO, cast, override
+from typing import IO, Protocol, cast, override
 
 from pydantic import JsonValue
 from pydantic_settings import BaseSettings, YamlConfigSettingsSource
@@ -23,6 +23,7 @@ from pydantic_settings.sources import ConfigFileSourceType, PathType
 from pydantic_settings.sources.utils import InitState
 from yaml import MappingNode, SafeLoader
 from yaml.constructor import ConstructorError
+from yaml.nodes import Node
 from yaml.resolver import BaseResolver
 
 from flext_core._typings.base import FlextTypingBase
@@ -36,6 +37,15 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
     use this to apply env-expansion, filtering, or section reshaping without
     reinstantiating the source or overriding ``settings_customise_sources``.
     """
+
+    class _Loader(Protocol):
+        """Typed view of the YAML loader's object-construction boundary."""
+
+        def construct_object(
+            self,
+            node: Node,
+            deep: bool = False,
+        ) -> JsonValue: ...
 
     class UniqueKeyLoader(SafeLoader):
         """Safe YAML loader rejecting duplicate and non-string mapping keys."""
@@ -56,8 +66,9 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
                 ConstructorError: If a key is not a string or is duplicated.
             """
             values: FlextTypingBase.JsonDict = {}
+            typed_loader = cast("FlextStrictYamlConfigSource._Loader", loader)
             for key_node, value_node in node.value:
-                key = cast("JsonValue", loader.construct_object(key_node, deep=deep))
+                key = typed_loader.construct_object(key_node, deep)
                 if not isinstance(key, str):
                     msg = "while constructing a config mapping"
                     raise ConstructorError(
@@ -74,10 +85,7 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
                         f"duplicate config key: {key}",
                         key_node.start_mark,
                     )
-                values[key] = cast(
-                    "JsonValue",
-                    loader.construct_object(value_node, deep=deep),
-                )
+                values[key] = typed_loader.construct_object(value_node, deep)
             return values
 
     UniqueKeyLoader.add_constructor(

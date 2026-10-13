@@ -47,7 +47,7 @@ class TestsFlextFlextSettingsPrecedenceCase(TestsFlextFlextSettingsFactories):
             _ = env_file.write_text(env_content, encoding="utf-8")
             tm.that(env_file.read_text(encoding="utf-8"), eq=env_content)
             with u.Tests.env_vars_context({"FLEXT_ENV_FILE": str(env_file)}):
-                from_dotenv = FlextSettings(_env_file=str(env_file))
+                from_dotenv = FlextSettings()
                 tm.that(from_dotenv.log_level, eq="WARNING")
                 tm.that(from_dotenv.debug, eq=True)
 

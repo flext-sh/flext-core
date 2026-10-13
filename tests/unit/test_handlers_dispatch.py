@@ -34,6 +34,10 @@ class TestsFlextHandlersDispatch(u.TestsFlextFlextHandlers):
         """Test execute returns processed payload for dict message."""
 
         class DictHandler(h[t.JsonMapping, t.JsonPayload]):
+            def __init__(self, *, settings: m.Handler | None = None) -> None:
+                """Initialize the dict-message handler with optional settings."""
+                super().__init__(settings=settings)
+
             @override
             def execute(self, message: t.JsonMapping) -> p.Result[t.JsonPayload]:
                 return self.handle(message)
@@ -111,6 +115,10 @@ class TestsFlextHandlersDispatch(u.TestsFlextFlextHandlers):
         class RestrictiveHandler(
             u.TestsFlextFlextHandlers.ConcreteTestHandler,
         ):
+            def __init__(self, *, settings: m.Handler | None = None) -> None:
+                """Initialize the restrictive handler with optional settings."""
+                super().__init__(settings=settings)
+
             @override
             def can_handle(self, message_type: type) -> bool:
                 _ = message_type
@@ -133,6 +141,10 @@ class TestsFlextHandlersDispatch(u.TestsFlextFlextHandlers):
         class ValidationFailingHandler(
             u.TestsFlextFlextHandlers.ConcreteTestHandler,
         ):
+            def __init__(self, *, settings: m.Handler | None = None) -> None:
+                """Initialize the validation-failing handler with optional settings."""
+                super().__init__(settings=settings)
+
             @override
             def validate_message(self, data: t.JsonPayload) -> p.Result[bool]:
                 _ = data
@@ -155,6 +167,10 @@ class TestsFlextHandlersDispatch(u.TestsFlextFlextHandlers):
         class ExceptionHandler(
             u.TestsFlextFlextHandlers.ConcreteTestHandler,
         ):
+            def __init__(self, *, settings: m.Handler | None = None) -> None:
+                """Initialize the exception-raising handler with optional settings."""
+                super().__init__(settings=settings)
+
             @override
             def handle(self, message: t.JsonPayload) -> p.Result[t.JsonPayload]:
                 _ = message

@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import MutableSequence, Sequence
+from typing import cast
 
 from flext_core import c, p, r, t, u
 from flext_core._utilities import FlextUtilitiesDispatcherExecute
@@ -72,7 +73,7 @@ class FlextDispatcher:
 
         """
         if isinstance(event, Sequence):
-            for evt in event:
+            for evt in cast("t.SequenceOf[p.Routable]", event):
                 _ = self.publish(evt)
             return r[bool].ok(value=True)
         route_name = u.resolve_message_route(event)

@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, cast
 
 if TYPE_CHECKING:
     from flext_core import t
@@ -37,40 +37,31 @@ class FlextUtilitiesGuardsTypeProtocolStringMixin:
         """
         return value is None
 
-    _STRING_TYPE_PREDICATES: ClassVar[
-        t.MappingKV[str, Callable[[ProtocolGuardInput], bool]]
-    ] = {
-        "str": lambda value: isinstance(value, str),
-        "dict": lambda value: isinstance(value, dict),
-        "list": lambda value: isinstance(value, list),
-        "tuple": lambda value: isinstance(value, tuple),
-        "sequence": lambda value: isinstance(value, (list, tuple, range)),
-        "mapping": lambda value: isinstance(value, Mapping),
-        "list_or_tuple": lambda value: isinstance(value, (list, tuple)),
-        "sequence_not_str": lambda value: (
-            isinstance(value, (list, tuple, range)) and not isinstance(value, str)
-        ),
-        "sequence_not_str_bytes": lambda value: (
-            isinstance(value, (list, tuple, range))
-            and not isinstance(value, (str, bytes))
-        ),
-        "sized": lambda value: hasattr(value, "__len__"),
-        "callable": callable,
-        "bytes": lambda value: isinstance(value, bytes),
-        "int": lambda value: isinstance(value, int),
-        "float": lambda value: isinstance(value, float),
-        "bool": lambda value: isinstance(value, bool),
-        "none": lambda value: value is None,
-        "string_non_empty": lambda value: (
-            isinstance(value, str) and bool(value.strip())
-        ),
-        "dict_non_empty": lambda value: isinstance(value, Mapping) and len(value) > 0,
-        "list_non_empty": lambda value: (
+    @staticmethod
+    def _is_non_empty_mapping(value: ProtocolGuardInput) -> bool:
+        """Return whether ``value`` is a non-empty mapping.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
+        return isinstance(value, Mapping) and bool(
+            cast("Mapping[str, t.JsonValue]", value),
+        )
+
+    @staticmethod
+    def _is_non_empty_sequence(value: ProtocolGuardInput) -> bool:
+        """Return whether ``value`` is a non-empty non-text sequence.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
+        return (
             isinstance(value, Sequence)
             and not isinstance(value, (str, bytes, bytearray))
-            and len(value) > 0
-        ),
-    }
+            and bool(cast("Sequence[t.JsonValue]", value))
+        )
 
     @staticmethod
     def _string_predicates() -> Mapping[str, Callable[[ProtocolGuardInput], bool]]:
@@ -115,16 +106,11 @@ class FlextUtilitiesGuardsTypeProtocolStringMixin:
                     value.strip(),
                 )
             ),
-            "dict_non_empty": lambda value: (
-                isinstance(value, Mapping)
-                and bool(
-                    len(value),
-                )
+            "dict_non_empty": (
+                FlextUtilitiesGuardsTypeProtocolStringMixin._is_non_empty_mapping
             ),
-            "list_non_empty": lambda value: (
-                isinstance(value, Sequence)
-                and not isinstance(value, (str, bytes, bytearray))
-                and bool(len(value))
+            "list_non_empty": (
+                FlextUtilitiesGuardsTypeProtocolStringMixin._is_non_empty_sequence
             ),
         }
 

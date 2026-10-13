@@ -14,7 +14,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast, override
 
 from flext_core import c, m, p, r, t
-from flext_core._handlers_parts import flexthandlers_part_05
+from flext_core._handlers_parts import (
+    flexthandlers_part_01,
+    flexthandlers_part_05,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -23,6 +26,21 @@ if TYPE_CHECKING:
 class FlextHandlers[MessageT_contra, ResultT](
     flexthandlers_part_05.FlextHandlers[MessageT_contra, ResultT],
 ):
+    def __init__(self, *, settings: p.HandlerConfig | None = None) -> None:
+        """Initialize the handler, forwarding configuration to its owner.
+
+        The base constructor is invoked explicitly so the pydantic model
+        synthesis pyright applies to every intermediate subclass keeps exposing
+        the owner-declared ``settings`` keyword at the boundary.
+
+        Args:
+            settings: Optional handler configuration model.
+
+        """
+        flexthandlers_part_01.FlextHandlers[MessageT_contra, ResultT].__init__(
+            self, settings=settings
+        )
+
     @staticmethod
     def create_from_callable(
         handler_callable: Callable[[t.Scalar], t.Scalar],

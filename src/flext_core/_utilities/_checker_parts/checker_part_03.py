@@ -10,8 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableSequence
-from typing import get_args, get_origin
+from collections.abc import Callable, Mapping, MutableSequence
+from typing import cast, get_args, get_origin
 
 from pydantic import BaseModel
 
@@ -52,17 +52,31 @@ class FlextUtilitiesChecker(checker_part_02.FlextUtilitiesChecker):
         ]
         if message_types:
             return message_types
-        return [
-            args[0]
-            for parent_cls in handler_class.__bases__
-            if isinstance(
-                (meta := getattr(parent_cls, "__pydantic_generic_metadata__", None)),
-                Mapping,
+        metadata_types: MutableSequence[FlextTypingBase.TypeHintSpecifier] = []
+        for parent_cls in handler_class.__bases__:
+            metadata_raw = getattr(
+                parent_cls,
+                "__pydantic_generic_metadata__",
+                None,
             )
-            if (origin := meta.get("origin")) is not None
-            if getattr(origin, "__name__", "") in c.CHECKER_HANDLER_ORIGIN_NAMES
-            if (args := meta.get("args", ()))
-        ]
+            if not isinstance(metadata_raw, Mapping):
+                continue
+            metadata = cast(
+                FlextTypingBase.MappingKV[
+                    str,
+                    FlextTypingBase.TypeHintSpecifier
+                    | FlextTypingBase.VariadicTuple[FlextTypingBase.TypeHintSpecifier]
+                    | None,
+                ],
+                metadata_raw,
+            )
+            origin = metadata.get("origin")
+            if getattr(origin, "__name__", "") not in c.CHECKER_HANDLER_ORIGIN_NAMES:
+                continue
+            args = metadata.get("args")
+            if isinstance(args, tuple) and args:
+                metadata_types.append(args[0])
+        return metadata_types
 
     @classmethod
     def _extract_message_type_from_handle(
@@ -88,13 +102,17 @@ class FlextUtilitiesChecker(checker_part_02.FlextUtilitiesChecker):
             return FlextResult[FlextTypingBase.TypeHintSpecifier].fail(
                 c.ERR_CHECKER_HANDLER_HANDLE_NOT_CALLABLE,
             )
-        signature_result = cls._get_method_signature(handle_method_raw)
+        handle_method = cast(
+            "Callable[..., FlextTypesServices.ModuleExport]",
+            handle_method_raw,
+        )
+        signature_result = cls._get_method_signature(handle_method)
         if signature_result.failure:
             return FlextResult[FlextTypingBase.TypeHintSpecifier].from_failure(
                 signature_result
             )
         signature = signature_result.unwrap()
-        type_hints = cls._get_type_hints_safe(handle_method_raw, handler_class)
+        type_hints = cls._get_type_hints_safe(handle_method, handler_class)
         for name, parameter in signature.parameters.items():
             if name == c.FRAME_SELF_KEY:
                 continue
