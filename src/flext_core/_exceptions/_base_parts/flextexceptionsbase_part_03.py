@@ -59,7 +59,7 @@ class FlextExceptionsBase:
                 # Extract exactly the remaining option keys from the kwargs so
                 # they feed the typed options instead of falling into the
                 # generic extra bucket; ``metadata`` is a named parameter.
-                option_kwargs: dict[
+                option_kwargs: FlextTypingBase.MutableMappingKV[
                     str,
                     FlextProtocolsResult.HasModelDump
                     | FlextTypingBase.JsonValue

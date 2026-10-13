@@ -150,7 +150,9 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
         return None
 
     @staticmethod
-    def _family_base_exempt(value: type, target: type, module: object) -> bool:
+    def _family_base_exempt(
+        value: type, target: type, module: t.UnconstrainedValue
+    ) -> bool:
         """Return True when the tier import is an exempt family base or lazy member.
 
         Returns:
@@ -171,7 +173,7 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
         )
 
     @staticmethod
-    def _is_lazy_published_member(module: object, value: type) -> bool:
+    def _is_lazy_published_member(module: t.UnconstrainedValue, value: type) -> bool:
         """Return True when the module publishes the lazy export contract.
 
         *value* must be one of its lazy-published family members. The catalog
@@ -239,7 +241,7 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
 
     @staticmethod
     def _is_private_family_import(
-        value: object,
+        value: t.UnconstrainedValue,
         origin: str,
         package: str,
         *,

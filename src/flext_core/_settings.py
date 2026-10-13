@@ -31,7 +31,7 @@ import threading
 from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Annotated, ClassVar, Self
+from typing import TYPE_CHECKING, Annotated, ClassVar, Self
 
 from pydantic import BaseModel, Field, computed_field, model_validator
 from pydantic_settings import (
@@ -41,6 +41,9 @@ from pydantic_settings import (
 )
 
 from flext_core._constants import FlextConstantsEnvironment
+
+if TYPE_CHECKING:
+    from flext_core import t
 from flext_core._constants.settings import FlextConstantsSettings
 
 ENV_FILE_ENV_VAR = FlextConstantsSettings.ENV_FILE_ENV_VAR
@@ -259,13 +262,13 @@ class FlextSettings(BaseSettings):
     _instance: ClassVar[Self | None] = None
     _app_namespace: ClassVar[str | None] = None
 
-    def __init_subclass__(cls, **kwargs: object) -> None:
+    def __init_subclass__(cls, **kwargs: t.SettingsOverride | None) -> None:
         """Give every concrete subclass its own isolated singleton slot."""
         _ = kwargs
         super().__init_subclass__()
         cls._instance = None
 
-    def __new__(cls, **kwargs: object) -> Self:
+    def __new__(cls, **kwargs: t.SettingsOverride | None) -> Self:
         """Singleton factory; unknown kwargs are ignored by consumer factories.
 
         Raises:
@@ -309,7 +312,7 @@ class FlextSettings(BaseSettings):
                 cls._singleton_enabled = original
 
     @classmethod
-    def fetch_global(cls, *, overrides: Mapping[str, object] | None = None) -> Self:
+    def fetch_global(cls, *, overrides: t.ScalarMapping | None = None) -> Self:
         """Return the shared per-class singleton (lazy, thread-safe).
 
         With ``overrides`` return an isolated clone; the singleton is not
@@ -333,14 +336,16 @@ class FlextSettings(BaseSettings):
             return created
 
     @classmethod
-    def _merge_overrides(cls, current: Self, **overrides: object) -> dict[str, object]:
+    def _merge_overrides(
+        cls, current: Self, **overrides: t.SettingsOverride | None
+    ) -> t.MutableMappingKV[str, t.SettingsOverride | None]:
         """Merge partial nested-model overrides onto the current state.
 
         Returns:
-            The resulting ``dict[str, object]``.
+            The resulting mapping of the merged override values.
         """
         cls._validate_overrides(**overrides)
-        merged: dict[str, object] = {}
+        merged: t.MutableMappingKV[str, t.SettingsOverride | None] = {}
         for field_name, override_value in overrides.items():
             current_value = getattr(current, field_name, None)
             if isinstance(current_value, BaseModel) and isinstance(
@@ -357,7 +362,7 @@ class FlextSettings(BaseSettings):
             merged[field_name] = override_value
         return merged
 
-    def clone(self, **overrides: object) -> Self:
+    def clone(self, **overrides: t.SettingsOverride | None) -> Self:
         """Deep copy with optional field overrides + re-validation.
 
         Returns:
@@ -374,7 +379,7 @@ class FlextSettings(BaseSettings):
             return type(copied).model_validate(copied, from_attributes=True)
 
     @classmethod
-    def update_global(cls, **overrides: object) -> Self:
+    def update_global(cls, **overrides: t.SettingsOverride | None) -> Self:
         """Replace the singleton via ``model_copy(update=…)`` + revalidate.
 
         Returns:
@@ -392,7 +397,7 @@ class FlextSettings(BaseSettings):
         return validated
 
     @classmethod
-    def _validate_overrides(cls, **overrides: object) -> None:
+    def _validate_overrides(cls, **overrides: t.SettingsOverride | None) -> None:
         """Reject override keys that are not declared model fields.
 
         Raises:

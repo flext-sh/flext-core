@@ -84,7 +84,7 @@ class FlextUtilitiesChecker(checker_part_01.FlextUtilitiesChecker):
         """Safely extract type hints, returning empty dict on error.
 
         Returns:
-            The resulting ``FlextTypingBase.MappingKV[str, FlextTypingBase.TypeHintSpecifier | None]``.
+            The resulting mapping of type-hint specifiers, ``None`` for absent.
         from flext_core._typings.services import FlextTypesServices as ts
         from flext_core._typings.base import FlextTypingBase as tb
 

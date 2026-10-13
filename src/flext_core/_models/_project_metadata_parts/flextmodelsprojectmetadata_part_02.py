@@ -136,7 +136,9 @@ class FlextModelsProjectMetadataFields:
 
         @field_validator("include", mode="before")
         @classmethod
-        def _validate_include_path(cls, value: object) -> object:
+        def _validate_include_path(
+            cls, value: FlextTypingBase.UnconstrainedValue
+        ) -> FlextTypingBase.UnconstrainedValue:
             if value is None or not isinstance(value, (str, PurePosixPath)):
                 return value
             rendered = str(value)

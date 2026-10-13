@@ -30,7 +30,7 @@ class FlextUtilitiesChecker(checker_part_02.FlextUtilitiesChecker):
         """Extract message types from generic base annotations.
 
         Returns:
-            The resulting ``FlextTypingBase.SequenceOf[FlextTypingBase.TypeHintSpecifier]``.
+            The resulting sequence of type-hint specifiers.
 
         """
         raw_bases: (
@@ -134,7 +134,7 @@ class FlextUtilitiesChecker(checker_part_02.FlextUtilitiesChecker):
         """Compute message types accepted by a handler using cached introspection.
 
         Returns:
-            The resulting ``FlextTypingBase.VariadicTuple[FlextTypingBase.TypeHintSpecifier]``.
+            The resulting tuple of type-hint specifiers.
 
         from flext_core._typings.base import FlextTypingBase as tb
         """
