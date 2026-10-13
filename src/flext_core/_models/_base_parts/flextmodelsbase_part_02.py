@@ -15,7 +15,7 @@ from __future__ import annotations
 import uuid
 from collections.abc import Hashable
 from datetime import datetime
-from typing import Annotated, ClassVar, override
+from typing import Annotated, ClassVar, dataclass_transform, override
 
 from pydantic import ConfigDict
 from typing_extensions import TypeForm
@@ -158,6 +158,7 @@ class FlextModelsBase(flextmodelsbase_part_01.FlextModelsBase):
             data = self.model_dump()
             return hash(tuple(sorted(((k, str(v)) for k, v in data.items()))))
 
+    @dataclass_transform(kw_only_default=True)
     class MutableConfiguredMixin:
         """Shared preset for mutable mixins with assignment validation."""
 

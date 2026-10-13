@@ -14,6 +14,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from typing_extensions import TypeForm
 
 from flext_core import FlextConfig, FlextStrictYamlConfigSource
 from tests import t, tm, u
@@ -34,10 +35,10 @@ class TestsFlextCoreUtilitiesYaml:
         )
         for path, document in zip(paths, documents, strict=True):
             path.write_text(document, encoding="utf-8")
-        baseline = u.type_adapter(t.JsonDict).validate_python(
+        baseline: t.JsonDict = u.type_adapter(TypeForm(t.JsonDict)).validate_python(
             u.Yaml.unique_key_load(documents[0]),
         )
-        override = u.type_adapter(t.JsonDict).validate_python(
+        override: t.JsonDict = u.type_adapter(TypeForm(t.JsonDict)).validate_python(
             u.Yaml.unique_key_load(documents[1]),
         )
         merged = FlextStrictYamlConfigSource.merge_values(baseline, override)

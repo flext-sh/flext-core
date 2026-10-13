@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from itertools import starmap
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from flext_core import FlextResult, FlextRuntime, c, m, t
 from flext_core._models import FlextModelsPydantic
@@ -157,7 +157,10 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
                 if isinstance(item, FlextModelsPydantic.BaseModel):
                     raw = getattr(item, field, None)
                 elif isinstance(item, Mapping):
-                    raw = item.get(field)
+                    raw = cast(
+                        "t.MappingKV[str, p.AttributeProbe]",
+                        item,
+                    ).get(field)
                 else:
                     continue
                 if isinstance(raw, c.NUMERIC_TYPES):

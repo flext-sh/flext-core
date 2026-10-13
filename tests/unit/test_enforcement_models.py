@@ -52,7 +52,7 @@ class TestsFlextEnforcementModels:
         class _M(m.ArbitraryTypesModel):
             data: _BARE_DICT_TYPE = m.Field(default_factory=dict, description="d")
 
-        assert messages(u.check(_M), fragment="bare ")
+        assert messages(u.check(_M), fragment="no_raw_collections_field_default")
 
     @staticmethod
     def test_bare_list_detected() -> None:
@@ -61,7 +61,7 @@ class TestsFlextEnforcementModels:
         class _M(m.ArbitraryTypesModel):
             items: list[str] = m.Field(default_factory=list, description="d")
 
-        assert messages(u.check(_M), fragment="bare ")
+        assert messages(u.check(_M), fragment="no_raw_collections_field_default")
 
     @staticmethod
     def test_mapping_passes() -> None:
@@ -75,7 +75,7 @@ class TestsFlextEnforcementModels:
                 ),
             ] = m.Field(default_factory=lambda: MappingProxyType[str, str]({}))
 
-        assert not messages(u.check(_M), fragment="bare ")
+        assert not messages(u.check(_M), fragment="no_raw_collections_field_default")
 
     @staticmethod
     def test_mutable_sequence_list_factory_passes() -> None:

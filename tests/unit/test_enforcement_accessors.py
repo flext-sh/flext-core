@@ -103,7 +103,11 @@ class TestsFlextCoreEnforcementAccessors:
         # Arrange — the base introduces get_user; the subclass overrides it.
         """Test accessor is judged once at the introducing class."""
         base = make_class("FlextCoreAccessedBase", {"get_user": synthetic_method})
-        child = type("FlextCoreAccessedChild", (base,), {"get_user": synthetic_method})
+        child: type = type(
+            "FlextCoreAccessedChild",
+            (base,),
+            {"get_user": synthetic_method},
+        )
         child.__qualname__ = child.__name__
         child.__module__ = "flext_core.synthetic"
 

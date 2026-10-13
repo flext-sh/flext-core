@@ -11,7 +11,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
-from typing import TYPE_CHECKING, ClassVar
+from collections.abc import Sized
+from typing import TYPE_CHECKING, ClassVar, cast
 
 from typing_extensions import TypeForm
 
@@ -26,7 +27,7 @@ from flext_core._utilities import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Mapping, Sized
+    from collections.abc import Callable, Mapping
 
 
 # NOTE (multi-agent): mro-i6nq.12 — consolidated _guards_parts/part_01..02 (one
@@ -79,9 +80,8 @@ class FlextUtilitiesGuards(
         """
         if isinstance(value, c.NUMERIC_TYPES):
             return value
-        if isinstance(value, (str, bytes, list, tuple, dict, set, frozenset)):
-            sized_value: Sized = value
-            return len(sized_value)
+        if isinstance(value, Sized):
+            return len(value)
         return 0
 
     @staticmethod
@@ -313,10 +313,13 @@ class FlextUtilitiesGuards(
         if isinstance(validator, type):
             return isinstance(value, validator)
         if isinstance(validator, tuple):
+            candidates = cast("t.VariadicTuple[t.TypeHintSpecifier]", validator)
+            if not all(isinstance(item, type) for item in candidates):
+                return False
             tuple_types: t.VariadicTuple[type] = tuple(
-                item for item in validator if isinstance(item, type)
+                item for item in candidates if isinstance(item, type)
             )
-            return len(tuple_types) == len(validator) and isinstance(value, tuple_types)
+            return isinstance(value, tuple_types)
         if callable(validator):
             return validator(value)
         return bool(value)
