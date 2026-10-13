@@ -20,8 +20,8 @@ from tests.unit._enforcement_support import messages
 # Deliberate broad-annotation fixtures: the enforcement engine under test must
 # detect these exact runtime types, so they are exposed as type aliases usable
 # inside annotations.
-type _ANY_TYPE = typing.Any
-type _BARE_DICT_TYPE = dict[str, str]
+type _ANY_TYPE = t.UnconstrainedValue
+type _BARE_DICT_TYPE = t.MappingKV[str, str]
 
 
 class TestsFlextEnforcementModels:

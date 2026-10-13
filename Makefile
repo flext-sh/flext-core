@@ -479,18 +479,11 @@ SETUP_ENVIRONMENT_RECIPE = set -eu; \
 	$$credential_env $(UV) sync --project "$(UV_PROJECT)" --python "$$desired_python" $(UV_SYNC_FLAGS) --frozen --link-mode "$(UV_LINK_MODE)"; \
 	$(UV) pip check --python "$(RUNTIME_PYTHON)"; \
 	$(PROJECT_FLEXT_INFRA) workspace verify-environment --repository-root "$(RUNTIME_ROOT)"; \
-	$(PROJECT_FLEXT_INFRA) codegen mise-artifacts --repository-root "$(PROJECT_ROOT)" --config-only; \
-	for member in $(WORKSPACE_SUBPROJECTS); do \
-		$(PROJECT_FLEXT_INFRA) codegen mise-artifacts --repository-root "$(PROJECT_ROOT)/$$member" --config-only; \
-	done; \
-	$(PROJECT_FLEXT_INFRA) workspace sync-environment --repository-root "$(PROJECT_ROOT)"; \
-	if [ "$(strip $(CI))" != "Y" ]; then \
-		for member in $(WORKSPACE_SUBPROJECTS); do \
-			if [ -f "$(PROJECT_ROOT)/$$member/.envrc" ]; then \
-				$(PROJECT_FLEXT_INFRA) workspace sync-environment --repository-root "$(PROJECT_ROOT)/$$member"; \
-			fi; \
-		done; \
-	fi
+	setup_scope="self"; \
+	if [ "$(strip $(CI))" = "Y" ]; then setup_scope=self; fi; \
+	$(PROJECT_FLEXT_INFRA) codegen mise-artifacts --repository-root "$(PROJECT_ROOT)" --config-only --scope "$$setup_scope"; \
+	$(PROJECT_FLEXT_INFRA) workspace sync-environment --repository-root "$(PROJECT_ROOT)" --scope "$$setup_scope"; \
+	$(PROJECT_FLEXT_INFRA) codegen conform --root "$(PROJECT_ROOT)" --what runtime-bindings --scope "$$setup_scope" --mode apply
 
 # Reject borrowed environments before bootstrap, activation or custom hooks.
 # Members may use their containing workspace, never an unrelated checkout.
@@ -1748,9 +1741,8 @@ endif
 
 # === SECTION: setup environment (managed) ===
 # Source: computed (MAKE_PROFILE routing)
-# Setup PROVISIONS tooling only — mise, venv, dependencies.
-# It never generates, conforms, or mutates project code; `make gen` is the
-# single public conformance/generation surface.
+# Setup provisions tooling, dependencies and declared runtime-local bindings.
+# It never generates or mutates project source; `make gen` owns source generation.
 # Setup installs the committed uv.lock and never writes it (lock law: only
 # `make upg` writes locks); uv owns the venv: `uv sync --python` creates or
 # replaces it against the declared interpreter.
@@ -1882,7 +1874,7 @@ _builtin_check_all: _builtin_require_environment
 			printf 'ERROR: no active check gates remain in the selected context\n' >&2; \
 			exit 2; \
 		fi; \
-		$(PROJECT_FLEXT_INFRA) check run --repository-root "$(PROJECT_ROOT)" --gates "$$gates"
+		$(PROJECT_FLEXT_INFRA) workspace capture-gate --repository-root "$(PROJECT_ROOT)" --gates "$$gates"
 
 _builtin_test_all: _builtin_require_environment
 	@set -eu; \
@@ -2080,7 +2072,7 @@ _builtin-profile-test-report: _builtin_require_environment
 
 _builtin_status_import_observation: _builtin_require_interpreter
 	@$(RUNTIME_PYTHON) -c 'import json, sys; exec(json.loads(sys.argv[1]))' \
-		'"\nimport importlib\nimport inspect\nimport json\nimport sys\n\ndeclared = json.loads(sys.argv[2])\nnames = tuple(name for name, root in declared)\nprint(f\"runtime-import-observation executable={sys.executable!r} prefix={sys.prefix!r}\", flush=True)\ntry:\n    for name, root in declared:\n        print(f\"runtime-import-declaration module={name!r} source={root!r}\", flush=True)\n        importlib.import_module(name)\nfinally:\n    for name, module in tuple(sys.modules.items()):\n        if not any(name == package or name.startswith(package + \".\") for package in names):\n            continue\n        spec = getattr(module, \"__spec__\", None)\n        print(\n            f\"runtime-import-module name={name!r} \"\n            f\"origin={getattr(spec, \u0027origin\u0027, None)!r} \"\n            f\"file={getattr(module, \u0027__file__\u0027, None)!r} \"\n            f\"path={getattr(module, \u0027__path__\u0027, None)!r} \"\n            f\"cached={getattr(module, \u0027__cached__\u0027, None)!r}\",\n            flush=True,\n        )\n        for symbol, value in tuple(vars(module).items()):\n            function = value.__func__ if inspect.ismethod(value) else value\n            if inspect.isfunction(function):\n                print(\n                    f\"runtime-import-code module={name!r} symbol={symbol!r} \"\n                    f\"co_filename={function.__code__.co_filename!r}\",\n                    flush=True,\n                )\n"' '[["flext_core", "/home/marlonsc/flext/flext-core"]]'
+		'"\nimport importlib\nimport inspect\nimport json\nimport sys\n\ndeclared = json.loads(sys.argv[2])\nnames = tuple(name for name, root in declared)\nprint(f\"runtime-import-observation executable={sys.executable!r} prefix={sys.prefix!r}\", flush=True)\ntry:\n    for name, root in declared:\n        print(f\"runtime-import-declaration module={name!r} source={root!r}\", flush=True)\n        importlib.import_module(name)\nfinally:\n    for name, module in tuple(sys.modules.items()):\n        if not any(name == package or name.startswith(package + \".\") for package in names):\n            continue\n        spec = getattr(module, \"__spec__\", None)\n        print(\n            f\"runtime-import-module name={name!r} \"\n            f\"origin={getattr(spec, \u0027origin\u0027, None)!r} \"\n            f\"file={getattr(module, \u0027__file__\u0027, None)!r} \"\n            f\"path={getattr(module, \u0027__path__\u0027, None)!r} \"\n            f\"cached={getattr(module, \u0027__cached__\u0027, None)!r}\",\n            flush=True,\n        )\n        for symbol, value in tuple(vars(module).items()):\n            function = value.__func__ if inspect.ismethod(value) else value\n            if inspect.isfunction(function):\n                print(\n                    f\"runtime-import-code module={name!r} symbol={symbol!r} \"\n                    f\"co_filename={function.__code__.co_filename!r}\",\n                    flush=True,\n                )\n"' '[["flext_core", "."]]'
 
 _builtin_status_diagnostics: _builtin_require_environment
 	@$(GITHUB_AUTH_DIAGNOSTICS)
@@ -2185,15 +2177,15 @@ _builtin-census-constants: _builtin_require_environment
 		--json-output "$(PROJECT_ROOT)/.reports/constants-census.json" --apply
 
 _builtin_mod_text: _builtin_require_environment
-	@$(PROJECT_FLEXT_INFRA) refactor mod-text --apply
+	@$(PROJECT_FLEXT_INFRA) refactor mod-text --repository-root "$(PROJECT_ROOT)" --apply
 
 _builtin_mod_text_candidate: _builtin_require_environment
-	@$(PROJECT_FLEXT_INFRA) refactor mod-text-candidate --apply
+	@$(PROJECT_FLEXT_INFRA) refactor mod-text-candidate --repository-root "$(PROJECT_ROOT)" --apply
 
 # `mod` verifies committed rule-test snapshots and never rewrites them; this is
 # the one explicit regeneration, whose diff is reviewed and committed.
 _builtin_mod_snapshots: _builtin_require_environment
-	@$(PROJECT_FLEXT_INFRA) refactor mod-snapshots --apply
+	@$(PROJECT_FLEXT_INFRA) refactor mod-snapshots --repository-root "$(PROJECT_ROOT)" --apply
 
 # Namespace and accessor migration are the same selector-free refactor surface
 # as `mod`: each public verb owns one fixed rewrite of every resolved consumer.

@@ -16,20 +16,16 @@ from flext_core._typings import FlextTypingBase
 from flext_core._utilities import FlextUtilitiesBeartypeEngine
 from flext_core._utilities._enforcement_collect_parts import enforcement_collect_part_01
 
-pb = FlextProtocolsBase
 
-part_01 = enforcement_collect_part_01
-
-ub = FlextUtilitiesBeartypeEngine
-
-
-class FlextUtilitiesEnforcementCollect(part_01.FlextUtilitiesEnforcementCollect):
+class FlextUtilitiesEnforcementCollect(
+    enforcement_collect_part_01.FlextUtilitiesEnforcementCollect
+):
     @staticmethod
     def _ns_nested_mro(
         target: type,
         qn: str,
         project: FlextTypingBase.StrPair,
-    ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
+    ) -> Iterator[tuple[str, tuple[FlextProtocolsBase.AttributeProbe, ...]]]:
         top = (getattr(target, "__module__", "") or "").split(".", 1)[0]
         if top and top == FlextUtilitiesEnforcementCollect._discover_src_package(
             target,
@@ -41,7 +37,7 @@ class FlextUtilitiesEnforcementCollect(part_01.FlextUtilitiesEnforcementCollect)
     def _ns_no_accessor_methods(
         target: type,
         qn: str,
-    ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
+    ) -> Iterator[tuple[str, tuple[FlextProtocolsBase.AttributeProbe, ...]]]:
         # A method name is judged at the class that introduces it. An override
         # keeps the contract its base declares: a FLEXT base is judged at its
         # own declaration, and a foreign base's name (rope's
@@ -61,7 +57,7 @@ class FlextUtilitiesEnforcementCollect(part_01.FlextUtilitiesEnforcementCollect)
     def _ns_classvar_constants(
         target: type,
         qn: str,
-    ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
+    ) -> Iterator[tuple[str, tuple[FlextProtocolsBase.AttributeProbe, ...]]]:
         """Yield one item per public attribute; the visitor judges each one.
 
         Granularity lives here (the iterator), never in the visitor: every
@@ -69,7 +65,7 @@ class FlextUtilitiesEnforcementCollect(part_01.FlextUtilitiesEnforcementCollect)
         per gate round.
 
         Yields:
-            Each ``tuple[str, tuple[pb.AttributeProbe, ...]]``.
+            Each ``tuple[str, tuple[FlextProtocolsBase.AttributeProbe, ...]]``.
 
         """
         for name, value in vars(target).items():
@@ -81,18 +77,20 @@ class FlextUtilitiesEnforcementCollect(part_01.FlextUtilitiesEnforcementCollect)
     def _ns_nested_classes(
         root: type,
         node: type,
-    ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
+    ) -> Iterator[tuple[str, tuple[FlextProtocolsBase.AttributeProbe, ...]]]:
         """Yield every locally declared non-Enum class nested under ``node``.
 
         Yields:
-            Each ``tuple[str, tuple[pb.AttributeProbe, ...]]``.
+            Each ``tuple[str, tuple[FlextProtocolsBase.AttributeProbe, ...]]``.
 
         """
         for value in vars(node).values():
             if (
                 isinstance(value, type)
                 and not isinstance(value, EnumType)
-                and ub.defined_inside(value, node.__qualname__)
+                and FlextUtilitiesBeartypeEngine.defined_inside(
+                    value, node.__qualname__
+                )
             ):
                 yield value.__qualname__, (root, value)
                 yield from FlextUtilitiesEnforcementCollect._ns_nested_classes(
@@ -105,18 +103,18 @@ class FlextUtilitiesEnforcementCollect(part_01.FlextUtilitiesEnforcementCollect)
         target: type,
         tag: str,
         effective_layer: str = "",
-    ) -> Iterator[tuple[str, tuple[pb.AttributeProbe, ...]]]:
+    ) -> Iterator[tuple[str, tuple[FlextProtocolsBase.AttributeProbe, ...]]]:
         """Per-tag dispatcher for namespace-category rule inputs.
 
         Yields:
-            Each ``tuple[str, tuple[pb.AttributeProbe, ...]]``.
+            Each ``tuple[str, tuple[FlextProtocolsBase.AttributeProbe, ...]]``.
 
         Raises:
             ValueError: If unknown namespace collection.
 
         """
         if (
-            ub.defined_in_function_scope(target)
+            FlextUtilitiesBeartypeEngine.defined_in_function_scope(target)
             or target.__name__.startswith("_")
             or "[" in target.__name__
         ):

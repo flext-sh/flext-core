@@ -11,10 +11,6 @@ from flext_core._models import FlextModelsPydantic
 from flext_core._utilities import FlextUtilitiesBeartypeEngine
 from flext_core._utilities._enforcement_parts import enforcement_part_02
 
-mp = FlextModelsPydantic
-
-ub = FlextUtilitiesBeartypeEngine
-
 
 class FlextUtilitiesEnforcement(enforcement_part_02.FlextUtilitiesEnforcement):
     @staticmethod
@@ -41,7 +37,7 @@ class FlextUtilitiesEnforcement(enforcement_part_02.FlextUtilitiesEnforcement):
         return any(seg.startswith(("Tests", "Test")) for seg in segments)
 
     @staticmethod
-    def run(model_type: type[mp.BaseModel]) -> None:
+    def run(model_type: type[FlextModelsPydantic.BaseModel]) -> None:
         """Pydantic ``__pydantic_init_subclass__`` hook.
 
         Function-local classes (Python's ``<locals>`` qualname marker)
@@ -50,7 +46,7 @@ class FlextUtilitiesEnforcement(enforcement_part_02.FlextUtilitiesEnforcement):
         """
         if c.ENFORCEMENT_MODE is c.EnforcementMode.OFF:
             return
-        if ub.defined_in_function_scope(model_type):
+        if FlextUtilitiesBeartypeEngine.defined_in_function_scope(model_type):
             return
         if FlextUtilitiesEnforcement._is_exempt(model_type):
             return
@@ -65,7 +61,7 @@ class FlextUtilitiesEnforcement(enforcement_part_02.FlextUtilitiesEnforcement):
         """
         if c.ENFORCEMENT_NAMESPACE_MODE is c.EnforcementMode.OFF:
             return
-        if ub.defined_in_function_scope(target):
+        if FlextUtilitiesBeartypeEngine.defined_in_function_scope(target):
             return
         if FlextUtilitiesEnforcement._is_exempt(target):
             return

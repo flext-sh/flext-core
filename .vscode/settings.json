@@ -1,7 +1,7 @@
 {
   "files.autoSave": "afterDelay",
   "python.analysis.diagnosticMode": "workspace",
-  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "python.defaultInterpreterPath": "${workspaceFolder}/../.venv/bin/python",
   "python.terminal.activateEnvInCurrentTerminal": true,
   "python.terminal.activateEnvironment": true,
   "ruff.configurationPreference": "filesystemFirst",
@@ -138,8 +138,8 @@
     "**/target": true
   },
   "terminal.integrated.env.linux": {
-    "PATH": "${workspaceFolder}/.venv/bin:${env:PATH}",
-    "VIRTUAL_ENV": "${workspaceFolder}/.venv"
+    "PATH": "${workspaceFolder}/../.venv/bin:${env:PATH}",
+    "VIRTUAL_ENV": "${workspaceFolder}/../.venv"
   },
   "shellcheck.useRepositoryRootAsCwd": true,
   "python.analysis.autoFormatStrings": true,
@@ -162,7 +162,7 @@
   "python.testing.pytestEnabled": false,
   "python.testing.unittestEnabled": false,
   "python.useEnvironmentsExtension": false,
-  "pyrefly.lspPath": "${workspaceFolder}/.venv/bin/pyrefly",
+  "pyrefly.lspPath": "${workspaceFolder}/../.venv/bin/pyrefly",
   "markdownlint.configFile": ".markdownlint.json",
   "git.autoRepositoryDetection": "subFolders",
   "git.detectSubmodules": true,
@@ -172,10 +172,10 @@
   "githubPullRequests.autoRepositoryDetection": true,
   "githubPullRequests.ignoreSubmodules": false,
   "ruff.interpreter": [
-    "${workspaceFolder}/.venv/bin/python"
+    "${workspaceFolder}/../.venv/bin/python"
   ],
   "ruff.path": [
-    "${workspaceFolder}/.venv/bin/ruff"
+    "${workspaceFolder}/../.venv/bin/ruff"
   ],
   "markdownlint.lintWorkspaceGlobs": [
     "!**/.git/**",

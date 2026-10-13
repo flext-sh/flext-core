@@ -9,8 +9,6 @@ from __future__ import annotations
 from flext_core import c
 from flext_core._utilities._enforcement_parts import enforcement_part_04
 
-cre = c
-
 
 class FlextUtilitiesEnforcement(enforcement_part_04.FlextUtilitiesEnforcement):
     @staticmethod
@@ -51,7 +49,7 @@ class FlextUtilitiesEnforcement(enforcement_part_04.FlextUtilitiesEnforcement):
             idx = tail.find(layer)
             if idx > 0:
                 project = tail[:idx]
-                snake = cre.CAMEL_TO_SNAKE_RE.sub(r"\1_\2", project).lower()
+                snake = c.CAMEL_TO_SNAKE_RE.sub(r"\1_\2", project).lower()
                 return f"flext_{snake}"
         msg = (
             f"class_name_to_module: {class_name!r} contains no facade "

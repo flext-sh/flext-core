@@ -441,6 +441,7 @@ ignore = [
   "typing-only-first-party-import",
   "typing-only-standard-library-import",
   "typing-only-third-party-import",
+  "unsorted-imports",
 ]
 select = ["ALL"]
 unfixable = [
@@ -528,7 +529,6 @@ runtime-evaluated-base-classes = [
   "flext_core._result.FlextResultConstruction",
   "flext_core._result.FlextResultTransforms",
   "flext_core._result.FlextResultUnwrap",
-  "flext_core.flextlazy_part_01.FlextLazyPart01",
   "flext_core.m.ArbitraryTypesModel",
   "flext_core.m.BaseModel",
   "flext_core.m.Command",

@@ -13,9 +13,9 @@ import uuid
 
 import pytest
 
-from tests import u
+from tests import t, u
 
-type _MatchValue = str | int | bool | list[int] | dict[str, int]
+type _MatchValue = str | int | bool | list[int] | t.MappingKV[str, int]
 type _ConvValue = str | float | int | bool | None
 
 
@@ -166,8 +166,8 @@ class TestsFlextCoreUtilities:
         [({"a": 1}, {"a": 1}, True), ({"a": 1}, {"a": 2}, False), ({}, {}, True)],
     )
     def test_deep_eq_compares_mapping_contents(
-        left: dict[str, int],
-        right: dict[str, int],
+        left: t.MappingKV[str, int],
+        right: t.MappingKV[str, int],
         *,
         expected: bool,
     ) -> None:

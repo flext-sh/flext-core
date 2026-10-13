@@ -93,7 +93,7 @@ class TestsFlextCoverageLoggings:
     def test_clear_scope_returns_success_for_bound_scopes(
         self,
         scope: str,
-        context: dict[str, str],
+        context: t.MappingKV[str, str],
     ) -> None:
         """Test clear scope returns success for bound scopes."""
         bind_result = u.bind_context(scope=scope, **context)

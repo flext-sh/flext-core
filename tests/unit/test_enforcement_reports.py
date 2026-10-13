@@ -11,19 +11,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import typing
 import warnings
 from typing import Annotated
 
 import pytest
 
 from flext_core.utilities import FlextUtilitiesEnforcement
-from tests import c, m, u
+from tests import c, m, t, u
 
 # Deliberate broad-annotation fixture: the enforcement engine under test must
 # detect this exact runtime type, so it is exposed as a type alias usable
 # inside an annotation.
-type _ANY_TYPE = typing.Any
+type _ANY_TYPE = t.UnconstrainedValue
 
 
 def _hard_violation(
