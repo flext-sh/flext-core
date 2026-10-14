@@ -233,7 +233,8 @@ class TestPackagedConfigWithUserPreferences:
                 "from typing import ClassVar\n"
                 "from synthpkg_missing._config import SynthConfig\n"
                 "class DeclaredConfig(SynthConfig):\n"
-                "    CONFIG_FILENAMES: ClassVar[tuple[str, ...]] = ('defaults.yaml',)\n",
+                "    CONFIG_FILENAMES: ClassVar[tuple[str, ...]] = (\n"
+                "        'defaults.yaml',)\n",
                 encoding="utf-8",
             )
             module = importlib.import_module("synthpkg_missing.declared")
