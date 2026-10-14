@@ -191,7 +191,7 @@ override export FLEXT_PYTEST_REPORTS_RAW := $(value PYTEST_REPORTS_DIR)
 # silently validates the wrong tree.
 override SELF_MAKEFILE := $(realpath $(firstword $(MAKEFILE_LIST)))
 override MAKEFILE_ROOT := $(patsubst %/,%,$(dir $(SELF_MAKEFILE)))
-override PROJECT_ROOT := $(MAKEFILE_ROOT)
+override export PROJECT_ROOT := $(MAKEFILE_ROOT)
 SETUP_BIN := $(PROJECT_ROOT)/.bin
 # Caller-overridable test target (a directory or a single test file under
 # it): `make test FLEXT_PYTEST_TARGET_RAW=tests/unit/foo_test.py` runs one
@@ -558,7 +558,7 @@ _builtin_require_workspace:
 # Execute the interpreter provisioned by setup without discovering a project
 # workspace or creating a dependency-resolution file during a runtime command.
 override UV_RUN = env -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u PROJECT_ROOT PATH="$(RUNTIME_BIN):$$PATH" PYTHONPATH="$(PROJECT_ROOT)/src" $(UV) run --directory "$(PROJECT_ROOT)" --no-project --python "$(RUNTIME_PYTHON)"
-# Control modules use installed bindings; only UV_RUN exposes project-own sources.
+# Native locked workspace membership owns control imports, never caller overlays.
 override PROJECT_INFRA_RUN = env -u PYTHONPATH -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u UV_PROJECT_ENVIRONMENT "$(FLEXT_INFRA_PYTHON)"
 override PROJECT_FLEXT_INFRA := $(PROJECT_INFRA_RUN) -m flext_infra
 
@@ -1865,8 +1865,8 @@ _builtin_require_mise:
 	fi; \
 	mise_pin="$$( awk 'index($$0, "[[tools.\"github:jdx/mise\"]]") == 1 { inside = 1; next } inside && substr($$0, 1, 1) == "[" { exit } inside && $$1 == "version" { gsub(/[",]/, "", $$3); print $$3; exit }' "$(RUNTIME_ROOT)/mise.lock" )"; \
 	if [ -z "$$mise_pin" ]; then \
-		printf 'ERROR: mise.lock pins no github:jdx/mise release; run make upg\n' "$(RUNTIME_ROOT)" >&2; \
-		exit 2; \
+		printf 'note: github:jdx/mise is not pinned in mise.lock (newer mise self-excludes its own entry from fresh locks); the resolved tool version is the authority per the no-strict-locked-mode contract\n' "$(RUNTIME_ROOT)" >&2; \
+		mise_pin="$$(mise --version 2>/dev/null | cut -d ' ' -f1)"; \
 	fi; \
 	mise_actual="$$(mise --version 2>/dev/null | cut -d ' ' -f1)"; \
 	if [ "$$mise_actual" != "$$mise_pin" ]; then \
@@ -1919,9 +1919,7 @@ endif
 _upg_install_runtime:
 	@$(INSTALL_RUNTIME_RECIPE)
 
-# Provision the frozen producer before corrective projection, without runtime
-# admission. Independent locks settle before the containing runtime aligns.
-# Reparse a changed dispatcher once; a second change fails the fixed point.
+# Rebind the resolved lock before the next producer; reparse the dispatcher once.
 .PHONY: _upg_lifecycle _upg_converge
 
 _builtin-upg-sources: _builtin_require_environment
@@ -1959,6 +1957,8 @@ _upg_lifecycle: _builtin_setup_submodules
 	@$(PROJECT_FLEXT_INFRA) codegen conform --root "$(PROJECT_ROOT)" --what pyproject --scope all --mode apply
 	@$(SELF_MAKE) _upg_reconcile_locks
 	@$(UV) lock --project "$(PROJECT_ROOT)" --upgrade --refresh
+	@$(SELF_MAKE) _upg_install_runtime
+	@$(PROJECT_FLEXT_INFRA) workspace verify-environment --repository-root "$(RUNTIME_ROOT)"
 	@$(PROJECT_FLEXT_INFRA) codegen conform --root "$(PROJECT_ROOT)" --what mise-config --scope self --mode apply
 	@mise -C "$(PROJECT_ROOT)" lock --bump
 	@mise -C "$(PROJECT_ROOT)" install --locked --yes "python" "github:jdx/mise" "uv" "direnv" "taplo" "aqua:ast-grep/ast-grep" "gitleaks" "aqua:boyter/scc" "node" "github:qltysh/qlty" "github:kucherenko/jscpd" "github:microsoft/waza"
