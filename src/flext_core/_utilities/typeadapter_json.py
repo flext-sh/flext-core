@@ -27,6 +27,7 @@ class FlextUtilitiesTypingAdapterJson(FlextUtilitiesBase):
     def metadata_map_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[Mapping[str, FlextTypesPydantic.JsonValue]]:
+        """Return the cached adapter for ``Mapping[str, JsonValue]``."""
         return cls.type_adapter(Mapping[str, FlextTypesPydantic.JsonValue])
 
     @classmethod
@@ -34,6 +35,7 @@ class FlextUtilitiesTypingAdapterJson(FlextUtilitiesBase):
     def json_value_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypesPydantic.JsonValue]:
+        """Return the cached adapter for ``JsonValue``."""
         return cls.type_adapter(TypeForm(FlextTypesPydantic.JsonValue))
 
     @classmethod
@@ -41,6 +43,7 @@ class FlextUtilitiesTypingAdapterJson(FlextUtilitiesBase):
     def json_mapping_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.JsonMapping]:
+        """Return the cached adapter for ``JsonMapping``."""
         return cls.type_adapter(TypeForm(FlextTypingBase.JsonMapping))
 
     @classmethod
@@ -48,6 +51,7 @@ class FlextUtilitiesTypingAdapterJson(FlextUtilitiesBase):
     def strict_json_mapping_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.JsonMapping]:
+        """Return the cached strict-mode adapter for ``JsonMapping``."""
         return cls.type_adapter(
             TypeForm(FlextTypingBase.JsonMapping),
             config=ConfigDict(strict=True),
@@ -58,6 +62,7 @@ class FlextUtilitiesTypingAdapterJson(FlextUtilitiesBase):
     def json_dict_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.JsonDict]:
+        """Return the cached adapter for ``JsonDict``."""
         return cls.type_adapter(TypeForm(FlextTypingBase.JsonDict))
 
     @classmethod
@@ -67,6 +72,7 @@ class FlextUtilitiesTypingAdapterJson(FlextUtilitiesBase):
     ) -> FlextTypesPydantic.TypeAdapter[
         FlextTypingBase.SequenceOf[FlextTypingBase.JsonDict]
     ]:
+        """Return the cached adapter for ``JsonDict`` sequences."""
         return cls.type_adapter(
             TypeForm(FlextTypingBase.SequenceOf[FlextTypingBase.JsonDict])
         )
@@ -78,6 +84,7 @@ class FlextUtilitiesTypingAdapterJson(FlextUtilitiesBase):
     ) -> FlextTypesPydantic.TypeAdapter[
         FlextTypingBase.SequenceOf[FlextTypingBase.JsonMapping]
     ]:
+        """Return the cached adapter for ``JsonMapping`` sequences."""
         return cls.type_adapter(
             TypeForm(FlextTypingBase.SequenceOf[FlextTypingBase.JsonMapping])
         )
@@ -89,6 +96,7 @@ class FlextUtilitiesTypingAdapterJson(FlextUtilitiesBase):
     ) -> FlextTypesPydantic.TypeAdapter[
         FlextTypingBase.MappingKV[str, FlextTypingBase.JsonMapping]
     ]:
+        """Return the cached adapter for str-keyed ``JsonMapping`` mappings."""
         return cls.type_adapter(
             TypeForm(FlextTypingBase.MappingKV[str, FlextTypingBase.JsonMapping])
         )
@@ -98,6 +106,7 @@ class FlextUtilitiesTypingAdapterJson(FlextUtilitiesBase):
     def json_list_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.JsonList]:
+        """Return the cached adapter for ``JsonList``."""
         return cls.type_adapter(TypeForm(FlextTypingBase.JsonList))
 
     @classmethod
@@ -105,6 +114,7 @@ class FlextUtilitiesTypingAdapterJson(FlextUtilitiesBase):
     def strict_json_list_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.JsonList]:
+        """Return the cached strict-mode adapter for ``JsonList``."""
         return cls.type_adapter(
             TypeForm(FlextTypingBase.JsonList), config=ConfigDict(strict=True)
         )
@@ -114,6 +124,7 @@ class FlextUtilitiesTypingAdapterJson(FlextUtilitiesBase):
     def primitives_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.Primitives]:
+        """Return the cached adapter for ``Primitives``."""
         return cls.type_adapter(TypeForm(FlextTypingBase.Primitives))
 
     @classmethod
@@ -121,11 +132,13 @@ class FlextUtilitiesTypingAdapterJson(FlextUtilitiesBase):
     def container_set_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[set[FlextTypesPydantic.JsonValue]]:
+        """Return the cached adapter for ``JsonValue`` sets."""
         return cls.type_adapter(set[FlextTypesPydantic.JsonValue])
 
     @classmethod
     @cache
     def string_set_adapter(cls) -> FlextTypesPydantic.TypeAdapter[set[str]]:
+        """Return the cached adapter for ``str`` sets."""
         return cls.type_adapter(set[str])
 
     @classmethod
@@ -133,6 +146,7 @@ class FlextUtilitiesTypingAdapterJson(FlextUtilitiesBase):
     def scalar_set_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[set[FlextTypingBase.Scalar]]:
+        """Return the cached adapter for ``Scalar`` sets."""
         return cls.type_adapter(TypeForm(set[FlextTypingBase.Scalar]))
 
     @classmethod
@@ -145,6 +159,7 @@ class FlextUtilitiesTypingAdapterJson(FlextUtilitiesBase):
             FlextTypesPydantic.JsonValue | None,
         ]
     ]:
+        """Return the cached adapter for sortable-object mappings."""
         return cls.type_adapter(
             TypeForm(
                 Mapping[

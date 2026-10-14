@@ -233,6 +233,17 @@ class FlextUtilitiesGuards(
         spec: FlextModelsCollections.GuardCheckSpec | None = None,
         **criteria: t.GuardInput,
     ) -> bool:
+        """Check one value against a guard spec merged with inline criteria.
+
+        Args:
+            value: The value to check.
+            spec: The optional base guard specification.
+            **criteria: The spec fields overriding ``spec``.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
         guard_spec = (
             spec if spec is not None else FlextModelsCollections.GuardCheckSpec()
         )
@@ -335,6 +346,23 @@ class FlextUtilitiesGuards(
         default: t.Scalar | t.JsonList | t.JsonMapping | None = None,
         return_value: bool = False,
     ) -> t.JsonValue | bool | FlextProtocolsResult.Result[t.JsonValue]:
+        """Validate a value into a verdict, value, default, or failure.
+
+        An exception raised by the validator counts as a validation failure.
+
+        Args:
+            value: The value to validate.
+            validator: The callable, type, or tuple of types accepting the value.
+            default: The fallback value returned on failure when provided.
+            return_value: Whether to return the validated (or default) value
+                instead of a boolean verdict, and a failed ``p.Result``
+                instead of ``False``.
+
+        Returns:
+            The validated value, the default, the boolean verdict, or the
+            failed ``p.Result``.
+
+        """
         fail_msg = "Guard validation failed"
         try:
             validation_passed = FlextUtilitiesGuards._check_validator(value, validator)

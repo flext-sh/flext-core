@@ -49,10 +49,22 @@ class FlextUtilitiesBeartypeEngine(
 
     @staticmethod
     def defined_inside(inner_cls: type, outer_qualname: str) -> bool:
+        """Report whether a class is qualnamed inside the named outer class.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
         return getattr(inner_cls, "__qualname__", "").startswith(f"{outer_qualname}.")
 
     @staticmethod
     def defined_in_function_scope(target: type) -> bool:
+        """Report whether a type was defined inside a function scope.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
         return "<locals>" in getattr(target, "__qualname__", "")
 
     @staticmethod
@@ -60,6 +72,16 @@ class FlextUtilitiesBeartypeEngine(
         name: str,
         value: FlextProtocolsBase.AttributeProbe,
     ) -> bool:
+        """Report whether a class attribute qualifies as an enforced constant.
+
+        Args:
+            name: The attribute name.
+            value: The attribute value.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
         if name.startswith("_") or name in c.ENFORCEMENT_CONSTANTS_SKIP_ATTRS:
             return False
         if isinstance(value, (type, classmethod, staticmethod, property)):
@@ -68,10 +90,26 @@ class FlextUtilitiesBeartypeEngine(
 
     @staticmethod
     def attr_accept_public(name: str) -> bool:
+        """Report whether an attribute name is public (not underscore-prefixed).
+
+        Returns:
+            The resulting ``bool``.
+
+        """
         return not name.startswith("_")
 
     @staticmethod
     def attr_accept_utility(target: type, name: str) -> bool:
+        """Report whether a utility method name is subject to enforcement.
+
+        Args:
+            target: The utility class owning the method.
+            name: The method name.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
         if name.startswith("_"):
             return False
         if name in c.ENFORCEMENT_UTILITIES_EXEMPT_METHODS:
@@ -80,6 +118,12 @@ class FlextUtilitiesBeartypeEngine(
 
     @staticmethod
     def contains_any(hint: FlextTypingBase.TypeHintSpecifier | None) -> bool:
+        """Report whether a hint is or contains ``Any`` or ``object`` at any depth.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
         return FlextUtilitiesBeartypeHelpers.contains_any_recursive(hint, seen=set())
 
     @staticmethod
@@ -195,6 +239,17 @@ class FlextUtilitiesBeartypeEngine(
         hint: FlextTypingBase.TypeFormSpecifier | None,
         forbidden: frozenset[str],
     ) -> tuple[bool, str]:
+        """Match a hint's collection origin against the forbidden names.
+
+        Args:
+            hint: The type form to inspect.
+            forbidden: The forbidden collection origin names.
+
+        Returns:
+            ``(True, origin name)`` when the origin is forbidden, otherwise
+            ``(False, '')``.
+
+        """
         return FlextUtilitiesBeartypeHelpers.has_forbidden_collection_origin(
             hint,
             forbidden,
