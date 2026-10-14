@@ -77,7 +77,6 @@ class FlextUtilitiesLoggingConfig:
             )
             self._failure: BaseException | None = None
             self.queue: queue.Queue[str] = queue.Queue(maxsize=c.MAX_ITEMS)
-            self.stop_event = threading.Event()
             self.thread = threading.Thread(
                 target=self._worker,
                 daemon=True,
@@ -120,17 +119,14 @@ class FlextUtilitiesLoggingConfig:
         @override
         def flush(self) -> None:
             """Flush the target and propagate its original stream failure."""
+            self.queue.join()
             if self._failure is not None:
                 raise self._failure
             self._target_stream.flush()
 
         def shutdown(self) -> None:
             """Stop worker thread and flush remaining messages."""
-            if self.stop_event.is_set():
-                if self._failure is not None:
-                    raise self._failure
-                return
-            self.stop_event.set()
+            self.queue.shutdown()
             if self.thread.is_alive():
                 self.thread.join(timeout=c.LOG_SHUTDOWN_JOIN_SECONDS)
             if self.thread.is_alive():
@@ -148,33 +144,36 @@ class FlextUtilitiesLoggingConfig:
             """
             if self._failure is not None:
                 raise self._failure
-            if self.stop_event.is_set():
-                msg = "Async log writer is shut down"
-                raise ValueError(msg)
-            self.queue.put(s, block=c.ASYNC_BLOCK_ON_FULL)
+            try:
+                self.queue.put(s, block=c.ASYNC_BLOCK_ON_FULL)
+            except queue.ShutDown:
+                if self._failure is not None:
+                    raise self._failure
+                raise
             return len(s)
 
         def _write_queued_message(self, msg: str) -> None:
             target_stream = self._target_stream
             _ = target_stream.write(msg)
             _ = target_stream.flush()
-            self.queue.task_done()
 
         def _worker(self) -> None:
             """Worker thread processing log queue."""
             while True:
                 try:
-                    msg = self.queue.get(timeout=c.LOG_WORKER_POLL_SECONDS)
-                except queue.Empty:
-                    if self.stop_event.is_set():
-                        break
-                    continue
+                    msg = self.queue.get()
+                except queue.ShutDown:
+                    break
                 try:
-                    self._write_queued_message(msg)
+                    if self._failure is None:
+                        self._write_queued_message(msg)
                 except BaseException as exc:
                     self._failure = exc
-                    self.stop_event.set()
-                    raise
+                    self.queue.shutdown()
+                finally:
+                    self.queue.task_done()
+            if self._failure is not None:
+                raise self._failure
 
     _async_writer: ClassVar[_AsyncLogWriter | None] = None
 
