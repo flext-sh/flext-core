@@ -11,7 +11,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from typing import TYPE_CHECKING, Literal, Protocol, overload, runtime_checkable
+from typing import (
+    TYPE_CHECKING,
+    ClassVar,
+    Literal,
+    Protocol,
+    overload,
+    runtime_checkable,
+)
 
 import pydantic
 from pydantic_core import PydanticUndefinedType
@@ -38,31 +45,18 @@ class FlextProtocolsPydantic:
         """Declared field annotation consumed by schema and protocol generators."""
 
         @property
-        def annotation(self) -> FlextTypingBase.TypeHintSpecifier | None: ...
+        def annotation(self) -> FlextTypingBase.TypeFormSpecifier | None: ...
 
         @property
         def frozen(self) -> bool | None: ...
 
-    class ModelConfiguration(Protocol):
-        """Native configuration flags consumed by structural model projections."""
-
-        def get(
-            self, key: Literal["frozen"], default: bool = False, /
-        ) -> bool | None: ...
-
     class ModelType(FlextProtocolsBase.ModuleOwned, Protocol):
-        """Read-only model declaration metadata; instance operations stay on Model."""
+        """Native class metadata; instance operations remain on Model."""
 
         __name__: str
         __qualname__: str
-
-        @property
-        def model_fields(
-            self,
-        ) -> Mapping[str, FlextProtocolsPydantic.ModelField]: ...
-
-        @property
-        def model_config(self) -> FlextProtocolsPydantic.ModelConfiguration: ...
+        model_fields: ClassVar[Mapping[str, FlextProtocolsPydantic.ModelField]]
+        model_config: ClassVar[pydantic.ConfigDict]
 
     @runtime_checkable
     class FunctionDecorator(Protocol):

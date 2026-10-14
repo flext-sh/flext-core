@@ -60,9 +60,9 @@ class TestsFlextCorePydanticDeclarations:
         assert '"visits":"2 visits"' in box.model_dump_json()
         payload: p.Tests.PublicPayload
         for payload in (
-            m.Tests.PublicPayload(rawName="alice", visits=2),
+            m.Tests.PublicPayload(raw_name="alice", visits=2),
             TestsFlextCorePydanticDeclarations._DetailedPayload(
-                rawName="alice",
+                raw_name="alice",
                 visits=2,
                 detail="private",
             ),
@@ -90,6 +90,12 @@ class TestsFlextCorePydanticDeclarations:
     def test_protocol_field_preserves_owner_schema(
         mode: Literal["validation", "serialization"],
     ) -> None:
+        model_type: p.ModelType = TestsFlextCorePydanticDeclarations._ProtocolBox
+        field: p.ModelField = model_type.model_fields["item"]
+        assert field.annotation is p.Tests.PublicPayload
+        assert model_type.model_config.get(
+            "frozen", False
+        ) == m.ContractModel.model_config.get("frozen", False)
         schema = TestsFlextCorePydanticDeclarations._ProtocolBox.model_json_schema(
             mode=mode,
         )
