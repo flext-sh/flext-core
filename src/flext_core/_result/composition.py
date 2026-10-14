@@ -20,7 +20,13 @@ if TYPE_CHECKING:
 
 
 class FlextResultComposition[T](FlextResultTransforms[T]):
-    """Sequence, resource, and decorator composition helpers."""
+    """Sequence, resource, and decorator composition helpers.
+
+    Combines many results (``accumulate_errors``, ``traverse``), wraps
+    resource acquisition and cleanup around result-producing operations
+    (``with_resource``), and guards plain functions via ``safe`` so runtime
+    exceptions become ``r.Fail`` instead of raising.
+    """
 
     @classmethod
     def accumulate_errors[ValueT](

@@ -16,7 +16,12 @@ if TYPE_CHECKING:
 
 
 class FlextResultUnwrap[T](FlextResultComposition[T]):
-    """Value extraction helpers for results."""
+    """Value extraction helpers for results.
+
+    Provides the terminal operations of the railway: ``unwrap`` (raises on
+    failure), ``unwrap_or`` (default on failure) and ``unwrap_or_else``
+    (lazily computed default on failure).
+    """
 
     def unwrap(self) -> T:
         """Return the success payload.

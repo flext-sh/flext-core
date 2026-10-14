@@ -26,6 +26,7 @@ def _validated_label(values: t.MappingKV[str, p.AttributeProbe]) -> str:
 
     Returns:
         The validated label passed to the field factory.
+
     """
     return str(values["label"])
 

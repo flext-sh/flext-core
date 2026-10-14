@@ -120,6 +120,7 @@ class TestsFlextCorePydanticDeclarations:
 
             Returns:
                 The labeled field value.
+
             """
             return f"model:{value}"
 
@@ -130,6 +131,7 @@ class TestsFlextCorePydanticDeclarations:
 
             Returns:
                 The labeled field value.
+
             """
             return f"utility:{value}"
 
@@ -140,6 +142,7 @@ class TestsFlextCorePydanticDeclarations:
 
             Returns:
                 The native serialized value incremented by one.
+
             """
             return handler(value) + 1
 
@@ -152,6 +155,7 @@ class TestsFlextCorePydanticDeclarations:
 
             Returns:
                 The native serialized value incremented by two.
+
             """
             return handler(value) + 2
 
@@ -199,6 +203,7 @@ class TestsFlextCorePydanticDeclarations:
 
             Returns:
                 The directory derived from the model value.
+
             """
             return f"stream-{self.value}"
 
@@ -209,6 +214,7 @@ class TestsFlextCorePydanticDeclarations:
 
             Returns:
                 Twice the model value.
+
             """
             return self.value * 2
 

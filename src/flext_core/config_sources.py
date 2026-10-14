@@ -49,7 +49,12 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
         ) -> JsonValue: ...
 
     class UniqueKeyLoader(SafeLoader):
-        """Safe YAML loader rejecting duplicate and non-string mapping keys."""
+        """Safe YAML loader rejecting duplicate and non-string mapping keys.
+
+        Mapping nodes are constructed through ``construct_unique_mapping``,
+        which fails the load with a marked ``UniqueKeyError`` when a key
+        repeats or a key is not a string, keeping config files unambiguous.
+        """
 
         @staticmethod
         def construct_unique_mapping(

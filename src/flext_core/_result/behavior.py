@@ -42,7 +42,13 @@ def _is_result_factory(
 
 
 class FlextResultBehavior[T](FlextResultBase[T]):
-    """Behavior layer: context manager, dunder methods, error accessors."""
+    """Behavior layer: context manager, dunder methods, error accessors.
+
+    Adds the pythonic surface of the result — ``__enter__``/``__exit__`` for
+    scoped usage, truthiness via ``__bool__``, the ``|`` rail operator, and
+    the ``failure``, ``value`` and ``exception`` accessors that expose the
+    failure state.
+    """
 
     @property
     def failure(self) -> bool:

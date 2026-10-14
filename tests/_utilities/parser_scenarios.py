@@ -19,6 +19,7 @@ def _case_insensitive_options() -> m.ParseOptions[bool]:
 
     Returns:
         The resulting ``m.ParseOptions[bool]``.
+
     """
     return cast("m.ParseOptions[bool]", m.ParseOptions(case_insensitive=True))
 
@@ -28,6 +29,7 @@ def _field_name_options() -> m.ParseOptions[bool]:
 
     Returns:
         The resulting ``m.ParseOptions[bool]``.
+
     """
     return cast("m.ParseOptions[bool]", m.ParseOptions(field_name="flag"))
 

@@ -20,7 +20,12 @@ if TYPE_CHECKING:
 
 
 class FlextResultTransforms[T](FlextResultConstruction[T]):
-    """Instance transformation methods for result values and errors."""
+    """Instance transformation methods for result values and errors.
+
+    Covers mapping payloads through callables, mapping errors, combining
+    with defaults (``map_or`` family) and converting back to plain values
+    or results without changing the success/failure disposition.
+    """
 
     def _as_result(self) -> p.Result[T]:
         """Structural view of self as the abstract Result protocol.
