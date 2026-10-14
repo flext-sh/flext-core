@@ -51,7 +51,7 @@ class FlextResultBehavior[T](FlextResultBase[T]):
 
     @property
     def value(self) -> T:
-        """Return the success payload.
+        """The success payload bound to this result.
 
         Raises:
             RuntimeError: If this result is a failure, chained from the
