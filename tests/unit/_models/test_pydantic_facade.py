@@ -90,8 +90,8 @@ class TestsFlextCorePydanticDeclarations:
     def test_protocol_field_preserves_owner_schema(
         mode: Literal["validation", "serialization"],
     ) -> None:
-        model_type: p.ModelType = TestsFlextCorePydanticDeclarations._ProtocolBox
-        field: p.ModelField = model_type.model_fields["item"]
+        model_type = TestsFlextCorePydanticDeclarations._ProtocolBox
+        field = model_type.model_fields["item"]
         assert field.annotation is p.Tests.PublicPayload
         assert model_type.model_config.get(
             "frozen", False

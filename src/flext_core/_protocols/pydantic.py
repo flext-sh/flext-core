@@ -11,14 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from typing import (
-    TYPE_CHECKING,
-    ClassVar,
-    Literal,
-    Protocol,
-    overload,
-    runtime_checkable,
-)
+from typing import TYPE_CHECKING, Literal, Protocol, overload, runtime_checkable
 
 import pydantic
 from pydantic_core import PydanticUndefinedType
@@ -55,8 +48,16 @@ class FlextProtocolsPydantic:
 
         __name__: str
         __qualname__: str
-        model_fields: ClassVar[Mapping[str, FlextProtocolsPydantic.ModelField]]
-        model_config: ClassVar[pydantic.ConfigDict]
+
+        @property
+        def model_fields(self) -> Mapping[str, FlextProtocolsPydantic.ModelField]:
+            """Read the class-level field descriptor without requiring storage."""
+            ...
+
+        @property
+        def model_config(self) -> pydantic.ConfigDict:
+            """Read the model owner's native configuration."""
+            ...
 
     @runtime_checkable
     class FunctionDecorator(Protocol):
