@@ -70,15 +70,20 @@ class TestsFlextCorePydanticDeclarations:
             box = TestsFlextCorePydanticDeclarations._ProtocolBox(item=payload)
             assert box.item is payload
             assert box.model_dump()["item"] == expected
-        with pytest.raises(m.ValidationError):
+
+        def reject() -> None:
+            """Validate the malformed payload through the declared input form."""
             if json_input:
                 TestsFlextCorePydanticDeclarations._ProtocolBox.model_validate_json(
                     '{"item":{"rawName":"alice","visits":"invalid"}}',
                 )
             else:
-                TestsFlextCorePydanticDeclarations._ProtocolBox.model_validate({
-                    "item": {"rawName": "alice", "visits": "invalid"},
-                })
+                TestsFlextCorePydanticDeclarations._ProtocolBox.model_validate(
+                    {"item": {"rawName": "alice", "visits": "invalid"}},
+                )
+
+        with pytest.raises(m.ValidationError):
+            reject()
 
     @staticmethod
     @pytest.mark.parametrize("mode", ["validation", "serialization"])
