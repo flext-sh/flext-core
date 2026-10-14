@@ -17,11 +17,82 @@ from typing import Annotated, Literal
 import pytest
 from typing_extensions import TypeForm
 
-from tests import m, t, u
+from tests import m, p, t, u
 
 
 class TestsFlextCorePydanticDeclarations:
     """Behavioral contract for the advanced pydantic facade exports."""
+
+    class _DetailedPayload(m.Tests.PublicPayload):
+        """Subclass-only data must respect the declared serialization boundary."""
+
+        detail: str
+
+    class _ProtocolBox(m.BaseModel):
+        """Protocol annotations retain the model owner's native schema."""
+
+        item: Annotated[
+            p.Tests.PublicPayload,
+            m.GetPydanticSchema(
+                lambda _source, handler: handler.generate_schema(m.Tests.PublicPayload),
+            ),
+        ]
+
+    @staticmethod
+    @pytest.mark.parametrize("json_input", [False, True])
+    def test_protocol_field_boundary(json_input: bool) -> None:
+        box = (
+            TestsFlextCorePydanticDeclarations._ProtocolBox.model_validate_json(
+                '{"item":{"rawName":" alice ","visits":2}}',
+            )
+            if json_input
+            else TestsFlextCorePydanticDeclarations._ProtocolBox.model_validate({
+                "item": {"rawName": " alice ", "visits": 2},
+            })
+        )
+        expected = {
+            "raw_name": "Alice",
+            "visits": "2 visits",
+            "label": "Alice:2",
+        }
+        assert (box.item.raw_name, box.item.visits) == ("Alice", 2)
+        assert box.model_dump()["item"] == expected
+        assert '"visits":"2 visits"' in box.model_dump_json()
+        payload: p.Tests.PublicPayload
+        for payload in (
+            m.Tests.PublicPayload(rawName="alice", visits=2),
+            TestsFlextCorePydanticDeclarations._DetailedPayload(
+                rawName="alice",
+                visits=2,
+                detail="private",
+            ),
+        ):
+            box = TestsFlextCorePydanticDeclarations._ProtocolBox(item=payload)
+            assert box.item is payload
+            assert box.model_dump()["item"] == expected
+        with pytest.raises(m.ValidationError):
+            if json_input:
+                TestsFlextCorePydanticDeclarations._ProtocolBox.model_validate_json(
+                    '{"item":{"rawName":"alice","visits":"invalid"}}',
+                )
+            else:
+                TestsFlextCorePydanticDeclarations._ProtocolBox.model_validate({
+                    "item": {"rawName": "alice", "visits": "invalid"},
+                })
+
+    @staticmethod
+    @pytest.mark.parametrize("mode", ["validation", "serialization"])
+    def test_protocol_field_preserves_owner_schema(
+        mode: Literal["validation", "serialization"],
+    ) -> None:
+        schema = TestsFlextCorePydanticDeclarations._ProtocolBox.model_json_schema(
+            mode=mode,
+        )
+        assert schema["$defs"][
+            "PublicPayload"
+        ] == m.Tests.PublicPayload.model_json_schema(
+            mode=mode,
+        )
 
     class _VectorInput(m.BaseModel):
         """Natively validated input shape for the ValidateAs hook."""
