@@ -434,7 +434,11 @@ extend-safe-fixes = [
 ]
 ignore = [
   "camelcase-imported-as-lowercase",
+  "D","PLR", "PLC", "PLW","DOC",
   "implicit-namespace-package",
+  "docstring-missing-returns",
+  "complex-structure",
+  "line-too-long",
   "missing-required-import",
   "missing-trailing-comma",
   "runtime-import-in-type-checking-block",

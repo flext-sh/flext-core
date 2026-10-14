@@ -33,6 +33,14 @@ validation, property access, Python dumps, and JSON dumps. Wrap-serializer tests
 exercise the real native handler; tests must not replace it or accept an unchanged
 payload in place of the declared transformation.
 
+An internal field can expose a structural `p` contract while retaining its canonical
+model's validation and serialization schema: annotate it with
+`Annotated[p.Contract, m.GetPydanticSchema(lambda _source, handler: handler.generate_schema(m.Owner))]`.
+The metadata delegates schema construction; it does not reconstruct validated
+instances. The protocol and model must be structurally compatible. This does not
+make unrelated implementations of the protocol valid model inputs: instance reuse,
+subclass serialization and validation remain governed by the selected model preset.
+
 ## Base Model + Field
 
 ```python

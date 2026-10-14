@@ -28,7 +28,7 @@ class TestsFlextCorePydanticDeclarations:
 
         detail: str
 
-    class _ProtocolBox(m.BaseModel):
+    class _ProtocolBox(m.ContractModel):
         """Protocol annotations retain the model owner's native schema."""
 
         item: Annotated[
