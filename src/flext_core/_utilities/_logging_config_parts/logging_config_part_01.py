@@ -125,7 +125,11 @@ class FlextUtilitiesLoggingConfig:
             self._target_stream.flush()
 
         def shutdown(self) -> None:
-            """Stop worker thread and flush remaining messages."""
+            """Stop worker thread and flush remaining messages.
+
+            Raises:
+                TimeoutError: If the worker exceeds its shutdown deadline.
+            """
             self.queue.shutdown()
             if self.thread.is_alive():
                 self.thread.join(timeout=c.LOG_SHUTDOWN_JOIN_SECONDS)
@@ -136,7 +140,7 @@ class FlextUtilitiesLoggingConfig:
 
         @override
         def write(self, s: str, /) -> int:
-            """Write message to queue (non-blocking).
+            """Admit a message using the declared queue capacity policy.
 
             Returns:
                 The resulting ``int``.
@@ -144,12 +148,13 @@ class FlextUtilitiesLoggingConfig:
             """
             if self._failure is not None:
                 raise self._failure
+            failure: BaseException | None = None
             try:
                 self.queue.put(s, block=c.ASYNC_BLOCK_ON_FULL)
-            except queue.ShutDown:
-                if self._failure is not None:
-                    raise self._failure
-                raise
+            except queue.ShutDown as exc:
+                failure = self._failure if self._failure is not None else exc
+            if failure is not None:
+                raise failure
             return len(s)
 
         def _write_queued_message(self, msg: str) -> None:
@@ -165,15 +170,13 @@ class FlextUtilitiesLoggingConfig:
                 except queue.ShutDown:
                     break
                 try:
-                    if self._failure is None:
-                        self._write_queued_message(msg)
-                except BaseException as exc:
-                    self._failure = exc
-                    self.queue.shutdown()
+                    self._write_queued_message(msg)
                 finally:
+                    failure = sys.exception()
+                    if failure is not None:
+                        self._failure = failure
+                        self.queue.shutdown(immediate=True)
                     self.queue.task_done()
-            if self._failure is not None:
-                raise self._failure
 
     _async_writer: ClassVar[_AsyncLogWriter | None] = None
 

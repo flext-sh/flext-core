@@ -30,9 +30,10 @@ class TestsFlextLoggingStages:
     def test_closed_async_stream_preserves_native_failure() -> None:
         """A failed sink terminates without logging back into its own writer."""
         consumer = (
-            "import sys, structlog\n"
+            "import logging, sys, structlog\n"
             "from flext_core import m, u\n"
-            "u.configure_structlog(settings=m.StructlogOptions(async_logging=True))\n"
+            "u.configure_structlog(settings=m.StructlogOptions("
+            "async_logging=True, log_level=logging.INFO))\n"
             "sys.stdout.close()\n"
             "structlog.get_logger().info('closed stream')\n"
         )
