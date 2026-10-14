@@ -110,6 +110,7 @@ class FlextUtilitiesBeartypeClassVisitor(
 
         from flext_core._models.enforcement import FlextModelsEnforcement as me
         from flext_core._typings.base import FlextTypingBase as t
+
         """
         context = _arg_context(args)
         if context is None:

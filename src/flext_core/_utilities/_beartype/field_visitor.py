@@ -248,6 +248,7 @@ class FlextUtilitiesBeartypeFieldVisitor:
 
         Raises:
             TypeError: If unsupported field-shape predicate arguments.
+
         """
         match args:
             case (type() as model_type, str() as name, FieldInfo() as info):

@@ -19,17 +19,42 @@ class FlextResultUnwrap[T](FlextResultComposition[T]):
     """Value extraction helpers for results."""
 
     def unwrap(self) -> T:
+        """Return the success payload.
+
+        Raises:
+            RuntimeError: If this result is a failure, chained from the
+                attached exception.
+
+        """
         if self.failure:
             msg = c.ERR_RESULT_CANNOT_UNWRAP.format(error=self.error)
             raise RuntimeError(msg) from self.exception
         return self.value
 
     def unwrap_or[DefaultT](self, default: DefaultT) -> T | DefaultT:
+        """Return the payload on success, otherwise ``default``.
+
+        Args:
+            default: The fallback value used when this result is a failure.
+
+        Returns:
+            The success payload or ``default``.
+
+        """
         if self.success:
             return self._payload
         return default
 
     def unwrap_or_else[DefaultT](self, func: Callable[[], DefaultT]) -> T | DefaultT:
+        """Return the payload on success, otherwise ``func()``.
+
+        Args:
+            func: The callable producing the fallback value on failure.
+
+        Returns:
+            The success payload or the ``func()`` result.
+
+        """
         if self.success:
             return self._payload
         return func()

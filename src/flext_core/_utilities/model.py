@@ -62,6 +62,7 @@ class FlextUtilitiesModel:
 
         Returns:
             The resulting ``t.SettingsClass``.
+
         """
         settings_module = import_module("flext_core")
         settings_cls: t.SettingsClass = settings_module.FlextSettings
@@ -73,6 +74,7 @@ class FlextUtilitiesModel:
 
         Returns:
             The resulting ``p.ContainerType``.
+
         """
         container_module = import_module("flext_core")
         container_cls: p.ContainerType = container_module.FlextContainer
@@ -84,6 +86,7 @@ class FlextUtilitiesModel:
 
         Returns:
             The resulting ``p.ContextType``.
+
         """
         context_module = import_module("flext_core")
         context_cls: p.ContextType = context_module.FlextContext
@@ -121,6 +124,7 @@ class FlextUtilitiesModel:
 
         Returns:
             The resulting ``p.Result[TValue]``.
+
         """
         try:
             adapter: t.ValueAdapter[TValue] = (

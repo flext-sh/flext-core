@@ -64,12 +64,12 @@ class TestsFlextCoreServiceOperations:
 
         @property
         def label(self) -> str:
-            """A property is not an operation."""
+            """Provide a property, which is not an operation."""
             return self.__class__.__name__
 
         @classmethod
         def build(cls) -> p.Result[bool]:
-            """A classmethod is not an operation.
+            """Provide a classmethod, which is not an operation.
 
             Returns:
                 The resulting ``p.Result[bool]``.
@@ -79,7 +79,7 @@ class TestsFlextCoreServiceOperations:
 
         @staticmethod
         def helper() -> p.Result[bool]:
-            """A staticmethod is not an operation.
+            """Provide a staticmethod, which is not an operation.
 
             Returns:
                 The resulting ``p.Result[bool]``.
@@ -89,7 +89,7 @@ class TestsFlextCoreServiceOperations:
 
         @m.model_validator(mode="after")
         def check_state(self) -> Self:
-            """A Pydantic validator is not an operation.
+            """Provide a Pydantic validator, which is not an operation.
 
             Returns:
                 The resulting ``Self``.
@@ -99,7 +99,7 @@ class TestsFlextCoreServiceOperations:
 
         @staticmethod
         def _private() -> p.Result[bool]:
-            """A private method is not an operation.
+            """Provide a private method, which is not an operation.
 
             Returns:
                 The resulting ``p.Result[bool]``.

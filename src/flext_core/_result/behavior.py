@@ -46,10 +46,18 @@ class FlextResultBehavior[T](FlextResultBase[T]):
 
     @property
     def failure(self) -> bool:
+        """Whether this result represents a failure."""
         return not self.success
 
     @property
     def value(self) -> T:
+        """Return the success payload.
+
+        Raises:
+            RuntimeError: If this result is a failure, chained from the
+                exception that produced it.
+
+        """
         if not self.success:
             error_msg = self.error or ""
             msg = f"Cannot access value of failed result: {error_msg}"
@@ -58,17 +66,19 @@ class FlextResultBehavior[T](FlextResultBase[T]):
 
     @property
     def exception(self) -> BaseException | None:
+        """The exception that produced this failure, if any."""
         return self._exception
 
     @classmethod
     def _factory(cls) -> type[FlextProtocolsResult.ResultFactory]:
-        """Return the concrete MRO only after structural factory validation.
+        """Return the concrete result class after structural factory validation.
 
         Returns:
-            The concrete MRO only after structural factory validation.
+            The concrete result class implementing the factory contract.
 
         Raises:
-            TypeError: If ``not _is_result_factory(factory_cls)``.
+            TypeError: If the class does not implement the result factory
+                contract.
 
         """
         factory_cls: type = cls
@@ -89,6 +99,7 @@ class FlextResultBehavior[T](FlextResultBase[T]):
         pass
 
     def __or__[D](self, default: D) -> T | D:
+        """Return the payload on success, otherwise ``default``."""
         if self.success:
             return self._payload
         return default

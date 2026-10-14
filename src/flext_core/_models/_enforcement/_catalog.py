@@ -82,6 +82,7 @@ class FlextModelsEnforcementCatalog(FlextModelsEnforcementSources):
             Returns:
                 The resulting ``tuple[FlextModelsEnforcementCatalog.EnforcementRuleSpec,
                     ...]``.
+
             """
             return tuple(rule for rule in self.rules if rule.source.kind == kind.value)
 

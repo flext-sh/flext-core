@@ -68,6 +68,7 @@ class FlextModelsBase(flextmodelsbase_part_02.FlextModelsBase):
 
             Returns:
                 The resulting ``str | None``.
+
             """
             return value.isoformat() if value else None
 
@@ -81,6 +82,7 @@ class FlextModelsBase(flextmodelsbase_part_02.FlextModelsBase):
             Raises:
                 ValueError: If ``self.updated_at is not None and self.updated_at <
                     self.created_at``.
+
             """
             if self.updated_at is not None and self.updated_at < self.created_at:
                 raise ValueError(c.ERR_MODEL_UPDATED_AT_BEFORE_CREATED_AT)
@@ -109,6 +111,7 @@ class FlextModelsBase(flextmodelsbase_part_02.FlextModelsBase):
 
             Raises:
                 ValueError: If ``self.version < c.DEFAULT_RETRY_DELAY_SECONDS``.
+
             """
             if self.version < c.DEFAULT_RETRY_DELAY_SECONDS:
                 raise ValueError(

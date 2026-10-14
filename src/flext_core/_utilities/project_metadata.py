@@ -148,6 +148,7 @@ class FlextUtilitiesProjectMetadata(FlextModelsProjectMetadata):
 
         Returns:
             The normalized underscore name of every parseable requirement.
+
         """
         names: list[str] = []
         for requirement in distribution.requires or ():
