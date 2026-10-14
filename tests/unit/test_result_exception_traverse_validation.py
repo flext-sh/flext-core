@@ -102,7 +102,7 @@ class TestsFlextCoreResultExceptionTraverseValidation(
         # Assert
         tm.that(result.failure, eq=True)
         tm.that(result.error, none=False)
-        tm.that(result.error, has=["error 1", "error 2"])  # pyrefly: ignore[bad-argument-type]
+        tm.that(result.error, has=["error 1", "error 2"])
 
     @staticmethod
     def test_traverse_accumulate_reports_every_callback_exception() -> None:
