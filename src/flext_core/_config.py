@@ -2,7 +2,7 @@
 
 A thin layer over ``pydantic_settings.BaseSettings`` that depends on **nothing**
 but stdlib + pydantic-settings. Declarative execution parametrization is loaded
-from the project's local ``config/`` dir: every ``config/*.yaml`` file is
+from the declaring package's ``config/`` resource: every ``config/*.yaml`` file is
 auto-discovered and deep-merged (YAML is the authoring format so rules stay
 organized across multiple files). Frozen and static, like constants; a per-class
 singleton exposed at the root as ``config``.
@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import inspect
 import os
+from importlib.resources import files
 from pathlib import Path
 from threading import RLock
 from typing import ClassVar, Self, override
@@ -77,19 +78,11 @@ class FlextConfig(BaseSettings):
     def _config_dir(cls) -> Path:
         """Resolve the packaged ``config/`` root, independent of the caller's CWD.
 
-        ``CONFIG_DIR`` may be an absolute path (explicit override, used verbatim)
-        or a relative name (default ``"config"``). When relative it is resolved
-        against the concrete subclass's own module layout, trying in order:
-
-        1. ``<pkg>/config`` — the packaged copy shipped via hatch force-include,
-           present after ``pip install`` (``site-packages/<pkg>/config``).
-        2. ``<project-root>/config`` — the editable/workspace source tree, where
-           ``config/`` sits beside ``src/`` (``<root>/src/<pkg>/_config.py`` →
-           ``parents[2]`` is the project root).
-
-        An operator may relocate the root entirely with
-        ``<PACKAGE>_CONFIG_DIR``. Library code must never depend on the process
-        CWD, so the legacy CWD-relative lookup is gone.
+        The concrete class's import package owns the resource in editable and
+        wheel installs, regardless of declaration depth or inherited loader.
+        Repository overlays are separate explicit consumer inputs, never a
+        replacement for a missing packaged default. ``<PACKAGE>_CONFIG_DIR``
+        remains the explicit operator relocation.
 
         Returns:
             The resulting ``Path``.
@@ -98,14 +91,8 @@ class FlextConfig(BaseSettings):
         override = os.environ.get(f"{app_env_prefix(namespace)}CONFIG_DIR")
         if override:
             return Path(override)
-        config_dir = Path(FlextConstantsConfig.CONFIG_DIR_NAME)
-        if config_dir.is_absolute():
-            return config_dir
-        module_path = Path(inspect.getfile(cls)).resolve()
-        packaged = module_path.parent / config_dir
-        if packaged.is_dir():
-            return packaged
-        return module_path.parents[2] / config_dir
+        package = cls.__module__.partition(".")[0]
+        return Path(str(files(package) / FlextConstantsConfig.CONFIG_DIR_NAME))
 
     @classmethod
     def _user_config_dir(cls) -> Path:

@@ -2,7 +2,7 @@
 # @flext-owner: flext-infra/config/codegen.yaml + flext-infra/src/flext_infra/templates/project/base/pyproject.toml.j2
 # @flext-adjust: MANAGED=conflict_sections + overwrite_project_keys. CUSTOM=preserve_project_keys and [tool.*] outside conflict_sections. Never edit this projection.
 # @flext-regenerate: make gen
-
+# @flext-rendered-by: flext-infra 0.12.0
 [build-system]
 build-backend = "hatchling.build"
 requires = ["hatchling"]
@@ -441,7 +441,6 @@ ignore = [
   "typing-only-first-party-import",
   "typing-only-standard-library-import",
   "typing-only-third-party-import",
-  "unsorted-imports",
 ]
 select = ["ALL"]
 unfixable = [
@@ -688,10 +687,6 @@ whitelines = 1
 constraint-dependencies = ["mypy<2.4.0"]
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 link-mode = "copy"
-override-dependencies = ["flext-core"]
-
-[tool.uv.sources.flext-core]
-workspace = true
 
 [tool.bandit]
 severity = "MEDIUM"

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from examples._models.person import ExamplesFlextSharedPerson
 from examples._models.errors import ExamplesFlextModelsErrors
 from examples._models.ex00 import ExamplesFlextModelsEx00
 from examples._models.ex01 import ExamplesFlextModelsEx01
@@ -22,9 +21,10 @@ from examples._models.ex10 import ExamplesFlextModelsEx10
 from examples._models.ex11 import ExamplesFlextModelsEx11
 from examples._models.ex12 import ExamplesFlextModelsEx12
 from examples._models.ex14 import ExamplesFlextModelsEx14
-from examples._models.output import ExamplesFlextModelsOutput
-from flext_core import FlextModels
 from examples._models.handle import ExamplesFlextSharedHandle
+from examples._models.output import ExamplesFlextModelsOutput
+from examples._models.person import ExamplesFlextSharedPerson
+from flext_core import FlextModels
 
 if TYPE_CHECKING:
     from examples import t

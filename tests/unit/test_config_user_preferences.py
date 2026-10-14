@@ -179,6 +179,69 @@ class TestPackagedConfigWithUserPreferences:
             assert epsilon.SynthConfig.fetch_global().greeting == "packaged"
 
     @staticmethod
+    @pytest.mark.parametrize("layout", ["site-packages", "src", "member/src"])
+    def test_nested_mro_declaration_uses_its_package_resource(
+        tmp_path: Path,
+        layout: str,
+    ) -> None:
+        """Declaration depth and source layout cannot select repository defaults."""
+        with u.Tests.env_vars_context(
+            env_vars={"XDG_CONFIG_HOME": str(tmp_path / "xdg")},
+        ):
+            root = tmp_path / layout
+            parent = _install_package(root, "synthpkg_parent", "greeting: parent\n")
+            child = _install_package(root, "synthpkg_nested", "greeting: packaged\n")
+            nested = root / "synthpkg_nested" / "declarations"
+            nested.mkdir()
+            (nested / "__init__.py").write_text("", encoding="utf-8")
+            (nested / "owner.py").write_text(
+                "from synthpkg_parent._config import SynthConfig\n"
+                "class NestedConfig(SynthConfig):\n"
+                "    pass\n",
+                encoding="utf-8",
+            )
+            for directory in (nested / "config", tmp_path / "config"):
+                directory.mkdir()
+                (directory / "defaults.yaml").write_text(
+                    "greeting: foreign\n", encoding="utf-8"
+                )
+            module = importlib.import_module("synthpkg_nested.declarations.owner")
+            config = module.NestedConfig.fetch_global()
+            assert config.greeting == child.SynthConfig.fetch_global().greeting
+            assert config.greeting != parent.SynthConfig.fetch_global().greeting
+            assert module.NestedConfig.fetch_global() is config
+            assert config is not parent.SynthConfig.fetch_global()
+
+    @staticmethod
+    def test_missing_declared_resource_never_borrows_repository_config(
+        tmp_path: Path,
+    ) -> None:
+        """A missing packaged declaration fails even with a repository lookalike."""
+        with u.Tests.env_vars_context(
+            env_vars={"XDG_CONFIG_HOME": str(tmp_path / "xdg")},
+        ):
+            root = tmp_path / "src"
+            _install_package(root, "synthpkg_missing", "greeting: packaged\n")
+            package = root / "synthpkg_missing"
+            (package / "config" / "defaults.yaml").unlink()
+            (package / "config").rmdir()
+            (tmp_path / "config").mkdir()
+            (tmp_path / "config" / "defaults.yaml").write_text(
+                "greeting: foreign\n", encoding="utf-8"
+            )
+            (package / "declared.py").write_text(
+                "from typing import ClassVar\n"
+                "from synthpkg_missing._config import SynthConfig\n"
+                "class DeclaredConfig(SynthConfig):\n"
+                "    CONFIG_FILENAMES: ClassVar[tuple[str, ...]] = (\n"
+                "        'defaults.yaml',)\n",
+                encoding="utf-8",
+            )
+            module = importlib.import_module("synthpkg_missing.declared")
+            with pytest.raises(FileNotFoundError, match="declared config directory"):
+                module.DeclaredConfig.fetch_global()
+
+    @staticmethod
     def test_explicit_config_dir_env_override_replaces_the_root(
         tmp_path: Path,
     ) -> None:

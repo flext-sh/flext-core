@@ -218,32 +218,39 @@ jobs:
           fi
           echo "${mise_path%/*}" >> "${GITHUB_PATH}"
 
-      # CI approval, one visible step per ci workflow row (setup -> audit -> check -> test -> verify-clean).
+      # CI approval, one visible step per ci workflow row (setup -> gen -> audit -> check -> test -> verify-clean).
       - name: make setup (blocking)
         id: approval-setup
         run: CI=Y make setup
-      # CI approval, one visible step per ci workflow row (setup -> audit -> check -> test -> verify-clean).
+      # CI approval, one visible step per ci workflow row (setup -> gen -> audit -> check -> test -> verify-clean).
+      - name: make gen (blocking)
+        id: approval-gen
+        # Every approval verb reports once setup provisioned the environment,
+        # so one red verdict (an audit lock drift) never hides the others.
+        if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' }}
+        run: CI=Y make gen
+      # CI approval, one visible step per ci workflow row (setup -> gen -> audit -> check -> test -> verify-clean).
       - name: make audit (blocking)
         id: approval-audit
         # Every approval verb reports once setup provisioned the environment,
         # so one red verdict (an audit lock drift) never hides the others.
         if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' }}
         run: CI=Y make audit
-      # CI approval, one visible step per ci workflow row (setup -> audit -> check -> test -> verify-clean).
+      # CI approval, one visible step per ci workflow row (setup -> gen -> audit -> check -> test -> verify-clean).
       - name: make check (blocking)
         id: approval-check
         # Every approval verb reports once setup provisioned the environment,
         # so one red verdict (an audit lock drift) never hides the others.
         if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' }}
         run: CI=Y make check
-      # CI approval, one visible step per ci workflow row (setup -> audit -> check -> test -> verify-clean).
+      # CI approval, one visible step per ci workflow row (setup -> gen -> audit -> check -> test -> verify-clean).
       - name: make test (blocking)
         id: approval-test
         # Every approval verb reports once setup provisioned the environment,
         # so one red verdict (an audit lock drift) never hides the others.
         if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' }}
         run: CI=Y make test
-      # CI approval, one visible step per ci workflow row (setup -> audit -> check -> test -> verify-clean).
+      # CI approval, one visible step per ci workflow row (setup -> gen -> audit -> check -> test -> verify-clean).
       - name: make verify-clean (blocking)
         id: approval-verify-clean
         # Every approval verb reports once setup provisioned the environment,
