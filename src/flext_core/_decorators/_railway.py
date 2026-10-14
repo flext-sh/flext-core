@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import time
 from functools import wraps
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from flext_core import c, m, r
 from flext_core._decorators import FlextDecoratorsLogging
@@ -48,6 +48,8 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
             ) -> FlextProtocolsResult.Result[TValue]:
                 try:
                     result = func(*args, **kwargs)
+                    if isinstance(result, FlextProtocolsResult.Result):
+                        return cast("FlextProtocolsResult.Result[TValue]", result)
                     return r[TValue].ok(result)
                 except cls._CAUGHT_EXCEPTIONS as exc:
                     effective_error_code = (
