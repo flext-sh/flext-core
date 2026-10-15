@@ -38,6 +38,7 @@ class ExamplesFlextEchoService(s[str]):
 
         Returns:
             The resulting ``t.JsonMapping``.
+
         """
         return {"service": type(self).__name__, "payload": self.payload.text}
 
@@ -46,6 +47,7 @@ class ExamplesFlextEchoService(s[str]):
 
         Returns:
             The resulting ``bool``.
+
         """
         validation: p.Result[bool] = self.validate_business_rules()
         return validation.success
@@ -55,6 +57,7 @@ class ExamplesFlextEchoService(s[str]):
 
         Returns:
             The resulting ``p.Result[bool]``.
+
         """
         if self.rule_error:
             return r[bool].fail(self.rule_error)

@@ -60,6 +60,7 @@ def _resolve_env_file(namespace: str | None = None) -> str:
 
     Returns:
         The resulting ``str``.
+
     """
     custom_env_file = os.environ.get(ENV_FILE_ENV_VAR)
     if custom_env_file:
@@ -94,6 +95,7 @@ def _platform_root(
 
     Returns:
         The resulting ``Path``.
+
     """
     if sys.platform == "darwin":
         return Path.home() / "Library" / apple_leaf
@@ -117,6 +119,7 @@ def _platform_cache_root() -> Path:
 
     Returns:
         The resulting ``Path``.
+
     """
     return _platform_root(
         "Caches",
@@ -136,6 +139,7 @@ def _platform_data_root() -> Path:
 
     Returns:
         The resulting ``Path``.
+
     """
     return _platform_root(
         "Application Support",
@@ -155,6 +159,7 @@ def platform_config_root() -> Path:
 
     Returns:
         The resulting ``Path``.
+
     """
     return _platform_root(
         "Application Support",
@@ -174,6 +179,7 @@ def _platform_state_root() -> Path:
 
     Returns:
         The resulting ``Path``.
+
     """
     return _platform_root(
         "Application Support",
@@ -195,6 +201,7 @@ def _validate_app_namespace(namespace: str) -> str:
 
     Raises:
         ValueError: If application namespace must be one non-empty path segment.
+
     """
     candidate = namespace.strip()
     if not candidate or candidate in {".", ".."} or Path(candidate).name != candidate:
@@ -211,6 +218,7 @@ def _namespace_dir_name(env_prefix: str) -> str:
 
     Returns:
         The resulting ``str``.
+
     """
     return env_prefix.rstrip("_").lower().replace("_", "-")
 
@@ -242,6 +250,7 @@ class FlextSettings(BaseSettings):
 
         Returns:
             The resulting ``str``.
+
         """
         return _resolve_env_file(namespace)
 
@@ -273,6 +282,7 @@ class FlextSettings(BaseSettings):
 
         Raises:
             TypeError: If Singleton instance is not of expected type.
+
         """
         _ = kwargs
         if not cls._singleton_enabled:
@@ -343,6 +353,7 @@ class FlextSettings(BaseSettings):
 
         Returns:
             The resulting mapping of the merged override values.
+
         """
         cls._validate_overrides(**overrides)
         merged: t.MutableMappingKV[str, t.SettingsOverride | None] = {}
@@ -367,6 +378,7 @@ class FlextSettings(BaseSettings):
 
         Returns:
             The resulting ``Self``.
+
         """
         if not overrides:
             with self.__class__.singleton_disabled():
@@ -384,6 +396,7 @@ class FlextSettings(BaseSettings):
 
         Returns:
             The resulting ``Self``.
+
         """
         if not overrides:
             return cls.fetch_global()
@@ -402,6 +415,7 @@ class FlextSettings(BaseSettings):
 
         Raises:
             ValueError: If Unknown settings override(s) for.
+
         """
         unknown = sorted(set(overrides) - set(cls.model_fields))
         if unknown:
@@ -505,6 +519,7 @@ class FlextSettings(BaseSettings):
 
         Raises:
             ValueError: If runtime_dir must be absolute.
+
         """
         namespace = self._current_app_namespace()
         override = os.environ.get(f"{app_env_prefix(namespace)}RUNTIME_DIR")
@@ -531,6 +546,7 @@ class FlextSettings(BaseSettings):
 
         Raises:
             ValueError: If ``self.trace and (not self.debug)``.
+
         """
         if self.trace and not self.debug:
             raise ValueError(_ERR_TRACE_REQUIRES_DEBUG)

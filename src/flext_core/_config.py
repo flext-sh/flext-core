@@ -86,6 +86,7 @@ class FlextConfig(BaseSettings):
 
         Returns:
             The resulting ``Path``.
+
         """
         namespace = cls._package_namespace()
         override = os.environ.get(f"{app_env_prefix(namespace)}CONFIG_DIR")
@@ -111,7 +112,7 @@ class FlextConfig(BaseSettings):
 
     @classmethod
     def _config_files(cls) -> list[Path]:
-        """Packaged ``config/*.yaml`` first, then the operator's overlay files.
+        """Collect packaged ``config/*.yaml`` first, then the operator's overlay files.
 
         Later files win on key collision, so operator preferences override the
         packaged defaults while every undeclared key keeps shipping its default.
@@ -120,9 +121,11 @@ class FlextConfig(BaseSettings):
             The resulting ``list[Path]``.
 
         Raises:
-            FileNotFoundError: If declared config directory does not exist; or if
-                ``missing``.
-            ValueError: If ``invalid``.
+            FileNotFoundError: If a declared config directory or declared config
+                file does not exist.
+            ValueError: If a declared config filename is not a bare ``.yaml`` or
+                ``.yml`` name.
+
         """
         config_dir = cls._config_dir()
         user_files = cls._yaml_files_in(cls._user_config_dir())
@@ -154,7 +157,7 @@ class FlextConfig(BaseSettings):
         cls,
         data: dict[str, JsonValue],
     ) -> dict[str, JsonValue]:
-        """Hook for subclasses to transform merged YAML before validation.
+        """Transform merged YAML before validation on subclass override.
 
         Default is identity (no transformation). Override to apply env
         expansion, section filtering, or any data reshaping without
@@ -162,6 +165,7 @@ class FlextConfig(BaseSettings):
 
         Returns:
             The resulting ``dict[str, JsonValue]``.
+
         """
         return data
 
@@ -179,6 +183,7 @@ class FlextConfig(BaseSettings):
 
         Returns:
             The resulting ``tuple[PydanticBaseSettingsSource, ...]``.
+
         """
         _ = (dotenv_settings, file_secret_settings)
         return (
@@ -204,6 +209,7 @@ class FlextConfig(BaseSettings):
 
         Raises:
             ValidationError: If the configuration is invalid.
+
         """
         instance = cls.__dict__.get("_instance")
         if isinstance(instance, cls):

@@ -129,6 +129,7 @@ class FlextUtilitiesLoggingConfig:
 
             Raises:
                 TimeoutError: If the worker exceeds its shutdown deadline.
+
             """
             self.queue.shutdown()
             if self.thread.is_alive():

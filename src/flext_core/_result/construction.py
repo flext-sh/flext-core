@@ -54,6 +54,18 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
 
     @classmethod
     def from_failure(cls: type[Self], source: p.FailureLike) -> p.Result[T]:
+        """Build a failure copying the error metadata of another result.
+
+        Args:
+            source: The failed result whose error state is copied.
+
+        Returns:
+            The resulting ``p.Result[T]``.
+
+        Raises:
+            ValueError: If ``source`` is a successful result.
+
+        """
         if source.success:
             msg = c.ERR_RESULT_FAILURE_REQUIRED
             raise ValueError(msg)
@@ -136,6 +148,16 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
         func: Callable[[], V | None],
         error_code: str | None = None,
     ) -> p.Result[V]:
+        """Invoke a callable, turning ``None`` and exceptions into failures.
+
+        Args:
+            func: The callable producing the payload.
+            error_code: Optional error code carried by the failure results.
+
+        Returns:
+            The resulting ``p.Result[V]``.
+
+        """
         try:
             value = func()
             if value is None:
@@ -179,6 +201,23 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
         error_data: t.JsonMapping | t.ConfigModelInput | None = None,
         exception: BaseException | None = None,
     ) -> p.Result[T]:
+        """Build a failed result, resolving codes and redacting error data.
+
+        A ``None`` error normalizes to the empty string; an omitted
+        ``error_code`` is extracted from the exception, and an omitted
+        ``error_data`` is extracted from the exception's metadata with
+        sensitive keys redacted and the correlation id preserved.
+
+        Args:
+            error: The human-readable error message, or ``None``.
+            error_code: Optional machine-readable error code.
+            error_data: Optional structured error payload to validate and filter.
+            exception: Optional exception bound to the failure.
+
+        Returns:
+            The resulting ``p.Result[T]``.
+
+        """
         error_msg = error if error is not None else ""
         resolved_error_code = error_code or cls._extract_exception_error_code(exception)
         # Why: redact caller-supplied AND auto-extracted error_data (security mro-8taj)
@@ -205,6 +244,16 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
         operation: str,
         exc: Exception | str | None = None,
     ) -> p.Result[T]:
+        """Build a failure with a standardized ``<operation> failed`` message.
+
+        Args:
+            operation: The operation name leading the error message.
+            exc: Optional exception or message appended to the error.
+
+        Returns:
+            The resulting ``p.Result[T]``.
+
+        """
         if isinstance(exc, Exception):
             return cls.fail(f"{operation} failed: {exc}", exception=exc)
         error_msg = (
@@ -218,6 +267,16 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
         data: t.ModelInput,
         model: t.ModelClass[ModelT],
     ) -> p.Result[ModelT]:
+        """Validate data against a model, turning validation errors into failures.
+
+        Args:
+            data: The input passed to the model's validation.
+            model: The model class validating the data.
+
+        Returns:
+            The resulting ``p.Result[ModelT]``.
+
+        """
         try:
             validated: ModelT = model.model_validate(data)
             return ok_result(cls._factory(), validated)

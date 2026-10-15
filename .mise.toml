@@ -48,18 +48,14 @@ python = "3.13"
 # provisions from mise.lock; a host bootstrap mise only needs to read that lock.
 "github:jdx/mise" = "2026.10.3"
 # Native toolchain (single source: Infra.codegen.toolchain.tools in codegen.yaml).
-uv = "latest"
-direnv = "latest"
-taplo = "latest"
+"uv" = "latest"
+"direnv" = "latest"
+"taplo" = "latest"
 "aqua:ast-grep/ast-grep" = "latest"
-gitleaks = "latest"
+"gitleaks" = "latest"
 "aqua:boyter/scc" = "latest"
-node = "latest"
-[tools."github:qltysh/qlty"]
-version = "latest"
-[tools."github:kucherenko/jscpd"]
-version = "latest"
-[tools."github:microsoft/waza"]
-version = "latest"
-version_prefix = "v"
+"node" = "latest"
+"github:qltysh/qlty" = { version = "latest" }
+"github:kucherenko/jscpd" = { version = "latest" }
+"github:microsoft/waza" = { version = "latest", version_prefix = "v" }
 # End SECTION: tools

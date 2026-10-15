@@ -51,6 +51,7 @@ class FlextUtilitiesFamilySurface:
         Returns:
             True when the distribution name or one requirement carries the
             family prefix.
+
         """
         return distribution_name.startswith(
             c.NAMESPACE_FAMILY_PREFIX,
@@ -228,6 +229,7 @@ class FlextUtilitiesFamilySurface:
 
         Raises:
             ValueError: If published family surface maps.
+
         """
         previous = renames.setdefault(long_name, alias)
         if previous != alias:

@@ -363,6 +363,14 @@ CLAUDE.local.md
 !.vscode/settings.json
 !config/
 !config/gitleaks-release.toml
+!.flext/
+!.flext/uv/
+!.flext/uv/local/
+!.flext/uv/local/pyproject.toml
+!.flext/uv/standalone/
+!.flext/uv/standalone/pyproject.toml
+!.flext/uv/local/uv.lock
+!.flext/uv/standalone/uv.lock
 
 # RUNTIME: local projections (derived)
 /.vscode/settings.json

@@ -25,6 +25,7 @@ class ExamplesFlextCreateUserHandler:
 
         Returns:
             The resulting ``t.JsonPayload | p.ResultView[t.JsonPayload] | None``.
+
         """
         if not isinstance(message, m.Examples.CreateUser):
             return r[str].fail("unexpected_message")

@@ -28,6 +28,7 @@ def _floor_divide(dividend: int, divisor: int) -> int:
 
     Returns:
         The resulting ``int``.
+
     """
     return dividend // divisor
 

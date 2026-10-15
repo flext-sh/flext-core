@@ -22,7 +22,13 @@ class FlextResultComposed[T](
     FlextResultConstruction[T],
     FlextResultBehavior[T],
 ):
-    """Type-safe result with monadic railway-oriented operations."""
+    """Type-safe result with monadic railway-oriented operations.
+
+    Composes the unwrap, composition, transform, construction and behavior
+    layers into the single concrete base published as ``FlextResult``; every
+    layer contributes one orthogonal slice of the result API and the MRO is
+    the only composition mechanism.
+    """
 
 
 __all__: list[str] = ["FlextResultComposed"]

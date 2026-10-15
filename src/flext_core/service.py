@@ -53,7 +53,12 @@ from flext_core import c, m, p, t, x
 
 
 class FlextService[TDomainResult = p.Base](x):
-    """Base class for domain services in FLEXT applications."""
+    """Base class for domain services in FLEXT applications.
+
+    Concrete services inherit settings, container, context and logger access
+    from the ``x`` mixins and may act as thread-safe per-class singletons.
+    ``TDomainResult`` fixes the result payload type the service returns.
+    """
 
     model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
         strict=True,
