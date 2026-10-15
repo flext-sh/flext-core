@@ -10,7 +10,7 @@ import sys
 from types import ModuleType
 from typing import TYPE_CHECKING
 
-from flext_core._lazy_parts.flextlazy_member import FlextLazyMember
+from flext_core.flextlazy_member import FlextLazyMember
 from flext_core._lazy_parts.flextlazy_part_01 import (
     FlextLazyPart01,
     LazyImportDict,
