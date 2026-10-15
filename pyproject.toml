@@ -62,9 +62,6 @@ Homepage = "https://github.com/flext-sh/flext-core"
 Repository = "https://github.com/flext-sh/flext-core"
 
 [dependency-groups]
-codegen = [
-  "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
-]
 dev = [
   "actionlint-py>=1.7.12.24",
   "bandit>=1.9.4",
@@ -126,6 +123,9 @@ dev = [
   "vulture>=2.16",
   "yamlfix>=1.19.1",
 ]
+codegen = [
+  "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
+]
 
 [tool.codespell]
 check-filenames = true
@@ -151,7 +151,7 @@ omit = [
 
 [tool.deptry]
 known_first_party = ["flext_core"]
-pep621_dev_dependency_groups = ["dev"]
+optional_dependencies_dev_groups = ["dev"]
 
 [tool.flext.docs]
 package_name = "flext_core"
@@ -168,8 +168,14 @@ include = ["/src/flext_core/**"]
 [tool.hatch.build.targets.wheel.sources]
 "src/flext_core" = "flext_core"
 
+[tool.hatch.build.targets.wheel.force-include]
+"pyproject.toml" = "flext_core/pyproject.toml"
+
 [tool.hatch.build.targets.sdist]
 include = ["/src/flext_core/**"]
+
+[tool.hatch.build.targets.sdist.force-include]
+"pyproject.toml" = "pyproject.toml"
 
 [tool.mypy]
 mypy_path = ["src"]
@@ -432,13 +438,10 @@ extend-safe-fixes = [
   "relative-imports",
   "typing-only-first-party-import",
 ]
+extend-select = ["missing-blank-line-after-last-section"]
 ignore = [
   "camelcase-imported-as-lowercase",
-  "D","PLR", "PLC", "PLW","DOC",
   "implicit-namespace-package",
-  "docstring-missing-returns",
-  "complex-structure",
-  "line-too-long",
   "missing-required-import",
   "missing-trailing-comma",
   "runtime-import-in-type-checking-block",
@@ -448,15 +451,11 @@ ignore = [
 ]
 select = ["ALL"]
 unfixable = [
-  "duplicate-value",
   "multi-value-repeated-key-literal",
   "multi-value-repeated-key-variable",
-  "outdated-version-block",
   "p-print",
   "print",
   "pytest-duplicate-parametrize-test-cases",
-  "redefined-while-unused",
-  "unused-variable",
 ]
 
 [tool.ruff.lint.flake8-copyright]
@@ -556,9 +555,11 @@ runtime-evaluated-base-classes = [
   "tests.m.ArbitraryTypesModel",
   "tests.m.BaseModel",
   "tests.m.BaseSettings",
+  "tests.m.ContractModel",
   "tests.m.Entity",
   "tests.m.FlexibleModel",
   "tests.m.FrozenValueModel",
+  "tests.m.Tests.PublicPayload",
   "tests.m.Value",
   "tests.s",
   "tests.unit._models.test_pydantic_facade._Item",

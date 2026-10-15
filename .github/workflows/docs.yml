@@ -188,13 +188,13 @@ jobs:
         run: |
           set -eu
           for report_root in .reports apps; do
-            if [ -d "$report_root" ]; then
-              find "$report_root" \
+            if [ -d "${report_root}" ]; then
+              find "${report_root}" \
                 \( -path '*/audit-summary.json' -o -path '*/audit-report.md' -o -path '*/validate-summary.json' -o -path '*/validate-report.md' \) \
                 -type f -exec sh -eu -c '
                   for report_file do
-                    printf "::group::%s\n" "$report_file"
-                    tail -n 80 "$report_file"
+                    printf "::group::%s\n" "${report_file}"
+                    tail -n 80 "${report_file}"
                     printf "::endgroup::\n"
                   done
                 ' sh {} +
