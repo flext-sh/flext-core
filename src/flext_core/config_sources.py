@@ -49,7 +49,12 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
         ) -> JsonValue: ...
 
     class UniqueKeyLoader(SafeLoader):
-        """Safe YAML loader rejecting duplicate and non-string mapping keys."""
+        """Safe YAML loader rejecting duplicate and non-string mapping keys.
+
+        Mapping nodes are constructed through ``construct_unique_mapping``,
+        which fails the load with a marked ``UniqueKeyError`` when a key
+        repeats or a key is not a string, keeping config files unambiguous.
+        """
 
         @staticmethod
         def construct_unique_mapping(
@@ -69,6 +74,7 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
 
             Raises:
                 ConstructorError: If a key is not a string or is duplicated.
+
             """
             typed_loader = cast("FlextStrictYamlConfigSource._Loader", loader)
             declared: set[str] = set()
@@ -125,7 +131,21 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
         *,
         transform: Callable[[dict[str, JsonValue]], dict[str, JsonValue]] | None = None,
     ) -> None:
-        """Initialize the YAML source with an optional deep merge and transform hook."""
+        """Initialize the YAML source with an optional deep merge and transform hook.
+
+        Args:
+            settings_cls: The pydantic settings class this source serves.
+            yaml_file: Optional YAML file selector forwarded to the base source.
+            yaml_file_encoding: Optional file encoding forwarded to the base
+                source.
+            yaml_config_section: Optional settings section selector forwarded to
+                the base source.
+            deep_merge: Whether multiple files deep-merge instead of last-wins.
+            _init_state: Optional pydantic-settings initialization state.
+            transform: Optional callable applied to the fully merged YAML data
+                before pydantic validates it.
+
+        """
         self._transform = transform
         super().__init__(
             settings_cls,
@@ -148,8 +168,12 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
     def unique_key_load(stream: str | IO[str]) -> JsonValue:
         """Parse safe YAML with unique keys and validate the JSON value boundary.
 
+        Args:
+            stream: The YAML text or text stream to parse.
+
         Returns:
             The parsed JSON-compatible value.
+
         """
         loader = FlextStrictYamlConfigSource.UniqueKeyLoader(stream)
         try:
@@ -169,7 +193,8 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
             The parsed native JSON mapping.
 
         Raises:
-            TypeError: If config YAML root must be a mapping.
+            TypeError: If the config YAML root is not a mapping.
+
         """
         with file_path.open(encoding=self.yaml_file_encoding) as yaml_file:
             loaded = self.unique_key_load(yaml_file)
@@ -196,6 +221,7 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
 
         Returns:
             The merged native JSON mapping.
+
         """
         if files is None:
             return {}
@@ -229,6 +255,7 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
 
         Returns:
             The resulting ``FlextTypingBase.JsonDict``.
+
         """
         result = dict(base)
         for key, value in updating.items():

@@ -25,6 +25,7 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
 
         Returns:
             The resulting ``str``.
+
         """
         return value.email if isinstance(value, m.Tests.User) else str(value)
 
@@ -34,6 +35,7 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
 
         Returns:
             The resulting ``p.Result[m.Tests.EmailResponse]``.
+
         """
         to = value if isinstance(value, str) else str(value)
         return TestsFlextUtilitiesRailwayPipelinesMixin.make(
@@ -55,6 +57,7 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
 
         Returns:
             The resulting ``str``.
+
         """
         return value.status if isinstance(value, m.Tests.EmailResponse) else str(value)
 

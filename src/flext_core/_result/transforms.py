@@ -20,7 +20,12 @@ if TYPE_CHECKING:
 
 
 class FlextResultTransforms[T](FlextResultConstruction[T]):
-    """Instance transformation methods for result values and errors."""
+    """Instance transformation methods for result values and errors.
+
+    Covers mapping payloads through callables, mapping errors, combining
+    with defaults (``map_or`` family) and converting back to plain values
+    or results without changing the success/failure disposition.
+    """
 
     def _as_result(self) -> p.Result[T]:
         """Structural view of self as the abstract Result protocol.
@@ -46,6 +51,18 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
         )
 
     def filter(self: Self, predicate: Callable[[T], bool]) -> p.Result[T]:
+        """Keep the result only when the predicate holds for the payload.
+
+        A false predicate turns the result into a failure; an exception raised
+        by ``predicate`` becomes a failure. Failures pass through unchanged.
+
+        Args:
+            predicate: The callable testing the success payload.
+
+        Returns:
+            The resulting ``p.Result[T]``.
+
+        """
         if self.success:
             try:
                 if predicate(self._payload):
@@ -56,6 +73,18 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
         return self._as_result()
 
     def flat_map[U](self: Self, func: Callable[[T], p.Result[U]]) -> p.Result[U]:
+        """Chain a result-returning function over the payload.
+
+        Failures propagate with their metadata preserved; an exception raised
+        by ``func`` becomes a failure.
+
+        Args:
+            func: The callable producing the next result.
+
+        Returns:
+            The resulting ``p.Result[U]``.
+
+        """
         if self.failure:
             return cast("p.Result[U]", self._fail_with_metadata())
         try:
@@ -64,6 +93,15 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
             return cast("p.Result[U]", self.__class__.fail(str(exc), exception=exc))
 
     def flow_through(self: Self, *funcs: Callable[[T], p.Result[T]]) -> p.Result[T]:
+        """Apply functions left to right, stopping at the first failure.
+
+        Args:
+            *funcs: The result-returning functions applied in order.
+
+        Returns:
+            The resulting ``p.Result[T]``.
+
+        """
         factory = self.__class__
         current: p.Result[T] = self._as_result()
         for func in funcs:
@@ -81,11 +119,33 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
         on_failure: Callable[[str], U],
         on_success: Callable[[T], U],
     ) -> U:
+        """Reduce the result to one value through the matching branch.
+
+        Args:
+            on_failure: The callable receiving the error message on failure.
+            on_success: The callable receiving the payload on success.
+
+        Returns:
+            The value produced by the matching callable.
+
+        """
         if self.success:
             return on_success(self._payload)
         return on_failure(self.require_error(self._as_result()))
 
     def lash[U](self: Self, func: Callable[[str], p.Result[U]]) -> p.Result[T | U]:
+        """Recover a failure through a result-returning error handler.
+
+        Successes pass through unchanged; an exception raised by ``func``
+        becomes a failure.
+
+        Args:
+            func: The callable mapping the error message to a new result.
+
+        Returns:
+            The resulting ``p.Result[T | U]``.
+
+        """
         if self.failure:
             try:
                 return cast(
@@ -103,6 +163,18 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
         return cast("p.Result[T | U]", self._as_result())
 
     def map[U](self: Self, func: Callable[[T], U]) -> p.Result[U]:
+        """Transform the payload with a plain function on success.
+
+        Failures propagate with their metadata preserved; an exception raised
+        by ``func`` becomes a failure.
+
+        Args:
+            func: The callable transforming the success payload.
+
+        Returns:
+            The resulting ``p.Result[U]``.
+
+        """
         if self.success:
             try:
                 return ok_result(self._factory(), func(self._payload))
@@ -111,6 +183,18 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
         return cast("p.Result[U]", self._fail_with_metadata())
 
     def map_error(self: Self, func: Callable[[str], str]) -> p.Result[T]:
+        """Transform the error message on failure, preserving other metadata.
+
+        Successes pass through unchanged; an exception raised by ``func``
+        becomes a failure.
+
+        Args:
+            func: The callable transforming the error message.
+
+        Returns:
+            The resulting ``p.Result[T]``.
+
+        """
         if self.failure:
             try:
                 return self.__class__.fail(
@@ -131,6 +215,16 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
     def map_or[U](self, default: U, func: Callable[[T], U]) -> U: ...
 
     def map_or[U](self, default: U, func: Callable[[T], U] | None = None) -> U | T:
+        """Apply ``func`` to the payload on success, otherwise return ``default``.
+
+        Args:
+            default: The value returned when this result is a failure.
+            func: The optional callable applied to the success payload.
+
+        Returns:
+            The transformed payload, the payload itself, or ``default``.
+
+        """
         if self.success:
             if func is not None:
                 return func(self._payload)
@@ -138,6 +232,18 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
         return default
 
     def recover[U](self: Self, func: Callable[[str], U]) -> p.Result[T | U]:
+        """Turn a failure into a success through a fallback function.
+
+        Successes pass through unchanged; an exception raised by ``func``
+        becomes a failure.
+
+        Args:
+            func: The callable mapping the error message to the recovery value.
+
+        Returns:
+            The resulting ``p.Result[T | U]``.
+
+        """
         if self.success:
             return cast("p.Result[T | U]", self)
         try:
@@ -149,6 +255,18 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
             return cast("p.Result[T | U]", self.__class__.fail(str(exc), exception=exc))
 
     def tap(self: Self, func: Callable[[T], None]) -> p.Result[T]:
+        """Run a side effect on the payload without changing the result.
+
+        Only runs on success; an exception raised by ``func`` becomes a
+        failure.
+
+        Args:
+            func: The callable receiving the success payload.
+
+        Returns:
+            The resulting ``p.Result[T]``.
+
+        """
         if self.success:
             try:
                 func(self._payload)
@@ -157,6 +275,18 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
         return self._as_result()
 
     def tap_error(self: Self, func: Callable[[str], None]) -> p.Result[T]:
+        """Run a side effect on the error message without changing the result.
+
+        Only runs on failure; an exception raised by ``func`` becomes a
+        failure.
+
+        Args:
+            func: The callable receiving the error message.
+
+        Returns:
+            The resulting ``p.Result[T]``.
+
+        """
         if self.failure:
             try:
                 func(self.require_error(self._as_result()))
@@ -165,6 +295,18 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
         return self._as_result()
 
     def to_model[U: BaseModel](self: Self, model: type[U]) -> p.Result[U]:
+        """Validate the payload into a model instance on success.
+
+        Failures propagate with their metadata preserved; a validation error
+        becomes a failure.
+
+        Args:
+            model: The model class validating the payload.
+
+        Returns:
+            The resulting ``p.Result[U]``.
+
+        """
         if self.failure:
             return cast("p.Result[U]", self._fail_with_metadata())
         try:

@@ -262,8 +262,15 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
     ) -> p.Result[T] | p.Result[t.RegisterableService]:
         """Resolve a registered service, factory or resource by name.
 
+        Args:
+            name: The registered name to resolve.
+            type_cls: When given, the resolved value is type-checked against
+                this class and the failure result carries a type-mismatch
+                error on mismatch.
+
         Returns:
-            The resulting ``p.Result[T] | p.Result[t.RegisterableService]``.
+            ``r.Ok`` wrapping the resolved instance, or ``r.Fail`` with a
+            not-found or type-mismatch error; lookup failures never raise.
 
         """
         match self._registrations.get(name):
@@ -327,7 +334,13 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         *,
         registration: m.ServiceRegistrationSpec | None = None,
     ) -> None:
-        """Reset the registrations from a spec and register the core services."""
+        """Reset the registrations from a spec and register the core services.
+
+        Args:
+            registration: Optional spec providing container config, user
+                overrides, settings and context; defaults apply when omitted.
+
+        """
         spec = registration or m.ServiceRegistrationSpec()
         self._registrations = {}
         self._global_config = spec.container_config or m.ContainerConfig()

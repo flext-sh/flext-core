@@ -34,6 +34,31 @@ class FlextProtocolsPydantic:
     type ValidationInfo = pydantic.ValidationInfo
     type ValidatorFunctionWrapHandler = pydantic.ValidatorFunctionWrapHandler
 
+    class ModelField(Protocol):
+        """Declared field annotation consumed by schema and protocol generators."""
+
+        @property
+        def annotation(self) -> FlextTypingBase.TypeFormSpecifier | None: ...
+
+        @property
+        def frozen(self) -> bool | None: ...
+
+    class ModelType(FlextProtocolsBase.ModuleOwned, Protocol):
+        """Native class metadata; instance operations remain on Model."""
+
+        __name__: str
+        __qualname__: str
+
+        @property
+        def model_fields(self) -> Mapping[str, FlextProtocolsPydantic.ModelField]:
+            """Read the class-level field descriptor without requiring storage."""
+            ...
+
+        @property
+        def model_config(self) -> pydantic.ConfigDict:
+            """Read the model owner's native configuration."""
+            ...
+
     @runtime_checkable
     class FunctionDecorator(Protocol):
         """Decorator preserving each function's parameter and return types."""

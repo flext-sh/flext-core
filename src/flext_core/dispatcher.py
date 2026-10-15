@@ -17,7 +17,7 @@ class FlextDispatcher:
     """Application-level dispatcher that satisfies the command bus protocol."""
 
     def __init__(self) -> None:
-        """Initialize dispatcher."""
+        """Initialize the dispatcher with an empty handler registry."""
         super().__init__()
         self.logger = u.fetch_logger(__name__)
         handlers: t.RegistryDict[

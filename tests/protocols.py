@@ -40,6 +40,13 @@ class TestsFlextProtocols(FlextTestsProtocols):
         """flext-core test protocols namespace."""
 
         @runtime_checkable
+        class PublicPayload(FlextTestsProtocols.Base, Protocol):
+            """Data consumed through a protocol and validated by its model owner."""
+
+            raw_name: str
+            visits: int
+
+        @runtime_checkable
         class GoodProtocol(FlextTestsProtocols.Base, Protocol):
             """Runtime-checkable port used by the clean enforcement fixture."""
 

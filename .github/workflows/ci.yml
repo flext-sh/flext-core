@@ -127,15 +127,15 @@ jobs:
         run: |
           set -eu
           cache_home="${XDG_CACHE_HOME:-${HOME}/.cache}"
-          database="$(realpath -m "$cache_home/flext/infra/testmon/flext-core/.testmondata")"
-          case "$database" in /*) ;; *) exit 2 ;; esac
-          printf 'database=%s\n' "$database" >> "$GITHUB_OUTPUT"
-          branch_digest="$(printf '%s' "$CACHE_BRANCH" | sha256sum)"
-          seed_digest="$(printf '%s' "$CACHE_SEED_BRANCH" | sha256sum)"
-          namespace="$CACHE_PLATFORM-3.13-flext-testmon-flext-core-${branch_digest%% *}-"
-          seed_namespace="$CACHE_PLATFORM-3.13-flext-testmon-flext-core-${seed_digest%% *}-"
-          printf 'namespace=%s\nseed_namespace=%s\nsave_allowed=%s\n' "$namespace" "$seed_namespace" "$CACHE_WRITE_ALLOWED" >> "$GITHUB_OUTPUT"
-          printf 'key=%s%s-%s\n' "$namespace" "$CACHE_INPUTS" "$CACHE_GENERATION" >> "$GITHUB_OUTPUT"
+          database="$(realpath -m "${cache_home}/flext/infra/testmon/flext-core/.testmondata")"
+          case "${database}" in /*) ;; *) exit 2 ;; esac
+          printf 'database=%s\n' "${database}" >> "${GITHUB_OUTPUT}"
+          branch_digest="$(printf '%s' "${CACHE_BRANCH}" | sha256sum)"
+          seed_digest="$(printf '%s' "${CACHE_SEED_BRANCH}" | sha256sum)"
+          namespace="${CACHE_PLATFORM}-3.13-flext-testmon-flext-core-${branch_digest%% *}-"
+          seed_namespace="${CACHE_PLATFORM}-3.13-flext-testmon-flext-core-${seed_digest%% *}-"
+          printf 'namespace=%s\nseed_namespace=%s\nsave_allowed=%s\n' "${namespace}" "${seed_namespace}" "${CACHE_WRITE_ALLOWED}" >> "${GITHUB_OUTPUT}"
+          printf 'key=%s%s-%s\n' "${namespace}" "${CACHE_INPUTS}" "${CACHE_GENERATION}" >> "${GITHUB_OUTPUT}"
       - name: Restore testmon database
         uses: actions/cache/restore@v6
         with:
@@ -265,13 +265,13 @@ jobs:
           # Structured reports only — a subset of Upload reports (no raw
           # pytest/tool logs: those may carry connection strings / env secrets).
           for report_root in .reports apps; do
-            if [ -d "$report_root" ]; then
-              find "$report_root" \
+            if [ -d "${report_root}" ]; then
+              find "${report_root}" \
                 \( -path '*/junit.xml' -o -path '*/coverage.xml' -o -path '*/coverage.json' \) \
                 -type f -exec sh -eu -c '
                   for report_file do
-                    printf "::group::%s\n" "$report_file"
-                    tail -n 200 "$report_file"
+                    printf "::group::%s\n" "${report_file}"
+                    tail -n 200 "${report_file}"
                     printf "::endgroup::\n"
                   done
                 ' sh {} +
